@@ -159,9 +159,7 @@ For examples on how it is to be used refer to the sections below.
 
 .. topic:: Examples
 
-    * :ref:`sphx_glr_auto_examples_feature_selection_plot_select_from_model_diabetes.py`: Selecting the two
-      most important features from the diabetes dataset without knowing the
-      threshold beforehand.
+    * :ref:`sphx_glr_auto_examples_feature_selection_plot_select_from_model_diabetes.py`
 
 .. _l1_feature_selection:
 
@@ -268,6 +266,7 @@ Sequential Feature Selection
 
 Sequential Feature Selection (SFS) is available in the
 :class:`~sklearn.feature_selection.SequentialFeatureSelector` transformer.
+SFS can be either forward and backward:
 
 Forward-SFS is a greedy procedure that iteratively finds the best new feature
 to add to the set of selected features. Concretely, we initially start with
@@ -287,6 +286,10 @@ Also, one may be much faster than the other depending on the requested number
 of selected features: if we have 10 features and ask for 7 selected features,
 forward selection would need to perform 7 iterations while backward selection
 would only need to perform 3.
+
+.. topic:: Examples
+
+    * :ref:`sphx_glr_auto_examples_feature_selection_plot_select_from_model_diabetes.py`
 
 Feature selection as part of a pipeline
 =======================================
