@@ -469,6 +469,7 @@ def _accumulate_prediction(predict, X, out, lock, out_sample_weight=None):
     else:
         prediction = predict(X, check_input=False)
     with lock:
+        print(out, len(out))
         if len(out) == 1:
             if out_sample_weight:
                 out[0] += proba * normalizer[:, np.newaxis]
@@ -476,13 +477,8 @@ def _accumulate_prediction(predict, X, out, lock, out_sample_weight=None):
             else:
                 out[0] += prediction
         else:
-            if out_sample_weight:
-                for i in range(len(out)):
-                    out[i] += proba[i] * normalizer[i][:, np.newaxis]
-                    out_sample_weight[i] += normalizer[i]
-            else:
-                for i in range(len(out)):
-                    out[i] += prediction[i]
+            for i in range(len(out)):
+                out[i] += prediction[i]
 
 
 class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
