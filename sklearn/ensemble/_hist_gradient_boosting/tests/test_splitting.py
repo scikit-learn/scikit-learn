@@ -562,8 +562,8 @@ def _assert_threshold_equals_bitset(expected_thresholds, bitset):
     expected_threshold_bitset = np.zeros(8, dtype=np.uint32)
     for threshold in expected_thresholds:
         i1 = threshold // 32
-        i2 = np.uint32(threshold % 32)
-        expected_threshold_bitset[i1] |= (np.uint32(1) << i2)
+        i2 = threshold % 32
+        expected_threshold_bitset[i1] |= 1 << i2
 
     # check for equality
     assert_array_equal(expected_threshold_bitset, bitset)
