@@ -40,9 +40,9 @@ print(diabetes.DESCR)
 # To get an idea of the importance of the features, we are going to use the
 # :class:`~sklearn.linear_model.LassoCV` estimator. The features with the
 # highest absolute `coef_` value are considered the most important.
-# we can observe the coefficients directly without needing to scale them (or
+# We can observe the coefficients directly without needing to scale them (or
 # scale the data) because from the description above, we know that the features
-# where already standardized.
+# were already standardized.
 # For a more complete example on the interpretations of the coefficients of
 # linear models, you may refer to
 # :ref:`sphx_glr_auto_examples_inspection_plot_linear_model_coefficient_interpretation.py`
@@ -81,7 +81,7 @@ print("Features selected by SelectFromModel: "
 # Selecting features with Sequential Feature Selection
 # ----------------------------------------------------
 #
-# Another way of selection features is to use Sequential Feature Selection
+# Another way of selecting features is to use Sequential Feature Selection
 # (SFS). SFS is a greedy procedure where, at each iteration, we choose the best
 # new feature to add to our selected features based a cross-validation score.
 # That is, we start with 0 features and choose the best single feature with the
@@ -124,4 +124,3 @@ print("Features selected by backward sequential selection: "
 # models for each of the iterations. SFS however works with any model, while
 # :class:`~sklearn.feature_selection.SelectFromModel` requires the underlying
 # estimator to expose a `coef_` attribute or a `feature_importance_` attribute.
-#

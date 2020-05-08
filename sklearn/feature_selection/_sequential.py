@@ -177,9 +177,10 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
             current_mask.add(new_feature_idx)
 
         # transform the mask into a proper boolean mask of selected features
-        self.support_ = np.full(X.shape[1], fill_value=not self.forward,
-                                dtype=bool)
-        self.support_[list(current_mask)] = self.forward
+        selected_features = (current_mask if self.forward
+                             else set(range(X.shape[1])) - current_mask)
+        self.support_ = np.full(X.shape[1], fill_value=False, dtype=bool)
+        self.support_[list(selected_features)] = True
 
         return self
 
