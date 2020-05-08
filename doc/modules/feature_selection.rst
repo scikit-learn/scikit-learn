@@ -264,7 +264,7 @@ meta-transformer)::
 Sequential Feature Selection
 ============================
 
-Sequential Feature Selection (SFS) is available in the
+Sequential Feature Selection [sfs]_ (SFS) is available in the
 :class:`~sklearn.feature_selection.SequentialFeatureSelector` transformer.
 SFS can be either forward and backward:
 
@@ -290,6 +290,12 @@ would only need to perform 3.
 .. topic:: Examples
 
     * :ref:`sphx_glr_auto_examples_feature_selection_plot_select_from_model_diabetes.py`
+
+.. topic:: References:
+
+   .. [sfs] Ferri et al, `Comparative study of techniques for
+      large-scale feature selection
+      <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.24.4369&rep=rep1&type=pdf>`_.
 
 Feature selection as part of a pipeline
 =======================================
