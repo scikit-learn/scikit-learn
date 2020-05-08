@@ -55,9 +55,9 @@ hist_one_hot = make_pipeline(preprocessor,
 # Create gradient boosting estimator with native categorical support
 # ------------------------------------------------------------------
 # The :class:`~ensemble.HistGradientBoostingRegressor` has native support
-# for categorical features using the `categorical` parameter:
+# for categorical features using the `categorical_features` parameter:
 
-hist_native = HistGradientBoostingRegressor(categorical='pandas',
+hist_native = HistGradientBoostingRegressor(categorical_features='pandas',
                                             random_state=0)
 
 ##############################################################################
