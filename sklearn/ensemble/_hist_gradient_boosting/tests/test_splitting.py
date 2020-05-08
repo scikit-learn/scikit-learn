@@ -586,44 +586,44 @@ def _assert_threshold_equals_bitset(expected_thresholds, bitset):
 
         # 5 categories where the left node has more samples
         # the grower would add the missing value bin to go to the left
-        # ([0, 1, 2, 3, 4] * 11 + [1] * 50,  # X_binned
-        #  [1, 10, 1, 1, 1] * 11 + [10] * 50,  # all_gradients
-        #  [1],  # expected_thresholds
-        #  5,  # n_bins_non_missing
-        #  5,  # missing_values_bin_idx
-        #  False),  # has_missing_values
+        ([0, 1, 2, 3, 4] * 11 + [1] * 50,  # X_binned
+         [1, 10, 1, 1, 1] * 11 + [10] * 50,  # all_gradients
+         [1],  # expected_thresholds
+         5,  # n_bins_non_missing
+         5,  # missing_values_bin_idx
+         False),  # has_missing_values
 
-        # # 4 categories (including missing value)
-        # ([0, 1, 2] * 11 + [9] * 11,  # X_binned
-        #  [1, 5, 1] * 11 + [1] * 11,  # all_gradients
-        #  [1],  # expected_thresholds
-        #  3,  # n_bins_non_missing
-        #  9,  # missing_values_bin_idx
-        #  True),   # has_missing_values
+        # 4 categories (including missing value)
+        ([0, 1, 2] * 11 + [9] * 11,  # X_binned
+         [1, 5, 1] * 11 + [1] * 11,  # all_gradients
+         [1],  # expected_thresholds
+         3,  # n_bins_non_missing
+         9,  # missing_values_bin_idx
+         True),   # has_missing_values
 
-        # # split is on the missing value
-        # ([0, 1, 2, 3, 4] * 11 + [255] * 12,  # X_binned
-        #  [1, 1, 1, 1, 1] * 11 + [20] * 12,  # all_gradients
-        #  [255],  # expected_thresholds
-        #  5,  # n_bins_non_missing
-        #  255,  # missing_values_bin_idx
-        #  True),   # has_missing_values
+        # split is on the missing value
+        ([0, 1, 2, 3, 4] * 11 + [255] * 12,  # X_binned
+         [1, 1, 1, 1, 1] * 11 + [20] * 12,  # all_gradients
+         [255],  # expected_thresholds
+         5,  # n_bins_non_missing
+         255,  # missing_values_bin_idx
+         True),   # has_missing_values
 
-        # # split on even categories
-        # (list(range(60)) * 12,  # X_binned
-        #  [1, 10] * 360,  # all_gradients
-        #  list(range(0, 60, 2)),  # expected_thresholds
-        #  59,  # n_bins_non_missing
-        #  59,  # missing_values_bin_idx
-        #  True),  # has_missing_values
+        # split on even categories
+        (list(range(60)) * 12,  # X_binned
+         [1, 10] * 360,  # all_gradients
+         list(range(0, 60, 2)),  # expected_thresholds
+         59,  # n_bins_non_missing
+         59,  # missing_values_bin_idx
+         True),  # has_missing_values
 
-        # # split on every 8 categories
-        # (list(range(256)) * 12,  # X_binned
-        #  [1, 1, 1, 1, 1, 1, 1, 10] * 384,  # all_gradients
-        #  list(range(7, 256, 8)),  # expected_thresholds
-        #  255,  # n_bins_non_missing
-        #  255,  # missing_values_bin_idx
-        #  True),  # has_missing_values
+        # split on every 8 categories
+        (list(range(256)) * 12,  # X_binned
+         [1, 1, 1, 1, 1, 1, 1, 10] * 384,  # all_gradients
+         list(range(7, 256, 8)),  # expected_thresholds
+         255,  # n_bins_non_missing
+         255,  # missing_values_bin_idx
+         True),  # has_missing_values
      ])
 def test_splitting_categorical_sanity(X_binned, all_gradients,
                                       expected_thresholds,
