@@ -894,13 +894,13 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
 
         - None : no features will be considered categorical.
         - `'pandas'` : categorical features will be infered using pandas
-        categorical dtypes.
+          categorical dtypes.
         - boolean array-like : boolean mask indicating categorical features.
-        The categories must have been already be numerical i.e. encoded by
-        an :class:`~sklearn.preprocessing.OrdinalEncoder`.
+           The categories must have been already be numerical i.e. encoded by
+          an :class:`~sklearn.preprocessing.OrdinalEncoder`.
         - integer array-like : integer indicies indicating categorical
-        features. The categories must have been already be numerical i.e.
-        encoded by an :class:`~sklearn.preprocessing.OrdinalEncoder`.
+          features. The categories must have been already be numerical i.e.
+          encoded by an :class:`~sklearn.preprocessing.OrdinalEncoder`.
 
         If the number of features is greater than ``max_bins``, then the top
         ``max_bins`` categories based on cardinality are kept. Categories
@@ -1121,13 +1121,13 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
 
         - None : no features will be considered categorical.
         - `'pandas'` : categorical features will be infered using pandas
-        categorical dtypes.
+          categorical dtypes.
         - boolean array-like : boolean mask indicating categorical features.
-        The categories must have been already be numerical i.e. encoded by
-        an :class:`~sklearn.preprocessing.OrdinalEncoder`.
+           The categories must have been already be numerical i.e. encoded by
+          an :class:`~sklearn.preprocessing.OrdinalEncoder`.
         - integer array-like : integer indicies indicating categorical
-        features. The categories must have been already be numerical i.e.
-        encoded by an :class:`~sklearn.preprocessing.OrdinalEncoder`.
+          features. The categories must have been already be numerical i.e.
+          encoded by an :class:`~sklearn.preprocessing.OrdinalEncoder`.
 
         If the number of features is greater than ``max_bins``, then the top
         ``max_bins`` categories based on cardinality are kept. Categories
