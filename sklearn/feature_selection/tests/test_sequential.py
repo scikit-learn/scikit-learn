@@ -1,4 +1,5 @@
 import pytest
+import scipy
 import numpy as np
 from numpy.testing import assert_array_equal
 
@@ -56,3 +57,13 @@ def test_sanity(seed, forward, n_features_to_select,
     sfs.fit(X, y)
     assert_array_equal(sfs.get_support(indices=True),
                        expected_selected_features)
+
+
+def test_sparse_data():
+    # Make sure sparse data is supported
+
+    X, y = make_regression(n_features=10)
+    X = scipy.sparse.csr_matrix(X)
+    sfs = SequentialFeatureSelector(LinearRegression(), cv=2)
+    sfs.fit(X, y)
+    sfs.transform(X)

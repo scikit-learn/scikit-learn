@@ -261,6 +261,13 @@ meta-transformer)::
     * :ref:`sphx_glr_auto_examples_ensemble_plot_forest_importances_faces.py`: example
       on face recognition data.
 
+.. _sequential_feature_selection:
+
+Sequential Feature Selection
+============================
+
+TODO: Do that
+
 Feature selection as part of a pipeline
 =======================================
 
