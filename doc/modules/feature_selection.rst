@@ -266,7 +266,27 @@ meta-transformer)::
 Sequential Feature Selection
 ============================
 
-TODO: Do that
+Sequential Feature Selection (SFS) is available in the
+:class:`~sklearn.feature_selection.SequentialFeatureSelector` transformer.
+
+Forward-SFS is a greedy procedure that iteratively finds the best new feature
+to add to the set of selected features. Concretely, we initially start with
+zero feature and find the one feature that maximizes a cross-validated score
+when an estimator is trained on this single feature. Once that first feature
+is selected, we repeat the procedure by adding a new feature to the set of
+selected features. The procedure stops when the desired number of selected
+features is reached, as determined by the `n_features_to_select` parameter.
+
+Backward-SFS follows the same idea but works in the opposite direction:
+instead of starting with no feature and greedily adding features, we start
+with *all* the features and greedily *remove* features from the set. The
+`forward` parameter controls whether forward or backward SFS is used.
+
+In general, forward and backward selection do not yield equivalent results.
+Also, one may be much faster than the other depending on the requested number
+of selected features: if we have 10 features and ask for 7 selected features,
+forward selection would need to perform 7 iterations while backward selection
+would only need to perform 3.
 
 Feature selection as part of a pipeline
 =======================================

@@ -63,7 +63,9 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
         cross-validation strategies that can be used here.
 
     n_jobs : int, default=None
-        Number of jobs to run in parallel.
+        Number of jobs to run in parallel. When evaluating a new feature to
+        add or remove, the cross-validation procedure is parallel over the
+        folds.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
@@ -208,6 +210,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
 
     def _more_tags(self):
         estimator_tags = self.estimator._get_tags()
-        return {'allow_nan': estimator_tags.get('allow_nan', True),
-                'requires_y': True,
-                }
+        return {
+            'allow_nan': estimator_tags.get('allow_nan', True),
+            'requires_y': True,
+        }
