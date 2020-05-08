@@ -627,25 +627,6 @@ Changelog
 - |FIX| :func:`utils.all_estimators` now only returns public estimators.
   :pr:`15380` by `Thomas Fan`_.
 
-:mod:`sklearn.cluster`
-......................
-
-- |Fix| :class:`cluster.AgglomerativeClustering` add specific error when
-  distance matrix is not square and `affinity=precomputed`.
-  :pr:`16257` by :user:`Simona Maggio <simonamaggio>`.
-
-:mod:`sklearn.svm`
-....................
-
-- |Enhancement| invoke scipy blas api for svm kernel function in ``fit``,
-  ``score``, ``predict``, ``predict_proba``, ``predict_log_proba`` and 
-  ``decision_function`` methods of :class:`svm.SVC` and :class:`svm.NuSVC`
-  as well as ``fit``, ``predict`` and ``score`` methods of :class:`svm.SVR` 
-  and :class:`svm.NuSVR` together with ``fit``, ``predict``, 
-  ``decision_function``, ``score_samples`` and ``fit_predict`` methods of
-  :class:`OneClassSVM`.
-  :pr:`16530` by :user:`Shuhua Fan <jim0421>`.
-
 Miscellaneous
 .............
 
