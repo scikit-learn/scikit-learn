@@ -893,11 +893,14 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         Indicates the categorical features.
 
         - None : no features will be considered categorical.
-        - boolean array-like : boolean mask indicating categorical features.
-        - integer array-like : integer indicies indicating categorical
-        features.
         - `'pandas'` : categorical features will be infered using pandas
-        categorical dtypes
+        categorical dtypes.
+        - boolean array-like : boolean mask indicating categorical features.
+        The categories must have been already be numerical i.e. encoded by
+        an :class:`~sklearn.preprocessing.OrdinalEncoder`.
+        - integer array-like : integer indicies indicating categorical
+        features. The categories must have been already be numerical i.e.
+        encoded by an :class:`~sklearn.preprocessing.OrdinalEncoder`.
 
         If the number of features is greater than ``max_bins``, then the top
         ``max_bins`` categories based on cardinality are kept. Categories
@@ -1117,11 +1120,14 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
         Indicates the categorical features.
 
         - None : no features will be considered categorical.
-        - boolean array-like : boolean mask indicating categorical features.
-        - integer array-like : integer indicies indicating categorical
-        features.
         - `'pandas'` : categorical features will be infered using pandas
-        categorical dtypes
+        categorical dtypes.
+        - boolean array-like : boolean mask indicating categorical features.
+        The categories must have been already be numerical i.e. encoded by
+        an :class:`~sklearn.preprocessing.OrdinalEncoder`.
+        - integer array-like : integer indicies indicating categorical
+        features. The categories must have been already be numerical i.e.
+        encoded by an :class:`~sklearn.preprocessing.OrdinalEncoder`.
 
         If the number of features is greater than ``max_bins``, then the top
         ``max_bins`` categories based on cardinality are kept. Categories
