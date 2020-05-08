@@ -896,7 +896,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         - `'pandas'` : categorical features will be infered using pandas
           categorical dtypes.
         - boolean array-like : boolean mask indicating categorical features.
-           The categories must have been already be numerical i.e. encoded by
+          The categories must have been already be numerical i.e. encoded by
           an :class:`~sklearn.preprocessing.OrdinalEncoder`.
         - integer array-like : integer indicies indicating categorical
           features. The categories must have been already be numerical i.e.
@@ -1123,7 +1123,7 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
         - `'pandas'` : categorical features will be infered using pandas
           categorical dtypes.
         - boolean array-like : boolean mask indicating categorical features.
-           The categories must have been already be numerical i.e. encoded by
+          The categories must have been already be numerical i.e. encoded by
           an :class:`~sklearn.preprocessing.OrdinalEncoder`.
         - integer array-like : integer indicies indicating categorical
           features. The categories must have been already be numerical i.e.
