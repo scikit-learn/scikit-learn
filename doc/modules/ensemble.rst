@@ -1126,10 +1126,10 @@ cardinality will be kept, and the less frequent categories will be considered
 as missing. 
 
 To enable categorical support, a boolean mask can be passed to the
-`categorical` parameter. In the following, the first feature will be
+`categorical_features` parameter. In the following, the first feature will be
 treated as categorical and the second feature as nummerical::
 
-  >>> gbdt = HistGradientBoostingRegressor(categorical=[True, False])
+  >>> gbdt = HistGradientBoostingRegressor(categorical_features=[True, False])
 
 Another way to enable categorical support is to pass `'pandas'` to the
 `categorical` parameter. This will infer the categorical features using pandas'

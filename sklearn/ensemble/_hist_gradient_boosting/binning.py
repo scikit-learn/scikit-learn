@@ -103,7 +103,7 @@ def _find_categories(data, max_bins, is_categorical):
         For each categorical feature, this gives a maps categorical indicies
         to the categories corresponding to each bin.
     """
-    if is_categorical is not None and ~np.any(is_categorical):
+    if is_categorical is None or ~np.any(is_categorical):
         return {}
 
     categorical_indices = np.flatnonzero(is_categorical)
