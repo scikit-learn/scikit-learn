@@ -1567,11 +1567,6 @@ def check_estimators_pickle(name, estimator_orig):
     set_random_state(estimator)
     estimator.fit(X, y)
 
-    result = dict()
-    for method in check_methods:
-        if hasattr(estimator, method):
-            result[method] = getattr(estimator, method)(X)
-
     # pickle and unpickle!
     pickled_estimator = pickle.dumps(estimator)
     if estimator.__module__.startswith('sklearn.'):
