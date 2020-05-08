@@ -10,7 +10,7 @@ from ..utils import check_array
 from ..utils.validation import check_is_fitted
 from ..utils.validation import _deprecate_positional_args
 
-from ._label import _encode, _encode_check_unknown, _unique
+from ..utils._encode import _encode, _encode_check_unknown, _unique
 
 
 __all__ = [

@@ -34,7 +34,7 @@ from ..utils.sparsefuncs import count_nonzero
 from ..utils.validation import _deprecate_positional_args
 from ..exceptions import UndefinedMetricWarning
 from ..preprocessing import label_binarize
-from ..preprocessing._label import _encode, _unique
+from ..utils._encode import _encode, _unique
 
 from ._base import _average_binary_score, _average_multiclass_ovo_score
 
