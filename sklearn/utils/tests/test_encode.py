@@ -2,7 +2,9 @@ import numpy as np
 import pytest
 from numpy.testing import assert_array_equal
 
-from sklearn.utils._encode import _unique, _encode
+from sklearn.utils._encode import _unique
+from sklearn.utils._encode import _encode
+from sklearn.utils._encode import _encode_check_unknown
 
 
 @pytest.mark.parametrize(
@@ -21,7 +23,7 @@ def test_encode_util(values, expected):
     assert_array_equal(encoded, np.array([1, 0, 2, 0, 2]))
 
 
-def test_encode_check_unknown():
+def test_encode_with_check_unknown():
     # test for the check_unknown parameter of _encode()
     uniques = np.array([1, 2, 3])
     values = np.array([1, 2, 3, 4])
@@ -40,3 +42,20 @@ def test_encode_check_unknown():
     with pytest.raises(ValueError,
                        match='y contains previously unseen labels'):
         _encode(values, uniques=uniques, check_unknown=False)
+
+
+@pytest.mark.parametrize("values, uniques, expected_diff", [
+  (np.array([1, 2, 3, 4]), np.array([1, 2, 3]), [4]),
+  (np.array(['a', 'b', 'c', 'd'], dtype=object),
+   np.array(['a', 'b', 'c'], dtype=object),
+   np.array(['d']))
+])
+def test_encode_check_unknown(values, uniques, expected_diff):
+    diff = _encode_check_unknown(values, uniques)
+
+    assert_array_equal(diff, expected_diff)
+
+    diff, valid_mask = _encode_check_unknown(values, uniques, return_mask=True)
+
+    assert_array_equal(diff, expected_diff)
+    assert_array_equal(valid_mask, [True, True, True, False])
