@@ -578,7 +578,7 @@ def _assert_threshold_equals_bitset(expected_thresholds, bitset):
         # missing values should go to the left bin with 22 samples but
         # this is done in the grower
         ([0, 1, 2] * 11,  # X_binned
-         [1, 10, 1] * 11,  # all_gradients
+         [1, 20, 1] * 11,  # all_gradients
          [0, 2],  # expected_thresholds
          3,  # n_bins_non_missing
          3,  # missing_values_bin_idx
