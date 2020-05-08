@@ -1,6 +1,54 @@
 import numpy as np
 
 
+def _unique(values, *, return_inverse=False):
+    """Helper function to find unique values with support for python objects.
+
+    Uses pure python method for object dtype, and numpy method for
+    all other dtypes.
+
+    Parameters
+    ----------
+    values : ndarray
+        Values to check for unknowns.
+
+    return_inverse : bool, default=False
+        If True, also return the indices of the unique values.
+
+    Returns
+    -------
+    unique : ndarray
+        The sorted unique values.
+
+    unique_inverse : ndarray
+        The indices to reconstruct the original array from the unique array.
+        Only provided if `return_inverse` is True.
+    """
+    if values.dtype == object:
+        return _unique_python(values, return_inverse=return_inverse)
+    # numerical
+    return np.unique(values, return_inverse=return_inverse)
+
+
+def _unique_python(values, *, return_inverse):
+    # Only used in _uniques below, see docstring there for details
+    try:
+        uniques = sorted(set(values))
+        uniques = np.array(uniques, dtype=values.dtype)
+    except TypeError:
+        types = sorted(t.__qualname__
+                       for t in set(type(v) for v in values))
+        raise TypeError("Encoders require their input to be uniformly "
+                        f"strings or numbers. Got {types}")
+
+    if return_inverse:
+        table = {val: i for i, val in enumerate(uniques)}
+        inverse = np.array([table[v] for v in values])
+        return uniques, inverse
+
+    return uniques
+
+
 def _encode(values, *, uniques, check_unknown=True):
     """Helper function to encode values into [0, n_uniques - 1].
 
@@ -43,54 +91,6 @@ def _encode(values, *, uniques, check_unknown=True):
                 raise ValueError(f"y contains previously unseen labels: "
                                  f"{str(diff)}")
         return np.searchsorted(uniques, values)
-
-
-def _unique_python(values, *, return_inverse):
-    # Only used in _uniques below, see docstring there for details
-    try:
-        uniques = sorted(set(values))
-        uniques = np.array(uniques, dtype=values.dtype)
-    except TypeError:
-        types = sorted(t.__qualname__
-                       for t in set(type(v) for v in values))
-        raise TypeError("Encoders require their input to be uniformly "
-                        f"strings or numbers. Got {types}")
-
-    if return_inverse:
-        table = {val: i for i, val in enumerate(uniques)}
-        inverse = np.array([table[v] for v in values])
-        return uniques, inverse
-
-    return uniques
-
-
-def _unique(values, *, return_inverse=False):
-    """Helper function to find unique values with support for python objects.
-
-    Uses pure python method for object dtype, and numpy method for
-    all other dtypes.
-
-    Parameters
-    ----------
-    values : ndarray
-        Values to check for unknowns.
-
-    return_inverse : bool, default=False
-        If True, also return the indices of the unique values.
-
-    Returns
-    -------
-    unique : ndarray
-        The sorted unique values.
-
-    unique_inverse : ndarray
-        The indices to reconstruct the original array from the unique array.
-        Only provided if `return_inverse` is True.
-    """
-    if values.dtype == object:
-        return _unique_python(values, return_inverse=return_inverse)
-    # numerical
-    return np.unique(values, return_inverse=return_inverse)
 
 
 def _encode_check_unknown(values, uniques, return_mask=False):
