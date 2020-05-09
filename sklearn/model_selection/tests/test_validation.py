@@ -45,7 +45,7 @@ from sklearn.datasets import make_regression
 from sklearn.datasets import load_diabetes
 from sklearn.datasets import load_iris
 from sklearn.datasets import load_digits
-from sklearn.datasets.samples_generator import make_blobs
+from sklearn.datasets import make_blobs
 from sklearn.metrics import explained_variance_score
 from sklearn.metrics import make_scorer
 from sklearn.metrics import accuracy_score
