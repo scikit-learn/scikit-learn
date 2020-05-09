@@ -239,7 +239,7 @@ def test_fit_docstring_attributes(name, Estimator):
                'MiniBatchKMeans', 'MLPClassifier', 'MLPRegressor',
                'MultiTaskElasticNet', 'MultiTaskElasticNetCV',
                'MultiTaskLasso', 'MultiTaskLassoCV', 'NearestNeighbors',
-               'NuSVR', 'OAS', 'OneClassSVM', 'OrthogonalMatchingPursuit',
+               'NuSVR', 'OneClassSVM', 'OrthogonalMatchingPursuit',
                'PLSCanonical', 'PLSRegression', 'PLSSVD',
                'PassiveAggressiveClassifier', 'Perceptron', 'RBFSampler',
                'RadiusNeighborsClassifier', 'RadiusNeighborsRegressor',
