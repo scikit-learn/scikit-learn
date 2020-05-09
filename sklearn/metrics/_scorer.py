@@ -345,11 +345,7 @@ def get_scorer(scoring):
     """
     if isinstance(scoring, str):
         try:
-            if scoring == 'brier_score_loss':
-                # deprecated
-                scorer = brier_score_loss_scorer
-            else:
-                scorer = SCORERS[scoring]
+            scorer = SCORERS[scoring]
         except KeyError:
             raise ValueError('%r is not a valid scoring value. '
                              'Use sorted(sklearn.metrics.SCORERS.keys()) '
