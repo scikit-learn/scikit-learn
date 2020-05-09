@@ -82,11 +82,11 @@ class ShrunkCovariance(EmpiricalCovariance):
 
     Attributes
     ----------
-    location_ : ndarray of shape (n_features,)
-        Estimated location, i.e. the estimated mean.
-
     covariance_ : ndarray of shape (n_features, n_features)
         Estimated covariance matrix
+
+    location_ : ndarray of shape (n_features,)
+        Estimated location, i.e. the estimated mean.
 
     precision_ : ndarray of shape (n_features, n_features)
         Estimated pseudo inverse matrix.
@@ -344,11 +344,11 @@ class LedoitWolf(EmpiricalCovariance):
 
     Attributes
     ----------
-    location_ : ndarray of shape (n_features,)
-        Estimated location, i.e. the estimated mean.
-
     covariance_ : ndarray of shape (n_features, n_features)
         Estimated covariance matrix.
+
+    location_ : ndarray of shape (n_features,)
+        Estimated location, i.e. the estimated mean.
 
     precision_ : ndarray of shape (n_features, n_features)
         Estimated pseudo inverse matrix.
@@ -525,6 +525,9 @@ class OAS(EmpiricalCovariance):
     ----------
     covariance_ : ndarray of shape (n_features, n_features)
         Estimated covariance matrix.
+
+    location_ : ndarray of shape (n_features,)
+        Estimated location, i.e. the estimated mean.
 
     precision_ : ndarray of shape (n_features, n_features)
         Estimated pseudo inverse matrix.
