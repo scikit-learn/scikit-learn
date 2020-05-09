@@ -23,10 +23,7 @@ pytestmark = pytest.mark.filterwarnings(
 
 @pytest.fixture(scope="module")
 def diabetes():
-    diabetes = load_diabetes()
-    # Match type of `feature_names` of prev used `load_boston`
-    diabetes.feature_names = np.asarray(diabetes.feature_names)
-    return diabetes
+    return load_diabetes()
 
 
 @pytest.fixture(scope="module")
@@ -182,11 +179,11 @@ def test_plot_partial_dependence_str_features(pyplot, clf_diabetes, diabetes,
 def test_plot_partial_dependence_custom_axes(pyplot, clf_diabetes, diabetes):
     grid_resolution = 25
     fig, (ax1, ax2) = pyplot.subplots(1, 2)
-    feature_names = diabetes.feature_names.tolist()
     disp = plot_partial_dependence(clf_diabetes, diabetes.data,
                                    ['age', ('age', 'bmi')],
                                    grid_resolution=grid_resolution,
-                                   feature_names=feature_names, ax=[ax1, ax2])
+                                   feature_names=diabetes.feature_names,
+                                   ax=[ax1, ax2])
     assert fig is disp.figure_
     assert disp.bounding_ax_ is None
     assert disp.axes_.shape == (2, )
@@ -217,7 +214,7 @@ def test_plot_partial_dependence_custom_axes(pyplot, clf_diabetes, diabetes):
 def test_plot_partial_dependence_passing_numpy_axes(pyplot, clf_diabetes,
                                                     diabetes):
     grid_resolution = 25
-    feature_names = diabetes.feature_names.tolist()
+    feature_names = diabetes.feature_names
     disp1 = plot_partial_dependence(clf_diabetes, diabetes.data,
                                     ['age', 'bmi'],
                                     grid_resolution=grid_resolution,
