@@ -5,12 +5,12 @@
      libsvm and liblinear.
      Sylvain Marie, Schneider Electric
      See <https://github.com/scikit-learn/scikit-learn/pull/13511#issuecomment-481729756>
-
  */
 #ifndef _NEWRAND_H
 #define _NEWRAND_H
 
 #ifdef __cplusplus
+#include <random>
 extern "C" {
 #endif
 
@@ -33,7 +33,7 @@ void set_seed(unsigned custom_seed) {
 }
 
 // - (3) New internal `bounded_rand_int` function, used instead of rand() everywhere.
-int bounded_rand_int(int orig_range) {
+inline int bounded_rand_int(int orig_range) {
     // "LibSVM / LibLinear Original way" - make a 31bit or 63bit positive
     // random number and use modulo to make it fit in the range
     // return abs( (int)mt_rand()) % orig_range;

@@ -47,9 +47,8 @@ def configuration(parent_package='', top_path=None):
                                        join('src', 'libsvm'),
                                        join('src', 'newrand')],
                          libraries=['libsvm-skl'],
-                         depends=[join('src', 'newrand', 'newrand.h'),
-                                  join('src', 'newrand', 'newrand-cache.cpp'),
-                                  join('src', 'newrand', 'newrand-cache.h')],
+                         depends=[join('src', 'newrand', 'newrand.h')],
+                         language='c++',
                          )
 
     # liblinear module

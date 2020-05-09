@@ -1,10 +1,11 @@
+# language: c++
 """
 Wrapper for newrand.h
 
 """
 
-cdef extern from "newrand-cache.h":
-	void set_seed(int)
+cdef extern from "newrand.h":
+	void set_seed(unsigned)
 	int bounded_rand_int(int)
 
 def set_seed_wrap(unsigned custom_seed):
