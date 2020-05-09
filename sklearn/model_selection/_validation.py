@@ -1293,7 +1293,7 @@ def learning_curve(estimator, X, y, *, groups=None,
         out = parallel(delayed(_incremental_fit_estimator)(
             clone(estimator), X, y, classes, train, test, train_sizes_abs,
             scorer, verbose, return_times, fit_params=fit_params)
-        for train, test in cv_iter)
+            for train, test in cv_iter)
     else:
         train_test_proportions = []
         for train, test in cv_iter:
