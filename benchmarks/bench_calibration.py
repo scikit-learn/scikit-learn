@@ -21,12 +21,13 @@ class CalibratedClassifierCVBenchmark(object):
     :param n_trials: number of trials of each test for the benchmark
     """
 
-    def __init__(self, n_samples=100000, n_trials=20):
+    def __init__(self, n_samples=100000, n_features=10, n_trials=20):
         self.n_samples = n_samples
+        self.n_features = n_features
         self.n_trials = n_trials
         self.X, self.y = make_classification(
             n_samples=self.n_samples,
-            n_features=10,
+            n_features=self.n_features,
             n_informative=3,
             n_redundant=0,
             random_state=42,
@@ -87,8 +88,8 @@ class CalibratedClassifierCVBenchmark(object):
 
         ax.set_ylabel("Execution time (in sec.)")
         ax.xaxis.set_tick_params(rotation=45)
-        plt.title(benchmark_class.__doc__,
-                  f" ({self.n_samples} samples, {self.n_trials} trials)")
+        plt.title(f"{benchmark_class.__doc__ }"
+                  f" — dataset-shape: ({self.n_samples}, {self.n_features}) — {self.n_trials} trials")
         ax.yaxis.grid(True)
 
         plt.savefig(f"{benchmark_class.__name__.lower()}.png")
