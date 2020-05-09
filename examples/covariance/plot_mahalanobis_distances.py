@@ -12,7 +12,7 @@ Mahalanobis distance:
 
 .. math::
 
-    d_{(\mu,\Sigma)}(x_i)^2 = (x_i - \mu)'\Sigma^{-1}(x_i - \mu)
+    d_{(\mu,\Sigma)}(x_i)^2 = (x_i - \mu)^T\Sigma^{-1}(x_i - \mu)
 
 where :math:`\mu` and :math:`\Sigma` are the location and the covariance of
 the underlying Gaussian distributions.
@@ -35,7 +35,7 @@ estimator of covariance. The idea behind the MCD is to find
 observations whose empirical covariance has the smallest determinant,
 yielding a "pure" subset of observations from which to compute
 standards estimates of location and covariance. The MCD was introduced by
-P.J.Rousseuw in [1].
+P.J.Rousseuw in [1]_.
 
 This example illustrates how the Mahalanobis distances are affected by
 outlying data. Observations drawn from a contaminating distribution
@@ -50,12 +50,15 @@ observation ranking and clustering.
 
     See also :ref:`sphx_glr_auto_examples_covariance_plot_robust_vs_empirical_covariance.py`
 
+.. topic:: References:
+    .. [1] P. J. Rousseeuw. `Least median of squares regression
+        <http://web.ipac.caltech.edu/staff/fmasci/home/astro_refs/LeastMedianOfSquares.pdf>`_. J. Am
+        Stat Ass, 79:871, 1984.
+    .. [2] Wilson, E. B., & Hilferty, M. M. (1931). `The distribution of chi-square.
+        <https://water.usgs.gov/osw/bulletin17b/Wilson_Hilferty_1931.pdf>`_
+        Proceedings of the National Academy of Sciences of the United States
+        of America, 17, 684-688.
 """  # noqa: E501
-
-import numpy as np
-import matplotlib.pyplot as plt
-
-from sklearn.covariance import EmpiricalCovariance, MinCovDet
 
 # %%
 # Generate data
@@ -66,6 +69,8 @@ from sklearn.covariance import EmpiricalCovariance, MinCovDet
 # deviation = 2 and feature 2 has a standard deviation = 1. Next, 25 samples
 # are replaced with Gaussian outlier samples where feature 1 has standard
 # devation = 1 and feature 2 has standard deviation = 7.
+
+import numpy as np
 
 # for consistent results
 np.random.seed(7)
@@ -93,6 +98,9 @@ X[-n_outliers:] = np.dot(np.random.randn(n_outliers, n_features), outliers_cov)
 # that of the MCD robust estimator (1.2). This shows that the MCD based
 # robust estimator is much more resistant to the outlier samples, which were
 # designed to have a much larger variance in feature 2.
+
+import matplotlib.pyplot as plt
+from sklearn.covariance import EmpiricalCovariance, MinCovDet
 
 # fit a MCD robust estimator to data
 robust_cov = MinCovDet().fit(X)
@@ -145,7 +153,7 @@ plt.show()
 # Finally, we highlight the ability of MCD based Mahalanobis distances to
 # distinguish outliers. We take the cubic root of the Mahalanobis distances,
 # yielding approximately normal distributions (as suggested by Wilson and
-# Hilferty [2]), then plot the values of inlier and outlier samples with
+# Hilferty [2]_), then plot the values of inlier and outlier samples with
 # boxplots. The distribution of outlier samples is more separated from the
 # distribution of inlier samples for robust MCD based Mahalanobis distances.
 
@@ -180,10 +188,3 @@ ax2.set_ylabel(r"$\sqrt[3]{\rm{(Mahal. dist.)}}$", size=16)
 ax2.set_title("Using robust estimates\n(Minimum Covariance Determinant)")
 
 plt.show()
-
-# %%
-# [1] P. J. Rousseeuw. Least median of squares regression. J. Am
-#     Stat Ass, 79:871, 1984.
-# [2] Wilson, E. B., & Hilferty, M. M. (1931). The distribution of chi-square.
-#     Proceedings of the National Academy of Sciences of the United States
-#     of America, 17, 684-688.
