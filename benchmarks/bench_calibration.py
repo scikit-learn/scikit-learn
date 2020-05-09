@@ -1,7 +1,10 @@
 import numpy as np
 import itertools
 import time
+import seaborn as sns
+import gc
 
+import pandas as pd
 from matplotlib import pyplot as plt
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.datasets import make_classification
@@ -18,7 +21,7 @@ class CalibratedClassifierCVBenchmark(object):
     :param n_trials: number of trials of each test for the benchmark
     """
 
-    def __init__(self, n_samples=10000, n_trials=10):
+    def __init__(self, n_samples=100000, n_trials=20):
         self.n_samples = n_samples
         self.n_trials = n_trials
         self.X, self.y = make_classification(
@@ -43,16 +46,19 @@ class CalibratedClassifierCVBenchmark(object):
 
         def proxy(*args, **key_args):
             times = []
+            gc.collect()
             for _ in range(self.n_trials):
                 t1 = time.time()
-                r = func(*args, **key_args)
+                _ = func(*args, **key_args)
                 t2 = time.time()
                 times.append(t2 - t1)
 
             mean = np.mean(times)
             std = np.std(times)
-            print("{} trials: {:.4f} ± {:.4f} s".format(self.n_trials, mean, std))
-            return args, key_args, mean, std
+            print("{} trials: {:.4f} ± {:.4f} s"
+                  .format(self.n_trials, mean, std))
+            print(times)
+            return args, key_args, times
 
         return proxy
 
@@ -68,29 +74,21 @@ class CalibratedClassifierCVBenchmark(object):
     def _plot_res(self, benchmark_class, res):
         plt.figure(figsize=(21, 13))
 
-        key_args = list(map(lambda x: x[1], res))
-        means = list(map(lambda x: x[2], res))
-        std = list(map(lambda x: x[3], res))
+        df = pd.DataFrame()
+        for args, key_args, times in res:
+            d = pd.DataFrame(dict(times=times))
+            key_args_string = "\n".join(list(
+                map(lambda x: f"{x[0]}: {x[1]}", key_args.items())))
 
-        ticks = list(range(len(means)))
-        ax = plt.gca()
-        ax.bar(
-            ticks,
-            means,
-            yerr=std,
-            align="center",
-            alpha=0.5,
-            ecolor="black",
-            capsize=10,
-        )
+            d['args'] = key_args_string
+            df = pd.concat([df, d])
+
+        ax = sns.boxplot(x="args", y="times", data=df, whis=0.4)
+
         ax.set_ylabel("Execution time (in sec.)")
-        ax.set_xticks(ticks)
-        xlabels = [
-            "\n".join(list(map(lambda x: f"{x[0]}: {x[1]}", k.items())))
-            for k in key_args
-        ]
-        ax.set_xticklabels(xlabels, rotation=90)
-        plt.title(benchmark_class.__doc__)
+        ax.xaxis.set_tick_params(rotation=45)
+        plt.title(benchmark_class.__doc__,
+                  f" ({self.n_samples} samples, {self.n_trials} trials)")
         ax.yaxis.grid(True)
 
         plt.savefig(f"{benchmark_class.__name__.lower()}.png")
@@ -112,7 +110,7 @@ class CalibratedClassifierCVBenchmark(object):
 
 
 class BenchmarkNJobsSingleThreadAlgo(CalibratedClassifierCVBenchmark):
-    """ Time vs algo. and threads numbers."""
+    """ Time vs single-threaded algo. and threads numbers."""
 
     ESTIMATORS = {
         "LogisticReg.": LogisticRegression(),
@@ -130,7 +128,7 @@ class BenchmarkNJobsSingleThreadAlgo(CalibratedClassifierCVBenchmark):
 
 
 class BenchmarkNJobsMultiThreadAlgo(CalibratedClassifierCVBenchmark):
-    """ Time vs algo. and threads numbers."""
+    """ Time vs multi-threaded algo. and threads numbers."""
 
     ESTIMATORS = {
         "ExtraTrees": ExtraTreesClassifier(),
