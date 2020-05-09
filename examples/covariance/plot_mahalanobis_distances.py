@@ -51,6 +51,7 @@ observation ranking and clustering.
     See also :ref:`sphx_glr_auto_examples_covariance_plot_robust_vs_empirical_covariance.py`
 
 .. topic:: References:
+
     .. [1] P. J. Rousseeuw. `Least median of squares regression
         <http://web.ipac.caltech.edu/staff/fmasci/home/astro_refs/LeastMedianOfSquares.pdf>`_. J. Am
         Stat Ass, 79:871, 1984.
@@ -58,6 +59,7 @@ observation ranking and clustering.
         <https://water.usgs.gov/osw/bulletin17b/Wilson_Hilferty_1931.pdf>`_
         Proceedings of the National Academy of Sciences of the United States
         of America, 17, 684-688.
+
 """  # noqa: E501
 
 # %%
