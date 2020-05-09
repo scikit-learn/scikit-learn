@@ -22,7 +22,7 @@ from joblib import Parallel, delayed
 
 from ..base import is_classifier, clone
 from ..utils import (indexable, check_random_state, _safe_indexing,
-                     _message_with_time, safe_indexing)
+                     _message_with_time)
 from ..utils.validation import _check_fit_params, _is_arraylike
 from ..utils.validation import _num_samples
 from ..utils.validation import _deprecate_positional_args
@@ -968,7 +968,7 @@ def _index_param_value(X, v, indices):
         return v
     if sp.issparse(v):
         v = v.tocsr()
-    return safe_indexing(v, indices)
+    return _safe_indexing(v, indices)
 
 
 @_deprecate_positional_args
