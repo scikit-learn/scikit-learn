@@ -89,7 +89,8 @@ class CalibratedClassifierCVBenchmark(object):
         ax.set_ylabel("Execution time (in sec.)")
         ax.xaxis.set_tick_params(rotation=45)
         plt.title(f"{benchmark_class.__doc__ }"
-                  f" — dataset-shape: ({self.n_samples}, {self.n_features}) — {self.n_trials} trials")
+                  f" — dataset-shape: ({self.n_samples}, "
+                  f"{self.n_features}) — {self.n_trials} trials")
         ax.yaxis.grid(True)
 
         plt.savefig(f"{benchmark_class.__name__.lower()}.png")
