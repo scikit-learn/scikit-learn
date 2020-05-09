@@ -90,7 +90,7 @@ for i in range(NUM_TRIALS):
 
 score_difference = non_nested_scores - nested_scores
 
-print("Average difference of {0:6f} with std. dev. of {1:6f}."
+print("Average difference of {:6f} with std. dev. of {:6f}."
       .format(score_difference.mean(), score_difference.std()))
 
 # Plot scores on each trial for nested and non-nested CV

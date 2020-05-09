@@ -24,11 +24,11 @@ User questions
 ==============
 
 - Some scikit-learn developers support users on StackOverflow using
-  the `[scikit-learn] <http://stackoverflow.com/questions/tagged/scikit-learn>`_
+  the `[scikit-learn] <https://stackoverflow.com/questions/tagged/scikit-learn>`_
   tag.
 
 - For general theoretical or methodological Machine Learning questions
-  `stack exchange <http://stats.stackexchange.com/>`_ is probably a more
+  `stack exchange <https://stats.stackexchange.com/>`_ is probably a more
   suitable venue.
 
 In both cases please use a descriptive question in the title field (e.g.
@@ -73,16 +73,13 @@ Note: gists are git cloneable repositories and thus you can use git to
 push datafiles to them.
 
 
-.. _irc:
+.. _gitter:
 
-IRC
+Gitter
 ===
 
-Some developers like to hang out on channel ``#scikit-learn`` on
-``irc.freenode.net``.
-
-If you do not have an IRC client or are behind a firewall this web
-client works fine: http://webchat.freenode.net
+Some developers like to hang out on scikit-learn Gitter room:
+https://gitter.im/scikit-learn/scikit-learn.
 
 
 .. _documentation_resources:
