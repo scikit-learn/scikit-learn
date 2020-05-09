@@ -356,7 +356,9 @@ def abs_r_regression(X, y, center=True):
     that require a statistic which is increases with significance of
     association.
 
-    see r_regression for details.
+    See also
+    --------
+    r_regression: Univariate linear regression tests returning Pearson R.
     """
     # compute the correlation
     corr = r_regression(X, y, center=center)
