@@ -295,13 +295,13 @@ class IncrementalPCA(_BasePCA):
             X = np.vstack((self.singular_values_.reshape((-1, 1)) *
                            self.components_, X, mean_correction))
 
-        U, S, V = linalg.svd(X, full_matrices=False)
-        U, V = svd_flip(U, V, u_based_decision=False)
+        U, S, Vt = linalg.svd(X, full_matrices=False)
+        U, Vt = svd_flip(U, Vt, u_based_decision=False)
         explained_variance = S ** 2 / (n_total_samples - 1)
         explained_variance_ratio = S ** 2 / np.sum(col_var * n_total_samples)
 
         self.n_samples_seen_ = n_total_samples
-        self.components_ = V[:self.n_components_]
+        self.components_ = Vt[:self.n_components_]
         self.singular_values_ = S[:self.n_components_]
         self.mean_ = col_mean
         self.var_ = col_var

@@ -201,17 +201,17 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
         # to allow for unified computation of loglikelihood
         if self.svd_method == 'lapack':
             def my_svd(X):
-                _, s, V = linalg.svd(X, full_matrices=False)
-                return (s[:n_components], V[:n_components],
+                _, s, Vt = linalg.svd(X, full_matrices=False)
+                return (s[:n_components], Vt[:n_components],
                         squared_norm(s[n_components:]))
         elif self.svd_method == 'randomized':
             random_state = check_random_state(self.random_state)
 
             def my_svd(X):
-                _, s, V = randomized_svd(X, n_components,
-                                         random_state=random_state,
-                                         n_iter=self.iterated_power)
-                return s, V, squared_norm(X) - squared_norm(s)
+                _, s, Vt = randomized_svd(X, n_components,
+                                          random_state=random_state,
+                                          n_iter=self.iterated_power)
+                return s, Vt, squared_norm(X) - squared_norm(s)
         else:
             raise ValueError('SVD method %s is not supported. Please consider'
                              ' the documentation' % self.svd_method)
@@ -219,11 +219,11 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
         for i in range(self.max_iter):
             # SMALL helps numerics
             sqrt_psi = np.sqrt(psi) + SMALL
-            s, V, unexp_var = my_svd(X / (sqrt_psi * nsqrt))
+            s, Vt, unexp_var = my_svd(X / (sqrt_psi * nsqrt))
             s **= 2
             # Use 'maximum' here to avoid sqrt problems.
-            W = np.sqrt(np.maximum(s - 1., 0.))[:, np.newaxis] * V
-            del V
+            W = np.sqrt(np.maximum(s - 1., 0.))[:, np.newaxis] * Vt
+            del Vt
             W *= sqrt_psi
 
             # loglikelihood
