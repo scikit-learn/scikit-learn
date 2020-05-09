@@ -31,6 +31,52 @@ from .model_selection import check_cv
 from .utils.validation import _deprecate_positional_args
 
 
+def _calibrate_classifier(estimator, X, y, train, test,
+                          supports_sw,
+                          method,
+                          classes,
+                          sample_weight=None):
+    """Calibrate estimator for a given dataset split.
+    Parameters
+    ----------
+    estimator : estimator object implementing 'fit'
+        The object to use to fit the data.
+    X : array-like of shape at least 2D
+        The data to fit.
+    y : array-like, optional, default: None
+        The target variable to try to predict in the case of
+        supervised learning.
+    train : array-like, shape (n_train_samples,)
+        Indices of training samples.
+    test : array-like, shape (n_test_samples,)
+        Indices of test samples.
+    method : 'sigmoid' or 'isotonic'
+        The method to use for calibration.
+    classes : array, shape (n_classes)
+        The class labels.
+    sample_weight : array-like of shape (n_samples,), default=None
+        Sample weights. If None, then samples are equally weighted.
+    Returns
+    -------
+    calibrated_classifier : estimator object
+        The calibrated estimator
+    """
+    if sample_weight is not None \
+            and supports_sw:
+        estimator.fit(X[train], y[train],
+                      sample_weight=sample_weight[train])
+    else:
+        estimator.fit(X[train], y[train])
+
+    calibrated_classifier = _CalibratedClassifier(estimator,
+                                                  method=method,
+                                                  classes=classes)
+    sw = None if sample_weight is None else sample_weight[test]
+    calibrated_classifier.fit(X[test], y[test],
+                              sample_weight=sw)
+    return calibrated_classifier
+
+
 class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
                              MetaEstimatorMixin):
     """Probability calibration with isotonic regression or logistic regression.
@@ -189,12 +235,12 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
         else:
             cv = check_cv(self.cv, y, classifier=True)
             fit_parameters = signature(base_estimator.fit).parameters
-            base_estimator_supports_sw = "sample_weight" in fit_parameters
+            supports_sw = "sample_weight" in fit_parameters
 
             if sample_weight is not None:
                 sample_weight = _check_sample_weight(sample_weight, X)
 
-                if not base_estimator_supports_sw:
+                if not supports_sw:
                     estimator_name = type(base_estimator).__name__
                     warnings.warn("Since %s does not support sample_weights, "
                                   "sample weights will only be used for the "
@@ -204,28 +250,14 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
                                 pre_dispatch=self.pre_dispatch)
 
             with parallel:
-                def _fit_calibrated_classifier(estimator, X, y, train, test,
-                                               sample_weight=None):
-
-                    if sample_weight is not None \
-                            and base_estimator_supports_sw:
-                        estimator.fit(X[train], y[train],
-                                      sample_weight=sample_weight[train])
-                    else:
-                        estimator.fit(X[train], y[train])
-
-                    calibrated_classifier = _CalibratedClassifier(
-                        estimator, method=self.method, classes=self.classes_)
-                    sw = None if sample_weight is None else sample_weight[test]
-                    calibrated_classifier.fit(X[test], y[test],
-                                              sample_weight=sw)
-                    return calibrated_classifier
-
                 self.calibrated_classifiers_ = parallel(delayed(
-                    _fit_calibrated_classifier)(clone(base_estimator),
-                                                X, y,
-                                                train=train, test=test,
-                                                sample_weight=sample_weight)
+                    _calibrate_classifier)(clone(base_estimator),
+                                           X, y,
+                                           train=train, test=test,
+                                           method=self.method,
+                                           classes=self.classes_,
+                                           supports_sw=supports_sw,
+                                           sample_weight=sample_weight)
                                for train, test
                                in cv.split(X, y))
 
