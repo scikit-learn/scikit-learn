@@ -14,7 +14,7 @@ this module can be regarded as dimensionality reduction techniques.
 import warnings
 with warnings.catch_warnings():
     warnings.simplefilter("ignore", category=FutureWarning)
-    from ._dict_learning import dict_learning
+    from .dict_learning import dict_learning
 
 
 from ._nmf import NMF, non_negative_factorization  # noqa
