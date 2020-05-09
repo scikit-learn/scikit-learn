@@ -54,7 +54,7 @@ def clone(estimator, *, safe=True):
 
     Parameters
     ----------
-    estimator : {list, tuple, set} of estimator object or estimator object
+    estimator : {list, tuple, set} of estimator objects or estimator object
         The estimator or group of estimators to be cloned.
 
     safe : bool, default=True
