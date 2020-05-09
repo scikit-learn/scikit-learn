@@ -3,19 +3,21 @@ Testing for the gradient boosting loss functions and initial estimators.
 """
 
 import numpy as np
-from numpy.testing import assert_array_equal
 from numpy.testing import assert_almost_equal
-from numpy.testing import assert_equal
+from numpy.testing import assert_allclose
+import pytest
 
 from sklearn.utils import check_random_state
-from sklearn.utils.testing import assert_raises
-from sklearn.ensemble.gradient_boosting import BinomialDeviance
-from sklearn.ensemble.gradient_boosting import LogOddsEstimator
-from sklearn.ensemble.gradient_boosting import LeastSquaresError
-from sklearn.ensemble.gradient_boosting import RegressionLossFunction
-from sklearn.ensemble.gradient_boosting import LOSS_FUNCTIONS
-from sklearn.ensemble.gradient_boosting import _weighted_percentile
-from sklearn.ensemble.gradient_boosting import QuantileLossFunction
+from sklearn.utils.stats import _weighted_percentile
+from sklearn.ensemble._gb_losses import RegressionLossFunction
+from sklearn.ensemble._gb_losses import LeastSquaresError
+from sklearn.ensemble._gb_losses import LeastAbsoluteError
+from sklearn.ensemble._gb_losses import HuberLossFunction
+from sklearn.ensemble._gb_losses import QuantileLossFunction
+from sklearn.ensemble._gb_losses import BinomialDeviance
+from sklearn.ensemble._gb_losses import MultinomialDeviance
+from sklearn.ensemble._gb_losses import ExponentialLoss
+from sklearn.ensemble._gb_losses import LOSS_FUNCTIONS
 
 
 def test_binomial_deviance():
@@ -24,7 +26,7 @@ def test_binomial_deviance():
     bd = BinomialDeviance(2)
 
     # pred has the same BD for y in {0, 1}
-    assert_equal(bd(np.array([0.0]), np.array([0.0])),
+    assert (bd(np.array([0.0]), np.array([0.0])) ==
                  bd(np.array([1.0]), np.array([0.0])))
 
     assert_almost_equal(bd(np.array([1.0, 1.0, 1.0]),
@@ -50,17 +52,6 @@ def test_binomial_deviance():
     alt_ng = lambda y, pred: (2 * y - 1) / (1 + np.exp(2 * (2 * y - 1) * pred))
     for datum in test_data:
         assert_almost_equal(bd.negative_gradient(*datum), alt_ng(*datum))
-
-
-def test_log_odds_estimator():
-    # Check log odds estimator.
-    est = LogOddsEstimator()
-    assert_raises(ValueError, est.fit, None, np.array([1]))
-
-    est.fit(None, np.array([1.0, 0.0]))
-    assert_equal(est.prior, 0.0)
-    assert_array_equal(est.predict(np.array([[1.0], [1.0]])),
-                       np.array([[0.0], [0.0]]))
 
 
 def test_sample_weight_smoke():
@@ -100,16 +91,16 @@ def test_sample_weight_init_estimators():
         loss = Loss(k)
         init_est = loss.init_estimator()
         init_est.fit(X, y)
-        out = init_est.predict(X)
-        assert_equal(out.shape, (y.shape[0], 1))
+        out = loss.get_init_raw_predictions(X, init_est)
+        assert out.shape == (y.shape[0], 1)
 
         sw_init_est = loss.init_estimator()
         sw_init_est.fit(X, y, sample_weight=sample_weight)
-        sw_out = init_est.predict(X)
-        assert_equal(sw_out.shape, (y.shape[0], 1))
+        sw_out = loss.get_init_raw_predictions(X, sw_init_est)
+        assert sw_out.shape == (y.shape[0], 1)
 
         # check if predictions match
-        assert_array_equal(out, sw_out)
+        assert_allclose(out, sw_out, rtol=1e-2)
 
 
 def test_weighted_percentile():
@@ -155,7 +146,6 @@ def test_quantile_loss_function():
 def test_sample_weight_deviance():
     # Test if deviance supports sample weights.
     rng = check_random_state(13)
-    X = rng.rand(100, 2)
     sample_weight = np.ones(100)
     reg_y = rng.rand(100)
     clf_y = rng.randint(0, 2, size=100)
@@ -184,3 +174,123 @@ def test_sample_weight_deviance():
         deviance_w_w = loss(y, p, sample_weight)
         deviance_wo_w = loss(y, p)
         assert deviance_wo_w == deviance_w_w
+
+
+def test_init_raw_predictions_shapes():
+    # Make sure get_init_raw_predictions returns float64 arrays with shape
+    # (n_samples, K) where K is 1 for binary classification and regression, and
+    # K = n_classes for multiclass classification
+    rng = np.random.RandomState(0)
+
+    n_samples = 100
+    X = rng.normal(size=(n_samples, 5))
+    y = rng.normal(size=n_samples)
+    for loss in (LeastSquaresError(n_classes=1),
+                 LeastAbsoluteError(n_classes=1),
+                 QuantileLossFunction(n_classes=1),
+                 HuberLossFunction(n_classes=1)):
+        init_estimator = loss.init_estimator().fit(X, y)
+        raw_predictions = loss.get_init_raw_predictions(y, init_estimator)
+        assert raw_predictions.shape == (n_samples, 1)
+        assert raw_predictions.dtype == np.float64
+
+    y = rng.randint(0, 2, size=n_samples)
+    for loss in (BinomialDeviance(n_classes=2),
+                 ExponentialLoss(n_classes=2)):
+        init_estimator = loss.init_estimator().fit(X, y)
+        raw_predictions = loss.get_init_raw_predictions(y, init_estimator)
+        assert raw_predictions.shape == (n_samples, 1)
+        assert raw_predictions.dtype == np.float64
+
+    for n_classes in range(3, 5):
+        y = rng.randint(0, n_classes, size=n_samples)
+        loss = MultinomialDeviance(n_classes=n_classes)
+        init_estimator = loss.init_estimator().fit(X, y)
+        raw_predictions = loss.get_init_raw_predictions(y, init_estimator)
+        assert raw_predictions.shape == (n_samples, n_classes)
+        assert raw_predictions.dtype == np.float64
+
+
+def test_init_raw_predictions_values():
+    # Make sure the get_init_raw_predictions() returns the expected values for
+    # each loss.
+    rng = np.random.RandomState(0)
+
+    n_samples = 100
+    X = rng.normal(size=(n_samples, 5))
+    y = rng.normal(size=n_samples)
+
+    # Least squares loss
+    loss = LeastSquaresError(n_classes=1)
+    init_estimator = loss.init_estimator().fit(X, y)
+    raw_predictions = loss.get_init_raw_predictions(y, init_estimator)
+    # Make sure baseline prediction is the mean of all targets
+    assert_almost_equal(raw_predictions, y.mean())
+
+    # Least absolute and huber loss
+    for Loss in (LeastAbsoluteError, HuberLossFunction):
+        loss = Loss(n_classes=1)
+        init_estimator = loss.init_estimator().fit(X, y)
+        raw_predictions = loss.get_init_raw_predictions(y, init_estimator)
+        # Make sure baseline prediction is the median of all targets
+        assert_almost_equal(raw_predictions, np.median(y))
+
+    # Quantile loss
+    for alpha in (.1, .5, .9):
+        loss = QuantileLossFunction(n_classes=1, alpha=alpha)
+        init_estimator = loss.init_estimator().fit(X, y)
+        raw_predictions = loss.get_init_raw_predictions(y, init_estimator)
+        # Make sure baseline prediction is the alpha-quantile of all targets
+        assert_almost_equal(raw_predictions, np.percentile(y, alpha * 100))
+
+    y = rng.randint(0, 2, size=n_samples)
+
+    # Binomial deviance
+    loss = BinomialDeviance(n_classes=2)
+    init_estimator = loss.init_estimator().fit(X, y)
+    # Make sure baseline prediction is equal to link_function(p), where p
+    # is the proba of the positive class. We want predict_proba() to return p,
+    # and by definition
+    # p = inverse_link_function(raw_prediction) = sigmoid(raw_prediction)
+    # So we want raw_prediction = link_function(p) = log(p / (1 - p))
+    raw_predictions = loss.get_init_raw_predictions(y, init_estimator)
+    p = y.mean()
+    assert_almost_equal(raw_predictions, np.log(p / (1 - p)))
+
+    # Exponential loss
+    loss = ExponentialLoss(n_classes=2)
+    init_estimator = loss.init_estimator().fit(X, y)
+    raw_predictions = loss.get_init_raw_predictions(y, init_estimator)
+    p = y.mean()
+    assert_almost_equal(raw_predictions, .5 * np.log(p / (1 - p)))
+
+    # Multinomial deviance loss
+    for n_classes in range(3, 5):
+        y = rng.randint(0, n_classes, size=n_samples)
+        loss = MultinomialDeviance(n_classes=n_classes)
+        init_estimator = loss.init_estimator().fit(X, y)
+        raw_predictions = loss.get_init_raw_predictions(y, init_estimator)
+        for k in range(n_classes):
+            p = (y == k).mean()
+        assert_almost_equal(raw_predictions[:, k], np.log(p))
+
+
+@pytest.mark.parametrize('seed', range(5))
+def test_lad_equals_quantile_50(seed):
+    # Make sure quantile loss with alpha = .5 is equivalent to LAD
+    lad = LeastAbsoluteError(n_classes=1)
+    ql = QuantileLossFunction(n_classes=1, alpha=0.5)
+
+    n_samples = 50
+    rng = np.random.RandomState(seed)
+    raw_predictions = rng.normal(size=(n_samples))
+    y_true = rng.normal(size=(n_samples))
+
+    lad_loss = lad(y_true, raw_predictions)
+    ql_loss = ql(y_true, raw_predictions)
+    assert_almost_equal(lad_loss, 2 * ql_loss)
+
+    weights = np.linspace(0, 1, n_samples) ** 2
+    lad_weighted_loss = lad(y_true, raw_predictions, sample_weight=weights)
+    ql_weighted_loss = ql(y_true, raw_predictions, sample_weight=weights)
+    assert_almost_equal(lad_weighted_loss, 2 * ql_weighted_loss)

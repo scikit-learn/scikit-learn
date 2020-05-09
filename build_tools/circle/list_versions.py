@@ -1,20 +1,12 @@
 #!/usr/bin/env python3
 
 # List all available versions of the documentation
-from __future__ import print_function
-
 import json
 import re
 import sys
 
-try:
-    from urllib.request import urlopen
-except ImportError:
-    # Python 2
-    from urllib import urlopen
-
 from distutils.version import LooseVersion
-
+from urllib.request import urlopen
 
 def json_urlread(url):
     try:
@@ -47,6 +39,8 @@ def get_pdf_size(version):
             return human_readable_data_quantity(path_details['size'], 1000)
 
 
+print(':orphan:')
+print()
 heading = 'Available documentation for Scikit-learn'
 print(heading)
 print('=' * len(heading))
@@ -55,8 +49,8 @@ print('Web-based documentation is available for versions listed below:')
 print()
 
 ROOT_URL = 'https://api.github.com/repos/scikit-learn/scikit-learn.github.io/contents/'  # noqa
-RAW_FMT = 'https://raw.githubusercontent.com/scikit-learn/scikit-learn.github.io/master/%s/documentation.html'  # noqa
-VERSION_RE = re.compile(r"\bVERSION:\s*'([^']+)'")
+RAW_FMT = 'https://raw.githubusercontent.com/scikit-learn/scikit-learn.github.io/master/%s/index.html'  # noqa
+VERSION_RE = re.compile(r"scikit-learn ([\w\.\-]+) documentation</title>")
 NAMED_DIRS = ['dev', 'stable']
 
 # Gather data for each version directory, including symlinks
@@ -94,8 +88,8 @@ for name in (NAMED_DIRS +
     else:
         seen.add(version_num)
     name_display = '' if name[:1].isdigit() else ' (%s)' % name
-    path = 'http://scikit-learn.org/%s' % name
-    out = ('* `Scikit-learn %s%s documentation <%s/documentation.html>`_'
+    path = 'https://scikit-learn.org/%s/' % name
+    out = ('* `Scikit-learn %s%s documentation <%s>`_'
            % (version_num, name_display, path))
     if pdf_size is not None:
         out += (' (`PDF %s <%s/_downloads/scikit-learn-docs.pdf>`_)'

@@ -50,7 +50,7 @@ import matplotlib.pyplot as plt
 
 def _weights(x, dx=1, orig=0):
     x = np.ravel(x)
-    floor_x = np.floor((x - orig) / dx)
+    floor_x = np.floor((x - orig) / dx).astype(np.int64)
     alpha = (x - orig - floor_x * dx) / dx
     return np.hstack((floor_x, floor_x + 1)), np.hstack((1 - alpha, alpha))
 
@@ -112,7 +112,7 @@ def generate_synthetic_data():
 
 # Generate synthetic images, and projections
 l = 128
-proj_operator = build_projection_operator(l, l / 7.)
+proj_operator = build_projection_operator(l, l // 7)
 data = generate_synthetic_data()
 proj = proj_operator * data.ravel()[:, np.newaxis]
 proj += 0.15 * np.random.randn(*proj.shape)

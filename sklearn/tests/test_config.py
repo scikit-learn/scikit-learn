@@ -1,16 +1,20 @@
 from sklearn import get_config, set_config, config_context
-from sklearn.utils.testing import assert_raises
+from sklearn.utils._testing import assert_raises
 
 
 def test_config_context():
-    assert get_config() == {'assume_finite': False}
+    assert get_config() == {'assume_finite': False, 'working_memory': 1024,
+                            'print_changed_only': True,
+                            'display': 'text'}
 
     # Not using as a context manager affects nothing
     config_context(assume_finite=True)
     assert get_config()['assume_finite'] is False
 
     with config_context(assume_finite=True):
-        assert get_config() == {'assume_finite': True}
+        assert get_config() == {'assume_finite': True, 'working_memory': 1024,
+                                'print_changed_only': True,
+                                'display': 'text'}
     assert get_config()['assume_finite'] is False
 
     with config_context(assume_finite=True):
@@ -34,7 +38,9 @@ def test_config_context():
 
         assert get_config()['assume_finite'] is True
 
-    assert get_config() == {'assume_finite': False}
+    assert get_config() == {'assume_finite': False, 'working_memory': 1024,
+                            'print_changed_only': True,
+                            'display': 'text'}
 
     # No positional arguments
     assert_raises(TypeError, config_context, True)

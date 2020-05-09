@@ -57,6 +57,7 @@ clf = best_gmm
 bars = []
 
 # Plot the BIC scores
+plt.figure(figsize=(8, 6))
 spl = plt.subplot(2, 1, 1)
 for i, (cv_type, color) in enumerate(zip(cv_types, color_iter)):
     xpos = np.array(n_components_range) + .2 * (i - 2)
