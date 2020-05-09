@@ -1,4 +1,3 @@
-# language: c++
 """
 Wrapper for newrand.h
 
