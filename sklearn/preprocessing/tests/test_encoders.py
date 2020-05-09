@@ -560,7 +560,7 @@ def test_ordinal_encoder_handle_unknowns():
     enc.fit(X_fit)
 
     X_trans_enc = enc.transform(X_trans)
-    exp = np.array([[2, -999], [-999, 1], [0, 0]], dtype=object)
+    exp = np.array([[2, -999], [-999, 1], [0, 0]], dtype='int64')
     assert_array_equal(X_trans_enc, exp)
 
     X_trans_inv = enc.inverse_transform(X_trans_enc)
