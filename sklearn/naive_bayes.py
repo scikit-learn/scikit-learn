@@ -302,16 +302,41 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
 
     def _validate_models(self, X):
 
-        self._cols = []
-        dict_col2model = {}
-
+        # Check type of self.models
         if not isinstance(self.models, list):
             raise TypeError(
                 "Expected list but got {}".format(type(self.models)))
 
+        # Check names in self.models
         names, _, _ = zip(*self.models)
         self._validate_names(names)
 
+        # Check columns in self.models for duplicates
+        # convert to feature if callable
+        self._cols = []
+        dict_col2model = {}
+        if callable(cols):
+            cols = cols(X)
+        for col in cols:
+            if col in dict_col2model:
+                raise ValueError("Duplicate specification of "
+                                f"column {col} found.")
+            else:
+                dict_col2model[col] = estimator.__class__.__name__.lower()
+        self._cols.append(cols)
+
+        # This checks if the no. of columns in the dataset 
+        # matches the columns specified 
+        # TODO: Lift this restriction and use a `remainder` parameter
+        n_features = X.shape[-1]
+        n_cols_specified = len(dict_col2model)
+        if n_cols_specified != n_features:
+            raise ValueError("Expected {} columns ".format(n_features) +
+                             "in X but {} ".format(n_cols_specified) +
+                             "were specified.")
+        self.n_features_ = n_features
+    
+        # Lastly, check the estimators in self.models
         for model in self.models:
 
             # Check type of each entry in list
@@ -323,38 +348,20 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
                 raise ValueError("Expected tuple to have length of 3 "
                                  "but got {}".format(len(model)))
 
-            _, estimator, cols = model
+            _, estimator, _ = model
 
-            # Check if user specified say `GaussianNB()` instead of `GaussianNB`
+            # Check if user specified say `GaussianNB()` instead of 
+            # `GaussianNB`
             if callable(estimator):
                 raise ValueError("Estimator should be a callable.")
 
-            # Check naive bayes estimator for format
+            # Check naive bayes estimator for
             # `fit` and `_joint_log_likelihood` attributes
             if not (hasattr(estimator, "fit")
                     or hasattr(estimator, "_joint_log_likelihood")):
                 raise TypeError("Naive bayes estimator should implement "
                                 "the fit and _joint_log_likelihood methods. "
                                 "{} doesn't.".format(type(estimator)))
-
-            # Check the columns for duplicate models and
-            # convert to feature if callable
-            if callable(cols):
-                cols = cols(X)
-            for col in cols:
-                if col in dict_col2model:
-                    raise ValueError("Duplicate specification of "
-                                     f"column {col} found.")
-                else:
-                    dict_col2model[col] = estimator.__class__.__name__.lower()
-            self._cols.append(cols)
-
-        n_features = X.shape[-1]
-        n_cols = len(dict_col2model)
-        if n_cols != n_features:
-            raise ValueError("Expected {} columns".format(n_features) +
-                             " in X but {} were specified.".format(n_cols))
-        self.n_features_ = n_features
 
     def _check_X_y(self, X, y):
         # Delay any further checks on X and y to the respective estimators
