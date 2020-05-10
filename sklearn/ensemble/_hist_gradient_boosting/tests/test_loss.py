@@ -76,8 +76,8 @@ def test_derivatives(loss, x0, y_true):
         if isinstance(loss, _LOSSES['binary_crossentropy']):
             # Subtract a constant term such that the binary cross entropy
             # has its minimum at zero. This only works if 0 < y_true < 1.
-            return (loss.pointwise_loss(y_true, x)
-                    - loss.pointwise_loss(y_true, logit(y_true))).item(0)
+            actual_min = loss.pointwise_loss(y_true, logit(y_true))
+            return (loss.pointwise_loss(y_true, x) - actual_min).item(0)
         else:
             return loss.pointwise_loss(y_true, x).item(0)
 
