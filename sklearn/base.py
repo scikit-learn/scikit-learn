@@ -54,8 +54,8 @@ def clone(estimator, *, safe=True):
 
     Parameters
     ----------
-    estimator : estimator object, or list, tuple or set of objects
-        The estimator or group of estimators to be cloned
+    estimator : {list, tuple, set} of estimator objects or estimator object
+        The estimator or group of estimators to be cloned.
 
     safe : bool, default=True
         If safe is false, clone will fall back to a deep copy on objects
@@ -625,7 +625,7 @@ class BiclusterMixin:
 
         Returns
         -------
-        shape : (int, int)
+        shape : tuple (int, int)
             Number of rows and columns (resp.) in the bicluster.
         """
         indices = self.get_indices(i)
@@ -669,8 +669,8 @@ class TransformerMixin:
 
         Parameters
         ----------
-        X : ndarray of shape (n_samples, n_features)
-            Training set.
+        X : {array-like, sparse matrix, dataframe} of shape \
+                (n_samples, n_features)
 
         y : ndarray of shape (n_samples,), default=None
             Target values.
@@ -725,8 +725,8 @@ class OutlierMixin:
 
         Parameters
         ----------
-        X : ndarray of shape (n_samples, n_features)
-            Input data.
+        X : {array-like, sparse matrix, dataframe} of shape \
+            (n_samples, n_features)
 
         y : Ignored
             Not used, present for API consistency by convention.
