@@ -277,7 +277,7 @@ class KernelDensity(BaseEstimator):
 
     def _more_tags(self):
         return {
-            '_xfail_test': {
+            '_xfail_checks': {
                 'check_sample_weights_invariance(kind=zeros)':
                 'sample_weight must have positive values',
             }

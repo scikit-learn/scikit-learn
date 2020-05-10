@@ -246,7 +246,7 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
 
     def _more_tags(self):
         return {
-            '_xfail_test': {
+            '_xfail_checks': {
                 'check_sample_weights_invariance(kind=zeros)':
                 'zero sample_weight is not equivalent to removing samples',
             }
@@ -434,7 +434,7 @@ class LinearSVR(RegressorMixin, LinearModel):
 
     def _more_tags(self):
         return {
-            '_xfail_test': {
+            '_xfail_checks': {
                 'check_sample_weights_invariance(kind=zeros)':
                 'zero sample_weight is not equivalent to removing samples',
             }
@@ -668,7 +668,7 @@ class SVC(BaseSVC):
 
     def _more_tags(self):
         return {
-            '_xfail_test': {
+            '_xfail_checks': {
                 'check_sample_weights_invariance(kind=zeros)':
                 'zero sample_weight is not equivalent to removing samples',
             }
@@ -1055,7 +1055,7 @@ class SVR(RegressorMixin, BaseLibSVM):
 
     def _more_tags(self):
         return {
-            '_xfail_test': {
+            '_xfail_checks': {
                 'check_sample_weights_invariance(kind=zeros)':
                 'zero sample_weight is not equivalent to removing samples',
             }
@@ -1193,7 +1193,7 @@ class NuSVR(RegressorMixin, BaseLibSVM):
 
     def _more_tags(self):
         return {
-            '_xfail_test': {
+            '_xfail_checks': {
                 'check_sample_weights_invariance(kind=zeros)':
                 'zero sample_weight is not equivalent to removing samples',
             }
@@ -1416,7 +1416,7 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
 
     def _more_tags(self):
         return {
-            '_xfail_test': {
+            '_xfail_checks': {
                 'check_sample_weights_invariance(kind=zeros)':
                 'zero sample_weight is not equivalent to removing samples',
             }
