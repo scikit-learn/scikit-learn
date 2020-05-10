@@ -657,9 +657,9 @@ def test_print_elapsed_time(message, expected, capsys, monkeypatch):
 
 @pytest.mark.parametrize("value, result", [(float("nan"), True),
                                            (np.nan, True),
-                                           (np.float(float("nan")), True),
-                                           (np.float32(float("nan")), True),
-                                           (np.float64(float("nan")), True),
+                                           (np.float(np.nan), True),
+                                           (np.float32(np.nan), True),
+                                           (np.float64(np.nan), True),
                                            (0, False),
                                            (0., False),
                                            (None, False),
