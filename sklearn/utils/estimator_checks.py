@@ -452,6 +452,7 @@ def check_estimator(Estimator, generate_only=False):
     check) tuples where the check can be called independently from each
     other, i.e. `check(estimator)`. This allows all checks to be run
     independently and report the checks that are failing.
+
     scikit-learn provides a pytest specific decorator,
     :func:`~sklearn.utils.parametrize_with_checks`, making it easier to test
     multiple estimators.
@@ -470,6 +471,7 @@ def check_estimator(Estimator, generate_only=False):
         When `True`, `check_estimator` returns a generator that yields
         (estimator, check) tuples. The check is run by calling
         `check(estimator)`.
+
         .. versionadded:: 0.22
 
     Returns
