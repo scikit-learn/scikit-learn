@@ -4,6 +4,7 @@ import os
 from contextlib import contextmanager as contextmanager
 
 _global_config = {
+    'assume_positive_sample_weights': True,
     'assume_finite': bool(os.environ.get('SKLEARN_ASSUME_FINITE', False)),
     'working_memory': int(os.environ.get('SKLEARN_WORKING_MEMORY', 1024)),
     'print_changed_only': True,
@@ -28,7 +29,8 @@ def get_config():
 
 
 def set_config(assume_finite=None, working_memory=None,
-               print_changed_only=None, display=None):
+               print_changed_only=None, display=None,
+               assume_positive_sample_weights=None):
     """Set global scikit-learn configuration
 
     .. versionadded:: 0.19
@@ -72,6 +74,8 @@ def set_config(assume_finite=None, working_memory=None,
     config_context: Context manager for global scikit-learn configuration
     get_config: Retrieve current values of the global configuration
     """
+    if assume_positive_sample_weights is not None:
+        _global_config['assume_positive_sample_weights'] = assume_positive_sample_weights
     if assume_finite is not None:
         _global_config['assume_finite'] = assume_finite
     if working_memory is not None:
@@ -88,6 +92,10 @@ def config_context(**new_config):
 
     Parameters
     ----------
+    assume_positive_sample_weights : bool, optional
+        If in function _check_sample_weight parameter force_positive
+        is set to None, then it's value is set to assume_positive_sample_weights.
+
     assume_finite : bool, optional
         If True, validation for finiteness will be skipped,
         saving time, but leading to potential crashes. If

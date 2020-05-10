@@ -52,6 +52,8 @@ from sklearn.exceptions import NotFittedError, PositiveSpectrumWarning
 
 from sklearn.utils._testing import TempMemmap
 
+from sklearn import get_config as _get_config
+from sklearn import set_config as _set_config
 
 def test_as_float_array():
     # Test function for as_float_array
@@ -1071,6 +1073,7 @@ def test_check_sample_weight():
     # float32 dtype is preserved
     X = np.ones((5, 2))
     sample_weight = np.ones(5, dtype=np.float32)
+    print(sample_weight)
     sample_weight = _check_sample_weight(sample_weight, X)
     assert sample_weight.dtype == np.float32
 
@@ -1079,6 +1082,29 @@ def test_check_sample_weight():
     sample_weight = _check_sample_weight(None, X, dtype=X.dtype)
     assert sample_weight.dtype == np.float64
 
+    # error for negative weights given force_positive=True or None
+    X = np.ones((5, 2), dtype=np.int)
+    sample_weight = np.array([-1, 2, 0, -3, 2], dtype=np.float32)
+    msg = r"There are negative values in sample_weight"
+    with pytest.raises(ValueError, match=msg):
+        _check_sample_weight(sample_weight, X, force_positive=True)
+    with pytest.raises(ValueError, match=msg):
+        _check_sample_weight(sample_weight, X)
+    # no error here
+    _check_sample_weight(sample_weight, X, force_positive=False)
+    
+    # no error for negative weights if global parameter set to False
+    _set_config(assume_positive_sample_weights=False)
+
+    X = np.ones((5, 2), dtype=np.int)
+    sample_weight = np.array([-1, 2, 0, -3, 2], dtype=np.float32)
+    _check_sample_weight(sample_weight, X, force_positive=False)
+    _check_sample_weight(sample_weight, X)
+    #error here
+    with pytest.raises(ValueError, match=msg):
+        _check_sample_weight(sample_weight, X, force_positive=True)
+
+    _set_config(assume_positive_sample_weights=True)
 
 @pytest.mark.parametrize("toarray", [
     np.array, sp.csr_matrix, sp.csc_matrix])
