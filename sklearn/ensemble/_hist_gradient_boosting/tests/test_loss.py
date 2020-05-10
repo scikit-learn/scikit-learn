@@ -72,27 +72,25 @@ def test_derivatives(loss, x0, y_true):
     x0 = np.array([x0], dtype=Y_DTYPE).reshape(1, 1)
     get_gradients, get_hessians = get_derivatives_helper(loss)
 
-    # Note: Methods of loss classes often call rehappe(-1). Therefore we work
-    # with arrays with one single element instead of scalars.
-    def func(x):
+    def func(x: float) -> float:
         if isinstance(loss, _LOSSES['binary_crossentropy']):
             # Subtract a constant term such that the binary cross entropy
             # has its minimum at zero. This only works if 0 < y_true < 1.
-            return loss.pointwise_loss(y_true, x) \
-                - loss.pointwise_loss(y_true, logit(y_true))
+            return (loss.pointwise_loss(y_true, x)
+                    - loss.pointwise_loss(y_true, logit(y_true))).item(0)
         else:
-            return loss.pointwise_loss(y_true, x)
+            return loss.pointwise_loss(y_true, x).item(0)
 
-    def fprime(x):
-        return get_gradients(y_true, x)
+    def fprime(x: float) -> float:
+        return get_gradients(y_true, x).item(0)
 
-    def fprime2(x):
-        return get_hessians(y_true, x)
+    def fprime2(x: float) -> float:
+        return get_hessians(y_true, x).item(0)
 
     optimum = newton(func, x0=x0, fprime=fprime, fprime2=fprime2,
                      maxiter=70, tol=2e-8)
     assert_allclose(loss.inverse_link_function(optimum)[0], y_true)
-    assert_allclose(func(optimum)[0], 0, atol=1e-14)
+    assert_allclose(func(optimum), 0, atol=1e-14)
     assert_allclose(get_gradients(y_true, optimum)[0], 0, atol=1e-7)
 
 
