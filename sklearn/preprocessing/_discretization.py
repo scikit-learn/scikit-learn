@@ -159,8 +159,10 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         n_bins = self._validate_n_bins(n_features)
 
         bin_edges = np.zeros(n_features, dtype=object)
+        contains_nan = []
         for jj in range(n_features):
             column = X[:, jj]
+            contains_nan.append(np.isnan(column).any()) # check whether there are NaN
             column = column[~np.isnan(column)] # remove NaNs for the fit
             col_min, col_max = column.min(), column.max()
 
@@ -208,7 +210,9 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
         if 'onehot' in self.encode:
             self._encoder = OneHotEncoder(
-                categories=[np.arange(-1, i) for i in self.n_bins_],
+                categories=[np.arange(-1, self.n_bins_[jj]) if contains_nan[jj] else
+                            np.arange(0, self.n_bins_[jj]) 
+                            for jj in range(n_features)],
                 sparse=self.encode == 'onehot')
             # Fit the OneHotEncoder with toy datasets
             # so that it's ready for use after the KBinsDiscretizer is fitted
