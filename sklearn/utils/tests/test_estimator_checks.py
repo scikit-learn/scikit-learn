@@ -356,13 +356,12 @@ def test_check_fit_score_takes_y_works_on_deprecated_fit():
     check_fit_score_takes_y("test", TestEstimatorWithDeprecatedFitMethod())
 
 
-@ignore_warnings("Passing a class is depr", category=FutureWarning)  # 0.24
 def test_check_estimator():
     # tests that the estimator actually fails on "bad" estimators.
     # not a complete test of all checks, which are very extensive.
 
     # check that we have a set_params and can clone
-    msg = "it does not implement a 'get_params' method"
+    msg = "Passing a class was deprecated"
     assert_raises_regex(TypeError, msg, check_estimator, object)
     msg = "object has no attribute '_get_tags'"
     assert_raises_regex(AttributeError, msg, check_estimator, object())
@@ -375,12 +374,9 @@ def test_check_estimator():
                         ModifiesAnotherValue())
     # check that we have a fit method
     msg = "object has no attribute 'fit'"
-    assert_raises_regex(AttributeError, msg, check_estimator, BaseEstimator)
     assert_raises_regex(AttributeError, msg, check_estimator, BaseEstimator())
     # check that fit does input validation
     msg = "ValueError not raised"
-    assert_raises_regex(AssertionError, msg, check_estimator,
-                        BaseBadClassifier)
     assert_raises_regex(AssertionError, msg, check_estimator,
                         BaseBadClassifier())
     # check that sample_weights in fit accepts pandas.Series type
@@ -389,39 +385,38 @@ def test_check_estimator():
         msg = ("Estimator NoSampleWeightPandasSeriesType raises error if "
                "'sample_weight' parameter is of type pandas.Series")
         assert_raises_regex(
-            ValueError, msg, check_estimator, NoSampleWeightPandasSeriesType)
+            ValueError, msg, check_estimator, NoSampleWeightPandasSeriesType())
     except ImportError:
         pass
     # check that predict does input validation (doesn't accept dicts in input)
     msg = "Estimator doesn't check for NaN and inf in predict"
-    assert_raises_regex(AssertionError, msg, check_estimator, NoCheckinPredict)
     assert_raises_regex(AssertionError, msg, check_estimator,
                         NoCheckinPredict())
     # check that estimator state does not change
     # at transform/predict/predict_proba time
     msg = 'Estimator changes __dict__ during predict'
-    assert_raises_regex(AssertionError, msg, check_estimator, ChangesDict)
+    assert_raises_regex(AssertionError, msg, check_estimator, ChangesDict())
     # check that `fit` only changes attribures that
     # are private (start with an _ or end with a _).
     msg = ('Estimator ChangesWrongAttribute should not change or mutate  '
            'the parameter wrong_attribute from 0 to 1 during fit.')
     assert_raises_regex(AssertionError, msg,
-                        check_estimator, ChangesWrongAttribute)
-    check_estimator(ChangesUnderscoreAttribute)
+                        check_estimator, ChangesWrongAttribute())
+    check_estimator(ChangesUnderscoreAttribute())
     # check that `fit` doesn't add any public attribute
     msg = (r'Estimator adds public attribute\(s\) during the fit method.'
            ' Estimators are only allowed to add private attributes'
            ' either started with _ or ended'
            ' with _ but wrong_attribute added')
     assert_raises_regex(AssertionError, msg,
-                        check_estimator, SetsWrongAttribute)
+                        check_estimator, SetsWrongAttribute())
     # check for invariant method
     name = NotInvariantPredict.__name__
     method = 'predict'
     msg = ("{method} of {name} is not invariant when applied "
            "to a subset.").format(method=method, name=name)
     assert_raises_regex(AssertionError, msg,
-                        check_estimator, NotInvariantPredict)
+                        check_estimator, NotInvariantPredict())
     # check for sparse matrix input handling
     name = NoSparseClassifier.__name__
     msg = "Estimator %s doesn't seem to fail gracefully on sparse data" % name
@@ -432,8 +427,8 @@ def test_check_estimator():
     string_buffer = StringIO()
     sys.stdout = string_buffer
     try:
-        check_estimator(NoSparseClassifier)
-    except:
+        check_estimator(NoSparseClassifier())
+    except Exception:
         pass
     finally:
         sys.stdout = old_stdout
@@ -443,29 +438,28 @@ def test_check_estimator():
     msg = ('Estimator LargeSparseNotSupportedClassifier doesn\'t seem to '
            r'support \S{3}_64 matrix, and is not failing gracefully.*')
     assert_raises_regex(AssertionError, msg, check_estimator,
-                        LargeSparseNotSupportedClassifier)
+                        LargeSparseNotSupportedClassifier())
 
     # does error on binary_only untagged estimator
     msg = 'Only 2 classes are supported'
     assert_raises_regex(ValueError, msg, check_estimator,
-                        UntaggedBinaryClassifier)
+                        UntaggedBinaryClassifier())
 
     # non-regression test for estimators transforming to sparse data
     check_estimator(SparseTransformer())
 
     # doesn't error on actual estimator
-    check_estimator(LogisticRegression)
+    check_estimator(LogisticRegression())
     check_estimator(LogisticRegression(C=0.01))
-    check_estimator(MultiTaskElasticNet)
     check_estimator(MultiTaskElasticNet())
 
     # doesn't error on binary_only tagged estimator
-    check_estimator(TaggedBinaryClassifier)
+    check_estimator(TaggedBinaryClassifier())
 
     # Check regressor with requires_positive_y estimator tag
     msg = 'negative y values not supported!'
     assert_raises_regex(ValueError, msg, check_estimator,
-                        RequiresPositiveYRegressor)
+                        RequiresPositiveYRegressor())
 
 
 def test_check_outlier_corruption():
@@ -578,22 +572,6 @@ def test_check_regressor_data_not_an_array():
                         check_regressor_data_not_an_array,
                         'estimator_name',
                         EstimatorInconsistentForPandas())
-
-
-@ignore_warnings("Passing a class is depr", category=FutureWarning)  # 0.24
-def test_check_estimator_required_parameters_skip():
-    # TODO: remove whole test in 0.24 since passes classes to check_estimator()
-    # isn't supported anymore
-    class MyEstimator(BaseEstimator):
-        _required_parameters = ["special_parameter"]
-
-        def __init__(self, special_parameter):
-            self.special_parameter = special_parameter
-
-    assert_raises_regex(SkipTest, r"Can't instantiate estimator MyEstimator "
-                                  r"which requires parameters "
-                                  r"\['special_parameter'\]",
-                                  check_estimator, MyEstimator)
 
 
 def run_tests_without_pytest():
