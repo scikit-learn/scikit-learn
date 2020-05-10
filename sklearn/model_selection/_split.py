@@ -766,15 +766,14 @@ class TimeSeriesSplit(_BaseKFold):
     max_train_size : int, default=None
         Maximum size for a single training set.
 
-    test_size : int, optional
+    test_size : int, default=None
         Used to limit the size of the test set. Defaults to
-        ``n_samples / (n_splits + 1)``, which is the maximum allowed value
+        ``n_samples // (n_splits + 1)``, which is the maximum allowed value
         with ``gap=0``.
 
     gap : int, default=0
         Number of samples to exclude from the end of each train set before
         the test set.
-
 
     Examples
     --------
@@ -868,14 +867,12 @@ class TimeSeriesSplit(_BaseKFold):
         # Make sure we have enough samples for the given split parameters
         if n_folds > n_samples:
             raise ValueError(
-                ("Cannot have number of folds ={0} greater"
-                 " than the number of samples: {1}.").format(n_folds,
-                                                             n_samples))
+                (f"Cannot have number of folds ={n_folds} greater"
+                 f" than the number of samples: {n_samples}."))
         if n_samples - gap - (test_size * n_splits) <= 0:
             raise ValueError(
-                ("Too many splits ={0} for number of samples"
-                 " ={1} with test_size ={2} and gap ={3}."
-                 "").format(n_splits, n_samples, test_size, gap))
+                (f"Too many splits ={n_splits} for number of samples"
+                 f" ={n_samples} with test_size ={test_size} and gap ={gap}."))
 
         indices = np.arange(n_samples)
         test_starts = range(n_samples - n_splits * test_size,
