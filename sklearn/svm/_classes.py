@@ -244,6 +244,14 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
 
         return self
 
+    def _more_tags(self):
+        return {
+            '_xfail_test': {
+                'check_sample_weights_invariance(kind=zeros)':
+                'zero sample_weight is not equivalent to removing samples',
+            }
+        }
+
 
 class LinearSVR(RegressorMixin, LinearModel):
     """Linear Support Vector Regression.
@@ -423,6 +431,14 @@ class LinearSVR(RegressorMixin, LinearModel):
         self.coef_ = self.coef_.ravel()
 
         return self
+
+    def _more_tags(self):
+        return {
+            '_xfail_test': {
+                'check_sample_weights_invariance(kind=zeros)':
+                'zero sample_weight is not equivalent to removing samples',
+            }
+        }
 
 
 class SVC(BaseSVC):
@@ -650,6 +666,14 @@ class SVC(BaseSVC):
             break_ties=break_ties,
             random_state=random_state)
 
+    def _more_tags(self):
+        return {
+            '_xfail_test': {
+                'check_sample_weights_invariance(kind=zeros)':
+                'zero sample_weight is not equivalent to removing samples',
+            }
+        }
+
 
 class NuSVC(BaseSVC):
     """Nu-Support Vector Classification.
@@ -866,7 +890,9 @@ class NuSVC(BaseSVC):
             '_xfail_checks': {
                 'check_methods_subset_invariance':
                 'fails for the decision_function method',
-                'check_class_weight_classifiers': 'class_weight is ignored.'
+                'check_class_weight_classifiers': 'class_weight is ignored.',
+                'check_sample_weights_invariance(kind=zeros)':
+                'zero sample_weight is not equivalent to removing samples',
             }
         }
 
@@ -1027,6 +1053,14 @@ class SVR(RegressorMixin, BaseLibSVM):
     def probB_(self):
         return self._probB
 
+    def _more_tags(self):
+        return {
+            '_xfail_test': {
+                'check_sample_weights_invariance(kind=zeros)':
+                'zero sample_weight is not equivalent to removing samples',
+            }
+        }
+
 
 class NuSVR(RegressorMixin, BaseLibSVM):
     """Nu Support Vector Regression.
@@ -1156,6 +1190,14 @@ class NuSVR(RegressorMixin, BaseLibSVM):
             tol=tol, C=C, nu=nu, epsilon=0., shrinking=shrinking,
             probability=False, cache_size=cache_size, class_weight=None,
             verbose=verbose, max_iter=max_iter, random_state=None)
+
+    def _more_tags(self):
+        return {
+            '_xfail_test': {
+                'check_sample_weights_invariance(kind=zeros)':
+                'zero sample_weight is not equivalent to removing samples',
+            }
+        }
 
 
 class OneClassSVM(OutlierMixin, BaseLibSVM):
@@ -1371,3 +1413,11 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
     @property
     def probB_(self):
         return self._probB
+
+    def _more_tags(self):
+        return {
+            '_xfail_test': {
+                'check_sample_weights_invariance(kind=zeros)':
+                'zero sample_weight is not equivalent to removing samples',
+            }
+        }
