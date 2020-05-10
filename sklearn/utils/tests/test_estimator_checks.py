@@ -362,7 +362,7 @@ def test_check_estimator():
 
     # check that we have a set_params and can clone
     msg = "Passing a class was deprecated"
-    assert_raises_regex(ValueError, msg, check_estimator, object)
+    assert_raises_regex(TypeError, msg, check_estimator, object)
     msg = "object has no attribute '_get_tags'"
     assert_raises_regex(AttributeError, msg, check_estimator, object())
     # check that values returned by get_params match set_params
