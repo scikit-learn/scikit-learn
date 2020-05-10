@@ -358,7 +358,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
     def _more_tags(self):
         return {
             'poor_score': True, 'no_validation': True,
-            '_xfail_test': {
+            '_xfail_checks': {
                 'check_methods_subset_invariance':
                 'fails for the predict method'
             }
@@ -395,7 +395,8 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
             X = np.zeros(shape=(len(y), 1))
         return super().score(X, y, sample_weight)
 
-    @deprecated(
+    # mypy error: Decorated property not supported
+    @deprecated(  # type: ignore
         "The outputs_2d_ attribute is deprecated in version 0.22 "
         "and will be removed in version 0.24. It is equivalent to "
         "n_outputs_ > 1."
@@ -560,6 +561,8 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
             Whether to return the standard deviation of posterior prediction.
             All zeros in this case.
 
+            .. versionadded:: 0.20
+
         Returns
         -------
         y : array-like of shape (n_samples,) or (n_samples, n_outputs)
@@ -622,7 +625,8 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
             X = np.zeros(shape=(len(y), 1))
         return super().score(X, y, sample_weight)
 
-    @deprecated(
+    # mypy error: Decorated property not supported
+    @deprecated(  # type: ignore
         "The outputs_2d_ attribute is deprecated in version 0.22 "
         "and will be removed in version 0.24. It is equivalent to "
         "n_outputs_ > 1."

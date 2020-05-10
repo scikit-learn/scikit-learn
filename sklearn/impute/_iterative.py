@@ -54,7 +54,9 @@ class IterativeImputer(_BaseImputer):
 
     missing_values : int, np.nan, default=np.nan
         The placeholder for the missing values. All occurrences of
-        ``missing_values`` will be imputed.
+        `missing_values` will be imputed. For pandas' dataframes with
+        nullable integer dtypes with missing values, `missing_values`
+        should be set to `np.nan`, since `pd.NA` will be converted to `np.nan`.
 
     sample_posterior : boolean, default=False
         Whether to sample from the (Gaussian) predictive posterior of the
@@ -206,9 +208,8 @@ class IterativeImputer(_BaseImputer):
         Journal of the Royal Statistical Society 22(2): 302-306.
         <https://www.jstor.org/stable/2984099>`_
     """
-
     def __init__(self,
-                 estimator=None,
+                 estimator=None, *,
                  missing_values=np.nan,
                  sample_posterior=False,
                  max_iter=10,

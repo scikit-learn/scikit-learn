@@ -246,39 +246,18 @@ whether it is just for you or for contributing it to scikit-learn, there are
 several internals of scikit-learn that you should be aware of in addition to
 the scikit-learn API outlined above. You can check whether your estimator
 adheres to the scikit-learn interface and standards by running
-:func:`utils.estimator_checks.check_estimator` on the class::
+:func:`~sklearn.utils.estimator_checks.check_estimator` on an instance. The
+:func:`~sklearn.utils.parametrize_with_checks` pytest decorator can also be
+used (see its docstring for details and possible interactions with `pytest`)::
 
   >>> from sklearn.utils.estimator_checks import check_estimator
   >>> from sklearn.svm import LinearSVC
-  >>> check_estimator(LinearSVC)  # passes
+  >>> check_estimator(LinearSVC())  # passes
 
 The main motivation to make a class compatible to the scikit-learn estimator
 interface might be that you want to use it together with model evaluation and
 selection tools such as :class:`model_selection.GridSearchCV` and
 :class:`pipeline.Pipeline`.
-
-Setting `generate_only=True` returns a generator that yields (estimator, check)
-tuples where the check can be called independently from each other, i.e.
-`check(estimator)`. This allows all checks to be run independently and report
-the checks that are failing. scikit-learn provides a pytest specific decorator, 
-:func:`~sklearn.utils.parametrize_with_checks`, making it easier to test
-multiple estimators::
-
-  from sklearn.utils.estimator_checks import parametrize_with_checks
-  from sklearn.linear_model import LogisticRegression
-  from sklearn.tree import DecisionTreeRegressor
-
-  @parametrize_with_checks([LogisticRegression, DecisionTreeRegressor])
-  def test_sklearn_compatible_estimator(estimator, check):
-      check(estimator)
-
-This decorator sets the `id` keyword in `pytest.mark.parameterize` exposing
-the name of the underlying estimator and check in the test name. This allows
-`pytest -k` to be used to specify which tests to run.
-
-.. code-block: bash
-   
-   pytest test_check_estimators.py -k check_estimators_fit_returns_self
 
 Before detailing the required interface below, we describe two ways to achieve
 the correct interface more easily.
@@ -531,6 +510,11 @@ requires_fit (default=True)
 requires_positive_X (default=False)
     whether the estimator requires positive X.
 
+requires_y (default=False)
+    whether the estimator requires y to be passed to `fit`, `fit_predict` or
+    `fit_transform` methods. The tag is True for estimators inheriting from
+    `~sklearn.base.RegressorMixin` and `~sklearn.base.ClassifierMixin`.
+
 requires_positive_y (default=False)
     whether the estimator requires a positive y (only applicable for regression).
 
@@ -538,10 +522,17 @@ _skip_test (default=False)
     whether to skip common tests entirely. Don't use this unless you have a
     *very good* reason.
 
-_xfail_test (default=False)
-    dictionary ``{check_name : reason}`` of common checks to mark as a
-    known failure, with the associated reason. Don't use this unless you have a
-    *very good* reason.
+_xfail_checks (default=False)
+    dictionary ``{check_name: reason}`` of common checks that will be marked
+    as `XFAIL` for pytest, when using
+    :func:`~sklearn.utils.estimator_checks.parametrize_with_checks`. This tag
+    currently has no effect on
+    :func:`~sklearn.utils.estimator_checks.check_estimator`.
+    Don't use this unless there is a *very good* reason for your estimator
+    not to pass the check.
+    Also note that the usage of this tag is highly subject to change because
+    we are trying to make it more flexible: be prepared for breaking changes
+    in the future.
 
 stateless (default=False)
     whether the estimator needs access to data for fitting. Even though an

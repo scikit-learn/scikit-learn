@@ -19,6 +19,7 @@ from ..utils import check_array, check_random_state, check_X_y
 from ..utils.extmath import safe_sparse_dot
 from ..utils.multiclass import _check_partial_fit_first_call
 from ..utils.validation import check_is_fitted, _check_sample_weight
+from ..utils.validation import _deprecate_positional_args
 from ..exceptions import ConvergenceWarning
 from ..model_selection import StratifiedShuffleSplit, ShuffleSplit
 
@@ -68,8 +69,8 @@ class _ValidationScoreCallback:
 
 class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
     """Base class for SGD classification and regression."""
-
-    def __init__(self, loss, penalty='l2', alpha=0.0001, C=1.0,
+    @_deprecate_positional_args
+    def __init__(self, loss, *, penalty='l2', alpha=0.0001, C=1.0,
                  l1_ratio=0.15, fit_intercept=True, max_iter=1000, tol=1e-3,
                  shuffle=True, verbose=0, epsilon=0.1, random_state=None,
                  learning_rate="optimal", eta0=0.0, power_t=0.5,
@@ -287,25 +288,31 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
             self, X[validation_mask], y[validation_mask],
             sample_weight[validation_mask], classes=classes)
 
-    @deprecated("Attribute standard_coef_ was deprecated "
+    # mypy error: Decorated property not supported
+    @deprecated("Attribute standard_coef_ was deprecated "  # type: ignore
                 "in version 0.23 and will be removed in 0.25.")
     @property
     def standard_coef_(self):
         return self._standard_coef
 
-    @deprecated("Attribute standard_intercept_ was deprecated "
-                "in version 0.23 and will be removed in 0.25.")
+    # mypy error: Decorated property not supported
+    @deprecated(  # type: ignore
+        "Attribute standard_intercept_ was deprecated "
+        "in version 0.23 and will be removed in 0.25."
+    )
     @property
     def standard_intercept_(self):
         return self._standard_intercept
 
-    @deprecated("Attribute average_coef_ was deprecated "
+    # mypy error: Decorated property not supported
+    @deprecated("Attribute average_coef_ was deprecated "  # type: ignore
                 "in version 0.23 and will be removed in 0.25.")
     @property
     def average_coef_(self):
         return self._average_coef
 
-    @deprecated("Attribute average_intercept_ was deprecated "
+    # mypy error: Decorated property not supported
+    @deprecated("Attribute average_intercept_ was deprecated "  # type: ignore
                 "in version 0.23 and will be removed in 0.25.")
     @property
     def average_intercept_(self):
@@ -455,7 +462,8 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
     }
 
     @abstractmethod
-    def __init__(self, loss="hinge", penalty='l2', alpha=0.0001,
+    @_deprecate_positional_args
+    def __init__(self, loss="hinge", *, penalty='l2', alpha=0.0001,
                  l1_ratio=0.15, fit_intercept=True, max_iter=1000, tol=1e-3,
                  shuffle=True, verbose=0, epsilon=DEFAULT_EPSILON, n_jobs=None,
                  random_state=None, learning_rate="optimal", eta0=0.0,
@@ -479,8 +487,8 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
                      loss, learning_rate, max_iter,
                      classes, sample_weight,
                      coef_init, intercept_init):
-        X, y = check_X_y(X, y, 'csr', dtype=np.float64, order="C",
-                         accept_large_sparse=False)
+        X, y = check_X_y(X, y, accept_sparse='csr', dtype=np.float64,
+                         order="C", accept_large_sparse=False)
 
         n_samples, n_features = X.shape
 
@@ -839,6 +847,9 @@ class SGDClassifier(BaseSGDClassifier):
           training loss by tol or fail to increase validation score by tol if
           early_stopping is True, the current learning rate is divided by 5.
 
+            .. versionadded:: 0.20
+                Added 'adaptive' option
+
     eta0 : double, default=0.0
         The initial learning rate for the 'constant', 'invscaling' or
         'adaptive' schedules. The default value is 0.0 as eta0 is not used by
@@ -855,6 +866,7 @@ class SGDClassifier(BaseSGDClassifier):
         improving by at least tol for n_iter_no_change consecutive epochs.
 
         .. versionadded:: 0.20
+            Added 'early_stopping' option
 
     validation_fraction : float, default=0.1
         The proportion of training data to set aside as validation set for
@@ -862,11 +874,13 @@ class SGDClassifier(BaseSGDClassifier):
         Only used if `early_stopping` is True.
 
         .. versionadded:: 0.20
+            Added 'validation_fraction' option
 
     n_iter_no_change : int, default=5
         Number of iterations with no improvement to wait before early stopping.
 
         .. versionadded:: 0.20
+            Added 'n_iter_no_change' option
 
     class_weight : dict, {class_label: weight} or "balanced", default=None
         Preset for the class_weight fit parameter.
@@ -944,8 +958,9 @@ class SGDClassifier(BaseSGDClassifier):
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
     """
-
-    def __init__(self, loss="hinge", penalty='l2', alpha=0.0001, l1_ratio=0.15,
+    @_deprecate_positional_args
+    def __init__(self, loss="hinge", *, penalty='l2', alpha=0.0001,
+                 l1_ratio=0.15,
                  fit_intercept=True, max_iter=1000, tol=1e-3, shuffle=True,
                  verbose=0, epsilon=DEFAULT_EPSILON, n_jobs=None,
                  random_state=None, learning_rate="optimal", eta0=0.0,
@@ -1091,7 +1106,8 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
     }
 
     @abstractmethod
-    def __init__(self, loss="squared_loss", penalty="l2", alpha=0.0001,
+    @_deprecate_positional_args
+    def __init__(self, loss="squared_loss", *, penalty="l2", alpha=0.0001,
                  l1_ratio=0.15, fit_intercept=True, max_iter=1000, tol=1e-3,
                  shuffle=True, verbose=0, epsilon=DEFAULT_EPSILON,
                  random_state=None, learning_rate="invscaling", eta0=0.01,
@@ -1436,6 +1452,9 @@ class SGDRegressor(BaseSGDRegressor):
           training loss by tol or fail to increase validation score by tol if
           early_stopping is True, the current learning rate is divided by 5.
 
+            .. versionadded:: 0.20
+                Added 'adaptive' option
+
     eta0 : double, default=0.01
         The initial learning rate for the 'constant', 'invscaling' or
         'adaptive' schedules. The default value is 0.01.
@@ -1452,6 +1471,7 @@ class SGDRegressor(BaseSGDRegressor):
         epochs.
 
         .. versionadded:: 0.20
+            Added 'early_stopping' option
 
     validation_fraction : float, default=0.1
         The proportion of training data to set aside as validation set for
@@ -1459,11 +1479,13 @@ class SGDRegressor(BaseSGDRegressor):
         Only used if `early_stopping` is True.
 
         .. versionadded:: 0.20
+            Added 'validation_fraction' option
 
     n_iter_no_change : int, default=5
         Number of iterations with no improvement to wait before early stopping.
 
         .. versionadded:: 0.20
+            Added 'n_iter_no_change' option
 
     warm_start : bool, default=False
         When set to True, reuse the solution of the previous call to fit as
@@ -1537,7 +1559,8 @@ class SGDRegressor(BaseSGDRegressor):
     Ridge, ElasticNet, Lasso, sklearn.svm.SVR
 
     """
-    def __init__(self, loss="squared_loss", penalty="l2", alpha=0.0001,
+    @_deprecate_positional_args
+    def __init__(self, loss="squared_loss", *, penalty="l2", alpha=0.0001,
                  l1_ratio=0.15, fit_intercept=True, max_iter=1000, tol=1e-3,
                  shuffle=True, verbose=0, epsilon=DEFAULT_EPSILON,
                  random_state=None, learning_rate="invscaling", eta0=0.01,
