@@ -12,13 +12,13 @@ machine-learning as a versatile tool for science and engineering.
 
 See http://scikit-learn.org for complete documentation.
 """
-import sys
-import logging
-import os
+import sys as _sys
+import logging as _logging
+import os as _os
 
 from ._config import get_config, set_config, config_context
 
-logger = logging.getLogger(__name__)
+logger = _logging.getLogger(__name__)
 
 
 # PEP0440 compatible formatted version, see:
@@ -48,11 +48,11 @@ __version__ = '0.24.dev0'
 # the code where nested OpenMP loops can happen, by dynamically reconfiguring
 # the inner OpenMP runtime to temporarily disable it while under the scope of
 # the outer OpenMP parallel section.
-os.environ.setdefault("KMP_DUPLICATE_LIB_OK", "True")
+_os.environ.setdefault("KMP_DUPLICATE_LIB_OK", "True")
 
 # Workaround issue discovered in intel-openmp 2019.5:
 # https://github.com/ContinuumIO/anaconda-issues/issues/11294
-os.environ.setdefault("KMP_INIT_AT_FORK", "FALSE")
+_os.environ.setdefault("KMP_INIT_AT_FORK", "FALSE")
 
 try:
     # This variable is injected in the __builtins__ by the build
@@ -64,7 +64,7 @@ except NameError:
     __SKLEARN_SETUP__ = False
 
 if __SKLEARN_SETUP__:
-    sys.stderr.write('Partial import of sklearn during the build process.\n')
+    _sys.stderr.write('Partial import of sklearn during the build process.\n')
     # We are not importing the rest of scikit-learn during the build
     # process, as it may not be compiled yet
 else:
@@ -97,12 +97,11 @@ else:
 
 def setup_module(module):
     """Fixture for the tests to assure globally controllable seeding of RNGs"""
-    import os
     import numpy as np
     import random
 
     # Check if a random seed exists in the environment, if not create one.
-    _random_seed = os.environ.get('SKLEARN_SEED', None)
+    _random_seed = _os.environ.get('SKLEARN_SEED', None)
     if _random_seed is None:
         _random_seed = np.random.uniform() * np.iinfo(np.int32).max
     _random_seed = int(_random_seed)
