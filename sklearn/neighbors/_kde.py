@@ -274,3 +274,11 @@ class KernelDensity(BaseEstimator):
             correction = (gammainc(0.5 * dim, 0.5 * s_sq) ** (1. / dim)
                           * self.bandwidth / np.sqrt(s_sq))
             return data[i] + X * correction[:, np.newaxis]
+
+    def _more_tags(self):
+        return {
+            '_xfail_test': {
+                'check_sample_weights_invariance(kind=zeros)':
+                'sample_weight must have positive values',
+            }
+        }
