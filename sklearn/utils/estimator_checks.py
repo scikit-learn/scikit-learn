@@ -434,17 +434,20 @@ def parametrize_with_checks(estimators):
 
 def check_estimator(Estimator, generate_only=False):
     """Check if estimator adheres to scikit-learn conventions.
+
     This estimator will run an extensive test-suite for input validation,
     shapes, etc, making sure that the estimator complies with `scikit-learn`
     conventions as detailed in :ref:`rolling_your_own_estimator`.
     Additional tests for classifiers, regressors, clustering or transformers
     will be run if the Estimator class inherits from the corresponding mixin
     from sklearn.base.
+
     This test can be applied to classes or instances.
     Classes currently have some additional tests that related to construction,
     while passing instances allows the testing of multiple options. However,
     support for classes is deprecated since version 0.23 and will be removed
     in version 0.24 (class checks will still be run on the instances).
+
     Setting `generate_only=True` returns a generator that yields (estimator,
     check) tuples where the check can be called independently from each
     other, i.e. `check(estimator)`. This allows all checks to be run
@@ -452,19 +455,23 @@ def check_estimator(Estimator, generate_only=False):
     scikit-learn provides a pytest specific decorator,
     :func:`~sklearn.utils.parametrize_with_checks`, making it easier to test
     multiple estimators.
+
     Parameters
     ----------
     estimator : estimator object
         Estimator to check. Estimator is a class object or instance.
+
         .. deprecated:: 0.23
            Passing a class is deprecated from version 0.23, and won't be
            supported in 0.24. Pass an instance instead.
+
     generate_only : bool, optional (default=False)
         When `False`, checks are evaluated when `check_estimator` is called.
         When `True`, `check_estimator` returns a generator that yields
         (estimator, check) tuples. The check is run by calling
         `check(estimator)`.
         .. versionadded:: 0.22
+
     Returns
     -------
     checks_generator : generator
