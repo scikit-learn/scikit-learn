@@ -327,9 +327,6 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
 
     def _validate_models(self, X):
 
-        valid_modules = copy.copy(__all__)
-        valid_modules.remove("GeneralNB")
-
         self._cols = []
         dict_col2model = {}
 
