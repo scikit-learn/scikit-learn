@@ -763,6 +763,9 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
     n_connected_components_ : int
         The estimated number of connected components in the graph.
 
+        .. versionadded:: 0.21
+            ``n_connected_components_`` was added to replace ``n_components_``.
+
     children_ : array-like of shape (n_samples-1, 2)
         The children of each non-leaf node. Values less than `n_samples`
         correspond to leaves of the tree which are the original samples.
@@ -1006,6 +1009,9 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
 
     n_connected_components_ : int
         The estimated number of connected components in the graph.
+
+        .. versionadded:: 0.21
+            ``n_connected_components_`` was added to replace ``n_components_``.
 
     children_ : array-like of shape (n_nodes-1, 2)
         The children of each non-leaf node. Values less than `n_features`
