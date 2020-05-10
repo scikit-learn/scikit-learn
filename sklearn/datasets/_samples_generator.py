@@ -1307,8 +1307,8 @@ def make_spd_matrix(n_dim, *, random_state=None):
     generator = check_random_state(random_state)
 
     A = generator.rand(n_dim, n_dim)
-    U, s, V = linalg.svd(np.dot(A.T, A))
-    X = np.dot(np.dot(U, 1.0 + np.diag(generator.rand(n_dim))), V)
+    U, _, Vt = linalg.svd(np.dot(A.T, A))
+    X = np.dot(np.dot(U, 1.0 + np.diag(generator.rand(n_dim))), Vt)
 
     return X
 
