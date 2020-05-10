@@ -234,25 +234,7 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
             for (name, nb_model, _), cols
             in zip(self.models, self._cols)]
 
-        # Obtain the log priors from each fitted estimator
-        all_log_priors = [
-            nb_model.class_log_prior_
-            if hasattr(nb_model, 'class_log_prior_')
-            else np.log(nb_model.class_prior_)
-            for _, nb_model, _ in self.models_]
-
-        # Ensure class log priors are the same for all estimators
-        all_log_priors = np.hstack([all_log_priors])
-        if np.max(np.ptp(all_log_priors, axis=0)) < 1e-6:
-            log_prior = all_log_priors[0]
-        else:
-            raise ValueError("Class priors for every estimator "
-                             "must be the same.")
-
         self._is_fitted = True
-
-    def _update_attributes(self):
-        self.models
 
     def _joint_log_likelihood(self, X):
         """Calculate the posterior log probability of sample X
