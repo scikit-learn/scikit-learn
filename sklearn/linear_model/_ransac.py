@@ -502,11 +502,3 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
         check_is_fitted(self)
 
         return self.estimator_.score(X, y)
-
-    def _more_tags(self):
-        return {
-            '_xfail_test': {
-                'check_sample_weights_invariance(kind=zeros)':
-                'zero sample_weight is not equivalent to removing samples',
-            }
-        }

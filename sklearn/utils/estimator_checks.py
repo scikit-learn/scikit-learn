@@ -68,8 +68,7 @@ def _yield_checks(name, estimator):
     yield check_sample_weights_not_an_array
     yield check_sample_weights_list
     yield check_sample_weights_shape
-    yield partial(check_sample_weights_invariance, kind='ones')
-    yield partial(check_sample_weights_invariance, kind='zeros')
+    yield check_sample_weights_invariance
     yield check_estimators_fit_returns_self
     yield partial(check_estimators_fit_returns_self, readonly_memmap=True)
 
@@ -489,7 +488,6 @@ def check_estimator(Estimator, generate_only=False):
         warnings.warn(msg, FutureWarning)
 
         checks_generator = _generate_class_checks(Estimator)
-        estimator = _construct_instance(Estimator)
     else:
         # got an instance
         estimator = Estimator
@@ -499,19 +497,12 @@ def check_estimator(Estimator, generate_only=False):
     if generate_only:
         return checks_generator
 
-    xfail_checks = _safe_tags(estimator, '_xfail_test')
-
     for estimator, check in checks_generator:
-        check_name = _set_check_estimator_ids(check)
-        if xfail_checks and check_name in xfail_checks:
-            # skip tests marked as a known failure and raise a warning
-            msg = xfail_checks[check_name]
-            warnings.warn(f'Skipping {check_name}: {msg}', SkipTestWarning)
-            continue
         try:
             check(estimator)
         except SkipTest as exception:
-            # raise warning for tests that are are skipped
+            # the only SkipTest thrown currently results from not
+            # being able to import pandas.
             warnings.warn(str(exception), SkipTestWarning)
 
 
@@ -870,7 +861,7 @@ def check_sample_weights_shape(name, estimator_orig):
 
 
 @ignore_warnings(category=FutureWarning)
-def check_sample_weights_invariance(name, estimator_orig, kind="ones"):
+def check_sample_weights_invariance(name, estimator_orig):
     # check that the estimators yield same results for
     # unit weights and no weights
     if (has_fit_parameter(estimator_orig, "sample_weight") and
@@ -886,45 +877,25 @@ def check_sample_weights_invariance(name, estimator_orig, kind="ones"):
         X = np.array([[1, 3], [1, 3], [1, 3], [1, 3],
                       [2, 1], [2, 1], [2, 1], [2, 1],
                       [3, 3], [3, 3], [3, 3], [3, 3],
-                      [4, 1], [4, 1], [4, 1], [4, 1]], dtype=np.float64)
+                      [4, 1], [4, 1], [4, 1], [4, 1]], dtype=np.dtype('float'))
         y = np.array([1, 1, 1, 1, 2, 2, 2, 2,
-                      1, 1, 1, 1, 2, 2, 2, 2], dtype=np.int)
-
-        if kind == 'ones':
-            X2 = X
-            y2 = y
-            sw2 = np.ones(shape=len(y))
-            err_msg = (f"For {name} sample_weight=None is not equivalent to "
-                       f"sample_weight=ones")
-        elif kind == 'zeros':
-            # Construct a dataset that is very different to (X, y) if weights
-            # are disregarded, but identical to (X, y) given weights.
-            X2 = np.vstack([X, X + 1])
-            y2 = np.hstack([y, 3 - y])
-            sw2 = np.ones(shape=len(y) * 2)
-            sw2[len(y):] = 0
-            X2, y2, sw2 = shuffle(X2, y2, sw2, random_state=0)
-
-            err_msg = (f"For {name} sample_weight is not equivalent "
-                       f"to removing samples")
-        else:
-            raise ValueError
-
+                      1, 1, 1, 1, 2, 2, 2, 2], dtype=np.dtype('int'))
         y = _enforce_estimator_tags_y(estimator1, y)
-        y2 = _enforce_estimator_tags_y(estimator2, y2)
 
-        estimator1.fit(X, y=y, sample_weight=None)
-        estimator2.fit(X2, y=y2, sample_weight=sw2)
+        estimator1.fit(X, y=y, sample_weight=np.ones(shape=len(y)))
+        estimator2.fit(X, y=y, sample_weight=None)
 
-        for method in ["predict", "predict_proba",
-                       "decision_function", "transform"]:
+        for method in ["predict", "transform"]:
             if hasattr(estimator_orig, method):
                 X_pred1 = getattr(estimator1, method)(X)
                 X_pred2 = getattr(estimator2, method)(X)
                 if sparse.issparse(X_pred1):
                     X_pred1 = X_pred1.toarray()
                     X_pred2 = X_pred2.toarray()
-                assert_allclose(X_pred1, X_pred2, err_msg=err_msg)
+                assert_allclose(X_pred1, X_pred2,
+                                err_msg="For %s sample_weight=None is not"
+                                        " equivalent to sample_weight=ones"
+                                        % name)
 
 
 @ignore_warnings(category=(FutureWarning, UserWarning))
