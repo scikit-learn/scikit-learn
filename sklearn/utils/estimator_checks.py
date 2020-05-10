@@ -390,7 +390,7 @@ def parametrize_with_checks(estimators):
         msg = ("Passing a class was deprecated in version 0.23 "
                "and isn't supported anymore from 0.24."
                "Please pass an instance instead.")
-        raise ValueError(msg)
+        raise TypeError(msg)
 
     checks_generator = chain.from_iterable(
         check_estimator(estimator, generate_only=True)
@@ -450,7 +450,7 @@ def check_estimator(Estimator, generate_only=False):
         msg = ("Passing a class was deprecated in version 0.23 "
                "and isn't supported anymore from 0.24."
                "Please pass an instance instead.")
-        raise ValueError(msg)
+        raise TypeError(msg)
 
     estimator = Estimator
     name = type(estimator).__name__

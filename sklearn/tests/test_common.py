@@ -199,8 +199,8 @@ def test_class_support_removed():
     # raises an error
 
     msg = "Passing a class was deprecated.* isn't supported anymore"
-    with pytest.raises(ValueError, match=msg):
+    with pytest.raises(TypeError, match=msg):
         check_estimator(LogisticRegression)
 
-    with pytest.raises(ValueError, match=msg):
+    with pytest.raises(TypeError, match=msg):
         parametrize_with_checks([LogisticRegression])
