@@ -21,7 +21,8 @@ from ..utils.validation import check_memory, _deprecate_positional_args
 from ..neighbors import DistanceMetric
 from ..neighbors._dist_metrics import METRIC_MAPPING
 
-from . import _hierarchical_fast as _hierarchical
+# mypy error: Module 'sklearn.cluster' has no attribute '_hierarchical_fast'
+from . import _hierarchical_fast as _hierarchical  # type: ignore
 from ._feature_agglomeration import AgglomerationTransform
 from ..utils._fast_dict import IntFloatDict
 from ..utils.fixes import _astype_copy_false
