@@ -50,8 +50,9 @@ def get_derivatives_helper(loss):
     ('least_squares', -2., 42),
     ('least_squares', 117., 1.05),
     ('least_squares', 0., 0.),
-    # The argmin of binary_crossentropy for y_true=[0, 1] is [-inf, +inf] due
-    # to logit, cf. "complete separation". Therefore we use 0 < y_true < 1.
+    # The argmin of binary_crossentropy for y_true=0 and y_true=1 is resp. -inf
+    # and +inf due to logit, cf. "complete separation". Therefore, we use
+    # 0 < y_true < 1.
     ('binary_crossentropy', 0.3, 0.1),
     ('binary_crossentropy', -12, 0.2),
     ('binary_crossentropy', 30, 0.9),
@@ -63,9 +64,11 @@ def get_derivatives_helper(loss):
                     reason='bug in scipy 1.2.0, see scipy issue #9608')
 @skip_if_32bit
 def test_derivatives(loss, x0, y_true):
-    # Check that gradients are zero when the loss is minimized on 1D array
-    # using Halley's method with the first and second order derivatives
-    # computed by the Loss instance.
+    # Check that gradients are zero when the loss is minimized on a single
+    # value/sample using Halley's method with the first and second order
+    # derivatives computed by the Loss instance.
+    # Note that methods of Loss instances operate on arrays while the newton
+    # root finder expects a scalar or a one-element array for this purpose.
 
     loss = _LOSSES[loss](sample_weight=None)
     y_true = np.array([y_true], dtype=Y_DTYPE)
@@ -77,7 +80,7 @@ def test_derivatives(loss, x0, y_true):
             # Subtract a constant term such that the binary cross entropy
             # has its minimum at zero. This only works if 0 < y_true < 1.
             actual_min = loss.pointwise_loss(y_true, logit(y_true))
-            return (loss.pointwise_loss(y_true, x) - actual_min)
+            return loss.pointwise_loss(y_true, x) - actual_min
         else:
             return loss.pointwise_loss(y_true, x)
 
@@ -89,6 +92,8 @@ def test_derivatives(loss, x0, y_true):
 
     optimum = newton(func, x0=x0, fprime=fprime, fprime2=fprime2,
                      maxiter=70, tol=2e-8)
+
+    # Need to ravel arrays because assert_allclose requires matching dimensions
     y_true = y_true.ravel()
     optimum = optimum.ravel()
     assert_allclose(loss.inverse_link_function(optimum), y_true)
