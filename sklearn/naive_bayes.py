@@ -215,10 +215,12 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
         self : object
         """
         self._validate_models(X)
-        # self._check_X_y(X, y)
+        self._check_X_y(X, y)
 
-        # self.classes_ = np.unique(y)
-
+        # Apply self.fit_prior and self.class_prior to 
+        # all the models specified by user at index 1. 
+        # Continuous models like GaussianNB do not 
+        # have an attribute equivalent to fit_prior
         for i in range(len(self.models)):
             if hasattr(self.models[i][1], "fit_prior"):
                 self.models[i][1].fit_prior = self.fit_prior
@@ -226,9 +228,10 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
             else:
                 self.models[i][1].priors = self.class_prior
 
-        ipdb.set_trace()
-        
+        self.classes_ = np.unique(y)
 
+        # Create an attribute that is a verified version
+        # of the user-specified self.models
         self.models_ = [
             (name, nb_model.fit(_safe_indexing(X, cols, axis=1), y), cols)
             for (name, nb_model, _), cols
