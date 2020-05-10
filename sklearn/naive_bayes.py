@@ -37,7 +37,7 @@ from .utils.multiclass import _check_partial_fit_first_call
 from .utils.validation import check_is_fitted, check_non_negative, column_or_1d
 from .utils.validation import _check_sample_weight
 from .utils.validation import _deprecate_positional_args
-import ipdb
+# import ipdb
 
 __all__ = ['BernoulliNB', 'GaussianNB', 'MultinomialNB', 'ComplementNB',
            'CategoricalNB', 'GeneralNB']
@@ -237,8 +237,6 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
             for (name, nb_model, _), cols
             in zip(self.models, self._cols)]
 
-        self._is_fitted = True
-
     def _joint_log_likelihood(self, X):
         """Calculate the posterior log probability of sample X
 
@@ -252,15 +250,7 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
         -------
         jll : ndarray, shape (1, n_classes)
             Posterior log probability.
-
-        Raises
-        ------
-        NotFittedError
-            If estimators have not been fitted
         """
-        if not self._is_fitted:
-            raise NotFittedError("Call the fit() method first "
-                                 "before calling predict().")
 
         # FIXME
         # Obtain the jll of each fitted estimator
