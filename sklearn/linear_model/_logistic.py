@@ -2083,3 +2083,11 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         scoring = get_scorer(scoring)
 
         return scoring(self, X, y, sample_weight=sample_weight)
+
+    def _more_tags(self):
+        return {
+            '_xfail_test': {
+                'check_sample_weights_invariance(kind=zeros)':
+                'zero sample_weight is not equivalent to removing samples',
+            }
+        }
