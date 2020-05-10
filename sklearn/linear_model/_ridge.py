@@ -239,7 +239,7 @@ def _get_valid_accept_sparse(is_X_sparse, solver):
 def ridge_regression(X, y, alpha, *, sample_weight=None, solver='auto',
                      max_iter=None, tol=1e-3, verbose=0, random_state=None,
                      return_n_iter=False, return_intercept=False,
-                     check_input=True, force_positive_weights=None):
+                     check_input=True):
     """Solve the ridge equation by the method of normal equations.
 
     Read more in the :ref:`User Guide <ridge_regression>`.
@@ -346,12 +346,6 @@ def ridge_regression(X, y, alpha, *, sample_weight=None, solver='auto',
 
         .. versionadded:: 0.21
 
-    force_positive : {True, False or None}
-        If True, 'sample_weight' will raise error on negative values.
-        If False, 'sample_weight' being negative won't raise an error.
-        If None, assumes value of assume_positive_sample_weights,
-        which is initially set to True.
-
     Returns
     -------
     coef : ndarray of shape (n_features,) or (n_targets, n_features)
@@ -380,15 +374,13 @@ def ridge_regression(X, y, alpha, *, sample_weight=None, solver='auto',
                              return_intercept=return_intercept,
                              X_scale=None,
                              X_offset=None,
-                             check_input=check_input,
-                             force_positive_weights=force_positive_weights)
+                             check_input=check_input)
 
 
 def _ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
                       max_iter=None, tol=1e-3, verbose=0, random_state=None,
                       return_n_iter=False, return_intercept=False,
-                      X_scale=None, X_offset=None, check_input=True,
-                      force_positive_weights=None):
+                      X_scale=None, X_offset=None, check_input=True):
 
     has_sw = sample_weight is not None
 
@@ -435,8 +427,7 @@ def _ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
                          " %d != %d" % (n_samples, n_samples_))
 
     if has_sw:
-        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype,
-                                        force_positive=force_positive_weights)
+        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
         if solver not in ['sag', 'saga']:
             # SAG supports sample_weight directly. For other solvers,
@@ -542,7 +533,7 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
         self.solver = solver
         self.random_state = random_state
 
-    def fit(self, X, y, sample_weight=None, force_positive_weights=None):
+    def fit(self, X, y, sample_weight=None):
 
         # all other solvers work at both float precision levels
         _dtype = [np.float64, np.float32]
@@ -574,8 +565,8 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
             solver = self.solver
 
         if sample_weight is not None:
-            sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype,
-                                            force_positive=force_positive_weights)
+            sample_weight = _check_sample_weight(sample_weight, X,
+                                                 dtype=X.dtype)
 
         # when X is sparse we only remove offset from y
         X, y, X_offset, y_offset, X_scale = self._preprocess_data(
@@ -907,7 +898,7 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
             random_state=random_state)
         self.class_weight = class_weight
 
-    def fit(self, X, y, sample_weight=None, force_positive_weights=None):
+    def fit(self, X, y, sample_weight=None):
         """Fit Ridge classifier model.
 
         Parameters
@@ -925,12 +916,6 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
             .. versionadded:: 0.17
                *sample_weight* support to Classifier.
 
-        force_positive : {True, False or None}
-            If True, 'sample_weight' will raise error on negative values.
-            If False, 'sample_weight' being negative won't raise an error.
-            If None, assumes value of assume_positive_sample_weights,
-            which is initially set to True.
-
         Returns
         -------
         self : object
@@ -940,8 +925,7 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
                                                   self.solver)
         X, y = self._validate_data(X, y, accept_sparse=_accept_sparse,
                                    multi_output=True, y_numeric=False)
-        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype,
-                                    force_positive = force_positive_weights)
+        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
         self._label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
         Y = self._label_binarizer.fit_transform(y)
@@ -1449,7 +1433,7 @@ class _RidgeGCV(LinearModel):
             G_inverse_diag = G_inverse_diag[:, np.newaxis]
         return G_inverse_diag, c
 
-    def fit(self, X, y, sample_weight=None, force_positive_weights=None):
+    def fit(self, X, y, sample_weight=None):
         """Fit Ridge regression model with gcv.
 
         Parameters
@@ -1464,12 +1448,6 @@ class _RidgeGCV(LinearModel):
             Individual weights for each sample. If given a float, every sample
             will have the same weight.
 
-        force_positive : {True, False or None}
-            If True, 'sample_weight' will raise error on negative values.
-            If False, 'sample_weight' being negative won't raise an error.
-            If None, assumes value of assume_positive_sample_weights,
-            which is initially set to True.
-
         Returns
         -------
         self : object
@@ -1479,8 +1457,8 @@ class _RidgeGCV(LinearModel):
                                    multi_output=True, y_numeric=True)
 
         if sample_weight is not None:
-            sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype,
-                                            force_positive=force_positive_weights)
+            sample_weight = _check_sample_weight(sample_weight, X,
+                                                 dtype=X.dtype)
 
         if np.any(self.alphas <= 0):
             raise ValueError(
@@ -1889,7 +1867,7 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
             scoring=scoring, cv=cv, store_cv_values=store_cv_values)
         self.class_weight = class_weight
 
-    def fit(self, X, y, sample_weight=None, force_positive_weights=None):
+    def fit(self, X, y, sample_weight=None):
         """Fit Ridge classifier with cv.
 
         Parameters
@@ -1906,20 +1884,13 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
             Individual weights for each sample. If given a float, every sample
             will have the same weight.
 
-        force_positive : {True, False or None}
-            If True, 'sample_weight' will raise error on negative values.
-            If False, 'sample_weight' being negative won't raise an error.
-            If None, assumes value of assume_positive_sample_weights,
-            which is initially set to True.
-
         Returns
         -------
         self : object
         """
         X, y = self._validate_data(X, y, accept_sparse=['csr', 'csc', 'coo'],
                                    multi_output=True, y_numeric=False)
-        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype,
-                                        force_positive=force_positive_weights)
+        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
         self._label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
         Y = self._label_binarizer.fit_transform(y)
