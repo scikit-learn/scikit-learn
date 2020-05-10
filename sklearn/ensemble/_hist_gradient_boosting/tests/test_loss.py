@@ -72,6 +72,8 @@ def test_derivatives(loss, x0, y_true):
     x0 = np.array([x0], dtype=Y_DTYPE).reshape(1, 1)
     get_gradients, get_hessians = get_derivatives_helper(loss)
 
+    # Note: Methods of loss classes often call rehappe(-1). Therefore we work
+    # with arrays with one single element instead of scalars.
     def func(x):
         if isinstance(loss, _LOSSES['binary_crossentropy']):
             # Subtract a constant term such that the binary cross entropy
