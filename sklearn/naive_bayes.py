@@ -30,13 +30,14 @@ from .preprocessing import LabelBinarizer
 from .preprocessing import label_binarize
 from .utils.extmath import safe_sparse_dot
 from .utils import check_X_y, check_array, deprecated, Bunch, _safe_indexing
-from .utils.fixes import logsumexp
+# from .utils.fixes import logsumexp
 from .utils.validation import _check_sample_weight
 from .utils.metaestimators import _BaseComposition
 from .utils.multiclass import _check_partial_fit_first_call
 from .utils.validation import check_is_fitted, check_non_negative, column_or_1d
 from .utils.validation import _check_sample_weight
 from .utils.validation import _deprecate_positional_args
+import ipdb
 
 __all__ = ['BernoulliNB', 'GaussianNB', 'MultinomialNB', 'ComplementNB',
            'CategoricalNB', 'GeneralNB']
@@ -182,8 +183,8 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
     ...               [2.7, 3.8, 2.3, 1, 0],
     ...               [1.7, 0.1, 4.5, 1, 0]])
     >>> y = np.array([1, 0, 0])
-    >>> clf = GeneralNB(
-    ...         [("gaussian", GaussianNB(), [0, 1, 2]),
+    >>> clf = GeneralNB(models=[
+    ...          ("gaussian", GaussianNB(), [0, 1, 2]),
     ...          ("categorical", CategoricalNB(), [3, 4])])
     >>> clf.fit(X, y)
     GeneralNB(models=[('gaussian', GaussianNB(...), [0, 1, 2]),
@@ -192,9 +193,10 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
     array([1])
     """
 
-    # FIXME add `class_prior` and `fit_prior`
-    def __init__(self, models, class_prior, fit_prior):
+    def __init__(self, *, models, fit_prior=False, class_prior=None):
         self.models = models
+        self.fit_prior = fit_prior
+        self.class_prior = class_prior
         self._is_fitted = False
 
     def fit(self, X, y):
@@ -213,9 +215,19 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
         self : object
         """
         self._validate_models(X)
-        self._check_X_y(X, y)
+        # self._check_X_y(X, y)
 
-        self.classes_ = np.unique(y)
+        # self.classes_ = np.unique(y)
+
+        for i in range(len(self.models)):
+            if hasattr(self.models[i][1], "fit_prior"):
+                self.models[i][1].fit_prior = self.fit_prior
+                self.models[i][1].class_prior = self.class_prior
+            else:
+                self.models[i][1].priors = self.class_prior
+
+        ipdb.set_trace()
+        
 
         self.models_ = [
             (name, nb_model.fit(_safe_indexing(X, cols, axis=1), y), cols)
@@ -239,7 +251,8 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
 
         self._is_fitted = True
 
-        return self
+    def _update_attributes(self):
+        self.models
 
     def _joint_log_likelihood(self, X):
         """Calculate the posterior log probability of sample X
@@ -319,8 +332,6 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
 
         self._cols = []
         dict_col2model = {}
-        all_fit_priors = []
-        all_class_priors = []
 
         if not isinstance(self.models, list):
             raise TypeError(
@@ -344,7 +355,7 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
 
             # Check if user specified say `GaussianNB()` instead of `GaussianNB`
             if callable(estimator):
-                raise ValueError("Estimator should be a callable specified.")
+                raise ValueError("Estimator should be a callable.")
 
             # Check naive bayes estimator for format
             # `fit` and `_joint_log_likelihood` attributes
@@ -353,14 +364,6 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
                 raise TypeError("Naive bayes estimator should implement "
                                 "the fit and _joint_log_likelihood methods. "
                                 "{} doesn't.".format(type(estimator)))
-
-            # Check naive bayes estimator for attributes
-            # like `priors`, `class_prior` and `fit_prior`
-            class_prior = getattr(estimator, "priors", None) or \
-                getattr(estimator, "class_prior", None)
-            fit_prior = getattr(estimator, "fit_prior", True)
-            all_class_priors.append(class_prior)
-            all_fit_priors.append(fit_prior)
 
             # Check the columns for duplicate models and
             # convert to feature if callable
@@ -373,23 +376,6 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
                 else:
                     dict_col2model[col] = estimator.__class__.__name__.lower()
             self._cols.append(cols)
-
-        # Check if class priors are the same throughout all estimators
-        if not all(prior is None for prior in all_class_priors):
-            raise ValueError("The parameters 'class_prior' or 'priors' "
-                             "must be the same values throughout all "
-                             "estimators if specified.")
-        if all(prior is not None for prior in all_class_priors):
-            if np.max(np.ptp(all_class_priors, axis=0)) < 1e-6:
-                raise ValueError("The parameters 'class_prior' or 'priors' "
-                                 "must be the same values throughout all "
-                                 "estimators if specified.")
-
-        # Check if `fit_prior`s are the same throughout all estimators
-        if not all(all_fit_priors):
-            raise ValueError("The parameter 'fit_prior' must be "
-                             "the same values through out all estimators "
-                             "if specified.")
 
         n_features = X.shape[-1]
         n_cols = len(dict_col2model)
