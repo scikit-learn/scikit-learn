@@ -72,26 +72,28 @@ def test_derivatives(loss, x0, y_true):
     x0 = np.array([x0], dtype=Y_DTYPE).reshape(1, 1)
     get_gradients, get_hessians = get_derivatives_helper(loss)
 
-    def func(x: float) -> float:
+    def func(x: np.ndarray) -> np.ndarray:
         if isinstance(loss, _LOSSES['binary_crossentropy']):
             # Subtract a constant term such that the binary cross entropy
             # has its minimum at zero. This only works if 0 < y_true < 1.
             actual_min = loss.pointwise_loss(y_true, logit(y_true))
-            return (loss.pointwise_loss(y_true, x) - actual_min).item(0)
+            return (loss.pointwise_loss(y_true, x) - actual_min)
         else:
-            return loss.pointwise_loss(y_true, x).item(0)
+            return loss.pointwise_loss(y_true, x)
 
-    def fprime(x: float) -> float:
-        return get_gradients(y_true, x).item(0)
+    def fprime(x: np.ndarray) -> np.ndarray:
+        return get_gradients(y_true, x)
 
-    def fprime2(x: float) -> float:
-        return get_hessians(y_true, x).item(0)
+    def fprime2(x: np.ndarray) -> np.ndarray:
+        return get_hessians(y_true, x)
 
     optimum = newton(func, x0=x0, fprime=fprime, fprime2=fprime2,
                      maxiter=70, tol=2e-8)
-    assert_allclose(loss.inverse_link_function(optimum)[0], y_true)
+    y_true = y_true.ravel()
+    optimum = optimum.ravel()
+    assert_allclose(loss.inverse_link_function(optimum), y_true)
     assert_allclose(func(optimum), 0, atol=1e-14)
-    assert_allclose(get_gradients(y_true, optimum)[0], 0, atol=1e-7)
+    assert_allclose(get_gradients(y_true, optimum), 0, atol=1e-7)
 
 
 @pytest.mark.parametrize('loss, n_classes, prediction_dim', [
