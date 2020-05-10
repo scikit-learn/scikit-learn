@@ -142,7 +142,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         -------
         self
         """
-        X = self._validate_data(X, dtype='numeric')
+        X = self._validate_data(X, dtype='numeric', force_all_finite=False)
 
         valid_encode = ('onehot', 'onehot-dense', 'ordinal')
         if self.encode not in valid_encode:
@@ -161,6 +161,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         bin_edges = np.zeros(n_features, dtype=object)
         for jj in range(n_features):
             column = X[:, jj]
+            column = column[~np.isnan(column)] # remove NaNs for the fit
             col_min, col_max = column.min(), column.max()
 
             if col_min == col_max:
@@ -207,7 +208,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
         if 'onehot' in self.encode:
             self._encoder = OneHotEncoder(
-                categories=[np.arange(i) for i in self.n_bins_],
+                categories=[np.arange(-1, i) for i in self.n_bins_],
                 sparse=self.encode == 'onehot')
             # Fit the OneHotEncoder with toy datasets
             # so that it's ready for use after the KBinsDiscretizer is fitted
@@ -265,7 +266,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         """
         check_is_fitted(self)
 
-        Xt = check_array(X, copy=True, dtype=FLOAT_DTYPES)
+        Xt = check_array(X, copy=True, dtype=FLOAT_DTYPES, force_all_finite=False)
         n_features = self.n_bins_.shape[0]
         if Xt.shape[1] != n_features:
             raise ValueError("Incorrect number of features. Expecting {}, "
@@ -273,15 +274,18 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
         bin_edges = self.bin_edges_
         for jj in range(Xt.shape[1]):
+            column = Xt[:, jj]
             # Values which are close to a bin edge are susceptible to numeric
             # instability. Add eps to X so these values are binned correctly
             # with respect to their decimal truncation. See documentation of
             # numpy.isclose for an explanation of ``rtol`` and ``atol``.
             rtol = 1.e-5
             atol = 1.e-8
-            eps = atol + rtol * np.abs(Xt[:, jj])
-            Xt[:, jj] = np.digitize(Xt[:, jj] + eps, bin_edges[jj][1:])
-        np.clip(Xt, 0, self.n_bins_ - 1, out=Xt)
+            eps = atol + rtol * np.abs(column)
+            column = np.digitize(column + eps, bin_edges[jj][1:])
+            np.clip(column, 0, self.n_bins_[jj] - 1, out=column)
+            column[np.isnan(Xt[:, jj])] = -1
+            Xt[:, jj] = column
 
         if self.encode == 'ordinal':
             return Xt
@@ -319,6 +323,9 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         for jj in range(n_features):
             bin_edges = self.bin_edges_[jj]
             bin_centers = (bin_edges[1:] + bin_edges[:-1]) * 0.5
-            Xinv[:, jj] = bin_centers[np.int_(Xinv[:, jj])]
-
+            column = Xinv[:, jj]
+            column = bin_centers[np.int_(column)]
+            column[Xinv[:, jj] == -1] = np.NaN
+            Xinv[:, jj] = column
+            
         return Xinv
