@@ -27,6 +27,8 @@ from .common cimport hist_struct
 from .common import HISTOGRAM_DTYPE
 from .common cimport MonotonicConstraint
 
+np.import_array()
+
 
 cdef struct split_info_struct:
     # Same as the SplitInfo class, but we need a C struct to use it in the
@@ -809,7 +811,7 @@ cpdef inline Y_DTYPE_C compute_node_value(
     """
 
     cdef:
-        Y_DTYPE_C value 
+        Y_DTYPE_C value
 
     value = -sum_gradient / (sum_hessian + l2_regularization + 1e-15)
 

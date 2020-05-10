@@ -8,6 +8,7 @@ from scipy import sparse
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
 from ..utils.validation import check_is_fitted
+from ..utils.validation import _deprecate_positional_args
 
 from ._label import _encode, _encode_check_unknown
 
@@ -185,6 +186,8 @@ class OneHotEncoder(_BaseEncoder):
 
         The used categories can be found in the ``categories_`` attribute.
 
+        .. versionadded:: 0.20
+
     drop : {'first', 'if_binary'} or a array-like of shape (n_features,), \
             default=None
         Specifies a methodology to use to drop one of the categories per
@@ -292,7 +295,8 @@ class OneHotEncoder(_BaseEncoder):
            [1., 0., 1., 0.]])
     """
 
-    def __init__(self, categories='auto', drop=None, sparse=True,
+    @_deprecate_positional_args
+    def __init__(self, *, categories='auto', drop=None, sparse=True,
                  dtype=np.float64, handle_unknown='error'):
         self.categories = categories
         self.sparse = sparse
@@ -601,7 +605,7 @@ class OrdinalEncoder(_BaseEncoder):
 
     Read more in the :ref:`User Guide <preprocessing_categorical_features>`.
 
-    .. versionchanged:: 0.20.1
+    .. versionadded:: 0.20
 
     Parameters
     ----------
@@ -653,7 +657,8 @@ class OrdinalEncoder(_BaseEncoder):
            ['Female', 2]], dtype=object)
     """
 
-    def __init__(self, categories='auto', dtype=np.float64):
+    @_deprecate_positional_args
+    def __init__(self, *, categories='auto', dtype=np.float64):
         self.categories = categories
         self.dtype = dtype
 

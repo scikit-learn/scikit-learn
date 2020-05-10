@@ -32,6 +32,7 @@ from ..utils.multiclass import check_classification_targets
 from ..utils.validation import column_or_1d
 from ..utils.validation import _deprecate_positional_args
 from ..exceptions import NotFittedError
+from ..utils._estimator_html_repr import _VisualBlock
 
 
 class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
@@ -104,6 +105,10 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
 
         return self.estimators_[0].n_features_in_
 
+    def _sk_visual_block_(self):
+        names, estimators = zip(*self.estimators)
+        return _VisualBlock('parallel', estimators, names=names)
+
 
 class VotingClassifier(ClassifierMixin, _BaseVoting):
     """Soft Voting/Majority Rule classifier for unfitted estimators.
@@ -141,6 +146,8 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
+        .. versionadded:: 0.18
+
     flatten_transform : bool, default=True
         Affects shape of transform output only when voting='soft'
         If voting='soft' and flatten_transform=True, transform method returns
@@ -160,7 +167,6 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
 
     named_estimators_ : :class:`~sklearn.utils.Bunch`
         Attribute to access any fitted sub-estimators by name.
-
 
         .. versionadded:: 0.20
 
@@ -232,6 +238,8 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
             Sample weights. If None, then samples are equally weighted.
             Note that this is supported only if all underlying estimators
             support sample weights.
+
+            .. versionadded:: 0.18
 
         Returns
         -------
@@ -350,8 +358,8 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
 
     .. versionadded:: 0.21
 
-    A voting regressor is an ensemble meta-estimator that fits base
-    regressors each on the whole dataset. It, then, averages the individual
+    A voting regressor is an ensemble meta-estimator that fits several base
+    regressors, each on the whole dataset. Then it averages the individual
     predictions to form a final prediction.
 
     Read more in the :ref:`User Guide <voting_regressor>`.

@@ -33,6 +33,7 @@ from ..utils.validation import check_is_fitted, check_array, FLOAT_DTYPES
 from ..utils import _IS_32BIT, deprecated
 from ..utils.fixes import _astype_copy_false
 from ..exceptions import NotFittedError
+from ..utils.validation import _deprecate_positional_args
 
 
 __all__ = ['HashingVectorizer',
@@ -677,8 +678,8 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
     CountVectorizer, TfidfVectorizer
 
     """
-
-    def __init__(self, input='content', encoding='utf-8',
+    @_deprecate_positional_args
+    def __init__(self, *, input='content', encoding='utf-8',
                  decode_error='strict', strip_accents=None,
                  lowercase=True, preprocessor=None, tokenizer=None,
                  stop_words=None, token_pattern=r"(?u)\b\w\w+\b",
@@ -999,8 +1000,8 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
     when pickling. This attribute is provided only for introspection and can
     be safely removed using delattr or set to None before pickling.
     """
-
-    def __init__(self, input='content', encoding='utf-8',
+    @_deprecate_positional_args
+    def __init__(self, *, input='content', encoding='utf-8',
                  decode_error='strict', strip_accents=None,
                  lowercase=True, preprocessor=None, tokenizer=None,
                  stop_words=None, token_pattern=r"(?u)\b\w\w+\b",
@@ -1374,6 +1375,8 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
         The inverse document frequency (IDF) vector; only defined
         if  ``use_idf`` is True.
 
+        .. versionadded:: 0.20
+
     Examples
     --------
     >>> from sklearn.feature_extraction.text import TfidfTransformer
@@ -1409,8 +1412,8 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
                    Introduction to Information Retrieval. Cambridge University
                    Press, pp. 118-120.
     """
-
-    def __init__(self, norm='l2', use_idf=True, smooth_idf=True,
+    @_deprecate_positional_args
+    def __init__(self, *, norm='l2', use_idf=True, smooth_idf=True,
                  sublinear_tf=False):
         self.norm = norm
         self.use_idf = use_idf
@@ -1715,8 +1718,8 @@ class TfidfVectorizer(CountVectorizer):
     >>> print(X.shape)
     (4, 9)
     """
-
-    def __init__(self, input='content', encoding='utf-8',
+    @_deprecate_positional_args
+    def __init__(self, *, input='content', encoding='utf-8',
                  decode_error='strict', strip_accents=None, lowercase=True,
                  preprocessor=None, tokenizer=None, analyzer='word',
                  stop_words=None, token_pattern=r"(?u)\b\w\w+\b",
