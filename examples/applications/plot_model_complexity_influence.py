@@ -137,7 +137,7 @@ def benchmark_influence(conf):
 # Choose parameters
 # -----------------------------
 #
-# We are choosing the parameters for each of our estimators by making
+# We choose the parameters for each of our estimators by making
 # a dictionary with all the necessary values.
 # 'changing_param' is the name of the parameter which will vary in each
 # estimator.
