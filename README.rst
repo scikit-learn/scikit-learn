@@ -131,7 +131,7 @@ Submitting a Pull Request
 
 Before opening a Pull Request, have a look at the
 full Contributing page to make sure your code complies
-with our guidelines: https://scikit-learn.org/stable/developers/index.html
+with our guidelines: https://scikit-learn.org/stable/developers/index.html.
 
 
 Project History
@@ -168,4 +168,4 @@ Communication
 Citation
 ~~~~~~~~
 
-If you use scikit-learn in a scientific publication, we would appreciate citations: https://scikit-learn.org/stable/about.html#citing-scikit-learn
+If you use scikit-learn in a scientific publication, we would appreciate citations: https://scikit-learn.org/stable/about.html#citing-scikit-learn.
