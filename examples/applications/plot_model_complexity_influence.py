@@ -63,7 +63,7 @@ np.random.seed(0)
 #
 # Note 1: We are using :func:`~sklearn.datasets.fetch_20newsgroups_vectorized`
 #  to download 20
-# newsgroups data set. It returns ready-to-use features.
+# newsgroups dataset. It returns ready-to-use features.
 #
 # Note 2: X for the 20 newsgropus dataset is a sparse matrix while X of
 # diabetes dataset is a numpy array.
