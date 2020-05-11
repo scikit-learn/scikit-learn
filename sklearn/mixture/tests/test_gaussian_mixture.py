@@ -774,6 +774,7 @@ def test_weighted_vs_repeated():
     rng = np.random.RandomState(0)
     n_samples = 200
     rand_data = RandomData(rng, n_samples=n_samples)
+    n_repeated_samples = 80
 
     n_features = rand_data.n_features
     n_components = rand_data.n_components
@@ -781,11 +782,10 @@ def test_weighted_vs_repeated():
     for covar_type in COVARIANCE_TYPE:
         X = rand_data.X[covar_type]
 
-        separation_index = int(np.round(rand_data.weights[0] * n_samples))
         sample_weight = np.ones(n_samples)
-        sample_weight[separation_index:] += 2
+        sample_weight[n_repeated_samples:] += 2
 
-        X_second_component = X[separation_index:]
+        X_second_component = X[n_repeated_samples:]
         X_repeat = np.vstack((X, X_second_component, X_second_component))
 
         g = GaussianMixture(n_components=n_components, n_init=20,
