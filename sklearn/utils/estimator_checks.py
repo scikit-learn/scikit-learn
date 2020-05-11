@@ -33,7 +33,7 @@ from ..discriminant_analysis import LinearDiscriminantAnalysis
 from ..linear_model import Ridge
 
 from ..base import (clone, ClusterMixin, is_classifier, is_regressor,
-                    RegressorMixin, is_outlier_detector, BaseEstimator)
+                    RegressorMixin, is_outlier_detector)
 
 from ..metrics import accuracy_score, adjusted_rand_score, f1_score
 from ..random_projection import BaseRandomProjection
@@ -258,6 +258,7 @@ def _yield_all_checks(name, estimator):
     if is_outlier_detector(estimator):
         for check in _yield_outliers_checks(name, estimator):
             yield check
+    yield check_parameters_default_constructible
     yield check_fit2d_predict1d
     yield check_methods_subset_invariance
     yield check_fit2d_1sample
@@ -333,36 +334,9 @@ def _construct_instance(Estimator):
     return estimator
 
 
-# TODO: probably not needed anymore in 0.24 since _generate_class_checks should
-# be removed too. Just put this in check_estimator()
-def _generate_instance_checks(name, estimator):
-    """Generate instance checks."""
-    yield from ((estimator, partial(check, name))
-                for check in _yield_all_checks(name, estimator))
-
-
-# TODO: remove this in 0.24
-def _generate_class_checks(Estimator):
-    """Generate class checks."""
-    name = Estimator.__name__
-    yield (Estimator, partial(check_parameters_default_constructible, name))
-    estimator = _construct_instance(Estimator)
-    yield from _generate_instance_checks(name, estimator)
-
-
 def _mark_xfail_checks(estimator, check, pytest):
     """Mark (estimator, check) pairs with xfail according to the
     _xfail_checks_ tag"""
-    if isinstance(estimator, type):
-        # try to construct estimator instance, if it is unable to then
-        # return the estimator class, ignoring the tag
-        # TODO: remove this if block in 0.24 since passing instances isn't
-        # supported anymore
-        try:
-            estimator = _construct_instance(estimator)
-        except Exception:
-            return estimator, check
-
     xfail_checks = estimator._get_tags()['_xfail_checks'] or {}
     check_name = _set_check_estimator_ids(check)
 
@@ -387,12 +361,12 @@ def parametrize_with_checks(estimators):
 
     Parameters
     ----------
-    estimators : list of estimators objects or classes
+    estimators : list of estimators instances
         Estimators to generated checks for.
 
-        .. deprecated:: 0.23
-           Passing a class is deprecated from version 0.23, and won't be
-           supported in 0.24. Pass an instance instead.
+        .. versionchanged:: 0.24
+           Passing a class was deprecated in version 0.23, and support for
+           classes was removed in 0.24. Pass an instance instead.
 
     Returns
     -------
@@ -413,11 +387,10 @@ def parametrize_with_checks(estimators):
     import pytest
 
     if any(isinstance(est, type) for est in estimators):
-        # TODO: remove class support in 0.24 and update docstrings
-        msg = ("Passing a class is deprecated since version 0.23 "
-               "and won't be supported in 0.24."
+        msg = ("Passing a class was deprecated in version 0.23 "
+               "and isn't supported anymore from 0.24."
                "Please pass an instance instead.")
-        warnings.warn(msg, FutureWarning)
+        raise TypeError(msg)
 
     checks_generator = chain.from_iterable(
         check_estimator(estimator, generate_only=True)
@@ -441,12 +414,6 @@ def check_estimator(Estimator, generate_only=False):
     will be run if the Estimator class inherits from the corresponding mixin
     from sklearn.base.
 
-    This test can be applied to classes or instances.
-    Classes currently have some additional tests that related to construction,
-    while passing instances allows the testing of multiple options. However,
-    support for classes is deprecated since version 0.23 and will be removed
-    in version 0.24 (class checks will still be run on the instances).
-
     Setting `generate_only=True` returns a generator that yields (estimator,
     check) tuples where the check can be called independently from each
     other, i.e. `check(estimator)`. This allows all checks to be run
@@ -459,11 +426,11 @@ def check_estimator(Estimator, generate_only=False):
     Parameters
     ----------
     estimator : estimator object
-        Estimator to check. Estimator is a class object or instance.
+        Estimator instance to check.
 
-        .. deprecated:: 0.23
-           Passing a class is deprecated from version 0.23, and won't be
-           supported in 0.24. Pass an instance instead.
+        .. versionchanged:: 0.24
+           Passing a class was deprecated in version 0.23, and support for
+           classes was removed in 0.24.
 
     generate_only : bool, optional (default=False)
         When `False`, checks are evaluated when `check_estimator` is called.
@@ -479,20 +446,17 @@ def check_estimator(Estimator, generate_only=False):
         Generator that yields (estimator, check) tuples. Returned when
         `generate_only=True`.
     """
-    # TODO: remove class support in 0.24 and update docstrings
     if isinstance(Estimator, type):
-        # got a class
-        msg = ("Passing a class is deprecated since version 0.23 "
-               "and won't be supported in 0.24."
+        msg = ("Passing a class was deprecated in version 0.23 "
+               "and isn't supported anymore from 0.24."
                "Please pass an instance instead.")
-        warnings.warn(msg, FutureWarning)
+        raise TypeError(msg)
 
-        checks_generator = _generate_class_checks(Estimator)
-    else:
-        # got an instance
-        estimator = Estimator
-        name = type(estimator).__name__
-        checks_generator = _generate_instance_checks(name, estimator)
+    estimator = Estimator
+    name = type(estimator).__name__
+
+    checks_generator = ((estimator, partial(check, name))
+                        for check in _yield_all_checks(name, estimator))
 
     if generate_only:
         return checks_generator
@@ -2591,14 +2555,10 @@ def check_estimators_data_not_an_array(name, estimator_orig, X, y, obj_type):
 
 
 def check_parameters_default_constructible(name, Estimator):
-    # this check works on classes, not instances
     # test default-constructibility
     # get rid of deprecation warnings
-    if isinstance(Estimator, BaseEstimator):
-        # Convert estimator instance to its class
-        # TODO: Always convert to class in 0.24, because check_estimator() will
-        # only accept instances, not classes
-        Estimator = Estimator.__class__
+
+    Estimator = Estimator.__class__
 
     with ignore_warnings(category=FutureWarning):
         estimator = _construct_instance(Estimator)
