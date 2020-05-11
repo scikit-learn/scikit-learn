@@ -144,7 +144,7 @@ def benchmark_influence(conf):
 # Complexity will be defined by the ``complexity_label`` and calculated using
 # 'complexity_computer'
 # Also note that depending on the estimator type we are passing
-# different data
+# different data.
 #
 
 def _count_nonzero_coefficients(estimator):
