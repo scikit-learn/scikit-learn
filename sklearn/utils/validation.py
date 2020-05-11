@@ -18,7 +18,8 @@ import scipy.sparse as sp
 from distutils.version import LooseVersion
 from inspect import signature, isclass, Parameter
 
-from numpy.core.numeric import ComplexWarning
+# mypy error: Module 'numpy.core.numeric' has no attribute 'ComplexWarning'
+from numpy.core.numeric import ComplexWarning  # type: ignore
 import joblib
 
 from contextlib import suppress
@@ -34,6 +35,44 @@ FLOAT_DTYPES = (np.float64, np.float32, np.float16)
 # Silenced by default to reduce verbosity. Turn on at runtime for
 # performance profiling.
 warnings.simplefilter('ignore', NonBLASDotWarning)
+
+
+def _deprecate_positional_args(f):
+    """Decorator for methods that issues warnings for positional arguments
+
+    Using the keyword-only argument syntax in pep 3102, arguments after the
+    * will issue a warning when passed as a positional argument.
+
+    Parameters
+    ----------
+    f : function
+        function to check arguments on
+    """
+    sig = signature(f)
+    kwonly_args = []
+    all_args = []
+
+    for name, param in sig.parameters.items():
+        if param.kind == Parameter.POSITIONAL_OR_KEYWORD:
+            all_args.append(name)
+        elif param.kind == Parameter.KEYWORD_ONLY:
+            kwonly_args.append(name)
+
+    @wraps(f)
+    def inner_f(*args, **kwargs):
+        extra_args = len(args) - len(all_args)
+        if extra_args > 0:
+            # ignore first 'self' argument for instance methods
+            args_msg = ['{}={}'.format(name, arg)
+                        for name, arg in zip(kwonly_args[:extra_args],
+                                             args[-extra_args:])]
+            warnings.warn("Pass {} as keyword args. From version 0.25 "
+                          "passing these as positional arguments will "
+                          "result in an error".format(", ".join(args_msg)),
+                          FutureWarning)
+        kwargs.update({k: arg for k, arg in zip(sig.parameters, args)})
+        return f(**kwargs)
+    return inner_f
 
 
 def _assert_all_finite(X, allow_nan=False, msg_dtype=None):
@@ -67,7 +106,8 @@ def _assert_all_finite(X, allow_nan=False, msg_dtype=None):
             raise ValueError("Input contains NaN")
 
 
-def assert_all_finite(X, allow_nan=False):
+@_deprecate_positional_args
+def assert_all_finite(X, *, allow_nan=False):
     """Throw a ValueError if X contains NaN or infinity.
 
     Parameters
@@ -79,7 +119,8 @@ def assert_all_finite(X, allow_nan=False):
     _assert_all_finite(X.data if sp.issparse(X) else X, allow_nan)
 
 
-def as_float_array(X, copy=True, force_all_finite=True):
+@_deprecate_positional_args
+def as_float_array(X, *, copy=True, force_all_finite=True):
     """Converts an array-like to an array of floats.
 
     The new dtype will be np.float32 or np.float64, depending on the original
@@ -95,16 +136,19 @@ def as_float_array(X, copy=True, force_all_finite=True):
         returned if X's dtype is not a floating point type.
 
     force_all_finite : boolean or 'allow-nan', (default=True)
-        Whether to raise an error on np.inf and np.nan in X. The possibilities
-        are:
+        Whether to raise an error on np.inf, np.nan, pd.NA in X. The
+        possibilities are:
 
         - True: Force all values of X to be finite.
-        - False: accept both np.inf and np.nan in X.
-        - 'allow-nan': accept only np.nan values in X. Values cannot be
-          infinite.
+        - False: accepts np.inf, np.nan, pd.NA in X.
+        - 'allow-nan': accepts only np.nan and pd.NA values in X. Values cannot
+          be infinite.
 
         .. versionadded:: 0.20
            ``force_all_finite`` accepts the string ``'allow-nan'``.
+
+        .. versionchanged:: 0.23
+           Accepts `pd.NA` and converts it into `np.nan`
 
     Returns
     -------
@@ -113,9 +157,9 @@ def as_float_array(X, copy=True, force_all_finite=True):
     """
     if isinstance(X, np.matrix) or (not isinstance(X, np.ndarray)
                                     and not sp.issparse(X)):
-        return check_array(X, ['csr', 'csc', 'coo'], dtype=np.float64,
-                           copy=copy, force_all_finite=force_all_finite,
-                           ensure_2d=False)
+        return check_array(X, accept_sparse=['csr', 'csc', 'coo'],
+                           dtype=np.float64, copy=copy,
+                           force_all_finite=force_all_finite, ensure_2d=False)
     elif sp.issparse(X) and X.dtype in [np.float32, np.float64]:
         return X.copy() if copy else X
     elif X.dtype in [np.float32, np.float64]:  # is numpy array
@@ -277,16 +321,19 @@ def _ensure_sparse_format(spmatrix, accept_sparse, dtype, copy,
         be triggered by a conversion.
 
     force_all_finite : boolean or 'allow-nan', (default=True)
-        Whether to raise an error on np.inf and np.nan in X. The possibilities
-        are:
+        Whether to raise an error on np.inf, np.nan, pd.NA in X. The
+        possibilities are:
 
         - True: Force all values of X to be finite.
-        - False: accept both np.inf and np.nan in X.
-        - 'allow-nan': accept only np.nan values in X. Values cannot be
-          infinite.
+        - False: accepts np.inf, np.nan, pd.NA in X.
+        - 'allow-nan': accepts only np.nan and pd.NA values in X. Values cannot
+          be infinite.
 
         .. versionadded:: 0.20
            ``force_all_finite`` accepts the string ``'allow-nan'``.
+
+        .. versionchanged:: 0.23
+           Accepts `pd.NA` and converts it into `np.nan`
 
     Returns
     -------
@@ -349,7 +396,8 @@ def _ensure_no_complex_data(array):
                          "{}\n".format(array))
 
 
-def check_array(array, accept_sparse=False, accept_large_sparse=True,
+@_deprecate_positional_args
+def check_array(array, accept_sparse=False, *, accept_large_sparse=True,
                 dtype="numeric", order=None, copy=False, force_all_finite=True,
                 ensure_2d=True, allow_nd=False, ensure_min_samples=1,
                 ensure_min_features=1, estimator=None):
@@ -397,18 +445,19 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
         be triggered by a conversion.
 
     force_all_finite : boolean or 'allow-nan', (default=True)
-        Whether to raise an error on np.inf and np.nan in array. The
+        Whether to raise an error on np.inf, np.nan, pd.NA in array. The
         possibilities are:
 
         - True: Force all values of array to be finite.
-        - False: accept both np.inf and np.nan in array.
-        - 'allow-nan': accept only np.nan values in array. Values cannot
-          be infinite.
-
-        For object dtyped data, only np.nan is checked and not np.inf.
+        - False: accepts np.inf, np.nan, pd.NA in array.
+        - 'allow-nan': accepts only np.nan and pd.NA values in array. Values
+          cannot be infinite.
 
         .. versionadded:: 0.20
            ``force_all_finite`` accepts the string ``'allow-nan'``.
+
+        .. versionchanged:: 0.23
+           Accepts `pd.NA` and converts it into `np.nan`
 
     ensure_2d : boolean (default=True)
         Whether to raise a value error if array is not 2D.
@@ -450,6 +499,7 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
     # check if the object contains several dtypes (typically a pandas
     # DataFrame), and store them. If not, store None.
     dtypes_orig = None
+    has_pd_integer_array = False
     if hasattr(array, "dtypes") and hasattr(array.dtypes, '__array__'):
         # throw warning if columns are sparse. If all columns are sparse, then
         # array.sparse exists and sparsity will be perserved (later).
@@ -466,7 +516,20 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
         # pandas boolean dtype __array__ interface coerces bools to objects
         for i, dtype_iter in enumerate(dtypes_orig):
             if dtype_iter.kind == 'b':
-                dtypes_orig[i] = np.object
+                dtypes_orig[i] = np.dtype(np.object)
+            elif dtype_iter.name.startswith(("Int", "UInt")):
+                # name looks like an Integer Extension Array, now check for
+                # the dtype
+                with suppress(ImportError):
+                    from pandas import (Int8Dtype, Int16Dtype,
+                                        Int32Dtype, Int64Dtype,
+                                        UInt8Dtype, UInt16Dtype,
+                                        UInt32Dtype, UInt64Dtype)
+                    if isinstance(dtype_iter, (Int8Dtype, Int16Dtype,
+                                               Int32Dtype, Int64Dtype,
+                                               UInt8Dtype, UInt16Dtype,
+                                               UInt32Dtype, UInt64Dtype)):
+                        has_pd_integer_array = True
 
         if all(isinstance(dtype, np.dtype) for dtype in dtypes_orig):
             dtype_orig = np.result_type(*dtypes_orig)
@@ -486,6 +549,10 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
             # dtype conversion required. Let's select the first element of the
             # list of accepted types.
             dtype = dtype[0]
+
+    if has_pd_integer_array:
+        # If there are any pandas integer extension arrays,
+        array = array.astype(dtype)
 
     if force_all_finite not in (True, False, 'allow-nan'):
         raise ValueError('force_all_finite should be a bool or "allow-nan"'
@@ -620,7 +687,8 @@ def _check_large_sparse(X, accept_large_sparse=False):
                                  % indices_datatype)
 
 
-def check_X_y(X, y, accept_sparse=False, accept_large_sparse=True,
+@_deprecate_positional_args
+def check_X_y(X, y, accept_sparse=False, *, accept_large_sparse=True,
               dtype="numeric", order=None, copy=False, force_all_finite=True,
               ensure_2d=True, allow_nd=False, multi_output=False,
               ensure_min_samples=1, ensure_min_features=1, y_numeric=False,
@@ -670,17 +738,20 @@ def check_X_y(X, y, accept_sparse=False, accept_large_sparse=True,
         be triggered by a conversion.
 
     force_all_finite : boolean or 'allow-nan', (default=True)
-        Whether to raise an error on np.inf and np.nan in X. This parameter
-        does not influence whether y can have np.inf or np.nan values.
+        Whether to raise an error on np.inf, np.nan, pd.NA in X. This parameter
+        does not influence whether y can have np.inf, np.nan, pd.NA values.
         The possibilities are:
 
         - True: Force all values of X to be finite.
-        - False: accept both np.inf and np.nan in X.
-        - 'allow-nan': accept only np.nan values in X. Values cannot be
-          infinite.
+        - False: accepts np.inf, np.nan, pd.NA in X.
+        - 'allow-nan': accepts only np.nan or pd.NA values in X. Values cannot
+          be infinite.
 
         .. versionadded:: 0.20
            ``force_all_finite`` accepts the string ``'allow-nan'``.
+
+        .. versionchanged:: 0.23
+           Accepts `pd.NA` and converts it into `np.nan`
 
     ensure_2d : boolean (default=True)
         Whether to raise a value error if X is not 2D.
@@ -732,8 +803,8 @@ def check_X_y(X, y, accept_sparse=False, accept_large_sparse=True,
                     ensure_min_features=ensure_min_features,
                     estimator=estimator)
     if multi_output:
-        y = check_array(y, 'csr', force_all_finite=True, ensure_2d=False,
-                        dtype=None)
+        y = check_array(y, accept_sparse='csr', force_all_finite=True,
+                        ensure_2d=False, dtype=None)
     else:
         y = column_or_1d(y, warn=True)
         _assert_all_finite(y)
@@ -745,7 +816,8 @@ def check_X_y(X, y, accept_sparse=False, accept_large_sparse=True,
     return X, y
 
 
-def column_or_1d(y, warn=False):
+@_deprecate_positional_args
+def column_or_1d(y, *, warn=False):
     """ Ravel column or 1d numpy array, else raises an error
 
     Parameters
@@ -825,7 +897,8 @@ def has_fit_parameter(estimator, parameter):
     return parameter in signature(estimator.fit).parameters
 
 
-def check_symmetric(array, tol=1E-10, raise_warning=True,
+@_deprecate_positional_args
+def check_symmetric(array, *, tol=1E-10, raise_warning=True,
                     raise_exception=False):
     """Make sure that array is 2D, square and symmetric.
 
@@ -881,7 +954,8 @@ def check_symmetric(array, tol=1E-10, raise_warning=True,
     return array
 
 
-def check_is_fitted(estimator, attributes=None, msg=None, all_or_any=all):
+@_deprecate_positional_args
+def check_is_fitted(estimator, attributes=None, *, msg=None, all_or_any=all):
     """Perform is_fitted validation for estimator.
 
     Checks if the estimator is fitted by verifying the presence of
@@ -974,7 +1048,7 @@ def check_non_negative(X, whom):
         raise ValueError("Negative values in data passed to %s" % whom)
 
 
-def check_scalar(x, name, target_type, min_val=None, max_val=None):
+def check_scalar(x, name, target_type, *, min_val=None, max_val=None):
     """Validate scalar parameters type and value.
 
     Parameters
@@ -1266,44 +1340,6 @@ def _allclose_dense_sparse(x, y, rtol=1e-7, atol=1e-9):
         return np.allclose(x, y, rtol=rtol, atol=atol)
     raise ValueError("Can only compare two sparse matrices, not a sparse "
                      "matrix and an array")
-
-
-def _deprecate_positional_args(f):
-    """Decorator for methods that issues warnings for positional arguments
-
-    Using the keyword-only argument syntax in pep 3102, arguments after the
-    * will issue a warning when passed as a positional argument.
-
-    Parameters
-    ----------
-    f : function
-        function to check arguments on
-    """
-    sig = signature(f)
-    kwonly_args = []
-    all_args = []
-
-    for name, param in sig.parameters.items():
-        if param.kind == Parameter.POSITIONAL_OR_KEYWORD:
-            all_args.append(name)
-        elif param.kind == Parameter.KEYWORD_ONLY:
-            kwonly_args.append(name)
-
-    @wraps(f)
-    def inner_f(*args, **kwargs):
-        extra_args = len(args) - len(all_args)
-        if extra_args > 0:
-            # ignore first 'self' argument for instance methods
-            args_msg = ['{}={}'.format(name, arg)
-                        for name, arg in zip(kwonly_args[:extra_args],
-                                             args[-extra_args:])]
-            warnings.warn("Pass {} as keyword args. From version 0.25 "
-                          "passing these as positional arguments will "
-                          "result in an error".format(", ".join(args_msg)),
-                          FutureWarning)
-        kwargs.update({k: arg for k, arg in zip(sig.parameters, args)})
-        return f(**kwargs)
-    return inner_f
 
 
 def _check_fit_params(X, fit_params, indices=None):

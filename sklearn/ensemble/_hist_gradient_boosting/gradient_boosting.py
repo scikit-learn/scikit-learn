@@ -758,11 +758,13 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
 
     Parameters
     ----------
-    loss : {'least_squares', 'least_absolute_deviation'}, \
+    loss : {'least_squares', 'least_absolute_deviation', 'poisson'}, \
             optional (default='least_squares')
         The loss function to use in the boosting process. Note that the
-        "least squares" loss actually implements an "half least squares loss"
-        to simplify the computation of the gradient.
+        "least squares" and "poisson" losses actually implement
+        "half least squares loss" and "half poisson deviance" to simplify the
+        computation of the gradient. Furthermore, "poisson" loss internally
+        uses a log-link and requires ``y >= 0``
     learning_rate : float, optional (default=0.1)
         The learning rate, also known as *shrinkage*. This is used as a
         multiplicative factor for the leaves values. Use ``1`` for no
@@ -868,7 +870,8 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
     0.92...
     """
 
-    _VALID_LOSSES = ('least_squares', 'least_absolute_deviation')
+    _VALID_LOSSES = ('least_squares', 'least_absolute_deviation',
+                     'poisson')
 
     @_deprecate_positional_args
     def __init__(self, loss='least_squares', *, learning_rate=0.1,
@@ -902,14 +905,20 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         y : ndarray, shape (n_samples,)
             The predicted values.
         """
-        # Return raw predictions after converting shape
-        # (n_samples, 1) to (n_samples,)
-        return self._raw_predict(X).ravel()
+        check_is_fitted(self)
+        # Return inverse link of raw predictions after converting
+        # shape (n_samples, 1) to (n_samples,)
+        return self.loss_.inverse_link_function(self._raw_predict(X).ravel())
 
     def _encode_y(self, y):
         # Just convert y to the expected dtype
         self.n_trees_per_iteration_ = 1
         y = y.astype(Y_DTYPE, copy=False)
+        if self.loss == 'poisson':
+            # Ensure y >= 0 and sum(y) > 0
+            if not (np.all(y >= 0) and np.sum(y) > 0):
+                raise ValueError("loss='poisson' requires non-negative y and "
+                                 "sum(y) > 0.")
         return y
 
     def _get_loss(self, sample_weight):
