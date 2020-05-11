@@ -779,41 +779,40 @@ First of all you need to install the development version of asv::
 
   pip install git+https://github.com/airspeed-velocity/asv
 
-and change your directory to `asv_benchmarks/`. The benchmark suite is
-configured to run against your local clone of scikit-learn. Make sure it is up
-to date::
+and change your directory to `asv_benchmarks/`::
+
+  cd asv_benchmarks/
+
+The benchmark suite is configured to run against your local clone of
+scikit-learn. Make sure it is up to date::
 
   git fetch upstream
 
 In the benchmark suite, the benchmarks are organized following the same
-structure as scikit-learn. For example, you can run the benchmarks for the
-`linear_model` module only::
+structure as scikit-learn. For example, you can compare the performance of a
+specific estimator between master and the branch you are working on::
 
-  asv run -b linear_model upstream/master^!
+  asv continuous -b LogisticRegression origin/master HEAD
 
-or for a specific estimator::
+You can also specify a whole module to benchmark::
 
-  asv run -b LogisticRegression upstream/master^!
+  asv continuous -b linear_model origin/master HEAD
 
-You can run the benchmarks against any commit, the branch you are working on
-for example::
+You can replace `HEAD` by any branch. By default it will only report the
+benchmarks that have change by at least 10%. You can control this ratio with
+the `-f` flag.
 
-  asv run -b linear_model my_branch^!
+To run the full benchmark suite, simply remove the `-b` flag ::
 
-Simply remove the `-b` flag to run the full benchmark suite::
-
-  asv run my_branch^!
+  asv continuous origin/master HEAD
 
 However this can take up to two hours. The `-b` flag also accepts a regular
 expression for a more complex subset of benchmarks to run.
 
-You can compare the performances of two commits. For example, comparing master
-and the branch you are working on::
+To run the benchmarks without comparing to another branch, use the `run`
+command::
 
-  asv continuous upstream/master my_branch
-
-By default it will only report the benchmarks that have change by at least 10%.
-You can control this ratio with the `-f` flag.
+  asv run -b linear_model HEAD^!
 
 You can also run the benchmark suite using the version of scikit-learn already
 installed in your current Python environment::
