@@ -3,10 +3,11 @@ from ._base import NeighborsBase
 from ._base import KNeighborsMixin
 from ._base import RadiusNeighborsMixin
 from ._base import UnsupervisedMixin
+from ..utils.validation import _deprecate_positional_args
 
 
-class NearestNeighbors(NeighborsBase, KNeighborsMixin,
-                       RadiusNeighborsMixin, UnsupervisedMixin):
+class NearestNeighbors(KNeighborsMixin, RadiusNeighborsMixin,
+                       UnsupervisedMixin, NeighborsBase):
     """Unsupervised learner for implementing neighbor searches.
 
     Read more in the :ref:`User Guide <unsupervised_neighbors>`.
@@ -43,10 +44,10 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
     metric : str or callable, default='minkowski'
         the distance metric to use for the tree.  The default metric is
         minkowski, and with p=2 is equivalent to the standard Euclidean
-        metric. See the documentation of the DistanceMetric class for a
+        metric. See the documentation of :class:`DistanceMetric` for a
         list of available metrics.
         If metric is "precomputed", X is assumed to be a distance matrix and
-        must be square during fit. X may be a :term:`Glossary <sparse graph>`,
+        must be square during fit. X may be a :term:`sparse graph`,
         in which case only "nonzero" elements may be considered neighbors.
 
     p : int, default=2
@@ -78,7 +79,7 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
       >>> from sklearn.neighbors import NearestNeighbors
       >>> samples = [[0, 0, 2], [1, 0, 0], [0, 0, 1]]
 
-      >>> neigh = NearestNeighbors(2, 0.4)
+      >>> neigh = NearestNeighbors(n_neighbors=2, radius=0.4)
       >>> neigh.fit(samples)
       NearestNeighbors(...)
 
@@ -105,7 +106,8 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
     https://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
     """
 
-    def __init__(self, n_neighbors=5, radius=1.0,
+    @_deprecate_positional_args
+    def __init__(self, *, n_neighbors=5, radius=1.0,
                  algorithm='auto', leaf_size=30, metric='minkowski',
                  p=2, metric_params=None, n_jobs=None):
         super().__init__(

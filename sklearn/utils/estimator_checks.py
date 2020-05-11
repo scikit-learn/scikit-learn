@@ -258,6 +258,7 @@ def _yield_all_checks(name, estimator):
     if is_outlier_detector(estimator):
         for check in _yield_outliers_checks(name, estimator):
             yield check
+    yield check_parameters_default_constructible
     yield check_fit2d_predict1d
     yield check_methods_subset_invariance
     yield check_fit2d_1sample
@@ -270,6 +271,8 @@ def _yield_all_checks(name, estimator):
     yield check_fit_idempotent
     if not tags["no_validation"]:
         yield check_n_features_in
+        if tags["requires_y"]:
+            yield check_requires_y_none
     if tags["requires_positive_X"]:
         yield check_fit_non_negative
 
@@ -331,31 +334,9 @@ def _construct_instance(Estimator):
     return estimator
 
 
-def _generate_instance_checks(name, estimator):
-    """Generate instance checks."""
-    yield from ((estimator, partial(check, name))
-                for check in _yield_all_checks(name, estimator))
-
-
-def _generate_class_checks(Estimator):
-    """Generate class checks."""
-    name = Estimator.__name__
-    yield (Estimator, partial(check_parameters_default_constructible, name))
-    estimator = _construct_instance(Estimator)
-    yield from _generate_instance_checks(name, estimator)
-
-
 def _mark_xfail_checks(estimator, check, pytest):
     """Mark (estimator, check) pairs with xfail according to the
     _xfail_checks_ tag"""
-    if isinstance(estimator, type):
-        # try to construct estimator instance, if it is unable to then
-        # return the estimator class, ignoring the tag
-        try:
-            estimator = _construct_instance(estimator)
-        except Exception:
-            return estimator, check
-
     xfail_checks = estimator._get_tags()['_xfail_checks'] or {}
     check_name = _set_check_estimator_ids(check)
 
@@ -380,8 +361,12 @@ def parametrize_with_checks(estimators):
 
     Parameters
     ----------
-    estimators : list of estimators objects or classes
+    estimators : list of estimators instances
         Estimators to generated checks for.
+
+        .. versionchanged:: 0.24
+           Passing a class was deprecated in version 0.23, and support for
+           classes was removed in 0.24. Pass an instance instead.
 
     Returns
     -------
@@ -393,12 +378,19 @@ def parametrize_with_checks(estimators):
     >>> from sklearn.linear_model import LogisticRegression
     >>> from sklearn.tree import DecisionTreeRegressor
 
-    >>> @parametrize_with_checks([LogisticRegression, DecisionTreeRegressor])
+    >>> @parametrize_with_checks([LogisticRegression(),
+    ...                           DecisionTreeRegressor()])
     ... def test_sklearn_compatible_estimator(estimator, check):
     ...     check(estimator)
 
     """
     import pytest
+
+    if any(isinstance(est, type) for est in estimators):
+        msg = ("Passing a class was deprecated in version 0.23 "
+               "and isn't supported anymore from 0.24."
+               "Please pass an instance instead.")
+        raise TypeError(msg)
 
     checks_generator = chain.from_iterable(
         check_estimator(estimator, generate_only=True)
@@ -416,15 +408,11 @@ def check_estimator(Estimator, generate_only=False):
     """Check if estimator adheres to scikit-learn conventions.
 
     This estimator will run an extensive test-suite for input validation,
-    shapes, etc, making sure that the estimator complies with `scikit-leanrn`
+    shapes, etc, making sure that the estimator complies with `scikit-learn`
     conventions as detailed in :ref:`rolling_your_own_estimator`.
     Additional tests for classifiers, regressors, clustering or transformers
     will be run if the Estimator class inherits from the corresponding mixin
     from sklearn.base.
-
-    This test can be applied to classes or instances.
-    Classes currently have some additional tests that related to construction,
-    while passing instances allows the testing of multiple options.
 
     Setting `generate_only=True` returns a generator that yields (estimator,
     check) tuples where the check can be called independently from each
@@ -437,8 +425,12 @@ def check_estimator(Estimator, generate_only=False):
 
     Parameters
     ----------
-    estimator : estimator object or class
-        Estimator to check. Estimator is a class object or instance.
+    estimator : estimator object
+        Estimator instance to check.
+
+        .. versionchanged:: 0.24
+           Passing a class was deprecated in version 0.23, and support for
+           classes was removed in 0.24.
 
     generate_only : bool, optional (default=False)
         When `False`, checks are evaluated when `check_estimator` is called.
@@ -455,13 +447,16 @@ def check_estimator(Estimator, generate_only=False):
         `generate_only=True`.
     """
     if isinstance(Estimator, type):
-        # got a class
-        checks_generator = _generate_class_checks(Estimator)
-    else:
-        # got an instance
-        estimator = Estimator
-        name = type(estimator).__name__
-        checks_generator = _generate_instance_checks(name, estimator)
+        msg = ("Passing a class was deprecated in version 0.23 "
+               "and isn't supported anymore from 0.24."
+               "Please pass an instance instead.")
+        raise TypeError(msg)
+
+    estimator = Estimator
+    name = type(estimator).__name__
+
+    checks_generator = ((estimator, partial(check, name))
+                        for check in _yield_all_checks(name, estimator))
 
     if generate_only:
         return checks_generator
@@ -1536,11 +1531,6 @@ def check_estimators_pickle(name, estimator_orig):
     set_random_state(estimator)
     estimator.fit(X, y)
 
-    result = dict()
-    for method in check_methods:
-        if hasattr(estimator, method):
-            result[method] = getattr(estimator, method)(X)
-
     # pickle and unpickle!
     pickled_estimator = pickle.dumps(estimator)
     if estimator.__module__.startswith('sklearn.'):
@@ -2565,9 +2555,11 @@ def check_estimators_data_not_an_array(name, estimator_orig, X, y, obj_type):
 
 
 def check_parameters_default_constructible(name, Estimator):
-    # this check works on classes, not instances
     # test default-constructibility
     # get rid of deprecation warnings
+
+    Estimator = Estimator.__class__
+
     with ignore_warnings(category=FutureWarning):
         estimator = _construct_instance(Estimator)
         # test cloning
@@ -2976,3 +2968,35 @@ def check_n_features_in(name, estimator_orig):
             "https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep010/proposal.html",  # noqa
             FutureWarning
         )
+
+
+def check_requires_y_none(name, estimator_orig):
+    # Make sure that an estimator with requires_y=True fails gracefully when
+    # given y=None
+
+    rng = np.random.RandomState(0)
+
+    estimator = clone(estimator_orig)
+    set_random_state(estimator)
+
+    n_samples = 100
+    X = rng.normal(loc=100, size=(n_samples, 2))
+    X = _pairwise_estimator_convert_X(X, estimator)
+
+    warning_msg = ("As of scikit-learn 0.23, estimators should have a "
+                   "'requires_y' tag set to the appropriate value. "
+                   "The default value of the tag is False. "
+                   "An error will be raised from version 0.25 when calling "
+                   "check_estimator() if the tag isn't properly set.")
+
+    expected_err_msgs = (
+        "requires y to be passed, but the target y is None",
+        "Expected array-like (array or non-string sequence), got None",
+        "y should be a 1d array"
+    )
+
+    try:
+        estimator.fit(X, None)
+    except ValueError as ve:
+        if not any(msg in str(ve) for msg in expected_err_msgs):
+            warnings.warn(warning_msg, FutureWarning)
