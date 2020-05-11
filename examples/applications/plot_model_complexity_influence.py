@@ -9,7 +9,7 @@ computational performance.
 We will be using two datasets:
     - Diabetes dataset for regression.
       This dataset consists of 10 measurements taken from diabetes patients.
-      The task is to predict the disease
+      The task is to predict disease
       progression
     - 20 Newsgroups dataset for classification. This dataset consists of
       newsgroup posts. The task is to predict on which topic (out of 20 topics)
