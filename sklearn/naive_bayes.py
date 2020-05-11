@@ -163,6 +163,14 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
             <sklearn.compose.make_column_selector>`
             can select multiple columns by name or dtype.
 
+    remainder : Estimator, default=None
+        By default, only the specified columns in `models` are
+        used for fitting, and the non-specified columns are dropped 
+        (default of ``None``). 
+        By specifying ``remainder=GaussianNB()`` for example, all remaining 
+        columns that are not specified in `models` will be modelled using
+        Gaussian Naive Bayes.
+
     Attributes
     ----------
     models_ : list of tuples
@@ -193,8 +201,13 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
     array([1])
     """
 
-    def __init__(self, models, *, fit_prior=False, class_prior=None):
+    def __init__(self,
+                 models, *,
+                 remainder=None,
+                 fit_prior=False,
+                 class_prior=None):
         self.models = models
+        self.remainder = remainder
         self.fit_prior = fit_prior
         self.class_prior = class_prior
 
@@ -216,9 +229,9 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
         self._validate_models(X)
         self._check_X_y(X, y)
 
-        # Apply self.fit_prior and self.class_prior to 
-        # all the models specified by user at index 1. 
-        # Continuous models like GaussianNB do not 
+        # Apply self.fit_prior and self.class_prior to
+        # all the models specified by user at index 1.
+        # Continuous models like GaussianNB do not
         # have an attribute equivalent to fit_prior
         for i in range(len(self.models)):
             if hasattr(self.models[i][1], "fit_prior"):
@@ -319,13 +332,13 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
         for col in cols:
             if col in dict_col2model:
                 raise ValueError("Duplicate specification of "
-                                f"column {col} found.")
+                                 f"column {col} found.")
             else:
                 dict_col2model[col] = estimator.__class__.__name__.lower()
         self._cols.append(cols)
 
-        # This checks if the no. of columns in the dataset 
-        # matches the columns specified 
+        # This checks if the no. of columns in the dataset
+        # matches the columns specified
         # TODO: Lift this restriction and use a `remainder` parameter
         n_features = X.shape[-1]
         n_cols_specified = len(dict_col2model)
@@ -334,7 +347,7 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
                              "in X but {} ".format(n_cols_specified) +
                              "were specified.")
         self.n_features_ = n_features
-    
+
         # Lastly, check the estimators in self.models
         for model in self.models:
 
@@ -349,7 +362,7 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
 
             _, estimator, _ = model
 
-            # Check if user specified say `GaussianNB()` instead of 
+            # Check if user specified say `GaussianNB()` instead of
             # `GaussianNB`
             if callable(estimator):
                 raise ValueError("Estimator should be a callable.")
