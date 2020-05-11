@@ -59,8 +59,7 @@ Changelog
   :class:`neighbors.RadiusNeighborsClassifier`,
   :class:`neighbors.RadiusNeighborsRegressor`,
   :func:`metrics.pairwise_distances`
-  and by performing data validation in :func:`_validate_data` instead of
-  in loops of calling :func:`dist` or :func:`rdist`.
+  and by validating data out of loops.
   :pr:`17038` by :user:`Wenbo Zhao <webber26232>`.
 
 Code and Documentation Contributors
