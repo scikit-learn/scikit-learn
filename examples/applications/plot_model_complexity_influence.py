@@ -16,18 +16,21 @@ We will be using two datasets:
       the post is written about.
 
 We will model the complexity influence on three different estimators:
-    - :class:`~sklearn.linear_model.SGDClassifier` (for classification data) which implements stochastic
-      gradient descent learning
-      
-    - :class:`~sklearn.svm.NuSVR` (for regression data) which implements Nu support vector regression
-      
-    - :class:`~sklearn.ensemble.GradientBoostingRegressor` (for regression data) which builds an additive
-      model in a forward stage-wise fashion
-      
+    - :class:`~sklearn.linear_model.SGDClassifier` (for classification data)
+      which implements stochastic gradient descent learning
 
-For each class of models we make the model complexity vary through the choice
-of relevant model parameters. Next, we will measure the influence on both
-computational performance (latency) and predictive power (MSE or Hamming Loss).
+    - :class:`~sklearn.svm.NuSVR` (for regression data) which implements
+      Nu support vector regression
+
+    - :class:`~sklearn.ensemble.GradientBoostingRegressor` (for regression
+      data) which builds an additive
+      model in a forward stage-wise fashion
+
+
+We make the model complexity vary through the choice of relevant model
+parameters in each of our selected models. Next, we will measure the influence
+on both computational performance (latency) and predictive power (MSE or
+Hamming Loss).
 
 """
 
@@ -97,8 +100,8 @@ classification_data = generate_data('classification')
 # Next, we can calculate the influence of the parameters on the given
 # estimator. In each lap we will set the estimator with the new value of
 # ``changing_param`` and we will be collecting the prediction times, prediction
-# performance and complexities to see how those changes affect the estimator.  We
-# will calculate the complexity using ``complexity_computer`` passed as a
+# performance and complexities to see how those changes affect the estimator.
+# We will calculate the complexity using ``complexity_computer`` passed as a
 # parameter.
 #
 
