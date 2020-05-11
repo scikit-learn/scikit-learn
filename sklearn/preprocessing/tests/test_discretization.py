@@ -281,3 +281,29 @@ def test_percentile_numeric_stability():
     assert_warns_message(UserWarning, msg, kbd.fit, X)
     assert_array_almost_equal(kbd.bin_edges_[0], bin_edges)
     assert_array_almost_equal(kbd.transform(X), Xt)
+
+
+@pytest.mark.parametrize('strategy', ['uniform', 'kmeans', 'quantile'])
+@pytest.mark.parametrize('encode', ['ordinal', 'onehot'])
+def test_nan_handling(strategy, encode):
+    X = np.array([[1, 3],
+                  [2, -1],
+                  [np.nan, 0],
+                  [4, 1],
+                  [-1, 5]])
+    kbd = KBinsDiscretizer(n_bins=3, strategy=strategy, encode=encode)
+    Xt = kbd.fit_transform(X)
+    Xinv = kbd.inverse_transform(Xt)
+    if encode == 'onehot':
+        # one additional column for feature 1
+        # because of NaN but no additional column
+        # for feature 2 since it has no NaNs
+        assert Xt.shape[1] == 7
+        assert Xt[2, 0] == 1
+    elif encode == 'ordinal':
+        flat_Xt = Xt.ravel()
+        mask = np.ones(flat_Xt.shape, dtype=bool)
+        mask[4] = False  # NaN position
+        assert ~(flat_Xt[mask] == -1).any()
+        assert (flat_Xt[~mask] == -1).any()
+    assert np.isnan(Xinv[2, 0])
