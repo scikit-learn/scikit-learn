@@ -268,7 +268,7 @@ def test_unit_weights_vs_no_weights(covar_type):
     prec_unit_weight = uniform_precisions(g_unit_weight.precisions_,
                                           covar_type, n_components, n_features)
     prec_no_weight = uniform_precisions(g_no_weight.precisions_,
-                                          covar_type, n_components, n_features)
+                                        covar_type, n_components, n_features)
 
     arg_idx1 = np.trace(prec_unit_weight, axis1=1, axis2=2).argsort()
     arg_idx2 = np.trace(prec_no_weight, axis1=1, axis2=2).argsort()
@@ -740,7 +740,7 @@ def test_gaussian_mixture_fit(covar_type):
                     rtol=0.1, atol=1e-2)
 
     prec_pred = uniform_precisions(g.precisions_, covar_type,
-                                       n_components, n_features)
+                                   n_components, n_features)
     prec_test = uniform_precisions(rand_data.precisions[covar_type],
                                    covar_type, n_components, n_features)
 
