@@ -13,7 +13,7 @@ We will be using two datasets:
       progression
     - :ref:`20newsgroups_dataset` for classification. This dataset consists of
       newsgroup posts. The task is to predict on which topic (out of 20 topics)
-      the post is written on
+      the post is written about.
 
 We will model the complexity influence on three different estimators:
     - SGDClassifier (for classification data) which implements stochastic
