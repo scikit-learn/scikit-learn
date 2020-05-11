@@ -193,7 +193,7 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
     array([1])
     """
 
-    def __init__(self, *, models, fit_prior=False, class_prior=None):
+    def __init__(self, models, *, fit_prior=False, class_prior=None):
         self.models = models
         self.fit_prior = fit_prior
         self.class_prior = class_prior
