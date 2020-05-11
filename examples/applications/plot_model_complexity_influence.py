@@ -10,7 +10,7 @@ We will be using two datasets:
     - :ref:`diabetes_dataset` for regression.
       This dataset consists of 10 measurements taken from diabetes patients.
       The task is to predict disease
-      progression
+      progression.
     - :ref:`20newsgroups_dataset` for classification. This dataset consists of
       newsgroup posts. The task is to predict on which topic (out of 20 topics)
       the post is written about.
