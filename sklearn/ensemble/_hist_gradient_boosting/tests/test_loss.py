@@ -78,7 +78,7 @@ def test_derivatives(loss, x0, y_true):
     def func(x: np.ndarray) -> np.ndarray:
         if isinstance(loss, _LOSSES['binary_crossentropy']):
             # Subtract a constant term such that the binary cross entropy
-            # has its minimum at zero. This only works if 0 < y_true < 1.
+            # has its minimum at zero, which is needed for the newton method.
             actual_min = loss.pointwise_loss(y_true, logit(y_true))
             return loss.pointwise_loss(y_true, x) - actual_min
         else:
