@@ -7,23 +7,23 @@ Demonstrate how model complexity influences both prediction accuracy and
 computational performance.
 
 We will be using two datasets:
-    - Diabetes dataset for regression.
+    - :ref:`diabetes_dataset` for regression.
       This dataset consists of 10 measurements taken from diabetes patients.
-      The task is to predict the disease
-      progression
-    - 20 Newsgroups dataset for classification. This dataset consists of
+      The task is to predict disease
+      progression.
+    - :ref:`20newsgroups_dataset` for classification. This dataset consists of
       newsgroup posts. The task is to predict on which topic (out of 20 topics)
-      the post is written on
+      the post is written about.
 
 We will model the complexity influence on three different estimators:
-    - SGDClassifier (for classification data) which implements stochastic
+    - :class:`~sklearn.linear_model.SGDClassifier` (for classification data) which implements stochastic
       gradient descent learning
-      :class:`sklearn.linear_model.SGDClassifier`
-    - NuSVR (for regression data) which implements Nu support vector regression
-      :class:`sklearn.svm.NuSVR`
-    - GradientBoostingRegressor (for regression data) which builds an additive
+      
+    - :class:`~sklearn.svm.NuSVR` (for regression data) which implements Nu support vector regression
+      
+    - :class:`~sklearn.ensemble.GradientBoostingRegressor` (for regression data) which builds an additive
       model in a forward stage-wise fashion
-      :class:`sklearn.ensemble.GradientBoostingRegressor`
+      
 
 For each class of models we make the model complexity vary through the choice
 of relevant model parameters. Next, we will measure the influence on both
@@ -59,13 +59,13 @@ np.random.seed(0)
 # Load the data
 # -------------
 #
-# First we are loading both datasets.
+# First we load both datasets.
 #
-# Note 1: We are using fetch_20newsgroups_vectorized
-# :func:`sklearn.datasets.fetch_20newsgroups_vectorized` to download 20
-# newsgroups data set. It returns ready-to-use features.
+# Note 1: We are using :func:`~sklearn.datasets.fetch_20newsgroups_vectorized`
+#  to download 20
+# newsgroups dataset. It returns ready-to-use features.
 #
-# Note 2: X for the 20 newsgropus dataset is a sparse matrix while X of
+# Note 2: ``X`` of the 20 newsgropus dataset is a sparse matrix while ``X`` of
 # diabetes dataset is a numpy array.
 #
 
@@ -94,11 +94,11 @@ classification_data = generate_data('classification')
 ##############################################################################
 # Benchmark influence
 # -------------------
-# Next, we can calculate the influence of the changing params on the given
+# Next, we can calculate the influence of the parameters on the given
 # estimator. In each lap we will set the estimator with the new value of
-# 'changing param' and we will be collecting the prediction times, prediction
-# powers and complexities to see how those changes affect the estimator.  We
-# will calculate the complexity using 'complexity_computer' passed as a
+# ``changing_param`` and we will be collecting the prediction times, prediction
+# performance and complexities to see how those changes affect the estimator.  We
+# will calculate the complexity using ``complexity_computer`` passed as a
 # parameter.
 #
 
@@ -137,14 +137,14 @@ def benchmark_influence(conf):
 # Choose parameters
 # -----------------------------
 #
-# We are choosing the parameters for each of our estimators by making
+# We choose the parameters for each of our estimators by making
 # a dictionary with all the necessary values.
-# 'changing_param' is the name of the parameter which will vary in each
+# ``changing_param`` is the name of the parameter which will vary in each
 # estimator.
-# complexity will be defined by the 'complexity_label' and calculated using
+# Complexity will be defined by the ``complexity_label`` and calculated using
 # 'complexity_computer'
 # Also note that depending on the estimator type we are passing
-# different data
+# different data.
 #
 
 def _count_nonzero_coefficients(estimator):
@@ -194,7 +194,7 @@ configurations = [
 # Run the code and plot the results
 # ---------------------------------
 # We are ready to run all our functions by looping though the configurations we
-# set previously and then plotting the inluence of changing parameters on the
+# set previously and then plotting the influence of varying parameters on the
 # complexity and the latency of each model.
 #
 
