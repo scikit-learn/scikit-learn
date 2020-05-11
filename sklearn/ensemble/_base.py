@@ -4,6 +4,7 @@
 # License: BSD 3 clause
 
 from abc import ABCMeta, abstractmethod
+import copy
 import numbers
 from typing import List
 
@@ -148,7 +149,9 @@ class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         sub-estimators.
         """
         estimator = clone(self.base_estimator_)
-        estimator.set_params(**{p: getattr(self, p)
+        # Make a deepcopy in case one of the base estimators has a mutable
+        # parameter that might be shared and modified during parallel fitting
+        estimator.set_params(**{p: copy.deepcopy(getattr(self, p))
                                 for p in self.estimator_params})
 
         if random_state is not None:

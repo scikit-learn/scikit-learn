@@ -1377,3 +1377,22 @@ def test_little_tree_with_small_max_samples(ForestClass):
 
     msg = "Tree without `max_samples` restriction should have more nodes"
     assert tree1.node_count > tree2.node_count, msg
+
+
+@pytest.mark.parametrize('Forest', FOREST_REGRESSORS)
+def test_mse_criterion_object_segfault_smoke_test(Forest):
+    # Ensure that we can pass a mutable criterion while using parallel fit
+    # Non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/12623
+    from sklearn.tree._classes import CRITERIA_REG
+
+    X = np.random.random((1000, 3))
+    y = np.random.random((1000, 1))
+
+    n_samples, n_outputs = y.shape
+    mse_criterion = CRITERIA_REG['mse'](n_outputs, n_samples)
+    est = FOREST_REGRESSORS[Forest](
+        n_estimators=2, n_jobs=2, criterion=mse_criterion
+    )
+
+    est.fit(X, y)

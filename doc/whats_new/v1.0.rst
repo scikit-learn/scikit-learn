@@ -44,6 +44,15 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
+:mod:`sklearn.ensemble`
+.......................
+
+- |Fix| Fix a bug in `_make_estimator` of :class:`ensemble.BaseEnsemble` that
+  caused segmentation faults under certain conditions. `_make_estimator` now
+  deep copies each element of `estimator_params` when creating estimators
+  to prevent shared access to underlying mutable attributes in the parameters.
+  :pr:`18985` by :user:`Alex Adamson <aadamson>` and
+  :user:`Wil Yegelwel <wyegelwel>`.
 
 
 Code and Documentation Contributors
