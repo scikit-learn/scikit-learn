@@ -194,7 +194,7 @@ configurations = [
 # Run the code and plot the results
 # ---------------------------------
 # We are ready to run all our functions by looping though the configurations we
-# set previously and then plotting the inluence of changing parameters on the
+# set previously and then plotting the influence of varying parameters on the
 # complexity and the latency of each model.
 #
 
