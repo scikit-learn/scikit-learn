@@ -7,7 +7,7 @@ Demonstrate how model complexity influences both prediction accuracy and
 computational performance.
 
 We will be using two datasets:
-    - Diabetes dataset for regression.
+    - :ref:`diabetes_dataset` for regression.
       This dataset consists of 10 measurements taken from diabetes patients.
       The task is to predict disease
       progression
