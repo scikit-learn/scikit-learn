@@ -139,7 +139,7 @@ def benchmark_influence(conf):
 #
 # We choose the parameters for each of our estimators by making
 # a dictionary with all the necessary values.
-# 'changing_param' is the name of the parameter which will vary in each
+# ``changing_param`` is the name of the parameter which will vary in each
 # estimator.
 # Complexity will be defined by the ``complexity_label`` and calculated using
 # 'complexity_computer'
