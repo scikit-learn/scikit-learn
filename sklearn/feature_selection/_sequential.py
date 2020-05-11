@@ -70,23 +70,6 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    pre_dispatch : int, or str, default=None
-        Controls the number of jobs that get dispatched during parallel
-        execution. Reducing this number can be useful to avoid an
-        explosion of memory consumption when more jobs get dispatched
-        than CPUs can process. This parameter can be:
-
-            - None, in which case all the jobs are immediately
-              created and spawned. Use this for lightweight and
-              fast-running jobs, to avoid delays due to on-demand
-              spawning of the jobs
-
-            - An int, giving the exact number of total jobs that are
-              spawned
-
-            - A str, giving an expression as a function of n_jobs,
-              as in '2*n_jobs'
-
     Attributes
     ----------
     n_features_to_select_ : int
@@ -114,17 +97,18 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
 
     See also
     --------
-    RFE : Recursive feature elimination selection of the best number of
-          features
-    SelectFromModel : Feature selection based on importance weights
+    RFE : Recursive feature elimination based on importance weights.
+    RFECV : Recursive feature elimination based on importance weights, with
+        automatic selection of the number of features.
+    SelectFromModel : Feature selection based on thresholds of importance
+        weights.
     """
     def __init__(self, estimator, *, n_features_to_select=None, forward=True,
-                 scoring=None, cv=5, n_jobs=None, pre_dispatch='2*n_jobs'):
+                 scoring=None, cv=5, n_jobs=None):
 
         self.estimator = estimator
         self.n_features_to_select = n_features_to_select
         self.forward = forward
-        self.pre_dispatch = pre_dispatch
         self.scoring = scoring
         self.cv = cv
         self.n_jobs = n_jobs
@@ -177,10 +161,10 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
             current_mask.add(new_feature_idx)
 
         # transform the mask into a proper boolean mask of selected features
-        selected_features = (current_mask if self.forward
-                             else set(range(X.shape[1])) - current_mask)
         self.support_ = np.zeros(X.shape[1], dtype=bool)
-        self.support_[list(selected_features)] = True
+        self.support_[list(current_mask)] = True
+        if not self.forward:
+            self.support_ = ~self.support_
 
         return self
 
@@ -203,7 +187,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
             X_new = _safe_indexing(X, list(candidate_mask), axis=1)
             scores[feature_idx] = cross_val_score(
                 estimator, X_new, y, cv=self.cv, scoring=self.scoring,
-                n_jobs=self.n_jobs, pre_dispatch=self.pre_dispatch).mean()
+                n_jobs=self.n_jobs).mean()
         return max(scores, key=lambda feature_idx: scores[feature_idx])
 
     def _get_support_mask(self):

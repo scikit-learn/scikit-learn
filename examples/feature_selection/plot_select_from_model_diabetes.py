@@ -1,7 +1,7 @@
 """
-===========================================================================
-Feature selection using feature importance and sequential feature selection
-===========================================================================
+============================================
+Model-based and sequential feature selection
+============================================
 
 This example illustrates and compares two approaches for feature selection:
 :class:`~sklearn.feature_selection.SelectFromModel` which is based on feature
