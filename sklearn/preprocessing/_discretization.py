@@ -335,3 +335,6 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
             column[Xinv[:, jj] == -1] = np.NaN
             Xinv[:, jj] = column
         return Xinv
+
+    def _more_tags(self):
+        return {'allow_nan': True}
