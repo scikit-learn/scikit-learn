@@ -867,7 +867,7 @@ class TimeSeriesSplit(_BaseKFold):
         # Make sure we have enough samples for the given split parameters
         if n_folds > n_samples:
             raise ValueError(
-                (f"Cannot have number of folds ={n_folds} greater"
+                (f"Cannot have number of folds={n_folds} greater"
                  f" than the number of samples: {n_samples}."))
         if n_samples - gap - (test_size * n_splits) <= 0:
             raise ValueError(
