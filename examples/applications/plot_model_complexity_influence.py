@@ -97,7 +97,7 @@ classification_data = generate_data('classification')
 # Next, we can calculate the influence of the parameters on the given
 # estimator. In each lap we will set the estimator with the new value of
 # ``changing_param`` and we will be collecting the prediction times, prediction
-# powers and complexities to see how those changes affect the estimator.  We
+# performance and complexities to see how those changes affect the estimator.  We
 # will calculate the complexity using 'complexity_computer' passed as a
 # parameter.
 #
