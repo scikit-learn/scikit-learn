@@ -70,12 +70,16 @@ plt.show()
 # Since we want to select only 2 features, we will set this threshold slightly
 # above the coefficient of third most important feature.
 from sklearn.feature_selection import SelectFromModel
+from time import time
 
 threshold = np.sort(importance)[-3] + 0.01
 
+tic = time()
 sfm = SelectFromModel(lasso, threshold=threshold).fit(X, y)
+toc = time()
 print("Features selected by SelectFromModel: "
       f"{feature_names[sfm.get_support()]}")
+print(f"Done in {toc - tic:.3f}s")
 
 ##############################################################################
 # Selecting features with Sequential Feature Selection
@@ -94,14 +98,22 @@ print("Features selected by SelectFromModel: "
 
 from sklearn.feature_selection import SequentialFeatureSelector
 
+tic_fwd = time()
 sfs_forward = SequentialFeatureSelector(lasso, n_features_to_select=2,
                                         forward=True).fit(X, y)
+toc_fwd = time()
+
+tic_bwd = time()
 sfs_backward = SequentialFeatureSelector(lasso, n_features_to_select=2,
                                          forward=False).fit(X, y)
+toc_bwd = time()
+
 print("Features selected by forward sequential selection: "
       f"{feature_names[sfs_forward.get_support()]}")
+print(f"Done in {toc_fwd - tic_fwd:.3f}s")
 print("Features selected by backward sequential selection: "
       f"{feature_names[sfs_backward.get_support()]}")
+print(f"Done in {toc_bwd - tic_bwd:.3f}s")
 
 ##############################################################################
 # Discussion
@@ -124,4 +136,6 @@ print("Features selected by backward sequential selection: "
 # models for each of the iterations. SFS however works with any model, while
 # :class:`~sklearn.feature_selection.SelectFromModel` requires the underlying
 # estimator to expose a `coef_` attribute or a `feature_importances_`
-# attribute.
+# attribute. The forward SFS is faster than the backward SFS because it only
+# needs to perform `n_features_to_select = 2` iterations, while the backward
+# SFS needs to perform `n_features - n_features_to_select = 8` iterations.

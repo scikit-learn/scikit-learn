@@ -118,7 +118,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
           features
     SelectFromModel : Feature selection based on importance weights
     """
-    def __init__(self, estimator, n_features_to_select=None, forward=True,
+    def __init__(self, estimator, *, n_features_to_select=None, forward=True,
                  scoring=None, cv=5, n_jobs=None, pre_dispatch='2*n_jobs'):
 
         self.estimator = estimator
@@ -179,7 +179,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
         # transform the mask into a proper boolean mask of selected features
         selected_features = (current_mask if self.forward
                              else set(range(X.shape[1])) - current_mask)
-        self.support_ = np.full(X.shape[1], fill_value=False, dtype=bool)
+        self.support_ = np.zeros(X.shape[1], dtype=bool)
         self.support_[list(selected_features)] = True
 
         return self
