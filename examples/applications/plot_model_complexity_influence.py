@@ -94,7 +94,7 @@ classification_data = generate_data('classification')
 ##############################################################################
 # Benchmark influence
 # -------------------
-# Next, we can calculate the influence of the changing params on the given
+# Next, we can calculate the influence of the parameters on the given
 # estimator. In each lap we will set the estimator with the new value of
 # 'changing param' and we will be collecting the prediction times, prediction
 # powers and complexities to see how those changes affect the estimator.  We
