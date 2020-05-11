@@ -59,7 +59,7 @@ np.random.seed(0)
 # Load the data
 # -------------
 #
-# First we are loading both datasets.
+# First we load both datasets.
 #
 # Note 1: We are using fetch_20newsgroups_vectorized
 # :func:`sklearn.datasets.fetch_20newsgroups_vectorized` to download 20
