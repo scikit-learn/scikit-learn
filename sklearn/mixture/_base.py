@@ -166,8 +166,10 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
 
         if self.init_params == 'kmeans':
             resp = np.zeros((n_samples, self.n_components))
-            label = cluster.KMeans(n_clusters=self.n_components, n_init=1,
-                                   random_state=random_state).fit(X, sample_weight=sample_weight_copy).labels_
+            label = cluster.KMeans(
+                n_clusters=self.n_components, n_init=1,
+                random_state=random_state).fit(
+                    X, sample_weight=sample_weight_copy).labels_
             resp[np.arange(n_samples), label] = 1
         elif self.init_params == 'random':
             resp = random_state.rand(n_samples, self.n_components)
@@ -508,7 +510,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
                     self.means_, self.covariances_, n_samples_comp)])
 
         y = np.concatenate([np.full(sample, j, dtype=int)
-                           for j, sample in enumerate(n_samples_comp)])
+                            for j, sample in enumerate(n_samples_comp)])
 
         return (X, y)
 
