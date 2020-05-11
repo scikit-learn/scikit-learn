@@ -48,16 +48,14 @@ Changelog
 .....................
 
 
-:mod:`sklearn.neural_network`
+:mod:`sklearn.neighbors`
 .............................
 
-- |Efficiency| Speed up :class:`neighbors._dist_metrics.SEuclideanDistance`,
-  :class:`neighbors._dist_metrics.WMinkowskiDistance`,
-  :class:`neighbors._dist_metrics.MahalanobisDistance` and
-  :class:`neighbors._dist_metrics.HaversineDistance` by avoiding unexpected
-  GIL acquiring in Cython, and by performing data validation in
-  :func:`_validate_data` instead of in loops of calling
-  :func:`dist` or :func:`rdist`. :pr:`17038` by :user:`Wenbo Zhao`.
+- |Efficiency| Speed up `seuclidean`, `wminkowski`, `mahalanobis` and
+  `haversine` metrics in :class:`neighbors.DistanceMetric` by avoiding
+  unexpected GIL acquiring in Cython, and by performing data validation in
+  :func:`_validate_data` instead of in loops of calling :func:`dist` or
+  :func:`rdist`. :pr:`17038` by :user:`Wenbo Zhao <webber26232>`.
 
 Code and Documentation Contributors
 -----------------------------------
