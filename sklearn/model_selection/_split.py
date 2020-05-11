@@ -868,11 +868,11 @@ class TimeSeriesSplit(_BaseKFold):
         if n_folds > n_samples:
             raise ValueError(
                 (f"Cannot have number of folds={n_folds} greater"
-                 f" than the number of samples: {n_samples}."))
+                 f" than the number of samples={n_samples}."))
         if n_samples - gap - (test_size * n_splits) <= 0:
             raise ValueError(
-                (f"Too many splits ={n_splits} for number of samples"
-                 f" ={n_samples} with test_size ={test_size} and gap ={gap}."))
+                (f"Too many splits={n_splits} for number of samples"
+                 f"={n_samples} with test_size={test_size} and gap={gap}."))
 
         indices = np.arange(n_samples)
         test_starts = range(n_samples - n_splits * test_size,
