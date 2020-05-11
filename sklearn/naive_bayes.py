@@ -197,7 +197,6 @@ class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
         self.models = models
         self.fit_prior = fit_prior
         self.class_prior = class_prior
-        self._is_fitted = False
 
     def fit(self, X, y):
         """Fit X and y to the naive Bayes estimators.
