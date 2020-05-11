@@ -162,8 +162,9 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         contains_nan = []
         for jj in range(n_features):
             column = X[:, jj]
-            contains_nan.append(np.isnan(column).any()) # check whether there are NaN
-            column = column[~np.isnan(column)] # remove NaNs for the fit
+            contains_nan.append(
+                np.isnan(column).any())  # check whether there are NaN
+            column = column[~np.isnan(column)]  # remove NaNs for the fit
             col_min, col_max = column.min(), column.max()
 
             if col_min == col_max:
@@ -210,8 +211,9 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
         if 'onehot' in self.encode:
             self._encoder = OneHotEncoder(
-                categories=[np.arange(-1, self.n_bins_[jj]) if contains_nan[jj] else
-                            np.arange(0, self.n_bins_[jj]) 
+                categories=[np.arange(-1, self.n_bins_[jj])
+                            if contains_nan[jj] else
+                            np.arange(0, self.n_bins_[jj])
                             for jj in range(n_features)],
                 sparse=self.encode == 'onehot')
             # Fit the OneHotEncoder with toy datasets
@@ -270,7 +272,8 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         """
         check_is_fitted(self)
 
-        Xt = check_array(X, copy=True, dtype=FLOAT_DTYPES, force_all_finite=False)
+        Xt = check_array(
+            X, copy=True, dtype=FLOAT_DTYPES, force_all_finite=False)
         n_features = self.n_bins_.shape[0]
         if Xt.shape[1] != n_features:
             raise ValueError("Incorrect number of features. Expecting {}, "
@@ -331,5 +334,4 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
             column = bin_centers[np.int_(column)]
             column[Xinv[:, jj] == -1] = np.NaN
             Xinv[:, jj] = column
-            
         return Xinv
