@@ -745,6 +745,10 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
     H : array-like, shape (n_components, n_features)
         Initial guess for the solution.
 
+    A :
+
+    B :
+
     beta_loss : float or string, default 'frobenius'
         String must be in {'frobenius', 'kullback-leibler', 'itakura-saito'}.
         Beta divergence to be minimized, measuring the distance between X
@@ -752,6 +756,8 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
         (or 2) and 'kullback-leibler' (or 1) lead to significantly slower
         fits. Note that for beta_loss <= 0 (or 'itakura-saito'), the input
         matrix X cannot contain zeros.
+
+    batch_size :
 
     max_iter : integer, default: 200
         Number of iterations.
@@ -805,22 +811,23 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
         gamma = 1. / (beta_loss - 1.)
     else:
         gamma = 1.
-    n_samples = X.shape[0]
+
     # used for the convergence criterion
     error_at_init = _beta_divergence(X, W, H, beta_loss, square_root=True)
     previous_error = error_at_init
 
     H_sum, HHt, XHt = None, None, None
 
+    n_samples = X.shape[0]
     n_iter_update_h_ = 1
     max_iter_update_w_ = 5
 
     for n_iter in range(1, max_iter + 1):
-        # update W
-        # H_sum, HHt and XHt are saved and reused if not update_H
         for i, slice in enumerate(gen_batches(n=n_samples,
                                               batch_size=batch_size)):
 
+            # update W
+            # H_sum, HHt and XHt are saved and reused if not update_H
             for j in range(max_iter_update_w_):
                 delta_W, H_sum, HHt, XHt = _multiplicative_update_w(
                     X[slice], W[slice], H, beta_loss, l1_reg_W, l2_reg_W,
@@ -916,9 +923,15 @@ def non_negative_factorization(X, W=None, H=None,  A=None, B=None,
         If init='custom', it is used as initial guess for the solution.
         If update_H=False, it is used as a constant, to solve for W only.
 
+    A :
+
+    B :
+
     n_components : integer
         Number of components, if n_components is not set all features
         are kept.
+
+    batch_size :
 
     init : None | 'random' | 'nndsvd' | 'nndsvda' | 'nndsvdar' | 'custom'
         Method used to initialize the procedure.
@@ -1022,7 +1035,7 @@ def non_negative_factorization(X, W=None, H=None,  A=None, B=None,
     >>> import numpy as np
     >>> X = np.array([[1,1], [2, 1], [3, 1.2], [4, 1], [5, 0.8], [6, 1]])
     >>> from sklearn.decomposition import non_negative_factorization
-    >>> W, H, n_iter = non_negative_factorization(X, n_components=2,
+    >>> W, H, A, B, n_iter = non_negative_factorization(X, n_components=2,
     ... init='random', random_state=0)
 
     References
@@ -1322,7 +1335,7 @@ class NMF(TransformerMixin, BaseEstimator):
             X=X, W=W, H=H, A=None, B=None, n_components=self.n_components,
             batch_size=self.batch_size, init=self.init,
             update_H=True, solver=self.solver, beta_loss=self.beta_loss,
-            tol=0, max_iter=1, alpha=self.alpha,
+            tol=self.tol, max_iter=self.max_iter, alpha=self.alpha,
             l1_ratio=self.l1_ratio, regularization='both',
             random_state=self.random_state, verbose=self.verbose,
             shuffle=self.shuffle)

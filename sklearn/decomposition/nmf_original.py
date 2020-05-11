@@ -1078,7 +1078,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
     return W, H, n_iter
 
 
-class NMF(TransformerMixin, BaseEstimator):
+class NMFOriginal(TransformerMixin, BaseEstimator):
     r"""Non-Negative Matrix Factorization (NMF)
 
     Find two non-negative matrices (W, H) whose product approximates the non-
