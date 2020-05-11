@@ -23,7 +23,7 @@ dimensionality reduction of PCA projects the data into a lower dimensional
 space where the variance of the projected data is greedily maximized along
 each axis. Despite them having the most predictive power on the target, the
 directions with a lower variance will be dropped, and the final regressor
-will not be able to levarage them.
+will not be able to leverage them.
 
 PLS is both a transformer and a regressor, and it is quite similar to PCR: it
 also applies a dimensionality reduction to the samples before applying a
@@ -59,7 +59,8 @@ for i, (comp, var) in enumerate(zip(pca.components_, pca.explained_variance_)):
     comp = comp * var  # scale component by its variance explanation power
     plt.plot([0, comp[0]], [0, comp[1]], label=f"Component {i}", linewidth=5)
 plt.gca().set(aspect='equal',
-              title="2-dimensional dataset with principal components")
+              title="2-dimensional dataset with principal components",
+              xlabel='first feature', ylabel='second feature')
 plt.legend()
 plt.show()
 
@@ -67,17 +68,15 @@ plt.show()
 # For the purpose of this example, we now define the target `y` such that it is
 # strongly correlated with a direction that has a small variance. To this end,
 # we will project `X` onto the second component, and add some noise to it.
-# Our goal is to illustrate that PCR will perform poorly on this dataset,
-# comparatively to PLS.
 
 y = X.dot(pca.components_[1]) + rng.normal(size=n_samples) / 2
 
 fig, axes = plt.subplots(1, 2, figsize=(10, 3))
 
 axes[0].scatter(X.dot(pca.components_[0]), y)
-axes[0].set(xlabel='Projected data onto first component', ylabel='y')
+axes[0].set(xlabel='Projected data onto first PCA component', ylabel='y')
 axes[1].scatter(X.dot(pca.components_[1]), y)
-axes[1].set(xlabel='Projected data onto second component', ylabel='y')
+axes[1].set(xlabel='Projected data onto second PCA component', ylabel='y')
 plt.tight_layout()
 plt.show()
 
@@ -91,7 +90,7 @@ plt.show()
 # estimator has built-in scaling capabilities.
 #
 # For both models, we plot the projected data onto the first component against
-# the target. In both cases, this projected data is what the regrerssors will
+# the target. In both cases, this projected data is what the regressors will
 # use as training data.
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
@@ -111,19 +110,19 @@ pls.fit(X_train, y_train)
 
 fig, axes = plt.subplots(1, 2, figsize=(10, 2))
 axes[0].scatter(pca.transform(X_test), y_test)
-axes[0].set(xlabel='Projected data onto first component',
+axes[0].set(xlabel='Projected data onto first PCA component',
             ylabel='y', title='PCR / PCA')
 axes[1].scatter(pls.transform(X_test), y_test)
-axes[1].set(xlabel='Projected data onto first component',
+axes[1].set(xlabel='Projected data onto first PLS component',
             ylabel='y', title='PLS')
 plt.tight_layout()
 plt.show()
 
 ##############################################################################
-# As expected, the unsupervized PCA transformation of PCR has dropped the
-# the second component, i.e. the direction with the lowest variance, despite
+# As expected, the unsupervised PCA transformation of PCR has dropped the
+# second component, i.e. the direction with the lowest variance, despite
 # it being the most predictive direction. This is because PCA is a completely
-# unsupervized transformation, and results in the projected data having a low
+# unsupervised transformation, and results in the projected data having a low
 # predictive power on the target.
 #
 # On the other hand, the PLS regressor manages to capture the effect of the
