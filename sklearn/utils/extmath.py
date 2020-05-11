@@ -349,24 +349,24 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter='auto',
     B = safe_sparse_dot(Q.T, M)
 
     # compute the SVD on the thin matrix: (k + p) wide
-    Uhat, s, V = linalg.svd(B, full_matrices=False)
+    Uhat, s, Vt = linalg.svd(B, full_matrices=False)
 
     del B
     U = np.dot(Q, Uhat)
 
     if flip_sign:
         if not transpose:
-            U, V = svd_flip(U, V)
+            U, Vt = svd_flip(U, Vt)
         else:
             # In case of transpose u_based_decision=false
             # to actually flip based on u and not v.
-            U, V = svd_flip(U, V, u_based_decision=False)
+            U, Vt = svd_flip(U, Vt, u_based_decision=False)
 
     if transpose:
         # transpose back the results according to the input convention
-        return V[:n_components, :].T, s[:n_components], U[:, :n_components].T
+        return Vt[:n_components, :].T, s[:n_components], U[:, :n_components].T
     else:
-        return U[:, :n_components], s[:n_components], V[:n_components, :]
+        return U[:, :n_components], s[:n_components], Vt[:n_components, :]
 
 
 def weighted_mode(a, w, axis=0):
@@ -508,6 +508,8 @@ def svd_flip(u, v, u_based_decision=True):
         u and v are the output of `linalg.svd` or
         :func:`~sklearn.utils.extmath.randomized_svd`, with matching inner
         dimensions so one can compute `np.dot(u * s, v)`.
+        The input v should really be called vt to be consistent with scipy's
+        ouput.
 
     u_based_decision : boolean, (default=True)
         If True, use the columns of u as the basis for sign flipping.
