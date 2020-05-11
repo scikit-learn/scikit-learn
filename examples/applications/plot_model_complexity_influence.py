@@ -61,8 +61,8 @@ np.random.seed(0)
 #
 # First we load both datasets.
 #
-# Note 1: We are using fetch_20newsgroups_vectorized
-# :func:`sklearn.datasets.fetch_20newsgroups_vectorized` to download 20
+# Note 1: We are using :func:`~sklearn.datasets.fetch_20newsgroups_vectorized`
+#  to download 20
 # newsgroups data set. It returns ready-to-use features.
 #
 # Note 2: X for the 20 newsgropus dataset is a sparse matrix while X of
