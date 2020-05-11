@@ -8,24 +8,27 @@ This example compares `Principal Component Regression
 `Partial Least Squares Regression
 <https://en.wikipedia.org/wiki/Partial_least_squares_regression>`_ (PLS) on a
 toy dataset. Our goal is to illustrate how PLS can outperform PCR when the
-target is strongly correlated with some features that have a low variance.
+target is strongly correlated with some directions in the data that have a
+low variance.
 
-PCR consists in applying :class:`~sklearn.decomposition.PCA` to the
-training data (possibly performing dimensionality reduction), and then
-training a regressor on the transformed training samples. In
+PCR is a regressor composed of two steps: first,
+:class:`~sklearn.decomposition.PCA` is applied to the training data, possibly
+performing dimensionality reduction; then, a regressor (e.g. a linear
+regressor) is trained on the transformed samples. In
 :class:`~sklearn.decomposition.PCA`, the transformation is purely
 unsupervised, meaning that no information about the targets is used. As a
-result, PCR may perform poorly in some datasets where the target is
-correlated with features that have a low variance. Indeed, the dimensionality
-reduction of PCA tries to only keep the features that have a high variance.
-Those that have a low variance will be dropped, and the final regressor will
-not be able to leverage these features (or, strictly speaking, linear
-combinations thereof).
+result, PCR may perform poorly in some datasets where the target is strongly
+correlated with *directions* that have low variance. Indeed, the
+dimensionality reduction of PCA projects the data into a lower dimensional
+space where the variance of the projected data is greedily maximized along
+each axis. Despite them having the most predictive power on the target, the
+directions with a lower variance will be dropped, and the final regressor
+will not be able to levarage them.
 
 PLS is both a transformer and a regressor, and it is quite similar to PCR: it
 also applies a dimensionality reduction to the samples before applying a
 linear regressor to the transformed data. The main difference with PCR is
-that the transformation is supervised. Therefore, as we will see in this
+that the PLS transformation is supervised. Therefore, as we will see in this
 example, it does not suffer from the issue we just mentioned.
 """
 
@@ -35,29 +38,46 @@ print(__doc__)
 # The data
 # --------
 #
-# We start by creating a simple dataset with two features. The target `y` is
-# strongly correlated with the second feature, which has a low variance. The
-# first feature has a higher variance but no predictive power on the target.
-
+# We start by creating a simple dataset with two features. Before we even dive
+# into PCR and PLS, we fit a PCA estimator to display the two principal
+# components of this dataset, i.e. the two directions that explain the most
+# variance in the data.
 import numpy as np
 import matplotlib.pyplot as plt
+from sklearn.decomposition import PCA
 
 rng = np.random.RandomState(0)
 n_samples = 500
-f0 = rng.normal(scale=10, size=n_samples)
-f1 = rng.normal(scale=1, size=n_samples)
-X = np.c_[f0, f1]
-y = f1 + rng.normal(scale=.1, size=n_samples)
+cov = [[3, 3],
+       [3, 4]]
+X = rng.multivariate_normal(mean=[0, 0], cov=cov, size=n_samples)
+pca = PCA(n_components=2).fit(X)
 
-fig, axes = plt.subplots(1, 3, figsize=(10, 3))
 
-axes[0].scatter(f0, f1)
-axes[0].set(ylim=(-10, 10), xlim=(-20, 20), xlabel='f0', ylabel='f1',
-            title='training data')
-axes[1].scatter(f0, y)
-axes[1].set(xlabel='f0', ylabel='y', title='target vs f0')
-axes[2].scatter(f1, y)
-axes[2].set(xlabel='f1', ylabel='y', title='target vs f1')
+plt.scatter(X[:, 0], X[:, 1], alpha=.3, label='samples')
+for i, (comp, var) in enumerate(zip(pca.components_, pca.explained_variance_)):
+    comp = comp * var  # scale component by its variance explanation power
+    plt.plot([0, comp[0]], [0, comp[1]], label=f"Component {i}", linewidth=5)
+plt.gca().set(aspect='equal',
+              title="2-dimensional dataset with principal components")
+plt.legend()
+plt.show()
+
+##############################################################################
+# For the purpose of this example, we now define the target `y` such that it is
+# strongly correlated with a direction that has a small variance. To this end,
+# we will project `X` onto the second component, and add some noise to it.
+# Our goal is to illustrate that PCR will perform poorly on this dataset,
+# comparatively to PLS.
+
+y = X.dot(pca.components_[1]) + rng.normal(size=n_samples) / 2
+
+fig, axes = plt.subplots(1, 2, figsize=(10, 3))
+
+axes[0].scatter(X.dot(pca.components_[0]), y)
+axes[0].set(xlabel='Projected data onto first component', ylabel='y')
+axes[1].scatter(X.dot(pca.components_[1]), y)
+axes[1].set(xlabel='Projected data onto second component', ylabel='y')
 plt.tight_layout()
 plt.show()
 
@@ -66,50 +86,65 @@ plt.show()
 # ------------------------------------------------
 #
 # We now create two regressors: PCR and PLS, and for our illustration purposes
-# we set the number of components to 1. For both models, we plot the first
-# component against the target.
+# we set the number of components to 1. Before feeding the data to the PCA step
+# of PCR, we first standardize it, as recommended by good practice. The PLS
+# estimator has built-in scaling capabilities.
 #
+# For both models, we plot the projected data onto the first component against
+# the target. In both cases, this projected data is what the regrerssors will
+# use as training data.
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.linear_model import LinearRegression
+from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 from sklearn.cross_decomposition import PLSRegression
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=rng)
 
-pcr = make_pipeline(PCA(n_components=1), LinearRegression())
+pcr = make_pipeline(StandardScaler(), PCA(n_components=1), LinearRegression())
 pcr.fit(X_train, y_train)
 pca = pcr.named_steps['pca']  # retrieve the PCA step of the pipeline
 
 pls = PLSRegression(n_components=1)
 pls.fit(X_train, y_train)
 
-fig, axes = plt.subplots(1, 2, figsize=(10, 3))
+fig, axes = plt.subplots(1, 2, figsize=(10, 2))
 axes[0].scatter(pca.transform(X_test), y_test)
-axes[0].set(xlabel='first component', ylabel='y', title='PCR / PCA')
+axes[0].set(xlabel='Projected data onto first component',
+            ylabel='y', title='PCR / PCA')
 axes[1].scatter(pls.transform(X_test), y_test)
-axes[1].set(xlabel='first component', ylabel='y', title='PLS')
+axes[1].set(xlabel='Projected data onto first component',
+            ylabel='y', title='PLS')
 plt.tight_layout()
 plt.show()
 
 ##############################################################################
 # As expected, the unsupervized PCA transformation of PCR has dropped the
-# second feature because it has a low variance, despite it being the most
-# predictive feature. This results in the first component having a low
-# predictive power on the target. On the other hand, the PLS regressor manages
-# to capture the effect of the second feature thanks to its use of target
-# information during the transformation: it can recogize that the second
-# feature should not be dropped.
+# the second component, i.e. the direction with the lowest variance, despite
+# it being the most predictive direction. This is because PCA is a completely
+# unsupervized transformation, and results in the projected data having a low
+# predictive power on the target.
+#
+# On the other hand, the PLS regressor manages to capture the effect of the
+# direction with the lowest variance, thanks to its use of target information
+# during the transformation: it can recogize that this direction is actually
+# the most predictive. We note that the first PLS component is negatively
+# correlated with the target, which comes from the fact that the signs of
+# eigenvectors are arbitrary.
 #
 # We also print the R-squared scores of both estimators, which further confirms
-# that PLS is a better alternative than PCR in this case:
+# that PLS is a better alternative than PCR in this case. A negative R-squared
+# indicates that PCR performs worse than a regressor that would simply predict
+# the mean of the target.
 
 print(f"PCR r-squared {pcr.score(X_test, y_test):.3f}")
 print(f"PLS r-squared {pls.score(X_test, y_test):.3f}")
 
 ##############################################################################
-# As a final remark, we note that PCR with 2 components performs well, since
-# the second feature wasn't dropped in this case:
+# As a final remark, we note that PCR with 2 components performs as well as
+# PLS: this is because in this case, PCR was able to leverage the second
+# component which has the most preditive power on the target.
 
 pca_2 = make_pipeline(PCA(n_components=2), LinearRegression())
 pca_2.fit(X_train, y_train)
