@@ -100,12 +100,12 @@ def check_randomized_svd_low_rank(dtype):
     assert X.shape == (n_samples, n_features)
 
     # compute the singular values of X using the slow exact method
-    U, s, V = linalg.svd(X, full_matrices=False)
+    U, s, Vt = linalg.svd(X, full_matrices=False)
 
     # Convert the singular values to the specific dtype
     U = U.astype(dtype, copy=False)
     s = s.astype(dtype, copy=False)
-    V = V.astype(dtype, copy=False)
+    Vt = Vt.astype(dtype, copy=False)
 
     for normalizer in ['auto', 'LU', 'QR']:  # 'none' would not be stable
         # compute the singular values of X using the fast approximate method
@@ -133,7 +133,7 @@ def check_randomized_svd_low_rank(dtype):
         assert_almost_equal(s[:k], sa, decimal=decimal)
 
         # check the singular vectors too (while not checking the sign)
-        assert_almost_equal(np.dot(U[:, :k], V[:k, :]), np.dot(Ua, Va),
+        assert_almost_equal(np.dot(U[:, :k], Vt[:k, :]), np.dot(Ua, Va),
                             decimal=decimal)
 
         # check the sparse matrix representation
@@ -306,28 +306,28 @@ def test_randomized_svd_power_iteration_normalizer():
     n_components = 50
 
     # Check that it diverges with many (non-normalized) power iterations
-    U, s, V = randomized_svd(X, n_components, n_iter=2,
-                             power_iteration_normalizer='none')
-    A = X - U.dot(np.diag(s).dot(V))
+    U, s, Vt = randomized_svd(X, n_components, n_iter=2,
+                              power_iteration_normalizer='none')
+    A = X - U.dot(np.diag(s).dot(Vt))
     error_2 = linalg.norm(A, ord='fro')
-    U, s, V = randomized_svd(X, n_components, n_iter=20,
-                             power_iteration_normalizer='none')
-    A = X - U.dot(np.diag(s).dot(V))
+    U, s, Vt = randomized_svd(X, n_components, n_iter=20,
+                              power_iteration_normalizer='none')
+    A = X - U.dot(np.diag(s).dot(Vt))
     error_20 = linalg.norm(A, ord='fro')
     assert np.abs(error_2 - error_20) > 100
 
     for normalizer in ['LU', 'QR', 'auto']:
-        U, s, V = randomized_svd(X, n_components, n_iter=2,
-                                 power_iteration_normalizer=normalizer,
-                                 random_state=0)
-        A = X - U.dot(np.diag(s).dot(V))
+        U, s, Vt = randomized_svd(X, n_components, n_iter=2,
+                                  power_iteration_normalizer=normalizer,
+                                  random_state=0)
+        A = X - U.dot(np.diag(s).dot(Vt))
         error_2 = linalg.norm(A, ord='fro')
 
         for i in [5, 10, 50]:
-            U, s, V = randomized_svd(X, n_components, n_iter=i,
-                                     power_iteration_normalizer=normalizer,
-                                     random_state=0)
-            A = X - U.dot(np.diag(s).dot(V))
+            U, s, Vt = randomized_svd(X, n_components, n_iter=i,
+                                      power_iteration_normalizer=normalizer,
+                                      random_state=0)
+            A = X - U.dot(np.diag(s).dot(Vt))
             error = linalg.norm(A, ord='fro')
             assert 15 > np.abs(error_2 - error)
 
@@ -355,20 +355,20 @@ def test_svd_flip():
     X = rs.randn(n_samples, n_features)
 
     # Check matrix reconstruction
-    U, S, V = linalg.svd(X, full_matrices=False)
-    U1, V1 = svd_flip(U, V, u_based_decision=False)
+    U, S, Vt = linalg.svd(X, full_matrices=False)
+    U1, V1 = svd_flip(U, Vt, u_based_decision=False)
     assert_almost_equal(np.dot(U1 * S, V1), X, decimal=6)
 
     # Check transposed matrix reconstruction
     XT = X.T
-    U, S, V = linalg.svd(XT, full_matrices=False)
-    U2, V2 = svd_flip(U, V, u_based_decision=True)
+    U, S, Vt = linalg.svd(XT, full_matrices=False)
+    U2, V2 = svd_flip(U, Vt, u_based_decision=True)
     assert_almost_equal(np.dot(U2 * S, V2), XT, decimal=6)
 
     # Check that different flip methods are equivalent under reconstruction
-    U_flip1, V_flip1 = svd_flip(U, V, u_based_decision=True)
+    U_flip1, V_flip1 = svd_flip(U, Vt, u_based_decision=True)
     assert_almost_equal(np.dot(U_flip1 * S, V_flip1), XT, decimal=6)
-    U_flip2, V_flip2 = svd_flip(U, V, u_based_decision=False)
+    U_flip2, V_flip2 = svd_flip(U, Vt, u_based_decision=False)
     assert_almost_equal(np.dot(U_flip2 * S, V_flip2), XT, decimal=6)
 
 

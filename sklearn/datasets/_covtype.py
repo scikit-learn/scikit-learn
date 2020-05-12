@@ -28,6 +28,8 @@ from ._base import RemoteFileMetadata
 from ..utils import Bunch
 from ._base import _pkl_filepath
 from ..utils import check_random_state
+from ..utils.validation import _deprecate_positional_args
+
 
 # The original data can be found in:
 # https://archive.ics.uci.edu/ml/machine-learning-databases/covtype/covtype.data.gz
@@ -40,7 +42,8 @@ ARCHIVE = RemoteFileMetadata(
 logger = logging.getLogger(__name__)
 
 
-def fetch_covtype(data_home=None, download_if_missing=True,
+@_deprecate_positional_args
+def fetch_covtype(*, data_home=None, download_if_missing=True,
                   random_state=None, shuffle=False, return_X_y=False):
     """Load the covertype dataset (classification).
 
