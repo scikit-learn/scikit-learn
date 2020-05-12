@@ -1301,7 +1301,7 @@ class RobustScaler(TransformerMixin, BaseEstimator):
 
 @_deprecate_positional_args
 def robust_scale(X, *, axis=0, with_centering=True, with_scaling=True,
-                 quantile_range=(25.0, 75.0), copy=True):
+                 quantile_range=(25.0, 75.0), gauss_adjust=False, copy=True):
     """Standardize a dataset along any axis
 
     Center to the median and component wise scale
@@ -1368,7 +1368,8 @@ def robust_scale(X, *, axis=0, with_centering=True, with_scaling=True,
         X = X.reshape(X.shape[0], 1)
 
     s = RobustScaler(with_centering=with_centering, with_scaling=with_scaling,
-                     quantile_range=quantile_range, copy=copy)
+                     quantile_range=quantile_range, gauss_adjust=gauss_adjust,
+                     copy=copy)
     if axis == 0:
         X = s.fit_transform(X)
     else:
