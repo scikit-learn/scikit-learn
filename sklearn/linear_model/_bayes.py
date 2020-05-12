@@ -12,9 +12,9 @@ from scipy import linalg
 from ._base import LinearModel, _rescale_data
 from ..base import RegressorMixin
 from ..utils.extmath import fast_logdet
-from ..utils import check_X_y
-from ..utils.fixes import pinvh
+from scipy.linalg import pinvh
 from ..utils.validation import _check_sample_weight
+from ..utils.validation import _deprecate_positional_args
 
 
 ###############################################################################
@@ -146,8 +146,8 @@ class BayesianRidge(RegressorMixin, LinearModel):
     M. E. Tipping, Sparse Bayesian Learning and the Relevance Vector Machine,
     Journal of Machine Learning Research, Vol. 1, 2001.
     """
-
-    def __init__(self, n_iter=300, tol=1.e-3, alpha_1=1.e-6, alpha_2=1.e-6,
+    @_deprecate_positional_args
+    def __init__(self, *, n_iter=300, tol=1.e-3, alpha_1=1.e-6, alpha_2=1.e-6,
                  lambda_1=1.e-6, lambda_2=1.e-6, alpha_init=None,
                  lambda_init=None, compute_score=False, fit_intercept=True,
                  normalize=False, copy_X=True, verbose=False):
@@ -190,7 +190,7 @@ class BayesianRidge(RegressorMixin, LinearModel):
             raise ValueError('n_iter should be greater than or equal to 1.'
                              ' Got {!r}.'.format(self.n_iter))
 
-        X, y = check_X_y(X, y, dtype=np.float64, y_numeric=True)
+        X, y = self._validate_data(X, y, dtype=np.float64, y_numeric=True)
 
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X,
@@ -490,8 +490,8 @@ class ARDRegression(RegressorMixin, LinearModel):
     which ``self.lambda_ < self.threshold_lambda`` are kept and the rest are
     discarded.
     """
-
-    def __init__(self, n_iter=300, tol=1.e-3, alpha_1=1.e-6, alpha_2=1.e-6,
+    @_deprecate_positional_args
+    def __init__(self, *, n_iter=300, tol=1.e-3, alpha_1=1.e-6, alpha_2=1.e-6,
                  lambda_1=1.e-6, lambda_2=1.e-6, compute_score=False,
                  threshold_lambda=1.e+4, fit_intercept=True, normalize=False,
                  copy_X=True, verbose=False):
@@ -526,8 +526,8 @@ class ARDRegression(RegressorMixin, LinearModel):
         -------
         self : returns an instance of self.
         """
-        X, y = check_X_y(X, y, dtype=np.float64, y_numeric=True,
-                         ensure_min_samples=2)
+        X, y = self._validate_data(X, y, dtype=np.float64, y_numeric=True,
+                                   ensure_min_samples=2)
 
         n_samples, n_features = X.shape
         coef_ = np.zeros(n_features)
@@ -554,27 +554,16 @@ class ARDRegression(RegressorMixin, LinearModel):
         self.scores_ = list()
         coef_old_ = None
 
-        # Compute sigma and mu (using Woodbury matrix identity)
-        def update_sigma(X, alpha_, lambda_, keep_lambda, n_samples):
-            sigma_ = pinvh(np.eye(n_samples) / alpha_ +
-                           np.dot(X[:, keep_lambda] *
-                           np.reshape(1. / lambda_[keep_lambda], [1, -1]),
-                           X[:, keep_lambda].T))
-            sigma_ = np.dot(sigma_, X[:, keep_lambda] *
-                            np.reshape(1. / lambda_[keep_lambda], [1, -1]))
-            sigma_ = - np.dot(np.reshape(1. / lambda_[keep_lambda], [-1, 1]) *
-                              X[:, keep_lambda].T, sigma_)
-            sigma_.flat[::(sigma_.shape[1] + 1)] += 1. / lambda_[keep_lambda]
-            return sigma_
-
         def update_coeff(X, y, coef_, alpha_, keep_lambda, sigma_):
             coef_[keep_lambda] = alpha_ * np.dot(
                 sigma_, np.dot(X[:, keep_lambda].T, y))
             return coef_
 
+        update_sigma = (self._update_sigma if n_samples >= n_features
+                        else self._update_sigma_woodbury)
         # Iterative procedure of ARDRegression
         for iter_ in range(self.n_iter):
-            sigma_ = update_sigma(X, alpha_, lambda_, keep_lambda, n_samples)
+            sigma_ = update_sigma(X, alpha_, lambda_, keep_lambda)
             coef_ = update_coeff(X, y, coef_, alpha_, keep_lambda, sigma_)
 
             # Update alpha and lambda
@@ -606,9 +595,15 @@ class ARDRegression(RegressorMixin, LinearModel):
                 break
             coef_old_ = np.copy(coef_)
 
-        # update sigma and mu using updated parameters from the last iteration
-        sigma_ = update_sigma(X, alpha_, lambda_, keep_lambda, n_samples)
-        coef_ = update_coeff(X, y, coef_, alpha_, keep_lambda, sigma_)
+            if not keep_lambda.any():
+                break
+
+        if keep_lambda.any():
+            # update sigma and mu using updated params from the last iteration
+            sigma_ = update_sigma(X, alpha_, lambda_, keep_lambda)
+            coef_ = update_coeff(X, y, coef_, alpha_, keep_lambda, sigma_)
+        else:
+            sigma_ = np.array([]).reshape(0, 0)
 
         self.coef_ = coef_
         self.alpha_ = alpha_
@@ -616,6 +611,34 @@ class ARDRegression(RegressorMixin, LinearModel):
         self.lambda_ = lambda_
         self._set_intercept(X_offset_, y_offset_, X_scale_)
         return self
+
+    def _update_sigma_woodbury(self, X, alpha_, lambda_, keep_lambda):
+        # See slides as referenced in the docstring note
+        # this function is used when n_samples < n_features and will invert
+        # a matrix of shape (n_samples, n_samples) making use of the
+        # woodbury formula:
+        # https://en.wikipedia.org/wiki/Woodbury_matrix_identity
+        n_samples = X.shape[0]
+        X_keep = X[:, keep_lambda]
+        inv_lambda = 1 / lambda_[keep_lambda].reshape(1, -1)
+        sigma_ = pinvh(
+            np.eye(n_samples) / alpha_ + np.dot(X_keep * inv_lambda, X_keep.T)
+        )
+        sigma_ = np.dot(sigma_, X_keep * inv_lambda)
+        sigma_ = - np.dot(inv_lambda.reshape(-1, 1) * X_keep.T, sigma_)
+        sigma_[np.diag_indices(sigma_.shape[1])] += 1. / lambda_[keep_lambda]
+        return sigma_
+
+    def _update_sigma(self, X, alpha_, lambda_, keep_lambda):
+        # See slides as referenced in the docstring note
+        # this function is used when n_samples >= n_features and will
+        # invert a matrix of shape (n_features, n_features)
+        X_keep = X[:, keep_lambda]
+        gram = np.dot(X_keep.T, X_keep)
+        eye = np.eye(gram.shape[0])
+        sigma_inv = lambda_[keep_lambda] * eye + alpha_ * gram
+        sigma_ = pinvh(sigma_inv)
+        return sigma_
 
     def predict(self, X, return_std=False):
         """Predict using the linear model.

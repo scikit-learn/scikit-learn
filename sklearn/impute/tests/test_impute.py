@@ -16,7 +16,7 @@ from sklearn.utils._testing import assert_array_almost_equal
 # make IterativeImputer available
 from sklearn.experimental import enable_iterative_imputer  # noqa
 
-from sklearn.datasets import load_boston
+from sklearn.datasets import load_diabetes
 from sklearn.impute import MissingIndicator
 from sklearn.impute import SimpleImputer, IterativeImputer
 from sklearn.dummy import DummyRegressor
@@ -48,14 +48,14 @@ def _check_statistics(X, X_true,
         assert_ae = assert_array_almost_equal
 
     # Normal matrix
-    imputer = SimpleImputer(missing_values, strategy=strategy)
+    imputer = SimpleImputer(missing_values=missing_values, strategy=strategy)
     X_trans = imputer.fit(X).transform(X.copy())
     assert_ae(imputer.statistics_, statistics,
               err_msg=err_msg.format(False))
     assert_ae(X_trans, X_true, err_msg=err_msg.format(False))
 
     # Sparse matrix
-    imputer = SimpleImputer(missing_values, strategy=strategy)
+    imputer = SimpleImputer(missing_values=missing_values, strategy=strategy)
     imputer.fit(sparse.csc_matrix(X))
     X_trans = imputer.transform(sparse.csc_matrix(X.copy()))
 
@@ -177,6 +177,7 @@ def test_imputation_mean_median():
             X[:, j] = np.hstack((v, z, p))
 
             if 0 == test_missing_values:
+                # XXX unreached code as of v0.22
                 X_true[:, j] = np.hstack((v,
                                           np.repeat(
                                               true_statistics[j],
@@ -706,7 +707,6 @@ def test_iterative_imputer_truncated_normal_posterior():
     #  note that starting from the wrong random seed will make this test fail
     #  because random sampling doesn't occur at all when the imputation
     #  is outside of the (min_value, max_value) range
-    pytest.importorskip("scipy", minversion="0.17.0")
     rng = np.random.RandomState(42)
 
     X = rng.normal(size=(5, 5))
@@ -763,7 +763,6 @@ def test_iterative_imputer_missing_at_transform(strategy):
 
 
 def test_iterative_imputer_transform_stochasticity():
-    pytest.importorskip("scipy", minversion="0.17.0")
     rng1 = np.random.RandomState(0)
     rng2 = np.random.RandomState(1)
     n = 100
@@ -948,7 +947,7 @@ def test_iterative_imputer_early_stopping():
 def test_iterative_imputer_catch_warning():
     # check that we catch a RuntimeWarning due to a division by zero when a
     # feature is constant in the dataset
-    X, y = load_boston(return_X_y=True)
+    X, y = load_diabetes(return_X_y=True)
     n_samples, n_features = X.shape
 
     # simulate that a feature only contain one category during fit
@@ -969,6 +968,74 @@ def test_iterative_imputer_catch_warning():
         X_fill = imputer.fit_transform(X, y)
     assert not record.list
     assert not np.any(np.isnan(X_fill))
+
+
+@pytest.mark.parametrize(
+    "min_value, max_value, correct_output",
+    [(0, 100, np.array([[0] * 3, [100] * 3])),
+     (None, None, np.array([[-np.inf] * 3, [np.inf] * 3])),
+     (-np.inf, np.inf, np.array([[-np.inf] * 3, [np.inf] * 3])),
+     ([-5, 5, 10], [100, 200, 300], np.array([[-5, 5, 10], [100, 200, 300]])),
+     ([-5, -np.inf, 10], [100, 200, np.inf],
+      np.array([[-5, -np.inf, 10], [100, 200, np.inf]]))],
+    ids=["scalars", "None-default", "inf", "lists", "lists-with-inf"])
+def test_iterative_imputer_min_max_array_like(min_value,
+                                              max_value,
+                                              correct_output):
+    # check that passing scalar or array-like
+    # for min_value and max_value in IterativeImputer works
+    X = np.random.RandomState(0).randn(10, 3)
+    imputer = IterativeImputer(min_value=min_value, max_value=max_value)
+    imputer.fit(X)
+
+    assert (isinstance(imputer._min_value, np.ndarray) and
+            isinstance(imputer._max_value, np.ndarray))
+    assert ((imputer._min_value.shape[0] == X.shape[1]) and
+            (imputer._max_value.shape[0] == X.shape[1]))
+
+    assert_allclose(correct_output[0, :], imputer._min_value)
+    assert_allclose(correct_output[1, :], imputer._max_value)
+
+
+@pytest.mark.parametrize(
+    "min_value, max_value, err_msg",
+    [(100, 0, "min_value >= max_value."),
+     (np.inf, -np.inf, "min_value >= max_value."),
+     ([-5, 5], [100, 200, 0], "_value' should be of shape")])
+def test_iterative_imputer_catch_min_max_error(min_value, max_value, err_msg):
+    # check that passing scalar or array-like
+    # for min_value and max_value in IterativeImputer works
+    X = np.random.random((10, 3))
+    imputer = IterativeImputer(min_value=min_value, max_value=max_value)
+    with pytest.raises(ValueError, match=err_msg):
+        imputer.fit(X)
+
+
+@pytest.mark.parametrize(
+    "min_max_1, min_max_2",
+    [([None, None], [-np.inf, np.inf]),
+     ([-10, 10], [[-10] * 4, [10] * 4])],
+    ids=["None-vs-inf", "Scalar-vs-vector"])
+def test_iterative_imputer_min_max_array_like_imputation(min_max_1, min_max_2):
+    # Test that None/inf and scalar/vector give the same imputation
+    X_train = np.array([
+        [np.nan, 2, 2, 1],
+        [10, np.nan, np.nan, 7],
+        [3, 1, np.nan, 1],
+        [np.nan, 4, 2, np.nan]])
+    X_test = np.array([
+        [np.nan, 2, np.nan, 5],
+        [2, 4, np.nan, np.nan],
+        [np.nan, 1, 10, 1]])
+    imputer1 = IterativeImputer(min_value=min_max_1[0],
+                                max_value=min_max_1[1],
+                                random_state=0)
+    imputer2 = IterativeImputer(min_value=min_max_2[0],
+                                max_value=min_max_2[1],
+                                random_state=0)
+    X_test_imputed1 = imputer1.fit(X_train).transform(X_test)
+    X_test_imputed2 = imputer2.fit(X_train).transform(X_test)
+    assert_allclose(X_test_imputed1[:, 0], X_test_imputed2[:, 0])
 
 
 @pytest.mark.parametrize(

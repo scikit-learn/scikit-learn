@@ -5,6 +5,7 @@
 import numpy as np
 from . import MinCovDet
 from ..utils.validation import check_is_fitted, check_array
+from ..utils.validation import _deprecate_positional_args
 from ..metrics import accuracy_score
 from ..base import OutlierMixin
 
@@ -16,10 +17,10 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
 
     Parameters
     ----------
-    store_precision : boolean, optional (default=True)
+    store_precision : bool, default=True
         Specify if the estimated precision is stored.
 
-    assume_centered : boolean, optional (default=False)
+    assume_centered : bool, default=False
         If True, the support of robust location and covariance estimates
         is computed, and a covariance estimate is recomputed from it,
         without centering the data.
@@ -28,35 +29,34 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
         If False, the robust location and covariance are directly computed
         with the FastMCD algorithm without additional treatment.
 
-    support_fraction : float in (0., 1.), optional (default=None)
+    support_fraction : float, default=None
         The proportion of points to be included in the support of the raw
         MCD estimate. If None, the minimum value of support_fraction will
         be used within the algorithm: `[n_sample + n_features + 1] / 2`.
+        Range is (0, 1).
 
-    contamination : float in (0., 0.5), optional (default=0.1)
+    contamination : float, default=0.1
         The amount of contamination of the data set, i.e. the proportion
-        of outliers in the data set.
+        of outliers in the data set. Range is (0, 0.5).
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        The seed of the pseudo random number generator to use when shuffling
-        the data.  If int, random_state is the seed used by the random number
-        generator; If RandomState instance, random_state is the random number
-        generator; If None, the random number generator is the RandomState
-        instance used by `np.random`.
+    random_state : int or RandomState instance, default=None
+        Determines the pseudo random number generator for shuffling
+        the data. Pass an int for reproducible results across multiple function
+        calls. See :term: `Glossary <random_state>`.
 
     Attributes
     ----------
-    location_ : array-like, shape (n_features,)
+    location_ : ndarray of shape (n_features,)
         Estimated robust location
 
-    covariance_ : array-like, shape (n_features, n_features)
+    covariance_ : ndarray of shape (n_features, n_features)
         Estimated robust covariance matrix
 
-    precision_ : array-like, shape (n_features, n_features)
+    precision_ : ndarray of shape (n_features, n_features)
         Estimated pseudo inverse matrix.
         (stored only if store_precision is True)
 
-    support_ : array-like, shape (n_samples,)
+    support_ : ndarray of shape (n_samples,)
         A mask of the observations that have been used to compute the
         robust estimates of location and shape.
 
@@ -66,6 +66,23 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
         The offset depends on the contamination parameter and is defined in
         such a way we obtain the expected number of outliers (samples with
         decision function < 0) in training.
+
+        .. versionadded:: 0.20
+
+    raw_location_ : ndarray of shape (n_features,)
+        The raw robust estimated location before correction and re-weighting.
+
+    raw_covariance_ : ndarray of shape (n_features, n_features)
+        The raw robust estimated covariance before correction and re-weighting.
+
+    raw_support_ : ndarray of shape (n_samples,)
+        A mask of the observations that have been used to compute
+        the raw robust estimates of location and shape, before correction
+        and re-weighting.
+
+    dist_ : ndarray of shape (n_samples,)
+        Mahalanobis distances of the training set (on which :meth:`fit` is
+        called) observations.
 
     Examples
     --------
@@ -102,9 +119,9 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
     .. [1] Rousseeuw, P.J., Van Driessen, K. "A fast algorithm for the
        minimum covariance determinant estimator" Technometrics 41(3), 212
        (1999)
-
     """
-    def __init__(self, store_precision=True, assume_centered=False,
+    @_deprecate_positional_args
+    def __init__(self, *, store_precision=True, assume_centered=False,
                  support_fraction=None, contamination=0.1,
                  random_state=None):
         super().__init__(
@@ -119,12 +136,11 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
 
         Parameters
         ----------
-        X : numpy array or sparse matrix, shape (n_samples, n_features).
-            Training data
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Training data.
 
         y : Ignored
-            not used, present for API consistency by convention.
-
+            Not used, present for API consistency by convention.
         """
         super().fit(X)
         self.offset_ = np.percentile(-self.dist_, 100. * self.contamination)
@@ -135,17 +151,16 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
+            The data matrix.
 
         Returns
         -------
-
-        decision : array-like, shape (n_samples, )
+        decision : ndarray of shape (n_samples, )
             Decision function of the samples.
             It is equal to the shifted Mahalanobis distances.
             The threshold for being an outlier is 0, which ensures a
             compatibility with other outlier detection algorithms.
-
         """
         check_is_fitted(self)
         negative_mahal_dist = self.score_samples(X)
@@ -156,11 +171,12 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
+            The data matrix.
 
         Returns
         -------
-        negative_mahal_distances : array-like, shape (n_samples, )
+        negative_mahal_distances : array-like of shape (n_samples,)
             Opposite of the Mahalanobis distances.
         """
         check_is_fitted(self)
@@ -173,11 +189,12 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
+            The data matrix.
 
         Returns
         -------
-        is_inlier : array, shape (n_samples,)
+        is_inlier : ndarray of shape (n_samples,)
             Returns -1 for anomalies/outliers and +1 for inliers.
         """
         X = check_array(X)
@@ -196,19 +213,18 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Test samples.
 
-        y : array-like, shape (n_samples,) or (n_samples, n_outputs)
+        y : array-like of shape (n_samples,) or (n_samples, n_outputs)
             True labels for X.
 
-        sample_weight : array-like, shape (n_samples,), optional
+        sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
 
         Returns
         -------
         score : float
-            Mean accuracy of self.predict(X) wrt. y.
-
+            Mean accuracy of self.predict(X) w.r.t. y.
         """
         return accuracy_score(y, self.predict(X), sample_weight=sample_weight)

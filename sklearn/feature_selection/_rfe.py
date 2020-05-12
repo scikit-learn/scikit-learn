@@ -9,10 +9,11 @@
 import numpy as np
 from joblib import Parallel, delayed, effective_n_jobs
 
-from ..utils import check_X_y, safe_sqr
+from ..utils import safe_sqr
 from ..utils.metaestimators import if_delegate_has_method
 from ..utils.metaestimators import _safe_split
 from ..utils.validation import check_is_fitted
+from ..utils.validation import _deprecate_positional_args
 from ..base import BaseEstimator
 from ..base import MetaEstimatorMixin
 from ..base import clone
@@ -95,7 +96,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
     >>> from sklearn.svm import SVR
     >>> X, y = make_friedman1(n_samples=50, n_features=10, random_state=0)
     >>> estimator = SVR(kernel="linear")
-    >>> selector = RFE(estimator, 5, step=1)
+    >>> selector = RFE(estimator, n_features_to_select=5, step=1)
     >>> selector = selector.fit(X, y)
     >>> selector.support_
     array([ True,  True,  True,  True,  True, False, False, False, False,
@@ -119,7 +120,8 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
            for cancer classification using support vector machines",
            Mach. Learn., 46(1-3), 389--422, 2002.
     """
-    def __init__(self, estimator, n_features_to_select=None, step=1,
+    @_deprecate_positional_args
+    def __init__(self, estimator, *, n_features_to_select=None, step=1,
                  verbose=0):
         self.estimator = estimator
         self.n_features_to_select = n_features_to_select
@@ -155,8 +157,12 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         # self.scores_ will not be calculated when calling _fit through fit
 
         tags = self._get_tags()
-        X, y = check_X_y(X, y, "csc", ensure_min_features=2,
-                         force_all_finite=not tags.get('allow_nan', True))
+        X, y = self._validate_data(
+            X, y, accept_sparse="csc",
+            ensure_min_features=2,
+            force_all_finite=not tags.get('allow_nan', True),
+            multi_output=True
+        )
         # Initialization
         n_features = X.shape[1]
         if self.n_features_to_select is None:
@@ -334,7 +340,9 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
     def _more_tags(self):
         estimator_tags = self.estimator._get_tags()
         return {'poor_score': True,
-                'allow_nan': estimator_tags.get('allow_nan', True)}
+                'allow_nan': estimator_tags.get('allow_nan', True),
+                'requires_y': True,
+                }
 
 
 class RFECV(RFE):
@@ -365,6 +373,8 @@ class RFECV(RFE):
         will always be scored, even if the difference between the original
         feature count and ``min_features_to_select`` isn't divisible by
         ``step``.
+
+        .. versionadded:: 0.20
 
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
@@ -399,6 +409,8 @@ class RFECV(RFE):
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
+
+        .. versionadded:: 0.18
 
     Attributes
     ----------
@@ -460,7 +472,8 @@ class RFECV(RFE):
            for cancer classification using support vector machines",
            Mach. Learn., 46(1-3), 389--422, 2002.
     """
-    def __init__(self, estimator, step=1, min_features_to_select=1, cv=None,
+    @_deprecate_positional_args
+    def __init__(self, estimator, *, step=1, min_features_to_select=1, cv=None,
                  scoring=None, verbose=0, n_jobs=None):
         self.estimator = estimator
         self.step = step
@@ -488,12 +501,18 @@ class RFECV(RFE):
             Group labels for the samples used while splitting the dataset into
             train/test set. Only used in conjunction with a "Group" :term:`cv`
             instance (e.g., :class:`~sklearn.model_selection.GroupKFold`).
+
+            .. versionadded:: 0.20
         """
-        X, y = check_X_y(X, y, "csr", ensure_min_features=2,
-                         force_all_finite=False)
+        tags = self._get_tags()
+        X, y = self._validate_data(
+            X, y, accept_sparse="csr", ensure_min_features=2,
+            force_all_finite=not tags.get('allow_nan', True),
+            multi_output=True
+        )
 
         # Initialization
-        cv = check_cv(self.cv, y, is_classifier(self.estimator))
+        cv = check_cv(self.cv, y, classifier=is_classifier(self.estimator))
         scorer = check_scoring(self.estimator, scoring=self.scoring)
         n_features = X.shape[1]
 

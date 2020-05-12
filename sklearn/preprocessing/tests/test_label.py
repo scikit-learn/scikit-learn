@@ -14,6 +14,7 @@ from sklearn.utils.multiclass import type_of_target
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_warns_message
 from sklearn.utils._testing import ignore_warnings
+from sklearn.utils import _to_object_array
 
 from sklearn.preprocessing._label import LabelBinarizer
 from sklearn.preprocessing._label import MultiLabelBinarizer
@@ -177,7 +178,7 @@ def test_label_binarizer_errors():
     with pytest.raises(ValueError):
         LabelBinarizer().fit(np.array([[1, 3], [2, 1]]))
     with pytest.raises(ValueError):
-        label_binarize(np.array([[1, 3], [2, 1]]), [1, 2, 3])
+        label_binarize(np.array([[1, 3], [2, 1]]), classes=[1, 2, 3])
 
 
 @pytest.mark.parametrize(
@@ -433,8 +434,7 @@ def test_multilabel_binarizer_same_length_sequence():
 
 
 def test_multilabel_binarizer_non_integer_labels():
-    tuple_classes = np.empty(3, dtype=object)
-    tuple_classes[:] = [(1,), (2,), (3,)]
+    tuple_classes = _to_object_array([(1,), (2,), (3,)])
     inputs = [
         ([('2', '3'), ('1',), ('1', '2')], ['1', '2', '3']),
         ([('b', 'c'), ('a',), ('a', 'b')], ['a', 'b', 'c']),
@@ -509,13 +509,13 @@ def check_binarized_results(y, classes, pos_label, neg_label, expected):
     for sparse_output in [True, False]:
         if ((pos_label == 0 or neg_label != 0) and sparse_output):
             with pytest.raises(ValueError):
-                label_binarize(y, classes, neg_label=neg_label,
+                label_binarize(y, classes=classes, neg_label=neg_label,
                                pos_label=pos_label,
                                sparse_output=sparse_output)
             continue
 
         # check label_binarize
-        binarized = label_binarize(y, classes, neg_label=neg_label,
+        binarized = label_binarize(y, classes=classes, neg_label=neg_label,
                                    pos_label=pos_label,
                                    sparse_output=sparse_output)
         assert_array_equal(toarray(binarized), expected)
@@ -576,7 +576,7 @@ def test_label_binarize_multiclass():
     check_binarized_results(y, classes, pos_label, neg_label, expected)
 
     with pytest.raises(ValueError):
-        label_binarize(y, classes, neg_label=-1, pos_label=pos_label,
+        label_binarize(y, classes=classes, neg_label=-1, pos_label=pos_label,
                        sparse_output=True)
 
 
@@ -595,7 +595,7 @@ def test_label_binarize_multilabel():
                                 expected)
 
     with pytest.raises(ValueError):
-        label_binarize(y, classes, neg_label=-1, pos_label=pos_label,
+        label_binarize(y, classes=classes, neg_label=-1, pos_label=pos_label,
                        sparse_output=True)
 
 

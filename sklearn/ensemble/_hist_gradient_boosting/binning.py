@@ -34,9 +34,11 @@ def _find_binning_thresholds(data, max_bins, subsample, random_state):
         If ``n_samples > subsample``, then ``sub_samples`` samples will be
         randomly chosen to compute the quantiles. If ``None``, the whole data
         is used.
-    random_state: int or numpy.random.RandomState or None
+    random_state: int, RandomState instance or None
         Pseudo-random number generator to control the random sub-sampling.
-        See :term:`random_state`.
+        Pass an int for reproducible output across multiple
+        function calls.
+        See :term: `Glossary <random_state>`.
 
     Return
     ------
@@ -47,7 +49,7 @@ def _find_binning_thresholds(data, max_bins, subsample, random_state):
     """
     rng = check_random_state(random_state)
     if subsample is not None and data.shape[0] > subsample:
-        subset = rng.choice(np.arange(data.shape[0]), subsample, replace=False)
+        subset = rng.choice(data.shape[0], subsample, replace=False)
         data = data.take(subset, axis=0)
 
     binning_thresholds = []
@@ -109,10 +111,11 @@ class _BinMapper(TransformerMixin, BaseEstimator):
         If ``n_samples > subsample``, then ``sub_samples`` samples will be
         randomly chosen to compute the quantiles. If ``None``, the whole data
         is used.
-    random_state: int or numpy.random.RandomState or None, \
-        optional (default=None)
+    random_state: int, RandomState instance or None
         Pseudo-random number generator to control the random sub-sampling.
-        See :term:`random_state`.
+        Pass an int for reproducible output across multiple
+        function calls.
+        See :term: `Glossary <random_state>`.
 
     Attributes
     ----------
