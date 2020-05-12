@@ -47,7 +47,8 @@ class ConfusionMatrixDisplay:
 
     @_deprecate_positional_args
     def plot(self, *, include_values=True, cmap='viridis',
-             xticks_rotation='horizontal', values_format=None, ax=None, colorbar):
+             xticks_rotation='horizontal', values_format=None,
+             ax=None, colorbar):
         """Plot visualization.
 
         Parameters
@@ -71,7 +72,6 @@ class ConfusionMatrixDisplay:
             created.
 
         colorbar : matplotlib colorbar, default=True
-        
         Returns
         -------
         display : :class:`~sklearn.metrics.ConfusionMatrixDisplay`
@@ -138,7 +138,7 @@ class ConfusionMatrixDisplay:
 def plot_confusion_matrix(estimator, X, y_true, *, labels=None,
                           sample_weight=None, normalize=None,
                           display_labels=None, include_values=True,
-                          xticks_rotation='horizontal', 
+                          xticks_rotation='horizontal',
                           values_format=None,
                           cmap='viridis', ax=None, colorbar=True):
     """Plot Confusion Matrix.
@@ -192,8 +192,8 @@ def plot_confusion_matrix(estimator, X, y_true, *, labels=None,
     ax : matplotlib Axes, default=None
         Axes object to plot on. If `None`, a new figure and axes is
         created.
+
     colorbar : matplotlib colorbar, default=True
-    
     Returns
     -------
     display : :class:`~sklearn.metrics.ConfusionMatrixDisplay`
