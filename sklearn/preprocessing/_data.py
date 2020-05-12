@@ -1130,6 +1130,9 @@ class RobustScaler(TransformerMixin, BaseEstimator):
 
         .. versionadded:: 0.18
 
+    gauss_adjust : boolean, False by default
+        If True, scale data to a standard Gaussian distributtion.
+
     copy : boolean, optional, default is True
         If False, try to avoid a copy and do inplace scaling instead.
         This is not guaranteed to always work inplace; e.g. if the data is
@@ -1180,10 +1183,12 @@ class RobustScaler(TransformerMixin, BaseEstimator):
     """
     @_deprecate_positional_args
     def __init__(self, *, with_centering=True, with_scaling=True,
-                 quantile_range=(25.0, 75.0), copy=True):
+                 quantile_range=(25.0, 75.0), gauss_adjust=False,
+                 copy=True):
         self.with_centering = with_centering
         self.with_scaling = with_scaling
         self.quantile_range = quantile_range
+        self.gauss_adjust = gauss_adjust
         self.copy = copy
 
     def fit(self, X, y=None):
@@ -1233,6 +1238,12 @@ class RobustScaler(TransformerMixin, BaseEstimator):
 
             self.scale_ = quantiles[1] - quantiles[0]
             self.scale_ = _handle_zeros_in_scale(self.scale_, copy=False)
+            if self.gauss_adjust:
+                # Create scipy.stats.norm object
+                output_distribution = getattr(stats, 'norm')
+                self.adjust_ = output_distribution.ppf(q_max / 100.0) - \
+                    output_distribution.ppf(q_min / 100.0)
+                self.scale_ = self.scale_ / self.adjust_
         else:
             self.scale_ = None
 
