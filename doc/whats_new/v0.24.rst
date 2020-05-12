@@ -47,6 +47,15 @@ Changelog
 :mod:`sklearn.module`
 .....................
 
+:mod:`sklearn.model_selection`
+..............................
+
+- |Enhancement| :class:`model_selection.TimeSeriesSplit` has two new keyword
+  arguments `test_size` and `gap`. `test_size` allows the out-of-sample
+  time series length to be fixed for all folds. `gap` removes a fixed number of
+  samples between the train and test set on each fold.
+  :pr:`13204` by :user:`Kyle Kosic <kykosic>`.
+
 
 Code and Documentation Contributors
 -----------------------------------
