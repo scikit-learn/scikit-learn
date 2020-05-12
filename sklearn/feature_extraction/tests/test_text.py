@@ -887,6 +887,13 @@ def test_vectorizer_column(est, input, tmpdir):
     X_col_vec_list = X_col_vec.tolist()
     assert_array_equal(Xt.A, est.fit_transform(X_col_vec_list).A)
 
+    try:
+        import pandas
+        X_col_df = pandas.DataFrame({"text": X})
+        assert_array_equal(Xt.A, est.fit_transform(X_col_df).A)
+    except ImportError:
+        pass
+
     # 2d with multiple columns fails
     with pytest.raises(Exception):
         est.fit_transform(np.hstack([X_col_vec, X_col_vec]))
