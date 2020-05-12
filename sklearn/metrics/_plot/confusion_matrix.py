@@ -48,7 +48,7 @@ class ConfusionMatrixDisplay:
     @_deprecate_positional_args
     def plot(self, *, include_values=True, cmap='viridis',
              xticks_rotation='horizontal', values_format=None,
-             ax=None, colorbar):
+             ax=None, colorbar=True):
         """Plot visualization.
 
         Parameters
