@@ -67,7 +67,10 @@ cdef class LossFunction:
         return 0.
 
     def py_dloss(self, double p, double y):
-        """Python version of derivative for testing."""
+        """Python version of `dloss` for testing.
+
+        Pytest needs a python function and can't use cdef functions.
+        """
         return self.dloss(p, y)
 
     cdef double dloss(self, double p, double y) nogil:
@@ -85,8 +88,6 @@ cdef class LossFunction:
         double
             The derivative of the loss function with regards to `p`.
         """
-        # Implementation of dloss; separate function because cpdef and nogil
-        # can't be combined.
         return 0.
 
 
