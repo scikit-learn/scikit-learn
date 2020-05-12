@@ -13,10 +13,11 @@ from sklearn.ensemble._hist_gradient_boosting.common import (
 
 @pytest.mark.parametrize('n_bins', [200, 256])
 def test_regression_dataset(n_bins):
-    X, y = make_regression(n_samples=500, n_features=10, n_informative=5,
+    X, y = make_regression(n_samples=500,
+                           n_features=10,
+                           n_informative=5,
                            random_state=42)
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, random_state=42)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
 
     mapper = _BinMapper(n_bins=n_bins, random_state=42)
     X_train_binned = mapper.fit_transform(X_train)
@@ -27,9 +28,12 @@ def test_regression_dataset(n_bins):
 
     min_samples_leaf = 10
     max_leaf_nodes = 30
-    grower = TreeGrower(X_train_binned, gradients, hessians,
+    grower = TreeGrower(X_train_binned,
+                        gradients,
+                        hessians,
                         min_samples_leaf=min_samples_leaf,
-                        max_leaf_nodes=max_leaf_nodes, n_bins=n_bins,
+                        max_leaf_nodes=max_leaf_nodes,
+                        n_bins=n_bins,
                         n_bins_non_missing=mapper.n_bins_non_missing_)
     grower.grow()
 
@@ -52,7 +56,7 @@ def test_infinite_values_and_thresholds(threshold, expected_predictions):
     # sample should go to the right child. If the threshold is inf (split on
     # nan), the +inf sample will go to the left child.
 
-    X = np.array([-np.inf, 10, 20,  np.inf]).reshape(-1, 1)
+    X = np.array([-np.inf, 10, 20, np.inf]).reshape(-1, 1)
     nodes = np.zeros(3, dtype=PREDICTOR_RECORD_DTYPE)
 
     # We just construct a simple tree with 1 root and 2 children

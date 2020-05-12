@@ -12,7 +12,6 @@ from sklearn.linear_model._glm.link import (
     LogitLink,
 )
 
-
 LINK_FUNCTIONS = [IdentityLink, LogLink, LogitLink]
 
 
@@ -40,6 +39,6 @@ def test_link_derivative(Link):
     err = check_grad(link, link.derivative, x) / link.derivative(x)
     assert abs(err) < 1e-6
 
-    err = (check_grad(link.inverse, link.inverse_derivative, x)
-           / link.derivative(x))
+    err = (check_grad(link.inverse, link.inverse_derivative, x) /
+           link.derivative(x))
     assert abs(err) < 1e-6

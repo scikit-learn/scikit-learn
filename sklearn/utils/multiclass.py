@@ -28,8 +28,7 @@ def _unique_multiclass(y):
 
 def _unique_indicator(y):
     return np.arange(
-        check_array(y, accept_sparse=['csr', 'csc', 'coo']).shape[1]
-    )
+        check_array(y, accept_sparse=['csr', 'csc', 'coo']).shape[1])
 
 
 _FN_UNIQUE_LABELS = {
@@ -84,10 +83,10 @@ def unique_labels(*ys):
     label_type = ys_types.pop()
 
     # Check consistency for the indicator format
-    if (label_type == "multilabel-indicator" and
-            len(set(check_array(y,
-                                accept_sparse=['csr', 'csc', 'coo']).shape[1]
-                    for y in ys)) > 1):
+    if (label_type == "multilabel-indicator" and len(
+            set(
+                check_array(y, accept_sparse=['csr', 'csc', 'coo']).shape[1]
+                for y in ys)) > 1):
         raise ValueError("Multi-label binary indicator input with "
                          "different numbers of labels")
 
@@ -167,8 +166,10 @@ def check_classification_targets(y):
     y : array-like
     """
     y_type = type_of_target(y)
-    if y_type not in ['binary', 'multiclass', 'multiclass-multioutput',
-                      'multilabel-indicator', 'multilabel-sequences']:
+    if y_type not in [
+            'binary', 'multiclass', 'multiclass-multioutput',
+            'multilabel-indicator', 'multilabel-sequences'
+    ]:
         raise ValueError("Unknown label type: %r" % y_type)
 
 
@@ -269,8 +270,8 @@ def type_of_target(y):
         pass
 
     # Invalid inputs
-    if y.ndim > 2 or (y.dtype == object and len(y) and
-                      not isinstance(y.flat[0], str)):
+    if y.ndim > 2 or (y.dtype == object and len(y)
+                      and not isinstance(y.flat[0], str)):
         return 'unknown'  # [[[1, 2]]] or [obj_1] and not ["label_1"]
 
     if y.ndim == 2 and y.shape[1] == 0:

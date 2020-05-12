@@ -31,9 +31,9 @@ from sklearn.metrics import ndcg_score, dcg_score
 
 from sklearn.exceptions import UndefinedMetricWarning
 
-
 ###############################################################################
 # Utilities for testing
+
 
 def make_prediction(dataset=None, binary=False):
     """Make some classification predictions on a toy dataset using a SVC
@@ -81,6 +81,7 @@ def make_prediction(dataset=None, binary=False):
 
 ###############################################################################
 # Tests
+
 
 def _auc(y_true, y_score):
     """Alternative implementation to check for correctness of
@@ -150,7 +151,6 @@ def _partial_roc_auc_score(y_true, y_predict, max_fpr):
     """Alternative implementation to check for correctness of `roc_auc_score`
     with `max_fpr` set.
     """
-
     def _partial_roc(y_true, y_predict, max_fpr):
         fpr, tpr, _ = roc_curve(y_true, y_predict)
         new_fpr = fpr[fpr <= max_fpr]
@@ -180,7 +180,8 @@ def test_roc_curve(drop):
     y_true, _, probas_pred = make_prediction(binary=True)
     expected_auc = _auc(y_true, probas_pred)
 
-    fpr, tpr, thresholds = roc_curve(y_true, probas_pred,
+    fpr, tpr, thresholds = roc_curve(y_true,
+                                     probas_pred,
                                      drop_intermediate=drop)
     roc_auc = auc(fpr, tpr)
     assert_array_almost_equal(roc_auc, expected_auc, decimal=2)
@@ -280,8 +281,7 @@ def test_roc_curve_one_label():
     assert fpr.shape == thresholds.shape
 
     # assert there are warnings
-    fpr, tpr, thresholds = assert_warns(w, roc_curve,
-                                        [1 - x for x in y_true],
+    fpr, tpr, thresholds = assert_warns(w, roc_curve, [1 - x for x in y_true],
                                         y_pred)
     # all negative labels, all tpr should be nan
     assert_array_equal(tpr, np.full(len(thresholds), np.nan))
@@ -393,13 +393,10 @@ def test_roc_curve_drop_intermediate():
     assert_array_almost_equal(thresholds, [2., 1., 0.7, 0.])
 
     # Test dropping thresholds with repeating scores
-    y_true = [0, 0, 0, 0, 0, 0, 0,
-              1, 1, 1, 1, 1, 1]
-    y_score = [0., 0.1, 0.6, 0.6, 0.7, 0.8, 0.9,
-               0.6, 0.7, 0.8, 0.9, 0.9, 1.0]
+    y_true = [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1]
+    y_score = [0., 0.1, 0.6, 0.6, 0.7, 0.8, 0.9, 0.6, 0.7, 0.8, 0.9, 0.9, 1.0]
     tpr, fpr, thresholds = roc_curve(y_true, y_score, drop_intermediate=True)
-    assert_array_almost_equal(thresholds,
-                              [2.0, 1.0, 0.9, 0.7, 0.6, 0.])
+    assert_array_almost_equal(thresholds, [2.0, 1.0, 0.9, 0.7, 0.6, 0.])
 
 
 def test_roc_curve_fpr_tpr_increasing():
@@ -451,18 +448,16 @@ def test_auc_errors():
         auc(x, y)
 
 
-@pytest.mark.parametrize(
-    "y_true, labels",
-    [(np.array([0, 1, 0, 2]), [0, 1, 2]),
-     (np.array([0, 1, 0, 2]), None),
-     (["a", "b", "a", "c"], ["a", "b", "c"]),
-     (["a", "b", "a", "c"], None)]
-)
+@pytest.mark.parametrize("y_true, labels",
+                         [(np.array([0, 1, 0, 2]), [0, 1, 2]),
+                          (np.array([0, 1, 0, 2]), None),
+                          (["a", "b", "a", "c"], ["a", "b", "c"]),
+                          (["a", "b", "a", "c"], None)])
 def test_multiclass_ovo_roc_auc_toydata(y_true, labels):
     # Tests the one-vs-one multiclass ROC AUC algorithm
     # on a small example, representative of an expected use case.
-    y_scores = np.array(
-        [[0.1, 0.8, 0.1], [0.3, 0.4, 0.3], [0.35, 0.5, 0.15], [0, 0.2, 0.8]])
+    y_scores = np.array([[0.1, 0.8, 0.1], [0.3, 0.4, 0.3], [0.35, 0.5, 0.15],
+                         [0, 0.2, 0.8]])
 
     # Used to compute the expected output.
     # Consider labels 0 and 1:
@@ -483,8 +478,8 @@ def test_multiclass_ovo_roc_auc_toydata(y_true, labels):
     average_score_12 = (score_12 + score_21) / 2
 
     # Unweighted, one-vs-one multiclass ROC AUC algorithm
-    ovo_unweighted_score = (
-        average_score_01 + average_score_02 + average_score_12) / 3
+    ovo_unweighted_score = (average_score_01 + average_score_02 +
+                            average_score_12) / 3
     assert_almost_equal(
         roc_auc_score(y_true, y_scores, labels=labels, multi_class="ovo"),
         ovo_unweighted_score)
@@ -495,12 +490,11 @@ def test_multiclass_ovo_roc_auc_toydata(y_true, labels):
     prevalence = [0.75, 0.75, 0.50]
     ovo_weighted_score = np.average(pair_scores, weights=prevalence)
     assert_almost_equal(
-        roc_auc_score(
-            y_true,
-            y_scores,
-            labels=labels,
-            multi_class="ovo",
-            average="weighted"), ovo_weighted_score)
+        roc_auc_score(y_true,
+                      y_scores,
+                      labels=labels,
+                      multi_class="ovo",
+                      average="weighted"), ovo_weighted_score)
 
 
 @pytest.mark.parametrize("y_true, labels",
@@ -510,8 +504,8 @@ def test_multiclass_ovo_roc_auc_toydata_binary(y_true, labels):
     # Tests the one-vs-one multiclass ROC AUC algorithm for binary y_true
     #
     # on a small example, representative of an expected use case.
-    y_scores = np.array(
-        [[0.2, 0.0, 0.8], [0.6, 0.0, 0.4], [0.55, 0.0, 0.45], [0.4, 0.0, 0.6]])
+    y_scores = np.array([[0.2, 0.0, 0.8], [0.6, 0.0, 0.4], [0.55, 0.0, 0.45],
+                         [0.4, 0.0, 0.6]])
 
     # Used to compute the expected output.
     # Consider labels 0 and 1:
@@ -527,21 +521,23 @@ def test_multiclass_ovo_roc_auc_toydata_binary(y_true, labels):
 
     # Weighted, one-vs-one multiclass ROC AUC algorithm
     assert_almost_equal(
-        roc_auc_score(y_true, y_scores, labels=labels, multi_class='ovo',
+        roc_auc_score(y_true,
+                      y_scores,
+                      labels=labels,
+                      multi_class='ovo',
                       average="weighted"), ovo_score)
 
 
-@pytest.mark.parametrize(
-    "y_true, labels",
-    [(np.array([0, 1, 2, 2]), None),
-     (["a", "b", "c", "c"], None),
-     ([0, 1, 2, 2], [0, 1, 2]),
-     (["a", "b", "c", "c"], ["a", "b", "c"])])
+@pytest.mark.parametrize("y_true, labels",
+                         [(np.array([0, 1, 2, 2]), None),
+                          (["a", "b", "c", "c"], None),
+                          ([0, 1, 2, 2], [0, 1, 2]),
+                          (["a", "b", "c", "c"], ["a", "b", "c"])])
 def test_multiclass_ovr_roc_auc_toydata(y_true, labels):
     # Tests the unweighted, one-vs-rest multiclass ROC AUC algorithm
     # on a small example, representative of an expected use case.
-    y_scores = np.array(
-        [[1.0, 0.0, 0.0], [0.1, 0.5, 0.4], [0.1, 0.1, 0.8], [0.3, 0.3, 0.4]])
+    y_scores = np.array([[1.0, 0.0, 0.0], [0.1, 0.5, 0.4], [0.1, 0.1, 0.8],
+                         [0.3, 0.3, 0.4]])
     # Compute the expected result by individually computing the 'one-vs-rest'
     # ROC AUC scores for classes 0, 1, and 2.
     out_0 = roc_auc_score([1, 0, 0, 0], y_scores[:, 0])
@@ -557,35 +553,30 @@ def test_multiclass_ovr_roc_auc_toydata(y_true, labels):
     # on the same input (Provost & Domingos, 2000)
     result_weighted = out_0 * 0.25 + out_1 * 0.25 + out_2 * 0.5
     assert_almost_equal(
-        roc_auc_score(
-            y_true,
-            y_scores,
-            multi_class="ovr",
-            labels=labels,
-            average="weighted"), result_weighted)
+        roc_auc_score(y_true,
+                      y_scores,
+                      multi_class="ovr",
+                      labels=labels,
+                      average="weighted"), result_weighted)
 
 
 @pytest.mark.parametrize(
     "msg, y_true, labels",
     [("Parameter 'labels' must be unique", np.array([0, 1, 2, 2]), [0, 2, 0]),
-     ("Parameter 'labels' must be unique", np.array(["a", "b", "c", "c"]),
-      ["a", "a", "b"]),
+     ("Parameter 'labels' must be unique", np.array(["a", "b", "c", "c"
+                                                     ]), ["a", "a", "b"]),
      ("Number of classes in y_true not equal to the number of columns "
       "in 'y_score'", np.array([0, 2, 0, 2]), None),
-     ("Parameter 'labels' must be ordered", np.array(["a", "b", "c", "c"]),
-      ["a", "c", "b"]),
+     ("Parameter 'labels' must be ordered", np.array(["a", "b", "c", "c"
+                                                      ]), ["a", "c", "b"]),
      ("Number of given labels, 2, not equal to the number of columns in "
-      "'y_score', 3",
-      np.array([0, 1, 2, 2]), [0, 1]),
+      "'y_score', 3", np.array([0, 1, 2, 2]), [0, 1]),
      ("Number of given labels, 2, not equal to the number of columns in "
-      "'y_score', 3",
-      np.array(["a", "b", "c", "c"]), ["a", "b"]),
+      "'y_score', 3", np.array(["a", "b", "c", "c"]), ["a", "b"]),
      ("Number of given labels, 4, not equal to the number of columns in "
-      "'y_score', 3",
-      np.array([0, 1, 2, 2]), [0, 1, 2, 3]),
+      "'y_score', 3", np.array([0, 1, 2, 2]), [0, 1, 2, 3]),
      ("Number of given labels, 4, not equal to the number of columns in "
-      "'y_score', 3",
-      np.array(["a", "b", "c", "c"]), ["a", "b", "c", "d"]),
+      "'y_score', 3", np.array(["a", "b", "c", "c"]), ["a", "b", "c", "d"]),
      ("'y_true' contains labels not in parameter 'labels'",
       np.array(["a", "b", "c", "e"]), ["a", "b", "c"]),
      ("'y_true' contains labels not in parameter 'labels'",
@@ -593,31 +584,42 @@ def test_multiclass_ovr_roc_auc_toydata(y_true, labels):
      ("'y_true' contains labels not in parameter 'labels'",
       np.array([0, 1, 2, 3]), [0, 1, 2])])
 @pytest.mark.parametrize("multi_class", ["ovo", "ovr"])
-def test_roc_auc_score_multiclass_labels_error(
-        msg, y_true, labels, multi_class):
-    y_scores = np.array(
-        [[0.1, 0.8, 0.1], [0.3, 0.4, 0.3], [0.35, 0.5, 0.15], [0, 0.2, 0.8]])
+def test_roc_auc_score_multiclass_labels_error(msg, y_true, labels,
+                                               multi_class):
+    y_scores = np.array([[0.1, 0.8, 0.1], [0.3, 0.4, 0.3], [0.35, 0.5, 0.15],
+                         [0, 0.2, 0.8]])
 
     with pytest.raises(ValueError, match=msg):
         roc_auc_score(y_true, y_scores, labels=labels, multi_class=multi_class)
 
 
-@pytest.mark.parametrize("msg, kwargs", [
-    ((r"average must be one of \('macro', 'weighted'\) for "
-      r"multiclass problems"), {"average": "samples", "multi_class": "ovo"}),
-    ((r"average must be one of \('macro', 'weighted'\) for "
-      r"multiclass problems"), {"average": "micro", "multi_class": "ovr"}),
-    ((r"sample_weight is not supported for multiclass one-vs-one "
-      r"ROC AUC, 'sample_weight' must be None in this case"),
-     {"multi_class": "ovo", "sample_weight": []}),
-    ((r"Partial AUC computation not available in multiclass setting, "
-      r"'max_fpr' must be set to `None`, received `max_fpr=0.5` "
-      r"instead"), {"multi_class": "ovo", "max_fpr": 0.5}),
-    ((r"multi_class='ovp' is not supported for multiclass ROC AUC, "
-      r"multi_class must be in \('ovo', 'ovr'\)"),
-     {"multi_class": "ovp"}),
-    (r"multi_class must be in \('ovo', 'ovr'\)", {})
-])
+@pytest.mark.parametrize(
+    "msg, kwargs",
+    [((r"average must be one of \('macro', 'weighted'\) for "
+       r"multiclass problems"), {
+           "average": "samples",
+           "multi_class": "ovo"
+       }),
+     ((r"average must be one of \('macro', 'weighted'\) for "
+       r"multiclass problems"), {
+           "average": "micro",
+           "multi_class": "ovr"
+       }),
+     ((r"sample_weight is not supported for multiclass one-vs-one "
+       r"ROC AUC, 'sample_weight' must be None in this case"), {
+           "multi_class": "ovo",
+           "sample_weight": []
+       }),
+     ((r"Partial AUC computation not available in multiclass setting, "
+       r"'max_fpr' must be set to `None`, received `max_fpr=0.5` "
+       r"instead"), {
+           "multi_class": "ovo",
+           "max_fpr": 0.5
+       }),
+     ((r"multi_class='ovp' is not supported for multiclass ROC AUC, "
+       r"multi_class must be in \('ovo', 'ovr'\)"), {
+           "multi_class": "ovp"
+       }), (r"multi_class must be in \('ovo', 'ovr'\)", {})])
 def test_roc_auc_score_multiclass_error(msg, kwargs):
     # Test that roc_auc_score function returns an error when trying
     # to compute multiclass AUC for parameters where an output
@@ -739,7 +741,8 @@ def _test_precision_recall_curve(y_true, probas_pred):
                               average_precision_score(y_true, probas_pred))
     # `_average_precision` is not very precise in case of 0.5 ties: be tolerant
     assert_almost_equal(_average_precision(y_true, probas_pred),
-                        precision_recall_auc, decimal=2)
+                        precision_recall_auc,
+                        decimal=2)
     assert p.size == r.size
     assert p.size == thresholds.size + 1
     # Smoke test in the case of proba having only one value
@@ -771,7 +774,7 @@ def test_precision_recall_curve_toydata():
         p, r, _ = precision_recall_curve(y_true, y_score)
         auc_prc = average_precision_score(y_true, y_score)
         assert_array_almost_equal(p, [0.5, 0., 1.])
-        assert_array_almost_equal(r, [1., 0.,  0.])
+        assert_array_almost_equal(r, [1., 0., 0.])
         # Here we are doing a terrible prediction: we are always getting
         # it wrong, hence the average_precision_score is the accuracy at
         # chance: 50%
@@ -822,10 +825,10 @@ def test_precision_recall_curve_toydata():
             average_precision_score(y_true, y_score, average="macro")
         with pytest.raises(Exception):
             average_precision_score(y_true, y_score, average="weighted")
-        assert_almost_equal(average_precision_score(y_true, y_score,
-                            average="samples"), 1.)
-        assert_almost_equal(average_precision_score(y_true, y_score,
-                            average="micro"), 1.)
+        assert_almost_equal(
+            average_precision_score(y_true, y_score, average="samples"), 1.)
+        assert_almost_equal(
+            average_precision_score(y_true, y_score, average="micro"), 1.)
 
         y_true = np.array([[0, 1], [0, 1]])
         y_score = np.array([[0, 1], [1, 0]])
@@ -833,39 +836,39 @@ def test_precision_recall_curve_toydata():
             average_precision_score(y_true, y_score, average="macro")
         with pytest.raises(Exception):
             average_precision_score(y_true, y_score, average="weighted")
-        assert_almost_equal(average_precision_score(y_true, y_score,
-                            average="samples"), 0.75)
-        assert_almost_equal(average_precision_score(y_true, y_score,
-                            average="micro"), 0.5)
+        assert_almost_equal(
+            average_precision_score(y_true, y_score, average="samples"), 0.75)
+        assert_almost_equal(
+            average_precision_score(y_true, y_score, average="micro"), 0.5)
 
         y_true = np.array([[1, 0], [0, 1]])
         y_score = np.array([[0, 1], [1, 0]])
-        assert_almost_equal(average_precision_score(y_true, y_score,
-                            average="macro"), 0.5)
-        assert_almost_equal(average_precision_score(y_true, y_score,
-                            average="weighted"), 0.5)
-        assert_almost_equal(average_precision_score(y_true, y_score,
-                            average="samples"), 0.5)
-        assert_almost_equal(average_precision_score(y_true, y_score,
-                            average="micro"), 0.5)
+        assert_almost_equal(
+            average_precision_score(y_true, y_score, average="macro"), 0.5)
+        assert_almost_equal(
+            average_precision_score(y_true, y_score, average="weighted"), 0.5)
+        assert_almost_equal(
+            average_precision_score(y_true, y_score, average="samples"), 0.5)
+        assert_almost_equal(
+            average_precision_score(y_true, y_score, average="micro"), 0.5)
 
         y_true = np.array([[1, 0], [0, 1]])
         y_score = np.array([[0.5, 0.5], [0.5, 0.5]])
-        assert_almost_equal(average_precision_score(y_true, y_score,
-                            average="macro"), 0.5)
-        assert_almost_equal(average_precision_score(y_true, y_score,
-                            average="weighted"), 0.5)
-        assert_almost_equal(average_precision_score(y_true, y_score,
-                            average="samples"), 0.5)
-        assert_almost_equal(average_precision_score(y_true, y_score,
-                            average="micro"), 0.5)
+        assert_almost_equal(
+            average_precision_score(y_true, y_score, average="macro"), 0.5)
+        assert_almost_equal(
+            average_precision_score(y_true, y_score, average="weighted"), 0.5)
+        assert_almost_equal(
+            average_precision_score(y_true, y_score, average="samples"), 0.5)
+        assert_almost_equal(
+            average_precision_score(y_true, y_score, average="micro"), 0.5)
 
     with np.errstate(all="ignore"):
         # if one class is never present weighted should not be NaN
         y_true = np.array([[0, 0], [0, 1]])
         y_score = np.array([[0, 0], [0, 1]])
-        assert_almost_equal(average_precision_score(y_true, y_score,
-                            average="weighted"), 1)
+        assert_almost_equal(
+            average_precision_score(y_true, y_score, average="weighted"), 1)
 
 
 def test_average_precision_constant_values():
@@ -999,8 +1002,8 @@ def check_zero_or_all_relevant_labels(lrap_score):
         assert lrap_score(y_true, y_score_ties) == 1.
 
     # Degenerate case: only one label
-    assert_almost_equal(lrap_score([[1], [0], [1], [0]],
-                                   [[0.5], [0.5], [0.5], [0.5]]), 1.)
+    assert_almost_equal(
+        lrap_score([[1], [0], [1], [0]], [[0.5], [0.5], [0.5], [0.5]]), 1.)
 
 
 def check_lrap_error_raised(lrap_score):
@@ -1064,9 +1067,10 @@ def check_lrap_without_tie_and_increasing_score(lrap_score):
             for pos in range(n_labels - n_relevant):
                 y_true = np.zeros((1, n_labels))
                 y_true[0, pos:pos + n_relevant] = 1
-                assert_almost_equal(lrap_score(y_true, y_score),
-                                    sum((r + 1) / ((pos + r + 1) * n_relevant)
-                                        for r in range(n_relevant)))
+                assert_almost_equal(
+                    lrap_score(y_true, y_score),
+                    sum((r + 1) / ((pos + r + 1) * n_relevant)
+                        for r in range(n_relevant)))
 
 
 def _my_lrap(y_true, y_score):
@@ -1107,8 +1111,10 @@ def _my_lrap(y_true, y_score):
     return score.mean()
 
 
-def check_alternative_lrap_implementation(lrap_score, n_classes=5,
-                                          n_samples=20, random_state=0):
+def check_alternative_lrap_implementation(lrap_score,
+                                          n_classes=5,
+                                          n_samples=20,
+                                          random_state=0):
     _, y_true = make_multilabel_classification(n_features=1,
                                                allow_unlabeled=False,
                                                random_state=random_state,
@@ -1135,14 +1141,10 @@ def check_alternative_lrap_implementation(lrap_score, n_classes=5,
 
 
 @pytest.mark.parametrize(
-        'check',
-        (check_lrap_toy,
-         check_lrap_without_tie_and_increasing_score,
-         check_lrap_only_ties,
-         check_zero_or_all_relevant_labels))
-@pytest.mark.parametrize(
-        'func',
-        (label_ranking_average_precision_score, _my_lrap))
+    'check', (check_lrap_toy, check_lrap_without_tie_and_increasing_score,
+              check_lrap_only_ties, check_zero_or_all_relevant_labels))
+@pytest.mark.parametrize('func',
+                         (label_ranking_average_precision_score, _my_lrap))
 def test_label_ranking_avp(check, func):
     check(func)
 
@@ -1157,8 +1159,8 @@ def test_lrap_error_raised():
 def test_alternative_lrap_implementation(n_samples, n_classes, random_state):
 
     check_alternative_lrap_implementation(
-               label_ranking_average_precision_score,
-               n_classes, n_samples, random_state)
+        label_ranking_average_precision_score, n_classes, n_samples,
+        random_state)
 
 
 def test_lrap_sample_weighting_zero_labels():
@@ -1175,7 +1177,8 @@ def test_lrap_sample_weighting_zero_labels():
     sample_weight = np.array([1.0, 1.0, 0.0])
 
     assert_almost_equal(
-        label_ranking_average_precision_score(y_true, y_score,
+        label_ranking_average_precision_score(y_true,
+                                              y_score,
                                               sample_weight=sample_weight),
         np.sum(sample_weight * samplewise_lraps) / np.sum(sample_weight))
 
@@ -1215,17 +1218,19 @@ def test_coverage_error():
     assert_almost_equal(coverage_error([[1, 1, 1]], [[0.5, 0.75, 0.25]]), 3)
 
     # Non trival case
-    assert_almost_equal(coverage_error([[0, 1, 0], [1, 1, 0]],
-                                       [[0.1, 10., -3], [0, 1, 3]]),
-                        (1 + 3) / 2.)
+    assert_almost_equal(
+        coverage_error([[0, 1, 0], [1, 1, 0]], [[0.1, 10., -3], [0, 1, 3]]),
+        (1 + 3) / 2.)
 
-    assert_almost_equal(coverage_error([[0, 1, 0], [1, 1, 0], [0, 1, 1]],
-                                       [[0.1, 10, -3], [0, 1, 3], [0, 2, 0]]),
-                        (1 + 3 + 3) / 3.)
+    assert_almost_equal(
+        coverage_error([[0, 1, 0], [1, 1, 0], [0, 1, 1]],
+                       [[0.1, 10, -3], [0, 1, 3], [0, 2, 0]]),
+        (1 + 3 + 3) / 3.)
 
-    assert_almost_equal(coverage_error([[0, 1, 0], [1, 1, 0], [0, 1, 1]],
-                                       [[0.1, 10, -3], [3, 1, 3], [0, 2, 0]]),
-                        (1 + 3 + 3) / 3.)
+    assert_almost_equal(
+        coverage_error([[0, 1, 0], [1, 1, 0], [0, 1, 1]],
+                       [[0.1, 10, -3], [3, 1, 3], [0, 2, 0]]),
+        (1 + 3 + 3) / 3.)
 
 
 def test_coverage_tie_handling():
@@ -1271,30 +1276,28 @@ def test_label_ranking_loss():
                         0)
     assert_almost_equal(label_ranking_loss([[1, 1, 1]], [[0.5, 0.75, 0.25]]),
                         0)
-    assert_almost_equal(label_ranking_loss([[0, 0, 0]], [[0.25, 0.5, 0.5]]),
-                        0)
+    assert_almost_equal(label_ranking_loss([[0, 0, 0]], [[0.25, 0.5, 0.5]]), 0)
     assert_almost_equal(label_ranking_loss([[1, 1, 1]], [[0.25, 0.5, 0.5]]), 0)
 
     # Non trival case
-    assert_almost_equal(label_ranking_loss([[0, 1, 0], [1, 1, 0]],
-                                           [[0.1, 10., -3], [0, 1, 3]]),
-                        (0 + 2 / 2) / 2.)
+    assert_almost_equal(
+        label_ranking_loss([[0, 1, 0], [1, 1, 0]],
+                           [[0.1, 10., -3], [0, 1, 3]]), (0 + 2 / 2) / 2.)
 
-    assert_almost_equal(label_ranking_loss(
-        [[0, 1, 0], [1, 1, 0], [0, 1, 1]],
-        [[0.1, 10, -3], [0, 1, 3], [0, 2, 0]]),
+    assert_almost_equal(
+        label_ranking_loss([[0, 1, 0], [1, 1, 0], [0, 1, 1]],
+                           [[0.1, 10, -3], [0, 1, 3], [0, 2, 0]]),
         (0 + 2 / 2 + 1 / 2) / 3.)
 
-    assert_almost_equal(label_ranking_loss(
-        [[0, 1, 0], [1, 1, 0], [0, 1, 1]],
-        [[0.1, 10, -3], [3, 1, 3], [0, 2, 0]]),
+    assert_almost_equal(
+        label_ranking_loss([[0, 1, 0], [1, 1, 0], [0, 1, 1]],
+                           [[0.1, 10, -3], [3, 1, 3], [0, 2, 0]]),
         (0 + 2 / 2 + 1 / 2) / 3.)
 
     # Sparse csr matrices
-    assert_almost_equal(label_ranking_loss(
-        csr_matrix(np.array([[0, 1, 0], [1, 1, 0]])),
-        [[0.1, 10, -3], [3, 1, 3]]),
-        (0 + 2 / 2) / 2.)
+    assert_almost_equal(
+        label_ranking_loss(csr_matrix(np.array([[0, 1, 0], [1, 1, 0]])),
+                           [[0.1, 10, -3], [3, 1, 3]]), (0 + 2 / 2) / 2.)
 
 
 def test_ranking_appropriate_input_shape():
@@ -1329,7 +1332,7 @@ def test_ranking_loss_ties_handling():
 
 def test_dcg_score():
     _, y_true = make_multilabel_classification(random_state=0, n_classes=10)
-    y_score = - y_true + 1
+    y_score = -y_true + 1
     _test_dcg_score_for(y_true, y_score)
     y_true, y_score = np.random.RandomState(0).random_sample((2, 100, 10))
     _test_dcg_score_for(y_true, y_score)
@@ -1354,13 +1357,15 @@ def test_dcg_ties():
     dcg_ignore_ties = _dcg_sample_scores(y_true, y_score, ignore_ties=True)
     discounts = 1 / np.log2(np.arange(2, 7))
     assert dcg == pytest.approx([discounts.sum() * y_true.mean()])
-    assert dcg_ignore_ties == pytest.approx(
-        [(discounts * y_true[:, ::-1]).sum()])
+    assert dcg_ignore_ties == pytest.approx([
+        (discounts * y_true[:, ::-1]).sum()
+    ])
     y_score[0, 3:] = 1
     dcg = _dcg_sample_scores(y_true, y_score)
     dcg_ignore_ties = _dcg_sample_scores(y_true, y_score, ignore_ties=True)
-    assert dcg_ignore_ties == pytest.approx(
-        [(discounts * y_true[:, ::-1]).sum()])
+    assert dcg_ignore_ties == pytest.approx([
+        (discounts * y_true[:, ::-1]).sum()
+    ])
     assert dcg == pytest.approx([
         discounts[:2].sum() * y_true[0, 3:].mean() +
         discounts[2:].sum() * y_true[0, :3].mean()
@@ -1391,41 +1396,44 @@ def test_ndcg_toy_examples(ignore_ties):
     y_score = np.tile(np.arange(6, -1, -1), (5, 1))
     y_score_noisy = y_score + np.random.RandomState(0).uniform(
         -.2, .2, size=y_score.shape)
-    assert _dcg_sample_scores(
-        y_true, y_score, ignore_ties=ignore_ties) == pytest.approx(
-            3 / np.log2(np.arange(2, 7)))
-    assert _dcg_sample_scores(
-        y_true, y_score_noisy, ignore_ties=ignore_ties) == pytest.approx(
-            3 / np.log2(np.arange(2, 7)))
-    assert _ndcg_sample_scores(
-        y_true, y_score, ignore_ties=ignore_ties) == pytest.approx(
-            1 / np.log2(np.arange(2, 7)))
-    assert _dcg_sample_scores(y_true, y_score, log_base=10,
+    assert _dcg_sample_scores(y_true, y_score,
+                              ignore_ties=ignore_ties) == pytest.approx(
+                                  3 / np.log2(np.arange(2, 7)))
+    assert _dcg_sample_scores(y_true, y_score_noisy,
+                              ignore_ties=ignore_ties) == pytest.approx(
+                                  3 / np.log2(np.arange(2, 7)))
+    assert _ndcg_sample_scores(y_true, y_score,
+                               ignore_ties=ignore_ties) == pytest.approx(
+                                   1 / np.log2(np.arange(2, 7)))
+    assert _dcg_sample_scores(y_true,
+                              y_score,
+                              log_base=10,
                               ignore_ties=ignore_ties) == pytest.approx(
                                   3 / np.log10(np.arange(2, 7)))
-    assert ndcg_score(
-        y_true, y_score, ignore_ties=ignore_ties) == pytest.approx(
-            (1 / np.log2(np.arange(2, 7))).mean())
-    assert dcg_score(
-        y_true, y_score, ignore_ties=ignore_ties) == pytest.approx(
-            (3 / np.log2(np.arange(2, 7))).mean())
+    assert ndcg_score(y_true, y_score,
+                      ignore_ties=ignore_ties) == pytest.approx(
+                          (1 / np.log2(np.arange(2, 7))).mean())
+    assert dcg_score(y_true, y_score,
+                     ignore_ties=ignore_ties) == pytest.approx(
+                         (3 / np.log2(np.arange(2, 7))).mean())
     y_true = 3 * np.ones((5, 7))
     expected_dcg_score = (3 / np.log2(np.arange(2, 9))).sum()
-    assert _dcg_sample_scores(
-        y_true, y_score, ignore_ties=ignore_ties) == pytest.approx(
-            expected_dcg_score * np.ones(5))
-    assert _ndcg_sample_scores(
-        y_true, y_score, ignore_ties=ignore_ties) == pytest.approx(np.ones(5))
+    assert _dcg_sample_scores(y_true, y_score,
+                              ignore_ties=ignore_ties) == pytest.approx(
+                                  expected_dcg_score * np.ones(5))
+    assert _ndcg_sample_scores(y_true, y_score,
+                               ignore_ties=ignore_ties) == pytest.approx(
+                                   np.ones(5))
     assert dcg_score(
-        y_true, y_score, ignore_ties=ignore_ties) == pytest.approx(
-            expected_dcg_score)
-    assert ndcg_score(
-        y_true, y_score, ignore_ties=ignore_ties) == pytest.approx(1.)
+        y_true, y_score,
+        ignore_ties=ignore_ties) == pytest.approx(expected_dcg_score)
+    assert ndcg_score(y_true, y_score,
+                      ignore_ties=ignore_ties) == pytest.approx(1.)
 
 
 def test_ndcg_score():
     _, y_true = make_multilabel_classification(random_state=0, n_classes=10)
-    y_score = - y_true + 1
+    y_score = -y_true + 1
     _test_ndcg_score_for(y_true, y_score)
     y_true, y_score = np.random.RandomState(0).random_sample((2, 100, 10))
     _test_ndcg_score_for(y_true, y_score)
@@ -1458,7 +1466,7 @@ def test_partial_roc_auc_score():
     with pytest.raises(ValueError):
         assert roc_auc_score(y_true, y_true, max_fpr=0)
 
-    y_scores = np.array([0.1,  0,  0.1, 0.01])
+    y_scores = np.array([0.1, 0, 0.1, 0.01])
     roc_auc_with_max_fpr_one = roc_auc_score(y_true, y_scores, max_fpr=1)
     unconstrained_roc_auc = roc_auc_score(y_true, y_scores)
     assert roc_auc_with_max_fpr_one == unconstrained_roc_auc
@@ -1466,6 +1474,5 @@ def test_partial_roc_auc_score():
 
     y_true, y_pred, _ = make_prediction(binary=True)
     for max_fpr in np.linspace(1e-4, 1, 5):
-        assert_almost_equal(
-            roc_auc_score(y_true, y_pred, max_fpr=max_fpr),
-            _partial_roc_auc_score(y_true, y_pred, max_fpr))
+        assert_almost_equal(roc_auc_score(y_true, y_pred, max_fpr=max_fpr),
+                            _partial_roc_auc_score(y_true, y_pred, max_fpr))

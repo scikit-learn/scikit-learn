@@ -84,8 +84,7 @@ class _MultimetricScorer:
 
         for name, scorer in self._scorers.items():
             if isinstance(scorer, _BaseScorer):
-                score = scorer._score(cached_call, estimator,
-                                      *args, **kwargs)
+                score = scorer._score(cached_call, estimator, *args, **kwargs)
             else:
                 score = scorer(estimator, *args, **kwargs)
             scores[name] = score
@@ -116,8 +115,8 @@ class _MultimetricScorer:
         if counter[_ThresholdScorer]:
             if is_regressor(estimator) and counter[_PredictScorer]:
                 return True
-            elif (counter[_ProbaScorer] and
-                  not hasattr(estimator, "decision_function")):
+            elif (counter[_ProbaScorer]
+                  and not hasattr(estimator, "decision_function")):
                 return True
         return False
 
@@ -132,12 +131,12 @@ class _BaseScorer:
         self._deprecation_msg = None
 
     def __repr__(self):
-        kwargs_string = "".join([", %s=%s" % (str(k), str(v))
-                                 for k, v in self._kwargs.items()])
-        return ("make_scorer(%s%s%s%s)"
-                % (self._score_func.__name__,
-                   "" if self._sign > 0 else ", greater_is_better=False",
-                   self._factory_args(), kwargs_string))
+        kwargs_string = "".join(
+            [", %s=%s" % (str(k), str(v)) for k, v in self._kwargs.items()])
+        return ("make_scorer(%s%s%s%s)" %
+                (self._score_func.__name__,
+                 "" if self._sign > 0 else ", greater_is_better=False",
+                 self._factory_args(), kwargs_string))
 
     def __call__(self, estimator, X, y_true, sample_weight=None):
         """Evaluate predicted target values for X relative to y_true.
@@ -166,7 +165,10 @@ class _BaseScorer:
             warnings.warn(self._deprecation_msg,
                           category=FutureWarning,
                           stacklevel=2)
-        return self._score(partial(_cached_call, None), estimator, X, y_true,
+        return self._score(partial(_cached_call, None),
+                           estimator,
+                           X,
+                           y_true,
                            sample_weight=sample_weight)
 
     def _factory_args(self):
@@ -205,12 +207,11 @@ class _PredictScorer(_BaseScorer):
 
         y_pred = method_caller(estimator, "predict", X)
         if sample_weight is not None:
-            return self._sign * self._score_func(y_true, y_pred,
-                                                 sample_weight=sample_weight,
-                                                 **self._kwargs)
+            return self._sign * self._score_func(
+                y_true, y_pred, sample_weight=sample_weight, **self._kwargs)
         else:
-            return self._sign * self._score_func(y_true, y_pred,
-                                                 **self._kwargs)
+            return self._sign * self._score_func(y_true, y_pred, **
+                                                 self._kwargs)
 
 
 class _ProbaScorer(_BaseScorer):
@@ -254,9 +255,8 @@ class _ProbaScorer(_BaseScorer):
                                  ' classes for {} scoring'.format(
                                      y_pred.shape, self._score_func.__name__))
         if sample_weight is not None:
-            return self._sign * self._score_func(y, y_pred,
-                                                 sample_weight=sample_weight,
-                                                 **self._kwargs)
+            return self._sign * self._score_func(
+                y, y_pred, sample_weight=sample_weight, **self._kwargs)
         else:
             return self._sign * self._score_func(y, y_pred, **self._kwargs)
 
@@ -326,9 +326,8 @@ class _ThresholdScorer(_BaseScorer):
                     y_pred = np.vstack([p[:, -1] for p in y_pred]).T
 
         if sample_weight is not None:
-            return self._sign * self._score_func(y, y_pred,
-                                                 sample_weight=sample_weight,
-                                                 **self._kwargs)
+            return self._sign * self._score_func(
+                y, y_pred, sample_weight=sample_weight, **self._kwargs)
         else:
             return self._sign * self._score_func(y, y_pred, **self._kwargs)
 
@@ -424,8 +423,8 @@ def check_scoring(estimator, scoring=None, *, allow_none=False):
         else:
             raise TypeError(
                 "If no scoring is specified, the estimator passed should "
-                "have a 'score' method. The estimator %r does not."
-                % estimator)
+                "have a 'score' method. The estimator %r does not." %
+                estimator)
     elif isinstance(scoring, Iterable):
         raise ValueError("For evaluating multiple scores, use "
                          "sklearn.model_selection.cross_validate instead. "
@@ -470,8 +469,7 @@ def _check_multimetric_scoring(estimator, scoring=None):
         True if scorer is a list/tuple or dict of callables
         False if scorer is None/str/callable
     """
-    if callable(scoring) or scoring is None or isinstance(scoring,
-                                                          str):
+    if callable(scoring) or scoring is None or isinstance(scoring, str):
         scorers = {"score": check_scoring(estimator, scoring=scoring)}
         return scorers, False
     else:
@@ -479,8 +477,8 @@ def _check_multimetric_scoring(estimator, scoring=None):
                            "callable for single metric evaluation or a "
                            "list/tuple of strings or a dict of scorer name "
                            "mapped to the callable for multiple metric "
-                           "evaluation. Got %s of type %s"
-                           % (repr(scoring), type(scoring)))
+                           "evaluation. Got %s of type %s" %
+                           (repr(scoring), type(scoring)))
 
         if isinstance(scoring, (list, tuple, set)):
             err_msg = ("The list/tuple elements must be unique "
@@ -507,10 +505,12 @@ def _check_multimetric_scoring(estimator, scoring=None):
                     else:
                         raise ValueError(err_msg +
                                          "Non-string types were found in "
-                                         "the given list. Got %r"
-                                         % repr(scoring))
-                scorers = {scorer: check_scoring(estimator, scoring=scorer)
-                           for scorer in scoring}
+                                         "the given list. Got %r" %
+                                         repr(scoring))
+                scorers = {
+                    scorer: check_scoring(estimator, scoring=scorer)
+                    for scorer in scoring
+                }
             else:
                 raise ValueError(err_msg +
                                  "Empty list was given. %r" % repr(scoring))
@@ -521,18 +521,24 @@ def _check_multimetric_scoring(estimator, scoring=None):
                 raise ValueError("Non-string types were found in the keys of "
                                  "the given dict. scoring=%r" % repr(scoring))
             if len(keys) == 0:
-                raise ValueError("An empty dict was passed. %r"
-                                 % repr(scoring))
-            scorers = {key: check_scoring(estimator, scoring=scorer)
-                       for key, scorer in scoring.items()}
+                raise ValueError("An empty dict was passed. %r" %
+                                 repr(scoring))
+            scorers = {
+                key: check_scoring(estimator, scoring=scorer)
+                for key, scorer in scoring.items()
+            }
         else:
             raise ValueError(err_msg_generic)
         return scorers, True
 
 
 @_deprecate_positional_args
-def make_scorer(score_func, *, greater_is_better=True, needs_proba=False,
-                needs_threshold=False, **kwargs):
+def make_scorer(score_func,
+                *,
+                greater_is_better=True,
+                needs_proba=False,
+                needs_threshold=False,
+                **kwargs):
     """Make a scorer from a performance metric or loss function.
 
     This factory function wraps scoring functions for use in GridSearchCV
@@ -618,8 +624,7 @@ def make_scorer(score_func, *, greater_is_better=True, needs_proba=False,
 # Standard regression scores
 explained_variance_scorer = make_scorer(explained_variance_score)
 r2_scorer = make_scorer(r2_score)
-max_error_scorer = make_scorer(max_error,
-                               greater_is_better=False)
+max_error_scorer = make_scorer(max_error, greater_is_better=False)
 neg_mean_squared_error_scorer = make_scorer(mean_squared_error,
                                             greater_is_better=False)
 neg_mean_squared_log_error_scorer = make_scorer(mean_squared_log_error,
@@ -631,36 +636,40 @@ neg_median_absolute_error_scorer = make_scorer(median_absolute_error,
 neg_root_mean_squared_error_scorer = make_scorer(mean_squared_error,
                                                  greater_is_better=False,
                                                  squared=False)
-neg_mean_poisson_deviance_scorer = make_scorer(
-    mean_poisson_deviance, greater_is_better=False
-)
+neg_mean_poisson_deviance_scorer = make_scorer(mean_poisson_deviance,
+                                               greater_is_better=False)
 
-neg_mean_gamma_deviance_scorer = make_scorer(
-    mean_gamma_deviance, greater_is_better=False
-)
+neg_mean_gamma_deviance_scorer = make_scorer(mean_gamma_deviance,
+                                             greater_is_better=False)
 
 # Standard Classification Scores
 accuracy_scorer = make_scorer(accuracy_score)
 balanced_accuracy_scorer = make_scorer(balanced_accuracy_score)
 
 # Score functions that need decision values
-roc_auc_scorer = make_scorer(roc_auc_score, greater_is_better=True,
+roc_auc_scorer = make_scorer(roc_auc_score,
+                             greater_is_better=True,
                              needs_threshold=True)
 average_precision_scorer = make_scorer(average_precision_score,
                                        needs_threshold=True)
-roc_auc_ovo_scorer = make_scorer(roc_auc_score, needs_proba=True,
+roc_auc_ovo_scorer = make_scorer(roc_auc_score,
+                                 needs_proba=True,
                                  multi_class='ovo')
-roc_auc_ovo_weighted_scorer = make_scorer(roc_auc_score, needs_proba=True,
+roc_auc_ovo_weighted_scorer = make_scorer(roc_auc_score,
+                                          needs_proba=True,
                                           multi_class='ovo',
                                           average='weighted')
-roc_auc_ovr_scorer = make_scorer(roc_auc_score, needs_proba=True,
+roc_auc_ovr_scorer = make_scorer(roc_auc_score,
+                                 needs_proba=True,
                                  multi_class='ovr')
-roc_auc_ovr_weighted_scorer = make_scorer(roc_auc_score, needs_proba=True,
+roc_auc_ovr_weighted_scorer = make_scorer(roc_auc_score,
+                                          needs_proba=True,
                                           multi_class='ovr',
                                           average='weighted')
 
 # Score function for probabilistic classification
-neg_log_loss_scorer = make_scorer(log_loss, greater_is_better=False,
+neg_log_loss_scorer = make_scorer(log_loss,
+                                  greater_is_better=False,
                                   needs_proba=True)
 neg_brier_score_scorer = make_scorer(brier_score_loss,
                                      greater_is_better=False,
@@ -673,7 +682,6 @@ deprecation_msg = ('Scoring method brier_score_loss was renamed to '
                    'be removed in 0.24.')
 brier_score_loss_scorer._deprecation_msg = deprecation_msg
 
-
 # Clustering scores
 adjusted_rand_scorer = make_scorer(adjusted_rand_score)
 homogeneity_scorer = make_scorer(homogeneity_score)
@@ -684,42 +692,42 @@ adjusted_mutual_info_scorer = make_scorer(adjusted_mutual_info_score)
 normalized_mutual_info_scorer = make_scorer(normalized_mutual_info_score)
 fowlkes_mallows_scorer = make_scorer(fowlkes_mallows_score)
 
+SCORERS = dict(
+    explained_variance=explained_variance_scorer,
+    r2=r2_scorer,
+    max_error=max_error_scorer,
+    neg_median_absolute_error=neg_median_absolute_error_scorer,
+    neg_mean_absolute_error=neg_mean_absolute_error_scorer,
+    neg_mean_squared_error=neg_mean_squared_error_scorer,
+    neg_mean_squared_log_error=neg_mean_squared_log_error_scorer,
+    neg_root_mean_squared_error=neg_root_mean_squared_error_scorer,
+    neg_mean_poisson_deviance=neg_mean_poisson_deviance_scorer,
+    neg_mean_gamma_deviance=neg_mean_gamma_deviance_scorer,
+    accuracy=accuracy_scorer,
+    roc_auc=roc_auc_scorer,
+    roc_auc_ovr=roc_auc_ovr_scorer,
+    roc_auc_ovo=roc_auc_ovo_scorer,
+    roc_auc_ovr_weighted=roc_auc_ovr_weighted_scorer,
+    roc_auc_ovo_weighted=roc_auc_ovo_weighted_scorer,
+    balanced_accuracy=balanced_accuracy_scorer,
+    average_precision=average_precision_scorer,
+    neg_log_loss=neg_log_loss_scorer,
+    neg_brier_score=neg_brier_score_scorer,
+    # Cluster metrics that use supervised evaluation
+    adjusted_rand_score=adjusted_rand_scorer,
+    homogeneity_score=homogeneity_scorer,
+    completeness_score=completeness_scorer,
+    v_measure_score=v_measure_scorer,
+    mutual_info_score=mutual_info_scorer,
+    adjusted_mutual_info_score=adjusted_mutual_info_scorer,
+    normalized_mutual_info_score=normalized_mutual_info_scorer,
+    fowlkes_mallows_score=fowlkes_mallows_scorer)
 
-SCORERS = dict(explained_variance=explained_variance_scorer,
-               r2=r2_scorer,
-               max_error=max_error_scorer,
-               neg_median_absolute_error=neg_median_absolute_error_scorer,
-               neg_mean_absolute_error=neg_mean_absolute_error_scorer,
-               neg_mean_squared_error=neg_mean_squared_error_scorer,
-               neg_mean_squared_log_error=neg_mean_squared_log_error_scorer,
-               neg_root_mean_squared_error=neg_root_mean_squared_error_scorer,
-               neg_mean_poisson_deviance=neg_mean_poisson_deviance_scorer,
-               neg_mean_gamma_deviance=neg_mean_gamma_deviance_scorer,
-               accuracy=accuracy_scorer, roc_auc=roc_auc_scorer,
-               roc_auc_ovr=roc_auc_ovr_scorer,
-               roc_auc_ovo=roc_auc_ovo_scorer,
-               roc_auc_ovr_weighted=roc_auc_ovr_weighted_scorer,
-               roc_auc_ovo_weighted=roc_auc_ovo_weighted_scorer,
-               balanced_accuracy=balanced_accuracy_scorer,
-               average_precision=average_precision_scorer,
-               neg_log_loss=neg_log_loss_scorer,
-               neg_brier_score=neg_brier_score_scorer,
-               # Cluster metrics that use supervised evaluation
-               adjusted_rand_score=adjusted_rand_scorer,
-               homogeneity_score=homogeneity_scorer,
-               completeness_score=completeness_scorer,
-               v_measure_score=v_measure_scorer,
-               mutual_info_score=mutual_info_scorer,
-               adjusted_mutual_info_score=adjusted_mutual_info_scorer,
-               normalized_mutual_info_score=normalized_mutual_info_scorer,
-               fowlkes_mallows_score=fowlkes_mallows_scorer)
-
-
-for name, metric in [('precision', precision_score),
-                     ('recall', recall_score), ('f1', f1_score),
-                     ('jaccard', jaccard_score)]:
+for name, metric in [('precision', precision_score), ('recall', recall_score),
+                     ('f1', f1_score), ('jaccard', jaccard_score)]:
     SCORERS[name] = make_scorer(metric, average='binary')
     for average in ['macro', 'micro', 'samples', 'weighted']:
         qualified_name = '{0}_{1}'.format(name, average)
-        SCORERS[qualified_name] = make_scorer(metric, pos_label=None,
+        SCORERS[qualified_name] = make_scorer(metric,
+                                              pos_label=None,
                                               average=average)

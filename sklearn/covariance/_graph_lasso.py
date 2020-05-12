@@ -36,9 +36,9 @@ def _objective(mle, precision_, alpha):
     penalisation term to promote sparsity
     """
     p = precision_.shape[0]
-    cost = - 2. * log_likelihood(mle, precision_) + p * np.log(2 * np.pi)
-    cost += alpha * (np.abs(precision_).sum()
-                     - np.abs(np.diag(precision_)).sum())
+    cost = -2. * log_likelihood(mle, precision_) + p * np.log(2 * np.pi)
+    cost += alpha * (np.abs(precision_).sum() -
+                     np.abs(np.diag(precision_)).sum())
     return cost
 
 
@@ -50,8 +50,8 @@ def _dual_gap(emp_cov, precision_, alpha):
     """
     gap = np.sum(emp_cov * precision_)
     gap -= precision_.shape[0]
-    gap += alpha * (np.abs(precision_).sum()
-                    - np.abs(np.diag(precision_)).sum())
+    gap += alpha * (np.abs(precision_).sum() -
+                    np.abs(np.diag(precision_)).sum())
     return gap
 
 
@@ -76,9 +76,17 @@ def alpha_max(emp_cov):
 
 # The g-lasso algorithm
 
-def graphical_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
-                    enet_tol=1e-4, max_iter=100, verbose=False,
-                    return_costs=False, eps=np.finfo(np.float64).eps,
+
+def graphical_lasso(emp_cov,
+                    alpha,
+                    cov_init=None,
+                    mode='cd',
+                    tol=1e-4,
+                    enet_tol=1e-4,
+                    max_iter=100,
+                    verbose=False,
+                    return_costs=False,
+                    eps=np.finfo(np.float64).eps,
                     return_n_iter=False):
     """l1-penalized covariance estimator
 
@@ -166,7 +174,7 @@ def graphical_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
     if alpha == 0:
         if return_costs:
             precision_ = linalg.inv(emp_cov)
-            cost = - 2. * log_likelihood(emp_cov, precision_)
+            cost = -2. * log_likelihood(emp_cov, precision_)
             cost += n_features * np.log(2 * np.pi)
             d_gap = np.sum(emp_cov * precision_) - n_features
             if return_n_iter:
@@ -221,26 +229,31 @@ def graphical_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
                 with np.errstate(**errors):
                     if mode == 'cd':
                         # Use coordinate descent
-                        coefs = -(precision_[indices != idx, idx]
-                                  / (precision_[idx, idx] + 1000 * eps))
+                        coefs = -(precision_[indices != idx, idx] /
+                                  (precision_[idx, idx] + 1000 * eps))
                         coefs, _, _, _ = cd_fast.enet_coordinate_descent_gram(
                             coefs, alpha, 0, sub_covariance,
                             row, row, max_iter, enet_tol,
                             check_random_state(None), False)
                     else:
                         # Use LARS
-                        _, _, coefs = lars_path_gram(
-                            Xy=row, Gram=sub_covariance, n_samples=row.size,
-                            alpha_min=alpha / (n_features - 1), copy_Gram=True,
-                            eps=eps, method='lars', return_path=False)
+                        _, _, coefs = lars_path_gram(Xy=row,
+                                                     Gram=sub_covariance,
+                                                     n_samples=row.size,
+                                                     alpha_min=alpha /
+                                                     (n_features - 1),
+                                                     copy_Gram=True,
+                                                     eps=eps,
+                                                     method='lars',
+                                                     return_path=False)
                 # Update the precision matrix
                 precision_[idx, idx] = (
-                    1. / (covariance_[idx, idx]
-                          - np.dot(covariance_[indices != idx, idx], coefs)))
-                precision_[indices != idx, idx] = (- precision_[idx, idx]
-                                                   * coefs)
-                precision_[idx, indices != idx] = (- precision_[idx, idx]
-                                                   * coefs)
+                    1. / (covariance_[idx, idx] -
+                          np.dot(covariance_[indices != idx, idx], coefs)))
+                precision_[indices != idx,
+                           idx] = (-precision_[idx, idx] * coefs)
+                precision_[idx,
+                           indices != idx] = (-precision_[idx, idx] * coefs)
                 coefs = np.dot(sub_covariance, coefs)
                 covariance_[idx, indices != idx] = coefs
                 covariance_[indices != idx, idx] = coefs
@@ -251,8 +264,7 @@ def graphical_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
             cost = _objective(emp_cov, precision_, alpha)
             if verbose:
                 print('[graphical_lasso] Iteration '
-                      '% 3i, cost % 3.2e, dual gap %.3e'
-                      % (i, cost, d_gap))
+                      '% 3i, cost % 3.2e, dual gap %.3e' % (i, cost, d_gap))
             if return_costs:
                 costs.append((cost, d_gap))
             if np.abs(d_gap) < tol:
@@ -261,12 +273,13 @@ def graphical_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
                 raise FloatingPointError('Non SPD result: the system is '
                                          'too ill-conditioned for this solver')
         else:
-            warnings.warn('graphical_lasso: did not converge after '
-                          '%i iteration: dual gap: %.3e'
-                          % (max_iter, d_gap), ConvergenceWarning)
+            warnings.warn(
+                'graphical_lasso: did not converge after '
+                '%i iteration: dual gap: %.3e' % (max_iter, d_gap),
+                ConvergenceWarning)
     except FloatingPointError as e:
-        e.args = (e.args[0]
-                  + '. The system is too ill-conditioned for this solver',)
+        e.args = (e.args[0] +
+                  '. The system is too ill-conditioned for this solver', )
         raise e
 
     if return_costs:
@@ -364,8 +377,15 @@ class GraphicalLasso(EmpiricalCovariance):
     graphical_lasso, GraphicalLassoCV
     """
     @_deprecate_positional_args
-    def __init__(self, alpha=.01, *, mode='cd', tol=1e-4, enet_tol=1e-4,
-                 max_iter=100, verbose=False, assume_centered=False):
+    def __init__(self,
+                 alpha=.01,
+                 *,
+                 mode='cd',
+                 tol=1e-4,
+                 enet_tol=1e-4,
+                 max_iter=100,
+                 verbose=False,
+                 assume_centered=False):
         super().__init__(assume_centered=assume_centered)
         self.alpha = alpha
         self.mode = mode
@@ -390,25 +410,38 @@ class GraphicalLasso(EmpiricalCovariance):
         self : object
         """
         # Covariance does not make sense for a single feature
-        X = self._validate_data(X, ensure_min_features=2, ensure_min_samples=2,
+        X = self._validate_data(X,
+                                ensure_min_features=2,
+                                ensure_min_samples=2,
                                 estimator=self)
 
         if self.assume_centered:
             self.location_ = np.zeros(X.shape[1])
         else:
             self.location_ = X.mean(0)
-        emp_cov = empirical_covariance(
-            X, assume_centered=self.assume_centered)
+        emp_cov = empirical_covariance(X, assume_centered=self.assume_centered)
         self.covariance_, self.precision_, self.n_iter_ = graphical_lasso(
-            emp_cov, alpha=self.alpha, mode=self.mode, tol=self.tol,
-            enet_tol=self.enet_tol, max_iter=self.max_iter,
-            verbose=self.verbose, return_n_iter=True)
+            emp_cov,
+            alpha=self.alpha,
+            mode=self.mode,
+            tol=self.tol,
+            enet_tol=self.enet_tol,
+            max_iter=self.max_iter,
+            verbose=self.verbose,
+            return_n_iter=True)
         return self
 
 
 # Cross-validation with GraphicalLasso
-def graphical_lasso_path(X, alphas, cov_init=None, X_test=None, mode='cd',
-                         tol=1e-4, enet_tol=1e-4, max_iter=100, verbose=False):
+def graphical_lasso_path(X,
+                         alphas,
+                         cov_init=None,
+                         X_test=None,
+                         mode='cd',
+                         tol=1e-4,
+                         enet_tol=1e-4,
+                         max_iter=100,
+                         verbose=False):
     """l1-penalized covariance estimator along a path of decreasing alphas
 
     Read more in the :ref:`User Guide <sparse_inverse_covariance>`.
@@ -480,9 +513,14 @@ def graphical_lasso_path(X, alphas, cov_init=None, X_test=None, mode='cd',
     for alpha in alphas:
         try:
             # Capture the errors, and move on
-            covariance_, precision_ = graphical_lasso(
-                emp_cov, alpha=alpha, cov_init=covariance_, mode=mode, tol=tol,
-                enet_tol=enet_tol, max_iter=max_iter, verbose=inner_verbose)
+            covariance_, precision_ = graphical_lasso(emp_cov,
+                                                      alpha=alpha,
+                                                      cov_init=covariance_,
+                                                      mode=mode,
+                                                      tol=tol,
+                                                      enet_tol=enet_tol,
+                                                      max_iter=max_iter,
+                                                      verbose=inner_verbose)
             covariances_.append(covariance_)
             precisions_.append(precision_)
             if X_test is not None:
@@ -499,8 +537,8 @@ def graphical_lasso_path(X, alphas, cov_init=None, X_test=None, mode='cd',
             sys.stderr.write('.')
         elif verbose > 1:
             if X_test is not None:
-                print('[graphical_lasso_path] alpha: %.2e, score: %.2e'
-                      % (alpha, this_score))
+                print('[graphical_lasso_path] alpha: %.2e, score: %.2e' %
+                      (alpha, this_score))
             else:
                 print('[graphical_lasso_path] alpha: %.2e' % alpha)
     if X_test is not None:
@@ -646,12 +684,24 @@ class GraphicalLassoCV(GraphicalLasso):
     be close to these missing values.
     """
     @_deprecate_positional_args
-    def __init__(self, *, alphas=4, n_refinements=4, cv=None, tol=1e-4,
-                 enet_tol=1e-4, max_iter=100, mode='cd', n_jobs=None,
-                 verbose=False, assume_centered=False):
-        super().__init__(
-            mode=mode, tol=tol, verbose=verbose, enet_tol=enet_tol,
-            max_iter=max_iter, assume_centered=assume_centered)
+    def __init__(self,
+                 *,
+                 alphas=4,
+                 n_refinements=4,
+                 cv=None,
+                 tol=1e-4,
+                 enet_tol=1e-4,
+                 max_iter=100,
+                 mode='cd',
+                 n_jobs=None,
+                 verbose=False,
+                 assume_centered=False):
+        super().__init__(mode=mode,
+                         tol=tol,
+                         verbose=verbose,
+                         enet_tol=enet_tol,
+                         max_iter=max_iter,
+                         assume_centered=assume_centered)
         self.alphas = alphas
         self.n_refinements = n_refinements
         self.cv = cv
@@ -678,8 +728,7 @@ class GraphicalLassoCV(GraphicalLasso):
             self.location_ = np.zeros(X.shape[1])
         else:
             self.location_ = X.mean(0)
-        emp_cov = empirical_covariance(
-            X, assume_centered=self.assume_centered)
+        emp_cov = empirical_covariance(X, assume_centered=self.assume_centered)
 
         cv = check_cv(self.cv, y, classifier=False)
 
@@ -710,17 +759,17 @@ class GraphicalLassoCV(GraphicalLasso):
                 # NOTE: Warm-restarting graphical_lasso_path has been tried,
                 # and this did not allow to gain anything
                 # (same execution time with or without).
-                this_path = Parallel(
-                    n_jobs=self.n_jobs,
-                    verbose=self.verbose
-                )(delayed(graphical_lasso_path)(X[train], alphas=alphas,
-                                                X_test=X[test], mode=self.mode,
-                                                tol=self.tol,
-                                                enet_tol=self.enet_tol,
-                                                max_iter=int(.1 *
-                                                             self.max_iter),
-                                                verbose=inner_verbose)
-                  for train, test in cv.split(X, y))
+                this_path = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
+                    delayed(graphical_lasso_path)(X[train],
+                                                  alphas=alphas,
+                                                  X_test=X[test],
+                                                  mode=self.mode,
+                                                  tol=self.tol,
+                                                  enet_tol=self.enet_tol,
+                                                  max_iter=int(.1 *
+                                                               self.max_iter),
+                                                  verbose=inner_verbose)
+                    for train, test in cv.split(X, y))
 
             # Little danse to transform the list in what we need
             covs, _, scores = zip(*this_path)
@@ -752,7 +801,7 @@ class GraphicalLassoCV(GraphicalLasso):
                 alpha_1 = path[0][0]
                 alpha_0 = path[1][0]
             elif (best_index == last_finite_idx
-                    and not best_index == len(path) - 1):
+                  and not best_index == len(path) - 1):
                 # We have non-converged models on the upper bound of the
                 # grid, we need to refine the grid there
                 alpha_1 = path[best_index][0]
@@ -778,9 +827,12 @@ class GraphicalLassoCV(GraphicalLasso):
         alphas = list(path[0])
         # Finally, compute the score with alpha = 0
         alphas.append(0)
-        grid_scores.append(cross_val_score(EmpiricalCovariance(), X,
-                                           cv=cv, n_jobs=self.n_jobs,
-                                           verbose=inner_verbose))
+        grid_scores.append(
+            cross_val_score(EmpiricalCovariance(),
+                            X,
+                            cv=cv,
+                            n_jobs=self.n_jobs,
+                            verbose=inner_verbose))
         self.grid_scores_ = np.array(grid_scores)
         best_alpha = alphas[best_index]
         self.alpha_ = best_alpha
@@ -788,7 +840,12 @@ class GraphicalLassoCV(GraphicalLasso):
 
         # Finally fit the model with the selected alpha
         self.covariance_, self.precision_, self.n_iter_ = graphical_lasso(
-            emp_cov, alpha=best_alpha, mode=self.mode, tol=self.tol,
-            enet_tol=self.enet_tol, max_iter=self.max_iter,
-            verbose=inner_verbose, return_n_iter=True)
+            emp_cov,
+            alpha=best_alpha,
+            mode=self.mode,
+            tol=self.tol,
+            enet_tol=self.enet_tol,
+            max_iter=self.max_iter,
+            verbose=inner_verbose,
+            return_n_iter=True)
         return self

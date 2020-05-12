@@ -14,13 +14,17 @@ __all__ = ['sample_without_replacement']
 
 @deprecated("random_choice_csc is deprecated in version "
             "0.22 and will be removed in version 0.24.")
-def random_choice_csc(n_samples, classes, class_probability=None,
+def random_choice_csc(n_samples,
+                      classes,
+                      class_probability=None,
                       random_state=None):
     return _random_choice_csc(n_samples, classes, class_probability,
                               random_state)
 
 
-def _random_choice_csc(n_samples, classes, class_probability=None,
+def _random_choice_csc(n_samples,
+                       classes,
+                       class_probability=None,
                        random_state=None):
     """Generate a sparse random matrix given column class distributions
 
@@ -70,9 +74,9 @@ def _random_choice_csc(n_samples, classes, class_probability=None,
         if class_prob_j.shape[0] != classes[j].shape[0]:
             raise ValueError("classes[{0}] (length {1}) and "
                              "class_probability[{0}] (length {2}) have "
-                             "different length.".format(j,
-                                                        classes[j].shape[0],
-                                                        class_prob_j.shape[0]))
+                             "different length.".format(
+                                 j, classes[j].shape[0],
+                                 class_prob_j.shape[0]))
 
         # If 0 is not present in the classes insert it with a probability 0.0
         if 0 not in classes[j]:
@@ -99,6 +103,5 @@ def _random_choice_csc(n_samples, classes, class_probability=None,
             data.extend(classes[j][classes_j_nonzero][classes_ind])
         indptr.append(len(indices))
 
-    return sp.csc_matrix((data, indices, indptr),
-                         (n_samples, len(classes)),
+    return sp.csc_matrix((data, indices, indptr), (n_samples, len(classes)),
                          dtype=int)

@@ -35,7 +35,6 @@ from ._label import MultiLabelBinarizer
 
 from ._discretization import KBinsDiscretizer
 
-
 __all__ = [
     'Binarizer',
     'FunctionTransformer',

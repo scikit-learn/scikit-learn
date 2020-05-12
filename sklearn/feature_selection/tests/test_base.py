@@ -81,10 +81,8 @@ def test_inverse_transform_dense():
     assert_array_equal(Xinv, Xinv_actual)
 
     # Check dtype matches
-    assert (np.int32 ==
-                 sel.inverse_transform(Xt.astype(np.int32)).dtype)
-    assert (np.float32 ==
-                 sel.inverse_transform(Xt.astype(np.float32)).dtype)
+    assert (np.int32 == sel.inverse_transform(Xt.astype(np.int32)).dtype)
+    assert (np.float32 == sel.inverse_transform(Xt.astype(np.float32)).dtype)
 
     # Check 1d list and other dtype:
     names_inv_actual = sel.inverse_transform([feature_names_t])
@@ -102,10 +100,10 @@ def test_inverse_transform_sparse():
     assert_array_equal(Xinv, Xinv_actual.toarray())
 
     # Check dtype matches
-    assert (np.int32 ==
-                 sel.inverse_transform(sparse(Xt).astype(np.int32)).dtype)
-    assert (np.float32 ==
-                 sel.inverse_transform(sparse(Xt).astype(np.float32)).dtype)
+    assert (np.int32 == sel.inverse_transform(sparse(Xt).astype(
+        np.int32)).dtype)
+    assert (np.float32 == sel.inverse_transform(sparse(Xt).astype(
+        np.float32)).dtype)
 
     # Check wrong shape raises error
     with pytest.raises(ValueError):

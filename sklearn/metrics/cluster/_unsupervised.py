@@ -5,7 +5,6 @@
 #          Thierry Guillemot <thierry.guillemot.work@gmail.com>
 # License: BSD 3 clause
 
-
 import functools
 
 import numpy as np
@@ -36,8 +35,13 @@ def check_number_of_labels(n_labels, n_samples):
 
 
 @_deprecate_positional_args
-def silhouette_score(X, labels, *, metric='euclidean', sample_size=None,
-                     random_state=None, **kwds):
+def silhouette_score(X,
+                     labels,
+                     *,
+                     metric='euclidean',
+                     sample_size=None,
+                     random_state=None,
+                     **kwds):
     """Compute the mean Silhouette Coefficient of all samples.
 
     The Silhouette Coefficient is calculated using the mean intra-cluster
@@ -135,7 +139,8 @@ def _silhouette_reduce(D_chunk, start, labels, label_freqs):
     clust_dists = np.zeros((len(D_chunk), len(label_freqs)),
                            dtype=D_chunk.dtype)
     for i in range(len(D_chunk)):
-        clust_dists[i] += np.bincount(labels, weights=D_chunk[i],
+        clust_dists[i] += np.bincount(labels,
+                                      weights=D_chunk[i],
                                       minlength=len(label_freqs))
 
     # intra_index selects intra-cluster distances within clust_dists
@@ -219,8 +224,7 @@ def silhouette_samples(X, labels, *, metric='euclidean', **kwds):
         if np.any(np.abs(np.diagonal(X)) > atol):
             raise ValueError(
                 'The precomputed distance matrix contains non-zero '
-                'elements on the diagonal. Use np.fill_diagonal(X, 0).'
-            )
+                'elements on the diagonal. Use np.fill_diagonal(X, 0).')
 
     le = LabelEncoder()
     labels = le.fit_transform(labels)
@@ -230,9 +234,10 @@ def silhouette_samples(X, labels, *, metric='euclidean', **kwds):
 
     kwds['metric'] = metric
     reduce_func = functools.partial(_silhouette_reduce,
-                                    labels=labels, label_freqs=label_freqs)
-    results = zip(*pairwise_distances_chunked(X, reduce_func=reduce_func,
-                                              **kwds))
+                                    labels=labels,
+                                    label_freqs=label_freqs)
+    results = zip(
+        *pairwise_distances_chunked(X, reduce_func=reduce_func, **kwds))
     intra_clust_dists, inter_clust_dists = results
     intra_clust_dists = np.concatenate(intra_clust_dists)
     inter_clust_dists = np.concatenate(inter_clust_dists)
@@ -292,11 +297,10 @@ def calinski_harabasz_score(X, labels):
     for k in range(n_labels):
         cluster_k = X[labels == k]
         mean_k = np.mean(cluster_k, axis=0)
-        extra_disp += len(cluster_k) * np.sum((mean_k - mean) ** 2)
-        intra_disp += np.sum((cluster_k - mean_k) ** 2)
+        extra_disp += len(cluster_k) * np.sum((mean_k - mean)**2)
+        intra_disp += np.sum((cluster_k - mean_k)**2)
 
-    return (1. if intra_disp == 0. else
-            extra_disp * (n_samples - n_labels) /
+    return (1. if intra_disp == 0. else extra_disp * (n_samples - n_labels) /
             (intra_disp * (n_labels - 1.)))
 
 
@@ -349,8 +353,7 @@ def davies_bouldin_score(X, labels):
         cluster_k = _safe_indexing(X, labels == k)
         centroid = cluster_k.mean(axis=0)
         centroids[k] = centroid
-        intra_dists[k] = np.average(pairwise_distances(
-            cluster_k, [centroid]))
+        intra_dists[k] = np.average(pairwise_distances(cluster_k, [centroid]))
 
     centroid_distances = pairwise_distances(centroids)
 

@@ -74,11 +74,11 @@ def launch_mcd_on_dataset(n_samples, n_features, n_outliers, tol_loc, tol_cov,
     S = mcd_fit.covariance_
     H = mcd_fit.support_
     # compare with the estimates learnt from the inliers
-    error_location = np.mean((pure_data.mean(0) - T) ** 2)
-    assert(error_location < tol_loc)
-    error_cov = np.mean((empirical_covariance(pure_data) - S) ** 2)
-    assert(error_cov < tol_cov)
-    assert(np.sum(H) >= tol_support)
+    error_location = np.mean((pure_data.mean(0) - T)**2)
+    assert (error_location < tol_loc)
+    error_cov = np.mean((empirical_covariance(pure_data) - S)**2)
+    assert (error_cov < tol_cov)
+    assert (np.sum(H) >= tol_support)
     assert_array_almost_equal(mcd_fit.mahalanobis(data), mcd_fit.dist_)
 
 
@@ -142,27 +142,14 @@ def test_mcd_increasing_det_warning():
     # decreasing. Increasing determinants are likely due to ill-conditioned
     # covariance matrices that result in poor precision matrices.
 
-    X = [[5.1, 3.5, 1.4, 0.2],
-         [4.9, 3.0, 1.4, 0.2],
-         [4.7, 3.2, 1.3, 0.2],
-         [4.6, 3.1, 1.5, 0.2],
-         [5.0, 3.6, 1.4, 0.2],
-         [4.6, 3.4, 1.4, 0.3],
-         [5.0, 3.4, 1.5, 0.2],
-         [4.4, 2.9, 1.4, 0.2],
-         [4.9, 3.1, 1.5, 0.1],
-         [5.4, 3.7, 1.5, 0.2],
-         [4.8, 3.4, 1.6, 0.2],
-         [4.8, 3.0, 1.4, 0.1],
-         [4.3, 3.0, 1.1, 0.1],
-         [5.1, 3.5, 1.4, 0.3],
-         [5.7, 3.8, 1.7, 0.3],
-         [5.4, 3.4, 1.7, 0.2],
-         [4.6, 3.6, 1.0, 0.2],
-         [5.0, 3.0, 1.6, 0.2],
+    X = [[5.1, 3.5, 1.4, 0.2], [4.9, 3.0, 1.4, 0.2], [4.7, 3.2, 1.3, 0.2],
+         [4.6, 3.1, 1.5, 0.2], [5.0, 3.6, 1.4, 0.2], [4.6, 3.4, 1.4, 0.3],
+         [5.0, 3.4, 1.5, 0.2], [4.4, 2.9, 1.4, 0.2], [4.9, 3.1, 1.5, 0.1],
+         [5.4, 3.7, 1.5, 0.2], [4.8, 3.4, 1.6, 0.2], [4.8, 3.0, 1.4, 0.1],
+         [4.3, 3.0, 1.1, 0.1], [5.1, 3.5, 1.4, 0.3], [5.7, 3.8, 1.7, 0.3],
+         [5.4, 3.4, 1.7, 0.2], [4.6, 3.6, 1.0, 0.2], [5.0, 3.0, 1.6, 0.2],
          [5.2, 3.5, 1.5, 0.2]]
 
     mcd = MinCovDet(random_state=1)
-    assert_warns_message(RuntimeWarning,
-                         "Determinant has increased",
-                         mcd.fit, X)
+    assert_warns_message(RuntimeWarning, "Determinant has increased", mcd.fit,
+                         X)

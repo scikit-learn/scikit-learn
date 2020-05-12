@@ -26,7 +26,6 @@ class MockClassifier:
     """
     Dummy classifier to test recursive feature elimination
     """
-
     def __init__(self, foo_param=0):
         self.foo_param = foo_param
 
@@ -62,7 +61,8 @@ def test_rfe_features_importance():
     y = iris.target
 
     clf = RandomForestClassifier(n_estimators=20,
-                                 random_state=generator, max_depth=2)
+                                 random_state=generator,
+                                 max_depth=2)
     rfe = RFE(estimator=clf, n_features_to_select=4, step=0.1)
     rfe.fit(X, y)
     assert len(rfe.ranking_) == X.shape[1]
@@ -124,7 +124,7 @@ def test_rfecv():
     generator = check_random_state(0)
     iris = load_iris()
     X = np.c_[iris.data, generator.normal(size=(len(iris.data), 6))]
-    y = list(iris.target)   # regression test: list should be supported
+    y = list(iris.target)  # regression test: list should be supported
 
     # Test using the score function
     rfecv = RFECV(estimator=SVC(kernel="linear"), step=1)
@@ -161,6 +161,7 @@ def test_rfecv():
     # Test fix on grid_scores
     def test_scorer(estimator, X, y):
         return 1.0
+
     rfecv = RFECV(estimator=SVC(kernel="linear"), step=1, scoring=test_scorer)
     rfecv.fit(X, y)
     assert_array_equal(rfecv.grid_scores_, np.ones(len(rfecv.grid_scores_)))
@@ -196,7 +197,7 @@ def test_rfecv_mockclassifier():
     generator = check_random_state(0)
     iris = load_iris()
     X = np.c_[iris.data, generator.normal(size=(len(iris.data), 6))]
-    y = list(iris.target)   # regression test: list should be supported
+    y = list(iris.target)  # regression test: list should be supported
 
     # Test using the score function
     rfecv = RFECV(estimator=MockClassifier(), step=1)
@@ -229,17 +230,17 @@ def test_rfecv_grid_scores_size():
     generator = check_random_state(0)
     iris = load_iris()
     X = np.c_[iris.data, generator.normal(size=(len(iris.data), 6))]
-    y = list(iris.target)   # regression test: list should be supported
+    y = list(iris.target)  # regression test: list should be supported
 
     # Non-regression test for varying combinations of step and
     # min_features_to_select.
     for step, min_features_to_select in [[2, 1], [2, 2], [3, 3]]:
-        rfecv = RFECV(estimator=MockClassifier(), step=step,
+        rfecv = RFECV(estimator=MockClassifier(),
+                      step=step,
                       min_features_to_select=min_features_to_select)
         rfecv.fit(X, y)
 
-        score_len = np.ceil(
-            (X.shape[1] - min_features_to_select) / step) + 1
+        score_len = np.ceil((X.shape[1] - min_features_to_select) / step) + 1
         assert len(rfecv.grid_scores_) == score_len
         assert len(rfecv.ranking_) == X.shape[1]
         assert rfecv.n_features_ >= min_features_to_select
@@ -303,13 +304,14 @@ def test_number_of_subsets_of_features():
         X = generator.normal(size=(100, n_features))
         y = generator.rand(100).round()
         rfe = RFE(estimator=SVC(kernel="linear"),
-                  n_features_to_select=n_features_to_select, step=step)
+                  n_features_to_select=n_features_to_select,
+                  step=step)
         rfe.fit(X, y)
         # this number also equals to the maximum of ranking_
-        assert (np.max(rfe.ranking_) ==
-                     formula1(n_features, n_features_to_select, step))
-        assert (np.max(rfe.ranking_) ==
-                     formula2(n_features, n_features_to_select, step))
+        assert (np.max(rfe.ranking_) == formula1(n_features,
+                                                 n_features_to_select, step))
+        assert (np.max(rfe.ranking_) == formula2(n_features,
+                                                 n_features_to_select, step))
 
     # In RFECV, 'fit' calls 'RFE._fit'
     # 'number_of_subsets_of_features' of RFE
@@ -330,10 +332,10 @@ def test_number_of_subsets_of_features():
         rfecv = RFECV(estimator=SVC(kernel="linear"), step=step)
         rfecv.fit(X, y)
 
-        assert (rfecv.grid_scores_.shape[0] ==
-                     formula1(n_features, n_features_to_select, step))
-        assert (rfecv.grid_scores_.shape[0] ==
-                     formula2(n_features, n_features_to_select, step))
+        assert (rfecv.grid_scores_.shape[0] == formula1(
+            n_features, n_features_to_select, step))
+        assert (rfecv.grid_scores_.shape[0] == formula2(
+            n_features, n_features_to_select, step))
 
 
 def test_rfe_cv_n_jobs():
@@ -365,16 +367,12 @@ def test_rfe_cv_groups():
         estimator=RandomForestClassifier(random_state=generator),
         step=1,
         scoring='accuracy',
-        cv=GroupKFold(n_splits=2)
-    )
+        cv=GroupKFold(n_splits=2))
     est_groups.fit(X, y, groups=groups)
     assert est_groups.n_features_ > 0
 
 
-@pytest.mark.parametrize("cv", [
-    None,
-    5
-])
+@pytest.mark.parametrize("cv", [None, 5])
 def test_rfe_allow_nan_inf_in_x(cv):
     iris = load_iris()
     X = iris.data
@@ -393,10 +391,7 @@ def test_rfe_allow_nan_inf_in_x(cv):
     rfe.transform(X)
 
 
-@pytest.mark.parametrize('ClsRFE', [
-    RFE,
-    RFECV
-    ])
+@pytest.mark.parametrize('ClsRFE', [RFE, RFECV])
 def test_multioutput(ClsRFE):
     X = np.random.normal(size=(10, 3))
     y = np.random.randint(2, size=(10, 2))

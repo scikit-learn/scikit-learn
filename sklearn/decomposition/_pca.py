@@ -72,8 +72,8 @@ def _assess_dimension(spectrum, rank, n_samples):
 
     pu = -rank * log(2.)
     for i in range(1, rank + 1):
-        pu += (gammaln((n_features - i + 1) / 2.) -
-               log(np.pi) * (n_features - i + 1) / 2.)
+        pu += (gammaln((n_features - i + 1) / 2.) - log(np.pi) *
+               (n_features - i + 1) / 2.)
 
     pl = np.sum(np.log(spectrum[:rank]))
     pl = -pl * n_samples / 2.
@@ -320,8 +320,14 @@ class PCA(_BasePCA):
     [6.30061...]
     """
     @_deprecate_positional_args
-    def __init__(self, n_components=None, *, copy=True, whiten=False,
-                 svd_solver='auto', tol=0.0, iterated_power='auto',
+    def __init__(self,
+                 n_components=None,
+                 *,
+                 copy=True,
+                 whiten=False,
+                 svd_solver='auto',
+                 tol=0.0,
+                 iterated_power='auto',
                  random_state=None):
         self.n_components = n_components
         self.copy = copy
@@ -394,8 +400,10 @@ class PCA(_BasePCA):
             raise TypeError('PCA does not support sparse input. See '
                             'TruncatedSVD for a possible alternative.')
 
-        X = self._validate_data(X, dtype=[np.float64, np.float32],
-                                ensure_2d=True, copy=self.copy)
+        X = self._validate_data(X,
+                                dtype=[np.float64, np.float32],
+                                ensure_2d=True,
+                                copy=self.copy)
 
         # Handle n_components==None
         if self.n_components is None:
@@ -438,14 +446,14 @@ class PCA(_BasePCA):
         elif not 0 <= n_components <= min(n_samples, n_features):
             raise ValueError("n_components=%r must be between 0 and "
                              "min(n_samples, n_features)=%r with "
-                             "svd_solver='full'"
-                             % (n_components, min(n_samples, n_features)))
+                             "svd_solver='full'" %
+                             (n_components, min(n_samples, n_features)))
         elif n_components >= 1:
             if not isinstance(n_components, numbers.Integral):
                 raise ValueError("n_components=%r must be of type int "
                                  "when greater than or equal to 1, "
-                                 "was of type=%r"
-                                 % (n_components, type(n_components)))
+                                 "was of type=%r" %
+                                 (n_components, type(n_components)))
 
         # Center data
         self.mean_ = np.mean(X, axis=0)
@@ -458,7 +466,7 @@ class PCA(_BasePCA):
         components_ = Vt
 
         # Get variance explained by singular values
-        explained_variance_ = (S ** 2) / (n_samples - 1)
+        explained_variance_ = (S**2) / (n_samples - 1)
         total_var = explained_variance_.sum()
         explained_variance_ratio_ = explained_variance_ / total_var
         singular_values_ = S.copy()  # Store the singular values.
@@ -474,8 +482,8 @@ class PCA(_BasePCA):
             # their variance is always greater than n_components float
             # passed. More discussion in issue: #15669
             ratio_cumsum = stable_cumsum(explained_variance_ratio_)
-            n_components = np.searchsorted(ratio_cumsum, n_components,
-                                           side='right') + 1
+            n_components = np.searchsorted(
+                ratio_cumsum, n_components, side='right') + 1
         # Compute noise covariance using Probabilistic PCA model
         # The sigma2 maximum likelihood (cf. eq. 12.46)
         if n_components < min(n_features, n_samples):
@@ -501,25 +509,26 @@ class PCA(_BasePCA):
 
         if isinstance(n_components, str):
             raise ValueError("n_components=%r cannot be a string "
-                             "with svd_solver='%s'"
-                             % (n_components, svd_solver))
+                             "with svd_solver='%s'" %
+                             (n_components, svd_solver))
         elif not 1 <= n_components <= min(n_samples, n_features):
-            raise ValueError("n_components=%r must be between 1 and "
-                             "min(n_samples, n_features)=%r with "
-                             "svd_solver='%s'"
-                             % (n_components, min(n_samples, n_features),
-                                svd_solver))
+            raise ValueError(
+                "n_components=%r must be between 1 and "
+                "min(n_samples, n_features)=%r with "
+                "svd_solver='%s'" %
+                (n_components, min(n_samples, n_features), svd_solver))
         elif not isinstance(n_components, numbers.Integral):
-            raise ValueError("n_components=%r must be of type int "
-                             "when greater than or equal to 1, was of type=%r"
-                             % (n_components, type(n_components)))
-        elif svd_solver == 'arpack' and n_components == min(n_samples,
-                                                            n_features):
-            raise ValueError("n_components=%r must be strictly less than "
-                             "min(n_samples, n_features)=%r with "
-                             "svd_solver='%s'"
-                             % (n_components, min(n_samples, n_features),
-                                svd_solver))
+            raise ValueError(
+                "n_components=%r must be of type int "
+                "when greater than or equal to 1, was of type=%r" %
+                (n_components, type(n_components)))
+        elif svd_solver == 'arpack' and n_components == min(
+                n_samples, n_features):
+            raise ValueError(
+                "n_components=%r must be strictly less than "
+                "min(n_samples, n_features)=%r with "
+                "svd_solver='%s'" %
+                (n_components, min(n_samples, n_features), svd_solver))
 
         random_state = check_random_state(self.random_state)
 
@@ -539,7 +548,8 @@ class PCA(_BasePCA):
 
         elif svd_solver == 'randomized':
             # sign flipping is done inside
-            U, S, Vt = randomized_svd(X, n_components=n_components,
+            U, S, Vt = randomized_svd(X,
+                                      n_components=n_components,
                                       n_iter=self.iterated_power,
                                       flip_sign=True,
                                       random_state=random_state)
@@ -549,7 +559,7 @@ class PCA(_BasePCA):
         self.n_components_ = n_components
 
         # Get variance explained by singular values
-        self.explained_variance_ = (S ** 2) / (n_samples - 1)
+        self.explained_variance_ = (S**2) / (n_samples - 1)
         total_var = np.var(X, ddof=1, axis=0)
         self.explained_variance_ratio_ = \
             self.explained_variance_ / total_var.sum()

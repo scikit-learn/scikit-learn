@@ -14,7 +14,6 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.compose import make_column_transformer
 
-
 # TODO: Remove when https://github.com/numpy/numpy/issues/14397 is resolved
 pytestmark = pytest.mark.filterwarnings(
     "ignore:In future, it will be an error for 'np.bool_':DeprecationWarning:"
@@ -45,13 +44,13 @@ def test_plot_roc_curve_error_non_binary(pyplot, data):
 @pytest.mark.parametrize(
     "response_method, msg",
     [("predict_proba", "response method predict_proba is not defined in "
-                       "MyClassifier"),
+      "MyClassifier"),
      ("decision_function", "response method decision_function is not defined "
-                           "in MyClassifier"),
+      "in MyClassifier"),
      ("auto", "response method decision_function or predict_proba is not "
-              "defined in MyClassifier"),
+      "defined in MyClassifier"),
      ("bad_method", "response_method must be 'predict_proba', "
-                    "'decision_function' or 'auto'")])
+      "'decision_function' or 'auto'")])
 def test_plot_roc_curve_error_no_response(pyplot, data_binary, response_method,
                                           msg):
     X, y = data_binary
@@ -73,8 +72,7 @@ def test_plot_roc_curve_error_no_response(pyplot, data_binary, response_method,
 @pytest.mark.parametrize("drop_intermediate", [True, False])
 @pytest.mark.parametrize("with_strings", [True, False])
 def test_plot_roc_curve(pyplot, response_method, data_binary,
-                        with_sample_weight, drop_intermediate,
-                        with_strings):
+                        with_sample_weight, drop_intermediate, with_strings):
     X, y = data_binary
 
     pos_label = None
@@ -91,14 +89,20 @@ def test_plot_roc_curve(pyplot, response_method, data_binary,
     lr = LogisticRegression()
     lr.fit(X, y)
 
-    viz = plot_roc_curve(lr, X, y, alpha=0.8, sample_weight=sample_weight,
+    viz = plot_roc_curve(lr,
+                         X,
+                         y,
+                         alpha=0.8,
+                         sample_weight=sample_weight,
                          drop_intermediate=drop_intermediate)
 
     y_pred = getattr(lr, response_method)(X)
     if y_pred.ndim == 2:
         y_pred = y_pred[:, 1]
 
-    fpr, tpr, _ = roc_curve(y, y_pred, sample_weight=sample_weight,
+    fpr, tpr, _ = roc_curve(y,
+                            y_pred,
+                            sample_weight=sample_weight,
                             drop_intermediate=drop_intermediate,
                             pos_label=pos_label)
 
@@ -121,11 +125,12 @@ def test_plot_roc_curve(pyplot, response_method, data_binary,
     assert viz.ax_.get_xlabel() == "False Positive Rate"
 
 
-@pytest.mark.parametrize(
-    "clf", [LogisticRegression(),
-            make_pipeline(StandardScaler(), LogisticRegression()),
-            make_pipeline(make_column_transformer((StandardScaler(), [0, 1])),
-                          LogisticRegression())])
+@pytest.mark.parametrize("clf", [
+    LogisticRegression(),
+    make_pipeline(StandardScaler(), LogisticRegression()),
+    make_pipeline(make_column_transformer(
+        (StandardScaler(), [0, 1])), LogisticRegression())
+])
 def test_roc_curve_not_fitted_errors(pyplot, data_binary, clf):
     X, y = data_binary
     with pytest.raises(NotFittedError):
@@ -153,18 +158,15 @@ def test_plot_roc_curve_estimator_name_multiple_calls(pyplot, data_binary):
     assert clf_name in disp.line_.get_label()
 
 
-@pytest.mark.parametrize(
-    "roc_auc, estimator_name, expected_label",
-    [
-        (0.9, None, "AUC = 0.90"),
-        (None, "my_est", "my_est"),
-        (0.8, "my_est2", "my_est2 (AUC = 0.80)")
-    ]
-)
-def test_default_labels(pyplot, roc_auc, estimator_name,
-                        expected_label):
+@pytest.mark.parametrize("roc_auc, estimator_name, expected_label",
+                         [(0.9, None, "AUC = 0.90"),
+                          (None, "my_est", "my_est"),
+                          (0.8, "my_est2", "my_est2 (AUC = 0.80)")])
+def test_default_labels(pyplot, roc_auc, estimator_name, expected_label):
     fpr = np.array([0, 0.5, 1])
     tpr = np.array([0, 0.5, 1])
-    disp = RocCurveDisplay(fpr=fpr, tpr=tpr, roc_auc=roc_auc,
+    disp = RocCurveDisplay(fpr=fpr,
+                           tpr=tpr,
+                           roc_auc=roc_auc,
                            estimator_name=estimator_name).plot()
     assert disp.line_.get_label() == expected_label

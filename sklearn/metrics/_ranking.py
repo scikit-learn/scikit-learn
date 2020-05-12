@@ -17,7 +17,6 @@ the lower the better
 #          Noel Dawe <noel@dawe.me>
 # License: BSD 3 clause
 
-
 import warnings
 from functools import partial
 
@@ -103,7 +102,11 @@ def auc(x, y):
 
 
 @_deprecate_positional_args
-def average_precision_score(y_true, y_score, *, average="macro", pos_label=1,
+def average_precision_score(y_true,
+                            y_score,
+                            *,
+                            average="macro",
+                            pos_label=1,
                             sample_weight=None):
     """Compute average precision (AP) from prediction scores
 
@@ -192,8 +195,10 @@ def average_precision_score(y_true, y_score, *, average="macro", pos_label=1,
       Instead of linearly interpolating between operating points, precisions
       are weighted by the change in recall since the last operating point.
     """
-    def _binary_uninterpolated_average_precision(
-            y_true, y_score, pos_label=1, sample_weight=None):
+    def _binary_uninterpolated_average_precision(y_true,
+                                                 y_score,
+                                                 pos_label=1,
+                                                 sample_weight=None):
         precision, recall, _ = precision_recall_curve(
             y_true, y_score, pos_label=pos_label, sample_weight=sample_weight)
         # Return the step function integral
@@ -213,8 +218,11 @@ def average_precision_score(y_true, y_score, *, average="macro", pos_label=1,
                              "y_true." % pos_label)
     average_precision = partial(_binary_uninterpolated_average_precision,
                                 pos_label=pos_label)
-    return _average_binary_score(average_precision, y_true, y_score,
-                                 average, sample_weight=sample_weight)
+    return _average_binary_score(average_precision,
+                                 y_true,
+                                 y_score,
+                                 average,
+                                 sample_weight=sample_weight)
 
 
 def _binary_roc_auc_score(y_true, y_score, sample_weight=None, max_fpr=None):
@@ -223,8 +231,7 @@ def _binary_roc_auc_score(y_true, y_score, sample_weight=None, max_fpr=None):
         raise ValueError("Only one class present in y_true. ROC AUC score "
                          "is not defined in that case.")
 
-    fpr, tpr, _ = roc_curve(y_true, y_score,
-                            sample_weight=sample_weight)
+    fpr, tpr, _ = roc_curve(y_true, y_score, sample_weight=sample_weight)
     if max_fpr is None or max_fpr == 1:
         return auc(fpr, tpr)
     if max_fpr <= 0 or max_fpr > 1:
@@ -246,8 +253,14 @@ def _binary_roc_auc_score(y_true, y_score, sample_weight=None, max_fpr=None):
 
 
 @_deprecate_positional_args
-def roc_auc_score(y_true, y_score, *, average="macro", sample_weight=None,
-                  max_fpr=None, multi_class="raise", labels=None):
+def roc_auc_score(y_true,
+                  y_score,
+                  *,
+                  average="macro",
+                  sample_weight=None,
+                  max_fpr=None,
+                  multi_class="raise",
+                  labels=None):
     """Compute Area Under the Receiver Operating Characteristic Curve (ROC AUC)
     from prediction scores.
 
@@ -371,9 +384,8 @@ def roc_auc_score(y_true, y_score, *, average="macro", sample_weight=None,
     y_true = check_array(y_true, ensure_2d=False, dtype=None)
     y_score = check_array(y_score, ensure_2d=False)
 
-    if y_type == "multiclass" or (y_type == "binary" and
-                                  y_score.ndim == 2 and
-                                  y_score.shape[1] > 2):
+    if y_type == "multiclass" or (y_type == "binary" and y_score.ndim == 2
+                                  and y_score.shape[1] > 2):
         # do not support partial ROC computation for multiclass
         if max_fpr is not None and max_fpr != 1.:
             raise ValueError("Partial AUC computation not available in "
@@ -382,24 +394,28 @@ def roc_auc_score(y_true, y_score, *, average="macro", sample_weight=None,
                              "instead".format(max_fpr))
         if multi_class == 'raise':
             raise ValueError("multi_class must be in ('ovo', 'ovr')")
-        return _multiclass_roc_auc_score(y_true, y_score, labels,
-                                         multi_class, average, sample_weight)
+        return _multiclass_roc_auc_score(y_true, y_score, labels, multi_class,
+                                         average, sample_weight)
     elif y_type == "binary":
         labels = np.unique(y_true)
         y_true = label_binarize(y_true, classes=labels)[:, 0]
         return _average_binary_score(partial(_binary_roc_auc_score,
                                              max_fpr=max_fpr),
-                                     y_true, y_score, average,
+                                     y_true,
+                                     y_score,
+                                     average,
                                      sample_weight=sample_weight)
     else:  # multilabel-indicator
         return _average_binary_score(partial(_binary_roc_auc_score,
                                              max_fpr=max_fpr),
-                                     y_true, y_score, average,
+                                     y_true,
+                                     y_score,
+                                     average,
                                      sample_weight=sample_weight)
 
 
-def _multiclass_roc_auc_score(y_true, y_score, labels,
-                              multi_class, average, sample_weight):
+def _multiclass_roc_auc_score(y_true, y_score, labels, multi_class, average,
+                              sample_weight):
     """Multiclass roc auc score
 
     Parameters
@@ -455,8 +471,7 @@ def _multiclass_roc_auc_score(y_true, y_score, labels,
     if multi_class not in multiclass_options:
         raise ValueError("multi_class='{0}' is not supported "
                          "for multiclass ROC AUC, multi_class must be "
-                         "in {1}".format(
-                                multi_class, multiclass_options))
+                         "in {1}".format(multi_class, multiclass_options))
 
     if labels is not None:
         labels = column_or_1d(labels)
@@ -468,8 +483,8 @@ def _multiclass_roc_auc_score(y_true, y_score, labels,
         if len(classes) != y_score.shape[1]:
             raise ValueError(
                 "Number of given labels, {0}, not equal to the number "
-                "of columns in 'y_score', {1}".format(
-                    len(classes), y_score.shape[1]))
+                "of columns in 'y_score', {1}".format(len(classes),
+                                                      y_score.shape[1]))
         if len(np.setdiff1d(y_true, classes)):
             raise ValueError(
                 "'y_true' contains labels not in parameter 'labels'")
@@ -489,12 +504,15 @@ def _multiclass_roc_auc_score(y_true, y_score, labels,
         # Hand & Till (2001) implementation (ovo)
         return _average_multiclass_ovo_score(_binary_roc_auc_score,
                                              y_true_encoded,
-                                             y_score, average=average)
+                                             y_score,
+                                             average=average)
     else:
         # ovr is same as multi-label
         y_true_multilabel = label_binarize(y_true, classes=classes)
-        return _average_binary_score(_binary_roc_auc_score, y_true_multilabel,
-                                     y_score, average,
+        return _average_binary_score(_binary_roc_auc_score,
+                                     y_true_multilabel,
+                                     y_score,
+                                     average,
                                      sample_weight=sample_weight)
 
 
@@ -552,19 +570,18 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
     # triggering a FutureWarning by calling np.array_equal(a, b)
     # when elements in the two arrays are not comparable.
     classes = np.unique(y_true)
-    if (pos_label is None and (
-            classes.dtype.kind in ('O', 'U', 'S') or
-            not (np.array_equal(classes, [0, 1]) or
-                 np.array_equal(classes, [-1, 1]) or
-                 np.array_equal(classes, [0]) or
-                 np.array_equal(classes, [-1]) or
-                 np.array_equal(classes, [1])))):
+    if (pos_label is None
+            and (classes.dtype.kind in ('O', 'U', 'S')
+                 or not (np.array_equal(classes, [0, 1]) or np.array_equal(
+                     classes, [-1, 1]) or np.array_equal(classes, [0])
+                         or np.array_equal(classes, [-1])
+                         or np.array_equal(classes, [1])))):
         classes_repr = ", ".join(repr(c) for c in classes)
-        raise ValueError("y_true takes value in {{{classes_repr}}} and "
-                         "pos_label is not specified: either make y_true "
-                         "take value in {{0, 1}} or {{-1, 1}} or "
-                         "pass pos_label explicitly.".format(
-                             classes_repr=classes_repr))
+        raise ValueError(
+            "y_true takes value in {{{classes_repr}}} and "
+            "pos_label is not specified: either make y_true "
+            "take value in {{0, 1}} or {{-1, 1}} or "
+            "pass pos_label explicitly.".format(classes_repr=classes_repr))
     elif pos_label is None:
         pos_label = 1.
 
@@ -598,7 +615,10 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
 
 
 @_deprecate_positional_args
-def precision_recall_curve(y_true, probas_pred, *, pos_label=None,
+def precision_recall_curve(y_true,
+                           probas_pred,
+                           *,
+                           pos_label=None,
                            sample_weight=None):
     """Compute precision-recall pairs for different probability thresholds
 
@@ -672,7 +692,8 @@ def precision_recall_curve(y_true, probas_pred, *, pos_label=None,
     array([0.35, 0.4 , 0.8 ])
 
     """
-    fps, tps, thresholds = _binary_clf_curve(y_true, probas_pred,
+    fps, tps, thresholds = _binary_clf_curve(y_true,
+                                             probas_pred,
                                              pos_label=pos_label,
                                              sample_weight=sample_weight)
 
@@ -688,7 +709,11 @@ def precision_recall_curve(y_true, probas_pred, *, pos_label=None,
 
 
 @_deprecate_positional_args
-def roc_curve(y_true, y_score, *, pos_label=None, sample_weight=None,
+def roc_curve(y_true,
+              y_score,
+              *,
+              pos_label=None,
+              sample_weight=None,
               drop_intermediate=True):
     """Compute Receiver operating characteristic (ROC)
 
@@ -772,8 +797,10 @@ def roc_curve(y_true, y_score, *, pos_label=None, sample_weight=None,
     array([1.8 , 0.8 , 0.4 , 0.35, 0.1 ])
 
     """
-    fps, tps, thresholds = _binary_clf_curve(
-        y_true, y_score, pos_label=pos_label, sample_weight=sample_weight)
+    fps, tps, thresholds = _binary_clf_curve(y_true,
+                                             y_score,
+                                             pos_label=pos_label,
+                                             sample_weight=sample_weight)
 
     # Attempt to drop thresholds corresponding to points in between and
     # collinear with other points. These are always suboptimal and do not
@@ -785,10 +812,9 @@ def roc_curve(y_true, y_score, *, pos_label=None, sample_weight=None,
     # but does not drop more complicated cases like fps = [1, 3, 7],
     # tps = [1, 2, 4]; there is no harm in keeping too many thresholds.
     if drop_intermediate and len(fps) > 2:
-        optimal_idxs = np.where(np.r_[True,
-                                      np.logical_or(np.diff(fps, 2),
-                                                    np.diff(tps, 2)),
-                                      True])[0]
+        optimal_idxs = np.where(
+            np.r_[True,
+                  np.logical_or(np.diff(fps, 2), np.diff(tps, 2)), True])[0]
         fps = fps[optimal_idxs]
         tps = tps[optimal_idxs]
         thresholds = thresholds[optimal_idxs]
@@ -800,17 +826,19 @@ def roc_curve(y_true, y_score, *, pos_label=None, sample_weight=None,
     thresholds = np.r_[thresholds[0] + 1, thresholds]
 
     if fps[-1] <= 0:
-        warnings.warn("No negative samples in y_true, "
-                      "false positive value should be meaningless",
-                      UndefinedMetricWarning)
+        warnings.warn(
+            "No negative samples in y_true, "
+            "false positive value should be meaningless",
+            UndefinedMetricWarning)
         fpr = np.repeat(np.nan, fps.shape)
     else:
         fpr = fps / fps[-1]
 
     if tps[-1] <= 0:
-        warnings.warn("No positive samples in y_true, "
-                      "true positive value should be meaningless",
-                      UndefinedMetricWarning)
+        warnings.warn(
+            "No positive samples in y_true, "
+            "true positive value should be meaningless",
+            UndefinedMetricWarning)
         tpr = np.repeat(np.nan, tps.shape)
     else:
         tpr = tps / tps[-1]
@@ -819,7 +847,9 @@ def roc_curve(y_true, y_score, *, pos_label=None, sample_weight=None,
 
 
 @_deprecate_positional_args
-def label_ranking_average_precision_score(y_true, y_score, *,
+def label_ranking_average_precision_score(y_true,
+                                          y_score,
+                                          *,
                                           sample_weight=None):
     """Compute ranking-based average precision
 
@@ -873,8 +903,8 @@ def label_ranking_average_precision_score(y_true, y_score, *,
 
     # Handle badly formatted array and the degenerate case with one label
     y_type = type_of_target(y_true)
-    if (y_type != "multilabel-indicator" and
-            not (y_type == "binary" and y_true.ndim == 2)):
+    if (y_type != "multilabel-indicator"
+            and not (y_type == "binary" and y_true.ndim == 2)):
         raise ValueError("{0} format is not supported".format(y_type))
 
     y_true = csr_matrix(y_true)
@@ -1014,7 +1044,7 @@ def label_ranking_loss(y_true, y_score, *, sample_weight=None):
     check_consistent_length(y_true, y_score, sample_weight)
 
     y_type = type_of_target(y_true)
-    if y_type not in ("multilabel-indicator",):
+    if y_type not in ("multilabel-indicator", ):
         raise ValueError("{0} format is not supported".format(y_type))
 
     if y_true.shape != y_score.shape:
@@ -1054,8 +1084,7 @@ def label_ranking_loss(y_true, y_score, *, sample_weight=None):
     return np.average(loss, weights=sample_weight)
 
 
-def _dcg_sample_scores(y_true, y_score, k=None,
-                       log_base=2, ignore_ties=False):
+def _dcg_sample_scores(y_true, y_score, k=None, log_base=2, ignore_ties=False):
     """Compute Discounted Cumulative Gain.
 
     Sum the true scores ranked in the order induced by the predicted scores,
@@ -1109,8 +1138,10 @@ def _dcg_sample_scores(y_true, y_score, k=None,
         cumulative_gains = discount.dot(ranked.T)
     else:
         discount_cumsum = np.cumsum(discount)
-        cumulative_gains = [_tie_averaged_dcg(y_t, y_s, discount_cumsum)
-                            for y_t, y_s in zip(y_true, y_score)]
+        cumulative_gains = [
+            _tie_averaged_dcg(y_t, y_s, discount_cumsum)
+            for y_t, y_s in zip(y_true, y_score)
+        ]
         cumulative_gains = np.asarray(cumulative_gains)
     return cumulative_gains
 
@@ -1152,8 +1183,9 @@ def _tie_averaged_dcg(y_true, y_score, discount_cumsum):
     Berlin, Heidelberg.
 
     """
-    _, inv, counts = np.unique(
-        - y_score, return_inverse=True, return_counts=True)
+    _, inv, counts = np.unique(-y_score,
+                               return_inverse=True,
+                               return_counts=True)
     ranked = np.zeros(len(counts))
     np.add.at(ranked, inv, y_true)
     ranked /= counts
@@ -1175,8 +1207,13 @@ def _check_dcg_target_type(y_true):
 
 
 @_deprecate_positional_args
-def dcg_score(y_true, y_score, *, k=None,
-              log_base=2, sample_weight=None, ignore_ties=False):
+def dcg_score(y_true,
+              y_score,
+              *,
+              k=None,
+              log_base=2,
+              sample_weight=None,
+              ignore_ties=False):
     """Compute Discounted Cumulative Gain.
 
     Sum the true scores ranked in the order induced by the predicted scores,
@@ -1274,11 +1311,12 @@ def dcg_score(y_true, y_score, *, k=None,
     y_score = check_array(y_score, ensure_2d=False)
     check_consistent_length(y_true, y_score, sample_weight)
     _check_dcg_target_type(y_true)
-    return np.average(
-        _dcg_sample_scores(
-            y_true, y_score, k=k, log_base=log_base,
-            ignore_ties=ignore_ties),
-        weights=sample_weight)
+    return np.average(_dcg_sample_scores(y_true,
+                                         y_score,
+                                         k=k,
+                                         log_base=log_base,
+                                         ignore_ties=ignore_ties),
+                      weights=sample_weight)
 
 
 def _ndcg_sample_scores(y_true, y_score, k=None, ignore_ties=False):
@@ -1333,7 +1371,11 @@ def _ndcg_sample_scores(y_true, y_score, k=None, ignore_ties=False):
 
 
 @_deprecate_positional_args
-def ndcg_score(y_true, y_score, *, k=None, sample_weight=None,
+def ndcg_score(y_true,
+               y_score,
+               *,
+               k=None,
+               sample_weight=None,
                ignore_ties=False):
     """Compute Normalized Discounted Cumulative Gain.
 

@@ -15,7 +15,9 @@ def _make_training_data(n_bins=256, constant_hessian=True):
 
     # Generate some test data directly binned so as to test the grower code
     # independently of the binning logic.
-    X_binned = rng.randint(0, n_bins - 1, size=(n_samples, 2),
+    X_binned = rng.randint(0,
+                           n_bins - 1,
+                           size=(n_samples, 2),
                            dtype=X_BINNED_DTYPE)
     X_binned = np.asfortranarray(X_binned)
 
@@ -50,30 +52,28 @@ def _check_children_consistency(parent, left, right):
     assert parent.right_child is right
 
     # each sample from the parent is propagated to one of the two children
-    assert (len(left.sample_indices) + len(right.sample_indices)
-            == len(parent.sample_indices))
+    assert (len(left.sample_indices) + len(right.sample_indices) == len(
+        parent.sample_indices))
 
-    assert (set(left.sample_indices).union(set(right.sample_indices))
-            == set(parent.sample_indices))
+    assert (set(left.sample_indices).union(set(right.sample_indices)) == set(
+        parent.sample_indices))
 
     # samples are sent either to the left or the right node, never to both
-    assert (set(left.sample_indices).intersection(set(right.sample_indices))
-            == set())
+    assert (set(left.sample_indices).intersection(set(
+        right.sample_indices)) == set())
 
 
-@pytest.mark.parametrize(
-    'n_bins, constant_hessian, stopping_param, shrinkage',
-    [
-        (11, True, "min_gain_to_split", 0.5),
-        (11, False, "min_gain_to_split", 1.),
-        (11, True, "max_leaf_nodes", 1.),
-        (11, False, "max_leaf_nodes", 0.1),
-        (42, True, "max_leaf_nodes", 0.01),
-        (42, False, "max_leaf_nodes", 1.),
-        (256, True, "min_gain_to_split", 1.),
-        (256, True, "max_leaf_nodes", 0.1),
-    ]
-)
+@pytest.mark.parametrize('n_bins, constant_hessian, stopping_param, shrinkage',
+                         [
+                             (11, True, "min_gain_to_split", 0.5),
+                             (11, False, "min_gain_to_split", 1.),
+                             (11, True, "max_leaf_nodes", 1.),
+                             (11, False, "max_leaf_nodes", 0.1),
+                             (42, True, "max_leaf_nodes", 0.01),
+                             (42, False, "max_leaf_nodes", 1.),
+                             (256, True, "min_gain_to_split", 1.),
+                             (256, True, "max_leaf_nodes", 0.1),
+                         ])
 def test_grow_tree(n_bins, constant_hessian, stopping_param, shrinkage):
     X_binned, all_gradients, all_hessians = _make_training_data(
         n_bins=n_bins, constant_hessian=constant_hessian)
@@ -84,9 +84,13 @@ def test_grow_tree(n_bins, constant_hessian, stopping_param, shrinkage):
     else:
         stopping_param = {"min_gain_to_split": 0.01}
 
-    grower = TreeGrower(X_binned, all_gradients, all_hessians,
-                        n_bins=n_bins, shrinkage=shrinkage,
-                        min_samples_leaf=1, **stopping_param)
+    grower = TreeGrower(X_binned,
+                        all_gradients,
+                        all_hessians,
+                        n_bins=n_bins,
+                        shrinkage=shrinkage,
+                        min_samples_leaf=1,
+                        **stopping_param)
 
     # The root node is not yet splitted, but the best possible split has
     # already been evaluated:
@@ -146,11 +150,14 @@ def test_grow_tree(n_bins, constant_hessian, stopping_param, shrinkage):
 def test_predictor_from_grower():
     # Build a tree on the toy 3-leaf dataset to extract the predictor.
     n_bins = 256
-    X_binned, all_gradients, all_hessians = _make_training_data(
-        n_bins=n_bins)
-    grower = TreeGrower(X_binned, all_gradients, all_hessians,
-                        n_bins=n_bins, shrinkage=1.,
-                        max_leaf_nodes=3, min_samples_leaf=5)
+    X_binned, all_gradients, all_hessians = _make_training_data(n_bins=n_bins)
+    grower = TreeGrower(X_binned,
+                        all_gradients,
+                        all_hessians,
+                        n_bins=n_bins,
+                        shrinkage=1.,
+                        max_leaf_nodes=3,
+                        min_samples_leaf=5)
     grower.grow()
     assert grower.n_nodes == 5  # (2 decision nodes + 3 leaves)
 
@@ -166,15 +173,14 @@ def test_predictor_from_grower():
         [0, 0],
         [42, 99],
         [128, 254],
-
         [129, 0],
         [129, 85],
         [254, 85],
-
         [129, 86],
         [129, 254],
         [242, 100],
-    ], dtype=np.uint8)
+    ],
+                          dtype=np.uint8)
     missing_values_bin_idx = n_bins - 1
     predictions = predictor.predict_binned(input_data, missing_values_bin_idx)
     expected_targets = [1, 1, 1, 1, 1, 1, -1, -1, -1]
@@ -186,8 +192,7 @@ def test_predictor_from_grower():
 
 
 @pytest.mark.parametrize(
-    'n_samples, min_samples_leaf, n_bins, constant_hessian, noise',
-    [
+    'n_samples, min_samples_leaf, n_bins, constant_hessian, noise', [
         (11, 10, 7, True, 0),
         (13, 10, 42, False, 0),
         (56, 10, 255, True, 0.1),
@@ -195,8 +200,7 @@ def test_predictor_from_grower():
         (200, 42, 42, False, 0),
         (300, 55, 255, True, 0.1),
         (300, 301, 255, True, 0.1),
-    ]
-)
+    ])
 def test_min_samples_leaf(n_samples, min_samples_leaf, n_bins,
                           constant_hessian, noise):
     rng = np.random.RandomState(seed=0)
@@ -212,13 +216,15 @@ def test_min_samples_leaf(n_samples, min_samples_leaf, n_bins,
     all_gradients = y.astype(G_H_DTYPE)
     shape_hessian = 1 if constant_hessian else all_gradients.shape
     all_hessians = np.ones(shape=shape_hessian, dtype=G_H_DTYPE)
-    grower = TreeGrower(X, all_gradients, all_hessians,
-                        n_bins=n_bins, shrinkage=1.,
+    grower = TreeGrower(X,
+                        all_gradients,
+                        all_hessians,
+                        n_bins=n_bins,
+                        shrinkage=1.,
                         min_samples_leaf=min_samples_leaf,
                         max_leaf_nodes=n_samples)
     grower.grow()
-    predictor = grower.make_predictor(
-        bin_thresholds=mapper.bin_thresholds_)
+    predictor = grower.make_predictor(bin_thresholds=mapper.bin_thresholds_)
 
     if n_samples >= min_samples_leaf:
         for node in predictor.nodes:
@@ -230,9 +236,7 @@ def test_min_samples_leaf(n_samples, min_samples_leaf, n_bins,
         assert predictor.nodes[0]['count'] == n_samples
 
 
-@pytest.mark.parametrize('n_samples, min_samples_leaf', [
-                         (99, 50),
-                         (100, 50)])
+@pytest.mark.parametrize('n_samples, min_samples_leaf', [(99, 50), (100, 50)])
 def test_min_samples_leaf_root(n_samples, min_samples_leaf):
     # Make sure root node isn't split if n_samples is not at least twice
     # min_samples_leaf
@@ -248,8 +252,11 @@ def test_min_samples_leaf_root(n_samples, min_samples_leaf):
 
     all_gradients = y.astype(G_H_DTYPE)
     all_hessians = np.ones(shape=1, dtype=G_H_DTYPE)
-    grower = TreeGrower(X, all_gradients, all_hessians,
-                        n_bins=n_bins, shrinkage=1.,
+    grower = TreeGrower(X,
+                        all_gradients,
+                        all_hessians,
+                        n_bins=n_bins,
+                        shrinkage=1.,
                         min_samples_leaf=min_samples_leaf,
                         max_leaf_nodes=n_samples)
     grower.grow()
@@ -313,12 +320,13 @@ def test_init_parameters_validation():
     with pytest.raises(ValueError,
                        match="min_gain_to_split=-1 must be positive"):
 
-        TreeGrower(X_binned, all_gradients, all_hessians,
-                   min_gain_to_split=-1)
+        TreeGrower(X_binned, all_gradients, all_hessians, min_gain_to_split=-1)
 
     with pytest.raises(ValueError,
                        match="min_hessian_to_split=-1 must be positive"):
-        TreeGrower(X_binned, all_gradients, all_hessians,
+        TreeGrower(X_binned,
+                   all_gradients,
+                   all_hessians,
                    min_hessian_to_split=-1)
 
 
@@ -335,7 +343,10 @@ def test_missing_value_predict_only():
     gradients = rng.normal(size=n_samples).astype(G_H_DTYPE)
     hessians = np.ones(shape=1, dtype=G_H_DTYPE)
 
-    grower = TreeGrower(X_binned, gradients, hessians, min_samples_leaf=5,
+    grower = TreeGrower(X_binned,
+                        gradients,
+                        hessians,
+                        min_samples_leaf=5,
                         has_missing_values=False)
     grower.grow()
 
@@ -374,7 +385,9 @@ def test_split_on_nan_with_infinite_values():
 
     n_bins_non_missing = 3
     has_missing_values = True
-    grower = TreeGrower(X_binned, gradients, hessians,
+    grower = TreeGrower(X_binned,
+                        gradients,
+                        hessians,
                         n_bins_non_missing=n_bins_non_missing,
                         has_missing_values=has_missing_values,
                         min_samples_leaf=1)
@@ -382,8 +395,7 @@ def test_split_on_nan_with_infinite_values():
     grower.grow()
 
     predictor = grower.make_predictor(
-        bin_thresholds=bin_mapper.bin_thresholds_
-    )
+        bin_thresholds=bin_mapper.bin_thresholds_)
 
     # sanity check: this was a split on nan
     assert predictor.nodes[0]['threshold'] == np.inf

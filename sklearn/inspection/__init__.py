@@ -17,10 +17,7 @@ from ._permutation_importance import permutation_importance  # noqa
 from ._plot.partial_dependence import plot_partial_dependence  # noqa
 from ._plot.partial_dependence import PartialDependenceDisplay  # noqa
 
-
 __all__ = [
-    'partial_dependence',
-    'plot_partial_dependence',
-    'permutation_importance',
+    'partial_dependence', 'plot_partial_dependence', 'permutation_importance',
     'PartialDependenceDisplay'
 ]

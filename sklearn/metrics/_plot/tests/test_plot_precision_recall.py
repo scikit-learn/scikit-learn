@@ -16,7 +16,6 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.compose import make_column_transformer
 
-
 # TODO: Remove when https://github.com/numpy/numpy/issues/14397 is resolved
 pytestmark = pytest.mark.filterwarnings(
     "ignore:In future, it will be an error for 'np.bool_':DeprecationWarning:"
@@ -24,7 +23,8 @@ pytestmark = pytest.mark.filterwarnings(
 
 
 def test_errors(pyplot):
-    X, y_multiclass = make_classification(n_classes=3, n_samples=50,
+    X, y_multiclass = make_classification(n_classes=3,
+                                          n_samples=50,
                                           n_informative=3,
                                           random_state=0)
     y_binary = y_multiclass == 0
@@ -51,13 +51,13 @@ def test_errors(pyplot):
 @pytest.mark.parametrize(
     "response_method, msg",
     [("predict_proba", "response method predict_proba is not defined in "
-                       "MyClassifier"),
+      "MyClassifier"),
      ("decision_function", "response method decision_function is not defined "
-                           "in MyClassifier"),
+      "in MyClassifier"),
      ("auto", "response method decision_function or predict_proba is not "
-              "defined in MyClassifier"),
+      "defined in MyClassifier"),
      ("bad_method", "response_method must be 'predict_proba', "
-                    "'decision_function' or 'auto'")])
+      "'decision_function' or 'auto'")])
 def test_error_bad_response(pyplot, response_method, msg):
     X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
 
@@ -87,7 +87,10 @@ def test_plot_precision_recall(pyplot, response_method, with_sample_weight):
     else:
         sample_weight = None
 
-    disp = plot_precision_recall_curve(lr, X, y, alpha=0.8,
+    disp = plot_precision_recall_curve(lr,
+                                       X,
+                                       y,
+                                       alpha=0.8,
                                        response_method=response_method,
                                        sample_weight=sample_weight)
 
@@ -95,7 +98,8 @@ def test_plot_precision_recall(pyplot, response_method, with_sample_weight):
     if response_method == 'predict_proba':
         y_score = y_score[:, 1]
 
-    prec, recall, _ = precision_recall_curve(y, y_score,
+    prec, recall, _ = precision_recall_curve(y,
+                                             y_score,
                                              sample_weight=sample_weight)
     avg_prec = average_precision_score(y, y_score, sample_weight=sample_weight)
 
@@ -123,10 +127,11 @@ def test_plot_precision_recall(pyplot, response_method, with_sample_weight):
     assert disp.line_.get_label() == expected_label
 
 
-@pytest.mark.parametrize(
-    "clf", [make_pipeline(StandardScaler(), LogisticRegression()),
-            make_pipeline(make_column_transformer((StandardScaler(), [0, 1])),
-                          LogisticRegression())])
+@pytest.mark.parametrize("clf", [
+    make_pipeline(StandardScaler(), LogisticRegression()),
+    make_pipeline(make_column_transformer(
+        (StandardScaler(), [0, 1])), LogisticRegression())
+])
 def test_precision_recall_curve_pipeline(pyplot, clf):
     X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
     with pytest.raises(NotFittedError):
@@ -149,8 +154,7 @@ def test_precision_recall_curve_string_labels(pyplot):
     disp = plot_precision_recall_curve(lr, X, y)
 
     y_pred = lr.predict_proba(X)[:, 1]
-    avg_prec = average_precision_score(y, y_pred,
-                                       pos_label=lr.classes_[1])
+    avg_prec = average_precision_score(y, y_pred, pos_label=lr.classes_[1])
 
     assert disp.average_precision == pytest.approx(avg_prec)
     assert disp.estimator_name == lr.__class__.__name__
@@ -173,19 +177,17 @@ def test_plot_precision_recall_curve_estimator_name_multiple_calls(pyplot):
     assert clf_name in disp.line_.get_label()
 
 
-@pytest.mark.parametrize(
-    "average_precision, estimator_name, expected_label",
-    [
-        (0.9, None, "AP = 0.90"),
-        (None, "my_est", "my_est"),
-        (0.8, "my_est2", "my_est2 (AP = 0.80)"),
-    ]
-)
+@pytest.mark.parametrize("average_precision, estimator_name, expected_label", [
+    (0.9, None, "AP = 0.90"),
+    (None, "my_est", "my_est"),
+    (0.8, "my_est2", "my_est2 (AP = 0.80)"),
+])
 def test_default_labels(pyplot, average_precision, estimator_name,
                         expected_label):
     prec = np.array([1, 0.5, 0])
     recall = np.array([0, 0.5, 1])
-    disp = PrecisionRecallDisplay(prec, recall,
+    disp = PrecisionRecallDisplay(prec,
+                                  recall,
                                   average_precision=average_precision,
                                   estimator_name=estimator_name)
     disp.plot()

@@ -17,11 +17,23 @@ from ...utils.validation import _deprecate_positional_args
 
 
 @_deprecate_positional_args
-def plot_partial_dependence(estimator, X, features, *, feature_names=None,
-                            target=None, response_method='auto', n_cols=3,
-                            grid_resolution=100, percentiles=(0.05, 0.95),
-                            method='auto', n_jobs=None, verbose=0, fig=None,
-                            line_kw=None, contour_kw=None, ax=None):
+def plot_partial_dependence(estimator,
+                            X,
+                            features,
+                            *,
+                            feature_names=None,
+                            target=None,
+                            response_method='auto',
+                            n_cols=3,
+                            grid_resolution=100,
+                            percentiles=(0.05, 0.95),
+                            method='auto',
+                            n_jobs=None,
+                            verbose=0,
+                            fig=None,
+                            line_kw=None,
+                            contour_kw=None,
+                            ax=None):
     """Partial dependence plots.
 
     The ``len(features)`` plots are arranged in a grid with ``n_cols``
@@ -209,17 +221,17 @@ def plot_partial_dependence(estimator, X, features, *, feature_names=None,
         if target is None:
             raise ValueError('target must be specified for multi-class')
         target_idx = np.searchsorted(estimator.classes_, target)
-        if (not (0 <= target_idx < len(estimator.classes_)) or
-                estimator.classes_[target_idx] != target):
-            raise ValueError('target not in est.classes_, got {}'.format(
-                target))
+        if (not (0 <= target_idx < len(estimator.classes_))
+                or estimator.classes_[target_idx] != target):
+            raise ValueError(
+                'target not in est.classes_, got {}'.format(target))
     else:
         # regression and binary classification
         target_idx = 0
 
     # Use check_array only on lists and other non-array-likes / sparse. Do not
     # convert DataFrame into a NumPy array.
-    if not(hasattr(X, '__array__') or sparse.issparse(X)):
+    if not (hasattr(X, '__array__') or sparse.issparse(X)):
         X = check_array(X, force_all_finite='allow-nan', dtype=np.object)
     n_features = X.shape[1]
 
@@ -249,7 +261,7 @@ def plot_partial_dependence(estimator, X, features, *, feature_names=None,
     tmp_features = []
     for fxs in features:
         if isinstance(fxs, (numbers.Integral, str)):
-            fxs = (fxs,)
+            fxs = (fxs, )
         try:
             fxs = tuple(convert_feature(fx) for fx in fxs)
         except TypeError:
@@ -268,17 +280,19 @@ def plot_partial_dependence(estimator, X, features, *, feature_names=None,
         axes = np.asarray(ax, dtype=object)
         if axes.size != len(features):
             raise ValueError("Expected ax to have {} axes, got {}".format(
-                             len(features), axes.size))
+                len(features), axes.size))
 
     for i in chain.from_iterable(features):
         if i >= len(feature_names):
             raise ValueError('All entries of features must be less than '
-                             'len(feature_names) = {0}, got {1}.'
-                             .format(len(feature_names), i))
+                             'len(feature_names) = {0}, got {1}.'.format(
+                                 len(feature_names), i))
 
     # compute averaged predictions
     pd_results = Parallel(n_jobs=n_jobs, verbose=verbose)(
-        delayed(partial_dependence)(estimator, X, fxs,
+        delayed(partial_dependence)(estimator,
+                                    X,
+                                    fxs,
                                     response_method=response_method,
                                     method=method,
                                     grid_resolution=grid_resolution,
@@ -318,9 +332,9 @@ def plot_partial_dependence(estimator, X, features, *, feature_names=None,
             deciles[fx] = mquantiles(X_col, prob=np.arange(0.1, 1.0, 0.1))
 
     if fig is not None:
-        warnings.warn("The fig parameter is deprecated in version "
-                      "0.22 and will be removed in version 0.24",
-                      FutureWarning)
+        warnings.warn(
+            "The fig parameter is deprecated in version "
+            "0.22 and will be removed in version 0.24", FutureWarning)
         fig.clear()
         ax = fig.gca()
 
@@ -330,7 +344,9 @@ def plot_partial_dependence(estimator, X, features, *, feature_names=None,
                                        target_idx=target_idx,
                                        pdp_lim=pdp_lim,
                                        deciles=deciles)
-    return display.plot(ax=ax, n_cols=n_cols, line_kw=line_kw,
+    return display.plot(ax=ax,
+                        n_cols=n_cols,
+                        line_kw=line_kw,
                         contour_kw=contour_kw)
 
 
@@ -508,7 +524,8 @@ class PartialDependenceDisplay:
 
             axes_ravel = self.axes_.ravel()
 
-            gs = GridSpecFromSubplotSpec(n_rows, n_cols,
+            gs = GridSpecFromSubplotSpec(n_rows,
+                                         n_cols,
                                          subplot_spec=ax.get_subplotspec())
             for i, spec in zip(range(n_features), gs):
                 axes_ravel[i] = self.figure_.add_subplot(spec)
@@ -516,8 +533,8 @@ class PartialDependenceDisplay:
         else:  # array-like
             ax = np.asarray(ax, dtype=object)
             if ax.size != n_features:
-                raise ValueError("Expected ax to have {} axes, got {}"
-                                 .format(n_features, ax.size))
+                raise ValueError("Expected ax to have {} axes, got {}".format(
+                    n_features, ax.size))
 
             if ax.ndim == 2:
                 n_cols = ax.shape[1]
@@ -542,8 +559,7 @@ class PartialDependenceDisplay:
         vlines_ravel = self.deciles_vlines_.ravel(order='C')
         hlines_ravel = self.deciles_hlines_.ravel(order='C')
 
-        for i, axi, fx, (avg_preds, values) in zip(count(),
-                                                   self.axes_.ravel(),
+        for i, axi, fx, (avg_preds, values) in zip(count(), self.axes_.ravel(),
                                                    self.features,
                                                    self.pd_results):
             if len(values) == 1:
@@ -554,20 +570,33 @@ class PartialDependenceDisplay:
                 # contour plot
                 XX, YY = np.meshgrid(values[0], values[1])
                 Z = avg_preds[self.target_idx].T
-                CS = axi.contour(XX, YY, Z, levels=Z_level, linewidths=0.5,
+                CS = axi.contour(XX,
+                                 YY,
+                                 Z,
+                                 levels=Z_level,
+                                 linewidths=0.5,
                                  colors='k')
-                contours_ravel[i] = axi.contourf(XX, YY, Z, levels=Z_level,
+                contours_ravel[i] = axi.contourf(XX,
+                                                 YY,
+                                                 Z,
+                                                 levels=Z_level,
                                                  vmax=Z_level[-1],
                                                  vmin=Z_level[0],
                                                  **contour_kw)
-                axi.clabel(CS, fmt='%2.2f', colors='k', fontsize=10,
+                axi.clabel(CS,
+                           fmt='%2.2f',
+                           colors='k',
+                           fontsize=10,
                            inline=True)
 
-            trans = transforms.blended_transform_factory(axi.transData,
-                                                         axi.transAxes)
+            trans = transforms.blended_transform_factory(
+                axi.transData, axi.transAxes)
             ylim = axi.get_ylim()
-            vlines_ravel[i] = axi.vlines(self.deciles[fx[0]], 0, 0.05,
-                                         transform=trans, color='k')
+            vlines_ravel[i] = axi.vlines(self.deciles[fx[0]],
+                                         0,
+                                         0.05,
+                                         transform=trans,
+                                         color='k')
             axi.set_ylim(ylim)
 
             # Set xlabel if it is not already set
@@ -582,11 +611,14 @@ class PartialDependenceDisplay:
                 axi.set_ylim(self.pdp_lim[1])
             else:
                 # contour plot
-                trans = transforms.blended_transform_factory(axi.transAxes,
-                                                             axi.transData)
+                trans = transforms.blended_transform_factory(
+                    axi.transAxes, axi.transData)
                 xlim = axi.get_xlim()
-                hlines_ravel[i] = axi.hlines(self.deciles[fx[1]], 0, 0.05,
-                                             transform=trans, color='k')
+                hlines_ravel[i] = axi.hlines(self.deciles[fx[1]],
+                                             0,
+                                             0.05,
+                                             transform=trans,
+                                             color='k')
                 # hline erases xlim
                 axi.set_ylabel(self.feature_names[fx[1]])
                 axi.set_xlim(xlim)

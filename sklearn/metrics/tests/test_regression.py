@@ -1,4 +1,3 @@
-
 import numpy as np
 from numpy.testing import assert_allclose
 from itertools import product
@@ -27,13 +26,13 @@ def test_regression_metrics(n_samples=50):
     y_pred = y_true + 1
 
     assert_almost_equal(mean_squared_error(y_true, y_pred), 1.)
-    assert_almost_equal(mean_squared_log_error(y_true, y_pred),
-                        mean_squared_error(np.log(1 + y_true),
-                                           np.log(1 + y_pred)))
+    assert_almost_equal(
+        mean_squared_log_error(y_true, y_pred),
+        mean_squared_error(np.log(1 + y_true), np.log(1 + y_pred)))
     assert_almost_equal(mean_absolute_error(y_true, y_pred), 1.)
     assert_almost_equal(median_absolute_error(y_true, y_pred), 1.)
     assert_almost_equal(max_error(y_true, y_pred), 1.)
-    assert_almost_equal(r2_score(y_true, y_pred),  0.995, 2)
+    assert_almost_equal(r2_score(y_true, y_pred), 0.995, 2)
     assert_almost_equal(explained_variance_score(y_true, y_pred), 1.)
     assert_almost_equal(mean_tweedie_deviance(y_true, y_pred, power=0),
                         mean_squared_error(y_true, y_pred))
@@ -45,12 +44,12 @@ def test_regression_metrics(n_samples=50):
     y_pred = 2 * y_true
     n = n_samples
     assert_almost_equal(mean_tweedie_deviance(y_true, y_pred, power=-1),
-                        5/12 * n * (n**2 + 2 * n + 1))
+                        5 / 12 * n * (n**2 + 2 * n + 1))
     assert_almost_equal(mean_tweedie_deviance(y_true, y_pred, power=1),
                         (n + 1) * (1 - np.log(2)))
     assert_almost_equal(mean_tweedie_deviance(y_true, y_pred, power=2),
                         2 * np.log(2) - 1)
-    assert_almost_equal(mean_tweedie_deviance(y_true, y_pred, power=3/2),
+    assert_almost_equal(mean_tweedie_deviance(y_true, y_pred, power=3 / 2),
                         ((6 * np.sqrt(2) - 8) / n) * np.sqrt(y_true).sum())
     assert_almost_equal(mean_tweedie_deviance(y_true, y_pred, power=3),
                         np.sum(1 / y_true) / (4 * n))
@@ -59,12 +58,12 @@ def test_regression_metrics(n_samples=50):
 def test_mean_squared_error_multioutput_raw_value_squared():
     # non-regression test for
     # https://github.com/scikit-learn/scikit-learn/pull/16323
-    mse1 = mean_squared_error(
-        [[1]], [[10]], multioutput="raw_values", squared=True
-    )
-    mse2 = mean_squared_error(
-        [[1]], [[10]], multioutput="raw_values", squared=False
-    )
+    mse1 = mean_squared_error([[1]], [[10]],
+                              multioutput="raw_values",
+                              squared=True)
+    mse2 = mean_squared_error([[1]], [[10]],
+                              multioutput="raw_values",
+                              squared=False)
     assert np.sqrt(mse1) == pytest.approx(mse2)
 
 
@@ -120,7 +119,8 @@ def test_regression_metrics_at_limits():
     # Tweedie deviance error
     power = -1.2
     assert_allclose(mean_tweedie_deviance([0], [1.], power=power),
-                    2 / (2 - power), rtol=1e-3)
+                    2 / (2 - power),
+                    rtol=1e-3)
     with pytest.raises(ValueError,
                        match="can only be used on strictly positive y_pred."):
         mean_tweedie_deviance([0.], [0.], power=power)
@@ -137,14 +137,16 @@ def test_regression_metrics_at_limits():
     with pytest.raises(ValueError, match=msg):
         mean_tweedie_deviance([0.], [0.], power=power)
     power = 2.
-    assert_allclose(mean_tweedie_deviance([1.], [1.], power=power), 0.00,
+    assert_allclose(mean_tweedie_deviance([1.], [1.], power=power),
+                    0.00,
                     atol=1e-8)
     msg = "can only be used on strictly positive y and y_pred."
     with pytest.raises(ValueError, match=msg):
         mean_tweedie_deviance([0.], [0.], power=power)
     power = 3.
     assert_allclose(mean_tweedie_deviance([1.], [1.], power=power),
-                    0.00, atol=1e-8)
+                    0.00,
+                    atol=1e-8)
 
     msg = "can only be used on strictly positive y and y_pred."
     with pytest.raises(ValueError, match=msg):
@@ -185,9 +187,9 @@ def test__check_reg_targets():
 
 def test__check_reg_targets_exception():
     invalid_multioutput = 'this_value_is_not_valid'
-    expected_message = ("Allowed 'multioutput' string values are.+"
-                        "You provided multioutput={!r}".format(
-                            invalid_multioutput))
+    expected_message = (
+        "Allowed 'multioutput' string values are.+"
+        "You provided multioutput={!r}".format(invalid_multioutput))
     with pytest.raises(ValueError, match=expected_message):
         _check_reg_targets([1, 2, 3], [[1], [2], [3]], invalid_multioutput)
 
@@ -208,8 +210,8 @@ def test_regression_multioutput_array():
 
     # mean_absolute_error and mean_squared_error are equal because
     # it is a binary problem.
-    y_true = [[0, 0]]*4
-    y_pred = [[1, 1]]*4
+    y_true = [[0, 0]] * 4
+    y_pred = [[1, 1]] * 4
     mse = mean_squared_error(y_true, y_pred, multioutput='raw_values')
     mae = mean_absolute_error(y_true, y_pred, multioutput='raw_values')
     r = r2_score(y_true, y_pred, multioutput='raw_values')
@@ -231,7 +233,8 @@ def test_regression_multioutput_array():
     y_pred = [[1, 4], [-1, 1]]
     r2 = r2_score(y_true, y_pred, multioutput='raw_values')
     assert_array_almost_equal(r2, [1., -3.], decimal=2)
-    assert np.mean(r2) == r2_score(y_true, y_pred,
+    assert np.mean(r2) == r2_score(y_true,
+                                   y_pred,
                                    multioutput='uniform_average')
     evs = explained_variance_score(y_true, y_pred, multioutput='raw_values')
     assert_array_almost_equal(evs, [1., -3.], decimal=2)
@@ -241,7 +244,8 @@ def test_regression_multioutput_array():
     y_true = np.array([[0.5, 1], [1, 2], [7, 6]])
     y_pred = np.array([[0.5, 2], [1, 2.5], [8, 8]])
     msle = mean_squared_log_error(y_true, y_pred, multioutput='raw_values')
-    msle2 = mean_squared_error(np.log(1 + y_true), np.log(1 + y_pred),
+    msle2 = mean_squared_error(np.log(1 + y_true),
+                               np.log(1 + y_pred),
                                multioutput='raw_values')
     assert_array_almost_equal(msle, msle2, decimal=2)
 
@@ -251,7 +255,9 @@ def test_regression_custom_weights():
     y_pred = [[1, 1], [2, -1], [5, 4], [5, 6.5]]
 
     msew = mean_squared_error(y_true, y_pred, multioutput=[0.4, 0.6])
-    rmsew = mean_squared_error(y_true, y_pred, multioutput=[0.4, 0.6],
+    rmsew = mean_squared_error(y_true,
+                               y_pred,
+                               multioutput=[0.4, 0.6],
                                squared=False)
     maew = mean_absolute_error(y_true, y_pred, multioutput=[0.4, 0.6])
     rw = r2_score(y_true, y_pred, multioutput=[0.4, 0.6])
@@ -267,7 +273,8 @@ def test_regression_custom_weights():
     y_true = np.array([[0.5, 1], [1, 2], [7, 6]])
     y_pred = np.array([[0.5, 2], [1, 2.5], [8, 8]])
     msle = mean_squared_log_error(y_true, y_pred, multioutput=[0.3, 0.7])
-    msle2 = mean_squared_error(np.log(1 + y_true), np.log(1 + y_pred),
+    msle2 = mean_squared_error(np.log(1 + y_true),
+                               np.log(1 + y_pred),
                                multioutput=[0.3, 0.7])
     assert_almost_equal(msle, msle2, decimal=2)
 

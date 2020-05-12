@@ -20,8 +20,15 @@ from ..neighbors import NearestNeighbors
 from ._dbscan_inner import dbscan_inner
 
 
-def dbscan(X, eps=0.5, min_samples=5, metric='minkowski', metric_params=None,
-           algorithm='auto', leaf_size=30, p=2, sample_weight=None,
+def dbscan(X,
+           eps=0.5,
+           min_samples=5,
+           metric='minkowski',
+           metric_params=None,
+           algorithm='auto',
+           leaf_size=30,
+           p=2,
+           sample_weight=None,
            n_jobs=None):
     """Perform DBSCAN clustering from vector array or distance matrix.
 
@@ -139,9 +146,14 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski', metric_params=None,
     ACM Transactions on Database Systems (TODS), 42(3), 19.
     """
 
-    est = DBSCAN(eps=eps, min_samples=min_samples, metric=metric,
-                 metric_params=metric_params, algorithm=algorithm,
-                 leaf_size=leaf_size, p=p, n_jobs=n_jobs)
+    est = DBSCAN(eps=eps,
+                 min_samples=min_samples,
+                 metric=metric,
+                 metric_params=metric_params,
+                 algorithm=algorithm,
+                 leaf_size=leaf_size,
+                 p=p,
+                 n_jobs=n_jobs)
     est.fit(X, sample_weight=sample_weight)
     return est.core_sample_indices_, est.labels_
 
@@ -271,8 +283,15 @@ class DBSCAN(ClusterMixin, BaseEstimator):
     ACM Transactions on Database Systems (TODS), 42(3), 19.
     """
     @_deprecate_positional_args
-    def __init__(self, eps=0.5, *, min_samples=5, metric='euclidean',
-                 metric_params=None, algorithm='auto', leaf_size=30, p=None,
+    def __init__(self,
+                 eps=0.5,
+                 *,
+                 min_samples=5,
+                 metric='euclidean',
+                 metric_params=None,
+                 algorithm='auto',
+                 leaf_size=30,
+                 p=None,
                  n_jobs=None):
         self.eps = eps
         self.min_samples = min_samples
@@ -326,21 +345,25 @@ class DBSCAN(ClusterMixin, BaseEstimator):
                 warnings.simplefilter('ignore', sparse.SparseEfficiencyWarning)
                 X.setdiag(X.diagonal())  # XXX: modifies X's internals in-place
 
-        neighbors_model = NearestNeighbors(
-            radius=self.eps, algorithm=self.algorithm,
-            leaf_size=self.leaf_size, metric=self.metric,
-            metric_params=self.metric_params, p=self.p, n_jobs=self.n_jobs)
+        neighbors_model = NearestNeighbors(radius=self.eps,
+                                           algorithm=self.algorithm,
+                                           leaf_size=self.leaf_size,
+                                           metric=self.metric,
+                                           metric_params=self.metric_params,
+                                           p=self.p,
+                                           n_jobs=self.n_jobs)
         neighbors_model.fit(X)
         # This has worst case O(n^2) memory complexity
         neighborhoods = neighbors_model.radius_neighbors(X,
                                                          return_distance=False)
 
         if sample_weight is None:
-            n_neighbors = np.array([len(neighbors)
-                                    for neighbors in neighborhoods])
+            n_neighbors = np.array(
+                [len(neighbors) for neighbors in neighborhoods])
         else:
-            n_neighbors = np.array([np.sum(sample_weight[neighbors])
-                                    for neighbors in neighborhoods])
+            n_neighbors = np.array([
+                np.sum(sample_weight[neighbors]) for neighbors in neighborhoods
+            ])
 
         # Initially, all samples are noise.
         labels = np.full(X.shape[0], -1, dtype=np.intp)

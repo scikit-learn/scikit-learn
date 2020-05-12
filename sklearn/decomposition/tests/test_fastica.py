@@ -40,11 +40,11 @@ def test_gs():
     W, _, _ = np.linalg.svd(rng.randn(10, 10))
     w = rng.randn(10)
     _gs_decorrelation(w, W, 10)
-    assert (w ** 2).sum() < 1.e-10
+    assert (w**2).sum() < 1.e-10
     w = rng.randn(10)
     u = _gs_decorrelation(w, W, 5)
     tmp = np.dot(u, W.T)
-    assert (tmp[:5] ** 2).sum() < 1.e-10
+    assert (tmp[:5]**2).sum() < 1.e-10
 
 
 @pytest.mark.parametrize("add_noise", [True, False])
@@ -63,8 +63,8 @@ def test_fastica_simple(add_noise, seed):
 
     # Mixing angle
     phi = 0.6
-    mixing = np.array([[np.cos(phi), np.sin(phi)],
-                       [np.sin(phi), -np.cos(phi)]])
+    mixing = np.array([[np.cos(phi), np.sin(phi)], [np.sin(phi),
+                                                    -np.cos(phi)]])
     m = np.dot(mixing, s)
 
     if add_noise:
@@ -74,21 +74,26 @@ def test_fastica_simple(add_noise, seed):
 
     # function as fun arg
     def g_test(x):
-        return x ** 3, (3 * x ** 2).mean(axis=-1)
+        return x**3, (3 * x**2).mean(axis=-1)
 
     algos = ['parallel', 'deflation']
     nls = ['logcosh', 'exp', 'cube', g_test]
     whitening = [True, False]
     for algo, nl, whiten in itertools.product(algos, nls, whitening):
         if whiten:
-            k_, mixing_, s_ = fastica(m.T, fun=nl, algorithm=algo,
+            k_, mixing_, s_ = fastica(m.T,
+                                      fun=nl,
+                                      algorithm=algo,
                                       random_state=rng)
             with pytest.raises(ValueError):
                 fastica(m.T, fun=np.tanh, algorithm=algo)
         else:
             pca = PCA(n_components=2, whiten=True, random_state=rng)
             X = pca.fit_transform(m.T)
-            k_, mixing_, s_ = fastica(X, fun=nl, algorithm=algo, whiten=False,
+            k_, mixing_, s_ = fastica(X,
+                                      fun=nl,
+                                      algorithm=algo,
+                                      whiten=False,
                                       random_state=rng)
             with pytest.raises(ValueError):
                 fastica(X, fun=np.tanh, algorithm=algo)
@@ -115,8 +120,7 @@ def test_fastica_simple(add_noise, seed):
             assert_almost_equal(np.dot(s2_, s2) / n_samples, 1, decimal=1)
 
     # Test FastICA class
-    _, _, sources_fun = fastica(m.T, fun=nl, algorithm=algo,
-                                random_state=seed)
+    _, _, sources_fun = fastica(m.T, fun=nl, algorithm=algo, random_state=seed)
     ica = FastICA(fun=nl, algorithm=algo, random_state=seed)
     sources = ica.fit_transform(m.T)
     assert ica.components_.shape == (2, 2)
@@ -164,8 +168,11 @@ def test_fastica_convergence_fail():
     m = np.dot(mixing, s)
 
     # Do fastICA with tolerance 0. to ensure failing convergence
-    ica = FastICA(algorithm="parallel", n_components=2, random_state=rng,
-                  max_iter=2, tol=0.)
+    ica = FastICA(algorithm="parallel",
+                  n_components=2,
+                  random_state=rng,
+                  max_iter=2,
+                  tol=0.)
     assert_warns(ConvergenceWarning, ica.fit, m.T)
 
 
@@ -218,8 +225,8 @@ def test_fit_transform():
     rng = np.random.RandomState(0)
     X = rng.random_sample((100, 10))
     for whiten, n_components in [[True, 5], [False, None]]:
-        n_components_ = (n_components if n_components is not None else
-                         X.shape[1])
+        n_components_ = (n_components
+                         if n_components is not None else X.shape[1])
 
         ica = FastICA(n_components=n_components, whiten=whiten, random_state=0)
         Xt = ica.fit_transform(X)
@@ -241,15 +248,18 @@ def test_inverse_transform():
     n1, n2 = 5, 10
     rng = np.random.RandomState(0)
     X = rng.random_sample((n_samples, n_features))
-    expected = {(True, n1): (n_features, n1),
-                (True, n2): (n_features, n2),
-                (False, n1): (n_features, n2),
-                (False, n2): (n_features, n2)}
+    expected = {
+        (True, n1): (n_features, n1),
+        (True, n2): (n_features, n2),
+        (False, n1): (n_features, n2),
+        (False, n2): (n_features, n2)
+    }
     for whiten in [True, False]:
         for n_components in [n1, n2]:
-            n_components_ = (n_components if n_components is not None else
-                             X.shape[1])
-            ica = FastICA(n_components=n_components, random_state=rng,
+            n_components_ = (n_components
+                             if n_components is not None else X.shape[1])
+            ica = FastICA(n_components=n_components,
+                          random_state=rng,
                           whiten=whiten)
             with warnings.catch_warnings(record=True):
                 # catch "n_components ignored" warning
@@ -274,10 +284,12 @@ def test_fastica_errors():
         FastICA(max_iter=0)
     with pytest.raises(ValueError, match=r'alpha must be in \[1,2\]'):
         fastica(X, fun_args={'alpha': 0})
-    with pytest.raises(ValueError, match='w_init has invalid shape.+'
+    with pytest.raises(ValueError,
+                       match='w_init has invalid shape.+'
                        r'should be \(3L?, 3L?\)'):
         fastica(X, w_init=w_init)
-    with pytest.raises(ValueError, match='Invalid algorithm.+must '
+    with pytest.raises(ValueError,
+                       match='Invalid algorithm.+must '
                        'be.+parallel.+or.+deflation'):
         fastica(X, algorithm='pizza')
 
@@ -293,7 +305,9 @@ def test_fastica_output_shape(whiten, return_X_mean, return_n_iter):
 
     expected_len = 3 + return_X_mean + return_n_iter
 
-    out = fastica(X, whiten=whiten, return_n_iter=return_n_iter,
+    out = fastica(X,
+                  whiten=whiten,
+                  return_n_iter=return_n_iter,
                   return_X_mean=return_X_mean)
 
     assert len(out) == expected_len

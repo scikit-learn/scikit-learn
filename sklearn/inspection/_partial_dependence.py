@@ -28,7 +28,6 @@ from ..ensemble._gb import BaseGradientBoosting
 from sklearn.ensemble._hist_gradient_boosting.gradient_boosting import (
     BaseHistGradientBoosting)
 
-
 __all__ = [
     'partial_dependence',
 ]
@@ -86,9 +85,9 @@ def _grid_from_X(X, percentiles, grid_resolution):
             axis = uniques
         else:
             # create axis based on percentiles and grid resolution
-            emp_percentiles = mquantiles(
-                _safe_indexing(X, feature, axis=1), prob=percentiles, axis=0
-            )
+            emp_percentiles = mquantiles(_safe_indexing(X, feature, axis=1),
+                                         prob=percentiles,
+                                         axis=0)
             if np.allclose(emp_percentiles[0], emp_percentiles[1]):
                 raise ValueError(
                     'percentiles are too close to each other, '
@@ -96,15 +95,16 @@ def _grid_from_X(X, percentiles, grid_resolution):
                     'that are further apart.')
             axis = np.linspace(emp_percentiles[0],
                                emp_percentiles[1],
-                               num=grid_resolution, endpoint=True)
+                               num=grid_resolution,
+                               endpoint=True)
         values.append(axis)
 
     return cartesian(values), values
 
 
 def _partial_dependence_recursion(est, grid, features):
-    averaged_predictions = est._compute_partial_dependence_recursion(grid,
-                                                                     features)
+    averaged_predictions = est._compute_partial_dependence_recursion(
+        grid, features)
     if averaged_predictions.ndim == 1:
         # reshape to (1, n_points) for consistency with
         # _partial_dependence_brute
@@ -126,14 +126,12 @@ def _partial_dependence_brute(est, grid, features, X, response_method):
             # try predict_proba, then decision_function if it doesn't exist
             prediction_method = predict_proba or decision_function
         else:
-            prediction_method = (predict_proba if response_method ==
-                                 'predict_proba' else decision_function)
+            prediction_method = (predict_proba if response_method
+                                 == 'predict_proba' else decision_function)
         if prediction_method is None:
             if response_method == 'auto':
-                raise ValueError(
-                    'The estimator has no predict_proba and no '
-                    'decision_function method.'
-                )
+                raise ValueError('The estimator has no predict_proba and no '
+                                 'decision_function method.')
             elif response_method == 'predict_proba':
                 raise ValueError('The estimator has no predict_proba method.')
             else:
@@ -183,8 +181,13 @@ def _partial_dependence_brute(est, grid, features, X, response_method):
 
 
 @_deprecate_positional_args
-def partial_dependence(estimator, X, features, *, response_method='auto',
-                       percentiles=(0.05, 0.95), grid_resolution=100,
+def partial_dependence(estimator,
+                       X,
+                       features,
+                       *,
+                       response_method='auto',
+                       percentiles=(0.05, 0.95),
+                       grid_resolution=100,
                        method='auto'):
     """Partial dependence of ``features``.
 
@@ -306,8 +309,7 @@ def partial_dependence(estimator, X, features, *, response_method='auto',
     """
     if not (is_classifier(estimator) or is_regressor(estimator)):
         raise ValueError(
-            "'estimator' must be a fitted regressor or classifier."
-        )
+            "'estimator' must be a fitted regressor or classifier.")
 
     if isinstance(estimator, Pipeline):
         # TODO: to be removed if/when pipeline get a `steps_` attributes
@@ -320,15 +322,13 @@ def partial_dependence(estimator, X, features, *, response_method='auto',
     else:
         check_is_fitted(estimator)
 
-    if (is_classifier(estimator) and
-            isinstance(estimator.classes_[0], np.ndarray)):
-        raise ValueError(
-            'Multiclass-multioutput estimators are not supported'
-        )
+    if (is_classifier(estimator)
+            and isinstance(estimator.classes_[0], np.ndarray)):
+        raise ValueError('Multiclass-multioutput estimators are not supported')
 
     # Use check_array only on lists and other non-array-likes / sparse. Do not
     # convert DataFrame into a NumPy array.
-    if not(hasattr(X, '__array__') or sparse.issparse(X)):
+    if not (hasattr(X, '__array__') or sparse.issparse(X)):
         X = check_array(X, force_all_finite='allow-nan', dtype=np.object)
 
     accepted_responses = ('auto', 'predict_proba', 'decision_function')
@@ -340,8 +340,7 @@ def partial_dependence(estimator, X, features, *, response_method='auto',
     if is_regressor(estimator) and response_method != 'auto':
         raise ValueError(
             "The response_method parameter is ignored for regressors and "
-            "must be 'auto'."
-        )
+            "must be 'auto'.")
 
     accepted_methods = ('brute', 'recursion', 'auto')
     if method not in accepted_methods:
@@ -350,12 +349,12 @@ def partial_dependence(estimator, X, features, *, response_method='auto',
                 method, ', '.join(accepted_methods)))
 
     if method == 'auto':
-        if (isinstance(estimator, BaseGradientBoosting) and
-                estimator.init is None):
+        if (isinstance(estimator, BaseGradientBoosting)
+                and estimator.init is None):
             method = 'recursion'
-        elif isinstance(estimator, (BaseHistGradientBoosting,
-                                    DecisionTreeRegressor,
-                                    RandomForestRegressor)):
+        elif isinstance(estimator,
+                        (BaseHistGradientBoosting, DecisionTreeRegressor,
+                         RandomForestRegressor)):
             method = 'recursion'
         else:
             method = 'brute'
@@ -375,16 +374,15 @@ def partial_dependence(estimator, X, features, *, response_method='auto',
             )
             raise ValueError(
                 "Only the following estimators support the 'recursion' "
-                "method: {}. Try using method='brute'."
-                .format(', '.join(supported_classes_recursion)))
+                "method: {}. Try using method='brute'.".format(
+                    ', '.join(supported_classes_recursion)))
         if response_method == 'auto':
             response_method = 'decision_function'
 
         if response_method != 'decision_function':
             raise ValueError(
                 "With the 'recursion' method, the response_method must be "
-                "'decision_function'. Got {}.".format(response_method)
-            )
+                "'decision_function'. Got {}.".format(response_method))
 
     if _determine_key_type(features, accept_slice=False) == 'int':
         # _get_column_indices() supports negative indexing. Here, we limit
@@ -392,26 +390,21 @@ def partial_dependence(estimator, X, features, *, response_method='auto',
         # by _get_column_indices()
         if np.any(np.less(features, 0)):
             raise ValueError(
-                'all features must be in [0, {}]'.format(X.shape[1] - 1)
-            )
+                'all features must be in [0, {}]'.format(X.shape[1] - 1))
 
-    features_indices = np.asarray(
-        _get_column_indices(X, features), dtype=np.int32, order='C'
-    ).ravel()
+    features_indices = np.asarray(_get_column_indices(X, features),
+                                  dtype=np.int32,
+                                  order='C').ravel()
 
-    grid, values = _grid_from_X(
-        _safe_indexing(X, features_indices, axis=1), percentiles,
-        grid_resolution
-    )
+    grid, values = _grid_from_X(_safe_indexing(X, features_indices, axis=1),
+                                percentiles, grid_resolution)
 
     if method == 'brute':
         averaged_predictions = _partial_dependence_brute(
-            estimator, grid, features_indices, X, response_method
-        )
+            estimator, grid, features_indices, X, response_method)
     else:
         averaged_predictions = _partial_dependence_recursion(
-            estimator, grid, features_indices
-        )
+            estimator, grid, features_indices)
 
     # reshape averaged_predictions to
     # (n_outputs, n_values_feature_0, n_values_feature_1, ...)

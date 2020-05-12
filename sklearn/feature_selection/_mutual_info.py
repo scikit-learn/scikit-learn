@@ -140,8 +140,7 @@ def _compute_mi_cd(c, d, n_neighbors):
     m_all = np.array([i.size for i in ind])
 
     mi = (digamma(n_samples) + np.mean(digamma(k_all)) -
-          np.mean(digamma(label_counts)) -
-          np.mean(digamma(m_all + 1)))
+          np.mean(digamma(label_counts)) - np.mean(digamma(m_all + 1)))
 
     return max(0, mi)
 
@@ -192,8 +191,13 @@ def _iterate_columns(X, columns=None):
             yield X[:, i]
 
 
-def _estimate_mi(X, y, discrete_features='auto', discrete_target=False,
-                 n_neighbors=3, copy=True, random_state=None):
+def _estimate_mi(X,
+                 y,
+                 discrete_features='auto',
+                 discrete_target=False,
+                 n_neighbors=3,
+                 copy=True,
+                 random_state=None):
     """Estimate mutual information between the features and the target.
 
     Parameters
@@ -272,26 +276,33 @@ def _estimate_mi(X, y, discrete_features='auto', discrete_target=False,
 
         if not discrete_target:
             X[:, continuous_mask] = scale(X[:, continuous_mask],
-                                          with_mean=False, copy=False)
+                                          with_mean=False,
+                                          copy=False)
 
         # Add small noise to continuous features as advised in Kraskov et. al.
         X = X.astype(float, **_astype_copy_false(X))
         means = np.maximum(1, np.mean(np.abs(X[:, continuous_mask]), axis=0))
         X[:, continuous_mask] += 1e-10 * means * rng.randn(
-                n_samples, np.sum(continuous_mask))
+            n_samples, np.sum(continuous_mask))
 
     if not discrete_target:
         y = scale(y, with_mean=False)
         y += 1e-10 * np.maximum(1, np.mean(np.abs(y))) * rng.randn(n_samples)
 
-    mi = [_compute_mi(x, y, discrete_feature, discrete_target, n_neighbors) for
-          x, discrete_feature in zip(_iterate_columns(X), discrete_mask)]
+    mi = [
+        _compute_mi(x, y, discrete_feature, discrete_target, n_neighbors)
+        for x, discrete_feature in zip(_iterate_columns(X), discrete_mask)
+    ]
 
     return np.array(mi)
 
 
-def mutual_info_regression(X, y, discrete_features='auto', n_neighbors=3,
-                           copy=True, random_state=None):
+def mutual_info_regression(X,
+                           y,
+                           discrete_features='auto',
+                           n_neighbors=3,
+                           copy=True,
+                           random_state=None):
     """Estimate mutual information for a continuous target variable.
 
     Mutual information (MI) [1]_ between two random variables is a non-negative
@@ -363,12 +374,16 @@ def mutual_info_regression(X, y, discrete_features='auto', n_neighbors=3,
     .. [4] L. F. Kozachenko, N. N. Leonenko, "Sample Estimate of the Entropy
            of a Random Vector", Probl. Peredachi Inf., 23:2 (1987), 9-16
     """
-    return _estimate_mi(X, y, discrete_features, False, n_neighbors,
-                        copy, random_state)
+    return _estimate_mi(X, y, discrete_features, False, n_neighbors, copy,
+                        random_state)
 
 
-def mutual_info_classif(X, y, discrete_features='auto', n_neighbors=3,
-                        copy=True, random_state=None):
+def mutual_info_classif(X,
+                        y,
+                        discrete_features='auto',
+                        n_neighbors=3,
+                        copy=True,
+                        random_state=None):
     """Estimate mutual information for a discrete target variable.
 
     Mutual information (MI) [1]_ between two random variables is a non-negative
@@ -441,5 +456,5 @@ def mutual_info_classif(X, y, discrete_features='auto', n_neighbors=3,
            of a Random Vector:, Probl. Peredachi Inf., 23:2 (1987), 9-16
     """
     check_classification_targets(y)
-    return _estimate_mi(X, y, discrete_features, True, n_neighbors,
-                        copy, random_state)
+    return _estimate_mi(X, y, discrete_features, True, n_neighbors, copy,
+                        random_state)

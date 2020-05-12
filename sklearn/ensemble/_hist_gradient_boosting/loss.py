@@ -25,7 +25,6 @@ from ...utils.stats import _weighted_percentile
 
 class BaseLoss(ABC):
     """Base class for a loss."""
-
     def __init__(self, hessians_are_constant):
         self.hessians_are_constant = hessians_are_constant
 
@@ -155,7 +154,6 @@ class LeastSquares(BaseLoss):
     the computation of the gradients and get a unit hessian (and be consistent
     with what is done in LightGBM).
     """
-
     def __init__(self, sample_weight):
         # If sample weights are provided, the hessians and gradients
         # are multiplied by sample_weight, which means the hessians are
@@ -198,7 +196,6 @@ class LeastAbsoluteDeviation(BaseLoss):
 
         loss(x_i) = |y_true_i - raw_pred_i|
     """
-
     def __init__(self, sample_weight):
         # If sample weights are provided, the hessians and gradients
         # are multiplied by sample_weight, which means the hessians are
@@ -258,11 +255,11 @@ class LeastAbsoluteDeviation(BaseLoss):
         for leaf in grower.finalized_leaves:
             indices = leaf.sample_indices
             if sample_weight is None:
-                median_res = np.median(y_true[indices]
-                                       - raw_predictions[indices])
+                median_res = np.median(y_true[indices] -
+                                       raw_predictions[indices])
             else:
-                median_res = _weighted_percentile(y_true[indices]
-                                                  - raw_predictions[indices],
+                median_res = _weighted_percentile(y_true[indices] -
+                                                  raw_predictions[indices],
                                                   sample_weight=sample_weight,
                                                   percentile=50)
             leaf.value = grower.shrinkage * median_res
@@ -280,7 +277,6 @@ class Poisson(BaseLoss):
     This actually computes half the Poisson deviance to simplify
     the computation of the gradients.
     """
-
     def __init__(self, sample_weight):
         super().__init__(hessians_are_constant=False)
 
@@ -292,8 +288,8 @@ class Poisson(BaseLoss):
         raw_predictions = raw_predictions.reshape(-1)
         # TODO: For speed, we could remove the constant xlogy(y_true, y_true)
         # Advantage of this form: minimum of zero at raw_predictions = y_true.
-        loss = (xlogy(y_true, y_true) - y_true * (raw_predictions + 1)
-                + np.exp(raw_predictions))
+        loss = (xlogy(y_true, y_true) - y_true * (raw_predictions + 1) +
+                np.exp(raw_predictions))
         return loss
 
     def get_baseline_prediction(self, y_train, sample_weight, prediction_dim):
@@ -309,9 +305,8 @@ class Poisson(BaseLoss):
         raw_predictions = raw_predictions.reshape(-1)
         gradients = gradients.reshape(-1)
         hessians = hessians.reshape(-1)
-        _update_gradients_hessians_poisson(gradients, hessians,
-                                           y_true, raw_predictions,
-                                           sample_weight)
+        _update_gradients_hessians_poisson(gradients, hessians, y_true,
+                                           raw_predictions, sample_weight)
 
 
 class BinaryCrossEntropy(BaseLoss):
@@ -325,7 +320,6 @@ class BinaryCrossEntropy(BaseLoss):
     See The Elements of Statistical Learning, by Hastie, Tibshirani, Friedman,
     section 4.4.1 (about logistic regression).
     """
-
     def __init__(self, sample_weight):
         super().__init__(hessians_are_constant=False)
 
@@ -359,8 +353,9 @@ class BinaryCrossEntropy(BaseLoss):
         raw_predictions = raw_predictions.reshape(-1)
         gradients = gradients.reshape(-1)
         hessians = hessians.reshape(-1)
-        _update_gradients_hessians_binary_crossentropy(
-            gradients, hessians, y_true, raw_predictions, sample_weight)
+        _update_gradients_hessians_binary_crossentropy(gradients, hessians,
+                                                       y_true, raw_predictions,
+                                                       sample_weight)
 
     def predict_proba(self, raw_predictions):
         # shape (1, n_samples) --> (n_samples,). reshape(-1) is more likely to
@@ -379,7 +374,6 @@ class CategoricalCrossEntropy(BaseLoss):
     the negative log-likelihood of the model and generalizes the binary
     cross-entropy to more than 2 classes.
     """
-
     def __init__(self, sample_weight):
         super().__init__(hessians_are_constant=False)
 
@@ -397,8 +391,7 @@ class CategoricalCrossEntropy(BaseLoss):
         init_value = np.zeros(shape=(prediction_dim, 1), dtype=Y_DTYPE)
         eps = np.finfo(y_train.dtype).eps
         for k in range(prediction_dim):
-            proba_kth_class = np.average(y_train == k,
-                                         weights=sample_weight)
+            proba_kth_class = np.average(y_train == k, weights=sample_weight)
             proba_kth_class = np.clip(proba_kth_class, eps, 1 - eps)
             init_value[k, :] += np.log(proba_kth_class)
 

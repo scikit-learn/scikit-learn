@@ -14,9 +14,7 @@ from .utils import check_array, check_consistent_length
 from .utils.validation import _check_sample_weight, _deprecate_positional_args
 from ._isotonic import _inplace_contiguous_isotonic_regression, _make_unique
 
-
-__all__ = ['check_increasing', 'isotonic_regression',
-           'IsotonicRegression']
+__all__ = ['check_increasing', 'isotonic_regression', 'IsotonicRegression']
 
 
 def check_increasing(x, y):
@@ -76,7 +74,10 @@ def check_increasing(x, y):
     return increasing_bool
 
 
-def isotonic_regression(y, sample_weight=None, y_min=None, y_max=None,
+def isotonic_regression(y,
+                        sample_weight=None,
+                        y_min=None,
+                        y_max=None,
                         increasing=True):
     """Solve the isotonic regression model.
 
@@ -203,7 +204,11 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
     array([1.8628..., 3.7256...])
     """
     @_deprecate_positional_args
-    def __init__(self, *, y_min=None, y_max=None, increasing=True,
+    def __init__(self,
+                 *,
+                 y_min=None,
+                 y_max=None,
+                 increasing=True,
                  out_of_bounds='nan'):
         self.y_min = y_min
         self.y_max = y_max
@@ -220,15 +225,17 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         # Handle the out_of_bounds argument by setting bounds_error
         if self.out_of_bounds not in ["raise", "nan", "clip"]:
             raise ValueError("The argument ``out_of_bounds`` must be in "
-                             "'nan', 'clip', 'raise'; got {0}"
-                             .format(self.out_of_bounds))
+                             "'nan', 'clip', 'raise'; got {0}".format(
+                                 self.out_of_bounds))
 
         bounds_error = self.out_of_bounds == "raise"
         if len(y) == 1:
             # single y, constant prediction
             self.f_ = lambda x: y.repeat(x.shape)
         else:
-            self.f_ = interpolate.interp1d(X, y, kind='linear',
+            self.f_ = interpolate.interp1d(X,
+                                           y,
+                                           kind='linear',
                                            bounds_error=bounds_error)
 
     def _build_y(self, X, y, sample_weight, trim_duplicates=True):
@@ -253,8 +260,10 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
             X, y, sample_weight)
 
         X = unique_X
-        y = isotonic_regression(unique_y, unique_sample_weight,
-                                self.y_min, self.y_max,
+        y = isotonic_regression(unique_y,
+                                unique_sample_weight,
+                                self.y_min,
+                                self.y_max,
                                 increasing=self.increasing_)
 
         # Handle the left and right bounds on X
@@ -262,13 +271,11 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
 
         if trim_duplicates:
             # Remove unnecessary points for faster prediction
-            keep_data = np.ones((len(y),), dtype=bool)
+            keep_data = np.ones((len(y), ), dtype=bool)
             # Aside from the 1st and last point, remove points whose y values
             # are equal to both the point before and the point after it.
-            keep_data[1:-1] = np.logical_or(
-                np.not_equal(y[1:-1], y[:-2]),
-                np.not_equal(y[1:-1], y[2:])
-            )
+            keep_data[1:-1] = np.logical_or(np.not_equal(y[1:-1], y[:-2]),
+                                            np.not_equal(y[1:-1], y[2:]))
             return X[keep_data], y[keep_data]
         else:
             # The ability to turn off trim_duplicates is only used to it make
@@ -348,8 +355,8 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         # Handle the out_of_bounds argument by clipping if needed
         if self.out_of_bounds not in ["raise", "nan", "clip"]:
             raise ValueError("The argument ``out_of_bounds`` must be in "
-                             "'nan', 'clip', 'raise'; got {0}"
-                             .format(self.out_of_bounds))
+                             "'nan', 'clip', 'raise'; got {0}".format(
+                                 self.out_of_bounds))
 
         if self.out_of_bounds == "clip":
             T = np.clip(T, self.X_min_, self.X_max_)

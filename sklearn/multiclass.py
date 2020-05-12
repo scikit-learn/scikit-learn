@@ -102,14 +102,13 @@ def _predict_binary(estimator, X):
 
 def _check_estimator(estimator):
     """Make sure that an estimator implements the necessary methods."""
-    if (not hasattr(estimator, "decision_function") and
-            not hasattr(estimator, "predict_proba")):
+    if (not hasattr(estimator, "decision_function")
+            and not hasattr(estimator, "predict_proba")):
         raise ValueError("The base estimator should implement "
                          "decision_function or predict_proba!")
 
 
 class _ConstantPredictor(BaseEstimator):
-
     def fit(self, X, y):
         self.y_ = y
         return self
@@ -128,7 +127,8 @@ class _ConstantPredictor(BaseEstimator):
         check_is_fitted(self)
 
         return np.repeat([np.hstack([1 - self.y_, self.y_])],
-                         X.shape[0], axis=0)
+                         X.shape[0],
+                         axis=0)
 
 
 class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
@@ -238,11 +238,15 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
         # In cases where individual estimators are very fast to train setting
         # n_jobs > 1 in can results in slower performance due to the overhead
         # of spawning threads.  See joblib issue #112.
-        self.estimators_ = Parallel(n_jobs=self.n_jobs)(delayed(_fit_binary)(
-            self.estimator, X, column, classes=[
-                "not %s" % self.label_binarizer_.classes_[i],
-                self.label_binarizer_.classes_[i]])
-            for i, column in enumerate(columns))
+        self.estimators_ = Parallel(n_jobs=self.n_jobs)(
+            delayed(_fit_binary)(self.estimator,
+                                 X,
+                                 column,
+                                 classes=[
+                                     "not %s" %
+                                     self.label_binarizer_.classes_[i],
+                                     self.label_binarizer_.classes_[i]
+                                 ]) for i, column in enumerate(columns))
 
         return self
 
@@ -276,9 +280,10 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
         if _check_partial_fit_first_call(self, classes):
             if not hasattr(self.estimator, "partial_fit"):
                 raise ValueError(("Base estimator {0}, doesn't have "
-                                 "partial_fit method").format(self.estimator))
-            self.estimators_ = [clone(self.estimator) for _ in range
-                                (self.n_classes_)]
+                                  "partial_fit method").format(self.estimator))
+            self.estimators_ = [
+                clone(self.estimator) for _ in range(self.n_classes_)
+            ]
 
             # A sparse LabelBinarizer, with sparse_output=True, has been
             # shown to outperform or match a dense label binarizer in all
@@ -288,9 +293,9 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
             self.label_binarizer_.fit(self.classes_)
 
         if len(np.setdiff1d(y, self.classes_)):
-            raise ValueError(("Mini-batch contains {0} while classes " +
-                             "must be subset of {1}").format(np.unique(y),
-                                                             self.classes_))
+            raise ValueError(
+                ("Mini-batch contains {0} while classes " +
+                 "must be subset of {1}").format(np.unique(y), self.classes_))
 
         Y = self.label_binarizer_.transform(y)
         Y = Y.tocsc()
@@ -328,8 +333,8 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
                 argmaxima[maxima == pred] = i
             return self.classes_[argmaxima]
         else:
-            if (hasattr(self.estimators_[0], "decision_function") and
-                    is_classifier(self.estimators_[0])):
+            if (hasattr(self.estimators_[0], "decision_function")
+                    and is_classifier(self.estimators_[0])):
                 thresh = 0
             else:
                 thresh = .5
@@ -403,8 +408,8 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
         check_is_fitted(self)
         if len(self.estimators_) == 1:
             return self.estimators_[0].decision_function(X)
-        return np.array([est.decision_function(X).ravel()
-                         for est in self.estimators_]).T
+        return np.array(
+            [est.decision_function(X).ravel() for est in self.estimators_]).T
 
     @property
     def multilabel_(self):
@@ -451,9 +456,8 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
             check_is_fitted(self)
         except NotFittedError as nfe:
             raise AttributeError(
-                "{} object has no n_features_in_ attribute."
-                .format(self.__class__.__name__)
-            ) from nfe
+                "{} object has no n_features_in_ attribute.".format(
+                    self.__class__.__name__)) from nfe
         return self.estimators_[0].n_features_in_
 
 
@@ -467,7 +471,8 @@ def _fit_ovo_binary(estimator, X, y, i, j):
     indcond = np.arange(X.shape[0])[cond]
     return _fit_binary(estimator,
                        _safe_split(estimator, X, None, indices=indcond)[0],
-                       y_binary, classes=[i, j]), indcond
+                       y_binary,
+                       classes=[i, j]), indcond
 
 
 def _partial_fit_ovo_binary(estimator, X, y, i, j):
@@ -552,14 +557,15 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
             raise ValueError("OneVsOneClassifier can not be fit when only one"
                              " class is present.")
         n_classes = self.classes_.shape[0]
-        estimators_indices = list(zip(*(Parallel(n_jobs=self.n_jobs)(
-            delayed(_fit_ovo_binary)
-            (self.estimator, X, y, self.classes_[i], self.classes_[j])
-            for i in range(n_classes) for j in range(i + 1, n_classes)))))
+        estimators_indices = list(
+            zip(*(Parallel(n_jobs=self.n_jobs)(
+                delayed(_fit_ovo_binary)(self.estimator, X, y,
+                                         self.classes_[i], self.classes_[j])
+                for i in range(n_classes) for j in range(i + 1, n_classes)))))
 
         self.estimators_ = estimators_indices[0]
-        self.pairwise_indices_ = (
-            estimators_indices[1] if self._pairwise else None)
+        self.pairwise_indices_ = (estimators_indices[1]
+                                  if self._pairwise else None)
 
         return self
 
@@ -592,24 +598,23 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         self
         """
         if _check_partial_fit_first_call(self, classes):
-            self.estimators_ = [clone(self.estimator) for _ in
-                                range(self.n_classes_ *
-                                      (self.n_classes_ - 1) // 2)]
+            self.estimators_ = [
+                clone(self.estimator)
+                for _ in range(self.n_classes_ * (self.n_classes_ - 1) // 2)
+            ]
 
         if len(np.setdiff1d(y, self.classes_)):
             raise ValueError("Mini-batch contains {0} while it "
-                             "must be subset of {1}".format(np.unique(y),
-                                                            self.classes_))
+                             "must be subset of {1}".format(
+                                 np.unique(y), self.classes_))
 
         X, y = check_X_y(X, y, accept_sparse=['csr', 'csc'])
         check_classification_targets(y)
         combinations = itertools.combinations(range(self.n_classes_), 2)
-        self.estimators_ = Parallel(
-            n_jobs=self.n_jobs)(
-                delayed(_partial_fit_ovo_binary)(
-                    estimator, X, y, self.classes_[i], self.classes_[j])
-                for estimator, (i, j) in zip(self.estimators_,
-                                             (combinations)))
+        self.estimators_ = Parallel(n_jobs=self.n_jobs)(
+            delayed(_partial_fit_ovo_binary)(estimator, X, y, self.classes_[i],
+                                             self.classes_[j])
+            for estimator, (i, j) in zip(self.estimators_, (combinations)))
 
         self.pairwise_indices_ = None
 
@@ -665,12 +670,13 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         else:
             Xs = [X[:, idx] for idx in indices]
 
-        predictions = np.vstack([est.predict(Xi)
-                                 for est, Xi in zip(self.estimators_, Xs)]).T
-        confidences = np.vstack([_predict_binary(est, Xi)
-                                 for est, Xi in zip(self.estimators_, Xs)]).T
-        Y = _ovr_decision_function(predictions,
-                                   confidences, len(self.classes_))
+        predictions = np.vstack(
+            [est.predict(Xi) for est, Xi in zip(self.estimators_, Xs)]).T
+        confidences = np.vstack([
+            _predict_binary(est, Xi) for est, Xi in zip(self.estimators_, Xs)
+        ]).T
+        Y = _ovr_decision_function(predictions, confidences,
+                                   len(self.classes_))
         if self.n_classes_ == 2:
             return Y[:, 1]
         return Y
@@ -766,7 +772,11 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
        2008.
     """
     @_deprecate_positional_args
-    def __init__(self, estimator, *, code_size=1.5, random_state=None,
+    def __init__(self,
+                 estimator,
+                 *,
+                 code_size=1.5,
+                 random_state=None,
                  n_jobs=None):
         self.estimator = estimator
         self.code_size = code_size
@@ -813,8 +823,9 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
         classes_index = {c: i for i, c in enumerate(self.classes_)}
 
-        Y = np.array([self.code_book_[classes_index[y[i]]]
-                      for i in range(X.shape[0])], dtype=np.int)
+        Y = np.array(
+            [self.code_book_[classes_index[y[i]]] for i in range(X.shape[0])],
+            dtype=np.int)
 
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
             delayed(_fit_binary)(self.estimator, X, Y[:, i])

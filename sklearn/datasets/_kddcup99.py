@@ -25,7 +25,6 @@ from ..utils import check_random_state
 from ..utils import shuffle as shuffle_method
 from ..utils.validation import _deprecate_positional_args
 
-
 # The original data can be found at:
 # https://archive.ics.uci.edu/ml/machine-learning-databases/kddcup99-mld/kddcup.data.gz
 ARCHIVE = RemoteFileMetadata(
@@ -46,9 +45,14 @@ logger = logging.getLogger(__name__)
 
 
 @_deprecate_positional_args
-def fetch_kddcup99(*, subset=None, data_home=None, shuffle=False,
+def fetch_kddcup99(*,
+                   subset=None,
+                   data_home=None,
+                   shuffle=False,
                    random_state=None,
-                   percent10=True, download_if_missing=True, return_X_y=False):
+                   percent10=True,
+                   download_if_missing=True,
+                   return_X_y=False):
     """Load the kddcup99 dataset (classification).
 
     Download it if necessary.
@@ -178,8 +182,8 @@ def fetch_kddcup99(*, subset=None, data_home=None, shuffle=False,
 
 
 def _fetch_brute_kddcup99(data_home=None,
-                          download_if_missing=True, percent10=True):
-
+                          download_if_missing=True,
+                          percent10=True):
     """Load the kddcup99 dataset, downloading it if necessary.
 
     Parameters
@@ -228,39 +232,20 @@ def _fetch_brute_kddcup99(data_home=None,
         _mkdirp(kddcup_dir)
         logger.info("Downloading %s" % archive.url)
         _fetch_remote(archive, dirname=kddcup_dir)
-        dt = [('duration', int),
-              ('protocol_type', 'S4'),
-              ('service', 'S11'),
-              ('flag', 'S6'),
-              ('src_bytes', int),
-              ('dst_bytes', int),
-              ('land', int),
-              ('wrong_fragment', int),
-              ('urgent', int),
-              ('hot', int),
-              ('num_failed_logins', int),
-              ('logged_in', int),
-              ('num_compromised', int),
-              ('root_shell', int),
-              ('su_attempted', int),
-              ('num_root', int),
-              ('num_file_creations', int),
-              ('num_shells', int),
-              ('num_access_files', int),
-              ('num_outbound_cmds', int),
-              ('is_host_login', int),
-              ('is_guest_login', int),
-              ('count', int),
-              ('srv_count', int),
-              ('serror_rate', float),
-              ('srv_serror_rate', float),
-              ('rerror_rate', float),
-              ('srv_rerror_rate', float),
-              ('same_srv_rate', float),
-              ('diff_srv_rate', float),
-              ('srv_diff_host_rate', float),
-              ('dst_host_count', int),
-              ('dst_host_srv_count', int),
+        dt = [('duration', int), ('protocol_type', 'S4'), ('service', 'S11'),
+              ('flag', 'S6'), ('src_bytes', int), ('dst_bytes', int),
+              ('land', int), ('wrong_fragment', int), ('urgent', int),
+              ('hot', int), ('num_failed_logins', int), ('logged_in', int),
+              ('num_compromised', int), ('root_shell', int),
+              ('su_attempted', int), ('num_root', int),
+              ('num_file_creations', int), ('num_shells', int),
+              ('num_access_files', int), ('num_outbound_cmds', int),
+              ('is_host_login', int), ('is_guest_login', int), ('count', int),
+              ('srv_count', int), ('serror_rate', float),
+              ('srv_serror_rate', float), ('rerror_rate', float),
+              ('srv_rerror_rate', float), ('same_srv_rate', float),
+              ('diff_srv_rate', float), ('srv_diff_host_rate', float),
+              ('dst_host_count', int), ('dst_host_srv_count', int),
               ('dst_host_same_srv_rate', float),
               ('dst_host_diff_srv_rate', float),
               ('dst_host_same_src_port_rate', float),
@@ -268,8 +253,7 @@ def _fetch_brute_kddcup99(data_home=None,
               ('dst_host_serror_rate', float),
               ('dst_host_srv_serror_rate', float),
               ('dst_host_rerror_rate', float),
-              ('dst_host_srv_rerror_rate', float),
-              ('labels', 'S16')]
+              ('dst_host_srv_rerror_rate', float), ('labels', 'S16')]
         DT = np.dtype(dt)
         logger.debug("extracting archive")
         archive_path = join(kddcup_dir, archive.filename)

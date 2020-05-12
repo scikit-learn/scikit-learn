@@ -41,8 +41,12 @@ class PrecisionRecallDisplay:
     figure_ : matplotlib Figure
         Figure containing the curve.
     """
-    def __init__(self, precision, recall, *,
-                 average_precision=None, estimator_name=None):
+    def __init__(self,
+                 precision,
+                 recall,
+                 *,
+                 average_precision=None,
+                 estimator_name=None):
         self.precision = precision
         self.recall = recall
         self.average_precision = average_precision
@@ -85,8 +89,7 @@ class PrecisionRecallDisplay:
             line_kwargs["label"] = (f"{name} (AP = "
                                     f"{self.average_precision:0.2f})")
         elif self.average_precision is not None:
-            line_kwargs["label"] = (f"AP = "
-                                    f"{self.average_precision:0.2f}")
+            line_kwargs["label"] = (f"AP = " f"{self.average_precision:0.2f}")
         elif name is not None:
             line_kwargs["label"] = name
         line_kwargs.update(**kwargs)
@@ -103,9 +106,15 @@ class PrecisionRecallDisplay:
 
 
 @_deprecate_positional_args
-def plot_precision_recall_curve(estimator, X, y, *,
-                                sample_weight=None, response_method="auto",
-                                name=None, ax=None, **kwargs):
+def plot_precision_recall_curve(estimator,
+                                X,
+                                y,
+                                *,
+                                sample_weight=None,
+                                response_method="auto",
+                                name=None,
+                                ax=None,
+                                **kwargs):
     """Plot Precision Recall Curve for binary classifiers.
 
     Extra keyword arguments will be passed to matplotlib's `plot`.
@@ -156,8 +165,8 @@ def plot_precision_recall_curve(estimator, X, y, *,
     if not is_classifier(estimator):
         raise ValueError(classification_error)
 
-    prediction_method = _check_classifer_response_method(estimator,
-                                                         response_method)
+    prediction_method = _check_classifer_response_method(
+        estimator, response_method)
     y_pred = prediction_method(X)
 
     if y_pred.ndim != 1:
@@ -167,15 +176,17 @@ def plot_precision_recall_curve(estimator, X, y, *,
             y_pred = y_pred[:, 1]
 
     pos_label = estimator.classes_[1]
-    precision, recall, _ = precision_recall_curve(y, y_pred,
+    precision, recall, _ = precision_recall_curve(y,
+                                                  y_pred,
                                                   pos_label=pos_label,
                                                   sample_weight=sample_weight)
-    average_precision = average_precision_score(y, y_pred,
+    average_precision = average_precision_score(y,
+                                                y_pred,
                                                 pos_label=pos_label,
                                                 sample_weight=sample_weight)
     name = name if name is not None else estimator.__class__.__name__
-    viz = PrecisionRecallDisplay(
-        precision=precision, recall=recall,
-        average_precision=average_precision, estimator_name=name
-    )
+    viz = PrecisionRecallDisplay(precision=precision,
+                                 recall=recall,
+                                 average_precision=average_precision,
+                                 estimator_name=name)
     return viz.plot(ax=ax, name=name, **kwargs)

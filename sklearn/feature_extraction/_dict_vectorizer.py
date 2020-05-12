@@ -91,7 +91,11 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
       features encoded as columns of arbitrary data types.
     """
     @_deprecate_positional_args
-    def __init__(self, *, dtype=np.float64, separator="=", sparse=True,
+    def __init__(self,
+                 *,
+                 dtype=np.float64,
+                 separator="=",
+                 sparse=True,
                  sort=True):
         self.dtype = dtype
         self.separator = separator
@@ -185,7 +189,8 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
         shape = (len(indptr) - 1, len(vocab))
 
         result_matrix = sp.csr_matrix((values, indices, indptr),
-                                      shape=shape, dtype=dtype)
+                                      shape=shape,
+                                      dtype=dtype)
 
         # Sort everything if asked
         if fitting and self.sort:
@@ -355,8 +360,9 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
             new_vocab[names[i]] = len(new_vocab)
 
         self.vocabulary_ = new_vocab
-        self.feature_names_ = [f for f, i in sorted(new_vocab.items(),
-                                                    key=itemgetter(1))]
+        self.feature_names_ = [
+            f for f, i in sorted(new_vocab.items(), key=itemgetter(1))
+        ]
 
         return self
 

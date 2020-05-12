@@ -1,7 +1,6 @@
 import warnings
 import functools
 
-
 __all__ = ["deprecated"]
 
 
@@ -66,6 +65,7 @@ class deprecated:
         def wrapped(*args, **kwargs):
             warnings.warn(msg, category=FutureWarning)
             return init(*args, **kwargs)
+
         cls.__init__ = wrapped
 
         wrapped.__name__ = '__init__'
@@ -117,9 +117,9 @@ def _is_deprecated(func):
     closures = getattr(func, '__closure__', [])
     if closures is None:
         closures = []
-    is_deprecated = ('deprecated' in ''.join([c.cell_contents
-                                              for c in closures
-                     if isinstance(c.cell_contents, str)]))
+    is_deprecated = ('deprecated' in ''.join([
+        c.cell_contents for c in closures if isinstance(c.cell_contents, str)
+    ]))
     return is_deprecated
 
 
@@ -131,13 +131,12 @@ def _raise_dep_warning_if_not_pytest(deprecated_path, correct_path):
 
     # TODO: remove in 0.24 since this shouldn't be needed anymore.
 
-    message = (
-        "The {deprecated_path} module is  deprecated in version "
-        "0.22 and will be removed in version 0.24. "
-        "The corresponding classes / functions "
-        "should instead be imported from {correct_path}. "
-        "Anything that cannot be imported from {correct_path} is now "
-        "part of the private API."
-    ).format(deprecated_path=deprecated_path, correct_path=correct_path)
+    message = ("The {deprecated_path} module is  deprecated in version "
+               "0.22 and will be removed in version 0.24. "
+               "The corresponding classes / functions "
+               "should instead be imported from {correct_path}. "
+               "Anything that cannot be imported from {correct_path} is now "
+               "part of the private API.").format(
+                   deprecated_path=deprecated_path, correct_path=correct_path)
 
     warnings.warn(message, FutureWarning)

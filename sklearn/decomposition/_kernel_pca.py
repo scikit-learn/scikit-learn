@@ -140,11 +140,23 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         MIT Press, Cambridge, MA, USA 327-352.
     """
     @_deprecate_positional_args
-    def __init__(self, n_components=None, *, kernel="linear",
-                 gamma=None, degree=3, coef0=1, kernel_params=None,
-                 alpha=1.0, fit_inverse_transform=False, eigen_solver='auto',
-                 tol=0, max_iter=None, remove_zero_eig=False,
-                 random_state=None, copy_X=True, n_jobs=None):
+    def __init__(self,
+                 n_components=None,
+                 *,
+                 kernel="linear",
+                 gamma=None,
+                 degree=3,
+                 coef0=1,
+                 kernel_params=None,
+                 alpha=1.0,
+                 fit_inverse_transform=False,
+                 eigen_solver='auto',
+                 tol=0,
+                 max_iter=None,
+                 remove_zero_eig=False,
+                 random_state=None,
+                 copy_X=True,
+                 n_jobs=None):
         if fit_inverse_transform and kernel == 'precomputed':
             raise ValueError(
                 "Cannot fit_inverse_transform with a precomputed kernel.")
@@ -172,11 +184,16 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         if callable(self.kernel):
             params = self.kernel_params or {}
         else:
-            params = {"gamma": self.gamma,
-                      "degree": self.degree,
-                      "coef0": self.coef0}
-        return pairwise_kernels(X, Y, metric=self.kernel,
-                                filter_params=True, n_jobs=self.n_jobs,
+            params = {
+                "gamma": self.gamma,
+                "degree": self.degree,
+                "coef0": self.coef0
+            }
+        return pairwise_kernels(X,
+                                Y,
+                                metric=self.kernel,
+                                filter_params=True,
+                                n_jobs=self.n_jobs,
                                 **params)
 
     def _fit_transform(self, K):
@@ -205,7 +222,8 @@ class KernelPCA(TransformerMixin, BaseEstimator):
             random_state = check_random_state(self.random_state)
             # initialize with [-1,1] as in ARPACK
             v0 = random_state.uniform(-1, 1, K.shape[0])
-            self.lambdas_, self.alphas_ = eigsh(K, n_components,
+            self.lambdas_, self.alphas_ = eigsh(K,
+                                                n_components,
                                                 which="LA",
                                                 tol=self.tol,
                                                 maxiter=self.max_iter,
@@ -216,8 +234,7 @@ class KernelPCA(TransformerMixin, BaseEstimator):
                                                enable_warnings=False)
 
         # flip eigenvectors' sign to enforce deterministic output
-        self.alphas_, _ = svd_flip(self.alphas_,
-                                   np.zeros_like(self.alphas_).T)
+        self.alphas_, _ = svd_flip(self.alphas_, np.zeros_like(self.alphas_).T)
 
         # sort eigenvectors in descending order
         indices = self.lambdas_.argsort()[::-1]
@@ -331,8 +348,8 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         # scale eigenvectors (properly account for null-space for dot product)
         non_zeros = np.flatnonzero(self.lambdas_)
         scaled_alphas = np.zeros_like(self.alphas_)
-        scaled_alphas[:, non_zeros] = (self.alphas_[:, non_zeros]
-                                       / np.sqrt(self.lambdas_[non_zeros]))
+        scaled_alphas[:, non_zeros] = (self.alphas_[:, non_zeros] /
+                                       np.sqrt(self.lambdas_[non_zeros]))
 
         # Project with a scalar product between K and the scaled eigenvectors
         return np.dot(K, scaled_alphas)

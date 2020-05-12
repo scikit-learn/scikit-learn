@@ -14,10 +14,10 @@ from scipy import sparse
 
 from .graph_shortest_path import graph_shortest_path  # noqa
 
-
 ###############################################################################
 # Path and connected component analysis.
 # Code adapted from networkx
+
 
 def single_source_shortest_path_length(graph, source, cutoff=None):
     """Return the shortest path length from source to all reachable nodes.
@@ -52,15 +52,15 @@ def single_source_shortest_path_length(graph, source, cutoff=None):
         graph = graph.tolil()
     else:
         graph = sparse.lil_matrix(graph)
-    seen = {}                   # level (number of hops) when seen in BFS
-    level = 0                   # the current level
-    next_level = [source]       # dict of nodes to check at next level
+    seen = {}  # level (number of hops) when seen in BFS
+    level = 0  # the current level
+    next_level = [source]  # dict of nodes to check at next level
     while next_level:
-        this_level = next_level     # advance to next level
-        next_level = set()          # and start a new list (fringe)
+        this_level = next_level  # advance to next level
+        next_level = set()  # and start a new list (fringe)
         for v in this_level:
             if v not in seen:
-                seen[v] = level     # set the level of vertex v
+                seen[v] = level  # set the level of vertex v
                 next_level.update(graph.rows[v])
         if cutoff is not None and cutoff <= level:
             break

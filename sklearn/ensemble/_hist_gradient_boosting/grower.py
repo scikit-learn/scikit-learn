@@ -19,7 +19,6 @@ from .common import PREDICTOR_RECORD_DTYPE
 from .common import Y_DTYPE
 from .common import MonotonicConstraint
 
-
 EPS = np.finfo(Y_DTYPE).eps  # to avoid zero division errors
 
 
@@ -87,8 +86,13 @@ class TreeNode:
     partition_start = 0
     partition_stop = 0
 
-    def __init__(self, depth, sample_indices, sum_gradients,
-                 sum_hessians, parent=None, value=None):
+    def __init__(self,
+                 depth,
+                 sample_indices,
+                 sum_gradients,
+                 sum_hessians,
+                 parent=None,
+                 value=None):
         self.depth = depth
         self.sample_indices = sample_indices
         self.n_samples = sample_indices.shape[0]
@@ -176,11 +180,21 @@ class TreeGrower:
         The shrinkage parameter to apply to the leaves values, also known as
         learning rate.
     """
-    def __init__(self, X_binned, gradients, hessians, max_leaf_nodes=None,
-                 max_depth=None, min_samples_leaf=20, min_gain_to_split=0.,
-                 n_bins=256, n_bins_non_missing=None, has_missing_values=False,
-                 monotonic_cst=None, l2_regularization=0.,
-                 min_hessian_to_split=1e-3, shrinkage=1.):
+    def __init__(self,
+                 X_binned,
+                 gradients,
+                 hessians,
+                 max_leaf_nodes=None,
+                 max_depth=None,
+                 min_samples_leaf=20,
+                 min_gain_to_split=0.,
+                 n_bins=256,
+                 n_bins_non_missing=None,
+                 has_missing_values=False,
+                 monotonic_cst=None,
+                 l2_regularization=0.,
+                 min_hessian_to_split=1e-3,
+                 shrinkage=1.):
 
         self._validate_parameters(X_binned, max_leaf_nodes, max_depth,
                                   min_samples_leaf, min_gain_to_split,
@@ -190,9 +204,9 @@ class TreeGrower:
             n_bins_non_missing = n_bins - 1
 
         if isinstance(n_bins_non_missing, numbers.Integral):
-            n_bins_non_missing = np.array(
-                [n_bins_non_missing] * X_binned.shape[1],
-                dtype=np.uint32)
+            n_bins_non_missing = np.array([n_bins_non_missing] *
+                                          X_binned.shape[1],
+                                          dtype=np.uint32)
         else:
             n_bins_non_missing = np.asarray(n_bins_non_missing,
                                             dtype=np.uint32)
@@ -213,25 +227,23 @@ class TreeGrower:
             if monotonic_cst.shape[0] != X_binned.shape[1]:
                 raise ValueError(
                     "monotonic_cst has shape {} but the input data "
-                    "X has {} features.".format(
-                        monotonic_cst.shape[0], X_binned.shape[1]
-                    )
-                )
+                    "X has {} features.".format(monotonic_cst.shape[0],
+                                                X_binned.shape[1]))
             if np.any(monotonic_cst < -1) or np.any(monotonic_cst > 1):
                 raise ValueError(
                     "monotonic_cst must be None or an array-like of "
-                    "-1, 0 or 1."
-                    )
+                    "-1, 0 or 1.")
 
         hessians_are_constant = hessians.shape[0] == 1
-        self.histogram_builder = HistogramBuilder(
-            X_binned, n_bins, gradients, hessians, hessians_are_constant)
+        self.histogram_builder = HistogramBuilder(X_binned, n_bins, gradients,
+                                                  hessians,
+                                                  hessians_are_constant)
         missing_values_bin_idx = n_bins - 1
-        self.splitter = Splitter(
-            X_binned, n_bins_non_missing, missing_values_bin_idx,
-            has_missing_values, monotonic_cst,
-            l2_regularization, min_hessian_to_split,
-            min_samples_leaf, min_gain_to_split, hessians_are_constant)
+        self.splitter = Splitter(X_binned, n_bins_non_missing,
+                                 missing_values_bin_idx, has_missing_values,
+                                 monotonic_cst, l2_regularization,
+                                 min_hessian_to_split, min_samples_leaf,
+                                 min_gain_to_split, hessians_are_constant)
         self.n_bins_non_missing = n_bins_non_missing
         self.max_leaf_nodes = max_leaf_nodes
         self.has_missing_values = has_missing_values
@@ -259,12 +271,10 @@ class TreeGrower:
         Also validate parameters passed to splitter.
         """
         if X_binned.dtype != np.uint8:
-            raise NotImplementedError(
-                "X_binned must be of type uint8.")
+            raise NotImplementedError("X_binned must be of type uint8.")
         if not X_binned.flags.f_contiguous:
-            raise ValueError(
-                "X_binned should be passed as Fortran contiguous "
-                "array for maximum efficiency.")
+            raise ValueError("X_binned should be passed as Fortran contiguous "
+                             "array for maximum efficiency.")
         if max_leaf_nodes is not None and max_leaf_nodes <= 1:
             raise ValueError('max_leaf_nodes={} should not be'
                              ' smaller than 2'.format(max_leaf_nodes))
@@ -312,13 +322,11 @@ class TreeGrower:
             sum_hessians = hessians[0] * n_samples
         else:
             sum_hessians = sum_parallel(hessians)
-        self.root = TreeNode(
-            depth=depth,
-            sample_indices=self.splitter.partition,
-            sum_gradients=sum_gradients,
-            sum_hessians=sum_hessians,
-            value=0
-        )
+        self.root = TreeNode(depth=depth,
+                             sample_indices=self.splitter.partition,
+                             sum_gradients=sum_gradients,
+                             sum_hessians=sum_hessians,
+                             value=0)
 
         self.root.partition_start = 0
         self.root.partition_stop = n_samples
@@ -368,30 +376,31 @@ class TreeGrower:
         node = heappop(self.splittable_nodes)
 
         tic = time()
-        (sample_indices_left,
-         sample_indices_right,
-         right_child_pos) = self.splitter.split_indices(node.split_info,
-                                                        node.sample_indices)
+        (sample_indices_left, sample_indices_right,
+         right_child_pos) = self.splitter.split_indices(
+             node.split_info, node.sample_indices)
         self.total_apply_split_time += time() - tic
 
         depth = node.depth + 1
         n_leaf_nodes = len(self.finalized_leaves) + len(self.splittable_nodes)
         n_leaf_nodes += 2
 
-        left_child_node = TreeNode(depth,
-                                   sample_indices_left,
-                                   node.split_info.sum_gradient_left,
-                                   node.split_info.sum_hessian_left,
-                                   parent=node,
-                                   value=node.split_info.value_left,
-                                   )
-        right_child_node = TreeNode(depth,
-                                    sample_indices_right,
-                                    node.split_info.sum_gradient_right,
-                                    node.split_info.sum_hessian_right,
-                                    parent=node,
-                                    value=node.split_info.value_right,
-                                    )
+        left_child_node = TreeNode(
+            depth,
+            sample_indices_left,
+            node.split_info.sum_gradient_left,
+            node.split_info.sum_hessian_left,
+            parent=node,
+            value=node.split_info.value_left,
+        )
+        right_child_node = TreeNode(
+            depth,
+            sample_indices_right,
+            node.split_info.sum_gradient_right,
+            node.split_info.sum_hessian_right,
+            parent=node,
+            value=node.split_info.value_right,
+        )
 
         left_child_node.sibling = right_child_node
         right_child_node.sibling = left_child_node
@@ -408,8 +417,8 @@ class TreeGrower:
             # If no missing values are encountered at fit time, then samples
             # with missing values during predict() will go to whichever child
             # has the most samples.
-            node.split_info.missing_go_to_left = (
-                left_child_node.n_samples > right_child_node.n_samples)
+            node.split_info.missing_go_to_left = (left_child_node.n_samples >
+                                                  right_child_node.n_samples)
 
         self.n_nodes += 2
 
@@ -516,13 +525,15 @@ class TreeGrower:
         A TreePredictor object.
         """
         predictor_nodes = np.zeros(self.n_nodes, dtype=PREDICTOR_RECORD_DTYPE)
-        _fill_predictor_node_array(predictor_nodes, self.root,
-                                   bin_thresholds, self.n_bins_non_missing)
+        _fill_predictor_node_array(predictor_nodes, self.root, bin_thresholds,
+                                   self.n_bins_non_missing)
         return TreePredictor(predictor_nodes)
 
 
-def _fill_predictor_node_array(predictor_nodes, grower_node,
-                               bin_thresholds, n_bins_non_missing,
+def _fill_predictor_node_array(predictor_nodes,
+                               grower_node,
+                               bin_thresholds,
+                               n_bins_non_missing,
                                next_free_idx=0):
     """Helper used in make_predictor to set the TreePredictor fields."""
     node = predictor_nodes[next_free_idx]
@@ -558,14 +569,16 @@ def _fill_predictor_node_array(predictor_nodes, grower_node,
 
         node['left'] = next_free_idx
         next_free_idx = _fill_predictor_node_array(
-            predictor_nodes, grower_node.left_child,
+            predictor_nodes,
+            grower_node.left_child,
             bin_thresholds=bin_thresholds,
             n_bins_non_missing=n_bins_non_missing,
             next_free_idx=next_free_idx)
 
         node['right'] = next_free_idx
         return _fill_predictor_node_array(
-            predictor_nodes, grower_node.right_child,
+            predictor_nodes,
+            grower_node.right_child,
             bin_thresholds=bin_thresholds,
             n_bins_non_missing=n_bins_non_missing,
             next_free_idx=next_free_idx)

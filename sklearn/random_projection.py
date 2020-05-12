@@ -43,10 +43,10 @@ from .utils.validation import _deprecate_positional_args
 from .exceptions import DataDimensionalityWarning
 from .utils import deprecated
 
-
-__all__ = ["SparseRandomProjection",
-           "GaussianRandomProjection",
-           "johnson_lindenstrauss_min_dim"]
+__all__ = [
+    "SparseRandomProjection", "GaussianRandomProjection",
+    "johnson_lindenstrauss_min_dim"
+]
 
 
 def johnson_lindenstrauss_min_dim(n_samples, eps=0.1):
@@ -119,15 +119,15 @@ def johnson_lindenstrauss_min_dim(n_samples, eps=0.1):
     n_samples = np.asarray(n_samples)
 
     if np.any(eps <= 0.0) or np.any(eps >= 1):
-        raise ValueError(
-            "The JL bound is defined for eps in ]0, 1[, got %r" % eps)
+        raise ValueError("The JL bound is defined for eps in ]0, 1[, got %r" %
+                         eps)
 
     if np.any(n_samples) <= 0:
         raise ValueError(
-            "The JL bound is defined for n_samples greater than zero, got %r"
-            % n_samples)
+            "The JL bound is defined for n_samples greater than zero, got %r" %
+            n_samples)
 
-    denominator = (eps ** 2 / 2) - (eps ** 3 / 3)
+    denominator = (eps**2 / 2) - (eps**3 / 3)
     return (4 * np.log(n_samples) / denominator).astype(np.int)
 
 
@@ -137,8 +137,7 @@ def _check_density(density, n_features):
         density = 1 / np.sqrt(n_features)
 
     elif density <= 0 or density > 1:
-        raise ValueError("Expected density in range ]0, 1], got: %r"
-                         % density)
+        raise ValueError("Expected density in range ]0, 1], got: %r" % density)
     return density
 
 
@@ -202,13 +201,17 @@ def _gaussian_random_matrix(n_components, n_features, random_state=None):
 # TODO: remove in 0.24
 @deprecated("gaussian_random_matrix is deprecated in "
             "0.22 and will be removed in version 0.24.")
-def sparse_random_matrix(n_components, n_features, density='auto',
+def sparse_random_matrix(n_components,
+                         n_features,
+                         density='auto',
                          random_state=None):
     return _sparse_random_matrix(n_components, n_features, density,
                                  random_state)
 
 
-def _sparse_random_matrix(n_components, n_features, density='auto',
+def _sparse_random_matrix(n_components,
+                          n_features,
+                          density='auto',
                           random_state=None):
     """Generalized Achlioptas random sparse matrix for random projection
 
@@ -285,7 +288,8 @@ def _sparse_random_matrix(n_components, n_features, density='auto',
         for _ in range(n_components):
             # find the indices of the non-zero components for row i
             n_nonzero_i = rng.binomial(n_features, density)
-            indices_i = sample_without_replacement(n_features, n_nonzero_i,
+            indices_i = sample_without_replacement(n_features,
+                                                   n_nonzero_i,
                                                    random_state=rng)
             indices.append(indices_i)
             offset += n_nonzero_i
@@ -309,9 +313,12 @@ class BaseRandomProjection(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
     Warning: This class should not be used directly.
     Use derived classes instead.
     """
-
     @abstractmethod
-    def __init__(self, n_components='auto', *, eps=0.1, dense_output=False,
+    def __init__(self,
+                 n_components='auto',
+                 *,
+                 eps=0.1,
+                 dense_output=False,
                  random_state=None):
         self.n_components = n_components
         self.eps = eps
@@ -366,27 +373,27 @@ class BaseRandomProjection(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
             if self.n_components_ <= 0:
                 raise ValueError(
                     'eps=%f and n_samples=%d lead to a target dimension of '
-                    '%d which is invalid' % (
-                        self.eps, n_samples, self.n_components_))
+                    '%d which is invalid' %
+                    (self.eps, n_samples, self.n_components_))
 
             elif self.n_components_ > n_features:
                 raise ValueError(
                     'eps=%f and n_samples=%d lead to a target dimension of '
                     '%d which is larger than the original space with '
-                    'n_features=%d' % (self.eps, n_samples, self.n_components_,
-                                       n_features))
+                    'n_features=%d' %
+                    (self.eps, n_samples, self.n_components_, n_features))
         else:
             if self.n_components <= 0:
-                raise ValueError("n_components must be greater than 0, got %s"
-                                 % self.n_components)
+                raise ValueError(
+                    "n_components must be greater than 0, got %s" %
+                    self.n_components)
 
             elif self.n_components > n_features:
                 warnings.warn(
                     "The number of components is higher than the number of"
                     " features: n_features < n_components (%s < %s)."
-                    "The dimensionality of the problem will not be reduced."
-                    % (n_features, self.n_components),
-                    DataDimensionalityWarning)
+                    "The dimensionality of the problem will not be reduced." %
+                    (n_features, self.n_components), DataDimensionalityWarning)
 
             self.n_components_ = self.n_components
 
@@ -396,8 +403,8 @@ class BaseRandomProjection(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
 
         # Check contract
         assert self.components_.shape == (self.n_components_, n_features), (
-                'An error has occurred the self.components_ matrix has '
-                ' not the proper shape.')
+            'An error has occurred the self.components_ matrix has '
+            ' not the proper shape.')
 
         return self
 
@@ -424,7 +431,8 @@ class BaseRandomProjection(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
                 'X at fit stage had a different number of features. '
                 '(%s != %s)' % (X.shape[1], self.components_.shape[1]))
 
-        X_new = safe_sparse_dot(X, self.components_.T,
+        X_new = safe_sparse_dot(X,
+                                self.components_.T,
                                 dense_output=self.dense_output)
         return X_new
 
@@ -492,11 +500,10 @@ class GaussianRandomProjection(BaseRandomProjection):
     """
     @_deprecate_positional_args
     def __init__(self, n_components='auto', *, eps=0.1, random_state=None):
-        super().__init__(
-            n_components=n_components,
-            eps=eps,
-            dense_output=True,
-            random_state=random_state)
+        super().__init__(n_components=n_components,
+                         eps=eps,
+                         dense_output=True,
+                         random_state=random_state)
 
     def _make_random_matrix(self, n_components, n_features):
         """ Generate the random projection matrix
@@ -629,13 +636,17 @@ class SparseRandomProjection(BaseRandomProjection):
 
     """
     @_deprecate_positional_args
-    def __init__(self, n_components='auto', *, density='auto', eps=0.1,
-                 dense_output=False, random_state=None):
-        super().__init__(
-            n_components=n_components,
-            eps=eps,
-            dense_output=dense_output,
-            random_state=random_state)
+    def __init__(self,
+                 n_components='auto',
+                 *,
+                 density='auto',
+                 eps=0.1,
+                 dense_output=False,
+                 random_state=None):
+        super().__init__(n_components=n_components,
+                         eps=eps,
+                         dense_output=dense_output,
+                         random_state=random_state)
 
         self.density = density
 

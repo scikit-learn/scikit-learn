@@ -4,7 +4,6 @@
 #          L. Buitinck, A. Joly
 # License: BSD 3 clause
 
-
 import numpy as np
 import warnings
 
@@ -97,8 +96,8 @@ def f_oneway(*args):
     n_samples = np.sum(n_samples_per_class)
     ss_alldata = sum(safe_sqr(a).sum(axis=0) for a in args)
     sums_args = [np.asarray(a.sum(axis=0)) for a in args]
-    square_of_sums_alldata = sum(sums_args) ** 2
-    square_of_sums_args = [s ** 2 for s in sums_args]
+    square_of_sums_alldata = sum(sums_args)**2
+    square_of_sums_args = [s**2 for s in sums_args]
     sstot = ss_alldata - square_of_sums_alldata / float(n_samples)
     ssbn = 0.
     for k, _ in enumerate(args):
@@ -220,7 +219,7 @@ def chi2(X, y):
     if Y.shape[1] == 1:
         Y = np.append(1 - Y, Y, axis=1)
 
-    observed = safe_sparse_dot(Y.T, X)          # n_classes * n_features
+    observed = safe_sparse_dot(Y.T, X)  # n_classes * n_features
 
     feature_count = X.sum(axis=0).reshape(1, -1)
     class_prob = Y.mean(axis=0).reshape(1, -1)
@@ -277,7 +276,9 @@ def f_regression(X, y, center=True):
     SelectPercentile: Select features based on percentile of the highest
         scores.
     """
-    X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'],
+    X, y = check_X_y(X,
+                     y,
+                     accept_sparse=['csr', 'csc', 'coo'],
                      dtype=np.float64)
     n_samples = X.shape[0]
 
@@ -291,8 +292,8 @@ def f_regression(X, y, center=True):
         else:
             X_means = X.mean(axis=0)
         # compute the scaled standard deviations via moments
-        X_norms = np.sqrt(row_norms(X.T, squared=True) -
-                          n_samples * X_means ** 2)
+        X_norms = np.sqrt(
+            row_norms(X.T, squared=True) - n_samples * X_means**2)
     else:
         X_norms = row_norms(X.T)
 
@@ -303,13 +304,14 @@ def f_regression(X, y, center=True):
 
     # convert to p-value
     degrees_of_freedom = y.size - (2 if center else 1)
-    F = corr ** 2 / (1 - corr ** 2) * degrees_of_freedom
+    F = corr**2 / (1 - corr**2) * degrees_of_freedom
     pv = stats.f.sf(F, 1, degrees_of_freedom)
     return F, pv
 
 
 ######################################################################
 # Base classes
+
 
 class _BaseFilter(SelectorMixin, BaseEstimator):
     """Initialize the univariate feature selection.
@@ -320,7 +322,6 @@ class _BaseFilter(SelectorMixin, BaseEstimator):
         Function taking two arrays X and y, and returning a pair of arrays
         (scores, pvalues) or a single array with scores.
     """
-
     def __init__(self, score_func):
         self.score_func = score_func
 
@@ -340,13 +341,15 @@ class _BaseFilter(SelectorMixin, BaseEstimator):
         -------
         self : object
         """
-        X, y = self._validate_data(X, y, accept_sparse=['csr', 'csc'],
+        X, y = self._validate_data(X,
+                                   y,
+                                   accept_sparse=['csr', 'csc'],
                                    multi_output=True)
 
         if not callable(self.score_func):
             raise TypeError("The score function should be a callable, %s (%s) "
-                            "was passed."
-                            % (self.score_func, type(self.score_func)))
+                            "was passed." %
+                            (self.score_func, type(self.score_func)))
 
         self._check_params(X, y)
         score_func_ret = self.score_func(X, y)
@@ -433,8 +436,8 @@ class SelectPercentile(_BaseFilter):
 
     def _check_params(self, X, y):
         if not 0 <= self.percentile <= 100:
-            raise ValueError("percentile should be >=0, <=100; got %r"
-                             % self.percentile)
+            raise ValueError("percentile should be >=0, <=100; got %r" %
+                             self.percentile)
 
     def _get_support_mask(self):
         check_is_fitted(self)
@@ -520,8 +523,8 @@ class SelectKBest(_BaseFilter):
     def _check_params(self, X, y):
         if not (self.k == "all" or 0 <= self.k <= X.shape[1]):
             raise ValueError("k should be >=0, <= n_features = %d; got %r. "
-                             "Use k='all' to return all features."
-                             % (X.shape[1], self.k))
+                             "Use k='all' to return all features." %
+                             (X.shape[1], self.k))
 
     def _get_support_mask(self):
         check_is_fitted(self)
@@ -735,6 +738,7 @@ class SelectFwe(_BaseFilter):
 # Generic filter
 ######################################################################
 
+
 # TODO this class should fit on either p-values or scores,
 # depending on the mode.
 class GenericUnivariateSelect(_BaseFilter):
@@ -789,11 +793,13 @@ class GenericUnivariateSelect(_BaseFilter):
     SelectFwe: Select features based on family-wise error rate.
     """
 
-    _selection_modes = {'percentile': SelectPercentile,
-                        'k_best': SelectKBest,
-                        'fpr': SelectFpr,
-                        'fdr': SelectFdr,
-                        'fwe': SelectFwe}
+    _selection_modes = {
+        'percentile': SelectPercentile,
+        'k_best': SelectKBest,
+        'fpr': SelectFpr,
+        'fdr': SelectFdr,
+        'fwe': SelectFwe
+    }
 
     @_deprecate_positional_args
     def __init__(self, score_func=f_classif, *, mode='percentile', param=1e-5):
@@ -814,10 +820,10 @@ class GenericUnivariateSelect(_BaseFilter):
 
     def _check_params(self, X, y):
         if self.mode not in self._selection_modes:
-            raise ValueError("The mode passed should be one of %s, %r,"
-                             " (type %s) was passed."
-                             % (self._selection_modes.keys(), self.mode,
-                                type(self.mode)))
+            raise ValueError(
+                "The mode passed should be one of %s, %r,"
+                " (type %s) was passed." %
+                (self._selection_modes.keys(), self.mode, type(self.mode)))
 
         self._make_selector()._check_params(X, y)
 

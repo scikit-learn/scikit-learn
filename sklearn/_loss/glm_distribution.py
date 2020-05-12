@@ -12,7 +12,6 @@ import numbers
 import numpy as np
 from scipy.special import xlogy
 
-
 DistributionBoundary = namedtuple("DistributionBoundary",
                                   ("value", "inclusive"))
 
@@ -45,7 +44,6 @@ class ExponentialDispersionModel(metaclass=ABCMeta):
     ----------
     https://en.wikipedia.org/wiki/Exponential_dispersion_model.
     """
-
     def in_y_range(self, y):
         """Returns ``True`` if y is in the valid range of Y~EDM.
 
@@ -213,8 +211,8 @@ class TweedieDistribution(ExponentialDispersionModel):
         # upper bound when the power parameter is updated e.g. in grid
         # search.
         if not isinstance(power, numbers.Real):
-            raise TypeError('power must be a real number, input was {0}'
-                            .format(power))
+            raise TypeError(
+                'power must be a real number, input was {0}'.format(power))
 
         if power <= 0:
             # Extreme Stable or Normal distribution
@@ -292,17 +290,17 @@ class TweedieDistribution(ExponentialDispersionModel):
             elif p >= 2:
                 # Gamma and Extreme stable distribution, y and y_pred > 0
                 if (y <= 0).any() or (y_pred <= 0).any():
-                    raise ValueError(message
-                                     + "strictly positive y and y_pred.")
+                    raise ValueError(message +
+                                     "strictly positive y and y_pred.")
             else:  # pragma: nocover
                 # Unreachable statement
                 raise ValueError
 
         if p < 0:
             # 'Extreme stable', y any realy number, y_pred > 0
-            dev = 2 * (np.power(np.maximum(y, 0), 2-p) / ((1-p) * (2-p))
-                       - y * np.power(y_pred, 1-p) / (1-p)
-                       + np.power(y_pred, 2-p) / (2-p))
+            dev = 2 * (np.power(np.maximum(y, 0), 2 - p) /
+                       ((1 - p) * (2 - p)) - y * np.power(y_pred, 1 - p) /
+                       (1 - p) + np.power(y_pred, 2 - p) / (2 - p))
 
         elif p == 0:
             # Normal distribution, y and y_pred any real number
@@ -312,14 +310,14 @@ class TweedieDistribution(ExponentialDispersionModel):
                              "and power>=1.")
         elif p == 1:
             # Poisson distribution
-            dev = 2 * (xlogy(y, y/y_pred) - y + y_pred)
+            dev = 2 * (xlogy(y, y / y_pred) - y + y_pred)
         elif p == 2:
             # Gamma distribution
-            dev = 2 * (np.log(y_pred/y) + y/y_pred - 1)
+            dev = 2 * (np.log(y_pred / y) + y / y_pred - 1)
         else:
-            dev = 2 * (np.power(y, 2-p) / ((1-p) * (2-p))
-                       - y * np.power(y_pred, 1-p) / (1-p)
-                       + np.power(y_pred, 2-p) / (2-p))
+            dev = 2 * (np.power(y, 2 - p) /
+                       ((1 - p) * (2 - p)) - y * np.power(y_pred, 1 - p) /
+                       (1 - p) + np.power(y_pred, 2 - p) / (2 - p))
         return dev
 
 

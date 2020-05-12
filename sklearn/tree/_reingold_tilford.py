@@ -9,9 +9,10 @@ class DrawTree:
         self.x = -1.
         self.y = depth
         self.tree = tree
-        self.children = [DrawTree(c, self, depth + 1, i + 1)
-                         for i, c
-                         in enumerate(tree.children)]
+        self.children = [
+            DrawTree(c, self, depth + 1, i + 1)
+            for i, c in enumerate(tree.children)
+        ]
         self.parent = parent
         self.thread = None
         self.mod = 0
@@ -42,6 +43,7 @@ class DrawTree:
                 self.parent.children[0]:
             self._lmost_sibling = self.parent.children[0]
         return self._lmost_sibling
+
     lmost_sibling = property(get_lmost_sibling)
 
     def __str__(self):
@@ -51,7 +53,7 @@ class DrawTree:
         return self.__str__()
 
     def max_extents(self):
-        extents = [c.max_extents() for c in self. children]
+        extents = [c.max_extents() for c in self.children]
         extents.append((self.x, self.y))
         return np.max(extents, axis=0)
 

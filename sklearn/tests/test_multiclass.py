@@ -43,12 +43,13 @@ def test_ovr_exceptions():
     assert_raises(ValueError, ovr.predict, [])
 
     # Fail on multioutput data
-    assert_raises(ValueError, OneVsRestClassifier(MultinomialNB()).fit,
-                  np.array([[1, 0], [0, 1]]),
-                  np.array([[1, 2], [3, 1]]))
-    assert_raises(ValueError, OneVsRestClassifier(MultinomialNB()).fit,
-                  np.array([[1, 0], [0, 1]]),
-                  np.array([[1.5, 2.4], [3.1, 0.8]]))
+    assert_raises(ValueError,
+                  OneVsRestClassifier(MultinomialNB()).fit,
+                  np.array([[1, 0], [0, 1]]), np.array([[1, 2], [3, 1]]))
+    assert_raises(ValueError,
+                  OneVsRestClassifier(MultinomialNB()).fit,
+                  np.array([[1, 0], [0, 1]]), np.array([[1.5, 2.4], [3.1,
+                                                                     0.8]]))
 
 
 def test_check_classification_targets():
@@ -93,13 +94,13 @@ def test_ovr_partial_fit():
     X = np.abs(np.random.randn(14, 2))
     y = [1, 1, 1, 1, 2, 3, 3, 0, 0, 2, 3, 1, 2, 3]
 
-    ovr = OneVsRestClassifier(SGDClassifier(max_iter=1, tol=None,
-                                            shuffle=False, random_state=0))
+    ovr = OneVsRestClassifier(
+        SGDClassifier(max_iter=1, tol=None, shuffle=False, random_state=0))
     ovr.partial_fit(X[:7], y[:7], np.unique(y))
     ovr.partial_fit(X[7:], y[7:])
     pred = ovr.predict(X)
-    ovr1 = OneVsRestClassifier(SGDClassifier(max_iter=1, tol=None,
-                                             shuffle=False, random_state=0))
+    ovr1 = OneVsRestClassifier(
+        SGDClassifier(max_iter=1, tol=None, shuffle=False, random_state=0))
     pred1 = ovr1.fit(X, y).predict(X)
     assert np.mean(pred == y) == np.mean(pred1 == y)
 
@@ -117,8 +118,10 @@ def test_ovr_partial_fit_exceptions():
     # It should raise ValueError
     y1 = [5] + y[7:-1]
     assert_raises_regexp(ValueError, r"Mini-batch contains \[.+\] while "
-                                     r"classes must be subset of \[.+\]",
-                         ovr.partial_fit, X=X[7:], y=y1)
+                         r"classes must be subset of \[.+\]",
+                         ovr.partial_fit,
+                         X=X[7:],
+                         y=y1)
 
 
 def test_ovr_ovo_regressor():
@@ -140,8 +143,10 @@ def test_ovr_ovo_regressor():
 
 
 def test_ovr_fit_predict_sparse():
-    for sparse in [sp.csr_matrix, sp.csc_matrix, sp.coo_matrix, sp.dok_matrix,
-                   sp.lil_matrix]:
+    for sparse in [
+            sp.csr_matrix, sp.csc_matrix, sp.coo_matrix, sp.dok_matrix,
+            sp.lil_matrix
+    ]:
         base_clf = MultinomialNB(alpha=1)
 
         X, Y = datasets.make_multilabel_classification(n_samples=100,
@@ -215,17 +220,12 @@ def test_ovr_multiclass():
     # Toy dataset where features correspond directly to labels.
     X = np.array([[0, 0, 5], [0, 5, 0], [3, 0, 0], [0, 0, 6], [6, 0, 0]])
     y = ["eggs", "spam", "ham", "eggs", "ham"]
-    Y = np.array([[0, 0, 1],
-                  [0, 1, 0],
-                  [1, 0, 0],
-                  [0, 0, 1],
-                  [1, 0, 0]])
+    Y = np.array([[0, 0, 1], [0, 1, 0], [1, 0, 0], [0, 0, 1], [1, 0, 0]])
 
     classes = set("ham eggs spam".split())
 
     for base_clf in (MultinomialNB(), LinearSVC(random_state=0),
-                     LinearRegression(), Ridge(),
-                     ElasticNet()):
+                     LinearRegression(), Ridge(), ElasticNet()):
         clf = OneVsRestClassifier(base_clf).fit(X, y)
         assert set(clf.classes_) == classes
         y_pred = clf.predict(np.array([[0, 0, 4]]))[0]
@@ -252,22 +252,22 @@ def test_ovr_binary():
         assert_array_equal(y_pred, ["eggs"])
         if hasattr(base_clf, 'decision_function'):
             dec = clf.decision_function(X)
-            assert dec.shape == (5,)
+            assert dec.shape == (5, )
 
         if test_predict_proba:
             X_test = np.array([[0, 0, 4]])
             probabilities = clf.predict_proba(X_test)
             assert 2 == len(probabilities[0])
-            assert (clf.classes_[np.argmax(probabilities, axis=1)] ==
-                         clf.predict(X_test))
+            assert (clf.classes_[np.argmax(probabilities,
+                                           axis=1)] == clf.predict(X_test))
 
         # test input as label indicator matrix
         clf = OneVsRestClassifier(base_clf).fit(X, Y)
         y_pred = clf.predict([[3, 0, 0]])[0]
         assert y_pred == 1
 
-    for base_clf in (LinearSVC(random_state=0), LinearRegression(),
-                     Ridge(), ElasticNet()):
+    for base_clf in (LinearSVC(random_state=0), LinearRegression(), Ridge(),
+                     ElasticNet()):
         conduct_test(base_clf)
 
     for base_clf in (MultinomialNB(), SVC(probability=True),
@@ -278,15 +278,11 @@ def test_ovr_binary():
 def test_ovr_multilabel():
     # Toy dataset where features correspond directly to labels.
     X = np.array([[0, 4, 5], [0, 5, 0], [3, 3, 3], [4, 0, 6], [6, 0, 0]])
-    y = np.array([[0, 1, 1],
-                  [0, 1, 0],
-                  [1, 1, 1],
-                  [1, 0, 1],
-                  [1, 0, 0]])
+    y = np.array([[0, 1, 1], [0, 1, 0], [1, 1, 1], [1, 0, 1], [1, 0, 0]])
 
     for base_clf in (MultinomialNB(), LinearSVC(random_state=0),
-                     LinearRegression(), Ridge(),
-                     ElasticNet(), Lasso(alpha=0.5)):
+                     LinearRegression(), Ridge(), ElasticNet(),
+                     Lasso(alpha=0.5)):
         clf = OneVsRestClassifier(base_clf).fit(X, y)
         y_pred = clf.predict([[0, 4, 4]])[0]
         assert_array_equal(y_pred, [0, 1, 1])
@@ -409,8 +405,8 @@ def test_ovr_single_label_decision_function():
     X_train, Y_train = X[:80], Y[:80]
     X_test = X[80:]
     clf = OneVsRestClassifier(svm.SVC()).fit(X_train, Y_train)
-    assert_array_equal(clf.decision_function(X_test).ravel() > 0,
-                       clf.predict(X_test))
+    assert_array_equal(
+        clf.decision_function(X_test).ravel() > 0, clf.predict(X_test))
 
 
 def test_ovr_gridsearch():
@@ -435,8 +431,10 @@ def test_ovr_pipeline():
 
 
 def test_ovr_coef_():
-    for base_classifier in [SVC(kernel='linear', random_state=0),
-                            LinearSVC(random_state=0)]:
+    for base_classifier in [
+            SVC(kernel='linear', random_state=0),
+            LinearSVC(random_state=0)
+    ]:
         # SVC has sparse coef with sparse input data
 
         ovr = OneVsRestClassifier(base_classifier)
@@ -447,8 +445,8 @@ def test_ovr_coef_():
             assert shape[0] == n_classes
             assert shape[1] == iris.data.shape[1]
             # don't densify sparse coefficients
-            assert (sp.issparse(ovr.estimators_[0].coef_) ==
-                         sp.issparse(ovr.coef_))
+            assert (sp.issparse(ovr.estimators_[0].coef_) == sp.issparse(
+                ovr.coef_))
 
 
 def test_ovr_coef_exceptions():
@@ -532,8 +530,8 @@ def test_ovo_partial_fit_predict():
     ovo = OneVsOneClassifier(MultinomialNB())
     error_y = [0, 1, 2, 3, 4, 5, 2]
     message_re = escape("Mini-batch contains {0} while "
-                        "it must be subset of {1}".format(np.unique(error_y),
-                                                          np.unique(y)))
+                        "it must be subset of {1}".format(
+                            np.unique(error_y), np.unique(y)))
     assert_raises_regexp(ValueError, message_re, ovo.partial_fit, X[:7],
                          error_y, np.unique(y))
 
@@ -549,7 +547,7 @@ def test_ovo_decision_function():
     # first binary
     ovo_clf.fit(iris.data, iris.target == 0)
     decisions = ovo_clf.decision_function(iris.data)
-    assert decisions.shape == (n_samples,)
+    assert decisions.shape == (n_samples, )
 
     # then multi-class
     ovo_clf.fit(iris.data, iris.target)
@@ -603,8 +601,8 @@ def test_ovo_ties():
     # not defaulting to the smallest label
     X = np.array([[1, 2], [2, 1], [-2, 1], [-2, -1]])
     y = np.array([2, 0, 1, 2])
-    multi_clf = OneVsOneClassifier(Perceptron(shuffle=False, max_iter=4,
-                                              tol=None))
+    multi_clf = OneVsOneClassifier(
+        Perceptron(shuffle=False, max_iter=4, tol=None))
     ovo_prediction = multi_clf.fit(X, y).predict(X)
     ovo_decision = multi_clf.decision_function(X)
 
@@ -631,8 +629,8 @@ def test_ovo_ties2():
     # cycle through labels so that each label wins once
     for i in range(3):
         y = (y_ref + i) % 3
-        multi_clf = OneVsOneClassifier(Perceptron(shuffle=False, max_iter=4,
-                                                  tol=None))
+        multi_clf = OneVsOneClassifier(
+            Perceptron(shuffle=False, max_iter=4, tol=None))
         ovo_prediction = multi_clf.fit(X, y).predict(X)
         assert ovo_prediction[0] == i % 3
 
@@ -673,7 +671,8 @@ def test_ecoc_exceptions():
 def test_ecoc_fit_predict():
     # A classifier which implements decision_function.
     ecoc = OutputCodeClassifier(LinearSVC(random_state=0),
-                                code_size=2, random_state=0)
+                                code_size=2,
+                                random_state=0)
     ecoc.fit(iris.data, iris.target).predict(iris.data)
     assert len(ecoc.estimators_) == n_classes * 2
 
@@ -684,8 +683,7 @@ def test_ecoc_fit_predict():
 
 
 def test_ecoc_gridsearch():
-    ecoc = OutputCodeClassifier(LinearSVC(random_state=0),
-                                random_state=0)
+    ecoc = OutputCodeClassifier(LinearSVC(random_state=0), random_state=0)
     Cs = [0.1, 0.5, 0.8]
     cv = GridSearchCV(ecoc, {'estimator__C': Cs})
     cv.fit(iris.data, iris.target)
@@ -717,8 +715,8 @@ def test_pairwise_indices():
     precomputed_indices = ovr_false.pairwise_indices_
 
     for idx in precomputed_indices:
-        assert (idx.shape[0] * n_estimators / (n_estimators - 1) ==
-                     linear_kernel.shape[0])
+        assert (idx.shape[0] * n_estimators /
+                (n_estimators - 1) == linear_kernel.shape[0])
 
 
 def test_pairwise_attribute():

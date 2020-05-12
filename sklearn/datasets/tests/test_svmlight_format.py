@@ -36,9 +36,8 @@ def test_load_svmlight_file():
     assert y.shape[0] == 6
 
     # test X's non-zero values
-    for i, j, val in ((0, 2, 2.5), (0, 10, -5.2), (0, 15, 1.5),
-                      (1, 5, 1.0), (1, 12, -3),
-                      (2, 20, 27)):
+    for i, j, val in ((0, 2, 2.5), (0, 10, -5.2), (0, 15, 1.5), (1, 5, 1.0),
+                      (1, 12, -3), (2, 20, 27)):
 
         assert X[i, j] == val
 
@@ -72,7 +71,7 @@ def test_load_svmlight_file_fd():
 
 def test_load_svmlight_file_multilabel():
     X, y = load_svmlight_file(multifile, multilabel=True)
-    assert y == [(0, 1), (2,), (), (1, 2)]
+    assert y == [(0, 1), (2, ), (), (1, 2)]
 
 
 def test_load_svmlight_files():
@@ -99,8 +98,7 @@ def test_load_svmlight_file_n_features():
     assert X.shape[1] == 22
 
     # test X's non-zero values
-    for i, j, val in ((0, 2, 2.5), (0, 10, -5.2),
-                      (1, 5, 1.0), (1, 12, -3)):
+    for i, j, val in ((0, 2, 2.5), (0, 10, -5.2), (1, 5, 1.0), (1, 12, -3)):
 
         assert X[i, j] == val
 
@@ -191,11 +189,12 @@ def test_load_large_qid():
     """
     load large libsvm / svmlight file with qid attribute. Tests 64-bit query ID
     """
-    data = b"\n".join(("3 qid:{0} 1:0.53 2:0.12\n2 qid:{0} 1:0.13 2:0.1"
-                      .format(i).encode() for i in range(1, 40*1000*1000)))
+    data = b"\n".join(
+        ("3 qid:{0} 1:0.53 2:0.12\n2 qid:{0} 1:0.13 2:0.1".format(i).encode()
+         for i in range(1, 40 * 1000 * 1000)))
     X, y, qid = load_svmlight_file(BytesIO(data), query_id=True)
     assert_array_equal(y[-4:], [3, 2, 3, 2])
-    assert_array_equal(np.unique(qid), np.arange(1, 40*1000*1000))
+    assert_array_equal(np.unique(qid), np.arange(1, 40 * 1000 * 1000))
 
 
 def test_load_invalid_file2():
@@ -245,7 +244,10 @@ def test_dump():
                     # different from X_sparse.astype(dtype).asarray().
                     X_input = X.astype(dtype)
 
-                    dump_svmlight_file(X_input, y, f, comment="test",
+                    dump_svmlight_file(X_input,
+                                       y,
+                                       f,
+                                       comment="test",
                                        zero_based=zero_based)
                     f.seek(0)
 
@@ -259,7 +261,8 @@ def test_dump():
 
                     assert ["one", "zero"][zero_based] + "-based" in comment
 
-                    X2, y2 = load_svmlight_file(f, dtype=dtype,
+                    X2, y2 = load_svmlight_file(f,
+                                                dtype=dtype,
                                                 zero_based=zero_based)
                     assert X2.dtype == dtype
                     assert_array_equal(X2.sorted_indices().indices, X2.indices)
@@ -272,22 +275,18 @@ def test_dump():
 
                     if dtype == np.float32:
                         # allow a rounding error at the last decimal place
-                        assert_array_almost_equal(
-                            X_input_dense, X2_dense, 4)
+                        assert_array_almost_equal(X_input_dense, X2_dense, 4)
                         assert_array_almost_equal(
                             y_dense.astype(dtype, copy=False), y2, 4)
                     else:
                         # allow a rounding error at the last decimal place
-                        assert_array_almost_equal(
-                            X_input_dense, X2_dense, 15)
+                        assert_array_almost_equal(X_input_dense, X2_dense, 15)
                         assert_array_almost_equal(
                             y_dense.astype(dtype, copy=False), y2, 15)
 
 
 def test_dump_multilabel():
-    X = [[1, 0, 3, 0, 5],
-         [0, 0, 0, 0, 0],
-         [0, 5, 0, 1, 0]]
+    X = [[1, 0, 3, 0, 5], [0, 0, 0, 0, 0], [0, 5, 0, 1, 0]]
     y_dense = [[0, 1, 0], [1, 0, 1], [1, 1, 0]]
     y_sparse = sp.csr_matrix(y_dense)
     for y in [y_dense, y_sparse]:
@@ -307,18 +306,14 @@ def test_dump_concise():
     exact = 1.000000000000001
     # loses the last decimal place
     almost = 1.0000000000000001
-    X = [[one, two, three, exact, almost],
-         [1e9, 2e18, 3e27, 0, 0],
-         [0, 0, 0, 0, 0],
-         [0, 0, 0, 0, 0],
-         [0, 0, 0, 0, 0]]
+    X = [[one, two, three, exact, almost], [1e9, 2e18, 3e27, 0, 0],
+         [0, 0, 0, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0]]
     y = [one, two, three, exact, almost]
     f = BytesIO()
     dump_svmlight_file(X, y, f)
     f.seek(0)
     # make sure it's using the most concise format possible
-    assert (f.readline() ==
-                 b"1 0:1 1:2.1 2:3.01 3:1.000000000000001 4:1\n")
+    assert (f.readline() == b"1 0:1 1:2.1 2:3.01 3:1.000000000000001 4:1\n")
     assert f.readline() == b"2.1 0:1000000000 1:2e+18 2:3e+27\n"
     assert f.readline() == b"3.01 \n"
     assert f.readline() == b"1.000000000000001 \n"
@@ -400,8 +395,7 @@ def test_load_with_long_qid():
     3 qid:9223372036854775807  0:1440446648 1:72048431380967004 2:236784985"""
     X, y, qid = load_svmlight_file(BytesIO(data), query_id=True)
 
-    true_X = [[1,          2,                 3],
-              [1440446648, 72048431380967004, 236784985],
+    true_X = [[1, 2, 3], [1440446648, 72048431380967004, 236784985],
               [1440446648, 72048431380967004, 236784985],
               [1440446648, 72048431380967004, 236784985]]
 
@@ -463,12 +457,15 @@ def test_load_with_offsets(sparsity, n_samples, n_features):
     length_1 = mark_2 - mark_1
 
     # load the original sparse matrix into 3 independent CSR matrices
-    X_0, y_0 = load_svmlight_file(f, n_features=n_features,
-                                  offset=mark_0, length=length_0)
-    X_1, y_1 = load_svmlight_file(f, n_features=n_features,
-                                  offset=mark_1, length=length_1)
-    X_2, y_2 = load_svmlight_file(f, n_features=n_features,
-                                  offset=mark_2)
+    X_0, y_0 = load_svmlight_file(f,
+                                  n_features=n_features,
+                                  offset=mark_0,
+                                  length=length_0)
+    X_1, y_1 = load_svmlight_file(f,
+                                  n_features=n_features,
+                                  offset=mark_1,
+                                  length=length_1)
+    X_2, y_2 = load_svmlight_file(f, n_features=n_features, offset=mark_2)
 
     y_concat = np.concatenate([y_0, y_1, y_2])
     X_concat = sp.vstack([X_0, X_1, X_2])
@@ -502,11 +499,15 @@ def test_load_offset_exhaustive_splits():
     # locate the split so has to test for particular boundary cases
     for mark in range(size):
         f.seek(0)
-        X_0, y_0, q_0 = load_svmlight_file(f, n_features=n_features,
-                                           query_id=True, offset=0,
+        X_0, y_0, q_0 = load_svmlight_file(f,
+                                           n_features=n_features,
+                                           query_id=True,
+                                           offset=0,
                                            length=mark)
-        X_1, y_1, q_1 = load_svmlight_file(f, n_features=n_features,
-                                           query_id=True, offset=mark,
+        X_1, y_1, q_1 = load_svmlight_file(f,
+                                           n_features=n_features,
+                                           query_id=True,
+                                           offset=mark,
                                            length=-1)
         q_concat = np.concatenate([q_0, q_1])
         y_concat = np.concatenate([y_0, y_1])

@@ -39,8 +39,14 @@ def _calculate_permutation_scores(estimator, X, y, col_idx, random_state,
 
 
 @_deprecate_positional_args
-def permutation_importance(estimator, X, y, *, scoring=None, n_repeats=5,
-                           n_jobs=None, random_state=None):
+def permutation_importance(estimator,
+                           X,
+                           y,
+                           *,
+                           scoring=None,
+                           n_repeats=5,
+                           n_jobs=None,
+                           random_state=None):
     """Permutation importance for feature evaluation [BRE]_.
 
     The :term:`estimator` is required to be a fitted estimator. `X` can be the
@@ -133,8 +139,8 @@ def permutation_importance(estimator, X, y, *, scoring=None, n_repeats=5,
     baseline_score = scorer(estimator, X, y)
 
     scores = Parallel(n_jobs=n_jobs)(delayed(_calculate_permutation_scores)(
-        estimator, X, y, col_idx, random_seed, n_repeats, scorer
-    ) for col_idx in range(X.shape[1]))
+        estimator, X, y, col_idx, random_seed, n_repeats, scorer)
+                                     for col_idx in range(X.shape[1]))
 
     importances = baseline_score - np.array(scores)
     return Bunch(importances_mean=np.mean(importances, axis=1),

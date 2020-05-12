@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-
 """
 The :mod:`sklearn.naive_bayes` module implements Naive Bayes algorithms. These
 are supervised learning methods based on applying Bayes' theorem with strong
@@ -19,7 +18,6 @@ import warnings
 
 from abc import ABCMeta, abstractmethod
 
-
 import numpy as np
 from scipy.special import logsumexp
 
@@ -34,13 +32,14 @@ from .utils.validation import check_is_fitted, check_non_negative, column_or_1d
 from .utils.validation import _check_sample_weight
 from .utils.validation import _deprecate_positional_args
 
-__all__ = ['BernoulliNB', 'GaussianNB', 'MultinomialNB', 'ComplementNB',
-           'CategoricalNB']
+__all__ = [
+    'BernoulliNB', 'GaussianNB', 'MultinomialNB', 'ComplementNB',
+    'CategoricalNB'
+]
 
 
 class _BaseNB(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
     """Abstract base class for naive Bayes estimators"""
-
     @abstractmethod
     def _joint_log_likelihood(self, X):
         """Compute the unnormalized posterior log probability of X
@@ -179,7 +178,6 @@ class GaussianNB(_BaseNB):
     >>> print(clf_pf.predict([[-0.8, -1]]))
     [1]
     """
-
     @_deprecate_positional_args
     def __init__(self, *, priors=None, var_smoothing=1e-9):
         self.priors = priors
@@ -209,7 +207,10 @@ class GaussianNB(_BaseNB):
         """
         X, y = self._validate_data(X, y)
         y = column_or_1d(y, warn=True)
-        return self._partial_fit(X, y, np.unique(y), _refit=True,
+        return self._partial_fit(X,
+                                 y,
+                                 np.unique(y),
+                                 _refit=True,
                                  sample_weight=sample_weight)
 
     def _check_X(self, X):
@@ -262,7 +263,8 @@ class GaussianNB(_BaseNB):
         if sample_weight is not None:
             n_new = float(sample_weight.sum())
             new_mu = np.average(X, axis=0, weights=sample_weight)
-            new_var = np.average((X - new_mu) ** 2, axis=0,
+            new_var = np.average((X - new_mu)**2,
+                                 axis=0,
                                  weights=sample_weight)
         else:
             n_new = X.shape[0]
@@ -283,8 +285,8 @@ class GaussianNB(_BaseNB):
         # the sum-of-squared-differences (ssd)
         old_ssd = n_past * var
         new_ssd = n_new * new_var
-        total_ssd = (old_ssd + new_ssd +
-                     (n_new * n_past / n_total) * (mu - new_mu) ** 2)
+        total_ssd = (old_ssd + new_ssd + (n_new * n_past / n_total) *
+                     (mu - new_mu)**2)
         total_var = total_ssd / n_total
 
         return total_mu, total_var
@@ -328,10 +330,17 @@ class GaussianNB(_BaseNB):
         -------
         self : object
         """
-        return self._partial_fit(X, y, classes, _refit=False,
+        return self._partial_fit(X,
+                                 y,
+                                 classes,
+                                 _refit=False,
                                  sample_weight=sample_weight)
 
-    def _partial_fit(self, X, y, classes=None, _refit=False,
+    def _partial_fit(self,
+                     X,
+                     y,
+                     classes=None,
+                     _refit=False,
                      sample_weight=None):
         """Actual implementation of Gaussian NB fitting.
 
@@ -452,9 +461,9 @@ class GaussianNB(_BaseNB):
         joint_log_likelihood = []
         for i in range(np.size(self.classes_)):
             jointi = np.log(self.class_prior_[i])
-            n_ij = - 0.5 * np.sum(np.log(2. * np.pi * self.sigma_[i, :]))
-            n_ij -= 0.5 * np.sum(((X - self.theta_[i, :]) ** 2) /
-                                 (self.sigma_[i, :]), 1)
+            n_ij = -0.5 * np.sum(np.log(2. * np.pi * self.sigma_[i, :]))
+            n_ij -= 0.5 * np.sum(
+                ((X - self.theta_[i, :])**2) / (self.sigma_[i, :]), 1)
             joint_log_likelihood.append(jointi + n_ij)
 
         joint_log_likelihood = np.array(joint_log_likelihood).T
@@ -472,7 +481,6 @@ class _BaseDiscreteNB(_BaseNB):
     __init__
     _joint_log_likelihood(X) as per _BaseNB
     """
-
     def _check_X(self, X):
         return check_array(X, accept_sparse='csr')
 
@@ -748,7 +756,6 @@ class MultinomialNB(_BaseDiscreteNB):
     Information Retrieval. Cambridge University Press, pp. 234-265.
     https://nlp.stanford.edu/IR-book/html/htmledition/naive-bayes-text-classification-1.html
     """
-
     @_deprecate_positional_args
     def __init__(self, *, alpha=1.0, fit_prior=True, class_prior=None):
         self.alpha = alpha
@@ -853,9 +860,12 @@ class ComplementNB(_BaseDiscreteNB):
     (Vol. 3, pp. 616-623).
     https://people.csail.mit.edu/jrennie/papers/icml03-nb.pdf
     """
-
     @_deprecate_positional_args
-    def __init__(self, *, alpha=1.0, fit_prior=True, class_prior=None,
+    def __init__(self,
+                 *,
+                 alpha=1.0,
+                 fit_prior=True,
+                 class_prior=None,
                  norm=False):
         self.alpha = alpha
         self.fit_prior = fit_prior
@@ -968,9 +978,12 @@ class BernoulliNB(_BaseDiscreteNB):
     V. Metsis, I. Androutsopoulos and G. Paliouras (2006). Spam filtering with
     naive Bayes -- Which naive Bayes? 3rd Conf. on Email and Anti-Spam (CEAS).
     """
-
     @_deprecate_positional_args
-    def __init__(self, *, alpha=1.0, binarize=.0, fit_prior=True,
+    def __init__(self,
+                 *,
+                 alpha=1.0,
+                 binarize=.0,
+                 fit_prior=True,
                  class_prior=None):
         self.alpha = alpha
         self.binarize = binarize
@@ -1008,8 +1021,9 @@ class BernoulliNB(_BaseDiscreteNB):
         n_samples, n_features_X = X.shape
 
         if n_features_X != n_features:
-            raise ValueError("Expected input with %d features, got %d instead"
-                             % (n_features, n_features_X))
+            raise ValueError(
+                "Expected input with %d features, got %d instead" %
+                (n_features, n_features_X))
 
         neg_prob = np.log(1 - np.exp(self.feature_log_prob_))
         # Compute  neg_prob · (1 - X).T  as  ∑neg_prob - X · neg_prob
@@ -1080,7 +1094,6 @@ class CategoricalNB(_BaseDiscreteNB):
     >>> print(clf.predict(X[2:3]))
     [3]
     """
-
     @_deprecate_positional_args
     def __init__(self, *, alpha=1.0, fit_prior=True, class_prior=None):
         self.alpha = alpha
@@ -1154,28 +1167,33 @@ class CategoricalNB(_BaseDiscreteNB):
         -------
         self : object
         """
-        return super().partial_fit(X, y, classes,
-                                   sample_weight=sample_weight)
+        return super().partial_fit(X, y, classes, sample_weight=sample_weight)
 
     def _more_tags(self):
         return {'requires_positive_X': True}
 
     def _check_X(self, X):
-        X = check_array(X, dtype='int', accept_sparse=False,
+        X = check_array(X,
+                        dtype='int',
+                        accept_sparse=False,
                         force_all_finite=True)
         check_non_negative(X, "CategoricalNB (input X)")
         return X
 
     def _check_X_y(self, X, y):
-        X, y = self._validate_data(X, y, dtype='int', accept_sparse=False,
+        X, y = self._validate_data(X,
+                                   y,
+                                   dtype='int',
+                                   accept_sparse=False,
                                    force_all_finite=True)
         check_non_negative(X, "CategoricalNB (input X)")
         return X, y
 
     def _init_counters(self, n_effective_classes, n_features):
         self.class_count_ = np.zeros(n_effective_classes, dtype=np.float64)
-        self.category_count_ = [np.zeros((n_effective_classes, 0))
-                                for _ in range(n_features)]
+        self.category_count_ = [
+            np.zeros((n_effective_classes, 0)) for _ in range(n_features)
+        ]
 
     def _count(self, X, Y):
         def _update_cat_count_dims(cat_count, highest_feature):
@@ -1201,8 +1219,7 @@ class CategoricalNB(_BaseDiscreteNB):
             X_feature = X[:, i]
             self.category_count_[i] = _update_cat_count_dims(
                 self.category_count_[i], X_feature.max())
-            _update_cat_count(X_feature, Y,
-                              self.category_count_[i],
+            _update_cat_count(X_feature, Y, self.category_count_[i],
                               self.class_count_.shape[0])
 
     def _update_feature_log_prob(self, alpha):
@@ -1217,8 +1234,9 @@ class CategoricalNB(_BaseDiscreteNB):
 
     def _joint_log_likelihood(self, X):
         if not X.shape[1] == self.n_features_:
-            raise ValueError("Expected input with %d features, got %d instead"
-                             % (self.n_features_, X.shape[1]))
+            raise ValueError(
+                "Expected input with %d features, got %d instead" %
+                (self.n_features_, X.shape[1]))
         jll = np.zeros((X.shape[0], self.class_count_.shape[0]))
         for i in range(self.n_features_):
             indices = X[:, i]

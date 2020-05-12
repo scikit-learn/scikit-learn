@@ -13,7 +13,8 @@ with _warnings.catch_warnings():
     from joblib import cpu_count, Parallel, Memory, delayed
     from joblib import parallel_backend, register_parallel_backend
 
-
-__all__ = ["parallel_backend", "register_parallel_backend", "cpu_count",
-           "Parallel", "Memory", "delayed", "effective_n_jobs", "hash",
-           "logger", "dump", "load", "joblib", "__version__"]
+__all__ = [
+    "parallel_backend", "register_parallel_backend", "cpu_count", "Parallel",
+    "Memory", "delayed", "effective_n_jobs", "hash", "logger", "dump", "load",
+    "joblib", "__version__"
+]

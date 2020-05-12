@@ -20,7 +20,6 @@ from ._config import get_config, set_config, config_context
 
 logger = logging.getLogger(__name__)
 
-
 # PEP0440 compatible formatted version, see:
 # https://www.python.org/dev/peps/pep-0440/
 #
@@ -38,7 +37,6 @@ logger = logging.getLogger(__name__)
 # 'X.Y.dev0' is the canonical version of 'X.Y.dev'
 #
 __version__ = '0.24.dev0'
-
 
 # On OSX, we can get a runtime error due to multiple OpenMP libraries loaded
 # simultaneously. This can happen for instance when calling BLAS inside a
@@ -80,19 +78,51 @@ else:
     from .base import clone
     from .utils._show_versions import show_versions
 
-    __all__ = ['calibration', 'cluster', 'covariance', 'cross_decomposition',
-               'datasets', 'decomposition', 'dummy', 'ensemble', 'exceptions',
-               'experimental', 'externals', 'feature_extraction',
-               'feature_selection', 'gaussian_process', 'inspection',
-               'isotonic', 'kernel_approximation', 'kernel_ridge',
-               'linear_model', 'manifold', 'metrics', 'mixture',
-               'model_selection', 'multiclass', 'multioutput',
-               'naive_bayes', 'neighbors', 'neural_network', 'pipeline',
-               'preprocessing', 'random_projection', 'semi_supervised',
-               'svm', 'tree', 'discriminant_analysis', 'impute', 'compose',
-               # Non-modules:
-               'clone', 'get_config', 'set_config', 'config_context',
-               'show_versions']
+    __all__ = [
+        'calibration',
+        'cluster',
+        'covariance',
+        'cross_decomposition',
+        'datasets',
+        'decomposition',
+        'dummy',
+        'ensemble',
+        'exceptions',
+        'experimental',
+        'externals',
+        'feature_extraction',
+        'feature_selection',
+        'gaussian_process',
+        'inspection',
+        'isotonic',
+        'kernel_approximation',
+        'kernel_ridge',
+        'linear_model',
+        'manifold',
+        'metrics',
+        'mixture',
+        'model_selection',
+        'multiclass',
+        'multioutput',
+        'naive_bayes',
+        'neighbors',
+        'neural_network',
+        'pipeline',
+        'preprocessing',
+        'random_projection',
+        'semi_supervised',
+        'svm',
+        'tree',
+        'discriminant_analysis',
+        'impute',
+        'compose',
+        # Non-modules:
+        'clone',
+        'get_config',
+        'set_config',
+        'config_context',
+        'show_versions'
+    ]
 
 
 def setup_module(module):

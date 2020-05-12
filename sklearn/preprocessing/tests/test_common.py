@@ -45,8 +45,7 @@ def _get_valid_samples_by_column(X, col):
      (PowerTransformer('box-cox'), power_transform, False, True),
      (QuantileTransformer(n_quantiles=10), quantile_transform, True, False),
      (RobustScaler(), robust_scale, False, False),
-     (RobustScaler(with_centering=False), robust_scale, True, False)]
-)
+     (RobustScaler(with_centering=False), robust_scale, True, False)])
 def test_missing_value_handling(est, func, support_sparse, strictly_positive):
     # check that the preprocessing method let pass nan
     rng = np.random.RandomState(42)
@@ -129,17 +128,16 @@ def test_missing_value_handling(est, func, support_sparse, strictly_positive):
 
 
 @pytest.mark.parametrize(
-    "est, func",
-    [(MaxAbsScaler(), maxabs_scale),
-     (MinMaxScaler(), minmax_scale),
-     (StandardScaler(), scale),
-     (StandardScaler(with_mean=False), scale),
-     (PowerTransformer('yeo-johnson'), power_transform),
-     (PowerTransformer('box-cox'), power_transform,),
-     (QuantileTransformer(n_quantiles=3), quantile_transform),
-     (RobustScaler(), robust_scale),
-     (RobustScaler(with_centering=False), robust_scale)]
-)
+    "est, func", [(MaxAbsScaler(), maxabs_scale),
+                  (MinMaxScaler(), minmax_scale), (StandardScaler(), scale),
+                  (StandardScaler(with_mean=False), scale),
+                  (PowerTransformer('yeo-johnson'), power_transform),
+                  (
+                      PowerTransformer('box-cox'),
+                      power_transform,
+                  ), (QuantileTransformer(n_quantiles=3), quantile_transform),
+                  (RobustScaler(), robust_scale),
+                  (RobustScaler(with_centering=False), robust_scale)])
 def test_missing_value_pandas_na_support(est, func):
     # Test pandas IntegerArray with pd.NA
     pd = pytest.importorskip('pandas', minversion="1.0")

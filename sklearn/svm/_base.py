@@ -6,7 +6,7 @@ from abc import ABCMeta, abstractmethod
 # mypy error: error: Module 'sklearn.svm' has no attribute '_libsvm'
 # (and same for other imports)
 from . import _libsvm as libsvm  # type: ignore
-from .import _liblinear as liblinear  # type: ignore
+from . import _liblinear as liblinear  # type: ignore
 from . import _libsvm_sparse as libsvm_sparse  # type: ignore
 from ..base import BaseEstimator, ClassifierMixin
 from ..preprocessing import LabelEncoder
@@ -21,7 +21,6 @@ from ..utils.validation import _check_sample_weight, check_consistent_length
 from ..utils.multiclass import check_classification_targets
 from ..exceptions import ConvergenceWarning
 from ..exceptions import NotFittedError
-
 
 LIBSVM_IMPL = ['c_svc', 'nu_svc', 'one_class', 'epsilon_svr', 'nu_svr']
 
@@ -54,8 +53,8 @@ def _one_vs_one_coef(dual_coef, n_support, support_vectors):
             alpha2 = dual_coef[class1, sv_locs[class2]:sv_locs[class2 + 1]]
             # build weight for class1 vs class2
 
-            coef.append(safe_sparse_dot(alpha1, sv1)
-                        + safe_sparse_dot(alpha2, sv2))
+            coef.append(
+                safe_sparse_dot(alpha1, sv1) + safe_sparse_dot(alpha2, sv2))
     return coef
 
 
@@ -73,13 +72,13 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
     _sparse_kernels = ["linear", "poly", "rbf", "sigmoid", "precomputed"]
 
     @abstractmethod
-    def __init__(self, kernel, degree, gamma, coef0,
-                 tol, C, nu, epsilon, shrinking, probability, cache_size,
-                 class_weight, verbose, max_iter, random_state):
+    def __init__(self, kernel, degree, gamma, coef0, tol, C, nu, epsilon,
+                 shrinking, probability, cache_size, class_weight, verbose,
+                 max_iter, random_state):
 
         if self._impl not in LIBSVM_IMPL:
-            raise ValueError("impl should be one of %s, %s was given" % (
-                LIBSVM_IMPL, self._impl))
+            raise ValueError("impl should be one of %s, %s was given" %
+                             (LIBSVM_IMPL, self._impl))
 
         if gamma == 0:
             msg = ("The gamma value of 0.0 is invalid. Use 'auto' to set"
@@ -151,21 +150,22 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
             if self.decision_function_shape not in ('ovr', 'ovo'):
                 raise ValueError(
                     f"decision_function_shape must be either 'ovr' or 'ovo', "
-                    f"got {self.decision_function_shape}."
-                )
+                    f"got {self.decision_function_shape}.")
 
         if callable(self.kernel):
             check_consistent_length(X, y)
         else:
-            X, y = self._validate_data(X, y, dtype=np.float64,
-                                       order='C', accept_sparse='csr',
+            X, y = self._validate_data(X,
+                                       y,
+                                       dtype=np.float64,
+                                       order='C',
+                                       accept_sparse='csr',
                                        accept_large_sparse=False)
 
         y = self._validate_targets(y)
 
-        sample_weight = np.asarray([]
-                                   if sample_weight is None
-                                   else sample_weight, dtype=np.float64)
+        sample_weight = np.asarray(
+            [] if sample_weight is None else sample_weight, dtype=np.float64)
         solver_type = LIBSVM_IMPL.index(self._impl)
 
         # input validation
@@ -177,15 +177,15 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
 
         if self.kernel == "precomputed" and n_samples != X.shape[1]:
             raise ValueError("Precomputed matrix must be a square matrix."
-                             " Input is a {}x{} matrix."
-                             .format(X.shape[0], X.shape[1]))
+                             " Input is a {}x{} matrix.".format(
+                                 X.shape[0], X.shape[1]))
 
         if sample_weight.shape[0] > 0 and sample_weight.shape[0] != n_samples:
             raise ValueError("sample_weight and X have incompatible shapes: "
                              "%r vs %r\n"
                              "Note: Sparse matrices cannot be indexed w/"
-                             "boolean masks (use `indices=True` in CV)."
-                             % (sample_weight.shape, X.shape))
+                             "boolean masks (use `indices=True` in CV)." %
+                             (sample_weight.shape, X.shape))
 
         kernel = 'precomputed' if callable(self.kernel) else self.kernel
 
@@ -196,16 +196,15 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         elif isinstance(self.gamma, str):
             if self.gamma == 'scale':
                 # var = E[X^2] - E[X]^2 if sparse
-                X_var = ((X.multiply(X)).mean() - (X.mean()) ** 2
-                         if sparse else X.var())
+                X_var = ((X.multiply(X)).mean() -
+                         (X.mean())**2 if sparse else X.var())
                 self._gamma = 1.0 / (X.shape[1] * X_var) if X_var != 0 else 1.0
             elif self.gamma == 'auto':
                 self._gamma = 1.0 / X.shape[1]
             else:
                 raise ValueError(
                     "When 'gamma' is a string, it should be either 'scale' or "
-                    "'auto'. Got '{}' instead.".format(self.gamma)
-                )
+                    "'auto'. Got '{}' instead.".format(self.gamma))
         else:
             self._gamma = self.gamma
 
@@ -243,10 +242,11 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
     def _warn_from_fit_status(self):
         assert self.fit_status_ in (0, 1)
         if self.fit_status_ == 1:
-            warnings.warn('Solver terminated early (max_iter=%i).'
-                          '  Consider pre-processing your data with'
-                          ' StandardScaler or MinMaxScaler.'
-                          % self.max_iter, ConvergenceWarning)
+            warnings.warn(
+                'Solver terminated early (max_iter=%i).'
+                '  Consider pre-processing your data with'
+                ' StandardScaler or MinMaxScaler.' % self.max_iter,
+                ConvergenceWarning)
 
     def _dense_fit(self, X, y, sample_weight, solver_type, kernel,
                    random_seed):
@@ -349,12 +349,20 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
 
         svm_type = LIBSVM_IMPL.index(self._impl)
 
-        return libsvm.predict(
-            X, self.support_, self.support_vectors_, self._n_support,
-            self._dual_coef_, self._intercept_,
-            self._probA, self._probB, svm_type=svm_type, kernel=kernel,
-            degree=self.degree, coef0=self.coef0, gamma=self._gamma,
-            cache_size=self.cache_size)
+        return libsvm.predict(X,
+                              self.support_,
+                              self.support_vectors_,
+                              self._n_support,
+                              self._dual_coef_,
+                              self._intercept_,
+                              self._probA,
+                              self._probB,
+                              svm_type=svm_type,
+                              kernel=kernel,
+                              degree=self.degree,
+                              coef0=self.coef0,
+                              gamma=self._gamma,
+                              cache_size=self.cache_size)
 
     def _sparse_predict(self, X):
         # Precondition: X is a csr_matrix of dtype np.float64.
@@ -367,16 +375,12 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         C = 0.0  # C is not useful here
 
         return libsvm_sparse.libsvm_sparse_predict(
-            X.data, X.indices, X.indptr,
-            self.support_vectors_.data,
-            self.support_vectors_.indices,
-            self.support_vectors_.indptr,
+            X.data, X.indices, X.indptr, self.support_vectors_.data,
+            self.support_vectors_.indices, self.support_vectors_.indptr,
             self._dual_coef_.data, self._intercept_,
-            LIBSVM_IMPL.index(self._impl), kernel_type,
-            self.degree, self._gamma, self.coef0, self.tol,
-            C, self.class_weight_,
-            self.nu, self.epsilon, self.shrinking,
-            self.probability, self._n_support,
+            LIBSVM_IMPL.index(self._impl), kernel_type, self.degree,
+            self._gamma, self.coef0, self.tol, C, self.class_weight_, self.nu,
+            self.epsilon, self.shrinking, self.probability, self._n_support,
             self._probA, self._probB)
 
     def _compute_kernel(self, X):
@@ -421,20 +425,29 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         return dec_func
 
     def _dense_decision_function(self, X):
-        X = check_array(X, dtype=np.float64, order="C",
+        X = check_array(X,
+                        dtype=np.float64,
+                        order="C",
                         accept_large_sparse=False)
 
         kernel = self.kernel
         if callable(kernel):
             kernel = 'precomputed'
 
-        return libsvm.decision_function(
-            X, self.support_, self.support_vectors_, self._n_support,
-            self._dual_coef_, self._intercept_,
-            self._probA, self._probB,
-            svm_type=LIBSVM_IMPL.index(self._impl),
-            kernel=kernel, degree=self.degree, cache_size=self.cache_size,
-            coef0=self.coef0, gamma=self._gamma)
+        return libsvm.decision_function(X,
+                                        self.support_,
+                                        self.support_vectors_,
+                                        self._n_support,
+                                        self._dual_coef_,
+                                        self._intercept_,
+                                        self._probA,
+                                        self._probB,
+                                        svm_type=LIBSVM_IMPL.index(self._impl),
+                                        kernel=kernel,
+                                        degree=self.degree,
+                                        cache_size=self.cache_size,
+                                        coef0=self.coef0,
+                                        gamma=self._gamma)
 
     def _sparse_decision_function(self, X):
         X.data = np.asarray(X.data, dtype=np.float64, order='C')
@@ -446,24 +459,23 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
         kernel_type = self._sparse_kernels.index(kernel)
 
         return libsvm_sparse.libsvm_sparse_decision_function(
-            X.data, X.indices, X.indptr,
-            self.support_vectors_.data,
-            self.support_vectors_.indices,
-            self.support_vectors_.indptr,
+            X.data, X.indices, X.indptr, self.support_vectors_.data,
+            self.support_vectors_.indices, self.support_vectors_.indptr,
             self._dual_coef_.data, self._intercept_,
-            LIBSVM_IMPL.index(self._impl), kernel_type,
-            self.degree, self._gamma, self.coef0, self.tol,
-            self.C, self.class_weight_,
-            self.nu, self.epsilon, self.shrinking,
-            self.probability, self._n_support,
-            self._probA, self._probB)
+            LIBSVM_IMPL.index(self._impl), kernel_type, self.degree,
+            self._gamma, self.coef0, self.tol, self.C, self.class_weight_,
+            self.nu, self.epsilon, self.shrinking, self.probability,
+            self._n_support, self._probA, self._probB)
 
     def _validate_for_predict(self, X):
         check_is_fitted(self)
 
         if not callable(self.kernel):
-            X = check_array(X, accept_sparse='csr', dtype=np.float64,
-                            order="C", accept_large_sparse=False)
+            X = check_array(X,
+                            accept_sparse='csr',
+                            dtype=np.float64,
+                            order="C",
+                            accept_large_sparse=False)
 
         if self._sparse and not sp.isspmatrix(X):
             X = sp.csr_matrix(X)
@@ -472,8 +484,8 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
 
         if sp.issparse(X) and not self._sparse and not callable(self.kernel):
             raise ValueError(
-                "cannot use sparse input in %r trained on dense data"
-                % type(self).__name__)
+                "cannot use sparse input in %r trained on dense data" %
+                type(self).__name__)
 
         if self.kernel == "precomputed":
             if X.shape[1] != self.shape_fit_[0]:
@@ -526,18 +538,26 @@ class BaseLibSVM(BaseEstimator, metaclass=ABCMeta):
 class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
     """ABC for LibSVM-based classifiers."""
     @abstractmethod
-    def __init__(self, kernel, degree, gamma, coef0, tol, C, nu,
-                 shrinking, probability, cache_size, class_weight, verbose,
-                 max_iter, decision_function_shape, random_state,
-                 break_ties):
+    def __init__(self, kernel, degree, gamma, coef0, tol, C, nu, shrinking,
+                 probability, cache_size, class_weight, verbose, max_iter,
+                 decision_function_shape, random_state, break_ties):
         self.decision_function_shape = decision_function_shape
         self.break_ties = break_ties
-        super().__init__(
-            kernel=kernel, degree=degree, gamma=gamma,
-            coef0=coef0, tol=tol, C=C, nu=nu, epsilon=0., shrinking=shrinking,
-            probability=probability, cache_size=cache_size,
-            class_weight=class_weight, verbose=verbose, max_iter=max_iter,
-            random_state=random_state)
+        super().__init__(kernel=kernel,
+                         degree=degree,
+                         gamma=gamma,
+                         coef0=coef0,
+                         tol=tol,
+                         C=C,
+                         nu=nu,
+                         epsilon=0.,
+                         shrinking=shrinking,
+                         probability=probability,
+                         cache_size=cache_size,
+                         class_weight=class_weight,
+                         verbose=verbose,
+                         max_iter=max_iter,
+                         random_state=random_state)
 
     def _validate_targets(self, y):
         y_ = column_or_1d(y, warn=True)
@@ -606,8 +626,7 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
             raise ValueError("break_ties must be False when "
                              "decision_function_shape is 'ovo'")
 
-        if (self.break_ties
-                and self.decision_function_shape == 'ovr'
+        if (self.break_ties and self.decision_function_shape == 'ovr'
                 and len(self.classes_) > 2):
             y = np.argmax(self.decision_function(X), axis=1)
         else:
@@ -707,12 +726,20 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
             kernel = 'precomputed'
 
         svm_type = LIBSVM_IMPL.index(self._impl)
-        pprob = libsvm.predict_proba(
-            X, self.support_, self.support_vectors_, self._n_support,
-            self._dual_coef_, self._intercept_,
-            self._probA, self._probB,
-            svm_type=svm_type, kernel=kernel, degree=self.degree,
-            cache_size=self.cache_size, coef0=self.coef0, gamma=self._gamma)
+        pprob = libsvm.predict_proba(X,
+                                     self.support_,
+                                     self.support_vectors_,
+                                     self._n_support,
+                                     self._dual_coef_,
+                                     self._intercept_,
+                                     self._probA,
+                                     self._probB,
+                                     svm_type=svm_type,
+                                     kernel=kernel,
+                                     degree=self.degree,
+                                     cache_size=self.cache_size,
+                                     coef0=self.coef0,
+                                     gamma=self._gamma)
 
         return pprob
 
@@ -726,17 +753,13 @@ class BaseSVC(ClassifierMixin, BaseLibSVM, metaclass=ABCMeta):
         kernel_type = self._sparse_kernels.index(kernel)
 
         return libsvm_sparse.libsvm_sparse_predict_proba(
-            X.data, X.indices, X.indptr,
-            self.support_vectors_.data,
-            self.support_vectors_.indices,
-            self.support_vectors_.indptr,
+            X.data, X.indices, X.indptr, self.support_vectors_.data,
+            self.support_vectors_.indices, self.support_vectors_.indptr,
             self._dual_coef_.data, self._intercept_,
-            LIBSVM_IMPL.index(self._impl), kernel_type,
-            self.degree, self._gamma, self.coef0, self.tol,
-            self.C, self.class_weight_,
-            self.nu, self.epsilon, self.shrinking,
-            self.probability, self._n_support,
-            self._probA, self._probB)
+            LIBSVM_IMPL.index(self._impl), kernel_type, self.degree,
+            self._gamma, self.coef0, self.tol, self.C, self.class_weight_,
+            self.nu, self.epsilon, self.shrinking, self.probability,
+            self._n_support, self._probA, self._probB)
 
     def _get_coef(self):
         if self.dual_coef_.shape[0] == 1:
@@ -780,17 +803,39 @@ def _get_liblinear_solver_type(multi_class, penalty, loss, dual):
     # combination of loss function and penalty
     _solver_type_dict = {
         'logistic_regression': {
-            'l1': {False: 6},
-            'l2': {False: 0, True: 7}},
+            'l1': {
+                False: 6
+            },
+            'l2': {
+                False: 0,
+                True: 7
+            }
+        },
         'hinge': {
-            'l2': {True: 3}},
+            'l2': {
+                True: 3
+            }
+        },
         'squared_hinge': {
-            'l1': {False: 5},
-            'l2': {False: 2, True: 1}},
+            'l1': {
+                False: 5
+            },
+            'l2': {
+                False: 2,
+                True: 1
+            }
+        },
         'epsilon_insensitive': {
-            'l2': {True: 13}},
+            'l2': {
+                True: 13
+            }
+        },
         'squared_epsilon_insensitive': {
-            'l2': {False: 11, True: 12}},
+            'l2': {
+                False: 11,
+                True: 12
+            }
+        },
         'crammer_singer': 4
     }
 
@@ -807,25 +852,35 @@ def _get_liblinear_solver_type(multi_class, penalty, loss, dual):
         _solver_dual = _solver_pen.get(penalty, None)
         if _solver_dual is None:
             error_string = ("The combination of penalty='%s' "
-                            "and loss='%s' is not supported"
-                            % (penalty, loss))
+                            "and loss='%s' is not supported" % (penalty, loss))
         else:
             solver_num = _solver_dual.get(dual, None)
             if solver_num is None:
                 error_string = ("The combination of penalty='%s' and "
-                                "loss='%s' are not supported when dual=%s"
-                                % (penalty, loss, dual))
+                                "loss='%s' are not supported when dual=%s" %
+                                (penalty, loss, dual))
             else:
                 return solver_num
     raise ValueError('Unsupported set of arguments: %s, '
-                     'Parameters: penalty=%r, loss=%r, dual=%r'
-                     % (error_string, penalty, loss, dual))
+                     'Parameters: penalty=%r, loss=%r, dual=%r' %
+                     (error_string, penalty, loss, dual))
 
 
-def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
-                   penalty, dual, verbose, max_iter, tol,
-                   random_state=None, multi_class='ovr',
-                   loss='logistic_regression', epsilon=0.1,
+def _fit_liblinear(X,
+                   y,
+                   C,
+                   fit_intercept,
+                   intercept_scaling,
+                   class_weight,
+                   penalty,
+                   dual,
+                   verbose,
+                   max_iter,
+                   tol,
+                   random_state=None,
+                   multi_class='ovr',
+                   loss='logistic_regression',
+                   epsilon=0.1,
                    sample_weight=None):
     """Used by Logistic Regression (and CV) and LinearSVC/LinearSVR.
 
@@ -957,22 +1012,23 @@ def _fit_liblinear(X, y, C, fit_intercept, intercept_scaling, class_weight,
     y_ind = np.asarray(y_ind, dtype=np.float64).ravel()
     y_ind = np.require(y_ind, requirements="W")
 
-    sample_weight = _check_sample_weight(sample_weight, X,
-                                         dtype=np.float64)
+    sample_weight = _check_sample_weight(sample_weight, X, dtype=np.float64)
 
     solver_type = _get_liblinear_solver_type(multi_class, penalty, loss, dual)
-    raw_coef_, n_iter_ = liblinear.train_wrap(
-        X, y_ind, sp.isspmatrix(X), solver_type, tol, bias, C,
-        class_weight_, max_iter, rnd.randint(np.iinfo('i').max),
-        epsilon, sample_weight)
+    raw_coef_, n_iter_ = liblinear.train_wrap(X, y_ind, sp.isspmatrix(X),
+                                              solver_type, tol, bias, C,
+                                              class_weight_, max_iter,
+                                              rnd.randint(np.iinfo('i').max),
+                                              epsilon, sample_weight)
     # Regarding rnd.randint(..) in the above signature:
     # seed for srand in range [0..INT_MAX); due to limitations in Numpy
     # on 32-bit platforms, we can't get to the UINT_MAX limit that
     # srand supports
     n_iter_ = max(n_iter_)
     if n_iter_ >= max_iter:
-        warnings.warn("Liblinear failed to converge, increase "
-                      "the number of iterations.", ConvergenceWarning)
+        warnings.warn(
+            "Liblinear failed to converge, increase "
+            "the number of iterations.", ConvergenceWarning)
 
     if fit_intercept:
         coef_ = raw_coef_[:, :-1]

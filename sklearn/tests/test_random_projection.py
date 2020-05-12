@@ -1,4 +1,3 @@
-
 import functools
 from typing import List, Any
 
@@ -39,9 +38,8 @@ all_RandomProjection = set(all_SparseRandomProjection +
 def make_sparse_random_data(n_samples, n_features, n_nonzeros):
     rng = np.random.RandomState(0)
     data_coo = sp.coo_matrix(
-        (rng.randn(n_nonzeros),
-         (rng.randint(n_samples, size=n_nonzeros),
-          rng.randint(n_features, size=n_nonzeros))),
+        (rng.randn(n_nonzeros), (rng.randint(n_samples, size=n_nonzeros),
+                                 rng.randint(n_features, size=n_nonzeros))),
         shape=(n_samples, n_features))
     return data_coo.toarray(), data_coo.tocsr()
 
@@ -69,10 +67,14 @@ def test_invalid_jl_domain():
 
 
 def test_input_size_jl_min_dim():
-    assert_raises(ValueError, johnson_lindenstrauss_min_dim,
-                  3 * [100], eps=2 * [0.9])
+    assert_raises(ValueError,
+                  johnson_lindenstrauss_min_dim,
+                  3 * [100],
+                  eps=2 * [0.9])
 
-    assert_raises(ValueError, johnson_lindenstrauss_min_dim, 3 * [100],
+    assert_raises(ValueError,
+                  johnson_lindenstrauss_min_dim,
+                  3 * [100],
                   eps=2 * [0.9])
 
     johnson_lindenstrauss_min_dim(np.random.randint(1, 10, size=(10, 10)),
@@ -104,7 +106,7 @@ def check_zero_mean_and_unit_norm(random_matrix):
     A = densify(random_matrix(10000, 1, random_state=0))
 
     assert_array_almost_equal(0, np.mean(A), 3)
-    assert_array_almost_equal(1.0, np.linalg.norm(A),  1)
+    assert_array_almost_equal(1.0, np.linalg.norm(A), 1)
 
 
 def check_input_with_sparse_random_matrix(random_matrix):
@@ -112,7 +114,10 @@ def check_input_with_sparse_random_matrix(random_matrix):
 
     for density in [-1., 0.0, 1.1]:
         assert_raises(ValueError,
-                      random_matrix, n_components, n_features, density=density)
+                      random_matrix,
+                      n_components,
+                      n_features,
+                      density=density)
 
 
 @pytest.mark.parametrize("random_matrix", all_random_matrix)
@@ -155,15 +160,15 @@ def test_sparse_random_matrix():
         s = 1 / density
 
         A = _sparse_random_matrix(n_components,
-                                 n_features,
-                                 density=density,
-                                 random_state=0)
+                                  n_features,
+                                  density=density,
+                                  random_state=0)
         A = densify(A)
 
         # Check possible values
         values = np.unique(A)
         assert np.sqrt(s) / np.sqrt(n_components) in values
-        assert - np.sqrt(s) / np.sqrt(n_components) in values
+        assert -np.sqrt(s) / np.sqrt(n_components) in values
 
         if density == 1.0:
             assert np.size(values) == 2
@@ -178,21 +183,22 @@ def test_sparse_random_matrix():
         # -  0                              with probability 1 - 1 / s
         # - +sqrt(s) / sqrt(n_components)   with probability 1 / 2s
         #
-        assert_almost_equal(np.mean(A == 0.0),
-                            1 - 1 / s, decimal=2)
+        assert_almost_equal(np.mean(A == 0.0), 1 - 1 / s, decimal=2)
         assert_almost_equal(np.mean(A == np.sqrt(s) / np.sqrt(n_components)),
-                            1 / (2 * s), decimal=2)
-        assert_almost_equal(np.mean(A == - np.sqrt(s) / np.sqrt(n_components)),
-                            1 / (2 * s), decimal=2)
+                            1 / (2 * s),
+                            decimal=2)
+        assert_almost_equal(np.mean(A == -np.sqrt(s) / np.sqrt(n_components)),
+                            1 / (2 * s),
+                            decimal=2)
 
-        assert_almost_equal(np.var(A == 0.0, ddof=1),
-                            (1 - 1 / s) * 1 / s, decimal=2)
+        assert_almost_equal(np.var(A == 0.0, ddof=1), (1 - 1 / s) * 1 / s,
+                            decimal=2)
         assert_almost_equal(np.var(A == np.sqrt(s) / np.sqrt(n_components),
-                                   ddof=1),
-                            (1 - 1 / (2 * s)) * 1 / (2 * s), decimal=2)
-        assert_almost_equal(np.var(A == - np.sqrt(s) / np.sqrt(n_components),
-                                   ddof=1),
-                            (1 - 1 / (2 * s)) * 1 / (2 * s), decimal=2)
+                                   ddof=1), (1 - 1 / (2 * s)) * 1 / (2 * s),
+                            decimal=2)
+        assert_almost_equal(np.var(A == -np.sqrt(s) / np.sqrt(n_components),
+                                   ddof=1), (1 - 1 / (2 * s)) * 1 / (2 * s),
+                            decimal=2)
 
 
 ###############################################################################
@@ -200,14 +206,11 @@ def test_sparse_random_matrix():
 ###############################################################################
 def test_sparse_random_projection_transformer_invalid_density():
     for RandomProjection in all_SparseRandomProjection:
-        assert_raises(ValueError,
-                      RandomProjection(density=1.1).fit, data)
+        assert_raises(ValueError, RandomProjection(density=1.1).fit, data)
 
-        assert_raises(ValueError,
-                      RandomProjection(density=0).fit, data)
+        assert_raises(ValueError, RandomProjection(density=0).fit, data)
 
-        assert_raises(ValueError,
-                      RandomProjection(density=-0.1).fit, data)
+        assert_raises(ValueError, RandomProjection(density=-0.1).fit, data)
 
 
 def test_random_projection_transformer_invalid_input():
@@ -215,8 +218,7 @@ def test_random_projection_transformer_invalid_input():
         assert_raises(ValueError,
                       RandomProjection(n_components='auto').fit, [[0, 1, 2]])
 
-        assert_raises(ValueError,
-                      RandomProjection(n_components=-10).fit, data)
+        assert_raises(ValueError, RandomProjection(n_components=-10).fit, data)
 
 
 def test_try_to_transform_before_fit():
@@ -271,7 +273,8 @@ def test_SparseRandomProjection_output_representation():
     for SparseRandomProjection in all_SparseRandomProjection:
         # when using sparse input, the projected data can be forced to be a
         # dense numpy array
-        rp = SparseRandomProjection(n_components=10, dense_output=True,
+        rp = SparseRandomProjection(n_components=10,
+                                    dense_output=True,
                                     random_state=0)
         rp.fit(data)
         assert isinstance(rp.transform(data), np.ndarray)
@@ -280,7 +283,8 @@ def test_SparseRandomProjection_output_representation():
         assert isinstance(rp.transform(sparse_data), np.ndarray)
 
         # the output can be left to a sparse matrix instead
-        rp = SparseRandomProjection(n_components=10, dense_output=False,
+        rp = SparseRandomProjection(n_components=10,
+                                    dense_output=False,
                                     random_state=0)
         rp = rp.fit(data)
         # output for dense input will stay dense:
@@ -292,8 +296,7 @@ def test_SparseRandomProjection_output_representation():
 
 def test_correct_RandomProjection_dimensions_embedding():
     for RandomProjection in all_RandomProjection:
-        rp = RandomProjection(n_components='auto',
-                              random_state=0,
+        rp = RandomProjection(n_components='auto', random_state=0,
                               eps=0.5).fit(data)
 
         # the number of components is adjusted from the shape of the training
@@ -325,7 +328,8 @@ def test_correct_RandomProjection_dimensions_embedding():
         # it is also possible to fix the number of components and the density
         # level
         if RandomProjection in all_SparseRandomProjection:
-            rp = RandomProjection(n_components=100, density=0.001,
+            rp = RandomProjection(n_components=100,
+                                  density=0.001,
                                   random_state=0)
             projected = rp.fit_transform(data)
             assert projected.shape == (n_samples, 100)
@@ -348,8 +352,7 @@ def test_works_with_sparse_data():
     data, _ = make_sparse_random_data(5, n_features, int(n_features / 4))
 
     for RandomProjection in all_RandomProjection:
-        rp_dense = RandomProjection(n_components=3,
-                                    random_state=1).fit(data)
+        rp_dense = RandomProjection(n_components=3, random_state=1).fit(data)
         rp_sparse = RandomProjection(n_components=3,
                                      random_state=1).fit(sp.csr_matrix(data))
         assert_array_almost_equal(densify(rp_dense.components_),

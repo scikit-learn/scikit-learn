@@ -45,25 +45,19 @@ FUNNELED_ARCHIVE = RemoteFileMetadata(
 # http://vis-www.cs.umass.edu/lfw/pairsDevTest.txt',
 # http://vis-www.cs.umass.edu/lfw/pairs.txt',
 TARGETS = (
-    RemoteFileMetadata(
-        filename='pairsDevTrain.txt',
-        url='https://ndownloader.figshare.com/files/5976012',
-        checksum=('1d454dada7dfeca0e7eab6f65dc4e97a'
-                  '6312d44cf142207be28d688be92aabfa')),
-
-    RemoteFileMetadata(
-        filename='pairsDevTest.txt',
-        url='https://ndownloader.figshare.com/files/5976009',
-        checksum=('7cb06600ea8b2814ac26e946201cdb30'
-                  '4296262aad67d046a16a7ec85d0ff87c')),
-
-    RemoteFileMetadata(
-        filename='pairs.txt',
-        url='https://ndownloader.figshare.com/files/5976006',
-        checksum=('ea42330c62c92989f9d7c03237ed5d59'
-                  '1365e89b3e649747777b70e692dc1592')),
+    RemoteFileMetadata(filename='pairsDevTrain.txt',
+                       url='https://ndownloader.figshare.com/files/5976012',
+                       checksum=('1d454dada7dfeca0e7eab6f65dc4e97a'
+                                 '6312d44cf142207be28d688be92aabfa')),
+    RemoteFileMetadata(filename='pairsDevTest.txt',
+                       url='https://ndownloader.figshare.com/files/5976009',
+                       checksum=('7cb06600ea8b2814ac26e946201cdb30'
+                                 '4296262aad67d046a16a7ec85d0ff87c')),
+    RemoteFileMetadata(filename='pairs.txt',
+                       url='https://ndownloader.figshare.com/files/5976006',
+                       checksum=('ea42330c62c92989f9d7c03237ed5d59'
+                                 '1365e89b3e649747777b70e692dc1592')),
 )
-
 
 #
 # Common private utilities for data fetching from the original LFW website
@@ -100,8 +94,7 @@ def _check_fetch_lfw(data_home=None, funneled=True, download_if_missing=True):
         archive_path = join(lfw_home, archive.filename)
         if not exists(archive_path):
             if download_if_missing:
-                logger.info("Downloading LFW data (~200MB): %s",
-                            archive.url)
+                logger.info("Downloading LFW data (~200MB): %s", archive.url)
                 _fetch_remote(archive, dirname=lfw_home)
             else:
                 raise IOError("%s is missing" % archive_path)
@@ -154,8 +147,8 @@ def _load_imgs(file_paths, slice_, color, resize):
         img = imread(file_path)
         if img.ndim == 0:
             raise RuntimeError("Failed to read the image file %s, "
-                               "Please make sure that libjpeg is installed"
-                               % file_path)
+                               "Please make sure that libjpeg is installed" %
+                               file_path)
 
         face = np.asarray(img[slice_], dtype=np.float32)
         face /= 255.0  # scale uint8 coded colors to the [0.0, 1.0] floats
@@ -175,7 +168,11 @@ def _load_imgs(file_paths, slice_, color, resize):
 # Task #1:  Face Identification on picture with names
 #
 
-def _fetch_lfw_people(data_folder_path, slice_=None, color=False, resize=None,
+
+def _fetch_lfw_people(data_folder_path,
+                      slice_=None,
+                      color=False,
+                      resize=None,
                       min_faces_per_person=0):
     """Perform the actual data loading for the lfw people dataset
 
@@ -217,10 +214,15 @@ def _fetch_lfw_people(data_folder_path, slice_=None, color=False, resize=None,
 
 
 @_deprecate_positional_args
-def fetch_lfw_people(*, data_home=None, funneled=True, resize=0.5,
-                     min_faces_per_person=0, color=False,
+def fetch_lfw_people(*,
+                     data_home=None,
+                     funneled=True,
+                     resize=0.5,
+                     min_faces_per_person=0,
+                     color=False,
                      slice_=(slice(70, 195), slice(78, 172)),
-                     download_if_missing=True, return_X_y=False):
+                     download_if_missing=True,
+                     return_X_y=False):
     """Load the Labeled Faces in the Wild (LFW) people dataset \
 (classification).
 
@@ -298,7 +300,8 @@ def fetch_lfw_people(*, data_home=None, funneled=True, resize=0.5,
 
     """
     lfw_home, data_folder_path = _check_fetch_lfw(
-        data_home=data_home, funneled=funneled,
+        data_home=data_home,
+        funneled=funneled,
         download_if_missing=download_if_missing)
     logger.debug('Loading LFW people faces from %s', lfw_home)
 
@@ -313,8 +316,11 @@ def fetch_lfw_people(*, data_home=None, funneled=True, resize=0.5,
 
     # load and memoize the pairs as np arrays
     faces, target, target_names = load_func(
-        data_folder_path, resize=resize,
-        min_faces_per_person=min_faces_per_person, color=color, slice_=slice_)
+        data_folder_path,
+        resize=resize,
+        min_faces_per_person=min_faces_per_person,
+        color=color,
+        slice_=slice_)
 
     X = faces.reshape(len(faces), -1)
 
@@ -326,8 +332,10 @@ def fetch_lfw_people(*, data_home=None, funneled=True, resize=0.5,
         return X, target
 
     # pack the results as a Bunch instance
-    return Bunch(data=X, images=faces,
-                 target=target, target_names=target_names,
+    return Bunch(data=X,
+                 images=faces,
+                 target=target,
+                 target_names=target_names,
                  DESCR=fdescr)
 
 
@@ -336,8 +344,11 @@ def fetch_lfw_people(*, data_home=None, funneled=True, resize=0.5,
 #
 
 
-def _fetch_lfw_pairs(index_file_path, data_folder_path, slice_=None,
-                     color=False, resize=None):
+def _fetch_lfw_pairs(index_file_path,
+                     data_folder_path,
+                     slice_=None,
+                     color=False,
+                     resize=None):
     """Perform the actual data loading for the LFW pairs dataset
 
     This operation is meant to be cached by a joblib wrapper.
@@ -388,9 +399,13 @@ def _fetch_lfw_pairs(index_file_path, data_folder_path, slice_=None,
 
 
 @_deprecate_positional_args
-def fetch_lfw_pairs(*, subset='train', data_home=None, funneled=True,
+def fetch_lfw_pairs(*,
+                    subset='train',
+                    data_home=None,
+                    funneled=True,
                     resize=0.5,
-                    color=False, slice_=(slice(70, 195), slice(78, 172)),
+                    color=False,
+                    slice_=(slice(70, 195), slice(78, 172)),
                     download_if_missing=True):
     """Load the Labeled Faces in the Wild (LFW) pairs dataset (classification).
 
@@ -471,7 +486,8 @@ def fetch_lfw_pairs(*, subset='train', data_home=None, funneled=True,
 
     """
     lfw_home, data_folder_path = _check_fetch_lfw(
-        data_home=data_home, funneled=funneled,
+        data_home=data_home,
+        funneled=funneled,
         download_if_missing=download_if_missing)
     logger.debug('Loading %s LFW pairs from %s', subset, lfw_home)
 
@@ -491,20 +507,24 @@ def fetch_lfw_pairs(*, subset='train', data_home=None, funneled=True,
         '10_folds': 'pairs.txt',
     }
     if subset not in label_filenames:
-        raise ValueError("subset='%s' is invalid: should be one of %r" % (
-            subset, list(sorted(label_filenames.keys()))))
+        raise ValueError("subset='%s' is invalid: should be one of %r" %
+                         (subset, list(sorted(label_filenames.keys()))))
     index_file_path = join(lfw_home, label_filenames[subset])
 
     # load and memoize the pairs as np arrays
-    pairs, target, target_names = load_func(
-        index_file_path, data_folder_path, resize=resize, color=color,
-        slice_=slice_)
+    pairs, target, target_names = load_func(index_file_path,
+                                            data_folder_path,
+                                            resize=resize,
+                                            color=color,
+                                            slice_=slice_)
 
     module_path = dirname(__file__)
     with open(join(module_path, 'descr', 'lfw.rst')) as rst_file:
         fdescr = rst_file.read()
 
     # pack the results as a Bunch instance
-    return Bunch(data=pairs.reshape(len(pairs), -1), pairs=pairs,
-                 target=target, target_names=target_names,
+    return Bunch(data=pairs.reshape(len(pairs), -1),
+                 pairs=pairs,
+                 target=target,
+                 target_names=target_names,
                  DESCR=fdescr)

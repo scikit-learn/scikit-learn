@@ -107,8 +107,14 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
         on Machine Learning (ICML) 2008
     """
     @_deprecate_positional_args
-    def __init__(self, n_components=256, *, learning_rate=0.1, batch_size=10,
-                 n_iter=10, verbose=0, random_state=None):
+    def __init__(self,
+                 n_components=256,
+                 *,
+                 learning_rate=0.1,
+                 batch_size=10,
+                 n_iter=10,
+                 verbose=0,
+                 random_state=None):
         self.n_components = n_components
         self.learning_rate = learning_rate
         self.batch_size = batch_size
@@ -204,9 +210,10 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
         free_energy : ndarray of shape (n_samples,)
             The value of the free energy.
         """
-        return (- safe_sparse_dot(v, self.intercept_visible_)
-                - np.logaddexp(0, safe_sparse_dot(v, self.components_.T)
-                               + self.intercept_hidden_).sum(axis=1))
+        return (-safe_sparse_dot(v, self.intercept_visible_) - np.logaddexp(
+            0,
+            safe_sparse_dot(v, self.components_.T) +
+            self.intercept_hidden_).sum(axis=1))
 
     def gibbs(self, v):
         """Perform one Gibbs sampling step.
@@ -247,13 +254,9 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
         if not hasattr(self, 'random_state_'):
             self.random_state_ = check_random_state(self.random_state)
         if not hasattr(self, 'components_'):
-            self.components_ = np.asarray(
-                self.random_state_.normal(
-                    0,
-                    0.01,
-                    (self.n_components, X.shape[1])
-                ),
-                order='F')
+            self.components_ = np.asarray(self.random_state_.normal(
+                0, 0.01, (self.n_components, X.shape[1])),
+                                          order='F')
         if not hasattr(self, 'intercept_hidden_'):
             self.intercept_hidden_ = np.zeros(self.n_components, )
         if not hasattr(self, 'intercept_visible_'):
@@ -286,9 +289,8 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
         update -= np.dot(h_neg.T, v_neg)
         self.components_ += lr * update
         self.intercept_hidden_ += lr * (h_pos.sum(axis=0) - h_neg.sum(axis=0))
-        self.intercept_visible_ += lr * (np.asarray(
-                                         v_pos.sum(axis=0)).squeeze() -
-                                         v_neg.sum(axis=0))
+        self.intercept_visible_ += lr * (
+            np.asarray(v_pos.sum(axis=0)).squeeze() - v_neg.sum(axis=0))
 
         h_neg[rng.uniform(size=h_neg.shape) < h_neg] = 1.0  # sample binomial
         self.h_samples_ = np.floor(h_neg, h_neg)
@@ -318,8 +320,7 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
         rng = check_random_state(self.random_state)
 
         # Randomly corrupt one feature in each sample in v.
-        ind = (np.arange(v.shape[0]),
-               rng.randint(0, v.shape[1], v.shape[0]))
+        ind = (np.arange(v.shape[0]), rng.randint(0, v.shape[1], v.shape[0]))
         if sp.issparse(v):
             data = -2 * v[ind] + 1
             v_ = v + sp.csr_matrix((data.A.ravel(), ind), shape=v.shape)
@@ -348,16 +349,18 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
         n_samples = X.shape[0]
         rng = check_random_state(self.random_state)
 
-        self.components_ = np.asarray(
-            rng.normal(0, 0.01, (self.n_components, X.shape[1])),
-            order='F')
+        self.components_ = np.asarray(rng.normal(
+            0, 0.01, (self.n_components, X.shape[1])),
+                                      order='F')
         self.intercept_hidden_ = np.zeros(self.n_components, )
         self.intercept_visible_ = np.zeros(X.shape[1], )
         self.h_samples_ = np.zeros((self.batch_size, self.n_components))
 
         n_batches = int(np.ceil(float(n_samples) / self.batch_size))
-        batch_slices = list(gen_even_slices(n_batches * self.batch_size,
-                                            n_batches, n_samples=n_samples))
+        batch_slices = list(
+            gen_even_slices(n_batches * self.batch_size,
+                            n_batches,
+                            n_samples=n_samples))
         verbose = self.verbose
         begin = time.time()
         for iteration in range(1, self.n_iter + 1):
@@ -367,9 +370,9 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
             if verbose:
                 end = time.time()
                 print("[%s] Iteration %d, pseudo-likelihood = %.2f,"
-                      " time = %.2fs"
-                      % (type(self).__name__, iteration,
-                         self.score_samples(X).mean(), end - begin))
+                      " time = %.2fs" %
+                      (type(self).__name__, iteration,
+                       self.score_samples(X).mean(), end - begin))
                 begin = end
 
         return self

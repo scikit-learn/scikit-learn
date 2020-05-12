@@ -17,8 +17,8 @@ def test_fetch(fetch_covtype_fxt):
     assert X1.sum() == X2.sum()
 
     y1, y2 = data1['target'], data2['target']
-    assert (X1.shape[0],) == y1.shape
-    assert (X1.shape[0],) == y2.shape
+    assert (X1.shape[0], ) == y1.shape
+    assert (X1.shape[0], ) == y2.shape
 
     # test return_X_y option
     fetch_func = partial(fetch_covtype_fxt)

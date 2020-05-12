@@ -23,7 +23,11 @@ from ..exceptions import ConvergenceWarning
 __all__ = ['PLSCanonical', 'PLSRegression', 'PLSSVD']
 
 
-def _nipals_twoblocks_inner_loop(X, Y, mode="A", max_iter=500, tol=1e-06,
+def _nipals_twoblocks_inner_loop(X,
+                                 Y,
+                                 mode="A",
+                                 max_iter=500,
+                                 tol=1e-06,
                                  norm_y_weights=False):
     """Inner loop of the iterative NIPALS algorithm.
 
@@ -135,7 +139,10 @@ def _center_scale_xy(X, Y, scale=True):
     return X, Y, x_mean, y_mean, x_std, y_std
 
 
-class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
+class _PLS(TransformerMixin,
+           RegressorMixin,
+           MultiOutputMixin,
+           BaseEstimator,
            metaclass=ABCMeta):
     """Partial Least Squares (PLS)
 
@@ -247,12 +254,18 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
     CCA
     PLS_SVD
     """
-
     @abstractmethod
-    def __init__(self, n_components=2, *, scale=True,
+    def __init__(self,
+                 n_components=2,
+                 *,
+                 scale=True,
                  deflation_mode="regression",
-                 mode="A", algorithm="nipals", norm_y_weights=False,
-                 max_iter=500, tol=1e-06, copy=True):
+                 mode="A",
+                 algorithm="nipals",
+                 norm_y_weights=False,
+                 max_iter=500,
+                 tol=1e-06,
+                 copy=True):
         self.n_components = n_components
         self.deflation_mode = deflation_mode
         self.mode = mode
@@ -279,7 +292,9 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
 
         # copy since this will contains the residuals (deflated) matrices
         check_consistent_length(X, Y)
-        X = self._validate_data(X, dtype=np.float64, copy=self.copy,
+        X = self._validate_data(X,
+                                dtype=np.float64,
+                                copy=self.copy,
                                 ensure_min_samples=2)
         Y = check_array(Y, dtype=np.float64, copy=self.copy, ensure_2d=False)
         if Y.ndim == 1:
@@ -365,13 +380,13 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
             Xk -= np.dot(x_scores, x_loadings.T)
             if self.deflation_mode == "canonical":
                 # - regress Yk's on y_score, then subtract rank-one approx.
-                y_loadings = (np.dot(Yk.T, y_scores)
-                              / np.dot(y_scores.T, y_scores))
+                y_loadings = (np.dot(Yk.T, y_scores) /
+                              np.dot(y_scores.T, y_scores))
                 Yk -= np.dot(y_scores, y_loadings.T)
             if self.deflation_mode == "regression":
                 # - regress Yk's on x_score, then subtract rank-one approx.
-                y_loadings = (np.dot(Yk.T, x_scores)
-                              / np.dot(x_scores.T, x_scores))
+                y_loadings = (np.dot(Yk.T, x_scores) /
+                              np.dot(x_scores.T, x_scores))
                 Yk -= np.dot(x_scores, y_loadings.T)
             # 3) Store weights, scores and loadings # Notation:
             self.x_scores_[:, k] = x_scores.ravel()  # T
@@ -519,8 +534,7 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
         return self.fit(X, y).transform(X, y)
 
     def _more_tags(self):
-        return {'poor_score': True,
-                'requires_y': False}
+        return {'poor_score': True, 'requires_y': False}
 
 
 class PLSRegression(_PLS):
@@ -654,13 +668,21 @@ class PLSRegression(_PLS):
     Editions Technic.
     """
     @_deprecate_positional_args
-    def __init__(self, n_components=2, *, scale=True,
-                 max_iter=500, tol=1e-06, copy=True):
-        super().__init__(
-            n_components=n_components, scale=scale,
-            deflation_mode="regression", mode="A",
-            norm_y_weights=False, max_iter=max_iter, tol=tol,
-            copy=copy)
+    def __init__(self,
+                 n_components=2,
+                 *,
+                 scale=True,
+                 max_iter=500,
+                 tol=1e-06,
+                 copy=True):
+        super().__init__(n_components=n_components,
+                         scale=scale,
+                         deflation_mode="regression",
+                         mode="A",
+                         norm_y_weights=False,
+                         max_iter=max_iter,
+                         tol=tol,
+                         copy=copy)
 
 
 class PLSCanonical(_PLS):
@@ -803,13 +825,23 @@ class PLSCanonical(_PLS):
     PLSSVD
     """
     @_deprecate_positional_args
-    def __init__(self, n_components=2, *, scale=True, algorithm="nipals",
-                 max_iter=500, tol=1e-06, copy=True):
-        super().__init__(
-            n_components=n_components, scale=scale,
-            deflation_mode="canonical", mode="A",
-            norm_y_weights=True, algorithm=algorithm,
-            max_iter=max_iter, tol=tol, copy=copy)
+    def __init__(self,
+                 n_components=2,
+                 *,
+                 scale=True,
+                 algorithm="nipals",
+                 max_iter=500,
+                 tol=1e-06,
+                 copy=True):
+        super().__init__(n_components=n_components,
+                         scale=scale,
+                         deflation_mode="canonical",
+                         mode="A",
+                         norm_y_weights=True,
+                         algorithm=algorithm,
+                         max_iter=max_iter,
+                         tol=tol,
+                         copy=copy)
 
 
 class PLSSVD(TransformerMixin, BaseEstimator):
@@ -892,7 +924,9 @@ class PLSSVD(TransformerMixin, BaseEstimator):
         """
         # copy since this will contains the centered data
         check_consistent_length(X, Y)
-        X = self._validate_data(X, dtype=np.float64, copy=self.copy,
+        X = self._validate_data(X,
+                                dtype=np.float64,
+                                copy=self.copy,
                                 ensure_min_samples=2)
         Y = check_array(Y, dtype=np.float64, copy=self.copy, ensure_2d=False)
         if Y.ndim == 1:
@@ -900,8 +934,8 @@ class PLSSVD(TransformerMixin, BaseEstimator):
 
         if self.n_components > max(Y.shape[1], X.shape[1]):
             raise ValueError("Invalid number of components n_components=%d"
-                             " with X of shape %s and Y of shape %s."
-                             % (self.n_components, str(X.shape), str(Y.shape)))
+                             " with X of shape %s and Y of shape %s." %
+                             (self.n_components, str(X.shape), str(Y.shape)))
 
         # Scale (in place)
         X, Y, self.x_mean_, self.y_mean_, self.x_std_, self.y_std_ = (

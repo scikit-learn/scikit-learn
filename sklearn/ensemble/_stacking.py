@@ -34,13 +34,19 @@ from ..utils.validation import column_or_1d
 from ..utils.validation import _deprecate_positional_args
 
 
-class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble,
+class _BaseStacking(TransformerMixin,
+                    _BaseHeterogeneousEnsemble,
                     metaclass=ABCMeta):
     """Base class for stacking method."""
-
     @abstractmethod
-    def __init__(self, estimators, final_estimator=None, *, cv=None,
-                 stack_method='auto', n_jobs=None, verbose=0,
+    def __init__(self,
+                 estimators,
+                 final_estimator=None,
+                 *,
+                 cv=None,
+                 stack_method='auto',
+                 n_jobs=None,
+                 verbose=0,
                  passthrough=False):
         super().__init__(estimators=estimators)
         self.final_estimator = final_estimator
@@ -75,8 +81,8 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble,
             if preds.ndim == 1:
                 X_meta.append(preds.reshape(-1, 1))
             else:
-                if (self.stack_method_[est_idx] == 'predict_proba' and
-                        len(self.classes_) == 2):
+                if (self.stack_method_[est_idx] == 'predict_proba'
+                        and len(self.classes_) == 2):
                     # Remove the first column when using probabilities in
                     # binary classification because both features are perfectly
                     # collinear.
@@ -144,8 +150,7 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble,
         # predict_proba. They are exposed publicly.
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
             delayed(_fit_single_estimator)(clone(est), X, y, sample_weight)
-            for est in all_estimators if est != 'drop'
-        )
+            for est in all_estimators if est != 'drop')
         self.n_features_in_ = self.estimators_[0].n_features_in_
 
         self.named_estimators_ = Bunch()
@@ -172,17 +177,20 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble,
             self._method_name(name, est, meth)
             for name, est, meth in zip(names, all_estimators, stack_method)
         ]
-        fit_params = ({"sample_weight": sample_weight}
-                      if sample_weight is not None
-                      else None)
+        fit_params = ({
+            "sample_weight": sample_weight
+        } if sample_weight is not None else None)
         predictions = Parallel(n_jobs=self.n_jobs)(
-            delayed(cross_val_predict)(clone(est), X, y, cv=deepcopy(cv),
-                                       method=meth, n_jobs=self.n_jobs,
+            delayed(cross_val_predict)(clone(est),
+                                       X,
+                                       y,
+                                       cv=deepcopy(cv),
+                                       method=meth,
+                                       n_jobs=self.n_jobs,
                                        fit_params=fit_params,
                                        verbose=self.verbose)
             for est, meth in zip(all_estimators, self.stack_method_)
-            if est != 'drop'
-        )
+            if est != 'drop')
 
         # Only not None or not 'drop' estimators will be used in transform.
         # Remove the None from the method as well.
@@ -192,7 +200,9 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble,
         ]
 
         X_meta = self._concatenate_predictions(X, predictions)
-        _fit_single_estimator(self.final_estimator_, X_meta, y,
+        _fit_single_estimator(self.final_estimator_,
+                              X_meta,
+                              y,
                               sample_weight=sample_weight)
 
         return self
@@ -230,13 +240,14 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble,
         """
 
         check_is_fitted(self)
-        return self.final_estimator_.predict(
-            self.transform(X), **predict_params
-        )
+        return self.final_estimator_.predict(self.transform(X),
+                                             **predict_params)
 
     def _sk_visual_block_(self, final_estimator):
         names, estimators = zip(*self.estimators)
-        parallel = _VisualBlock('parallel', estimators, names=names,
+        parallel = _VisualBlock('parallel',
+                                estimators,
+                                names=names,
                                 dash_wrapped=False)
         serial = _VisualBlock('serial', (parallel, final_estimator),
                               dash_wrapped=False)
@@ -377,26 +388,29 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
 
     """
     @_deprecate_positional_args
-    def __init__(self, estimators, final_estimator=None, *, cv=None,
-                 stack_method='auto', n_jobs=None, passthrough=False,
+    def __init__(self,
+                 estimators,
+                 final_estimator=None,
+                 *,
+                 cv=None,
+                 stack_method='auto',
+                 n_jobs=None,
+                 passthrough=False,
                  verbose=0):
-        super().__init__(
-            estimators=estimators,
-            final_estimator=final_estimator,
-            cv=cv,
-            stack_method=stack_method,
-            n_jobs=n_jobs,
-            passthrough=passthrough,
-            verbose=verbose
-        )
+        super().__init__(estimators=estimators,
+                         final_estimator=final_estimator,
+                         cv=cv,
+                         stack_method=stack_method,
+                         n_jobs=n_jobs,
+                         passthrough=passthrough,
+                         verbose=verbose)
 
     def _validate_final_estimator(self):
         self._clone_final_estimator(default=LogisticRegression())
         if not is_classifier(self.final_estimator_):
             raise ValueError(
-                "'final_estimator' parameter should be a classifier. Got {}"
-                .format(self.final_estimator_)
-            )
+                "'final_estimator' parameter should be a classifier. Got {}".
+                format(self.final_estimator_))
 
     def fit(self, X, y, sample_weight=None):
         """Fit the estimators.
@@ -624,25 +638,28 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
 
     """
     @_deprecate_positional_args
-    def __init__(self, estimators, final_estimator=None, *, cv=None,
-                 n_jobs=None, passthrough=False, verbose=0):
-        super().__init__(
-            estimators=estimators,
-            final_estimator=final_estimator,
-            cv=cv,
-            stack_method="predict",
-            n_jobs=n_jobs,
-            passthrough=passthrough,
-            verbose=verbose
-        )
+    def __init__(self,
+                 estimators,
+                 final_estimator=None,
+                 *,
+                 cv=None,
+                 n_jobs=None,
+                 passthrough=False,
+                 verbose=0):
+        super().__init__(estimators=estimators,
+                         final_estimator=final_estimator,
+                         cv=cv,
+                         stack_method="predict",
+                         n_jobs=n_jobs,
+                         passthrough=passthrough,
+                         verbose=verbose)
 
     def _validate_final_estimator(self):
         self._clone_final_estimator(default=RidgeCV())
         if not is_regressor(self.final_estimator_):
             raise ValueError(
-                "'final_estimator' parameter should be a regressor. Got {}"
-                .format(self.final_estimator_)
-            )
+                "'final_estimator' parameter should be a regressor. Got {}".
+                format(self.final_estimator_))
 
     def fit(self, X, y, sample_weight=None):
         """Fit the estimators.

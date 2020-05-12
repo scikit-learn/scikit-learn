@@ -16,13 +16,23 @@ from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
 
 ESTIMATORS = [
-    (label_propagation.LabelPropagation, {'kernel': 'rbf'}),
-    (label_propagation.LabelPropagation, {'kernel': 'knn', 'n_neighbors': 2}),
+    (label_propagation.LabelPropagation, {
+        'kernel': 'rbf'
+    }),
+    (label_propagation.LabelPropagation, {
+        'kernel': 'knn',
+        'n_neighbors': 2
+    }),
     (label_propagation.LabelPropagation, {
         'kernel': lambda x, y: rbf_kernel(x, y, gamma=20)
     }),
-    (label_propagation.LabelSpreading, {'kernel': 'rbf'}),
-    (label_propagation.LabelSpreading, {'kernel': 'knn', 'n_neighbors': 2}),
+    (label_propagation.LabelSpreading, {
+        'kernel': 'rbf'
+    }),
+    (label_propagation.LabelSpreading, {
+        'kernel': 'knn',
+        'n_neighbors': 2
+    }),
     (label_propagation.LabelSpreading, {
         'kernel': lambda x, y: rbf_kernel(x, y, gamma=20)
     }),
@@ -43,7 +53,7 @@ def test_distribution():
     for estimator, parameters in ESTIMATORS:
         clf = estimator(**parameters).fit(samples, labels)
         if parameters['kernel'] == 'knn':
-            continue    # unstable test; changes in k-NN ordering break it
+            continue  # unstable test; changes in k-NN ordering break it
             assert_array_almost_equal(clf.predict_proba([[1., 0.0]]),
                                       np.array([[1., 0.]]), 2)
         else:
@@ -70,7 +80,8 @@ def test_predict_proba():
 
 def test_label_spreading_closed_form():
     n_classes = 2
-    X, y = make_classification(n_classes=n_classes, n_samples=200,
+    X, y = make_classification(n_classes=n_classes,
+                               n_samples=200,
                                random_state=0)
     y[::3] = -1
     clf = label_propagation.LabelSpreading().fit(X, y)
@@ -89,21 +100,21 @@ def test_label_spreading_closed_form():
 
 def test_label_propagation_closed_form():
     n_classes = 2
-    X, y = make_classification(n_classes=n_classes, n_samples=200,
+    X, y = make_classification(n_classes=n_classes,
+                               n_samples=200,
                                random_state=0)
     y[::3] = -1
     Y = np.zeros((len(y), n_classes + 1))
     Y[np.arange(len(y)), y] = 1
-    unlabelled_idx = Y[:, (-1,)].nonzero()[0]
-    labelled_idx = (Y[:, (-1,)] == 0).nonzero()[0]
+    unlabelled_idx = Y[:, (-1, )].nonzero()[0]
+    labelled_idx = (Y[:, (-1, )] == 0).nonzero()[0]
 
-    clf = label_propagation.LabelPropagation(max_iter=10000,
-                                             gamma=0.1)
+    clf = label_propagation.LabelPropagation(max_iter=10000, gamma=0.1)
     clf.fit(X, y)
     # adopting notation from Zhu et al 2002
     T_bar = clf._build_graph()
-    Tuu = T_bar[tuple(np.meshgrid(unlabelled_idx, unlabelled_idx,
-                      indexing='ij'))]
+    Tuu = T_bar[tuple(
+        np.meshgrid(unlabelled_idx, unlabelled_idx, indexing='ij'))]
     Tul = T_bar[tuple(np.meshgrid(unlabelled_idx, labelled_idx,
                                   indexing='ij'))]
     Y = Y[:, :-1]
@@ -119,7 +130,8 @@ def test_label_propagation_closed_form():
 
 def test_valid_alpha():
     n_classes = 2
-    X, y = make_classification(n_classes=n_classes, n_samples=200,
+    X, y = make_classification(n_classes=n_classes,
+                               n_samples=200,
                                random_state=0)
     for alpha in [-0.1, 0, 1, 1.1, None]:
         with pytest.raises(ValueError):
@@ -192,7 +204,8 @@ def test_predict_sparse_callable_kernel():
                                n_repeated=0,
                                random_state=0)
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y,
+    X_train, X_test, y_train, y_test = train_test_split(X,
+                                                        y,
                                                         test_size=n_test,
                                                         random_state=0)
 

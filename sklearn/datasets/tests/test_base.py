@@ -102,21 +102,24 @@ def test_default_load_files(test_category_dir_1, test_category_dir_2,
     assert res.data == [b"Hello World!\n"]
 
 
-def test_load_files_w_categories_desc_and_encoding(
-        test_category_dir_1, test_category_dir_2, load_files_root):
+def test_load_files_w_categories_desc_and_encoding(test_category_dir_1,
+                                                   test_category_dir_2,
+                                                   load_files_root):
     if IS_PYPY:
         pytest.xfail('[PyPy] fails due to string containing NUL characters')
     category = os.path.abspath(test_category_dir_1).split('/').pop()
-    res = load_files(load_files_root, description="test",
-                     categories=category, encoding="utf-8")
+    res = load_files(load_files_root,
+                     description="test",
+                     categories=category,
+                     encoding="utf-8")
     assert len(res.filenames) == 1
     assert len(res.target_names) == 1
     assert res.DESCR == "test"
     assert res.data == ["Hello World!\n"]
 
 
-def test_load_files_wo_load_content(
-        test_category_dir_1, test_category_dir_2, load_files_root):
+def test_load_files_wo_load_content(test_category_dir_1, test_category_dir_2,
+                                    load_files_root):
     res = load_files(load_files_root, load_content=False)
     assert len(res.filenames) == 1
     assert len(res.target_names) == 2
@@ -132,11 +135,11 @@ def test_load_sample_images():
         images = res.images
 
         # assert is china image
-        assert np.all(images[0][0, 0, :] ==
-                      np.array([174, 201, 231], dtype=np.uint8))
+        assert np.all(
+            images[0][0, 0, :] == np.array([174, 201, 231], dtype=np.uint8))
         # assert is flower image
-        assert np.all(images[1][0, 0, :] ==
-                      np.array([2, 19, 13], dtype=np.uint8))
+        assert np.all(images[1][0,
+                                0, :] == np.array([2, 19, 13], dtype=np.uint8))
         assert res.DESCR
     except ImportError:
         warnings.warn("Could not load sample images, PIL is not available.")
@@ -243,7 +246,8 @@ def test_load_breast_cancer():
 ])
 def test_toy_dataset_as_frame(loader_func, data_dtype, target_dtype):
     default_result = loader_func()
-    check_as_frame(default_result, partial(loader_func),
+    check_as_frame(default_result,
+                   partial(loader_func),
                    expected_data_dtype=data_dtype,
                    expected_target_dtype=target_dtype)
 

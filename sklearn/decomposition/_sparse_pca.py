@@ -21,13 +21,11 @@ def _check_normalize_components(normalize_components, estimator_name):
             warnings.warn(
                 "'normalize_components' has been deprecated in 0.22 and "
                 "will be removed in 0.24. Remove the parameter from the "
-                " constructor.", FutureWarning
-            )
+                " constructor.", FutureWarning)
         else:
             raise NotImplementedError(
                 "normalize_components=False is not supported starting from "
-                "0.22. Remove this parameter from the constructor."
-            )
+                "0.22. Remove this parameter from the constructor.")
 
 
 class SparsePCA(TransformerMixin, BaseEstimator):
@@ -138,9 +136,19 @@ class SparsePCA(TransformerMixin, BaseEstimator):
     DictionaryLearning
     """
     @_deprecate_positional_args
-    def __init__(self, n_components=None, *, alpha=1, ridge_alpha=0.01,
-                 max_iter=1000, tol=1e-8, method='lars', n_jobs=None,
-                 U_init=None, V_init=None, verbose=False, random_state=None,
+    def __init__(self,
+                 n_components=None,
+                 *,
+                 alpha=1,
+                 ridge_alpha=0.01,
+                 max_iter=1000,
+                 tol=1e-8,
+                 method='lars',
+                 n_jobs=None,
+                 U_init=None,
+                 V_init=None,
+                 verbose=False,
+                 random_state=None,
                  normalize_components='deprecated'):
         self.n_components = n_components
         self.alpha = alpha
@@ -174,9 +182,8 @@ class SparsePCA(TransformerMixin, BaseEstimator):
         random_state = check_random_state(self.random_state)
         X = self._validate_data(X)
 
-        _check_normalize_components(
-            self.normalize_components, self.__class__.__name__
-        )
+        _check_normalize_components(self.normalize_components,
+                                    self.__class__.__name__)
 
         self.mean_ = X.mean(axis=0)
         X = X - self.mean_
@@ -187,7 +194,9 @@ class SparsePCA(TransformerMixin, BaseEstimator):
             n_components = self.n_components
         code_init = self.V_init.T if self.V_init is not None else None
         dict_init = self.U_init.T if self.U_init is not None else None
-        Vt, _, E, self.n_iter_ = dict_learning(X.T, n_components, self.alpha,
+        Vt, _, E, self.n_iter_ = dict_learning(X.T,
+                                               n_components,
+                                               self.alpha,
                                                tol=self.tol,
                                                max_iter=self.max_iter,
                                                method=self.method,
@@ -198,8 +207,8 @@ class SparsePCA(TransformerMixin, BaseEstimator):
                                                dict_init=dict_init,
                                                return_n_iter=True)
         self.components_ = Vt.T
-        components_norm = np.linalg.norm(
-            self.components_, axis=1)[:, np.newaxis]
+        components_norm = np.linalg.norm(self.components_, axis=1)[:,
+                                                                   np.newaxis]
         components_norm[components_norm == 0] = 1
         self.components_ /= components_norm
         self.n_components_ = len(self.components_)
@@ -233,7 +242,9 @@ class SparsePCA(TransformerMixin, BaseEstimator):
         X = check_array(X)
         X = X - self.mean_
 
-        U = ridge_regression(self.components_.T, X.T, self.ridge_alpha,
+        U = ridge_regression(self.components_.T,
+                             X.T,
+                             self.ridge_alpha,
                              solver='cholesky')
 
         return U
@@ -354,15 +365,28 @@ class MiniBatchSparsePCA(SparsePCA):
     DictionaryLearning
     """
     @_deprecate_positional_args
-    def __init__(self, n_components=None, *, alpha=1, ridge_alpha=0.01,
-                 n_iter=100, callback=None, batch_size=3, verbose=False,
-                 shuffle=True, n_jobs=None, method='lars', random_state=None,
+    def __init__(self,
+                 n_components=None,
+                 *,
+                 alpha=1,
+                 ridge_alpha=0.01,
+                 n_iter=100,
+                 callback=None,
+                 batch_size=3,
+                 verbose=False,
+                 shuffle=True,
+                 n_jobs=None,
+                 method='lars',
+                 random_state=None,
                  normalize_components='deprecated'):
-        super().__init__(
-            n_components=n_components, alpha=alpha, verbose=verbose,
-            ridge_alpha=ridge_alpha, n_jobs=n_jobs, method=method,
-            random_state=random_state,
-            normalize_components=normalize_components)
+        super().__init__(n_components=n_components,
+                         alpha=alpha,
+                         verbose=verbose,
+                         ridge_alpha=ridge_alpha,
+                         n_jobs=n_jobs,
+                         method=method,
+                         random_state=random_state,
+                         normalize_components=normalize_components)
         self.n_iter = n_iter
         self.callback = callback
         self.batch_size = batch_size
@@ -387,9 +411,8 @@ class MiniBatchSparsePCA(SparsePCA):
         random_state = check_random_state(self.random_state)
         X = self._validate_data(X)
 
-        _check_normalize_components(
-            self.normalize_components, self.__class__.__name__
-        )
+        _check_normalize_components(self.normalize_components,
+                                    self.__class__.__name__)
 
         self.mean_ = X.mean(axis=0)
         X = X - self.mean_
@@ -398,20 +421,24 @@ class MiniBatchSparsePCA(SparsePCA):
             n_components = X.shape[1]
         else:
             n_components = self.n_components
-        Vt, _, self.n_iter_ = dict_learning_online(
-            X.T, n_components, alpha=self.alpha,
-            n_iter=self.n_iter, return_code=True,
-            dict_init=None, verbose=self.verbose,
-            callback=self.callback,
-            batch_size=self.batch_size,
-            shuffle=self.shuffle,
-            n_jobs=self.n_jobs, method=self.method,
-            random_state=random_state,
-            return_n_iter=True)
+        Vt, _, self.n_iter_ = dict_learning_online(X.T,
+                                                   n_components,
+                                                   alpha=self.alpha,
+                                                   n_iter=self.n_iter,
+                                                   return_code=True,
+                                                   dict_init=None,
+                                                   verbose=self.verbose,
+                                                   callback=self.callback,
+                                                   batch_size=self.batch_size,
+                                                   shuffle=self.shuffle,
+                                                   n_jobs=self.n_jobs,
+                                                   method=self.method,
+                                                   random_state=random_state,
+                                                   return_n_iter=True)
         self.components_ = Vt.T
 
-        components_norm = np.linalg.norm(
-            self.components_, axis=1)[:, np.newaxis]
+        components_norm = np.linalg.norm(self.components_, axis=1)[:,
+                                                                   np.newaxis]
         components_norm[components_norm == 0] = 1
         self.components_ /= components_norm
         self.n_components_ = len(self.components_)

@@ -10,8 +10,7 @@ import scipy.sparse as sp
 
 from sklearn.utils._testing import (assert_array_equal,
                                     assert_allclose_dense_sparse,
-                                    assert_warns_message,
-                                    assert_no_warnings,
+                                    assert_warns_message, assert_no_warnings,
                                     _convert_container)
 from sklearn.utils import check_random_state
 from sklearn.utils import _determine_key_type
@@ -56,10 +55,8 @@ def test_make_rng():
 def test_gen_batches():
     # Make sure gen_batches errors on invalid batch_size
 
-    assert_array_equal(
-        list(gen_batches(4, 2)),
-        [slice(0, 2, None), slice(2, 4, None)]
-    )
+    assert_array_equal(list(gen_batches(
+        4, 2)), [slice(0, 2, None), slice(2, 4, None)])
     msg_zero = "gen_batches got batch_size=0, must be positive"
     with pytest.raises(ValueError, match=msg_zero):
         next(gen_batches(4, 0))
@@ -83,7 +80,7 @@ def test_deprecated():
 
         spam = ham()
 
-        assert spam == "spam"     # function must remain usable
+        assert spam == "spam"  # function must remain usable
 
         assert len(w) == 1
         assert issubclass(w[0].category, FutureWarning)
@@ -130,7 +127,10 @@ def test_resample_stratified():
     X = rng.normal(size=(n_samples, 1))
     y = rng.binomial(1, p, size=n_samples)
 
-    _, y_not_stratified = resample(X, y, n_samples=10, random_state=0,
+    _, y_not_stratified = resample(X,
+                                   y,
+                                   n_samples=10,
+                                   random_state=0,
                                    stratify=None)
     assert np.all(y_not_stratified == 1)
 
@@ -146,17 +146,29 @@ def test_resample_stratified_replace():
     X = rng.normal(size=(n_samples, 1))
     y = rng.randint(0, 2, size=n_samples)
 
-    X_replace, _ = resample(X, y, replace=True, n_samples=50,
-                            random_state=rng, stratify=y)
-    X_no_replace, _ = resample(X, y, replace=False, n_samples=50,
-                               random_state=rng, stratify=y)
+    X_replace, _ = resample(X,
+                            y,
+                            replace=True,
+                            n_samples=50,
+                            random_state=rng,
+                            stratify=y)
+    X_no_replace, _ = resample(X,
+                               y,
+                               replace=False,
+                               n_samples=50,
+                               random_state=rng,
+                               stratify=y)
     assert np.unique(X_replace).shape[0] < 50
     assert np.unique(X_no_replace).shape[0] == 50
 
     # make sure n_samples can be greater than X.shape[0] if we sample with
     # replacement
-    X_replace, _ = resample(X, y, replace=True, n_samples=1000,
-                            random_state=rng, stratify=y)
+    X_replace, _ = resample(X,
+                            y,
+                            replace=True,
+                            n_samples=1000,
+                            random_state=rng,
+                            stratify=y)
     assert X_replace.shape[0] == 1000
     assert np.unique(X_replace).shape[0] == 100
 
@@ -179,7 +191,10 @@ def test_resample_stratify_sparse_error():
     y = rng.randint(0, 2, size=n_samples)
     stratify = sp.csr_matrix(y)
     with pytest.raises(TypeError, match='A sparse matrix was passed'):
-        X, y = resample(X, y, n_samples=50, random_state=rng,
+        X, y = resample(X,
+                        y,
+                        n_samples=50,
+                        random_state=rng,
                         stratify=stratify)
 
 
@@ -222,29 +237,17 @@ def test_column_or_1d():
 
 @pytest.mark.parametrize(
     "key, dtype",
-    [(0, 'int'),
-     ('0', 'str'),
-     (True, 'bool'),
-     (np.bool_(True), 'bool'),
-     ([0, 1, 2], 'int'),
-     (['0', '1', '2'], 'str'),
-     ((0, 1, 2), 'int'),
-     (('0', '1', '2'), 'str'),
-     (slice(None, None), None),
-     (slice(0, 2), 'int'),
+    [(0, 'int'), ('0', 'str'), (True, 'bool'), (np.bool_(True), 'bool'),
+     ([0, 1, 2], 'int'), (['0', '1', '2'], 'str'), ((0, 1, 2), 'int'),
+     (('0', '1', '2'), 'str'), (slice(None, None), None), (slice(0, 2), 'int'),
      (np.array([0, 1, 2], dtype=np.int32), 'int'),
      (np.array([0, 1, 2], dtype=np.int64), 'int'),
-     (np.array([0, 1, 2], dtype=np.uint8), 'int'),
-     ([True, False], 'bool'),
-     ((True, False), 'bool'),
-     (np.array([True, False]), 'bool'),
-     ('col_0', 'str'),
-     (['col_0', 'col_1', 'col_2'], 'str'),
-     (('col_0', 'col_1', 'col_2'), 'str'),
-     (slice('begin', 'end'), 'str'),
+     (np.array([0, 1, 2], dtype=np.uint8), 'int'), ([True, False], 'bool'),
+     ((True, False), 'bool'), (np.array([True, False]), 'bool'),
+     ('col_0', 'str'), (['col_0', 'col_1', 'col_2'], 'str'),
+     (('col_0', 'col_1', 'col_2'), 'str'), (slice('begin', 'end'), 'str'),
      (np.array(['col_0', 'col_1', 'col_2']), 'str'),
-     (np.array(['col_0', 'col_1', 'col_2'], dtype=object), 'str')]
-)
+     (np.array(['col_0', 'col_1', 'col_2'], dtype=object), 'str')])
 def test_determine_key_type(key, dtype):
     assert _determine_key_type(key) == dtype
 
@@ -259,12 +262,10 @@ def test_determine_key_type_slice_error():
         _determine_key_type(slice(0, 2, 1), accept_slice=False)
 
 
-@pytest.mark.parametrize(
-    "array_type", ["list", "array", "sparse", "dataframe"]
-)
-@pytest.mark.parametrize(
-    "indices_type", ["list", "tuple", "array", "series", "slice"]
-)
+@pytest.mark.parametrize("array_type",
+                         ["list", "array", "sparse", "dataframe"])
+@pytest.mark.parametrize("indices_type",
+                         ["list", "tuple", "array", "series", "slice"])
 def test_safe_indexing_2d_container_axis_0(array_type, indices_type):
     indices = [1, 2]
     if indices_type == 'slice' and isinstance(indices[1], int):
@@ -273,14 +274,12 @@ def test_safe_indexing_2d_container_axis_0(array_type, indices_type):
     indices = _convert_container(indices, indices_type)
     subset = _safe_indexing(array, indices, axis=0)
     assert_allclose_dense_sparse(
-        subset, _convert_container([[4, 5, 6], [7, 8, 9]], array_type)
-    )
+        subset, _convert_container([[4, 5, 6], [7, 8, 9]], array_type))
 
 
 @pytest.mark.parametrize("array_type", ["list", "array", "series"])
-@pytest.mark.parametrize(
-    "indices_type", ["list", "tuple", "array", "series", "slice"]
-)
+@pytest.mark.parametrize("indices_type",
+                         ["list", "tuple", "array", "series", "slice"])
 def test_safe_indexing_1d_container(array_type, indices_type):
     indices = [1, 2]
     if indices_type == 'slice' and isinstance(indices[1], int):
@@ -288,15 +287,13 @@ def test_safe_indexing_1d_container(array_type, indices_type):
     array = _convert_container([1, 2, 3, 4, 5, 6, 7, 8, 9], array_type)
     indices = _convert_container(indices, indices_type)
     subset = _safe_indexing(array, indices, axis=0)
-    assert_allclose_dense_sparse(
-        subset, _convert_container([2, 3], array_type)
-    )
+    assert_allclose_dense_sparse(subset, _convert_container([2, 3],
+                                                            array_type))
 
 
 @pytest.mark.parametrize("array_type", ["array", "sparse", "dataframe"])
-@pytest.mark.parametrize(
-    "indices_type", ["list", "tuple", "array", "series", "slice"]
-)
+@pytest.mark.parametrize("indices_type",
+                         ["list", "tuple", "array", "series", "slice"])
 @pytest.mark.parametrize("indices", [[1, 2], ["col_1", "col_2"]])
 def test_safe_indexing_2d_container_axis_1(array_type, indices_type, indices):
     # validation of the indices
@@ -306,9 +303,8 @@ def test_safe_indexing_2d_container_axis_1(array_type, indices_type, indices):
         indices_converted[1] += 1
 
     columns_name = ['col_0', 'col_1', 'col_2']
-    array = _convert_container(
-        [[1, 2, 3], [4, 5, 6], [7, 8, 9]], array_type, columns_name
-    )
+    array = _convert_container([[1, 2, 3], [4, 5, 6], [7, 8, 9]], array_type,
+                               columns_name)
     indices_converted = _convert_container(indices_converted, indices_type)
 
     if isinstance(indices[0], str) and array_type != 'dataframe':
@@ -319,18 +315,16 @@ def test_safe_indexing_2d_container_axis_1(array_type, indices_type, indices):
     else:
         subset = _safe_indexing(array, indices_converted, axis=1)
         assert_allclose_dense_sparse(
-            subset, _convert_container([[2, 3], [5, 6], [8, 9]], array_type)
-        )
+            subset, _convert_container([[2, 3], [5, 6], [8, 9]], array_type))
 
 
 @pytest.mark.parametrize("array_read_only", [True, False])
 @pytest.mark.parametrize("indices_read_only", [True, False])
 @pytest.mark.parametrize("array_type", ["array", "sparse", "dataframe"])
 @pytest.mark.parametrize("indices_type", ["array", "series"])
-@pytest.mark.parametrize(
-    "axis, expected_array",
-    [(0, [[4, 5, 6], [7, 8, 9]]), (1, [[2, 3], [5, 6], [8, 9]])]
-)
+@pytest.mark.parametrize("axis, expected_array",
+                         [(0, [[4, 5, 6], [7, 8, 9]]),
+                          (1, [[2, 3], [5, 6], [8, 9]])])
 def test_safe_indexing_2d_read_only_axis_1(array_read_only, indices_read_only,
                                            array_type, indices_type, axis,
                                            expected_array):
@@ -344,8 +338,7 @@ def test_safe_indexing_2d_read_only_axis_1(array_read_only, indices_read_only,
     indices = _convert_container(indices, indices_type)
     subset = _safe_indexing(array, indices, axis=axis)
     assert_allclose_dense_sparse(
-        subset, _convert_container(expected_array, array_type)
-    )
+        subset, _convert_container(expected_array, array_type))
 
 
 @pytest.mark.parametrize("array_type", ["list", "array", "series"])
@@ -355,38 +348,31 @@ def test_safe_indexing_1d_container_mask(array_type, indices_type):
     array = _convert_container([1, 2, 3, 4, 5, 6, 7, 8, 9], array_type)
     indices = _convert_container(indices, indices_type)
     subset = _safe_indexing(array, indices, axis=0)
-    assert_allclose_dense_sparse(
-        subset, _convert_container([2, 3], array_type)
-    )
+    assert_allclose_dense_sparse(subset, _convert_container([2, 3],
+                                                            array_type))
 
 
 @pytest.mark.parametrize("array_type", ["array", "sparse", "dataframe"])
 @pytest.mark.parametrize("indices_type", ["list", "tuple", "array", "series"])
-@pytest.mark.parametrize(
-    "axis, expected_subset",
-    [(0, [[4, 5, 6], [7, 8, 9]]),
-     (1, [[2, 3], [5, 6], [8, 9]])]
-)
+@pytest.mark.parametrize("axis, expected_subset",
+                         [(0, [[4, 5, 6], [7, 8, 9]]),
+                          (1, [[2, 3], [5, 6], [8, 9]])])
 def test_safe_indexing_2d_mask(array_type, indices_type, axis,
                                expected_subset):
     columns_name = ['col_0', 'col_1', 'col_2']
-    array = _convert_container(
-        [[1, 2, 3], [4, 5, 6], [7, 8, 9]], array_type, columns_name
-    )
+    array = _convert_container([[1, 2, 3], [4, 5, 6], [7, 8, 9]], array_type,
+                               columns_name)
     indices = [False, True, True]
     indices = _convert_container(indices, indices_type)
 
     subset = _safe_indexing(array, indices, axis=axis)
     assert_allclose_dense_sparse(
-        subset, _convert_container(expected_subset, array_type)
-    )
+        subset, _convert_container(expected_subset, array_type))
 
 
-@pytest.mark.parametrize(
-    "array_type, expected_output_type",
-    [("list", "list"), ("array", "array"),
-     ("sparse", "sparse"), ("dataframe", "series")]
-)
+@pytest.mark.parametrize("array_type, expected_output_type",
+                         [("list", "list"), ("array", "array"),
+                          ("sparse", "sparse"), ("dataframe", "series")])
 def test_safe_indexing_2d_scalar_axis_0(array_type, expected_output_type):
     array = _convert_container([[1, 2, 3], [4, 5, 6], [7, 8, 9]], array_type)
     indices = 2
@@ -403,17 +389,15 @@ def test_safe_indexing_1d_scalar(array_type):
     assert subset == 3
 
 
-@pytest.mark.parametrize(
-    "array_type, expected_output_type",
-    [("array", "array"), ("sparse", "sparse"), ("dataframe", "series")]
-)
+@pytest.mark.parametrize("array_type, expected_output_type",
+                         [("array", "array"), ("sparse", "sparse"),
+                          ("dataframe", "series")])
 @pytest.mark.parametrize("indices", [2, "col_2"])
 def test_safe_indexing_2d_scalar_axis_1(array_type, expected_output_type,
                                         indices):
     columns_name = ['col_0', 'col_1', 'col_2']
-    array = _convert_container(
-        [[1, 2, 3], [4, 5, 6], [7, 8, 9]], array_type, columns_name
-    )
+    array = _convert_container([[1, 2, 3], [4, 5, 6], [7, 8, 9]], array_type,
+                               columns_name)
 
     if isinstance(indices, str) and array_type != 'dataframe':
         err_msg = ("Specifying the columns using strings is only supported "
@@ -426,9 +410,8 @@ def test_safe_indexing_2d_scalar_axis_1(array_type, expected_output_type,
         if expected_output_type == 'sparse':
             # sparse matrix are keeping the 2D shape
             expected_output = [[3], [6], [9]]
-        expected_array = _convert_container(
-            expected_output, expected_output_type
-        )
+        expected_array = _convert_container(expected_output,
+                                            expected_output_type)
         assert_allclose_dense_sparse(subset, expected_array)
 
 
@@ -480,8 +463,7 @@ def test_safe_indexing_container_axis_0_unsupported_type():
 @pytest.mark.parametrize(
     "key, err_msg",
     [(10, r"all features must be in \[0, 2\]"),
-     ('whatever', 'A given column is not a column of the dataframe')]
-)
+     ('whatever', 'A given column is not a column of the dataframe')])
 def test_get_column_indices_error(key, err_msg):
     pd = pytest.importorskip("pandas")
     X_df = pd.DataFrame(X_toy, columns=['col_0', 'col_1', 'col_2'])
@@ -492,8 +474,7 @@ def test_get_column_indices_error(key, err_msg):
 
 @pytest.mark.parametrize(
     "key",
-    [['col1'], ['col2'], ['col1', 'col2'], ['col1', 'col3'], ['col2', 'col3']]
-)
+    [['col1'], ['col2'], ['col1', 'col2'], ['col1', 'col3'], ['col2', 'col3']])
 def test_get_column_indices_pandas_nonunique_columns_error(key):
     pd = pytest.importorskip('pandas')
     toy = np.zeros((1, 5), dtype=int)
@@ -507,7 +488,7 @@ def test_get_column_indices_pandas_nonunique_columns_error(key):
 
 
 def test_shuffle_on_ndim_equals_three():
-    def to_tuple(A):    # to make the inner arrays hashable
+    def to_tuple(A):  # to make the inner arrays hashable
         return tuple(tuple(tuple(C) for C in B) for B in A)
 
     A = np.array([[[1, 2], [3, 4]], [[5, 6], [7, 8]]])  # A.shape = (2,2,2)
@@ -522,10 +503,7 @@ def test_shuffle_dont_convert_to_array():
     a = ['a', 'b', 'c']
     b = np.array(['a', 'b', 'c'], dtype=object)
     c = [1, 2, 3]
-    d = MockDataFrame(np.array([['a', 0],
-                                ['b', 1],
-                                ['c', 2]],
-                      dtype=object))
+    d = MockDataFrame(np.array([['a', 0], ['b', 1], ['c', 2]], dtype=object))
     e = sp.csc_matrix(np.arange(6).reshape(3, 2))
     a_s, b_s, c_s, d_s, e_s = shuffle(a, b, c, d, e, random_state=0)
 
@@ -538,47 +516,45 @@ def test_shuffle_dont_convert_to_array():
     assert c_s == [3, 2, 1]
     assert type(c_s) == list
 
-    assert_array_equal(d_s, np.array([['c', 2],
-                                      ['b', 1],
-                                      ['a', 0]],
-                                     dtype=object))
+    assert_array_equal(d_s,
+                       np.array([['c', 2], ['b', 1], ['a', 0]], dtype=object))
     assert type(d_s) == MockDataFrame
 
-    assert_array_equal(e_s.toarray(), np.array([[4, 5],
-                                                [2, 3],
-                                                [0, 1]]))
+    assert_array_equal(e_s.toarray(), np.array([[4, 5], [2, 3], [0, 1]]))
 
 
 def test_gen_even_slices():
     # check that gen_even_slices contains all samples
     some_range = range(10)
-    joined_range = list(chain(*[some_range[slice] for slice in
-                                gen_even_slices(10, 3)]))
+    joined_range = list(
+        chain(*[some_range[slice] for slice in gen_even_slices(10, 3)]))
     assert_array_equal(some_range, joined_range)
 
     # check that passing negative n_chunks raises an error
     slices = gen_even_slices(10, -1)
-    with pytest.raises(ValueError, match="gen_even_slices got n_packs=-1,"
-                                         " must be >=1"):
+    with pytest.raises(ValueError,
+                       match="gen_even_slices got n_packs=-1,"
+                       " must be >=1"):
         next(slices)
 
 
 @pytest.mark.parametrize(
-    ('row_bytes', 'max_n_rows', 'working_memory', 'expected', 'warning'),
-    [(1024, None, 1, 1024, None),
-     (1024, None, 0.99999999, 1023, None),
-     (1023, None, 1, 1025, None),
-     (1025, None, 1, 1023, None),
-     (1024, None, 2, 2048, None),
-     (1024, 7, 1, 7, None),
-     (1024 * 1024, None, 1, 1, None),
-     (1024 * 1024 + 1, None, 1, 1,
-      'Could not adhere to working_memory config. '
-      'Currently 1MiB, 2MiB required.'),
-     ])
-def test_get_chunk_n_rows(row_bytes, max_n_rows, working_memory,
-                          expected, warning):
+    ('row_bytes', 'max_n_rows', 'working_memory', 'expected', 'warning'), [
+        (1024, None, 1, 1024, None),
+        (1024, None, 0.99999999, 1023, None),
+        (1023, None, 1, 1025, None),
+        (1025, None, 1, 1023, None),
+        (1024, None, 2, 2048, None),
+        (1024, 7, 1, 7, None),
+        (1024 * 1024, None, 1, 1, None),
+        (1024 * 1024 + 1, None, 1, 1,
+         'Could not adhere to working_memory config. '
+         'Currently 1MiB, 2MiB required.'),
+    ])
+def test_get_chunk_n_rows(row_bytes, max_n_rows, working_memory, expected,
+                          warning):
     if warning is not None:
+
         def check_warning(*args, **kw):
             return assert_warns_message(UserWarning, warning, *args, **kw)
     else:
@@ -599,23 +575,19 @@ def test_get_chunk_n_rows(row_bytes, max_n_rows, working_memory,
         assert type(actual) is type(expected)
 
 
-@pytest.mark.parametrize(
-    ['source', 'message', 'is_long'],
-    [
-        ('ABC', string.ascii_lowercase, False),
-        ('ABCDEF', string.ascii_lowercase, False),
-        ('ABC', string.ascii_lowercase * 3, True),
-        ('ABC' * 10, string.ascii_lowercase, True),
-        ('ABC', string.ascii_lowercase + u'\u1048', False),
-    ])
-@pytest.mark.parametrize(
-    ['time', 'time_str'],
-    [
-        (0.2, '   0.2s'),
-        (20, '  20.0s'),
-        (2000, '33.3min'),
-        (20000, '333.3min'),
-    ])
+@pytest.mark.parametrize(['source', 'message', 'is_long'], [
+    ('ABC', string.ascii_lowercase, False),
+    ('ABCDEF', string.ascii_lowercase, False),
+    ('ABC', string.ascii_lowercase * 3, True),
+    ('ABC' * 10, string.ascii_lowercase, True),
+    ('ABC', string.ascii_lowercase + u'\u1048', False),
+])
+@pytest.mark.parametrize(['time', 'time_str'], [
+    (0.2, '   0.2s'),
+    (20, '  20.0s'),
+    (2000, '33.3min'),
+    (20000, '333.3min'),
+])
 def test_message_with_time(source, message, is_long, time, time_str):
     out = _message_with_time(source, message, time)
     if is_long:
@@ -641,13 +613,11 @@ def test_message_with_time(source, message, is_long, time, time_str):
         assert list(set(out)) == ['.']
 
 
-@pytest.mark.parametrize(
-    ['message', 'expected'],
-    [
-        ('hello', _message_with_time('ABC', 'hello', 0.1) + '\n'),
-        ('', _message_with_time('ABC', '', 0.1) + '\n'),
-        (None, ''),
-    ])
+@pytest.mark.parametrize(['message', 'expected'], [
+    ('hello', _message_with_time('ABC', 'hello', 0.1) + '\n'),
+    ('', _message_with_time('ABC', '', 0.1) + '\n'),
+    (None, ''),
+])
 def test_print_elapsed_time(message, expected, capsys, monkeypatch):
     monkeypatch.setattr(timeit, 'default_timer', lambda: 0)
     with _print_elapsed_time('ABC', message):
@@ -660,12 +630,9 @@ def test_print_elapsed_time(message, expected, capsys, monkeypatch):
                                            (np.float(np.nan), True),
                                            (np.float32(np.nan), True),
                                            (np.float64(np.nan), True),
-                                           (0, False),
-                                           (0., False),
-                                           (None, False),
-                                           ("", False),
-                                           ("nan", False),
-                                           ([np.nan], False)])
+                                           (0, False), (0., False),
+                                           (None, False), ("", False),
+                                           ("nan", False), ([np.nan], False)])
 def test_is_scalar_nan(value, result):
     assert is_scalar_nan(value) is result
 
@@ -686,10 +653,8 @@ def test_deprecation_joblib_api(tmpdir):
     del joblib.parallel.BACKENDS['failing']
 
 
-@pytest.mark.parametrize(
-    "sequence",
-    [[np.array(1), np.array(2)], [[1, 2], [3, 4]]]
-)
+@pytest.mark.parametrize("sequence",
+                         [[np.array(1), np.array(2)], [[1, 2], [3, 4]]])
 def test_to_object_array(sequence):
     out = _to_object_array(sequence)
     assert isinstance(out, np.ndarray)

@@ -26,7 +26,6 @@ except ImportError:
 # Python import machinery.
 builtins.__SKLEARN_SETUP__ = True
 
-
 DISTNAME = 'scikit-learn'
 DESCRIPTION = 'A set of python modules for machine learning and data mining'
 with open('README.rst') as f:
@@ -63,9 +62,17 @@ THREADPOOLCTL_MIN_VERSION = '2.0.0'
 # as it monkey-patches the 'setup' function
 # For some commands, use setuptools
 SETUPTOOLS_COMMANDS = {
-    'develop', 'release', 'bdist_egg', 'bdist_rpm',
-    'bdist_wininst', 'install_egg_info', 'build_sphinx',
-    'egg_info', 'easy_install', 'upload', 'bdist_wheel',
+    'develop',
+    'release',
+    'bdist_egg',
+    'bdist_rpm',
+    'bdist_wininst',
+    'install_egg_info',
+    'build_sphinx',
+    'egg_info',
+    'easy_install',
+    'upload',
+    'bdist_wheel',
     '--single-version-externally-managed',
 }
 if SETUPTOOLS_COMMANDS.intersection(sys.argv):
@@ -84,8 +91,8 @@ if SETUPTOOLS_COMMANDS.intersection(sys.argv):
 else:
     extra_setuptools_args = dict()
 
-
 # Custom clean command to remove build artifacts
+
 
 class CleanCommand(Clean):
     description = "Remove build artifacts from the source tree"
@@ -101,8 +108,9 @@ class CleanCommand(Clean):
             shutil.rmtree('build')
         for dirpath, dirnames, filenames in os.walk('sklearn'):
             for filename in filenames:
-                if any(filename.endswith(suffix) for suffix in
-                       (".so", ".pyd", ".dll", ".pyc")):
+                if any(
+                        filename.endswith(suffix)
+                        for suffix in (".so", ".pyd", ".dll", ".pyc")):
                     os.unlink(os.path.join(dirpath, filename))
                     continue
                 extension = os.path.splitext(filename)[1]
@@ -142,7 +150,6 @@ except ImportError:
     # Numpy should not be a dependency just to be able to introspect
     # that python 3.6 is required.
     pass
-
 
 # Optional wheelhouse-uploader features
 # To automate release of binary packages for scikit-learn we need a tool
@@ -203,8 +210,7 @@ def check_package_status(package, min_version):
         package_status['up_to_date'] = False
         package_status['version'] = ""
 
-    req_str = "scikit-learn requires {} >= {}.\n".format(
-        package, min_version)
+    req_str = "scikit-learn requires {} >= {}.\n".format(package, min_version)
 
     instructions = ("Installation instructions are available on the "
                     "scikit-learn website: "
@@ -213,64 +219,58 @@ def check_package_status(package, min_version):
     if package_status['up_to_date'] is False:
         if package_status['version']:
             raise ImportError("Your installation of {} "
-                              "{} is out-of-date.\n{}{}"
-                              .format(package, package_status['version'],
-                                      req_str, instructions))
+                              "{} is out-of-date.\n{}{}".format(
+                                  package, package_status['version'], req_str,
+                                  instructions))
         else:
             raise ImportError("{} is not "
-                              "installed.\n{}{}"
-                              .format(package, req_str, instructions))
+                              "installed.\n{}{}".format(
+                                  package, req_str, instructions))
 
 
 def setup_package():
-    metadata = dict(name=DISTNAME,
-                    maintainer=MAINTAINER,
-                    maintainer_email=MAINTAINER_EMAIL,
-                    description=DESCRIPTION,
-                    license=LICENSE,
-                    url=URL,
-                    download_url=DOWNLOAD_URL,
-                    project_urls=PROJECT_URLS,
-                    version=VERSION,
-                    long_description=LONG_DESCRIPTION,
-                    classifiers=['Intended Audience :: Science/Research',
-                                 'Intended Audience :: Developers',
-                                 'License :: OSI Approved',
-                                 'Programming Language :: C',
-                                 'Programming Language :: Python',
-                                 'Topic :: Software Development',
-                                 'Topic :: Scientific/Engineering',
-                                 'Operating System :: Microsoft :: Windows',
-                                 'Operating System :: POSIX',
-                                 'Operating System :: Unix',
-                                 'Operating System :: MacOS',
-                                 'Programming Language :: Python :: 3',
-                                 'Programming Language :: Python :: 3.6',
-                                 'Programming Language :: Python :: 3.7',
-                                 'Programming Language :: Python :: 3.8',
-                                 ('Programming Language :: Python :: '
-                                  'Implementation :: CPython'),
-                                 ('Programming Language :: Python :: '
-                                  'Implementation :: PyPy')
-                                 ],
-                    cmdclass=cmdclass,
-                    python_requires=">=3.6",
-                    install_requires=[
-                        'numpy>={}'.format(NUMPY_MIN_VERSION),
-                        'scipy>={}'.format(SCIPY_MIN_VERSION),
-                        'joblib>={}'.format(JOBLIB_MIN_VERSION),
-                        'threadpoolctl>={}'.format(THREADPOOLCTL_MIN_VERSION)
-                    ],
-                    package_data={'': ['*.pxd']},
-                    **extra_setuptools_args)
+    metadata = dict(
+        name=DISTNAME,
+        maintainer=MAINTAINER,
+        maintainer_email=MAINTAINER_EMAIL,
+        description=DESCRIPTION,
+        license=LICENSE,
+        url=URL,
+        download_url=DOWNLOAD_URL,
+        project_urls=PROJECT_URLS,
+        version=VERSION,
+        long_description=LONG_DESCRIPTION,
+        classifiers=[
+            'Intended Audience :: Science/Research',
+            'Intended Audience :: Developers', 'License :: OSI Approved',
+            'Programming Language :: C', 'Programming Language :: Python',
+            'Topic :: Software Development', 'Topic :: Scientific/Engineering',
+            'Operating System :: Microsoft :: Windows',
+            'Operating System :: POSIX', 'Operating System :: Unix',
+            'Operating System :: MacOS', 'Programming Language :: Python :: 3',
+            'Programming Language :: Python :: 3.6',
+            'Programming Language :: Python :: 3.7',
+            'Programming Language :: Python :: 3.8',
+            ('Programming Language :: Python :: '
+             'Implementation :: CPython'),
+            ('Programming Language :: Python :: '
+             'Implementation :: PyPy')
+        ],
+        cmdclass=cmdclass,
+        python_requires=">=3.6",
+        install_requires=[
+            'numpy>={}'.format(NUMPY_MIN_VERSION),
+            'scipy>={}'.format(SCIPY_MIN_VERSION),
+            'joblib>={}'.format(JOBLIB_MIN_VERSION),
+            'threadpoolctl>={}'.format(THREADPOOLCTL_MIN_VERSION)
+        ],
+        package_data={'': ['*.pxd']},
+        **extra_setuptools_args)
 
     if len(sys.argv) == 1 or (
-            len(sys.argv) >= 2 and ('--help' in sys.argv[1:] or
-                                    sys.argv[1] in ('--help-commands',
-                                                    'egg_info',
-                                                    'dist_info',
-                                                    '--version',
-                                                    'clean'))):
+            len(sys.argv) >= 2 and
+        ('--help' in sys.argv[1:] or sys.argv[1] in
+         ('--help-commands', 'egg_info', 'dist_info', '--version', 'clean'))):
         # For these actions, NumPy is not required
         #
         # They are required to succeed without Numpy for example when
@@ -286,8 +286,8 @@ def setup_package():
         if sys.version_info < (3, 6):
             raise RuntimeError(
                 "Scikit-learn requires Python 3.6 or later. The current"
-                " Python version is %s installed in %s."
-                % (platform.python_version(), sys.executable))
+                " Python version is %s installed in %s." %
+                (platform.python_version(), sys.executable))
 
         check_package_status('numpy', NUMPY_MIN_VERSION)
 

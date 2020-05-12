@@ -16,10 +16,8 @@ from sklearn.metrics.cluster import v_measure_score
 from sklearn.metrics.cluster._supervised import _generalized_average
 
 from sklearn.utils import assert_all_finite
-from sklearn.utils._testing import (
-        assert_almost_equal, ignore_warnings)
+from sklearn.utils._testing import (assert_almost_equal, ignore_warnings)
 from numpy.testing import assert_array_almost_equal
-
 
 score_funcs = [
     adjusted_rand_score,
@@ -86,9 +84,8 @@ def test_perfect_matches():
 
 def test_homogeneous_but_not_complete_labeling():
     # homogeneous but not complete clustering
-    h, c, v = homogeneity_completeness_v_measure(
-        [0, 0, 0, 1, 1, 1],
-        [0, 0, 0, 1, 2, 2])
+    h, c, v = homogeneity_completeness_v_measure([0, 0, 0, 1, 1, 1],
+                                                 [0, 0, 0, 1, 2, 2])
     assert_almost_equal(h, 1.00, 2)
     assert_almost_equal(c, 0.69, 2)
     assert_almost_equal(v, 0.81, 2)
@@ -96,9 +93,8 @@ def test_homogeneous_but_not_complete_labeling():
 
 def test_complete_but_not_homogeneous_labeling():
     # complete but not homogeneous clustering
-    h, c, v = homogeneity_completeness_v_measure(
-        [0, 0, 1, 1, 2, 2],
-        [0, 0, 1, 1, 1, 1])
+    h, c, v = homogeneity_completeness_v_measure([0, 0, 1, 1, 2, 2],
+                                                 [0, 0, 1, 1, 1, 1])
     assert_almost_equal(h, 0.58, 2)
     assert_almost_equal(c, 1.00, 2)
     assert_almost_equal(v, 0.73, 2)
@@ -106,9 +102,8 @@ def test_complete_but_not_homogeneous_labeling():
 
 def test_not_complete_and_not_homogeneous_labeling():
     # neither complete nor homogeneous but not so bad either
-    h, c, v = homogeneity_completeness_v_measure(
-        [0, 0, 0, 1, 1, 1],
-        [0, 1, 0, 1, 2, 2])
+    h, c, v = homogeneity_completeness_v_measure([0, 0, 0, 1, 1, 1],
+                                                 [0, 1, 0, 1, 2, 2])
     assert_almost_equal(h, 0.67, 2)
     assert_almost_equal(c, 0.42, 2)
     assert_almost_equal(v, 0.52, 2)
@@ -121,36 +116,30 @@ def test_beta_parameter():
     beta_test = 0.2
     h_test = 0.67
     c_test = 0.42
-    v_test = ((1 + beta_test) * h_test * c_test
-              / (beta_test * h_test + c_test))
+    v_test = ((1 + beta_test) * h_test * c_test /
+              (beta_test * h_test + c_test))
 
-    h, c, v = homogeneity_completeness_v_measure(
-        [0, 0, 0, 1, 1, 1],
-        [0, 1, 0, 1, 2, 2],
-        beta=beta_test)
+    h, c, v = homogeneity_completeness_v_measure([0, 0, 0, 1, 1, 1],
+                                                 [0, 1, 0, 1, 2, 2],
+                                                 beta=beta_test)
     assert_almost_equal(h, h_test, 2)
     assert_almost_equal(c, c_test, 2)
     assert_almost_equal(v, v_test, 2)
 
-    v = v_measure_score(
-        [0, 0, 0, 1, 1, 1],
-        [0, 1, 0, 1, 2, 2],
-        beta=beta_test)
+    v = v_measure_score([0, 0, 0, 1, 1, 1], [0, 1, 0, 1, 2, 2], beta=beta_test)
     assert_almost_equal(v, v_test, 2)
 
 
 def test_non_consecutive_labels():
     # regression tests for labels with gaps
-    h, c, v = homogeneity_completeness_v_measure(
-        [0, 0, 0, 2, 2, 2],
-        [0, 1, 0, 1, 2, 2])
+    h, c, v = homogeneity_completeness_v_measure([0, 0, 0, 2, 2, 2],
+                                                 [0, 1, 0, 1, 2, 2])
     assert_almost_equal(h, 0.67, 2)
     assert_almost_equal(c, 0.42, 2)
     assert_almost_equal(v, 0.52, 2)
 
-    h, c, v = homogeneity_completeness_v_measure(
-        [0, 0, 0, 1, 1, 1],
-        [0, 4, 0, 4, 2, 2])
+    h, c, v = homogeneity_completeness_v_measure([0, 0, 0, 1, 1, 1],
+                                                 [0, 4, 0, 4, 2, 2])
     assert_almost_equal(h, 0.67, 2)
     assert_almost_equal(c, 0.42, 2)
     assert_almost_equal(v, 0.52, 2)
@@ -162,7 +151,10 @@ def test_non_consecutive_labels():
 
 
 @ignore_warnings(category=FutureWarning)
-def uniform_labelings_scores(score_func, n_samples, k_range, n_runs=10,
+def uniform_labelings_scores(score_func,
+                             n_samples,
+                             k_range,
+                             n_runs=10,
                              seed=42):
     # Compute score for random uniform cluster labelings
     random_labels = np.random.RandomState(seed).randint
@@ -182,8 +174,8 @@ def test_adjustment_for_chance():
     n_samples = 100
     n_runs = 10
 
-    scores = uniform_labelings_scores(
-        adjusted_rand_score, n_samples, n_clusters_range, n_runs)
+    scores = uniform_labelings_scores(adjusted_rand_score, n_samples,
+                                      n_clusters_range, n_runs)
 
     max_abs_scores = np.abs(scores).max(axis=1)
     assert_array_almost_equal(max_abs_scores, [0.02, 0.03, 0.03, 0.02], 2)
@@ -228,8 +220,8 @@ def test_expected_mutual_info_overflow():
 
 def test_int_overflow_mutual_info_fowlkes_mallows_score():
     # Test overflow in mutual_info_classif and fowlkes_mallows_score
-    x = np.array([1] * (52632 + 2529) + [2] * (14660 + 793) + [3] * (3271 +
-                 204) + [4] * (814 + 39) + [5] * (316 + 20))
+    x = np.array([1] * (52632 + 2529) + [2] * (14660 + 793) + [3] *
+                 (3271 + 204) + [4] * (814 + 39) + [5] * (316 + 20))
     y = np.array([0] * 52632 + [1] * 2529 + [0] * 14660 + [1] * 793 +
                  [0] * 3271 + [1] * 204 + [0] * 814 + [1] * 39 + [0] * 316 +
                  [1] * 20)
@@ -248,9 +240,9 @@ def test_contingency_matrix():
     labels_a = np.array([1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3])
     labels_b = np.array([1, 1, 1, 1, 2, 1, 2, 2, 2, 2, 3, 1, 3, 3, 3, 2, 2])
     C = contingency_matrix(labels_a, labels_b)
-    C2 = np.histogram2d(labels_a, labels_b,
-                        bins=(np.arange(1, 5),
-                              np.arange(1, 5)))[0]
+    C2 = np.histogram2d(labels_a,
+                        labels_b,
+                        bins=(np.arange(1, 5), np.arange(1, 5)))[0]
     assert_array_almost_equal(C, C2)
     C = contingency_matrix(labels_a, labels_b, eps=.1)
     assert_array_almost_equal(C, C2 + .1)
@@ -270,8 +262,9 @@ def test_contingency_matrix_sparse():
 def test_exactly_zero_info_score():
     # Check numerical stability when information is exactly zero
     for i in np.logspace(1, 4, 4).astype(np.int):
-        labels_a, labels_b = (np.ones(i, dtype=np.int),
-                              np.arange(i, dtype=np.int))
+        labels_a, labels_b = (np.ones(i,
+                                      dtype=np.int), np.arange(i,
+                                                               dtype=np.int))
         assert normalized_mutual_info_score(labels_a, labels_b) == 0.0
         assert v_measure_score(labels_a, labels_b) == 0.0
         assert adjusted_mutual_info_score(labels_a, labels_b) == 0.0
@@ -289,20 +282,21 @@ def test_v_measure_and_mutual_information(seed=36):
         random_state = np.random.RandomState(seed)
         labels_a, labels_b = (random_state.randint(0, 10, i),
                               random_state.randint(0, 10, i))
-        assert_almost_equal(v_measure_score(labels_a, labels_b),
-                            2.0 * mutual_info_score(labels_a, labels_b) /
-                            (entropy(labels_a) + entropy(labels_b)), 0)
+        assert_almost_equal(
+            v_measure_score(labels_a, labels_b),
+            2.0 * mutual_info_score(labels_a, labels_b) /
+            (entropy(labels_a) + entropy(labels_b)), 0)
         avg = 'arithmetic'
-        assert_almost_equal(v_measure_score(labels_a, labels_b),
-                            normalized_mutual_info_score(labels_a, labels_b,
-                                                         average_method=avg)
-                            )
+        assert_almost_equal(
+            v_measure_score(labels_a, labels_b),
+            normalized_mutual_info_score(labels_a,
+                                         labels_b,
+                                         average_method=avg))
 
 
 def test_fowlkes_mallows_score():
     # General case
-    score = fowlkes_mallows_score([0, 0, 0, 1, 1, 1],
-                                  [0, 0, 1, 1, 2, 2])
+    score = fowlkes_mallows_score([0, 0, 0, 1, 1, 1], [0, 0, 1, 1, 2, 2])
     assert_almost_equal(score, 4. / np.sqrt(12. * 6.))
 
     # Perfect match but where the label names changed
@@ -311,8 +305,7 @@ def test_fowlkes_mallows_score():
     assert_almost_equal(perfect_score, 1.)
 
     # Worst case
-    worst_score = fowlkes_mallows_score([0, 0, 0, 0, 0, 0],
-                                        [0, 1, 2, 3, 4, 5])
+    worst_score = fowlkes_mallows_score([0, 0, 0, 0, 0, 0], [0, 1, 2, 3, 4, 5])
     assert_almost_equal(worst_score, 0.)
 
 

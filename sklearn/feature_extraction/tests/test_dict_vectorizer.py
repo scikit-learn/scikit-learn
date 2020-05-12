@@ -18,9 +18,17 @@ from sklearn.feature_selection import SelectKBest, chi2
 @pytest.mark.parametrize('sort', (True, False))
 @pytest.mark.parametrize('iterable', (True, False))
 def test_dictvectorizer(sparse, dtype, sort, iterable):
-    D = [{"foo": 1, "bar": 3},
-         {"bar": 4, "baz": 2},
-         {"bar": 1, "quux": 1, "quuux": 2}]
+    D = [{
+        "foo": 1,
+        "bar": 3
+    }, {
+        "bar": 4,
+        "baz": 2
+    }, {
+        "bar": 1,
+        "quux": 1,
+        "quuux": 2
+    }]
 
     v = DictVectorizer(sparse=sparse, dtype=dtype, sort=sort)
     X = v.fit_transform(iter(D) if iterable else D)
@@ -32,24 +40,23 @@ def test_dictvectorizer(sparse, dtype, sort, iterable):
 
     if sparse:
         # CSR matrices can't be compared for equality
-        assert_array_equal(X.A, v.transform(iter(D) if iterable
-                                            else D).A)
+        assert_array_equal(X.A, v.transform(iter(D) if iterable else D).A)
     else:
-        assert_array_equal(X, v.transform(iter(D) if iterable
-                                          else D))
+        assert_array_equal(X, v.transform(iter(D) if iterable else D))
 
     if sort:
-        assert (v.feature_names_ ==
-                     sorted(v.feature_names_))
+        assert (v.feature_names_ == sorted(v.feature_names_))
 
 
 def test_feature_selection():
     # make two feature dicts with two useful features and a bunch of useless
     # ones, in terms of chi2
     d1 = dict([("useless%d" % i, 10) for i in range(20)],
-              useful1=1, useful2=20)
+              useful1=1,
+              useful2=20)
     d2 = dict([("useless%d" % i, 10) for i in range(20)],
-              useful1=20, useful2=1)
+              useful1=20,
+              useful2=1)
 
     for indices in (True, False):
         v = DictVectorizer().fit([d1, d2])
@@ -61,9 +68,16 @@ def test_feature_selection():
 
 
 def test_one_of_k():
-    D_in = [{"version": "1", "ham": 2},
-            {"version": "2", "spam": .3},
-            {"version=3": True, "spam": -1}]
+    D_in = [{
+        "version": "1",
+        "ham": 2
+    }, {
+        "version": "2",
+        "spam": .3
+    }, {
+        "version=3": True,
+        "spam": -1
+    }]
     v = DictVectorizer()
     X = v.fit_transform(D_in)
     assert X.shape == (3, 5)

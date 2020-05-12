@@ -23,15 +23,14 @@ def _get_feature_importances(estimator, norm_order=1):
             importances = np.abs(coef_)
 
         else:
-            importances = np.linalg.norm(coef_, axis=0,
-                                         ord=norm_order)
+            importances = np.linalg.norm(coef_, axis=0, ord=norm_order)
 
     elif importances is None:
         raise ValueError(
             "The underlying estimator %s has no `coef_` or "
             "`feature_importances_` attribute. Either pass a fitted estimator"
-            " to SelectFromModel or call fit before calling transform."
-            % estimator.__class__.__name__)
+            " to SelectFromModel or call fit before calling transform." %
+            estimator.__class__.__name__)
 
     return importances
 
@@ -42,8 +41,8 @@ def _calculate_threshold(estimator, importances, threshold):
     if threshold is None:
         # determine default from estimator
         est_name = estimator.__class__.__name__
-        if ((hasattr(estimator, "penalty") and estimator.penalty == "l1") or
-                "Lasso" in est_name):
+        if ((hasattr(estimator, "penalty") and estimator.penalty == "l1")
+                or "Lasso" in est_name):
             # the natural default threshold is 0 when l1 penalty was used
             threshold = 1e-5
         else:
@@ -159,8 +158,13 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
            [ 1.48]])
     """
     @_deprecate_positional_args
-    def __init__(self, estimator, *, threshold=None, prefit=False,
-                 norm_order=1, max_features=None):
+    def __init__(self,
+                 estimator,
+                 *,
+                 threshold=None,
+                 prefit=False,
+                 norm_order=1,
+                 max_features=None):
         self.estimator = estimator
         self.threshold = threshold
         self.prefit = prefit
@@ -210,12 +214,12 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         if self.max_features is not None:
             if not isinstance(self.max_features, numbers.Integral):
                 raise TypeError("'max_features' should be an integer between"
-                                " 0 and {} features. Got {!r} instead."
-                                .format(X.shape[1], self.max_features))
+                                " 0 and {} features. Got {!r} instead.".format(
+                                    X.shape[1], self.max_features))
             elif self.max_features < 0 or self.max_features > X.shape[1]:
                 raise ValueError("'max_features' should be 0 and {} features."
-                                 "Got {} instead."
-                                 .format(X.shape[1], self.max_features))
+                                 "Got {} instead.".format(
+                                     X.shape[1], self.max_features))
 
         if self.prefit:
             raise NotFittedError(
@@ -264,9 +268,8 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
             check_is_fitted(self)
         except NotFittedError as nfe:
             raise AttributeError(
-                "{} object has no n_features_in_ attribute."
-                .format(self.__class__.__name__)
-            ) from nfe
+                "{} object has no n_features_in_ attribute.".format(
+                    self.__class__.__name__)) from nfe
 
         return self.estimator_.n_features_in_
 

@@ -52,14 +52,12 @@ JUNK_FOOD_DOCS = (
 class NoFit:
     """Small class to test parameter dispatching.
     """
-
     def __init__(self, a=None, b=None):
         self.a = a
         self.b = b
 
 
 class NoTrans(NoFit):
-
     def fit(self, X, y):
         return self
 
@@ -85,7 +83,6 @@ class Transf(NoInvTransf):
 
 
 class TransfFitParams(Transf):
-
     def fit(self, X, y, **fit_params):
         self.fit_params = fit_params
         return self
@@ -116,7 +113,6 @@ class Mult(BaseEstimator):
 class FitParamT(BaseEstimator):
     """Mock classifier
     """
-
     def __init__(self):
         self.successful = False
 
@@ -138,7 +134,6 @@ class FitParamT(BaseEstimator):
 
 class DummyTransf(Transf):
     """Transformer which store the column means"""
-
     def fit(self, X, y):
         self.means_ = np.mean(X, axis=0)
         # store timestamp to figure out whether the result of 'fit' has been
@@ -149,7 +144,6 @@ class DummyTransf(Transf):
 
 class DummyEstimatorParams(BaseEstimator):
     """Mock classifier that takes params on predict"""
-
     def fit(self, X, y):
         return self
 
@@ -163,17 +157,17 @@ def test_pipeline_init():
     assert_raises(TypeError, Pipeline)
     # Check that we can't instantiate pipelines with objects without fit
     # method
-    assert_raises_regex(TypeError,
-                        'Last step of Pipeline should implement fit '
-                        'or be the string \'passthrough\''
-                        '.*NoFit.*',
-                        Pipeline, [('clf', NoFit())])
+    assert_raises_regex(
+        TypeError, 'Last step of Pipeline should implement fit '
+        'or be the string \'passthrough\''
+        '.*NoFit.*', Pipeline, [('clf', NoFit())])
     # Smoke test with only an estimator
     clf = NoTrans()
     pipe = Pipeline([('svc', clf)])
-    assert (pipe.get_params(deep=True) ==
-                 dict(svc__a=None, svc__b=None, svc=clf,
-                      **pipe.get_params(deep=False)))
+    assert (pipe.get_params(deep=True) == dict(svc__a=None,
+                                               svc__b=None,
+                                               svc=clf,
+                                               **pipe.get_params(deep=False)))
 
     # Check that params are set
     pipe.set_params(svc__a=0.1)
@@ -193,10 +187,9 @@ def test_pipeline_init():
 
     # Check that we can't instantiate with non-transformers on the way
     # Note that NoTrans implements fit, but not transform
-    assert_raises_regex(TypeError,
-                        'All intermediate steps should be transformers'
-                        '.*\\bNoTrans\\b.*',
-                        Pipeline, [('t', NoTrans()), ('svc', clf)])
+    assert_raises_regex(
+        TypeError, 'All intermediate steps should be transformers'
+        '.*\\bNoTrans\\b.*', Pipeline, [('t', NoTrans()), ('svc', clf)])
 
     # Check that params are set
     pipe.set_params(svc__C=0.1)
@@ -266,11 +259,12 @@ def test_pipeline_fit_params():
     assert pipe.named_steps['transf'].a is None
     assert pipe.named_steps['transf'].b is None
     # invalid parameters should raise an error message
-    assert_raise_message(
-        TypeError,
-        "fit() got an unexpected keyword argument 'bad'",
-        pipe.fit, None, None, clf__bad=True
-    )
+    assert_raise_message(TypeError,
+                         "fit() got an unexpected keyword argument 'bad'",
+                         pipe.fit,
+                         None,
+                         None,
+                         clf__bad=True)
 
 
 def test_pipeline_sample_weight_supported():
@@ -294,8 +288,9 @@ def test_pipeline_sample_weight_unsupported():
     assert_raise_message(
         TypeError,
         "score() got an unexpected keyword argument 'sample_weight'",
-        pipe.score, X, sample_weight=np.array([2, 3])
-    )
+        pipe.score,
+        X,
+        sample_weight=np.array([2, 3]))
 
 
 def test_pipeline_raise_set_params_error():
@@ -344,7 +339,7 @@ def test_pipeline_score_samples_pca_lof():
     pipe = Pipeline([('pca', pca), ('lof', lof)])
     pipe.fit(X)
     # Check the shapes
-    assert pipe.score_samples(X).shape == (X.shape[0],)
+    assert pipe.score_samples(X).shape == (X.shape[0], )
     # Check the values
     lof.fit(pca.fit_transform(X))
     assert_allclose(pipe.score_samples(X), lof.score_samples(pca.transform(X)))
@@ -359,7 +354,7 @@ def test_score_samples_on_pipeline_without_score_samples():
     pipe.fit(X, y)
     with pytest.raises(AttributeError,
                        match="'LogisticRegression' object has no attribute "
-                             "'score_samples'"):
+                       "'score_samples'"):
         pipe.score_samples(X)
 
 
@@ -379,7 +374,7 @@ def test_pipeline_methods_preprocessing_svm():
 
         # check shapes of various prediction functions
         predict = pipe.predict(X)
-        assert predict.shape == (n_samples,)
+        assert predict.shape == (n_samples, )
 
         proba = pipe.predict_proba(X)
         assert proba.shape == (n_samples, n_classes)
@@ -409,10 +404,8 @@ def test_fit_predict_on_pipeline():
     separate_pred = km.fit_predict(scaled)
 
     # use a pipeline to do the transform and clustering in one step
-    pipe = Pipeline([
-        ('scaler', scaler_for_pipeline),
-        ('Kmeans', km_for_pipeline)
-    ])
+    pipe = Pipeline([('scaler', scaler_for_pipeline),
+                     ('Kmeans', km_for_pipeline)])
     pipeline_pred = pipe.fit_predict(iris.data)
 
     assert_array_almost_equal(pipeline_pred, separate_pred)
@@ -425,8 +418,8 @@ def test_fit_predict_on_pipeline_without_fit_predict():
     pca = PCA(svd_solver='full')
     pipe = Pipeline([('scaler', scaler), ('pca', pca)])
     assert_raises_regex(AttributeError,
-                        "'PCA' object has no attribute 'fit_predict'",
-                        getattr, pipe, 'fit_predict')
+                        "'PCA' object has no attribute 'fit_predict'", getattr,
+                        pipe, 'fit_predict')
 
 
 def test_fit_predict_with_intermediate_fit_params():
@@ -490,11 +483,10 @@ def test_feature_union():
     assert X_transformed.shape == (X.shape[0], 8)
 
     # test error if some elements do not support transform
-    assert_raises_regex(TypeError,
-                        'All estimators should implement fit and '
-                        'transform.*\\bNoTrans\\b',
-                        FeatureUnion,
-                        [("transform", Transf()), ("no_transform", NoTrans())])
+    assert_raises_regex(
+        TypeError, 'All estimators should implement fit and '
+        'transform.*\\bNoTrans\\b', FeatureUnion,
+        [("transform", Transf()), ("no_transform", NoTrans())])
 
     # test that init accepts tuples
     fs = FeatureUnion((("svd", svd), ("select", select)))
@@ -517,11 +509,15 @@ def test_make_union_kwargs():
     assert fu.transformer_list == make_union(pca, mock).transformer_list
     assert 3 == fu.n_jobs
     # invalid keyword parameters should raise an error message
-    assert_raise_message(
-        TypeError,
-        'Unknown keyword arguments: "transformer_weights"',
-        make_union, pca, mock, transformer_weights={'pca': 10, 'Transf': 1}
-    )
+    assert_raise_message(TypeError,
+                         'Unknown keyword arguments: "transformer_weights"',
+                         make_union,
+                         pca,
+                         mock,
+                         transformer_weights={
+                             'pca': 10,
+                             'Transf': 1
+                         })
 
 
 def test_pipeline_transform():
@@ -557,8 +553,7 @@ def test_pipeline_fit_transform():
 
 
 def test_pipeline_slice():
-    pipe = Pipeline([('transf1', Transf()),
-                     ('transf2', Transf()),
+    pipe = Pipeline([('transf1', Transf()), ('transf2', Transf()),
                      ('clf', FitParamT())])
     pipe2 = pipe[:-1]
     assert isinstance(pipe2, Pipeline)
@@ -630,12 +625,8 @@ def test_pipeline_correctly_adjusts_steps(passthrough):
     mult3 = Mult(mult=3)
     mult5 = Mult(mult=5)
 
-    pipeline = Pipeline([
-        ('m2', mult2),
-        ('bad', passthrough),
-        ('m3', mult3),
-        ('m5', mult5)
-    ])
+    pipeline = Pipeline([('m2', mult2), ('bad', passthrough), ('m3', mult3),
+                         ('m5', mult5)])
 
     pipeline.fit(X, y)
     expected_names = ['m2', 'bad', 'm3', 'm5']
@@ -666,16 +657,16 @@ def test_set_pipeline_step_passthrough(passthrough):
     assert_array_equal([[exp]], pipeline.fit_transform(X, y))
     assert_array_equal([exp], pipeline.fit(X).predict(X))
     assert_array_equal(X, pipeline.inverse_transform([[exp]]))
-    assert (pipeline.get_params(deep=True) ==
-                      {'steps': pipeline.steps,
-                       'm2': mult2,
-                       'm3': passthrough,
-                       'last': mult5,
-                       'memory': None,
-                       'm2__mult': 2,
-                       'last__mult': 5,
-                       'verbose': False
-                       })
+    assert (pipeline.get_params(deep=True) == {
+        'steps': pipeline.steps,
+        'm2': mult2,
+        'm3': passthrough,
+        'last': mult5,
+        'memory': None,
+        'm2__mult': 2,
+        'last__mult': 5,
+        'verbose': False
+    })
 
     pipeline.set_params(m2=passthrough)
     exp = 5
@@ -684,8 +675,10 @@ def test_set_pipeline_step_passthrough(passthrough):
     assert_array_equal(X, pipeline.inverse_transform([[exp]]))
 
     # for other methods, ensure no AttributeErrors on None:
-    other_methods = ['predict_proba', 'predict_log_proba',
-                     'decision_function', 'transform', 'score']
+    other_methods = [
+        'predict_proba', 'predict_log_proba', 'decision_function', 'transform',
+        'score'
+    ]
     for method in other_methods:
         getattr(pipeline, method)(X)
 
@@ -703,13 +696,12 @@ def test_set_pipeline_step_passthrough(passthrough):
     assert_array_equal([[exp]], pipeline.fit_transform(X, y))
     assert_array_equal(X, pipeline.inverse_transform([[exp]]))
     assert_raise_message(AttributeError,
-                         "'str' object has no attribute 'predict'",
-                         getattr, pipeline, 'predict')
+                         "'str' object has no attribute 'predict'", getattr,
+                         pipeline, 'predict')
 
     # Check 'passthrough' step at construction time
     exp = 2 * 5
-    pipeline = Pipeline(
-        [('m2', mult2), ('m3', passthrough), ('last', mult5)])
+    pipeline = Pipeline([('m2', mult2), ('m3', passthrough), ('last', mult5)])
     assert_array_equal([[exp]], pipeline.fit_transform(X, y))
     assert_array_equal([exp], pipeline.fit(X).predict(X))
     assert_array_equal(X, pipeline.inverse_transform([[exp]]))
@@ -757,11 +749,12 @@ def test_make_pipeline():
     assert pipe.steps[1][0] == "transf-2"
     assert pipe.steps[2][0] == "fitparamt"
 
-    assert_raise_message(
-        TypeError,
-        'Unknown keyword arguments: "random_parameter"',
-        make_pipeline, t1, t2, random_parameter='rnd'
-    )
+    assert_raise_message(TypeError,
+                         'Unknown keyword arguments: "random_parameter"',
+                         make_pipeline,
+                         t1,
+                         t2,
+                         random_parameter='rnd')
 
 
 def test_feature_union_weights():
@@ -808,12 +801,14 @@ def test_feature_union_parallel():
     fs_parallel = FeatureUnion([
         ("words", CountVectorizer(analyzer='word')),
         ("chars", CountVectorizer(analyzer='char')),
-    ], n_jobs=2)
+    ],
+                               n_jobs=2)
 
     fs_parallel2 = FeatureUnion([
         ("words", CountVectorizer(analyzer='word')),
         ("chars", CountVectorizer(analyzer='char')),
-    ], n_jobs=2)
+    ],
+                                n_jobs=2)
 
     fs.fit(X)
     X_transformed = fs.transform(X)
@@ -822,24 +817,18 @@ def test_feature_union_parallel():
     fs_parallel.fit(X)
     X_transformed_parallel = fs_parallel.transform(X)
     assert X_transformed.shape == X_transformed_parallel.shape
-    assert_array_equal(
-        X_transformed.toarray(),
-        X_transformed_parallel.toarray()
-    )
+    assert_array_equal(X_transformed.toarray(),
+                       X_transformed_parallel.toarray())
 
     # fit_transform should behave the same
     X_transformed_parallel2 = fs_parallel2.fit_transform(X)
-    assert_array_equal(
-        X_transformed.toarray(),
-        X_transformed_parallel2.toarray()
-    )
+    assert_array_equal(X_transformed.toarray(),
+                       X_transformed_parallel2.toarray())
 
     # transformers should stay fit after fit_transform
     X_transformed_parallel2 = fs_parallel2.transform(X)
-    assert_array_equal(
-        X_transformed.toarray(),
-        X_transformed_parallel2.toarray()
-    )
+    assert_array_equal(X_transformed.toarray(),
+                       X_transformed_parallel2.toarray())
 
 
 def test_feature_union_feature_names():
@@ -853,9 +842,9 @@ def test_feature_union_feature_names():
     assert len(feature_names) == 35
 
     ft = FeatureUnion([("tr1", Transf())]).fit([[1]])
-    assert_raise_message(AttributeError,
-                         'Transformer tr1 (type Transf) does not provide '
-                         'get_feature_names', ft.get_feature_names)
+    assert_raise_message(
+        AttributeError, 'Transformer tr1 (type Transf) does not provide '
+        'get_feature_names', ft.get_feature_names)
 
 
 def test_classes_property():
@@ -954,7 +943,7 @@ def test_step_name_validation():
             (bad_steps1, "Estimator names must not contain __: got ['a__q']"),
             (bad_steps2, "Names provided are not unique: ['a', 'a']"),
             (bad_steps3, "Estimator names conflict with constructor "
-                         "arguments: ['%s']" % param),
+             "arguments: ['%s']" % param),
         ]:
             # three ways to make invalid:
             # - construction
@@ -965,23 +954,19 @@ def test_step_name_validation():
             est = cls(**{param: [('a', Mult(1))]})
             setattr(est, param, bad_steps)
             assert_raise_message(ValueError, message, est.fit, [[1]], [1])
-            assert_raise_message(ValueError, message, est.fit_transform,
-                                 [[1]], [1])
+            assert_raise_message(ValueError, message, est.fit_transform, [[1]],
+                                 [1])
 
             # - set_params
             est = cls(**{param: [('a', Mult(1))]})
             est.set_params(**{param: bad_steps})
             assert_raise_message(ValueError, message, est.fit, [[1]], [1])
-            assert_raise_message(ValueError, message, est.fit_transform,
-                                 [[1]], [1])
+            assert_raise_message(ValueError, message, est.fit_transform, [[1]],
+                                 [1])
 
 
 def test_set_params_nested_pipeline():
-    estimator = Pipeline([
-        ('a', Pipeline([
-            ('b', DummyRegressor())
-        ]))
-    ])
+    estimator = Pipeline([('a', Pipeline([('b', DummyRegressor())]))])
     estimator.set_params(a__b__alpha=0.001, a__b=Lasso())
     estimator.set_params(a__steps=[('b', LogisticRegression())], a__b__C=5)
 
@@ -993,11 +978,12 @@ def test_pipeline_wrong_memory():
     y = iris.target
     # Define memory as an integer
     memory = 1
-    cached_pipe = Pipeline([('transf', DummyTransf()),
-                            ('svc', SVC())], memory=memory)
-    assert_raises_regex(ValueError, "'memory' should be None, a string or"
-                        " have the same interface as joblib.Memory."
-                        " Got memory='1' instead.", cached_pipe.fit, X, y)
+    cached_pipe = Pipeline([('transf', DummyTransf()), ('svc', SVC())],
+                           memory=memory)
+    assert_raises_regex(
+        ValueError, "'memory' should be None, a string or"
+        " have the same interface as joblib.Memory."
+        " Got memory='1' instead.", cached_pipe.fit, X, y)
 
 
 class DummyMemory:
@@ -1015,11 +1001,11 @@ def test_pipeline_with_cache_attribute():
                     memory=DummyMemory())
     pipe.fit(X, y=None)
     dummy = WrongDummyMemory()
-    pipe = Pipeline([('transf', Transf()), ('clf', Mult())],
-                    memory=dummy)
-    assert_raises_regex(ValueError, "'memory' should be None, a string or"
-                        " have the same interface as joblib.Memory."
-                        " Got memory='{}' instead.".format(dummy), pipe.fit, X)
+    pipe = Pipeline([('transf', Transf()), ('clf', Mult())], memory=dummy)
+    assert_raises_regex(
+        ValueError, "'memory' should be None, a string or"
+        " have the same interface as joblib.Memory."
+        " Got memory='{}' instead.".format(dummy), pipe.fit, X)
 
 
 def test_pipeline_memory():
@@ -1105,46 +1091,48 @@ def test_make_pipeline_memory():
 
 def test_pipeline_param_error():
     clf = make_pipeline(LogisticRegression())
-    with pytest.raises(ValueError, match="Pipeline.fit does not accept "
-                                         "the sample_weight parameter"):
+    with pytest.raises(ValueError,
+                       match="Pipeline.fit does not accept "
+                       "the sample_weight parameter"):
         clf.fit([[0], [0]], [0, 1], sample_weight=[1, 1])
 
 
-parameter_grid_test_verbose = ((est, pattern, method) for
-                               (est, pattern), method in itertools.product(
-    [
-     (Pipeline([('transf', Transf()), ('clf', FitParamT())]),
-      r'\[Pipeline\].*\(step 1 of 2\) Processing transf.* total=.*\n'
-      r'\[Pipeline\].*\(step 2 of 2\) Processing clf.* total=.*\n$'),
-     (Pipeline([('transf', Transf()), ('noop', None),
-               ('clf', FitParamT())]),
-      r'\[Pipeline\].*\(step 1 of 3\) Processing transf.* total=.*\n'
-      r'\[Pipeline\].*\(step 2 of 3\) Processing noop.* total=.*\n'
-      r'\[Pipeline\].*\(step 3 of 3\) Processing clf.* total=.*\n$'),
-     (Pipeline([('transf', Transf()), ('noop', 'passthrough'),
-               ('clf', FitParamT())]),
-      r'\[Pipeline\].*\(step 1 of 3\) Processing transf.* total=.*\n'
-      r'\[Pipeline\].*\(step 2 of 3\) Processing noop.* total=.*\n'
-      r'\[Pipeline\].*\(step 3 of 3\) Processing clf.* total=.*\n$'),
-     (Pipeline([('transf', Transf()), ('clf', None)]),
-      r'\[Pipeline\].*\(step 1 of 2\) Processing transf.* total=.*\n'
-      r'\[Pipeline\].*\(step 2 of 2\) Processing clf.* total=.*\n$'),
-     (Pipeline([('transf', None), ('mult', Mult())]),
-      r'\[Pipeline\].*\(step 1 of 2\) Processing transf.* total=.*\n'
-      r'\[Pipeline\].*\(step 2 of 2\) Processing mult.* total=.*\n$'),
-     (Pipeline([('transf', 'passthrough'), ('mult', Mult())]),
-      r'\[Pipeline\].*\(step 1 of 2\) Processing transf.* total=.*\n'
-      r'\[Pipeline\].*\(step 2 of 2\) Processing mult.* total=.*\n$'),
-     (FeatureUnion([('mult1', Mult()), ('mult2', Mult())]),
-      r'\[FeatureUnion\].*\(step 1 of 2\) Processing mult1.* total=.*\n'
-      r'\[FeatureUnion\].*\(step 2 of 2\) Processing mult2.* total=.*\n$'),
-     (FeatureUnion([('mult1', 'drop'), ('mult2', Mult()), ('mult3', 'drop')]),
-      r'\[FeatureUnion\].*\(step 1 of 1\) Processing mult2.* total=.*\n$')
-    ], ['fit', 'fit_transform', 'fit_predict'])
-    if hasattr(est, method) and not (
-        method == 'fit_transform' and hasattr(est, 'steps') and
-        isinstance(est.steps[-1][1], FitParamT))
-)
+parameter_grid_test_verbose = (
+    (est, pattern,
+     method) for (est, pattern), method in itertools.product(
+         [(Pipeline([('transf', Transf()), ('clf', FitParamT())]),
+           r'\[Pipeline\].*\(step 1 of 2\) Processing transf.* total=.*\n'
+           r'\[Pipeline\].*\(step 2 of 2\) Processing clf.* total=.*\n$'),
+          (Pipeline([('transf', Transf()), ('noop', None), ('clf',
+                                                            FitParamT())]),
+           r'\[Pipeline\].*\(step 1 of 3\) Processing transf.* total=.*\n'
+           r'\[Pipeline\].*\(step 2 of 3\) Processing noop.* total=.*\n'
+           r'\[Pipeline\].*\(step 3 of 3\) Processing clf.* total=.*\n$'),
+          (Pipeline([('transf', Transf()), ('noop',
+                                            'passthrough'), ('clf',
+                                                             FitParamT())]),
+           r'\[Pipeline\].*\(step 1 of 3\) Processing transf.* total=.*\n'
+           r'\[Pipeline\].*\(step 2 of 3\) Processing noop.* total=.*\n'
+           r'\[Pipeline\].*\(step 3 of 3\) Processing clf.* total=.*\n$'),
+          (Pipeline([('transf', Transf()), ('clf', None)]),
+           r'\[Pipeline\].*\(step 1 of 2\) Processing transf.* total=.*\n'
+           r'\[Pipeline\].*\(step 2 of 2\) Processing clf.* total=.*\n$'),
+          (Pipeline([('transf', None), ('mult', Mult())]),
+           r'\[Pipeline\].*\(step 1 of 2\) Processing transf.* total=.*\n'
+           r'\[Pipeline\].*\(step 2 of 2\) Processing mult.* total=.*\n$'),
+          (Pipeline([('transf', 'passthrough'), ('mult', Mult())]),
+           r'\[Pipeline\].*\(step 1 of 2\) Processing transf.* total=.*\n'
+           r'\[Pipeline\].*\(step 2 of 2\) Processing mult.* total=.*\n$'),
+          (FeatureUnion([('mult1', Mult()), ('mult2', Mult())]),
+           r'\[FeatureUnion\].*\(step 1 of 2\) Processing mult1.* total=.*\n'
+           r'\[FeatureUnion\].*\(step 2 of 2\) Processing mult2.* total=.*\n$'
+           ),
+          (FeatureUnion([('mult1', 'drop'), ('mult2', Mult()), ('mult3',
+                                                                'drop')]),
+           r'\[FeatureUnion\].*\(step 1 of 1\) Processing mult2.* total=.*\n$'
+           )], ['fit', 'fit_transform', 'fit_predict'])
+    if hasattr(est, method) and not (method == 'fit_transform' and hasattr(
+        est, 'steps') and isinstance(est.steps[-1][1], FitParamT)))
 
 
 @pytest.mark.parametrize('est, pattern, method', parameter_grid_test_verbose)

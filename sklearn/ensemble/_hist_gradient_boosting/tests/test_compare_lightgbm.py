@@ -50,8 +50,10 @@ def test_same_predictions_regression(seed, min_samples_leaf, n_samples,
     max_iter = 1
     max_bins = 255
 
-    X, y = make_regression(n_samples=n_samples, n_features=5,
-                           n_informative=5, random_state=0)
+    X, y = make_regression(n_samples=n_samples,
+                           n_features=5,
+                           n_informative=5,
+                           random_state=0)
 
     if n_samples > 255:
         # bin data and convert it to float32 so that the estimator doesn't
@@ -103,8 +105,12 @@ def test_same_predictions_classification(seed, min_samples_leaf, n_samples,
     max_iter = 1
     max_bins = 255
 
-    X, y = make_classification(n_samples=n_samples, n_classes=2, n_features=5,
-                               n_informative=5, n_redundant=0, random_state=0)
+    X, y = make_classification(n_samples=n_samples,
+                               n_classes=2,
+                               n_features=5,
+                               n_informative=5,
+                               n_redundant=0,
+                               random_state=0)
 
     if n_samples > 255:
         # bin data and convert it to float32 so that the estimator doesn't
@@ -154,8 +160,8 @@ def test_same_predictions_classification(seed, min_samples_leaf, n_samples,
     (255, 4096),
     (10000, 8),
 ])
-def test_same_predictions_multiclass_classification(
-        seed, min_samples_leaf, n_samples, max_leaf_nodes):
+def test_same_predictions_multiclass_classification(seed, min_samples_leaf,
+                                                    n_samples, max_leaf_nodes):
     # Same as test_same_predictions_regression but for classification
     pytest.importorskip("lightgbm")
 
@@ -165,9 +171,13 @@ def test_same_predictions_multiclass_classification(
     max_bins = 255
     lr = 1
 
-    X, y = make_classification(n_samples=n_samples, n_classes=3, n_features=5,
-                               n_informative=5, n_redundant=0,
-                               n_clusters_per_class=1, random_state=0)
+    X, y = make_classification(n_samples=n_samples,
+                               n_classes=3,
+                               n_features=5,
+                               n_informative=5,
+                               n_redundant=0,
+                               n_clusters_per_class=1,
+                               random_state=0)
 
     if n_samples > 255:
         # bin data and convert it to float32 so that the estimator doesn't

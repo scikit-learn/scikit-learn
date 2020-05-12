@@ -23,8 +23,7 @@ from sklearn.utils._testing import ignore_warnings
 from sklearn.cluster import ward_tree
 from sklearn.cluster import AgglomerativeClustering, FeatureAgglomeration
 from sklearn.cluster._agglomerative import (_hc_cut, _TREE_BUILDERS,
-                                            linkage_tree,
-                                            _fix_connectivity)
+                                            linkage_tree, _fix_connectivity)
 from sklearn.feature_extraction.image import grid_to_graph
 from sklearn.metrics.pairwise import PAIRED_DISTANCES, cosine_distances,\
     manhattan_distances, pairwise_distances
@@ -94,8 +93,10 @@ def test_unstructured_linkage_tree():
         # With specified a number of clusters just for the sake of
         # raising a warning and testing the warning code
         with ignore_warnings():
-            children, n_nodes, n_leaves, parent = assert_warns(
-                UserWarning, ward_tree, this_X.T, n_clusters=10)
+            children, n_nodes, n_leaves, parent = assert_warns(UserWarning,
+                                                               ward_tree,
+                                                               this_X.T,
+                                                               n_clusters=10)
         n_nodes = 2 * X.shape[1] - 1
         assert len(children) + n_leaves == n_nodes
 
@@ -136,8 +137,7 @@ def test_agglomerative_clustering_wrong_arg_memory():
 def test_zero_cosine_linkage_tree():
     # Check that zero vectors in X produce an error when
     # 'cosine' affinity is used
-    X = np.array([[0, 1],
-                  [0, 0]])
+    X = np.array([[0, 1], [0, 0]])
     msg = 'Cosine affinity cannot be used when X contains zero vectors'
     assert_raise_message(ValueError, msg, linkage_tree, X, affinity='cosine')
 
@@ -158,64 +158,62 @@ def test_agglomerative_clustering():
         # test caching
         try:
             tempdir = mkdtemp()
-            clustering = AgglomerativeClustering(
-                n_clusters=10, connectivity=connectivity,
-                memory=tempdir,
-                linkage=linkage)
+            clustering = AgglomerativeClustering(n_clusters=10,
+                                                 connectivity=connectivity,
+                                                 memory=tempdir,
+                                                 linkage=linkage)
             clustering.fit(X)
             labels = clustering.labels_
             assert np.size(np.unique(labels)) == 10
         finally:
             shutil.rmtree(tempdir)
         # Turn caching off now
-        clustering = AgglomerativeClustering(
-            n_clusters=10, connectivity=connectivity, linkage=linkage)
+        clustering = AgglomerativeClustering(n_clusters=10,
+                                             connectivity=connectivity,
+                                             linkage=linkage)
         # Check that we obtain the same solution with early-stopping of the
         # tree building
         clustering.compute_full_tree = False
         clustering.fit(X)
-        assert_almost_equal(normalized_mutual_info_score(clustering.labels_,
-                                                         labels), 1)
+        assert_almost_equal(
+            normalized_mutual_info_score(clustering.labels_, labels), 1)
         clustering.connectivity = None
         clustering.fit(X)
         assert np.size(np.unique(clustering.labels_)) == 10
         # Check that we raise a TypeError on dense matrices
         clustering = AgglomerativeClustering(
             n_clusters=10,
-            connectivity=sparse.lil_matrix(
-                connectivity.toarray()[:10, :10]),
+            connectivity=sparse.lil_matrix(connectivity.toarray()[:10, :10]),
             linkage=linkage)
         with pytest.raises(ValueError):
             clustering.fit(X)
 
     # Test that using ward with another metric than euclidean raises an
     # exception
-    clustering = AgglomerativeClustering(
-        n_clusters=10,
-        connectivity=connectivity.toarray(),
-        affinity="manhattan",
-        linkage="ward")
+    clustering = AgglomerativeClustering(n_clusters=10,
+                                         connectivity=connectivity.toarray(),
+                                         affinity="manhattan",
+                                         linkage="ward")
     with pytest.raises(ValueError):
         clustering.fit(X)
 
     # Test using another metric than euclidean works with linkage complete
     for affinity in PAIRED_DISTANCES.keys():
         # Compare our (structured) implementation to scipy
-        clustering = AgglomerativeClustering(
-            n_clusters=10,
-            connectivity=np.ones((n_samples, n_samples)),
-            affinity=affinity,
-            linkage="complete")
+        clustering = AgglomerativeClustering(n_clusters=10,
+                                             connectivity=np.ones(
+                                                 (n_samples, n_samples)),
+                                             affinity=affinity,
+                                             linkage="complete")
         clustering.fit(X)
-        clustering2 = AgglomerativeClustering(
-            n_clusters=10,
-            connectivity=None,
-            affinity=affinity,
-            linkage="complete")
+        clustering2 = AgglomerativeClustering(n_clusters=10,
+                                              connectivity=None,
+                                              affinity=affinity,
+                                              linkage="complete")
         clustering2.fit(X)
-        assert_almost_equal(normalized_mutual_info_score(clustering2.labels_,
-                                                         clustering.labels_),
-                            1)
+        assert_almost_equal(
+            normalized_mutual_info_score(clustering2.labels_,
+                                         clustering.labels_), 1)
 
     # Test that using a distance matrix (affinity = 'precomputed') has same
     # results (with connectivity constraints)
@@ -258,15 +256,16 @@ def test_single_linkage_clustering():
     moons, moon_labels = make_moons(noise=0.05, random_state=42)
     clustering = AgglomerativeClustering(n_clusters=2, linkage='single')
     clustering.fit(moons)
-    assert_almost_equal(normalized_mutual_info_score(clustering.labels_,
-                                                     moon_labels), 1)
+    assert_almost_equal(
+        normalized_mutual_info_score(clustering.labels_, moon_labels), 1)
 
-    circles, circle_labels = make_circles(factor=0.5, noise=0.025,
+    circles, circle_labels = make_circles(factor=0.5,
+                                          noise=0.025,
                                           random_state=42)
     clustering = AgglomerativeClustering(n_clusters=2, linkage='single')
     clustering.fit(circles)
-    assert_almost_equal(normalized_mutual_info_score(clustering.labels_,
-                                                     circle_labels), 1)
+    assert_almost_equal(
+        normalized_mutual_info_score(clustering.labels_, circle_labels), 1)
 
 
 def assess_same_labelling(cut1, cut2):
@@ -302,9 +301,10 @@ def test_sparse_scikit_vs_scipy():
 
             # Sort the order of child nodes per row for consistency
             children.sort(axis=1)
-            assert_array_equal(children, children_, 'linkage tree differs'
-                                                    ' from scipy impl for'
-                                                    ' linkage: ' + linkage)
+            assert_array_equal(
+                children, children_, 'linkage tree differs'
+                ' from scipy impl for'
+                ' linkage: ' + linkage)
 
             cut = _hc_cut(k, children, n_leaves)
             cut_ = _hc_cut(k, children_, n_leaves)
@@ -332,10 +332,10 @@ def test_vector_scikit_single_vs_scipy_single(seed):
 
     # Sort the order of child nodes per row for consistency
     children.sort(axis=1)
-    assert_array_equal(children, children_scipy,
-                       'linkage tree differs'
-                       ' from scipy impl for'
-                       ' single linkage.')
+    assert_array_equal(
+        children, children_scipy, 'linkage tree differs'
+        ' from scipy impl for'
+        ' single linkage.')
 
     cut = _hc_cut(n_clusters, children, n_leaves)
     cut_scipy = _hc_cut(n_clusters, children_scipy, n_leaves)
@@ -345,14 +345,12 @@ def test_vector_scikit_single_vs_scipy_single(seed):
 def test_identical_points():
     # Ensure identical points are handled correctly when using mst with
     # a sparse connectivity matrix
-    X = np.array([[0, 0, 0], [0, 0, 0],
-                  [1, 1, 1], [1, 1, 1],
-                  [2, 2, 2], [2, 2, 2]])
+    X = np.array([[0, 0, 0], [0, 0, 0], [1, 1, 1], [1, 1, 1], [2, 2, 2],
+                  [2, 2, 2]])
     true_labels = np.array([0, 0, 1, 1, 2, 2])
     connectivity = kneighbors_graph(X, n_neighbors=3, include_self=False)
     connectivity = 0.5 * (connectivity + connectivity.T)
-    connectivity, n_components = _fix_connectivity(X,
-                                                   connectivity,
+    connectivity, n_components = _fix_connectivity(X, connectivity,
                                                    'euclidean')
 
     for linkage in ('single', 'average', 'average', 'ward'):
@@ -361,21 +359,21 @@ def test_identical_points():
                                              connectivity=connectivity)
         clustering.fit(X)
 
-        assert_almost_equal(normalized_mutual_info_score(clustering.labels_,
-                                                         true_labels), 1)
+        assert_almost_equal(
+            normalized_mutual_info_score(clustering.labels_, true_labels), 1)
 
 
 def test_connectivity_propagation():
     # Check that connectivity in the ward tree is propagated correctly during
     # merging.
-    X = np.array([(.014, .120), (.014, .099), (.014, .097),
-                  (.017, .153), (.017, .153), (.018, .153),
-                  (.018, .153), (.018, .153), (.018, .153),
-                  (.018, .153), (.018, .153), (.018, .153),
+    X = np.array([(.014, .120), (.014, .099), (.014, .097), (.017, .153),
+                  (.017, .153), (.018, .153), (.018, .153), (.018, .153),
+                  (.018, .153), (.018, .153), (.018, .153), (.018, .153),
                   (.018, .152), (.018, .149), (.018, .144)])
     connectivity = kneighbors_graph(X, 10, include_self=False)
-    ward = AgglomerativeClustering(
-        n_clusters=4, connectivity=connectivity, linkage='ward')
+    ward = AgglomerativeClustering(n_clusters=4,
+                                   connectivity=connectivity,
+                                   linkage='ward')
     # If changes are not propagated correctly, fit crashes with an
     # IndexError
     ward.fit(X)
@@ -416,7 +414,8 @@ def test_ward_linkage_tree_return_distance():
         X -= X.mean(axis=1)[:, np.newaxis]
 
         out_unstructured = ward_tree(X, return_distance=True)
-        out_structured = ward_tree(X, connectivity=connectivity,
+        out_structured = ward_tree(X,
+                                   connectivity=connectivity,
                                    return_distance=True)
 
         # get children
@@ -433,27 +432,26 @@ def test_ward_linkage_tree_return_distance():
         assert_array_almost_equal(dist_unstructured, dist_structured)
 
         for linkage in ['average', 'complete', 'single']:
-            structured_items = linkage_tree(
-                X, connectivity=connectivity, linkage=linkage,
-                return_distance=True)[-1]
-            unstructured_items = linkage_tree(
-                X, linkage=linkage, return_distance=True)[-1]
+            structured_items = linkage_tree(X,
+                                            connectivity=connectivity,
+                                            linkage=linkage,
+                                            return_distance=True)[-1]
+            unstructured_items = linkage_tree(X,
+                                              linkage=linkage,
+                                              return_distance=True)[-1]
             structured_dist = structured_items[-1]
             unstructured_dist = unstructured_items[-1]
             structured_children = structured_items[0]
             unstructured_children = unstructured_items[0]
             assert_array_almost_equal(structured_dist, unstructured_dist)
-            assert_array_almost_equal(
-                structured_children, unstructured_children)
+            assert_array_almost_equal(structured_children,
+                                      unstructured_children)
 
     # test on the following dataset where we know the truth
     # taken from scipy/cluster/tests/hierarchy_test_data.py
-    X = np.array([[1.43054825, -7.5693489],
-                  [6.95887839, 6.82293382],
-                  [2.87137846, -9.68248579],
-                  [7.87974764, -6.05485803],
-                  [8.24018364, -6.09495602],
-                  [7.39020262, 8.54004355]])
+    X = np.array([[1.43054825, -7.5693489], [6.95887839, 6.82293382],
+                  [2.87137846, -9.68248579], [7.87974764, -6.05485803],
+                  [8.24018364, -6.09495602], [7.39020262, 8.54004355]])
     # truth
     linkage_X_ward = np.array([[3., 4., 0.36265956, 2.],
                                [1., 5., 1.77045373, 2.],
@@ -461,25 +459,24 @@ def test_ward_linkage_tree_return_distance():
                                [6., 8., 9.10208346, 4.],
                                [7., 9., 24.7784379, 6.]])
 
-    linkage_X_complete = np.array(
-        [[3., 4., 0.36265956, 2.],
-         [1., 5., 1.77045373, 2.],
-         [0., 2., 2.55760419, 2.],
-         [6., 8., 6.96742194, 4.],
-         [7., 9., 18.77445997, 6.]])
+    linkage_X_complete = np.array([[3., 4., 0.36265956, 2.],
+                                   [1., 5., 1.77045373, 2.],
+                                   [0., 2., 2.55760419, 2.],
+                                   [6., 8., 6.96742194, 4.],
+                                   [7., 9., 18.77445997, 6.]])
 
-    linkage_X_average = np.array(
-        [[3., 4., 0.36265956, 2.],
-         [1., 5., 1.77045373, 2.],
-         [0., 2., 2.55760419, 2.],
-         [6., 8., 6.55832839, 4.],
-         [7., 9., 15.44089605, 6.]])
+    linkage_X_average = np.array([[3., 4., 0.36265956, 2.],
+                                  [1., 5., 1.77045373, 2.],
+                                  [0., 2., 2.55760419, 2.],
+                                  [6., 8., 6.55832839, 4.],
+                                  [7., 9., 15.44089605, 6.]])
 
     n_samples, n_features = np.shape(X)
     connectivity_X = np.ones((n_samples, n_samples))
 
     out_X_unstructured = ward_tree(X, return_distance=True)
-    out_X_structured = ward_tree(X, connectivity=connectivity_X,
+    out_X_structured = ward_tree(X,
+                                 connectivity=connectivity_X,
                                  return_distance=True)
 
     # check that the labels are the same
@@ -493,11 +490,13 @@ def test_ward_linkage_tree_return_distance():
     linkage_options = ['complete', 'average', 'single']
     X_linkage_truth = [linkage_X_complete, linkage_X_average]
     for (linkage, X_truth) in zip(linkage_options, X_linkage_truth):
-        out_X_unstructured = linkage_tree(
-            X, return_distance=True, linkage=linkage)
-        out_X_structured = linkage_tree(
-            X, connectivity=connectivity_X, linkage=linkage,
-            return_distance=True)
+        out_X_unstructured = linkage_tree(X,
+                                          return_distance=True,
+                                          linkage=linkage)
+        out_X_structured = linkage_tree(X,
+                                        connectivity=connectivity_X,
+                                        linkage=linkage,
+                                        return_distance=True)
 
         # check that the labels are the same
         assert_array_equal(X_truth[:, :2], out_X_unstructured[0])
@@ -542,9 +541,8 @@ def test_connectivity_callable():
     X = rng.rand(20, 5)
     connectivity = kneighbors_graph(X, 3, include_self=False)
     aglc1 = AgglomerativeClustering(connectivity=connectivity)
-    aglc2 = AgglomerativeClustering(
-        connectivity=partial(kneighbors_graph, n_neighbors=3,
-                             include_self=False))
+    aglc2 = AgglomerativeClustering(connectivity=partial(
+        kneighbors_graph, n_neighbors=3, include_self=False))
     aglc1.fit(X)
     aglc2.fit(X)
     assert_array_equal(aglc1.labels_, aglc2.labels_)
@@ -622,8 +620,10 @@ def test_affinity_passed_to_fix_connectivity():
     X = rng.randn(size, size)
     mask = np.array([True, False, False, True])
 
-    connectivity = grid_to_graph(n_x=size, n_y=size,
-                                 mask=mask, return_as=np.ndarray)
+    connectivity = grid_to_graph(n_x=size,
+                                 n_y=size,
+                                 mask=mask,
+                                 return_as=np.ndarray)
 
     class FakeAffinity:
         def __init__(self):
@@ -655,7 +655,8 @@ def test_agglomerative_clustering_with_distance_threshold(linkage):
         clustering = AgglomerativeClustering(
             n_clusters=None,
             distance_threshold=distance_threshold,
-            connectivity=conn, linkage=linkage)
+            connectivity=conn,
+            linkage=linkage)
         clustering.fit(X)
         clusters_produced = clustering.labels_
         num_clusters_produced = len(np.unique(clustering.labels_))
@@ -673,8 +674,7 @@ def test_agglomerative_clustering_with_distance_threshold(linkage):
         clusters_at_threshold = _hc_cut(n_clusters=num_clusters_produced,
                                         children=children,
                                         n_leaves=n_leaves)
-        assert np.array_equiv(clusters_produced,
-                              clusters_at_threshold)
+        assert np.array_equiv(clusters_produced, clusters_at_threshold)
 
 
 def test_small_distance_threshold():
@@ -684,10 +684,9 @@ def test_small_distance_threshold():
     # this should result in all data in their own clusters, given that
     # their pairwise distances are bigger than .1 (which may not be the case
     # with a different random seed).
-    clustering = AgglomerativeClustering(
-        n_clusters=None,
-        distance_threshold=1.,
-        linkage="single").fit(X)
+    clustering = AgglomerativeClustering(n_clusters=None,
+                                         distance_threshold=1.,
+                                         linkage="single").fit(X)
     # check that the pairwise distances are indeed all larger than .1
     all_distances = pairwise_distances(X, metric='minkowski', p=2)
     np.fill_diagonal(all_distances, np.inf)
@@ -701,20 +700,20 @@ def test_cluster_distances_with_distance_threshold():
     X = rng.randint(-10, 10, size=(n_samples, 3))
     # check the distances within the clusters and with other clusters
     distance_threshold = 4
-    clustering = AgglomerativeClustering(
-        n_clusters=None,
-        distance_threshold=distance_threshold,
-        linkage="single").fit(X)
+    clustering = AgglomerativeClustering(n_clusters=None,
+                                         distance_threshold=distance_threshold,
+                                         linkage="single").fit(X)
     labels = clustering.labels_
     D = pairwise_distances(X, metric="minkowski", p=2)
     # to avoid taking the 0 diagonal in min()
     np.fill_diagonal(D, np.inf)
     for label in np.unique(labels):
         in_cluster_mask = labels == label
-        max_in_cluster_distance = (D[in_cluster_mask][:, in_cluster_mask]
-                                   .min(axis=0).max())
-        min_out_cluster_distance = (D[in_cluster_mask][:, ~in_cluster_mask]
-                                    .min(axis=0).min())
+        max_in_cluster_distance = (D[in_cluster_mask][:, in_cluster_mask].min(
+            axis=0).max())
+        min_out_cluster_distance = (D[in_cluster_mask][:,
+                                                       ~in_cluster_mask].min(
+                                                           axis=0).min())
         # single data point clusters only have that inf diagonal here
         if in_cluster_mask.sum() > 1:
             assert max_in_cluster_distance < distance_threshold
@@ -728,10 +727,9 @@ def test_agglomerative_clustering_with_distance_threshold_edge_case(
         linkage, threshold, y_true):
     # test boundary case of distance_threshold matching the distance
     X = [[0], [1]]
-    clusterer = AgglomerativeClustering(
-        n_clusters=None,
-        distance_threshold=threshold,
-        linkage=linkage)
+    clusterer = AgglomerativeClustering(n_clusters=None,
+                                        distance_threshold=threshold,
+                                        linkage=linkage)
     y_pred = clusterer.fit_predict(X)
     assert adjusted_rand_score(y_true, y_pred) == 1
 
@@ -743,8 +741,7 @@ def test_dist_threshold_invalid_parameters():
                                 distance_threshold=None).fit(X)
 
     with pytest.raises(ValueError, match="Exactly one of "):
-        AgglomerativeClustering(n_clusters=2,
-                                distance_threshold=1).fit(X)
+        AgglomerativeClustering(n_clusters=2, distance_threshold=1).fit(X)
 
     X = [[0], [1]]
     with pytest.raises(ValueError, match="compute_full_tree must be True if"):

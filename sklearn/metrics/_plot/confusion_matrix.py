@@ -46,8 +46,13 @@ class ConfusionMatrixDisplay:
         self.display_labels = display_labels
 
     @_deprecate_positional_args
-    def plot(self, *, include_values=True, cmap='viridis',
-             xticks_rotation='horizontal', values_format=None, ax=None):
+    def plot(self,
+             *,
+             include_values=True,
+             cmap='viridis',
+             xticks_rotation='horizontal',
+             values_format=None,
+             ax=None):
         """Plot visualization.
 
         Parameters
@@ -106,10 +111,12 @@ class ConfusionMatrixDisplay:
                 else:
                     text_cm = format(cm[i, j], values_format)
 
-                self.text_[i, j] = ax.text(
-                    j, i, text_cm,
-                    ha="center", va="center",
-                    color=color)
+                self.text_[i, j] = ax.text(j,
+                                           i,
+                                           text_cm,
+                                           ha="center",
+                                           va="center",
+                                           color=color)
 
         if self.display_labels is None:
             display_labels = np.arange(n_classes)
@@ -133,12 +140,19 @@ class ConfusionMatrixDisplay:
 
 
 @_deprecate_positional_args
-def plot_confusion_matrix(estimator, X, y_true, *, labels=None,
-                          sample_weight=None, normalize=None,
-                          display_labels=None, include_values=True,
+def plot_confusion_matrix(estimator,
+                          X,
+                          y_true,
+                          *,
+                          labels=None,
+                          sample_weight=None,
+                          normalize=None,
+                          display_labels=None,
+                          include_values=True,
                           xticks_rotation='horizontal',
                           values_format=None,
-                          cmap='viridis', ax=None):
+                          cmap='viridis',
+                          ax=None):
     """Plot Confusion Matrix.
 
     Read more in the :ref:`User Guide <confusion_matrix>`.
@@ -217,8 +231,11 @@ def plot_confusion_matrix(estimator, X, y_true, *, labels=None,
         raise ValueError("plot_confusion_matrix only supports classifiers")
 
     y_pred = estimator.predict(X)
-    cm = confusion_matrix(y_true, y_pred, sample_weight=sample_weight,
-                          labels=labels, normalize=normalize)
+    cm = confusion_matrix(y_true,
+                          y_pred,
+                          sample_weight=sample_weight,
+                          labels=labels,
+                          normalize=normalize)
 
     if display_labels is None:
         if labels is None:
@@ -229,5 +246,7 @@ def plot_confusion_matrix(estimator, X, y_true, *, labels=None,
     disp = ConfusionMatrixDisplay(confusion_matrix=cm,
                                   display_labels=display_labels)
     return disp.plot(include_values=include_values,
-                     cmap=cmap, ax=ax, xticks_rotation=xticks_rotation,
+                     cmap=cmap,
+                     ax=ax,
+                     xticks_rotation=xticks_rotation,
                      values_format=values_format)

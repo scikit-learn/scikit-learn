@@ -10,8 +10,7 @@ from ..utils.multiclass import check_classification_targets
 from ..utils.deprecation import deprecated
 
 
-class LinearSVC(BaseEstimator, LinearClassifierMixin,
-                SparseCoefMixin):
+class LinearSVC(BaseEstimator, LinearClassifierMixin, SparseCoefMixin):
     """Linear Support Vector Classification.
 
     Similar to SVC with parameter kernel='linear', but implemented in terms of
@@ -179,10 +178,20 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
     [1]
     """
     @_deprecate_positional_args
-    def __init__(self, penalty='l2', loss='squared_hinge', *, dual=True,
-                 tol=1e-4, C=1.0, multi_class='ovr', fit_intercept=True,
-                 intercept_scaling=1, class_weight=None, verbose=0,
-                 random_state=None, max_iter=1000):
+    def __init__(self,
+                 penalty='l2',
+                 loss='squared_hinge',
+                 *,
+                 dual=True,
+                 tol=1e-4,
+                 C=1.0,
+                 multi_class='ovr',
+                 fit_intercept=True,
+                 intercept_scaling=1,
+                 class_weight=None,
+                 verbose=0,
+                 random_state=None,
+                 max_iter=1000):
         self.dual = dual
         self.tol = tol
         self.C = C
@@ -221,20 +230,34 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
             An instance of the estimator.
         """
         if self.C < 0:
-            raise ValueError("Penalty term must be positive; got (C=%r)"
-                             % self.C)
+            raise ValueError("Penalty term must be positive; got (C=%r)" %
+                             self.C)
 
-        X, y = self._validate_data(X, y, accept_sparse='csr',
-                                   dtype=np.float64, order="C",
+        X, y = self._validate_data(X,
+                                   y,
+                                   accept_sparse='csr',
+                                   dtype=np.float64,
+                                   order="C",
                                    accept_large_sparse=False)
         check_classification_targets(y)
         self.classes_ = np.unique(y)
 
         self.coef_, self.intercept_, self.n_iter_ = _fit_liblinear(
-            X, y, self.C, self.fit_intercept, self.intercept_scaling,
-            self.class_weight, self.penalty, self.dual, self.verbose,
-            self.max_iter, self.tol, self.random_state, self.multi_class,
-            self.loss, sample_weight=sample_weight)
+            X,
+            y,
+            self.C,
+            self.fit_intercept,
+            self.intercept_scaling,
+            self.class_weight,
+            self.penalty,
+            self.dual,
+            self.verbose,
+            self.max_iter,
+            self.tol,
+            self.random_state,
+            self.multi_class,
+            self.loss,
+            sample_weight=sample_weight)
 
         if self.multi_class == "crammer_singer" and len(self.classes_) == 2:
             self.coef_ = (self.coef_[1] - self.coef_[0]).reshape(1, -1)
@@ -366,12 +389,19 @@ class LinearSVR(RegressorMixin, LinearModel):
         less memory, allows incremental (online) learning, and implements
         various loss functions and regularization regimes.
     """
-
     @_deprecate_positional_args
-    def __init__(self, *, epsilon=0.0, tol=1e-4, C=1.0,
-                 loss='epsilon_insensitive', fit_intercept=True,
-                 intercept_scaling=1., dual=True, verbose=0,
-                 random_state=None, max_iter=1000):
+    def __init__(self,
+                 *,
+                 epsilon=0.0,
+                 tol=1e-4,
+                 C=1.0,
+                 loss='epsilon_insensitive',
+                 fit_intercept=True,
+                 intercept_scaling=1.,
+                 dual=True,
+                 verbose=0,
+                 random_state=None,
+                 max_iter=1000):
         self.tol = tol
         self.C = C
         self.epsilon = epsilon
@@ -408,18 +438,32 @@ class LinearSVR(RegressorMixin, LinearModel):
             An instance of the estimator.
         """
         if self.C < 0:
-            raise ValueError("Penalty term must be positive; got (C=%r)"
-                             % self.C)
+            raise ValueError("Penalty term must be positive; got (C=%r)" %
+                             self.C)
 
-        X, y = self._validate_data(X, y, accept_sparse='csr',
-                                   dtype=np.float64, order="C",
+        X, y = self._validate_data(X,
+                                   y,
+                                   accept_sparse='csr',
+                                   dtype=np.float64,
+                                   order="C",
                                    accept_large_sparse=False)
         penalty = 'l2'  # SVR only accepts l2 penalty
         self.coef_, self.intercept_, self.n_iter_ = _fit_liblinear(
-            X, y, self.C, self.fit_intercept, self.intercept_scaling,
-            None, penalty, self.dual, self.verbose,
-            self.max_iter, self.tol, self.random_state, loss=self.loss,
-            epsilon=self.epsilon, sample_weight=sample_weight)
+            X,
+            y,
+            self.C,
+            self.fit_intercept,
+            self.intercept_scaling,
+            None,
+            penalty,
+            self.dual,
+            self.verbose,
+            self.max_iter,
+            self.tol,
+            self.random_state,
+            loss=self.loss,
+            epsilon=self.epsilon,
+            sample_weight=sample_weight)
         self.coef_ = self.coef_.ravel()
 
         return self
@@ -634,21 +678,40 @@ class SVC(BaseSVC):
     _impl = 'c_svc'
 
     @_deprecate_positional_args
-    def __init__(self, *, C=1.0, kernel='rbf', degree=3, gamma='scale',
-                 coef0=0.0, shrinking=True, probability=False,
-                 tol=1e-3, cache_size=200, class_weight=None,
-                 verbose=False, max_iter=-1, decision_function_shape='ovr',
+    def __init__(self,
+                 *,
+                 C=1.0,
+                 kernel='rbf',
+                 degree=3,
+                 gamma='scale',
+                 coef0=0.0,
+                 shrinking=True,
+                 probability=False,
+                 tol=1e-3,
+                 cache_size=200,
+                 class_weight=None,
+                 verbose=False,
+                 max_iter=-1,
+                 decision_function_shape='ovr',
                  break_ties=False,
                  random_state=None):
 
-        super().__init__(
-            kernel=kernel, degree=degree, gamma=gamma,
-            coef0=coef0, tol=tol, C=C, nu=0., shrinking=shrinking,
-            probability=probability, cache_size=cache_size,
-            class_weight=class_weight, verbose=verbose, max_iter=max_iter,
-            decision_function_shape=decision_function_shape,
-            break_ties=break_ties,
-            random_state=random_state)
+        super().__init__(kernel=kernel,
+                         degree=degree,
+                         gamma=gamma,
+                         coef0=coef0,
+                         tol=tol,
+                         C=C,
+                         nu=0.,
+                         shrinking=shrinking,
+                         probability=probability,
+                         cache_size=cache_size,
+                         class_weight=class_weight,
+                         verbose=verbose,
+                         max_iter=max_iter,
+                         decision_function_shape=decision_function_shape,
+                         break_ties=break_ties,
+                         random_state=random_state)
 
 
 class NuSVC(BaseSVC):
@@ -846,20 +909,40 @@ class NuSVC(BaseSVC):
     _impl = 'nu_svc'
 
     @_deprecate_positional_args
-    def __init__(self, *, nu=0.5, kernel='rbf', degree=3, gamma='scale',
-                 coef0=0.0, shrinking=True, probability=False, tol=1e-3,
-                 cache_size=200, class_weight=None, verbose=False, max_iter=-1,
-                 decision_function_shape='ovr', break_ties=False,
+    def __init__(self,
+                 *,
+                 nu=0.5,
+                 kernel='rbf',
+                 degree=3,
+                 gamma='scale',
+                 coef0=0.0,
+                 shrinking=True,
+                 probability=False,
+                 tol=1e-3,
+                 cache_size=200,
+                 class_weight=None,
+                 verbose=False,
+                 max_iter=-1,
+                 decision_function_shape='ovr',
+                 break_ties=False,
                  random_state=None):
 
-        super().__init__(
-            kernel=kernel, degree=degree, gamma=gamma,
-            coef0=coef0, tol=tol, C=0., nu=nu, shrinking=shrinking,
-            probability=probability, cache_size=cache_size,
-            class_weight=class_weight, verbose=verbose, max_iter=max_iter,
-            decision_function_shape=decision_function_shape,
-            break_ties=break_ties,
-            random_state=random_state)
+        super().__init__(kernel=kernel,
+                         degree=degree,
+                         gamma=gamma,
+                         coef0=coef0,
+                         tol=tol,
+                         C=0.,
+                         nu=nu,
+                         shrinking=shrinking,
+                         probability=probability,
+                         cache_size=cache_size,
+                         class_weight=class_weight,
+                         verbose=verbose,
+                         max_iter=max_iter,
+                         decision_function_shape=decision_function_shape,
+                         break_ties=break_ties,
+                         random_state=random_state)
 
     def _more_tags(self):
         return {
@@ -1001,15 +1084,35 @@ class SVR(RegressorMixin, BaseLibSVM):
     _impl = 'epsilon_svr'
 
     @_deprecate_positional_args
-    def __init__(self, *, kernel='rbf', degree=3, gamma='scale',
-                 coef0=0.0, tol=1e-3, C=1.0, epsilon=0.1, shrinking=True,
-                 cache_size=200, verbose=False, max_iter=-1):
+    def __init__(self,
+                 *,
+                 kernel='rbf',
+                 degree=3,
+                 gamma='scale',
+                 coef0=0.0,
+                 tol=1e-3,
+                 C=1.0,
+                 epsilon=0.1,
+                 shrinking=True,
+                 cache_size=200,
+                 verbose=False,
+                 max_iter=-1):
 
-        super().__init__(
-            kernel=kernel, degree=degree, gamma=gamma,
-            coef0=coef0, tol=tol, C=C, nu=0., epsilon=epsilon, verbose=verbose,
-            shrinking=shrinking, probability=False, cache_size=cache_size,
-            class_weight=None, max_iter=max_iter, random_state=None)
+        super().__init__(kernel=kernel,
+                         degree=degree,
+                         gamma=gamma,
+                         coef0=coef0,
+                         tol=tol,
+                         C=C,
+                         nu=0.,
+                         epsilon=epsilon,
+                         verbose=verbose,
+                         shrinking=shrinking,
+                         probability=False,
+                         cache_size=cache_size,
+                         class_weight=None,
+                         max_iter=max_iter,
+                         random_state=None)
 
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
@@ -1147,15 +1250,35 @@ class NuSVR(RegressorMixin, BaseLibSVM):
     _impl = 'nu_svr'
 
     @_deprecate_positional_args
-    def __init__(self, *, nu=0.5, C=1.0, kernel='rbf', degree=3,
-                 gamma='scale', coef0=0.0, shrinking=True,
-                 tol=1e-3, cache_size=200, verbose=False, max_iter=-1):
+    def __init__(self,
+                 *,
+                 nu=0.5,
+                 C=1.0,
+                 kernel='rbf',
+                 degree=3,
+                 gamma='scale',
+                 coef0=0.0,
+                 shrinking=True,
+                 tol=1e-3,
+                 cache_size=200,
+                 verbose=False,
+                 max_iter=-1):
 
-        super().__init__(
-            kernel=kernel, degree=degree, gamma=gamma, coef0=coef0,
-            tol=tol, C=C, nu=nu, epsilon=0., shrinking=shrinking,
-            probability=False, cache_size=cache_size, class_weight=None,
-            verbose=verbose, max_iter=max_iter, random_state=None)
+        super().__init__(kernel=kernel,
+                         degree=degree,
+                         gamma=gamma,
+                         coef0=coef0,
+                         tol=tol,
+                         C=C,
+                         nu=nu,
+                         epsilon=0.,
+                         shrinking=shrinking,
+                         probability=False,
+                         cache_size=cache_size,
+                         class_weight=None,
+                         verbose=verbose,
+                         max_iter=max_iter,
+                         random_state=None)
 
 
 class OneClassSVM(OutlierMixin, BaseLibSVM):
@@ -1264,14 +1387,34 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
     _impl = 'one_class'
 
     @_deprecate_positional_args
-    def __init__(self, *, kernel='rbf', degree=3, gamma='scale',
-                 coef0=0.0, tol=1e-3, nu=0.5, shrinking=True, cache_size=200,
-                 verbose=False, max_iter=-1):
+    def __init__(self,
+                 *,
+                 kernel='rbf',
+                 degree=3,
+                 gamma='scale',
+                 coef0=0.0,
+                 tol=1e-3,
+                 nu=0.5,
+                 shrinking=True,
+                 cache_size=200,
+                 verbose=False,
+                 max_iter=-1):
 
-        super().__init__(
-            kernel, degree, gamma, coef0, tol, 0., nu, 0.,
-            shrinking, False, cache_size, None, verbose, max_iter,
-            random_state=None)
+        super().__init__(kernel,
+                         degree,
+                         gamma,
+                         coef0,
+                         tol,
+                         0.,
+                         nu,
+                         0.,
+                         shrinking,
+                         False,
+                         cache_size,
+                         None,
+                         verbose,
+                         max_iter,
+                         random_state=None)
 
     def fit(self, X, y=None, sample_weight=None, **params):
         """Detects the soft boundary of the set of samples X.
@@ -1298,8 +1441,10 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
         If X is not a C-ordered contiguous array it is copied.
 
         """
-        super().fit(X, np.ones(_num_samples(X)),
-                    sample_weight=sample_weight, **params)
+        super().fit(X,
+                    np.ones(_num_samples(X)),
+                    sample_weight=sample_weight,
+                    **params)
         self.offset_ = -self._intercept_
         return self
 

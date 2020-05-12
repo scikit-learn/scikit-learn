@@ -20,7 +20,6 @@ class AgglomerationTransform(TransformerMixin):
     """
     A class for feature agglomeration via the transform interface
     """
-
     def transform(self, X):
         """
         Transform a new matrix using the built clustering
@@ -46,11 +45,15 @@ class AgglomerationTransform(TransformerMixin):
             size = np.bincount(self.labels_)
             n_samples = X.shape[0]
             # a fast way to compute the mean of grouped features
-            nX = np.array([np.bincount(self.labels_, X[i, :]) / size
-                          for i in range(n_samples)])
+            nX = np.array([
+                np.bincount(self.labels_, X[i, :]) / size
+                for i in range(n_samples)
+            ])
         else:
-            nX = [self.pooling_func(X[:, self.labels_ == l], axis=1)
-                  for l in np.unique(self.labels_)]
+            nX = [
+                self.pooling_func(X[:, self.labels_ == l], axis=1)
+                for l in np.unique(self.labels_)
+            ]
             nX = np.array(nX).T
         return nX
 

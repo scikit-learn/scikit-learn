@@ -35,15 +35,11 @@ from ..utils.fixes import _astype_copy_false
 from ..exceptions import NotFittedError
 from ..utils.validation import _deprecate_positional_args
 
-
-__all__ = ['HashingVectorizer',
-           'CountVectorizer',
-           'ENGLISH_STOP_WORDS',
-           'TfidfTransformer',
-           'TfidfVectorizer',
-           'strip_accents_ascii',
-           'strip_accents_unicode',
-           'strip_tags']
+__all__ = [
+    'HashingVectorizer', 'CountVectorizer', 'ENGLISH_STOP_WORDS',
+    'TfidfTransformer', 'TfidfVectorizer', 'strip_accents_ascii',
+    'strip_accents_unicode', 'strip_tags'
+]
 
 
 def _preprocess(doc, accent_function=None, lower=False):
@@ -72,8 +68,13 @@ def _preprocess(doc, accent_function=None, lower=False):
     return doc
 
 
-def _analyze(doc, analyzer=None, tokenizer=None, ngrams=None,
-             preprocessor=None, decoder=None, stop_words=None):
+def _analyze(doc,
+             analyzer=None,
+             tokenizer=None,
+             ngrams=None,
+             preprocessor=None,
+             decoder=None,
+             stop_words=None):
     """Chain together an optional series of text processing steps to go from
     a single document to ngrams, with or without tokenizing or preprocessing.
 
@@ -245,10 +246,9 @@ class _VectorizerMixin:
             tokens_append = tokens.append
             space_join = " ".join
 
-            for n in range(min_n,
-                           min(max_n + 1, n_original_tokens + 1)):
+            for n in range(min_n, min(max_n + 1, n_original_tokens + 1)):
                 for i in range(n_original_tokens - n + 1):
-                    tokens_append(space_join(original_tokens[i: i + n]))
+                    tokens_append(space_join(original_tokens[i:i + n]))
 
         return tokens
 
@@ -272,7 +272,7 @@ class _VectorizerMixin:
 
         for n in range(min_n, min(max_n + 1, text_len + 1)):
             for i in range(text_len - n + 1):
-                ngrams_append(text_document[i: i + n])
+                ngrams_append(text_document[i:i + n])
         return ngrams
 
     def _char_wb_ngrams(self, text_document):
@@ -299,7 +299,7 @@ class _VectorizerMixin:
                 while offset + n < w_len:
                     offset += 1
                     ngrams_append(w[offset:offset + n])
-                if offset == 0:   # count a short word (w_len < n) only once
+                if offset == 0:  # count a short word (w_len < n) only once
                     break
         return ngrams
 
@@ -327,9 +327,9 @@ class _VectorizerMixin:
             raise ValueError('Invalid value for "strip_accents": %s' %
                              self.strip_accents)
 
-        return partial(
-            _preprocess, accent_function=strip_accents, lower=self.lowercase
-        )
+        return partial(_preprocess,
+                       accent_function=strip_accents,
+                       lower=self.lowercase)
 
     def build_tokenizer(self):
         """Return a function that splits a string into a sequence of tokens.
@@ -403,29 +403,36 @@ class _VectorizerMixin:
         """
 
         if callable(self.analyzer):
-            return partial(
-                _analyze, analyzer=self.analyzer, decoder=self.decode
-            )
+            return partial(_analyze,
+                           analyzer=self.analyzer,
+                           decoder=self.decode)
 
         preprocess = self.build_preprocessor()
 
         if self.analyzer == 'char':
-            return partial(_analyze, ngrams=self._char_ngrams,
-                           preprocessor=preprocess, decoder=self.decode)
+            return partial(_analyze,
+                           ngrams=self._char_ngrams,
+                           preprocessor=preprocess,
+                           decoder=self.decode)
 
         elif self.analyzer == 'char_wb':
 
-            return partial(_analyze, ngrams=self._char_wb_ngrams,
-                           preprocessor=preprocess, decoder=self.decode)
+            return partial(_analyze,
+                           ngrams=self._char_wb_ngrams,
+                           preprocessor=preprocess,
+                           decoder=self.decode)
 
         elif self.analyzer == 'word':
             stop_words = self.get_stop_words()
             tokenize = self.build_tokenizer()
             self._check_stop_words_consistency(stop_words, preprocess,
                                                tokenize)
-            return partial(_analyze, ngrams=self._word_ngrams,
-                           tokenizer=tokenize, preprocessor=preprocess,
-                           decoder=self.decode, stop_words=stop_words)
+            return partial(_analyze,
+                           ngrams=self._word_ngrams,
+                           tokenizer=tokenize,
+                           preprocessor=preprocess,
+                           decoder=self.decode,
+                           stop_words=stop_words)
 
         else:
             raise ValueError('%s is not a valid tokenization scheme/analyzer' %
@@ -473,10 +480,9 @@ class _VectorizerMixin:
         """Check validity of ngram_range parameter"""
         min_n, max_m = self.ngram_range
         if min_n > max_m:
-            raise ValueError(
-                "Invalid value for ngram_range=%s "
-                "lower boundary larger than the upper boundary."
-                % str(self.ngram_range))
+            raise ValueError("Invalid value for ngram_range=%s "
+                             "lower boundary larger than the upper boundary." %
+                             str(self.ngram_range))
 
     def _warn_for_unused_params(self):
 
@@ -679,12 +685,23 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
 
     """
     @_deprecate_positional_args
-    def __init__(self, *, input='content', encoding='utf-8',
-                 decode_error='strict', strip_accents=None,
-                 lowercase=True, preprocessor=None, tokenizer=None,
-                 stop_words=None, token_pattern=r"(?u)\b\w\w+\b",
-                 ngram_range=(1, 1), analyzer='word', n_features=(2 ** 20),
-                 binary=False, norm='l2', alternate_sign=True,
+    def __init__(self,
+                 *,
+                 input='content',
+                 encoding='utf-8',
+                 decode_error='strict',
+                 strip_accents=None,
+                 lowercase=True,
+                 preprocessor=None,
+                 tokenizer=None,
+                 stop_words=None,
+                 token_pattern=r"(?u)\b\w\w+\b",
+                 ngram_range=(1, 1),
+                 analyzer='word',
+                 n_features=(2**20),
+                 binary=False,
+                 norm='l2',
+                 alternate_sign=True,
                  dtype=np.float64):
         self.input = input
         self.encoding = encoding
@@ -726,9 +743,8 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
         """
         # triggers a parameter validation
         if isinstance(X, str):
-            raise ValueError(
-                "Iterable over raw text documents expected, "
-                "string object received.")
+            raise ValueError("Iterable over raw text documents expected, "
+                             "string object received.")
 
         self._warn_for_unused_params()
         self._validate_params()
@@ -752,9 +768,8 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
             Document-term matrix.
         """
         if isinstance(X, str):
-            raise ValueError(
-                "Iterable over raw text documents expected, "
-                "string object received.")
+            raise ValueError("Iterable over raw text documents expected, "
+                             "string object received.")
 
         self._validate_params()
 
@@ -788,7 +803,8 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
 
     def _get_hasher(self):
         return FeatureHasher(n_features=self.n_features,
-                             input_type='string', dtype=self.dtype,
+                             input_type='string',
+                             dtype=self.dtype,
                              alternate_sign=self.alternate_sign)
 
     def _more_tags(self):
@@ -1001,13 +1017,25 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
     be safely removed using delattr or set to None before pickling.
     """
     @_deprecate_positional_args
-    def __init__(self, *, input='content', encoding='utf-8',
-                 decode_error='strict', strip_accents=None,
-                 lowercase=True, preprocessor=None, tokenizer=None,
-                 stop_words=None, token_pattern=r"(?u)\b\w\w+\b",
-                 ngram_range=(1, 1), analyzer='word',
-                 max_df=1.0, min_df=1, max_features=None,
-                 vocabulary=None, binary=False, dtype=np.int64):
+    def __init__(self,
+                 *,
+                 input='content',
+                 encoding='utf-8',
+                 decode_error='strict',
+                 strip_accents=None,
+                 lowercase=True,
+                 preprocessor=None,
+                 tokenizer=None,
+                 stop_words=None,
+                 token_pattern=r"(?u)\b\w\w+\b",
+                 ngram_range=(1, 1),
+                 analyzer='word',
+                 max_df=1.0,
+                 min_df=1,
+                 max_features=None,
+                 vocabulary=None,
+                 binary=False,
+                 dtype=np.int64):
         self.input = input
         self.encoding = encoding
         self.decode_error = decode_error
@@ -1024,11 +1052,11 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
             raise ValueError("negative value for max_df or min_df")
         self.max_features = max_features
         if max_features is not None:
-            if (not isinstance(max_features, numbers.Integral) or
-                    max_features <= 0):
+            if (not isinstance(max_features, numbers.Integral)
+                    or max_features <= 0):
                 raise ValueError(
-                    "max_features=%r, neither a positive integer nor None"
-                    % max_features)
+                    "max_features=%r, neither a positive integer nor None" %
+                    max_features)
         self.ngram_range = ngram_range
         self.vocabulary = vocabulary
         self.binary = binary
@@ -1048,8 +1076,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         X.indices = map_index.take(X.indices, mode='clip')
         return X
 
-    def _limit_features(self, X, vocabulary, high=None, low=None,
-                        limit=None):
+    def _limit_features(self, X, vocabulary, high=None, low=None, limit=None):
         """Remove too rare or too common features.
 
         Prune features that are non zero in more samples than high or less
@@ -1131,10 +1158,11 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
 
         if indptr[-1] > np.iinfo(np.int32).max:  # = 2**31 - 1
             if _IS_32BIT:
-                raise ValueError(('sparse CSR array has {} non-zero '
-                                  'elements and requires 64 bit indexing, '
-                                  'which is unsupported with 32 bit Python.')
-                                 .format(indptr[-1]))
+                raise ValueError(
+                    ('sparse CSR array has {} non-zero '
+                     'elements and requires 64 bit indexing, '
+                     'which is unsupported with 32 bit Python.').format(
+                         indptr[-1]))
             indices_dtype = np.int64
 
         else:
@@ -1185,9 +1213,8 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         # fit_transform overridable without unwanted side effects in
         # TfidfVectorizer.
         if isinstance(raw_documents, str):
-            raise ValueError(
-                "Iterable over raw text documents expected, "
-                "string object received.")
+            raise ValueError("Iterable over raw text documents expected, "
+                             "string object received.")
 
         self._validate_params()
         self._validate_vocabulary()
@@ -1203,11 +1230,9 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
 
         if not self.fixed_vocabulary_:
             n_doc = X.shape[0]
-            max_doc_count = (max_df
-                             if isinstance(max_df, numbers.Integral)
+            max_doc_count = (max_df if isinstance(max_df, numbers.Integral)
                              else max_df * n_doc)
-            min_doc_count = (min_df
-                             if isinstance(min_df, numbers.Integral)
+            min_doc_count = (min_df if isinstance(min_df, numbers.Integral)
                              else min_df * n_doc)
             if max_doc_count < min_doc_count:
                 raise ValueError(
@@ -1240,9 +1265,8 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
             Document-term matrix.
         """
         if isinstance(raw_documents, str):
-            raise ValueError(
-                "Iterable over raw text documents expected, "
-                "string object received.")
+            raise ValueError("Iterable over raw text documents expected, "
+                             "string object received.")
         self._check_vocabulary()
 
         # use the same matrix-building strategy as fit_transform
@@ -1279,8 +1303,10 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         indices = np.array(list(self.vocabulary_.values()))
         inverse_vocabulary = terms[np.argsort(indices)]
 
-        return [inverse_vocabulary[X[i, :].nonzero()[1]].ravel()
-                for i in range(n_samples)]
+        return [
+            inverse_vocabulary[X[i, :].nonzero()[1]].ravel()
+            for i in range(n_samples)
+        ]
 
     def get_feature_names(self):
         """Array mapping from feature integer indices to feature name.
@@ -1293,8 +1319,9 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
 
         self._check_vocabulary()
 
-        return [t for t, i in sorted(self.vocabulary_.items(),
-                                     key=itemgetter(1))]
+        return [
+            t for t, i in sorted(self.vocabulary_.items(), key=itemgetter(1))
+        ]
 
     def _more_tags(self):
         return {'X_types': ['string']}
@@ -1413,7 +1440,11 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
                    Press, pp. 118-120.
     """
     @_deprecate_positional_args
-    def __init__(self, *, norm='l2', use_idf=True, smooth_idf=True,
+    def __init__(self,
+                 *,
+                 norm='l2',
+                 use_idf=True,
+                 smooth_idf=True,
                  sublinear_tf=False):
         self.norm = norm
         self.use_idf = use_idf
@@ -1445,7 +1476,8 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
             # log+1 instead of log makes sure terms with zero idf don't get
             # suppressed entirely.
             idf = np.log(n_samples / df) + 1
-            self._idf_diag = sp.diags(idf, offsets=0,
+            self._idf_diag = sp.diags(idf,
+                                      offsets=0,
                                       shape=(n_features, n_features),
                                       format='csr',
                                       dtype=dtype)
@@ -1482,14 +1514,15 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
             # idf_ being a property, the automatic attributes detection
             # does not work as usual and we need to specify the attribute
             # name:
-            check_is_fitted(self, attributes=["idf_"],
+            check_is_fitted(self,
+                            attributes=["idf_"],
                             msg='idf vector is not fitted')
 
             expected_n_features = self._idf_diag.shape[0]
             if n_features != expected_n_features:
                 raise ValueError("Input has n_features=%d while the model"
-                                 " has been trained with n_features=%d" % (
-                                     n_features, expected_n_features))
+                                 " has been trained with n_features=%d" %
+                                 (n_features, expected_n_features))
             # *= doesn't work
             X = X * self._idf_diag
 
@@ -1508,8 +1541,11 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
     def idf_(self, value):
         value = np.asarray(value, dtype=np.float64)
         n_features = value.shape[0]
-        self._idf_diag = sp.spdiags(value, diags=0, m=n_features,
-                                    n=n_features, format='csr')
+        self._idf_diag = sp.spdiags(value,
+                                    diags=0,
+                                    m=n_features,
+                                    n=n_features,
+                                    format='csr')
 
     def _more_tags(self):
         return {'X_types': 'sparse'}
@@ -1719,25 +1755,50 @@ class TfidfVectorizer(CountVectorizer):
     (4, 9)
     """
     @_deprecate_positional_args
-    def __init__(self, *, input='content', encoding='utf-8',
-                 decode_error='strict', strip_accents=None, lowercase=True,
-                 preprocessor=None, tokenizer=None, analyzer='word',
-                 stop_words=None, token_pattern=r"(?u)\b\w\w+\b",
-                 ngram_range=(1, 1), max_df=1.0, min_df=1,
-                 max_features=None, vocabulary=None, binary=False,
-                 dtype=np.float64, norm='l2', use_idf=True, smooth_idf=True,
+    def __init__(self,
+                 *,
+                 input='content',
+                 encoding='utf-8',
+                 decode_error='strict',
+                 strip_accents=None,
+                 lowercase=True,
+                 preprocessor=None,
+                 tokenizer=None,
+                 analyzer='word',
+                 stop_words=None,
+                 token_pattern=r"(?u)\b\w\w+\b",
+                 ngram_range=(1, 1),
+                 max_df=1.0,
+                 min_df=1,
+                 max_features=None,
+                 vocabulary=None,
+                 binary=False,
+                 dtype=np.float64,
+                 norm='l2',
+                 use_idf=True,
+                 smooth_idf=True,
                  sublinear_tf=False):
 
-        super().__init__(
-            input=input, encoding=encoding, decode_error=decode_error,
-            strip_accents=strip_accents, lowercase=lowercase,
-            preprocessor=preprocessor, tokenizer=tokenizer, analyzer=analyzer,
-            stop_words=stop_words, token_pattern=token_pattern,
-            ngram_range=ngram_range, max_df=max_df, min_df=min_df,
-            max_features=max_features, vocabulary=vocabulary, binary=binary,
-            dtype=dtype)
+        super().__init__(input=input,
+                         encoding=encoding,
+                         decode_error=decode_error,
+                         strip_accents=strip_accents,
+                         lowercase=lowercase,
+                         preprocessor=preprocessor,
+                         tokenizer=tokenizer,
+                         analyzer=analyzer,
+                         stop_words=stop_words,
+                         token_pattern=token_pattern,
+                         ngram_range=ngram_range,
+                         max_df=max_df,
+                         min_df=min_df,
+                         max_features=max_features,
+                         vocabulary=vocabulary,
+                         binary=binary,
+                         dtype=dtype)
 
-        self._tfidf = TfidfTransformer(norm=norm, use_idf=use_idf,
+        self._tfidf = TfidfTransformer(norm=norm,
+                                       use_idf=use_idf,
                                        smooth_idf=smooth_idf,
                                        sublinear_tf=sublinear_tf)
 
@@ -1792,10 +1853,10 @@ class TfidfVectorizer(CountVectorizer):
 
     def _check_params(self):
         if self.dtype not in FLOAT_DTYPES:
-            warnings.warn("Only {} 'dtype' should be used. {} 'dtype' will "
-                          "be converted to np.float64."
-                          .format(FLOAT_DTYPES, self.dtype),
-                          UserWarning)
+            warnings.warn(
+                "Only {} 'dtype' should be used. {} 'dtype' will "
+                "be converted to np.float64.".format(FLOAT_DTYPES, self.dtype),
+                UserWarning)
 
     def fit(self, raw_documents, y=None):
         """Learn vocabulary and idf from training set.

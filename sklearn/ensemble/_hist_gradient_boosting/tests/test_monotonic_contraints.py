@@ -6,9 +6,7 @@ from sklearn.ensemble._hist_gradient_boosting.common import G_H_DTYPE
 from sklearn.ensemble._hist_gradient_boosting.common import X_BINNED_DTYPE
 from sklearn.ensemble._hist_gradient_boosting.common import MonotonicConstraint
 from sklearn.ensemble._hist_gradient_boosting.splitting import (
-    Splitter,
-    compute_node_value
-)
+    Splitter, compute_node_value)
 from sklearn.ensemble._hist_gradient_boosting.histogram import HistogramBuilder
 from sklearn.experimental import enable_hist_gradient_boosting  # noqa
 from sklearn.ensemble import HistGradientBoostingRegressor
@@ -107,20 +105,16 @@ def assert_children_values_bounded(grower, monotonic_cst):
             sibling = node.sibling  # on the right
             middle = (node.value + sibling.value) / 2
             if monotonic_cst == MonotonicConstraint.POS:
-                assert (node.left_child.value <=
-                        node.right_child.value <=
+                assert (node.left_child.value <= node.right_child.value <=
                         middle)
                 if not sibling.is_leaf:
-                    assert (middle <=
-                            sibling.left_child.value <=
+                    assert (middle <= sibling.left_child.value <=
                             sibling.right_child.value)
             else:  # NEG
-                assert (node.left_child.value >=
-                        node.right_child.value >=
+                assert (node.left_child.value >= node.right_child.value >=
                         middle)
                 if not sibling.is_leaf:
-                    assert (middle >=
-                            sibling.left_child.value >=
+                    assert (middle >= sibling.left_child.value >=
                             sibling.right_child.value)
 
         recursively_check_children_node_values(node.left_child)
@@ -157,14 +151,18 @@ def test_nodes_values(monotonic_cst, seed):
     rng = np.random.RandomState(seed)
     n_samples = 1000
     n_features = 1
-    X_binned = rng.randint(0, 255, size=(n_samples, n_features),
+    X_binned = rng.randint(0,
+                           255,
+                           size=(n_samples, n_features),
                            dtype=np.uint8)
     X_binned = np.asfortranarray(X_binned)
 
     gradients = rng.normal(size=n_samples).astype(G_H_DTYPE)
     hessians = np.ones(shape=1, dtype=G_H_DTYPE)
 
-    grower = TreeGrower(X_binned, gradients, hessians,
+    grower = TreeGrower(X_binned,
+                        gradients,
+                        hessians,
                         monotonic_cst=[monotonic_cst],
                         shrinkage=.1)
     grower.grow()
@@ -203,9 +201,8 @@ def test_predictions(seed):
     f_1 = rng.rand(n_samples)  # negative correslation with y
     X = np.c_[f_0, f_1]
     noise = rng.normal(loc=0.0, scale=0.01, size=n_samples)
-    y = (5 * f_0 + np.sin(10 * np.pi * f_0) -
-         5 * f_1 - np.cos(10 * np.pi * f_1) +
-         noise)
+    y = (5 * f_0 + np.sin(10 * np.pi * f_0) - 5 * f_1 -
+         np.cos(10 * np.pi * f_1) + noise)
 
     gbdt = HistGradientBoostingRegressor(monotonic_cst=[1, -1])
     gbdt.fit(X, y)
@@ -258,15 +255,13 @@ def test_input_error():
         gbdt = HistGradientBoostingRegressor(monotonic_cst=monotonic_cst)
         with pytest.raises(ValueError,
                            match='must be None or an array-like of '
-                                 '-1, 0 or 1'):
+                           '-1, 0 or 1'):
             gbdt.fit(X, y)
 
     gbdt = HistGradientBoostingClassifier(monotonic_cst=[0, 1])
-    with pytest.raises(
-            ValueError,
-            match='monotonic constraints are not supported '
-                  'for multiclass classification'
-            ):
+    with pytest.raises(ValueError,
+                       match='monotonic constraints are not supported '
+                       'for multiclass classification'):
         gbdt.fit(X, y)
 
 
@@ -290,14 +285,13 @@ def test_bounded_value_min_gain_to_split():
     sum_hessians = all_hessians.sum()
     hessians_are_constant = False
 
-    builder = HistogramBuilder(X_binned, n_bins, all_gradients,
-                               all_hessians, hessians_are_constant)
+    builder = HistogramBuilder(X_binned, n_bins, all_gradients, all_hessians,
+                               hessians_are_constant)
     n_bins_non_missing = np.array([n_bins - 1] * X_binned.shape[1],
                                   dtype=np.uint32)
     has_missing_values = np.array([False] * X_binned.shape[1], dtype=np.uint8)
-    monotonic_cst = np.array(
-        [MonotonicConstraint.NO_CST] * X_binned.shape[1],
-        dtype=np.int8)
+    monotonic_cst = np.array([MonotonicConstraint.NO_CST] * X_binned.shape[1],
+                             dtype=np.int8)
     missing_values_bin_idx = n_bins - 1
     children_lower_bound, children_upper_bound = -np.inf, np.inf
 
@@ -319,8 +313,11 @@ def test_bounded_value_min_gain_to_split():
                                l2_regularization)
     # the unbounded value is equal to -sum_gradients / sum_hessians
     assert value == pytest.approx(-104 / 5)
-    split_info = splitter.find_node_split(n_samples, histograms,
-                                          sum_gradients, sum_hessians, value,
+    split_info = splitter.find_node_split(n_samples,
+                                          histograms,
+                                          sum_gradients,
+                                          sum_hessians,
+                                          value,
                                           lower_bound=children_lower_bound,
                                           upper_bound=children_upper_bound)
     assert split_info.gain == -1  # min_gain_to_split not respected
@@ -334,8 +331,11 @@ def test_bounded_value_min_gain_to_split():
                                current_lower_bound, current_upper_bound,
                                l2_regularization)
     assert value == -10
-    split_info = splitter.find_node_split(n_samples, histograms,
-                                          sum_gradients, sum_hessians, value,
+    split_info = splitter.find_node_split(n_samples,
+                                          histograms,
+                                          sum_gradients,
+                                          sum_hessians,
+                                          value,
                                           lower_bound=children_lower_bound,
                                           upper_bound=children_upper_bound)
     assert split_info.gain > min_gain_to_split

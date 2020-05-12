@@ -25,7 +25,6 @@ from sklearn.datasets import make_classification
 
 import pytest
 
-
 # walk_packages() ignores DeprecationWarnings, now we need to ignore
 # FutureWarnings
 with warnings.catch_warnings():
@@ -40,21 +39,14 @@ with warnings.catch_warnings():
 
 # functions to ignore args / docstring of
 _DOCSTRING_IGNORES = [
-    'sklearn.utils.deprecation.load_mlcomp',
-    'sklearn.pipeline.make_pipeline',
-    'sklearn.pipeline.make_union',
-    'sklearn.utils.extmath.safe_sparse_dot',
+    'sklearn.utils.deprecation.load_mlcomp', 'sklearn.pipeline.make_pipeline',
+    'sklearn.pipeline.make_union', 'sklearn.utils.extmath.safe_sparse_dot',
     'sklearn.utils._joblib'
 ]
 
 # Methods where y param should be ignored if y=None by default
 _METHODS_IGNORE_NONE_Y = [
-    'fit',
-    'score',
-    'fit_predict',
-    'fit_transform',
-    'partial_fit',
-    'predict'
+    'fit', 'score', 'fit_predict', 'fit_transform', 'partial_fit', 'predict'
 ]
 
 
@@ -92,8 +84,8 @@ def test_docstring_parameters():
             with warnings.catch_warnings(record=True) as w:
                 cdoc = docscrape.ClassDoc(cls)
             if len(w):
-                raise RuntimeError('Error for __init__ of %s in %s:\n%s'
-                                   % (cls, name, w[0]))
+                raise RuntimeError('Error for __init__ of %s in %s:\n%s' %
+                                   (cls, name, w[0]))
 
             cls_init = getattr(cls, '__init__', None)
 
@@ -112,11 +104,11 @@ def test_docstring_parameters():
                 # by default for API reason
                 if method_name in _METHODS_IGNORE_NONE_Y:
                     sig = signature(method)
-                    if ('y' in sig.parameters and
-                            sig.parameters['y'].default is None):
+                    if ('y' in sig.parameters
+                            and sig.parameters['y'].default is None):
                         param_ignore = ['y']  # ignore y for fit and score
-                result = check_docstring_parameters(
-                    method, ignore=param_ignore)
+                result = check_docstring_parameters(method,
+                                                    ignore=param_ignore)
                 this_incorrect += result
 
             incorrect += this_incorrect
@@ -131,8 +123,8 @@ def test_docstring_parameters():
             if fname == "configuration" and name.endswith("setup"):
                 continue
             name_ = _get_func_name(func)
-            if (not any(d in name_ for d in _DOCSTRING_IGNORES) and
-                    not _is_deprecated(func)):
+            if (not any(d in name_ for d in _DOCSTRING_IGNORES)
+                    and not _is_deprecated(func)):
                 incorrect += check_docstring_parameters(func)
 
     msg = '\n'.join(incorrect)
@@ -146,8 +138,8 @@ def test_tabs():
     for importer, modname, ispkg in walk_packages(sklearn.__path__,
                                                   prefix='sklearn.'):
 
-        if IS_PYPY and ('_svmlight_format_io' in modname or
-                        'feature_extraction._hashing_fast' in modname):
+        if IS_PYPY and ('_svmlight_format_io' in modname
+                        or 'feature_extraction._hashing_fast' in modname):
             continue
 
         # because we don't import
@@ -164,12 +156,10 @@ def test_tabs():
         except IOError:  # user probably should have run "make clean"
             continue
         assert '\t' not in source, ('"%s" has tabs, please remove them ',
-                                    'or add it to the ignore list'
-                                    % modname)
+                                    'or add it to the ignore list' % modname)
 
 
-@pytest.mark.parametrize('name, Estimator',
-                         all_estimators())
+@pytest.mark.parametrize('name, Estimator', all_estimators())
 def test_fit_docstring_attributes(name, Estimator):
     pytest.importorskip('numpydoc')
     from numpydoc import docscrape
@@ -177,16 +167,17 @@ def test_fit_docstring_attributes(name, Estimator):
     doc = docscrape.ClassDoc(Estimator)
     attributes = doc['Attributes']
 
-    IGNORED = {'ClassifierChain', 'ColumnTransformer', 'CountVectorizer',
-               'DictVectorizer', 'FeatureUnion', 'GaussianRandomProjection',
-               'GridSearchCV', 'MultiOutputClassifier', 'MultiOutputRegressor',
-               'NoSampleWeightWrapper', 'OneVsOneClassifier',
-               'OneVsRestClassifier', 'OutputCodeClassifier', 'Pipeline',
-               'RFE', 'RFECV', 'RandomizedSearchCV', 'RegressorChain',
-               'SelectFromModel', 'SparseCoder', 'SparseRandomProjection',
-               'SpectralBiclustering', 'StackingClassifier',
-               'StackingRegressor', 'TfidfVectorizer', 'VotingClassifier',
-               'VotingRegressor'}
+    IGNORED = {
+        'ClassifierChain', 'ColumnTransformer', 'CountVectorizer',
+        'DictVectorizer', 'FeatureUnion', 'GaussianRandomProjection',
+        'GridSearchCV', 'MultiOutputClassifier', 'MultiOutputRegressor',
+        'NoSampleWeightWrapper', 'OneVsOneClassifier', 'OneVsRestClassifier',
+        'OutputCodeClassifier', 'Pipeline', 'RFE', 'RFECV',
+        'RandomizedSearchCV', 'RegressorChain', 'SelectFromModel',
+        'SparseCoder', 'SparseRandomProjection', 'SpectralBiclustering',
+        'StackingClassifier', 'StackingRegressor', 'TfidfVectorizer',
+        'VotingClassifier', 'VotingRegressor'
+    }
     if Estimator.__name__ in IGNORED or Estimator.__name__.startswith('_'):
         pytest.skip("Estimator cannot be fit easily to test fit attributes")
 
@@ -202,8 +193,10 @@ def test_fit_docstring_attributes(name, Estimator):
     if Estimator.__name__ == 'AffinityPropagation':
         est.random_state = 63
 
-    X, y = make_classification(n_samples=20, n_features=3,
-                               n_redundant=0, n_classes=2,
+    X, y = make_classification(n_samples=20,
+                               n_features=3,
+                               n_redundant=0,
+                               n_classes=2,
                                random_state=2)
 
     y = _enforce_estimator_tags_y(est, y)
@@ -228,29 +221,30 @@ def test_fit_docstring_attributes(name, Estimator):
         if 'only ' not in desc:
             assert hasattr(est, attr.name)
 
-    IGNORED = {'BayesianRidge', 'Birch', 'CCA', 'CategoricalNB', 'ElasticNet',
-               'ElasticNetCV', 'GaussianProcessClassifier',
-               'GradientBoostingRegressor', 'HistGradientBoostingClassifier',
-               'HistGradientBoostingRegressor', 'IsolationForest',
-               'KNeighborsClassifier', 'KNeighborsRegressor',
-               'KNeighborsTransformer', 'KernelCenterer', 'KernelDensity',
-               'LarsCV', 'Lasso', 'LassoLarsCV', 'LassoLarsIC',
-               'LatentDirichletAllocation', 'LocalOutlierFactor', 'MDS',
-               'MiniBatchKMeans', 'MLPClassifier', 'MLPRegressor',
-               'MultiTaskElasticNet', 'MultiTaskElasticNetCV',
-               'MultiTaskLasso', 'MultiTaskLassoCV', 'NearestNeighbors',
-               'NuSVR', 'OneClassSVM', 'OrthogonalMatchingPursuit',
-               'PLSCanonical', 'PLSRegression', 'PLSSVD',
-               'PassiveAggressiveClassifier', 'Perceptron', 'RBFSampler',
-               'RadiusNeighborsClassifier', 'RadiusNeighborsRegressor',
-               'RadiusNeighborsTransformer', 'RandomTreesEmbedding', 'SVR',
-               'SkewedChi2Sampler'}
+    IGNORED = {
+        'BayesianRidge', 'Birch', 'CCA', 'CategoricalNB', 'ElasticNet',
+        'ElasticNetCV', 'GaussianProcessClassifier',
+        'GradientBoostingRegressor', 'HistGradientBoostingClassifier',
+        'HistGradientBoostingRegressor', 'IsolationForest',
+        'KNeighborsClassifier', 'KNeighborsRegressor', 'KNeighborsTransformer',
+        'KernelCenterer', 'KernelDensity', 'LarsCV', 'Lasso', 'LassoLarsCV',
+        'LassoLarsIC', 'LatentDirichletAllocation', 'LocalOutlierFactor',
+        'MDS', 'MiniBatchKMeans', 'MLPClassifier', 'MLPRegressor',
+        'MultiTaskElasticNet', 'MultiTaskElasticNetCV', 'MultiTaskLasso',
+        'MultiTaskLassoCV', 'NearestNeighbors', 'NuSVR', 'OneClassSVM',
+        'OrthogonalMatchingPursuit', 'PLSCanonical', 'PLSRegression', 'PLSSVD',
+        'PassiveAggressiveClassifier', 'Perceptron', 'RBFSampler',
+        'RadiusNeighborsClassifier', 'RadiusNeighborsRegressor',
+        'RadiusNeighborsTransformer', 'RandomTreesEmbedding', 'SVR',
+        'SkewedChi2Sampler'
+    }
     if Estimator.__name__ in IGNORED:
-        pytest.xfail(
-            reason="Classifier has too many undocumented attributes.")
+        pytest.xfail(reason="Classifier has too many undocumented attributes.")
 
-    fit_attr = [k for k in est.__dict__.keys() if k.endswith('_')
-                and not k.startswith('_')]
+    fit_attr = [
+        k for k in est.__dict__.keys()
+        if k.endswith('_') and not k.startswith('_')
+    ]
     fit_attr_names = [attr.name for attr in attributes]
     undocumented_attrs = set(fit_attr).difference(fit_attr_names)
     undocumented_attrs = set(undocumented_attrs).difference(skipped_attributes)

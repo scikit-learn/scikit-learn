@@ -27,7 +27,6 @@ from ..utils import shuffle as shuffle_
 from ..utils import Bunch
 from ..utils.validation import _deprecate_positional_args
 
-
 # The original vectorized data can be found at:
 #    http://www.ai.mit.edu/projects/jmlr/papers/volume5/lewis04a/a13-vector-files/lyrl2004_vectors_test_pt0.dat.gz
 #    http://www.ai.mit.edu/projects/jmlr/papers/volume5/lewis04a/a13-vector-files/lyrl2004_vectors_test_pt1.dat.gz
@@ -38,32 +37,26 @@ from ..utils.validation import _deprecate_positional_args
 # in the README, section B.12.i.:
 #    http://www.ai.mit.edu/projects/jmlr/papers/volume5/lewis04a/lyrl2004_rcv1v2_README.htm
 XY_METADATA = (
-    RemoteFileMetadata(
-        url='https://ndownloader.figshare.com/files/5976069',
-        checksum=('ed40f7e418d10484091b059703eeb95a'
-                  'e3199fe042891dcec4be6696b9968374'),
-        filename='lyrl2004_vectors_test_pt0.dat.gz'),
-    RemoteFileMetadata(
-        url='https://ndownloader.figshare.com/files/5976066',
-        checksum=('87700668ae45d45d5ca1ef6ae9bd81ab'
-                  '0f5ec88cc95dcef9ae7838f727a13aa6'),
-        filename='lyrl2004_vectors_test_pt1.dat.gz'),
-    RemoteFileMetadata(
-        url='https://ndownloader.figshare.com/files/5976063',
-        checksum=('48143ac703cbe33299f7ae9f4995db4'
-                  '9a258690f60e5debbff8995c34841c7f5'),
-        filename='lyrl2004_vectors_test_pt2.dat.gz'),
-    RemoteFileMetadata(
-        url='https://ndownloader.figshare.com/files/5976060',
-        checksum=('dfcb0d658311481523c6e6ca0c3f5a3'
-                  'e1d3d12cde5d7a8ce629a9006ec7dbb39'),
-        filename='lyrl2004_vectors_test_pt3.dat.gz'),
-    RemoteFileMetadata(
-        url='https://ndownloader.figshare.com/files/5976057',
-        checksum=('5468f656d0ba7a83afc7ad44841cf9a5'
-                  '3048a5c083eedc005dcdb5cc768924ae'),
-        filename='lyrl2004_vectors_train.dat.gz')
-)
+    RemoteFileMetadata(url='https://ndownloader.figshare.com/files/5976069',
+                       checksum=('ed40f7e418d10484091b059703eeb95a'
+                                 'e3199fe042891dcec4be6696b9968374'),
+                       filename='lyrl2004_vectors_test_pt0.dat.gz'),
+    RemoteFileMetadata(url='https://ndownloader.figshare.com/files/5976066',
+                       checksum=('87700668ae45d45d5ca1ef6ae9bd81ab'
+                                 '0f5ec88cc95dcef9ae7838f727a13aa6'),
+                       filename='lyrl2004_vectors_test_pt1.dat.gz'),
+    RemoteFileMetadata(url='https://ndownloader.figshare.com/files/5976063',
+                       checksum=('48143ac703cbe33299f7ae9f4995db4'
+                                 '9a258690f60e5debbff8995c34841c7f5'),
+                       filename='lyrl2004_vectors_test_pt2.dat.gz'),
+    RemoteFileMetadata(url='https://ndownloader.figshare.com/files/5976060',
+                       checksum=('dfcb0d658311481523c6e6ca0c3f5a3'
+                                 'e1d3d12cde5d7a8ce629a9006ec7dbb39'),
+                       filename='lyrl2004_vectors_test_pt3.dat.gz'),
+    RemoteFileMetadata(url='https://ndownloader.figshare.com/files/5976057',
+                       checksum=('5468f656d0ba7a83afc7ad44841cf9a5'
+                                 '3048a5c083eedc005dcdb5cc768924ae'),
+                       filename='lyrl2004_vectors_train.dat.gz'))
 
 # The original data can be found at:
 # http://jmlr.csail.mit.edu/papers/volume5/lewis04a/a08-topic-qrels/rcv1-v2.topics.qrels.gz
@@ -77,8 +70,13 @@ logger = logging.getLogger(__name__)
 
 
 @_deprecate_positional_args
-def fetch_rcv1(*, data_home=None, subset='all', download_if_missing=True,
-               random_state=None, shuffle=False, return_X_y=False):
+def fetch_rcv1(*,
+               data_home=None,
+               subset='all',
+               download_if_missing=True,
+               random_state=None,
+               shuffle=False,
+               return_X_y=False):
     """Load the RCV1 multilabel dataset (classification).
 
     Download it if necessary.
@@ -165,8 +163,8 @@ def fetch_rcv1(*, data_home=None, subset='all', download_if_missing=True,
     topics_path = _pkl_filepath(rcv1_dir, "topics_names.pkl")
 
     # load data (X) and sample_id
-    if download_if_missing and (not exists(samples_path) or
-                                not exists(sample_id_path)):
+    if download_if_missing and (not exists(samples_path)
+                                or not exists(sample_id_path)):
         files = []
         for each in XY_METADATA:
             logger.info("Downloading %s" % each.url)
@@ -192,11 +190,10 @@ def fetch_rcv1(*, data_home=None, subset='all', download_if_missing=True,
         sample_id = joblib.load(sample_id_path)
 
     # load target (y), categories, and sample_id_bis
-    if download_if_missing and (not exists(sample_topics_path) or
-                                not exists(topics_path)):
+    if download_if_missing and (not exists(sample_topics_path)
+                                or not exists(topics_path)):
         logger.info("Downloading %s" % TOPICS_METADATA.url)
-        topics_archive_path = _fetch_remote(TOPICS_METADATA,
-                                            dirname=rcv1_dir)
+        topics_archive_path = _fetch_remote(TOPICS_METADATA, dirname=rcv1_dir)
 
         # parse the target file
         n_cat = -1
@@ -269,8 +266,11 @@ def fetch_rcv1(*, data_home=None, subset='all', download_if_missing=True,
     if return_X_y:
         return X, y
 
-    return Bunch(data=X, target=y, sample_id=sample_id,
-                 target_names=categories, DESCR=fdescr)
+    return Bunch(data=X,
+                 target=y,
+                 sample_id=sample_id,
+                 target_names=categories,
+                 DESCR=fdescr)
 
 
 def _inverse_permutation(p):

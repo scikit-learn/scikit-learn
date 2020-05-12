@@ -26,14 +26,11 @@ from ..exceptions import DataConversionWarning
 from .deprecation import deprecated
 from .fixes import np_version
 from ._estimator_html_repr import estimator_html_repr
-from .validation import (as_float_array,
-                         assert_all_finite,
-                         check_random_state, column_or_1d, check_array,
-                         check_consistent_length, check_X_y, indexable,
-                         check_symmetric, check_scalar,
+from .validation import (as_float_array, assert_all_finite, check_random_state,
+                         column_or_1d, check_array, check_consistent_length,
+                         check_X_y, indexable, check_symmetric, check_scalar,
                          _deprecate_positional_args)
 from .. import get_config
-
 
 # Do not deprecate parallel_backend and register_parallel_backend as they are
 # needed to tune `scikit-learn` behavior and have different effect if called
@@ -43,18 +40,15 @@ from .. import get_config
 parallel_backend = _joblib.parallel_backend
 register_parallel_backend = _joblib.register_parallel_backend
 
-
-__all__ = ["murmurhash3_32", "as_float_array",
-           "assert_all_finite", "check_array",
-           "check_random_state",
-           "compute_class_weight", "compute_sample_weight",
-           "column_or_1d", "safe_indexing",
-           "check_consistent_length", "check_X_y", "check_scalar", 'indexable',
-           "check_symmetric", "indices_to_mask", "deprecated",
-           "parallel_backend", "register_parallel_backend",
-           "resample", "shuffle", "check_matplotlib_support", "all_estimators",
-           "DataConversionWarning", "estimator_html_repr"
-           ]
+__all__ = [
+    "murmurhash3_32", "as_float_array", "assert_all_finite", "check_array",
+    "check_random_state", "compute_class_weight", "compute_sample_weight",
+    "column_or_1d", "safe_indexing", "check_consistent_length", "check_X_y",
+    "check_scalar", 'indexable', "check_symmetric", "indices_to_mask",
+    "deprecated", "parallel_backend", "register_parallel_backend", "resample",
+    "shuffle", "check_matplotlib_support", "all_estimators",
+    "DataConversionWarning", "estimator_html_repr"
+]
 
 IS_PYPY = platform.python_implementation() == 'PyPy'
 _IS_32BIT = 8 * struct.calcsize("P") == 32
@@ -81,7 +75,6 @@ class Bunch(dict):
     >>> b['c']
     6
     """
-
     def __init__(self, **kwargs):
         super().__init__(kwargs)
 
@@ -228,8 +221,14 @@ def _determine_key_type(key, accept_slice=True):
                "allowed")
 
     dtype_to_str = {int: 'int', str: 'str', bool: 'bool', np.bool_: 'bool'}
-    array_dtype_to_str = {'i': 'int', 'u': 'int', 'b': 'bool', 'O': 'str',
-                          'U': 'str', 'S': 'str'}
+    array_dtype_to_str = {
+        'i': 'int',
+        'u': 'int',
+        'b': 'bool',
+        'O': 'str',
+        'U': 'str',
+        'S': 'str'
+    }
 
     if key is None:
         return None
@@ -240,10 +239,8 @@ def _determine_key_type(key, accept_slice=True):
             raise ValueError(err_msg)
     if isinstance(key, slice):
         if not accept_slice:
-            raise TypeError(
-                'Only array-like or scalar are supported. '
-                'A Python slice was given.'
-            )
+            raise TypeError('Only array-like or scalar are supported. '
+                            'A Python slice was given.')
         if key.start is None and key.stop is None:
             return None
         key_start_type = _determine_key_type(key.start)
@@ -366,28 +363,23 @@ def _safe_indexing(X, indices, *, axis=0):
     if axis not in (0, 1):
         raise ValueError(
             "'axis' should be either 0 (to index rows) or 1 (to index "
-            " column). Got {} instead.".format(axis)
-        )
+            " column). Got {} instead.".format(axis))
 
     indices_dtype = _determine_key_type(indices)
 
     if axis == 0 and indices_dtype == 'str':
-        raise ValueError(
-            "String indexing is not supported with 'axis=0'"
-        )
+        raise ValueError("String indexing is not supported with 'axis=0'")
 
     if axis == 1 and X.ndim != 2:
         raise ValueError(
             "'X' should be a 2D NumPy array, 2D sparse matrix or pandas "
             "dataframe when indexing the columns (i.e. 'axis=1'). "
-            "Got {} instead with {} dimension(s).".format(type(X), X.ndim)
-        )
+            "Got {} instead with {} dimension(s).".format(type(X), X.ndim))
 
     if axis == 1 and indices_dtype == 'str' and not hasattr(X, 'loc'):
         raise ValueError(
             "Specifying the columns using strings is only supported for "
-            "pandas DataFrames"
-        )
+            "pandas DataFrames")
 
     if hasattr(X, "iloc"):
         return _pandas_indexing(X, indices, indices_dtype, axis=axis)
@@ -416,9 +408,8 @@ def _get_column_indices(X, key):
             idx = _safe_indexing(np.arange(n_columns), key)
         except IndexError as e:
             raise ValueError(
-                'all features must be in [0, {}] or [-{}, 0]'
-                .format(n_columns - 1, n_columns)
-            ) from e
+                'all features must be in [0, {}] or [-{}, 0]'.format(
+                    n_columns - 1, n_columns)) from e
         return np.atleast_1d(idx).tolist()
     elif key_dtype == 'str':
         try:
@@ -452,8 +443,7 @@ def _get_column_indices(X, key):
 
         except KeyError as e:
             raise ValueError(
-                "A given column is not a column of the dataframe"
-            ) from e
+                "A given column is not a column of the dataframe") from e
 
         return column_indices
     else:
@@ -564,14 +554,15 @@ def resample(*arrays, **options):
         max_n_samples = n_samples
     elif (max_n_samples > n_samples) and (not replace):
         raise ValueError("Cannot sample %d out of arrays with dim %d "
-                         "when replace is False" % (max_n_samples,
-                                                    n_samples))
+                         "when replace is False" % (max_n_samples, n_samples))
 
     check_consistent_length(*arrays)
 
     if stratify is None:
         if replace:
-            indices = random_state.randint(0, n_samples, size=(max_n_samples,))
+            indices = random_state.randint(0,
+                                           n_samples,
+                                           size=(max_n_samples, ))
         else:
             indices = np.arange(n_samples)
             random_state.shuffle(indices)
@@ -599,12 +590,12 @@ def resample(*arrays, **options):
         indices = []
 
         for i in range(n_classes):
-            indices_i = random_state.choice(class_indices[i], n_i[i],
+            indices_i = random_state.choice(class_indices[i],
+                                            n_i[i],
                                             replace=replace)
             indices.extend(indices_i)
 
         indices = random_state.permutation(indices)
-
 
     # convert sparse matrices to CSR for row-based indexing
     arrays = [a.tocsr() if issparse(a) else a for a in arrays]
@@ -709,7 +700,7 @@ def safe_sqr(X, *, copy=True):
         X.data **= 2
     else:
         if copy:
-            X = X ** 2
+            X = X**2
         else:
             X **= 2
     return X
@@ -808,8 +799,8 @@ def gen_even_slices(n, n_packs, *, n_samples=None):
     """
     start = 0
     if n_packs < 1:
-        raise ValueError("gen_even_slices got n_packs=%s, must be >=1"
-                         % n_packs)
+        raise ValueError("gen_even_slices got n_packs=%s, must be >=1" %
+                         n_packs)
     for pack_num in range(n_packs):
         this_n = n // n_packs
         if pack_num < n % n_packs:
@@ -990,13 +981,13 @@ def get_chunk_n_rows(row_bytes, *, max_n_rows=None, working_memory=None):
     if working_memory is None:
         working_memory = get_config()['working_memory']
 
-    chunk_n_rows = int(working_memory * (2 ** 20) // row_bytes)
+    chunk_n_rows = int(working_memory * (2**20) // row_bytes)
     if max_n_rows is not None:
         chunk_n_rows = min(chunk_n_rows, max_n_rows)
     if chunk_n_rows < 1:
         warnings.warn('Could not adhere to working_memory config. '
                       'Currently %.0fMiB, %.0fMiB required.' %
-                      (working_memory, np.ceil(row_bytes * 2 ** -20)))
+                      (working_memory, np.ceil(row_bytes * 2**-20)))
         chunk_n_rows = 1
     return chunk_n_rows
 
@@ -1118,8 +1109,7 @@ def check_matplotlib_support(caller_name):
     except ImportError as e:
         raise ImportError(
             "{} requires matplotlib. You can install matplotlib with "
-            "`pip install matplotlib`".format(caller_name)
-        ) from e
+            "`pip install matplotlib`".format(caller_name)) from e
 
 
 def check_pandas_support(caller_name):
@@ -1138,9 +1128,7 @@ def check_pandas_support(caller_name):
         import pandas  # noqa
         return pandas
     except ImportError as e:
-        raise ImportError(
-            "{} requires pandas.".format(caller_name)
-        ) from e
+        raise ImportError("{} requires pandas.".format(caller_name)) from e
 
 
 def all_estimators(type_filter=None):
@@ -1172,7 +1160,7 @@ def all_estimators(type_filter=None):
                         TransformerMixin, ClusterMixin)
 
     def is_abstract(c):
-        if not(hasattr(c, '__abstractmethods__')):
+        if not (hasattr(c, '__abstractmethods__')):
             return False
         if not len(c.__abstractmethods__):
             return False
@@ -1205,9 +1193,10 @@ def all_estimators(type_filter=None):
 
     all_classes = set(all_classes)
 
-    estimators = [c for c in all_classes
-                  if (issubclass(c[1], BaseEstimator) and
-                      c[0] != 'BaseEstimator')]
+    estimators = [
+        c for c in all_classes
+        if (issubclass(c[1], BaseEstimator) and c[0] != 'BaseEstimator')
+    ]
     # get rid of abstract base classes
     estimators = [c for c in estimators if not is_abstract(c[1])]
 
@@ -1217,15 +1206,17 @@ def all_estimators(type_filter=None):
         else:
             type_filter = list(type_filter)  # copy
         filtered_estimators = []
-        filters = {'classifier': ClassifierMixin,
-                   'regressor': RegressorMixin,
-                   'transformer': TransformerMixin,
-                   'cluster': ClusterMixin}
+        filters = {
+            'classifier': ClassifierMixin,
+            'regressor': RegressorMixin,
+            'transformer': TransformerMixin,
+            'cluster': ClusterMixin
+        }
         for name, mixin in filters.items():
             if name in type_filter:
                 type_filter.remove(name)
-                filtered_estimators.extend([est for est in estimators
-                                            if issubclass(est[1], mixin)])
+                filtered_estimators.extend(
+                    [est for est in estimators if issubclass(est[1], mixin)])
         estimators = filtered_estimators
         if type_filter:
             raise ValueError("Parameter type_filter must be 'classifier', "

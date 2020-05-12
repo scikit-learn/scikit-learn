@@ -38,8 +38,11 @@ rng = np.random.RandomState(0)
 
 
 def test_invalid_input():
-    clf = SGDClassifier(alpha=0.1, max_iter=10, shuffle=True,
-                        random_state=None, tol=None)
+    clf = SGDClassifier(alpha=0.1,
+                        max_iter=10,
+                        shuffle=True,
+                        random_state=None,
+                        tol=None)
     for threshold in ["gobbledigook", ".5 * gobbledigook"]:
         model = SelectFromModel(clf, threshold=threshold)
         model.fit(data, y)
@@ -60,8 +63,7 @@ def test_input_estimator_unchanged():
     [(-1, ValueError, "'max_features' should be 0 and"),
      (data.shape[1] + 1, ValueError, "'max_features' should be 0 and"),
      ('gobbledigook', TypeError, "should be an integer"),
-     ('all', TypeError, "should be an integer")]
-)
+     ('all', TypeError, "should be an integer")])
 def test_max_features_error(max_features, err_type, err_msg):
     clf = RandomForestClassifier(n_estimators=50, random_state=0)
 
@@ -92,14 +94,17 @@ class FixedImportanceEstimator(BaseEstimator):
 
 def test_max_features():
     # Test max_features parameter using various values
-    X, y = datasets.make_classification(
-        n_samples=1000, n_features=10, n_informative=3, n_redundant=0,
-        n_repeated=0, shuffle=False, random_state=0)
+    X, y = datasets.make_classification(n_samples=1000,
+                                        n_features=10,
+                                        n_informative=3,
+                                        n_redundant=0,
+                                        n_repeated=0,
+                                        shuffle=False,
+                                        random_state=0)
     max_features = X.shape[1]
     est = RandomForestClassifier(n_estimators=50, random_state=0)
 
-    transformer1 = SelectFromModel(estimator=est,
-                                   threshold=-np.inf)
+    transformer1 = SelectFromModel(estimator=est, threshold=-np.inf)
     transformer2 = SelectFromModel(estimator=est,
                                    max_features=max_features,
                                    threshold=-np.inf)
@@ -108,15 +113,15 @@ def test_max_features():
     assert_allclose(X_new1, X_new2)
 
     # Test max_features against actual model.
-    transformer1 = SelectFromModel(estimator=Lasso(alpha=0.025,
-                                                   random_state=42))
+    transformer1 = SelectFromModel(
+        estimator=Lasso(alpha=0.025, random_state=42))
     X_new1 = transformer1.fit_transform(X, y)
     scores1 = np.abs(transformer1.estimator_.coef_)
     candidate_indices1 = np.argsort(-scores1, kind='mergesort')
 
     for n_features in range(1, X_new1.shape[1] + 1):
         transformer2 = SelectFromModel(estimator=Lasso(alpha=0.025,
-                                       random_state=42),
+                                                       random_state=42),
                                        max_features=n_features,
                                        threshold=-np.inf)
         X_new2 = transformer2.fit_transform(X, y)
@@ -130,9 +135,13 @@ def test_max_features():
 
 def test_max_features_tiebreak():
     # Test if max_features can break tie among feature importance
-    X, y = datasets.make_classification(
-        n_samples=1000, n_features=10, n_informative=3, n_redundant=0,
-        n_repeated=0, shuffle=False, random_state=0)
+    X, y = datasets.make_classification(n_samples=1000,
+                                        n_features=10,
+                                        n_informative=3,
+                                        n_redundant=0,
+                                        n_repeated=0,
+                                        shuffle=False,
+                                        random_state=0)
     max_features = X.shape[1]
 
     feature_importances = np.array([4, 4, 4, 4, 3, 3, 3, 2, 2, 1])
@@ -148,19 +157,25 @@ def test_max_features_tiebreak():
 
 
 def test_threshold_and_max_features():
-    X, y = datasets.make_classification(
-        n_samples=1000, n_features=10, n_informative=3, n_redundant=0,
-        n_repeated=0, shuffle=False, random_state=0)
+    X, y = datasets.make_classification(n_samples=1000,
+                                        n_features=10,
+                                        n_informative=3,
+                                        n_redundant=0,
+                                        n_repeated=0,
+                                        shuffle=False,
+                                        random_state=0)
     est = RandomForestClassifier(n_estimators=50, random_state=0)
 
-    transformer1 = SelectFromModel(estimator=est, max_features=3,
+    transformer1 = SelectFromModel(estimator=est,
+                                   max_features=3,
                                    threshold=-np.inf)
     X_new1 = transformer1.fit_transform(X, y)
 
     transformer2 = SelectFromModel(estimator=est, threshold=0.04)
     X_new2 = transformer2.fit_transform(X, y)
 
-    transformer3 = SelectFromModel(estimator=est, max_features=3,
+    transformer3 = SelectFromModel(estimator=est,
+                                   max_features=3,
                                    threshold=0.04)
     X_new3 = transformer3.fit_transform(X, y)
     assert X_new3.shape[1] == min(X_new1.shape[1], X_new2.shape[1])
@@ -171,9 +186,13 @@ def test_threshold_and_max_features():
 
 @skip_if_32bit
 def test_feature_importances():
-    X, y = datasets.make_classification(
-        n_samples=1000, n_features=10, n_informative=3, n_redundant=0,
-        n_repeated=0, shuffle=False, random_state=0)
+    X, y = datasets.make_classification(n_samples=1000,
+                                        n_features=10,
+                                        n_informative=3,
+                                        n_redundant=0,
+                                        n_repeated=0,
+                                        shuffle=False,
+                                        random_state=0)
 
     est = RandomForestClassifier(n_estimators=50, random_state=0)
     for threshold, func in zip(["mean", "median"], [np.mean, np.median]):
@@ -191,9 +210,13 @@ def test_feature_importances():
 
 def test_sample_weight():
     # Ensure sample weights are passed to underlying estimator
-    X, y = datasets.make_classification(
-        n_samples=100, n_features=10, n_informative=3, n_redundant=0,
-        n_repeated=0, shuffle=False, random_state=0)
+    X, y = datasets.make_classification(n_samples=100,
+                                        n_features=10,
+                                        n_informative=3,
+                                        n_redundant=0,
+                                        n_repeated=0,
+                                        shuffle=False,
+                                        random_state=0)
 
     # Check with sample weights
     sample_weight = np.ones(y.shape)
@@ -212,13 +235,16 @@ def test_sample_weight():
 
 
 def test_coef_default_threshold():
-    X, y = datasets.make_classification(
-        n_samples=100, n_features=10, n_informative=3, n_redundant=0,
-        n_repeated=0, shuffle=False, random_state=0)
+    X, y = datasets.make_classification(n_samples=100,
+                                        n_features=10,
+                                        n_informative=3,
+                                        n_redundant=0,
+                                        n_repeated=0,
+                                        shuffle=False,
+                                        random_state=0)
 
     # For the Lasso and related models, the threshold defaults to 1e-5
-    transformer = SelectFromModel(estimator=Lasso(alpha=0.1,
-                                  random_state=42))
+    transformer = SelectFromModel(estimator=Lasso(alpha=0.1, random_state=42))
     transformer.fit(X, y)
     X_new = transformer.transform(X)
     mask = np.abs(transformer.estimator_.coef_) > 1e-5
@@ -227,9 +253,14 @@ def test_coef_default_threshold():
 
 @skip_if_32bit
 def test_2d_coef():
-    X, y = datasets.make_classification(
-        n_samples=1000, n_features=10, n_informative=3, n_redundant=0,
-        n_repeated=0, shuffle=False, random_state=0, n_classes=4)
+    X, y = datasets.make_classification(n_samples=1000,
+                                        n_features=10,
+                                        n_informative=3,
+                                        n_redundant=0,
+                                        n_repeated=0,
+                                        shuffle=False,
+                                        random_state=0,
+                                        n_classes=4)
 
     est = LogisticRegression()
     for threshold, func in zip(["mean", "median"], [np.mean, np.median]):
@@ -251,14 +282,14 @@ def test_2d_coef():
 
 
 def test_partial_fit():
-    est = PassiveAggressiveClassifier(random_state=0, shuffle=False,
-                                      max_iter=5, tol=None)
+    est = PassiveAggressiveClassifier(random_state=0,
+                                      shuffle=False,
+                                      max_iter=5,
+                                      tol=None)
     transformer = SelectFromModel(estimator=est)
-    transformer.partial_fit(data, y,
-                            classes=np.unique(y))
+    transformer.partial_fit(data, y, classes=np.unique(y))
     old_model = transformer.estimator_
-    transformer.partial_fit(data, y,
-                            classes=np.unique(y))
+    transformer.partial_fit(data, y, classes=np.unique(y))
     new_model = transformer.estimator_
     assert old_model is new_model
 
@@ -285,8 +316,11 @@ def test_prefit():
 
     # Passing a prefit parameter with the selected model
     # and fitting a unfit model with prefit=False should give same results.
-    clf = SGDClassifier(alpha=0.1, max_iter=10, shuffle=True,
-                        random_state=0, tol=None)
+    clf = SGDClassifier(alpha=0.1,
+                        max_iter=10,
+                        shuffle=True,
+                        random_state=0,
+                        tol=None)
     model = SelectFromModel(clf)
     model.fit(data, y)
     X_transform = model.transform(data)
@@ -321,8 +355,11 @@ def test_threshold_string():
 
 def test_threshold_without_refitting():
     # Test that the threshold can be set without refitting the model.
-    clf = SGDClassifier(alpha=0.1, max_iter=10, shuffle=True,
-                        random_state=0, tol=None)
+    clf = SGDClassifier(alpha=0.1,
+                        max_iter=10,
+                        shuffle=True,
+                        random_state=0,
+                        tol=None)
     model = SelectFromModel(clf, threshold="0.1 * mean")
     model.fit(data, y)
     X_transform = model.transform(data)

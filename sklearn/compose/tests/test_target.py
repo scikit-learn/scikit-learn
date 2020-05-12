@@ -30,21 +30,24 @@ def test_transform_target_regressor_error():
     # provide a transformer and functions at the same time
     regr = TransformedTargetRegressor(regressor=LinearRegression(),
                                       transformer=StandardScaler(),
-                                      func=np.exp, inverse_func=np.log)
+                                      func=np.exp,
+                                      inverse_func=np.log)
     with pytest.raises(ValueError,
                        match="'transformer' and functions"
                        " 'func'/'inverse_func' cannot both be set."):
         regr.fit(X, y)
     # fit with sample_weight with a regressor which does not support it
-    sample_weight = np.ones((y.shape[0],))
+    sample_weight = np.ones((y.shape[0], ))
     regr = TransformedTargetRegressor(regressor=OrthogonalMatchingPursuit(),
                                       transformer=StandardScaler())
-    with pytest.raises(TypeError, match=r"fit\(\) got an unexpected "
+    with pytest.raises(TypeError,
+                       match=r"fit\(\) got an unexpected "
                        "keyword argument 'sample_weight'"):
         regr.fit(X, y, sample_weight=sample_weight)
     # func is given but inverse_func is not
     regr = TransformedTargetRegressor(func=np.exp)
-    with pytest.raises(ValueError, match="When 'func' is provided, "
+    with pytest.raises(ValueError,
+                       match="When 'func' is provided, "
                        "'inverse_func' must also be provided"):
         regr.fit(X, y)
 
@@ -52,13 +55,15 @@ def test_transform_target_regressor_error():
 def test_transform_target_regressor_invertible():
     X, y = friedman
     regr = TransformedTargetRegressor(regressor=LinearRegression(),
-                                      func=np.sqrt, inverse_func=np.log,
+                                      func=np.sqrt,
+                                      inverse_func=np.log,
                                       check_inverse=True)
-    assert_warns_message(UserWarning, "The provided functions or transformer"
-                         " are not strictly inverse of each other.",
-                         regr.fit, X, y)
+    assert_warns_message(
+        UserWarning, "The provided functions or transformer"
+        " are not strictly inverse of each other.", regr.fit, X, y)
     regr = TransformedTargetRegressor(regressor=LinearRegression(),
-                                      func=np.sqrt, inverse_func=np.log)
+                                      func=np.sqrt,
+                                      inverse_func=np.log)
     regr.set_params(check_inverse=False)
     assert_no_warnings(regr.fit, X, y)
 
@@ -76,13 +81,15 @@ def _check_shifted_by_one(y, y_pred):
 def test_transform_target_regressor_functions():
     X, y = friedman
     regr = TransformedTargetRegressor(regressor=LinearRegression(),
-                                      func=np.log, inverse_func=np.exp)
+                                      func=np.log,
+                                      inverse_func=np.exp)
     y_pred = regr.fit(X, y).predict(X)
     # check the transformer output
     y_tran = regr.transformer_.transform(y.reshape(-1, 1)).squeeze()
     assert_allclose(np.log(y), y_tran)
-    assert_allclose(y, regr.transformer_.inverse_transform(
-        y_tran.reshape(-1, 1)).squeeze())
+    assert_allclose(
+        y,
+        regr.transformer_.inverse_transform(y_tran.reshape(-1, 1)).squeeze())
     assert y.shape == y_pred.shape
     assert_allclose(y_pred, regr.inverse_func(regr.regressor_.predict(X)))
     # check the regressor output
@@ -92,9 +99,10 @@ def test_transform_target_regressor_functions():
 
 def test_transform_target_regressor_functions_multioutput():
     X = friedman[0]
-    y = np.vstack((friedman[1], friedman[1] ** 2 + 1)).T
+    y = np.vstack((friedman[1], friedman[1]**2 + 1)).T
     regr = TransformedTargetRegressor(regressor=LinearRegression(),
-                                      func=np.log, inverse_func=np.exp)
+                                      func=np.log,
+                                      inverse_func=np.exp)
     y_pred = regr.fit(X, y).predict(X)
     # check the transformer output
     y_tran = regr.transformer_.transform(y)
@@ -107,10 +115,9 @@ def test_transform_target_regressor_functions_multioutput():
     assert_allclose(regr.regressor_.coef_.ravel(), lr.coef_.ravel())
 
 
-@pytest.mark.parametrize("X,y", [friedman,
-                                 (friedman[0],
-                                  np.vstack((friedman[1],
-                                             friedman[1] ** 2 + 1)).T)])
+@pytest.mark.parametrize(
+    "X,y",
+    [friedman, (friedman[0], np.vstack((friedman[1], friedman[1]**2 + 1)).T)])
 def test_transform_target_regressor_1d_transformer(X, y):
     # All transformer in scikit-learn expect 2D data. FunctionTransformer with
     # validate=False lift this constraint without checking that the input is a
@@ -127,8 +134,7 @@ def test_transform_target_regressor_1d_transformer(X, y):
     _check_shifted_by_one(y, y_tran)
     assert y.shape == y_pred.shape
     # consistency inverse transform
-    assert_allclose(y, regr.transformer_.inverse_transform(
-        y_tran).squeeze())
+    assert_allclose(y, regr.transformer_.inverse_transform(y_tran).squeeze())
     # consistency of the regressor
     lr = LinearRegression()
     transformer2 = clone(transformer)
@@ -138,10 +144,9 @@ def test_transform_target_regressor_1d_transformer(X, y):
     assert_allclose(regr.regressor_.coef_, lr.coef_)
 
 
-@pytest.mark.parametrize("X,y", [friedman,
-                                 (friedman[0],
-                                  np.vstack((friedman[1],
-                                             friedman[1] ** 2 + 1)).T)])
+@pytest.mark.parametrize(
+    "X,y",
+    [friedman, (friedman[0], np.vstack((friedman[1], friedman[1]**2 + 1)).T)])
 def test_transform_target_regressor_2d_transformer(X, y):
     # Check consistency with transformer accepting only 2D array and a 1D/2D y
     # array.
@@ -158,8 +163,7 @@ def test_transform_target_regressor_2d_transformer(X, y):
     _check_standard_scaled(y, y_tran)
     assert y.shape == y_pred.shape
     # consistency inverse transform
-    assert_allclose(y, regr.transformer_.inverse_transform(
-        y_tran).squeeze())
+    assert_allclose(y, regr.transformer_.inverse_transform(y_tran).squeeze())
     # consistency of the regressor
     lr = LinearRegression()
     transformer2 = clone(transformer)
@@ -176,7 +180,7 @@ def test_transform_target_regressor_2d_transformer_multioutput():
     # Check consistency with transformer accepting only 2D array and a 2D y
     # array.
     X = friedman[0]
-    y = np.vstack((friedman[1], friedman[1] ** 2 + 1)).T
+    y = np.vstack((friedman[1], friedman[1]**2 + 1)).T
     transformer = StandardScaler()
     regr = TransformedTargetRegressor(regressor=LinearRegression(),
                                       transformer=transformer)
@@ -187,8 +191,7 @@ def test_transform_target_regressor_2d_transformer_multioutput():
     _check_standard_scaled(y, y_tran)
     assert y.shape == y_pred.shape
     # consistency inverse transform
-    assert_allclose(y, regr.transformer_.inverse_transform(
-        y_tran).squeeze())
+    assert_allclose(y, regr.transformer_.inverse_transform(y_tran).squeeze())
     # consistency of the regressor
     lr = LinearRegression()
     transformer2 = clone(transformer)
@@ -200,16 +203,17 @@ def test_transform_target_regressor_2d_transformer_multioutput():
 
 def test_transform_target_regressor_multi_to_single():
     X = friedman[0]
-    y = np.transpose([friedman[1], (friedman[1] ** 2 + 1)])
+    y = np.transpose([friedman[1], (friedman[1]**2 + 1)])
 
     def func(y):
-        out = np.sqrt(y[:, 0] ** 2 + y[:, 1] ** 2)
+        out = np.sqrt(y[:, 0]**2 + y[:, 1]**2)
         return out[:, np.newaxis]
 
     def inverse_func(y):
         return y
 
-    tt = TransformedTargetRegressor(func=func, inverse_func=inverse_func,
+    tt = TransformedTargetRegressor(func=func,
+                                    inverse_func=inverse_func,
                                     check_inverse=False)
     tt.fit(X, y)
     y_pred_2d_func = tt.predict(X)
@@ -217,9 +221,10 @@ def test_transform_target_regressor_multi_to_single():
 
     # force that the function only return a 1D array
     def func(y):
-        return np.sqrt(y[:, 0] ** 2 + y[:, 1] ** 2)
+        return np.sqrt(y[:, 0]**2 + y[:, 1]**2)
 
-    tt = TransformedTargetRegressor(func=func, inverse_func=inverse_func,
+    tt = TransformedTargetRegressor(func=func,
+                                    inverse_func=inverse_func,
                                     check_inverse=False)
     tt.fit(X, y)
     y_pred_1d_func = tt.predict(X)
@@ -229,7 +234,6 @@ def test_transform_target_regressor_multi_to_single():
 
 
 class DummyCheckerArrayTransformer(TransformerMixin, BaseEstimator):
-
     def fit(self, X, y=None):
         assert isinstance(X, np.ndarray)
         return self
@@ -244,7 +248,6 @@ class DummyCheckerArrayTransformer(TransformerMixin, BaseEstimator):
 
 
 class DummyCheckerListRegressor(DummyRegressor):
-
     def fit(self, X, y, sample_weight=None):
         assert isinstance(X, list)
         return super().fit(X, y, sample_weight)
@@ -291,9 +294,8 @@ def test_transform_target_regressor_count_fit(check_inverse):
     # regression test for gh-issue #11618
     # check that we only call a single time fit for the transformer
     X, y = friedman
-    ttr = TransformedTargetRegressor(
-        transformer=DummyTransformer(), check_inverse=check_inverse
-    )
+    ttr = TransformedTargetRegressor(transformer=DummyTransformer(),
+                                     check_inverse=check_inverse)
     ttr.fit(X, y)
     assert ttr.transformer_.fit_counter == 1
 
@@ -310,8 +312,7 @@ def test_transform_target_regressor_pass_fit_parameters():
     X, y = friedman
     regr = TransformedTargetRegressor(
         regressor=DummyRegressorWithExtraFitParams(),
-        transformer=DummyTransformer()
-    )
+        transformer=DummyTransformer())
 
     regr.fit(X, y, check_input=False)
     assert regr.transformer_.fit_counter == 1
@@ -322,11 +323,8 @@ def test_transform_target_regressor_route_pipeline():
 
     regr = TransformedTargetRegressor(
         regressor=DummyRegressorWithExtraFitParams(),
-        transformer=DummyTransformer()
-    )
-    estimators = [
-        ('normalize', StandardScaler()), ('est', regr)
-    ]
+        transformer=DummyTransformer())
+    estimators = [('normalize', StandardScaler()), ('est', regr)]
 
     pip = Pipeline(estimators)
     pip.fit(X, y, **{'est__check_input': False})

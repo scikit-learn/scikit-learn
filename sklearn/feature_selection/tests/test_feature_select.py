@@ -17,14 +17,16 @@ from sklearn.utils._testing import assert_warns_message
 from sklearn.utils import safe_mask
 
 from sklearn.datasets import make_classification, make_regression
-from sklearn.feature_selection import (
-    chi2, f_classif, f_oneway, f_regression, mutual_info_classif,
-    mutual_info_regression, SelectPercentile, SelectKBest, SelectFpr,
-    SelectFdr, SelectFwe, GenericUnivariateSelect)
-
+from sklearn.feature_selection import (chi2, f_classif, f_oneway, f_regression,
+                                       mutual_info_classif,
+                                       mutual_info_regression,
+                                       SelectPercentile, SelectKBest,
+                                       SelectFpr, SelectFdr, SelectFwe,
+                                       GenericUnivariateSelect)
 
 ##############################################################################
 # Test the score functions
+
 
 def test_f_oneway_vs_scipy_stats():
     # Test that our f_oneway gives the same result as scipy.stats
@@ -54,11 +56,17 @@ def test_f_oneway_ints():
 def test_f_classif():
     # Test whether the F test yields meaningful results
     # on a simple simulated classification problem
-    X, y = make_classification(n_samples=200, n_features=20,
-                               n_informative=3, n_redundant=2,
-                               n_repeated=0, n_classes=8,
-                               n_clusters_per_class=1, flip_y=0.0,
-                               class_sep=10, shuffle=False, random_state=0)
+    X, y = make_classification(n_samples=200,
+                               n_features=20,
+                               n_informative=3,
+                               n_redundant=2,
+                               n_repeated=0,
+                               n_classes=8,
+                               n_clusters_per_class=1,
+                               flip_y=0.0,
+                               class_sep=10,
+                               shuffle=False,
+                               random_state=0)
 
     F, pv = f_classif(X, y)
     F_sparse, pv_sparse = f_classif(sparse.csr_matrix(X), y)
@@ -74,8 +82,11 @@ def test_f_classif():
 def test_f_regression():
     # Test whether the F test yields meaningful results
     # on a simple simulated regression problem
-    X, y = make_regression(n_samples=200, n_features=20, n_informative=5,
-                           shuffle=False, random_state=0)
+    X, y = make_regression(n_samples=200,
+                           n_features=20,
+                           n_informative=5,
+                           shuffle=False,
+                           random_state=0)
 
     F, pv = f_regression(X, y)
     assert (F > 0).all()
@@ -130,11 +141,17 @@ def test_f_regression_center():
 def test_f_classif_multi_class():
     # Test whether the F test yields meaningful results
     # on a simple simulated classification problem
-    X, y = make_classification(n_samples=200, n_features=20,
-                               n_informative=3, n_redundant=2,
-                               n_repeated=0, n_classes=8,
-                               n_clusters_per_class=1, flip_y=0.0,
-                               class_sep=10, shuffle=False, random_state=0)
+    X, y = make_classification(n_samples=200,
+                               n_features=20,
+                               n_informative=3,
+                               n_redundant=2,
+                               n_repeated=0,
+                               n_classes=8,
+                               n_clusters_per_class=1,
+                               flip_y=0.0,
+                               class_sep=10,
+                               shuffle=False,
+                               random_state=0)
 
     F, pv = f_classif(X, y)
     assert (F > 0).all()
@@ -148,11 +165,17 @@ def test_select_percentile_classif():
     # Test whether the relative univariate feature selection
     # gets the correct items in a simple classification problem
     # with the percentile heuristic
-    X, y = make_classification(n_samples=200, n_features=20,
-                               n_informative=3, n_redundant=2,
-                               n_repeated=0, n_classes=8,
-                               n_clusters_per_class=1, flip_y=0.0,
-                               class_sep=10, shuffle=False, random_state=0)
+    X, y = make_classification(n_samples=200,
+                               n_features=20,
+                               n_informative=3,
+                               n_redundant=2,
+                               n_repeated=0,
+                               n_classes=8,
+                               n_clusters_per_class=1,
+                               flip_y=0.0,
+                               class_sep=10,
+                               shuffle=False,
+                               random_state=0)
 
     univariate_filter = SelectPercentile(f_classif, percentile=25)
     X_r = univariate_filter.fit(X, y).transform(X)
@@ -169,11 +192,17 @@ def test_select_percentile_classif_sparse():
     # Test whether the relative univariate feature selection
     # gets the correct items in a simple classification problem
     # with the percentile heuristic
-    X, y = make_classification(n_samples=200, n_features=20,
-                               n_informative=3, n_redundant=2,
-                               n_repeated=0, n_classes=8,
-                               n_clusters_per_class=1, flip_y=0.0,
-                               class_sep=10, shuffle=False, random_state=0)
+    X, y = make_classification(n_samples=200,
+                               n_features=20,
+                               n_informative=3,
+                               n_redundant=2,
+                               n_repeated=0,
+                               n_classes=8,
+                               n_clusters_per_class=1,
+                               flip_y=0.0,
+                               class_sep=10,
+                               shuffle=False,
+                               random_state=0)
     X = sparse.csr_matrix(X)
     univariate_filter = SelectPercentile(f_classif, percentile=25)
     X_r = univariate_filter.fit(X, y).transform(X)
@@ -197,20 +226,27 @@ def test_select_percentile_classif_sparse():
 ##############################################################################
 # Test univariate selection in classification settings
 
+
 def test_select_kbest_classif():
     # Test whether the relative univariate feature selection
     # gets the correct items in a simple classification problem
     # with the k best heuristic
-    X, y = make_classification(n_samples=200, n_features=20,
-                               n_informative=3, n_redundant=2,
-                               n_repeated=0, n_classes=8,
-                               n_clusters_per_class=1, flip_y=0.0,
-                               class_sep=10, shuffle=False, random_state=0)
+    X, y = make_classification(n_samples=200,
+                               n_features=20,
+                               n_informative=3,
+                               n_redundant=2,
+                               n_repeated=0,
+                               n_classes=8,
+                               n_clusters_per_class=1,
+                               flip_y=0.0,
+                               class_sep=10,
+                               shuffle=False,
+                               random_state=0)
 
     univariate_filter = SelectKBest(f_classif, k=5)
     X_r = univariate_filter.fit(X, y).transform(X)
-    X_r2 = GenericUnivariateSelect(
-        f_classif, mode='k_best', param=5).fit(X, y).transform(X)
+    X_r2 = GenericUnivariateSelect(f_classif, mode='k_best',
+                                   param=5).fit(X, y).transform(X)
     assert_array_equal(X_r, X_r2)
     support = univariate_filter.get_support()
     gtruth = np.zeros(20)
@@ -220,8 +256,10 @@ def test_select_kbest_classif():
 
 def test_select_kbest_all():
     # Test whether k="all" correctly returns all features.
-    X, y = make_classification(n_samples=20, n_features=10,
-                               shuffle=False, random_state=0)
+    X, y = make_classification(n_samples=20,
+                               n_features=10,
+                               shuffle=False,
+                               random_state=0)
 
     univariate_filter = SelectKBest(f_classif, k='all')
     X_r = univariate_filter.fit(X, y).transform(X)
@@ -230,8 +268,10 @@ def test_select_kbest_all():
 
 def test_select_kbest_zero():
     # Test whether k=0 correctly returns no features.
-    X, y = make_classification(n_samples=20, n_features=10,
-                               shuffle=False, random_state=0)
+    X, y = make_classification(n_samples=20,
+                               n_features=10,
+                               shuffle=False,
+                               random_state=0)
 
     univariate_filter = SelectKBest(f_classif, k=0)
     univariate_filter.fit(X, y)
@@ -247,19 +287,25 @@ def test_select_heuristics_classif():
     # Test whether the relative univariate feature selection
     # gets the correct items in a simple classification problem
     # with the fdr, fwe and fpr heuristics
-    X, y = make_classification(n_samples=200, n_features=20,
-                               n_informative=3, n_redundant=2,
-                               n_repeated=0, n_classes=8,
-                               n_clusters_per_class=1, flip_y=0.0,
-                               class_sep=10, shuffle=False, random_state=0)
+    X, y = make_classification(n_samples=200,
+                               n_features=20,
+                               n_informative=3,
+                               n_redundant=2,
+                               n_repeated=0,
+                               n_classes=8,
+                               n_clusters_per_class=1,
+                               flip_y=0.0,
+                               class_sep=10,
+                               shuffle=False,
+                               random_state=0)
 
     univariate_filter = SelectFwe(f_classif, alpha=0.01)
     X_r = univariate_filter.fit(X, y).transform(X)
     gtruth = np.zeros(20)
     gtruth[:5] = 1
     for mode in ['fdr', 'fpr', 'fwe']:
-        X_r2 = GenericUnivariateSelect(
-            f_classif, mode=mode, param=0.01).fit(X, y).transform(X)
+        X_r2 = GenericUnivariateSelect(f_classif, mode=mode,
+                                       param=0.01).fit(X, y).transform(X)
         assert_array_equal(X_r, X_r2)
         support = univariate_filter.get_support()
         assert_array_almost_equal(support, gtruth)
@@ -280,14 +326,17 @@ def test_select_percentile_regression():
     # Test whether the relative univariate feature selection
     # gets the correct items in a simple regression problem
     # with the percentile heuristic
-    X, y = make_regression(n_samples=200, n_features=20,
-                           n_informative=5, shuffle=False, random_state=0)
+    X, y = make_regression(n_samples=200,
+                           n_features=20,
+                           n_informative=5,
+                           shuffle=False,
+                           random_state=0)
 
     univariate_filter = SelectPercentile(f_regression, percentile=25)
     X_r = univariate_filter.fit(X, y).transform(X)
     assert_best_scores_kept(univariate_filter)
-    X_r2 = GenericUnivariateSelect(
-        f_regression, mode='percentile', param=25).fit(X, y).transform(X)
+    X_r2 = GenericUnivariateSelect(f_regression, mode='percentile',
+                                   param=25).fit(X, y).transform(X)
     assert_array_equal(X_r, X_r2)
     support = univariate_filter.get_support()
     gtruth = np.zeros(20)
@@ -304,14 +353,17 @@ def test_select_percentile_regression():
 def test_select_percentile_regression_full():
     # Test whether the relative univariate feature selection
     # selects all features when '100%' is asked.
-    X, y = make_regression(n_samples=200, n_features=20,
-                           n_informative=5, shuffle=False, random_state=0)
+    X, y = make_regression(n_samples=200,
+                           n_features=20,
+                           n_informative=5,
+                           shuffle=False,
+                           random_state=0)
 
     univariate_filter = SelectPercentile(f_regression, percentile=100)
     X_r = univariate_filter.fit(X, y).transform(X)
     assert_best_scores_kept(univariate_filter)
-    X_r2 = GenericUnivariateSelect(
-        f_regression, mode='percentile', param=100).fit(X, y).transform(X)
+    X_r2 = GenericUnivariateSelect(f_regression, mode='percentile',
+                                   param=100).fit(X, y).transform(X)
     assert_array_equal(X_r, X_r2)
     support = univariate_filter.get_support()
     gtruth = np.ones(20)
@@ -319,8 +371,11 @@ def test_select_percentile_regression_full():
 
 
 def test_invalid_percentile():
-    X, y = make_regression(n_samples=10, n_features=20,
-                           n_informative=2, shuffle=False, random_state=0)
+    X, y = make_regression(n_samples=10,
+                           n_features=20,
+                           n_informative=2,
+                           shuffle=False,
+                           random_state=0)
 
     with pytest.raises(ValueError):
         SelectPercentile(percentile=-1).fit(X, y)
@@ -336,14 +391,18 @@ def test_select_kbest_regression():
     # Test whether the relative univariate feature selection
     # gets the correct items in a simple regression problem
     # with the k best heuristic
-    X, y = make_regression(n_samples=200, n_features=20, n_informative=5,
-                           shuffle=False, random_state=0, noise=10)
+    X, y = make_regression(n_samples=200,
+                           n_features=20,
+                           n_informative=5,
+                           shuffle=False,
+                           random_state=0,
+                           noise=10)
 
     univariate_filter = SelectKBest(f_regression, k=5)
     X_r = univariate_filter.fit(X, y).transform(X)
     assert_best_scores_kept(univariate_filter)
-    X_r2 = GenericUnivariateSelect(
-        f_regression, mode='k_best', param=5).fit(X, y).transform(X)
+    X_r2 = GenericUnivariateSelect(f_regression, mode='k_best',
+                                   param=5).fit(X, y).transform(X)
     assert_array_equal(X_r, X_r2)
     support = univariate_filter.get_support()
     gtruth = np.zeros(20)
@@ -355,16 +414,20 @@ def test_select_heuristics_regression():
     # Test whether the relative univariate feature selection
     # gets the correct items in a simple regression problem
     # with the fpr, fdr or fwe heuristics
-    X, y = make_regression(n_samples=200, n_features=20, n_informative=5,
-                           shuffle=False, random_state=0, noise=10)
+    X, y = make_regression(n_samples=200,
+                           n_features=20,
+                           n_informative=5,
+                           shuffle=False,
+                           random_state=0,
+                           noise=10)
 
     univariate_filter = SelectFpr(f_regression, alpha=0.01)
     X_r = univariate_filter.fit(X, y).transform(X)
     gtruth = np.zeros(20)
     gtruth[:5] = 1
     for mode in ['fdr', 'fpr', 'fwe']:
-        X_r2 = GenericUnivariateSelect(
-            f_regression, mode=mode, param=0.01).fit(X, y).transform(X)
+        X_r2 = GenericUnivariateSelect(f_regression, mode=mode,
+                                       param=0.01).fit(X, y).transform(X)
         assert_array_equal(X_r, X_r2)
         support = univariate_filter.get_support()
         assert_array_equal(support[:5], np.ones((5, ), dtype=np.bool))
@@ -410,17 +473,21 @@ def test_boundary_case_ch2():
 def test_select_fdr_regression(alpha, n_informative):
     # Test that fdr heuristic actually has low FDR.
     def single_fdr(alpha, n_informative, random_state):
-        X, y = make_regression(n_samples=150, n_features=20,
-                               n_informative=n_informative, shuffle=False,
-                               random_state=random_state, noise=10)
+        X, y = make_regression(n_samples=150,
+                               n_features=20,
+                               n_informative=n_informative,
+                               shuffle=False,
+                               random_state=random_state,
+                               noise=10)
 
         with warnings.catch_warnings(record=True):
             # Warnings can be raised when no features are selected
             # (low alpha or very noisy data)
             univariate_filter = SelectFdr(f_regression, alpha=alpha)
             X_r = univariate_filter.fit(X, y).transform(X)
-            X_r2 = GenericUnivariateSelect(
-                f_regression, mode='fdr', param=alpha).fit(X, y).transform(X)
+            X_r2 = GenericUnivariateSelect(f_regression,
+                                           mode='fdr',
+                                           param=alpha).fit(X, y).transform(X)
 
         assert_array_equal(X_r, X_r2)
         support = univariate_filter.get_support()
@@ -436,9 +503,10 @@ def test_select_fdr_regression(alpha, n_informative):
     # As per Benjamini-Hochberg, the expected false discovery rate
     # should be lower than alpha:
     # FDR = E(FP / (TP + FP)) <= alpha
-    false_discovery_rate = np.mean([single_fdr(alpha, n_informative,
-                                               random_state) for
-                                    random_state in range(100)])
+    false_discovery_rate = np.mean([
+        single_fdr(alpha, n_informative, random_state)
+        for random_state in range(100)
+    ])
     assert alpha >= false_discovery_rate
 
     # Make sure that the empirical false discovery rate increases
@@ -451,13 +519,16 @@ def test_select_fwe_regression():
     # Test whether the relative univariate feature selection
     # gets the correct items in a simple regression problem
     # with the fwe heuristic
-    X, y = make_regression(n_samples=200, n_features=20,
-                           n_informative=5, shuffle=False, random_state=0)
+    X, y = make_regression(n_samples=200,
+                           n_features=20,
+                           n_informative=5,
+                           shuffle=False,
+                           random_state=0)
 
     univariate_filter = SelectFwe(f_regression, alpha=0.01)
     X_r = univariate_filter.fit(X, y).transform(X)
-    X_r2 = GenericUnivariateSelect(
-        f_regression, mode='fwe', param=0.01).fit(X, y).transform(X)
+    X_r2 = GenericUnivariateSelect(f_regression, mode='fwe',
+                                   param=0.01).fit(X, y).transform(X)
     assert_array_equal(X_r, X_r2)
     support = univariate_filter.get_support()
     gtruth = np.zeros(20)
@@ -552,8 +623,9 @@ def test_nans():
     X = [[0, 1, 0], [0, -1, -1], [0, .5, .5]]
     y = [1, 0, 1]
 
-    for select in (SelectKBest(f_classif, k=2),
-                   SelectPercentile(f_classif, percentile=67)):
+    for select in (SelectKBest(f_classif,
+                               k=2), SelectPercentile(f_classif,
+                                                      percentile=67)):
         ignore_warnings(select.fit)(X, y)
         assert_array_equal(select.get_support(indices=True), np.array([1, 2]))
 
@@ -562,8 +634,10 @@ def test_score_func_error():
     X = [[0, 1, 0], [0, -1, -1], [0, .5, .5]]
     y = [1, 0, 1]
 
-    for SelectFeatures in [SelectKBest, SelectPercentile, SelectFwe,
-                           SelectFdr, SelectFpr, GenericUnivariateSelect]:
+    for SelectFeatures in [
+            SelectKBest, SelectPercentile, SelectFwe, SelectFdr, SelectFpr,
+            GenericUnivariateSelect
+    ]:
         with pytest.raises(TypeError):
             SelectFeatures(score_func=10).fit(X, y)
 
@@ -606,23 +680,30 @@ def test_no_feature_selected():
     ]
     for selector in strict_selectors:
         assert_array_equal(selector.get_support(), np.zeros(10))
-        X_selected = assert_warns_message(
-            UserWarning, 'No features were selected', selector.transform, X)
+        X_selected = assert_warns_message(UserWarning,
+                                          'No features were selected',
+                                          selector.transform, X)
         assert X_selected.shape == (40, 0)
 
 
 def test_mutual_info_classif():
-    X, y = make_classification(n_samples=100, n_features=5,
-                               n_informative=1, n_redundant=1,
-                               n_repeated=0, n_classes=2,
-                               n_clusters_per_class=1, flip_y=0.0,
-                               class_sep=10, shuffle=False, random_state=0)
+    X, y = make_classification(n_samples=100,
+                               n_features=5,
+                               n_informative=1,
+                               n_redundant=1,
+                               n_repeated=0,
+                               n_classes=2,
+                               n_clusters_per_class=1,
+                               flip_y=0.0,
+                               class_sep=10,
+                               shuffle=False,
+                               random_state=0)
 
     # Test in KBest mode.
     univariate_filter = SelectKBest(mutual_info_classif, k=2)
     X_r = univariate_filter.fit(X, y).transform(X)
-    X_r2 = GenericUnivariateSelect(
-        mutual_info_classif, mode='k_best', param=2).fit(X, y).transform(X)
+    X_r2 = GenericUnivariateSelect(mutual_info_classif, mode='k_best',
+                                   param=2).fit(X, y).transform(X)
     assert_array_equal(X_r, X_r2)
     support = univariate_filter.get_support()
     gtruth = np.zeros(5)
@@ -632,8 +713,9 @@ def test_mutual_info_classif():
     # Test in Percentile mode.
     univariate_filter = SelectPercentile(mutual_info_classif, percentile=40)
     X_r = univariate_filter.fit(X, y).transform(X)
-    X_r2 = GenericUnivariateSelect(
-        mutual_info_classif, mode='percentile', param=40).fit(X, y).transform(X)
+    X_r2 = GenericUnivariateSelect(mutual_info_classif,
+                                   mode='percentile',
+                                   param=40).fit(X, y).transform(X)
     assert_array_equal(X_r, X_r2)
     support = univariate_filter.get_support()
     gtruth = np.zeros(5)
@@ -642,15 +724,20 @@ def test_mutual_info_classif():
 
 
 def test_mutual_info_regression():
-    X, y = make_regression(n_samples=100, n_features=10, n_informative=2,
-                           shuffle=False, random_state=0, noise=10)
+    X, y = make_regression(n_samples=100,
+                           n_features=10,
+                           n_informative=2,
+                           shuffle=False,
+                           random_state=0,
+                           noise=10)
 
     # Test in KBest mode.
     univariate_filter = SelectKBest(mutual_info_regression, k=2)
     X_r = univariate_filter.fit(X, y).transform(X)
     assert_best_scores_kept(univariate_filter)
-    X_r2 = GenericUnivariateSelect(
-        mutual_info_regression, mode='k_best', param=2).fit(X, y).transform(X)
+    X_r2 = GenericUnivariateSelect(mutual_info_regression,
+                                   mode='k_best',
+                                   param=2).fit(X, y).transform(X)
     assert_array_equal(X_r, X_r2)
     support = univariate_filter.get_support()
     gtruth = np.zeros(10)
@@ -660,7 +747,8 @@ def test_mutual_info_regression():
     # Test in Percentile mode.
     univariate_filter = SelectPercentile(mutual_info_regression, percentile=20)
     X_r = univariate_filter.fit(X, y).transform(X)
-    X_r2 = GenericUnivariateSelect(mutual_info_regression, mode='percentile',
+    X_r2 = GenericUnivariateSelect(mutual_info_regression,
+                                   mode='percentile',
                                    param=20).fit(X, y).transform(X)
     assert_array_equal(X_r, X_r2)
     support = univariate_filter.get_support()

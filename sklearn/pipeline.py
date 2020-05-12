@@ -154,8 +154,8 @@ class Pipeline(_BaseComposition):
         for t in transformers:
             if t is None or t == 'passthrough':
                 continue
-            if (not (hasattr(t, "fit") or hasattr(t, "fit_transform")) or not
-                    hasattr(t, "transform")):
+            if (not (hasattr(t, "fit") or hasattr(t, "fit_transform"))
+                    or not hasattr(t, "transform")):
                 raise TypeError("All intermediate steps should be "
                                 "transformers and implement fit and transform "
                                 "or be the string 'passthrough' "
@@ -164,10 +164,10 @@ class Pipeline(_BaseComposition):
         # We allow last estimator to be None as an identity transformation
         if (estimator is not None and estimator != 'passthrough'
                 and not hasattr(estimator, "fit")):
-            raise TypeError(
-                "Last step of Pipeline should implement fit "
-                "or be the string 'passthrough'. "
-                "'%s' (type %s) doesn't" % (estimator, type(estimator)))
+            raise TypeError("Last step of Pipeline should implement fit "
+                            "or be the string 'passthrough'. "
+                            "'%s' (type %s) doesn't" %
+                            (estimator, type(estimator)))
 
     def _iter(self, with_final=True, filter_passthrough=True):
         """
@@ -231,13 +231,14 @@ class Pipeline(_BaseComposition):
             return None
         name, step = self.steps[step_idx]
 
-        return '(step %d of %d) Processing %s' % (step_idx + 1,
-                                                  len(self.steps),
-                                                  name)
+        return '(step %d of %d) Processing %s' % (step_idx + 1, len(
+            self.steps), name)
 
     def _check_fit_params(self, **fit_params):
-        fit_params_steps = {name: {} for name, step in self.steps
-                            if step is not None}
+        fit_params_steps = {
+            name: {}
+            for name, step in self.steps if step is not None
+        }
         for pname, pval in fit_params.items():
             if '__' not in pname:
                 raise ValueError(
@@ -261,8 +262,7 @@ class Pipeline(_BaseComposition):
 
         fit_transform_one_cached = memory.cache(_fit_transform_one)
 
-        for (step_idx,
-             name,
+        for (step_idx, name,
              transformer) in self._iter(with_final=False,
                                         filter_passthrough=False):
             if (transformer is None or transformer == 'passthrough'):
@@ -290,7 +290,10 @@ class Pipeline(_BaseComposition):
                 cloned_transformer = clone(transformer)
             # Fit or load from cache the current transformer
             X, fitted_transformer = fit_transform_one_cached(
-                cloned_transformer, X, y, None,
+                cloned_transformer,
+                X,
+                y,
+                None,
                 message_clsname='Pipeline',
                 message=self._log_message(step_idx),
                 **fit_params_steps[name])
@@ -632,9 +635,11 @@ class Pipeline(_BaseComposition):
                 return f'{name}: passthrough'
             # Is an estimator
             return f'{name}: {est.__class__.__name__}'
+
         names = [_get_name(name, est) for name, est in self.steps]
         name_details = [str(est) for est in estimators]
-        return _VisualBlock('serial', estimators,
+        return _VisualBlock('serial',
+                            estimators,
                             names=names,
                             name_details=name_details,
                             dash_wrapped=False)
@@ -710,8 +715,8 @@ def make_pipeline(*steps, **kwargs):
     memory = kwargs.pop('memory', None)
     verbose = kwargs.pop('verbose', False)
     if kwargs:
-        raise TypeError('Unknown keyword arguments: "{}"'
-                        .format(list(kwargs.keys())[0]))
+        raise TypeError('Unknown keyword arguments: "{}"'.format(
+            list(kwargs.keys())[0]))
     return Pipeline(_name_estimators(steps), memory=memory, verbose=verbose)
 
 
@@ -821,8 +826,12 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
     _required_parameters = ["transformer_list"]
 
     @_deprecate_positional_args
-    def __init__(self, transformer_list, *, n_jobs=None,
-                 transformer_weights=None, verbose=False):
+    def __init__(self,
+                 transformer_list,
+                 *,
+                 n_jobs=None,
+                 transformer_weights=None,
+                 verbose=False):
         self.transformer_list = transformer_list
         self.n_jobs = n_jobs
         self.transformer_weights = transformer_weights
@@ -867,15 +876,15 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         for t in transformers:
             # TODO: Remove in 0.24 when None is removed
             if t is None:
-                warnings.warn("Using None as a transformer is deprecated "
-                              "in version 0.22 and will be removed in "
-                              "version 0.24. Please use 'drop' instead.",
-                              FutureWarning)
+                warnings.warn(
+                    "Using None as a transformer is deprecated "
+                    "in version 0.22 and will be removed in "
+                    "version 0.24. Please use 'drop' instead.", FutureWarning)
                 continue
             if t == 'drop':
                 continue
-            if (not (hasattr(t, "fit") or hasattr(t, "fit_transform")) or not
-                    hasattr(t, "transform")):
+            if (not (hasattr(t, "fit") or hasattr(t, "fit_transform"))
+                    or not hasattr(t, "transform")):
                 raise TypeError("All estimators should implement fit and "
                                 "transform. '%s' (type %s) doesn't" %
                                 (t, type(t)))
@@ -902,10 +911,10 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         for name, trans, weight in self._iter():
             if not hasattr(trans, 'get_feature_names'):
                 raise AttributeError("Transformer %s (type %s) does not "
-                                     "provide get_feature_names."
-                                     % (str(name), type(trans).__name__))
-            feature_names.extend([name + "__" + f for f in
-                                  trans.get_feature_names()])
+                                     "provide get_feature_names." %
+                                     (str(name), type(trans).__name__))
+            feature_names.extend(
+                [name + "__" + f for f in trans.get_feature_names()])
         return feature_names
 
     def fit(self, X, y=None, **fit_params):
@@ -976,7 +985,10 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         transformers = list(self._iter())
 
         return Parallel(n_jobs=self.n_jobs)(delayed(func)(
-            transformer, X, y, weight,
+            transformer,
+            X,
+            y,
+            weight,
             message_clsname='FeatureUnion',
             message=self._log_message(name, idx, len(transformers)),
             **fit_params) for idx, (name, transformer,
@@ -1011,9 +1023,10 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
     def _update_transformer_list(self, transformers):
         transformers = iter(transformers)
-        self.transformer_list[:] = [(name, old if old is None or old == 'drop'
-                                     else next(transformers))
-                                    for name, old in self.transformer_list]
+        self.transformer_list[:] = [
+            (name, old if old is None or old == 'drop' else next(transformers))
+            for name, old in self.transformer_list
+        ]
 
     @property
     def n_features_in_(self):
@@ -1072,7 +1085,8 @@ def make_union(*transformers, **kwargs):
     if kwargs:
         # We do not currently support `transformer_weights` as we may want to
         # change its type spec in make_union
-        raise TypeError('Unknown keyword arguments: "{}"'
-                        .format(list(kwargs.keys())[0]))
-    return FeatureUnion(
-        _name_estimators(transformers), n_jobs=n_jobs, verbose=verbose)
+        raise TypeError('Unknown keyword arguments: "{}"'.format(
+            list(kwargs.keys())[0]))
+    return FeatureUnion(_name_estimators(transformers),
+                        n_jobs=n_jobs,
+                        verbose=verbose)

@@ -49,14 +49,14 @@ def _split_node(node, threshold, branching_factor):
     """
     new_subcluster1 = _CFSubcluster()
     new_subcluster2 = _CFSubcluster()
-    new_node1 = _CFNode(
-        threshold=threshold, branching_factor=branching_factor,
-        is_leaf=node.is_leaf,
-        n_features=node.n_features)
-    new_node2 = _CFNode(
-        threshold=threshold, branching_factor=branching_factor,
-        is_leaf=node.is_leaf,
-        n_features=node.n_features)
+    new_node1 = _CFNode(threshold=threshold,
+                        branching_factor=branching_factor,
+                        is_leaf=node.is_leaf,
+                        n_features=node.n_features)
+    new_node2 = _CFNode(threshold=threshold,
+                        branching_factor=branching_factor,
+                        is_leaf=node.is_leaf,
+                        n_features=node.n_features)
     new_subcluster1.child_ = new_node1
     new_subcluster2.child_ = new_node2
 
@@ -70,13 +70,13 @@ def _split_node(node, threshold, branching_factor):
         if node.next_leaf_ is not None:
             node.next_leaf_.prev_leaf_ = new_node2
 
-    dist = euclidean_distances(
-        node.centroids_, Y_norm_squared=node.squared_norm_, squared=True)
+    dist = euclidean_distances(node.centroids_,
+                               Y_norm_squared=node.squared_norm_,
+                               squared=True)
     n_clusters = dist.shape[0]
 
-    farthest_idx = np.unravel_index(
-        dist.argmax(), (n_clusters, n_clusters))
-    node1_dist, node2_dist = dist[(farthest_idx,)]
+    farthest_idx = np.unravel_index(dist.argmax(), (n_clusters, n_clusters))
+    node1_dist, node2_dist = dist[(farthest_idx, )]
 
     node1_closer = node1_dist < node2_dist
     for idx, subcluster in enumerate(node.subclusters_):
@@ -163,8 +163,8 @@ class _CFNode:
         self.centroids_ = self.init_centroids_[:n_samples + 1, :]
         self.squared_norm_ = self.init_sq_norm_[:n_samples + 1]
 
-    def update_split_subclusters(self, subcluster,
-                                 new_subcluster1, new_subcluster2):
+    def update_split_subclusters(self, subcluster, new_subcluster1,
+                                 new_subcluster2):
         """Remove a subcluster from a node and update it with the
         split subclusters.
         """
@@ -211,8 +211,8 @@ class _CFNode:
             else:
                 new_subcluster1, new_subcluster2 = _split_node(
                     closest_subcluster.child_, threshold, branching_factor)
-                self.update_split_subclusters(
-                    closest_subcluster, new_subcluster1, new_subcluster2)
+                self.update_split_subclusters(closest_subcluster,
+                                              new_subcluster1, new_subcluster2)
 
                 if len(self.subclusters_) > self.branching_factor:
                     return True
@@ -285,8 +285,8 @@ class _CFSubcluster:
         else:
             self.n_samples_ = 1
             self.centroid_ = self.linear_sum_ = linear_sum
-            self.squared_sum_ = self.sq_norm_ = np.dot(
-                self.linear_sum_, self.linear_sum_)
+            self.squared_sum_ = self.sq_norm_ = np.dot(self.linear_sum_,
+                                                       self.linear_sum_)
         self.child_ = None
 
     def update(self, subcluster):
@@ -307,7 +307,7 @@ class _CFSubcluster:
         new_norm = np.dot(new_centroid, new_centroid)
         dot_product = (-2 * new_n) * new_norm
         sq_radius = (new_ss + dot_product) / new_n + new_norm
-        if sq_radius <= threshold ** 2:
+        if sq_radius <= threshold**2:
             (self.n_samples_, self.linear_sum_, self.squared_sum_,
              self.centroid_, self.sq_norm_) = \
                 new_n, new_ls, new_ss, new_centroid, new_norm
@@ -318,9 +318,8 @@ class _CFSubcluster:
     def radius(self):
         """Return radius of the subcluster"""
         dot_product = -2 * np.dot(self.linear_sum_, self.centroid_)
-        return sqrt(
-            ((self.squared_sum_ + dot_product) / self.n_samples_) +
-            self.sq_norm_)
+        return sqrt(((self.squared_sum_ + dot_product) / self.n_samples_) +
+                    self.sq_norm_)
 
 
 class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
@@ -434,8 +433,13 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
     array([0, 0, 0, 1, 1, 1])
     """
     @_deprecate_positional_args
-    def __init__(self, *, threshold=0.5, branching_factor=50, n_clusters=3,
-                 compute_labels=True, copy=True):
+    def __init__(self,
+                 *,
+                 threshold=0.5,
+                 branching_factor=50,
+                 n_clusters=3,
+                 compute_labels=True,
+                 copy=True):
         self.threshold = threshold
         self.branching_factor = branching_factor
         self.n_clusters = n_clusters
@@ -485,7 +489,8 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
             # To enable getting back subclusters.
             self.dummy_leaf_ = _CFNode(threshold=threshold,
                                        branching_factor=branching_factor,
-                                       is_leaf=True, n_features=n_features)
+                                       is_leaf=True,
+                                       n_features=n_features)
             self.dummy_leaf_.next_leaf_ = self.root_
             self.root_.prev_leaf_ = self.dummy_leaf_
 
@@ -510,8 +515,8 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
                 self.root_.append_subcluster(new_subcluster1)
                 self.root_.append_subcluster(new_subcluster2)
 
-        centroids = np.concatenate([
-            leaf.centroids_ for leaf in self._get_leaves()])
+        centroids = np.concatenate(
+            [leaf.centroids_ for leaf in self._get_leaves()])
         self.subcluster_centers_ = centroids
 
         self._global_clustering(X)
@@ -564,11 +569,10 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
     def _check_fit(self, X):
         check_is_fitted(self)
 
-        if (hasattr(self, 'subcluster_centers_') and
-                X.shape[1] != self.subcluster_centers_.shape[1]):
-            raise ValueError(
-                "Training data and predicted data do "
-                "not have same number of features.")
+        if (hasattr(self, 'subcluster_centers_')
+                and X.shape[1] != self.subcluster_centers_.shape[1]):
+            raise ValueError("Training data and predicted data do "
+                             "not have same number of features.")
 
     def predict(self, X):
         """
@@ -589,11 +593,8 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
         X = check_array(X, accept_sparse='csr')
         self._check_fit(X)
         kwargs = {'Y_norm_squared': self._subcluster_norms}
-        return self.subcluster_labels_[
-                pairwise_distances_argmin(X,
-                                          self.subcluster_centers_,
-                                          metric_kwargs=kwargs)
-            ]
+        return self.subcluster_labels_[pairwise_distances_argmin(
+            X, self.subcluster_centers_, metric_kwargs=kwargs)]
 
     def transform(self, X):
         """
@@ -626,27 +627,25 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
         # Preprocessing for the global clustering.
         not_enough_centroids = False
         if isinstance(clusterer, numbers.Integral):
-            clusterer = AgglomerativeClustering(
-                n_clusters=self.n_clusters)
+            clusterer = AgglomerativeClustering(n_clusters=self.n_clusters)
             # There is no need to perform the global clustering step.
             if len(centroids) < self.n_clusters:
                 not_enough_centroids = True
-        elif (clusterer is not None and not
-              hasattr(clusterer, 'fit_predict')):
+        elif (clusterer is not None and not hasattr(clusterer, 'fit_predict')):
             raise ValueError("n_clusters should be an instance of "
                              "ClusterMixin or an int")
 
         # To use in predict to avoid recalculation.
-        self._subcluster_norms = row_norms(
-            self.subcluster_centers_, squared=True)
+        self._subcluster_norms = row_norms(self.subcluster_centers_,
+                                           squared=True)
 
         if clusterer is None or not_enough_centroids:
             self.subcluster_labels_ = np.arange(len(centroids))
             if not_enough_centroids:
                 warnings.warn(
                     "Number of subclusters found (%d) by Birch is less "
-                    "than (%d). Decrease the threshold."
-                    % (len(centroids), self.n_clusters), ConvergenceWarning)
+                    "than (%d). Decrease the threshold." %
+                    (len(centroids), self.n_clusters), ConvergenceWarning)
         else:
             # The global clustering step that clusters the subclusters of
             # the leaves. It assumes the centroids of the subclusters as

@@ -17,7 +17,6 @@ from ..utils.sparsefuncs import mean_variance_axis
 from ..utils.validation import _deprecate_positional_args
 from ..utils.validation import check_is_fitted
 
-
 __all__ = ["TruncatedSVD"]
 
 
@@ -120,8 +119,13 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
 
     """
     @_deprecate_positional_args
-    def __init__(self, n_components=2, *, algorithm="randomized", n_iter=5,
-                 random_state=None, tol=0.):
+    def __init__(self,
+                 n_components=2,
+                 *,
+                 algorithm="randomized",
+                 n_iter=5,
+                 random_state=None,
+                 tol=0.):
         self.algorithm = algorithm
         self.n_components = n_components
         self.n_iter = n_iter
@@ -161,7 +165,8 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
         X_new : array, shape (n_samples, n_components)
             Reduced version of X. This will always be a dense array.
         """
-        X = self._validate_data(X, accept_sparse=['csr', 'csc'],
+        X = self._validate_data(X,
+                                accept_sparse=['csr', 'csc'],
                                 ensure_min_features=2)
         random_state = check_random_state(self.random_state)
 
@@ -178,7 +183,8 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
             if k >= n_features:
                 raise ValueError("n_components must be < n_features;"
                                  " got %d >= %d" % (k, n_features))
-            U, Sigma, VT = randomized_svd(X, self.n_components,
+            U, Sigma, VT = randomized_svd(X,
+                                          self.n_components,
                                           n_iter=self.n_iter,
                                           random_state=random_state)
         else:

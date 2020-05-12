@@ -41,7 +41,7 @@ _DEFAULT_TAGS = {
     'binary_only': False,
     'requires_fit': True,
     'requires_y': False,
-    }
+}
 
 
 @_deprecate_positional_args
@@ -78,8 +78,8 @@ def clone(estimator, *, safe=True):
                 raise TypeError("Cannot clone object '%s' (type %s): "
                                 "it does not seem to be a scikit-learn "
                                 "estimator as it does not implement a "
-                                "'get_params' method."
-                                % (repr(estimator), type(estimator)))
+                                "'get_params' method." %
+                                (repr(estimator), type(estimator)))
 
     klass = estimator.__class__
     new_object_params = estimator.get_params(deep=False)
@@ -158,7 +158,6 @@ class BaseEstimator:
     at the class level in their ``__init__`` as explicit keyword
     arguments (no ``*args`` or ``**kwargs``).
     """
-
     @classmethod
     def _get_param_names(cls):
         """Get parameter names for the estimator"""
@@ -173,16 +172,18 @@ class BaseEstimator:
         # to represent
         init_signature = inspect.signature(init)
         # Consider the constructor parameters excluding 'self'
-        parameters = [p for p in init_signature.parameters.values()
-                      if p.name != 'self' and p.kind != p.VAR_KEYWORD]
+        parameters = [
+            p for p in init_signature.parameters.values()
+            if p.name != 'self' and p.kind != p.VAR_KEYWORD
+        ]
         for p in parameters:
             if p.kind == p.VAR_POSITIONAL:
                 raise RuntimeError("scikit-learn estimators should always "
                                    "specify their parameters in the signature"
                                    " of their __init__ (no varargs)."
                                    " %s with constructor %s doesn't "
-                                   " follow this convention."
-                                   % (cls, init_signature))
+                                   " follow this convention." %
+                                   (cls, init_signature))
         # Extract and sort argument names excluding 'self'
         return sorted([p.name for p in parameters])
 
@@ -206,11 +207,11 @@ class BaseEstimator:
             try:
                 value = getattr(self, key)
             except AttributeError:
-                warnings.warn('From version 0.24, get_params will raise an '
-                              'AttributeError if a parameter cannot be '
-                              'retrieved as an instance attribute. Previously '
-                              'it would return None.',
-                              FutureWarning)
+                warnings.warn(
+                    'From version 0.24, get_params will raise an '
+                    'AttributeError if a parameter cannot be '
+                    'retrieved as an instance attribute. Previously '
+                    'it would return None.', FutureWarning)
                 value = None
             if deep and hasattr(value, 'get_params'):
                 deep_items = value.get_params().items()
@@ -273,7 +274,9 @@ class BaseEstimator:
 
         # use ellipsis for sequences with a lot of elements
         pp = _EstimatorPrettyPrinter(
-            compact=True, indent=1, indent_at_name=True,
+            compact=True,
+            indent=1,
+            indent_at_name=True,
             n_max_elements_to_show=N_MAX_ELEMENTS_TO_SHOW)
 
         repr_ = pp.pformat(self)
@@ -371,17 +374,19 @@ class BaseEstimator:
             if not hasattr(self, 'n_features_in_'):
                 raise RuntimeError(
                     "The reset parameter is False but there is no "
-                    "n_features_in_ attribute. Is this estimator fitted?"
-                )
+                    "n_features_in_ attribute. Is this estimator fitted?")
             if n_features != self.n_features_in_:
                 raise ValueError(
                     'X has {} features, but this {} is expecting {} features '
                     'as input.'.format(n_features, self.__class__.__name__,
-                                       self.n_features_in_)
-                )
+                                       self.n_features_in_))
 
-    def _validate_data(self, X, y=None, reset=True,
-                       validate_separately=False, **check_params):
+    def _validate_data(self,
+                       X,
+                       y=None,
+                       reset=True,
+                       validate_separately=False,
+                       **check_params):
         """Validate input data and set or check the `n_features_in_` attribute.
 
         Parameters
@@ -415,8 +420,7 @@ class BaseEstimator:
             if self._get_tags()['requires_y']:
                 raise ValueError(
                     f"This {self.__class__.__name__} estimator "
-                    f"requires y to be passed, but the target y is None."
-                )
+                    f"requires y to be passed, but the target y is None.")
             X = check_array(X, **check_params)
             out = X
         else:
@@ -584,7 +588,6 @@ class ClusterMixin:
 
 class BiclusterMixin:
     """Mixin class for all bicluster estimators in scikit-learn"""
-
     @property
     def biclusters_(self):
         """Convenient way to get row and column indicators together.
@@ -659,7 +662,6 @@ class BiclusterMixin:
 
 class TransformerMixin:
     """Mixin class for all transformers in scikit-learn."""
-
     def fit_transform(self, X, y=None, **fit_params):
         """
         Fit to data, then transform it.
@@ -754,8 +756,10 @@ class MultiOutputMixin:
 class _UnstableArchMixin:
     """Mark estimators that are non-determinstic on 32bit or PowerPC"""
     def _more_tags(self):
-        return {'non_deterministic': (
-            _IS_32BIT or platform.machine().startswith(('ppc', 'powerpc')))}
+        return {
+            'non_deterministic': (_IS_32BIT or platform.machine().startswith(
+                ('ppc', 'powerpc')))
+        }
 
 
 def is_classifier(estimator):

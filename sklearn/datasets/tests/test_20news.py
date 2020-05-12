@@ -15,8 +15,9 @@ def test_20news(fetch_20newsgroups_fxt):
     data = fetch_20newsgroups_fxt(subset='all', shuffle=False)
 
     # Extract a reduced dataset
-    data2cats = fetch_20newsgroups_fxt(
-        subset='all', categories=data.target_names[-1:-3:-1], shuffle=False)
+    data2cats = fetch_20newsgroups_fxt(subset='all',
+                                       categories=data.target_names[-1:-3:-1],
+                                       shuffle=False)
     # Check that the ordering of the target_names is the same
     # as the ordering in the full dataset
     assert data2cats.target_names == data.target_names[-2:]

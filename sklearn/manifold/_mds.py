@@ -17,8 +17,14 @@ from ..isotonic import IsotonicRegression
 from ..utils.validation import _deprecate_positional_args
 
 
-def _smacof_single(dissimilarities, metric=True, n_components=2, init=None,
-                   max_iter=300, verbose=0, eps=1e-3, random_state=None):
+def _smacof_single(dissimilarities,
+                   metric=True,
+                   n_components=2,
+                   init=None,
+                   max_iter=300,
+                   verbose=0,
+                   eps=1e-3,
+                   random_state=None):
     """Computes multidimensional scaling using SMACOF algorithm
 
     Parameters
@@ -103,27 +109,27 @@ def _smacof_single(dissimilarities, metric=True, n_components=2, init=None,
             disparities = dis_flat.copy()
             disparities[sim_flat != 0] = disparities_flat
             disparities = disparities.reshape((n_samples, n_samples))
-            disparities *= np.sqrt((n_samples * (n_samples - 1) / 2) /
-                                   (disparities ** 2).sum())
+            disparities *= np.sqrt(
+                (n_samples * (n_samples - 1) / 2) / (disparities**2).sum())
 
         # Compute stress
-        stress = ((dis.ravel() - disparities.ravel()) ** 2).sum() / 2
+        stress = ((dis.ravel() - disparities.ravel())**2).sum() / 2
 
         # Update X using the Guttman transform
         dis[dis == 0] = 1e-5
         ratio = disparities / dis
-        B = - ratio
+        B = -ratio
         B[np.arange(len(B)), np.arange(len(B))] += ratio.sum(axis=1)
         X = 1. / n_samples * np.dot(B, X)
 
-        dis = np.sqrt((X ** 2).sum(axis=1)).sum()
+        dis = np.sqrt((X**2).sum(axis=1)).sum()
         if verbose >= 2:
             print('it: %d, stress %s' % (it, stress))
         if old_stress is not None:
-            if(old_stress - stress / dis) < eps:
+            if (old_stress - stress / dis) < eps:
                 if verbose:
-                    print('breaking at iteration %d with stress %s' % (it,
-                                                                       stress))
+                    print('breaking at iteration %d with stress %s' %
+                          (it, stress))
                 break
         old_stress = stress / dis
 
@@ -131,9 +137,18 @@ def _smacof_single(dissimilarities, metric=True, n_components=2, init=None,
 
 
 @_deprecate_positional_args
-def smacof(dissimilarities, *, metric=True, n_components=2, init=None,
-           n_init=8, n_jobs=None, max_iter=300, verbose=0, eps=1e-3,
-           random_state=None, return_n_iter=False):
+def smacof(dissimilarities,
+           *,
+           metric=True,
+           n_components=2,
+           init=None,
+           n_init=8,
+           n_jobs=None,
+           max_iter=300,
+           verbose=0,
+           eps=1e-3,
+           random_state=None,
+           return_n_iter=False):
     """Computes multidimensional scaling using the SMACOF algorithm.
 
     The SMACOF (Scaling by MAjorizing a COmplicated Function) algorithm is a
@@ -235,21 +250,23 @@ def smacof(dissimilarities, *, metric=True, n_components=2, init=None,
     if hasattr(init, '__array__'):
         init = np.asarray(init).copy()
         if not n_init == 1:
-            warnings.warn(
-                'Explicit initial positions passed: '
-                'performing only one init of the MDS instead of %d'
-                % n_init)
+            warnings.warn('Explicit initial positions passed: '
+                          'performing only one init of the MDS instead of %d' %
+                          n_init)
             n_init = 1
 
     best_pos, best_stress = None, None
 
     if effective_n_jobs(n_jobs) == 1:
         for it in range(n_init):
-            pos, stress, n_iter_ = _smacof_single(
-                dissimilarities, metric=metric,
-                n_components=n_components, init=init,
-                max_iter=max_iter, verbose=verbose,
-                eps=eps, random_state=random_state)
+            pos, stress, n_iter_ = _smacof_single(dissimilarities,
+                                                  metric=metric,
+                                                  n_components=n_components,
+                                                  init=init,
+                                                  max_iter=max_iter,
+                                                  verbose=verbose,
+                                                  eps=eps,
+                                                  random_state=random_state)
             if best_stress is None or stress < best_stress:
                 best_stress = stress
                 best_pos = pos.copy()
@@ -257,11 +274,14 @@ def smacof(dissimilarities, *, metric=True, n_components=2, init=None,
     else:
         seeds = random_state.randint(np.iinfo(np.int32).max, size=n_init)
         results = Parallel(n_jobs=n_jobs, verbose=max(verbose - 1, 0))(
-            delayed(_smacof_single)(
-                dissimilarities, metric=metric, n_components=n_components,
-                init=init, max_iter=max_iter, verbose=verbose, eps=eps,
-                random_state=seed)
-            for seed in seeds)
+            delayed(_smacof_single)(dissimilarities,
+                                    metric=metric,
+                                    n_components=n_components,
+                                    init=init,
+                                    max_iter=max_iter,
+                                    verbose=verbose,
+                                    eps=eps,
+                                    random_state=seed) for seed in seeds)
         positions, stress, n_iters = zip(*results)
         best = np.argmin(stress)
         best_stress = stress[best]
@@ -360,9 +380,17 @@ class MDS(BaseEstimator):
 
     """
     @_deprecate_positional_args
-    def __init__(self, n_components=2, *, metric=True, n_init=4,
-                 max_iter=300, verbose=0, eps=1e-3, n_jobs=None,
-                 random_state=None, dissimilarity="euclidean"):
+    def __init__(self,
+                 n_components=2,
+                 *,
+                 metric=True,
+                 n_init=4,
+                 max_iter=300,
+                 verbose=0,
+                 eps=1e-3,
+                 n_jobs=None,
+                 random_state=None,
+                 dissimilarity="euclidean"):
         self.n_components = n_components
         self.dissimilarity = dissimilarity
         self.metric = metric
@@ -430,10 +458,16 @@ class MDS(BaseEstimator):
                              " Got %s instead" % str(self.dissimilarity))
 
         self.embedding_, self.stress_, self.n_iter_ = smacof(
-            self.dissimilarity_matrix_, metric=self.metric,
-            n_components=self.n_components, init=init, n_init=self.n_init,
-            n_jobs=self.n_jobs, max_iter=self.max_iter, verbose=self.verbose,
-            eps=self.eps, random_state=self.random_state,
+            self.dissimilarity_matrix_,
+            metric=self.metric,
+            n_components=self.n_components,
+            init=init,
+            n_init=self.n_init,
+            n_jobs=self.n_jobs,
+            max_iter=self.max_iter,
+            verbose=self.verbose,
+            eps=self.eps,
+            random_state=self.random_state,
             return_n_iter=True)
 
         return self.embedding_

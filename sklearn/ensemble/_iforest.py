@@ -185,7 +185,8 @@ class IsolationForest(OutlierMixin, BaseBagging):
     array([ 1,  1, -1])
     """
     @_deprecate_positional_args
-    def __init__(self, *,
+    def __init__(self,
+                 *,
                  n_estimators=100,
                  max_samples="auto",
                  contamination="auto",
@@ -197,10 +198,9 @@ class IsolationForest(OutlierMixin, BaseBagging):
                  verbose=0,
                  warm_start=False):
         super().__init__(
-            base_estimator=ExtraTreeRegressor(
-                max_features=1,
-                splitter='random',
-                random_state=random_state),
+            base_estimator=ExtraTreeRegressor(max_features=1,
+                                              splitter='random',
+                                              random_state=random_state),
             # here above max_features has no links with self.max_features
             bootstrap=bootstrap,
             bootstrap_features=False,
@@ -252,13 +252,11 @@ class IsolationForest(OutlierMixin, BaseBagging):
                 warn(
                     "'behaviour' is deprecated in 0.22 and will be removed "
                     "in 0.24. You should not pass or set this parameter.",
-                    FutureWarning
-                )
+                    FutureWarning)
             else:
                 raise NotImplementedError(
                     "The old behaviour of IsolationForest is not implemented "
-                    "anymore. Remove the 'behaviour' parameter."
-                )
+                    "anymore. Remove the 'behaviour' parameter.")
 
         X = check_array(X, accept_sparse=['csc'])
         if issparse(X):
@@ -284,20 +282,22 @@ class IsolationForest(OutlierMixin, BaseBagging):
             if self.max_samples > n_samples:
                 warn("max_samples (%s) is greater than the "
                      "total number of samples (%s). max_samples "
-                     "will be set to n_samples for estimation."
-                     % (self.max_samples, n_samples))
+                     "will be set to n_samples for estimation." %
+                     (self.max_samples, n_samples))
                 max_samples = n_samples
             else:
                 max_samples = self.max_samples
         else:  # float
             if not 0. < self.max_samples <= 1.:
-                raise ValueError("max_samples must be in (0, 1], got %r"
-                                 % self.max_samples)
+                raise ValueError("max_samples must be in (0, 1], got %r" %
+                                 self.max_samples)
             max_samples = int(self.max_samples * X.shape[0])
 
         self.max_samples_ = max_samples
         max_depth = int(np.ceil(np.log2(max(max_samples, 2))))
-        super()._fit(X, y, max_samples,
+        super()._fit(X,
+                     y,
+                     max_samples,
                      max_depth=max_depth,
                      sample_weight=sample_weight)
 
@@ -463,17 +463,11 @@ class IsolationForest(OutlierMixin, BaseBagging):
             node_indicator = tree.decision_path(X_subset)
             n_samples_leaf = tree.tree_.n_node_samples[leaves_index]
 
-            depths += (
-                np.ravel(node_indicator.sum(axis=1))
-                + _average_path_length(n_samples_leaf)
-                - 1.0
-            )
+            depths += (np.ravel(node_indicator.sum(axis=1)) +
+                       _average_path_length(n_samples_leaf) - 1.0)
 
-        scores = 2 ** (
-            -depths
-            / (len(self.estimators_)
-               * _average_path_length([self.max_samples_]))
-        )
+        scores = 2**(-depths / (len(self.estimators_) *
+                                _average_path_length([self.max_samples_])))
         return scores
 
 
@@ -506,8 +500,7 @@ def _average_path_length(n_samples_leaf):
     average_path_length[mask_1] = 0.
     average_path_length[mask_2] = 1.
     average_path_length[not_mask] = (
-        2.0 * (np.log(n_samples_leaf[not_mask] - 1.0) + np.euler_gamma)
-        - 2.0 * (n_samples_leaf[not_mask] - 1.0) / n_samples_leaf[not_mask]
-    )
+        2.0 * (np.log(n_samples_leaf[not_mask] - 1.0) + np.euler_gamma) - 2.0 *
+        (n_samples_leaf[not_mask] - 1.0) / n_samples_leaf[not_mask])
 
     return average_path_length.reshape(n_samples_leaf_shape)

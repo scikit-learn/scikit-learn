@@ -16,7 +16,6 @@ from functools import partial
 
 import pytest
 
-
 from sklearn.utils import all_estimators
 from sklearn.utils._testing import ignore_warnings
 from sklearn.exceptions import ConvergenceWarning
@@ -30,11 +29,8 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.utils import IS_PYPY
 from sklearn.utils._testing import SkipTest
 from sklearn.utils.estimator_checks import (
-    _construct_instance,
-    _set_checking_parameters,
-    _set_check_estimator_ids,
-    check_class_weight_balanced_linear_classifier,
-    parametrize_with_checks)
+    _construct_instance, _set_checking_parameters, _set_check_estimator_ids,
+    check_class_weight_balanced_linear_classifier, parametrize_with_checks)
 
 
 def test_all_estimator_no_base_class():
@@ -49,16 +45,18 @@ def _sample_func(x, y=1):
     pass
 
 
-@pytest.mark.parametrize("val, expected", [
-    (partial(_sample_func, y=1), "_sample_func(y=1)"),
-    (_sample_func, "_sample_func"),
-    (partial(_sample_func, 'world'), "_sample_func"),
-    (LogisticRegression(C=2.0), "LogisticRegression(C=2.0)"),
-    (LogisticRegression(random_state=1, solver='newton-cg',
-                        class_weight='balanced', warm_start=True),
-     "LogisticRegression(class_weight='balanced',random_state=1,"
-     "solver='newton-cg',warm_start=True)")
-])
+@pytest.mark.parametrize(
+    "val, expected",
+    [(partial(_sample_func, y=1), "_sample_func(y=1)"),
+     (_sample_func, "_sample_func"),
+     (partial(_sample_func, 'world'), "_sample_func"),
+     (LogisticRegression(C=2.0), "LogisticRegression(C=2.0)"),
+     (LogisticRegression(random_state=1,
+                         solver='newton-cg',
+                         class_weight='balanced',
+                         warm_start=True),
+      "LogisticRegression(class_weight='balanced',random_state=1,"
+      "solver='newton-cg',warm_start=True)")])
 def test_set_check_estimator_ids(val, expected):
     assert _set_check_estimator_ids(val) == expected
 
@@ -78,8 +76,7 @@ def _tested_estimators():
 @parametrize_with_checks(list(_tested_estimators()))
 def test_estimators(estimator, check, request):
     # Common tests for estimator instances
-    with ignore_warnings(category=(FutureWarning,
-                                   ConvergenceWarning,
+    with ignore_warnings(category=(FutureWarning, ConvergenceWarning,
                                    UserWarning, FutureWarning)):
         _set_checking_parameters(estimator)
         check(estimator)
@@ -132,13 +129,12 @@ def _tested_linear_classifiers():
                 # FIXME
                 continue
 
-            if ('class_weight' in clazz().get_params().keys() and
-                    issubclass(clazz, LinearClassifierMixin)):
+            if ('class_weight' in clazz().get_params().keys()
+                    and issubclass(clazz, LinearClassifierMixin)):
                 yield name, clazz
 
 
-@pytest.mark.parametrize("name, Classifier",
-                         _tested_linear_classifiers())
+@pytest.mark.parametrize("name, Classifier", _tested_linear_classifiers())
 def test_class_weight_balanced_linear_classifiers(name, Classifier):
     check_class_weight_balanced_linear_classifier(name, Classifier)
 
@@ -147,14 +143,15 @@ def test_class_weight_balanced_linear_classifiers(name, Classifier):
 def test_import_all_consistency():
     # Smoke test to check that any name in a __all__ list is actually defined
     # in the namespace of the module or package.
-    pkgs = pkgutil.walk_packages(path=sklearn.__path__, prefix='sklearn.',
+    pkgs = pkgutil.walk_packages(path=sklearn.__path__,
+                                 prefix='sklearn.',
                                  onerror=lambda _: None)
     submods = [modname for _, modname, _ in pkgs]
     for modname in submods + ['sklearn']:
         if ".tests." in modname:
             continue
-        if IS_PYPY and ('_svmlight_format_io' in modname or
-                        'feature_extraction._hashing_fast' in modname):
+        if IS_PYPY and ('_svmlight_format_io' in modname
+                        or 'feature_extraction._hashing_fast' in modname):
             continue
         package = __import__(modname, fromlist="dummy")
         for name in getattr(package, '__all__', ()):
@@ -180,13 +177,16 @@ def test_all_tests_are_importable():
                                       \.tests(\.|$)|
                                       \._
                                       ''')
-    lookup = {name: ispkg
-              for _, name, ispkg
-              in pkgutil.walk_packages(sklearn.__path__, prefix='sklearn.')}
-    missing_tests = [name for name, ispkg in lookup.items()
-                     if ispkg
-                     and not HAS_TESTS_EXCEPTIONS.search(name)
-                     and name + '.tests' not in lookup]
+    lookup = {
+        name: ispkg
+        for _, name, ispkg in pkgutil.walk_packages(sklearn.__path__,
+                                                    prefix='sklearn.')
+    }
+    missing_tests = [
+        name for name, ispkg in lookup.items()
+        if ispkg and not HAS_TESTS_EXCEPTIONS.search(name) and name +
+        '.tests' not in lookup
+    ]
     assert missing_tests == [], ('{0} do not have `tests` subpackages. '
                                  'Perhaps they require '
                                  '__init__.py or an add_subpackage directive '

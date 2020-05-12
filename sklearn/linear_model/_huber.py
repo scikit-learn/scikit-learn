@@ -76,7 +76,7 @@ def _huber_loss_and_gradient(w, X, y, epsilon, alpha, sample_weight=None):
     outliers_sw = sample_weight[outliers_mask]
     n_sw_outliers = np.sum(outliers_sw)
     outlier_loss = (2. * epsilon * np.sum(outliers_sw * outliers) -
-                    sigma * n_sw_outliers * epsilon ** 2)
+                    sigma * n_sw_outliers * epsilon**2)
 
     # Calculate the quadratic loss due to the non-outliers.-
     # This is equal to |(y - X'w - c)**2 / sigma**2| * sigma
@@ -101,15 +101,15 @@ def _huber_loss_and_gradient(w, X, y, epsilon, alpha, sample_weight=None):
     signed_outliers[signed_outliers_mask] = -1.0
     X_outliers = axis0_safe_slice(X, outliers_mask, num_outliers)
     sw_outliers = sample_weight[outliers_mask] * signed_outliers
-    grad[:n_features] -= 2. * epsilon * (
-        safe_sparse_dot(sw_outliers, X_outliers))
+    grad[:n_features] -= 2. * epsilon * (safe_sparse_dot(
+        sw_outliers, X_outliers))
 
     # Gradient due to the penalty.
     grad[:n_features] += alpha * 2. * w
 
     # Gradient due to sigma.
     grad[-1] = n_samples
-    grad[-1] -= n_sw_outliers * epsilon ** 2
+    grad[-1] -= n_sw_outliers * epsilon**2
     grad[-1] -= squared_loss / sigma
 
     # Gradient due to the intercept.
@@ -224,8 +224,14 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
            https://statweb.stanford.edu/~owen/reports/hhu.pdf
     """
     @_deprecate_positional_args
-    def __init__(self, *, epsilon=1.35, max_iter=100, alpha=0.0001,
-                 warm_start=False, fit_intercept=True, tol=1e-05):
+    def __init__(self,
+                 *,
+                 epsilon=1.35,
+                 max_iter=100,
+                 alpha=0.0001,
+                 warm_start=False,
+                 fit_intercept=True,
+                 tol=1e-05):
         self.epsilon = epsilon
         self.max_iter = max_iter
         self.alpha = alpha
@@ -252,16 +258,19 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
         -------
         self : object
         """
-        X, y = self._validate_data(
-            X, y, copy=False, accept_sparse=['csr'], y_numeric=True,
-            dtype=[np.float64, np.float32])
+        X, y = self._validate_data(X,
+                                   y,
+                                   copy=False,
+                                   accept_sparse=['csr'],
+                                   y_numeric=True,
+                                   dtype=[np.float64, np.float32])
 
         sample_weight = _check_sample_weight(sample_weight, X)
 
         if self.epsilon < 1.0:
             raise ValueError(
-                "epsilon should be greater than or equal to 1.0, got %f"
-                % self.epsilon)
+                "epsilon should be greater than or equal to 1.0, got %f" %
+                self.epsilon)
 
         if self.warm_start and hasattr(self, 'coef_'):
             parameters = np.concatenate(
@@ -281,18 +290,25 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
         bounds = np.tile([-np.inf, np.inf], (parameters.shape[0], 1))
         bounds[-1][0] = np.finfo(np.float64).eps * 10
 
-        opt_res = optimize.minimize(
-            _huber_loss_and_gradient, parameters, method="L-BFGS-B", jac=True,
-            args=(X, y, self.epsilon, self.alpha, sample_weight),
-            options={"maxiter": self.max_iter, "gtol": self.tol, "iprint": -1},
-            bounds=bounds)
+        opt_res = optimize.minimize(_huber_loss_and_gradient,
+                                    parameters,
+                                    method="L-BFGS-B",
+                                    jac=True,
+                                    args=(X, y, self.epsilon, self.alpha,
+                                          sample_weight),
+                                    options={
+                                        "maxiter": self.max_iter,
+                                        "gtol": self.tol,
+                                        "iprint": -1
+                                    },
+                                    bounds=bounds)
 
         parameters = opt_res.x
 
         if opt_res.status == 2:
             raise ValueError("HuberRegressor convergence failed:"
-                             " l-BFGS-b solver terminated with %s"
-                             % opt_res.message)
+                             " l-BFGS-b solver terminated with %s" %
+                             opt_res.message)
         self.n_iter_ = _check_optimize_result("lbfgs", opt_res, self.max_iter)
         self.scale_ = parameters[-1]
         if self.fit_intercept:
@@ -301,7 +317,6 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
             self.intercept_ = 0.0
         self.coef_ = parameters[:X.shape[1]]
 
-        residual = np.abs(
-            y - safe_sparse_dot(X, self.coef_) - self.intercept_)
+        residual = np.abs(y - safe_sparse_dot(X, self.coef_) - self.intercept_)
         self.outliers_ = residual > self.scale_ * self.epsilon
         return self

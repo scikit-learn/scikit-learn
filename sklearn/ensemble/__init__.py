@@ -26,15 +26,24 @@ if typing.TYPE_CHECKING:
     # Avoid errors in type checkers (e.g. mypy) for experimental estimators.
     # TODO: remove this check once the estimator is no longer experimental.
     from ._hist_gradient_boosting.gradient_boosting import (  # noqa
-        HistGradientBoostingRegressor, HistGradientBoostingClassifier
-    )
+        HistGradientBoostingRegressor, HistGradientBoostingClassifier)
 
-__all__ = ["BaseEnsemble",
-           "RandomForestClassifier", "RandomForestRegressor",
-           "RandomTreesEmbedding", "ExtraTreesClassifier",
-           "ExtraTreesRegressor", "BaggingClassifier",
-           "BaggingRegressor", "IsolationForest", "GradientBoostingClassifier",
-           "GradientBoostingRegressor", "AdaBoostClassifier",
-           "AdaBoostRegressor", "VotingClassifier", "VotingRegressor",
-           "StackingClassifier", "StackingRegressor",
-           ]
+__all__ = [
+    "BaseEnsemble",
+    "RandomForestClassifier",
+    "RandomForestRegressor",
+    "RandomTreesEmbedding",
+    "ExtraTreesClassifier",
+    "ExtraTreesRegressor",
+    "BaggingClassifier",
+    "BaggingRegressor",
+    "IsolationForest",
+    "GradientBoostingClassifier",
+    "GradientBoostingRegressor",
+    "AdaBoostClassifier",
+    "AdaBoostRegressor",
+    "VotingClassifier",
+    "VotingRegressor",
+    "StackingClassifier",
+    "StackingRegressor",
+]

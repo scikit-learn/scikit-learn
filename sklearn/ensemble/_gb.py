@@ -91,8 +91,8 @@ class VerboseReporter:
         verbose_fmt.append('{remaining_time:>16s}')
 
         # print the header line
-        print(('%10s ' + '%16s ' *
-               (len(header_fields) - 1)) % tuple(header_fields))
+        print(('%10s ' + '%16s ' * (len(header_fields) - 1)) %
+              tuple(header_fields))
 
         self.verbose_fmt = ' '.join(verbose_fmt)
         # plot verbose info each time i % verbose_mod == 0
@@ -121,10 +121,11 @@ class VerboseReporter:
                 remaining_time = '{0:.2f}m'.format(remaining_time / 60.0)
             else:
                 remaining_time = '{0:.2f}s'.format(remaining_time)
-            print(self.verbose_fmt.format(iter=j + 1,
-                                          train_score=est.train_score_[j],
-                                          oob_impr=oob_impr,
-                                          remaining_time=remaining_time))
+            print(
+                self.verbose_fmt.format(iter=j + 1,
+                                        train_score=est.train_score_[j],
+                                        oob_impr=oob_impr,
+                                        remaining_time=remaining_time))
             if self.verbose == 1 and ((i + 1) // (self.verbose_mod * 10) > 0):
                 # adjust verbose frequency (powers of 10)
                 self.verbose_mod *= 10
@@ -132,15 +133,31 @@ class VerboseReporter:
 
 class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
     """Abstract base class for Gradient Boosting. """
-
     @abstractmethod
-    def __init__(self, *, loss, learning_rate, n_estimators, criterion,
-                 min_samples_split, min_samples_leaf, min_weight_fraction_leaf,
-                 max_depth, min_impurity_decrease, min_impurity_split,
-                 init, subsample, max_features, ccp_alpha,
-                 random_state, alpha=0.9, verbose=0, max_leaf_nodes=None,
-                 warm_start=False, presort='deprecated',
-                 validation_fraction=0.1, n_iter_no_change=None,
+    def __init__(self,
+                 *,
+                 loss,
+                 learning_rate,
+                 n_estimators,
+                 criterion,
+                 min_samples_split,
+                 min_samples_leaf,
+                 min_weight_fraction_leaf,
+                 max_depth,
+                 min_impurity_decrease,
+                 min_impurity_split,
+                 init,
+                 subsample,
+                 max_features,
+                 ccp_alpha,
+                 random_state,
+                 alpha=0.9,
+                 verbose=0,
+                 max_leaf_nodes=None,
+                 warm_start=False,
+                 presort='deprecated',
+                 validation_fraction=0.1,
+                 n_iter_no_change=None,
                  tol=1e-4):
 
         self.n_estimators = n_estimators
@@ -167,8 +184,17 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         self.n_iter_no_change = n_iter_no_change
         self.tol = tol
 
-    def _fit_stage(self, i, X, y, raw_predictions, sample_weight, sample_mask,
-                   random_state, X_idx_sorted, X_csc=None, X_csr=None):
+    def _fit_stage(self,
+                   i,
+                   X,
+                   y,
+                   raw_predictions,
+                   sample_weight,
+                   sample_mask,
+                   random_state,
+                   X_idx_sorted,
+                   X_csc=None,
+                   X_csr=None):
         """Fit another stage of ``n_classes_`` trees to the boosting model. """
 
         assert sample_mask.dtype == np.bool
@@ -185,7 +211,9 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             if loss.is_multi_class:
                 y = np.array(original_y == k, dtype=np.float64)
 
-            residual = loss.negative_gradient(y, raw_predictions_copy, k=k,
+            residual = loss.negative_gradient(y,
+                                              raw_predictions_copy,
+                                              k=k,
                                               sample_weight=sample_weight)
 
             # induce regression tree on residuals
@@ -208,13 +236,22 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 sample_weight = sample_weight * sample_mask.astype(np.float64)
 
             X = X_csr if X_csr is not None else X
-            tree.fit(X, residual, sample_weight=sample_weight,
-                     check_input=False, X_idx_sorted=X_idx_sorted)
+            tree.fit(X,
+                     residual,
+                     sample_weight=sample_weight,
+                     check_input=False,
+                     X_idx_sorted=X_idx_sorted)
 
             # update tree leaves
-            loss.update_terminal_regions(
-                tree.tree_, X, y, residual, raw_predictions, sample_weight,
-                sample_mask, learning_rate=self.learning_rate, k=k)
+            loss.update_terminal_regions(tree.tree_,
+                                         X,
+                                         y,
+                                         residual,
+                                         raw_predictions,
+                                         sample_weight,
+                                         sample_mask,
+                                         learning_rate=self.learning_rate,
+                                         k=k)
 
             # add tree to ensemble
             self.estimators_[i, k] = tree
@@ -237,8 +274,8 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
         if self.loss == 'deviance':
             loss_class = (_gb_losses.MultinomialDeviance
-                          if len(self.classes_) > 2
-                          else _gb_losses.BinomialDeviance)
+                          if len(self.classes_) > 2 else
+                          _gb_losses.BinomialDeviance)
         else:
             loss_class = _gb_losses.LOSS_FUNCTIONS[self.loss]
 
@@ -258,8 +295,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             elif not (isinstance(self.init, str) and self.init == 'zero'):
                 raise ValueError(
                     "The init parameter must be an estimator or 'zero'. "
-                    "Got init={}".format(self.init)
-                )
+                    "Got init={}".format(self.init))
 
         if not (0.0 < self.alpha < 1.0):
             raise ValueError("alpha must be in (0.0, 1.0) but "
@@ -287,8 +323,8 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             max_features = self.max_features
         else:  # float
             if 0. < self.max_features <= 1.:
-                max_features = max(int(self.max_features *
-                                       self.n_features_), 1)
+                max_features = max(int(self.max_features * self.n_features_),
+                                   1)
             else:
                 raise ValueError("max_features must be in (0, n_features]")
 
@@ -297,16 +333,15 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         if not isinstance(self.n_iter_no_change,
                           (numbers.Integral, type(None))):
             raise ValueError("n_iter_no_change should either be None or an "
-                             "integer. %r was passed"
-                             % self.n_iter_no_change)
+                             "integer. %r was passed" % self.n_iter_no_change)
 
         if self.presort != 'deprecated':
-            warnings.warn("The parameter 'presort' is deprecated and has no "
-                          "effect. It will be removed in v0.24. You can "
-                          "suppress this warning by not passing any value "
-                          "to the 'presort' parameter. We also recommend "
-                          "using HistGradientBoosting models instead.",
-                          FutureWarning)
+            warnings.warn(
+                "The parameter 'presort' is deprecated and has no "
+                "effect. It will be removed in v0.24. You can "
+                "suppress this warning by not passing any value "
+                "to the 'presort' parameter. We also recommend "
+                "using HistGradientBoosting models instead.", FutureWarning)
 
     def _init_state(self):
         """Initialize model state and allocate model state data structures. """
@@ -317,7 +352,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
         self.estimators_ = np.empty((self.n_estimators, self.loss_.K),
                                     dtype=np.object)
-        self.train_score_ = np.zeros((self.n_estimators,), dtype=np.float64)
+        self.train_score_ = np.zeros((self.n_estimators, ), dtype=np.float64)
         # do oob?
         if self.subsample < 1.0:
             self.oob_improvement_ = np.zeros((self.n_estimators),
@@ -353,7 +388,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 self.oob_improvement_ = np.resize(self.oob_improvement_,
                                                   total_n_estimators)
             else:
-                self.oob_improvement_ = np.zeros((total_n_estimators,),
+                self.oob_improvement_ = np.zeros((total_n_estimators, ),
                                                  dtype=np.float64)
 
     def _is_initialized(self):
@@ -406,8 +441,11 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         # Since check_array converts both X and y to the same dtype, but the
         # trees use different types for X and y, checking them separately.
 
-        X, y = self._validate_data(X, y, accept_sparse=['csr', 'csc', 'coo'],
-                                   dtype=DTYPE, multi_output=True)
+        X, y = self._validate_data(X,
+                                   y,
+                                   accept_sparse=['csr', 'csc', 'coo'],
+                                   dtype=DTYPE,
+                                   multi_output=True)
         n_samples, self.n_features_ = X.shape
 
         sample_weight_is_none = sample_weight is None
@@ -420,7 +458,9 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         if self.n_iter_no_change is not None:
             stratify = y if is_classifier(self) else None
             X, X_val, y, y_val, sample_weight, sample_weight_val = (
-                train_test_split(X, y, sample_weight,
+                train_test_split(X,
+                                 y,
+                                 sample_weight,
                                  random_state=self.random_state,
                                  test_size=self.validation_fraction,
                                  stratify=stratify))
@@ -433,8 +473,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                     raise ValueError(
                         'The training data after the early stopping split '
                         'is missing some classes. Try using another random '
-                        'seed.'
-                    )
+                        'seed.')
         else:
             X_val = y_val = sample_weight_val = None
 
@@ -479,11 +518,11 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             # add more estimators to fitted model
             # invariant: warm_start = True
             if self.n_estimators < self.estimators_.shape[0]:
-                raise ValueError('n_estimators=%d must be larger or equal to '
-                                 'estimators_.shape[0]=%d when '
-                                 'warm_start==True'
-                                 % (self.n_estimators,
-                                    self.estimators_.shape[0]))
+                raise ValueError(
+                    'n_estimators=%d must be larger or equal to '
+                    'estimators_.shape[0]=%d when '
+                    'warm_start==True' %
+                    (self.n_estimators, self.estimators_.shape[0]))
             begin_at_stage = self.estimators_.shape[0]
             # The requirements of _decision_function (called in two lines
             # below) are more constrained than fit. It accepts only CSR
@@ -495,9 +534,9 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         X_idx_sorted = None
 
         # fit the boosting stages
-        n_stages = self._fit_stages(
-            X, y, raw_predictions, sample_weight, self._rng, X_val, y_val,
-            sample_weight_val, begin_at_stage, monitor, X_idx_sorted)
+        n_stages = self._fit_stages(X, y, raw_predictions, sample_weight,
+                                    self._rng, X_val, y_val, sample_weight_val,
+                                    begin_at_stage, monitor, X_idx_sorted)
 
         # change shape of arrays after fit (early-stopping or additional ests)
         if n_stages != self.estimators_.shape[0]:
@@ -509,9 +548,18 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         self.n_estimators_ = n_stages
         return self
 
-    def _fit_stages(self, X, y, raw_predictions, sample_weight, random_state,
-                    X_val, y_val, sample_weight_val,
-                    begin_at_stage=0, monitor=None, X_idx_sorted=None):
+    def _fit_stages(self,
+                    X,
+                    y,
+                    raw_predictions,
+                    sample_weight,
+                    random_state,
+                    X_val,
+                    y_val,
+                    sample_weight_val,
+                    begin_at_stage=0,
+                    monitor=None,
+                    X_idx_sorted=None):
         """Iteratively fits the stages.
 
         For each stage it computes the progress (OOB, train score)
@@ -552,9 +600,10 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                                       sample_weight[~sample_mask])
 
             # fit next stage of trees
-            raw_predictions = self._fit_stage(
-                i, X, y, raw_predictions, sample_weight, sample_mask,
-                random_state, X_idx_sorted, X_csc, X_csr)
+            raw_predictions = self._fit_stage(i, X, y, raw_predictions,
+                                              sample_weight, sample_mask,
+                                              random_state, X_idx_sorted,
+                                              X_csc, X_csr)
 
             # track deviance (= loss)
             if do_oob:
@@ -562,9 +611,9 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                                              raw_predictions[sample_mask],
                                              sample_weight[sample_mask])
                 self.oob_improvement_[i] = (
-                    old_oob_score - loss_(y[~sample_mask],
-                                          raw_predictions[~sample_mask],
-                                          sample_weight[~sample_mask]))
+                    old_oob_score -
+                    loss_(y[~sample_mask], raw_predictions[~sample_mask],
+                          sample_weight[~sample_mask]))
             else:
                 # no need to fancy index w/ no subsampling
                 self.train_score_[i] = loss_(y, raw_predictions, sample_weight)
@@ -670,9 +719,10 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         """
         self._check_initialized()
 
-        relevant_trees = [tree
-                          for stage in self.estimators_ for tree in stage
-                          if tree.tree_.node_count > 1]
+        relevant_trees = [
+            tree for stage in self.estimators_ for tree in stage
+            if tree.tree_.node_count > 1
+        ]
         if not relevant_trees:
             # degenerate case where all trees have only one node
             return np.zeros(shape=self.n_features_, dtype=np.float64)
@@ -682,7 +732,8 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             for tree in relevant_trees
         ]
         avg_feature_importances = np.mean(relevant_feature_importances,
-                                          axis=0, dtype=np.float64)
+                                          axis=0,
+                                          dtype=np.float64)
         return avg_feature_importances / np.sum(avg_feature_importances)
 
     def _compute_partial_dependence_recursion(self, grid, target_features):
@@ -707,13 +758,12 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             warnings.warn(
                 'Using recursion method with a non-constant init predictor '
                 'will lead to incorrect partial dependence values. '
-                'Got init=%s.' % self.init,
-                UserWarning
-            )
+                'Got init=%s.' % self.init, UserWarning)
         grid = np.asarray(grid, dtype=DTYPE, order='C')
         n_estimators, n_trees_per_stage = self.estimators_.shape
         averaged_predictions = np.zeros((n_trees_per_stage, grid.shape[0]),
-                                        dtype=np.float64, order='C')
+                                        dtype=np.float64,
+                                        order='C')
         for stage in range(n_estimators):
             for k in range(n_trees_per_stage):
                 tree = self.estimators_[stage, k].tree_
@@ -1068,30 +1118,53 @@ shape (n_estimators, ``loss_.K``)
     _SUPPORTED_LOSS = ('deviance', 'exponential')
 
     @_deprecate_positional_args
-    def __init__(self, *, loss='deviance', learning_rate=0.1, n_estimators=100,
-                 subsample=1.0, criterion='friedman_mse', min_samples_split=2,
-                 min_samples_leaf=1, min_weight_fraction_leaf=0.,
-                 max_depth=3, min_impurity_decrease=0.,
-                 min_impurity_split=None, init=None,
-                 random_state=None, max_features=None, verbose=0,
-                 max_leaf_nodes=None, warm_start=False,
-                 presort='deprecated', validation_fraction=0.1,
-                 n_iter_no_change=None, tol=1e-4, ccp_alpha=0.0):
+    def __init__(self,
+                 *,
+                 loss='deviance',
+                 learning_rate=0.1,
+                 n_estimators=100,
+                 subsample=1.0,
+                 criterion='friedman_mse',
+                 min_samples_split=2,
+                 min_samples_leaf=1,
+                 min_weight_fraction_leaf=0.,
+                 max_depth=3,
+                 min_impurity_decrease=0.,
+                 min_impurity_split=None,
+                 init=None,
+                 random_state=None,
+                 max_features=None,
+                 verbose=0,
+                 max_leaf_nodes=None,
+                 warm_start=False,
+                 presort='deprecated',
+                 validation_fraction=0.1,
+                 n_iter_no_change=None,
+                 tol=1e-4,
+                 ccp_alpha=0.0):
 
-        super().__init__(
-            loss=loss, learning_rate=learning_rate, n_estimators=n_estimators,
-            criterion=criterion, min_samples_split=min_samples_split,
-            min_samples_leaf=min_samples_leaf,
-            min_weight_fraction_leaf=min_weight_fraction_leaf,
-            max_depth=max_depth, init=init, subsample=subsample,
-            max_features=max_features,
-            random_state=random_state, verbose=verbose,
-            max_leaf_nodes=max_leaf_nodes,
-            min_impurity_decrease=min_impurity_decrease,
-            min_impurity_split=min_impurity_split,
-            warm_start=warm_start, presort=presort,
-            validation_fraction=validation_fraction,
-            n_iter_no_change=n_iter_no_change, tol=tol, ccp_alpha=ccp_alpha)
+        super().__init__(loss=loss,
+                         learning_rate=learning_rate,
+                         n_estimators=n_estimators,
+                         criterion=criterion,
+                         min_samples_split=min_samples_split,
+                         min_samples_leaf=min_samples_leaf,
+                         min_weight_fraction_leaf=min_weight_fraction_leaf,
+                         max_depth=max_depth,
+                         init=init,
+                         subsample=subsample,
+                         max_features=max_features,
+                         random_state=random_state,
+                         verbose=verbose,
+                         max_leaf_nodes=max_leaf_nodes,
+                         min_impurity_decrease=min_impurity_decrease,
+                         min_impurity_split=min_impurity_split,
+                         warm_start=warm_start,
+                         presort=presort,
+                         validation_fraction=validation_fraction,
+                         n_iter_no_change=n_iter_no_change,
+                         tol=tol,
+                         ccp_alpha=ccp_alpha)
 
     def _validate_y(self, y, sample_weight):
         check_classification_targets(y)
@@ -1100,8 +1173,8 @@ shape (n_estimators, ``loss_.K``)
         if n_trim_classes < 2:
             raise ValueError("y contains %d class after sample_weight "
                              "trimmed classes with zero weights, while a "
-                             "minimum of 2 classes are required."
-                             % n_trim_classes)
+                             "minimum of 2 classes are required." %
+                             n_trim_classes)
         self.n_classes_ = len(self.classes_)
         return y
 
@@ -1567,29 +1640,55 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     _SUPPORTED_LOSS = ('ls', 'lad', 'huber', 'quantile')
 
     @_deprecate_positional_args
-    def __init__(self, *, loss='ls', learning_rate=0.1, n_estimators=100,
-                 subsample=1.0, criterion='friedman_mse', min_samples_split=2,
-                 min_samples_leaf=1, min_weight_fraction_leaf=0.,
-                 max_depth=3, min_impurity_decrease=0.,
-                 min_impurity_split=None, init=None, random_state=None,
-                 max_features=None, alpha=0.9, verbose=0, max_leaf_nodes=None,
-                 warm_start=False, presort='deprecated',
+    def __init__(self,
+                 *,
+                 loss='ls',
+                 learning_rate=0.1,
+                 n_estimators=100,
+                 subsample=1.0,
+                 criterion='friedman_mse',
+                 min_samples_split=2,
+                 min_samples_leaf=1,
+                 min_weight_fraction_leaf=0.,
+                 max_depth=3,
+                 min_impurity_decrease=0.,
+                 min_impurity_split=None,
+                 init=None,
+                 random_state=None,
+                 max_features=None,
+                 alpha=0.9,
+                 verbose=0,
+                 max_leaf_nodes=None,
+                 warm_start=False,
+                 presort='deprecated',
                  validation_fraction=0.1,
-                 n_iter_no_change=None, tol=1e-4, ccp_alpha=0.0):
+                 n_iter_no_change=None,
+                 tol=1e-4,
+                 ccp_alpha=0.0):
 
-        super().__init__(
-            loss=loss, learning_rate=learning_rate, n_estimators=n_estimators,
-            criterion=criterion, min_samples_split=min_samples_split,
-            min_samples_leaf=min_samples_leaf,
-            min_weight_fraction_leaf=min_weight_fraction_leaf,
-            max_depth=max_depth, init=init, subsample=subsample,
-            max_features=max_features,
-            min_impurity_decrease=min_impurity_decrease,
-            min_impurity_split=min_impurity_split,
-            random_state=random_state, alpha=alpha, verbose=verbose,
-            max_leaf_nodes=max_leaf_nodes, warm_start=warm_start,
-            presort=presort, validation_fraction=validation_fraction,
-            n_iter_no_change=n_iter_no_change, tol=tol, ccp_alpha=ccp_alpha)
+        super().__init__(loss=loss,
+                         learning_rate=learning_rate,
+                         n_estimators=n_estimators,
+                         criterion=criterion,
+                         min_samples_split=min_samples_split,
+                         min_samples_leaf=min_samples_leaf,
+                         min_weight_fraction_leaf=min_weight_fraction_leaf,
+                         max_depth=max_depth,
+                         init=init,
+                         subsample=subsample,
+                         max_features=max_features,
+                         min_impurity_decrease=min_impurity_decrease,
+                         min_impurity_split=min_impurity_split,
+                         random_state=random_state,
+                         alpha=alpha,
+                         verbose=verbose,
+                         max_leaf_nodes=max_leaf_nodes,
+                         warm_start=warm_start,
+                         presort=presort,
+                         validation_fraction=validation_fraction,
+                         n_iter_no_change=n_iter_no_change,
+                         tol=tol,
+                         ccp_alpha=ccp_alpha)
 
     def predict(self, X):
         """Predict regression target for X.

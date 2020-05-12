@@ -26,7 +26,10 @@ from ..neighbors import NearestNeighbors
 from ..metrics.pairwise import pairwise_distances_argmin
 
 
-def estimate_bandwidth(X, quantile=0.3, n_samples=None, random_state=0,
+def estimate_bandwidth(X,
+                       quantile=0.3,
+                       n_samples=None,
+                       random_state=0,
                        n_jobs=None):
     """Estimate the bandwidth to use with the mean-shift algorithm.
 
@@ -71,8 +74,7 @@ def estimate_bandwidth(X, quantile=0.3, n_samples=None, random_state=0,
     n_neighbors = int(X.shape[0] * quantile)
     if n_neighbors < 1:  # cannot fit NearestNeighbors with n_neighbors = 0
         n_neighbors = 1
-    nbrs = NearestNeighbors(n_neighbors=n_neighbors,
-                            n_jobs=n_jobs)
+    nbrs = NearestNeighbors(n_neighbors=n_neighbors, n_jobs=n_jobs)
     nbrs.fit(X)
 
     bandwidth = 0.
@@ -91,7 +93,8 @@ def _mean_shift_single_seed(my_mean, X, nbrs, max_iter):
     completed_iterations = 0
     while True:
         # Find mean of points within bandwidth
-        i_nbrs = nbrs.radius_neighbors([my_mean], bandwidth,
+        i_nbrs = nbrs.radius_neighbors([my_mean],
+                                       bandwidth,
                                        return_distance=False)[0]
         points_within = X[i_nbrs]
         if len(points_within) == 0:
@@ -99,15 +102,20 @@ def _mean_shift_single_seed(my_mean, X, nbrs, max_iter):
         my_old_mean = my_mean  # save the old mean
         my_mean = np.mean(points_within, axis=0)
         # If converged or at max_iter, adds the cluster
-        if (np.linalg.norm(my_mean - my_old_mean) < stop_thresh or
-                completed_iterations == max_iter):
+        if (np.linalg.norm(my_mean - my_old_mean) < stop_thresh
+                or completed_iterations == max_iter):
             break
         completed_iterations += 1
     return tuple(my_mean), len(points_within), completed_iterations
 
 
-def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
-               min_bin_freq=1, cluster_all=True, max_iter=300,
+def mean_shift(X,
+               bandwidth=None,
+               seeds=None,
+               bin_seeding=False,
+               min_bin_freq=1,
+               cluster_all=True,
+               max_iter=300,
                n_jobs=None):
     """Perform mean shift clustering of data using a flat kernel.
 
@@ -179,10 +187,12 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
     <sphx_glr_auto_examples_cluster_plot_mean_shift.py>`.
 
     """
-    model = MeanShift(bandwidth=bandwidth, seeds=seeds,
+    model = MeanShift(bandwidth=bandwidth,
+                      seeds=seeds,
                       min_bin_freq=min_bin_freq,
                       bin_seeding=bin_seeding,
-                      cluster_all=cluster_all, n_jobs=n_jobs,
+                      cluster_all=cluster_all,
+                      n_jobs=n_jobs,
                       max_iter=max_iter).fit(X)
     return model.cluster_centers_, model.labels_
 
@@ -224,8 +234,9 @@ def get_bin_seeds(X, bin_size, min_bin_freq=1):
         bin_sizes[tuple(binned_point)] += 1
 
     # Select only those bins as seeds which have enough members
-    bin_seeds = np.array([point for point, freq in bin_sizes.items() if
-                          freq >= min_bin_freq], dtype=np.float32)
+    bin_seeds = np.array(
+        [point for point, freq in bin_sizes.items() if freq >= min_bin_freq],
+        dtype=np.float32)
     if len(bin_seeds) == len(X):
         warnings.warn("Binning data failed with provided bin_size=%f,"
                       " using data points as seeds." % bin_size)
@@ -347,8 +358,15 @@ class MeanShift(ClusterMixin, BaseEstimator):
 
     """
     @_deprecate_positional_args
-    def __init__(self, *, bandwidth=None, seeds=None, bin_seeding=False,
-                 min_bin_freq=1, cluster_all=True, n_jobs=None, max_iter=300):
+    def __init__(self,
+                 *,
+                 bandwidth=None,
+                 seeds=None,
+                 bin_seeding=False,
+                 min_bin_freq=1,
+                 cluster_all=True,
+                 n_jobs=None,
+                 max_iter=300):
         self.bandwidth = bandwidth
         self.seeds = seeds
         self.bin_seeding = bin_seeding
@@ -392,8 +410,8 @@ class MeanShift(ClusterMixin, BaseEstimator):
 
         # execute iterations on all seeds in parallel
         all_res = Parallel(n_jobs=self.n_jobs)(
-            delayed(_mean_shift_single_seed)
-            (seed, X, nbrs, self.max_iter) for seed in seeds)
+            delayed(_mean_shift_single_seed)(seed, X, nbrs, self.max_iter)
+            for seed in seeds)
         # copy results in a dictionary
         for i in range(len(seeds)):
             if all_res[i][1]:  # i.e. len(points_within) > 0
@@ -405,8 +423,7 @@ class MeanShift(ClusterMixin, BaseEstimator):
             # nothing near seeds
             raise ValueError("No point was within bandwidth=%f of any seed."
                              " Try a different seeding strategy \
-                             or increase the bandwidth."
-                             % bandwidth)
+                             or increase the bandwidth." % bandwidth)
 
         # POST PROCESSING: remove near duplicate points
         # If the distance between two kernels is less than the bandwidth,

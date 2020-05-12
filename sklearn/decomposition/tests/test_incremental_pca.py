@@ -26,7 +26,8 @@ def test_incremental_pca():
 
     assert X_transformed.shape == (X.shape[0], 2)
     np.testing.assert_allclose(ipca.explained_variance_ratio_.sum(),
-                               pca.explained_variance_ratio_.sum(), rtol=1e-3)
+                               pca.explained_variance_ratio_.sum(),
+                               rtol=1e-3)
 
     for n_components in [1, 2, X.shape[1]]:
         ipca = IncrementalPCA(n_components, batch_size=batch_size)
@@ -34,12 +35,12 @@ def test_incremental_pca():
         cov = ipca.get_covariance()
         precision = ipca.get_precision()
         np.testing.assert_allclose(np.dot(cov, precision),
-                                   np.eye(X.shape[1]), atol=1e-13)
+                                   np.eye(X.shape[1]),
+                                   atol=1e-13)
 
 
 @pytest.mark.parametrize(
-    "matrix_class",
-    [sparse.csc_matrix, sparse.csr_matrix, sparse.lil_matrix])
+    "matrix_class", [sparse.csc_matrix, sparse.csr_matrix, sparse.lil_matrix])
 def test_incremental_pca_sparse(matrix_class):
     # Incremental PCA on sparse arrays.
     X = iris.data
@@ -53,7 +54,8 @@ def test_incremental_pca_sparse(matrix_class):
 
     assert X_transformed.shape == (X_sparse.shape[0], 2)
     np.testing.assert_allclose(ipca.explained_variance_ratio_.sum(),
-                               pca.explained_variance_ratio_.sum(), rtol=1e-3)
+                               pca.explained_variance_ratio_.sum(),
+                               rtol=1e-3)
 
     for n_components in [1, 2, X.shape[1]]:
         ipca = IncrementalPCA(n_components, batch_size=batch_size)
@@ -61,13 +63,13 @@ def test_incremental_pca_sparse(matrix_class):
         cov = ipca.get_covariance()
         precision = ipca.get_precision()
         np.testing.assert_allclose(np.dot(cov, precision),
-                                   np.eye(X_sparse.shape[1]), atol=1e-13)
+                                   np.eye(X_sparse.shape[1]),
+                                   atol=1e-13)
 
-    with pytest.raises(
-            TypeError,
-            match="IncrementalPCA.partial_fit does not support "
-            "sparse input. Either convert data to dense "
-            "or use IncrementalPCA.fit to do so in batches."):
+    with pytest.raises(TypeError,
+                       match="IncrementalPCA.partial_fit does not support "
+                       "sparse input. Either convert data to dense "
+                       "or use IncrementalPCA.fit to do so in batches."):
         ipca.partial_fit(X_sparse)
 
 
@@ -85,7 +87,7 @@ def test_incremental_pca_check_projection():
     Yt = IncrementalPCA(n_components=2).fit(X).transform(Xt)
 
     # Normalize
-    Yt /= np.sqrt((Yt ** 2).sum())
+    Yt /= np.sqrt((Yt**2).sum())
 
     # Make sure that the first element of Yt is ~1, this means
     # the reconstruction worked as expected
@@ -113,16 +115,17 @@ def test_incremental_pca_validation():
     X = np.array([[0, 1, 0], [1, 0, 0]])
     n_samples, n_features = X.shape
     for n_components in [-1, 0, .99, 4]:
-        with pytest.raises(ValueError, match="n_components={} invalid"
+        with pytest.raises(ValueError,
+                           match="n_components={} invalid"
                            " for n_features={}, need more rows than"
                            " columns for IncrementalPCA"
-                           " processing".format(n_components,
-                                                n_features)):
+                           " processing".format(n_components, n_features)):
             IncrementalPCA(n_components, batch_size=10).fit(X)
 
     # Tests that n_components is also <= n_samples.
     n_components = 3
-    with pytest.raises(ValueError, match="n_components={} must be"
+    with pytest.raises(ValueError,
+                       match="n_components={} must be"
                        " less or equal to the batch number of"
                        " samples {}".format(n_components, n_samples)):
         IncrementalPCA(n_components=n_components).partial_fit(X)
@@ -275,18 +278,24 @@ def test_incremental_pca_against_pca_random_data():
 
 def test_explained_variances():
     # Test that PCA and IncrementalPCA calculations match
-    X = datasets.make_low_rank_matrix(1000, 100, tail_strength=0.,
-                                      effective_rank=10, random_state=1999)
+    X = datasets.make_low_rank_matrix(1000,
+                                      100,
+                                      tail_strength=0.,
+                                      effective_rank=10,
+                                      random_state=1999)
     prec = 3
     n_samples, n_features = X.shape
     for nc in [None, 99]:
         pca = PCA(n_components=nc).fit(X)
         ipca = IncrementalPCA(n_components=nc, batch_size=100).fit(X)
-        assert_almost_equal(pca.explained_variance_, ipca.explained_variance_,
+        assert_almost_equal(pca.explained_variance_,
+                            ipca.explained_variance_,
                             decimal=prec)
         assert_almost_equal(pca.explained_variance_ratio_,
-                            ipca.explained_variance_ratio_, decimal=prec)
-        assert_almost_equal(pca.noise_variance_, ipca.noise_variance_,
+                            ipca.explained_variance_ratio_,
+                            decimal=prec)
+        assert_almost_equal(pca.noise_variance_,
+                            ipca.noise_variance_,
                             decimal=prec)
 
 
@@ -297,8 +306,11 @@ def test_singular_values():
     n_samples = 1000
     n_features = 100
 
-    X = datasets.make_low_rank_matrix(n_samples, n_features, tail_strength=0.0,
-                                      effective_rank=10, random_state=rng)
+    X = datasets.make_low_rank_matrix(n_samples,
+                                      n_features,
+                                      tail_strength=0.0,
+                                      effective_rank=10,
+                                      random_state=rng)
 
     pca = PCA(n_components=10, svd_solver='full', random_state=rng).fit(X)
     ipca = IncrementalPCA(n_components=10, batch_size=100).fit(X)
@@ -323,8 +335,11 @@ def test_singular_values():
     n_samples = 100
     n_features = 110
 
-    X = datasets.make_low_rank_matrix(n_samples, n_features, tail_strength=0.0,
-                                      effective_rank=3, random_state=rng)
+    X = datasets.make_low_rank_matrix(n_samples,
+                                      n_features,
+                                      tail_strength=0.0,
+                                      effective_rank=3,
+                                      random_state=rng)
 
     pca = PCA(n_components=3, svd_solver='full', random_state=rng)
     ipca = IncrementalPCA(n_components=3, batch_size=100)
@@ -343,8 +358,11 @@ def test_singular_values():
 
 def test_whitening():
     # Test that PCA and IncrementalPCA transforms match to sign flip.
-    X = datasets.make_low_rank_matrix(1000, 10, tail_strength=0.,
-                                      effective_rank=2, random_state=1999)
+    X = datasets.make_low_rank_matrix(1000,
+                                      10,
+                                      tail_strength=0.,
+                                      effective_rank=2,
+                                      random_state=1999)
     prec = 3
     n_samples, n_features = X.shape
     for nc in [None, 9]:

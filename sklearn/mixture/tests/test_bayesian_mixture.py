@@ -22,7 +22,6 @@ from sklearn.mixture.tests.test_gaussian_mixture import RandomData
 from sklearn.exceptions import ConvergenceWarning, NotFittedError
 from sklearn.utils._testing import ignore_warnings
 
-
 COVARIANCE_TYPE = ['full', 'tied', 'diag', 'spherical']
 PRIOR_TYPE = ['dirichlet_process', 'dirichlet_distribution']
 
@@ -49,9 +48,10 @@ def test_log_wishart_norm():
     for k, (degrees_of_freedom_k, log_det_k) in enumerate(
             zip(degrees_of_freedom, log_det_precisions_chol)):
         expected_norm[k] = -(
-            degrees_of_freedom_k * (log_det_k + .5 * n_features * np.log(2.)) +
-            np.sum(gammaln(.5 * (degrees_of_freedom_k -
-                                 np.arange(0, n_features)[:, np.newaxis])), 0))
+            degrees_of_freedom_k *
+            (log_det_k + .5 * n_features * np.log(2.)) + np.sum(
+                gammaln(.5 * (degrees_of_freedom_k -
+                              np.arange(0, n_features)[:, np.newaxis])), 0))
     predected_norm = _log_wishart_norm(degrees_of_freedom,
                                        log_det_precisions_chol, n_features)
 
@@ -66,11 +66,10 @@ def test_bayesian_mixture_covariance_type():
     covariance_type = 'bad_covariance_type'
     bgmm = BayesianGaussianMixture(covariance_type=covariance_type,
                                    random_state=rng)
-    assert_raise_message(ValueError,
-                         "Invalid value for 'covariance_type': %s "
-                         "'covariance_type' should be in "
-                         "['spherical', 'tied', 'diag', 'full']"
-                         % covariance_type, bgmm.fit, X)
+    assert_raise_message(
+        ValueError, "Invalid value for 'covariance_type': %s "
+        "'covariance_type' should be in "
+        "['spherical', 'tied', 'diag', 'full']" % covariance_type, bgmm.fit, X)
 
 
 def test_bayesian_mixture_weight_concentration_prior_type():
@@ -81,11 +80,11 @@ def test_bayesian_mixture_weight_concentration_prior_type():
     bad_prior_type = 'bad_prior_type'
     bgmm = BayesianGaussianMixture(
         weight_concentration_prior_type=bad_prior_type, random_state=rng)
-    assert_raise_message(ValueError,
-                         "Invalid value for 'weight_concentration_prior_type':"
-                         " %s 'weight_concentration_prior_type' should be in "
-                         "['dirichlet_process', 'dirichlet_distribution']"
-                         % bad_prior_type, bgmm.fit, X)
+    assert_raise_message(
+        ValueError, "Invalid value for 'weight_concentration_prior_type':"
+        " %s 'weight_concentration_prior_type' should be in "
+        "['dirichlet_process', 'dirichlet_distribution']" % bad_prior_type,
+        bgmm.fit, X)
 
 
 def test_bayesian_mixture_weights_prior_initialisation():
@@ -98,11 +97,10 @@ def test_bayesian_mixture_weights_prior_initialisation():
     bgmm = BayesianGaussianMixture(
         weight_concentration_prior=bad_weight_concentration_prior_,
         random_state=0)
-    assert_raise_message(ValueError,
-                         "The parameter 'weight_concentration_prior' "
-                         "should be greater than 0., but got %.3f."
-                         % bad_weight_concentration_prior_,
-                         bgmm.fit, X)
+    assert_raise_message(
+        ValueError, "The parameter 'weight_concentration_prior' "
+        "should be greater than 0., but got %.3f." %
+        bad_weight_concentration_prior_, bgmm.fit, X)
 
     # Check correct init for a given value of weight_concentration_prior
     weight_concentration_prior = rng.rand()
@@ -126,19 +124,16 @@ def test_bayesian_mixture_mean_prior_initialisation():
     # Check raise message for a bad value of mean_precision_prior
     bad_mean_precision_prior_ = 0.
     bgmm = BayesianGaussianMixture(
-        mean_precision_prior=bad_mean_precision_prior_,
-        random_state=rng)
-    assert_raise_message(ValueError,
-                         "The parameter 'mean_precision_prior' should be "
-                         "greater than 0., but got %.3f."
-                         % bad_mean_precision_prior_,
-                         bgmm.fit, X)
+        mean_precision_prior=bad_mean_precision_prior_, random_state=rng)
+    assert_raise_message(
+        ValueError, "The parameter 'mean_precision_prior' should be "
+        "greater than 0., but got %.3f." % bad_mean_precision_prior_, bgmm.fit,
+        X)
 
     # Check correct init for a given value of mean_precision_prior
     mean_precision_prior = rng.rand()
-    bgmm = BayesianGaussianMixture(
-        mean_precision_prior=mean_precision_prior,
-        random_state=rng).fit(X)
+    bgmm = BayesianGaussianMixture(mean_precision_prior=mean_precision_prior,
+                                   random_state=rng).fit(X)
     assert_almost_equal(mean_precision_prior, bgmm.mean_precision_prior_)
 
     # Check correct init for the default value of mean_precision_prior
@@ -177,11 +172,10 @@ def test_bayesian_mixture_precisions_prior_initialisation():
     bgmm = BayesianGaussianMixture(
         degrees_of_freedom_prior=bad_degrees_of_freedom_prior_,
         random_state=rng)
-    assert_raise_message(ValueError,
-                         "The parameter 'degrees_of_freedom_prior' should be "
-                         "greater than %d, but got %.3f."
-                         % (n_features - 1, bad_degrees_of_freedom_prior_),
-                         bgmm.fit, X)
+    assert_raise_message(
+        ValueError, "The parameter 'degrees_of_freedom_prior' should be "
+        "greater than %d, but got %.3f." %
+        (n_features - 1, bad_degrees_of_freedom_prior_), bgmm.fit, X)
 
     # Check correct init for a given value of degrees_of_freedom_prior
     degrees_of_freedom_prior = rng.rand() + n_features - 1.
@@ -204,33 +198,33 @@ def test_bayesian_mixture_precisions_prior_initialisation():
         'full': np.cov(X.T, bias=1) + 10,
         'tied': np.cov(X.T, bias=1) + 5,
         'diag': np.diag(np.atleast_2d(np.cov(X.T, bias=1))) + 3,
-        'spherical': rng.rand()}
+        'spherical': rng.rand()
+    }
 
     bgmm = BayesianGaussianMixture(random_state=rng)
     for cov_type in ['full', 'tied', 'diag', 'spherical']:
         bgmm.covariance_type = cov_type
         bgmm.covariance_prior = covariance_prior[cov_type]
         bgmm.fit(X)
-        assert_almost_equal(covariance_prior[cov_type],
-                            bgmm.covariance_prior_)
+        assert_almost_equal(covariance_prior[cov_type], bgmm.covariance_prior_)
 
     # Check raise message for a bad spherical value of covariance_prior
     bad_covariance_prior_ = -1.
     bgmm = BayesianGaussianMixture(covariance_type='spherical',
                                    covariance_prior=bad_covariance_prior_,
                                    random_state=rng)
-    assert_raise_message(ValueError,
-                         "The parameter 'spherical covariance_prior' "
-                         "should be greater than 0., but got %.3f."
-                         % bad_covariance_prior_,
-                         bgmm.fit, X)
+    assert_raise_message(
+        ValueError, "The parameter 'spherical covariance_prior' "
+        "should be greater than 0., but got %.3f." % bad_covariance_prior_,
+        bgmm.fit, X)
 
     # Check correct init for the default value of covariance_prior
     covariance_prior_default = {
         'full': np.atleast_2d(np.cov(X.T)),
         'tied': np.atleast_2d(np.cov(X.T)),
         'diag': np.var(X, axis=0, ddof=1),
-        'spherical': np.var(X, axis=0, ddof=1).mean()}
+        'spherical': np.var(X, axis=0, ddof=1).mean()
+    }
 
     bgmm = BayesianGaussianMixture(random_state=0)
     for cov_type in ['full', 'tied', 'diag', 'spherical']:
@@ -247,9 +241,9 @@ def test_bayesian_mixture_check_is_fitted():
     # Check raise message
     bgmm = BayesianGaussianMixture(random_state=rng)
     X = rng.rand(n_samples, n_features)
-    assert_raise_message(ValueError,
-                         'This BayesianGaussianMixture instance is not '
-                         'fitted yet.', bgmm.score, X)
+    assert_raise_message(
+        ValueError, 'This BayesianGaussianMixture instance is not '
+        'fitted yet.', bgmm.score, X)
 
 
 def test_bayesian_mixture_weights():
@@ -261,7 +255,8 @@ def test_bayesian_mixture_weights():
     # Case Dirichlet distribution for the weight concentration prior type
     bgmm = BayesianGaussianMixture(
         weight_concentration_prior_type="dirichlet_distribution",
-        n_components=3, random_state=rng).fit(X)
+        n_components=3,
+        random_state=rng).fit(X)
 
     expected_weights = (bgmm.weight_concentration_ /
                         np.sum(bgmm.weight_concentration_))
@@ -271,7 +266,8 @@ def test_bayesian_mixture_weights():
     # Case Dirichlet process for the weight concentration prior type
     dpgmm = BayesianGaussianMixture(
         weight_concentration_prior_type="dirichlet_process",
-        n_components=3, random_state=rng).fit(X)
+        n_components=3,
+        random_state=rng).fit(X)
     weight_dirichlet_sum = (dpgmm.weight_concentration_[0] +
                             dpgmm.weight_concentration_[1])
     tmp = dpgmm.weight_concentration_[1] / weight_dirichlet_sum
@@ -295,8 +291,12 @@ def test_monotonic_likelihood():
             X = rand_data.X[covar_type]
             bgmm = BayesianGaussianMixture(
                 weight_concentration_prior_type=prior_type,
-                n_components=2 * n_components, covariance_type=covar_type,
-                warm_start=True, max_iter=1, random_state=rng, tol=1e-3)
+                n_components=2 * n_components,
+                covariance_type=covar_type,
+                warm_start=True,
+                max_iter=1,
+                random_state=rng,
+                tol=1e-3)
             current_lower_bound = -np.infty
             # Do one training iteration at a time so we can make sure that the
             # training log likelihood increases after each iteration.
@@ -307,7 +307,7 @@ def test_monotonic_likelihood():
 
                 if bgmm.converged_:
                     break
-            assert(bgmm.converged_)
+            assert (bgmm.converged_)
 
 
 def test_compare_covar_type():
@@ -322,8 +322,11 @@ def test_compare_covar_type():
         # Computation of the full_covariance
         bgmm = BayesianGaussianMixture(
             weight_concentration_prior_type=prior_type,
-            n_components=2 * n_components, covariance_type='full',
-            max_iter=1, random_state=0, tol=1e-7)
+            n_components=2 * n_components,
+            covariance_type='full',
+            max_iter=1,
+            random_state=0,
+            tol=1e-7)
         bgmm._check_initial_parameters(X)
         bgmm._initialize_parameters(X, np.random.RandomState(0))
         full_covariances = (
@@ -333,8 +336,11 @@ def test_compare_covar_type():
         # Check tied_covariance = mean(full_covariances, 0)
         bgmm = BayesianGaussianMixture(
             weight_concentration_prior_type=prior_type,
-            n_components=2 * n_components, covariance_type='tied',
-            max_iter=1, random_state=0, tol=1e-7)
+            n_components=2 * n_components,
+            covariance_type='tied',
+            max_iter=1,
+            random_state=0,
+            tol=1e-7)
         bgmm._check_initial_parameters(X)
         bgmm._initialize_parameters(X, np.random.RandomState(0))
 
@@ -344,28 +350,34 @@ def test_compare_covar_type():
         # Check diag_covariance = diag(full_covariances)
         bgmm = BayesianGaussianMixture(
             weight_concentration_prior_type=prior_type,
-            n_components=2 * n_components, covariance_type='diag',
-            max_iter=1, random_state=0, tol=1e-7)
+            n_components=2 * n_components,
+            covariance_type='diag',
+            max_iter=1,
+            random_state=0,
+            tol=1e-7)
         bgmm._check_initial_parameters(X)
         bgmm._initialize_parameters(X, np.random.RandomState(0))
 
         diag_covariances = (bgmm.covariances_ *
                             bgmm.degrees_of_freedom_[:, np.newaxis])
-        assert_almost_equal(diag_covariances,
-                            np.array([np.diag(cov)
-                                     for cov in full_covariances]))
+        assert_almost_equal(
+            diag_covariances,
+            np.array([np.diag(cov) for cov in full_covariances]))
 
         # Check spherical_covariance = np.mean(diag_covariances, 0)
         bgmm = BayesianGaussianMixture(
             weight_concentration_prior_type=prior_type,
-            n_components=2 * n_components, covariance_type='spherical',
-            max_iter=1, random_state=0, tol=1e-7)
+            n_components=2 * n_components,
+            covariance_type='spherical',
+            max_iter=1,
+            random_state=0,
+            tol=1e-7)
         bgmm._check_initial_parameters(X)
         bgmm._initialize_parameters(X, np.random.RandomState(0))
 
         spherical_covariances = bgmm.covariances_ * bgmm.degrees_of_freedom_
-        assert_almost_equal(
-            spherical_covariances, np.mean(diag_covariances, 1))
+        assert_almost_equal(spherical_covariances,
+                            np.mean(diag_covariances, 1))
 
 
 @ignore_warnings(category=ConvergenceWarning)
@@ -378,7 +390,9 @@ def test_check_covariance_precision():
 
     # Computation of the full_covariance
     bgmm = BayesianGaussianMixture(n_components=n_components,
-                                   max_iter=100, random_state=rng, tol=1e-3,
+                                   max_iter=100,
+                                   random_state=rng,
+                                   tol=1e-3,
                                    reg_covar=0)
     for covar_type in COVARIANCE_TYPE:
         bgmm.covariance_type = covar_type
@@ -414,12 +428,18 @@ def test_invariant_translation():
             X = rand_data.X[covar_type]
             bgmm1 = BayesianGaussianMixture(
                 weight_concentration_prior_type=prior_type,
-                n_components=n_components, max_iter=100, random_state=0,
-                tol=1e-3, reg_covar=0).fit(X)
+                n_components=n_components,
+                max_iter=100,
+                random_state=0,
+                tol=1e-3,
+                reg_covar=0).fit(X)
             bgmm2 = BayesianGaussianMixture(
                 weight_concentration_prior_type=prior_type,
-                n_components=n_components, max_iter=100, random_state=0,
-                tol=1e-3, reg_covar=0).fit(X + 100)
+                n_components=n_components,
+                max_iter=100,
+                random_state=0,
+                tol=1e-3,
+                reg_covar=0).fit(X + 100)
 
             assert_almost_equal(bgmm1.means_, bgmm2.means_ - 100)
             assert_almost_equal(bgmm1.weights_, bgmm2.weights_)
@@ -427,12 +447,14 @@ def test_invariant_translation():
 
 
 @pytest.mark.filterwarnings("ignore:.*did not converge.*")
-@pytest.mark.parametrize('seed, max_iter, tol', [
-    (0, 2, 1e-7),    # strict non-convergence
-    (1, 2, 1e-1),    # loose non-convergence
-    (3, 300, 1e-7),  # strict convergence
-    (4, 300, 1e-1),  # loose convergence
-])
+@pytest.mark.parametrize(
+    'seed, max_iter, tol',
+    [
+        (0, 2, 1e-7),  # strict non-convergence
+        (1, 2, 1e-1),  # loose non-convergence
+        (3, 300, 1e-7),  # strict convergence
+        (4, 300, 1e-1),  # loose convergence
+    ])
 def test_bayesian_mixture_fit_predict(seed, max_iter, tol):
     rng = np.random.RandomState(seed)
     rand_data = RandomData(rng, n_samples=50, scale=7)
@@ -440,8 +462,10 @@ def test_bayesian_mixture_fit_predict(seed, max_iter, tol):
 
     for covar_type in COVARIANCE_TYPE:
         bgmm1 = BayesianGaussianMixture(n_components=n_components,
-                                        max_iter=max_iter, random_state=rng,
-                                        tol=tol, reg_covar=0)
+                                        max_iter=max_iter,
+                                        random_state=rng,
+                                        tol=tol,
+                                        reg_covar=0)
         bgmm1.covariance_type = covar_type
         bgmm2 = copy.deepcopy(bgmm1)
         X = rand_data.X[covar_type]
@@ -475,11 +499,11 @@ def test_bayesian_mixture_predict_predict_proba():
                 covariance_type=covar_type)
 
             # Check a warning message arrive if we don't do fit
-            assert_raise_message(NotFittedError,
-                                 "This BayesianGaussianMixture instance"
-                                 " is not fitted yet. Call 'fit' with "
-                                 "appropriate arguments before using "
-                                 "this estimator.", bgmm.predict, X)
+            assert_raise_message(
+                NotFittedError, "This BayesianGaussianMixture instance"
+                " is not fitted yet. Call 'fit' with "
+                "appropriate arguments before using "
+                "this estimator.", bgmm.predict, X)
 
             bgmm.fit(X)
             Y_pred = bgmm.predict(X)

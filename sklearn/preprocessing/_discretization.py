@@ -5,7 +5,6 @@
 
 # License: BSD
 
-
 import numbers
 import numpy as np
 import warnings
@@ -118,7 +117,6 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
            [ 0.5,  3.5, -1.5,  1.5]])
 
     """
-
     @_deprecate_positional_args
     def __init__(self, n_bins=5, *, encode='onehot', strategy='quantile'):
         self.n_bins = n_bins
@@ -147,13 +145,13 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         valid_encode = ('onehot', 'onehot-dense', 'ordinal')
         if self.encode not in valid_encode:
             raise ValueError("Valid options for 'encode' are {}. "
-                             "Got encode={!r} instead."
-                             .format(valid_encode, self.encode))
+                             "Got encode={!r} instead.".format(
+                                 valid_encode, self.encode))
         valid_strategy = ('uniform', 'quantile', 'kmeans')
         if self.strategy not in valid_strategy:
             raise ValueError("Valid options for 'strategy' are {}. "
-                             "Got strategy={!r} instead."
-                             .format(valid_strategy, self.strategy))
+                             "Got strategy={!r} instead.".format(
+                                 valid_strategy, self.strategy))
 
         n_features = X.shape[1]
         n_bins = self._validate_n_bins(n_features)
@@ -222,16 +220,19 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         if isinstance(orig_bins, numbers.Number):
             if not isinstance(orig_bins, numbers.Integral):
                 raise ValueError("{} received an invalid n_bins type. "
-                                 "Received {}, expected int."
-                                 .format(KBinsDiscretizer.__name__,
-                                         type(orig_bins).__name__))
+                                 "Received {}, expected int.".format(
+                                     KBinsDiscretizer.__name__,
+                                     type(orig_bins).__name__))
             if orig_bins < 2:
-                raise ValueError("{} received an invalid number "
-                                 "of bins. Received {}, expected at least 2."
-                                 .format(KBinsDiscretizer.__name__, orig_bins))
+                raise ValueError(
+                    "{} received an invalid number "
+                    "of bins. Received {}, expected at least 2.".format(
+                        KBinsDiscretizer.__name__, orig_bins))
             return np.full(n_features, orig_bins, dtype=np.int)
 
-        n_bins = check_array(orig_bins, dtype=np.int, copy=True,
+        n_bins = check_array(orig_bins,
+                             dtype=np.int,
+                             copy=True,
                              ensure_2d=False)
 
         if n_bins.ndim > 1 or n_bins.shape[0] != n_features:
@@ -245,8 +246,8 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
             indices = ", ".join(str(i) for i in violating_indices)
             raise ValueError("{} received an invalid number "
                              "of bins at indices {}. Number of bins "
-                             "must be at least 2, and must be an int."
-                             .format(KBinsDiscretizer.__name__, indices))
+                             "must be at least 2, and must be an int.".format(
+                                 KBinsDiscretizer.__name__, indices))
         return n_bins
 
     def transform(self, X):

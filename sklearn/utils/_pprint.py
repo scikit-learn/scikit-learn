@@ -56,7 +56,6 @@ BaseEstimator.__repr__ for pretty-printing estimators"""
 # 8. By copying, installing or otherwise using Python, Licensee agrees to be
 # bound by the terms and conditions of this License Agreement.
 
-
 # Brief summary of changes to original code:
 # - "compact" parameter is supported for dicts, not just lists or tuples
 # - estimators have a custom handler, they're not just treated as objects
@@ -95,8 +94,8 @@ def _changed_params(estimator):
     init_params = signature(init_func).parameters
     init_params = {name: param.default for name, param in init_params.items()}
     for k, v in params.items():
-        if (repr(v) != repr(init_params[k]) and
-                not (is_scalar_nan(init_params[k]) and is_scalar_nan(v))):
+        if (repr(v) != repr(init_params[k])
+                and not (is_scalar_nan(init_params[k]) and is_scalar_nan(v))):
             filtered_params[k] = v
     return filtered_params
 
@@ -151,9 +150,14 @@ class _EstimatorPrettyPrinter(pprint.PrettyPrinter):
     _pprint_estimator). We had to create the two classes KeyValTuple and
     KeyValTupleParam for this.
     """
-
-    def __init__(self, indent=1, width=80, depth=None, stream=None, *,
-                 compact=False, indent_at_name=True,
+    def __init__(self,
+                 indent=1,
+                 width=80,
+                 depth=None,
+                 stream=None,
+                 *,
+                 compact=False,
+                 indent_at_name=True,
                  n_max_elements_to_show=None):
         super().__init__(indent, width, depth, stream, compact=compact)
         self._indent_at_name = indent_at_name
@@ -166,7 +170,10 @@ class _EstimatorPrettyPrinter(pprint.PrettyPrinter):
         self.n_max_elements_to_show = n_max_elements_to_show
 
     def format(self, object, context, maxlevels, level):
-        return _safe_repr(object, context, maxlevels, level,
+        return _safe_repr(object,
+                          context,
+                          maxlevels,
+                          level,
                           changed_only=self._changed_only)
 
     def _pprint_estimator(self, object, stream, indent, allowance, context,
@@ -180,8 +187,8 @@ class _EstimatorPrettyPrinter(pprint.PrettyPrinter):
         else:
             params = object.get_params(deep=False)
 
-        params = OrderedDict((name, val)
-                             for (name, val) in sorted(params.items()))
+        params = OrderedDict(
+            (name, val) for (name, val) in sorted(params.items()))
 
         self._format_params(params.items(), stream, indent, allowance + 1,
                             context, level)
@@ -189,12 +196,22 @@ class _EstimatorPrettyPrinter(pprint.PrettyPrinter):
 
     def _format_dict_items(self, items, stream, indent, allowance, context,
                            level):
-        return self._format_params_or_dict_items(
-            items, stream, indent, allowance, context, level, is_dict=True)
+        return self._format_params_or_dict_items(items,
+                                                 stream,
+                                                 indent,
+                                                 allowance,
+                                                 context,
+                                                 level,
+                                                 is_dict=True)
 
     def _format_params(self, items, stream, indent, allowance, context, level):
-        return self._format_params_or_dict_items(
-            items, stream, indent, allowance, context, level, is_dict=False)
+        return self._format_params_or_dict_items(items,
+                                                 stream,
+                                                 indent,
+                                                 allowance,
+                                                 context,
+                                                 level,
+                                                 is_dict=False)
 
     def _format_params_or_dict_items(self, object, stream, indent, allowance,
                                      context, level, is_dict):
@@ -254,8 +271,8 @@ class _EstimatorPrettyPrinter(pprint.PrettyPrinter):
             write(delim)
             delim = delimnl
             class_ = KeyValTuple if is_dict else KeyValTupleParam
-            self._format(class_(ent), stream, indent,
-                         allowance if last else 1, context, level)
+            self._format(class_(ent), stream, indent, allowance if last else 1,
+                         context, level)
 
     def _format_items(self, items, stream, indent, allowance, context, level):
         """Format the items of an iterable (list, tuple...). Same as the
@@ -303,8 +320,8 @@ class _EstimatorPrettyPrinter(pprint.PrettyPrinter):
                     continue
             write(delim)
             delim = delimnl
-            self._format(ent, stream, indent,
-                         allowance if last else 1, context, level)
+            self._format(ent, stream, indent, allowance if last else 1,
+                         context, level)
 
     def _pprint_key_val_tuple(self, object, stream, indent, allowance, context,
                               level):
@@ -356,10 +373,16 @@ def _safe_repr(object, context, maxlevels, level, changed_only=False):
         saferepr = _safe_repr
         items = sorted(object.items(), key=pprint._safe_tuple)
         for k, v in items:
-            krepr, kreadable, krecur = saferepr(
-                k, context, maxlevels, level, changed_only=changed_only)
-            vrepr, vreadable, vrecur = saferepr(
-                v, context, maxlevels, level, changed_only=changed_only)
+            krepr, kreadable, krecur = saferepr(k,
+                                                context,
+                                                maxlevels,
+                                                level,
+                                                changed_only=changed_only)
+            vrepr, vreadable, vrecur = saferepr(v,
+                                                context,
+                                                maxlevels,
+                                                level,
+                                                changed_only=changed_only)
             append("%s: %s" % (krepr, vrepr))
             readable = readable and kreadable and vreadable
             if krecur or vrecur:
@@ -391,8 +414,11 @@ def _safe_repr(object, context, maxlevels, level, changed_only=False):
         append = components.append
         level += 1
         for o in object:
-            orepr, oreadable, orecur = _safe_repr(
-                o, context, maxlevels, level, changed_only=changed_only)
+            orepr, oreadable, orecur = _safe_repr(o,
+                                                  context,
+                                                  maxlevels,
+                                                  level,
+                                                  changed_only=changed_only)
             append(orepr)
             if not oreadable:
                 readable = False
@@ -420,10 +446,16 @@ def _safe_repr(object, context, maxlevels, level, changed_only=False):
         saferepr = _safe_repr
         items = sorted(params.items(), key=pprint._safe_tuple)
         for k, v in items:
-            krepr, kreadable, krecur = saferepr(
-                k, context, maxlevels, level, changed_only=changed_only)
-            vrepr, vreadable, vrecur = saferepr(
-                v, context, maxlevels, level, changed_only=changed_only)
+            krepr, kreadable, krecur = saferepr(k,
+                                                context,
+                                                maxlevels,
+                                                level,
+                                                changed_only=changed_only)
+            vrepr, vreadable, vrecur = saferepr(v,
+                                                context,
+                                                maxlevels,
+                                                level,
+                                                changed_only=changed_only)
             append("%s=%s" % (krepr.strip("'"), vrepr))
             readable = readable and kreadable and vreadable
             if krecur or vrecur:

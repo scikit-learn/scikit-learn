@@ -47,7 +47,8 @@ def test_graphviz_toy():
     assert contents1 == contents2
 
     # Test with feature_names
-    contents1 = export_graphviz(clf, feature_names=["feature0", "feature1"],
+    contents1 = export_graphviz(clf,
+                                feature_names=["feature0", "feature1"],
                                 out_file=None)
     contents2 = 'digraph Tree {\n' \
                 'node [shape=box] ;\n' \
@@ -82,9 +83,13 @@ def test_graphviz_toy():
     assert contents1 == contents2
 
     # Test plot_options
-    contents1 = export_graphviz(clf, filled=True, impurity=False,
-                                proportion=True, special_characters=True,
-                                rounded=True, out_file=None)
+    contents1 = export_graphviz(clf,
+                                filled=True,
+                                impurity=False,
+                                proportion=True,
+                                special_characters=True,
+                                rounded=True,
+                                out_file=None)
     contents2 = 'digraph Tree {\n' \
                 'node [shape=box, style="filled, rounded", color="black", ' \
                 'fontname=helvetica] ;\n' \
@@ -104,8 +109,10 @@ def test_graphviz_toy():
     assert contents1 == contents2
 
     # Test max_depth
-    contents1 = export_graphviz(clf, max_depth=0,
-                                class_names=True, out_file=None)
+    contents1 = export_graphviz(clf,
+                                max_depth=0,
+                                class_names=True,
+                                out_file=None)
     contents2 = 'digraph Tree {\n' \
                 'node [shape=box] ;\n' \
                 '0 [label="X[0] <= 0.0\\ngini = 0.5\\nsamples = 6\\n' \
@@ -119,8 +126,11 @@ def test_graphviz_toy():
     assert contents1 == contents2
 
     # Test max_depth with plot_options
-    contents1 = export_graphviz(clf, max_depth=0, filled=True,
-                                out_file=None, node_ids=True)
+    contents1 = export_graphviz(clf,
+                                max_depth=0,
+                                filled=True,
+                                out_file=None,
+                                node_ids=True)
     contents2 = 'digraph Tree {\n' \
                 'node [shape=box, style="filled", color="black"] ;\n' \
                 '0 [label="node #0\\nX[0] <= 0.0\\ngini = 0.5\\n' \
@@ -140,8 +150,10 @@ def test_graphviz_toy():
                                  random_state=2)
     clf = clf.fit(X, y2, sample_weight=w)
 
-    contents1 = export_graphviz(clf, filled=True,
-                                impurity=False, out_file=None)
+    contents1 = export_graphviz(clf,
+                                filled=True,
+                                impurity=False,
+                                out_file=None)
     contents2 = 'digraph Tree {\n' \
                 'node [shape=box, style="filled", color="black"] ;\n' \
                 '0 [label="X[0] <= 0.0\\nsamples = 6\\n' \
@@ -173,8 +185,12 @@ def test_graphviz_toy():
                                 random_state=2)
     clf.fit(X, y)
 
-    contents1 = export_graphviz(clf, filled=True, leaves_parallel=True,
-                                out_file=None, rotate=True, rounded=True)
+    contents1 = export_graphviz(clf,
+                                filled=True,
+                                leaves_parallel=True,
+                                out_file=None,
+                                rotate=True,
+                                rounded=True)
     contents2 = 'digraph Tree {\n' \
                 'node [shape=box, style="filled, rounded", color="black", ' \
                 'fontname=helvetica] ;\n' \
@@ -270,17 +286,18 @@ def test_precision():
     rng_reg = RandomState(2)
     rng_clf = RandomState(8)
     for X, y, clf in zip(
-            (rng_reg.random_sample((5, 2)),
-             rng_clf.random_sample((1000, 4))),
-            (rng_reg.random_sample((5, )),
-             rng_clf.randint(2, size=(1000, ))),
-            (DecisionTreeRegressor(criterion="friedman_mse", random_state=0,
-                                   max_depth=1),
-             DecisionTreeClassifier(max_depth=1, random_state=0))):
+        (rng_reg.random_sample((5, 2)), rng_clf.random_sample(
+            (1000, 4))), (rng_reg.random_sample(
+                (5, )), rng_clf.randint(2, size=(1000, ))),
+        (DecisionTreeRegressor(
+            criterion="friedman_mse", random_state=0, max_depth=1),
+         DecisionTreeClassifier(max_depth=1, random_state=0))):
 
         clf.fit(X, y)
         for precision in (4, 3):
-            dot_data = export_graphviz(clf, out_file=None, precision=precision,
+            dot_data = export_graphviz(clf,
+                                       out_file=None,
+                                       precision=precision,
                                        proportion=True)
 
             # With the current random state, the impurity and the threshold
@@ -291,9 +308,8 @@ def test_precision():
 
             # check value
             for finding in finditer(r"value = \d+\.\d+", dot_data):
-                assert (
-                    len(search(r"\.\d+", finding.group()).group()) <=
-                    precision + 1)
+                assert (len(search(r"\.\d+", finding.group()).group()) <=
+                        precision + 1)
             # check impurity
             if is_classifier(clf):
                 pattern = r"gini = \d+\.\d+"
@@ -302,12 +318,12 @@ def test_precision():
 
             # check impurity
             for finding in finditer(pattern, dot_data):
-                assert (len(search(r"\.\d+", finding.group()).group()) ==
-                        precision + 1)
+                assert (len(search(r"\.\d+",
+                                   finding.group()).group()) == precision + 1)
             # check threshold
             for finding in finditer(r"<= \d+\.\d+", dot_data):
-                assert (len(search(r"\.\d+", finding.group()).group()) ==
-                        precision + 1)
+                assert (len(search(r"\.\d+",
+                                   finding.group()).group()) == precision + 1)
 
 
 def test_export_text_errors():
@@ -408,7 +424,9 @@ def test_export_text():
     """).lstrip()
     assert export_text(reg, decimals=1,
                        feature_names=['first']) == expected_report
-    assert export_text(reg, decimals=1, show_weights=True,
+    assert export_text(reg,
+                       decimals=1,
+                       show_weights=True,
                        feature_names=['first']) == expected_report
 
 

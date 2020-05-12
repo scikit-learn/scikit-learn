@@ -124,8 +124,11 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
         self : object
             Returns an instance of self.
         """
-        X, y = self._validate_data(X, y, accept_sparse=['csc', 'csr', 'coo'],
-                                   force_all_finite=False, allow_nd=True)
+        X, y = self._validate_data(X,
+                                   y,
+                                   accept_sparse=['csc', 'csr', 'coo'],
+                                   force_all_finite=False,
+                                   allow_nd=True)
         X, y = indexable(X, y)
         le = LabelBinarizer().fit(y)
         self.classes_ = le.classes_
@@ -138,8 +141,8 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
                 np.any([np.sum(y == class_) < n_folds for class_ in
                         self.classes_]):
             raise ValueError("Requesting %d-fold cross-validation but provided"
-                             " less than %d examples for at least one class."
-                             % (n_folds, n_folds))
+                             " less than %d examples for at least one class." %
+                             (n_folds, n_folds))
 
         self.calibrated_classifiers_ = []
         if self.base_estimator is None:
@@ -150,8 +153,8 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
             base_estimator = self.base_estimator
 
         if self.cv == "prefit":
-            calibrated_classifier = _CalibratedClassifier(
-                base_estimator, method=self.method)
+            calibrated_classifier = _CalibratedClassifier(base_estimator,
+                                                          method=self.method)
             calibrated_classifier.fit(X, y, sample_weight)
             self.calibrated_classifiers_.append(calibrated_classifier)
         else:
@@ -172,7 +175,8 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
                 this_estimator = clone(base_estimator)
 
                 if sample_weight is not None and base_estimator_supports_sw:
-                    this_estimator.fit(X[train], y[train],
+                    this_estimator.fit(X[train],
+                                       y[train],
                                        sample_weight=sample_weight[train])
                 else:
                     this_estimator.fit(X[train], y[train])
@@ -202,7 +206,8 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
             The predicted probas.
         """
         check_is_fitted(self)
-        X = check_array(X, accept_sparse=['csc', 'csr', 'coo'],
+        X = check_array(X,
+                        accept_sparse=['csc', 'csr', 'coo'],
                         force_all_finite=False)
         # Compute the arithmetic mean of the predictions of the calibrated
         # classifiers
@@ -506,7 +511,10 @@ class _SigmoidCalibration(RegressorMixin, BaseEstimator):
         return expit(-(self.a_ * T + self.b_))
 
 
-def calibration_curve(y_true, y_prob, normalize=False, n_bins=5,
+def calibration_curve(y_true,
+                      y_prob,
+                      normalize=False,
+                      n_bins=5,
                       strategy='uniform'):
     """Compute true and predicted probabilities for a calibration curve.
 

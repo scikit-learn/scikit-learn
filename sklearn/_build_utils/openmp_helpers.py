@@ -3,7 +3,6 @@
 # This code is adapted for a large part from the astropy openmp helpers, which
 # can be found at: https://github.com/astropy/astropy-helpers/blob/master/astropy_helpers/openmp_helpers.py  # noqa
 
-
 import os
 import sys
 import textwrap
@@ -46,8 +45,7 @@ def get_openmp_flag(compiler):
 
 def check_openmp_support():
     """Check whether OpenMP test code can be compiled and run"""
-    code = textwrap.dedent(
-        """\
+    code = textwrap.dedent("""\
         #include <omp.h>
         #include <stdio.h>
         int main(void) {
@@ -62,7 +60,8 @@ def check_openmp_support():
         extra_preargs = extra_preargs.strip().split(" ")
         extra_preargs = [
             flag for flag in extra_preargs
-            if flag.startswith(('-L', '-Wl,-rpath', '-l'))]
+            if flag.startswith(('-L', '-Wl,-rpath', '-l'))
+        ]
 
     extra_postargs = get_openmp_flag
 
@@ -84,8 +83,7 @@ def check_openmp_support():
         if os.getenv("SKLEARN_FAIL_NO_OPENMP"):
             raise CompileError("Failed to build with OpenMP")
         else:
-            message = textwrap.dedent(
-                """
+            message = textwrap.dedent("""
 
                                 ***********
                                 * WARNING *

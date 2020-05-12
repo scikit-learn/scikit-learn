@@ -25,7 +25,6 @@ from sklearn.utils import parallel_backend
 from sklearn.utils._testing import _convert_container
 
 
-
 @pytest.mark.parametrize("n_jobs", [1, 2])
 def test_permutation_importance_correlated_feature_regression(n_jobs):
     # Make sure that feature highly correlated to the target have a higher
@@ -34,23 +33,27 @@ def test_permutation_importance_correlated_feature_regression(n_jobs):
     n_repeats = 5
 
     X, y = load_diabetes(return_X_y=True)
-    y_with_little_noise = (
-        y + rng.normal(scale=0.001, size=y.shape[0])).reshape(-1, 1)
+    y_with_little_noise = (y +
+                           rng.normal(scale=0.001, size=y.shape[0])).reshape(
+                               -1, 1)
 
     X = np.hstack([X, y_with_little_noise])
 
     clf = RandomForestRegressor(n_estimators=10, random_state=42)
     clf.fit(X, y)
 
-    result = permutation_importance(clf, X, y, n_repeats=n_repeats,
-                                    random_state=rng, n_jobs=n_jobs)
+    result = permutation_importance(clf,
+                                    X,
+                                    y,
+                                    n_repeats=n_repeats,
+                                    random_state=rng,
+                                    n_jobs=n_jobs)
 
     assert result.importances.shape == (X.shape[1], n_repeats)
 
     # the correlated feature with y was added as the last column and should
     # have the highest importance
-    assert np.all(result.importances_mean[-1] >
-                  result.importances_mean[:-1])
+    assert np.all(result.importances_mean[-1] > result.importances_mean[:-1])
 
 
 @pytest.mark.parametrize("n_jobs", [1, 2])
@@ -64,8 +67,9 @@ def test_permutation_importance_correlated_feature_regression_pandas(n_jobs):
 
     dataset = load_iris()
     X, y = dataset.data, dataset.target
-    y_with_little_noise = (
-        y + rng.normal(scale=0.001, size=y.shape[0])).reshape(-1, 1)
+    y_with_little_noise = (y +
+                           rng.normal(scale=0.001, size=y.shape[0])).reshape(
+                               -1, 1)
 
     # Adds feature correlated with y as the last column
     X = pd.DataFrame(X, columns=dataset.feature_names)
@@ -74,8 +78,12 @@ def test_permutation_importance_correlated_feature_regression_pandas(n_jobs):
     clf = RandomForestClassifier(n_estimators=10, random_state=42)
     clf.fit(X, y)
 
-    result = permutation_importance(clf, X, y, n_repeats=n_repeats,
-                                    random_state=rng, n_jobs=n_jobs)
+    result = permutation_importance(clf,
+                                    X,
+                                    y,
+                                    n_repeats=n_repeats,
+                                    random_state=rng,
+                                    n_jobs=n_jobs)
 
     assert result.importances.shape == (X.shape[1], n_repeats)
 
@@ -118,8 +126,10 @@ def test_robustness_to_high_cardinality_noisy_feature(n_jobs, seed=42):
     # Split the dataset to be able to evaluate on a held-out test set. The
     # Test size should be large enough for importance measurements to be
     # stable:
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.5, random_state=rng)
+    X_train, X_test, y_train, y_test = train_test_split(X,
+                                                        y,
+                                                        test_size=0.5,
+                                                        random_state=rng)
     clf = RandomForestClassifier(n_estimators=5, random_state=rng)
     clf.fit(X_train, y_train)
 
@@ -133,8 +143,12 @@ def test_robustness_to_high_cardinality_noisy_feature(n_jobs, seed=42):
 
     # Let's check that permutation-based feature importances do not have this
     # problem.
-    r = permutation_importance(clf, X_test, y_test, n_repeats=n_repeats,
-                               random_state=rng, n_jobs=n_jobs)
+    r = permutation_importance(clf,
+                               X_test,
+                               y_test,
+                               n_repeats=n_repeats,
+                               random_state=rng,
+                               n_jobs=n_jobs)
 
     assert r.importances.shape == (X.shape[1], n_repeats)
 
@@ -167,7 +181,10 @@ def test_permutation_importance_mixed_types():
 
     clf = make_pipeline(SimpleImputer(), LogisticRegression(solver='lbfgs'))
     clf.fit(X, y)
-    result = permutation_importance(clf, X, y, n_repeats=n_repeats,
+    result = permutation_importance(clf,
+                                    X,
+                                    y,
+                                    n_repeats=n_repeats,
                                     random_state=rng)
 
     assert result.importances.shape == (X.shape[1], n_repeats)
@@ -178,7 +195,10 @@ def test_permutation_importance_mixed_types():
 
     # use another random state
     rng = np.random.RandomState(0)
-    result2 = permutation_importance(clf, X, y, n_repeats=n_repeats,
+    result2 = permutation_importance(clf,
+                                     X,
+                                     y,
+                                     n_repeats=n_repeats,
                                      random_state=rng)
     assert result2.importances.shape == (X.shape[1], n_repeats)
 
@@ -195,19 +215,22 @@ def test_permutation_importance_mixed_types_pandas():
     n_repeats = 5
 
     # Last column is correlated with y
-    X = pd.DataFrame({'col1': [1.0, 2.0, 3.0, np.nan],
-                      'col2': ['a', 'b', 'a', 'b']})
+    X = pd.DataFrame({
+        'col1': [1.0, 2.0, 3.0, np.nan],
+        'col2': ['a', 'b', 'a', 'b']
+    })
     y = np.array([0, 1, 0, 1])
 
     num_preprocess = make_pipeline(SimpleImputer(), StandardScaler())
-    preprocess = ColumnTransformer([
-        ('num', num_preprocess, ['col1']),
-        ('cat', OneHotEncoder(), ['col2'])
-    ])
+    preprocess = ColumnTransformer([('num', num_preprocess, ['col1']),
+                                    ('cat', OneHotEncoder(), ['col2'])])
     clf = make_pipeline(preprocess, LogisticRegression(solver='lbfgs'))
     clf.fit(X, y)
 
-    result = permutation_importance(clf, X, y, n_repeats=n_repeats,
+    result = permutation_importance(clf,
+                                    X,
+                                    y,
+                                    n_repeats=n_repeats,
                                     random_state=rng)
 
     assert result.importances.shape == (X.shape[1], n_repeats)
@@ -226,11 +249,15 @@ def test_permutation_importance_linear_regresssion():
 
     # this relationship can be computed in closed form
     expected_importances = 2 * lr.coef_**2
-    results = permutation_importance(lr, X, y,
+    results = permutation_importance(lr,
+                                     X,
+                                     y,
                                      n_repeats=50,
                                      scoring='neg_mean_squared_error')
-    assert_allclose(expected_importances, results.importances_mean,
-                    rtol=1e-1, atol=1e-6)
+    assert_allclose(expected_importances,
+                    results.importances_mean,
+                    rtol=1e-1,
+                    atol=1e-6)
 
 
 def test_permutation_importance_equivalence_sequential_parallel():
@@ -239,9 +266,12 @@ def test_permutation_importance_equivalence_sequential_parallel():
     X, y = make_regression(n_samples=500, n_features=10, random_state=0)
     lr = LinearRegression().fit(X, y)
 
-    importance_sequential = permutation_importance(
-        lr, X, y, n_repeats=5, random_state=0, n_jobs=1
-    )
+    importance_sequential = permutation_importance(lr,
+                                                   X,
+                                                   y,
+                                                   n_repeats=5,
+                                                   random_state=0,
+                                                   n_jobs=1)
 
     # First check that the problem is structured enough and that the model is
     # complex enough to not yield trivial, constant importances:
@@ -255,22 +285,25 @@ def test_permutation_importance_equivalence_sequential_parallel():
     # ('loky' or 'multiprocessing') depending on the joblib version:
 
     # process-based parallelism (by default):
-    importance_processes = permutation_importance(
-        lr, X, y, n_repeats=5, random_state=0, n_jobs=2)
-    assert_allclose(
-        importance_processes['importances'],
-        importance_sequential['importances']
-    )
+    importance_processes = permutation_importance(lr,
+                                                  X,
+                                                  y,
+                                                  n_repeats=5,
+                                                  random_state=0,
+                                                  n_jobs=2)
+    assert_allclose(importance_processes['importances'],
+                    importance_sequential['importances'])
 
     # thread-based parallelism:
     with parallel_backend("threading"):
-        importance_threading = permutation_importance(
-            lr, X, y, n_repeats=5, random_state=0, n_jobs=2
-        )
-    assert_allclose(
-        importance_threading['importances'],
-        importance_sequential['importances']
-    )
+        importance_threading = permutation_importance(lr,
+                                                      X,
+                                                      y,
+                                                      n_repeats=5,
+                                                      random_state=0,
+                                                      n_jobs=2)
+    assert_allclose(importance_threading['importances'],
+                    importance_sequential['importances'])
 
 
 @pytest.mark.parametrize("n_jobs", [None, 1, 2])
@@ -310,9 +343,12 @@ def test_permutation_importance_equivalence_array_dataframe(n_jobs):
     rf.fit(X, y)
 
     n_repeats = 3
-    importance_array = permutation_importance(
-        rf, X, y, n_repeats=n_repeats, random_state=0, n_jobs=n_jobs
-    )
+    importance_array = permutation_importance(rf,
+                                              X,
+                                              y,
+                                              n_repeats=n_repeats,
+                                              random_state=0,
+                                              n_jobs=n_jobs)
 
     # First check that the problem is structured enough and that the model is
     # complex enough to not yield trivial, constant importances:
@@ -322,13 +358,14 @@ def test_permutation_importance_equivalence_array_dataframe(n_jobs):
 
     # Now check that importances computed on dataframe matche the values
     # of those computed on the array with the same data.
-    importance_dataframe = permutation_importance(
-        rf, X_df, y, n_repeats=n_repeats, random_state=0, n_jobs=n_jobs
-    )
-    assert_allclose(
-        importance_array['importances'],
-        importance_dataframe['importances']
-    )
+    importance_dataframe = permutation_importance(rf,
+                                                  X_df,
+                                                  y,
+                                                  n_repeats=n_repeats,
+                                                  random_state=0,
+                                                  n_jobs=n_jobs)
+    assert_allclose(importance_array['importances'],
+                    importance_dataframe['importances'])
 
 
 @pytest.mark.parametrize("input_type", ["array", "dataframe"])
@@ -336,7 +373,8 @@ def test_permutation_importance_large_memmaped_data(input_type):
     # Smoke, non-regression test for:
     # https://github.com/scikit-learn/scikit-learn/issues/15810
     n_samples, n_features = int(5e4), 4
-    X, y = make_classification(n_samples=n_samples, n_features=n_features,
+    X, y = make_classification(n_samples=n_samples,
+                               n_features=n_features,
                                random_state=0)
     assert X.nbytes > 1e6  # trigger joblib memmaping
 

@@ -5,9 +5,7 @@ import numpy as np
 from sklearn.base import clone
 
 
-class MiniSeqKernel(GenericKernelMixin,
-                    StationaryKernelMixin,
-                    Kernel):
+class MiniSeqKernel(GenericKernelMixin, StationaryKernelMixin, Kernel):
     '''
     A minimal (but valid) convolutional kernel for sequences of variable
     length.
@@ -20,14 +18,14 @@ class MiniSeqKernel(GenericKernelMixin,
 
     @property
     def hyperparameter_baseline_similarity(self):
-        return Hyperparameter("baseline_similarity",
-                              "numeric",
+        return Hyperparameter("baseline_similarity", "numeric",
                               self.baseline_similarity_bounds)
 
     def _f(self, s1, s2):
-        return sum([1.0 if c1 == c2 else self.baseline_similarity
-                   for c1 in s1
-                   for c2 in s2])
+        return sum([
+            1.0 if c1 == c2 else self.baseline_similarity for c1 in s1
+            for c2 in s2
+        ])
 
     def _g(self, s1, s2):
         return sum([0.0 if c1 == c2 else 1.0 for c1 in s1 for c2 in s2])

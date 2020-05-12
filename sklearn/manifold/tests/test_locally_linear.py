@@ -19,11 +19,8 @@ def test_barycenter_kneighbors_graph():
     X = np.array([[0, 1], [1.01, 1.], [2, 0]])
 
     A = barycenter_kneighbors_graph(X, 1)
-    assert_array_almost_equal(
-        A.toarray(),
-        [[0.,  1.,  0.],
-         [1.,  0.,  0.],
-         [0.,  1.,  0.]])
+    assert_array_almost_equal(A.toarray(),
+                              [[0., 1., 0.], [1., 0., 0.], [0., 1., 0.]])
 
     A = barycenter_kneighbors_graph(X, 2)
     # check that columns sum to one
@@ -34,6 +31,7 @@ def test_barycenter_kneighbors_graph():
 
 # ----------------------------------------------------------------------
 # Test LLE by computing the reconstruction error on some manifolds.
+
 
 def test_lle_simple_grid():
     # note: ARPACK is numerically unstable, so this test will fail for
@@ -58,11 +56,12 @@ def test_lle_simple_grid():
         clf.fit(X)
         assert clf.embedding_.shape[1] == n_components
         reconstruction_error = linalg.norm(
-            np.dot(N, clf.embedding_) - clf.embedding_, 'fro') ** 2
+            np.dot(N, clf.embedding_) - clf.embedding_, 'fro')**2
 
         assert reconstruction_error < tol
         assert_almost_equal(clf.reconstruction_error_,
-                            reconstruction_error, decimal=1)
+                            reconstruction_error,
+                            decimal=1)
 
     # re-embed a noisy version of X using the transform method
     noise = rng.randn(*X.shape) / 100
@@ -74,13 +73,14 @@ def test_lle_manifold():
     rng = np.random.RandomState(0)
     # similar test on a slightly more complex manifold
     X = np.array(list(product(np.arange(18), repeat=2)))
-    X = np.c_[X, X[:, 0] ** 2 / 18]
+    X = np.c_[X, X[:, 0]**2 / 18]
     X = X + 1e-10 * rng.uniform(size=X.shape)
     n_components = 2
     for method in ["standard", "hessian", "modified", "ltsa"]:
         clf = manifold.LocallyLinearEmbedding(n_neighbors=6,
                                               n_components=n_components,
-                                              method=method, random_state=0)
+                                              method=method,
+                                              random_state=0)
         tol = 1.5 if method == "standard" else 3
 
         N = barycenter_kneighbors_graph(X, clf.n_neighbors).toarray()
@@ -92,11 +92,10 @@ def test_lle_manifold():
             clf.fit(X)
             assert clf.embedding_.shape[1] == n_components
             reconstruction_error = linalg.norm(
-                np.dot(N, clf.embedding_) - clf.embedding_, 'fro') ** 2
+                np.dot(N, clf.embedding_) - clf.embedding_, 'fro')**2
             details = ("solver: %s, method: %s" % (solver, method))
             assert reconstruction_error < tol, details
-            assert (np.abs(clf.reconstruction_error_ -
-                           reconstruction_error) <
+            assert (np.abs(clf.reconstruction_error_ - reconstruction_error) <
                     tol * reconstruction_error), details
 
 
@@ -119,9 +118,9 @@ def test_pipeline():
     # TODO check that it actually does something useful
     from sklearn import pipeline, datasets
     X, y = datasets.make_blobs(random_state=0)
-    clf = pipeline.Pipeline(
-        [('filter', manifold.LocallyLinearEmbedding(random_state=0)),
-         ('clf', neighbors.KNeighborsClassifier())])
+    clf = pipeline.Pipeline([('filter',
+                              manifold.LocallyLinearEmbedding(random_state=0)),
+                             ('clf', neighbors.KNeighborsClassifier())])
     clf.fit(X, y)
     assert .9 < clf.score(X, y)
 
@@ -131,9 +130,12 @@ def test_singular_matrix():
     M = np.ones((10, 3))
     f = ignore_warnings
     with pytest.raises(ValueError):
-        f(manifold.locally_linear_embedding(M, n_neighbors=2, n_components=1,
-                                            method='standard',
-                                            eigen_solver='arpack'))
+        f(
+            manifold.locally_linear_embedding(M,
+                                              n_neighbors=2,
+                                              n_components=1,
+                                              method='standard',
+                                              eigen_solver='arpack'))
 
 
 # regression test for #6033

@@ -71,7 +71,6 @@ COVERAGES = RemoteFileMetadata(
 
 DATA_ARCHIVE_NAME = "species_coverage.pkz"
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -139,8 +138,7 @@ def construct_grids(batch):
 
 
 @_deprecate_positional_args
-def fetch_species_distributions(*, data_home=None,
-                                download_if_missing=True):
+def fetch_species_distributions(*, data_home=None, download_if_missing=True):
     """Loader for species distribution dataset from Phillips et. al. (2006)
 
     Read more in the :ref:`User Guide <datasets>`.
@@ -228,8 +226,8 @@ def fetch_species_distributions(*, data_home=None,
     if not exists(archive_path):
         if not download_if_missing:
             raise IOError("Data not found and `download_if_missing` is False")
-        logger.info('Downloading species data from %s to %s' % (
-            SAMPLES.url, data_home))
+        logger.info('Downloading species data from %s to %s' %
+                    (SAMPLES.url, data_home))
         samples_path = _fetch_remote(SAMPLES, dirname=data_home)
         with np.load(samples_path) as X:  # samples.zip is a valid npz
             for f in X.files:
@@ -240,8 +238,8 @@ def fetch_species_distributions(*, data_home=None,
                     test = _load_csv(fhandle)
         remove(samples_path)
 
-        logger.info('Downloading coverage data from %s to %s' % (
-            COVERAGES.url, data_home))
+        logger.info('Downloading coverage data from %s to %s' %
+                    (COVERAGES.url, data_home))
         coverages_path = _fetch_remote(COVERAGES, dirname=data_home)
         with np.load(coverages_path) as X:  # coverages.zip is a valid npz
             coverages = []

@@ -36,13 +36,15 @@ def compile_test_program(code, extra_preargs=[], extra_postargs=[]):
             os.mkdir('objects')
 
             # Compile, test program
-            ccompiler.compile(['test_program.c'], output_dir='objects',
+            ccompiler.compile(['test_program.c'],
+                              output_dir='objects',
                               extra_postargs=extra_postargs)
 
             # Link test program
             objects = glob.glob(
                 os.path.join('objects', '*' + ccompiler.obj_extension))
-            ccompiler.link_executable(objects, 'test_program',
+            ccompiler.link_executable(objects,
+                                      'test_program',
                                       extra_preargs=extra_preargs,
                                       extra_postargs=extra_postargs)
 
@@ -60,8 +62,7 @@ def compile_test_program(code, extra_preargs=[], extra_postargs=[]):
 
 def basic_check_build():
     """Check basic compilation and linking of C code"""
-    code = textwrap.dedent(
-        """\
+    code = textwrap.dedent("""\
         #include <stdio.h>
         int main(void) {
         return 0;

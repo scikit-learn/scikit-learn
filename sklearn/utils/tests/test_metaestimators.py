@@ -38,7 +38,6 @@ class MetaEst:
 
 class MetaEstTestTuple(MetaEst):
     """A mock meta estimator to test passing a tuple of delegates"""
-
     @if_delegate_has_method(delegate=('sub_est', 'better_sub_est'))
     def predict(self):
         pass
@@ -46,7 +45,6 @@ class MetaEstTestTuple(MetaEst):
 
 class MetaEstTestList(MetaEst):
     """A mock meta estimator to test passing a list of delegates"""
-
     @if_delegate_has_method(delegate=['sub_est', 'better_sub_est'])
     def predict(self):
         pass
@@ -54,7 +52,6 @@ class MetaEstTestList(MetaEst):
 
 class HasPredict:
     """A mock sub-estimator with predict method"""
-
     def predict(self):
         pass
 

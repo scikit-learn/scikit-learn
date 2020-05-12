@@ -117,8 +117,9 @@ def strip_newsgroup_quoting(text):
     text : string
         The text from which to remove the signature block.
     """
-    good_lines = [line for line in text.split('\n')
-                  if not _QUOTE_RE.search(line)]
+    good_lines = [
+        line for line in text.split('\n') if not _QUOTE_RE.search(line)
+    ]
     return '\n'.join(good_lines)
 
 
@@ -148,10 +149,15 @@ def strip_newsgroup_footer(text):
 
 
 @_deprecate_positional_args
-def fetch_20newsgroups(*, data_home=None, subset='train', categories=None,
-                       shuffle=True, random_state=42,
+def fetch_20newsgroups(*,
+                       data_home=None,
+                       subset='train',
+                       categories=None,
+                       shuffle=True,
+                       random_state=42,
                        remove=(),
-                       download_if_missing=True, return_X_y=False):
+                       download_if_missing=True,
+                       return_X_y=False):
     """Load the filenames and data from the 20 newsgroups dataset \
 (classification).
 
@@ -242,8 +248,8 @@ def fetch_20newsgroups(*, data_home=None, subset='train', categories=None,
         try:
             with open(cache_path, 'rb') as f:
                 compressed_content = f.read()
-            uncompressed_content = codecs.decode(
-                compressed_content, 'zlib_codec')
+            uncompressed_content = codecs.decode(compressed_content,
+                                                 'zlib_codec')
             cache = pickle.loads(uncompressed_content)
         except Exception as e:
             print(80 * '_')
@@ -325,8 +331,12 @@ def fetch_20newsgroups(*, data_home=None, subset='train', categories=None,
 
 
 @_deprecate_positional_args
-def fetch_20newsgroups_vectorized(*, subset="train", remove=(), data_home=None,
-                                  download_if_missing=True, return_X_y=False,
+def fetch_20newsgroups_vectorized(*,
+                                  subset="train",
+                                  remove=(),
+                                  data_home=None,
+                                  download_if_missing=True,
+                                  return_X_y=False,
                                   normalize=True):
     """Load the 20 newsgroups dataset and vectorize it into token counts \
 (classification).

@@ -23,7 +23,7 @@ IN THE SOFTWARE.
 from __future__ import unicode_literals
 import sys
 
-__all__ = ('Pep562',)
+__all__ = ('Pep562', )
 
 
 class Pep562(object):
@@ -33,7 +33,6 @@ class Pep562(object):
     Wraps the module in a class that exposes the mechanics to override `__dir__` and `__getattr__`.
     The given module will be searched for overrides of `__dir__` and `__getattr__` and use them when needed.
     """
-
     def __init__(self, name):
         """Acquire `__getattr__` and `__dir__`, but only replace module for versions less than Python 3.7."""
 

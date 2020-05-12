@@ -15,15 +15,12 @@ from ...base import BaseEstimator, RegressorMixin
 from ...utils import check_array, check_X_y
 from ...utils.optimize import _check_optimize_result
 from ...utils.validation import check_is_fitted, _check_sample_weight
-from ..._loss.glm_distribution import (
-        ExponentialDispersionModel,
-        TweedieDistribution,
-        EDM_DISTRIBUTIONS
-)
+from ..._loss.glm_distribution import (ExponentialDispersionModel,
+                                       TweedieDistribution, EDM_DISTRIBUTIONS)
 from .link import (
-        BaseLink,
-        IdentityLink,
-        LogLink,
+    BaseLink,
+    IdentityLink,
+    LogLink,
 )
 
 
@@ -124,9 +121,16 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
     n_iter_ : int
         Actual number of iterations used in the solver.
     """
-    def __init__(self, *, alpha=1.0,
-                 fit_intercept=True, family='normal', link='auto',
-                 solver='lbfgs', max_iter=100, tol=1e-4, warm_start=False,
+    def __init__(self,
+                 *,
+                 alpha=1.0,
+                 fit_intercept=True,
+                 family='normal',
+                 link='auto',
+                 solver='lbfgs',
+                 max_iter=100,
+                 tol=1e-4,
+                 warm_start=False,
                  verbose=0):
         self.alpha = alpha
         self.fit_intercept = fit_intercept
@@ -182,8 +186,8 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
                     raise ValueError("No default link known for the "
                                      "specified distribution family. Please "
                                      "set link manually, i.e. not to 'auto'; "
-                                     "got (link='auto', family={})"
-                                     .format(self.family))
+                                     "got (link='auto', family={})".format(
+                                         self.family))
             elif self.link == 'identity':
                 self._link_instance = IdentityLink()
             elif self.link == 'log':
@@ -219,9 +223,12 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         family = self._family_instance
         link = self._link_instance
 
-        X, y = check_X_y(X, y, accept_sparse=['csc', 'csr'],
+        X, y = check_X_y(X,
+                         y,
+                         accept_sparse=['csc', 'csr'],
                          dtype=[np.float64, np.float32],
-                         y_numeric=True, multi_output=False)
+                         y_numeric=True,
+                         multi_output=False)
 
         weights = _check_sample_weight(sample_weight, X)
 
@@ -229,8 +236,8 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
 
         if not np.all(family.in_y_range(y)):
             raise ValueError("Some value(s) of y are out of the valid "
-                             "range for family {0}"
-                             .format(family.__class__.__name__))
+                             "range for family {0}".format(
+                                 family.__class__.__name__))
         # TODO: if alpha=0 check that X is not rank deficient
 
         # rescaling of sample_weight
@@ -244,13 +251,13 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
 
         if self.warm_start and hasattr(self, 'coef_'):
             if self.fit_intercept:
-                coef = np.concatenate((np.array([self.intercept_]),
-                                       self.coef_))
+                coef = np.concatenate(
+                    (np.array([self.intercept_]), self.coef_))
             else:
                 coef = self.coef_
         else:
             if self.fit_intercept:
-                coef = np.zeros(n_features+1)
+                coef = np.zeros(n_features + 1)
                 coef[0] = link(np.average(y, weights=weights))
             else:
                 coef = np.zeros(n_features)
@@ -258,10 +265,10 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
         # algorithms for optimization
 
         if solver == 'lbfgs':
+
             def func(coef, X, y, weights, alpha, family, link):
                 y_pred, devp = _y_pred_deviance_derivative(
-                    coef, X, y, weights, family, link
-                )
+                    coef, X, y, weights, family, link)
                 dev = family.deviance(y, y_pred, weights)
                 # offset if coef[0] is intercept
                 offset = 1 if self.fit_intercept else 0
@@ -273,15 +280,21 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
 
             args = (X, y, weights, self.alpha, family, link)
 
-            opt_res = scipy.optimize.minimize(
-                func, coef, method="L-BFGS-B", jac=True,
-                options={
-                    "maxiter": self.max_iter,
-                    "iprint": (self.verbose > 0) - 1,
-                    "gtol": self.tol,
-                    "ftol": 1e3*np.finfo(float).eps,
-                },
-                args=args)
+            opt_res = scipy.optimize.minimize(func,
+                                              coef,
+                                              method="L-BFGS-B",
+                                              jac=True,
+                                              options={
+                                                  "maxiter":
+                                                  self.max_iter,
+                                                  "iprint":
+                                                  (self.verbose > 0) - 1,
+                                                  "gtol":
+                                                  self.tol,
+                                                  "ftol":
+                                                  1e3 * np.finfo(float).eps,
+                                              },
+                                              args=args)
             self.n_iter_ = _check_optimize_result("lbfgs", opt_res)
             coef = opt_res.x
 
@@ -309,8 +322,10 @@ class GeneralizedLinearRegressor(BaseEstimator, RegressorMixin):
             Returns predicted values of linear predictor.
         """
         check_is_fitted(self)
-        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
-                        dtype=[np.float64, np.float32], ensure_2d=True,
+        X = check_array(X,
+                        accept_sparse=['csr', 'csc', 'coo'],
+                        dtype=[np.float64, np.float32],
+                        ensure_2d=True,
                         allow_nd=False)
         return X @ self.coef_ + self.intercept_
 
@@ -431,12 +446,23 @@ class PoissonRegressor(GeneralizedLinearRegressor):
     n_iter_ : int
         Actual number of iterations used in the solver.
     """
-    def __init__(self, *, alpha=1.0, fit_intercept=True, max_iter=100,
-                 tol=1e-4, warm_start=False, verbose=0):
+    def __init__(self,
+                 *,
+                 alpha=1.0,
+                 fit_intercept=True,
+                 max_iter=100,
+                 tol=1e-4,
+                 warm_start=False,
+                 verbose=0):
 
-        super().__init__(alpha=alpha, fit_intercept=fit_intercept,
-                         family="poisson", link='log', max_iter=max_iter,
-                         tol=tol, warm_start=warm_start, verbose=verbose)
+        super().__init__(alpha=alpha,
+                         fit_intercept=fit_intercept,
+                         family="poisson",
+                         link='log',
+                         max_iter=max_iter,
+                         tol=tol,
+                         warm_start=warm_start,
+                         verbose=verbose)
 
     @property
     def family(self):
@@ -494,12 +520,23 @@ class GammaRegressor(GeneralizedLinearRegressor):
     n_iter_ : int
         Actual number of iterations used in the solver.
     """
-    def __init__(self, *, alpha=1.0, fit_intercept=True, max_iter=100,
-                 tol=1e-4, warm_start=False, verbose=0):
+    def __init__(self,
+                 *,
+                 alpha=1.0,
+                 fit_intercept=True,
+                 max_iter=100,
+                 tol=1e-4,
+                 warm_start=False,
+                 verbose=0):
 
-        super().__init__(alpha=alpha, fit_intercept=fit_intercept,
-                         family="gamma", link='log', max_iter=max_iter,
-                         tol=tol, warm_start=warm_start, verbose=verbose)
+        super().__init__(alpha=alpha,
+                         fit_intercept=fit_intercept,
+                         family="gamma",
+                         link='log',
+                         max_iter=max_iter,
+                         tol=tol,
+                         warm_start=warm_start,
+                         verbose=verbose)
 
     @property
     def family(self):
@@ -588,14 +625,25 @@ class TweedieRegressor(GeneralizedLinearRegressor):
     n_iter_ : int
         Actual number of iterations used in the solver.
     """
-    def __init__(self, *, power=0.0, alpha=1.0, fit_intercept=True,
-                 link='auto', max_iter=100, tol=1e-4,
-                 warm_start=False, verbose=0):
+    def __init__(self,
+                 *,
+                 power=0.0,
+                 alpha=1.0,
+                 fit_intercept=True,
+                 link='auto',
+                 max_iter=100,
+                 tol=1e-4,
+                 warm_start=False,
+                 verbose=0):
 
-        super().__init__(alpha=alpha, fit_intercept=fit_intercept,
-                         family=TweedieDistribution(power=power), link=link,
-                         max_iter=max_iter, tol=tol,
-                         warm_start=warm_start, verbose=verbose)
+        super().__init__(alpha=alpha,
+                         fit_intercept=fit_intercept,
+                         family=TweedieDistribution(power=power),
+                         link=link,
+                         max_iter=max_iter,
+                         tol=tol,
+                         warm_start=warm_start,
+                         verbose=verbose)
 
     @property
     def family(self):

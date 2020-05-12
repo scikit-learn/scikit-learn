@@ -2,8 +2,7 @@ import numpy as np
 import scipy.sparse as sp
 import pytest
 
-from sklearn.utils._testing import (assert_array_almost_equal,
-                                   assert_allclose)
+from sklearn.utils._testing import (assert_array_almost_equal, assert_allclose)
 
 from sklearn.decomposition import PCA, KernelPCA
 from sklearn.datasets import make_circles
@@ -22,7 +21,7 @@ def test_kernel_pca():
 
     def histogram(x, y, **kwargs):
         # Histogram kernel implemented as a callable.
-        assert kwargs == {}    # no kernel_params that we didn't ask for
+        assert kwargs == {}  # no kernel_params that we didn't ask for
         return np.minimum(x, y).sum()
 
     for eigen_solver in ("auto", "dense", "arpack"):
@@ -32,7 +31,9 @@ def test_kernel_pca():
             inv = not callable(kernel)
 
             # transform fit data
-            kpca = KernelPCA(4, kernel=kernel, eigen_solver=eigen_solver,
+            kpca = KernelPCA(4,
+                             kernel=kernel,
+                             eigen_solver=eigen_solver,
                              fit_inverse_transform=inv)
             X_fit_transformed = kpca.fit_transform(X_fit)
             X_fit_transformed2 = kpca.fit(X_fit).transform(X_fit)
@@ -45,8 +46,7 @@ def test_kernel_pca():
 
             # transform new data
             X_pred_transformed = kpca.transform(X_pred)
-            assert (X_pred_transformed.shape[1] ==
-                         X_fit_transformed.shape[1])
+            assert (X_pred_transformed.shape[1] == X_fit_transformed.shape[1])
 
             # inverse transform
             if inv:
@@ -80,11 +80,12 @@ def test_kernel_pca_deterministic_output():
     for solver in eigen_solver:
         transformed_X = np.zeros((20, 2))
         for i in range(20):
-            kpca = KernelPCA(n_components=2, eigen_solver=solver,
+            kpca = KernelPCA(n_components=2,
+                             eigen_solver=solver,
                              random_state=rng)
             transformed_X[i, :] = kpca.fit_transform(X)[0]
-        assert_allclose(
-            transformed_X, np.tile(transformed_X[0, :], 20).reshape(20, 2))
+        assert_allclose(transformed_X,
+                        np.tile(transformed_X[0, :], 20).reshape(20, 2))
 
 
 def test_kernel_pca_sparse():
@@ -95,7 +96,9 @@ def test_kernel_pca_sparse():
     for eigen_solver in ("auto", "arpack"):
         for kernel in ("linear", "rbf", "poly"):
             # transform fit data
-            kpca = KernelPCA(4, kernel=kernel, eigen_solver=eigen_solver,
+            kpca = KernelPCA(4,
+                             kernel=kernel,
+                             eigen_solver=eigen_solver,
                              fit_inverse_transform=False)
             X_fit_transformed = kpca.fit_transform(X_fit)
             X_fit_transformed2 = kpca.fit(X_fit).transform(X_fit)
@@ -104,8 +107,7 @@ def test_kernel_pca_sparse():
 
             # transform new data
             X_pred_transformed = kpca.transform(X_pred)
-            assert (X_pred_transformed.shape[1] ==
-                         X_fit_transformed.shape[1])
+            assert (X_pred_transformed.shape[1] == X_fit_transformed.shape[1])
 
             # inverse transform
             # X_pred2 = kpca.inverse_transform(X_pred_transformed)
@@ -165,7 +167,8 @@ def test_leave_zero_eig():
     # Assert that even with all np warnings on, there is no div by zero warning
     with pytest.warns(None) as record:
         with np.errstate(all='warn'):
-            k = KernelPCA(n_components=2, remove_zero_eig=False,
+            k = KernelPCA(n_components=2,
+                          remove_zero_eig=False,
                           eigen_solver="dense")
             # Fit, then transform
             A = k.fit(X_fit).transform(X_fit)
@@ -190,22 +193,24 @@ def test_kernel_pca_precomputed():
     for eigen_solver in ("dense", "arpack"):
         X_kpca = KernelPCA(4, eigen_solver=eigen_solver).\
             fit(X_fit).transform(X_pred)
-        X_kpca2 = KernelPCA(
-            4, eigen_solver=eigen_solver, kernel='precomputed').fit(
-                np.dot(X_fit, X_fit.T)).transform(np.dot(X_pred, X_fit.T))
+        X_kpca2 = KernelPCA(4, eigen_solver=eigen_solver,
+                            kernel='precomputed').fit(np.dot(
+                                X_fit,
+                                X_fit.T)).transform(np.dot(X_pred, X_fit.T))
 
-        X_kpca_train = KernelPCA(
-            4, eigen_solver=eigen_solver,
-            kernel='precomputed').fit_transform(np.dot(X_fit, X_fit.T))
-        X_kpca_train2 = KernelPCA(
-            4, eigen_solver=eigen_solver, kernel='precomputed').fit(
-                np.dot(X_fit, X_fit.T)).transform(np.dot(X_fit, X_fit.T))
+        X_kpca_train = KernelPCA(4,
+                                 eigen_solver=eigen_solver,
+                                 kernel='precomputed').fit_transform(
+                                     np.dot(X_fit, X_fit.T))
+        X_kpca_train2 = KernelPCA(4,
+                                  eigen_solver=eigen_solver,
+                                  kernel='precomputed').fit(
+                                      np.dot(X_fit, X_fit.T)).transform(
+                                          np.dot(X_fit, X_fit.T))
 
-        assert_array_almost_equal(np.abs(X_kpca),
-                                  np.abs(X_kpca2))
+        assert_array_almost_equal(np.abs(X_kpca), np.abs(X_kpca2))
 
-        assert_array_almost_equal(np.abs(X_kpca_train),
-                                  np.abs(X_kpca_train2))
+        assert_array_almost_equal(np.abs(X_kpca_train), np.abs(X_kpca_train2))
 
 
 def test_kernel_pca_invalid_kernel():
@@ -219,12 +224,11 @@ def test_kernel_pca_invalid_kernel():
 def test_gridsearch_pipeline():
     # Test if we can do a grid-search to find parameters to separate
     # circles with a perceptron model.
-    X, y = make_circles(n_samples=400, factor=.3, noise=.05,
-                        random_state=0)
+    X, y = make_circles(n_samples=400, factor=.3, noise=.05, random_state=0)
     kpca = KernelPCA(kernel="rbf", n_components=2)
     pipeline = Pipeline([("kernel_pca", kpca),
                          ("Perceptron", Perceptron(max_iter=5))])
-    param_grid = dict(kernel_pca__gamma=2. ** np.arange(-2, 2))
+    param_grid = dict(kernel_pca__gamma=2.**np.arange(-2, 2))
     grid_search = GridSearchCV(pipeline, cv=3, param_grid=param_grid)
     grid_search.fit(X, y)
     assert grid_search.best_score_ == 1
@@ -233,8 +237,7 @@ def test_gridsearch_pipeline():
 def test_gridsearch_pipeline_precomputed():
     # Test if we can do a grid-search to find parameters to separate
     # circles with a perceptron model using a precomputed kernel.
-    X, y = make_circles(n_samples=400, factor=.3, noise=.05,
-                        random_state=0)
+    X, y = make_circles(n_samples=400, factor=.3, noise=.05, random_state=0)
     kpca = KernelPCA(kernel="precomputed", n_components=2)
     pipeline = Pipeline([("kernel_pca", kpca),
                          ("Perceptron", Perceptron(max_iter=5))])
@@ -247,8 +250,7 @@ def test_gridsearch_pipeline_precomputed():
 
 def test_nested_circles():
     # Test the linear separability of the first 2D KPCA transform
-    X, y = make_circles(n_samples=400, factor=.3, noise=.05,
-                        random_state=0)
+    X, y = make_circles(n_samples=400, factor=.3, noise=.05, random_state=0)
 
     # 2D nested circles are not linearly separable
     train_score = Perceptron(max_iter=5).fit(X, y).score(X, y)
@@ -259,8 +261,10 @@ def test_nested_circles():
     # Note that the gamma value is data dependent. If this test breaks
     # and the gamma value has to be updated, the Kernel PCA example will
     # have to be updated too.
-    kpca = KernelPCA(kernel="rbf", n_components=2,
-                     fit_inverse_transform=True, gamma=2.)
+    kpca = KernelPCA(kernel="rbf",
+                     n_components=2,
+                     fit_inverse_transform=True,
+                     gamma=2.)
     X_kpca = kpca.fit_transform(X)
 
     # The data is perfectly linearly separable in that space
@@ -273,10 +277,9 @@ def test_kernel_conditioning():
     Non-regression test for issue #12140 (PR #12145)"""
 
     # create a pathological X leading to small non-zero eigenvalue
-    X = [[5, 1],
-         [5+1e-8, 1e-8],
-         [5+1e-8, 0]]
-    kpca = KernelPCA(kernel="linear", n_components=2,
+    X = [[5, 1], [5 + 1e-8, 1e-8], [5 + 1e-8, 0]]
+    kpca = KernelPCA(kernel="linear",
+                     n_components=2,
                      fit_inverse_transform=True)
     kpca.fit(X)
 
@@ -288,7 +291,9 @@ def test_kernel_conditioning():
 @pytest.mark.parametrize("kernel",
                          ["linear", "poly", "rbf", "sigmoid", "cosine"])
 def test_kernel_pca_inverse_transform(kernel):
-    X, *_ = make_blobs(n_samples=100, n_features=4, centers=[[1, 1, 1, 1]],
+    X, *_ = make_blobs(n_samples=100,
+                       n_features=4,
+                       centers=[[1, 1, 1, 1]],
                        random_state=0)
 
     kp = KernelPCA(n_components=2, kernel=kernel, fit_inverse_transform=True)

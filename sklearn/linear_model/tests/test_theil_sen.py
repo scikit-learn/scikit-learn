@@ -246,8 +246,7 @@ def test_verbosity():
     # Check that Theil-Sen can be verbose
     with no_stdout_stderr():
         TheilSenRegressor(verbose=True, random_state=0).fit(X, y)
-        TheilSenRegressor(verbose=True,
-                          max_subpopulation=10,
+        TheilSenRegressor(verbose=True, max_subpopulation=10,
                           random_state=0).fit(X, y)
 
 

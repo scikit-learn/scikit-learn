@@ -13,6 +13,7 @@ from sklearn.utils._testing import if_safe_multiprocessing_with_blas
 from sklearn.decomposition import SparsePCA, MiniBatchSparsePCA, PCA
 from sklearn.utils import check_random_state
 
+
 def generate_toy_data(n_components, n_samples, image_size, random_state=None):
     n_features = image_size[0] * image_size[1]
 
@@ -33,6 +34,7 @@ def generate_toy_data(n_components, n_samples, image_size, random_state=None):
     Y = np.dot(U, V)
     Y += 0.1 * rng.randn(Y.shape[0], Y.shape[1])  # Add noise
     return Y, U, V
+
 
 # SparsePCA can be a bit slow. To avoid having test times go up, we
 # test different aspects of the code in the same test
@@ -56,12 +58,16 @@ def test_fit_transform():
     alpha = 1
     rng = np.random.RandomState(0)
     Y, _, _ = generate_toy_data(3, 10, (8, 8), random_state=rng)  # wide array
-    spca_lars = SparsePCA(n_components=3, method='lars', alpha=alpha,
+    spca_lars = SparsePCA(n_components=3,
+                          method='lars',
+                          alpha=alpha,
                           random_state=0)
     spca_lars.fit(Y)
 
     # Test that CD gives similar results
-    spca_lasso = SparsePCA(n_components=3, method='cd', random_state=0,
+    spca_lasso = SparsePCA(n_components=3,
+                           method='cd',
+                           random_state=0,
                            alpha=alpha)
     spca_lasso.fit(Y)
     assert_array_almost_equal(spca_lasso.components_, spca_lars.components_)
@@ -72,12 +78,17 @@ def test_fit_transform_parallel():
     alpha = 1
     rng = np.random.RandomState(0)
     Y, _, _ = generate_toy_data(3, 10, (8, 8), random_state=rng)  # wide array
-    spca_lars = SparsePCA(n_components=3, method='lars', alpha=alpha,
+    spca_lars = SparsePCA(n_components=3,
+                          method='lars',
+                          alpha=alpha,
                           random_state=0)
     spca_lars.fit(Y)
     U1 = spca_lars.transform(Y)
     # Test multiple CPUs
-    spca = SparsePCA(n_components=3, n_jobs=2, method='lars', alpha=alpha,
+    spca = SparsePCA(n_components=3,
+                     n_jobs=2,
+                     method='lars',
+                     alpha=alpha,
                      random_state=0).fit(Y)
     U2 = spca.transform(Y)
     assert not np.all(spca_lars.components_ == 0)
@@ -108,7 +119,10 @@ def test_initialization():
     rng = np.random.RandomState(0)
     U_init = rng.randn(5, 3)
     V_init = rng.randn(3, 4)
-    model = SparsePCA(n_components=3, U_init=U_init, V_init=V_init, max_iter=0,
+    model = SparsePCA(n_components=3,
+                      U_init=U_init,
+                      V_init=V_init,
+                      max_iter=0,
                       random_state=rng)
     model.fit(rng.randn(5, 4))
     assert_allclose(model.components_,
@@ -144,19 +158,25 @@ def test_mini_batch_fit_transform():
         _mp = joblib.parallel.multiprocessing
         joblib.parallel.multiprocessing = None
         try:
-            spca = MiniBatchSparsePCA(n_components=3, n_jobs=2, alpha=alpha,
+            spca = MiniBatchSparsePCA(n_components=3,
+                                      n_jobs=2,
+                                      alpha=alpha,
                                       random_state=0)
             U2 = spca.fit(Y).transform(Y)
         finally:
             joblib.parallel.multiprocessing = _mp
     else:  # we can efficiently use parallelism
-        spca = MiniBatchSparsePCA(n_components=3, n_jobs=2, alpha=alpha,
+        spca = MiniBatchSparsePCA(n_components=3,
+                                  n_jobs=2,
+                                  alpha=alpha,
                                   random_state=0)
         U2 = spca.fit(Y).transform(Y)
     assert not np.all(spca_lars.components_ == 0)
     assert_array_almost_equal(U1, U2)
     # Test that CD gives similar results
-    spca_lasso = MiniBatchSparsePCA(n_components=3, method='cd', alpha=alpha,
+    spca_lasso = MiniBatchSparsePCA(n_components=3,
+                                    method='cd',
+                                    alpha=alpha,
                                     random_state=0).fit(Y)
     assert_array_almost_equal(spca_lasso.components_, spca_lars.components_)
 
@@ -165,7 +185,9 @@ def test_scaling_fit_transform():
     alpha = 1
     rng = np.random.RandomState(0)
     Y, _, _ = generate_toy_data(3, 1000, (8, 8), random_state=rng)
-    spca_lars = SparsePCA(n_components=3, method='lars', alpha=alpha,
+    spca_lars = SparsePCA(n_components=3,
+                          method='lars',
+                          alpha=alpha,
                           random_state=rng)
     results_train = spca_lars.fit_transform(Y)
     results_test = spca_lars.transform(Y[:10])
@@ -183,7 +205,8 @@ def test_pca_vs_spca():
     results_test_pca = pca.transform(Z)
     results_test_spca = spca.transform(Z)
     assert_allclose(np.abs(spca.components_.dot(pca.components_.T)),
-                    np.eye(2), atol=1e-5)
+                    np.eye(2),
+                    atol=1e-5)
     results_test_pca *= np.sign(results_test_pca[0, :])
     results_test_spca *= np.sign(results_test_spca[0, :])
     assert_allclose(results_test_pca, results_test_spca)

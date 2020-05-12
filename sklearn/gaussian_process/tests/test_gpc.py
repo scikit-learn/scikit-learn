@@ -29,22 +29,21 @@ y_mc[fX < -0.35] = 0
 y_mc[(fX >= -0.35) & (fX < 0.35)] = 1
 y_mc[fX > 0.35] = 2
 
-
 fixed_kernel = RBF(length_scale=1.0, length_scale_bounds="fixed")
-kernels = [RBF(length_scale=0.1), fixed_kernel,
-           RBF(length_scale=1.0, length_scale_bounds=(1e-3, 1e3)),
-           C(1.0, (1e-2, 1e2)) *
-           RBF(length_scale=1.0, length_scale_bounds=(1e-3, 1e3))]
-non_fixed_kernels = [kernel for kernel in kernels
-                     if kernel != fixed_kernel]
+kernels = [
+    RBF(length_scale=0.1), fixed_kernel,
+    RBF(length_scale=1.0, length_scale_bounds=(1e-3, 1e3)),
+    C(1.0,
+      (1e-2, 1e2)) * RBF(length_scale=1.0, length_scale_bounds=(1e-3, 1e3))
+]
+non_fixed_kernels = [kernel for kernel in kernels if kernel != fixed_kernel]
 
 
 @pytest.mark.parametrize('kernel', kernels)
 def test_predict_consistent(kernel):
     # Check binary predict decision has also predicted probability above 0.5.
     gpc = GaussianProcessClassifier(kernel=kernel).fit(X, y)
-    assert_array_equal(gpc.predict(X),
-                       gpc.predict_proba(X)[:, 1] >= 0.5)
+    assert_array_equal(gpc.predict(X), gpc.predict_proba(X)[:, 1] >= 0.5)
 
 
 def test_predict_consistent_structured():
@@ -53,8 +52,7 @@ def test_predict_consistent_structured():
     y = np.array([True, False, True])
     kernel = MiniSeqKernel(baseline_similarity_bounds='fixed')
     gpc = GaussianProcessClassifier(kernel=kernel).fit(X, y)
-    assert_array_equal(gpc.predict(X),
-                       gpc.predict_proba(X)[:, 1] >= 0.5)
+    assert_array_equal(gpc.predict(X), gpc.predict_proba(X)[:, 1] >= 0.5)
 
 
 @pytest.mark.parametrize('kernel', non_fixed_kernels)
@@ -91,9 +89,9 @@ def test_converged_to_local_maximum(kernel):
     lml, lml_gradient = \
         gpc.log_marginal_likelihood(gpc.kernel_.theta, True)
 
-    assert np.all((np.abs(lml_gradient) < 1e-4) |
-                  (gpc.kernel_.theta == gpc.kernel_.bounds[:, 0]) |
-                  (gpc.kernel_.theta == gpc.kernel_.bounds[:, 1]))
+    assert np.all((np.abs(lml_gradient) < 1e-4)
+                  | (gpc.kernel_.theta == gpc.kernel_.bounds[:, 0])
+                  | (gpc.kernel_.theta == gpc.kernel_.bounds[:, 1]))
 
 
 @pytest.mark.parametrize('kernel', kernels)
@@ -125,7 +123,8 @@ def test_random_starts():
     last_lml = -np.inf
     for n_restarts_optimizer in range(5):
         gp = GaussianProcessClassifier(
-            kernel=kernel, n_restarts_optimizer=n_restarts_optimizer,
+            kernel=kernel,
+            n_restarts_optimizer=n_restarts_optimizer,
             random_state=0).fit(X, y)
         lml = gp.log_marginal_likelihood(gp.kernel_.theta)
         assert lml > last_lml - np.finfo(np.float32).eps
@@ -141,8 +140,9 @@ def test_custom_optimizer(kernel):
         theta_opt, func_min = \
             initial_theta, obj_func(initial_theta, eval_gradient=False)
         for _ in range(10):
-            theta = np.atleast_1d(rng.uniform(np.maximum(-2, bounds[:, 0]),
-                                              np.minimum(1, bounds[:, 1])))
+            theta = np.atleast_1d(
+                rng.uniform(np.maximum(-2, bounds[:, 0]),
+                            np.minimum(1, bounds[:, 1])))
             f = obj_func(theta, eval_gradient=False)
             if f < func_min:
                 theta_opt, func_min = theta, f

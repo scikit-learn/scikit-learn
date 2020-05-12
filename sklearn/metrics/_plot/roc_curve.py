@@ -112,9 +112,16 @@ class RocCurveDisplay:
 
 
 @_deprecate_positional_args
-def plot_roc_curve(estimator, X, y, *, sample_weight=None,
-                   drop_intermediate=True, response_method="auto",
-                   name=None, ax=None, **kwargs):
+def plot_roc_curve(estimator,
+                   X,
+                   y,
+                   *,
+                   sample_weight=None,
+                   drop_intermediate=True,
+                   response_method="auto",
+                   name=None,
+                   ax=None,
+                   **kwargs):
     """Plot Receiver operating characteristic (ROC) curve.
 
     Extra keyword arguments will be passed to matplotlib's `plot`.
@@ -175,14 +182,13 @@ def plot_roc_curve(estimator, X, y, *, sample_weight=None,
     """
     check_matplotlib_support('plot_roc_curve')
 
-    classification_error = (
-        "{} should be a binary classifier".format(estimator.__class__.__name__)
-    )
+    classification_error = ("{} should be a binary classifier".format(
+        estimator.__class__.__name__))
     if not is_classifier(estimator):
         raise ValueError(classification_error)
 
-    prediction_method = _check_classifer_response_method(estimator,
-                                                         response_method)
+    prediction_method = _check_classifer_response_method(
+        estimator, response_method)
     y_pred = prediction_method(X)
 
     if y_pred.ndim != 1:
@@ -192,12 +198,15 @@ def plot_roc_curve(estimator, X, y, *, sample_weight=None,
             y_pred = y_pred[:, 1]
 
     pos_label = estimator.classes_[1]
-    fpr, tpr, _ = roc_curve(y, y_pred, pos_label=pos_label,
+    fpr, tpr, _ = roc_curve(y,
+                            y_pred,
+                            pos_label=pos_label,
                             sample_weight=sample_weight,
                             drop_intermediate=drop_intermediate)
     roc_auc = auc(fpr, tpr)
     name = estimator.__class__.__name__ if name is None else name
-    viz = RocCurveDisplay(
-        fpr=fpr, tpr=tpr, roc_auc=roc_auc, estimator_name=name
-    )
+    viz = RocCurveDisplay(fpr=fpr,
+                          tpr=tpr,
+                          roc_auc=roc_auc,
+                          estimator_name=name)
     return viz.plot(ax=ax, name=name, **kwargs)

@@ -30,8 +30,8 @@ class MockBiclustering(BiclusterMixin, BaseEstimator):
 
     def get_indices(self, i):
         # Overridden to reproduce old get_submatrix test.
-        return (np.where([True, True, False, False, True])[0],
-                np.where([False, False, True, True])[0])
+        return (np.where([True, True, False, False,
+                          True])[0], np.where([False, False, True, True])[0])
 
 
 def test_get_submatrix():
@@ -42,9 +42,7 @@ def test_get_submatrix():
         submatrix = model.get_submatrix(0, X)
         if issparse(submatrix):
             submatrix = submatrix.toarray()
-        assert_array_equal(submatrix, [[2, 3],
-                                       [6, 7],
-                                       [18, 19]])
+        assert_array_equal(submatrix, [[2, 3], [6, 7], [18, 19]])
         submatrix[:] = -1
         if issparse(X):
             X = X.toarray()
@@ -62,13 +60,17 @@ def _test_shape_indices(model):
 
 def test_spectral_coclustering():
     # Test Dhillon's Spectral CoClustering on a simple problem.
-    param_grid = {'svd_method': ['randomized', 'arpack'],
-                  'n_svd_vecs': [None, 20],
-                  'mini_batch': [False, True],
-                  'init': ['k-means++'],
-                  'n_init': [10]}
+    param_grid = {
+        'svd_method': ['randomized', 'arpack'],
+        'n_svd_vecs': [None, 20],
+        'mini_batch': [False, True],
+        'init': ['k-means++'],
+        'n_init': [10]
+    }
     random_state = 0
-    S, rows, cols = make_biclusters((30, 30), 3, noise=0.5,
+    S, rows, cols = make_biclusters((30, 30),
+                                    3,
+                                    noise=0.5,
                                     random_state=random_state)
     S -= S.min()  # needs to be nonnegative before making it sparse
     S = np.where(S < 1, 0, S)  # threshold some values
@@ -82,21 +84,21 @@ def test_spectral_coclustering():
             assert model.rows_.shape == (3, 30)
             assert_array_equal(model.rows_.sum(axis=0), np.ones(30))
             assert_array_equal(model.columns_.sum(axis=0), np.ones(30))
-            assert consensus_score(model.biclusters_,
-                                   (rows, cols)) == 1
+            assert consensus_score(model.biclusters_, (rows, cols)) == 1
 
             _test_shape_indices(model)
 
 
 def test_spectral_biclustering():
     # Test Kluger methods on a checkerboard dataset.
-    S, rows, cols = make_checkerboard((30, 30), 3, noise=0.5,
-                                      random_state=0)
+    S, rows, cols = make_checkerboard((30, 30), 3, noise=0.5, random_state=0)
 
-    non_default_params = {'method': ['scale', 'log'],
-                          'svd_method': ['arpack'],
-                          'n_svd_vecs': [20],
-                          'mini_batch': [True]}
+    non_default_params = {
+        'method': ['scale', 'log'],
+        'svd_method': ['arpack'],
+        'n_svd_vecs': [20],
+        'mini_batch': [True]
+    }
 
     for mat in (S, csr_matrix(S)):
         for param_name, param_values in non_default_params.items():
@@ -120,12 +122,10 @@ def test_spectral_biclustering():
 
                 assert model.rows_.shape == (9, 30)
                 assert model.columns_.shape == (9, 30)
-                assert_array_equal(model.rows_.sum(axis=0),
-                                   np.repeat(3, 30))
+                assert_array_equal(model.rows_.sum(axis=0), np.repeat(3, 30))
                 assert_array_equal(model.columns_.sum(axis=0),
                                    np.repeat(3, 30))
-                assert consensus_score(model.biclusters_,
-                                       (rows, cols)) == 1
+                assert consensus_score(model.biclusters_, (rows, cols)) == 1
 
                 _test_shape_indices(model)
 
@@ -137,10 +137,8 @@ def _do_scale_test(scaled):
     if issparse(scaled):
         row_sum = np.asarray(row_sum).squeeze()
         col_sum = np.asarray(col_sum).squeeze()
-    assert_array_almost_equal(row_sum, np.tile(row_sum.mean(), 100),
-                              decimal=1)
-    assert_array_almost_equal(col_sum, np.tile(col_sum.mean(), 100),
-                              decimal=1)
+    assert_array_almost_equal(row_sum, np.tile(row_sum.mean(), 100), decimal=1)
+    assert_array_almost_equal(col_sum, np.tile(col_sum.mean(), 100), decimal=1)
 
 
 def _do_bistochastic_test(scaled):
@@ -182,8 +180,7 @@ def test_log_normalize():
 
 def test_fit_best_piecewise():
     model = SpectralBiclustering(random_state=0)
-    vectors = np.array([[0, 0, 0, 1, 1, 1],
-                        [2, 2, 2, 3, 3, 3],
+    vectors = np.array([[0, 0, 0, 1, 1, 1], [2, 2, 2, 3, 3, 3],
                         [0, 1, 2, 3, 4, 5]])
     best = model._fit_best_piecewise(vectors, n_best=2, n_clusters=2)
     assert_array_equal(best, vectors[:2])
@@ -191,16 +188,10 @@ def test_fit_best_piecewise():
 
 def test_project_and_cluster():
     model = SpectralBiclustering(random_state=0)
-    data = np.array([[1, 1, 1],
-                     [1, 1, 1],
-                     [3, 6, 3],
-                     [3, 6, 3]])
-    vectors = np.array([[1, 0],
-                        [0, 1],
-                        [0, 0]])
+    data = np.array([[1, 1, 1], [1, 1, 1], [3, 6, 3], [3, 6, 3]])
+    vectors = np.array([[1, 0], [0, 1], [0, 0]])
     for mat in (data, csr_matrix(data)):
-        labels = model._project_and_cluster(mat, vectors,
-                                            n_clusters=2)
+        labels = model._project_and_cluster(mat, vectors, n_clusters=2)
         assert_almost_equal(v_measure_score(labels, [0, 0, 1, 1]), 1.0)
 
 
@@ -208,36 +199,37 @@ def test_perfect_checkerboard():
     # XXX Previously failed on build bot (not reproducible)
     model = SpectralBiclustering(3, svd_method="arpack", random_state=0)
 
-    S, rows, cols = make_checkerboard((30, 30), 3, noise=0,
-                                      random_state=0)
+    S, rows, cols = make_checkerboard((30, 30), 3, noise=0, random_state=0)
     model.fit(S)
-    assert consensus_score(model.biclusters_,
-                           (rows, cols)) == 1
+    assert consensus_score(model.biclusters_, (rows, cols)) == 1
 
-    S, rows, cols = make_checkerboard((40, 30), 3, noise=0,
-                                      random_state=0)
+    S, rows, cols = make_checkerboard((40, 30), 3, noise=0, random_state=0)
     model.fit(S)
-    assert consensus_score(model.biclusters_,
-                           (rows, cols)) == 1
+    assert consensus_score(model.biclusters_, (rows, cols)) == 1
 
-    S, rows, cols = make_checkerboard((30, 40), 3, noise=0,
-                                      random_state=0)
+    S, rows, cols = make_checkerboard((30, 40), 3, noise=0, random_state=0)
     model.fit(S)
-    assert consensus_score(model.biclusters_,
-                           (rows, cols)) == 1
+    assert consensus_score(model.biclusters_, (rows, cols)) == 1
 
 
-@pytest.mark.parametrize(
-    "args",
-    [{'n_clusters': (3, 3, 3)},
-     {'n_clusters': 'abc'},
-     {'n_clusters': (3, 'abc')},
-     {'method': 'unknown'},
-     {'n_components': 0},
-     {'n_best': 0},
-     {'svd_method': 'unknown'},
-     {'n_components': 3, 'n_best': 4}]
-)
+@pytest.mark.parametrize("args", [{
+    'n_clusters': (3, 3, 3)
+}, {
+    'n_clusters': 'abc'
+}, {
+    'n_clusters': (3, 'abc')
+}, {
+    'method': 'unknown'
+}, {
+    'n_components': 0
+}, {
+    'n_best': 0
+}, {
+    'svd_method': 'unknown'
+}, {
+    'n_components': 3,
+    'n_best': 4
+}])
 def test_errors(args):
     data = np.arange(25).reshape((5, 5))
 

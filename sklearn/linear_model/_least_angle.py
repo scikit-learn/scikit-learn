@@ -30,10 +30,21 @@ SOLVE_TRIANGULAR_ARGS = {'check_finite': False}
 
 
 @_deprecate_positional_args
-def lars_path(X, y, Xy=None, *, Gram=None, max_iter=500, alpha_min=0,
-              method='lar', copy_X=True, eps=np.finfo(np.float).eps,
-              copy_Gram=True, verbose=0, return_path=True,
-              return_n_iter=False, positive=False):
+def lars_path(X,
+              y,
+              Xy=None,
+              *,
+              Gram=None,
+              max_iter=500,
+              alpha_min=0,
+              method='lar',
+              copy_X=True,
+              eps=np.finfo(np.float).eps,
+              copy_Gram=True,
+              verbose=0,
+              return_path=True,
+              return_n_iter=False,
+              positive=False):
     """Compute Least Angle Regression or Lasso path using LARS algorithm [1]
 
     The optimization objective for the case method='lasso' is::
@@ -148,22 +159,40 @@ def lars_path(X, y, Xy=None, *, Gram=None, max_iter=500, alpha_min=0,
 
     """
     if X is None and Gram is not None:
-        raise ValueError(
-            'X cannot be None if Gram is not None'
-            'Use lars_path_gram to avoid passing X and y.'
-        )
-    return _lars_path_solver(
-        X=X, y=y, Xy=Xy, Gram=Gram, n_samples=None, max_iter=max_iter,
-        alpha_min=alpha_min, method=method, copy_X=copy_X,
-        eps=eps, copy_Gram=copy_Gram, verbose=verbose, return_path=return_path,
-        return_n_iter=return_n_iter, positive=positive)
+        raise ValueError('X cannot be None if Gram is not None'
+                         'Use lars_path_gram to avoid passing X and y.')
+    return _lars_path_solver(X=X,
+                             y=y,
+                             Xy=Xy,
+                             Gram=Gram,
+                             n_samples=None,
+                             max_iter=max_iter,
+                             alpha_min=alpha_min,
+                             method=method,
+                             copy_X=copy_X,
+                             eps=eps,
+                             copy_Gram=copy_Gram,
+                             verbose=verbose,
+                             return_path=return_path,
+                             return_n_iter=return_n_iter,
+                             positive=positive)
 
 
 @_deprecate_positional_args
-def lars_path_gram(Xy, Gram, *, n_samples, max_iter=500, alpha_min=0,
-                   method='lar', copy_X=True, eps=np.finfo(np.float).eps,
-                   copy_Gram=True, verbose=0, return_path=True,
-                   return_n_iter=False, positive=False):
+def lars_path_gram(Xy,
+                   Gram,
+                   *,
+                   n_samples,
+                   max_iter=500,
+                   alpha_min=0,
+                   method='lar',
+                   copy_X=True,
+                   eps=np.finfo(np.float).eps,
+                   copy_Gram=True,
+                   verbose=0,
+                   return_path=True,
+                   return_n_iter=False,
+                   positive=False):
     """lars_path in the sufficient stats mode [1]
 
     The optimization objective for the case method='lasso' is::
@@ -268,18 +297,38 @@ def lars_path_gram(Xy, Gram, *, n_samples, max_iter=500, alpha_min=0,
            <https://en.wikipedia.org/wiki/Lasso_(statistics)>`_
 
     """
-    return _lars_path_solver(
-        X=None, y=None, Xy=Xy, Gram=Gram, n_samples=n_samples,
-        max_iter=max_iter, alpha_min=alpha_min, method=method,
-        copy_X=copy_X, eps=eps, copy_Gram=copy_Gram,
-        verbose=verbose, return_path=return_path,
-        return_n_iter=return_n_iter, positive=positive)
+    return _lars_path_solver(X=None,
+                             y=None,
+                             Xy=Xy,
+                             Gram=Gram,
+                             n_samples=n_samples,
+                             max_iter=max_iter,
+                             alpha_min=alpha_min,
+                             method=method,
+                             copy_X=copy_X,
+                             eps=eps,
+                             copy_Gram=copy_Gram,
+                             verbose=verbose,
+                             return_path=return_path,
+                             return_n_iter=return_n_iter,
+                             positive=positive)
 
 
-def _lars_path_solver(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
-                      alpha_min=0, method='lar', copy_X=True,
-                      eps=np.finfo(np.float).eps, copy_Gram=True, verbose=0,
-                      return_path=True, return_n_iter=False, positive=False):
+def _lars_path_solver(X,
+                      y,
+                      Xy=None,
+                      Gram=None,
+                      n_samples=None,
+                      max_iter=500,
+                      alpha_min=0,
+                      method='lar',
+                      copy_X=True,
+                      eps=np.finfo(np.float).eps,
+                      copy_Gram=True,
+                      verbose=0,
+                      return_path=True,
+                      return_n_iter=False,
+                      positive=False):
     """Compute Least Angle Regression or Lasso path using LARS algorithm [1]
 
     The optimization objective for the case method='lasso' is::
@@ -395,10 +444,8 @@ def _lars_path_solver(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
 
     """
     if method == 'lar' and positive:
-        raise ValueError(
-                "Positive constraint not supported for 'lar' "
-                "coding method."
-            )
+        raise ValueError("Positive constraint not supported for 'lar' "
+                         "coding method.")
 
     n_samples = n_samples if n_samples is not None else y.size
 
@@ -451,11 +498,11 @@ def _lars_path_solver(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
     # referenced.
     if Gram is None:
         L = np.empty((max_features, max_features), dtype=X.dtype)
-        swap, nrm2 = linalg.get_blas_funcs(('swap', 'nrm2'), (X,))
+        swap, nrm2 = linalg.get_blas_funcs(('swap', 'nrm2'), (X, ))
     else:
         L = np.empty((max_features, max_features), dtype=Gram.dtype)
-        swap, nrm2 = linalg.get_blas_funcs(('swap', 'nrm2'), (Cov,))
-    solve_cholesky, = get_lapack_funcs(('potrs',), (L,))
+        swap, nrm2 = linalg.get_blas_funcs(('swap', 'nrm2'), (Cov, ))
+    solve_cholesky, = get_lapack_funcs(('potrs', ), (L, ))
 
     if verbose:
         if verbose > 1:
@@ -534,7 +581,7 @@ def _lars_path_solver(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
 
             if Gram is None:
                 X.T[n], X.T[m] = swap(X.T[n], X.T[m])
-                c = nrm2(X.T[n_active]) ** 2
+                c = nrm2(X.T[n_active])**2
                 L[n_active, :n_active] = \
                     np.dot(X.T[n_active], X.T[:n_active].T)
             else:
@@ -549,7 +596,8 @@ def _lars_path_solver(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
             if n_active:
                 linalg.solve_triangular(L[:n_active, :n_active],
                                         L[n_active, :n_active],
-                                        trans=0, lower=1,
+                                        trans=0,
+                                        lower=1,
                                         overwrite_b=True,
                                         **SOLVE_TRIANGULAR_ARGS)
 
@@ -567,14 +615,14 @@ def _lars_path_solver(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
                 # to get early stopping to work consistently on all versions of
                 # Python including 32 bit Python under Windows seems to make it
                 # very difficult to trigger the 'drop for good' strategy.
-                warnings.warn('Regressors in active set degenerate. '
-                              'Dropping a regressor, after %i iterations, '
-                              'i.e. alpha=%.3e, '
-                              'with an active set of %i regressors, and '
-                              'the smallest cholesky pivot element being %.3e.'
-                              ' Reduce max_iter or increase eps parameters.'
-                              % (n_iter, alpha, n_active, diag),
-                              ConvergenceWarning)
+                warnings.warn(
+                    'Regressors in active set degenerate. '
+                    'Dropping a regressor, after %i iterations, '
+                    'i.e. alpha=%.3e, '
+                    'with an active set of %i regressors, and '
+                    'the smallest cholesky pivot element being %.3e.'
+                    ' Reduce max_iter or increase eps parameters.' %
+                    (n_iter, alpha, n_active, diag), ConvergenceWarning)
 
                 # XXX: need to figure a 'drop for good' way
                 Cov = Cov_not_shortened
@@ -586,21 +634,21 @@ def _lars_path_solver(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
             n_active += 1
 
             if verbose > 1:
-                print("%s\t\t%s\t\t%s\t\t%s\t\t%s" % (n_iter, active[-1], '',
-                                                      n_active, C))
+                print("%s\t\t%s\t\t%s\t\t%s\t\t%s" %
+                      (n_iter, active[-1], '', n_active, C))
 
         if method == 'lasso' and n_iter > 0 and prev_alpha[0] < alpha[0]:
             # alpha is increasing. This is because the updates of Cov are
             # bringing in too much numerical error that is greater than
             # than the remaining correlation with the
             # regressors. Time to bail out
-            warnings.warn('Early stopping the lars path, as the residues '
-                          'are small and the current value of alpha is no '
-                          'longer well controlled. %i iterations, alpha=%.3e, '
-                          'previous alpha=%.3e, with an active set of %i '
-                          'regressors.'
-                          % (n_iter, alpha, prev_alpha, n_active),
-                          ConvergenceWarning)
+            warnings.warn(
+                'Early stopping the lars path, as the residues '
+                'are small and the current value of alpha is no '
+                'longer well controlled. %i iterations, alpha=%.3e, '
+                'previous alpha=%.3e, with an active set of %i '
+                'regressors.' % (n_iter, alpha, prev_alpha, n_active),
+                ConvergenceWarning)
             break
 
         # least squares solution
@@ -621,9 +669,10 @@ def _lars_path_solver(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
                 i = 0
                 L_ = L[:n_active, :n_active].copy()
                 while not np.isfinite(AA):
-                    L_.flat[::n_active + 1] += (2 ** i) * eps
-                    least_squares, _ = solve_cholesky(
-                        L_, sign_active[:n_active], lower=True)
+                    L_.flat[::n_active + 1] += (2**i) * eps
+                    least_squares, _ = solve_cholesky(L_,
+                                                      sign_active[:n_active],
+                                                      lower=True)
                     tmp = max(np.sum(least_squares * sign_active[:n_active]),
                               eps)
                     AA = 1. / np.sqrt(tmp)
@@ -640,8 +689,7 @@ def _lars_path_solver(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
             # if huge number of features, this takes 50% of time, I
             # think could be avoided if we just update it using an
             # orthogonal (QR) decomposition of X
-            corr_eq_dir = np.dot(Gram[:n_active, n_active:].T,
-                                 least_squares)
+            corr_eq_dir = np.dot(Gram[:n_active, n_active:].T, least_squares)
 
         g1 = arrayfuncs.min_pos((C - Cov) / (AA - corr_eq_dir + tiny32))
         if positive:
@@ -718,8 +766,9 @@ def _lars_path_solver(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
                     for i in range(ii, n_active):
                         indices[i], indices[i + 1] = indices[i + 1], indices[i]
                         Gram[i], Gram[i + 1] = swap(Gram[i], Gram[i + 1])
-                        Gram[:, i], Gram[:, i + 1] = swap(Gram[:, i],
-                                                          Gram[:, i + 1])
+                        Gram[:, i], Gram[:,
+                                         i + 1] = swap(Gram[:, i], Gram[:,
+                                                                        i + 1])
 
                 # Cov_n = Cov_j + x_j * X + increment(betas) TODO:
                 # will this still work with multiple drops ?
@@ -734,8 +783,8 @@ def _lars_path_solver(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
             sign_active = np.delete(sign_active, idx)
             sign_active = np.append(sign_active, 0.)  # just to maintain size
             if verbose > 1:
-                print("%s\t\t%s\t\t%s\t\t%s\t\t%s" % (n_iter, '', drop_idx,
-                                                      n_active, abs(temp)))
+                print("%s\t\t%s\t\t%s\t\t%s\t\t%s" %
+                      (n_iter, '', drop_idx, n_active, abs(temp)))
 
     if return_path:
         # resize coefs in case of early stop
@@ -755,6 +804,7 @@ def _lars_path_solver(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
 
 ###############################################################################
 # Estimator classes
+
 
 class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
     """Least Angle Regression model a.k.a. LAR
@@ -859,10 +909,18 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
     positive = False
 
     @_deprecate_positional_args
-    def __init__(self, *, fit_intercept=True, verbose=False, normalize=True,
-                 precompute='auto', n_nonzero_coefs=500,
-                 eps=np.finfo(np.float).eps, copy_X=True, fit_path=True,
-                 jitter=None, random_state=None):
+    def __init__(self,
+                 *,
+                 fit_intercept=True,
+                 verbose=False,
+                 normalize=True,
+                 precompute='auto',
+                 n_nonzero_coefs=500,
+                 eps=np.finfo(np.float).eps,
+                 copy_X=True,
+                 fit_path=True,
+                 jitter=None,
+                 random_state=None):
         self.fit_intercept = fit_intercept
         self.verbose = verbose
         self.normalize = normalize
@@ -877,9 +935,9 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
     @staticmethod
     def _get_gram(precompute, X, y):
         if (not hasattr(precompute, '__array__')) and (
-                (precompute is True) or
-                (precompute == 'auto' and X.shape[0] > X.shape[1]) or
-                (precompute == 'auto' and y.shape[1] > 1)):
+            (precompute is True) or
+            (precompute == 'auto' and X.shape[0] > X.shape[1]) or
+            (precompute == 'auto' and y.shape[1] > 1)):
             precompute = np.dot(X.T, X)
 
         return precompute
@@ -908,11 +966,20 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
             for k in range(n_targets):
                 this_Xy = None if Xy is None else Xy[:, k]
                 alphas, active, coef_path, n_iter_ = lars_path(
-                    X, y[:, k], Gram=Gram, Xy=this_Xy, copy_X=self.copy_X,
-                    copy_Gram=True, alpha_min=alpha, method=self.method,
-                    verbose=max(0, self.verbose - 1), max_iter=max_iter,
-                    eps=self.eps, return_path=True,
-                    return_n_iter=True, positive=self.positive)
+                    X,
+                    y[:, k],
+                    Gram=Gram,
+                    Xy=this_Xy,
+                    copy_X=self.copy_X,
+                    copy_Gram=True,
+                    alpha_min=alpha,
+                    method=self.method,
+                    verbose=max(0, self.verbose - 1),
+                    max_iter=max_iter,
+                    eps=self.eps,
+                    return_path=True,
+                    return_n_iter=True,
+                    positive=self.positive)
                 self.alphas_.append(alphas)
                 self.active_.append(active)
                 self.n_iter_.append(n_iter_)
@@ -922,16 +989,26 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
             if n_targets == 1:
                 self.alphas_, self.active_, self.coef_path_, self.coef_ = [
                     a[0] for a in (self.alphas_, self.active_, self.coef_path_,
-                                   self.coef_)]
+                                   self.coef_)
+                ]
                 self.n_iter_ = self.n_iter_[0]
         else:
             for k in range(n_targets):
                 this_Xy = None if Xy is None else Xy[:, k]
                 alphas, _, self.coef_[k], n_iter_ = lars_path(
-                    X, y[:, k], Gram=Gram, Xy=this_Xy, copy_X=self.copy_X,
-                    copy_Gram=True, alpha_min=alpha, method=self.method,
-                    verbose=max(0, self.verbose - 1), max_iter=max_iter,
-                    eps=self.eps, return_path=False, return_n_iter=True,
+                    X,
+                    y[:, k],
+                    Gram=Gram,
+                    Xy=this_Xy,
+                    copy_X=self.copy_X,
+                    copy_Gram=True,
+                    alpha_min=alpha,
+                    method=self.method,
+                    verbose=max(0, self.verbose - 1),
+                    max_iter=max_iter,
+                    eps=self.eps,
+                    return_path=False,
+                    return_n_iter=True,
                     positive=self.positive)
                 self.alphas_.append(alphas)
                 self.n_iter_.append(n_iter_)
@@ -978,7 +1055,11 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
             noise = rng.uniform(high=self.jitter, size=len(y))
             y = y + noise
 
-        self._fit(X, y, max_iter=max_iter, alpha=alpha, fit_path=self.fit_path,
+        self._fit(X,
+                  y,
+                  max_iter=max_iter,
+                  alpha=alpha,
+                  fit_path=self.fit_path,
                   Xy=Xy)
 
         return self
@@ -1115,10 +1196,20 @@ class LassoLars(Lars):
     method = 'lasso'
 
     @_deprecate_positional_args
-    def __init__(self, alpha=1.0, *, fit_intercept=True, verbose=False,
-                 normalize=True, precompute='auto', max_iter=500,
-                 eps=np.finfo(np.float).eps, copy_X=True, fit_path=True,
-                 positive=False, jitter=None, random_state=None):
+    def __init__(self,
+                 alpha=1.0,
+                 *,
+                 fit_intercept=True,
+                 verbose=False,
+                 normalize=True,
+                 precompute='auto',
+                 max_iter=500,
+                 eps=np.finfo(np.float).eps,
+                 copy_X=True,
+                 fit_path=True,
+                 positive=False,
+                 jitter=None,
+                 random_state=None):
         self.alpha = alpha
         self.fit_intercept = fit_intercept
         self.max_iter = max_iter
@@ -1136,16 +1227,26 @@ class LassoLars(Lars):
 ###############################################################################
 # Cross-validated estimator classes
 
+
 def _check_copy_and_writeable(array, copy=False):
     if copy or not array.flags.writeable:
         return array.copy()
     return array
 
 
-def _lars_path_residues(X_train, y_train, X_test, y_test, Gram=None,
-                        copy=True, method='lars', verbose=False,
-                        fit_intercept=True, normalize=True, max_iter=500,
-                        eps=np.finfo(np.float).eps, positive=False):
+def _lars_path_residues(X_train,
+                        y_train,
+                        X_test,
+                        y_test,
+                        Gram=None,
+                        copy=True,
+                        method='lars',
+                        verbose=False,
+                        fit_intercept=True,
+                        normalize=True,
+                        max_iter=500,
+                        eps=np.finfo(np.float).eps,
+                        positive=False):
     """Compute the residues on left-out data for a full LARS path
 
     Parameters
@@ -1243,14 +1344,20 @@ def _lars_path_residues(X_train, y_train, X_test, y_test, Gram=None,
         y_test -= y_mean
 
     if normalize:
-        norms = np.sqrt(np.sum(X_train ** 2, axis=0))
+        norms = np.sqrt(np.sum(X_train**2, axis=0))
         nonzeros = np.flatnonzero(norms)
         X_train[:, nonzeros] /= norms[nonzeros]
 
-    alphas, active, coefs = lars_path(
-        X_train, y_train, Gram=Gram, copy_X=False, copy_Gram=False,
-        method=method, verbose=max(0, verbose - 1), max_iter=max_iter, eps=eps,
-        positive=positive)
+    alphas, active, coefs = lars_path(X_train,
+                                      y_train,
+                                      Gram=Gram,
+                                      copy_X=False,
+                                      copy_Gram=False,
+                                      method=method,
+                                      verbose=max(0, verbose - 1),
+                                      max_iter=max_iter,
+                                      eps=eps,
+                                      positive=positive)
     if normalize:
         coefs[nonzeros] /= norms[nonzeros][:, np.newaxis]
     residues = np.dot(X_test, coefs) - y_test[:, np.newaxis]
@@ -1373,19 +1480,30 @@ class LarsCV(Lars):
     method = 'lar'
 
     @_deprecate_positional_args
-    def __init__(self, *, fit_intercept=True, verbose=False, max_iter=500,
-                 normalize=True, precompute='auto', cv=None,
-                 max_n_alphas=1000, n_jobs=None, eps=np.finfo(np.float).eps,
+    def __init__(self,
+                 *,
+                 fit_intercept=True,
+                 verbose=False,
+                 max_iter=500,
+                 normalize=True,
+                 precompute='auto',
+                 cv=None,
+                 max_n_alphas=1000,
+                 n_jobs=None,
+                 eps=np.finfo(np.float).eps,
                  copy_X=True):
         self.max_iter = max_iter
         self.cv = cv
         self.max_n_alphas = max_n_alphas
         self.n_jobs = n_jobs
         super().__init__(fit_intercept=fit_intercept,
-                         verbose=verbose, normalize=normalize,
+                         verbose=verbose,
+                         normalize=normalize,
                          precompute=precompute,
                          n_nonzero_coefs=500,
-                         eps=eps, copy_X=copy_X, fit_path=True)
+                         eps=eps,
+                         copy_X=copy_X,
+                         fit_path=True)
 
     def _more_tags(self):
         return {'multioutput': False}
@@ -1417,16 +1535,24 @@ class LarsCV(Lars):
         Gram = self.precompute
         if hasattr(Gram, '__array__'):
             warnings.warn('Parameter "precompute" cannot be an array in '
-                          '%s. Automatically switch to "auto" instead.'
-                          % self.__class__.__name__)
+                          '%s. Automatically switch to "auto" instead.' %
+                          self.__class__.__name__)
             Gram = 'auto'
 
         cv_paths = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
-            delayed(_lars_path_residues)(
-                X[train], y[train], X[test], y[test], Gram=Gram, copy=False,
-                method=self.method, verbose=max(0, self.verbose - 1),
-                normalize=self.normalize, fit_intercept=self.fit_intercept,
-                max_iter=self.max_iter, eps=self.eps, positive=self.positive)
+            delayed(_lars_path_residues)(X[train],
+                                         y[train],
+                                         X[test],
+                                         y[test],
+                                         Gram=Gram,
+                                         copy=False,
+                                         method=self.method,
+                                         verbose=max(0, self.verbose - 1),
+                                         normalize=self.normalize,
+                                         fit_intercept=self.fit_intercept,
+                                         max_iter=self.max_iter,
+                                         eps=self.eps,
+                                         positive=self.positive)
             for train, test in cv.split(X, y))
         all_alphas = np.concatenate(list(zip(*cv_paths))[0])
         # Unique also sorts
@@ -1445,8 +1571,7 @@ class LarsCV(Lars):
             if alphas[-1] != all_alphas[-1]:
                 alphas = np.r_[alphas, all_alphas[-1]]
                 residues = np.r_[residues, residues[-1, np.newaxis]]
-            this_residues = interpolate.interp1d(alphas,
-                                                 residues,
+            this_residues = interpolate.interp1d(alphas, residues,
                                                  axis=0)(all_alphas)
             this_residues **= 2
             mse_path[:, index] = np.mean(this_residues, axis=-1)
@@ -1466,8 +1591,12 @@ class LarsCV(Lars):
         # Now compute the full model
         # it will call a lasso internally when self if LassoLarsCV
         # as self.method == 'lasso'
-        self._fit(X, y, max_iter=self.max_iter, alpha=best_alpha,
-                  Xy=None, fit_path=True)
+        self._fit(X,
+                  y,
+                  max_iter=self.max_iter,
+                  alpha=best_alpha,
+                  Xy=None,
+                  fit_path=True)
         return self
 
 
@@ -1615,10 +1744,19 @@ class LassoLarsCV(LarsCV):
     method = 'lasso'
 
     @_deprecate_positional_args
-    def __init__(self, *, fit_intercept=True, verbose=False, max_iter=500,
-                 normalize=True, precompute='auto', cv=None,
-                 max_n_alphas=1000, n_jobs=None, eps=np.finfo(np.float).eps,
-                 copy_X=True, positive=False):
+    def __init__(self,
+                 *,
+                 fit_intercept=True,
+                 verbose=False,
+                 max_iter=500,
+                 normalize=True,
+                 precompute='auto',
+                 cv=None,
+                 max_n_alphas=1000,
+                 n_jobs=None,
+                 eps=np.finfo(np.float).eps,
+                 copy_X=True,
+                 positive=False):
         self.fit_intercept = fit_intercept
         self.verbose = verbose
         self.max_iter = max_iter
@@ -1749,9 +1887,17 @@ class LassoLarsIC(LassoLars):
     lars_path, LassoLars, LassoLarsCV
     """
     @_deprecate_positional_args
-    def __init__(self, criterion='aic', *, fit_intercept=True, verbose=False,
-                 normalize=True, precompute='auto', max_iter=500,
-                 eps=np.finfo(np.float).eps, copy_X=True, positive=False):
+    def __init__(self,
+                 criterion='aic',
+                 *,
+                 fit_intercept=True,
+                 verbose=False,
+                 normalize=True,
+                 precompute='auto',
+                 max_iter=500,
+                 eps=np.finfo(np.float).eps,
+                 copy_X=True,
+                 positive=False):
         self.criterion = criterion
         self.fit_intercept = fit_intercept
         self.positive = positive
@@ -1798,9 +1944,18 @@ class LassoLarsIC(LassoLars):
         Gram = self.precompute
 
         alphas_, _, coef_path_, self.n_iter_ = lars_path(
-            X, y, Gram=Gram, copy_X=copy_X, copy_Gram=True, alpha_min=0.0,
-            method='lasso', verbose=self.verbose, max_iter=max_iter,
-            eps=self.eps, return_n_iter=True, positive=self.positive)
+            X,
+            y,
+            Gram=Gram,
+            copy_X=copy_X,
+            copy_Gram=True,
+            alpha_min=0.0,
+            method='lasso',
+            verbose=self.verbose,
+            max_iter=max_iter,
+            eps=self.eps,
+            return_n_iter=True,
+            positive=self.positive)
 
         n_samples = X.shape[0]
 
@@ -1812,7 +1967,7 @@ class LassoLarsIC(LassoLars):
             raise ValueError('criterion should be either bic or aic')
 
         R = y[:, np.newaxis] - np.dot(X, coef_path_)  # residuals
-        mean_squared_error = np.mean(R ** 2, axis=0)
+        mean_squared_error = np.mean(R**2, axis=0)
         sigma2 = np.var(y)
 
         df = np.zeros(coef_path_.shape[1], dtype=np.int)  # Degrees of freedom

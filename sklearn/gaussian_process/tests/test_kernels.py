@@ -18,31 +18,33 @@ from sklearn.gaussian_process.kernels \
 from sklearn.base import clone
 
 from sklearn.utils._testing import (assert_almost_equal, assert_array_equal,
-                                    assert_array_almost_equal,
-                                    assert_allclose,
+                                    assert_array_almost_equal, assert_allclose,
                                     assert_raise_message)
-
 
 X = np.random.RandomState(0).normal(0, 1, (5, 2))
 Y = np.random.RandomState(0).normal(0, 1, (6, 2))
 
 kernel_rbf_plus_white = RBF(length_scale=2.0) + WhiteKernel(noise_level=3.0)
-kernels = [RBF(length_scale=2.0), RBF(length_scale_bounds=(0.5, 2.0)),
-           ConstantKernel(constant_value=10.0),
-           2.0 * RBF(length_scale=0.33, length_scale_bounds="fixed"),
-           2.0 * RBF(length_scale=0.5), kernel_rbf_plus_white,
-           2.0 * RBF(length_scale=[0.5, 2.0]),
-           2.0 * Matern(length_scale=0.33, length_scale_bounds="fixed"),
-           2.0 * Matern(length_scale=0.5, nu=0.5),
-           2.0 * Matern(length_scale=1.5, nu=1.5),
-           2.0 * Matern(length_scale=2.5, nu=2.5),
-           2.0 * Matern(length_scale=[0.5, 2.0], nu=0.5),
-           3.0 * Matern(length_scale=[2.0, 0.5], nu=1.5),
-           4.0 * Matern(length_scale=[0.5, 0.5], nu=2.5),
-           RationalQuadratic(length_scale=0.5, alpha=1.5),
-           ExpSineSquared(length_scale=0.5, periodicity=1.5),
-           DotProduct(sigma_0=2.0), DotProduct(sigma_0=2.0) ** 2,
-           RBF(length_scale=[2.0]), Matern(length_scale=[2.0])]
+kernels = [
+    RBF(length_scale=2.0),
+    RBF(length_scale_bounds=(0.5, 2.0)),
+    ConstantKernel(constant_value=10.0),
+    2.0 * RBF(length_scale=0.33, length_scale_bounds="fixed"),
+    2.0 * RBF(length_scale=0.5), kernel_rbf_plus_white,
+    2.0 * RBF(length_scale=[0.5, 2.0]),
+    2.0 * Matern(length_scale=0.33, length_scale_bounds="fixed"), 2.0 *
+    Matern(length_scale=0.5, nu=0.5), 2.0 * Matern(length_scale=1.5, nu=1.5),
+    2.0 * Matern(length_scale=2.5, nu=2.5),
+    2.0 * Matern(length_scale=[0.5, 2.0], nu=0.5),
+    3.0 * Matern(length_scale=[2.0, 0.5], nu=1.5),
+    4.0 * Matern(length_scale=[0.5, 0.5], nu=2.5),
+    RationalQuadratic(length_scale=0.5, alpha=1.5),
+    ExpSineSquared(length_scale=0.5, periodicity=1.5),
+    DotProduct(sigma_0=2.0),
+    DotProduct(sigma_0=2.0)**2,
+    RBF(length_scale=[2.0]),
+    Matern(length_scale=[2.0])
+]
 for metric in PAIRWISE_KERNEL_FUNCTIONS:
     if metric in ["additive_chi2", "chi2"]:
         continue
@@ -70,11 +72,13 @@ def test_kernel_gradient(kernel):
 
 
 @pytest.mark.parametrize(
-        'kernel',
-        [kernel for kernel in kernels
-         # skip non-basic kernels
-         if not (isinstance(kernel, KernelOperator)
-                 or isinstance(kernel, Exponentiation))])
+    'kernel',
+    [
+        kernel for kernel in kernels
+        # skip non-basic kernels
+        if not (isinstance(kernel, KernelOperator)
+                or isinstance(kernel, Exponentiation))
+    ])
 def test_kernel_theta(kernel):
     # Check that parameter vector theta of kernel is set correctly.
     theta = kernel.theta
@@ -85,10 +89,9 @@ def test_kernel_theta(kernel):
     args = [p.name for p in init_sign if p.name != 'self']
     theta_vars = map(lambda s: s[0:-len("_bounds")],
                      filter(lambda s: s.endswith("_bounds"), args))
-    assert (
-        set(hyperparameter.name
-            for hyperparameter in kernel.hyperparameters) ==
-        set(theta_vars))
+    assert (set(
+        hyperparameter.name
+        for hyperparameter in kernel.hyperparameters) == set(theta_vars))
 
     # Check that values returned in theta are consistent with
     # hyperparameter values (being their logarithms)
@@ -109,12 +112,11 @@ def test_kernel_theta(kernel):
         assert K_gradient.shape[2] == K_gradient_new.shape[2] + 1
         if i > 0:
             assert theta[:i] == new_kernel.theta[:i]
-            assert_array_equal(K_gradient[..., :i],
-                               K_gradient_new[..., :i])
+            assert_array_equal(K_gradient[..., :i], K_gradient_new[..., :i])
         if i + 1 < len(kernel.hyperparameters):
             assert theta[i + 1:] == new_kernel.theta[i:]
-            assert_array_equal(K_gradient[..., i + 1:],
-                               K_gradient_new[..., i:])
+            assert_array_equal(K_gradient[..., i + 1:], K_gradient_new[...,
+                                                                       i:])
 
     # Check that values of theta are modified correctly
     for i, hyperparameter in enumerate(kernel.hyperparameters):
@@ -126,10 +128,13 @@ def test_kernel_theta(kernel):
         assert_almost_equal(kernel.theta[i], np.log(43))
 
 
-@pytest.mark.parametrize('kernel',
-                         [kernel for kernel in kernels
-                          # Identity is not satisfied on diagonal
-                          if kernel != kernel_rbf_plus_white])
+@pytest.mark.parametrize(
+    'kernel',
+    [
+        kernel for kernel in kernels
+        # Identity is not satisfied on diagonal
+        if kernel != kernel_rbf_plus_white
+    ])
 def test_auto_vs_cross(kernel):
     # Auto-correlation and cross-correlation should be consistent.
     K_auto = kernel(X)
@@ -148,12 +153,10 @@ def test_kernel_diag(kernel):
 def test_kernel_operator_commutative():
     # Adding kernels and multiplying kernels should be commutative.
     # Check addition
-    assert_almost_equal((RBF(2.0) + 1.0)(X),
-                        (1.0 + RBF(2.0))(X))
+    assert_almost_equal((RBF(2.0) + 1.0)(X), (1.0 + RBF(2.0))(X))
 
     # Check multiplication
-    assert_almost_equal((3.0 * RBF(2.0))(X),
-                        (RBF(2.0) * 3.0)(X))
+    assert_almost_equal((3.0 * RBF(2.0))(X), (RBF(2.0) * 3.0)(X))
 
 
 def test_kernel_anisotropic():
@@ -177,33 +180,33 @@ def test_kernel_anisotropic():
     assert_array_equal(kernel.k2.length_scale, [1.0, 4.0])
 
 
-@pytest.mark.parametrize('kernel',
-                         [kernel for kernel in kernels
-                          if kernel.is_stationary()])
+@pytest.mark.parametrize(
+    'kernel', [kernel for kernel in kernels if kernel.is_stationary()])
 def test_kernel_stationary(kernel):
     # Test stationarity of kernels.
     K = kernel(X, X + 1)
     assert_almost_equal(K[0, 0], np.diag(K))
 
 
-@pytest.mark.parametrize('kernel',  kernels)
+@pytest.mark.parametrize('kernel', kernels)
 def test_kernel_input_type(kernel):
     # Test whether kernels is for vectors or structured data
     if isinstance(kernel, Exponentiation):
-        assert(kernel.requires_vector_input ==
-               kernel.kernel.requires_vector_input)
+        assert (kernel.requires_vector_input ==
+                kernel.kernel.requires_vector_input)
     if isinstance(kernel, KernelOperator):
-        assert(kernel.requires_vector_input ==
-               (kernel.k1.requires_vector_input or
-                kernel.k2.requires_vector_input))
+        assert (kernel.requires_vector_input == (
+            kernel.k1.requires_vector_input
+            or kernel.k2.requires_vector_input))
 
 
 def test_compound_kernel_input_type():
     kernel = CompoundKernel([WhiteKernel(noise_level=3.0)])
     assert not kernel.requires_vector_input
 
-    kernel = CompoundKernel([WhiteKernel(noise_level=3.0),
-                             RBF(length_scale=2.0)])
+    kernel = CompoundKernel(
+        [WhiteKernel(noise_level=3.0),
+         RBF(length_scale=2.0)])
     assert kernel.requires_vector_input
 
 
@@ -246,8 +249,7 @@ def test_kernel_clone_after_set_params(kernel):
     params = kernel.get_params()
     # RationalQuadratic kernel is isotropic.
     isotropic_kernels = (ExpSineSquared, RationalQuadratic)
-    if 'length_scale' in params and not isinstance(kernel,
-                                                   isotropic_kernels):
+    if 'length_scale' in params and not isinstance(kernel, isotropic_kernels):
         length_scale = params['length_scale']
         if np.iterable(length_scale):
             # XXX unreached code as of v0.22
@@ -379,7 +381,7 @@ def test_warns_on_get_params_non_attribute():
 
 def test_rational_quadratic_kernel():
     kernel = RationalQuadratic(length_scale=[1., 1.])
-    assert_raise_message(AttributeError,
-                         "RationalQuadratic kernel only supports isotropic "
-                         "version, please use a single "
-                         "scalar for length_scale", kernel, X)
+    assert_raise_message(
+        AttributeError, "RationalQuadratic kernel only supports isotropic "
+        "version, please use a single "
+        "scalar for length_scale", kernel, X)

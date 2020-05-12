@@ -108,7 +108,12 @@ def barycenter_kneighbors_graph(X, n_neighbors, reg=1e-3, n_jobs=None):
                       shape=(n_samples, n_samples))
 
 
-def null_space(M, k, k_skip=1, eigen_solver='arpack', tol=1E-6, max_iter=100,
+def null_space(M,
+               k,
+               k_skip=1,
+               eigen_solver='arpack',
+               tol=1E-6,
+               max_iter=100,
                random_state=None):
     """
     Find the null space of a matrix M.
@@ -160,8 +165,11 @@ def null_space(M, k, k_skip=1, eigen_solver='arpack', tol=1E-6, max_iter=100,
         # initialize with [-1,1] as in ARPACK
         v0 = random_state.uniform(-1, 1, M.shape[0])
         try:
-            eigen_values, eigen_vectors = eigsh(M, k + k_skip, sigma=0.0,
-                                                tol=tol, maxiter=max_iter,
+            eigen_values, eigen_vectors = eigsh(M,
+                                                k + k_skip,
+                                                sigma=0.0,
+                                                tol=tol,
+                                                maxiter=max_iter,
                                                 v0=v0)
         except RuntimeError as msg:
             raise ValueError("Error in determining null-space with ARPACK. "
@@ -169,15 +177,16 @@ def null_space(M, k, k_skip=1, eigen_solver='arpack', tol=1E-6, max_iter=100,
                              "Note that method='arpack' can fail when the "
                              "weight matrix is singular or otherwise "
                              "ill-behaved.  method='dense' is recommended. "
-                             "See online documentation for more information."
-                             % msg)
+                             "See online documentation for more information." %
+                             msg)
 
         return eigen_vectors[:, k_skip:], np.sum(eigen_values[k_skip:])
     elif eigen_solver == 'dense':
         if hasattr(M, 'toarray'):
             M = M.toarray()
-        eigen_values, eigen_vectors = eigh(
-            M, eigvals=(k_skip, k + k_skip - 1), overwrite_a=True)
+        eigen_values, eigen_vectors = eigh(M,
+                                           eigvals=(k_skip, k + k_skip - 1),
+                                           overwrite_a=True)
         index = np.argsort(np.abs(eigen_values))
         return eigen_vectors[:, index], np.sum(eigen_values)
     else:
@@ -185,10 +194,19 @@ def null_space(M, k, k_skip=1, eigen_solver='arpack', tol=1E-6, max_iter=100,
 
 
 @_deprecate_positional_args
-def locally_linear_embedding(
-        X, *, n_neighbors, n_components, reg=1e-3, eigen_solver='auto',
-        tol=1e-6, max_iter=100, method='standard', hessian_tol=1E-4,
-        modified_tol=1E-12, random_state=None, n_jobs=None):
+def locally_linear_embedding(X,
+                             *,
+                             n_neighbors,
+                             n_components,
+                             reg=1e-3,
+                             eigen_solver='auto',
+                             tol=1e-6,
+                             max_iter=100,
+                             method='standard',
+                             hessian_tol=1E-4,
+                             modified_tol=1E-12,
+                             random_state=None,
+                             n_jobs=None):
     """Perform a Locally Linear Embedding analysis on the data.
 
     Read more in the :ref:`User Guide <locally_linear_embedding>`.
@@ -300,11 +318,9 @@ def locally_linear_embedding(
         raise ValueError("output dimension must be less than or equal "
                          "to input dimension")
     if n_neighbors >= N:
-        raise ValueError(
-            "Expected n_neighbors <= n_samples, "
-            " but n_samples = %d, n_neighbors = %d" %
-            (N, n_neighbors)
-        )
+        raise ValueError("Expected n_neighbors <= n_samples, "
+                         " but n_samples = %d, n_neighbors = %d" %
+                         (N, n_neighbors))
 
     if n_neighbors <= 0:
         raise ValueError("n_neighbors must be positive")
@@ -312,8 +328,10 @@ def locally_linear_embedding(
     M_sparse = (eigen_solver != 'dense')
 
     if method == 'standard':
-        W = barycenter_kneighbors_graph(
-            nbrs, n_neighbors=n_neighbors, reg=reg, n_jobs=n_jobs)
+        W = barycenter_kneighbors_graph(nbrs,
+                                        n_neighbors=n_neighbors,
+                                        reg=reg,
+                                        n_jobs=n_jobs)
 
         # we'll compute M = (I-W)'(I-W)
         # depending on the solver, we'll do this differently
@@ -332,7 +350,8 @@ def locally_linear_embedding(
                              "greater than "
                              "[n_components * (n_components + 3) / 2]")
 
-        neighbors = nbrs.kneighbors(X, n_neighbors=n_neighbors + 1,
+        neighbors = nbrs.kneighbors(X,
+                                    n_neighbors=n_neighbors + 1,
                                     return_distance=False)
         neighbors = neighbors[:, 1:]
 
@@ -381,7 +400,8 @@ def locally_linear_embedding(
             raise ValueError("modified LLE requires "
                              "n_neighbors >= n_components")
 
-        neighbors = nbrs.kneighbors(X, n_neighbors=n_neighbors + 1,
+        neighbors = nbrs.kneighbors(X,
+                                    n_neighbors=n_neighbors + 1,
                                     return_distance=False)
         neighbors = neighbors[:, 1:]
 
@@ -398,8 +418,7 @@ def locally_linear_embedding(
         if use_svd:
             for i in range(N):
                 X_nbrs = X[neighbors[i]] - X[i]
-                V[i], evals[i], _ = svd(X_nbrs,
-                                        full_matrices=True)
+                V[i], evals[i], _ = svd(X_nbrs, full_matrices=True)
             evals **= 2
         else:
             for i in range(N):
@@ -484,7 +503,8 @@ def locally_linear_embedding(
             M = csr_matrix(M)
 
     elif method == 'ltsa':
-        neighbors = nbrs.kneighbors(X, n_neighbors=n_neighbors + 1,
+        neighbors = nbrs.kneighbors(X,
+                                    n_neighbors=n_neighbors + 1,
                                     return_distance=False)
         neighbors = neighbors[:, 1:]
 
@@ -513,12 +533,17 @@ def locally_linear_embedding(
             M[nbrs_x, nbrs_y] -= GiGiT
             M[neighbors[i], neighbors[i]] += 1
 
-    return null_space(M, n_components, k_skip=1, eigen_solver=eigen_solver,
-                      tol=tol, max_iter=max_iter, random_state=random_state)
+    return null_space(M,
+                      n_components,
+                      k_skip=1,
+                      eigen_solver=eigen_solver,
+                      tol=tol,
+                      max_iter=max_iter,
+                      random_state=random_state)
 
 
-class LocallyLinearEmbedding(TransformerMixin,
-                             _UnstableArchMixin, BaseEstimator):
+class LocallyLinearEmbedding(TransformerMixin, _UnstableArchMixin,
+                             BaseEstimator):
     """Locally Linear Embedding
 
     Read more in the :ref:`User Guide <locally_linear_embedding>`.
@@ -631,10 +656,20 @@ class LocallyLinearEmbedding(TransformerMixin,
         Journal of Shanghai Univ.  8:406 (2004)
     """
     @_deprecate_positional_args
-    def __init__(self, *, n_neighbors=5, n_components=2, reg=1E-3,
-                 eigen_solver='auto', tol=1E-6, max_iter=100,
-                 method='standard', hessian_tol=1E-4, modified_tol=1E-12,
-                 neighbors_algorithm='auto', random_state=None, n_jobs=None):
+    def __init__(self,
+                 *,
+                 n_neighbors=5,
+                 n_components=2,
+                 reg=1E-3,
+                 eigen_solver='auto',
+                 tol=1E-6,
+                 max_iter=100,
+                 method='standard',
+                 hessian_tol=1E-4,
+                 modified_tol=1E-12,
+                 neighbors_algorithm='auto',
+                 random_state=None,
+                 n_jobs=None):
         self.n_neighbors = n_neighbors
         self.n_components = n_components
         self.reg = reg
@@ -719,10 +754,10 @@ class LocallyLinearEmbedding(TransformerMixin,
         check_is_fitted(self)
 
         X = check_array(X)
-        ind = self.nbrs_.kneighbors(X, n_neighbors=self.n_neighbors,
+        ind = self.nbrs_.kneighbors(X,
+                                    n_neighbors=self.n_neighbors,
                                     return_distance=False)
-        weights = barycenter_weights(X, self.nbrs_._fit_X[ind],
-                                     reg=self.reg)
+        weights = barycenter_weights(X, self.nbrs_._fit_X[ind], reg=self.reg)
         X_new = np.empty((X.shape[0], self.n_components))
         for i in range(X.shape[0]):
             X_new[i] = np.dot(self.embedding_[ind[i]].T, weights[i])

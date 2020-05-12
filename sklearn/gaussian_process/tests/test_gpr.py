@@ -33,23 +33,24 @@ X2 = np.atleast_2d([2., 4., 5.5, 6.5, 7.5]).T
 y = f(X).ravel()
 
 fixed_kernel = RBF(length_scale=1.0, length_scale_bounds="fixed")
-kernels = [RBF(length_scale=1.0), fixed_kernel,
-           RBF(length_scale=1.0, length_scale_bounds=(1e-3, 1e3)),
-           C(1.0, (1e-2, 1e2)) *
-           RBF(length_scale=1.0, length_scale_bounds=(1e-3, 1e3)),
-           C(1.0, (1e-2, 1e2)) *
-           RBF(length_scale=1.0, length_scale_bounds=(1e-3, 1e3)) +
-           C(1e-5, (1e-5, 1e2)),
-           C(0.1, (1e-2, 1e2)) *
-           RBF(length_scale=1.0, length_scale_bounds=(1e-3, 1e3)) +
-           C(1e-5, (1e-5, 1e2))]
-non_fixed_kernels = [kernel for kernel in kernels
-                     if kernel != fixed_kernel]
+kernels = [
+    RBF(length_scale=1.0), fixed_kernel,
+    RBF(length_scale=1.0, length_scale_bounds=(1e-3, 1e3)),
+    C(1.0,
+      (1e-2, 1e2)) * RBF(length_scale=1.0, length_scale_bounds=(1e-3, 1e3)),
+    C(1.0,
+      (1e-2, 1e2)) * RBF(length_scale=1.0, length_scale_bounds=(1e-3, 1e3)) +
+    C(1e-5, (1e-5, 1e2)),
+    C(0.1,
+      (1e-2, 1e2)) * RBF(length_scale=1.0, length_scale_bounds=(1e-3, 1e3)) +
+    C(1e-5, (1e-5, 1e2))
+]
+non_fixed_kernels = [kernel for kernel in kernels if kernel != fixed_kernel]
 
 
 @pytest.mark.parametrize('kernel', kernels)
 def test_gpr_interpolation(kernel):
-    if sys.maxsize <= 2 ** 32 and sys.version_info[:2] == (3, 6):
+    if sys.maxsize <= 2**32 and sys.version_info[:2] == (3, 6):
         pytest.xfail("This test may fail on 32bit Py3.6")
 
     # Test the interpolating property for different kernels.
@@ -68,15 +69,15 @@ def test_gpr_interpolation_structured():
     gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
     y_pred, y_cov = gpr.predict(X, return_cov=True)
 
-    assert_almost_equal(kernel(X, eval_gradient=True)[1].ravel(),
-                        (1 - np.eye(len(X))).ravel())
+    assert_almost_equal(
+        kernel(X, eval_gradient=True)[1].ravel(), (1 - np.eye(len(X))).ravel())
     assert_almost_equal(y_pred, y)
     assert_almost_equal(np.diag(y_cov), 0.)
 
 
 @pytest.mark.parametrize('kernel', non_fixed_kernels)
 def test_lml_improving(kernel):
-    if sys.maxsize <= 2 ** 32 and sys.version_info[:2] == (3, 6):
+    if sys.maxsize <= 2**32 and sys.version_info[:2] == (3, 6):
         pytest.xfail("This test may fail on 32bit Py3.6")
 
     # Test that hyperparameter-tuning improves log-marginal likelihood.
@@ -89,8 +90,8 @@ def test_lml_improving(kernel):
 def test_lml_precomputed(kernel):
     # Test that lml of optimized kernel is stored correctly.
     gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
-    assert (gpr.log_marginal_likelihood(gpr.kernel_.theta) ==
-            gpr.log_marginal_likelihood())
+    assert (gpr.log_marginal_likelihood(
+        gpr.kernel_.theta) == gpr.log_marginal_likelihood())
 
 
 @pytest.mark.parametrize('kernel', kernels)
@@ -111,9 +112,9 @@ def test_converged_to_local_maximum(kernel):
     lml, lml_gradient = \
         gpr.log_marginal_likelihood(gpr.kernel_.theta, True)
 
-    assert np.all((np.abs(lml_gradient) < 1e-4) |
-                  (gpr.kernel_.theta == gpr.kernel_.bounds[:, 0]) |
-                  (gpr.kernel_.theta == gpr.kernel_.bounds[:, 1]))
+    assert np.all((np.abs(lml_gradient) < 1e-4)
+                  | (gpr.kernel_.theta == gpr.kernel_.bounds[:, 0])
+                  | (gpr.kernel_.theta == gpr.kernel_.bounds[:, 1]))
 
 
 @pytest.mark.parametrize('kernel', non_fixed_kernels)
@@ -171,8 +172,9 @@ def test_sample_statistics(kernel):
 
     # More digits accuracy would require many more samples
     assert_almost_equal(y_mean, np.mean(samples, 1), 1)
-    assert_almost_equal(np.diag(y_cov) / np.diag(y_cov).max(),
-                        np.var(samples, 1) / np.diag(y_cov).max(), 1)
+    assert_almost_equal(
+        np.diag(y_cov) / np.diag(y_cov).max(),
+        np.var(samples, 1) / np.diag(y_cov).max(), 1)
 
 
 def test_no_optimizer():
@@ -184,7 +186,7 @@ def test_no_optimizer():
 
 @pytest.mark.parametrize('kernel', kernels)
 def test_predict_cov_vs_std(kernel):
-    if sys.maxsize <= 2 ** 32 and sys.version_info[:2] == (3, 6):
+    if sys.maxsize <= 2**32 and sys.version_info[:2] == (3, 6):
         pytest.xfail("This test may fail on 32bit Py3.6")
 
     # Test that predicted std.-dev. is consistent with cov's diagonal.
@@ -205,8 +207,7 @@ def test_anisotropic_kernel():
 
     kernel = RBF([1.0, 1.0])
     gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
-    assert (np.exp(gpr.kernel_.theta[1]) >
-            np.exp(gpr.kernel_.theta[0]) * 5)
+    assert (np.exp(gpr.kernel_.theta[1]) > np.exp(gpr.kernel_.theta[0]) * 5)
 
 
 def test_random_starts():
@@ -225,8 +226,10 @@ def test_random_starts():
     last_lml = -np.inf
     for n_restarts_optimizer in range(5):
         gp = GaussianProcessRegressor(
-            kernel=kernel, n_restarts_optimizer=n_restarts_optimizer,
-            random_state=0,).fit(X, y)
+            kernel=kernel,
+            n_restarts_optimizer=n_restarts_optimizer,
+            random_state=0,
+        ).fit(X, y)
         lml = gp.log_marginal_likelihood(gp.kernel_.theta)
         assert lml > last_lml - np.finfo(np.float32).eps
         last_lml = lml
@@ -307,18 +310,12 @@ def test_large_variance_y():
     y_pred, y_pred_std = gpr.predict(X2, return_std=True)
 
     # 'Gold standard' mean predictions from GPy
-    y_pred_gpy = np.array([15.16918303,
-                           -27.98707845,
-                           -39.31636019,
-                           14.52605515,
-                           69.18503589])
+    y_pred_gpy = np.array(
+        [15.16918303, -27.98707845, -39.31636019, 14.52605515, 69.18503589])
 
     # 'Gold standard' std predictions from GPy
-    y_pred_std_gpy = np.array([7.78860962,
-                               3.83179178,
-                               0.63149951,
-                               0.52745188,
-                               0.86170042])
+    y_pred_std_gpy = np.array(
+        [7.78860962, 3.83179178, 0.63149951, 0.52745188, 0.86170042])
 
     # Based on numerical experiments, it's reasonable to expect our
     # GP's mean predictions to get within 7% of predictions of those
@@ -339,11 +336,13 @@ def test_y_multioutput():
     # of 1d GP and that second dimension is twice as large
     kernel = RBF(length_scale=1.0)
 
-    gpr = GaussianProcessRegressor(kernel=kernel, optimizer=None,
+    gpr = GaussianProcessRegressor(kernel=kernel,
+                                   optimizer=None,
                                    normalize_y=False)
     gpr.fit(X, y)
 
-    gpr_2d = GaussianProcessRegressor(kernel=kernel, optimizer=None,
+    gpr_2d = GaussianProcessRegressor(kernel=kernel,
+                                      optimizer=None,
                                       normalize_y=False)
     gpr_2d.fit(X, y_2d)
 
@@ -383,8 +382,9 @@ def test_custom_optimizer(kernel):
         theta_opt, func_min = \
             initial_theta, obj_func(initial_theta, eval_gradient=False)
         for _ in range(50):
-            theta = np.atleast_1d(rng.uniform(np.maximum(-2, bounds[:, 0]),
-                                              np.minimum(1, bounds[:, 1])))
+            theta = np.atleast_1d(
+                rng.uniform(np.maximum(-2, bounds[:, 0]),
+                            np.minimum(1, bounds[:, 1])))
             f = obj_func(theta, eval_gradient=False)
             if f < func_min:
                 theta_opt, func_min = theta, f
@@ -402,12 +402,11 @@ def test_gpr_correct_error_message():
     y = np.ones(6)
     kernel = DotProduct()
     gpr = GaussianProcessRegressor(kernel=kernel, alpha=0.0)
-    assert_raise_message(np.linalg.LinAlgError,
-                         "The kernel, %s, is not returning a "
-                         "positive definite matrix. Try gradually increasing "
-                         "the 'alpha' parameter of your "
-                         "GaussianProcessRegressor estimator."
-                         % kernel, gpr.fit, X, y)
+    assert_raise_message(
+        np.linalg.LinAlgError, "The kernel, %s, is not returning a "
+        "positive definite matrix. Try gradually increasing "
+        "the 'alpha' parameter of your "
+        "GaussianProcessRegressor estimator." % kernel, gpr.fit, X, y)
 
 
 @pytest.mark.parametrize('kernel', kernels)

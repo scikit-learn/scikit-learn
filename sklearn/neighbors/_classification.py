@@ -142,18 +142,26 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
 
     https://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
     """
-
     @_deprecate_positional_args
-    def __init__(self, n_neighbors=5, *,
-                 weights='uniform', algorithm='auto', leaf_size=30,
-                 p=2, metric='minkowski', metric_params=None, n_jobs=None,
+    def __init__(self,
+                 n_neighbors=5,
+                 *,
+                 weights='uniform',
+                 algorithm='auto',
+                 leaf_size=30,
+                 p=2,
+                 metric='minkowski',
+                 metric_params=None,
+                 n_jobs=None,
                  **kwargs):
-        super().__init__(
-            n_neighbors=n_neighbors,
-            algorithm=algorithm,
-            leaf_size=leaf_size, metric=metric, p=p,
-            metric_params=metric_params,
-            n_jobs=n_jobs, **kwargs)
+        super().__init__(n_neighbors=n_neighbors,
+                         algorithm=algorithm,
+                         leaf_size=leaf_size,
+                         metric=metric,
+                         p=p,
+                         metric_params=metric_params,
+                         n_jobs=n_jobs,
+                         **kwargs)
         self.weights = _check_weights(weights)
 
     def predict(self, X):
@@ -375,18 +383,27 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
 
     https://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
     """
-
     @_deprecate_positional_args
-    def __init__(self, radius=1.0, *, weights='uniform',
-                 algorithm='auto', leaf_size=30, p=2, metric='minkowski',
-                 outlier_label=None, metric_params=None, n_jobs=None,
+    def __init__(self,
+                 radius=1.0,
+                 *,
+                 weights='uniform',
+                 algorithm='auto',
+                 leaf_size=30,
+                 p=2,
+                 metric='minkowski',
+                 outlier_label=None,
+                 metric_params=None,
+                 n_jobs=None,
                  **kwargs):
-        super().__init__(
-              radius=radius,
-              algorithm=algorithm,
-              leaf_size=leaf_size,
-              metric=metric, p=p, metric_params=metric_params,
-              n_jobs=n_jobs, **kwargs)
+        super().__init__(radius=radius,
+                         algorithm=algorithm,
+                         leaf_size=leaf_size,
+                         metric=metric,
+                         p=p,
+                         metric_params=metric_params,
+                         n_jobs=n_jobs,
+                         **kwargs)
         self.weights = _check_weights(weights)
         self.outlier_label = outlier_label
 
@@ -426,20 +443,19 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
                 outlier_label_.append(classes_k[label_count.argmax()])
 
         else:
-            if (_is_arraylike(self.outlier_label) and
-               not isinstance(self.outlier_label, str)):
+            if (_is_arraylike(self.outlier_label)
+                    and not isinstance(self.outlier_label, str)):
                 if len(self.outlier_label) != len(classes_):
                     raise ValueError("The length of outlier_label: {} is "
                                      "inconsistent with the output "
-                                     "length: {}".format(self.outlier_label,
-                                                         len(classes_)))
+                                     "length: {}".format(
+                                         self.outlier_label, len(classes_)))
                 outlier_label_ = self.outlier_label
             else:
                 outlier_label_ = [self.outlier_label] * len(classes_)
 
             for classes, label in zip(classes_, outlier_label_):
-                if (_is_arraylike(label) and
-                   not isinstance(label, str)):
+                if (_is_arraylike(label) and not isinstance(label, str)):
                     # ensure the outlier lable for each output is a scalar.
                     raise TypeError("The outlier_label of classes {} is "
                                     "supposed to be a scalar, got "
@@ -528,11 +544,11 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
             classes_ = [self.classes_]
 
         if self.outlier_label_ is None and outliers.size > 0:
-            raise ValueError('No neighbors found for test samples %r, '
-                             'you can try using larger radius, '
-                             'giving a label for outliers, '
-                             'or considering removing them from your dataset.'
-                             % outliers)
+            raise ValueError(
+                'No neighbors found for test samples %r, '
+                'you can try using larger radius, '
+                'giving a label for outliers, '
+                'or considering removing them from your dataset.' % outliers)
 
         weights = _get_weights(neigh_dist, self.weights)
         if weights is not None:

@@ -15,14 +15,11 @@ from . import KMeans, MiniBatchKMeans
 from ..base import BaseEstimator, BiclusterMixin
 from ..utils import check_random_state
 
-from ..utils.extmath import (make_nonnegative, randomized_svd,
-                             safe_sparse_dot)
+from ..utils.extmath import (make_nonnegative, randomized_svd, safe_sparse_dot)
 
 from ..utils.validation import assert_all_finite, _deprecate_positional_args
 
-
-__all__ = ['SpectralCoclustering',
-           'SpectralBiclustering']
+__all__ = ['SpectralCoclustering', 'SpectralBiclustering']
 
 
 def _scale_normalize(X):
@@ -85,11 +82,16 @@ def _log_normalize(X):
 
 class BaseSpectral(BiclusterMixin, BaseEstimator, metaclass=ABCMeta):
     """Base class for spectral biclustering."""
-
     @abstractmethod
-    def __init__(self, n_clusters=3, svd_method="randomized",
-                 n_svd_vecs=None, mini_batch=False, init="k-means++",
-                 n_init=10, n_jobs='deprecated', random_state=None):
+    def __init__(self,
+                 n_clusters=3,
+                 svd_method="randomized",
+                 n_svd_vecs=None,
+                 mini_batch=False,
+                 init="k-means++",
+                 n_init=10,
+                 n_jobs='deprecated',
+                 random_state=None):
         self.n_clusters = n_clusters
         self.svd_method = svd_method
         self.n_svd_vecs = n_svd_vecs
@@ -117,8 +119,9 @@ class BaseSpectral(BiclusterMixin, BaseEstimator, metaclass=ABCMeta):
 
         """
         if self.n_jobs != 'deprecated':
-            warnings.warn("'n_jobs' was deprecated in version 0.23 and will be"
-                          " removed in 0.25.", FutureWarning)
+            warnings.warn(
+                "'n_jobs' was deprecated in version 0.23 and will be"
+                " removed in 0.25.", FutureWarning)
 
         X = self._validate_data(X, accept_sparse='csr', dtype=np.float64)
         self._check_parameters()
@@ -134,7 +137,8 @@ class BaseSpectral(BiclusterMixin, BaseEstimator, metaclass=ABCMeta):
             kwargs = {}
             if self.n_svd_vecs is not None:
                 kwargs['n_oversamples'] = self.n_svd_vecs
-            u, _, vt = randomized_svd(array, n_components,
+            u, _, vt = randomized_svd(array,
+                                      n_components,
                                       random_state=self.random_state,
                                       **kwargs)
 
@@ -170,8 +174,10 @@ class BaseSpectral(BiclusterMixin, BaseEstimator, metaclass=ABCMeta):
                                     n_init=self.n_init,
                                     random_state=self.random_state)
         else:
-            model = KMeans(n_clusters, init=self.init,
-                           n_init=self.n_init, n_jobs=self.n_jobs,
+            model = KMeans(n_clusters,
+                           init=self.init,
+                           n_init=self.n_init,
+                           n_jobs=self.n_jobs,
                            random_state=self.random_state)
         model.fit(data)
         centroid = model.cluster_centers_
@@ -285,24 +291,25 @@ class SpectralCoclustering(BaseSpectral):
 
     """
     @_deprecate_positional_args
-    def __init__(self, n_clusters=3, *, svd_method='randomized',
-                 n_svd_vecs=None, mini_batch=False, init='k-means++',
-                 n_init=10, n_jobs='deprecated', random_state=None):
-        super().__init__(n_clusters,
-                         svd_method,
-                         n_svd_vecs,
-                         mini_batch,
-                         init,
-                         n_init,
-                         n_jobs,
-                         random_state)
+    def __init__(self,
+                 n_clusters=3,
+                 *,
+                 svd_method='randomized',
+                 n_svd_vecs=None,
+                 mini_batch=False,
+                 init='k-means++',
+                 n_init=10,
+                 n_jobs='deprecated',
+                 random_state=None):
+        super().__init__(n_clusters, svd_method, n_svd_vecs, mini_batch, init,
+                         n_init, n_jobs, random_state)
 
     def _fit(self, X):
         normalized_data, row_diag, col_diag = _scale_normalize(X)
         n_sv = 1 + int(np.ceil(np.log2(self.n_clusters)))
         u, v = self._svd(normalized_data, n_sv, n_discard=1)
-        z = np.vstack((row_diag[:, np.newaxis] * u,
-                       col_diag[:, np.newaxis] * v))
+        z = np.vstack(
+            (row_diag[:, np.newaxis] * u, col_diag[:, np.newaxis] * v))
 
         _, labels = self._k_means(z, self.n_clusters)
 
@@ -310,10 +317,10 @@ class SpectralCoclustering(BaseSpectral):
         self.row_labels_ = labels[:n_rows]
         self.column_labels_ = labels[n_rows:]
 
-        self.rows_ = np.vstack([self.row_labels_ == c
-                                for c in range(self.n_clusters)])
-        self.columns_ = np.vstack([self.column_labels_ == c
-                                   for c in range(self.n_clusters)])
+        self.rows_ = np.vstack(
+            [self.row_labels_ == c for c in range(self.n_clusters)])
+        self.columns_ = np.vstack(
+            [self.column_labels_ == c for c in range(self.n_clusters)])
 
 
 class SpectralBiclustering(BaseSpectral):
@@ -437,18 +444,21 @@ class SpectralBiclustering(BaseSpectral):
 
     """
     @_deprecate_positional_args
-    def __init__(self, n_clusters=3, *, method='bistochastic',
-                 n_components=6, n_best=3, svd_method='randomized',
-                 n_svd_vecs=None, mini_batch=False, init='k-means++',
-                 n_init=10, n_jobs='deprecated', random_state=None):
-        super().__init__(n_clusters,
-                         svd_method,
-                         n_svd_vecs,
-                         mini_batch,
-                         init,
-                         n_init,
-                         n_jobs,
-                         random_state)
+    def __init__(self,
+                 n_clusters=3,
+                 *,
+                 method='bistochastic',
+                 n_components=6,
+                 n_best=3,
+                 svd_method='randomized',
+                 n_svd_vecs=None,
+                 mini_batch=False,
+                 init='k-means++',
+                 n_init=10,
+                 n_jobs='deprecated',
+                 random_state=None):
+        super().__init__(n_clusters, svd_method, n_svd_vecs, mini_batch, init,
+                         n_init, n_jobs, random_state)
         self.method = method
         self.n_components = n_components
         self.n_best = n_best
@@ -502,24 +512,24 @@ class SpectralBiclustering(BaseSpectral):
         except TypeError:
             n_row_clusters = n_col_clusters = self.n_clusters
 
-        best_ut = self._fit_best_piecewise(ut, self.n_best,
-                                           n_row_clusters)
+        best_ut = self._fit_best_piecewise(ut, self.n_best, n_row_clusters)
 
-        best_vt = self._fit_best_piecewise(vt, self.n_best,
-                                           n_col_clusters)
+        best_vt = self._fit_best_piecewise(vt, self.n_best, n_col_clusters)
 
         self.row_labels_ = self._project_and_cluster(X, best_vt.T,
                                                      n_row_clusters)
 
-        self.column_labels_ = self._project_and_cluster(X.T, best_ut.T,
-                                                        n_col_clusters)
+        self.column_labels_ = self._project_and_cluster(
+            X.T, best_ut.T, n_col_clusters)
 
-        self.rows_ = np.vstack([self.row_labels_ == label
-                                for label in range(n_row_clusters)
-                                for _ in range(n_col_clusters)])
-        self.columns_ = np.vstack([self.column_labels_ == label
-                                   for _ in range(n_row_clusters)
-                                   for label in range(n_col_clusters)])
+        self.rows_ = np.vstack([
+            self.row_labels_ == label for label in range(n_row_clusters)
+            for _ in range(n_col_clusters)
+        ])
+        self.columns_ = np.vstack([
+            self.column_labels_ == label for _ in range(n_row_clusters)
+            for label in range(n_col_clusters)
+        ])
 
     def _fit_best_piecewise(self, vectors, n_best, n_clusters):
         """Find the ``n_best`` vectors that are best approximated by piecewise
@@ -532,9 +542,12 @@ class SpectralBiclustering(BaseSpectral):
         def make_piecewise(v):
             centroid, labels = self._k_means(v.reshape(-1, 1), n_clusters)
             return centroid[labels].ravel()
+
         piecewise_vectors = np.apply_along_axis(make_piecewise,
-                                                axis=1, arr=vectors)
-        dists = np.apply_along_axis(norm, axis=1,
+                                                axis=1,
+                                                arr=vectors)
+        dists = np.apply_along_axis(norm,
+                                    axis=1,
                                     arr=(vectors - piecewise_vectors))
         result = vectors[np.argsort(dists)[:n_best]]
         return result

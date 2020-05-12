@@ -12,11 +12,7 @@ from ..utils.validation import _deprecate_positional_args
 
 from ._label import _encode, _encode_check_unknown
 
-
-__all__ = [
-    'OneHotEncoder',
-    'OrdinalEncoder'
-]
+__all__ = ['OneHotEncoder', 'OrdinalEncoder']
 
 
 class _BaseEncoder(TransformerMixin, BaseEstimator):
@@ -25,7 +21,6 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
     transform the input features.
 
     """
-
     def _check_X(self, X):
         """
         Perform custom check_array:
@@ -57,7 +52,9 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
 
         for i in range(n_features):
             Xi = self._get_feature(X, feature_idx=i)
-            Xi = check_array(Xi, ensure_2d=False, dtype=None,
+            Xi = check_array(Xi,
+                             ensure_2d=False,
+                             dtype=None,
                              force_all_finite=needs_validation)
             X_columns.append(Xi)
 
@@ -108,13 +105,13 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
             raise ValueError(
                 "The number of features in X is different to the number of "
                 "features of the fitted data. The fitted data had {} features "
-                "and the X has {} features."
-                .format(len(self.categories_,), n_features)
-            )
+                "and the X has {} features.".format(len(self.categories_, ),
+                                                    n_features))
 
         for i in range(n_features):
             Xi = X_list[i]
-            diff, valid_mask = _encode_check_unknown(Xi, self.categories_[i],
+            diff, valid_mask = _encode_check_unknown(Xi,
+                                                     self.categories_[i],
                                                      return_mask=True)
 
             if not np.all(valid_mask):
@@ -138,7 +135,9 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                     Xi[~valid_mask] = self.categories_[i][0]
             # We use check_unknown=False, since _encode_check_unknown was
             # already called above.
-            _, encoded = _encode(Xi, self.categories_[i], encode=True,
+            _, encoded = _encode(Xi,
+                                 self.categories_[i],
+                                 encode=True,
                                  check_unknown=False)
             X_int[:, i] = encoded
 
@@ -294,10 +293,14 @@ class OneHotEncoder(_BaseEncoder):
     array([[0., 1., 0., 0.],
            [1., 0., 1., 0.]])
     """
-
     @_deprecate_positional_args
-    def __init__(self, *, categories='auto', drop=None, sparse=True,
-                 dtype=np.float64, handle_unknown='error'):
+    def __init__(self,
+                 *,
+                 categories='auto',
+                 drop=None,
+                 sparse=True,
+                 dtype=np.float64,
+                 handle_unknown='error'):
         self.categories = categories
         self.sparse = sparse
         self.dtype = dtype
@@ -325,13 +328,14 @@ class OneHotEncoder(_BaseEncoder):
             if self.drop == 'first':
                 return np.zeros(len(self.categories_), dtype=np.object)
             elif self.drop == 'if_binary':
-                return np.array([0 if len(cats) == 2 else None
-                                for cats in self.categories_], dtype=np.object)
+                return np.array([
+                    0 if len(cats) == 2 else None for cats in self.categories_
+                ],
+                                dtype=np.object)
             else:
                 msg = (
                     "Wrong input for parameter `drop`. Expected "
-                    "'first', 'if_binary', None or array of objects, got {}"
-                    )
+                    "'first', 'if_binary', None or array of objects, got {}")
                 raise ValueError(msg.format(type(self.drop)))
 
         else:
@@ -341,27 +345,27 @@ class OneHotEncoder(_BaseEncoder):
             except (ValueError, TypeError):
                 msg = (
                     "Wrong input for parameter `drop`. Expected "
-                    "'first', 'if_binary', None or array of objects, got {}"
-                    )
+                    "'first', 'if_binary', None or array of objects, got {}")
                 raise ValueError(msg.format(type(self.drop)))
             if droplen != len(self.categories_):
                 msg = ("`drop` should have length equal to the number "
                        "of features ({}), got {}")
-                raise ValueError(msg.format(len(self.categories_),
-                                            len(self.drop)))
+                raise ValueError(
+                    msg.format(len(self.categories_), len(self.drop)))
             missing_drops = [(i, val) for i, val in enumerate(self.drop)
                              if val not in self.categories_[i]]
             if any(missing_drops):
                 msg = ("The following categories were supposed to be "
                        "dropped, but were not found in the training "
-                       "data.\n{}".format(
-                           "\n".join(
-                                ["Category: {}, Feature: {}".format(c, v)
-                                    for c, v in missing_drops])))
+                       "data.\n{}".format("\n".join([
+                           "Category: {}, Feature: {}".format(c, v)
+                           for c, v in missing_drops
+                       ])))
                 raise ValueError(msg)
-            return np.array([np.where(cat_list == val)[0][0]
-                             for (val, cat_list) in
-                             zip(self.drop, self.categories_)],
+            return np.array([
+                np.where(cat_list == val)[0][0]
+                for (val, cat_list) in zip(self.drop, self.categories_)
+            ],
                             dtype=np.object)
 
     def fit(self, X, y=None):
@@ -493,13 +497,12 @@ class OneHotEncoder(_BaseEncoder):
         n_samples, _ = X.shape
         n_features = len(self.categories_)
         if self.drop_idx_ is None:
-            n_transformed_features = sum(len(cats)
-                                         for cats in self.categories_)
+            n_transformed_features = sum(
+                len(cats) for cats in self.categories_)
         else:
             n_transformed_features = sum(
                 len(cats) - 1 if to_drop is not None else len(cats)
-                for cats, to_drop in zip(self.categories_, self.drop_idx_)
-            )
+                for cats, to_drop in zip(self.categories_, self.drop_idx_))
 
         # validate shape of passed X
         msg = ("Shape of the passed X data is not correct. Expected {0} "
@@ -585,8 +588,7 @@ class OneHotEncoder(_BaseEncoder):
 
         feature_names = []
         for i in range(len(cats)):
-            names = [
-                input_features[i] + '_' + str(t) for t in cats[i]]
+            names = [input_features[i] + '_' + str(t) for t in cats[i]]
             if self.drop_idx_ is not None and self.drop_idx_[i] is not None:
                 names.pop(self.drop_idx_[i])
             feature_names.extend(names)
@@ -656,7 +658,6 @@ class OrdinalEncoder(_BaseEncoder):
     array([['Male', 1],
            ['Female', 2]], dtype=object)
     """
-
     @_deprecate_positional_args
     def __init__(self, *, categories='auto', dtype=np.float64):
         self.categories = categories

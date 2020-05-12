@@ -25,12 +25,11 @@ def test_elliptic_envelope():
     scores = clf.score_samples(X)
     decisions = clf.decision_function(X)
 
-    assert_array_almost_equal(
-        scores, -clf.mahalanobis(X))
+    assert_array_almost_equal(scores, -clf.mahalanobis(X))
     assert_array_almost_equal(clf.mahalanobis(X), clf.dist_)
     assert_almost_equal(clf.score(X, np.ones(100)),
                         (100 - y_pred[y_pred == -1].size) / 100.)
-    assert(sum(y_pred == -1) == sum(decisions < 0))
+    assert (sum(y_pred == -1) == sum(decisions < 0))
 
 
 def test_score_samples():

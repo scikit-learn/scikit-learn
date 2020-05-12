@@ -10,8 +10,8 @@ from sklearn.isotonic import (check_increasing, isotonic_regression,
 
 from sklearn.utils.validation import check_array
 from sklearn.utils._testing import (assert_raises, assert_array_equal,
-                                   assert_array_almost_equal,
-                                   assert_warns_message, assert_no_warnings)
+                                    assert_array_almost_equal,
+                                    assert_warns_message, assert_no_warnings)
 from sklearn.utils import shuffle
 
 from scipy.special import expit
@@ -82,8 +82,7 @@ def test_check_ci_warn():
 
     # Check that we got increasing=False and CI interval warning
     is_increasing = assert_warns_message(UserWarning, "interval",
-                                         check_increasing,
-                                         x, y)
+                                         check_increasing, x, y)
 
     assert not is_increasing
 
@@ -161,8 +160,10 @@ def test_isotonic_regression_ties_secondary_():
     """
     x = [8, 8, 8, 10, 10, 10, 12, 12, 12, 14, 14]
     y = [21, 23.5, 23, 24, 21, 25, 21.5, 22, 19, 23.5, 25]
-    y_true = [22.22222, 22.22222, 22.22222, 22.22222, 22.22222, 22.22222,
-              22.22222, 22.22222, 22.22222, 24.25, 24.25]
+    y_true = [
+        22.22222, 22.22222, 22.22222, 22.22222, 22.22222, 22.22222, 22.22222,
+        22.22222, 22.22222, 24.25, 24.25
+    ]
 
     # Check fit, transform and fit_transform
     ir = IsotonicRegression()
@@ -213,8 +214,9 @@ def test_isotonic_regression_auto_decreasing():
         warnings.simplefilter("always")
         y_ = ir.fit_transform(x, y)
         # work-around for pearson divide warnings in scipy <= 0.17.0
-        assert all(["invalid value encountered in "
-                    in str(warn.message) for warn in w])
+        assert all([
+            "invalid value encountered in " in str(warn.message) for warn in w
+        ])
 
     # Check that relationship decreases
     is_increasing = y_[0] < y_[-1]
@@ -232,8 +234,9 @@ def test_isotonic_regression_auto_increasing():
         warnings.simplefilter("always")
         y_ = ir.fit_transform(x, y)
         # work-around for pearson divide warnings in scipy <= 0.17.0
-        assert all(["invalid value encountered in "
-                    in str(warn.message) for warn in w])
+        assert all([
+            "invalid value encountered in " in str(warn.message) for warn in w
+        ])
 
     # Check that relationship increases
     is_increasing = y_[0] < y_[-1]
@@ -256,7 +259,7 @@ def test_isotonic_sample_weight_parameter_default_value():
     rng = np.random.RandomState(42)
     n = 100
     x = np.arange(n)
-    y = rng.randint(-50, 50, size=(n,)) + 50. * np.log(1 + np.arange(n))
+    y = rng.randint(-50, 50, size=(n, )) + 50. * np.log(1 + np.arange(n))
     # check if value is correctly used
     weights = np.ones(n)
     y_set_value = ir.fit_transform(x, y, sample_weight=weights)
@@ -382,9 +385,11 @@ def test_isotonic_duplicate_min_entry():
 def test_isotonic_ymin_ymax():
     # Test from @NelleV's issue:
     # https://github.com/scikit-learn/scikit-learn/issues/6921
-    x = np.array([1.263, 1.318, -0.572, 0.307, -0.707, -0.176, -1.599, 1.059,
-                  1.396, 1.906, 0.210, 0.028, -0.081, 0.444, 0.018, -0.377,
-                  -0.896, -0.377, -1.327, 0.180])
+    x = np.array([
+        1.263, 1.318, -0.572, 0.307, -0.707, -0.176, -1.599, 1.059, 1.396,
+        1.906, 0.210, 0.028, -0.081, 0.444, 0.018, -0.377, -0.896, -0.377,
+        -1.327, 0.180
+    ])
     y = isotonic_regression(x, y_min=0., y_max=0.1)
 
     assert np.all(y >= 0)
@@ -429,7 +434,7 @@ def test_fast_predict():
     # affect out-of-sample predictions:
     # https://github.com/scikit-learn/scikit-learn/pull/6206
     rng = np.random.RandomState(123)
-    n_samples = 10 ** 3
+    n_samples = 10**3
     # X values over the -10,10 range
     X_train = 20.0 * rng.rand(n_samples) - 10
     y_train = np.less(rng.rand(n_samples),
@@ -445,7 +450,8 @@ def test_fast_predict():
     # Build interpolation function with ALL input data, not just the
     # non-redundant subset. The following 2 lines are taken from the
     # .fit() method, without removing unnecessary points
-    X_train_fit, y_train_fit = slow_model._build_y(X_train, y_train,
+    X_train_fit, y_train_fit = slow_model._build_y(X_train,
+                                                   y_train,
                                                    sample_weight=weights,
                                                    trim_duplicates=False)
     slow_model._build_f(X_train_fit, y_train_fit)
@@ -487,9 +493,8 @@ def test_isotonic_dtype():
             assert res.dtype == expected_dtype
 
 
-@pytest.mark.parametrize(
-    "y_dtype", [np.int32, np.int64, np.float32, np.float64]
-)
+@pytest.mark.parametrize("y_dtype",
+                         [np.int32, np.int64, np.float32, np.float64])
 def test_isotonic_mismatched_dtype(y_dtype):
     # regression test for #15004
     # check that data are converted when X and y dtype differ

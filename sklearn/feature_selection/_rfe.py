@@ -3,7 +3,6 @@
 #          Gilles Louppe <g.louppe@gmail.com>
 #
 # License: BSD 3 clause
-
 """Recursive feature elimination for feature ranking"""
 
 import numpy as np
@@ -31,8 +30,8 @@ def _rfe_single_fit(rfe, estimator, X, y, train, test, scorer):
     X_train, y_train = _safe_split(estimator, X, y, train)
     X_test, y_test = _safe_split(estimator, X, y, test, train)
     return rfe._fit(
-        X_train, y_train, lambda estimator, features:
-        _score(estimator, X_test[:, features], y_test, scorer)).scores_
+        X_train, y_train, lambda estimator, features: _score(
+            estimator, X_test[:, features], y_test, scorer)).scores_
 
 
 class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
@@ -121,7 +120,11 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
            Mach. Learn., 46(1-3), 389--422, 2002.
     """
     @_deprecate_positional_args
-    def __init__(self, estimator, *, n_features_to_select=None, step=1,
+    def __init__(self,
+                 estimator,
+                 *,
+                 n_features_to_select=None,
+                 step=1,
                  verbose=0):
         self.estimator = estimator
         self.n_features_to_select = n_features_to_select
@@ -158,11 +161,12 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
 
         tags = self._get_tags()
         X, y = self._validate_data(
-            X, y, accept_sparse="csc",
+            X,
+            y,
+            accept_sparse="csc",
             ensure_min_features=2,
             force_all_finite=not tags.get('allow_nan', True),
-            multi_output=True
-        )
+            multi_output=True)
         # Initialization
         n_features = X.shape[1]
         if self.n_features_to_select is None:
@@ -339,10 +343,11 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
 
     def _more_tags(self):
         estimator_tags = self.estimator._get_tags()
-        return {'poor_score': True,
-                'allow_nan': estimator_tags.get('allow_nan', True),
-                'requires_y': True,
-                }
+        return {
+            'poor_score': True,
+            'allow_nan': estimator_tags.get('allow_nan', True),
+            'requires_y': True,
+        }
 
 
 class RFECV(RFE):
@@ -473,8 +478,15 @@ class RFECV(RFE):
            Mach. Learn., 46(1-3), 389--422, 2002.
     """
     @_deprecate_positional_args
-    def __init__(self, estimator, *, step=1, min_features_to_select=1, cv=None,
-                 scoring=None, verbose=0, n_jobs=None):
+    def __init__(self,
+                 estimator,
+                 *,
+                 step=1,
+                 min_features_to_select=1,
+                 cv=None,
+                 scoring=None,
+                 verbose=0,
+                 n_jobs=None):
         self.estimator = estimator
         self.step = step
         self.cv = cv
@@ -506,10 +518,12 @@ class RFECV(RFE):
         """
         tags = self._get_tags()
         X, y = self._validate_data(
-            X, y, accept_sparse="csr", ensure_min_features=2,
+            X,
+            y,
+            accept_sparse="csr",
+            ensure_min_features=2,
             force_all_finite=not tags.get('allow_nan', True),
-            multi_output=True
-        )
+            multi_output=True)
 
         # Initialization
         cv = check_cv(self.cv, y, classifier=is_classifier(self.estimator))
@@ -527,7 +541,8 @@ class RFECV(RFE):
         # feature count, down to self.min_features_to_select
         rfe = RFE(estimator=self.estimator,
                   n_features_to_select=self.min_features_to_select,
-                  step=self.step, verbose=self.verbose)
+                  step=self.step,
+                  verbose=self.verbose)
 
         # Determine the number of subsets of features by fitting across
         # the train folds and choosing the "features_to_select" parameter
@@ -554,13 +569,13 @@ class RFECV(RFE):
         scores = np.sum(scores, axis=0)
         scores_rev = scores[::-1]
         argmax_idx = len(scores) - np.argmax(scores_rev) - 1
-        n_features_to_select = max(
-            n_features - (argmax_idx * step),
-            self.min_features_to_select)
+        n_features_to_select = max(n_features - (argmax_idx * step),
+                                   self.min_features_to_select)
 
         # Re-execute an elimination with best_k over the whole set
         rfe = RFE(estimator=self.estimator,
-                  n_features_to_select=n_features_to_select, step=self.step,
+                  n_features_to_select=n_features_to_select,
+                  step=self.step,
                   verbose=self.verbose)
 
         rfe.fit(X, y)

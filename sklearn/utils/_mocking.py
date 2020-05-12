@@ -23,6 +23,7 @@ class MockDataFrame:
     ----------
     array
     """
+
     # have shape and length but don't support indexing.
     def __init__(self, array):
         self.array = array
@@ -66,7 +67,10 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
     ----------
     classes_
     """
-    def __init__(self, check_y=None, check_X=None, foo_param=0,
+    def __init__(self,
+                 check_y=None,
+                 check_X=None,
+                 foo_param=0,
                  expected_fit_params=None):
         self.check_y = check_y
         self.check_X = check_X
@@ -96,17 +100,16 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
         if self.check_y is not None:
             assert self.check_y(y)
         self.n_features_in_ = len(X)
-        self.classes_ = np.unique(check_array(y, ensure_2d=False,
-                                              allow_nd=True))
+        self.classes_ = np.unique(
+            check_array(y, ensure_2d=False, allow_nd=True))
         if self.expected_fit_params:
             missing = set(self.expected_fit_params) - set(fit_params)
             assert len(missing) == 0, 'Expected fit parameter(s) %s not ' \
                                       'seen.' % list(missing)
             for key, value in fit_params.items():
                 assert len(value) == len(X), (
-                        'Fit parameter %s has length %d; '
-                        'expected %d.'
-                        % (key, len(value), len(X)))
+                    'Fit parameter %s has length %d; '
+                    'expected %d.' % (key, len(value), len(X)))
 
         return self
 

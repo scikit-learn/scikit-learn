@@ -23,15 +23,21 @@ from ..linear_model import Lasso, orthogonal_mp_gram, LassoLars, Lars
 
 def _check_positive_coding(method, positive):
     if positive and method in ["omp", "lars"]:
-        raise ValueError(
-                "Positive constraint not supported for '{}' "
-                "coding method.".format(method)
-            )
+        raise ValueError("Positive constraint not supported for '{}' "
+                         "coding method.".format(method))
 
 
-def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
-                   regularization=None, copy_cov=True,
-                   init=None, max_iter=1000, check_input=True, verbose=0,
+def _sparse_encode(X,
+                   dictionary,
+                   gram,
+                   cov=None,
+                   algorithm='lasso_lars',
+                   regularization=None,
+                   copy_cov=True,
+                   init=None,
+                   max_iter=1000,
+                   check_input=True,
+                   verbose=0,
                    positive=False):
     """Generic sparse coding
 
@@ -125,10 +131,14 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
 
             # Not passing in verbose=max(0, verbose-1) because Lars.fit already
             # corrects the verbosity level.
-            lasso_lars = LassoLars(alpha=alpha, fit_intercept=False,
-                                   verbose=verbose, normalize=False,
-                                   precompute=gram, fit_path=False,
-                                   positive=positive, max_iter=max_iter)
+            lasso_lars = LassoLars(alpha=alpha,
+                                   fit_intercept=False,
+                                   verbose=verbose,
+                                   normalize=False,
+                                   precompute=gram,
+                                   fit_path=False,
+                                   positive=positive,
+                                   max_iter=max_iter)
             lasso_lars.fit(dictionary.T, X.T, Xy=cov)
             new_code = lasso_lars.coef_
         finally:
@@ -140,8 +150,12 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
         # TODO: Make verbosity argument for Lasso?
         # sklearn.linear_model.coordinate_descent.enet_path has a verbosity
         # argument that we could pass in from Lasso.
-        clf = Lasso(alpha=alpha, fit_intercept=False, normalize=False,
-                    precompute=gram, max_iter=max_iter, warm_start=True,
+        clf = Lasso(alpha=alpha,
+                    fit_intercept=False,
+                    normalize=False,
+                    precompute=gram,
+                    max_iter=max_iter,
+                    warm_start=True,
                     positive=positive)
 
         if init is not None:
@@ -156,8 +170,11 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
 
             # Not passing in verbose=max(0, verbose-1) because Lars.fit already
             # corrects the verbosity level.
-            lars = Lars(fit_intercept=False, verbose=verbose, normalize=False,
-                        precompute=gram, n_nonzero_coefs=int(regularization),
+            lars = Lars(fit_intercept=False,
+                        verbose=verbose,
+                        normalize=False,
+                        precompute=gram,
+                        n_nonzero_coefs=int(regularization),
                         fit_path=False)
             lars.fit(dictionary.T, X.T, Xy=cov)
             new_code = lars.coef_
@@ -166,28 +183,40 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
 
     elif algorithm == 'threshold':
         new_code = ((np.sign(cov) *
-                    np.maximum(np.abs(cov) - regularization, 0)).T)
+                     np.maximum(np.abs(cov) - regularization, 0)).T)
         if positive:
             np.clip(new_code, 0, None, out=new_code)
 
     elif algorithm == 'omp':
-        new_code = orthogonal_mp_gram(
-            Gram=gram, Xy=cov, n_nonzero_coefs=int(regularization),
-            tol=None, norms_squared=row_norms(X, squared=True),
-            copy_Xy=copy_cov).T
+        new_code = orthogonal_mp_gram(Gram=gram,
+                                      Xy=cov,
+                                      n_nonzero_coefs=int(regularization),
+                                      tol=None,
+                                      norms_squared=row_norms(X, squared=True),
+                                      copy_Xy=copy_cov).T
     else:
         raise ValueError('Sparse coding method must be "lasso_lars" '
-                         '"lasso_cd", "lasso", "threshold" or "omp", got %s.'
-                         % algorithm)
+                         '"lasso_cd", "lasso", "threshold" or "omp", got %s.' %
+                         algorithm)
     if new_code.ndim != 2:
         return new_code.reshape(n_samples, n_components)
     return new_code
 
 
 # XXX : could be moved to the linear_model module
-def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
-                  n_nonzero_coefs=None, alpha=None, copy_cov=True, init=None,
-                  max_iter=1000, n_jobs=None, check_input=True, verbose=0,
+def sparse_encode(X,
+                  dictionary,
+                  gram=None,
+                  cov=None,
+                  algorithm='lasso_lars',
+                  n_nonzero_coefs=None,
+                  alpha=None,
+                  copy_cov=True,
+                  init=None,
+                  max_iter=1000,
+                  n_jobs=None,
+                  check_input=True,
+                  verbose=0,
                   positive=False):
     """Sparse coding
 
@@ -308,9 +337,12 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
 
     if effective_n_jobs(n_jobs) == 1 or algorithm == 'threshold':
         code = _sparse_encode(X,
-                              dictionary, gram, cov=cov,
+                              dictionary,
+                              gram,
+                              cov=cov,
                               algorithm=algorithm,
-                              regularization=regularization, copy_cov=copy_cov,
+                              regularization=regularization,
+                              copy_cov=copy_cov,
                               init=init,
                               max_iter=max_iter,
                               check_input=False,
@@ -322,25 +354,31 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
     code = np.empty((n_samples, n_components))
     slices = list(gen_even_slices(n_samples, effective_n_jobs(n_jobs)))
 
-    code_views = Parallel(n_jobs=n_jobs, verbose=verbose)(
-        delayed(_sparse_encode)(
-            X[this_slice], dictionary, gram,
-            cov[:, this_slice] if cov is not None else None,
-            algorithm,
-            regularization=regularization, copy_cov=copy_cov,
-            init=init[this_slice] if init is not None else None,
-            max_iter=max_iter,
-            check_input=False,
-            verbose=verbose,
-            positive=positive)
-        for this_slice in slices)
+    code_views = Parallel(n_jobs=n_jobs, verbose=verbose)(delayed(
+        _sparse_encode)(X[this_slice],
+                        dictionary,
+                        gram,
+                        cov[:, this_slice] if cov is not None else None,
+                        algorithm,
+                        regularization=regularization,
+                        copy_cov=copy_cov,
+                        init=init[this_slice] if init is not None else None,
+                        max_iter=max_iter,
+                        check_input=False,
+                        verbose=verbose,
+                        positive=positive) for this_slice in slices)
     for this_slice, this_view in zip(slices, code_views):
         code[this_slice] = this_view
     return code
 
 
-def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
-                 random_state=None, positive=False):
+def _update_dict(dictionary,
+                 Y,
+                 code,
+                 verbose=False,
+                 return_r2=False,
+                 random_state=None,
+                 positive=False):
     """Update the dense dictionary factor in place.
 
     Parameters
@@ -381,9 +419,9 @@ def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
     n_features = Y.shape[0]
     random_state = check_random_state(random_state)
     # Get BLAS functions
-    gemm, = linalg.get_blas_funcs(('gemm',), (dictionary, code, Y))
-    ger, = linalg.get_blas_funcs(('ger',), (dictionary, code))
-    nrm2, = linalg.get_blas_funcs(('nrm2',), (dictionary,))
+    gemm, = linalg.get_blas_funcs(('gemm', ), (dictionary, code, Y))
+    ger, = linalg.get_blas_funcs(('ger', ), (dictionary, code))
+    nrm2, = linalg.get_blas_funcs(('nrm2', ), (dictionary, ))
     # Residuals, computed with BLAS for speed and efficiency
     # R <- -1.0 * U * V^T + 1.0 * Y
     # Outputs R as Fortran array for efficiency
@@ -416,16 +454,27 @@ def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
             # R <- -1.0 * U_k * V_k^T + R
             R = ger(-1.0, dictionary[:, k], code[k, :], a=R, overwrite_a=True)
     if return_r2:
-        R = nrm2(R) ** 2.0
+        R = nrm2(R)**2.0
         return dictionary, R
     return dictionary
 
 
-def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
-                  method='lars', n_jobs=None, dict_init=None, code_init=None,
-                  callback=None, verbose=False, random_state=None,
-                  return_n_iter=False, positive_dict=False,
-                  positive_code=False, method_max_iter=1000):
+def dict_learning(X,
+                  n_components,
+                  alpha,
+                  max_iter=100,
+                  tol=1e-8,
+                  method='lars',
+                  n_jobs=None,
+                  dict_init=None,
+                  code_init=None,
+                  callback=None,
+                  verbose=False,
+                  random_state=None,
+                  return_n_iter=False,
+                  positive_dict=False,
+                  positive_code=False,
+                  method_max_iter=1000):
     """Solves a dictionary learning matrix factorization problem.
 
     Finds the best dictionary and the corresponding sparse code for
@@ -528,8 +577,8 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
     MiniBatchSparsePCA
     """
     if method not in ('lars', 'cd'):
-        raise ValueError('Coding method %r not supported as a fit algorithm.'
-                         % method)
+        raise ValueError('Coding method %r not supported as a fit algorithm.' %
+                         method)
 
     _check_positive_coding(method, positive_code)
 
@@ -578,16 +627,25 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
             sys.stdout.flush()
         elif verbose:
             print("Iteration % 3i "
-                  "(elapsed time: % 3is, % 4.1fmn, current cost % 7.3f)"
-                  % (ii, dt, dt / 60, current_cost))
+                  "(elapsed time: % 3is, % 4.1fmn, current cost % 7.3f)" %
+                  (ii, dt, dt / 60, current_cost))
 
         # Update code
-        code = sparse_encode(X, dictionary, algorithm=method, alpha=alpha,
-                             init=code, n_jobs=n_jobs, positive=positive_code,
-                             max_iter=method_max_iter, verbose=verbose)
+        code = sparse_encode(X,
+                             dictionary,
+                             algorithm=method,
+                             alpha=alpha,
+                             init=code,
+                             n_jobs=n_jobs,
+                             positive=positive_code,
+                             max_iter=method_max_iter,
+                             verbose=verbose)
         # Update dictionary
-        dictionary, residuals = _update_dict(dictionary.T, X.T, code.T,
-                                             verbose=verbose, return_r2=True,
+        dictionary, residuals = _update_dict(dictionary.T,
+                                             X.T,
+                                             code.T,
+                                             verbose=verbose,
+                                             return_r2=True,
                                              random_state=random_state,
                                              positive=positive_dict)
         dictionary = dictionary.T
@@ -615,13 +673,25 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
         return code, dictionary, errors
 
 
-def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
-                         return_code=True, dict_init=None, callback=None,
-                         batch_size=3, verbose=False, shuffle=True,
-                         n_jobs=None, method='lars', iter_offset=0,
-                         random_state=None, return_inner_stats=False,
-                         inner_stats=None, return_n_iter=False,
-                         positive_dict=False, positive_code=False,
+def dict_learning_online(X,
+                         n_components=2,
+                         alpha=1,
+                         n_iter=100,
+                         return_code=True,
+                         dict_init=None,
+                         callback=None,
+                         batch_size=3,
+                         verbose=False,
+                         shuffle=True,
+                         n_jobs=None,
+                         method='lars',
+                         iter_offset=0,
+                         random_state=None,
+                         return_inner_stats=False,
+                         inner_stats=None,
+                         return_n_iter=False,
+                         positive_dict=False,
+                         positive_code=False,
                          method_max_iter=1000):
     """Solves a dictionary learning matrix factorization problem online.
 
@@ -766,7 +836,8 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
     if dict_init is not None:
         dictionary = dict_init
     else:
-        _, S, dictionary = randomized_svd(X, n_components,
+        _, S, dictionary = randomized_svd(X,
+                                          n_components,
                                           random_state=random_state)
         dictionary = S[:, np.newaxis] * dictionary
     r = len(dictionary)
@@ -785,7 +856,9 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
     else:
         X_train = X
 
-    dictionary = check_array(dictionary.T, order='F', dtype=np.float64,
+    dictionary = check_array(dictionary.T,
+                             order='F',
+                             dtype=np.float64,
                              copy=False)
     dictionary = np.require(dictionary, requirements='W')
 
@@ -814,20 +887,24 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
             sys.stdout.flush()
         elif verbose:
             if verbose > 10 or ii % ceil(100. / verbose) == 0:
-                print("Iteration % 3i (elapsed time: % 3is, % 4.1fmn)"
-                      % (ii, dt, dt / 60))
+                print("Iteration % 3i (elapsed time: % 3is, % 4.1fmn)" %
+                      (ii, dt, dt / 60))
 
-        this_code = sparse_encode(this_X, dictionary.T, algorithm=method,
-                                  alpha=alpha, n_jobs=n_jobs,
+        this_code = sparse_encode(this_X,
+                                  dictionary.T,
+                                  algorithm=method,
+                                  alpha=alpha,
+                                  n_jobs=n_jobs,
                                   check_input=False,
                                   positive=positive_code,
-                                  max_iter=method_max_iter, verbose=verbose).T
+                                  max_iter=method_max_iter,
+                                  verbose=verbose).T
 
         # Update the auxiliary variables
         if ii < batch_size - 1:
             theta = float((ii + 1) * batch_size)
         else:
-            theta = float(batch_size ** 2 + ii + 1 - batch_size)
+            theta = float(batch_size**2 + ii + 1 - batch_size)
         beta = (theta + 1 - batch_size) / (theta + 1)
 
         A *= beta
@@ -836,7 +913,10 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
         B += np.dot(this_X.T, this_code.T)
 
         # Update dictionary
-        dictionary = _update_dict(dictionary, B, A, verbose=verbose,
+        dictionary = _update_dict(dictionary,
+                                  B,
+                                  A,
+                                  verbose=verbose,
                                   random_state=random_state,
                                   positive=positive_dict)
         # XXX: Can the residuals be of any use?
@@ -856,9 +936,14 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
             print('Learning code...', end=' ')
         elif verbose == 1:
             print('|', end=' ')
-        code = sparse_encode(X, dictionary.T, algorithm=method, alpha=alpha,
-                             n_jobs=n_jobs, check_input=False,
-                             positive=positive_code, max_iter=method_max_iter,
+        code = sparse_encode(X,
+                             dictionary.T,
+                             algorithm=method,
+                             alpha=alpha,
+                             n_jobs=n_jobs,
+                             check_input=False,
+                             positive=positive_code,
+                             max_iter=method_max_iter,
                              verbose=verbose)
         if verbose > 1:
             dt = (time.time() - t0)
@@ -876,12 +961,14 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
 
 class SparseCodingMixin(TransformerMixin):
     """Sparse coding mixin"""
-
-    def _set_sparse_coding_params(self, n_components,
+    def _set_sparse_coding_params(self,
+                                  n_components,
                                   transform_algorithm='omp',
                                   transform_n_nonzero_coefs=None,
-                                  transform_alpha=None, split_sign=False,
-                                  n_jobs=None, positive_code=False,
+                                  transform_alpha=None,
+                                  split_sign=False,
+                                  n_jobs=None,
+                                  positive_code=False,
                                   transform_max_iter=1000):
         self.n_components = n_components
         self.transform_algorithm = transform_algorithm
@@ -914,11 +1001,14 @@ class SparseCodingMixin(TransformerMixin):
 
         X = check_array(X)
 
-        code = sparse_encode(
-            X, self.components_, algorithm=self.transform_algorithm,
-            n_nonzero_coefs=self.transform_n_nonzero_coefs,
-            alpha=self.transform_alpha, max_iter=self.transform_max_iter,
-            n_jobs=self.n_jobs, positive=self.positive_code)
+        code = sparse_encode(X,
+                             self.components_,
+                             algorithm=self.transform_algorithm,
+                             n_nonzero_coefs=self.transform_n_nonzero_coefs,
+                             alpha=self.transform_alpha,
+                             max_iter=self.transform_max_iter,
+                             n_jobs=self.n_jobs,
+                             positive=self.positive_code)
 
         if self.split_sign:
             # feature vector is split into a positive and negative side
@@ -1014,9 +1104,15 @@ class SparseCoder(SparseCodingMixin, BaseEstimator):
     _required_parameters = ["dictionary"]
 
     @_deprecate_positional_args
-    def __init__(self, dictionary, *, transform_algorithm='omp',
-                 transform_n_nonzero_coefs=None, transform_alpha=None,
-                 split_sign=False, n_jobs=None, positive_code=False,
+    def __init__(self,
+                 dictionary,
+                 *,
+                 transform_algorithm='omp',
+                 transform_n_nonzero_coefs=None,
+                 transform_alpha=None,
+                 split_sign=False,
+                 n_jobs=None,
+                 positive_code=False,
                  transform_max_iter=1000):
         self._set_sparse_coding_params(dictionary.shape[0],
                                        transform_algorithm,
@@ -1185,12 +1281,25 @@ class DictionaryLearning(SparseCodingMixin, BaseEstimator):
     MiniBatchSparsePCA
     """
     @_deprecate_positional_args
-    def __init__(self, n_components=None, *, alpha=1, max_iter=1000, tol=1e-8,
-                 fit_algorithm='lars', transform_algorithm='omp',
-                 transform_n_nonzero_coefs=None, transform_alpha=None,
-                 n_jobs=None, code_init=None, dict_init=None, verbose=False,
-                 split_sign=False, random_state=None, positive_code=False,
-                 positive_dict=False, transform_max_iter=1000):
+    def __init__(self,
+                 n_components=None,
+                 *,
+                 alpha=1,
+                 max_iter=1000,
+                 tol=1e-8,
+                 fit_algorithm='lars',
+                 transform_algorithm='omp',
+                 transform_n_nonzero_coefs=None,
+                 transform_alpha=None,
+                 n_jobs=None,
+                 code_init=None,
+                 dict_init=None,
+                 verbose=False,
+                 split_sign=False,
+                 random_state=None,
+                 positive_code=False,
+                 positive_dict=False,
+                 transform_max_iter=1000):
 
         self._set_sparse_coding_params(n_components, transform_algorithm,
                                        transform_n_nonzero_coefs,
@@ -1230,8 +1339,11 @@ class DictionaryLearning(SparseCodingMixin, BaseEstimator):
             n_components = self.n_components
 
         V, U, E, self.n_iter_ = dict_learning(
-            X, n_components, self.alpha,
-            tol=self.tol, max_iter=self.max_iter,
+            X,
+            n_components,
+            self.alpha,
+            tol=self.tol,
+            max_iter=self.max_iter,
             method=self.fit_algorithm,
             method_max_iter=self.transform_max_iter,
             n_jobs=self.n_jobs,
@@ -1391,12 +1503,24 @@ class MiniBatchDictionaryLearning(SparseCodingMixin, BaseEstimator):
 
     """
     @_deprecate_positional_args
-    def __init__(self, n_components=None, *, alpha=1, n_iter=1000,
-                 fit_algorithm='lars', n_jobs=None, batch_size=3, shuffle=True,
-                 dict_init=None, transform_algorithm='omp',
-                 transform_n_nonzero_coefs=None, transform_alpha=None,
-                 verbose=False, split_sign=False, random_state=None,
-                 positive_code=False, positive_dict=False,
+    def __init__(self,
+                 n_components=None,
+                 *,
+                 alpha=1,
+                 n_iter=1000,
+                 fit_algorithm='lars',
+                 n_jobs=None,
+                 batch_size=3,
+                 shuffle=True,
+                 dict_init=None,
+                 transform_algorithm='omp',
+                 transform_n_nonzero_coefs=None,
+                 transform_alpha=None,
+                 verbose=False,
+                 split_sign=False,
+                 random_state=None,
+                 positive_code=False,
+                 positive_dict=False,
                  transform_max_iter=1000):
 
         self._set_sparse_coding_params(n_components, transform_algorithm,
@@ -1434,13 +1558,19 @@ class MiniBatchDictionaryLearning(SparseCodingMixin, BaseEstimator):
         X = self._validate_data(X)
 
         U, (A, B), self.n_iter_ = dict_learning_online(
-            X, self.n_components, self.alpha,
-            n_iter=self.n_iter, return_code=False,
+            X,
+            self.n_components,
+            self.alpha,
+            n_iter=self.n_iter,
+            return_code=False,
             method=self.fit_algorithm,
             method_max_iter=self.transform_max_iter,
-            n_jobs=self.n_jobs, dict_init=self.dict_init,
-            batch_size=self.batch_size, shuffle=self.shuffle,
-            verbose=self.verbose, random_state=random_state,
+            n_jobs=self.n_jobs,
+            dict_init=self.dict_init,
+            batch_size=self.batch_size,
+            shuffle=self.shuffle,
+            verbose=self.verbose,
+            random_state=random_state,
             return_inner_stats=True,
             return_n_iter=True,
             positive_dict=self.positive_dict,
@@ -1485,17 +1615,25 @@ class MiniBatchDictionaryLearning(SparseCodingMixin, BaseEstimator):
         inner_stats = getattr(self, 'inner_stats_', None)
         if iter_offset is None:
             iter_offset = getattr(self, 'iter_offset_', 0)
-        U, (A, B) = dict_learning_online(
-            X, self.n_components, self.alpha,
-            n_iter=self.n_iter, method=self.fit_algorithm,
-            method_max_iter=self.transform_max_iter,
-            n_jobs=self.n_jobs, dict_init=dict_init,
-            batch_size=len(X), shuffle=False,
-            verbose=self.verbose, return_code=False,
-            iter_offset=iter_offset, random_state=self.random_state_,
-            return_inner_stats=True, inner_stats=inner_stats,
-            positive_dict=self.positive_dict,
-            positive_code=self.positive_code)
+        U, (A,
+            B) = dict_learning_online(X,
+                                      self.n_components,
+                                      self.alpha,
+                                      n_iter=self.n_iter,
+                                      method=self.fit_algorithm,
+                                      method_max_iter=self.transform_max_iter,
+                                      n_jobs=self.n_jobs,
+                                      dict_init=dict_init,
+                                      batch_size=len(X),
+                                      shuffle=False,
+                                      verbose=self.verbose,
+                                      return_code=False,
+                                      iter_offset=iter_offset,
+                                      random_state=self.random_state_,
+                                      return_inner_stats=True,
+                                      inner_stats=inner_stats,
+                                      positive_dict=self.positive_dict,
+                                      positive_code=self.positive_code)
         self.components_ = U
 
         # Keep track of the state of the algorithm to be able to do

@@ -59,9 +59,10 @@ def test_whitening(solver, copy):
     rank = 50
 
     # some low rank data with correlated features
-    X = np.dot(rng.randn(n_samples, rank),
-               np.dot(np.diag(np.linspace(10.0, 1.0, rank)),
-                      rng.randn(rank, n_features)))
+    X = np.dot(
+        rng.randn(n_samples, rank),
+        np.dot(np.diag(np.linspace(10.0, 1.0, rank)),
+               rng.randn(rank, n_features)))
     # the component-wise variance of the first 50 features is 3 times the
     # mean component-wise variance of the remaining 30 features
     X[:, :50] *= 3
@@ -73,8 +74,12 @@ def test_whitening(solver, copy):
 
     # whiten the data while projecting to the lower dim subspace
     X_ = X.copy()  # make sure we keep an original across iterations.
-    pca = PCA(n_components=n_components, whiten=True, copy=copy,
-              svd_solver=solver, random_state=0, iterated_power=7)
+    pca = PCA(n_components=n_components,
+              whiten=True,
+              copy=copy,
+              svd_solver=solver,
+              random_state=0,
+              iterated_power=7)
     # test fit_transform
     X_whitened = pca.fit_transform(X_.copy())
     assert X_whitened.shape == (n_samples, n_components)
@@ -82,12 +87,14 @@ def test_whitening(solver, copy):
     assert_allclose(X_whitened, X_whitened2, rtol=5e-4)
 
     assert_allclose(X_whitened.std(ddof=1, axis=0), np.ones(n_components))
-    assert_allclose(
-        X_whitened.mean(axis=0), np.zeros(n_components), atol=1e-12
-    )
+    assert_allclose(X_whitened.mean(axis=0),
+                    np.zeros(n_components),
+                    atol=1e-12)
 
     X_ = X.copy()
-    pca = PCA(n_components=n_components, whiten=False, copy=copy,
+    pca = PCA(n_components=n_components,
+              whiten=False,
+              copy=copy,
               svd_solver=solver).fit(X_)
     X_unwhitened = pca.transform(X_)
     assert X_unwhitened.shape == (n_samples, n_components)
@@ -109,25 +116,19 @@ def test_pca_explained_variance_equivalence_solver(svd_solver):
     pca_full.fit(X)
     pca_other.fit(X)
 
-    assert_allclose(
-        pca_full.explained_variance_,
-        pca_other.explained_variance_,
-        rtol=5e-2
-    )
-    assert_allclose(
-        pca_full.explained_variance_ratio_,
-        pca_other.explained_variance_ratio_,
-        rtol=5e-2
-    )
+    assert_allclose(pca_full.explained_variance_,
+                    pca_other.explained_variance_,
+                    rtol=5e-2)
+    assert_allclose(pca_full.explained_variance_ratio_,
+                    pca_other.explained_variance_ratio_,
+                    rtol=5e-2)
 
 
-@pytest.mark.parametrize(
-    'X',
-    [np.random.RandomState(0).randn(100, 80),
-     datasets.make_classification(100, 80, n_informative=78,
-                                  random_state=0)[0]],
-    ids=['random-data', 'correlated-data']
-)
+@pytest.mark.parametrize('X', [
+    np.random.RandomState(0).randn(100, 80),
+    datasets.make_classification(100, 80, n_informative=78, random_state=0)[0]
+],
+                         ids=['random-data', 'correlated-data'])
 @pytest.mark.parametrize('svd_solver', PCA_SOLVERS)
 def test_pca_explained_variance_empirical(X, svd_solver):
     pca = PCA(n_components=2, svd_solver=svd_solver, random_state=0)
@@ -151,9 +152,9 @@ def test_pca_singular_values_consistency(svd_solver):
     pca_full.fit(X)
     pca_other.fit(X)
 
-    assert_allclose(
-        pca_full.singular_values_, pca_other.singular_values_, rtol=5e-3
-    )
+    assert_allclose(pca_full.singular_values_,
+                    pca_other.singular_values_,
+                    rtol=5e-3)
 
 
 @pytest.mark.parametrize("svd_solver", PCA_SOLVERS)
@@ -166,13 +167,10 @@ def test_pca_singular_values(svd_solver):
     X_trans = pca.fit_transform(X)
 
     # compare to the Frobenius norm
-    assert_allclose(
-        np.sum(pca.singular_values_ ** 2), np.linalg.norm(X_trans, "fro") ** 2
-    )
+    assert_allclose(np.sum(pca.singular_values_**2),
+                    np.linalg.norm(X_trans, "fro")**2)
     # Compare to the 2-norms of the score vectors
-    assert_allclose(
-        pca.singular_values_, np.sqrt(np.sum(X_trans ** 2, axis=0))
-    )
+    assert_allclose(pca.singular_values_, np.sqrt(np.sum(X_trans**2, axis=0)))
 
     # set the singular values and see what er get back
     n_samples, n_features = 100, 110
@@ -180,7 +178,7 @@ def test_pca_singular_values(svd_solver):
 
     pca = PCA(n_components=3, svd_solver=svd_solver, random_state=rng)
     X_trans = pca.fit_transform(X)
-    X_trans /= np.sqrt(np.sum(X_trans ** 2, axis=0))
+    X_trans /= np.sqrt(np.sum(X_trans**2, axis=0))
     X_trans[:, 0] *= 3.142
     X_trans[:, 1] *= 2.718
     X_hat = np.dot(X_trans, pca.components_)
@@ -198,7 +196,7 @@ def test_pca_check_projection(svd_solver):
     Xt = 0.1 * rng.randn(1, p) + np.array([3, 4, 5])
 
     Yt = PCA(n_components=2, svd_solver=svd_solver).fit(X).transform(Xt)
-    Yt /= np.sqrt((Yt ** 2).sum())
+    Yt /= np.sqrt((Yt**2).sum())
 
     assert_allclose(np.abs(Yt[0][0]), 1., rtol=5e-3)
 
@@ -234,8 +232,8 @@ def test_pca_inverse(svd_solver, whiten):
 
 @pytest.mark.parametrize(
     'data',
-    [np.array([[0, 1, 0], [1, 0, 0]]), np.array([[0, 1, 0], [1, 0, 0]]).T]
-)
+    [np.array([[0, 1, 0], [1, 0, 0]]),
+     np.array([[0, 1, 0], [1, 0, 0]]).T])
 @pytest.mark.parametrize(
     "svd_solver, n_components, err_msg",
     [('arpack', 0, r'must be between 1 and min\(n_samples, n_features\)'),
@@ -247,8 +245,7 @@ def test_pca_inverse(svd_solver, whiten):
      ('auto', 3, (r"n_components={}L? must be between {}L? and "
                   r"min\(n_samples, n_features\)={}L? with "
                   r"svd_solver=\'{}\'")),
-     ('auto', 1.0, "must be of type int")]
-)
+     ('auto', 1.0, "must be of type int")])
 def test_pca_validation(svd_solver, data, n_components, err_msg):
     # Ensures that solver-specific extreme inputs for the n_components
     # parameter raise errors
@@ -257,9 +254,8 @@ def test_pca_validation(svd_solver, data, n_components, err_msg):
     pca_fitted = PCA(n_components, svd_solver=svd_solver)
 
     solver_reported = 'full' if svd_solver == 'auto' else svd_solver
-    err_msg = err_msg.format(
-        n_components, lower_limit[svd_solver], smallest_d, solver_reported
-    )
+    err_msg = err_msg.format(n_components, lower_limit[svd_solver], smallest_d,
+                             solver_reported)
     with pytest.raises(ValueError, match=err_msg):
         pca_fitted.fit(data)
 
@@ -274,12 +270,10 @@ def test_pca_validation(svd_solver, data, n_components, err_msg):
             PCA(n_components, svd_solver=svd_solver).fit(data)
 
 
-@pytest.mark.parametrize(
-    'solver, n_components_',
-    [('full', min(iris.data.shape)),
-     ('arpack', min(iris.data.shape) - 1),
-     ('randomized', min(iris.data.shape))]
-)
+@pytest.mark.parametrize('solver, n_components_',
+                         [('full', min(iris.data.shape)),
+                          ('arpack', min(iris.data.shape) - 1),
+                          ('randomized', min(iris.data.shape))])
 @pytest.mark.parametrize("data", [iris.data, iris.data.T])
 def test_n_components_none(data, solver, n_components_):
     pca = PCA(svd_solver=solver)
@@ -306,8 +300,8 @@ def test_n_components_mle_error(svd_solver):
     n_samples, n_features = 600, 10
     X = rng.randn(n_samples, n_features)
     pca = PCA(n_components='mle', svd_solver=svd_solver)
-    err_msg = ("n_components='mle' cannot be a string with svd_solver='{}'"
-               .format(svd_solver))
+    err_msg = ("n_components='mle' cannot be a string with svd_solver='{}'".
+               format(svd_solver))
     with pytest.raises(ValueError, match=err_msg):
         pca.fit(X)
 
@@ -366,9 +360,11 @@ def test_infer_dim_3():
 
 @pytest.mark.parametrize(
     "X, n_components, n_components_validated",
-    [(iris.data, 0.95, 2),  # row > col
-     (iris.data, 0.01, 1),  # row > col
-     (np.random.RandomState(0).rand(5, 20), 0.5, 2)]  # row < col
+    [
+        (iris.data, 0.95, 2),  # row > col
+        (iris.data, 0.01, 1),  # row > col
+        (np.random.RandomState(0).rand(5, 20), 0.5, 2)
+    ]  # row < col
 )
 def test_infer_dim_by_explained_variance(X, n_components,
                                          n_components_validated):
@@ -388,7 +384,7 @@ def test_pca_score(svd_solver):
     pca.fit(X)
 
     ll1 = pca.score(X)
-    h = -0.5 * np.log(2 * np.pi * np.exp(1) * 0.1 ** 2) * p
+    h = -0.5 * np.log(2 * np.pi * np.exp(1) * 0.1**2) * p
     assert_allclose(ll1 / h, 1, rtol=5e-2)
 
     ll2 = pca.score(rng.randn(n, p) * .2 + np.array([3, 4, 5]))
@@ -459,7 +455,7 @@ def test_pca_zero_noise_variance_edge_cases(svd_solver):
 
 @pytest.mark.parametrize(
     'data, n_components, expected_solver',
-    [   # case: n_components in (0,1) => 'full'
+    [  # case: n_components in (0,1) => 'full'
         (np.random.RandomState(0).uniform(size=(1000, 50)), 0.5, 'full'),
         # case: max(X.shape) <= 500 => 'full'
         (np.random.RandomState(0).uniform(size=(10, 50)), 5, 'full'),
@@ -467,13 +463,12 @@ def test_pca_zero_noise_variance_edge_cases(svd_solver):
         (np.random.RandomState(0).uniform(size=(1000, 50)), 50, 'full'),
         # n_components >= 1 and n_components < .8*min(X.shape) => 'randomized'
         (np.random.RandomState(0).uniform(size=(1000, 50)), 10, 'randomized')
-    ]
-)
+    ])
 def test_pca_svd_solver_auto(data, n_components, expected_solver):
     pca_auto = PCA(n_components=n_components, random_state=0)
-    pca_test = PCA(
-        n_components=n_components, svd_solver=expected_solver, random_state=0
-    )
+    pca_test = PCA(n_components=n_components,
+                   svd_solver=expected_solver,
+                   random_state=0)
     pca_auto.fit(data)
     pca_test.fit(data)
     assert_allclose(pca_auto.components_, pca_test.components_)
@@ -506,9 +501,8 @@ def test_pca_deterministic_output(svd_solver):
     for i in range(20):
         pca = PCA(n_components=2, svd_solver=svd_solver, random_state=rng)
         transformed_X[i, :] = pca.fit_transform(X)[0]
-    assert_allclose(
-        transformed_X, np.tile(transformed_X[0, :], 20).reshape(20, 2)
-    )
+    assert_allclose(transformed_X,
+                    np.tile(transformed_X[0, :], 20).reshape(20, 2))
 
 
 @pytest.mark.parametrize('svd_solver', PCA_SOLVERS)
@@ -597,8 +591,10 @@ def test_mle_redundant_data():
     # Test 'mle' with pathological X: only one relevant feature should give a
     # rank of 1
     X, _ = datasets.make_classification(n_features=20,
-                                        n_informative=1, n_repeated=18,
-                                        n_redundant=1, n_clusters_per_class=1,
+                                        n_informative=1,
+                                        n_repeated=18,
+                                        n_redundant=1,
+                                        n_clusters_per_class=1,
                                         random_state=42)
     pca = PCA(n_components='mle').fit(X)
     assert pca.n_components_ == 1
@@ -607,13 +603,15 @@ def test_mle_redundant_data():
 def test_fit_mle_too_few_samples():
     # Tests that an error is raised when the number of samples is smaller
     # than the number of features during an mle fit
-    X, _ = datasets.make_classification(n_samples=20, n_features=21,
+    X, _ = datasets.make_classification(n_samples=20,
+                                        n_features=21,
                                         random_state=42)
 
     pca = PCA(n_components='mle', svd_solver='full')
-    with pytest.raises(ValueError, match="n_components='mle' is only "
-                                         "supported if "
-                                         "n_samples >= n_features"):
+    with pytest.raises(ValueError,
+                       match="n_components='mle' is only "
+                       "supported if "
+                       "n_samples >= n_features"):
         pca.fit(X)
 
 

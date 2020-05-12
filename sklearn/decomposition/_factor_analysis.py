@@ -24,7 +24,6 @@ from math import sqrt, log
 import numpy as np
 from scipy import linalg
 
-
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array, check_random_state
 from ..utils.extmath import fast_logdet, randomized_svd, squared_norm
@@ -139,10 +138,16 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
         non-Gaussian latent variables.
     """
     @_deprecate_positional_args
-    def __init__(self, n_components=None, *, tol=1e-2, copy=True,
+    def __init__(self,
+                 n_components=None,
+                 *,
+                 tol=1e-2,
+                 copy=True,
                  max_iter=1000,
-                 noise_variance_init=None, svd_method='randomized',
-                 iterated_power=3, random_state=0):
+                 noise_variance_init=None,
+                 svd_method='randomized',
+                 iterated_power=3,
+                 random_state=0):
         self.n_components = n_components
         self.copy = copy
         self.tol = tol
@@ -200,6 +205,7 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
         # we'll modify svd outputs to return unexplained variance
         # to allow for unified computation of loglikelihood
         if self.svd_method == 'lapack':
+
             def my_svd(X):
                 _, s, Vt = linalg.svd(X, full_matrices=False)
                 return (s[:n_components], Vt[:n_components],
@@ -208,7 +214,8 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
             random_state = check_random_state(self.random_state)
 
             def my_svd(X):
-                _, s, Vt = randomized_svd(X, n_components,
+                _, s, Vt = randomized_svd(X,
+                                          n_components,
                                           random_state=random_state,
                                           n_iter=self.iterated_power)
                 return s, Vt, squared_norm(X) - squared_norm(s)
@@ -235,12 +242,11 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
                 break
             old_ll = ll
 
-            psi = np.maximum(var - np.sum(W ** 2, axis=0), SMALL)
+            psi = np.maximum(var - np.sum(W**2, axis=0), SMALL)
         else:
-            warnings.warn('FactorAnalysis did not converge.' +
-                          ' You might want' +
-                          ' to increase the number of iterations.',
-                          ConvergenceWarning)
+            warnings.warn(
+                'FactorAnalysis did not converge.' + ' You might want' +
+                ' to increase the number of iterations.', ConvergenceWarning)
 
         self.components_ = W
         self.noise_variance_ = psi
@@ -342,8 +348,8 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
         precision = self.get_precision()
         n_features = X.shape[1]
         log_like = -.5 * (Xr * (np.dot(Xr, precision))).sum(axis=1)
-        log_like -= .5 * (n_features * log(2. * np.pi)
-                          - fast_logdet(precision))
+        log_like -= .5 * (n_features * log(2. * np.pi) -
+                          fast_logdet(precision))
         return log_like
 
     def score(self, X, y=None):

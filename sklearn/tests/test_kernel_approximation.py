@@ -104,7 +104,8 @@ def test_skewed_chi2_sampler():
     kernel = np.exp(log_kernel.sum(axis=2))
 
     # approximate kernel mapping
-    transform = SkewedChi2Sampler(skewedness=c, n_components=1000,
+    transform = SkewedChi2Sampler(skewedness=c,
+                                  n_components=1000,
                                   random_state=42)
     X_trans = transform.fit_transform(X)
     Y_trans = transform.transform(Y)
@@ -234,8 +235,10 @@ def test_nystroem_poly_kernel_params():
     X = rnd.uniform(size=(10, 4))
 
     K = polynomial_kernel(X, degree=3.1, coef0=.1)
-    nystroem = Nystroem(kernel="polynomial", n_components=X.shape[0],
-                        degree=3.1, coef0=.1)
+    nystroem = Nystroem(kernel="polynomial",
+                        n_components=X.shape[0],
+                        degree=3.1,
+                        coef0=.1)
     X_transformed = nystroem.fit_transform(X)
     assert_array_almost_equal(np.dot(X_transformed, X_transformed.T), K)
 
@@ -252,10 +255,12 @@ def test_nystroem_callable():
         return np.minimum(x, y).sum()
 
     kernel_log = []
-    X = list(X)     # test input validation
+    X = list(X)  # test input validation
     Nystroem(kernel=logging_histogram_kernel,
              n_components=(n_samples - 1),
-             kernel_params={'log': kernel_log}).fit(X)
+             kernel_params={
+                 'log': kernel_log
+             }).fit(X)
     assert len(kernel_log) == n_samples * (n_samples - 1) / 2
 
     # if degree, gamma or coef0 is passed, we raise a warning
@@ -282,7 +287,6 @@ def test_nystroem_precomputed_kernel():
     msg = "Don't pass gamma, coef0 or degree to Nystroem"
     params = ({'gamma': 1}, {'coef0': 1}, {'degree': 2})
     for param in params:
-        ny = Nystroem(kernel='precomputed', n_components=X.shape[0],
-                      **param)
+        ny = Nystroem(kernel='precomputed', n_components=X.shape[0], **param)
         with pytest.raises(ValueError, match=msg):
             ny.fit(K)

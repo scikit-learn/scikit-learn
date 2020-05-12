@@ -21,13 +21,15 @@ from sklearn._build_utils.deprecated_modules import _DEPRECATED_MODULES
 PYTEST_MIN_VERSION = '3.3.0'
 
 if LooseVersion(pytest.__version__) < PYTEST_MIN_VERSION:
-    raise ImportError('Your version of pytest is too old, you should have '
-                      'at least pytest >= {} installed.'
-                      .format(PYTEST_MIN_VERSION))
+    raise ImportError(
+        'Your version of pytest is too old, you should have '
+        'at least pytest >= {} installed.'.format(PYTEST_MIN_VERSION))
 
 
 def pytest_addoption(parser):
-    parser.addoption("--skip-network", action="store_true", default=False,
+    parser.addoption("--skip-network",
+                     action="store_true",
+                     default=False,
                      help="skip network tests")
 
 
@@ -38,8 +40,8 @@ def pytest_collection_modifyitems(config, items):
         skip_marker = pytest.mark.skip(
             reason='FeatureHasher is not compatible with PyPy')
         for item in items:
-            if item.name.endswith(('_hash.FeatureHasher',
-                                   'text.HashingVectorizer')):
+            if item.name.endswith(
+                ('_hash.FeatureHasher', 'text.HashingVectorizer')):
                 item.add_marker(skip_marker)
 
     # Skip tests which require internet if the flag is provided
@@ -80,7 +82,8 @@ def pytest_collection_modifyitems(config, items):
         for item in items:
             if item.name in [
                     "sklearn.feature_extraction.image.PatchExtractor",
-                    "sklearn.feature_extraction.image.extract_patches_2d"]:
+                    "sklearn.feature_extraction.image.extract_patches_2d"
+            ]:
                 item.add_marker(skip_marker)
 
 
@@ -89,9 +92,7 @@ def pytest_configure(config):
     sys._is_pytest_session = True
     # declare our custom markers to avoid PytestUnknownMarkWarning
     config.addinivalue_line(
-        "markers",
-        "network: mark a test for execution if network available."
-    )
+        "markers", "network: mark a test for execution if network available.")
 
 
 def pytest_unconfigure(config):
@@ -103,4 +104,5 @@ def pytest_unconfigure(config):
 # Configures pytest to ignore deprecated modules.
 collect_ignore_glob = [
     os.path.join(*deprecated_path.split(".")) + ".py"
-    for _, deprecated_path, _, _ in _DEPRECATED_MODULES]
+    for _, deprecated_path, _, _ in _DEPRECATED_MODULES
+]

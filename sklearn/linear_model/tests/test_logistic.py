@@ -32,11 +32,9 @@ from sklearn.utils._testing import skip_if_no_parallel
 
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model._logistic import (
-    LogisticRegression,
-    _logistic_regression_path, LogisticRegressionCV,
-    _logistic_loss_and_grad, _logistic_grad_hess,
-    _multinomial_grad_hess, _logistic_loss,
-    _log_reg_scoring_path)
+    LogisticRegression, _logistic_regression_path, LogisticRegressionCV,
+    _logistic_loss_and_grad, _logistic_grad_hess, _multinomial_grad_hess,
+    _logistic_loss, _log_reg_scoring_path)
 
 X = [[-1, 0], [0, 1], [1, 1]]
 X_sp = sp.csr_matrix(X)
@@ -54,7 +52,7 @@ def check_predictions(clf, X, y):
     predicted = clf.fit(X, y).predict(X)
     assert_array_equal(clf.classes_, classes)
 
-    assert predicted.shape == (n_samples,)
+    assert predicted.shape == (n_samples, )
     assert_array_equal(predicted, y)
 
     probabilities = clf.predict_proba(X)
@@ -72,17 +70,16 @@ def test_predict_2_classes():
     check_predictions(LogisticRegression(C=100, random_state=0), X, Y1)
     check_predictions(LogisticRegression(C=100, random_state=0), X_sp, Y1)
 
-    check_predictions(LogisticRegression(fit_intercept=False,
-                                         random_state=0), X, Y1)
-    check_predictions(LogisticRegression(fit_intercept=False,
-                                         random_state=0), X_sp, Y1)
+    check_predictions(LogisticRegression(fit_intercept=False, random_state=0),
+                      X, Y1)
+    check_predictions(LogisticRegression(fit_intercept=False, random_state=0),
+                      X_sp, Y1)
 
 
 def test_error():
     # Test for appropriate exception on errors
     msg = "Penalty term must be positive"
-    assert_raise_message(ValueError, msg,
-                         LogisticRegression(C=-1).fit, X, Y1)
+    assert_raise_message(ValueError, msg, LogisticRegression(C=-1).fit, X, Y1)
     assert_raise_message(ValueError, msg,
                          LogisticRegression(C="test").fit, X, Y1)
 
@@ -102,7 +99,6 @@ def test_error():
 
 
 def test_logistic_cv_mock_scorer():
-
     class MockScorer:
         def __init__(self):
             self.calls = 0
@@ -149,11 +145,10 @@ def test_lr_liblinear_warning():
     target = iris.target_names[iris.target]
 
     lr = LogisticRegression(solver='liblinear', n_jobs=2)
-    assert_warns_message(UserWarning,
-                         "'n_jobs' > 1 does not have any effect when"
-                         " 'solver' is set to 'liblinear'. Got 'n_jobs'"
-                         " = 2.",
-                         lr.fit, iris.data, target)
+    assert_warns_message(
+        UserWarning, "'n_jobs' > 1 does not have any effect when"
+        " 'solver' is set to 'liblinear'. Got 'n_jobs'"
+        " = 2.", lr.fit, iris.data, target)
 
 
 def test_predict_3_classes():
@@ -170,17 +165,27 @@ def test_predict_iris():
     # Test that both multinomial and OvR solvers handle
     # multiclass data correctly and give good accuracy
     # score (>0.95) for the training data.
-    for clf in [LogisticRegression(C=len(iris.data), solver='liblinear',
-                                   multi_class='ovr'),
-                LogisticRegression(C=len(iris.data), solver='lbfgs',
-                                   multi_class='multinomial'),
-                LogisticRegression(C=len(iris.data), solver='newton-cg',
-                                   multi_class='multinomial'),
-                LogisticRegression(C=len(iris.data), solver='sag', tol=1e-2,
-                                   multi_class='ovr', random_state=42),
-                LogisticRegression(C=len(iris.data), solver='saga', tol=1e-2,
-                                   multi_class='ovr', random_state=42)
-                ]:
+    for clf in [
+            LogisticRegression(C=len(iris.data),
+                               solver='liblinear',
+                               multi_class='ovr'),
+            LogisticRegression(C=len(iris.data),
+                               solver='lbfgs',
+                               multi_class='multinomial'),
+            LogisticRegression(C=len(iris.data),
+                               solver='newton-cg',
+                               multi_class='multinomial'),
+            LogisticRegression(C=len(iris.data),
+                               solver='sag',
+                               tol=1e-2,
+                               multi_class='ovr',
+                               random_state=42),
+            LogisticRegression(C=len(iris.data),
+                               solver='saga',
+                               tol=1e-2,
+                               multi_class='ovr',
+                               random_state=42)
+    ]:
         clf.fit(iris.data, target)
         assert_array_equal(np.unique(target), clf.classes_)
 
@@ -222,13 +227,11 @@ def test_check_solver_option(LR):
 
     # all solvers except 'liblinear' and 'saga'
     for solver in ['newton-cg', 'lbfgs', 'sag']:
-        msg = ("Solver %s supports only 'l2' or 'none' penalties," %
-               solver)
+        msg = ("Solver %s supports only 'l2' or 'none' penalties," % solver)
         lr = LR(solver=solver, penalty='l1', multi_class='ovr')
         assert_raise_message(ValueError, msg, lr.fit, X, y)
     for solver in ['newton-cg', 'lbfgs', 'sag', 'saga']:
-        msg = ("Solver %s supports only dual=False, got dual=True" %
-               solver)
+        msg = ("Solver %s supports only dual=False, got dual=True" % solver)
         lr = LR(solver=solver, dual=True, multi_class='ovr')
         assert_raise_message(ValueError, msg, lr.fit, X, y)
 
@@ -253,19 +256,22 @@ def test_multinomial_binary(solver):
     target = (iris.target > 0).astype(np.intp)
     target = np.array(["setosa", "not-setosa"])[target]
 
-    clf = LogisticRegression(solver=solver, multi_class='multinomial',
-                             random_state=42, max_iter=2000)
+    clf = LogisticRegression(solver=solver,
+                             multi_class='multinomial',
+                             random_state=42,
+                             max_iter=2000)
     clf.fit(iris.data, target)
 
     assert clf.coef_.shape == (1, iris.data.shape[1])
-    assert clf.intercept_.shape == (1,)
+    assert clf.intercept_.shape == (1, )
     assert_array_equal(clf.predict(iris.data), target)
 
-    mlr = LogisticRegression(solver=solver, multi_class='multinomial',
-                             random_state=42, fit_intercept=False)
+    mlr = LogisticRegression(solver=solver,
+                             multi_class='multinomial',
+                             random_state=42,
+                             fit_intercept=False)
     mlr.fit(iris.data, target)
-    pred = clf.classes_[np.argmax(clf.predict_log_proba(iris.data),
-                                  axis=1)]
+    pred = clf.classes_[np.argmax(clf.predict_log_proba(iris.data), axis=1)]
     assert np.mean(pred == target) > .9
 
 
@@ -323,8 +329,8 @@ def test_inconsistent_input():
     assert_raises(ValueError, clf.fit, X, y_wrong)
 
     # Wrong dimensions for test data
-    assert_raises(ValueError, clf.fit(X_, y_).predict,
-                  rng.random_sample((3, 12)))
+    assert_raises(ValueError,
+                  clf.fit(X_, y_).predict, rng.random_sample((3, 12)))
 
 
 def test_write_parameters():
@@ -356,30 +362,52 @@ def test_consistency_path():
     # can't test with fit_intercept=True since LIBLINEAR
     # penalizes the intercept
     for solver in ['sag', 'saga']:
-        coefs, Cs, _ = f(_logistic_regression_path)(
-            X, y, Cs=Cs, fit_intercept=False, tol=1e-5, solver=solver,
-            max_iter=1000, multi_class='ovr', random_state=0)
+        coefs, Cs, _ = f(_logistic_regression_path)(X,
+                                                    y,
+                                                    Cs=Cs,
+                                                    fit_intercept=False,
+                                                    tol=1e-5,
+                                                    solver=solver,
+                                                    max_iter=1000,
+                                                    multi_class='ovr',
+                                                    random_state=0)
         for i, C in enumerate(Cs):
-            lr = LogisticRegression(C=C, fit_intercept=False, tol=1e-5,
-                                    solver=solver, multi_class='ovr',
-                                    random_state=0, max_iter=1000)
+            lr = LogisticRegression(C=C,
+                                    fit_intercept=False,
+                                    tol=1e-5,
+                                    solver=solver,
+                                    multi_class='ovr',
+                                    random_state=0,
+                                    max_iter=1000)
             lr.fit(X, y)
             lr_coef = lr.coef_.ravel()
-            assert_array_almost_equal(lr_coef, coefs[i], decimal=4,
+            assert_array_almost_equal(lr_coef,
+                                      coefs[i],
+                                      decimal=4,
                                       err_msg="with solver = %s" % solver)
 
     # test for fit_intercept=True
     for solver in ('lbfgs', 'newton-cg', 'liblinear', 'sag', 'saga'):
         Cs = [1e3]
-        coefs, Cs, _ = f(_logistic_regression_path)(
-            X, y, Cs=Cs, tol=1e-6, solver=solver,
-            intercept_scaling=10000., random_state=0, multi_class='ovr')
-        lr = LogisticRegression(C=Cs[0], tol=1e-4,
-                                intercept_scaling=10000., random_state=0,
-                                multi_class='ovr', solver=solver)
+        coefs, Cs, _ = f(_logistic_regression_path)(X,
+                                                    y,
+                                                    Cs=Cs,
+                                                    tol=1e-6,
+                                                    solver=solver,
+                                                    intercept_scaling=10000.,
+                                                    random_state=0,
+                                                    multi_class='ovr')
+        lr = LogisticRegression(C=Cs[0],
+                                tol=1e-4,
+                                intercept_scaling=10000.,
+                                random_state=0,
+                                multi_class='ovr',
+                                solver=solver)
         lr.fit(X, y)
         lr_coef = np.concatenate([lr.coef_.ravel(), lr.intercept_])
-        assert_array_almost_equal(lr_coef, coefs[0], decimal=4,
+        assert_array_almost_equal(lr_coef,
+                                  coefs[0],
+                                  decimal=4,
                                   err_msg="with solver = %s" % solver)
 
 
@@ -393,8 +421,13 @@ def test_logistic_regression_path_convergence_fail():
     # advice (scaling the data) and to the logistic regression specific
     # documentation that includes hints on the solver configuration.
     with pytest.warns(ConvergenceWarning) as record:
-        _logistic_regression_path(
-            X, y, Cs=Cs, tol=0., max_iter=1, random_state=0, verbose=0)
+        _logistic_regression_path(X,
+                                  y,
+                                  Cs=Cs,
+                                  tol=0.,
+                                  max_iter=1,
+                                  random_state=0,
+                                  verbose=0)
 
     assert len(record) == 1
     warn_msg = record[0].message.args[0]
@@ -407,22 +440,34 @@ def test_logistic_regression_path_convergence_fail():
 def test_liblinear_dual_random_state():
     # random_state is relevant for liblinear solver only if dual=True
     X, y = make_classification(n_samples=20, random_state=0)
-    lr1 = LogisticRegression(random_state=0, dual=True, max_iter=1, tol=1e-15,
-                             solver='liblinear', multi_class='ovr')
+    lr1 = LogisticRegression(random_state=0,
+                             dual=True,
+                             max_iter=1,
+                             tol=1e-15,
+                             solver='liblinear',
+                             multi_class='ovr')
     lr1.fit(X, y)
-    lr2 = LogisticRegression(random_state=0, dual=True, max_iter=1, tol=1e-15,
-                             solver='liblinear', multi_class='ovr')
+    lr2 = LogisticRegression(random_state=0,
+                             dual=True,
+                             max_iter=1,
+                             tol=1e-15,
+                             solver='liblinear',
+                             multi_class='ovr')
     lr2.fit(X, y)
-    lr3 = LogisticRegression(random_state=8, dual=True, max_iter=1, tol=1e-15,
-                             solver='liblinear', multi_class='ovr')
+    lr3 = LogisticRegression(random_state=8,
+                             dual=True,
+                             max_iter=1,
+                             tol=1e-15,
+                             solver='liblinear',
+                             multi_class='ovr')
     lr3.fit(X, y)
 
     # same result for same random state
     assert_array_almost_equal(lr1.coef_, lr2.coef_)
     # different results for different random states
     msg = "Arrays are not almost equal to 6 decimals"
-    assert_raise_message(AssertionError, msg,
-                         assert_array_almost_equal, lr1.coef_, lr3.coef_)
+    assert_raise_message(AssertionError, msg, assert_array_almost_equal,
+                         lr1.coef_, lr3.coef_)
 
 
 def test_logistic_loss_and_grad():
@@ -438,20 +483,16 @@ def test_logistic_loss_and_grad():
         # First check that our derivation of the grad is correct
         loss, grad = _logistic_loss_and_grad(w, X, y, alpha=1.)
         approx_grad = optimize.approx_fprime(
-            w, lambda w: _logistic_loss_and_grad(w, X, y, alpha=1.)[0], 1e-3
-        )
+            w, lambda w: _logistic_loss_and_grad(w, X, y, alpha=1.)[0], 1e-3)
         assert_array_almost_equal(grad, approx_grad, decimal=2)
 
         # Second check that our intercept implementation is good
         w = np.zeros(n_features + 1)
-        loss_interp, grad_interp = _logistic_loss_and_grad(
-            w, X, y, alpha=1.
-        )
+        loss_interp, grad_interp = _logistic_loss_and_grad(w, X, y, alpha=1.)
         assert_array_almost_equal(loss, loss_interp)
 
         approx_grad = optimize.approx_fprime(
-            w, lambda w: _logistic_loss_and_grad(w, X, y, alpha=1.)[0], 1e-3
-        )
+            w, lambda w: _logistic_loss_and_grad(w, X, y, alpha=1.)[0], 1e-3)
         assert_array_almost_equal(grad_interp, approx_grad, decimal=2)
 
 
@@ -512,11 +553,16 @@ def test_logistic_cv():
     y = np.sign(X_ref.dot(5 * rng.randn(n_features)))
     X_ref -= X_ref.mean()
     X_ref /= X_ref.std()
-    lr_cv = LogisticRegressionCV(Cs=[1.], fit_intercept=False,
-                                 solver='liblinear', multi_class='ovr', cv=3)
+    lr_cv = LogisticRegressionCV(Cs=[1.],
+                                 fit_intercept=False,
+                                 solver='liblinear',
+                                 multi_class='ovr',
+                                 cv=3)
     lr_cv.fit(X_ref, y)
-    lr = LogisticRegression(C=1., fit_intercept=False,
-                            solver='liblinear', multi_class='ovr')
+    lr = LogisticRegression(C=1.,
+                            fit_intercept=False,
+                            solver='liblinear',
+                            multi_class='ovr')
     lr.fit(X_ref, y)
     assert_array_almost_equal(lr.coef_, lr_cv.coef_)
 
@@ -526,27 +572,32 @@ def test_logistic_cv():
 
     coefs_paths = np.asarray(list(lr_cv.coefs_paths_.values()))
     assert_array_equal(coefs_paths.shape, (1, 3, 1, n_features))
-    assert_array_equal(lr_cv.Cs_.shape, (1,))
+    assert_array_equal(lr_cv.Cs_.shape, (1, ))
     scores = np.asarray(list(lr_cv.scores_.values()))
     assert_array_equal(scores.shape, (1, 3, 1))
 
 
-@pytest.mark.parametrize('scoring, multiclass_agg_list',
-                         [('accuracy', ['']),
-                          ('precision', ['_macro', '_weighted']),
-                          # no need to test for micro averaging because it
-                          # is the same as accuracy for f1, precision,
-                          # and recall (see https://github.com/
-                          # scikit-learn/scikit-learn/pull/
-                          # 11578#discussion_r203250062)
-                          ('f1', ['_macro', '_weighted']),
-                          ('neg_log_loss', ['']),
-                          ('recall', ['_macro', '_weighted'])])
+@pytest.mark.parametrize(
+    'scoring, multiclass_agg_list',
+    [
+        ('accuracy', ['']),
+        ('precision', ['_macro', '_weighted']),
+        # no need to test for micro averaging because it
+        # is the same as accuracy for f1, precision,
+        # and recall (see https://github.com/
+        # scikit-learn/scikit-learn/pull/
+        # 11578#discussion_r203250062)
+        ('f1', ['_macro', '_weighted']),
+        ('neg_log_loss', ['']),
+        ('recall', ['_macro', '_weighted'])
+    ])
 def test_logistic_cv_multinomial_score(scoring, multiclass_agg_list):
     # test that LogisticRegressionCV uses the right score to compute its
     # cross-validation scores when using a multinomial scoring
     # see https://github.com/scikit-learn/scikit-learn/issues/8720
-    X, y = make_classification(n_samples=100, random_state=0, n_classes=3,
+    X, y = make_classification(n_samples=100,
+                               random_state=0,
+                               n_classes=3,
                                n_informative=6)
     train, test = np.arange(80), np.arange(80, 100)
     lr = LogisticRegression(C=1., multi_class='multinomial')
@@ -559,16 +610,23 @@ def test_logistic_cv_multinomial_score(scoring, multiclass_agg_list):
     for averaging in multiclass_agg_list:
         scorer = get_scorer(scoring + averaging)
         assert_array_almost_equal(
-            _log_reg_scoring_path(X, y, train, test, Cs=[1.],
-                                  scoring=scorer, **params)[2][0],
+            _log_reg_scoring_path(X,
+                                  y,
+                                  train,
+                                  test,
+                                  Cs=[1.],
+                                  scoring=scorer,
+                                  **params)[2][0],
             scorer(lr, X[test], y[test]))
 
 
 def test_multinomial_logistic_regression_string_inputs():
     # Test with string labels for LogisticRegression(CV)
     n_samples, n_features, n_classes = 50, 5, 3
-    X_ref, y = make_classification(n_samples=n_samples, n_features=n_features,
-                                   n_classes=n_classes, n_informative=3,
+    X_ref, y = make_classification(n_samples=n_samples,
+                                   n_features=n_features,
+                                   n_classes=n_classes,
+                                   n_informative=3,
                                    random_state=0)
     y_str = LabelEncoder().fit(['bar', 'baz', 'foo']).inverse_transform(y)
     # For numerical labels, let y values be taken from set (-1, 0, 1)
@@ -595,15 +653,18 @@ def test_multinomial_logistic_regression_string_inputs():
     assert sorted(np.unique(lr_cv_str.predict(X_ref))) == ['bar', 'baz', 'foo']
 
     # Make sure class weights can be given with string labels
-    lr_cv_str = LogisticRegression(
-        class_weight={'bar': 1, 'baz': 2, 'foo': 0},
-        multi_class='multinomial').fit(X_ref, y_str)
+    lr_cv_str = LogisticRegression(class_weight={
+        'bar': 1,
+        'baz': 2,
+        'foo': 0
+    },
+                                   multi_class='multinomial').fit(
+                                       X_ref, y_str)
     assert sorted(np.unique(lr_cv_str.predict(X_ref))) == ['bar', 'baz']
 
 
 def test_logistic_cv_sparse():
-    X, y = make_classification(n_samples=50, n_features=5,
-                               random_state=0)
+    X, y = make_classification(n_samples=50, n_features=5, random_state=0)
     X[X < 1.0] = 0.0
     csr = sp.csr_matrix(X)
 
@@ -618,7 +679,8 @@ def test_logistic_cv_sparse():
 
 def test_intercept_logistic_helper():
     n_samples, n_features = 10, 5
-    X, y = make_classification(n_samples=n_samples, n_features=n_features,
+    X, y = make_classification(n_samples=n_samples,
+                               n_features=n_features,
                                random_state=0)
 
     # Fit intercept case.
@@ -635,7 +697,7 @@ def test_intercept_logistic_helper():
 
     # In the fit_intercept=False case, the feature vector of ones is
     # penalized. This should be taken care of.
-    assert_almost_equal(loss_interp + 0.5 * (w[-1] ** 2), loss)
+    assert_almost_equal(loss_interp + 0.5 * (w[-1]**2), loss)
 
     # Check gradient.
     assert_array_almost_equal(grad_interp[:n_features], grad[:n_features])
@@ -682,7 +744,7 @@ def test_ovr_multinomial_iris():
     assert_array_equal(clf.classes_, [0, 1, 2])
     coefs_paths = np.asarray(list(clf.coefs_paths_.values()))
     assert coefs_paths.shape == (3, n_cv, 10, n_features + 1)
-    assert clf.Cs_.shape == (10,)
+    assert clf.Cs_.shape == (10, )
     scores = np.asarray(list(clf.scores_.values()))
     assert scores.shape == (3, n_cv, 10)
 
@@ -690,8 +752,11 @@ def test_ovr_multinomial_iris():
     for solver in ['lbfgs', 'newton-cg', 'sag', 'saga']:
         max_iter = 500 if solver in ['sag', 'saga'] else 15
         clf_multi = LogisticRegressionCV(
-            solver=solver, multi_class='multinomial', max_iter=max_iter,
-            random_state=42, tol=1e-3 if solver in ['sag', 'saga'] else 1e-2,
+            solver=solver,
+            multi_class='multinomial',
+            max_iter=max_iter,
+            random_state=42,
+            tol=1e-3 if solver in ['sag', 'saga'] else 1e-2,
             cv=2)
         clf_multi.fit(train, target)
         multi_score = clf_multi.score(train, target)
@@ -703,7 +768,7 @@ def test_ovr_multinomial_iris():
         assert_array_equal(clf_multi.classes_, [0, 1, 2])
         coefs_paths = np.asarray(list(clf_multi.coefs_paths_.values()))
         assert coefs_paths.shape == (3, n_cv, 10, n_features + 1)
-        assert clf_multi.Cs_.shape == (10,)
+        assert clf_multi.Cs_.shape == (10, )
         scores = np.asarray(list(clf_multi.scores_.values()))
         assert scores.shape == (3, n_cv, 10)
 
@@ -735,10 +800,15 @@ def test_logistic_regression_solvers():
 
 
 def test_logistic_regression_solvers_multiclass():
-    X, y = make_classification(n_samples=20, n_features=20, n_informative=10,
-                               n_classes=3, random_state=0)
+    X, y = make_classification(n_samples=20,
+                               n_features=20,
+                               n_informative=10,
+                               n_classes=3,
+                               random_state=0)
     tol = 1e-7
-    params = dict(fit_intercept=False, tol=tol, random_state=42,
+    params = dict(fit_intercept=False,
+                  tol=tol,
+                  random_state=42,
                   multi_class='ovr')
     ncg = LogisticRegression(solver='newton-cg', **params)
     lbf = LogisticRegression(solver='lbfgs', **params)
@@ -766,34 +836,44 @@ def test_logistic_regressioncv_class_weights():
     for weight in [{0: 0.1, 1: 0.2}, {0: 0.1, 1: 0.2, 2: 0.5}]:
         n_classes = len(weight)
         for class_weight in (weight, 'balanced'):
-            X, y = make_classification(n_samples=30, n_features=3,
+            X, y = make_classification(n_samples=30,
+                                       n_features=3,
                                        n_repeated=0,
-                                       n_informative=3, n_redundant=0,
-                                       n_classes=n_classes, random_state=0)
+                                       n_informative=3,
+                                       n_redundant=0,
+                                       n_classes=n_classes,
+                                       random_state=0)
 
-            clf_lbf = LogisticRegressionCV(solver='lbfgs', Cs=1,
+            clf_lbf = LogisticRegressionCV(solver='lbfgs',
+                                           Cs=1,
                                            fit_intercept=False,
                                            multi_class='ovr',
                                            class_weight=class_weight)
-            clf_ncg = LogisticRegressionCV(solver='newton-cg', Cs=1,
+            clf_ncg = LogisticRegressionCV(solver='newton-cg',
+                                           Cs=1,
                                            fit_intercept=False,
                                            multi_class='ovr',
                                            class_weight=class_weight)
-            clf_lib = LogisticRegressionCV(solver='liblinear', Cs=1,
+            clf_lib = LogisticRegressionCV(solver='liblinear',
+                                           Cs=1,
                                            fit_intercept=False,
                                            multi_class='ovr',
                                            class_weight=class_weight)
-            clf_sag = LogisticRegressionCV(solver='sag', Cs=1,
+            clf_sag = LogisticRegressionCV(solver='sag',
+                                           Cs=1,
                                            fit_intercept=False,
                                            multi_class='ovr',
                                            class_weight=class_weight,
-                                           tol=1e-5, max_iter=10000,
+                                           tol=1e-5,
+                                           max_iter=10000,
                                            random_state=0)
-            clf_saga = LogisticRegressionCV(solver='saga', Cs=1,
+            clf_saga = LogisticRegressionCV(solver='saga',
+                                            Cs=1,
                                             fit_intercept=False,
                                             multi_class='ovr',
                                             class_weight=class_weight,
-                                            tol=1e-5, max_iter=10000,
+                                            tol=1e-5,
+                                            max_iter=10000,
                                             random_state=0)
             clf_lbf.fit(X, y)
             clf_ncg.fit(X, y)
@@ -807,8 +887,11 @@ def test_logistic_regressioncv_class_weights():
 
 
 def test_logistic_regression_sample_weights():
-    X, y = make_classification(n_samples=20, n_features=5, n_informative=3,
-                               n_classes=2, random_state=0)
+    X, y = make_classification(n_samples=20,
+                               n_features=5,
+                               n_informative=3,
+                               n_classes=2,
+                               random_state=0)
     sample_weight = y + 1
 
     for LR in [LogisticRegression, LogisticRegressionCV]:
@@ -824,8 +907,9 @@ def test_logistic_regression_sample_weights():
             clf_sw_ones = LR(solver=solver, **kw)
             clf_sw_none.fit(X, y)
             clf_sw_ones.fit(X, y, sample_weight=np.ones(y.shape[0]))
-            assert_array_almost_equal(
-                clf_sw_none.coef_, clf_sw_ones.coef_, decimal=4)
+            assert_array_almost_equal(clf_sw_none.coef_,
+                                      clf_sw_ones.coef_,
+                                      decimal=4)
 
         # Test that sample weights work the same with the lbfgs,
         # newton-cg, and 'sag' solvers
@@ -839,12 +923,15 @@ def test_logistic_regression_sample_weights():
             clf_sw_sag.fit(X, y, sample_weight=sample_weight)
         clf_sw_liblinear = LR(solver='liblinear', **kw)
         clf_sw_liblinear.fit(X, y, sample_weight=sample_weight)
-        assert_array_almost_equal(
-            clf_sw_lbfgs.coef_, clf_sw_n.coef_, decimal=4)
-        assert_array_almost_equal(
-            clf_sw_lbfgs.coef_, clf_sw_sag.coef_, decimal=4)
-        assert_array_almost_equal(
-            clf_sw_lbfgs.coef_, clf_sw_liblinear.coef_, decimal=4)
+        assert_array_almost_equal(clf_sw_lbfgs.coef_,
+                                  clf_sw_n.coef_,
+                                  decimal=4)
+        assert_array_almost_equal(clf_sw_lbfgs.coef_,
+                                  clf_sw_sag.coef_,
+                                  decimal=4)
+        assert_array_almost_equal(clf_sw_lbfgs.coef_,
+                                  clf_sw_liblinear.coef_,
+                                  decimal=4)
 
         # Test that passing class_weight as [1,2] is the same as
         # passing class weight = [1,1] but adjusting sample weights
@@ -854,28 +941,49 @@ def test_logistic_regression_sample_weights():
             clf_cw_12.fit(X, y)
             clf_sw_12 = LR(solver=solver, **kw)
             clf_sw_12.fit(X, y, sample_weight=sample_weight)
-            assert_array_almost_equal(
-                clf_cw_12.coef_, clf_sw_12.coef_, decimal=4)
+            assert_array_almost_equal(clf_cw_12.coef_,
+                                      clf_sw_12.coef_,
+                                      decimal=4)
 
     # Test the above for l1 penalty and l2 penalty with dual=True.
     # since the patched liblinear code is different.
-    clf_cw = LogisticRegression(
-        solver="liblinear", fit_intercept=False, class_weight={0: 1, 1: 2},
-        penalty="l1", tol=1e-5, random_state=42, multi_class='ovr')
+    clf_cw = LogisticRegression(solver="liblinear",
+                                fit_intercept=False,
+                                class_weight={
+                                    0: 1,
+                                    1: 2
+                                },
+                                penalty="l1",
+                                tol=1e-5,
+                                random_state=42,
+                                multi_class='ovr')
     clf_cw.fit(X, y)
-    clf_sw = LogisticRegression(
-        solver="liblinear", fit_intercept=False, penalty="l1", tol=1e-5,
-        random_state=42, multi_class='ovr')
+    clf_sw = LogisticRegression(solver="liblinear",
+                                fit_intercept=False,
+                                penalty="l1",
+                                tol=1e-5,
+                                random_state=42,
+                                multi_class='ovr')
     clf_sw.fit(X, y, sample_weight)
     assert_array_almost_equal(clf_cw.coef_, clf_sw.coef_, decimal=4)
 
-    clf_cw = LogisticRegression(
-        solver="liblinear", fit_intercept=False, class_weight={0: 1, 1: 2},
-        penalty="l2", dual=True, random_state=42, multi_class='ovr')
+    clf_cw = LogisticRegression(solver="liblinear",
+                                fit_intercept=False,
+                                class_weight={
+                                    0: 1,
+                                    1: 2
+                                },
+                                penalty="l2",
+                                dual=True,
+                                random_state=42,
+                                multi_class='ovr')
     clf_cw.fit(X, y)
-    clf_sw = LogisticRegression(
-        solver="liblinear", fit_intercept=False, penalty="l2", dual=True,
-        random_state=42, multi_class='ovr')
+    clf_sw = LogisticRegression(solver="liblinear",
+                                fit_intercept=False,
+                                penalty="l2",
+                                dual=True,
+                                random_state=42,
+                                multi_class='ovr')
     clf_sw.fit(X, y, sample_weight)
     assert_array_almost_equal(clf_cw.coef_, clf_sw.coef_, decimal=4)
 
@@ -896,9 +1004,11 @@ def test_logistic_regression_class_weights():
     class_weight_dict = _compute_class_weight_dictionary(y)
 
     for solver in solvers:
-        clf1 = LogisticRegression(solver=solver, multi_class="multinomial",
+        clf1 = LogisticRegression(solver=solver,
+                                  multi_class="multinomial",
                                   class_weight="balanced")
-        clf2 = LogisticRegression(solver=solver, multi_class="multinomial",
+        clf2 = LogisticRegression(solver=solver,
+                                  multi_class="multinomial",
                                   class_weight=class_weight_dict)
         clf1.fit(X, y)
         clf2.fit(X, y)
@@ -911,9 +1021,11 @@ def test_logistic_regression_class_weights():
     class_weight_dict = _compute_class_weight_dictionary(y)
 
     for solver in solvers:
-        clf1 = LogisticRegression(solver=solver, multi_class="ovr",
+        clf1 = LogisticRegression(solver=solver,
+                                  multi_class="ovr",
                                   class_weight="balanced")
-        clf2 = LogisticRegression(solver=solver, multi_class="ovr",
+        clf2 = LogisticRegression(solver=solver,
+                                  multi_class="ovr",
                                   class_weight=class_weight_dict)
         clf1.fit(X, y)
         clf2.fit(X, y)
@@ -928,25 +1040,34 @@ def test_logistic_regression_multinomial():
     X, y = make_classification(n_samples=n_samples,
                                n_features=n_features,
                                n_informative=10,
-                               n_classes=n_classes, random_state=0)
+                               n_classes=n_classes,
+                               random_state=0)
 
     X = StandardScaler(with_mean=False).fit_transform(X)
 
     # 'lbfgs' is used as a referenced
     solver = 'lbfgs'
     ref_i = LogisticRegression(solver=solver, multi_class='multinomial')
-    ref_w = LogisticRegression(solver=solver, multi_class='multinomial',
+    ref_w = LogisticRegression(solver=solver,
+                               multi_class='multinomial',
                                fit_intercept=False)
     ref_i.fit(X, y)
     ref_w.fit(X, y)
     assert ref_i.coef_.shape == (n_classes, n_features)
     assert ref_w.coef_.shape == (n_classes, n_features)
     for solver in ['sag', 'saga', 'newton-cg']:
-        clf_i = LogisticRegression(solver=solver, multi_class='multinomial',
-                                   random_state=42, max_iter=2000, tol=1e-7,
-                                   )
-        clf_w = LogisticRegression(solver=solver, multi_class='multinomial',
-                                   random_state=42, max_iter=2000, tol=1e-7,
+        clf_i = LogisticRegression(
+            solver=solver,
+            multi_class='multinomial',
+            random_state=42,
+            max_iter=2000,
+            tol=1e-7,
+        )
+        clf_w = LogisticRegression(solver=solver,
+                                   multi_class='multinomial',
+                                   random_state=42,
+                                   max_iter=2000,
+                                   tol=1e-7,
                                    fit_intercept=False)
         clf_i.fit(X, y)
         clf_w.fit(X, y)
@@ -962,8 +1083,11 @@ def test_logistic_regression_multinomial():
     # case we take the average of the coefs after fitting across all the
     # folds, it need not be exactly the same.
     for solver in ['lbfgs', 'newton-cg', 'sag', 'saga']:
-        clf_path = LogisticRegressionCV(solver=solver, max_iter=2000, tol=1e-6,
-                                        multi_class='multinomial', Cs=[1.])
+        clf_path = LogisticRegressionCV(solver=solver,
+                                        max_iter=2000,
+                                        tol=1e-6,
+                                        multi_class='multinomial',
+                                        Cs=[1.])
         clf_path.fit(X, y)
         assert_allclose(clf_path.coef_, ref_i.coef_, rtol=2e-2)
         assert_allclose(clf_path.intercept_, ref_i.intercept_, rtol=2e-2)
@@ -979,7 +1103,10 @@ def test_multinomial_grad_hess():
     Y[range(0, n_samples), ind] = 1
     w = w.ravel()
     sample_weights = np.ones(X.shape[0])
-    grad, hessp = _multinomial_grad_hess(w, X, Y, alpha=1.,
+    grad, hessp = _multinomial_grad_hess(w,
+                                         X,
+                                         Y,
+                                         alpha=1.,
                                          sample_weight=sample_weights)
     # extract first column of hessian matrix
     vec = np.zeros(n_features * n_classes)
@@ -991,9 +1118,11 @@ def test_multinomial_grad_hess():
     e = 1e-3
     d_x = np.linspace(-e, e, 30)
     d_grad = np.array([
-        _multinomial_grad_hess(w + t * vec, X, Y, alpha=1.,
-                               sample_weight=sample_weights)[0]
-        for t in d_x
+        _multinomial_grad_hess(w + t * vec,
+                               X,
+                               Y,
+                               alpha=1.,
+                               sample_weight=sample_weights)[0] for t in d_x
     ])
     d_grad -= d_grad.mean(axis=0)
     approx_hess_col = linalg.lstsq(d_x[:, np.newaxis], d_grad)[0].ravel()
@@ -1007,7 +1136,8 @@ def test_liblinear_decision_function_zero():
     # See Issue: https://github.com/scikit-learn/scikit-learn/issues/3600
     # and the PR https://github.com/scikit-learn/scikit-learn/pull/3623
     X, y = make_classification(n_samples=5, n_features=5, random_state=0)
-    clf = LogisticRegression(fit_intercept=False, solver='liblinear',
+    clf = LogisticRegression(fit_intercept=False,
+                             solver='liblinear',
                              multi_class='ovr')
     clf.fit(X, y)
 
@@ -1036,7 +1166,8 @@ def test_logreg_intercept_scaling():
     # Test that the right error message is thrown when intercept_scaling <= 0
 
     for i in [-1, 0]:
-        clf = LogisticRegression(intercept_scaling=i, solver='liblinear',
+        clf = LogisticRegression(intercept_scaling=i,
+                                 solver='liblinear',
                                  multi_class='ovr')
         msg = ('Intercept scaling is %r but needs to be greater than 0.'
                ' To disable fitting an intercept,'
@@ -1058,19 +1189,27 @@ def test_logreg_l1():
     # the two models at convergence.
     rng = np.random.RandomState(42)
     n_samples = 50
-    X, y = make_classification(n_samples=n_samples, n_features=20,
+    X, y = make_classification(n_samples=n_samples,
+                               n_features=20,
                                random_state=0)
     X_noise = rng.normal(size=(n_samples, 3))
     X_constant = np.ones(shape=(n_samples, 2))
     X = np.concatenate((X, X_noise, X_constant), axis=1)
-    lr_liblinear = LogisticRegression(penalty="l1", C=1.0, solver='liblinear',
-                                      fit_intercept=False, multi_class='ovr',
+    lr_liblinear = LogisticRegression(penalty="l1",
+                                      C=1.0,
+                                      solver='liblinear',
+                                      fit_intercept=False,
+                                      multi_class='ovr',
                                       tol=1e-10)
     lr_liblinear.fit(X, y)
 
-    lr_saga = LogisticRegression(penalty="l1", C=1.0, solver='saga',
-                                 fit_intercept=False, multi_class='ovr',
-                                 max_iter=1000, tol=1e-10)
+    lr_saga = LogisticRegression(penalty="l1",
+                                 C=1.0,
+                                 solver='saga',
+                                 fit_intercept=False,
+                                 multi_class='ovr',
+                                 max_iter=1000,
+                                 tol=1e-10)
     lr_saga.fit(X, y)
     assert_array_almost_equal(lr_saga.coef_, lr_liblinear.coef_)
 
@@ -1086,7 +1225,8 @@ def test_logreg_l1_sparse_data():
     # the two models at convergence.
     rng = np.random.RandomState(42)
     n_samples = 50
-    X, y = make_classification(n_samples=n_samples, n_features=20,
+    X, y = make_classification(n_samples=n_samples,
+                               n_features=20,
                                random_state=0)
     X_noise = rng.normal(scale=0.1, size=(n_samples, 3))
     X_constant = np.zeros(shape=(n_samples, 2))
@@ -1094,14 +1234,21 @@ def test_logreg_l1_sparse_data():
     X[X < 1] = 0
     X = sparse.csr_matrix(X)
 
-    lr_liblinear = LogisticRegression(penalty="l1", C=1.0, solver='liblinear',
-                                      fit_intercept=False, multi_class='ovr',
+    lr_liblinear = LogisticRegression(penalty="l1",
+                                      C=1.0,
+                                      solver='liblinear',
+                                      fit_intercept=False,
+                                      multi_class='ovr',
                                       tol=1e-10)
     lr_liblinear.fit(X, y)
 
-    lr_saga = LogisticRegression(penalty="l1", C=1.0, solver='saga',
-                                 fit_intercept=False, multi_class='ovr',
-                                 max_iter=1000, tol=1e-10)
+    lr_saga = LogisticRegression(penalty="l1",
+                                 C=1.0,
+                                 solver='saga',
+                                 fit_intercept=False,
+                                 multi_class='ovr',
+                                 max_iter=1000,
+                                 tol=1e-10)
     lr_saga.fit(X, y)
     assert_array_almost_equal(lr_saga.coef_, lr_liblinear.coef_)
     # Noise and constant features should be regularized to zero by the l1
@@ -1110,9 +1257,13 @@ def test_logreg_l1_sparse_data():
     assert_array_almost_equal(lr_saga.coef_[0, -5:], np.zeros(5))
 
     # Check that solving on the sparse and dense data yield the same results
-    lr_saga_dense = LogisticRegression(penalty="l1", C=1.0, solver='saga',
-                                       fit_intercept=False, multi_class='ovr',
-                                       max_iter=1000, tol=1e-10)
+    lr_saga_dense = LogisticRegression(penalty="l1",
+                                       C=1.0,
+                                       solver='saga',
+                                       fit_intercept=False,
+                                       multi_class='ovr',
+                                       max_iter=1000,
+                                       tol=1e-10)
     lr_saga_dense.fit(X.toarray(), y)
     assert_array_almost_equal(lr_saga.coef_, lr_saga_dense.coef_)
 
@@ -1128,7 +1279,8 @@ def test_logistic_regression_cv_refit(random_seed, penalty):
     # logistic regression loss is convex, we should still recover exactly
     # the same solution as long as the stopping criterion is strict enough (and
     # that there are no exactly duplicated features when penalty='l1').
-    X, y = make_classification(n_samples=100, n_features=20,
+    X, y = make_classification(n_samples=100,
+                               n_features=20,
                                random_state=random_seed)
     common_params = dict(
         solver='saga',
@@ -1145,8 +1297,11 @@ def test_logistic_regression_cv_refit(random_seed, penalty):
 
 
 def test_logreg_predict_proba_multinomial():
-    X, y = make_classification(n_samples=10, n_features=20, random_state=0,
-                               n_classes=3, n_informative=10)
+    X, y = make_classification(n_samples=10,
+                               n_features=20,
+                               random_state=0,
+                               n_classes=3,
+                               n_informative=10)
 
     # Predicted probabilities using the true-entropy loss should give a
     # smaller loss than those using the ovr method.
@@ -1177,9 +1332,11 @@ def test_max_iter():
             for multi_class in ['ovr', 'multinomial']:
                 if solver == 'liblinear' and multi_class == 'multinomial':
                     continue
-                lr = LogisticRegression(max_iter=max_iter, tol=1e-15,
+                lr = LogisticRegression(max_iter=max_iter,
+                                        tol=1e-15,
                                         multi_class=multi_class,
-                                        random_state=0, solver=solver)
+                                        random_state=0,
+                                        solver=solver)
                 assert_warns(ConvergenceWarning, lr.fit, X, y_bin)
                 assert lr.n_iter_[0] == max_iter
 
@@ -1198,16 +1355,23 @@ def test_n_iter(solver):
 
     # OvR case
     n_classes = 1 if solver == 'liblinear' else np.unique(y).shape[0]
-    clf = LogisticRegression(tol=1e-2, multi_class='ovr',
-                             solver=solver, C=1.,
-                             random_state=42, max_iter=100)
+    clf = LogisticRegression(tol=1e-2,
+                             multi_class='ovr',
+                             solver=solver,
+                             C=1.,
+                             random_state=42,
+                             max_iter=100)
     clf.fit(X, y)
-    assert clf.n_iter_.shape == (n_classes,)
+    assert clf.n_iter_.shape == (n_classes, )
 
     n_classes = np.unique(y).shape[0]
-    clf = LogisticRegressionCV(tol=1e-2, multi_class='ovr',
-                               solver=solver, Cs=n_Cs, cv=n_cv_fold,
-                               random_state=42, max_iter=100)
+    clf = LogisticRegressionCV(tol=1e-2,
+                               multi_class='ovr',
+                               solver=solver,
+                               Cs=n_Cs,
+                               cv=n_cv_fold,
+                               random_state=42,
+                               max_iter=100)
     clf.fit(X, y)
     assert clf.n_iter_.shape == (n_classes, n_cv_fold, n_Cs)
     clf.fit(X, y_bin)
@@ -1218,15 +1382,22 @@ def test_n_iter(solver):
     if solver in ('liblinear', 'sag', 'saga'):
         return
 
-    clf = LogisticRegression(tol=1e-2, multi_class='multinomial',
-                             solver=solver, C=1.,
-                             random_state=42, max_iter=100)
+    clf = LogisticRegression(tol=1e-2,
+                             multi_class='multinomial',
+                             solver=solver,
+                             C=1.,
+                             random_state=42,
+                             max_iter=100)
     clf.fit(X, y)
-    assert clf.n_iter_.shape == (n_classes,)
+    assert clf.n_iter_.shape == (n_classes, )
 
-    clf = LogisticRegressionCV(tol=1e-2, multi_class='multinomial',
-                               solver=solver, Cs=n_Cs, cv=n_cv_fold,
-                               random_state=42, max_iter=100)
+    clf = LogisticRegressionCV(tol=1e-2,
+                               multi_class='multinomial',
+                               solver=solver,
+                               Cs=n_Cs,
+                               cv=n_cv_fold,
+                               random_state=42,
+                               max_iter=100)
     clf.fit(X, y)
     assert clf.n_iter_.shape == (n_classes, n_cv_fold, n_Cs)
     clf.fit(X, y_bin)
@@ -1243,10 +1414,12 @@ def test_warm_start(solver, warm_start, fit_intercept, multi_class):
     # Warm starting does not work with liblinear solver.
     X, y = iris.data, iris.target
 
-    clf = LogisticRegression(tol=1e-4, multi_class=multi_class,
+    clf = LogisticRegression(tol=1e-4,
+                             multi_class=multi_class,
                              warm_start=warm_start,
                              solver=solver,
-                             random_state=42, max_iter=100,
+                             random_state=42,
+                             max_iter=100,
                              fit_intercept=fit_intercept)
     with ignore_warnings(category=ConvergenceWarning):
         clf.fit(X, y)
@@ -1256,9 +1429,8 @@ def test_warm_start(solver, warm_start, fit_intercept, multi_class):
         clf.fit(X, y)
     cum_diff = np.sum(np.abs(coef_1 - clf.coef_))
     msg = ("Warm starting issue with %s solver in %s mode "
-           "with fit_intercept=%s and warm_start=%s"
-           % (solver, multi_class, str(fit_intercept),
-              str(warm_start)))
+           "with fit_intercept=%s and warm_start=%s" %
+           (solver, multi_class, str(fit_intercept), str(warm_start)))
     if warm_start:
         assert 2.0 > cum_diff, msg
     else:
@@ -1274,7 +1446,8 @@ def test_saga_vs_liblinear():
     X_bin = X[y <= 1]
     y_bin = y[y <= 1] * 2 - 1
 
-    X_sparse, y_sparse = make_classification(n_samples=50, n_features=20,
+    X_sparse, y_sparse = make_classification(n_samples=50,
+                                             n_features=20,
                                              random_state=0)
     X_sparse = sparse.csr_matrix(X_sparse)
 
@@ -1283,21 +1456,23 @@ def test_saga_vs_liblinear():
             n_samples = X.shape[0]
             # alpha=1e-3 is time consuming
             for alpha in np.logspace(-1, 1, 3):
-                saga = LogisticRegression(
-                    C=1. / (n_samples * alpha),
-                    solver='saga',
-                    multi_class='ovr',
-                    max_iter=200,
-                    fit_intercept=False,
-                    penalty=penalty, random_state=0, tol=1e-24)
+                saga = LogisticRegression(C=1. / (n_samples * alpha),
+                                          solver='saga',
+                                          multi_class='ovr',
+                                          max_iter=200,
+                                          fit_intercept=False,
+                                          penalty=penalty,
+                                          random_state=0,
+                                          tol=1e-24)
 
-                liblinear = LogisticRegression(
-                    C=1. / (n_samples * alpha),
-                    solver='liblinear',
-                    multi_class='ovr',
-                    max_iter=200,
-                    fit_intercept=False,
-                    penalty=penalty, random_state=0, tol=1e-24)
+                liblinear = LogisticRegression(C=1. / (n_samples * alpha),
+                                               solver='liblinear',
+                                               multi_class='ovr',
+                                               max_iter=200,
+                                               fit_intercept=False,
+                                               penalty=penalty,
+                                               random_state=0,
+                                               tol=1e-24)
 
                 saga.fit(X, y)
                 liblinear.fit(X, y)
@@ -1325,9 +1500,11 @@ def test_dtype_match(solver, multi_class, fit_intercept):
     X_sparse_64 = sp.csr_matrix(X, dtype=np.float64)
     solver_tol = 5e-4
 
-    lr_templ = LogisticRegression(
-        solver=solver, multi_class=multi_class,
-        random_state=42, tol=solver_tol, fit_intercept=fit_intercept)
+    lr_templ = LogisticRegression(solver=solver,
+                                  multi_class=multi_class,
+                                  random_state=42,
+                                  tol=solver_tol,
+                                  fit_intercept=fit_intercept)
 
     # Check 32-bit type consistency
     lr_32 = clone(lr_templ)
@@ -1384,10 +1561,12 @@ def test_warm_start_converge_LR():
     X = np.concatenate((rng.randn(100, 2) + [1, 1], rng.randn(100, 2)))
     y = np.array([1] * 100 + [-1] * 100)
     lr_no_ws = LogisticRegression(multi_class='multinomial',
-                                  solver='sag', warm_start=False,
+                                  solver='sag',
+                                  warm_start=False,
                                   random_state=0)
     lr_ws = LogisticRegression(multi_class='multinomial',
-                               solver='sag', warm_start=True,
+                               solver='sag',
+                               warm_start=True,
                                random_state=0)
 
     lr_no_ws_loss = log_loss(y, lr_no_ws.fit(X, y).predict_proba(X))
@@ -1406,8 +1585,11 @@ def test_elastic_net_coeffs():
     l1_ratio = .5
     coeffs = list()
     for penalty in ('elasticnet', 'l1', 'l2'):
-        lr = LogisticRegression(penalty=penalty, C=C, solver='saga',
-                                random_state=0, l1_ratio=l1_ratio)
+        lr = LogisticRegression(penalty=penalty,
+                                C=C,
+                                solver='saga',
+                                random_state=0,
+                                l1_ratio=l1_ratio)
         lr.fit(X, y)
         coeffs.append(lr.coef_)
 
@@ -1419,17 +1601,20 @@ def test_elastic_net_coeffs():
 
 
 @pytest.mark.parametrize('C', [.001, .1, 1, 10, 100, 1000, 1e6])
-@pytest.mark.parametrize('penalty, l1_ratio',
-                         [('l1', 1),
-                          ('l2', 0)])
+@pytest.mark.parametrize('penalty, l1_ratio', [('l1', 1), ('l2', 0)])
 def test_elastic_net_l1_l2_equivalence(C, penalty, l1_ratio):
     # Make sure elasticnet is equivalent to l1 when l1_ratio=1 and to l2 when
     # l1_ratio=0.
     X, y = make_classification(random_state=0)
 
-    lr_enet = LogisticRegression(penalty='elasticnet', C=C, l1_ratio=l1_ratio,
-                                 solver='saga', random_state=0)
-    lr_expected = LogisticRegression(penalty=penalty, C=C, solver='saga',
+    lr_enet = LogisticRegression(penalty='elasticnet',
+                                 C=C,
+                                 l1_ratio=l1_ratio,
+                                 solver='saga',
+                                 random_state=0)
+    lr_expected = LogisticRegression(penalty=penalty,
+                                     C=C,
+                                     solver='saga',
                                      random_state=0)
     lr_enet.fit(X, y)
     lr_expected.fit(X, y)
@@ -1447,13 +1632,19 @@ def test_elastic_net_vs_l1_l2(C):
 
     param_grid = {'l1_ratio': np.linspace(0, 1, 5)}
 
-    enet_clf = LogisticRegression(penalty='elasticnet', C=C, solver='saga',
+    enet_clf = LogisticRegression(penalty='elasticnet',
+                                  C=C,
+                                  solver='saga',
                                   random_state=0)
     gs = GridSearchCV(enet_clf, param_grid, refit=True)
 
-    l1_clf = LogisticRegression(penalty='l1', C=C, solver='saga',
+    l1_clf = LogisticRegression(penalty='l1',
+                                C=C,
+                                solver='saga',
                                 random_state=0)
-    l2_clf = LogisticRegression(penalty='l2', C=C, solver='saga',
+    l2_clf = LogisticRegression(penalty='l2',
+                                C=C,
+                                solver='saga',
                                 random_state=0)
 
     for clf in (gs, l1_clf, l2_clf):
@@ -1471,16 +1662,26 @@ def test_LogisticRegression_elastic_net_objective(C, l1_ratio):
     # Here we train a logistic regression with l2 (a) and elasticnet (b)
     # penalties, and compute the elasticnet objective. That of a should be
     # greater than that of b (both objectives are convex).
-    X, y = make_classification(n_samples=1000, n_classes=2, n_features=20,
-                               n_informative=10, n_redundant=0,
-                               n_repeated=0, random_state=0)
+    X, y = make_classification(n_samples=1000,
+                               n_classes=2,
+                               n_features=20,
+                               n_informative=10,
+                               n_redundant=0,
+                               n_repeated=0,
+                               random_state=0)
     X = scale(X)
 
-    lr_enet = LogisticRegression(penalty='elasticnet', solver='saga',
-                                 random_state=0, C=C, l1_ratio=l1_ratio,
+    lr_enet = LogisticRegression(penalty='elasticnet',
+                                 solver='saga',
+                                 random_state=0,
+                                 C=C,
+                                 l1_ratio=l1_ratio,
                                  fit_intercept=False)
-    lr_l2 = LogisticRegression(penalty='l2', solver='saga', random_state=0,
-                               C=C, fit_intercept=False)
+    lr_l2 = LogisticRegression(penalty='l2',
+                               solver='saga',
+                               random_state=0,
+                               C=C,
+                               fit_intercept=False)
     lr_enet.fit(X, y)
     lr_l2.fit(X, y)
 
@@ -1504,7 +1705,9 @@ def test_LogisticRegressionCV_GridSearchCV_elastic_net(multi_class):
         # test_LogisticRegressionCV_GridSearchCV_elastic_net_ovr
         X, y = make_classification(random_state=0)
     else:
-        X, y = make_classification(n_samples=100, n_classes=3, n_informative=3,
+        X, y = make_classification(n_samples=100,
+                                   n_classes=3,
+                                   n_informative=3,
                                    random_state=0)
 
     cv = StratifiedKFold(5)
@@ -1512,14 +1715,20 @@ def test_LogisticRegressionCV_GridSearchCV_elastic_net(multi_class):
     l1_ratios = np.linspace(0, 1, 3)
     Cs = np.logspace(-4, 4, 3)
 
-    lrcv = LogisticRegressionCV(penalty='elasticnet', Cs=Cs, solver='saga',
-                                cv=cv, l1_ratios=l1_ratios, random_state=0,
+    lrcv = LogisticRegressionCV(penalty='elasticnet',
+                                Cs=Cs,
+                                solver='saga',
+                                cv=cv,
+                                l1_ratios=l1_ratios,
+                                random_state=0,
                                 multi_class=multi_class)
     lrcv.fit(X, y)
 
     param_grid = {'C': Cs, 'l1_ratio': l1_ratios}
-    lr = LogisticRegression(penalty='elasticnet', solver='saga',
-                            random_state=0, multi_class=multi_class)
+    lr = LogisticRegression(penalty='elasticnet',
+                            solver='saga',
+                            random_state=0,
+                            multi_class=multi_class)
     gs = GridSearchCV(lr, param_grid, cv=cv)
     gs.fit(X, y)
 
@@ -1535,7 +1744,9 @@ def test_LogisticRegressionCV_GridSearchCV_elastic_net_ovr():
     # l1_param for each class, while LogisticRegression will share the
     # parameters over the *n_classes* classifiers.
 
-    X, y = make_classification(n_samples=100, n_classes=3, n_informative=3,
+    X, y = make_classification(n_samples=100,
+                               n_classes=3,
+                               n_informative=3,
                                random_state=0)
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
     cv = StratifiedKFold(5)
@@ -1543,14 +1754,20 @@ def test_LogisticRegressionCV_GridSearchCV_elastic_net_ovr():
     l1_ratios = np.linspace(0, 1, 3)
     Cs = np.logspace(-4, 4, 3)
 
-    lrcv = LogisticRegressionCV(penalty='elasticnet', Cs=Cs, solver='saga',
-                                cv=cv, l1_ratios=l1_ratios, random_state=0,
+    lrcv = LogisticRegressionCV(penalty='elasticnet',
+                                Cs=Cs,
+                                solver='saga',
+                                cv=cv,
+                                l1_ratios=l1_ratios,
+                                random_state=0,
                                 multi_class='ovr')
     lrcv.fit(X_train, y_train)
 
     param_grid = {'C': Cs, 'l1_ratio': l1_ratios}
-    lr = LogisticRegression(penalty='elasticnet', solver='saga',
-                            random_state=0, multi_class='ovr')
+    lr = LogisticRegression(penalty='elasticnet',
+                            solver='saga',
+                            random_state=0,
+                            multi_class='ovr')
     gs = GridSearchCV(lr, param_grid, cv=cv)
     gs.fit(X_train, y_train)
 
@@ -1566,8 +1783,10 @@ def test_LogisticRegressionCV_no_refit(penalty, multi_class):
 
     n_classes = 3
     n_features = 20
-    X, y = make_classification(n_samples=200, n_classes=n_classes,
-                               n_informative=n_classes, n_features=n_features,
+    X, y = make_classification(n_samples=200,
+                               n_classes=n_classes,
+                               n_informative=n_classes,
+                               n_features=n_features,
                                random_state=0)
 
     Cs = np.logspace(-4, 4, 3)
@@ -1576,12 +1795,16 @@ def test_LogisticRegressionCV_no_refit(penalty, multi_class):
     else:
         l1_ratios = None
 
-    lrcv = LogisticRegressionCV(penalty=penalty, Cs=Cs, solver='saga',
-                                l1_ratios=l1_ratios, random_state=0,
-                                multi_class=multi_class, refit=False)
+    lrcv = LogisticRegressionCV(penalty=penalty,
+                                Cs=Cs,
+                                solver='saga',
+                                l1_ratios=l1_ratios,
+                                random_state=0,
+                                multi_class=multi_class,
+                                refit=False)
     lrcv.fit(X, y)
-    assert lrcv.C_.shape == (n_classes,)
-    assert lrcv.l1_ratio_.shape == (n_classes,)
+    assert lrcv.C_.shape == (n_classes, )
+    assert lrcv.l1_ratio_.shape == (n_classes, )
     assert lrcv.coef_.shape == (n_classes, n_features)
 
 
@@ -1591,21 +1814,27 @@ def test_LogisticRegressionCV_elasticnet_attribute_shapes():
 
     n_classes = 3
     n_features = 20
-    X, y = make_classification(n_samples=200, n_classes=n_classes,
-                               n_informative=n_classes, n_features=n_features,
+    X, y = make_classification(n_samples=200,
+                               n_classes=n_classes,
+                               n_informative=n_classes,
+                               n_features=n_features,
                                random_state=0)
 
     Cs = np.logspace(-4, 4, 3)
     l1_ratios = np.linspace(0, 1, 2)
 
     n_folds = 2
-    lrcv = LogisticRegressionCV(penalty='elasticnet', Cs=Cs, solver='saga',
-                                cv=n_folds, l1_ratios=l1_ratios,
-                                multi_class='ovr', random_state=0)
+    lrcv = LogisticRegressionCV(penalty='elasticnet',
+                                Cs=Cs,
+                                solver='saga',
+                                cv=n_folds,
+                                l1_ratios=l1_ratios,
+                                multi_class='ovr',
+                                random_state=0)
     lrcv.fit(X, y)
     coefs_paths = np.asarray(list(lrcv.coefs_paths_.values()))
-    assert coefs_paths.shape == (n_classes, n_folds, Cs.size,
-                                 l1_ratios.size, n_features + 1)
+    assert coefs_paths.shape == (n_classes, n_folds, Cs.size, l1_ratios.size,
+                                 n_features + 1)
     scores = np.asarray(list(lrcv.scores_.values()))
     assert scores.shape == (n_classes, n_folds, Cs.size, l1_ratios.size)
 
@@ -1616,16 +1845,18 @@ def test_LogisticRegressionCV_elasticnet_attribute_shapes():
 def test_l1_ratio_param(l1_ratio):
 
     msg = "l1_ratio must be between 0 and 1; got (l1_ratio=%r)" % l1_ratio
-    assert_raise_message(ValueError, msg,
-                         LogisticRegression(penalty='elasticnet',
-                                            solver='saga',
-                                            l1_ratio=l1_ratio).fit, X, Y1)
+    assert_raise_message(
+        ValueError, msg,
+        LogisticRegression(penalty='elasticnet',
+                           solver='saga',
+                           l1_ratio=l1_ratio).fit, X, Y1)
     if l1_ratio is not None:
         msg = ("l1_ratio parameter is only used when penalty is 'elasticnet'."
                " Got (penalty=l1)")
-        assert_warns_message(UserWarning, msg,
-                             LogisticRegression(penalty='l1', solver='saga',
-                                                l1_ratio=l1_ratio).fit, X, Y1)
+        assert_warns_message(
+            UserWarning, msg,
+            LogisticRegression(penalty='l1', solver='saga',
+                               l1_ratio=l1_ratio).fit, X, Y1)
 
 
 @pytest.mark.parametrize('l1_ratios', ([], [.5, 2], None, 'something_wrong'))
@@ -1633,16 +1864,19 @@ def test_l1_ratios_param(l1_ratios):
 
     msg = ("l1_ratios must be a list of numbers between 0 and 1; got "
            "(l1_ratios=%r)" % l1_ratios)
-    assert_raise_message(ValueError, msg,
-                         LogisticRegressionCV(penalty='elasticnet',
-                                              solver='saga',
-                                              l1_ratios=l1_ratios, cv=2).fit,
-                         X, Y1)
+    assert_raise_message(
+        ValueError, msg,
+        LogisticRegressionCV(penalty='elasticnet',
+                             solver='saga',
+                             l1_ratios=l1_ratios,
+                             cv=2).fit, X, Y1)
     if l1_ratios is not None:
         msg = ("l1_ratios parameter is only used when penalty is "
                "'elasticnet'. Got (penalty=l1)")
-        function = LogisticRegressionCV(penalty='l1', solver='saga',
-                                        l1_ratios=l1_ratios, cv=2).fit
+        function = LogisticRegressionCV(penalty='l1',
+                                        solver='saga',
+                                        l1_ratios=l1_ratios,
+                                        cv=2).fit
         assert_warns_message(UserWarning, msg, function, X, Y1)
 
 
@@ -1651,17 +1885,31 @@ def test_l1_ratios_param(l1_ratios):
 def test_elastic_net_versus_sgd(C, l1_ratio):
     # Compare elasticnet penalty in LogisticRegression() and SGD(loss='log')
     n_samples = 500
-    X, y = make_classification(n_samples=n_samples, n_classes=2, n_features=5,
-                               n_informative=5, n_redundant=0, n_repeated=0,
+    X, y = make_classification(n_samples=n_samples,
+                               n_classes=2,
+                               n_features=5,
+                               n_informative=5,
+                               n_redundant=0,
+                               n_repeated=0,
                                random_state=1)
     X = scale(X)
 
-    sgd = SGDClassifier(
-        penalty='elasticnet', random_state=1, fit_intercept=False, tol=-np.inf,
-        max_iter=2000, l1_ratio=l1_ratio, alpha=1. / C / n_samples, loss='log')
-    log = LogisticRegression(
-        penalty='elasticnet', random_state=1, fit_intercept=False, tol=1e-5,
-        max_iter=1000, l1_ratio=l1_ratio, C=C, solver='saga')
+    sgd = SGDClassifier(penalty='elasticnet',
+                        random_state=1,
+                        fit_intercept=False,
+                        tol=-np.inf,
+                        max_iter=2000,
+                        l1_ratio=l1_ratio,
+                        alpha=1. / C / n_samples,
+                        loss='log')
+    log = LogisticRegression(penalty='elasticnet',
+                             random_state=1,
+                             fit_intercept=False,
+                             tol=1e-5,
+                             max_iter=1000,
+                             l1_ratio=l1_ratio,
+                             C=C,
+                             solver='saga')
 
     sgd.fit(X, y)
     log.fit(X, y)
@@ -1672,12 +1920,20 @@ def test_logistic_regression_path_coefs_multinomial():
     # Make sure that the returned coefs by logistic_regression_path when
     # multi_class='multinomial' don't override each other (used to be a
     # bug).
-    X, y = make_classification(n_samples=200, n_classes=3, n_informative=2,
-                               n_redundant=0, n_clusters_per_class=1,
-                               random_state=0, n_features=2)
+    X, y = make_classification(n_samples=200,
+                               n_classes=3,
+                               n_informative=2,
+                               n_redundant=0,
+                               n_clusters_per_class=1,
+                               random_state=0,
+                               n_features=2)
     Cs = [.00001, 1, 10000]
-    coefs, _, _ = _logistic_regression_path(X, y, penalty='l1', Cs=Cs,
-                                            solver='saga', random_state=0,
+    coefs, _, _ = _logistic_regression_path(X,
+                                            y,
+                                            penalty='l1',
+                                            Cs=Cs,
+                                            solver='saga',
+                                            random_state=0,
                                             multi_class='multinomial')
 
     with pytest.raises(AssertionError):
@@ -1688,13 +1944,13 @@ def test_logistic_regression_path_coefs_multinomial():
         assert_array_almost_equal(coefs[1], coefs[2], decimal=1)
 
 
-@pytest.mark.parametrize('est',
-                         [LogisticRegression(random_state=0),
-                          LogisticRegressionCV(random_state=0, cv=3,
-                                               Cs=3, tol=1e-3)],
+@pytest.mark.parametrize('est', [
+    LogisticRegression(random_state=0),
+    LogisticRegressionCV(random_state=0, cv=3, Cs=3, tol=1e-3)
+],
                          ids=lambda x: x.__class__.__name__)
-@pytest.mark.parametrize('solver', ['liblinear', 'lbfgs', 'newton-cg', 'sag',
-                                    'saga'])
+@pytest.mark.parametrize('solver',
+                         ['liblinear', 'lbfgs', 'newton-cg', 'sag', 'saga'])
 def test_logistic_regression_multi_class_auto(est, solver):
     # check multi_class='auto' => multi_class='ovr' iff binary y or liblinear
 
@@ -1718,7 +1974,9 @@ def test_logistic_regression_multi_class_auto(est, solver):
         assert_allclose(est_auto_multi.predict_proba(X2),
                         est_ovr_multi.predict_proba(X2))
     else:
-        est_multi_multi = fit(X, y_multi, multi_class='multinomial',
+        est_multi_multi = fit(X,
+                              y_multi,
+                              multi_class='multinomial',
                               solver=solver)
         if sys.platform == 'darwin' and solver == 'lbfgs':
             pytest.xfail('Issue #11924: LogisticRegressionCV(solver="lbfgs", '
@@ -1729,12 +1987,12 @@ def test_logistic_regression_multi_class_auto(est, solver):
                         est_multi_multi.predict_proba(X2))
 
         # Make sure multi_class='ovr' is distinct from ='multinomial'
-        assert not np.allclose(est_auto_bin.coef_,
-                               fit(X, y_bin, multi_class='multinomial',
-                                   solver=solver).coef_)
-        assert not np.allclose(est_auto_bin.coef_,
-                               fit(X, y_multi, multi_class='multinomial',
-                                   solver=solver).coef_)
+        assert not np.allclose(
+            est_auto_bin.coef_,
+            fit(X, y_bin, multi_class='multinomial', solver=solver).coef_)
+        assert not np.allclose(
+            est_auto_bin.coef_,
+            fit(X, y_multi, multi_class='multinomial', solver=solver).coef_)
 
 
 @pytest.mark.parametrize('solver', ('lbfgs', 'newton-cg', 'sag', 'saga'))
@@ -1749,9 +2007,10 @@ def test_penalty_none(solver):
     lr = LogisticRegression(penalty='none', solver=solver, C=4)
     assert_warns_message(UserWarning, msg, lr.fit, X, y)
 
-    lr_none = LogisticRegression(penalty='none', solver=solver,
-                                 random_state=0)
-    lr_l2_C_inf = LogisticRegression(penalty='l2', C=np.inf, solver=solver,
+    lr_none = LogisticRegression(penalty='none', solver=solver, random_state=0)
+    lr_l2_C_inf = LogisticRegression(penalty='l2',
+                                     C=np.inf,
+                                     solver=solver,
                                      random_state=0)
     pred_none = lr_none.fit(X, y).predict(X)
     pred_l2_C_inf = lr_l2_C_inf.fit(X, y).predict(X)
@@ -1759,28 +2018,35 @@ def test_penalty_none(solver):
 
     lr = LogisticRegressionCV(penalty='none')
     assert_raise_message(
-        ValueError,
-        "penalty='none' is not useful and not supported by "
-        "LogisticRegressionCV",
-        lr.fit, X, y
-    )
+        ValueError, "penalty='none' is not useful and not supported by "
+        "LogisticRegressionCV", lr.fit, X, y)
 
 
-@pytest.mark.parametrize(
-    "params",
-    [{'penalty': 'l1', 'dual': False, 'tol': 1e-12, 'max_iter': 1000},
-     {'penalty': 'l2', 'dual': True, 'tol': 1e-12, 'max_iter': 1000},
-     {'penalty': 'l2', 'dual': False, 'tol': 1e-12, 'max_iter': 1000}]
-)
+@pytest.mark.parametrize("params", [{
+    'penalty': 'l1',
+    'dual': False,
+    'tol': 1e-12,
+    'max_iter': 1000
+}, {
+    'penalty': 'l2',
+    'dual': True,
+    'tol': 1e-12,
+    'max_iter': 1000
+}, {
+    'penalty': 'l2',
+    'dual': False,
+    'tol': 1e-12,
+    'max_iter': 1000
+}])
 def test_logisticregression_liblinear_sample_weight(params):
     # check that we support sample_weight with liblinear in all possible cases:
     # l1-primal, l2-primal, l2-dual
-    X = np.array([[1, 3], [1, 3], [1, 3], [1, 3],
-                  [2, 1], [2, 1], [2, 1], [2, 1],
-                  [3, 3], [3, 3], [3, 3], [3, 3],
-                  [4, 1], [4, 1], [4, 1], [4, 1]], dtype=np.dtype('float'))
-    y = np.array([1, 1, 1, 1, 2, 2, 2, 2,
-                  1, 1, 1, 1, 2, 2, 2, 2], dtype=np.dtype('int'))
+    X = np.array(
+        [[1, 3], [1, 3], [1, 3], [1, 3], [2, 1], [2, 1], [2, 1], [2, 1],
+         [3, 3], [3, 3], [3, 3], [3, 3], [4, 1], [4, 1], [4, 1], [4, 1]],
+        dtype=np.dtype('float'))
+    y = np.array([1, 1, 1, 1, 2, 2, 2, 2, 1, 1, 1, 1, 2, 2, 2, 2],
+                 dtype=np.dtype('int'))
 
     X2 = np.vstack([X, X])
     y2 = np.hstack([y, 3 - y])
@@ -1812,8 +2078,11 @@ def test_scores_attribute_layout_elasticnet():
     l1_ratios = [.1, .9]
     Cs = [.1, 1, 10]
 
-    lrcv = LogisticRegressionCV(penalty='elasticnet', solver='saga',
-                                l1_ratios=l1_ratios, Cs=Cs, cv=cv,
+    lrcv = LogisticRegressionCV(penalty='elasticnet',
+                                solver='saga',
+                                l1_ratios=l1_ratios,
+                                Cs=Cs,
+                                cv=cv,
                                 random_state=0)
     lrcv.fit(X, y)
 
@@ -1822,8 +2091,11 @@ def test_scores_attribute_layout_elasticnet():
     for i, C in enumerate(Cs):
         for j, l1_ratio in enumerate(l1_ratios):
 
-            lr = LogisticRegression(penalty='elasticnet', solver='saga', C=C,
-                                    l1_ratio=l1_ratio, random_state=0)
+            lr = LogisticRegression(penalty='elasticnet',
+                                    solver='saga',
+                                    C=C,
+                                    l1_ratio=l1_ratio,
+                                    random_state=0)
 
             avg_score_lr = cross_val_score(lr, X, y, cv=cv).mean()
             assert avg_scores_lrcv[i, j] == pytest.approx(avg_score_lr)

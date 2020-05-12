@@ -38,7 +38,6 @@ from ._base import RemoteFileMetadata
 from ..utils import Bunch
 from ..utils.validation import _deprecate_positional_args
 
-
 # The original data can be found at:
 # https://www.dcc.fc.up.pt/~ltorgo/Regression/cal_housing.tgz
 ARCHIVE = RemoteFileMetadata(
@@ -51,8 +50,11 @@ logger = logging.getLogger(__name__)
 
 
 @_deprecate_positional_args
-def fetch_california_housing(*, data_home=None, download_if_missing=True,
-                             return_X_y=False, as_frame=False):
+def fetch_california_housing(*,
+                             data_home=None,
+                             download_if_missing=True,
+                             return_X_y=False,
+                             as_frame=False):
     """Load the California housing dataset (regression).
 
     ==============   ==============
@@ -149,8 +151,10 @@ def fetch_california_housing(*, data_home=None, download_if_missing=True,
     else:
         cal_housing = joblib.load(filepath)
 
-    feature_names = ["MedInc", "HouseAge", "AveRooms", "AveBedrms",
-                     "Population", "AveOccup", "Latitude", "Longitude"]
+    feature_names = [
+        "MedInc", "HouseAge", "AveRooms", "AveBedrms", "Population",
+        "AveOccup", "Latitude", "Longitude"
+    ]
 
     target, data = cal_housing[:, 0], cal_housing[:, 1:]
 
@@ -174,12 +178,12 @@ def fetch_california_housing(*, data_home=None, download_if_missing=True,
     y = target
 
     frame = None
-    target_names = ["MedHouseVal", ]
+    target_names = [
+        "MedHouseVal",
+    ]
     if as_frame:
-        frame, X, y = _convert_data_dataframe("fetch_california_housing",
-                                              data,
-                                              target,
-                                              feature_names,
+        frame, X, y = _convert_data_dataframe("fetch_california_housing", data,
+                                              target, feature_names,
                                               target_names)
 
     if return_X_y:

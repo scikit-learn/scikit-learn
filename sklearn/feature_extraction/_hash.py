@@ -13,11 +13,12 @@ from ..base import BaseEstimator, TransformerMixin
 if not IS_PYPY:
     from ._hashing_fast import transform as _hashing_transform
 else:
+
     def _hashing_transform(*args, **kwargs):
         raise NotImplementedError(
-                'FeatureHasher is not compatible with PyPy (see '
-                'https://github.com/scikit-learn/scikit-learn/issues/11540 '
-                'for the status updates).')
+            'FeatureHasher is not compatible with PyPy (see '
+            'https://github.com/scikit-learn/scikit-learn/issues/11540 '
+            'for the status updates).')
 
 
 def _iteritems(d):
@@ -90,8 +91,12 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
     sklearn.preprocessing.OneHotEncoder : handles nominal/categorical features.
     """
     @_deprecate_positional_args
-    def __init__(self, n_features=(2 ** 20), *, input_type="dict",
-                 dtype=np.float64, alternate_sign=True):
+    def __init__(self,
+                 n_features=(2**20),
+                 *,
+                 input_type="dict",
+                 dtype=np.float64,
+                 alternate_sign=True):
         self._validate_params(n_features, input_type)
 
         self.dtype = dtype
@@ -104,8 +109,8 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
         # strangely, np.int16 instances are not instances of Integral,
         # while np.int64 instances are...
         if not isinstance(n_features, numbers.Integral):
-            raise TypeError("n_features must be integral, got %r (%s)."
-                            % (n_features, type(n_features)))
+            raise TypeError("n_features must be integral, got %r (%s)." %
+                            (n_features, type(n_features)))
         elif n_features < 1 or n_features >= np.iinfo(np.int32).max + 1:
             raise ValueError("Invalid number of features (%d)." % n_features)
 
@@ -163,7 +168,8 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
         if n_samples == 0:
             raise ValueError("Cannot vectorize empty sequence.")
 
-        X = sp.csr_matrix((values, indices, indptr), dtype=self.dtype,
+        X = sp.csr_matrix((values, indices, indptr),
+                          dtype=self.dtype,
                           shape=(n_samples, self.n_features))
         X.sum_duplicates()  # also sorts the indices
 

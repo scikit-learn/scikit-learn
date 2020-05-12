@@ -26,15 +26,16 @@ def _check_classifer_response_method(estimator, response_method):
     if response_method != "auto":
         prediction_method = getattr(estimator, response_method, None)
         if prediction_method is None:
-            raise ValueError(error_msg.format(response_method,
-                                              estimator.__class__.__name__))
+            raise ValueError(
+                error_msg.format(response_method,
+                                 estimator.__class__.__name__))
     else:
         predict_proba = getattr(estimator, 'predict_proba', None)
         decision_function = getattr(estimator, 'decision_function', None)
         prediction_method = predict_proba or decision_function
         if prediction_method is None:
-            raise ValueError(error_msg.format(
-                "decision_function or predict_proba",
-                estimator.__class__.__name__))
+            raise ValueError(
+                error_msg.format("decision_function or predict_proba",
+                                 estimator.__class__.__name__))
 
     return prediction_method

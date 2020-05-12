@@ -124,10 +124,19 @@ class Isomap(TransformerMixin, BaseEstimator):
            framework for nonlinear dimensionality reduction. Science 290 (5500)
     """
     @_deprecate_positional_args
-    def __init__(self, *, n_neighbors=5, n_components=2, eigen_solver='auto',
-                 tol=0, max_iter=None, path_method='auto',
-                 neighbors_algorithm='auto', n_jobs=None, metric='minkowski',
-                 p=2, metric_params=None):
+    def __init__(self,
+                 *,
+                 n_neighbors=5,
+                 n_components=2,
+                 eigen_solver='auto',
+                 tol=0,
+                 max_iter=None,
+                 path_method='auto',
+                 neighbors_algorithm='auto',
+                 n_jobs=None,
+                 metric='minkowski',
+                 p=2,
+                 metric_params=None):
         self.n_neighbors = n_neighbors
         self.n_components = n_components
         self.eigen_solver = eigen_solver
@@ -143,7 +152,8 @@ class Isomap(TransformerMixin, BaseEstimator):
     def _fit_transform(self, X):
         self.nbrs_ = NearestNeighbors(n_neighbors=self.n_neighbors,
                                       algorithm=self.neighbors_algorithm,
-                                      metric=self.metric, p=self.p,
+                                      metric=self.metric,
+                                      p=self.p,
                                       metric_params=self.metric_params,
                                       n_jobs=self.n_jobs)
         self.nbrs_.fit(X)
@@ -152,18 +162,22 @@ class Isomap(TransformerMixin, BaseEstimator):
         self.kernel_pca_ = KernelPCA(n_components=self.n_components,
                                      kernel="precomputed",
                                      eigen_solver=self.eigen_solver,
-                                     tol=self.tol, max_iter=self.max_iter,
+                                     tol=self.tol,
+                                     max_iter=self.max_iter,
                                      n_jobs=self.n_jobs)
 
-        kng = kneighbors_graph(self.nbrs_, self.n_neighbors,
-                               metric=self.metric, p=self.p,
+        kng = kneighbors_graph(self.nbrs_,
+                               self.n_neighbors,
+                               metric=self.metric,
+                               p=self.p,
                                metric_params=self.metric_params,
-                               mode='distance', n_jobs=self.n_jobs)
+                               mode='distance',
+                               n_jobs=self.n_jobs)
 
         self.dist_matrix_ = graph_shortest_path(kng,
                                                 method=self.path_method,
                                                 directed=False)
-        G = self.dist_matrix_ ** 2
+        G = self.dist_matrix_**2
         G *= -0.5
 
         self.embedding_ = self.kernel_pca_.fit_transform(G)
@@ -171,8 +185,7 @@ class Isomap(TransformerMixin, BaseEstimator):
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
         "Attribute `training_data_` was deprecated in version 0.22 and"
-        " will be removed in 0.24."
-    )
+        " will be removed in 0.24.")
     @property
     def training_data_(self):
         check_is_fitted(self)
@@ -197,10 +210,10 @@ class Isomap(TransformerMixin, BaseEstimator):
 
         ``K(D) = -0.5 * (I - 1/n_samples) * D^2 * (I - 1/n_samples)``
         """
-        G = -0.5 * self.dist_matrix_ ** 2
+        G = -0.5 * self.dist_matrix_**2
         G_center = KernelCenterer().fit_transform(G)
         evals = self.kernel_pca_.lambdas_
-        return np.sqrt(np.sum(G_center ** 2) - np.sum(evals ** 2)) / G.shape[0]
+        return np.sqrt(np.sum(G_center**2) - np.sum(evals**2)) / G.shape[0]
 
     def fit(self, X, y=None):
         """Compute the embedding vectors for data X
@@ -273,8 +286,8 @@ class Isomap(TransformerMixin, BaseEstimator):
         n_queries = distances.shape[0]
         G_X = np.zeros((n_queries, n_samples_fit))
         for i in range(n_queries):
-            G_X[i] = np.min(self.dist_matrix_[indices[i]] +
-                            distances[i][:, None], 0)
+            G_X[i] = np.min(
+                self.dist_matrix_[indices[i]] + distances[i][:, None], 0)
 
         G_X **= 2
         G_X *= -0.5

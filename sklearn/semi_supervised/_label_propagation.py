@@ -105,10 +105,16 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
     """
-
     @_deprecate_positional_args
-    def __init__(self, kernel='rbf', *, gamma=20, n_neighbors=7,
-                 alpha=1, max_iter=30, tol=1e-3, n_jobs=None):
+    def __init__(self,
+                 kernel='rbf',
+                 *,
+                 gamma=20,
+                 n_neighbors=7,
+                 alpha=1,
+                 max_iter=30,
+                 tol=1e-3,
+                 n_jobs=None):
 
         self.max_iter = max_iter
         self.tol = tol
@@ -190,17 +196,18 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         """
         check_is_fitted(self)
 
-        X_2d = check_array(X, accept_sparse=['csc', 'csr', 'coo', 'dok',
-                                             'bsr', 'lil', 'dia'])
+        X_2d = check_array(
+            X, accept_sparse=['csc', 'csr', 'coo', 'dok', 'bsr', 'lil', 'dia'])
         weight_matrices = self._get_kernel(self.X_, X_2d)
         if self.kernel == 'knn':
             probabilities = np.array([
                 np.sum(self.label_distributions_[weight_matrix], axis=0)
-                for weight_matrix in weight_matrices])
+                for weight_matrix in weight_matrices
+            ])
         else:
             weight_matrices = weight_matrices.T
-            probabilities = safe_sparse_dot(
-                    weight_matrices, self.label_distributions_)
+            probabilities = safe_sparse_dot(weight_matrices,
+                                            self.label_distributions_)
         normalizer = np.atleast_2d(np.sum(probabilities, axis=1)).T
         probabilities /= normalizer
         return probabilities
@@ -276,8 +283,8 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
                 graph_matrix, self.label_distributions_)
 
             if self._variant == 'propagation':
-                normalizer = np.sum(
-                    self.label_distributions_, axis=1)[:, np.newaxis]
+                normalizer = np.sum(self.label_distributions_,
+                                    axis=1)[:, np.newaxis]
                 self.label_distributions_ /= normalizer
                 self.label_distributions_ = np.where(unlabeled,
                                                      self.label_distributions_,
@@ -287,10 +294,9 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
                 self.label_distributions_ = np.multiply(
                     alpha, self.label_distributions_) + y_static
         else:
-            warnings.warn(
-                'max_iter=%d was reached without convergence.' % self.max_iter,
-                category=ConvergenceWarning
-            )
+            warnings.warn('max_iter=%d was reached without convergence.' %
+                          self.max_iter,
+                          category=ConvergenceWarning)
             self.n_iter_ += 1
 
         normalizer = np.sum(self.label_distributions_, axis=1)[:, np.newaxis]
@@ -381,11 +387,21 @@ class LabelPropagation(BaseLabelPropagation):
     _variant = 'propagation'
 
     @_deprecate_positional_args
-    def __init__(self, kernel='rbf', *, gamma=20, n_neighbors=7,
-                 max_iter=1000, tol=1e-3, n_jobs=None):
-        super().__init__(kernel=kernel, gamma=gamma,
-                         n_neighbors=n_neighbors, max_iter=max_iter,
-                         tol=tol, n_jobs=n_jobs, alpha=None)
+    def __init__(self,
+                 kernel='rbf',
+                 *,
+                 gamma=20,
+                 n_neighbors=7,
+                 max_iter=1000,
+                 tol=1e-3,
+                 n_jobs=None):
+        super().__init__(kernel=kernel,
+                         gamma=gamma,
+                         n_neighbors=n_neighbors,
+                         max_iter=max_iter,
+                         tol=tol,
+                         n_jobs=n_jobs,
+                         alpha=None)
 
     def _build_graph(self):
         """Matrix representing a fully connected graph between each sample
@@ -495,13 +511,24 @@ class LabelSpreading(BaseLabelPropagation):
     _variant = 'spreading'
 
     @_deprecate_positional_args
-    def __init__(self, kernel='rbf', *, gamma=20, n_neighbors=7, alpha=0.2,
-                 max_iter=30, tol=1e-3, n_jobs=None):
+    def __init__(self,
+                 kernel='rbf',
+                 *,
+                 gamma=20,
+                 n_neighbors=7,
+                 alpha=0.2,
+                 max_iter=30,
+                 tol=1e-3,
+                 n_jobs=None):
 
         # this one has different base parameters
-        super().__init__(kernel=kernel, gamma=gamma,
-                         n_neighbors=n_neighbors, alpha=alpha,
-                         max_iter=max_iter, tol=tol, n_jobs=n_jobs)
+        super().__init__(kernel=kernel,
+                         gamma=gamma,
+                         n_neighbors=n_neighbors,
+                         alpha=alpha,
+                         max_iter=max_iter,
+                         tol=tol,
+                         n_jobs=n_jobs)
 
     def _build_graph(self):
         """Graph matrix for Label Spreading computes the graph laplacian"""

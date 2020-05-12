@@ -21,8 +21,8 @@ from sklearn.feature_selection import SelectFromModel
 
 def test_base():
     # Check BaseEnsemble methods.
-    ensemble = BaggingClassifier(
-        base_estimator=Perceptron(random_state=None), n_estimators=3)
+    ensemble = BaggingClassifier(base_estimator=Perceptron(random_state=None),
+                                 n_estimators=3)
 
     iris = load_iris()
     ensemble.fit(iris.data, iris.target)
@@ -51,8 +51,7 @@ def test_base():
 def test_base_zero_n_estimators():
     # Check that instantiating a BaseEnsemble with n_estimators<=0 raises
     # a ValueError.
-    ensemble = BaggingClassifier(base_estimator=Perceptron(),
-                                 n_estimators=0)
+    ensemble = BaggingClassifier(base_estimator=Perceptron(), n_estimators=0)
     iris = load_iris()
     assert_raise_message(ValueError,
                          "n_estimators must be greater than zero, got 0.",
@@ -65,13 +64,11 @@ def test_base_not_int_n_estimators():
     string_ensemble = BaggingClassifier(base_estimator=Perceptron(),
                                         n_estimators='3')
     iris = load_iris()
-    assert_raise_message(ValueError,
-                         "n_estimators must be an integer",
+    assert_raise_message(ValueError, "n_estimators must be an integer",
                          string_ensemble.fit, iris.data, iris.target)
     float_ensemble = BaggingClassifier(base_estimator=Perceptron(),
                                        n_estimators=3.0)
-    assert_raise_message(ValueError,
-                         "n_estimators must be an integer",
+    assert_raise_message(ValueError, "n_estimators must be an integer",
                          float_ensemble.fit, iris.data, iris.target)
 
 
@@ -103,7 +100,7 @@ def test_set_random_states():
     assert isinstance(est1.steps[0][1].estimator.random_state, int)
     assert isinstance(est1.steps[1][1].random_state, int)
     assert (est1.get_params()['sel__estimator__random_state'] !=
-                     est1.get_params()['clf__random_state'])
+            est1.get_params()['clf__random_state'])
 
     # ensure multiple random_state parameters are invariant to get_params()
     # iteration order
@@ -122,6 +119,6 @@ def test_set_random_states():
         est2 = cls(make_steps())
         _set_random_states(est2, 3)
         assert (est1.get_params()['sel__estimator__random_state'] ==
-                     est2.get_params()['sel__estimator__random_state'])
-        assert (est1.get_params()['clf__random_state'] ==
-                     est2.get_params()['clf__random_state'])
+                est2.get_params()['sel__estimator__random_state'])
+        assert (est1.get_params()['clf__random_state'] == est2.get_params()
+                ['clf__random_state'])

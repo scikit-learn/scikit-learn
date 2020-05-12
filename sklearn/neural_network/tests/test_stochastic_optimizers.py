@@ -5,14 +5,13 @@ from sklearn.neural_network._stochastic_optimizers import (BaseOptimizer,
                                                            AdamOptimizer)
 from sklearn.utils._testing import assert_array_equal
 
-
 shapes = [(4, 6), (6, 8), (7, 8, 9)]
 
 
 def test_base_optimizer():
     params = [np.zeros(shape) for shape in shapes]
 
-    for lr in [10 ** i for i in range(-3, 4)]:
+    for lr in [10**i for i in range(-3, 4)]:
         optimizer = BaseOptimizer(params, lr)
         assert optimizer.trigger_stopping('', False)
 
@@ -20,7 +19,7 @@ def test_base_optimizer():
 def test_sgd_optimizer_no_momentum():
     params = [np.zeros(shape) for shape in shapes]
 
-    for lr in [10 ** i for i in range(-3, 4)]:
+    for lr in [10**i for i in range(-3, 4)]:
         optimizer = SGDOptimizer(params, lr, momentum=0, nesterov=False)
         grads = [np.random.random(shape) for shape in shapes]
         expected = [param - lr * grad for param, grad in zip(params, grads)]
@@ -39,8 +38,10 @@ def test_sgd_optimizer_momentum():
         velocities = [np.random.random(shape) for shape in shapes]
         optimizer.velocities = velocities
         grads = [np.random.random(shape) for shape in shapes]
-        updates = [momentum * velocity - lr * grad
-                   for velocity, grad in zip(velocities, grads)]
+        updates = [
+            momentum * velocity - lr * grad
+            for velocity, grad in zip(velocities, grads)
+        ]
         expected = [param + update for param, update in zip(params, updates)]
         optimizer.update_params(grads)
 
@@ -66,10 +67,14 @@ def test_sgd_optimizer_nesterovs_momentum():
         velocities = [np.random.random(shape) for shape in shapes]
         optimizer.velocities = velocities
         grads = [np.random.random(shape) for shape in shapes]
-        updates = [momentum * velocity - lr * grad
-                   for velocity, grad in zip(velocities, grads)]
-        updates = [momentum * update - lr * grad
-                   for update, grad in zip(updates, grads)]
+        updates = [
+            momentum * velocity - lr * grad
+            for velocity, grad in zip(velocities, grads)
+        ]
+        updates = [
+            momentum * update - lr * grad
+            for update, grad in zip(updates, grads)
+        ]
         expected = [param + update for param, update in zip(params, updates)]
         optimizer.update_params(grads)
 
@@ -93,15 +98,21 @@ def test_adam_optimizer():
             optimizer.t = t - 1
             grads = [np.random.random(shape) for shape in shapes]
 
-            ms = [beta_1 * m + (1 - beta_1) * grad
-                  for m, grad in zip(ms, grads)]
-            vs = [beta_2 * v + (1 - beta_2) * (grad ** 2)
-                  for v, grad in zip(vs, grads)]
-            learning_rate = lr * np.sqrt(1 - beta_2 ** t) / (1 - beta_1**t)
-            updates = [-learning_rate * m / (np.sqrt(v) + epsilon)
-                       for m, v in zip(ms, vs)]
-            expected = [param + update
-                        for param, update in zip(params, updates)]
+            ms = [
+                beta_1 * m + (1 - beta_1) * grad for m, grad in zip(ms, grads)
+            ]
+            vs = [
+                beta_2 * v + (1 - beta_2) * (grad**2)
+                for v, grad in zip(vs, grads)
+            ]
+            learning_rate = lr * np.sqrt(1 - beta_2**t) / (1 - beta_1**t)
+            updates = [
+                -learning_rate * m / (np.sqrt(v) + epsilon)
+                for m, v in zip(ms, vs)
+            ]
+            expected = [
+                param + update for param, update in zip(params, updates)
+            ]
 
             optimizer.update_params(grads)
             for exp, param in zip(expected, optimizer.params):

@@ -34,14 +34,17 @@ def test_silhouette():
         if X is X_dense:
             score_dense_without_sampling = score_precomputed
         else:
-            pytest.approx(score_euclidean,
-                          score_dense_without_sampling)
+            pytest.approx(score_euclidean, score_dense_without_sampling)
 
         # Test with sampling
-        score_precomputed = silhouette_score(D, y, metric='precomputed',
+        score_precomputed = silhouette_score(D,
+                                             y,
+                                             metric='precomputed',
                                              sample_size=int(X.shape[0] / 2),
                                              random_state=0)
-        score_euclidean = silhouette_score(X, y, metric='euclidean',
+        score_euclidean = silhouette_score(X,
+                                           y,
+                                           metric='euclidean',
                                            sample_size=int(X.shape[0] / 2),
                                            random_state=0)
         assert score_precomputed > 0
@@ -80,36 +83,57 @@ def test_cluster_size_1():
 def test_silhouette_paper_example():
     # Explicitly check per-sample results against Rousseeuw (1987)
     # Data from Table 1
-    lower = [5.58,
-             7.00, 6.50,
-             7.08, 7.00, 3.83,
-             4.83, 5.08, 8.17, 5.83,
-             2.17, 5.75, 6.67, 6.92, 4.92,
-             6.42, 5.00, 5.58, 6.00, 4.67, 6.42,
-             3.42, 5.50, 6.42, 6.42, 5.00, 3.92, 6.17,
-             2.50, 4.92, 6.25, 7.33, 4.50, 2.25, 6.33, 2.75,
-             6.08, 6.67, 4.25, 2.67, 6.00, 6.17, 6.17, 6.92, 6.17,
-             5.25, 6.83, 4.50, 3.75, 5.75, 5.42, 6.08, 5.83, 6.67, 3.67,
-             4.75, 3.00, 6.08, 6.67, 5.00, 5.58, 4.83, 6.17, 5.67, 6.50, 6.92]
+    lower = [
+        5.58, 7.00, 6.50, 7.08, 7.00, 3.83, 4.83, 5.08, 8.17, 5.83, 2.17, 5.75,
+        6.67, 6.92, 4.92, 6.42, 5.00, 5.58, 6.00, 4.67, 6.42, 3.42, 5.50, 6.42,
+        6.42, 5.00, 3.92, 6.17, 2.50, 4.92, 6.25, 7.33, 4.50, 2.25, 6.33, 2.75,
+        6.08, 6.67, 4.25, 2.67, 6.00, 6.17, 6.17, 6.92, 6.17, 5.25, 6.83, 4.50,
+        3.75, 5.75, 5.42, 6.08, 5.83, 6.67, 3.67, 4.75, 3.00, 6.08, 6.67, 5.00,
+        5.58, 4.83, 6.17, 5.67, 6.50, 6.92
+    ]
     D = np.zeros((12, 12))
     D[np.tril_indices(12, -1)] = lower
     D += D.T
 
-    names = ['BEL', 'BRA', 'CHI', 'CUB', 'EGY', 'FRA', 'IND', 'ISR', 'USA',
-             'USS', 'YUG', 'ZAI']
+    names = [
+        'BEL', 'BRA', 'CHI', 'CUB', 'EGY', 'FRA', 'IND', 'ISR', 'USA', 'USS',
+        'YUG', 'ZAI'
+    ]
 
     # Data from Figure 2
     labels1 = [1, 1, 2, 2, 1, 1, 2, 1, 1, 2, 2, 1]
-    expected1 = {'USA': .43, 'BEL': .39, 'FRA': .35, 'ISR': .30, 'BRA': .22,
-                 'EGY': .20, 'ZAI': .19, 'CUB': .40, 'USS': .34, 'CHI': .33,
-                 'YUG': .26, 'IND': -.04}
+    expected1 = {
+        'USA': .43,
+        'BEL': .39,
+        'FRA': .35,
+        'ISR': .30,
+        'BRA': .22,
+        'EGY': .20,
+        'ZAI': .19,
+        'CUB': .40,
+        'USS': .34,
+        'CHI': .33,
+        'YUG': .26,
+        'IND': -.04
+    }
     score1 = .28
 
     # Data from Figure 3
     labels2 = [1, 2, 3, 3, 1, 1, 2, 1, 1, 3, 3, 2]
-    expected2 = {'USA': .47, 'FRA': .44, 'BEL': .42, 'ISR': .37, 'EGY': .02,
-                 'ZAI': .28, 'BRA': .25, 'IND': .17, 'CUB': .48, 'USS': .44,
-                 'YUG': .31, 'CHI': .31}
+    expected2 = {
+        'USA': .47,
+        'FRA': .44,
+        'BEL': .42,
+        'ISR': .37,
+        'EGY': .02,
+        'ZAI': .28,
+        'BRA': .25,
+        'IND': .17,
+        'CUB': .48,
+        'USS': .44,
+        'YUG': .31,
+        'CHI': .31
+    }
     score2 = .33
 
     for labels, expected, score in [(labels1, expected1, score1),
@@ -117,11 +141,13 @@ def test_silhouette_paper_example():
         expected = [expected[name] for name in names]
         # we check to 2dp because that's what's in the paper
         pytest.approx(expected,
-                      silhouette_samples(D, np.array(labels),
+                      silhouette_samples(D,
+                                         np.array(labels),
                                          metric='precomputed'),
                       abs=1e-2)
         pytest.approx(score,
-                      silhouette_score(D, np.array(labels),
+                      silhouette_score(D,
+                                       np.array(labels),
                                        metric='precomputed'),
                       abs=1e-2)
 
@@ -150,18 +176,17 @@ def test_non_encoded_labels():
     dataset = datasets.load_iris()
     X = dataset.data
     labels = dataset.target
-    assert (
-        silhouette_score(X, labels * 2 + 10) == silhouette_score(X, labels))
-    assert_array_equal(
-        silhouette_samples(X, labels * 2 + 10), silhouette_samples(X, labels))
+    assert (silhouette_score(X,
+                             labels * 2 + 10) == silhouette_score(X, labels))
+    assert_array_equal(silhouette_samples(X, labels * 2 + 10),
+                       silhouette_samples(X, labels))
 
 
 def test_non_numpy_labels():
     dataset = datasets.load_iris()
     X = dataset.data
     y = dataset.target
-    assert (
-        silhouette_score(list(X), list(y)) == silhouette_score(X, y))
+    assert (silhouette_score(list(X), list(y)) == silhouette_score(X, y))
 
 
 @pytest.mark.parametrize('dtype', (np.float32, np.float64))
@@ -204,16 +229,15 @@ def test_calinski_harabasz_score():
     assert_raises_on_all_points_same_cluster(calinski_harabasz_score)
 
     # Assert the value is 1. when all samples are equals
-    assert 1. == calinski_harabasz_score(np.ones((10, 2)),
-                                         [0] * 5 + [1] * 5)
+    assert 1. == calinski_harabasz_score(np.ones((10, 2)), [0] * 5 + [1] * 5)
 
     # Assert the value is 0. when all the mean cluster are equal
     assert 0. == calinski_harabasz_score([[-1, -1], [1, 1]] * 10,
                                          [0] * 10 + [1] * 10)
 
     # General case (with non numpy arrays)
-    X = ([[0, 0], [1, 1]] * 5 + [[3, 3], [4, 4]] * 5 +
-         [[0, 4], [1, 3]] * 5 + [[3, 1], [4, 0]] * 5)
+    X = ([[0, 0], [1, 1]] * 5 + [[3, 3], [4, 4]] * 5 + [[0, 4], [1, 3]] * 5 +
+         [[3, 1], [4, 0]] * 5)
     labels = [0] * 10 + [1] * 10 + [2] * 10 + [3] * 10
     pytest.approx(calinski_harabasz_score(X, labels),
                   45 * (40 - 4) / (5 * (4 - 1)))
@@ -232,8 +256,8 @@ def test_davies_bouldin_score():
                                 [0] * 10 + [1] * 10) == pytest.approx(0.0)
 
     # General case (with non numpy arrays)
-    X = ([[0, 0], [1, 1]] * 5 + [[3, 3], [4, 4]] * 5 +
-         [[0, 4], [1, 3]] * 5 + [[3, 1], [4, 0]] * 5)
+    X = ([[0, 0], [1, 1]] * 5 + [[3, 3], [4, 4]] * 5 + [[0, 4], [1, 3]] * 5 +
+         [[3, 1], [4, 0]] * 5)
     labels = [0] * 10 + [1] * 10 + [2] * 10 + [3] * 10
     pytest.approx(davies_bouldin_score(X, labels), 2 * np.sqrt(0.5) / 3)
 

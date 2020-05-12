@@ -120,13 +120,12 @@ def compute_sample_weight(class_weight, y, *, indices=None):
         if class_weight not in ['balanced']:
             raise ValueError('The only valid preset for class_weight is '
                              '"balanced". Given "%s".' % class_weight)
-    elif (indices is not None and
-          not isinstance(class_weight, str)):
+    elif (indices is not None and not isinstance(class_weight, str)):
         raise ValueError('The only valid class_weight for subsampling is '
                          '"balanced". Given "%s".' % class_weight)
     elif n_outputs > 1:
-        if (not hasattr(class_weight, "__iter__") or
-                isinstance(class_weight, dict)):
+        if (not hasattr(class_weight, "__iter__")
+                or isinstance(class_weight, dict)):
             raise ValueError("For multi-output, class_weight should be a "
                              "list of dicts, or a valid string.")
         if len(class_weight) != n_outputs:
@@ -161,8 +160,7 @@ def compute_sample_weight(class_weight, y, *, indices=None):
 
             classes_missing = set(classes_full) - set(classes_subsample)
         else:
-            weight_k = compute_class_weight(class_weight_k,
-                                            classes_full,
+            weight_k = compute_class_weight(class_weight_k, classes_full,
                                             y_full)
 
         weight_k = weight_k[np.searchsorted(classes_full, y_full)]

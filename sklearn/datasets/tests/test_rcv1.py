@@ -24,7 +24,7 @@ def test_fetch_rcv1(fetch_rcv1_fxt):
     # test shapes
     assert (804414, 47236) == X1.shape
     assert (804414, 103) == Y1.shape
-    assert (804414,) == s1.shape
+    assert (804414, ) == s1.shape
     assert 103 == len(cat_list)
 
     # test ordering of categories

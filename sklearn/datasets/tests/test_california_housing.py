@@ -9,8 +9,8 @@ from functools import partial
 
 def test_fetch(fetch_california_housing_fxt):
     data = fetch_california_housing_fxt()
-    assert((20640, 8) == data.data.shape)
-    assert((20640, ) == data.target.shape)
+    assert ((20640, 8) == data.data.shape)
+    assert ((20640, ) == data.target.shape)
 
     # test return_X_y option
     fetch_func = partial(fetch_california_housing_fxt)

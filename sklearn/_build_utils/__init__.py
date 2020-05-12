@@ -4,7 +4,6 @@ Utilities useful during the build.
 # author: Andy Mueller, Gael Varoquaux
 # license: BSD
 
-
 import os
 import sklearn
 import contextlib
@@ -13,7 +12,6 @@ from distutils.version import LooseVersion
 
 from .pre_build_helpers import basic_check_build
 from .openmp_helpers import check_openmp_support
-
 
 DEFAULT_ROOT = 'sklearn'
 
@@ -25,9 +23,9 @@ CYTHON_MIN_VERSION = '0.28.5'
 
 
 def _check_cython_version():
-    message = ('Please install Cython with a version >= {0} in order '
-               'to build a scikit-learn from source.').format(
-                    CYTHON_MIN_VERSION)
+    message = (
+        'Please install Cython with a version >= {0} in order '
+        'to build a scikit-learn from source.').format(CYTHON_MIN_VERSION)
     try:
         import Cython
     except ModuleNotFoundError:
@@ -35,8 +33,9 @@ def _check_cython_version():
         raise ModuleNotFoundError(message)
 
     if LooseVersion(Cython.__version__) < CYTHON_MIN_VERSION:
-        message += (' The current version of Cython is {} installed in {}.'
-                    .format(Cython.__version__, Cython.__path__))
+        message += (
+            ' The current version of Cython is {} installed in {}.'.format(
+                Cython.__version__, Cython.__path__))
         raise ValueError(message)
 
 
@@ -72,12 +71,13 @@ def cythonize_extensions(top_path, config):
             # CPU particularly in CI (cf loky#114)
             n_jobs = joblib.cpu_count()
 
-    config.ext_modules = cythonize(
-        config.ext_modules,
-        nthreads=n_jobs,
-        compile_time_env={
-            'SKLEARN_OPENMP_PARALLELISM_ENABLED': sklearn._OPENMP_SUPPORTED},
-        compiler_directives={'language_level': 3})
+    config.ext_modules = cythonize(config.ext_modules,
+                                   nthreads=n_jobs,
+                                   compile_time_env={
+                                       'SKLEARN_OPENMP_PARALLELISM_ENABLED':
+                                       sklearn._OPENMP_SUPPORTED
+                                   },
+                                   compiler_directives={'language_level': 3})
 
 
 def gen_from_templates(templates, top_path):
@@ -89,8 +89,8 @@ def gen_from_templates(templates, top_path):
         outfile = template.replace('.tp', '')
 
         # if the template is not updated, no need to output the cython file
-        if not (os.path.exists(outfile) and
-                os.stat(template).st_mtime < os.stat(outfile).st_mtime):
+        if not (os.path.exists(outfile)
+                and os.stat(template).st_mtime < os.stat(outfile).st_mtime):
 
             with open(template, "r") as f:
                 tmpl = f.read()

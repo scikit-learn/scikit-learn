@@ -110,8 +110,13 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
 
     """
     @_deprecate_positional_args
-    def __init__(self, regressor=None, *, transformer=None,
-                 func=None, inverse_func=None, check_inverse=True):
+    def __init__(self,
+                 regressor=None,
+                 *,
+                 transformer=None,
+                 func=None,
+                 inverse_func=None,
+                 check_inverse=True):
         self.regressor = regressor
         self.transformer = transformer
         self.func = func
@@ -125,8 +130,8 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
         check on a subset (optional).
 
         """
-        if (self.transformer is not None and
-                (self.func is not None or self.inverse_func is not None)):
+        if (self.transformer is not None
+                and (self.func is not None or self.inverse_func is not None)):
             raise ValueError("'transformer' and functions 'func'/"
                              "'inverse_func' cannot both be set.")
         elif self.transformer is not None:
@@ -136,7 +141,9 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
                 raise ValueError("When 'func' is provided, 'inverse_func' must"
                                  " also be provided")
             self.transformer_ = FunctionTransformer(
-                func=self.func, inverse_func=self.inverse_func, validate=True,
+                func=self.func,
+                inverse_func=self.inverse_func,
+                validate=True,
                 check_inverse=self.check_inverse)
         # XXX: sample_weight is not currently passed to the
         # transformer. However, if transformer starts using sample_weight, the
@@ -149,10 +156,11 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
             y_sel_t = self.transformer_.transform(y_sel)
             if not np.allclose(y_sel,
                                self.transformer_.inverse_transform(y_sel_t)):
-                warnings.warn("The provided functions or transformer are"
-                              " not strictly inverse of each other. If"
-                              " you are sure you want to proceed regardless"
-                              ", set 'check_inverse=False'", UserWarning)
+                warnings.warn(
+                    "The provided functions or transformer are"
+                    " not strictly inverse of each other. If"
+                    " you are sure you want to proceed regardless"
+                    ", set 'check_inverse=False'", UserWarning)
 
     def fit(self, X, y, **fit_params):
         """Fit the model according to the given training data.
@@ -175,8 +183,11 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
         -------
         self : object
         """
-        y = check_array(y, accept_sparse=False, force_all_finite=True,
-                        ensure_2d=False, dtype='numeric')
+        y = check_array(y,
+                        accept_sparse=False,
+                        force_all_finite=True,
+                        ensure_2d=False,
+                        dtype='numeric')
 
         # store the number of dimension of the target to predict an array of
         # similar shape at predict
@@ -232,8 +243,8 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
                 pred.reshape(-1, 1))
         else:
             pred_trans = self.transformer_.inverse_transform(pred)
-        if (self._training_dim == 1 and
-                pred_trans.ndim == 2 and pred_trans.shape[1] == 1):
+        if (self._training_dim == 1 and pred_trans.ndim == 2
+                and pred_trans.shape[1] == 1):
             pred_trans = pred_trans.squeeze(axis=1)
 
         return pred_trans
@@ -249,8 +260,7 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
             check_is_fitted(self)
         except NotFittedError as nfe:
             raise AttributeError(
-                "{} object has no n_features_in_ attribute."
-                .format(self.__class__.__name__)
-            ) from nfe
+                "{} object has no n_features_in_ attribute.".format(
+                    self.__class__.__name__)) from nfe
 
         return self.regressor_.n_features_in_

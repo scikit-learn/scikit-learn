@@ -20,9 +20,7 @@ flake8 to ignore the import, which appears as unused.
 """
 
 from ..ensemble._hist_gradient_boosting.gradient_boosting import (
-    HistGradientBoostingClassifier,
-    HistGradientBoostingRegressor
-)
+    HistGradientBoostingClassifier, HistGradientBoostingRegressor)
 
 from .. import ensemble
 
@@ -32,5 +30,6 @@ setattr(ensemble, "HistGradientBoostingClassifier",
 setattr(ensemble, "HistGradientBoostingRegressor",
         HistGradientBoostingRegressor)
 
-ensemble.__all__ += ['HistGradientBoostingClassifier',
-                     'HistGradientBoostingRegressor']
+ensemble.__all__ += [
+    'HistGradientBoostingClassifier', 'HistGradientBoostingRegressor'
+]

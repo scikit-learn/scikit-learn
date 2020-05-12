@@ -37,8 +37,12 @@ FACES = RemoteFileMetadata(
 
 
 @_deprecate_positional_args
-def fetch_olivetti_faces(*, data_home=None, shuffle=False, random_state=0,
-                         download_if_missing=True, return_X_y=False):
+def fetch_olivetti_faces(*,
+                         data_home=None,
+                         shuffle=False,
+                         random_state=0,
+                         download_if_missing=True,
+                         return_X_y=False):
     """Load the Olivetti faces data-set from AT&T (classification).
 
     Download it if necessary.
@@ -106,8 +110,8 @@ def fetch_olivetti_faces(*, data_home=None, shuffle=False, random_state=0,
         if not download_if_missing:
             raise IOError("Data not found and `download_if_missing` is False")
 
-        print('downloading Olivetti faces from %s to %s'
-              % (FACES.url, data_home))
+        print('downloading Olivetti faces from %s to %s' %
+              (FACES.url, data_home))
         mat_path = _fetch_remote(FACES, dirname=data_home)
         mfile = loadmat(file_name=mat_path)
         # delete raw .mat data

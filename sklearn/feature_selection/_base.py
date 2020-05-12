@@ -22,7 +22,6 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
     `inverse_transform` functionality given an implementation of
     `_get_support_mask`.
     """
-
     def get_support(self, indices=False):
         """
         Get a mask, or integer index, of the features selected
@@ -72,13 +71,15 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
             The input samples with only the selected features.
         """
         tags = self._get_tags()
-        X = check_array(X, dtype=None, accept_sparse='csr',
+        X = check_array(X,
+                        dtype=None,
+                        accept_sparse='csr',
                         force_all_finite=not tags.get('allow_nan', True))
         mask = self.get_support()
         if not mask.any():
-            warn("No features were selected: either the data is"
-                 " too noisy or the selection test too strict.",
-                 UserWarning)
+            warn(
+                "No features were selected: either the data is"
+                " too noisy or the selection test too strict.", UserWarning)
             return np.empty(0).reshape((X.shape[0], 0))
         if len(mask) != X.shape[1]:
             raise ValueError("X has a different shape than during fitting.")
@@ -108,7 +109,8 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
             col_nonzeros = it.ravel()
             indptr = np.concatenate([[0], np.cumsum(col_nonzeros)])
             Xt = csc_matrix((X.data, X.indices, indptr),
-                            shape=(X.shape[0], len(indptr) - 1), dtype=X.dtype)
+                            shape=(X.shape[0], len(indptr) - 1),
+                            dtype=X.dtype)
             return Xt
 
         support = self.get_support()

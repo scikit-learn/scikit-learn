@@ -164,8 +164,8 @@ def test_compute_sample_weight():
     # Test with unbalanced classes
     y = np.asarray([1, 1, 1, 2, 2, 2, 3])
     sample_weight = compute_sample_weight("balanced", y)
-    expected_balanced = np.array([0.7777, 0.7777, 0.7777, 0.7777, 0.7777,
-                                  0.7777, 2.3333])
+    expected_balanced = np.array(
+        [0.7777, 0.7777, 0.7777, 0.7777, 0.7777, 0.7777, 2.3333])
     assert_array_almost_equal(sample_weight, expected_balanced, decimal=4)
 
     # Test with `None` weights
@@ -185,7 +185,7 @@ def test_compute_sample_weight():
     # Test with multi-output of unbalanced classes
     y = np.asarray([[1, 0], [1, 0], [1, 0], [2, 1], [2, 1], [2, 1], [3, -1]])
     sample_weight = compute_sample_weight("balanced", y)
-    assert_array_almost_equal(sample_weight, expected_balanced ** 2, decimal=3)
+    assert_array_almost_equal(sample_weight, expected_balanced**2, decimal=3)
 
 
 def test_compute_sample_weight_with_subsample():
@@ -203,21 +203,23 @@ def test_compute_sample_weight_with_subsample():
     # Test with a subsample
     y = np.asarray([1, 1, 1, 2, 2, 2])
     sample_weight = compute_sample_weight("balanced", y, indices=range(4))
-    assert_array_almost_equal(sample_weight, [2. / 3, 2. / 3,
-                                              2. / 3, 2., 2., 2.])
+    assert_array_almost_equal(sample_weight,
+                              [2. / 3, 2. / 3, 2. / 3, 2., 2., 2.])
 
     # Test with a bootstrap subsample
     y = np.asarray([1, 1, 1, 2, 2, 2])
-    sample_weight = compute_sample_weight("balanced", y,
+    sample_weight = compute_sample_weight("balanced",
+                                          y,
                                           indices=[0, 1, 1, 2, 2, 3])
     expected_balanced = np.asarray([0.6, 0.6, 0.6, 3., 3., 3.])
     assert_array_almost_equal(sample_weight, expected_balanced)
 
     # Test with a bootstrap subsample for multi-output
     y = np.asarray([[1, 0], [1, 0], [1, 0], [2, 1], [2, 1], [2, 1]])
-    sample_weight = compute_sample_weight("balanced", y,
+    sample_weight = compute_sample_weight("balanced",
+                                          y,
                                           indices=[0, 1, 1, 2, 2, 3])
-    assert_array_almost_equal(sample_weight, expected_balanced ** 2)
+    assert_array_almost_equal(sample_weight, expected_balanced**2)
 
     # Test with a missing class
     y = np.asarray([1, 1, 1, 2, 2, 2, 3])

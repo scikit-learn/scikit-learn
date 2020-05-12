@@ -150,13 +150,13 @@ def _beta_divergence(X, W, H, beta, square_root=False):
             # np.sum(np.dot(W, H) ** beta)
             sum_WH_beta = 0
             for i in range(X.shape[1]):
-                sum_WH_beta += np.sum(np.dot(W, H[:, i]) ** beta)
+                sum_WH_beta += np.sum(np.dot(W, H[:, i])**beta)
 
         else:
-            sum_WH_beta = np.sum(WH ** beta)
+            sum_WH_beta = np.sum(WH**beta)
 
-        sum_X_WH = np.dot(X_data, WH_data ** (beta - 1))
-        res = (X_data ** beta).sum() - beta * sum_X_WH
+        sum_X_WH = np.dot(X_data, WH_data**(beta - 1))
+        res = (X_data**beta).sum() - beta * sum_X_WH
         res += sum_WH_beta * (beta - 1)
         res /= beta * (beta - 1)
 
@@ -222,11 +222,12 @@ def _check_string_param(solver, regularization, beta_loss, init):
             ' = %r' % (solver, beta_loss))
 
     if solver == 'mu' and init == 'nndsvd':
-        warnings.warn("The multiplicative update ('mu') solver cannot update "
-                      "zeros present in the initialization, and so leads to "
-                      "poorer results when used jointly with init='nndsvd'. "
-                      "You may try init='nndsvda' or init='nndsvdar' instead.",
-                      UserWarning)
+        warnings.warn(
+            "The multiplicative update ('mu') solver cannot update "
+            "zeros present in the initialization, and so leads to "
+            "poorer results when used jointly with init='nndsvd'. "
+            "You may try init='nndsvda' or init='nndsvdar' instead.",
+            UserWarning)
 
     beta_loss = _beta_loss_to_float(beta_loss)
     return beta_loss
@@ -234,9 +235,11 @@ def _check_string_param(solver, regularization, beta_loss, init):
 
 def _beta_loss_to_float(beta_loss):
     """Convert string beta_loss to float"""
-    allowed_beta_loss = {'frobenius': 2,
-                         'kullback-leibler': 1,
-                         'itakura-saito': 0}
+    allowed_beta_loss = {
+        'frobenius': 2,
+        'kullback-leibler': 1,
+        'itakura-saito': 0
+    }
     if isinstance(beta_loss, str) and beta_loss in allowed_beta_loss:
         beta_loss = allowed_beta_loss[beta_loss]
 
@@ -247,8 +250,7 @@ def _beta_loss_to_float(beta_loss):
     return beta_loss
 
 
-def _initialize_nmf(X, n_components, init=None, eps=1e-6,
-                    random_state=None):
+def _initialize_nmf(X, n_components, init=None, eps=1e-6, random_state=None):
     """Algorithms for NMF initialization.
 
     Computes an initial guess for the non-negative
@@ -312,9 +314,9 @@ def _initialize_nmf(X, n_components, init=None, eps=1e-6,
 
     if (init is not None and init != 'random'
             and n_components > min(n_samples, n_features)):
-        raise ValueError("init = '{}' can only be used when "
-                         "n_components <= min(n_samples, n_features)"
-                         .format(init))
+        raise ValueError(
+            "init = '{}' can only be used when "
+            "n_components <= min(n_samples, n_features)".format(init))
 
     if init is None:
         if n_components <= min(n_samples, n_features):
@@ -424,9 +426,19 @@ def _update_coordinate_descent(X, W, Ht, l1_reg, l2_reg, shuffle,
     return _update_cdnmf_fast(W, HHt, XHt, permutation)
 
 
-def _fit_coordinate_descent(X, W, H, tol=1e-4, max_iter=200, l1_reg_W=0,
-                            l1_reg_H=0, l2_reg_W=0, l2_reg_H=0, update_H=True,
-                            verbose=0, shuffle=False, random_state=None):
+def _fit_coordinate_descent(X,
+                            W,
+                            H,
+                            tol=1e-4,
+                            max_iter=200,
+                            l1_reg_W=0,
+                            l1_reg_H=0,
+                            l2_reg_W=0,
+                            l2_reg_H=0,
+                            update_H=True,
+                            verbose=0,
+                            shuffle=False,
+                            random_state=None):
     """Compute Non-negative Matrix Factorization (NMF) with Coordinate Descent
 
     The objective function is minimized with an alternating minimization of W
@@ -506,8 +518,8 @@ def _fit_coordinate_descent(X, W, H, tol=1e-4, max_iter=200, l1_reg_W=0,
         violation = 0.
 
         # Update W
-        violation += _update_coordinate_descent(X, W, Ht, l1_reg_W,
-                                                l2_reg_W, shuffle, rng)
+        violation += _update_coordinate_descent(X, W, Ht, l1_reg_W, l2_reg_W,
+                                                shuffle, rng)
         # Update H
         if update_H:
             violation += _update_coordinate_descent(X.T, Ht, W, l1_reg_H,
@@ -530,8 +542,17 @@ def _fit_coordinate_descent(X, W, H, tol=1e-4, max_iter=200, l1_reg_W=0,
     return W, Ht.T, n_iter
 
 
-def _multiplicative_update_w(X, W, H, beta_loss, l1_reg_W, l2_reg_W, gamma,
-                             H_sum=None, HHt=None, XHt=None, update_H=True):
+def _multiplicative_update_w(X,
+                             W,
+                             H,
+                             beta_loss,
+                             l1_reg_W,
+                             l2_reg_W,
+                             gamma,
+                             H_sum=None,
+                             HHt=None,
+                             XHt=None,
+                             update_H=True):
     """update W in Multiplicative Update NMF"""
     if beta_loss == 2:
         # Numerator
@@ -707,10 +728,18 @@ def _multiplicative_update_h(X, W, H, beta_loss, l1_reg_H, l2_reg_H, gamma):
     return delta_H
 
 
-def _fit_multiplicative_update(X, W, H, beta_loss='frobenius',
-                               max_iter=200, tol=1e-4,
-                               l1_reg_W=0, l1_reg_H=0, l2_reg_W=0, l2_reg_H=0,
-                               update_H=True, verbose=0):
+def _fit_multiplicative_update(X,
+                               W,
+                               H,
+                               beta_loss='frobenius',
+                               max_iter=200,
+                               tol=1e-4,
+                               l1_reg_W=0,
+                               l1_reg_H=0,
+                               l2_reg_W=0,
+                               l2_reg_H=0,
+                               update_H=True,
+                               verbose=0):
     """Compute Non-negative Matrix Factorization with Multiplicative Update
 
     The objective function is _beta_divergence(X, WH) and is minimized with an
@@ -798,8 +827,8 @@ def _fit_multiplicative_update(X, W, H, beta_loss='frobenius',
         # update W
         # H_sum, HHt and XHt are saved and reused if not update_H
         delta_W, H_sum, HHt, XHt = _multiplicative_update_w(
-            X, W, H, beta_loss, l1_reg_W, l2_reg_W, gamma,
-            H_sum, HHt, XHt, update_H)
+            X, W, H, beta_loss, l1_reg_W, l2_reg_W, gamma, H_sum, HHt, XHt,
+            update_H)
         W *= delta_W
 
         # necessary for stability with beta_loss < 1
@@ -841,12 +870,22 @@ def _fit_multiplicative_update(X, W, H, beta_loss='frobenius',
     return W, H, n_iter
 
 
-def non_negative_factorization(X, W=None, H=None, n_components=None,
-                               init=None, update_H=True, solver='cd',
-                               beta_loss='frobenius', tol=1e-4,
-                               max_iter=200, alpha=0., l1_ratio=0.,
-                               regularization=None, random_state=None,
-                               verbose=0, shuffle=False):
+def non_negative_factorization(X,
+                               W=None,
+                               H=None,
+                               n_components=None,
+                               init=None,
+                               update_H=True,
+                               solver='cd',
+                               beta_loss='frobenius',
+                               tol=1e-4,
+                               max_iter=200,
+                               alpha=0.,
+                               l1_ratio=0.,
+                               regularization=None,
+                               random_state=None,
+                               verbose=0,
+                               shuffle=False):
     r"""Compute Non-negative Matrix Factorization (NMF)
 
     Find two non-negative matrices (W, H) whose product approximates the non-
@@ -1004,7 +1043,8 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
     Fevotte, C., & Idier, J. (2011). Algorithms for nonnegative matrix
     factorization with the beta-divergence. Neural Computation, 23(9).
     """
-    X = check_array(X, accept_sparse=('csr', 'csc'),
+    X = check_array(X,
+                    accept_sparse=('csr', 'csc'),
                     dtype=[np.float64, np.float32])
     check_non_negative(X, "NMF (input X)")
     beta_loss = _check_string_param(solver, regularization, beta_loss, init)
@@ -1034,8 +1074,8 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
         _check_init(W, (n_samples, n_components), "NMF (input W)")
         if H.dtype != X.dtype or W.dtype != X.dtype:
             raise TypeError("H and W should have the same dtype as X. Got "
-                            "H.dtype = {} and W.dtype = {}."
-                            .format(H.dtype, W.dtype))
+                            "H.dtype = {} and W.dtype = {}.".format(
+                                H.dtype, W.dtype))
     elif not update_H:
         _check_init(H, (n_components, n_features), "NMF (input H)")
         if H.dtype != X.dtype:
@@ -1048,16 +1088,24 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
         else:
             W = np.zeros((n_samples, n_components), dtype=X.dtype)
     else:
-        W, H = _initialize_nmf(X, n_components, init=init,
+        W, H = _initialize_nmf(X,
+                               n_components,
+                               init=init,
                                random_state=random_state)
 
     l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H = _compute_regularization(
         alpha, l1_ratio, regularization)
 
     if solver == 'cd':
-        W, H, n_iter = _fit_coordinate_descent(X, W, H, tol, max_iter,
-                                               l1_reg_W, l1_reg_H,
-                                               l2_reg_W, l2_reg_H,
+        W, H, n_iter = _fit_coordinate_descent(X,
+                                               W,
+                                               H,
+                                               tol,
+                                               max_iter,
+                                               l1_reg_W,
+                                               l1_reg_H,
+                                               l2_reg_W,
+                                               l2_reg_H,
                                                update_H=update_H,
                                                verbose=verbose,
                                                shuffle=shuffle,
@@ -1072,8 +1120,9 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
         raise ValueError("Invalid solver parameter '%s'." % solver)
 
     if n_iter == max_iter and tol > 0:
-        warnings.warn("Maximum number of iterations %d reached. Increase it to"
-                      " improve convergence." % max_iter, ConvergenceWarning)
+        warnings.warn(
+            "Maximum number of iterations %d reached. Increase it to"
+            " improve convergence." % max_iter, ConvergenceWarning)
 
     return W, H, n_iter
 
@@ -1234,9 +1283,18 @@ class NMF(TransformerMixin, BaseEstimator):
     factorization with the beta-divergence. Neural Computation, 23(9).
     """
     @_deprecate_positional_args
-    def __init__(self, n_components=None, *, init=None, solver='cd',
-                 beta_loss='frobenius', tol=1e-4, max_iter=200,
-                 random_state=None, alpha=0., l1_ratio=0., verbose=0,
+    def __init__(self,
+                 n_components=None,
+                 *,
+                 init=None,
+                 solver='cd',
+                 beta_loss='frobenius',
+                 tol=1e-4,
+                 max_iter=200,
+                 random_state=None,
+                 alpha=0.,
+                 l1_ratio=0.,
+                 verbose=0,
                  shuffle=False):
         self.n_components = n_components
         self.init = init
@@ -1276,18 +1334,32 @@ class NMF(TransformerMixin, BaseEstimator):
         W : array, shape (n_samples, n_components)
             Transformed data.
         """
-        X = self._validate_data(X, accept_sparse=('csr', 'csc'),
+        X = self._validate_data(X,
+                                accept_sparse=('csr', 'csc'),
                                 dtype=[np.float64, np.float32])
 
         W, H, n_iter_ = non_negative_factorization(
-            X=X, W=W, H=H, n_components=self.n_components, init=self.init,
-            update_H=True, solver=self.solver, beta_loss=self.beta_loss,
-            tol=self.tol, max_iter=self.max_iter, alpha=self.alpha,
-            l1_ratio=self.l1_ratio, regularization='both',
-            random_state=self.random_state, verbose=self.verbose,
+            X=X,
+            W=W,
+            H=H,
+            n_components=self.n_components,
+            init=self.init,
+            update_H=True,
+            solver=self.solver,
+            beta_loss=self.beta_loss,
+            tol=self.tol,
+            max_iter=self.max_iter,
+            alpha=self.alpha,
+            l1_ratio=self.l1_ratio,
+            regularization='both',
+            random_state=self.random_state,
+            verbose=self.verbose,
             shuffle=self.shuffle)
 
-        self.reconstruction_err_ = _beta_divergence(X, W, H, self.beta_loss,
+        self.reconstruction_err_ = _beta_divergence(X,
+                                                    W,
+                                                    H,
+                                                    self.beta_loss,
                                                     square_root=True)
 
         self.n_components_ = H.shape[0]
@@ -1329,11 +1401,21 @@ class NMF(TransformerMixin, BaseEstimator):
         check_is_fitted(self)
 
         W, _, n_iter_ = non_negative_factorization(
-            X=X, W=None, H=self.components_, n_components=self.n_components_,
-            init=self.init, update_H=False, solver=self.solver,
-            beta_loss=self.beta_loss, tol=self.tol, max_iter=self.max_iter,
-            alpha=self.alpha, l1_ratio=self.l1_ratio, regularization='both',
-            random_state=self.random_state, verbose=self.verbose,
+            X=X,
+            W=None,
+            H=self.components_,
+            n_components=self.n_components_,
+            init=self.init,
+            update_H=False,
+            solver=self.solver,
+            beta_loss=self.beta_loss,
+            tol=self.tol,
+            max_iter=self.max_iter,
+            alpha=self.alpha,
+            l1_ratio=self.l1_ratio,
+            regularization='both',
+            random_state=self.random_state,
+            verbose=self.verbose,
             shuffle=self.shuffle)
 
         return W

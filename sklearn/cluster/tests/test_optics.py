@@ -18,7 +18,6 @@ from sklearn.utils._testing import assert_allclose
 
 from sklearn.cluster.tests.common import generate_clustered_data
 
-
 rng = np.random.RandomState(0)
 n_points_per_cluster = 10
 C1 = [-5, -2] + .8 * rng.randn(n_points_per_cluster, 2)
@@ -30,13 +29,12 @@ C6 = [5, 6] + 2 * rng.randn(n_points_per_cluster, 2)
 X = np.vstack((C1, C2, C3, C4, C5, C6))
 
 
-@pytest.mark.parametrize(
-    ('r_plot', 'end'),
-    [[[10, 8.9, 8.8, 8.7, 7, 10], 3],
-     [[10, 8.9, 8.8, 8.7, 8.6, 7, 10], 0],
-     [[10, 8.9, 8.8, 8.7, 7, 6, np.inf], 4],
-     [[10, 8.9, 8.8, 8.7, 7, 6, np.inf], 4],
-     ])
+@pytest.mark.parametrize(('r_plot', 'end'), [
+    [[10, 8.9, 8.8, 8.7, 7, 10], 3],
+    [[10, 8.9, 8.8, 8.7, 8.6, 7, 10], 0],
+    [[10, 8.9, 8.8, 8.7, 7, 6, np.inf], 4],
+    [[10, 8.9, 8.8, 8.7, 7, 6, np.inf], 4],
+])
 def test_extend_downward(r_plot, end):
     r_plot = np.array(r_plot)
     ratio = r_plot[:-1] / r_plot[1:]
@@ -47,13 +45,12 @@ def test_extend_downward(r_plot, end):
     assert e == end
 
 
-@pytest.mark.parametrize(
-    ('r_plot', 'end'),
-    [[[1, 2, 2.1, 2.2, 4, 8, 8, np.inf], 6],
-     [[1, 2, 2.1, 2.2, 2.3, 4, 8, 8, np.inf], 0],
-     [[1, 2, 2.1, 2, np.inf], 0],
-     [[1, 2, 2.1, np.inf], 2],
-     ])
+@pytest.mark.parametrize(('r_plot', 'end'), [
+    [[1, 2, 2.1, 2.2, 4, 8, 8, np.inf], 6],
+    [[1, 2, 2.1, 2.2, 2.3, 4, 8, 8, np.inf], 0],
+    [[1, 2, 2.1, 2, np.inf], 0],
+    [[1, 2, 2.1, np.inf], 2],
+])
 def test_extend_upward(r_plot, end):
     r_plot = np.array(r_plot)
     ratio = r_plot[:-1] / r_plot[1:]
@@ -64,13 +61,12 @@ def test_extend_upward(r_plot, end):
     assert e == end
 
 
-@pytest.mark.parametrize(
-    ('ordering', 'clusters', 'expected'),
-    [[[0, 1, 2, 3], [[0, 1], [2, 3]], [0, 0, 1, 1]],
-     [[0, 1, 2, 3], [[0, 1], [3, 3]], [0, 0, -1, 1]],
-     [[0, 1, 2, 3], [[0, 1], [3, 3], [0, 3]], [0, 0, -1, 1]],
-     [[3, 1, 2, 0], [[0, 1], [3, 3], [0, 3]], [1, 0, -1, 0]],
-     ])
+@pytest.mark.parametrize(('ordering', 'clusters', 'expected'), [
+    [[0, 1, 2, 3], [[0, 1], [2, 3]], [0, 0, 1, 1]],
+    [[0, 1, 2, 3], [[0, 1], [3, 3]], [0, 0, -1, 1]],
+    [[0, 1, 2, 3], [[0, 1], [3, 3], [0, 3]], [0, 0, -1, 1]],
+    [[3, 1, 2, 0], [[0, 1], [3, 3], [0, 3]], [1, 0, -1, 0]],
+])
 def test_the_extract_xi_labels(ordering, clusters, expected):
     labels = _extract_xi_labels(ordering, clusters)
 
@@ -91,28 +87,34 @@ def test_extract_xi():
     C6 = [5, 6] + .2 * rng.randn(n_points_per_cluster, 2)
 
     X = np.vstack((C1, C2, C3, C4, C5, np.array([[100, 100]]), C6))
-    expected_labels = np.r_[[2] * 5, [0] * 5, [1] * 5, [3] * 5, [1] * 5,
-                            -1, [4] * 5]
+    expected_labels = np.r_[[2] * 5, [0] * 5, [1] * 5, [3] * 5, [1] * 5, -1,
+                            [4] * 5]
     X, expected_labels = shuffle(X, expected_labels, random_state=rng)
 
-    clust = OPTICS(min_samples=3, min_cluster_size=2,
-                   max_eps=20, cluster_method='xi',
+    clust = OPTICS(min_samples=3,
+                   min_cluster_size=2,
+                   max_eps=20,
+                   cluster_method='xi',
                    xi=0.4).fit(X)
     assert_array_equal(clust.labels_, expected_labels)
 
     # check float min_samples and min_cluster_size
-    clust = OPTICS(min_samples=0.1, min_cluster_size=0.08,
-                   max_eps=20, cluster_method='xi',
+    clust = OPTICS(min_samples=0.1,
+                   min_cluster_size=0.08,
+                   max_eps=20,
+                   cluster_method='xi',
                    xi=0.4).fit(X)
     assert_array_equal(clust.labels_, expected_labels)
 
     X = np.vstack((C1, C2, C3, C4, C5, np.array([[100, 100]] * 2), C6))
-    expected_labels = np.r_[[1] * 5, [3] * 5, [2] * 5, [0] * 5, [2] * 5,
-                            -1, -1, [4] * 5]
+    expected_labels = np.r_[[1] * 5, [3] * 5, [2] * 5, [0] * 5, [2] * 5, -1,
+                            -1, [4] * 5]
     X, expected_labels = shuffle(X, expected_labels, random_state=rng)
 
-    clust = OPTICS(min_samples=3, min_cluster_size=3,
-                   max_eps=20, cluster_method='xi',
+    clust = OPTICS(min_samples=3,
+                   min_cluster_size=3,
+                   max_eps=20,
+                   cluster_method='xi',
                    xi=0.3).fit(X)
     # this may fail if the predecessor correction is not at work!
     assert_array_equal(clust.labels_, expected_labels)
@@ -124,8 +126,10 @@ def test_extract_xi():
     expected_labels = np.r_[[0] * 4, [1] * 4, [2] * 4]
     X, expected_labels = shuffle(X, expected_labels, random_state=rng)
 
-    clust = OPTICS(min_samples=2, min_cluster_size=2,
-                   max_eps=np.inf, cluster_method='xi',
+    clust = OPTICS(min_samples=2,
+                   min_cluster_size=2,
+                   max_eps=np.inf,
+                   cluster_method='xi',
                    xi=0.04).fit(X)
     assert_array_equal(clust.labels_, expected_labels)
 
@@ -158,16 +162,16 @@ def test_correct_number_of_clusters():
     assert n_clusters_1 == n_clusters
 
     # check attribute types and sizes
-    assert clust.labels_.shape == (len(X),)
+    assert clust.labels_.shape == (len(X), )
     assert clust.labels_.dtype.kind == 'i'
 
-    assert clust.reachability_.shape == (len(X),)
+    assert clust.reachability_.shape == (len(X), )
     assert clust.reachability_.dtype.kind == 'f'
 
-    assert clust.core_distances_.shape == (len(X),)
+    assert clust.core_distances_.shape == (len(X), )
     assert clust.core_distances_.dtype.kind == 'f'
 
-    assert clust.ordering_.shape == (len(X),)
+    assert clust.ordering_.shape == (len(X), )
     assert clust.ordering_.dtype.kind == 'i'
     assert set(clust.ordering_) == set(range(len(X)))
 
@@ -188,21 +192,26 @@ def test_bad_extract():
     # Test an extraction of eps too close to original eps
     msg = "Specify an epsilon smaller than 0.15. Got 0.3."
     centers = [[1, 1], [-1, -1], [1, -1]]
-    X, labels_true = make_blobs(n_samples=750, centers=centers,
-                                cluster_std=0.4, random_state=0)
+    X, labels_true = make_blobs(n_samples=750,
+                                centers=centers,
+                                cluster_std=0.4,
+                                random_state=0)
 
     # Compute OPTICS
     clust = OPTICS(max_eps=5.0 * 0.03,
                    cluster_method='dbscan',
-                   eps=0.3, min_samples=10)
+                   eps=0.3,
+                   min_samples=10)
     assert_raise_message(ValueError, msg, clust.fit, X)
 
 
 def test_bad_reachability():
     msg = "All reachability values are inf. Set a larger max_eps."
     centers = [[1, 1], [-1, -1], [1, -1]]
-    X, labels_true = make_blobs(n_samples=750, centers=centers,
-                                cluster_std=0.4, random_state=0)
+    X, labels_true = make_blobs(n_samples=750,
+                                centers=centers,
+                                cluster_std=0.4,
+                                random_state=0)
 
     with pytest.warns(UserWarning, match=msg):
         clust = OPTICS(max_eps=5.0 * 0.003, min_samples=10, eps=0.015)
@@ -213,12 +222,16 @@ def test_close_extract():
     # Test extract where extraction eps is close to scaled max_eps
 
     centers = [[1, 1], [-1, -1], [1, -1]]
-    X, labels_true = make_blobs(n_samples=750, centers=centers,
-                                cluster_std=0.4, random_state=0)
+    X, labels_true = make_blobs(n_samples=750,
+                                centers=centers,
+                                cluster_std=0.4,
+                                random_state=0)
 
     # Compute OPTICS
-    clust = OPTICS(max_eps=1.0, cluster_method='dbscan',
-                   eps=0.3, min_samples=10).fit(X)
+    clust = OPTICS(max_eps=1.0,
+                   cluster_method='dbscan',
+                   eps=0.3,
+                   min_samples=10).fit(X)
     # Cluster ordering starts at 0; max cluster label = 2 is 3 clusters
     assert max(clust.labels_) == 2
 
@@ -229,8 +242,10 @@ def test_dbscan_optics_parity(eps, min_samples):
     # Test that OPTICS clustering labels are <= 5% difference of DBSCAN
 
     centers = [[1, 1], [-1, -1], [1, -1]]
-    X, labels_true = make_blobs(n_samples=750, centers=centers,
-                                cluster_std=0.4, random_state=0)
+    X, labels_true = make_blobs(n_samples=750,
+                                centers=centers,
+                                cluster_std=0.4,
+                                random_state=0)
 
     # calculate optics with dbscan extract at 0.3 epsilon
     op = OPTICS(min_samples=min_samples, cluster_method='dbscan',
@@ -257,21 +272,18 @@ def test_min_samples_edge_case():
     X = np.vstack((C1, C2, C3))
 
     expected_labels = np.r_[[0] * 3, [1] * 3, [2] * 3]
-    clust = OPTICS(min_samples=3,
-                   max_eps=7, cluster_method='xi',
+    clust = OPTICS(min_samples=3, max_eps=7, cluster_method='xi',
                    xi=0.04).fit(X)
     assert_array_equal(clust.labels_, expected_labels)
 
     expected_labels = np.r_[[0] * 3, [1] * 3, [-1] * 3]
-    clust = OPTICS(min_samples=3,
-                   max_eps=3, cluster_method='xi',
+    clust = OPTICS(min_samples=3, max_eps=3, cluster_method='xi',
                    xi=0.04).fit(X)
     assert_array_equal(clust.labels_, expected_labels)
 
     expected_labels = np.r_[[-1] * 9]
     with pytest.warns(UserWarning, match="All reachability values"):
-        clust = OPTICS(min_samples=4,
-                       max_eps=3, cluster_method='xi',
+        clust = OPTICS(min_samples=4, max_eps=3, cluster_method='xi',
                        xi=0.04).fit(X)
         assert_array_equal(clust.labels_, expected_labels)
 
@@ -319,34 +331,40 @@ def test_compare_to_ELKI():
     # java -jar elki.jar cli -dbc.in csv -dbc.filter FixedDBIDsFilter
     #   -algorithm clustering.optics.OPTICSHeap -optics.minpts 5
     # where the FixedDBIDsFilter gives 0-indexed ids.
-    r1 = [np.inf, 1.0574896366427478, 0.7587934993548423, 0.7290174038973836,
-          0.7290174038973836, 0.7290174038973836, 0.6861627576116127,
-          0.7587934993548423, 0.9280118450166668, 1.1748022534146194,
-          3.3355455741292257, 0.49618389254482587, 0.2552805046961355,
-          0.2552805046961355, 0.24944622248445714, 0.24944622248445714,
-          0.24944622248445714, 0.2552805046961355, 0.2552805046961355,
-          0.3086779122185853, 4.163024452756142, 1.623152630340929,
-          0.45315840475822655, 0.25468325192031926, 0.2254004358159971,
-          0.18765711877083036, 0.1821471333893275, 0.1821471333893275,
-          0.18765711877083036, 0.18765711877083036, 0.2240202988740153,
-          1.154337614548715, 1.342604473837069, 1.323308536402633,
-          0.8607514948648837, 0.27219111215810565, 0.13260875220533205,
-          0.13260875220533205, 0.09890587675958984, 0.09890587675958984,
-          0.13548790801634494, 0.1575483940837384, 0.17515137170530226,
-          0.17575920159442388, 0.27219111215810565, 0.6101447895405373,
-          1.3189208094864302, 1.323308536402633, 2.2509184159764577,
-          2.4517810628594527, 3.675977064404973, 3.8264795626020365,
-          2.9130735341510614, 2.9130735341510614, 2.9130735341510614,
-          2.9130735341510614, 2.8459300127258036, 2.8459300127258036,
-          2.8459300127258036, 3.0321982337972537]
-    o1 = [0, 3, 6, 4, 7, 8, 2, 9, 5, 1, 31, 30, 32, 34, 33, 38, 39, 35, 37, 36,
-          44, 21, 23, 24, 22, 25, 27, 29, 26, 28, 20, 40, 45, 46, 10, 15, 11,
-          13, 17, 19, 18, 12, 16, 14, 47, 49, 43, 48, 42, 41, 53, 57, 51, 52,
-          56, 59, 54, 55, 58, 50]
-    p1 = [-1, 0, 3, 6, 6, 6, 8, 3, 7, 5, 1, 31, 30, 30, 34, 34, 34, 32, 32, 37,
-          36, 44, 21, 23, 24, 22, 25, 25, 22, 22, 22, 21, 40, 45, 46, 10, 15,
-          15, 13, 13, 15, 11, 19, 15, 10, 47, 12, 45, 14, 43, 42, 53, 57, 57,
-          57, 57, 59, 59, 59, 58]
+    r1 = [
+        np.inf, 1.0574896366427478, 0.7587934993548423, 0.7290174038973836,
+        0.7290174038973836, 0.7290174038973836, 0.6861627576116127,
+        0.7587934993548423, 0.9280118450166668, 1.1748022534146194,
+        3.3355455741292257, 0.49618389254482587, 0.2552805046961355,
+        0.2552805046961355, 0.24944622248445714, 0.24944622248445714,
+        0.24944622248445714, 0.2552805046961355, 0.2552805046961355,
+        0.3086779122185853, 4.163024452756142, 1.623152630340929,
+        0.45315840475822655, 0.25468325192031926, 0.2254004358159971,
+        0.18765711877083036, 0.1821471333893275, 0.1821471333893275,
+        0.18765711877083036, 0.18765711877083036, 0.2240202988740153,
+        1.154337614548715, 1.342604473837069, 1.323308536402633,
+        0.8607514948648837, 0.27219111215810565, 0.13260875220533205,
+        0.13260875220533205, 0.09890587675958984, 0.09890587675958984,
+        0.13548790801634494, 0.1575483940837384, 0.17515137170530226,
+        0.17575920159442388, 0.27219111215810565, 0.6101447895405373,
+        1.3189208094864302, 1.323308536402633, 2.2509184159764577,
+        2.4517810628594527, 3.675977064404973, 3.8264795626020365,
+        2.9130735341510614, 2.9130735341510614, 2.9130735341510614,
+        2.9130735341510614, 2.8459300127258036, 2.8459300127258036,
+        2.8459300127258036, 3.0321982337972537
+    ]
+    o1 = [
+        0, 3, 6, 4, 7, 8, 2, 9, 5, 1, 31, 30, 32, 34, 33, 38, 39, 35, 37, 36,
+        44, 21, 23, 24, 22, 25, 27, 29, 26, 28, 20, 40, 45, 46, 10, 15, 11, 13,
+        17, 19, 18, 12, 16, 14, 47, 49, 43, 48, 42, 41, 53, 57, 51, 52, 56, 59,
+        54, 55, 58, 50
+    ]
+    p1 = [
+        -1, 0, 3, 6, 6, 6, 8, 3, 7, 5, 1, 31, 30, 30, 34, 34, 34, 32, 32, 37,
+        36, 44, 21, 23, 24, 22, 25, 25, 22, 22, 22, 21, 40, 45, 46, 10, 15, 15,
+        13, 13, 15, 11, 19, 15, 10, 47, 12, 45, 14, 43, 42, 53, 57, 57, 57, 57,
+        59, 59, 59, 58
+    ]
 
     # Tests against known extraction array
     # Does NOT work with metric='euclidean', because sklearn euclidean has
@@ -363,28 +381,33 @@ def test_compare_to_ELKI():
                 clust1.core_distances_[clust1.predecessor_[i]])
 
     # Expected values, computed with (future) ELKI 0.7.5 using
-    r2 = [np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf,
-          np.inf, np.inf, np.inf, 0.27219111215810565, 0.13260875220533205,
-          0.13260875220533205, 0.09890587675958984, 0.09890587675958984,
-          0.13548790801634494, 0.1575483940837384, 0.17515137170530226,
-          0.17575920159442388, 0.27219111215810565, 0.4928068613197889,
-          np.inf, 0.2666183922512113, 0.18765711877083036, 0.1821471333893275,
-          0.1821471333893275, 0.1821471333893275, 0.18715928772277457,
-          0.18765711877083036, 0.18765711877083036, 0.25468325192031926,
-          np.inf, 0.2552805046961355, 0.2552805046961355, 0.24944622248445714,
-          0.24944622248445714, 0.24944622248445714, 0.2552805046961355,
-          0.2552805046961355, 0.3086779122185853, 0.34466409325984865,
-          np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf,
-          np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf,
-          np.inf, np.inf]
-    o2 = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 11, 13, 17, 19, 18, 12, 16, 14,
-          47, 46, 20, 22, 25, 23, 27, 29, 24, 26, 28, 21, 30, 32, 34, 33, 38,
-          39, 35, 37, 36, 31, 40, 41, 42, 43, 44, 45, 48, 49, 50, 51, 52, 53,
-          54, 55, 56, 57, 58, 59]
-    p2 = [-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 10, 15, 15, 13, 13, 15,
-          11, 19, 15, 10, 47, -1, 20, 22, 25, 25, 25, 25, 22, 22, 23, -1, 30,
-          30, 34, 34, 34, 32, 32, 37, 38, -1, -1, -1, -1, -1, -1, -1, -1, -1,
-          -1, -1, -1, -1, -1, -1, -1, -1, -1]
+    r2 = [
+        np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf,
+        np.inf, np.inf, 0.27219111215810565, 0.13260875220533205,
+        0.13260875220533205, 0.09890587675958984, 0.09890587675958984,
+        0.13548790801634494, 0.1575483940837384, 0.17515137170530226,
+        0.17575920159442388, 0.27219111215810565, 0.4928068613197889, np.inf,
+        0.2666183922512113, 0.18765711877083036, 0.1821471333893275,
+        0.1821471333893275, 0.1821471333893275, 0.18715928772277457,
+        0.18765711877083036, 0.18765711877083036, 0.25468325192031926, np.inf,
+        0.2552805046961355, 0.2552805046961355, 0.24944622248445714,
+        0.24944622248445714, 0.24944622248445714, 0.2552805046961355,
+        0.2552805046961355, 0.3086779122185853, 0.34466409325984865, np.inf,
+        np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf,
+        np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf, np.inf
+    ]
+    o2 = [
+        0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 15, 11, 13, 17, 19, 18, 12, 16, 14,
+        47, 46, 20, 22, 25, 23, 27, 29, 24, 26, 28, 21, 30, 32, 34, 33, 38, 39,
+        35, 37, 36, 31, 40, 41, 42, 43, 44, 45, 48, 49, 50, 51, 52, 53, 54, 55,
+        56, 57, 58, 59
+    ]
+    p2 = [
+        -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, 10, 15, 15, 13, 13, 15, 11,
+        19, 15, 10, 47, -1, 20, 22, 25, 25, 25, 25, 22, 22, 23, -1, 30, 30, 34,
+        34, 34, 32, 32, 37, 38, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+        -1, -1, -1, -1, -1, -1
+    ]
     clust2 = OPTICS(min_samples=5, max_eps=0.5).fit(X)
 
     assert_array_equal(clust2.ordering_, np.array(o2))

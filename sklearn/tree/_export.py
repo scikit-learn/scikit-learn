@@ -53,17 +53,11 @@ def _color_brew(n):
         h_bar = h / 60.
         x = c * (1 - abs((h_bar % 2) - 1))
         # Initialize RGB with same hue & chroma as our color
-        rgb = [(c, x, 0),
-               (x, c, 0),
-               (0, c, x),
-               (0, x, c),
-               (x, 0, c),
-               (c, 0, x),
-               (c, x, 0)]
+        rgb = [(c, x, 0), (x, c, 0), (0, c, x), (0, x, c), (x, 0, c),
+               (c, 0, x), (c, x, 0)]
         r, g, b = rgb[int(h_bar)]
         # Shift the initial RGB values to match value and store
-        rgb = [(int(255 * (r + m))),
-               (int(255 * (g + m))),
+        rgb = [(int(255 * (r + m))), (int(255 * (g + m))),
                (int(255 * (b + m)))]
         color_list.append(rgb)
 
@@ -79,11 +73,21 @@ SENTINEL = Sentinel()
 
 
 @_deprecate_positional_args
-def plot_tree(decision_tree, *, max_depth=None, feature_names=None,
-              class_names=None, label='all', filled=False,
-              impurity=True, node_ids=False,
-              proportion=False, rotate='deprecated', rounded=False,
-              precision=3, ax=None, fontsize=None):
+def plot_tree(decision_tree,
+              *,
+              max_depth=None,
+              feature_names=None,
+              class_names=None,
+              label='all',
+              filled=False,
+              impurity=True,
+              node_ids=False,
+              proportion=False,
+              rotate='deprecated',
+              rounded=False,
+              precision=3,
+              ax=None,
+              fontsize=None):
     """Plot a decision tree.
 
     The sample counts that are shown are weighted with any sample_weights that
@@ -181,24 +185,37 @@ def plot_tree(decision_tree, *, max_depth=None, feature_names=None,
 
     if rotate != 'deprecated':
         warnings.warn(("'rotate' has no effect and is deprecated in 0.23. "
-                       "It will be removed in 0.25."),
-                      FutureWarning)
+                       "It will be removed in 0.25."), FutureWarning)
 
-    exporter = _MPLTreeExporter(
-        max_depth=max_depth, feature_names=feature_names,
-        class_names=class_names, label=label, filled=filled,
-        impurity=impurity, node_ids=node_ids,
-        proportion=proportion, rotate=rotate, rounded=rounded,
-        precision=precision, fontsize=fontsize)
+    exporter = _MPLTreeExporter(max_depth=max_depth,
+                                feature_names=feature_names,
+                                class_names=class_names,
+                                label=label,
+                                filled=filled,
+                                impurity=impurity,
+                                node_ids=node_ids,
+                                proportion=proportion,
+                                rotate=rotate,
+                                rounded=rounded,
+                                precision=precision,
+                                fontsize=fontsize)
     return exporter.export(decision_tree, ax=ax)
 
 
 class _BaseTreeExporter:
-    def __init__(self, max_depth=None, feature_names=None,
-                 class_names=None, label='all', filled=False,
-                 impurity=True, node_ids=False,
-                 proportion=False, rotate=False, rounded=False,
-                 precision=3, fontsize=None):
+    def __init__(self,
+                 max_depth=None,
+                 feature_names=None,
+                 class_names=None,
+                 label='all',
+                 filled=False,
+                 impurity=True,
+                 node_ids=False,
+                 proportion=False,
+                 rotate=False,
+                 rounded=False,
+                 precision=3,
+                 fontsize=None):
         self.max_depth = max_depth
         self.feature_names = feature_names
         self.class_names = class_names
@@ -221,8 +238,8 @@ class _BaseTreeExporter:
             if len(sorted_values) == 1:
                 alpha = 0
             else:
-                alpha = ((sorted_values[0] - sorted_values[1])
-                         / (1 - sorted_values[1]))
+                alpha = ((sorted_values[0] - sorted_values[1]) /
+                         (1 - sorted_values[1]))
         else:
             # Regression tree or multi-output
             color = list(self.colors['rgb'][0])
@@ -244,8 +261,7 @@ class _BaseTreeExporter:
                 # Find max and min impurities for multi-output
                 self.colors['bounds'] = (np.min(-tree.impurity),
                                          np.max(-tree.impurity))
-            elif (tree.n_classes[0] == 1 and
-                  len(np.unique(tree.value)) != 1):
+            elif (tree.n_classes[0] == 1 and len(np.unique(tree.value)) != 1):
                 # Find max and min values in leaf nodes for regression
                 self.colors['bounds'] = (np.min(tree.value),
                                          np.max(tree.value))
@@ -285,14 +301,11 @@ class _BaseTreeExporter:
             if self.feature_names is not None:
                 feature = self.feature_names[tree.feature[node_id]]
             else:
-                feature = "X%s%s%s" % (characters[1],
-                                       tree.feature[node_id],
+                feature = "X%s%s%s" % (characters[1], tree.feature[node_id],
                                        characters[2])
-            node_string += '%s %s %s%s' % (feature,
-                                           characters[3],
-                                           round(tree.threshold[node_id],
-                                                 self.precision),
-                                           characters[4])
+            node_string += '%s %s %s%s' % (
+                feature, characters[3],
+                round(tree.threshold[node_id], self.precision), characters[4])
 
         # Write impurity
         if self.impurity:
@@ -302,8 +315,9 @@ class _BaseTreeExporter:
                 criterion = "impurity"
             if labels:
                 node_string += '%s = ' % criterion
-            node_string += (str(round(tree.impurity[node_id], self.precision))
-                            + characters[4])
+            node_string += (
+                str(round(tree.impurity[node_id], self.precision)) +
+                characters[4])
 
         # Write node sample count
         if labels:
@@ -311,11 +325,9 @@ class _BaseTreeExporter:
         if self.proportion:
             percent = (100. * tree.n_node_samples[node_id] /
                        float(tree.n_node_samples[0]))
-            node_string += (str(round(percent, 1)) + '%' +
-                            characters[4])
+            node_string += (str(round(percent, 1)) + '%' + characters[4])
         else:
-            node_string += (str(tree.n_node_samples[node_id]) +
-                            characters[4])
+            node_string += (str(tree.n_node_samples[node_id]) + characters[4])
 
         # Write node class distribution / regression value
         if self.proportion and tree.n_classes[0] != 1:
@@ -344,17 +356,15 @@ class _BaseTreeExporter:
         node_string += value_text + characters[4]
 
         # Write node majority class
-        if (self.class_names is not None and
-                tree.n_classes[0] != 1 and
-                tree.n_outputs == 1):
+        if (self.class_names is not None and tree.n_classes[0] != 1
+                and tree.n_outputs == 1):
             # Only done for single-output classification trees
             if labels:
                 node_string += 'class = '
             if self.class_names is not True:
                 class_name = self.class_names[np.argmax(value)]
             else:
-                class_name = "y%s%s%s" % (characters[1],
-                                          np.argmax(value),
+                class_name = "y%s%s%s" % (characters[1], np.argmax(value),
                                           characters[2])
             node_string += class_name
 
@@ -366,27 +376,42 @@ class _BaseTreeExporter:
 
 
 class _DOTTreeExporter(_BaseTreeExporter):
-    def __init__(self, out_file=SENTINEL, max_depth=None,
-                 feature_names=None, class_names=None, label='all',
-                 filled=False, leaves_parallel=False, impurity=True,
-                 node_ids=False, proportion=False, rotate=False, rounded=False,
-                 special_characters=False, precision=3):
+    def __init__(self,
+                 out_file=SENTINEL,
+                 max_depth=None,
+                 feature_names=None,
+                 class_names=None,
+                 label='all',
+                 filled=False,
+                 leaves_parallel=False,
+                 impurity=True,
+                 node_ids=False,
+                 proportion=False,
+                 rotate=False,
+                 rounded=False,
+                 special_characters=False,
+                 precision=3):
 
-        super().__init__(
-            max_depth=max_depth, feature_names=feature_names,
-            class_names=class_names, label=label, filled=filled,
-            impurity=impurity,
-            node_ids=node_ids, proportion=proportion, rotate=rotate,
-            rounded=rounded,
-            precision=precision)
+        super().__init__(max_depth=max_depth,
+                         feature_names=feature_names,
+                         class_names=class_names,
+                         label=label,
+                         filled=filled,
+                         impurity=impurity,
+                         node_ids=node_ids,
+                         proportion=proportion,
+                         rotate=rotate,
+                         rounded=rounded,
+                         precision=precision)
         self.leaves_parallel = leaves_parallel
         self.out_file = out_file
         self.special_characters = special_characters
 
         # PostScript compatibility for special characters
         if special_characters:
-            self.characters = ['&#35;', '<SUB>', '</SUB>', '&le;', '<br/>',
-                               '>', '<']
+            self.characters = [
+                '&#35;', '<SUB>', '</SUB>', '&le;', '<br/>', '>', '<'
+            ]
         else:
             self.characters = ['#', '[', ']', '<=', '\\n', '"', '"']
 
@@ -410,17 +435,18 @@ class _DOTTreeExporter(_BaseTreeExporter):
         # n_features_ in the decision_tree
         if self.feature_names is not None:
             if len(self.feature_names) != decision_tree.n_features_:
-                raise ValueError("Length of feature_names, %d "
-                                 "does not match number of features, %d"
-                                 % (len(self.feature_names),
-                                    decision_tree.n_features_))
+                raise ValueError(
+                    "Length of feature_names, %d "
+                    "does not match number of features, %d" %
+                    (len(self.feature_names), decision_tree.n_features_))
         # each part writes to out_file
         self.head()
         # Now recurse the tree and add node & edge attributes
         if isinstance(decision_tree, _tree.Tree):
             self.recurse(decision_tree, 0, criterion="impurity")
         else:
-            self.recurse(decision_tree.tree_, 0,
+            self.recurse(decision_tree.tree_,
+                         0,
                          criterion=decision_tree.criterion)
 
         self.tail()
@@ -429,9 +455,9 @@ class _DOTTreeExporter(_BaseTreeExporter):
         # If required, draw leaf nodes at same depth as each other
         if self.leaves_parallel:
             for rank in sorted(self.ranks):
-                self.out_file.write(
-                    "{rank=same ; " +
-                    "; ".join(r for r in self.ranks[rank]) + "} ;\n")
+                self.out_file.write("{rank=same ; " +
+                                    "; ".join(r for r in self.ranks[rank]) +
+                                    "} ;\n")
         self.out_file.write("}")
 
     def head(self):
@@ -445,9 +471,8 @@ class _DOTTreeExporter(_BaseTreeExporter):
         if self.rounded:
             rounded_filled.append('rounded')
         if len(rounded_filled) > 0:
-            self.out_file.write(
-                ', style="%s", color="black"'
-                % ", ".join(rounded_filled))
+            self.out_file.write(', style="%s", color="black"' %
+                                ", ".join(rounded_filled))
         if self.rounded:
             self.out_file.write(', fontname=helvetica')
         self.out_file.write('] ;\n')
@@ -480,12 +505,12 @@ class _DOTTreeExporter(_BaseTreeExporter):
                 self.ranks[str(depth)].append(str(node_id))
 
             self.out_file.write(
-                '%d [label=%s' % (node_id, self.node_to_str(tree, node_id,
-                                                            criterion)))
+                '%d [label=%s' %
+                (node_id, self.node_to_str(tree, node_id, criterion)))
 
             if self.filled:
-                self.out_file.write(', fillcolor="%s"'
-                                    % self.get_fill_color(tree, node_id))
+                self.out_file.write(', fillcolor="%s"' %
+                                    self.get_fill_color(tree, node_id))
             self.out_file.write('] ;\n')
 
             if parent is not None:
@@ -504,10 +529,16 @@ class _DOTTreeExporter(_BaseTreeExporter):
                 self.out_file.write(' ;\n')
 
             if left_child != _tree.TREE_LEAF:
-                self.recurse(tree, left_child, criterion=criterion,
-                             parent=node_id, depth=depth + 1)
-                self.recurse(tree, right_child, criterion=criterion,
-                             parent=node_id, depth=depth + 1)
+                self.recurse(tree,
+                             left_child,
+                             criterion=criterion,
+                             parent=node_id,
+                             depth=depth + 1)
+                self.recurse(tree,
+                             right_child,
+                             criterion=criterion,
+                             parent=node_id,
+                             depth=depth + 1)
 
         else:
             self.ranks['leaves'].append(str(node_id))
@@ -524,17 +555,31 @@ class _DOTTreeExporter(_BaseTreeExporter):
 
 
 class _MPLTreeExporter(_BaseTreeExporter):
-    def __init__(self, max_depth=None, feature_names=None,
-                 class_names=None, label='all', filled=False,
-                 impurity=True, node_ids=False,
-                 proportion=False, rotate=False, rounded=False,
-                 precision=3, fontsize=None):
+    def __init__(self,
+                 max_depth=None,
+                 feature_names=None,
+                 class_names=None,
+                 label='all',
+                 filled=False,
+                 impurity=True,
+                 node_ids=False,
+                 proportion=False,
+                 rotate=False,
+                 rounded=False,
+                 precision=3,
+                 fontsize=None):
 
-        super().__init__(
-            max_depth=max_depth, feature_names=feature_names,
-            class_names=class_names, label=label, filled=filled,
-            impurity=impurity, node_ids=node_ids, proportion=proportion,
-            rotate=rotate, rounded=rounded, precision=precision)
+        super().__init__(max_depth=max_depth,
+                         feature_names=feature_names,
+                         class_names=class_names,
+                         label=label,
+                         filled=filled,
+                         impurity=impurity,
+                         node_ids=node_ids,
+                         proportion=proportion,
+                         rotate=rotate,
+                         rounded=rounded,
+                         precision=precision)
         self.fontsize = fontsize
 
         # validate
@@ -565,10 +610,16 @@ class _MPLTreeExporter(_BaseTreeExporter):
         name = self.node_to_str(et, node_id, criterion=criterion)
         if (et.children_left[node_id] != _tree.TREE_LEAF
                 and (self.max_depth is None or depth <= self.max_depth)):
-            children = [self._make_tree(et.children_left[node_id], et,
-                                        criterion, depth=depth + 1),
-                        self._make_tree(et.children_right[node_id], et,
-                                        criterion, depth=depth + 1)]
+            children = [
+                self._make_tree(et.children_left[node_id],
+                                et,
+                                criterion,
+                                depth=depth + 1),
+                self._make_tree(et.children_right[node_id],
+                                et,
+                                criterion,
+                                depth=depth + 1)
+            ]
         else:
             return Tree(name, node_id)
         return Tree(name, node_id, *children)
@@ -596,11 +647,12 @@ class _MPLTreeExporter(_BaseTreeExporter):
         scale_x = ax_width / max_x
         scale_y = ax_height / max_y
 
-        self.recurse(draw_tree, decision_tree.tree_, ax,
-                     scale_x, scale_y, ax_height)
+        self.recurse(draw_tree, decision_tree.tree_, ax, scale_x, scale_y,
+                     ax_height)
 
-        anns = [ann for ann in ax.get_children()
-                if isinstance(ann, Annotation)]
+        anns = [
+            ann for ann in ax.get_children() if isinstance(ann, Annotation)
+        ]
 
         # update sizes of all bboxes
         renderer = ax.figure.canvas.get_renderer()
@@ -612,8 +664,9 @@ class _MPLTreeExporter(_BaseTreeExporter):
             # get figure to data transform
             # adjust fontsize to avoid overlap
             # get max box width and height
-            extents = [ann.get_bbox_patch().get_window_extent()
-                       for ann in anns]
+            extents = [
+                ann.get_bbox_patch().get_window_extent() for ann in anns
+            ]
             max_width = max([extent.width for extent in extents])
             max_height = max([extent.height for extent in extents])
             # width should be around scale_x in axis coordinates
@@ -625,8 +678,11 @@ class _MPLTreeExporter(_BaseTreeExporter):
         return anns
 
     def recurse(self, node, tree, ax, scale_x, scale_y, height, depth=0):
-        kwargs = dict(bbox=self.bbox_args, ha='center', va='center',
-                      zorder=100 - 10 * depth, xycoords='axes pixels')
+        kwargs = dict(bbox=self.bbox_args,
+                      ha='center',
+                      va='center',
+                      zorder=100 - 10 * depth,
+                      xycoords='axes pixels')
 
         if self.fontsize is not None:
             kwargs['fontsize'] = self.fontsize
@@ -636,8 +692,8 @@ class _MPLTreeExporter(_BaseTreeExporter):
 
         if self.max_depth is None or depth <= self.max_depth:
             if self.filled:
-                kwargs['bbox']['fc'] = self.get_fill_color(tree,
-                                                           node.tree.node_id)
+                kwargs['bbox']['fc'] = self.get_fill_color(
+                    tree, node.tree.node_id)
             if node.parent is None:
                 # root
                 ax.annotate(node.tree.label, xy, **kwargs)
@@ -647,7 +703,12 @@ class _MPLTreeExporter(_BaseTreeExporter):
                 kwargs["arrowprops"] = self.arrow_args
                 ax.annotate(node.tree.label, xy_parent, xy, **kwargs)
             for child in node.children:
-                self.recurse(child, tree, ax, scale_x, scale_y, height,
+                self.recurse(child,
+                             tree,
+                             ax,
+                             scale_x,
+                             scale_y,
+                             height,
                              depth=depth + 1)
 
         else:
@@ -659,11 +720,22 @@ class _MPLTreeExporter(_BaseTreeExporter):
 
 
 @_deprecate_positional_args
-def export_graphviz(decision_tree, out_file=None, *, max_depth=None,
-                    feature_names=None, class_names=None, label='all',
-                    filled=False, leaves_parallel=False, impurity=True,
-                    node_ids=False, proportion=False, rotate=False,
-                    rounded=False, special_characters=False, precision=3):
+def export_graphviz(decision_tree,
+                    out_file=None,
+                    *,
+                    max_depth=None,
+                    feature_names=None,
+                    class_names=None,
+                    label='all',
+                    filled=False,
+                    leaves_parallel=False,
+                    impurity=True,
+                    node_ids=False,
+                    proportion=False,
+                    rotate=False,
+                    rounded=False,
+                    special_characters=False,
+                    precision=3):
     """Export a decision tree in DOT format.
 
     This function generates a GraphViz representation of the decision tree,
@@ -773,13 +845,20 @@ def export_graphviz(decision_tree, out_file=None, *, max_depth=None,
             return_string = True
             out_file = StringIO()
 
-        exporter = _DOTTreeExporter(
-            out_file=out_file, max_depth=max_depth,
-            feature_names=feature_names, class_names=class_names, label=label,
-            filled=filled, leaves_parallel=leaves_parallel, impurity=impurity,
-            node_ids=node_ids, proportion=proportion, rotate=rotate,
-            rounded=rounded, special_characters=special_characters,
-            precision=precision)
+        exporter = _DOTTreeExporter(out_file=out_file,
+                                    max_depth=max_depth,
+                                    feature_names=feature_names,
+                                    class_names=class_names,
+                                    label=label,
+                                    filled=filled,
+                                    leaves_parallel=leaves_parallel,
+                                    impurity=impurity,
+                                    node_ids=node_ids,
+                                    proportion=proportion,
+                                    rotate=rotate,
+                                    rounded=rounded,
+                                    special_characters=special_characters,
+                                    precision=precision)
         exporter.export(decision_tree)
 
         if return_string:
@@ -794,16 +873,16 @@ def _compute_depth(tree, node):
     """
     Returns the depth of the subtree rooted in node.
     """
-    def compute_depth_(current_node, current_depth,
-                       children_left, children_right, depths):
+    def compute_depth_(current_node, current_depth, children_left,
+                       children_right, depths):
         depths += [current_depth]
         left = children_left[current_node]
         right = children_right[current_node]
         if left != -1 and right != -1:
-            compute_depth_(left, current_depth+1,
-                           children_left, children_right, depths)
-            compute_depth_(right, current_depth+1,
-                           children_left, children_right, depths)
+            compute_depth_(left, current_depth + 1, children_left,
+                           children_right, depths)
+            compute_depth_(right, current_depth + 1, children_left,
+                           children_right, depths)
 
     depths = []
     compute_depth_(node, 1, tree.children_left, tree.children_right, depths)
@@ -811,8 +890,13 @@ def _compute_depth(tree, node):
 
 
 @_deprecate_positional_args
-def export_text(decision_tree, *, feature_names=None, max_depth=10,
-                spacing=3, decimals=2, show_weights=False):
+def export_text(decision_tree,
+                *,
+                feature_names=None,
+                max_depth=10,
+                spacing=3,
+                decimals=2,
+                show_weights=False):
     """Build a text report showing the rules of a decision tree.
 
     Note that backwards compatibility may not be supported.
@@ -879,11 +963,10 @@ def export_text(decision_tree, *, feature_names=None, max_depth=10,
     if max_depth < 0:
         raise ValueError("max_depth bust be >= 0, given %d" % max_depth)
 
-    if (feature_names is not None and
-            len(feature_names) != tree_.n_features):
+    if (feature_names is not None and len(feature_names) != tree_.n_features):
         raise ValueError("feature_names must contain "
-                         "%d elements, got %d" % (tree_.n_features,
-                                                  len(feature_names)))
+                         "%d elements, got %d" %
+                         (tree_.n_features, len(feature_names)))
 
     if spacing <= 0:
         raise ValueError("spacing must be > 0, given %d" % spacing)
@@ -899,8 +982,10 @@ def export_text(decision_tree, *, feature_names=None, max_depth=10,
         value_fmt = "{}{} value: {}\n"
 
     if feature_names:
-        feature_names_ = [feature_names[i] if i != _tree.TREE_UNDEFINED
-                          else None for i in tree_.feature]
+        feature_names_ = [
+            feature_names[i] if i != _tree.TREE_UNDEFINED else None
+            for i in tree_.feature
+        ]
     else:
         feature_names_ = ["feature_{}".format(i) for i in tree_.feature]
 
@@ -908,11 +993,10 @@ def export_text(decision_tree, *, feature_names=None, max_depth=10,
 
     def _add_leaf(value, class_name, indent):
         val = ''
-        is_classification = isinstance(decision_tree,
-                                       DecisionTreeClassifier)
+        is_classification = isinstance(decision_tree, DecisionTreeClassifier)
         if show_weights or not is_classification:
             val = ["{1:.{0}f}, ".format(decimals, v) for v in value]
-            val = '['+''.join(val)[:-2]+']'
+            val = '[' + ''.join(val)[:-2] + ']'
         if is_classification:
             val += ' class: ' + str(class_name)
         export_text.report += value_fmt.format(indent, '', val)
@@ -928,11 +1012,10 @@ def export_text(decision_tree, *, feature_names=None, max_depth=10,
             value = tree_.value[node].T[0]
         class_name = np.argmax(value)
 
-        if (tree_.n_classes[0] != 1 and
-                tree_.n_outputs == 1):
+        if (tree_.n_classes[0] != 1 and tree_.n_outputs == 1):
             class_name = class_names[class_name]
 
-        if depth <= max_depth+1:
+        if depth <= max_depth + 1:
             info_fmt = ""
             info_fmt_left = info_fmt
             info_fmt_right = info_fmt
@@ -941,17 +1024,15 @@ def export_text(decision_tree, *, feature_names=None, max_depth=10,
                 name = feature_names_[node]
                 threshold = tree_.threshold[node]
                 threshold = "{1:.{0}f}".format(decimals, threshold)
-                export_text.report += right_child_fmt.format(indent,
-                                                             name,
-                                                             threshold)
+                export_text.report += right_child_fmt.format(
+                    indent, name, threshold)
                 export_text.report += info_fmt_left
-                print_tree_recurse(tree_.children_left[node], depth+1)
+                print_tree_recurse(tree_.children_left[node], depth + 1)
 
-                export_text.report += left_child_fmt.format(indent,
-                                                            name,
-                                                            threshold)
+                export_text.report += left_child_fmt.format(
+                    indent, name, threshold)
                 export_text.report += info_fmt_right
-                print_tree_recurse(tree_.children_right[node], depth+1)
+                print_tree_recurse(tree_.children_right[node], depth + 1)
             else:  # leaf
                 _add_leaf(value, class_name, indent)
         else:
@@ -960,8 +1041,8 @@ def export_text(decision_tree, *, feature_names=None, max_depth=10,
                 _add_leaf(value, class_name, indent)
             else:
                 trunc_report = 'truncated branch of depth %d' % subtree_depth
-                export_text.report += truncation_fmt.format(indent,
-                                                            trunc_report)
+                export_text.report += truncation_fmt.format(
+                    indent, trunc_report)
 
     print_tree_recurse(0, 1)
     return export_text.report

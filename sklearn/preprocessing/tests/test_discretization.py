@@ -1,4 +1,3 @@
-
 import pytest
 import numpy as np
 import scipy.sparse as sp
@@ -6,15 +5,10 @@ import warnings
 
 from sklearn.preprocessing import KBinsDiscretizer
 from sklearn.preprocessing import OneHotEncoder
-from sklearn.utils._testing import (
-    assert_array_almost_equal,
-    assert_array_equal,
-    assert_warns_message
-)
+from sklearn.utils._testing import (assert_array_almost_equal,
+                                    assert_array_equal, assert_warns_message)
 
-X = [[-2, 1.5, -4, -1],
-     [-1, 2.5, -3, -0.5],
-     [0, 3.5, -2, 0.5],
+X = [[-2, 1.5, -4, -1], [-1, 2.5, -3, -0.5], [0, 3.5, -2, 0.5],
      [1, 4.5, -1, 2]]
 
 
@@ -89,7 +83,8 @@ def test_invalid_n_bins_array():
      ('kmeans', [[0, 0, 0, 0], [0, 0, 0, 0], [1, 1, 1, 1], [1, 2, 2, 2]]),
      ('quantile', [[0, 0, 0, 0], [0, 1, 1, 1], [1, 2, 2, 2], [1, 2, 2, 2]])])
 def test_fit_transform_n_bins_array(strategy, expected):
-    est = KBinsDiscretizer(n_bins=[2, 3, 3, 3], encode='ordinal',
+    est = KBinsDiscretizer(n_bins=[2, 3, 3, 3],
+                           encode='ordinal',
                            strategy=strategy).fit(X)
     assert_array_equal(expected, est.transform(X))
 
@@ -111,14 +106,11 @@ def test_invalid_n_features():
 @pytest.mark.parametrize('strategy', ['uniform', 'kmeans', 'quantile'])
 def test_same_min_max(strategy):
     warnings.simplefilter("always")
-    X = np.array([[1, -2],
-                  [1, -1],
-                  [1, 0],
-                  [1, 1]])
+    X = np.array([[1, -2], [1, -1], [1, 0], [1, 1]])
     est = KBinsDiscretizer(strategy=strategy, n_bins=3, encode='ordinal')
-    assert_warns_message(UserWarning,
-                         "Feature 0 is constant and will be replaced "
-                         "with 0.", est.fit, X)
+    assert_warns_message(
+        UserWarning, "Feature 0 is constant and will be replaced "
+        "with 0.", est.fit, X)
     assert est.n_bins_[0] == 1
     # replace the feature with zeros
     Xt = est.transform(X)
@@ -158,26 +150,21 @@ def test_invalid_encode_option():
 
 
 def test_encode_options():
-    est = KBinsDiscretizer(n_bins=[2, 3, 3, 3],
-                           encode='ordinal').fit(X)
+    est = KBinsDiscretizer(n_bins=[2, 3, 3, 3], encode='ordinal').fit(X)
     Xt_1 = est.transform(X)
-    est = KBinsDiscretizer(n_bins=[2, 3, 3, 3],
-                           encode='onehot-dense').fit(X)
+    est = KBinsDiscretizer(n_bins=[2, 3, 3, 3], encode='onehot-dense').fit(X)
     Xt_2 = est.transform(X)
     assert not sp.issparse(Xt_2)
-    assert_array_equal(OneHotEncoder(
-                           categories=[np.arange(i) for i in [2, 3, 3, 3]],
-                           sparse=False)
-                       .fit_transform(Xt_1), Xt_2)
-    est = KBinsDiscretizer(n_bins=[2, 3, 3, 3],
-                           encode='onehot').fit(X)
+    assert_array_equal(
+        OneHotEncoder(categories=[np.arange(i) for i in [2, 3, 3, 3]],
+                      sparse=False).fit_transform(Xt_1), Xt_2)
+    est = KBinsDiscretizer(n_bins=[2, 3, 3, 3], encode='onehot').fit(X)
     Xt_3 = est.transform(X)
     assert sp.issparse(Xt_3)
-    assert_array_equal(OneHotEncoder(
-                           categories=[np.arange(i) for i in [2, 3, 3, 3]],
-                           sparse=True)
-                       .fit_transform(Xt_1).toarray(),
-                       Xt_3.toarray())
+    assert_array_equal(
+        OneHotEncoder(categories=[np.arange(i) for i in [2, 3, 3, 3]],
+                      sparse=True).fit_transform(Xt_1).toarray(),
+        Xt_3.toarray())
 
 
 def test_invalid_strategy_option():
@@ -194,8 +181,8 @@ def test_invalid_strategy_option():
     [('uniform', [0, 0, 0, 0, 1, 1], [0, 0, 0, 0, 2, 2], [0, 0, 1, 1, 4, 4]),
      ('kmeans', [0, 0, 0, 0, 1, 1], [0, 0, 1, 1, 2, 2], [0, 0, 1, 2, 3, 4]),
      ('quantile', [0, 0, 0, 1, 1, 1], [0, 0, 1, 1, 2, 2], [0, 1, 2, 3, 4, 4])])
-def test_nonuniform_strategies(
-        strategy, expected_2bins, expected_3bins, expected_5bins):
+def test_nonuniform_strategies(strategy, expected_2bins, expected_3bins,
+                               expected_5bins):
     X = np.array([0, 0.5, 2, 3, 9, 10]).reshape(-1, 1)
 
     # with 2 bins
@@ -220,8 +207,7 @@ def test_nonuniform_strategies(
                   [0.5, 4., -1.5, 0.5], [0.5, 4., -1.5, 1.5]]),
      ('kmeans', [[-1.375, 2.125, -3.375, -0.5625],
                  [-1.375, 2.125, -3.375, -0.5625],
-                 [-0.125, 3.375, -2.125, 0.5625],
-                 [0.75, 4.25, -1.25, 1.625]]),
+                 [-0.125, 3.375, -2.125, 0.5625], [0.75, 4.25, -1.25, 1.625]]),
      ('quantile', [[-1.5, 2., -3.5, -0.75], [-0.5, 3., -2.5, 0.],
                    [0.5, 4., -1.5, 1.25], [0.5, 4., -1.5, 1.25]])])
 @pytest.mark.parametrize('encode', ['ordinal', 'onehot', 'onehot-dense'])
@@ -258,9 +244,8 @@ def test_overwrite():
     assert_array_equal(Xinv, np.array([[0.5], [1.5], [2.5], [2.5]]))
 
 
-@pytest.mark.parametrize(
-    'strategy, expected_bin_edges',
-    [('quantile', [0, 1, 3]), ('kmeans', [0, 1.5, 3])])
+@pytest.mark.parametrize('strategy, expected_bin_edges',
+                         [('quantile', [0, 1, 3]), ('kmeans', [0, 1.5, 3])])
 def test_redundant_bins(strategy, expected_bin_edges):
     X = [[0], [0], [0], [0], [3], [3]]
     kbd = KBinsDiscretizer(n_bins=3, strategy=strategy)
@@ -274,8 +259,7 @@ def test_percentile_numeric_stability():
     X = np.array([0.05, 0.05, 0.95]).reshape(-1, 1)
     bin_edges = np.array([0.05, 0.23, 0.41, 0.59, 0.77, 0.95])
     Xt = np.array([0, 0, 4]).reshape(-1, 1)
-    kbd = KBinsDiscretizer(n_bins=10, encode='ordinal',
-                           strategy='quantile')
+    kbd = KBinsDiscretizer(n_bins=10, encode='ordinal', strategy='quantile')
     msg = ("Bins whose width are too small (i.e., <= 1e-8) in feature 0 "
            "are removed. Consider decreasing the number of bins.")
     assert_warns_message(UserWarning, msg, kbd.fit, X)

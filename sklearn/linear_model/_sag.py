@@ -17,7 +17,10 @@ from ..utils.validation import _deprecate_positional_args
 from ..utils.extmath import row_norms
 
 
-def get_auto_step_size(max_squared_sum, alpha_scaled, loss, fit_intercept,
+def get_auto_step_size(max_squared_sum,
+                       alpha_scaled,
+                       loss,
+                       fit_intercept,
                        n_samples=None,
                        is_saga=False):
     """Compute automatic step size for SAG solver
@@ -86,9 +89,18 @@ def get_auto_step_size(max_squared_sum, alpha_scaled, loss, fit_intercept,
 
 
 @_deprecate_positional_args
-def sag_solver(X, y, sample_weight=None, loss='log', alpha=1., beta=0.,
-               max_iter=1000, tol=0.001, verbose=0, random_state=None,
-               check_input=True, max_squared_sum=None,
+def sag_solver(X,
+               y,
+               sample_weight=None,
+               loss='log',
+               alpha=1.,
+               beta=0.,
+               max_iter=1000,
+               tol=0.001,
+               verbose=0,
+               random_state=None,
+               check_input=True,
+               max_squared_sum=None,
                warm_start_mem=None,
                is_saga=False):
     """SAG solver for Ridge and LogisticRegression
@@ -258,8 +270,7 @@ def sag_solver(X, y, sample_weight=None, loss='log', alpha=1., beta=0.,
         coef_init = warm_start_mem['coef']
     else:
         # assume fit_intercept is False
-        coef_init = np.zeros((n_features, n_classes), dtype=X.dtype,
-                             order='C')
+        coef_init = np.zeros((n_features, n_classes), dtype=X.dtype, order='C')
 
     # coef_init contains possibly the intercept_init at the end.
     # Note that Ridge centers the data before fitting, so fit_intercept=False.
@@ -279,12 +290,14 @@ def sag_solver(X, y, sample_weight=None, loss='log', alpha=1., beta=0.,
         gradient_memory_init = warm_start_mem['gradient_memory']
     else:
         gradient_memory_init = np.zeros((n_samples, n_classes),
-                                        dtype=X.dtype, order='C')
+                                        dtype=X.dtype,
+                                        order='C')
     if 'sum_gradient' in warm_start_mem.keys():
         sum_gradient_init = warm_start_mem['sum_gradient']
     else:
         sum_gradient_init = np.zeros((n_features, n_classes),
-                                     dtype=X.dtype, order='C')
+                                     dtype=X.dtype,
+                                     order='C')
 
     if 'seen' in warm_start_mem.keys():
         seen_init = warm_start_mem['seen']
@@ -300,42 +313,41 @@ def sag_solver(X, y, sample_weight=None, loss='log', alpha=1., beta=0.,
 
     if max_squared_sum is None:
         max_squared_sum = row_norms(X, squared=True).max()
-    step_size = get_auto_step_size(max_squared_sum, alpha_scaled, loss,
-                                   fit_intercept, n_samples=n_samples,
+    step_size = get_auto_step_size(max_squared_sum,
+                                   alpha_scaled,
+                                   loss,
+                                   fit_intercept,
+                                   n_samples=n_samples,
                                    is_saga=is_saga)
     if step_size * alpha_scaled == 1:
         raise ZeroDivisionError("Current sag implementation does not handle "
                                 "the case step_size * alpha_scaled == 1")
 
     sag = sag64 if X.dtype == np.float64 else sag32
-    num_seen, n_iter_ = sag(dataset, coef_init,
-                            intercept_init, n_samples,
-                            n_features, n_classes, tol,
-                            max_iter,
-                            loss,
-                            step_size, alpha_scaled,
-                            beta_scaled,
-                            sum_gradient_init,
-                            gradient_memory_init,
-                            seen_init,
-                            num_seen_init,
-                            fit_intercept,
-                            intercept_sum_gradient,
-                            intercept_decay,
-                            is_saga,
+    num_seen, n_iter_ = sag(dataset, coef_init, intercept_init, n_samples,
+                            n_features, n_classes, tol, max_iter, loss,
+                            step_size, alpha_scaled, beta_scaled,
+                            sum_gradient_init, gradient_memory_init, seen_init,
+                            num_seen_init, fit_intercept,
+                            intercept_sum_gradient, intercept_decay, is_saga,
                             verbose)
 
     if n_iter_ == max_iter:
-        warnings.warn("The max_iter was reached which means "
-                      "the coef_ did not converge", ConvergenceWarning)
+        warnings.warn(
+            "The max_iter was reached which means "
+            "the coef_ did not converge", ConvergenceWarning)
 
     if fit_intercept:
         coef_init = np.vstack((coef_init, intercept_init))
 
-    warm_start_mem = {'coef': coef_init, 'sum_gradient': sum_gradient_init,
-                      'intercept_sum_gradient': intercept_sum_gradient,
-                      'gradient_memory': gradient_memory_init,
-                      'seen': seen_init, 'num_seen': num_seen}
+    warm_start_mem = {
+        'coef': coef_init,
+        'sum_gradient': sum_gradient_init,
+        'intercept_sum_gradient': intercept_sum_gradient,
+        'gradient_memory': gradient_memory_init,
+        'seen': seen_init,
+        'num_seen': num_seen
+    }
 
     if loss == 'multinomial':
         coef_ = coef_init.T

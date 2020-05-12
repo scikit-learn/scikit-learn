@@ -98,20 +98,23 @@ class KNNImputer(_BaseImputer):
            [8. , 8. , 7. ]])
     """
     @_deprecate_positional_args
-    def __init__(self, *, missing_values=np.nan, n_neighbors=5,
-                 weights="uniform", metric="nan_euclidean", copy=True,
+    def __init__(self,
+                 *,
+                 missing_values=np.nan,
+                 n_neighbors=5,
+                 weights="uniform",
+                 metric="nan_euclidean",
+                 copy=True,
                  add_indicator=False):
-        super().__init__(
-            missing_values=missing_values,
-            add_indicator=add_indicator
-        )
+        super().__init__(missing_values=missing_values,
+                         add_indicator=add_indicator)
         self.n_neighbors = n_neighbors
         self.weights = weights
         self.metric = metric
         self.copy = copy
 
-    def _calc_impute(self, dist_pot_donors, n_neighbors,
-                     fit_X_col, mask_fit_X_col):
+    def _calc_impute(self, dist_pot_donors, n_neighbors, fit_X_col,
+                     mask_fit_X_col):
         """Helper function to impute a single column.
 
         Parameters
@@ -140,8 +143,8 @@ class KNNImputer(_BaseImputer):
                                      axis=1)[:, :n_neighbors]
 
         # Get weight matrix from from distance matrix
-        donors_dist = dist_pot_donors[
-            np.arange(donors_idx.shape[0])[:, None], donors_idx]
+        donors_dist = dist_pot_donors[np.arange(donors_idx.shape[0])[:, None],
+                                      donors_idx]
 
         weight_matrix = _get_weights(donors_dist, self.weights)
 
@@ -178,10 +181,12 @@ class KNNImputer(_BaseImputer):
                 raise ValueError(
                     "The selected metric does not support NaN values")
         if self.n_neighbors <= 0:
-            raise ValueError(
-                "Expected n_neighbors > 0. Got {}".format(self.n_neighbors))
+            raise ValueError("Expected n_neighbors > 0. Got {}".format(
+                self.n_neighbors))
 
-        X = self._validate_data(X, accept_sparse=False, dtype=FLOAT_DTYPES,
+        X = self._validate_data(X,
+                                accept_sparse=False,
+                                dtype=FLOAT_DTYPES,
                                 force_all_finite=force_all_finite,
                                 copy=self.copy)
         super()._fit_indicator(X)
@@ -211,8 +216,11 @@ class KNNImputer(_BaseImputer):
             force_all_finite = True
         else:
             force_all_finite = "allow-nan"
-        X = check_array(X, accept_sparse=False, dtype=FLOAT_DTYPES,
-                        force_all_finite=force_all_finite, copy=self.copy)
+        X = check_array(X,
+                        accept_sparse=False,
+                        dtype=FLOAT_DTYPES,
+                        force_all_finite=force_all_finite,
+                        copy=self.copy)
         X_indicator = super()._transform_indicator(X)
 
         if X.shape[1] != self._fit_X.shape[1]:
@@ -256,8 +264,8 @@ class KNNImputer(_BaseImputer):
                 receivers_idx = row_missing_chunk[np.flatnonzero(col_mask)]
 
                 # distances for samples that needed imputation for column
-                dist_subset = (dist_chunk[dist_idx_map[receivers_idx] - start]
-                               [:, potential_donors_idx])
+                dist_subset = (dist_chunk[dist_idx_map[receivers_idx] -
+                                          start][:, potential_donors_idx])
 
                 # receivers with all nan distances impute with mean
                 all_nan_dist_mask = np.isnan(dist_subset).all(axis=1)
@@ -274,26 +282,23 @@ class KNNImputer(_BaseImputer):
 
                     # receivers with at least one defined distance
                     receivers_idx = receivers_idx[~all_nan_dist_mask]
-                    dist_subset = (dist_chunk[dist_idx_map[receivers_idx]
-                                              - start]
-                                   [:, potential_donors_idx])
+                    dist_subset = (dist_chunk[dist_idx_map[receivers_idx] -
+                                              start][:, potential_donors_idx])
 
                 n_neighbors = min(self.n_neighbors, len(potential_donors_idx))
                 value = self._calc_impute(
-                    dist_subset,
-                    n_neighbors,
-                    self._fit_X[potential_donors_idx, col],
+                    dist_subset, n_neighbors, self._fit_X[potential_donors_idx,
+                                                          col],
                     mask_fit_X[potential_donors_idx, col])
                 X[receivers_idx, col] = value
 
         # process in fixed-memory chunks
-        gen = pairwise_distances_chunked(
-            X[row_missing_idx, :],
-            self._fit_X,
-            metric=self.metric,
-            missing_values=self.missing_values,
-            force_all_finite=force_all_finite,
-            reduce_func=process_chunk)
+        gen = pairwise_distances_chunked(X[row_missing_idx, :],
+                                         self._fit_X,
+                                         metric=self.metric,
+                                         missing_values=self.missing_values,
+                                         force_all_finite=force_all_finite,
+                                         reduce_func=process_chunk)
         for chunk in gen:
             # process_chunk modifies X in place. No return value.
             pass

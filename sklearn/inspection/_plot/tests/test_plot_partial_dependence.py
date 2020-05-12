@@ -14,7 +14,6 @@ from sklearn.utils._testing import _convert_container
 
 from sklearn.inspection import plot_partial_dependence
 
-
 # TODO: Remove when https://github.com/numpy/numpy/issues/14397 is resolved
 pytestmark = pytest.mark.filterwarnings(
     "ignore:In future, it will be an error for 'np.bool_':DeprecationWarning:"
@@ -37,8 +36,8 @@ def clf_boston(boston):
 def test_plot_partial_dependence(grid_resolution, pyplot, clf_boston, boston):
     # Test partial dependence plot function.
     feature_names = boston.feature_names
-    disp = plot_partial_dependence(clf_boston, boston.data,
-                                   [0, 1, (0, 1)],
+    disp = plot_partial_dependence(clf_boston,
+                                   boston.data, [0, 1, (0, 1)],
                                    grid_resolution=grid_resolution,
                                    feature_names=feature_names,
                                    contour_kw={"cmap": "jet"})
@@ -69,9 +68,9 @@ def test_plot_partial_dependence(grid_resolution, pyplot, clf_boston, boston):
     assert np.all(disp.feature_names == feature_names)
     assert len(disp.deciles) == 2
     for i in [0, 1]:
-        assert_allclose(disp.deciles[i],
-                        mquantiles(boston.data[:, i],
-                                   prob=np.arange(0.1, 1.0, 0.1)))
+        assert_allclose(
+            disp.deciles[i],
+            mquantiles(boston.data[:, i], prob=np.arange(0.1, 1.0, 0.1)))
 
     single_feature_positions = [(0, 0), (0, 1)]
     expected_ylabels = ["Partial dependence", ""]
@@ -102,14 +101,14 @@ def test_plot_partial_dependence(grid_resolution, pyplot, clf_boston, boston):
     assert ax.get_ylabel() == boston.feature_names[1]
 
 
-@pytest.mark.parametrize(
-    "input_type, feature_names_type",
-    [('dataframe', None),
-     ('dataframe', 'list'), ('list', 'list'), ('array', 'list'),
-     ('dataframe', 'array'), ('list', 'array'), ('array', 'array'),
-     ('dataframe', 'series'), ('list', 'series'), ('array', 'series'),
-     ('dataframe', 'index'), ('list', 'index'), ('array', 'index')]
-)
+@pytest.mark.parametrize("input_type, feature_names_type",
+                         [('dataframe', None), ('dataframe', 'list'),
+                          ('list', 'list'), ('array', 'list'),
+                          ('dataframe', 'array'), ('list', 'array'),
+                          ('array', 'array'), ('dataframe', 'series'),
+                          ('list', 'series'), ('array', 'series'),
+                          ('dataframe', 'index'), ('list', 'index'),
+                          ('array', 'index')])
 def test_plot_partial_dependence_str_features(pyplot, clf_boston, boston,
                                               input_type, feature_names_type):
     if input_type == 'dataframe':
@@ -128,11 +127,12 @@ def test_plot_partial_dependence_str_features(pyplot, clf_boston, boston,
 
     grid_resolution = 25
     # check with str features and array feature names and single column
-    disp = plot_partial_dependence(clf_boston, X,
-                                   [('CRIM', 'ZN'), 'ZN'],
+    disp = plot_partial_dependence(clf_boston,
+                                   X, [('CRIM', 'ZN'), 'ZN'],
                                    grid_resolution=grid_resolution,
                                    feature_names=feature_names,
-                                   n_cols=1, line_kw={"alpha": 0.8})
+                                   n_cols=1,
+                                   line_kw={"alpha": 0.8})
     fig = pyplot.gcf()
     axs = fig.get_axes()
     assert len(axs) == 3
@@ -178,10 +178,11 @@ def test_plot_partial_dependence_custom_axes(pyplot, clf_boston, boston):
     grid_resolution = 25
     fig, (ax1, ax2) = pyplot.subplots(1, 2)
     feature_names = boston.feature_names.tolist()
-    disp = plot_partial_dependence(clf_boston, boston.data,
-                                   ['CRIM', ('CRIM', 'ZN')],
+    disp = plot_partial_dependence(clf_boston,
+                                   boston.data, ['CRIM', ('CRIM', 'ZN')],
                                    grid_resolution=grid_resolution,
-                                   feature_names=feature_names, ax=[ax1, ax2])
+                                   feature_names=feature_names,
+                                   ax=[ax1, ax2])
     assert fig is disp.figure_
     assert disp.bounding_ax_ is None
     assert disp.axes_.shape == (2, )
@@ -213,8 +214,8 @@ def test_plot_partial_dependence_passing_numpy_axes(pyplot, clf_boston,
                                                     boston):
     grid_resolution = 25
     feature_names = boston.feature_names.tolist()
-    disp1 = plot_partial_dependence(clf_boston, boston.data,
-                                    ['CRIM', 'ZN'],
+    disp1 = plot_partial_dependence(clf_boston,
+                                    boston.data, ['CRIM', 'ZN'],
                                     grid_resolution=grid_resolution,
                                     feature_names=feature_names)
     assert disp1.axes_.shape == (1, 2)
@@ -226,8 +227,8 @@ def test_plot_partial_dependence_passing_numpy_axes(pyplot, clf_boston,
     lr = LinearRegression()
     lr.fit(boston.data, boston.target)
 
-    disp2 = plot_partial_dependence(lr, boston.data,
-                                    ['CRIM', 'ZN'],
+    disp2 = plot_partial_dependence(lr,
+                                    boston.data, ['CRIM', 'ZN'],
                                     grid_resolution=grid_resolution,
                                     feature_names=feature_names,
                                     ax=disp1.axes_)
@@ -238,23 +239,23 @@ def test_plot_partial_dependence_passing_numpy_axes(pyplot, clf_boston,
 
 
 @pytest.mark.parametrize("nrows, ncols", [(2, 2), (3, 1)])
-def test_plot_partial_dependence_incorrent_num_axes(pyplot, clf_boston,
-                                                    boston, nrows, ncols):
+def test_plot_partial_dependence_incorrent_num_axes(pyplot, clf_boston, boston,
+                                                    nrows, ncols):
     grid_resolution = 5
     fig, axes = pyplot.subplots(nrows, ncols)
     axes_formats = [list(axes.ravel()), tuple(axes.ravel()), axes]
 
     msg = "Expected ax to have 2 axes, got {}".format(nrows * ncols)
 
-    disp = plot_partial_dependence(clf_boston, boston.data,
-                                   ['CRIM', 'ZN'],
+    disp = plot_partial_dependence(clf_boston,
+                                   boston.data, ['CRIM', 'ZN'],
                                    grid_resolution=grid_resolution,
                                    feature_names=boston.feature_names)
 
     for ax_format in axes_formats:
         with pytest.raises(ValueError, match=msg):
-            plot_partial_dependence(clf_boston, boston.data,
-                                    ['CRIM', 'ZN'],
+            plot_partial_dependence(clf_boston,
+                                    boston.data, ['CRIM', 'ZN'],
                                     grid_resolution=grid_resolution,
                                     feature_names=boston.feature_names,
                                     ax=ax_format)
@@ -278,18 +279,21 @@ def test_plot_partial_dependence_with_same_axes(pyplot, clf_boston, boston):
 
     grid_resolution = 25
     fig, ax = pyplot.subplots()
-    plot_partial_dependence(clf_boston, boston.data, ['CRIM', 'ZN'],
+    plot_partial_dependence(clf_boston,
+                            boston.data, ['CRIM', 'ZN'],
                             grid_resolution=grid_resolution,
-                            feature_names=boston.feature_names, ax=ax)
+                            feature_names=boston.feature_names,
+                            ax=ax)
 
     msg = ("The ax was already used in another plot function, please set "
            "ax=display.axes_ instead")
 
     with pytest.raises(ValueError, match=msg):
-        plot_partial_dependence(clf_boston, boston.data,
-                                ['CRIM', 'ZN'],
+        plot_partial_dependence(clf_boston,
+                                boston.data, ['CRIM', 'ZN'],
                                 grid_resolution=grid_resolution,
-                                feature_names=boston.feature_names, ax=ax)
+                                feature_names=boston.feature_names,
+                                ax=ax)
 
 
 def test_plot_partial_dependence_feature_name_reuse(pyplot, clf_boston,
@@ -298,13 +302,15 @@ def test_plot_partial_dependence_feature_name_reuse(pyplot, clf_boston,
     # call
 
     feature_names = boston.feature_names
-    disp = plot_partial_dependence(clf_boston, boston.data,
-                                   [0, 1],
+    disp = plot_partial_dependence(clf_boston,
+                                   boston.data, [0, 1],
                                    grid_resolution=10,
                                    feature_names=feature_names)
 
-    plot_partial_dependence(clf_boston, boston.data, [0, 1],
-                            grid_resolution=10, ax=disp.axes_)
+    plot_partial_dependence(clf_boston,
+                            boston.data, [0, 1],
+                            grid_resolution=10,
+                            ax=disp.axes_)
 
     for i, ax in enumerate(disp.axes_.ravel()):
         assert ax.get_xlabel() == feature_names[i]
@@ -317,7 +323,8 @@ def test_plot_partial_dependence_multiclass(pyplot):
 
     # Test partial dependence plot function on multi-class input.
     clf_int.fit(iris.data, iris.target)
-    disp_target_0 = plot_partial_dependence(clf_int, iris.data, [0, 1],
+    disp_target_0 = plot_partial_dependence(clf_int,
+                                            iris.data, [0, 1],
                                             target=0,
                                             grid_resolution=grid_resolution)
     assert disp_target_0.figure_ is pyplot.gcf()
@@ -333,7 +340,8 @@ def test_plot_partial_dependence_multiclass(pyplot):
     target = iris.target_names[iris.target]
     clf_symbol = GradientBoostingClassifier(n_estimators=10, random_state=1)
     clf_symbol.fit(iris.data, target)
-    disp_symbol = plot_partial_dependence(clf_symbol, iris.data, [0, 1],
+    disp_symbol = plot_partial_dependence(clf_symbol,
+                                          iris.data, [0, 1],
                                           target='setosa',
                                           grid_resolution=grid_resolution)
     assert disp_symbol.figure_ is pyplot.gcf()
@@ -353,7 +361,8 @@ def test_plot_partial_dependence_multiclass(pyplot):
         assert_allclose(values_int, values_symbol)
 
     # check that the pd plots are different for another target
-    disp_target_1 = plot_partial_dependence(clf_int, iris.data, [0, 1],
+    disp_target_1 = plot_partial_dependence(clf_int,
+                                            iris.data, [0, 1],
                                             target=1,
                                             grid_resolution=grid_resolution)
     target_0_data_y = disp_target_0.lines_[0, 0].get_data()[1]
@@ -361,7 +370,8 @@ def test_plot_partial_dependence_multiclass(pyplot):
     assert any(target_0_data_y != target_1_data_y)
 
 
-multioutput_regression_data = make_regression(n_samples=50, n_targets=2,
+multioutput_regression_data = make_regression(n_samples=50,
+                                              n_targets=2,
                                               random_state=0)
 
 
@@ -372,7 +382,9 @@ def test_plot_partial_dependence_multioutput(pyplot, target):
     clf = LinearRegression().fit(X, y)
 
     grid_resolution = 25
-    disp = plot_partial_dependence(clf, X, [0, 1], target=target,
+    disp = plot_partial_dependence(clf,
+                                   X, [0, 1],
+                                   target=target,
                                    grid_resolution=grid_resolution)
     fig = pyplot.gcf()
     axs = fig.get_axes()
@@ -395,42 +407,53 @@ def test_plot_partial_dependence_dataframe(pyplot, clf_boston, boston):
 
     grid_resolution = 25
 
-    plot_partial_dependence(
-        clf_boston, df, ['TAX', 'AGE'], grid_resolution=grid_resolution,
-        feature_names=df.columns.tolist()
-    )
+    plot_partial_dependence(clf_boston,
+                            df, ['TAX', 'AGE'],
+                            grid_resolution=grid_resolution,
+                            feature_names=df.columns.tolist())
 
 
 dummy_classification_data = make_classification(random_state=0)
 
 
-@pytest.mark.parametrize(
-    "data, params, err_msg",
-    [(multioutput_regression_data, {"target": None, 'features': [0]},
-      "target must be specified for multi-output"),
-     (multioutput_regression_data, {"target": -1, 'features': [0]},
-      r'target must be in \[0, n_tasks\]'),
-     (multioutput_regression_data, {"target": 100, 'features': [0]},
-      r'target must be in \[0, n_tasks\]'),
-     (dummy_classification_data,
-     {'features': ['foobar'], 'feature_names': None},
-     'Feature foobar not in feature_names'),
-     (dummy_classification_data,
-     {'features': ['foobar'], 'feature_names': ['abcd', 'def']},
-      'Feature foobar not in feature_names'),
-     (dummy_classification_data, {'features': [(1, 2, 3)]},
-      'Each entry in features must be either an int, '),
-     (dummy_classification_data, {'features': [1, {}]},
-      'Each entry in features must be either an int, '),
-     (dummy_classification_data, {'features': [tuple()]},
-      'Each entry in features must be either an int, '),
-     (dummy_classification_data,
-      {'features': [123], 'feature_names': ['blahblah']},
-      'All entries of features must be less than '),
-     (dummy_classification_data,
-      {'features': [0, 1, 2], 'feature_names': ['a', 'b', 'a']},
-      'feature_names should not contain duplicates')]
-)
+@pytest.mark.parametrize("data, params, err_msg",
+                         [(multioutput_regression_data, {
+                             "target": None,
+                             'features': [0]
+                         }, "target must be specified for multi-output"),
+                          (multioutput_regression_data, {
+                              "target": -1,
+                              'features': [0]
+                          }, r'target must be in \[0, n_tasks\]'),
+                          (multioutput_regression_data, {
+                              "target": 100,
+                              'features': [0]
+                          }, r'target must be in \[0, n_tasks\]'),
+                          (dummy_classification_data, {
+                              'features': ['foobar'],
+                              'feature_names': None
+                          }, 'Feature foobar not in feature_names'),
+                          (dummy_classification_data, {
+                              'features': ['foobar'],
+                              'feature_names': ['abcd', 'def']
+                          }, 'Feature foobar not in feature_names'),
+                          (dummy_classification_data, {
+                              'features': [(1, 2, 3)]
+                          }, 'Each entry in features must be either an int, '),
+                          (dummy_classification_data, {
+                              'features': [1, {}]
+                          }, 'Each entry in features must be either an int, '),
+                          (dummy_classification_data, {
+                              'features': [tuple()]
+                          }, 'Each entry in features must be either an int, '),
+                          (dummy_classification_data, {
+                              'features': [123],
+                              'feature_names': ['blahblah']
+                          }, 'All entries of features must be less than '),
+                          (dummy_classification_data, {
+                              'features': [0, 1, 2],
+                              'feature_names': ['a', 'b', 'a']
+                          }, 'feature_names should not contain duplicates')])
 def test_plot_partial_dependence_error(pyplot, data, params, err_msg):
     X, y = data
     estimator = LinearRegression().fit(X, y)
@@ -440,12 +463,18 @@ def test_plot_partial_dependence_error(pyplot, data, params, err_msg):
 
 
 @pytest.mark.parametrize("params, err_msg", [
-    ({'target': 4, 'features': [0]},
-     'target not in est.classes_, got 4'),
-    ({'target': None, 'features': [0]},
-     'target must be specified for multi-class'),
-    ({'target': 1, 'features': [4.5]},
-     'Each entry in features must be either an int,'),
+    ({
+        'target': 4,
+        'features': [0]
+    }, 'target not in est.classes_, got 4'),
+    ({
+        'target': None,
+        'features': [0]
+    }, 'target must be specified for multi-class'),
+    ({
+        'target': 1,
+        'features': [4.5]
+    }, 'Each entry in features must be either an int,'),
 ])
 def test_plot_partial_dependence_multiclass_error(pyplot, params, err_msg):
     iris = load_iris()
@@ -468,7 +497,10 @@ def test_plot_partial_dependence_fig_deprecated(pyplot):
     msg = ("The fig parameter is deprecated in version 0.22 and will be "
            "removed in version 0.24")
     with pytest.warns(FutureWarning, match=msg):
-        plot_partial_dependence(
-            clf, X, [0, 1], target=0, grid_resolution=grid_resolution, fig=fig)
+        plot_partial_dependence(clf,
+                                X, [0, 1],
+                                target=0,
+                                grid_resolution=grid_resolution,
+                                fig=fig)
 
     assert pyplot.gcf() is fig

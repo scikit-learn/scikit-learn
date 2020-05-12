@@ -1,7 +1,6 @@
 # Authors: Raghav RV <rvraghav93@gmail.com>
 # License: BSD 3 clause
 
-
 import pickle
 
 from sklearn.utils.deprecation import _is_deprecated
@@ -40,8 +39,7 @@ def test_deprecated():
     assert_warns_message(FutureWarning, 'mockclass2_method',
                          MockClass2().method)
     assert_warns_message(FutureWarning, 'deprecated', MockClass3)
-    val = assert_warns_message(FutureWarning, 'deprecated',
-                               mock_function)
+    val = assert_warns_message(FutureWarning, 'deprecated', mock_function)
     assert val == 10
 
 

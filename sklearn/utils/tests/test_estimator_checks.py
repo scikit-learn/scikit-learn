@@ -9,10 +9,8 @@ from io import StringIO
 
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils import deprecated
-from sklearn.utils._testing import (assert_raises_regex,
-                                    ignore_warnings,
-                                    assert_warns, assert_raises,
-                                    SkipTest)
+from sklearn.utils._testing import (assert_raises_regex, ignore_warnings,
+                                    assert_warns, assert_raises, SkipTest)
 from sklearn.utils.estimator_checks import check_estimator, _NotAnArray
 from sklearn.utils.estimator_checks \
     import check_class_weight_balanced_linear_classifier
@@ -182,11 +180,11 @@ class CorrectNotFittedErrorClassifier(BaseBadClassifier):
 class NoSampleWeightPandasSeriesType(BaseEstimator):
     def fit(self, X, y, sample_weight=None):
         # Convert data
-        X, y = self._validate_data(
-            X, y,
-            accept_sparse=("csr", "csc"),
-            multi_output=True,
-            y_numeric=True)
+        X, y = self._validate_data(X,
+                                   y,
+                                   accept_sparse=("csr", "csc"),
+                                   multi_output=True,
+                                   y_numeric=True)
         # Function is only called after we verify that pandas is installed
         from pandas import Series
         if isinstance(sample_weight, Series):
@@ -234,11 +232,11 @@ class BadTransformerWithoutMixin(BaseEstimator):
 class NotInvariantPredict(BaseEstimator):
     def fit(self, X, y):
         # Convert data
-        X, y = self._validate_data(
-            X, y,
-            accept_sparse=("csr", "csc"),
-            multi_output=True,
-            y_numeric=True)
+        X, y = self._validate_data(X,
+                                   y,
+                                   accept_sparse=("csr", "csc"),
+                                   multi_output=True,
+                                   y_numeric=True)
         return self
 
     def predict(self, X):
@@ -251,12 +249,12 @@ class NotInvariantPredict(BaseEstimator):
 
 class LargeSparseNotSupportedClassifier(BaseEstimator):
     def fit(self, X, y):
-        X, y = self._validate_data(
-            X, y,
-            accept_sparse=("csr", "csc", "coo"),
-            accept_large_sparse=True,
-            multi_output=True,
-            y_numeric=True)
+        X, y = self._validate_data(X,
+                                   y,
+                                   accept_sparse=("csr", "csc", "coo"),
+                                   accept_large_sparse=True,
+                                   multi_output=True,
+                                   y_numeric=True)
         if sp.issparse(X):
             if X.getformat() == "coo":
                 if X.row.dtype == "int64" or X.col.dtype == "int64":
@@ -321,7 +319,6 @@ class TaggedBinaryClassifier(UntaggedBinaryClassifier):
 
 
 class RequiresPositiveYRegressor(LinearRegression):
-
     def fit(self, X, y):
         X, y = self._validate_data(X, y, multi_output=True)
         if (y <= 0).any():
@@ -384,8 +381,8 @@ def test_check_estimator():
         from pandas import Series  # noqa
         msg = ("Estimator NoSampleWeightPandasSeriesType raises error if "
                "'sample_weight' parameter is of type pandas.Series")
-        assert_raises_regex(
-            ValueError, msg, check_estimator, NoSampleWeightPandasSeriesType())
+        assert_raises_regex(ValueError, msg, check_estimator,
+                            NoSampleWeightPandasSeriesType())
     except ImportError:
         pass
     # check that predict does input validation (doesn't accept dicts in input)
@@ -400,23 +397,23 @@ def test_check_estimator():
     # are private (start with an _ or end with a _).
     msg = ('Estimator ChangesWrongAttribute should not change or mutate  '
            'the parameter wrong_attribute from 0 to 1 during fit.')
-    assert_raises_regex(AssertionError, msg,
-                        check_estimator, ChangesWrongAttribute())
+    assert_raises_regex(AssertionError, msg, check_estimator,
+                        ChangesWrongAttribute())
     check_estimator(ChangesUnderscoreAttribute())
     # check that `fit` doesn't add any public attribute
     msg = (r'Estimator adds public attribute\(s\) during the fit method.'
            ' Estimators are only allowed to add private attributes'
            ' either started with _ or ended'
            ' with _ but wrong_attribute added')
-    assert_raises_regex(AssertionError, msg,
-                        check_estimator, SetsWrongAttribute())
+    assert_raises_regex(AssertionError, msg, check_estimator,
+                        SetsWrongAttribute())
     # check for invariant method
     name = NotInvariantPredict.__name__
     method = 'predict'
     msg = ("{method} of {name} is not invariant when applied "
            "to a subset.").format(method=method, name=name)
-    assert_raises_regex(AssertionError, msg,
-                        check_estimator, NotInvariantPredict())
+    assert_raises_regex(AssertionError, msg, check_estimator,
+                        NotInvariantPredict())
     # check for sparse matrix input handling
     name = NoSparseClassifier.__name__
     msg = "Estimator %s doesn't seem to fail gracefully on sparse data" % name
@@ -473,8 +470,8 @@ def test_check_outlier_corruption():
 
 def test_check_estimator_transformer_no_mixin():
     # check that TransformerMixin is not required for transformer tests to run
-    assert_raises_regex(AttributeError, '.*fit_transform.*',
-                        check_estimator, BadTransformerWithoutMixin())
+    assert_raises_regex(AttributeError, '.*fit_transform.*', check_estimator,
+                        BadTransformerWithoutMixin())
 
 
 def test_check_estimator_clones():
@@ -482,9 +479,10 @@ def test_check_estimator_clones():
     from sklearn.datasets import load_iris
     iris = load_iris()
 
-    for Estimator in [GaussianMixture, LinearRegression,
-                      RandomForestClassifier, NMF, SGDClassifier,
-                      MiniBatchKMeans]:
+    for Estimator in [
+            GaussianMixture, LinearRegression, RandomForestClassifier, NMF,
+            SGDClassifier, MiniBatchKMeans
+    ]:
         with ignore_warnings(category=FutureWarning):
             # when 'est = SGDClassifier()'
             est = Estimator()
@@ -528,21 +526,18 @@ def test_check_no_attributes_set_in_init():
         def __init__(self, you_should_set_this_=None):
             pass
 
-    assert_raises_regex(AssertionError,
-                        "Estimator estimator_name should not set any"
-                        " attribute apart from parameters during init."
-                        r" Found attributes \['you_should_not_set_this_'\].",
-                        check_no_attributes_set_in_init,
-                        'estimator_name',
-                        NonConformantEstimatorPrivateSet())
-    assert_raises_regex(AssertionError,
-                        "Estimator estimator_name should store all "
-                        "parameters as an attribute during init. "
-                        "Did not find attributes "
-                        r"\['you_should_set_this_'\].",
-                        check_no_attributes_set_in_init,
-                        'estimator_name',
-                        NonConformantEstimatorNoParamSet())
+    assert_raises_regex(
+        AssertionError, "Estimator estimator_name should not set any"
+        " attribute apart from parameters during init."
+        r" Found attributes \['you_should_not_set_this_'\].",
+        check_no_attributes_set_in_init, 'estimator_name',
+        NonConformantEstimatorPrivateSet())
+    assert_raises_regex(
+        AssertionError, "Estimator estimator_name should store all "
+        "parameters as an attribute during init. "
+        "Did not find attributes "
+        r"\['you_should_set_this_'\].", check_no_attributes_set_in_init,
+        'estimator_name', NonConformantEstimatorNoParamSet())
 
 
 def test_check_estimator_pairwise():
@@ -559,18 +554,14 @@ def test_check_estimator_pairwise():
 
 
 def test_check_classifier_data_not_an_array():
-    assert_raises_regex(AssertionError,
-                        'Not equal to tolerance',
-                        check_classifier_data_not_an_array,
-                        'estimator_name',
+    assert_raises_regex(AssertionError, 'Not equal to tolerance',
+                        check_classifier_data_not_an_array, 'estimator_name',
                         EstimatorInconsistentForPandas())
 
 
 def test_check_regressor_data_not_an_array():
-    assert_raises_regex(AssertionError,
-                        'Not equal to tolerance',
-                        check_regressor_data_not_an_array,
-                        'estimator_name',
+    assert_raises_regex(AssertionError, 'Not equal to tolerance',
+                        check_regressor_data_not_an_array, 'estimator_name',
                         EstimatorInconsistentForPandas())
 
 
@@ -578,8 +569,10 @@ def run_tests_without_pytest():
     """Runs the tests in this file without using pytest.
     """
     main_module = sys.modules['__main__']
-    test_functions = [getattr(main_module, name) for name in dir(main_module)
-                      if name.startswith('test_')]
+    test_functions = [
+        getattr(main_module, name) for name in dir(main_module)
+        if name.startswith('test_')
+    ]
     test_cases = [unittest.FunctionTestCase(fn) for fn in test_functions]
     suite = unittest.TestSuite()
     suite.addTests(test_cases)
@@ -589,12 +582,11 @@ def run_tests_without_pytest():
 
 def test_check_class_weight_balanced_linear_classifier():
     # check that ill-computed balanced weights raises an exception
-    assert_raises_regex(AssertionError,
-                        "Classifier estimator_name is not computing"
-                        " class_weight=balanced properly.",
-                        check_class_weight_balanced_linear_classifier,
-                        'estimator_name',
-                        BadBalancedWeightsClassifier)
+    assert_raises_regex(
+        AssertionError, "Classifier estimator_name is not computing"
+        " class_weight=balanced properly.",
+        check_class_weight_balanced_linear_classifier, 'estimator_name',
+        BadBalancedWeightsClassifier)
 
 
 def test_all_estimators_all_public():

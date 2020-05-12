@@ -85,8 +85,9 @@ def test_linear_regression_sample_weights():
                 dummy_column = np.ones(shape=(n_samples, 1))
                 X_aug = np.concatenate((dummy_column, X), axis=1)
 
-            coefs2 = linalg.solve(X_aug.T.dot(W).dot(X_aug),
-                                  X_aug.T.dot(W).dot(y))
+            coefs2 = linalg.solve(
+                X_aug.T.dot(W).dot(X_aug),
+                X_aug.T.dot(W).dot(y))
 
             if intercept is False:
                 assert_array_almost_equal(coefs1, coefs2)
@@ -104,7 +105,7 @@ def test_raises_value_error_if_sample_weights_greater_than_1d():
     for n_samples, n_features in zip(n_sampless, n_featuress):
         X = rng.randn(n_samples, n_features)
         y = rng.randn(n_samples)
-        sample_weights_OK = rng.randn(n_samples) ** 2 + 1
+        sample_weights_OK = rng.randn(n_samples)**2 + 1
         sample_weights_OK_1 = 1.
         sample_weights_OK_2 = 2.
 
@@ -118,8 +119,7 @@ def test_raises_value_error_if_sample_weights_greater_than_1d():
 
 def test_fit_intercept():
     # Test assertions on betas shape.
-    X2 = np.array([[0.38349978, 0.61650022],
-                   [0.58853682, 0.41146318]])
+    X2 = np.array([[0.38349978, 0.61650022], [0.58853682, 0.41146318]])
     X3 = np.array([[0.27677969, 0.70693172, 0.01628859],
                    [0.08385139, 0.20692515, 0.70922346]])
     y = np.array([1, 1])
@@ -130,12 +130,12 @@ def test_fit_intercept():
     lr3_without_intercept = LinearRegression(fit_intercept=False).fit(X3, y)
     lr3_with_intercept = LinearRegression().fit(X3, y)
 
-    assert (lr2_with_intercept.coef_.shape ==
-            lr2_without_intercept.coef_.shape)
-    assert (lr3_with_intercept.coef_.shape ==
-            lr3_without_intercept.coef_.shape)
-    assert (lr2_without_intercept.coef_.ndim ==
-            lr3_without_intercept.coef_.ndim)
+    assert (
+        lr2_with_intercept.coef_.shape == lr2_without_intercept.coef_.shape)
+    assert (
+        lr3_with_intercept.coef_.shape == lr3_without_intercept.coef_.shape)
+    assert (
+        lr2_without_intercept.coef_.ndim == lr3_without_intercept.coef_.ndim)
 
 
 def test_linear_regression_sparse(random_state=0):
@@ -281,17 +281,23 @@ def test_preprocess_data_multioutput():
 
     args = [X, sparse.csc_matrix(X)]
     for X in args:
-        _, yt, _, y_mean, _ = _preprocess_data(X, y, fit_intercept=False,
+        _, yt, _, y_mean, _ = _preprocess_data(X,
+                                               y,
+                                               fit_intercept=False,
                                                normalize=False)
         assert_array_almost_equal(y_mean, np.zeros(n_outputs))
         assert_array_almost_equal(yt, y)
 
-        _, yt, _, y_mean, _ = _preprocess_data(X, y, fit_intercept=True,
+        _, yt, _, y_mean, _ = _preprocess_data(X,
+                                               y,
+                                               fit_intercept=True,
                                                normalize=False)
         assert_array_almost_equal(y_mean, expected_y_mean)
         assert_array_almost_equal(yt, y - y_mean)
 
-        _, yt, _, y_mean, _ = _preprocess_data(X, y, fit_intercept=True,
+        _, yt, _, y_mean, _ = _preprocess_data(X,
+                                               y,
+                                               fit_intercept=True,
                                                normalize=True)
         assert_array_almost_equal(y_mean, expected_y_mean)
         assert_array_almost_equal(yt, y - y_mean)
@@ -308,8 +314,8 @@ def test_preprocess_data_weighted():
 
     # XXX: if normalize=True, should we expect a weighted standard deviation?
     #      Currently not weighted, but calculated with respect to weighted mean
-    expected_X_norm = (np.sqrt(X.shape[0]) *
-                       np.mean((X - expected_X_mean) ** 2, axis=0) ** .5)
+    expected_X_norm = (np.sqrt(X.shape[0]) * np.mean(
+        (X - expected_X_mean)**2, axis=0)**.5)
 
     Xt, yt, X_mean, y_mean, X_norm = \
         _preprocess_data(X, y, fit_intercept=True, normalize=False,
@@ -386,8 +392,11 @@ def test_preprocess_copy_data_no_checks(is_sparse, to_copy):
     if is_sparse:
         X = sparse.csr_matrix(X)
 
-    X_, y_, _, _, _ = _preprocess_data(X, y, True,
-                                       copy=to_copy, check_input=False)
+    X_, y_, _, _, _ = _preprocess_data(X,
+                                       y,
+                                       True,
+                                       copy=to_copy,
+                                       check_input=False)
 
     if to_copy and is_sparse:
         assert not np.may_share_memory(X_.data, X.data)
@@ -414,20 +423,32 @@ def test_dtype_preprocess_data():
         for normalize in [True, False]:
 
             Xt_32, yt_32, X_mean_32, y_mean_32, X_norm_32 = _preprocess_data(
-                X_32, y_32, fit_intercept=fit_intercept, normalize=normalize,
+                X_32,
+                y_32,
+                fit_intercept=fit_intercept,
+                normalize=normalize,
                 return_mean=True)
 
             Xt_64, yt_64, X_mean_64, y_mean_64, X_norm_64 = _preprocess_data(
-                X_64, y_64, fit_intercept=fit_intercept, normalize=normalize,
+                X_64,
+                y_64,
+                fit_intercept=fit_intercept,
+                normalize=normalize,
                 return_mean=True)
 
             Xt_3264, yt_3264, X_mean_3264, y_mean_3264, X_norm_3264 = (
-                _preprocess_data(X_32, y_64, fit_intercept=fit_intercept,
-                                 normalize=normalize, return_mean=True))
+                _preprocess_data(X_32,
+                                 y_64,
+                                 fit_intercept=fit_intercept,
+                                 normalize=normalize,
+                                 return_mean=True))
 
             Xt_6432, yt_6432, X_mean_6432, y_mean_6432, X_norm_6432 = (
-                _preprocess_data(X_64, y_32, fit_intercept=fit_intercept,
-                                 normalize=normalize, return_mean=True))
+                _preprocess_data(X_64,
+                                 y_32,
+                                 fit_intercept=fit_intercept,
+                                 normalize=normalize,
+                                 return_mean=True))
 
             assert Xt_32.dtype == np.float32
             assert yt_32.dtype == np.float32

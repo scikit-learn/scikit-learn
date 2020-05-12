@@ -37,7 +37,5 @@ def test_feature_agglomeration():
     assert np.unique(X_full_mean[0]).size == n_clusters
     assert np.unique(X_full_median[0]).size == n_clusters
 
-    assert_array_almost_equal(agglo_mean.transform(X_full_mean),
-                              Xt_mean)
-    assert_array_almost_equal(agglo_median.transform(X_full_median),
-                              Xt_median)
+    assert_array_almost_equal(agglo_mean.transform(X_full_mean), Xt_mean)
+    assert_array_almost_equal(agglo_median.transform(X_full_median), Xt_median)

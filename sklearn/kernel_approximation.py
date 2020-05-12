@@ -108,10 +108,12 @@ class RBFSampler(TransformerMixin, BaseEstimator):
         random_state = check_random_state(self.random_state)
         n_features = X.shape[1]
 
-        self.random_weights_ = (np.sqrt(2 * self.gamma) * random_state.normal(
-            size=(n_features, self.n_components)))
+        self.random_weights_ = (
+            np.sqrt(2 * self.gamma) *
+            random_state.normal(size=(n_features, self.n_components)))
 
-        self.random_offset_ = random_state.uniform(0, 2 * np.pi,
+        self.random_offset_ = random_state.uniform(0,
+                                                   2 * np.pi,
                                                    size=self.n_components)
         return self
 
@@ -215,9 +217,10 @@ class SkewedChi2Sampler(TransformerMixin, BaseEstimator):
         n_features = X.shape[1]
         uniform = random_state.uniform(size=(n_features, self.n_components))
         # transform by inverse CDF of sech
-        self.random_weights_ = (1. / np.pi
-                                * np.log(np.tan(np.pi / 2. * uniform)))
-        self.random_offset_ = random_state.uniform(0, 2 * np.pi,
+        self.random_weights_ = (1. / np.pi *
+                                np.log(np.tan(np.pi / 2. * uniform)))
+        self.random_offset_ = random_state.uniform(0,
+                                                   2 * np.pi,
                                                    size=self.n_components)
         return self
 
@@ -416,7 +419,9 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
 
         data_step = np.sqrt(X.data * self.sample_interval_)
         X_step = sp.csr_matrix((data_step, indices, indptr),
-                               shape=X.shape, dtype=X.dtype, copy=False)
+                               shape=X.shape,
+                               dtype=X.dtype,
+                               copy=False)
         X_new = [X_step]
 
         log_step_nz = self.sample_interval_ * np.log(X.data)
@@ -428,19 +433,22 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
 
             data_step = factor_nz * np.cos(j * log_step_nz)
             X_step = sp.csr_matrix((data_step, indices, indptr),
-                                   shape=X.shape, dtype=X.dtype, copy=False)
+                                   shape=X.shape,
+                                   dtype=X.dtype,
+                                   copy=False)
             X_new.append(X_step)
 
             data_step = factor_nz * np.sin(j * log_step_nz)
             X_step = sp.csr_matrix((data_step, indices, indptr),
-                                   shape=X.shape, dtype=X.dtype, copy=False)
+                                   shape=X.shape,
+                                   dtype=X.dtype,
+                                   copy=False)
             X_new.append(X_step)
 
         return sp.hstack(X_new)
 
     def _more_tags(self):
-        return {'stateless': True,
-                'requires_positive_X': True}
+        return {'stateless': True, 'requires_positive_X': True}
 
 
 class Nystroem(TransformerMixin, BaseEstimator):
@@ -536,8 +544,15 @@ class Nystroem(TransformerMixin, BaseEstimator):
     sklearn.metrics.pairwise.kernel_metrics : List of built-in kernels.
     """
     @_deprecate_positional_args
-    def __init__(self, kernel="rbf", *, gamma=None, coef0=None, degree=None,
-                 kernel_params=None, n_components=100, random_state=None):
+    def __init__(self,
+                 kernel="rbf",
+                 *,
+                 gamma=None,
+                 coef0=None,
+                 degree=None,
+                 kernel_params=None,
+                 n_components=100,
+                 random_state=None):
         self.kernel = kernel
         self.gamma = gamma
         self.coef0 = coef0
@@ -576,7 +591,8 @@ class Nystroem(TransformerMixin, BaseEstimator):
         basis_inds = inds[:n_components]
         basis = X[basis_inds]
 
-        basis_kernel = pairwise_kernels(basis, metric=self.kernel,
+        basis_kernel = pairwise_kernels(basis,
+                                        metric=self.kernel,
                                         filter_params=True,
                                         **self._get_kernel_params())
 
@@ -608,7 +624,8 @@ class Nystroem(TransformerMixin, BaseEstimator):
         X = check_array(X, accept_sparse='csr')
 
         kernel_params = self._get_kernel_params()
-        embedded = pairwise_kernels(X, self.components_,
+        embedded = pairwise_kernels(X,
+                                    self.components_,
                                     metric=self.kernel,
                                     filter_params=True,
                                     **kernel_params)
@@ -623,9 +640,8 @@ class Nystroem(TransformerMixin, BaseEstimator):
                 if getattr(self, param) is not None:
                     params[param] = getattr(self, param)
         else:
-            if (self.gamma is not None or
-                    self.coef0 is not None or
-                    self.degree is not None):
+            if (self.gamma is not None or self.coef0 is not None
+                    or self.degree is not None):
                 raise ValueError("Don't pass gamma, coef0 or degree to "
                                  "Nystroem if using a callable "
                                  "or precomputed kernel")

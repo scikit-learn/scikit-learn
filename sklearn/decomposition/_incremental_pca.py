@@ -165,7 +165,11 @@ class IncrementalPCA(_BasePCA):
     TruncatedSVD
     """
     @_deprecate_positional_args
-    def __init__(self, n_components=None, *, whiten=False, copy=True,
+    def __init__(self,
+                 n_components=None,
+                 *,
+                 whiten=False,
+                 copy=True,
                  batch_size=None):
         self.n_components = n_components
         self.whiten = whiten
@@ -198,8 +202,10 @@ class IncrementalPCA(_BasePCA):
         self.singular_values_ = None
         self.noise_variance_ = None
 
-        X = self._validate_data(X, accept_sparse=['csr', 'csc', 'lil'],
-                                copy=self.copy, dtype=[np.float64, np.float32])
+        X = self._validate_data(X,
+                                accept_sparse=['csr', 'csc', 'lil'],
+                                copy=self.copy,
+                                dtype=[np.float64, np.float32])
         n_samples, n_features = X.shape
 
         if self.batch_size is None:
@@ -207,7 +213,8 @@ class IncrementalPCA(_BasePCA):
         else:
             self.batch_size_ = self.batch_size
 
-        for batch in gen_batches(n_samples, self.batch_size_,
+        for batch in gen_batches(n_samples,
+                                 self.batch_size_,
                                  min_batch_size=self.n_components or 0):
             X_batch = X[batch]
             if sparse.issparse(X_batch):
@@ -292,13 +299,13 @@ class IncrementalPCA(_BasePCA):
             mean_correction = \
                 np.sqrt((self.n_samples_seen_ * n_samples) /
                         n_total_samples) * (self.mean_ - col_batch_mean)
-            X = np.vstack((self.singular_values_.reshape((-1, 1)) *
-                           self.components_, X, mean_correction))
+            X = np.vstack((self.singular_values_.reshape(
+                (-1, 1)) * self.components_, X, mean_correction))
 
         U, S, Vt = linalg.svd(X, full_matrices=False)
         U, Vt = svd_flip(U, Vt, u_based_decision=False)
-        explained_variance = S ** 2 / (n_total_samples - 1)
-        explained_variance_ratio = S ** 2 / np.sum(col_var * n_total_samples)
+        explained_variance = S**2 / (n_total_samples - 1)
+        explained_variance_ratio = S**2 / np.sum(col_var * n_total_samples)
 
         self.n_samples_seen_ = n_total_samples
         self.components_ = Vt[:self.n_components_]
@@ -347,7 +354,8 @@ class IncrementalPCA(_BasePCA):
         if sparse.issparse(X):
             n_samples = X.shape[0]
             output = []
-            for batch in gen_batches(n_samples, self.batch_size_,
+            for batch in gen_batches(n_samples,
+                                     self.batch_size_,
                                      min_batch_size=self.n_components or 0):
                 output.append(super().transform(X[batch].toarray()))
             return np.vstack(output)

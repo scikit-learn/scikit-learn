@@ -51,21 +51,19 @@ from sklearn.base import (BaseEstimator, ClassifierMixin, ClusterMixin,
                           RegressorMixin, TransformerMixin)
 from sklearn.utils import deprecated, IS_PYPY, _IS_32BIT
 
-
-__all__ = ["assert_equal", "assert_not_equal", "assert_raises",
-           "assert_raises_regexp",
-           "assert_almost_equal", "assert_array_equal",
-           "assert_array_almost_equal", "assert_array_less",
-           "assert_less", "assert_less_equal",
-           "assert_greater", "assert_greater_equal",
-           "assert_approx_equal", "assert_allclose",
-           "assert_run_python_script", "SkipTest", "all_estimators"]
+__all__ = [
+    "assert_equal", "assert_not_equal", "assert_raises",
+    "assert_raises_regexp", "assert_almost_equal", "assert_array_equal",
+    "assert_array_almost_equal", "assert_array_less", "assert_less",
+    "assert_less_equal", "assert_greater", "assert_greater_equal",
+    "assert_approx_equal", "assert_allclose", "assert_run_python_script",
+    "SkipTest", "all_estimators"
+]
 
 _dummy = TestCase('__init__')
 deprecation_message = (
     'This helper is deprecated in version 0.22 and will be removed in version '
-    '0.24. Please use "assert" instead'
-)
+    '0.24. Please use "assert" instead')
 assert_equal = deprecated(deprecation_message)(_dummy.assertEqual)
 assert_not_equal = deprecated(deprecation_message)(_dummy.assertNotEqual)
 assert_raises = _dummy.assertRaises
@@ -114,18 +112,19 @@ def assert_warns(warning_class, func, *args, **kw):
         result = func(*args, **kw)
         if hasattr(np, 'FutureWarning'):
             # Filter out numpy-specific warnings in numpy >= 1.9
-            w = [e for e in w
-                 if e.category is not np.VisibleDeprecationWarning]
+            w = [
+                e for e in w if e.category is not np.VisibleDeprecationWarning
+            ]
 
         # Verify some things
         if not len(w) > 0:
-            raise AssertionError("No warning raised when calling %s"
-                                 % func.__name__)
+            raise AssertionError("No warning raised when calling %s" %
+                                 func.__name__)
 
         found = any(warning.category is warning_class for warning in w)
         if not found:
-            raise AssertionError("%s did not give warning: %s( is %s)"
-                                 % (func.__name__, warning_class, w))
+            raise AssertionError("%s did not give warning: %s( is %s)" %
+                                 (func.__name__, warning_class, w))
     return result
 
 
@@ -165,14 +164,13 @@ def assert_warns_message(warning_class, message, func, *args, **kw):
         result = func(*args, **kw)
         # Verify some things
         if not len(w) > 0:
-            raise AssertionError("No warning raised when calling %s"
-                                 % func.__name__)
+            raise AssertionError("No warning raised when calling %s" %
+                                 func.__name__)
 
         found = [issubclass(warning.category, warning_class) for warning in w]
         if not any(found):
             raise AssertionError("No warning raised for %s with class "
-                                 "%s"
-                                 % (func.__name__, warning_class))
+                                 "%s" % (func.__name__, warning_class))
 
         message_found = False
         # Checks the message of all warnings belong to warning_class
@@ -183,7 +181,9 @@ def assert_warns_message(warning_class, message, func, *args, **kw):
             if callable(message):  # add support for certain tests
                 check_in_message = message
             else:
-                def check_in_message(msg): return message in msg
+
+                def check_in_message(msg):
+                    return message in msg
 
             if check_in_message(msg):
                 message_found = True
@@ -191,8 +191,8 @@ def assert_warns_message(warning_class, message, func, *args, **kw):
 
         if not message_found:
             raise AssertionError("Did not receive the message you expected "
-                                 "('%s') for <%s>, got: '%s'"
-                                 % (message, func.__name__, msg))
+                                 "('%s') for <%s>, got: '%s'" %
+                                 (message, func.__name__, msg))
 
     return result
 
@@ -216,8 +216,8 @@ def assert_warns_div0(func, *args, **kw):
             # This platform does not report numpy divide by zeros
             return func(*args, **kw)
         return assert_warns_message(RuntimeWarning,
-                                    'invalid value encountered',
-                                    func, *args, **kw)
+                                    'invalid value encountered', func, *args,
+                                    **kw)
 
 
 # To remove when we support numpy 1.7
@@ -236,13 +236,14 @@ def assert_no_warnings(func, *args, **kw):
         result = func(*args, **kw)
         if hasattr(np, 'FutureWarning'):
             # Filter out numpy-specific warnings in numpy >= 1.9
-            w = [e for e in w
-                 if e.category is not np.VisibleDeprecationWarning]
+            w = [
+                e for e in w if e.category is not np.VisibleDeprecationWarning
+            ]
 
         if len(w) > 0:
-            raise AssertionError("Got warnings when calling %s: [%s]"
-                                 % (func.__name__,
-                                    ', '.join(str(warning) for warning in w)))
+            raise AssertionError(
+                "Got warnings when calling %s: [%s]" %
+                (func.__name__, ', '.join(str(warning) for warning in w)))
     return result
 
 
@@ -300,7 +301,6 @@ class _IgnoreWarnings:
         The category to filter. By default, all the categories will be muted.
 
     """
-
     def __init__(self, category):
         self._record = True
         self._module = sys.modules['warnings']
@@ -453,7 +453,7 @@ def all_estimators(type_filter=None):
         and ``class`` is the actual type of the class.
     """
     def is_abstract(c):
-        if not(hasattr(c, '__abstractmethods__')):
+        if not (hasattr(c, '__abstractmethods__')):
             return False
         if not len(c.__abstractmethods__):
             return False
@@ -466,8 +466,8 @@ def all_estimators(type_filter=None):
             path=path, prefix='sklearn.', onerror=lambda x: None):
         if ".tests." in modname or "externals" in modname:
             continue
-        if IS_PYPY and ('_svmlight_format_io' in modname or
-                        'feature_extraction._hashing_fast' in modname):
+        if IS_PYPY and ('_svmlight_format_io' in modname
+                        or 'feature_extraction._hashing_fast' in modname):
             continue
         # Ignore deprecation warnings triggered at import time.
         with ignore_warnings(category=FutureWarning):
@@ -477,9 +477,10 @@ def all_estimators(type_filter=None):
 
     all_classes = set(all_classes)
 
-    estimators = [c for c in all_classes
-                  if (issubclass(c[1], BaseEstimator) and
-                      c[0] != 'BaseEstimator')]
+    estimators = [
+        c for c in all_classes
+        if (issubclass(c[1], BaseEstimator) and c[0] != 'BaseEstimator')
+    ]
     # get rid of abstract base classes
     estimators = [c for c in estimators if not is_abstract(c[1])]
 
@@ -489,15 +490,17 @@ def all_estimators(type_filter=None):
         else:
             type_filter = list(type_filter)  # copy
         filtered_estimators = []
-        filters = {'classifier': ClassifierMixin,
-                   'regressor': RegressorMixin,
-                   'transformer': TransformerMixin,
-                   'cluster': ClusterMixin}
+        filters = {
+            'classifier': ClassifierMixin,
+            'regressor': RegressorMixin,
+            'transformer': TransformerMixin,
+            'cluster': ClusterMixin
+        }
         for name, mixin in filters.items():
             if name in type_filter:
                 type_filter.remove(name)
-                filtered_estimators.extend([est for est in estimators
-                                            if issubclass(est[1], mixin)])
+                filtered_estimators.extend(
+                    [est for est in estimators if issubclass(est[1], mixin)])
         estimators = filtered_estimators
         if type_filter:
             raise ValueError("Parameter type_filter must be 'classifier', "
@@ -559,8 +562,8 @@ try:
     #  default.
 
     if_safe_multiprocessing_with_blas = pytest.mark.skipif(
-            sys.platform == 'darwin',
-            reason="Possible multi-process bug with some BLAS")
+        sys.platform == 'darwin',
+        reason="Possible multi-process bug with some BLAS")
 except ImportError:
     pass
 
@@ -618,8 +621,8 @@ def create_memmap_backed_data(data, mmap_mode='r', return_folder=False):
     filename = op.join(temp_folder, 'data.pkl')
     joblib.dump(data, filename)
     memmap_backed_data = joblib.load(filename, mmap_mode=mmap_mode)
-    result = (memmap_backed_data if not return_folder
-              else (memmap_backed_data, temp_folder))
+    result = (memmap_backed_data if not return_folder else
+              (memmap_backed_data, temp_folder))
     return result
 
 
@@ -634,11 +637,15 @@ def _get_args(function, varargs=False):
     except ValueError:
         # Error on builtin C function
         return []
-    args = [key for key, param in params.items()
-            if param.kind not in (param.VAR_POSITIONAL, param.VAR_KEYWORD)]
+    args = [
+        key for key, param in params.items()
+        if param.kind not in (param.VAR_POSITIONAL, param.VAR_KEYWORD)
+    ]
     if varargs:
-        varargs = [param.name for param in params.values()
-                   if param.kind == param.VAR_POSITIONAL]
+        varargs = [
+            param.name for param in params.values()
+            if param.kind == param.VAR_POSITIONAL
+        ]
         if len(varargs) == 0:
             varargs = None
         return args, varargs
@@ -694,8 +701,8 @@ def check_docstring_parameters(func, doc=None, ignore=None):
     ignore = [] if ignore is None else ignore
 
     func_name = _get_func_name(func)
-    if (not func_name.startswith('sklearn.') or
-            func_name.startswith('sklearn.externals')):
+    if (not func_name.startswith('sklearn.')
+            or func_name.startswith('sklearn.externals')):
         return incorrect
     # Don't check docstring for property-functions
     if inspect.isdatadescriptor(func):
@@ -728,13 +735,16 @@ def check_docstring_parameters(func, doc=None, ignore=None):
         # Type hints are empty only if parameter name ended with :
         if not type_definition.strip():
             if ':' in name and name[:name.index(':')][-1:].strip():
-                incorrect += [func_name +
-                              ' There was no space between the param name and '
-                              'colon (%r)' % name]
+                incorrect += [
+                    func_name +
+                    ' There was no space between the param name and '
+                    'colon (%r)' % name
+                ]
             elif name.rstrip().endswith(':'):
-                incorrect += [func_name +
-                              ' Parameter %r has an empty type spec. '
-                              'Remove the colon' % (name.lstrip())]
+                incorrect += [
+                    func_name + ' Parameter %r has an empty type spec. '
+                    'Remove the colon' % (name.lstrip())
+                ]
 
         # Create a list of parameters to compare with the parameters gotten
         # from the func signature
@@ -756,20 +766,25 @@ def check_docstring_parameters(func, doc=None, ignore=None):
     message = []
     for i in range(min(len(param_docs), len(param_signature))):
         if param_signature[i] != param_docs[i]:
-            message += ["There's a parameter name mismatch in function"
-                        " docstring w.r.t. function signature, at index %s"
-                        " diff: %r != %r" %
-                        (i, param_signature[i], param_docs[i])]
+            message += [
+                "There's a parameter name mismatch in function"
+                " docstring w.r.t. function signature, at index %s"
+                " diff: %r != %r" % (i, param_signature[i], param_docs[i])
+            ]
             break
     if len(param_signature) > len(param_docs):
-        message += ["Parameters in function docstring have less items w.r.t."
-                    " function signature, first missing item: %s" %
-                    param_signature[len(param_docs)]]
+        message += [
+            "Parameters in function docstring have less items w.r.t."
+            " function signature, first missing item: %s" %
+            param_signature[len(param_docs)]
+        ]
 
     elif len(param_signature) < len(param_docs):
-        message += ["Parameters in function docstring have more items w.r.t."
-                    " function signature, first extra item: %s" %
-                    param_docs[len(param_signature)]]
+        message += [
+            "Parameters in function docstring have more items w.r.t."
+            " function signature, first extra item: %s" %
+            param_docs[len(param_signature)]
+        ]
 
     # If there wasn't any difference in the parameters themselves between
     # docstring and signature including having the same length then return
@@ -785,10 +800,8 @@ def check_docstring_parameters(func, doc=None, ignore=None):
 
     message += ["Full diff:"]
 
-    message.extend(
-        line.strip() for line in difflib.ndiff(param_signature_formatted,
-                                               param_docs_formatted)
-    )
+    message.extend(line.strip() for line in difflib.ndiff(
+        param_signature_formatted, param_docs_formatted))
 
     incorrect.extend(message)
 
@@ -825,11 +838,7 @@ def assert_run_python_script(source_code, timeout=60):
             env["PYTHONPATH"] = os.pathsep.join([cwd, env["PYTHONPATH"]])
         except KeyError:
             env["PYTHONPATH"] = cwd
-        kwargs = {
-            'cwd': cwd,
-            'stderr': STDOUT,
-            'env': env
-        }
+        kwargs = {'cwd': cwd, 'stderr': STDOUT, 'env': env}
         # If coverage is running, pass the config file to the subprocess
         coverage_rc = os.environ.get("COVERAGE_PROCESS_START")
         if coverage_rc:
@@ -840,13 +849,13 @@ def assert_run_python_script(source_code, timeout=60):
             try:
                 out = check_output(cmd, **kwargs)
             except CalledProcessError as e:
-                raise RuntimeError(u"script errored with output:\n%s"
-                                   % e.output.decode('utf-8'))
+                raise RuntimeError(u"script errored with output:\n%s" %
+                                   e.output.decode('utf-8'))
             if out != b"":
                 raise AssertionError(out.decode('utf-8'))
         except TimeoutExpired as e:
-            raise RuntimeError(u"script timeout, output so far:\n%s"
-                               % e.output.decode('utf-8'))
+            raise RuntimeError(u"script timeout, output so far:\n%s" %
+                               e.output.decode('utf-8'))
     finally:
         os.unlink(source_file)
 

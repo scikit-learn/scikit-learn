@@ -9,13 +9,10 @@ from contextlib import suppress
 # (new_module_name, deprecated_path, correct_import_path, importee)
 # importee is used by test_import_deprecations to check for DeprecationWarnings
 _DEPRECATED_MODULES = [
-    ('_mocking', 'sklearn.utils.mocking', 'sklearn.utils',
-     'MockDataFrame'),
-
+    ('_mocking', 'sklearn.utils.mocking', 'sklearn.utils', 'MockDataFrame'),
     ('_bagging', 'sklearn.ensemble.bagging', 'sklearn.ensemble',
      'BaggingClassifier'),
-    ('_base', 'sklearn.ensemble.base', 'sklearn.ensemble',
-     'BaseEnsemble'),
+    ('_base', 'sklearn.ensemble.base', 'sklearn.ensemble', 'BaseEnsemble'),
     ('_forest', 'sklearn.ensemble.forest', 'sklearn.ensemble',
      'RandomForestClassifier'),
     ('_gb', 'sklearn.ensemble.gradient_boosting', 'sklearn.ensemble',
@@ -29,18 +26,15 @@ _DEPRECATED_MODULES = [
     ('_classes', 'sklearn.tree.tree', 'sklearn.tree',
      'DecisionTreeClassifier'),
     ('_export', 'sklearn.tree.export', 'sklearn.tree', 'export_graphviz'),
-
     ('_rbm', 'sklearn.neural_network.rbm', 'sklearn.neural_network',
      'BernoulliRBM'),
     ('_multilayer_perceptron', 'sklearn.neural_network.multilayer_perceptron',
      'sklearn.neural_network', 'MLPClassifier'),
-
     ('_weight_vector', 'sklearn.utils.weight_vector', 'sklearn.utils',
      'WeightVector'),
     ('_seq_dataset', 'sklearn.utils.seq_dataset', 'sklearn.utils',
      'ArrayDataset32'),
     ('_fast_dict', 'sklearn.utils.fast_dict', 'sklearn.utils', 'IntFloatDict'),
-
     ('_affinity_propagation', 'sklearn.cluster.affinity_propagation_',
      'sklearn.cluster', 'AffinityPropagation'),
     ('_bicluster', 'sklearn.cluster.bicluster', 'sklearn.cluster',
@@ -55,29 +49,25 @@ _DEPRECATED_MODULES = [
     ('_optics', 'sklearn.cluster.optics_', 'sklearn.cluster', 'OPTICS'),
     ('_spectral', 'sklearn.cluster.spectral', 'sklearn.cluster',
      'SpectralClustering'),
-
     ('_base', 'sklearn.mixture.base', 'sklearn.mixture', 'BaseMixture'),
     ('_gaussian_mixture', 'sklearn.mixture.gaussian_mixture',
      'sklearn.mixture', 'GaussianMixture'),
     ('_bayesian_mixture', 'sklearn.mixture.bayesian_mixture',
      'sklearn.mixture', 'BayesianGaussianMixture'),
-
     ('_empirical_covariance', 'sklearn.covariance.empirical_covariance_',
      'sklearn.covariance', 'EmpiricalCovariance'),
     ('_shrunk_covariance', 'sklearn.covariance.shrunk_covariance_',
      'sklearn.covariance', 'ShrunkCovariance'),
     ('_robust_covariance', 'sklearn.covariance.robust_covariance',
      'sklearn.covariance', 'MinCovDet'),
-    ('_graph_lasso', 'sklearn.covariance.graph_lasso_',
-     'sklearn.covariance', 'GraphicalLasso'),
+    ('_graph_lasso', 'sklearn.covariance.graph_lasso_', 'sklearn.covariance',
+     'GraphicalLasso'),
     ('_elliptic_envelope', 'sklearn.covariance.elliptic_envelope',
      'sklearn.covariance', 'EllipticEnvelope'),
-
-    ('_cca', 'sklearn.cross_decomposition.cca_',
-     'sklearn.cross_decomposition', 'CCA'),
-    ('_pls', 'sklearn.cross_decomposition.pls_',
-     'sklearn.cross_decomposition', 'PLSSVD'),
-
+    ('_cca', 'sklearn.cross_decomposition.cca_', 'sklearn.cross_decomposition',
+     'CCA'),
+    ('_pls', 'sklearn.cross_decomposition.pls_', 'sklearn.cross_decomposition',
+     'PLSSVD'),
     ('_base', 'sklearn.svm.base', 'sklearn.svm', 'BaseLibSVM'),
     ('_bounds', 'sklearn.svm.bounds', 'sklearn.svm', 'l1_min_c'),
     ('_classes', 'sklearn.svm.classes', 'sklearn.svm', 'SVR'),
@@ -85,7 +75,6 @@ _DEPRECATED_MODULES = [
     ('_libsvm_sparse', 'sklearn.svm.libsvm_sparse', 'sklearn.svm',
      'set_verbosity_wrap'),
     ('_liblinear', 'sklearn.svm.liblinear', 'sklearn.svm', 'train_wrap'),
-
     ('_base', 'sklearn.decomposition.base', 'sklearn.decomposition',
      'BaseEstimator'),
     ('_dict_learning', 'sklearn.decomposition.dict_learning',
@@ -101,8 +90,8 @@ _DEPRECATED_MODULES = [
     ('_kernel_pca', 'sklearn.decomposition.kernel_pca',
      'sklearn.decomposition', 'KernelPCA'),
     ('_nmf', 'sklearn.decomposition.nmf', 'sklearn.decomposition', 'NMF'),
-    ('_lda', 'sklearn.decomposition.online_lda',
-     'sklearn.decomposition', 'LatentDirichletAllocation'),
+    ('_lda', 'sklearn.decomposition.online_lda', 'sklearn.decomposition',
+     'LatentDirichletAllocation'),
     ('_online_lda_fast', 'sklearn.decomposition.online_lda_fast',
      'sklearn.decomposition', 'mean_change'),
     ('_pca', 'sklearn.decomposition.pca', 'sklearn.decomposition', 'PCA'),
@@ -110,12 +99,10 @@ _DEPRECATED_MODULES = [
      'sklearn.decomposition', 'SparsePCA'),
     ('_truncated_svd', 'sklearn.decomposition.truncated_svd',
      'sklearn.decomposition', 'TruncatedSVD'),
-
     ('_gpr', 'sklearn.gaussian_process.gpr', 'sklearn.gaussian_process',
      'GaussianProcessRegressor'),
     ('_gpc', 'sklearn.gaussian_process.gpc', 'sklearn.gaussian_process',
      'GaussianProcessClassifier'),
-
     ('_base', 'sklearn.datasets.base', 'sklearn.datasets', 'get_data_home'),
     ('_california_housing', 'sklearn.datasets.california_housing',
      'sklearn.datasets', 'fetch_california_housing'),
@@ -123,8 +110,7 @@ _DEPRECATED_MODULES = [
      'fetch_covtype'),
     ('_kddcup99', 'sklearn.datasets.kddcup99', 'sklearn.datasets',
      'fetch_kddcup99'),
-    ('_lfw', 'sklearn.datasets.lfw', 'sklearn.datasets',
-     'fetch_lfw_people'),
+    ('_lfw', 'sklearn.datasets.lfw', 'sklearn.datasets', 'fetch_lfw_people'),
     ('_olivetti_faces', 'sklearn.datasets.olivetti_faces', 'sklearn.datasets',
      'fetch_olivetti_faces'),
     ('_openml', 'sklearn.datasets.openml', 'sklearn.datasets', 'fetch_openml'),
@@ -137,14 +123,12 @@ _DEPRECATED_MODULES = [
      'sklearn.datasets', 'load_svmlight_file'),
     ('_twenty_newsgroups', 'sklearn.datasets.twenty_newsgroups',
      'sklearn.datasets', 'strip_newsgroup_header'),
-
     ('_dict_vectorizer', 'sklearn.feature_extraction.dict_vectorizer',
      'sklearn.feature_extraction', 'DictVectorizer'),
     ('_hash', 'sklearn.feature_extraction.hashing',
      'sklearn.feature_extraction', 'FeatureHasher'),
     ('_stop_words', 'sklearn.feature_extraction.stop_words',
      'sklearn.feature_extraction.text', 'ENGLISH_STOP_WORDS'),
-
     ('_base', 'sklearn.linear_model.base', 'sklearn.linear_model',
      'LinearRegression'),
     ('_cd_fast', 'sklearn.linear_model.cd_fast', 'sklearn.linear_model',
@@ -167,8 +151,7 @@ _DEPRECATED_MODULES = [
      'Perceptron'),
     ('_ransac', 'sklearn.linear_model.ransac', 'sklearn.linear_model',
      'RANSACRegressor'),
-    ('_ridge', 'sklearn.linear_model.ridge', 'sklearn.linear_model',
-     'Ridge'),
+    ('_ridge', 'sklearn.linear_model.ridge', 'sklearn.linear_model', 'Ridge'),
     ('_sag', 'sklearn.linear_model.sag', 'sklearn.linear_model',
      'get_auto_step_size'),
     ('_sag_fast', 'sklearn.linear_model.sag_fast', 'sklearn.linear_model',
@@ -179,7 +162,6 @@ _DEPRECATED_MODULES = [
      'sklearn.linear_model', 'SGDClassifier'),
     ('_theil_sen', 'sklearn.linear_model.theil_sen', 'sklearn.linear_model',
      'TheilSenRegressor'),
-
     ('_bicluster', 'sklearn.metrics.cluster.bicluster',
      'sklearn.metrics.cluster', 'consensus_score'),
     ('_supervised', 'sklearn.metrics.cluster.supervised',
@@ -189,7 +171,6 @@ _DEPRECATED_MODULES = [
     ('_expected_mutual_info_fast',
      'sklearn.metrics.cluster.expected_mutual_info_fast',
      'sklearn.metrics.cluster', 'expected_mutual_information'),
-
     ('_base', 'sklearn.metrics.base', 'sklearn.metrics', 'combinations'),
     ('_classification', 'sklearn.metrics.classification', 'sklearn.metrics',
      'accuracy_score'),
@@ -199,24 +180,19 @@ _DEPRECATED_MODULES = [
     ('_pairwise_fast', 'sklearn.metrics.pairwise_fast', 'sklearn.metrics',
      'np'),
     ('_scorer', 'sklearn.metrics.scorer', 'sklearn.metrics', 'get_scorer'),
-
     ('_partial_dependence', 'sklearn.inspection.partial_dependence',
      'sklearn.inspection', 'partial_dependence'),
-
     ('_ball_tree', 'sklearn.neighbors.ball_tree', 'sklearn.neighbors',
      'BallTree'),
-    ('_base', 'sklearn.neighbors.base', 'sklearn.neighbors',
-     'VALID_METRICS'),
+    ('_base', 'sklearn.neighbors.base', 'sklearn.neighbors', 'VALID_METRICS'),
     ('_classification', 'sklearn.neighbors.classification',
      'sklearn.neighbors', 'KNeighborsClassifier'),
     ('_dist_metrics', 'sklearn.neighbors.dist_metrics', 'sklearn.neighbors',
      'DistanceMetric'),
     ('_graph', 'sklearn.neighbors.graph', 'sklearn.neighbors',
      'KNeighborsTransformer'),
-    ('_kd_tree', 'sklearn.neighbors.kd_tree', 'sklearn.neighbors',
-     'KDTree'),
-    ('_kde', 'sklearn.neighbors.kde', 'sklearn.neighbors',
-     'KernelDensity'),
+    ('_kd_tree', 'sklearn.neighbors.kd_tree', 'sklearn.neighbors', 'KDTree'),
+    ('_kde', 'sklearn.neighbors.kde', 'sklearn.neighbors', 'KernelDensity'),
     ('_lof', 'sklearn.neighbors.lof', 'sklearn.neighbors',
      'LocalOutlierFactor'),
     ('_nca', 'sklearn.neighbors.nca', 'sklearn.neighbors',
@@ -227,11 +203,9 @@ _DEPRECATED_MODULES = [
      'CELL_DTYPE'),
     ('_regression', 'sklearn.neighbors.regression', 'sklearn.neighbors',
      'KNeighborsRegressor'),
-    ('_typedefs', 'sklearn.neighbors.typedefs', 'sklearn.neighbors',
-     'DTYPE'),
+    ('_typedefs', 'sklearn.neighbors.typedefs', 'sklearn.neighbors', 'DTYPE'),
     ('_unsupervised', 'sklearn.neighbors.unsupervised', 'sklearn.neighbors',
      'NearestNeighbors'),
-
     ('_isomap', 'sklearn.manifold.isomap', 'sklearn.manifold', 'Isomap'),
     ('_locally_linear', 'sklearn.manifold.locally_linear', 'sklearn.manifold',
      'LocallyLinearEmbedding'),
@@ -239,34 +213,26 @@ _DEPRECATED_MODULES = [
     ('_spectral_embedding', 'sklearn.manifold.spectral_embedding_',
      'sklearn.manifold', 'SpectralEmbedding'),
     ('_t_sne', 'sklearn.manifold.t_sne', 'sklearn.manifold', 'TSNE'),
-
     ('_label_propagation', 'sklearn.semi_supervised.label_propagation',
      'sklearn.semi_supervised', 'LabelPropagation'),
-
     ('_data', 'sklearn.preprocessing.data', 'sklearn.preprocessing',
      'Binarizer'),
     ('_label', 'sklearn.preprocessing.label', 'sklearn.preprocessing',
      'LabelEncoder'),
-
     ('_base', 'sklearn.feature_selection.base', 'sklearn.feature_selection',
      'SelectorMixin'),
     ('_from_model', 'sklearn.feature_selection.from_model',
      'sklearn.feature_selection', 'SelectFromModel'),
     ('_mutual_info', 'sklearn.feature_selection.mutual_info',
      'sklearn.feature_selection', 'mutual_info_regression'),
-    ('_rfe', 'sklearn.feature_selection.rfe',
-     'sklearn.feature_selection.rfe', 'RFE'),
-    ('_univariate_selection',
-     'sklearn.feature_selection.univariate_selection',
+    ('_rfe', 'sklearn.feature_selection.rfe', 'sklearn.feature_selection.rfe',
+     'RFE'),
+    ('_univariate_selection', 'sklearn.feature_selection.univariate_selection',
      'sklearn.feature_selection', 'chi2'),
-    ('_variance_threshold',
-     'sklearn.feature_selection.variance_threshold',
+    ('_variance_threshold', 'sklearn.feature_selection.variance_threshold',
      'sklearn.feature_selection', 'VarianceThreshold'),
-
-    ('_testing', 'sklearn.utils.testing', 'sklearn.utils',
-     'all_estimators'),
+    ('_testing', 'sklearn.utils.testing', 'sklearn.utils', 'all_estimators'),
 ]
-
 
 _FILE_CONTENT_TEMPLATE = """
 # THIS FILE WAS AUTOMATICALLY GENERATED BY deprecated_modules.py
@@ -300,8 +266,8 @@ def _create_deprecated_modules_files():
     on the deprecated submodule's name. When this submodule is imported a
     deprecation warning will be raised.
     """
-    for (new_module_name, deprecated_path,
-         correct_import_path, _) in _DEPRECATED_MODULES:
+    for (new_module_name, deprecated_path, correct_import_path,
+         _) in _DEPRECATED_MODULES:
         relative_dots = deprecated_path.count(".") * "."
         deprecated_content = _FILE_CONTENT_TEMPLATE.format(
             new_module_name=new_module_name,

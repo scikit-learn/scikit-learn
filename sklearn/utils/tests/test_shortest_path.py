@@ -79,17 +79,15 @@ def test_shortest_path():
         for i in range(dist_matrix.shape[0]):
             # Non-reachable nodes have distance 0 in graph_py
             dist_dict = defaultdict(int)
-            dist_dict.update(single_source_shortest_path_length(dist_matrix,
-                                                                i))
+            dist_dict.update(single_source_shortest_path_length(
+                dist_matrix, i))
 
             for j in range(graph_py[i].shape[0]):
                 assert_array_almost_equal(dist_dict[j], graph_py[i, j])
 
 
 def test_dijkstra_bug_fix():
-    X = np.array([[0., 0., 4.],
-                  [1., 0., 2.],
-                  [0., 5., 0.]])
+    X = np.array([[0., 0., 4.], [1., 0., 2.], [0., 5., 0.]])
     dist_FW = graph_shortest_path(X, directed=False, method='FW')
     dist_D = graph_shortest_path(X, directed=False, method='D')
     assert_array_almost_equal(dist_D, dist_FW)

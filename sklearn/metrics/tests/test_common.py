@@ -1,4 +1,3 @@
-
 from functools import partial
 from itertools import product
 from itertools import chain
@@ -59,7 +58,6 @@ from sklearn.metrics import dcg_score
 
 from sklearn.metrics._base import _average_binary_score
 
-
 # Note toward developers about metric testing
 # -------------------------------------------
 # It is often possible to write one general test for several metrics:
@@ -103,73 +101,106 @@ REGRESSION_METRICS = {
     "mean_normal_deviance": partial(mean_tweedie_deviance, power=0),
     "mean_poisson_deviance": mean_poisson_deviance,
     "mean_gamma_deviance": mean_gamma_deviance,
-    "mean_compound_poisson_deviance":
-    partial(mean_tweedie_deviance, power=1.4),
+    "mean_compound_poisson_deviance": partial(mean_tweedie_deviance,
+                                              power=1.4),
 }
 
 CLASSIFICATION_METRICS = {
-    "accuracy_score": accuracy_score,
-    "balanced_accuracy_score": balanced_accuracy_score,
-    "adjusted_balanced_accuracy_score": partial(balanced_accuracy_score,
-                                                adjusted=True),
-    "unnormalized_accuracy_score": partial(accuracy_score, normalize=False),
+    "accuracy_score":
+    accuracy_score,
+    "balanced_accuracy_score":
+    balanced_accuracy_score,
+    "adjusted_balanced_accuracy_score":
+    partial(balanced_accuracy_score, adjusted=True),
+    "unnormalized_accuracy_score":
+    partial(accuracy_score, normalize=False),
 
     # `confusion_matrix` returns absolute values and hence behaves unnormalized
     # . Naming it with an unnormalized_ prefix is necessary for this module to
     # skip sample_weight scaling checks which will fail for unnormalized
     # metrics.
-    "unnormalized_confusion_matrix": confusion_matrix,
-    "normalized_confusion_matrix": lambda *args, **kwargs: (
-        confusion_matrix(*args, **kwargs).astype('float') / confusion_matrix(
-            *args, **kwargs).sum(axis=1)[:, np.newaxis]
-    ),
-
-    "unnormalized_multilabel_confusion_matrix": multilabel_confusion_matrix,
+    "unnormalized_confusion_matrix":
+    confusion_matrix,
+    "normalized_confusion_matrix":
+    lambda *args, **kwargs:
+    (confusion_matrix(*args, **kwargs).astype('float') / confusion_matrix(
+        *args, **kwargs).sum(axis=1)[:, np.newaxis]),
+    "unnormalized_multilabel_confusion_matrix":
+    multilabel_confusion_matrix,
     "unnormalized_multilabel_confusion_matrix_sample":
-        partial(multilabel_confusion_matrix, samplewise=True),
-    "hamming_loss": hamming_loss,
-
-    "zero_one_loss": zero_one_loss,
-    "unnormalized_zero_one_loss": partial(zero_one_loss, normalize=False),
+    partial(multilabel_confusion_matrix, samplewise=True),
+    "hamming_loss":
+    hamming_loss,
+    "zero_one_loss":
+    zero_one_loss,
+    "unnormalized_zero_one_loss":
+    partial(zero_one_loss, normalize=False),
 
     # These are needed to test averaging
-    "jaccard_score": jaccard_score,
-    "precision_score": precision_score,
-    "recall_score": recall_score,
-    "f1_score": f1_score,
-    "f2_score": partial(fbeta_score, beta=2),
-    "f0.5_score": partial(fbeta_score, beta=0.5),
-    "matthews_corrcoef_score": matthews_corrcoef,
-
-    "weighted_f0.5_score": partial(fbeta_score, average="weighted", beta=0.5),
-    "weighted_f1_score": partial(f1_score, average="weighted"),
-    "weighted_f2_score": partial(fbeta_score, average="weighted", beta=2),
-    "weighted_precision_score": partial(precision_score, average="weighted"),
-    "weighted_recall_score": partial(recall_score, average="weighted"),
-    "weighted_jaccard_score": partial(jaccard_score, average="weighted"),
-
-    "micro_f0.5_score": partial(fbeta_score, average="micro", beta=0.5),
-    "micro_f1_score": partial(f1_score, average="micro"),
-    "micro_f2_score": partial(fbeta_score, average="micro", beta=2),
-    "micro_precision_score": partial(precision_score, average="micro"),
-    "micro_recall_score": partial(recall_score, average="micro"),
-    "micro_jaccard_score": partial(jaccard_score, average="micro"),
-
-    "macro_f0.5_score": partial(fbeta_score, average="macro", beta=0.5),
-    "macro_f1_score": partial(f1_score, average="macro"),
-    "macro_f2_score": partial(fbeta_score, average="macro", beta=2),
-    "macro_precision_score": partial(precision_score, average="macro"),
-    "macro_recall_score": partial(recall_score, average="macro"),
-    "macro_jaccard_score": partial(jaccard_score, average="macro"),
-
-    "samples_f0.5_score": partial(fbeta_score, average="samples", beta=0.5),
-    "samples_f1_score": partial(f1_score, average="samples"),
-    "samples_f2_score": partial(fbeta_score, average="samples", beta=2),
-    "samples_precision_score": partial(precision_score, average="samples"),
-    "samples_recall_score": partial(recall_score, average="samples"),
-    "samples_jaccard_score": partial(jaccard_score, average="samples"),
-
-    "cohen_kappa_score": cohen_kappa_score,
+    "jaccard_score":
+    jaccard_score,
+    "precision_score":
+    precision_score,
+    "recall_score":
+    recall_score,
+    "f1_score":
+    f1_score,
+    "f2_score":
+    partial(fbeta_score, beta=2),
+    "f0.5_score":
+    partial(fbeta_score, beta=0.5),
+    "matthews_corrcoef_score":
+    matthews_corrcoef,
+    "weighted_f0.5_score":
+    partial(fbeta_score, average="weighted", beta=0.5),
+    "weighted_f1_score":
+    partial(f1_score, average="weighted"),
+    "weighted_f2_score":
+    partial(fbeta_score, average="weighted", beta=2),
+    "weighted_precision_score":
+    partial(precision_score, average="weighted"),
+    "weighted_recall_score":
+    partial(recall_score, average="weighted"),
+    "weighted_jaccard_score":
+    partial(jaccard_score, average="weighted"),
+    "micro_f0.5_score":
+    partial(fbeta_score, average="micro", beta=0.5),
+    "micro_f1_score":
+    partial(f1_score, average="micro"),
+    "micro_f2_score":
+    partial(fbeta_score, average="micro", beta=2),
+    "micro_precision_score":
+    partial(precision_score, average="micro"),
+    "micro_recall_score":
+    partial(recall_score, average="micro"),
+    "micro_jaccard_score":
+    partial(jaccard_score, average="micro"),
+    "macro_f0.5_score":
+    partial(fbeta_score, average="macro", beta=0.5),
+    "macro_f1_score":
+    partial(f1_score, average="macro"),
+    "macro_f2_score":
+    partial(fbeta_score, average="macro", beta=2),
+    "macro_precision_score":
+    partial(precision_score, average="macro"),
+    "macro_recall_score":
+    partial(recall_score, average="macro"),
+    "macro_jaccard_score":
+    partial(jaccard_score, average="macro"),
+    "samples_f0.5_score":
+    partial(fbeta_score, average="samples", beta=0.5),
+    "samples_f1_score":
+    partial(f1_score, average="samples"),
+    "samples_f2_score":
+    partial(fbeta_score, average="samples", beta=2),
+    "samples_precision_score":
+    partial(precision_score, average="samples"),
+    "samples_recall_score":
+    partial(recall_score, average="samples"),
+    "samples_jaccard_score":
+    partial(jaccard_score, average="samples"),
+    "cohen_kappa_score":
+    cohen_kappa_score,
 }
 
 
@@ -191,8 +222,7 @@ def precision_recall_curve_padded_thresholds(*args, **kwargs):
     pad_threshholds = len(precision) - len(thresholds)
 
     return np.array([
-        precision,
-        recall,
+        precision, recall,
         np.pad(thresholds,
                pad_width=(0, pad_threshholds),
                mode='constant',
@@ -206,27 +236,36 @@ CURVE_METRICS = {
 }
 
 THRESHOLDED_METRICS = {
-    "coverage_error": coverage_error,
-    "label_ranking_loss": label_ranking_loss,
-    "log_loss": log_loss,
-    "unnormalized_log_loss": partial(log_loss, normalize=False),
-
-    "hinge_loss": hinge_loss,
-
-    "brier_score_loss": brier_score_loss,
-
-    "roc_auc_score": roc_auc_score,  # default: average="macro"
-    "weighted_roc_auc": partial(roc_auc_score, average="weighted"),
-    "samples_roc_auc": partial(roc_auc_score, average="samples"),
-    "micro_roc_auc": partial(roc_auc_score, average="micro"),
-    "ovr_roc_auc": partial(roc_auc_score, average="macro", multi_class='ovr'),
-    "weighted_ovr_roc_auc": partial(roc_auc_score, average="weighted",
-                                    multi_class='ovr'),
-    "ovo_roc_auc": partial(roc_auc_score, average="macro", multi_class='ovo'),
-    "weighted_ovo_roc_auc": partial(roc_auc_score, average="weighted",
-                                    multi_class='ovo'),
-    "partial_roc_auc": partial(roc_auc_score, max_fpr=0.5),
-
+    "coverage_error":
+    coverage_error,
+    "label_ranking_loss":
+    label_ranking_loss,
+    "log_loss":
+    log_loss,
+    "unnormalized_log_loss":
+    partial(log_loss, normalize=False),
+    "hinge_loss":
+    hinge_loss,
+    "brier_score_loss":
+    brier_score_loss,
+    "roc_auc_score":
+    roc_auc_score,  # default: average="macro"
+    "weighted_roc_auc":
+    partial(roc_auc_score, average="weighted"),
+    "samples_roc_auc":
+    partial(roc_auc_score, average="samples"),
+    "micro_roc_auc":
+    partial(roc_auc_score, average="micro"),
+    "ovr_roc_auc":
+    partial(roc_auc_score, average="macro", multi_class='ovr'),
+    "weighted_ovr_roc_auc":
+    partial(roc_auc_score, average="weighted", multi_class='ovr'),
+    "ovo_roc_auc":
+    partial(roc_auc_score, average="macro", multi_class='ovo'),
+    "weighted_ovo_roc_auc":
+    partial(roc_auc_score, average="weighted", multi_class='ovo'),
+    "partial_roc_auc":
+    partial(roc_auc_score, max_fpr=0.5),
     "average_precision_score":
     average_precision_score,  # default: average="macro"
     "weighted_average_precision_score":
@@ -237,8 +276,10 @@ THRESHOLDED_METRICS = {
     partial(average_precision_score, average="micro"),
     "label_ranking_average_precision_score":
     label_ranking_average_precision_score,
-    "ndcg_score": ndcg_score,
-    "dcg_score": dcg_score
+    "ndcg_score":
+    ndcg_score,
+    "dcg_score":
+    dcg_score
 }
 
 ALL_METRICS = dict()
@@ -258,35 +299,25 @@ ALL_METRICS.update(CURVE_METRICS)
 
 # Those metrics don't support binary inputs
 METRIC_UNDEFINED_BINARY = {
-    "samples_f0.5_score",
-    "samples_f1_score",
-    "samples_f2_score",
-    "samples_precision_score",
-    "samples_recall_score",
-    "samples_jaccard_score",
-    "coverage_error",
-    "unnormalized_multilabel_confusion_matrix_sample",
-    "label_ranking_loss",
-    "label_ranking_average_precision_score",
-    "dcg_score",
+    "samples_f0.5_score", "samples_f1_score", "samples_f2_score",
+    "samples_precision_score", "samples_recall_score", "samples_jaccard_score",
+    "coverage_error", "unnormalized_multilabel_confusion_matrix_sample",
+    "label_ranking_loss", "label_ranking_average_precision_score", "dcg_score",
     "ndcg_score"
 }
 
 # Those metrics don't support multiclass inputs
 METRIC_UNDEFINED_MULTICLASS = {
     "brier_score_loss",
-
     "micro_roc_auc",
     "samples_roc_auc",
     "partial_roc_auc",
     "roc_auc_score",
     "weighted_roc_auc",
-
     "average_precision_score",
     "weighted_average_precision_score",
     "micro_average_precision_score",
     "samples_average_precision_score",
-
     "jaccard_score",
 
     # with default average='binary', multiclass is prohibited
@@ -313,33 +344,43 @@ METRICS_WITH_AVERAGING = {
 
 # Threshold-based metrics with an "average" argument
 THRESHOLDED_METRICS_WITH_AVERAGING = {
-    "roc_auc_score", "average_precision_score", "partial_roc_auc",
+    "roc_auc_score",
+    "average_precision_score",
+    "partial_roc_auc",
 }
 
 # Metrics with a "pos_label" argument
 METRICS_WITH_POS_LABEL = {
     "roc_curve",
     "precision_recall_curve",
-
     "brier_score_loss",
-
-    "precision_score", "recall_score", "f1_score", "f2_score", "f0.5_score",
+    "precision_score",
+    "recall_score",
+    "f1_score",
+    "f2_score",
+    "f0.5_score",
     "jaccard_score",
-
     "average_precision_score",
     "weighted_average_precision_score",
     "micro_average_precision_score",
     "samples_average_precision_score",
 
     # pos_label support deprecated; to be removed in 0.18:
-    "weighted_f0.5_score", "weighted_f1_score", "weighted_f2_score",
-    "weighted_precision_score", "weighted_recall_score",
-
-    "micro_f0.5_score", "micro_f1_score", "micro_f2_score",
-    "micro_precision_score", "micro_recall_score",
-
-    "macro_f0.5_score", "macro_f1_score", "macro_f2_score",
-    "macro_precision_score", "macro_recall_score",
+    "weighted_f0.5_score",
+    "weighted_f1_score",
+    "weighted_f2_score",
+    "weighted_precision_score",
+    "weighted_recall_score",
+    "micro_f0.5_score",
+    "micro_f1_score",
+    "micro_f2_score",
+    "micro_precision_score",
+    "micro_recall_score",
+    "macro_f0.5_score",
+    "macro_f1_score",
+    "macro_f2_score",
+    "macro_precision_score",
+    "macro_recall_score",
 }
 
 # Metrics with a "labels" argument
@@ -350,25 +391,32 @@ METRICS_WITH_LABELS = {
     "normalized_confusion_matrix",
     "roc_curve",
     "precision_recall_curve",
-
-    "precision_score", "recall_score", "f1_score", "f2_score", "f0.5_score",
+    "precision_score",
+    "recall_score",
+    "f1_score",
+    "f2_score",
+    "f0.5_score",
     "jaccard_score",
-
-    "weighted_f0.5_score", "weighted_f1_score", "weighted_f2_score",
-    "weighted_precision_score", "weighted_recall_score",
+    "weighted_f0.5_score",
+    "weighted_f1_score",
+    "weighted_f2_score",
+    "weighted_precision_score",
+    "weighted_recall_score",
     "weighted_jaccard_score",
-
-    "micro_f0.5_score", "micro_f1_score", "micro_f2_score",
-    "micro_precision_score", "micro_recall_score",
+    "micro_f0.5_score",
+    "micro_f1_score",
+    "micro_f2_score",
+    "micro_precision_score",
+    "micro_recall_score",
     "micro_jaccard_score",
-
-    "macro_f0.5_score", "macro_f1_score", "macro_f2_score",
-    "macro_precision_score", "macro_recall_score",
+    "macro_f0.5_score",
+    "macro_f1_score",
+    "macro_f2_score",
+    "macro_precision_score",
+    "macro_recall_score",
     "macro_jaccard_score",
-
     "unnormalized_multilabel_confusion_matrix",
     "unnormalized_multilabel_confusion_matrix_sample",
-
     "cohen_kappa_score",
 }
 
@@ -382,43 +430,53 @@ METRICS_WITH_NORMALIZE_OPTION = {
 THRESHOLDED_MULTILABEL_METRICS = {
     "log_loss",
     "unnormalized_log_loss",
-
-    "roc_auc_score", "weighted_roc_auc", "samples_roc_auc",
-    "micro_roc_auc", "partial_roc_auc",
-
-    "average_precision_score", "weighted_average_precision_score",
-    "samples_average_precision_score", "micro_average_precision_score",
-
-    "coverage_error", "label_ranking_loss",
-
+    "roc_auc_score",
+    "weighted_roc_auc",
+    "samples_roc_auc",
+    "micro_roc_auc",
+    "partial_roc_auc",
+    "average_precision_score",
+    "weighted_average_precision_score",
+    "samples_average_precision_score",
+    "micro_average_precision_score",
+    "coverage_error",
+    "label_ranking_loss",
     "ndcg_score",
     "dcg_score",
-
     "label_ranking_average_precision_score",
 }
 
 # Classification metrics with  "multilabel-indicator" format
 MULTILABELS_METRICS = {
-    "accuracy_score", "unnormalized_accuracy_score",
+    "accuracy_score",
+    "unnormalized_accuracy_score",
     "hamming_loss",
-    "zero_one_loss", "unnormalized_zero_one_loss",
-
-    "weighted_f0.5_score", "weighted_f1_score", "weighted_f2_score",
-    "weighted_precision_score", "weighted_recall_score",
+    "zero_one_loss",
+    "unnormalized_zero_one_loss",
+    "weighted_f0.5_score",
+    "weighted_f1_score",
+    "weighted_f2_score",
+    "weighted_precision_score",
+    "weighted_recall_score",
     "weighted_jaccard_score",
-
-    "macro_f0.5_score", "macro_f1_score", "macro_f2_score",
-    "macro_precision_score", "macro_recall_score",
+    "macro_f0.5_score",
+    "macro_f1_score",
+    "macro_f2_score",
+    "macro_precision_score",
+    "macro_recall_score",
     "macro_jaccard_score",
-
-    "micro_f0.5_score", "micro_f1_score", "micro_f2_score",
-    "micro_precision_score", "micro_recall_score",
+    "micro_f0.5_score",
+    "micro_f1_score",
+    "micro_f2_score",
+    "micro_precision_score",
+    "micro_recall_score",
     "micro_jaccard_score",
-
     "unnormalized_multilabel_confusion_matrix",
-
-    "samples_f0.5_score", "samples_f1_score", "samples_f2_score",
-    "samples_precision_score", "samples_recall_score",
+    "samples_f0.5_score",
+    "samples_f1_score",
+    "samples_f2_score",
+    "samples_precision_score",
+    "samples_recall_score",
     "samples_jaccard_score",
 }
 
@@ -431,57 +489,52 @@ MULTIOUTPUT_METRICS = {
 # Symmetric with respect to their input arguments y_true and y_pred
 # metric(y_true, y_pred) == metric(y_pred, y_true).
 SYMMETRIC_METRICS = {
-    "accuracy_score", "unnormalized_accuracy_score",
+    "accuracy_score",
+    "unnormalized_accuracy_score",
     "hamming_loss",
-    "zero_one_loss", "unnormalized_zero_one_loss",
-
-    "micro_jaccard_score", "macro_jaccard_score",
+    "zero_one_loss",
+    "unnormalized_zero_one_loss",
+    "micro_jaccard_score",
+    "macro_jaccard_score",
     "jaccard_score",
     "samples_jaccard_score",
-
-    "f1_score", "micro_f1_score", "macro_f1_score",
+    "f1_score",
+    "micro_f1_score",
+    "macro_f1_score",
     "weighted_recall_score",
     # P = R = F = accuracy in multiclass case
-    "micro_f0.5_score", "micro_f1_score", "micro_f2_score",
-    "micro_precision_score", "micro_recall_score",
-
-    "matthews_corrcoef_score", "mean_absolute_error", "mean_squared_error",
-    "median_absolute_error", "max_error",
-
-    "cohen_kappa_score", "mean_normal_deviance"
+    "micro_f0.5_score",
+    "micro_f1_score",
+    "micro_f2_score",
+    "micro_precision_score",
+    "micro_recall_score",
+    "matthews_corrcoef_score",
+    "mean_absolute_error",
+    "mean_squared_error",
+    "median_absolute_error",
+    "max_error",
+    "cohen_kappa_score",
+    "mean_normal_deviance"
 }
 
 # Asymmetric with respect to their input arguments y_true and y_pred
 # metric(y_true, y_pred) != metric(y_pred, y_true).
 NOT_SYMMETRIC_METRICS = {
-    "balanced_accuracy_score",
-    "adjusted_balanced_accuracy_score",
-    "explained_variance_score",
-    "r2_score",
-    "unnormalized_confusion_matrix",
-    "normalized_confusion_matrix",
-    "roc_curve",
-    "precision_recall_curve",
-
+    "balanced_accuracy_score", "adjusted_balanced_accuracy_score",
+    "explained_variance_score", "r2_score", "unnormalized_confusion_matrix",
+    "normalized_confusion_matrix", "roc_curve", "precision_recall_curve",
     "precision_score", "recall_score", "f2_score", "f0.5_score",
-
     "weighted_f0.5_score", "weighted_f1_score", "weighted_f2_score",
     "weighted_precision_score", "weighted_jaccard_score",
-    "unnormalized_multilabel_confusion_matrix",
-
-    "macro_f0.5_score", "macro_f2_score", "macro_precision_score",
-    "macro_recall_score", "log_loss", "hinge_loss",
-    "mean_gamma_deviance", "mean_poisson_deviance",
+    "unnormalized_multilabel_confusion_matrix", "macro_f0.5_score",
+    "macro_f2_score", "macro_precision_score", "macro_recall_score",
+    "log_loss", "hinge_loss", "mean_gamma_deviance", "mean_poisson_deviance",
     "mean_compound_poisson_deviance"
 }
 
-
 # No Sample weight support
 METRICS_WITHOUT_SAMPLE_WEIGHT = {
-    "median_absolute_error",
-    "max_error",
-    "ovo_roc_auc",
-    "weighted_ovo_roc_auc"
+    "median_absolute_error", "max_error", "ovo_roc_auc", "weighted_ovo_roc_auc"
 }
 
 METRICS_REQUIRE_POSITIVE_Y = {
@@ -504,12 +557,9 @@ def test_symmetry_consistency():
     # We shouldn't forget any metrics
     assert (SYMMETRIC_METRICS.union(
         NOT_SYMMETRIC_METRICS, set(THRESHOLDED_METRICS),
-        METRIC_UNDEFINED_BINARY_MULTICLASS) ==
-        set(ALL_METRICS))
+        METRIC_UNDEFINED_BINARY_MULTICLASS) == set(ALL_METRICS))
 
-    assert (
-        SYMMETRIC_METRICS.intersection(NOT_SYMMETRIC_METRICS) ==
-        set())
+    assert (SYMMETRIC_METRICS.intersection(NOT_SYMMETRIC_METRICS) == set())
 
 
 @pytest.mark.parametrize("name", sorted(SYMMETRIC_METRICS))
@@ -558,8 +608,7 @@ def test_not_symmetric_metric(name):
 
 
 @pytest.mark.parametrize(
-        'name',
-        sorted(set(ALL_METRICS) - METRIC_UNDEFINED_BINARY_MULTICLASS))
+    'name', sorted(set(ALL_METRICS) - METRIC_UNDEFINED_BINARY_MULTICLASS))
 def test_sample_order_invariance(name):
     random_state = check_random_state(0)
     y_true = random_state.randint(0, 2, size=(20, ))
@@ -613,8 +662,7 @@ def test_sample_order_invariance_multilabel_and_multioutput():
 
 
 @pytest.mark.parametrize(
-        'name',
-        sorted(set(ALL_METRICS) - METRIC_UNDEFINED_BINARY_MULTICLASS))
+    'name', sorted(set(ALL_METRICS) - METRIC_UNDEFINED_BINARY_MULTICLASS))
 def test_format_invariance_with_1d_vectors(name):
     random_state = check_random_state(0)
     y1 = random_state.randint(0, 2, size=(20, ))
@@ -639,42 +687,51 @@ def test_format_invariance_with_1d_vectors(name):
 
         measure = metric(y1, y2)
 
-        assert_allclose(metric(y1_list, y2_list), measure,
+        assert_allclose(metric(y1_list, y2_list),
+                        measure,
                         err_msg="%s is not representation invariant with list"
-                                "" % name)
+                        "" % name)
 
-        assert_allclose(metric(y1_1d, y2_1d), measure,
+        assert_allclose(metric(y1_1d, y2_1d),
+                        measure,
                         err_msg="%s is not representation invariant with "
-                                "np-array-1d" % name)
+                        "np-array-1d" % name)
 
-        assert_allclose(metric(y1_column, y2_column), measure,
+        assert_allclose(metric(y1_column, y2_column),
+                        measure,
                         err_msg="%s is not representation invariant with "
-                                "np-array-column" % name)
+                        "np-array-column" % name)
 
         # Mix format support
-        assert_allclose(metric(y1_1d, y2_list), measure,
+        assert_allclose(metric(y1_1d, y2_list),
+                        measure,
                         err_msg="%s is not representation invariant with mix "
-                                "np-array-1d and list" % name)
+                        "np-array-1d and list" % name)
 
-        assert_allclose(metric(y1_list, y2_1d), measure,
+        assert_allclose(metric(y1_list, y2_1d),
+                        measure,
                         err_msg="%s is not representation invariant with mix "
-                                "np-array-1d and list" % name)
+                        "np-array-1d and list" % name)
 
-        assert_allclose(metric(y1_1d, y2_column), measure,
+        assert_allclose(metric(y1_1d, y2_column),
+                        measure,
                         err_msg="%s is not representation invariant with mix "
-                                "np-array-1d and np-array-column" % name)
+                        "np-array-1d and np-array-column" % name)
 
-        assert_allclose(metric(y1_column, y2_1d), measure,
+        assert_allclose(metric(y1_column, y2_1d),
+                        measure,
                         err_msg="%s is not representation invariant with mix "
-                                "np-array-1d and np-array-column" % name)
+                        "np-array-1d and np-array-column" % name)
 
-        assert_allclose(metric(y1_list, y2_column), measure,
+        assert_allclose(metric(y1_list, y2_column),
+                        measure,
                         err_msg="%s is not representation invariant with mix "
-                                "list and np-array-column" % name)
+                        "list and np-array-column" % name)
 
-        assert_allclose(metric(y1_column, y2_list), measure,
+        assert_allclose(metric(y1_column, y2_list),
+                        measure,
                         err_msg="%s is not representation invariant with mix "
-                                "list and np-array-column" % name)
+                        "list and np-array-column" % name)
 
         # These mix representations aren't allowed
         with pytest.raises(ValueError):
@@ -692,8 +749,8 @@ def test_format_invariance_with_1d_vectors(name):
 
         # NB: We do not test for y1_row, y2_row as these may be
         # interpreted as multilabel or multioutput data.
-        if (name not in (MULTIOUTPUT_METRICS | THRESHOLDED_MULTILABEL_METRICS |
-                         MULTILABELS_METRICS)):
+        if (name not in (MULTIOUTPUT_METRICS | THRESHOLDED_MULTILABEL_METRICS
+                         | MULTILABELS_METRICS)):
             with pytest.raises(ValueError):
                 metric(y1_row, y2_row)
 
@@ -724,28 +781,32 @@ def test_classification_invariance_string_vs_numbers_labels(name):
 
         measure_with_str = metric_str(y1_str, y2_str)
 
-        assert_array_equal(measure_with_number, measure_with_str,
+        assert_array_equal(measure_with_number,
+                           measure_with_str,
                            err_msg="{0} failed string vs number invariance "
-                                   "test".format(name))
+                           "test".format(name))
 
         measure_with_strobj = metric_str(y1_str.astype('O'),
                                          y2_str.astype('O'))
-        assert_array_equal(measure_with_number, measure_with_strobj,
+        assert_array_equal(measure_with_number,
+                           measure_with_strobj,
                            err_msg="{0} failed string object vs number "
-                                   "invariance test".format(name))
+                           "invariance test".format(name))
 
         if name in METRICS_WITH_LABELS:
             metric_str = partial(metric_str, labels=labels_str)
             measure_with_str = metric_str(y1_str, y2_str)
-            assert_array_equal(measure_with_number, measure_with_str,
+            assert_array_equal(measure_with_number,
+                               measure_with_str,
                                err_msg="{0} failed string vs number  "
-                                       "invariance test".format(name))
+                               "invariance test".format(name))
 
             measure_with_strobj = metric_str(y1_str.astype('O'),
                                              y2_str.astype('O'))
-            assert_array_equal(measure_with_number, measure_with_strobj,
+            assert_array_equal(measure_with_number,
+                               measure_with_strobj,
                                err_msg="{0} failed string vs number  "
-                                       "invariance test".format(name))
+                               "invariance test".format(name))
 
 
 @pytest.mark.parametrize('name', THRESHOLDED_METRICS)
@@ -769,14 +830,16 @@ def test_thresholded_invariance_string_vs_numbers_labels(name):
 
             measure_with_number = metric(y1, y2)
             measure_with_str = metric_str(y1_str, y2)
-            assert_array_equal(measure_with_number, measure_with_str,
+            assert_array_equal(measure_with_number,
+                               measure_with_str,
                                err_msg="{0} failed string vs number "
-                                       "invariance test".format(name))
+                               "invariance test".format(name))
 
             measure_with_strobj = metric_str(y1_str.astype('O'), y2)
-            assert_array_equal(measure_with_number, measure_with_strobj,
+            assert_array_equal(measure_with_number,
+                               measure_with_strobj,
                                err_msg="{0} failed string object vs number "
-                                       "invariance test".format(name))
+                               "invariance test".format(name))
         else:
             # TODO those metrics doesn't support string label yet
             with pytest.raises(ValueError):
@@ -785,14 +848,13 @@ def test_thresholded_invariance_string_vs_numbers_labels(name):
                 metric(y1_str.astype('O'), y2)
 
 
-invalids = [([0, 1], [np.inf, np.inf]),
-            ([0, 1], [np.nan, np.nan]),
+invalids = [([0, 1], [np.inf, np.inf]), ([0, 1], [np.nan, np.nan]),
             ([0, 1], [np.nan, np.inf])]
 
 
-@pytest.mark.parametrize(
-        'metric',
-        chain(THRESHOLDED_METRICS.values(), REGRESSION_METRICS.values()))
+@pytest.mark.parametrize('metric',
+                         chain(THRESHOLDED_METRICS.values(),
+                               REGRESSION_METRICS.values()))
 def test_regression_thresholded_inf_nan_input(metric):
 
     for y_true, y_score in invalids:
@@ -874,8 +936,8 @@ def test_multioutput_regression_invariance_to_dimension_shuffling(name):
         perm = random_state.permutation(y_true.shape[1])
         assert_allclose(metric(y_true[:, perm], y_pred[:, perm]),
                         error,
-                        err_msg="%s is not dimension shuffling invariant" % (
-                            name))
+                        err_msg="%s is not dimension shuffling invariant" %
+                        (name))
 
 
 @ignore_warnings
@@ -884,11 +946,15 @@ def test_multilabel_representation_invariance():
     n_classes = 4
     n_samples = 50
 
-    _, y1 = make_multilabel_classification(n_features=1, n_classes=n_classes,
-                                           random_state=0, n_samples=n_samples,
+    _, y1 = make_multilabel_classification(n_features=1,
+                                           n_classes=n_classes,
+                                           random_state=0,
+                                           n_samples=n_samples,
                                            allow_unlabeled=True)
-    _, y2 = make_multilabel_classification(n_features=1, n_classes=n_classes,
-                                           random_state=1, n_samples=n_samples,
+    _, y2 = make_multilabel_classification(n_features=1,
+                                           n_classes=n_classes,
+                                           random_state=1,
+                                           n_samples=n_samples,
                                            allow_unlabeled=True)
 
     # To make sure at least one empty label is present
@@ -918,30 +984,26 @@ def test_multilabel_representation_invariance():
         assert_allclose(metric(y1_sparse_indicator, y2_sparse_indicator),
                         measure,
                         err_msg="%s failed representation invariance between "
-                                "dense and sparse indicator formats." % name)
+                        "dense and sparse indicator formats." % name)
         assert_almost_equal(metric(y1_list_list_indicator,
                                    y2_list_list_indicator),
                             measure,
                             err_msg="%s failed representation invariance  "
-                                    "between dense array and list of list "
-                                    "indicator formats." % name)
+                            "between dense array and list of list "
+                            "indicator formats." % name)
         assert_almost_equal(metric(y1_list_array_indicator,
                                    y2_list_array_indicator),
                             measure,
                             err_msg="%s failed representation invariance  "
-                                    "between dense and list of array "
-                                    "indicator formats." % name)
+                            "between dense and list of array "
+                            "indicator formats." % name)
 
 
 @pytest.mark.parametrize('name', sorted(MULTILABELS_METRICS))
 def test_raise_value_error_multilabel_sequences(name):
     # make sure the multilabel-sequence format raises ValueError
-    multilabel_sequences = [
-        [[1], [2], [0, 1]],
-        [(), (2), (0, 1)],
-        [[]],
-        [()],
-        np.array([[], [1, 2]], dtype='object')]
+    multilabel_sequences = [[[1], [2], [0, 1]], [(), (2), (0, 1)], [[]], [()],
+                            np.array([[], [1, 2]], dtype='object')]
 
     metric = ALL_METRICS[name]
     for seq in multilabel_sequences:
@@ -959,11 +1021,12 @@ def test_normalize_option_binary_classification(name):
 
     metrics = ALL_METRICS[name]
     measure = metrics(y_true, y_pred, normalize=True)
-    assert_array_less(-1.0 * measure, 0,
+    assert_array_less(-1.0 * measure,
+                      0,
                       err_msg="We failed to test correctly the normalize "
-                              "option")
-    assert_allclose(metrics(y_true, y_pred, normalize=False) / n_samples,
-                    measure)
+                      "option")
+    assert_allclose(
+        metrics(y_true, y_pred, normalize=False) / n_samples, measure)
 
 
 @pytest.mark.parametrize('name', sorted(METRICS_WITH_NORMALIZE_OPTION))
@@ -976,11 +1039,12 @@ def test_normalize_option_multiclass_classification(name):
 
     metrics = ALL_METRICS[name]
     measure = metrics(y_true, y_pred, normalize=True)
-    assert_array_less(-1.0 * measure, 0,
+    assert_array_less(-1.0 * measure,
+                      0,
                       err_msg="We failed to test correctly the normalize "
-                              "option")
-    assert_allclose(metrics(y_true, y_pred, normalize=False) / n_samples,
-                    measure)
+                      "option")
+    assert_allclose(
+        metrics(y_true, y_pred, normalize=False) / n_samples, measure)
 
 
 def test_normalize_option_multilabel_classification():
@@ -1002,17 +1066,19 @@ def test_normalize_option_multilabel_classification():
                                                n_samples=n_samples)
 
     # To make sure at least one empty label is present
-    y_true += [0]*n_classes
-    y_pred += [0]*n_classes
+    y_true += [0] * n_classes
+    y_pred += [0] * n_classes
 
     for name in METRICS_WITH_NORMALIZE_OPTION:
         metrics = ALL_METRICS[name]
         measure = metrics(y_true, y_pred, normalize=True)
-        assert_array_less(-1.0 * measure, 0,
+        assert_array_less(-1.0 * measure,
+                          0,
                           err_msg="We failed to test correctly the normalize "
-                                  "option")
+                          "option")
         assert_allclose(metrics(y_true, y_pred, normalize=False) / n_samples,
-                        measure, err_msg="Failed with %s" % name)
+                        measure,
+                        err_msg="Failed with %s" % name)
 
 
 @ignore_warnings
@@ -1022,9 +1088,10 @@ def _check_averaging(metric, y_true, y_pred, y_true_binarize, y_pred_binarize,
 
     # No averaging
     label_measure = metric(y_true, y_pred, average=None)
-    assert_allclose(label_measure,
-                    [metric(y_true_binarize[:, i], y_pred_binarize[:, i])
-                     for i in range(n_classes)])
+    assert_allclose(label_measure, [
+        metric(y_true_binarize[:, i], y_pred_binarize[:, i])
+        for i in range(n_classes)
+    ])
 
     # Micro measure
     micro_measure = metric(y_true, y_pred, average="micro")
@@ -1049,9 +1116,12 @@ def _check_averaging(metric, y_true, y_pred, y_true_binarize, y_pred_binarize,
     # Sample measure
     if is_multilabel:
         sample_measure = metric(y_true, y_pred, average="samples")
-        assert_allclose(sample_measure,
-                        np.mean([metric(y_true_binarize[i], y_pred_binarize[i])
-                                 for i in range(n_samples)]))
+        assert_allclose(
+            sample_measure,
+            np.mean([
+                metric(y_true_binarize[i], y_pred_binarize[i])
+                for i in range(n_samples)
+            ]))
 
     with pytest.raises(ValueError):
         metric(y_true, y_pred, average="unknown")
@@ -1069,8 +1139,8 @@ def check_averaging(name, y_true, y_true_binarize, y_pred, y_pred_binarize,
         _check_averaging(metric, y_true, y_pred, y_true_binarize,
                          y_pred_binarize, is_multilabel)
     elif name in THRESHOLDED_METRICS_WITH_AVERAGING:
-        _check_averaging(metric, y_true, y_score, y_true_binarize,
-                         y_score, is_multilabel)
+        _check_averaging(metric, y_true, y_score, y_true_binarize, y_score,
+                         is_multilabel)
     else:
         raise ValueError("Metric is not recorded as having an average option")
 
@@ -1087,17 +1157,19 @@ def test_averaging_multiclass(name):
     y_true_binarize = lb.transform(y_true)
     y_pred_binarize = lb.transform(y_pred)
 
-    check_averaging(name, y_true, y_true_binarize,
-                    y_pred, y_pred_binarize, y_score)
+    check_averaging(name, y_true, y_true_binarize, y_pred, y_pred_binarize,
+                    y_score)
 
 
-@pytest.mark.parametrize(
-    'name',
-    sorted(METRICS_WITH_AVERAGING | THRESHOLDED_METRICS_WITH_AVERAGING))
+@pytest.mark.parametrize('name',
+                         sorted(METRICS_WITH_AVERAGING
+                                | THRESHOLDED_METRICS_WITH_AVERAGING))
 def test_averaging_multilabel(name):
     n_samples, n_classes = 40, 5
-    _, y = make_multilabel_classification(n_features=1, n_classes=n_classes,
-                                          random_state=5, n_samples=n_samples,
+    _, y = make_multilabel_classification(n_features=1,
+                                          n_classes=n_classes,
+                                          random_state=5,
+                                          n_samples=n_samples,
                                           allow_unlabeled=False)
     y_true = y[:20]
     y_pred = y[20:]
@@ -1105,8 +1177,8 @@ def test_averaging_multilabel(name):
     y_true_binarize = y_true
     y_pred_binarize = y_pred
 
-    check_averaging(name, y_true, y_true_binarize,
-                    y_pred, y_pred_binarize, y_score)
+    check_averaging(name, y_true, y_true_binarize, y_pred, y_pred_binarize,
+                    y_score)
 
 
 @pytest.mark.parametrize('name', sorted(METRICS_WITH_AVERAGING))
@@ -1117,8 +1189,8 @@ def test_averaging_multilabel_all_zeroes(name):
     y_true_binarize = y_true
     y_pred_binarize = y_pred
 
-    check_averaging(name, y_true, y_true_binarize,
-                    y_pred, y_pred_binarize, y_score)
+    check_averaging(name, y_true, y_true_binarize, y_pred, y_pred_binarize,
+                    y_score)
 
 
 def test_averaging_binary_multilabel_all_zeroes():
@@ -1127,11 +1199,15 @@ def test_averaging_binary_multilabel_all_zeroes():
     y_true_binarize = y_true
     y_pred_binarize = y_pred
     # Test _average_binary_score for weight.sum() == 0
-    binary_metric = (lambda y_true, y_score, average="macro":
-                     _average_binary_score(
-                         precision_score, y_true, y_score, average))
-    _check_averaging(binary_metric, y_true, y_pred, y_true_binarize,
-                     y_pred_binarize, is_multilabel=True)
+    binary_metric = (
+        lambda y_true, y_score, average="macro": _average_binary_score(
+            precision_score, y_true, y_score, average))
+    _check_averaging(binary_metric,
+                     y_true,
+                     y_pred,
+                     y_true_binarize,
+                     y_pred_binarize,
+                     is_multilabel=True)
 
 
 @pytest.mark.parametrize('name', sorted(METRICS_WITH_AVERAGING))
@@ -1142,8 +1218,8 @@ def test_averaging_multilabel_all_ones(name):
     y_true_binarize = y_true
     y_pred_binarize = y_pred
 
-    check_averaging(name, y_true, y_true_binarize,
-                    y_pred, y_pred_binarize, y_score)
+    check_averaging(name, y_true, y_true_binarize, y_pred, y_pred_binarize,
+                    y_score)
 
 
 @ignore_warnings
@@ -1154,11 +1230,10 @@ def check_sample_weight_invariance(name, metric, y1, y2):
     # check that unit weights gives the same score as no weight
     unweighted_score = metric(y1, y2, sample_weight=None)
 
-    assert_allclose(
-        unweighted_score,
-        metric(y1, y2, sample_weight=np.ones(shape=len(y1))),
-        err_msg="For %s sample_weight=None is not equivalent to "
-                "sample_weight=ones" % name)
+    assert_allclose(unweighted_score,
+                    metric(y1, y2, sample_weight=np.ones(shape=len(y1))),
+                    err_msg="For %s sample_weight=None is not equivalent to "
+                    "sample_weight=ones" % name)
 
     # check that the weighted and unweighted scores are unequal
     weighted_score = metric(y1, y2, sample_weight=sample_weight)
@@ -1171,21 +1246,22 @@ def check_sample_weight_invariance(name, metric, y1, y2):
                          "for %s" % (unweighted_score, weighted_score, name))
 
     # check that sample_weight can be a list
-    weighted_score_list = metric(y1, y2,
-                                 sample_weight=sample_weight.tolist())
+    weighted_score_list = metric(y1, y2, sample_weight=sample_weight.tolist())
     assert_allclose(
-        weighted_score, weighted_score_list,
+        weighted_score,
+        weighted_score_list,
         err_msg=("Weighted scores for array and list "
-                 "sample_weight input are not equal (%s != %s) for %s") % (
-                     weighted_score, weighted_score_list, name))
+                 "sample_weight input are not equal (%s != %s) for %s") %
+        (weighted_score, weighted_score_list, name))
 
     # check that integer weights is the same as repeated samples
-    repeat_weighted_score = metric(
-        np.repeat(y1, sample_weight, axis=0),
-        np.repeat(y2, sample_weight, axis=0), sample_weight=None)
-    assert_allclose(
-        weighted_score, repeat_weighted_score,
-        err_msg="Weighting %s is not equal to repeating samples" % name)
+    repeat_weighted_score = metric(np.repeat(y1, sample_weight, axis=0),
+                                   np.repeat(y2, sample_weight, axis=0),
+                                   sample_weight=None)
+    assert_allclose(weighted_score,
+                    repeat_weighted_score,
+                    err_msg="Weighting %s is not equal to repeating samples" %
+                    name)
 
     # check that ignoring a fraction of the samples is equivalent to setting
     # the corresponding weights to zero
@@ -1194,12 +1270,13 @@ def check_sample_weight_invariance(name, metric, y1, y2):
     sample_weight_zeroed[::2] = 0
     y1_subset = y1[1::2]
     y2_subset = y2[1::2]
-    weighted_score_subset = metric(y1_subset, y2_subset,
+    weighted_score_subset = metric(y1_subset,
+                                   y2_subset,
                                    sample_weight=sample_weight_subset)
-    weighted_score_zeroed = metric(y1, y2,
-                                   sample_weight=sample_weight_zeroed)
+    weighted_score_zeroed = metric(y1, y2, sample_weight=sample_weight_zeroed)
     assert_allclose(
-        weighted_score_subset, weighted_score_zeroed,
+        weighted_score_subset,
+        weighted_score_zeroed,
         err_msg=("Zeroing weights does not give the same result as "
                  "removing the corresponding samples (%s != %s) for %s" %
                  (weighted_score_zeroed, weighted_score_subset, name)))
@@ -1208,11 +1285,12 @@ def check_sample_weight_invariance(name, metric, y1, y2):
         # check that the score is invariant under scaling of the weights by a
         # common factor
         for scaling in [2, 0.3]:
-            assert_allclose(
-                weighted_score,
-                metric(y1, y2, sample_weight=sample_weight * scaling),
-                err_msg="%s sample_weight is not invariant "
-                        "under scaling" % name)
+            assert_allclose(weighted_score,
+                            metric(y1,
+                                   y2,
+                                   sample_weight=sample_weight * scaling),
+                            err_msg="%s sample_weight is not invariant "
+                            "under scaling" % name)
 
     # Check that if number of samples in y_true and sample_weight are not
     # equal, meaningful error is raised.
@@ -1221,8 +1299,7 @@ def check_sample_weight_invariance(name, metric, y1, y2):
                          _num_samples(y1), _num_samples(y2),
                          _num_samples(sample_weight) * 2))
     with pytest.raises(ValueError, match=error_message):
-        metric(y1, y2, sample_weight=np.hstack([sample_weight,
-                                                sample_weight]))
+        metric(y1, y2, sample_weight=np.hstack([sample_weight, sample_weight]))
 
 
 @pytest.mark.parametrize(
@@ -1234,8 +1311,8 @@ def test_regression_sample_weight_invariance(name):
     n_samples = 50
     random_state = check_random_state(0)
     # regression
-    y_true = random_state.random_sample(size=(n_samples,))
-    y_pred = random_state.random_sample(size=(n_samples,))
+    y_true = random_state.random_sample(size=(n_samples, ))
+    y_pred = random_state.random_sample(size=(n_samples, ))
     metric = ALL_METRICS[name]
     check_sample_weight_invariance(name, metric, y_true, y_pred)
 
@@ -1251,7 +1328,7 @@ def test_binary_sample_weight_invariance(name):
     random_state = check_random_state(0)
     y_true = random_state.randint(0, 2, size=(n_samples, ))
     y_pred = random_state.randint(0, 2, size=(n_samples, ))
-    y_score = random_state.random_sample(size=(n_samples,))
+    y_score = random_state.random_sample(size=(n_samples, ))
     metric = ALL_METRICS[name]
     if name in THRESHOLDED_METRICS:
         check_sample_weight_invariance(name, metric, y_true, y_score)
@@ -1288,11 +1365,15 @@ def test_multiclass_sample_weight_invariance(name):
 def test_multilabel_sample_weight_invariance(name):
     # multilabel indicator
     random_state = check_random_state(0)
-    _, ya = make_multilabel_classification(n_features=1, n_classes=10,
-                                           random_state=0, n_samples=50,
+    _, ya = make_multilabel_classification(n_features=1,
+                                           n_classes=10,
+                                           random_state=0,
+                                           n_samples=50,
                                            allow_unlabeled=False)
-    _, yb = make_multilabel_classification(n_features=1, n_classes=10,
-                                           random_state=1, n_samples=50,
+    _, yb = make_multilabel_classification(n_features=1,
+                                           n_classes=10,
+                                           random_state=1,
+                                           n_samples=50,
                                            allow_unlabeled=False)
     y_true = np.vstack([ya, yb])
     y_pred = np.vstack([ya, ya])
@@ -1329,9 +1410,9 @@ def test_no_averaging_labels():
             assert_array_equal(score_labels, score[inverse_labels])
 
 
-@pytest.mark.parametrize(
-    'name',
-    sorted(MULTILABELS_METRICS - {"unnormalized_multilabel_confusion_matrix"}))
+@pytest.mark.parametrize('name',
+                         sorted(MULTILABELS_METRICS -
+                                {"unnormalized_multilabel_confusion_matrix"}))
 def test_multilabel_label_permutations_invariance(name):
     random_state = check_random_state(0)
     n_samples, n_classes = 20, 4
@@ -1350,8 +1431,9 @@ def test_multilabel_label_permutations_invariance(name):
         assert_almost_equal(score, current_score)
 
 
-@pytest.mark.parametrize(
-    'name', sorted(THRESHOLDED_MULTILABEL_METRICS | MULTIOUTPUT_METRICS))
+@pytest.mark.parametrize('name',
+                         sorted(THRESHOLDED_MULTILABEL_METRICS
+                                | MULTIOUTPUT_METRICS))
 def test_thresholded_multilabel_multioutput_permutations_invariance(name):
     random_state = check_random_state(0)
     n_samples, n_classes = 20, 4

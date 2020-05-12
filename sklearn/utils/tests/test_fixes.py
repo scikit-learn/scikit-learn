@@ -25,19 +25,24 @@ def test_joblib_parallel_args(monkeypatch, joblib_version):
         # arguments are simply passed through
         assert _joblib_parallel_args(prefer='threads') == {'prefer': 'threads'}
         assert _joblib_parallel_args(prefer='processes', require=None) == {
-                    'prefer': 'processes', 'require': None}
+            'prefer': 'processes',
+            'require': None
+        }
         assert _joblib_parallel_args(non_existing=1) == {'non_existing': 1}
     elif joblib_version == '0.11':
         # arguments are mapped to the corresponding backend
         assert _joblib_parallel_args(prefer='threads') == {
-                    'backend': 'threading'}
+            'backend': 'threading'
+        }
         assert _joblib_parallel_args(prefer='processes') == {
-                    'backend': 'multiprocessing'}
+            'backend': 'multiprocessing'
+        }
         with pytest.raises(ValueError):
             _joblib_parallel_args(prefer='invalid')
-        assert _joblib_parallel_args(
-                prefer='processes', require='sharedmem') == {
-                    'backend': 'threading'}
+        assert _joblib_parallel_args(prefer='processes',
+                                     require='sharedmem') == {
+                                         'backend': 'threading'
+                                     }
         with pytest.raises(ValueError):
             _joblib_parallel_args(require='invalid')
         with pytest.raises(NotImplementedError):
@@ -46,30 +51,27 @@ def test_joblib_parallel_args(monkeypatch, joblib_version):
         raise ValueError
 
 
-@pytest.mark.parametrize("dtype, val", ([object, 1],
-                                        [object, "a"],
-                                        [float, 1]))
+@pytest.mark.parametrize("dtype, val",
+                         ([object, 1], [object, "a"], [float, 1]))
 def test_object_dtype_isnan(dtype, val):
-    X = np.array([[val, np.nan],
-                  [np.nan, val]], dtype=dtype)
+    X = np.array([[val, np.nan], [np.nan, val]], dtype=dtype)
 
-    expected_mask = np.array([[False, True],
-                              [True, False]])
+    expected_mask = np.array([[False, True], [True, False]])
 
     mask = _object_dtype_isnan(X)
 
     assert_array_equal(mask, expected_mask)
 
 
-@pytest.mark.parametrize("low,high,base",
-                         [(-1, 0, 10), (0, 2, np.exp(1)), (-1, 1, 2)])
+@pytest.mark.parametrize("low,high,base", [(-1, 0, 10), (0, 2, np.exp(1)),
+                                           (-1, 1, 2)])
 def test_loguniform(low, high, base):
-    rv = loguniform(base ** low, base ** high)
+    rv = loguniform(base**low, base**high)
     assert isinstance(rv, scipy.stats._distn_infrastructure.rv_frozen)
     rvs = rv.rvs(size=2000, random_state=0)
 
     # Test the basics; right bounds, right size
-    assert (base ** low <= rvs).all() and (rvs <= base ** high).all()
+    assert (base**low <= rvs).all() and (rvs <= base**high).all()
     assert len(rvs) == 2000
 
     # Test that it's actually (fairly) uniform
@@ -79,7 +81,6 @@ def test_loguniform(low, high, base):
     assert np.abs(counts - counts.mean()).max() <= 40
 
     # Test that random_state works
-    assert (
-        loguniform(base ** low, base ** high).rvs(random_state=0)
-        == loguniform(base ** low, base ** high).rvs(random_state=0)
-    )
+    assert (loguniform(base**low,
+                       base**high).rvs(random_state=0) == loguniform(
+                           base**low, base**high).rvs(random_state=0))

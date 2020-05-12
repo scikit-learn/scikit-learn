@@ -15,7 +15,6 @@ from sklearn.metrics import confusion_matrix
 from sklearn.metrics import plot_confusion_matrix
 from sklearn.metrics import ConfusionMatrixDisplay
 
-
 # TODO: Remove when https://github.com/numpy/numpy/issues/14397 is resolved
 pytestmark = pytest.mark.filterwarnings(
     "ignore:In future, it will be an error for 'np.bool_':DeprecationWarning:"
@@ -29,8 +28,10 @@ def n_classes():
 
 @pytest.fixture(scope="module")
 def data(n_classes):
-    X, y = make_classification(n_samples=100, n_informative=5,
-                               n_classes=n_classes, random_state=0)
+    X, y = make_classification(n_samples=100,
+                               n_informative=5,
+                               n_classes=n_classes,
+                               random_state=0)
     return X, y
 
 
@@ -56,8 +57,7 @@ def test_error_on_regressor(pyplot, data):
 
 def test_error_on_invalid_option(pyplot, fitted_clf, data):
     X, y = data
-    msg = (r"normalize must be one of \{'true', 'pred', 'all', "
-           r"None\}")
+    msg = (r"normalize must be one of \{'true', 'pred', 'all', " r"None\}")
 
     with pytest.raises(ValueError, match=msg):
         plot_confusion_matrix(fitted_clf, X, y, normalize='invalid')
@@ -74,8 +74,11 @@ def test_plot_confusion_matrix_custom_labels(pyplot, data, y_pred, fitted_clf,
     display_labels = ['b', 'd', 'a', 'e', 'f'] if with_display_labels else None
 
     cm = confusion_matrix(y, y_pred, labels=labels)
-    disp = plot_confusion_matrix(fitted_clf, X, y,
-                                 ax=ax, display_labels=display_labels,
+    disp = plot_confusion_matrix(fitted_clf,
+                                 X,
+                                 y,
+                                 ax=ax,
+                                 display_labels=display_labels,
                                  labels=labels)
 
     assert_allclose(disp.confusion_matrix, cm)
@@ -87,8 +90,9 @@ def test_plot_confusion_matrix_custom_labels(pyplot, data, y_pred, fitted_clf,
     else:
         expected_display_labels = list(range(n_classes))
 
-    expected_display_labels_str = [str(name)
-                                   for name in expected_display_labels]
+    expected_display_labels_str = [
+        str(name) for name in expected_display_labels
+    ]
 
     x_ticks = [tick.get_text() for tick in disp.ax_.get_xticklabels()]
     y_ticks = [tick.get_text() for tick in disp.ax_.get_yticklabels()]
@@ -106,9 +110,12 @@ def test_plot_confusion_matrix(pyplot, data, y_pred, n_classes, fitted_clf,
     ax = pyplot.gca()
     cmap = 'plasma'
     cm = confusion_matrix(y, y_pred)
-    disp = plot_confusion_matrix(fitted_clf, X, y,
+    disp = plot_confusion_matrix(fitted_clf,
+                                 X,
+                                 y,
                                  normalize=normalize,
-                                 cmap=cmap, ax=ax,
+                                 cmap=cmap,
+                                 ax=ax,
                                  include_values=include_values)
 
     assert disp.ax_ == ax
@@ -135,8 +142,9 @@ def test_plot_confusion_matrix(pyplot, data, y_pred, n_classes, fitted_clf,
 
     expected_display_labels = list(range(n_classes))
 
-    expected_display_labels_str = [str(name)
-                                   for name in expected_display_labels]
+    expected_display_labels_str = [
+        str(name) for name in expected_display_labels
+    ]
 
     assert_array_equal(disp.display_labels, expected_display_labels)
     assert_array_equal(x_ticks, expected_display_labels_str)
@@ -149,8 +157,8 @@ def test_plot_confusion_matrix(pyplot, data, y_pred, n_classes, fitted_clf,
         assert disp.text_.shape == (n_classes, n_classes)
         fmt = '.2g'
         expected_text = np.array([format(v, fmt) for v in cm.ravel(order="C")])
-        text_text = np.array([
-            t.get_text() for t in disp.text_.ravel(order="C")])
+        text_text = np.array(
+            [t.get_text() for t in disp.text_.ravel(order="C")])
         assert_array_equal(expected_text, text_text)
     else:
         assert disp.text_ is None
@@ -160,8 +168,12 @@ def test_confusion_matrix_display(pyplot, data, fitted_clf, y_pred, n_classes):
     X, y = data
 
     cm = confusion_matrix(y, y_pred)
-    disp = plot_confusion_matrix(fitted_clf, X, y, normalize=None,
-                                 include_values=True, cmap='viridis',
+    disp = plot_confusion_matrix(fitted_clf,
+                                 X,
+                                 y,
+                                 normalize=None,
+                                 include_values=True,
+                                 cmap='viridis',
                                  xticks_rotation=45.0)
 
     assert_allclose(disp.confusion_matrix, cm)
@@ -185,8 +197,7 @@ def test_confusion_matrix_display(pyplot, data, fitted_clf, y_pred, n_classes):
 
     disp.plot(values_format='e')
     expected_text = np.array([format(v, 'e') for v in cm.ravel(order="C")])
-    text_text = np.array([
-        t.get_text() for t in disp.text_.ravel(order="C")])
+    text_text = np.array([t.get_text() for t in disp.text_.ravel(order="C")])
     assert_array_equal(expected_text, text_text)
 
 
@@ -227,11 +238,12 @@ def test_confusion_matrix_contrast(pyplot):
     assert_allclose(disp.text_[1, 1].get_color(), min_color)
 
 
-@pytest.mark.parametrize(
-    "clf", [LogisticRegression(),
-            make_pipeline(StandardScaler(), LogisticRegression()),
-            make_pipeline(make_column_transformer((StandardScaler(), [0, 1])),
-                          LogisticRegression())])
+@pytest.mark.parametrize("clf", [
+    LogisticRegression(),
+    make_pipeline(StandardScaler(), LogisticRegression()),
+    make_pipeline(make_column_transformer(
+        (StandardScaler(), [0, 1])), LogisticRegression())
+])
 def test_confusion_matrix_pipeline(pyplot, clf, data, n_classes):
     X, y = data
     with pytest.raises(NotFittedError):
@@ -252,23 +264,24 @@ def test_confusion_matrix_text_format(pyplot, data, y_pred, n_classes,
     # Make sure plot text is formatted with 'values_format'.
     X, y = data
     cm = confusion_matrix(y, y_pred)
-    disp = plot_confusion_matrix(fitted_clf, X, y,
+    disp = plot_confusion_matrix(fitted_clf,
+                                 X,
+                                 y,
                                  include_values=True,
                                  values_format=values_format)
 
     assert disp.text_.shape == (n_classes, n_classes)
 
-    expected_text = np.array([format(v, values_format)
-                              for v in cm.ravel()])
-    text_text = np.array([
-        t.get_text() for t in disp.text_.ravel()])
+    expected_text = np.array([format(v, values_format) for v in cm.ravel()])
+    text_text = np.array([t.get_text() for t in disp.text_.ravel()])
     assert_array_equal(expected_text, text_text)
 
 
 def test_confusion_matrix_standard_format(pyplot):
     cm = np.array([[10000000, 0], [123456, 12345678]])
-    plotted_text = ConfusionMatrixDisplay(
-        cm, display_labels=[False, True]).plot().text_
+    plotted_text = ConfusionMatrixDisplay(cm,
+                                          display_labels=[False,
+                                                          True]).plot().text_
     # Values should be shown as whole numbers 'd',
     # except the first number which should be shown as 1e+07 (longer length)
     # and the last number will be shown as 1.2e+07 (longer length)
@@ -276,8 +289,9 @@ def test_confusion_matrix_standard_format(pyplot):
     assert test == ['1e+07', '0', '123456', '1.2e+07']
 
     cm = np.array([[0.1, 10], [100, 0.525]])
-    plotted_text = ConfusionMatrixDisplay(
-        cm, display_labels=[False, True]).plot().text_
+    plotted_text = ConfusionMatrixDisplay(cm,
+                                          display_labels=[False,
+                                                          True]).plot().text_
     # Values should now formatted as '.2g', since there's a float in
     # Values are have two dec places max, (e.g 100 becomes 1e+02)
     test = [t.get_text() for t in plotted_text.ravel()]

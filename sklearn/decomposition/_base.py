@@ -73,7 +73,7 @@ class _BasePCA(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
         precision.flat[::len(precision) + 1] += 1. / exp_var_diff
         precision = np.dot(components_.T,
                            np.dot(linalg.inv(precision), components_))
-        precision /= -(self.noise_variance_ ** 2)
+        precision /= -(self.noise_variance_**2)
         precision.flat[::len(precision) + 1] += 1. / self.noise_variance_
         return precision
 
@@ -153,7 +153,9 @@ class _BasePCA(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
         exact inverse operation, which includes reversing whitening.
         """
         if self.whiten:
-            return np.dot(X, np.sqrt(self.explained_variance_[:, np.newaxis]) *
-                            self.components_) + self.mean_
+            return np.dot(
+                X,
+                np.sqrt(self.explained_variance_[:, np.newaxis]) *
+                self.components_) + self.mean_
         else:
             return np.dot(X, self.components_) + self.mean_

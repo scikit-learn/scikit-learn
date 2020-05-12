@@ -1,4 +1,3 @@
-
 import numpy as np
 import pytest
 from scipy.sparse import csr_matrix
@@ -16,8 +15,9 @@ def test_compute_mi_dd():
     x = np.array([0, 1, 1, 0, 0])
     y = np.array([1, 0, 0, 0, 1])
 
-    H_x = H_y = -(3/5) * np.log(3/5) - (2/5) * np.log(2/5)
-    H_xy = -1/5 * np.log(1/5) - 2/5 * np.log(2/5) - 2/5 * np.log(2/5)
+    H_x = H_y = -(3 / 5) * np.log(3 / 5) - (2 / 5) * np.log(2 / 5)
+    H_xy = -1 / 5 * np.log(1 / 5) - 2 / 5 * np.log(2 / 5) - 2 / 5 * np.log(
+        2 / 5)
     I_xy = H_x + H_y - H_xy
 
     assert_almost_equal(_compute_mi(x, y, True, True), I_xy)
@@ -34,10 +34,8 @@ def test_compute_mi_cc():
     sigma_1 = 1
     sigma_2 = 10
     corr = 0.5
-    cov = np.array([
-        [sigma_1**2, corr * sigma_1 * sigma_2],
-        [corr * sigma_1 * sigma_2, sigma_2**2]
-    ])
+    cov = np.array([[sigma_1**2, corr * sigma_1 * sigma_2],
+                    [corr * sigma_1 * sigma_2, sigma_2**2]])
 
     # True theoretical mutual information.
     I_theory = (np.log(sigma_1) + np.log(sigma_2) -
@@ -112,11 +110,7 @@ def test_compute_mi_cd_unique_label():
 
 # We are going test that feature ordering by MI matches our expectations.
 def test_mutual_info_classif_discrete():
-    X = np.array([[0, 0, 0],
-                  [1, 1, 0],
-                  [2, 0, 1],
-                  [2, 0, 1],
-                  [2, 0, 1]])
+    X = np.array([[0, 0, 0], [1, 1, 0], [2, 0, 1], [2, 0, 1], [2, 0, 1]])
     y = np.array([0, 1, 2, 2, 1])
 
     # Here X[:, 0] is the most informative feature, and X[:, 1] is weakly
@@ -131,12 +125,8 @@ def test_mutual_info_regression():
     # variables after transformation is selected as the target vector,
     # it has the strongest correlation with the variable 2, and
     # the weakest correlation with the variable 1.
-    T = np.array([
-        [1, 0.5, 2, 1],
-        [0, 1, 0.1, 0.0],
-        [0, 0.1, 1, 0.1],
-        [0, 0.1, 0.1, 1]
-    ])
+    T = np.array([[1, 0.5, 2, 1], [0, 1, 0.1, 0.0], [0, 0.1, 1, 0.1],
+                  [0, 0.1, 0.1, 1]])
     cov = T.dot(T.T)
     mean = np.zeros(4)
 
@@ -158,12 +148,18 @@ def test_mutual_info_classif_mixed():
     y = ((0.5 * X[:, 0] + X[:, 2]) > 0.5).astype(int)
     X[:, 2] = X[:, 2] > 0.5
 
-    mi = mutual_info_classif(X, y, discrete_features=[2], n_neighbors=3,
+    mi = mutual_info_classif(X,
+                             y,
+                             discrete_features=[2],
+                             n_neighbors=3,
                              random_state=0)
     assert_array_equal(np.argsort(-mi), [2, 0, 1])
     for n_neighbors in [5, 7, 9]:
-        mi_nn = mutual_info_classif(X, y, discrete_features=[2],
-                                    n_neighbors=n_neighbors, random_state=0)
+        mi_nn = mutual_info_classif(X,
+                                    y,
+                                    discrete_features=[2],
+                                    n_neighbors=n_neighbors,
+                                    random_state=0)
         # Check that the continuous values have an higher MI with greater
         # n_neighbors
         assert mi_nn[0] > mi[0]
@@ -174,11 +170,8 @@ def test_mutual_info_classif_mixed():
 
 
 def test_mutual_info_options():
-    X = np.array([[0, 0, 0],
-                  [1, 1, 0],
-                  [2, 0, 1],
-                  [2, 0, 1],
-                  [2, 0, 1]], dtype=float)
+    X = np.array([[0, 0, 0], [1, 1, 0], [2, 0, 1], [2, 0, 1], [2, 0, 1]],
+                 dtype=float)
     y = np.array([0, 1, 2, 2, 1], dtype=float)
     X_csr = csr_matrix(X)
 
@@ -198,7 +191,9 @@ def test_mutual_info_options():
         mi_2 = mutual_info(X, y, discrete_features=False, random_state=0)
         mi_3 = mutual_info(X_csr, y, discrete_features='auto', random_state=0)
         mi_4 = mutual_info(X_csr, y, discrete_features=True, random_state=0)
-        mi_5 = mutual_info(X, y, discrete_features=[True, False, True],
+        mi_5 = mutual_info(X,
+                           y,
+                           discrete_features=[True, False, True],
                            random_state=0)
         mi_6 = mutual_info(X, y, discrete_features=[0, 2], random_state=0)
 

@@ -165,27 +165,38 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
 
     """
     @_deprecate_positional_args
-    def __init__(self, *, C=1.0, fit_intercept=True, max_iter=1000, tol=1e-3,
-                 early_stopping=False, validation_fraction=0.1,
-                 n_iter_no_change=5, shuffle=True, verbose=0, loss="hinge",
-                 n_jobs=None, random_state=None, warm_start=False,
-                 class_weight=None, average=False):
-        super().__init__(
-            penalty=None,
-            fit_intercept=fit_intercept,
-            max_iter=max_iter,
-            tol=tol,
-            early_stopping=early_stopping,
-            validation_fraction=validation_fraction,
-            n_iter_no_change=n_iter_no_change,
-            shuffle=shuffle,
-            verbose=verbose,
-            random_state=random_state,
-            eta0=1.0,
-            warm_start=warm_start,
-            class_weight=class_weight,
-            average=average,
-            n_jobs=n_jobs)
+    def __init__(self,
+                 *,
+                 C=1.0,
+                 fit_intercept=True,
+                 max_iter=1000,
+                 tol=1e-3,
+                 early_stopping=False,
+                 validation_fraction=0.1,
+                 n_iter_no_change=5,
+                 shuffle=True,
+                 verbose=0,
+                 loss="hinge",
+                 n_jobs=None,
+                 random_state=None,
+                 warm_start=False,
+                 class_weight=None,
+                 average=False):
+        super().__init__(penalty=None,
+                         fit_intercept=fit_intercept,
+                         max_iter=max_iter,
+                         tol=tol,
+                         early_stopping=early_stopping,
+                         validation_fraction=validation_fraction,
+                         n_iter_no_change=n_iter_no_change,
+                         shuffle=shuffle,
+                         verbose=verbose,
+                         random_state=random_state,
+                         eta0=1.0,
+                         warm_start=warm_start,
+                         class_weight=class_weight,
+                         average=average,
+                         n_jobs=n_jobs)
 
         self.C = C
         self.loss = loss
@@ -225,10 +236,17 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
                              "resulting weights as the class_weight "
                              "parameter.")
         lr = "pa1" if self.loss == "hinge" else "pa2"
-        return self._partial_fit(X, y, alpha=1.0, C=self.C,
-                                 loss="hinge", learning_rate=lr, max_iter=1,
-                                 classes=classes, sample_weight=None,
-                                 coef_init=None, intercept_init=None)
+        return self._partial_fit(X,
+                                 y,
+                                 alpha=1.0,
+                                 C=self.C,
+                                 loss="hinge",
+                                 learning_rate=lr,
+                                 max_iter=1,
+                                 classes=classes,
+                                 sample_weight=None,
+                                 coef_init=None,
+                                 intercept_init=None)
 
     def fit(self, X, y, coef_init=None, intercept_init=None):
         """Fit linear model with Passive Aggressive algorithm.
@@ -253,9 +271,14 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
         """
         self._validate_params()
         lr = "pa1" if self.loss == "hinge" else "pa2"
-        return self._fit(X, y, alpha=1.0, C=self.C,
-                         loss="hinge", learning_rate=lr,
-                         coef_init=coef_init, intercept_init=intercept_init)
+        return self._fit(X,
+                         y,
+                         alpha=1.0,
+                         C=self.C,
+                         loss="hinge",
+                         learning_rate=lr,
+                         coef_init=coef_init,
+                         intercept_init=intercept_init)
 
 
 class PassiveAggressiveRegressor(BaseSGDRegressor):
@@ -393,28 +416,37 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
 
     """
     @_deprecate_positional_args
-    def __init__(self, *, C=1.0, fit_intercept=True, max_iter=1000, tol=1e-3,
-                 early_stopping=False, validation_fraction=0.1,
-                 n_iter_no_change=5, shuffle=True, verbose=0,
-                 loss="epsilon_insensitive", epsilon=DEFAULT_EPSILON,
-                 random_state=None, warm_start=False,
+    def __init__(self,
+                 *,
+                 C=1.0,
+                 fit_intercept=True,
+                 max_iter=1000,
+                 tol=1e-3,
+                 early_stopping=False,
+                 validation_fraction=0.1,
+                 n_iter_no_change=5,
+                 shuffle=True,
+                 verbose=0,
+                 loss="epsilon_insensitive",
+                 epsilon=DEFAULT_EPSILON,
+                 random_state=None,
+                 warm_start=False,
                  average=False):
-        super().__init__(
-            penalty=None,
-            l1_ratio=0,
-            epsilon=epsilon,
-            eta0=1.0,
-            fit_intercept=fit_intercept,
-            max_iter=max_iter,
-            tol=tol,
-            early_stopping=early_stopping,
-            validation_fraction=validation_fraction,
-            n_iter_no_change=n_iter_no_change,
-            shuffle=shuffle,
-            verbose=verbose,
-            random_state=random_state,
-            warm_start=warm_start,
-            average=average)
+        super().__init__(penalty=None,
+                         l1_ratio=0,
+                         epsilon=epsilon,
+                         eta0=1.0,
+                         fit_intercept=fit_intercept,
+                         max_iter=max_iter,
+                         tol=tol,
+                         early_stopping=early_stopping,
+                         validation_fraction=validation_fraction,
+                         n_iter_no_change=n_iter_no_change,
+                         shuffle=shuffle,
+                         verbose=verbose,
+                         random_state=random_state,
+                         warm_start=warm_start,
+                         average=average)
         self.C = C
         self.loss = loss
 
@@ -435,11 +467,16 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
         """
         self._validate_params(for_partial_fit=True)
         lr = "pa1" if self.loss == "epsilon_insensitive" else "pa2"
-        return self._partial_fit(X, y, alpha=1.0, C=self.C,
+        return self._partial_fit(X,
+                                 y,
+                                 alpha=1.0,
+                                 C=self.C,
                                  loss="epsilon_insensitive",
-                                 learning_rate=lr, max_iter=1,
+                                 learning_rate=lr,
+                                 max_iter=1,
                                  sample_weight=None,
-                                 coef_init=None, intercept_init=None)
+                                 coef_init=None,
+                                 intercept_init=None)
 
     def fit(self, X, y, coef_init=None, intercept_init=None):
         """Fit linear model with Passive Aggressive algorithm.
@@ -464,7 +501,10 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
         """
         self._validate_params()
         lr = "pa1" if self.loss == "epsilon_insensitive" else "pa2"
-        return self._fit(X, y, alpha=1.0, C=self.C,
+        return self._fit(X,
+                         y,
+                         alpha=1.0,
+                         C=self.C,
                          loss="epsilon_insensitive",
                          learning_rate=lr,
                          coef_init=coef_init,

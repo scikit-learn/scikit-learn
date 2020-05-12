@@ -32,7 +32,6 @@ from ..utils.validation import column_or_1d
 from ..utils.validation import _deprecate_positional_args
 from ..exceptions import UndefinedMetricWarning
 
-
 __ALL__ = [
     "max_error",
     "mean_absolute_error",
@@ -102,24 +101,25 @@ def _check_reg_targets(y_true, y_pred, multioutput, dtype="numeric"):
         if multioutput not in allowed_multioutput_str:
             raise ValueError("Allowed 'multioutput' string values are {}. "
                              "You provided multioutput={!r}".format(
-                                 allowed_multioutput_str,
-                                 multioutput))
+                                 allowed_multioutput_str, multioutput))
     elif multioutput is not None:
         multioutput = check_array(multioutput, ensure_2d=False)
         if n_outputs == 1:
             raise ValueError("Custom weights are useful only in "
                              "multi-output cases.")
         elif n_outputs != len(multioutput):
-            raise ValueError(("There must be equally many custom weights "
-                              "(%d) as outputs (%d).") %
-                             (len(multioutput), n_outputs))
+            raise ValueError(
+                ("There must be equally many custom weights "
+                 "(%d) as outputs (%d).") % (len(multioutput), n_outputs))
     y_type = 'continuous' if n_outputs == 1 else 'continuous-multioutput'
 
     return y_type, y_true, y_pred, multioutput
 
 
 @_deprecate_positional_args
-def mean_absolute_error(y_true, y_pred, *,
+def mean_absolute_error(y_true,
+                        y_pred,
+                        *,
                         sample_weight=None,
                         multioutput='uniform_average'):
     """Mean absolute error regression loss
@@ -179,7 +179,8 @@ def mean_absolute_error(y_true, y_pred, *,
         y_true, y_pred, multioutput)
     check_consistent_length(y_true, y_pred, sample_weight)
     output_errors = np.average(np.abs(y_pred - y_true),
-                               weights=sample_weight, axis=0)
+                               weights=sample_weight,
+                               axis=0)
     if isinstance(multioutput, str):
         if multioutput == 'raw_values':
             return output_errors
@@ -191,9 +192,12 @@ def mean_absolute_error(y_true, y_pred, *,
 
 
 @_deprecate_positional_args
-def mean_squared_error(y_true, y_pred, *,
+def mean_squared_error(y_true,
+                       y_pred,
+                       *,
                        sample_weight=None,
-                       multioutput='uniform_average', squared=True):
+                       multioutput='uniform_average',
+                       squared=True):
     """Mean squared error regression loss
 
     Read more in the :ref:`User Guide <mean_squared_error>`.
@@ -253,7 +257,8 @@ def mean_squared_error(y_true, y_pred, *,
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput)
     check_consistent_length(y_true, y_pred, sample_weight)
-    output_errors = np.average((y_true - y_pred) ** 2, axis=0,
+    output_errors = np.average((y_true - y_pred)**2,
+                               axis=0,
                                weights=sample_weight)
     if isinstance(multioutput, str):
         if multioutput == 'raw_values':
@@ -267,7 +272,9 @@ def mean_squared_error(y_true, y_pred, *,
 
 
 @_deprecate_positional_args
-def mean_squared_log_error(y_true, y_pred, *,
+def mean_squared_log_error(y_true,
+                           y_pred,
+                           *,
                            sample_weight=None,
                            multioutput='uniform_average'):
     """Mean squared logarithmic error regression loss
@@ -329,7 +336,8 @@ def mean_squared_log_error(y_true, y_pred, *,
         raise ValueError("Mean Squared Logarithmic Error cannot be used when "
                          "targets contain negative values.")
 
-    return mean_squared_error(np.log1p(y_true), np.log1p(y_pred),
+    return mean_squared_error(np.log1p(y_true),
+                              np.log1p(y_pred),
                               sample_weight=sample_weight,
                               multioutput=multioutput)
 
@@ -399,7 +407,9 @@ def median_absolute_error(y_true, y_pred, *, multioutput='uniform_average'):
 
 
 @_deprecate_positional_args
-def explained_variance_score(y_true, y_pred, *,
+def explained_variance_score(y_true,
+                             y_pred,
+                             *,
                              sample_weight=None,
                              multioutput='uniform_average'):
     """Explained variance regression score function
@@ -461,12 +471,14 @@ def explained_variance_score(y_true, y_pred, *,
     check_consistent_length(y_true, y_pred, sample_weight)
 
     y_diff_avg = np.average(y_true - y_pred, weights=sample_weight, axis=0)
-    numerator = np.average((y_true - y_pred - y_diff_avg) ** 2,
-                           weights=sample_weight, axis=0)
+    numerator = np.average((y_true - y_pred - y_diff_avg)**2,
+                           weights=sample_weight,
+                           axis=0)
 
     y_true_avg = np.average(y_true, weights=sample_weight, axis=0)
-    denominator = np.average((y_true - y_true_avg) ** 2,
-                             weights=sample_weight, axis=0)
+    denominator = np.average((y_true - y_true_avg)**2,
+                             weights=sample_weight,
+                             axis=0)
 
     nonzero_numerator = numerator != 0
     nonzero_denominator = denominator != 0
@@ -492,7 +504,10 @@ def explained_variance_score(y_true, y_pred, *,
 
 
 @_deprecate_positional_args
-def r2_score(y_true, y_pred, *, sample_weight=None,
+def r2_score(y_true,
+             y_pred,
+             *,
+             sample_weight=None,
              multioutput="uniform_average"):
     """R^2 (coefficient of determination) regression score function.
 
@@ -595,11 +610,11 @@ def r2_score(y_true, y_pred, *, sample_weight=None,
     else:
         weight = 1.
 
-    numerator = (weight * (y_true - y_pred) ** 2).sum(axis=0,
-                                                      dtype=np.float64)
-    denominator = (weight * (y_true - np.average(
-        y_true, axis=0, weights=sample_weight)) ** 2).sum(axis=0,
-                                                          dtype=np.float64)
+    numerator = (weight * (y_true - y_pred)**2).sum(axis=0, dtype=np.float64)
+    denominator = (
+        weight *
+        (y_true - np.average(y_true, axis=0, weights=sample_weight))**2).sum(
+            axis=0, dtype=np.float64)
     nonzero_denominator = denominator != 0
     nonzero_numerator = numerator != 0
     valid_score = nonzero_denominator & nonzero_numerator
@@ -761,9 +776,10 @@ def mean_poisson_deviance(y_true, y_pred, *, sample_weight=None):
     >>> mean_poisson_deviance(y_true, y_pred)
     1.4260...
     """
-    return mean_tweedie_deviance(
-        y_true, y_pred, sample_weight=sample_weight, power=1
-    )
+    return mean_tweedie_deviance(y_true,
+                                 y_pred,
+                                 sample_weight=sample_weight,
+                                 power=1)
 
 
 @_deprecate_positional_args
@@ -800,6 +816,7 @@ def mean_gamma_deviance(y_true, y_pred, *, sample_weight=None):
     >>> mean_gamma_deviance(y_true, y_pred)
     1.0568...
     """
-    return mean_tweedie_deviance(
-        y_true, y_pred, sample_weight=sample_weight, power=2
-    )
+    return mean_tweedie_deviance(y_true,
+                                 y_pred,
+                                 sample_weight=sample_weight,
+                                 power=2)

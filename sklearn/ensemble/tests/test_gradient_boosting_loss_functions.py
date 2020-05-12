@@ -26,24 +26,23 @@ def test_binomial_deviance():
     bd = BinomialDeviance(2)
 
     # pred has the same BD for y in {0, 1}
-    assert (bd(np.array([0.0]), np.array([0.0])) ==
-                 bd(np.array([1.0]), np.array([0.0])))
+    assert (bd(np.array([0.0]), np.array([0.0])) == bd(np.array([1.0]),
+                                                       np.array([0.0])))
 
-    assert_almost_equal(bd(np.array([1.0, 1.0, 1.0]),
-                           np.array([100.0, 100.0, 100.0])),
-                        0.0)
-    assert_almost_equal(bd(np.array([1.0, 0.0, 0.0]),
-                           np.array([100.0, -100.0, -100.0])), 0)
+    assert_almost_equal(
+        bd(np.array([1.0, 1.0, 1.0]), np.array([100.0, 100.0, 100.0])), 0.0)
+    assert_almost_equal(
+        bd(np.array([1.0, 0.0, 0.0]), np.array([100.0, -100.0, -100.0])), 0)
 
     # check if same results as alternative definition of deviance (from ESLII)
-    alt_dev = lambda y, pred: np.mean(np.logaddexp(0.0, -2.0 *
-                                                   (2.0 * y - 1) * pred))
+    alt_dev = lambda y, pred: np.mean(
+        np.logaddexp(0.0, -2.0 * (2.0 * y - 1) * pred))
     test_data = [(np.array([1.0, 1.0, 1.0]), np.array([100.0, 100.0, 100.0])),
                  (np.array([0.0, 0.0, 0.0]), np.array([100.0, 100.0, 100.0])),
-                 (np.array([0.0, 0.0, 0.0]),
-                  np.array([-100.0, -100.0, -100.0])),
-                 (np.array([1.0, 1.0, 1.0]),
-                  np.array([-100.0, -100.0, -100.0]))]
+                 (np.array([0.0, 0.0, 0.0]), np.array([-100.0, -100.0,
+                                                       -100.0])),
+                 (np.array([1.0, 1.0, 1.0]), np.array([-100.0, -100.0,
+                                                       -100.0]))]
 
     for datum in test_data:
         assert_almost_equal(bd(*datum), alt_dev(*datum))
@@ -195,8 +194,7 @@ def test_init_raw_predictions_shapes():
         assert raw_predictions.dtype == np.float64
 
     y = rng.randint(0, 2, size=n_samples)
-    for loss in (BinomialDeviance(n_classes=2),
-                 ExponentialLoss(n_classes=2)):
+    for loss in (BinomialDeviance(n_classes=2), ExponentialLoss(n_classes=2)):
         init_estimator = loss.init_estimator().fit(X, y)
         raw_predictions = loss.get_init_raw_predictions(y, init_estimator)
         assert raw_predictions.shape == (n_samples, 1)
@@ -290,7 +288,7 @@ def test_lad_equals_quantile_50(seed):
     ql_loss = ql(y_true, raw_predictions)
     assert_almost_equal(lad_loss, 2 * ql_loss)
 
-    weights = np.linspace(0, 1, n_samples) ** 2
+    weights = np.linspace(0, 1, n_samples)**2
     lad_weighted_loss = lad(y_true, raw_predictions, sample_weight=weights)
     ql_weighted_loss = ql(y_true, raw_predictions, sample_weight=weights)
     assert_almost_equal(lad_weighted_loss, 2 * ql_weighted_loss)

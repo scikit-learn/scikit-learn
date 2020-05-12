@@ -16,7 +16,6 @@ from sklearn.utils._testing import skip_if_32bit
 def get_derivatives_helper(loss):
     """Return get_gradients() and get_hessians() functions for a given loss.
     """
-
     def get_gradients(y_true, raw_predictions):
         # create gradients and hessians array, update inplace, and return
         gradients = np.empty_like(raw_predictions, dtype=G_H_DTYPE)
@@ -46,20 +45,22 @@ def get_derivatives_helper(loss):
     return get_gradients, get_hessians
 
 
-@pytest.mark.parametrize('loss, x0, y_true', [
-    ('least_squares', -2., 42),
-    ('least_squares', 117., 1.05),
-    ('least_squares', 0., 0.),
-    # The argmin of binary_crossentropy for y_true=0 and y_true=1 is resp. -inf
-    # and +inf due to logit, cf. "complete separation". Therefore, we use
-    # 0 < y_true < 1.
-    ('binary_crossentropy', 0.3, 0.1),
-    ('binary_crossentropy', -12, 0.2),
-    ('binary_crossentropy', 30, 0.9),
-    ('poisson', 12., 1.),
-    ('poisson', 0., 2.),
-    ('poisson', -22., 10.),
-])
+@pytest.mark.parametrize(
+    'loss, x0, y_true',
+    [
+        ('least_squares', -2., 42),
+        ('least_squares', 117., 1.05),
+        ('least_squares', 0., 0.),
+        # The argmin of binary_crossentropy for y_true=0 and y_true=1 is resp. -inf
+        # and +inf due to logit, cf. "complete separation". Therefore, we use
+        # 0 < y_true < 1.
+        ('binary_crossentropy', 0.3, 0.1),
+        ('binary_crossentropy', -12, 0.2),
+        ('binary_crossentropy', 30, 0.9),
+        ('poisson', 12., 1.),
+        ('poisson', 0., 2.),
+        ('poisson', -22., 10.),
+    ])
 @pytest.mark.skipif(sp_version == (1, 2, 0),
                     reason='bug in scipy 1.2.0, see scipy issue #9608')
 @skip_if_32bit
@@ -90,8 +91,12 @@ def test_derivatives(loss, x0, y_true):
     def fprime2(x: np.ndarray) -> np.ndarray:
         return get_hessians(y_true, x)
 
-    optimum = newton(func, x0=x0, fprime=fprime, fprime2=fprime2,
-                     maxiter=70, tol=2e-8)
+    optimum = newton(func,
+                     x0=x0,
+                     fprime=fprime,
+                     fprime2=fprime2,
+                     maxiter=70,
+                     tol=2e-8)
 
     # Need to ravel arrays because assert_allclose requires matching dimensions
     y_true = y_true.ravel()
@@ -124,9 +129,8 @@ def test_numerical_gradients(loss, n_classes, prediction_dim, seed=0):
         y_true = rng.poisson(size=n_samples).astype(Y_DTYPE)
     else:
         y_true = rng.randint(0, n_classes, size=n_samples).astype(Y_DTYPE)
-    raw_predictions = rng.normal(
-        size=(prediction_dim, n_samples)
-    ).astype(Y_DTYPE)
+    raw_predictions = rng.normal(size=(prediction_dim,
+                                       n_samples)).astype(Y_DTYPE)
     loss = _LOSSES[loss](sample_weight=None)
     get_gradients, get_hessians = get_derivatives_helper(loss)
 
@@ -238,8 +242,8 @@ def test_baseline_categorical_crossentropy():
     loss = _LOSSES['categorical_crossentropy'](sample_weight=None)
     for y_train in (np.zeros(shape=100), np.ones(shape=100)):
         y_train = y_train.astype(np.float64)
-        baseline_prediction = loss.get_baseline_prediction(y_train, None,
-                                                           prediction_dim)
+        baseline_prediction = loss.get_baseline_prediction(
+            y_train, None, prediction_dim)
         assert baseline_prediction.dtype == y_train.dtype
         assert_all_finite(baseline_prediction)
 
@@ -260,7 +264,7 @@ def test_baseline_categorical_crossentropy():
     ('binary_crossentropy', 'classification'),
     ('categorical_crossentropy', 'classification'),
     ('poisson', 'poisson_regression'),
-    ])
+])
 @pytest.mark.parametrize('sample_weight', ['ones', 'random'])
 def test_sample_weight_multiplies_gradients(loss, problem, sample_weight):
     # Make sure that passing sample weights to the gradient and hessians
@@ -289,8 +293,7 @@ def test_sample_weight_multiplies_gradients(loss, problem, sample_weight):
     loss_ = _LOSSES[loss](sample_weight=sample_weight)
 
     baseline_prediction = loss_.get_baseline_prediction(
-        y_true, None, prediction_dim
-    )
+        y_true, None, prediction_dim)
     raw_predictions = np.zeros(shape=(prediction_dim, n_samples),
                                dtype=baseline_prediction.dtype)
     raw_predictions += baseline_prediction
@@ -319,15 +322,15 @@ def test_init_gradient_and_hessians_sample_weight():
     sample_weight = None
     loss = _LOSSES['least_squares'](sample_weight=sample_weight)
     _, hessians = loss.init_gradients_and_hessians(
-        n_samples=n_samples, prediction_dim=prediction_dim,
-        sample_weight=None)
+        n_samples=n_samples, prediction_dim=prediction_dim, sample_weight=None)
     assert loss.hessians_are_constant
     assert hessians.shape == (1, 1)
 
     sample_weight = np.ones(n_samples)
     loss = _LOSSES['least_squares'](sample_weight=sample_weight)
     _, hessians = loss.init_gradients_and_hessians(
-        n_samples=n_samples, prediction_dim=prediction_dim,
+        n_samples=n_samples,
+        prediction_dim=prediction_dim,
         sample_weight=sample_weight)
     assert not loss.hessians_are_constant
     assert hessians.shape == (prediction_dim, n_samples)

@@ -25,7 +25,6 @@ from .utils.extmath import softmax
 from .preprocessing import StandardScaler
 from .utils.validation import _deprecate_positional_args
 
-
 __all__ = ['LinearDiscriminantAnalysis', 'QuadraticDiscriminantAnalysis']
 
 
@@ -245,8 +244,14 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
     [1]
     """
     @_deprecate_positional_args
-    def __init__(self, *, solver='svd', shrinkage=None, priors=None,
-                 n_components=None, store_covariance=False, tol=1e-4):
+    def __init__(self,
+                 *,
+                 solver='svd',
+                 shrinkage=None,
+                 priors=None,
+                 n_components=None,
+                 store_covariance=False,
+                 tol=1e-4):
         self.solver = solver
         self.shrinkage = shrinkage
         self.priors = priors
@@ -333,8 +338,8 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         Sb = St - Sw  # between scatter
 
         evals, evecs = linalg.eigh(Sb, Sw)
-        self.explained_variance_ratio_ = np.sort(evals / np.sum(evals)
-                                                 )[::-1][:self._max_components]
+        self.explained_variance_ratio_ = np.sort(
+            evals / np.sum(evals))[::-1][:self._max_components]
         evecs = evecs[:, np.argsort(evals)[::-1]]  # sort eigenvectors
 
         self.scalings_ = evecs
@@ -393,12 +398,12 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         # (n_classes) centers
         _, S, Vt = linalg.svd(X, full_matrices=0)
 
-        self.explained_variance_ratio_ = (S**2 / np.sum(
-            S**2))[:self._max_components]
+        self.explained_variance_ratio_ = (S**2 /
+                                          np.sum(S**2))[:self._max_components]
         rank = np.sum(S > self.tol * S[0])
         self.scalings_ = np.dot(scalings, Vt.T[:, :rank])
         coef = np.dot(self.means_ - self.xbar_, self.scalings_)
-        self.intercept_ = (-0.5 * np.sum(coef ** 2, axis=1) +
+        self.intercept_ = (-0.5 * np.sum(coef**2, axis=1) +
                            np.log(self.priors_))
         self.coef_ = np.dot(coef, self.scalings_.T)
         self.intercept_ -= np.dot(self.xbar_, self.coef_.T)
@@ -421,7 +426,10 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         y : array-like of shape (n_samples,)
             Target values.
         """
-        X, y = self._validate_data(X, y, ensure_min_samples=2, estimator=self,
+        X, y = self._validate_data(X,
+                                   y,
+                                   ensure_min_samples=2,
+                                   estimator=self,
                                    dtype=[np.float64, np.float32])
         self.classes_ = unique_labels(y)
         n_samples, _ = X.shape
@@ -454,8 +462,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
             if self.n_components > max_components:
                 raise ValueError(
                     "n_components cannot be larger than min(n_features, "
-                    "n_classes - 1)."
-                )
+                    "n_classes - 1).")
             self._max_components = self.n_components
 
         if self.solver == 'svd':
@@ -470,10 +477,12 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
             raise ValueError("unknown solver {} (valid solvers are 'svd', "
                              "'lsqr', and 'eigen').".format(self.solver))
         if self.classes_.size == 2:  # treat binary case as a special case
-            self.coef_ = np.array(self.coef_[1, :] - self.coef_[0, :], ndmin=2,
+            self.coef_ = np.array(self.coef_[1, :] - self.coef_[0, :],
+                                  ndmin=2,
                                   dtype=X.dtype)
             self.intercept_ = np.array(self.intercept_[1] - self.intercept_[0],
-                                       ndmin=1, dtype=X.dtype)
+                                       ndmin=1,
+                                       dtype=X.dtype)
         return self
 
     def transform(self, X):
@@ -520,7 +529,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         decision = self.decision_function(X)
         if self.classes_.size == 2:
             proba = expit(decision)
-            return np.vstack([1-proba, proba]).T
+            return np.vstack([1 - proba, proba]).T
         else:
             return softmax(decision)
 
@@ -654,7 +663,11 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
         Discriminant Analysis
     """
     @_deprecate_positional_args
-    def __init__(self, *, priors=None, reg_param=0., store_covariance=False,
+    def __init__(self,
+                 *,
+                 priors=None,
+                 reg_param=0.,
+                 store_covariance=False,
                  tol=1.0e-4):
         self.priors = np.asarray(priors) if priors is not None else None
         self.reg_param = reg_param
@@ -713,7 +726,7 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
             rank = np.sum(S > self.tol)
             if rank < n_features:
                 warnings.warn("Variables are collinear")
-            S2 = (S ** 2) / (len(Xg) - 1)
+            S2 = (S**2) / (len(Xg) - 1)
             S2 = ((1 - self.reg_param) * S2) + self.reg_param
             if self.store_covariance or store_covariance:
                 # cov = V * (S^2 / (n-1)) * V.T
@@ -737,8 +750,8 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
             R = self.rotations_[i]
             S = self.scalings_[i]
             Xm = X - self.means_[i]
-            X2 = np.dot(Xm, R * (S ** (-0.5)))
-            norm2.append(np.sum(X2 ** 2, axis=1))
+            X2 = np.dot(Xm, R * (S**(-0.5)))
+            norm2.append(np.sum(X2**2, axis=1))
         norm2 = np.array(norm2).T  # shape = [len(X), n_classes]
         u = np.asarray([np.sum(np.log(s)) for s in self.scalings_])
         return (-0.5 * (norm2 + u) + np.log(self.priors_))

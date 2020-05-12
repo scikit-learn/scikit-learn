@@ -33,7 +33,6 @@ def _parse_version(version_string):
 np_version = _parse_version(np.__version__)
 sp_version = _parse_version(scipy.__version__)
 
-
 if sp_version >= (1, 4):
     from scipy.sparse.linalg import lobpcg
 else:
@@ -87,16 +86,18 @@ def _joblib_parallel_args(**kwargs):
 
     extra_args = set(kwargs.keys()).difference({'prefer', 'require'})
     if extra_args:
-        raise NotImplementedError('unhandled arguments %s with joblib %s'
-                                  % (list(extra_args), joblib.__version__))
+        raise NotImplementedError('unhandled arguments %s with joblib %s' %
+                                  (list(extra_args), joblib.__version__))
     args = {}
     if 'prefer' in kwargs:
         prefer = kwargs['prefer']
         if prefer not in ['threads', 'processes', None]:
             raise ValueError('prefer=%s is not supported' % prefer)
-        args['backend'] = {'threads': 'threading',
-                           'processes': 'multiprocessing',
-                           None: None}[prefer]
+        args['backend'] = {
+            'threads': 'threading',
+            'processes': 'multiprocessing',
+            None: None
+        }[prefer]
 
     if 'require' in kwargs:
         require = kwargs['require']

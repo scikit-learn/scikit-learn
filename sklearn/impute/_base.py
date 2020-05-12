@@ -20,12 +20,12 @@ from ..utils import is_scalar_nan
 
 
 def _check_inputs_dtype(X, missing_values):
-    if (X.dtype.kind in ("f", "i", "u") and
-            not isinstance(missing_values, numbers.Real)):
+    if (X.dtype.kind in ("f", "i", "u")
+            and not isinstance(missing_values, numbers.Real)):
         raise ValueError("'X' and 'missing_values' types are expected to be"
                          " both numerical. Got X.dtype={} and "
-                         " type(missing_values)={}."
-                         .format(X.dtype, type(missing_values)))
+                         " type(missing_values)={}.".format(
+                             X.dtype, type(missing_values)))
 
 
 def _most_frequent(array, extra_value, n_repeat):
@@ -67,7 +67,6 @@ class _BaseImputer(TransformerMixin, BaseEstimator):
 
     It adds automatically support for `add_indicator`.
     """
-
     def __init__(self, *, missing_values=np.nan, add_indicator=False):
         self.missing_values = missing_values
         self.add_indicator = add_indicator
@@ -76,8 +75,7 @@ class _BaseImputer(TransformerMixin, BaseEstimator):
         """Fit a MissingIndicator."""
         if self.add_indicator:
             self.indicator_ = MissingIndicator(
-                missing_values=self.missing_values, error_on_new=False
-            )
+                missing_values=self.missing_values, error_on_new=False)
             self.indicator_.fit(X)
         else:
             self.indicator_ = None
@@ -90,10 +88,8 @@ class _BaseImputer(TransformerMixin, BaseEstimator):
         """
         if self.add_indicator:
             if not hasattr(self, 'indicator_'):
-                raise ValueError(
-                    "Make sure to call _fit_indicator before "
-                    "_transform_indicator"
-                )
+                raise ValueError("Make sure to call _fit_indicator before "
+                                 "_transform_indicator")
             return self.indicator_.transform(X)
 
     def _concatenate_indicator(self, X_imputed, X_indicator):
@@ -106,8 +102,7 @@ class _BaseImputer(TransformerMixin, BaseEstimator):
             raise ValueError(
                 "Data from the missing indicator are not provided. Call "
                 "_fit_indicator and _transform_indicator in the imputer "
-                "implementation."
-                )
+                "implementation.")
 
         return hstack((X_imputed, X_indicator))
 
@@ -209,12 +204,16 @@ class SimpleImputer(_BaseImputer):
 
     """
     @_deprecate_positional_args
-    def __init__(self, *, missing_values=np.nan, strategy="mean",
-                 fill_value=None, verbose=0, copy=True, add_indicator=False):
-        super().__init__(
-            missing_values=missing_values,
-            add_indicator=add_indicator
-        )
+    def __init__(self,
+                 *,
+                 missing_values=np.nan,
+                 strategy="mean",
+                 fill_value=None,
+                 verbose=0,
+                 copy=True,
+                 add_indicator=False):
+        super().__init__(missing_values=missing_values,
+                         add_indicator=add_indicator)
         self.strategy = strategy
         self.fill_value = fill_value
         self.verbose = verbose
@@ -224,8 +223,8 @@ class SimpleImputer(_BaseImputer):
         allowed_strategies = ["mean", "median", "most_frequent", "constant"]
         if self.strategy not in allowed_strategies:
             raise ValueError("Can only use these strategies: {0} "
-                             " got strategy={1}".format(allowed_strategies,
-                                                        self.strategy))
+                             " got strategy={1}".format(
+                                 allowed_strategies, self.strategy))
 
         if self.strategy in ("most_frequent", "constant"):
             dtype = None
@@ -238,8 +237,10 @@ class SimpleImputer(_BaseImputer):
             force_all_finite = "allow-nan"
 
         try:
-            X = self._validate_data(X, reset=in_fit,
-                                    accept_sparse='csc', dtype=dtype,
+            X = self._validate_data(X,
+                                    reset=in_fit,
+                                    accept_sparse='csc',
+                                    dtype=dtype,
                                     force_all_finite=force_all_finite,
                                     copy=self.copy)
         except ValueError as ve:
@@ -288,9 +289,8 @@ class SimpleImputer(_BaseImputer):
             fill_value = self.fill_value
 
         # fill_value should be numerical in case of numerical input
-        if (self.strategy == "constant" and
-                X.dtype.kind in ("i", "u", "f") and
-                not isinstance(fill_value, numbers.Real)):
+        if (self.strategy == "constant" and X.dtype.kind in ("i", "u", "f")
+                and not isinstance(fill_value, numbers.Real)):
             raise ValueError("'fill_value'={0} is invalid. Expected a "
                              "numerical value when imputing numerical "
                              "data".format(fill_value))
@@ -303,15 +303,12 @@ class SimpleImputer(_BaseImputer):
                                  "== 0 and input is sparse. Provide a dense "
                                  "array instead.")
             else:
-                self.statistics_ = self._sparse_fit(X,
-                                                    self.strategy,
+                self.statistics_ = self._sparse_fit(X, self.strategy,
                                                     self.missing_values,
                                                     fill_value)
         else:
-            self.statistics_ = self._dense_fit(X,
-                                               self.strategy,
-                                               self.missing_values,
-                                               fill_value)
+            self.statistics_ = self._dense_fit(X, self.strategy,
+                                               self.missing_values, fill_value)
         return self
 
     def _sparse_fit(self, X, strategy, missing_values, fill_value):
@@ -342,13 +339,10 @@ class SimpleImputer(_BaseImputer):
                     statistics[i] = np.nan if s == 0 else column.sum() / s
 
                 elif strategy == "median":
-                    statistics[i] = _get_median(column,
-                                                n_zeros)
+                    statistics[i] = _get_median(column, n_zeros)
 
                 elif strategy == "most_frequent":
-                    statistics[i] = _most_frequent(column,
-                                                   0,
-                                                   n_zeros)
+                    statistics[i] = _most_frequent(column, 0, n_zeros)
         return statistics
 
     def _dense_fit(self, X, strategy, missing_values, fill_value):
@@ -418,8 +412,8 @@ class SimpleImputer(_BaseImputer):
         statistics = self.statistics_
 
         if X.shape[1] != statistics.shape[0]:
-            raise ValueError("X has %d features per sample, expected %d"
-                             % (X.shape[1], self.statistics_.shape[0]))
+            raise ValueError("X has %d features per sample, expected %d" %
+                             (X.shape[1], self.statistics_.shape[0]))
 
         # Delete the invalid columns if strategy is not constant
         if self.strategy == "constant":
@@ -446,9 +440,8 @@ class SimpleImputer(_BaseImputer):
                                  "array instead.")
             else:
                 mask = _get_mask(X.data, self.missing_values)
-                indexes = np.repeat(
-                    np.arange(len(X.indptr) - 1, dtype=np.int),
-                    np.diff(X.indptr))[mask]
+                indexes = np.repeat(np.arange(len(X.indptr) - 1, dtype=np.int),
+                                    np.diff(X.indptr))[mask]
 
                 X.data[mask] = valid_statistics[indexes].astype(X.dtype,
                                                                 copy=False)
@@ -531,8 +524,12 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
 
     """
     @_deprecate_positional_args
-    def __init__(self, *, missing_values=np.nan, features="missing-only",
-                 sparse="auto", error_on_new=True):
+    def __init__(self,
+                 *,
+                 missing_values=np.nan,
+                 features="missing-only",
+                 sparse="auto",
+                 error_on_new=True):
         self.missing_values = missing_values
         self.features = features
         self.sparse = sparse
@@ -563,11 +560,12 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
 
             # The imputer mask will be constructed with the same sparse format
             # as X.
-            sparse_constructor = (sparse.csr_matrix if X.format == 'csr'
-                                  else sparse.csc_matrix)
+            sparse_constructor = (sparse.csr_matrix
+                                  if X.format == 'csr' else sparse.csc_matrix)
             imputer_mask = sparse_constructor(
                 (mask, X.indices.copy(), X.indptr.copy()),
-                shape=X.shape, dtype=bool)
+                shape=X.shape,
+                dtype=bool)
             imputer_mask.eliminate_zeros()
 
             if self.features == 'missing-only':
@@ -598,8 +596,10 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
             force_all_finite = True
         else:
             force_all_finite = "allow-nan"
-        X = self._validate_data(X, reset=in_fit,
-                                accept_sparse=('csc', 'csr'), dtype=None,
+        X = self._validate_data(X,
+                                reset=in_fit,
+                                accept_sparse=('csc', 'csr'),
+                                dtype=None,
                                 force_all_finite=force_all_finite)
         _check_inputs_dtype(X, self.missing_values)
         if X.dtype.kind not in ("i", "u", "f", "O"):
@@ -642,8 +642,8 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
             raise ValueError("'features' has to be either 'missing-only' or "
                              "'all'. Got {} instead.".format(self.features))
 
-        if not ((isinstance(self.sparse, str) and
-                self.sparse == "auto") or isinstance(self.sparse, bool)):
+        if not ((isinstance(self.sparse, str) and self.sparse == "auto")
+                or isinstance(self.sparse, bool)):
             raise ValueError("'sparse' has to be a boolean or 'auto'. "
                              "Got {!r} instead.".format(self.sparse))
 
@@ -731,5 +731,4 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
         return imputer_mask
 
     def _more_tags(self):
-        return {'allow_nan': True,
-                'X_types': ['2darray', 'string']}
+        return {'allow_nan': True, 'X_types': ['2darray', 'string']}

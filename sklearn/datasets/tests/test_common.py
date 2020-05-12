@@ -11,8 +11,8 @@ def check_pandas_dependency_message(fetch_func):
     except ImportError:
         # Check that pandas is imported lazily and that an informative error
         # message is raised when pandas is missing:
-        expected_msg = ('{} with as_frame=True requires pandas'
-                        .format(fetch_func.__name__))
+        expected_msg = ('{} with as_frame=True requires pandas'.format(
+            fetch_func.__name__))
         with pytest.raises(ImportError, match=expected_msg):
             fetch_func(as_frame=True)
 
@@ -24,8 +24,10 @@ def check_return_X_y(bunch, fetch_func_partial):
     assert X_y_tuple[1].shape == bunch.target.shape
 
 
-def check_as_frame(bunch, fetch_func_partial,
-                   expected_data_dtype=None, expected_target_dtype=None):
+def check_as_frame(bunch,
+                   fetch_func_partial,
+                   expected_data_dtype=None,
+                   expected_target_dtype=None):
     pd = pytest.importorskip('pandas')
     frame_bunch = fetch_func_partial(as_frame=True)
     assert hasattr(frame_bunch, 'frame')

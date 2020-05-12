@@ -60,8 +60,13 @@ def _return_float_dtype(X, Y):
 
 
 @_deprecate_positional_args
-def check_pairwise_arrays(X, Y, *, precomputed=False, dtype=None,
-                          accept_sparse='csr', force_all_finite=True,
+def check_pairwise_arrays(X,
+                          Y,
+                          *,
+                          precomputed=False,
+                          dtype=None,
+                          accept_sparse='csr',
+                          force_all_finite=True,
                           copy=False):
     """ Set X and Y appropriately and checks inputs
 
@@ -137,15 +142,24 @@ def check_pairwise_arrays(X, Y, *, precomputed=False, dtype=None,
         dtype = dtype_float
 
     if Y is X or Y is None:
-        X = Y = check_array(X, accept_sparse=accept_sparse, dtype=dtype,
-                            copy=copy, force_all_finite=force_all_finite,
+        X = Y = check_array(X,
+                            accept_sparse=accept_sparse,
+                            dtype=dtype,
+                            copy=copy,
+                            force_all_finite=force_all_finite,
                             estimator=estimator)
     else:
-        X = check_array(X, accept_sparse=accept_sparse, dtype=dtype,
-                        copy=copy, force_all_finite=force_all_finite,
+        X = check_array(X,
+                        accept_sparse=accept_sparse,
+                        dtype=dtype,
+                        copy=copy,
+                        force_all_finite=force_all_finite,
                         estimator=estimator)
-        Y = check_array(Y, accept_sparse=accept_sparse, dtype=dtype,
-                        copy=copy, force_all_finite=force_all_finite,
+        Y = check_array(Y,
+                        accept_sparse=accept_sparse,
+                        dtype=dtype,
+                        copy=copy,
+                        force_all_finite=force_all_finite,
                         estimator=estimator)
 
     if precomputed:
@@ -156,8 +170,8 @@ def check_pairwise_arrays(X, Y, *, precomputed=False, dtype=None,
                              (X.shape[0], X.shape[1], Y.shape[0]))
     elif X.shape[1] != Y.shape[1]:
         raise ValueError("Incompatible dimension for X and Y matrices: "
-                         "X.shape[1] == %d while Y.shape[1] == %d" % (
-                             X.shape[1], Y.shape[1]))
+                         "X.shape[1] == %d while Y.shape[1] == %d" %
+                         (X.shape[1], Y.shape[1]))
 
     return X, Y
 
@@ -198,7 +212,11 @@ def check_paired_arrays(X, Y):
 
 # Pairwise distances
 @_deprecate_positional_args
-def euclidean_distances(X, Y=None, *, Y_norm_squared=None, squared=False,
+def euclidean_distances(X,
+                        Y=None,
+                        *,
+                        Y_norm_squared=None,
+                        squared=False,
                         X_norm_squared=None):
     """
     Considering the rows of X (and Y=X) as vectors, compute the
@@ -306,7 +324,7 @@ def euclidean_distances(X, Y=None, *, Y_norm_squared=None, squared=False,
         distances = _euclidean_distances_upcast(X, XX, Y, YY)
     else:
         # if dtype is already float64, no need to chunk and upcast
-        distances = - 2 * safe_sparse_dot(X, Y.T, dense_output=True)
+        distances = -2 * safe_sparse_dot(X, Y.T, dense_output=True)
         distances += XX
         distances += YY
     np.maximum(distances, 0, out=distances)
@@ -320,8 +338,12 @@ def euclidean_distances(X, Y=None, *, Y_norm_squared=None, squared=False,
 
 
 @_deprecate_positional_args
-def nan_euclidean_distances(X, Y=None, *, squared=False,
-                            missing_values=np.nan, copy=True):
+def nan_euclidean_distances(X,
+                            Y=None,
+                            *,
+                            squared=False,
+                            missing_values=np.nan,
+                            copy=True):
     """Calculate the euclidean distances in the presence of missing values.
 
     Compute the euclidean distance between each pair of samples in X and Y,
@@ -393,8 +415,11 @@ def nan_euclidean_distances(X, Y=None, *, squared=False,
     """
 
     force_all_finite = 'allow-nan' if is_scalar_nan(missing_values) else True
-    X, Y = check_pairwise_arrays(X, Y, accept_sparse=False,
-                                 force_all_finite=force_all_finite, copy=copy)
+    X, Y = check_pairwise_arrays(X,
+                                 Y,
+                                 accept_sparse=False,
+                                 force_all_finite=force_all_finite,
+                                 copy=copy)
     # Get missing mask for X
     missing_X = _get_mask(X, missing_values)
 
@@ -457,9 +482,9 @@ def _euclidean_distances_upcast(X, XX=None, Y=None, YY=None, batch_size=None):
         # Allow 10% more memory than X, Y and the distance matrix take (at
         # least 10MiB)
         maxmem = max(
-            ((x_density * n_samples_X + y_density * n_samples_Y) * n_features
-             + (x_density * n_samples_X * y_density * n_samples_Y)) / 10,
-            10 * 2 ** 17)
+            ((x_density * n_samples_X + y_density * n_samples_Y) * n_features +
+             (x_density * n_samples_X * y_density * n_samples_Y)) / 10,
+            10 * 2**17)
 
         # The increase amount of memory in 8-byte blocks is:
         # - x_density * batch_size * n_features (copy of chunk of X)
@@ -468,7 +493,7 @@ def _euclidean_distances_upcast(X, XX=None, Y=None, YY=None, batch_size=None):
         # Hence x² + (xd+yd)kx = M, where x=batch_size, k=n_features, M=maxmem
         #                                 xd=x_density and yd=y_density
         tmp = (x_density + y_density) * n_features
-        batch_size = (-tmp + np.sqrt(tmp ** 2 + 4 * maxmem)) / 2
+        batch_size = (-tmp + np.sqrt(tmp**2 + 4 * maxmem)) / 2
         batch_size = max(int(batch_size), 1)
 
     x_batches = gen_batches(n_samples_X, batch_size)
@@ -511,7 +536,11 @@ def _argmin_min_reduce(dist, start):
 
 
 @_deprecate_positional_args
-def pairwise_distances_argmin_min(X, Y, *, axis=1, metric="euclidean",
+def pairwise_distances_argmin_min(X,
+                                  Y,
+                                  *,
+                                  axis=1,
+                                  metric="euclidean",
                                   metric_kwargs=None):
     """Compute minimum distances between one point and a set of points.
 
@@ -589,8 +618,7 @@ def pairwise_distances_argmin_min(X, Y, *, axis=1, metric="euclidean",
         X, Y = Y, X
 
     indices, values = zip(*pairwise_distances_chunked(
-        X, Y, reduce_func=_argmin_min_reduce, metric=metric,
-        **metric_kwargs))
+        X, Y, reduce_func=_argmin_min_reduce, metric=metric, **metric_kwargs))
     indices = np.concatenate(indices)
     values = np.concatenate(values)
 
@@ -598,7 +626,11 @@ def pairwise_distances_argmin_min(X, Y, *, axis=1, metric="euclidean",
 
 
 @_deprecate_positional_args
-def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean",
+def pairwise_distances_argmin(X,
+                              Y,
+                              *,
+                              axis=1,
+                              metric="euclidean",
                               metric_kwargs=None):
     """Compute minimum distances between one point and a set of points.
 
@@ -668,7 +700,10 @@ def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean",
     if metric_kwargs is None:
         metric_kwargs = {}
 
-    return pairwise_distances_argmin_min(X, Y, axis=axis, metric=metric,
+    return pairwise_distances_argmin_min(X,
+                                         Y,
+                                         axis=axis,
+                                         metric=metric,
                                          metric_kwargs=metric_kwargs)[0]
 
 
@@ -786,12 +821,11 @@ def manhattan_distances(X, Y=None, *, sum_over_features=True):
 
         X = csr_matrix(X, copy=False)
         Y = csr_matrix(Y, copy=False)
-        X.sum_duplicates()   # this also sorts indices in-place
+        X.sum_duplicates()  # this also sorts indices in-place
         Y.sum_duplicates()
         D = np.zeros((X.shape[0], Y.shape[0]))
-        _sparse_manhattan(X.data, X.indices, X.indptr,
-                          Y.data, Y.indices, Y.indptr,
-                          D)
+        _sparse_manhattan(X.data, X.indices, X.indptr, Y.data, Y.indices,
+                          Y.indptr, D)
         return D
 
     if sum_over_features:
@@ -915,7 +949,8 @@ PAIRED_DISTANCES = {
     'l2': paired_euclidean_distances,
     'l1': paired_manhattan_distances,
     'manhattan': paired_manhattan_distances,
-    'cityblock': paired_manhattan_distances}
+    'cityblock': paired_manhattan_distances
+}
 
 
 @_deprecate_positional_args
@@ -1183,7 +1218,8 @@ def cosine_similarity(X, Y=None, dense_output=True):
     else:
         Y_normalized = normalize(Y, copy=True)
 
-    K = safe_sparse_dot(X_normalized, Y_normalized.T,
+    K = safe_sparse_dot(X_normalized,
+                        Y_normalized.T,
                         dense_output=dense_output)
 
     return K
@@ -1405,13 +1441,14 @@ def _pairwise_callable(X, Y, metric, force_all_finite=True, **kwds):
     return out
 
 
-_VALID_METRICS = ['euclidean', 'l2', 'l1', 'manhattan', 'cityblock',
-                  'braycurtis', 'canberra', 'chebyshev', 'correlation',
-                  'cosine', 'dice', 'hamming', 'jaccard', 'kulsinski',
-                  'mahalanobis', 'matching', 'minkowski', 'rogerstanimoto',
-                  'russellrao', 'seuclidean', 'sokalmichener',
-                  'sokalsneath', 'sqeuclidean', 'yule', "wminkowski",
-                  'nan_euclidean', 'haversine']
+_VALID_METRICS = [
+    'euclidean', 'l2', 'l1', 'manhattan', 'cityblock', 'braycurtis',
+    'canberra', 'chebyshev', 'correlation', 'cosine', 'dice', 'hamming',
+    'jaccard', 'kulsinski', 'mahalanobis', 'matching', 'minkowski',
+    'rogerstanimoto', 'russellrao', 'seuclidean', 'sokalmichener',
+    'sokalsneath', 'sqeuclidean', 'yule', "wminkowski", 'nan_euclidean',
+    'haversine'
+]
 
 _NAN_METRICS = ['nan_euclidean']
 
@@ -1423,18 +1460,19 @@ def _check_chunk_size(reduced, chunk_size):
         return
     is_tuple = isinstance(reduced, tuple)
     if not is_tuple:
-        reduced = (reduced,)
-    if any(isinstance(r, tuple) or not hasattr(r, '__iter__')
-           for r in reduced):
+        reduced = (reduced, )
+    if any(
+            isinstance(r, tuple) or not hasattr(r, '__iter__')
+            for r in reduced):
         raise TypeError('reduce_func returned %r. '
                         'Expected sequence(s) of length %d.' %
                         (reduced if is_tuple else reduced[0], chunk_size))
     if any(_num_samples(r) != chunk_size for r in reduced):
         actual_size = tuple(_num_samples(r) for r in reduced)
-        raise ValueError('reduce_func returned object of length %s. '
-                         'Expected same length as input: %d.' %
-                         (actual_size if is_tuple else actual_size[0],
-                          chunk_size))
+        raise ValueError(
+            'reduce_func returned object of length %s. '
+            'Expected same length as input: %d.' %
+            (actual_size if is_tuple else actual_size[0], chunk_size))
 
 
 def _precompute_metric_params(X, Y, metric=None, **kwds):
@@ -1444,27 +1482,34 @@ def _precompute_metric_params(X, Y, metric=None, **kwds):
         if X is Y:
             V = np.var(X, axis=0, ddof=1)
         else:
-            warnings.warn("from version 0.25, pairwise_distances for "
-                          "metric='seuclidean' will require V to be "
-                          "specified if Y is passed.", FutureWarning)
+            warnings.warn(
+                "from version 0.25, pairwise_distances for "
+                "metric='seuclidean' will require V to be "
+                "specified if Y is passed.", FutureWarning)
             V = np.var(np.vstack([X, Y]), axis=0, ddof=1)
         return {'V': V}
     if metric == "mahalanobis" and 'VI' not in kwds:
         if X is Y:
             VI = np.linalg.inv(np.cov(X.T)).T
         else:
-            warnings.warn("from version 0.25, pairwise_distances for "
-                          "metric='mahalanobis' will require VI to be "
-                          "specified if Y is passed.", FutureWarning)
+            warnings.warn(
+                "from version 0.25, pairwise_distances for "
+                "metric='mahalanobis' will require VI to be "
+                "specified if Y is passed.", FutureWarning)
             VI = np.linalg.inv(np.cov(np.vstack([X, Y]).T)).T
         return {'VI': VI}
     return {}
 
 
 @_deprecate_positional_args
-def pairwise_distances_chunked(X, Y=None, *, reduce_func=None,
-                               metric='euclidean', n_jobs=None,
-                               working_memory=None, **kwds):
+def pairwise_distances_chunked(X,
+                               Y=None,
+                               *,
+                               reduce_func=None,
+                               metric='euclidean',
+                               n_jobs=None,
+                               working_memory=None,
+                               **kwds):
     """Generate a distance matrix chunk by chunk with optional reduction
 
     In cases where not all of a pairwise distance matrix needs to be stored at
@@ -1582,7 +1627,7 @@ def pairwise_distances_chunked(X, Y=None, *, reduce_func=None,
     """
     n_samples_X = _num_samples(X)
     if metric == 'precomputed':
-        slices = (slice(0, n_samples_X),)
+        slices = (slice(0, n_samples_X), )
     else:
         if Y is None:
             Y = X
@@ -1609,11 +1654,13 @@ def pairwise_distances_chunked(X, Y=None, *, reduce_func=None,
             X_chunk = X  # enable optimised paths for X is Y
         else:
             X_chunk = X[sl]
-        D_chunk = pairwise_distances(X_chunk, Y, metric=metric,
-                                     n_jobs=n_jobs, **kwds)
-        if ((X is Y or Y is None)
-                and PAIRWISE_DISTANCE_FUNCTIONS.get(metric, None)
-                is euclidean_distances):
+        D_chunk = pairwise_distances(X_chunk,
+                                     Y,
+                                     metric=metric,
+                                     n_jobs=n_jobs,
+                                     **kwds)
+        if ((X is Y or Y is None) and PAIRWISE_DISTANCE_FUNCTIONS.get(
+                metric, None) is euclidean_distances):
             # zeroing diagonal, taking care of aliases of "euclidean",
             # i.e. "l2"
             D_chunk.flat[sl.start::_num_samples(X) + 1] = 0
@@ -1625,8 +1672,13 @@ def pairwise_distances_chunked(X, Y=None, *, reduce_func=None,
 
 
 @_deprecate_positional_args
-def pairwise_distances(X, Y=None, metric="euclidean", *, n_jobs=None,
-                       force_all_finite=True, **kwds):
+def pairwise_distances(X,
+                       Y=None,
+                       metric="euclidean",
+                       *,
+                       n_jobs=None,
+                       force_all_finite=True,
+                       **kwds):
     """ Compute the distance matrix from a vector array X and optional Y.
 
     This method takes either a vector array or a distance matrix, and returns
@@ -1729,14 +1781,16 @@ def pairwise_distances(X, Y=None, metric="euclidean", *, n_jobs=None,
     paired_distances : Computes the distances between corresponding
                        elements of two arrays
     """
-    if (metric not in _VALID_METRICS and
-            not callable(metric) and metric != "precomputed"):
+    if (metric not in _VALID_METRICS and not callable(metric)
+            and metric != "precomputed"):
         raise ValueError("Unknown metric %s. "
                          "Valid metrics are %s, or 'precomputed', or a "
                          "callable" % (metric, _VALID_METRICS))
 
     if metric == "precomputed":
-        X, _ = check_pairwise_arrays(X, Y, precomputed=True,
+        X, _ = check_pairwise_arrays(X,
+                                     Y,
+                                     precomputed=True,
                                      force_all_finite=force_all_finite)
 
         whom = ("`pairwise_distances`. Precomputed distance "
@@ -1746,8 +1800,10 @@ def pairwise_distances(X, Y=None, metric="euclidean", *, n_jobs=None,
     elif metric in PAIRWISE_DISTANCE_FUNCTIONS:
         func = PAIRWISE_DISTANCE_FUNCTIONS[metric]
     elif callable(metric):
-        func = partial(_pairwise_callable, metric=metric,
-                       force_all_finite=force_all_finite, **kwds)
+        func = partial(_pairwise_callable,
+                       metric=metric,
+                       force_all_finite=force_all_finite,
+                       **kwds)
     else:
         if issparse(X) or issparse(Y):
             raise TypeError("scipy distance metrics do not"
@@ -1755,12 +1811,14 @@ def pairwise_distances(X, Y=None, metric="euclidean", *, n_jobs=None,
 
         dtype = bool if metric in PAIRWISE_BOOLEAN_FUNCTIONS else None
 
-        if (dtype == bool and
-                (X.dtype != bool or (Y is not None and Y.dtype != bool))):
+        if (dtype == bool
+                and (X.dtype != bool or (Y is not None and Y.dtype != bool))):
             msg = "Data was converted to boolean for metric %s" % metric
             warnings.warn(msg, DataConversionWarning)
 
-        X, Y = check_pairwise_arrays(X, Y, dtype=dtype,
+        X, Y = check_pairwise_arrays(X,
+                                     Y,
+                                     dtype=dtype,
                                      force_all_finite=force_all_finite)
 
         # precompute data-derived metric params
@@ -1800,7 +1858,8 @@ PAIRWISE_KERNEL_FUNCTIONS = {
     'rbf': rbf_kernel,
     'laplacian': laplacian_kernel,
     'sigmoid': sigmoid_kernel,
-    'cosine': cosine_similarity, }
+    'cosine': cosine_similarity,
+}
 
 
 def kernel_metrics():
@@ -1844,8 +1903,13 @@ KERNEL_PARAMS = {
 
 
 @_deprecate_positional_args
-def pairwise_kernels(X, Y=None, metric="linear", *, filter_params=False,
-                     n_jobs=None, **kwds):
+def pairwise_kernels(X,
+                     Y=None,
+                     metric="linear",
+                     *,
+                     filter_params=False,
+                     n_jobs=None,
+                     **kwds):
     """Compute the kernel between arrays X and optional array Y.
 
     This method takes either a vector array or a kernel matrix, and returns
@@ -1925,8 +1989,7 @@ def pairwise_kernels(X, Y=None, metric="linear", *, filter_params=False,
         func = metric.__call__
     elif metric in PAIRWISE_KERNEL_FUNCTIONS:
         if filter_params:
-            kwds = {k: kwds[k] for k in kwds
-                    if k in KERNEL_PARAMS[metric]}
+            kwds = {k: kwds[k] for k in kwds if k in KERNEL_PARAMS[metric]}
         func = PAIRWISE_KERNEL_FUNCTIONS[metric]
     elif callable(metric):
         func = partial(_pairwise_callable, metric=metric, **kwds)

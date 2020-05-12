@@ -30,9 +30,15 @@ def _equal_similarities_and_preferences(S, preference):
     return all_equal_preferences() and all_equal_similarities()
 
 
-def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
-                         damping=0.5, copy=True, verbose=False,
-                         return_n_iter=False, random_state='warn'):
+def affinity_propagation(S,
+                         preference=None,
+                         convergence_iter=15,
+                         max_iter=200,
+                         damping=0.5,
+                         copy=True,
+                         verbose=False,
+                         return_n_iter=False,
+                         random_state='warn'):
     """Perform Affinity Propagation Clustering of data
 
     Read more in the :ref:`User Guide <affinity_propagation>`.
@@ -126,20 +132,19 @@ def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
 
     preference = np.array(preference)
 
-    if (n_samples == 1 or
-            _equal_similarities_and_preferences(S, preference)):
+    if (n_samples == 1 or _equal_similarities_and_preferences(S, preference)):
         # It makes no sense to run the algorithm in this case, so return 1 or
         # n_samples clusters, depending on preferences
         warnings.warn("All samples have mutually equal similarities. "
                       "Returning arbitrary cluster center(s).")
         if preference.flat[0] >= S.flat[n_samples - 1]:
-            return ((np.arange(n_samples), np.arange(n_samples), 0)
-                    if return_n_iter
-                    else (np.arange(n_samples), np.arange(n_samples)))
+            return ((np.arange(n_samples), np.arange(n_samples),
+                     0) if return_n_iter else
+                    (np.arange(n_samples), np.arange(n_samples)))
         else:
-            return ((np.array([0]), np.array([0] * n_samples), 0)
-                    if return_n_iter
-                    else (np.array([0]), np.array([0] * n_samples)))
+            return ((np.array([0]), np.array([0] * n_samples),
+                     0) if return_n_iter else
+                    (np.array([0]), np.array([0] * n_samples)))
 
     if random_state == 'warn':
         warnings.warn(("'random_state' has been introduced in 0.23. "
@@ -147,8 +152,7 @@ def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
                        "means that results will differ at every function "
                        "call. Set 'random_state' to None to silence this "
                        "warning, or to 0 to keep the behavior of versions "
-                       "<0.23."),
-                      FutureWarning)
+                       "<0.23."), FutureWarning)
         random_state = 0
     random_state = check_random_state(random_state)
 
@@ -208,8 +212,8 @@ def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
 
         if it >= convergence_iter:
             se = np.sum(e, axis=1)
-            unconverged = (np.sum((se == convergence_iter) + (se == 0))
-                           != n_samples)
+            unconverged = (np.sum((se == convergence_iter) +
+                                  (se == 0)) != n_samples)
             if (not unconverged and (K > 0)) or (it == max_iter):
                 never_converged = False
                 if verbose:
@@ -239,8 +243,9 @@ def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
         cluster_centers_indices = np.unique(labels)
         labels = np.searchsorted(cluster_centers_indices, labels)
     else:
-        warnings.warn("Affinity propagation did not converge, this model "
-                      "will not have any cluster centers.", ConvergenceWarning)
+        warnings.warn(
+            "Affinity propagation did not converge, this model "
+            "will not have any cluster centers.", ConvergenceWarning)
         labels = np.array([-1] * n_samples)
         cluster_centers_indices = []
 
@@ -251,6 +256,7 @@ def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
 
 
 ###############################################################################
+
 
 class AffinityPropagation(ClusterMixin, BaseEstimator):
     """Perform Affinity Propagation Clustering of data.
@@ -359,9 +365,16 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
            [4, 2]])
     """
     @_deprecate_positional_args
-    def __init__(self, *, damping=.5, max_iter=200, convergence_iter=15,
-                 copy=True, preference=None, affinity='euclidean',
-                 verbose=False, random_state='warn'):
+    def __init__(self,
+                 *,
+                 damping=.5,
+                 max_iter=200,
+                 convergence_iter=15,
+                 copy=True,
+                 preference=None,
+                 affinity='euclidean',
+                 verbose=False,
+                 random_state='warn'):
 
         self.damping = damping
         self.max_iter = max_iter
@@ -406,8 +419,8 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
             self.affinity_matrix_ = -euclidean_distances(X, squared=True)
         else:
             raise ValueError("Affinity must be 'precomputed' or "
-                             "'euclidean'. Got %s instead"
-                             % str(self.affinity))
+                             "'euclidean'. Got %s instead" %
+                             str(self.affinity))
 
         self.cluster_centers_indices_, self.labels_, self.n_iter_ = \
             affinity_propagation(
@@ -444,9 +457,10 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
         if self.cluster_centers_.shape[0] > 0:
             return pairwise_distances_argmin(X, self.cluster_centers_)
         else:
-            warnings.warn("This model does not have any cluster centers "
-                          "because affinity propagation did not converge. "
-                          "Labeling every sample as '-1'.", ConvergenceWarning)
+            warnings.warn(
+                "This model does not have any cluster centers "
+                "because affinity propagation did not converge. "
+                "Labeling every sample as '-1'.", ConvergenceWarning)
             return np.array([-1] * X.shape[0])
 
     def fit_predict(self, X, y=None):

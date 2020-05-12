@@ -30,18 +30,25 @@ from ..utils.validation import _deprecate_positional_args
 if not IS_PYPY:
     from ._svmlight_format_fast import _load_svmlight_file
 else:
+
     def _load_svmlight_file(*args, **kwargs):
         raise NotImplementedError(
-                'load_svmlight_file is currently not '
-                'compatible with PyPy (see '
-                'https://github.com/scikit-learn/scikit-learn/issues/11543 '
-                'for the status updates).')
+            'load_svmlight_file is currently not '
+            'compatible with PyPy (see '
+            'https://github.com/scikit-learn/scikit-learn/issues/11543 '
+            'for the status updates).')
 
 
 @_deprecate_positional_args
-def load_svmlight_file(f, *, n_features=None, dtype=np.float64,
-                       multilabel=False, zero_based="auto", query_id=False,
-                       offset=0, length=-1):
+def load_svmlight_file(f,
+                       *,
+                       n_features=None,
+                       dtype=np.float64,
+                       multilabel=False,
+                       zero_based="auto",
+                       query_id=False,
+                       offset=0,
+                       length=-1):
     """Load datasets in the svmlight / libsvm format into sparse CSR matrix
 
     This format is a text-based format, with one sample per line. It does
@@ -153,13 +160,15 @@ def load_svmlight_file(f, *, n_features=None, dtype=np.float64,
 
         X, y = get_data()
     """
-    return tuple(load_svmlight_files([f], n_features=n_features,
-                                     dtype=dtype,
-                                     multilabel=multilabel,
-                                     zero_based=zero_based,
-                                     query_id=query_id,
-                                     offset=offset,
-                                     length=length))
+    return tuple(
+        load_svmlight_files([f],
+                            n_features=n_features,
+                            dtype=dtype,
+                            multilabel=multilabel,
+                            zero_based=zero_based,
+                            query_id=query_id,
+                            offset=offset,
+                            length=length))
 
 
 def _gen_open(f):
@@ -179,8 +188,13 @@ def _gen_open(f):
         return open(f, "rb")
 
 
-def _open_and_load(f, dtype, multilabel, zero_based, query_id,
-                   offset=0, length=-1):
+def _open_and_load(f,
+                   dtype,
+                   multilabel,
+                   zero_based,
+                   query_id,
+                   offset=0,
+                   length=-1):
     if hasattr(f, "read"):
         actual_dtype, data, ind, indptr, labels, query = \
             _load_svmlight_file(f, dtype, multilabel, zero_based, query_id,
@@ -196,17 +210,23 @@ def _open_and_load(f, dtype, multilabel, zero_based, query_id,
         labels = np.frombuffer(labels, np.float64)
     data = np.frombuffer(data, actual_dtype)
     indices = np.frombuffer(ind, np.longlong)
-    indptr = np.frombuffer(indptr, dtype=np.longlong)   # never empty
+    indptr = np.frombuffer(indptr, dtype=np.longlong)  # never empty
     query = np.frombuffer(query, np.int64)
 
-    data = np.asarray(data, dtype=dtype)    # no-op for float{32,64}
+    data = np.asarray(data, dtype=dtype)  # no-op for float{32,64}
     return data, indices, indptr, labels, query
 
 
 @_deprecate_positional_args
-def load_svmlight_files(files, *, n_features=None, dtype=np.float64,
-                        multilabel=False, zero_based="auto", query_id=False,
-                        offset=0, length=-1):
+def load_svmlight_files(files,
+                        *,
+                        n_features=None,
+                        dtype=np.float64,
+                        multilabel=False,
+                        zero_based="auto",
+                        query_id=False,
+                        offset=0,
+                        length=-1):
     """Load dataset from multiple files in SVMlight format
 
     This function is equivalent to mapping load_svmlight_file over a list of
@@ -300,13 +320,18 @@ def load_svmlight_files(files, *, n_features=None, dtype=np.float64,
         raise ValueError(
             "n_features is required when offset or length is specified.")
 
-    r = [_open_and_load(f, dtype, multilabel, bool(zero_based), bool(query_id),
-                        offset=offset, length=length)
-         for f in files]
+    r = [
+        _open_and_load(f,
+                       dtype,
+                       multilabel,
+                       bool(zero_based),
+                       bool(query_id),
+                       offset=offset,
+                       length=length) for f in files
+    ]
 
-    if (zero_based is False or
-            zero_based == "auto" and all(len(tmp[1]) and np.min(tmp[1]) > 0
-                                         for tmp in r)):
+    if (zero_based is False or zero_based == "auto"
+            and all(len(tmp[1]) and np.min(tmp[1]) > 0 for tmp in r)):
         for _, indices, _, _, _ in r:
             indices -= 1
 
@@ -316,8 +341,8 @@ def load_svmlight_files(files, *, n_features=None, dtype=np.float64,
         n_features = n_f
     elif n_features < n_f:
         raise ValueError("n_features was set to {},"
-                         " but input file contains {} features"
-                         .format(n_features, n_f))
+                         " but input file contains {} features".format(
+                             n_features, n_f))
 
     result = []
     for data, indices, indptr, y, query_values in r:
@@ -350,10 +375,10 @@ def _dump_svmlight(X, y, f, multilabel, one_based, comment, query_id):
     line_pattern += " %s\n"
 
     if comment:
-        f.write(("# Generated by dump_svmlight_file from scikit-learn %s\n"
-                % __version__).encode())
-        f.write(("# Column indices are %s-based\n"
-                % ["zero", "one"][one_based]).encode())
+        f.write(("# Generated by dump_svmlight_file from scikit-learn %s\n" %
+                 __version__).encode())
+        f.write(("# Column indices are %s-based\n" %
+                 ["zero", "one"][one_based]).encode())
 
         f.write(b"#\n")
         f.writelines(b"# %s\n" % line for line in comment.splitlines())
@@ -389,7 +414,12 @@ def _dump_svmlight(X, y, f, multilabel, one_based, comment, query_id):
 
 
 @_deprecate_positional_args
-def dump_svmlight_file(X, y, f, *, zero_based=True, comment=None,
+def dump_svmlight_file(X,
+                       y,
+                       f,
+                       *,
+                       zero_based=True,
+                       comment=None,
                        query_id=None,
                        multilabel=False):
     """Dump the dataset in svmlight / libsvm file format.
@@ -455,18 +485,17 @@ def dump_svmlight_file(X, y, f, *, zero_based=True, comment=None,
     if sp.issparse(yval):
         if yval.shape[1] != 1 and not multilabel:
             raise ValueError("expected y of shape (n_samples, 1),"
-                             " got %r" % (yval.shape,))
+                             " got %r" % (yval.shape, ))
     else:
         if yval.ndim != 1 and not multilabel:
-            raise ValueError("expected y of shape (n_samples,), got %r"
-                             % (yval.shape,))
+            raise ValueError("expected y of shape (n_samples,), got %r" %
+                             (yval.shape, ))
 
     Xval = check_array(X, accept_sparse='csr')
     if Xval.shape[0] != yval.shape[0]:
-        raise ValueError(
-            "X.shape[0] and y.shape[0] should be the same, got"
-            " %r and %r instead." % (Xval.shape[0], yval.shape[0])
-        )
+        raise ValueError("X.shape[0] and y.shape[0] should be the same, got"
+                         " %r and %r instead." %
+                         (Xval.shape[0], yval.shape[0]))
 
     # We had some issues with CSR matrices with unsorted indices (e.g. #1501),
     # so sort them here, but first make sure we don't modify the user's X.
@@ -488,8 +517,9 @@ def dump_svmlight_file(X, y, f, *, zero_based=True, comment=None,
     if query_id is not None:
         query_id = np.asarray(query_id)
         if query_id.shape[0] != y.shape[0]:
-            raise ValueError("expected query_id of shape (n_samples,), got %r"
-                             % (query_id.shape,))
+            raise ValueError(
+                "expected query_id of shape (n_samples,), got %r" %
+                (query_id.shape, ))
 
     one_based = not zero_based
 

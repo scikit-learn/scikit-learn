@@ -19,7 +19,6 @@ from sklearn.utils.extmath import _deterministic_vector_sign_flip
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_array_equal
 
-
 # non centered, sparse centers to check the
 centers = np.array([
     [0.0, 5.0, 0.0, 0.0, 0.0],
@@ -28,17 +27,19 @@ centers = np.array([
 ])
 n_samples = 1000
 n_clusters, n_features = centers.shape
-S, true_labels = make_blobs(n_samples=n_samples, centers=centers,
-                            cluster_std=1., random_state=42)
+S, true_labels = make_blobs(n_samples=n_samples,
+                            centers=centers,
+                            cluster_std=1.,
+                            random_state=42)
 
 
 def _assert_equal_with_sign_flipping(A, B, tol=0.0):
     """ Check array A and B are equal with possible sign flipping on
     each columns"""
-    tol_squared = tol ** 2
+    tol_squared = tol**2
     for A_col, B_col in zip(A.T, B.T):
-        assert (np.max((A_col - B_col) ** 2) <= tol_squared or
-                np.max((A_col + B_col) ** 2) <= tol_squared)
+        assert (np.max((A_col - B_col)**2) <= tol_squared or np.max(
+            (A_col + B_col)**2) <= tol_squared)
 
 
 def test_sparse_graph_connected_component():
@@ -109,7 +110,8 @@ def test_spectral_embedding_two_components(seed=36):
     true_label = np.zeros(shape=2 * n_sample)
     true_label[0:n_sample] = 1
 
-    se_precomp = SpectralEmbedding(n_components=1, affinity="precomputed",
+    se_precomp = SpectralEmbedding(n_components=1,
+                                   affinity="precomputed",
                                    random_state=np.random.RandomState(seed))
     embedded_coordinate = se_precomp.fit_transform(affinity)
     # Some numpy versions are touchy with types
@@ -125,15 +127,17 @@ def test_spectral_embedding_two_components(seed=36):
 def test_spectral_embedding_precomputed_affinity(X, seed=36):
     # Test spectral embedding with precomputed kernel
     gamma = 1.0
-    se_precomp = SpectralEmbedding(n_components=2, affinity="precomputed",
+    se_precomp = SpectralEmbedding(n_components=2,
+                                   affinity="precomputed",
                                    random_state=np.random.RandomState(seed))
-    se_rbf = SpectralEmbedding(n_components=2, affinity="rbf",
+    se_rbf = SpectralEmbedding(n_components=2,
+                               affinity="rbf",
                                gamma=gamma,
                                random_state=np.random.RandomState(seed))
     embed_precomp = se_precomp.fit_transform(rbf_kernel(X, gamma=gamma))
     embed_rbf = se_rbf.fit_transform(X)
-    assert_array_almost_equal(
-        se_precomp.affinity_matrix_, se_rbf.affinity_matrix_)
+    assert_array_almost_equal(se_precomp.affinity_matrix_,
+                              se_rbf.affinity_matrix_)
     _assert_equal_with_sign_flipping(embed_precomp, embed_rbf, 0.05)
 
 
@@ -142,13 +146,14 @@ def test_precomputed_nearest_neighbors_filtering():
     n_neighbors = 2
     results = []
     for additional_neighbors in [0, 10]:
-        nn = NearestNeighbors(
-            n_neighbors=n_neighbors + additional_neighbors).fit(S)
+        nn = NearestNeighbors(n_neighbors=n_neighbors +
+                              additional_neighbors).fit(S)
         graph = nn.kneighbors_graph(S, mode='connectivity')
-        embedding = SpectralEmbedding(random_state=0, n_components=2,
-                                      affinity='precomputed_nearest_neighbors',
-                                      n_neighbors=n_neighbors
-                                      ).fit(graph).embedding_
+        embedding = SpectralEmbedding(
+            random_state=0,
+            n_components=2,
+            affinity='precomputed_nearest_neighbors',
+            n_neighbors=n_neighbors).fit(graph).embedding_
         results.append(embedding)
 
     assert_array_equal(results[0], results[1])
@@ -160,18 +165,19 @@ def test_spectral_embedding_callable_affinity(X, seed=36):
     # Test spectral embedding with callable affinity
     gamma = 0.9
     kern = rbf_kernel(S, gamma=gamma)
-    se_callable = SpectralEmbedding(n_components=2,
-                                    affinity=(
-                                        lambda x: rbf_kernel(x, gamma=gamma)),
-                                    gamma=gamma,
-                                    random_state=np.random.RandomState(seed))
-    se_rbf = SpectralEmbedding(n_components=2, affinity="rbf",
+    se_callable = SpectralEmbedding(
+        n_components=2,
+        affinity=(lambda x: rbf_kernel(x, gamma=gamma)),
+        gamma=gamma,
+        random_state=np.random.RandomState(seed))
+    se_rbf = SpectralEmbedding(n_components=2,
+                               affinity="rbf",
                                gamma=gamma,
                                random_state=np.random.RandomState(seed))
     embed_rbf = se_rbf.fit_transform(X)
     embed_callable = se_callable.fit_transform(X)
-    assert_array_almost_equal(
-        se_callable.affinity_matrix_, se_rbf.affinity_matrix_)
+    assert_array_almost_equal(se_callable.affinity_matrix_,
+                              se_rbf.affinity_matrix_)
     assert_array_almost_equal(kern, se_rbf.affinity_matrix_)
     _assert_equal_with_sign_flipping(embed_rbf, embed_callable, 0.05)
 
@@ -184,11 +190,15 @@ def test_spectral_embedding_amg_solver(seed=36):
     # Test spectral embedding with amg solver
     pytest.importorskip('pyamg')
 
-    se_amg = SpectralEmbedding(n_components=2, affinity="nearest_neighbors",
-                               eigen_solver="amg", n_neighbors=5,
+    se_amg = SpectralEmbedding(n_components=2,
+                               affinity="nearest_neighbors",
+                               eigen_solver="amg",
+                               n_neighbors=5,
                                random_state=np.random.RandomState(seed))
-    se_arpack = SpectralEmbedding(n_components=2, affinity="nearest_neighbors",
-                                  eigen_solver="arpack", n_neighbors=5,
+    se_arpack = SpectralEmbedding(n_components=2,
+                                  affinity="nearest_neighbors",
+                                  eigen_solver="arpack",
+                                  n_neighbors=5,
                                   random_state=np.random.RandomState(seed))
     embed_amg = se_amg.fit_transform(S)
     embed_arpack = se_arpack.fit_transform(S)
@@ -253,14 +263,13 @@ def test_pipeline_spectral_clustering(seed=36):
         km = KMeans(n_clusters=n_clusters, random_state=random_state)
         km.fit(se.fit_transform(S))
         assert_array_almost_equal(
-            normalized_mutual_info_score(
-                km.labels_,
-                true_labels), 1.0, 2)
+            normalized_mutual_info_score(km.labels_, true_labels), 1.0, 2)
 
 
 def test_spectral_embedding_unknown_eigensolver(seed=36):
     # Test that SpectralClustering fails with an unknown eigensolver
-    se = SpectralEmbedding(n_components=1, affinity="precomputed",
+    se = SpectralEmbedding(n_components=1,
+                           affinity="precomputed",
                            random_state=np.random.RandomState(seed),
                            eigen_solver="<unknown>")
     with pytest.raises(ValueError):
@@ -269,7 +278,8 @@ def test_spectral_embedding_unknown_eigensolver(seed=36):
 
 def test_spectral_embedding_unknown_affinity(seed=36):
     # Test that SpectralClustering fails with an unknown affinity type
-    se = SpectralEmbedding(n_components=1, affinity="<unknown>",
+    se = SpectralEmbedding(n_components=1,
+                           affinity="<unknown>",
                            random_state=np.random.RandomState(seed))
     with pytest.raises(ValueError):
         se.fit(S)
@@ -277,19 +287,13 @@ def test_spectral_embedding_unknown_affinity(seed=36):
 
 def test_connectivity(seed=36):
     # Test that graph connectivity test works as expected
-    graph = np.array([[1, 0, 0, 0, 0],
-                      [0, 1, 1, 0, 0],
-                      [0, 1, 1, 1, 0],
-                      [0, 0, 1, 1, 1],
-                      [0, 0, 0, 1, 1]])
+    graph = np.array([[1, 0, 0, 0, 0], [0, 1, 1, 0, 0], [0, 1, 1, 1, 0],
+                      [0, 0, 1, 1, 1], [0, 0, 0, 1, 1]])
     assert not _graph_is_connected(graph)
     assert not _graph_is_connected(sparse.csr_matrix(graph))
     assert not _graph_is_connected(sparse.csc_matrix(graph))
-    graph = np.array([[1, 1, 0, 0, 0],
-                      [1, 1, 1, 0, 0],
-                      [0, 1, 1, 1, 0],
-                      [0, 0, 1, 1, 1],
-                      [0, 0, 0, 1, 1]])
+    graph = np.array([[1, 1, 0, 0, 0], [1, 1, 1, 0, 0], [0, 1, 1, 1, 0],
+                      [0, 0, 1, 1, 1], [0, 0, 0, 1, 1]])
     assert _graph_is_connected(graph)
     assert _graph_is_connected(sparse.csr_matrix(graph))
     assert _graph_is_connected(sparse.csc_matrix(graph))
@@ -318,8 +322,7 @@ def test_spectral_embedding_unnormalized():
                                      drop_first=False)
 
     # Verify using manual computation with dense eigh
-    laplacian, dd = csgraph.laplacian(sims, normed=False,
-                                      return_diag=True)
+    laplacian, dd = csgraph.laplacian(sims, normed=False, return_diag=True)
     _, diffusion_map = eigh(laplacian)
     embedding_2 = diffusion_map.T[:n_components]
     embedding_2 = _deterministic_vector_sign_flip(embedding_2).T

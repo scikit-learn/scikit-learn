@@ -27,10 +27,11 @@ def configuration(parent_package='', top_path=None):
                          include_dirs=[numpy.get_include()],
                          libraries=libraries)
 
-    config.add_extension('murmurhash',
-                         sources=['murmurhash.pyx', join(
-                             'src', 'MurmurHash3.cpp')],
-                         include_dirs=['src'])
+    config.add_extension(
+        'murmurhash',
+        sources=['murmurhash.pyx',
+                 join('src', 'MurmurHash3.cpp')],
+        include_dirs=['src'])
 
     config.add_extension('graph_shortest_path',
                          sources=['graph_shortest_path.pyx'],
@@ -47,8 +48,10 @@ def configuration(parent_package='', top_path=None):
                          libraries=libraries)
 
     # generate _seq_dataset from template
-    templates = ['sklearn/utils/_seq_dataset.pyx.tp',
-                 'sklearn/utils/_seq_dataset.pxd.tp']
+    templates = [
+        'sklearn/utils/_seq_dataset.pyx.tp',
+        'sklearn/utils/_seq_dataset.pxd.tp'
+    ]
     gen_from_templates(templates, top_path)
 
     config.add_extension('_seq_dataset',

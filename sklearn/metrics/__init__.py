@@ -3,7 +3,6 @@ The :mod:`sklearn.metrics` module includes score functions, performance metrics
 and pairwise metrics and distance computations.
 """
 
-
 from ._ranking import auc
 from ._ranking import average_precision_score
 from ._ranking import coverage_error
@@ -69,7 +68,6 @@ from ._regression import mean_tweedie_deviance
 from ._regression import mean_poisson_deviance
 from ._regression import mean_gamma_deviance
 
-
 from ._scorer import check_scoring
 from ._scorer import make_scorer
 from ._scorer import SCORERS
@@ -82,7 +80,6 @@ from ._plot.precision_recall_curve import PrecisionRecallDisplay
 
 from ._plot.confusion_matrix import plot_confusion_matrix
 from ._plot.confusion_matrix import ConfusionMatrixDisplay
-
 
 __all__ = [
     'accuracy_score',

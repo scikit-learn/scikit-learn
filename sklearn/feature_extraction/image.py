@@ -19,11 +19,10 @@ from ..utils import check_array, check_random_state, deprecated
 from ..utils.validation import _deprecate_positional_args
 from ..base import BaseEstimator
 
-__all__ = ['PatchExtractor',
-           'extract_patches_2d',
-           'grid_to_graph',
-           'img_to_graph',
-           'reconstruct_from_patches_2d']
+__all__ = [
+    'PatchExtractor', 'extract_patches_2d', 'grid_to_graph', 'img_to_graph',
+    'reconstruct_from_patches_2d'
+]
 
 ###############################################################################
 # From an image to a graph
@@ -42,10 +41,10 @@ def _make_edges_3d(n_x, n_y, n_z=1):
         The size of the grid in the z direction, defaults to 1
     """
     vertices = np.arange(n_x * n_y * n_z).reshape((n_x, n_y, n_z))
-    edges_deep = np.vstack((vertices[:, :, :-1].ravel(),
-                            vertices[:, :, 1:].ravel()))
-    edges_right = np.vstack((vertices[:, :-1].ravel(),
-                             vertices[:, 1:].ravel()))
+    edges_deep = np.vstack((vertices[:, :, :-1].ravel(), vertices[:, :,
+                                                                  1:].ravel()))
+    edges_right = np.vstack((vertices[:, :-1].ravel(), vertices[:,
+                                                                1:].ravel()))
     edges_down = np.vstack((vertices[:-1].ravel(), vertices[1:].ravel()))
     edges = np.hstack((edges_deep, edges_right, edges_down))
     return edges
@@ -54,22 +53,22 @@ def _make_edges_3d(n_x, n_y, n_z=1):
 def _compute_gradient_3d(edges, img):
     _, n_y, n_z = img.shape
     gradient = np.abs(img[edges[0] // (n_y * n_z),
-                      (edges[0] % (n_y * n_z)) // n_z,
-                      (edges[0] % (n_y * n_z)) % n_z] -
+                          (edges[0] % (n_y * n_z)) // n_z,
+                          (edges[0] % (n_y * n_z)) % n_z] -
                       img[edges[1] // (n_y * n_z),
-                      (edges[1] % (n_y * n_z)) // n_z,
-                      (edges[1] % (n_y * n_z)) % n_z])
+                          (edges[1] % (n_y * n_z)) // n_z,
+                          (edges[1] % (n_y * n_z)) % n_z])
     return gradient
 
 
 # XXX: Why mask the image after computing the weights?
 
+
 def _mask_edges_weights(mask, edges, weights=None):
     """Apply a mask to edges (weighted or not)"""
     inds = np.arange(mask.size)
     inds = inds[mask.ravel()]
-    ind_mask = np.logical_and(np.in1d(edges[0], inds),
-                              np.in1d(edges[1], inds))
+    ind_mask = np.logical_and(np.in1d(edges[0], inds), np.in1d(edges[1], inds))
     edges = edges[:, ind_mask]
     if weights is not None:
         weights = weights[ind_mask]
@@ -85,8 +84,13 @@ def _mask_edges_weights(mask, edges, weights=None):
         return edges, weights
 
 
-def _to_graph(n_x, n_y, n_z, mask=None, img=None,
-              return_as=sparse.coo_matrix, dtype=None):
+def _to_graph(n_x,
+              n_y,
+              n_z,
+              mask=None,
+              img=None,
+              return_as=sparse.coo_matrix,
+              dtype=None):
     """Auxiliary function for img_to_graph and grid_to_graph
     """
     edges = _make_edges_3d(n_x, n_y, n_z)
@@ -120,9 +124,8 @@ def _to_graph(n_x, n_y, n_z, mask=None, img=None,
     diag_idx = np.arange(n_voxels)
     i_idx = np.hstack((edges[0], edges[1]))
     j_idx = np.hstack((edges[1], edges[0]))
-    graph = sparse.coo_matrix((np.hstack((weights, weights, diag)),
-                              (np.hstack((i_idx, diag_idx)),
-                               np.hstack((j_idx, diag_idx)))),
+    graph = sparse.coo_matrix((np.hstack((weights, weights, diag)), (np.hstack(
+        (i_idx, diag_idx)), np.hstack((j_idx, diag_idx)))),
                               (n_voxels, n_voxels),
                               dtype=dtype)
     if return_as is np.ndarray:
@@ -166,7 +169,11 @@ def img_to_graph(img, mask=None, return_as=sparse.coo_matrix, dtype=None):
     return _to_graph(n_x, n_y, n_z, mask, img, return_as, dtype)
 
 
-def grid_to_graph(n_x, n_y, n_z=1, mask=None, return_as=sparse.coo_matrix,
+def grid_to_graph(n_x,
+                  n_y,
+                  n_z=1,
+                  mask=None,
+                  return_as=sparse.coo_matrix,
                   dtype=np.int):
     """Graph of the pixel-to-pixel connections
 
@@ -198,12 +205,17 @@ def grid_to_graph(n_x, n_y, n_z=1, mask=None, return_as=sparse.coo_matrix,
     For compatibility, user code relying on this method should wrap its
     calls in ``np.asarray`` to avoid type issues.
     """
-    return _to_graph(n_x, n_y, n_z, mask=mask, return_as=return_as,
+    return _to_graph(n_x,
+                     n_y,
+                     n_z,
+                     mask=mask,
+                     return_as=return_as,
                      dtype=dtype)
 
 
 ###############################################################################
 # From an image to a set of small image patches
+
 
 def _compute_n_patches(i_h, i_w, p_h, p_w, max_patches=None):
     """Compute the number of patches that will be extracted in an image.
@@ -236,8 +248,7 @@ def _compute_n_patches(i_h, i_w, p_h, p_w, max_patches=None):
         elif (isinstance(max_patches, (numbers.Integral))
               and max_patches >= all_patches):
             return all_patches
-        elif (isinstance(max_patches, (numbers.Real))
-                and 0 < max_patches < 1):
+        elif (isinstance(max_patches, (numbers.Real)) and 0 < max_patches < 1):
             return int(max_patches * all_patches)
         else:
             raise ValueError("Invalid value for max_patches: %r" % max_patches)
@@ -340,7 +351,8 @@ def extract_patches(arr, patch_shape=8, extraction_step=1):
         a copying operation to obtain a list of patches:
         result.reshape([-1] + list(patch_shape))
     """
-    return _extract_patches(arr, patch_shape=patch_shape,
+    return _extract_patches(arr,
+                            patch_shape=patch_shape,
                             extraction_step=extraction_step)
 
 
@@ -478,8 +490,8 @@ def reconstruct_from_patches_2d(patches, image_size):
         for j in range(i_w):
             # divide by the amount of overlap
             # XXX: is this the most efficient way? memory-wise yes, cpu wise?
-            img[i, j] /= float(min(i + 1, p_h, i_h - i) *
-                               min(j + 1, p_w, i_w - j))
+            img[i, j] /= float(
+                min(i + 1, p_h, i_h - i) * min(j + 1, p_w, i_w - j))
     return img
 
 
@@ -521,7 +533,10 @@ class PatchExtractor(BaseEstimator):
     Patches shape: (545706, 2, 2)
     """
     @_deprecate_positional_args
-    def __init__(self, *, patch_size=None, max_patches=None,
+    def __init__(self,
+                 *,
+                 patch_size=None,
+                 max_patches=None,
                  random_state=None):
         self.patch_size = patch_size
         self.max_patches = max_patches
@@ -571,9 +586,9 @@ class PatchExtractor(BaseEstimator):
         # compute the dimensions of the patches array
         p_h, p_w = patch_size
         n_patches = _compute_n_patches(i_h, i_w, p_h, p_w, self.max_patches)
-        patches_shape = (n_images * n_patches,) + patch_size
+        patches_shape = (n_images * n_patches, ) + patch_size
         if n_channels > 1:
-            patches_shape += (n_channels,)
+            patches_shape += (n_channels, )
 
         # extract the patches
         patches = np.empty(patches_shape)

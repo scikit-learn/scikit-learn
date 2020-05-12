@@ -20,7 +20,10 @@ from ..utils import check_array, check_consistent_length
 from ..utils.multiclass import type_of_target
 
 
-def _average_binary_score(binary_metric, y_true, y_score, average,
+def _average_binary_score(binary_metric,
+                          y_true,
+                          y_score,
+                          average,
                           sample_weight=None):
     """Average a binary metric for multilabel classification
 
@@ -93,7 +96,8 @@ def _average_binary_score(binary_metric, y_true, y_score, average,
     elif average == 'weighted':
         if score_weight is not None:
             average_weight = np.sum(np.multiply(
-                y_true, np.reshape(score_weight, (-1, 1))), axis=0)
+                y_true, np.reshape(score_weight, (-1, 1))),
+                                    axis=0)
         else:
             average_weight = np.sum(y_true, axis=0)
         if np.isclose(average_weight.sum(), 0.0):
@@ -112,11 +116,12 @@ def _average_binary_score(binary_metric, y_true, y_score, average,
         y_score = y_score.reshape((-1, 1))
 
     n_classes = y_score.shape[not_average_axis]
-    score = np.zeros((n_classes,))
+    score = np.zeros((n_classes, ))
     for c in range(n_classes):
         y_true_c = y_true.take([c], axis=not_average_axis).ravel()
         y_score_c = y_score.take([c], axis=not_average_axis).ravel()
-        score[c] = binary_metric(y_true_c, y_score_c,
+        score[c] = binary_metric(y_true_c,
+                                 y_score_c,
                                  sample_weight=score_weight)
 
     # Average the results
@@ -131,7 +136,9 @@ def _average_binary_score(binary_metric, y_true, y_score, average,
         return score
 
 
-def _average_multiclass_ovo_score(binary_metric, y_true, y_score,
+def _average_multiclass_ovo_score(binary_metric,
+                                  y_true,
+                                  y_score,
                                   average='macro'):
     """Average one-versus-one scores for multiclass classification.
 

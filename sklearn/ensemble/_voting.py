@@ -41,7 +41,6 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
     Warning: This class should not be used directly. Use derived classes
     instead.
     """
-
     def _log_message(self, name, idx, total):
         if not self.verbose:
             return None
@@ -52,8 +51,10 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
         """Get the weights of not `None` estimators."""
         if self.weights is None:
             return None
-        return [w for est, w in zip(self.estimators, self.weights)
-                if est[1] not in (None, 'drop')]
+        return [
+            w for est, w in zip(self.estimators, self.weights)
+            if est[1] not in (None, 'drop')
+        ]
 
     def _predict(self, X):
         """Collect results from clf.predict calls."""
@@ -64,22 +65,21 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
         """Get common fit operations."""
         names, clfs = self._validate_estimators()
 
-        if (self.weights is not None and
-                len(self.weights) != len(self.estimators)):
+        if (self.weights is not None
+                and len(self.weights) != len(self.estimators)):
             raise ValueError('Number of `estimators` and weights must be equal'
-                             '; got %d weights, %d estimators'
-                             % (len(self.weights), len(self.estimators)))
+                             '; got %d weights, %d estimators' %
+                             (len(self.weights), len(self.estimators)))
 
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
-                delayed(_fit_single_estimator)(
-                        clone(clf), X, y,
-                        sample_weight=sample_weight,
-                        message_clsname='Voting',
-                        message=self._log_message(names[idx],
-                                                  idx + 1, len(clfs))
-                )
-                for idx, clf in enumerate(clfs) if clf not in (None, 'drop')
-            )
+            delayed(_fit_single_estimator)(clone(clf),
+                                           X,
+                                           y,
+                                           sample_weight=sample_weight,
+                                           message_clsname='Voting',
+                                           message=self._log_message(
+                                               names[idx], idx + 1, len(clfs)))
+            for idx, clf in enumerate(clfs) if clf not in (None, 'drop'))
 
         self.named_estimators_ = Bunch()
 
@@ -99,9 +99,8 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
             check_is_fitted(self)
         except NotFittedError as nfe:
             raise AttributeError(
-                "{} object has no n_features_in_ attribute."
-                .format(self.__class__.__name__)
-            ) from nfe
+                "{} object has no n_features_in_ attribute.".format(
+                    self.__class__.__name__)) from nfe
 
         return self.estimators_[0].n_features_in_
 
@@ -216,8 +215,14 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
     (6, 6)
     """
     @_deprecate_positional_args
-    def __init__(self, estimators, *, voting='hard', weights=None,
-                 n_jobs=None, flatten_transform=True, verbose=False):
+    def __init__(self,
+                 estimators,
+                 *,
+                 voting='hard',
+                 weights=None,
+                 n_jobs=None,
+                 flatten_transform=True,
+                 verbose=False):
         super().__init__(estimators=estimators)
         self.voting = voting
         self.weights = weights
@@ -255,8 +260,9 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
                                       ' classification is not supported.')
 
         if self.voting not in ('soft', 'hard'):
-            raise ValueError("Voting must be 'soft' or 'hard'; got (voting=%r)"
-                             % self.voting)
+            raise ValueError(
+                "Voting must be 'soft' or 'hard'; got (voting=%r)" %
+                self.voting)
 
         self.le_ = LabelEncoder().fit(y)
         self.classes_ = self.le_.classes_
@@ -283,10 +289,10 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
 
         else:  # 'hard' voting
             predictions = self._predict(X)
-            maj = np.apply_along_axis(
-                lambda x: np.argmax(
-                    np.bincount(x, weights=self._weights_not_none)),
-                axis=1, arr=predictions)
+            maj = np.apply_along_axis(lambda x: np.argmax(
+                np.bincount(x, weights=self._weights_not_none)),
+                                      axis=1,
+                                      arr=predictions)
 
         maj = self.le_.inverse_transform(maj)
 
@@ -299,7 +305,8 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
     def _predict_proba(self, X):
         """Predict class probabilities for X in 'soft' voting."""
         check_is_fitted(self)
-        avg = np.average(self._collect_probas(X), axis=0,
+        avg = np.average(self._collect_probas(X),
+                         axis=0,
                          weights=self._weights_not_none)
         return avg
 
@@ -426,7 +433,11 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
     [ 3.3  5.7 11.8 19.7 28.  40.3]
     """
     @_deprecate_positional_args
-    def __init__(self, estimators, *, weights=None, n_jobs=None,
+    def __init__(self,
+                 estimators,
+                 *,
+                 weights=None,
+                 n_jobs=None,
                  verbose=False):
         super().__init__(estimators=estimators)
         self.weights = weights
@@ -475,7 +486,8 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
             The predicted values.
         """
         check_is_fitted(self)
-        return np.average(self._predict(X), axis=1,
+        return np.average(self._predict(X),
+                          axis=1,
                           weights=self._weights_not_none)
 
     def transform(self, X):

@@ -3,8 +3,7 @@ import os
 
 from sklearn._build_utils import cythonize_extensions
 from sklearn._build_utils.deprecated_modules import (
-    _create_deprecated_modules_files
-)
+    _create_deprecated_modules_files)
 
 
 def configuration(parent_package='', top_path=None):
@@ -72,11 +71,12 @@ def configuration(parent_package='', top_path=None):
     config.add_subpackage('linear_model')
 
     # add cython extension module for isotonic regression
-    config.add_extension('_isotonic',
-                         sources=['_isotonic.pyx'],
-                         include_dirs=[numpy.get_include()],
-                         libraries=libraries,
-                         )
+    config.add_extension(
+        '_isotonic',
+        sources=['_isotonic.pyx'],
+        include_dirs=[numpy.get_include()],
+        libraries=libraries,
+    )
 
     # add the test directory
     config.add_subpackage('tests')

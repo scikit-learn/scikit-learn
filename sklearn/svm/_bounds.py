@@ -11,7 +11,11 @@ from ..utils.extmath import safe_sparse_dot
 
 
 @_deprecate_positional_args
-def l1_min_c(X, y, *, loss='squared_hinge', fit_intercept=True,
+def l1_min_c(X,
+             y,
+             *,
+             loss='squared_hinge',
+             fit_intercept=True,
              intercept_scaling=1.0):
     """
     Return the lowest bound for C such that for C in (l1_min_C, infinity)
@@ -61,7 +65,8 @@ def l1_min_c(X, y, *, loss='squared_hinge', fit_intercept=True,
     # maximum absolute value over classes and features
     den = np.max(np.abs(safe_sparse_dot(Y, X)))
     if fit_intercept:
-        bias = np.full((np.size(y), 1), intercept_scaling,
+        bias = np.full((np.size(y), 1),
+                       intercept_scaling,
                        dtype=np.array(intercept_scaling).dtype)
         den = max(den, abs(np.dot(Y, bias)).max())
 

@@ -23,7 +23,6 @@ from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import SkipTest
 from sklearn.datasets.tests.test_common import check_return_X_y
 
-
 SCIKIT_LEARN_DATA = None
 SCIKIT_LEARN_EMPTY_DATA = None
 LFW_HOME = None
@@ -82,8 +81,7 @@ def setup_module():
     # generate some pairing metadata files using the same format as LFW
     with open(os.path.join(LFW_HOME, 'pairsDevTrain.txt'), 'wb') as f:
         f.write(b"10\n")
-        more_than_two = [name for name, count in counts.items()
-                         if count >= 2]
+        more_than_two = [name for name, count in counts.items() if count >= 2]
         for i in range(5):
             name = random_state.choice(more_than_two)
             first, second = random_state.sample(range(counts[name]), 2)
@@ -93,9 +91,9 @@ def setup_module():
             first_name, second_name = random_state.sample(FAKE_NAMES, 2)
             first_index = random_state.choice(np.arange(counts[first_name]))
             second_index = random_state.choice(np.arange(counts[second_name]))
-            f.write(('%s\t%d\t%s\t%d\n' % (first_name, first_index,
-                                           second_name, second_index)
-                     ).encode())
+            f.write((
+                '%s\t%d\t%s\t%d\n' %
+                (first_name, first_index, second_name, second_index)).encode())
 
     with open(os.path.join(LFW_HOME, 'pairsDevTest.txt'), 'wb') as f:
         f.write(b"Fake place holder that won't be tested")
@@ -137,29 +135,35 @@ def test_load_fake_lfw_people():
 
     # It is possible to ask for the original data without any croping or color
     # conversion and not limit on the number of picture per person
-    lfw_people = fetch_lfw_people(data_home=SCIKIT_LEARN_DATA, resize=None,
-                                  slice_=None, color=True,
+    lfw_people = fetch_lfw_people(data_home=SCIKIT_LEARN_DATA,
+                                  resize=None,
+                                  slice_=None,
+                                  color=True,
                                   download_if_missing=False)
     assert lfw_people.images.shape == (17, 250, 250, 3)
 
     # the ids and class names are the same as previously
     assert_array_equal(lfw_people.target,
                        [0, 0, 1, 6, 5, 6, 3, 6, 0, 3, 6, 1, 2, 4, 5, 1, 2])
-    assert_array_equal(lfw_people.target_names,
-                       ['Abdelatif Smith', 'Abhati Kepler', 'Camara Alvaro',
-                        'Chen Dupont', 'John Lee', 'Lin Bauman', 'Onur Lopez'])
+    assert_array_equal(lfw_people.target_names, [
+        'Abdelatif Smith', 'Abhati Kepler', 'Camara Alvaro', 'Chen Dupont',
+        'John Lee', 'Lin Bauman', 'Onur Lopez'
+    ])
 
     # test return_X_y option
-    fetch_func = partial(fetch_lfw_people, data_home=SCIKIT_LEARN_DATA,
+    fetch_func = partial(fetch_lfw_people,
+                         data_home=SCIKIT_LEARN_DATA,
                          resize=None,
-                         slice_=None, color=True,
+                         slice_=None,
+                         color=True,
                          download_if_missing=False)
     check_return_X_y(lfw_people, fetch_func)
 
 
 def test_load_fake_lfw_people_too_restrictive():
     with pytest.raises(ValueError):
-        fetch_lfw_people(data_home=SCIKIT_LEARN_DATA, min_faces_per_person=100,
+        fetch_lfw_people(data_home=SCIKIT_LEARN_DATA,
+                         min_faces_per_person=100,
                          download_if_missing=False)
 
 
@@ -186,8 +190,10 @@ def test_load_fake_lfw_pairs():
 
     # It is possible to ask for the original data without any croping or color
     # conversion
-    lfw_pairs_train = fetch_lfw_pairs(data_home=SCIKIT_LEARN_DATA, resize=None,
-                                      slice_=None, color=True,
+    lfw_pairs_train = fetch_lfw_pairs(data_home=SCIKIT_LEARN_DATA,
+                                      resize=None,
+                                      slice_=None,
+                                      color=True,
                                       download_if_missing=False)
     assert lfw_pairs_train.pairs.shape == (10, 2, 250, 250, 3)
 

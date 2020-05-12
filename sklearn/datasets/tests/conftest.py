@@ -22,6 +22,7 @@ def _wrapped_fetch(f, dataset_name):
             return f(*args, **kwargs)
         except IOError:
             pytest.skip("Download {} to run this test".format(dataset_name))
+
     return wrapped
 
 

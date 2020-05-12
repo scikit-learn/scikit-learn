@@ -1,4 +1,3 @@
-
 import numpy as np
 import scipy.sparse as sp
 from itertools import product
@@ -28,7 +27,6 @@ from sklearn.utils.metaestimators import _safe_split
 from sklearn.model_selection import ShuffleSplit
 from sklearn.svm import SVC
 from sklearn import datasets
-
 
 EXAMPLES = {
     'multilabel-indicator': [
@@ -123,7 +121,12 @@ EXAMPLES = {
         [frozenset([1, 2, 3]), frozenset([1, 2])],
 
         # and also confusable as sequences of sequences
-        [{0: 'a', 1: 'b'}, {0: 'a'}],
+        [{
+            0: 'a',
+            1: 'b'
+        }, {
+            0: 'a'
+        }],
 
         # empty second dimension
         np.array([[], []]),
@@ -135,19 +138,22 @@ EXAMPLES = {
 
 NON_ARRAY_LIKE_EXAMPLES = [
     {1, 2, 3},
-    {0: 'a', 1: 'b'},
-    {0: [5], 1: [5]},
+    {
+        0: 'a',
+        1: 'b'
+    },
+    {
+        0: [5],
+        1: [5]
+    },
     'abc',
     frozenset([1, 2, 3]),
     None,
 ]
 
-MULTILABEL_SEQUENCES = [
-    [[1], [2], [0, 1]],
-    [(), (2), (0, 1)],
-    np.array([[], [1, 2]], dtype='object'),
-    _NotAnArray(np.array([[], [1, 2]], dtype='object'))
-]
+MULTILABEL_SEQUENCES = [[[1], [2], [0, 1]], [(), (2), (0, 1)],
+                        np.array([[], [1, 2]], dtype='object'),
+                        _NotAnArray(np.array([[], [1, 2]], dtype='object'))]
 
 
 def test_unique_labels():
@@ -161,20 +167,16 @@ def test_unique_labels():
     assert_array_equal(unique_labels([4, 0, 2]), np.array([0, 2, 4]))
 
     # Multilabel indicator
-    assert_array_equal(unique_labels(np.array([[0, 0, 1],
-                                               [1, 0, 1],
-                                               [0, 0, 0]])),
-                       np.arange(3))
+    assert_array_equal(
+        unique_labels(np.array([[0, 0, 1], [1, 0, 1], [0, 0, 0]])),
+        np.arange(3))
 
-    assert_array_equal(unique_labels(np.array([[0, 0, 1],
-                                               [0, 0, 0]])),
+    assert_array_equal(unique_labels(np.array([[0, 0, 1], [0, 0, 0]])),
                        np.arange(3))
 
     # Several arrays passed
-    assert_array_equal(unique_labels([4, 0, 2], range(5)),
-                       np.arange(5))
-    assert_array_equal(unique_labels((0, 1, 2), (0,), (2, 1)),
-                       np.arange(3))
+    assert_array_equal(unique_labels([4, 0, 2], range(5)), np.arange(5))
+    assert_array_equal(unique_labels((0, 1, 2), (0, ), (2, 1)), np.arange(3))
 
     # Border line case with binary indicator matrix
     with pytest.raises(ValueError):
@@ -199,8 +201,10 @@ def test_unique_labels_non_specific():
         with pytest.raises(ValueError):
             unique_labels(example)
 
-    for y_type in ["unknown", "continuous", 'continuous-multioutput',
-                   'multiclass-multioutput']:
+    for y_type in [
+            "unknown", "continuous", 'continuous-multioutput',
+            'multiclass-multioutput'
+    ]:
         for example in EXAMPLES[y_type]:
             with pytest.raises(ValueError):
                 unique_labels(example)
@@ -209,8 +213,7 @@ def test_unique_labels_non_specific():
 def test_unique_labels_mixed_types():
     # Mix with binary or multiclass and multilabel
     mix_clf_format = product(EXAMPLES["multilabel-indicator"],
-                             EXAMPLES["multiclass"] +
-                             EXAMPLES["binary"])
+                             EXAMPLES["multiclass"] + EXAMPLES["binary"])
 
     for y_multilabel, y_multiclass in mix_clf_format:
         with pytest.raises(ValueError):
@@ -246,29 +249,28 @@ def test_is_multilabel():
             else:
                 sparse_exp = False
 
-            if (issparse(example) or
-                (hasattr(example, '__array__') and
-                 np.asarray(example).ndim == 2 and
-                 np.asarray(example).dtype.kind in 'biuf' and
-                 np.asarray(example).shape[1] > 0)):
-                examples_sparse = [sparse_matrix(example)
-                                   for sparse_matrix in [coo_matrix,
-                                                         csc_matrix,
-                                                         csr_matrix,
-                                                         dok_matrix,
-                                                         lil_matrix]]
+            if (issparse(example)
+                    or (hasattr(example, '__array__')
+                        and np.asarray(example).ndim == 2
+                        and np.asarray(example).dtype.kind in 'biuf'
+                        and np.asarray(example).shape[1] > 0)):
+                examples_sparse = [
+                    sparse_matrix(example) for sparse_matrix in [
+                        coo_matrix, csc_matrix, csr_matrix, dok_matrix,
+                        lil_matrix
+                    ]
+                ]
                 for exmpl_sparse in examples_sparse:
                     assert sparse_exp == is_multilabel(exmpl_sparse), (
-                            'is_multilabel(%r) should be %s'
-                            % (exmpl_sparse, sparse_exp))
+                        'is_multilabel(%r) should be %s' %
+                        (exmpl_sparse, sparse_exp))
 
             # Densify sparse examples before testing
             if issparse(example):
                 example = example.toarray()
 
             assert dense_exp == is_multilabel(example), (
-                    'is_multilabel(%r) should be %s'
-                    % (example, dense_exp))
+                'is_multilabel(%r) should be %s' % (example, dense_exp))
 
 
 def test_check_classification_targets():
@@ -288,8 +290,8 @@ def test_type_of_target():
     for group, group_examples in EXAMPLES.items():
         for example in group_examples:
             assert type_of_target(example) == group, (
-                'type_of_target(%r) should be %r, got %r'
-                % (example, group, type_of_target(example)))
+                'type_of_target(%r) should be %r, got %r' %
+                (example, group, type_of_target(example)))
 
     for example in NON_ARRAY_LIKE_EXAMPLES:
         msg_regex = r'Expected array-like \(array or non-string sequence\).*'
@@ -319,12 +321,8 @@ def test_type_of_target_pandas_sparse():
 
 
 def test_class_distribution():
-    y = np.array([[1, 0, 0, 1],
-                  [2, 2, 0, 1],
-                  [1, 3, 0, 1],
-                  [4, 2, 0, 1],
-                  [2, 0, 0, 1],
-                  [1, 3, 0, 1]])
+    y = np.array([[1, 0, 0, 1], [2, 2, 0, 1], [1, 3, 0, 1], [4, 2, 0, 1],
+                  [2, 0, 0, 1], [1, 3, 0, 1]])
     # Define the sparse matrix with a mix of implicit and explicit zeros
     data = np.array([1, 2, 1, 4, 2, 1, 0, 2, 3, 2, 3, 1, 1, 1, 1, 1, 1])
     indices = np.array([0, 1, 2, 3, 4, 5, 0, 1, 2, 3, 5, 0, 1, 2, 3, 4, 5])
@@ -333,15 +331,10 @@ def test_class_distribution():
 
     classes, n_classes, class_prior = class_distribution(y)
     classes_sp, n_classes_sp, class_prior_sp = class_distribution(y_sp)
-    classes_expected = [[1, 2, 4],
-                        [0, 2, 3],
-                        [0],
-                        [1]]
+    classes_expected = [[1, 2, 4], [0, 2, 3], [0], [1]]
     n_classes_expected = [3, 3, 1, 1]
-    class_prior_expected = [[3/6, 2/6, 1/6],
-                            [1/3, 1/3, 1/3],
-                            [1.0],
-                            [1.0]]
+    class_prior_expected = [[3 / 6, 2 / 6, 1 / 6], [1 / 3, 1 / 3, 1 / 3],
+                            [1.0], [1.0]]
 
     for k in range(y.shape[1]):
         assert_array_almost_equal(classes[k], classes_expected[k])
@@ -353,16 +346,12 @@ def test_class_distribution():
         assert_array_almost_equal(class_prior_sp[k], class_prior_expected[k])
 
     # Test again with explicit sample weights
-    (classes,
-     n_classes,
+    (classes, n_classes,
      class_prior) = class_distribution(y, [1.0, 2.0, 1.0, 2.0, 1.0, 2.0])
-    (classes_sp,
-     n_classes_sp,
+    (classes_sp, n_classes_sp,
      class_prior_sp) = class_distribution(y, [1.0, 2.0, 1.0, 2.0, 1.0, 2.0])
-    class_prior_expected = [[4/9, 3/9, 2/9],
-                            [2/9, 4/9, 3/9],
-                            [1.0],
-                            [1.0]]
+    class_prior_expected = [[4 / 9, 3 / 9, 2 / 9], [2 / 9, 4 / 9, 3 / 9],
+                            [1.0], [1.0]]
 
     for k in range(y.shape[1]):
         assert_array_almost_equal(classes[k], classes_expected[k])
@@ -399,14 +388,9 @@ def test_safe_split_with_precomputed_kernel():
 def test_ovr_decision_function():
     # test properties for ovr decision function
 
-    predictions = np.array([[0, 1, 1],
-                            [0, 1, 0],
-                            [0, 1, 1],
-                            [0, 1, 1]])
+    predictions = np.array([[0, 1, 1], [0, 1, 0], [0, 1, 1], [0, 1, 1]])
 
-    confidences = np.array([[-1e16, 0, -1e16],
-                            [1., 2., -3.],
-                            [-5., 2., 5.],
+    confidences = np.array([[-1e16, 0, -1e16], [1., 2., -3.], [-5., 2., 5.],
                             [-0.5, 0.2, 0.5]])
 
     n_classes = 3
@@ -414,10 +398,7 @@ def test_ovr_decision_function():
     dec_values = _ovr_decision_function(predictions, confidences, n_classes)
 
     # check that the decision values are within 0.5 range of the votes
-    votes = np.array([[1, 0, 2],
-                      [1, 1, 1],
-                      [1, 0, 2],
-                      [1, 0, 2]])
+    votes = np.array([[1, 0, 2], [1, 1, 1], [1, 0, 2], [1, 0, 2]])
 
     assert_allclose(votes, dec_values, atol=0.5)
 
@@ -432,8 +413,10 @@ def test_ovr_decision_function():
     assert (dec_values[2, 2] > dec_values[3, 2])
 
     # assert subset invariance.
-    dec_values_one = [_ovr_decision_function(np.array([predictions[i]]),
-                                             np.array([confidences[i]]),
-                                             n_classes)[0] for i in range(4)]
+    dec_values_one = [
+        _ovr_decision_function(np.array([predictions[i]]),
+                               np.array([confidences[i]]), n_classes)[0]
+        for i in range(4)
+    ]
 
     assert_allclose(dec_values, dec_values_one, atol=1e-6)

@@ -18,24 +18,25 @@ from sklearn.ensemble import VotingClassifier, VotingRegressor
 @pytest.mark.parametrize(
     "X, y, estimator",
     [(*make_classification(n_samples=10),
-      StackingClassifier(estimators=[('lr', LogisticRegression()),
-                                     ('svm', LinearSVC()),
-                                     ('rf', RandomForestClassifier())])),
+      StackingClassifier(
+          estimators=[('lr', LogisticRegression()), (
+              'svm', LinearSVC()), ('rf', RandomForestClassifier())])),
      (*make_classification(n_samples=10),
-      VotingClassifier(estimators=[('lr', LogisticRegression()),
-                                   ('svm', LinearSVC()),
-                                   ('rf', RandomForestClassifier())])),
+      VotingClassifier(
+          estimators=[('lr', LogisticRegression()), (
+              'svm', LinearSVC()), ('rf', RandomForestClassifier())])),
      (*make_regression(n_samples=10),
-      StackingRegressor(estimators=[('lr', LinearRegression()),
-                                    ('svm', LinearSVR()),
-                                    ('rf', RandomForestRegressor())])),
+      StackingRegressor(
+          estimators=[('lr', LinearRegression()), (
+              'svm', LinearSVR()), ('rf', RandomForestRegressor())])),
      (*make_regression(n_samples=10),
-      VotingRegressor(estimators=[('lr', LinearRegression()),
-                                  ('svm', LinearSVR()),
-                                  ('rf', RandomForestRegressor())]))],
-    ids=['stacking-classifier', 'voting-classifier',
-         'stacking-regressor', 'voting-regressor']
-)
+      VotingRegressor(
+          estimators=[('lr', LinearRegression()), (
+              'svm', LinearSVR()), ('rf', RandomForestRegressor())]))],
+    ids=[
+        'stacking-classifier', 'voting-classifier', 'stacking-regressor',
+        'voting-regressor'
+    ])
 def test_ensemble_heterogeneous_estimators_behavior(X, y, estimator):
     # check that the behavior of `estimators`, `estimators_`,
     # `named_estimators`, `named_estimators_` is consistent across all
@@ -50,8 +51,8 @@ def test_ensemble_heterogeneous_estimators_behavior(X, y, estimator):
     estimator.fit(X, y)
     assert len(estimator.named_estimators) == 3
     assert len(estimator.named_estimators_) == 3
-    assert (sorted(list(estimator.named_estimators_.keys())) ==
-            sorted(['lr', 'svm', 'rf']))
+    assert (sorted(list(estimator.named_estimators_.keys())) == sorted(
+        ['lr', 'svm', 'rf']))
 
     # check that set_params() does not add a new attribute
     estimator_new_params = clone(estimator)
@@ -70,8 +71,8 @@ def test_ensemble_heterogeneous_estimators_behavior(X, y, estimator):
     assert len(estimator_dropped.named_estimators) == 3
     assert estimator_dropped.named_estimators.svm == 'drop'
     assert len(estimator_dropped.named_estimators_) == 3
-    assert (sorted(list(estimator_dropped.named_estimators_.keys())) ==
-            sorted(['lr', 'svm', 'rf']))
+    assert (sorted(list(estimator_dropped.named_estimators_.keys())) == sorted(
+        ['lr', 'svm', 'rf']))
     for sub_est in estimator_dropped.named_estimators_:
         # check that the correspondence is correct
         assert not isinstance(sub_est, type(estimator.named_estimators.svm))
@@ -79,16 +80,15 @@ def test_ensemble_heterogeneous_estimators_behavior(X, y, estimator):
     # check that we can set the parameters of the underlying classifier
     estimator.set_params(svm__C=10.0)
     estimator.set_params(rf__max_depth=5)
-    assert (estimator.get_params()['svm__C'] ==
-            estimator.get_params()['svm'].get_params()['C'])
-    assert (estimator.get_params()['rf__max_depth'] ==
-            estimator.get_params()['rf'].get_params()['max_depth'])
+    assert (estimator.get_params()['svm__C'] == estimator.get_params()
+            ['svm'].get_params()['C'])
+    assert (estimator.get_params()['rf__max_depth'] == estimator.get_params()
+            ['rf'].get_params()['max_depth'])
 
 
 @pytest.mark.parametrize(
     "Ensemble",
-    [StackingClassifier, VotingClassifier, StackingRegressor, VotingRegressor]
-)
+    [StackingClassifier, VotingClassifier, StackingRegressor, VotingRegressor])
 def test_ensemble_heterogeneous_estimators_type(Ensemble):
     # check that ensemble will fail during validation if the underlying
     # estimators are not of the same type (i.e. classifier or regressor)
@@ -112,8 +112,7 @@ def test_ensemble_heterogeneous_estimators_type(Ensemble):
     [(*make_classification(n_samples=10), StackingClassifier),
      (*make_classification(n_samples=10), VotingClassifier),
      (*make_regression(n_samples=10), StackingRegressor),
-     (*make_regression(n_samples=10), VotingRegressor)]
-)
+     (*make_regression(n_samples=10), VotingRegressor)])
 def test_ensemble_heterogeneous_estimators_name_validation(X, y, Ensemble):
     # raise an error when the name contains dunder
     if issubclass(Ensemble, ClassifierMixin):
@@ -131,8 +130,7 @@ def test_ensemble_heterogeneous_estimators_name_validation(X, y, Ensemble):
         estimators = [('lr', LogisticRegression()),
                       ('lr', LogisticRegression())]
     else:
-        estimators = [('lr', LinearRegression()),
-                      ('lr', LinearRegression())]
+        estimators = [('lr', LinearRegression()), ('lr', LinearRegression())]
     ensemble = Ensemble(estimators=estimators)
 
     err_msg = r"Names provided are not unique: \['lr', 'lr'\]"
@@ -161,9 +159,10 @@ def test_ensemble_heterogeneous_estimators_name_validation(X, y, Ensemble):
       StackingRegressor(estimators=[('lr', LinearRegression())])),
      (*make_regression(n_samples=10),
       VotingRegressor(estimators=[('lr', LinearRegression())]))],
-    ids=['stacking-classifier', 'voting-classifier',
-         'stacking-regressor', 'voting-regressor']
-)
+    ids=[
+        'stacking-classifier', 'voting-classifier', 'stacking-regressor',
+        'voting-regressor'
+    ])
 def test_ensemble_heterogeneous_estimators_all_dropped(X, y, estimator):
     # check that we raise a consistent error when all estimators are
     # dropped

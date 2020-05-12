@@ -9,7 +9,6 @@ import numpy as np
 from scipy.linalg import pinvh
 import pytest
 
-
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_less
@@ -39,7 +38,7 @@ def test_bayesian_ridge_scores():
     clf = BayesianRidge(compute_score=True)
     clf.fit(X, y)
 
-    assert clf.scores_.shape == (clf.n_iter_ + 1,)
+    assert clf.scores_.shape == (clf.n_iter_ + 1, )
 
 
 def test_bayesian_ridge_score_values():
@@ -74,13 +73,17 @@ def test_bayesian_ridge_score_values():
     score += alpha_1 * log(alpha_) - alpha_2 * alpha_
     M = 1. / alpha_ * np.eye(n_samples) + 1. / lambda_ * np.dot(X, X.T)
     M_inv = pinvh(M)
-    score += - 0.5 * (fast_logdet(M) + np.dot(y.T, np.dot(M_inv, y)) +
-                      n_samples * log(2 * np.pi))
+    score += -0.5 * (fast_logdet(M) + np.dot(y.T, np.dot(M_inv, y)) +
+                     n_samples * log(2 * np.pi))
 
     # compute score with BayesianRidge
-    clf = BayesianRidge(alpha_1=alpha_1, alpha_2=alpha_2,
-                        lambda_1=lambda_1, lambda_2=lambda_2,
-                        n_iter=1, fit_intercept=False, compute_score=True)
+    clf = BayesianRidge(alpha_1=alpha_1,
+                        alpha_2=alpha_2,
+                        lambda_1=lambda_1,
+                        lambda_2=lambda_2,
+                        n_iter=1,
+                        fit_intercept=False,
+                        compute_score=True)
     clf.fit(X, y)
 
     assert_almost_equal(clf.scores_[0], score, decimal=9)
@@ -129,7 +132,7 @@ def test_toy_bayesian_ridge_object():
 def test_bayesian_initial_params():
     # Test BayesianRidge with initial values (alpha_init, lambda_init)
     X = np.vander(np.linspace(0, 4, 5), 4)
-    y = np.array([0., 1., 0., -1., 0.])    # y = (x^3 - 6x^2 + 8x) / 3
+    y = np.array([0., 1., 0., -1., 0.])  # y = (x^3 - 6x^2 + 8x) / 3
 
     # In this case, starting from the default initial values will increase
     # the bias of the fitted curve. So, lambda_init should be small.
@@ -147,9 +150,11 @@ def test_prediction_bayesian_ridge_ard_with_constant_input():
     random_state = check_random_state(42)
     constant_value = random_state.rand()
     X = random_state.random_sample((n_samples, n_features))
-    y = np.full(n_samples, constant_value,
+    y = np.full(n_samples,
+                constant_value,
                 dtype=np.array(constant_value).dtype)
-    expected = np.full(n_samples, constant_value,
+    expected = np.full(n_samples,
+                       constant_value,
                        dtype=np.array(constant_value).dtype)
 
     for clf in [BayesianRidge(), ARDRegression()]:
@@ -166,7 +171,8 @@ def test_std_bayesian_ridge_ard_with_constant_input():
     random_state = check_random_state(42)
     constant_value = random_state.rand()
     X = random_state.random_sample((n_samples, n_features))
-    y = np.full(n_samples, constant_value,
+    y = np.full(n_samples,
+                constant_value,
                 dtype=np.array(constant_value).dtype)
     expected_upper_boundary = 0.01
 
@@ -178,8 +184,7 @@ def test_std_bayesian_ridge_ard_with_constant_input():
 def test_update_of_sigma_in_ard():
     # Checks that `sigma_` is updated correctly after the last iteration
     # of the ARDRegression algorithm. See issue #10128.
-    X = np.array([[1, 0],
-                  [0, 0]])
+    X = np.array([[1, 0], [0, 0]])
     y = np.array([0, 0])
     clf = ARDRegression(n_iter=1)
     clf.fit(X, y)

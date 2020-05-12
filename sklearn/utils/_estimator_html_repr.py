@@ -34,7 +34,12 @@ class _VisualBlock:
         If true, wrapped HTML element will be wrapped with a dashed border.
         Only active when kind != 'single'.
     """
-    def __init__(self, kind, estimators, *, names=None, name_details=None,
+    def __init__(self,
+                 kind,
+                 estimators,
+                 *,
+                 names=None,
+                 name_details=None,
                  dash_wrapped=True):
         self.kind = kind
         self.estimators = estimators
@@ -53,7 +58,9 @@ class _VisualBlock:
         return self
 
 
-def _write_label_html(out, name, name_details,
+def _write_label_html(out,
+                      name,
+                      name_details,
                       outer_class="sk-label-container",
                       inner_class="sk-label",
                       checked=False):
@@ -83,11 +90,15 @@ def _get_visual_block(estimator):
         return estimator._sk_visual_block_()
 
     if isinstance(estimator, str):
-        return _VisualBlock('single', estimator,
-                            names=estimator, name_details=estimator)
+        return _VisualBlock('single',
+                            estimator,
+                            names=estimator,
+                            name_details=estimator)
     elif estimator is None:
-        return _VisualBlock('single', estimator,
-                            names='None', name_details='None')
+        return _VisualBlock('single',
+                            estimator,
+                            names='None',
+                            name_details='None')
 
     # check if estimator looks like a meta estimator wraps estimators
     if hasattr(estimator, 'get_params'):
@@ -99,13 +110,17 @@ def _get_visual_block(estimator):
         if len(estimators):
             return _VisualBlock('parallel', estimators, names=None)
 
-    return _VisualBlock('single', estimator,
+    return _VisualBlock('single',
+                        estimator,
                         names=estimator.__class__.__name__,
                         name_details=str(estimator))
 
 
-def _write_estimator_html(out, estimator, estimator_label,
-                          estimator_label_details, first_call=False):
+def _write_estimator_html(out,
+                          estimator,
+                          estimator_label,
+                          estimator_label_details,
+                          first_call=False):
     """Write estimator to html in serial, parallel, or by itself (single).
     """
     if first_call:
@@ -140,8 +155,11 @@ def _write_estimator_html(out, estimator, estimator_label,
 
         out.write('</div></div>')
     elif est_block.kind == 'single':
-        _write_label_html(out, est_block.names, est_block.name_details,
-                          outer_class="sk-item", inner_class="sk-estimator",
+        _write_label_html(out,
+                          est_block.names,
+                          est_block.name_details,
+                          outer_class="sk-item",
+                          inner_class="sk-estimator",
                           checked=first_call)
 
 
@@ -303,8 +321,11 @@ def estimator_html_repr(estimator):
     with closing(StringIO()) as out:
         out.write(f'<style>{_STYLE}</style>'
                   f'<div class="sk-top-container"><div class="sk-container">')
-        _write_estimator_html(out, estimator, estimator.__class__.__name__,
-                              str(estimator), first_call=True)
+        _write_estimator_html(out,
+                              estimator,
+                              estimator.__class__.__name__,
+                              str(estimator),
+                              first_call=True)
         out.write('</div></div>')
 
         html_output = out.getvalue()

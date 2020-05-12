@@ -121,14 +121,17 @@ class EllipticEnvelope(OutlierMixin, MinCovDet):
        (1999)
     """
     @_deprecate_positional_args
-    def __init__(self, *, store_precision=True, assume_centered=False,
-                 support_fraction=None, contamination=0.1,
+    def __init__(self,
+                 *,
+                 store_precision=True,
+                 assume_centered=False,
+                 support_fraction=None,
+                 contamination=0.1,
                  random_state=None):
-        super().__init__(
-            store_precision=store_precision,
-            assume_centered=assume_centered,
-            support_fraction=support_fraction,
-            random_state=random_state)
+        super().__init__(store_precision=store_precision,
+                         assume_centered=assume_centered,
+                         support_fraction=support_fraction,
+                         random_state=random_state)
         self.contamination = contamination
 
     def fit(self, X, y=None):

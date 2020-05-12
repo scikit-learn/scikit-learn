@@ -66,26 +66,21 @@ def test_get_visual_block_single_estimator():
 
 
 def test_get_visual_block_pipeline():
-    pipe = Pipeline([
-        ('imputer', SimpleImputer()),
-        ('do_nothing', 'passthrough'),
-        ('do_nothing_more', None),
-        ('classifier', LogisticRegression())
-    ])
+    pipe = Pipeline([('imputer', SimpleImputer()),
+                     ('do_nothing', 'passthrough'), ('do_nothing_more', None),
+                     ('classifier', LogisticRegression())])
     est_html_info = _get_visual_block(pipe)
     assert est_html_info.kind == 'serial'
     assert est_html_info.estimators == tuple(step[1] for step in pipe.steps)
-    assert est_html_info.names == ['imputer: SimpleImputer',
-                                   'do_nothing: passthrough',
-                                   'do_nothing_more: passthrough',
-                                   'classifier: LogisticRegression']
+    assert est_html_info.names == [
+        'imputer: SimpleImputer', 'do_nothing: passthrough',
+        'do_nothing_more: passthrough', 'classifier: LogisticRegression'
+    ]
     assert est_html_info.name_details == [str(est) for _, est in pipe.steps]
 
 
 def test_get_visual_block_feature_union():
-    f_union = FeatureUnion([
-        ('pca', PCA()), ('svd', TruncatedSVD())
-    ])
+    f_union = FeatureUnion([('pca', PCA()), ('svd', TruncatedSVD())])
     est_html_info = _get_visual_block(f_union)
     assert est_html_info.kind == 'parallel'
     assert est_html_info.names == ('pca', 'svd')
@@ -95,10 +90,8 @@ def test_get_visual_block_feature_union():
 
 
 def test_get_visual_block_voting():
-    clf = VotingClassifier([
-        ('log_reg', LogisticRegression()),
-        ('mlp', MLPClassifier())
-    ])
+    clf = VotingClassifier([('log_reg', LogisticRegression()),
+                            ('mlp', MLPClassifier())])
     est_html_info = _get_visual_block(clf)
     assert est_html_info.kind == 'parallel'
     assert est_html_info.estimators == tuple(trans[1]
@@ -108,49 +101,42 @@ def test_get_visual_block_voting():
 
 
 def test_get_visual_block_column_transformer():
-    ct = ColumnTransformer([
-        ('pca', PCA(), ['num1', 'num2']),
-        ('svd', TruncatedSVD, [0, 3])
-    ])
+    ct = ColumnTransformer([('pca', PCA(), ['num1', 'num2']),
+                            ('svd', TruncatedSVD, [0, 3])])
     est_html_info = _get_visual_block(ct)
     assert est_html_info.kind == 'parallel'
-    assert est_html_info.estimators == tuple(
-        trans[1] for trans in ct.transformers)
+    assert est_html_info.estimators == tuple(trans[1]
+                                             for trans in ct.transformers)
     assert est_html_info.names == ('pca', 'svd')
     assert est_html_info.name_details == (['num1', 'num2'], [0, 3])
 
 
 def test_estimator_html_repr_pipeline():
-    num_trans = Pipeline(steps=[
-        ('pass', 'passthrough'),
-        ('imputer', SimpleImputer(strategy='median'))
-    ])
+    num_trans = Pipeline(
+        steps=[('pass',
+                'passthrough'), ('imputer', SimpleImputer(strategy='median'))])
 
-    cat_trans = Pipeline(steps=[
-        ('imputer', SimpleImputer(strategy='constant',
-                                  missing_values='empty')),
-        ('one-hot', OneHotEncoder(drop='first'))
-    ])
+    cat_trans = Pipeline(
+        steps=[('imputer',
+                SimpleImputer(strategy='constant', missing_values='empty')
+                ), ('one-hot', OneHotEncoder(drop='first'))])
 
-    preprocess = ColumnTransformer([
-        ('num', num_trans, ['a', 'b', 'c', 'd', 'e']),
-        ('cat', cat_trans, [0, 1, 2, 3])
-    ])
+    preprocess = ColumnTransformer([('num', num_trans,
+                                     ['a', 'b', 'c', 'd', 'e']),
+                                    ('cat', cat_trans, [0, 1, 2, 3])])
 
-    feat_u = FeatureUnion([
-            ('pca', PCA(n_components=1)),
-            ('tsvd', Pipeline([('first', TruncatedSVD(n_components=3)),
-                               ('select', SelectPercentile())]))
-    ])
+    feat_u = FeatureUnion([('pca', PCA(n_components=1)),
+                           ('tsvd',
+                            Pipeline([('first', TruncatedSVD(n_components=3)),
+                                      ('select', SelectPercentile())]))])
 
-    clf = VotingClassifier([
-        ('lr', LogisticRegression(solver='lbfgs', random_state=1)),
-        ('mlp', MLPClassifier(alpha=0.001))
-    ])
+    clf = VotingClassifier([('lr',
+                             LogisticRegression(solver='lbfgs',
+                                                random_state=1)),
+                            ('mlp', MLPClassifier(alpha=0.001))])
 
-    pipe = Pipeline([
-        ('preprocessor', preprocess), ('feat_u', feat_u), ('classifier', clf)
-    ])
+    pipe = Pipeline([('preprocessor', preprocess), ('feat_u', feat_u),
+                     ('classifier', clf)])
     html_output = estimator_html_repr(pipe)
 
     # top level estimators show estimator with changes
@@ -191,8 +177,8 @@ def test_estimator_html_repr_pipeline():
 def test_stacking_classsifer(final_estimator):
     estimators = [('mlp', MLPClassifier(alpha=0.001)),
                   ('tree', DecisionTreeClassifier())]
-    clf = StackingClassifier(
-        estimators=estimators, final_estimator=final_estimator)
+    clf = StackingClassifier(estimators=estimators,
+                             final_estimator=final_estimator)
 
     html_output = estimator_html_repr(clf)
 
@@ -207,8 +193,8 @@ def test_stacking_classsifer(final_estimator):
 
 @pytest.mark.parametrize("final_estimator", [None, LinearSVR()])
 def test_stacking_regressor(final_estimator):
-    reg = StackingRegressor(
-        estimators=[('svr', LinearSVR())], final_estimator=final_estimator)
+    reg = StackingRegressor(estimators=[('svr', LinearSVR())],
+                            final_estimator=final_estimator)
     html_output = estimator_html_repr(reg)
 
     assert str(reg.estimators[0][0]) in html_output
