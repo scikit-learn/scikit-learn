@@ -181,12 +181,12 @@ Contributing code
   If in doubt about duplicated work, or if you want to work on a non-trivial
   feature, it's recommended to first open an issue in
   the `issue tracker <https://github.com/scikit-learn/scikit-learn/issues>`_
-  to get some feedbacks from core developers. 
-  
-  One easy way to find an issue to work on is by applying the "help wanted" 
-  label in your search. This lists all the issues that have been unclaimed 
-  so far. In order to claim an issue for yourself, please comment exactly 
-  ``take`` on it for the CI to automatically assign the issue to you.  
+  to get some feedbacks from core developers.
+
+  One easy way to find an issue to work on is by applying the "help wanted"
+  label in your search. This lists all the issues that have been unclaimed
+  so far. In order to claim an issue for yourself, please comment exactly
+  ``take`` on it for the CI to automatically assign the issue to you.
 
 How to contribute
 -----------------
@@ -215,7 +215,7 @@ how to set up your git repository:
 
 4. Install the development dependencies::
 
-       $ pip install cython pytest pytest-cov flake8
+       $ pip install cython pytest pytest-cov flake8 mypy
 
 5. Install scikit-learn in editable mode::
 
@@ -223,6 +223,8 @@ how to set up your git repository:
 
    for more details about advanced installation, see the
    :ref:`install_bleeding_edge` section.
+
+.. _upstream:
 
 6. Add the ``upstream`` remote. This saves a reference to the main
    scikit-learn repository, which you can use to keep your repository
@@ -246,19 +248,28 @@ modifying code and submitting a PR:
    and start making changes. Always use a feature branch. It's good
    practice to never work on the ``master`` branch!
 
-9. Develop the feature on your feature branch on your computer, using Git to
-   do the version control. When you're done editing, add changed files using
-   ``git add`` and then ``git commit``::
+9. (**Optional**) Install `pre-commit <https://pre-commit.com/#install>`_ to
+   run code style checks before each commit::
 
-       $ git add modified_files
-       $ git commit
+        $ pip install pre-commit
+        $ pre-commit install
 
-   to record your changes in Git, then push the changes to your GitHub
-   account with::
+   pre-commit checks can be disabled for a particular commit with
+   `git commit -n`.
+
+10. Develop the feature on your feature branch on your computer, using Git to
+    do the version control. When you're done editing, add changed files using
+    ``git add`` and then ``git commit``::
+ 
+        $ git add modified_files
+        $ git commit
+
+    to record your changes in Git, then push the changes to your GitHub
+    account with::
 
        $ git push -u origin my_feature
 
-10. Follow `these
+11. Follow `these
     <https://help.github.com/articles/creating-a-pull-request-from-a-fork>`_
     instructions to create a pull request from your fork. This will send an
     email to the committers. You may want to consider sending an email to the
@@ -356,12 +367,16 @@ complies with the following rules before marking a PR as ``[MRG]``. The
    non-regression tests should fail for the code base in the master branch
    and pass for the PR code.
 
-5. **Make sure that your PR does not add PEP8 violations**. On a Unix-like
-   system, you can run `make flake8-diff`. `flake8 path_to_file`, would work
-   for any system, but please avoid reformatting parts of the file that your
-   pull request doesn't change, as it distracts from code review.
+5. **Make sure that your PR does not add PEP8 violations**. To check the
+   code that you changed, you can run the following command (see
+   :ref:`above <upstream>` to set up the upstream remote)::
+
+        git diff upstream/master -u -- "*.py" | flake8 --diff
+
+   or `make flake8-diff` which should work on unix-like system.
 
 6. Follow the :ref:`coding-guidelines`.
+
 
 7. When applicable, use the validation tools and scripts in the
    ``sklearn.utils`` submodule.  A list of utility routines available
@@ -407,6 +422,21 @@ You can check for common programming errors with the following tools:
     $ pytest --cov sklearn path/to/tests_for_package
 
   see also :ref:`testing_coverage`
+
+* A moderate use of type annotations is encouraged but is not mandatory. See
+  [mypy quickstart](https://mypy.readthedocs.io/en/latest/getting_started.html)
+  for an introduction, as well as [pandas contributing documentation](
+  https://pandas.pydata.org/pandas-docs/stable/development/contributing.html#type-hints)
+  for style guidelines. Whether you add type annotation or not::
+
+    mypy --ignore-missing-import sklearn
+
+  must not produce new errors in your pull request. Using `# type: ignore`
+  annotation can be a workaround for a few cases that are not supported by
+  mypy, in particular,
+
+  - when importing C or Cython modules
+  - on properties with decorators
 
 Bonus points for contributions that include a performance analysis with
 a benchmark script and profiling output (please report on the mailing
@@ -662,7 +692,7 @@ In general have the following in mind:
     4. 1D or 2D data can be a subset of
        ``{array-like, ndarray, sparse matrix, dataframe}``. Note that ``array-like``
        can also be a ``list``, while ``ndarray`` is explicitly only a ``numpy.ndarray``.
-    5. When specifying the data type of a list, use ``of`` as a delimiter: 
+    5. When specifying the data type of a list, use ``of`` as a delimiter:
        ``list of int``.
     6. When specifying the dtype of an ndarray, use e.g. ``dtype=np.int32``
        after defining the shape:
