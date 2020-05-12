@@ -1657,7 +1657,6 @@ def test_robust_scaler_gauss_adjust():
     rng = np.random.RandomState(0)
     X = rng.randn(100000, 1) * 5 + 2
     robust_scaler = RobustScaler(gauss_adjust=True)
-    robust_scaler_2 = RobustScaler(gauss_adjust=False)
     standard_scaler = StandardScaler()
     assert_array_almost_equal(robust_scaler.fit_transform(X),
                               standard_scaler.fit_transform(X),
