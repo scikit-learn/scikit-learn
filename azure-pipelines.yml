@@ -1,4 +1,12 @@
 # Adapted from https://github.com/pandas-dev/pandas/blob/master/azure-pipelines.yml
+schedules:
+- cron: "30 2 * * *"
+  displayName: Run nightly build
+  branches:
+    include:
+    - master
+  always: true
+
 jobs:
 - job: linting
   displayName: Linting
@@ -9,9 +17,14 @@ jobs:
       displayName: Add conda to PATH
     - bash: sudo chown -R $USER $CONDA
       displayName: Take ownership of conda installation
-    - bash: conda create --name flake8_env --yes flake8
+    - bash: |
+        set -ex
+        conda create --name flake8_env --yes python=3.8
+        source activate flake8_env
+        pip install flake8 mypy==0.770
       displayName: Install flake8
     - bash: |
+        set -ex
         if [[ $BUILD_SOURCEVERSIONMESSAGE =~ \[lint\ skip\] ]]; then
           # skip linting
           echo "Skipping linting"
@@ -21,7 +34,43 @@ jobs:
           ./build_tools/circle/linting.sh
         fi
       displayName: Run linting
+    - bash: |
+        set -ex
+        if [[ $BUILD_SOURCEVERSIONMESSAGE =~ \[lint\ skip\] ]]; then
+          # skip linting
+          echo "Skipping linting"
+          exit 0
+        else
+          source activate flake8_env
+          mypy sklearn/ --ignore-missing-imports
+        fi
+      displayName: Run mypy
+    - bash: |
+        if [[ $BUILD_SOURCEVERSIONMESSAGE =~ \[scipy-dev\] ]] || \
+           [[ $BUILD_REASON == "Schedule" ]]; then
+          echo "##vso[task.setvariable variable=runScipyDev;isOutput=true]true"
+        else
+          echo "##vso[task.setvariable variable=runScipyDev;isOutput=true]false"
+        fi
+      name: gitCommitMessage
+      displayName: Determine to run scipy-dev
 
+- template: build_tools/azure/posix.yml
+  parameters:
+    name: Linux_Nightly
+    vmImage: ubuntu-18.04
+    dependsOn: [linting]
+    condition: eq(dependencies['linting']['outputs']['gitCommitMessage.runScipyDev'], 'true')
+    matrix:
+      pylatest_pip_scipy_dev:
+        DISTRIB: 'conda-pip-scipy-dev'
+        PYTHON_VERSION: '*'
+        CHECK_WARNINGS: 'true'
+        CHECK_PYTEST_SOFT_DEPENDENCY: 'true'
+        TEST_DOCSTRINGS: 'true'
+        # Tests that require large downloads over the networks are skipped in CI.
+        # Here we make sure, that they are still run on a regular basis.
+        SKLEARN_SKIP_NETWORK_TESTS: '0'
 
 # Will run all the time regardless of linting outcome.
 - template: build_tools/azure/posix.yml
@@ -47,6 +96,7 @@ jobs:
     name: Linux
     vmImage: ubuntu-18.04
     dependsOn: [linting]
+    condition: and(ne(variables['Build.Reason'], 'Schedule'), succeeded('linting'))
     matrix:
       # Linux environment to test that scikit-learn can be built against
       # versions of numpy, scipy with ATLAS that comes with Ubuntu Bionic 18.04
@@ -90,6 +140,7 @@ jobs:
     name: Linux32
     vmImage: ubuntu-18.04
     dependsOn: [linting]
+    condition: and(ne(variables['Build.Reason'], 'Schedule'), succeeded('linting'))
     matrix:
       py36_ubuntu_atlas_32bit:
         DISTRIB: 'ubuntu-32'
@@ -100,8 +151,9 @@ jobs:
 - template: build_tools/azure/posix.yml
   parameters:
     name: macOS
-    vmImage: xcode9-macos10.13
+    vmImage: macOS-10.14
     dependsOn: [linting]
+    condition: and(ne(variables['Build.Reason'], 'Schedule'), succeeded('linting'))
     matrix:
       pylatest_conda_mkl:
         DISTRIB: 'conda'
@@ -135,6 +187,7 @@ jobs:
     name: Windows
     vmImage: vs2017-win2016
     dependsOn: [linting]
+    condition: and(ne(variables['Build.Reason'], 'Schedule'), succeeded('linting'))
     matrix:
       py37_conda_mkl:
         PYTHON_VERSION: '3.7'

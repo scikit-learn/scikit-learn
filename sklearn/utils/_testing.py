@@ -183,7 +183,7 @@ def assert_warns_message(warning_class, message, func, *args, **kw):
             if callable(message):  # add support for certain tests
                 check_in_message = message
             else:
-                check_in_message = lambda msg: message in msg
+                def check_in_message(msg): return message in msg
 
             if check_in_message(msg):
                 message_found = True

@@ -18,6 +18,7 @@ from ._base import _get_weights, _check_weights, NeighborsBase, KNeighborsMixin
 from ._base import RadiusNeighborsMixin, SupervisedFloatMixin
 from ..base import RegressorMixin
 from ..utils import check_array
+from ..utils.validation import _deprecate_positional_args
 
 
 class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
@@ -77,10 +78,10 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
     metric : str or callable, default='minkowski'
         the distance metric to use for the tree.  The default metric is
         minkowski, and with p=2 is equivalent to the standard Euclidean
-        metric. See the documentation of the DistanceMetric class for a
+        metric. See the documentation of :class:`DistanceMetric` for a
         list of available metrics.
         If metric is "precomputed", X is assumed to be a distance matrix and
-        must be square during fit. X may be a :term:`Glossary <sparse graph>`,
+        must be square during fit. X may be a :term:`sparse graph`,
         in which case only "nonzero" elements may be considered neighbors.
 
     metric_params : dict, default=None
@@ -139,7 +140,8 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
     https://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
     """
 
-    def __init__(self, n_neighbors=5, weights='uniform',
+    @_deprecate_positional_args
+    def __init__(self, n_neighbors=5, *, weights='uniform',
                  algorithm='auto', leaf_size=30,
                  p=2, metric='minkowski', metric_params=None, n_jobs=None,
                  **kwargs):
@@ -253,10 +255,10 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
     metric : str or callable, default='minkowski'
         the distance metric to use for the tree.  The default metric is
         minkowski, and with p=2 is equivalent to the standard Euclidean
-        metric. See the documentation of the DistanceMetric class for a
+        metric. See the documentation of :class:`DistanceMetric` for a
         list of available metrics.
         If metric is "precomputed", X is assumed to be a distance matrix and
-        must be square during fit. X may be a :term:`Glossary <sparse graph>`,
+        must be square during fit. X may be a :term:`sparse graph`,
         in which case only "nonzero" elements may be considered neighbors.
 
     metric_params : dict, default=None
@@ -307,7 +309,8 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
     https://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
     """
 
-    def __init__(self, radius=1.0, weights='uniform',
+    @_deprecate_positional_args
+    def __init__(self, radius=1.0, *, weights='uniform',
                  algorithm='auto', leaf_size=30,
                  p=2, metric='minkowski', metric_params=None, n_jobs=None,
                  **kwargs):

@@ -23,13 +23,16 @@ from ..base import ClassifierMixin
 from ..base import RegressorMixin
 from ..base import TransformerMixin
 from ..base import clone
-from ._base import _parallel_fit_estimator
+from ._base import _fit_single_estimator
 from ._base import _BaseHeterogeneousEnsemble
 from ..preprocessing import LabelEncoder
 from ..utils import Bunch
 from ..utils.validation import check_is_fitted
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import column_or_1d
+from ..utils.validation import _deprecate_positional_args
+from ..exceptions import NotFittedError
+from ..utils._estimator_html_repr import _VisualBlock
 
 
 class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
@@ -68,7 +71,7 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
                              % (len(self.weights), len(self.estimators)))
 
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
-                delayed(_parallel_fit_estimator)(
+                delayed(_fit_single_estimator)(
                         clone(clf), X, y,
                         sample_weight=sample_weight,
                         message_clsname='Voting',
@@ -88,6 +91,24 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
 
         return self
 
+    @property
+    def n_features_in_(self):
+        # For consistency with other estimators we raise a AttributeError so
+        # that hasattr() fails if the estimator isn't fitted.
+        try:
+            check_is_fitted(self)
+        except NotFittedError as nfe:
+            raise AttributeError(
+                "{} object has no n_features_in_ attribute."
+                .format(self.__class__.__name__)
+            ) from nfe
+
+        return self.estimators_[0].n_features_in_
+
+    def _sk_visual_block_(self):
+        names, estimators = zip(*self.estimators)
+        return _VisualBlock('parallel', estimators, names=names)
+
 
 class VotingClassifier(ClassifierMixin, _BaseVoting):
     """Soft Voting/Majority Rule classifier for unfitted estimators.
@@ -103,6 +124,9 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         of those original estimators that will be stored in the class attribute
         ``self.estimators_``. An estimator can be set to ``'drop'``
         using ``set_params``.
+
+        .. versionchanged:: 0.21
+            ``'drop'`` is accepted.
 
         .. deprecated:: 0.22
            Using ``None`` to drop an estimator is deprecated in 0.22 and
@@ -125,6 +149,8 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
+        .. versionadded:: 0.18
+
     flatten_transform : bool, default=True
         Affects shape of transform output only when voting='soft'
         If voting='soft' and flatten_transform=True, transform method returns
@@ -142,7 +168,7 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         The collection of fitted sub-estimators as defined in ``estimators``
         that are not 'drop'.
 
-    named_estimators_ : Bunch
+    named_estimators_ : :class:`~sklearn.utils.Bunch`
         Attribute to access any fitted sub-estimators by name.
 
         .. versionadded:: 0.20
@@ -189,8 +215,8 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
     >>> print(eclf3.transform(X).shape)
     (6, 6)
     """
-
-    def __init__(self, estimators, voting='hard', weights=None,
+    @_deprecate_positional_args
+    def __init__(self, estimators, *, voting='hard', weights=None,
                  n_jobs=None, flatten_transform=True, verbose=False):
         super().__init__(estimators=estimators)
         self.voting = voting
@@ -215,6 +241,8 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
             Sample weights. If None, then samples are equally weighted.
             Note that this is supported only if all underlying estimators
             support sample weights.
+
+            .. versionadded:: 0.18
 
         Returns
         -------
@@ -333,8 +361,8 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
 
     .. versionadded:: 0.21
 
-    A voting regressor is an ensemble meta-estimator that fits base
-    regressors each on the whole dataset. It, then, averages the individual
+    A voting regressor is an ensemble meta-estimator that fits several base
+    regressors, each on the whole dataset. Then it averages the individual
     predictions to form a final prediction.
 
     Read more in the :ref:`User Guide <voting_regressor>`.
@@ -346,6 +374,9 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
         of those original estimators that will be stored in the class attribute
         ``self.estimators_``. An estimator can be set to ``'drop'`` using
         ``set_params``.
+
+        .. versionchanged:: 0.21
+            ``'drop'`` is accepted.
 
         .. deprecated:: 0.22
            Using ``None`` to drop an estimator is deprecated in 0.22 and
@@ -394,8 +425,9 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
     >>> print(er.fit(X, y).predict(X))
     [ 3.3  5.7 11.8 19.7 28.  40.3]
     """
-
-    def __init__(self, estimators, weights=None, n_jobs=None, verbose=False):
+    @_deprecate_positional_args
+    def __init__(self, estimators, *, weights=None, n_jobs=None,
+                 verbose=False):
         super().__init__(estimators=estimators)
         self.weights = weights
         self.n_jobs = n_jobs
