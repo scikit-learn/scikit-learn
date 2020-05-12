@@ -93,6 +93,10 @@ enhance the functionality of scikit-learn's estimators.
 - `sklearn-porter <https://github.com/nok/sklearn-porter>`_
   Transpile trained scikit-learn models to C, Java, Javascript and others.
 
+- `treelite <https://treelite.readthedocs.io>`_
+  Compiles tree-based ensemble models into C code for minimizing prediction
+  latency.
+
 
 Other estimators and tasks
 --------------------------
