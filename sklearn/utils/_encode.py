@@ -93,7 +93,7 @@ def _encode(values, *, uniques, check_unknown=True):
         return np.searchsorted(uniques, values)
 
 
-def _check_unknown(values, uniques, return_mask=False):
+def _check_unknown(values, known_values, return_mask=False):
     """
     Helper function to check for unknowns in values to be encoded.
 
@@ -104,8 +104,8 @@ def _check_unknown(values, uniques, return_mask=False):
     ----------
     values : array
         Values to check for unknowns.
-    uniques : array
-        Allowed uniques values.
+    known_values : array
+        Known values. Must be unique.
     return_mask : bool, default False
         If True, return a mask of the same shape as `values` indicating
         the valid values.
@@ -113,14 +113,13 @@ def _check_unknown(values, uniques, return_mask=False):
     Returns
     -------
     diff : list
-        The unique values present in `values` and not in `uniques` (the
-        unknown values).
+        The unique values present in `values` and not in `know_values`.
     valid_mask : boolean array
         Additionally returned if ``return_mask=True``.
 
     """
     if values.dtype == object:
-        uniques_set = set(uniques)
+        uniques_set = set(known_values)
         diff = list(set(values) - uniques_set)
         if return_mask:
             if diff:
@@ -132,10 +131,11 @@ def _check_unknown(values, uniques, return_mask=False):
             return diff
     else:
         unique_values = np.unique(values)
-        diff = list(np.setdiff1d(unique_values, uniques, assume_unique=True))
+        diff = list(np.setdiff1d(unique_values, known_values,
+                                 assume_unique=True))
         if return_mask:
             if diff:
-                valid_mask = np.in1d(values, uniques)
+                valid_mask = np.in1d(values, known_values)
             else:
                 valid_mask = np.ones(len(values), dtype=bool)
             return diff, valid_mask
