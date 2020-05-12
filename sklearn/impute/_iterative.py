@@ -602,9 +602,9 @@ class IterativeImputer(_BaseImputer):
             self.n_iter_ = 0
             return super()._concatenate_indicator(Xt, X_indicator)
 
-        self._min_value = IterativeImputer._validate_limit(
+        self._min_value = self._validate_limit(
             self.min_value, "min", X.shape[1])
-        self._max_value = IterativeImputer._validate_limit(
+        self._max_value = self._validate_limit(
             self.max_value, "max", X.shape[1])
 
         if not np.all(np.greater(self._max_value, self._min_value)):
