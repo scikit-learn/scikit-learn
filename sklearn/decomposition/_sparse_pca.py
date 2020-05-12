@@ -103,6 +103,11 @@ class SparsePCA(TransformerMixin, BaseEstimator):
     error_ : array
         Vector of errors at each iteration.
 
+    n_components_ : int
+        Estimated number of components.
+
+        .. versionadded:: 0.23
+
     n_iter_ : int
         Number of iterations run.
 
@@ -197,6 +202,7 @@ class SparsePCA(TransformerMixin, BaseEstimator):
             self.components_, axis=1)[:, np.newaxis]
         components_norm[components_norm == 0] = 1
         self.components_ /= components_norm
+        self.n_components_ = len(self.components_)
 
         self.error_ = E
         return self
@@ -234,7 +240,7 @@ class SparsePCA(TransformerMixin, BaseEstimator):
 
     def _more_tags(self):
         return {
-            '_xfail_test': {
+            '_xfail_checks': {
                 "check_methods_subset_invariance":
                 "fails for the transform method"
             }
@@ -311,6 +317,11 @@ class MiniBatchSparsePCA(SparsePCA):
     ----------
     components_ : array, [n_components, n_features]
         Sparse components extracted from the data.
+
+    n_components_ : int
+        Estimated number of components.
+
+        .. versionadded:: 0.23
 
     n_iter_ : int
         Number of iterations run.
@@ -403,5 +414,6 @@ class MiniBatchSparsePCA(SparsePCA):
             self.components_, axis=1)[:, np.newaxis]
         components_norm[components_norm == 0] = 1
         self.components_ /= components_norm
+        self.n_components_ = len(self.components_)
 
         return self

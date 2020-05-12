@@ -27,15 +27,12 @@ from sklearn.base import BiclusterMixin
 
 from sklearn.linear_model._base import LinearClassifierMixin
 from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import GridSearchCV
 from sklearn.utils import IS_PYPY
 from sklearn.utils._testing import SkipTest
 from sklearn.utils.estimator_checks import (
-    _mark_xfail_checks,
     _construct_instance,
     _set_checking_parameters,
     _set_check_estimator_ids,
-    check_parameters_default_constructible,
     check_class_weight_balanced_linear_classifier,
     parametrize_with_checks)
 
@@ -46,33 +43,6 @@ def test_all_estimator_no_base_class():
         msg = ("Base estimators such as {0} should not be included"
                " in all_estimators").format(name)
         assert not name.lower().startswith('base'), msg
-
-
-def test_estimator_cls_parameterize_with_checks():
-    # Non-regression test for #16707 to ensure that parametrize_with_checks
-    # works with estimator classes
-    param_checks = parametrize_with_checks([LogisticRegression])
-    # Using the generator does not raise
-    list(param_checks.args[1])
-
-
-def test_mark_xfail_checks_with_unconsructable_estimator():
-    class MyEstimator:
-        def __init__(self):
-            raise ValueError("This is bad")
-
-    estimator, check = _mark_xfail_checks(MyEstimator, 42, None)
-    assert estimator == MyEstimator
-    assert check == 42
-
-
-@pytest.mark.parametrize(
-        'name, Estimator',
-        all_estimators()
-)
-def test_parameters_default_constructible(name, Estimator):
-    # Test that estimators are default-constructible
-    check_parameters_default_constructible(name, Estimator)
 
 
 def _sample_func(x, y=1):
@@ -105,7 +75,7 @@ def _tested_estimators():
         yield estimator
 
 
-@parametrize_with_checks(_tested_estimators())
+@parametrize_with_checks(list(_tested_estimators()))
 def test_estimators(estimator, check, request):
     # Common tests for estimator instances
     with ignore_warnings(category=(FutureWarning,
@@ -116,25 +86,9 @@ def test_estimators(estimator, check, request):
 
 
 def test_check_estimator_generate_only():
-    estimator_cls_gen_checks = check_estimator(LogisticRegression,
-                                               generate_only=True)
     all_instance_gen_checks = check_estimator(LogisticRegression(),
                                               generate_only=True)
-    assert isgenerator(estimator_cls_gen_checks)
     assert isgenerator(all_instance_gen_checks)
-
-    estimator_cls_checks = list(estimator_cls_gen_checks)
-    all_instance_checks = list(all_instance_gen_checks)
-
-    # all classes checks include check_parameters_default_constructible
-    assert len(estimator_cls_checks) == len(all_instance_checks) + 1
-
-    # TODO: meta-estimators like GridSearchCV has required parameters
-    # that do not have default values. This is expected to change in the future
-    with pytest.raises(SkipTest):
-        for estimator, check in check_estimator(GridSearchCV,
-                                                generate_only=True):
-            check(estimator)
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
@@ -238,3 +192,15 @@ def test_all_tests_are_importable():
                                  '__init__.py or an add_subpackage directive '
                                  'in the parent '
                                  'setup.py'.format(missing_tests))
+
+
+def test_class_support_removed():
+    # Make sure passing classes to check_estimator or parametrize_with_checks
+    # raises an error
+
+    msg = "Passing a class was deprecated.* isn't supported anymore"
+    with pytest.raises(TypeError, match=msg):
+        check_estimator(LogisticRegression)
+
+    with pytest.raises(TypeError, match=msg):
+        parametrize_with_checks([LogisticRegression])

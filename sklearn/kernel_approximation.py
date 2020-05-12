@@ -40,10 +40,10 @@ class RBFSampler(TransformerMixin, BaseEstimator):
         Equals the dimensionality of the computed feature space.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        Pseudo-random number generator to control the generation of the random
+        weights and random offset when fitting the training data.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     Attributes
     ----------
@@ -154,10 +154,10 @@ class SkewedChi2Sampler(TransformerMixin, BaseEstimator):
         Equals the dimensionality of the computed feature space.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        Pseudo-random number generator to control the generation of the random
+        weights and random offset when fitting the training data.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     Examples
     --------
@@ -482,10 +482,11 @@ class Nystroem(TransformerMixin, BaseEstimator):
         How many data points will be used to construct the mapping.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        Pseudo-random number generator to control the uniform sampling without
+        replacement of n_components of the training data to construct the basis
+        kernel.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     Attributes
     ----------
