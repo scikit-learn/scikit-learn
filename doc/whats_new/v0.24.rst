@@ -47,6 +47,14 @@ Changelog
 :mod:`sklearn.module`
 .....................
 
+:mod: `sklearn.ensemble`
+........................
+
+- |Feature| :class:`ensemble.HistGradientBoostingRegressor` and
+  :class:`ensemble.HistGradientClassifier` now support `staged_predict`,
+  which allows monitoring of each stage.
+  :pr:`16985` by :user:`Hao Chun Chang <haochunchang>` and `Nicolas Hug`_.
+
 :mod:`sklearn.impute`
 .....................
 
