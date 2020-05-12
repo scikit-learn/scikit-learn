@@ -10,7 +10,7 @@ from ..utils import check_array
 from ..utils.validation import check_is_fitted
 from ..utils.validation import _deprecate_positional_args
 
-from ._label import _encode, _encode_check_unknown
+from ..utils._encode import _encode, _encode_check_unknown, _unique
 
 
 __all__ = [
@@ -83,7 +83,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         for i in range(n_features):
             Xi = X_list[i]
             if self.categories == 'auto':
-                cats = _encode(Xi)
+                cats = _unique(Xi)
             else:
                 cats = np.array(self.categories[i], dtype=Xi.dtype)
                 if Xi.dtype != object:
@@ -138,9 +138,8 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                     Xi[~valid_mask] = self.categories_[i][0]
             # We use check_unknown=False, since _encode_check_unknown was
             # already called above.
-            _, encoded = _encode(Xi, self.categories_[i], encode=True,
-                                 check_unknown=False)
-            X_int[:, i] = encoded
+            X_int[:, i] = _encode(Xi, uniques=self.categories_[i],
+                                  check_unknown=False)
 
         return X_int, X_mask
 
