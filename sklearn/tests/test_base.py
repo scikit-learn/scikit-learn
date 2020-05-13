@@ -525,3 +525,15 @@ def test_repr_mimebundle_():
         output = tree._repr_mimebundle_()
         assert "text/plain" in output
         assert "text/html" in output
+
+
+def test_repr_html_wraps():
+    # Checks the display configuration flag controls the html output
+    tree = DecisionTreeClassifier()
+    msg = "_repr_html_ is only defined when"
+    with pytest.raises(AttributeError, match=msg):
+        output = tree._repr_html_()
+
+    with config_context(display='diagram'):
+        output = tree._repr_html_()
+        assert "<style>" in output

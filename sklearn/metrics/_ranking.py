@@ -34,7 +34,7 @@ from ..utils.sparsefuncs import count_nonzero
 from ..utils.validation import _deprecate_positional_args
 from ..exceptions import UndefinedMetricWarning
 from ..preprocessing import label_binarize
-from ..preprocessing._label import _unique, _encode
+from ..utils._encode import _encode, _unique
 
 from ._base import _average_binary_score, _average_multiclass_ovo_score
 
@@ -485,7 +485,7 @@ def _multiclass_roc_auc_score(y_true, y_score, labels,
             raise ValueError("sample_weight is not supported "
                              "for multiclass one-vs-one ROC AUC, "
                              "'sample_weight' must be None in this case.")
-        y_true_encoded = _encode(y_true, classes)
+        y_true_encoded = _encode(y_true, uniques=classes)
         # Hand & Till (2001) implementation (ovo)
         return _average_multiclass_ovo_score(_binary_roc_auc_score,
                                              y_true_encoded,
