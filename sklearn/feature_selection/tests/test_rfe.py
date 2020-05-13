@@ -381,7 +381,7 @@ def test_rfe_cv_groups():
     [attrgetter('regressor_.coef_'), 'regressor_.coef_'])
 @pytest.mark.parametrize('selector', [RFE, RFECV])
 def test_rfe_wrapped_estimator(importance_getter, selector):
-    # Non-regression test for 
+    # Non-regression test for
     # https://github.com/scikit-learn/scikit-learn/issues/15312
     n_features = 10
     X, y = make_friedman1(n_samples=50, n_features=n_features, random_state=0)
