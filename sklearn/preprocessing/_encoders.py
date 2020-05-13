@@ -105,7 +105,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         self.categories_ = []
 
         return_counts = process_counts is not None
-        category_counts = [] if return_counts else None
+        category_counts = []
 
         for i in range(n_features):
             Xi = X_list[i]
@@ -138,8 +138,8 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
             process_counts(category_counts, n_samples)
 
     def _transform(self, X, handle_unknown='error',
-                   process_valid_mask=None,
-                   get_default_invalid_category=None):
+                   transform_valid_mask=None,
+                   get_invalid_category=None):
         X_list, n_samples, n_features = self._check_X(X)
 
         X_int = np.zeros((n_samples, n_features), dtype=np.int)
@@ -174,15 +174,15 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                     else:
                         Xi = Xi.copy()
 
-                    if get_default_invalid_category is not None:
-                        invalid_index = get_default_invalid_category(i)
+                    if get_invalid_category is not None:
+                        invalid_index = get_invalid_category(i)
                     else:
                         invalid_index = 0
 
                     Xi[~valid_mask] = self.categories_[i][invalid_index]
 
-                    if process_valid_mask is not None:
-                        valid_mask = process_valid_mask(valid_mask, i)
+                    if transform_valid_mask is not None:
+                        valid_mask = transform_valid_mask(valid_mask, i)
 
                     X_mask[:, i] = valid_mask
 
@@ -619,7 +619,7 @@ class OneHotEncoder(_BaseEncoder):
                 continue
             X_int[:, i] = np.take(mapping, X_int[:, i])
 
-    def _get_default_invalid_category(self, col_idx):
+    def _get_invalid_category(self, col_idx):
         """Get default invalid category for column index during `_transform`.
 
         This function is pasesd to `_transform` to set the invalid categories.
@@ -627,7 +627,7 @@ class OneHotEncoder(_BaseEncoder):
         infrequent_idx = self.infrequent_indices_[col_idx]
         return 0 if infrequent_idx is None else infrequent_idx[0]
 
-    def _process_valid_mask(self, valid_mask, col_idx):
+    def _transform_valid_mask(self, valid_mask, col_idx):
         """Process the valid mask during `_transform`
 
         This function is passed to `_transform` to adjust the mask depending
@@ -792,9 +792,8 @@ class OneHotEncoder(_BaseEncoder):
         transform_kws = {"handle_unknown": self.handle_unknown}
         if self._infrequent_enabled():
             transform_kws.update({
-                "process_valid_mask": self._process_valid_mask,
-                "get_default_invalid_category":
-                self._get_default_invalid_category
+                "transform_valid_mask": self._transform_valid_mask,
+                "get_invalid_category": self._get_invalid_category
             })
 
         X_int, X_mask = self._transform(X, **transform_kws)
