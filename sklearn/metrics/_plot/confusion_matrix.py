@@ -72,6 +72,8 @@ class ConfusionMatrixDisplay:
             created.
 
         colorbar : matplotlib colorbar, default=True
+            If `False` colorbar to the plot is not added.
+
         Returns
         -------
         display : :class:`~sklearn.metrics.ConfusionMatrixDisplay`
@@ -194,6 +196,8 @@ def plot_confusion_matrix(estimator, X, y_true, *, labels=None,
         created.
 
     colorbar : matplotlib colorbar, default=True
+        If `False` colorbar to the plot is not added.
+
     Returns
     -------
     display : :class:`~sklearn.metrics.ConfusionMatrixDisplay`

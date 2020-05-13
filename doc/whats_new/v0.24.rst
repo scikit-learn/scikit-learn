@@ -65,6 +65,12 @@ Changelog
   samples between the train and test set on each fold.
   :pr:`13204` by :user:`Kyle Kosic <kykosic>`.
 
+:mod:`sklearn.metrics`
+......................
+
+- |Feature| :func:`metrics.plot_confusion_matrix now supports making colorbar 
+  optional in the matplotlib plot by setting colorbar=False. :pr:`17192` by 
+  :user:`Avi Gupta <avigupta2612>`
 
 Code and Documentation Contributors
 -----------------------------------
