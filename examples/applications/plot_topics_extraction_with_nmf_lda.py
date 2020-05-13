@@ -27,6 +27,7 @@ proportional to (n_samples * iterations).
 # License: BSD 3 clause
 
 from time import time
+import matplotlib.pyplot as plt
 
 from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
 from sklearn.decomposition import NMF, LatentDirichletAllocation
@@ -38,13 +39,25 @@ n_components = 10
 n_top_words = 20
 
 
-def print_top_words(model, feature_names, n_top_words):
+def plot_top_words(model, feature_names, n_top_words):
+    fig, axes = plt.subplots(2, 5, figsize=(30, 15), sharex=True)
+    axes = axes.flatten()
     for topic_idx, topic in enumerate(model.components_):
-        message = "Topic #%d: " % topic_idx
-        message += " ".join([feature_names[i]
-                             for i in topic.argsort()[:-n_top_words - 1:-1]])
-        print(message)
+        top_features_ind = [
+                i for i in topic.argsort()[:-n_top_words - 1:-1]]
+        top_features = [feature_names[i] for i in top_features_ind]
+        values = [topic[i] for i in top_features_ind]
+        ax = axes[topic_idx]
+        ax.barh(top_features, values)
+        ax.set_title(f'Topic {topic_idx +1}', fontdict={'fontsize': 40})
+        ax.invert_yaxis()
+        ax.tick_params(axis='both', which='major', labelsize=20)
+        for i in 'top right left'.split():
+            ax.spines[i].set_visible(False)
+
     print()
+    plt.subplots_adjust(top=0.95, bottom=0.05, wspace=0.90, hspace=0.3)
+    plt.show()
 
 
 # Load the 20 newsgroups dataset and vectorize it. We use a few heuristics
@@ -90,7 +103,7 @@ print("done in %0.3fs." % (time() - t0))
 
 print("\nTopics in NMF model (Frobenius norm):")
 tfidf_feature_names = tfidf_vectorizer.get_feature_names()
-print_top_words(nmf, tfidf_feature_names, n_top_words)
+plot_top_words(nmf, tfidf_feature_names, n_top_words)
 
 # Fit the NMF model
 print("Fitting the NMF model (generalized Kullback-Leibler divergence) with "
@@ -104,7 +117,7 @@ print("done in %0.3fs." % (time() - t0))
 
 print("\nTopics in NMF model (generalized Kullback-Leibler divergence):")
 tfidf_feature_names = tfidf_vectorizer.get_feature_names()
-print_top_words(nmf, tfidf_feature_names, n_top_words)
+plot_top_words(nmf, tfidf_feature_names, n_top_words)
 
 print("Fitting LDA models with tf features, "
       "n_samples=%d and n_features=%d..."
@@ -119,4 +132,4 @@ print("done in %0.3fs." % (time() - t0))
 
 print("\nTopics in LDA model:")
 tf_feature_names = tf_vectorizer.get_feature_names()
-print_top_words(lda, tf_feature_names, n_top_words)
+plot_top_words(lda, tf_feature_names, n_top_words)
