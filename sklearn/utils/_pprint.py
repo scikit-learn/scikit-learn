@@ -66,7 +66,6 @@ BaseEstimator.__repr__ for pretty-printing estimators"""
 from inspect import signature
 import pprint
 from collections import OrderedDict
-from collections import defaultdict
 
 from ..base import BaseEstimator
 from .._config import get_config
@@ -95,14 +94,11 @@ def _changed_params(estimator):
                         estimator.__init__)
     init_params = signature(init_func).parameters
     init_params = {name: param.default for name, param in init_params.items()}
-    # We make init_params a defaultdict to be nice with third party libraries
-    # that have **kwargs in __init__. The parameters in kwargs would cause a
-    # KeyError otherwise.
-    init_params = defaultdict(lambda: None, init_params)
 
     for k, v in params.items():
-        if (repr(v) != repr(init_params[k]) and
-                not (is_scalar_nan(init_params[k]) and is_scalar_nan(v))):
+        if (k not in init_params or (  # happens if k is part of a **kwargs
+                repr(v) != repr(init_params[k]) and
+                not (is_scalar_nan(init_params[k]) and is_scalar_nan(v)))):
             filtered_params[k] = v
     return filtered_params
 
