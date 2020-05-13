@@ -2,6 +2,23 @@
 
 .. currentmodule:: sklearn
 
+.. _changes_0_23_1:
+
+Version 0.23.1
+==============
+
+**TBD**
+
+Changelog
+---------
+
+:mod:`sklearn.cluster`
+......................
+
+- |Fix| Fixed a bug in :class:`cluster.KMeans` where the sample weights
+  provided by the user was modified in place. :pr:`17204` by
+  :user:`Jeremie du Boisberranger <jeremiedbb>`.
+
 .. _changes_0_23:
 
 Version 0.23.0
