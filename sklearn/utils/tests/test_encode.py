@@ -19,8 +19,23 @@ from sklearn.utils._encode import _check_unknown
 def test_encode_util(values, expected):
     uniques = _unique(values)
     assert_array_equal(uniques, expected)
+
+    result, encoded = _unique(values, return_inverse=True)
+    assert_array_equal(result, expected)
+    assert_array_equal(encoded, np.array([1, 0, 2, 0, 2]))
+
     encoded = _encode(values, uniques=uniques)
     assert_array_equal(encoded, np.array([1, 0, 2, 0, 2]))
+
+    result, counts = _unique(values, return_counts=True)
+    assert_array_equal(result, expected)
+    assert_array_equal(counts, np.array([2, 1, 2]))
+
+    result, encoded, counts = _unique(values, return_inverse=True,
+                                      return_counts=True)
+    assert_array_equal(result, expected)
+    assert_array_equal(encoded, np.array([1, 0, 2, 0, 2]))
+    assert_array_equal(counts, np.array([2, 1, 2]))
 
 
 def test_encode_with_check_unknown():
