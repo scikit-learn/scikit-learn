@@ -1651,12 +1651,12 @@ def test_robust_scaler_zero_variance_features():
     assert_array_almost_equal(X_trans_new, X_expected_new, decimal=3)
 
 
-def test_robust_scaler_gauss_adjust():
+def test_robust_scaler_unit_variance():
     # Check RobustScaler with gaus_adjust=True is equivalent to StandardScaler
     # on large normal data
     rng = np.random.RandomState(0)
     X = rng.randn(100000, 1) * 5 + 2
-    robust_scaler = RobustScaler(gauss_adjust=True)
+    robust_scaler = RobustScaler(unit_variance=True)
     standard_scaler = StandardScaler()
     assert_array_almost_equal(robust_scaler.fit_transform(X),
                               standard_scaler.fit_transform(X),

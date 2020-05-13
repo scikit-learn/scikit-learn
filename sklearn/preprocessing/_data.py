@@ -1130,9 +1130,8 @@ class RobustScaler(TransformerMixin, BaseEstimator):
 
         .. versionadded:: 0.18
 
-    scale_to_unit_variance : boolean, False by default
-        If True, scale data to have variance of 1 (if data is normally
-        distributed).
+    unit_variance : boolean, False by default
+        If True, scale data (if normally distributed) to have variance of 1.
 
     copy : boolean, optional, default is True
         If False, try to avoid a copy and do inplace scaling instead.
@@ -1184,12 +1183,12 @@ class RobustScaler(TransformerMixin, BaseEstimator):
     """
     @_deprecate_positional_args
     def __init__(self, *, with_centering=True, with_scaling=True,
-                 quantile_range=(25.0, 75.0), scale_to_unit_variance=False,
+                 quantile_range=(25.0, 75.0), unit_variance=False,
                  copy=True):
         self.with_centering = with_centering
         self.with_scaling = with_scaling
         self.quantile_range = quantile_range
-        self.scale_to_unit_variance = scale_to_unit_variance
+        self.unit_variance = unit_variance
         self.copy = copy
 
     def fit(self, X, y=None):
@@ -1239,7 +1238,7 @@ class RobustScaler(TransformerMixin, BaseEstimator):
 
             self.scale_ = quantiles[1] - quantiles[0]
             self.scale_ = _handle_zeros_in_scale(self.scale_, copy=False)
-            if self.scale_to_unit_variance:
+            if self.unit_variance:
                 # Create scipy.stats.norm object
                 output_distribution = getattr(stats, 'norm')
                 self.adjust_ = output_distribution.ppf(q_max / 100.0) - \
@@ -1302,8 +1301,7 @@ class RobustScaler(TransformerMixin, BaseEstimator):
 
 @_deprecate_positional_args
 def robust_scale(X, *, axis=0, with_centering=True, with_scaling=True,
-                 quantile_range=(25.0, 75.0), scale_to_unit_variance=False,
-                 copy=True):
+                 quantile_range=(25.0, 75.0), unit_variance=False, copy=True):
     """Standardize a dataset along any axis
 
     Center to the median and component wise scale
@@ -1334,7 +1332,7 @@ def robust_scale(X, *, axis=0, with_centering=True, with_scaling=True,
 
         .. versionadded:: 0.18
 
-    scale_to_unit_variance : boolean, False by default
+    unit_variance : boolean, False by default
         If True, scale data to have variance of 1 (if data is normally
         distributed).
 
@@ -1374,8 +1372,8 @@ def robust_scale(X, *, axis=0, with_centering=True, with_scaling=True,
         X = X.reshape(X.shape[0], 1)
 
     s = RobustScaler(with_centering=with_centering, with_scaling=with_scaling,
-                     quantile_range=quantile_range, gauss_adjust=gauss_adjust,
-                     copy=copy)
+                     quantile_range=quantile_range,
+                     unit_variance=unit_variance, copy=copy)
     if axis == 0:
         X = s.fit_transform(X)
     else:
