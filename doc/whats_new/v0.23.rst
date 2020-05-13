@@ -686,7 +686,7 @@ Code and Documentation Contributors
 -----------------------------------
 
 Thanks to everyone who has contributed to the maintenance and improvement of the
-project since version 0.20, including:
+project since version 0.22, including:
 
 Abbie Popa, Adrin Jalali, Aleksandra Kocot, Alexandre Batisse, Alexandre
 Gramfort, Alex Henrie, Alex Itkes, Alex Liang, alexshacked, Alonso Silva
