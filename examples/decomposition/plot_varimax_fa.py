@@ -27,13 +27,13 @@ from sklearn.datasets import load_iris
 
 print(__doc__)
 
-##############################################################################
+# %%
 # Load Iris data
 data = load_iris()
 X = StandardScaler().fit_transform(data["data"])
 feature_names = data["feature_names"]
 
-##############################################################################
+# %%
 # Plot covariance of Iris features
 ax = plt.axes()
 
@@ -48,7 +48,7 @@ plt.colorbar(im).ax.set_ylabel("$r$", rotation=0)
 ax.set_title("Iris feature correlation matrix")
 plt.tight_layout()
 
-##############################################################################
+# %%
 # Run factor analysis with Varimax rotation
 n_comps = 2
 
