@@ -47,6 +47,15 @@ Changelog
 :mod:`sklearn.module`
 .....................
 
+:mod:`sklearn.impute`
+.....................
+
+- |Fix| replace the default values in :class:`impute.IterativeImputer`
+  of `min_value` and `max_value` parameters to `-np.inf` and `np.inf`,
+  respectively instead of `None`. However, the behaviour of the class does not
+  change since `None` was defaulting to these values already.
+  :pr:`16493` by :user:`Darshan N <DarshanGowda0>`.
+
 :mod:`sklearn.model_selection`
 ..............................
 
