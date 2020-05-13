@@ -601,7 +601,6 @@ class OneHotEncoder(_BaseEncoder):
             default_to_infrequent_mappings.append(mapping)
 
         self._default_to_infrequent_mappings = default_to_infrequent_mappings
-        # self._largest_infreq_indices = largest_infreq_idxs
 
     def _map_to_infrequent_categories(self, X_int):
         """Map categories to infrequent categories.
