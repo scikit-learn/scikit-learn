@@ -31,7 +31,7 @@ def _unique(values, *, return_inverse=False):
 
 
 def _unique_python(values, *, return_inverse):
-    # Only used in _uniques below, see docstring there for details
+    # Only used in `_uniques`, see docstring there for details
     try:
         uniques = sorted(set(values))
         uniques = np.array(uniques, dtype=values.dtype)
@@ -62,15 +62,15 @@ def _encode(values, *, uniques, check_unknown=True):
     Parameters
     ----------
     values : ndarray
-        Values to factorize or encode.
+        Values to encode.
     uniques : ndarray
-        The uniques values in `values`. If the dtype is not object, then
-        `uniques` need to be sorted.
+        The unique values in `values`. If the dtype is not object, then
+        `uniques` needs to be sorted.
     check_unknown : bool, default True
         If True, check for values in `values` that are not in `unique`
         and raise an error. This is ignored for object dtype, and treated as
         True in this case. This parameter is useful for
-        _BaseEncoder._transform() to avoid calling _encode_check_unknown()
+        _BaseEncoder._transform() to avoid calling _check_unknown()
         twice.
 
     Returns
@@ -86,14 +86,14 @@ def _encode(values, *, uniques, check_unknown=True):
             raise ValueError(f"y contains previously unseen labels: {str(e)}")
     else:
         if check_unknown:
-            diff = _encode_check_unknown(values, uniques)
+            diff = _check_unknown(values, uniques)
             if diff:
                 raise ValueError(f"y contains previously unseen labels: "
                                  f"{str(diff)}")
         return np.searchsorted(uniques, values)
 
 
-def _encode_check_unknown(values, uniques, return_mask=False):
+def _check_unknown(values, known_values, return_mask=False):
     """
     Helper function to check for unknowns in values to be encoded.
 
@@ -104,8 +104,8 @@ def _encode_check_unknown(values, uniques, return_mask=False):
     ----------
     values : array
         Values to check for unknowns.
-    uniques : array
-        Allowed uniques values.
+    known_values : array
+        Known values. Must be unique.
     return_mask : bool, default False
         If True, return a mask of the same shape as `values` indicating
         the valid values.
@@ -113,14 +113,13 @@ def _encode_check_unknown(values, uniques, return_mask=False):
     Returns
     -------
     diff : list
-        The unique values present in `values` and not in `uniques` (the
-        unknown values).
+        The unique values present in `values` and not in `know_values`.
     valid_mask : boolean array
         Additionally returned if ``return_mask=True``.
 
     """
     if values.dtype == object:
-        uniques_set = set(uniques)
+        uniques_set = set(known_values)
         diff = list(set(values) - uniques_set)
         if return_mask:
             if diff:
@@ -132,10 +131,11 @@ def _encode_check_unknown(values, uniques, return_mask=False):
             return diff
     else:
         unique_values = np.unique(values)
-        diff = list(np.setdiff1d(unique_values, uniques, assume_unique=True))
+        diff = list(np.setdiff1d(unique_values, known_values,
+                                 assume_unique=True))
         if return_mask:
             if diff:
-                valid_mask = np.in1d(values, uniques)
+                valid_mask = np.in1d(values, known_values)
             else:
                 valid_mask = np.ones(len(values), dtype=bool)
             return diff, valid_mask
