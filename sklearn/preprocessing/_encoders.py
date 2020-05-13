@@ -281,10 +281,10 @@ class OneHotEncoder(_BaseEncoder):
         When this parameter is set to 'auto' and an unknown category is
         encountered in transform:
 
-            1. If there was no infrequent category during training, the
-            resulting one-hot encoded columns for this feature will be all
-            zeros. In the inverse transform, an unknown category will be
-            denoted as `None`.
+            1. If infrequent category support was not configured or there were
+            no infrequent category during training, the resulting one-hot
+            encoded columns for this feature will be all zeros. In the inverse
+            transform, an unknown category will be denoted as `None`.
 
             2. If there is an infrequent category during training, the unknown
             category will be considered infrequent. In the inverse transform,
@@ -292,13 +292,13 @@ class OneHotEncoder(_BaseEncoder):
             'infrequent' is already a category, 'infrequent_sklearn' will be
             used instead.
 
-        .. versionadded:: 0.23
+        .. versionadded:: 0.24
             `'auto'` was added to automatically handle unknown categories
             and infrequent categories.
 
-        .. deprecated:: 0.23
+        .. deprecated:: 0.24
             `'ignore'` is deprecated in favor of `'auto'`. This option will be
-            removed in 0.25.
+            removed in 0.26.
 
     min_frequency : int or float, default=1
         Specifies the categories to be considered infrequent.
@@ -309,15 +309,16 @@ class OneHotEncoder(_BaseEncoder):
             2. If float, categories with a smaller cardinality than
             `min_frequency * n_samples`  will be considered infrequent.
 
-        .. versionadded:: 0.23
+        .. versionadded:: 0.24
 
     max_categories : int, default=None
         Specifies an upper limit to the number of output features for each
-        input feature when considering infrequent categories. `max_categories`
-        includes the feature that combines infrequent categories. If `None`
-        there is no limit to the number of output features.
+        input feature when considering infrequent categories. Note that
+        `max_categories` includes the category representing the infrequent
+        categories along with the frequent categories. If `None`, there is no
+        limit to the number of output features.
 
-        .. versionadded:: 0.23
+        .. versionadded:: 0.24
 
     Attributes
     ----------

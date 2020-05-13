@@ -7,7 +7,6 @@
 # License: BSD 3 clause
 
 from collections import defaultdict
-from collections import Counter
 import itertools
 import array
 import warnings
