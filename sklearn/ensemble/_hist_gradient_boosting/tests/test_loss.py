@@ -2,6 +2,7 @@ import numpy as np
 from numpy.testing import assert_almost_equal
 from numpy.testing import assert_allclose
 from scipy.optimize import newton
+from scipy.special import logit
 from sklearn.utils import assert_all_finite
 from sklearn.utils.fixes import sp_version
 import pytest
@@ -49,10 +50,12 @@ def get_derivatives_helper(loss):
     ('least_squares', -2., 42),
     ('least_squares', 117., 1.05),
     ('least_squares', 0., 0.),
-    # I don't understand why but y_true == 0 fails :/
-    # ('binary_crossentropy', 0.3, 0),
-    ('binary_crossentropy', -12, 1),
-    ('binary_crossentropy', 30, 1),
+    # The argmin of binary_crossentropy for y_true=0 and y_true=1 is resp. -inf
+    # and +inf due to logit, cf. "complete separation". Therefore, we use
+    # 0 < y_true < 1.
+    ('binary_crossentropy', 0.3, 0.1),
+    ('binary_crossentropy', -12, 0.2),
+    ('binary_crossentropy', 30, 0.9),
     ('poisson', 12., 1.),
     ('poisson', 0., 2.),
     ('poisson', -22., 10.),
@@ -61,29 +64,41 @@ def get_derivatives_helper(loss):
                     reason='bug in scipy 1.2.0, see scipy issue #9608')
 @skip_if_32bit
 def test_derivatives(loss, x0, y_true):
-    # Check that gradients are zero when the loss is minimized on 1D array
-    # using Halley's method with the first and second order derivatives
-    # computed by the Loss instance.
+    # Check that gradients are zero when the loss is minimized on a single
+    # value/sample using Halley's method with the first and second order
+    # derivatives computed by the Loss instance.
+    # Note that methods of Loss instances operate on arrays while the newton
+    # root finder expects a scalar or a one-element array for this purpose.
 
     loss = _LOSSES[loss](sample_weight=None)
     y_true = np.array([y_true], dtype=Y_DTYPE)
     x0 = np.array([x0], dtype=Y_DTYPE).reshape(1, 1)
     get_gradients, get_hessians = get_derivatives_helper(loss)
 
-    def func(x):
-        return loss.pointwise_loss(y_true, x)
+    def func(x: np.ndarray) -> np.ndarray:
+        if isinstance(loss, _LOSSES['binary_crossentropy']):
+            # Subtract a constant term such that the binary cross entropy
+            # has its minimum at zero, which is needed for the newton method.
+            actual_min = loss.pointwise_loss(y_true, logit(y_true))
+            return loss.pointwise_loss(y_true, x) - actual_min
+        else:
+            return loss.pointwise_loss(y_true, x)
 
-    def fprime(x):
+    def fprime(x: np.ndarray) -> np.ndarray:
         return get_gradients(y_true, x)
 
-    def fprime2(x):
+    def fprime2(x: np.ndarray) -> np.ndarray:
         return get_hessians(y_true, x)
 
     optimum = newton(func, x0=x0, fprime=fprime, fprime2=fprime2,
                      maxiter=70, tol=2e-8)
-    assert np.allclose(loss.inverse_link_function(optimum), y_true)
-    assert np.allclose(loss.pointwise_loss(y_true, optimum), 0)
-    assert np.allclose(get_gradients(y_true, optimum), 0, atol=1e-7)
+
+    # Need to ravel arrays because assert_allclose requires matching dimensions
+    y_true = y_true.ravel()
+    optimum = optimum.ravel()
+    assert_allclose(loss.inverse_link_function(optimum), y_true)
+    assert_allclose(func(optimum), 0, atol=1e-14)
+    assert_allclose(get_gradients(y_true, optimum), 0, atol=1e-7)
 
 
 @pytest.mark.parametrize('loss, n_classes, prediction_dim', [
