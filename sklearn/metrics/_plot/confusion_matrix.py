@@ -198,6 +198,8 @@ def plot_confusion_matrix(estimator, X, y_true, *, labels=None,
     colorbar : matplotlib colorbar, default=True
         If `False` colorbar to the plot is not added.
 
+        .. versionadded:: 0.24
+
     Returns
     -------
     display : :class:`~sklearn.metrics.ConfusionMatrixDisplay`
