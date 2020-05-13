@@ -2,6 +2,7 @@ import re
 from pprint import PrettyPrinter
 
 import numpy as np
+import pytest
 
 from sklearn.utils._pprint import _EstimatorPrettyPrinter
 from sklearn.linear_model import LogisticRegressionCV
@@ -538,3 +539,17 @@ def test_builtin_prettyprinter():
     # Used to be a bug
 
     PrettyPrinter().pprint(LogisticRegression())
+
+def test_kwargs_in_init():
+    # Make sure the changed_only=True mode is OK when an argument is passed as
+    # kwargs.
+    # Non-regression test for TODO
+
+    pytest.importorskip("lightgbm")
+    from lightgbm import LGBMClassifier  # noqa
+
+    # metric is part of **kwargs
+    est = LGBMClassifier(metric='auc', max_depth=10)
+
+    expected = "LGBMClassifier(max_depth=10, metric='auc')"
+    assert expected == est.__repr__()
