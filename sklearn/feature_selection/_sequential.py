@@ -152,19 +152,17 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
         # the current mask corresponds to the set of features:
         # - that we have already *selected* if we do forward selection
         # - that we have already *excluded* if we do backward selection
-        current_mask = set()
+        current_mask = np.zeros(shape=X.shape[1], dtype=bool)
         n_iterations = (self.n_features_to_select_ if self.forward
                         else X.shape[1] - self.n_features_to_select_)
         for _ in range(n_iterations):
             new_feature_idx = self._get_best_new_feature(cloned_estimator, X,
                                                          y, current_mask)
-            current_mask.add(new_feature_idx)
+            current_mask[new_feature_idx] = True
 
-        # transform the mask into a proper boolean mask of selected features
-        self.support_ = np.zeros(X.shape[1], dtype=bool)
-        self.support_[list(current_mask)] = True
         if not self.forward:
-            self.support_ = ~self.support_
+            current_mask = ~current_mask
+        self.support_ = current_mask
 
         return self
 
@@ -172,19 +170,19 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
         # Return the best new feature to add to the current_mask, i.e. return
         # the best new feature to add (resp. remove) when doing forward
         # selection (resp. backward selection)
-        all_features = set(range(X.shape[1]))
-        candidate_feature_indices = all_features - current_mask
+        candidate_feature_indices = np.flatnonzero(~current_mask)
         scores = {}
         for feature_idx in candidate_feature_indices:
-            candidate_mask = current_mask | {feature_idx}
+            candidate_mask = current_mask.copy()
+            candidate_mask[feature_idx] = True
             if not self.forward:
                 # For backward selection, we transform candidate_mask into its
                 # complement, i.e. we change its semantic from "features to
                 # remove" to "features to keep" because _safe_indexing only
                 # understands the latter
                 # TODO: maybe remove when _safe_indexing supports "complement"
-                candidate_mask = all_features - candidate_mask
-            X_new = _safe_indexing(X, list(candidate_mask), axis=1)
+                candidate_mask = ~candidate_mask
+            X_new = _safe_indexing(X, candidate_mask, axis=1)
             scores[feature_idx] = cross_val_score(
                 estimator, X_new, y, cv=self.cv, scoring=self.scoring,
                 n_jobs=self.n_jobs).mean()
