@@ -71,8 +71,8 @@ class ConfusionMatrixDisplay:
             Axes object to plot on. If `None`, a new figure and axes is
             created.
 
-        colorbar : matplotlib colorbar, default=True
-            If `False` colorbar to the plot is not added.
+        colorbar : bool, default=True
+            Whether to add a colorbar to the plot.
 
         Returns
         -------
@@ -195,8 +195,8 @@ def plot_confusion_matrix(estimator, X, y_true, *, labels=None,
         Axes object to plot on. If `None`, a new figure and axes is
         created.
 
-    colorbar : matplotlib colorbar, default=True
-        If `False` colorbar to the plot is not added.
+    colorbar : bool, default=True
+        Whether to add a colorbar to the plot.
 
         .. versionadded:: 0.24
 
