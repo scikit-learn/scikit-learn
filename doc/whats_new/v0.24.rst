@@ -51,6 +51,24 @@ Changelog
   which implements forward and backward sequential feature selection.
   :pr:`6545` by `Sebastian Raschka`_ and :pr:`17159` by `Nicolas Hug`_.
 
+:mod:`sklearn.impute`
+.....................
+
+- |Fix| replace the default values in :class:`impute.IterativeImputer`
+  of `min_value` and `max_value` parameters to `-np.inf` and `np.inf`,
+  respectively instead of `None`. However, the behaviour of the class does not
+  change since `None` was defaulting to these values already.
+  :pr:`16493` by :user:`Darshan N <DarshanGowda0>`.
+
+:mod:`sklearn.model_selection`
+..............................
+
+- |Enhancement| :class:`model_selection.TimeSeriesSplit` has two new keyword
+  arguments `test_size` and `gap`. `test_size` allows the out-of-sample
+  time series length to be fixed for all folds. `gap` removes a fixed number of
+  samples between the train and test set on each fold.
+  :pr:`13204` by :user:`Kyle Kosic <kykosic>`.
+
 
 Code and Documentation Contributors
 -----------------------------------
