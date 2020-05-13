@@ -1652,8 +1652,8 @@ def test_robust_scaler_zero_variance_features():
 
 
 def test_robust_scaler_unit_variance():
-    # Check RobustScaler with gaus_adjust=True is equivalent to StandardScaler
-    # on large normal data
+    # Check RobustScaler with unit_variance=True is equivalent to
+    # StandardScaler on large normal data
     rng = np.random.RandomState(0)
     X = rng.randn(100000, 1) * 5 + 2
     robust_scaler = RobustScaler(unit_variance=True)
