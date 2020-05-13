@@ -71,9 +71,9 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
     verbose : int, (default=0)
         Controls verbosity of output.
 
-    importance_getter : str or callable, optional (default='auto')
+    importance_getter : str or callable, default='auto'
         If 'auto', uses the feature importance either through a `coef_`
-        attribute or `feature_importances_` attribute of estimator.
+        or `feature_importances_` attributes of estimator.
 
         Also accepts a string that specifies an attribute name/path
         for extracting feature importance (implemented with `attrgetter`).
@@ -432,8 +432,8 @@ class RFECV(RFE):
         .. versionadded:: 0.18
 
     importance_getter : str or callable, optional (default='auto')
-        If 'auto', uses the feature importance either through a ``coef_``
-        attribute or ``feature_importances_`` attribute of estimator.
+        If 'auto', uses the feature importance either through a `coef_`
+        or `feature_importances_` attributes of estimator.
 
         Also accepts a string that specifies an attribute name/path
         for extracting feature importance (implemented with `attrgetter`).
