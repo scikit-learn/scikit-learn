@@ -23,7 +23,7 @@ Miscellaneous
 .............
 
 - |Fix| Fixed a bug in the `repr` of third-party estimators that use a
-  `**kwords` parameter in their constructor, when `changed_only` is True
+  `**kwargs` parameter in their constructor, when `changed_only` is True
   which is now the default. :pr:`17205` by `Nicolas Hug`_.
 
 .. _changes_0_23:
