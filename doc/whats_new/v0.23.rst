@@ -16,8 +16,15 @@ Changelog
 ......................
 
 - |Fix| Fixed a bug in :class:`cluster.KMeans` where the sample weights
-  provided by the user was modified in place. :pr:`17204` by
+  provided by the user were modified in place. :pr:`17204` by
   :user:`Jeremie du Boisberranger <jeremiedbb>`.
+
+Miscellaneous
+.............
+
+- |Fix| Fixed a bug in the `repr` of third-party estimators that use a
+  `**kwargs` parameter in their constructor, when `changed_only` is True
+  which is now the default. :pr:`17205` by `Nicolas Hug`_.
 
 .. _changes_0_23:
 
