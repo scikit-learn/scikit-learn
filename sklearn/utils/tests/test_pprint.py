@@ -543,7 +543,8 @@ def test_builtin_prettyprinter():
 def test_kwargs_in_init():
     # Make sure the changed_only=True mode is OK when an argument is passed as
     # kwargs.
-    # Non-regression test for TODO
+    # Non-regression test for
+    # https://github.com/scikit-learn/scikit-learn/issues/17206
 
     pytest.importorskip("lightgbm")
     from lightgbm import LGBMClassifier  # noqa
