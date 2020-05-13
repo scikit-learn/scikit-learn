@@ -11,7 +11,7 @@ from scipy import sparse
 from sklearn.feature_selection import RFE, RFECV
 from sklearn.datasets import load_iris, make_friedman1
 from sklearn.metrics import zero_one_loss
-from sklearn.svm import SVC, SVR
+from sklearn.svm import SVC, SVR, LinearSVR
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import cross_val_score
@@ -384,7 +384,7 @@ def test_rfe_wrapped_estimator(importance_getter, selector):
     # Non-regression test for https://github.com/scikit-learn/scikit-learn/issues/15312
     n_features = 10
     X, y = make_friedman1(n_samples=50, n_features=n_features, random_state=0)
-    estimator = SVR(kernel='linear')
+    estimator = LinearSVR()
 
     log_estimator = TransformedTargetRegressor(regressor=estimator,
                                                func=np.log,
@@ -406,7 +406,7 @@ def test_rfe_wrapped_estimator(importance_getter, selector):
 def test_rfe_importance_getter_validation(importance_getter, err_type,
                                           Selector):
     X, y = make_friedman1(n_samples=50, n_features=10, random_state=42)
-    estimator = SVR(kernel='linear')
+    estimator = LinearSVR()
     log_estimator = TransformedTargetRegressor(
         regressor=estimator, func=np.log, inverse_func=np.exp
     )
