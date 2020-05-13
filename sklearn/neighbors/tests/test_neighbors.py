@@ -1674,3 +1674,18 @@ def test_pipeline_with_nearest_neighbors_transformer():
         y_pred_chain = reg_chain.fit(X, y).predict(X2)
         y_pred_compact = reg_compact.fit(X, y).predict(X2)
         assert_array_almost_equal(y_pred_chain, y_pred_compact)
+
+
+@pytest.mark.parametrize('X, metric, metric_params, expected_algo', [
+    (np.random.randn(10, 20), 'euclidean', None, 'brute'),
+    (np.random.randint(10, size=(5, 5)), 'precomputed', None, 'brute'),
+    (np.random.randn(10, 5), 'euclidean', None, 'kd_tree'),
+    (np.random.randn(10, 5), 'seuclidean', {'V': [2]*5}, 'ball_tree'),
+    (np.random.randn(10, 5), 'correlation', None, 'brute'),
+])
+def test_auto_algorithm(X, metric, metric_params, expected_algo):
+    model = neighbors.NearestNeighbors(algorithm='auto', metric=metric,
+                                       metric_params=metric_params)
+    model.fit(X)
+
+    assert model._fit_method == expected_algo
