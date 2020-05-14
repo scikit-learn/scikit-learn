@@ -6,7 +6,6 @@ import pickle
 import re
 from copy import deepcopy
 from functools import partial
-from itertools import chain
 from inspect import signature
 
 import numpy as np
@@ -399,9 +398,11 @@ def parametrize_with_checks(estimators):
                "Please pass an instance instead.")
         raise TypeError(msg)
 
-    checks_generator = chain.from_iterable(
-        check_estimator(estimator, generate_only=True)
-        for estimator in estimators)
+    names = (type(estimator).__name__ for estimator in estimators)
+
+    checks_generator = ((estimator, partial(check, name))
+                        for name, estimator in zip(names, estimators)
+                        for check in _yield_all_checks(name, estimator))
 
     checks_with_marks = (
         _mark_xfail_checks(estimator, check, pytest)
