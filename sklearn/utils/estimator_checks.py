@@ -485,8 +485,8 @@ def check_estimator(Estimator, generate_only=False):
         try:
             check(estimator)
         except SkipTest as exception:
-            # SkipTest is thrown we pandas can't be imported, or by checks that
-            # are in the xfail_checks tag
+            # SkipTest is thrown when pandas can't be imported, or by checks
+            # that are in the xfail_checks tag
             warnings.warn(str(exception), SkipTestWarning)
 
 
