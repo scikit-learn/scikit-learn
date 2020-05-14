@@ -126,7 +126,7 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
         return Xt
 
 
-def _get_feature_importances(estimator, getter, ranking_func="square",
+def _get_feature_importances(estimator, getter, transform_func=None,
                              norm_order=1):
     """Retrieve or aggregate feature importances from estimator"""
     if isinstance(getter, str):
@@ -151,18 +151,20 @@ def _get_feature_importances(estimator, getter, ranking_func="square",
         )
     importances = getter(estimator)
 
-    if ranking_func == "norm":
+    if transform_func == "norm":
         if importances.ndim == 1:
             importances = np.abs(importances)
         else:
             importances = np.linalg.norm(importances, axis=0,
                                          ord=norm_order)
-    elif ranking_func == "square":
-        if importances.ndim > 1:
-            importances = safe_sqr(importances).sum(axis=0)
-        else:
+    elif transform_func == "square":
+        if importances.ndim == 1:
             importances = safe_sqr(importances)
-    else:
-        raise ValueError("XXXX")
+        else:
+            importances = safe_sqr(importances).sum(axis=0)
+    elif not transform_func:
+        raise ValueError("Valid values for `transform_func` are " +
+                         "'norm' and 'square'. Those two " +
+                         "transformation are only supported now")
 
     return importances

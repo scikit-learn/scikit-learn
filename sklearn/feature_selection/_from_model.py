@@ -174,7 +174,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
                              ' estimator to the constructor.')
         scores = _get_feature_importances(estimator,
                                           self.importance_getter,
-                                          self.norm_order)
+                                          'norm', self.norm_order)
         threshold = _calculate_threshold(estimator, scores, self.threshold)
         if self.max_features is not None:
             mask = np.zeros_like(scores, dtype=bool)
@@ -225,7 +225,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
     def threshold_(self):
         scores = _get_feature_importances(self.estimator_,
                                           self.importance_getter,
-                                          self.norm_order)
+                                          'norm', self.norm_order)
         return _calculate_threshold(self.estimator, scores, self.threshold)
 
     @if_delegate_has_method('estimator')
