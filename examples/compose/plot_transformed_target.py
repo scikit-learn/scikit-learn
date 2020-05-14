@@ -167,12 +167,11 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=1)
 ###############################################################################
 # The effect of the transformer is weaker than on the synthetic data. However,
 # the transformation results in an increase in :math:`R^2` and large decrease
-# of the
-# MAE. The residual plot (predicted target - true target vs predicted target)
-# without target transformation takes on a curved, 'reverse smile' shape due to
-# residual values that vary depending on the value of predicted target.
-# With target transformation, the shape is more linear indicating better model
-# fit.
+# of the MAE. The residual plot (predicted target - true target vs predicted
+# target) without target transformation takes on a curved, 'reverse smile'
+# shape due to residual values that vary depending on the value of predicted
+# target. With target transformation, the shape is more linear indicating
+# better model fit.
 
 f, (ax0, ax1) = plt.subplots(2, 2, sharey='row', figsize=(6.5, 8))
 
