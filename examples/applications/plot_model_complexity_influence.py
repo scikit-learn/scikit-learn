@@ -20,7 +20,7 @@ We will model the complexity influence on three different estimators:
       which implements stochastic gradient descent learning;
 
     - :class:`~sklearn.svm.NuSVR` (for regression data) which implements
-      Nu support vector regression
+      Nu support vector regression;
 
     - :class:`~sklearn.ensemble.GradientBoostingRegressor` (for regression
       data) which builds an additive
