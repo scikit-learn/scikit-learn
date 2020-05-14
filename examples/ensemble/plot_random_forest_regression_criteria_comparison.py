@@ -4,13 +4,14 @@ Comparing Different Split Criteria for Random Forest Regression on Toy Datasets
 ===============================================================================
 An example to compare the different split criteria available for
 :class:`sklearn.ensemble.RandomForestRegressor`.
-Metrics used to evaluate these splitters include runtime and Mean Squared Error (MSE), a
-measure of distance between the true target (`y_true`) and the predicted output
-(`y_pred`).  
+Metrics used to evaluate these splitters include runtime and
+Mean Squared Error (MSE), a measure of distance between the true
+target (`y_true`) and the predicted output (`y_pred`).
+
 For visual examples of these datasets, see
 :ref:`sphx_glr_auto_examples_datasets_plot_nonlinear_regression_datasets.py`.
 """
- 
+
 # Authors: Vivek Gopalakrishnan <vgopala4@jhu.edu>
 #          Morgan Sanchez       <msanch35@jhu.edu>
 # License: BSD 3 clause
@@ -39,10 +40,11 @@ print(__doc__)
 ###############################################################################
 # Initialize Random State, Noise, and Simulation Dictionary
 # ----------------------------------------------------------
-# 
-# For each simulation, we will set the appropriate data generation function and 
-# noise amount. Note that Multiplicative and Independence data will be noiseless.
-# Please see :ref:`sphx_glr_auto_examples_datasets_plot_nonlinear_regression_datasets.py`
+#
+# For each simulation, we will set the appropriate data generation function and
+# noise amount. Note that Multiplicative and Independence data will be
+# noiseless. Please see
+# :ref:`sphx_glr_auto_examples_datasets_plot_nonlinear_regression_datasets.py`
 # for more information on the datasets used in this example.
 
 random_state = 0
@@ -59,7 +61,7 @@ simulations = {
 # Define a Data Preparation Function
 # -----------------------------------
 #
-# This function generates train and test data for all trials. 
+# This function generates train and test data for all trials.
 #
 # First, we obtain an array of seeds for each trial.
 #
@@ -68,6 +70,7 @@ simulations = {
 # using that trial's random seed in addition to a single X_test and y_test
 # that is consistent across all trials. To obtain this data we use
 # the simulation name's associated make_* function from the above section.
+
 
 def _prep_data(sim_dict, sim_name, max_n_samples, n_dimensions, n_trials):
     """Generate train and test data for all trials."""
@@ -105,8 +108,10 @@ def _prep_data(sim_dict, sim_name, max_n_samples, n_dimensions, n_trials):
 # Define a Function to Train a Forest
 # -----------------------------------
 #
-# Given X and y (training data) and a split criterion, this function fits a 
-# random forest regressor with 500 trees, max_features of sqrt and max_depth of 5.
+# Given X and y (training data) and a split criterion, this function fits a
+# random forest regressor with 500 trees, max_features of sqrt and
+# max_depth of 5.
+
 
 def _train_forest(X, y, criterion):
     """Fit RandomForestRegressor with selected parameters & given criterion."""
@@ -120,9 +125,11 @@ def _train_forest(X, y, criterion):
 # Define a Function to Test a Forest
 # ----------------------------------
 #
-# Given X_test, y_test (which are the true predictions), and regr (the random forest
-# regressor), this function returns the Mean Squared Error. In other words, it assesses
+# Given X_test, y_test (which are the true predictions), and regr
+# (the random forest regressor), this function returns the Mean
+# Squared Error. In other words, it assesses
 # the performance of the forest.
+
 
 def _test_forest(X, y, regr):
     """Calculate the accuracy of the model on a heldout set."""
@@ -133,9 +140,10 @@ def _test_forest(X, y, regr):
 # Define a Function That Performs a Single Trial
 # ----------------------------------------------
 #
-# For a given simulation name, trial, number of samples, and criterion, 
+# For a given simulation name, trial, number of samples, and criterion,
 # this function trains and evaluates a random forest regressor based on MSE
 # and runtime.
+
 
 def main(sim_name, sim_data, n_samples, criterion, n_dimensions, n_iter):
     """Measure the performance of RandomForest under simulation conditions.
@@ -207,11 +215,11 @@ def main(sim_name, sim_data, n_samples, criterion, n_dimensions, n_iter):
 # ---------------------------------
 #
 # For this experiment, we will be training a random forest for each simulation
-# type, sample size, and split criterion 8 times. 
+# type, sample size, and split criterion 8 times.
 #
-# The targets will be 10 dimensional. In other words, there will be 10 predictors
-# because the aim of this experiment is to provide a nonlinear multioutput regression
-# example.
+# The targets will be 10 dimensional. In other words, there will be 10
+# predictors because the aim of this experiment is to provide a nonlinear
+# multioutput regression example.
 
 print("Constructing parameter space...")
 
@@ -232,7 +240,7 @@ params = product(simulation_names, sample_sizes, criteria, range(n_repeats))
 # Construct Validation Datasets
 # ------------------------------
 #
-# Here, we generate X_test and y_test. For each simulation name, we generate 
+# Here, we generate X_test and y_test. For each simulation name, we generate
 # 1000 samples each with 10 targets.
 
 print("Constructing validation datasets...")
@@ -255,16 +263,18 @@ for simulation_name, (sim, noise) in simulations.items():
 ###############################################################################
 # Run the Experiment
 # ------------------
-# For each simulation type (Logarithmic, Sine, Square, Multiplicative, Independence)
-# 
+# For each simulation type (Logarithmic, Sine, Square, Multiplicative,
+# Independence)
+#
 # - And For each split criterion (mse, mae, friedman mse)
-# 
+#
 #   - Generate 8 noisy training sets (10 dimensions, 50 samples)
-# 
+#
 #   - Generate 1 noisy test set (10 dimensions, 1000 samples)
-# 
-#   - Train and evaluate using mse and runtime for all 8 training sets with random 
-#   forests (500 trees) varying number of samples ( `np.arange(5, 51, 3)` )
+#
+#   - Train and evaluate using mse and runtime for all 8 training sets with
+#     random forests (500 trees) varying number of samples
+#     ( `np.arange(5, 51, 3)` )
 
 print("Running simulations...")
 
@@ -290,9 +300,9 @@ df = pd.DataFrame(data, columns=columns)
 # Plot the Results
 # ----------------
 #
-# The first plot shows the MSE comparison across split criteria. 
+# The first plot shows the MSE comparison across split criteria.
 # We use this plot to determine how increasing the number of training
-# samples affects the prediction error. 
+# samples affects the prediction error.
 
 plt.rcParams.update({'font.size': 15})
 sns.relplot(
@@ -308,8 +318,8 @@ plt.tight_layout()
 plt.show()
 
 ###############################################################################
-# The second plot shows how increasing the number of training samples affects the 
-# runtime, or more specifically, the process time. 
+# The second plot shows how increasing the number of training samples
+# affects the runtime, or more specifically, the process time.
 
 plt.rcParams.update({'font.size': 16})
 sns.relplot(
@@ -328,17 +338,19 @@ plt.show()
 # Analyze the Plots
 # ------------------
 #
-# As can be seen in the first plot, MAE seems to slightly outperform MSE and 
+# As can be seen in the first plot, MAE seems to slightly outperform MSE and
 # Friedman_MSE split criteria in terms of prediction error for almost all
-# simulation types. This slight difference in performance, however, is only on average
-# and in some cases, the other split criteria outperform it.
+# simulation types. This slight difference in performance, however,
+# is only on average and in some cases, the other split criteria outperform
+# it.
 #
-# The second plot clearly shows that the runtime greatly increases with number of 
-# samples for the MAE split criterion however. MSE and Friedman_MSE, on the other hand,
-# are not as affected by sample size. In other words, if you care at all about 
-# computation time, you may want to choose MSE or Friedman_MSE over MAE because 
-# the prediction error decrease that MAE may (or may not) give you most likely 
-# won't outweigh the computational cost.
+# The second plot clearly shows that the runtime greatly increases with
+# number of samples for the MAE split criterion however. MSE and
+# Friedman_MSE, on the other hand, are not as affected by sample size.
+# In other words, if you care at all about computation time, you may want
+# to choose MSE or Friedman_MSE over MAE because the prediction error
+# decrease that MAE may (or may not) give you most likely won't outweigh
+# the computational cost.
 #
 # ---------
 # Takeaways
@@ -346,11 +358,12 @@ plt.show()
 #
 # For the most part, if your data resembles these nonlinear types, you may
 # want to consider using Friedman_MSE or MSE for your split criterion because
-# the performance benefits may not outweight the computational cost. Specifically,
-# for independence or square data, the choice is more clear since the average MAE
-# mean squared error is not better than MSE and Friedman_MSE. For multiplicative 
-# data, however, the performance enhancement may be enough to sacrifice the resources
-# for, but ultimately, that choice is up to you.
+# the performance benefits may not outweight the computational cost.
+# Specifically, for independence or square data, the choice is more clear
+# since the average MAE mean squared error is not better than MSE and
+# Friedman_MSE. For multiplicative data, however, the performance enhancement
+# may be enough to sacrifice the resources for, but ultimately, that choice
+# is up to you.
 #
-# This example provides a simple method for comparing split criteria and ultimately
-# choosing the one that best fits your needs.
+# This example provides a simple method for comparing split criteria and
+# ultimately choosing the one that best fits your needs.
