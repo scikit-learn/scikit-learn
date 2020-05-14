@@ -1130,15 +1130,17 @@ class RobustScaler(TransformerMixin, BaseEstimator):
 
         .. versionadded:: 0.18
 
-    unit_variance : boolean, False by default
-        If True, scale data so that normally distributed features have a
-        variance of 1.
-
     copy : boolean, optional, default is True
         If False, try to avoid a copy and do inplace scaling instead.
         This is not guaranteed to always work inplace; e.g. if the data is
         not a NumPy array or scipy.sparse CSR matrix, a copy may still be
         returned.
+
+    unit_variance : boolean, False by default
+        If True, scale data so that normally distributed features have a
+        variance of 1.
+
+        .. versionadded:: 0.24
 
     Attributes
     ----------
@@ -1240,10 +1242,8 @@ class RobustScaler(TransformerMixin, BaseEstimator):
             self.scale_ = quantiles[1] - quantiles[0]
             self.scale_ = _handle_zeros_in_scale(self.scale_, copy=False)
             if self.unit_variance:
-                # Create scipy.stats.norm object
-                output_distribution = getattr(stats, 'norm')
-                self.adjust_ = output_distribution.ppf(q_max / 100.0) - \
-                    output_distribution.ppf(q_min / 100.0)
+                self.adjust_ = stats.norm.ppf(q_max / 100.0) - \
+                    stats.norm.ppf(q_min / 100.0)
                 self.scale_ = self.scale_ / self.adjust_
         else:
             self.scale_ = None
@@ -1333,14 +1333,16 @@ def robust_scale(X, *, axis=0, with_centering=True, with_scaling=True,
 
         .. versionadded:: 0.18
 
-    unit_variance : boolean, False by default
-        If True, scale data so that normally distributed features have a
-        variance of 1.
-
     copy : boolean, optional, default is True
         set to False to perform inplace row normalization and avoid a
         copy (if the input is already a numpy array or a scipy.sparse
         CSR matrix and if axis is 1).
+
+    unit_variance : boolean, False by default
+        If True, scale data so that normally distributed features have a
+        variance of 1.
+
+        .. versionadded:: 0.24
 
     Notes
     -----
