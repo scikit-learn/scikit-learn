@@ -209,7 +209,7 @@ def plot_influence(conf, mse_values, prediction_times, complexities):
 
     # first axes (prediction error)
     ax1 = fig.add_subplot(111)
-    line1 = ax1.plot(complexities, mse_values, 'b-',)[0]
+    line1 = ax1.plot(complexities, mse_values, c='tab:blue', ls='-')[0]
     ax1.set_xlabel('Model Complexity (%s)' % conf['complexity_label'])
     y1_label = conf['prediction_performance_label']
     ax1.set_ylabel(y1_label)
@@ -220,7 +220,7 @@ def plot_influence(conf, mse_values, prediction_times, complexities):
 
     # second axes (latency)
     ax2 = fig.add_subplot(111, sharex=ax1, frameon=False)
-    line2 = ax2.plot(complexities, prediction_times, 'r-')[0]
+    line2 = ax2.plot(complexities, prediction_times, c='tab:orange', ls='-')[0]
     ax2.yaxis.tick_right()
     ax2.yaxis.set_label_position("right")
     y2_label = "Time (s)"
