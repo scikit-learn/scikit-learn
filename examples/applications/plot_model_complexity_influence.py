@@ -62,11 +62,12 @@ np.random.seed(0)
 #
 # First we load both datasets.
 #
-# Note 1: We are using :func:`~sklearn.datasets.fetch_20newsgroups_vectorized`
-#  to download 20 newsgroups dataset. It returns ready-to-use features.
+# .. note:: We are using
+#    :func:`~sklearn.datasets.fetch_20newsgroups_vectorized` to download 20
+#    newsgroups dataset. It returns ready-to-use features.
 #
-# Note 2: ``X`` of the 20 newsgropus dataset is a sparse matrix while ``X`` of
-# diabetes dataset is a numpy array.
+# .. note:: ``X`` of the 20 newsgroups dataset is a sparse matrix while ``X``
+#    of diabetes dataset is a numpy array.
 #
 
 
@@ -105,7 +106,7 @@ classification_data = generate_data('classification')
 
 def benchmark_influence(conf):
     """
-    Benchmark influence of :changing_param: on both MSE and latency.
+    Benchmark influence of `changing_param` on both MSE and latency.
     """
     prediction_times = []
     prediction_powers = []
@@ -135,7 +136,7 @@ def benchmark_influence(conf):
 
 ##############################################################################
 # Choose parameters
-# -----------------------------
+# -----------------
 #
 # We choose the parameters for each of our estimators by making
 # a dictionary with all the necessary values.
@@ -193,11 +194,10 @@ configurations = [
 ##############################################################################
 # Run the code and plot the results
 # ---------------------------------
-# We are ready to run all our functions by looping though the configurations we
+# We are ready to run all our functions by looping through the configurations we
 # set previously and then plotting the influence of varying parameters on the
 # complexity and the latency of each model.
 #
-
 
 def plot_influence(conf, mse_values, prediction_times, complexities):
     """
