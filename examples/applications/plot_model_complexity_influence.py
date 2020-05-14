@@ -36,6 +36,7 @@ print(__doc__)
 
 # Authors: Eustache Diemert <eustache@diemert.fr>
 #          Maria Telenczuk <https://github.com/maikia>
+#          Guillaume Lemaitre <g.lemaitre58@gmail.com>
 # License: BSD 3 clause
 
 import time
@@ -192,12 +193,21 @@ configurations = [
 ##############################################################################
 # Run the code and plot the results
 # ---------------------------------
+#
 # We defined all the functions required to run our benchmark. Now, we will loop
 # over the different configurations that we defined previously. Subsequently,
-# we will analyze the effects of the parameters on the model complexity and
-# latency.
-# The plot shows two y-axis, one for the prediction error (left) and one for
-# the latency (right)
+# we can analyze the plots obtained from the benchmark:
+# Relaxing the `L1` penalty in the SGD classifier reduces the prediction error
+# but leads to an increase in the training time.
+# We can draw a similar analysis regarding the training time which increases
+# with the number of support vectors with a Nu-SVR. However, we observed that
+# there is an optimal number of support vectors which reduces the prediction
+# error. Indeed, too few support vectors lead to an under-fitted model while
+# too many support vectors lead to an over-fitted model.
+# The exact same conclusion can be drawn for the gradient-boosting model. The
+# only the difference with the Nu-SVR is that having too many trees in the
+# ensemble is not as detrimental.
+#
 
 def plot_influence(conf, mse_values, prediction_times, complexities):
     """
@@ -242,3 +252,17 @@ for conf in configurations:
     plot_influence(conf, prediction_performances, prediction_times,
                    complexities)
 plt.show()
+
+
+##############################################################################
+# Conclusion
+# ----------
+#
+# As a conclusion, we can deduce the following insights:
+#
+# * a model which is more complex (or expressive) will require a larger
+#   training time;
+# * a more complex model does not guarantee to reduce the prediction error.
+#
+# These aspects are related to model generalization and avoiding model
+# under-fitting or over-fitting.
