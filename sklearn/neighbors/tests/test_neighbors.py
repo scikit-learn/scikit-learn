@@ -1677,15 +1677,19 @@ def test_pipeline_with_nearest_neighbors_transformer():
 
 
 @pytest.mark.parametrize('X, metric, metric_params, expected_algo', [
+    (np.random.randint(10, size=(10, 10)), 'precomputed', None, 'brute'),
     (np.random.randn(10, 20), 'euclidean', None, 'brute'),
-    (np.random.randint(10, size=(5, 5)), 'precomputed', None, 'brute'),
+    (np.random.randn(8, 5), 'euclidean', None, 'brute'),
     (np.random.randn(10, 5), 'euclidean', None, 'kd_tree'),
     (np.random.randn(10, 5), 'seuclidean', {'V': [2]*5}, 'ball_tree'),
     (np.random.randn(10, 5), 'correlation', None, 'brute'),
 ])
 def test_auto_algorithm(X, metric, metric_params, expected_algo):
-    model = neighbors.NearestNeighbors(algorithm='auto', metric=metric,
-                                       metric_params=metric_params)
+    model = neighbors.NearestNeighbors(
+        n_neighbors=4,
+        algorithm='auto',
+        metric=metric,
+        metric_params=metric_params
+    )
     model.fit(X)
-
     assert model._fit_method == expected_algo
