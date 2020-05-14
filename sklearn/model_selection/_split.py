@@ -2166,14 +2166,6 @@ def train_test_split(*arrays,
     n_arrays = len(arrays)
     if n_arrays == 0:
         raise ValueError("At least one array required as input")
-    test_size = options.pop('test_size', None)
-    train_size = options.pop('train_size', None)
-    random_state = options.pop('random_state', None)
-    stratify = options.pop('stratify', None)
-    shuffle = options.pop('shuffle', True)
-
-    if options:
-        raise TypeError("Invalid parameters passed: %s" % str(options))
 
     arrays = indexable(*arrays)
 
