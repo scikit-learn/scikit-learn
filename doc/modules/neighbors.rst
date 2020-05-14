@@ -423,6 +423,7 @@ conditions are verified:
 * :math:`D > 15`
 * :math:`k >= N/2`
 * ``effective_metric_`` isn't in the ``VALID_METRICS`` list for either ``'kd_tree'`` or ``'ball_tree'``
+
 Otherwise, it selects the first out of ``'kd_tree'`` and ``'ball_tree'`` that
 has ``effective_metric_`` in its ``VALID_METRICS`` list. This heuristic is
 based on the following assumptions:
