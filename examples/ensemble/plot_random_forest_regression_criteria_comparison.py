@@ -294,6 +294,7 @@ df = pd.DataFrame(data, columns=columns)
 # We use this plot to determine how increasing the number of training
 # samples affects the prediction error. 
 
+plt.rcParams.update({'font.size': 15})
 sns.relplot(
     x="n_samples",
     y="mse",
@@ -310,6 +311,7 @@ plt.show()
 # The second plot shows how increasing the number of training samples affects the 
 # runtime, or more specifically, the process time. 
 
+plt.rcParams.update({'font.size': 16})
 sns.relplot(
     x="n_samples",
     y="Runtime",
