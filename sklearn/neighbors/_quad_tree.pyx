@@ -29,6 +29,8 @@ cdef extern from "numpy/arrayobject.h":
                                 np.npy_intp* strides,
                                 void* data, int flags, object obj)
 
+# Dummy variable to avoid computing member offsets using a null pointer.
+cdef Cell dummy;
 
 # Repeat struct definition for numpy
 CELL_DTYPE = np.dtype({
@@ -39,18 +41,18 @@ CELL_DTYPE = np.dtype({
                 np.intp, np.intp, (np.float32, 3), (np.float32, 3),
                 (np.float32, 3), (np.float32, 3)],
     'offsets': [
-        <Py_ssize_t> &(<Cell*> NULL).parent,
-        <Py_ssize_t> &(<Cell*> NULL).children,
-        <Py_ssize_t> &(<Cell*> NULL).cell_id,
-        <Py_ssize_t> &(<Cell*> NULL).point_index,
-        <Py_ssize_t> &(<Cell*> NULL).is_leaf,
-        <Py_ssize_t> &(<Cell*> NULL).squared_max_width,
-        <Py_ssize_t> &(<Cell*> NULL).depth,
-        <Py_ssize_t> &(<Cell*> NULL).cumulative_size,
-        <Py_ssize_t> &(<Cell*> NULL).center,
-        <Py_ssize_t> &(<Cell*> NULL).barycenter,
-        <Py_ssize_t> &(<Cell*> NULL).min_bounds,
-        <Py_ssize_t> &(<Cell*> NULL).max_bounds,
+        (<Py_ssize_t>&(dummy.parent) - <Py_ssize_t>&(dummy)),
+        (<Py_ssize_t>&(dummy.children) - <Py_ssize_t>&(dummy)),
+        (<Py_ssize_t>&(dummy.cell_id) - <Py_ssize_t>&(dummy)),
+        (<Py_ssize_t>&(dummy.point_index) - <Py_ssize_t>&(dummy)),
+        (<Py_ssize_t>&(dummy.is_leaf) - <Py_ssize_t>&(dummy)),
+        (<Py_ssize_t>&(dummy.squared_max_width) - <Py_ssize_t>&(dummy)),
+        (<Py_ssize_t>&(dummy.depth) - <Py_ssize_t>&(dummy)),
+        (<Py_ssize_t>&(dummy.cumulative_size) - <Py_ssize_t>&(dummy)),
+        (<Py_ssize_t>&(dummy.center) - <Py_ssize_t>&(dummy)),
+        (<Py_ssize_t>&(dummy.barycenter) - <Py_ssize_t>&(dummy)),
+        (<Py_ssize_t>&(dummy.min_bounds) - <Py_ssize_t>&(dummy)),
+        (<Py_ssize_t>&(dummy.max_bounds) - <Py_ssize_t>&(dummy)),
     ]
 })
 

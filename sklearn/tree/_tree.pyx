@@ -67,6 +67,9 @@ cdef SIZE_t _TREE_LEAF = TREE_LEAF
 cdef SIZE_t _TREE_UNDEFINED = TREE_UNDEFINED
 cdef SIZE_t INITIAL_STACK_SIZE = 10
 
+# Dummy variable to avoid computing member offsets using a null pointer.
+cdef Node dummy;
+
 # Repeat struct definition for numpy
 NODE_DTYPE = np.dtype({
     'names': ['left_child', 'right_child', 'feature', 'threshold', 'impurity',
@@ -74,13 +77,13 @@ NODE_DTYPE = np.dtype({
     'formats': [np.intp, np.intp, np.intp, np.float64, np.float64, np.intp,
                 np.float64],
     'offsets': [
-        <Py_ssize_t> &(<Node*> NULL).left_child,
-        <Py_ssize_t> &(<Node*> NULL).right_child,
-        <Py_ssize_t> &(<Node*> NULL).feature,
-        <Py_ssize_t> &(<Node*> NULL).threshold,
-        <Py_ssize_t> &(<Node*> NULL).impurity,
-        <Py_ssize_t> &(<Node*> NULL).n_node_samples,
-        <Py_ssize_t> &(<Node*> NULL).weighted_n_node_samples
+        (<Py_ssize_t>&(dummy.left_child) - <Py_ssize_t>&(dummy)),
+        (<Py_ssize_t>&(dummy.right_child) - <Py_ssize_t>&(dummy)),
+        (<Py_ssize_t>&(dummy.feature) - <Py_ssize_t>&(dummy)),
+        (<Py_ssize_t>&(dummy.threshold) - <Py_ssize_t>&(dummy)),
+        (<Py_ssize_t>&(dummy.impurity) - <Py_ssize_t>&(dummy)),
+        (<Py_ssize_t>&(dummy.n_node_samples) - <Py_ssize_t>&(dummy)),
+        (<Py_ssize_t>&(dummy.weighted_n_node_samples) - <Py_ssize_t>&(dummy))
     ]
 })
 
