@@ -41,8 +41,6 @@ print(__doc__)
 import time
 import numpy as np
 import matplotlib.pyplot as plt
-from mpl_toolkits.axes_grid1.parasite_axes import host_subplot
-from mpl_toolkits.axisartist.axislines import Axes
 
 from sklearn import datasets
 from sklearn.utils import shuffle
@@ -198,13 +196,13 @@ configurations = [
 # over the different configurations that we defined previously. Subsequently,
 # we will analyze the effects of the parameters on the model complexity and
 # latency.
-#
+# The plot shows two y-axis, one for the prediction error (left) and one for
+# the latency (right)
 
 def plot_influence(conf, mse_values, prediction_times, complexities):
     """
     Plot influence of model complexity on both accuracy and latency.
     """
-
 
     fig = plt.figure()
     fig.subplots_adjust(right=0.75)
@@ -236,6 +234,7 @@ def plot_influence(conf, mse_values, prediction_times, complexities):
 
     plt.title("Influence of varying '%s' on %s" % (conf['changing_param'],
                                                    conf['estimator'].__name__))
+
 
 for conf in configurations:
     prediction_performances, prediction_times, complexities = \
