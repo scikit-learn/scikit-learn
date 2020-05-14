@@ -1,25 +1,10 @@
-# taken from https://github.com/llimllib/pymag-trees/blob/master/buchheim.py
-# with slight modifications
-
-#            DO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE
-#                    Version 2, December 2004
-#
-# Copyright (C) 2004 Sam Hocevar <sam@hocevar.net>
-#
-# Everyone is permitted to copy and distribute verbatim or modified
-# copies of this license document, and changing it is allowed as long
-# as the name is changed.
-#
-#            DO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE
-#   TERMS AND CONDITIONS FOR COPYING, DISTRIBUTION AND MODIFICATION
-
-#  0. You just DO WHAT THE FUCK YOU WANT TO.
-
+# Authors: William Mill (bill@billmill.org)
+# License: BSD 3 clause
 
 import numpy as np
 
 
-class DrawTree(object):
+class DrawTree:
     def __init__(self, tree, parent=None, depth=0, number=1):
         self.x = -1.
         self.y = depth
@@ -193,7 +178,7 @@ def second_walk(v, m=0, depth=0, min=None):
     return min
 
 
-class Tree(object):
+class Tree:
     def __init__(self, label="", node_id=-1, *children):
         self.label = label
         self.node_id = node_id

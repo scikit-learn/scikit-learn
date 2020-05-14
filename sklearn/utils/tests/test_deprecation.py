@@ -2,13 +2,11 @@
 # License: BSD 3 clause
 
 
-import sys
 import pickle
 
 from sklearn.utils.deprecation import _is_deprecated
 from sklearn.utils.deprecation import deprecated
-from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import SkipTest
+from sklearn.utils._testing import assert_warns_message
 
 
 @deprecated('qwerty')
@@ -38,17 +36,16 @@ def mock_function():
 
 
 def test_deprecated():
-    assert_warns_message(DeprecationWarning, 'qwerty', MockClass1)
-    assert_warns_message(DeprecationWarning, 'mockclass2_method',
+    assert_warns_message(FutureWarning, 'qwerty', MockClass1)
+    assert_warns_message(FutureWarning, 'mockclass2_method',
                          MockClass2().method)
-    assert_warns_message(DeprecationWarning, 'deprecated', MockClass3)
-    val = assert_warns_message(DeprecationWarning, 'deprecated', mock_function)
+    assert_warns_message(FutureWarning, 'deprecated', MockClass3)
+    val = assert_warns_message(FutureWarning, 'deprecated',
+                               mock_function)
     assert val == 10
 
 
 def test_is_deprecated():
-    if sys.version_info < (3, 5):
-        raise SkipTest("This test will run only on python3.5 and above")
     # Test if _is_deprecated helper identifies wrapping via deprecated
     # NOTE it works only for class methods and functions
     assert _is_deprecated(MockClass1.__init__)

@@ -78,7 +78,7 @@ cax = plt.imshow(y_prob, cmap=cm.gray_r, alpha=0.8,
                  extent=(-lim, lim, -lim, lim))
 norm = plt.matplotlib.colors.Normalize(vmin=0., vmax=0.9)
 cb = plt.colorbar(cax, ticks=[0., 0.2, 0.4, 0.6, 0.8, 1.], norm=norm)
-cb.set_label('${\\rm \mathbb{P}}\left[\widehat{G}(\mathbf{x}) \leq 0\\right]$')
+cb.set_label(r'${\rm \mathbb{P}}\left[\widehat{G}(\mathbf{x}) \leq 0\right]$')
 plt.clim(0, 1)
 
 plt.plot(X[y <= 0, 0], X[y <= 0, 1], 'r.', markersize=12)

@@ -1,8 +1,6 @@
 #!/bin/bash
 
 set -e
+set -x
 
-if [[ "$SKIP_TESTS" != "true" ]]; then
-    set -x
-    make test-doc
-fi
+make test-doc

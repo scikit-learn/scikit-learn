@@ -26,7 +26,6 @@ proportional to (n_samples * iterations).
 #         Chyi-Kwei Yau <chyikwei.yau@gmail.com>
 # License: BSD 3 clause
 
-from __future__ import print_function
 from time import time
 
 from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
@@ -55,9 +54,10 @@ def print_top_words(model, feature_names, n_top_words):
 
 print("Loading dataset...")
 t0 = time()
-dataset = fetch_20newsgroups(shuffle=True, random_state=1,
-                             remove=('headers', 'footers', 'quotes'))
-data_samples = dataset.data[:n_samples]
+data, _ = fetch_20newsgroups(shuffle=True, random_state=1,
+                             remove=('headers', 'footers', 'quotes'),
+                             return_X_y=True)
+data_samples = data[:n_samples]
 print("done in %0.3fs." % (time() - t0))
 
 # Use tf-idf features for NMF.

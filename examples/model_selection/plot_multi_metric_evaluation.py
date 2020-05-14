@@ -47,7 +47,7 @@ scoring = {'AUC': 'roc_auc', 'Accuracy': make_scorer(accuracy_score)}
 # ``gs.best_index_``
 gs = GridSearchCV(DecisionTreeClassifier(random_state=42),
                   param_grid={'min_samples_split': range(2, 403, 10)},
-                  scoring=scoring, cv=5, refit='AUC', return_train_score=True)
+                  scoring=scoring, refit='AUC', return_train_score=True)
 gs.fit(X, y)
 results = gs.cv_results_
 
@@ -92,5 +92,5 @@ for scorer, color in zip(sorted(scoring), ['g', 'k']):
                 (X_axis[best_index], best_score + 0.005))
 
 plt.legend(loc="best")
-plt.grid('off')
+plt.grid(False)
 plt.show()

@@ -11,9 +11,6 @@ efficiently handle sparse matrices.
 The dataset used in this example is the 20 newsgroups dataset. It will be
 automatically downloaded, then cached.
 
-The bar plot indicates the accuracy, training time (normalized) and test time
-(normalized) of each classifier.
-
 """
 
 # Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
@@ -21,9 +18,6 @@ The bar plot indicates the accuracy, training time (normalized) and test time
 #         Mathieu Blondel <mathieu@mblondel.org>
 #         Lars Buitinck
 # License: BSD 3 clause
-
-from __future__ import print_function
-
 import logging
 import numpy as np
 from optparse import OptionParser
@@ -54,8 +48,6 @@ from sklearn import metrics
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s %(levelname)s %(message)s')
 
-
-# parse commandline arguments
 op = OptionParser()
 op.add_option("--report",
               action="store_true", dest="print_report",
@@ -101,8 +93,12 @@ op.print_help()
 print()
 
 
-# #############################################################################
-# Load some categories from the training set
+##############################################################################
+# Load data from the training set
+# ------------------------------------
+# Let's load data from the newsgroups dataset which comprises around 18000
+# newsgroups posts on 20 topics split in two subsets: one for training (or
+# development) and the other one for testing (or for performance evaluation).
 if opts.all_categories:
     categories = None
 else:
@@ -145,7 +141,7 @@ print("%d documents - %0.3fMB (training set)" % (
     len(data_train.data), data_train_size_mb))
 print("%d documents - %0.3fMB (test set)" % (
     len(data_test.data), data_test_size_mb))
-print("%d categories" % len(categories))
+print("%d categories" % len(target_names))
 print()
 
 # split a training set and a test set
@@ -203,8 +199,11 @@ def trim(s):
     return s if len(s) <= 80 else s[:77] + "..."
 
 
-# #############################################################################
+##############################################################################
 # Benchmark classifiers
+# ------------------------------------
+# We train and test the datasets with 15 different classification models
+# and get performance results for each model.
 def benchmark(clf):
     print('_' * 80)
     print("Training: ")
@@ -250,11 +249,11 @@ def benchmark(clf):
 results = []
 for clf, name in (
         (RidgeClassifier(tol=1e-2, solver="sag"), "Ridge Classifier"),
-        (Perceptron(max_iter=50, tol=1e-3), "Perceptron"),
-        (PassiveAggressiveClassifier(max_iter=50, tol=1e-3),
+        (Perceptron(max_iter=50), "Perceptron"),
+        (PassiveAggressiveClassifier(max_iter=50),
          "Passive-Aggressive"),
         (KNeighborsClassifier(n_neighbors=10), "kNN"),
-        (RandomForestClassifier(n_estimators=100), "Random forest")):
+        (RandomForestClassifier(), "Random forest")):
     print('=' * 80)
     print(name)
     results.append(benchmark(clf))
@@ -297,8 +296,12 @@ results.append(benchmark(Pipeline([
                                                   tol=1e-3))),
   ('classification', LinearSVC(penalty="l2"))])))
 
-# make some plots
 
+##############################################################################
+# Add plots
+# ------------------------------------
+# The bar plot indicates the accuracy, training time (normalized) and test time
+# (normalized) of each classifier.
 indices = np.arange(len(results))
 
 results = [[x[i] for x in results] for i in range(4)]

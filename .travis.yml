@@ -1,6 +1,4 @@
 # make it explicit that we favor the new container-based travis workers
-sudo: false
-
 language: python
 
 cache:
@@ -9,7 +7,7 @@ cache:
   - $HOME/.cache/pip
   - $HOME/.ccache
 
-dist: trusty
+dist: xenial
 
 env:
   global:
@@ -20,49 +18,15 @@ env:
 
 matrix:
   include:
-    # This environment tests that scikit-learn can be built against
-    # versions of numpy, scipy with ATLAS that comes with Ubuntu Trusty 14.04
-    # i.e. numpy 1.8.2 and scipy 0.13.3
-    - env: DISTRIB="ubuntu" PYTHON_VERSION="2.7" CYTHON_VERSION="0.23.5"
-           COVERAGE=true
-      if: type != cron
-      addons:
-        apt:
-          packages:
-            # these only required by the DISTRIB="ubuntu" builds:
-            - python-scipy
-            - libatlas3-base
-            - libatlas-dev
-    # Python 3.4 build
-    - env: DISTRIB="conda" PYTHON_VERSION="3.4" INSTALL_MKL="false"
-           NUMPY_VERSION="1.10.4" SCIPY_VERSION="0.16.1" CYTHON_VERSION="0.25.2"
-           PILLOW_VERSION="4.0.0" COVERAGE=true
-      if: type != cron
-    # This environment tests the latest available dependencies.
-    # It runs tests requiring pandas and PyAMG.
-    # It also runs with the site joblib instead of the vendored copy of joblib.
-    - env: DISTRIB="conda" PYTHON_VERSION="*" INSTALL_MKL="true"
-           NUMPY_VERSION="*" SCIPY_VERSION="*" PANDAS_VERSION="*"
-           CYTHON_VERSION="*" PYAMG_VERSION="*" PILLOW_VERSION="*"
-           JOBLIB_VERSION="*" COVERAGE=true
-           CHECK_PYTEST_SOFT_DEPENDENCY="true" TEST_DOCSTRINGS="true"
-           SKLEARN_SITE_JOBLIB=1 CHECK_WARNINGS="true"
-      if: type != cron
-    # flake8 linting on diff wrt common ancestor with upstream/master
-    - env: RUN_FLAKE8="true" SKIP_TESTS="true"
-           DISTRIB="conda" PYTHON_VERSION="3.5" INSTALL_MKL="true"
-           NUMPY_VERSION="1.13.1" SCIPY_VERSION="0.19.1"
-           CYTHON_VERSION="0.26.1"
-      if: type != cron
-    # This environment tests scikit-learn against numpy and scipy master
+    # Linux environment to test scikit-learn against numpy and scipy master
     # installed from their CI wheels in a virtualenv with the Python
     # interpreter provided by travis.
-    -  python: 3.6
-       env: DISTRIB="scipy-dev" CHECK_WARNINGS="true"
+    -  python: 3.7
+       env: CHECK_WARNINGS="true"
        if: type = cron OR commit_message =~ /\[scipy-dev\]/
 
 install: source build_tools/travis/install.sh
-script: 
+script:
   - bash build_tools/travis/test_script.sh
   - bash build_tools/travis/test_docs.sh
   - bash build_tools/travis/test_pytest_soft_dependency.sh

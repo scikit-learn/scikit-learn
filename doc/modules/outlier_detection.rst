@@ -98,8 +98,8 @@ Outlier Factor (LOF) does not show a decision boundary in black as it
 has no predict method to be applied on new data when it is used for outlier
 detection.
 
-.. figure:: ../auto_examples/images/sphx_glr_plot_anomaly_comparison_001.png
-   :target: ../auto_examples/plot_anomaly_comparison.html
+.. figure:: ../auto_examples/miscellaneous/images/sphx_glr_plot_anomaly_comparison_001.png
+   :target: ../auto_examples/miscellaneous/plot_anomaly_comparison.html
    :align: center
    :scale: 50
 
@@ -109,12 +109,12 @@ The :class:`svm.OneClassSVM` is known to be sensitive to outliers and thus
 does not perform very well for outlier detection. Finally,
 :class:`covariance.EllipticEnvelope` assumes the data is Gaussian and learns
 an ellipse. For more details on the different estimators refer to the example
-:ref:`sphx_glr_auto_examples_plot_anomaly_comparison.py` and the sections
-hereunder.
+:ref:`sphx_glr_auto_examples_miscellaneous_plot_anomaly_comparison.py` and the
+sections hereunder.
 
 .. topic:: Examples:
 
-  * See :ref:`sphx_glr_auto_examples_plot_anomaly_comparison.py`
+  * See :ref:`sphx_glr_auto_examples_miscellaneous_plot_anomaly_comparison.py`
     for a comparison of the :class:`svm.OneClassSVM`, the
     :class:`ensemble.IsolationForest`, the
     :class:`neighbors.LocalOutlierFactor` and
@@ -239,20 +239,39 @@ Random partitioning produces noticeably shorter paths for anomalies.
 Hence, when a forest of random trees collectively produce shorter path
 lengths for particular samples, they are highly likely to be anomalies.
 
-This strategy is illustrated below.
+The implementation of :class:`ensemble.IsolationForest` is based on an ensemble
+of :class:`tree.ExtraTreeRegressor`. Following Isolation Forest original paper,
+the maximum depth of each tree is set to :math:`\lceil \log_2(n) \rceil` where
+:math:`n` is the number of samples used to build the tree (see (Liu et al.,
+2008) for more details).
+
+This algorithm is illustrated below.
 
 .. figure:: ../auto_examples/ensemble/images/sphx_glr_plot_isolation_forest_001.png
    :target: ../auto_examples/ensemble/plot_isolation_forest.html
    :align: center
    :scale: 75%
 
+.. _iforest_warm_start:
+
+The :class:`ensemble.IsolationForest` supports ``warm_start=True`` which
+allows you to add more trees to an already fitted model::
+
+  >>> from sklearn.ensemble import IsolationForest
+  >>> import numpy as np
+  >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [0, 0], [-20, 50], [3, 5]])
+  >>> clf = IsolationForest(n_estimators=10, warm_start=True)
+  >>> clf.fit(X)  # fit 10 trees  # doctest: +SKIP
+  >>> clf.set_params(n_estimators=20)  # add 10 more trees  # doctest: +SKIP
+  >>> clf.fit(X)  # fit the added trees  # doctest: +SKIP
+
 .. topic:: Examples:
 
    * See :ref:`sphx_glr_auto_examples_ensemble_plot_isolation_forest.py` for
      an illustration of the use of IsolationForest.
 
-   * See :ref:`sphx_glr_auto_examples_plot_anomaly_comparison.py` for a
-     comparison of :class:`ensemble.IsolationForest` with
+   * See :ref:`sphx_glr_auto_examples_miscellaneous_plot_anomaly_comparison.py`
+     for a comparison of :class:`ensemble.IsolationForest` with
      :class:`neighbors.LocalOutlierFactor`,
      :class:`svm.OneClassSVM` (tuned to perform like an outlier detection
      method) and a covariance-based outlier detection with
@@ -320,8 +339,8 @@ This strategy is illustrated below.
    * See :ref:`sphx_glr_auto_examples_neighbors_plot_lof_outlier_detection.py`
      for an illustration of the use of :class:`neighbors.LocalOutlierFactor`.
 
-   * See :ref:`sphx_glr_auto_examples_plot_anomaly_comparison.py` for a
-     comparison with other anomaly detection methods.
+   * See :ref:`sphx_glr_auto_examples_miscellaneous_plot_anomaly_comparison.py`
+     for a comparison with other anomaly detection methods.
 
 .. topic:: References:
 
