@@ -9,8 +9,7 @@ computational performance.
 We will be using two datasets:
     - :ref:`diabetes_dataset` for regression.
       This dataset consists of 10 measurements taken from diabetes patients.
-      The task is to predict disease
-      progression.
+      The task is to predict disease progression;
     - :ref:`20newsgroups_dataset` for classification. This dataset consists of
       newsgroup posts. The task is to predict on which topic (out of 20 topics)
       the post is written about.
@@ -23,8 +22,7 @@ We will model the complexity influence on three different estimators:
       Nu support vector regression;
 
     - :class:`~sklearn.ensemble.GradientBoostingRegressor` (for regression
-      data) which builds an additive
-      model in a forward stage-wise fashion.
+      data) which builds an additive model in a forward stage-wise fashion.
 
 
 We make the model complexity vary through the choice of relevant model
@@ -65,8 +63,7 @@ np.random.seed(0)
 # First we load both datasets.
 #
 # Note 1: We are using :func:`~sklearn.datasets.fetch_20newsgroups_vectorized`
-#  to download 20
-# newsgroups dataset. It returns ready-to-use features.
+#  to download 20 newsgroups dataset. It returns ready-to-use features.
 #
 # Note 2: ``X`` of the 20 newsgropus dataset is a sparse matrix while ``X`` of
 # diabetes dataset is a numpy array.
