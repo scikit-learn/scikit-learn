@@ -2073,6 +2073,7 @@ def check_cv(cv=5, y=None, *, classifier=False):
 
 
 def train_test_split(*arrays,
+                     *,
                      test_size=None,
                      train_size=None,
                      random_state=None,
