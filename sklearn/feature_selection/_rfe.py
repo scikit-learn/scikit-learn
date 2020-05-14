@@ -8,9 +8,7 @@
 
 import numpy as np
 from joblib import Parallel, delayed, effective_n_jobs
-from operator import attrgetter
 
-from ..utils import safe_sqr
 from ..utils.metaestimators import if_delegate_has_method
 from ..utils.metaestimators import _safe_split
 from ..utils.validation import check_is_fitted
@@ -22,7 +20,8 @@ from ..base import is_classifier
 from ..model_selection import check_cv
 from ..model_selection._validation import _score
 from ..metrics import check_scoring
-from ._base import SelectorMixin, _get_importances_auto
+from ._base import SelectorMixin
+from ._base import _get_feature_importances
 
 
 def _rfe_single_fit(rfe, estimator, X, y, train, test, scorer):
@@ -212,23 +211,11 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
 
             estimator.fit(X[:, features], y)
 
-            # Get feature importance
-            importance_getter = self.importance_getter
-            if isinstance(importance_getter, str):
-                if importance_getter == 'auto':
-                    importance_getter = _get_importances_auto(estimator)
-                else:
-                    importance_getter = attrgetter(importance_getter)
-            elif not callable(importance_getter):
-                raise ValueError('`importance_getter` has to be a string'
-                                 ' or `callable`')
-            importances = importance_getter(estimator)
-
-            # Get ranks
-            if importances.ndim > 1:
-                ranks = np.argsort(safe_sqr(importances).sum(axis=0))
-            else:
-                ranks = np.argsort(safe_sqr(importances))
+            # Get importance and rank them
+            importances = _get_feature_importances(
+                estimator, self.importance_getter, ranking_func="square",
+            )
+            ranks = np.argsort(importances)
 
             # for sparse case ranks is matrix
             ranks = np.ravel(ranks)
@@ -436,7 +423,7 @@ class RFECV(RFE):
         or `feature_importances_` attributes of estimator.
 
         Also accepts a string that specifies an attribute name/path
-        for extracting feature importance (implemented with `attrgetter`).
+        for extracting feature importance.
         For example, give `regressor_.coef_` in case of
         :class:`sklearn.compose.TransformedTargetRegressor`  or
         `named_steps.clf.feature_importances_` in case of

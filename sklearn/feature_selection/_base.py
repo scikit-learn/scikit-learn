@@ -12,7 +12,9 @@ import numpy as np
 from scipy.sparse import issparse, csc_matrix
 
 from ..base import TransformerMixin
-from ..utils import check_array, safe_mask
+from ..utils import check_array
+from ..utils import safe_mask
+from ..utils import safe_sqr
 
 
 class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
@@ -124,40 +126,43 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
         return Xt
 
 
-def _get_importances_auto(estimator):
-    if hasattr(estimator, 'coef_'):
-        getter = attrgetter('coef_')
-    elif hasattr(estimator, 'feature_importances_'):
-        getter = attrgetter('feature_importances_')
-    else:
-        raise ValueError(
-            f"when `importance_getter=='auto'`, the underlying estimator "
-            f"{estimator.__class__.__name__} should have `coef_` or "
-            f"`feature_importances_` attribute. Either pass a fitted "
-            f"estimator to feature selector or call fit before calling "
-            f"transform."
-        )
-
-    return getter
-
-
-def _get_feature_importances(estimator, getter,
+def _get_feature_importances(estimator, getter, ranking_func="square",
                              norm_order=1):
     """Retrieve or aggregate feature importances from estimator"""
     if isinstance(getter, str):
         if getter == 'auto':
-            getter = _get_importances_auto(estimator)
+            if hasattr(estimator, 'coef_'):
+                getter = attrgetter('coef_')
+            elif hasattr(estimator, 'feature_importances_'):
+                getter = attrgetter('feature_importances_')
+            else:
+                raise ValueError(
+                    f"when `importance_getter=='auto'`, the underlying "
+                    f"estimator {estimator.__class__.__name__} should have "
+                    f"`coef_` or `feature_importances_` attribute. Either "
+                    f"pass a fitted estimator to feature selector or call fit "
+                    f"before calling transform."
+                )
         else:
             getter = attrgetter(getter)
     elif not callable(getter):
-        raise ValueError('`importance_getter` has to be a string'
-                         ' or `callable`')
+        raise ValueError(
+            '`importance_getter` has to be a string or `callable`'
+        )
     importances = getter(estimator)
 
-    if importances.ndim == 1:
-        importances = np.abs(importances)
+    if ranking_func == "norm":
+        if importances.ndim == 1:
+            importances = np.abs(importances)
+        else:
+            importances = np.linalg.norm(importances, axis=0,
+                                         ord=norm_order)
+    elif ranking_func == "square":
+        if importances.ndim > 1:
+            importances = safe_sqr(importances).sum(axis=0)
+        else:
+            importances = safe_sqr(importances)
     else:
-        importances = np.linalg.norm(importances, axis=0,
-                                     ord=norm_order)
+        raise ValueError("XXXX")
 
     return importances

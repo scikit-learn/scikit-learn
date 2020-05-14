@@ -379,12 +379,13 @@ def test_rfe_cv_groups():
 @pytest.mark.parametrize(
     'importance_getter',
     [attrgetter('regressor_.coef_'), 'regressor_.coef_'])
-@pytest.mark.parametrize('selector', [RFE, RFECV])
-def test_rfe_wrapped_estimator(importance_getter, selector):
+@pytest.mark.parametrize('selector, expected_features',
+                         [(RFE, 5), (RFECV, 4)])
+def test_rfe_wrapped_estimator(importance_getter, selector,
+                               expected_features):
     # Non-regression test for
     # https://github.com/scikit-learn/scikit-learn/issues/15312
-    n_features = 10
-    X, y = make_friedman1(n_samples=50, n_features=n_features, random_state=0)
+    X, y = make_friedman1(n_samples=50, n_features=10, random_state=0)
     estimator = LinearSVR()
 
     log_estimator = TransformedTargetRegressor(regressor=estimator,
@@ -393,7 +394,7 @@ def test_rfe_wrapped_estimator(importance_getter, selector):
 
     selector = selector(log_estimator, importance_getter=importance_getter)
     sel = selector.fit(X, y)
-    assert sel.support_.sum() == n_features // 2
+    assert sel.support_.sum() == expected_features
 
 
 @pytest.mark.parametrize(
