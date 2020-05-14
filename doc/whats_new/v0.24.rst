@@ -65,6 +65,15 @@ Changelog
   samples between the train and test set on each fold.
   :pr:`13204` by :user:`Kyle Kosic <kykosic>`.
 
+  :mod:`sklearn.neighbors`
+..............................
+
+- |Efficiency| :class:`neighbors.NeighborsBase` benefits of an improved
+`algorithm = 'auto'` heuristic. In addition to the previous set of rules, now,
+when the number of features exceeds 15, `brute` is selected, assuming the data
+intrinsic dimensionality is too high for tree-based methods. :pr:`17148` by
+:user:`Geoffrey Bolmier <gbolmier>.
+
 
 Code and Documentation Contributors
 -----------------------------------
