@@ -56,6 +56,16 @@ Changelog
   change since `None` was defaulting to these values already.
   :pr:`16493` by :user:`Darshan N <DarshanGowda0>`.
 
+:mod:`sklearn.metrics`
+......................
+
+- |Feature| new metric :func:`metrics.top_k_accuracy_score`. It's a
+  generalization of :func:`metrics.top_k_accuracy_score`, the difference is
+  that a prediction is considered correct as long as the true label is
+  associated with one of the `k` highest predicted scores.
+  :func:`accuracy_score` is the special case of `k = 1`.
+  :pr:`16625` by :user:`Geoffrey Bolmier <gbolmier>`.
+
 :mod:`sklearn.model_selection`
 ..............................
 
