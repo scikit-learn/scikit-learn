@@ -21,7 +21,8 @@ from ..utils.validation import check_memory, _deprecate_positional_args
 from ..neighbors import DistanceMetric
 from ..neighbors._dist_metrics import METRIC_MAPPING
 
-from . import _hierarchical_fast as _hierarchical
+# mypy error: Module 'sklearn.cluster' has no attribute '_hierarchical_fast'
+from . import _hierarchical_fast as _hierarchical  # type: ignore
 from ._feature_agglomeration import AgglomerationTransform
 from ..utils._fast_dict import IntFloatDict
 from ..utils.fixes import _astype_copy_false
@@ -736,6 +737,9 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         - single uses the minimum of the distances between all observations
           of the two sets.
 
+        .. versionadded:: 0.20
+            Added the 'single' option
+
     distance_threshold : float, default=None
         The linkage distance threshold above which, clusters will not be
         merged. If not ``None``, ``n_clusters`` must be ``None`` and
@@ -758,6 +762,9 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
 
     n_connected_components_ : int
         The estimated number of connected components in the graph.
+
+        .. versionadded:: 0.21
+            ``n_connected_components_`` was added to replace ``n_components_``.
 
     children_ : array-like of shape (n_samples-1, 2)
         The children of each non-leaf node. Values less than `n_samples`
@@ -1002,6 +1009,9 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
 
     n_connected_components_ : int
         The estimated number of connected components in the graph.
+
+        .. versionadded:: 0.21
+            ``n_connected_components_`` was added to replace ``n_components_``.
 
     children_ : array-like of shape (n_nodes-1, 2)
         The children of each non-leaf node. Values less than `n_features`

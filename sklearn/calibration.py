@@ -359,7 +359,7 @@ class _CalibratedClassifier:
         combined_sample_weight = sample_weight * self.class_weight_[
             self.label_encoder_.fit_transform(y)]
 
-        Y = label_binarize(y, self.classes_)
+        Y = label_binarize(y, classes=self.classes_)
 
         df, idx_pos_class = self._preproc(X)
         self.calibrators_ = []
@@ -604,7 +604,7 @@ def calibration_curve(y_true, y_prob, normalize=False, n_bins=5,
     if len(labels) > 2:
         raise ValueError("Only binary classification is supported. "
                          "Provided labels %s." % labels)
-    y_true = label_binarize(y_true, labels)[:, 0]
+    y_true = label_binarize(y_true, classes=labels)[:, 0]
 
     if strategy == 'quantile':  # Determine bin edges by distribution of data
         quantiles = np.linspace(0, 1, n_bins + 1)
