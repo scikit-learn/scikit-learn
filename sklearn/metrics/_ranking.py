@@ -1520,7 +1520,7 @@ def top_k_accuracy_score(y_true, y_score, *, k=2, normalize=True,
         )
 
     if labels is None:
-        classes = _encode(y_true)
+        classes = _unique(y_true)
         n_classes = len(classes)
 
         if n_classes != y_score_n_col:
@@ -1530,7 +1530,7 @@ def top_k_accuracy_score(y_true, y_score, *, k=2, normalize=True,
             )
     else:
         labels = column_or_1d(labels)
-        classes = _encode(labels)
+        classes = _unique(labels)
         n_labels = len(labels)
         n_classes = len(classes)
 
@@ -1558,7 +1558,7 @@ def top_k_accuracy_score(y_true, y_score, *, k=2, normalize=True,
             UndefinedMetricWarning
         )
 
-    _, y_true_encoded = _encode(y_true, uniques=classes, encode=True)
+    y_true_encoded = _encode(y_true, uniques=classes)
     sorted_pred = np.argsort(y_score, axis=1, kind='mergesort')[:, ::-1]
     hits = (y_true_encoded == sorted_pred[:, :k].T).any(axis=0)
 
