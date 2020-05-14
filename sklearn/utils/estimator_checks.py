@@ -5,7 +5,7 @@ import traceback
 import pickle
 import re
 from copy import deepcopy
-from functools import partial
+from functools import partial, wraps
 from inspect import signature
 
 import numpy as np
@@ -349,11 +349,22 @@ def _mark_xfail_checks(estimator, check, pytest):
                             marks=pytest.mark.xfail(reason=reason))
 
 
-def _is_xfail(estimator, check):
-    # Whether the check is part of the _xfail_checks tag of the estimator
+def _skip_if_xfail(estimator, check):
+    # wrap a check so that it's skipped with a warning if it's part of the
+    # xfail_checks tag.
     xfail_checks = estimator._get_tags()['_xfail_checks'] or {}
     check_name = _set_check_estimator_ids(check)
-    return check_name in xfail_checks
+
+    if check_name not in xfail_checks:
+        return check
+
+    @wraps(check)
+    def wrapped(*args, **kwargs):
+        raise SkipTest(
+            f"Skipping {check_name} for {estimator.__class__.__name__}"
+        )
+
+    return wrapped
 
 
 def parametrize_with_checks(estimators):
@@ -463,9 +474,9 @@ def check_estimator(Estimator, generate_only=False):
     estimator = Estimator
     name = type(estimator).__name__
 
-    checks_generator = ((estimator, partial(check, name))
-                        for check in _yield_all_checks(name, estimator)
-                        if not _is_xfail(estimator, check))
+    checks_generator = ((estimator,
+                         partial(_skip_if_xfail(estimator, check), name))
+                        for check in _yield_all_checks(name, estimator))
 
     if generate_only:
         return checks_generator

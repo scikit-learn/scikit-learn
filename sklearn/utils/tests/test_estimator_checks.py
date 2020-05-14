@@ -37,6 +37,7 @@ from sklearn.neighbors import KNeighborsRegressor
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils.validation import check_array
 from sklearn.utils import all_estimators
+from sklearn.exceptions import SkipTestWarning
 
 
 class CorrectNotFittedError(ValueError):
@@ -613,5 +614,5 @@ if __name__ == '__main__':
 
 def test_xfail_ignored_in_check_estimator():
     # Make sure checks marked as xfail are just ignored and not run by
-    # check_estimator().
-    check_estimator(NuSVC())
+    # check_estimator(), but still raise a warning.
+    assert_warns(SkipTestWarning, check_estimator, NuSVC())
