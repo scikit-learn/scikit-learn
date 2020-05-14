@@ -2072,7 +2072,12 @@ def check_cv(cv=5, y=None, *, classifier=False):
     return cv  # New style cv objects are passed without any modification
 
 
-def train_test_split(*arrays, **options):
+def train_test_split(*arrays,
+                     test_size=None,
+                     train_size=None,
+                     random_state=None,
+                     shuffle=True,
+                     stratify=None):
     """Split arrays or matrices into random train and test subsets
 
     Quick utility that wraps input validation and
@@ -2161,14 +2166,6 @@ def train_test_split(*arrays, **options):
     n_arrays = len(arrays)
     if n_arrays == 0:
         raise ValueError("At least one array required as input")
-    test_size = options.pop('test_size', None)
-    train_size = options.pop('train_size', None)
-    random_state = options.pop('random_state', None)
-    stratify = options.pop('stratify', None)
-    shuffle = options.pop('shuffle', True)
-
-    if options:
-        raise TypeError("Invalid parameters passed: %s" % str(options))
 
     arrays = indexable(*arrays)
 
