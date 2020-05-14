@@ -17,7 +17,7 @@ We will be using two datasets:
 
 We will model the complexity influence on three different estimators:
     - :class:`~sklearn.linear_model.SGDClassifier` (for classification data)
-      which implements stochastic gradient descent learning
+      which implements stochastic gradient descent learning;
 
     - :class:`~sklearn.svm.NuSVR` (for regression data) which implements
       Nu support vector regression
