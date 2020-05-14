@@ -480,13 +480,10 @@ def check_estimator(Estimator, generate_only=False):
     name = type(estimator).__name__
 
     xfail_checks_tag = estimator._get_tags()['_xfail_checks'] or {}
-
-    checks_generator = ((estimator, partial(check, name))
-                        for check in _yield_all_checks(name, estimator))
     checks_generator = (
-        (estimator,
-         _make_check_warn_on_fail(check, xfail_checks_tag=xfail_checks_tag))
-        for estimator, check in checks_generator)
+        (estimator, _make_check_warn_on_fail(
+            partial(check, name), xfail_checks_tag=xfail_checks_tag))
+        for check in _yield_all_checks(name, estimator))
 
     if generate_only:
         return checks_generator
