@@ -29,8 +29,8 @@ def _weighted_percentile(array, sample_weight, percentile=50):
     # in rare cases, percentile_idx equals to sorted_idx.shape[0]
     max_idx = sorted_idx.shape[0] - 1
     percentile_idx = np.apply_along_axis(lambda x: np.clip(x, 0, max_idx),
-                                         axis = 0, arr = percentile_idx)
-    if n_dim == 1
+                                         axis=0, arr=percentile_idx)
+    if n_dim == 1:
         percentile = sorted_array[percentile_idx][0]
     elif n_dim == 2:
         n_col = sorted_array.shape[1]
