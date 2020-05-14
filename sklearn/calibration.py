@@ -22,6 +22,7 @@ from .base import (BaseEstimator, ClassifierMixin, RegressorMixin, clone,
                    MetaEstimatorMixin)
 from .preprocessing import label_binarize, LabelBinarizer
 from .utils import check_array, indexable, column_or_1d, compute_class_weight
+from .utils._encode import _unique
 from .utils.validation import check_is_fitted, check_consistent_length
 from .utils.validation import _check_sample_weight
 from .isotonic import IsotonicRegression
@@ -356,8 +357,8 @@ class _CalibratedClassifier:
                                              dtype=X.dtype)
         self.class_weight_ = compute_class_weight(self.class_weight,
                                                   self.classes_, y)
-        combined_sample_weight = sample_weight * self.class_weight_[
-            self.label_encoder_.fit_transform(y)]
+        sample_weight *= self.class_weight_[
+            _unique(column_or_1d(y), return_inverse=True)[1]]
 
         Y = label_binarize(y, classes=self.classes_)
 
@@ -372,7 +373,7 @@ class _CalibratedClassifier:
             else:
                 raise ValueError('method should be "sigmoid" or '
                                  '"isotonic". Got %s.' % self.method)
-            calibrator.fit(this_df, Y[:, k], combined_sample_weight)
+            calibrator.fit(this_df, Y[:, k], sample_weight)
             self.calibrators_.append(calibrator)
 
         return self

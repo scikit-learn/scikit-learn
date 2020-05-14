@@ -124,6 +124,35 @@ def test_sample_weight():
         assert diff > 0.1
 
 
+def test_class_weight():
+    n_samples = 100
+    n_classes = 2
+    class_weight = np.random.RandomState(seed=42).uniform(size=n_classes)
+    X, y = make_classification(n_samples=2 * n_samples, n_features=6,
+                               random_state=42, n_classes=n_classes,
+                               weights=class_weight)
+    X_train, y_train = X[:n_samples], y[:n_samples]
+    X_test = X[n_samples:]
+
+    cw = dict(zip(np.arange(n_classes), class_weight))
+
+    for method in ['sigmoid', 'isotonic']:
+        base_estimator = LinearSVC(random_state=42)
+        calibrated_clf = CalibratedClassifierCV(base_estimator, method=method,
+                                                class_weight=cw)
+        calibrated_clf.fit(X_train, y_train)
+        probs_with_cw = calibrated_clf.predict_proba(X_test)
+
+        # As the weights are used for the calibration, they should still yield
+        # a different predictions
+        calibrated_clf = CalibratedClassifierCV(base_estimator, method=method)
+        calibrated_clf.fit(X_train, y_train)
+        probs_without_cw = calibrated_clf.predict_proba(X_test)
+
+        diff = np.linalg.norm(probs_with_cw - probs_without_cw)
+        assert diff > 0.1
+
+
 def test_calibration_multiclass():
     """Test calibration for multiclass """
     # test multi-class setting with classifier that implements
