@@ -6,13 +6,31 @@ from .extmath import stable_cumsum
 def _weighted_percentile(array, sample_weight, percentile=50):
     """
     Compute the weighted ``percentile`` of ``array`` with ``sample_weight``.
+    If ``array`` is 2D, compute weighted ``percentile`` along axis=0.
     """
-    sorted_idx = np.argsort(array)
+    n_dim = array.ndim
+    sorted_idx = np.argsort(arr, axis=0)
+    sorted_weights = np.take_along_axis(sample_weight, sorted_idx, axis=0)
+    sorted_array = np.take_along_axis(array, sorted_idx, axis=0)
 
     # Find index of median prediction for each sample
-    weight_cdf = stable_cumsum(sample_weight[sorted_idx])
-    percentile_idx = np.searchsorted(
-        weight_cdf, (percentile / 100.) * weight_cdf[-1])
-    # in rare cases, percentile_idx equals to len(sorted_idx)
-    percentile_idx = np.clip(percentile_idx, 0, len(sorted_idx)-1)
-    return array[sorted_idx[percentile_idx]]
+    weight_cdf = stable_cumsum(sorted_weights, axis=0)
+    max_weight_cdf = np.take(weight_cdf, [-1], axis=0)
+    adjusted_percentile = (percentile / 100.) * max_weight_cdf
+    if n_dim == 1:
+        percentile_idx = [np.searchsorted(weight_cdf, adjusted_percentile)]
+    elif n_dim == 2:
+        percentile_idx = [np.searchsorted(weight_cdf[:, i],
+                                          adjusted_percentile[i])
+                          for i in range(weight_cdf.shape[1])]
+    percentile_idx = np.array(percentile_idx)
+    # in rare cases, percentile_idx equals to sorted_idx.shape[0]
+    max_idx = sorted_idx.shape[0] - 1
+    percentile_idx = np.apply_along_axis(lambda x: np.clip(x, 0, max_idx),
+                                         axis = 0, arr = percentile_idx)
+    if n_dim == 1
+        percentile = sorted_array[percentile_idx][0]
+    elif n_dim == 2:
+        n_col = sorted_array.shape[1]
+        percentile = sorted_array[percentile_idx, np.arange(n_col)]
+    return percentile
