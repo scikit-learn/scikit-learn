@@ -30,6 +30,7 @@ from ..utils.validation import (check_array, check_consistent_length,
                                 _num_samples)
 from ..utils.validation import column_or_1d
 from ..utils.validation import _deprecate_positional_args
+from ..utils.stats import _weighted_percentile
 from ..exceptions import UndefinedMetricWarning
 
 
@@ -335,7 +336,8 @@ def mean_squared_log_error(y_true, y_pred, *,
 
 
 @_deprecate_positional_args
-def median_absolute_error(y_true, y_pred, *, multioutput='uniform_average'):
+def median_absolute_error(y_true, y_pred, *, sample_weight=None,
+                          multioutput='uniform_average'):
     """Median absolute error regression loss
 
     Median absolute error output is non-negative floating point. The best value
@@ -348,6 +350,11 @@ def median_absolute_error(y_true, y_pred, *, multioutput='uniform_average'):
 
     y_pred : array-like of shape = (n_samples) or (n_samples, n_outputs)
         Estimated target values.
+
+    sample_weight : array-like of shape (n_samples,), optional
+        Sample weights.
+
+        .. versionadded:: 0.24
 
     multioutput : {'raw_values', 'uniform_average'} or array-like of shape
         (n_outputs,)
@@ -387,7 +394,8 @@ def median_absolute_error(y_true, y_pred, *, multioutput='uniform_average'):
     """
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput)
-    output_errors = np.median(np.abs(y_pred - y_true), axis=0)
+    output_errors = _weighted_percentile(np.abs(y_pred - y_true),
+                                         sample_weight=sample_weight)
     if isinstance(multioutput, str):
         if multioutput == 'raw_values':
             return output_errors
