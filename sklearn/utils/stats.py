@@ -11,7 +11,7 @@ def _weighted_percentile(array, sample_weight, percentile=50):
     if sample_weight is None:
         sample_weight = np.ones_like(array)
     n_dim = array.ndim
-    sorted_idx = np.argsort(arr, axis=0)
+    sorted_idx = np.argsort(array, axis=0)
     sorted_weights = np.take_along_axis(sample_weight, sorted_idx, axis=0)
     sorted_array = np.take_along_axis(array, sorted_idx, axis=0)
 
