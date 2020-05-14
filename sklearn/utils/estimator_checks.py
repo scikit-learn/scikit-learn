@@ -350,6 +350,13 @@ def _mark_xfail_checks(estimator, check, pytest):
                             marks=pytest.mark.xfail(reason=reason))
 
 
+def _is_xfail(estimator, check):
+    # Whether the check is part of the _xfail_checks tag of the estimator
+    xfail_checks = estimator._get_tags()['_xfail_checks'] or {}
+    check_name = _set_check_estimator_ids(check)
+    return check_name in xfail_checks
+
+
 def parametrize_with_checks(estimators):
     """Pytest specific decorator for parametrizing estimator checks.
 
@@ -456,7 +463,8 @@ def check_estimator(Estimator, generate_only=False):
     name = type(estimator).__name__
 
     checks_generator = ((estimator, partial(check, name))
-                        for check in _yield_all_checks(name, estimator))
+                        for check in _yield_all_checks(name, estimator)
+                        if not _is_xfail(estimator, check))
 
     if generate_only:
         return checks_generator
