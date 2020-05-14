@@ -6,8 +6,8 @@ Topic extraction with Non-negative Matrix Factorization and Latent Dirichlet All
 This is an example of applying :class:`sklearn.decomposition.NMF` and
 :class:`sklearn.decomposition.LatentDirichletAllocation` on a corpus
 of documents and extract additive models of the topic structure of the
-corpus.  The output is a list of topics, each represented as a list of
-terms (weights are not shown).
+corpus.  The output is a plot of topics, each represented as bar plot
+using top few words based on weights.
 
 Non-negative Matrix Factorization is applied with two different objective
 functions: the Frobenius norm, and the generalized Kullback-Leibler divergence.
@@ -39,24 +39,25 @@ n_components = 10
 n_top_words = 20
 
 
-def plot_top_words(model, feature_names, n_top_words):
+def plot_top_words(model, feature_names, n_top_words, title):
     fig, axes = plt.subplots(2, 5, figsize=(30, 15), sharex=True)
     axes = axes.flatten()
     for topic_idx, topic in enumerate(model.components_):
-        top_features_ind = [
-                i for i in topic.argsort()[:-n_top_words - 1:-1]]
+        top_features_ind = topic.argsort()[:-n_top_words - 1:-1]
         top_features = [feature_names[i] for i in top_features_ind]
-        values = [topic[i] for i in top_features_ind]
+        weights = topic[top_features_ind]
+
         ax = axes[topic_idx]
-        ax.barh(top_features, values)
-        ax.set_title(f'Topic {topic_idx +1}', fontdict={'fontsize': 40})
+        ax.barh(top_features, weights, height=0.7)
+        ax.set_title(f'Topic {topic_idx +1}',
+                     fontdict={'fontsize': 30})
         ax.invert_yaxis()
         ax.tick_params(axis='both', which='major', labelsize=20)
         for i in 'top right left'.split():
             ax.spines[i].set_visible(False)
+        fig.suptitle(title, fontsize=40)
 
-    print()
-    plt.subplots_adjust(top=0.95, bottom=0.05, wspace=0.90, hspace=0.3)
+    plt.subplots_adjust(top=0.90, bottom=0.05, wspace=0.90, hspace=0.3)
     plt.show()
 
 
@@ -101,13 +102,14 @@ nmf = NMF(n_components=n_components, random_state=1,
           alpha=.1, l1_ratio=.5).fit(tfidf)
 print("done in %0.3fs." % (time() - t0))
 
-print("\nTopics in NMF model (Frobenius norm):")
+
 tfidf_feature_names = tfidf_vectorizer.get_feature_names()
-plot_top_words(nmf, tfidf_feature_names, n_top_words)
+plot_top_words(nmf, tfidf_feature_names, n_top_words,
+               'Topics in NMF model (Frobenius norm)')
 
 # Fit the NMF model
-print("Fitting the NMF model (generalized Kullback-Leibler divergence) with "
-      "tf-idf features, n_samples=%d and n_features=%d..."
+print('\n'*4, "Fitting the NMF model (generalized Kullback-Leibler divergence)"
+      "with tf-idf features, n_samples=%d and n_features=%d..."
       % (n_samples, n_features))
 t0 = time()
 nmf = NMF(n_components=n_components, random_state=1,
@@ -115,11 +117,11 @@ nmf = NMF(n_components=n_components, random_state=1,
           l1_ratio=.5).fit(tfidf)
 print("done in %0.3fs." % (time() - t0))
 
-print("\nTopics in NMF model (generalized Kullback-Leibler divergence):")
 tfidf_feature_names = tfidf_vectorizer.get_feature_names()
-plot_top_words(nmf, tfidf_feature_names, n_top_words)
+plot_top_words(nmf, tfidf_feature_names, n_top_words,
+               'Topics in NMF model (generalized Kullback-Leibler divergence)')
 
-print("Fitting LDA models with tf features, "
+print('\n'*4, "Fitting LDA models with tf features, "
       "n_samples=%d and n_features=%d..."
       % (n_samples, n_features))
 lda = LatentDirichletAllocation(n_components=n_components, max_iter=5,
@@ -130,6 +132,5 @@ t0 = time()
 lda.fit(tf)
 print("done in %0.3fs." % (time() - t0))
 
-print("\nTopics in LDA model:")
 tf_feature_names = tf_vectorizer.get_feature_names()
-plot_top_words(lda, tf_feature_names, n_top_words)
+plot_top_words(lda, tf_feature_names, n_top_words, 'Topics in LDA model')
