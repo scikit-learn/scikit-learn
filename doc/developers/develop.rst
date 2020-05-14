@@ -529,8 +529,7 @@ _xfail_checks (default=False)
     Don't use this unless there is a *very good* reason for your estimator
     not to pass the check.
     :func:`~sklearn.utils.estimator_checks.check_estimator` will raise a
-    :class:`~sklearn.exceptions.SkipTestWarning` when the check fails and
-    a `FutureWarning` if the check passes. Also note that the usage of this
+    :class:`UserWarning` when the check fails. Also note that the usage of this
     tag is highly subject to change because we are trying to make it more
     flexible: be prepared for breaking changes in the future.
 

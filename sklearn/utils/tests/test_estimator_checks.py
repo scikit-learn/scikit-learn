@@ -576,22 +576,8 @@ def test_check_regressor_data_not_an_array():
                         EstimatorInconsistentForPandas())
 
 
-def test_check_estimator_required_parameters_skip():
-    class MyEstimator(BaseEstimator):
-        _required_parameters = ["special_parameter"]
-
-        def __init__(self, special_parameter):
-            self.special_parameter = special_parameter
-
-    assert_raises_regex(SkipTest, r"Can't instantiate estimator MyEstimator "
-                                  r"which requires parameters "
-                                  r"\['special_parameter'\]",
-                                  check_estimator, MyEstimator)
-
-
 def test_check_estimator_xfail_tag_raises_skip_test_warning():
     # skips check_complex_data based on _xfail_checks
-
     assert_warns_message(UserWarning,
                          "fails for the predict method",
                          check_estimator, DummyClassifier())
