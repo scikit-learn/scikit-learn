@@ -141,7 +141,7 @@ def benchmark_influence(conf):
 # ``changing_param`` is the name of the parameter which will vary in each
 # estimator.
 # Complexity will be defined by the ``complexity_label`` and calculated using
-# 'complexity_computer'
+# `complexity_computer`.
 # Also note that depending on the estimator type we are passing
 # different data.
 #
