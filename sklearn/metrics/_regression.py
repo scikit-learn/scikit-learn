@@ -349,8 +349,8 @@ def median_absolute_error(y_true, y_pred, *, multioutput='uniform_average'):
     y_pred : array-like of shape = (n_samples) or (n_samples, n_outputs)
         Estimated target values.
 
-    multioutput : {'raw_values', 'uniform_average'} or array-like of shape
-        (n_outputs,)
+    multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
+                (n_outputs,)
         Defines aggregating of multiple output values. Array-like value defines
         weights used to average errors.
 
