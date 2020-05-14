@@ -65,6 +65,14 @@ Changelog
   samples between the train and test set on each fold.
   :pr:`13204` by :user:`Kyle Kosic <kykosic>`.
 
+:mod:`sklearn.preprocessing`
+..............................
+
+- |Enhancement| Add ``unit_variance`` to :class:`preprocessing.RobustScaler`,
+  which scales output data such that normally distributed features have a
+  variance of 1. :pr:`17193` by :user:`Lucy Liu <lucyleeow>` and
+  :user:`Mabel Villalba <mabelvj>`.
+
 
 Code and Documentation Contributors
 -----------------------------------
