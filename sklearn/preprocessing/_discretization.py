@@ -17,6 +17,7 @@ from ..utils.validation import check_array
 from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
 from ..utils.validation import _deprecate_positional_args
+from ..utils.validation import check_random_state
 
 
 class KBinsDiscretizer(TransformerMixin, BaseEstimator):
@@ -58,16 +59,14 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
             cluster.
 
     subsample : int, optional (default='warn')
-        Maximum number of samples used to estimate the quantiles for
-        computational efficiency. Note that the subsampling procedure may
-        differ for value-identical sparse and dense matrices.
+        Maximum number of samples, used to fit the model, for computational
+        efficiency. Used when ``strategy`` is 'quantile'.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by np.random. Note that this is used by subsampling and smoothing
-        noise.
+        Determines random number generation for subsampling.
+        Please see ``subsample`` for more details.
+        Pass an int for reproducible results across multiple function calls.
+        See :term:`Glossary <random_state>`
 
     Attributes
     ----------
@@ -140,7 +139,6 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         self.random_state = random_state
         self.subsample = subsample
 
-
     def fit(self, X, y=None):
         """
         Fit the estimator.
@@ -161,18 +159,23 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         X = self._validate_data(X, dtype='numeric')
         n_samples, n_features = X.shape
 
-        if self.subsample == 'warn':
-            warnings.warn("In the future (v0.22) onwards subsample = 1e5"
+        if self.strategy == 'quantile' and self.subsample == 'warn':
+            warnings.warn("In the future (vTBD) onwards subsample = 1e5"
                           "will be used by default. Pass subsample=None to"
                           "silence this warning for now.", FutureWarning)
 
-        if (self.subsample is not None) and (self.subsample != 'warn'):
+        if self.subsample is not None and self.subsample != 'warn':
+            if self.subsample <= 0:
+                raise ValueError("Invalid value for 'subsample': %d. "
+                                 "The number of subsamples must be "
+                                 "at least one."
+                                 % self.subsample)
 
+            rng = check_random_state(self.random_state)
             if n_samples > self.subsample:
-                subsample_idx = self.random_state.choice(
-                                n_samples, size=self.subsample,
-                                replace=False)
-                X = X.take(subsample_idx, mode='clip')
+                subsample_idx = rng.choice(n_samples, size=self.subsample,
+                                           replace=False)
+                X = X.take(subsample_idx, mode='clip', axis=0)
 
         valid_encode = ('onehot', 'onehot-dense', 'ordinal')
         if self.encode not in valid_encode:
@@ -292,21 +295,6 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         Xt : numeric array-like or sparse matrix
             Data in the binned space.
         """
-        X = check_array(X, dtype='numeric')
-        n_samples, n_features = X.shape
-
-        if self.subsample == 'warn':
-            warnings.warn("In the future (v0.22) onwards subsample = 1e5"
-                          "will be used by default. Pass subsample=None to"
-                          "silence this warning for now.", FutureWarning)
-
-        if (self.subsample is not None) and (self.subsample != 'warn'):
-
-            if n_samples > self.subsample:
-                subsample_idx = self.random_state.choice(
-                                n_samples, size=self.subsample,
-                                replace=False)
-                X = X.take(subsample_idx, mode='clip')
 
         check_is_fitted(self)
 
