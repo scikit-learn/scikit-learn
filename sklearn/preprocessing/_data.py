@@ -1131,7 +1131,8 @@ class RobustScaler(TransformerMixin, BaseEstimator):
         .. versionadded:: 0.18
 
     unit_variance : boolean, False by default
-        If True, scale data (if normally distributed) to have variance of 1.
+        If True, scale data so that normally distributed features have a
+        variance of 1.
 
     copy : boolean, optional, default is True
         If False, try to avoid a copy and do inplace scaling instead.
@@ -1333,8 +1334,8 @@ def robust_scale(X, *, axis=0, with_centering=True, with_scaling=True,
         .. versionadded:: 0.18
 
     unit_variance : boolean, False by default
-        If True, scale data to have variance of 1 (if data is normally
-        distributed).
+        If True, scale data so that normally distributed features have a
+        variance of 1.
 
     copy : boolean, optional, default is True
         set to False to perform inplace row normalization and avoid a
