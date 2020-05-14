@@ -1489,8 +1489,10 @@ def test_top_k_accuracy_score(y_true, k, normalize, sample_weight, true_score):
         [0.4, 0.1, 0.2, 0.3],
         [0.3, 0.2, 0.4, 0.1],
     ])
-    assert top_k_accuracy_score(y_true, y_score, k, normalize,
-                                sample_weight) == pytest.approx(true_score)
+    score = top_k_accuracy_score(y_true, y_score, k=k, normalize=normalize,
+                                 sample_weight=sample_weight)
+
+    assert score == pytest.approx(true_score)
 
 
 def test_top_k_accuracy_score_increasing():
@@ -1526,7 +1528,7 @@ def test_top_k_accuracy_score_ties(y_true, k, true_score):
         [1, 1, 1, 1],
     ])
     assert top_k_accuracy_score(y_true, y_score,
-                                k) == pytest.approx(true_score)
+                                k=k) == pytest.approx(true_score)
 
 
 @pytest.mark.parametrize('y_true, k', [
@@ -1541,7 +1543,7 @@ def test_top_k_accuracy_score_warning(y_true, k):
         [0.3, 0.2, 0.1, 0.4],
     ])
     w = UndefinedMetricWarning
-    score = assert_warns(w, top_k_accuracy_score, y_true, y_score, k)
+    score = assert_warns(w, top_k_accuracy_score, y_true, y_score, k=k)
     assert score == 1
 
 

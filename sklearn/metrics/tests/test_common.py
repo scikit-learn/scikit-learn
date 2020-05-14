@@ -56,6 +56,7 @@ from sklearn.metrics import roc_curve
 from sklearn.metrics import zero_one_loss
 from sklearn.metrics import ndcg_score
 from sklearn.metrics import dcg_score
+from sklearn.metrics import top_k_accuracy_score
 
 from sklearn.metrics._base import _average_binary_score
 
@@ -238,7 +239,8 @@ THRESHOLDED_METRICS = {
     "label_ranking_average_precision_score":
     label_ranking_average_precision_score,
     "ndcg_score": ndcg_score,
-    "dcg_score": dcg_score
+    "dcg_score": dcg_score,
+    "top_k_accuracy_score": partial(top_k_accuracy_score, k=1)
 }
 
 ALL_METRICS = dict()
@@ -490,6 +492,10 @@ METRICS_REQUIRE_POSITIVE_Y = {
     "mean_compound_poisson_deviance",
 }
 
+METRICS_REQUIRE_2D_Y_SCORE = {
+    "top_k_accuracy_score"
+}
+
 
 def _require_positive_targets(y1, y2):
     """Make targets strictly positive"""
@@ -564,8 +570,12 @@ def test_sample_order_invariance(name):
     random_state = check_random_state(0)
     y_true = random_state.randint(0, 2, size=(20, ))
     y_pred = random_state.randint(0, 2, size=(20, ))
+
     if name in METRICS_REQUIRE_POSITIVE_Y:
         y_true, y_pred = _require_positive_targets(y_true, y_pred)
+
+    if name in METRICS_REQUIRE_2D_Y_SCORE:
+        y_pred = random_state.randint(0, 2, size=(20, 2))
 
     y_true_shuffle, y_pred_shuffle = shuffle(y_true, y_pred, random_state=0)
 
@@ -614,7 +624,8 @@ def test_sample_order_invariance_multilabel_and_multioutput():
 
 @pytest.mark.parametrize(
         'name',
-        sorted(set(ALL_METRICS) - METRIC_UNDEFINED_BINARY_MULTICLASS))
+        sorted(set(ALL_METRICS) - METRIC_UNDEFINED_BINARY_MULTICLASS -
+               METRICS_REQUIRE_2D_Y_SCORE))
 def test_format_invariance_with_1d_vectors(name):
     random_state = check_random_state(0)
     y1 = random_state.randint(0, 2, size=(20, ))
@@ -755,6 +766,9 @@ def test_thresholded_invariance_string_vs_numbers_labels(name):
     y1 = random_state.randint(0, 2, size=(20, ))
     y2 = random_state.randint(0, 2, size=(20, ))
 
+    if name in METRICS_REQUIRE_2D_Y_SCORE:
+        y2 = random_state.randint(0, 2, size=(20, 2))
+
     y1_str = np.array(["eggs", "spam"])[y1]
 
     pos_label_str = "spam"
@@ -796,6 +810,9 @@ invalids = [([0, 1], [np.inf, np.inf]),
 def test_regression_thresholded_inf_nan_input(metric):
 
     for y_true, y_score in invalids:
+        if (isinstance(metric, partial) and
+                metric.func.__name__ in METRICS_REQUIRE_2D_Y_SCORE):
+            y_score = [y_score, y_score]
         with pytest.raises(ValueError, match="contains NaN, infinity"):
             metric(y_true, y_score)
 
@@ -1252,8 +1269,11 @@ def test_binary_sample_weight_invariance(name):
     y_true = random_state.randint(0, 2, size=(n_samples, ))
     y_pred = random_state.randint(0, 2, size=(n_samples, ))
     y_score = random_state.random_sample(size=(n_samples,))
+    y_score_2D = random_state.random_sample(size=(n_samples, 2))
     metric = ALL_METRICS[name]
-    if name in THRESHOLDED_METRICS:
+    if name in METRICS_REQUIRE_2D_Y_SCORE:
+        check_sample_weight_invariance(name, metric, y_true, y_score_2D)
+    elif name in THRESHOLDED_METRICS:
         check_sample_weight_invariance(name, metric, y_true, y_score)
     else:
         check_sample_weight_invariance(name, metric, y_true, y_pred)
