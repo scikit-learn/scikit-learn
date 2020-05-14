@@ -317,10 +317,6 @@ Changelog
 - |API| Adds :class:`feature_selection.SelectorMixin` back to public API.
   :pr:`16132` by :user:`trimeta`.
 
-- |Feature| :class:`feature_selection.RFE`, :class:`feature_selection.RFECV` and
-  :class:`feature_selection.SelectFromModel` now also accepts a string that specifies
-  an attribute name/path or a `callable` for extracting feature importance.
-
 :mod:`sklearn.gaussian_process`
 ...............................
 
