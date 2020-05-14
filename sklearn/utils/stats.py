@@ -23,7 +23,7 @@ def _weighted_percentile(array, sample_weight, percentile=50):
         percentile_idx = [np.searchsorted(weight_cdf, adjusted_percentile)]
     elif n_dim == 2:
         percentile_idx = [np.searchsorted(weight_cdf[:, i],
-                                         adjusted_percentile[i])
+                                          adjusted_percentile[i])
                           for i in range(weight_cdf.shape[1])]
     percentile_idx = np.array(percentile_idx)
     # in rare cases, percentile_idx equals to sorted_idx.shape[0]
