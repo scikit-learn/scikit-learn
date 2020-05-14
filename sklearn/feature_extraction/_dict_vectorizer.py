@@ -14,10 +14,20 @@ from ..utils import check_array, tosequence
 from ..utils.validation import _deprecate_positional_args
 
 
+def _unwrap_dataframe(raw_documents):
+    # accept an iterable, or a (column-vector) dataframe
+    if hasattr(raw_documents, 'iterrows'):
+        raw_documents = raw_documents.values
+    return raw_documents
+
+
 def _tosequence(X):
     """Turn X into a sequence or ndarray, avoiding a copy if possible."""
     if isinstance(X, Mapping):  # single sample
         return [X]
+    elif hasattr(X, 'iterrows'):
+        # handle column DataFrame containing dicts
+        return X.values
     else:
         return tosequence(X)
 
@@ -118,7 +128,7 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
         feature_names = []
         vocab = {}
 
-        for x in X:
+        for x in _unwrap_dataframe(X):
             if not hasattr(x, 'items') and len(x) == 1:
                 # column vector support
                 x = x[0]
@@ -157,7 +167,7 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
             vocab = self.vocabulary_
 
         # Process everything as sparse regardless of setting
-        X = [X] if isinstance(X, Mapping) else X
+        X = _tosequence(X)
 
         indices = array("i")
         indptr = [0]

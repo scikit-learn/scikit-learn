@@ -46,6 +46,13 @@ __all__ = ['HashingVectorizer',
            'strip_tags']
 
 
+def _unwrap_dataframe(raw_documents):
+    # accept an iterable, or a (column-vector) dataframe
+    if hasattr(raw_documents, 'iterrows'):
+        raw_documents = raw_documents.values
+    return raw_documents
+
+
 def _preprocess(doc, accent_function=None, lower=False):
     """Chain together an optional series of text preprocessing steps to
     apply to a document.
@@ -771,6 +778,7 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
         self._validate_params()
 
         analyzer = self.build_analyzer()
+        X = _unwrap_dataframe(X)
         X = self._get_hasher().transform(analyzer(doc) for doc in X)
         if self.binary:
             X.data.fill(1)
@@ -1117,7 +1125,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
 
         values = _make_int_array()
         indptr.append(0)
-        for doc in raw_documents:
+        for doc in _unwrap_dataframe(raw_documents):
             feature_counter = {}
             for feature in analyze(doc):
                 try:

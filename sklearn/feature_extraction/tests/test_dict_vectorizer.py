@@ -17,7 +17,7 @@ from sklearn.feature_selection import SelectKBest, chi2
 @pytest.mark.parametrize('dtype', (int, np.float32, np.int16))
 @pytest.mark.parametrize('sort', (True, False))
 @pytest.mark.parametrize('reformat', ['none', 'iterable',
-                                      'column', 'column_lists'])
+                                      'column', 'column_lists', 'column_df'])
 def test_dictvectorizer(sparse, dtype, sort, reformat):
     D = [{"foo": 1, "bar": 3},
          {"bar": 4, "baz": 2},
@@ -32,6 +32,11 @@ def test_dictvectorizer(sparse, dtype, sort, reformat):
     elif reformat == 'column_lists':
         def reformat(D):
             return [[d] for d in D]
+    elif reformat == 'column_df':
+        pandas = pytest.importorskip('pandas')
+
+        def reformat(D):
+            return pandas.DataFrame({"features": D})
     else:
         def reformat(D):
             return D
@@ -48,6 +53,7 @@ def test_dictvectorizer(sparse, dtype, sort, reformat):
         # CSR matrices can't be compared for equality
         assert_array_equal(X.A, v.transform(reformat(D)).A)
     else:
+        print('ref', reformat(D))
         assert_array_equal(X, v.transform(reformat(D)))
 
     if sort:

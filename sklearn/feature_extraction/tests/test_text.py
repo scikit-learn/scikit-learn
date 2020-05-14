@@ -867,6 +867,7 @@ def test_preanalyzed():
     CountVectorizer(analyzer='char',),
     CountVectorizer(analyzer='char_wb',),
     TfidfVectorizer(analyzer='char_wb',),
+    HashingVectorizer(),
 ])
 @pytest.mark.parametrize('input', ['content', 'filename'])
 def test_vectorizer_column(est, input, tmpdir):
