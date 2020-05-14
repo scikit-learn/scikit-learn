@@ -1544,13 +1544,13 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        input_features : list of str, length n_features, default=None
+        input_features : list of str of shape (n_features,), default=None
             String names for input features if available. By default,
             "x0", "x1", ... "xn_features" is used.
 
         Returns
         -------
-        output_feature_names : list of str, length n_output_features
+        output_feature_names : list of str of shape (n_output_features,)
         """
         powers = self.powers_
         if input_features is None:
