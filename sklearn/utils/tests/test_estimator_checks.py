@@ -592,11 +592,9 @@ def test_check_estimator_required_parameters_skip():
 def test_check_estimator_xfail_tag_raises_skip_test_warning():
     # skips check_complex_data based on _xfail_checks
 
-    estimators = [DummyClassifier(), DummyClassifier]
-    for estimator in estimators:
-        assert_warns_message(UserWarning,
-                             "fails for the predict method",
-                             check_estimator, DummyClassifier)
+    assert_warns_message(UserWarning,
+                         "fails for the predict method",
+                         check_estimator, DummyClassifier())
 
 
 def run_tests_without_pytest():
