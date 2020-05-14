@@ -24,7 +24,7 @@ We will model the complexity influence on three different estimators:
 
     - :class:`~sklearn.ensemble.GradientBoostingRegressor` (for regression
       data) which builds an additive
-      model in a forward stage-wise fashion
+      model in a forward stage-wise fashion.
 
 
 We make the model complexity vary through the choice of relevant model
