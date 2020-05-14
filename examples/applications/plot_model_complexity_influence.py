@@ -194,33 +194,48 @@ configurations = [
 ##############################################################################
 # Run the code and plot the results
 # ---------------------------------
-# We are ready to run all our functions by looping through the configurations we
-# set previously and then plotting the influence of varying parameters on the
-# complexity and the latency of each model.
+# We defined all the functions required to run our benchmark. Now, we will loop
+# over the different configurations that we defined previously. Subsequently,
+# we will analyze the effects of the parameters on the model complexity and
+# latency.
 #
 
 def plot_influence(conf, mse_values, prediction_times, complexities):
     """
     Plot influence of model complexity on both accuracy and latency.
     """
-    plt.figure(figsize=(12, 6))
-    host = host_subplot(111, axes_class=Axes)
-    plt.subplots_adjust(right=0.75)
-    par1 = host.twinx()
-    host.set_xlabel('Model Complexity (%s)' % conf['complexity_label'])
+
+
+    fig = plt.figure()
+    fig.subplots_adjust(right=0.75)
+
+    # first axes (prediction error)
+    ax1 = fig.add_subplot(111)
+    line1 = ax1.plot(complexities, mse_values, 'b-',)[0]
+    ax1.set_xlabel('Model Complexity (%s)' % conf['complexity_label'])
     y1_label = conf['prediction_performance_label']
+    ax1.set_ylabel(y1_label)
+
+    ax1.spines['left'].set_color(line1.get_color())
+    ax1.yaxis.label.set_color(line1.get_color())
+    ax1.tick_params(axis='y', colors=line1.get_color())
+
+    # second axes (latency)
+    ax2 = fig.add_subplot(111, sharex=ax1, frameon=False)
+    line2 = ax2.plot(complexities, prediction_times, 'r-')[0]
+    ax2.yaxis.tick_right()
+    ax2.yaxis.set_label_position("right")
     y2_label = "Time (s)"
-    host.set_ylabel(y1_label)
-    par1.set_ylabel(y2_label)
-    p1, = host.plot(complexities, mse_values, 'b-', label="prediction error")
-    p2, = par1.plot(complexities, prediction_times, 'r-',
-                    label="latency")
-    host.legend(loc='upper right')
-    host.axis["left"].label.set_color(p1.get_color())
-    par1.axis["right"].label.set_color(p2.get_color())
+    ax2.set_ylabel(y2_label)
+    ax1.spines['right'].set_color(line2.get_color())
+    ax2.yaxis.label.set_color(line2.get_color())
+    ax2.tick_params(axis='y', colors=line2.get_color())
+
+    plt.legend((line1, line2), ("prediction error", "latency"),
+               loc='upper right')
+
     plt.title("Influence of varying '%s' on %s" % (conf['changing_param'],
                                                    conf['estimator'].__name__))
-
 
 for conf in configurations:
     prediction_performances, prediction_times, complexities = \
