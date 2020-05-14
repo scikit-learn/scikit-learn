@@ -29,6 +29,7 @@ from .._loss.glm_distribution import TweedieDistribution
 from ..utils.validation import (check_array, check_consistent_length,
                                 _num_samples)
 from ..utils.validation import column_or_1d
+from ..utils.validation import _deprecate_positional_args
 from ..exceptions import UndefinedMetricWarning
 
 
@@ -117,7 +118,8 @@ def _check_reg_targets(y_true, y_pred, multioutput, dtype="numeric"):
     return y_type, y_true, y_pred, multioutput
 
 
-def mean_absolute_error(y_true, y_pred,
+@_deprecate_positional_args
+def mean_absolute_error(y_true, y_pred, *,
                         sample_weight=None,
                         multioutput='uniform_average'):
     """Mean absolute error regression loss
@@ -188,7 +190,8 @@ def mean_absolute_error(y_true, y_pred,
     return np.average(output_errors, weights=multioutput)
 
 
-def mean_squared_error(y_true, y_pred,
+@_deprecate_positional_args
+def mean_squared_error(y_true, y_pred, *,
                        sample_weight=None,
                        multioutput='uniform_average', squared=True):
     """Mean squared error regression loss
@@ -263,7 +266,8 @@ def mean_squared_error(y_true, y_pred,
     return mse if squared else np.sqrt(mse)
 
 
-def mean_squared_log_error(y_true, y_pred,
+@_deprecate_positional_args
+def mean_squared_log_error(y_true, y_pred, *,
                            sample_weight=None,
                            multioutput='uniform_average'):
     """Mean squared logarithmic error regression loss
@@ -326,10 +330,12 @@ def mean_squared_log_error(y_true, y_pred,
                          "targets contain negative values.")
 
     return mean_squared_error(np.log1p(y_true), np.log1p(y_pred),
-                              sample_weight, multioutput)
+                              sample_weight=sample_weight,
+                              multioutput=multioutput)
 
 
-def median_absolute_error(y_true, y_pred, multioutput='uniform_average'):
+@_deprecate_positional_args
+def median_absolute_error(y_true, y_pred, *, multioutput='uniform_average'):
     """Median absolute error regression loss
 
     Median absolute error output is non-negative floating point. The best value
@@ -392,7 +398,8 @@ def median_absolute_error(y_true, y_pred, multioutput='uniform_average'):
     return np.average(output_errors, weights=multioutput)
 
 
-def explained_variance_score(y_true, y_pred,
+@_deprecate_positional_args
+def explained_variance_score(y_true, y_pred, *,
                              sample_weight=None,
                              multioutput='uniform_average'):
     """Explained variance regression score function
@@ -484,7 +491,8 @@ def explained_variance_score(y_true, y_pred,
     return np.average(output_scores, weights=avg_weights)
 
 
-def r2_score(y_true, y_pred, sample_weight=None,
+@_deprecate_positional_args
+def r2_score(y_true, y_pred, *, sample_weight=None,
              multioutput="uniform_average"):
     """R^2 (coefficient of determination) regression score function.
 
@@ -655,7 +663,8 @@ def max_error(y_true, y_pred):
     return np.max(np.abs(y_true - y_pred))
 
 
-def mean_tweedie_deviance(y_true, y_pred, sample_weight=None, power=0):
+@_deprecate_positional_args
+def mean_tweedie_deviance(y_true, y_pred, *, sample_weight=None, power=0):
     """Mean Tweedie deviance regression loss.
 
     Read more in the :ref:`User Guide <mean_tweedie_deviance>`.
@@ -719,7 +728,8 @@ def mean_tweedie_deviance(y_true, y_pred, sample_weight=None, power=0):
     return np.average(dev, weights=sample_weight)
 
 
-def mean_poisson_deviance(y_true, y_pred, sample_weight=None):
+@_deprecate_positional_args
+def mean_poisson_deviance(y_true, y_pred, *, sample_weight=None):
     """Mean Poisson deviance regression loss.
 
     Poisson deviance is equivalent to the Tweedie deviance with
@@ -756,7 +766,8 @@ def mean_poisson_deviance(y_true, y_pred, sample_weight=None):
     )
 
 
-def mean_gamma_deviance(y_true, y_pred, sample_weight=None):
+@_deprecate_positional_args
+def mean_gamma_deviance(y_true, y_pred, *, sample_weight=None):
     """Mean Gamma deviance regression loss.
 
     Gamma deviance is equivalent to the Tweedie deviance with

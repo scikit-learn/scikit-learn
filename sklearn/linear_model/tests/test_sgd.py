@@ -1438,7 +1438,7 @@ def _test_gradient_common(loss_function, cases):
     # Test gradient of different loss functions
     # cases is a list of (p, y, expected)
     for p, y, expected in cases:
-        assert_almost_equal(loss_function.dloss(p, y), expected)
+        assert_almost_equal(loss_function.py_dloss(p, y), expected)
 
 
 def test_gradient_hinge():
@@ -1488,8 +1488,8 @@ def test_gradient_log():
         (17.9, -1.0, 1.0), (-17.9, 1.0, -1.0),
     ]
     _test_gradient_common(loss, cases)
-    assert_almost_equal(loss.dloss(18.1, 1.0), np.exp(-18.1) * -1.0, 16)
-    assert_almost_equal(loss.dloss(-18.1, -1.0), np.exp(-18.1) * 1.0, 16)
+    assert_almost_equal(loss.py_dloss(18.1, 1.0), np.exp(-18.1) * -1.0, 16)
+    assert_almost_equal(loss.py_dloss(-18.1, -1.0), np.exp(-18.1) * 1.0, 16)
 
 
 def test_gradient_squared_loss():

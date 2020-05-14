@@ -177,7 +177,7 @@ def _check_normalize_sample_weight(sample_weight, X):
         # an array of 1 (i.e. samples_weight is None) is already normalized
         n_samples = len(sample_weight)
         scale = n_samples / sample_weight.sum()
-        sample_weight *= scale
+        sample_weight = sample_weight * scale
     return sample_weight
 
 
@@ -834,6 +834,9 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         For now "auto" (kept for backward compatibiliy) chooses "elkan" but it
         might change in the future for a better heuristic.
 
+        .. versionchanged:: 0.18
+            Added Elkan algorithm
+
     Attributes
     ----------
     cluster_centers_ : ndarray of shape (n_clusters, n_features)
@@ -945,6 +948,8 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         sample_weight : array-like of shape (n_samples,), default=None
             The weights for each observation in X. If None, all observations
             are assigned equal weight.
+
+            .. versionadded:: 0.20
 
         Returns
         -------
@@ -1586,6 +1591,8 @@ class MiniBatchKMeans(KMeans):
         sample_weight : array-like, shape (n_samples,), optional
             The weights for each observation in X. If None, all observations
             are assigned equal weight (default: None).
+
+            .. versionadded:: 0.20
 
         Returns
         -------

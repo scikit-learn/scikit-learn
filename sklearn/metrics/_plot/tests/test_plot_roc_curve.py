@@ -165,6 +165,6 @@ def test_default_labels(pyplot, roc_auc, estimator_name,
                         expected_label):
     fpr = np.array([0, 0.5, 1])
     tpr = np.array([0, 0.5, 1])
-    disp = RocCurveDisplay(fpr, tpr, roc_auc=roc_auc,
+    disp = RocCurveDisplay(fpr=fpr, tpr=tpr, roc_auc=roc_auc,
                            estimator_name=estimator_name).plot()
     assert disp.line_.get_label() == expected_label

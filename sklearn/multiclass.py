@@ -48,6 +48,7 @@ from .utils import check_random_state
 from .utils.validation import _num_samples
 from .utils.validation import check_is_fitted
 from .utils.validation import check_X_y, check_array
+from .utils.validation import _deprecate_positional_args
 from .utils.multiclass import (_check_partial_fit_first_call,
                                check_classification_targets,
                                _ovr_decision_function)
@@ -164,6 +165,9 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
+        .. versionchanged:: v0.20
+           `n_jobs` default changed from 1 to None
+
     Attributes
     ----------
     estimators_ : list of `n_classes` estimators
@@ -201,7 +205,8 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
     array([2, 0, 1])
 
     """
-    def __init__(self, estimator, n_jobs=None):
+    @_deprecate_positional_args
+    def __init__(self, estimator, *, n_jobs=None):
         self.estimator = estimator
         self.n_jobs = n_jobs
 
@@ -518,9 +523,23 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     pairwise_indices_ : list, length = ``len(estimators_)``, or ``None``
         Indices of samples used when training the estimators.
         ``None`` when ``estimator`` does not have ``_pairwise`` attribute.
-    """
 
-    def __init__(self, estimator, n_jobs=None):
+    Examples
+    --------
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn.model_selection import train_test_split
+    >>> from sklearn.multiclass import OneVsOneClassifier
+    >>> from sklearn.svm import LinearSVC
+    >>> X, y = load_iris(return_X_y=True)
+    >>> X_train, X_test, y_train, y_test = train_test_split(
+    ...     X, y, test_size=0.33, shuffle=True, random_state=0)
+    >>> clf = OneVsOneClassifier(
+    ...     LinearSVC(random_state=0)).fit(X_train, y_train)
+    >>> clf.predict(X_test[:10])
+    array([2, 1, 0, 2, 0, 2, 0, 1, 1, 1])
+    """
+    @_deprecate_positional_args
+    def __init__(self, estimator, *, n_jobs=None):
         self.estimator = estimator
         self.n_jobs = n_jobs
 
@@ -760,8 +779,8 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
        Hastie T., Tibshirani R., Friedman J., page 606 (second-edition)
        2008.
     """
-
-    def __init__(self, estimator, code_size=1.5, random_state=None,
+    @_deprecate_positional_args
+    def __init__(self, estimator, *, code_size=1.5, random_state=None,
                  n_jobs=None):
         self.estimator = estimator
         self.code_size = code_size

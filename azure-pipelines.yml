@@ -18,27 +18,30 @@ jobs:
     - bash: sudo chown -R $USER $CONDA
       displayName: Take ownership of conda installation
     - bash: |
+        set -ex
         conda create --name flake8_env --yes python=3.8
-        conda activate flake8_env
+        source activate flake8_env
         pip install flake8 mypy==0.770
       displayName: Install flake8
     - bash: |
+        set -ex
         if [[ $BUILD_SOURCEVERSIONMESSAGE =~ \[lint\ skip\] ]]; then
           # skip linting
           echo "Skipping linting"
           exit 0
         else
-          conda activate flake8_env
+          source activate flake8_env
           ./build_tools/circle/linting.sh
         fi
       displayName: Run linting
     - bash: |
+        set -ex
         if [[ $BUILD_SOURCEVERSIONMESSAGE =~ \[lint\ skip\] ]]; then
           # skip linting
           echo "Skipping linting"
           exit 0
         else
-          conda activate flake8_env
+          source activate flake8_env
           mypy sklearn/ --ignore-missing-imports
         fi
       displayName: Run mypy

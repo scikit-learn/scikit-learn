@@ -259,6 +259,7 @@ def _yield_all_checks(name, estimator):
     if is_outlier_detector(estimator):
         for check in _yield_outliers_checks(name, estimator):
             yield check
+    yield check_parameters_default_constructible
     yield check_fit2d_predict1d
     yield check_methods_subset_invariance
     yield check_fit2d_1sample
@@ -334,19 +335,6 @@ def _construct_instance(Estimator):
     return estimator
 
 
-def _get_xfail_checks(estimator):
-    """Get checks marked with xfail_checks tag from estimator"""
-    if isinstance(estimator, type):
-        # try to construct estimator instance, if it is unable to then
-        # the xfail_checks tag is ignored
-        try:
-            estimator = _construct_instance(estimator)
-        except SkipTest:
-            return {}
-
-    return estimator._get_tags()['_xfail_checks'] or {}
-
-
 def _make_check_warn_on_fail(check, xfail_checks_tag):
     """Wrap the check so that a warning is raised when the check is in the
     `xfail_checks` tag and the check properly failed as expected.
@@ -369,35 +357,14 @@ def _make_check_warn_on_fail(check, xfail_checks_tag):
     return wrapped
 
 
-def _generate_instance_checks(name, estimator):
-    """Generate instance checks."""
-    yield from ((estimator, partial(check, name))
-                for check in _yield_all_checks(name, estimator))
-
-
-def _generate_class_checks(name, Estimator):
-    """Generate class checks."""
-    yield (Estimator, partial(check_parameters_default_constructible, name))
-    estimator = _construct_instance(Estimator)
-    yield from _generate_instance_checks(name, estimator)
-
-
-def _generate_checks(Estimator):
-    """Generate checks based on Estimator"""
-    if isinstance(Estimator, type):
-        # got a class
-        name = Estimator.__name__
-        return _generate_class_checks(name, Estimator)
-    # got an instance
-    name = type(Estimator).__name__
-    return _generate_instance_checks(name, Estimator)
-
-
 def _generate_marked_checks(estimator, pytest):
     """Generate checks marked with pytest.mark.xfail according to the
     _xfail_checks tag."""
-    xfail_checks_tag = _get_xfail_checks(estimator)
-    checks_generator = _generate_checks(estimator)
+    name = type(estimator).__name__
+    checks_generator = ((estimator, partial(check, name))
+                        for check in _yield_all_checks(name, estimator))
+
+    xfail_checks_tag = estimator._get_tags()['_xfail_checks'] or {}
 
     for estimator, check in checks_generator:
         check_name = _set_check_estimator_ids(check)
@@ -422,8 +389,12 @@ def parametrize_with_checks(estimators):
 
     Parameters
     ----------
-    estimators : list of estimators objects or classes
+    estimators : list of estimators instances
         Estimators to generated checks for.
+
+        .. versionchanged:: 0.24
+           Passing a class was deprecated in version 0.23, and support for
+           classes was removed in 0.24. Pass an instance instead.
 
     Returns
     -------
@@ -435,12 +406,19 @@ def parametrize_with_checks(estimators):
     >>> from sklearn.linear_model import LogisticRegression
     >>> from sklearn.tree import DecisionTreeRegressor
 
-    >>> @parametrize_with_checks([LogisticRegression, DecisionTreeRegressor])
+    >>> @parametrize_with_checks([LogisticRegression(),
+    ...                           DecisionTreeRegressor()])
     ... def test_sklearn_compatible_estimator(estimator, check):
     ...     check(estimator)
 
     """
     import pytest
+
+    if any(isinstance(est, type) for est in estimators):
+        msg = ("Passing a class was deprecated in version 0.23 "
+               "and isn't supported anymore from 0.24."
+               "Please pass an instance instead.")
+        raise TypeError(msg)
 
     checks_with_marks = chain.from_iterable(
         _generate_marked_checks(estimator, pytest)
@@ -454,15 +432,11 @@ def check_estimator(Estimator, generate_only=False):
     """Check if estimator adheres to scikit-learn conventions.
 
     This estimator will run an extensive test-suite for input validation,
-    shapes, etc, making sure that the estimator complies with `scikit-leanrn`
+    shapes, etc, making sure that the estimator complies with `scikit-learn`
     conventions as detailed in :ref:`rolling_your_own_estimator`.
     Additional tests for classifiers, regressors, clustering or transformers
     will be run if the Estimator class inherits from the corresponding mixin
     from sklearn.base.
-
-    This test can be applied to classes or instances.
-    Classes currently have some additional tests that related to construction,
-    while passing instances allows the testing of multiple options.
 
     Setting `generate_only=True` returns a generator that yields (estimator,
     check) tuples where the check can be called independently from each
@@ -475,8 +449,12 @@ def check_estimator(Estimator, generate_only=False):
 
     Parameters
     ----------
-    estimator : estimator object or class
-        Estimator to check. Estimator is a class object or instance.
+    estimator : estimator object
+        Estimator instance to check.
+
+        .. versionchanged:: 0.24
+           Passing a class was deprecated in version 0.23, and support for
+           classes was removed in 0.24.
 
     generate_only : bool, optional (default=False)
         When `False`, checks are evaluated when `check_estimator` is called.
@@ -492,10 +470,19 @@ def check_estimator(Estimator, generate_only=False):
         Generator that yields (estimator, check) tuples. Returned when
         `generate_only=True`.
     """
-    checks_generator = _generate_checks(Estimator)
+    if isinstance(Estimator, type):
+        msg = ("Passing a class was deprecated in version 0.23 "
+               "and isn't supported anymore from 0.24."
+               "Please pass an instance instead.")
+        raise TypeError(msg)
 
-    # wrap checks based on xfail_checks
-    xfail_checks_tag = _get_xfail_checks(Estimator)
+    estimator = Estimator
+    name = type(estimator).__name__
+
+    xfail_checks_tag = estimator._get_tags()['_xfail_checks'] or {}
+
+    checks_generator = ((estimator, partial(check, name))
+                        for check in _yield_all_checks(name, estimator))
     checks_generator = (
         (estimator,
          _make_check_warn_on_fail(check, xfail_checks_tag=xfail_checks_tag))
@@ -1574,11 +1561,6 @@ def check_estimators_pickle(name, estimator_orig):
     set_random_state(estimator)
     estimator.fit(X, y)
 
-    result = dict()
-    for method in check_methods:
-        if hasattr(estimator, method):
-            result[method] = getattr(estimator, method)(X)
-
     # pickle and unpickle!
     pickled_estimator = pickle.dumps(estimator)
     if estimator.__module__.startswith('sklearn.'):
@@ -2603,9 +2585,11 @@ def check_estimators_data_not_an_array(name, estimator_orig, X, y, obj_type):
 
 
 def check_parameters_default_constructible(name, Estimator):
-    # this check works on classes, not instances
     # test default-constructibility
     # get rid of deprecation warnings
+
+    Estimator = Estimator.__class__
+
     with ignore_warnings(category=FutureWarning):
         estimator = _construct_instance(Estimator)
         # test cloning

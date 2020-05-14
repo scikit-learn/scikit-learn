@@ -23,6 +23,7 @@ from sklearn import datasets
 
 from sklearn.base import TransformerMixin
 from sklearn.utils._mocking import MockDataFrame
+from sklearn import config_context
 import pickle
 
 
@@ -211,10 +212,10 @@ def test_repr():
     test = T(K(), K())
     assert (
         repr(test) ==
-        "T(a=K(c=None, d=None), b=K(c=None, d=None))")
+        "T(a=K(), b=K())")
 
     some_est = T(a=["long_params"] * 1000)
-    assert len(repr(some_est)) == 495
+    assert len(repr(some_est)) == 485
 
 
 def test_str():
@@ -511,3 +512,28 @@ def test_warns_on_get_params_non_attribute():
         params = est.get_params()
 
     assert params['param'] is None
+
+
+def test_repr_mimebundle_():
+    # Checks the display configuration flag controls the json output
+    tree = DecisionTreeClassifier()
+    output = tree._repr_mimebundle_()
+    assert "text/plain" in output
+    assert "text/html" not in output
+
+    with config_context(display='diagram'):
+        output = tree._repr_mimebundle_()
+        assert "text/plain" in output
+        assert "text/html" in output
+
+
+def test_repr_html_wraps():
+    # Checks the display configuration flag controls the html output
+    tree = DecisionTreeClassifier()
+    msg = "_repr_html_ is only defined when"
+    with pytest.raises(AttributeError, match=msg):
+        output = tree._repr_html_()
+
+    with config_context(display='diagram'):
+        output = tree._repr_html_()
+        assert "<style>" in output

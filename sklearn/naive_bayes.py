@@ -140,6 +140,8 @@ class GaussianNB(_BaseNB):
         Portion of the largest variance of all features that is added to
         variances for calculation stability.
 
+        .. versionadded:: 0.20
+
     Attributes
     ----------
     class_count_ : ndarray of shape (n_classes,)
@@ -784,6 +786,8 @@ class ComplementNB(_BaseDiscreteNB):
     particularly suited for imbalanced data sets.
 
     Read more in the :ref:`User Guide <complement_naive_bayes>`.
+
+    .. versionadded:: 0.20
 
     Parameters
     ----------

@@ -248,8 +248,8 @@ code. Follow these steps:
        $> valgrind -v --suppressions=valgrind-python.supp python my_test_script.py
 
 .. _valgrind: http://valgrind.org
-.. _`README.valgrind`: https://svn.python.org/projects/python/trunk/Misc/README.valgrind
-.. _`valgrind-python.supp`: https://svn.python.org/projects/python/trunk/Misc/valgrind-python.supp
+.. _`README.valgrind`: https://github.com/python/cpython/blob/master/Misc/README.valgrind
+.. _`valgrind-python.supp`: https://github.com/python/cpython/blob/master/Misc/valgrind-python.supp
 
 
 The result will be a list of all the memory-related errors, which reference
