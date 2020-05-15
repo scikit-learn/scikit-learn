@@ -881,8 +881,8 @@ def check_sample_weights_invariance(name, estimator_orig, kind="ones"):
             sw2[len(y):] = 0
             X2, y2, sw2 = shuffle(X2, y2, sw2, random_state=0)
 
-            err_msg = (f"For {name} sample_weight is not equivalent "
-                       f"to removing samples")
+            err_msg = (f"For {name}, a zero sample_weight is not equivalent "
+                       f"to removing the sample")
         else:
             raise ValueError
 
