@@ -137,9 +137,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         if return_counts:
             process_counts(category_counts, n_samples)
 
-    def _transform(self, X, handle_unknown='error',
-                   transform_valid_mask=None,
-                   get_invalid_category=None):
+    def _transform(self, X, handle_unknown='error'):
         X_list, n_samples, n_features = self._check_X(X)
 
         X_int = np.zeros((n_samples, n_features), dtype=np.int)
@@ -174,16 +172,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                     else:
                         Xi = Xi.copy()
 
-                    if get_invalid_category is not None:
-                        invalid_index = get_invalid_category(i)
-                    else:
-                        invalid_index = 0
-
-                    Xi[~valid_mask] = self.categories_[i][invalid_index]
-
-                    if transform_valid_mask is not None:
-                        valid_mask = transform_valid_mask(valid_mask, i)
-
+                    Xi[~valid_mask] = self.categories_[i][0]
                     X_mask[:, i] = valid_mask
 
             # We use check_unknown=False, since _encode_check_unknown was
@@ -602,7 +591,7 @@ class OneHotEncoder(_BaseEncoder):
 
         self._default_to_infrequent_mappings = default_to_infrequent_mappings
 
-    def _map_to_infrequent_categories(self, X_int):
+    def _map_to_infrequent_categories(self, X_int, X_mask):
         """Map categories to infrequent categories.
         This modifies X_int in-place.
 
@@ -614,52 +603,22 @@ class OneHotEncoder(_BaseEncoder):
         if not self._infrequent_enabled():
             return
 
+        n_features = X_int.shape[1]
+        for col_idx in range(n_features):
+            infrequent_idx = self.infrequent_indices_[col_idx]
+            if infrequent_idx is None:
+                continue
+
+            X_int[~X_mask[:, col_idx], col_idx] = infrequent_idx[0]
+            if self.handle_unknown == 'auto':
+                # unknown values will be mapped to infrequent in the next for
+                # loop
+                X_mask[:, col_idx] = True
+
         for i, mapping in enumerate(self._default_to_infrequent_mappings):
             if mapping is None:
                 continue
             X_int[:, i] = np.take(mapping, X_int[:, i])
-
-    def _get_invalid_category(self, col_idx):
-        """Get default invalid category for column index during `_transform`.
-
-        This function is pasesd to `_transform` to set the invalid categories.
-        """
-        infrequent_idx = self.infrequent_indices_[col_idx]
-        return 0 if infrequent_idx is None else infrequent_idx[0]
-
-    def _transform_valid_mask(self, valid_mask, col_idx):
-        """Process the valid mask during `_transform`
-
-        This function is passed to `_transform` to adjust the mask depending
-        on if the infrequent column exists or not.
-
-        Parameters
-        ----------
-        valid_mask : array of shape (n_samples, )
-            boolean mask representing if a sample was seen during training
-
-        col_idx : int
-            column index
-
-        Returns
-        -------
-        valid_mask : array of shape (n_samples,) or None
-            boolean mask to use for constructing X_mask in `_transform`.
-        """
-        if self.handle_unknown != 'auto':
-            return valid_mask
-
-        # handle_unknown == 'auto'
-        infrequent_idx = self.infrequent_indices_[col_idx]
-
-        # infrequent column does not exists
-        # returning the original mask to allow the column to be ignored
-        if infrequent_idx is None:
-            return valid_mask
-
-        # infrequent column exists
-        # the unknown categories will be mapped to the infrequent category
-        return np.ones_like(valid_mask, dtype=bool)
 
     def _compute_transformed_categories(self, i):
         """Compute the transformed categories used for column `i`.
@@ -789,15 +748,8 @@ class OneHotEncoder(_BaseEncoder):
         """
         check_is_fitted(self)
         # validation of X happens in _check_X called by _transform
-        transform_kws = {"handle_unknown": self.handle_unknown}
-        if self._infrequent_enabled():
-            transform_kws.update({
-                "transform_valid_mask": self._transform_valid_mask,
-                "get_invalid_category": self._get_invalid_category
-            })
-
-        X_int, X_mask = self._transform(X, **transform_kws)
-        self._map_to_infrequent_categories(X_int)
+        X_int, X_mask = self._transform(X, handle_unknown=self.handle_unknown)
+        self._map_to_infrequent_categories(X_int, X_mask)
 
         n_samples, n_features = X_int.shape
 
