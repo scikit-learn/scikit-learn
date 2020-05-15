@@ -189,7 +189,7 @@ def _take_along_axis(arr, indices, axis):
         # build a fancy index, consisting of orthogonal aranges, with the
         # requested index inserted at the right location
         fancy_index = []
-        for dim, n in zip(dest_dims, array.shape):
+        for dim, n in zip(dest_dims, arr.shape):
             if dim is None:
                 fancy_index.append(indices)
             else:
