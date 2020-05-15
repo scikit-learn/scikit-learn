@@ -108,8 +108,8 @@ plot_top_words(nmf, tfidf_feature_names, n_top_words,
                'Topics in NMF model (Frobenius norm)')
 
 # Fit the NMF model
-print('\n'*4, "Fitting the NMF model (generalized Kullback-Leibler divergence)"
-      "with tf-idf features, n_samples=%d and n_features=%d..."
+print('\n' * 2, "Fitting the NMF model (generalized Kullback-Leibler divergence)"
+      " with tf-idf features, n_samples=%d and n_features=%d..."
       % (n_samples, n_features))
 t0 = time()
 nmf = NMF(n_components=n_components, random_state=1,
@@ -121,7 +121,7 @@ tfidf_feature_names = tfidf_vectorizer.get_feature_names()
 plot_top_words(nmf, tfidf_feature_names, n_top_words,
                'Topics in NMF model (generalized Kullback-Leibler divergence)')
 
-print('\n'*4, "Fitting LDA models with tf features, "
+print('\n' * 2, "Fitting LDA models with tf features, "
       "n_samples=%d and n_features=%d..."
       % (n_samples, n_features))
 lda = LatentDirichletAllocation(n_components=n_components, max_iter=5,
