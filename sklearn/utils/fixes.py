@@ -165,3 +165,35 @@ class loguniform(scipy.stats.reciprocal):
 )
 class MaskedArray(_MaskedArray):
     pass  # TODO: remove in 0.25
+
+
+def _take_along_axis(arr, indicies, axis):
+    import numpy
+
+    if numpy.__version__ >= LooseVersion('1.15'):
+        return numpy.take_along_axis(arr=arr, indicies=indicies, axis=axis)
+    else:
+        if axis is None:
+            arr = arr.flatten()
+
+    if numpy.issubdtype(indices.dtype, numpy.intp):
+        raise IndexError('`indices` must be an integer array')
+    if arr.ndim != indices.ndim:
+    raise ValueError(
+        "`indices` and `arr` must have the same number of dimensions")
+
+    shape_ones = (1,) * indices.ndim
+    dest_dims = list(range(axis)) + [None] + list(range(axis+1, indices.ndim))
+
+    # build a fancy index, consisting of orthogonal aranges, with the
+    # requested index inserted at the right location
+    fancy_index = []
+    for dim, n in zip(dest_dims, arr_shape):
+        if dim is None:
+            fancy_index.append(indices)
+        else:
+            ind_shape = shape_ones[:dim] + (-1,) + shape_ones[dim+1:]
+            fancy_index.append(_nx.arange(n).reshape(ind_shape))
+
+    fancy_index = tuple(fancy_index)
+    return arr[fancy_index]
