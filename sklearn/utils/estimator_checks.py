@@ -58,7 +58,8 @@ BOSTON = None
 CROSS_DECOMPOSITION = ['PLSCanonical', 'PLSRegression', 'CCA', 'PLSSVD']
 
 
-def _yield_checks(name, estimator):
+def _yield_checks(estimator):
+    name = estimator.__class__.__name__
     tags = estimator._get_tags()
     yield check_no_attributes_set_in_init
     yield check_estimators_dtypes
@@ -101,7 +102,7 @@ def _yield_checks(name, estimator):
     yield check_estimators_pickle
 
 
-def _yield_classifier_checks(name, classifier):
+def _yield_classifier_checks(classifier):
     tags = classifier._get_tags()
 
     # test classifiers can handle non-array data and pandas objects
@@ -156,7 +157,7 @@ def check_supervised_y_no_nan(name, estimator_orig):
                          "array y with NaN value.".format(name))
 
 
-def _yield_regressor_checks(name, regressor):
+def _yield_regressor_checks(regressor):
     tags = regressor._get_tags()
     # TODO: test with intercept
     # TODO: test with multiple responses
@@ -173,6 +174,7 @@ def _yield_regressor_checks(name, regressor):
     if not tags["no_validation"]:
         yield check_supervised_y_2d
     yield check_supervised_y_no_nan
+    name = regressor.__class__.__name__
     if name != 'CCA':
         # check that the regressor handles int input
         yield check_regressors_int
@@ -181,7 +183,7 @@ def _yield_regressor_checks(name, regressor):
     yield check_non_transformer_estimators_n_iter
 
 
-def _yield_transformer_checks(name, transformer):
+def _yield_transformer_checks(transformer):
     # All transformers should either deal with sparse data or raise an
     # exception with type TypeError and an intelligible error message
     if not transformer._get_tags()["no_validation"]:
@@ -195,12 +197,15 @@ def _yield_transformer_checks(name, transformer):
     # param is non-trivial.
     external_solver = ['Isomap', 'KernelPCA', 'LocallyLinearEmbedding',
                        'RandomizedLasso', 'LogisticRegressionCV']
+
+    name = transformer.__class__.__name__
     if name not in external_solver:
         yield check_transformer_n_iter
 
 
-def _yield_clustering_checks(name, clusterer):
+def _yield_clustering_checks(clusterer):
     yield check_clusterer_compute_labels_predict
+    name = clusterer.__class__.__name__
     if name not in ('WardAgglomeration', "FeatureAgglomeration"):
         # this is clustering on the features
         # let's not test that here.
@@ -210,7 +215,7 @@ def _yield_clustering_checks(name, clusterer):
     yield check_non_transformer_estimators_n_iter
 
 
-def _yield_outliers_checks(name, estimator):
+def _yield_outliers_checks(estimator):
 
     # checks for outlier detectors that have a fit_predict method
     if hasattr(estimator, 'fit_predict'):
@@ -227,7 +232,8 @@ def _yield_outliers_checks(name, estimator):
             yield check_estimators_unfitted
 
 
-def _yield_all_checks(name, estimator):
+def _yield_all_checks(estimator):
+    name = estimator.__class__.__name__
     tags = estimator._get_tags()
     if "2darray" not in tags["X_types"]:
         warnings.warn("Can't test estimator {} which requires input "
@@ -240,22 +246,22 @@ def _yield_all_checks(name, estimator):
                       SkipTestWarning)
         return
 
-    for check in _yield_checks(name, estimator):
+    for check in _yield_checks(estimator):
         yield check
     if is_classifier(estimator):
-        for check in _yield_classifier_checks(name, estimator):
+        for check in _yield_classifier_checks(estimator):
             yield check
     if is_regressor(estimator):
-        for check in _yield_regressor_checks(name, estimator):
+        for check in _yield_regressor_checks(estimator):
             yield check
     if hasattr(estimator, 'transform'):
-        for check in _yield_transformer_checks(name, estimator):
+        for check in _yield_transformer_checks(estimator):
             yield check
     if isinstance(estimator, ClusterMixin):
-        for check in _yield_clustering_checks(name, estimator):
+        for check in _yield_clustering_checks(estimator):
             yield check
     if is_outlier_detector(estimator):
-        for check in _yield_outliers_checks(name, estimator):
+        for check in _yield_outliers_checks(estimator):
             yield check
     yield check_parameters_default_constructible
     yield check_fit2d_predict1d
@@ -413,7 +419,7 @@ def parametrize_with_checks(estimators):
 
     checks_generator = ((estimator, partial(check, name))
                         for name, estimator in zip(names, estimators)
-                        for check in _yield_all_checks(name, estimator))
+                        for check in _yield_all_checks(estimator))
 
     checks_with_marks = (
         _mark_xfail_checks(estimator, check, pytest)
@@ -476,7 +482,7 @@ def check_estimator(Estimator, generate_only=False):
 
     checks_generator = ((estimator,
                          partial(_skip_if_xfail(estimator, check), name))
-                        for check in _yield_all_checks(name, estimator))
+                        for check in _yield_all_checks(estimator))
 
     if generate_only:
         return checks_generator
