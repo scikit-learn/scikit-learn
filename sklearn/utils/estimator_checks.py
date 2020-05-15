@@ -5,8 +5,7 @@ import traceback
 import pickle
 import re
 from copy import deepcopy
-from functools import partial
-from itertools import chain
+from functools import partial, wraps
 from inspect import signature
 
 import numpy as np
@@ -350,6 +349,24 @@ def _mark_xfail_checks(estimator, check, pytest):
                             marks=pytest.mark.xfail(reason=reason))
 
 
+def _skip_if_xfail(estimator, check):
+    # wrap a check so that it's skipped with a warning if it's part of the
+    # xfail_checks tag.
+    xfail_checks = estimator._get_tags()['_xfail_checks'] or {}
+    check_name = _set_check_estimator_ids(check)
+
+    if check_name not in xfail_checks:
+        return check
+
+    @wraps(check)
+    def wrapped(*args, **kwargs):
+        raise SkipTest(
+            f"Skipping {check_name} for {estimator.__class__.__name__}"
+        )
+
+    return wrapped
+
+
 def parametrize_with_checks(estimators):
     """Pytest specific decorator for parametrizing estimator checks.
 
@@ -392,9 +409,11 @@ def parametrize_with_checks(estimators):
                "Please pass an instance instead.")
         raise TypeError(msg)
 
-    checks_generator = chain.from_iterable(
-        check_estimator(estimator, generate_only=True)
-        for estimator in estimators)
+    names = (type(estimator).__name__ for estimator in estimators)
+
+    checks_generator = ((estimator, partial(check, name))
+                        for name, estimator in zip(names, estimators)
+                        for check in _yield_all_checks(name, estimator))
 
     checks_with_marks = (
         _mark_xfail_checks(estimator, check, pytest)
@@ -455,7 +474,8 @@ def check_estimator(Estimator, generate_only=False):
     estimator = Estimator
     name = type(estimator).__name__
 
-    checks_generator = ((estimator, partial(check, name))
+    checks_generator = ((estimator,
+                         partial(_skip_if_xfail(estimator, check), name))
                         for check in _yield_all_checks(name, estimator))
 
     if generate_only:
@@ -465,8 +485,8 @@ def check_estimator(Estimator, generate_only=False):
         try:
             check(estimator)
         except SkipTest as exception:
-            # the only SkipTest thrown currently results from not
-            # being able to import pandas.
+            # SkipTest is thrown when pandas can't be imported, or by checks
+            # that are in the xfail_checks tag
             warnings.warn(str(exception), SkipTestWarning)
 
 

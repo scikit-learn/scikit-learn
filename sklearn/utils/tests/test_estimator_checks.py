@@ -32,11 +32,12 @@ from sklearn.mixture import GaussianMixture
 from sklearn.cluster import MiniBatchKMeans
 from sklearn.decomposition import NMF
 from sklearn.linear_model import MultiTaskElasticNet, LogisticRegression
-from sklearn.svm import SVC
+from sklearn.svm import SVC, NuSVC
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils.validation import check_array
 from sklearn.utils import all_estimators
+from sklearn.exceptions import SkipTestWarning
 
 
 class CorrectNotFittedError(ValueError):
@@ -609,3 +610,9 @@ if __name__ == '__main__':
     # This module is run as a script to check that we have no dependency on
     # pytest for estimator checks.
     run_tests_without_pytest()
+
+
+def test_xfail_ignored_in_check_estimator():
+    # Make sure checks marked as xfail are just ignored and not run by
+    # check_estimator(), but still raise a warning.
+    assert_warns(SkipTestWarning, check_estimator, NuSVC())
