@@ -271,6 +271,9 @@ def elkan_iter_chunked_dense(
     # count remainder chunk in total number of chunks
     n_chunks += n_samples != n_chunks * n_samples_chunk
 
+    # number of threads should not be bigger than number of chunks
+    n_threads = min(n_threads, n_chunks)
+
     if update_centers:
         memset(&centers_new[0, 0], 0, n_clusters * n_features * sizeof(floating))
         memset(&weight_in_clusters[0], 0, n_clusters * sizeof(floating))
@@ -501,6 +504,9 @@ def elkan_iter_chunked_sparse(
 
     # count remainder chunk in total number of chunks
     n_chunks += n_samples != n_chunks * n_samples_chunk
+
+    # number of threads should not be bigger than number of chunks
+    n_threads = min(n_threads, n_chunks)
 
     if update_centers:
         memset(&centers_new[0, 0], 0, n_clusters * n_features * sizeof(floating))
