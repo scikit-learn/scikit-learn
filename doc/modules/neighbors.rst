@@ -422,15 +422,18 @@ conditions are verified:
 * ``metric = 'precomputed'``
 * :math:`D > 15`
 * :math:`k >= N/2`
-* ``effective_metric_`` isn't in the ``VALID_METRICS`` list for either ``'kd_tree'`` or ``'ball_tree'``
+* ``effective_metric_`` isn't in the ``VALID_METRICS`` list for either
+  ``'kd_tree'`` or ``'ball_tree'``
 
 Otherwise, it selects the first out of ``'kd_tree'`` and ``'ball_tree'`` that
 has ``effective_metric_`` in its ``VALID_METRICS`` list. This heuristic is
 based on the following assumptions:
 
-* the number of query points is at least the same order as the number of training points
+* the number of query points is at least the same order as the number of
+  training points
 * ``leaf_size`` is close to its default value of ``30``
-* when :math:`D > 15`, the intrinsic dimensionality of the data is generally to high for tree-based methods
+* when :math:`D > 15`, the intrinsic dimensionality of the data is generally
+  to high for tree-based methods
 
 Effect of ``leaf_size``
 -----------------------
