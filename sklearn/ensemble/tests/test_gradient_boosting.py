@@ -685,7 +685,7 @@ def test_oob_improvement():
     assert clf.oob_improvement_.shape[0] == 100
     # hard-coded regression test - change if modification in OOB computation
     assert_array_almost_equal(clf.oob_improvement_[:5],
-                              np.array([0.19, 0.15, 0.12, -0.12, -0.11]),
+                              np.array([0.19, 0.16, 0.13, -0.12, -0.12]),
                               decimal=2)
 
 
@@ -1223,9 +1223,9 @@ def test_gradient_boosting_early_stopping():
     X_train, X_test, y_train, y_test = train_test_split(X, y,
                                                         random_state=42)
     # Check if early_stopping works as expected
-    for est, tol, early_stop_n_estimators in ((gbc, 1e-1, 28), (gbr, 1e-1, 13),
-                                              (gbc, 1e-3, 70),
-                                              (gbr, 1e-3, 28)):
+    for est, tol, early_stop_n_estimators in ((gbc, 1e-1, 28), (gbr, 1e-1, 14),
+                                              (gbc, 1e-3, 65),
+                                              (gbr, 1e-3, 49)):
         est.set_params(tol=tol)
         est.fit(X_train, y_train)
         assert est.n_estimators_ == early_stop_n_estimators
@@ -1403,3 +1403,52 @@ def test_presort_deprecated(Cls, presort):
     with pytest.warns(FutureWarning,
                       match="The parameter 'presort' is deprecated "):
         gb.fit(X, y)
+
+
+@pytest.mark.parametrize('GradientBoosting, X, y', [
+    (GradientBoostingClassifier, X, y),
+    (GradientBoostingRegressor, X, y)
+])
+@pytest.mark.parametrize('rng_type', ('none', 'int', 'instance'))
+def test_random_seeds_warm_start(GradientBoosting, X, y, rng_type):
+    # Make sure the seeds for train/val split and small trainset subsampling
+    # are correctly set in a warm start context.
+    def _get_rng(rng_type):
+        # Helper to avoid consuming rngs
+        if rng_type == 'none':
+            return None
+        elif rng_type == 'int':
+            return 42
+        else:
+            return np.random.RandomState(0)
+
+    random_state = _get_rng(rng_type)
+    gb_1 = GradientBoosting(n_estimators=3, random_state=random_state)
+    gb_1.fit(X, y)
+    random_seed_1_1 = gb_1._random_seed
+
+    gb_1.fit(X, y)
+    random_seed_1_2 = gb_1._random_seed  # clear the old state, different seed
+
+    random_state = _get_rng(rng_type)
+    gb_2 = GradientBoosting(n_estimators=3, random_state=random_state,
+                            warm_start=True)
+    gb_2.fit(X, y)  # inits state
+    random_seed_2_1 = gb_2._random_seed
+    gb_2.fit(X, y)  # clears old state and equals est
+    random_seed_2_2 = gb_2._random_seed
+
+    # Without warm starting, the seeds should be
+    # * all different if random state is None
+    # * all equal if random state is an integer
+    # * different when refitting and equal with a new estimator (because
+    #   the random state is mutated)
+    if rng_type == 'none':
+        assert random_seed_1_1 != random_seed_1_2 != random_seed_2_1
+    elif rng_type == 'int':
+        assert random_seed_1_1 == random_seed_1_2 == random_seed_2_1
+    else:
+        assert random_seed_1_1 == random_seed_2_1 != random_seed_1_2
+
+    # With warm starting, the seeds must be equal
+    assert random_seed_2_1 == random_seed_2_2

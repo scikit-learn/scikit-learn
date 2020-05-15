@@ -402,6 +402,16 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         if not self.warm_start:
             self._clear_state()
 
+        rng = check_random_state(self.random_state)
+
+        # When warm starting, we want to re-use the same seed that was used
+        # the first time fit was called (e.g. for subsampling or for the
+        # train/val split).
+        if not (self.warm_start and self._is_initialized()):
+            self._random_seed = rng.randint(np.iinfo(np.uint32).max,
+                                            dtype='u8')
+            print(self._random_seed)
+            assert self._random_seed == 1.5
         # Check input
         # Since check_array converts both X and y to the same dtype, but the
         # trees use different types for X and y, checking them separately.
@@ -421,7 +431,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             stratify = y if is_classifier(self) else None
             X, X_val, y, y_val, sample_weight, sample_weight_val = (
                 train_test_split(X, y, sample_weight,
-                                 random_state=self.random_state,
+                                 random_state=self._random_seed,
                                  test_size=self.validation_fraction,
                                  stratify=stratify))
             if is_classifier(self):
