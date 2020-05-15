@@ -10,6 +10,7 @@
 # License: BSD 3 clause
 
 from functools import wraps
+from functools import lru_cache
 import warnings
 import numbers
 
@@ -37,6 +38,7 @@ FLOAT_DTYPES = (np.float64, np.float32, np.float16)
 warnings.simplefilter('ignore', NonBLASDotWarning)
 
 
+@lru_cache()
 def _deprecate_positional_args(f):
     """Decorator for methods that issues warnings for positional arguments
 
@@ -61,15 +63,18 @@ def _deprecate_positional_args(f):
     @wraps(f)
     def inner_f(*args, **kwargs):
         extra_args = len(args) - len(all_args)
-        if extra_args > 0:
-            # ignore first 'self' argument for instance methods
-            args_msg = ['{}={}'.format(name, arg)
-                        for name, arg in zip(kwonly_args[:extra_args],
-                                             args[-extra_args:])]
-            warnings.warn("Pass {} as keyword args. From version 0.25 "
-                          "passing these as positional arguments will "
-                          "result in an error".format(", ".join(args_msg)),
-                          FutureWarning)
+        if extra_args <= 0:
+            return f(*args, **kwargs)
+
+        # extra_args > 0
+        # ignore first 'self' argument for instance methods
+        args_msg = ['{}={}'.format(name, arg)
+                    for name, arg in zip(kwonly_args[:extra_args],
+                                         args[-extra_args:])]
+        warnings.warn("Pass {} as keyword args. From version 0.25 "
+                      "passing these as positional arguments will "
+                      "result in an error".format(", ".join(args_msg)),
+                      FutureWarning)
         kwargs.update({k: arg for k, arg in zip(sig.parameters, args)})
         return f(**kwargs)
     return inner_f
