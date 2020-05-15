@@ -128,7 +128,33 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
 
 def _get_feature_importances(estimator, getter, transform_func=None,
                              norm_order=1):
-    """Retrieve or aggregate feature importances from estimator"""
+    """
+    Retrieve and aggregate (ndim > 1)  the feature importances
+    from an estimator. Also optionally applies transformation.
+
+    Parameters
+    ----------
+    estimator : estimator
+        A scikit-learn estimator from which we want to get the feature
+        importances.
+
+    getter : "auto", str or callable
+        An attribute or a callable to get the feature importance. If `"auto"`,
+        `estimator` is expected to expose `coef_` or `feature_importances`.
+
+    transform_func : {"norm", "square"}, default=None
+        The transform to apply to the feature importances. By default (`None`)
+        no transformation is applied.
+
+    norm_order : int, default=1
+        The norm order to apply when `transform_func="norm"`. Only applied
+        when `importances.ndim > 1`.
+
+    Returns
+    -------
+    importances : ndarray of shape (n_features,)
+        The features importances, optionally transformed.
+    """
     if isinstance(getter, str):
         if getter == 'auto':
             if hasattr(estimator, 'coef_'):
@@ -151,7 +177,9 @@ def _get_feature_importances(estimator, getter, transform_func=None,
         )
     importances = getter(estimator)
 
-    if transform_func == "norm":
+    if transform_func is None:
+        return importances
+    elif transform_func == "norm":
         if importances.ndim == 1:
             importances = np.abs(importances)
         else:
@@ -162,9 +190,9 @@ def _get_feature_importances(estimator, getter, transform_func=None,
             importances = safe_sqr(importances)
         else:
             importances = safe_sqr(importances).sum(axis=0)
-    elif not transform_func:
+    else:
         raise ValueError("Valid values for `transform_func` are " +
-                         "'norm' and 'square'. Those two " +
+                         "None, 'norm' and 'square'. Those two " +
                          "transformation are only supported now")
 
     return importances
