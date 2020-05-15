@@ -167,11 +167,11 @@ class MaskedArray(_MaskedArray):
     pass  # TODO: remove in 0.25
 
 
-def _take_along_axis(arr, indicies, axis):
+def _take_along_axis(arr, indices, axis):
     import numpy
 
     if numpy.__version__ >= LooseVersion('1.15'):
-        return numpy.take_along_axis(arr=arr, indicies=indicies, axis=axis)
+        return numpy.take_along_axis(arr=arr, indices=indices, axis=axis)
     else:
         if axis is None:
             arr = arr.flatten()
