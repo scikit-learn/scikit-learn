@@ -95,21 +95,23 @@ def test_unsupported_loss():
 #     _test(4294967295, 9)  # max unsigned int size
 
 
-def test_bounded_rand_int():
-    def _test(orig_range):
-        n_pts = 1000
-        n_iter = 100
-        ks_pvals = []
-        uniform_dist = stats.uniform(loc=0, scale=orig_range)
-        # avg over multiple tests to make chance of outlier result negligible
-        for _ in range(n_iter):
-            # Deterministic random sampling
-            sample = [bounded_rand_int_wrap(orig_range) for _ in range(n_pts)]
-            res = stats.kstest(sample, uniform_dist.cdf)
-            ks_pvals.append(res.pvalue)
-        avg_pval = np.mean(ks_pvals)
-        assert(avg_pval > 0.05),\
-            'p-value of {} not > 0.05, '\
-            'therefore distribution isn\'t uniform'.format(avg_pval)
-    _test(2147483647)  # max int
-    _test(100)  # arbitrary less than max max int
+_MAX_INT = 2147483647
+@pytest.mark.parametrize('orig_range, n_pts',
+                         [(_MAX_INT, 10000), (100, 10)])
+def test_bounded_rand_int(orig_range, n_pts):
+    n_iter = 100
+    ks_pvals = []
+    uniform_dist = stats.uniform(loc=0, scale=orig_range)
+    # perform multiple samplings to make chance of outlier sampling negligible
+    for _ in range(n_iter):
+        # Deterministic random sampling
+        sample = [bounded_rand_int_wrap(orig_range) for _ in range(n_pts)]
+        res = stats.kstest(sample, uniform_dist.cdf)
+        ks_pvals.append(res.pvalue)
+    min_10pct_pval = np.quantile(ks_pvals, q=0.1)
+    # lower 10th quantile pvalue <= 0.05 means that the test rejects the
+    # null hypothesis that the sample came from the uniform distribution
+    assert(min_10pct_pval > 0.05),\
+        'lower 10th quantile p-value of {} not > 0.05, '\
+        'therefore distribution isn\'t sufficiently uniform'\
+        .format(min_10pct_pval)
