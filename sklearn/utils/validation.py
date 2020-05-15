@@ -50,11 +50,11 @@ def _deprecate_positional_args(f):
     f : function
         function to check arguments on
     """
-    sig = signature(f)
+    parameters = signature(f).parameters
     kwonly_args = []
     all_args = []
 
-    for name, param in sig.parameters.items():
+    for name, param in parameters.items():
         if param.kind == Parameter.POSITIONAL_OR_KEYWORD:
             all_args.append(name)
         elif param.kind == Parameter.KEYWORD_ONLY:
@@ -67,7 +67,6 @@ def _deprecate_positional_args(f):
             return f(*args, **kwargs)
 
         # extra_args > 0
-        # ignore first 'self' argument for instance methods
         args_msg = ['{}={}'.format(name, arg)
                     for name, arg in zip(kwonly_args[:extra_args],
                                          args[-extra_args:])]
@@ -75,7 +74,7 @@ def _deprecate_positional_args(f):
                       "passing these as positional arguments will "
                       "result in an error".format(", ".join(args_msg)),
                       FutureWarning)
-        kwargs.update({k: arg for k, arg in zip(sig.parameters, args)})
+        kwargs.update({k: arg for k, arg in zip(parameters, args)})
         return f(**kwargs)
     return inner_f
 
