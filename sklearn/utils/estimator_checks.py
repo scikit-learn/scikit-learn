@@ -419,7 +419,7 @@ def parametrize_with_checks(estimators):
 
     checks_generator = ((estimator, partial(check, name))
                         for name, estimator in zip(names, estimators)
-                        for check in _yield_all_checks(name, estimator))
+                        for check in _yield_all_checks(estimator))
 
     checks_with_marks = (
         _mark_xfail_checks(estimator, check, pytest)
