@@ -4,7 +4,7 @@ Comparing randomized search and grid search for hyperparameter estimation
 =========================================================================
 
 Compare randomized search and grid search for optimizing hyperparameters of a
-random forest.
+linear SVM with SGD training.
 All parameters that influence the learning are searched simultaneously
 (except for the number of estimators, which poses a time / quality tradeoff).
 
@@ -14,9 +14,6 @@ time for randomized search is drastically lower.
 
 The performance is may slightly worse for the randomized search, and is likely
 due to a noise effect and would not carry over to a held-out test set.
-
-Note that in practice, one would not search over this many different parameters
-simultaneously using grid search, but pick only the ones deemed most important.
 """
 print(__doc__)
 

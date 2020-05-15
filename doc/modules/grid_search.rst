@@ -158,7 +158,7 @@ variable that is log-uniformly distributed between ``1e0`` and ``1e3``::
 
 .. topic:: Examples:
 
-    * :ref:`sphx_glr_auto_examples_model_selection_plot_randomized_search.py` compares the usage and efficiency
+    * :ref:`sphx_glr_auto_examples_model_selection_compare_randomized_search.py` compares the usage and efficiency
       of randomized search and grid search.
 
 .. topic:: References:
