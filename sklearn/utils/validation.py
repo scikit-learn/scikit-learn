@@ -10,7 +10,6 @@
 # License: BSD 3 clause
 
 from functools import wraps
-from functools import lru_cache
 import warnings
 import numbers
 
@@ -38,7 +37,6 @@ FLOAT_DTYPES = (np.float64, np.float32, np.float16)
 warnings.simplefilter('ignore', NonBLASDotWarning)
 
 
-@lru_cache()
 def _deprecate_positional_args(f):
     """Decorator for methods that issues warnings for positional arguments
 
