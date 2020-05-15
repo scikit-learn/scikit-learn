@@ -138,8 +138,8 @@ def mean_absolute_error(y_true, y_pred, *,
     sample_weight : array-like of shape (n_samples,), optional
         Sample weights.
 
-    multioutput : string in ['raw_values', 'uniform_average']
-        or array-like of shape (n_outputs)
+    multioutput : string in ['raw_values', 'uniform_average'] \
+                or array-like of shape (n_outputs)
         Defines aggregating of multiple output values.
         Array-like value defines weights used to average errors.
 
@@ -210,8 +210,8 @@ def mean_squared_error(y_true, y_pred, *,
     sample_weight : array-like of shape (n_samples,), optional
         Sample weights.
 
-    multioutput : string in ['raw_values', 'uniform_average']
-        or array-like of shape (n_outputs)
+    multioutput : string in ['raw_values', 'uniform_average'] \
+                or array-like of shape (n_outputs)
         Defines aggregating of multiple output values.
         Array-like value defines weights used to average errors.
 
@@ -356,8 +356,8 @@ def median_absolute_error(y_true, y_pred, *, sample_weight=None,
 
         .. versionadded:: 0.24
 
-    multioutput : {'raw_values', 'uniform_average'} or array-like of shape
-        (n_outputs,)
+    multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
+                (n_outputs,)
         Defines aggregating of multiple output values. Array-like value defines
         weights used to average errors.
 
