@@ -525,9 +525,10 @@ _skip_test (default=False)
 _xfail_checks (default=False)
     dictionary ``{check_name: reason}`` of common checks that will be marked
     as `XFAIL` for pytest, when using
-    :func:`~sklearn.utils.estimator_checks.parametrize_with_checks`. This tag
-    currently has no effect on
-    :func:`~sklearn.utils.estimator_checks.check_estimator`.
+    :func:`~sklearn.utils.estimator_checks.parametrize_with_checks`. These
+    checks will be simply ignored and not run by
+    :func:`~sklearn.utils.estimator_checks.check_estimator`, but a
+    `SkipTestWarning` will be raised.
     Don't use this unless there is a *very good* reason for your estimator
     not to pass the check.
     Also note that the usage of this tag is highly subject to change because

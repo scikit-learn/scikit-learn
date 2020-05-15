@@ -4,7 +4,7 @@
 Release History
 ===============
 
-Release notes for all scikit-learn releases are linked in this this page.
+Release notes for all scikit-learn releases are linked in this page.
 
 **Tip:** `Subscribe to scikit-learn releases <https://libraries.io/pypi/scikit-learn>`__
 on libraries.io to be notified when new versions are released.

@@ -177,7 +177,7 @@ def _check_normalize_sample_weight(sample_weight, X):
         # an array of 1 (i.e. samples_weight is None) is already normalized
         n_samples = len(sample_weight)
         scale = n_samples / sample_weight.sum()
-        sample_weight *= scale
+        sample_weight = sample_weight * scale
     return sample_weight
 
 

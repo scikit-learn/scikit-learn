@@ -9,7 +9,7 @@
 {%- set drop_down_navigation = [
   ('Getting Started', pathto('getting_started')),
   ('Tutorial', pathto('tutorial/index')),
-  ("What's new", 'whats_new/v' + version + '.html'),
+  ("What's new", pathto('whats_new/v' + version)),
   ('Glossary', pathto('glossary')),
   ('Development', pathto('developers/index')),
   ('FAQ', pathto('faq')),
