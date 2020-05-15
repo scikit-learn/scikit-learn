@@ -176,7 +176,7 @@ def _take_along_axis(arr, indices, axis):
         if axis is None:
             arr = arr.flatten()
 
-        if numpy.issubdtype(indices.dtype, numpy.intp):
+        if not numpy.issubdtype(indices.dtype, numpy.intp):
             raise IndexError('`indices` must be an integer array')
         if arr.ndim != indices.ndim:
             raise ValueError(
