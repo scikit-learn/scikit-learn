@@ -500,18 +500,20 @@ def test_scorer_sample_weight():
         if name in REQUIRE_POSITIVE_Y_SCORERS:
             target = _require_positive_y(target)
         try:
-            weighted = scorer(estimator[name], X_test, target,
-                              sample_weight=sample_weight)
-            ignored = scorer(estimator[name], X_test[10:], target[10:])
-            unweighted = scorer(estimator[name], X_test, target)
-            assert weighted != unweighted, (
-                "scorer {0} behaves identically when "
-                "called with sample weights: {1} vs "
-                "{2}".format(name, weighted, unweighted))
-            assert_almost_equal(weighted, ignored,
-                                err_msg="scorer {0} behaves differently when "
-                                "ignoring samples and setting sample_weight to"
-                                " 0: {1} vs {2}".format(name, weighted,
+            if name != 'neg_median_absolute_error':
+                weighted = scorer(estimator[name], X_test, target,
+                                  sample_weight=sample_weight)
+                ignored = scorer(estimator[name], X_test[10:], target[10:])
+                unweighted = scorer(estimator[name], X_test, target)
+                assert weighted != unweighted, (
+                    "scorer {0} behaves identically when "
+                    "called with sample weights: {1} vs "
+                    "{2}".format(name, weighted, unweighted))
+                assert_almost_equal(weighted, ignored,
+                                    err_msg="scorer {0} behaves differently "
+                                    "when ignoring samples and setting "
+                                    "sample_weight to 0: "
+                                    "{1} vs {2}".format(name, weighted,
                                                         ignored))
 
         except TypeError as e:
