@@ -9,6 +9,7 @@ import pytest
 
 from sklearn.utils import check_random_state
 from sklearn.utils.stats import _weighted_percentile
+from sklearn.utils._testing import assert_array_equal
 from sklearn.ensemble._gb_losses import RegressionLossFunction
 from sklearn.ensemble._gb_losses import LeastSquaresError
 from sklearn.ensemble._gb_losses import LeastAbsoluteError
@@ -113,6 +114,12 @@ def test_weighted_percentile():
     sw[-1] = 0.0
     score = _weighted_percentile(y, sw, 50)
     assert score == 1
+
+    # Check for multioutput
+    y_multi = np.vstack((y, y)).transpose()
+    sw_multi = np.vstack((sw, sw)).transpose()
+    score = _weighted_percentile(y_multi, sw_multi, 50)
+    assert_array_equal(score, [1, 1])
 
 
 def test_weighted_percentile_equal():
