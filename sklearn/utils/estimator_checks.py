@@ -883,7 +883,7 @@ def check_sample_weights_invariance(name, estimator_orig, kind="ones"):
 
             err_msg = (f"For {name}, a zero sample_weight is not equivalent "
                        f"to removing the sample")
-        else:
+        else:  # pragma: no cover
             raise ValueError
 
         y = _enforce_estimator_tags_y(estimator1, y)
