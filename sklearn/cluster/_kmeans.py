@@ -431,41 +431,38 @@ def _kmeans_single_elkan(X, sample_weight, n_clusters, max_iter=300,
     init_bounds(X, centers, center_half_distances,
                 labels, upper_bounds, lower_bounds)
 
-    # Threadpoolctl context to limit the number of threads in second level of
-    # nested parallelism (i.e. BLAS) to avoid oversubsciption.
-    with threadpool_limits(limits=1, user_api="blas"):
-        for i in range(max_iter):
-            elkan_iter(X, sample_weight, centers, centers_new,
-                       weight_in_clusters, center_half_distances,
-                       distance_next_center, upper_bounds, lower_bounds,
-                       labels, center_shift, n_threads)
+    for i in range(max_iter):
+        elkan_iter(X, sample_weight, centers, centers_new,
+                   weight_in_clusters, center_half_distances,
+                   distance_next_center, upper_bounds, lower_bounds,
+                   labels, center_shift, n_threads)
 
-            # compute new pairwise distances between centers and closest other
-            # center of each center for next iterations
-            center_half_distances = euclidean_distances(centers_new) / 2
-            distance_next_center = np.partition(
-                np.asarray(center_half_distances), kth=1, axis=0)[1]
+        # compute new pairwise distances between centers and closest other
+        # center of each center for next iterations
+        center_half_distances = euclidean_distances(centers_new) / 2
+        distance_next_center = np.partition(
+            np.asarray(center_half_distances), kth=1, axis=0)[1]
 
+        if verbose:
+            inertia = _inertia(X, sample_weight, centers, labels)
+            print("Iteration {0}, inertia {1}" .format(i, inertia))
+
+        center_shift_tot = (center_shift**2).sum()
+        if center_shift_tot <= tol:
             if verbose:
-                inertia = _inertia(X, sample_weight, centers, labels)
-                print("Iteration {0}, inertia {1}" .format(i, inertia))
+                print("Converged at iteration {0}: "
+                      "center shift {1} within tolerance {2}"
+                      .format(i, center_shift_tot, tol))
+            break
 
-            center_shift_tot = (center_shift**2).sum()
-            if center_shift_tot <= tol:
-                if verbose:
-                    print("Converged at iteration {0}: "
-                          "center shift {1} within tolerance {2}"
-                          .format(i, center_shift_tot, tol))
-                break
+        centers, centers_new = centers_new, centers
 
-            centers, centers_new = centers_new, centers
-
-        if center_shift_tot > 0:
-            # rerun E-step so that predicted labels match cluster centers
-            elkan_iter(X, sample_weight, centers, centers, weight_in_clusters,
-                       center_half_distances, distance_next_center,
-                       upper_bounds, lower_bounds, labels, center_shift,
-                       n_threads, update_centers=False)
+    if center_shift_tot > 0:
+        # rerun E-step so that predicted labels match cluster centers
+        elkan_iter(X, sample_weight, centers, centers, weight_in_clusters,
+                   center_half_distances, distance_next_center,
+                   upper_bounds, lower_bounds, labels, center_shift,
+                   n_threads, update_centers=False)
 
     inertia = _inertia(X, sample_weight, centers, labels)
 
