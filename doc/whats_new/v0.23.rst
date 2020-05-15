@@ -652,6 +652,10 @@ Changelog
   and support for classes will be removed in 0.24. Pass instances instead.
   :pr:`17032` by `Nicolas Hug`_.
 
+- |API| The use of `_safe_tags` in `utils.estimator_checks` is now
+  deprecated, hence all tags should be obtained through `estimator._get_tags()`
+  :pr:`16950` by `Nicolas Hug`_.
+
 - |FIX| :func:`utils.all_estimators` now only returns public estimators.
   :pr:`15380` by `Thomas Fan`_.
 
