@@ -352,7 +352,7 @@ def _mark_xfail_checks(estimator, check, pytest):
 def _skip_if_xfail(estimator, check):
     # wrap a check so that it's skipped with a warning if it's part of the
     # xfail_checks tag.
-    xfail_checks = estimator._get_tags().get('_xfail_checks', {})
+    xfail_checks = estimator._get_tags()['_xfail_checks'] or {}
     check_name = _set_check_estimator_ids(check)
 
     if check_name not in xfail_checks:
