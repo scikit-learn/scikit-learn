@@ -134,7 +134,7 @@ cdef class Splitter:
         const unsigned int [::1] n_bins_non_missing
         unsigned char missing_values_bin_idx
         const unsigned char [::1] has_missing_values
-        char [::1] monotonic_cst
+        signed char [::1] monotonic_cst
         unsigned char hessians_are_constant
         Y_DTYPE_C l2_regularization
         Y_DTYPE_C min_hessian_to_split
@@ -150,7 +150,7 @@ cdef class Splitter:
                  const unsigned int [::1] n_bins_non_missing,
                  const unsigned char missing_values_bin_idx,
                  const unsigned char [::1] has_missing_values,
-                 char [::1] monotonic_cst,
+                 signed char [::1] monotonic_cst,
                  Y_DTYPE_C l2_regularization,
                  Y_DTYPE_C min_hessian_to_split=1e-3,
                  unsigned int min_samples_leaf=20,
@@ -410,7 +410,7 @@ cdef class Splitter:
             split_info_struct split_info
             split_info_struct * split_infos
             const unsigned char [::1] has_missing_values = self.has_missing_values
-            char [::1] monotonic_cst = self.monotonic_cst
+            signed char [::1] monotonic_cst = self.monotonic_cst
 
         with nogil:
 
