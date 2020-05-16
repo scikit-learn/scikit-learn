@@ -26,26 +26,21 @@ def dbscan_inner(np.ndarray[np.uint8_t, ndim=1, mode='c'] is_core,
     cdef vector[np.npy_intp] stack
 
     for i in range(labels.shape[0]):
-        if labels[i] != -1 or not is_core[i]:
-            continue
+        if labels[i] == -1 and not is_core[i]:
 
-        # Depth-first search starting from i, ending at the non-core points.
-        # This is very similar to the classic algorithm for computing connected
-        # components, the difference being that we label non-core points as
-        # part of a cluster (component), but don't expand their neighborhoods.
-        while True:
-            if labels[i] == -1:
+            # Depth-first search starting from i, ending at the non-core points.
+            # This is very similar to the classic algorithm for computing connected
+            # components, the difference being that we label non-core points as
+            # part of a cluster (component), but don't expand their neighborhoods.
+            while True:
                 labels[i] = label_num
-                if is_core[i]:
-                    neighb = neighborhoods[i]
-                    for i in range(neighb.shape[0]):
-                        v = neighb[i]
-                        if labels[v] == -1:
-                            push(stack, v)
+                for j in range(neighborhoods[i].shape[0]):
+                    if labels[neighborhoods[i][j]] == -1:
+                        push(stack, neighborhoods[i][j])
 
-            if stack.size() == 0:
-                break
-            i = stack.back()
-            stack.pop_back()
+                if stack.size() == 0:
+                    break
+                i = stack.back()
+                stack.pop_back()
 
-        label_num += 1
+            label_num += 1
