@@ -652,6 +652,12 @@ Changelog
   and support for classes will be removed in 0.24. Pass instances instead.
   :pr:`17032` by `Nicolas Hug`_.
 
+- |API| The private utility `_safe_tags` in `utils.estimator_checks` was
+  removed, hence all tags should be obtained through `estimator._get_tags()`.
+  Note that Mixins like `RegressorMixin` must come *before* base classes
+  in the MRO for `_get_tags()` to work properly.
+  :pr:`16950` by `Nicolas Hug`_.
+
 - |FIX| :func:`utils.all_estimators` now only returns public estimators.
   :pr:`15380` by `Thomas Fan`_.
 
