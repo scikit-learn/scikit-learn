@@ -339,10 +339,10 @@ def _construct_instance(Estimator):
     return estimator
 
 
-def _mark_xfail_checks(estimator, check, pytest):
+def _mark_xfail_checks(estimator, check, strict_mode, pytest):
     """Mark (estimator, check) pairs with xfail according to the
     _xfail_checks_ tag"""
-    xfail_checks = estimator._get_tags()['_xfail_checks'] or {}
+    xfail_checks = _get_xfail_checks(estimator, strict_mode)
     check_name = _set_check_estimator_ids(check)
 
     if check_name not in xfail_checks:
@@ -355,10 +355,10 @@ def _mark_xfail_checks(estimator, check, pytest):
                             marks=pytest.mark.xfail(reason=reason))
 
 
-def _skip_if_xfail(estimator, check):
+def _skip_if_xfail(estimator, check, strict_mode):
     # wrap a check so that it's skipped with a warning if it's part of the
     # xfail_checks tag.
-    xfail_checks = estimator._get_tags()['_xfail_checks'] or {}
+    xfail_checks = _get_xfail_checks(estimator, strict_mode)
     check_name = _set_check_estimator_ids(check)
 
     if check_name not in xfail_checks:
@@ -373,7 +373,23 @@ def _skip_if_xfail(estimator, check):
     return wrapped
 
 
-def parametrize_with_checks(estimators):
+def _get_xfail_checks(estimator, strict_mode):
+    # Return the checks that are in the estimator's _xfail_checks tag, along
+    # with the strict checks if strict_mode is False.
+    xfail_checks = estimator._get_tags()['_xfail_checks'] or {}
+
+    if not strict_mode:
+        strict_checks = {
+            _set_check_estimator_ids(check):
+            'The check is strict and strict mode is off'  # the reason
+            for check in _STRICT_CHECKS
+        }
+        xfail_checks.update(strict_checks)
+
+    return xfail_checks
+
+
+def parametrize_with_checks(estimators, strict_mode=True):
     """Pytest specific decorator for parametrizing estimator checks.
 
     The `id` of each check is set to be a pprint version of the estimator
@@ -390,6 +406,12 @@ def parametrize_with_checks(estimators):
         .. versionchanged:: 0.24
            Passing a class was deprecated in version 0.23, and support for
            classes was removed in 0.24. Pass an instance instead.
+
+    strict_mode : bool, default=True
+        If False, the strict checks will be treated as if they were in the
+        estimators' `_xfails_checks` tag: they will be marked as `xfail` for
+        pytest. The list of strict checks is at TODO. See TODO link for more
+        info on the `_xfails_check` tag.
 
     Returns
     -------
@@ -422,14 +444,14 @@ def parametrize_with_checks(estimators):
                         for check in _yield_all_checks(estimator))
 
     checks_with_marks = (
-        _mark_xfail_checks(estimator, check, pytest)
+        _mark_xfail_checks(estimator, check, strict_mode, pytest)
         for estimator, check in checks_generator)
 
     return pytest.mark.parametrize("estimator, check", checks_with_marks,
                                    ids=_set_check_estimator_ids)
 
 
-def check_estimator(Estimator, generate_only=False):
+def check_estimator(Estimator, generate_only=False, strict_mode=True):
     """Check if estimator adheres to scikit-learn conventions.
 
     This estimator will run an extensive test-suite for input validation,
@@ -457,13 +479,19 @@ def check_estimator(Estimator, generate_only=False):
            Passing a class was deprecated in version 0.23, and support for
            classes was removed in 0.24.
 
-    generate_only : bool, optional (default=False)
+    generate_only : bool, default=False
         When `False`, checks are evaluated when `check_estimator` is called.
         When `True`, `check_estimator` returns a generator that yields
         (estimator, check) tuples. The check is run by calling
         `check(estimator)`.
 
         .. versionadded:: 0.22
+
+    strict_mode : bool, default=True
+        If False, the strict checks will be treated as if they were in the
+        estimator's `_xfails_checks` tag: they will be ignored with a
+        warning. The list of strict checks is at TODO. See TODO link for more
+        info on the `_xfails_check` tag.
 
     Returns
     -------
@@ -481,7 +509,8 @@ def check_estimator(Estimator, generate_only=False):
     name = type(estimator).__name__
 
     checks_generator = ((estimator,
-                         partial(_skip_if_xfail(estimator, check), name))
+                         partial(_skip_if_xfail(estimator, check, strict_mode),
+                                 name))
                         for check in _yield_all_checks(estimator))
 
     if generate_only:
@@ -3026,3 +3055,8 @@ def check_requires_y_none(name, estimator_orig):
     except ValueError as ve:
         if not any(msg in str(ve) for msg in expected_err_msgs):
             warnings.warn(warning_msg, FutureWarning)
+
+
+_STRICT_CHECKS = set([
+    check_n_features_in,  # arbitrary, we can decide on actual list later?
+])

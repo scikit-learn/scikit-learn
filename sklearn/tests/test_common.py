@@ -19,7 +19,7 @@ import pytest
 
 from sklearn.utils import all_estimators
 from sklearn.utils._testing import ignore_warnings
-from sklearn.exceptions import ConvergenceWarning
+from sklearn.exceptions import ConvergenceWarning, SkipTestWarning
 from sklearn.utils.estimator_checks import check_estimator
 
 import sklearn
@@ -27,6 +27,7 @@ from sklearn.base import BiclusterMixin
 
 from sklearn.linear_model._base import LinearClassifierMixin
 from sklearn.linear_model import LogisticRegression
+from sklearn.svm import NuSVC
 from sklearn.utils import IS_PYPY
 from sklearn.utils._testing import SkipTest
 from sklearn.utils.estimator_checks import (
@@ -204,3 +205,25 @@ def test_class_support_removed():
 
     with pytest.raises(TypeError, match=msg):
         parametrize_with_checks([LogisticRegression])
+
+
+def test_strict_mode_check_estimator():
+    # Make sure the strict checks are properly ignored when strict mode is off
+    # in check_estimator.
+    # We can't check the message because check_estimator doesn't give one.
+
+    with pytest.warns(SkipTestWarning):
+        # LogisticRegression has no _xfail_checks, but check_n_features_in is
+        # still skipped because it's a strict check
+        check_estimator(LogisticRegression(), strict_mode=False)
+
+    with pytest.warns(SkipTestWarning):
+        # NuSVC has some _xfail_checks. check_n_features_in is skipped along
+        # with the other checks in the tag.
+        check_estimator(NuSVC(), strict_mode=False)
+
+
+@parametrize_with_checks([LogisticRegression(), NuSVC()], strict_mode=False)
+def test_strict_mode_parametrize_with_checks(estimator, check):
+    # Not sure how to test parametrize_with_checks correctly??
+    check(estimator)
