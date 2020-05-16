@@ -328,7 +328,7 @@ To also transform a test set :math:`X`, we multiply it with :math:`V_k`:
     but the singular values found are the same.
 
 :class:`TruncatedSVD` is very similar to :class:`PCA`, but differs
-in that the matrix :math:`X` isn't centered.
+in that the matrix :math:`X` does not need to be centered.
 When the columnwise (per-feature) means of :math:`X`
 are subtracted from the feature values,
 truncated SVD on the resulting matrix is equivalent to PCA.
