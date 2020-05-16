@@ -19,9 +19,9 @@ Changelog
   provided by the user were modified in place. :pr:`17204` by
   :user:`Jeremie du Boisberranger <jeremiedbb>`.
 
-- |Efficiency| :class:`cluster.KMeans` cannot spawn idle threads any more for
-  very small datasets. :pr:`17210` by
-  :user:`Jeremie du Boisberranger <jeremiedbb>`.
+- |Efficiency| :class:`cluster.KMeans` efficiency has been improved for very
+  small datasets. In particular it cannot spawn idle threads any more.
+  :pr:`17210` and :pr:`17235` by :user:`Jeremie du Boisberranger <jeremiedbb>`.
 
 Miscellaneous
 .............
