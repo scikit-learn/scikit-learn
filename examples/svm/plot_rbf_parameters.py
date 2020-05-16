@@ -69,7 +69,6 @@ expense of compute time. Increasing the value number of ``C_range`` and
 map.
 
 '''
-print(__doc__)
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -80,6 +79,9 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.datasets import load_iris
 from sklearn.model_selection import StratifiedShuffleSplit
 from sklearn.model_selection import GridSearchCV
+from sklearn.plot import plot_gridsearch_results
+
+print(__doc__)
 
 
 # Utility function to move the midpoint of a colormap to be around
@@ -94,6 +96,7 @@ class MidpointNormalize(Normalize):
     def __call__(self, value, clip=None):
         x, y = [self.vmin, self.midpoint, self.vmax], [0, 0.5, 1]
         return np.ma.masked_array(np.interp(value, x, y))
+
 
 # #############################################################################
 # Load and prepare data set
@@ -176,9 +179,6 @@ for (k, (C, gamma, clf)) in enumerate(classifiers):
     plt.yticks(())
     plt.axis('tight')
 
-scores = grid.cv_results_['mean_test_score'].reshape(len(C_range),
-                                                     len(gamma_range))
-
 # Draw heatmap of the validation accuracy as a function of gamma and C
 #
 # The score are encoded as colors with the hot colormap which varies from dark
@@ -188,14 +188,10 @@ scores = grid.cv_results_['mean_test_score'].reshape(len(C_range),
 # interesting range while not brutally collapsing all the low score values to
 # the same color.
 
-plt.figure(figsize=(8, 6))
+plt.figure(figsize=(10, 10))
 plt.subplots_adjust(left=.2, right=0.95, bottom=0.15, top=0.95)
-plt.imshow(scores, interpolation='nearest', cmap=plt.cm.hot,
-           norm=MidpointNormalize(vmin=0.2, midpoint=0.92))
-plt.xlabel('gamma')
-plt.ylabel('C')
-plt.colorbar()
-plt.xticks(np.arange(len(gamma_range)), gamma_range, rotation=45)
-plt.yticks(np.arange(len(C_range)), C_range)
-plt.title('Validation accuracy')
+plot_gridsearch_results(grid.cv_results_, title="Validation accuracy",
+                        cmap=plt.cm.hot,
+                        norm=MidpointNormalize(vmin=0.2, midpoint=0.92))
+plt.tight_layout()
 plt.show()
