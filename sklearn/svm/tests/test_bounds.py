@@ -96,6 +96,8 @@ def test_unsupported_loss():
 
 
 _MAX_INT = 2147483647
+
+
 @pytest.mark.parametrize('orig_range, n_pts',
                          [(_MAX_INT, 10000), (100, 10)])
 def test_bounded_rand_int(orig_range, n_pts):
