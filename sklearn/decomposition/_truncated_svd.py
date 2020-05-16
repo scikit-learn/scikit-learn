@@ -56,7 +56,7 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
     n_iter : int, optional (default 5)
         Number of iterations for randomized SVD solver. Not used by ARPACK. The
         default is larger than the default in
-        :class:`~sklearn.utils.extmath.randomized_svd` to handle sparse
+        :func:`~sklearn.utils.extmath.randomized_svd` to handle sparse
         matrices that may have large slowly decaying spectrum.
 
     random_state : int, RandomState instance, default=None
