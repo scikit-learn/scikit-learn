@@ -5,11 +5,11 @@ Testing for the gradient boosting loss functions and initial estimators.
 import numpy as np
 from numpy.testing import assert_almost_equal
 from numpy.testing import assert_allclose
+from numpy.testing import assert_array_equal
 import pytest
 
 from sklearn.utils import check_random_state
 from sklearn.utils.stats import _weighted_percentile
-from sklearn.utils._testing import assert_array_equal
 from sklearn.ensemble._gb_losses import RegressionLossFunction
 from sklearn.ensemble._gb_losses import LeastSquaresError
 from sklearn.ensemble._gb_losses import LeastAbsoluteError
@@ -116,8 +116,8 @@ def test_weighted_percentile():
     assert score == 1
 
     # Check for multioutput
-    y_multi = np.vstack((y, y)).transpose()
-    sw_multi = np.vstack((sw, sw)).transpose()
+    y_multi = np.vstack((y, y)).T
+    sw_multi = np.vstack((sw, sw)).T
     score = _weighted_percentile(y_multi, sw_multi, 50)
     assert_array_equal(score, [1, 1])
 

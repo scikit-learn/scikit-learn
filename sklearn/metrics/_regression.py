@@ -336,8 +336,8 @@ def mean_squared_log_error(y_true, y_pred, *,
 
 
 @_deprecate_positional_args
-def median_absolute_error(y_true, y_pred, *, sample_weight=None,
-                          multioutput='uniform_average'):
+def median_absolute_error(y_true, y_pred, *, multioutput='uniform_average',
+                          sample_weight=None,):
     """Median absolute error regression loss
 
     Median absolute error output is non-negative floating point. The best value
@@ -351,11 +351,6 @@ def median_absolute_error(y_true, y_pred, *, sample_weight=None,
     y_pred : array-like of shape = (n_samples) or (n_samples, n_outputs)
         Estimated target values.
 
-    sample_weight : array-like of shape (n_samples,), optional
-        Sample weights.
-
-        .. versionadded:: 0.24
-
     multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
                 (n_outputs,)
         Defines aggregating of multiple output values. Array-like value defines
@@ -366,6 +361,11 @@ def median_absolute_error(y_true, y_pred, *, sample_weight=None,
 
         'uniform_average' :
             Errors of all outputs are averaged with uniform weight.
+
+    sample_weight : array-like of shape (n_samples,), default=None
+        Sample weights.
+
+        .. versionadded:: 0.24
 
     Returns
     -------
@@ -394,8 +394,11 @@ def median_absolute_error(y_true, y_pred, *, sample_weight=None,
     """
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput)
-    output_errors = _weighted_percentile(np.abs(y_pred - y_true),
-                                         sample_weight=sample_weight)
+    if sample_weight is None:
+        output_errors = np.median(np.abs(y_pred - y_true), axis=0)
+    else:
+        output_errors = _weighted_percentile(np.abs(y_pred - y_true),
+                                             sample_weight=sample_weight)
     if isinstance(multioutput, str):
         if multioutput == 'raw_values':
             return output_errors
