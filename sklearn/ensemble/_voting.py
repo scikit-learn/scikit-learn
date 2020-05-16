@@ -32,6 +32,7 @@ from ..utils.multiclass import check_classification_targets
 from ..utils.validation import column_or_1d
 from ..utils.validation import _deprecate_positional_args
 from ..exceptions import NotFittedError
+from ..utils._estimator_html_repr import _VisualBlock
 
 
 class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
@@ -104,6 +105,10 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
 
         return self.estimators_[0].n_features_in_
 
+    def _sk_visual_block_(self):
+        names, estimators = zip(*self.estimators)
+        return _VisualBlock('parallel', estimators, names=names)
+
 
 class VotingClassifier(ClassifierMixin, _BaseVoting):
     """Soft Voting/Majority Rule classifier for unfitted estimators.
@@ -119,6 +124,9 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         of those original estimators that will be stored in the class attribute
         ``self.estimators_``. An estimator can be set to ``'drop'``
         using ``set_params``.
+
+        .. versionchanged:: 0.21
+            ``'drop'`` is accepted.
 
         .. deprecated:: 0.22
            Using ``None`` to drop an estimator is deprecated in 0.22 and
@@ -366,6 +374,9 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
         of those original estimators that will be stored in the class attribute
         ``self.estimators_``. An estimator can be set to ``'drop'`` using
         ``set_params``.
+
+        .. versionchanged:: 0.21
+            ``'drop'`` is accepted.
 
         .. deprecated:: 0.22
            Using ``None`` to drop an estimator is deprecated in 0.22 and
