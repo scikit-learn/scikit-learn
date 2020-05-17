@@ -44,11 +44,8 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
-:mod:`sklearn.module`
-.....................
-
-:mod: `sklearn.ensemble`
-........................
+:mod:`sklearn.ensemble`
+.......................
 
 - |Feature| :class:`ensemble.HistGradientBoostingRegressor` and
   :class:`ensemble.HistGradientClassifier` now support `staged_predict`,
