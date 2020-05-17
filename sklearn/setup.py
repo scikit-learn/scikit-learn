@@ -1,6 +1,7 @@
+import sys
 import os
 
-from sklearn._build_utils import maybe_cythonize_extensions
+from sklearn._build_utils import cythonize_extensions
 from sklearn._build_utils.deprecated_modules import (
     _create_deprecated_modules_files
 )
@@ -52,13 +53,15 @@ def configuration(parent_package='', top_path=None):
     config.add_subpackage('experimental/tests')
     config.add_subpackage('ensemble/_hist_gradient_boosting')
     config.add_subpackage('ensemble/_hist_gradient_boosting/tests')
+    config.add_subpackage('_loss/')
+    config.add_subpackage('_loss/tests')
+    config.add_subpackage('externals')
 
     # submodules which have their own setup.py
     config.add_subpackage('cluster')
     config.add_subpackage('datasets')
     config.add_subpackage('decomposition')
     config.add_subpackage('ensemble')
-    config.add_subpackage('externals')
     config.add_subpackage('feature_extraction')
     config.add_subpackage('manifold')
     config.add_subpackage('metrics')
@@ -78,7 +81,11 @@ def configuration(parent_package='', top_path=None):
     # add the test directory
     config.add_subpackage('tests')
 
-    maybe_cythonize_extensions(top_path, config)
+    # Skip cythonization as we do not want to include the generated
+    # C/C++ files in the release tarballs as they are not necessarily
+    # forward compatible with future versions of Python for instance.
+    if 'sdist' not in sys.argv:
+        cythonize_extensions(top_path, config)
 
     return config
 

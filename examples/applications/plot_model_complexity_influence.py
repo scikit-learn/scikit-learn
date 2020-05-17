@@ -29,9 +29,9 @@ from scipy.sparse.csr import csr_matrix
 from sklearn import datasets
 from sklearn.utils import shuffle
 from sklearn.metrics import mean_squared_error
-from sklearn.svm.classes import NuSVR
-from sklearn.ensemble.gradient_boosting import GradientBoostingRegressor
-from sklearn.linear_model.stochastic_gradient import SGDClassifier
+from sklearn.svm import NuSVR
+from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.linear_model import SGDClassifier
 from sklearn.metrics import hamming_loss
 
 # #############################################################################

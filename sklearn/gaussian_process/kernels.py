@@ -31,6 +31,7 @@ from scipy.spatial.distance import pdist, cdist, squareform
 
 from ..metrics.pairwise import pairwise_kernels
 from ..base import clone
+from ..utils.validation import _num_samples
 
 
 def _check_length_scale(X, length_scale):
@@ -53,12 +54,12 @@ class Hyperparameter(namedtuple('Hyperparameter',
 
     Attributes
     ----------
-    name : string
+    name : str
         The name of the hyperparameter. Note that a kernel using a
         hyperparameter with name "x" must have the attributes self.x and
         self.x_bounds
 
-    value_type : string
+    value_type : str
         The type of the hyperparameter. Currently, only "numeric"
         hyperparameters are supported.
 
@@ -74,7 +75,7 @@ class Hyperparameter(namedtuple('Hyperparameter',
         corresponds to a hyperparameter which is vector-valued,
         such as, e.g., anisotropic length-scales.
 
-    fixed : bool, default: None
+    fixed : bool, default=None
         Whether the value of this hyperparameter is fixed, i.e., cannot be
         changed during hyperparameter tuning. If None is passed, the "fixed" is
         derived based on the given bounds.
@@ -127,13 +128,13 @@ class Kernel(metaclass=ABCMeta):
 
         Parameters
         ----------
-        deep : boolean, optional
+        deep : bool, default=True
             If True, will return the parameters for this estimator and
             contained subobjects that are estimators.
 
         Returns
         -------
-        params : mapping of string to any
+        params : dict
             Parameter names mapped to their values.
         """
         params = dict()
@@ -212,7 +213,7 @@ class Kernel(metaclass=ABCMeta):
 
         Parameters
         ----------
-        theta : array, shape (n_dims,)
+        theta : ndarray of shape (n_dims,)
             The hyperparameters
         """
         cloned = clone(self)
@@ -242,7 +243,7 @@ class Kernel(metaclass=ABCMeta):
 
         Returns
         -------
-        theta : array, shape (n_dims,)
+        theta : ndarray of shape (n_dims,)
             The non-fixed, log-transformed hyperparameters of the kernel
         """
         theta = []
@@ -261,7 +262,7 @@ class Kernel(metaclass=ABCMeta):
 
         Parameters
         ----------
-        theta : array, shape (n_dims,)
+        theta : ndarray of shape (n_dims,)
             The non-fixed, log-transformed hyperparameters of the kernel
         """
         params = self.get_params()
@@ -290,7 +291,7 @@ class Kernel(metaclass=ABCMeta):
 
         Returns
         -------
-        bounds : array, shape (n_dims, 2)
+        bounds : ndarray of shape (n_dims, 2)
             The log-transformed bounds on the kernel's hyperparameters theta
         """
         bounds = [hyperparameter.bounds
@@ -352,18 +353,25 @@ class Kernel(metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : array, shape (n_samples_X, n_features)
+        X : array-like of shape (n_samples,)
             Left argument of the returned kernel k(X, Y)
 
         Returns
         -------
-        K_diag : array, shape (n_samples_X,)
+        K_diag : ndarray of shape (n_samples_X,)
             Diagonal of kernel k(X, X)
         """
 
     @abstractmethod
     def is_stationary(self):
         """Returns whether the kernel is stationary. """
+
+    @property
+    def requires_vector_input(self):
+        """Returns whether the kernel is defined on fixed-length feature
+        vectors or generic objects. Defaults to True for backward
+        compatibility."""
+        return True
 
 
 class NormalizedKernelMixin:
@@ -381,12 +389,12 @@ class NormalizedKernelMixin:
 
         Parameters
         ----------
-        X : array, shape (n_samples_X, n_features)
+        X : ndarray of shape (n_samples_X, n_features)
             Left argument of the returned kernel k(X, Y)
 
         Returns
         -------
-        K_diag : array, shape (n_samples_X,)
+        K_diag : ndarray of shape (n_samples_X,)
             Diagonal of kernel k(X, X)
         """
         return np.ones(X.shape[0])
@@ -403,6 +411,19 @@ class StationaryKernelMixin:
         return True
 
 
+class GenericKernelMixin:
+    """Mixin for kernels which operate on generic objects such as variable-
+    length sequences, trees, and graphs.
+
+    .. versionadded:: 0.22
+    """
+
+    @property
+    def requires_vector_input(self):
+        """Whether the kernel works only on fixed-length feature vectors."""
+        return False
+
+
 class CompoundKernel(Kernel):
     """Kernel which is composed of a set of other kernels.
 
@@ -410,7 +431,7 @@ class CompoundKernel(Kernel):
 
     Parameters
     ----------
-    kernels : list of Kernel objects
+    kernels : list of Kernels
         The other kernels
     """
 
@@ -422,13 +443,13 @@ class CompoundKernel(Kernel):
 
         Parameters
         ----------
-        deep : boolean, optional
+        deep : bool, default=True
             If True, will return the parameters for this estimator and
             contained subobjects that are estimators.
 
         Returns
         -------
-        params : mapping of string to any
+        params : dict
             Parameter names mapped to their values.
         """
         return dict(kernels=self.kernels)
@@ -444,7 +465,7 @@ class CompoundKernel(Kernel):
 
         Returns
         -------
-        theta : array, shape (n_dims,)
+        theta : ndarray of shape (n_dims,)
             The non-fixed, log-transformed hyperparameters of the kernel
         """
         return np.hstack([kernel.theta for kernel in self.kernels])
@@ -455,7 +476,7 @@ class CompoundKernel(Kernel):
 
         Parameters
         ----------
-        theta : array, shape (n_dims,)
+        theta : array of shape (n_dims,)
             The non-fixed, log-transformed hyperparameters of the kernel
         """
         k_dims = self.k1.n_dims
@@ -468,7 +489,7 @@ class CompoundKernel(Kernel):
 
         Returns
         -------
-        bounds : array, shape (n_dims, 2)
+        bounds : array of shape (n_dims, 2)
             The log-transformed bounds on the kernel's hyperparameters theta
         """
         return np.vstack([kernel.bounds for kernel in self.kernels])
@@ -481,25 +502,28 @@ class CompoundKernel(Kernel):
 
         Parameters
         ----------
-        X : array, shape (n_samples_X, n_features)
+        X : array-like of shape (n_samples_X, n_features) or list of object, \
+            default=None
             Left argument of the returned kernel k(X, Y)
 
-        Y : array, shape (n_samples_Y, n_features), (optional, default=None)
+        Y : array-like of shape (n_samples_X, n_features) or list of object, \
+            default=None
             Right argument of the returned kernel k(X, Y). If None, k(X, X)
-            if evaluated instead.
+            is evaluated instead.
 
-        eval_gradient : bool (optional, default=False)
+        eval_gradient : bool, default=False
             Determines whether the gradient with respect to the kernel
             hyperparameter is determined.
 
         Returns
         -------
-        K : array, shape (n_samples_X, n_samples_Y, n_kernels)
+        K : ndarray of shape (n_samples_X, n_samples_Y, n_kernels)
             Kernel k(X, Y)
 
-        K_gradient : array, shape (n_samples_X, n_samples_X, n_dims, n_kernels)
+        K_gradient : ndarray of shape \
+                (n_samples_X, n_samples_X, n_dims, n_kernels), optional
             The gradient of the kernel k(X, X) with respect to the
-            hyperparameter of the kernel. Only returned when eval_gradient
+            hyperparameter of the kernel. Only returned when `eval_gradient`
             is True.
         """
         if eval_gradient:
@@ -524,21 +548,27 @@ class CompoundKernel(Kernel):
         """Returns whether the kernel is stationary. """
         return np.all([kernel.is_stationary() for kernel in self.kernels])
 
+    @property
+    def requires_vector_input(self):
+        """Returns whether the kernel is defined on discrete structures. """
+        return np.any([kernel.requires_vector_input
+                       for kernel in self.kernels])
+
     def diag(self, X):
         """Returns the diagonal of the kernel k(X, X).
 
-        The result of this method is identical to np.diag(self(X)); however,
+        The result of this method is identical to `np.diag(self(X))`; however,
         it can be evaluated more efficiently since only the diagonal is
         evaluated.
 
         Parameters
         ----------
-        X : array, shape (n_samples_X, n_features)
-            Left argument of the returned kernel k(X, Y)
+        X : array-like of shape (n_samples_X, n_features) or list of object
+            Argument to the kernel.
 
         Returns
         -------
-        K_diag : array, shape (n_samples_X, n_kernels)
+        K_diag : ndarray of shape (n_samples_X, n_kernels)
             Diagonal of kernel k(X, X)
         """
         return np.vstack([kernel.diag(X) for kernel in self.kernels]).T
@@ -559,13 +589,13 @@ class KernelOperator(Kernel):
 
         Parameters
         ----------
-        deep : boolean, optional
+        deep : bool, default=True
             If True, will return the parameters for this estimator and
             contained subobjects that are estimators.
 
         Returns
         -------
-        params : mapping of string to any
+        params : dict
             Parameter names mapped to their values.
         """
         params = dict(k1=self.k1, k2=self.k2)
@@ -603,7 +633,7 @@ class KernelOperator(Kernel):
 
         Returns
         -------
-        theta : array, shape (n_dims,)
+        theta : ndarray of shape (n_dims,)
             The non-fixed, log-transformed hyperparameters of the kernel
         """
         return np.append(self.k1.theta, self.k2.theta)
@@ -614,7 +644,7 @@ class KernelOperator(Kernel):
 
         Parameters
         ----------
-        theta : array, shape (n_dims,)
+        theta : ndarray of shape (n_dims,)
             The non-fixed, log-transformed hyperparameters of the kernel
         """
         k1_dims = self.k1.n_dims
@@ -627,7 +657,7 @@ class KernelOperator(Kernel):
 
         Returns
         -------
-        bounds : array, shape (n_dims, 2)
+        bounds : ndarray of shape (n_dims, 2)
             The log-transformed bounds on the kernel's hyperparameters theta
         """
         if self.k1.bounds.size == 0:
@@ -646,23 +676,50 @@ class KernelOperator(Kernel):
         """Returns whether the kernel is stationary. """
         return self.k1.is_stationary() and self.k2.is_stationary()
 
+    @property
+    def requires_vector_input(self):
+        """Returns whether the kernel is stationary. """
+        return (self.k1.requires_vector_input or
+                self.k2.requires_vector_input)
+
 
 class Sum(KernelOperator):
-    """Sum-kernel k1 + k2 of two kernels k1 and k2.
+    """The `Sum` kernel takes two kernels :math:`k_1` and :math:`k_2`
+    and combines them via
 
-    The resulting kernel is defined as
-    k_sum(X, Y) = k1(X, Y) + k2(X, Y)
+    .. math::
+        k_{sum}(X, Y) = k_1(X, Y) + k_2(X, Y)
+
+    Note that the `__add__` magic method is overridden, so
+    `Sum(RBF(), RBF())` is equivalent to using the + operator
+    with `RBF() + RBF()`.
+
+
+    Read more in the :ref:`User Guide <gp_kernels>`.
 
     .. versionadded:: 0.18
 
     Parameters
     ----------
-    k1 : Kernel object
+    k1 : Kernel
         The first base-kernel of the sum-kernel
 
-    k2 : Kernel object
+    k2 : Kernel
         The second base-kernel of the sum-kernel
 
+    Examples
+    --------
+    >>> from sklearn.datasets import make_friedman2
+    >>> from sklearn.gaussian_process import GaussianProcessRegressor
+    >>> from sklearn.gaussian_process.kernels import RBF, Sum, ConstantKernel
+    >>> X, y = make_friedman2(n_samples=500, noise=0, random_state=0)
+    >>> kernel = Sum(ConstantKernel(2), RBF())
+    >>> gpr = GaussianProcessRegressor(kernel=kernel,
+    ...         random_state=0).fit(X, y)
+    >>> gpr.score(X, y)
+    1.0
+    >>> kernel
+    1.41**2 + RBF(length_scale=1)
     """
 
     def __call__(self, X, Y=None, eval_gradient=False):
@@ -670,25 +727,27 @@ class Sum(KernelOperator):
 
         Parameters
         ----------
-        X : array, shape (n_samples_X, n_features)
+        X : array-like of shape (n_samples_X, n_features) or list of object
             Left argument of the returned kernel k(X, Y)
 
-        Y : array, shape (n_samples_Y, n_features), (optional, default=None)
+        Y : array-like of shape (n_samples_X, n_features) or list of object,\
+                default=None
             Right argument of the returned kernel k(X, Y). If None, k(X, X)
-            if evaluated instead.
+            is evaluated instead.
 
-        eval_gradient : bool (optional, default=False)
+        eval_gradient : bool, default=False
             Determines whether the gradient with respect to the kernel
             hyperparameter is determined.
 
         Returns
         -------
-        K : array, shape (n_samples_X, n_samples_Y)
+        K : ndarray of shape (n_samples_X, n_samples_Y)
             Kernel k(X, Y)
 
-        K_gradient : array (opt.), shape (n_samples_X, n_samples_X, n_dims)
+        K_gradient : ndarray of shape (n_samples_X, n_samples_X, n_dims),\
+                optional
             The gradient of the kernel k(X, X) with respect to the
-            hyperparameter of the kernel. Only returned when eval_gradient
+            hyperparameter of the kernel. Only returned when `eval_gradient`
             is True.
         """
         if eval_gradient:
@@ -701,18 +760,18 @@ class Sum(KernelOperator):
     def diag(self, X):
         """Returns the diagonal of the kernel k(X, X).
 
-        The result of this method is identical to np.diag(self(X)); however,
+        The result of this method is identical to `np.diag(self(X))`; however,
         it can be evaluated more efficiently since only the diagonal is
         evaluated.
 
         Parameters
         ----------
-        X : array, shape (n_samples_X, n_features)
-            Left argument of the returned kernel k(X, Y)
+        X : array-like of shape (n_samples_X, n_features) or list of object
+            Argument to the kernel.
 
         Returns
         -------
-        K_diag : array, shape (n_samples_X,)
+        K_diag : ndarray of shape (n_samples_X,)
             Diagonal of kernel k(X, X)
         """
         return self.k1.diag(X) + self.k2.diag(X)
@@ -722,21 +781,43 @@ class Sum(KernelOperator):
 
 
 class Product(KernelOperator):
-    """Product-kernel k1 * k2 of two kernels k1 and k2.
+    """The `Product` kernel takes two kernels :math:`k_1` and :math:`k_2`
+    and combines them via
 
-    The resulting kernel is defined as
-    k_prod(X, Y) = k1(X, Y) * k2(X, Y)
+    .. math::
+        k_{prod}(X, Y) = k_1(X, Y) * k_2(X, Y)
+
+    Note that the `__mul__` magic method is overridden, so
+    `Product(RBF(), RBF())` is equivalent to using the * operator
+    with `RBF() * RBF()`.
+
+    Read more in the :ref:`User Guide <gp_kernels>`.
 
     .. versionadded:: 0.18
 
     Parameters
     ----------
-    k1 : Kernel object
+    k1 : Kernel
         The first base-kernel of the product-kernel
 
-    k2 : Kernel object
+    k2 : Kernel
         The second base-kernel of the product-kernel
 
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_friedman2
+    >>> from sklearn.gaussian_process import GaussianProcessRegressor
+    >>> from sklearn.gaussian_process.kernels import (RBF, Product,
+    ...            ConstantKernel)
+    >>> X, y = make_friedman2(n_samples=500, noise=0, random_state=0)
+    >>> kernel = Product(ConstantKernel(2), RBF())
+    >>> gpr = GaussianProcessRegressor(kernel=kernel,
+    ...         random_state=0).fit(X, y)
+    >>> gpr.score(X, y)
+    1.0
+    >>> kernel
+    1.41**2 * RBF(length_scale=1)
     """
 
     def __call__(self, X, Y=None, eval_gradient=False):
@@ -744,25 +825,27 @@ class Product(KernelOperator):
 
         Parameters
         ----------
-        X : array, shape (n_samples_X, n_features)
+        X : array-like of shape (n_samples_X, n_features) or list of object
             Left argument of the returned kernel k(X, Y)
 
-        Y : array, shape (n_samples_Y, n_features), (optional, default=None)
+        Y : array-like of shape (n_samples_Y, n_features) or list of object,\
+            default=None
             Right argument of the returned kernel k(X, Y). If None, k(X, X)
-            if evaluated instead.
+            is evaluated instead.
 
-        eval_gradient : bool (optional, default=False)
+        eval_gradient : bool, default=False
             Determines whether the gradient with respect to the kernel
             hyperparameter is determined.
 
         Returns
         -------
-        K : array, shape (n_samples_X, n_samples_Y)
+        K : ndarray of shape (n_samples_X, n_samples_Y)
             Kernel k(X, Y)
 
-        K_gradient : array (opt.), shape (n_samples_X, n_samples_X, n_dims)
+        K_gradient : ndarray of shape (n_samples_X, n_samples_X, n_dims), \
+                optional
             The gradient of the kernel k(X, X) with respect to the
-            hyperparameter of the kernel. Only returned when eval_gradient
+            hyperparameter of the kernel. Only returned when `eval_gradient`
             is True.
         """
         if eval_gradient:
@@ -782,12 +865,12 @@ class Product(KernelOperator):
 
         Parameters
         ----------
-        X : array, shape (n_samples_X, n_features)
-            Left argument of the returned kernel k(X, Y)
+        X : array-like of shape (n_samples_X, n_features) or list of object
+            Argument to the kernel.
 
         Returns
         -------
-        K_diag : array, shape (n_samples_X,)
+        K_diag : ndarray of shape (n_samples_X,)
             Diagonal of kernel k(X, X)
         """
         return self.k1.diag(X) * self.k2.diag(X)
@@ -797,21 +880,44 @@ class Product(KernelOperator):
 
 
 class Exponentiation(Kernel):
-    """Exponentiate kernel by given exponent.
+    """The Exponentiation kernel takes one base kernel and a scalar parameter
+    :math:`p` and combines them via
 
-    The resulting kernel is defined as
-    k_exp(X, Y) = k(X, Y) ** exponent
+    .. math::
+        k_{exp}(X, Y) = k(X, Y) ^p
+
+    Note that the `__pow__` magic method is overridden, so
+    `Exponentiation(RBF(), 2)` is equivalent to using the ** operator
+    with `RBF() ** 2`.
+
+
+    Read more in the :ref:`User Guide <gp_kernels>`.
 
     .. versionadded:: 0.18
 
     Parameters
     ----------
-    kernel : Kernel object
+    kernel : Kernel
         The base kernel
 
     exponent : float
         The exponent for the base kernel
 
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_friedman2
+    >>> from sklearn.gaussian_process import GaussianProcessRegressor
+    >>> from sklearn.gaussian_process.kernels import (RationalQuadratic,
+    ...            Exponentiation)
+    >>> X, y = make_friedman2(n_samples=500, noise=0, random_state=0)
+    >>> kernel = Exponentiation(RationalQuadratic(), exponent=2)
+    >>> gpr = GaussianProcessRegressor(kernel=kernel, alpha=5,
+    ...         random_state=0).fit(X, y)
+    >>> gpr.score(X, y)
+    0.419...
+    >>> gpr.predict(X[:1,:], return_std=True)
+    (array([635.5...]), array([0.559...]))
     """
     def __init__(self, kernel, exponent):
         self.kernel = kernel
@@ -822,13 +928,13 @@ class Exponentiation(Kernel):
 
         Parameters
         ----------
-        deep : boolean, optional
+        deep : bool, default=True
             If True, will return the parameters for this estimator and
             contained subobjects that are estimators.
 
         Returns
         -------
-        params : mapping of string to any
+        params : dict
             Parameter names mapped to their values.
         """
         params = dict(kernel=self.kernel, exponent=self.exponent)
@@ -859,7 +965,7 @@ class Exponentiation(Kernel):
 
         Returns
         -------
-        theta : array, shape (n_dims,)
+        theta : ndarray of shape (n_dims,)
             The non-fixed, log-transformed hyperparameters of the kernel
         """
         return self.kernel.theta
@@ -870,7 +976,7 @@ class Exponentiation(Kernel):
 
         Parameters
         ----------
-        theta : array, shape (n_dims,)
+        theta : ndarray of shape (n_dims,)
             The non-fixed, log-transformed hyperparameters of the kernel
         """
         self.kernel.theta = theta
@@ -881,7 +987,7 @@ class Exponentiation(Kernel):
 
         Returns
         -------
-        bounds : array, shape (n_dims, 2)
+        bounds : ndarray of shape (n_dims, 2)
             The log-transformed bounds on the kernel's hyperparameters theta
         """
         return self.kernel.bounds
@@ -896,25 +1002,27 @@ class Exponentiation(Kernel):
 
         Parameters
         ----------
-        X : array, shape (n_samples_X, n_features)
+        X : array-like of shape (n_samples_X, n_features) or list of object
             Left argument of the returned kernel k(X, Y)
 
-        Y : array, shape (n_samples_Y, n_features), (optional, default=None)
+        Y : array-like of shape (n_samples_Y, n_features) or list of object,\
+            default=None
             Right argument of the returned kernel k(X, Y). If None, k(X, X)
-            if evaluated instead.
+            is evaluated instead.
 
-        eval_gradient : bool (optional, default=False)
+        eval_gradient : bool, default=False
             Determines whether the gradient with respect to the kernel
             hyperparameter is determined.
 
         Returns
         -------
-        K : array, shape (n_samples_X, n_samples_Y)
+        K : ndarray of shape (n_samples_X, n_samples_Y)
             Kernel k(X, Y)
 
-        K_gradient : array (opt.), shape (n_samples_X, n_samples_X, n_dims)
+        K_gradient : ndarray of shape (n_samples_X, n_samples_X, n_dims),\
+                optional
             The gradient of the kernel k(X, X) with respect to the
-            hyperparameter of the kernel. Only returned when eval_gradient
+            hyperparameter of the kernel. Only returned when `eval_gradient`
             is True.
         """
         if eval_gradient:
@@ -935,12 +1043,12 @@ class Exponentiation(Kernel):
 
         Parameters
         ----------
-        X : array, shape (n_samples_X, n_features)
-            Left argument of the returned kernel k(X, Y)
+        X : array-like of shape (n_samples_X, n_features) or list of object
+            Argument to the kernel.
 
         Returns
         -------
-        K_diag : array, shape (n_samples_X,)
+        K_diag : ndarray of shape (n_samples_X,)
             Diagonal of kernel k(X, X)
         """
         return self.kernel.diag(X) ** self.exponent
@@ -952,27 +1060,60 @@ class Exponentiation(Kernel):
         """Returns whether the kernel is stationary. """
         return self.kernel.is_stationary()
 
+    @property
+    def requires_vector_input(self):
+        """Returns whether the kernel is defined on discrete structures. """
+        return self.kernel.requires_vector_input
 
-class ConstantKernel(StationaryKernelMixin, Kernel):
+
+class ConstantKernel(StationaryKernelMixin, GenericKernelMixin,
+                     Kernel):
     """Constant kernel.
 
     Can be used as part of a product-kernel where it scales the magnitude of
     the other factor (kernel) or as part of a sum-kernel, where it modifies
     the mean of the Gaussian process.
 
-    k(x_1, x_2) = constant_value for all x_1, x_2
+    .. math::
+        k(x_1, x_2) = constant\\_value \\;\\forall\\; x_1, x_2
+
+    Adding a constant kernel is equivalent to adding a constant::
+
+            kernel = RBF() + ConstantKernel(constant_value=2)
+
+    is the same as::
+
+            kernel = RBF() + 2
+
+
+    Read more in the :ref:`User Guide <gp_kernels>`.
 
     .. versionadded:: 0.18
 
     Parameters
     ----------
-    constant_value : float, default: 1.0
+    constant_value : float, default=1.0
         The constant value which defines the covariance:
         k(x_1, x_2) = constant_value
 
-    constant_value_bounds : pair of floats >= 0, default: (1e-5, 1e5)
-        The lower and upper bound on constant_value
+    constant_value_bounds : pair of floats >= 0 or "fixed", default=(1e-5, 1e5)
+        The lower and upper bound on `constant_value`.
+        If set to "fixed", `constant_value` cannot be changed during
+        hyperparameter tuning.
 
+    Examples
+    --------
+    >>> from sklearn.datasets import make_friedman2
+    >>> from sklearn.gaussian_process import GaussianProcessRegressor
+    >>> from sklearn.gaussian_process.kernels import RBF, ConstantKernel
+    >>> X, y = make_friedman2(n_samples=500, noise=0, random_state=0)
+    >>> kernel = RBF() + ConstantKernel(constant_value=2)
+    >>> gpr = GaussianProcessRegressor(kernel=kernel, alpha=5,
+    ...         random_state=0).fit(X, y)
+    >>> gpr.score(X, y)
+    0.3696...
+    >>> gpr.predict(X[:1,:], return_std=True)
+    (array([606.1...]), array([0.24...]))
     """
     def __init__(self, constant_value=1.0, constant_value_bounds=(1e-5, 1e5)):
         self.constant_value = constant_value
@@ -988,42 +1129,43 @@ class ConstantKernel(StationaryKernelMixin, Kernel):
 
         Parameters
         ----------
-        X : array, shape (n_samples_X, n_features)
+        X : array-like of shape (n_samples_X, n_features) or list of object
             Left argument of the returned kernel k(X, Y)
 
-        Y : array, shape (n_samples_Y, n_features), (optional, default=None)
+        Y : array-like of shape (n_samples_X, n_features) or list of object, \
+            default=None
             Right argument of the returned kernel k(X, Y). If None, k(X, X)
-            if evaluated instead.
+            is evaluated instead.
 
-        eval_gradient : bool (optional, default=False)
+        eval_gradient : bool, default=False
             Determines whether the gradient with respect to the kernel
             hyperparameter is determined. Only supported when Y is None.
 
         Returns
         -------
-        K : array, shape (n_samples_X, n_samples_Y)
+        K : ndarray of shape (n_samples_X, n_samples_Y)
             Kernel k(X, Y)
 
-        K_gradient : array (opt.), shape (n_samples_X, n_samples_X, n_dims)
+        K_gradient : ndarray of shape (n_samples_X, n_samples_X, n_dims), \
+            optional
             The gradient of the kernel k(X, X) with respect to the
             hyperparameter of the kernel. Only returned when eval_gradient
             is True.
         """
-        X = np.atleast_2d(X)
         if Y is None:
             Y = X
         elif eval_gradient:
             raise ValueError("Gradient can only be evaluated when Y is None.")
 
-        K = np.full((X.shape[0], Y.shape[0]), self.constant_value,
+        K = np.full((_num_samples(X), _num_samples(Y)), self.constant_value,
                     dtype=np.array(self.constant_value).dtype)
         if eval_gradient:
             if not self.hyperparameter_constant_value.fixed:
-                return (K, np.full((X.shape[0], X.shape[0], 1),
+                return (K, np.full((_num_samples(X), _num_samples(X), 1),
                                    self.constant_value,
                                    dtype=np.array(self.constant_value).dtype))
             else:
-                return K, np.empty((X.shape[0], X.shape[0], 0))
+                return K, np.empty((_num_samples(X), _num_samples(X), 0))
         else:
             return K
 
@@ -1036,22 +1178,23 @@ class ConstantKernel(StationaryKernelMixin, Kernel):
 
         Parameters
         ----------
-        X : array, shape (n_samples_X, n_features)
-            Left argument of the returned kernel k(X, Y)
+        X : array-like of shape (n_samples_X, n_features) or list of object
+            Argument to the kernel.
 
         Returns
         -------
-        K_diag : array, shape (n_samples_X,)
+        K_diag : ndarray of shape (n_samples_X,)
             Diagonal of kernel k(X, X)
         """
-        return np.full(X.shape[0], self.constant_value,
+        return np.full(_num_samples(X), self.constant_value,
                        dtype=np.array(self.constant_value).dtype)
 
     def __repr__(self):
         return "{0:.3g}**2".format(np.sqrt(self.constant_value))
 
 
-class WhiteKernel(StationaryKernelMixin, Kernel):
+class WhiteKernel(StationaryKernelMixin, GenericKernelMixin,
+                  Kernel):
     """White kernel.
 
     The main use-case of this kernel is as part of a sum-kernel where it
@@ -1059,17 +1202,37 @@ class WhiteKernel(StationaryKernelMixin, Kernel):
     normally-distributed. The parameter noise_level equals the variance of this
     noise.
 
-    k(x_1, x_2) = noise_level if x_1 == x_2 else 0
+    .. math::
+        k(x_1, x_2) = noise\\_level \\text{ if } x_i == x_j \\text{ else } 0
+
+
+    Read more in the :ref:`User Guide <gp_kernels>`.
 
     .. versionadded:: 0.18
 
     Parameters
     ----------
-    noise_level : float, default: 1.0
+    noise_level : float, default=1.0
         Parameter controlling the noise level (variance)
 
-    noise_level_bounds : pair of floats >= 0, default: (1e-5, 1e5)
-        The lower and upper bound on noise_level
+    noise_level_bounds : pair of floats >= 0 or "fixed", default=(1e-5, 1e5)
+        The lower and upper bound on 'noise_level'.
+        If set to "fixed", 'noise_level' cannot be changed during
+        hyperparameter tuning.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_friedman2
+    >>> from sklearn.gaussian_process import GaussianProcessRegressor
+    >>> from sklearn.gaussian_process.kernels import DotProduct, WhiteKernel
+    >>> X, y = make_friedman2(n_samples=500, noise=0, random_state=0)
+    >>> kernel = DotProduct() + WhiteKernel(noise_level=0.5)
+    >>> gpr = GaussianProcessRegressor(kernel=kernel,
+    ...         random_state=0).fit(X, y)
+    >>> gpr.score(X, y)
+    0.3680...
+    >>> gpr.predict(X[:2,:], return_std=True)
+    (array([653.0..., 592.1... ]), array([316.6..., 316.6...]))
     """
     def __init__(self, noise_level=1.0, noise_level_bounds=(1e-5, 1e5)):
         self.noise_level = noise_level
@@ -1085,43 +1248,44 @@ class WhiteKernel(StationaryKernelMixin, Kernel):
 
         Parameters
         ----------
-        X : array, shape (n_samples_X, n_features)
+        X : array-like of shape (n_samples_X, n_features) or list of object
             Left argument of the returned kernel k(X, Y)
 
-        Y : array, shape (n_samples_Y, n_features), (optional, default=None)
+        Y : array-like of shape (n_samples_X, n_features) or list of object,\
+            default=None
             Right argument of the returned kernel k(X, Y). If None, k(X, X)
-            if evaluated instead.
+            is evaluated instead.
 
-        eval_gradient : bool (optional, default=False)
+        eval_gradient : bool, default=False
             Determines whether the gradient with respect to the kernel
             hyperparameter is determined. Only supported when Y is None.
 
         Returns
         -------
-        K : array, shape (n_samples_X, n_samples_Y)
+        K : ndarray of shape (n_samples_X, n_samples_Y)
             Kernel k(X, Y)
 
-        K_gradient : array (opt.), shape (n_samples_X, n_samples_X, n_dims)
+        K_gradient : ndarray of shape (n_samples_X, n_samples_X, n_dims),\
+            optional
             The gradient of the kernel k(X, X) with respect to the
             hyperparameter of the kernel. Only returned when eval_gradient
             is True.
         """
-        X = np.atleast_2d(X)
         if Y is not None and eval_gradient:
             raise ValueError("Gradient can only be evaluated when Y is None.")
 
         if Y is None:
-            K = self.noise_level * np.eye(X.shape[0])
+            K = self.noise_level * np.eye(_num_samples(X))
             if eval_gradient:
                 if not self.hyperparameter_noise_level.fixed:
                     return (K, self.noise_level
-                            * np.eye(X.shape[0])[:, :, np.newaxis])
+                            * np.eye(_num_samples(X))[:, :, np.newaxis])
                 else:
-                    return K, np.empty((X.shape[0], X.shape[0], 0))
+                    return K, np.empty((_num_samples(X), _num_samples(X), 0))
             else:
                 return K
         else:
-            return np.zeros((X.shape[0], Y.shape[0]))
+            return np.zeros((_num_samples(X), _num_samples(Y)))
 
     def diag(self, X):
         """Returns the diagonal of the kernel k(X, X).
@@ -1132,15 +1296,15 @@ class WhiteKernel(StationaryKernelMixin, Kernel):
 
         Parameters
         ----------
-        X : array, shape (n_samples_X, n_features)
-            Left argument of the returned kernel k(X, Y)
+        X : array-like of shape (n_samples_X, n_features) or list of object
+            Argument to the kernel.
 
         Returns
         -------
-        K_diag : array, shape (n_samples_X,)
+        K_diag : ndarray of shape (n_samples_X,)
             Diagonal of kernel k(X, X)
         """
-        return np.full(X.shape[0], self.noise_level,
+        return np.full(_num_samples(X), self.noise_level,
                        dtype=np.array(self.noise_level).dtype)
 
     def __repr__(self):
@@ -1152,29 +1316,63 @@ class RBF(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
     """Radial-basis function kernel (aka squared-exponential kernel).
 
     The RBF kernel is a stationary kernel. It is also known as the
-    "squared exponential" kernel. It is parameterized by a length-scale
-    parameter length_scale>0, which can either be a scalar (isotropic variant
+    "squared exponential" kernel. It is parameterized by a length scale
+    parameter :math:`l>0`, which can either be a scalar (isotropic variant
     of the kernel) or a vector with the same number of dimensions as the inputs
     X (anisotropic variant of the kernel). The kernel is given by:
 
-    k(x_i, x_j) = exp(-1 / 2 d(x_i / length_scale, x_j / length_scale)^2)
+    .. math::
+        k(x_i, x_j) = \\exp\\left(- \\frac{d(x_i, x_j)^2}{2l^2} \\right)
+
+    where :math:`l` is the length scale of the kernel and
+    :math:`d(\\cdot,\\cdot)` is the Euclidean distance.
+    For advice on how to set the length scale parameter, see e.g. [1]_.
 
     This kernel is infinitely differentiable, which implies that GPs with this
     kernel as covariance function have mean square derivatives of all orders,
     and are thus very smooth.
+    See [2]_, Chapter 4, Section 4.2, for further details of the RBF kernel.
+
+    Read more in the :ref:`User Guide <gp_kernels>`.
 
     .. versionadded:: 0.18
 
     Parameters
     ----------
-    length_scale : float or array with shape (n_features,), default: 1.0
+    length_scale : float or ndarray of shape (n_features,), default=1.0
         The length scale of the kernel. If a float, an isotropic kernel is
         used. If an array, an anisotropic kernel is used where each dimension
         of l defines the length-scale of the respective feature dimension.
 
-    length_scale_bounds : pair of floats >= 0, default: (1e-5, 1e5)
-        The lower and upper bound on length_scale
+    length_scale_bounds : pair of floats >= 0 or "fixed", default=(1e-5, 1e5)
+        The lower and upper bound on 'length_scale'.
+        If set to "fixed", 'length_scale' cannot be changed during
+        hyperparameter tuning.
 
+    References
+    ----------
+    .. [1] `David Duvenaud (2014). "The Kernel Cookbook:
+        Advice on Covariance functions".
+        <https://www.cs.toronto.edu/~duvenaud/cookbook/>`_
+
+    .. [2] `Carl Edward Rasmussen, Christopher K. I. Williams (2006).
+        "Gaussian Processes for Machine Learning". The MIT Press.
+        <http://www.gaussianprocess.org/gpml/>`_
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn.gaussian_process import GaussianProcessClassifier
+    >>> from sklearn.gaussian_process.kernels import RBF
+    >>> X, y = load_iris(return_X_y=True)
+    >>> kernel = 1.0 * RBF(1.0)
+    >>> gpc = GaussianProcessClassifier(kernel=kernel,
+    ...         random_state=0).fit(X, y)
+    >>> gpc.score(X, y)
+    0.9866...
+    >>> gpc.predict_proba(X[:2,:])
+    array([[0.8354..., 0.03228..., 0.1322...],
+           [0.7906..., 0.0652..., 0.1441...]])
     """
     def __init__(self, length_scale=1.0, length_scale_bounds=(1e-5, 1e5)):
         self.length_scale = length_scale
@@ -1198,25 +1396,26 @@ class RBF(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
 
         Parameters
         ----------
-        X : array, shape (n_samples_X, n_features)
+        X : ndarray of shape (n_samples_X, n_features)
             Left argument of the returned kernel k(X, Y)
 
-        Y : array, shape (n_samples_Y, n_features), (optional, default=None)
+        Y : ndarray of shape (n_samples_Y, n_features), default=None
             Right argument of the returned kernel k(X, Y). If None, k(X, X)
             if evaluated instead.
 
-        eval_gradient : bool (optional, default=False)
+        eval_gradient : bool, default=False
             Determines whether the gradient with respect to the kernel
             hyperparameter is determined. Only supported when Y is None.
 
         Returns
         -------
-        K : array, shape (n_samples_X, n_samples_Y)
+        K : ndarray of shape (n_samples_X, n_samples_Y)
             Kernel k(X, Y)
 
-        K_gradient : array (opt.), shape (n_samples_X, n_samples_X, n_dims)
+        K_gradient : ndarray of shape (n_samples_X, n_samples_X, n_dims), \
+                optional
             The gradient of the kernel k(X, X) with respect to the
-            hyperparameter of the kernel. Only returned when eval_gradient
+            hyperparameter of the kernel. Only returned when `eval_gradient`
             is True.
         """
         X = np.atleast_2d(X)
@@ -1265,30 +1464,50 @@ class RBF(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
 class Matern(RBF):
     """ Matern kernel.
 
-    The class of Matern kernels is a generalization of the RBF and the
-    absolute exponential kernel parameterized by an additional parameter
-    nu. The smaller nu, the less smooth the approximated function is.
-    For nu=inf, the kernel becomes equivalent to the RBF kernel and for nu=0.5
-    to the absolute exponential kernel. Important intermediate values are
-    nu=1.5 (once differentiable functions) and nu=2.5 (twice differentiable
-    functions).
+    The class of Matern kernels is a generalization of the :class:`RBF`.
+    It has an additional parameter :math:`\\nu` which controls the
+    smoothness of the resulting function. The smaller :math:`\\nu`,
+    the less smooth the approximated function is.
+    As :math:`\\nu\\rightarrow\\infty`, the kernel becomes equivalent to
+    the :class:`RBF` kernel. When :math:`\\nu = 1/2`, the Matérn kernel
+    becomes identical to the absolute exponential kernel.
+    Important intermediate values are
+    :math:`\\nu=1.5` (once differentiable functions)
+    and :math:`\\nu=2.5` (twice differentiable functions).
 
-    See Rasmussen and Williams 2006, pp84 for details regarding the
-    different variants of the Matern kernel.
+    The kernel is given by:
+
+    .. math::
+         k(x_i, x_j) =  \\frac{1}{\\Gamma(\\nu)2^{\\nu-1}}\\Bigg(
+         \\frac{\\sqrt{2\\nu}}{l} d(x_i , x_j )
+         \\Bigg)^\\nu K_\\nu\\Bigg(
+         \\frac{\\sqrt{2\\nu}}{l} d(x_i , x_j )\\Bigg)
+
+
+
+    where :math:`d(\\cdot,\\cdot)` is the Euclidean distance,
+    :math:`K_{\\nu}(\\cdot)` is a modified Bessel function and
+    :math:`\\Gamma(\\cdot)` is the gamma function.
+    See [1]_, Chapter 4, Section 4.2, for details regarding the different
+    variants of the Matern kernel.
+
+    Read more in the :ref:`User Guide <gp_kernels>`.
 
     .. versionadded:: 0.18
 
     Parameters
     ----------
-    length_scale : float or array with shape (n_features,), default: 1.0
+    length_scale : float or ndarray of shape (n_features,), default=1.0
         The length scale of the kernel. If a float, an isotropic kernel is
         used. If an array, an anisotropic kernel is used where each dimension
         of l defines the length-scale of the respective feature dimension.
 
-    length_scale_bounds : pair of floats >= 0, default: (1e-5, 1e5)
-        The lower and upper bound on length_scale
+    length_scale_bounds : pair of floats >= 0 or "fixed", default=(1e-5, 1e5)
+        The lower and upper bound on 'length_scale'.
+        If set to "fixed", 'length_scale' cannot be changed during
+        hyperparameter tuning.
 
-    nu : float, default: 1.5
+    nu : float, default=1.5
         The parameter nu controlling the smoothness of the learned function.
         The smaller nu, the less smooth the approximated function is.
         For nu=inf, the kernel becomes equivalent to the RBF kernel and for
@@ -1300,6 +1519,26 @@ class Matern(RBF):
         Bessel function. Furthermore, in contrast to l, nu is kept fixed to
         its initial value and not optimized.
 
+    References
+    ----------
+    .. [1] `Carl Edward Rasmussen, Christopher K. I. Williams (2006).
+        "Gaussian Processes for Machine Learning". The MIT Press.
+        <http://www.gaussianprocess.org/gpml/>`_
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn.gaussian_process import GaussianProcessClassifier
+    >>> from sklearn.gaussian_process.kernels import Matern
+    >>> X, y = load_iris(return_X_y=True)
+    >>> kernel = 1.0 * Matern(length_scale=1.0, nu=1.5)
+    >>> gpc = GaussianProcessClassifier(kernel=kernel,
+    ...         random_state=0).fit(X, y)
+    >>> gpc.score(X, y)
+    0.9866...
+    >>> gpc.predict_proba(X[:2,:])
+    array([[0.8513..., 0.0368..., 0.1117...],
+            [0.8086..., 0.0693..., 0.1220...]])
     """
     def __init__(self, length_scale=1.0, length_scale_bounds=(1e-5, 1e5),
                  nu=1.5):
@@ -1311,25 +1550,26 @@ class Matern(RBF):
 
         Parameters
         ----------
-        X : array, shape (n_samples_X, n_features)
+        X : ndarray of shape (n_samples_X, n_features)
             Left argument of the returned kernel k(X, Y)
 
-        Y : array, shape (n_samples_Y, n_features), (optional, default=None)
+        Y : ndarray of shape (n_samples_Y, n_features), default=None
             Right argument of the returned kernel k(X, Y). If None, k(X, X)
             if evaluated instead.
 
-        eval_gradient : bool (optional, default=False)
+        eval_gradient : bool, default=False
             Determines whether the gradient with respect to the kernel
             hyperparameter is determined. Only supported when Y is None.
 
         Returns
         -------
-        K : array, shape (n_samples_X, n_samples_Y)
+        K : ndarray of shape (n_samples_X, n_samples_Y)
             Kernel k(X, Y)
 
-        K_gradient : array (opt.), shape (n_samples_X, n_samples_X, n_dims)
+        K_gradient : ndarray of shape (n_samples_X, n_samples_X, n_dims), \
+                optional
             The gradient of the kernel k(X, X) with respect to the
-            hyperparameter of the kernel. Only returned when eval_gradient
+            hyperparameter of the kernel. Only returned when `eval_gradient`
             is True.
         """
         X = np.atleast_2d(X)
@@ -1351,6 +1591,8 @@ class Matern(RBF):
         elif self.nu == 2.5:
             K = dists * math.sqrt(5)
             K = (1. + K + K ** 2 / 3.0) * np.exp(-K)
+        elif self.nu == np.inf:
+            K = np.exp(-dists ** 2 / 2.0)
         else:  # general case; expensive to evaluate
             K = dists
             K[K == 0.0] += np.finfo(float).eps  # strict zeros result in nan
@@ -1387,6 +1629,8 @@ class Matern(RBF):
             elif self.nu == 2.5:
                 tmp = np.sqrt(5 * D.sum(-1))[..., np.newaxis]
                 K_gradient = 5.0 / 3.0 * D * (tmp + 1) * np.exp(-tmp)
+            elif self.nu == np.inf:
+                K_gradient = D * K[..., np.newaxis]
             else:
                 # approximate gradient numerically
                 def f(theta):  # helper function
@@ -1416,29 +1660,63 @@ class RationalQuadratic(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
     """Rational Quadratic kernel.
 
     The RationalQuadratic kernel can be seen as a scale mixture (an infinite
-    sum) of RBF kernels with different characteristic length-scales. It is
-    parameterized by a length-scale parameter length_scale>0 and a scale
-    mixture parameter alpha>0. Only the isotropic variant where length_scale is
-    a scalar is supported at the moment. The kernel given by:
+    sum) of RBF kernels with different characteristic length scales. It is
+    parameterized by a length scale parameter :math:`l>0` and a scale
+    mixture parameter :math:`\\alpha>0`. Only the isotropic variant
+    where length_scale :math:`l` is a scalar is supported at the moment.
+    The kernel is given by:
 
-    k(x_i, x_j) = (1 + d(x_i, x_j)^2 / (2*alpha * length_scale^2))^-alpha
+    .. math::
+        k(x_i, x_j) = \\left(
+        1 + \\frac{d(x_i, x_j)^2 }{ 2\\alpha  l^2}\\right)^{-\\alpha}
+
+    where :math:`\\alpha` is the scale mixture parameter, :math:`l` is
+    the length scale of the kernel and :math:`d(\\cdot,\\cdot)` is the
+    Euclidean distance.
+    For advice on how to set the parameters, see e.g. [1]_.
+
+    Read more in the :ref:`User Guide <gp_kernels>`.
 
     .. versionadded:: 0.18
 
     Parameters
     ----------
-    length_scale : float > 0, default: 1.0
+    length_scale : float > 0, default=1.0
         The length scale of the kernel.
 
-    alpha : float > 0, default: 1.0
+    alpha : float > 0, default=1.0
         Scale mixture parameter
 
-    length_scale_bounds : pair of floats >= 0, default: (1e-5, 1e5)
-        The lower and upper bound on length_scale
+    length_scale_bounds : pair of floats >= 0 or "fixed", default=(1e-5, 1e5)
+        The lower and upper bound on 'length_scale'.
+        If set to "fixed", 'length_scale' cannot be changed during
+        hyperparameter tuning.
 
-    alpha_bounds : pair of floats >= 0, default: (1e-5, 1e5)
-        The lower and upper bound on alpha
+    alpha_bounds : pair of floats >= 0 or "fixed", default=(1e-5, 1e5)
+        The lower and upper bound on 'alpha'.
+        If set to "fixed", 'alpha' cannot be changed during
+        hyperparameter tuning.
 
+    References
+    ----------
+    .. [1] `David Duvenaud (2014). "The Kernel Cookbook:
+        Advice on Covariance functions".
+        <https://www.cs.toronto.edu/~duvenaud/cookbook/>`_
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn.gaussian_process import GaussianProcessClassifier
+    >>> from sklearn.gaussian_process.kernels import Matern
+    >>> X, y = load_iris(return_X_y=True)
+    >>> kernel = RationalQuadratic(length_scale=1.0, alpha=1.5)
+    >>> gpc = GaussianProcessClassifier(kernel=kernel,
+    ...         random_state=0).fit(X, y)
+    >>> gpc.score(X, y)
+    0.9733...
+    >>> gpc.predict_proba(X[:2,:])
+    array([[0.8881..., 0.0566..., 0.05518...],
+            [0.8678..., 0.0707... , 0.0614...]])
     """
     def __init__(self, length_scale=1.0, alpha=1.0,
                  length_scale_bounds=(1e-5, 1e5), alpha_bounds=(1e-5, 1e5)):
@@ -1461,23 +1739,23 @@ class RationalQuadratic(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
 
         Parameters
         ----------
-        X : array, shape (n_samples_X, n_features)
+        X : ndarray of shape (n_samples_X, n_features)
             Left argument of the returned kernel k(X, Y)
 
-        Y : array, shape (n_samples_Y, n_features), (optional, default=None)
+        Y : ndarray of shape (n_samples_Y, n_features), default=None
             Right argument of the returned kernel k(X, Y). If None, k(X, X)
             if evaluated instead.
 
-        eval_gradient : bool (optional, default=False)
+        eval_gradient : bool, default=False
             Determines whether the gradient with respect to the kernel
             hyperparameter is determined. Only supported when Y is None.
 
         Returns
         -------
-        K : array, shape (n_samples_X, n_samples_Y)
+        K : ndarray of shape (n_samples_X, n_samples_Y)
             Kernel k(X, Y)
 
-        K_gradient : array (opt.), shape (n_samples_X, n_samples_X, n_dims)
+        K_gradient : ndarray of shape (n_samples_X, n_samples_X, n_dims)
             The gradient of the kernel k(X, X) with respect to the
             hyperparameter of the kernel. Only returned when eval_gradient
             is True.
@@ -1529,32 +1807,58 @@ class RationalQuadratic(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
 
 
 class ExpSineSquared(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
-    r"""Exp-Sine-Squared kernel.
+    r"""Exp-Sine-Squared kernel (aka periodic kernel).
 
-    The ExpSineSquared kernel allows modeling periodic functions. It is
-    parameterized by a length-scale parameter length_scale>0 and a periodicity
-    parameter periodicity>0. Only the isotropic variant where l is a scalar is
-    supported at the moment. The kernel given by:
+    The ExpSineSquared kernel allows one to model functions which repeat
+    themselves exactly. It is parameterized by a length scale
+    parameter :math:`l>0` and a periodicity parameter :math:`p>0`.
+    Only the isotropic variant where :math:`l` is a scalar is
+    supported at the moment. The kernel is given by:
 
-    k(x_i, x_j) =
-    exp(-2 (sin(\pi / periodicity * d(x_i, x_j)) / length_scale) ^ 2)
+    .. math::
+        k(x_i, x_j) = \text{exp}\left(-
+        \frac{ 2\sin^2(\pi d(x_i, x_j)/p) }{ l^ 2} \right)
+
+    where :math:`l` is the length scale of the kernel, :math:`p` the
+    periodicity of the kernel and :math:`d(\\cdot,\\cdot)` is the
+    Euclidean distance.
+
+    Read more in the :ref:`User Guide <gp_kernels>`.
 
     .. versionadded:: 0.18
 
     Parameters
     ----------
-    length_scale : float > 0, default: 1.0
+
+    length_scale : float > 0, default=1.0
         The length scale of the kernel.
 
-    periodicity : float > 0, default: 1.0
+    periodicity : float > 0, default=1.0
         The periodicity of the kernel.
 
-    length_scale_bounds : pair of floats >= 0, default: (1e-5, 1e5)
-        The lower and upper bound on length_scale
+    length_scale_bounds : pair of floats >= 0 or "fixed", default=(1e-5, 1e5)
+        The lower and upper bound on 'length_scale'.
+        If set to "fixed", 'length_scale' cannot be changed during
+        hyperparameter tuning.
 
-    periodicity_bounds : pair of floats >= 0, default: (1e-5, 1e5)
-        The lower and upper bound on periodicity
+    periodicity_bounds : pair of floats >= 0 or "fixed", default=(1e-5, 1e5)
+        The lower and upper bound on 'periodicity'.
+        If set to "fixed", 'periodicity' cannot be changed during
+        hyperparameter tuning.
 
+    Examples
+    --------
+    >>> from sklearn.datasets import make_friedman2
+    >>> from sklearn.gaussian_process import GaussianProcessRegressor
+    >>> from sklearn.gaussian_process.kernels import ExpSineSquared
+    >>> X, y = make_friedman2(n_samples=50, noise=0, random_state=0)
+    >>> kernel = ExpSineSquared(length_scale=1, periodicity=1)
+    >>> gpr = GaussianProcessRegressor(kernel=kernel, alpha=5,
+    ...         random_state=0).fit(X, y)
+    >>> gpr.score(X, y)
+    0.0144...
+    >>> gpr.predict(X[:2,:], return_std=True)
+    (array([425.6..., 457.5...]), array([0.3894..., 0.3467...]))
     """
     def __init__(self, length_scale=1.0, periodicity=1.0,
                  length_scale_bounds=(1e-5, 1e5),
@@ -1566,6 +1870,7 @@ class ExpSineSquared(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
 
     @property
     def hyperparameter_length_scale(self):
+        """Returns the length scale"""
         return Hyperparameter(
             "length_scale", "numeric", self.length_scale_bounds)
 
@@ -1579,25 +1884,26 @@ class ExpSineSquared(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
 
         Parameters
         ----------
-        X : array, shape (n_samples_X, n_features)
+        X : ndarray of shape (n_samples_X, n_features)
             Left argument of the returned kernel k(X, Y)
 
-        Y : array, shape (n_samples_Y, n_features), (optional, default=None)
+        Y : ndarray of shape (n_samples_Y, n_features), default=None
             Right argument of the returned kernel k(X, Y). If None, k(X, X)
             if evaluated instead.
 
-        eval_gradient : bool (optional, default=False)
+        eval_gradient : bool, default=False
             Determines whether the gradient with respect to the kernel
             hyperparameter is determined. Only supported when Y is None.
 
         Returns
         -------
-        K : array, shape (n_samples_X, n_samples_Y)
+        K : ndarray of shape (n_samples_X, n_samples_Y)
             Kernel k(X, Y)
 
-        K_gradient : array (opt.), shape (n_samples_X, n_samples_X, n_dims)
+        K_gradient : ndarray of shape (n_samples_X, n_samples_X, n_dims), \
+                optional
             The gradient of the kernel k(X, X) with respect to the
-            hyperparameter of the kernel. Only returned when eval_gradient
+            hyperparameter of the kernel. Only returned when `eval_gradient`
             is True.
         """
         X = np.atleast_2d(X)
@@ -1645,28 +1951,57 @@ class DotProduct(Kernel):
     r"""Dot-Product kernel.
 
     The DotProduct kernel is non-stationary and can be obtained from linear
-    regression by putting N(0, 1) priors on the coefficients of x_d (d = 1, . .
-    . , D) and a prior of N(0, \sigma_0^2) on the bias. The DotProduct kernel
-    is invariant to a rotation of the coordinates about the origin, but not
-    translations. It is parameterized by a parameter sigma_0^2. For
-    sigma_0^2 =0, the kernel is called the homogeneous linear kernel, otherwise
+    regression by putting :math:`N(0, 1)` priors on the coefficients
+    of :math:`x_d (d = 1, . . . , D)` and a prior of :math:`N(0, \sigma_0^2)`
+    on the bias. The DotProduct kernel is invariant to a rotation of
+    the coordinates about the origin, but not translations.
+    It is parameterized by a parameter sigma_0 :math:`\sigma`
+    which controls the inhomogenity of the kernel. For :math:`\sigma_0^2 =0`,
+    the kernel is called the homogeneous linear kernel, otherwise
     it is inhomogeneous. The kernel is given by
 
-    k(x_i, x_j) = sigma_0 ^ 2 + x_i \cdot x_j
+    .. math::
+        k(x_i, x_j) = \sigma_0 ^ 2 + x_i \cdot x_j
 
     The DotProduct kernel is commonly combined with exponentiation.
+
+    See [1]_, Chapter 4, Section 4.2, for further details regarding the
+    DotProduct kernel.
+
+    Read more in the :ref:`User Guide <gp_kernels>`.
 
     .. versionadded:: 0.18
 
     Parameters
     ----------
-    sigma_0 : float >= 0, default: 1.0
+    sigma_0 : float >= 0, default=1.0
         Parameter controlling the inhomogenity of the kernel. If sigma_0=0,
         the kernel is homogenous.
 
-    sigma_0_bounds : pair of floats >= 0, default: (1e-5, 1e5)
-        The lower and upper bound on l
+    sigma_0_bounds : pair of floats >= 0 or "fixed", default=(1e-5, 1e5)
+        The lower and upper bound on 'sigma_0'.
+        If set to "fixed", 'sigma_0' cannot be changed during
+        hyperparameter tuning.
 
+    References
+    ----------
+    .. [1] `Carl Edward Rasmussen, Christopher K. I. Williams (2006).
+        "Gaussian Processes for Machine Learning". The MIT Press.
+        <http://www.gaussianprocess.org/gpml/>`_
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_friedman2
+    >>> from sklearn.gaussian_process import GaussianProcessRegressor
+    >>> from sklearn.gaussian_process.kernels import DotProduct, WhiteKernel
+    >>> X, y = make_friedman2(n_samples=500, noise=0, random_state=0)
+    >>> kernel = DotProduct() + WhiteKernel()
+    >>> gpr = GaussianProcessRegressor(kernel=kernel,
+    ...         random_state=0).fit(X, y)
+    >>> gpr.score(X, y)
+    0.3680...
+    >>> gpr.predict(X[:2,:], return_std=True)
+    (array([653.0..., 592.1...]), array([316.6..., 316.6...]))
     """
 
     def __init__(self, sigma_0=1.0, sigma_0_bounds=(1e-5, 1e5)):
@@ -1682,25 +2017,26 @@ class DotProduct(Kernel):
 
         Parameters
         ----------
-        X : array, shape (n_samples_X, n_features)
+        X : ndarray of shape (n_samples_X, n_features)
             Left argument of the returned kernel k(X, Y)
 
-        Y : array, shape (n_samples_Y, n_features), (optional, default=None)
+        Y : ndarray of shape (n_samples_Y, n_features), default=None
             Right argument of the returned kernel k(X, Y). If None, k(X, X)
             if evaluated instead.
 
-        eval_gradient : bool (optional, default=False)
+        eval_gradient : bool, default=False
             Determines whether the gradient with respect to the kernel
             hyperparameter is determined. Only supported when Y is None.
 
         Returns
         -------
-        K : array, shape (n_samples_X, n_samples_Y)
+        K : ndarray of shape (n_samples_X, n_samples_Y)
             Kernel k(X, Y)
 
-        K_gradient : array (opt.), shape (n_samples_X, n_samples_X, n_dims)
+        K_gradient : ndarray of shape (n_samples_X, n_samples_X, n_dims),\
+                optional
             The gradient of the kernel k(X, X) with respect to the
-            hyperparameter of the kernel. Only returned when eval_gradient
+            hyperparameter of the kernel. Only returned when `eval_gradient`
             is True.
         """
         X = np.atleast_2d(X)
@@ -1731,13 +2067,13 @@ class DotProduct(Kernel):
 
         Parameters
         ----------
-        X : array, shape (n_samples_X, n_features)
-            Left argument of the returned kernel k(X, Y)
+        X : ndarray of shape (n_samples_X, n_features)
+            Left argument of the returned kernel k(X, Y).
 
         Returns
         -------
-        K_diag : array, shape (n_samples_X,)
-            Diagonal of kernel k(X, X)
+        K_diag : ndarray of shape (n_samples_X,)
+            Diagonal of kernel k(X, X).
         """
         return np.einsum('ij,ij->i', X, X) + self.sigma_0 ** 2
 
@@ -1779,13 +2115,18 @@ class PairwiseKernel(Kernel):
 
     Parameters
     ----------
-    gamma : float >= 0, default: 1.0
-        Parameter gamma of the pairwise kernel specified by metric
+    gamma : float, default=1.0
+        Parameter gamma of the pairwise kernel specified by metric. It should
+        be positive.
 
-    gamma_bounds : pair of floats >= 0, default: (1e-5, 1e5)
-        The lower and upper bound on gamma
+    gamma_bounds : pair of floats >= 0 or "fixed", default=(1e-5, 1e5)
+        The lower and upper bound on 'gamma'.
+        If set to "fixed", 'gamma' cannot be changed during
+        hyperparameter tuning.
 
-    metric : string, or callable, default: "linear"
+    metric : {"linear", "additive_chi2", "chi2", "poly", "polynomial", \
+              "rbf", "laplacian", "sigmoid", "cosine"} or callable, \
+              default="linear"
         The metric to use when calculating kernel between instances in a
         feature array. If metric is a string, it must be one of the metrics
         in pairwise.PAIRWISE_KERNEL_FUNCTIONS.
@@ -1795,7 +2136,7 @@ class PairwiseKernel(Kernel):
         should take two arrays from X as input and return a value indicating
         the distance between them.
 
-    pairwise_kernels_kwargs : dict, default: None
+    pairwise_kernels_kwargs : dict, default=None
         All entries of this dict (if any) are passed as keyword arguments to
         the pairwise kernel function.
 
@@ -1817,25 +2158,26 @@ class PairwiseKernel(Kernel):
 
         Parameters
         ----------
-        X : array, shape (n_samples_X, n_features)
+        X : ndarray of shape (n_samples_X, n_features)
             Left argument of the returned kernel k(X, Y)
 
-        Y : array, shape (n_samples_Y, n_features), (optional, default=None)
+        Y : ndarray of shape (n_samples_Y, n_features), default=None
             Right argument of the returned kernel k(X, Y). If None, k(X, X)
             if evaluated instead.
 
-        eval_gradient : bool (optional, default=False)
+        eval_gradient : bool, default=False
             Determines whether the gradient with respect to the kernel
             hyperparameter is determined. Only supported when Y is None.
 
         Returns
         -------
-        K : array, shape (n_samples_X, n_samples_Y)
+        K : ndarray of shape (n_samples_X, n_samples_Y)
             Kernel k(X, Y)
 
-        K_gradient : array (opt.), shape (n_samples_X, n_samples_X, n_dims)
+        K_gradient : ndarray of shape (n_samples_X, n_samples_X, n_dims),\
+                optional
             The gradient of the kernel k(X, X) with respect to the
-            hyperparameter of the kernel. Only returned when eval_gradient
+            hyperparameter of the kernel. Only returned when `eval_gradient`
             is True.
         """
         pairwise_kernels_kwargs = self.pairwise_kernels_kwargs
@@ -1868,12 +2210,12 @@ class PairwiseKernel(Kernel):
 
         Parameters
         ----------
-        X : array, shape (n_samples_X, n_features)
+        X : ndarray of shape (n_samples_X, n_features)
             Left argument of the returned kernel k(X, Y)
 
         Returns
         -------
-        K_diag : array, shape (n_samples_X,)
+        K_diag : ndarray of shape (n_samples_X,)
             Diagonal of kernel k(X, X)
         """
         # We have to fall back to slow way of computing diagonal

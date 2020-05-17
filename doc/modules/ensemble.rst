@@ -246,7 +246,7 @@ amount of time (e.g., on large datasets).
 
  * :ref:`sphx_glr_auto_examples_ensemble_plot_forest_iris.py`
  * :ref:`sphx_glr_auto_examples_ensemble_plot_forest_importances_faces.py`
- * :ref:`sphx_glr_auto_examples_plot_multioutput_face_completion.py`
+ * :ref:`sphx_glr_auto_examples_miscellaneous_plot_multioutput_face_completion.py`
 
 .. topic:: References
 
@@ -278,6 +278,19 @@ trees one can **reduce the variance** of such an estimate and use it
 for feature selection. This is known as the mean decrease in impurity, or MDI.
 Refer to [L2014]_ for more information on MDI and feature importance
 evaluation with Random Forests.
+
+.. warning::
+
+  The impurity-based feature importances computed on tree-based models suffer
+  from two flaws that can lead to misleading conclusions. First they are
+  computed on statistics derived from the training dataset and therefore **do
+  not necessarily inform us on which features are most important to make good
+  predictions on held-out dataset**. Secondly, **they favor high cardinality
+  features**, that is features with many unique values.
+  :ref:`permutation_importance` is an alternative to impurity-based feature
+  importance that does not suffer from these flaws. These two methods of
+  obtaining feature importance are explored in:
+  :ref:`sphx_glr_auto_examples_inspection_plot_permutation_importance.py`.
 
 The following example shows a color-coded representation of the relative
 importances of each individual pixel for a face recognition task using
@@ -322,8 +335,9 @@ trees and the maximum depth per tree. For each tree in the ensemble, the coding
 contains one entry of one. The size of the coding is at most ``n_estimators * 2
 ** max_depth``, the maximum number of leaves in the forest.
 
-As neighboring data points are more likely to lie within the same leaf of a tree,
-the transformation performs an implicit, non-parametric density estimation.
+As neighboring data points are more likely to lie within the same leaf of a
+tree, the transformation performs an implicit, non-parametric density
+estimation.
 
 .. topic:: Examples:
 
@@ -475,6 +489,10 @@ trees.
   in this setting.
 
 
+The usage and the parameters of :class:`GradientBoostingClassifier` and
+:class:`GradientBoostingRegressor` are described below. The 2 most important
+parameters of these estimators are `n_estimators` and `learning_rate`.
+
 Classification
 ---------------
 
@@ -495,7 +513,13 @@ with 100 decision stumps as weak learners::
     >>> clf.score(X_test, y_test)
     0.913...
 
-The number of weak learners (i.e. regression trees) is controlled by the parameter ``n_estimators``; :ref:`The size of each tree <gradient_boosting_tree_size>` can be controlled either by setting the tree depth via ``max_depth`` or by setting the number of leaf nodes via ``max_leaf_nodes``. The ``learning_rate`` is a hyper-parameter in the range (0.0, 1.0] that controls overfitting via :ref:`shrinkage <gradient_boosting_shrinkage>` .
+The number of weak learners (i.e. regression trees) is controlled by the
+parameter ``n_estimators``; :ref:`The size of each tree
+<gradient_boosting_tree_size>` can be controlled either by setting the tree
+depth via ``max_depth`` or by setting the number of leaf nodes via
+``max_leaf_nodes``. The ``learning_rate`` is a hyper-parameter in the range
+(0.0, 1.0] that controls overfitting via :ref:`shrinkage
+<gradient_boosting_shrinkage>` .
 
 .. note::
 
@@ -540,8 +564,8 @@ of the gradient boosting model. The test error at each iterations can be obtaine
 via the :meth:`~GradientBoostingRegressor.staged_predict` method which returns a
 generator that yields the predictions at each stage. Plots like these can be used
 to determine the optimal number of trees (i.e. ``n_estimators``) by early stopping.
-The plot on the right shows the feature importances which can be obtained via
-the ``feature_importances_`` property.
+The plot on the right shows the impurity-based feature importances which can be
+obtained via the ``feature_importances_`` property.
 
 .. figure:: ../auto_examples/ensemble/images/sphx_glr_plot_gradient_boosting_regression_001.png
    :target: ../auto_examples/ensemble/plot_gradient_boosting_regression.html
@@ -601,65 +625,118 @@ chapter on gradient boosting in [F2001]_ and is related to the parameter
 Mathematical formulation
 -------------------------
 
-GBRT considers additive models of the following form:
+We first present GBRT for regression, and then detail the classification
+case.
+
+Regression
+^^^^^^^^^^
+
+GBRT regressors are additive models whose prediction :math:`y_i` for a
+given input :math:`x_i` is of the following form:
 
   .. math::
 
-    F(x) = \sum_{m=1}^{M} \gamma_m h_m(x)
+    \hat{y_i} = F_M(x_i) = \sum_{m=1}^{M} h_m(x_i)
 
-where :math:`h_m(x)` are the basis functions which are usually called
-*weak learners* in the context of boosting. Gradient Tree Boosting
-uses :ref:`decision trees <tree>` of fixed size as weak
-learners. Decision trees have a number of abilities that make them
-valuable for boosting, namely the ability to handle data of mixed type
-and the ability to model complex functions.
+where the :math:`h_m` are estimators called *weak learners* in the context
+of boosting. Gradient Tree Boosting uses :ref:`decision tree regressors
+<tree>` of fixed size as weak learners. The constant M corresponds to the
+`n_estimators` parameter.
 
-Similar to other boosting algorithms, GBRT builds the additive model in
-a greedy fashion:
+Similar to other boosting algorithms, a GBRT is built in a greedy fashion:
 
   .. math::
 
-    F_m(x) = F_{m-1}(x) + \gamma_m h_m(x),
+    F_m(x) = F_{m-1}(x) + h_m(x),
 
-where the newly added tree :math:`h_m` tries to minimize the loss :math:`L`,
-given the previous ensemble :math:`F_{m-1}`:
-
-  .. math::
-
-    h_m =  \arg\min_{h} \sum_{i=1}^{n} L(y_i,
-    F_{m-1}(x_i) + h(x_i)).
-
-The initial model :math:`F_{0}` is problem specific, for least-squares
-regression one usually chooses the mean of the target values.
-
-.. note:: The initial model can also be specified via the ``init``
-          argument. The passed object has to implement ``fit`` and ``predict``.
-
-Gradient Boosting attempts to solve this minimization problem
-numerically via steepest descent: The steepest descent direction is
-the negative gradient of the loss function evaluated at the current
-model :math:`F_{m-1}` which can be calculated for any differentiable
-loss function:
+where the newly added tree :math:`h_m` is fitted in order to minimize a sum
+of losses :math:`L_m`, given the previous ensemble :math:`F_{m-1}`:
 
   .. math::
 
-    F_m(x) = F_{m-1}(x) - \gamma_m \sum_{i=1}^{n} \nabla_F L(y_i,
-    F_{m-1}(x_i))
+    h_m =  \arg\min_{h} L_m = \arg\min_{h} \sum_{i=1}^{n}
+    l(y_i, F_{m-1}(x_i) + h(x_i)),
 
-Where the step length :math:`\gamma_m` is chosen using line search:
+where :math:`l(y_i, F(x_i))` is defined by the `loss` parameter, detailed
+in the next section.
+
+By default, the initial model :math:`F_{0}` is chosen as the constant that
+minimizes the loss: for a least-squares loss, this is the empirical mean of
+the target values. The initial model can also be specified via the ``init``
+argument.
+
+Using a first-order Taylor approximation, the value of :math:`l` can be
+approximated as follows:
 
   .. math::
 
-    \gamma_m = \arg\min_{\gamma} \sum_{i=1}^{n} L(y_i, F_{m-1}(x_i)
-    - \gamma \frac{\partial L(y_i, F_{m-1}(x_i))}{\partial F_{m-1}(x_i)})
+    l(y_i, F_{m-1}(x_i) + h_m(x_i)) \approx
+    l(y_i, F_{m-1}(x_i))
+    + h_m(x_i)
+    \left[ \frac{\partial l(y_i, F(x_i))}{\partial F(x_i)} \right]_{F=F_{m - 1}}.
 
-The algorithms for regression and classification
-only differ in the concrete loss function used.
+.. note::
+
+  Briefly, a first-order Taylor approximation says that
+  :math:`l(z) \approx l(a) + (z - a) \frac{\partial l(a)}{\partial a}`.
+  Here, :math:`z` corresponds to :math:`F_{m - 1}(x_i) + h_m(x_i)`, and
+  :math:`a` corresponds to :math:`F_{m-1}(x_i)`
+
+The quantity :math:`\left[ \frac{\partial l(y_i, F(x_i))}{\partial F(x_i)}
+\right]_{F=F_{m - 1}}` is the derivative of the loss with respect to its
+second parameter, evaluated at :math:`F_{m-1}(x)`. It is easy to compute for
+any given :math:`F_{m - 1}(x_i)` in a closed form since the loss is
+differentiable. We will denote it by :math:`g_i`.
+
+Removing the constant terms, we have:
+
+  .. math::
+
+    h_m \approx \arg\min_{h} \sum_{i=1}^{n} h(x_i) g_i
+
+This is minimized if :math:`h(x_i)` is fitted to predict a value that is
+proportional to the negative gradient :math:`-g_i`. Therefore, at each
+iteration, **the estimator** :math:`h_m` **is fitted to predict the negative
+gradients of the samples**. The gradients are updated at each iteration.
+This can be considered as some kind of gradient descent in a functional
+space.
+
+.. note::
+
+  For some losses, e.g. the least absolute deviation (LAD) where the gradients
+  are :math:`\pm 1`, the values predicted by a fitted :math:`h_m` are not
+  accurate enough: the tree can only output integer values. As a result, the
+  leaves values of the tree :math:`h_m` are modified once the tree is
+  fitted, such that the leaves values minimize the loss :math:`L_m`. The
+  update is loss-dependent: for the LAD loss, the value of a leaf is updated
+  to the median of the samples in that leaf.
+
+Classification
+^^^^^^^^^^^^^^
+
+Gradient boosting for classification is very similar to the regression case.
+However, the sum of the trees :math:`F_M(x_i) = \sum_m h_m(x_i)` is not
+homogeneous to a prediction: it cannot be a class, since the trees predict
+continuous values.
+
+The mapping from the value :math:`F_M(x_i)` to a class or a probability is
+loss-dependent. For the deviance (or log-loss), the probability that
+:math:`x_i` belongs to the positive class is modeled as :math:`p(y_i = 1 |
+x_i) = \sigma(F_M(x_i))` where :math:`\sigma` is the sigmoid function.
+
+For multiclass classification, K trees (for K classes) are built at each of
+the :math:`M` iterations. The probability that :math:`x_i` belongs to class
+k is modeled as a softmax of the :math:`F_{M,k}(x_i)` values.
+
+Note that even for a classification task, the :math:`h_m` sub-estimator is
+still a regressor, not a classifier. This is because the sub-estimators are
+trained to predict (negative) *gradients*, which are always continuous
+quantities.
 
 .. _gradient_boosting_loss:
 
 Loss Functions
-...............
+--------------
 
 The following loss functions are supported and can be specified using
 the parameter ``loss``:
@@ -699,20 +776,17 @@ the parameter ``loss``:
       examples than ``'deviance'``; can only be used for binary
       classification.
 
-Regularization
-----------------
-
 .. _gradient_boosting_shrinkage:
 
-Shrinkage
-..........
+Shrinkage via learning rate
+---------------------------
 
 [F2001]_ proposed a simple regularization strategy that scales
-the contribution of each weak learner by a factor :math:`\nu`:
+the contribution of each weak learner by a constant factor :math:`\nu`:
 
 .. math::
 
-    F_m(x) = F_{m-1}(x) + \nu \gamma_m h_m(x)
+    F_m(x) = F_{m-1}(x) + \nu h_m(x)
 
 The parameter :math:`\nu` is also called the **learning rate** because
 it scales the step length the gradient descent procedure; it can
@@ -729,7 +803,7 @@ stopping. For a more detailed discussion of the interaction between
 ``learning_rate`` and ``n_estimators`` see [R2007]_.
 
 Subsampling
-............
+-----------
 
 [F1999]_ proposed stochastic gradient boosting, which combines gradient
 boosting with bootstrap averaging (bagging). At each iteration
@@ -773,8 +847,8 @@ is too time consuming.
  * :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_oob.py`
  * :ref:`sphx_glr_auto_examples_ensemble_plot_ensemble_oob.py`
 
-Interpretation
---------------
+Interpretation with feature importance
+--------------------------------------
 
 Individual decision trees can be interpreted easily by simply
 visualizing the tree structure. Gradient boosting models, however,
@@ -782,9 +856,6 @@ comprise hundreds of regression trees thus they cannot be easily
 interpreted by visual inspection of the individual trees. Fortunately,
 a number of techniques have been proposed to summarize and interpret
 gradient boosting models.
-
-Feature importance
-..................
 
 Often features do not contribute equally to predict the target
 response; in many situations the majority of the features are in fact
@@ -798,7 +869,7 @@ appropriate split points. This information can be used to measure the
 importance of each feature; the basic idea is: the more often a
 feature is used in the split points of a tree the more important that
 feature is. This notion of importance can be extended to decision tree
-ensembles by simply averaging the feature importance of each tree (see
+ensembles by simply averaging the impurity-based feature importance of each tree (see
 :ref:`random_forest_feature_importance` for more details).
 
 The feature importance scores of a fit gradient boosting model can be
@@ -813,6 +884,10 @@ accessed via the ``feature_importances_`` property::
     >>> clf.feature_importances_
     array([0.10..., 0.10..., 0.11..., ...
 
+Note that this computation of feature importance is based on entropy, and it
+is distinct from :func:`sklearn.inspection.permutation_importance` which is
+based on permutation of the features.
+
 .. topic:: Examples:
 
  * :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_regression.py`
@@ -822,7 +897,7 @@ accessed via the ``feature_importances_`` property::
 Histogram-Based Gradient Boosting
 =================================
 
-Scikit-learn 0.21 introduces two new experimental implementations of
+Scikit-learn 0.21 introduced two new experimental implementations of
 gradient boosting trees, namely :class:`HistGradientBoostingClassifier`
 and :class:`HistGradientBoostingRegressor`, inspired by
 `LightGBM <https://github.com/Microsoft/LightGBM>`__ (See [LightGBM]_).
@@ -842,8 +917,7 @@ leverage integer-based data structures (histograms) instead of relying on
 sorted continuous values when building the trees. The API of these
 estimators is slightly different, and some of the features from
 :class:`GradientBoostingClassifier` and :class:`GradientBoostingRegressor`
-are not yet supported: in particular sample weights, and some loss
-functions.
+are not yet supported, for instance some loss functions.
 
 These estimators are still **experimental**: their predictions
 and their API might change without any deprecation cycle. To use them, you
@@ -878,8 +952,9 @@ controls the number of iterations of the boosting process::
   >>> clf.score(X_test, y_test)
   0.8965
 
-Available losses for regression are 'least_squares' and
-'least_absolute_deviation', which is less sensitive to outliers. For
+Available losses for regression are 'least_squares',
+'least_absolute_deviation', which is less sensitive to outliers, and
+'poisson', which is well suited to model counts and frequencies. For
 classification, 'binary_crossentropy' is used for binary classification and
 'categorical_crossentropy' is used for multiclass classification. By default
 the loss is 'auto' and will select the appropriate loss depending on
@@ -895,12 +970,14 @@ generally recommended to use as many bins as possible, which is the default.
 The ``l2_regularization`` parameter is a regularizer on the loss function and
 corresponds to :math:`\lambda` in equation (2) of [XGBoost]_.
 
-Note that **early-stopping is enabled by default**. The early-stopping
-behaviour is controlled via the ``scoring``, ``validation_fraction``,
+Note that **early-stopping is enabled by default if the number of samples is
+larger than 10,000**. The early-stopping behaviour is controlled via the
+``early-stopping``, ``scoring``, ``validation_fraction``,
 ``n_iter_no_change``, and ``tol`` parameters. It is possible to early-stop
-using an arbitrary :term:`scorer`, or just the training or validation loss. By
-default, early-stopping is performed using the default :term:`scorer` of
-the estimator on a validation set.
+using an arbitrary :term:`scorer`, or just the training or validation loss.
+Note that for technical reasons, using a scorer is significantly slower than
+using the loss. By default, early-stopping is performed if there are at least
+10,000 samples in the training set, using the validation loss.
 
 Missing values support
 ----------------------
@@ -941,15 +1018,93 @@ If no missing values were encountered for a given feature during training,
 then samples with missing values are mapped to whichever child has the most
 samples.
 
+.. _sw_hgbdt:
+
+Sample weight support
+---------------------
+
+:class:`HistGradientBoostingClassifier` and
+:class:`HistGradientBoostingRegressor` sample support weights during
+:term:`fit`.
+
+The following toy example demonstrates how the model ignores the samples with
+zero sample weights:
+
+    >>> X = [[1, 0],
+    ...      [1, 0],
+    ...      [1, 0],
+    ...      [0, 1]]
+    >>> y = [0, 0, 1, 0]
+    >>> # ignore the first 2 training samples by setting their weight to 0
+    >>> sample_weight = [0, 0, 1, 1]
+    >>> gb = HistGradientBoostingClassifier(min_samples_leaf=1)
+    >>> gb.fit(X, y, sample_weight=sample_weight)
+    HistGradientBoostingClassifier(...)
+    >>> gb.predict([[1, 0]])
+    array([1])
+    >>> gb.predict_proba([[1, 0]])[0, 1]
+    0.99...
+
+As you can see, the `[1, 0]` is comfortably classified as `1` since the first
+two samples are ignored due to their sample weights.
+
+Implementation detail: taking sample weights into account amounts to
+multiplying the gradients (and the hessians) by the sample weights. Note that
+the binning stage (specifically the quantiles computation) does not take the
+weights into account.
+
+.. _monotonic_cst_gbdt:
+
+Monotonic Constraints
+---------------------
+
+Depending on the problem at hand, you may have prior knowledge indicating
+that a given feature should in general have a positive (or negative) effect
+on the target value. For example, all else being equal, a higher credit
+score should increase the probability of getting approved for a loan.
+Monotonic constraints allow you to incorporate such prior knowledge into the
+model.
+
+A positive monotonic constraint is a constraint of the form:
+
+:math:`x_1 \leq x_1' \implies F(x_1, x_2) \leq F(x_1', x_2)`,
+where :math:`F` is the predictor with two features.
+
+Similarly, a negative monotonic constraint is of the form:
+
+:math:`x_1 \leq x_1' \implies F(x_1, x_2) \geq F(x_1', x_2)`.
+
+Note that monotonic constraints only constraint the output "all else being
+equal". Indeed, the following relation **is not enforced** by a positive
+constraint: :math:`x_1 \leq x_1' \implies F(x_1, x_2) \leq F(x_1', x_2')`.
+
+You can specify a monotonic constraint on each feature using the
+`monotonic_cst` parameter. For each feature, a value of 0 indicates no
+constraint, while -1 and 1 indicate a negative and positive constraint,
+respectively::
+
+  >>> from sklearn.experimental import enable_hist_gradient_boosting  # noqa
+  >>> from sklearn.ensemble import HistGradientBoostingRegressor
+
+  ... # positive, negative, and no constraint on the 3 features
+  >>> gbdt = HistGradientBoostingRegressor(monotonic_cst=[1, -1, 0])
+
+In a binary classification context, imposing a monotonic constraint means
+that the feature is supposed to have a positive / negative effect on the
+probability to belong to the positive class. Monotonic constraints are not
+supported for multiclass context.
+
+.. topic:: Examples:
+
+  * :ref:`sphx_glr_auto_examples_ensemble_plot_monotonic_constraints.py`
+
 Low-level parallelism
 ---------------------
 
 :class:`HistGradientBoostingClassifier` and
 :class:`HistGradientBoostingRegressor` have implementations that use OpenMP
-for parallelization through Cython. The number of threads that is used can
-be changed using the ``OMP_NUM_THREADS`` environment variable. By default,
-all available cores are used. Please refer to the OpenMP documentation for
-details.
+for parallelization through Cython. For more details on how to control the
+number of threads, please refer to our :ref:`parallelism` notes.
 
 The following parts are parallelized:
 
@@ -1043,7 +1198,7 @@ based on the ascending sort order. E.g., in the following scenario
 the class label 1 will be assigned to the sample.
 
 Usage
-.....
+-----
 
 The following example shows how to fit the majority rule classifier::
 
@@ -1160,7 +1315,7 @@ hyperparameters of the individual estimators::
    >>> grid = grid.fit(iris.data, iris.target)
 
 Usage
-.....
+-----
 
 In order to predict the class labels based on the predicted
 class-probabilities (scikit-learn estimators in the VotingClassifier
@@ -1284,7 +1439,7 @@ any other regressor or classifier, exposing a `predict`, `predict_proba`, and
    >>> print('R2 score: {:.2f}'.format(r2_score(y_test, y_pred)))
    R2 score: 0.81
 
-Note that it is also possible to get the output of the stacked outputs of the
+Note that it is also possible to get the output of the stacked
 `estimators` using the `transform` method::
 
   >>> reg.transform(X_test[:5])
@@ -1324,7 +1479,7 @@ computationally expensive.
     StackingRegressor(...)
     >>> print('R2 score: {:.2f}'
     ...       .format(multi_layer_regressor.score(X_test, y_test)))
-    R2 score: 0.82
+    R2 score: 0.83
 
 .. topic:: References
 

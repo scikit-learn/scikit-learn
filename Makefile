@@ -67,4 +67,4 @@ code-analysis:
 	pylint -E -i y sklearn/ -d E1103,E0611,E1101
 
 flake8-diff:
-	./build_tools/circle/flake8_diff.sh
+	git diff upstream/master -u -- "*.py" | flake8 --diff

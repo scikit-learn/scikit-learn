@@ -88,10 +88,10 @@ def test_transform():
     noise_scale = 0.01
 
     # Create S-curve dataset
-    X, y = datasets.samples_generator.make_s_curve(n_samples, random_state=0)
+    X, y = datasets.make_s_curve(n_samples, random_state=0)
 
     # Compute isomap embedding
-    iso = manifold.Isomap(n_components, 2)
+    iso = manifold.Isomap(n_components=n_components, n_neighbors=2)
     X_iso = iso.fit_transform(X)
 
     # Re-embed a noisy version of the points

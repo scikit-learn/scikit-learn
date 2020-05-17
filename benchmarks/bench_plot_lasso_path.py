@@ -11,7 +11,7 @@ import numpy as np
 
 from sklearn.linear_model import lars_path, lars_path_gram
 from sklearn.linear_model import lasso_path
-from sklearn.datasets.samples_generator import make_regression
+from sklearn.datasets import make_regression
 
 
 def compute_bench(samples_range, features_range):

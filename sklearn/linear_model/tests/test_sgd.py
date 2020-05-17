@@ -6,13 +6,13 @@ import numpy as np
 import scipy.sparse as sp
 import joblib
 
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_raises_regexp
-from sklearn.utils.testing import assert_warns
-from sklearn.utils.testing import ignore_warnings
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_raises
+from sklearn.utils._testing import assert_raises_regexp
+from sklearn.utils._testing import assert_warns
+from sklearn.utils._testing import ignore_warnings
 
 from sklearn import linear_model, datasets, metrics
 from sklearn.base import clone, is_classifier
@@ -20,13 +20,8 @@ from sklearn.preprocessing import LabelEncoder, scale, MinMaxScaler
 from sklearn.preprocessing import StandardScaler
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.model_selection import StratifiedShuffleSplit, ShuffleSplit
-from sklearn.linear_model import sgd_fast
+from sklearn.linear_model import _sgd_fast as sgd_fast
 from sklearn.model_selection import RandomizedSearchCV
-
-
-# 0.23. warning about tol not having its correct default value.
-pytestmark = pytest.mark.filterwarnings(
-    "ignore:max_iter and tol parameters have been")
 
 
 def _update_kwargs(kwargs):
@@ -67,6 +62,7 @@ class _SparseSGDRegressor(linear_model.SGDRegressor):
         return linear_model.SGDRegressor.partial_fit(self, X, y, *args, **kw)
 
     def decision_function(self, X, *args, **kw):
+        # XXX untested as of v0.22
         X = sp.csr_matrix(X)
         return linear_model.SGDRegressor.decision_function(self, X, *args,
                                                            **kw)
@@ -259,18 +255,31 @@ def test_plain_has_no_average_attr(klass):
     clf = klass(average=True, eta0=.01)
     clf.fit(X, Y)
 
-    assert hasattr(clf, 'average_coef_')
-    assert hasattr(clf, 'average_intercept_')
-    assert hasattr(clf, 'standard_intercept_')
-    assert hasattr(clf, 'standard_coef_')
+    assert hasattr(clf, '_average_coef')
+    assert hasattr(clf, '_average_intercept')
+    assert hasattr(clf, '_standard_intercept')
+    assert hasattr(clf, '_standard_coef')
 
     clf = klass()
     clf.fit(X, Y)
 
-    assert not hasattr(clf, 'average_coef_')
-    assert not hasattr(clf, 'average_intercept_')
-    assert not hasattr(clf, 'standard_intercept_')
-    assert not hasattr(clf, 'standard_coef_')
+    assert not hasattr(clf, '_average_coef')
+    assert not hasattr(clf, '_average_intercept')
+    assert not hasattr(clf, '_standard_intercept')
+    assert not hasattr(clf, '_standard_coef')
+
+
+# TODO: remove in 0.25
+@pytest.mark.parametrize('klass', [SGDClassifier, SGDRegressor])
+def test_sgd_deprecated_attr(klass):
+    est = klass(average=True, eta0=.01)
+    est.fit(X, Y)
+
+    msg = "Attribute {} was deprecated"
+    for att in ['average_coef_', 'average_intercept_',
+                'standard_coef_', 'standard_intercept_']:
+        with pytest.warns(FutureWarning, match=msg.format(att)):
+            getattr(est, att)
 
 
 @pytest.mark.parametrize('klass', [SGDClassifier, SparseSGDClassifier,
@@ -1429,7 +1438,7 @@ def _test_gradient_common(loss_function, cases):
     # Test gradient of different loss functions
     # cases is a list of (p, y, expected)
     for p, y, expected in cases:
-        assert_almost_equal(loss_function.dloss(p, y), expected)
+        assert_almost_equal(loss_function.py_dloss(p, y), expected)
 
 
 def test_gradient_hinge():
@@ -1479,8 +1488,8 @@ def test_gradient_log():
         (17.9, -1.0, 1.0), (-17.9, 1.0, -1.0),
     ]
     _test_gradient_common(loss, cases)
-    assert_almost_equal(loss.dloss(18.1, 1.0), np.exp(-18.1) * -1.0, 16)
-    assert_almost_equal(loss.dloss(-18.1, -1.0), np.exp(-18.1) * 1.0, 16)
+    assert_almost_equal(loss.py_dloss(18.1, 1.0), np.exp(-18.1) * -1.0, 16)
+    assert_almost_equal(loss.py_dloss(-18.1, -1.0), np.exp(-18.1) * 1.0, 16)
 
 
 def test_gradient_squared_loss():
@@ -1568,11 +1577,6 @@ def test_multi_core_gridsearch_and_early_stopping():
     assert search.best_score_ > 0.8
 
 
-@pytest.mark.skipif(
-    not hasattr(sp, "random"),
-    reason="this test uses scipy.random, that was introduced in version  "
-           "0.17. This skip condition can be dropped as soon as we drop "
-           "support for scipy versions older than 0.17")
 @pytest.mark.parametrize("backend",
                          ["loky", "multiprocessing", "threading"])
 def test_SGDClassifier_fit_for_all_backends(backend):

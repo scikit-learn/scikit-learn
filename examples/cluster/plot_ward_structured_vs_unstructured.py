@@ -31,7 +31,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import mpl_toolkits.mplot3d.axes3d as p3
 from sklearn.cluster import AgglomerativeClustering
-from sklearn.datasets.samples_generator import make_swiss_roll
+from sklearn.datasets import make_swiss_roll
 
 # #############################################################################
 # Generate data (swiss roll dataset)

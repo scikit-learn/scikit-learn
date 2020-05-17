@@ -27,7 +27,9 @@ def _unique_multiclass(y):
 
 
 def _unique_indicator(y):
-    return np.arange(check_array(y, ['csr', 'csc', 'coo']).shape[1])
+    return np.arange(
+        check_array(y, accept_sparse=['csr', 'csc', 'coo']).shape[1]
+    )
 
 
 _FN_UNIQUE_LABELS = {
@@ -83,7 +85,8 @@ def unique_labels(*ys):
 
     # Check consistency for the indicator format
     if (label_type == "multilabel-indicator" and
-            len(set(check_array(y, ['csr', 'csc', 'coo']).shape[1]
+            len(set(check_array(y,
+                                accept_sparse=['csr', 'csc', 'coo']).shape[1]
                     for y in ys)) > 1):
         raise ValueError("Multi-label binary indicator input with "
                          "different numbers of labels")
@@ -134,7 +137,7 @@ def is_multilabel(y):
     >>> is_multilabel(np.array([[1, 0, 0]]))
     True
     """
-    if hasattr(y, '__array__'):
+    if hasattr(y, '__array__') or isinstance(y, Sequence):
         y = np.asarray(y)
     if not (hasattr(y, "shape") and y.ndim == 2 and y.shape[1] > 1):
         return False
@@ -227,7 +230,7 @@ def type_of_target(y):
     >>> type_of_target(np.array([[1, 2], [3, 1]]))
     'multiclass-multioutput'
     >>> type_of_target([[1, 2]])
-    'multiclass-multioutput'
+    'multilabel-indicator'
     >>> type_of_target(np.array([[1.5, 2.0], [3.0, 1.6]]))
     'continuous-multioutput'
     >>> type_of_target(np.array([[0, 1], [1, 1]]))
@@ -353,6 +356,8 @@ def class_distribution(y, sample_weight=None):
     class_prior = []
 
     n_samples, n_outputs = y.shape
+    if sample_weight is not None:
+        sample_weight = np.asarray(sample_weight)
 
     if issparse(y):
         y = y.tocsc()
@@ -362,7 +367,7 @@ def class_distribution(y, sample_weight=None):
             col_nonzero = y.indices[y.indptr[k]:y.indptr[k + 1]]
             # separate sample weights for zero and non-zero elements
             if sample_weight is not None:
-                nz_samp_weight = np.asarray(sample_weight)[col_nonzero]
+                nz_samp_weight = sample_weight[col_nonzero]
                 zeros_samp_weight_sum = (np.sum(sample_weight) -
                                          np.sum(nz_samp_weight))
             else:

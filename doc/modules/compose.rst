@@ -144,7 +144,7 @@ or by name::
  * :ref:`sphx_glr_auto_examples_feature_selection_plot_feature_selection_pipeline.py`
  * :ref:`sphx_glr_auto_examples_model_selection_grid_search_text_feature_extraction.py`
  * :ref:`sphx_glr_auto_examples_compose_plot_digits_pipe.py`
- * :ref:`sphx_glr_auto_examples_plot_kernel_approximation.py`
+ * :ref:`sphx_glr_auto_examples_miscellaneous_plot_kernel_approximation.py`
  * :ref:`sphx_glr_auto_examples_svm_plot_svm_anova.py`
  * :ref:`sphx_glr_auto_examples_compose_plot_compare_reduction.py`
 
@@ -383,11 +383,6 @@ and ignored by setting to ``'drop'``::
 ColumnTransformer for heterogeneous data
 ========================================
 
-.. warning::
-
-    The :class:`compose.ColumnTransformer <sklearn.compose.ColumnTransformer>`
-    class is experimental and the API is subject to change.
-
 Many datasets contain features of different types, say text, floats, and dates,
 where each type of feature requires separate preprocessing or feature
 extraction steps.  Often it is easiest to preprocess data before applying
@@ -462,7 +457,25 @@ as most of other transformers expects 2D data, therefore in that case you need
 to specify the column as a list of strings (``['city']``).
 
 Apart from a scalar or a single item list, the column selection can be specified
-as a list of multiple items, an integer array, a slice, or a boolean mask.
+as a list of multiple items, an integer array, a slice, a boolean mask, or
+with a :func:`~sklearn.compose.make_column_selector`. The 
+:func:`~sklearn.compose.make_column_selector` is used to select columns based
+on data type or column name::
+
+  >>> from sklearn.preprocessing import StandardScaler
+  >>> from sklearn.compose import make_column_selector
+  >>> ct = ColumnTransformer([
+  ...       ('scale', StandardScaler(),
+  ...       make_column_selector(dtype_include=np.number)),
+  ...       ('onehot',
+  ...       OneHotEncoder(),
+  ...       make_column_selector(pattern='city', dtype_include=object))])
+  >>> ct.fit_transform(X)
+  array([[ 0.904...,  0.      ,  1. ,  0. ,  0. ],
+         [-1.507...,  1.414...,  1. ,  0. ,  0. ],
+         [-0.301...,  0.      ,  0. ,  1. ,  0. ],
+         [ 0.904..., -1.414...,  0. ,  0. ,  1. ]])
+
 Strings can reference columns if the input is a DataFrame, integers are always
 interpreted as the positional columns.
 
@@ -514,6 +527,31 @@ above example would be::
                     transformers=[('onehotencoder', OneHotEncoder(), ['city']),
                                   ('countvectorizer', CountVectorizer(),
                                    'title')])
+
+.. _visualizing_composite_estimators:
+
+Visualizing Composite Estimators
+================================
+
+Estimators can be displayed with a HTML representation when shown in a
+jupyter notebook. This can be useful to diagnose or visualize a Pipeline with
+many estimators. This visualization is activated by setting the
+`display` option in :func:`sklearn.set_config`::
+
+  >>> from sklearn import set_config
+  >>> set_config(display='diagram')   # doctest: +SKIP
+  >>> # diplays HTML representation in a jupyter context
+  >>> column_trans  # doctest: +SKIP
+
+An example of the HTML output can be seen in the 
+**HTML representation of Pipeline** section of 
+:ref:`sphx_glr_auto_examples_compose_plot_column_transformer_mixed_types.py`.
+As an alternative, the HTML can be written to a file using
+:func:`~sklearn.utils.estimator_html_repr`::
+
+   >>> from sklearn.utils import estimator_html_repr
+   >>> with open('my_estimator.html', 'w') as f:  # doctest: +SKIP
+   ...     f.write(estimator_html_repr(clf))
 
 .. topic:: Examples:
 
