@@ -72,7 +72,6 @@ print(X_train[0])
 # :class:`~sklearn.preprocessing.FunctionTransformer` to create a scikit-learn
 # transformer.
 
-
 def subject_body_extractor(posts):
     # construct object dtype array with two columns
     # first column = 'subject' and second column = 'body'
@@ -95,12 +94,11 @@ def subject_body_extractor(posts):
     return features
 
 
-SubjectBodyExtractor = FunctionTransformer(subject_body_extractor)
+subject_body_transformer = FunctionTransformer(subject_body_extractor)
 
 ##############################################################################
 # We will also create a transformer that extracts the
 # length of the text and the number of sentences.
-
 
 def text_stats(posts):
     return [{'length': len(text),
@@ -108,7 +106,7 @@ def text_stats(posts):
             for text in posts]
 
 
-TextStats = FunctionTransformer(text_stats)
+text_stats_transformer = FunctionTransformer(text_stats)
 
 ##############################################################################
 # Classification pipeline
@@ -136,7 +134,7 @@ pipeline = Pipeline([
             ]), 1),
             # Pipeline for pulling text stats from post's body
             ('body_stats', Pipeline([
-                ('stats', TextStats),  # returns a list of dicts
+                ('stats', text_stats_transformer),  # returns a list of dicts
                 ('vect', DictVectorizer()),  # list of dicts -> feature matrix
             ]), 1),
         ],
@@ -153,7 +151,7 @@ pipeline = Pipeline([
 
 ##############################################################################
 # Finally, we fit our pipeline on the training data and use it to predict
-# topics for ``X_test``. Performance metrics of our pipeline is then printed.
+# topics for ``X_test``. Performance metrics of our pipeline are then printed.
 
 pipeline.fit(X_train, y_train)
 y_pred = pipeline.predict(X_test)
