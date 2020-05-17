@@ -56,7 +56,7 @@ X_test, y_test = fetch_20newsgroups(random_state=1,
                                     return_X_y=True)
 
 ##############################################################################
-# Each feature comprises meta information about that post, such as the subject
+# Each feature comprises meta information about that post, such as the subject,
 # and the body of the news post.
 
 print(X_train[0])
