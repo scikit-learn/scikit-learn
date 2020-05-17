@@ -72,6 +72,7 @@ print(X_train[0])
 # :class:`~sklearn.preprocessing.FunctionTransformer` to create a scikit-learn
 # transformer.
 
+
 def subject_body_extractor(posts):
     # construct object dtype array with two columns
     # first column = 'subject' and second column = 'body'
@@ -100,6 +101,7 @@ subject_body_transformer = FunctionTransformer(subject_body_extractor)
 # We will also create a transformer that extracts the
 # length of the text and the number of sentences.
 
+
 def text_stats(posts):
     return [{'length': len(text),
              'num_sentences': text.count('.')}
@@ -121,7 +123,7 @@ text_stats_transformer = FunctionTransformer(text_stats)
 
 pipeline = Pipeline([
     # Extract subject & body
-    ('subjectbody', SubjectBodyExtractor),
+    ('subjectbody', subject_body_transformer),
     # Use ColumnTransformer to combine the subject and body features
     ('union', ColumnTransformer(
         [
