@@ -63,7 +63,7 @@ def _linkcode_resolve(domain, info, package, url_fmt, revision):
                          start=os.path.dirname(__import__(package).__file__))
     try:
         lines, lineno = inspect.getsourcelines(obj)
-        # TODO: Remove in v0.24
+        # TODO: Remove in v0.25
         if lines[0] == "@_deprecate_positional_args\n":
             lineno += 1
     except Exception:
