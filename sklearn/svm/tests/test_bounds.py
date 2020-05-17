@@ -110,7 +110,7 @@ def test_bounded_rand_int(orig_range, n_pts):
         sample = [bounded_rand_int_wrap(orig_range) for _ in range(n_pts)]
         res = stats.kstest(sample, uniform_dist.cdf)
         ks_pvals.append(res.pvalue)
-    min_10pct_pval = np.quantile(ks_pvals, q=0.1)
+    min_10pct_pval = np.percentile(ks_pvals, q=10)
     # lower 10th quantile pvalue <= 0.05 means that the test rejects the
     # null hypothesis that the sample came from the uniform distribution
     assert(min_10pct_pval > 0.05),\
