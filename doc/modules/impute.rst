@@ -106,11 +106,11 @@ imputation round are returned.
 .. note::
 
    This estimator is still **experimental** for now: default parameters or
-   details of behaviour might change without any deprecation cycle,
-   specifically convergence criteria (:issue:`14338`),
-   default estimators (:issue:`13286`),
-   and use of random state (:issue:`15611`).
-   To use it, you need to explicitly import ``enable_iterative_imputer``.
+   details of behaviour might change without any deprecation cycle. Resolving
+   the following issues would help stabilize :class:`IterativeImputer`:
+   convergence criteria (:issue:`14338`), default estimators (:issue:`13286`),
+   and use of random state (:issue:`15611`). To use it, you need to explicitly
+   import ``enable_iterative_imputer``.
 
 ::
 
