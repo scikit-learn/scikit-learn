@@ -417,7 +417,8 @@ def explained_variance_score(y_true, y_pred, *,
     ``fix_when_y_true_is_constant`` to ``False`` to prevent this fix to happen.
 
     Note: when the prediction residuals have zero mean (perfectly unbiased
-    model), Explained Variance score is identical to the R^2 score.
+    model), Explained Variance score is identical to the
+    :func:`R^2 score <r2_score>`.
 
     Read more in the :ref:`User Guide <explained_variance_score>`.
 
@@ -547,11 +548,9 @@ def r2_score(y_true, y_pred, *, sample_weight=None,
     """R^2 (coefficient of determination) regression score function.
 
     Best possible score is 1.0 and it can be negative (because the
-    model can be arbitrarily worse).
-
-    In the general case when the true y is non-constant, a constant model
-    that always predict the average y, disregarding the input features,
-    would get a R^2 score of 0.0.
+    model can be arbitrarily worse). In the general case when the true y is
+    non-constant, a constant model that always predict the average y
+    disregarding the input features would get a R^2 score of 0.0.
 
     In the particular case when the true y is constant, the R^2 score is not
     finite: it is either ``NaN`` (perfect predictions) or ``-Inf`` (imperfect
@@ -562,7 +561,8 @@ def r2_score(y_true, y_pred, *, sample_weight=None,
     prevent this fix to happen.
 
     Note: when the prediction residuals have zero mean (perfectly unbiased
-    model), the R^2 score is identical to the Explained Variance score.
+    model), the R^2 score is identical to the
+    :func:`Explained Variance score <explained_variance_score>`.
 
     Read more in the :ref:`User Guide <r2_score>`.
 
