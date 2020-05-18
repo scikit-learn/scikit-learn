@@ -22,7 +22,7 @@ def iris():
     "input_type", ["list", "array", "sparse", "dataframe"]
 )
 def test_checking_classifier(iris, input_type):
-    # Check that the CheckingClassifier output what we expect
+    # Check that the CheckingClassifier outputs what we expect
     X, y = iris
     X = _convert_container(X, input_type)
     clf = CheckingClassifier()
