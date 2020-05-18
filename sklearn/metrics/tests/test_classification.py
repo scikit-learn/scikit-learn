@@ -42,6 +42,7 @@ from sklearn.metrics import matthews_corrcoef
 from sklearn.metrics import precision_recall_fscore_support
 from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
+from sklearn.metrics import tpr_fpr_tnr_fnr_scores
 from sklearn.metrics import zero_one_loss
 from sklearn.metrics import brier_score_loss
 from sklearn.metrics import multilabel_confusion_matrix
@@ -211,6 +212,26 @@ def test_precision_recall_f1_score_binary():
         assert_almost_equal(my_assert(fbeta_score, y_true, y_pred, beta=2,
                                       **kwargs),
                             (1 + 2 ** 2) * ps * rs / (2 ** 2 * ps + rs), 2)
+
+
+def test_tpr_fpr_tnr_fnr_scores_binary():
+    # Test TPR, FPR, TNR, FNR Score for binary classification task
+    y_true, y_pred, _ = make_prediction(binary=True)
+
+    # detailed measures for each class
+    tpr, fpr, tnr, fnr = tpr_fpr_tnr_fnr_scores(y_true, y_pred, average=None)
+    assert_array_almost_equal(tpr, [0.88, 0.68], 2)
+    assert_array_almost_equal(fpr, [0.32, 0.12], 2)
+    assert_array_almost_equal(tnr, [0.68, 0.88], 2)
+    assert_array_almost_equal(fnr, [0.12, 0.32], 2)
+
+    tn, fp, fn, tp = assert_no_warnings(
+        confusion_matrix, y_true, y_pred
+    ).ravel()
+    assert_array_almost_equal(tp / (tp + fn), 0.68, 2)
+    assert_array_almost_equal(fp / (tn + fp), 0.12, 2)
+    assert_array_almost_equal(tn / (tn + fp), 0.88, 2)
+    assert_array_almost_equal(fn / (tp + fn), 0.32, 2)
 
 
 @ignore_warnings
@@ -2064,8 +2085,9 @@ def test_hinge_loss_multiclass():
     ])
     np.clip(dummy_losses, 0, None, out=dummy_losses)
     dummy_hinge_loss = np.mean(dummy_losses)
-    assert (hinge_loss(y_true, pred_decision) ==
-                 dummy_hinge_loss)
+    assert (
+        hinge_loss(y_true, pred_decision) == dummy_hinge_loss
+    )
 
 
 def test_hinge_loss_multiclass_missing_labels_with_labels_none():
@@ -2101,8 +2123,9 @@ def test_hinge_loss_multiclass_with_missing_labels():
     ])
     np.clip(dummy_losses, 0, None, out=dummy_losses)
     dummy_hinge_loss = np.mean(dummy_losses)
-    assert (hinge_loss(y_true, pred_decision, labels=labels) ==
-                 dummy_hinge_loss)
+    assert (
+        hinge_loss(y_true, pred_decision, labels=labels) == dummy_hinge_loss
+    )
 
 
 def test_hinge_loss_multiclass_invariance_lists():

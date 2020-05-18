@@ -1509,7 +1509,8 @@ def tpr_fpr_tnr_fnr_scores(y_true, y_pred, *, labels=None, pos_label=1,
                            average=None, warn_for=('tpr', 'fpr',
                                                    'tnr', 'fnr'),
                            sample_weight=None, zero_division="warn"):
-    """Compute TPR, FPR, TNR, FNR for each class
+    """Compute True Positive Rate (TPR), False Positive Rate (FPR),\
+    True Negative Rate (TNR), False Negative Rate (FNR) for each class
 
     The TPR is the ratio ``tp / (tp + fn)`` where ``tp`` is the number of
     true positives and ``fn`` the number of false negatives.
@@ -1583,9 +1584,8 @@ def tpr_fpr_tnr_fnr_scores(y_true, y_pred, *, labels=None, pos_label=1,
 
     zero_division : "warn", 0 or 1, default="warn"
         Sets the value to return when there is a zero division:
-           - recall: when there are no positive labels
-           - precision: when there are no positive predictions
-           - f-score: both
+           - tpr, fnr: when there are no positive labels
+           - fpr, tnr: when there are no negative labels
 
         If set to "warn", this acts as 0, but warnings are also raised.
 
@@ -1649,7 +1649,7 @@ def tpr_fpr_tnr_fnr_scores(y_true, y_pred, *, labels=None, pos_label=1,
 
     labels = _check_set_wise_labels(y_true, y_pred, average, labels, pos_label)
 
-    # Calculate tp_sum, fp_sum, tn_sum, fn_sum, pred_sum, pos_sum, neg_sum ###
+    # Calculate tp_sum, fp_sum, tn_sum, fn_sum, pred_sum, pos_sum, neg_sum
     samplewise = average == 'samples'
     MCM = multilabel_confusion_matrix(y_true, y_pred,
                                       sample_weight=sample_weight,
@@ -1659,8 +1659,8 @@ def tpr_fpr_tnr_fnr_scores(y_true, y_pred, *, labels=None, pos_label=1,
     fn_sum = MCM[:, 1, 0]
     tp_sum = MCM[:, 1, 1]
     pred_sum = tp_sum + MCM[:, 0, 1]
-    neg_sum = tn_sum+fp_sum
-    pos_sum = fn_sum+tp_sum
+    neg_sum = tn_sum + fp_sum
+    pos_sum = fn_sum + tp_sum
 
     if average == 'micro':
         tp_sum = np.array([tp_sum.sum()])
@@ -1686,18 +1686,18 @@ def tpr_fpr_tnr_fnr_scores(y_true, y_pred, *, labels=None, pos_label=1,
         weights = pos_sum
         if weights.sum() == 0:
             zero_division_value = 0.0 if zero_division in ["warn", 0] else 1.0
-            # precision is zero_division if there are no positive predictions
-            # recall is zero_division if there are no positive labels
-            # fscore is zero_division if all labels AND predictions are
-            # negative
-            return (zero_division_value if pred_sum.sum() == 0 else 0,
-                    zero_division_value,
-                    zero_division_value if pred_sum.sum() == 0 else 0)
+            # TPR and FNR is zero_division if there are no positive labels
+            # FPR and TNR is zero_division if there are no negative labels
+            return (zero_division_value if pos_sum == 0 else 0,
+                    zero_division_value if neg_sum == 0 else 0,
+                    zero_division_value if neg_sum == 0 else 0,
+                    zero_division_value if pos_sum == 0 else 0)
 
     elif average == 'samples':
         weights = sample_weight
     else:
         weights = None
+
     if average is not None:
         assert average != 'binary' or len(fpr) == 1
         fpr = np.average(fpr, weights=weights)
@@ -2340,7 +2340,8 @@ def log_loss(y_true, y_pred, *, eps=1e-15, normalize=True, sample_weight=None,
     y_true : array-like or label indicator matrix
         Ground truth (correct) labels for n_samples samples.
 
-    y_pred : array-like of float, shape = (n_samples, n_classes) or (n_samples,)
+    y_pred : array-like of float, shape = (n_samples, n_classes) \
+    or (n_samples,)
         Predicted probabilities, as returned by a classifier's
         predict_proba method. If ``y_pred.shape = (n_samples,)``
         the probabilities provided are assumed to be that of the
