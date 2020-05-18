@@ -121,7 +121,7 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
         )
         if self.expected_fit_params:
             missing = set(self.expected_fit_params) - set(fit_params)
-            if len(missing) > 0:
+            if missing:
                 raise AssertionError(
                     f'Expected fit parameter(s) {list(missing)} not seen.'
                 )
