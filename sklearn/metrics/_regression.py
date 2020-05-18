@@ -397,6 +397,7 @@ def median_absolute_error(y_true, y_pred, *, multioutput='uniform_average',
     if sample_weight is None:
         output_errors = np.median(np.abs(y_pred - y_true), axis=0)
     else:
+        print('abs ypred shape {}, ytrue shape {}'.format(y_pred.shape, y_true.shape))
         output_errors = _weighted_percentile(np.abs(y_pred - y_true),
                                              sample_weight=sample_weight)
     if isinstance(multioutput, str):
