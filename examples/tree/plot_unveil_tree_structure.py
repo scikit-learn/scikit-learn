@@ -108,8 +108,7 @@ for i in range(n_nodes):
                   left=children_left[i],
                   feature=feature[i],
                   threshold=threshold[i],
-                  right=children_right[i],
-            ))
+                  right=children_right[i]))
 
 ##############################################################################
 # We can compare the above output to the plot of the decision tree.
@@ -163,8 +162,7 @@ for node_id in node_index:
               feature=feature[node_id],
               value=X_test[sample_id, feature[node_id]],
               inequality=threshold_sign,
-              threshold=threshold[node_id]
-            ))
+              threshold=threshold[node_id]))
 
 ##############################################################################
 # For a group of samples, we can determine the common nodes the samples go
@@ -179,6 +177,5 @@ common_node_id = np.arange(n_nodes)[common_nodes]
 
 print("\nThe following samples {samples} share the node(s) {nodes} in the "
       "tree.".format(samples=sample_ids, nodes=common_node_id))
-print("This is {prop} % of all nodes.".format(
-    prop=100 * len(common_node_id) / n_nodes)
-)
+print("This is {prop}% of all nodes.".format(
+    prop=100 * len(common_node_id) / n_nodes))
