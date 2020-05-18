@@ -1400,8 +1400,8 @@ or :class:`StackingRegressor`, respectively::
   >>> from sklearn.ensemble import GradientBoostingRegressor
   >>> from sklearn.ensemble import StackingRegressor
   >>> final_estimator = GradientBoostingRegressor(
-  ...                       n_estimators=25, subsample=0.5, min_samples_leaf=25,
-  ...                       max_features=1, random_state=42)
+  ...     n_estimators=25, subsample=0.5, min_samples_leaf=25, max_features=1,
+  ...     random_state=42)
   >>> reg = StackingRegressor(
   ...     estimators=estimators,
   ...     final_estimator=final_estimator)
@@ -1464,11 +1464,9 @@ computationally expensive.
    a :class:`StackingClassifier` or :class:`StackingRegressor`::
 
     >>> final_layer_rfr = RandomForestRegressor(
-    ...                        n_estimators=10, max_features=1,
-    ...                        max_leaf_nodes=5,random_state=42)
+    ...     n_estimators=10, max_features=1, max_leaf_nodes=5,random_state=42)
     >>> final_layer_gbr = GradientBoostingRegressor(
-    ...                        n_estimators=10, max_features=1,
-    ...                        max_leaf_nodes=5,random_state=42)
+    ...     n_estimators=10, max_features=1, max_leaf_nodes=5,random_state=42)
     >>> final_layer = StackingRegressor(
     ...     estimators=[('rf', final_layer_rfr),
     ...                 ('gbrt', final_layer_gbr)],
