@@ -58,7 +58,9 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
     Parameters
     ----------
     check_y
+    check_y_params
     check_X
+    check_X_params
     foo_param
     expected_fit_params
 
@@ -66,10 +68,13 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
     ----------
     classes_
     """
-    def __init__(self, check_y=None, check_X=None, foo_param=0,
+    def __init__(self, *, check_y=None, check_y_params=None,
+                 check_X=None, check_X_params=None, foo_param=0,
                  expected_fit_params=None):
         self.check_y = check_y
+        self.check_y_params = check_y_params
         self.check_X = check_X
+        self.check_X_params = check_X_params
         self.foo_param = foo_param
         self.expected_fit_params = expected_fit_params
 
@@ -90,12 +95,14 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
         **fit_params : dict of string -> object
             Parameters passed to the ``fit`` method of the estimator
         """
-        assert len(X) == len(y)
+        assert _num_samples(X) == _num_samples(y)
         if self.check_X is not None:
-            assert self.check_X(X)
+            params = {} if self.check_X_params is None else self.check_X_params
+            assert self.check_X(X, **params)
         if self.check_y is not None:
+            params = {} if self.check_y_params is None else self.check_y_params
             assert self.check_y(y)
-        self.n_features_in_ = len(X)
+        self.n_features_in_ = X.shape[1]
         self.classes_ = np.unique(check_array(y, ensure_2d=False,
                                               allow_nd=True))
         if self.expected_fit_params:
@@ -103,10 +110,10 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
             assert len(missing) == 0, 'Expected fit parameter(s) %s not ' \
                                       'seen.' % list(missing)
             for key, value in fit_params.items():
-                assert len(value) == len(X), (
-                        'Fit parameter %s has length %d; '
-                        'expected %d.'
-                        % (key, len(value), len(X)))
+                assert _num_samples(value) == _num_samples(X), (
+                    f'Fit parameter {key} has length {_num_samples(value)}; '
+                    f'expected {_num_samples(X)}.'
+                )
 
         return self
 
@@ -117,7 +124,8 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
         T : indexable, length n_samples
         """
         if self.check_X is not None:
-            assert self.check_X(T)
+            params = {} if self.check_X_params is None else self.check_X_params
+            assert self.check_X(T, **params)
         return self.classes_[np.zeros(_num_samples(T), dtype=np.int)]
 
     def score(self, X=None, Y=None):
