@@ -136,7 +136,7 @@ def _single_linkage_tree(connectivity, n_samples, n_nodes, n_clusters,
 # Hierarchical tree building functions
 
 @_deprecate_positional_args
-def ward_tree(X, connectivity=None, n_clusters=None, return_distance=False):
+def ward_tree(X, *, connectivity=None, n_clusters=None, return_distance=False):
     """Ward clustering based on a Feature matrix.
 
     Recursively merges the pair of clusters that minimally increases

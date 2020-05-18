@@ -186,10 +186,10 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
 
 # XXX : could be moved to the linear_model module
 @_deprecate_positional_args
-def sparse_encode(X, dictionary, *, gram=None, cov=None, algorithm='lasso_lars',
-                  n_nonzero_coefs=None, alpha=None, copy_cov=True, init=None,
-                  max_iter=1000, n_jobs=None, check_input=True, verbose=0,
-                  positive=False):
+def sparse_encode(X, dictionary, *, gram=None, cov=None,
+                  algorithm='lasso_lars', n_nonzero_coefs=None, alpha=None,
+                  copy_cov=True, init=None, max_iter=1000, n_jobs=None,
+                  check_input=True, verbose=0, positive=False):
     """Sparse coding
 
     Each row of the result is the solution to a sparse coding problem.
