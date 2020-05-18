@@ -257,8 +257,7 @@ be applied to the target variable::
   >>> from sklearn.linear_model import LinearRegression
   >>> from sklearn.model_selection import train_test_split
   >>> X, y = fetch_california_housing(return_X_y=True)
-  >>> X = X[:2000,:]
-  >>> y = y[:2000]
+  >>> X, y = X[:2000, :], y[:2000]  # select a subset of data
   >>> transformer = QuantileTransformer(output_distribution='normal')
   >>> regressor = LinearRegression()
   >>> regr = TransformedTargetRegressor(regressor=regressor,
