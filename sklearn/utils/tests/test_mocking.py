@@ -96,3 +96,10 @@ def test_checking_classifier_fit_params(iris):
 
     with pytest.raises(AssertionError, match="Fit parameter sample_weight"):
         clf.fit(X, y, sample_weight=sample_weight)
+
+
+def test_checking_classifier_missing_fit_params(iris):
+    X, y = iris
+    clf = CheckingClassifier(expected_fit_params=["sample_weight"])
+    with pytest.raises(AssertionError, match="Expected fit parameter"):
+        clf.fit(X, y)

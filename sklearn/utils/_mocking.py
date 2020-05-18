@@ -51,22 +51,32 @@ class MockDataFrame:
 class CheckingClassifier(ClassifierMixin, BaseEstimator):
     """Dummy classifier to test pipelining and meta-estimators.
 
-    Checks some property of X and y in fit / predict.
+    Checks some property of `X` and `y`in fit / predict.
     This allows testing whether pipelines / cross-validation or metaestimators
     changed the input.
 
     Parameters
     ----------
-    check_y
-    check_y_params
-    check_X
-    check_X_params
-    foo_param
-    expected_fit_params
+    check_y, check_X : callable, default=None
+        The callable used to validate `X` and `y`.
+
+    check_y_params, check_X_params : dict, default=None
+        The optional parameters to pass to `check_X` and `check_y`.
+
+    foo_param : int, default=0
+        A `foo` param. When `foo > 1`, the output of :meth:`score` will be 1
+        otherwise it is 0.
+
+    expected_fit_params : list of str, default=None
+        A list of the expected parameters given when calling `fit`.
 
     Attributes
     ----------
-    classes_
+    classes_ : int
+        The classes seen during `fit`.
+
+    n_features_in_ : int
+        The number of features seen during `fit`.
     """
     def __init__(self, *, check_y=None, check_y_params=None,
                  check_X=None, check_X_params=None, foo_param=0,
@@ -79,8 +89,7 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
         self.expected_fit_params = expected_fit_params
 
     def fit(self, X, y, **fit_params):
-        """
-        Fit classifier
+        """Fit classifier.
 
         Parameters
         ----------
@@ -94,6 +103,10 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
 
         **fit_params : dict of string -> object
             Parameters passed to the ``fit`` method of the estimator
+
+        Returns
+        -------
+        self
         """
         assert _num_samples(X) == _num_samples(y)
         if self.check_X is not None:
@@ -103,8 +116,9 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
             params = {} if self.check_y_params is None else self.check_y_params
             assert self.check_y(y)
         self.n_features_in_ = np.shape(X)[1]
-        self.classes_ = np.unique(check_array(y, ensure_2d=False,
-                                              allow_nd=True))
+        self.classes_ = np.unique(
+            check_array(y, ensure_2d=False, allow_nd=True)
+        )
         if self.expected_fit_params:
             missing = set(self.expected_fit_params) - set(fit_params)
             assert len(missing) == 0, (
@@ -119,10 +133,17 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
         return self
 
     def predict(self, T):
-        """
+        """Predict the first class seen.
+
         Parameters
         ----------
-        T : indexable, length n_samples
+        T : array-like of shape (n_samples, n_features)
+            The input data.
+
+        Returns
+        -------
+        preds : ndarray of shape (n_samples,)
+            Predictions of the first class seens in `classes_`.
         """
         if self.check_X is not None:
             params = {} if self.check_X_params is None else self.check_X_params
@@ -166,16 +187,23 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
             return self.predict_proba(T)
 
     def score(self, X=None, Y=None):
-        """
+        """Fake score.
+
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
             Input data, where n_samples is the number of samples and
             n_features is the number of features.
 
-        Y : array-like of shape (n_samples, n_output) or (n_samples,), optional
+        Y : array-like of shape (n_samples, n_output) or (n_samples,)
             Target relative to X for classification or regression;
             None for unsupervised learning.
+
+        Returns
+        -------
+        score : float
+            Either 0 or 1 depending of `foo_params` (i.e. > 1 `score=1`
+            otherwise `score=0`).
         """
         if self.foo_param > 1:
             score = 1.
