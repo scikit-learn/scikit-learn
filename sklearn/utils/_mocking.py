@@ -58,7 +58,8 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
     Parameters
     ----------
     check_y, check_X : callable, default=None
-        The callable used to validate `X` and `y`.
+        The callable used to validate `X` and `y`. These callable should return
+        a bool where `False` will trigger an `AssertionError`.
 
     check_y_params, check_X_params : dict, default=None
         The optional parameters to pass to `check_X` and `check_y`.
@@ -135,7 +136,7 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
         return self
 
     def predict(self, X):
-        """Predict the first class seen.
+        """Predict the first class seen in `classes_`.
 
         Parameters
         ----------
@@ -209,8 +210,8 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
         Returns
         -------
         score : float
-            Either 0 or 1 depending of `foo_param` (i.e. `foo_param > 1 => score=1`
-            otherwise `score=0`).
+            Either 0 or 1 depending of `foo_param` (i.e. `foo_param > 1 =>
+            score=1` otherwise `score=0`).
         """
         if self.foo_param > 1:
             score = 1.
