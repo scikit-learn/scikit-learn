@@ -609,14 +609,15 @@ class KNeighborsMixin:
             X = self._fit_X
             # Include an extra neighbor to account for the sample itself being
             # returned, which is removed later
+            original_n_neighbors = n_neighbors
             n_neighbors += 1
 
         n_samples_fit = self.n_samples_fit_
         if n_neighbors > n_samples_fit:
             raise ValueError(
-                "Expected n_neighbors <= n_samples, "
+                "Expected n_neighbors < n_samples, "
                 " but n_samples = %d, n_neighbors = %d" %
-                (n_samples_fit, n_neighbors)
+                (n_samples_fit, original_n_neighbors)
             )
 
         n_jobs = effective_n_jobs(self.n_jobs)
