@@ -45,20 +45,23 @@ clf.fit(X_train, y_train)
 # to low level attributes such as ``node_count``, the total number of nodes,
 # and ``max_depth``, the maximal depth of the tree. It also stores the
 # entire binary tree structure, represented as a number of parallel arrays. The
-# i-th element of each array holds information about the node i. Node 0 is the
-# tree's root. Some of the arrays only apply to either leaves or split nodes.
-# In this case the values of the nodes of the other type is arbitrary. For
-# example, the arrays ``feature`` and ``threshold`` only apply to split
+# i-th element of each array holds information about the node ``i``. Node 0 is
+# the tree's root. Some of the arrays only apply to either leaves or split
+# nodes. In this case the values of the nodes of the other type is arbitrary.
+# For example, the arrays ``feature`` and ``threshold`` only apply to split
 # nodes. The values for leaf nodes in these arrays are therefore arbitrary.
 #
 # Among these arrays, we have:
-#   - ``children_left[i]`` - id of the left child of node i or -1 if leaf node
-#   - ``children_right[i]`` - id of the right child of node i or -1 if leaf
+#
+#   - ``children_left[i]``: id of the left child of node ``i`` or -1 if leaf
 #     node
-#   - ``feature[i]`` - feature used for splitting node i
-#   - ``threshold[i]`` - threshold value at node i
-#   - ``n_node_samples[i]`` - the number of of training samples reaching node i
-#   - ``impurity[i]`` - the impurity at node i
+#   - ``children_right[i]``: id of the right child of node ``i`` or -1 if leaf
+#     node
+#   - ``feature[i]``: feature used for splitting node ``i``
+#   - ``threshold[i]``: threshold value at node ``i``
+#   - ``n_node_samples[i]``: the number of of training samples reaching node
+#     ``i``
+#   - ``impurity[i]``: the impurity at node ``i``
 #
 # Using the arrays, we can traverse the tree structure to compute various
 # properties. Below, we will compute the depth of each node and whether or not
@@ -90,22 +93,23 @@ while len(stack) > 0:
     else:
         is_leaves[node_id] = True
 
-print("The binary tree structure has %s nodes and has "
-      "the following tree structure:\n"
-      % n_nodes)
+print("The binary tree structure has {n} nodes and has "
+      "the following tree structure:\n".format(n=n_nodes))
 for i in range(n_nodes):
     if is_leaves[i]:
-        print("%snode=%s is a leaf node." % (node_depth[i] * "\t", i))
+        print("{space}node={node} is a leaf node.".format(
+            space=node_depth[i] * "\t", node=i))
     else:
-        print("%snode=%s is a split node: "
-              "go to node %s if X[:, %s] <= %s else to node %s."
-              % (node_depth[i] * "\t",
-                 i,
-                 children_left[i],
-                 feature[i],
-                 threshold[i],
-                 children_right[i],
-                 ))
+        print("{space}node={node} is a split node: "
+              "go to node {left} if X[:, {feature}] <= {threshold} "
+              "else to node {right}.".format(
+                  space=node_depth[i] * "\t",
+                  node=i,
+                  left=children_left[i],
+                  feature=feature[i],
+                  threshold=threshold[i],
+                  right=children_right[i],
+            ))
 
 ##############################################################################
 # We can compare the above output to the plot of the decision tree.
@@ -120,16 +124,16 @@ plt.show()
 # We can also retrieve the decision path of samples of interest. The
 # ``decision_path`` method outputs an indicator matrix that allows us to
 # retrieve the nodes the samples of interest traverse through. A non zero
-# element in the indicator matrix at position (i, j) indicates that
-# the sample i goes through the node j. Or, for one sample, i, the positions of
-# the non zero elements in row i of the indicator matrix designate the ids
-# of the nodes that sample goes through.
+# element in the indicator matrix at position ``(i, j)`` indicates that
+# the sample ``i`` goes through the node ``j``. Or, for one sample, ``i``, the
+# positions of the non zero elements in row ``i`` of the indicator matrix
+# designate the ids of the nodes that sample goes through.
 #
 # The leaf ids reached by samples of interest can be obtained with the
 # ``apply`` method. This returns an array of the node ids of the leaves
 # reached by each sample of interest. Using the leaf ids and the
 # ``decision_path`` we can obtain the tests that were used to predict a sample
-# or a group of samples. First, let's do it for one sample. Note:
+# or a group of samples. First, let's do it for one sample. Note that
 # ``node_index`` is a sparse matrix.
 
 node_indicator = clf.decision_path(X_test)
@@ -140,7 +144,7 @@ sample_id = 0
 node_index = node_indicator.indices[node_indicator.indptr[sample_id]:
                                     node_indicator.indptr[sample_id + 1]]
 
-print('Rules used to predict sample %s:\n' % sample_id)
+print('Rules used to predict sample {id}:\n'.format(id=sample_id))
 for node_id in node_index:
     # continue to the next node if it is a leaf node
     if leaf_id[sample_id] == node_id:
@@ -152,13 +156,15 @@ for node_id in node_index:
     else:
         threshold_sign = ">"
 
-    print("decision id node %s : (X_test[%s, %s] = %s) %s %s)"
-          % (node_id,
-             sample_id,
-             feature[node_id],
-             X_test[sample_id, feature[node_id]],
-             threshold_sign,
-             threshold[node_id]))
+    print("decision node {node} : (X_test[{sample}, {feature}] = {value}) "
+          "{inequality} {threshold})".format(
+              node=node_id,
+              sample=sample_id,
+              feature=feature[node_id],
+              value=X_test[sample_id, feature[node_id]],
+              inequality=threshold_sign,
+              threshold=threshold[node_id]
+            ))
 
 ##############################################################################
 # For a group of samples, we can determine the common nodes the samples go
@@ -171,6 +177,8 @@ common_nodes = (node_indicator.toarray()[sample_ids].sum(axis=0) ==
 # obstain node ids using position in array
 common_node_id = np.arange(n_nodes)[common_nodes]
 
-print("\nThe following samples %s share the node(s) %s in the tree."
-      % (sample_ids, common_node_id))
-print("This is %s %% of all nodes." % (100 * len(common_node_id) / n_nodes,))
+print("\nThe following samples {samples} share the node(s) {nodes} in the "
+      "tree.".format(samples=sample_ids, nodes=common_node_id))
+print("This is {prop} % of all nodes.".format(
+    prop=100 * len(common_node_id) / n_nodes)
+)
