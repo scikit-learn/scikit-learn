@@ -27,16 +27,16 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
     This transformer performs linear dimensionality reduction by means of
     truncated singular value decomposition (SVD). Contrary to PCA, this
     estimator does not center the data before computing the singular value
-    decomposition. This means it can work with scipy.sparse matrices
+    decomposition. This means it can work with sparse matrices
     efficiently.
 
     In particular, truncated SVD works on term count/tf-idf matrices as
-    returned by the vectorizers in sklearn.feature_extraction.text. In that
-    context, it is known as latent semantic analysis (LSA).
+    returned by the vectorizers in :mod:`sklearn.feature_extraction.text`. In
+    that context, it is known as latent semantic analysis (LSA).
 
     This estimator supports two algorithms: a fast randomized SVD solver, and
-    a "naive" algorithm that uses ARPACK as an eigensolver on (X * X.T) or
-    (X.T * X), whichever is more efficient.
+    a "naive" algorithm that uses ARPACK as an eigensolver on `X * X.T` or
+    `X.T * X`, whichever is more efficient.
 
     Read more in the :ref:`User Guide <LSA>`.
 
@@ -56,8 +56,8 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
     n_iter : int, optional (default 5)
         Number of iterations for randomized SVD solver. Not used by ARPACK. The
         default is larger than the default in
-        `~sklearn.utils.extmath.randomized_svd` to handle sparse matrices that
-        may have large slowly decaying spectrum.
+        :func:`~sklearn.utils.extmath.randomized_svd` to handle sparse
+        matrices that may have large slowly decaying spectrum.
 
     random_state : int, RandomState instance, default=None
         Used during randomized svd. Pass an int for reproducible results across
