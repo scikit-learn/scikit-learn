@@ -977,7 +977,8 @@ def paired_distances(X, Y, *, metric="euclidean", **kwds):
 
 
 # Kernels
-def linear_kernel(X, Y=None, dense_output=True):
+@_deprecate_positional_args
+def linear_kernel(X, Y=None, *, dense_output=True):
     """
     Compute the linear kernel between X and Y.
 
@@ -1003,7 +1004,8 @@ def linear_kernel(X, Y=None, dense_output=True):
     return safe_sparse_dot(X, Y.T, dense_output=dense_output)
 
 
-def polynomial_kernel(X, Y=None, degree=3, gamma=None, coef0=1):
+@_deprecate_positional_args
+def polynomial_kernel(X, Y=None, *, degree=3, gamma=None, coef0=1):
     """
     Compute the polynomial kernel between X and Y::
 
@@ -1039,7 +1041,8 @@ def polynomial_kernel(X, Y=None, degree=3, gamma=None, coef0=1):
     return K
 
 
-def sigmoid_kernel(X, Y=None, gamma=None, coef0=1):
+@_deprecate_positional_args
+def sigmoid_kernel(X, Y=None, *, gamma=None, coef0=1):
     """
     Compute the sigmoid kernel between X and Y::
 
@@ -1073,7 +1076,8 @@ def sigmoid_kernel(X, Y=None, gamma=None, coef0=1):
     return K
 
 
-def rbf_kernel(X, Y=None, gamma=None):
+@_deprecate_positional_args
+def rbf_kernel(X, Y=None, *, gamma=None):
     """
     Compute the rbf (gaussian) kernel between X and Y::
 
@@ -1106,7 +1110,8 @@ def rbf_kernel(X, Y=None, gamma=None):
     return K
 
 
-def laplacian_kernel(X, Y=None, gamma=None):
+@_deprecate_positional_args
+def laplacian_kernel(X, Y=None, *, gamma=None):
     """Compute the laplacian kernel between X and Y.
 
     The laplacian kernel is defined as::
@@ -1140,7 +1145,8 @@ def laplacian_kernel(X, Y=None, gamma=None):
     return K
 
 
-def cosine_similarity(X, Y=None, dense_output=True):
+@_deprecate_positional_args
+def cosine_similarity(X, Y=None, *, dense_output=True):
     """Compute cosine similarity between samples in X and Y.
 
     Cosine similarity, or the cosine kernel, computes similarity as the
@@ -1250,7 +1256,8 @@ def additive_chi2_kernel(X, Y=None):
     return result
 
 
-def chi2_kernel(X, Y=None, gamma=1.):
+@_deprecate_positional_args
+def chi2_kernel(X, Y=None, *, gamma=1.):
     """Computes the exponential chi-squared kernel X and Y.
 
     The chi-squared kernel is computed between each pair of rows in X and Y.  X
