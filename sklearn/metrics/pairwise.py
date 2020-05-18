@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+ # -*- coding: utf-8 -*-
 
 # Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #          Mathieu Blondel <mathieu@mblondel.org>
@@ -844,8 +844,7 @@ def cosine_distances(X, Y=None):
 
 # Paired distances
 def paired_euclidean_distances(X, Y):
-    """
-    Computes the paired euclidean distances between X and Y
+    """Computes the paired euclidean distances between X and Y
 
     Read more in the :ref:`User Guide <metrics>`.
 
@@ -861,6 +860,40 @@ def paired_euclidean_distances(X, Y):
     """
     X, Y = check_paired_arrays(X, Y)
     return row_norms(X - Y)
+
+
+def paired_haversine_distances(X, Y):
+    """Computes the paired Haversine distances between X and Y
+
+    Read more in the :ref:`User Guide <metrics>`.
+
+    Parameters
+    ----------
+    X : array-like, shape (n_samples, 2)
+
+    Y : array-like, shape (n_samples, 2)
+
+    Returns
+    -------
+    distances : ndarray (n_samples, )
+    """
+    X, Y = check_paired_arrays(X, Y)
+    if len(X.shape) != 2 and len(Y.shape) != 2:
+        raise ValueError("Incompatible dimension for X and Y matrices: "
+                         "X.shape and Y.shape should be of to 2 dimension")
+    if not (X.shape[1] == 2 and Y.shape[1] == 2):
+        raise ValueError("Haversine distance only valid in 2 dimensions")
+
+    X, Y = np.radians(X), np.radians(Y)
+    delta = Y - X
+    lat1, lat2 = X[:, 0], Y[:, 0]
+    dlat, dlon = delta[:, 0], delta[:, 1]
+
+    a = (np.sin(dlat / 2.0) ** 2) + (
+        np.cos(lat1) * np.cos(lat2) * np.sin(dlon / 2.0) ** 2
+    )
+    c = 2 * np.arcsin(np.sqrt(a))
+    return c
 
 
 def paired_manhattan_distances(X, Y):
@@ -920,6 +953,9 @@ PAIRED_DISTANCES = {
     'manhattan': paired_manhattan_distances,
     'cityblock': paired_manhattan_distances}
 
+PAIRED_DISTANCES_WITHOUT_RESTRICTIONS = {
+    'haversine': paired_haversine_distances}
+
 
 @_deprecate_positional_args
 def paired_distances(X, Y, *, metric="euclidean", **kwds):
@@ -932,17 +968,20 @@ def paired_distances(X, Y, *, metric="euclidean", **kwds):
 
     Parameters
     ----------
-    X : ndarray (n_samples, n_features)
+    X : ndarray (n_samples, n_features) or, (n_samples, 2)
+        if metric == "haversine"
         Array 1 for distance computation.
 
-    Y : ndarray (n_samples, n_features)
+    Y : ndarray (n_samples, n_features) or, (n_samples, 2)
+        if metric == "haversine"
         Array 2 for distance computation.
 
     metric : str or callable, default="euclidean"
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string, it must be one of the options
-        specified in PAIRED_DISTANCES, including "euclidean",
-        "manhattan", or "cosine".
+        specified in PAIRED_DISTANCES, including "euclidean", "manhattan",
+        or "cosine" and PAIRED_DISTANCES_WITHOUT_RESTRICTIONS, including
+        "haversine".
         Alternatively, if metric is a callable function, it is called on each
         pair of instances (rows) and the resulting value recorded. The callable
         should take two arrays from X as input and return a value indicating
@@ -960,6 +999,14 @@ def paired_distances(X, Y, *, metric="euclidean", **kwds):
     >>> paired_distances(X, Y)
     array([0., 1.])
 
+    The haversine metric only accept array of shape (n_samples, 2)
+
+    >>> from sklearn.metrics.pairwise import paired_distances
+    >>> X = [[0.182430, 1.292005], [1.062693, -0.010774]]
+    >>> Y = [[-0.970421, -1.451680], [1.504571, 1.205554]]
+    >>> paired_distances(X, Y, metric='haversine')
+    array([330.70908901, 143.80643402])
+
     See also
     --------
     pairwise_distances : Computes the distance between every pair of samples
@@ -967,6 +1014,9 @@ def paired_distances(X, Y, *, metric="euclidean", **kwds):
 
     if metric in PAIRED_DISTANCES:
         func = PAIRED_DISTANCES[metric]
+        return func(X, Y)
+    elif metric in PAIRED_DISTANCES_WITHOUT_RESTRICTIONS:
+        func = PAIRED_DISTANCES_WITHOUT_RESTRICTIONS[metric]
         return func(X, Y)
     elif callable(metric):
         # Check the matrix first (it is usually done by the metric)

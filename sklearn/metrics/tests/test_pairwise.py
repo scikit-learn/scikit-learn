@@ -38,10 +38,12 @@ from sklearn.metrics.pairwise import PAIRWISE_KERNEL_FUNCTIONS
 from sklearn.metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
 from sklearn.metrics.pairwise import PAIRWISE_BOOLEAN_FUNCTIONS
 from sklearn.metrics.pairwise import PAIRED_DISTANCES
+from sklearn.metrics.pairwise import PAIRED_DISTANCES_WITHOUT_RESTRICTIONS
 from sklearn.metrics.pairwise import check_pairwise_arrays
 from sklearn.metrics.pairwise import check_paired_arrays
 from sklearn.metrics.pairwise import paired_distances
 from sklearn.metrics.pairwise import paired_euclidean_distances
+from sklearn.metrics.pairwise import paired_haversine_distances
 from sklearn.metrics.pairwise import paired_manhattan_distances
 from sklearn.metrics.pairwise import _euclidean_distances_upcast
 from sklearn.preprocessing import normalize
@@ -353,10 +355,31 @@ def test_pairwise_kernels_filter_param():
         pairwise_kernels(X, Y, metric="rbf", **params)
 
 
-@pytest.mark.parametrize('metric, func', PAIRED_DISTANCES.items())
+@pytest.mark.parametrize('metric, func', list(PAIRED_DISTANCES.items()) +
+                         (list(PAIRED_DISTANCES_WITHOUT_RESTRICTIONS.items())))
 def test_paired_distances(metric, func):
+
     # Test the pairwise_distance helper function.
     rng = np.random.RandomState(0)
+
+    if metric == 'haversine':
+        # Haversine only support 2 dimension
+        # Test paired haversine distance
+        # The data should be valid latitude and longitude
+
+        X = rng.random_sample((5, 3))
+        Y = rng.random_sample((5, 3))
+        err_msg = "Haversine distance only valid in 2 dimensions"
+        with pytest.raises(ValueError, match=err_msg):
+            paired_haversine_distances(X, Y)
+
+        X = rng.random_sample((5, 2))
+        Y = rng.random_sample((5, 2))
+        S = paired_distances(X, Y, metric='haversine')
+        S2 = func(X, Y)
+        assert_array_almost_equal(S, S2)
+        return
+
     # Euclidean distance should be equivalent to calling the function.
     X = rng.random_sample((5, 4))
     # Euclidean distance, with Y != X.
@@ -953,8 +976,8 @@ def test_haversine_distances():
     with pytest.raises(ValueError, match=err_msg):
         haversine_distances(X)
 
-
 # Paired distances
+
 
 def test_paired_euclidean_distances():
     # Check the paired Euclidean distances computation
@@ -962,6 +985,22 @@ def test_paired_euclidean_distances():
     Y = [[1], [2]]
     D = paired_euclidean_distances(X, Y)
     assert_array_almost_equal(D, [1., 2.])
+
+
+def test_paired_haversine_distances():
+    # Check the paired Haversine distances computation
+    X = np.array([[-34.83333, -58.5166646], [-43.63284, -63.9876712]])
+    Y = np.array([[49.0083899664, 2.53844117956], [57.23313, 4.993234]])
+    D = paired_haversine_distances(X, Y)
+    assert_array_almost_equal(D, [1.74219751, 2.02609755])
+
+    # Test haversine distance does not accept X where n_feature != 2
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((5, 3))
+    Y = rng.random_sample((5, 3))
+    err_msg = "Haversine distance only valid in 2 dimensions"
+    with pytest.raises(ValueError, match=err_msg):
+        paired_haversine_distances(X, Y)
 
 
 def test_paired_manhattan_distances():
