@@ -583,7 +583,8 @@ class PatchExtractor(BaseEstimator):
         patches = np.empty(patches_shape)
         for ii, image in enumerate(X):
             patches[ii * n_patches:(ii + 1) * n_patches] = extract_patches_2d(
-                image, patch_size, self.max_patches, self.random_state)
+                image, patch_size, max_patches=self.max_patches,
+                random_state=self.random_state)
         return patches
 
     def _more_tags(self):
