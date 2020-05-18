@@ -164,11 +164,11 @@ fi
 
 # Check for default doctest directives ELLIPSIS and NORMALIZE_WHITESPACE
 
-doctest_directive=$(grep --include=\*.{py,rst} -rnw -E '# doctest: \+(ELLIPSIS|NORMALIZE_WHITESPACE)')
+doctest_directive="$(grep --include=\*.{py,rst} -rnw -E '# doctest: \+(ELLIPSIS|NORMALIZE_WHITESPACE)')"
 
 if [ ! -z "$doctest_directive" ]
 then
-    echo "Default doctest directives found:"
-    echo $doctest_directive
+    echo "Default doctest directives found:\n"
+    echo "$doctest_directive"
     exit 1
 fi
