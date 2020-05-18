@@ -161,3 +161,17 @@ then
     echo $bad_deprecation_property_order
     exit 1
 fi
+
+echo -e '\nChecking default doctest directives not present in the diff in the range' \
+     "$COMMIT_RANGE" \
+     "($(git rev-list $COMMIT_RANGE | wc -l) commit(s)):"
+echo '--------------------------------------------------------------------------------'
+
+check_files() {
+    files="$1"
+    if [ -n "$files" ]; then
+        # Conservative approach: diff without context (--unified=0) so that code
+        # that was not changed does not create failures
+        git diff --unified=0 $COMMIT_RANGE -- $files | grep --include=\*.{py,rst} -rnw -E '# doctest: \+(ELLIPSIS|NORMALIZE_WHITESPACE)'
+    fi
+}
