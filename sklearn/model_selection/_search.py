@@ -1374,11 +1374,11 @@ class RandomizedSearchCV(BaseSearchCV):
         +--------------+-------------+-------------------+---+---------------+
         | param_kernel | param_gamma | split0_test_score |...|rank_test_score|
         +==============+=============+===================+===+===============+
-        |    'rbf'     |     0.1     |       0.80        |...|       2       |
+        |    'rbf'     |     0.1     |       0.80        |...|       1       |
         +--------------+-------------+-------------------+---+---------------+
-        |    'rbf'     |     0.2     |       0.90        |...|       1       |
+        |    'rbf'     |     0.2     |       0.84        |...|       3       |
         +--------------+-------------+-------------------+---+---------------+
-        |    'rbf'     |     0.3     |       0.70        |...|       1       |
+        |    'rbf'     |     0.3     |       0.70        |...|       2       |
         +--------------+-------------+-------------------+---+---------------+
 
         will be represented by a ``cv_results_`` dict of::
@@ -1387,11 +1387,11 @@ class RandomizedSearchCV(BaseSearchCV):
             'param_kernel' : masked_array(data = ['rbf', 'rbf', 'rbf'],
                                           mask = False),
             'param_gamma'  : masked_array(data = [0.1 0.2 0.3], mask = False),
-            'split0_test_score'  : [0.80, 0.90, 0.70],
+            'split0_test_score'  : [0.80, 0.84, 0.70],
             'split1_test_score'  : [0.82, 0.50, 0.70],
-            'mean_test_score'    : [0.81, 0.70, 0.70],
-            'std_test_score'     : [0.01, 0.20, 0.00],
-            'rank_test_score'    : [3, 1, 1],
+            'mean_test_score'    : [0.81, 0.67, 0.70],
+            'std_test_score'     : [0.01, 0.24, 0.00],
+            'rank_test_score'    : [1, 3, 2],
             'split0_train_score' : [0.80, 0.92, 0.70],
             'split1_train_score' : [0.82, 0.55, 0.70],
             'mean_train_score'   : [0.81, 0.74, 0.70],
