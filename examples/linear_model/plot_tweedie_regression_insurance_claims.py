@@ -173,9 +173,9 @@ def score_estimator(
             if metric is None:
                 if not hasattr(estimator, "score"):
                     continue
-                score = estimator.score(X, y, _weights)
+                score = estimator.score(X, y, sample_weight=_weights)
             else:
-                score = metric(y, y_pred, _weights)
+                score = metric(y, y_pred, sample_weight=_weights)
 
             res.append(
                 {"subset": subset_label, "metric": score_label, "score": score}
