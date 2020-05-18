@@ -115,7 +115,7 @@ def plot_obs_pred(df, feature, weight, observed, predicted, y_label=None,
     df_["observed"] = df[observed] * df[weight]
     df_["predicted"] = predicted * df[weight]
     df_ = (
-        df_.groupby([feature])[weight, "observed", "predicted"]
+        df_.groupby([feature])[[weight, "observed", "predicted"]]
         .sum()
         .assign(observed=lambda x: x["observed"] / x[weight])
         .assign(predicted=lambda x: x["predicted"] / x[weight])
