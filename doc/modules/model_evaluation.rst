@@ -2007,8 +2007,8 @@ predicted by the model, through the proportion of explained variance.
 As such variance is dataset dependent, R² may not be meaningfully comparable
 across different datasets. Best possible score is 1.0 and it can be negative
 (because the model can be arbitrarily worse). A constant model that always
-predicts the expected value of y, disregarding the input features, would get a
-R² score of 0.0.
+predicts the expected (average) value of y, disregarding the input features,
+would get a R² score of 0.0.
 
 If :math:`\hat{y}_i` is the predicted value of the :math:`i`-th sample
 and :math:`y_i` is the corresponding true value for total :math:`n` samples,
@@ -2022,6 +2022,15 @@ where :math:`\bar{y} = \frac{1}{n} \sum_{i=1}^{n} y_i` and :math:`\sum_{i=1}^{n}
 
 Note that :func:`r2_score` calculates unadjusted R² without correcting for
 bias in sample variance of y.
+
+In the particular case when the true y is constant, the R^2 score is not
+finite: it is either ``NaN`` (perfect predictions) or ``-Inf`` (imperfect
+predictions). Such non-finite scores may prevent correct model optimization
+such as grid-search cross-validation to be performed correctly. For this reason
+the default behaviour of :func:`r2_score` is to replace them with 1.0 (perfect
+predictions) or 0.0 (imperfect predictions). You can set the
+``fix_when_y_true_is_constant`` parameter to ``False`` to prevent this fix to
+happen and fallback on the original R².
 
 Here is a small example of usage of the :func:`r2_score` function::
 
@@ -2042,7 +2051,18 @@ Here is a small example of usage of the :func:`r2_score` function::
   array([0.965..., 0.908...])
   >>> r2_score(y_true, y_pred, multioutput=[0.3, 0.7])
   0.925...
-
+  >>> y_true = [-2, -2, -2]
+  >>> y_pred = [-2, -2, -2]
+  >>> r2_score(y_true, y_pred)
+  1.0
+  >>> r2_score(y_true, y_pred, fix_when_y_true_is_constant=False)
+  NaN
+  >>> y_true = [-2, -2, -2]
+  >>> y_pred = [-2, -2, -2 + 1e-8]
+  >>> r2_score(y_true, y_pred)
+  0.0
+  >>> r2_score(y_true, y_pred, fix_when_y_true_is_constant=False)
+  -Inf
 
 .. topic:: Example:
 
