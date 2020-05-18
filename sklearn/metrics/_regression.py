@@ -20,6 +20,7 @@ the lower the better
 #          Michael Eickenberg <michael.eickenberg@gmail.com>
 #          Konstantin Shmelkov <konstantin.shmelkov@polytechnique.edu>
 #          Christian Lorentzen <lorentzen.ch@googlemail.com>
+#          Sylvain Marie <sylvain.marie@se.com>
 # License: BSD 3 clause
 
 import numpy as np
@@ -401,10 +402,22 @@ def median_absolute_error(y_true, y_pred, *, multioutput='uniform_average'):
 @_deprecate_positional_args
 def explained_variance_score(y_true, y_pred, *,
                              sample_weight=None,
-                             multioutput='uniform_average'):
+                             multioutput='uniform_average',
+                             fix_when_y_true_is_constant=True):
     """Explained variance regression score function
 
     Best possible score is 1.0, lower values are worse.
+
+    In the particular case when the true y is constant, the explained variance
+    score is not finite: it is either ``NaN`` (perfect predictions) or
+    ``-Inf`` (imperfect predictions). To prevent such non-finite numbers to
+    pollute higher-level experiments such as a grid search cross-validation,
+    by default these cases are replaced with 1.0 (perfect predictions) or 0.0
+    (imperfect predictions) respectively. You can set
+    ``fix_when_y_true_is_constant`` to ``False`` to prevent this fix to happen.
+
+    Note: when the prediction residuals have zero mean (perfectly unbiased
+    model), Explained Variance score is identical to the R^2 score.
 
     Read more in the :ref:`User Guide <explained_variance_score>`.
 
@@ -434,6 +447,14 @@ def explained_variance_score(y_true, y_pred, *,
             Scores of all outputs are averaged, weighted by the variances
             of each individual output.
 
+    fix_when_y_true_is_constant : boolean, optional
+        Flag indicating if ``NaN`` and ``-Inf`` scores resulting from constant
+        data should be replaced with real numbers (``1.0`` if prediction is
+        perfect, ``0.0`` otherwise). Default is ``True``, a convenient settings
+        for model optimization procedures (e.g. grid search cross-validation).
+
+        .. versionadded:: 0.24
+
     Returns
     -------
     score : float or ndarray of floats
@@ -454,7 +475,20 @@ def explained_variance_score(y_true, y_pred, *,
     >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
     >>> explained_variance_score(y_true, y_pred, multioutput='uniform_average')
     0.983...
-
+    >>> y_true = [-2, -2, -2]
+    >>> y_pred = [-2, -2, -2]
+    >>> explained_variance_score(y_true, y_pred)
+    1.0
+    >>> explained_variance_score(y_true, y_pred,
+    ...                          fix_when_y_true_is_constant=False)
+    nan
+    >>> y_true = [-2, -2, -2]
+    >>> y_pred = [-2, -2, -2 + 1e-8]
+    >>> explained_variance_score(y_true, y_pred)
+    0.0
+    >>> explained_variance_score(y_true, y_pred,
+    ...                          fix_when_y_true_is_constant=False)
+    -inf
     """
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput)
@@ -468,14 +502,22 @@ def explained_variance_score(y_true, y_pred, *,
     denominator = np.average((y_true - y_true_avg) ** 2,
                              weights=sample_weight, axis=0)
 
-    nonzero_numerator = numerator != 0
-    nonzero_denominator = denominator != 0
-    valid_score = nonzero_numerator & nonzero_denominator
-    output_scores = np.ones(y_true.shape[1])
+    if not fix_when_y_true_is_constant:
+        # Standard formula, that may lead to NaN or -Inf
+        output_scores = 1 - (numerator / denominator)
+    else:
+        nonzero_denominator = denominator != 0
+        nonzero_numerator = numerator != 0
+        # Default = Zero Numerator = perfect predictions. Set to 1.0
+        output_scores = np.ones([y_true.shape[1]])
+        # Non-zero Numerator and Non-zero Denominator: use the formula
+        valid_score = nonzero_denominator & nonzero_numerator
+        output_scores[valid_score] = 1 - (numerator[valid_score] /
+                                          denominator[valid_score])
+        # Non-zero Numerator and Zero Denominator:
+        # arbitrary set to 0.0 to avoid -inf scores
+        output_scores[nonzero_numerator & ~nonzero_denominator] = 0.
 
-    output_scores[valid_score] = 1 - (numerator[valid_score] /
-                                      denominator[valid_score])
-    output_scores[nonzero_numerator & ~nonzero_denominator] = 0.
     if isinstance(multioutput, str):
         if multioutput == 'raw_values':
             # return scores individually
@@ -485,6 +527,13 @@ def explained_variance_score(y_true, y_pred, *,
             avg_weights = None
         elif multioutput == 'variance_weighted':
             avg_weights = denominator
+            if fix_when_y_true_is_constant:
+                # avoid fail on constant y or one-element arrays
+                if not np.any(nonzero_denominator):
+                    if not np.any(nonzero_numerator):
+                        return 1.0
+                    else:
+                        return 0.0
     else:
         avg_weights = multioutput
 
@@ -511,6 +560,9 @@ def r2_score(y_true, y_pred, *, sample_weight=None,
     are replaced with 1.0 (perfect predictions) or 0.0 (imperfect predictions)
     respectively. You can set ``fix_when_y_true_is_constant`` to ``False`` to
     prevent this fix to happen.
+
+    Note: when the prediction residuals have zero mean (perfectly unbiased
+    model), the R^2 score is identical to the Explained Variance score.
 
     Read more in the :ref:`User Guide <r2_score>`.
 
@@ -603,13 +655,13 @@ def r2_score(y_true, y_pred, *, sample_weight=None,
     >>> r2_score(y_true, y_pred)
     1.0
     >>> r2_score(y_true, y_pred, fix_when_y_true_is_constant=False)
-    NaN
+    nan
     >>> y_true = [-2, -2, -2]
     >>> y_pred = [-2, -2, -2 + 1e-8]
     >>> r2_score(y_true, y_pred)
     0.0
     >>> r2_score(y_true, y_pred, fix_when_y_true_is_constant=False)
-    -Inf
+    -inf
     """
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput)
