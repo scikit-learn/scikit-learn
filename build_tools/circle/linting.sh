@@ -162,16 +162,13 @@ then
     exit 1
 fi
 
-echo -e '\nChecking default doctest directives not present in the diff in the range' \
-     "$COMMIT_RANGE" \
-     "($(git rev-list $COMMIT_RANGE | wc -l) commit(s)):"
-echo '--------------------------------------------------------------------------------'
+# Check for default doctest directives ELLIPSIS and NORMALIZE_WHITESPACE
 
-check_files() {
-    files="$1"
-    if [ -n "$files" ]; then
-        # Conservative approach: diff without context (--unified=0) so that code
-        # that was not changed does not create failures
-        git diff --unified=0 $COMMIT_RANGE -- $files | grep --include=\*.{py,rst} -rnw -E '# doctest: \+(ELLIPSIS|NORMALIZE_WHITESPACE)'
-    fi
-}
+doctest_directive=$(grep --include=\*.{py,rst} -rnw -E '# doctest: \+(ELLIPSIS|NORMALIZE_WHITESPACE)')
+
+if [ ! -z "$doctest_directive" ]
+then
+    echo "Default doctest directives found:"
+    echo $doctest_directive
+    exit 1
+fi
