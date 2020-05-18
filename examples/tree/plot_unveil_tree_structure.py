@@ -75,12 +75,11 @@ threshold = clf.tree_.threshold
 
 node_depth = np.zeros(shape=n_nodes, dtype=np.int64)
 is_leaves = np.zeros(shape=n_nodes, dtype=bool)
-stack = [(0, -1)]  # start with the root node id (0) and its parent depth (-1)
+stack = [(0, 0)]  # start with the root node id (0) and its depth (0)
 while len(stack) > 0:
     # `pop` ensures each node is only visited once
-    node_id, parent_depth = stack.pop()
-    # Increment parent depth to get current node depth
-    node_depth[node_id] = parent_depth + 1
+    node_id, depth = stack.pop()
+    node_depth[node_id] = depth
 
     # If the left and right child of a node is not the same we have a split
     # node
@@ -88,8 +87,8 @@ while len(stack) > 0:
     # If a split node, append left and right children and depth to `stack`
     # so we can loop through them
     if is_split_node:
-        stack.append((children_left[node_id], parent_depth + 1))
-        stack.append((children_right[node_id], parent_depth + 1))
+        stack.append((children_left[node_id], depth + 1))
+        stack.append((children_right[node_id], depth + 1))
     else:
         is_leaves[node_id] = True
 
@@ -124,16 +123,16 @@ plt.show()
 # ``decision_path`` method outputs an indicator matrix that allows us to
 # retrieve the nodes the samples of interest traverse through. A non zero
 # element in the indicator matrix at position ``(i, j)`` indicates that
-# the sample ``i`` goes through the node ``j``. Or, for one sample, ``i``, the
+# the sample ``i`` goes through the node ``j``. Or, for one sample ``i``, the
 # positions of the non zero elements in row ``i`` of the indicator matrix
 # designate the ids of the nodes that sample goes through.
 #
 # The leaf ids reached by samples of interest can be obtained with the
 # ``apply`` method. This returns an array of the node ids of the leaves
 # reached by each sample of interest. Using the leaf ids and the
-# ``decision_path`` we can obtain the tests that were used to predict a sample
-# or a group of samples. First, let's do it for one sample. Note that
-# ``node_index`` is a sparse matrix.
+# ``decision_path`` we can obtain the splitting conditions that were used to
+# predict a sample or a group of samples. First, let's do it for one sample.
+# Note that ``node_index`` is a sparse matrix.
 
 node_indicator = clf.decision_path(X_test)
 leaf_id = clf.apply(X_test)
@@ -172,7 +171,7 @@ sample_ids = [0, 1]
 # boolean array indicating the nodes both samples go through
 common_nodes = (node_indicator.toarray()[sample_ids].sum(axis=0) ==
                 len(sample_ids))
-# obstain node ids using position in array
+# obtain node ids using position in array
 common_node_id = np.arange(n_nodes)[common_nodes]
 
 print("\nThe following samples {samples} share the node(s) {nodes} in the "
