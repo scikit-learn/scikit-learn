@@ -2,7 +2,6 @@
 """
 import os
 from contextlib import contextmanager as contextmanager
-from .utils.validation import _deprecate_positional_args
 
 _global_config = {
     'assume_finite': bool(os.environ.get('SKLEARN_ASSUME_FINITE', False)),
@@ -28,8 +27,7 @@ def get_config():
     return _global_config.copy()
 
 
-@_deprecate_positional_args
-def set_config(*, assume_finite=None, working_memory=None,
+def set_config(assume_finite=None, working_memory=None,
                print_changed_only=None, display=None):
     """Set global scikit-learn configuration
 
