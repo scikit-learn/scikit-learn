@@ -48,7 +48,8 @@ def log_likelihood(emp_cov, precision):
     return log_likelihood_
 
 
-def empirical_covariance(X, assume_centered=False):
+@_deprecate_positional_args
+def empirical_covariance(X, *, assume_centered=False):
     """Computes the Maximum likelihood covariance estimator
 
 

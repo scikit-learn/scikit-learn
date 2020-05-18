@@ -30,6 +30,7 @@ def _equal_similarities_and_preferences(S, preference):
     return all_equal_preferences() and all_equal_similarities()
 
 
+@_deprecate_positional_args
 def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
                          damping=0.5, copy=True, verbose=False,
                          return_n_iter=False, random_state='warn'):

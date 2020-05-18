@@ -130,7 +130,8 @@ def _to_graph(n_x, n_y, n_z, mask=None, img=None,
     return return_as(graph)
 
 
-def img_to_graph(img, mask=None, return_as=sparse.coo_matrix, dtype=None):
+@_deprecate_positional_args
+def img_to_graph(img, *, mask=None, return_as=sparse.coo_matrix, dtype=None):
     """Graph of the pixel-to-pixel gradient connections
 
     Edges are weighted with the gradient values.
@@ -166,7 +167,8 @@ def img_to_graph(img, mask=None, return_as=sparse.coo_matrix, dtype=None):
     return _to_graph(n_x, n_y, n_z, mask, img, return_as, dtype)
 
 
-def grid_to_graph(n_x, n_y, n_z=1, mask=None, return_as=sparse.coo_matrix,
+@_deprecate_positional_args
+def grid_to_graph(n_x, n_y, n_z=1, *, mask=None, return_as=sparse.coo_matrix,
                   dtype=np.int):
     """Graph of the pixel-to-pixel connections
 
@@ -344,7 +346,9 @@ def extract_patches(arr, patch_shape=8, extraction_step=1):
                             extraction_step=extraction_step)
 
 
-def extract_patches_2d(image, patch_size, max_patches=None, random_state=None):
+@_deprecate_positional_args
+def extract_patches_2d(image, patch_size, *, max_patches=None,
+                       random_state=None):
     """Reshape a 2D image into a collection of patches
 
     The resulting patches are allocated in a dedicated array.

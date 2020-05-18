@@ -76,7 +76,8 @@ def check_increasing(x, y):
     return increasing_bool
 
 
-def isotonic_regression(y, sample_weight=None, y_min=None, y_max=None,
+@_deprecate_positional_args
+def isotonic_regression(y, *, sample_weight=None, y_min=None, y_max=None,
                         increasing=True):
     """Solve the isotonic regression model.
 
