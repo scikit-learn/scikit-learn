@@ -171,7 +171,7 @@ Changelog
   deprecated. It has no effect. :pr:`11950` by
   :user:`Jeremie du Boisberranger <jeremiedbb>`.
 
-- |API| The ``random_state`` parameter has been added to 
+- |API| The ``random_state`` parameter has been added to
   :class:`cluster.AffinityPropagation`. :pr:`16801` by :user:`rcwoolston`
   and :user:`Chiara Marmo <cmarmo>`.
 
@@ -252,12 +252,6 @@ Changelog
   components. :pr:`16224` by :user:`Lisa Schwetlick <lschwetlick>`, and
   :user:`Gelavizh Ahmadi <gelavizh1>` and :user:`Marija Vlajic Wheeler
   <marijavlajic>` and :pr:`16841` by `Nicolas Hug`_.
-
-- |Enhancement| :class:`decomposition.SparsePCA` and
-  :class:`decomposition.MiniBatchSparsePCA` now have two more attributes
-  `explained_variance_` and `explained_variance_ratio_`. :pr:`16255` by
-  :user:`Alexandre Batisse <batalex>` and
-  :user:`Julien Lhermitte <jrmlhermitte>`.
 
 - |Fix| :class:`decomposition.KernelPCA` method ``inverse_transform`` now
   applies the correct inverse transform to the transformed data. :pr:`16655`

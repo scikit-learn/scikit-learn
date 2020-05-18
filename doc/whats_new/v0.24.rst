@@ -44,6 +44,15 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
+:mod:`sklearn.decomposition`
+............................
+
+- |Enhancement| :class:`decomposition.SparsePCA` and
+  :class:`decomposition.MiniBatchSparsePCA` now have two more attributes
+  `explained_variance_` and `explained_variance_ratio_`. :pr:`16255` by
+  :user:`Alexandre Batisse <batalex>` and
+  :user:`Julien Lhermitte <jrmlhermitte>`.
+
 :mod:`sklearn.ensemble`
 .......................
 
