@@ -128,6 +128,42 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
             assert self.check_X(T, **params)
         return self.classes_[np.zeros(_num_samples(T), dtype=np.int)]
 
+    def predict_proba(self, T):
+        """Predict probabilities for each class.
+
+        Parameters
+        ----------
+        T : array-like of shape (n_samples, n_features)
+            The input data.
+
+        Returns
+        -------
+        proba : ndarray of shape (n_samples, n_classes)
+            The probabilities for each sample and class.
+        """
+        proba = np.zeros((_num_samples(T), len(self.classes_)))
+        proba[:, 0] = 1
+        return proba
+
+    def decision_function(self, T):
+        """Confidence score.
+
+        Parameters
+        ----------
+        T : array-like of shape (n_samples, n_features)
+            The input data.
+
+        Returns
+        -------
+        decision : ndarray of shape (n_samples,) if n_classes == 2\
+                else (n_samples, n_classes)
+            Confidence score.
+        """
+        if len(self.classes_) == 2:
+            return np.zeros(_num_samples(T))
+        else:
+            return self.predict_proba(T)
+
     def score(self, X=None, Y=None):
         """
         Parameters

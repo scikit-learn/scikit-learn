@@ -1,7 +1,9 @@
 import numpy as np
-from numpy.testing import assert_array_equal
 import pytest
 from scipy import sparse
+
+from numpy.testing import assert_array_equal
+from numpy.testing import assert_array_almost_equal
 
 from sklearn.datasets import load_iris
 from sklearn.utils import check_array
@@ -14,9 +16,14 @@ def iris():
     return load_iris(return_X_y=True)
 
 
-def test_checking_classifier(iris):
+@pytest.mark.parametrize(
+    "sparse_input", [True, False], ids=["X-dense", "X-sparse"]
+)
+def test_checking_classifier(iris, sparse_input):
     # Check that the CheckingClassifier output what we expect
     X, y = iris
+    if sparse_input:
+        X = sparse.csr_matrix(X)
     clf = CheckingClassifier()
     clf.fit(X, y)
 
@@ -30,19 +37,28 @@ def test_checking_classifier(iris):
     clf.set_params(foo_param=10)
     assert clf.fit(X, y).score(X) == pytest.approx(1)
 
+    y_proba = clf.predict_proba(X)
+    assert y_proba.shape == (150, 3)
+    assert_array_almost_equal(y_proba[:, 0], 1)
+    assert_array_almost_equal(y_proba[:, 1:], 0)
 
-def test_checking_classifier_sparse(iris):
-    # Smoke test to check that we can pass a sparse matrix when check are
-    # disabled
-    X, y = iris
-    X_sparse = sparse.csr_matrix(X)
+    y_decision = clf.decision_function(X)
+    assert y_decision.shape == (150, 3)
+    assert_array_almost_equal(y_decision[:, 0], 1)
+    assert_array_almost_equal(y_decision[:, 1:], 0)
 
-    clf = CheckingClassifier()
-    clf.fit(X_sparse, y)
-    y_pred = clf.predict(X_sparse)
+    # check the shape in case of binary classification
+    X, y = X[:100], y[:100]
+    clf.fit(X, y)
 
-    assert_array_equal(y_pred, np.zeros(y_pred.size, dtype=np.int))
-    assert clf.score(X_sparse, y) == pytest.approx(0)
+    y_proba = clf.predict_proba(X)
+    assert y_proba.shape == (100, 2)
+    assert_array_almost_equal(y_proba[:, 0], 1)
+    assert_array_almost_equal(y_proba[:, 1], 0)
+
+    y_decision = clf.decision_function(X)
+    assert y_decision.shape == (100,)
+    assert_array_almost_equal(y_decision, 0)
 
 
 def test_checking_classifier_with_params(iris):
