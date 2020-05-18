@@ -605,7 +605,7 @@ def r2_score(y_true, y_pred, *, sample_weight=None,
     >>> r2_score(y_true, y_pred, fix_when_y_true_is_constant=False)
     NaN
     >>> y_true = [-2, -2, -2]
-    >>> y_pred = [-2, -2, -2  + sys.float_info.epsilon]
+    >>> y_pred = [-2, -2, -2 + 1e-8]
     >>> r2_score(y_true, y_pred)
     0.0
     >>> r2_score(y_true, y_pred, fix_when_y_true_is_constant=False)
