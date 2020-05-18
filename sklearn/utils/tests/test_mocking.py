@@ -7,6 +7,7 @@ from numpy.testing import assert_array_almost_equal
 
 from sklearn.datasets import load_iris
 from sklearn.utils import check_array
+from sklearn.utils._testing import _convert_container
 
 from sklearn.utils._mocking import CheckingClassifier
 
@@ -17,18 +18,18 @@ def iris():
 
 
 @pytest.mark.parametrize(
-    "sparse_input", [True, False], ids=["X-dense", "X-sparse"]
+    "input_type", ["list", "array", "sparse", "dataframe"]
 )
-def test_checking_classifier(iris, sparse_input):
+def test_checking_classifier(iris, input_type):
     # Check that the CheckingClassifier output what we expect
     X, y = iris
-    if sparse_input:
-        X = sparse.csr_matrix(X)
+    X = _convert_container(X, input_type)
     clf = CheckingClassifier()
     clf.fit(X, y)
 
     assert_array_equal(clf.classes_, np.unique(y))
-    assert clf.n_features_in_ == X.shape[1]
+    assert len(clf.classes_) == 3
+    assert clf.n_features_in_ == 4
 
     y_pred = clf.predict(X)
     assert_array_equal(y_pred, np.zeros(y_pred.size, dtype=np.int))

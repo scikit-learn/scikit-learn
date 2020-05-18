@@ -102,13 +102,14 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
         if self.check_y is not None:
             params = {} if self.check_y_params is None else self.check_y_params
             assert self.check_y(y)
-        self.n_features_in_ = X.shape[1]
+        self.n_features_in_ = np.shape(X)[1]
         self.classes_ = np.unique(check_array(y, ensure_2d=False,
                                               allow_nd=True))
         if self.expected_fit_params:
             missing = set(self.expected_fit_params) - set(fit_params)
-            assert len(missing) == 0, 'Expected fit parameter(s) %s not ' \
-                                      'seen.' % list(missing)
+            assert len(missing) == 0, (
+                f'Expected fit parameter(s) {list(missing)} not seen.'
+            )
             for key, value in fit_params.items():
                 assert _num_samples(value) == _num_samples(X), (
                     f'Fit parameter {key} has length {_num_samples(value)}; '
