@@ -1504,7 +1504,8 @@ def precision_recall_fscore_support(y_true, y_pred, *, beta=1.0, labels=None,
     return precision, recall, f_score, true_sum
 
 
-def tpr_fpr_tnr_fnr_scores(y_true, y_pred, labels=None, pos_label=1,
+@_deprecate_positional_args
+def tpr_fpr_tnr_fnr_scores(y_true, y_pred, *, labels=None, pos_label=1,
                            average=None, warn_for=('tpr', 'fpr',
                                                    'tnr', 'fnr'),
                            sample_weight=None, zero_division="warn"):
@@ -1523,8 +1524,9 @@ def tpr_fpr_tnr_fnr_scores(y_true, y_pred, labels=None, pos_label=1,
     true positives and ``fn`` the number of false negatives.
 
     If ``pos_label is None`` and in binary classification, this function
-    returns the average precision, recall and F-measure if ``average``
-    is one of ``'micro'``, ``'macro'``, ``'weighted'`` or ``'samples'``.
+    returns the true positive rate, false positive rate, true negative rate
+    and false negative rate if ``average`` is one of ``'micro'``, ``'macro'``,
+    ``'weighted'`` or ``'samples'``.
 
     Parameters
     ----------
@@ -1566,8 +1568,7 @@ def tpr_fpr_tnr_fnr_scores(y_true, y_pred, labels=None, pos_label=1,
         ``'weighted'``:
             Calculate metrics for each label, and find their average weighted
             by support (the number of true instances for each label). This
-            alters 'macro' to account for label imbalance; it can result in an
-            F-score that is not between precision and recall.
+            alters 'macro' to account for label imbalance.
         ``'samples'``:
             Calculate metrics for each instance, and find their average (only
             meaningful for multilabel classification where this differs from
@@ -1593,7 +1594,7 @@ def tpr_fpr_tnr_fnr_scores(y_true, y_pred, labels=None, pos_label=1,
     tpr : float (if average is not None) or array of float, shape =\
         [n_unique_labels]
 
-    fpr : float (if average is not None) or array of float, , shape =\
+    fpr : float (if average is not None) or array of float, shape =\
         [n_unique_labels]
 
     tnr : float (if average is not None) or array of float, shape =\
@@ -1616,7 +1617,6 @@ def tpr_fpr_tnr_fnr_scores(y_true, y_pred, labels=None, pos_label=1,
     Examples
     --------
     >>> import numpy as np
-    >>> from sklearn.metrics import precision_recall_fscore_support
     >>> y_true = np.array(['cat', 'dog', 'pig', 'cat', 'dog', 'pig'])
     >>> y_pred = np.array(['cat', 'pig', 'dog', 'cat', 'cat', 'dog'])
     >>> tpr_fpr_tnr_fnr_scores(y_true, y_pred, average='macro')
@@ -1707,7 +1707,8 @@ def tpr_fpr_tnr_fnr_scores(y_true, y_pred, labels=None, pos_label=1,
     return tpr, fpr, tnr, fnr
 
 
-def precision_score(y_true, y_pred, labels=None, pos_label=1,
+@_deprecate_positional_args
+def precision_score(y_true, y_pred, *, labels=None, pos_label=1,
                     average='binary', sample_weight=None,
                     zero_division="warn"):
     """Compute the precision
@@ -2339,8 +2340,7 @@ def log_loss(y_true, y_pred, *, eps=1e-15, normalize=True, sample_weight=None,
     y_true : array-like or label indicator matrix
         Ground truth (correct) labels for n_samples samples.
 
-    y_pred : array-like of float, shape = (n_samples, n_classes)
-    or (n_samples,)
+    y_pred : array-like of float, shape = (n_samples, n_classes) or (n_samples,)
         Predicted probabilities, as returned by a classifier's
         predict_proba method. If ``y_pred.shape = (n_samples,)``
         the probabilities provided are assumed to be that of the
