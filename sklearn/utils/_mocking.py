@@ -209,7 +209,7 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
         Returns
         -------
         score : float
-            Either 0 or 1 depending of `foo_params` (i.e. > 1 `score=1`
+            Either 0 or 1 depending of `foo_param` (i.e. `foo_param > 1 => score=1`
             otherwise `score=0`).
         """
         if self.foo_param > 1:
