@@ -121,23 +121,25 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
         )
         if self.expected_fit_params:
             missing = set(self.expected_fit_params) - set(fit_params)
-            assert len(missing) == 0, (
-                f'Expected fit parameter(s) {list(missing)} not seen.'
-            )
-            for key, value in fit_params.items():
-                assert _num_samples(value) == _num_samples(X), (
-                    f'Fit parameter {key} has length {_num_samples(value)}; '
-                    f'expected {_num_samples(X)}.'
+            if len(missing) > 0:
+                raise AssertionError(
+                    f'Expected fit parameter(s) {list(missing)} not seen.'
                 )
+            for key, value in fit_params.items():
+                if _num_samples(value) != _num_samples(X):
+                    raise AssertionError (
+                        f'Fit parameter {key} has length {_num_samples(value)}'
+                        f'; expected {_num_samples(X)}.'
+                    )
 
         return self
 
-    def predict(self, T):
+    def predict(self, X):
         """Predict the first class seen.
 
         Parameters
         ----------
-        T : array-like of shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             The input data.
 
         Returns
@@ -147,15 +149,18 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
         """
         if self.check_X is not None:
             params = {} if self.check_X_params is None else self.check_X_params
-            assert self.check_X(T, **params)
-        return self.classes_[np.zeros(_num_samples(T), dtype=np.int)]
+            assert self.check_X(X, **params)
+        return self.classes_[np.zeros(_num_samples(X), dtype=np.int)]
 
-    def predict_proba(self, T):
+    def predict_proba(self, X):
         """Predict probabilities for each class.
+
+        Here, the dummy classifier will provide a probability of 1 for the
+        first class of `classes_` and 0 otherwise.
 
         Parameters
         ----------
-        T : array-like of shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             The input data.
 
         Returns
@@ -163,16 +168,16 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
         proba : ndarray of shape (n_samples, n_classes)
             The probabilities for each sample and class.
         """
-        proba = np.zeros((_num_samples(T), len(self.classes_)))
+        proba = np.zeros((_num_samples(X), len(self.classes_)))
         proba[:, 0] = 1
         return proba
 
-    def decision_function(self, T):
+    def decision_function(self, X):
         """Confidence score.
 
         Parameters
         ----------
-        T : array-like of shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             The input data.
 
         Returns
@@ -182,9 +187,11 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
             Confidence score.
         """
         if len(self.classes_) == 2:
-            return np.zeros(_num_samples(T))
+            # for binary classifier, the confidence score is related to
+            # classes_[1] and therefore should be null.
+            return np.zeros(_num_samples(X))
         else:
-            return self.predict_proba(T)
+            return self.predict_proba(X)
 
     def score(self, X=None, Y=None):
         """Fake score.

@@ -3,10 +3,11 @@ import pytest
 from scipy import sparse
 
 from numpy.testing import assert_array_equal
-from numpy.testing import assert_array_almost_equal
+from numpy.testing import assert_allclose
 
 from sklearn.datasets import load_iris
 from sklearn.utils import check_array
+from sklearn.utils import _safe_indexing
 from sklearn.utils._testing import _convert_container
 
 from sklearn.utils._mocking import CheckingClassifier
@@ -40,26 +41,28 @@ def test_checking_classifier(iris, input_type):
 
     y_proba = clf.predict_proba(X)
     assert y_proba.shape == (150, 3)
-    assert_array_almost_equal(y_proba[:, 0], 1)
-    assert_array_almost_equal(y_proba[:, 1:], 0)
+    assert_allclose(y_proba[:, 0], 1)
+    assert_allclose(y_proba[:, 1:], 0)
 
     y_decision = clf.decision_function(X)
     assert y_decision.shape == (150, 3)
-    assert_array_almost_equal(y_decision[:, 0], 1)
-    assert_array_almost_equal(y_decision[:, 1:], 0)
+    assert_allclose(y_decision[:, 0], 1)
+    assert_allclose(y_decision[:, 1:], 0)
 
     # check the shape in case of binary classification
-    X, y = X[:100], y[:100]
+    first_2_classes = np.logical_or(y == 0, y == 1)
+    X = _safe_indexing(X, first_2_classes)
+    y = _safe_indexing(y, first_2_classes)
     clf.fit(X, y)
 
     y_proba = clf.predict_proba(X)
     assert y_proba.shape == (100, 2)
-    assert_array_almost_equal(y_proba[:, 0], 1)
-    assert_array_almost_equal(y_proba[:, 1], 0)
+    assert_allclose(y_proba[:, 0], 1)
+    assert_allclose(y_proba[:, 1], 0)
 
     y_decision = clf.decision_function(X)
     assert y_decision.shape == (100,)
-    assert_array_almost_equal(y_decision, 0)
+    assert_allclose(y_decision, 0)
 
 
 def test_checking_classifier_with_params(iris):
