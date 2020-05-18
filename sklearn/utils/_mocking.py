@@ -127,7 +127,7 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
                 )
             for key, value in fit_params.items():
                 if _num_samples(value) != _num_samples(X):
-                    raise AssertionError (
+                    raise AssertionError(
                         f'Fit parameter {key} has length {_num_samples(value)}'
                         f'; expected {_num_samples(X)}.'
                     )
