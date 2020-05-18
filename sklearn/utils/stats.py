@@ -9,9 +9,6 @@ def _weighted_percentile(array, sample_weight, percentile=50):
     Compute the weighted ``percentile`` of ``array`` with ``sample_weight``.
     If ``array`` is 2D, compute weighted ``percentile`` along axis=0.
     """
-    if sample_weight is None:
-        sample_weight = np.ones_like(array)
-
     n_dim = array.ndim
     if n_dim == 0:
         return array[()]
