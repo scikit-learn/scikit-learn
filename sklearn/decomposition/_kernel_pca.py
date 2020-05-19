@@ -110,7 +110,7 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         When n_components is None, this parameter is ignored and components
         with zero eigenvalues are removed regardless.
 
-    random_state : int, RandomState instance or None, optional (default=None)
+    random_state : int, RandomState instance or None, default=None
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
@@ -127,7 +127,7 @@ class KernelPCA(TransformerMixin, BaseEstimator):
 
         .. versionadded:: 0.18
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int or None, default=None
         The number of parallel jobs to run.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`

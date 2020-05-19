@@ -50,7 +50,7 @@ class Isomap(TransformerMixin, BaseEstimator):
         Maximum number of iterations for the arpack solver.
         not used if eigen_solver == 'dense'.
 
-    iterated_power : int >= 0, or 'auto', (default 'auto')
+    iterated_power : int >= 0, or 'auto', default='auto'
         Number of iterations for the power method computed by
         svd_solver == 'randomized'.
 
