@@ -76,7 +76,8 @@ class KernelPCA(TransformerMixin, BaseEstimator):
             if the number of components to extract is lower than 80% of
             n_samples, then the more efficient 'randomized'
             method is enabled. Otherwise the exact full eigenvalue
-            decomposition is computed and optionally truncated afterwards.
+            decomposition is computed and optionally truncated afterwards
+            ('dense' method).
         dense :
             run exact full eigenvalue decomposition calling the standard
             LAPACK solver via `scipy.linalg.eigh`, and select the components
@@ -88,7 +89,11 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         randomized :
             run randomized SVD by the method of Halko et al.
 
-        .. versionchanged:: 0.23
+        .. versionchanged:: 0.24
+           Prior to this version the 'randomized' option was not available. The
+           'auto' behaviour was different: if the number of components to
+           extract was n_components < 10 and if n_samples > 200 then the
+           'arpack' solver was enabled. Otherwise the 'dense' method was used.
 
     tol : float, default=0
         Convergence tolerance for arpack.
@@ -102,7 +107,7 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         Number of iterations for the power method computed by
         svd_solver == 'randomized'.
 
-        .. versionadded:: 0.23
+        .. versionadded:: 0.24
 
     remove_zero_eig : boolean, default=False
         If True, then all components with zero eigenvalues are removed, so
@@ -245,7 +250,7 @@ class KernelPCA(TransformerMixin, BaseEstimator):
             # if K.shape[0] > 200 and n_components < 10:
             #     eigen_solver = 'arpack'
             if n_components >= 1 and n_components < .8 * K.shape[0]:
-                # For consistency this is the same criterion than in PCA
+                # For consistency this is the same criterion as in PCA
                 eigen_solver = 'randomized'
             else:
                 eigen_solver = 'dense'

@@ -41,7 +41,7 @@ class Isomap(TransformerMixin, BaseEstimator):
 
         'randomized' : Run randomized SVD by the method of Halko et al.
 
-        .. versionchanged:: 0.23
+        .. versionchanged:: 0.24
 
     tol : float
         Convergence tolerance passed to arpack or lobpcg.
@@ -55,7 +55,7 @@ class Isomap(TransformerMixin, BaseEstimator):
         Number of iterations for the power method computed by
         svd_solver == 'randomized'.
 
-        .. versionadded:: 0.23
+        .. versionadded:: 0.24
 
     path_method : string ['auto'|'FW'|'D']
         Method to use in finding shortest path.
