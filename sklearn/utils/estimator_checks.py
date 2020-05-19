@@ -339,9 +339,9 @@ def _construct_instance(Estimator):
     return estimator
 
 
-def _mark_xfail_checks(estimator, check, strict_mode, pytest):
-    """Mark (estimator, check) pairs with xfail according to the
-    _xfail_checks_ tag"""
+def _maybe_mark_xfail(estimator, check, strict_mode, pytest):
+    # Mark (estimator, check) pairs as XFAIL if the check is in the
+    # _xfail_checks_ tag or if it's a strict check and strict_mode=False.
     xfail_checks = _get_xfail_checks(estimator, strict_mode)
     check_name = _set_check_estimator_ids(check)
 
@@ -355,9 +355,9 @@ def _mark_xfail_checks(estimator, check, strict_mode, pytest):
                             marks=pytest.mark.xfail(reason=reason))
 
 
-def _skip_if_xfail(estimator, check, strict_mode):
+def _maybe_skip(estimator, check, strict_mode):
     # wrap a check so that it's skipped with a warning if it's part of the
-    # xfail_checks tag.
+    # xfail_checks tag, or if it's a strict check and strict_mode=False
     xfail_checks = _get_xfail_checks(estimator, strict_mode)
     check_name = _set_check_estimator_ids(check)
 
@@ -444,7 +444,7 @@ def parametrize_with_checks(estimators, strict_mode=True):
                         for check in _yield_all_checks(estimator))
 
     checks_with_marks = (
-        _mark_xfail_checks(estimator, check, strict_mode, pytest)
+        _maybe_mark_xfail(estimator, check, strict_mode, pytest)
         for estimator, check in checks_generator)
 
     return pytest.mark.parametrize("estimator, check", checks_with_marks,
@@ -508,10 +508,10 @@ def check_estimator(Estimator, generate_only=False, strict_mode=True):
     estimator = Estimator
     name = type(estimator).__name__
 
-    checks_generator = ((estimator,
-                         partial(_skip_if_xfail(estimator, check, strict_mode),
-                                 name))
-                        for check in _yield_all_checks(estimator))
+    checks_generator = (
+        (estimator, partial(_maybe_skip(estimator, check, strict_mode), name))
+        for check in _yield_all_checks(estimator)
+    )
 
     if generate_only:
         return checks_generator
