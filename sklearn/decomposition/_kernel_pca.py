@@ -273,9 +273,9 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         elif eigen_solver == 'randomized':
             # not using flip_sign=True for deterministic output, we do it later
             U, S, Vt = randomized_svd(K, n_components=n_components,
-                                     n_iter=self.iterated_power,
-                                     flip_sign=False,
-                                     random_state=self.random_state)
+                                      n_iter=self.iterated_power,
+                                      flip_sign=False,
+                                      random_state=self.random_state)
             self.alphas_ = U[:, :n_components]  # eigenvectors
             self.lambdas_ = S[:n_components]    # eigenvalues
 
