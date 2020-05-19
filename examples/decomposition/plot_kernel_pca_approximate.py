@@ -54,7 +54,6 @@ X, y = make_circles(n_samples=n_samples, factor=.3, noise=.05)
 
 # 2- Design experiment / Init plots
 # ---------------------------------
-plt.ion()
 plt.figure(figsize=(11, 5.5))
 
 # Set this to true to create a logarithmic grid
@@ -80,8 +79,6 @@ plt.scatter(X[blues, 0], X[blues, 1], c="blue",
             s=20, edgecolor='k')
 plt.xlabel("$x_1$")
 plt.ylabel("$x_2$")
-plt.draw()
-plt.pause(1e-3)  # needed to refresh the display
 
 # 2- Run experiments
 # -----------------------
@@ -107,8 +104,6 @@ for i, n_compo in enumerate(reversed(n_components_range)):
     plt.title("kPCA approx (n=%i)(%.2fs)" % (n_compo, elapsed))
     plt.xlabel("$x_1$")
     plt.ylabel("$x_2$")
-    plt.draw()
-    plt.pause(1e-3)  # needed to refresh the display
 
     # plot the first two principal components
     plt.subplot(2, nb_cols, i + 2 + nb_cols, aspect='equal')
@@ -119,10 +114,6 @@ for i, n_compo in enumerate(reversed(n_components_range)):
     plt.title("First 2PC (n=%i)" % n_compo)
     plt.xlabel(r"1st PC in space induced by $\phi$")
     plt.ylabel("2nd component")
-    plt.draw()
-    plt.pause(1e-3)  # needed to refresh the display
 
-plt.ioff()
 plt.tight_layout()
-plt.draw()  # to make the new layout appear
 plt.show()
