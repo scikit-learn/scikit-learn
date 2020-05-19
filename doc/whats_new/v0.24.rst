@@ -45,13 +45,41 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
+:mod:`sklearn.ensemble`
+.......................
+
+- |Feature| :class:`ensemble.HistGradientBoostingRegressor` and
+  :class:`ensemble.HistGradientClassifier` now support `staged_predict`,
+  which allows monitoring of each stage.
+  :pr:`16985` by :user:`Hao Chun Chang <haochunchang>`.
+
+:mod:`sklearn.impute`
+.....................
+
+- |Fix| replace the default values in :class:`impute.IterativeImputer`
+  of `min_value` and `max_value` parameters to `-np.inf` and `np.inf`,
+  respectively instead of `None`. However, the behaviour of the class does not
+  change since `None` was defaulting to these values already.
+  :pr:`16493` by :user:`Darshan N <DarshanGowda0>`.
+
 :mod:`sklearn.inspection`
 .........................
 
 - |Feature| :func:`inspection.partial_dependence` and
-  :func:`inspection.plot_partial_dependence` now support calculating and plotting
-  Individual Conditional Expectation (ICE) curves controlled by the ``kind``
-  parameter. :pr:`16619` by :user:`Madhura Jayratne <madhuracj>`.
+  :func:`inspection.plot_partial_dependence` now support calculating and
+  plotting Individual Conditional Expectation (ICE) curves controlled by the
+  ``kind`` parameter.
+  :pr:`16619` by :user:`Madhura Jayratne <madhuracj>`.
+
+
+:mod:`sklearn.model_selection`
+..............................
+
+- |Enhancement| :class:`model_selection.TimeSeriesSplit` has two new keyword
+  arguments `test_size` and `gap`. `test_size` allows the out-of-sample
+  time series length to be fixed for all folds. `gap` removes a fixed number of
+  samples between the train and test set on each fold.
+  :pr:`13204` by :user:`Kyle Kosic <kykosic>`.
 
 
 Code and Documentation Contributors

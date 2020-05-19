@@ -18,7 +18,8 @@ import scipy.sparse as sp
 from distutils.version import LooseVersion
 from inspect import signature, isclass, Parameter
 
-from numpy.core.numeric import ComplexWarning
+# mypy error: Module 'numpy.core.numeric' has no attribute 'ComplexWarning'
+from numpy.core.numeric import ComplexWarning  # type: ignore
 import joblib
 
 from contextlib import suppress

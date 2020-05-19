@@ -187,7 +187,8 @@ class SparsePCA(TransformerMixin, BaseEstimator):
             n_components = self.n_components
         code_init = self.V_init.T if self.V_init is not None else None
         dict_init = self.U_init.T if self.U_init is not None else None
-        Vt, _, E, self.n_iter_ = dict_learning(X.T, n_components, self.alpha,
+        Vt, _, E, self.n_iter_ = dict_learning(X.T, n_components,
+                                               alpha=self.alpha,
                                                tol=self.tol,
                                                max_iter=self.max_iter,
                                                method=self.method,

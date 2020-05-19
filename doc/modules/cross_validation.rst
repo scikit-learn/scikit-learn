@@ -782,7 +782,7 @@ Example of 3-split time series cross-validation on a dataset with 6 samples::
   >>> y = np.array([1, 2, 3, 4, 5, 6])
   >>> tscv = TimeSeriesSplit(n_splits=3)
   >>> print(tscv)
-  TimeSeriesSplit(max_train_size=None, n_splits=3)
+  TimeSeriesSplit(gap=0, max_train_size=None, n_splits=3, test_size=None)
   >>> for train, test in tscv.split(X):
   ...     print("%s %s" % (train, test))
   [0 1 2] [3]

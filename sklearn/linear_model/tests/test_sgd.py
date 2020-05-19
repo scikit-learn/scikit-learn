@@ -573,7 +573,7 @@ def test_partial_fit_weight_class_balanced(klass):
     # partial_fit with class_weight='balanced' not supported"""
     regex = (r"class_weight 'balanced' is not supported for "
              r"partial_fit\. In order to use 'balanced' weights, "
-             r"use compute_class_weight\('balanced', classes, y\). "
+             r"use compute_class_weight\('balanced', classes=classes, y=y\). "
              r"In place of y you can us a large enough sample "
              r"of the full training set target to properly "
              r"estimate the class frequency distributions\. "
@@ -1438,7 +1438,7 @@ def _test_gradient_common(loss_function, cases):
     # Test gradient of different loss functions
     # cases is a list of (p, y, expected)
     for p, y, expected in cases:
-        assert_almost_equal(loss_function.dloss(p, y), expected)
+        assert_almost_equal(loss_function.py_dloss(p, y), expected)
 
 
 def test_gradient_hinge():
@@ -1488,8 +1488,8 @@ def test_gradient_log():
         (17.9, -1.0, 1.0), (-17.9, 1.0, -1.0),
     ]
     _test_gradient_common(loss, cases)
-    assert_almost_equal(loss.dloss(18.1, 1.0), np.exp(-18.1) * -1.0, 16)
-    assert_almost_equal(loss.dloss(-18.1, -1.0), np.exp(-18.1) * 1.0, 16)
+    assert_almost_equal(loss.py_dloss(18.1, 1.0), np.exp(-18.1) * -1.0, 16)
+    assert_almost_equal(loss.py_dloss(-18.1, -1.0), np.exp(-18.1) * 1.0, 16)
 
 
 def test_gradient_squared_loss():

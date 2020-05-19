@@ -506,7 +506,8 @@ class _SigmoidCalibration(RegressorMixin, BaseEstimator):
         return expit(-(self.a_ * T + self.b_))
 
 
-def calibration_curve(y_true, y_prob, normalize=False, n_bins=5,
+@_deprecate_positional_args
+def calibration_curve(y_true, y_prob, *, normalize=False, n_bins=5,
                       strategy='uniform'):
     """Compute true and predicted probabilities for a calibration curve.
 
