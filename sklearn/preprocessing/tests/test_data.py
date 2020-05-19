@@ -1658,8 +1658,7 @@ def test_robust_scaler_unit_variance():
     robust_scaler = RobustScaler(unit_variance=True)
     standard_scaler = StandardScaler()
     assert_allclose(robust_scaler.fit_transform(X),
-                              standard_scaler.fit_transform(X),
-                              decimal=2)
+                    standard_scaler.fit_transform(X), decimal=2)
 
 
 def test_maxabs_scaler_zero_variance_features():
