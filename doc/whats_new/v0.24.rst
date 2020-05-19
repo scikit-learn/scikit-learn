@@ -22,8 +22,8 @@ parameters, may produce different models from the previous version. This often
 occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
-- items
-- items
+- :class:`decomposition.KernelPCA` |Feature|, |Enhancement|
+- :class:`manifold.Isomap` |Feature|
 
 Details are listed in the changelog below.
 
@@ -44,6 +44,15 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
+:mod:`sklearn.decomposition`
+............................
+
+- |Enhancement| added a new approximate solver (randomized SVD, available with
+  `eigen_solver='randomized'`) to :class:`decomposition.KernelPCA`. This
+  significantly accelerates computation when the number of samples gets much
+  larger than the desired number of components.
+  :pr:`12069` by :user:`Sylvain Marié <smarie>`
+
 :mod:`sklearn.ensemble`
 .......................
 
@@ -60,6 +69,14 @@ Changelog
   respectively instead of `None`. However, the behaviour of the class does not
   change since `None` was defaulting to these values already.
   :pr:`16493` by :user:`Darshan N <DarshanGowda0>`.
+
+:mod:`sklearn.manifold`
+.......................
+
+- |Feature| :class:`manifold.Isomap` can now use the new
+  `eigen_solver='randomized'` option from :class:`decomposition.KernelPCA` to
+  get faster results.
+  :pr:`12069` by :user:`Sylvain Marié <smarie>`
 
 :mod:`sklearn.model_selection`
 ..............................
