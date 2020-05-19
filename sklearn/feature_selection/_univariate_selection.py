@@ -229,7 +229,8 @@ def chi2(X, y):
     return _chisquare(observed, expected)
 
 
-def r_regression(X, y, center=True):
+@_deprecate_positional_args
+def r_regression(X, y, *, center=True):
     """Univariate linear regression tests returning Pearson R.
 
     Linear model for testing the individual effect of each of many regressors.
@@ -298,8 +299,8 @@ def r_regression(X, y, center=True):
     corr /= np.linalg.norm(y)
     return corr
 
-
-def f_regression(X, y, center=True):
+@_deprecate_positional_args
+def f_regression(X, y, *, center=True):
     """Univariate linear regression tests returning F-statistic and p-values.
 
     Quick linear model for testing the effect of a single regressor,

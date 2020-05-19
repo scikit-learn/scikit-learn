@@ -1,8 +1,4 @@
-"""
-Base classes for all estimators.
-
-Used for VotingClassifier
-"""
+"""Base classes for all estimators."""
 
 # Author: Gael Varoquaux <gael.varoquaux@normalesup.org>
 # License: BSD 3 clause
@@ -54,8 +50,8 @@ def clone(estimator, *, safe=True):
 
     Parameters
     ----------
-    estimator : estimator object, or list, tuple or set of objects
-        The estimator or group of estimators to be cloned
+    estimator : {list, tuple, set} of estimator objects or estimator object
+        The estimator or group of estimators to be cloned.
 
     safe : bool, default=True
         If safe is false, clone will fall back to a deep copy on objects
@@ -437,8 +433,25 @@ class BaseEstimator:
 
         return out
 
+    @property
     def _repr_html_(self):
-        """HTML representation of estimator"""
+        """HTML representation of estimator.
+
+        This is redundant with the logic of `_repr_mimebundle_`. The latter
+        should be favorted in the long term, `_repr_html_` is only
+        implemented for consumers who do not interpret `_repr_mimbundle_`.
+        """
+        if get_config()["display"] != 'diagram':
+            raise AttributeError("_repr_html_ is only defined when the "
+                                 "'display' configuration option is set to "
+                                 "'diagram'")
+        return self._repr_html_inner
+
+    def _repr_html_inner(self):
+        """This function is returned by the @property `_repr_html_` to make
+        `hasattr(estimator, "_repr_html_") return `True` or `False` depending
+        on `get_config()["display"]`.
+        """
         return estimator_html_repr(self)
 
     def _repr_mimebundle_(self, **kwargs):
@@ -608,7 +621,7 @@ class BiclusterMixin:
 
         Returns
         -------
-        shape : (int, int)
+        shape : tuple (int, int)
             Number of rows and columns (resp.) in the bicluster.
         """
         indices = self.get_indices(i)
@@ -652,8 +665,8 @@ class TransformerMixin:
 
         Parameters
         ----------
-        X : ndarray of shape (n_samples, n_features)
-            Training set.
+        X : {array-like, sparse matrix, dataframe} of shape \
+                (n_samples, n_features)
 
         y : ndarray of shape (n_samples,), default=None
             Target values.
@@ -708,8 +721,8 @@ class OutlierMixin:
 
         Parameters
         ----------
-        X : ndarray of shape (n_samples, n_features)
-            Input data.
+        X : {array-like, sparse matrix, dataframe} of shape \
+            (n_samples, n_features)
 
         y : Ignored
             Not used, present for API consistency by convention.

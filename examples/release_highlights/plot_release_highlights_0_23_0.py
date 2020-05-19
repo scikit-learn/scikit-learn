@@ -53,12 +53,15 @@ print(glm.score(X_test, y_test))
 print(gbdt.score(X_test, y_test))
 
 ##############################################################################
-# Rich HTML representation for estimators
-# ---------------------------------------
-# Estimators can now be rendered in html in notebooks by enabling the
-# `display='diagram'` option. This is particularly useful to visualize
-# pipelines and composite estimators. Click on the entries to expand and see
-# details.
+# Rich visual representation of estimators
+# -----------------------------------------
+# Estimators can now be visualized in notebooks by enabling the
+# `display='diagram'` option. This is particularly useful to summarise the
+# structure of pipelines and other composite estimators, with interactivity to
+# provide detail.  Click on the example image below to expand Pipeline
+# elements.  See :ref:`visualizing_composite_estimators` for how you can use
+# this feature.
+
 from sklearn import set_config
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
