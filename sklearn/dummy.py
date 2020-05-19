@@ -358,7 +358,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
     def _more_tags(self):
         return {
             'poor_score': True, 'no_validation': True,
-            '_xfail_test': {
+            '_xfail_checks': {
                 'check_methods_subset_invariance':
                 'fails for the predict method'
             }
@@ -560,6 +560,8 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         return_std : boolean, optional
             Whether to return the standard deviation of posterior prediction.
             All zeros in this case.
+
+            .. versionadded:: 0.20
 
         Returns
         -------

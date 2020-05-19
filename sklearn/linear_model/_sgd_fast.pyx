@@ -66,7 +66,14 @@ cdef class LossFunction:
         """
         return 0.
 
-    def dloss(self, double p, double y):
+    def py_dloss(self, double p, double y):
+        """Python version of `dloss` for testing.
+
+        Pytest needs a python function and can't use cdef functions.
+        """
+        return self.dloss(p, y)
+
+    cdef double dloss(self, double p, double y) nogil:
         """Evaluate the derivative of the loss function with respect to
         the prediction `p`.
 
@@ -81,11 +88,6 @@ cdef class LossFunction:
         double
             The derivative of the loss function with regards to `p`.
         """
-        return self._dloss(p, y)
-
-    cdef double _dloss(self, double p, double y) nogil:
-        # Implementation of dloss; separate function because cpdef and nogil
-        # can't be combined.
         return 0.
 
 
@@ -95,7 +97,7 @@ cdef class Regression(LossFunction):
     cdef double loss(self, double p, double y) nogil:
         return 0.
 
-    cdef double _dloss(self, double p, double y) nogil:
+    cdef double dloss(self, double p, double y) nogil:
         return 0.
 
 
@@ -105,7 +107,7 @@ cdef class Classification(LossFunction):
     cdef double loss(self, double p, double y) nogil:
         return 0.
 
-    cdef double _dloss(self, double p, double y) nogil:
+    cdef double dloss(self, double p, double y) nogil:
         return 0.
 
 
@@ -126,7 +128,7 @@ cdef class ModifiedHuber(Classification):
         else:
             return -4.0 * z
 
-    cdef double _dloss(self, double p, double y) nogil:
+    cdef double dloss(self, double p, double y) nogil:
         cdef double z = p * y
         if z >= 1.0:
             return 0.0
@@ -161,7 +163,7 @@ cdef class Hinge(Classification):
             return self.threshold - z
         return 0.0
 
-    cdef double _dloss(self, double p, double y) nogil:
+    cdef double dloss(self, double p, double y) nogil:
         cdef double z = p * y
         if z <= self.threshold:
             return -y
@@ -193,7 +195,7 @@ cdef class SquaredHinge(Classification):
             return z * z
         return 0.0
 
-    cdef double _dloss(self, double p, double y) nogil:
+    cdef double dloss(self, double p, double y) nogil:
         cdef double z = self.threshold - p * y
         if z > 0:
             return -2 * y * z
@@ -215,7 +217,7 @@ cdef class Log(Classification):
             return -z
         return log(1.0 + exp(-z))
 
-    cdef double _dloss(self, double p, double y) nogil:
+    cdef double dloss(self, double p, double y) nogil:
         cdef double z = p * y
         # approximately equal and saves the computation of the log
         if z > 18.0:
@@ -233,7 +235,7 @@ cdef class SquaredLoss(Regression):
     cdef double loss(self, double p, double y) nogil:
         return 0.5 * (p - y) * (p - y)
 
-    cdef double _dloss(self, double p, double y) nogil:
+    cdef double dloss(self, double p, double y) nogil:
         return p - y
 
     def __reduce__(self):
@@ -262,7 +264,7 @@ cdef class Huber(Regression):
         else:
             return self.c * abs_r - (0.5 * self.c * self.c)
 
-    cdef double _dloss(self, double p, double y) nogil:
+    cdef double dloss(self, double p, double y) nogil:
         cdef double r = p - y
         cdef double abs_r = fabs(r)
         if abs_r <= self.c:
@@ -291,7 +293,7 @@ cdef class EpsilonInsensitive(Regression):
         cdef double ret = fabs(y - p) - self.epsilon
         return ret if ret > 0 else 0
 
-    cdef double _dloss(self, double p, double y) nogil:
+    cdef double dloss(self, double p, double y) nogil:
         if y - p > self.epsilon:
             return -1
         elif p - y > self.epsilon:
@@ -318,7 +320,7 @@ cdef class SquaredEpsilonInsensitive(Regression):
         cdef double ret = fabs(y - p) - self.epsilon
         return ret * ret if ret > 0 else 0
 
-    cdef double _dloss(self, double p, double y) nogil:
+    cdef double dloss(self, double p, double y) nogil:
         cdef double z
         z = y - p
         if z > self.epsilon:
@@ -542,7 +544,7 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                     update = sqnorm(x_data_ptr, x_ind_ptr, xnnz)
                     update = loss.loss(p, y) / (update + 0.5 / C)
                 else:
-                    dloss = loss._dloss(p, y)
+                    dloss = loss.dloss(p, y)
                     # clip dloss with large values to avoid numerical
                     # instabilities
                     if dloss < -MAX_DLOSS:

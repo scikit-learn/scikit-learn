@@ -19,6 +19,7 @@ from ..utils import check_random_state
 from ..utils.optimize import _check_optimize_result
 from ..preprocessing import LabelEncoder
 from ..multiclass import OneVsRestClassifier, OneVsOneClassifier
+from ..utils.validation import _deprecate_positional_args
 
 
 # Values required for approximating the logistic sigmoid by
@@ -144,7 +145,8 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
         The log-marginal-likelihood of ``self.kernel_.theta``
 
     """
-    def __init__(self, kernel=None, optimizer="fmin_l_bfgs_b",
+    @_deprecate_positional_args
+    def __init__(self, kernel=None, *, optimizer="fmin_l_bfgs_b",
                  n_restarts_optimizer=0, max_iter_predict=100,
                  warm_start=False, copy_X_train=True, random_state=None):
         self.kernel = kernel
@@ -586,7 +588,8 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
 
     .. versionadded:: 0.18
     """
-    def __init__(self, kernel=None, optimizer="fmin_l_bfgs_b",
+    @_deprecate_positional_args
+    def __init__(self, kernel=None, *, optimizer="fmin_l_bfgs_b",
                  n_restarts_optimizer=0, max_iter_predict=100,
                  warm_start=False, copy_X_train=True, random_state=None,
                  multi_class="one_vs_rest", n_jobs=None):
@@ -623,9 +626,13 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
                                        ensure_2d=False, dtype=None)
 
         self.base_estimator_ = _BinaryGaussianProcessClassifierLaplace(
-            self.kernel, self.optimizer, self.n_restarts_optimizer,
-            self.max_iter_predict, self.warm_start, self.copy_X_train,
-            self.random_state)
+            kernel=self.kernel,
+            optimizer=self.optimizer,
+            n_restarts_optimizer=self.n_restarts_optimizer,
+            max_iter_predict=self.max_iter_predict,
+            warm_start=self.warm_start,
+            copy_X_train=self.copy_X_train,
+            random_state=self.random_state)
 
         self.classes_ = np.unique(y)
         self.n_classes_ = self.classes_.size

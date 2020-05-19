@@ -16,6 +16,7 @@ from scipy import sparse
 from numpy.lib.stride_tricks import as_strided
 
 from ..utils import check_array, check_random_state, deprecated
+from ..utils.validation import _deprecate_positional_args
 from ..base import BaseEstimator
 
 __all__ = ['PatchExtractor',
@@ -129,7 +130,8 @@ def _to_graph(n_x, n_y, n_z, mask=None, img=None,
     return return_as(graph)
 
 
-def img_to_graph(img, mask=None, return_as=sparse.coo_matrix, dtype=None):
+@_deprecate_positional_args
+def img_to_graph(img, *, mask=None, return_as=sparse.coo_matrix, dtype=None):
     """Graph of the pixel-to-pixel gradient connections
 
     Edges are weighted with the gradient values.
@@ -165,7 +167,8 @@ def img_to_graph(img, mask=None, return_as=sparse.coo_matrix, dtype=None):
     return _to_graph(n_x, n_y, n_z, mask, img, return_as, dtype)
 
 
-def grid_to_graph(n_x, n_y, n_z=1, mask=None, return_as=sparse.coo_matrix,
+@_deprecate_positional_args
+def grid_to_graph(n_x, n_y, n_z=1, *, mask=None, return_as=sparse.coo_matrix,
                   dtype=np.int):
     """Graph of the pixel-to-pixel connections
 
@@ -343,7 +346,9 @@ def extract_patches(arr, patch_shape=8, extraction_step=1):
                             extraction_step=extraction_step)
 
 
-def extract_patches_2d(image, patch_size, max_patches=None, random_state=None):
+@_deprecate_positional_args
+def extract_patches_2d(image, patch_size, *, max_patches=None,
+                       random_state=None):
     """Reshape a 2D image into a collection of patches
 
     The resulting patches are allocated in a dedicated array.
@@ -519,8 +524,9 @@ class PatchExtractor(BaseEstimator):
     >>> print('Patches shape: {}'.format(pe_trans.shape))
     Patches shape: (545706, 2, 2)
     """
-
-    def __init__(self, patch_size=None, max_patches=None, random_state=None):
+    @_deprecate_positional_args
+    def __init__(self, *, patch_size=None, max_patches=None,
+                 random_state=None):
         self.patch_size = patch_size
         self.max_patches = max_patches
         self.random_state = random_state
@@ -577,7 +583,8 @@ class PatchExtractor(BaseEstimator):
         patches = np.empty(patches_shape)
         for ii, image in enumerate(X):
             patches[ii * n_patches:(ii + 1) * n_patches] = extract_patches_2d(
-                image, patch_size, self.max_patches, self.random_state)
+                image, patch_size, max_patches=self.max_patches,
+                random_state=self.random_state)
         return patches
 
     def _more_tags(self):

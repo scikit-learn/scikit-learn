@@ -599,7 +599,8 @@ def test_auto_weight():
     unbalanced = np.delete(np.arange(y.size), np.where(y > 2)[0][::2])
 
     classes = np.unique(y[unbalanced])
-    class_weights = compute_class_weight('balanced', classes, y[unbalanced])
+    class_weights = compute_class_weight('balanced', classes=classes,
+                                         y=y[unbalanced])
     assert np.argmax(class_weights) == 2
 
     for clf in (svm.SVC(kernel='linear'), svm.LinearSVC(random_state=0),
