@@ -72,15 +72,9 @@ perm = rng.permutation(iris.target.size)
 iris.data = iris.data[perm]
 iris.target = iris.target[perm]
 
-# also load the diabetes dataset
-# and randomly permute it
-diabetes = datasets.load_diabetes()
-perm = rng.permutation(diabetes.target.size)
-diabetes.data = diabetes.data[perm]
-diabetes.target = diabetes.target[perm]
-
+# Make regression dataset
 X_reg, y_reg = datasets.make_regression(n_samples=500, n_features=10,
-                                        n_informative=100, random_state=1)
+                                        random_state=1)
 
 # also make a hastie_10_2 dataset
 hastie_X, hastie_y = datasets.make_hastie_10_2(n_samples=20, random_state=1)
@@ -387,15 +381,10 @@ def check_oob_score(name, X, y, n_estimators=20):
     n_samples = X.shape[0]
     est.fit(X[:n_samples // 2, :], y[:n_samples // 2])
     test_score = est.score(X[n_samples // 2:, :], y[n_samples // 2:])
-
     if name in FOREST_CLASSIFIERS:
         assert abs(test_score - est.oob_score_) < 0.1
     else:
-        print(test_score)
-        print('below should be lower')
-        print(est.oob_score_)
-        assert test_score > est.oob_score_
-        assert est.oob_score_ > .32
+        assert abs(test_score - est.oob_score_) < 0.1
 
     # Check warning if not enough estimators
     with np.errstate(divide="ignore", invalid="ignore"):
@@ -481,11 +470,13 @@ def check_parallel(name, X, y):
 @pytest.mark.parametrize('name', FOREST_CLASSIFIERS_REGRESSORS)
 def test_parallel(name):
     if name in FOREST_CLASSIFIERS:
-        ds = iris
+        X = iris.data
+        y = iris.target
     elif name in FOREST_REGRESSORS:
-        ds = diabetes
+        X = X_reg
+        y = y_reg
 
-    check_parallel(name, ds.data, ds.target)
+    check_parallel(name, X, y)
 
 
 def check_pickle(name, X, y):
@@ -506,11 +497,13 @@ def check_pickle(name, X, y):
 @pytest.mark.parametrize('name', FOREST_CLASSIFIERS_REGRESSORS)
 def test_pickle(name):
     if name in FOREST_CLASSIFIERS:
-        ds = iris
+        X = iris.data
+        y = iris.target
     elif name in FOREST_REGRESSORS:
-        ds = diabetes
+        X = X_reg
+        y = y_reg
 
-    check_pickle(name, ds.data[::2], ds.target[::2])
+    check_pickle(name, X[::2], y[::2])
 
 
 def check_multioutput(name):
