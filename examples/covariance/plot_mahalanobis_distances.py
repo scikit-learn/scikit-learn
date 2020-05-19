@@ -66,11 +66,12 @@ observation ranking and clustering.
 # Generate data
 # --------------
 #
-# First we generate a dataset of 125 samples and 2 features. Both features
+# First, we generate a dataset of 125 samples and 2 features. Both features
 # are Gaussian distributed with mean of 0 but feature 1 has a standard
-# deviation = 2 and feature 2 has a standard deviation = 1. Next, 25 samples
-# are replaced with Gaussian outlier samples where feature 1 has standard
-# devation = 1 and feature 2 has standard deviation = 7.
+# deviation equal to 2 and feature 2 has a standard deviation equal to 1. Next,
+# 25 samples are replaced with Gaussian outlier samples where feature 1 has
+# a standard devation equal to 1 and feature 2 has a standard deviation equal
+# to 7.
 
 import numpy as np
 
@@ -94,7 +95,7 @@ X[-n_outliers:] = np.dot(np.random.randn(n_outliers, n_features), outliers_cov)
 # Comparison of results
 # ---------------------
 #
-# Below we fit MCD and MLE based covariance estimators to our data and print
+# Below, we fit MCD and MLE based covariance estimators to our data and print
 # the estimated covariance matrices. Note that the estimated variance of
 # feature 2 is much higher with the MLE based estimator (7.5) than
 # that of the MCD robust estimator (1.2). This shows that the MCD based
