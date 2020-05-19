@@ -272,7 +272,7 @@ class KernelPCA(TransformerMixin, BaseEstimator):
                                                 v0=v0)
         elif eigen_solver == 'randomized':
             # not using flip_sign=True for deterministic output, we do it later
-            U, S, V = randomized_svd(K, n_components=n_components,
+            U, S, Vt = randomized_svd(K, n_components=n_components,
                                      n_iter=self.iterated_power,
                                      flip_sign=False,
                                      random_state=self.random_state)
@@ -286,7 +286,7 @@ class KernelPCA(TransformerMixin, BaseEstimator):
             # equal to the *eigenvalue*, it has the wrong sign. We have to
             # take this into account to find the actual *eigenvalue*.
             # Fastest check for flipped sign is the sign of the scalar product:
-            VU_scalprods = np.multiply(V[:n_components, :].T,
+            VU_scalprods = np.multiply(Vt[:n_components, :].T,
                                        U[:, :n_components]).sum(axis=0)
             signs = np.sign(VU_scalprods)
             self.lambdas_ = self.lambdas_ * signs
