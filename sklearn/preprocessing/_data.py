@@ -1138,7 +1138,10 @@ class RobustScaler(TransformerMixin, BaseEstimator):
 
     unit_variance : bool, default=False
         If True, scale data so that normally distributed features have a
-        variance of 1.
+        variance of 1. In general, if the difference between the x-values of
+        ``q_max`` and ``q_min`` for a standard normal distribution is greater
+        than 1, the dataset will be scaled down. If less than 1 the dataset
+        will be scaled up.
 
         .. versionadded:: 0.24
 
