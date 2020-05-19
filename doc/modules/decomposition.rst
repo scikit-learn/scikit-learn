@@ -323,30 +323,6 @@ The memory footprint of randomized :class:`KernelPCA` is also proportional to
 
 Note: this technique is the same than in :ref:`RandomizedPCA`.
 
-Kernel PCA solvers benchmarks
------------------------------
-
-To evaluate the performance impact of the solver selection with a more
-systematic approach you can execute the following benchmarks:
-
-* `Time vs. n_samples benchmark <https://github.com/scikit-learn/scikit-learn/blob/master/benchmarks/bench_kernel_pca_solvers_time_vs_n_samples.py>`_
-  compares the :class:`KernelPCA` execution times for various values of
-  ``eigen_solver``, when the number of components is fixed and the number of
-  samples increases. This is the kind of results it generates:
-
-  .. |bench_time_vs_nsamples| image:: https://user-images.githubusercontent.com/3236794/47029170-2b1fa480-d16b-11e8-8480-e8d71f2900bb.png
-      :target: https://github.com/scikit-learn/scikit-learn/blob/master/benchmarks/bench_kernel_pca_solvers_time_vs_n_samples.py
-      :scale: 60%
-
-* `Time vs. n_components benchmark <https://github.com/scikit-learn/scikit-learn/blob/master/benchmarks/bench_kernel_pca_solvers_time_vs_n_components.py>`_
-  compares the :class:`KernelPCA` execution times for various values of
-  ``eigen_solver``, when the number of samples is fixed and the number of
-  components increases. This is the kind of results it generates:
-
-  .. |bench_time_vs_ncomp| image:: https://user-images.githubusercontent.com/3236794/45894261-26670b00-bdce-11e8-967d-0195168707b4.png
-      :target: https://github.com/scikit-learn/scikit-learn/blob/master/benchmarks/bench_kernel_pca_solvers_time_vs_n_components.py
-      :scale: 60%
-
 
 .. _LSA:
 

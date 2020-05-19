@@ -27,8 +27,8 @@ full KernelPCA using 2000 components, while execution is much faster
 
 Going further:
 --------------
-You can have a look at the `Kernel PCA Solvers comparison benchmarks
-<https://scikit-learn.org/stable/modules/decomposition.html#kernel-pca-solvers-benchmarks>`_
+You can have a look at this `Kernel PCA Solvers comparison benchmark
+<https://github.com/scikit-learn/scikit-learn/blob/master/benchmarks/bench_kernel_pca_solvers_time_vs_n_samples.py>`_
 to compare execution times in more details.
 """
 print(__doc__)  # noqa
