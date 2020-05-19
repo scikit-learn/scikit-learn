@@ -164,7 +164,7 @@ fi
 
 # Check for default doctest directives ELLIPSIS and NORMALIZE_WHITESPACE
 
-doctest_directive="$(find . -type f \( -name "*.py" -o -name "*.rst" \) -exec grep -nw -E "# doctest: \+(ELLIPSIS|NORMALIZE_WHITESPACE)" {} \;)"
+doctest_directive="$(git grep -nw -E "# doctest\: \+(ELLIPSIS|NORMALIZE_WHITESPACE)")"
 
 if [ ! -z "$doctest_directive" ]
 then
