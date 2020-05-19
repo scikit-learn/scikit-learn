@@ -168,7 +168,7 @@ doctest_directive="$(find . -type f \( -name "*.py" -o -name "*.rst" \) -exec gr
 
 if [ ! -z "$doctest_directive" ]
 then
-    echo "Default doctest directives found:"
+    echo "ELLIPSIS and NORMALIZE_WHITESPACE doctest directives are enabled by default, but were found in:"
     echo "$doctest_directive"
     exit 1
 fi
