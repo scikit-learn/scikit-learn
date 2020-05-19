@@ -342,6 +342,8 @@ def _construct_instance(Estimator):
 def _maybe_mark_xfail(estimator, check, strict_mode, pytest):
     # Mark (estimator, check) pairs as XFAIL if the check is in the
     # _xfail_checks_ tag or if it's a strict check and strict_mode=False.
+    # This is similar to _maybe_skip(), but this one is used by
+    # @parametrize_with_checks() instead of check_estimator()
     xfail_checks = _get_xfail_checks(estimator, strict_mode)
     check_name = _set_check_estimator_ids(check)
 
@@ -356,8 +358,11 @@ def _maybe_mark_xfail(estimator, check, strict_mode, pytest):
 
 
 def _maybe_skip(estimator, check, strict_mode):
-    # wrap a check so that it's skipped with a warning if it's part of the
+    # Wrap a check so that it's skipped with a warning if it's part of the
     # xfail_checks tag, or if it's a strict check and strict_mode=False
+    # This is similar to _maybe_mark_xfail(), but this one is used by
+    # check_estimator() instead of @parametrize_with_checks which requires
+    # pytest
     xfail_checks = _get_xfail_checks(estimator, strict_mode)
     check_name = _set_check_estimator_ids(check)
 
