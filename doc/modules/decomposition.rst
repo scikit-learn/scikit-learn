@@ -285,10 +285,11 @@ prediction (kernel dependency estimation). :class:`KernelPCA` supports both
 Choice of solver for Kernel PCA
 -------------------------------
 
-In :class:`KernelPCA`, the number of components found is equal to the number of
-samples. Many real-world datasets have large number of samples! In these cases
-finding *all* the components with a full kPCA is a waste of computation time,
-as data is mostly described by the first few components
+While in :class:`PCA` the number of components is bounded by the number of
+features, in :class:`KernelPCA` the number of components is bounded by the
+number of samples. Many real-world datasets have large number of samples! In
+these cases finding *all* the components with a full kPCA is a waste of
+computation time, as data is mostly described by the first few components
 (e.g. ``n_components<=100``).
 
 The optional parameter ``eigen_solver='randomized'`` can be used to
@@ -297,16 +298,6 @@ The optional parameter ``eigen_solver='randomized'`` can be used to
 This is done automatically by default if you do not specify any
 ``eigen_solver`` and if the required ``n_components`` is less than 80% of
 the number of samples, see :class:`KernelPCA` for details.
-
-For example the figure below shows the same "circles" dataset (top left)
-reconstructed with various approximations (number of components decreases from
-2000 - full - to 4). You can compare the execution times vs. the reconstruction
-quality :
-
-.. figure:: ../auto_examples/decomposition/images/sphx_glr_plot_kernel_pca_approximate_001.png
-    :target: ../auto_examples/decomposition/plot_kernel_pca_approximate.html
-    :align: center
-    :scale: 75%
 
 The time complexity of the randomized :class:`KernelPCA` is
 :math:`O(n_{\mathrm{samples}}^2 \cdot n_{\mathrm{components}})`
@@ -317,11 +308,11 @@ The memory footprint of randomized :class:`KernelPCA` is also proportional to
 :math:`2 \cdot n_{\mathrm{samples}} \cdot n_{\mathrm{components}}` instead of
 :math:`n_{\mathrm{samples}}^2` for the exact method.
 
+Note: this technique is the same as in :ref:`RandomizedPCA`.
+
 .. topic:: Examples:
 
     * :ref:`sphx_glr_auto_examples_decomposition_plot_kernel_pca_approximate.py`
-
-Note: this technique is the same than in :ref:`RandomizedPCA`.
 
 
 .. _LSA:

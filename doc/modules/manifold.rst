@@ -144,7 +144,7 @@ The overall complexity of Isomap is
 * :math:`d` : output dimension
 
 Similarly to :ref:`kernel_PCA`, the optional parameter
-``eigen_solver='randomized'`` can be used to drastically improve the
+``eigen_solver='randomized'`` can be used to significantly improve the
 computation time. Note that this is not yet the automatic behaviour.
 
 .. topic:: References:
