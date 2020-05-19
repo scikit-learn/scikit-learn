@@ -118,11 +118,11 @@ labels are [-1, 1]) classification and multiclass (where the labels are
 
 Using the Iris dataset, we can construct a tree as follows::
 
-    >>> from sklearn.datasets import load_iris # doctest: +NORMALIZE_WHITESPACE
-    >>> from sklearn import tree # doctest: +NORMALIZE_WHITESPACE
-    >>> X, y = load_iris(return_X_y=True) # doctest: +NORMALIZE_WHITESPACE
-    >>> clf = tree.DecisionTreeClassifier() # doctest: +ELLIPSIS
-    >>> clf = clf.fit(X, y) # doctest: +ELLIPSIS
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn import tree
+    >>> X, y = load_iris(return_X_y=True)
+    >>> clf = tree.DecisionTreeClassifier()
+    >>> clf = clf.fit(X, y)
 
 Once trained, you can plot the tree with the :func:`plot_tree` function::
 
