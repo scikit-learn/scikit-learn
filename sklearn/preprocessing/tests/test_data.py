@@ -17,7 +17,6 @@ import pytest
 from sklearn.utils import gen_batches
 
 from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_less
 from sklearn.utils._testing import assert_warns_message
@@ -1658,7 +1657,7 @@ def test_robust_scaler_unit_variance():
     X = rng.randn(100000, 1) * 5 + 2
     robust_scaler = RobustScaler(unit_variance=True)
     standard_scaler = StandardScaler()
-    assert_array_almost_equal(robust_scaler.fit_transform(X),
+    assert_allclose(robust_scaler.fit_transform(X),
                               standard_scaler.fit_transform(X),
                               decimal=2)
 
