@@ -145,7 +145,7 @@ Changelog
 
 - |Enhancement| added a new approximate solver (randomized SVD, available with
   `eigen_solver='randomized'`) to :class:`decomposition.KernelPCA`. This
-  drastically accelerates computation when the number of samples gets much
+  significantly accelerates computation when the number of samples gets much
   larger than the desired number of components.
   :pr:`12069` by :user:`Sylvain Marié <smarie>`
 

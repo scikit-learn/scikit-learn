@@ -4,7 +4,7 @@ Kernel PCA Solvers comparison benchmark: time vs n_components
 =============================================================
 
 This benchmark shows that the approximate solvers provided in Kernel PCA can
-help drastically improve its execution speed when an approximate solution
+help significantly improve its execution speed when an approximate solution
 (small `n_components`) is acceptable. In many real-world datasets a few
 hundreds of principal components are indeed sufficient enough to capture the
 underlying distribution.

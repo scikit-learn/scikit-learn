@@ -292,7 +292,7 @@ as data is mostly described by the first few components
 (e.g. ``n_components<=100``).
 
 The optional parameter ``eigen_solver='randomized'`` can be used to
-*drastically* reduce the computation time when the number of requested
+*significantly* reduce the computation time when the number of requested
 ``n_components`` is small compared with the number of samples.
 This is done automatically by default if you do not specify any
 ``eigen_solver`` and if the required ``n_components`` is less than 80% of
