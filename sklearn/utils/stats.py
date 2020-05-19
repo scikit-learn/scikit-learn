@@ -33,4 +33,4 @@ def _weighted_percentile(array, sample_weight, percentile=50):
     col_index = np.arange(array.shape[1])
     percentile_in_sorted = sorted_idx[percentile_idx, col_index]
     percentile = array[percentile_in_sorted, col_index]
-    return percentile[0] if ndim == 1 else percentile
+    return percentile[0] if n_dim == 1 else percentile
