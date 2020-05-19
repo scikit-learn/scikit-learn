@@ -68,7 +68,7 @@ def test_connect_regions():
     face = face[::4, ::4]
     for thr in (50, 150):
         mask = face > thr
-        graph = img_to_graph(face, mask)
+        graph = img_to_graph(face, mask=mask)
         assert ndimage.label(mask)[1] == connected_components(graph)[0]
 
 
