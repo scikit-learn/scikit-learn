@@ -63,7 +63,8 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         Learn the inverse transform for non-precomputed kernels.
         (i.e. learn to find the pre-image of a point)
 
-    eigen_solver : string {'auto', 'dense', 'arpack', 'randomized'}, default='auto'
+    eigen_solver : string {'auto', 'dense', 'arpack', 'randomized'}, \
+        default='auto'
         Select eigensolver to use (default='auto'). If `n_components` is much
         less than the number of training samples, randomized (or arpack to a
         smaller extend) may be more efficient than the dense eigensolver.
