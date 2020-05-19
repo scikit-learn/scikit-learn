@@ -210,7 +210,8 @@ class BadBalancedWeightsClassifier(BaseBadClassifier):
 
         label_encoder = LabelEncoder().fit(y)
         classes = label_encoder.classes_
-        class_weight = compute_class_weight(self.class_weight, classes, y)
+        class_weight = compute_class_weight(self.class_weight, classes=classes,
+                                            y=y)
 
         # Intentionally modify the balanced class_weight
         # to simulate a bug and raise an exception

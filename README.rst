@@ -51,6 +51,7 @@ scikit-learn requires:
 - NumPy (>= 1.13.3)
 - SciPy (>= 0.19.1)
 - joblib (>= 0.11)
+- threadpoolctl (>= 2.0.0)
 
 **Scikit-learn 0.20 was the last version to support Python 2.7 and Python 3.4.**
 scikit-learn 0.23 and later require Python 3.6 or newer.
