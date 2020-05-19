@@ -17,6 +17,7 @@ import pytest
 from sklearn.utils import gen_batches
 
 from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_less
 from sklearn.utils._testing import assert_warns_message
