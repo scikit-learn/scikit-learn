@@ -27,17 +27,16 @@ from sklearn.model_selection import train_test_split
 # pixel images of digits. The ``images`` attribute of the dataset stores
 # 8x8 arrays of grayscale values for each image. We will use these arrays to
 # visualize the first 4 images. The ``target`` attribute of the dataset stores
-# the digit each image represents and this is included in title of the 4 plots
-# below.
+# the digit each image represents and this is included in the title of the 4
+# plots below.
 #
-# Note: if we were working from image files (e.g., 'png' files), we could load
+# Note: if we were working from image files (e.g., 'png' files), we would load
 # them using :func:`matplotlib.pyplot.imread`.
 
 digits = datasets.load_digits()
 
-_, axes = plt.subplots(1, 4, figsize=(10, 3))
-images_and_labels = list(zip(digits.images, digits.target))
-for ax, (image, label) in zip(axes, images_and_labels[:4]):
+_, axes = plt.subplots(nrows=1, ncols=4, figsize=(10, 3))
+for ax, image, label in zip(axes, digits.images, digits.target):
     ax.set_axis_off()
     ax.imshow(image, cmap=plt.cm.gray_r, interpolation='nearest')
     ax.set_title('Training: %i' % label)
@@ -47,10 +46,10 @@ for ax, (image, label) in zip(axes, images_and_labels[:4]):
 # --------------
 #
 # To apply a classifier on this data, we need to flatten the images, turning
-# each array of grayscale values from shape (8,8) into shape (64, ).
-# The data is then able to take the shape (n_samples, n_features), where
-# n_samples is the number of images and n_features is the total number of
-# pixels in each image.
+# each 2-D array of grayscale values from shape ``(8,8)`` into shape
+# ``(64, )``. Subsequently, the entire dataset will be of shape
+# ``(n_samples, n_features)``, where ``n_samples`` is the number of images and
+# ``n_features`` is the total number of pixels in each image.
 #
 # We can then split the data into train and test subsets and fit a support
 # vector classifier on the train samples. The fitted classifier can
@@ -78,9 +77,8 @@ predicted = clf.predict(X_test)
 # Below we visualize the first 4 test samples and show their predicted
 # digit value in the title.
 
-_, axes = plt.subplots(1, 4, figsize=(10, 3))
-images_and_predictions = list(zip(digits.images[n_samples // 2:], predicted))
-for ax, (image, prediction) in zip(axes, images_and_predictions[:4]):
+_, axes = plt.subplots(nrows=1, ncols=4, figsize=(10, 3))
+for ax, image, prediction in zip(axes, digits.images, predicted):
     ax.set_axis_off()
     ax.imshow(image, cmap=plt.cm.gray_r, interpolation='nearest')
     ax.set_title('Prediction: %i' % prediction)
@@ -98,6 +96,6 @@ print("Classification report for classifier %s:\n%s\n"
 
 disp = metrics.plot_confusion_matrix(clf, X_test, y_test)
 disp.figure_.suptitle("Confusion Matrix")
-print("Confusion matrix:\n%s" % disp.confusion_matrix)
+print(f"Confusion matrix:\n{disp.confusion_matrix}")
 
 plt.show()
