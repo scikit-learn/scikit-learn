@@ -108,12 +108,12 @@ perm = rng.permutation(iris.target.size)
 iris.data = iris.data[perm]
 iris.target = iris.target[perm]
 
-# also load the boston dataset
+# also load the diabetes dataset
 # and randomly permute it
-boston = datasets.load_boston()
-perm = rng.permutation(boston.target.size)
-boston.data = boston.data[perm]
-boston.target = boston.target[perm]
+diabetes = datasets.load_diabetes()
+perm = rng.permutation(diabetes.target.size)
+diabetes.data = diabetes.data[perm]
+diabetes.target = diabetes.target[perm]
 
 digits = datasets.load_digits()
 perm = rng.permutation(digits.target.size)
@@ -134,7 +134,7 @@ X_sparse_mix = _sparse_random_matrix(20, 10, density=0.25,
 
 DATASETS = {
     "iris": {"X": iris.data, "y": iris.target},
-    "boston": {"X": boston.data, "y": boston.target},
+    "diabetes": {"X": diabetes.data, "y": diabetes.target},
     "digits": {"X": digits.data, "y": digits.target},
     "toy": {"X": X, "y": y},
     "clf_small": {"X": X_small, "y": y_small},
@@ -260,13 +260,13 @@ def test_iris():
             "".format(name, criterion, score))
 
 
-def test_boston():
-    # Check consistency on dataset boston house prices.
+def test_diabetes():
+    # Check consistency on dataset diabetes house prices.
 
     for (name, Tree), criterion in product(REG_TREES.items(), REG_CRITERIONS):
         reg = Tree(criterion=criterion, random_state=0)
-        reg.fit(boston.data, boston.target)
-        score = mean_squared_error(boston.target, reg.predict(boston.data))
+        reg.fit(diabetes.data, diabetes.target)
+        score = mean_squared_error(diabetes.target, reg.predict(diabetes.data))
         assert score < 1, (
             "Failed with {0}, criterion = {1} and score = {2}"
             "".format(name, criterion, score))
@@ -274,8 +274,8 @@ def test_boston():
         # using fewer features reduces the learning ability of this tree,
         # but reduces training time.
         reg = Tree(criterion=criterion, max_features=6, random_state=0)
-        reg.fit(boston.data, boston.target)
-        score = mean_squared_error(boston.target, reg.predict(boston.data))
+        reg.fit(diabetes.data, diabetes.target)
+        score = mean_squared_error(diabetes.target, reg.predict(diabetes.data))
         assert score < 2, (
             "Failed with {0}, criterion = {1} and score = {2}"
             "".format(name, criterion, score))
@@ -420,8 +420,8 @@ def test_max_features():
     # Check max_features.
     for name, TreeRegressor in REG_TREES.items():
         reg = TreeRegressor(max_features="auto")
-        reg.fit(boston.data, boston.target)
-        assert reg.max_features_ == boston.data.shape[1]
+        reg.fit(diabetes.data, diabetes.target)
+        assert reg.max_features_ == diabetes.data.shape[1]
 
     for name, TreeClassifier in CLF_TREES.items():
         clf = TreeClassifier(max_features="auto")
@@ -902,7 +902,7 @@ def test_min_impurity_decrease():
         if "Classifier" in name:
             X, y = iris.data, iris.target
         else:
-            X, y = boston.data, boston.target
+            X, y = diabetes.data, diabetes.target
 
         est = TreeEstimator(random_state=0)
         est.fit(X, y)
@@ -1327,7 +1327,7 @@ def check_sparse_input(tree, dataset, max_depth=None):
     y = DATASETS[dataset]["y"]
 
     # Gain testing time
-    if dataset in ["digits", "boston"]:
+    if dataset in ["digits", "diabetes"]:
         n_samples = X.shape[0] // 5
         X = X[:n_samples]
         X_sparse = X_sparse[:n_samples]
@@ -1375,7 +1375,7 @@ def test_sparse_input(tree_type, dataset):
 
 @pytest.mark.parametrize("tree_type",
                          sorted(set(SPARSE_TREES).intersection(REG_TREES)))
-@pytest.mark.parametrize("dataset", ["boston", "reg_small"])
+@pytest.mark.parametrize("dataset", ["diabetes", "reg_small"])
 def test_sparse_input_reg_trees(tree_type, dataset):
     # Due to numerical instability of MSE and too strict test, we limit the
     # maximal depth
@@ -1817,7 +1817,7 @@ def test_empty_leaf_infinite_threshold():
 
 @pytest.mark.parametrize("criterion", CLF_CRITERIONS)
 @pytest.mark.parametrize(
-    "dataset", sorted(set(DATASETS.keys()) - {"reg_small", "boston"}))
+    "dataset", sorted(set(DATASETS.keys()) - {"reg_small", "diabetes"}))
 @pytest.mark.parametrize(
     "tree_cls", [DecisionTreeClassifier, ExtraTreeClassifier])
 def test_prune_tree_classifier_are_subtrees(criterion, dataset, tree_cls):
