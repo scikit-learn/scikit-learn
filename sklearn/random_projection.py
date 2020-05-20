@@ -39,7 +39,9 @@ from .utils import check_random_state
 from .utils.extmath import safe_sparse_dot
 from .utils.random import sample_without_replacement
 from .utils.validation import check_array, check_is_fitted
+from .utils.validation import _deprecate_positional_args
 from .exceptions import DataDimensionalityWarning
+from .utils import deprecated
 
 
 __all__ = ["SparseRandomProjection",
@@ -47,7 +49,8 @@ __all__ = ["SparseRandomProjection",
            "johnson_lindenstrauss_min_dim"]
 
 
-def johnson_lindenstrauss_min_dim(n_samples, eps=0.1):
+@_deprecate_positional_args
+def johnson_lindenstrauss_min_dim(n_samples, *, eps=0.1):
     """Find a 'safe' number of components to randomly project to
 
     The distortion introduced by a random projection `p` only changes the
@@ -150,7 +153,14 @@ def _check_input_size(n_components, n_features):
                          n_features)
 
 
+# TODO: remove in 0.24
+@deprecated("gaussian_random_matrix is deprecated in "
+            "0.22 and will be removed in version 0.24.")
 def gaussian_random_matrix(n_components, n_features, random_state=None):
+    return _gaussian_random_matrix(n_components, n_features, random_state)
+
+
+def _gaussian_random_matrix(n_components, n_features, random_state=None):
     """Generate a dense Gaussian random matrix.
 
     The components of the random matrix are drawn from
@@ -168,11 +178,10 @@ def gaussian_random_matrix(n_components, n_features, random_state=None):
         Dimensionality of the original source space.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        Control the pseudo random number generator used to generate the matrix
-        at fit time.  If int, random_state is the seed used by the random
-        number generator; If RandomState instance, random_state is the random
-        number generator; If None, the random number generator is the
-        RandomState instance used by `np.random`.
+        Controls the pseudo random number generator used to generate the matrix
+        at fit time.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     Returns
     -------
@@ -182,7 +191,6 @@ def gaussian_random_matrix(n_components, n_features, random_state=None):
     See Also
     --------
     GaussianRandomProjection
-    sparse_random_matrix
     """
     _check_input_size(n_components, n_features)
     rng = check_random_state(random_state)
@@ -192,8 +200,17 @@ def gaussian_random_matrix(n_components, n_features, random_state=None):
     return components
 
 
+# TODO: remove in 0.24
+@deprecated("gaussian_random_matrix is deprecated in "
+            "0.22 and will be removed in version 0.24.")
 def sparse_random_matrix(n_components, n_features, density='auto',
                          random_state=None):
+    return _sparse_random_matrix(n_components, n_features, density,
+                                 random_state)
+
+
+def _sparse_random_matrix(n_components, n_features, density='auto',
+                          random_state=None):
     """Generalized Achlioptas random sparse matrix for random projection
 
     Setting density to 1 / 3 will yield the original matrix by Dimitris
@@ -227,11 +244,10 @@ def sparse_random_matrix(n_components, n_features, density='auto',
         Achlioptas, 2001.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        Control the pseudo random number generator used to generate the matrix
-        at fit time.  If int, random_state is the seed used by the random
-        number generator; If RandomState instance, random_state is the random
-        number generator; If None, the random number generator is the
-        RandomState instance used by `np.random`.
+        Controls the pseudo random number generator used to generate the matrix
+        at fit time.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     Returns
     -------
@@ -241,7 +257,6 @@ def sparse_random_matrix(n_components, n_features, density='auto',
     See Also
     --------
     SparseRandomProjection
-    gaussian_random_matrix
 
     References
     ----------
@@ -297,7 +312,7 @@ class BaseRandomProjection(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
     """
 
     @abstractmethod
-    def __init__(self, n_components='auto', eps=0.1, dense_output=False,
+    def __init__(self, n_components='auto', *, eps=0.1, dense_output=False,
                  random_state=None):
         self.n_components = n_components
         self.eps = eps
@@ -341,7 +356,7 @@ class BaseRandomProjection(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
         self
 
         """
-        X = check_array(X, accept_sparse=['csr', 'csc'])
+        X = self._validate_data(X, accept_sparse=['csr', 'csc'])
 
         n_samples, n_features = X.shape
 
@@ -422,6 +437,8 @@ class GaussianRandomProjection(BaseRandomProjection):
 
     Read more in the :ref:`User Guide <gaussian_random_matrix>`.
 
+    .. versionadded:: 0.13
+
     Parameters
     ----------
     n_components : int or 'auto', optional (default = 'auto')
@@ -445,11 +462,10 @@ class GaussianRandomProjection(BaseRandomProjection):
         dimensions (n_components) in the target projection space.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        Control the pseudo random number generator used to generate the matrix
-        at fit time.  If int, random_state is the seed used by the random
-        number generator; If RandomState instance, random_state is the random
-        number generator; If None, the random number generator is the
-        RandomState instance used by `np.random`.
+        Controls the pseudo random number generator used to generate the
+        projection matrix at fit time.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     Attributes
     ----------
@@ -475,7 +491,8 @@ class GaussianRandomProjection(BaseRandomProjection):
     SparseRandomProjection
 
     """
-    def __init__(self, n_components='auto', eps=0.1, random_state=None):
+    @_deprecate_positional_args
+    def __init__(self, n_components='auto', *, eps=0.1, random_state=None):
         super().__init__(
             n_components=n_components,
             eps=eps,
@@ -500,9 +517,9 @@ class GaussianRandomProjection(BaseRandomProjection):
 
         """
         random_state = check_random_state(self.random_state)
-        return gaussian_random_matrix(n_components,
-                                      n_features,
-                                      random_state=random_state)
+        return _gaussian_random_matrix(n_components,
+                                       n_features,
+                                       random_state=random_state)
 
 
 class SparseRandomProjection(BaseRandomProjection):
@@ -521,6 +538,8 @@ class SparseRandomProjection(BaseRandomProjection):
       - +sqrt(s) / sqrt(n_components)   with probability 1 / 2s
 
     Read more in the :ref:`User Guide <sparse_random_matrix>`.
+
+    .. versionadded:: 0.13
 
     Parameters
     ----------
@@ -565,11 +584,10 @@ class SparseRandomProjection(BaseRandomProjection):
         the input is sparse.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        Control the pseudo random number generator used to generate the matrix
-        at fit time.  If int, random_state is the seed used by the random
-        number generator; If RandomState instance, random_state is the random
-        number generator; If None, the random number generator is the
-        RandomState instance used by `np.random`.
+        Controls the pseudo random number generator used to generate the
+        projection matrix at fit time.
+        Pass an int for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     Attributes
     ----------
@@ -611,7 +629,8 @@ class SparseRandomProjection(BaseRandomProjection):
            https://users.soe.ucsc.edu/~optas/papers/jl.pdf
 
     """
-    def __init__(self, n_components='auto', density='auto', eps=0.1,
+    @_deprecate_positional_args
+    def __init__(self, n_components='auto', *, density='auto', eps=0.1,
                  dense_output=False, random_state=None):
         super().__init__(
             n_components=n_components,
@@ -640,7 +659,7 @@ class SparseRandomProjection(BaseRandomProjection):
         """
         random_state = check_random_state(self.random_state)
         self.density_ = _check_density(self.density, n_features)
-        return sparse_random_matrix(n_components,
-                                    n_features,
-                                    density=self.density_,
-                                    random_state=random_state)
+        return _sparse_random_matrix(n_components,
+                                     n_features,
+                                     density=self.density_,
+                                     random_state=random_state)

@@ -15,7 +15,7 @@ import gc
 from time import time
 import numpy as np
 
-from sklearn.datasets.samples_generator import make_regression
+from sklearn.datasets import make_regression
 
 
 def compute_bench(alpha, n_samples, n_features, precompute):

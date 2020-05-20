@@ -11,16 +11,17 @@ import pytest
 
 from sklearn import config_context
 from sklearn.datasets import fetch_openml
-from sklearn.datasets.openml import (_open_openml_url,
-                                     _get_data_description_by_id,
-                                     _download_data_arff,
-                                     _get_local_path,
-                                     _retry_with_clean_cache,
-                                     _feature_to_dtype)
-from sklearn.utils.testing import (assert_warns_message,
-                                   assert_raise_message)
+from sklearn.datasets._openml import (_open_openml_url,
+                                      _arff,
+                                      _DATA_FILE,
+                                      _get_data_description_by_id,
+                                      _get_local_path,
+                                      _retry_with_clean_cache,
+                                      _feature_to_dtype)
+from sklearn.utils._testing import (assert_warns_message,
+                                    assert_raise_message)
 from sklearn.utils import is_scalar_nan
-from sklearn.utils.testing import assert_allclose, assert_array_equal
+from sklearn.utils._testing import assert_allclose, assert_array_equal
 from urllib.error import HTTPError
 from sklearn.datasets.tests.test_common import check_return_X_y
 from functools import partial
@@ -56,8 +57,13 @@ def _test_features_list(data_id):
     if sparse is True:
         raise ValueError('This test is not intended for sparse data, to keep '
                          'code relatively simple')
-    data_arff = _download_data_arff(data_description['file_id'],
-                                    sparse, None, False)
+    url = _DATA_FILE.format(data_description['file_id'])
+    with _open_openml_url(url, data_home=None) as f:
+        data_arff = _arff.load((line.decode('utf-8') for line in f),
+                               return_type=(_arff.COO if sparse
+                                            else _arff.DENSE_GEN),
+                               encode_nominal=False)
+
     data_downloaded = np.array(list(data_arff['data']), dtype='O')
 
     for i in range(len(data_bunch.feature_names)):
@@ -96,11 +102,13 @@ def _fetch_dataset_from_openml(data_id, data_name, data_version,
     if isinstance(target_column, str):
         # single target, so target is vector
         assert data_by_id.target.shape == (expected_observations, )
+        assert data_by_id.target_names == [target_column]
     elif isinstance(target_column, list):
         # multi target, so target is array
         assert data_by_id.target.shape == (expected_observations,
                                            len(target_column))
-    assert data_by_id.data.dtype == np.float64
+        assert data_by_id.target_names == target_column
+    assert data_by_id.data.dtype == expected_data_dtype
     assert data_by_id.target.dtype == expected_target_dtype
     assert len(data_by_id.feature_names) == expected_features
     for feature in data_by_id.feature_names:
@@ -116,11 +124,7 @@ def _fetch_dataset_from_openml(data_id, data_name, data_version,
     if compare_default_target:
         # check whether the data by id and data by id target are equal
         data_by_id_default = fetch_openml(data_id=data_id, cache=False)
-        if data_by_id.data.dtype == np.float64:
-            np.testing.assert_allclose(data_by_id.data,
-                                       data_by_id_default.data)
-        else:
-            assert np.array_equal(data_by_id.data, data_by_id_default.data)
+        np.testing.assert_allclose(data_by_id.data, data_by_id_default.data)
         if data_by_id.target.dtype == np.float64:
             np.testing.assert_allclose(data_by_id.target,
                                        data_by_id_default.target)
@@ -177,6 +181,15 @@ def _monkey_patch_webbased_functions(context,
             if self.is_gzip:
                 return {'Content-Encoding': 'gzip'}
             return {}
+
+        def __iter__(self):
+            return iter(self.data)
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc_val, exc_tb):
+            return False
 
     def _file_name(url, suffix):
         return (re.sub(r'\W', '-', url[len("https://openml.org/"):])
@@ -255,7 +268,7 @@ def _monkey_patch_webbased_functions(context,
 
     # XXX: Global variable
     if test_offline:
-        context.setattr(sklearn.datasets.openml, 'urlopen', _mock_urlopen)
+        context.setattr(sklearn.datasets._openml, 'urlopen', _mock_urlopen)
 
 
 @pytest.mark.parametrize('feature, expected_dtype', [
@@ -310,6 +323,7 @@ def test_fetch_openml_iris_pandas(monkeypatch):
     assert data.shape == data_shape
     assert np.all(data.columns == data_names)
     assert np.all(bunch.feature_names == data_names)
+    assert bunch.target_names == [target_name]
 
     assert isinstance(target, pd.Series)
     assert target.dtype == target_dtype
@@ -372,6 +386,7 @@ def test_fetch_openml_iris_multitarget_pandas(monkeypatch):
     assert data.shape == data_shape
     assert np.all(data.columns == data_names)
     assert np.all(bunch.feature_names == data_names)
+    assert bunch.target_names == target_names
 
     assert isinstance(target, pd.DataFrame)
     assert np.all(target.dtypes == target_dtypes)
@@ -453,6 +468,7 @@ def test_fetch_openml_cpu_pandas(monkeypatch):
     assert np.all(data.dtypes == data_dtypes)
     assert np.all(data.columns == feature_names)
     assert np.all(bunch.feature_names == feature_names)
+    assert bunch.target_names == [target_name]
 
     assert isinstance(target, pd.Series)
     assert target.shape == target_shape
@@ -671,6 +687,7 @@ def test_fetch_openml_titanic_pandas(monkeypatch):
     assert isinstance(data, pd.DataFrame)
     assert data.shape == data_shape
     assert np.all(data.columns == feature_names)
+    assert bunch.target_names == [target_name]
 
     assert isinstance(target, pd.Series)
     assert target.shape == target_shape
@@ -734,7 +751,7 @@ def test_fetch_openml_iris_multitarget(monkeypatch, gzip_response):
     _fetch_dataset_from_openml(data_id, data_name, data_version, target_column,
                                expected_observations, expected_features,
                                expected_missing,
-                               object, np.float64, expect_sparse=False,
+                               np.float64, np.float64, expect_sparse=False,
                                compare_default_target=False)
 
 
@@ -753,7 +770,7 @@ def test_fetch_openml_anneal(monkeypatch, gzip_response):
     _fetch_dataset_from_openml(data_id, data_name, data_version, target_column,
                                expected_observations, expected_features,
                                expected_missing,
-                               object, object, expect_sparse=False,
+                               np.float64, object, expect_sparse=False,
                                compare_default_target=True)
 
 
@@ -778,7 +795,7 @@ def test_fetch_openml_anneal_multitarget(monkeypatch, gzip_response):
     _fetch_dataset_from_openml(data_id, data_name, data_version, target_column,
                                expected_observations, expected_features,
                                expected_missing,
-                               object, object, expect_sparse=False,
+                               np.float64, object, expect_sparse=False,
                                compare_default_target=False)
 
 
@@ -796,7 +813,7 @@ def test_fetch_openml_cpu(monkeypatch, gzip_response):
     _fetch_dataset_from_openml(data_id, data_name, data_version, target_column,
                                expected_observations, expected_features,
                                expected_missing,
-                               object, np.float64, expect_sparse=False,
+                               np.float64, np.float64, expect_sparse=False,
                                compare_default_target=True)
 
 
@@ -911,7 +928,7 @@ def test_open_openml_url_cache(monkeypatch, gzip_response, tmpdir):
 
     _monkey_patch_webbased_functions(
         monkeypatch, data_id, gzip_response)
-    openml_path = sklearn.datasets.openml._DATA_FILE.format(data_id)
+    openml_path = sklearn.datasets._openml._DATA_FILE.format(data_id)
     cache_directory = str(tmpdir.mkdir('scikit_learn_data'))
     # first fill the cache
     response1 = _open_openml_url(openml_path, cache_directory)
@@ -928,7 +945,7 @@ def test_open_openml_url_cache(monkeypatch, gzip_response, tmpdir):
 def test_open_openml_url_unlinks_local_path(
         monkeypatch, gzip_response, tmpdir, write_to_disk):
     data_id = 61
-    openml_path = sklearn.datasets.openml._DATA_FILE.format(data_id)
+    openml_path = sklearn.datasets._openml._DATA_FILE.format(data_id)
     cache_directory = str(tmpdir.mkdir('scikit_learn_data'))
     location = _get_local_path(openml_path, cache_directory)
 
@@ -938,7 +955,7 @@ def test_open_openml_url_unlinks_local_path(
                 f.write("")
         raise ValueError("Invalid request")
 
-    monkeypatch.setattr(sklearn.datasets.openml, 'urlopen', _mock_urlopen)
+    monkeypatch.setattr(sklearn.datasets._openml, 'urlopen', _mock_urlopen)
 
     with pytest.raises(ValueError, match="Invalid request"):
         _open_openml_url(openml_path, cache_directory)
@@ -948,7 +965,7 @@ def test_open_openml_url_unlinks_local_path(
 
 def test_retry_with_clean_cache(tmpdir):
     data_id = 61
-    openml_path = sklearn.datasets.openml._DATA_FILE.format(data_id)
+    openml_path = sklearn.datasets._openml._DATA_FILE.format(data_id)
     cache_directory = str(tmpdir.mkdir('scikit_learn_data'))
     location = _get_local_path(openml_path, cache_directory)
     os.makedirs(os.path.dirname(location))
@@ -971,7 +988,7 @@ def test_retry_with_clean_cache(tmpdir):
 
 def test_retry_with_clean_cache_http_error(tmpdir):
     data_id = 61
-    openml_path = sklearn.datasets.openml._DATA_FILE.format(data_id)
+    openml_path = sklearn.datasets._openml._DATA_FILE.format(data_id)
     cache_directory = str(tmpdir.mkdir('scikit_learn_data'))
 
     @_retry_with_clean_cache(openml_path, cache_directory)
@@ -999,7 +1016,7 @@ def test_fetch_openml_cache(monkeypatch, gzip_response, tmpdir):
                                         data_home=cache_directory,
                                         return_X_y=True)
 
-    monkeypatch.setattr(sklearn.datasets.openml, 'urlopen',
+    monkeypatch.setattr(sklearn.datasets._openml, 'urlopen',
                         _mock_urlopen_raise)
 
     X_cached, y_cached = fetch_openml(data_id=data_id, cache=True,

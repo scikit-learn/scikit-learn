@@ -13,13 +13,13 @@ import numpy as np
 from scipy import sparse
 import joblib
 
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_raises_regex
-from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_allclose
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_no_warnings
+from sklearn.utils._testing import assert_raises
+from sklearn.utils._testing import assert_raises_regex
+from sklearn.utils._testing import assert_raise_message
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_no_warnings
 
 from sklearn.base import clone, BaseEstimator, TransformerMixin
 from sklearn.pipeline import Pipeline, FeatureUnion, make_pipeline, make_union
@@ -34,6 +34,8 @@ from sklearn.decomposition import PCA, TruncatedSVD
 from sklearn.datasets import load_iris
 from sklearn.preprocessing import StandardScaler
 from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.experimental import enable_hist_gradient_boosting  # noqa
+from sklearn.ensemble import HistGradientBoostingClassifier
 
 iris = load_iris()
 
@@ -1161,6 +1163,49 @@ def test_verbose(est, method, pattern, capsys):
     assert re.match(pattern, capsys.readouterr().out)
 
 
+def test_n_features_in_pipeline():
+    # make sure pipelines delegate n_features_in to the first step
+
+    X = [[1, 2], [3, 4], [5, 6]]
+    y = [0, 1, 2]
+
+    ss = StandardScaler()
+    gbdt = HistGradientBoostingClassifier()
+    pipe = make_pipeline(ss, gbdt)
+    assert not hasattr(pipe, 'n_features_in_')
+    pipe.fit(X, y)
+    assert pipe.n_features_in_ == ss.n_features_in_ == 2
+
+    # if the first step has the n_features_in attribute then the pipeline also
+    # has it, even though it isn't fitted.
+    ss = StandardScaler()
+    gbdt = HistGradientBoostingClassifier()
+    pipe = make_pipeline(ss, gbdt)
+    ss.fit(X, y)
+    assert pipe.n_features_in_ == ss.n_features_in_ == 2
+    assert not hasattr(gbdt, 'n_features_in_')
+
+
+def test_n_features_in_feature_union():
+    # make sure FeatureUnion delegates n_features_in to the first transformer
+
+    X = [[1, 2], [3, 4], [5, 6]]
+    y = [0, 1, 2]
+
+    ss = StandardScaler()
+    fu = make_union(ss)
+    assert not hasattr(fu, 'n_features_in_')
+    fu.fit(X, y)
+    assert fu.n_features_in_ == ss.n_features_in_ == 2
+
+    # if the first step has the n_features_in attribute then the feature_union
+    # also has it, even though it isn't fitted.
+    ss = StandardScaler()
+    fu = make_union(ss)
+    ss.fit(X, y)
+    assert fu.n_features_in_ == ss.n_features_in_ == 2
+
+
 def test_feature_union_fit_params():
     # Regression test for issue: #15117
     class Dummy(TransformerMixin, BaseEstimator):
@@ -1188,10 +1233,10 @@ def test_feature_union_fit_params():
 def test_feature_union_warns_with_none():
     msg = (r"Using None as a transformer is deprecated in version 0\.22 and "
            r"will be removed in version 0\.24\. Please use 'drop' instead\.")
-    with pytest.warns(DeprecationWarning, match=msg):
+    with pytest.warns(FutureWarning, match=msg):
         union = FeatureUnion([('multi1', None), ('multi2', Mult())])
 
     X = [[1, 2, 3], [4, 5, 6]]
 
-    with pytest.warns(DeprecationWarning, match=msg):
+    with pytest.warns(FutureWarning, match=msg):
         union.fit_transform(X)

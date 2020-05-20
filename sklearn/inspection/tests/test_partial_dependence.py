@@ -7,13 +7,14 @@ import pytest
 
 import sklearn
 from sklearn.inspection import partial_dependence
-from sklearn.inspection.partial_dependence import (
+from sklearn.inspection._partial_dependence import (
     _grid_from_X,
     _partial_dependence_brute,
     _partial_dependence_recursion
 )
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.ensemble import GradientBoostingRegressor
+from sklearn.ensemble import RandomForestRegressor
 from sklearn.experimental import enable_hist_gradient_boosting  # noqa
 from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.ensemble import HistGradientBoostingRegressor
@@ -24,14 +25,21 @@ from sklearn.tree import DecisionTreeRegressor
 from sklearn.datasets import load_iris
 from sklearn.datasets import make_classification, make_regression
 from sklearn.cluster import KMeans
+from sklearn.compose import make_column_transformer
 from sklearn.metrics import r2_score
-from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import RobustScaler
+from sklearn.pipeline import make_pipeline
 from sklearn.dummy import DummyClassifier
-from sklearn.base import BaseEstimator, ClassifierMixin
-from sklearn.utils.testing import assert_allclose
-from sklearn.utils.testing import assert_array_equal
+from sklearn.base import BaseEstimator, ClassifierMixin, clone
+from sklearn.exceptions import NotFittedError
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import ignore_warnings
+from sklearn.utils import _IS_32BIT
+from sklearn.utils.validation import check_random_state
+from sklearn.tree.tests.test_tree import assert_is_subtree
 
 
 # toy sample
@@ -49,6 +57,9 @@ multiclass_classification_data = (make_classification(n_samples=50,
 regression_data = (make_regression(n_samples=50, random_state=0), 1)
 multioutput_regression_data = (make_regression(n_samples=50, n_targets=2,
                                                random_state=0), 2)
+
+# iris
+iris = load_iris()
 
 
 @pytest.mark.parametrize('Estimator, method, data', [
@@ -167,6 +178,11 @@ def test_partial_dependence_helpers(est, method, target_feature):
     # samples.
     # This also checks that the brute and recursion methods give the same
     # output.
+    # Note that even on the trainset, the brute and the recursion methods
+    # aren't always strictly equivalent, in particular when the slow method
+    # generates unrealistic samples that have low mass in the joint
+    # distribution of the input features, and when some of the features are
+    # dependent. Hence the high tolerance on the checks.
 
     X, y = make_regression(random_state=0, n_features=5, n_informative=5)
     # The 'init' estimator for GBDT (here the average prediction) isn't taken
@@ -199,6 +215,71 @@ def test_partial_dependence_helpers(est, method, target_feature):
     assert np.allclose(pdp, mean_predictions, rtol=rtol)
 
 
+@pytest.mark.parametrize('seed', range(1))
+def test_recursion_decision_tree_vs_forest_and_gbdt(seed):
+    # Make sure that the recursion method gives the same results on a
+    # DecisionTreeRegressor and a GradientBoostingRegressor or a
+    # RandomForestRegressor with 1 tree and equivalent parameters.
+
+    rng = np.random.RandomState(seed)
+
+    # Purely random dataset to avoid correlated features
+    n_samples = 1000
+    n_features = 5
+    X = rng.randn(n_samples, n_features)
+    y = rng.randn(n_samples) * 10
+
+    # The 'init' estimator for GBDT (here the average prediction) isn't taken
+    # into account with the recursion method, for technical reasons. We set
+    # the mean to 0 to that this 'bug' doesn't have any effect.
+    y = y - y.mean()
+
+    # set max_depth not too high to avoid splits with same gain but different
+    # features
+    max_depth = 5
+
+    tree_seed = 0
+    forest = RandomForestRegressor(n_estimators=1, max_features=None,
+                                   bootstrap=False, max_depth=max_depth,
+                                   random_state=tree_seed)
+    # The forest will use ensemble.base._set_random_states to set the
+    # random_state of the tree sub-estimator. We simulate this here to have
+    # equivalent estimators.
+    equiv_random_state = check_random_state(tree_seed).randint(
+        np.iinfo(np.int32).max)
+    gbdt = GradientBoostingRegressor(n_estimators=1, learning_rate=1,
+                                     criterion='mse', max_depth=max_depth,
+                                     random_state=equiv_random_state)
+    tree = DecisionTreeRegressor(max_depth=max_depth,
+                                 random_state=equiv_random_state)
+
+    forest.fit(X, y)
+    gbdt.fit(X, y)
+    tree.fit(X, y)
+
+    # sanity check: if the trees aren't the same, the PD values won't be equal
+    try:
+        assert_is_subtree(tree.tree_, gbdt[0, 0].tree_)
+        assert_is_subtree(tree.tree_, forest[0].tree_)
+    except AssertionError:
+        # For some reason the trees aren't exactly equal on 32bits, so the PDs
+        # cannot be equal either. See
+        # https://github.com/scikit-learn/scikit-learn/issues/8853
+        assert _IS_32BIT, "this should only fail on 32 bit platforms"
+        return
+
+    grid = rng.randn(50).reshape(-1, 1)
+    for f in range(n_features):
+        features = np.array([f], dtype=np.int32)
+
+        pdp_forest = _partial_dependence_recursion(forest, grid, features)
+        pdp_gbdt = _partial_dependence_recursion(gbdt, grid, features)
+        pdp_tree = _partial_dependence_recursion(tree, grid, features)
+
+        np.testing.assert_allclose(pdp_gbdt, pdp_tree)
+        np.testing.assert_allclose(pdp_forest, pdp_tree)
+
+
 @pytest.mark.parametrize('est', (
     GradientBoostingClassifier(random_state=0),
     HistGradientBoostingClassifier(random_state=0),
@@ -229,8 +310,9 @@ def test_recursion_decision_function(est, target_feature):
     LinearRegression(),
     GradientBoostingRegressor(random_state=0),
     HistGradientBoostingRegressor(random_state=0, min_samples_leaf=1,
-                                  max_leaf_nodes=None, max_iter=1))
-)
+                                  max_leaf_nodes=None, max_iter=1),
+    DecisionTreeRegressor(random_state=0),
+))
 @pytest.mark.parametrize('power', (1, 2))
 def test_partial_dependence_easy_target(est, power):
     # If the target y only depends on one feature in an obvious way (linear or
@@ -336,11 +418,27 @@ def test_partial_dependence_error(estimator, params, err_msg):
 
 
 @pytest.mark.parametrize(
+    "with_dataframe, err_msg",
+    [(True, "Only array-like or scalar are supported"),
+     (False, "Only array-like or scalar are supported")]
+)
+def test_partial_dependence_slice_error(with_dataframe, err_msg):
+    X, y = make_classification(random_state=0)
+    if with_dataframe:
+        pd = pytest.importorskip('pandas')
+        X = pd.DataFrame(X)
+    estimator = LogisticRegression().fit(X, y)
+
+    with pytest.raises(TypeError, match=err_msg):
+        partial_dependence(estimator, X, features=slice(0, 2, 1))
+
+
+@pytest.mark.parametrize(
     'estimator',
     [LinearRegression(), GradientBoostingClassifier(random_state=0)]
 )
-@pytest.mark.parametrize('features', [-1, 1000000])
-def test_partial_dependence_unknown_feature(estimator, features):
+@pytest.mark.parametrize('features', [-1, 10000])
+def test_partial_dependence_unknown_feature_indices(estimator, features):
     X, y = make_classification(random_state=0)
     estimator.fit(X, y)
 
@@ -353,10 +451,16 @@ def test_partial_dependence_unknown_feature(estimator, features):
     'estimator',
     [LinearRegression(), GradientBoostingClassifier(random_state=0)]
 )
-def test_partial_dependence_unfitted_estimator(estimator):
-    err_msg = "'estimator' parameter must be a fitted estimator"
+def test_partial_dependence_unknown_feature_string(estimator):
+    pd = pytest.importorskip("pandas")
+    X, y = make_classification(random_state=0)
+    df = pd.DataFrame(X)
+    estimator.fit(df, y)
+
+    features = ['random']
+    err_msg = 'A given column is not a column of the dataframe'
     with pytest.raises(ValueError, match=err_msg):
-        partial_dependence(estimator, X, [0])
+        partial_dependence(estimator, df, features)
 
 
 @pytest.mark.parametrize(
@@ -370,6 +474,8 @@ def test_partial_dependence_X_list(estimator):
     partial_dependence(estimator, list(X), [0])
 
 
+# TODO: Remove in 0.24 when DummyClassifier's `strategy` default updates
+@ignore_warnings(category=FutureWarning)
 def test_warning_recursion_non_constant_init():
     # make sure that passing a non-constant init parameter to a GBDT and using
     # recursion method yields a warning.
@@ -414,6 +520,18 @@ def test_partial_dependence_sample_weight():
     assert np.corrcoef(pdp, values)[0, 1] > 0.99
 
 
+def test_hist_gbdt_sw_not_supported():
+    # TODO: remove/fix when PDP supports HGBT with sample weights
+    clf = HistGradientBoostingRegressor(random_state=1)
+    clf.fit(X, y, sample_weight=np.ones(len(X)))
+
+    with pytest.raises(NotImplementedError,
+                       match="does not support partial dependence"):
+        partial_dependence(clf, X, features=[1])
+
+
+# TODO: Remove in 0.24 when DummyClassifier's `strategy` default updates
+@ignore_warnings(category=FutureWarning)
 def test_partial_dependence_pipeline():
     # check that the partial dependence support pipeline
     iris = load_iris()
@@ -427,13 +545,119 @@ def test_partial_dependence_pipeline():
 
     features = 0
     pdp_pipe, values_pipe = partial_dependence(
-        pipe, iris.data, features=[features]
+        pipe, iris.data, features=[features], grid_resolution=10
     )
     pdp_clf, values_clf = partial_dependence(
-        clf, scaler.transform(iris.data), features=[features]
+        clf, scaler.transform(iris.data), features=[features],
+        grid_resolution=10
     )
     assert_allclose(pdp_pipe, pdp_clf)
     assert_allclose(
         values_pipe[0],
         values_clf[0] * scaler.scale_[features] + scaler.mean_[features]
     )
+
+
+@pytest.mark.parametrize(
+    "estimator",
+    [LogisticRegression(max_iter=1000, random_state=0),
+     GradientBoostingClassifier(random_state=0, n_estimators=5)],
+    ids=['estimator-brute', 'estimator-recursion']
+)
+@pytest.mark.parametrize(
+    "preprocessor",
+    [None,
+     make_column_transformer(
+         (StandardScaler(), [iris.feature_names[i] for i in (0, 2)]),
+         (RobustScaler(), [iris.feature_names[i] for i in (1, 3)])),
+     make_column_transformer(
+         (StandardScaler(), [iris.feature_names[i] for i in (0, 2)]),
+         remainder='passthrough')],
+    ids=['None', 'column-transformer', 'column-transformer-passthrough']
+)
+@pytest.mark.parametrize(
+    "features",
+    [[0, 2], [iris.feature_names[i] for i in (0, 2)]],
+    ids=['features-integer', 'features-string']
+)
+def test_partial_dependence_dataframe(estimator, preprocessor, features):
+    # check that the partial dependence support dataframe and pipeline
+    # including a column transformer
+    pd = pytest.importorskip("pandas")
+    df = pd.DataFrame(iris.data, columns=iris.feature_names)
+
+    pipe = make_pipeline(preprocessor, estimator)
+    pipe.fit(df, iris.target)
+    pdp_pipe, values_pipe = partial_dependence(
+        pipe, df, features=features, grid_resolution=10
+    )
+
+    # the column transformer will reorder the column when transforming
+    # we mixed the index to be sure that we are computing the partial
+    # dependence of the right columns
+    if preprocessor is not None:
+        X_proc = clone(preprocessor).fit_transform(df)
+        features_clf = [0, 1]
+    else:
+        X_proc = df
+        features_clf = [0, 2]
+
+    clf = clone(estimator).fit(X_proc, iris.target)
+    pdp_clf, values_clf = partial_dependence(
+        clf, X_proc, features=features_clf, method='brute', grid_resolution=10
+    )
+
+    assert_allclose(pdp_pipe, pdp_clf)
+    if preprocessor is not None:
+        scaler = preprocessor.named_transformers_['standardscaler']
+        assert_allclose(
+            values_pipe[1],
+            values_clf[1] * scaler.scale_[1] + scaler.mean_[1]
+        )
+    else:
+        assert_allclose(values_pipe[1], values_clf[1])
+
+
+@pytest.mark.parametrize(
+    "features, expected_pd_shape",
+    [(0, (3, 10)),
+     (iris.feature_names[0], (3, 10)),
+     ([0, 2], (3, 10, 10)),
+     ([iris.feature_names[i] for i in (0, 2)], (3, 10, 10)),
+     ([True, False, True, False], (3, 10, 10))],
+    ids=['scalar-int', 'scalar-str', 'list-int', 'list-str', 'mask']
+)
+def test_partial_dependence_feature_type(features, expected_pd_shape):
+    # check all possible features type supported in PDP
+    pd = pytest.importorskip("pandas")
+    df = pd.DataFrame(iris.data, columns=iris.feature_names)
+
+    preprocessor = make_column_transformer(
+        (StandardScaler(), [iris.feature_names[i] for i in (0, 2)]),
+        (RobustScaler(), [iris.feature_names[i] for i in (1, 3)])
+    )
+    pipe = make_pipeline(
+        preprocessor, LogisticRegression(max_iter=1000, random_state=0)
+    )
+    pipe.fit(df, iris.target)
+    pdp_pipe, values_pipe = partial_dependence(
+        pipe, df, features=features, grid_resolution=10
+    )
+    assert pdp_pipe.shape == expected_pd_shape
+    assert len(values_pipe) == len(pdp_pipe.shape) - 1
+
+
+@pytest.mark.parametrize(
+    "estimator", [LinearRegression(), LogisticRegression(),
+                  GradientBoostingRegressor(), GradientBoostingClassifier()]
+)
+def test_partial_dependence_unfitted(estimator):
+    X = iris.data
+    preprocessor = make_column_transformer(
+        (StandardScaler(), [0, 2]), (RobustScaler(), [1, 3])
+    )
+    pipe = make_pipeline(preprocessor, estimator)
+    with pytest.raises(NotFittedError, match="is not fitted yet"):
+        partial_dependence(pipe, X, features=[0, 2], grid_resolution=10)
+    with pytest.raises(NotFittedError, match="is not fitted yet"):
+        partial_dependence(estimator, X, features=[0, 2], grid_resolution=10)

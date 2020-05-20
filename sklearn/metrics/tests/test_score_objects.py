@@ -4,31 +4,33 @@ import shutil
 import os
 import numbers
 from unittest.mock import Mock
+from functools import partial
 
 import numpy as np
 import pytest
 import joblib
 
 from numpy.testing import assert_allclose
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import ignore_warnings
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import ignore_warnings
 
 from sklearn.base import BaseEstimator
 from sklearn.metrics import (f1_score, r2_score, roc_auc_score, fbeta_score,
                              log_loss, precision_score, recall_score,
                              jaccard_score)
 from sklearn.metrics import cluster as cluster_module
-from sklearn.metrics.scorer import (check_scoring, _PredictScorer,
-                                    _passthrough_scorer, _MultimetricScorer)
+from sklearn.metrics import check_scoring
+from sklearn.metrics._scorer import (_PredictScorer, _passthrough_scorer,
+                                     _MultimetricScorer,
+                                     _check_multimetric_scoring)
 from sklearn.metrics import accuracy_score
-from sklearn.metrics.scorer import _check_multimetric_scoring
 from sklearn.metrics import make_scorer, get_scorer, SCORERS
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import LinearSVC
 from sklearn.pipeline import make_pipeline
 from sklearn.cluster import KMeans
-from sklearn.linear_model import Ridge, LogisticRegression
+from sklearn.linear_model import Ridge, LogisticRegression, Perceptron
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.datasets import make_blobs
 from sklearn.datasets import make_classification
@@ -188,11 +190,11 @@ def check_scoring_validator_for_single_metric_usecases(scoring_validator):
     with pytest.raises(TypeError, match=pattern):
         scoring_validator(estimator)
 
-    scorer = scoring_validator(estimator, "accuracy")
+    scorer = scoring_validator(estimator, scoring="accuracy")
     assert_almost_equal(scorer(estimator, [[1]], [1]), 1.0)
 
     estimator = EstimatorWithFit()
-    scorer = scoring_validator(estimator, "accuracy")
+    scorer = scoring_validator(estimator, scoring="accuracy")
     assert isinstance(scorer, _PredictScorer)
 
     # Test the allow_none parameter for check_scoring alone
@@ -272,11 +274,11 @@ def test_check_scoring_gridsearchcv():
     # slightly redundant non-regression test.
 
     grid = GridSearchCV(LinearSVC(), param_grid={'C': [.1, 1]}, cv=3)
-    scorer = check_scoring(grid, "f1")
+    scorer = check_scoring(grid, scoring="f1")
     assert isinstance(scorer, _PredictScorer)
 
     pipe = make_pipeline(LinearSVC())
-    scorer = check_scoring(pipe, "f1")
+    scorer = check_scoring(pipe, scoring="f1")
     assert isinstance(scorer, _PredictScorer)
 
     # check that cross_val_score definitely calls the scorer
@@ -542,13 +544,13 @@ def test_scorer_memmap_input(name):
 
 def test_scoring_is_not_metric():
     with pytest.raises(ValueError, match='make_scorer'):
-        check_scoring(LogisticRegression(), f1_score)
+        check_scoring(LogisticRegression(), scoring=f1_score)
     with pytest.raises(ValueError, match='make_scorer'):
-        check_scoring(LogisticRegression(), roc_auc_score)
+        check_scoring(LogisticRegression(), scoring=roc_auc_score)
     with pytest.raises(ValueError, match='make_scorer'):
-        check_scoring(Ridge(), r2_score)
+        check_scoring(Ridge(), scoring=r2_score)
     with pytest.raises(ValueError, match='make_scorer'):
-        check_scoring(KMeans(), cluster_module.adjusted_rand_score)
+        check_scoring(KMeans(), scoring=cluster_module.adjusted_rand_score)
 
 
 def test_deprecated_scorer():
@@ -558,7 +560,7 @@ def test_deprecated_scorer():
     clf.fit(X_train, y_train)
 
     deprecated_scorer = get_scorer('brier_score_loss')
-    with pytest.warns(DeprecationWarning):
+    with pytest.warns(FutureWarning):
         deprecated_scorer(clf, X_test, y_test)
 
 
@@ -647,7 +649,7 @@ def test_multimetric_scorer_calls_method_once_regressor_threshold():
 
 
 def test_multimetric_scorer_sanity_check():
-    # scoring dictionary returned is the same as calling each scorer seperately
+    # scoring dictionary returned is the same as calling each scorer separately
     scorers = {'a1': 'accuracy', 'a2': 'accuracy',
                'll1': 'neg_log_loss', 'll2': 'neg_log_loss',
                'ra1': 'roc_auc', 'ra2': 'roc_auc'}
@@ -662,10 +664,58 @@ def test_multimetric_scorer_sanity_check():
 
     result = multi_scorer(clf, X, y)
 
-    seperate_scores = {
+    separate_scores = {
         name: get_scorer(name)(clf, X, y)
         for name in ['accuracy', 'neg_log_loss', 'roc_auc']}
 
     for key, value in result.items():
         score_name = scorers[key]
-        assert_allclose(value, seperate_scores[score_name])
+        assert_allclose(value, separate_scores[score_name])
+
+
+@pytest.mark.parametrize('scorer_name, metric', [
+    ('roc_auc_ovr', partial(roc_auc_score, multi_class='ovr')),
+    ('roc_auc_ovo', partial(roc_auc_score, multi_class='ovo')),
+    ('roc_auc_ovr_weighted', partial(roc_auc_score, multi_class='ovr',
+                                     average='weighted')),
+    ('roc_auc_ovo_weighted', partial(roc_auc_score, multi_class='ovo',
+                                     average='weighted'))])
+def test_multiclass_roc_proba_scorer(scorer_name, metric):
+    scorer = get_scorer(scorer_name)
+    X, y = make_classification(n_classes=3, n_informative=3, n_samples=20,
+                               random_state=0)
+    lr = LogisticRegression(multi_class="multinomial").fit(X, y)
+    y_proba = lr.predict_proba(X)
+    expected_score = metric(y, y_proba)
+
+    assert scorer(lr, X, y) == pytest.approx(expected_score)
+
+
+def test_multiclass_roc_proba_scorer_label():
+    scorer = make_scorer(roc_auc_score, multi_class='ovo',
+                         labels=[0, 1, 2], needs_proba=True)
+    X, y = make_classification(n_classes=3, n_informative=3, n_samples=20,
+                               random_state=0)
+    lr = LogisticRegression(multi_class="multinomial").fit(X, y)
+    y_proba = lr.predict_proba(X)
+
+    y_binary = y == 0
+    expected_score = roc_auc_score(y_binary, y_proba,
+                                   multi_class='ovo',
+                                   labels=[0, 1, 2])
+
+    assert scorer(lr, X, y_binary) == pytest.approx(expected_score)
+
+
+@pytest.mark.parametrize('scorer_name', [
+    'roc_auc_ovr', 'roc_auc_ovo',
+    'roc_auc_ovr_weighted', 'roc_auc_ovo_weighted'])
+def test_multiclass_roc_no_proba_scorer_errors(scorer_name):
+    # Perceptron has no predict_proba
+    scorer = get_scorer(scorer_name)
+    X, y = make_classification(n_classes=3, n_informative=3, n_samples=20,
+                               random_state=0)
+    lr = Perceptron().fit(X, y)
+    msg = "'Perceptron' object has no attribute 'predict_proba'"
+    with pytest.raises(AttributeError, match=msg):
+        scorer(lr, X, y)

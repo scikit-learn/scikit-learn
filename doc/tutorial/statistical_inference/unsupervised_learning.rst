@@ -21,14 +21,12 @@ K-means clustering
 -------------------
 
 Note that there exist a lot of different clustering criteria and associated
-algorithms. The simplest clustering algorithm is
-:ref:`k_means`.
+algorithms. The simplest clustering algorithm is :ref:`k_means`.
 
 .. image:: /auto_examples/cluster/images/sphx_glr_plot_cluster_iris_002.png
-    :target: ../../auto_examples/cluster/plot_cluster_iris.html
-    :scale: 70
-    :align: right
-
+   :target: ../../auto_examples/cluster/plot_cluster_iris.html
+   :scale: 70
+   :align: center
 
 ::
 
@@ -172,21 +170,40 @@ With agglomerative clustering, it is possible to specify which samples can be
 clustered together by giving a connectivity graph. Graphs in scikit-learn
 are represented by their adjacency matrix. Often, a sparse matrix is used.
 This can be useful, for instance, to retrieve connected regions (sometimes
-also referred to as connected components) when
-clustering an image:
+also referred to as connected components) when clustering an image.
 
 .. image:: /auto_examples/cluster/images/sphx_glr_plot_coin_ward_segmentation_001.png
-    :target: ../../auto_examples/cluster/plot_coin_ward_segmentation.html
-    :scale: 40
-    :align: right
+   :target: ../../auto_examples/cluster/plot_coin_ward_segmentation.html
+   :scale: 40
+   :align: center
 
-.. literalinclude:: ../../auto_examples/cluster/plot_coin_ward_segmentation.py
-    :lines: 21-45
+::
 
-..
-    >>> from sklearn.feature_extraction.image import grid_to_graph
-    >>> connectivity = grid_to_graph(*face.shape)
+    >>> from skimage.data import coins
+    >>> from scipy.ndimage.filters import gaussian_filter
+    >>> from skimage.transform import rescale
+    >>> rescaled_coins = rescale(
+    ...     gaussian_filter(coins(), sigma=2),
+    ...     0.2, mode='reflect', anti_aliasing=False, multichannel=False
+    ... )
+    >>> X = np.reshape(rescaled_coins, (-1, 1))
 
+We need a vectorized version of the image. `'rescaled_coins'` is a down-scaled
+version of the coins image to speed up the process::
+
+    >>> from sklearn.feature_extraction import grid_to_graph
+    >>> connectivity = grid_to_graph(*rescaled_coins.shape)
+
+Define the graph structure of the data. Pixels connected to their neighbors::
+
+    >>> n_clusters = 27  # number of regions
+
+    >>> from sklearn.cluster import AgglomerativeClustering
+    >>> ward = AgglomerativeClustering(n_clusters=n_clusters, linkage='ward',
+    ...                                connectivity=connectivity)
+    >>> ward.fit(X)
+    AgglomerativeClustering(connectivity=..., n_clusters=27)
+    >>> label = np.reshape(ward.labels_, rescaled_coins.shape)
 
 Feature agglomeration
 ......................
@@ -199,9 +216,9 @@ clustering in the feature direction, in other words clustering the
 transposed data.
 
 .. image:: /auto_examples/cluster/images/sphx_glr_plot_digits_agglomeration_001.png
-    :target: ../../auto_examples/cluster/plot_digits_agglomeration.html
-    :align: right
-    :scale: 57
+   :target: ../../auto_examples/cluster/plot_digits_agglomeration.html
+   :align: center
+   :scale: 57
 
 ::
 
