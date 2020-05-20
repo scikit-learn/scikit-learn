@@ -70,6 +70,13 @@ Changelog
   samples between the train and test set on each fold.
   :pr:`13204` by :user:`Kyle Kosic <kykosic>`.
 
+- |Feature| :class:`feature_selection.RFE`, 
+  :class:`feature_selection.RFECV` and
+  :class:`feature_selection.SelectFromModel` now supports a new parameter
+  `importance_getter` that accepts a string
+  that specifies an attribute name/path or a `callable` for
+  extracting feature importance from the estimator.
+  :pr:`15361` by :user:`Venkatachalam N <venkyyuvy>`
 
 Code and Documentation Contributors
 -----------------------------------
