@@ -182,11 +182,7 @@ class KernelPCA(TransformerMixin, BaseEstimator):
     def _fit_transform(self, K):
         """ Fit's using kernel K"""
         # center kernel
-        print(K)
         K = self._centerer.fit_transform(K)
-        print(K)
-        print()
-        print()
 
         if self.n_components is None:
             n_components = K.shape[0]
