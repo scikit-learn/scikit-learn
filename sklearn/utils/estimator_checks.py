@@ -341,7 +341,7 @@ def _construct_instance(Estimator):
 
 def _maybe_mark_xfail(estimator, check, strict_mode, pytest):
     # Mark (estimator, check) pairs as XFAIL if the check is in the
-    # _xfail_checks_ tag or if it's a strict check and strict_mode=False.
+    # _xfail_checks tag or if it's a strict check and strict_mode=False.
     # This is similar to _maybe_skip(), but this one is used by
     # @parametrize_with_checks() instead of check_estimator()
     xfail_checks = _get_xfail_checks(estimator, strict_mode)
@@ -415,8 +415,9 @@ def parametrize_with_checks(estimators, strict_mode=True):
     strict_mode : bool, default=True
         If False, the strict checks will be treated as if they were in the
         estimators' `_xfails_checks` tag: they will be marked as `xfail` for
-        pytest. The list of strict checks is at TODO. See TODO link for more
-        info on the `_xfails_check` tag.
+        pytest. See :ref:`estimator_tags` for more info on the
+        `_xfails_check` tag. The set of strict checks is in
+        `sklearn.utils.estimator_checks._STRICT_CHECKS`.
 
     Returns
     -------
@@ -495,8 +496,9 @@ def check_estimator(Estimator, generate_only=False, strict_mode=True):
     strict_mode : bool, default=True
         If False, the strict checks will be treated as if they were in the
         estimator's `_xfails_checks` tag: they will be ignored with a
-        warning. The list of strict checks is at TODO. See TODO link for more
-        info on the `_xfails_check` tag.
+        warning. See :ref:`estimator_tags` for more info on the
+        `_xfails_check` tag. The set of strict checks is in
+        `sklearn.utils.estimator_checks._STRICT_CHECKS`.
 
     Returns
     -------

@@ -225,5 +225,5 @@ def test_strict_mode_check_estimator():
 
 @parametrize_with_checks([LogisticRegression(), NuSVC()], strict_mode=False)
 def test_strict_mode_parametrize_with_checks(estimator, check):
-    # Not sure how to test parametrize_with_checks correctly??
+    # Ideally we should assert that the strict checks are Xfailed...
     check(estimator)
