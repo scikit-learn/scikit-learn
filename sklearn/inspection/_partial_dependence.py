@@ -329,7 +329,8 @@ def partial_dependence(estimator, X, features, *, response_method='auto',
             individual : ndarray of shape (n_outputs, n_instances,
                 len(values[0]), len(values[1]), ...)
                     The predictions for all the points in the grid for all
-                    samples in X.
+                    samples in X. This is also known as Individual
+                    Conditional Expectation (ICE)
             average : ndarray of shape (n_outputs, len(values[0]),
                 len(values[1]), ...)
                     The predictions for all the points in the grid, averaged
