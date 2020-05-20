@@ -131,7 +131,7 @@ display.figure_.subplots_adjust(hspace=0.3)
 # Gradient boosting
 # .................
 #
-# Let's now fit a :class`sklearn.ensemble.HistGradientBoostingRegressor` and
+# Let's now fit a :class:`sklearn.ensemble.HistGradientBoostingRegressor` and
 # compute the partial dependence on the same features.
 
 from sklearn.experimental import enable_hist_gradient_boosting  # noqa
@@ -151,8 +151,8 @@ print(f"Test R2 score: {est.score(X_test, y_test):.2f}")
 #
 # Note that on this tabular dataset, Gradient Boosting Machines are both
 # significantly faster to train and more accurate than neural networks. It is
-# also significantly cheaper to tune their hyperparameters (the default tend to
-# work well while this is not often the case for neural networks).
+# also significantly cheaper to tune their hyperparameters (the defaults tend
+# to work well while this is not often the case for neural networks).
 #
 # We will plot the partial dependence, both individual (ICE) and averaged one
 # (PDP). We limit to only 50 ICE curves to not overcrowd the plot.
@@ -197,8 +197,8 @@ display.figure_.subplots_adjust(wspace=0.4, hspace=0.3)
 # smoother predictions than
 # :class:`~sklearn.ensemble.HistGradientBoostingRegressor`.
 #
-# However, it is worth noting that we are creating potential meaningless due
-# to the correlation with another features.
+# However, it is worth noting that we are creating potential meaningless
+# synthetic samples if features are correlated.
 
 ##############################################################################
 # 2D interaction plots
@@ -213,8 +213,10 @@ display.figure_.subplots_adjust(wspace=0.4, hspace=0.3)
 features = ['AveOccup', 'HouseAge', ('AveOccup', 'HouseAge')]
 print('Computing partial dependence plots...')
 tic = time()
+_, ax = plt.subplots(ncols=3, figsize=(9, 4))
 display = plot_partial_dependence(
-    est, X_train, features, kind='average', n_jobs=3, grid_resolution=20
+    est, X_train, features, kind='average', n_jobs=3, grid_resolution=20,
+    ax=ax,
 )
 print(f"done in {time() - tic:.3f}s")
 display.figure_.suptitle(
@@ -222,7 +224,6 @@ display.figure_.suptitle(
     'for the California housing dataset, with Gradient Boosting'
 )
 display.figure_.subplots_adjust(wspace=0.4, hspace=0.3)
-display.figure_.set_size_inches(4.8, 3.2, forward=True)
 
 #############################################################################
 # The two-way partial dependence plot shows the dependence of median house

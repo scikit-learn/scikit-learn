@@ -1,9 +1,9 @@
 
 .. _partial_dependence:
 
-========================================
-Interaction between feature and response
-========================================
+===============================================================
+Partial Dependence and Individual Conditional Expectation plots
+===============================================================
 
 .. currentmodule:: sklearn.inspection
 
@@ -29,7 +29,7 @@ Due to the limits of human perception the size of the set of input feature of
 interest must be small (usually, one or two) thus the input features of interest
 are usually chosen among the most important features.
 
-The figure below shows four one-way and one two-way partial dependence plots
+The figure below shows two one-way and one two-way partial dependence plots
 for the California housing dataset, with a :class:`GradientBoostingRegressor
 <sklearn.ensemble.GradientBoostingRegressor>`:
 
@@ -39,9 +39,12 @@ for the California housing dataset, with a :class:`GradientBoostingRegressor
    :scale: 70
 
 One-way PDPs tell us about the interaction between the target response and an
-input feature of interest feature (e.g. linear, non-linear). The upper left
-plot in the above figure shows the effect of the median income in a district
-on the median house price; we can clearly see a linear relationship among them.
+input feature of interest feature (e.g. linear, non-linear). The left plot
+in the above figure shows the effect of the average occupancy on the median
+house price; we can clearly see a linear relationship among them when the
+average occupancy is inferior to 3 persons. Similarly, we could analyze the
+effect of the house age on the median house price (middle plot). Thus, these
+interpretations are marginal, considering a feature at a time.
 
 PDPs with two input features of interest show the interactions among the two
 features. For example, the two-variable PDP in the above figure shows the
@@ -149,7 +152,7 @@ ICE plots:
 
 In ICE plots it might not be easy to see the average effect of the input
 feature of interest. Hence, it is recommended to use ICE plots alongside
-partial dependency plots. They can be plotted together with
+PDPs. They can be plotted together with
 ``kind='both'``.
 
     >>> plot_partial_dependence(clf, X, features,
@@ -176,11 +179,8 @@ values are defined by :math:`x_S` for the features in :math:`X_S`, and by
 :math:`x_C` may be tuples.
 
 Computing this integral for various values of :math:`x_S` produces a PDP plot
-as above.
-
-In ICE, for each sample in :math:`\{(X_S^{(i)}, X_C^{(i)})\}_{i=1}^N` the
-line :math:`pd_{X_S}^{(i)}` is calculated against :math:`X_S^{(i)}`, while
-:math:`X_C^{(i)}` remains fixed.
+as above. An ICE line is defined as a single :math:`f(x_{S}, x_{C}^{(i)})`
+evaluated at at :math:`x_{S}`.
 
 Computation methods
 ===================
@@ -200,6 +200,11 @@ approximates the above integral by computing an average over the data `X`:
 where :math:`x_C^{(i)}` is the value of the i-th sample for the features in
 :math:`X_C`. For each value of :math:`x_S`, this method requires a full pass
 over the dataset `X` which is computationally intensive.
+
+Each of the :math:`f(x_{S}, x_{C}^{(i)})` corresponds to one ICE line evaluated
+at :math:`x_{S}`. Computing this for multiple values of :math:`x_{S}`, one
+obtains a full ICE line. As one can see, the average of the ICE lines
+correspond to the partial dependence line.
 
 The 'recursion' method is faster than the 'brute' method, but it is only
 supported for PDP plots by some tree-based estimators. It is computed as

@@ -281,7 +281,9 @@ def partial_dependence(estimator, X, features, *, response_method='auto',
           This is more efficient in terms of speed.
           With this method, the target response of a
           classifier is always the decision function, not the predicted
-          probabilities.
+          probabilities. Since the `'recursion'` method implicitely computes
+          the average of the ICEs by design, it is not compatible with ICE and
+          thus `kind` must be `'average'`.
 
         - 'brute' is supported for any estimator, but is more
           computationally intensive.
@@ -333,6 +335,13 @@ def partial_dependence(estimator, X, features, *, response_method='auto',
                     ``method`` is 'recursion').
                     Only available when kind='both'.
 
+            values : seq of 1d ndarrays
+                The values with which the grid has been created. The generated
+                grid is a cartesian product of the arrays in ``values``.
+                ``len(values) == len(features)``. The size of each array
+                ``values[j]`` is either ``grid_resolution``, or the number of
+                unique values in ``X[:, j]``, whichever is smaller.
+
         ``n_outputs`` corresponds to the number of classes in a multi-class
         setting, or to the number of tasks for multi-output regression.
         For classical regression and binary classification ``n_outputs==1``.
@@ -343,7 +352,7 @@ def partial_dependence(estimator, X, features, *, response_method='auto',
         is a cartesian product of the arrays in ``values``. ``len(values) ==
         len(features)``. The size of each array ``values[j]`` is either
         ``grid_resolution``, or the number of unique values in ``X[:, j]``,
-        whichever is smaller.
+        whichever is smaller. Only available when `kind="legacy"`.
 
     Examples
     --------
@@ -497,9 +506,11 @@ def partial_dependence(estimator, X, features, *, response_method='auto',
         # TODO 0.26: Remove kind == 'legacy' section
         return averaged_predictions, values
     elif kind == 'average':
-        return Bunch(average=averaged_predictions), values
+        return Bunch(average=averaged_predictions, values=values)
     elif kind == 'individual':
-        return Bunch(individual=predictions), values
+        return Bunch(individual=predictions, values=values)
     else:  # kind='both'
-        output = Bunch(average=averaged_predictions, individual=predictions)
-        return output, values
+        return Bunch(
+            average=averaged_predictions, individual=predictions,
+            values=values,
+        )

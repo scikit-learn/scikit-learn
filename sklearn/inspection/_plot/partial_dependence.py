@@ -143,7 +143,9 @@ def plot_partial_dependence(estimator, X, features, *, feature_names=None,
           but is more efficient in terms of speed.
           With this method, the target response of a
           classifier is always the decision function, not the predicted
-          probabilities.
+          probabilities. Since the `'recursion'` method implicitely computes
+          the average of the ICEs by design, it is not compatible with ICE and
+          thus `kind` must be `'average'`.
 
         - 'brute' is supported for any estimator, but is more
           computationally intensive.
@@ -339,7 +341,7 @@ def plot_partial_dependence(estimator, X, features, *, feature_names=None,
     # Also note: as multiclass-multioutput classifiers are not supported,
     # multiclass and multioutput scenario are mutually exclusive. So there is
     # no risk of overwriting target_idx here.
-    pd_result, _ = pd_results[0]  # checking the first result is enough
+    pd_result = pd_results[0]  # checking the first result is enough
     n_tasks = (pd_result.average.shape[0] if kind == 'average'
                else pd_result.individual.shape[0])
     if is_regressor(estimator) and n_tasks > 1:
@@ -353,9 +355,9 @@ def plot_partial_dependence(estimator, X, features, *, feature_names=None,
 
     # get global min and max average predictions of PD grouped by plot type
     pdp_lim = {}
-    for pd_result, values in pd_results:
-        preds = (pd_result.average if kind == 'average'
-                 else pd_result.individual)
+    for pdp in pd_results:
+        values = pdp["values"]
+        preds = (pdp.average if kind == 'average' else pdp.individual)
         min_pd = preds[target_idx].min()
         max_pd = preds[target_idx].max()
         n_fx = len(values)
@@ -408,9 +410,9 @@ class PartialDependenceDisplay:
 
     Parameters
     ----------
-    pd_results : list of (ndarray or Bunch, ndarray)
+    pd_results : list of (ndarray or Bunch)
         Results of :func:`~sklearn.inspection.partial_dependence` for
-        ``features``. Each tuple corresponds to a (averaged_predictions, grid).
+        ``features``.
 
     features : list of (int,) or list of (int, int)
         Indices of features for a given plot. A tuple of one integer will plot
@@ -591,10 +593,10 @@ class PartialDependenceDisplay:
         n_features = len(self.features)
         n_sampled = 1
         if self.kind == 'individual':
-            n_instances = len(self.pd_results[0][0].individual[0])
+            n_instances = len(self.pd_results[0].individual[0])
             n_sampled = self._get_sample_count(n_instances)
         elif self.kind == 'both':
-            n_instances = len(self.pd_results[0][0].individual[0])
+            n_instances = len(self.pd_results[0].individual[0])
             n_sampled = self._get_sample_count(n_instances) + 1
 
         if isinstance(ax, plt.Axes):
@@ -661,13 +663,12 @@ class PartialDependenceDisplay:
         vlines_ravel = self.deciles_vlines_.ravel(order='C')
         hlines_ravel = self.deciles_hlines_.ravel(order='C')
 
-        for i, axi, fx, (pd_result, values) in zip(count(),
-                                                   self.axes_.ravel(),
-                                                   self.features,
-                                                   self.pd_results):
+        for i, axi, fx, pd_result in zip(count(), self.axes_.ravel(),
+                                         self.features, self.pd_results):
 
             avg_preds = None
             preds = None
+            values = pd_result["values"]
             if self.kind == 'individual':
                 preds = pd_result.individual
             elif self.kind == 'average':
