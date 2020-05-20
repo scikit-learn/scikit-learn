@@ -80,7 +80,7 @@ sklearn/linear_model/_sag_fast.pyx
 
 # deprecated paths
 # All of these files were deprecated and automatically generated in 0.22, and
-# removed in 0.24. We keep them in gitignore otherwise users would need to
+# removed in 0.24. We keep them in gitignore otherwise devs would need to
 # manually delete them
 sklearn/utils/mocking.py
 
