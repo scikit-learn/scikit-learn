@@ -116,12 +116,9 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         When n_components is None, this parameter is ignored and components
         with zero eigenvalues are removed regardless.
 
-    random_state : int, RandomState instance or None, default=None
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`. Used when `eigen_solver` == 'arpack' or 'randomized'.
-        Pass an int for reproducible results across multiple function calls.
+    random_state : int, RandomState instance, default=None
+        Used when ``eigen_solver`` == 'arpack' or 'randomized'. Pass an int
+        for reproducible results across multiple function calls.
         See :term:`Glossary <random_state>`.
 
         .. versionadded:: 0.18
@@ -246,9 +243,6 @@ class KernelPCA(TransformerMixin, BaseEstimator):
 
         # compute eigenvectors
         if self.eigen_solver == 'auto':
-            # Legacy (before randomized_svd introduction)
-            # if K.shape[0] > 200 and n_components < 10:
-            #     eigen_solver = 'arpack'
             if n_components >= 1 and n_components < .8 * K.shape[0]:
                 # For consistency this is the same criterion as in PCA
                 eigen_solver = 'randomized'

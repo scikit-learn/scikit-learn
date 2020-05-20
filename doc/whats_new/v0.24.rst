@@ -50,7 +50,9 @@ Changelog
 - |Enhancement| added a new approximate solver (randomized SVD, available with
   `eigen_solver='randomized'`) to :class:`decomposition.KernelPCA`. This
   significantly accelerates computation when the number of samples is much
-  larger than the desired number of components.
+  larger than the desired number of components. This method is now
+  automatically selected when `eigen_solver='auto'` (default), when the number
+  of components to extract is less than 80% of the number of samples.
   :pr:`12069` by :user:`Sylvain Marié <smarie>`
 
 :mod:`sklearn.ensemble`
