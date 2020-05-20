@@ -501,9 +501,9 @@ def partial_dependence(estimator, X, features, *, response_method='auto',
     if kind == 'legacy':
         warnings.warn(
             "A Bunch will be returned in place of 'predictions' from version"
-            " 0.26 with partial dependence results accessible via the 'average'"
-            " key. In the meantime, pass kind='average' to get the future"
-            "s behaviour.",
+            " 0.26 with partial dependence results accessible via the "
+            "'average' key. In the meantime, pass kind='average' to get the "
+            "futures behaviour.",
             FutureWarning
         )
         # TODO 0.26: Remove kind == 'legacy' section
