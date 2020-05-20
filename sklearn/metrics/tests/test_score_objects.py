@@ -85,11 +85,15 @@ def _require_positive_y(y):
     return y
 
 
-def _make_estimators(X_train, y_train, y_ml_train):
+def _make_estimators(X_train, y_train, y_ml_train, y_reg_train=None):
     # Make estimators that make sense to test various scoring methods
     sensible_regr = DecisionTreeRegressor(random_state=0)
     # some of the regressions scorers require strictly positive input.
-    sensible_regr.fit(X_train, y_train + 1)
+    if y_reg_train is None:
+        sensible_regr.fit(X_train, y_train + 1)
+    else:
+        y_reg_train = _require_positive_y(y_reg_train)
+        sensible_regr.fit(X_train, y_reg_train)
     sensible_clf = DecisionTreeClassifier(random_state=0)
     sensible_clf.fit(X_train, y_train)
     sensible_ml_clf = DecisionTreeClassifier(random_state=0)
@@ -480,28 +484,26 @@ def test_scorer_sample_weight():
     # Unlike the metrics invariance test, in the scorer case it's harder
     # to ensure that, on the classifier output, weighted and unweighted
     # scores really should be unequal.
-    X, y = make_classification(random_state=0)
+    X, y = make_classification(n_samples=101, random_state=0)
     _, y_ml = make_multilabel_classification(n_samples=X.shape[0],
                                              random_state=0)
-    _, y_reg = make_regression(n_samples=X.shape[0], n_features=20,
+    _, y_reg = make_regression(n_samples=X.shape[0], n_features=X.shape[1],
                                random_state=0)
     split = train_test_split(X, y, y_ml, random_state=0)
     X_train, X_test, y_train, y_test, y_ml_train, y_ml_test = split
-    _, y_reg_test = train_test_split(y_reg, random_state=0)
-    # Mean Squared Logarithmic Error requires non-negative values
-    y_reg_test = np.abs(y_reg_test)
+    y_reg_train, y_reg_test = train_test_split(y_reg, random_state=0)
 
     sample_weight = np.ones_like(y_test)
-    sample_weight[:10] = 0
+    sample_weight[:11] = 0
 
     # get sensible estimators for each metric
-    estimator = _make_estimators(X_train, y_train, y_ml_train)
+    estimator = _make_estimators(X_train, y_train, y_ml_train, y_reg_train)
 
     for name, scorer in SCORERS.items():
         if name in MULTILABEL_ONLY_SCORERS:
             target = y_ml_test
         elif name in REGRESSION_SCORERS:
-            target = y_reg_test
+            target = _require_positive_y(y_reg_test)
         else:
             target = y_test
         if name in REQUIRE_POSITIVE_Y_SCORERS:
@@ -509,7 +511,7 @@ def test_scorer_sample_weight():
         try:
             weighted = scorer(estimator[name], X_test, target,
                               sample_weight=sample_weight)
-            ignored = scorer(estimator[name], X_test[10:], target[10:])
+            ignored = scorer(estimator[name], X_test[11:], target[11:])
             unweighted = scorer(estimator[name], X_test, target)
             assert weighted != unweighted, (
                 "scorer {0} behaves identically when "
