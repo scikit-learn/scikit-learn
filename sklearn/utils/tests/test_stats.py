@@ -50,12 +50,12 @@ def test_weighted_median_equal_weights():
 
     median = np.median(x)
     w_median = _weighted_percentile(x, weights)
-    assert_almost_equal(median, w_median)
+    assert median == w_median
 
 
 def test_weighted_median_integer_weights():
-    # Checks weighted percentile=0.5 is same as median when manually adjust
-    # data for weights
+    # Checks weighted percentile=0.5 is same as median when manually weight
+    # data
     rng = np.random.RandomState(0)
     x = rng.randint(20, size=10)
     weights = rng.choice(5, size=10)
