@@ -280,6 +280,13 @@ prediction (kernel dependency estimation). :class:`KernelPCA` supports both
 
     * :ref:`sphx_glr_auto_examples_decomposition_plot_kernel_pca.py`
 
+.. topic:: References:
+
+    * Kernel PCA was introduced in "Kernel principal component analysis"
+      Bernhard Schoelkopf, Alexander J. Smola, and Klaus-Robert Mueller. 1999.
+      In Advances in kernel methods, MIT Press, Cambridge, MA, USA 327-352.
+
+
 .. _kPCA_Solvers:
 
 Choice of solver for Kernel PCA
@@ -310,9 +317,31 @@ The memory footprint of randomized :class:`KernelPCA` is also proportional to
 
 Note: this technique is the same as in :ref:`RandomizedPCA`.
 
+In addition to the above two solvers, ``eigen_solver='arpack'`` can be used as
+an alternate way to get an approximate decomposition. In practice, this method
+only provides reasonable execution times when the number of components to find
+is extremely small.
+
 .. topic:: Examples:
 
     * :ref:`sphx_glr_auto_examples_decomposition_plot_kernel_pca_approximate.py`
+
+.. topic:: References:
+
+    * *dense* solver:
+      `scipy.linalg.eigh documentation
+      <https://docs.scipy.org/doc/scipy/reference/generated/scipy.linalg.eigh.html>`_
+
+    * *randomized* solver:
+      `"Finding structure with randomness: Stochastic algorithms for
+      constructing approximate matrix decompositions"
+      <https://arxiv.org/abs/0909.4061>`_
+      Halko, et al., 2009
+
+    * *arpack* solver:
+      `scipy.sparse.linalg.eigsh documentation
+      <https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.linalg.eigsh.html>`_
+      R. B. Lehoucq, D. C. Sorensen, and C. Yang, 1998
 
 
 .. _LSA:
