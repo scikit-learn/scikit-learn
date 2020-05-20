@@ -219,13 +219,13 @@ def partial_dependence(estimator, X, features, *, response_method='auto',
 
         For :class:`~sklearn.ensemble.GradientBoostingClassifier` and
         :class:`~sklearn.ensemble.GradientBoostingRegressor`, the
-        'recursion' method (used by default) will not account for the `init`
+        `'recursion'` method (used by default) will not account for the `init`
         predictor of the boosting process. In practice, this will produce
-        the same values as 'brute' up to a constant offset in the target
+        the same values as `'brute'` up to a constant offset in the target
         response, provided that `init` is a constant estimator (which is the
         default). However, if `init` is not a constant estimator, the
-        partial dependence values are incorrect for 'recursion' because the
-        offset will be sample-dependent. It is preferable to use the 'brute'
+        partial dependence values are incorrect for `'recursion'` because the
+        offset will be sample-dependent. It is preferable to use the `'brute'`
         method. Note that this only applies to
         :class:`~sklearn.ensemble.GradientBoostingClassifier` and
         :class:`~sklearn.ensemble.GradientBoostingRegressor`, not to
