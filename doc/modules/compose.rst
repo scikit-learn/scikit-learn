@@ -251,12 +251,13 @@ the regressor that will be used for prediction, and the transformer that will
 be applied to the target variable::
 
   >>> import numpy as np
-  >>> from sklearn.datasets import load_boston
+  >>> from sklearn.datasets import fetch_california_housing
   >>> from sklearn.compose import TransformedTargetRegressor
   >>> from sklearn.preprocessing import QuantileTransformer
   >>> from sklearn.linear_model import LinearRegression
   >>> from sklearn.model_selection import train_test_split
-  >>> X, y = load_boston(return_X_y=True)
+  >>> X, y = fetch_california_housing(return_X_y=True)
+  >>> X, y = X[:2000, :], y[:2000]  # select a subset of data
   >>> transformer = QuantileTransformer(output_distribution='normal')
   >>> regressor = LinearRegression()
   >>> regr = TransformedTargetRegressor(regressor=regressor,
@@ -265,10 +266,10 @@ be applied to the target variable::
   >>> regr.fit(X_train, y_train)
   TransformedTargetRegressor(...)
   >>> print('R2 score: {0:.2f}'.format(regr.score(X_test, y_test)))
-  R2 score: 0.67
+  R2 score: 0.61
   >>> raw_target_regr = LinearRegression().fit(X_train, y_train)
   >>> print('R2 score: {0:.2f}'.format(raw_target_regr.score(X_test, y_test)))
-  R2 score: 0.64
+  R2 score: 0.59
 
 For simple transformations, instead of a Transformer object, a pair of
 functions can be passed, defining the transformation and its inverse mapping::
@@ -286,7 +287,7 @@ Subsequently, the object is created as::
   >>> regr.fit(X_train, y_train)
   TransformedTargetRegressor(...)
   >>> print('R2 score: {0:.2f}'.format(regr.score(X_test, y_test)))
-  R2 score: 0.65
+  R2 score: 0.51
 
 By default, the provided functions are checked at each fit to be the inverse of
 each other. However, it is possible to bypass this checking by setting
@@ -301,7 +302,7 @@ each other. However, it is possible to bypass this checking by setting
   >>> regr.fit(X_train, y_train)
   TransformedTargetRegressor(...)
   >>> print('R2 score: {0:.2f}'.format(regr.score(X_test, y_test)))
-  R2 score: -4.50
+  R2 score: -1.57
 
 .. note::
 

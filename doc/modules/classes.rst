@@ -431,7 +431,7 @@ Samples generator
 
 .. autosummary::
    :toctree: generated/
-   :template: class_without_init.rst
+   :template: class.rst
 
    exceptions.ChangedBehaviorWarning
    exceptions.ConvergenceWarning

@@ -187,7 +187,7 @@ def test_discretize(n_samples):
         y_true_noisy = (y_indicator.toarray()
                         + 0.1 * random_state.randn(n_samples,
                                                    n_class + 1))
-        y_pred = discretize(y_true_noisy, random_state)
+        y_pred = discretize(y_true_noisy, random_state=random_state)
         assert adjusted_rand_score(y_true, y_pred) > 0.8
 
 

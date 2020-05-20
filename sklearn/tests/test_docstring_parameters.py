@@ -16,7 +16,7 @@ from sklearn.utils import IS_PYPY
 from sklearn.utils._testing import check_docstring_parameters
 from sklearn.utils._testing import _get_func_name
 from sklearn.utils._testing import ignore_warnings
-from sklearn.utils._testing import all_estimators
+from sklearn.utils import all_estimators
 from sklearn.utils.estimator_checks import _enforce_estimator_tags_y
 from sklearn.utils.estimator_checks import _enforce_estimator_tags_x
 from sklearn.utils.deprecation import _is_deprecated
