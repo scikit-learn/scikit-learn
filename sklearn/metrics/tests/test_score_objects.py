@@ -553,17 +553,6 @@ def test_scoring_is_not_metric():
         check_scoring(KMeans(), scoring=cluster_module.adjusted_rand_score)
 
 
-def test_deprecated_scorer():
-    X, y = make_blobs(random_state=0, centers=2)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
-    clf = DecisionTreeClassifier()
-    clf.fit(X_train, y_train)
-
-    deprecated_scorer = get_scorer('brier_score_loss')
-    with pytest.warns(FutureWarning):
-        deprecated_scorer(clf, X_test, y_test)
-
-
 @pytest.mark.parametrize(
     ("scorers,expected_predict_count,"
      "expected_predict_proba_count,expected_decision_func_count"),

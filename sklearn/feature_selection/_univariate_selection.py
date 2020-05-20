@@ -229,7 +229,8 @@ def chi2(X, y):
     return _chisquare(observed, expected)
 
 
-def f_regression(X, y, center=True):
+@_deprecate_positional_args
+def f_regression(X, y, *, center=True):
     """Univariate linear regression tests.
 
     Linear model for testing the individual effect of each of many regressors.
