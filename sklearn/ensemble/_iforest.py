@@ -505,9 +505,7 @@ def _average_path_length(n_samples_leaf):
 
     average_path_length[mask_1] = 0.
     average_path_length[mask_2] = 1.
-    average_path_length[not_mask] = (
-        2.0 * (np.log(n_samples_leaf[not_mask] - 1.0) + np.euler_gamma)
-        - 2.0 * (n_samples_leaf[not_mask] - 1.0) / n_samples_leaf[not_mask]
-    )
+    average_path_length[not_mask] = 2.0 * (np.log(n_samples_leaf[not_mask])
+                                           + np.euler_gamma - 1.0)
 
     return average_path_length.reshape(n_samples_leaf_shape)
