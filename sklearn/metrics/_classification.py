@@ -1649,7 +1649,7 @@ def tpr_fpr_tnr_fnr_scores(y_true, y_pred, *, labels=None, pos_label=1,
 
     labels = _check_set_wise_labels(y_true, y_pred, average, labels, pos_label)
 
-    # Calculate tp_sum, fp_sum, tn_sum, fn_sum, pred_sum, pos_sum, neg_sum
+    # Calculate tp_sum, fp_sum, tn_sum, fn_sum, pos_sum, neg_sum
     samplewise = average == 'samples'
     MCM = multilabel_confusion_matrix(y_true, y_pred,
                                       sample_weight=sample_weight,
@@ -1658,7 +1658,6 @@ def tpr_fpr_tnr_fnr_scores(y_true, y_pred, *, labels=None, pos_label=1,
     fp_sum = MCM[:, 0, 1]
     fn_sum = MCM[:, 1, 0]
     tp_sum = MCM[:, 1, 1]
-    pred_sum = tp_sum + MCM[:, 0, 1]
     neg_sum = tn_sum + fp_sum
     pos_sum = fn_sum + tp_sum
 
@@ -1669,7 +1668,6 @@ def tpr_fpr_tnr_fnr_scores(y_true, y_pred, *, labels=None, pos_label=1,
         fn_sum = np.array([fn_sum.sum()])
         neg_sum = np.array([neg_sum.sum()])
         pos_sum = np.array([pos_sum.sum()])
-        pred_sum = np.array([pred_sum.sum()])
 
     # Divide, and on zero-division, set scores and/or warn according to
     # zero_division:
