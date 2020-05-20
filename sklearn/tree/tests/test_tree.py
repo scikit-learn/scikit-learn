@@ -261,7 +261,7 @@ def test_iris():
 
 
 def test_diabetes():
-    # Check consistency on dataset diabetes house prices.
+    # Check consistency on diabetes dataset.
 
     for (name, Tree), criterion in product(REG_TREES.items(), REG_CRITERIONS):
         reg = Tree(criterion=criterion, random_state=0)
