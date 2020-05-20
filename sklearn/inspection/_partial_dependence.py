@@ -307,9 +307,9 @@ def partial_dependence(estimator, X, features, *, response_method='auto',
 
         .. versionadded:: 0.24
         .. deprecated:: 0.24
-            `kind='legacy'` is deprecated and will be removed in 0.26.
-            It is intended to migrate from the ndarray output to
-            :class:`~sklearn.utils.Bunch` output.
+            `kind='legacy'` is deprecated and will be removed in version 0.26.
+            `kind='average'` will be the new default. It is intended to migrate
+            from the ndarray output to :class:`~sklearn.utils.Bunch` output.
 
 
     Returns
