@@ -46,6 +46,13 @@ __all__ = ['HashingVectorizer',
            'strip_tags']
 
 
+def _unwrap_dataframe(raw_documents):
+    # accept an iterable, or a (column-vector) dataframe
+    if hasattr(raw_documents, 'iterrows'):
+        raw_documents = raw_documents.values
+    return raw_documents
+
+
 def _preprocess(doc, accent_function=None, lower=False):
     """Chain together an optional series of text preprocessing steps to
     apply to a document.
@@ -73,7 +80,8 @@ def _preprocess(doc, accent_function=None, lower=False):
 
 
 def _analyze(doc, analyzer=None, tokenizer=None, ngrams=None,
-             preprocessor=None, decoder=None, stop_words=None):
+             preprocessor=None, decoder=None, stop_words=None,
+             squeeze=True):
     """Chain together an optional series of text processing steps to go from
     a single document to ngrams, with or without tokenizing or preprocessing.
 
@@ -88,12 +96,22 @@ def _analyze(doc, analyzer=None, tokenizer=None, ngrams=None,
     preprocessor: callable, default=None
     decoder: callable, default=None
     stop_words: list, default=None
+    squeeze : bool, default=True
+        If True, a string will be extracted from a single element sequence or
+        array. Should be False for custom analyzers which may implement
+        squeezing themselves. Used to handle column vector input to transform.
 
     Returns
     -------
     ngrams: list
         A sequence of tokens, possibly with pairs, triples, etc.
     """
+    try:
+        if squeeze and len(doc) == 1 and not hasattr(doc, 'items'):
+            # column vector support
+            doc = doc[0]
+    except TypeError:
+        pass
 
     if decoder is not None:
         doc = decoder(doc)
@@ -404,7 +422,8 @@ class _VectorizerMixin:
 
         if callable(self.analyzer):
             return partial(
-                _analyze, analyzer=self.analyzer, decoder=self.decode
+                _analyze, analyzer=self.analyzer, decoder=self.decode,
+                squeeze=False
             )
 
         preprocess = self.build_preprocessor()
@@ -759,6 +778,7 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
         self._validate_params()
 
         analyzer = self.build_analyzer()
+        X = _unwrap_dataframe(X)
         X = self._get_hasher().transform(analyzer(doc) for doc in X)
         if self.binary:
             X.data.fill(1)
@@ -1105,7 +1125,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
 
         values = _make_int_array()
         indptr.append(0)
-        for doc in raw_documents:
+        for doc in _unwrap_dataframe(raw_documents):
             feature_counter = {}
             for feature in analyze(doc):
                 try:
@@ -1157,6 +1177,10 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         raw_documents : iterable
             An iterable which yields either str, unicode or file objects.
 
+            A column vector (or list of single-element lists) of text
+            objects is also accepted as long as `analyzer` is a string (not a
+            custom callable).
+
         Returns
         -------
         self
@@ -1175,6 +1199,10 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         ----------
         raw_documents : iterable
             An iterable which yields either str, unicode or file objects.
+
+            A column vector (or list of single-element lists) of text
+            objects is also accepted as long as `analyzer` is a string (not a
+            custom callable).
 
         Returns
         -------
@@ -1233,6 +1261,10 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         ----------
         raw_documents : iterable
             An iterable which yields either str, unicode or file objects.
+
+            A column vector (or list of single-element lists) of text
+            objects is also accepted as long as `analyzer` is a string (not a
+            custom callable).
 
         Returns
         -------
@@ -1804,6 +1836,10 @@ class TfidfVectorizer(CountVectorizer):
         ----------
         raw_documents : iterable
             An iterable which yields either str, unicode or file objects.
+
+            A column vector (or list of single-element lists) of text
+            objects is also accepted as long as `analyzer` is a string (not a
+            custom callable).
         y : None
             This parameter is not needed to compute tfidf.
 
@@ -1828,6 +1864,10 @@ class TfidfVectorizer(CountVectorizer):
         ----------
         raw_documents : iterable
             An iterable which yields either str, unicode or file objects.
+
+            A column vector (or list of single-element lists) of text
+            objects is also accepted as long as `analyzer` is a string (not a
+            custom callable).
         y : None
             This parameter is ignored.
 
@@ -1853,6 +1893,10 @@ class TfidfVectorizer(CountVectorizer):
         ----------
         raw_documents : iterable
             An iterable which yields either str, unicode or file objects.
+
+            A column vector (or list of single-element lists) of text
+            objects is also accepted as long as `analyzer` is a string (not a
+            custom callable).
 
         copy : bool, default=True
             Whether to copy X and operate on the copy or perform in-place

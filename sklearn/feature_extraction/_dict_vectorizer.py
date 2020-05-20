@@ -14,10 +14,20 @@ from ..utils import check_array, tosequence
 from ..utils.validation import _deprecate_positional_args
 
 
+def _unwrap_dataframe(raw_documents):
+    # accept an iterable, or a (column-vector) dataframe
+    if hasattr(raw_documents, 'iterrows'):
+        raw_documents = raw_documents.values
+    return raw_documents
+
+
 def _tosequence(X):
     """Turn X into a sequence or ndarray, avoiding a copy if possible."""
     if isinstance(X, Mapping):  # single sample
         return [X]
+    elif hasattr(X, 'iterrows'):
+        # handle column DataFrame containing dicts
+        return X.values
     else:
         return tosequence(X)
 
@@ -106,6 +116,9 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
         X : Mapping or iterable over Mappings
             Dict(s) or Mapping(s) from feature names (arbitrary Python
             objects) to feature values (strings or convertible to dtype).
+
+            A column vector (or list of single-element lists) of mappings is
+            also accepted.
         y : (ignored)
 
         Returns
@@ -115,7 +128,10 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
         feature_names = []
         vocab = {}
 
-        for x in X:
+        for x in _unwrap_dataframe(X):
+            if not hasattr(x, 'items') and len(x) == 1:
+                # column vector support
+                x = x[0]
             for f, v in x.items():
                 if isinstance(v, str):
                     f = "%s%s%s" % (f, self.separator, v)
@@ -151,7 +167,7 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
             vocab = self.vocabulary_
 
         # Process everything as sparse regardless of setting
-        X = [X] if isinstance(X, Mapping) else X
+        X = _tosequence(X)
 
         indices = array("i")
         indptr = [0]
@@ -162,6 +178,9 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
         # collect all the possible feature names and build sparse matrix at
         # same time
         for x in X:
+            if not hasattr(x, 'items') and len(x) == 1:
+                # column vector support
+                x = x[0]
             for f, v in x.items():
                 if isinstance(v, str):
                     f = "%s%s%s" % (f, self.separator, v)
@@ -218,6 +237,9 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
         X : Mapping or iterable over Mappings
             Dict(s) or Mapping(s) from feature names (arbitrary Python
             objects) to feature values (strings or convertible to dtype).
+
+            A column vector (or list of single-element lists) of mappings is
+            also accepted.
         y : (ignored)
 
         Returns
@@ -280,6 +302,9 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
             Dict(s) or Mapping(s) from feature names (arbitrary Python
             objects) to feature values (strings or convertible to dtype).
 
+            A column vector (or list of single-element lists) of mappings is
+            also accepted.
+
         Returns
         -------
         Xa : {array, sparse matrix}
@@ -295,6 +320,9 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
             Xa = np.zeros((len(X), len(vocab)), dtype=dtype)
 
             for i, x in enumerate(X):
+                if not hasattr(x, 'items') and len(x) == 1:
+                    # column vector support
+                    x = x[0]
                 for f, v in x.items():
                     if isinstance(v, str):
                         f = "%s%s%s" % (f, self.separator, v)

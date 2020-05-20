@@ -16,14 +16,33 @@ from sklearn.feature_selection import SelectKBest, chi2
 @pytest.mark.parametrize('sparse', (True, False))
 @pytest.mark.parametrize('dtype', (int, np.float32, np.int16))
 @pytest.mark.parametrize('sort', (True, False))
-@pytest.mark.parametrize('iterable', (True, False))
-def test_dictvectorizer(sparse, dtype, sort, iterable):
+@pytest.mark.parametrize('reformat', ['none', 'iterable',
+                                      'column', 'column_lists', 'column_df'])
+def test_dictvectorizer(sparse, dtype, sort, reformat):
     D = [{"foo": 1, "bar": 3},
          {"bar": 4, "baz": 2},
          {"bar": 1, "quux": 1, "quuux": 2}]
 
+    if reformat == 'iterable':
+        def reformat(D):
+            return iter(D)
+    elif reformat == 'column':
+        def reformat(D):
+            return np.asarray(D, dtype=object).reshape(-1, 1)
+    elif reformat == 'column_lists':
+        def reformat(D):
+            return [[d] for d in D]
+    elif reformat == 'column_df':
+        pandas = pytest.importorskip('pandas')
+
+        def reformat(D):
+            return pandas.DataFrame({"features": D})
+    else:
+        def reformat(D):
+            return D
+
     v = DictVectorizer(sparse=sparse, dtype=dtype, sort=sort)
-    X = v.fit_transform(iter(D) if iterable else D)
+    X = v.fit_transform(reformat(D))
 
     assert sp.issparse(X) == sparse
     assert X.shape == (3, 5)
@@ -32,15 +51,13 @@ def test_dictvectorizer(sparse, dtype, sort, iterable):
 
     if sparse:
         # CSR matrices can't be compared for equality
-        assert_array_equal(X.A, v.transform(iter(D) if iterable
-                                            else D).A)
+        assert_array_equal(X.A, v.transform(reformat(D)).A)
     else:
-        assert_array_equal(X, v.transform(iter(D) if iterable
-                                          else D))
+        print('ref', reformat(D))
+        assert_array_equal(X, v.transform(reformat(D)))
 
     if sort:
-        assert (v.feature_names_ ==
-                     sorted(v.feature_names_))
+        assert v.feature_names_ == sorted(v.feature_names_)
 
 
 def test_feature_selection():
