@@ -46,8 +46,8 @@ for ax, image, label in zip(axes, digits.images, digits.target):
 # --------------
 #
 # To apply a classifier on this data, we need to flatten the images, turning
-# each 2-D array of grayscale values from shape ``(8,8)`` into shape
-# ``(64, )``. Subsequently, the entire dataset will be of shape
+# each 2-D array of grayscale values from shape ``(8, 8)`` into shape
+# ``(64,)``. Subsequently, the entire dataset will be of shape
 # ``(n_samples, n_features)``, where ``n_samples`` is the number of images and
 # ``n_features`` is the total number of pixels in each image.
 #
@@ -81,14 +81,14 @@ _, axes = plt.subplots(nrows=1, ncols=4, figsize=(10, 3))
 for ax, image, prediction in zip(axes, digits.images, predicted):
     ax.set_axis_off()
     ax.imshow(image, cmap=plt.cm.gray_r, interpolation='nearest')
-    ax.set_title('Prediction: %i' % prediction)
+    ax.set_title(f'Prediction: {prediction}')
 
 ###############################################################################
 # :func:`~sklearn.metrics.classification_report` builds a text report showing
 # the main classification metrics.
 
-print("Classification report for classifier %s:\n%s\n"
-      % (clf, metrics.classification_report(y_test, predicted)))
+print(f"Classification report for classifier {clf}:\n"
+      f"{metrics.classification_report(y_test, predicted)}\n")
 
 ###############################################################################
 # We can also plot a :ref:`confusion matrix <confusion_matrix>` of the
