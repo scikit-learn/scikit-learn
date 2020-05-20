@@ -14,7 +14,7 @@ class KMeans_bench(Predictor, Transformer, Estimator, Benchmark):
     Benchmarks for KMeans.
     """
 
-    param_names = ['representation', 'algorithm', 'n_jobs']
+    param_names = ['representation', 'algorithm']
     params = (['dense', 'sparse'], ['full', 'elkan'])
 
     def setup_cache(self):
