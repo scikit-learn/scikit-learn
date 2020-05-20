@@ -33,7 +33,7 @@ from sklearn.cluster import KMeans
 from sklearn.linear_model import Ridge, LogisticRegression, Perceptron
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.datasets import make_blobs
-from sklearn.datasets import make_classification
+from sklearn.datasets import make_classification, make_regression
 from sklearn.datasets import make_multilabel_classification
 from sklearn.datasets import load_diabetes
 from sklearn.model_selection import train_test_split, cross_val_score
@@ -483,8 +483,13 @@ def test_scorer_sample_weight():
     X, y = make_classification(random_state=0)
     _, y_ml = make_multilabel_classification(n_samples=X.shape[0],
                                              random_state=0)
+    _, y_reg = make_regression(n_samples=X.shape[0], n_features=20,
+                               random_state=0)
     split = train_test_split(X, y, y_ml, random_state=0)
     X_train, X_test, y_train, y_test, y_ml_train, y_ml_test = split
+    _, y_reg_test = train_test_split(y_reg, random_state=0)
+    # Mean Squared Logarithmic Error requires non-negative values
+    y_reg_test = np.abs(y_reg_test)
 
     sample_weight = np.ones_like(y_test)
     sample_weight[:10] = 0
@@ -495,26 +500,27 @@ def test_scorer_sample_weight():
     for name, scorer in SCORERS.items():
         if name in MULTILABEL_ONLY_SCORERS:
             target = y_ml_test
+        elif name in REGRESSION_SCORERS:
+            target = y_reg_test
         else:
             target = y_test
         if name in REQUIRE_POSITIVE_Y_SCORERS:
             target = _require_positive_y(target)
         try:
-            if name != 'neg_median_absolute_error':
-                weighted = scorer(estimator[name], X_test, target,
-                                  sample_weight=sample_weight)
-                ignored = scorer(estimator[name], X_test[10:], target[10:])
-                unweighted = scorer(estimator[name], X_test, target)
-                assert weighted != unweighted, (
-                    "scorer {0} behaves identically when "
-                    "called with sample weights: {1} vs "
-                    "{2}".format(name, weighted, unweighted))
-                assert_almost_equal(weighted, ignored,
-                                    err_msg="scorer {0} behaves differently "
-                                    "when ignoring samples and setting "
-                                    "sample_weight to 0: "
-                                    "{1} vs {2}".format(name, weighted,
-                                                        ignored))
+            weighted = scorer(estimator[name], X_test, target,
+                              sample_weight=sample_weight)
+            ignored = scorer(estimator[name], X_test[10:], target[10:])
+            unweighted = scorer(estimator[name], X_test, target)
+            assert weighted != unweighted, (
+                "scorer {0} behaves identically when "
+                "called with sample weights: {1} vs "
+                "{2}".format(name, weighted, unweighted))
+            assert_almost_equal(weighted, ignored,
+                                err_msg="scorer {0} behaves differently "
+                                "when ignoring samples and setting "
+                                "sample_weight to 0: "
+                                "{1} vs {2}".format(name, weighted,
+                                                    ignored))
 
         except TypeError as e:
             assert "sample_weight" in str(e), (
