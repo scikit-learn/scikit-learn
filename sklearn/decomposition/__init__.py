@@ -28,7 +28,7 @@ from ._dict_learning import (dict_learning_online,
                              sparse_encode, DictionaryLearning,
                              MiniBatchDictionaryLearning, SparseCoder)  # noqa
 from ._factor_analysis import FactorAnalysis  # noqa
-from ..utils.extmath import randomized_svd  # noqa
+from ..utils.extmath import randomized_svd, randomized_eigsh  # noqa
 from ._lda import LatentDirichletAllocation  # noqa
 
 
@@ -47,6 +47,7 @@ __all__ = ['DictionaryLearning',
            'fastica',
            'non_negative_factorization',
            'randomized_svd',
+           'randomized_eigsh',
            'sparse_encode',
            'FactorAnalysis',
            'TruncatedSVD',

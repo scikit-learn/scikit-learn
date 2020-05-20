@@ -315,7 +315,7 @@ def randomized_svd(M, n_components, *, n_oversamples=10, n_iter='auto',
     References
     ----------
     * Finding structure with randomness: Stochastic algorithms for constructing
-      approximate matrix decompositions
+      approximate matrix decompositions (Algorithm 4.3)
       Halko, et al., 2009 https://arxiv.org/abs/0909.4061
 
     * A randomized algorithm for the decomposition of matrices
@@ -373,6 +373,98 @@ def randomized_svd(M, n_components, *, n_oversamples=10, n_iter='auto',
         return Vt[:n_components, :].T, s[:n_components], U[:, :n_components].T
     else:
         return U[:, :n_components], s[:n_components], Vt[:n_components, :]
+
+
+@_deprecate_positional_args
+def randomized_eigsh(M, n_components, *, n_oversamples=10, n_iter='auto',
+                    power_iteration_normalizer='auto', random_state=0):
+    """Computes a truncated eigendecomposition using randomized SVD
+
+    Parameters
+    ----------
+    M : ndarray or sparse matrix
+        Matrix to decompose, it should be real symmetric square or complex
+        hermitian
+
+    n_components : int
+        Number of eigenvalues and vectors to extract.
+
+    n_oversamples : int (default is 10)
+        Additional number of random vectors to sample the range of M so as
+        to ensure proper conditioning. The total number of random vectors
+        used to find the range of M is n_components + n_oversamples. Smaller
+        number can improve speed but can negatively impact the quality of
+        approximation of eigenvectors and eigenvalues.
+
+    n_iter : int or 'auto' (default is 'auto')
+        Number of power iterations. It can be used to deal with very noisy
+        problems. When 'auto', it is set to 4, unless `n_components` is small
+        (< .1 * min(X.shape)) `n_iter` in which case is set to 7.
+        This improves precision with few components.
+
+    power_iteration_normalizer : 'auto' (default), 'QR', 'LU', 'none'
+        Whether the power iterations are normalized with step-by-step
+        QR factorization (the slowest but most accurate), 'none'
+        (the fastest but numerically unstable when `n_iter` is large, e.g.
+        typically 5 or larger), or 'LU' factorization (numerically stable
+        but can lose slightly in accuracy). The 'auto' mode applies no
+        normalization if `n_iter` <= 2 and switches to LU otherwise.
+
+    random_state : int, RandomState instance or None, optional (default=None)
+        The seed of the pseudo random number generator to use when shuffling
+        the data, i.e. getting the random vectors to initialize the algorithm.
+        Pass an int for reproducible results across multiple function calls.
+        See :term:`Glossary <random_state>`.
+
+    Notes
+    -----
+    This algorithm finds a (usually very good) approximate truncated
+    eigendecomposition using randomized SVD to speed up the computations.
+
+    The principle is that for diagonalizable matrices, the singular values and
+    eigenvalues are related: if t is an eigenvalue of A, then |t| is a singular
+    value of A. This method uses the signs of the singular vectors to find
+    the true sign of t: if the sign of left and right singular vectors are
+    different then the corresponding eigenvalue is negative.
+
+    This method is particularly fast on large matrices on which
+    you wish to extract only a small number of components. In order to
+    obtain further speed up, `n_iter` can be set <=2 (at the cost of
+    loss of precision).
+
+    See Also
+    --------
+    :func:`randomized_svd`
+
+    References
+    ----------
+    * Finding structure with randomness: Stochastic algorithms for constructing
+      approximate matrix decompositions (Algorithm 4.3)
+      Halko, et al., 2009 https://arxiv.org/abs/0909.4061
+
+    """
+    # Note: no need for deterministic U and Vt (flip_sign=True),
+    # as we only use the dot product UVt afterwards
+    U, S, Vt = randomized_svd(
+        M, n_components=n_components, n_oversamples=n_oversamples,
+        n_iter=n_iter, power_iteration_normalizer=power_iteration_normalizer,
+        flip_sign=False, random_state=random_state)
+
+    alphas_ = U[:, :n_components]  # eigenvectors
+    lambdas_ = S[:n_components]  # eigenvalues
+
+    # Conversion of Singular values into Eigenvalues:
+    # For any eigenvalue t, the corresponding singular value is |t|.
+    # So if there is a negative eigenvalue t, the corresponding singular value
+    # will be -t, and the left (U) and right (V) singular vectors will have
+    # opposite signs.
+    # A fast check for flipped sign is the sign of the scalar product:
+    VU_scalprods = np.multiply(Vt[:n_components, :].T,
+                               U[:, :n_components]).sum(axis=0)
+    signs = np.sign(VU_scalprods)
+    lambdas_ = lambdas_ * signs
+
+    return lambdas_, alphas_
 
 
 @_deprecate_positional_args

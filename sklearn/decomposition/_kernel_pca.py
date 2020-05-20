@@ -9,7 +9,7 @@ from scipy import linalg
 from scipy.sparse.linalg import eigsh
 
 from ..utils import check_random_state
-from ..utils.extmath import svd_flip, randomized_svd
+from ..utils.extmath import svd_flip, randomized_eigsh
 from ..utils.validation import check_is_fitted, _check_psd_eigenvalues
 from ..exceptions import NotFittedError
 from ..base import BaseEstimator, TransformerMixin
@@ -265,29 +265,10 @@ class KernelPCA(TransformerMixin, BaseEstimator):
                                                 maxiter=self.max_iter,
                                                 v0=v0)
         elif eigen_solver == 'randomized':
-            # not using flip_sign=True for deterministic output, we do it later
-            U, S, Vt = randomized_svd(K, n_components=n_components,
-                                      n_iter=self.iterated_power,
-                                      flip_sign=False,
-                                      random_state=self.random_state)
-            self.alphas_ = U[:, :n_components]  # eigenvectors
-            self.lambdas_ = S[:n_components]    # eigenvalues
-
-            # Conversion of Singular values into Eigenvalues:
-            # Above we use SVD to get the eigenvalues decomposition.
-            # However SVD does not guarantee that sign of u and v is the same.
-            # If they are different, the corresponding *singular value* is not
-            # equal to the *eigenvalue*, it has the wrong sign. We have to
-            # take this into account to find the actual *eigenvalue*.
-            # Fastest check for flipped sign is the sign of the scalar product:
-            VU_scalprods = np.multiply(Vt[:n_components, :].T,
-                                       U[:, :n_components]).sum(axis=0)
-            signs = np.sign(VU_scalprods)
-            self.lambdas_ = self.lambdas_ * signs
-            # Note: the above is a mandatory operation to ensure a correct sign
-            # for *eigenvalues*, it has nothing to do with the optional
-            # `svd_flip` operation done below for all solvers to ensure
-            # deterministic signs for *eigenvectors*.
+            self.lambdas_, self.alphas_ = randomized_eigsh(
+                K, n_components=n_components, n_iter=self.iterated_power,
+                flip_sign=False, random_state=self.random_state
+            )
 
         # make sure that the eigenvalues are ok and fix numerical issues
         self.lambdas_ = _check_psd_eigenvalues(self.lambdas_,
