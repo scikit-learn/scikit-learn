@@ -249,8 +249,8 @@ def partial_dependence(estimator, X, features, *, response_method='auto',
         The feature (e.g. `[0]`) or pair of interacting features
         (e.g. `[(0, 1)]`) for which the partial dependency should be computed.
 
-    response_method : 'auto', 'predict_proba' or 'decision_function', \
-            optional (default='auto')
+    response_method : {'auto', 'predict_proba', 'decision_function'}, \
+            default='auto'
         Specifies whether to use :term:`predict_proba` or
         :term:`decision_function` as the target response. For regressors
         this parameter is ignored and the response is always the output of
@@ -259,18 +259,19 @@ def partial_dependence(estimator, X, features, *, response_method='auto',
         ``method`` is 'recursion', the response is always the output of
         :term:`decision_function`.
 
-    percentiles : tuple of float, optional (default=(0.05, 0.95))
+    percentiles : tuple of float, default=(0.05, 0.95)
         The lower and upper percentile used to create the extreme values
         for the grid. Must be in [0, 1].
 
-    grid_resolution : int, optional (default=100)
+    grid_resolution : int, default=100
         The number of equally spaced points on the grid, for each target
         feature.
 
-    method : str, optional (default='auto')
+    method : {'auto', 'recursion', 'brute'}, default='auto'
         The method used to calculate the averaged predictions:
 
-        - 'recursion' is only supported for some tree-based estimators (namely
+        - `'recursion'` is only supported for some tree-based estimators
+          (namely
           :class:`~sklearn.ensemble.GradientBoostingClassifier`,
           :class:`~sklearn.ensemble.GradientBoostingRegressor`,
           :class:`~sklearn.ensemble.HistGradientBoostingClassifier`,
@@ -285,23 +286,23 @@ def partial_dependence(estimator, X, features, *, response_method='auto',
           the average of the ICEs by design, it is not compatible with ICE and
           thus `kind` must be `'average'`.
 
-        - 'brute' is supported for any estimator, but is more
+        - `'brute'` is supported for any estimator, but is more
           computationally intensive.
 
-        - 'auto': the 'recursion' is used for estimators that support it,
-          and 'brute' is used otherwise.
+        - `'auto'`: the `'recursion'` is used for estimators that support it,
+          and `'brute'` is used otherwise.
 
         Please see :ref:`this note <pdp_method_differences>` for
-        differences between the 'brute' and 'recursion' method.
+        differences between the `'brute'` and `'recursion'` method.
 
     kind : {'legacy', 'average', 'individual', 'both'}, default='legacy'
         Whether to return the partial dependence averaged across all the
         samples in the dataset or one line per sample or both.
         See Returns below.
 
-        Note that the fast method='recursion' option is only available for
-        kind='average'. Plotting individual dependencies requires using the
-        slower method='brute' option.
+        Note that the fast `method='recursion'` option is only available for
+        `kind='average'`. Plotting individual dependencies requires using the
+        slower `method='brute'` option.
 
         .. versionadded:: 0.24
         .. deprecated:: 0.24

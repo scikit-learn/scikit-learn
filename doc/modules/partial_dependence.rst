@@ -29,9 +29,9 @@ Due to the limits of human perception the size of the set of input feature of
 interest must be small (usually, one or two) thus the input features of interest
 are usually chosen among the most important features.
 
-The figure below shows two one-way and one two-way partial dependence plots
-for the California housing dataset, with a :class:`GradientBoostingRegressor
-<sklearn.ensemble.GradientBoostingRegressor>`:
+The figure below shows two one-way and one two-way partial dependence plots for
+the California housing dataset, with a :class:`HistGradientBoostingRegressor
+<sklearn.ensemble.HistGradientBoostingRegressor>`:
 
 .. figure:: ../auto_examples/inspection/images/sphx_glr_plot_partial_dependence_003.png
    :target: ../auto_examples/inspection/plot_partial_dependence.html

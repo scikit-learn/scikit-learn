@@ -60,13 +60,13 @@ def plot_partial_dependence(estimator, X, features, *, feature_names=None,
 
         For :class:`~sklearn.ensemble.GradientBoostingClassifier` and
         :class:`~sklearn.ensemble.GradientBoostingRegressor`, the
-        'recursion' method (used by default) will not account for the `init`
+        `'recursion'` method (used by default) will not account for the `init`
         predictor of the boosting process. In practice, this will produce
-        the same values as 'brute' up to a constant offset in the target
+        the same values as `'brute'` up to a constant offset in the target
         response, provided that `init` is a constant estimator (which is the
         default). However, if `init` is not a constant estimator, the
-        partial dependence values are incorrect for 'recursion' because the
-        offset will be sample-dependent. It is preferable to use the 'brute'
+        partial dependence values are incorrect for `'recursion'` because the
+        offset will be sample-dependent. It is preferable to use the `'brute'`
         method. Note that this only applies to
         :class:`~sklearn.ensemble.GradientBoostingClassifier` and
         :class:`~sklearn.ensemble.GradientBoostingRegressor`, not to
@@ -84,22 +84,22 @@ def plot_partial_dependence(estimator, X, features, *, feature_names=None,
         ``X`` is used to generate a grid of values for the target
         ``features`` (where the partial dependence will be evaluated), and
         also to generate values for the complement features when the
-        `method` is 'brute'.
+        `method` is `'brute'`.
 
     features : list of {int, str, pair of int, pair of str}
         The target features for which to create the PDPs.
-        If features[i] is an int or a string, a one-way PDP is created; if
-        features[i] is a tuple, a two-way PDP is created (only supported with
-        kind='average'). Each tuple must be of size 2.
+        If `features[i]` is an integer or a string, a one-way PDP is created;
+        if `features[i]` is a tuple, a two-way PDP is created (only supported
+        with `kind='average'`). Each tuple must be of size 2.
         if any entry is a string, then it must be in ``feature_names``.
 
     feature_names : array-like of shape (n_features,), dtype=str, default=None
-        Name of each feature; feature_names[i] holds the name of the feature
-        with index i.
+        Name of each feature; `feature_names[i]` holds the name of the feature
+        with index `i`.
         By default, the name of the feature corresponds to their numerical
         index for NumPy array and their column name for pandas dataframe.
 
-    target : int, optional (default=None)
+    target : int, default=None
         - In a multiclass setting, specifies the class for which the PDPs
           should be computed. Note that for binary classification, the
           positive class (index 1) is always used.
@@ -108,32 +108,33 @@ def plot_partial_dependence(estimator, X, features, *, feature_names=None,
 
         Ignored in binary classification or classical regression settings.
 
-    response_method : 'auto', 'predict_proba' or 'decision_function', \
-            optional (default='auto')
+    response_method : {'auto', 'predict_proba', 'decision_function'}, \
+            default='auto'
         Specifies whether to use :term:`predict_proba` or
         :term:`decision_function` as the target response. For regressors
         this parameter is ignored and the response is always the output of
         :term:`predict`. By default, :term:`predict_proba` is tried first
         and we revert to :term:`decision_function` if it doesn't exist. If
-        ``method`` is 'recursion', the response is always the output of
+        ``method`` is `'recursion'`, the response is always the output of
         :term:`decision_function`.
 
-    n_cols : int, optional (default=3)
+    n_cols : int, default=3
         The maximum number of columns in the grid plot. Only active when `ax`
         is a single axis or `None`.
 
-    grid_resolution : int, optional (default=100)
+    grid_resolution : int, default=100
         The number of equally spaced points on the axes of the plots, for each
         target feature.
 
-    percentiles : tuple of float, optional (default=(0.05, 0.95))
+    percentiles : tuple of float, default=(0.05, 0.95)
         The lower and upper percentile used to create the extreme values
         for the PDP axes. Must be in [0, 1].
 
-    method : str, optional (default='auto')
+    method : str, default='auto'
         The method used to calculate the averaged predictions:
 
-        - 'recursion' is only supported for some tree-based estimators (namely
+        - `'recursion'` is only supported for some tree-based estimators
+          (namely
           :class:`~sklearn.ensemble.GradientBoostingClassifier`,
           :class:`~sklearn.ensemble.GradientBoostingRegressor`,
           :class:`~sklearn.ensemble.HistGradientBoostingClassifier`,
@@ -147,22 +148,22 @@ def plot_partial_dependence(estimator, X, features, *, feature_names=None,
           the average of the ICEs by design, it is not compatible with ICE and
           thus `kind` must be `'average'`.
 
-        - 'brute' is supported for any estimator, but is more
+        - `'brute'` is supported for any estimator, but is more
           computationally intensive.
 
-        - 'auto': the 'recursion' is used for estimators that support it,
-          and 'brute' is used otherwise.
+        - `'auto'`: the `'recursion'` is used for estimators that support it,
+          and `'brute'` is used otherwise.
 
         Please see :ref:`this note <pdp_method_differences>` for
-        differences between the 'brute' and 'recursion' method.
+        differences between the `'brute'` and `'recursion'` method.
 
-    n_jobs : int, optional (default=None)
+    n_jobs : int, default=None
         The number of CPUs to use to compute the partial dependences.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    verbose : int, optional (default=0)
+    verbose : int, default=0
         Verbose output during PD computations.
 
     fig : Matplotlib figure object, optional (default=None)
@@ -172,23 +173,23 @@ def plot_partial_dependence(estimator, X, features, *, feature_names=None,
         .. deprecated:: 0.22
            ``fig`` will be removed in 0.24.
 
-    line_kw : dict, optional
+    line_kw : dict, default=None
         Dict with keywords passed to the ``matplotlib.pyplot.plot`` call.
         For one-way partial dependence plots.
 
-    contour_kw : dict, optional
+    contour_kw : dict, default=None
         Dict with keywords passed to the ``matplotlib.pyplot.contourf`` call.
         For two-way partial dependence plots.
 
     ax : Matplotlib axes or array-like of Matplotlib axes, default=None
         - If a single axis is passed in, it is treated as a bounding axes
-            and a grid of partial dependence plots will be drawn within
-            these bounds. The `n_cols` parameter controls the number of
-            columns in the grid.
+          and a grid of partial dependence plots will be drawn within
+          these bounds. The `n_cols` parameter controls the number of
+          columns in the grid.
         - If an array-like of axes are passed in, the partial dependence
-            plots will be drawn directly into these axes.
+          plots will be drawn directly into these axes.
         - If `None`, a figure and a bounding axes is created and treated
-            as the single axes case.
+          as the single axes case.
 
         .. versionadded:: 0.22
 
@@ -410,7 +411,7 @@ class PartialDependenceDisplay:
 
     Parameters
     ----------
-    pd_results : list of (ndarray or Bunch)
+    pd_results : list of Bunch
         Results of :func:`~sklearn.inspection.partial_dependence` for
         ``features``.
 

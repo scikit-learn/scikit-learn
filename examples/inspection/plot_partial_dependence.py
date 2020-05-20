@@ -137,7 +137,7 @@ display.figure_.subplots_adjust(hspace=0.3)
 from sklearn.experimental import enable_hist_gradient_boosting  # noqa
 from sklearn.ensemble import HistGradientBoostingRegressor
 
-print("Training GradientBoostingRegressor...")
+print("Training HistGradientBoostingRegressor...")
 tic = time()
 est = HistGradientBoostingRegressor()
 est.fit(X_train, y_train)
