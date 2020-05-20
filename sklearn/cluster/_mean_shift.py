@@ -26,7 +26,8 @@ from ..neighbors import NearestNeighbors
 from ..metrics.pairwise import pairwise_distances_argmin
 
 
-def estimate_bandwidth(X, quantile=0.3, n_samples=None, random_state=0,
+@_deprecate_positional_args
+def estimate_bandwidth(X, *, quantile=0.3, n_samples=None, random_state=0,
                        n_jobs=None):
     """Estimate the bandwidth to use with the mean-shift algorithm.
 
@@ -106,7 +107,8 @@ def _mean_shift_single_seed(my_mean, X, nbrs, max_iter):
     return tuple(my_mean), len(points_within), completed_iterations
 
 
-def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
+@_deprecate_positional_args
+def mean_shift(X, *, bandwidth=None, seeds=None, bin_seeding=False,
                min_bin_freq=1, cluster_all=True, max_iter=300,
                n_jobs=None):
     """Perform mean shift clustering of data using a flat kernel.

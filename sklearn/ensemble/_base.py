@@ -5,7 +5,6 @@
 
 from abc import ABCMeta, abstractmethod
 import numbers
-import warnings
 from typing import List
 
 import numpy as np
@@ -227,16 +226,7 @@ class _BaseHeterogeneousEnsemble(MetaEstimatorMixin, _BaseComposition,
         # defined by MetaEstimatorMixin
         self._validate_names(names)
 
-        # FIXME: deprecate the usage of None to drop an estimator from the
-        # ensemble. Remove in 0.24
-        if any(est is None for est in estimators):
-            warnings.warn(
-                "Using 'None' to drop an estimator from the ensemble is "
-                "deprecated in 0.22 and support will be dropped in 0.24. "
-                "Use the string 'drop' instead.", FutureWarning
-            )
-
-        has_estimator = any(est not in (None, 'drop') for est in estimators)
+        has_estimator = any(est != 'drop' for est in estimators)
         if not has_estimator:
             raise ValueError(
                 "All estimators are dropped. At least one is required "
@@ -247,7 +237,7 @@ class _BaseHeterogeneousEnsemble(MetaEstimatorMixin, _BaseComposition,
                              else is_regressor)
 
         for est in estimators:
-            if est not in (None, 'drop') and not is_estimator_type(est):
+            if est != 'drop' and not is_estimator_type(est):
                 raise ValueError(
                     "The estimator {} should be a {}.".format(
                         est.__class__.__name__, is_estimator_type.__name__[3:]
