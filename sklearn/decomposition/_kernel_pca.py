@@ -267,7 +267,7 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         elif eigen_solver == 'randomized':
             self.lambdas_, self.alphas_ = randomized_eigsh(
                 K, n_components=n_components, n_iter=self.iterated_power,
-                flip_sign=False, random_state=self.random_state
+                random_state=self.random_state
             )
 
         # make sure that the eigenvalues are ok and fix numerical issues
