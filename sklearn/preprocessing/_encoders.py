@@ -28,19 +28,18 @@ def _get_counts(values, uniques):
 
     For object dtypes, the counts returned will use the order passed in by
     `uniques`.
-    For numerica dtypes, `uniques` is assumed to be ordered, such that it can
-    be used with `np.searchsorted`.
     """
     if values.dtype == object:
         uniques_dict = Counter(values)
         counts = np.array([uniques_dict[item] for item in uniques],
-                          dtype=np.int)
+                          dtype=int)
         return counts
 
     # numerical
     uniq_values, counts = np.unique(values, return_counts=True)
-    indices_in_uniq = np.searchsorted(uniq_values, uniques)
-    return counts[indices_in_uniq]
+    indices_in_uniq = np.isin(uniq_values, uniques, assume_unique=True)
+    counts[~indices_in_uniq] = 0
+    return counts
 
 
 class _BaseEncoder(TransformerMixin, BaseEstimator):
