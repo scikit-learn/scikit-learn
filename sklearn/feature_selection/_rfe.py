@@ -42,7 +42,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
     coefficients of a linear model), the goal of recursive feature elimination
     (RFE) is to select features by recursively considering smaller and smaller
     sets of features. First, the estimator is trained on the initial set of
-    features and the importance of each feature is obtained either through a
+    features and the importance of each feature is obtained either through
     any specific attribute or callable.
     Then, the least important features are pruned from current set of features.
     That procedure is recursively repeated on the pruned set until the desired

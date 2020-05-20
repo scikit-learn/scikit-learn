@@ -63,6 +63,8 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
 
     .. versionadded:: 0.17
 
+    Read more in the :ref:`User Guide <select_from_model>`.
+
     Parameters
     ----------
     estimator : object
