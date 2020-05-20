@@ -125,9 +125,9 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         ``self.estimators_``. An estimator can be set to ``'drop'``
         using ``set_params``.
 
-        .. versionchanged:: 0.24
-           Using ``None`` to drop an estimator was deprecated in 0.22 and
-           support was dropped in 0.24. Use the string ``'drop'`` instead.
+        .. versionchanged:: 0.21
+            ``'drop'`` is accepted. Using None was deprecated in 0.22 and
+            support was removed in 0.24.
 
     voting : {'hard', 'soft'}, default='hard'
         If 'hard', uses predicted class labels for majority rule voting.
@@ -372,9 +372,18 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
         ``self.estimators_``. An estimator can be set to ``'drop'`` using
         ``set_params``.
 
+<<<<<<< HEAD
         .. versionchanged:: 0.24
            Using ``None`` to drop an estimator was deprecated in 0.22 and
            support was dropped in 0.24. Use the string ``'drop'`` instead.
+=======
+        .. versionchanged:: 0.21
+            ``'drop'`` is accepted.
+
+        .. deprecated:: 0.22
+           Using ``None`` to drop an estimator is deprecated in 0.22 and
+           support will be dropped in 0.24. Use the string ``'drop'`` instead.
+>>>>>>> b3dca3d025bdc48c2ef07ea1de78082714e10e71
 
     weights : array-like of shape (n_regressors,), default=None
         Sequence of weights (`float` or `int`) to weight the occurrences of

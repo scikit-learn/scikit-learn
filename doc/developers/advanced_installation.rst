@@ -89,7 +89,8 @@ runtime:
 - Python (>= 3.6),
 - NumPy (>= 1.13.3),
 - SciPy (>= 0.19),
-- Joblib (>= 0.11).
+- Joblib (>= 0.11),
+- threadpoolctl (>= 2.0.0).
 
 Those dependencies are **automatically installed by pip** if they were missing
 when building scikit-learn from source.
