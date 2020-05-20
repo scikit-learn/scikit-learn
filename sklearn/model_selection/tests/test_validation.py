@@ -1332,7 +1332,8 @@ def test_validation_curve_fit_params():
     l_with_fit_params = validation_curve(est, X, y, param_name="gamma",
                                          param_range=gamma_range,
                                          fit_params={'sample_weight': w})
-    l_without_fit_params = validation_curve(est, X, y, "gamma", gamma_range)
+    l_without_fit_params = validation_curve(est, X, y, param_name="gamma",
+                                            param_range=gamma_range)
     l_without_fit_params_m0 = l_without_fit_params[0].mean()
     l_without_fit_params_m1 = l_without_fit_params[1].mean()
     assert not np.isclose(l_with_fit_params[0].mean(),
