@@ -84,7 +84,7 @@ class KernelPCA(TransformerMixin, BaseEstimator):
             by postprocessing
         arpack :
             run SVD truncated to n_components calling ARPACK solver using
-            `scipy.sparse.linalg.svds`. It requires strictly
+            `scipy.sparse.linalg.eigsh`. It requires strictly
             0 < n_components < n_samples
         randomized :
             run randomized SVD by the method of Halko et al.
