@@ -311,6 +311,24 @@ def test_kernel_conditioning():
     assert np.all(kpca.lambdas_ == _check_psd_eigenvalues(kpca.lambdas_))
 
 
+@pytest.mark.parametrize("solver", ["auto", "dense", "arpack", "randomized"],
+                         ids="solver={}".format)
+def test_precomputed_kernel_not_psd(solver):
+    """ Tests for all methods that an appropriate error is returned when the
+    provided precomputed kernel is invalid """
+
+    # a custom gram matrix purposedly not Positive Semi Definite
+    K = np.diag([2., 0., 0., -2., -2.])
+
+    # ask for enough components to get a negative even with truncated methods
+    kpca = KernelPCA(kernel="precomputed", eigen_solver=solver, n_components=4)
+
+    # make sure that the appropriate error is raised
+    with pytest.raises(ValueError,
+                       match="There are significant negative eigenvalues"):
+        kpca.fit(K)
+
+
 @pytest.mark.parametrize("n_components", [4, 10, 20],
                          ids="n_components={}".format)
 def test_kernel_pca_solvers_equivalence(n_components):
