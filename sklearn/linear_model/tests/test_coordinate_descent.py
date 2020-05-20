@@ -10,7 +10,7 @@ from copy import deepcopy
 import joblib
 from distutils.version import LooseVersion
 
-from sklearn.datasets import load_boston
+from sklearn.datasets import load_diabetes
 from sklearn.datasets import make_regression
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils._testing import assert_array_almost_equal
@@ -596,7 +596,7 @@ def test_warm_start_convergence():
 
 
 def test_warm_start_convergence_with_regularizer_decrement():
-    X, y = load_boston(return_X_y=True)
+    X, y = load_diabetes(return_X_y=True)
 
     # Train a model to converge on a lightly regularized problem
     final_alpha = 1e-5

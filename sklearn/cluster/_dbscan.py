@@ -20,9 +20,10 @@ from ..neighbors import NearestNeighbors
 from ._dbscan_inner import dbscan_inner
 
 
-def dbscan(X, eps=0.5, min_samples=5, metric='minkowski', metric_params=None,
-           algorithm='auto', leaf_size=30, p=2, sample_weight=None,
-           n_jobs=None):
+@_deprecate_positional_args
+def dbscan(X, eps=0.5, *, min_samples=5, metric='minkowski',
+           metric_params=None, algorithm='auto', leaf_size=30, p=2,
+           sample_weight=None, n_jobs=None):
     """Perform DBSCAN clustering from vector array or distance matrix.
 
     Read more in the :ref:`User Guide <dbscan>`.
