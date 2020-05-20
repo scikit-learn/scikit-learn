@@ -282,7 +282,7 @@ def partial_dependence(estimator, X, features, *, response_method='auto',
           This is more efficient in terms of speed.
           With this method, the target response of a
           classifier is always the decision function, not the predicted
-          probabilities. Since the `'recursion'` method implicitely computes
+          probabilities. Since the `'recursion'` method implicitly computes
           the average of the ICEs by design, it is not compatible with ICE and
           thus `kind` must be `'average'`.
 
@@ -499,9 +499,10 @@ def partial_dependence(estimator, X, features, *, response_method='auto',
 
     if kind == 'legacy':
         warnings.warn(
-            "A Bunch will be returned in place of 'predictions' from 0.26 with"
-            " partial dependence results accessible via the 'average' key. In"
-            " the meantime, pass kind='average' to get the future behaviour.",
+            "A Bunch will be returned in place of 'predictions' from version"
+            " 0.26 with partial dependence results accessible via the 'average'"
+            " key. In the meantime, pass kind='average' to get the future"
+            "s behaviour.",
             FutureWarning
         )
         # TODO 0.26: Remove kind == 'legacy' section
