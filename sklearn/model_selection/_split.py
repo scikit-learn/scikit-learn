@@ -289,12 +289,10 @@ class _BaseKFold(BaseCrossValidator, metaclass=ABCMeta):
                             " got {0}".format(shuffle))
 
         if not shuffle and random_state is not None:  # None is the default
-            # TODO 0.24: raise a ValueError instead of a warning
-            warnings.warn(
+            raise ValueError(
                 'Setting a random_state has no effect since shuffle is '
-                'False. This will raise an error in 0.24. You should leave '
+                'False. You should leave '
                 'random_state to its default (None), or set shuffle=True.',
-                FutureWarning
             )
 
         self.n_splits = n_splits

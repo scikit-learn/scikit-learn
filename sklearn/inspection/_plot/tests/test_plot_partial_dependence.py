@@ -457,21 +457,3 @@ def test_plot_partial_dependence_multiclass_error(pyplot, params, err_msg):
 
     with pytest.raises(ValueError, match=err_msg):
         plot_partial_dependence(clf, iris.data, **params)
-
-
-def test_plot_partial_dependence_fig_deprecated(pyplot):
-    # Make sure fig object is correctly used if not None
-    X, y = make_regression(n_samples=50, random_state=0)
-    clf = LinearRegression()
-    clf.fit(X, y)
-
-    fig = pyplot.figure()
-    grid_resolution = 25
-
-    msg = ("The fig parameter is deprecated in version 0.22 and will be "
-           "removed in version 0.24")
-    with pytest.warns(FutureWarning, match=msg):
-        plot_partial_dependence(
-            clf, X, [0, 1], target=0, grid_resolution=grid_resolution, fig=fig)
-
-    assert pyplot.gcf() is fig

@@ -573,6 +573,11 @@ def _set_checking_parameters(estimator):
         # datasets (only very shallow trees are built) that the checks use.
         estimator.set_params(min_samples_leaf=5)
 
+    if name == 'DummyClassifier':
+        # the default strategy prior would output constant predictions and fail
+        # for check_classifiers_predictions
+        estimator.set_params(strategy='stratified')
+
     # Speed-up by reducing the number of CV or splits for CV estimators
     loo_cv = ['RidgeCV']
     if name not in loo_cv and hasattr(estimator, 'cv'):
