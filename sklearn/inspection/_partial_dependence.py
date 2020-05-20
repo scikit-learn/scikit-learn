@@ -282,9 +282,10 @@ def partial_dependence(estimator, X, features, *, response_method='auto',
           This is more efficient in terms of speed.
           With this method, the target response of a
           classifier is always the decision function, not the predicted
-          probabilities. Since the `'recursion'` method implicitly computes
-          the average of the ICEs by design, it is not compatible with ICE and
-          thus `kind` must be `'average'`.
+          probabilities. Since the `'recursion'` method implicitely computes
+          the average of the Individual Conditional Expectation (ICE) by
+          design, it is not compatible with ICE and thus `kind` must be
+          `'average'`.
 
         - `'brute'` is supported for any estimator, but is more
           computationally intensive.
