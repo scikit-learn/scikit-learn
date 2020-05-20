@@ -1688,10 +1688,10 @@ def tpr_fpr_tnr_fnr_scores(y_true, y_pred, *, labels=None, pos_label=1,
             zero_division_value = 0.0 if zero_division in ["warn", 0] else 1.0
             # TPR and FNR is zero_division if there are no positive labels
             # FPR and TNR is zero_division if there are no negative labels
-            return (zero_division_value if pos_sum == 0 else 0,
-                    zero_division_value if neg_sum == 0 else 0,
-                    zero_division_value if neg_sum == 0 else 0,
-                    zero_division_value if pos_sum == 0 else 0)
+            return (zero_division_value if pos_sum.sum() == 0 else 0,
+                    zero_division_value if neg_sum.sum() == 0 else 0,
+                    zero_division_value if neg_sum.sum() == 0 else 0,
+                    zero_division_value if pos_sum.sum() == 0 else 0)
 
     elif average == 'samples':
         weights = sample_weight

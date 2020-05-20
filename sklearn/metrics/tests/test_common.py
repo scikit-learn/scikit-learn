@@ -53,6 +53,7 @@ from sklearn.metrics import r2_score
 from sklearn.metrics import recall_score
 from sklearn.metrics import roc_auc_score
 from sklearn.metrics import roc_curve
+from sklearn.metrics import tpr_fpr_tnr_fnr_scores
 from sklearn.metrics import zero_one_loss
 from sklearn.metrics import ndcg_score
 from sklearn.metrics import dcg_score
@@ -140,6 +141,9 @@ CLASSIFICATION_METRICS = {
     "f2_score": partial(fbeta_score, beta=2),
     "f0.5_score": partial(fbeta_score, beta=0.5),
     "matthews_corrcoef_score": matthews_corrcoef,
+    "tpr_fpr_tnr_fnr_scores": tpr_fpr_tnr_fnr_scores,
+    "binary_tpr_fpr_tnr_fnr_scores":
+    partial(tpr_fpr_tnr_fnr_scores, average="binary"),
 
     "weighted_f0.5_score": partial(fbeta_score, average="weighted", beta=0.5),
     "weighted_f1_score": partial(f1_score, average="weighted"),
@@ -147,6 +151,8 @@ CLASSIFICATION_METRICS = {
     "weighted_precision_score": partial(precision_score, average="weighted"),
     "weighted_recall_score": partial(recall_score, average="weighted"),
     "weighted_jaccard_score": partial(jaccard_score, average="weighted"),
+    "weighted_tpr_fpr_tnr_fnr_scores":
+    partial(tpr_fpr_tnr_fnr_scores, average="weighted"),
 
     "micro_f0.5_score": partial(fbeta_score, average="micro", beta=0.5),
     "micro_f1_score": partial(f1_score, average="micro"),
@@ -154,6 +160,8 @@ CLASSIFICATION_METRICS = {
     "micro_precision_score": partial(precision_score, average="micro"),
     "micro_recall_score": partial(recall_score, average="micro"),
     "micro_jaccard_score": partial(jaccard_score, average="micro"),
+    "micro_tpr_fpr_tnr_fnr_scores":
+    partial(tpr_fpr_tnr_fnr_scores, average="micro"),
 
     "macro_f0.5_score": partial(fbeta_score, average="macro", beta=0.5),
     "macro_f1_score": partial(f1_score, average="macro"),
@@ -161,6 +169,8 @@ CLASSIFICATION_METRICS = {
     "macro_precision_score": partial(precision_score, average="macro"),
     "macro_recall_score": partial(recall_score, average="macro"),
     "macro_jaccard_score": partial(jaccard_score, average="macro"),
+    "macro_tpr_fpr_tnr_fnr_scores":
+    partial(tpr_fpr_tnr_fnr_scores, average="macro"),
 
     "samples_f0.5_score": partial(fbeta_score, average="samples", beta=0.5),
     "samples_f1_score": partial(f1_score, average="samples"),
@@ -168,6 +178,8 @@ CLASSIFICATION_METRICS = {
     "samples_precision_score": partial(precision_score, average="samples"),
     "samples_recall_score": partial(recall_score, average="samples"),
     "samples_jaccard_score": partial(jaccard_score, average="samples"),
+    "samples_tpr_fpr_tnr_fnr_scores":
+    partial(tpr_fpr_tnr_fnr_scores, average="samples"),
 
     "cohen_kappa_score": cohen_kappa_score,
 }
@@ -264,6 +276,7 @@ METRIC_UNDEFINED_BINARY = {
     "samples_precision_score",
     "samples_recall_score",
     "samples_jaccard_score",
+    "samples_tpr_fpr_tnr_fnr_scores",
     "coverage_error",
     "unnormalized_multilabel_confusion_matrix_sample",
     "label_ranking_loss",
@@ -282,6 +295,7 @@ METRIC_UNDEFINED_MULTICLASS = {
     "roc_auc_score",
     "weighted_roc_auc",
 
+    "tpr_fpr_tnr_fnr_scores",
     "average_precision_score",
     "weighted_average_precision_score",
     "micro_average_precision_score",
@@ -295,6 +309,7 @@ METRIC_UNDEFINED_MULTICLASS = {
     "f1_score",
     "f2_score",
     "f0.5_score",
+    "binary_tpr_fpr_tnr_fnr_scores",
 
     # curves
     "roc_curve",
@@ -326,6 +341,7 @@ METRICS_WITH_POS_LABEL = {
     "precision_score", "recall_score", "f1_score", "f2_score", "f0.5_score",
     "jaccard_score",
 
+    "tpr_fpr_tnr_fnr_scores",
     "average_precision_score",
     "weighted_average_precision_score",
     "micro_average_precision_score",
@@ -354,17 +370,21 @@ METRICS_WITH_LABELS = {
     "precision_score", "recall_score", "f1_score", "f2_score", "f0.5_score",
     "jaccard_score",
 
+    "tpr_fpr_tnr_fnr_scores",
     "weighted_f0.5_score", "weighted_f1_score", "weighted_f2_score",
     "weighted_precision_score", "weighted_recall_score",
     "weighted_jaccard_score",
+    "weighted_tpr_fpr_tnr_fnr_scores",
 
     "micro_f0.5_score", "micro_f1_score", "micro_f2_score",
     "micro_precision_score", "micro_recall_score",
     "micro_jaccard_score",
+    "micro_tpr_fpr_tnr_fnr_scores",
 
     "macro_f0.5_score", "macro_f1_score", "macro_f2_score",
     "macro_precision_score", "macro_recall_score",
     "macro_jaccard_score",
+    "macro_tpr_fpr_tnr_fnr_scores",
 
     "unnormalized_multilabel_confusion_matrix",
     "unnormalized_multilabel_confusion_matrix_sample",
@@ -406,20 +426,24 @@ MULTILABELS_METRICS = {
     "weighted_f0.5_score", "weighted_f1_score", "weighted_f2_score",
     "weighted_precision_score", "weighted_recall_score",
     "weighted_jaccard_score",
+    "weighted_tpr_fpr_tnr_fnr_scores",
 
     "macro_f0.5_score", "macro_f1_score", "macro_f2_score",
     "macro_precision_score", "macro_recall_score",
     "macro_jaccard_score",
+    "macro_tpr_fpr_tnr_fnr_scores",
 
     "micro_f0.5_score", "micro_f1_score", "micro_f2_score",
     "micro_precision_score", "micro_recall_score",
     "micro_jaccard_score",
+    "micro_tpr_fpr_tnr_fnr_scores",
 
     "unnormalized_multilabel_confusion_matrix",
 
     "samples_f0.5_score", "samples_f1_score", "samples_f2_score",
     "samples_precision_score", "samples_recall_score",
     "samples_jaccard_score",
+    "samples_tpr_fpr_tnr_fnr_scores",
 }
 
 # Regression metrics with "multioutput-continuous" format support
@@ -444,6 +468,7 @@ SYMMETRIC_METRICS = {
     # P = R = F = accuracy in multiclass case
     "micro_f0.5_score", "micro_f1_score", "micro_f2_score",
     "micro_precision_score", "micro_recall_score",
+    "micro_tpr_fpr_tnr_fnr_scores",
 
     "matthews_corrcoef_score", "mean_absolute_error", "mean_squared_error",
     "median_absolute_error", "max_error",
@@ -464,6 +489,10 @@ NOT_SYMMETRIC_METRICS = {
     "precision_recall_curve",
 
     "precision_score", "recall_score", "f2_score", "f0.5_score",
+
+    "tpr_fpr_tnr_fnr_scores",
+    "weighted_tpr_fpr_tnr_fnr_scores",
+    "macro_tpr_fpr_tnr_fnr_scores",
 
     "weighted_f0.5_score", "weighted_f1_score", "weighted_f2_score",
     "weighted_precision_score", "weighted_jaccard_score",
