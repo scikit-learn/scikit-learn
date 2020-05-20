@@ -59,6 +59,7 @@ cdef SIZE_t rand_int(SIZE_t low, SIZE_t high,
 cdef double rand_uniform(double low, double high,
                          UINT32_t* random_state) nogil
 
+cdef double rand_normal(UINT32_t* random_state) nogil
 
 cdef double log(double x) nogil
 

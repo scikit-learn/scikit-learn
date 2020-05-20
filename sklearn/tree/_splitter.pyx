@@ -21,6 +21,7 @@ from libc.stdlib cimport free
 from libc.stdlib cimport qsort
 from libc.string cimport memcpy
 from libc.string cimport memset
+from libc.math cimport sqrt
 
 import numpy as np
 cimport numpy as np
@@ -31,6 +32,7 @@ from scipy.sparse import csc_matrix
 from ._utils cimport log
 from ._utils cimport rand_int
 from ._utils cimport rand_uniform
+from ._utils cimport rand_normal
 from ._utils cimport RAND_R_MAX
 from ._utils cimport safe_realloc
 
@@ -784,6 +786,169 @@ cdef class RandomSplitter(BaseDenseSplitter):
         n_constant_features[0] = n_total_constants
         return 0
 
+cdef class RandomObliqueSplitter(BaseDenseSplitter):
+    """Splitter for finding the best random split with oblique split hyperplans."""
+    cdef DTYPE_t* direction_vector
+
+    def __cinit__(self, Criterion criterion, SIZE_t max_features,
+                  SIZE_t min_samples_leaf, double min_weight_leaf,
+                  object random_state):
+
+        self.direction_vector = NULL
+
+    cdef int init(self,
+                  object X,
+                  const DOUBLE_t[:, ::1] y,
+                  DOUBLE_t* sample_weight,
+                  np.ndarray X_idx_sorted=None) except -1:
+        """Initialize the splitter
+
+        Returns -1 in case of failure to allocate memory (and raise MemoryError)
+        or 0 otherwise.
+        """
+
+        # Call parent init
+        BaseDenseSplitter.init(self, X, y, sample_weight)
+
+        safe_realloc(&self.direction_vector, self.n_features)
+        return 0
+
+
+    def __reduce__(self):
+        return (RandomObliqueSplitter, (self.criterion,
+                                 self.max_features,
+                                 self.min_samples_leaf,
+                                 self.min_weight_leaf,
+                                 self.random_state), self.__getstate__())
+
+    cdef int node_split(self, double impurity, SplitRecord* split,
+                        SIZE_t* n_constant_features) nogil except -1:
+        """Find the best random split on node samples[start:end]
+
+        Returns -1 in case of failure to allocate memory (and raise MemoryError)
+        or 0 otherwise.
+        """
+        # Draw random splits and pick the best
+        cdef SIZE_t* samples = self.samples
+        cdef SIZE_t start = self.start
+        cdef SIZE_t end = self.end
+
+        cdef SIZE_t* features = self.features
+        cdef SIZE_t n_features = self.n_features
+
+        cdef DTYPE_t* Xf = self.feature_values
+        cdef SIZE_t max_features = self.max_features # TODO ?
+        cdef SIZE_t min_samples_leaf = self.min_samples_leaf # TODO ?
+        cdef double min_weight_leaf = self.min_weight_leaf # TODO ?
+
+        cdef UINT32_t* random_state = &self.rand_r_state
+
+        cdef SplitRecord current
+
+        cdef SIZE_t p
+        cdef SIZE_t partition_end
+
+        # The min and max value on the direction
+        cdef DTYPE_t min_value
+        cdef DTYPE_t max_value
+        cdef DTYPE_t current_value # Value used to find min and max
+
+        cdef DTYPE_t* rand_dir_vector = self.direction_vector
+        cdef DTYPE_t rand_dir_vector_length = 0
+
+        # Compute a random direction vector
+        for f in range(n_features):
+            rand_dir_vector[f] = rand_normal(random_state)
+            rand_dir_vector_length += rand_dir_vector[f] * rand_dir_vector[f]
+        rand_dir_vector_length = sqrt(rand_dir_vector_length)
+        for f in range(n_features):
+            rand_dir_vector[f] = rand_dir_vector[f] / rand_dir_vector_length
+
+        # Project all points onto this vector
+        min_value = INFINITY
+        max_value = -INFINITY
+        for p in range(start, end):
+            # Compute scalar product of the point on the direction vector
+            current_value = 0
+            for f in range(n_features):
+                current_value += rand_dir_vector[f] * self.X[samples[p], features[f]]
+
+            # Set the value for this point
+            Xf[p] = current_value
+
+            # Update min and max values
+            if current_value < min_value:
+                min_value = current_value
+            elif current_value > max_value:
+                max_value = current_value
+
+        # Set the threshold
+        current.threshold = rand_uniform(min_value, max_value, random_state)
+        if current.threshold == max_value:
+             current.threshold = min_value
+
+        # Partition
+        p, partition_end = start, end
+        while p < partition_end:
+            if Xf[p] <= current.threshold:
+                p += 1
+            else:
+                partition_end -= 1
+
+                Xf[p], Xf[partition_end] = Xf[partition_end], Xf[p]
+                samples[p], samples[partition_end] = samples[partition_end], samples[p]
+
+        current.pos = partition_end
+#
+#            # Reject if min_samples_leaf is not guaranteed
+#            if (((current.pos - start) < min_samples_leaf) or
+#                    ((end - current.pos) < min_samples_leaf)):
+#                continue
+#
+#            # Evaluate split
+#            self.criterion.reset()
+#            self.criterion.update(current.pos)
+#
+#            # Reject if min_weight_leaf is not satisfied
+#            if ((self.criterion.weighted_n_left < min_weight_leaf) or
+#                    (self.criterion.weighted_n_right < min_weight_leaf)):
+#                continue
+#
+#            current_proxy_improvement = self.criterion.proxy_impurity_improvement()
+#
+#            if current_proxy_improvement > best_proxy_improvement:
+#                best_proxy_improvement = current_proxy_improvement
+#                best = current  # copy
+
+#        # Reorganize into samples[start:best.pos] + samples[best.pos:end]
+#        if best.pos < end:
+#            if current.feature != best.feature:
+#                p, partition_end = start, end
+#
+#                while p < partition_end:
+#                    if self.X[samples[p], best.feature] <= best.threshold:
+#                        p += 1
+#                    else:
+#                        partition_end -= 1
+#
+#                        samples[p], samples[partition_end] = samples[partition_end], samples[p]
+#
+#            self.criterion.reset()
+#            self.criterion.update(best.pos)
+#            best.improvement = self.criterion.impurity_improvement(impurity)
+#            self.criterion.children_impurity(&best.impurity_left,
+#                                             &best.impurity_right)
+#
+
+        self.criterion.reset()
+        self.criterion.update(current.pos)
+        current.improvement = self.criterion.impurity_improvement(impurity)
+        self.criterion.children_impurity(&current.impurity_left,
+                                         &current.impurity_right)
+
+        # Return values
+        split[0] = current
+        return 0
 
 cdef class BaseSparseSplitter(Splitter):
     # The sparse splitter works only with csc sparse matrix format

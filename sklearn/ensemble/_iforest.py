@@ -82,6 +82,12 @@ class IsolationForest(OutlierMixin, BaseBagging):
             - If int, then draw `max_features` features.
             - If float, then draw `max_features * X.shape[1]` features.
 
+    extended : bool, default=False
+        If True, use the extended version of the isolation forest algorithm.
+        This make the isolation forest partitioning the space using random
+        oblique hyperplanes instead of choosing a single feature for each
+        split.
+
     bootstrap : bool, default=False
         If True, individual trees are fit on random subsets of the training
         data sampled with replacement. If False, sampling without replacement
@@ -190,6 +196,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
                  max_samples="auto",
                  contamination="auto",
                  max_features=1.,
+                 extended=False,
                  bootstrap=False,
                  n_jobs=None,
                  behaviour='deprecated',
@@ -199,7 +206,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
         super().__init__(
             base_estimator=ExtraTreeRegressor(
                 max_features=1,
-                splitter='random',
+                splitter='random_oblique' if extended else 'random',
                 random_state=random_state),
             # here above max_features has no links with self.max_features
             bootstrap=bootstrap,
@@ -212,6 +219,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
             random_state=random_state,
             verbose=verbose)
 
+        self.extended = extended
         self.behaviour = behaviour
         self.contamination = contamination
 
