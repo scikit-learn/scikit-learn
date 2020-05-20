@@ -15,12 +15,6 @@ def test_weighted_percentile():
     score = _weighted_percentile(y, sw, 50)
     assert score == 1
 
-    # Check for multioutput
-    y_multi = np.vstack((y, y)).T
-    sw_multi = np.vstack((sw, sw)).T
-    score = _weighted_percentile(y_multi, sw_multi, 50)
-    assert_array_equal(score, [1, 1])
-
 
 def test_weighted_percentile_equal():
     y = np.empty(102, dtype=np.float64)
@@ -64,3 +58,21 @@ def test_weighted_median_integer_weights():
     w_median = _weighted_percentile(x, weights)
 
     assert median == w_median
+
+
+def test_weighted_percentile_2d():
+    # Check for when array is 2D
+    rng = np.random.RandomState(0)
+    x1 = rng.randint(10, size=10)
+    w1 = rng.choice(5, size=10)
+
+    x2 = rng.randint(20, size=10)
+    w2 = rng.choice(5, size=10)
+
+    x_2d = np.vstack((x1, x2)).T
+    w_2d = np.vstack((w1, w2)).T
+
+    w_median = _weighted_percentile(x_2d, w_2d)
+
+    for i, value in enumerate(w_median):
+        assert(value == _weighted_percentile(x_2d[:, i], w_2d[:, i]))
