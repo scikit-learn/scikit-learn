@@ -85,6 +85,8 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         The callable is passed with the fitted estimator and it should
         return importance for each feature.
 
+        .. versionadded:: 0.24
+
     Attributes
     ----------
     n_features_ : int
@@ -432,6 +434,8 @@ class RFECV(RFE):
         If `callable`, overrides the default feature importance getter.
         The callable is passed with the fitted estimator and it should
         return importance for each feature.
+
+        .. versionadded:: 0.24
 
     Attributes
     ----------

@@ -115,6 +115,8 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         The callable is passed with the fitted estimator and it should
         return importance for each feature.
 
+        .. versionadded:: 0.24
+
     Attributes
     ----------
     estimator_ : an estimator
@@ -172,9 +174,9 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
             raise ValueError('Either fit the model before transform or set'
                              ' "prefit=True" while passing the fitted'
                              ' estimator to the constructor.')
-        scores = _get_feature_importances(estimator,
-                                          self.importance_getter,
-                                          'norm', self.norm_order)
+        scores = _get_feature_importances(
+            estimator=estimator, getter=self.importance_getter,
+            transform_func='norm', norm_order=self.norm_order)
         threshold = _calculate_threshold(estimator, scores, self.threshold)
         if self.max_features is not None:
             mask = np.zeros_like(scores, dtype=bool)
@@ -223,9 +225,10 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
 
     @property
     def threshold_(self):
-        scores = _get_feature_importances(self.estimator_,
-                                          self.importance_getter,
-                                          'norm', self.norm_order)
+        scores = _get_feature_importances(estimator=self.estimator_,
+                                          getter=self.importance_getter,
+                                          transform_func='norm',
+                                          norm_order=self.norm_order)
         return _calculate_threshold(self.estimator, scores, self.threshold)
 
     @if_delegate_has_method('estimator')
