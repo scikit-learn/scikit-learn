@@ -32,7 +32,7 @@ from sklearn.utils._testing import SkipTest
 from sklearn.utils.estimator_checks import (
     _construct_instance,
     _set_checking_parameters,
-    _set_check_estimator_ids,
+    _get_repr,
     check_class_weight_balanced_linear_classifier,
     parametrize_with_checks)
 
@@ -59,8 +59,8 @@ def _sample_func(x, y=1):
      "LogisticRegression(class_weight='balanced',random_state=1,"
      "solver='newton-cg',warm_start=True)")
 ])
-def test_set_check_estimator_ids(val, expected):
-    assert _set_check_estimator_ids(val) == expected
+def test_get_repr(val, expected):
+    assert _get_repr(val) == expected
 
 
 def _tested_estimators():
