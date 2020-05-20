@@ -262,9 +262,6 @@ _DEPRECATED_MODULES = [
     ('_variance_threshold',
      'sklearn.feature_selection.variance_threshold',
      'sklearn.feature_selection', 'VarianceThreshold'),
-
-    ('_testing', 'sklearn.utils.testing', 'sklearn.utils',
-     'all_estimators'),
 ]
 
 

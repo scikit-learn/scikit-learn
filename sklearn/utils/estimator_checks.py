@@ -47,7 +47,6 @@ from ..model_selection._validation import _safe_split
 from ..metrics.pairwise import (rbf_kernel, linear_kernel, pairwise_distances)
 
 from .import shuffle
-from .import deprecated
 from .validation import has_fit_parameter, _num_samples
 from ..preprocessing import StandardScaler
 from ..datasets import (load_iris, load_boston, make_blobs,
@@ -507,12 +506,6 @@ def _boston_subset(n_samples=200):
     return BOSTON
 
 
-@deprecated("set_checking_parameters is deprecated in version "
-            "0.22 and will be removed in version 0.24.")
-def set_checking_parameters(estimator):
-    _set_checking_parameters(estimator)
-
-
 def _set_checking_parameters(estimator):
     # set parameters to speed up some estimators and
     # avoid deprecated behaviour
@@ -613,13 +606,6 @@ class _NotAnArray:
             func.__name__))
 
 
-@deprecated("NotAnArray is deprecated in version "
-            "0.22 and will be removed in version 0.24.")
-class NotAnArray(_NotAnArray):
-    # TODO: remove in 0.24
-    pass
-
-
 def _is_pairwise(estimator):
     """Returns True if estimator has a _pairwise attribute set to True.
 
@@ -652,12 +638,6 @@ def _is_pairwise_metric(estimator):
     metric = getattr(estimator, "metric", None)
 
     return bool(metric == 'precomputed')
-
-
-@deprecated("pairwise_estimator_convert_X is deprecated in version "
-            "0.22 and will be removed in version 0.24.")
-def pairwise_estimator_convert_X(X, estimator, kernel=linear_kernel):
-    return _pairwise_estimator_convert_X(X, estimator, kernel)
 
 
 def _pairwise_estimator_convert_X(X, estimator, kernel=linear_kernel):
@@ -797,7 +777,7 @@ def check_sample_weights_not_an_array(name, estimator_orig):
         X = np.array([[1, 1], [1, 2], [1, 3], [1, 4],
                       [2, 1], [2, 2], [2, 3], [2, 4],
                       [3, 1], [3, 2], [3, 3], [3, 4]])
-        X = _NotAnArray(pairwise_estimator_convert_X(X, estimator_orig))
+        X = _NotAnArray(_pairwise_estimator_convert_X(X, estimator_orig))
         y = _NotAnArray([1, 1, 1, 1, 2, 2, 2, 2, 1, 1, 2, 2])
         weights = _NotAnArray([1] * 12)
         if estimator._get_tags()["multioutput_only"]:
@@ -975,12 +955,6 @@ def check_dict_unchanged(name, estimator_orig):
             getattr(estimator, method)(X)
             assert estimator.__dict__ == dict_before, (
                 'Estimator changes __dict__ during %s' % method)
-
-
-@deprecated("is_public_parameter is deprecated in version "
-            "0.22 and will be removed in version 0.24.")
-def is_public_parameter(attr):
-    return _is_public_parameter(attr)
 
 
 def _is_public_parameter(attr):
@@ -1667,7 +1641,7 @@ def check_regressor_multioutput(name, estimator):
 
     X, y = make_regression(random_state=42, n_targets=5,
                            n_samples=n_samples, n_features=n_features)
-    X = pairwise_estimator_convert_X(X, estimator)
+    X = _pairwise_estimator_convert_X(X, estimator)
 
     estimator.fit(X, y)
     y_pred = estimator.predict(X)
@@ -2166,13 +2140,6 @@ def check_classifiers_predictions(X, y, name, classifier_orig):
                         ", ".join(map(str, classifier.classes_))))
 
 
-# TODO: remove in 0.24
-@deprecated("choose_check_classifiers_labels is deprecated in version "
-            "0.22 and will be removed in version 0.24.")
-def choose_check_classifiers_labels(name, y, y_names):
-    return _choose_check_classifiers_labels(name, y, y_names)
-
-
 def _choose_check_classifiers_labels(name, y, y_names):
     return y if name in ["LabelPropagation", "LabelSpreading"] else y_names
 
@@ -2647,13 +2614,6 @@ def check_parameters_default_constructible(name, Estimator):
                     assert param_value is init_param.default, init_param.name
                 else:
                     assert param_value == init_param.default, init_param.name
-
-
-# TODO: remove in 0.24
-@deprecated("enforce_estimator_tags_y is deprecated in version "
-            "0.22 and will be removed in version 0.24.")
-def enforce_estimator_tags_y(estimator, y):
-    return _enforce_estimator_tags_y(estimator, y)
 
 
 def _enforce_estimator_tags_y(estimator, y):
