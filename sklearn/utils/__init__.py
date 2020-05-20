@@ -273,7 +273,7 @@ def _determine_key_type(key, accept_slice=True):
 # TODO: remove in 0.24
 @deprecated("safe_indexing is deprecated in version "
             "0.22 and will be removed in version 0.24.")
-def safe_indexing(X, indices, axis=0):
+def safe_indexing(X, indices, *, axis=0):
     """Return rows, items or columns of X using indices.
 
     .. deprecated:: 0.22

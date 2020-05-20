@@ -5,35 +5,13 @@ import numpy as np
 import numbers
 
 from ._base import SelectorMixin
+from ._base import _get_feature_importances
 from ..base import BaseEstimator, clone, MetaEstimatorMixin
 from ..utils.validation import check_is_fitted
 
 from ..exceptions import NotFittedError
 from ..utils.metaestimators import if_delegate_has_method
 from ..utils.validation import _deprecate_positional_args
-
-
-def _get_feature_importances(estimator, norm_order=1):
-    """Retrieve or aggregate feature importances from estimator"""
-    importances = getattr(estimator, "feature_importances_", None)
-
-    coef_ = getattr(estimator, "coef_", None)
-    if importances is None and coef_ is not None:
-        if estimator.coef_.ndim == 1:
-            importances = np.abs(coef_)
-
-        else:
-            importances = np.linalg.norm(coef_, axis=0,
-                                         ord=norm_order)
-
-    elif importances is None:
-        raise ValueError(
-            "The underlying estimator %s has no `coef_` or "
-            "`feature_importances_` attribute. Either pass a fitted estimator"
-            " to SelectFromModel or call fit before calling transform."
-            % estimator.__class__.__name__)
-
-    return importances
 
 
 def _calculate_threshold(estimator, importances, threshold):
@@ -85,6 +63,8 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
 
     .. versionadded:: 0.17
 
+    Read more in the :ref:`User Guide <select_from_model>`.
+
     Parameters
     ----------
     estimator : object
@@ -121,6 +101,23 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         To only select based on ``max_features``, set ``threshold=-np.inf``.
 
         .. versionadded:: 0.20
+
+    importance_getter : str or callable, optional (default='auto')
+        If 'auto', uses the feature importance either through a ``coef_``
+        attribute or ``feature_importances_`` attribute of estimator.
+
+        Also accepts a string that specifies an attribute name/path
+        for extracting feature importance (implemented with `attrgetter`).
+        For example, give `regressor_.coef_` in case of
+        :class:`sklearn.compose.TransformedTargetRegressor`  or
+        `named_steps.clf.feature_importances_` in case of
+        :class:`sklearn.pipeline.Pipeline` with its last step named `clf`.
+
+        If `callable`, overrides the default feature importance getter.
+        The callable is passed with the fitted estimator and it should
+        return importance for each feature.
+
+        .. versionadded:: 0.24
 
     Attributes
     ----------
@@ -160,10 +157,12 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
     """
     @_deprecate_positional_args
     def __init__(self, estimator, *, threshold=None, prefit=False,
-                 norm_order=1, max_features=None):
+                 norm_order=1, max_features=None,
+                 importance_getter='auto'):
         self.estimator = estimator
         self.threshold = threshold
         self.prefit = prefit
+        self.importance_getter = importance_getter
         self.norm_order = norm_order
         self.max_features = max_features
 
@@ -177,7 +176,9 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
             raise ValueError('Either fit the model before transform or set'
                              ' "prefit=True" while passing the fitted'
                              ' estimator to the constructor.')
-        scores = _get_feature_importances(estimator, self.norm_order)
+        scores = _get_feature_importances(
+            estimator=estimator, getter=self.importance_getter,
+            transform_func='norm', norm_order=self.norm_order)
         threshold = _calculate_threshold(estimator, scores, self.threshold)
         if self.max_features is not None:
             mask = np.zeros_like(scores, dtype=bool)
@@ -226,7 +227,10 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
 
     @property
     def threshold_(self):
-        scores = _get_feature_importances(self.estimator_, self.norm_order)
+        scores = _get_feature_importances(estimator=self.estimator_,
+                                          getter=self.importance_getter,
+                                          transform_func='norm',
+                                          norm_order=self.norm_order)
         return _calculate_threshold(self.estimator, scores, self.threshold)
 
     @if_delegate_has_method('estimator')

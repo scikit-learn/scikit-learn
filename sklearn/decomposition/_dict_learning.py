@@ -185,10 +185,11 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
 
 
 # XXX : could be moved to the linear_model module
-def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
-                  n_nonzero_coefs=None, alpha=None, copy_cov=True, init=None,
-                  max_iter=1000, n_jobs=None, check_input=True, verbose=0,
-                  positive=False):
+@_deprecate_positional_args
+def sparse_encode(X, dictionary, *, gram=None, cov=None,
+                  algorithm='lasso_lars', n_nonzero_coefs=None, alpha=None,
+                  copy_cov=True, init=None, max_iter=1000, n_jobs=None,
+                  check_input=True, verbose=0, positive=False):
     """Sparse coding
 
     Each row of the result is the solution to a sparse coding problem.
@@ -421,7 +422,8 @@ def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
     return dictionary
 
 
-def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
+@_deprecate_positional_args
+def dict_learning(X, n_components, *, alpha, max_iter=100, tol=1e-8,
                   method='lars', n_jobs=None, dict_init=None, code_init=None,
                   callback=None, verbose=False, random_state=None,
                   return_n_iter=False, positive_dict=False,
@@ -615,7 +617,8 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
         return code, dictionary, errors
 
 
-def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
+@_deprecate_positional_args
+def dict_learning_online(X, n_components=2, *, alpha=1, n_iter=100,
                          return_code=True, dict_init=None, callback=None,
                          batch_size=3, verbose=False, shuffle=True,
                          n_jobs=None, method='lars', iter_offset=0,
@@ -1230,7 +1233,7 @@ class DictionaryLearning(SparseCodingMixin, BaseEstimator):
             n_components = self.n_components
 
         V, U, E, self.n_iter_ = dict_learning(
-            X, n_components, self.alpha,
+            X, n_components, alpha=self.alpha,
             tol=self.tol, max_iter=self.max_iter,
             method=self.fit_algorithm,
             method_max_iter=self.transform_max_iter,
@@ -1434,7 +1437,7 @@ class MiniBatchDictionaryLearning(SparseCodingMixin, BaseEstimator):
         X = self._validate_data(X)
 
         U, (A, B), self.n_iter_ = dict_learning_online(
-            X, self.n_components, self.alpha,
+            X, self.n_components, alpha=self.alpha,
             n_iter=self.n_iter, return_code=False,
             method=self.fit_algorithm,
             method_max_iter=self.transform_max_iter,
@@ -1486,7 +1489,7 @@ class MiniBatchDictionaryLearning(SparseCodingMixin, BaseEstimator):
         if iter_offset is None:
             iter_offset = getattr(self, 'iter_offset_', 0)
         U, (A, B) = dict_learning_online(
-            X, self.n_components, self.alpha,
+            X, self.n_components, alpha=self.alpha,
             n_iter=self.n_iter, method=self.fit_algorithm,
             method_max_iter=self.transform_max_iter,
             n_jobs=self.n_jobs, dict_init=dict_init,
