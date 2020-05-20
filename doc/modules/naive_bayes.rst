@@ -229,10 +229,10 @@ It is advisable to evaluate both models, if time permits.
 Categorical Naive Bayes
 -----------------------
 
-:class:`CategoricalNB` implements the categorical naive Bayes 
-algorithm for categorically distributed data. It assumes that each feature, 
-which is described by the index :math:`i`, has its own categorical 
-distribution. 
+:class:`CategoricalNB` implements the categorical naive Bayes
+algorithm for categorically distributed data. It assumes that each feature,
+which is described by the index :math:`i`, has its own categorical
+distribution.
 
 For each feature :math:`i` in the training set :math:`X`,
 :class:`CategoricalNB` estimates a categorical distribution for each feature i
@@ -258,6 +258,108 @@ of samples with class c, :math:`\alpha` is a smoothing parameter and
 categories for each feature :math:`i` are represented with numbers
 :math:`0, ..., n_i - 1` where :math:`n_i` is the number of available categories
 of feature :math:`i`.
+
+.. _general_naive_bayes:
+
+General Naive Bayes
+-------------------
+
+:class:`GeneralNB` implements multiple naive Bayes models across the
+features in the dataset by assuming different distributions for different
+features, while maintaining conditional independence between every pair of
+features given the value of a class variable.
+
+A practical use for this metaestimator is when encountering data with
+both numerical and categorical features. For example, suppose our data
+had 5 features where the first three are numerical and the rest categorical.
+We then proceed to assume that numerical features follow the Gaussian
+distribution and the categorical features follow the categorical
+distribution, i.e.,
+
+.. math::
+
+   X_1 \mid y \sim \text{Normal}(\mu_1,\sigma_1^2) \\
+   X_2 \mid y \sim \text{Normal}(\mu_2,\sigma_2^2) \\
+   X_3 \mid y \sim \text{Normal}(\mu_3,\sigma_3^2) \\
+   X_4 \mid y \sim \text{Categorical}(\textbf{p}_4) \\
+   X_5 \mid y \sim \text{Categorical}(\textbf{p}_5)
+
+Let's see how we `GeneralNB` is used with this toy dataset. We first import
+the libraries and prepare the data:
+
+   >>> import numpy as np
+   >>> import pandas as pd
+   >>> from sklearn.naive_bayes import GeneralNB, GaussianNB, CategoricalNB
+   >>>
+   >>> X = np.array([[1.5, 2.3, 5.7, 0, 1],
+   ...               [2.7, 3.8, 2.3, 1, 0],
+   ...               [1.7, 0.1, 4.5, 1, 0]])
+   >>> y = np.array([1, 0, 0])
+   >>> X_test = np.array([[1.5, 2.3, 5.7, 0, 1]])
+
+In the `GeneralNB` constructor,
+define a name (for easy access of the fitted estimators later)
+and the corresponding columns for every naive Bayes model.
+Below we defined two tuples, one for the `GaussianNB()` and
+one for the `CategoricalNB()` model.
+This manner of specification is similar to that of *transformers* in
+:class:`ColumnTransformer <sklearn.compose.ColumnTransformer>`.
+
+   >>> clf = GeneralNB([
+   ...     ("gaussian", GaussianNB(), [0, 1, 2]),
+   ...     ("categorical", CategoricalNB(), [3, 4])
+   ... ])
+   >>> clf.fit(X, y)
+   GeneralNB(models=[('gaussian', GaussianNB(...), [0, 1, 2]),
+                     ('categorical', CategoricalNB(...), [3, 4])])
+   >>> print(clf.predict(X_test))
+   [1]
+
+
+Besides specifying a list of integers, you can also indicate column
+names explicitly if the `X` and `y` data are pandas `DataFrame`s:
+
+   >>> X = pd.DataFrame(X)
+   >>> X.columns = ["a", "b", "c", "d", "e"]
+   >>> y = pd.DataFrame(y)
+   >>>
+   >>> clf = GeneralNB([
+   ...     ("gaussian", GaussianNB(), ["a", "b", "c"]),
+   ...     ("categorical", CategoricalNB(), ["d", "e"])
+   ... ])
+   >>> clf.fit(X, y)
+   GeneralNB(models=[('gaussian', GaussianNB(...), ['a', 'b', 'c']),
+                     ('categorical', CategoricalNB(...), ['d', 'e'])])
+
+Alternatively, you may also select DataFrame columns using
+:func:`sklearn.compose.make_column_selector` as follows. Note that
+X and y must be DataFrames.
+
+   >>> from sklearn.compose import make_column_selector
+   >>> clf = GeneralNB([
+   ...     ("gaussian", GaussianNB(),
+   ...         make_column_selector(pattern=r"[abc]")),
+   ...     ("categorical", CategoricalNB(),
+   ...        make_column_selector(pattern=r"[de]"))
+   ... ])
+   >>> clf.fit(X, y)
+   GeneralNB(models=[('gaussian', GaussianNB(...), ...),
+                     ('categorical', CategoricalNB(...), ...)])
+   >>> print(clf.predict(X.iloc[:1,]))
+   [1]
+
+Finally, you can access the attributes of the fitted estimators using
+the :meth:`named_models_ <sklearn.naive_bayes.GeneralNB.named_models_>`
+property and the previously defined names.
+Below we obtain the `class_count_` attribute from the fitted
+categorical distribution, where `"categorical"` comes from the previously
+defined `model` parameter in the constructor.
+
+   >>> clf.named_models_.categorical.class_count_
+   array([2., 1.])
+
+Apart from these two naive Bayes models, you may also use other combinations
+of naive Bayes models found on this page to fit your dataset.
 
 Out-of-core naive Bayes model fitting
 -------------------------------------

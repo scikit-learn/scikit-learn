@@ -20,7 +20,7 @@ from sklearn.utils._testing import assert_no_warnings
 
 from sklearn.naive_bayes import GaussianNB, BernoulliNB
 from sklearn.naive_bayes import MultinomialNB, ComplementNB
-from sklearn.naive_bayes import CategoricalNB
+from sklearn.naive_bayes import CategoricalNB, GeneralNB
 from sklearn.naive_bayes import BaseNB, BaseDiscreteNB
 
 
@@ -37,6 +37,140 @@ y1 = (rng.normal(size=(10)) > 0).astype(np.int)
 # three classes.
 X2 = rng.randint(5, size=(6, 100))
 y2 = np.array([1, 1, 2, 2, 3, 3])
+
+
+def test_generalnb_models_wrong_values():
+    """Test if wrong specification of models raises ValueError"""
+
+    # Tuple has length less than 3
+    clf = GeneralNB([
+        ("gaussian", GaussianNB()),
+        ("bernoulli", BernoulliNB())
+    ])
+    assert_raises(ValueError, clf.fit, X, y)
+
+    # Tuple has length more than 3
+    clf = GeneralNB([
+        ("gaussian", GaussianNB(), [0], [5]),
+        ("bernoulli", BernoulliNB(), [1], [1])
+    ])
+    assert_raises(ValueError, clf.fit, X, y)
+
+    # Tuple has length more than 3
+    clf = GeneralNB([
+        (5, GaussianNB(), [0], [5]),
+        (9, BernoulliNB(), [1], [1])
+    ])
+    assert_raises(ValueError, clf.fit, X, y)
+
+
+def test_generalnb_models_wrong_type():
+    """Test if wrong specification of models raises TypeError"""
+
+    clf = GeneralNB((
+        ("gaussian", GaussianNB(), [0]),
+        ("bernoulli", BernoulliNB(), [1])
+    ))
+    assert_raises(TypeError, clf.fit, X, y)
+
+    clf = GeneralNB((
+        ["gaussian", GaussianNB(), [0]],
+        ["bernoulli", BernoulliNB(), [1]]
+    ))
+    assert_raises(TypeError, clf.fit, X, y)
+
+    clf = GeneralNB([
+        ["gaussian", GaussianNB(), [0]],
+        ["bernoulli", BernoulliNB(), [1]]
+    ])
+    assert_raises(TypeError, clf.fit, X, y)
+
+    clf = GeneralNB([
+        (5, GaussianNB(), [0]),
+        (9, BernoulliNB(), [1])
+    ])
+    assert_raises(TypeError, clf.fit, X, y)
+
+    clf = GeneralNB([
+        ("gaussian", GaussianNB, [0]),
+        ("bernoulli", BernoulliNB, [1])
+    ])
+    assert_raises(ValueError, clf.fit, X, y)
+
+
+def test_generalnb_models_too_few_cols():
+    """Test specifying fewer cols than no. of cols in X"""
+    clf = GeneralNB([
+        ("gaussian", GaussianNB(), [0])
+    ])
+    assert_raises(ValueError, clf.fit, X, y)
+
+
+def test_generalnb_joint_log_likelihood():
+    """Test whether joint log likelihood has been computed correctly"""
+
+    X = np.array([[-2, 0], [-1, 1], [-1, 0], [1, 1], [1, 0], [2, 1]])
+    y = np.array([1, 1, 1, 2, 2, 2])
+
+    # Get jll from GaussianNB
+    clf_gnb = GaussianNB()
+    clf_gnb.fit(X[:, 0, None], y)
+    jll_gnb = clf_gnb._joint_log_likelihood(X[:, 0, None])
+    clp_gnb = np.log(clf_gnb.class_prior_)
+
+    # Get jll from BernoulliNB
+    clf_bnl = BernoulliNB()
+    clf_bnl.fit(X[:, 1, None], y)
+    jll_bnl = clf_bnl._joint_log_likelihood(X[:, 1, None])
+    clp_bnl = clf_bnl.class_log_prior_
+
+    # Get jll from GeneralNB
+    clf = GeneralNB([
+        ("gaussian", GaussianNB(), [0]),
+        ("bernoulli", BernoulliNB(), [1])]
+    )
+    clf.fit(X, y)
+    jll = clf._joint_log_likelihood(X)
+
+    expected_jll = (jll_gnb - clp_gnb + jll_bnl - clp_bnl) + clp_bnl
+    assert_array_almost_equal(jll, expected_jll)
+
+
+def test_generalnb_models_duplicate():
+    """Test if specifying duplicate columns in models raises error"""
+    clf = GeneralNB([
+        ("gaussian1", GaussianNB(), [0, 1]),
+        ("gaussian2", GaussianNB(), [1])]
+    )
+    assert_raises(ValueError, clf.fit, X, y)
+
+
+def test_generalnb_different_class_priors():
+    """
+    Test if specifying different priors across naive
+    Bayes models will raise error
+    """
+    clf = GeneralNB([
+        ("bernoulli1", BernoulliNB(class_prior=[0.5, 0.5]), [0]),
+        ("bernoulli2", BernoulliNB(class_prior=[0.8, 0.2]), [1])
+    ])
+    assert_raises(ValueError, clf.fit, X, y)
+
+
+def test_generalnb_different_fit_priors():
+    """
+    Test if specifying different fit_priors across naive
+    Bayes models will raise error
+    """
+    clf = GeneralNB([
+        ("gaussian", GaussianNB(), [0]),
+        ("bernoulli", BernoulliNB(fit_prior=False), [1])
+    ])
+    assert_raises(ValueError, clf.fit, X, y)
+
+
+def test_pickle():
+    pass
 
 
 def test_gnb():

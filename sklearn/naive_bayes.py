@@ -13,29 +13,34 @@ are supervised learning methods based on applying Bayes' theorem with strong
 #         Lars Buitinck
 #         Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
 #         (parts based on earlier work by Mathieu Blondel)
+#         Raimi Karim <raimi.bkarim@gmail.com>
 #
 # License: BSD 3 clause
 import warnings
-
 from abc import ABCMeta, abstractmethod
-
-
+import copy
 import numpy as np
+import pandas as pd
 from scipy.special import logsumexp
 
 from .base import BaseEstimator, ClassifierMixin
+from .exceptions import NotFittedError
 from .preprocessing import binarize
 from .preprocessing import LabelBinarizer
 from .preprocessing import label_binarize
-from .utils import check_X_y, check_array, deprecated
 from .utils.extmath import safe_sparse_dot
+from .utils import check_X_y, check_array, deprecated, Bunch, _safe_indexing
+# from .utils.fixes import logsumexp
+from .utils.validation import _check_sample_weight
+from .utils.metaestimators import _BaseComposition
 from .utils.multiclass import _check_partial_fit_first_call
 from .utils.validation import check_is_fitted, check_non_negative, column_or_1d
 from .utils.validation import _check_sample_weight
 from .utils.validation import _deprecate_positional_args
+# import ipdb
 
 __all__ = ['BernoulliNB', 'GaussianNB', 'MultinomialNB', 'ComplementNB',
-           'CategoricalNB']
+           'CategoricalNB', 'GeneralNB']
 
 
 class _BaseNB(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
@@ -116,6 +121,291 @@ class _BaseNB(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
             order, as they appear in the attribute :term:`classes_`.
         """
         return np.exp(self.predict_log_proba(X))
+
+
+class GeneralNB(_BaseNB, _BaseComposition, ClassifierMixin):
+    """Naive Bayes metaclassifier for multiple naive Bayes models
+
+    The General Naive Bayes classifier is a metaestimator that allows
+    different features in the data to be modeled with different naive Bayes
+    models. This is useful for data containing numerical and categorical
+    features, where numerical features may be modeled as Gaussian distributions
+    and categorical features as categorical distributions.
+
+    Read more in the :ref:`User Guide <general_naive_bayes>`.
+
+    Parameters
+    ----------
+    models : list of tuples
+        List of (name, naive Bayes model, column(s)) tuples specifying the
+        naive Bayes models to apply on the corresponding columns.
+        This is similar to :class:`Pipeline <sklearn.pipeline.Pipeline>`
+        or :class:`ColumnTransformer <sklearn.compose.ColumnTransformer>`.
+
+        name : string
+            This is a user-defined identifier that allows the models and its
+            parameters to be retrieved and set later using :meth:`get_params`
+            and :meth:`set_params`.
+        naive Bayes model : Estimator
+            The naive Bayes model represents the distribution assumption on
+            the features. Use our naive Bayes estimators like
+            :class:`GaussianNB <sklearn.naive_bayes.GaussianNB>` and
+            :class:`CategoricalNB <sklearn.naive_bayes.CategoricalNB>`.
+            Custom estimators must support :term:`fit`, :term:`predict`
+            and `_joint_log_likelihood`.
+        column(s) : array-like of {string or int}, slice, or callable
+            Features that correspond to the naive Bayes models. Indexes
+            the data on its second axis. Integers are interpreted as
+            positional columns, while strings reference DataFrame columns
+            by name. A callable is passed the input data `X` and must return
+            one of the above. For example,
+            :func:`compose.make_column_selector
+            <sklearn.compose.make_column_selector>`
+            can select multiple columns by name or dtype.
+
+    remainder : Estimator, default=None
+        By default, only the specified columns in `models` are
+        used for fitting, and the non-specified columns are dropped 
+        (default of ``None``). 
+        By specifying ``remainder=GaussianNB()`` for example, all remaining 
+        columns that are not specified in `models` will be modelled using
+        Gaussian Naive Bayes.
+
+    Attributes
+    ----------
+    models_ : list of tuples
+        List of (name, fitted naive Bayes model, column(s)),
+        based on `self.models`.
+
+    classes_ : ndarray of shape (n_classes,)
+        Class labels known to the classifier.
+
+    n_features_ : int
+        Number of features in each sample.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.naive_bayes import GeneralNB, GaussianNB, CategoricalNB
+    >>> X = np.array([[1.5, 2.3, 5.7, 0, 1],
+    ...               [2.7, 3.8, 2.3, 1, 0],
+    ...               [1.7, 0.1, 4.5, 1, 0]])
+    >>> y = np.array([1, 0, 0])
+    >>> clf = GeneralNB(models=[
+    ...          ("gaussian", GaussianNB(), [0, 1, 2]),
+    ...          ("categorical", CategoricalNB(), [3, 4])])
+    >>> clf.fit(X, y)
+    GeneralNB(models=[('gaussian', GaussianNB(...), [0, 1, 2]),
+                      ('categorical', CategoricalNB(...), [3, 4])])
+    >>> clf.predict(X[:1,])
+    array([1])
+    """
+
+    def __init__(self,
+                 models, *,
+                 remainder=None,
+                 fit_prior=False,
+                 class_prior=None):
+        self.models = models
+        self.remainder = remainder
+        self.fit_prior = fit_prior
+        self.class_prior = class_prior
+
+    def fit(self, X, y):
+        """Fit X and y to the naive Bayes estimators.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            Training sample, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
+        y : array-like, shape (n_samples,)
+            Target values.
+
+        Returns
+        -------
+        self : object
+        """
+        self._validate_models(X)
+        self._check_X_y(X, y)
+
+        # Apply self.fit_prior and self.class_prior to
+        # all the models specified by user at index 1.
+        # Continuous models like GaussianNB do not
+        # have an attribute equivalent to fit_prior
+        for i in range(len(self.models)):
+            if hasattr(self.models[i][1], "fit_prior"):
+                self.models[i][1].fit_prior = self.fit_prior
+                self.models[i][1].class_prior = self.class_prior
+            else:
+                self.models[i][1].priors = self.class_prior
+
+        self.classes_ = np.unique(y)
+
+        # Create an attribute that is a verified version
+        # of the user-specified self.models
+        self.models_ = [
+            (name, nb_model.fit(_safe_indexing(X, cols, axis=1), y), cols)
+            for (name, nb_model, _), cols
+            in zip(self.models, self._cols)]
+
+    def _joint_log_likelihood(self, X):
+        """Calculate the posterior log probability of sample X
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            Training sample, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
+
+        Returns
+        -------
+        jll : ndarray, shape (1, n_classes)
+            Posterior log probability.
+        """
+
+        # FIXME
+        # Obtain the jll of each fitted estimator
+        jlls = []
+        for _, nb_model, cols in self.models_:
+            X_ = X.copy()
+            # If X is DataFrame, cast X_ back to DataFrame
+            if self._df_cols is not None:
+                X_ = pd.DataFrame(X_, columns=self._df_cols)
+            X_ = np.array(_safe_indexing(X_, cols, axis=1))
+            X_ = nb_model._check_X(X_)
+            jll = nb_model._joint_log_likelihood(X_)
+            jlls.append(jll)
+
+        # Stack these jlls to give us
+        # the shape (estimator, sample, class)
+        jlls = np.hstack([jlls])
+
+        # Subtract the class log prior from all the jlls
+        # but add it back after the summation
+        jlls = jlls - log_prior
+        jll = jlls.sum(axis=0) + log_prior
+
+        return jll
+
+    @property
+    def _models(self):
+        """
+        Internal list of models only containing the name and
+        estimator, dropping the columns. This is for the implementation
+        of get_params via BaseComposition._get_params which expects lists
+        of tuples of length 2.
+        """
+        return [(name, model) for name, model, _ in self.models]
+
+    @_models.setter
+    def _models(self, value):
+        self.models = [
+            (name, nb_model, cols) for ((name, nb_model), (_, _, cols))
+            in zip(value, self.models)]
+
+    def get_params(self, deep=True):
+        """Get parameters for this metaestimator"""
+        return self._get_params('_models', deep=deep)
+
+    def set_params(self, **kwargs):
+        self._set_params('_models', **kwargs)
+        return self
+
+    def _validate_models(self, X):
+
+        # Check type of self.models
+        if not isinstance(self.models, list):
+            raise TypeError(
+                "Expected list but got {}".format(type(self.models)))
+
+        # Check names in self.models
+        names, _, _ = zip(*self.models)
+        self._validate_names(names)
+
+        # Check columns in self.models for duplicates
+        # convert to feature if callable
+        self._cols = []
+        dict_col2model = {}
+        if callable(cols):
+            cols = cols(X)
+        for col in cols:
+            if col in dict_col2model:
+                raise ValueError("Duplicate specification of "
+                                 f"column {col} found.")
+            else:
+                dict_col2model[col] = estimator.__class__.__name__.lower()
+        self._cols.append(cols)
+
+        # This checks if the no. of columns in the dataset
+        # matches the columns specified
+        # TODO: Lift this restriction and use a `remainder` parameter
+        n_features = X.shape[-1]
+        n_cols_specified = len(dict_col2model)
+        if n_cols_specified != n_features:
+            raise ValueError("Expected {} columns ".format(n_features) +
+                             "in X but {} ".format(n_cols_specified) +
+                             "were specified.")
+        self.n_features_ = n_features
+
+        # Lastly, check the estimators in self.models
+        for model in self.models:
+
+            # Check type of each entry in list
+            if not isinstance(model, tuple):
+                raise TypeError(
+                    "Expected list of tuples "
+                    "but got list of {}".format(type(model)))
+            if len(model) != 3:
+                raise ValueError("Expected tuple to have length of 3 "
+                                 "but got {}".format(len(model)))
+
+            _, estimator, _ = model
+
+            # Check if user specified say `GaussianNB()` instead of
+            # `GaussianNB`
+            if callable(estimator):
+                raise ValueError("Estimator should be a callable.")
+
+            # Check naive bayes estimator for
+            # `fit` and `_joint_log_likelihood` attributes
+            if not (hasattr(estimator, "fit")
+                    or hasattr(estimator, "_joint_log_likelihood")):
+                raise TypeError("Naive bayes estimator should implement "
+                                "the fit and _joint_log_likelihood methods. "
+                                "{} doesn't.".format(type(estimator)))
+
+    def _check_X_y(self, X, y):
+        # Delay any further checks on X and y to the respective estimators
+        # Only checks if X is pandas dataframe
+        if hasattr(X, "columns"):
+            self._df_cols = X.columns
+
+    def _check_X(self, X):
+        # Check if X is a pandas dataframe
+        if self._df_cols is not None:
+
+            if not hasattr(X, "columns"):
+                raise TypeError("X should be a dataframe")
+
+            if not all(self._df_cols == X.columns):
+                raise ValueError("Column names must match with "
+                                 "column names of fitted data.")
+
+        return X
+
+    @property
+    def named_models_(self):
+        """Access the fitted estimators by name.
+
+        Read-only attribute to access any distribution by given name.
+        Keys are model names and values are the fitted estimator
+        objects.
+
+        """
+        # Use Bunch object to improve autocomplete
+        return Bunch(**{name: estimator for name, estimator, _
+                        in self.models})
 
 
 class GaussianNB(_BaseNB):
