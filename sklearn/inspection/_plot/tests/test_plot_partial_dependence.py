@@ -108,16 +108,16 @@ def test_plot_partial_dependence(grid_resolution, pyplot, clf_diabetes,
 @pytest.mark.filterwarnings("ignore:A Bunch will be returned")
 @pytest.mark.parametrize("kind, subsample, shape", [
     ('average', None, (1, 3)),
-    ('individual', None, (1, 3, 506)),
-    ('both', None, (1, 3, 507)),
+    ('individual', None, (1, 3, 442)),
+    ('both', None, (1, 3, 443)),
     ('individual', 50, (1, 3, 50)),
     ('both', 50, (1, 3, 51)),
-    ('individual', 0.5, (1, 3, 253)),
-    ('both', 0.5, (1, 3, 254))
+    ('individual', 0.5, (1, 3, 221)),
+    ('both', 0.5, (1, 3, 222))
 ])
 def test_plot_partial_dependence_kind(pyplot, kind, subsample, shape,
-                                      clf_boston, boston):
-    disp = plot_partial_dependence(clf_boston, boston.data, [0, 1, 2],
+                                      clf_diabetes, diabetes):
+    disp = plot_partial_dependence(clf_diabetes, diabetes.data, [0, 1, 2],
                                    kind=kind, subsample=subsample)
 
     assert disp.axes_.shape == (1, 3)
@@ -240,14 +240,14 @@ def test_plot_partial_dependence_custom_axes(pyplot, clf_diabetes, diabetes):
 
 @pytest.mark.filterwarnings("ignore:A Bunch will be returned")
 @pytest.mark.parametrize("kind, lines", [
-    ('average', 1), ('individual', 506), ('both', 507)
+    ('average', 1), ('individual', 442), ('both', 443)
 ])
 def test_plot_partial_dependence_passing_numpy_axes(pyplot, clf_diabetes,
                                                     diabetes, kind, lines):
     grid_resolution = 25
     feature_names = diabetes.feature_names
     disp1 = plot_partial_dependence(clf_diabetes, diabetes.data,
-                                    ['age', 'bmi'],
+                                    ['age', 'bmi'], kind=kind,
                                     grid_resolution=grid_resolution,
                                     feature_names=feature_names)
     assert disp1.axes_.shape == (1, 2)
@@ -300,7 +300,7 @@ def test_plot_partial_dependence_incorrent_num_axes(pyplot, clf_diabetes,
 
 @pytest.mark.filterwarnings("ignore:A Bunch will be returned")
 def test_plot_partial_dependence_with_same_axes(pyplot, clf_diabetes,
->>>>>>> origin/master
+                                                diabetes):
     # The first call to plot_partial_dependence will create two new axes to
     # place in the space of the passed in axes, which results in a total of
     # three axes in the figure.
