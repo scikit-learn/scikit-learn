@@ -753,6 +753,17 @@ def test_alpha():
                          X, y, classes=[0, 1])
 
 
+def test_check_alpha():
+    # Test force_alpha if alpha < _ALPHA_MIN
+    _ALPHA_MIN = 1e-10  # const
+    b = BernoulliNB(alpha=0, force_alpha=True)
+    assert b._check_alpha() == 0
+    b = BernoulliNB(alpha=0, force_alpha=False)
+    assert b._check_alpha() == _ALPHA_MIN
+    b = BernoulliNB(alpha=0)
+    assert b._check_alpha() == _ALPHA_MIN
+
+
 def test_alpha_vector():
     X = np.array([[1, 0], [1, 1]])
     y = np.array([0, 1])
