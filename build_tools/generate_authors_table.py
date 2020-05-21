@@ -15,8 +15,8 @@ from os import path
 
 print("user:", file=sys.stderr)
 user = input()
-passwd = getpass.getpass("Password or access token:\n")
-auth = (user, passwd)
+token = getpass.getpass("access token:\n")
+auth = (user, token)
 
 LOGO_URL = 'https://avatars2.githubusercontent.com/u/365630?v=4'
 REPO_FOLDER = Path(path.abspath(__file__)).parent.parent
@@ -67,20 +67,23 @@ def get_contributors():
     members.remove('sklearn-lgtm')
     members.remove('sklearn-wheels')
 
-    # remove duplicate, and get the difference of the two sets
+    # remove duplicate, and get the difference of the sets
     core_devs = set(core_devs)
     members = set(members)
-    emeritus = members.difference(core_devs)
+    triage_team = set(['cmarmo'])
+    emeritus = members - core_devs - triage_team
 
     # get profiles from GitHub
     core_devs = [get_profile(login) for login in core_devs]
     emeritus = [get_profile(login) for login in emeritus]
+    triage_team = [get_profile(login) for login in triage_team]
 
     # sort by last name
     core_devs = sorted(core_devs, key=key)
     emeritus = sorted(emeritus, key=key)
+    triage_team = sorted(triage_team, key=key)
 
-    return core_devs, emeritus
+    return core_devs, emeritus, triage_team
 
 
 def get_profile(login):
@@ -143,10 +146,13 @@ def generate_list(contributors):
 
 if __name__ == "__main__":
 
-    core_devs, emeritus = get_contributors()
+    core_devs, emeritus, triage_team = get_contributors()
 
     with open(REPO_FOLDER / "doc" / "authors.rst", "w+") as rst_file:
         rst_file.write(generate_table(core_devs))
 
     with open(REPO_FOLDER / "doc" / "authors_emeritus.rst", "w+") as rst_file:
         rst_file.write(generate_list(emeritus))
+
+    with open(REPO_FOLDER / "doc" / "triage_team.rst", "w+") as rst_file:
+        rst_file.write(generate_table(triage_team))
