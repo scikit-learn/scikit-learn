@@ -48,7 +48,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
           the user. This is useful for metrics that evaluate a non-majority
           class
 
-        .. versionchanged:: 0.24
+          .. versionchanged:: 0.24
              The default value of `strategy` has changed to "prior" in version
              0.24.
 
