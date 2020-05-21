@@ -352,26 +352,27 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         """
         check_is_fitted(self)
         feature_names = []
-        for name, trans, columns, _ in self._iter(fitted=True):
-            if trans == 'drop':
+        for name, trans, column, _ in self._iter(fitted=True):
+            if trans == 'drop' or (
+                    hasattr(column, '__len__') and not len(column)):
                 continue
             if trans == 'passthrough':
                 if hasattr(self, '_df_columns'):
-                    if ((not isinstance(columns, slice))
-                            and all(isinstance(col, str) for col in columns)):
-                        feature_names.extend(columns)
+                    if ((not isinstance(column, slice))
+                            and all(isinstance(col, str) for col in column)):
+                        feature_names.extend(column)
                     else:
-                        feature_names.extend(self._df_columns[columns])
+                        feature_names.extend(self._df_columns[column])
                 else:
                     indices = np.arange(self._n_features)
-                    feature_names.extend(['x%d' % i for i in indices[columns]])
+                    feature_names.extend(['x%d' % i for i in indices[column]])
                 continue
             if not hasattr(trans, 'get_feature_names'):
                 raise AttributeError("Transformer %s (type %s) does not "
                                      "provide get_feature_names."
                                      % (str(name), type(trans).__name__))
             try:
-                more_names = trans.get_feature_names(input_features=columns)
+                more_names = trans.get_feature_names(input_features=column)
             except TypeError:
                 more_names = trans.get_feature_names()
             feature_names.extend([name + "__" + f for f in
