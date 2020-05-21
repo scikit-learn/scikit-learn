@@ -257,14 +257,14 @@ def randomized_svd(M, n_components, *, n_oversamples=10, n_iter='auto',
     n_components : int
         Number of singular values and vectors to extract.
 
-    n_oversamples : int (default is 10)
+    n_oversamples : int, default=10
         Additional number of random vectors to sample the range of M so as
         to ensure proper conditioning. The total number of random vectors
         used to find the range of M is n_components + n_oversamples. Smaller
         number can improve speed but can negatively impact the quality of
         approximation of singular vectors and singular values.
 
-    n_iter : int or 'auto' (default is 'auto')
+    n_iter : int or 'auto', default='auto'
         Number of power iterations. It can be used to deal with very noisy
         problems. When 'auto', it is set to 4, unless `n_components` is small
         (< .1 * min(X.shape)) `n_iter` in which case is set to 7.
@@ -272,7 +272,7 @@ def randomized_svd(M, n_components, *, n_oversamples=10, n_iter='auto',
 
         .. versionchanged:: 0.18
 
-    power_iteration_normalizer : 'auto' (default), 'QR', 'LU', 'none'
+    power_iteration_normalizer : {'auto', 'QR', 'LU', 'none'}, default='auto'
         Whether the power iterations are normalized with step-by-step
         QR factorization (the slowest but most accurate), 'none'
         (the fastest but numerically unstable when `n_iter` is large, e.g.
@@ -282,7 +282,7 @@ def randomized_svd(M, n_components, *, n_oversamples=10, n_iter='auto',
 
         .. versionadded:: 0.18
 
-    transpose : True, False or 'auto' (default)
+    transpose : True, False or 'auto', default='auto'
         Whether the algorithm should be applied to M.T instead of M. The
         result should approximately be the same. The 'auto' mode will
         trigger the transposition if M.shape[1] > M.shape[0] since this
@@ -291,7 +291,7 @@ def randomized_svd(M, n_components, *, n_oversamples=10, n_iter='auto',
 
         .. versionchanged:: 0.18
 
-    flip_sign : boolean, (True by default)
+    flip_sign : boolean, default=True
         The output of a singular value decomposition is only unique up to a
         permutation of the signs of the singular vectors. If `flip_sign` is
         set to `True`, the sign ambiguity is resolved by making the largest
@@ -377,8 +377,12 @@ def randomized_svd(M, n_components, *, n_oversamples=10, n_iter='auto',
 
 @_deprecate_positional_args
 def randomized_eigsh(M, n_components, *, n_oversamples=10, n_iter='auto',
-                    power_iteration_normalizer='auto', random_state=0):
-    """Computes a truncated eigendecomposition using randomized SVD
+                     power_iteration_normalizer='auto',
+                     selection='value', random_state=0):
+    """Computes a truncated eigendecomposition using randomized methods
+
+    The choice of components to select can be tuned with the `selection`
+    parameter.
 
     Parameters
     ----------
@@ -389,20 +393,20 @@ def randomized_eigsh(M, n_components, *, n_oversamples=10, n_iter='auto',
     n_components : int
         Number of eigenvalues and vectors to extract.
 
-    n_oversamples : int (default is 10)
+    n_oversamples : int, default=10
         Additional number of random vectors to sample the range of M so as
         to ensure proper conditioning. The total number of random vectors
         used to find the range of M is n_components + n_oversamples. Smaller
         number can improve speed but can negatively impact the quality of
         approximation of eigenvectors and eigenvalues.
 
-    n_iter : int or 'auto' (default is 'auto')
+    n_iter : int or 'auto', default='auto'
         Number of power iterations. It can be used to deal with very noisy
         problems. When 'auto', it is set to 4, unless `n_components` is small
         (< .1 * min(X.shape)) `n_iter` in which case is set to 7.
         This improves precision with few components.
 
-    power_iteration_normalizer : 'auto' (default), 'QR', 'LU', 'none'
+    power_iteration_normalizer : {'auto', 'QR', 'LU', 'none'}, default='auto'
         Whether the power iterations are normalized with step-by-step
         QR factorization (the slowest but most accurate), 'none'
         (the fastest but numerically unstable when `n_iter` is large, e.g.
@@ -410,7 +414,14 @@ def randomized_eigsh(M, n_components, *, n_oversamples=10, n_iter='auto',
         but can lose slightly in accuracy). The 'auto' mode applies no
         normalization if `n_iter` <= 2 and switches to LU otherwise.
 
-    random_state : int, RandomState instance or None, optional (default=None)
+    selection : {'value', 'module'}, default='value'
+        Strategy used to select the n components. When `selection` is `'value'`
+        (default, not yet implemented), the components corresponding to the n
+        largest eigenvalues are returned. When `selection` is `'module'`, the
+        components corresponding to the n eigenvalues with largest modules are
+        returned.
+
+    random_state : int, RandomState instance, default=None
         The seed of the pseudo random number generator to use when shuffling
         the data, i.e. getting the random vectors to initialize the algorithm.
         Pass an int for reproducible results across multiple function calls.
@@ -419,13 +430,19 @@ def randomized_eigsh(M, n_components, *, n_oversamples=10, n_iter='auto',
     Notes
     -----
     This algorithm finds a (usually very good) approximate truncated
-    eigendecomposition using randomized SVD to speed up the computations.
+    eigendecomposition using randomized methods to speed up the computations.
 
+    Strategy 'value': not implemented yet. An algorithm can be found in the
+    Halko et al reference below, for future implementation.
+
+    Strategy 'module':
     The principle is that for diagonalizable matrices, the singular values and
     eigenvalues are related: if t is an eigenvalue of A, then |t| is a singular
-    value of A. This method uses the signs of the singular vectors to find
-    the true sign of t: if the sign of left and right singular vectors are
-    different then the corresponding eigenvalue is negative.
+    value of A. This method relies on a randomized SVD to find the n singular
+    components corresponding to the n singular values with largest modules,
+    and then uses the signs of the singular vectors to find the true sign of t:
+    if the sign of left and right singular vectors are different then the
+    corresponding eigenvalue is negative.
 
     This method is particularly fast on large matrices on which
     you wish to extract only a small number of components. In order to
@@ -439,30 +456,39 @@ def randomized_eigsh(M, n_components, *, n_oversamples=10, n_iter='auto',
     References
     ----------
     * Finding structure with randomness: Stochastic algorithms for constructing
-      approximate matrix decompositions (Algorithm 4.3)
+      approximate matrix decompositions (Algorithm 4.3 for strategy 'module')
       Halko, et al., 2009 https://arxiv.org/abs/0909.4061
 
     """
-    # Note: no need for deterministic U and Vt (flip_sign=True),
-    # as we only use the dot product UVt afterwards
-    U, S, Vt = randomized_svd(
-        M, n_components=n_components, n_oversamples=n_oversamples,
-        n_iter=n_iter, power_iteration_normalizer=power_iteration_normalizer,
-        flip_sign=False, random_state=random_state)
+    if selection == 'value':
+        # to do : an algorithm can be found in the Halko et al reference
+        raise NotImplementedError()
 
-    alphas_ = U[:, :n_components]  # eigenvectors
-    lambdas_ = S[:n_components]  # eigenvalues
+    elif selection == 'module':
+        # Note: no need for deterministic U and Vt (flip_sign=True),
+        # as we only use the dot product UVt afterwards
+        U, S, Vt = randomized_svd(
+            M, n_components=n_components, n_oversamples=n_oversamples,
+            n_iter=n_iter,
+            power_iteration_normalizer=power_iteration_normalizer,
+            flip_sign=False, random_state=random_state)
 
-    # Conversion of Singular values into Eigenvalues:
-    # For any eigenvalue t, the corresponding singular value is |t|.
-    # So if there is a negative eigenvalue t, the corresponding singular value
-    # will be -t, and the left (U) and right (V) singular vectors will have
-    # opposite signs.
-    # A fast check for flipped sign is the sign of the scalar product:
-    VU_scalprods = np.multiply(Vt[:n_components, :].T,
-                               U[:, :n_components]).sum(axis=0)
-    signs = np.sign(VU_scalprods)
-    lambdas_ = lambdas_ * signs
+        alphas_ = U[:, :n_components]  # eigenvectors
+        lambdas_ = S[:n_components]  # eigenvalues
+
+        # Conversion of Singular values into Eigenvalues:
+        # For any eigenvalue t, the corresponding singular value is |t|.
+        # So if there is a negative eigenvalue t, the corresponding singular
+        # value will be -t, and the left (U) and right (V) singular vectors
+        # will have opposite signs.
+        # A fast check for flipped sign is the sign of the scalar product:
+        VU_scalprods = np.multiply(Vt[:n_components, :].T,
+                                   U[:, :n_components]).sum(axis=0)
+        signs = np.sign(VU_scalprods)
+        lambdas_ = lambdas_ * signs
+
+    else:
+        raise ValueError("Invalid `selection`: %r" % selection)
 
     return lambdas_, alphas_
 
