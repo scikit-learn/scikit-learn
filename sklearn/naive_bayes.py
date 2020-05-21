@@ -32,6 +32,7 @@ from .utils.extmath import safe_sparse_dot
 from .utils.multiclass import _check_partial_fit_first_call
 from .utils.validation import check_is_fitted, check_non_negative, column_or_1d
 from .utils.validation import _check_sample_weight
+from .utils.validation import _deprecate_positional_args
 
 __all__ = ['BernoulliNB', 'GaussianNB', 'MultinomialNB', 'ComplementNB',
            'CategoricalNB']
@@ -755,7 +756,8 @@ class MultinomialNB(_BaseDiscreteNB):
     https://nlp.stanford.edu/IR-book/html/htmledition/naive-bayes-text-classification-1.html
     """
 
-    def __init__(self, alpha=1.0, force_alpha=False,
+    @_deprecate_positional_args
+    def __init__(self, *, alpha=1.0, force_alpha=False,
                  fit_prior=True, class_prior=None):
         self.alpha = alpha
         self.force_alpha = force_alpha
@@ -865,7 +867,8 @@ class ComplementNB(_BaseDiscreteNB):
     https://people.csail.mit.edu/jrennie/papers/icml03-nb.pdf
     """
 
-    def __init__(self, alpha=1.0, force_alpha=False, fit_prior=True,
+    @_deprecate_positional_args
+    def __init__(self, *, alpha=1.0, force_alpha=False, fit_prior=True,
                  class_prior=None, norm=False):
         self.alpha = alpha
         self.force_alpha = force_alpha
@@ -985,7 +988,8 @@ class BernoulliNB(_BaseDiscreteNB):
     naive Bayes -- Which naive Bayes? 3rd Conf. on Email and Anti-Spam (CEAS).
     """
 
-    def __init__(self, alpha=1.0, force_alpha=False, binarize=.0,
+    @_deprecate_positional_args
+    def __init__(self, *, alpha=1.0, force_alpha=False, binarize=.0,
                  fit_prior=True, class_prior=None):
         self.alpha = alpha
         self.force_alpha = force_alpha
@@ -1102,7 +1106,8 @@ class CategoricalNB(_BaseDiscreteNB):
     [3]
     """
 
-    def __init__(self, alpha=1.0, force_alpha=False, fit_prior=True,
+    @_deprecate_positional_args
+    def __init__(self, *, alpha=1.0, force_alpha=False, fit_prior=True,
                  class_prior=None):
         self.alpha = alpha
         self.force_alpha = force_alpha
