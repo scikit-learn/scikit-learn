@@ -48,7 +48,7 @@ __all__ = ["murmurhash3_32", "as_float_array",
            "assert_all_finite", "check_array",
            "check_random_state",
            "compute_class_weight", "compute_sample_weight",
-           "column_or_1d", "safe_indexing",
+           "column_or_1d",
            "check_consistent_length", "check_X_y", "check_scalar", 'indexable',
            "check_symmetric", "indices_to_mask", "deprecated",
            "parallel_backend", "register_parallel_backend",
@@ -268,55 +268,6 @@ def _determine_key_type(key, accept_slice=True):
         except KeyError:
             raise ValueError(err_msg)
     raise ValueError(err_msg)
-
-
-# TODO: remove in 0.24
-@deprecated("safe_indexing is deprecated in version "
-            "0.22 and will be removed in version 0.24.")
-def safe_indexing(X, indices, *, axis=0):
-    """Return rows, items or columns of X using indices.
-
-    .. deprecated:: 0.22
-        This function was deprecated in version 0.22 and will be removed in
-        version 0.24.
-
-    Parameters
-    ----------
-    X : array-like, sparse-matrix, list, pandas.DataFrame, pandas.Series
-        Data from which to sample rows, items or columns. `list` are only
-        supported when `axis=0`.
-
-    indices : bool, int, str, slice, array-like
-
-        - If `axis=0`, boolean and integer array-like, integer slice,
-          and scalar integer are supported.
-        - If `axis=1`:
-
-            - to select a single column, `indices` can be of `int` type for
-              all `X` types and `str` only for dataframe. The selected subset
-              will be 1D, unless `X` is a sparse matrix in which case it will
-              be 2D.
-            - to select multiples columns, `indices` can be one of the
-              following: `list`, `array`, `slice`. The type used in
-              these containers can be one of the following: `int`, 'bool' and
-              `str`. However, `str` is only supported when `X` is a dataframe.
-              The selected subset will be 2D.
-
-    axis : int, default=0
-        The axis along which `X` will be subsampled. `axis=0` will select
-        rows while `axis=1` will select columns.
-
-    Returns
-    -------
-    subset
-        Subset of X on axis 0 or 1.
-
-    Notes
-    -----
-    CSR, CSC, and LIL sparse matrices are supported. COO sparse matrices are
-    not supported.
-    """
-    return _safe_indexing(X, indices, axis=axis)
 
 
 def _safe_indexing(X, indices, *, axis=0):

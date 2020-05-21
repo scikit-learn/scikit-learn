@@ -83,6 +83,11 @@ Changelog
   :class:`metrics.median_absolute_error`.
   :pr:`17225` by :user:`Lucy Liu <lucyleeow>`.
 
+:mod:`sklearn.tree`
+...................
+
+- |Enhancement| :func:`tree.plot_tree` now uses colors from the matplotlib
+  configuration settings. :pr:`17187` by `Andreas Müller`_.
 
 Code and Documentation Contributors
 -----------------------------------
