@@ -28,9 +28,8 @@ from sklearn.linear_model import LogisticRegression
 from sklearn import datasets
 from sklearn.preprocessing import StandardScaler
 
-digits = datasets.load_digits()
+X, y = datasets.load_digits(return_X_y=True)
 
-X, y = digits.data, digits.target
 X = StandardScaler().fit_transform(X)
 
 # classify small against large digits

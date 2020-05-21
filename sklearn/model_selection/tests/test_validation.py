@@ -13,19 +13,16 @@ from sklearn.exceptions import FitFailedWarning
 
 from sklearn.model_selection.tests.test_search import FailingClassifier
 
-from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_warns
-from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import assert_raises_regex
-from sklearn.utils.testing import assert_greater
-from sklearn.utils.testing import assert_less
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_allclose
-from sklearn.utils.mocking import CheckingClassifier, MockDataFrame
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_raises
+from sklearn.utils._testing import assert_raise_message
+from sklearn.utils._testing import assert_warns
+from sklearn.utils._testing import assert_warns_message
+from sklearn.utils._testing import assert_raises_regex
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils._mocking import CheckingClassifier, MockDataFrame
 
 from sklearn.model_selection import cross_val_score, ShuffleSplit
 from sklearn.model_selection import cross_val_predict
@@ -45,7 +42,7 @@ from sklearn.model_selection._validation import _fit_and_score
 from sklearn.model_selection._validation import _score
 
 from sklearn.datasets import make_regression
-from sklearn.datasets import load_boston
+from sklearn.datasets import load_diabetes
 from sklearn.datasets import load_iris
 from sklearn.datasets import load_digits
 from sklearn.metrics import explained_variance_score
@@ -55,7 +52,7 @@ from sklearn.metrics import confusion_matrix
 from sklearn.metrics import precision_recall_fscore_support
 from sklearn.metrics import precision_score
 from sklearn.metrics import r2_score
-from sklearn.metrics.scorer import check_scoring
+from sklearn.metrics import check_scoring
 
 from sklearn.linear_model import Ridge, LogisticRegression, SGDClassifier
 from sklearn.linear_model import PassiveAggressiveClassifier, RidgeClassifier
@@ -217,6 +214,9 @@ class MockClassifier:
             T = T.reshape(len(T), -1)
         return T[:, 0]
 
+    def predict_proba(self, T):
+        return T
+
     def score(self, X=None, Y=None):
         return 1. / (1 + np.abs(self.a))
 
@@ -370,8 +370,8 @@ def test_cross_validate():
 
     for X, y, est in ((X_reg, y_reg, reg), (X_clf, y_clf, clf)):
         # It's okay to evaluate regression metrics on classification too
-        mse_scorer = check_scoring(est, 'neg_mean_squared_error')
-        r2_scorer = check_scoring(est, 'r2')
+        mse_scorer = check_scoring(est, scoring='neg_mean_squared_error')
+        r2_scorer = check_scoring(est, scoring='r2')
         train_mse_scores = []
         test_mse_scores = []
         train_r2_scores = []
@@ -415,7 +415,7 @@ def check_cross_validate_single_metric(clf, X, y, scores):
                                              scoring='neg_mean_squared_error',
                                              return_train_score=False)
         assert isinstance(mse_scores_dict, dict)
-        assert_equal(len(mse_scores_dict), dict_len)
+        assert len(mse_scores_dict) == dict_len
         assert_array_almost_equal(mse_scores_dict['test_score'],
                                   test_mse_scores)
 
@@ -430,7 +430,7 @@ def check_cross_validate_single_metric(clf, X, y, scores):
             r2_scores_dict = cross_validate(clf, X, y, scoring=['r2'],
                                             return_train_score=False)
         assert isinstance(r2_scores_dict, dict)
-        assert_equal(len(r2_scores_dict), dict_len)
+        assert len(r2_scores_dict) == dict_len
         assert_array_almost_equal(r2_scores_dict['test_r2'], test_r2_scores)
 
     # Test return_estimator option
@@ -470,9 +470,9 @@ def check_cross_validate_multi_metric(clf, X, y, scores):
                 cv_results = cross_validate(clf, X, y, scoring=scoring,
                                             return_train_score=False)
             assert isinstance(cv_results, dict)
-            assert_equal(set(cv_results.keys()),
-                         keys_with_train if return_train_score
-                         else keys_sans_train)
+            assert (set(cv_results.keys()) ==
+                    (keys_with_train if return_train_score
+                     else keys_sans_train))
             assert_array_almost_equal(cv_results['test_r2'], test_r2_scores)
             assert_array_almost_equal(
                 cv_results['test_neg_mean_squared_error'], test_mse_scores)
@@ -591,9 +591,9 @@ def test_cross_val_score_fit_params():
         # Function to test that the values are passed correctly to the
         # classifier arguments for non-array type
 
-        assert_equal(clf.dummy_int, DUMMY_INT)
-        assert_equal(clf.dummy_str, DUMMY_STR)
-        assert_equal(clf.dummy_obj, DUMMY_OBJ)
+        assert clf.dummy_int == DUMMY_INT
+        assert clf.dummy_str == DUMMY_STR
+        assert clf.dummy_obj == DUMMY_OBJ
 
     fit_params = {'sample_weight': np.ones(n_samples),
                   'class_prior': np.full(n_classes, 1. / n_classes),
@@ -686,7 +686,7 @@ def test_permutation_score():
 
     score, scores, pvalue = permutation_test_score(
         svm, X, y, n_permutations=30, cv=cv, scoring="accuracy")
-    assert_greater(score, 0.9)
+    assert score > 0.9
     assert_almost_equal(pvalue, 0.0, 1)
 
     score_group, _, pvalue_group = permutation_test_score(
@@ -722,8 +722,8 @@ def test_permutation_score():
     score, scores, pvalue = permutation_test_score(
         svm, X, y, n_permutations=30, cv=cv, scoring="accuracy")
 
-    assert_less(score, 0.5)
-    assert_greater(pvalue, 0.2)
+    assert score < 0.5
+    assert pvalue > 0.2
 
 
 def test_permutation_test_score_allow_nans():
@@ -768,8 +768,7 @@ def test_cross_val_score_multilabel():
 
 
 def test_cross_val_predict():
-    boston = load_boston()
-    X, y = boston.data, boston.target
+    X, y = load_diabetes(return_X_y=True)
     cv = KFold()
 
     est = Ridge()
@@ -784,11 +783,11 @@ def test_cross_val_predict():
     assert_array_almost_equal(preds, preds2)
 
     preds = cross_val_predict(est, X, y)
-    assert_equal(len(preds), len(y))
+    assert len(preds) == len(y)
 
     cv = LeaveOneOut()
     preds = cross_val_predict(est, X, y, cv=cv)
-    assert_equal(len(preds), len(y))
+    assert len(preds) == len(y)
 
     Xsp = X.copy()
     Xsp *= (Xsp > np.median(Xsp))
@@ -797,7 +796,7 @@ def test_cross_val_predict():
     assert_array_almost_equal(len(preds), len(y))
 
     preds = cross_val_predict(KMeans(), X)
-    assert_equal(len(preds), len(y))
+    assert len(preds) == len(y)
 
     class BadCV():
         def split(self, X, y=None, groups=None):
@@ -812,22 +811,23 @@ def test_cross_val_predict():
                        'not match total number of classes (3). '
                        'Results may not be appropriate for your use case.')
     assert_warns_message(RuntimeWarning, warning_message,
-                         cross_val_predict, LogisticRegression(),
+                         cross_val_predict,
+                         LogisticRegression(solver="liblinear"),
                          X, y, method='predict_proba', cv=KFold(2))
 
 
 def test_cross_val_predict_decision_function_shape():
     X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
 
-    preds = cross_val_predict(LogisticRegression(), X, y,
+    preds = cross_val_predict(LogisticRegression(solver="liblinear"), X, y,
                               method='decision_function')
-    assert_equal(preds.shape, (50,))
+    assert preds.shape == (50,)
 
     X, y = load_iris(return_X_y=True)
 
-    preds = cross_val_predict(LogisticRegression(), X, y,
+    preds = cross_val_predict(LogisticRegression(solver="liblinear"), X, y,
                               method='decision_function')
-    assert_equal(preds.shape, (150, 3))
+    assert preds.shape == (150, 3)
 
     # This specifically tests imbalanced splits for binary
     # classification with decision_function. This is only
@@ -851,7 +851,7 @@ def test_cross_val_predict_decision_function_shape():
     preds = cross_val_predict(est,
                               X, y,
                               method='decision_function')
-    assert_equal(preds.shape, (1797, 45))
+    assert preds.shape == (1797, 45)
 
     ind = np.argsort(y)
     X, y = X[ind], y[ind]
@@ -866,29 +866,29 @@ def test_cross_val_predict_decision_function_shape():
 def test_cross_val_predict_predict_proba_shape():
     X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
 
-    preds = cross_val_predict(LogisticRegression(), X, y,
+    preds = cross_val_predict(LogisticRegression(solver="liblinear"), X, y,
                               method='predict_proba')
-    assert_equal(preds.shape, (50, 2))
+    assert preds.shape == (50, 2)
 
     X, y = load_iris(return_X_y=True)
 
-    preds = cross_val_predict(LogisticRegression(), X, y,
+    preds = cross_val_predict(LogisticRegression(solver="liblinear"), X, y,
                               method='predict_proba')
-    assert_equal(preds.shape, (150, 3))
+    assert preds.shape == (150, 3)
 
 
 def test_cross_val_predict_predict_log_proba_shape():
     X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
 
-    preds = cross_val_predict(LogisticRegression(), X, y,
+    preds = cross_val_predict(LogisticRegression(solver="liblinear"), X, y,
                               method='predict_log_proba')
-    assert_equal(preds.shape, (50, 2))
+    assert preds.shape == (50, 2)
 
     X, y = load_iris(return_X_y=True)
 
-    preds = cross_val_predict(LogisticRegression(), X, y,
+    preds = cross_val_predict(LogisticRegression(solver="liblinear"), X, y,
                               method='predict_log_proba')
-    assert_equal(preds.shape, (150, 3))
+    assert preds.shape == (150, 3)
 
 
 def test_cross_val_predict_input_types():
@@ -901,11 +901,11 @@ def test_cross_val_predict_input_types():
     # 3 fold cv is used --> atleast 3 samples per class
     # Smoke test
     predictions = cross_val_predict(clf, X, y)
-    assert_equal(predictions.shape, (150,))
+    assert predictions.shape == (150,)
 
     # test with multioutput y
     predictions = cross_val_predict(clf, X_sparse, multioutput_y)
-    assert_equal(predictions.shape, (150, 2))
+    assert predictions.shape == (150, 2)
 
     predictions = cross_val_predict(clf, X_sparse, y)
     assert_array_equal(predictions.shape, (150,))
@@ -923,9 +923,11 @@ def test_cross_val_predict_input_types():
     predictions = cross_val_predict(clf, X, y.tolist())
 
     # test with X and y as list and non empty method
-    predictions = cross_val_predict(LogisticRegression(), X.tolist(),
+    predictions = cross_val_predict(LogisticRegression(solver="liblinear"),
+                                    X.tolist(),
                                     y.tolist(), method='decision_function')
-    predictions = cross_val_predict(LogisticRegression(), X,
+    predictions = cross_val_predict(LogisticRegression(solver="liblinear"),
+                                    X,
                                     y.tolist(), method='decision_function')
 
     # test with 3d X and
@@ -961,8 +963,8 @@ def test_cross_val_predict_unbalanced():
                                random_state=1)
     # Change the first sample to a new class
     y[0] = 2
-    clf = LogisticRegression(random_state=1)
-    cv = StratifiedKFold(n_splits=2, random_state=1)
+    clf = LogisticRegression(random_state=1, solver="liblinear")
+    cv = StratifiedKFold(n_splits=2)
     train, test = list(cv.split(X, y))
     yhat_proba = cross_val_predict(clf, X, y, cv=cv, method="predict_proba")
     assert y[test[0]][0] == 2  # sanity check for further assertions
@@ -971,6 +973,19 @@ def test_cross_val_predict_unbalanced():
     assert np.all(yhat_proba[test[1]] > 0)
     assert_array_almost_equal(yhat_proba.sum(axis=1), np.ones(y.shape),
                               decimal=12)
+
+
+def test_cross_val_predict_y_none():
+    # ensure that cross_val_predict works when y is None
+    mock_classifier = MockClassifier()
+    rng = np.random.RandomState(42)
+    X = rng.rand(100, 10)
+    y_hat = cross_val_predict(mock_classifier, X, y=None, cv=5,
+                              method='predict')
+    assert_allclose(X[:, 0], y_hat)
+    y_hat_proba = cross_val_predict(mock_classifier, X, y=None, cv=5,
+                                    method='predict_proba')
+    assert_allclose(X, y_hat_proba)
 
 
 def test_cross_val_score_sparse_fit_params():
@@ -991,19 +1006,26 @@ def test_learning_curve():
     estimator = MockImprovingEstimator(n_samples * ((n_splits - 1) / n_splits))
     for shuffle_train in [False, True]:
         with warnings.catch_warnings(record=True) as w:
-            train_sizes, train_scores, test_scores = learning_curve(
-                estimator, X, y, cv=KFold(n_splits=n_splits),
-                train_sizes=np.linspace(0.1, 1.0, 10),
-                shuffle=shuffle_train)
+            train_sizes, train_scores, test_scores, fit_times, score_times = \
+                learning_curve(estimator, X, y, cv=KFold(n_splits=n_splits),
+                               train_sizes=np.linspace(0.1, 1.0, 10),
+                               shuffle=shuffle_train, return_times=True)
         if len(w) > 0:
             raise RuntimeError("Unexpected warning: %r" % w[0].message)
-        assert_equal(train_scores.shape, (10, 3))
-        assert_equal(test_scores.shape, (10, 3))
+        assert train_scores.shape == (10, 3)
+        assert test_scores.shape == (10, 3)
+        assert fit_times.shape == (10, 3)
+        assert score_times.shape == (10, 3)
         assert_array_equal(train_sizes, np.linspace(2, 20, 10))
         assert_array_almost_equal(train_scores.mean(axis=1),
                                   np.linspace(1.9, 1.0, 10))
         assert_array_almost_equal(test_scores.mean(axis=1),
                                   np.linspace(0.1, 1.0, 10))
+
+        # Cannot use assert_array_almost_equal for fit and score times because
+        # the values are hardware-dependant
+        assert fit_times.dtype == "float64"
+        assert score_times.dtype == "float64"
 
         # Test a custom cv splitter that can iterate only once
         with warnings.catch_warnings(record=True) as w:
@@ -1092,8 +1114,6 @@ def test_learning_curve_incremental_learning_unsupervised():
                               np.linspace(0.1, 1.0, 10))
 
 
-# 0.23. warning about tol not having its correct default value.
-@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_learning_curve_batch_and_incremental_learning_are_equal():
     X, y = make_classification(n_samples=30, n_features=1, n_informative=1,
                                n_redundant=0, n_classes=2,
@@ -1161,8 +1181,6 @@ def test_learning_curve_with_boolean_indices():
                               np.linspace(0.1, 1.0, 10))
 
 
-# 0.23. warning about tol not having its correct default value.
-@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_learning_curve_with_shuffle():
     # Following test case was designed this way to verify the code
     # changes made in pull request: #7506.
@@ -1233,7 +1251,8 @@ def test_validation_curve_cv_splits_consistency():
     X, y = make_classification(n_samples=100, random_state=0)
 
     scores1 = validation_curve(SVC(kernel='linear', random_state=0), X, y,
-                               'C', [0.1, 0.1, 0.2, 0.2],
+                               param_name='C',
+                               param_range=[0.1, 0.1, 0.2, 0.2],
                                cv=OneTimeSplitter(n_splits=n_splits,
                                                   n_samples=n_samples))
     # The OneTimeSplitter is a non-re-entrant cv splitter. Unless, the
@@ -1244,7 +1263,8 @@ def test_validation_curve_cv_splits_consistency():
                                          2))
 
     scores2 = validation_curve(SVC(kernel='linear', random_state=0), X, y,
-                               'C', [0.1, 0.1, 0.2, 0.2],
+                               param_name='C',
+                               param_range=[0.1, 0.1, 0.2, 0.2],
                                cv=KFold(n_splits=n_splits, shuffle=True))
 
     # For scores2, compare the 1st and 2nd parameter's scores
@@ -1254,7 +1274,8 @@ def test_validation_curve_cv_splits_consistency():
                                          2))
 
     scores3 = validation_curve(SVC(kernel='linear', random_state=0), X, y,
-                               'C', [0.1, 0.1, 0.2, 0.2],
+                               param_name='C',
+                               param_range=[0.1, 0.1, 0.2, 0.2],
                                cv=KFold(n_splits=n_splits))
 
     # OneTimeSplitter is basically unshuffled KFold(n_splits=5). Sanity check.
@@ -1377,7 +1398,7 @@ def check_cross_val_predict_multilabel(est, X, y, method):
     # Check actual outputs for several representations of y
     for tg in [y, y + 1, y - 2, y.astype('str')]:
         cv_predict_output = cross_val_predict(est, X, tg, method=method, cv=cv)
-        assert_equal(len(cv_predict_output), len(expected_preds))
+        assert len(cv_predict_output) == len(expected_preds)
         for i in range(len(cv_predict_output)):
             assert_allclose(cv_predict_output[i], expected_preds[i])
 
@@ -1385,7 +1406,7 @@ def check_cross_val_predict_multilabel(est, X, y, method):
 def check_cross_val_predict_with_method_binary(est):
     # This test includes the decision_function with two classes.
     # This is a special case: it has only one column of output.
-    X, y = make_classification(n_classes=2, random_state=0)
+    X, y = make_classification(n_classes=2,  random_state=0)
     for method in ['decision_function', 'predict_proba', 'predict_log_proba']:
         check_cross_val_predict_binary(est, X, y, method)
 
@@ -1399,11 +1420,12 @@ def check_cross_val_predict_with_method_multiclass(est):
 
 
 def test_cross_val_predict_with_method():
-    check_cross_val_predict_with_method_binary(LogisticRegression())
-    check_cross_val_predict_with_method_multiclass(LogisticRegression())
+    check_cross_val_predict_with_method_binary(
+            LogisticRegression(solver="liblinear"))
+    check_cross_val_predict_with_method_multiclass(
+            LogisticRegression(solver="liblinear"))
 
 
-@pytest.mark.filterwarnings('ignore: max_iter and tol parameters')
 def test_cross_val_predict_method_checking():
     # Regression test for issue #9639. Tests that cross_val_predict does not
     # check estimator methods (e.g. predict_proba) before fitting
@@ -1419,7 +1441,7 @@ def test_gridsearchcv_cross_val_predict_with_method():
     iris = load_iris()
     X, y = iris.data, iris.target
     X, y = shuffle(X, y, random_state=0)
-    est = GridSearchCV(LogisticRegression(random_state=42),
+    est = GridSearchCV(LogisticRegression(random_state=42, solver="liblinear"),
                        {'C': [0.1, 1]},
                        cv=2)
     for method in ['decision_function', 'predict_proba', 'predict_log_proba']:
@@ -1435,7 +1457,8 @@ def test_cross_val_predict_with_method_multilabel_ovr():
     X, y = make_multilabel_classification(n_samples=n_samp, n_labels=3,
                                           n_classes=n_classes, n_features=5,
                                           random_state=42)
-    est = OneVsRestClassifier(LogisticRegression(random_state=0))
+    est = OneVsRestClassifier(LogisticRegression(solver="liblinear",
+                                                 random_state=0))
     for method in ['predict_proba', 'decision_function']:
         check_cross_val_predict_binary(est, X, y, method=method)
 
@@ -1475,7 +1498,7 @@ def test_cross_val_predict_with_method_rare_class():
     rng = np.random.RandomState(0)
     X = rng.normal(0, 1, size=(14, 10))
     y = np.array([0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 1, 2, 0, 3])
-    est = LogisticRegression()
+    est = LogisticRegression(solver="liblinear")
     for method in ['predict_proba', 'predict_log_proba', 'decision_function']:
         with warnings.catch_warnings():
             # Suppress warning about too few examples of a class
@@ -1533,7 +1556,7 @@ def test_cross_val_predict_class_subset():
 
     methods = ['decision_function', 'predict_proba', 'predict_log_proba']
     for method in methods:
-        est = LogisticRegression()
+        est = LogisticRegression(solver="liblinear")
 
         # Test with n_splits=3
         predictions = cross_val_predict(est, X, y, method=method,
@@ -1628,8 +1651,14 @@ def test_fit_and_score_failing():
                        "partition for these parameters will be set to %f. "
                        "Details: \n%s" % (fit_and_score_kwargs['error_score'],
                                           error_message))
-    # check if the same warning is triggered
-    assert_warns_message(FitFailedWarning, warning_message, _fit_and_score,
+
+    def test_warn_trace(msg):
+        assert 'Traceback (most recent call last):\n' in msg
+        split = msg.splitlines()  # note: handles more than '\n'
+        mtb = split[0] + '\n' + split[-1]
+        return warning_message in mtb
+    # check traceback is included
+    assert_warns_message(FitFailedWarning, test_warn_trace, _fit_and_score,
                          *fit_and_score_args, **fit_and_score_kwargs)
 
     fit_and_score_kwargs = {'error_score': 'raise'}
@@ -1653,11 +1682,11 @@ def test_fit_and_score_failing():
                          failing_clf, X, y, cv=3, error_score='unvalid-string')
 
     assert_raise_message(ValueError, error_message, validation_curve,
-                         failing_clf, X, y, 'parameter',
-                         [FailingClassifier.FAILING_PARAMETER], cv=3,
-                         error_score='unvalid-string')
+                         failing_clf, X, y, param_name='parameter',
+                         param_range=[FailingClassifier.FAILING_PARAMETER],
+                         cv=3, error_score='unvalid-string')
 
-    assert_equal(failing_clf.score(), 0.)  # FailingClassifier coverage
+    assert failing_clf.score() == 0.  # FailingClassifier coverage
 
 
 def test_fit_and_score_working():

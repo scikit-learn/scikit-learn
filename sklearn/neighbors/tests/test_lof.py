@@ -4,22 +4,20 @@
 
 from math import sqrt
 
-import pytest
 import numpy as np
 from sklearn import neighbors
 
+import pytest
 from numpy.testing import assert_array_equal
 
 from sklearn import metrics
 from sklearn.metrics import roc_auc_score
 
 from sklearn.utils import check_random_state
-from sklearn.utils.testing import assert_greater
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_raises_regex
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_warns_message
+from sklearn.utils._testing import assert_raises
+from sklearn.utils._testing import assert_raises_regex
 from sklearn.utils.estimator_checks import check_estimator
 from sklearn.utils.estimator_checks import check_outlier_corruption
 
@@ -45,7 +43,7 @@ def test_lof():
     assert_array_equal(clf._fit_X, X)
 
     # Assert largest outlier score is smaller than smallest inlier score:
-    assert_greater(np.min(score[:-2]), np.max(score[-2:]))
+    assert np.min(score[:-2]) > np.max(score[-2:])
 
     # Assert predict() works:
     clf = neighbors.LocalOutlierFactor(contamination=0.25,
@@ -72,7 +70,7 @@ def test_lof_performance():
     y_pred = -clf.decision_function(X_test)
 
     # check that roc_auc is good
-    assert_greater(roc_auc_score(y_test, y_pred), .99)
+    assert roc_auc_score(y_test, y_pred) > .99
 
 
 def test_lof_values():
@@ -124,13 +122,13 @@ def test_lof_precomputed(random_state=42):
 def test_n_neighbors_attribute():
     X = iris.data
     clf = neighbors.LocalOutlierFactor(n_neighbors=500).fit(X)
-    assert_equal(clf.n_neighbors_, X.shape[0] - 1)
+    assert clf.n_neighbors_ == X.shape[0] - 1
 
     clf = neighbors.LocalOutlierFactor(n_neighbors=500)
     assert_warns_message(UserWarning,
                          "n_neighbors will be set to (n_samples - 1)",
                          clf.fit, X)
-    assert_equal(clf.n_neighbors_, X.shape[0] - 1)
+    assert clf.n_neighbors_ == X.shape[0] - 1
 
 
 def test_score_samples():
@@ -217,12 +215,12 @@ def test_novelty_true_common_tests():
     check_estimator(neighbors.LocalOutlierFactor(novelty=True))
 
 
-def test_predicted_outlier_number():
+@pytest.mark.parametrize('expected_outliers', [30, 53])
+def test_predicted_outlier_number(expected_outliers):
     # the number of predicted outliers should be equal to the number of
     # expected outliers unless there are ties in the abnormality scores.
     X = iris.data
     n_samples = X.shape[0]
-    expected_outliers = 30
     contamination = float(expected_outliers)/n_samples
 
     clf = neighbors.LocalOutlierFactor(contamination=contamination)

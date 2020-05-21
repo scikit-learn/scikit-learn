@@ -48,7 +48,7 @@ import matplotlib.pyplot as plt
 from sklearn import linear_model
 from sklearn.datasets import fetch_openml
 from sklearn.model_selection import train_test_split
-from sklearn.utils.testing import ignore_warnings
+from sklearn.utils._testing import ignore_warnings
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils import shuffle
 
@@ -89,7 +89,7 @@ def fit_and_score(estimator, max_iter, X_train, X_test, y_train, y_test):
 # Define the estimators to compare
 estimator_dict = {
     'No stopping criterion':
-    linear_model.SGDClassifier(tol=1e-3, n_iter_no_change=3),
+    linear_model.SGDClassifier(n_iter_no_change=3),
     'Training loss':
     linear_model.SGDClassifier(early_stopping=False, n_iter_no_change=3,
                                tol=0.1),

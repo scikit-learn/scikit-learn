@@ -65,9 +65,9 @@ cdef class Criterion:
             y is a buffer that can store values for n_outputs target variables
         sample_weight : array-like, dtype=DOUBLE_t
             The weight of each sample
-        weighted_n_samples : DOUBLE_t
+        weighted_n_samples : double
             The total weight of the samples being considered
-        samples : array-like, dtype=DOUBLE_t
+        samples : array-like, dtype=SIZE_t
             Indices of the samples in X and y, where samples[start:end]
             correspond to the samples in this node
         start : SIZE_t
@@ -289,9 +289,9 @@ cdef class ClassificationCriterion(Criterion):
         ----------
         y : array-like, dtype=DOUBLE_t
             The target stored as a buffer for memory efficiency
-        sample_weight : array-like, dtype=DTYPE_t
+        sample_weight : array-like, dtype=DOUBLE_t
             The weight of each sample
-        weighted_n_samples : SIZE_t
+        weighted_n_samples : double
             The total weight of all samples
         samples : array-like, dtype=SIZE_t
             A mask on the samples, showing which ones we want to use
@@ -636,9 +636,9 @@ cdef class Gini(ClassificationCriterion):
 
         Parameters
         ----------
-        impurity_left : DTYPE_t
+        impurity_left : double pointer
             The memory address to save the impurity of the left node to
-        impurity_right : DTYPE_t
+        impurity_right : double pointer
             The memory address to save the impurity of the right node to
         """
 

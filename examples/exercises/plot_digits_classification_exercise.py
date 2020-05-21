@@ -14,9 +14,8 @@ print(__doc__)
 
 from sklearn import datasets, neighbors, linear_model
 
-digits = datasets.load_digits()
-X_digits = digits.data / digits.data.max()
-y_digits = digits.target
+X_digits, y_digits = datasets.load_digits(return_X_y=True)
+X_digits = X_digits / X_digits.max()
 
 n_samples = len(X_digits)
 
