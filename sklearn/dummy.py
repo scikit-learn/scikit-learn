@@ -33,7 +33,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
 
     Parameters
     ----------
-    strategy : {"stratified", "most_frequent", "prior", "uniform",
+    strategy : {"stratified", "most_frequent", "prior", "uniform", \
             "constant"}, default="prior"
         Strategy to use to generate predictions.
 
