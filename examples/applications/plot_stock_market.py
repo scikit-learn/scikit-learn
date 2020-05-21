@@ -162,7 +162,7 @@ variation = close_prices - open_prices
 
 # #############################################################################
 # Learn a graphical structure from the correlations
-edge_model = covariance.GraphicalLassoCV(cv=5)
+edge_model = covariance.GraphicalLassoCV()
 
 # standardize the time series: using correlations rather than covariance
 # is more efficient for structure recovery
@@ -173,7 +173,8 @@ edge_model.fit(X)
 # #############################################################################
 # Cluster using affinity propagation
 
-_, labels = cluster.affinity_propagation(edge_model.covariance_)
+_, labels = cluster.affinity_propagation(edge_model.covariance_,
+                                         random_state=0)
 n_labels = labels.max()
 
 for i in range(n_labels + 1):

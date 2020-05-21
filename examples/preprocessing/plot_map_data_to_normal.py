@@ -3,8 +3,10 @@
 Map data to a normal distribution
 =================================
 
+.. currentmodule:: sklearn.preprocessing
+
 This example demonstrates the use of the Box-Cox and Yeo-Johnson transforms
-through :class:`preprocessing.PowerTransformer` to map data from various
+through :class:`~PowerTransformer` to map data from various
 distributions to a normal distribution.
 
 The power transform is useful as a transformation in modeling problems where
@@ -22,7 +24,7 @@ lognormal and chi-squared distributions, keep in mind that Box-Cox does not
 support inputs with negative values.
 
 For comparison, we also add the output from
-:class:`preprocessing.QuantileTransformer`. It can force any arbitrary
+:class:`~QuantileTransformer`. It can force any arbitrary
 distribution into a gaussian, provided that there are enough training samples
 (thousands). Because it is a non-parametric method, it is harder to interpret
 than the parametric ones (Box-Cox and Yeo-Johnson).
@@ -53,7 +55,10 @@ BINS = 30
 rng = np.random.RandomState(304)
 bc = PowerTransformer(method='box-cox')
 yj = PowerTransformer(method='yeo-johnson')
-qt = QuantileTransformer(output_distribution='normal', random_state=rng)
+# n_quantiles is set to the training set size rather than the default value
+# to avoid a warning being raised by this example
+qt = QuantileTransformer(n_quantiles=500, output_distribution='normal',
+                         random_state=rng)
 size = (N_SAMPLES, 1)
 
 
@@ -91,8 +96,8 @@ distributions = [
     ('Bimodal', X_bimodal)
 ]
 
-colors = ['firebrick', 'darkorange', 'goldenrod',
-          'seagreen', 'royalblue', 'darkorchid']
+colors = ['#D81B60', '#0188FF', '#FFC107',
+          '#B7A2FF', '#000000', '#2EC5AC']
 
 fig, axes = plt.subplots(nrows=8, ncols=3, figsize=plt.figaspect(2))
 axes = axes.flatten()

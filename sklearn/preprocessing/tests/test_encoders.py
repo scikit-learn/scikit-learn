@@ -7,24 +7,11 @@ from scipy import sparse
 import pytest
 
 from sklearn.exceptions import NotFittedError
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_raises_regex
-from sklearn.utils.testing import assert_allclose
-from sklearn.utils.testing import ignore_warnings
-from sklearn.utils.testing import assert_warns
-from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import assert_no_warnings
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_allclose
 
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.preprocessing import OrdinalEncoder
-
-
-def toarray(a):
-    if hasattr(a, "toarray"):
-        a = a.toarray()
-    return a
 
 
 def test_one_hot_encoder_sparse_dense():
@@ -91,7 +78,8 @@ def test_one_hot_encoder_not_fitted():
     X = np.array([['a'], ['b']])
     enc = OneHotEncoder(categories=['a', 'b'])
     msg = ("This OneHotEncoder instance is not fitted yet. "
-           "Call 'fit' with appropriate arguments before using this method.")
+           "Call 'fit' with appropriate arguments before using this "
+           "estimator.")
     with pytest.raises(NotFittedError, match=msg):
         enc.transform(X)
 
@@ -267,7 +255,34 @@ def test_one_hot_encoder_inverse(sparse_, drop):
     # incorrect shape raises
     X_tr = np.array([[0, 1, 1], [1, 0, 1]])
     msg = re.escape('Shape of the passed X data is not correct')
-    assert_raises_regex(ValueError, msg, enc.inverse_transform, X_tr)
+    with pytest.raises(ValueError, match=msg):
+        enc.inverse_transform(X_tr)
+
+
+def test_one_hot_encoder_inverse_if_binary():
+    X = np.array([['Male', 1],
+                  ['Female', 3],
+                  ['Female', 2]], dtype=object)
+    ohe = OneHotEncoder(drop='if_binary', sparse=False)
+    X_tr = ohe.fit_transform(X)
+    assert_array_equal(ohe.inverse_transform(X_tr), X)
+
+
+# check that resetting drop option without refitting does not throw an error
+@pytest.mark.parametrize('drop', ['if_binary', 'first', None])
+@pytest.mark.parametrize('reset_drop', ['if_binary', 'first', None])
+def test_one_hot_encoder_drop_reset(drop, reset_drop):
+    X = np.array([['Male', 1],
+                  ['Female', 3],
+                  ['Female', 2]], dtype=object)
+    ohe = OneHotEncoder(drop=drop, sparse=False)
+    ohe.fit(X)
+    X_tr = ohe.transform(X)
+    feature_names = ohe.get_feature_names()
+    ohe.set_params(drop=reset_drop)
+    assert_array_equal(ohe.inverse_transform(X_tr), X)
+    assert_allclose(ohe.transform(X), X_tr)
+    assert_array_equal(ohe.get_feature_names(), feature_names)
 
 
 @pytest.mark.parametrize("method", ['fit', 'fit_transform'])
@@ -388,51 +403,11 @@ def test_one_hot_encoder_pandas():
     assert_allclose(Xtr, [[1, 0, 1, 0], [0, 1, 0, 1]])
 
 
-def test_one_hot_encoder_feature_names():
-    enc = OneHotEncoder()
-    X = [['Male', 1, 'girl', 2, 3],
-         ['Female', 41, 'girl', 1, 10],
-         ['Male', 51, 'boy', 12, 3],
-         ['Male', 91, 'girl', 21, 30]]
-
-    enc.fit(X)
-    feature_names = enc.get_feature_names()
-    assert isinstance(feature_names, np.ndarray)
-
-    assert_array_equal(['x0_Female', 'x0_Male',
-                        'x1_1', 'x1_41', 'x1_51', 'x1_91',
-                        'x2_boy', 'x2_girl',
-                        'x3_1', 'x3_2', 'x3_12', 'x3_21',
-                        'x4_3',
-                        'x4_10', 'x4_30'], feature_names)
-
-    feature_names2 = enc.get_feature_names(['one', 'two',
-                                            'three', 'four', 'five'])
-
-    assert_array_equal(['one_Female', 'one_Male',
-                        'two_1', 'two_41', 'two_51', 'two_91',
-                        'three_boy', 'three_girl',
-                        'four_1', 'four_2', 'four_12', 'four_21',
-                        'five_3', 'five_10', 'five_30'], feature_names2)
-
-    with pytest.raises(ValueError, match="input_features should have length"):
-        enc.get_feature_names(['one', 'two'])
-
-
-def test_one_hot_encoder_feature_names_unicode():
-    enc = OneHotEncoder()
-    X = np.array([['c❤t1', 'dat2']], dtype=object).T
-    enc.fit(X)
-    feature_names = enc.get_feature_names()
-    assert_array_equal(['x0_c❤t1', 'x0_dat2'], feature_names)
-    feature_names = enc.get_feature_names(input_features=['n👍me'])
-    assert_array_equal(['n👍me_c❤t1', 'n👍me_dat2'], feature_names)
-
-
 @pytest.mark.parametrize("drop, expected_names",
                          [('first', ['x0_c', 'x2_b']),
+                          ('if_binary', ['x0_c', 'x1_2', 'x2_b']),
                           (['c', 2, 'b'], ['x0_b', 'x2_a'])],
-                         ids=['first', 'manual'])
+                         ids=['first', 'binary', 'manual'])
 def test_one_hot_encoder_feature_names_drop(drop, expected_names):
     X = [['c', 2, 'a'],
          ['b', 2, 'b']]
@@ -442,6 +417,36 @@ def test_one_hot_encoder_feature_names_drop(drop, expected_names):
     feature_names = ohe.get_feature_names()
     assert isinstance(feature_names, np.ndarray)
     assert_array_equal(expected_names, feature_names)
+
+
+def test_one_hot_encoder_drop_equals_if_binary():
+    # Canonical case
+    X = [[10, 'yes'],
+         [20, 'no'],
+         [30, 'yes']]
+    expected = np.array([[1., 0., 0., 1.],
+                         [0., 1., 0., 0.],
+                         [0., 0., 1., 1.]])
+    expected_drop_idx = np.array([None, 0])
+
+    ohe = OneHotEncoder(drop='if_binary', sparse=False)
+    result = ohe.fit_transform(X)
+    assert_array_equal(ohe.drop_idx_, expected_drop_idx)
+    assert_allclose(result, expected)
+
+    # with only one cat, the behaviour is equivalent to drop=None
+    X = [['true', 'a'],
+         ['false', 'a'],
+         ['false', 'a']]
+    expected = np.array([[1., 1.],
+                         [0., 1.],
+                         [0., 1.]])
+    expected_drop_idx = np.array([0, None])
+
+    ohe = OneHotEncoder(drop='if_binary', sparse=False)
+    result = ohe.fit_transform(X)
+    assert_array_equal(ohe.drop_idx_, expected_drop_idx)
+    assert_allclose(result, expected)
 
 
 @pytest.mark.parametrize("X", [np.array([[1, np.nan]]).T,
@@ -526,7 +531,8 @@ def test_ordinal_encoder_inverse():
     # incorrect shape raises
     X_tr = np.array([[0, 1, 1, 2], [1, 0, 1, 0]])
     msg = re.escape('Shape of the passed X data is not correct')
-    assert_raises_regex(ValueError, msg, enc.inverse_transform, X_tr)
+    with pytest.raises(ValueError, match=msg):
+        enc.inverse_transform(X_tr)
 
 
 @pytest.mark.parametrize("X", [np.array([[1, np.nan]]).T,
@@ -556,6 +562,7 @@ def test_ordinal_encoder_raise_categories_shape():
 
     with pytest.raises(ValueError, match=msg):
         enc.fit(X)
+
 
 def test_encoder_dtypes():
     # check that dtypes are preserved when determining categories
@@ -596,7 +603,7 @@ def test_encoder_dtypes_pandas():
     assert_array_equal(enc.transform(X).toarray(), exp)
 
     X = pd.DataFrame({'A': [1, 2], 'B': ['a', 'b'], 'C': [3., 4.]})
-    X_type = [int, object, float]
+    X_type = [X['A'].dtype, X['B'].dtype, X['C'].dtype]
     enc.fit(X)
     assert all([enc.categories_[i].dtype == X_type[i] for i in range(3)])
     assert_array_equal(enc.transform(X).toarray(), exp)
@@ -649,10 +656,9 @@ def test_one_hot_encoder_invalid_params(X_fit, params, err_msg):
 @pytest.mark.parametrize('drop', [['abc', 3], ['abc', 3, 41, 'a']])
 def test_invalid_drop_length(drop):
     enc = OneHotEncoder(drop=drop)
-    assert_raises_regex(
-        ValueError,
-        "`drop` should have length equal to the number",
-        enc.fit, [['abc', 2, 55], ['def', 1, 55], ['def', 3, 59]])
+    err_msg = "`drop` should have length equal to the number"
+    with pytest.raises(ValueError, match=err_msg):
+        enc.fit([['abc', 2, 55], ['def', 1, 55], ['def', 3, 59]])
 
 
 @pytest.mark.parametrize("density", [True, False],
@@ -674,6 +680,19 @@ def test_categories(density, drop):
         for drop_cat, drop_idx, cat_list in zip(drop,
                                                 ohe_test.drop_idx_,
                                                 ohe_test.categories_):
-            assert cat_list[drop_idx] == drop_cat
+            assert cat_list[int(drop_idx)] == drop_cat
     assert isinstance(ohe_test.drop_idx_, np.ndarray)
-    assert ohe_test.drop_idx_.dtype == np.int_
+    assert ohe_test.drop_idx_.dtype == np.object
+
+
+@pytest.mark.parametrize('Encoder', [OneHotEncoder, OrdinalEncoder])
+def test_encoders_has_categorical_tags(Encoder):
+    assert 'categorical' in Encoder()._get_tags()['X_types']
+
+
+@pytest.mark.parametrize('Encoder', [OneHotEncoder, OrdinalEncoder])
+def test_encoders_does_not_support_none_values(Encoder):
+    values = [["a"], [None]]
+    with pytest.raises(TypeError, match="Encoders require their input to be "
+                                        "uniformly strings or numbers."):
+        Encoder().fit(values)

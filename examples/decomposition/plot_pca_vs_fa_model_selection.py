@@ -69,20 +69,20 @@ def compute_scores(X):
     for n in n_components:
         pca.n_components = n
         fa.n_components = n
-        pca_scores.append(np.mean(cross_val_score(pca, X, cv=5)))
-        fa_scores.append(np.mean(cross_val_score(fa, X, cv=5)))
+        pca_scores.append(np.mean(cross_val_score(pca, X)))
+        fa_scores.append(np.mean(cross_val_score(fa, X)))
 
     return pca_scores, fa_scores
 
 
 def shrunk_cov_score(X):
     shrinkages = np.logspace(-2, 0, 30)
-    cv = GridSearchCV(ShrunkCovariance(), {'shrinkage': shrinkages}, cv=5)
-    return np.mean(cross_val_score(cv.fit(X).best_estimator_, X, cv=5))
+    cv = GridSearchCV(ShrunkCovariance(), {'shrinkage': shrinkages})
+    return np.mean(cross_val_score(cv.fit(X).best_estimator_, X))
 
 
 def lw_score(X):
-    return np.mean(cross_val_score(LedoitWolf(), X, cv=5))
+    return np.mean(cross_val_score(LedoitWolf(), X))
 
 
 for X, title in [(X_homo, 'Homoscedastic Noise'),

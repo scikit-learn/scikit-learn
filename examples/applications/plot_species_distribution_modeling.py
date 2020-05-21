@@ -9,9 +9,8 @@ model the geographic distribution of two south american
 mammals given past observations and 14 environmental
 variables. Since we have only positive examples (there are
 no unsuccessful observations), we cast this problem as a
-density estimation problem and use the `OneClassSVM` provided
-by the package `sklearn.svm` as our modeling tool.
-The dataset is provided by Phillips et. al. (2006).
+density estimation problem and use the :class:`sklearn.svm.OneClassSVM`
+as our modeling tool. The dataset is provided by Phillips et. al. (2006).
 If available, the example uses
 `basemap <https://matplotlib.org/basemap/>`_
 to plot the coast lines and national boundaries of South America.
@@ -46,9 +45,8 @@ from time import time
 import numpy as np
 import matplotlib.pyplot as plt
 
-from sklearn.datasets.base import Bunch
+from sklearn.utils import Bunch
 from sklearn.datasets import fetch_species_distributions
-from sklearn.datasets.species_distributions import construct_grids
 from sklearn import svm, metrics
 
 # if basemap is available, we'll use it.
@@ -60,6 +58,33 @@ except ImportError:
     basemap = False
 
 print(__doc__)
+
+
+def construct_grids(batch):
+    """Construct the map grid from the batch object
+
+    Parameters
+    ----------
+    batch : Batch object
+        The object returned by :func:`fetch_species_distributions`
+
+    Returns
+    -------
+    (xgrid, ygrid) : 1-D arrays
+        The grid corresponding to the values in batch.coverages
+    """
+    # x,y coordinates for corner cells
+    xmin = batch.x_left_lower_corner + batch.grid_size
+    xmax = xmin + (batch.Nx * batch.grid_size)
+    ymin = batch.y_left_lower_corner + batch.grid_size
+    ymax = ymin + (batch.Ny * batch.grid_size)
+
+    # x coordinates of the grid cells
+    xgrid = np.arange(xmin, xmax, batch.grid_size)
+    # y coordinates of the grid cells
+    ygrid = np.arange(ymin, ymax, batch.grid_size)
+
+    return (xgrid, ygrid)
 
 
 def create_species_bunch(species_name, train, test, coverages, xgrid, ygrid):

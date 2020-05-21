@@ -6,7 +6,8 @@ from contextlib import contextmanager as contextmanager
 _global_config = {
     'assume_finite': bool(os.environ.get('SKLEARN_ASSUME_FINITE', False)),
     'working_memory': int(os.environ.get('SKLEARN_WORKING_MEMORY', 1024)),
-    'print_changed_only': False,
+    'print_changed_only': True,
+    'display': 'text',
 }
 
 
@@ -17,12 +18,17 @@ def get_config():
     -------
     config : dict
         Keys are parameter names that can be passed to :func:`set_config`.
+
+    See Also
+    --------
+    config_context: Context manager for global scikit-learn configuration
+    set_config: Set global scikit-learn configuration
     """
     return _global_config.copy()
 
 
 def set_config(assume_finite=None, working_memory=None,
-               print_changed_only=None):
+               print_changed_only=None, display=None):
     """Set global scikit-learn configuration
 
     .. versionadded:: 0.19
@@ -53,6 +59,18 @@ def set_config(assume_finite=None, working_memory=None,
         all the non-changed parameters.
 
         .. versionadded:: 0.21
+
+    display : {'text', 'diagram'}, optional
+        If 'diagram', estimators will be displayed as text in a jupyter lab
+        of notebook context. If 'text', estimators will be displayed as
+        text. Default is 'text'.
+
+        .. versionadded:: 0.23
+
+    See Also
+    --------
+    config_context: Context manager for global scikit-learn configuration
+    get_config: Retrieve current values of the global configuration
     """
     if assume_finite is not None:
         _global_config['assume_finite'] = assume_finite
@@ -60,6 +78,8 @@ def set_config(assume_finite=None, working_memory=None,
         _global_config['working_memory'] = working_memory
     if print_changed_only is not None:
         _global_config['print_changed_only'] = print_changed_only
+    if display is not None:
+        _global_config['display'] = display
 
 
 @contextmanager
@@ -80,6 +100,23 @@ def config_context(**new_config):
         computation time and memory on expensive operations that can be
         performed in chunks. Global default: 1024.
 
+    print_changed_only : bool, optional
+        If True, only the parameters that were set to non-default
+        values will be printed when printing an estimator. For example,
+        ``print(SVC())`` while True will only print 'SVC()', but would print
+        'SVC(C=1.0, cache_size=200, ...)' with all the non-changed parameters
+        when False. Default is True.
+
+        .. versionchanged:: 0.23
+           Default changed from False to True.
+
+    display : {'text', 'diagram'}, optional
+        If 'diagram', estimators will be displayed as text in a jupyter lab
+        of notebook context. If 'text', estimators will be displayed as
+        text. Default is 'text'.
+
+        .. versionadded:: 0.23
+
     Notes
     -----
     All settings, not just those presently modified, will be returned to
@@ -95,10 +132,14 @@ def config_context(**new_config):
     >>> with sklearn.config_context(assume_finite=True):
     ...     with sklearn.config_context(assume_finite=False):
     ...         assert_all_finite([float('nan')])
-    ... # doctest: +ELLIPSIS
     Traceback (most recent call last):
     ...
     ValueError: Input contains NaN, ...
+
+    See Also
+    --------
+    set_config: Set global scikit-learn configuration
+    get_config: Retrieve current values of the global configuration
     """
     old_config = get_config().copy()
     set_config(**new_config)

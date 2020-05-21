@@ -37,8 +37,8 @@ def configuration(parent_package="", top_path=None):
                          sources=["_hist_gradient_boosting/_loss.pyx"],
                          include_dirs=[numpy.get_include()])
 
-    config.add_extension("_hist_gradient_boosting.types",
-                         sources=["_hist_gradient_boosting/types.pyx"],
+    config.add_extension("_hist_gradient_boosting.common",
+                         sources=["_hist_gradient_boosting/common.pyx"],
                          include_dirs=[numpy.get_include()])
 
     config.add_extension("_hist_gradient_boosting.utils",

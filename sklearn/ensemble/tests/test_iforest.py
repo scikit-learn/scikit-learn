@@ -10,21 +10,18 @@ import pytest
 
 import numpy as np
 
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_raises_regex
-from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_greater
-from sklearn.utils.testing import ignore_warnings
-from sklearn.utils.testing import assert_allclose
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_raises
+from sklearn.utils._testing import assert_warns_message
+from sklearn.utils._testing import ignore_warnings
+from sklearn.utils._testing import assert_allclose
 
 from sklearn.model_selection import ParameterGrid
 from sklearn.ensemble import IsolationForest
-from sklearn.ensemble.iforest import _average_path_length
+from sklearn.ensemble._iforest import _average_path_length
 from sklearn.model_selection import train_test_split
-from sklearn.datasets import load_boston, load_iris
+from sklearn.datasets import load_diabetes, load_iris
 from sklearn.utils import check_random_state
 from sklearn.metrics import roc_auc_score
 
@@ -40,12 +37,12 @@ perm = rng.permutation(iris.target.size)
 iris.data = iris.data[perm]
 iris.target = iris.target[perm]
 
-# also load the boston dataset
+# also load the diabetes dataset
 # and randomly permute it
-boston = load_boston()
-perm = rng.permutation(boston.target.size)
-boston.data = boston.data[perm]
-boston.target = boston.target[perm]
+diabetes = load_diabetes()
+perm = rng.permutation(diabetes.target.size)
+diabetes.data = diabetes.data[perm]
+diabetes.target = diabetes.target[perm]
 
 
 def test_iforest():
@@ -66,8 +63,8 @@ def test_iforest():
 def test_iforest_sparse():
     """Check IForest for various parameter settings on sparse input."""
     rng = check_random_state(0)
-    X_train, X_test, y_train, y_test = train_test_split(boston.data[:50],
-                                                        boston.target[:50],
+    X_train, X_test, y_train, y_test = train_test_split(diabetes.data[:50],
+                                                        diabetes.target[:50],
                                                         random_state=rng)
     grid = ParameterGrid({"max_samples": [0.5, 1.0],
                           "bootstrap": [True, False]})
@@ -127,41 +124,36 @@ def test_iforest_error():
     # test X_test n_features match X_train one:
     assert_raises(ValueError, IsolationForest().fit(X).predict, X[:, 1:])
 
-    # test that behaviour='old' will raise an error
-    msg = "The old behaviour of IsolationForest is not implemented anymore."
-    with pytest.raises(NotImplementedError, match=msg):
-        IsolationForest(behaviour='old').fit(X)
-
 
 def test_recalculate_max_depth():
     """Check max_depth recalculation when max_samples is reset to n_samples"""
     X = iris.data
     clf = IsolationForest().fit(X)
     for est in clf.estimators_:
-        assert_equal(est.max_depth, int(np.ceil(np.log2(X.shape[0]))))
+        assert est.max_depth == int(np.ceil(np.log2(X.shape[0])))
 
 
 def test_max_samples_attribute():
     X = iris.data
     clf = IsolationForest().fit(X)
-    assert_equal(clf.max_samples_, X.shape[0])
+    assert clf.max_samples_ == X.shape[0]
 
     clf = IsolationForest(max_samples=500)
     assert_warns_message(UserWarning,
                          "max_samples will be set to n_samples for estimation",
                          clf.fit, X)
-    assert_equal(clf.max_samples_, X.shape[0])
+    assert clf.max_samples_ == X.shape[0]
 
     clf = IsolationForest(max_samples=0.4).fit(X)
-    assert_equal(clf.max_samples_, 0.4*X.shape[0])
+    assert clf.max_samples_ == 0.4*X.shape[0]
 
 
 def test_iforest_parallel_regression():
     """Check parallel regression."""
     rng = check_random_state(0)
 
-    X_train, X_test, y_train, y_test = train_test_split(boston.data,
-                                                        boston.target,
+    X_train, X_test, y_train, y_test = train_test_split(diabetes.data,
+                                                        diabetes.target,
                                                         random_state=rng)
 
     ensemble = IsolationForest(n_jobs=3,
@@ -201,7 +193,7 @@ def test_iforest_performance():
     y_pred = - clf.decision_function(X_test)
 
     # check that there is at most 6 errors (false positive or false negative)
-    assert_greater(roc_auc_score(y_test, y_pred), 0.98)
+    assert roc_auc_score(y_test, y_pred) > 0.98
 
 
 @pytest.mark.parametrize("contamination", [0.25, "auto"])
@@ -215,7 +207,7 @@ def test_iforest_works(contamination):
     decision_func = -clf.decision_function(X)
     pred = clf.predict(X)
     # assert detect outliers:
-    assert_greater(np.min(decision_func[-2:]), np.max(decision_func[:-2]))
+    assert np.min(decision_func[-2:]) > np.max(decision_func[:-2])
     assert_array_equal(pred, 6 * [1] + 2 * [-1])
 
 
@@ -223,14 +215,14 @@ def test_max_samples_consistency():
     # Make sure validated max_samples in iforest and BaseBagging are identical
     X = iris.data
     clf = IsolationForest().fit(X)
-    assert_equal(clf.max_samples_, clf._max_samples)
+    assert clf.max_samples_ == clf._max_samples
 
 
 def test_iforest_subsampled_features():
     # It tests non-regression for #5732 which failed at predict.
     rng = check_random_state(0)
-    X_train, X_test, y_train, y_test = train_test_split(boston.data[:50],
-                                                        boston.target[:50],
+    X_train, X_test, y_train, y_test = train_test_split(diabetes.data[:50],
+                                                        diabetes.target[:50],
                                                         random_state=rng)
     clf = IsolationForest(max_features=0.8)
     clf.fit(X_train, y_train)
@@ -292,7 +284,7 @@ def test_iforest_warm_start():
 # mock get_chunk_n_rows to actually test more than one chunk (here one
 # chunk = 3 rows:
 @patch(
-    "sklearn.ensemble.iforest.get_chunk_n_rows",
+    "sklearn.ensemble._iforest.get_chunk_n_rows",
     side_effect=Mock(**{"return_value": 3}),
 )
 @pytest.mark.parametrize(
@@ -307,7 +299,7 @@ def test_iforest_chunks_works1(
 
 # idem with chunk_size = 5 rows
 @patch(
-    "sklearn.ensemble.iforest.get_chunk_n_rows",
+    "sklearn.ensemble._iforest.get_chunk_n_rows",
     side_effect=Mock(**{"return_value": 10}),
 )
 @pytest.mark.parametrize(
@@ -320,8 +312,35 @@ def test_iforest_chunks_works2(
     assert mocked_get_chunk.call_count == n_predict_calls
 
 
-def test_iforest_deprecation():
-    iforest = IsolationForest(behaviour='new')
-    warn_msg = "'behaviour' is deprecated in 0.22 and will be removed in 0.24"
-    with pytest.warns(DeprecationWarning, match=warn_msg):
-        iforest.fit(iris.data)
+def test_iforest_with_uniform_data():
+    """Test whether iforest predicts inliers when using uniform data"""
+
+    # 2-d array of all 1s
+    X = np.ones((100, 10))
+    iforest = IsolationForest()
+    iforest.fit(X)
+
+    rng = np.random.RandomState(0)
+
+    assert all(iforest.predict(X) == 1)
+    assert all(iforest.predict(rng.randn(100, 10)) == 1)
+    assert all(iforest.predict(X + 1) == 1)
+    assert all(iforest.predict(X - 1) == 1)
+
+    # 2-d array where columns contain the same value across rows
+    X = np.repeat(rng.randn(1, 10), 100, 0)
+    iforest = IsolationForest()
+    iforest.fit(X)
+
+    assert all(iforest.predict(X) == 1)
+    assert all(iforest.predict(rng.randn(100, 10)) == 1)
+    assert all(iforest.predict(np.ones((100, 10))) == 1)
+
+    # Single row
+    X = rng.randn(1, 10)
+    iforest = IsolationForest()
+    iforest.fit(X)
+
+    assert all(iforest.predict(X) == 1)
+    assert all(iforest.predict(rng.randn(100, 10)) == 1)
+    assert all(iforest.predict(np.ones((100, 10))) == 1)

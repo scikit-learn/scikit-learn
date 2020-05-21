@@ -1,4 +1,3 @@
-import os as _os
 import warnings as _warnings
 
 with _warnings.catch_warnings():

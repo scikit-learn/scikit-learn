@@ -6,15 +6,12 @@ import pytest
 
 import numpy as np
 
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_allclose
-from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import if_safe_multiprocessing_with_blas
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import if_safe_multiprocessing_with_blas
 
 from sklearn.decomposition import SparsePCA, MiniBatchSparsePCA, PCA
 from sklearn.utils import check_random_state
-
 
 def generate_toy_data(n_components, n_samples, image_size, random_state=None):
     n_features = image_size[0] * image_size[1]
@@ -46,13 +43,13 @@ def test_correct_shapes():
     X = rng.randn(12, 10)
     spca = SparsePCA(n_components=8, random_state=rng)
     U = spca.fit_transform(X)
-    assert_equal(spca.components_.shape, (8, 10))
-    assert_equal(U.shape, (12, 8))
+    assert spca.components_.shape == (8, 10)
+    assert U.shape == (12, 8)
     # test overcomplete decomposition
     spca = SparsePCA(n_components=13, random_state=rng)
     U = spca.fit_transform(X)
-    assert_equal(spca.components_.shape, (13, 10))
-    assert_equal(U.shape, (12, 13))
+    assert spca.components_.shape == (13, 10)
+    assert U.shape == (12, 13)
 
 
 def test_fit_transform():
@@ -123,13 +120,13 @@ def test_mini_batch_correct_shapes():
     X = rng.randn(12, 10)
     pca = MiniBatchSparsePCA(n_components=8, random_state=rng)
     U = pca.fit_transform(X)
-    assert_equal(pca.components_.shape, (8, 10))
-    assert_equal(U.shape, (12, 8))
+    assert pca.components_.shape == (8, 10)
+    assert U.shape == (12, 8)
     # test overcomplete decomposition
     pca = MiniBatchSparsePCA(n_components=13, random_state=rng)
     U = pca.fit_transform(X)
-    assert_equal(pca.components_.shape, (13, 10))
-    assert_equal(U.shape, (12, 13))
+    assert pca.components_.shape == (13, 10)
+    assert U.shape == (12, 13)
 
 
 # XXX: test always skipped
@@ -143,15 +140,15 @@ def test_mini_batch_fit_transform():
     U1 = spca_lars.transform(Y)
     # Test multiple CPUs
     if sys.platform == 'win32':  # fake parallelism for win32
-        import sklearn.utils._joblib.parallel as joblib_par
-        _mp = joblib_par.multiprocessing
-        joblib_par.multiprocessing = None
+        import joblib
+        _mp = joblib.parallel.multiprocessing
+        joblib.parallel.multiprocessing = None
         try:
             spca = MiniBatchSparsePCA(n_components=3, n_jobs=2, alpha=alpha,
                                       random_state=0)
             U2 = spca.fit(Y).transform(Y)
         finally:
-            joblib_par.multiprocessing = _mp
+            joblib.parallel.multiprocessing = _mp
     else:  # we can efficiently use parallelism
         spca = MiniBatchSparsePCA(n_components=3, n_jobs=2, alpha=alpha,
                                   random_state=0)
@@ -192,21 +189,16 @@ def test_pca_vs_spca():
     assert_allclose(results_test_pca, results_test_spca)
 
 
-@pytest.mark.parametrize("spca", [SparsePCA, MiniBatchSparsePCA])
-def test_spca_deprecation_warning(spca):
+@pytest.mark.parametrize("SPCA", [SparsePCA, MiniBatchSparsePCA])
+@pytest.mark.parametrize("n_components", [None, 3])
+def test_spca_n_components_(SPCA, n_components):
     rng = np.random.RandomState(0)
-    Y, _, _ = generate_toy_data(3, 10, (8, 8), random_state=rng)
+    n_samples, n_features = 12, 10
+    X = rng.randn(n_samples, n_features)
 
-    warn_msg = "'normalize_components' has been deprecated in 0.22"
-    with pytest.warns(DeprecationWarning, match=warn_msg):
-        spca(normalize_components=True).fit(Y)
+    model = SPCA(n_components=n_components).fit(X)
 
-
-@pytest.mark.parametrize("spca", [SparsePCA, MiniBatchSparsePCA])
-def test_spca_error_unormalized_components(spca):
-    rng = np.random.RandomState(0)
-    Y, _, _ = generate_toy_data(3, 10, (8, 8), random_state=rng)
-
-    err_msg = "normalize_components=False is not supported starting "
-    with pytest.raises(NotImplementedError, match=err_msg):
-        spca(normalize_components=False).fit(Y)
+    if n_components is not None:
+        assert model.n_components_ == n_components
+    else:
+        assert model.n_components_ == n_features

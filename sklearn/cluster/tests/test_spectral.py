@@ -8,18 +8,17 @@ import pytest
 import pickle
 
 from sklearn.utils import check_random_state
-from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_warns_message
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_warns_message
 
 from sklearn.cluster import SpectralClustering, spectral_clustering
-from sklearn.cluster.spectral import discretize
+from sklearn.cluster._spectral import discretize
 from sklearn.feature_extraction import img_to_graph
 from sklearn.metrics import pairwise_distances
 from sklearn.metrics import adjusted_rand_score
 from sklearn.metrics.pairwise import kernel_metrics, rbf_kernel
-from sklearn.datasets.samples_generator import make_blobs
+from sklearn.neighbors import NearestNeighbors
+from sklearn.datasets import make_blobs
 
 try:
     from pyamg import smoothed_aggregation_solver  # noqa
@@ -69,8 +68,9 @@ def test_spectral_unknown_mode():
     D = pairwise_distances(X)  # Distance matrix
     S = np.max(D) - D  # Similarity matrix
     S = sparse.coo_matrix(S)
-    assert_raises(ValueError, spectral_clustering, S, n_clusters=2,
-                  random_state=0, eigen_solver="<unknown>")
+    with pytest.raises(ValueError):
+        spectral_clustering(S, n_clusters=2, random_state=0,
+                            eigen_solver="<unknown>")
 
 
 def test_spectral_unknown_assign_labels():
@@ -85,8 +85,9 @@ def test_spectral_unknown_assign_labels():
     D = pairwise_distances(X)  # Distance matrix
     S = np.max(D) - D  # Similarity matrix
     S = sparse.coo_matrix(S)
-    assert_raises(ValueError, spectral_clustering, S, n_clusters=2,
-                  random_state=0, assign_labels="<unknown>")
+    with pytest.raises(ValueError):
+        spectral_clustering(S, n_clusters=2, random_state=0,
+                            assign_labels="<unknown>")
 
 
 def test_spectral_clustering_sparse():
@@ -100,6 +101,25 @@ def test_spectral_clustering_sparse():
     labels = SpectralClustering(random_state=0, n_clusters=2,
                                 affinity='precomputed').fit(S).labels_
     assert adjusted_rand_score(y, labels) == 1
+
+
+def test_precomputed_nearest_neighbors_filtering():
+    # Test precomputed graph filtering when containing too many neighbors
+    X, y = make_blobs(n_samples=200, random_state=0,
+                      centers=[[1, 1], [-1, -1]], cluster_std=0.01)
+
+    n_neighbors = 2
+    results = []
+    for additional_neighbors in [0, 10]:
+        nn = NearestNeighbors(
+            n_neighbors=n_neighbors + additional_neighbors).fit(X)
+        graph = nn.kneighbors_graph(X, mode='connectivity')
+        labels = SpectralClustering(random_state=0, n_clusters=2,
+                                    affinity='precomputed_nearest_neighbors',
+                                    n_neighbors=n_neighbors).fit(graph).labels_
+        results.append(labels)
+
+    assert_array_equal(results[0], results[1])
 
 
 def test_affinities():
@@ -137,7 +157,7 @@ def test_affinities():
 
     def histogram(x, y, **kwargs):
         # Histogram kernel implemented as a callable.
-        assert_equal(kwargs, {})    # no kernel_params that we didn't ask for
+        assert kwargs == {}    # no kernel_params that we didn't ask for
         return np.minimum(x, y).sum()
 
     sp = SpectralClustering(n_clusters=2, affinity=histogram, random_state=0)
@@ -146,7 +166,8 @@ def test_affinities():
 
     # raise error on unknown affinity
     sp = SpectralClustering(n_clusters=2, affinity='<unknown>')
-    assert_raises(ValueError, sp.fit, X)
+    with pytest.raises(ValueError):
+        sp.fit(X)
 
 
 @pytest.mark.parametrize('n_samples', [50, 100, 150, 500])
@@ -166,10 +187,14 @@ def test_discretize(n_samples):
         y_true_noisy = (y_indicator.toarray()
                         + 0.1 * random_state.randn(n_samples,
                                                    n_class + 1))
-        y_pred = discretize(y_true_noisy, random_state)
+        y_pred = discretize(y_true_noisy, random_state=random_state)
         assert adjusted_rand_score(y_true, y_pred) > 0.8
 
 
+# TODO: Remove when pyamg does replaces sp.rand call with np.random.rand
+# https://github.com/scikit-learn/scikit-learn/issues/15913
+@pytest.mark.filterwarnings(
+    "ignore:scipy.rand is deprecated:DeprecationWarning:pyamg.*")
 def test_spectral_clustering_with_arpack_amg_solvers():
     # Test that spectral_clustering is the same for arpack and amg solver
     # Based on toy example from plot_segmentation_toy.py
@@ -200,9 +225,9 @@ def test_spectral_clustering_with_arpack_amg_solvers():
             graph, n_clusters=2, eigen_solver='amg', random_state=0)
         assert adjusted_rand_score(labels_arpack, labels_amg) == 1
     else:
-        assert_raises(
-            ValueError, spectral_clustering,
-            graph, n_clusters=2, eigen_solver='amg', random_state=0)
+        with pytest.raises(ValueError):
+            spectral_clustering(graph, n_clusters=2, eigen_solver='amg',
+                                random_state=0)
 
 
 def test_n_components():

@@ -33,6 +33,7 @@ Base classes
    base.DensityMixin
    base.RegressorMixin
    base.TransformerMixin
+   feature_selection.SelectorMixin
 
 Functions
 ---------
@@ -85,7 +86,8 @@ Functions
    :no-members:
    :no-inherited-members:
 
-**User guide:** See the :ref:`clustering` section for further details.
+**User guide:** See the :ref:`clustering` and :ref:`biclustering` sections for
+further details.
 
 Classes
 -------
@@ -99,12 +101,14 @@ Classes
    cluster.AgglomerativeClustering
    cluster.Birch
    cluster.DBSCAN
-   cluster.OPTICS
    cluster.FeatureAgglomeration
    cluster.KMeans
    cluster.MiniBatchKMeans
    cluster.MeanShift
+   cluster.OPTICS
    cluster.SpectralClustering
+   cluster.SpectralBiclustering
+   cluster.SpectralCoclustering
 
 Functions
 ---------
@@ -122,28 +126,6 @@ Functions
    cluster.mean_shift
    cluster.spectral_clustering
    cluster.ward_tree
-
-.. _bicluster_ref:
-
-:mod:`sklearn.cluster.bicluster`: Biclustering
-==============================================
-
-.. automodule:: sklearn.cluster.bicluster
-   :no-members:
-   :no-inherited-members:
-
-**User guide:** See the :ref:`biclustering` section for further details.
-
-Classes
--------
-.. currentmodule:: sklearn.cluster.bicluster
-
-.. autosummary::
-   :toctree: generated/
-   :template: class.rst
-
-   SpectralBiclustering
-   SpectralCoclustering
 
 .. _compose_ref:
 
@@ -171,6 +153,7 @@ details.
    :template: function.rst
 
    compose.make_column_transformer
+   compose.make_column_selector
 
 .. _covariance_ref:
 
@@ -422,6 +405,8 @@ Samples generator
    ensemble.RandomForestClassifier
    ensemble.RandomForestRegressor
    ensemble.RandomTreesEmbedding
+   ensemble.StackingClassifier
+   ensemble.StackingRegressor
    ensemble.VotingClassifier
    ensemble.VotingRegressor
    ensemble.HistGradientBoostingRegressor
@@ -446,7 +431,7 @@ Samples generator
 
 .. autosummary::
    :toctree: generated/
-   :template: class_without_init.rst
+   :template: class.rst
 
    exceptions.ChangedBehaviorWarning
    exceptions.ConvergenceWarning
@@ -618,6 +603,65 @@ Kernels:
   gaussian_process.kernels.Sum
   gaussian_process.kernels.WhiteKernel
 
+
+.. _impute_ref:
+
+:mod:`sklearn.impute`: Impute
+=============================
+
+.. automodule:: sklearn.impute
+   :no-members:
+   :no-inherited-members:
+
+**User guide:** See the :ref:`Impute` section for further details.
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   impute.SimpleImputer
+   impute.IterativeImputer
+   impute.MissingIndicator
+   impute.KNNImputer
+
+
+.. _inspection_ref:
+
+:mod:`sklearn.inspection`: inspection
+=====================================
+
+.. automodule:: sklearn.inspection
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   inspection.partial_dependence
+   inspection.permutation_importance
+
+Plotting
+--------
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   inspection.PartialDependenceDisplay
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   inspection.plot_partial_dependence
+
 .. _isotonic_ref:
 
 :mod:`sklearn.isotonic`: Isotonic regression
@@ -644,27 +688,7 @@ Kernels:
    isotonic.check_increasing
    isotonic.isotonic_regression
 
-.. _impute_ref:
 
-:mod:`sklearn.impute`: Impute
-=============================
-
-.. automodule:: sklearn.impute
-   :no-members:
-   :no-inherited-members:
-
-**User guide:** See the :ref:`Impute` section for further details.
-
-.. currentmodule:: sklearn
-
-.. autosummary::
-   :toctree: generated/
-   :template: class.rst
-
-   impute.SimpleImputer
-   impute.IterativeImputer
-   impute.MissingIndicator
-   
 .. _kernel_approximation_ref:
 
 :mod:`sklearn.kernel_approximation` Kernel Approximation
@@ -708,8 +732,8 @@ Kernels:
 
 .. _linear_model_ref:
 
-:mod:`sklearn.linear_model`: Generalized Linear Models
-======================================================
+:mod:`sklearn.linear_model`: Linear Models
+==========================================
 
 .. automodule:: sklearn.linear_model
    :no-members:
@@ -717,17 +741,51 @@ Kernels:
 
 **User guide:** See the :ref:`linear_model` section for further details.
 
+The following subsections are only rough guidelines: the same estimator can
+fall into multiple categories, depending on its parameters.
+
 .. currentmodule:: sklearn
+
+Linear classifiers
+------------------
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   linear_model.LogisticRegression
+   linear_model.LogisticRegressionCV
+   linear_model.PassiveAggressiveClassifier
+   linear_model.Perceptron
+   linear_model.RidgeClassifier
+   linear_model.RidgeClassifierCV
+   linear_model.SGDClassifier
+
+Classical linear regressors
+---------------------------
 
 .. autosummary::
    :toctree: generated/
    :template: class.rst
 
-   linear_model.ARDRegression
-   linear_model.BayesianRidge
+   linear_model.LinearRegression
+   linear_model.Ridge
+   linear_model.RidgeCV
+   linear_model.SGDRegressor
+
+Regressors with variable selection
+----------------------------------
+
+The following estimators have built-in variable selection fitting
+procedures, but any estimator using a L1 or elastic-net penalty also
+performs variable selection: typically :class:`~linear_model.SGDRegressor`
+or :class:`~sklearn.linear_model.SGDClassifier` with an appropriate penalty.
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
    linear_model.ElasticNet
    linear_model.ElasticNetCV
-   linear_model.HuberRegressor
    linear_model.Lars
    linear_model.LarsCV
    linear_model.Lasso
@@ -735,31 +793,73 @@ Kernels:
    linear_model.LassoLars
    linear_model.LassoLarsCV
    linear_model.LassoLarsIC
-   linear_model.LinearRegression
-   linear_model.LogisticRegression
-   linear_model.LogisticRegressionCV
-   linear_model.MultiTaskLasso
-   linear_model.MultiTaskElasticNet
-   linear_model.MultiTaskLassoCV
-   linear_model.MultiTaskElasticNetCV
    linear_model.OrthogonalMatchingPursuit
    linear_model.OrthogonalMatchingPursuitCV
-   linear_model.PassiveAggressiveClassifier
-   linear_model.PassiveAggressiveRegressor
-   linear_model.Perceptron
+
+Bayesian regressors
+-------------------
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   linear_model.ARDRegression
+   linear_model.BayesianRidge
+
+Multi-task linear regressors with variable selection
+----------------------------------------------------
+
+These estimators fit multiple regression problems (or tasks) jointly, while
+inducing sparse coefficients. While the inferred coefficients may differ
+between the tasks, they are constrained to agree on the features that are
+selected (non-zero coefficients).
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   linear_model.MultiTaskElasticNet
+   linear_model.MultiTaskElasticNetCV
+   linear_model.MultiTaskLasso
+   linear_model.MultiTaskLassoCV
+
+Outlier-robust regressors
+-------------------------
+
+Any estimator using the Huber loss would also be robust to outliers, e.g.
+:class:`~linear_model.SGDRegressor` with ``loss='huber'``.
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   linear_model.HuberRegressor
    linear_model.RANSACRegressor
-   linear_model.Ridge
-   linear_model.RidgeClassifier
-   linear_model.RidgeClassifierCV
-   linear_model.RidgeCV
-   linear_model.SGDClassifier
-   linear_model.SGDRegressor
    linear_model.TheilSenRegressor
+
+Generalized linear models (GLM) for regression
+----------------------------------------------
+
+These models allow for response variables to have error distributions other
+than a normal distribution:
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   linear_model.PoissonRegressor
+   linear_model.TweedieRegressor
+   linear_model.GammaRegressor
+
+
+Miscellaneous
+-------------
 
 .. autosummary::
    :toctree: generated/
    :template: function.rst
 
+   linear_model.PassiveAggressiveRegressor
    linear_model.enet_path
    linear_model.lars_path
    linear_model.lars_path_gram
@@ -799,7 +899,8 @@ Kernels:
     manifold.locally_linear_embedding
     manifold.smacof
     manifold.spectral_embedding
-
+    manifold.trustworthiness
+	
 
 .. _metrics_ref:
 
@@ -846,6 +947,7 @@ details.
    metrics.classification_report
    metrics.cohen_kappa_score
    metrics.confusion_matrix
+   metrics.dcg_score
    metrics.f1_score
    metrics.fbeta_score
    metrics.hamming_loss
@@ -854,6 +956,7 @@ details.
    metrics.log_loss
    metrics.matthews_corrcoef
    metrics.multilabel_confusion_matrix
+   metrics.ndcg_score
    metrics.precision_recall_curve
    metrics.precision_recall_fscore_support
    metrics.precision_score
@@ -879,6 +982,9 @@ details.
    metrics.mean_squared_log_error
    metrics.median_absolute_error
    metrics.r2_score
+   metrics.mean_poisson_deviance
+   metrics.mean_gamma_deviance
+   metrics.mean_tweedie_deviance
 
 Multilabel ranking metrics
 --------------------------
@@ -966,6 +1072,7 @@ See the :ref:`metrics` section of the user guide for further details.
    metrics.pairwise.laplacian_kernel
    metrics.pairwise.linear_kernel
    metrics.pairwise.manhattan_distances
+   metrics.pairwise.nan_euclidean_distances
    metrics.pairwise.pairwise_kernels
    metrics.pairwise.polynomial_kernel
    metrics.pairwise.rbf_kernel
@@ -978,6 +1085,30 @@ See the :ref:`metrics` section of the user guide for further details.
    metrics.pairwise_distances_argmin
    metrics.pairwise_distances_argmin_min
    metrics.pairwise_distances_chunked
+
+
+Plotting
+--------
+
+See the :ref:`visualizations` section of the user guide for further details.
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   metrics.plot_confusion_matrix
+   metrics.plot_precision_recall_curve
+   metrics.plot_roc_curve
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   metrics.ConfusionMatrixDisplay
+   metrics.PrecisionRecallDisplay
+   metrics.RocCurveDisplay
 
 
 .. _mixture_ref:
@@ -1063,12 +1194,6 @@ Hyper-parameter optimizers
    model_selection.RandomizedSearchCV
 
 
-.. autosummary::
-   :toctree: generated/
-   :template: function.rst
-
-   model_selection.fit_grid_point
-
 Model validation
 ----------------
 
@@ -1146,9 +1271,10 @@ Model validation
    :template: class.rst
 
    naive_bayes.BernoulliNB
+   naive_bayes.CategoricalNB
+   naive_bayes.ComplementNB
    naive_bayes.GaussianNB
    naive_bayes.MultinomialNB
-   naive_bayes.ComplementNB
 
 
 .. _neighbors_ref:
@@ -1174,9 +1300,11 @@ Model validation
    neighbors.KernelDensity
    neighbors.KNeighborsClassifier
    neighbors.KNeighborsRegressor
+   neighbors.KNeighborsTransformer
    neighbors.LocalOutlierFactor
    neighbors.RadiusNeighborsClassifier
    neighbors.RadiusNeighborsRegressor
+   neighbors.RadiusNeighborsTransformer
    neighbors.NearestCentroid
    neighbors.NearestNeighbors
    neighbors.NeighborhoodComponentsAnalysis
@@ -1218,6 +1346,9 @@ Model validation
    :no-members:
    :no-inherited-members:
 
+**User guide:** See the :ref:`combining_estimators` section for further
+details.
+
 .. currentmodule:: sklearn
 
 .. autosummary::
@@ -1233,26 +1364,6 @@ Model validation
 
    pipeline.make_pipeline
    pipeline.make_union
-
-
-.. _inspection_ref:
-
-:mod:`sklearn.inspection`: inspection
-=====================================
-
-.. automodule:: sklearn.inspection
-   :no-members:
-   :no-inherited-members:
-
-.. currentmodule:: sklearn
-
-.. autosummary::
-   :toctree: generated/
-   :template: function.rst
-
-   inspection.partial_dependence
-   inspection.plot_partial_dependence
-
 
 .. _preprocessing_ref:
 
@@ -1387,20 +1498,6 @@ Estimators
 
    svm.l1_min_c
 
-Low-level methods
------------------
-
-.. autosummary::
-   :toctree: generated
-   :template: function.rst
-
-   svm.libsvm.cross_validation
-   svm.libsvm.decision_function
-   svm.libsvm.fit
-   svm.libsvm.predict
-   svm.libsvm.predict_proba
-
-
 .. _tree_ref:
 
 :mod:`sklearn.tree`: Decision Trees
@@ -1428,9 +1525,18 @@ Low-level methods
    :template: function.rst
 
    tree.export_graphviz
-   tree.plot_tree
    tree.export_text
 
+Plotting
+--------
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   tree.plot_tree
 
 .. _utils_ref:
 
@@ -1449,10 +1555,10 @@ Low-level methods
    :toctree: generated/
    :template: function.rst
 
-   utils.arrayfuncs.cholesky_delete
    utils.arrayfuncs.min_pos
    utils.as_float_array
    utils.assert_all_finite
+   utils.Bunch
    utils.check_X_y
    utils.check_array
    utils.check_scalar
@@ -1462,6 +1568,8 @@ Low-level methods
    utils.class_weight.compute_sample_weight
    utils.deprecated
    utils.estimator_checks.check_estimator
+   utils.estimator_checks.parametrize_with_checks
+   utils.estimator_html_repr
    utils.extmath.safe_sparse_dot
    utils.extmath.randomized_range_finder
    utils.extmath.randomized_svd
@@ -1478,7 +1586,7 @@ Low-level methods
    utils.multiclass.unique_labels
    utils.murmurhash3_32
    utils.resample
-   utils.safe_indexing
+   utils._safe_indexing
    utils.safe_mask
    utils.safe_sqr
    utils.shuffle
@@ -1497,10 +1605,7 @@ Low-level methods
    utils.validation.check_symmetric
    utils.validation.column_or_1d
    utils.validation.has_fit_parameter
-   utils.testing.assert_in
-   utils.testing.assert_not_in
-   utils.testing.assert_raise_message
-   utils.testing.all_estimators
+   utils.all_estimators
 
 Utilities from joblib:
 
@@ -1515,29 +1620,12 @@ Utilities from joblib:
 Recently deprecated
 ===================
 
-To be removed in 0.23
+To be removed in 0.24
 ---------------------
-
-.. autosummary::
-   :toctree: generated/
-   :template: deprecated_class.rst
-
-   utils.Memory
-   utils.Parallel
 
 .. autosummary::
    :toctree: generated/
    :template: deprecated_function.rst
 
-   utils.cpu_count
-   utils.delayed
-   metrics.calinski_harabaz_score
-   metrics.jaccard_similarity_score
-   linear_model.logistic_regression_path
-
-.. autosummary::
-   :toctree: generated/
-   :template: function.rst
-
-   ensemble.partial_dependence.partial_dependence
-   ensemble.partial_dependence.plot_partial_dependence
+   model_selection.fit_grid_point
+   utils.safe_indexing
