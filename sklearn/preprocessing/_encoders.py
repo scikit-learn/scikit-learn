@@ -10,7 +10,7 @@ from ..utils import check_array
 from ..utils.validation import check_is_fitted
 from ..utils.validation import _deprecate_positional_args
 
-from ._label import _encode, _encode_check_unknown
+from ..utils._encode import _encode, _check_unknown, _unique
 
 
 __all__ = [
@@ -83,7 +83,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         for i in range(n_features):
             Xi = X_list[i]
             if self.categories == 'auto':
-                cats = _encode(Xi)
+                cats = _unique(Xi)
             else:
                 cats = np.array(self.categories[i], dtype=Xi.dtype)
                 if Xi.dtype != object:
@@ -91,7 +91,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                         raise ValueError("Unsorted categories are not "
                                          "supported for numerical categories")
                 if handle_unknown == 'error':
-                    diff = _encode_check_unknown(Xi, cats)
+                    diff = _check_unknown(Xi, cats)
                     if diff:
                         msg = ("Found unknown categories {0} in column {1}"
                                " during fit".format(diff, i))
@@ -114,7 +114,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
 
         for i in range(n_features):
             Xi = X_list[i]
-            diff, valid_mask = _encode_check_unknown(Xi, self.categories_[i],
+            diff, valid_mask = _check_unknown(Xi, self.categories_[i],
                                                      return_mask=True)
 
             if not np.all(valid_mask):
@@ -136,11 +136,10 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                         Xi = Xi.copy()
 
                     Xi[~valid_mask] = self.categories_[i][0]
-            # We use check_unknown=False, since _encode_check_unknown was
+            # We use check_unknown=False, since _check_unknown was
             # already called above.
-            _, encoded = _encode(Xi, self.categories_[i], encode=True,
-                                 check_unknown=False)
-            X_int[:, i] = encoded
+            X_int[:, i] = _encode(Xi, uniques=self.categories_[i],
+                                  check_unknown=False)
 
         return X_int, X_mask
 
