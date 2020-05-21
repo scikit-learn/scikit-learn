@@ -1,7 +1,7 @@
 Common Pitfalls
 ===============
 
-The purpose of this guide is to illustrate some common pitfalls and
+The purpose of this chapter is to illustrate some common pitfalls and
 anti-patterns that occur when using ``scikit-learn``. It provides
 examples of what **not** to do, along with a corresponding correct
 example.
@@ -47,7 +47,7 @@ performance on the test dataset is worse than expected::
 **Right**
 
 A :class:`Pipeline <sklearn.pipeline.Pipeline>` makes it easier to chain
-transformations with estimators, and decreases the possibility of
+transformations with estimators, and reduces the possibility of
 forgetting a transformation::
 
     >>> model = make_pipeline(StandardScaler(), LinearRegression()).fit(
@@ -55,18 +55,3 @@ forgetting a transformation::
     >>> mean_squared_error(y_test, model.predict(X_test))
     0.90...
 
-Next steps
-----------
-
-We have briefly covered some common pitfalls and anti-patterns, but
-there is much more to ``scikit-learn``!
-
-Please refer to our :ref:`user_guide` for details on all the tools that we
-provide. You can also find an exhaustive list of the public API in the
-:ref:`api_ref`.
-
-You can also look at our numerous :ref:`examples <general_examples>` that
-illustrate the use of ``scikit-learn`` in many different contexts.
-
-The :ref:`tutorials <tutorial_menu>` also contain additional learning
-resources.
