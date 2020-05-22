@@ -719,8 +719,9 @@ def haversine_distances(X, Y=None):
     from sklearn.neighbors import DistanceMetric
     return DistanceMetric.get_metric('haversine').pairwise(X, Y)
 
+
 def pairwise_wasserstein_distances(X, Y, X_d, Y_d):
-    """Computes the pairwise wasserstein distances of two groups of 
+    """Computes the pairwise wasserstein distances of two groups of
     data points with uncertainties
     wikipedia: https://en.wikipedia.org/wiki/Wasserstein_metric
 
@@ -738,31 +739,30 @@ def pairwise_wasserstein_distances(X, Y, X_d, Y_d):
     X_d  : array_like, shape (n_samples_1, n_features)
 
     Y_d  : array_like, shape (n_samples_2, n_features)
-    
+
     Returns
     -------
     distance : {array}, shape (n_samples_1, n_samples_2)
 
     Notes
     -----
-    
+
     Examples
     --------
     Let's assume we collected 3D data points measurements from two
-    experiments A and B; along with each measurement, we have the 
-    uncertainties as well. Let's compute pairwise distances 
+    experiments A and B; along with each measurement, we have the
+    uncertainties as well. Let's compute pairwise distances
     between data points in A and data points in B, taking uncertainties
-    into consideration. 
+    into consideration.
 
-    >>> from sklearn.metrics.pairwise import wasserstein_distances
+    >>> from sklearn.metrics.pairwise import pairwise_wasserstein_distances
     >>> A = [[1.1, 2.2, 1.1],[1.2, 2.3, 4.1],[-3.2, 0.1, -2.1]]
     >>> B = [[0.1, 5.2, 1.1],[-1.2, 1.3, 4.1]]
     >>> A_uncrtnty = [[0.01, 0.02, 0.01],[0.02, 0.03, 0.01],[0.02, 0.01, 0.01]]
     >>> B_uncrtnty = [[0.01, 0.01, 0.01],[0.02, 0.01, 0.05]]
     >>> result = pairwise_wasserstein_distances(A, B, A_uncrtnty, B_uncrtnty)
-    >>> result = [[3.16399339, 3.90458194],
-                    [4.32216451, 2.62063762],
-                    [6.86757329, 6.63947671]]
+    >>> result = np.array([[3.16399339, 3.90458194],[4.32216451, 2.62063762],
+                            [6.86757329, 6.63947671]])
     """
     X, Y = check_pairwise_arrays(X, Y)
     X_d, Y_d = check_pairwise_arrays(X_d, Y_d)
@@ -774,13 +774,15 @@ def pairwise_wasserstein_distances(X, Y, X_d, Y_d):
     if n_feat != len(Y[0]):
         raise Exception("X, Y must have the same dimension")
         return
-    
+
     # sum(X_d[i]+Y_d[i]-2*sqrt(X_d[i]*Y_d[i])) for i in range(n_features)
     # for every pair of X and Y
     # use np array boardcasting for speed and simplicity of code
-    X_d_Y_d_dist = np.sum(X_d[:, None] + Y_d - 2 * np.sqrt(X_d[:, None] * Y_d), axis=2)
+    X_d_Y_d_dist = np.sum(X_d[:, None] +
+                        Y_d - 2 * np.sqrt(X_d[:, None] * Y_d), axis=2)
 
     return X_Y_dist + X_d_Y_d_dist
+
 
 @_deprecate_positional_args
 def manhattan_distances(X, Y=None, *, sum_over_features=True):
