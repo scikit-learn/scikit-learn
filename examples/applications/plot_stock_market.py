@@ -173,7 +173,8 @@ edge_model.fit(X)
 # #############################################################################
 # Cluster using affinity propagation
 
-_, labels = cluster.affinity_propagation(edge_model.covariance_)
+_, labels = cluster.affinity_propagation(edge_model.covariance_,
+                                         random_state=0)
 n_labels = labels.max()
 
 for i in range(n_labels + 1):

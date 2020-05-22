@@ -13,7 +13,7 @@ this project as part of his thesis.
 In 2010 Fabian Pedregosa, Gael Varoquaux, Alexandre Gramfort and Vincent
 Michel of INRIA took leadership of the project and made the first public
 release, February the 1st 2010. Since then, several releases have appeared
-following a ~3 month cycle, and a thriving international community has
+following a ~ 3-month cycle, and a thriving international community has
 been leading the development.
 
 Governance
@@ -139,7 +139,7 @@ Grisel, Guillaume Lemaitre, Jérémie du Boisberranger and Chiara Marmo.
    :target: https://www.axa.fr/
 
 .. |bnp| image:: images/bnp.png
-   :width: 170pt
+   :width: 150pt
    :target: https://www.bnpparibascardif.com/
 
 .. |fujitsu| image:: images/fujitsu.png
@@ -175,15 +175,17 @@ Grisel, Guillaume Lemaitre, Jérémie du Boisberranger and Chiara Marmo.
    +---------+----------+
    |                    |
    +---------+----------+ 
-   |  |axa|  ||fujitsu| |
+   |  |axa|  |   |bnp|  |
    +---------+----------+
-   |        |bnp|       |
-   +---------+----------+
-   | |intel| | |nvidia| |
+   ||fujitsu||  |intel| |
    +---------+----------+
    |                    |
    +---------+----------+
-   ||dataiku|| |inria|  |
+   ||dataiku|| |nvidia| |
+   +---------+----------+
+   |                    |
+   +---------+----------+
+   |       |inria|      |
    +---------+----------+
 
 .. raw:: html
@@ -269,31 +271,6 @@ July 2017.
    </div>
    </div>
 
-............
-
-.. raw:: html
-
-   <div class="sk-sponsor-div">
-   <div class="sk-sponsor-div-box">
-
-`Anaconda, Inc <https://www.anaconda.com/>`_ funds Adrin Jalali since 2019.
-
-.. raw:: html
-
-   </div>
-
-   <div class="sk-sponsor-div-box">
-
-.. image:: images/anaconda.png
-   :width: 100pt
-   :align: center
-   :target: https://sydney.edu.au/
-
-.. raw:: html
-
-   </div>
-   </div>
-
 Past Sponsors
 .............
 
@@ -345,6 +322,31 @@ time of Joris van den Bossche (2017-2018).
    :width: 100pt
    :align: center
    :target: https://www.datascience-paris-saclay.fr/
+
+.. raw:: html
+
+   </div>
+   </div>
+
+............
+
+.. raw:: html
+
+   <div class="sk-sponsor-div">
+   <div class="sk-sponsor-div-box">
+
+`Anaconda, Inc <https://www.anaconda.com/>`_ funded Adrin Jalali in 2019.
+
+.. raw:: html
+
+   </div>
+
+   <div class="sk-sponsor-div-box">
+
+.. image:: images/anaconda.png
+   :width: 100pt
+   :align: center
+   :target: https://www.anaconda.com/
 
 .. raw:: html
 
@@ -518,7 +520,7 @@ budget of the project [#f1]_.
 
 .. rubric:: Notes
 
-.. [#f1] Regarding the organization budget in particular, we might use some of
+.. [#f1] Regarding the organization budget, in particular, we might use some of
          the donated funds to pay for other project expenses such as DNS,
          hosting or continuous integration services.
 

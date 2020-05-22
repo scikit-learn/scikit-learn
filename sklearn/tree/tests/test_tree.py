@@ -23,8 +23,8 @@ from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import assert_warns_message
+from sklearn.utils._testing import create_memmap_backed_data
 from sklearn.utils._testing import ignore_warnings
-from sklearn.utils._testing import TempMemmap
 
 from sklearn.utils.validation import check_random_state
 
@@ -1124,14 +1124,6 @@ def test_sample_weight_invalid():
     with pytest.raises(TypeError, match=expected_err):
         clf.fit(X, y, sample_weight=sample_weight)
 
-    sample_weight = np.ones(101)
-    with pytest.raises(ValueError):
-        clf.fit(X, y, sample_weight=sample_weight)
-
-    sample_weight = np.ones(99)
-    with pytest.raises(ValueError):
-        clf.fit(X, y, sample_weight=sample_weight)
-
 
 def check_class_weights(name):
     """Check class_weights resemble sample_weights behavior."""
@@ -1615,19 +1607,6 @@ def test_public_apply_sparse_trees(name):
     check_public_apply_sparse(name)
 
 
-@pytest.mark.parametrize('Cls',
-                         (DecisionTreeRegressor, DecisionTreeClassifier))
-@pytest.mark.parametrize('presort', ['auto', True, False])
-def test_presort_deprecated(Cls, presort):
-    # TODO: remove in v0.24
-    X = np.zeros((10, 10))
-    y = np.r_[[0] * 5, [1] * 5]
-    tree = Cls(presort=presort)
-    with pytest.warns(FutureWarning,
-                      match="The parameter 'presort' is deprecated "):
-        tree.fit(X, y)
-
-
 def test_decision_path_hardcoded():
     X = iris.data
     y = iris.target
@@ -1823,15 +1802,6 @@ def test_empty_leaf_infinite_threshold():
         assert len(empty_leaf) == 0
 
 
-def test_decision_tree_memmap():
-    # check that decision trees supports read-only buffer (#13626)
-    X = np.random.RandomState(0).random_sample((10, 2)).astype(np.float32)
-    y = np.zeros(10)
-
-    with TempMemmap((X, y)) as (X_read_only, y_read_only):
-        DecisionTreeClassifier().fit(X_read_only, y_read_only)
-
-
 @pytest.mark.parametrize("criterion", CLF_CRITERIONS)
 @pytest.mark.parametrize(
     "dataset", sorted(set(DATASETS.keys()) - {"reg_small", "boston"}))
@@ -1948,18 +1918,19 @@ def test_prune_tree_raises_negative_ccp_alpha():
         clf._prune_tree()
 
 
-def test_classes_deprecated():
-    X = [[0, 0], [2, 2], [4, 6], [10, 11]]
-    y = [0.5, 2.5, 3.5, 5.5]
-    clf = DecisionTreeRegressor()
-    clf = clf.fit(X, y)
+def check_apply_path_readonly(name):
+    X_readonly = create_memmap_backed_data(X_small.astype(tree._tree.DTYPE,
+                                                          copy=False))
+    y_readonly = create_memmap_backed_data(np.array(y_small,
+                                                    dtype=tree._tree.DTYPE))
+    est = ALL_TREES[name]()
+    est.fit(X_readonly, y_readonly)
+    assert_array_equal(est.predict(X_readonly),
+                       est.predict(X_small))
+    assert_array_equal(est.decision_path(X_readonly).todense(),
+                       est.decision_path(X_small).todense())
 
-    match = ("attribute is to be deprecated from version "
-             "0.22 and will be removed in 0.24.")
 
-    with pytest.warns(FutureWarning, match=match):
-        n = len(clf.classes_)
-        assert n == clf.n_outputs_
-
-    with pytest.warns(FutureWarning, match=match):
-        assert len(clf.n_classes_) == clf.n_outputs_
+@pytest.mark.parametrize("name", ALL_TREES)
+def test_apply_path_readonly_all_trees(name):
+    check_apply_path_readonly(name)

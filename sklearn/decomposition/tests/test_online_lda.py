@@ -8,8 +8,8 @@ from scipy.special import psi
 import pytest
 
 from sklearn.decomposition import LatentDirichletAllocation
-from sklearn.decomposition._online_lda import (_dirichlet_expectation_1d,
-                                               _dirichlet_expectation_2d)
+from sklearn.decomposition._lda import (_dirichlet_expectation_1d,
+                                        _dirichlet_expectation_2d)
 
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_array_almost_equal

@@ -14,6 +14,7 @@ from ..utils import check_random_state, check_array
 from ..utils.extmath import stable_cumsum
 from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
+from ..utils.validation import _deprecate_positional_args
 from ..neighbors import NearestNeighbors
 
 
@@ -97,7 +98,7 @@ def barycenter_kneighbors_graph(X, n_neighbors, reg=1e-3, n_jobs=None):
     sklearn.neighbors.kneighbors_graph
     sklearn.neighbors.radius_neighbors_graph
     """
-    knn = NearestNeighbors(n_neighbors + 1, n_jobs=n_jobs).fit(X)
+    knn = NearestNeighbors(n_neighbors=n_neighbors + 1, n_jobs=n_jobs).fit(X)
     X = knn._fit_X
     n_samples = knn.n_samples_fit_
     ind = knn.kneighbors(X, return_distance=False)[:, 1:]
@@ -143,12 +144,10 @@ def null_space(M, k, k_skip=1, eigen_solver='arpack', tol=1E-6, max_iter=100,
         Maximum number of iterations for 'arpack' method.
         Not used if eigen_solver=='dense'
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`. Used when ``solver`` == 'arpack'.
-
+    random_state : int, RandomState instance, default=None
+        Determines the random number generator when ``solver`` == 'arpack'.
+        Pass an int for reproducible results across multiple function calls.
+        See :term: `Glossary <random_state>`.
     """
     if eigen_solver == 'auto':
         if M.shape[0] > 200 and k + k_skip < 10:
@@ -185,10 +184,11 @@ def null_space(M, k, k_skip=1, eigen_solver='arpack', tol=1E-6, max_iter=100,
         raise ValueError("Unrecognized eigen_solver '%s'" % eigen_solver)
 
 
+@_deprecate_positional_args
 def locally_linear_embedding(
-        X, n_neighbors, n_components, reg=1e-3, eigen_solver='auto', tol=1e-6,
-        max_iter=100, method='standard', hessian_tol=1E-4, modified_tol=1E-12,
-        random_state=None, n_jobs=None):
+        X, *, n_neighbors, n_components, reg=1e-3, eigen_solver='auto',
+        tol=1e-6, max_iter=100, method='standard', hessian_tol=1E-4,
+        modified_tol=1E-12, random_state=None, n_jobs=None):
     """Perform a Locally Linear Embedding analysis on the data.
 
     Read more in the :ref:`User Guide <locally_linear_embedding>`.
@@ -249,11 +249,10 @@ def locally_linear_embedding(
         Tolerance for modified LLE method.
         Only used if method == 'modified'
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`. Used when ``solver`` == 'arpack'.
+    random_state : int, RandomState instance, default=None
+        Determines the random number generator when ``solver`` == 'arpack'.
+        Pass an int for reproducible results across multiple function calls.
+        See :term: `Glossary <random_state>`.
 
     n_jobs : int or None, optional (default=None)
         The number of parallel jobs to run for neighbors search.
@@ -581,11 +580,10 @@ class LocallyLinearEmbedding(TransformerMixin,
         algorithm to use for nearest neighbors search,
         passed to neighbors.NearestNeighbors instance
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`. Used when ``eigen_solver`` == 'arpack'.
+    random_state : int, RandomState instance, default=None
+        Determines the random number generator when
+        ``eigen_solver`` == 'arpack'. Pass an int for reproducible results
+        across multiple function calls. See :term: `Glossary <random_state>`.
 
     n_jobs : int or None, optional (default=None)
         The number of parallel jobs to run.
@@ -632,8 +630,8 @@ class LocallyLinearEmbedding(TransformerMixin,
         dimensionality reduction via tangent space alignment.
         Journal of Shanghai Univ.  8:406 (2004)
     """
-
-    def __init__(self, n_neighbors=5, n_components=2, reg=1E-3,
+    @_deprecate_positional_args
+    def __init__(self, *, n_neighbors=5, n_components=2, reg=1E-3,
                  eigen_solver='auto', tol=1E-6, max_iter=100,
                  method='standard', hessian_tol=1E-4, modified_tol=1E-12,
                  neighbors_algorithm='auto', random_state=None, n_jobs=None):
@@ -651,16 +649,17 @@ class LocallyLinearEmbedding(TransformerMixin,
         self.n_jobs = n_jobs
 
     def _fit_transform(self, X):
-        self.nbrs_ = NearestNeighbors(self.n_neighbors,
+        self.nbrs_ = NearestNeighbors(n_neighbors=self.n_neighbors,
                                       algorithm=self.neighbors_algorithm,
                                       n_jobs=self.n_jobs)
 
         random_state = check_random_state(self.random_state)
-        X = check_array(X, dtype=float)
+        X = self._validate_data(X, dtype=float)
         self.nbrs_.fit(X)
         self.embedding_, self.reconstruction_error_ = \
             locally_linear_embedding(
-                self.nbrs_, self.n_neighbors, self.n_components,
+                X=self.nbrs_, n_neighbors=self.n_neighbors,
+                n_components=self.n_components,
                 eigen_solver=self.eigen_solver, tol=self.tol,
                 max_iter=self.max_iter, method=self.method,
                 hessian_tol=self.hessian_tol, modified_tol=self.modified_tol,

@@ -225,17 +225,21 @@ print(titanic.data.head()[['pclass', 'embarked']])
 # ---------------------------------------------------
 # Developers can check the compatibility of their scikit-learn compatible
 # estimators using :func:`~utils.estimator_checks.check_estimator`. For
-# instance, the ``check_estimator(LinearSVC)`` passes.
+# instance, the ``check_estimator(LinearSVC())`` passes.
 #
 # We now provide a ``pytest`` specific decorator which allows ``pytest``
 # to run all checks independently and report the checks that are failing.
+#
+# ..note::
+#   This entry was slightly updated in version 0.24, where passing classes
+#   isn't supported anymore: pass instances instead.
 
 from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.utils.estimator_checks import parametrize_with_checks
 
 
-@parametrize_with_checks([LogisticRegression, DecisionTreeRegressor])
+@parametrize_with_checks([LogisticRegression(), DecisionTreeRegressor()])
 def test_sklearn_compatible_estimator(estimator, check):
     check(estimator)
 

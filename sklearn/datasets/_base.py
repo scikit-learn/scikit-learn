@@ -9,7 +9,6 @@ Base IO code for all datasets
 import os
 import csv
 import shutil
-import warnings
 from collections import namedtuple
 from os import environ, listdir, makedirs
 from os.path import dirname, exists, expanduser, isdir, join, splitext
@@ -17,6 +16,8 @@ import hashlib
 
 from ..utils import Bunch
 from ..utils import check_random_state
+from ..utils import check_pandas_support
+from ..utils.validation import _deprecate_positional_args
 
 import numpy as np
 
@@ -67,7 +68,21 @@ def clear_data_home(data_home=None):
     shutil.rmtree(data_home)
 
 
-def load_files(container_path, description=None, categories=None,
+def _convert_data_dataframe(caller_name, data, target,
+                            feature_names, target_names):
+    pd = check_pandas_support('{} with as_frame=True'.format(caller_name))
+    data_df = pd.DataFrame(data, columns=feature_names)
+    target_df = pd.DataFrame(target, columns=target_names)
+    combined_df = pd.concat([data_df, target_df], axis=1)
+    X = combined_df[feature_names]
+    y = combined_df[target_names]
+    if y.shape[1] == 1:
+        y = y.iloc[:, 0]
+    return combined_df, X, y
+
+
+@_deprecate_positional_args
+def load_files(container_path, *, description=None, categories=None,
                load_content=True, shuffle=True, encoding=None,
                decode_error='strict', random_state=0):
     """Load text files with categories as subfolder names.
@@ -121,7 +136,7 @@ def load_files(container_path, description=None, categories=None,
         If None (default), load all the categories. If not None, list of
         category names to load (other categories ignored).
 
-    load_content : boolean, optional (default=True)
+    load_content : bool, optional (default=True)
         Whether to load or not the content of the different files. If true a
         'data' attribute containing the text information is present in the data
         structure returned. If not, a filenames attribute gives the path to the
@@ -142,19 +157,27 @@ def load_files(container_path, description=None, categories=None,
         contains characters not of the given `encoding`. Passed as keyword
         argument 'errors' to bytes.decode.
 
-    random_state : int, RandomState instance or None (default=0)
+    random_state : int, RandomState instance or None, default=0
         Determines random number generation for dataset shuffling. Pass an int
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
     Returns
     -------
-    data : Bunch
-        Dictionary-like object, the interesting attributes are: either
-        data, the raw text data to learn, or 'filenames', the files
-        holding it, 'target', the classification labels (integer index),
-        'target_names', the meaning of the labels, and 'DESCR', the full
-        description of the dataset.
+    data : :class:`~sklearn.utils.Bunch`
+        Dictionary-like object, with the following attributes.
+
+        data : list of str
+            Only present when `load_content=True`.
+            The raw text data to learn.
+        target : ndarray
+            The target labels (integer index).
+        target_names : list
+            The names of target classes.
+        DESCR : str
+            The full description of the dataset.
+        filenames: ndarray
+            The filenames holding the dataset.
     """
     target = []
     target_names = []
@@ -246,7 +269,8 @@ def load_data(module_path, data_file_name):
     return data, target, target_names
 
 
-def load_wine(return_X_y=False):
+@_deprecate_positional_args
+def load_wine(*, return_X_y=False, as_frame=False):
     """Load and return the wine dataset (classification).
 
     .. versionadded:: 0.18
@@ -266,17 +290,41 @@ def load_wine(return_X_y=False):
 
     Parameters
     ----------
-    return_X_y : boolean, default=False.
+    return_X_y : bool, default=False.
         If True, returns ``(data, target)`` instead of a Bunch object.
         See below for more information about the `data` and `target` object.
 
+    as_frame : bool, default=False
+        If True, the data is a pandas DataFrame including columns with
+        appropriate dtypes (numeric). The target is
+        a pandas DataFrame or Series depending on the number of target columns.
+        If `return_X_y` is True, then (`data`, `target`) will be pandas
+        DataFrames or Series as described below.
+
+        .. versionadded:: 0.23
+
     Returns
     -------
-    data : Bunch
-        Dictionary-like object, the interesting attributes are: 'data', the
-        data to learn, 'target', the classification labels, 'target_names', the
-        meaning of the labels, 'feature_names', the meaning of the features,
-        and 'DESCR', the full description of the dataset.
+    data : :class:`~sklearn.utils.Bunch`
+        Dictionary-like object, with the following attributes.
+
+        data : {ndarray, dataframe} of shape (178, 13)
+            The data matrix. If `as_frame=True`, `data` will be a pandas
+            DataFrame.
+        target: {ndarray, Series} of shape (178,)
+            The classification target. If `as_frame=True`, `target` will be
+            a pandas Series.
+        feature_names: list
+            The names of the dataset columns.
+        target_names: list
+            The names of target classes.
+        frame: DataFrame of shape (178, 14)
+            Only present when `as_frame=True`. DataFrame with `data` and
+            `target`.
+
+            .. versionadded:: 0.23
+        DESCR: str
+            The full description of the dataset.
 
     (data, target) : tuple if ``return_X_y`` is True
 
@@ -302,28 +350,42 @@ def load_wine(return_X_y=False):
     with open(join(module_path, 'descr', 'wine_data.rst')) as rst_file:
         fdescr = rst_file.read()
 
+    feature_names = ['alcohol',
+                     'malic_acid',
+                     'ash',
+                     'alcalinity_of_ash',
+                     'magnesium',
+                     'total_phenols',
+                     'flavanoids',
+                     'nonflavanoid_phenols',
+                     'proanthocyanins',
+                     'color_intensity',
+                     'hue',
+                     'od280/od315_of_diluted_wines',
+                     'proline']
+
+    frame = None
+    target_columns = ['target', ]
+    if as_frame:
+        frame, data, target = _convert_data_dataframe("load_wine",
+                                                      data,
+                                                      target,
+                                                      feature_names,
+                                                      target_columns)
+
     if return_X_y:
         return data, target
 
-    return Bunch(data=data, target=target,
+    return Bunch(data=data,
+                 target=target,
+                 frame=frame,
                  target_names=target_names,
                  DESCR=fdescr,
-                 feature_names=['alcohol',
-                                'malic_acid',
-                                'ash',
-                                'alcalinity_of_ash',
-                                'magnesium',
-                                'total_phenols',
-                                'flavanoids',
-                                'nonflavanoid_phenols',
-                                'proanthocyanins',
-                                'color_intensity',
-                                'hue',
-                                'od280/od315_of_diluted_wines',
-                                'proline'])
+                 feature_names=feature_names)
 
 
-def load_iris(return_X_y=False):
+@_deprecate_positional_args
+def load_iris(*, return_X_y=False, as_frame=False):
     """Load and return the iris dataset (classification).
 
     The iris dataset is a classic and very easy multi-class classification
@@ -341,21 +403,47 @@ def load_iris(return_X_y=False):
 
     Parameters
     ----------
-    return_X_y : boolean, default=False.
+    return_X_y : bool, default=False.
         If True, returns ``(data, target)`` instead of a Bunch object. See
         below for more information about the `data` and `target` object.
 
         .. versionadded:: 0.18
 
+    as_frame : bool, default=False
+        If True, the data is a pandas DataFrame including columns with
+        appropriate dtypes (numeric). The target is
+        a pandas DataFrame or Series depending on the number of target columns.
+        If `return_X_y` is True, then (`data`, `target`) will be pandas
+        DataFrames or Series as described below.
+
+        .. versionadded:: 0.23
+
     Returns
     -------
-    data : Bunch
-        Dictionary-like object, the interesting attributes are:
-        'data', the data to learn, 'target', the classification labels,
-        'target_names', the meaning of the labels, 'feature_names', the
-        meaning of the features, 'DESCR', the full description of
-        the dataset, 'filename', the physical location of
-        iris csv dataset (added in version `0.20`).
+    data : :class:`~sklearn.utils.Bunch`
+        Dictionary-like object, with the following attributes.
+
+        data : {ndarray, dataframe} of shape (150, 4)
+            The data matrix. If `as_frame=True`, `data` will be a pandas
+            DataFrame.
+        target: {ndarray, Series} of shape (150,)
+            The classification target. If `as_frame=True`, `target` will be
+            a pandas Series.
+        feature_names: list
+            The names of the dataset columns.
+        target_names: list
+            The names of target classes.
+        frame: DataFrame of shape (150, 5)
+            Only present when `as_frame=True`. DataFrame with `data` and
+            `target`.
+
+            .. versionadded:: 0.23
+        DESCR: str
+            The full description of the dataset.
+        filename: str
+            The path to the location of the data.
+
+            .. versionadded:: 0.20
 
     (data, target) : tuple if ``return_X_y`` is True
 
@@ -387,18 +475,32 @@ def load_iris(return_X_y=False):
     with open(join(module_path, 'descr', 'iris.rst')) as rst_file:
         fdescr = rst_file.read()
 
+    feature_names = ['sepal length (cm)', 'sepal width (cm)',
+                     'petal length (cm)', 'petal width (cm)']
+
+    frame = None
+    target_columns = ['target', ]
+    if as_frame:
+        frame, data, target = _convert_data_dataframe("load_iris",
+                                                      data,
+                                                      target,
+                                                      feature_names,
+                                                      target_columns)
+
     if return_X_y:
         return data, target
 
-    return Bunch(data=data, target=target,
+    return Bunch(data=data,
+                 target=target,
+                 frame=frame,
                  target_names=target_names,
                  DESCR=fdescr,
-                 feature_names=['sepal length (cm)', 'sepal width (cm)',
-                                'petal length (cm)', 'petal width (cm)'],
+                 feature_names=feature_names,
                  filename=iris_csv_filename)
 
 
-def load_breast_cancer(return_X_y=False):
+@_deprecate_positional_args
+def load_breast_cancer(*, return_X_y=False, as_frame=False):
     """Load and return the breast cancer wisconsin dataset (classification).
 
     The breast cancer dataset is a classic and very easy binary classification
@@ -416,21 +518,47 @@ def load_breast_cancer(return_X_y=False):
 
     Parameters
     ----------
-    return_X_y : boolean, default=False
+    return_X_y : bool, default=False
         If True, returns ``(data, target)`` instead of a Bunch object.
         See below for more information about the `data` and `target` object.
 
         .. versionadded:: 0.18
 
+    as_frame : bool, default=False
+        If True, the data is a pandas DataFrame including columns with
+        appropriate dtypes (numeric). The target is
+        a pandas DataFrame or Series depending on the number of target columns.
+        If `return_X_y` is True, then (`data`, `target`) will be pandas
+        DataFrames or Series as described below.
+
+        .. versionadded:: 0.23
+
     Returns
     -------
-    data : Bunch
-        Dictionary-like object, the interesting attributes are:
-        'data', the data to learn, 'target', the classification labels,
-        'target_names', the meaning of the labels, 'feature_names', the
-        meaning of the features, and 'DESCR', the full description of
-        the dataset, 'filename', the physical location of
-        breast cancer csv dataset (added in version `0.20`).
+    data : :class:`~sklearn.utils.Bunch`
+        Dictionary-like object, with the following attributes.
+
+        data : {ndarray, dataframe} of shape (569, 30)
+            The data matrix. If `as_frame=True`, `data` will be a pandas
+            DataFrame.
+        target: {ndarray, Series} of shape (569,)
+            The classification target. If `as_frame=True`, `target` will be
+            a pandas Series.
+        feature_names: list
+            The names of the dataset columns.
+        target_names: list
+            The names of target classes.
+        frame: DataFrame of shape (569, 31)
+            Only present when `as_frame=True`. DataFrame with `data` and
+            `target`.
+
+            .. versionadded:: 0.23
+        DESCR: str
+            The full description of the dataset.
+        filename: str
+            The path to the location of the data.
+
+            .. versionadded:: 0.20
 
     (data, target) : tuple if ``return_X_y`` is True
 
@@ -475,17 +603,29 @@ def load_breast_cancer(return_X_y=False):
                               'worst concavity', 'worst concave points',
                               'worst symmetry', 'worst fractal dimension'])
 
+    frame = None
+    target_columns = ['target', ]
+    if as_frame:
+        frame, data, target = _convert_data_dataframe("load_breast_cancer",
+                                                      data,
+                                                      target,
+                                                      feature_names,
+                                                      target_columns)
+
     if return_X_y:
         return data, target
 
-    return Bunch(data=data, target=target,
+    return Bunch(data=data,
+                 target=target,
+                 frame=frame,
                  target_names=target_names,
                  DESCR=fdescr,
                  feature_names=feature_names,
                  filename=csv_filename)
 
 
-def load_digits(n_class=10, return_X_y=False):
+@_deprecate_positional_args
+def load_digits(*, n_class=10, return_X_y=False, as_frame=False):
     """Load and return the digits dataset (classification).
 
     Each datapoint is a 8x8 image of a digit.
@@ -505,20 +645,48 @@ def load_digits(n_class=10, return_X_y=False):
     n_class : integer, between 0 and 10, optional (default=10)
         The number of classes to return.
 
-    return_X_y : boolean, default=False.
+    return_X_y : bool, default=False.
         If True, returns ``(data, target)`` instead of a Bunch object.
         See below for more information about the `data` and `target` object.
 
         .. versionadded:: 0.18
 
+    as_frame : bool, default=False
+        If True, the data is a pandas DataFrame including columns with
+        appropriate dtypes (numeric). The target is
+        a pandas DataFrame or Series depending on the number of target columns.
+        If `return_X_y` is True, then (`data`, `target`) will be pandas
+        DataFrames or Series as described below.
+
+        .. versionadded:: 0.23
+
     Returns
     -------
-    data : Bunch
-        Dictionary-like object, the interesting attributes are:
-        'data', the data to learn, 'images', the images corresponding
-        to each sample, 'target', the classification labels for each
-        sample, 'target_names', the meaning of the labels, and 'DESCR',
-        the full description of the dataset.
+    data : :class:`~sklearn.utils.Bunch`
+        Dictionary-like object, with the following attributes.
+
+        data : {ndarray, dataframe} of shape (1797, 64)
+            The flattened data matrix. If `as_frame=True`, `data` will be
+            a pandas DataFrame.
+        target: {ndarray, Series} of shape (1797,)
+            The classification target. If `as_frame=True`, `target` will be
+            a pandas Series.
+        feature_names: list
+            The names of the dataset columns.
+        target_names: list
+            The names of target classes.
+
+            .. versionadded:: 0.20
+
+        frame: DataFrame of shape (1797, 65)
+            Only present when `as_frame=True`. DataFrame with `data` and
+            `target`.
+
+            .. versionadded:: 0.23
+        images: {ndarray} of shape (1797, 8, 8)
+            The raw image data.
+        DESCR: str
+            The full description of the dataset.
 
     (data, target) : tuple if ``return_X_y`` is True
 
@@ -555,17 +723,33 @@ def load_digits(n_class=10, return_X_y=False):
         flat_data, target = flat_data[idx], target[idx]
         images = images[idx]
 
+    feature_names = ['pixel_{}_{}'.format(row_idx, col_idx)
+                     for row_idx in range(8)
+                     for col_idx in range(8)]
+
+    frame = None
+    target_columns = ['target', ]
+    if as_frame:
+        frame, flat_data, target = _convert_data_dataframe("load_digits",
+                                                           flat_data,
+                                                           target,
+                                                           feature_names,
+                                                           target_columns)
+
     if return_X_y:
         return flat_data, target
 
     return Bunch(data=flat_data,
                  target=target,
+                 frame=frame,
+                 feature_names=feature_names,
                  target_names=np.arange(10),
                  images=images,
                  DESCR=descr)
 
 
-def load_diabetes(return_X_y=False):
+@_deprecate_positional_args
+def load_diabetes(*, return_X_y=False, as_frame=False):
     """Load and return the diabetes dataset (regression).
 
     ==============   ==================
@@ -579,20 +763,45 @@ def load_diabetes(return_X_y=False):
 
     Parameters
     ----------
-    return_X_y : boolean, default=False.
+    return_X_y : bool, default=False.
         If True, returns ``(data, target)`` instead of a Bunch object.
         See below for more information about the `data` and `target` object.
 
         .. versionadded:: 0.18
 
+    as_frame : bool, default=False
+        If True, the data is a pandas DataFrame including columns with
+        appropriate dtypes (numeric). The target is
+        a pandas DataFrame or Series depending on the number of target columns.
+        If `return_X_y` is True, then (`data`, `target`) will be pandas
+        DataFrames or Series as described below.
+
+        .. versionadded:: 0.23
+
     Returns
     -------
-    data : Bunch
-        Dictionary-like object, the interesting attributes are:
-        'data', the data to learn, 'target', the regression target for each
-        sample, 'data_filename', the physical location
-        of diabetes data csv dataset, and 'target_filename', the physical
-        location of diabetes targets csv datataset (added in version `0.20`).
+    data : :class:`~sklearn.utils.Bunch`
+        Dictionary-like object, with the following attributes.
+
+        data : {ndarray, dataframe} of shape (442, 10)
+            The data matrix. If `as_frame=True`, `data` will be a pandas
+            DataFrame.
+        target: {ndarray, Series} of shape (442,)
+            The regression target. If `as_frame=True`, `target` will be
+            a pandas Series.
+        feature_names: list
+            The names of the dataset columns.
+        frame: DataFrame of shape (442, 11)
+            Only present when `as_frame=True`. DataFrame with `data` and
+            `target`.
+
+            .. versionadded:: 0.23
+        DESCR: str
+            The full description of the dataset.
+        data_filename: str
+            The path to the location of the data.
+        target_filename: str
+            The path to the location of the target.
 
     (data, target) : tuple if ``return_X_y`` is True
 
@@ -608,18 +817,35 @@ def load_diabetes(return_X_y=False):
     with open(join(module_path, 'descr', 'diabetes.rst')) as rst_file:
         fdescr = rst_file.read()
 
+    feature_names = ['age', 'sex', 'bmi', 'bp',
+                     's1', 's2', 's3', 's4', 's5', 's6']
+
+    frame = None
+    target_columns = ['target', ]
+    if as_frame:
+        frame, data, target = _convert_data_dataframe("load_diabetes",
+                                                      data,
+                                                      target,
+                                                      feature_names,
+                                                      target_columns)
+
     if return_X_y:
         return data, target
 
-    return Bunch(data=data, target=target, DESCR=fdescr,
-                 feature_names=['age', 'sex', 'bmi', 'bp',
-                                's1', 's2', 's3', 's4', 's5', 's6'],
+    return Bunch(data=data,
+                 target=target,
+                 frame=frame,
+                 DESCR=fdescr,
+                 feature_names=feature_names,
                  data_filename=data_filename,
                  target_filename=target_filename)
 
 
-def load_linnerud(return_X_y=False):
-    """Load and return the linnerud dataset (multivariate regression).
+@_deprecate_positional_args
+def load_linnerud(*, return_X_y=False, as_frame=False):
+    """Load and return the physical excercise linnerud dataset.
+
+    This dataset is suitable for multi-ouput regression tasks.
 
     ==============   ============================
     Samples total    20
@@ -632,23 +858,49 @@ def load_linnerud(return_X_y=False):
 
     Parameters
     ----------
-    return_X_y : boolean, default=False.
+    return_X_y : bool, default=False.
         If True, returns ``(data, target)`` instead of a Bunch object.
         See below for more information about the `data` and `target` object.
 
         .. versionadded:: 0.18
 
+    as_frame : bool, default=False
+        If True, the data is a pandas DataFrame including columns with
+        appropriate dtypes (numeric, string or categorical). The target is
+        a pandas DataFrame or Series depending on the number of target columns.
+        If `return_X_y` is True, then (`data`, `target`) will be pandas
+        DataFrames or Series as described below.
+
+        .. versionadded:: 0.23
+
     Returns
     -------
-    data : Bunch
-        Dictionary-like object, the interesting attributes are: 'data' and
-        'target', the two multivariate datasets, with 'data' corresponding to
-        the exercise and 'target' corresponding to the physiological
-        measurements, as well as 'feature_names' and 'target_names'.
-        In addition, you will also have access to 'data_filename',
-        the physical location of linnerud data csv dataset, and
-        'target_filename', the physical location of
-        linnerud targets csv datataset (added in version `0.20`).
+    data : :class:`~sklearn.utils.Bunch`
+        Dictionary-like object, with the following attributes.
+
+        data : {ndarray, dataframe} of shape (20, 3)
+            The data matrix. If `as_frame=True`, `data` will be a pandas
+            DataFrame.
+        target: {ndarray, dataframe} of shape (20, 3)
+            The regression targets. If `as_frame=True`, `target` will be
+            a pandas DataFrame.
+        feature_names: list
+            The names of the dataset columns.
+        target_names: list
+            The names of the target columns.
+        frame: DataFrame of shape (20, 6)
+            Only present when `as_frame=True`. DataFrame with `data` and
+            `target`.
+
+            .. versionadded:: 0.23
+        DESCR: str
+            The full description of the dataset.
+        data_filename: str
+            The path to the location of the data.
+        target_filename: str
+            The path to the location of the target.
+
+            .. versionadded:: 0.20
 
     (data, target) : tuple if ``return_X_y`` is True
 
@@ -671,18 +923,30 @@ def load_linnerud(return_X_y=False):
     with open(dirname(__file__) + '/descr/linnerud.rst') as f:
         descr = f.read()
 
+    frame = None
+    if as_frame:
+        (frame,
+         data_exercise,
+         data_physiological) = _convert_data_dataframe("load_linnerud",
+                                                       data_exercise,
+                                                       data_physiological,
+                                                       header_exercise,
+                                                       header_physiological)
     if return_X_y:
         return data_exercise, data_physiological
 
-    return Bunch(data=data_exercise, feature_names=header_exercise,
+    return Bunch(data=data_exercise,
+                 feature_names=header_exercise,
                  target=data_physiological,
                  target_names=header_physiological,
+                 frame=frame,
                  DESCR=descr,
                  data_filename=data_filename,
                  target_filename=target_filename)
 
 
-def load_boston(return_X_y=False):
+@_deprecate_positional_args
+def load_boston(*, return_X_y=False):
     """Load and return the boston house-prices dataset (regression).
 
     ==============   ==============
@@ -696,7 +960,7 @@ def load_boston(return_X_y=False):
 
     Parameters
     ----------
-    return_X_y : boolean, default=False.
+    return_X_y : bool, default=False.
         If True, returns ``(data, target)`` instead of a Bunch object.
         See below for more information about the `data` and `target` object.
 
@@ -704,12 +968,22 @@ def load_boston(return_X_y=False):
 
     Returns
     -------
-    data : Bunch
-        Dictionary-like object, the interesting attributes are:
-        'data', the data to learn, 'target', the regression targets,
-        'DESCR', the full description of the dataset,
-        and 'filename', the physical location of boston
-        csv dataset (added in version `0.20`).
+    data : :class:`~sklearn.utils.Bunch`
+        Dictionary-like object, with the following attributes.
+
+        data : ndarray of shape (506, 13)
+            The data matrix.
+        target : ndarray of shape (506, )
+            The regression target.
+        filename : str
+            The physical location of boston csv dataset.
+
+            .. versionadded:: 0.20
+
+        DESCR : str
+            The full description of the dataset.
+        feature_names : ndarray
+            The names of features
 
     (data, target) : tuple if ``return_X_y`` is True
 
@@ -768,10 +1042,15 @@ def load_sample_images():
 
     Returns
     -------
-    data : Bunch
-        Dictionary-like object with the following attributes : 'images', the
-        two sample images, 'filenames', the file names for the images, and
-        'DESCR' the full description of the dataset.
+    data : :class:`~sklearn.utils.Bunch`
+        Dictionary-like object, with the following attributes.
+
+        images : list of ndarray of shape (427, 640, 3)
+            The two sample image.
+        filenames : list
+            The filenames for the images.
+        DESCR : str
+            The full description of the dataset.
 
     Examples
     --------
@@ -907,31 +1186,3 @@ def _fetch_remote(remote, dirname=None):
                       "file may be corrupted.".format(file_path, checksum,
                                                       remote.checksum))
     return file_path
-
-
-def _refresh_cache(files, compress):
-    # TODO: REMOVE in v0.23
-    import joblib
-    msg = "sklearn.externals.joblib is deprecated in 0.21"
-    with warnings.catch_warnings(record=True) as warns:
-        data = tuple([joblib.load(f) for f in files])
-
-    refresh_needed = any([str(x.message).startswith(msg) for x in warns])
-
-    other_warns = [w for w in warns if not str(w.message).startswith(msg)]
-    for w in other_warns:
-        warnings.warn(message=w.message, category=w.category)
-
-    if refresh_needed:
-        try:
-            for value, path in zip(data, files):
-                joblib.dump(value, path, compress=compress)
-        except IOError:
-            message = ("This dataset will stop being loadable in scikit-learn "
-                       "version 0.23 because it references a deprecated "
-                       "import path. Consider removing the following files "
-                       "and allowing it to be cached anew:\n%s"
-                       % ("\n".join(files)))
-            warnings.warn(message=message, category=FutureWarning)
-
-    return data[0] if len(data) == 1 else data

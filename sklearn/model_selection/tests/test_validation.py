@@ -42,7 +42,7 @@ from sklearn.model_selection._validation import _fit_and_score
 from sklearn.model_selection._validation import _score
 
 from sklearn.datasets import make_regression
-from sklearn.datasets import load_boston
+from sklearn.datasets import load_diabetes
 from sklearn.datasets import load_iris
 from sklearn.datasets import load_digits
 from sklearn.metrics import explained_variance_score
@@ -214,6 +214,9 @@ class MockClassifier:
             T = T.reshape(len(T), -1)
         return T[:, 0]
 
+    def predict_proba(self, T):
+        return T
+
     def score(self, X=None, Y=None):
         return 1. / (1 + np.abs(self.a))
 
@@ -367,8 +370,8 @@ def test_cross_validate():
 
     for X, y, est in ((X_reg, y_reg, reg), (X_clf, y_clf, clf)):
         # It's okay to evaluate regression metrics on classification too
-        mse_scorer = check_scoring(est, 'neg_mean_squared_error')
-        r2_scorer = check_scoring(est, 'r2')
+        mse_scorer = check_scoring(est, scoring='neg_mean_squared_error')
+        r2_scorer = check_scoring(est, scoring='r2')
         train_mse_scores = []
         test_mse_scores = []
         train_r2_scores = []
@@ -765,7 +768,7 @@ def test_cross_val_score_multilabel():
 
 
 def test_cross_val_predict():
-    X, y = load_boston(return_X_y=True)
+    X, y = load_diabetes(return_X_y=True)
     cv = KFold()
 
     est = Ridge()
@@ -970,6 +973,19 @@ def test_cross_val_predict_unbalanced():
     assert np.all(yhat_proba[test[1]] > 0)
     assert_array_almost_equal(yhat_proba.sum(axis=1), np.ones(y.shape),
                               decimal=12)
+
+
+def test_cross_val_predict_y_none():
+    # ensure that cross_val_predict works when y is None
+    mock_classifier = MockClassifier()
+    rng = np.random.RandomState(42)
+    X = rng.rand(100, 10)
+    y_hat = cross_val_predict(mock_classifier, X, y=None, cv=5,
+                              method='predict')
+    assert_allclose(X[:, 0], y_hat)
+    y_hat_proba = cross_val_predict(mock_classifier, X, y=None, cv=5,
+                                    method='predict_proba')
+    assert_allclose(X, y_hat_proba)
 
 
 def test_cross_val_score_sparse_fit_params():
@@ -1235,7 +1251,8 @@ def test_validation_curve_cv_splits_consistency():
     X, y = make_classification(n_samples=100, random_state=0)
 
     scores1 = validation_curve(SVC(kernel='linear', random_state=0), X, y,
-                               'C', [0.1, 0.1, 0.2, 0.2],
+                               param_name='C',
+                               param_range=[0.1, 0.1, 0.2, 0.2],
                                cv=OneTimeSplitter(n_splits=n_splits,
                                                   n_samples=n_samples))
     # The OneTimeSplitter is a non-re-entrant cv splitter. Unless, the
@@ -1246,7 +1263,8 @@ def test_validation_curve_cv_splits_consistency():
                                          2))
 
     scores2 = validation_curve(SVC(kernel='linear', random_state=0), X, y,
-                               'C', [0.1, 0.1, 0.2, 0.2],
+                               param_name='C',
+                               param_range=[0.1, 0.1, 0.2, 0.2],
                                cv=KFold(n_splits=n_splits, shuffle=True))
 
     # For scores2, compare the 1st and 2nd parameter's scores
@@ -1256,7 +1274,8 @@ def test_validation_curve_cv_splits_consistency():
                                          2))
 
     scores3 = validation_curve(SVC(kernel='linear', random_state=0), X, y,
-                               'C', [0.1, 0.1, 0.2, 0.2],
+                               param_name='C',
+                               param_range=[0.1, 0.1, 0.2, 0.2],
                                cv=KFold(n_splits=n_splits))
 
     # OneTimeSplitter is basically unshuffled KFold(n_splits=5). Sanity check.
@@ -1663,9 +1682,9 @@ def test_fit_and_score_failing():
                          failing_clf, X, y, cv=3, error_score='unvalid-string')
 
     assert_raise_message(ValueError, error_message, validation_curve,
-                         failing_clf, X, y, 'parameter',
-                         [FailingClassifier.FAILING_PARAMETER], cv=3,
-                         error_score='unvalid-string')
+                         failing_clf, X, y, param_name='parameter',
+                         param_range=[FailingClassifier.FAILING_PARAMETER],
+                         cv=3, error_score='unvalid-string')
 
     assert failing_clf.score() == 0.  # FailingClassifier coverage
 

@@ -14,11 +14,12 @@ from scipy.special import erf, expit
 from ..base import BaseEstimator, ClassifierMixin, clone
 from .kernels \
     import RBF, CompoundKernel, ConstantKernel as C
-from ..utils.validation import check_X_y, check_is_fitted, check_array
+from ..utils.validation import check_is_fitted, check_array
 from ..utils import check_random_state
 from ..utils.optimize import _check_optimize_result
 from ..preprocessing import LabelEncoder
 from ..multiclass import OneVsRestClassifier, OneVsOneClassifier
+from ..utils.validation import _deprecate_positional_args
 
 
 # Values required for approximating the logistic sigmoid by
@@ -49,12 +50,12 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
 
     Parameters
     ----------
-    kernel : kernel object
+    kernel : kernel instance, default=None
         The kernel specifying the covariance function of the GP. If None is
         passed, the kernel "1.0 * RBF(1.0)" is used as default. Note that
         the kernel's hyperparameters are optimized during fitting.
 
-    optimizer : string or callable, optional (default: "fmin_l_bfgs_b")
+    optimizer : 'fmin_l_bfgs_b' or callable, default='fmin_l_bfgs_b'
         Can either be one of the internally supported optimizers for optimizing
         the kernel's parameters, specified by a string, or an externally
         defined optimizer passed as a callable. If a callable is passed, it
@@ -79,7 +80,7 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
 
             'fmin_l_bfgs_b'
 
-    n_restarts_optimizer: int, optional (default: 0)
+    n_restarts_optimizer : int, default=0
         The number of restarts of the optimizer for finding the kernel's
         parameters which maximize the log-marginal likelihood. The first run
         of the optimizer is performed from the kernel's initial parameters,
@@ -88,12 +89,12 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
         must be finite. Note that n_restarts_optimizer=0 implies that one
         run is performed.
 
-    max_iter_predict: int, optional (default: 100)
+    max_iter_predict : int, default=100
         The maximum number of iterations in Newton's method for approximating
         the posterior during predict. Smaller values will reduce computation
         time at the cost of worse results.
 
-    warm_start : bool, optional (default: False)
+    warm_start : bool, default=False
         If warm-starts are enabled, the solution of the last Newton iteration
         on the Laplace approximation of the posterior mode is used as
         initialization for the next call of _posterior_mode(). This can speed
@@ -101,24 +102,22 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
         problems as in hyperparameter optimization. See :term:`the Glossary
         <warm_start>`.
 
-    copy_X_train : bool, optional (default: True)
+    copy_X_train : bool, default=True
         If True, a persistent copy of the training data is stored in the
         object. Otherwise, just a reference to the training data is stored,
         which might cause predictions to change if the data is modified
         externally.
 
-    random_state : int, RandomState instance or None, optional (default: None)
-        The generator used to initialize the centers. If int, random_state is
-        the seed used by the random number generator; If RandomState instance,
-        random_state is the random number generator; If None, the random number
-        generator is the RandomState instance used by `np.random`.
+    random_state : int or RandomState, default=None
+        Determines random number generation used to initialize the centers.
+        Pass an int for reproducible results across multiple function calls.
+        See :term: `Glossary <random_state>`.
 
     Attributes
     ----------
-    X_train_ : sequence of length n_samples
+    X_train_ : array-like of shape (n_samples, n_features) or list of object
         Feature vectors or other representations of training data (also
-        required for prediction). Could either be array-like with shape =
-        (n_samples, n_features) or a list of objects.
+        required for prediction).
 
     y_train_ : array-like of shape (n_samples,)
         Target values in training data (also required for prediction)
@@ -126,7 +125,7 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
     classes_ : array-like of shape (n_classes,)
         Unique class labels.
 
-    kernel_ : kernel object
+    kernel_ : kernl instance
         The kernel used for prediction. The structure of the kernel is the
         same as the one passed as parameter but with optimized hyperparameters
 
@@ -146,7 +145,8 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
         The log-marginal-likelihood of ``self.kernel_.theta``
 
     """
-    def __init__(self, kernel=None, optimizer="fmin_l_bfgs_b",
+    @_deprecate_positional_args
+    def __init__(self, kernel=None, *, optimizer="fmin_l_bfgs_b",
                  n_restarts_optimizer=0, max_iter_predict=100,
                  warm_start=False, copy_X_train=True, random_state=None):
         self.kernel = kernel
@@ -162,10 +162,8 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
 
         Parameters
         ----------
-        X : sequence of length n_samples
+        X : array-like of shape (n_samples, n_features) or list of object
             Feature vectors or other representations of training data.
-            Could either be array-like with shape = (n_samples, n_features)
-            or a list of objects.
 
         y : array-like of shape (n_samples,)
             Target values, must be binary
@@ -252,10 +250,8 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
 
         Parameters
         ----------
-        X : sequence of length n_samples
+        X : array-like of shape (n_samples, n_features) or list of object
             Query points where the GP is evaluated for classification.
-            Could either be array-like with shape = (n_samples, n_features)
-            or a list of objects.
 
         Returns
         -------
@@ -277,10 +273,8 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
 
         Parameters
         ----------
-        X : sequence of length n_samples
+        X : array-like of shape (n_samples, n_features) or list of object
             Query points where the GP is evaluated for classification.
-            Could either be array-like with shape = (n_samples, n_features)
-            or a list of objects.
 
         Returns
         -------
@@ -320,12 +314,12 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
 
         Parameters
         ----------
-        theta : array-like of shape (n_kernel_params,) or None
+        theta : array-like of shape (n_kernel_params,), default=None
             Kernel hyperparameters for which the log-marginal likelihood is
             evaluated. If None, the precomputed log_marginal_likelihood
             of ``self.kernel_.theta`` is returned.
 
-        eval_gradient : bool, default: False
+        eval_gradient : bool, default=False
             If True, the gradient of the log-marginal likelihood with respect
             to the kernel hyperparameters at position theta is returned
             additionally. If True, theta must not be None.
@@ -339,10 +333,11 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
         log_likelihood : float
             Log-marginal likelihood of theta for training data.
 
-        log_likelihood_gradient : array, shape = (n_kernel_params,), optional
+        log_likelihood_gradient : ndarray of shape (n_kernel_params,), \
+                optional
             Gradient of the log-marginal likelihood with respect to the kernel
             hyperparameters at position theta.
-            Only returned when eval_gradient is True.
+            Only returned when `eval_gradient` is True.
         """
         if theta is None:
             if eval_gradient:
@@ -474,14 +469,16 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
     classifiers are fitted. Note that this class thus does not implement
     a true multi-class Laplace approximation.
 
+    Read more in the :ref:`User Guide <gaussian_process>`.
+
     Parameters
     ----------
-    kernel : kernel object
+    kernel : kernel instance, default=None
         The kernel specifying the covariance function of the GP. If None is
         passed, the kernel "1.0 * RBF(1.0)" is used as default. Note that
         the kernel's hyperparameters are optimized during fitting.
 
-    optimizer : string or callable, optional (default: "fmin_l_bfgs_b")
+    optimizer : 'fmin_l_bfgs_b' or callable, default='fmin_l_bfgs_b'
         Can either be one of the internally supported optimizers for optimizing
         the kernel's parameters, specified by a string, or an externally
         defined optimizer passed as a callable. If a callable is passed, it
@@ -506,7 +503,7 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
 
             'fmin_l_bfgs_b'
 
-    n_restarts_optimizer : int, optional (default: 0)
+    n_restarts_optimizer : int, default=0
         The number of restarts of the optimizer for finding the kernel's
         parameters which maximize the log-marginal likelihood. The first run
         of the optimizer is performed from the kernel's initial parameters,
@@ -515,12 +512,12 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
         must be finite. Note that n_restarts_optimizer=0 implies that one
         run is performed.
 
-    max_iter_predict : int, optional (default: 100)
+    max_iter_predict : int, default=100
         The maximum number of iterations in Newton's method for approximating
         the posterior during predict. Smaller values will reduce computation
         time at the cost of worse results.
 
-    warm_start : bool, optional (default: False)
+    warm_start : bool, default=False
         If warm-starts are enabled, the solution of the last Newton iteration
         on the Laplace approximation of the posterior mode is used as
         initialization for the next call of _posterior_mode(). This can speed
@@ -528,31 +525,29 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
         problems as in hyperparameter optimization. See :term:`the Glossary
         <warm_start>`.
 
-    copy_X_train : bool, optional (default: True)
+    copy_X_train : bool, default=True
         If True, a persistent copy of the training data is stored in the
         object. Otherwise, just a reference to the training data is stored,
         which might cause predictions to change if the data is modified
         externally.
 
-    random_state : int, RandomState instance or None, optional (default: None)
-        The generator used to initialize the centers.
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int or RandomState, default=None
+        Determines random number generation used to initialize the centers.
+        Pass an int for reproducible results across multiple function calls.
+        See :term: `Glossary <random_state>`.
 
-    multi_class : string, default : "one_vs_rest"
+    multi_class : {'one_vs_rest', 'one_vs_one'}, default='one_vs_rest'
         Specifies how multi-class classification problems are handled.
-        Supported are "one_vs_rest" and "one_vs_one". In "one_vs_rest",
+        Supported are 'one_vs_rest' and 'one_vs_one'. In 'one_vs_rest',
         one binary Gaussian process classifier is fitted for each class, which
-        is trained to separate this class from the rest. In "one_vs_one", one
+        is trained to separate this class from the rest. In 'one_vs_one', one
         binary Gaussian process classifier is fitted for each pair of classes,
         which is trained to separate these two classes. The predictions of
         these binary predictors are combined into multi-class predictions.
-        Note that "one_vs_one" does not support predicting probability
+        Note that 'one_vs_one' does not support predicting probability
         estimates.
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int, default=None
         The number of jobs to use for the computation.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
@@ -560,7 +555,7 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
 
     Attributes
     ----------
-    kernel_ : kernel object
+    kernel_ : kernel instance
         The kernel used for prediction. In case of binary classification,
         the structure of the kernel is the same as the one passed as parameter
         but with optimized hyperparameters. In case of multi-class
@@ -593,7 +588,8 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
 
     .. versionadded:: 0.18
     """
-    def __init__(self, kernel=None, optimizer="fmin_l_bfgs_b",
+    @_deprecate_positional_args
+    def __init__(self, kernel=None, *, optimizer="fmin_l_bfgs_b",
                  n_restarts_optimizer=0, max_iter_predict=100,
                  warm_start=False, copy_X_train=True, random_state=None,
                  multi_class="one_vs_rest", n_jobs=None):
@@ -612,10 +608,8 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : sequence of length n_samples
+        X : array-like of shape (n_samples, n_features) or list of object
             Feature vectors or other representations of training data.
-            Could either be array-like with shape = (n_samples, n_features)
-            or a list of objects.
 
         y : array-like of shape (n_samples,)
             Target values, must be binary
@@ -625,16 +619,20 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
         self : returns an instance of self.
         """
         if self.kernel is None or self.kernel.requires_vector_input:
-            X, y = check_X_y(X, y, multi_output=False,
-                             ensure_2d=True, dtype="numeric")
+            X, y = self._validate_data(X, y, multi_output=False,
+                                       ensure_2d=True, dtype="numeric")
         else:
-            X, y = check_X_y(X, y, multi_output=False,
-                             ensure_2d=False, dtype=None)
+            X, y = self._validate_data(X, y, multi_output=False,
+                                       ensure_2d=False, dtype=None)
 
         self.base_estimator_ = _BinaryGaussianProcessClassifierLaplace(
-            self.kernel, self.optimizer, self.n_restarts_optimizer,
-            self.max_iter_predict, self.warm_start, self.copy_X_train,
-            self.random_state)
+            kernel=self.kernel,
+            optimizer=self.optimizer,
+            n_restarts_optimizer=self.n_restarts_optimizer,
+            max_iter_predict=self.max_iter_predict,
+            warm_start=self.warm_start,
+            copy_X_train=self.copy_X_train,
+            random_state=self.random_state)
 
         self.classes_ = np.unique(y)
         self.n_classes_ = self.classes_.size
@@ -673,10 +671,8 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : sequence of length n_samples
+        X : array-like of shape (n_samples, n_features) or list of object
             Query points where the GP is evaluated for classification.
-            Could either be array-like with shape = (n_samples, n_features)
-            or a list of objects.
 
         Returns
         -------
@@ -697,10 +693,8 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : sequence of length n_samples
+        X : array-like of shape (n_samples, n_features) or list of object
             Query points where the GP is evaluated for classification.
-            Could either be array-like with shape = (n_samples, n_features)
-            or a list of objects.
 
         Returns
         -------
@@ -740,7 +734,7 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
 
         Parameters
         ----------
-        theta : array-like of shape (n_kernel_params,) or None
+        theta : array-like of shape (n_kernel_params,), default=None
             Kernel hyperparameters for which the log-marginal likelihood is
             evaluated. In the case of multi-class classification, theta may
             be the  hyperparameters of the compound kernel or of an individual
@@ -748,7 +742,7 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
             same theta values. If None, the precomputed log_marginal_likelihood
             of ``self.kernel_.theta`` is returned.
 
-        eval_gradient : bool, default: False
+        eval_gradient : bool, default=False
             If True, the gradient of the log-marginal likelihood with respect
             to the kernel hyperparameters at position theta is returned
             additionally. Note that gradient computation is not supported
@@ -763,10 +757,10 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
         log_likelihood : float
             Log-marginal likelihood of theta for training data.
 
-        log_likelihood_gradient : array, shape = (n_kernel_params,), optional
+        log_likelihood_gradient : ndarray of shape (n_kernel_params,), optional
             Gradient of the log-marginal likelihood with respect to the kernel
             hyperparameters at position theta.
-            Only returned when eval_gradient is True.
+            Only returned when `eval_gradient` is True.
         """
         check_is_fitted(self)
 

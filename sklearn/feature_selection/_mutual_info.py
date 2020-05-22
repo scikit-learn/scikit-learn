@@ -11,6 +11,7 @@ from ..preprocessing import scale
 from ..utils import check_random_state
 from ..utils.fixes import _astype_copy_false
 from ..utils.validation import check_array, check_X_y
+from ..utils.validation import _deprecate_positional_args
 from ..utils.multiclass import check_classification_targets
 
 
@@ -224,12 +225,10 @@ def _estimate_mi(X, y, discrete_features='auto', discrete_target=False,
         data will be overwritten.
 
     random_state : int, RandomState instance or None, optional, default None
-        The seed of the pseudo random number generator for adding small noise
-        to continuous variables in order to remove repeated values.  If int,
-        random_state is the seed used by the random number generator; If
-        RandomState instance, random_state is the random number generator; If
-        None, the random number generator is the RandomState instance used by
-        `np.random`.
+        Determines random number generation for adding small noise to
+        continuous variables in order to remove repeated values.
+        Pass an int for reproducible results across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     Returns
     -------
@@ -292,7 +291,8 @@ def _estimate_mi(X, y, discrete_features='auto', discrete_target=False,
     return np.array(mi)
 
 
-def mutual_info_regression(X, y, discrete_features='auto', n_neighbors=3,
+@_deprecate_positional_args
+def mutual_info_regression(X, y, *, discrete_features='auto', n_neighbors=3,
                            copy=True, random_state=None):
     """Estimate mutual information for a continuous target variable.
 
@@ -333,12 +333,10 @@ def mutual_info_regression(X, y, discrete_features='auto', n_neighbors=3,
         data will be overwritten.
 
     random_state : int, RandomState instance or None, optional, default None
-        The seed of the pseudo random number generator for adding small noise
-        to continuous variables in order to remove repeated values.
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        Determines random number generation for adding small noise to
+        continuous variables in order to remove repeated values.
+        Pass an int for reproducible results across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     Returns
     -------
@@ -371,7 +369,8 @@ def mutual_info_regression(X, y, discrete_features='auto', n_neighbors=3,
                         copy, random_state)
 
 
-def mutual_info_classif(X, y, discrete_features='auto', n_neighbors=3,
+@_deprecate_positional_args
+def mutual_info_classif(X, y, *, discrete_features='auto', n_neighbors=3,
                         copy=True, random_state=None):
     """Estimate mutual information for a discrete target variable.
 
@@ -412,12 +411,10 @@ def mutual_info_classif(X, y, discrete_features='auto', n_neighbors=3,
         data will be overwritten.
 
     random_state : int, RandomState instance or None, optional, default None
-        The seed of the pseudo random number generator for adding small noise
-        to continuous variables in order to remove repeated values.  If int,
-        random_state is the seed used by the random number generator; If
-        RandomState instance, random_state is the random number generator; If
-        None, the random number generator is the RandomState instance used by
-        `np.random`.
+        Determines random number generation for adding small noise to
+        continuous variables in order to remove repeated values.
+        Pass an int for reproducible results across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     Returns
     -------

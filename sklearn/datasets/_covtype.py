@@ -25,10 +25,11 @@ import joblib
 from . import get_data_home
 from ._base import _fetch_remote
 from ._base import RemoteFileMetadata
-from ._base import _refresh_cache
 from ..utils import Bunch
 from ._base import _pkl_filepath
 from ..utils import check_random_state
+from ..utils.validation import _deprecate_positional_args
+
 
 # The original data can be found in:
 # https://archive.ics.uci.edu/ml/machine-learning-databases/covtype/covtype.data.gz
@@ -41,7 +42,8 @@ ARCHIVE = RemoteFileMetadata(
 logger = logging.getLogger(__name__)
 
 
-def fetch_covtype(data_home=None, download_if_missing=True,
+@_deprecate_positional_args
+def fetch_covtype(*, data_home=None, download_if_missing=True,
                   random_state=None, shuffle=False, return_X_y=False):
     """Load the covertype dataset (classification).
 
@@ -66,7 +68,7 @@ def fetch_covtype(data_home=None, download_if_missing=True,
         If False, raise a IOError if the data is not locally available
         instead of trying to download the data from the source site.
 
-    random_state : int, RandomState instance or None (default)
+    random_state : int, RandomState instance, default=None
         Determines random number generation for dataset shuffling. Pass an int
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
@@ -82,17 +84,17 @@ def fetch_covtype(data_home=None, download_if_missing=True,
 
     Returns
     -------
-    dataset : dict-like object with the following attributes:
+    dataset : :class:`~sklearn.utils.Bunch`
+        Dictionary-like object, with the following attributes.
 
-    dataset.data : numpy array of shape (581012, 54)
-        Each row corresponds to the 54 features in the dataset.
-
-    dataset.target : numpy array of shape (581012,)
-        Each value corresponds to one of the 7 forest covertypes with values
-        ranging between 1 to 7.
-
-    dataset.DESCR : string
-        Description of the forest covertype dataset.
+        data : numpy array of shape (581012, 54)
+            Each row corresponds to the 54 features in the dataset.
+        target : numpy array of shape (581012,)
+            Each value corresponds to one of
+            the 7 forest covertypes with values
+            ranging between 1 to 7.
+        DESCR : str
+            Description of the forest covertype dataset.
 
     (data, target) : tuple if ``return_X_y`` is True
 
@@ -126,10 +128,8 @@ def fetch_covtype(data_home=None, download_if_missing=True,
     try:
         X, y
     except NameError:
-        X, y = _refresh_cache([samples_path, targets_path], 9)
-        # TODO: Revert to the following two lines in v0.23
-        # X = joblib.load(samples_path)
-        # y = joblib.load(targets_path)
+        X = joblib.load(samples_path)
+        y = joblib.load(targets_path)
 
     if shuffle:
         ind = np.arange(X.shape[0])

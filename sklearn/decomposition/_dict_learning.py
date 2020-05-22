@@ -17,7 +17,7 @@ from ..base import BaseEstimator, TransformerMixin
 from ..utils import (check_array, check_random_state, gen_even_slices,
                      gen_batches)
 from ..utils.extmath import randomized_svd, row_norms
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, _deprecate_positional_args
 from ..linear_model import Lasso, orthogonal_mp_gram, LassoLars, Lars
 
 
@@ -185,10 +185,11 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
 
 
 # XXX : could be moved to the linear_model module
-def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
-                  n_nonzero_coefs=None, alpha=None, copy_cov=True, init=None,
-                  max_iter=1000, n_jobs=None, check_input=True, verbose=0,
-                  positive=False):
+@_deprecate_positional_args
+def sparse_encode(X, dictionary, *, gram=None, cov=None,
+                  algorithm='lasso_lars', n_nonzero_coefs=None, alpha=None,
+                  copy_cov=True, init=None, max_iter=1000, n_jobs=None,
+                  check_input=True, verbose=0, positive=False):
     """Sparse coding
 
     Each row of the result is the solution to a sparse coding problem.
@@ -361,11 +362,10 @@ def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
         Whether to compute and return the residual sum of squares corresponding
         to the computed solution.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance, default=None
+        Used for randomly initializing the dictionary. Pass an int for
+        reproducible results across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     positive : boolean, optional
         Whether to enforce positivity when finding the dictionary.
@@ -422,7 +422,8 @@ def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
     return dictionary
 
 
-def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
+@_deprecate_positional_args
+def dict_learning(X, n_components, *, alpha, max_iter=100, tol=1e-8,
                   method='lars', n_jobs=None, dict_init=None, code_init=None,
                   callback=None, verbose=False, random_state=None,
                   return_n_iter=False, positive_dict=False,
@@ -483,10 +484,9 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
         To control the verbosity of the procedure.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        Used for randomly initializing the dictionary. Pass an int for
+        reproducible results across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     return_n_iter : bool
         Whether or not to return the number of iterations.
@@ -617,7 +617,8 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
         return code, dictionary, errors
 
 
-def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
+@_deprecate_positional_args
+def dict_learning_online(X, n_components=2, *, alpha=1, n_iter=100,
                          return_code=True, dict_init=None, callback=None,
                          batch_size=3, verbose=False, shuffle=True,
                          n_jobs=None, method='lars', iter_offset=0,
@@ -690,10 +691,11 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
         initialization.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        Used for initializing the dictionary when ``dict_init`` is not
+        specified, randomly shuffling the data when ``shuffle`` is set to
+        ``True``, and updating the dictionary. Pass an int for reproducible
+        results across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     return_inner_stats : boolean, optional
         Return the inner statistics A (dictionary covariance) and B
@@ -1014,7 +1016,8 @@ class SparseCoder(SparseCodingMixin, BaseEstimator):
     """
     _required_parameters = ["dictionary"]
 
-    def __init__(self, dictionary, transform_algorithm='omp',
+    @_deprecate_positional_args
+    def __init__(self, dictionary, *, transform_algorithm='omp',
                  transform_n_nonzero_coefs=None, transform_alpha=None,
                  split_sign=False, n_jobs=None, positive_code=False,
                  transform_max_iter=1000):
@@ -1043,6 +1046,10 @@ class SparseCoder(SparseCodingMixin, BaseEstimator):
             Returns the object itself
         """
         return self
+
+    @property
+    def n_features_in_(self):
+        return self.components_.shape[1]
 
 
 class DictionaryLearning(SparseCodingMixin, BaseEstimator):
@@ -1132,11 +1139,12 @@ class DictionaryLearning(SparseCodingMixin, BaseEstimator):
         its negative part and its positive part. This can improve the
         performance of downstream classifiers.
 
-    random_state : int, RandomState instance or None, default=None
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance or None, optional (default=None)
+        Used for initializing the dictionary when ``dict_init`` is not
+        specified, randomly shuffling the data when ``shuffle`` is set to
+        ``True``, and updating the dictionary. Pass an int for reproducible
+        results across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     positive_code : bool, default=False
         Whether to enforce positivity when finding the code.
@@ -1179,7 +1187,8 @@ class DictionaryLearning(SparseCodingMixin, BaseEstimator):
     SparsePCA
     MiniBatchSparsePCA
     """
-    def __init__(self, n_components=None, alpha=1, max_iter=1000, tol=1e-8,
+    @_deprecate_positional_args
+    def __init__(self, n_components=None, *, alpha=1, max_iter=1000, tol=1e-8,
                  fit_algorithm='lars', transform_algorithm='omp',
                  transform_n_nonzero_coefs=None, transform_alpha=None,
                  n_jobs=None, code_init=None, dict_init=None, verbose=False,
@@ -1217,14 +1226,14 @@ class DictionaryLearning(SparseCodingMixin, BaseEstimator):
             Returns the object itself
         """
         random_state = check_random_state(self.random_state)
-        X = check_array(X)
+        X = self._validate_data(X)
         if self.n_components is None:
             n_components = X.shape[1]
         else:
             n_components = self.n_components
 
         V, U, E, self.n_iter_ = dict_learning(
-            X, n_components, self.alpha,
+            X, n_components, alpha=self.alpha,
             tol=self.tol, max_iter=self.max_iter,
             method=self.fit_algorithm,
             method_max_iter=self.transform_max_iter,
@@ -1323,10 +1332,11 @@ class MiniBatchDictionaryLearning(SparseCodingMixin, BaseEstimator):
         performance of downstream classifiers.
 
     random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        Used for initializing the dictionary when ``dict_init`` is not
+        specified, randomly shuffling the data when ``shuffle`` is set to
+        ``True``, and updating the dictionary. Pass an int for reproducible
+        results across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     positive_code : bool
         Whether to enforce positivity when finding the code.
@@ -1383,7 +1393,8 @@ class MiniBatchDictionaryLearning(SparseCodingMixin, BaseEstimator):
     MiniBatchSparsePCA
 
     """
-    def __init__(self, n_components=None, alpha=1, n_iter=1000,
+    @_deprecate_positional_args
+    def __init__(self, n_components=None, *, alpha=1, n_iter=1000,
                  fit_algorithm='lars', n_jobs=None, batch_size=3, shuffle=True,
                  dict_init=None, transform_algorithm='omp',
                  transform_n_nonzero_coefs=None, transform_alpha=None,
@@ -1423,10 +1434,10 @@ class MiniBatchDictionaryLearning(SparseCodingMixin, BaseEstimator):
             Returns the instance itself.
         """
         random_state = check_random_state(self.random_state)
-        X = check_array(X)
+        X = self._validate_data(X)
 
         U, (A, B), self.n_iter_ = dict_learning_online(
-            X, self.n_components, self.alpha,
+            X, self.n_components, alpha=self.alpha,
             n_iter=self.n_iter, return_code=False,
             method=self.fit_algorithm,
             method_max_iter=self.transform_max_iter,
@@ -1442,6 +1453,7 @@ class MiniBatchDictionaryLearning(SparseCodingMixin, BaseEstimator):
         # some online fitting (partial_fit)
         self.inner_stats_ = (A, B)
         self.iter_offset_ = self.n_iter
+        self.random_state_ = random_state
         return self
 
     def partial_fit(self, X, y=None, iter_offset=None):
@@ -1477,7 +1489,7 @@ class MiniBatchDictionaryLearning(SparseCodingMixin, BaseEstimator):
         if iter_offset is None:
             iter_offset = getattr(self, 'iter_offset_', 0)
         U, (A, B) = dict_learning_online(
-            X, self.n_components, self.alpha,
+            X, self.n_components, alpha=self.alpha,
             n_iter=self.n_iter, method=self.fit_algorithm,
             method_max_iter=self.transform_max_iter,
             n_jobs=self.n_jobs, dict_init=dict_init,
