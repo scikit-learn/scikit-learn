@@ -358,11 +358,8 @@ def test_voting_classifier_set_params():
     assert eclf2.estimators[1][1].get_params() == clf2.get_params()
 
 
-# TODO: Remove parametrization in 0.24 when None is removed in Voting*
-@pytest.mark.parametrize("drop", [None, 'drop'])
-def test_set_estimator_none(drop):
-    """VotingClassifier set_params should be able to set estimators as None or
-    drop"""
+def test_set_estimator_drop():
+    # VotingClassifier set_params should be able to set estimators as drop
     # Test predict
     clf1 = LogisticRegression(random_state=123)
     clf2 = RandomForestClassifier(n_estimators=10, random_state=123)
@@ -375,27 +372,27 @@ def test_set_estimator_none(drop):
                                          ('nb', clf3)],
                              voting='hard', weights=[1, 1, 0.5])
     with pytest.warns(None) as record:
-        eclf2.set_params(rf=drop).fit(X, y)
-    assert record if drop is None else not record
+        eclf2.set_params(rf='drop').fit(X, y)
+    assert not record
     assert_array_equal(eclf1.predict(X), eclf2.predict(X))
 
-    assert dict(eclf2.estimators)["rf"] is drop
+    assert dict(eclf2.estimators)["rf"] == 'drop'
     assert len(eclf2.estimators_) == 2
     assert all(isinstance(est, (LogisticRegression, GaussianNB))
                for est in eclf2.estimators_)
-    assert eclf2.get_params()["rf"] is drop
+    assert eclf2.get_params()["rf"] == 'drop'
 
     eclf1.set_params(voting='soft').fit(X, y)
     with pytest.warns(None) as record:
         eclf2.set_params(voting='soft').fit(X, y)
-    assert record if drop is None else not record
+    assert not record
     assert_array_equal(eclf1.predict(X), eclf2.predict(X))
     assert_array_almost_equal(eclf1.predict_proba(X), eclf2.predict_proba(X))
     msg = 'All estimators are dropped. At least one is required'
     with pytest.warns(None) as record:
         with pytest.raises(ValueError, match=msg):
-            eclf2.set_params(lr=drop, rf=drop, nb=drop).fit(X, y)
-    assert record if drop is None else not record
+            eclf2.set_params(lr='drop', rf='drop', nb='drop').fit(X, y)
+    assert not record
 
     # Test soft voting transform
     X1 = np.array([[1], [2]])
@@ -408,8 +405,8 @@ def test_set_estimator_none(drop):
                              voting='soft', weights=[1, 0.5],
                              flatten_transform=False)
     with pytest.warns(None) as record:
-        eclf2.set_params(rf=drop).fit(X1, y1)
-    assert record if drop is None else not record
+        eclf2.set_params(rf='drop').fit(X1, y1)
+    assert not record
     assert_array_almost_equal(eclf1.transform(X1),
                               np.array([[[0.7, 0.3], [0.3, 0.7]],
                                         [[1., 0.], [0., 1.]]]))
@@ -470,7 +467,6 @@ def test_transform():
     )
 
 
-# TODO: Remove drop=None in 0.24 when None is removed in Voting*
 @pytest.mark.parametrize(
     "X, y, voter",
     [(X, y, VotingClassifier(
@@ -480,19 +476,16 @@ def test_transform():
          [('lr', LinearRegression()),
           ('rf', RandomForestRegressor(n_estimators=5))]))]
 )
-@pytest.mark.parametrize("drop", [None, 'drop'])
-def test_none_estimator_with_weights(X, y, voter, drop):
-    # TODO: remove the parametrization on 'drop' when support for None is
-    # removed.
+def test_none_estimator_with_weights(X, y, voter):
     # check that an estimator can be set to 'drop' and passing some weight
     # regression test for
     # https://github.com/scikit-learn/scikit-learn/issues/13777
     voter = clone(voter)
     voter.fit(X, y, sample_weight=np.ones(y.shape))
-    voter.set_params(lr=drop)
+    voter.set_params(lr='drop')
     with pytest.warns(None) as record:
         voter.fit(X, y, sample_weight=np.ones(y.shape))
-    assert record if drop is None else not record
+    assert not record
     y_pred = voter.predict(X)
     assert y_pred.shape == y.shape
 
@@ -555,20 +548,3 @@ def test_voting_verbose(estimator, capsys):
 
     estimator.fit(X, y)
     assert re.match(pattern, capsys.readouterr()[0])
-
-
-# TODO: Remove in 0.24 when None is removed in Voting*
-@pytest.mark.parametrize(
-    "Voter, BaseEstimator",
-    [(VotingClassifier, DecisionTreeClassifier),
-     (VotingRegressor, DecisionTreeRegressor)]
-)
-def test_deprecate_none_transformer(Voter, BaseEstimator):
-    est = Voter(estimators=[('lr', None),
-                            ('tree', BaseEstimator(random_state=0))])
-
-    msg = ("Using 'None' to drop an estimator from the ensemble is "
-           "deprecated in 0.22 and support will be dropped in 0.24. "
-           "Use the string 'drop' instead.")
-    with pytest.warns(FutureWarning, match=msg):
-        est.fit(X, y)

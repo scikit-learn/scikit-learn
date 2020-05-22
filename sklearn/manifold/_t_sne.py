@@ -22,7 +22,8 @@ from ..utils.validation import check_non_negative
 from ..utils.validation import _deprecate_positional_args
 from ..decomposition import PCA
 from ..metrics.pairwise import pairwise_distances
-from . import _utils
+# mypy error: Module 'sklearn.manifold' has no attribute '_utils'
+from . import _utils  # type: ignore
 # mypy error: Module 'sklearn.manifold' has no attribute '_barnes_hut_tsne'
 from . import _barnes_hut_tsne  # type: ignore
 

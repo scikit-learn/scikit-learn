@@ -41,7 +41,6 @@ from .utils.random import sample_without_replacement
 from .utils.validation import check_array, check_is_fitted
 from .utils.validation import _deprecate_positional_args
 from .exceptions import DataDimensionalityWarning
-from .utils import deprecated
 
 
 __all__ = ["SparseRandomProjection",
@@ -49,7 +48,8 @@ __all__ = ["SparseRandomProjection",
            "johnson_lindenstrauss_min_dim"]
 
 
-def johnson_lindenstrauss_min_dim(n_samples, eps=0.1):
+@_deprecate_positional_args
+def johnson_lindenstrauss_min_dim(n_samples, *, eps=0.1):
     """Find a 'safe' number of components to randomly project to
 
     The distortion introduced by a random projection `p` only changes the
@@ -152,13 +152,6 @@ def _check_input_size(n_components, n_features):
                          n_features)
 
 
-# TODO: remove in 0.24
-@deprecated("gaussian_random_matrix is deprecated in "
-            "0.22 and will be removed in version 0.24.")
-def gaussian_random_matrix(n_components, n_features, random_state=None):
-    return _gaussian_random_matrix(n_components, n_features, random_state)
-
-
 def _gaussian_random_matrix(n_components, n_features, random_state=None):
     """Generate a dense Gaussian random matrix.
 
@@ -197,15 +190,6 @@ def _gaussian_random_matrix(n_components, n_features, random_state=None):
                             scale=1.0 / np.sqrt(n_components),
                             size=(n_components, n_features))
     return components
-
-
-# TODO: remove in 0.24
-@deprecated("gaussian_random_matrix is deprecated in "
-            "0.22 and will be removed in version 0.24.")
-def sparse_random_matrix(n_components, n_features, density='auto',
-                         random_state=None):
-    return _sparse_random_matrix(n_components, n_features, density,
-                                 random_state)
 
 
 def _sparse_random_matrix(n_components, n_features, density='auto',
