@@ -100,16 +100,19 @@ def check_pairwise_arrays(X, Y, *, precomputed=False, dtype=None,
         raise an error.
 
     force_all_finite : boolean or 'allow-nan', (default=True)
-        Whether to raise an error on np.inf and np.nan in array. The
+        Whether to raise an error on np.inf, np.nan, pd.NA in array. The
         possibilities are:
 
         - True: Force all values of array to be finite.
-        - False: accept both np.inf and np.nan in array.
-        - 'allow-nan': accept only np.nan values in array. Values cannot
-          be infinite.
+        - False: accepts np.inf, np.nan, pd.NA in array.
+        - 'allow-nan': accepts only np.nan and pd.NA values in array. Values
+          cannot be infinite.
 
         .. versionadded:: 0.22
            ``force_all_finite`` accepts the string ``'allow-nan'``.
+
+        .. versionchanged:: 0.23
+           Accepts `pd.NA` and converts it into `np.nan`
 
     copy : bool
         Whether a forced copy will be triggered. If copy=False, a copy might
@@ -673,9 +676,9 @@ def haversine_distances(X, Y=None):
     """Compute the Haversine distance between samples in X and Y
 
     The Haversine (or great circle) distance is the angular distance between
-    two points on the surface of a sphere. The first distance of each point is
-    assumed to be the latitude, the second is the longitude, given in radians.
-    The dimension of the data must be 2.
+    two points on the surface of a sphere. The first coordinate of each point
+    is assumed to be the latitude, the second is the longitude, given
+    in radians. The dimension of the data must be 2.
 
     .. math::
        D(x, y) = 2\\arcsin[\\sqrt{\\sin^2((x1 - y1) / 2)
@@ -1691,15 +1694,19 @@ def pairwise_distances(X, Y=None, metric="euclidean", *, n_jobs=None,
         for more details.
 
     force_all_finite : boolean or 'allow-nan', (default=True)
-        Whether to raise an error on np.inf and np.nan in array. The
+        Whether to raise an error on np.inf, np.nan, pd.NA in array. The
         possibilities are:
 
         - True: Force all values of array to be finite.
-        - False: accept both np.inf and np.nan in array.
-        - 'allow-nan': accept only np.nan values in array. Values cannot
-          be infinite.
+        - False: accepts np.inf, np.nan, pd.NA in array.
+        - 'allow-nan': accepts only np.nan and pd.NA values in array. Values
+          cannot be infinite.
 
         .. versionadded:: 0.22
+           ``force_all_finite`` accepts the string ``'allow-nan'``.
+
+        .. versionchanged:: 0.23
+           Accepts `pd.NA` and converts it into `np.nan`
 
     **kwds : optional keyword parameters
         Any further parameters are passed directly to the distance function.
