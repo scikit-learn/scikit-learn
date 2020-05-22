@@ -87,21 +87,16 @@ def pytest_collection_modifyitems(config, items):
 def pytest_configure(config):
     import sys
     sys._is_pytest_session = True
+    # declare our custom markers to avoid PytestUnknownMarkWarning
+    config.addinivalue_line(
+        "markers",
+        "network: mark a test for execution if network available."
+    )
 
 
 def pytest_unconfigure(config):
     import sys
     del sys._is_pytest_session
-
-
-def pytest_runtest_setup(item):
-    if isinstance(item, DoctestItem):
-        set_config(print_changed_only=True)
-
-
-def pytest_runtest_teardown(item, nextitem):
-    if isinstance(item, DoctestItem):
-        set_config(print_changed_only=False)
 
 
 # TODO: Remove when modules are deprecated in 0.24

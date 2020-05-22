@@ -6,8 +6,8 @@
 import numpy as np
 from ..base import BaseEstimator, TransformerMixin
 from ..neighbors import NearestNeighbors, kneighbors_graph
-from ..utils.deprecation import deprecated
 from ..utils.validation import check_is_fitted
+from ..utils.validation import _deprecate_positional_args
 from ..utils.graph import graph_shortest_path
 from ..decomposition import KernelPCA
 from ..preprocessing import KernelCenterer
@@ -122,8 +122,8 @@ class Isomap(TransformerMixin, BaseEstimator):
     .. [1] Tenenbaum, J.B.; De Silva, V.; & Langford, J.C. A global geometric
            framework for nonlinear dimensionality reduction. Science 290 (5500)
     """
-
-    def __init__(self, n_neighbors=5, n_components=2, eigen_solver='auto',
+    @_deprecate_positional_args
+    def __init__(self, *, n_neighbors=5, n_components=2, eigen_solver='auto',
                  tol=0, max_iter=None, path_method='auto',
                  neighbors_algorithm='auto', n_jobs=None, metric='minkowski',
                  p=2, metric_params=None):
@@ -166,13 +166,6 @@ class Isomap(TransformerMixin, BaseEstimator):
         G *= -0.5
 
         self.embedding_ = self.kernel_pca_.fit_transform(G)
-
-    @deprecated("Attribute `training_data_` was deprecated in version 0.22 and"
-                " will be removed in 0.24.")
-    @property
-    def training_data_(self):
-        check_is_fitted(self)
-        return self.nbrs_._fit_X
 
     def reconstruction_error(self):
         """Compute the reconstruction error for the embedding.

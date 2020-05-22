@@ -17,6 +17,7 @@ import hashlib
 from ..utils import Bunch
 from ..utils import check_random_state
 from ..utils import check_pandas_support
+from ..utils.validation import _deprecate_positional_args
 
 import numpy as np
 
@@ -80,7 +81,8 @@ def _convert_data_dataframe(caller_name, data, target,
     return combined_df, X, y
 
 
-def load_files(container_path, description=None, categories=None,
+@_deprecate_positional_args
+def load_files(container_path, *, description=None, categories=None,
                load_content=True, shuffle=True, encoding=None,
                decode_error='strict', random_state=0):
     """Load text files with categories as subfolder names.
@@ -267,7 +269,8 @@ def load_data(module_path, data_file_name):
     return data, target, target_names
 
 
-def load_wine(return_X_y=False, as_frame=False):
+@_deprecate_positional_args
+def load_wine(*, return_X_y=False, as_frame=False):
     """Load and return the wine dataset (classification).
 
     .. versionadded:: 0.18
@@ -381,7 +384,8 @@ def load_wine(return_X_y=False, as_frame=False):
                  feature_names=feature_names)
 
 
-def load_iris(return_X_y=False, as_frame=False):
+@_deprecate_positional_args
+def load_iris(*, return_X_y=False, as_frame=False):
     """Load and return the iris dataset (classification).
 
     The iris dataset is a classic and very easy multi-class classification
@@ -439,6 +443,8 @@ def load_iris(return_X_y=False, as_frame=False):
         filename: str
             The path to the location of the data.
 
+            .. versionadded:: 0.20
+
     (data, target) : tuple if ``return_X_y`` is True
 
         .. versionadded:: 0.18
@@ -493,7 +499,8 @@ def load_iris(return_X_y=False, as_frame=False):
                  filename=iris_csv_filename)
 
 
-def load_breast_cancer(return_X_y=False, as_frame=False):
+@_deprecate_positional_args
+def load_breast_cancer(*, return_X_y=False, as_frame=False):
     """Load and return the breast cancer wisconsin dataset (classification).
 
     The breast cancer dataset is a classic and very easy binary classification
@@ -550,6 +557,8 @@ def load_breast_cancer(return_X_y=False, as_frame=False):
             The full description of the dataset.
         filename: str
             The path to the location of the data.
+
+            .. versionadded:: 0.20
 
     (data, target) : tuple if ``return_X_y`` is True
 
@@ -615,7 +624,8 @@ def load_breast_cancer(return_X_y=False, as_frame=False):
                  filename=csv_filename)
 
 
-def load_digits(n_class=10, return_X_y=False, as_frame=False):
+@_deprecate_positional_args
+def load_digits(*, n_class=10, return_X_y=False, as_frame=False):
     """Load and return the digits dataset (classification).
 
     Each datapoint is a 8x8 image of a digit.
@@ -665,6 +675,9 @@ def load_digits(n_class=10, return_X_y=False, as_frame=False):
             The names of the dataset columns.
         target_names: list
             The names of target classes.
+
+            .. versionadded:: 0.20
+
         frame: DataFrame of shape (1797, 65)
             Only present when `as_frame=True`. DataFrame with `data` and
             `target`.
@@ -735,7 +748,8 @@ def load_digits(n_class=10, return_X_y=False, as_frame=False):
                  DESCR=descr)
 
 
-def load_diabetes(return_X_y=False, as_frame=False):
+@_deprecate_positional_args
+def load_diabetes(*, return_X_y=False, as_frame=False):
     """Load and return the diabetes dataset (regression).
 
     ==============   ==================
@@ -827,7 +841,8 @@ def load_diabetes(return_X_y=False, as_frame=False):
                  target_filename=target_filename)
 
 
-def load_linnerud(return_X_y=False, as_frame=False):
+@_deprecate_positional_args
+def load_linnerud(*, return_X_y=False, as_frame=False):
     """Load and return the physical excercise linnerud dataset.
 
     This dataset is suitable for multi-ouput regression tasks.
@@ -885,6 +900,8 @@ def load_linnerud(return_X_y=False, as_frame=False):
         target_filename: str
             The path to the location of the target.
 
+            .. versionadded:: 0.20
+
     (data, target) : tuple if ``return_X_y`` is True
 
         .. versionadded:: 0.18
@@ -928,7 +945,8 @@ def load_linnerud(return_X_y=False, as_frame=False):
                  target_filename=target_filename)
 
 
-def load_boston(return_X_y=False):
+@_deprecate_positional_args
+def load_boston(*, return_X_y=False):
     """Load and return the boston house-prices dataset (regression).
 
     ==============   ==============
@@ -961,6 +979,7 @@ def load_boston(return_X_y=False):
             The physical location of boston csv dataset.
 
             .. versionadded:: 0.20
+
         DESCR : str
             The full description of the dataset.
         feature_names : ndarray

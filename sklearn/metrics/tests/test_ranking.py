@@ -737,8 +737,9 @@ def _test_precision_recall_curve(y_true, probas_pred):
     assert_array_almost_equal(precision_recall_auc, 0.859, 3)
     assert_array_almost_equal(precision_recall_auc,
                               average_precision_score(y_true, probas_pred))
+    # `_average_precision` is not very precise in case of 0.5 ties: be tolerant
     assert_almost_equal(_average_precision(y_true, probas_pred),
-                        precision_recall_auc, decimal=3)
+                        precision_recall_auc, decimal=2)
     assert p.size == r.size
     assert p.size == thresholds.size + 1
     # Smoke test in the case of proba having only one value

@@ -24,6 +24,7 @@ from ..utils import indexable, check_random_state, _safe_indexing
 from ..utils import _approximate_mode
 from ..utils.validation import _num_samples, column_or_1d
 from ..utils.validation import check_array
+from ..utils.validation import _deprecate_positional_args
 from ..utils.multiclass import type_of_target
 from ..base import _pprint
 
@@ -50,7 +51,6 @@ class BaseCrossValidator(metaclass=ABCMeta):
 
     Implementations must define `_iter_test_masks` or `_iter_test_indices`.
     """
-
     def split(self, X, y=None, groups=None):
         """Generate indices to split data into training and test set.
 
@@ -270,7 +270,8 @@ class _BaseKFold(BaseCrossValidator, metaclass=ABCMeta):
     """Base class for KFold, GroupKFold, and StratifiedKFold"""
 
     @abstractmethod
-    def __init__(self, n_splits, shuffle, random_state):
+    @_deprecate_positional_args
+    def __init__(self, n_splits, *, shuffle, random_state):
         if not isinstance(n_splits, numbers.Integral):
             raise ValueError('The number of folds must be of Integral type. '
                              '%s of type %s was passed.'
@@ -288,12 +289,10 @@ class _BaseKFold(BaseCrossValidator, metaclass=ABCMeta):
                             " got {0}".format(shuffle))
 
         if not shuffle and random_state is not None:  # None is the default
-            # TODO 0.24: raise a ValueError instead of a warning
-            warnings.warn(
+            raise ValueError(
                 'Setting a random_state has no effect since shuffle is '
-                'False. This will raise an error in 0.24. You should leave '
+                'False. You should leave '
                 'random_state to its default (None), or set shuffle=True.',
-                FutureWarning
             )
 
         self.n_splits = n_splits
@@ -426,10 +425,11 @@ class KFold(_BaseKFold):
 
     RepeatedKFold: Repeats K-Fold n times.
     """
-
-    def __init__(self, n_splits=5, shuffle=False,
+    @_deprecate_positional_args
+    def __init__(self, n_splits=5, *, shuffle=False,
                  random_state=None):
-        super().__init__(n_splits, shuffle, random_state)
+        super().__init__(n_splits=n_splits, shuffle=shuffle,
+                         random_state=random_state)
 
     def _iter_test_indices(self, X, y=None, groups=None):
         n_samples = _num_samples(X)
@@ -633,9 +633,10 @@ class StratifiedKFold(_BaseKFold):
     --------
     RepeatedStratifiedKFold: Repeats Stratified K-Fold n times.
     """
-
-    def __init__(self, n_splits=5, shuffle=False, random_state=None):
-        super().__init__(n_splits, shuffle, random_state)
+    @_deprecate_positional_args
+    def __init__(self, n_splits=5, *, shuffle=False, random_state=None):
+        super().__init__(n_splits=n_splits, shuffle=shuffle,
+                         random_state=random_state)
 
     def _make_test_folds(self, X, y=None):
         rng = check_random_state(self.random_state)
@@ -736,6 +737,8 @@ class StratifiedKFold(_BaseKFold):
 class TimeSeriesSplit(_BaseKFold):
     """Time Series cross-validator
 
+    .. versionadded:: 0.18
+
     Provides train/test indices to split time series data samples
     that are observed at fixed time intervals, in train/test sets.
     In each split, test indices must be higher than before, and thus shuffling
@@ -761,6 +764,15 @@ class TimeSeriesSplit(_BaseKFold):
     max_train_size : int, default=None
         Maximum size for a single training set.
 
+    test_size : int, default=None
+        Used to limit the size of the test set. Defaults to
+        ``n_samples // (n_splits + 1)``, which is the maximum allowed value
+        with ``gap=0``.
+
+    gap : int, default=0
+        Number of samples to exclude from the end of each train set before
+        the test set.
+
     Examples
     --------
     >>> import numpy as np
@@ -769,7 +781,7 @@ class TimeSeriesSplit(_BaseKFold):
     >>> y = np.array([1, 2, 3, 4, 5, 6])
     >>> tscv = TimeSeriesSplit()
     >>> print(tscv)
-    TimeSeriesSplit(max_train_size=None, n_splits=5)
+    TimeSeriesSplit(gap=0, max_train_size=None, n_splits=5, test_size=None)
     >>> for train_index, test_index in tscv.split(X):
     ...     print("TRAIN:", train_index, "TEST:", test_index)
     ...     X_train, X_test = X[train_index], X[test_index]
@@ -779,17 +791,45 @@ class TimeSeriesSplit(_BaseKFold):
     TRAIN: [0 1 2] TEST: [3]
     TRAIN: [0 1 2 3] TEST: [4]
     TRAIN: [0 1 2 3 4] TEST: [5]
+    >>> # Fix test_size to 2 with 12 samples
+    >>> X = np.random.randn(12, 2)
+    >>> y = np.random.randint(0, 2, 12)
+    >>> tscv = TimeSeriesSplit(n_splits=3, test_size=2)
+    >>> for train_index, test_index in tscv.split(X):
+    ...    print("TRAIN:", train_index, "TEST:", test_index)
+    ...    X_train, X_test = X[train_index], X[test_index]
+    ...    y_train, y_test = y[train_index], y[test_index]
+    TRAIN: [0 1 2 3 4 5] TEST: [6 7]
+    TRAIN: [0 1 2 3 4 5 6 7] TEST: [8 9]
+    TRAIN: [0 1 2 3 4 5 6 7 8 9] TEST: [10 11]
+    >>> # Add in a 2 period gap
+    >>> tscv = TimeSeriesSplit(n_splits=3, test_size=2, gap=2)
+    >>> for train_index, test_index in tscv.split(X):
+    ...    print("TRAIN:", train_index, "TEST:", test_index)
+    ...    X_train, X_test = X[train_index], X[test_index]
+    ...    y_train, y_test = y[train_index], y[test_index]
+    TRAIN: [0 1 2 3] TEST: [6 7]
+    TRAIN: [0 1 2 3 4 5] TEST: [8 9]
+    TRAIN: [0 1 2 3 4 5 6 7] TEST: [10 11]
 
     Notes
     -----
     The training set has size ``i * n_samples // (n_splits + 1)
     + n_samples % (n_splits + 1)`` in the ``i``th split,
-    with a test set of size ``n_samples//(n_splits + 1)``,
+    with a test set of size ``n_samples//(n_splits + 1)`` by default,
     where ``n_samples`` is the number of samples.
     """
-    def __init__(self, n_splits=5, max_train_size=None):
+    @_deprecate_positional_args
+    def __init__(self,
+                 n_splits=5,
+                 *,
+                 max_train_size=None,
+                 test_size=None,
+                 gap=0):
         super().__init__(n_splits, shuffle=False, random_state=None)
         self.max_train_size = max_train_size
+        self.test_size = test_size
+        self.gap = gap
 
     def split(self, X, y=None, groups=None):
         """Generate indices to split data into training and test set.
@@ -818,21 +858,31 @@ class TimeSeriesSplit(_BaseKFold):
         n_samples = _num_samples(X)
         n_splits = self.n_splits
         n_folds = n_splits + 1
+        gap = self.gap
+        test_size = self.test_size if self.test_size is not None \
+            else n_samples // n_folds
+
+        # Make sure we have enough samples for the given split parameters
         if n_folds > n_samples:
             raise ValueError(
-                ("Cannot have number of folds ={0} greater"
-                 " than the number of samples: {1}.").format(n_folds,
-                                                             n_samples))
+                (f"Cannot have number of folds={n_folds} greater"
+                 f" than the number of samples={n_samples}."))
+        if n_samples - gap - (test_size * n_splits) <= 0:
+            raise ValueError(
+                (f"Too many splits={n_splits} for number of samples"
+                 f"={n_samples} with test_size={test_size} and gap={gap}."))
+
         indices = np.arange(n_samples)
-        test_size = (n_samples // n_folds)
-        test_starts = range(test_size + n_samples % n_folds,
+        test_starts = range(n_samples - n_splits * test_size,
                             n_samples, test_size)
+
         for test_start in test_starts:
-            if self.max_train_size and self.max_train_size < test_start:
-                yield (indices[test_start - self.max_train_size:test_start],
+            train_end = test_start - gap
+            if self.max_train_size and self.max_train_size < train_end:
+                yield (indices[train_end - self.max_train_size:train_end],
                        indices[test_start:test_start + test_size])
             else:
-                yield (indices[:test_start],
+                yield (indices[:train_end],
                        indices[test_start:test_start + test_size])
 
 
@@ -1099,7 +1149,8 @@ class _RepeatedSplits(metaclass=ABCMeta):
         Constructor parameters for cv. Must not contain random_state
         and shuffle.
     """
-    def __init__(self, cv, n_repeats=10, random_state=None, **cvargs):
+    @_deprecate_positional_args
+    def __init__(self, cv, *, n_repeats=10, random_state=None, **cvargs):
         if not isinstance(n_repeats, numbers.Integral):
             raise ValueError("Number of repetitions must be of Integral type.")
 
@@ -1226,9 +1277,11 @@ class RepeatedKFold(_RepeatedSplits):
     --------
     RepeatedStratifiedKFold: Repeats Stratified K-Fold n times.
     """
-    def __init__(self, n_splits=5, n_repeats=10, random_state=None):
+    @_deprecate_positional_args
+    def __init__(self, *, n_splits=5, n_repeats=10, random_state=None):
         super().__init__(
-            KFold, n_repeats, random_state, n_splits=n_splits)
+            KFold, n_repeats=n_repeats,
+            random_state=random_state, n_splits=n_splits)
 
 
 class RepeatedStratifiedKFold(_RepeatedSplits):
@@ -1280,15 +1333,17 @@ class RepeatedStratifiedKFold(_RepeatedSplits):
     --------
     RepeatedKFold: Repeats K-Fold n times.
     """
-    def __init__(self, n_splits=5, n_repeats=10, random_state=None):
+    @_deprecate_positional_args
+    def __init__(self, *, n_splits=5, n_repeats=10, random_state=None):
         super().__init__(
-            StratifiedKFold, n_repeats, random_state, n_splits=n_splits)
+            StratifiedKFold, n_repeats=n_repeats, random_state=random_state,
+            n_splits=n_splits)
 
 
 class BaseShuffleSplit(metaclass=ABCMeta):
     """Base class for ShuffleSplit and StratifiedShuffleSplit"""
-
-    def __init__(self, n_splits=10, test_size=None, train_size=None,
+    @_deprecate_positional_args
+    def __init__(self, n_splits=10, *, test_size=None, train_size=None,
                  random_state=None):
         self.n_splits = n_splits
         self.test_size = test_size
@@ -1421,7 +1476,8 @@ class ShuffleSplit(BaseShuffleSplit):
     TRAIN: [3 4 1] TEST: [5 2]
     TRAIN: [3 5 1] TEST: [2 4]
     """
-    def __init__(self, n_splits=10, test_size=None, train_size=None,
+    @_deprecate_positional_args
+    def __init__(self, n_splits=10, *, test_size=None, train_size=None,
                  random_state=None):
         super().__init__(
             n_splits=n_splits,
@@ -1510,8 +1566,8 @@ class GroupShuffleSplit(ShuffleSplit):
     TRAIN: [2 3 4 5 6 7] TEST: [0 1]
     TRAIN: [0 1 5 6 7] TEST: [2 3 4]
     '''
-
-    def __init__(self, n_splits=5, test_size=None, train_size=None,
+    @_deprecate_positional_args
+    def __init__(self, n_splits=5, *, test_size=None, train_size=None,
                  random_state=None):
         super().__init__(
             n_splits=n_splits,
@@ -1626,8 +1682,8 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
     TRAIN: [4 1 0] TEST: [2 3 5]
     TRAIN: [0 5 1] TEST: [3 4 2]
     """
-
-    def __init__(self, n_splits=10, test_size=None, train_size=None,
+    @_deprecate_positional_args
+    def __init__(self, n_splits=10, *, test_size=None, train_size=None,
                  random_state=None):
         super().__init__(
             n_splits=n_splits,
@@ -1959,7 +2015,8 @@ class _CVIterableWrapper(BaseCrossValidator):
             yield train, test
 
 
-def check_cv(cv=5, y=None, classifier=False):
+@_deprecate_positional_args
+def check_cv(cv=5, y=None, *, classifier=False):
     """Input checker utility for building a cross-validator
 
     Parameters
@@ -2013,7 +2070,12 @@ def check_cv(cv=5, y=None, classifier=False):
     return cv  # New style cv objects are passed without any modification
 
 
-def train_test_split(*arrays, **options):
+def train_test_split(*arrays,
+                     test_size=None,
+                     train_size=None,
+                     random_state=None,
+                     shuffle=True,
+                     stratify=None):
     """Split arrays or matrices into random train and test subsets
 
     Quick utility that wraps input validation and
@@ -2102,14 +2164,6 @@ def train_test_split(*arrays, **options):
     n_arrays = len(arrays)
     if n_arrays == 0:
         raise ValueError("At least one array required as input")
-    test_size = options.pop('test_size', None)
-    train_size = options.pop('train_size', None)
-    random_state = options.pop('random_state', None)
-    stratify = options.pop('stratify', None)
-    shuffle = options.pop('shuffle', True)
-
-    if options:
-        raise TypeError("Invalid parameters passed: %s" % str(options))
 
     arrays = indexable(*arrays)
 
@@ -2144,7 +2198,8 @@ def train_test_split(*arrays, **options):
 
 # Tell nose that train_test_split is not a test.
 # (Needed for external libraries that may use nose.)
-train_test_split.__test__ = False
+# Use setattr to avoid mypy errors when monkeypatching.
+setattr(train_test_split, '__test__', False)
 
 
 def _build_repr(self):

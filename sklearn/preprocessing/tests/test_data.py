@@ -2295,7 +2295,7 @@ def test_power_transformer_boxcox_strictly_positive_exception():
         pt.fit(X_with_negatives)
 
     with pytest.raises(ValueError, match=not_positive_message):
-        power_transform(X_with_negatives, 'box-cox')
+        power_transform(X_with_negatives, method='box-cox')
 
     with pytest.raises(ValueError, match=not_positive_message):
         pt.transform(np.zeros(X_2d.shape))
@@ -2304,7 +2304,7 @@ def test_power_transformer_boxcox_strictly_positive_exception():
         pt.fit(np.zeros(X_2d.shape))
 
     with pytest.raises(ValueError, match=not_positive_message):
-        power_transform(np.zeros(X_2d.shape), 'box-cox')
+        power_transform(np.zeros(X_2d.shape), method='box-cox')
 
 
 @pytest.mark.parametrize('X', [X_2d, np.abs(X_2d), -np.abs(X_2d),
@@ -2432,7 +2432,7 @@ def test_power_transformer_fit_transform(method, standardize):
     if method == 'box-cox':
         X = np.abs(X)
 
-    pt = PowerTransformer(method, standardize)
+    pt = PowerTransformer(method, standardize=standardize)
     assert_array_almost_equal(pt.fit(X).transform(X), pt.fit_transform(X))
 
 
@@ -2449,7 +2449,7 @@ def test_power_transformer_copy_True(method, standardize):
     assert X is not X_original  # sanity checks
     assert_array_almost_equal(X, X_original)
 
-    pt = PowerTransformer(method, standardize, copy=True)
+    pt = PowerTransformer(method, standardize=standardize, copy=True)
 
     pt.fit(X)
     assert_array_almost_equal(X, X_original)
@@ -2477,7 +2477,7 @@ def test_power_transformer_copy_False(method, standardize):
     assert X is not X_original  # sanity checks
     assert_array_almost_equal(X, X_original)
 
-    pt = PowerTransformer(method, standardize, copy=False)
+    pt = PowerTransformer(method, standardize=standardize, copy=False)
 
     pt.fit(X)
     assert_array_almost_equal(X, X_original)  # fit didn't change X

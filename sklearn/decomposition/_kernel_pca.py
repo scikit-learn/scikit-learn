@@ -14,6 +14,7 @@ from ..exceptions import NotFittedError
 from ..base import BaseEstimator, TransformerMixin
 from ..preprocessing import KernelCenterer
 from ..metrics.pairwise import pairwise_kernels
+from ..utils.validation import _deprecate_positional_args
 
 
 class KernelPCA(TransformerMixin, BaseEstimator):
@@ -138,8 +139,8 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         component analysis. In Advances in kernel methods,
         MIT Press, Cambridge, MA, USA 327-352.
     """
-
-    def __init__(self, n_components=None, kernel="linear",
+    @_deprecate_positional_args
+    def __init__(self, n_components=None, *, kernel="linear",
                  gamma=None, degree=3, coef0=1, kernel_params=None,
                  alpha=1.0, fit_inverse_transform=False, eigen_solver='auto',
                  tol=0, max_iter=None, remove_zero_eig=False,
@@ -235,7 +236,7 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         # if v is an eigenvector of K
         #     then Phi(X)v  is an eigenvector of Phi(X)Phi(X)'
         # if u is an eigenvector of Phi(X)Phi(X)'
-        #     then Phi(X)'u is an eigenvector of Phi(X)Phi(X)'
+        #     then Phi(X)'u is an eigenvector of Phi(X)'Phi(X)
         #
         # At this stage our self.alphas_ (the v) have norm 1, we need to scale
         # them so that eigenvectors in kernel feature space (the u) have norm=1
