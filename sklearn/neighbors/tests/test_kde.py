@@ -9,6 +9,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.datasets import make_blobs
 from sklearn.model_selection import GridSearchCV
 from sklearn.preprocessing import StandardScaler
+from sklearn.exceptions import NotFittedError
 import joblib
 
 
@@ -73,7 +74,7 @@ def test_kernel_density_sampling(n_samples=100, n_features=3):
 
     for kernel in ['gaussian', 'tophat']:
         # draw a tophat sample
-        kde = KernelDensity(bandwidth, kernel=kernel).fit(X)
+        kde = KernelDensity(bandwidth=bandwidth, kernel=kernel).fit(X)
         samp = kde.sample(100)
         assert X.shape == samp.shape
 
@@ -90,7 +91,7 @@ def test_kernel_density_sampling(n_samples=100, n_features=3):
 
     # check unsupported kernels
     for kernel in ['epanechnikov', 'exponential', 'linear', 'cosine']:
-        kde = KernelDensity(bandwidth, kernel=kernel).fit(X)
+        kde = KernelDensity(bandwidth=bandwidth, kernel=kernel).fit(X)
         assert_raises(NotImplementedError, kde.sample, 100)
 
     # non-regression test: used to return a scalar
@@ -235,3 +236,15 @@ def test_pickling(tmpdir, sample_weight):
     scores_pickled = kde.score_samples(X)
 
     assert_allclose(scores, scores_pickled)
+
+
+@pytest.mark.parametrize('method', ['score_samples', 'sample'])
+def test_check_is_fitted(method):
+    # Check that predict raises an exception in an unfitted estimator.
+    # Unfitted estimators should raise a NotFittedError.
+    rng = np.random.RandomState(0)
+    X = rng.randn(10, 2)
+    kde = KernelDensity()
+
+    with pytest.raises(NotFittedError):
+        getattr(kde, method)(X)
