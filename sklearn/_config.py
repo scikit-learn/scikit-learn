@@ -75,7 +75,8 @@ def set_config(assume_finite=None, working_memory=None,
     get_config: Retrieve current values of the global configuration
     """
     if assume_positive_sample_weights is not None:
-        _global_config['assume_positive_sample_weights'] = assume_positive_sample_weights
+        _global_config['assume_positive_sample_weights'] = \
+            assume_positive_sample_weights
     if assume_finite is not None:
         _global_config['assume_finite'] = assume_finite
     if working_memory is not None:
@@ -93,8 +94,8 @@ def config_context(**new_config):
     Parameters
     ----------
     assume_positive_sample_weights : bool, optional
-        If in function _check_sample_weight parameter force_positive
-        is set to None, then it's value is set to assume_positive_sample_weights.
+        If in function _check_sample_weight parameter force_positive is set
+        to None, then it's value is set to assume_positive_sample_weights.
 
     assume_finite : bool, optional
         If True, validation for finiteness will be skipped,

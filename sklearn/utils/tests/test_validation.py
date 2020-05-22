@@ -52,8 +52,8 @@ from sklearn.exceptions import NotFittedError, PositiveSpectrumWarning
 
 from sklearn.utils._testing import TempMemmap
 
-from sklearn import get_config as _get_config
 from sklearn import set_config as _set_config
+
 
 def test_as_float_array():
     # Test function for as_float_array
@@ -123,7 +123,7 @@ def test_np_matrix():
 def test_memmap():
     # Confirm that input validation code doesn't copy memory mapped arrays
 
-    asflt = lambda x: as_float_array(x, copy=False)
+    def asflt(x): return as_float_array(x, copy=False)
 
     with NamedTemporaryFile(prefix='sklearn-test') as tmp:
         M = np.memmap(tmp, shape=(10, 10), dtype=np.float32)
@@ -280,8 +280,10 @@ def test_check_array():
         else:
             # doesn't copy if it was already good
             if (X.dtype == X_checked.dtype and
-                    X_checked.flags['C_CONTIGUOUS'] == X.flags['C_CONTIGUOUS']
-                    and X_checked.flags['F_CONTIGUOUS'] == X.flags['F_CONTIGUOUS']):
+                    X_checked.flags['C_CONTIGUOUS'] ==
+                    X.flags['C_CONTIGUOUS'] and
+                    X_checked.flags['F_CONTIGUOUS'] ==
+                    X.flags['F_CONTIGUOUS']):
                 assert X is X_checked
 
     # allowed sparse != None
@@ -1092,7 +1094,7 @@ def test_check_sample_weight():
         _check_sample_weight(sample_weight, X)
     # no error here
     _check_sample_weight(sample_weight, X, force_positive=False)
-    
+
     # no error for negative weights if global parameter set to False
     _set_config(assume_positive_sample_weights=False)
 
@@ -1100,11 +1102,12 @@ def test_check_sample_weight():
     sample_weight = np.array([-1, 2, 0, -3, 2], dtype=np.float32)
     _check_sample_weight(sample_weight, X, force_positive=False)
     _check_sample_weight(sample_weight, X)
-    #error here
+    # error here
     with pytest.raises(ValueError, match=msg):
         _check_sample_weight(sample_weight, X, force_positive=True)
 
     _set_config(assume_positive_sample_weights=True)
+
 
 @pytest.mark.parametrize("toarray", [
     np.array, sp.csr_matrix, sp.csc_matrix])
