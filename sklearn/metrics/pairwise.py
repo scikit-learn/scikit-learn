@@ -761,8 +761,10 @@ def pairwise_wasserstein_distances(X, Y, X_d, Y_d):
     >>> A_uncrtnty = [[0.01, 0.02, 0.01],[0.02, 0.03, 0.01],[0.02, 0.01, 0.01]]
     >>> B_uncrtnty = [[0.01, 0.01, 0.01],[0.02, 0.01, 0.05]]
     >>> result = pairwise_wasserstein_distances(A, B, A_uncrtnty, B_uncrtnty)
-    >>> result = np.array([[3.16399339, 3.90458194],[4.32216451, 2.62063762],
-                            [6.86757329, 6.63947671]])
+    >>> result
+    array([[3.16399339, 3.90458194],
+           [4.32216451, 2.62063762],
+           [6.86757329, 6.63947671]])
     """
     X, Y = check_pairwise_arrays(X, Y)
     X_d, Y_d = check_pairwise_arrays(X_d, Y_d)
