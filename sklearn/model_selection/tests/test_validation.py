@@ -1735,7 +1735,11 @@ def test_fit_and_score_verbosity(capsys, train_score, scorer, verbose,
     _fit_and_score(*fit_and_score_args, **fit_and_score_kwargs)
     out, _ = capsys.readouterr()
     print(out)
-    assert out.split('\n')[1] == expected
+    outlines = out.split('\n')
+    if len(outlines) > 2:
+        assert outlines[1] == expected
+    else:
+        assert outlines[0] == expected
 
 
 def test_score():

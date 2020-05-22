@@ -519,6 +519,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
             sorted_keys = sorted(parameters)  # Ensure deterministic o/p
             params_msg = (', '.join(f'{k}={parameters[k]}'
                                     for k in sorted_keys))
+    if verbose > 9:
         start_msg = f"[CV{progress_msg}] START {params_msg}"
         print(f"{start_msg}{(80 - len(start_msg)) * '.'}")
 

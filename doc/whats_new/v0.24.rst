@@ -76,7 +76,10 @@ Changelog
   attribute name/path or a `callable` for extracting feature importance from
   the estimator.  :pr:`15361` by :user:`Venkatachalam N <venkyyuvy>`
 
-  
+- |Enhancement| Verbose output of :class:`model_selection.GridSearchCV` has
+  been improved for readability. :pr:`16935` by :user:`Raghav Rajagopalan
+  <raghavrv>` and :user:`Chiara Marmo <cmarmo>`.
+
 :mod:`sklearn.tree`
 ...................
 
