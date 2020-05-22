@@ -586,11 +586,11 @@ class GaussianMixture(BaseMixture):
     >>> import numpy as np
     >>> from sklearn.mixture import GaussianMixture
     >>> X = np.array([[1, 2], [1, 4], [1, 0], [10, 2], [10, 4], [10, 0]])
-    >>> GM = GaussianMixture(n_components=2, random_state=0).fit(X)
-    >>> GM.means_
+    >>> gm = GaussianMixture(n_components=2, random_state=0).fit(X)
+    >>> gm.means_
     array([[10.,  2.],
            [ 1.,  2.]])
-    >>> GM.predict([[0, 0], [12, 3]])
+    >>> gm.predict([[0, 0], [12, 3]])
     array([1, 0])
 
     See Also
