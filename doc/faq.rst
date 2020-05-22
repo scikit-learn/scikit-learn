@@ -97,7 +97,7 @@ What are the inclusion criteria for new algorithms ?
 ----------------------------------------------------
 
 We only consider well-established algorithms for inclusion. A rule of thumb is
-at least 3 years since publication, 200+ citations and wide use and
+at least 3 years since publication, 200+ citations, and wide use and
 usefulness. A technique that provides a clear-cut improvement (e.g. an
 enhanced data structure or a more efficient approximation technique) on
 a widely-used method will also be considered for inclusion.
@@ -123,7 +123,7 @@ Inclusion of a new algorithm speeding up an existing model is easier if:
   n_samples",
 - benchmarks clearly show a speed up.
 
-Also note that your implementation need not be in scikit-learn to be used
+Also, note that your implementation need not be in scikit-learn to be used
 together with scikit-learn tools. You can implement your favorite algorithm
 in a scikit-learn compatible way, upload it to GitHub and let us know. We
 will be happy to list it under :ref:`related_projects`. If you already have
@@ -135,7 +135,7 @@ interested to look at `scikit-learn-contrib
 
 Why are you so selective on what algorithms you include in scikit-learn?
 ------------------------------------------------------------------------
-Code is maintenance cost, and we need to balance the amount of
+Code comes with maintenance cost, and we need to balance the amount of
 code we have with the size of the team (and add to this the fact that
 complexity scales non linearly with the number of features).
 The package relies on core developers using their free time to
@@ -250,7 +250,7 @@ Why do I sometime get a crash/freeze with n_jobs > 1 under OSX or Linux?
 
 Several scikit-learn tools such as ``GridSearchCV`` and ``cross_val_score``
 rely internally on Python's `multiprocessing` module to parallelize execution
-onto several Python processes by passing ``n_jobs > 1`` as argument.
+onto several Python processes by passing ``n_jobs > 1`` as an argument.
 
 The problem is that Python ``multiprocessing`` does a ``fork`` system call
 without following it with an ``exec`` system call for performance reasons. Many

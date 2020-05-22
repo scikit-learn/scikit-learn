@@ -13,6 +13,7 @@ import scipy.sparse as sparse
 from ..base import clone
 from ..base import ClassifierMixin, RegressorMixin, TransformerMixin
 from ..base import is_classifier, is_regressor
+from ..utils._estimator_html_repr import _VisualBlock
 
 from ._base import _fit_single_estimator
 from ._base import _BaseHeterogeneousEnsemble
@@ -232,6 +233,14 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble,
         return self.final_estimator_.predict(
             self.transform(X), **predict_params
         )
+
+    def _sk_visual_block_(self, final_estimator):
+        names, estimators = zip(*self.estimators)
+        parallel = _VisualBlock('parallel', estimators, names=names,
+                                dash_wrapped=False)
+        serial = _VisualBlock('serial', (parallel, final_estimator),
+                              dash_wrapped=False)
+        return _VisualBlock('serial', [serial])
 
 
 class StackingClassifier(ClassifierMixin, _BaseStacking):
@@ -496,6 +505,15 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         """
         return self._transform(X)
 
+    def _sk_visual_block_(self):
+        # If final_estimator's default changes then this should be
+        # updated.
+        if self.final_estimator is None:
+            final_estimator = LogisticRegression()
+        else:
+            final_estimator = self.final_estimator
+        return super()._sk_visual_block_(final_estimator)
+
 
 class StackingRegressor(RegressorMixin, _BaseStacking):
     """Stack of estimators with a final regressor.
@@ -665,3 +683,12 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
             Prediction outputs for each estimator.
         """
         return self._transform(X)
+
+    def _sk_visual_block_(self):
+        # If final_estimator's default changes then this should be
+        # updated.
+        if self.final_estimator is None:
+            final_estimator = RidgeCV()
+        else:
+            final_estimator = self.final_estimator
+        return super()._sk_visual_block_(final_estimator)

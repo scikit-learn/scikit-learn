@@ -71,7 +71,7 @@ def test_estimate_bandwidth_with_sparse_matrix():
     # Test estimate_bandwidth with sparse matrix
     X = sparse.lil_matrix((1000, 1000))
     msg = "A sparse matrix was passed, but dense data is required."
-    assert_raise_message(TypeError, msg, estimate_bandwidth, X, 200)
+    assert_raise_message(TypeError, msg, estimate_bandwidth, X)
 
 
 def test_parallel():

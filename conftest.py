@@ -99,16 +99,6 @@ def pytest_unconfigure(config):
     del sys._is_pytest_session
 
 
-def pytest_runtest_setup(item):
-    if isinstance(item, DoctestItem):
-        set_config(print_changed_only=True)
-
-
-def pytest_runtest_teardown(item, nextitem):
-    if isinstance(item, DoctestItem):
-        set_config(print_changed_only=False)
-
-
 # TODO: Remove when modules are deprecated in 0.24
 # Configures pytest to ignore deprecated modules.
 collect_ignore_glob = [

@@ -19,8 +19,6 @@ import os
 from ._config import get_config, set_config, config_context
 
 logger = logging.getLogger(__name__)
-logger.addHandler(logging.StreamHandler())
-logger.setLevel(logging.INFO)
 
 
 # PEP0440 compatible formatted version, see:
@@ -39,7 +37,7 @@ logger.setLevel(logging.INFO)
 # Dev branch marker is: 'X.Y.dev' or 'X.Y.devN' where N is an integer.
 # 'X.Y.dev0' is the canonical version of 'X.Y.dev'
 #
-__version__ = '0.23.dev0'
+__version__ = '0.24.dev0'
 
 
 # On OSX, we can get a runtime error due to multiple OpenMP libraries loaded
