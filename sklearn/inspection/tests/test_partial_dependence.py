@@ -36,7 +36,6 @@ from sklearn.base import BaseEstimator, ClassifierMixin, clone
 from sklearn.exceptions import NotFittedError
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import ignore_warnings
 from sklearn.utils import _IS_32BIT
 from sklearn.utils.validation import check_random_state
 from sklearn.tree.tests.test_tree import assert_is_subtree
