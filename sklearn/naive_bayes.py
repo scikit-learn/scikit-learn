@@ -504,9 +504,14 @@ class _BaseDiscreteNB(_BaseNB):
                 raise ValueError("alpha should be a scalar or a numpy array "
                                  "with shape [n_features]")
         if np.min(self.alpha) < _ALPHA_MIN:
-            warnings.warn('alpha too small will result in numeric errors, '
-                          'setting alpha = %.1e' % _ALPHA_MIN)
-            return np.maximum(self.alpha, _ALPHA_MIN)
+            if self.force_alpha:
+                warnings.warn('alpha too small will result in numeric errors, '
+                              'force_alpha was set to True, '
+                              'proceeding without changing alpha.')
+            else:
+                warnings.warn('alpha too small will result in numeric errors, '
+                              'setting alpha = %.1e' % _ALPHA_MIN)
+                return np.maximum(self.alpha, _ALPHA_MIN)
         return self.alpha
 
     def partial_fit(self, X, y, classes=None, sample_weight=None):
@@ -677,7 +682,12 @@ class MultinomialNB(_BaseDiscreteNB):
     ----------
     alpha : float, default=1.0
         Additive (Laplace/Lidstone) smoothing parameter
-        (0 for no smoothing).
+        (set alpha=0 and force_alpha=True, for no smoothing).
+
+    force_alpha : bool, default=False
+        If false and alpha is too close to 0, it will set alpha to _ALPHA_MIN.
+        If true, warn user about potential numeric errors
+        and proceed with alpha unchanged.
 
     fit_prior : bool, default=True
         Whether to learn class prior probabilities or not.
@@ -746,8 +756,10 @@ class MultinomialNB(_BaseDiscreteNB):
     """
 
     @_deprecate_positional_args
-    def __init__(self, *, alpha=1.0, fit_prior=True, class_prior=None):
+    def __init__(self, *, alpha=1.0, force_alpha=False,
+                 fit_prior=True, class_prior=None):
         self.alpha = alpha
+        self.force_alpha = force_alpha
         self.fit_prior = fit_prior
         self.class_prior = class_prior
 
@@ -788,7 +800,13 @@ class ComplementNB(_BaseDiscreteNB):
     Parameters
     ----------
     alpha : float, default=1.0
-        Additive (Laplace/Lidstone) smoothing parameter (0 for no smoothing).
+        Additive (Laplace/Lidstone) smoothing parameter
+        (set alpha=0 and force_alpha=True, for no smoothing).
+
+    force_alpha : bool, default=False
+        If false and alpha is too close to 0, it will set alpha to _ALPHA_MIN.
+        If true, warn user about potential numeric errors
+        and proceed with alpha unchanged.
 
     fit_prior : bool, default=True
         Only used in edge case with a single class in the training set.
@@ -851,9 +869,10 @@ class ComplementNB(_BaseDiscreteNB):
     """
 
     @_deprecate_positional_args
-    def __init__(self, *, alpha=1.0, fit_prior=True, class_prior=None,
-                 norm=False):
+    def __init__(self, *, alpha=1.0, force_alpha=False, fit_prior=True,
+                 class_prior=None, norm=False):
         self.alpha = alpha
+        self.force_alpha = force_alpha
         self.fit_prior = fit_prior
         self.class_prior = class_prior
         self.norm = norm
@@ -901,7 +920,12 @@ class BernoulliNB(_BaseDiscreteNB):
     ----------
     alpha : float, default=1.0
         Additive (Laplace/Lidstone) smoothing parameter
-        (0 for no smoothing).
+        (set alpha=0 and force_alpha=True, for no smoothing).
+
+    force_alpha : bool, default=False
+        If false and alpha is too close to 0, it will set alpha to _ALPHA_MIN.
+        If true, warn user about potential numeric errors
+        and proceed with alpha unchanged.
 
     binarize : float or None, default=0.0
         Threshold for binarizing (mapping to booleans) of sample features.
@@ -966,9 +990,10 @@ class BernoulliNB(_BaseDiscreteNB):
     """
 
     @_deprecate_positional_args
-    def __init__(self, *, alpha=1.0, binarize=.0, fit_prior=True,
-                 class_prior=None):
+    def __init__(self, *, alpha=1.0, force_alpha=False, binarize=.0,
+                 fit_prior=True, class_prior=None):
         self.alpha = alpha
+        self.force_alpha = force_alpha
         self.binarize = binarize
         self.fit_prior = fit_prior
         self.class_prior = class_prior
@@ -1028,7 +1053,12 @@ class CategoricalNB(_BaseDiscreteNB):
     ----------
     alpha : float, default=1.0
         Additive (Laplace/Lidstone) smoothing parameter
-        (0 for no smoothing).
+        (set alpha=0 and force_alpha=True, for no smoothing).
+
+    force_alpha : bool, default=False
+        If false and alpha is too close to 0, it will set alpha to _ALPHA_MIN.
+        If true, warn user about potential numeric errors
+        and proceed with alpha unchanged.
 
     fit_prior : bool, default=True
         Whether to learn class prior probabilities or not.
@@ -1078,8 +1108,10 @@ class CategoricalNB(_BaseDiscreteNB):
     """
 
     @_deprecate_positional_args
-    def __init__(self, *, alpha=1.0, fit_prior=True, class_prior=None):
+    def __init__(self, *, alpha=1.0, force_alpha=False, fit_prior=True,
+                 class_prior=None):
         self.alpha = alpha
+        self.force_alpha = force_alpha
         self.fit_prior = fit_prior
         self.class_prior = class_prior
 
