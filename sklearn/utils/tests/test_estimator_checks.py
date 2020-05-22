@@ -473,7 +473,7 @@ def test_check_estimator():
                         RequiresPositiveYRegressor())
 
     # Does not raise error on classifier with poor_score tag
-    check_estimator(PoorScoreLogisticRegression)
+    check_estimator(PoorScoreLogisticRegression())
 
 
 def test_check_outlier_corruption():
