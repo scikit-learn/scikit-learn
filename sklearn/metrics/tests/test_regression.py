@@ -76,7 +76,7 @@ def test_multioutput_regression():
     assert_almost_equal(error, (1. / 3 + 2. / 3 + 2. / 3) / 4.)
 
     error = mean_squared_error(y_true, y_pred, squared=False)
-    assert_almost_equal(error, 0.645, decimal=2)
+    assert_almost_equal(error, 0.454, decimal=2)
 
     error = mean_squared_log_error(y_true, y_pred)
     assert_almost_equal(error, 0.200, decimal=2)
