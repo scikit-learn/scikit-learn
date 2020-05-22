@@ -901,13 +901,14 @@ def test_nan_euclidean_distances_one_feature_match_positive(missing_value):
                                    squared=False)
     assert_allclose(dist, 0.0)
 
+
 def test_wasserstein_distance():
     # Test wasserstein distance between two samples of measurement, X, Y
     # with their corresponding uncertainties X_d, Y_d
-    X = np.array([[ 1.1,  2.2,  1.1],
-                    [ 1.2,  2.3,  4.1],
-                    [-3.2,  0.1, -2.1]])
-    Y = np.array([[ 0.1,  5.2,  1.1],
+    X = np.array([[1.1,  2.2,  1.1],
+                  [1.2,  2.3,  4.1],
+                  [-3.2,  0.1, -2.1]])
+    Y = np.array([[0.1,  5.2,  1.1],
                   [-1.2,  1.3,  4.1]])
     X_d = np.array([[0.01, 0.02, 0.01],
                     [0.02, 0.03, 0.01],
@@ -915,10 +916,11 @@ def test_wasserstein_distance():
     Y_d = np.array([[0.01, 0.01, 0.01],
                     [0.02, 0.01, 0.05]])
     answer = np.array([[3.16399339, 3.90458194],
-                    [4.32216451, 2.62063762],
-                    [6.86757329, 6.63947671]])
+                       [4.32216451, 2.62063762],
+                       [6.86757329, 6.63947671]])
     dist = pairwise_wasserstein_distances(X, Y, X_d, Y_d)
     assert_allclose(dist, answer)
+
 
 def test_cosine_distances():
     # Check the pairwise Cosine distances computation

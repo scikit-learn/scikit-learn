@@ -779,7 +779,7 @@ def pairwise_wasserstein_distances(X, Y, X_d, Y_d):
     # for every pair of X and Y
     # use np array boardcasting for speed and simplicity of code
     X_d_Y_d_dist = np.sum(X_d[:, None] +
-                        Y_d - 2 * np.sqrt(X_d[:, None] * Y_d), axis=2)
+                          Y_d - 2 * np.sqrt(X_d[:, None] * Y_d), axis=2)
 
     return X_Y_dist + X_d_Y_d_dist
 
