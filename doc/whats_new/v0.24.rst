@@ -76,6 +76,13 @@ Changelog
   attribute name/path or a `callable` for extracting feature importance from
   the estimator.  :pr:`15361` by :user:`Venkatachalam N <venkyyuvy>`
 
+  
+:mod:`sklearn.tree`
+...................
+
+- |Enhancement| :func:`tree.plot_tree` now uses colors from the matplotlib
+  configuration settings. :pr:`17187` by `Andreas Müller`_.
+
 Code and Documentation Contributors
 -----------------------------------
 
