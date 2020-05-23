@@ -240,7 +240,9 @@ THRESHOLDED_METRICS = {
     label_ranking_average_precision_score,
     "ndcg_score": ndcg_score,
     "dcg_score": dcg_score,
-    "top_k_accuracy_score": partial(top_k_accuracy_score, k=1)
+
+    "top_k_accuracy_score": top_k_accuracy_score,
+    "top_k_accuracy_score_binary": partial(top_k_accuracy_score, k=1)
 }
 
 ALL_METRICS = dict()
@@ -271,7 +273,8 @@ METRIC_UNDEFINED_BINARY = {
     "label_ranking_loss",
     "label_ranking_average_precision_score",
     "dcg_score",
-    "ndcg_score"
+    "ndcg_score",
+    "top_k_accuracy_score"
 }
 
 # Those metrics don't support multiclass inputs
@@ -492,10 +495,6 @@ METRICS_REQUIRE_POSITIVE_Y = {
     "mean_compound_poisson_deviance",
 }
 
-METRICS_REQUIRE_2D_Y_SCORE = {
-    "top_k_accuracy_score"
-}
-
 
 def _require_positive_targets(y1, y2):
     """Make targets strictly positive"""
@@ -574,9 +573,6 @@ def test_sample_order_invariance(name):
     if name in METRICS_REQUIRE_POSITIVE_Y:
         y_true, y_pred = _require_positive_targets(y_true, y_pred)
 
-    if name in METRICS_REQUIRE_2D_Y_SCORE:
-        y_pred = random_state.randint(0, 2, size=(20, 2))
-
     y_true_shuffle, y_pred_shuffle = shuffle(y_true, y_pred, random_state=0)
 
     with ignore_warnings():
@@ -624,8 +620,7 @@ def test_sample_order_invariance_multilabel_and_multioutput():
 
 @pytest.mark.parametrize(
         'name',
-        sorted(set(ALL_METRICS) - METRIC_UNDEFINED_BINARY_MULTICLASS -
-               METRICS_REQUIRE_2D_Y_SCORE))
+        sorted(set(ALL_METRICS) - METRIC_UNDEFINED_BINARY_MULTICLASS))
 def test_format_invariance_with_1d_vectors(name):
     random_state = check_random_state(0)
     y1 = random_state.randint(0, 2, size=(20, ))
@@ -766,16 +761,14 @@ def test_thresholded_invariance_string_vs_numbers_labels(name):
     y1 = random_state.randint(0, 2, size=(20, ))
     y2 = random_state.randint(0, 2, size=(20, ))
 
-    if name in METRICS_REQUIRE_2D_Y_SCORE:
-        y2 = random_state.randint(0, 2, size=(20, 2))
-
     y1_str = np.array(["eggs", "spam"])[y1]
 
     pos_label_str = "spam"
 
     with ignore_warnings():
         metric = THRESHOLDED_METRICS[name]
-        if name not in METRIC_UNDEFINED_BINARY:
+        if (name not in METRIC_UNDEFINED_BINARY or
+                name == 'top_k_accuracy_score'):
             # Ugly, but handle case with a pos_label and label
             metric_str = metric
             if name in METRICS_WITH_POS_LABEL:
@@ -810,9 +803,6 @@ invalids = [([0, 1], [np.inf, np.inf]),
 def test_regression_thresholded_inf_nan_input(metric):
 
     for y_true, y_score in invalids:
-        if (isinstance(metric, partial) and
-                metric.func.__name__ in METRICS_REQUIRE_2D_Y_SCORE):
-            y_score = [y_score, y_score]
         with pytest.raises(ValueError, match="contains NaN, infinity"):
             metric(y_true, y_score)
 
@@ -1269,11 +1259,8 @@ def test_binary_sample_weight_invariance(name):
     y_true = random_state.randint(0, 2, size=(n_samples, ))
     y_pred = random_state.randint(0, 2, size=(n_samples, ))
     y_score = random_state.random_sample(size=(n_samples,))
-    y_score_2D = random_state.random_sample(size=(n_samples, 2))
     metric = ALL_METRICS[name]
-    if name in METRICS_REQUIRE_2D_Y_SCORE:
-        check_sample_weight_invariance(name, metric, y_true, y_score_2D)
-    elif name in THRESHOLDED_METRICS:
+    if name in THRESHOLDED_METRICS:
         check_sample_weight_invariance(name, metric, y_true, y_score)
     else:
         check_sample_weight_invariance(name, metric, y_true, y_pred)

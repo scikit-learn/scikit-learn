@@ -1450,12 +1450,15 @@ def top_k_accuracy_score(y_true, y_score, *, k=2, normalize=True,
     y_true : array-like of shape (n_samples,)
         True labels.
 
-    y_score : array-like of shape (n_samples, n_classes)
+    y_score : array-like of shape (n_samples,) or (n_samples, n_classes)
         Target scores. These can be either probability estimates or
         non-thresholded decision values (as returned by
-        :term:`decision_function` on some classifiers). The order of the class
-        scores must correspond to the order of ``labels``, if provided, or else
-        to the numerical or lexicographical order of the labels in ``y_true``.
+        :term:`decision_function` on some classifiers). The binary case expects
+        scores with shape (n_samples,) while the multiclass case expects scores
+        with shape (n_samples, n_classes). In the nulticlass case, the order of
+        the class scores must correspond to the order of ``labels``, if
+        provided, or else to the numerical or lexicographical order of the
+        labels in ``y_true``.
 
     k : int, default=2
         Number of guesses allowed to find the correct label.
@@ -1509,24 +1512,26 @@ def top_k_accuracy_score(y_true, y_score, *, k=2, normalize=True,
     """
     y_true = check_array(y_true, ensure_2d=False, dtype=None)
     y_true = column_or_1d(y_true)
-    y_score = check_array(y_score)
-    check_consistent_length(y_true, y_score, sample_weight)
     y_type = type_of_target(y_true)
-    y_score_n_col = y_score.shape[1]
+    y_score = check_array(y_score, ensure_2d=False)
+    y_score = column_or_1d(y_score) if y_type == 'binary' else y_score
+    check_consistent_length(y_true, y_score, sample_weight)
 
     if y_type not in {'binary', 'multiclass'}:
         raise ValueError(
             f"y type must be 'binary' or 'multiclass', got '{y_type}' instead."
         )
 
+    y_score_n_classes = y_score.shape[1] if y_score.ndim == 2 else 2
+
     if labels is None:
         classes = _unique(y_true)
         n_classes = len(classes)
 
-        if n_classes != y_score_n_col:
+        if n_classes != y_score_n_classes:
             raise ValueError(
                 f"Number of classes in 'y_true' ({n_classes}) not equal "
-                f"to the number of columns in 'y_score' ({y_score_n_col})."
+                f"to the number of classes in 'y_score' ({y_score_n_classes})."
             )
     else:
         labels = column_or_1d(labels)
@@ -1540,10 +1545,10 @@ def top_k_accuracy_score(y_true, y_score, *, k=2, normalize=True,
         if not np.array_equal(classes, labels):
             raise ValueError("Parameter 'labels' must be ordered.")
 
-        if n_classes != y_score_n_col:
+        if n_classes != y_score_n_classes:
             raise ValueError(
                 f"Number of given labels ({n_classes}) not equal to the "
-                f"number of columns in 'y_score' ({y_score_n_col})."
+                f"number of classes in 'y_score' ({y_score_n_classes})."
             )
 
         if len(np.setdiff1d(y_true, classes)):
@@ -1559,8 +1564,17 @@ def top_k_accuracy_score(y_true, y_score, *, k=2, normalize=True,
         )
 
     y_true_encoded = _encode(y_true, uniques=classes)
-    sorted_pred = np.argsort(y_score, axis=1, kind='mergesort')[:, ::-1]
-    hits = (y_true_encoded == sorted_pred[:, :k].T).any(axis=0)
+
+    if y_type == 'binary':
+        if k == 1:
+            threshold = .5 if y_score.min() >= 0 and y_score.max() <= 1 else 0
+            y_pred = (y_score > threshold).astype(np.int)
+            hits = y_pred == y_true_encoded
+        else:
+            hits = [True] * len(y_score)
+    elif y_type == 'multiclass':
+        sorted_pred = np.argsort(y_score, axis=1, kind='mergesort')[:, ::-1]
+        hits = (y_true_encoded == sorted_pred[:, :k].T).any(axis=0)
 
     if normalize:
         return np.average(hits, weights=sample_weight)

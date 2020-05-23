@@ -18,6 +18,7 @@ from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_warns
 
+from sklearn.metrics import accuracy_score
 from sklearn.metrics import auc
 from sklearn.metrics import average_precision_score
 from sklearn.metrics import coverage_error
@@ -1495,6 +1496,26 @@ def test_top_k_accuracy_score(y_true, k, normalize, sample_weight, true_score):
     assert score == pytest.approx(true_score)
 
 
+@pytest.mark.parametrize('y_score, k, true_score', [
+    (np.array([-1, -1, 1, 1]), 1, 1),
+    (np.array([-1, 1, -1, 1]), 1, 0.5),
+    (np.array([-1, 1, -1, 1]), 2, 1),
+    (np.array([.2, .2, .7, .7]), 1, 1),
+    (np.array([.2, .7, .2, .7]), 1, 0.5),
+    (np.array([.2, .7, .2, .7]), 2, 1),
+])
+def test_top_k_accuracy_score_binary(y_score, k, true_score):
+    y_true = [0, 0, 1, 1]
+
+    threshold = .5 if y_score.min() >= 0 and y_score.max() <= 1 else 0
+    y_pred = (y_score > threshold).astype(np.int) if k == 1 else y_true
+
+    score = top_k_accuracy_score(y_true, y_score, k=k)
+    score_acc = accuracy_score(y_true, y_pred)
+
+    assert score == score_acc == pytest.approx(true_score)
+
+
 def test_top_k_accuracy_score_increasing():
     # Make sure increasing k leads to a higher score
     X, y = datasets.make_classification(n_classes=10, n_samples=1000,
@@ -1549,40 +1570,41 @@ def test_top_k_accuracy_score_warning(y_true, k):
 
 @pytest.mark.parametrize('y_true, labels, msg', [
     (
-        [.57, 1, 2],
+        [0, .57, 1, 2],
         None,
         "y type must be 'binary' or 'multiclass', got 'continuous'"
     ),
     (
-        [0, 0, 0],
+        [0, 1, 2, 3],
         None,
-        r"Number of classes in 'y_true' \(1\) not equal to the number of "
-        r"columns in 'y_score' \(3\)."
+        r"Number of classes in 'y_true' \(4\) not equal to the number of "
+        r"classes in 'y_score' \(3\)."
     ),
     (
-        ['c', 'a', 'b'],
-        ['a', 'b', 'b', 'c'],
+        ['c', 'c', 'a', 'b'],
+        ['a', 'b', 'c', 'c'],
         "Parameter 'labels' must be unique."
     ),
     (
-        ['c', 'a', 'b'],
+        ['c', 'c', 'a', 'b'],
         ['a', 'c', 'b'],
         "Parameter 'labels' must be ordered."
     ),
     (
-        [0, 1, 2],
+        [0, 0, 1, 2],
         [0, 1, 2, 3],
-        r"Number of given labels \(4\) not equal to the number of columns in "
+        r"Number of given labels \(4\) not equal to the number of classes in "
         r"'y_score' \(3\)."
     ),
     (
-        [0, 1, 2],
+        [0, 0, 1, 2],
         [0, 1, 3],
         "'y_true' contains labels not in parameter 'labels'."
     ),
 ])
 def test_top_k_accuracy_score_error(y_true, labels, msg):
     y_score = np.array([
+        [0.2, 0.1, 0.7],
         [0.4, 0.3, 0.3],
         [0.3, 0.4, 0.3],
         [0.4, 0.5, 0.1],
