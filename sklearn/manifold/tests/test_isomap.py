@@ -11,7 +11,7 @@ from sklearn import preprocessing
 
 from scipy.sparse import rand as sparse_rand
 
-eigen_solvers = ['auto', 'dense', 'arpack']
+eigen_solvers = ['auto', 'dense', 'arpack', 'randomized']
 path_methods = ['auto', 'FW', 'D']
 
 
@@ -185,4 +185,19 @@ def test_sparse_input():
             clf = manifold.Isomap(n_components=2,
                                   eigen_solver=eigen_solver,
                                   path_method=path_method)
-            clf.fit(X)
+            if eigen_solver != 'randomized':
+                # nominal scenario: it should work
+                clf.fit(X)
+            else:
+                # the randomized method is still inconsistent with the others
+                # on this case: if the gram matrix sent by isomap contains
+                # large negative eigenvalues they can be selected instead of
+                # the 2 largest positive. In that case there is a protection in
+                # KernelPCA: a ValueError is raised instead of using the wrong
+                # components
+                try:
+                    # sometimes it will work
+                    clf.fit(X)
+                except ValueError as e:
+                    # sometimes it wont (large negative eigenvalue)
+                    assert "There are significant negative eigenval" in str(e)
