@@ -449,36 +449,6 @@ def test_one_hot_encoder_drop_equals_if_binary():
     assert_allclose(result, expected)
 
 
-@pytest.mark.parametrize("X", [np.array([[1, np.nan]]).T,
-                               np.array([['a', np.nan]], dtype=object).T],
-                         ids=['numeric', 'object'])
-@pytest.mark.parametrize("as_data_frame", [False, True],
-                         ids=['array', 'dataframe'])
-@pytest.mark.parametrize("handle_unknown", ['error', 'ignore'])
-def test_one_hot_encoder_raise_missing(X, as_data_frame, handle_unknown):
-    if as_data_frame:
-        pd = pytest.importorskip('pandas')
-        X = pd.DataFrame(X)
-
-    ohe = OneHotEncoder(categories='auto', handle_unknown=handle_unknown)
-
-    with pytest.raises(ValueError, match="Input contains NaN"):
-        ohe.fit(X)
-
-    with pytest.raises(ValueError, match="Input contains NaN"):
-        ohe.fit_transform(X)
-
-    if as_data_frame:
-        X_partial = X.iloc[:1, :]
-    else:
-        X_partial = X[:1, :]
-
-    ohe.fit(X_partial)
-
-    with pytest.raises(ValueError, match="Input contains NaN"):
-        ohe.transform(X)
-
-
 @pytest.mark.parametrize("X", [
     [['abc', 2, 55], ['def', 1, 55]],
     np.array([[10, 2, 55], [20, 1, 55]]),
@@ -533,24 +503,6 @@ def test_ordinal_encoder_inverse():
     msg = re.escape('Shape of the passed X data is not correct')
     with pytest.raises(ValueError, match=msg):
         enc.inverse_transform(X_tr)
-
-
-@pytest.mark.parametrize("X", [np.array([[1, np.nan]]).T,
-                               np.array([['a', np.nan]], dtype=object).T],
-                         ids=['numeric', 'object'])
-def test_ordinal_encoder_raise_missing(X):
-    ohe = OrdinalEncoder()
-
-    with pytest.raises(ValueError, match="Input contains NaN"):
-        ohe.fit(X)
-
-    with pytest.raises(ValueError, match="Input contains NaN"):
-        ohe.fit_transform(X)
-
-    ohe.fit(X[:1, :])
-
-    with pytest.raises(ValueError, match="Input contains NaN"):
-        ohe.transform(X)
 
 
 def test_ordinal_encoder_raise_categories_shape():
@@ -690,9 +642,208 @@ def test_encoders_has_categorical_tags(Encoder):
     assert 'categorical' in Encoder()._get_tags()['X_types']
 
 
-@pytest.mark.parametrize('Encoder', [OneHotEncoder, OrdinalEncoder])
-def test_encoders_does_not_support_none_values(Encoder):
-    values = [["a"], [None]]
-    with pytest.raises(TypeError, match="Encoders require their input to be "
-                                        "uniformly strings or numbers."):
-        Encoder().fit(values)
+def test_ohe_missing_value_float_sanity():
+    # missing values with float types
+    X = np.array([[1.0, 2.0, np.nan, 1.0, np.nan]], dtype=float).T
+    ohe = OneHotEncoder(sparse=False, handle_unknown='ignore').fit(X)
+
+    assert len(ohe.categories_) == 1
+    assert_allclose(ohe.categories_[0][:2], [1.0, 2.0])
+    assert np.isnan(ohe.categories_[0][-1])
+
+    X_test = np.array([[3.0, 1.0, np.nan, 2.0]], dtype=float).T
+    expected_X_trans = np.array([
+        [0, 0, 0],
+        [1, 0, 0],
+        [0, 0, 1],
+        [0, 1, 0]
+    ])
+    X_trans = ohe.transform(X_test)
+    assert_allclose(expected_X_trans, X_trans)
+
+    X_inverse = ohe.inverse_transform(expected_X_trans)
+    expected_X_inverse = np.array([[None, 1.0, np.nan, 2.0]], dtype=object).T
+    assert_array_equal(expected_X_inverse[[0, 1, 3], 0],
+                       X_inverse[[0, 1, 3], 0])
+    assert np.isnan(X_inverse[2, 0])
+
+    names = ohe.get_feature_names(input_features=['first'])
+    assert_array_equal(names, ['first_1.0', 'first_2.0', 'first_nan'])
+
+
+def test_ohe_missing_value_float_sanity_drop():
+    # drops the missing value with float dtypes
+    X = np.array([[1.0, 2.0, np.nan, 1.0, np.nan]], dtype=float).T
+    ohe = OneHotEncoder(sparse=False, drop=[np.nan]).fit(X)
+    assert_array_equal(ohe.drop_idx_, [2])
+
+    X_test = np.array([[1.0, np.nan, 2.0]], dtype=float).T
+    expected_X_trans = np.array([
+        [1, 0],
+        [0, 0],
+        [0, 1]
+    ])
+    X_trans = ohe.transform(X_test)
+    assert_allclose(expected_X_trans, X_trans)
+
+
+@pytest.mark.parametrize("missing_value", [np.nan, None])
+def test_ohe_missing_value_object_drop(missing_value):
+    # encoder with missing values with object dtypes
+    X = np.array([['a', 'b', missing_value, 'a', missing_value]],
+                 dtype=object).T
+    ohe = OneHotEncoder(sparse=False, drop=[missing_value]).fit(X)
+    assert_array_equal(ohe.drop_idx_, [2])
+
+    X_test = np.array([['a', missing_value, 'b']], dtype=object).T
+    expected_X_trans = np.array([
+        [1, 0],
+        [0, 0],
+        [0, 1]
+    ])
+    X_trans = ohe.transform(X_test)
+    assert_allclose(expected_X_trans, X_trans)
+
+
+@pytest.mark.parametrize("missing_value", [np.nan, None])
+def test_ohe_missing_value_object_auto(missing_value):
+    # encoder with missing values with object dtypes
+
+    X = np.array([['a', 'b', missing_value, 'a', missing_value]],
+                 dtype=object).T
+    ohe = OneHotEncoder(sparse=False, handle_unknown='ignore').fit(X)
+
+    assert len(ohe.categories_) == 1
+
+    if missing_value is None:
+        assert_array_equal(ohe.categories_[0], ['a', 'b', None])
+    else:  # nan
+        assert_array_equal(ohe.categories_[0][:2], ['a', 'b'])
+        assert np.isnan(ohe.categories_[0][-1])
+
+    X_test = np.array([['c', 'a', missing_value, 'b']], dtype=object).T
+    expected_X_trans = np.array([
+        [0, 0, 0],
+        [1, 0, 0],
+        [0, 0, 1],
+        [0, 1, 0]
+    ])
+    X_trans = ohe.transform(X_test)
+    assert_allclose(expected_X_trans, X_trans)
+
+    X_inverse = ohe.inverse_transform(expected_X_trans)
+    expected_X_inverse = np.array([[None, 'a', missing_value, 'b']],
+                                  dtype=object).T
+
+    if missing_value is None:
+        assert_array_equal(X_inverse, expected_X_inverse)
+    else:
+        assert_array_equal(expected_X_inverse[[0, 1, 3], 0],
+                           X_inverse[[0, 1, 3], 0])
+        assert np.isnan(X_inverse[2, 0])
+
+    names = ohe.get_feature_names()
+    assert_array_equal(names, ['x0_a', 'x0_b', f'x0_{missing_value}'])
+
+
+def test_ohe_missing_value_object_different_order():
+    # categories are not in lexicon ordering
+    categories = [['b', None, 'a']]
+    X = np.array([['a', 'b', 'b', None, 'c']], dtype=object).T
+    ohe = OneHotEncoder(sparse=False, handle_unknown='ignore',
+                        categories=categories).fit(X)
+
+    X_test = np.array([['a', 'b', None, 'c']], dtype=object).T
+    X_trans = ohe.fit_transform(X_test)
+    expected_X_trans = np.array([
+        [0, 0, 1],
+        [1, 0, 0],
+        [0, 1, 0],
+        [0, 0, 0]
+    ])
+    assert_allclose(expected_X_trans, X_trans)
+
+
+@pytest.mark.parametrize("categories", [
+    'auto', [['a', 'b', None], [0, 2, np.nan]]
+])
+def test_ohe_missing_value_mixed_sanity(categories):
+    X = np.array([['a', 'b', None], [0, np.nan, 2]], dtype=object).T
+    expected_X_trans = np.array([
+        [1, 0, 0, 1, 0, 0],
+        [0, 1, 0, 0, 0, 1],
+        [0, 0, 1, 0, 1, 0],
+    ])
+    ohe = OneHotEncoder(sparse=False, handle_unknown='ignore',
+                        categories=categories)
+    X_trans = ohe.fit_transform(X)
+    assert_allclose(expected_X_trans, X_trans)
+
+    X_test = np.array([
+        ['b', np.nan],
+        [None, 0],
+        ['c', 2],
+        ['a', 4]
+    ], dtype=object)
+    X_trans = ohe.transform(X_test)
+    expected_X_test = np.array([
+        [0, 1, 0, 0, 0, 1],
+        [0, 0, 1, 1, 0, 0],
+        [0, 0, 0, 0, 1, 0],
+        [1, 0, 0, 0, 0, 0],
+    ])
+
+    assert_allclose(expected_X_test, X_trans)
+
+
+@pytest.mark.parametrize("categories", [
+    'auto', [['cat', 'dog', None], [0, 3, 4, np.nan]]
+])
+def test_ohe_missing_value_support_pandas(categories):
+    # check support for pandas with mixed dtypes and missing values
+    pd = pytest.importorskip('pandas')
+    df = pd.DataFrame({
+        'col1': ['dog', 'cat', None, 'cat'],
+        'col2': np.array([3, 0, 4, np.nan], dtype=float)
+    }, columns=['col1', 'col2'])
+    expected_df_trans = np.array([
+        [0, 1, 0, 0, 1, 0, 0],
+        [1, 0, 0, 1, 0, 0, 0],
+        [0, 0, 1, 0, 0, 1, 0],
+        [1, 0, 0, 0, 0, 0, 1],
+    ])
+
+    ohe = OneHotEncoder(sparse=False, handle_unknown='ignore',
+                        categories=categories)
+    df_trans = ohe.fit_transform(df)
+    assert_allclose(expected_df_trans, df_trans)
+
+    expected_categories = [np.array(['cat', 'dog', None]),
+                           np.array([0, 3, 4, np.nan])]
+
+    assert_array_equal(ohe.categories_[0], expected_categories[0])
+    assert_array_equal(ohe.categories_[1][:-1], expected_categories[1][:-1])
+    assert np.isnan(ohe.categories_[1][-1])
+
+
+def test_ohe_missing_value_support_pandas_categorical():
+    # checks pandas dataframe with categorical features
+    pd = pytest.importorskip('pandas')
+    df = pd.DataFrame({
+        'col1': pd.Series(['c', 'a', np.nan, 'b', 'a'], dtype='category'),
+    })
+    expected_df_trans = np.array([
+        [0, 0, 1, 0],
+        [1, 0, 0, 0],
+        [0, 0, 0, 1],
+        [0, 1, 0, 0],
+        [1, 0, 0, 0],
+    ])
+
+    ohe = OneHotEncoder(sparse=False, handle_unknown='ignore')
+    df_trans = ohe.fit_transform(df)
+    assert_allclose(expected_df_trans, df_trans)
+
+    assert len(ohe.categories_) == 1
+    assert_array_equal(ohe.categories_[0][:-1], ['a', 'b', 'c'])
+    assert np.isnan(ohe.categories_[0][-1])

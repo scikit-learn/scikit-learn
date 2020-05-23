@@ -1,4 +1,5 @@
 import numpy as np
+from . import is_scalar_nan
 
 
 def _unique(values, *, return_inverse=False):
@@ -27,13 +28,45 @@ def _unique(values, *, return_inverse=False):
     if values.dtype == object:
         return _unique_python(values, return_inverse=return_inverse)
     # numerical
-    return np.unique(values, return_inverse=return_inverse)
+    out = np.unique(values, return_inverse=return_inverse)
+
+    if return_inverse:
+        uniques, inverse = out
+    else:
+        uniques, inverse = out, None
+
+    if is_scalar_nan(uniques[-1]):
+        nan_idx = np.searchsorted(uniques, np.nan)
+        uniques = uniques[:nan_idx + 1]
+        if return_inverse:
+            inverse[inverse > nan_idx] = nan_idx
+
+    if return_inverse:
+        return uniques, inverse
+    return uniques
 
 
 def _unique_python(values, *, return_inverse):
     # Only used in `_uniques`, see docstring there for details
     try:
-        uniques = sorted(set(values))
+        uniques_set = set(values)
+        none_in_set = None in uniques_set
+        nan_in_set = np.nan in uniques_set
+
+        if none_in_set and nan_in_set:
+            raise ValueError("Input wiith both types of missing, None and "
+                             "np.nan, is not supported")
+        if none_in_set:
+            uniques_set.remove(None)
+            uniques = sorted(uniques_set)
+            uniques.append(None)
+        elif nan_in_set:
+            uniques_set.remove(np.nan)
+            uniques = sorted(uniques_set)
+            uniques.append(np.nan)
+        else:
+            uniques = sorted(uniques_set)
+
         uniques = np.array(uniques, dtype=values.dtype)
     except TypeError:
         types = sorted(t.__qualname__
@@ -118,26 +151,57 @@ def _check_unknown(values, known_values, return_mask=False):
         Additionally returned if ``return_mask=True``.
 
     """
-    if values.dtype == object:
+    valid_mask = None
+
+    if values.dtype.kind in 'UO':
         uniques_set = set(known_values)
-        diff = list(set(values) - uniques_set)
+        diff = set(values) - uniques_set
         if return_mask:
             if diff:
                 valid_mask = np.array([val in uniques_set for val in values])
             else:
                 valid_mask = np.ones(len(values), dtype=bool)
-            return diff, valid_mask
+
+        none_in_diff = None in diff
+        nan_in_diff = np.nan in diff
+
+        if none_in_diff and nan_in_diff:
+            raise ValueError("Input wiith both types of missing, None and "
+                             "np.nan, is not supported")
+        if none_in_diff:
+            diff.remove(None)
+            diff = list(diff)
+            diff.append(None)
+        elif nan_in_diff:
+            diff.remove(np.nan)
+            diff = list(diff)
+            diff.append(np.nan)
         else:
-            return diff
+            diff = list(diff)
     else:
         unique_values = np.unique(values)
-        diff = list(np.setdiff1d(unique_values, known_values,
-                                 assume_unique=True))
+        diff = np.setdiff1d(unique_values, known_values,
+                            assume_unique=True)
         if return_mask:
-            if diff:
+            if diff.size:
                 valid_mask = np.in1d(values, known_values)
             else:
                 valid_mask = np.ones(len(values), dtype=bool)
-            return diff, valid_mask
-        else:
-            return diff
+
+        # check for nans in the known_values
+        if np.isnan(known_values).any():
+            diff_is_nan = np.isnan(diff)
+            if diff_is_nan.any():
+                # removes nan from valid_mask
+                if diff.size and return_mask:
+                    is_nan = np.isnan(values)
+                    valid_mask[is_nan] = 1
+
+                # remove nan from diff
+                diff = diff[~diff_is_nan]
+        diff = list(diff)
+
+    if return_mask:
+        return diff, valid_mask
+    # valid_mask is
+    return diff
