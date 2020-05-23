@@ -1504,8 +1504,7 @@ def top_k_accuracy_score(y_true, y_score, *, k=2, normalize=True,
     ...                     [0.7, 0.2, 0.1]]) # 2 isn't in top 2
     >>> top_k_accuracy_score(y_true, y_score, k=2)
     0.75
-
-    # Not normalizing gives the number of "correctly" classified samples
+    >>> # Not normalizing gives the number of "correctly" classified samples
     >>> top_k_accuracy_score(y_true, y_score, k=2, normalize=False)
     3
 
