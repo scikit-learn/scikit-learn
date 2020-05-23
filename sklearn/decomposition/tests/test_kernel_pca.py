@@ -360,7 +360,7 @@ def test_precomputed_kernel_not_psd(solver):
     # 2. ask for a small enough n_components to get only positive ones
     kpca = KernelPCA(kernel="precomputed", eigen_solver=solver, n_components=2)
     if solver not in ('auto', 'randomized'):
-        # general case: it works since the 2 largest are positive
+        # general case: make sure that it works
         kpca.fit(K)
     else:
         # the randomized method is still inconsistent with the others on this
