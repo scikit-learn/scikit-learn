@@ -182,7 +182,11 @@ def spectral_embedding(adjacency, *, n_components=8, eigen_solver=None,
     random_state : int, RandomState instance or None, default=None
         Determines the random number generator used for the initialization of
         the lobpcg eigenvectors decomposition when ``solver`` == 'amg'. Pass
-        an int for reproducible results across multiple function calls.
+        an int for reproducible results across multiple function calls.  When
+        using ``solver`` == 'amg' it is necessary to also fix the
+        global numpy seed with ``np.random.seed(int)`` to get
+        deterministic results.  See
+        https://github.com/pyamg/pyamg/issues/139 for further information.
         See :term: `Glossary <random_state>`.
 
     eigen_tol : float, default=0.0
@@ -400,7 +404,11 @@ class SpectralEmbedding(BaseEstimator):
     random_state : int, RandomState instance or None, default=None
         Determines the random number generator used for the initialization of
         the lobpcg eigenvectors when ``solver`` == 'amg'.  Pass an int for
-        reproducible results across multiple function calls.
+        reproducible results across multiple function calls.  When
+        using ``solver`` == 'amg' it is necessary to also fix the
+        global numpy seed with ``np.random.seed(int)`` to get
+        deterministic results.  See
+        https://github.com/pyamg/pyamg/issues/139 for further information.
         See :term: `Glossary <random_state>`.
 
     eigen_solver : {'arpack', 'lobpcg', 'amg'}, default=None

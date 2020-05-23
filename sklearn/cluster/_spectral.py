@@ -200,10 +200,14 @@ def spectral_clustering(affinity, *, n_clusters=8, n_components=None,
         used.
 
     random_state : int, RandomState instance, default=None
-        A pseudo random number generator used for the initialization of the
-        lobpcg eigen vectors decomposition when eigen_solver == 'amg' and by
-        the K-Means initialization. Use an int to make the randomness
-        deterministic.
+        A pseudo random number generator used for the initialization
+        of the lobpcg eigen vectors decomposition when eigen_solver ==
+        'amg' and by the K-Means initialization. Use an int to make
+        the randomness deterministic. When using ``solver`` == 'amg'
+        it is necessary to also fix the global numpy seed with
+        ``np.random.seed(int)`` to get deterministic results. See
+        https://github.com/pyamg/pyamg/issues/139 for further
+        information.
         See :term:`Glossary <random_state>`.
 
     n_init : int, default=10
@@ -324,10 +328,14 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         Number of eigen vectors to use for the spectral embedding
 
     random_state : int, RandomState instance, default=None
-        A pseudo random number generator used for the initialization of the
-        lobpcg eigen vectors decomposition when ``eigen_solver='amg'`` and by
-        the K-Means initialization. Use an int to make the randomness
-        deterministic.
+        A pseudo random number generator used for the initialization
+        of the lobpcg eigen vectors decomposition when
+        ``eigen_solver='amg'`` and by the K-Means initialization. Use
+        an int to make the randomness deterministic. When using
+        ``solver`` == 'amg' it is necessary to also fix the global
+        numpy seed with ``np.random.seed(int)`` to get deterministic
+        results. See https://github.com/pyamg/pyamg/issues/139 for
+        further information.
         See :term:`Glossary <random_state>`.
 
     n_init : int, default=10
