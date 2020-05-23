@@ -93,10 +93,6 @@ def config_context(**new_config):
 
     Parameters
     ----------
-    assume_positive_sample_weights : bool, optional
-        If in function _check_sample_weight parameter force_positive is set
-        to None, then it's value is set to assume_positive_sample_weights.
-
     assume_finite : bool, optional
         If True, validation for finiteness will be skipped,
         saving time, but leading to potential crashes. If
@@ -125,6 +121,10 @@ def config_context(**new_config):
         text. Default is 'text'.
 
         .. versionadded:: 0.23
+
+    assume_positive_sample_weights : bool, optional
+        If in function _check_sample_weight parameter force_positive is set
+        to None, then it's value is set to assume_positive_sample_weights.
 
     Notes
     -----

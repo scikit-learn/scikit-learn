@@ -1314,9 +1314,8 @@ def _check_sample_weight(sample_weight, X, dtype=None, force_positive=None):
         if sample_weight.shape != (n_samples,):
             raise ValueError("sample_weight.shape == {}, expected {}!"
                              .format(sample_weight.shape, (n_samples,)))
-    if force_positive is True:
-        if np.any(sample_weight < 0):
-            raise ValueError("There are negative values in sample_weight")
+    if force_positive and np.any(sample_weight < 0):
+        raise ValueError("There are negative values in sample_weight")
     return sample_weight
 
 
