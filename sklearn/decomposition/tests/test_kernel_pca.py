@@ -3,7 +3,7 @@ import scipy.sparse as sp
 import pytest
 
 from sklearn.utils._testing import (assert_array_almost_equal,
-                                   assert_allclose)
+                                    assert_allclose)
 
 from sklearn.decomposition import PCA, KernelPCA
 from sklearn.datasets import make_circles
@@ -230,6 +230,23 @@ def test_kernel_pca_precomputed():
 
         assert_array_almost_equal(np.abs(X_kpca_train),
                                   np.abs(X_kpca_train2))
+
+
+@pytest.mark.parametrize("solver", ["auto", "dense", "arpack", "randomized"],
+                         ids="solver={}".format)
+def test_kernel_pca_precomputed_non_symmetric(solver):
+    """Tests that a non symmetric precomputed kernel is actually accepted
+    because the kernel centerer does its job correctly"""
+
+    K = [  # a non symmetric gram matrix
+        [1, 2],
+        [3, 40]
+    ]
+
+    kpca = KernelPCA(kernel="precomputed", eigen_solver=solver,
+                     n_components=1)
+    # no error
+    kpca.fit(K)
 
 
 def test_kernel_pca_invalid_kernel():
