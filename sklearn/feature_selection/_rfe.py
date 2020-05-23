@@ -433,7 +433,7 @@ class RFECV(RFE):
 
     cv_results_ : dict of floats
         A dict with keys:
-        
+
         split(i)_score : float
         corresponds to the CV score of the i-th subset of features
 
@@ -588,7 +588,7 @@ class RFECV(RFE):
         grid_scores = scores[::-1] / cv.get_n_splits(X, y, groups)
         self.cv_results_ = {}
         for i in range(grid_scores.shape[0]):
-            key = "split{}_score".format(i)
+            key = "split%d_score" % i
             self.cv_results_[key] = grid_scores[i]
         self.cv_results_["mean_score"] = np.mean(grid_scores, axis=0)
         self.cv_results_["std_score"] = np.std(grid_scores, axis=0)
@@ -604,4 +604,4 @@ class RFECV(RFE):
         grid_size = len(self.cv_results_) - 2
         return np.asarray(
             [self.cv_results_["split{}_score".format(i)]
-            for i in range(grid_size)]).T
+                for i in range(grid_size)]).T
