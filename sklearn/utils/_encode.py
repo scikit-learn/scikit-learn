@@ -35,7 +35,7 @@ def _unique(values, *, return_inverse=False):
     else:
         uniques, inverse = out, None
 
-    if is_scalar_nan(uniques[-1]):
+    if uniques.size and is_scalar_nan(uniques[-1]):
         nan_idx = np.searchsorted(uniques, np.nan)
         uniques = uniques[:nan_idx + 1]
         if return_inverse:
