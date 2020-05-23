@@ -14,7 +14,8 @@ jobs:
     vmImage: ubuntu-18.04
   steps:
     - task: UsePythonVersion@0
-      versionSpec: '3.8'
+      inputs:
+        versionSpec: '3.8'
     - bash: |
         pip install flake8 mypy==0.770
       displayName: Install linters
