@@ -83,6 +83,20 @@ Changelog
 - |Enhancement| :func:`tree.plot_tree` now uses colors from the matplotlib
   configuration settings. :pr:`17187` by `Andreas Müller`_.
 
+:mod:`sklearn.neighbors`
+.............................
+
+- |Efficiency| Speed up ``seuclidean``, ``wminkowski``, ``mahalanobis`` and
+  ``haversine`` metrics in :class:`neighbors.DistanceMetric` by avoiding
+  unexpected GIL acquiring in Cython when setting ``n_jobs>1`` in
+  :class:`neighbors.KNeighborsClassifier`,
+  :class:`neighbors.KNeighborsRegressor`,
+  :class:`neighbors.RadiusNeighborsClassifier`,
+  :class:`neighbors.RadiusNeighborsRegressor`,
+  :func:`metrics.pairwise_distances`
+  and by validating data out of loops.
+  :pr:`17038` by :user:`Wenbo Zhao <webber26232>`.
+
 Code and Documentation Contributors
 -----------------------------------
 
