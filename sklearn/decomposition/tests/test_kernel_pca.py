@@ -331,19 +331,47 @@ def test_kernel_conditioning():
 @pytest.mark.parametrize("solver", ["auto", "dense", "arpack", "randomized"],
                          ids="solver={}".format)
 def test_precomputed_kernel_not_psd(solver):
-    """ Tests for all methods that an appropriate error is returned when the
-    provided precomputed kernel is invalid """
+    """ Tests for all methods what happens with a non PSD gram matrix (this
+    can happen in an isomap scenario, or with custom kernel functions, or
+    maybe with ill-posed datasets)"""
 
-    # a custom gram matrix purposedly not Positive Semi Definite
-    K = np.diag([2., 0., 0., -2., -2.])
+    # a non PSD kernel with large eigenvalues, already centered
+    # it was captured from an isomap call and multiplied by 100 for compacity
+    K = [
+        [4.48, -1., 8.07, 2.33, 2.33, 2.33, -5.76, -12.78],
+        [-1., -6.48, 4.5, -1.24, -1.24, -1.24, -0.81, 7.49],
+        [8.07, 4.5, 15.48, 2.09, 2.09, 2.09, -11.1, -23.23],
+        [2.33, -1.24, 2.09, 4., -3.65, -3.65, 1.02, -0.9],
+        [2.33, -1.24, 2.09, -3.65, 4., -3.65, 1.02, -0.9],
+        [2.33, -1.24, 2.09, -3.65, -3.65, 4., 1.02, -0.9],
+        [-5.76, -0.81, -11.1, 1.02, 1.02, 1.02, 4.86, 9.75],
+        [-12.78, 7.49, -23.23, -0.9, -0.9, -0.9, 9.75, 21.46]
+    ]
+    # this gram matrix has 5 positive eigenvalues and 3 negative ones
+    # [ 52.72,   7.65,   7.65,   5.02,   0.  ,  -0.  ,  -6.13, -15.11]
 
-    # ask for enough components to get a negative even with truncated methods
-    kpca = KernelPCA(kernel="precomputed", eigen_solver=solver, n_components=4)
-
+    # 1. ask for enough components to get a significant negative one
+    kpca = KernelPCA(kernel="precomputed", eigen_solver=solver, n_components=7)
     # make sure that the appropriate error is raised
     with pytest.raises(ValueError,
                        match="There are significant negative eigenvalues"):
         kpca.fit(K)
+
+    # 2. ask for a small enough n_components to get only positive ones
+    kpca = KernelPCA(kernel="precomputed", eigen_solver=solver, n_components=2)
+    if solver not in ('auto', 'randomized'):
+        # general case: it works since the 2 largest are positive
+        kpca.fit(K)
+    else:
+        # the randomized method is still inconsistent with the others on this
+        # since it selects the eigenvalues based on the largest 2 modules, not
+        # on the largest 2 values.
+        #
+        # At least we can ensure that we return an error instead of returning
+        # the wrong eigenvalues
+        with pytest.raises(ValueError,
+                           match="There are significant negative eigenvalues"):
+            kpca.fit(K)
 
 
 @pytest.mark.parametrize("n_components", [4, 10, 20],
