@@ -61,6 +61,8 @@ X, y = fetch_openml("titanic", version=1, as_frame=True, return_X_y=True)
 # * ``pclass``: ordinal integers ``{1, 2, 3}``.
 #
 # We create the preprocessing pipelines for both numeric and categorical data.
+# Note that ``pclass`` could either be treated as a categorical or numeric
+# feature.
 
 numeric_features = ['age', 'fare']
 numeric_transformer = Pipeline(steps=[
@@ -82,7 +84,8 @@ preprocessor = ColumnTransformer(
 clf = Pipeline(steps=[('preprocessor', preprocessor),
                       ('classifier', LogisticRegression())])
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2,
+                                                    random_state=0)
 
 clf.fit(X_train, y_train)
 print("model score: %.3f" % clf.score(X_test, y_test))
@@ -93,6 +96,7 @@ print("model score: %.3f" % clf.score(X_test, y_test))
 # When the ``Pipeline`` is printed out in a jupyter notebook an HTML
 # representation of the estimator is displayed as follows:
 from sklearn import set_config
+
 set_config(display='diagram')
 clf
 
@@ -107,12 +111,12 @@ clf
 # example.
 
 subset_feature = ['embarked', 'sex', 'pclass', 'age', 'fare']
-X = X[subset_feature]
+X_train, X_test = X_train[subset_feature], X_test[subset_feature]
 
 ###############################################################################
 # Then, we introspect the information regarding each column data type.
 
-X.info()
+X_train.info()
 
 ###############################################################################
 # We can observe that the `embarked` and `sex` columns were tagged as
@@ -134,12 +138,23 @@ preprocessor = ColumnTransformer(transformers=[
     ('num', numeric_transformer, selector(dtype_exclude="category")),
     ('cat', categorical_transformer, selector(dtype_include="category"))
 ])
+clf = Pipeline(steps=[('preprocessor', preprocessor),
+                      ('classifier', LogisticRegression())])
 
-# Reproduce the identical fit/score process
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
 
 clf.fit(X_train, y_train)
 print("model score: %.3f" % clf.score(X_test, y_test))
+
+###############################################################################
+# The resulting score is not exactly the same as the one from the previous
+# pipeline becase the dtype-based selector treats the ``pclass`` columns as
+# a numeric features instead of a categorical feature as previously:
+
+selector(dtype_exclude="category")(X_train)
+
+###############################################################################
+
+selector(dtype_include="category")(X_train)
 
 ###############################################################################
 # Using the prediction pipeline in a grid search
@@ -157,7 +172,36 @@ param_grid = {
 }
 
 grid_search = GridSearchCV(clf, param_grid, cv=10)
+grid_search
+
+###############################################################################
+# Calling 'fit' triggers the cross-validated search for the best
+# hyper-parameters combination:
+#
 grid_search.fit(X_train, y_train)
 
+print(f"Best params:")
+print(grid_search.best_params_)
+
+###############################################################################
+# The internal cross-validation scores obtained by those parameters is:
+print(f"Internal CV score: {grid_search.best_score_:.3f}")
+
+###############################################################################
+# We can also introspect the top grid search results as a pandas dataframe:
+import pandas as pd
+
+cv_results = pd.DataFrame(grid_search.cv_results_)
+cv_results = cv_results.sort_values("mean_test_score", ascending=False)
+cv_results[["mean_test_score", "std_test_score",
+            "param_preprocessor__num__imputer__strategy",
+            "param_classifier__C"
+            ]].head(5)
+
+###############################################################################
+# The best hyper-parameters have be used to re-fit a final model on the full
+# training set. We can evaluate that final model on held out test data that was
+# not used for hyparameter tuning.
+#
 print(("best logistic regression from grid search: %.3f"
        % grid_search.score(X_test, y_test)))
