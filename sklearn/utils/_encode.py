@@ -35,6 +35,8 @@ def _unique(values, *, return_inverse=False):
     else:
         uniques, inverse = out, None
 
+    # np.unique will have duplicate missing values at the end of `uniques`
+    # here we clip the nans and remove it from uniques
     if uniques.size and is_scalar_nan(uniques[-1]):
         nan_idx = np.searchsorted(uniques, np.nan)
         uniques = uniques[:nan_idx + 1]
