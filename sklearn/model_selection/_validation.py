@@ -296,19 +296,19 @@ def cross_validate(estimator, X, y=None, *, groups=None, scoring=None, cv=None,
 
 def _handle_error_score(results, error_score):
     """Handle error in results by replacing them with `error_score`."""
-    score_names = None
+    successful_score = None
     failed_indices = []
     for i, result in enumerate(results):
         if result["fit_failed"]:
             failed_indices.append(i)
-        elif score_names is None:
-            score_names = result["test_scores"].keys()
+        elif successful_score is None:
+            successful_score = result["test_scores"]
 
-    if score_names is None:
+    if successful_score is None:
         raise NotFittedError("All estimators failed to fit")
 
-    if score_names:
-        formatted_error = {name: error_score for name in score_names}
+    if isinstance(successful_score, dict):
+        formatted_error = {name: error_score for name in successful_score}
         for i in failed_indices:
             results[i]["test_scores"] = formatted_error.copy()
             if "train_scores" in results[i]:
