@@ -423,7 +423,7 @@ def check_scoring(estimator, scoring=None, *, allow_none=False):
                          " None. %r was passed" % scoring)
 
 
-def _check_multimetric_scoring(estimator, scoring):
+def _check_multimetric_scoring(estimator, scoring=None):
     """Check the scoring parameter in cases when multiple metrics are allowed
 
     Parameters
