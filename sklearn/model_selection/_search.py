@@ -29,7 +29,7 @@ from ..base import MetaEstimatorMixin
 from ._split import check_cv
 from ._validation import _fit_and_score
 from ._validation import _aggregate_list_of_dicts
-from ._validation import _check_fit_and_score_results
+from ._validation import _handle_error_score
 from ..exceptions import NotFittedError
 from joblib import Parallel, delayed
 from ..utils import check_random_state
@@ -678,17 +678,20 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         cv = check_cv(self.cv, y, classifier=is_classifier(estimator))
 
         refit_metric = "score"
+
+        # If scoring is callable, then error scores must be handled after
+        # scoring is called.
         if callable(self.scoring):
             scorers = self.scoring
-            check_fit_and_score_results = True
+            should_handle_error_scores = True
         elif self.scoring is None or isinstance(self.scoring, str):
             scorers = check_scoring(self.estimator, self.scoring)
-            check_fit_and_score_results = False
+            should_handle_error_scores = False
         else:
             scorers = _check_multimetric_scoring(self.estimator, self.scoring)
             self._check_refit_for_multimetric(scorers)
             refit_metric = self.refit
-            check_fit_and_score_results = False
+            should_handle_error_scores = False
 
         X, y, groups = indexable(X, y, groups)
         fit_params = _check_fit_params(X, fit_params)
@@ -742,8 +745,8 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                                      .format(n_splits,
                                              len(out) // n_candidates))
 
-                if check_fit_and_score_results:
-                    _check_fit_and_score_results(out, self.error_score)
+                if should_handle_error_scores:
+                    _handle_error_score(out, self.error_score)
                 all_candidate_params.extend(candidate_params)
                 all_out.extend(out)
 

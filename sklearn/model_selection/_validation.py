@@ -234,15 +234,17 @@ def cross_validate(estimator, X, y=None, *, groups=None, scoring=None, cv=None,
 
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
 
+    # If scoring is callable, then error scores must be handled after
+    # scoring is called.
     if callable(scoring):
         scorers = scoring
-        check_fit_and_score_results = True
+        should_handle_error_scores = True
     elif scoring is None or isinstance(scoring, str):
         scorers = check_scoring(estimator, scoring)
-        check_fit_and_score_results = False
+        should_handle_error_scores = False
     else:
         scorers = _check_multimetric_scoring(estimator, scoring)
-        check_fit_and_score_results = False
+        should_handle_error_scores = False
 
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
@@ -256,8 +258,8 @@ def cross_validate(estimator, X, y=None, *, groups=None, scoring=None, cv=None,
             error_score=error_score)
         for train, test in cv.split(X, y, groups))
 
-    if check_fit_and_score_results:
-        _check_fit_and_score_results(results, error_score)
+    if should_handle_error_scores:
+        _handle_error_score(results, error_score)
     results = _aggregate_list_of_dicts(results)
 
     if return_estimator:
@@ -292,28 +294,25 @@ def cross_validate(estimator, X, y=None, *, groups=None, scoring=None, cv=None,
     return ret
 
 
-def _check_fit_and_score_results(results, error_score):
-    """Aggregate scores in results into a single dictionary of scores. Results
-    that failed are set to error_score. `results` are the aggregated output
-    of `_fit_and_score`.
-    """
-    successful_score = None
+def _handle_error_score(results, error_score):
+    """Handle error in results by replacing them with `error_score`."""
+    score_names = None
     failed_indices = []
     for i, result in enumerate(results):
         if result["fit_failed"]:
             failed_indices.append(i)
-        elif successful_score is None:
-            successful_score = result["test_scores"]
+        elif score_names is None:
+            score_names = result["test_scores"].keys()
 
-    if successful_score is None:
+    if score_names is None:
         raise NotFittedError("All estimators failed to fit")
 
-    if isinstance(successful_score, dict):
-        formatted_erorr = {name: error_score for name in successful_score}
+    if score_names:
+        formatted_error = {name: error_score for name in score_names}
         for i in failed_indices:
-            results[i]["test_scores"] = formatted_erorr.copy()
+            results[i]["test_scores"] = formatted_error.copy()
             if "train_scores" in results[i]:
-                results[i]["train_scores"] = formatted_erorr.copy()
+                results[i]["train_scores"] = formatted_error.copy()
 
 
 @_deprecate_positional_args
@@ -522,25 +521,18 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
         train_scores : dict of scorer name -> float
             Score on training set (for all the scorers),
             returned only if `return_train_score` is `True`.
-
         test_scores : dict of scorer name -> float
             Score on testing set (for all the scorers).
-
         n_test_samples : int
             Number of test samples.
-
         fit_time : float
             Time spent for fitting in seconds.
-
         score_time : float
             Time spent for scoring in seconds.
-
         parameters : dict or None
             The parameters that have been evaluated.
-
         estimator : estimator object
             The fitted estimator
-
         fit_failed : bool
             The estimator failed to fit.
     """
