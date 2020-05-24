@@ -17,8 +17,8 @@ from .utils.validation import check_is_fitted, _check_sample_weight
 from .utils.random import _random_choice_csc
 from .utils.stats import _weighted_percentile
 from .utils.multiclass import class_distribution
-from .utils import deprecated
 from .utils.validation import _deprecate_positional_args
+
 
 class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
     """
@@ -33,7 +33,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
 
     Parameters
     ----------
-    strategy : str, default="stratified"
+    strategy : str, default="prior"
         Strategy to use to generate predictions.
 
         * "stratified": generates predictions by respecting the training
@@ -47,14 +47,9 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
           the user. This is useful for metrics that evaluate a non-majority
           class
 
-          .. versionchanged:: 0.22
-             The default value of `strategy` will change to "prior" in version
-             0.24. Starting from version 0.22, a warning will be raised if
-             `strategy` is not explicitly set.
-
-          .. versionadded:: 0.17
-             Dummy Classifier now supports prior fitting strategy using
-             parameter *prior*.
+          .. versionchanged:: 0.24
+             The default value of `strategy` has changed to "prior" in version
+             0.24.
 
     random_state : int, RandomState instance or None, optional, default=None
         Controls the randomness to generate the predictions when
@@ -99,7 +94,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
     0.75
     """
     @_deprecate_positional_args
-    def __init__(self, *, strategy="warn", random_state=None,
+    def __init__(self, *, strategy="prior", random_state=None,
                  constant=None):
         self.strategy = strategy
         self.random_state = random_state
@@ -126,16 +121,11 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
         allowed_strategies = ("most_frequent", "stratified", "uniform",
                               "constant", "prior")
 
-        # TODO: Remove in 0.24
-        if self.strategy == "warn":
-            warnings.warn("The default value of strategy will change from "
-                          "stratified to prior in 0.24.", FutureWarning)
-            self._strategy = "stratified"
-        elif self.strategy not in allowed_strategies:
+        if self.strategy not in allowed_strategies:
             raise ValueError("Unknown strategy type: %s, expected one of %s."
                              % (self.strategy, allowed_strategies))
-        else:
-            self._strategy = self.strategy
+
+        self._strategy = self.strategy
 
         if self._strategy == "uniform" and sp.issparse(y):
             y = y.toarray()
@@ -395,16 +385,6 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
             X = np.zeros(shape=(len(y), 1))
         return super().score(X, y, sample_weight)
 
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "The outputs_2d_ attribute is deprecated in version 0.22 "
-        "and will be removed in version 0.24. It is equivalent to "
-        "n_outputs_ > 1."
-    )
-    @property
-    def outputs_2d_(self):
-        return self.n_outputs_ != 1
-
 
 class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
     """
@@ -624,13 +604,3 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         if X is None:
             X = np.zeros(shape=(len(y), 1))
         return super().score(X, y, sample_weight)
-
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "The outputs_2d_ attribute is deprecated in version 0.22 "
-        "and will be removed in version 0.24. It is equivalent to "
-        "n_outputs_ > 1."
-    )
-    @property
-    def outputs_2d_(self):
-        return self.n_outputs_ != 1

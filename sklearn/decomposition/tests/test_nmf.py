@@ -234,19 +234,19 @@ def test_non_negative_factorization_checking():
     nnmf = non_negative_factorization
     msg = ("Number of components must be a positive integer; "
            "got (n_components=1.5)")
-    assert_raise_message(ValueError, msg, nnmf, A, A, A, 1.5, 'random')
+    assert_raise_message(ValueError, msg, nnmf, A, A, A, 1.5, init='random')
     msg = ("Number of components must be a positive integer; "
            "got (n_components='2')")
-    assert_raise_message(ValueError, msg, nnmf, A, A, A, '2', 'random')
+    assert_raise_message(ValueError, msg, nnmf, A, A, A, '2', init='random')
     msg = "Negative values in data passed to NMF (input H)"
-    assert_raise_message(ValueError, msg, nnmf, A, A, -A, 2, 'custom')
+    assert_raise_message(ValueError, msg, nnmf, A, A, -A, 2, init='custom')
     msg = "Negative values in data passed to NMF (input W)"
-    assert_raise_message(ValueError, msg, nnmf, A, -A, A, 2, 'custom')
+    assert_raise_message(ValueError, msg, nnmf, A, -A, A, 2, init='custom')
     msg = "Array passed to NMF (input H) is full of zeros"
-    assert_raise_message(ValueError, msg, nnmf, A, A, 0 * A, 2, 'custom')
+    assert_raise_message(ValueError, msg, nnmf, A, A, 0 * A, 2, init='custom')
     msg = "Invalid regularization parameter: got 'spam' instead of one of"
-    assert_raise_message(ValueError, msg, nnmf, A, A, 0 * A, 2, 'custom', True,
-                         'cd', 2., 1e-4, 200, 0., 0., 'spam')
+    assert_raise_message(ValueError, msg, nnmf, A, A, 0 * A, 2, init='custom',
+                         regularization='spam')
 
 
 def _beta_divergence_dense(X, W, H, beta):
