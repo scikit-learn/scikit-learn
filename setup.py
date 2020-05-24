@@ -58,6 +58,12 @@ else:
 JOBLIB_MIN_VERSION = '0.11'
 THREADPOOLCTL_MIN_VERSION = '2.0.0'
 
+MATPLOTLIB_MIN_VERSION = '2.1.1'
+SCIKIT_IMAGE_MIN_VERSION ='0.13'
+PANDAS_MIN_VERSION = '0.18.0'
+SEABORN_MIN_VERSION = '0.9.0'
+PYTEST_MIN_VERSION = '3.3.0'
+
 # Optional setuptools features
 # We need to import setuptools early, if we want setuptools features,
 # as it monkey-patches the 'setup' function
@@ -260,6 +266,26 @@ def setup_package():
                         'scipy>={}'.format(SCIPY_MIN_VERSION),
                         'joblib>={}'.format(JOBLIB_MIN_VERSION),
                         'threadpoolctl>={}'.format(THREADPOOLCTL_MIN_VERSION)
+                    ],
+                    extras_require=[
+                        'matplotlib>={}'.format(MATPLOTLIB_MIN_VERSION),
+                        'scikit-image>={}'.format(SCIKIT_IMAGE_MIN_VERSION),
+                        'pandas>={}'.format(PANDAS_MIN_VERSION),
+                        'seaborn>={}'.format(SEABORN_MIN_VERSION),
+                        'pytest>={}'.format(PYTEST_MIN_VERSION),
+                        'pytest-cov',
+                        'cython',
+                        'flake8',
+                        'mypy',
+                        'coverage',
+                        'sphinx=2.1.2',
+                        'sphinx-gallery',
+                        'pillow',
+                        'joblib',
+                        'memory_profiler',
+                        'packaging',
+                        'testenv',
+                        'numpydoc'
                     ],
                     package_data={'': ['*.pxd']},
                     **extra_setuptools_args)
