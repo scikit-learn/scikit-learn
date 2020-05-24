@@ -4,6 +4,7 @@ from numpy.testing import assert_allclose
 
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.metrics import plot_precision_recall_curve
+from sklearn.metrics import PrecisionRecallDisplay
 from sklearn.metrics import average_precision_score
 from sklearn.metrics import precision_recall_curve
 from sklearn.datasets import make_classification
@@ -37,12 +38,12 @@ def test_errors(pyplot):
     multi_clf = DecisionTreeClassifier().fit(X, y_multiclass)
 
     # Fitted multiclass classifier with binary data
-    msg = "DecisionTreeClassifier should be a binary classifer"
+    msg = "DecisionTreeClassifier should be a binary classifier"
     with pytest.raises(ValueError, match=msg):
         plot_precision_recall_curve(multi_clf, X, y_binary)
 
     reg = DecisionTreeRegressor().fit(X, y_multiclass)
-    msg = "DecisionTreeRegressor should be a binary classifer"
+    msg = "DecisionTreeRegressor should be a binary classifier"
     with pytest.raises(ValueError, match=msg):
         plot_precision_recall_curve(reg, X, y_binary)
 
@@ -153,3 +154,39 @@ def test_precision_recall_curve_string_labels(pyplot):
 
     assert disp.average_precision == pytest.approx(avg_prec)
     assert disp.estimator_name == lr.__class__.__name__
+
+
+def test_plot_precision_recall_curve_estimator_name_multiple_calls(pyplot):
+    # non-regression test checking that the `name` used when calling
+    # `plot_roc_curve` is used as well when calling `disp.plot()`
+    X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
+    clf_name = "my hand-crafted name"
+    clf = LogisticRegression().fit(X, y)
+    disp = plot_precision_recall_curve(clf, X, y, name=clf_name)
+    assert disp.estimator_name == clf_name
+    pyplot.close("all")
+    disp.plot()
+    assert clf_name in disp.line_.get_label()
+    pyplot.close("all")
+    clf_name = "another_name"
+    disp.plot(name=clf_name)
+    assert clf_name in disp.line_.get_label()
+
+
+@pytest.mark.parametrize(
+    "average_precision, estimator_name, expected_label",
+    [
+        (0.9, None, "AP = 0.90"),
+        (None, "my_est", "my_est"),
+        (0.8, "my_est2", "my_est2 (AP = 0.80)"),
+    ]
+)
+def test_default_labels(pyplot, average_precision, estimator_name,
+                        expected_label):
+    prec = np.array([1, 0.5, 0])
+    recall = np.array([0, 0.5, 1])
+    disp = PrecisionRecallDisplay(prec, recall,
+                                  average_precision=average_precision,
+                                  estimator_name=estimator_name)
+    disp.plot()
+    assert disp.line_.get_label() == expected_label

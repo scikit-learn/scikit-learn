@@ -10,6 +10,7 @@ from scipy import linalg, sparse
 from ._base import _BasePCA
 from ..utils import check_array, gen_batches
 from ..utils.extmath import svd_flip, _incremental_mean_and_var
+from ..utils.validation import _deprecate_positional_args
 
 
 class IncrementalPCA(_BasePCA):
@@ -104,6 +105,9 @@ class IncrementalPCA(_BasePCA):
         The number of samples processed by the estimator. Will be reset on
         new calls to fit, but increments across ``partial_fit`` calls.
 
+    batch_size_ : int
+        Inferred batch size from ``batch_size``.
+
     Examples
     --------
     >>> from sklearn.datasets import load_digits
@@ -160,8 +164,8 @@ class IncrementalPCA(_BasePCA):
     SparsePCA
     TruncatedSVD
     """
-
-    def __init__(self, n_components=None, whiten=False, copy=True,
+    @_deprecate_positional_args
+    def __init__(self, n_components=None, *, whiten=False, copy=True,
                  batch_size=None):
         self.n_components = n_components
         self.whiten = whiten
@@ -191,11 +195,10 @@ class IncrementalPCA(_BasePCA):
         self.singular_values_ = None
         self.explained_variance_ = None
         self.explained_variance_ratio_ = None
-        self.singular_values_ = None
         self.noise_variance_ = None
 
-        X = check_array(X, accept_sparse=['csr', 'csc', 'lil'],
-                        copy=self.copy, dtype=[np.float64, np.float32])
+        X = self._validate_data(X, accept_sparse=['csr', 'csc', 'lil'],
+                                copy=self.copy, dtype=[np.float64, np.float32])
         n_samples, n_features = X.shape
 
         if self.batch_size is None:
@@ -291,13 +294,13 @@ class IncrementalPCA(_BasePCA):
             X = np.vstack((self.singular_values_.reshape((-1, 1)) *
                            self.components_, X, mean_correction))
 
-        U, S, V = linalg.svd(X, full_matrices=False)
-        U, V = svd_flip(U, V, u_based_decision=False)
+        U, S, Vt = linalg.svd(X, full_matrices=False)
+        U, Vt = svd_flip(U, Vt, u_based_decision=False)
         explained_variance = S ** 2 / (n_total_samples - 1)
         explained_variance_ratio = S ** 2 / np.sum(col_var * n_total_samples)
 
         self.n_samples_seen_ = n_total_samples
-        self.components_ = V[:self.n_components_]
+        self.components_ = Vt[:self.n_components_]
         self.singular_values_ = S[:self.n_components_]
         self.mean_ = col_mean
         self.var_ = col_var

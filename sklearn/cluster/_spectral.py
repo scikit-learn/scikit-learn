@@ -11,14 +11,15 @@ import numpy as np
 
 from ..base import BaseEstimator, ClusterMixin
 from ..utils import check_random_state, as_float_array
-from ..utils.validation import check_array
+from ..utils.validation import _deprecate_positional_args
 from ..metrics.pairwise import pairwise_kernels
 from ..neighbors import kneighbors_graph, NearestNeighbors
 from ..manifold import spectral_embedding
 from ._kmeans import k_means
 
 
-def discretize(vectors, copy=True, max_svd_restarts=30, n_iter_max=20,
+@_deprecate_positional_args
+def discretize(vectors, *, copy=True, max_svd_restarts=30, n_iter_max=20,
                random_state=None):
     """Search for a partition matrix (clustering) which is closest to the
     eigenvector embedding.
@@ -156,7 +157,8 @@ def discretize(vectors, copy=True, max_svd_restarts=30, n_iter_max=20,
     return labels
 
 
-def spectral_clustering(affinity, n_clusters=8, n_components=None,
+@_deprecate_positional_args
+def spectral_clustering(affinity, *, n_clusters=8, n_components=None,
                         eigen_solver=None, random_state=None, n_init=10,
                         eigen_tol=0.0, assign_labels='kmeans'):
     """Apply clustering to a projection of the normalized Laplacian.
@@ -433,8 +435,8 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
       Stella X. Yu, Jianbo Shi
       https://www1.icsi.berkeley.edu/~stellayu/publication/doc/2003kwayICCV.pdf
     """
-
-    def __init__(self, n_clusters=8, eigen_solver=None, n_components=None,
+    @_deprecate_positional_args
+    def __init__(self, n_clusters=8, *, eigen_solver=None, n_components=None,
                  random_state=None, n_init=10, gamma=1., affinity='rbf',
                  n_neighbors=10, eigen_tol=0.0, assign_labels='kmeans',
                  degree=3, coef0=1, kernel_params=None, n_jobs=None):
@@ -474,8 +476,8 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         self
 
         """
-        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'],
-                        dtype=np.float64, ensure_min_samples=2)
+        X = self._validate_data(X, accept_sparse=['csr', 'csc', 'coo'],
+                                dtype=np.float64, ensure_min_samples=2)
         allow_squared = self.affinity in ["precomputed",
                                           "precomputed_nearest_neighbors"]
         if X.shape[0] == X.shape[1] and not allow_squared:

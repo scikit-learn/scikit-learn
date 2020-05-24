@@ -15,7 +15,7 @@ from ._gaussian_mixture import _compute_precision_cholesky
 from ._gaussian_mixture import _estimate_gaussian_parameters
 from ._gaussian_mixture import _estimate_log_gaussian_prob
 from ..utils import check_array
-from ..utils.validation import check_is_fitted
+from ..utils.validation import _deprecate_positional_args
 
 
 def _log_dirichlet_norm(dirichlet_concentration):
@@ -288,6 +288,18 @@ class BayesianGaussianMixture(BaseMixture):
             (n_features)             if 'diag',
             float                    if 'spherical'
 
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.mixture import BayesianGaussianMixture
+    >>> X = np.array([[1, 2], [1, 4], [1, 0], [4, 2], [12, 4], [10, 7]])
+    >>> bgm = BayesianGaussianMixture(n_components=2, random_state=42).fit(X)
+    >>> bgm.means_
+    array([[2.49... , 2.29...],
+           [8.45..., 4.52... ]])
+    >>> bgm.predict([[0, 0], [9, 3]])
+    array([0, 1])
+
     See Also
     --------
     GaussianMixture : Finite Gaussian mixture fit with EM.
@@ -308,8 +320,8 @@ class BayesianGaussianMixture(BaseMixture):
        inference for Dirichlet process mixtures". Bayesian analysis 1.1
        <https://www.cs.princeton.edu/courses/archive/fall11/cos597C/reading/BleiJordan2005.pdf>`_
     """
-
-    def __init__(self, n_components=1, covariance_type='full', tol=1e-3,
+    @_deprecate_positional_args
+    def __init__(self, *, n_components=1, covariance_type='full', tol=1e-3,
                  reg_covar=1e-6, max_iter=100, n_init=1, init_params='kmeans',
                  weight_concentration_prior_type='dirichlet_process',
                  weight_concentration_prior=None,

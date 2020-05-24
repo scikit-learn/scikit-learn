@@ -30,10 +30,6 @@ BOOLEAN_METRICS = ['matching', 'jaccard', 'dice', 'kulsinski',
                    'sokalsneath']
 
 
-def dist_func(x1, x2, p):
-    return np.sum((x1 - x2) ** p) ** (1. / p)
-
-
 def brute_force_neighbors(X, Y, k, metric, **kwargs):
     D = DistanceMetric.get_metric(metric, **kwargs).pairwise(Y, X)
     ind = np.argsort(D, axis=1)[:, :k]
