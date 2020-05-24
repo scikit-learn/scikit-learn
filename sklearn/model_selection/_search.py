@@ -987,7 +987,7 @@ class GridSearchCV(BaseSearchCV):
           displayed;
         - >2 : the score is also displayed;
         - >3 : the fold and candidate parameter indexes are also displayed
-          together with the starting time of the computation. 
+          together with the starting time of the computation.
 
     error_score : 'raise' or numeric, default=np.nan
         Value to assign to the score if an error occurs in estimator fitting.
