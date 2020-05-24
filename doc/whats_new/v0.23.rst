@@ -66,6 +66,14 @@ Changelog
    error if ``metric='seuclidean'`` and ``X`` is not type ``np.float64``.
   :pr:`15730` by :user:`Forrest Koch <ForrestCKoch>`.
 
+:mod:`sklearn.metrics`
+......................
+
+- |Fix| Fixed a bug in :func:`metrics.mean_squared_error` where the
+  average of multiple RMSE values was incorrectly calculated as the root of the
+  average of multiple MSE values.
+  :pr:`17309` by :user:`Swier Heeres <swierh>`
+
 .. _changes_0_23_1:
 
 Version 0.23.1
