@@ -6,9 +6,11 @@ from sklearn.datasets import make_low_rank_matrix
 from sklearn.preprocessing import KBinsDiscretizer, MinMaxScaler
 from sklearn.model_selection import train_test_split
 from sklearn.base import clone, BaseEstimator, TransformerMixin
+from sklearn.base import is_regressor
 from sklearn.pipeline import make_pipeline
 from sklearn.metrics import mean_poisson_deviance
 from sklearn.dummy import DummyRegressor
+from sklearn.exceptions import NotFittedError
 
 # To use this experimental feature, we need to explicitly ask for it:
 from sklearn.experimental import enable_hist_gradient_boosting  # noqa
@@ -24,6 +26,9 @@ from sklearn.utils import shuffle
 
 X_classification, y_classification = make_classification(random_state=0)
 X_regression, y_regression = make_regression(random_state=0)
+X_multi_classification, y_multi_classification = make_classification(
+    n_classes=3, n_informative=3, random_state=0
+)
 
 
 def _make_dumb_dataset(n_samples):
@@ -744,3 +749,48 @@ def test_single_node_trees(Est):
 def test_custom_loss(Est, loss, X, y):
     est = Est(loss=loss, max_iter=20)
     est.fit(X, y)
+
+
+@pytest.mark.parametrize('HistGradientBoosting, X, y', [
+    (HistGradientBoostingClassifier, X_classification, y_classification),
+    (HistGradientBoostingRegressor, X_regression, y_regression),
+    (HistGradientBoostingClassifier,
+        X_multi_classification, y_multi_classification),
+])
+def test_staged_predict(HistGradientBoosting, X, y):
+
+    # Test whether staged predictor eventually gives
+    # the same prediction.
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y,
+        test_size=0.5,
+        random_state=0
+    )
+    gb = HistGradientBoosting(max_iter=10)
+
+    # test raise NotFittedError if not fitted
+    with pytest.raises(NotFittedError):
+        next(gb.staged_predict(X_test))
+
+    gb.fit(X_train, y_train)
+
+    # test if the staged predictions of each iteration
+    # are equal to the corresponding predictions of the same estimator
+    # trained from scratch.
+    # this also test limit case when max_iter = 1
+    method_names = (
+        ['predict'] if is_regressor(gb)
+        else ['predict', 'predict_proba', 'decision_function']
+    )
+    for method_name in method_names:
+
+        staged_method = getattr(gb, 'staged_' + method_name)
+        staged_predictions = list(staged_method(X_test))
+        assert len(staged_predictions) == gb.n_iter_
+        for n_iter, staged_predictions in enumerate(staged_method(X_test), 1):
+            aux = HistGradientBoosting(max_iter=n_iter)
+            aux.fit(X_train, y_train)
+            pred_aux = getattr(aux, method_name)(X_test)
+
+            assert_allclose(staged_predictions, pred_aux)
+            assert staged_predictions.shape == pred_aux.shape
