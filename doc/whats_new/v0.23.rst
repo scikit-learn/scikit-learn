@@ -44,8 +44,6 @@ refer to
 
 .. include:: changelog_legend.inc
 
-Put the changes in their relevant module.
-
 Enforcing keyword-only arguments
 --------------------------------
 
