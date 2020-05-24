@@ -685,7 +685,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         fit_and_score_kwargs = dict(scorer=scorers,
                                     fit_params=fit_params,
                                     return_train_score=self.return_train_score,
-                                    return_n_test_samples=True,
+                                    return_n_test_samples=False,
                                     return_times=True,
                                     return_parameters=False,
                                     error_score=self.error_score,
@@ -780,11 +780,10 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
         # if one choose to see train score, "out" will contain train score info
         if self.return_train_score:
-            (train_score_dicts, test_score_dicts, test_sample_counts, fit_time,
+            (train_score_dicts, test_score_dicts, fit_time,
              score_time) = zip(*out)
         else:
-            (test_score_dicts, test_sample_counts, fit_time,
-             score_time) = zip(*out)
+            test_score_dicts, fit_time, score_time = zip(*out)
 
         # test_score_dicts and train_score dicts are lists of dictionaries and
         # we make them into dict of lists
@@ -837,10 +836,6 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         results.update(param_results)
         # Store a list of param dicts at the key 'params'
         results['params'] = candidate_params
-
-        # NOTE test_sample counts (weights) remain the same for all candidates
-        test_sample_counts = np.array(test_sample_counts[:n_splits],
-                                      dtype=np.int)
 
         for scorer_name in scorers.keys():
             # Computed the (weighted) mean and std for test scores alone
