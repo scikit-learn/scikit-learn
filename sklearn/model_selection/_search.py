@@ -856,10 +856,6 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         # Store a list of param dicts at the key 'params'
         results['params'] = candidate_params
 
-        # NOTE test_sample counts (weights) remain the same for all candidates
-        test_sample_counts = np.array(out["n_test_samples"][:n_splits],
-                                      dtype=np.int)
-
         test_scores = out["test_scores"]
         if isinstance(test_scores[0], dict):
             test_scores_dict = _aggregate_list_of_dicts(test_scores)
