@@ -250,4 +250,3 @@ def test_multiple_categories_santiy_pandas():
       [y_mean, y_mean]
     ])
     assert_allclose(X_trans, expected_X_trans)
-
