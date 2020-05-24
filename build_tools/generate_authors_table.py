@@ -67,8 +67,7 @@ def get_contributors():
     members |= {'Angel Soler Gollonet'}
     # remove CI bots
     members -= {'sklearn-ci', 'sklearn-lgtm', 'sklearn-wheels'}
-    # remove Olivier from triage team
-    triage_team -= {'ogrisel'}
+    triage_team -= core_devs  # remove ogrisel from triage_team
 
     emeritus = members - core_devs - triage_team
 
