@@ -27,7 +27,7 @@ from ._data import PolynomialFeatures
 
 from ._encoders import OneHotEncoder
 from ._encoders import OrdinalEncoder
-from ._impact_encoder import ImpactEncoder
+from ._target_encoder import TargetRegressorEncoder
 
 from ._label import label_binarize
 from ._label import LabelBinarizer
@@ -44,7 +44,7 @@ __all__ = [
     'KernelCenterer',
     'LabelBinarizer',
     'LabelEncoder',
-    'ImpactEncoder',
+    'TargetRegressorEncoder',
     'MultiLabelBinarizer',
     'MinMaxScaler',
     'MaxAbsScaler',

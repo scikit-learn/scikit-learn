@@ -2,6 +2,8 @@
 #          Joris Van den Bossche <jorisvandenbossche@gmail.com>
 # License: BSD 3 clause
 
+from collections import Counter
+
 import numpy as np
 from scipy import sparse
 
@@ -17,6 +19,25 @@ __all__ = [
     'OneHotEncoder',
     'OrdinalEncoder'
 ]
+
+
+def _get_counts(values, uniques):
+    """Get the number of times each of the values comes up `values`
+
+    For object dtypes, the counts returned will use the order passed in by
+    `uniques`.
+    """
+    if values.dtype == object:
+        uniques_dict = Counter(values)
+        counts = np.array([uniques_dict[item] for item in uniques],
+                          dtype=int)
+        return counts
+
+    # numerical
+    uniq_values, counts = np.unique(values, return_counts=True)
+    indices_in_uniq = np.isin(uniq_values, uniques, assume_unique=True)
+    counts[~indices_in_uniq] = 0
+    return counts
 
 
 class _BaseEncoder(TransformerMixin, BaseEstimator):
@@ -70,7 +91,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         # numpy arrays, sparse arrays
         return X[:, feature_idx]
 
-    def _fit(self, X, handle_unknown='error'):
+    def _fit(self, X, handle_unknown='error', return_counts=False):
         X_list, n_samples, n_features = self._check_X(X)
 
         if self.categories != 'auto':
@@ -79,11 +100,17 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                                  " it has to be of shape (n_features,).")
 
         self.categories_ = []
+        category_counts = []
 
         for i in range(n_features):
             Xi = X_list[i]
             if self.categories == 'auto':
-                cats = _unique(Xi)
+                result = _unique(Xi, return_counts=return_counts)
+                if return_counts:
+                    cats, counts = result
+                    category_counts.append(counts)
+                else:
+                    cats = result
             else:
                 cats = np.array(self.categories[i], dtype=Xi.dtype)
                 if Xi.dtype != object:
@@ -96,7 +123,13 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                         msg = ("Found unknown categories {0} in column {1}"
                                " during fit".format(diff, i))
                         raise ValueError(msg)
+                if return_counts:
+                    category_counts.append(_get_counts(Xi, cats))
+
             self.categories_.append(cats)
+
+        return {'category_counts': category_counts,
+                'n_samples': n_samples}
 
     def _transform(self, X, handle_unknown='error'):
         X_list, n_samples, n_features = self._check_X(X)
@@ -115,7 +148,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         for i in range(n_features):
             Xi = X_list[i]
             diff, valid_mask = _check_unknown(Xi, self.categories_[i],
-                                                     return_mask=True)
+                                              return_mask=True)
 
             if not np.all(valid_mask):
                 if handle_unknown == 'error':

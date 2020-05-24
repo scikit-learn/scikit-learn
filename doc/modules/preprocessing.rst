@@ -593,6 +593,55 @@ the 2 features with respectively 3 categories each.
 See :ref:`dict_feature_extraction` for categorical features that are
 represented as a dict, not as scalars.
 
+.. _target_regressor_encoder:
+
+Target Regressor Encoder
+========================
+The :class:`~sklearn.preprocessing.TargetRegressorEncoder` uses statistics of
+the target conditioned on the categorical feature. The target encoding scheme
+takes a weighted average of the overall target mean and the target mean
+conditioned on categories. A multilevel linear model, where the levels are the
+categories, is used to construct the weighted average is estimated in Chapter
+12 of [GEL]_:
+
+.. math::
+
+    \alpha_c\approx\frac{\frac{n_c}{\sigma_c^2}\mu_c+
+    \frac{1}{\sigma^2}\mu}{\frac{n_c}{\sigma_c^2} + \frac{1}{\sigma^2}}
+
+where :math:`\alpha_c` is the encoding for category :math:`c`, :math:`n_c` is
+the category count, :math:`\mu_c` is the target mean conditioned on :math:`c`,
+:math:`\sigma_c^2` is the target variance conditioned on :math:`c`, :math:`\mu`
+is the overall target mean, and :math:`\sigma^2` is the overall target
+variance. The averages from categories with smaller counts carry less
+information and the multilevel estimates are pulled closer to the overall mean.
+For categories with larger counts the multilevel estimates are pulled closer to
+the mean conditioned on the category.
+
+For example, the following toy dataset contains two categories where the
+`'cat'` category appears 3 times and the `'dog'` category appears 50 times. The
+encoding for `'cat'` is pulled toward the overall mean of `53` when compared to
+`'dog'` because the `'cat'` category appears less frequently::
+
+    >>> from sklearn.preprocessing import TargetRegressorEncoder
+    >>> X = np.array([['cat'] * 3 + ['dog'] * 50]).T
+    >>> y = np.array([0, 30, 60] + [50, 60] * 25)
+    >>> enc = TargetRegressorEncoder().fit(X, y)
+    >>> enc.transform([['cat'], ['dog']])
+    array([[46...],
+           [54...]])
+    >>> enc.y_mean_
+    53...
+
+.. topic:: Examples:
+
+  * :ref:`sphx_glr_auto_examples_preprocessing_plot_target_regressor_encoder.py`
+
+.. topic:: References
+
+    .. [GEL] Andrew Gelman and Jennifer Hill. Data Analysis Using Regression
+       and Multilevel/Hierarchical Models. Cambridge University Press, 2007
+
 .. _preprocessing_discretization:
 
 Discretization

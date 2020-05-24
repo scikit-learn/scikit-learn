@@ -1,7 +1,8 @@
+from collections import Counter
 import numpy as np
 
 
-def _unique(values, *, return_inverse=False):
+def _unique(values, *, return_inverse=False, return_counts=False):
     """Helper function to find unique values with support for python objects.
 
     Uses pure python method for object dtype, and numpy method for
@@ -23,14 +24,20 @@ def _unique(values, *, return_inverse=False):
     unique_inverse : ndarray
         The indices to reconstruct the original array from the unique array.
         Only provided if `return_inverse` is True.
+
+    unique_counts : ndarray
+        The number of times each of the unique values comes up in the originial
+        array. Only provided if `return_counts` is True.
     """
     if values.dtype == object:
-        return _unique_python(values, return_inverse=return_inverse)
+        return _unique_python(values, return_inverse=return_inverse,
+                              return_counts=return_counts)
     # numerical
-    return np.unique(values, return_inverse=return_inverse)
+    return np.unique(values, return_inverse=return_inverse,
+                     return_counts=return_counts)
 
 
-def _unique_python(values, *, return_inverse):
+def _unique_python(values, *, return_inverse, return_counts):
     # Only used in `_uniques`, see docstring there for details
     try:
         uniques = sorted(set(values))
@@ -40,13 +47,23 @@ def _unique_python(values, *, return_inverse):
                        for t in set(type(v) for v in values))
         raise TypeError("Encoders require their input to be uniformly "
                         f"strings or numbers. Got {types}")
+    ret = (uniques, )
 
     if return_inverse:
         table = {val: i for i, val in enumerate(uniques)}
         inverse = np.array([table[v] for v in values])
-        return uniques, inverse
+        ret += (inverse, )
 
-    return uniques
+    if return_counts:
+        uniques_dict = Counter(values)
+        counts = np.array([uniques_dict[item] for item in uniques],
+                          dtype=int)
+        ret += (counts, )
+
+    if len(ret) == 1:
+        ret = ret[0]
+
+    return ret
 
 
 def _encode(values, *, uniques, check_unknown=True):

@@ -1399,6 +1399,7 @@ details.
    preprocessing.QuantileTransformer
    preprocessing.RobustScaler
    preprocessing.StandardScaler
+   preprocessing.TargetRegressorEncoder
 
 .. autosummary::
    :toctree: generated/
