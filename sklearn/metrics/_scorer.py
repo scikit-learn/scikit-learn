@@ -431,7 +431,10 @@ def _check_multimetric_scoring(estimator, scoring):
     estimator : sklearn estimator instance
         The estimator for which the scoring will be applied.
 
-    scoring : list/tuple or dict
+    scoring : string, callable, list/tuple, dict or None, default: None
+        A single string (see :ref:`scoring_parameter`) or a callable
+        (see :ref:`scoring`) to evaluate the predictions on the test set.
+
         For evaluating multiple metrics, either give a list of (unique) strings
         or a dict with names as keys and callables as values.
 
@@ -441,6 +444,7 @@ def _check_multimetric_scoring(estimator, scoring):
 
         See :ref:`multimetric_grid_search` for an example.
 
+        If None the estimator's score method is used.
         The return value in that case will be ``{'score': <default_scorer>}``.
         If the estimator's score method is not available, a ``TypeError``
         is raised.
