@@ -65,7 +65,7 @@ Changelog
 ......................
 
 - |Fix| Fixed a bug in :func:`metrics.mean_squared_error` where the
-  average of multiple RMSE values was calculated as the root of the
+  average of multiple RMSE values was incorrectly calculated as the root of the
   average of multiple MSE values.
   :pr:`17309` by :user:`Swier Heeres <swierh>`
 
