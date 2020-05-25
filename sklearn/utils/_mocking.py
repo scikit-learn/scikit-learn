@@ -67,6 +67,11 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
     check_y_params, check_X_params : dict, default=None
         The optional parameters to pass to `check_X` and `check_y`.
 
+    methods_to_check : "all" or list of str, default="all"
+        The methods in which the checks should be applied. By default,
+        all checks will be done on all methods (`fit`, `predict`,
+        `predict_proba`, `decision_function` and `score`).
+
     foo_param : int, default=0
         A `foo` param. When `foo > 1`, the output of :meth:`score` will be 1
         otherwise it is 0.
@@ -83,14 +88,50 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
         The number of features seen during `fit`.
     """
     def __init__(self, *, check_y=None, check_y_params=None,
-                 check_X=None, check_X_params=None, foo_param=0,
-                 expected_fit_params=None):
+                 check_X=None, check_X_params=None, methods_to_check="all",
+                 foo_param=0, expected_fit_params=None):
         self.check_y = check_y
         self.check_y_params = check_y_params
         self.check_X = check_X
         self.check_X_params = check_X_params
+        self.methods_to_check = methods_to_check
         self.foo_param = foo_param
         self.expected_fit_params = expected_fit_params
+
+    def _check_X_y(self, X, y=None, should_be_fitted=True):
+        """Validate X and y and make extra check.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            The data set.
+        y : array-like of shape (n_samples), default=None
+            The corresponding target, by default None.
+        should_be_fitted : bool, default=True
+            Whether or not the classifier should be already fitted.
+            By default True.
+
+        Returns
+        -------
+        X, y
+        """
+        if should_be_fitted:
+            check_is_fitted(self)
+        if self.check_X is not None:
+            params = {} if self.check_X_params is None else self.check_X_params
+            checked_X = self.check_X(X, **params)
+            if isinstance(checked_X, (bool, np.bool_)):
+                assert checked_X
+            else:
+                X = checked_X
+        if y is not None and self.check_y is not None:
+            params = {} if self.check_y_params is None else self.check_y_params
+            checked_y = self.check_y(y)
+            if isinstance(checked_y, (bool, np.bool_)):
+                assert checked_y
+            else:
+                y = checked_y
+        return X, y
 
     def fit(self, X, y, **fit_params):
         """Fit classifier.
@@ -113,12 +154,8 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
         self
         """
         assert _num_samples(X) == _num_samples(y)
-        if self.check_X is not None:
-            params = {} if self.check_X_params is None else self.check_X_params
-            assert self.check_X(X, **params)
-        if self.check_y is not None:
-            params = {} if self.check_y_params is None else self.check_y_params
-            assert self.check_y(y)
+        if self.methods_to_check == "all" or "fit" in self.methods_to_check:
+            X, y = self._check_X_y(X, y, should_be_fitted=False)
         self.n_features_in_ = np.shape(X)[1]
         self.classes_ = np.unique(
             check_array(y, ensure_2d=False, allow_nd=True)
@@ -138,13 +175,7 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
 
         return self
 
-    def _check_at_predict(self, X):
-        check_is_fitted(self)
-        if self.check_X is not None:
-            params = {} if self.check_X_params is None else self.check_X_params
-            assert self.check_X(X, **params)
-
-    def predict(self, X):
+    def predict(self, X, y=None):
         """Predict the first class seen in `classes_`.
 
         Parameters
@@ -157,10 +188,12 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
         preds : ndarray of shape (n_samples,)
             Predictions of the first class seens in `classes_`.
         """
-        self._check_at_predict(X)
+        if (self.methods_to_check == "all" or
+                "predict" in self.methods_to_check):
+            X, y = self._check_X_y(X, y)
         return self.classes_[np.zeros(_num_samples(X), dtype=np.int)]
 
-    def predict_proba(self, X):
+    def predict_proba(self, X, y=None):
         """Predict probabilities for each class.
 
         Here, the dummy classifier will provide a probability of 1 for the
@@ -176,12 +209,14 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
         proba : ndarray of shape (n_samples, n_classes)
             The probabilities for each sample and class.
         """
-        self._check_at_predict(X)
+        if (self.methods_to_check == "all" or
+                "predict_proba" in self.methods_to_check):
+            X, y = self._check_X_y(X, y)
         proba = np.zeros((_num_samples(X), len(self.classes_)))
         proba[:, 0] = 1
         return proba
 
-    def decision_function(self, X):
+    def decision_function(self, X, y=None):
         """Confidence score.
 
         Parameters
@@ -195,7 +230,9 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
                 else (n_samples, n_classes)
             Confidence score.
         """
-        self._check_at_predict(X)
+        if (self.methods_to_check == "all" or
+                "decision_function" in self.methods_to_check):
+            X, y = self._check_X_y(X, y)
         if len(self.classes_) == 2:
             # for binary classifier, the confidence score is related to
             # classes_[1] and therefore should be null.
@@ -222,7 +259,8 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
             Either 0 or 1 depending of `foo_param` (i.e. `foo_param > 1 =>
             score=1` otherwise `score=0`).
         """
-        self._check_at_predict(X)
+        if self.methods_to_check == "all" or "score" in self.methods_to_check:
+            X, Y = self._check_X_y(X, Y)
         if self.foo_param > 1:
             score = 1.
         else:
