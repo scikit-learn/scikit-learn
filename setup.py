@@ -93,24 +93,24 @@ if SETUPTOOLS_COMMANDS.intersection(sys.argv):
         include_package_data=True,
         extras_require={
             'alldeps': (
-                'numpy >= {}'.format(NUMPY_MIN_VERSION),
-                'scipy >= {}'.format(SCIPY_MIN_VERSION),
-                'matplotlib>={}'.format(MATPLOTLIB_MIN_VERSION),
-                'scikit-image>={}'.format(SCIKIT_IMAGE_MIN_VERSION),
-                'pandas>={}'.format(PANDAS_MIN_VERSION),
-                'seaborn>={}'.format(SEABORN_MIN_VERSION),
-                'pytest>={}'.format(PYTEST_MIN_VERSION),
-                'pytest-cov>={}'.format(PYTEST_COV_MIN_VERSION),
-                'Cython>={}'.format(CYTHON_MIN_VERSION),
-                'flake8>={}'.format(FLAKE8_MIN_VERSION),
-                'mypy>={}'.format(MYPY_MIN_VERSION),
-                'coverage>={}'.format(COVERAGE_MIN_VERSION),
-                'sphinx>={}'.format(SPHINX_MIN_VERSION),
-                'sphinx-gallery>={}'.format(SPHINX_GALLERY_MIN_VERSION),
-                'Pillow>={}'.format(PILLOW_MIN_VERSION),
-                'memory_profiler>={}'.format(MEMORY_PROFILER_MIN_VERSION),
-                'packaging>={}'.format(PACKAGING_MIN_VERSION),
-                'numpydoc>={}'.format(NUMPY_DOC_MIN_VERSION)
+                f'numpy>={NUMPY_MIN_VERSION}',
+                f'scipy>={SCIPY_MIN_VERSION}',
+                f'matplotlib>={MATPLOTLIB_MIN_VERSION}',
+                f'scikit-image>={SCIKIT_IMAGE_MIN_VERSION}',
+                f'pandas>={PANDAS_MIN_VERSION}',
+                f'seaborn>={SEABORN_MIN_VERSION}',
+                f'pytest>={PYTEST_MIN_VERSION}',
+                f'pytest-cov>={PYTEST_COV_MIN_VERSION}',
+                f'Cython>={CYTHON_MIN_VERSION}',
+                f'flake8>={FLAKE8_MIN_VERSION}',
+                f'mypy>={MYPY_MIN_VERSION}',
+                f'coverage>={COVERAGE_MIN_VERSION}',
+                f'sphinx>={SPHINX_MIN_VERSION}',
+                f'sphinx-gallery>={SPHINX_GALLERY_MIN_VERSION}',
+                f'Pillow>={PILLOW_MIN_VERSION}',
+                f'memory_profiler>={MEMORY_PROFILER_MIN_VERSION}',
+                f'packaging>={PACKAGING_MIN_VERSION}',
+                f'numpydoc>={NUMPY_DOC_MIN_VERSION}'
             ),
         },
     )
@@ -289,10 +289,10 @@ def setup_package():
                     cmdclass=cmdclass,
                     python_requires=">=3.6",
                     install_requires=[
-                        'numpy>={}'.format(NUMPY_MIN_VERSION),
-                        'scipy>={}'.format(SCIPY_MIN_VERSION),
-                        'joblib>={}'.format(JOBLIB_MIN_VERSION),
-                        'threadpoolctl>={}'.format(THREADPOOLCTL_MIN_VERSION)
+                        f'numpy>={NUMPY_MIN_VERSION}',
+                        f'scipy>={SCIPY_MIN_VERSION}',
+                        f'joblib>={JOBLIB_MIN_VERSION}',
+                        f'threadpoolctl>={THREADPOOLCTL_MIN_VERSION}'
                     ],
                     package_data={'': ['*.pxd']},
                     **extra_setuptools_args)
