@@ -52,7 +52,7 @@ def test_check_on_fit_fail(iris, kwargs):
 
 
 @pytest.mark.parametrize(
-    "pred_func", ["predict", "predict_proba", "decision_function"]
+    "pred_func", ["predict", "predict_proba", "decision_function", "score"]
 )
 def test_check_X_on_predict_success(iris, pred_func):
     X, y = iris
@@ -61,7 +61,7 @@ def test_check_X_on_predict_success(iris, pred_func):
 
 
 @pytest.mark.parametrize(
-    "pred_func", ["predict", "predict_proba", "decision_function"]
+    "pred_func", ["predict", "predict_proba", "decision_function", "score"]
 )
 def test_check_X_on_predict_fail(iris, pred_func):
     X, y = iris
@@ -122,22 +122,13 @@ def test_checking_classifier_with_params(iris):
     X, y = iris
     X_sparse = sparse.csr_matrix(X)
 
-    def check_X_is_sparse(X):
-        if not sparse.issparse(X):
-            raise ValueError("X is not sparse")
-        return True
-
-    clf = CheckingClassifier(check_X=check_X_is_sparse)
-    with pytest.raises(ValueError, match="X is not sparse"):
+    clf = CheckingClassifier(check_X=sparse.issparse)
+    with pytest.raises(AssertionError):
         clf.fit(X, y)
     clf.fit(X_sparse, y)
 
-    def _check_array(X, **params):
-        check_array(X, **params)
-        return True
-
     clf = CheckingClassifier(
-        check_X=_check_array, check_X_params={"accept_sparse": False}
+        check_X=check_array, check_X_params={"accept_sparse": False}
     )
     clf.fit(X, y)
     with pytest.raises(TypeError, match="A sparse matrix was passed"):
@@ -159,3 +150,18 @@ def test_checking_classifier_missing_fit_params(iris):
     clf = CheckingClassifier(expected_fit_params=["sample_weight"])
     with pytest.raises(AssertionError, match="Expected fit parameter"):
         clf.fit(X, y)
+
+
+def test_checking_classifier_methods_to_check(iris):
+    # check that methods_to_check allows to bypass checks
+    X, y = iris
+    X_sparse = sparse.csr_matrix(X)
+
+    clf = CheckingClassifier(
+        check_X=sparse.issparse, methods_to_check=["predict"],
+    )
+
+    clf.fit(X, y)
+    with pytest.raises(AssertionError):
+        clf.predict(X, y)
+    clf.predict(X_sparse, y)

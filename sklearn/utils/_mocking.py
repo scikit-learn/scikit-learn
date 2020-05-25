@@ -55,7 +55,7 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
     This allows testing whether pipelines / cross-validation or metaestimators
     changed the input.
 
-    Can also be used to check if fit_params are passed correctly, and
+    Can also be used to check if `fit_params` are passed correctly, and
     to force a certain score to be returned.
 
     Parameters
