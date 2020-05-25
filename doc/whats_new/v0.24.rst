@@ -61,6 +61,14 @@ Changelog
   change since `None` was defaulting to these values already.
   :pr:`16493` by :user:`Darshan N <DarshanGowda0>`.
 
+:mod:`sklearn.metrics`
+......................
+
+- |Fix| Fixed a bug in :func:`metrics.mean_squared_error` where the
+  average of multiple RMSE values was incorrectly calculated as the root of the
+  average of multiple MSE values.
+  :pr:`17309` by :user:`Swier Heeres <swierh>`
+
 :mod:`sklearn.model_selection`
 ..............................
 
