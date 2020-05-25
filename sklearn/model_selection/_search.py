@@ -372,8 +372,7 @@ def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
                              fit_params=fit_params,
                              return_n_test_samples=True,
                              error_score=error_score)
-    return (results["test_scores"], results["parameters"],
-            results["n_test_samples"])
+    return results["test_scores"], parameters, results["n_test_samples"]
 
 
 def _check_param_grid(param_grid):
