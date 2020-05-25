@@ -181,9 +181,6 @@ class KNNImputer(_BaseImputer):
             raise ValueError(
                 "Expected n_neighbors > 0. Got {}".format(self.n_neighbors))
 
-        X = check_array(X, accept_sparse=False, dtype=FLOAT_DTYPES,
-                        force_all_finite=force_all_finite, copy=self.copy)
-
         X = self._validate_data(X, accept_sparse=False, dtype=FLOAT_DTYPES,
                                 force_all_finite=force_all_finite,
                                 copy=self.copy)
