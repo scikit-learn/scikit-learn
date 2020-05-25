@@ -106,13 +106,12 @@ from sklearn.datasets import make_classification
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.inspection import permutation_importance
 
-X, y = make_classification(random_state=0, n_features=5,
-                           n_informative=3)
+X, y = make_classification(random_state=0, n_features=5, n_informative=3)
+feature_names = np.array([f'x_{i}' for i in range(X.shape[1])])
+
 rf = RandomForestClassifier(random_state=0).fit(X, y)
 result = permutation_importance(rf, X, y, n_repeats=10, random_state=0,
                                 n_jobs=-1)
-
-feature_names = np.array([f'x_{i}' for i in range(X.shape[1])])
 
 fig, ax = plt.subplots()
 sorted_idx = result.importances_mean.argsort()
