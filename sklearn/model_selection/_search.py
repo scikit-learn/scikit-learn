@@ -28,7 +28,7 @@ from ..base import BaseEstimator, is_classifier, clone
 from ..base import MetaEstimatorMixin
 from ._split import check_cv
 from ._validation import _fit_and_score
-from ._validation import _aggregate_list_of_dicts
+from ._validation import _aggregate_score_dicts
 from ._validation import _handle_error_score
 from ..exceptions import NotFittedError
 from joblib import Parallel, delayed
@@ -808,7 +808,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
     def _format_results(self, candidate_params, n_splits, out):
         n_candidates = len(candidate_params)
-        out = _aggregate_list_of_dicts(out)
+        out = _aggregate_score_dicts(out)
 
         results = {}
 
@@ -858,14 +858,14 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
         test_scores = out["test_scores"]
         if isinstance(test_scores[0], dict):
-            test_scores_dict = _aggregate_list_of_dicts(test_scores)
+            test_scores_dict = _aggregate_score_dicts(test_scores)
         else:
             test_scores_dict = {"score": test_scores}
 
         if self.return_train_score:
             train_scores = out["train_scores"]
             if isinstance(test_scores[0], dict):
-                train_scores_dict = _aggregate_list_of_dicts(train_scores)
+                train_scores_dict = _aggregate_score_dicts(train_scores)
             else:
                 train_scores_dict = {"score": train_scores}
 
