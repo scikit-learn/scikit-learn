@@ -12,7 +12,11 @@ import re
 
 import numpy as np
 
-from numpy.testing import assert_almost_equal, assert_array_equal
+from numpy.testing import (
+    assert_almost_equal,
+    assert_array_equal,
+    assert_allclose,
+)
 
 from sklearn.datasets import load_digits, load_iris
 from sklearn.datasets import make_regression, make_multilabel_classification
@@ -416,7 +420,7 @@ def test_partial_fit_regression():
             mlp.partial_fit(X, y)
 
         pred2 = mlp.predict(X)
-        assert_almost_equal(pred1, pred2)
+        assert_allclose(pred1, pred2)
         score = mlp.score(X, y)
         assert score > 0.65
 
