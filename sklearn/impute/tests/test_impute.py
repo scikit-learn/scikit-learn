@@ -19,10 +19,11 @@ from sklearn.experimental import enable_iterative_imputer  # noqa
 from sklearn.datasets import load_diabetes
 from sklearn.impute import MissingIndicator
 from sklearn.impute import SimpleImputer, IterativeImputer
-from sklearn.dummy import DummyRegressor
+from sklearn.dummy import DummyRegressor, DummyClassifier
 from sklearn.linear_model import BayesianRidge, ARDRegression, RidgeCV
 from sklearn.pipeline import Pipeline
 from sklearn.pipeline import make_union
+from sklearn.preprocessing import OneHotEncoder
 from sklearn.model_selection import GridSearchCV
 from sklearn import tree
 from sklearn.random_projection import _sparse_random_matrix
@@ -588,6 +589,21 @@ def test_iterative_imputer_all_missing():
     imputer = IterativeImputer(missing_values=0, max_iter=1)
     X_imputed = imputer.fit_transform(X)
     assert_allclose(X_imputed, imputer.initial_imputer_.transform(X))
+
+
+def test_iterative_imputer_mixed_categorical():
+    age = [np.nan, 82.0, 28.0]
+    sex = ["male", "female", np.nan]
+    cabin = ["c1", np.nan, "e8"]
+    pd = pytest.importorskip("pandas")
+    X = pd.DataFrame({"age": age, "sex": sex, "cabin": cabin})
+    imputer = IterativeImputer(
+        estimator=[(DummyClassifier(), slice(1, 3))],
+        transformers=[(OneHotEncoder(sparse=False), slice(1, 3))],
+        initial_strategy="most_frequent"
+    )
+    X_filled = imputer.fit_transform(X)
+    assert not np.any(pd.isnull(X_filled))
 
 
 @pytest.mark.parametrize(
