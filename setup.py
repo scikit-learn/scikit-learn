@@ -96,21 +96,27 @@ if SETUPTOOLS_COMMANDS.intersection(sys.argv):
                 f'numpy>={NUMPY_MIN_VERSION}',
                 f'scipy>={SCIPY_MIN_VERSION}',
                 f'joblib>={JOBLIB_MIN_VERSION}',
-                f'threadpoolctl>={THREADPOOLCTL_MIN_VERSION}',
+                f'threadpoolctl>={THREADPOOLCTL_MIN_VERSION}'
+            ),
+            'examples': (
                 f'matplotlib>={MATPLOTLIB_MIN_VERSION}',
                 f'scikit-image>={SCIKIT_IMAGE_MIN_VERSION}',
                 f'pandas>={PANDAS_MIN_VERSION}',
                 f'seaborn>={SEABORN_MIN_VERSION}',
+                f'Pillow>={PILLOW_MIN_VERSION}',
+                f'memory_profiler>={MEMORY_PROFILER_MIN_VERSION}'
+            ),
+            'tests': (
                 f'pytest>={PYTEST_MIN_VERSION}',
                 f'pytest-cov>={PYTEST_COV_MIN_VERSION}',
                 f'Cython>={CYTHON_MIN_VERSION}',
                 f'flake8>={FLAKE8_MIN_VERSION}',
                 f'mypy>={MYPY_MIN_VERSION}',
-                f'coverage>={COVERAGE_MIN_VERSION}',
+                f'coverage>={COVERAGE_MIN_VERSION}'
+            ),
+            'docs': (
                 f'sphinx>={SPHINX_MIN_VERSION}',
                 f'sphinx-gallery>={SPHINX_GALLERY_MIN_VERSION}',
-                f'Pillow>={PILLOW_MIN_VERSION}',
-                f'memory_profiler>={MEMORY_PROFILER_MIN_VERSION}',
                 f'packaging>={PACKAGING_MIN_VERSION}',
                 f'numpydoc>={NUMPY_DOC_MIN_VERSION}'
             ),
