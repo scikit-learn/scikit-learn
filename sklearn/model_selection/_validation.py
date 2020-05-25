@@ -488,7 +488,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
         parameters : dict or None
             The parameters that have been evaluated.
         estimator : estimator object
-            The fitted estimator
+            The fitted estimator.
     """
     if verbose > 1:
         if parameters is None:
