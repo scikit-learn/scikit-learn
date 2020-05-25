@@ -1620,12 +1620,5 @@ Utilities from joblib:
 Recently deprecated
 ===================
 
-To be removed in 0.24
+To be removed in 0.25
 ---------------------
-
-.. autosummary::
-   :toctree: generated/
-   :template: deprecated_function.rst
-
-   model_selection.fit_grid_point
-   utils.safe_indexing

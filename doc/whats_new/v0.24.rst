@@ -71,6 +71,14 @@ Changelog
   ``kind`` parameter.
   :pr:`16619` by :user:`Madhura Jayratne <madhuracj>`.
 
+:mod:`sklearn.metrics`
+......................
+
+- |Fix| Fixed a bug in :func:`metrics.mean_squared_error` where the
+  average of multiple RMSE values was incorrectly calculated as the root of the
+  average of multiple MSE values.
+  :pr:`17309` by :user:`Swier Heeres <swierh>`
+
 
 :mod:`sklearn.model_selection`
 ..............................
@@ -93,6 +101,28 @@ Changelog
 
 - |Enhancement| :func:`tree.plot_tree` now uses colors from the matplotlib
   configuration settings. :pr:`17187` by `Andreas Müller`_.
+
+:mod:`sklearn.neighbors`
+.............................
+
+- |Efficiency| Speed up ``seuclidean``, ``wminkowski``, ``mahalanobis`` and
+  ``haversine`` metrics in :class:`neighbors.DistanceMetric` by avoiding
+  unexpected GIL acquiring in Cython when setting ``n_jobs>1`` in
+  :class:`neighbors.KNeighborsClassifier`,
+  :class:`neighbors.KNeighborsRegressor`,
+  :class:`neighbors.RadiusNeighborsClassifier`,
+  :class:`neighbors.RadiusNeighborsRegressor`,
+  :func:`metrics.pairwise_distances`
+  and by validating data out of loops.
+  :pr:`17038` by :user:`Wenbo Zhao <webber26232>`.
+
+:mod:`sklearn.svm`
+....................
+- |Enhancement| invoke scipy blas api for svm kernel function in ``fit``,
+  ``predict`` and related methods of :class:`svm.SVC`, :class:`svm.NuSVC`, 
+  :class:`svm.SVR`, :class:`svm.NuSVR`, :class:`OneClassSVM`.
+  :pr:`16530` by :user:`Shuhua Fan <jim0421>`.
+
 
 Code and Documentation Contributors
 -----------------------------------
