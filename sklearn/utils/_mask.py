@@ -31,7 +31,7 @@ def _get_mask(X, value_to_mask, sparse=False):
         ``n_features`` is the number of features.
 
     value_to_mask : {int, float, nan}
-                    The values for which should be maked in X.
+                    The value which is to be masked in X.
 
     sparse : bool, default=False
              Whether or not we need to reconstruct sparse matrix.

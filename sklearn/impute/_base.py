@@ -728,6 +728,9 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
 
         """
         check_is_fitted(self)
+
+        # Need not validate X again as it would have already been validated
+        # in the Imputer calling MissingIndicator
         if not self._precomputed:
             X = self._validate_input(X, in_fit=False)
 
