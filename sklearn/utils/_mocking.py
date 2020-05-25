@@ -196,7 +196,7 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
 
         return self
 
-    def predict(self, X, y=None):
+    def predict(self, X):
         """Predict the first class seen in `classes_`.
 
         Parameters
@@ -211,10 +211,10 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
         """
         if (self.methods_to_check == "all" or
                 "predict" in self.methods_to_check):
-            X, y = self._check_X_y(X, y)
+            X, y = self._check_X_y(X)
         return self.classes_[np.zeros(_num_samples(X), dtype=np.int)]
 
-    def predict_proba(self, X, y=None):
+    def predict_proba(self, X):
         """Predict probabilities for each class.
 
         Here, the dummy classifier will provide a probability of 1 for the
@@ -232,12 +232,12 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
         """
         if (self.methods_to_check == "all" or
                 "predict_proba" in self.methods_to_check):
-            X, y = self._check_X_y(X, y)
+            X, y = self._check_X_y(X)
         proba = np.zeros((_num_samples(X), len(self.classes_)))
         proba[:, 0] = 1
         return proba
 
-    def decision_function(self, X, y=None):
+    def decision_function(self, X):
         """Confidence score.
 
         Parameters
@@ -253,13 +253,15 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
         """
         if (self.methods_to_check == "all" or
                 "decision_function" in self.methods_to_check):
-            X, y = self._check_X_y(X, y)
+            X, y = self._check_X_y(X)
         if len(self.classes_) == 2:
             # for binary classifier, the confidence score is related to
             # classes_[1] and therefore should be null.
             return np.zeros(_num_samples(X))
         else:
-            return self.predict_proba(X)
+            decision = np.zeros((_num_samples(X), len(self.classes_)))
+            decision[:, 0] = 1
+            return decision
 
     def score(self, X=None, Y=None):
         """Fake score.

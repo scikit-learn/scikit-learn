@@ -152,16 +152,27 @@ def test_checking_classifier_missing_fit_params(iris):
         clf.fit(X, y)
 
 
-def test_checking_classifier_methods_to_check(iris):
+@pytest.mark.parametrize(
+    "methods_to_check",
+    [["predict"], ["predict", "predict_proba"]],
+)
+@pytest.mark.parametrize(
+    "predict_method",
+    ["predict", "predict_proba", "decision_function", "score"]
+)
+def test_checking_classifier_methods_to_check(iris, methods_to_check,
+                                              predict_method):
     # check that methods_to_check allows to bypass checks
     X, y = iris
     X_sparse = sparse.csr_matrix(X)
 
     clf = CheckingClassifier(
-        check_X=sparse.issparse, methods_to_check=["predict"],
+        check_X=sparse.issparse, methods_to_check=methods_to_check,
     )
 
     clf.fit(X, y)
-    with pytest.raises(AssertionError):
-        clf.predict(X, y)
-    clf.predict(X_sparse, y)
+    if predict_method in methods_to_check:
+        with pytest.raises(AssertionError):
+            getattr(clf, predict_method)(X)
+    else:
+        getattr(clf, predict_method)(X)
