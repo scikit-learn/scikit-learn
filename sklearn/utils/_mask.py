@@ -30,7 +30,7 @@ def _get_mask(X, value_to_mask, sparse=False):
         Input data, where ``n_samples`` is the number of samples and
         ``n_features`` is the number of features.
 
-    value_to_mask : {int, float, nan}
+    value_to_mask : int or float
                     The value which is to be masked in X.
 
     sparse : bool, default=False
