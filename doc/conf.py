@@ -80,7 +80,7 @@ master_doc = 'contents'
 
 # General information about the project.
 project = 'scikit-learn'
-copyright = '2007 - 2019, scikit-learn developers (BSD License)'
+copyright = '2007 - 2020, scikit-learn developers (BSD License)'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the

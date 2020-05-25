@@ -168,7 +168,8 @@ def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
                        num=n_alphas)[::-1]
 
 
-def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
+@_deprecate_positional_args
+def lasso_path(X, y, *, eps=1e-3, n_alphas=100, alphas=None,
                precompute='auto', Xy=None, copy_X=True, coef_init=None,
                verbose=False, return_n_iter=False, positive=False, **params):
     """Compute Lasso path with coordinate descent
@@ -313,7 +314,8 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
                      positive=positive, return_n_iter=return_n_iter, **params)
 
 
-def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
+@_deprecate_positional_args
+def enet_path(X, y, *, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
               precompute='auto', Xy=None, copy_X=True, coef_init=None,
               verbose=False, return_n_iter=False, positive=False,
               check_input=True, **params):

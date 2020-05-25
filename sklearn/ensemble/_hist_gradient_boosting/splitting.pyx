@@ -162,7 +162,7 @@ cdef class Splitter:
         unsigned char missing_values_bin_idx
         const unsigned char [::1] has_missing_values
         const unsigned char [::1] is_categorical
-        const char [::1] monotonic_cst
+        const signed char [::1] monotonic_cst
         unsigned char hessians_are_constant
         Y_DTYPE_C l2_regularization
         Y_DTYPE_C min_hessian_to_split
@@ -179,7 +179,7 @@ cdef class Splitter:
                  const unsigned char missing_values_bin_idx,
                  const unsigned char [::1] has_missing_values,
                  const unsigned char [::1] is_categorical,
-                 const char [::1] monotonic_cst,
+                 const signed char [::1] monotonic_cst,
                  Y_DTYPE_C l2_regularization,
                  Y_DTYPE_C min_hessian_to_split=1e-3,
                  unsigned int min_samples_leaf=20,
@@ -444,8 +444,8 @@ cdef class Splitter:
             split_info_struct split_info
             split_info_struct * split_infos
             const unsigned char [::1] has_missing_values = self.has_missing_values
-            const char [::1] monotonic_cst = self.monotonic_cst
             const unsigned char [::1] is_categorical = self.is_categorical
+            const signed char [::1] monotonic_cst = self.monotonic_cst
 
         with nogil:
 
@@ -554,7 +554,7 @@ cdef class Splitter:
             Y_DTYPE_C sum_gradients,
             Y_DTYPE_C sum_hessians,
             Y_DTYPE_C value,
-            char monotonic_cst,
+            signed char monotonic_cst,
             Y_DTYPE_C lower_bound,
             Y_DTYPE_C upper_bound,
             split_info_struct * split_info) nogil:  # OUT
@@ -668,7 +668,7 @@ cdef class Splitter:
             Y_DTYPE_C sum_gradients,
             Y_DTYPE_C sum_hessians,
             Y_DTYPE_C value,
-            char monotonic_cst,
+            signed char monotonic_cst,
             Y_DTYPE_C lower_bound,
             Y_DTYPE_C upper_bound,
             split_info_struct * split_info) nogil:  # OUT
@@ -972,7 +972,7 @@ cdef inline Y_DTYPE_C _split_gain(
         Y_DTYPE_C sum_gradient_right,
         Y_DTYPE_C sum_hessian_right,
         Y_DTYPE_C loss_current_node,
-        char monotonic_cst,
+        signed char monotonic_cst,
         Y_DTYPE_C lower_bound,
         Y_DTYPE_C upper_bound,
         Y_DTYPE_C l2_regularization) nogil:

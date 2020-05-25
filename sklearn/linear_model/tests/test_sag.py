@@ -644,7 +644,8 @@ def test_binary_classifier_class_weight():
     clf2.fit(sp.csr_matrix(X), y)
 
     le = LabelEncoder()
-    class_weight_ = compute_class_weight(class_weight, np.unique(y), y)
+    class_weight_ = compute_class_weight(class_weight, classes=np.unique(y),
+                                         y=y)
     sample_weight = class_weight_[le.fit_transform(y)]
     spweights, spintercept = sag_sparse(X, y, step_size, alpha, n_iter=n_iter,
                                         dloss=log_dloss,
@@ -690,7 +691,8 @@ def test_multiclass_classifier_class_weight():
     clf2.fit(sp.csr_matrix(X), y)
 
     le = LabelEncoder()
-    class_weight_ = compute_class_weight(class_weight, np.unique(y), y)
+    class_weight_ = compute_class_weight(class_weight, classes=np.unique(y),
+                                         y=y)
     sample_weight = class_weight_[le.fit_transform(y)]
 
     coef1 = []

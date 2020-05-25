@@ -1,7 +1,6 @@
 import numbers
 from itertools import chain
 from itertools import count
-import warnings
 
 import numpy as np
 from scipy import sparse
@@ -20,7 +19,7 @@ from ...utils.validation import _deprecate_positional_args
 def plot_partial_dependence(estimator, X, features, *, feature_names=None,
                             target=None, response_method='auto', n_cols=3,
                             grid_resolution=100, percentiles=(0.05, 0.95),
-                            method='auto', n_jobs=None, verbose=0, fig=None,
+                            method='auto', n_jobs=None, verbose=0,
                             line_kw=None, contour_kw=None, ax=None):
     """Partial dependence plots.
 
@@ -153,13 +152,6 @@ def plot_partial_dependence(estimator, X, features, *, feature_names=None,
 
     verbose : int, optional (default=0)
         Verbose output during PD computations.
-
-    fig : Matplotlib figure object, optional (default=None)
-        A figure object onto which the plots will be drawn, after the figure
-        has been cleared. By default, a new one is created.
-
-        .. deprecated:: 0.22
-           ``fig`` will be removed in 0.24.
 
     line_kw : dict, optional
         Dict with keywords passed to the ``matplotlib.pyplot.plot`` call.
@@ -316,13 +308,6 @@ def plot_partial_dependence(estimator, X, features, *, feature_names=None,
         if fx not in deciles:
             X_col = _safe_indexing(X, fx, axis=1)
             deciles[fx] = mquantiles(X_col, prob=np.arange(0.1, 1.0, 0.1))
-
-    if fig is not None:
-        warnings.warn("The fig parameter is deprecated in version "
-                      "0.22 and will be removed in version 0.24",
-                      FutureWarning)
-        fig.clear()
-        ax = fig.gca()
 
     display = PartialDependenceDisplay(pd_results=pd_results,
                                        features=features,
