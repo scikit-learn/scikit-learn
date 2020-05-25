@@ -63,6 +63,17 @@ SCIKIT_IMAGE_MIN_VERSION ='0.13'
 PANDAS_MIN_VERSION = '0.18.0'
 SEABORN_MIN_VERSION = '0.9.0'
 PYTEST_MIN_VERSION = '3.3.0'
+PYTEST_COV_MIN_VERSION = '2.9.0'
+CYTHON_MIN_VERSION = '0.29.19'
+FLAKE8_MIN_VERSION = '3.8.2'
+MYPY_MIN_VERSION = '0.770'
+COVERAGE_MIN_VERSION = '5.1'
+SPHINX_MIN_VERSION = '2.1.2'
+SPHINX_GALLERY_MIN_VERSION = '0.7.0'
+PILLOW_MIN_VERSION = '7.1.2'
+MEMORY_PROFILER_MIN_VERSION = '0.57.0'
+PACKAGING_MIN_VERSION = '20.4'
+NUMPY_DOC_MIN_VERSION = '0.9.2'
 
 # Optional setuptools features
 # We need to import setuptools early, if we want setuptools features,
@@ -89,18 +100,17 @@ if SETUPTOOLS_COMMANDS.intersection(sys.argv):
                 'pandas>={}'.format(PANDAS_MIN_VERSION),
                 'seaborn>={}'.format(SEABORN_MIN_VERSION),
                 'pytest>={}'.format(PYTEST_MIN_VERSION),
-                'pytest-cov>=2.9.0',
-                'Cython>=0.29.19',
-                'flake8>=3.8.2',
-                'mypy>=0.770',
-                'coverage>=5.1',
-                'sphinx>=2.1.2',
-                'sphinx-gallery>=0.7.0',
-                'Pillow>=7.1.2',
-                'joblib>=0.15.1',
-                'memory_profiler>=0.57.0',
-                'packaging>=20.4',
-                'numpydoc>=0.9.2'
+                'pytest-cov>={}'.format(PYTEST_COV_MIN_VERSION),
+                'Cython>={}'.format(CYTHON_MIN_VERSION),
+                'flake8>={}'.format(FLAKE8_MIN_VERSION),
+                'mypy>={}'.format(MYPY_MIN_VERSION),
+                'coverage>={}'.format(COVERAGE_MIN_VERSION),
+                'sphinx>={}'.format(SPHINX_MIN_VERSION),
+                'sphinx-gallery>={}'.format(SPHINX_GALLERY_MIN_VERSION),
+                'Pillow>={}'.format(PILLOW_MIN_VERSION),
+                'memory_profiler>={}'.format(MEMORY_PROFILER_MIN_VERSION),
+                'packaging>={}'.format(PACKAGING_MIN_VERSION),
+                'numpydoc>={}'.format(NUMPY_DOC_MIN_VERSION)
             ),
         },
     )
