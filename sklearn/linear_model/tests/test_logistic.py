@@ -883,7 +883,7 @@ def test_logistic_regression_sample_weights():
 def _compute_class_weight_dictionary(y):
     # helper for returning a dictionary instead of an array
     classes = np.unique(y)
-    class_weight = compute_class_weight("balanced", classes, y)
+    class_weight = compute_class_weight("balanced", classes=classes, y=y)
     class_weight_dict = dict(zip(classes, class_weight))
     return class_weight_dict
 

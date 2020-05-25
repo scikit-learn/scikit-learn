@@ -261,13 +261,13 @@ class OPTICS(ClusterMixin, BaseEstimator):
         # Extract clusters from the calculated orders and reachability
         if self.cluster_method == 'xi':
             labels_, clusters_ = cluster_optics_xi(
-                self.reachability_,
-                self.predecessor_,
-                self.ordering_,
-                self.min_samples,
-                self.min_cluster_size,
-                self.xi,
-                self.predecessor_correction)
+                reachability=self.reachability_,
+                predecessor=self.predecessor_,
+                ordering=self.ordering_,
+                min_samples=self.min_samples,
+                min_cluster_size=self.min_cluster_size,
+                xi=self.xi,
+                predecessor_correction=self.predecessor_correction)
             self.cluster_hierarchy_ = clusters_
         elif self.cluster_method == 'dbscan':
             if self.eps is None:
@@ -279,10 +279,10 @@ class OPTICS(ClusterMixin, BaseEstimator):
                 raise ValueError('Specify an epsilon smaller than %s. Got %s.'
                                  % (self.max_eps, eps))
 
-            labels_ = cluster_optics_dbscan(self.reachability_,
-                                            self.core_distances_,
-                                            self.ordering_,
-                                            eps)
+            labels_ = cluster_optics_dbscan(
+                reachability=self.reachability_,
+                core_distances=self.core_distances_,
+                ordering=self.ordering_, eps=eps)
 
         self.labels_ = labels_
         return self
@@ -339,7 +339,8 @@ def _compute_core_distances_(X, neighbors, min_samples, working_memory):
     return core_distances
 
 
-def compute_optics_graph(X, min_samples, max_eps, metric, p, metric_params,
+@_deprecate_positional_args
+def compute_optics_graph(X, *, min_samples, max_eps, metric, p, metric_params,
                          algorithm, leaf_size, n_jobs):
     """Computes the OPTICS reachability graph.
 
@@ -538,7 +539,8 @@ def _set_reach_dist(core_distances_, reachability_, predecessor_,
     predecessor_[unproc[improved]] = point_index
 
 
-def cluster_optics_dbscan(reachability, core_distances, ordering, eps):
+@_deprecate_positional_args
+def cluster_optics_dbscan(*, reachability, core_distances, ordering, eps):
     """Performs DBSCAN extraction for an arbitrary epsilon.
 
     Extracting the clusters runs in linear time. Note that this results in
@@ -577,7 +579,7 @@ def cluster_optics_dbscan(reachability, core_distances, ordering, eps):
     return labels
 
 
-def cluster_optics_xi(reachability, predecessor, ordering, min_samples,
+def cluster_optics_xi(*, reachability, predecessor, ordering, min_samples,
                       min_cluster_size=None, xi=0.05,
                       predecessor_correction=True):
     """Automatically extract clusters according to the Xi-steep method.

@@ -11,6 +11,7 @@ from ..preprocessing import scale
 from ..utils import check_random_state
 from ..utils.fixes import _astype_copy_false
 from ..utils.validation import check_array, check_X_y
+from ..utils.validation import _deprecate_positional_args
 from ..utils.multiclass import check_classification_targets
 
 
@@ -290,7 +291,8 @@ def _estimate_mi(X, y, discrete_features='auto', discrete_target=False,
     return np.array(mi)
 
 
-def mutual_info_regression(X, y, discrete_features='auto', n_neighbors=3,
+@_deprecate_positional_args
+def mutual_info_regression(X, y, *, discrete_features='auto', n_neighbors=3,
                            copy=True, random_state=None):
     """Estimate mutual information for a continuous target variable.
 
@@ -367,7 +369,8 @@ def mutual_info_regression(X, y, discrete_features='auto', n_neighbors=3,
                         copy, random_state)
 
 
-def mutual_info_classif(X, y, discrete_features='auto', n_neighbors=3,
+@_deprecate_positional_args
+def mutual_info_classif(X, y, *, discrete_features='auto', n_neighbors=3,
                         copy=True, random_state=None):
     """Estimate mutual information for a discrete target variable.
 

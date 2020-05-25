@@ -27,7 +27,6 @@ from .utils.metaestimators import if_delegate_has_method
 from .utils.validation import (check_is_fitted, has_fit_parameter,
                                _check_fit_params, _deprecate_positional_args)
 from .utils.multiclass import check_classification_targets
-from .utils import deprecated
 
 __all__ = ["MultiOutputRegressor", "MultiOutputClassifier",
            "ClassifierChain", "RegressorChain"]
@@ -214,6 +213,8 @@ class MultiOutputRegressor(RegressorMixin, _MultiOutputEstimator):
     This strategy consists of fitting one regressor per target. This is a
     simple strategy for extending regressors that do not natively support
     multi-target regression.
+
+    .. versionadded:: 0.18
 
     Parameters
     ----------
@@ -786,10 +787,3 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
 
     def _more_tags(self):
         return {'multioutput_only': True}
-
-
-# TODO: remove in 0.24
-@deprecated("MultiOutputEstimator is deprecated in version "
-            "0.22 and will be removed in version 0.24.")
-class MultiOutputEstimator(_MultiOutputEstimator):
-    pass
