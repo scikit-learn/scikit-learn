@@ -246,8 +246,12 @@ def _convert_arff_data(arff, col_slice_x, col_slice_y, shape=None):
     """
     arff_data = arff['data']
     if isinstance(arff_data, Generator):
+        if shape[0] == -1:
+            count = -1
+        else:
+            count = shape[0] * shape[1]
         data = np.fromiter(itertools.chain.from_iterable(arff_data),
-                           dtype='float64')
+                           dtype='float64', count=count)
         data = data.reshape(*shape)
         X = data[:, col_slice_x]
         y = data[:, col_slice_y]
@@ -463,17 +467,26 @@ def _load_arff_response(url, data_home, return_type, encode_nominal,
             for line in response:
                 actual_md5_checksum.update(line)
                 yield line.decode('utf-8')
-            # stream consumed, check md5
-            if actual_md5_checksum.hexdigest() != md5_checksum:
-                raise ValueError("md5 checksum of local file for " + url
-                                 + " does not match description. "
-                                 "Downloaded file could have been modified / "
-                                 "corrupted, clean cache and retry...")
 
-        arff = _arff.load(_stream_checksum_generator(response),
+        stream = _stream_checksum_generator(response)
+
+        arff = _arff.load(stream,
                           return_type=return_type,
                           encode_nominal=encode_nominal)
-        return parse_arff(arff)
+
+        parsed_arff = parse_arff(arff)
+
+        # consume remaining stream, if early exited
+        for _ in stream:
+            pass
+
+        if actual_md5_checksum.hexdigest() != md5_checksum:
+            raise ValueError("md5 checksum of local file for " + url +
+                             " does not match description. "
+                             "Downloaded file could have been modified / "
+                             "corrupted, clean cache and retry...")
+
+        return parsed_arff
 
 
 def _download_data_to_bunch(url, sparse, data_home, *, as_frame, features_list,
