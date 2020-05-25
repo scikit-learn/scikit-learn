@@ -691,7 +691,7 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
         if hasattr(X, 'dtype') and X.dtype.kind == 'b':
             self._precomputed = True
 
-        return self._fit(X, y)
+        return self._fit(X)
 
     def fit(self, X, y=None):
         """Fit the transformer on X.
