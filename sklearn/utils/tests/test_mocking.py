@@ -164,7 +164,6 @@ def test_checking_classifier_methods_to_check(iris, methods_to_check,
                                               predict_method):
     # check that methods_to_check allows to bypass checks
     X, y = iris
-    X_sparse = sparse.csr_matrix(X)
 
     clf = CheckingClassifier(
         check_X=sparse.issparse, methods_to_check=methods_to_check,
