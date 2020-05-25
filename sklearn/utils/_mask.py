@@ -44,7 +44,7 @@ def _get_mask(X, value_to_mask, sparse=False):
     if not (sp.issparse(X) and sparse):
         # For all cases apart of a sparse input where we need to reconstruct
         # a sparse output
-        return _fit_mask(X, value_to_mask)
+        return _get_dense_mask(X, value_to_mask)
 
     if not sp.issparse(X):
         raise ValueError("Cannot reconstruct sparse mask as passed"
