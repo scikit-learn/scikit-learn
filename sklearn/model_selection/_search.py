@@ -757,6 +757,8 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
             self._run_search(evaluate_candidates)
 
+            # multimetric is determined here based on test_scores. This is
+            # to support callable self.scoring
             sample_score = all_out[0]['test_scores']
             self.multimetric_ = isinstance(sample_score, dict)
 
