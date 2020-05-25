@@ -674,7 +674,7 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
 
         return missing_features_info[0]
 
-    def _fit_precomputed(self, X, y=None):
+    def _fit_precomputed(self, X):
         """Fit the transformer on X.
 
         Parameters
