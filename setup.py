@@ -95,6 +95,8 @@ if SETUPTOOLS_COMMANDS.intersection(sys.argv):
             'alldeps': (
                 f'numpy>={NUMPY_MIN_VERSION}',
                 f'scipy>={SCIPY_MIN_VERSION}',
+                f'joblib>={JOBLIB_MIN_VERSION}',
+                f'threadpoolctl>={THREADPOOLCTL_MIN_VERSION}',
                 f'matplotlib>={MATPLOTLIB_MIN_VERSION}',
                 f'scikit-image>={SCIKIT_IMAGE_MIN_VERSION}',
                 f'pandas>={PANDAS_MIN_VERSION}',
