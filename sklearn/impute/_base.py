@@ -317,7 +317,7 @@ class SimpleImputer(_BaseImputer):
     def _sparse_fit(self, X, strategy, missing_values, fill_value):
         """Fit the transformer on sparse data."""
         missing_mask = _get_mask(X, missing_values,
-                                 sparse=sp.issparse(X))
+                                 sparse=True)
         mask_data = missing_mask.data
         n_implicit_zeros = X.shape[0] - np.diff(X.indptr)
 
