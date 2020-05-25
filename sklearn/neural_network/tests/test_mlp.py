@@ -285,7 +285,6 @@ def test_lbfgs_regression_maxfun(X, y):
     max_fun = 10
     # regression tests
     for activation in ACTIVATION_TYPES:
-        print(f'{activation}')
         mlp = MLPRegressor(solver='lbfgs', hidden_layer_sizes=50, tol=0.0,
                            max_iter=150, max_fun=max_fun, shuffle=True,
                            random_state=1, activation=activation)
