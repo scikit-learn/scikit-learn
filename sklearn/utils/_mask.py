@@ -5,7 +5,7 @@ from . import is_scalar_nan
 from .fixes import _object_dtype_isnan
 
 
-def _fit_mask(X, value_to_mask):
+def _get_dense_mask(X, value_to_mask):
     if is_scalar_nan(value_to_mask):
         if X.dtype.kind == "f":
             Xt = np.isnan(X)
@@ -49,7 +49,7 @@ def _get_mask(X, value_to_mask, sparse=False):
     if not sp.issparse(X):
         raise ValueError("Cannot reconstruct sparse mask as passed"
                          " input is not sparse.")
-    Xt = _fit_mask(X.data, value_to_mask)
+    Xt = _get_dense_mask(X.data, value_to_mask)
 
     sparse_constructor = (sp.csr_matrix if X.format == 'csr'
                           else sp.csc_matrix)
