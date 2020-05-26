@@ -627,6 +627,81 @@ def test_iterative_imputer_mixed_categorical(cls_columns, n_jobs, max_value):
     X_filled = imputer.fit_transform(X)
     assert not np.any(pd.isnull(X_filled))
 
+@pytest.mark.parametrize(
+    ["cls_columns", "tf_columns"],
+    [
+        [[1, 1], [1, 2]],
+        [[1, 2], [1, 1]],
+        [[1, 1], [1, 1]],
+    ],
+)
+def test_iterative_duplicate_columns(cls_columns, tf_columns):
+    age = [np.nan, 82.0, 28.0]
+    sex = ["male", "female", np.nan]
+    cabin = ["c1", np.nan, "e8"]
+    pd = pytest.importorskip("pandas")
+    X = pd.DataFrame({"age": age, "sex": sex, "cabin": cabin})
+    imputer = IterativeImputer(
+        estimator=[(DummyClassifier(), cls_columns)],
+        transformers=[(OneHotEncoder(sparse=False), tf_columns)],
+        initial_strategy="most_frequent",
+    )
+    with pytest.raises(ValueError):
+        imputer.fit_transform(X)
+
+@pytest.mark.parametrize(
+    "initial_strategy",
+    [
+        "mean",
+        "median",
+    ]
+)
+def test_iterative_categorical_initial_strategy(initial_strategy):
+    age = [np.nan, 82.0, 28.0]
+    sex = ["male", "female", np.nan]
+    cabin = ["c1", np.nan, "e8"]
+    pd = pytest.importorskip("pandas")
+    X = pd.DataFrame({"age": age, "sex": sex, "cabin": cabin})
+    imputer = IterativeImputer(
+        estimator=[(DummyClassifier(), [1, 2])],
+        transformers=[(OneHotEncoder(sparse=False), [1, 2])],
+        initial_strategy=initial_strategy,
+    )
+    with pytest.raises(ValueError):
+        imputer.fit_transform(X)
+
+
+def test_iterative_categorical_sample_posterior():
+    age = [np.nan, 82.0, 28.0]
+    sex = ["male", "female", np.nan]
+    cabin = ["c1", np.nan, "e8"]
+    pd = pytest.importorskip("pandas")
+    X = pd.DataFrame({"age": age, "sex": sex, "cabin": cabin})
+    imputer = IterativeImputer(
+        estimator=[(DummyClassifier(), [1, 2])],
+        transformers=[(OneHotEncoder(sparse=False), [1, 2])],
+        initial_strategy="most_frequent",
+        sample_posterior=True
+    )
+    with pytest.raises(ValueError):
+        imputer.fit_transform(X)
+
+
+def test_iterative_categorical_tol():
+    age = [np.nan, 82.0, 28.0]
+    sex = ["male", "female", np.nan]
+    cabin = ["c1", np.nan, "e8"]
+    pd = pytest.importorskip("pandas")
+    X = pd.DataFrame({"age": age, "sex": sex, "cabin": cabin})
+    imputer = IterativeImputer(
+        estimator=[(DummyClassifier(), [1, 2])],
+        transformers=[(OneHotEncoder(sparse=False), [1, 2])],
+        initial_strategy="most_frequent",
+        tol=1, # a non-default value
+    )
+    with pytest.warns(UserWarning, match="ignored"):
+        imputer.fit_transform(X)
+
 
 @pytest.mark.parametrize(
     "max_value",
