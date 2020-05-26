@@ -77,7 +77,7 @@ lsvm.fit(X_train, y_train)
 lsvm_time = time.time() - start
 lsvm_score = 100 * lsvm.score(X_test, y_test)
 
-results[f"LSVM"] = {"time": lsvm_time, "score": lsvm_score}
+results["LSVM"] = {"time": lsvm_time, "score": lsvm_score}
 print(f"Linear SVM score on raw features: {lsvm_score:.2f}%")
 
 ##############################################################################
@@ -133,7 +133,7 @@ ksvm.fit(X_train, y_train)
 ksvm_time = time.time() - start
 ksvm_score = 100 * ksvm.score(X_test, y_test)
 
-results[f"KSVM"] = {"time": ksvm_time, "score": ksvm_score}
+results["KSVM"] = {"time": ksvm_time, "score": ksvm_score}
 print(f"Kernel-SVM score on raw featrues: {ksvm_score:.2f}%")
 
 ##############################################################################
@@ -146,29 +146,29 @@ plt.figure(figsize=(7, 7))
 plt.scatter([results["LSVM"]["time"], ], [results["LSVM"]["score"], ],
             label="Linear SVM", c="green", marker="^")
 
-plt.scatter([results[f"LSVM + PS(250)"]["time"], ],
-            [results[f"LSVM + PS(250)"]["score"], ],
+plt.scatter([results["LSVM + PS(250)"]["time"], ],
+            [results["LSVM + PS(250)"]["score"], ],
             label="Linear SVM + PolynomialSampler", c="blue")
-plt.scatter([results[f"LSVM + PS(500)"]["time"], ],
-            [results[f"LSVM + PS(500)"]["score"], ],
+plt.scatter([results["LSVM + PS(500)"]["time"], ],
+            [results["LSVM + PS(500)"]["score"], ],
             c="blue")
-plt.scatter([results[f"LSVM + PS(1000)"]["time"], ],
-            [results[f"LSVM + PS(1000)"]["score"], ],
+plt.scatter([results["LSVM + PS(1000)"]["time"], ],
+            [results["LSVM + PS(1000)"]["score"], ],
             c="blue")
-plt.scatter([results[f"LSVM + PS(2000)"]["time"], ],
-            [results[f"LSVM + PS(2000)"]["score"], ],
+plt.scatter([results["LSVM + PS(2000)"]["time"], ],
+            [results["LSVM + PS(2000)"]["score"], ],
             c="blue")
-plt.annotate("n_comp.=250", (results[f"LSVM + PS(250)"]["time"],
-                             results[f"LSVM + PS(250)"]["score"]),
+plt.annotate("n_comp.=250", (results["LSVM + PS(250)"]["time"],
+                             results["LSVM + PS(250)"]["score"]),
              xytext=(-30, 10), textcoords="offset pixels")
-plt.annotate("n_comp.=500", (results[f"LSVM + PS(500)"]["time"],
-                             results[f"LSVM + PS(500)"]["score"]),
+plt.annotate("n_comp.=500", (results["LSVM + PS(500)"]["time"],
+                             results["LSVM + PS(500)"]["score"]),
              xytext=(-30, 10), textcoords="offset pixels")
-plt.annotate("n_comp.=1000", (results[f"LSVM + PS(1000)"]["time"],
-                              results[f"LSVM + PS(1000)"]["score"]),
+plt.annotate("n_comp.=1000", (results["LSVM + PS(1000)"]["time"],
+                              results["LSVM + PS(1000)"]["score"]),
              xytext=(-30, 10), textcoords="offset pixels")
-plt.annotate("n_comp.=2000", (results[f"LSVM + PS(2000)"]["time"],
-                              results[f"LSVM + PS(2000)"]["score"]),
+plt.annotate("n_comp.=2000", (results["LSVM + PS(2000)"]["time"],
+                              results["LSVM + PS(2000)"]["score"]),
              xytext=(-30, 10), textcoords="offset pixels")
 
 plt.scatter([results["KSVM"]["time"], ], [results["KSVM"]["score"], ],
