@@ -253,16 +253,19 @@ class IterativeImputer(_BaseImputer):
         self.n_jobs = n_jobs
 
     def _validate_transformers(self, X):
-        if isinstance(X, (list, tuple)):
+        """Validates transformers and processes column selection.
+        """
+        if not hasattr(X, "shape") or not hasattr(X, "ndim"):
             # Ensure array-like, but preserve DataFrames
             X = self._validate_data(
                 X, dtype=None, order="F", force_all_finite=False
             )
+        n_features = 1 if X.ndim == 1 else X.shape[1]
         transformers = self.transformers
         if not transformers:
             transformers = [[None, []]]
         # Collect transformers
-        self._transformers = np.array([None] * X.shape[1])
+        self._transformers = np.array([None] * n_features)
         for tfs, col_group in transformers:
             # Convert columns to features if callable
             if callable(col_group):
@@ -290,28 +293,30 @@ class IterativeImputer(_BaseImputer):
                 )
 
         # Create variable to map inverse transforms
-        self._split_cols = np.array([1] * X.shape[1])
+        self._split_cols = np.array([1] * n_features)
 
     def _validate_estimators(self, X):
-        if isinstance(X, (list, tuple)):
+        """Validates estimators and processes column selection.
+        """
+        if not hasattr(X, "shape") or not hasattr(X, "ndim"):
             # Ensure array-like, but preserve DataFrames
             X = self._validate_data(
                 X, dtype=None, order="F", force_all_finite=False
             )
+        n_features = 1 if X.ndim == 1 else X.shape[1]
         estimators = self.estimator
         if estimators is None:
             # No estimator or pipeline given, use default
             from ..linear_model import BayesianRidge
-
             estimators = BayesianRidge()
         if not isinstance(estimators, list):
             # Single estimator given, use for all columns
             estimators = [
-                (clone(estimators), [colnum]) for colnum in range(X.shape[1])
+                (clone(estimators), [colnum]) for colnum in range(n_features)
             ]
         # Collect estimators
-        self._estimators = np.array([None] * X.shape[1])
-        self._is_cls_task = np.array([False] * X.shape[1])
+        self._estimators = np.array([None] * n_features)
+        self._is_cls_task = np.array([False] * n_features)
         for estimator, col_group in estimators:
             # Set random state
             if hasattr(estimator, "random_state"):
@@ -342,7 +347,6 @@ class IterativeImputer(_BaseImputer):
         for i, estimator in enumerate(self._estimators):
             if estimator is None:
                 from ..linear_model import BayesianRidge
-
                 self._estimators[i] = BayesianRidge()
 
     def _impute_one_feature(
