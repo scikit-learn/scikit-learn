@@ -292,6 +292,14 @@ cdef class DistanceMetric:
         if self.__class__ is DistanceMetric:
             raise NotImplementedError("DistanceMetric is an abstract class")
 
+    def _validate_data(self, X):
+        """Validate the input data.
+
+        This should be overridden in a base class if a specific input format
+        is required.
+        """
+        return
+
     cdef DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2,
                       ITYPE_t size) nogil except -1:
         """Compute the distance between vectors x1 and x2
@@ -386,6 +394,7 @@ cdef class DistanceMetric:
         cdef np.ndarray[DTYPE_t, ndim=2, mode='c'] Darr
 
         Xarr = np.asarray(X, dtype=DTYPE, order='C')
+        self._validate_data(Xarr)
         if Y is None:
             Darr = np.zeros((Xarr.shape[0], Xarr.shape[0]),
                          dtype=DTYPE, order='C')
@@ -393,6 +402,7 @@ cdef class DistanceMetric:
                        get_memview_DTYPE_2D(Darr))
         else:
             Yarr = np.asarray(Y, dtype=DTYPE, order='C')
+            self._validate_data(Yarr)
             Darr = np.zeros((Xarr.shape[0], Yarr.shape[0]),
                          dtype=DTYPE, order='C')
             self.cdist(get_memview_DTYPE_2D(Xarr),
@@ -449,11 +459,12 @@ cdef class SEuclideanDistance(DistanceMetric):
         self.size = self.vec.shape[0]
         self.p = 2
 
+    def _validate_data(self, X):
+        if X.shape[1] != self.size:
+            raise ValueError('SEuclidean dist: size of V does not match')
+
     cdef inline DTYPE_t rdist(self, DTYPE_t* x1, DTYPE_t* x2,
                               ITYPE_t size) nogil except -1:
-        if size != self.size:
-            with gil:
-                raise ValueError('SEuclidean dist: size of V does not match')
         cdef DTYPE_t tmp, d=0
         cdef np.intp_t j
         for j in range(size):
@@ -597,12 +608,13 @@ cdef class WMinkowskiDistance(DistanceMetric):
         self.vec_ptr = get_vec_ptr(self.vec)
         self.size = self.vec.shape[0]
 
+    def _validate_data(self, X):
+        if X.shape[1] != self.size:
+            raise ValueError('WMinkowskiDistance dist: '
+                             'size of w does not match')
+
     cdef inline DTYPE_t rdist(self, DTYPE_t* x1, DTYPE_t* x2,
                               ITYPE_t size) nogil except -1:
-        if size != self.size:
-            with gil:
-                raise ValueError('WMinkowskiDistance dist: '
-                                 'size of w does not match')
         cdef DTYPE_t d=0
         cdef np.intp_t j
         for j in range(size):
@@ -662,12 +674,12 @@ cdef class MahalanobisDistance(DistanceMetric):
         self.vec = np.zeros(self.size, dtype=DTYPE)
         self.vec_ptr = get_vec_ptr(self.vec)
 
+    def _validate_data(self, X):
+        if X.shape[1] != self.size:
+            raise ValueError('Mahalanobis dist: size of V does not match')
+
     cdef inline DTYPE_t rdist(self, DTYPE_t* x1, DTYPE_t* x2,
                               ITYPE_t size) nogil except -1:
-        if size != self.size:
-            with gil:
-                raise ValueError('Mahalanobis dist: size of V does not match')
-
         cdef DTYPE_t tmp, d = 0
         cdef np.intp_t i, j
 
@@ -986,25 +998,21 @@ cdef class HaversineDistance(DistanceMetric):
        D(x, y) = 2\\arcsin[\\sqrt{\\sin^2((x1 - y1) / 2)
                                 + \\cos(x1)\\cos(y1)\\sin^2((x2 - y2) / 2)}]
     """
+
+    def _validate_data(self, X):
+        if X.shape[1] != 2:
+            raise ValueError("Haversine distance only valid "
+                             "in 2 dimensions")
+
     cdef inline DTYPE_t rdist(self, DTYPE_t* x1, DTYPE_t* x2,
                               ITYPE_t size) nogil except -1:
-        if size != 2:
-            with gil:
-                raise ValueError("Haversine distance only valid "
-                                 "in 2 dimensions")
         cdef DTYPE_t sin_0 = sin(0.5 * (x1[0] - x2[0]))
         cdef DTYPE_t sin_1 = sin(0.5 * (x1[1] - x2[1]))
         return (sin_0 * sin_0 + cos(x1[0]) * cos(x2[0]) * sin_1 * sin_1)
 
     cdef inline DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2,
-                              ITYPE_t size) nogil except -1:
-        if size != 2:
-            with gil:
-                raise ValueError("Haversine distance only valid in 2 dimensions")
-        cdef DTYPE_t sin_0 = sin(0.5 * (x1[0] - x2[0]))
-        cdef DTYPE_t sin_1 = sin(0.5 * (x1[1] - x2[1]))
-        return 2 * asin(sqrt(sin_0 * sin_0
-                             + cos(x1[0]) * cos(x2[0]) * sin_1 * sin_1))
+                             ITYPE_t size) nogil except -1:
+        return 2 * asin(sqrt(self.rdist(x1, x2, size)))
 
     cdef inline DTYPE_t _rdist_to_dist(self, DTYPE_t rdist) nogil except -1:
         return 2 * asin(sqrt(rdist))

@@ -6,7 +6,6 @@
 import numpy as np
 from ..base import BaseEstimator, TransformerMixin
 from ..neighbors import NearestNeighbors, kneighbors_graph
-from ..utils.deprecation import deprecated
 from ..utils.validation import check_is_fitted
 from ..utils.validation import _deprecate_positional_args
 from ..utils.graph import graph_shortest_path
@@ -167,16 +166,6 @@ class Isomap(TransformerMixin, BaseEstimator):
         G *= -0.5
 
         self.embedding_ = self.kernel_pca_.fit_transform(G)
-
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "Attribute `training_data_` was deprecated in version 0.22 and"
-        " will be removed in 0.24."
-    )
-    @property
-    def training_data_(self):
-        check_is_fitted(self)
-        return self.nbrs_._fit_X
 
     def reconstruction_error(self):
         """Compute the reconstruction error for the embedding.

@@ -573,7 +573,7 @@ def test_partial_fit_weight_class_balanced(klass):
     # partial_fit with class_weight='balanced' not supported"""
     regex = (r"class_weight 'balanced' is not supported for "
              r"partial_fit\. In order to use 'balanced' weights, "
-             r"use compute_class_weight\('balanced', classes, y\). "
+             r"use compute_class_weight\('balanced', classes=classes, y=y\). "
              r"In place of y you can us a large enough sample "
              r"of the full training set target to properly "
              r"estimate the class frequency distributions\. "
