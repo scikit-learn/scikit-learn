@@ -253,6 +253,11 @@ class IterativeImputer(_BaseImputer):
         self.n_jobs = n_jobs
 
     def _validate_transformers(self, X):
+        if isinstance(X, (list, tuple)):
+            # Ensure array-like, but preserve DataFrames
+            X = self._validate_data(
+                X, dtype=None, order="F", force_all_finite=False
+            )
         transformers = self.transformers
         if not transformers:
             transformers = [[None, []]]
@@ -268,7 +273,7 @@ class IterativeImputer(_BaseImputer):
                     col_group.start or 0, col_group.stop, col_group.step or 1
                 )
             # Convert columns to numeric index from strings
-            col_group = [self._columns[col] for col in col_group]
+            col_group = [self._columns.get(col, col) for col in col_group]
             # Iterate over column groups and process
             for col_num in col_group:
                 if self._transformers[col_num]:
@@ -288,6 +293,11 @@ class IterativeImputer(_BaseImputer):
         self._split_cols = np.array([1] * X.shape[1])
 
     def _validate_estimators(self, X):
+        if isinstance(X, (list, tuple)):
+            # Ensure array-like, but preserve DataFrames
+            X = self._validate_data(
+                X, dtype=None, order="F", force_all_finite=False
+            )
         estimators = self.estimator
         if estimators is None:
             # No estimator or pipeline given, use default
@@ -315,10 +325,7 @@ class IterativeImputer(_BaseImputer):
                     col_group.start or 0, col_group.stop, col_group.step or 1
                 )
             # Convert columns to numeric index from strings
-            try:
-                col_group = [self._columns[col] for col in col_group]
-            except:
-                pass
+            col_group = [self._columns.get(col, col) for col in col_group]
             # Iterate over column groups and process
             for col_num in col_group:
                 if self._estimators[col_num]:
@@ -630,6 +637,11 @@ class IterativeImputer(_BaseImputer):
                 order="F",
                 force_all_finite=force_all_finite,
             )
+        else:
+            # Just make sure X is an array
+            X = self._validate_data(
+                X, dtype=None, order="F", force_all_finite=False
+            )
         _check_inputs_dtype(X, self.missing_values)
 
         mask_missing_values = _get_mask(X, self.missing_values)
@@ -826,17 +838,13 @@ class IterativeImputer(_BaseImputer):
             )
 
         # Save column name to index mapping
-        self._columns = {i: i for i in range(np.asarray(X).shape[1])}
+        self._columns = dict()
         if hasattr(X, "columns"):
             # Pandas dataframe
-            for i, col in enumerate(X.columns):
-                self._columns[col] = i
+            self._columns = {col: i for i, col in enumerate(X.columns)}
 
         # Basic validation
-        # Ensure X is an array
-        X = self._validate_data(
-            X, dtype=None, order="F", force_all_finite=False
-        )
+        # Ensure X is an array-like
         self._validate_estimators(X)
         self._validate_transformers(X)
 

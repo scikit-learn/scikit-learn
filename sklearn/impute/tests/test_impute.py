@@ -28,6 +28,7 @@ from sklearn.model_selection import GridSearchCV
 from sklearn import tree
 from sklearn.random_projection import _sparse_random_matrix
 from sklearn.exceptions import ConvergenceWarning
+from sklearn.compose import make_column_selector
 
 
 def _check_statistics(X, X_true,
@@ -591,16 +592,28 @@ def test_iterative_imputer_all_missing():
     assert_allclose(X_imputed, imputer.initial_imputer_.transform(X))
 
 
-def test_iterative_imputer_mixed_categorical():
+@pytest.mark.parametrize("n_jobs", [None, -1, 1, 2])
+@pytest.mark.parametrize(
+    "cls_columns",
+    [
+        [1, 2],
+        slice(1, 3),
+        ["sex", "cabin"],
+        ["sex", 2],
+        make_column_selector(dtype_exclude="number"),
+    ],
+)
+def test_iterative_imputer_mixed_categorical(cls_columns, n_jobs):
     age = [np.nan, 82.0, 28.0]
     sex = ["male", "female", np.nan]
     cabin = ["c1", np.nan, "e8"]
     pd = pytest.importorskip("pandas")
     X = pd.DataFrame({"age": age, "sex": sex, "cabin": cabin})
     imputer = IterativeImputer(
-        estimator=[(DummyClassifier(), slice(1, 3))],
-        transformers=[(OneHotEncoder(sparse=False), slice(1, 3))],
-        initial_strategy="most_frequent"
+        estimator=[(DummyClassifier(), cls_columns)],
+        transformers=[(OneHotEncoder(sparse=False), cls_columns)],
+        initial_strategy="most_frequent",
+        n_jobs=n_jobs,
     )
     X_filled = imputer.fit_transform(X)
     assert not np.any(pd.isnull(X_filled))
