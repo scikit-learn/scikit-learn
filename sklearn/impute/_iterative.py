@@ -315,7 +315,10 @@ class IterativeImputer(_BaseImputer):
                     col_group.start or 0, col_group.stop, col_group.step or 1
                 )
             # Convert columns to numeric index from strings
-            col_group = [self._columns[col] for col in col_group]
+            try:
+                col_group = [self._columns[col] for col in col_group]
+            except:
+                pass
             # Iterate over column groups and process
             for col_num in col_group:
                 if self._estimators[col_num]:
@@ -823,18 +826,17 @@ class IterativeImputer(_BaseImputer):
             )
 
         # Save column name to index mapping
+        self._columns = {i: i for i in range(np.asarray(X).shape[1])}
         if hasattr(X, "columns"):
             # Pandas dataframe
-            self._columns = {col: i for i, col in enumerate(X.columns)}
+            for i, col in enumerate(X.columns):
+                self._columns[col] = i
 
         # Basic validation
         # Ensure X is an array
         X = self._validate_data(
             X, dtype=None, order="F", force_all_finite=False
         )
-        # Process mapping of transformers and estimators
-        if not hasattr(self, "_columns"):
-            self._columns = {i: i for i in range(X.shape[1])}
         self._validate_estimators(X)
         self._validate_transformers(X)
 
