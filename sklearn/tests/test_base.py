@@ -291,7 +291,7 @@ def test_score_sample_weight():
     estimators = [DecisionTreeClassifier(max_depth=2),
                   DecisionTreeRegressor(max_depth=2)]
     sets = [datasets.load_iris(),
-            datasets.load_boston()]
+            datasets.load_diabetes()]
 
     for est, ds in zip(estimators, sets):
         est.fit(ds.data, ds.target)
