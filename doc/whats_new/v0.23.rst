@@ -7,7 +7,7 @@
 Version 0.23.1
 ==============
 
-**TBD**
+**May 18 2020**
 
 Changelog
 ---------
@@ -15,13 +15,13 @@ Changelog
 :mod:`sklearn.cluster`
 ......................
 
-- |Fix| Fixed a bug in :class:`cluster.KMeans` where the sample weights
-  provided by the user were modified in place. :pr:`17204` by
-  :user:`Jeremie du Boisberranger <jeremiedbb>`.
-
 - |Efficiency| :class:`cluster.KMeans` efficiency has been improved for very
   small datasets. In particular it cannot spawn idle threads any more.
   :pr:`17210` and :pr:`17235` by :user:`Jeremie du Boisberranger <jeremiedbb>`.
+
+- |Fix| Fixed a bug in :class:`cluster.KMeans` where the sample weights
+  provided by the user were modified in place. :pr:`17204` by
+  :user:`Jeremie du Boisberranger <jeremiedbb>`.
 
 Miscellaneous
 .............

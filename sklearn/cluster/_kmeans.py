@@ -182,7 +182,8 @@ def _check_normalize_sample_weight(sample_weight, X):
     return sample_weight
 
 
-def k_means(X, n_clusters, sample_weight=None, init='k-means++',
+@_deprecate_positional_args
+def k_means(X, n_clusters, *, sample_weight=None, init='k-means++',
             precompute_distances='deprecated', n_init=10, max_iter=300,
             verbose=False, tol=1e-4, random_state=None, copy_x=True,
             n_jobs='deprecated', algorithm="auto", return_n_iter=False):

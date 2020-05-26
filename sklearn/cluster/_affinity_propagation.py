@@ -30,8 +30,9 @@ def _equal_similarities_and_preferences(S, preference):
     return all_equal_preferences() and all_equal_similarities()
 
 
-def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
-                         damping=0.5, copy=True, verbose=False,
+@_deprecate_positional_args
+def affinity_propagation(S, *, preference=None, convergence_iter=15,
+                         max_iter=200, damping=0.5, copy=True, verbose=False,
                          return_n_iter=False, random_state='warn'):
     """Perform Affinity Propagation Clustering of data
 
@@ -411,7 +412,8 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
 
         self.cluster_centers_indices_, self.labels_, self.n_iter_ = \
             affinity_propagation(
-                self.affinity_matrix_, self.preference, max_iter=self.max_iter,
+                self.affinity_matrix_, preference=self.preference,
+                max_iter=self.max_iter,
                 convergence_iter=self.convergence_iter, damping=self.damping,
                 copy=self.copy, verbose=self.verbose, return_n_iter=True,
                 random_state=self.random_state)
