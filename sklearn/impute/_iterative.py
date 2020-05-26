@@ -267,6 +267,8 @@ class IterativeImputer(_BaseImputer):
                 col_group = range(
                     col_group.start or 0, col_group.stop, col_group.step or 1
                 )
+            # Convert columns to numeric index from strings
+            col_group = [self._columns[col] for col in col_group]
             # Iterate over column groups and process
             for col_num in col_group:
                 if self._transformers[col_num]:
@@ -312,6 +314,8 @@ class IterativeImputer(_BaseImputer):
                 col_group = range(
                     col_group.start or 0, col_group.stop, col_group.step or 1
                 )
+            # Convert columns to numeric index from strings
+            col_group = [self._columns[col] for col in col_group]
             # Iterate over column groups and process
             for col_num in col_group:
                 if self._estimators[col_num]:
@@ -727,9 +731,9 @@ class IterativeImputer(_BaseImputer):
                     split_cols = Xtf.shape[1]
             else:
                 Xtf = transformer.transform(indexed)
-            return (split_cols, Xtf.reshape(Xtf.shape[0], -1))
+            return (split_cols, transformer, Xtf.reshape(Xtf.shape[0], -1))
 
-        split_cols, transformed = zip(
+        split_cols, tfs, transformed = zip(
             *Parallel(n_jobs=self.n_jobs)(
                 delayed(transform_one_column)(
                     transformer=tf, Xt=Xt, col_num=col_num, fit_mode=fit_mode,
@@ -739,6 +743,7 @@ class IterativeImputer(_BaseImputer):
         )
         if fit_mode:
             self._split_cols[columns] = split_cols
+            self._transformers[columns] = tfs
         Xtf = np.concatenate(transformed, axis=1)
         if Xtf.ndim == 2 and Xt.ndim == 1 and Xtf.shape[1] == 1:
             return np.squeeze(Xtf, axis=1)
@@ -779,7 +784,8 @@ class IterativeImputer(_BaseImputer):
             )
         )
         Xt = np.concatenate(transformed, axis=1)
-        if Xt.ndim == 2 and Xtf.ndim == 1 and Xt.shape[1] == 1:
+        if Xt.ndim == 2 and Xt.shape[1] == 1:
+            # Always squeeze singleton dimension
             return np.squeeze(Xt, axis=1)
         return Xt
 
@@ -816,12 +822,19 @@ class IterativeImputer(_BaseImputer):
                 " Got {} instead.".format(self.tol)
             )
 
+        # Save column name to index mapping
+        if hasattr(X, "columns"):
+            # Pandas dataframe
+            self._columns = {col: i for i, col in enumerate(X.columns)}
+
         # Basic validation
         # Ensure X is an array
         X = self._validate_data(
             X, dtype=None, order="F", force_all_finite=False
         )
         # Process mapping of transformers and estimators
+        if not hasattr(self, "_columns"):
+            self._columns = {i: i for i in range(X.shape[1])}
         self._validate_estimators(X)
         self._validate_transformers(X)
 
