@@ -1,5 +1,6 @@
 import numpy as np
 import scipy.sparse as sp
+import pytest
 
 from re import escape
 
@@ -710,30 +711,22 @@ def test_ecoc_float_y():
 def test_ecoc_delegate_sparse_base_estimator():
     # Non-regression test for
     # https://github.com/scikit-learn/scikit-learn/issues/17218
-    def check_func(X):
-        # custom function that checks an array and then
-        # returns True if the check passes and False otherwise.
-        ensure_2d = False if X.ndim == 1 else True
-        out = False
-        try:
-            check_array(X, accept_sparse=False, ensure_2d=ensure_2d)
-            out = True
-        except ValueError:
-            pass
-        finally:
-            return out
-
-    base_est = CheckingClassifier(check_y=check_func, check_X=check_func)
-    ecoc = OutputCodeClassifier(base_est, random_state=0)
     X, y = iris.data, iris.target
     X_sp = sp.csc_matrix(X)
-    # test if base estimator throws AssertionError when fit method
-    # on `ecoc` is called with sparse input data.
-    assert_raises(AssertionError, ecoc.fit, X_sp, y)
 
-    # test if exception is raised when calling `predict`
+    # create an estimator that does not support sparse input
+    base_estimator = CheckingClassifier(
+        check_X=check_array,
+        check_X_params={"ensure_2d": True, "accept_sparse": False},
+    )
+    ecoc = OutputCodeClassifier(base_estimator, random_state=0)
+
+    with pytest.raises(TypeError, match="A sparse matrix was passed"):
+        ecoc.fit(X_sp, y)
+
     ecoc.fit(X, y)
-    assert_raises(AssertionError, ecoc.predict, X_sp)
+    with pytest.raises(TypeError, match="A sparse matrix was passed"):
+        ecoc.predict(X_sp)
 
     # smoke test to check when sparse input should be supported
     ecoc = OutputCodeClassifier(LinearSVC(random_state=0))
