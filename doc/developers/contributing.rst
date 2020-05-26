@@ -792,11 +792,11 @@ In the benchmark suite, the benchmarks are organized following the same
 structure as scikit-learn. For example, you can compare the performance of a
 specific estimator between master and the branch you are working on::
 
-  asv continuous -b LogisticRegression origin/master HEAD
+  asv continuous -b LogisticRegression upstream/master HEAD
 
 You can also specify a whole module to benchmark::
 
-  asv continuous -b linear_model origin/master HEAD
+  asv continuous -b linear_model upstream/master HEAD
 
 You can replace `HEAD` by any branch. By default it will only report the
 benchmarks that have change by at least 10%. You can control this ratio with
@@ -804,7 +804,7 @@ the `-f` flag.
 
 To run the full benchmark suite, simply remove the `-b` flag ::
 
-  asv continuous origin/master HEAD
+  asv continuous upstream/master HEAD
 
 However this can take up to two hours. The `-b` flag also accepts a regular
 expression for a more complex subset of benchmarks to run.
