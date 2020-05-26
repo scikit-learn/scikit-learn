@@ -15,7 +15,7 @@ Changelog
 
 - |Fix| Fixes :class:`ensemble.StackingClassifier` and
   :class:`ensemble.StackingRegressor` compatibility with estimators that
-  does not define `n_features_in_`. :pr:`17357` by `Thomas Fan`_.
+  do not define `n_features_in_`. :pr:`17357` by `Thomas Fan`_.
 
 .. _changes_0_23_1:
 

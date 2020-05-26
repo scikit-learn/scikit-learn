@@ -202,8 +202,10 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble,
         """Number of features seen during :term:`fit`."""
         try:
             check_is_fitted(self)
-        except NotFittedError:
-            raise AttributeError("n_features_in_ not defined before fitting")
+        except NotFittedError as nfe:
+            raise AttributeError(
+                f"{self.__class__.__name__} object has no attribute "
+                f"n_features_in_") from nfe
         return self.estimators_[0].n_features_in_
 
     def _transform(self, X):
