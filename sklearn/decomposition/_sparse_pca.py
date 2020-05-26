@@ -2,8 +2,6 @@
 # Author: Vlad Niculae, Gael Varoquaux, Alexandre Gramfort
 # License: BSD 3 clause
 
-import warnings
-
 import numpy as np
 
 from ..utils import check_random_state, check_array
@@ -12,22 +10,6 @@ from ..utils.validation import _deprecate_positional_args
 from ..linear_model import ridge_regression
 from ..base import BaseEstimator, TransformerMixin
 from ._dict_learning import dict_learning, dict_learning_online
-
-
-# FIXME: remove in 0.24
-def _check_normalize_components(normalize_components, estimator_name):
-    if normalize_components != 'deprecated':
-        if normalize_components:
-            warnings.warn(
-                "'normalize_components' has been deprecated in 0.22 and "
-                "will be removed in 0.24. Remove the parameter from the "
-                " constructor.", FutureWarning
-            )
-        else:
-            raise NotImplementedError(
-                "normalize_components=False is not supported starting from "
-                "0.22. Remove this parameter from the constructor."
-            )
 
 
 class SparsePCA(TransformerMixin, BaseEstimator):
@@ -85,16 +67,6 @@ class SparsePCA(TransformerMixin, BaseEstimator):
         across multiple function calls.
         See :term:`Glossary <random_state>`.
 
-    normalize_components : 'deprecated'
-        This parameter does not have any effect. The components are always
-        normalized.
-
-        .. versionadded:: 0.20
-
-        .. deprecated:: 0.22
-           ``normalize_components`` is deprecated in 0.22 and will be removed
-           in 0.24.
-
     Attributes
     ----------
     components_ : array, [n_components, n_features]
@@ -140,8 +112,7 @@ class SparsePCA(TransformerMixin, BaseEstimator):
     @_deprecate_positional_args
     def __init__(self, n_components=None, *, alpha=1, ridge_alpha=0.01,
                  max_iter=1000, tol=1e-8, method='lars', n_jobs=None,
-                 U_init=None, V_init=None, verbose=False, random_state=None,
-                 normalize_components='deprecated'):
+                 U_init=None, V_init=None, verbose=False, random_state=None):
         self.n_components = n_components
         self.alpha = alpha
         self.ridge_alpha = ridge_alpha
@@ -153,7 +124,6 @@ class SparsePCA(TransformerMixin, BaseEstimator):
         self.V_init = V_init
         self.verbose = verbose
         self.random_state = random_state
-        self.normalize_components = normalize_components
 
     def fit(self, X, y=None):
         """Fit the model from data in X.
@@ -173,10 +143,6 @@ class SparsePCA(TransformerMixin, BaseEstimator):
         """
         random_state = check_random_state(self.random_state)
         X = self._validate_data(X)
-
-        _check_normalize_components(
-            self.normalize_components, self.__class__.__name__
-        )
 
         self.mean_ = X.mean(axis=0)
         X = X - self.mean_
@@ -304,16 +270,6 @@ class MiniBatchSparsePCA(SparsePCA):
         across multiple function calls.
         See :term:`Glossary <random_state>`.
 
-    normalize_components : 'deprecated'
-        This parameter does not have any effect. The components are always
-        normalized.
-
-        .. versionadded:: 0.20
-
-        .. deprecated:: 0.22
-           ``normalize_components`` is deprecated in 0.22 and will be removed
-           in 0.24.
-
     Attributes
     ----------
     components_ : array, [n_components, n_features]
@@ -357,13 +313,11 @@ class MiniBatchSparsePCA(SparsePCA):
     @_deprecate_positional_args
     def __init__(self, n_components=None, *, alpha=1, ridge_alpha=0.01,
                  n_iter=100, callback=None, batch_size=3, verbose=False,
-                 shuffle=True, n_jobs=None, method='lars', random_state=None,
-                 normalize_components='deprecated'):
+                 shuffle=True, n_jobs=None, method='lars', random_state=None):
         super().__init__(
             n_components=n_components, alpha=alpha, verbose=verbose,
             ridge_alpha=ridge_alpha, n_jobs=n_jobs, method=method,
-            random_state=random_state,
-            normalize_components=normalize_components)
+            random_state=random_state)
         self.n_iter = n_iter
         self.callback = callback
         self.batch_size = batch_size
@@ -387,10 +341,6 @@ class MiniBatchSparsePCA(SparsePCA):
         """
         random_state = check_random_state(self.random_state)
         X = self._validate_data(X)
-
-        _check_normalize_components(
-            self.normalize_components, self.__class__.__name__
-        )
 
         self.mean_ = X.mean(axis=0)
         X = X - self.mean_

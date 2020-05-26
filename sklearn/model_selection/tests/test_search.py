@@ -35,7 +35,6 @@ from sklearn.datasets import make_blobs
 from sklearn.datasets import make_multilabel_classification
 
 from sklearn.model_selection import fit_grid_point
-from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import KFold
 from sklearn.model_selection import StratifiedKFold
@@ -845,7 +844,6 @@ def check_cv_results_keys(cv_results, param_keys, score_keys, n_cand):
                for key in param_keys + score_keys)
 
 
-@pytest.mark.filterwarnings("ignore:The parameter 'iid' is deprecated")  # 0.24
 def test_grid_search_cv_results():
     X, y = make_classification(n_samples=50, n_features=4,
                                random_state=42)
@@ -867,38 +865,35 @@ def test_grid_search_cv_results():
                   'mean_score_time', 'std_score_time')
     n_candidates = n_grid_points
 
-    for iid in (False, True):
-        search = GridSearchCV(SVC(), cv=n_splits, iid=iid,
-                              param_grid=params, return_train_score=True)
-        search.fit(X, y)
-        assert iid == search.iid
-        cv_results = search.cv_results_
-        # Check if score and timing are reasonable
-        assert all(cv_results['rank_test_score'] >= 1)
-        assert (all(cv_results[k] >= 0) for k in score_keys
-                if k != 'rank_test_score')
-        assert (all(cv_results[k] <= 1) for k in score_keys
-                if 'time' not in k and
-                k != 'rank_test_score')
-        # Check cv_results structure
-        check_cv_results_array_types(search, param_keys, score_keys)
-        check_cv_results_keys(cv_results, param_keys, score_keys, n_candidates)
-        # Check masking
-        cv_results = search.cv_results_
-        n_candidates = len(search.cv_results_['params'])
-        assert all((cv_results['param_C'].mask[i] and
-                    cv_results['param_gamma'].mask[i] and
-                    not cv_results['param_degree'].mask[i])
-                   for i in range(n_candidates)
-                   if cv_results['param_kernel'][i] == 'linear')
-        assert all((not cv_results['param_C'].mask[i] and
-                    not cv_results['param_gamma'].mask[i] and
-                    cv_results['param_degree'].mask[i])
-                   for i in range(n_candidates)
-                   if cv_results['param_kernel'][i] == 'rbf')
+    search = GridSearchCV(SVC(), cv=n_splits, param_grid=params,
+                          return_train_score=True)
+    search.fit(X, y)
+    cv_results = search.cv_results_
+    # Check if score and timing are reasonable
+    assert all(cv_results['rank_test_score'] >= 1)
+    assert (all(cv_results[k] >= 0) for k in score_keys
+            if k != 'rank_test_score')
+    assert (all(cv_results[k] <= 1) for k in score_keys
+            if 'time' not in k and
+            k != 'rank_test_score')
+    # Check cv_results structure
+    check_cv_results_array_types(search, param_keys, score_keys)
+    check_cv_results_keys(cv_results, param_keys, score_keys, n_candidates)
+    # Check masking
+    cv_results = search.cv_results_
+    n_candidates = len(search.cv_results_['params'])
+    assert all((cv_results['param_C'].mask[i] and
+                cv_results['param_gamma'].mask[i] and
+                not cv_results['param_degree'].mask[i])
+               for i in range(n_candidates)
+               if cv_results['param_kernel'][i] == 'linear')
+    assert all((not cv_results['param_C'].mask[i] and
+                not cv_results['param_gamma'].mask[i] and
+                cv_results['param_degree'].mask[i])
+               for i in range(n_candidates)
+               if cv_results['param_kernel'][i] == 'rbf')
 
 
-@pytest.mark.filterwarnings("ignore:The parameter 'iid' is deprecated")  # 0.24
 def test_random_search_cv_results():
     X, y = make_classification(n_samples=50, n_features=4, random_state=42)
 
@@ -920,28 +915,26 @@ def test_random_search_cv_results():
                   'mean_score_time', 'std_score_time')
     n_cand = n_search_iter
 
-    for iid in (False, True):
-        search = RandomizedSearchCV(SVC(), n_iter=n_search_iter,
-                                    cv=n_splits, iid=iid,
-                                    param_distributions=params,
-                                    return_train_score=True)
-        search.fit(X, y)
-        assert iid == search.iid
-        cv_results = search.cv_results_
-        # Check results structure
-        check_cv_results_array_types(search, param_keys, score_keys)
-        check_cv_results_keys(cv_results, param_keys, score_keys, n_cand)
-        n_candidates = len(search.cv_results_['params'])
-        assert all((cv_results['param_C'].mask[i] and
-                    cv_results['param_gamma'].mask[i] and
-                    not cv_results['param_degree'].mask[i])
-                   for i in range(n_candidates)
-                   if cv_results['param_kernel'][i] == 'linear')
-        assert all((not cv_results['param_C'].mask[i] and
-                    not cv_results['param_gamma'].mask[i] and
-                    cv_results['param_degree'].mask[i])
-                   for i in range(n_candidates)
-                   if cv_results['param_kernel'][i] == 'rbf')
+    search = RandomizedSearchCV(SVC(), n_iter=n_search_iter,
+                                cv=n_splits,
+                                param_distributions=params,
+                                return_train_score=True)
+    search.fit(X, y)
+    cv_results = search.cv_results_
+    # Check results structure
+    check_cv_results_array_types(search, param_keys, score_keys)
+    check_cv_results_keys(cv_results, param_keys, score_keys, n_cand)
+    n_candidates = len(search.cv_results_['params'])
+    assert all((cv_results['param_C'].mask[i] and
+                cv_results['param_gamma'].mask[i] and
+                not cv_results['param_degree'].mask[i])
+               for i in range(n_candidates)
+               if cv_results['param_kernel'][i] == 'linear')
+    assert all((not cv_results['param_C'].mask[i] and
+                not cv_results['param_gamma'].mask[i] and
+                cv_results['param_degree'].mask[i])
+               for i in range(n_candidates)
+               if cv_results['param_kernel'][i] == 'rbf')
 
 
 @pytest.mark.parametrize(
@@ -951,7 +944,7 @@ def test_random_search_cv_results():
       {'param_distributions': {'C': [1, 10]}, 'n_iter': 2})]
 )
 def test_search_default_iid(SearchCV, specialized_params):
-    # Test the IID parameter
+    # Test the IID parameter  TODO: Clearly this test does something else???
     # noise-free simple 2d-data
     X, y = make_blobs(centers=[[0, 0], [1, 0], [0, 1], [1, 1]], random_state=0,
                       cluster_std=0.1, shuffle=False, n_samples=80)
@@ -998,105 +991,6 @@ def test_search_default_iid(SearchCV, specialized_params):
     assert train_std == pytest.approx(0)
 
 
-@pytest.mark.filterwarnings("ignore:The parameter 'iid' is deprecated")  # 0.24
-def test_search_iid_param():
-    # Test the IID parameter
-    # noise-free simple 2d-data
-    X, y = make_blobs(centers=[[0, 0], [1, 0], [0, 1], [1, 1]], random_state=0,
-                      cluster_std=0.1, shuffle=False, n_samples=80)
-    # split dataset into two folds that are not iid
-    # first one contains data of all 4 blobs, second only from two.
-    mask = np.ones(X.shape[0], dtype=np.bool)
-    mask[np.where(y == 1)[0][::2]] = 0
-    mask[np.where(y == 2)[0][::2]] = 0
-    # this leads to perfect classification on one fold and a score of 1/3 on
-    # the other
-    # create "cv" for splits
-    cv = [[mask, ~mask], [~mask, mask]]
-    # once with iid=True (default)
-    grid_search = GridSearchCV(SVC(gamma='auto'), param_grid={'C': [1, 10]},
-                               cv=cv, return_train_score=True, iid=True)
-    random_search = RandomizedSearchCV(SVC(gamma='auto'), n_iter=2,
-                                       param_distributions={'C': [1, 10]},
-                                       cv=cv, iid=True,
-                                       return_train_score=True)
-    for search in (grid_search, random_search):
-        search.fit(X, y)
-        assert search.iid or search.iid is None
-
-        test_cv_scores = np.array(list(search.cv_results_['split%d_test_score'
-                                                          % s_i][0]
-                                       for s_i in range(search.n_splits_)))
-        test_mean = search.cv_results_['mean_test_score'][0]
-        test_std = search.cv_results_['std_test_score'][0]
-
-        train_cv_scores = np.array(list(search.cv_results_['split%d_train_'
-                                                           'score' % s_i][0]
-                                        for s_i in range(search.n_splits_)))
-        train_mean = search.cv_results_['mean_train_score'][0]
-        train_std = search.cv_results_['std_train_score'][0]
-
-        # Test the first candidate
-        assert search.cv_results_['param_C'][0] == 1
-        assert_array_almost_equal(test_cv_scores, [1, 1. / 3.])
-        assert_array_almost_equal(train_cv_scores, [1, 1])
-
-        # for first split, 1/4 of dataset is in test, for second 3/4.
-        # take weighted average and weighted std
-        expected_test_mean = 1 * 1. / 4. + 1. / 3. * 3. / 4.
-        expected_test_std = np.sqrt(1. / 4 * (expected_test_mean - 1) ** 2 +
-                                    3. / 4 * (expected_test_mean - 1. / 3.) **
-                                    2)
-        assert_almost_equal(test_mean, expected_test_mean)
-        assert_almost_equal(test_std, expected_test_std)
-        assert_array_almost_equal(test_cv_scores,
-                                  cross_val_score(SVC(C=1, gamma='auto'), X,
-                                                  y, cv=cv))
-
-        # For the train scores, we do not take a weighted mean irrespective of
-        # i.i.d. or not
-        assert_almost_equal(train_mean, 1)
-        assert_almost_equal(train_std, 0)
-
-    # once with iid=False
-    grid_search = GridSearchCV(SVC(gamma='auto'),
-                               param_grid={'C': [1, 10]},
-                               cv=cv, iid=False, return_train_score=True)
-    random_search = RandomizedSearchCV(SVC(gamma='auto'), n_iter=2,
-                                       param_distributions={'C': [1, 10]},
-                                       cv=cv, iid=False,
-                                       return_train_score=True)
-
-    for search in (grid_search, random_search):
-        search.fit(X, y)
-        assert not search.iid
-
-        test_cv_scores = np.array(list(search.cv_results_['split%d_test_score'
-                                                          % s][0]
-                                       for s in range(search.n_splits_)))
-        test_mean = search.cv_results_['mean_test_score'][0]
-        test_std = search.cv_results_['std_test_score'][0]
-
-        train_cv_scores = np.array(list(search.cv_results_['split%d_train_'
-                                                           'score' % s][0]
-                                        for s in range(search.n_splits_)))
-        train_mean = search.cv_results_['mean_train_score'][0]
-        train_std = search.cv_results_['std_train_score'][0]
-
-        assert search.cv_results_['param_C'][0] == 1
-        # scores are the same as above
-        assert_array_almost_equal(test_cv_scores, [1, 1. / 3.])
-        # Unweighted mean/std is used
-        assert_almost_equal(test_mean, np.mean(test_cv_scores))
-        assert_almost_equal(test_std, np.std(test_cv_scores))
-
-        # For the train scores, we do not take a weighted mean irrespective of
-        # i.i.d. or not
-        assert_almost_equal(train_mean, 1)
-        assert_almost_equal(train_std, 0)
-
-
-@pytest.mark.filterwarnings("ignore:The parameter 'iid' is deprecated")  # 0.24
 def test_grid_search_cv_results_multimetric():
     X, y = make_classification(n_samples=50, n_features=4, random_state=42)
 
@@ -1104,22 +998,19 @@ def test_grid_search_cv_results_multimetric():
     params = [dict(kernel=['rbf', ], C=[1, 10], gamma=[0.1, 1]),
               dict(kernel=['poly', ], degree=[1, 2])]
 
-    for iid in (False, True):
-        grid_searches = []
-        for scoring in ({'accuracy': make_scorer(accuracy_score),
-                         'recall': make_scorer(recall_score)},
-                        'accuracy', 'recall'):
-            grid_search = GridSearchCV(SVC(), cv=n_splits,
-                                       iid=iid, param_grid=params,
-                                       scoring=scoring, refit=False)
-            grid_search.fit(X, y)
-            assert grid_search.iid == iid
-            grid_searches.append(grid_search)
+    grid_searches = []
+    for scoring in ({'accuracy': make_scorer(accuracy_score),
+                     'recall': make_scorer(recall_score)},
+                    'accuracy', 'recall'):
+        grid_search = GridSearchCV(SVC(), cv=n_splits,
+                                   param_grid=params,
+                                   scoring=scoring, refit=False)
+        grid_search.fit(X, y)
+        grid_searches.append(grid_search)
 
-        compare_cv_results_multimetric_with_single(*grid_searches, iid=iid)
+    compare_cv_results_multimetric_with_single(*grid_searches)
 
 
-@pytest.mark.filterwarnings("ignore:The parameter 'iid' is deprecated")  # 0.24
 def test_random_search_cv_results_multimetric():
     X, y = make_classification(n_samples=50, n_features=4, random_state=42)
 
@@ -1129,38 +1020,34 @@ def test_random_search_cv_results_multimetric():
     # Scipy 0.12's stats dists do not accept seed, hence we use param grid
     params = dict(C=np.logspace(-4, 1, 3),
                   gamma=np.logspace(-5, 0, 3, base=0.1))
-    for iid in (True, False):
-        for refit in (True, False):
-            random_searches = []
-            for scoring in (('accuracy', 'recall'), 'accuracy', 'recall'):
-                # If True, for multi-metric pass refit='accuracy'
-                if refit:
-                    probability = True
-                    refit = 'accuracy' if isinstance(scoring, tuple) else refit
-                else:
-                    probability = False
-                clf = SVC(probability=probability, random_state=42)
-                random_search = RandomizedSearchCV(clf, n_iter=n_search_iter,
-                                                   cv=n_splits, iid=iid,
-                                                   param_distributions=params,
-                                                   scoring=scoring,
-                                                   refit=refit, random_state=0)
-                random_search.fit(X, y)
-                random_searches.append(random_search)
+    for refit in (True, False):
+        random_searches = []
+        for scoring in (('accuracy', 'recall'), 'accuracy', 'recall'):
+            # If True, for multi-metric pass refit='accuracy'
+            if refit:
+                probability = True
+                refit = 'accuracy' if isinstance(scoring, tuple) else refit
+            else:
+                probability = False
+            clf = SVC(probability=probability, random_state=42)
+            random_search = RandomizedSearchCV(clf, n_iter=n_search_iter,
+                                               cv=n_splits,
+                                               param_distributions=params,
+                                               scoring=scoring,
+                                               refit=refit, random_state=0)
+            random_search.fit(X, y)
+            random_searches.append(random_search)
 
-            compare_cv_results_multimetric_with_single(*random_searches,
-                                                       iid=iid)
-            compare_refit_methods_when_refit_with_acc(
-                random_searches[0], random_searches[1], refit)
+        compare_cv_results_multimetric_with_single(*random_searches)
+        compare_refit_methods_when_refit_with_acc(
+            random_searches[0], random_searches[1], refit)
 
 
-@pytest.mark.filterwarnings("ignore:The parameter 'iid' is deprecated")  # 0.24
 def compare_cv_results_multimetric_with_single(
-        search_multi, search_acc, search_rec, iid):
+        search_multi, search_acc, search_rec):
     """Compare multi-metric cv_results with the ensemble of multiple
     single metric cv_results from single metric grid/random search"""
 
-    assert search_multi.iid == iid
     assert search_multi.multimetric_
     assert_array_equal(sorted(search_multi.scorer_),
                        ('accuracy', 'recall'))
@@ -1727,16 +1614,12 @@ def test_custom_run_search():
 
     results = mycv.cv_results_
     check_results(results, gscv)
-    # TODO: remove in v0.24, the deprecation goes away then.
-    with pytest.warns(FutureWarning,
-                      match="attribute is to be deprecated from version 0.22"):
-        for attr in dir(gscv):
-            if (attr[0].islower() and attr[-1:] == '_' and
-                    attr not in {'cv_results_', 'best_estimator_',
-                                 'refit_time_',
-                                 }):
-                assert getattr(gscv, attr) == getattr(mycv, attr), \
-                    "Attribute %s not equal" % attr
+    for attr in dir(gscv):
+        if (attr[0].islower() and attr[-1:] == '_' and
+                attr not in {'cv_results_', 'best_estimator_',
+                             'refit_time_', 'classes_'}):
+            assert getattr(gscv, attr) == getattr(mycv, attr), \
+                "Attribute %s not equal" % attr
 
 
 def test__custom_fit_no_run_search():
@@ -1758,18 +1641,6 @@ def test__custom_fit_no_run_search():
                        match="_run_search not implemented."):
         # this should raise a NotImplementedError
         BadSearchCV(SVC()).fit(X, y)
-
-
-@pytest.mark.parametrize("iid", [False, True])
-def test_deprecated_grid_search_iid(iid):
-    # FIXME: remove in 0.24
-    depr_msg = "The parameter 'iid' is deprecated in 0.22 and will be removed"
-    X, y = make_blobs(n_samples=54, random_state=0, centers=2)
-    grid = GridSearchCV(
-        SVC(random_state=0), param_grid={'C': [10]}, cv=3, iid=iid
-    )
-    with pytest.warns(FutureWarning, match=depr_msg):
-        grid.fit(X, y)
 
 
 def test_empty_cv_iterator_error():
