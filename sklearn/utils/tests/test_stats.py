@@ -1,4 +1,6 @@
 import numpy as np
+from numpy.testing import assert_allclose
+from pytest import approx
 
 from sklearn.utils.stats import _weighted_percentile
 
@@ -12,7 +14,7 @@ def test_weighted_percentile():
     sw = np.ones(102, dtype=np.float64)
     sw[-1] = 0.0
     score = _weighted_percentile(y, sw, 50)
-    assert score == 1
+    assert approx(score) == 1
 
 
 def test_weighted_percentile_equal():
@@ -30,7 +32,7 @@ def test_weighted_percentile_zero_weight():
     sw = np.ones(102, dtype=np.float64)
     sw.fill(0.0)
     score = _weighted_percentile(y, sw, 50)
-    assert score == 1.0
+    assert approx(score) == 1.0
 
 
 def test_weighted_median_equal_weights():
@@ -42,7 +44,7 @@ def test_weighted_median_equal_weights():
 
     median = np.median(x)
     w_median = _weighted_percentile(x, weights)
-    assert median == w_median
+    assert median == approx(w_median)
 
 
 def test_weighted_median_integer_weights():
@@ -56,22 +58,32 @@ def test_weighted_median_integer_weights():
     median = np.median(x_manual)
     w_median = _weighted_percentile(x, weights)
 
-    assert median == w_median
+    assert median == approx(w_median)
 
 
 def test_weighted_percentile_2d():
-    # Check for when array is 2D
+    # Check for when array 2D and sample_weight 1D
     rng = np.random.RandomState(0)
     x1 = rng.randint(10, size=10)
     w1 = rng.choice(5, size=10)
 
     x2 = rng.randint(20, size=10)
-    w2 = rng.choice(5, size=10)
-
     x_2d = np.vstack((x1, x2)).T
+
+    w_median = _weighted_percentile(x_2d, w1)
+    p_axis_0 = [
+        _weighted_percentile(x_2d[:, i], w1)
+        for i in range(x_2d.shape[1])
+    ]
+    assert_allclose(w_median, p_axis_0)
+
+    # Check when array and sample_weight boht 2D
+    w2 = rng.choice(5, size=10)
     w_2d = np.vstack((w1, w2)).T
 
     w_median = _weighted_percentile(x_2d, w_2d)
-
-    for i, value in enumerate(w_median):
-        assert(value == _weighted_percentile(x_2d[:, i], w_2d[:, i]))
+    p_axis_0 = [
+        _weighted_percentile(x_2d[:, i], w_2d[:, i])
+        for i in range(x_2d.shape[1])
+    ]
+    assert_allclose(w_median, p_axis_0)
