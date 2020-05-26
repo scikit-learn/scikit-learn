@@ -308,6 +308,7 @@ class IterativeImputer(_BaseImputer):
         if estimators is None:
             # No estimator or pipeline given, use default
             from ..linear_model import BayesianRidge
+
             estimators = BayesianRidge()
         if not isinstance(estimators, list):
             # Single estimator given, use for all columns
@@ -347,6 +348,7 @@ class IterativeImputer(_BaseImputer):
         for i, estimator in enumerate(self._estimators):
             if estimator is None:
                 from ..linear_model import BayesianRidge
+
                 self._estimators[i] = BayesianRidge()
 
     def _impute_one_feature(
@@ -459,14 +461,12 @@ class IterativeImputer(_BaseImputer):
             imputed_values = self._inverse_transform_filled(
                 imputed_values, [feat_idx],
             )
-            if not np.isnan(self._min_value[feat_idx]) or not np.isnan(
-                self._max_value[feat_idx]
-            ):
-                imputed_values = np.clip(
-                    imputed_values,
-                    self._min_value[feat_idx],
-                    self._max_value[feat_idx],
-                )
+            min_val = self._min_value[feat_idx]
+            min_val = min_val if not np.isnan(min_val) else None
+            max_val = self._max_value[feat_idx]
+            max_val = max_val if not np.isnan(max_val) else None
+            if max_val is not None or min_val is not None:
+                imputed_values = np.clip(imputed_values, min_val, max_val,)
 
         # Update the feature
         X_filled[missing_row_mask, feat_idx] = imputed_values
@@ -716,6 +716,20 @@ class IterativeImputer(_BaseImputer):
                 )
         return limit
 
+    @staticmethod
+    def _transform_one_column(transformer, Xt, col_num, fit_mode):
+        indexed = _safe_indexing(
+            Xt.reshape(Xt.shape[0], -1), col_num, axis=1
+        ).reshape(Xt.shape[0], 1)
+        split_cols = 1
+        if fit_mode:
+            Xtf = transformer.fit_transform(indexed)
+            if Xtf.ndim > 1:
+                split_cols = Xtf.shape[1]
+        else:
+            Xtf = transformer.transform(indexed)
+        return (split_cols, transformer, Xtf.reshape(Xtf.shape[0], -1))
+
     def _fit_transform_filled(self, Xt, columns, fit_mode):
         """Transform Xt using transformers indexed by columns.
 
@@ -739,22 +753,9 @@ class IterativeImputer(_BaseImputer):
         if not np.asarray(columns).size:
             return np.empty(dtype=Xt.dtype, shape=(0,))
 
-        def transform_one_column(transformer, Xt, col_num, fit_mode):
-            indexed = _safe_indexing(
-                Xt.reshape(Xt.shape[0], -1), col_num, axis=1
-            ).reshape(Xt.shape[0], 1)
-            split_cols = 1
-            if fit_mode:
-                Xtf = transformer.fit_transform(indexed)
-                if Xtf.ndim > 1:
-                    split_cols = Xtf.shape[1]
-            else:
-                Xtf = transformer.transform(indexed)
-            return (split_cols, transformer, Xtf.reshape(Xtf.shape[0], -1))
-
         split_cols, tfs, transformed = zip(
             *Parallel(n_jobs=self.n_jobs)(
-                delayed(transform_one_column)(
+                delayed(self._transform_one_column)(
                     transformer=tf, Xt=Xt, col_num=col_num, fit_mode=fit_mode,
                 )
                 for col_num, tf in enumerate(self._transformers[columns])
@@ -767,6 +768,11 @@ class IterativeImputer(_BaseImputer):
         if Xtf.ndim == 2 and Xt.ndim == 1 and Xtf.shape[1] == 1:
             return np.squeeze(Xtf, axis=1)
         return Xtf
+
+    @staticmethod
+    def _inverse_one_column(transformer, Xtf):
+        inverse = transformer.inverse_transform(Xtf)
+        return inverse.reshape(inverse.shape[0], -1)
 
     def _inverse_transform_filled(self, Xtf, columns):
         """Inverts the transformation on Xtf using transformers
@@ -792,12 +798,10 @@ class IterativeImputer(_BaseImputer):
         else:
             inverse_tf = [Xtf]
 
-        def inverse_one_column(transformer, Xtf):
-            inverse = transformer.inverse_transform(Xtf)
-            return inverse.reshape(inverse.shape[0], -1)
-
         transformed = Parallel(n_jobs=self.n_jobs)(
-            delayed(inverse_one_column)(transformer=transformer, Xtf=Xtf,)
+            delayed(self._inverse_one_column)(
+                transformer=transformer, Xtf=Xtf,
+            )
             for transformer, Xtf in zip(
                 self._transformers[columns], inverse_tf
             )
