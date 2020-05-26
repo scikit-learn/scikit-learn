@@ -811,7 +811,11 @@ To run the full benchmark suite, simply remove the `-b` flag ::
   asv continuous upstream/master HEAD
 
 However this can take up to two hours. The `-b` flag also accepts a regular
-expression for a more complex subset of benchmarks to run.
+expression for a more complex subset of benchmarks to run. The command uses
+conda by default for creating the benchmark environments. If you want to use 
+virtualenv instead, use the `-E` flag::
+
+  asv continuous -E virtualenv upstream/master HEAD
 
 To run the benchmarks without comparing to another branch, use the `run`
 command::
