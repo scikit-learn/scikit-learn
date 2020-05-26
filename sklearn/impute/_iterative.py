@@ -688,8 +688,8 @@ class IterativeImputer(_BaseImputer):
             if np.any(error_col):
                 # User specified a numeric limit for a cls task
                 raise ValueError(
-                    "Limit detected for categorical column " +
-                    f"{np.argmax(error_col)}."
+                    "Limit detected for categorical column "
+                    + f"{np.argmax(error_col)}."
                 )
         return limit
 
@@ -715,8 +715,8 @@ class IterativeImputer(_BaseImputer):
         """
         if not np.asarray(columns).size:
             return np.empty(dtype=Xt.dtype, shape=(0,))
-        def transform_one_column(transformer, Xt,
-                                col_num, fit_mode):
+
+        def transform_one_column(transformer, Xt, col_num, fit_mode):
             indexed = _safe_indexing(
                 Xt.reshape(Xt.shape[0], -1), col_num, axis=1
             ).reshape(Xt.shape[0], 1)
@@ -728,23 +728,19 @@ class IterativeImputer(_BaseImputer):
             else:
                 Xtf = transformer.transform(indexed)
             return (split_cols, Xtf.reshape(Xtf.shape[0], -1))
-        split_cols, transformed = zip(*Parallel(n_jobs=self.n_jobs)(
-            delayed(transform_one_column)(
-                transformer=tf,
-                Xt=Xt,
-                col_num=col_num,
-                fit_mode=fit_mode,
+
+        split_cols, transformed = zip(
+            *Parallel(n_jobs=self.n_jobs)(
+                delayed(transform_one_column)(
+                    transformer=tf, Xt=Xt, col_num=col_num, fit_mode=fit_mode,
+                )
+                for col_num, tf in enumerate(self._transformers[columns])
             )
-            for col_num, tf in enumerate(self._transformers[columns])
-        ))
+        )
         if fit_mode:
             self._split_cols[columns] = split_cols
         Xtf = np.concatenate(transformed, axis=1)
-        if (
-            Xtf.ndim == 2
-            and Xt.ndim == 1
-            and Xtf.shape[1] == 1
-        ):
+        if Xtf.ndim == 2 and Xt.ndim == 1 and Xtf.shape[1] == 1:
             return np.squeeze(Xtf, axis=1)
         return Xtf
 
@@ -771,22 +767,19 @@ class IterativeImputer(_BaseImputer):
             inverse_tf = np.split(Xtf, split_cols, axis=1)
         else:
             inverse_tf = [Xtf]
+
         def inverse_one_column(transformer, Xtf):
             inverse = transformer.inverse_transform(Xtf)
             return inverse.reshape(inverse.shape[0], -1)
+
         transformed = Parallel(n_jobs=self.n_jobs)(
-            delayed(inverse_one_column)(
-                transformer=transformer,
-                Xtf=Xtf,
+            delayed(inverse_one_column)(transformer=transformer, Xtf=Xtf,)
+            for transformer, Xtf in zip(
+                self._transformers[columns], inverse_tf
             )
-            for transformer, Xtf in zip(self._transformers[columns], inverse_tf)
         )
         Xt = np.concatenate(transformed, axis=1)
-        if (
-            Xt.ndim == 2
-            and Xtf.ndim == 1
-            and Xt.shape[1] == 1
-        ):
+        if Xt.ndim == 2 and Xtf.ndim == 1 and Xt.shape[1] == 1:
             return np.squeeze(Xt, axis=1)
         return Xt
 
@@ -857,7 +850,9 @@ class IterativeImputer(_BaseImputer):
         X, Xt, mask_missing_values = self._initial_imputation(X)
 
         # Initial fit of transformers
-        self._fit_transform_filled(Xt, columns=range(X.shape[1]), fit_mode=True)
+        self._fit_transform_filled(
+            Xt, columns=range(X.shape[1]), fit_mode=True
+        )
 
         # Edge cases:
         #  - No missing values
