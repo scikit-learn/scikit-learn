@@ -17,6 +17,7 @@ from sklearn.exceptions import ConvergenceWarning
 from sklearn.datasets import load_iris
 from sklearn.datasets import load_diabetes
 from sklearn.datasets import load_breast_cancer
+from sklearn.datasets import make_regression
 
 from sklearn.dummy import DummyClassifier
 from sklearn.dummy import DummyRegressor
@@ -491,3 +492,20 @@ def test_stacking_cv_influence(stacker, X, y):
     with pytest.raises(AssertionError, match='Not equal'):
         assert_allclose(stacker_cv_3.final_estimator_.coef_,
                         stacker_cv_5.final_estimator_.coef_)
+
+
+def test_stacking_without_n_features_in():
+    # Stacking supports estimators without `n_features_in_`. Regression test
+    # for #17353
+
+    class MyLR(LinearRegression):
+        """LinearRegresion without n_features_in_"""
+        def fit(self, X, y):
+            super().fit(X, y)
+            del self.n_features_in_
+
+    X, y = make_regression(random_state=0, n_samples=100)
+    stack = StackingRegressor(estimators=[('lr', MyLR())])
+
+    # Does not raise
+    stack.fit(X, y)
