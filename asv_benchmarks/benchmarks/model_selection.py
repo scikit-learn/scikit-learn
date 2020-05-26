@@ -6,7 +6,7 @@ from .datasets import _synth_classification_dataset
 from .utils import make_gen_classif_scorers
 
 
-class CrossValidation_bench(Benchmark):
+class CrossValidationBenchmark(Benchmark):
     """
     Benchmarks for Cross Validation.
     """
@@ -42,7 +42,7 @@ class CrossValidation_bench(Benchmark):
                                      self.y, **self.cv_params).mean())
 
 
-class GridSearch_bench(Predictor, Estimator, Benchmark):
+class GridSearchBenchmark(Predictor, Estimator, Benchmark):
     """
     Benchmarks for GridSearch.
     """

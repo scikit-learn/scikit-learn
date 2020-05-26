@@ -4,7 +4,7 @@ from .common import Benchmark, Estimator
 from .datasets import _digits_dataset
 
 
-class TSNE_bench(Estimator, Benchmark):
+class TSNEBenchmark(Estimator, Benchmark):
     """
     Benchmarks for t-SNE.
     """

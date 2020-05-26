@@ -9,7 +9,7 @@ from .datasets import _blobs_dataset, _20newsgroups_highdim_dataset
 from .utils import neg_mean_inertia
 
 
-class KMeans_bench(Predictor, Transformer, Estimator, Benchmark):
+class KMeansBenchmark(Predictor, Transformer, Estimator, Benchmark):
     """
     Benchmarks for KMeans.
     """
@@ -59,7 +59,7 @@ class KMeans_bench(Predictor, Transformer, Estimator, Benchmark):
                                            self.estimator.cluster_centers_))
 
 
-class KMeansPlusPlus_bench(Benchmark):
+class KMeansPlusPlusBenchmark(Benchmark):
     """
     Benchmarks for k-means++ init.
     """

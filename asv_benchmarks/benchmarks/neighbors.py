@@ -5,7 +5,7 @@ from .datasets import _20newsgroups_lowdim_dataset
 from .utils import make_gen_classif_scorers
 
 
-class KNeighborsClassifier_bench(Predictor, Estimator, Benchmark):
+class KNeighborsClassifierBenchmark(Predictor, Estimator, Benchmark):
     """
     Benchmarks for KNeighborsClassifier.
     """

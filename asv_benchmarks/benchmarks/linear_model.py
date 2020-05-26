@@ -9,7 +9,7 @@ from .datasets import (_20newsgroups_highdim_dataset,
 from .utils import make_gen_classif_scorers, make_gen_reg_scorers
 
 
-class LogisticRegression_bench(Predictor, Estimator, Benchmark):
+class LogisticRegressionBenchmark(Predictor, Estimator, Benchmark):
     """
     Benchmarks for LogisticRegression.
     """
@@ -49,7 +49,7 @@ class LogisticRegression_bench(Predictor, Estimator, Benchmark):
         make_gen_classif_scorers(self)
 
 
-class Ridge_bench(Predictor, Estimator, Benchmark):
+class RidgeBenchmark(Predictor, Estimator, Benchmark):
     """
     Benchmarks for Ridge.
     """
@@ -90,7 +90,7 @@ class Ridge_bench(Predictor, Estimator, Benchmark):
         make_gen_reg_scorers(self)
 
 
-class LinearRegression_bench(Predictor, Estimator, Benchmark):
+class LinearRegressionBenchmark(Predictor, Estimator, Benchmark):
     """
     Benchmarks for Linear Reagression.
     """
@@ -119,7 +119,7 @@ class LinearRegression_bench(Predictor, Estimator, Benchmark):
         make_gen_reg_scorers(self)
 
 
-class SGDRegressor_bench(Predictor, Estimator, Benchmark):
+class SGDRegressorBenchmark(Predictor, Estimator, Benchmark):
     """
     Benchmark for SGD
     """
@@ -150,7 +150,7 @@ class SGDRegressor_bench(Predictor, Estimator, Benchmark):
         make_gen_reg_scorers(self)
 
 
-class ElasticNet_bench(Predictor, Estimator, Benchmark):
+class ElasticNetBenchmark(Predictor, Estimator, Benchmark):
     """
     Benchmarks for ElasticNet.
     """
@@ -190,7 +190,7 @@ class ElasticNet_bench(Predictor, Estimator, Benchmark):
         make_gen_reg_scorers(self)
 
 
-class Lasso_bench(Predictor, Estimator, Benchmark):
+class LassoBenchmark(Predictor, Estimator, Benchmark):
     """
     Benchmarks for Lasso.
     """

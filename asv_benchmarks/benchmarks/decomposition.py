@@ -6,7 +6,7 @@ from .datasets import _olivetti_faces_dataset, _mnist_dataset
 from .utils import make_pca_scorers, make_dict_learning_scorers
 
 
-class PCA_bench(Transformer, Estimator, Benchmark):
+class PCABenchmark(Transformer, Estimator, Benchmark):
     """
     Benchmarks for PCA.
     """
@@ -32,7 +32,7 @@ class PCA_bench(Transformer, Estimator, Benchmark):
         make_pca_scorers(self)
 
 
-class DictionaryLearning_bench(Transformer, Estimator, Benchmark):
+class DictionaryLearningBenchmark(Transformer, Estimator, Benchmark):
     """
     Benchmarks for DictionaryLearning.
     """
@@ -62,7 +62,7 @@ class DictionaryLearning_bench(Transformer, Estimator, Benchmark):
         make_dict_learning_scorers(self)
 
 
-class MiniBatchDictionaryLearning_bench(Transformer, Estimator, Benchmark):
+class MiniBatchDictionaryLearningBenchmark(Transformer, Estimator, Benchmark):
     """
     Benchmarks for MiniBatchDictionaryLearning
     """

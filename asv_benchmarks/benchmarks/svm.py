@@ -5,7 +5,7 @@ from .datasets import _synth_classification_dataset
 from .utils import optimal_cache_size, make_gen_classif_scorers
 
 
-class SVC_bench(Predictor, Estimator, Benchmark):
+class SVCBenchmark(Predictor, Estimator, Benchmark):
     """Benchmarks for SVC."""
 
     param_names = ['kernel']

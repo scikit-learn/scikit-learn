@@ -4,7 +4,7 @@ from .common import Benchmark
 from .datasets import _random_dataset
 
 
-class PairwiseDistances_bench(Benchmark):
+class PairwiseDistancesBenchmark(Benchmark):
     """
     Benchmarks for pairwise distances.
     """

@@ -6,7 +6,7 @@ from .datasets import (_20newsgroups_highdim_dataset,
 from .utils import make_gen_classif_scorers
 
 
-class RandomForestClassifier_bench(Predictor, Estimator, Benchmark):
+class RandomForestClassifierBenchmark(Predictor, Estimator, Benchmark):
     """
     Benchmarks for RandomForestClassifier.
     """
@@ -39,7 +39,7 @@ class RandomForestClassifier_bench(Predictor, Estimator, Benchmark):
         make_gen_classif_scorers(self)
 
 
-class GradientBoostingClassifier_bench(Predictor, Estimator, Benchmark):
+class GradientBoostingClassifierBenchmark(Predictor, Estimator, Benchmark):
     """
     Benchmarks for GradientBoostingClassifier.
     """
