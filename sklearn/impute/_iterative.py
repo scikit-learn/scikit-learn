@@ -685,7 +685,8 @@ class IterativeImputer(_BaseImputer):
             if np.any(error_col):
                 # User specified a numeric limit for a cls task
                 raise ValueError(
-                    f"Limit detected for categorical column {np.argmax(error_col)}."
+                    "Limit detected for categorical column " +
+                    f"{np.argmax(error_col)}."
                 )
         return limit
 
@@ -757,16 +758,14 @@ class IterativeImputer(_BaseImputer):
 
         if self.max_iter < 0:
             raise ValueError(
-                "'max_iter' should be a positive integer. Got {} instead.".format(
-                    self.max_iter
-                )
+                "'max_iter' should be a positive integer."
+                " Got {} instead.".format(self.max_iter)
             )
 
         if self.tol < 0:
             raise ValueError(
-                "'tol' should be a non-negative float. Got {} instead.".format(
-                    self.tol
-                )
+                "'tol' should be a non-negative float."
+                " Got {} instead.".format(self.tol)
             )
 
         # Basic validation
