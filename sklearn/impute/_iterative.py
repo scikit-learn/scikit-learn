@@ -5,6 +5,7 @@ import warnings
 
 from scipy import stats
 import numpy as np
+from joblib import Parallel, delayed
 
 from ..base import clone, is_classifier
 from ..exceptions import ConvergenceWarning
@@ -230,6 +231,7 @@ class IterativeImputer(_BaseImputer):
         verbose=0,
         random_state=None,
         add_indicator=False,
+        n_jobs=None,
     ):
         super().__init__(
             missing_values=missing_values, add_indicator=add_indicator
@@ -248,6 +250,7 @@ class IterativeImputer(_BaseImputer):
         self.max_value = max_value
         self.verbose = verbose
         self.random_state = random_state
+        self.n_jobs = n_jobs
 
     def _validate_transformers(self, X):
         transformers = self.transformers
@@ -690,50 +693,102 @@ class IterativeImputer(_BaseImputer):
                 )
         return limit
 
-    def _fit_transform_filled(self, filled, columns, fit_mode):
+    def _fit_transform_filled(self, Xt, columns, fit_mode):
+        """Transform Xt using transformers indexed by columns.
+
+        Parameters
+        ----------
+        Xt : np.array
+            Filled data to transform
+        columns : {np.array, list, tuple}
+            Column numbers in complete Xt present in this slice
+            of Xt.
+        fit_mode : bool
+            If True, transformers will be fit or re-fit.
+            If False, transformers are assumed to be fit and
+            are not re-fit.
+
+        Returns
+        -------
+        Xtf
+            Transformation of Xt.
         """
-        Private function to fit and/or transform on demand.
-        ``fit_mode=True`` ensures the fitted transformers are used.
-        """
-        transformed = []
-        for i, col_num in enumerate(columns):
-            transformer = self._transformers[col_num]
+        if not np.asarray(columns).size:
+            return np.empty(dtype=Xt.dtype, shape=(0,))
+        def transform_one_column(transformer, Xt,
+                                col_num, fit_mode):
             indexed = _safe_indexing(
-                filled.reshape(filled.shape[0], -1), i, axis=1
-            ).reshape(filled.shape[0], 1)
+                Xt.reshape(Xt.shape[0], -1), col_num, axis=1
+            ).reshape(Xt.shape[0], 1)
+            split_cols = 1
             if fit_mode:
                 Xtf = transformer.fit_transform(indexed)
+                if Xtf.ndim > 1:
+                    split_cols = Xtf.shape[1]
             else:
                 Xtf = transformer.transform(indexed)
-            if Xtf.ndim > 1:
-                self._split_cols[col_num] = Xtf.shape[1]
-            transformed.append(Xtf.reshape(Xtf.shape[0], -1))
-        transformed = np.concatenate(transformed, axis=1)
+            return (split_cols, Xtf.reshape(Xtf.shape[0], -1))
+        split_cols, transformed = zip(*Parallel(n_jobs=self.n_jobs)(
+            delayed(transform_one_column)(
+                transformer=tf,
+                Xt=Xt,
+                col_num=col_num,
+                fit_mode=fit_mode,
+            )
+            for col_num, tf in enumerate(self._transformers[columns])
+        ))
+        if fit_mode:
+            self._split_cols[columns] = split_cols
+        Xtf = np.concatenate(transformed, axis=1)
         if (
-            transformed.ndim == 2
-            and filled.ndim == 1
-            and transformed.shape[1] == 1
+            Xtf.ndim == 2
+            and Xt.ndim == 1
+            and Xtf.shape[1] == 1
         ):
-            return np.squeeze(transformed, axis=1)
-        return transformed
+            return np.squeeze(Xtf, axis=1)
+        return Xtf
 
-    def _inverse_transform_filled(self, filled, columns):
+    def _inverse_transform_filled(self, Xtf, columns):
+        """Inverts the transformation on Xtf using transformers
+        indexed by columns.
+
+        Parameters
+        ----------
+        Xtf : np.array
+            Numpy array of transformed data with no missing values.
+        columns : {np.array, list, tuple}
+            Iterable of column numbers to map filled back to.
+
+        Returns
+        -------
+        Xt
+            Inverse-transform of filled.
+        """
+        if not np.asarray(columns).size:
+            return np.empty(dtype=Xtf.dtype, shape=(0,))
         split_cols = list(accumulate(self._split_cols[columns]))[:-1]
-        if filled.ndim > 1:
-            inverse_tf = np.split(filled, split_cols, axis=1)
+        if Xtf.ndim > 1:
+            inverse_tf = np.split(Xtf, split_cols, axis=1)
         else:
-            inverse_tf = [filled]
-        for i, (col, inverse) in enumerate(zip(columns, inverse_tf)):
-            inverse_tf[i] = self._transformers[col].inverse_transform(inverse)
-            inverse_tf[i] = inverse_tf[i].reshape(inverse_tf[i].shape[0], -1)
-        inverse_tf = np.concatenate(inverse_tf, axis=1)
+            inverse_tf = [Xtf]
+        def inverse_one_column(transformer, Xtf):
+            inverse = transformer.inverse_transform(Xtf)
+            return inverse.reshape(inverse.shape[0], -1)
+        transformed = Parallel(n_jobs=self.n_jobs)(
+            delayed(inverse_one_column)(
+                transformer=transformer,
+                Xtf=Xtf,
+            )
+            for transformer, Xtf in zip(self._transformers[columns], inverse_tf)
+        )
+        Xt = np.concatenate(transformed, axis=1)
         if (
-            inverse_tf.ndim == 2
-            and filled.ndim == 1
-            and inverse_tf.shape[1] == 1
+            Xt.ndim == 2
+            and Xtf.ndim == 1
+            and Xt.shape[1] == 1
         ):
-            return np.squeeze(inverse_tf, axis=1)
-        return inverse_tf
+            return np.squeeze(Xt, axis=1)
+        return Xt
 
     def fit_transform(self, X, y=None):
         """Fits the imputer on X and return the transformed X.
@@ -769,9 +824,11 @@ class IterativeImputer(_BaseImputer):
             )
 
         # Basic validation
+        # Ensure X is an array
         X = self._validate_data(
             X, dtype=None, order="F", force_all_finite=False
         )
+        # Process mapping of transformers and estimators
         self._validate_estimators(X)
         self._validate_transformers(X)
 
@@ -800,11 +857,7 @@ class IterativeImputer(_BaseImputer):
         X, Xt, mask_missing_values = self._initial_imputation(X)
 
         # Initial fit of transformers
-        self._validate_transformers(X)
-        for feat_idx in range(X.shape[1]):
-            self._fit_transform_filled(
-                Xt[:, feat_idx], columns=[feat_idx], fit_mode=True
-            )
+        self._fit_transform_filled(Xt, columns=range(X.shape[1]), fit_mode=True)
 
         # Edge cases:
         #  - No missing values
