@@ -71,6 +71,11 @@ Changelog
   :func:`accuracy_score` is the special case of `k = 1`.
   :pr:`16625` by :user:`Geoffrey Bolmier <gbolmier>`.
 
+- |Fix| Fixed a bug in :func:`metrics.mean_squared_error` where the
+  average of multiple RMSE values was incorrectly calculated as the root of the
+  average of multiple MSE values.
+  :pr:`17309` by :user:`Swier Heeres <swierh>`
+
 :mod:`sklearn.model_selection`
 ..............................
 
@@ -86,15 +91,16 @@ Changelog
   attribute name/path or a `callable` for extracting feature importance from
   the estimator.  :pr:`15361` by :user:`Venkatachalam N <venkyyuvy>`
 
-  
-:mod:`sklearn.tree`
-...................
+:mod:`sklearn.multiclass`
+.........................
 
-- |Enhancement| :func:`tree.plot_tree` now uses colors from the matplotlib
-  configuration settings. :pr:`17187` by `Andreas Müller`_.
+- |Fix| A fix to allow :class:`multiclass.OutputCodeClassifier` to accept
+  sparse input data in its `fit` and `predict` methods. The check for
+  validity of the input is now delegated to the base estimator.
+  :pr:`17233` by :user:`Zolisa Bleki <zoj613>`.
 
 :mod:`sklearn.neighbors`
-.............................
+........................
 
 - |Efficiency| Speed up ``seuclidean``, ``wminkowski``, ``mahalanobis`` and
   ``haversine`` metrics in :class:`neighbors.DistanceMetric` by avoiding
@@ -106,6 +112,20 @@ Changelog
   :func:`metrics.pairwise_distances`
   and by validating data out of loops.
   :pr:`17038` by :user:`Wenbo Zhao <webber26232>`.
+
+:mod:`sklearn.svm`
+..................
+
+- |Enhancement| invoke scipy blas api for svm kernel function in ``fit``,
+  ``predict`` and related methods of :class:`svm.SVC`, :class:`svm.NuSVC`,
+  :class:`svm.SVR`, :class:`svm.NuSVR`, :class:`OneClassSVM`.
+  :pr:`16530` by :user:`Shuhua Fan <jim0421>`.
+
+:mod:`sklearn.tree`
+...................
+
+- |Enhancement| :func:`tree.plot_tree` now uses colors from the matplotlib
+  configuration settings. :pr:`17187` by `Andreas Müller`_.
 
 Code and Documentation Contributors
 -----------------------------------
