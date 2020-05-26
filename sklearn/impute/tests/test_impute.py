@@ -627,6 +627,7 @@ def test_iterative_imputer_mixed_categorical(cls_columns, n_jobs, max_value):
     X_filled = imputer.fit_transform(X)
     assert not np.any(pd.isnull(X_filled))
 
+
 @pytest.mark.parametrize(
     ["cls_columns", "tf_columns"],
     [
@@ -648,6 +649,7 @@ def test_iterative_duplicate_columns(cls_columns, tf_columns):
     )
     with pytest.raises(ValueError):
         imputer.fit_transform(X)
+
 
 @pytest.mark.parametrize(
     "initial_strategy",
@@ -697,7 +699,7 @@ def test_iterative_categorical_tol():
         estimator=[(DummyClassifier(), [1, 2])],
         transformers=[(OneHotEncoder(sparse=False), [1, 2])],
         initial_strategy="most_frequent",
-        tol=1, # a non-default value
+        tol=1  # a non-default value
     )
     with pytest.warns(UserWarning, match="ignored"):
         imputer.fit_transform(X)
@@ -725,6 +727,7 @@ def test_iterative_imputer_invalid_limit_for_categorical(max_value):
     )
     with pytest.raises(ValueError):
         imputer.fit_transform(X)
+
 
 @pytest.mark.parametrize(
     "imputation_order",
