@@ -118,7 +118,7 @@ class Estimator(ABC):
 
     def setup_cache(self):
         """Run once per benchmark class
-        
+
         Create and pickle all datasets needed for all param combinations.
         Pickle a fitted estimator for all param combinations.
         """
@@ -145,7 +145,7 @@ class Estimator(ABC):
 
     def setup(self, *params):
         """Run for each param combination
-        
+
         Load the pickled dataset and fitted estimator and run the benchmark.
         """
         if hasattr(self, 'setup_'):
