@@ -420,8 +420,8 @@ class OneHotEncoder(_BaseEncoder):
         # TODO: Remove when handle_unknown='ignore' is deprecated
         if self.handle_unknown == 'ignore':
             warnings.warn("handle_unknown='ignore' is deprecated in favor "
-                          "of 'auto' in version 0.23 and will be removed in "
-                          "version 0.25", FutureWarning)
+                          "of 'auto' in version 0.24 and will be removed in "
+                          "version 0.26", FutureWarning)
             if self._infrequent_enabled():
                 raise ValueError("infrequent categories are only supported "
                                  "when handle_unknown is 'error' or 'auto'")
@@ -433,12 +433,12 @@ class OneHotEncoder(_BaseEncoder):
             if not self.min_frequency >= 1:
                 raise ValueError("min_frequency must be an integer at least "
                                  "1 or a float in (0.0, 1.0); got the "
-                                 "integer {}".format(self.min_frequency))
+                                 f"integer {self.min_frequency}")
         else:  # float
             if not 0.0 < self.min_frequency < 1.0:
                 raise ValueError("min_frequency must be an integer at least "
                                  "1 or a float in (0.0, 1.0); got the "
-                                 "float {}".format(self.min_frequency))
+                                 f"float {self.min_frequency}")
 
     def _compute_drop_idx(self):
         if self.drop is None:
@@ -488,11 +488,15 @@ class OneHotEncoder(_BaseEncoder):
 
     def _infrequent_enabled(self):
         """Infrequent category is enabled."""
-        return (self.max_categories is not None and self.max_categories > 1 or
-                (isinstance(self.min_frequency, numbers.Integral)
-                    and self.min_frequency > 1) or
-                (isinstance(self.min_frequency, numbers.Real)
-                    and 0.0 < self.min_frequency < 1.0))
+        if self.max_categories is not None and self.max_categories > 1:
+            return True
+        if (isinstance(self.min_frequency, numbers.Integral)
+                and self.min_frequency > 1):
+            return True
+        if (isinstance(self.min_frequency, numbers.Real)
+                and 0.0 < self.min_frequency < 1.0):
+            return True
+        return False
 
     def _identify_infrequent(self, category_count, n_samples, col_idx):
         """Compute the infrequent indicies based on max_categories and
@@ -501,13 +505,13 @@ class OneHotEncoder(_BaseEncoder):
         Parameters
         ----------
         category_count : ndarray of shape (n_cardinality,)
-            category counts
+            Category counts.
 
         n_samples : int
-            number of samples
+            Number of samples.
 
         col_idx : int
-            index of current category only used for the error message
+            Index of the current category. Only used for the error message.
 
         Returns
         -------
@@ -527,14 +531,15 @@ class OneHotEncoder(_BaseEncoder):
         if (self.max_categories is not None and self.max_categories > 1
                 and self.max_categories < category_count.size):
             # stable sort to preserve original count order
-            smallest_levels = np.argsort(category_count, kind='mergesort'
-                                         )[:-self.max_categories + 1]
+            smallest_levels = np.argsort(
+                category_count, kind='mergesort'
+                )[:-self.max_categories + 1]
             infrequent_mask[smallest_levels] = True
 
         output = np.flatnonzero(infrequent_mask)
         if output.size == category_count.size:
-            raise ValueError("All categories in column {} are infrequent"
-                             .format(col_idx))
+            raise ValueError(f"All categories in column {col_idx} are "
+                             "infrequent")
         return output if output.size > 0 else None
 
     def _fit_infrequent_category_mapping(self, fit_results):
@@ -555,7 +560,8 @@ class OneHotEncoder(_BaseEncoder):
 
         self.infrequent_indices_ = [
             self._identify_infrequent(category_count, n_samples, col_idx)
-            for col_idx, category_count in enumerate(category_counts)]
+            for col_idx, category_count in enumerate(category_counts)
+        ]
 
         # compute mapping from default mapping to infrequent mapping
         default_to_infrequent_mappings = []
@@ -590,7 +596,7 @@ class OneHotEncoder(_BaseEncoder):
         Parameters
         ----------
         X_int: ndarray of shape (n_samples, n_features)
-            integer encoded categories
+            Integer encoded categories.
         """
         if not self._infrequent_enabled():
             return

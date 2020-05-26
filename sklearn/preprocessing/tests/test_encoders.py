@@ -87,7 +87,7 @@ def test_one_hot_encoder_not_fitted():
         enc.transform(X)
 
 
-# TODO: Remove when 'ignore' is deprecated in 0.25
+# TODO: Remove when 'ignore' is deprecated in 0.26
 @pytest.mark.filterwarnings("ignore:handle_unknown='ignore':FutureWarning")
 @pytest.mark.parametrize("handle_unknown", ['ignore', 'auto'])
 def test_one_hot_encoder_handle_unknown_strings(handle_unknown):
@@ -220,7 +220,7 @@ def test_one_hot_encoder(X):
     assert_allclose(Xtr.toarray(), [[0, 1, 1, 0,  1], [1, 0, 0, 1, 1]])
 
 
-# TODO: Remove when 'ignore' is deprecated in 0.25
+# TODO: Remove when 'ignore' is deprecated in 0.26
 @pytest.mark.filterwarnings("ignore:handle_unknown='ignore':FutureWarning")
 @pytest.mark.parametrize("handle_unknown", ['ignore', 'auto'])
 @pytest.mark.parametrize('sparse_', [False, True])
@@ -338,7 +338,7 @@ def test_one_hot_encoder_categories(X, cat_exp, cat_dtype):
             assert np.issubdtype(res.dtype, cat_dtype)
 
 
-# TODO: Remove when 'ignore' is deprecated in 0.25
+# TODO: Remove when 'ignore' is deprecated in 0.26
 @pytest.mark.filterwarnings("ignore:handle_unknown='ignore':FutureWarning")
 @pytest.mark.parametrize("handle_unknown", ['ignore', 'auto'])
 @pytest.mark.parametrize("X, X2, cats, cat_dtype", [
@@ -462,7 +462,7 @@ def test_one_hot_encoder_drop_equals_if_binary():
     assert_allclose(result, expected)
 
 
-# TODO: Remove when 'ignore' is deprecated in 0.25
+# TODO: Remove when 'ignore' is deprecated in 0.26
 @pytest.mark.filterwarnings("ignore:handle_unknown='ignore':FutureWarning")
 @pytest.mark.parametrize("X", [np.array([[1, np.nan]]).T,
                                np.array([['a', np.nan]], dtype=object).T],
