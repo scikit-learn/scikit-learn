@@ -689,7 +689,7 @@ class IterativeImputer(_BaseImputer):
             limit = np.full(n_features, limit)
             # Set to None for classification tasks
             if np.any(self._is_cls_task):
-                limit[self._is_cls_task] = None
+                limit[self._is_cls_task] = np.nan
         else:
             # Ensure array
             limit = check_array(

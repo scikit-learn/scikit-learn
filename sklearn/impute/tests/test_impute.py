@@ -603,7 +603,15 @@ def test_iterative_imputer_all_missing():
         make_column_selector(dtype_exclude="number"),
     ],
 )
-def test_iterative_imputer_mixed_categorical(cls_columns, n_jobs):
+@pytest.mark.parametrize(
+    "max_value",
+    [
+        None,
+        [None, None, None],
+        [0, None, None]
+    ],
+)
+def test_iterative_imputer_mixed_categorical(cls_columns, n_jobs, max_value):
     age = [np.nan, 82.0, 28.0]
     sex = ["male", "female", np.nan]
     cabin = ["c1", np.nan, "e8"]
@@ -614,10 +622,34 @@ def test_iterative_imputer_mixed_categorical(cls_columns, n_jobs):
         transformers=[(OneHotEncoder(sparse=False), cls_columns)],
         initial_strategy="most_frequent",
         n_jobs=n_jobs,
+        max_value=max_value,
     )
     X_filled = imputer.fit_transform(X)
     assert not np.any(pd.isnull(X_filled))
 
+
+@pytest.mark.parametrize(
+    "max_value",
+    [
+        0,
+        [0, 0, None],
+        [None, None, 0]
+    ],
+)
+def test_iterative_imputer_invalid_limit_for_categorical(max_value):
+    age = [np.nan, 82.0, 28.0]
+    sex = ["male", "female", np.nan]
+    cabin = ["c1", np.nan, "e8"]
+    pd = pytest.importorskip("pandas")
+    X = pd.DataFrame({"age": age, "sex": sex, "cabin": cabin})
+    imputer = IterativeImputer(
+        estimator=[(DummyClassifier(), [1, 2])],
+        transformers=[(OneHotEncoder(sparse=False), [1, 2])],
+        initial_strategy="most_frequent",
+        max_value=max_value,
+    )
+    with pytest.raises(ValueError):
+        imputer.fit_transform(X)
 
 @pytest.mark.parametrize(
     "imputation_order",
