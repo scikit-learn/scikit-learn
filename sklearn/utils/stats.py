@@ -1,13 +1,33 @@
 import numpy as np
 
 from .extmath import stable_cumsum
-from sklearn.utils.fixes import _take_along_axis
+from .fixes import _take_along_axis
 
 
 def _weighted_percentile(array, sample_weight, percentile=50):
-    """
-    Compute the weighted ``percentile`` of ``array`` with ``sample_weight``.
-    If ``array`` is 2D, compute weighted ``percentile`` along axis=0.
+    """Compute weighted percentile
+
+    Computes lower weighted percentile. If `array` is a 2D array, the
+    `percentile` is computed along the axis 0.
+
+        .. versionchanged:: 0.24
+            Accepts 2D `array`.
+
+    Parameters
+    ----------
+    array : 1D or 2D array
+        Values to take the weighted percentile of.
+
+    sample_weight: 1D or 2D array
+        Weights for each value in `array`. Must be the same shape as `array`.
+
+    percentile: int, default=50
+        Percentile to compute. Must be value between 0 and 100.
+
+    Returns
+    -------
+    percentile : int if `array` 1D, ndarray if `array` 2D
+        Weighted percentile.
     """
     n_dim = array.ndim
     if n_dim == 0:

@@ -30,6 +30,7 @@ from ..utils.validation import (check_array, check_consistent_length,
                                 _num_samples)
 from ..utils.validation import column_or_1d
 from ..utils.validation import _deprecate_positional_args
+from ..utils.validation import _check_sample_weight
 from ..utils.stats import _weighted_percentile
 from ..exceptions import UndefinedMetricWarning
 
@@ -337,7 +338,7 @@ def mean_squared_log_error(y_true, y_pred, *,
 
 @_deprecate_positional_args
 def median_absolute_error(y_true, y_pred, *, multioutput='uniform_average',
-                          sample_weight=None,):
+                          sample_weight=None):
     """Median absolute error regression loss
 
     Median absolute error output is non-negative floating point. The best value
@@ -394,6 +395,7 @@ def median_absolute_error(y_true, y_pred, *, multioutput='uniform_average',
     """
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput)
+    sample_weight = _check_sample_weight(sample_weight, y_pred)
     if sample_weight is None:
         output_errors = np.median(np.abs(y_pred - y_true), axis=0)
     else:
