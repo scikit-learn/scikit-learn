@@ -20,7 +20,7 @@ def _weighted_percentile(array, sample_weight, percentile=50):
 
     sample_weight: 1D or 2D array
         Weights for each value in `array`. Must be same shape as `array` or
-        shape of `(array.shape[0],)`.
+        of shape `(array.shape[0],)`.
 
     percentile: int, default=50
         Percentile to compute. Must be value between 0 and 100.
