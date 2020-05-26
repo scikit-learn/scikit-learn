@@ -765,8 +765,8 @@ To test code coverage, you need to install the `coverage
 Monitoring performance
 ======================
 
-*This section is heavily inspired from the `pandas documentation 
-<https://pandas.pydata.org/docs/development/contributing.html#running-the-performance-test-suite>`_.*
+*This section is heavily inspired from the* `pandas documentation 
+<https://pandas.pydata.org/docs/development/contributing.html#running-the-performance-test-suite>`_.
 
 
 When proposing changes to the existing code base, it's important to make sure
