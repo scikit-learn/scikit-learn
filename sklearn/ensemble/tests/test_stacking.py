@@ -513,7 +513,7 @@ def test_stacking_without_n_features_in(make_dataset, Stacking, Regression):
     stacker = Stacking(estimators=[('lr', MyLR())])
 
     msg = f"{Stacking.__name__} object has no attribute n_features_in_"
-    with pytest.raises(AttributeError, match=msg) as record:
+    with pytest.raises(AttributeError, match=msg):
         stacker.n_features_in_
 
     # Does not raise
