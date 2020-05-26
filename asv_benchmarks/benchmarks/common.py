@@ -10,6 +10,7 @@ import numpy as np
 
 
 def get_from_config():
+    """Get benchmarks configuration from the config.json file"""
     current_path = os.path.dirname(os.path.realpath(__file__))
 
     config_path = os.path.join(current_path, 'config.json')
@@ -52,6 +53,7 @@ def get_from_config():
 
 
 def get_estimator_path(benchmark, folder, params, save=False):
+    """Get path of pickled estimator"""
     folder = os.path.join('estimators', folder) if save else 'tmp'
     f_name = (benchmark.__class__.__name__[:-6]
               + '_estimator_' + '_'.join(list(map(str, params))) + '.pkl')
@@ -61,6 +63,7 @@ def get_estimator_path(benchmark, folder, params, save=False):
 
 
 def get_data_path(benchmark, params):
+    """Get path of pickled dataset"""
     f_name = (benchmark.__class__.__name__[:-6]
               + '_data_' + '_'.join(list(map(str, params))) + '.pkl')
     path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
@@ -69,6 +72,7 @@ def get_data_path(benchmark, params):
 
 
 def clear_tmp():
+    """Clean the cache folder"""
     path = os.path.join(os.path.dirname(os.path.realpath(__file__)),
                         'cache', 'tmp')
 
@@ -76,6 +80,7 @@ def clear_tmp():
 
 
 class Benchmark(ABC):
+    """Abstract base class for all the benchmarks"""
     timer = timeit.default_timer  # wall time
     processes = 1
     timeout = 500
@@ -106,11 +111,17 @@ class Benchmark(ABC):
 
 
 class Estimator(ABC):
+    """Abstract base class for all benchmarks of estimators"""
     @abstractmethod
     def setup_cache_(self, params):
         pass
 
     def setup_cache(self):
+        """Run once per benchmark class
+        
+        Create and pickle all datasets needed for all param combinations.
+        Pickle a fitted estimator for all param combinations.
+        """
         clear_tmp()
 
         param_grid = list(itertools.product(*self.params))
@@ -133,6 +144,10 @@ class Estimator(ABC):
                 pickle.dump(estimator, f)
 
     def setup(self, *params):
+        """Run for each param combination
+        
+        Load the pickled dataset and fitted estimator and run the benchmark.
+        """
         if hasattr(self, 'setup_'):
             self.setup_(params)
 
@@ -169,6 +184,7 @@ class Estimator(ABC):
 
 
 class Predictor(ABC):
+    """Abstract base class for benchmarks of estimators implementing predict"""
     if Benchmark.bench_predict:
         def time_predict(self, *args):
             self.estimator.predict(self.X)
@@ -195,6 +211,8 @@ class Predictor(ABC):
 
 
 class Transformer(ABC):
+    """Abstract base class for benchmarks of estimators implementing transform
+    """
     if Benchmark.bench_transform:
         def time_transform(self, *args):
             self.estimator.transform(self.X)
