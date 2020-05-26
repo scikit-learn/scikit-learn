@@ -18,6 +18,59 @@ def iris():
     return load_iris(return_X_y=True)
 
 
+def _success(x):
+    return True
+
+
+def _fail(x):
+    return False
+
+
+@pytest.mark.parametrize('kwargs', [
+    {},
+    {'check_X': _success},
+    {'check_y': _success},
+    {'check_X': _success, 'check_y': _success},
+])
+def test_check_on_fit_success(iris, kwargs):
+    X, y = iris
+    CheckingClassifier(**kwargs).fit(X, y)
+
+
+@pytest.mark.parametrize('kwargs', [
+    {'check_X': _fail},
+    {'check_y': _fail},
+    {'check_X': _success, 'check_y': _fail},
+    {'check_X': _fail, 'check_y': _success},
+    {'check_X': _fail, 'check_y': _fail},
+])
+def test_check_on_fit_fail(iris, kwargs):
+    X, y = iris
+    clf = CheckingClassifier(**kwargs)
+    with pytest.raises(AssertionError):
+        clf.fit(X, y)
+
+
+@pytest.mark.parametrize(
+    "pred_func", ["predict", "predict_proba", "decision_function", "score"]
+)
+def test_check_X_on_predict_success(iris, pred_func):
+    X, y = iris
+    clf = CheckingClassifier(check_X=_success).fit(X, y)
+    getattr(clf, pred_func)(X)
+
+
+@pytest.mark.parametrize(
+    "pred_func", ["predict", "predict_proba", "decision_function", "score"]
+)
+def test_check_X_on_predict_fail(iris, pred_func):
+    X, y = iris
+    clf = CheckingClassifier(check_X=_success).fit(X, y)
+    clf.set_params(check_X=_fail)
+    with pytest.raises(AssertionError):
+        getattr(clf, pred_func)(X)
+
+
 @pytest.mark.parametrize(
     "input_type", ["list", "array", "sparse", "dataframe"]
 )
@@ -69,22 +122,13 @@ def test_checking_classifier_with_params(iris):
     X, y = iris
     X_sparse = sparse.csr_matrix(X)
 
-    def check_X_is_sparse(X):
-        if not sparse.issparse(X):
-            raise ValueError("X is not sparse")
-        return True
-
-    clf = CheckingClassifier(check_X=check_X_is_sparse)
-    with pytest.raises(ValueError, match="X is not sparse"):
+    clf = CheckingClassifier(check_X=sparse.issparse)
+    with pytest.raises(AssertionError):
         clf.fit(X, y)
     clf.fit(X_sparse, y)
 
-    def _check_array(X, **params):
-        check_array(X, **params)
-        return True
-
     clf = CheckingClassifier(
-        check_X=_check_array, check_X_params={"accept_sparse": False}
+        check_X=check_array, check_X_params={"accept_sparse": False}
     )
     clf.fit(X, y)
     with pytest.raises(TypeError, match="A sparse matrix was passed"):
@@ -106,3 +150,28 @@ def test_checking_classifier_missing_fit_params(iris):
     clf = CheckingClassifier(expected_fit_params=["sample_weight"])
     with pytest.raises(AssertionError, match="Expected fit parameter"):
         clf.fit(X, y)
+
+
+@pytest.mark.parametrize(
+    "methods_to_check",
+    [["predict"], ["predict", "predict_proba"]],
+)
+@pytest.mark.parametrize(
+    "predict_method",
+    ["predict", "predict_proba", "decision_function", "score"]
+)
+def test_checking_classifier_methods_to_check(iris, methods_to_check,
+                                              predict_method):
+    # check that methods_to_check allows to bypass checks
+    X, y = iris
+
+    clf = CheckingClassifier(
+        check_X=sparse.issparse, methods_to_check=methods_to_check,
+    )
+
+    clf.fit(X, y)
+    if predict_method in methods_to_check:
+        with pytest.raises(AssertionError):
+            getattr(clf, predict_method)(X)
+    else:
+        getattr(clf, predict_method)(X)

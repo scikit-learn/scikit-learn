@@ -692,7 +692,9 @@ def test_gridsearch_nd():
     y_3d = np.arange(10 * 7 * 11).reshape(10, 7, 11)
     check_X = lambda x: x.shape[1:] == (5, 3, 2)
     check_y = lambda x: x.shape[1:] == (7, 11)
-    clf = CheckingClassifier(check_X=check_X, check_y=check_y)
+    clf = CheckingClassifier(
+        check_X=check_X, check_y=check_y, methods_to_check=["fit"],
+    )
     grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]})
     grid_search.fit(X_4d, y_3d).score(X, y)
     assert hasattr(grid_search, "cv_results_")
@@ -703,7 +705,9 @@ def test_X_as_list():
     X = np.arange(100).reshape(10, 10)
     y = np.array([0] * 5 + [1] * 5)
 
-    clf = CheckingClassifier(check_X=lambda x: isinstance(x, list))
+    clf = CheckingClassifier(
+        check_X=lambda x: isinstance(x, list), methods_to_check=["fit"],
+    )
     cv = KFold(n_splits=3)
     grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]}, cv=cv)
     grid_search.fit(X.tolist(), y).score(X, y)
@@ -715,7 +719,9 @@ def test_y_as_list():
     X = np.arange(100).reshape(10, 10)
     y = np.array([0] * 5 + [1] * 5)
 
-    clf = CheckingClassifier(check_y=lambda x: isinstance(x, list))
+    clf = CheckingClassifier(
+        check_y=lambda x: isinstance(x, list), methods_to_check=["fit"],
+    )
     cv = KFold(n_splits=3)
     grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]}, cv=cv)
     grid_search.fit(X, y.tolist()).score(X, y)
