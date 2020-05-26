@@ -20,7 +20,6 @@ from sklearn.datasets import load_diabetes
 from sklearn.datasets import load_linnerud
 from sklearn.datasets import load_iris
 from sklearn.datasets import load_breast_cancer
-from sklearn.datasets import load_boston
 from sklearn.datasets import load_wine
 from sklearn.utils import Bunch
 from sklearn.datasets.tests.test_common import check_return_X_y
@@ -258,18 +257,6 @@ def test_toy_dataset_as_frame(loader_func, data_dtype, target_dtype):
 ])
 def test_toy_dataset_as_frame_no_pandas(loader_func):
     check_pandas_dependency_message(loader_func)
-
-
-def test_load_boston():
-    res = load_boston()
-    assert res.data.shape == (506, 13)
-    assert res.target.size == 506
-    assert res.feature_names.size == 13
-    assert res.DESCR
-    assert os.path.exists(res.filename)
-
-    # test return_X_y option
-    check_return_X_y(res, partial(load_boston))
 
 
 def test_loads_dumps_bunch():
