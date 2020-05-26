@@ -113,6 +113,15 @@ Changelog
   :pr:`16530` by :user:`Shuhua Fan <jim0421>`.
 
 
+:mod:`sklearn.multiclass`
+.........................
+
+- |Fix| A fix to allow :class:`multiclass.OutputCodeClassifier` to accept
+  sparse input data in its `fit` and `predict` methods. The check for
+  validity of the input is now delegated to the base estimator.
+  :pr:`17233` by :user:`Zolisa Bleki <zoj613>`.
+
+
 Code and Documentation Contributors
 -----------------------------------
 
