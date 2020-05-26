@@ -338,13 +338,6 @@ Changelog
   :class:`tree.DecisionTreeRegressor`. :pr:`15864` by
   `Nicolas Hug`_.
 
-:mod:`sklearn.kernel_approximation`
-...................................
-
-- |Feature| Added class :class:`kernel_approximation.PolynomialSampler` which implements the Tensor Sketch
-  algorithm for polynomial kernel feature map approximation.
-  :pr:`13003` by :user:`Daniel López Sánchez <lopeLH>`.
-
 :mod:`sklearn.linear_model`
 ...........................
 
