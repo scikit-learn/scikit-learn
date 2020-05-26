@@ -44,12 +44,16 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
-:mod:`sklearn.kernel_approximation`
-...................................
+:mod:`sklearn.ensemble`
+.......................
 
-- |Feature| Added class :class:`kernel_approximation.PolynomialSampler` which implements the Tensor Sketch
-  algorithm for polynomial kernel feature map approximation.
-  :pr:`13003` by :user:`Daniel López Sánchez <lopeLH>`.
+- |Feature| :class:`ensemble.HistGradientBoostingRegressor` and
+  :class:`ensemble.HistGradientClassifier` now support `staged_predict`,
+  which allows monitoring of each stage.
+  :pr:`16985` by :user:`Hao Chun Chang <haochunchang>`.
+
+:mod:`sklearn.impute`
+.....................
 
 - |Fix| replace the default values in :class:`impute.IterativeImputer`
   of `min_value` and `max_value` parameters to `-np.inf` and `np.inf`,
