@@ -73,7 +73,6 @@ They can be loaded using the following functions:
    :toctree: ../modules/generated/
    :template: function.rst
 
-   load_boston
    load_iris
    load_diabetes
    load_digits
@@ -84,8 +83,6 @@ They can be loaded using the following functions:
 These datasets are useful to quickly illustrate the behavior of the
 various algorithms implemented in scikit-learn. They are however often too
 small to be representative of real world machine learning tasks.
-
-.. include:: ../../sklearn/datasets/descr/boston_house_prices.rst
 
 .. include:: ../../sklearn/datasets/descr/iris.rst
 
