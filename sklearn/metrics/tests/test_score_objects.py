@@ -89,7 +89,7 @@ def _make_estimators(X_train, y_train, y_ml_train):
     # Make estimators that make sense to test various scoring methods
     sensible_regr = DecisionTreeRegressor(random_state=0)
     # some of the regressions scorers require strictly positive input.
-    sensible_regr.fit(X_train, y_train + 1)
+    sensible_regr.fit(X_train, _require_positive_y(y_train))
     sensible_clf = DecisionTreeClassifier(random_state=0)
     sensible_clf.fit(X_train, y_train)
     sensible_ml_clf = DecisionTreeClassifier(random_state=0)
