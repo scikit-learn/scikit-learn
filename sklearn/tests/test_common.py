@@ -15,7 +15,7 @@ from inspect import isgenerator
 from functools import partial
 
 import pytest
-
+import numpy as np
 
 from sklearn.utils import all_estimators
 from sklearn.utils._testing import ignore_warnings
@@ -25,6 +25,8 @@ from sklearn.utils.estimator_checks import check_estimator
 import sklearn
 from sklearn.base import BiclusterMixin
 
+from sklearn.decomposition import NMF
+from sklearn.utils.validation import check_non_negative, check_array
 from sklearn.linear_model._base import LinearClassifierMixin
 from sklearn.linear_model import LogisticRegression
 from sklearn.svm import NuSVC
@@ -33,7 +35,7 @@ from sklearn.utils._testing import SkipTest
 from sklearn.utils.estimator_checks import (
     _construct_instance,
     _set_checking_parameters,
-    _set_check_estimator_ids,
+    _get_check_estimator_ids,
     check_class_weight_balanced_linear_classifier,
     parametrize_with_checks)
 
@@ -60,8 +62,8 @@ def _sample_func(x, y=1):
      "LogisticRegression(class_weight='balanced',random_state=1,"
      "solver='newton-cg',warm_start=True)")
 ])
-def test_set_check_estimator_ids(val, expected):
-    assert _set_check_estimator_ids(val) == expected
+def test_get_check_estimator_ids(val, expected):
+    assert _get_check_estimator_ids(val) == expected
 
 
 def _tested_estimators():
@@ -207,6 +209,21 @@ def test_class_support_removed():
         parametrize_with_checks([LogisticRegression])
 
 
+class MyNMFWithBadErrorMessage(NMF):
+    # Same as NMF but raises an uninformative error message if X has negative
+    # value. This estimator would fail the check suite in strict mode,
+    # specifically it would fail check_fit_non_negative
+    def fit(self, X, y=None, **params):
+        X = check_array(X, accept_sparse=('csr', 'csc'),
+                        dtype=[np.float64, np.float32])
+        try:
+            check_non_negative(X, whom='')
+        except ValueError:
+            raise ValueError("Some non-informative error msg")
+
+        return super().fit(X, y, **params)
+
+
 def test_strict_mode_check_estimator():
     # Make sure the strict checks are properly ignored when strict mode is off
     # in check_estimator.
@@ -214,7 +231,7 @@ def test_strict_mode_check_estimator():
 
     with pytest.warns(SkipTestWarning):
         # LogisticRegression has no _xfail_checks, but check_n_features_in is
-        # still skipped because it's a strict check
+        # still skipped because it's a fully strict check
         check_estimator(LogisticRegression(), strict_mode=False)
 
     with pytest.warns(SkipTestWarning):
@@ -222,8 +239,17 @@ def test_strict_mode_check_estimator():
         # with the other checks in the tag.
         check_estimator(NuSVC(), strict_mode=False)
 
+    # MyNMF will fail check_fit_non_negative in strict mode, but it will pass
+    # in non-strict mode which doesn't check the exact error message.
+    with pytest.raises(AssertionError, match='does not match'):
+        check_estimator(MyNMFWithBadErrorMessage(), strict_mode=True)
+    check_estimator(MyNMFWithBadErrorMessage(), strict_mode=False)
 
-@parametrize_with_checks([LogisticRegression(), NuSVC()], strict_mode=False)
+
+@parametrize_with_checks([LogisticRegression(),
+                          NuSVC(),
+                          MyNMFWithBadErrorMessage()],
+                         strict_mode=False)
 def test_strict_mode_parametrize_with_checks(estimator, check):
     # Ideally we should assert that the strict checks are Xfailed...
     check(estimator)
