@@ -70,9 +70,6 @@ They can be loaded using the following functions:
 
 .. autosummary::
 
-   :toctree: ../modules/generated/
-   :template: function.rst
-
    load_boston
    load_iris
    load_diabetes
@@ -110,10 +107,7 @@ necessary.
 They can be loaded using the following functions:
 
 .. autosummary::
-
-   :toctree: ../modules/generated/
-   :template: function.rst
-
+ 
    fetch_olivetti_faces
    fetch_20newsgroups
    fetch_20newsgroups_vectorized
@@ -207,9 +201,6 @@ Biclustering
 
 .. autosummary::
 
-   :toctree: ../modules/generated/
-   :template: function.rst
-
    make_biclusters
    make_checkerboard
 
@@ -235,9 +226,6 @@ Generators for manifold learning
 
 .. autosummary::
 
-   :toctree: ../modules/generated/
-   :template: function.rst
-
    make_s_curve
    make_swiss_roll
 
@@ -245,9 +233,6 @@ Generators for decomposition
 ----------------------------
 
 .. autosummary::
-
-   :toctree: ../modules/generated/
-   :template: function.rst
 
    make_low_rank_matrix
    make_sparse_coded_signal
@@ -270,9 +255,6 @@ Commons license by their authors. Those images can be useful to test algorithms
 and pipeline on 2D data.
 
 .. autosummary::
-
-   :toctree: ../modules/generated/
-   :template: function.rst
 
    load_sample_images
    load_sample_image

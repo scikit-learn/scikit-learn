@@ -310,8 +310,6 @@ Here is the list of such models:
 .. currentmodule:: sklearn
 
 .. autosummary::
-   :toctree: generated/
-   :template: class.rst
 
    linear_model.ElasticNetCV
    linear_model.LarsCV
@@ -337,8 +335,6 @@ Criterion (AIC) or the Bayesian Information Criterion (BIC) for automated
 model selection:
 
 .. autosummary::
-   :toctree: generated/
-   :template: class.rst
 
    linear_model.LassoLarsIC
 
@@ -361,8 +357,6 @@ model selection.
 This is currently implemented in the following classes:
 
 .. autosummary::
-   :toctree: generated/
-   :template: class.rst
 
     ensemble.RandomForestClassifier
     ensemble.RandomForestRegressor
