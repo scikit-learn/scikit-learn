@@ -91,12 +91,6 @@ if SETUPTOOLS_COMMANDS.intersection(sys.argv):
         zip_safe=False,  # the package can run out of an .egg file
         include_package_data=True,
         extras_require={
-            'alldeps': (
-                f'numpy>={NUMPY_MIN_VERSION}',
-                f'scipy>={SCIPY_MIN_VERSION}',
-                f'joblib>={JOBLIB_MIN_VERSION}',
-                f'threadpoolctl>={THREADPOOLCTL_MIN_VERSION}'
-            ),
             'examples': (
                 f'matplotlib>={MATPLOTLIB_MIN_VERSION}',
                 f'scikit-image>={SCIKIT_IMAGE_MIN_VERSION}',
