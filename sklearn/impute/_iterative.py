@@ -455,8 +455,14 @@ class IterativeImputer(_BaseImputer):
                 imputed_values = np.clip(imputed_values, min_val, max_val,)
 
         # Update the feature
-        X_filled[missing_row_mask, self._col_mapping(feat_idx)] = \
-            imputed_values
+        # Create a valid index from the boolean row
+        # masks and integer column numbers
+        ix = np.ix_(
+            np.where(missing_row_mask)[0],
+            np.atleast_1d(self._col_mapping(feat_idx))
+        )
+        # Reshape imputed_values, X_filled[ix] will always be at least 2D
+        X_filled[ix] = imputed_values.reshape(imputed_values.shape[0], -1)
         return X_filled, estimator
 
     def _col_mapping(self, cols):
@@ -767,7 +773,7 @@ class IterativeImputer(_BaseImputer):
         )
         if fit_mode:
             self._split_cols = split_cols
-            self._transformers = tfs
+            self._transformers = np.asarray(tfs)
         Xtf = np.concatenate(transformed, axis=1)
         if Xtf.ndim == 2 and Xt.ndim == 1 and Xtf.shape[1] == 1:
             return np.squeeze(Xtf, axis=1)
