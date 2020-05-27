@@ -108,7 +108,6 @@ if SETUPTOOLS_COMMANDS.intersection(sys.argv):
             'tests': (
                 f'pytest>={PYTEST_MIN_VERSION}',
                 f'pytest-cov>={PYTEST_COV_MIN_VERSION}',
-                f'Cython>={CYTHON_MIN_VERSION}',
                 f'flake8>={FLAKE8_MIN_VERSION}',
                 f'mypy>={MYPY_MIN_VERSION}',
                 f'coverage>={COVERAGE_MIN_VERSION}'
