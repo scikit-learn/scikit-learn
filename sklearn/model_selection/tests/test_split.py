@@ -2,7 +2,7 @@
 import warnings
 import pytest
 import numpy as np
-from numpy import array #I read somewhere that I should not import
+from numpy import array  # I read somewhere that I should not import
 from scipy.sparse import coo_matrix, csc_matrix, csr_matrix
 from scipy import stats
 from scipy.special import comb
@@ -1620,37 +1620,36 @@ def test_random_state_shuffle_false(Klass):
                        match='has no effect since shuffle is False'):
         Klass(3, shuffle=False, random_state=0)
 
+
 def test_group_time_series_work_even_if_groups_are_none():
     """
     The GroupTimeSeriesSplit with no group should work exactly as a
     TimeSeriesSplit
     """
-    X = [0,1,2,3,4,5,6,7]
-    unique_groups = ['A','B','C','D']
-
+    X = [0, 1, 2, 3, 4, 5, 6, 7]
+    unique_groups = ['A', 'B', 'C', 'D']
     groups = np.array(unique_groups*2)
     n_samples = len(groups)
-    n_splits = 4
     
     # Fake array of time like
     time_stamps = X * np.arange(n_samples)
-
-    #expected_result = TimeSeriesSplit(n_splits=4).split(X)
+    
+    # expected_result = TimeSeriesSplit(n_splits=4).split(X)
     tscv = TimeSeriesSplit(n_splits=4)
     expected_result = []
     for train, test in tscv.split(X):
-        print("%s %s" % (train,test))
-        expected_result.append((train,test))
+        print("%s %s" % (train, test))
+        expected_result.append((train, test))
 
-    #A = GroupTimeSeriesSplit.split(X) with no groups
+    # A = GroupTimeSeriesSplit.split(X) with no groups
     
     A = [(array([0, 1, 2, 3]), array([4])),
-        (array([0, 1, 2, 3, 4]), array([5])),
-        (array([0, 1, 2, 3, 4, 5]), array([6])),
-        (array([0, 1, 2, 3, 4, 5, 6]), array([7]))]
+            (array([0, 1, 2, 3, 4]), array([5])),
+            (array([0, 1, 2, 3, 4, 5]), array([6])),
+            (array([0, 1, 2, 3, 4, 5, 6]), array([7]))]
     
     for i in range(len(A)):
-        assert_array_equal (all(A), all(expected_result))
+        assert_array_equal(all(A), all(expected_result))
 
 
 def test_group_time_series_ordering_and_group_preserved():
@@ -1658,27 +1657,28 @@ def test_group_time_series_ordering_and_group_preserved():
         unseen groups in the future
     """
 
-    unique_groups = ['A','B','C','D']
+    unique_groups = ['A', 'B', 'C', 'D']
     groups = np.array(unique_groups*4)
     n_samples = len(groups)
-    n_splits = 4
+    X = np.ones(n_samples)
+    # n_splits = 4
 
-    X = y = np.ones(n_samples)
     # Fake array of time like
     time_stamps = X * np.arange(n_samples)
 
-    #gts = GroupTimeSeriesSplit(n_splits=n_splits)
+    # gts = GroupTimeSeriesSplit(n_splits=n_splits)
 
     # We check two things here:
     # 1. Elements of a group in the evaluation split should not be
     # in the training split
     # 2. Elements of the training split should be in the past
     
-    #splits = gts.split(X, y, groups)
-    train = [0,2,3,4,6,7,8]
+    # splits = gts.split(X, y, groups)
+    train = [0, 2, 3, 4, 6, 7, 8]
     test = [9]
 
     # Get all the other entries for the groups found in test
+<<<<<<< HEAD
     #for (train, test) in splits:
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -1692,21 +1692,28 @@ def test_group_time_series_ordering_and_group_preserved():
     print(f"Train: {train}")
 >>>>>>> 3 new tests pytest passed locally
         # verify that they are not in the test set
+=======
+    # for (train, test) in splits:
+    print(f"Test: {test}")
+    print(f"Train: {train}")
+    # verify that they are not in the test set
+>>>>>>> add test each group be test group at least once and max_train_size
     assert len(np.intersect1d(groups[train], groups[test])) == 0
 
-#member of test set that happened during the train time will have to be removed?
-#maybe another test is needed?
-#something from GroupKFold test
+# member of test set that happened during train time will have to be removed?
+# maybe another test is needed?
+# something from GroupKFold test
 
-        # All the elements in the training set should be in past of the
-        # elements of the test set
+# All the elements in the training set should be in past of the
+# elements of the test set
     for e in time_stamps[train]:
         assert (e < time_stamps[test]).all()
 
-#if groups is uniformly distributed, interval between each split cannot be uniform
-#otherwise that one group will never be in the train set
-#in other words, if want to split every 5 minutes, 
-#there cannot be 5 groups that are uniformly distributed
+# if groups is uniformly distributed, interval between each split cannot be uniform
+# otherwise that one group will never be in the train set
+# in other words, if want to split every 5 minutes,
+# there cannot be 5 groups that are uniformly distributed
+
 
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -1727,22 +1734,102 @@ def test_group_time_series_more_splits_than_group():
 >>>>>>> add hard-code expected result from split function
 =======
 def test_group_time_series_fail_if_more_splits_than_group():
-   """ GroupTimeSeriesSplit should fail if there are more folds than group 
-   """
+    """ GroupTimeSeriesSplit should fail if there are more folds than group"""
     
-groups = np.array([1, 1, 1, 2, 2])
-unique_groups = np.unique(groups)
-n_splits = 4
-n_groups = len(unique_groups)
+    groups = np.array([1, 1, 1, 2, 2])
+    unique_groups = np.unique(groups)
+    n_splits = 4
+    n_groups = len(unique_groups)
 
-with pytest.raises(ValueError) as excinfo:
-    n_splits > n_groups
-    raise ValueError('Cannot have number of splits n_splits=%d greater than the number of groups: %d."')
+    with pytest.raises(ValueError) as excinfo:
+        n_splits > n_groups
+        raise ValueError('Cannot have number of splits n_splits=%d greater'
+        ' than the number of groups: %d."')
     
-assert str(excinfo.value) == 'Cannot have number of splits n_splits=%d greater than the number of groups: %d."'
+    assert str(excinfo.value) == 'Cannot have number of splits n_splits=%d greater than the number of groups: %d."'
 
 
-#assert_raises_regexp(ValueError, "Cannot have number of splits.*greater",
+# assert_raises_regexp(ValueError, "Cannot have number of splits.*greater",
                          #next,
                          #GroupTimeSeriesSplit(n_splits=3).split(X, y, groups))
+<<<<<<< HEAD
 >>>>>>> 3 new tests pytest passed locally
+=======
+
+def test_all_groups_get_to_be_test_set_at_least_once():
+    """ Each group has to be the test group"""
+    
+    X = [0, 1, 2, 3, 4, 5, 6, 7]
+    groups = ['B', 'D', 'D', 'C', 'C', 'A', 'B', 'A']
+    unique_groups = np.unique(groups)
+    n_samples = len(groups)
+    n_splits = 4
+    # hardcoded expected result  
+    # splits = GroupTimeSeriesSplit(n_splits=4, 
+    # 0B 1D 2D 3C 4C 5A 6B 7A
+    # [0 1 2 3 4][5 7]
+    # [1 2 3 4][6]
+    # [0 1 2][3 4]
+    # [0][1 2]
+    expected_test_indices = np.array([[1, 2], [3, 4], [6], [5, 7]])
+    flat_list = [item for sublist in expected_test_indices for item in sublist]
+    all_test_set = [int(i) for i in flat_list]
+
+    result = []
+    for i in all_test_set :
+        result.append(groups[i])
+    assert np.array_equal(np.unique(result), unique_groups)
+
+
+def _check_group_time_series_max_train_size(splits, check_splits, max_train_size):
+
+    for (train, test), (check_train, check_test) in zip(splits, check_splits):
+        assert_array_equal(test, check_test)
+        assert len(check_train) <= max_train_size
+        suffix_start = max(len(train) - max_train_size, 0)
+        assert_array_equal(check_train, train[suffix_start:])
+
+
+def test_group_time_series_max_train_size():
+    X = range(16)
+    groups = ['B', 'A', 'C', 'B', 'D', 'D', 'B', 'C', 'A', 'A', 'C', 'D', 'C', 'B', 'D', 'A']
+
+    #splits = GroupTimeSeriesSplit(n_splits=5).split(X)
+    splits = np.array([([1, 2], [3]), 
+    ([0, 1, 3, 4, 5], [7]), 
+    ([0, 2, 3, 4, 5, 6, 7], [9]),
+    ([0, 1, 2, 3, 6, 7, 8, 9, 10], [11]), 
+    ([0, 2, 3, 4, 5, 6, 7, 10, 11, 12, 13, 14], [15])])
+
+    #check_splits = GroupTimeSeriesSplit(n_splits=5, max_train_size=3).split(X)
+    # 5 and 8 would not be there in the 3rd and 4th train set??
+    max_train_size = 3
+    check_splits =  np.array([([1, 2], [3]), 
+    ([3, 4, 5], [7]), 
+    ([5, 6, 7], [9]), 
+    ([8, 9, 10], [11]), 
+    ([12, 13, 14], [15])])
+    _check_group_time_series_max_train_size(splits, check_splits, max_train_size=3)
+
+    # Test for the case where the size of a fold is greater than max_train_size
+    #check_splits = GroupTimeSeriesSplit(n_splits=5, max_train_size=2).split(X)
+    
+    max_train_size = 2
+    check_splits =  np.array([([1, 2], [3]), 
+    ([4, 5], [7]), 
+    ([6, 7], [9]), 
+    ([9, 10], [11]), 
+    ([13, 14], [15])])
+    _check_group_time_series_max_train_size(splits, check_splits, max_train_size=2)
+
+    # Test for the case where the size of each fold is less than max_train_size
+    #check_splits = GroupTimeSeriesSplit(n_splits=5, max_train_size=5).split(X)
+
+    max_train_size = 5
+    check_splits = np.array([([1, 2], [3]), 
+    ([0, 1, 3, 4, 5], [7]), 
+    ([3, 4, 5, 6, 7], [9]),
+    ([6, 7, 8, 9, 10], [11]), 
+    ([10, 11, 12, 13, 14], [15])])
+    _check_group_time_series_max_train_size(splits, check_splits, max_train_size=5)
+>>>>>>> add test each group be test group at least once and max_train_size
