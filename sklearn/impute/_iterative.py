@@ -119,6 +119,7 @@ class IterativeImputer(_BaseImputer):
         Minimum possible imputed value. Broadcast to shape (n_features,) if
         scalar. If array-like, expects shape (n_features,), one min value for
         each feature. The default is `-np.inf`.
+
     max_value : float or array-like of shape (n_features,), default=np.inf
         Maximum possible imputed value. Broadcast to shape (n_features,) if
         scalar. If array-like, expects shape (n_features,), one max value for
@@ -394,10 +395,8 @@ class IterativeImputer(_BaseImputer):
             ``X_filled[missing_row_mask, feat_idx]``.
         """
         if estimator is None and fit_mode is False:
-            raise ValueError(
-                "If fit_mode is False, then an already-fitted "
-                "estimator should be passed in."
-            )
+            raise ValueError("If fit_mode is False, then an already-fitted "
+                             "estimator should be passed in.")
 
         if estimator is None:
             estimator = clone(self._estimators[feat_idx])
@@ -421,9 +420,8 @@ class IterativeImputer(_BaseImputer):
             return X_filled, estimator
 
         # get posterior samples if there is at least one missing value
-        X_test = _safe_indexing(
-            X_filled[:, neighbor_feat_idx], missing_row_mask
-        )
+        X_test = _safe_indexing(X_filled[:, neighbor_feat_idx],
+                                missing_row_mask)
         if self.sample_posterior:
             mus, sigmas = estimator.predict(X_test, return_std=True)
             imputed_values = np.zeros(mus.shape, dtype=X_filled.dtype)
@@ -508,15 +506,19 @@ class IterativeImputer(_BaseImputer):
 
     def _get_ordered_idx(self, mask_missing_values):
         """Decide in what order we will update the features.
+
         As a homage to the MICE R package, we will have 4 main options of
         how to order the updates, and use a random order if anything else
         is specified.
+
         Also, this function skips features which have no missing values.
+
         Parameters
         ----------
         mask_missing_values : array-like, shape (n_samples, n_features)
             Input data's missing indicator matrix, where "n_samples" is the
             number of samples and "n_features" is the number of features.
+
         Returns
         -------
         ordered_idx : ndarray, shape (n_features,)
@@ -551,13 +553,16 @@ class IterativeImputer(_BaseImputer):
 
     def _get_abs_corr_mat(self, X_filled, tolerance=1e-6):
         """Get absolute correlation matrix between features.
+
         Parameters
         ----------
         X_filled : ndarray, shape (n_samples, n_features)
             Input data with the most recent imputations.
+
         tolerance : float, default=1e-6
             ``abs_corr_mat`` can have nans, which will be replaced
             with ``tolerance``.
+
         Returns
         -------
         abs_corr_mat : ndarray, shape (n_features, n_features)
@@ -898,10 +903,8 @@ class IterativeImputer(_BaseImputer):
 
         n_samples, n_features = Xt.shape
         if self.verbose > 0:
-            print(
-                "[IterativeImputer] Completing matrix with shape %s"
-                % (X.shape,)
-            )
+            print("[IterativeImputer] Completing matrix with shape %s"
+                  % (X.shape,))
         start_t = time()
         if not self.sample_posterior:
             Xt_previous = Xt.copy()
@@ -911,7 +914,7 @@ class IterativeImputer(_BaseImputer):
                 )
         self.imputation_sequence_ = []
         for self.n_iter_ in range(1, self.max_iter + 1):
-            if self.imputation_order == "random":
+            if self.imputation_order == 'random':
                 ordered_idx = self._get_ordered_idx(mask_missing_values)
 
             for feat_idx in ordered_idx:
@@ -937,13 +940,18 @@ class IterativeImputer(_BaseImputer):
                         Xt - Xt_previous, ord=np.inf, axis=None
                     )
                     if self.verbose > 0:
-                        print('[IterativeImputer] '
-                          'Change: {}, scaled tolerance: {} '.format(
-                              inf_norm, normalized_tol))
+                        print(
+                            '[IterativeImputer] '
+                            'Change: {}, scaled tolerance: {} '.format(
+                                inf_norm, normalized_tol
+                            )
+                        )
                     if inf_norm < normalized_tol:
                         if self.verbose > 0:
-                            print('[IterativeImputer] Early stopping criterion '
-                              'reached.')
+                            print(
+                                '[IterativeImputer] Early stopping '
+                                'criterion reached.'
+                            )
                         break
                 Xt_previous = Xt.copy()
         else:
@@ -955,12 +963,15 @@ class IterativeImputer(_BaseImputer):
 
     def transform(self, X):
         """Imputes all missing values in X.
+
         Note that this is stochastic, and that if random_state is not fixed,
         repeated calls, or permuted input, will yield different results.
+
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
             The input data to complete.
+
         Returns
         -------
         Xt : array-like, shape (n_samples, n_features)
@@ -1002,12 +1013,15 @@ class IterativeImputer(_BaseImputer):
 
     def fit(self, X, y=None):
         """Fits the imputer on X and return self.
+
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
             Input data, where "n_samples" is the number of samples and
             "n_features" is the number of features.
+
         y : ignored
+
         Returns
         -------
         self : object
