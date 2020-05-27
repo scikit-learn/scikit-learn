@@ -141,8 +141,7 @@ def test_unseen_or_no_features():
         assert_array_equal(X, np.zeros((1, 2)))
         with pytest.raises(ValueError) as e:
             v.transform([])
-        except ValueError as e:
-            assert "empty" in str(e)
+        assert "empty" in str(e)
 
 
 def test_deterministic_vocabulary():
