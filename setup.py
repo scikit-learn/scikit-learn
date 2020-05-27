@@ -58,22 +58,6 @@ else:
 JOBLIB_MIN_VERSION = '0.11'
 THREADPOOLCTL_MIN_VERSION = '2.0.0'
 
-MATPLOTLIB_MIN_VERSION = '2.1.1'
-SCIKIT_IMAGE_MIN_VERSION = '0.13'
-PANDAS_MIN_VERSION = '0.18.0'
-SEABORN_MIN_VERSION = '0.9.0'
-PYTEST_MIN_VERSION = '3.3.0'
-PYTEST_COV_MIN_VERSION = '2.9.0'
-CYTHON_MIN_VERSION = '0.29.19'
-FLAKE8_MIN_VERSION = '3.8.2'
-MYPY_MIN_VERSION = '0.770'
-COVERAGE_MIN_VERSION = '5.1'
-SPHINX_MIN_VERSION = '2.1.2'
-SPHINX_GALLERY_MIN_VERSION = '0.7.0'
-PILLOW_MIN_VERSION = '7.1.2'
-MEMORY_PROFILER_MIN_VERSION = '0.57.0'
-NUMPY_DOC_MIN_VERSION = '0.9.2'
-
 # Optional setuptools features
 # We need to import setuptools early, if we want setuptools features,
 # as it monkey-patches the 'setup' function
@@ -92,26 +76,25 @@ if SETUPTOOLS_COMMANDS.intersection(sys.argv):
         include_package_data=True,
         extras_require={
             'examples': (
-                f'matplotlib>={MATPLOTLIB_MIN_VERSION}',
-                f'scikit-image>={SCIKIT_IMAGE_MIN_VERSION}',
-                f'pandas>={PANDAS_MIN_VERSION}',
-                f'seaborn>={SEABORN_MIN_VERSION}',
+                'matplotlib>=2.1.1',
+                'scikit-image>=0.13',
+                'pandas>=0.18.0',
+                'seaborn>=0.9.0',
             ),
             'benchmark': (
-                f'memory_profiler>={MEMORY_PROFILER_MIN_VERSION}'
+                'memory_profiler>=0.57.0'
             ),
             'tests': (
-                f'pytest>={PYTEST_MIN_VERSION}',
-                f'pytest-cov>={PYTEST_COV_MIN_VERSION}',
-                f'flake8>={FLAKE8_MIN_VERSION}',
-                f'mypy>={MYPY_MIN_VERSION}',
-                f'coverage>={COVERAGE_MIN_VERSION}'
+                'pytest>=3.3.0',
+                'pytest-cov>=2.9.0',
+                'flake8>=3.8.2',
+                'mypy>=0.770',
             ),
             'docs': (
-                f'sphinx>={SPHINX_MIN_VERSION}',
-                f'sphinx-gallery>={SPHINX_GALLERY_MIN_VERSION}',
-                f'numpydoc>={NUMPY_DOC_MIN_VERSION}'
-                f'Pillow>={PILLOW_MIN_VERSION}',
+                'sphinx>=2.1.2',
+                'sphinx-gallery>=0.7.0',
+                'numpydoc>=0.9.2'
+                'Pillow>=7.1.2',
             ),
         },
     )
