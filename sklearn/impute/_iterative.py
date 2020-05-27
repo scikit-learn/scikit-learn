@@ -10,23 +10,20 @@ from joblib import Parallel, delayed
 from ..base import clone, is_classifier
 from ..exceptions import ConvergenceWarning
 from ..preprocessing import normalize
-from ..utils import (
-    check_array,
-    check_random_state,
-    _safe_indexing,
-    is_scalar_nan,
-)
+from ..utils import (check_array, check_random_state, _safe_indexing,
+                     is_scalar_nan)
 from ..utils.validation import FLOAT_DTYPES, check_is_fitted
 from ..utils._mask import _get_mask
 from ..preprocessing import FunctionTransformer
+
 from ._base import _BaseImputer
 from ._base import SimpleImputer
 from ._base import _check_inputs_dtype
 
 
-_ImputerTriplet = namedtuple(
-    "_ImputerTriplet", ["feat_idx", "neighbor_feat_idx", "estimator"]
-)
+_ImputerTriplet = namedtuple('_ImputerTriplet', ['feat_idx',
+                                                 'neighbor_feat_idx',
+                                                 'estimator'])
 
 DEFAULT_TOLERANCE = 1e-3
 
@@ -121,8 +118,10 @@ class IterativeImputer(_BaseImputer):
     min_value : float or array-like of shape (n_features,), default=-np.inf
         Minimum possible imputed value. Broadcast to shape (n_features,) if
         scalar. If array-like, expects shape (n_features,), one min value for
+        each feature. The default is `-np.inf`.
     max_value : float or array-like of shape (n_features,), default=np.inf
         Maximum possible imputed value. Broadcast to shape (n_features,) if
+        scalar. If array-like, expects shape (n_features,), one max value for
         each feature. The default is `np.inf`.
 
     verbose : int, default=0
@@ -212,29 +211,26 @@ class IterativeImputer(_BaseImputer):
         Journal of the Royal Statistical Society 22(2): 302-306.
         <https://www.jstor.org/stable/2984099>`_
     """
-
-    def __init__(
-        self,
-        estimator=None,
-        *,
-        transformers=None,
-        missing_values=np.nan,
-        sample_posterior=False,
-        max_iter=10,
-        tol=DEFAULT_TOLERANCE,
-        n_nearest_features=None,
-        initial_strategy="mean",
-        imputation_order="ascending",
-        skip_complete=False,
-        min_value=-np.inf,
-        max_value=np.inf,
-        verbose=0,
-        random_state=None,
-        add_indicator=False,
-        n_jobs=None,
-    ):
+    def __init__(self,
+                 estimator=None, *,
+                 transformers=None,
+                 missing_values=np.nan,
+                 sample_posterior=False,
+                 max_iter=10,
+                 tol=1e-3,
+                 n_nearest_features=None,
+                 initial_strategy="mean",
+                 imputation_order='ascending',
+                 skip_complete=False,
+                 min_value=-np.inf,
+                 max_value=np.inf,
+                 verbose=0,
+                 random_state=None,
+                 add_indicator=False,
+                 n_jobs=None):
         super().__init__(
-            missing_values=missing_values, add_indicator=add_indicator
+            missing_values=missing_values,
+            add_indicator=add_indicator
         )
 
         self.estimator = estimator
@@ -351,15 +347,13 @@ class IterativeImputer(_BaseImputer):
 
                 self._estimators[i] = BayesianRidge()
 
-    def _impute_one_feature(
-        self,
-        X_filled,
-        mask_missing_values,
-        feat_idx,
-        neighbor_feat_idx,
-        estimator=None,
-        fit_mode=True,
-    ):
+    def _impute_one_feature(self,
+                            X_filled,
+                            mask_missing_values,
+                            feat_idx,
+                            neighbor_feat_idx,
+                            estimator=None,
+                            fit_mode=True):
         """Impute a single feature from the others provided.
 
         This function predicts the missing values of one of the features using
@@ -449,10 +443,10 @@ class IterativeImputer(_BaseImputer):
             a = (self._min_value[feat_idx] - mus) / sigmas
             b = (self._max_value[feat_idx] - mus) / sigmas
 
-            truncated_normal = stats.truncnorm(a=a, b=b, loc=mus, scale=sigmas)
+            truncated_normal = stats.truncnorm(a=a, b=b,
+                                               loc=mus, scale=sigmas)
             imputed_values[inrange_mask] = truncated_normal.rvs(
-                random_state=self.random_state_
-            )
+                random_state=self.random_state_)
         else:
             X_test = self._fit_transform_filled(
                 X_test, neighbor_feat_idx, fit_mode=False
@@ -472,7 +466,10 @@ class IterativeImputer(_BaseImputer):
         X_filled[missing_row_mask, feat_idx] = imputed_values
         return X_filled, estimator
 
-    def _get_neighbor_feat_idx(self, n_features, feat_idx, abs_corr_mat):
+    def _get_neighbor_feat_idx(self,
+                               n_features,
+                               feat_idx,
+                               abs_corr_mat):
         """Get a list of other features to predict ``feat_idx``.
 
         If self.n_nearest_features is less than or equal to the total
@@ -497,17 +494,12 @@ class IterativeImputer(_BaseImputer):
         neighbor_feat_idx : array-like
             The features to use to impute ``feat_idx``.
         """
-        if (
-            self.n_nearest_features is not None
-            and self.n_nearest_features < n_features
-        ):
+        if (self.n_nearest_features is not None and
+                self.n_nearest_features < n_features):
             p = abs_corr_mat[:, feat_idx]
             neighbor_feat_idx = self.random_state_.choice(
-                np.arange(n_features),
-                self.n_nearest_features,
-                replace=False,
-                p=p,
-            )
+                np.arange(n_features), self.n_nearest_features, replace=False,
+                p=p)
         else:
             inds_left = np.arange(feat_idx)
             inds_right = np.arange(feat_idx + 1, n_features)
@@ -516,19 +508,15 @@ class IterativeImputer(_BaseImputer):
 
     def _get_ordered_idx(self, mask_missing_values):
         """Decide in what order we will update the features.
-
         As a homage to the MICE R package, we will have 4 main options of
         how to order the updates, and use a random order if anything else
         is specified.
-
         Also, this function skips features which have no missing values.
-
         Parameters
         ----------
         mask_missing_values : array-like, shape (n_samples, n_features)
             Input data's missing indicator matrix, where "n_samples" is the
             number of samples and "n_features" is the number of features.
-
         Returns
         -------
         ordered_idx : ndarray, shape (n_features,)
@@ -539,44 +527,37 @@ class IterativeImputer(_BaseImputer):
             missing_values_idx = np.flatnonzero(frac_of_missing_values)
         else:
             missing_values_idx = np.arange(np.shape(frac_of_missing_values)[0])
-        if self.imputation_order == "roman":
+        if self.imputation_order == 'roman':
             ordered_idx = missing_values_idx
-        elif self.imputation_order == "arabic":
+        elif self.imputation_order == 'arabic':
             ordered_idx = missing_values_idx[::-1]
-        elif self.imputation_order == "ascending":
+        elif self.imputation_order == 'ascending':
             n = len(frac_of_missing_values) - len(missing_values_idx)
-            ordered_idx = np.argsort(frac_of_missing_values, kind="mergesort")[
-                n:
-            ]
-        elif self.imputation_order == "descending":
+            ordered_idx = np.argsort(frac_of_missing_values,
+                                     kind='mergesort')[n:]
+        elif self.imputation_order == 'descending':
             n = len(frac_of_missing_values) - len(missing_values_idx)
-            ordered_idx = np.argsort(frac_of_missing_values, kind="mergesort")[
-                n:
-            ][::-1]
-        elif self.imputation_order == "random":
+            ordered_idx = np.argsort(frac_of_missing_values,
+                                     kind='mergesort')[n:][::-1]
+        elif self.imputation_order == 'random':
             ordered_idx = missing_values_idx
             self.random_state_.shuffle(ordered_idx)
         else:
-            raise ValueError(
-                "Got an invalid imputation order: '{0}'. It must "
-                "be one of the following: 'roman', 'arabic', "
-                "'ascending', 'descending', or "
-                "'random'.".format(self.imputation_order)
-            )
+            raise ValueError("Got an invalid imputation order: '{0}'. It must "
+                             "be one of the following: 'roman', 'arabic', "
+                             "'ascending', 'descending', or "
+                             "'random'.".format(self.imputation_order))
         return ordered_idx
 
     def _get_abs_corr_mat(self, X_filled, tolerance=1e-6):
         """Get absolute correlation matrix between features.
-
         Parameters
         ----------
         X_filled : ndarray, shape (n_samples, n_features)
             Input data with the most recent imputations.
-
         tolerance : float, default=1e-6
             ``abs_corr_mat`` can have nans, which will be replaced
             with ``tolerance``.
-
         Returns
         -------
         abs_corr_mat : ndarray, shape (n_features, n_features)
@@ -586,12 +567,10 @@ class IterativeImputer(_BaseImputer):
             to 1.
         """
         n_features = X_filled.shape[1]
-        if (
-            self.n_nearest_features is None
-            or self.n_nearest_features >= n_features
-        ):
+        if (self.n_nearest_features is None or
+                self.n_nearest_features >= n_features):
             return None
-        with np.errstate(invalid="ignore"):
+        with np.errstate(invalid='ignore'):
             # if a feature in the neighboorhood has only a single value
             # (e.g., categorical feature), the std. dev. will be null and
             # np.corrcoef will raise a warning due to a division by zero
@@ -603,7 +582,7 @@ class IterativeImputer(_BaseImputer):
         # features are not their own neighbors
         np.fill_diagonal(abs_corr_mat, 0)
         # needs to sum to 1 for np.random.choice sampling
-        abs_corr_mat = normalize(abs_corr_mat, norm="l1", axis=0, copy=False)
+        abs_corr_mat = normalize(abs_corr_mat, norm='l1', axis=0, copy=False)
         return abs_corr_mat
 
     def _initial_imputation(self, X):
@@ -829,9 +808,8 @@ class IterativeImputer(_BaseImputer):
             The imputed input data.
         """
 
-        self.random_state_ = getattr(
-            self, "random_state_", check_random_state(self.random_state)
-        )
+        self.random_state_ = getattr(self, "random_state_",
+                                     check_random_state(self.random_state))
 
         if self.max_iter < 0:
             raise ValueError(
@@ -937,28 +915,21 @@ class IterativeImputer(_BaseImputer):
                 ordered_idx = self._get_ordered_idx(mask_missing_values)
 
             for feat_idx in ordered_idx:
-                neighbor_feat_idx = self._get_neighbor_feat_idx(
-                    n_features, feat_idx, abs_corr_mat
-                )
+                neighbor_feat_idx = self._get_neighbor_feat_idx(n_features,
+                                                                feat_idx,
+                                                                abs_corr_mat)
                 Xt, estimator = self._impute_one_feature(
-                    Xt,
-                    mask_missing_values,
-                    feat_idx,
-                    neighbor_feat_idx,
-                    estimator=None,
-                    fit_mode=True,
-                )
-                estimator_triplet = _ImputerTriplet(
-                    feat_idx, neighbor_feat_idx, estimator
-                )
+                    Xt, mask_missing_values, feat_idx, neighbor_feat_idx,
+                    estimator=None, fit_mode=True)
+                estimator_triplet = _ImputerTriplet(feat_idx,
+                                                    neighbor_feat_idx,
+                                                    estimator)
                 self.imputation_sequence_.append(estimator_triplet)
 
             if self.verbose > 1:
-                print(
-                    "[IterativeImputer] Ending imputation round "
-                    "%d/%d, elapsed time %0.2f"
-                    % (self.n_iter_, self.max_iter, time() - start_t)
-                )
+                print('[IterativeImputer] Ending imputation round '
+                      '%d/%d, elapsed time %0.2f'
+                      % (self.n_iter_, self.max_iter, time() - start_t))
 
             if not self.sample_posterior:
                 if not np.any(self._is_cls_task):
@@ -966,41 +937,30 @@ class IterativeImputer(_BaseImputer):
                         Xt - Xt_previous, ord=np.inf, axis=None
                     )
                     if self.verbose > 0:
-                        print(
-                            "[IterativeImputer] "
-                            "Change: {}, scaled tolerance: {} ".format(
-                                inf_norm, normalized_tol
-                            )
-                        )
+                        print('[IterativeImputer] '
+                          'Change: {}, scaled tolerance: {} '.format(
+                              inf_norm, normalized_tol))
                     if inf_norm < normalized_tol:
                         if self.verbose > 0:
-                            print(
-                                "[IterativeImputer] Early stopping criterion "
-                                "reached."
-                            )
+                            print('[IterativeImputer] Early stopping criterion '
+                              'reached.')
                         break
                 Xt_previous = Xt.copy()
         else:
             if not self.sample_posterior:
-                warnings.warn(
-                    "[IterativeImputer] Early stopping criterion not"
-                    " reached.",
-                    ConvergenceWarning,
-                )
+                warnings.warn("[IterativeImputer] Early stopping criterion not"
+                              " reached.", ConvergenceWarning)
         Xt[~mask_missing_values] = X[~mask_missing_values]
         return super()._concatenate_indicator(Xt, X_indicator)
 
     def transform(self, X):
         """Imputes all missing values in X.
-
         Note that this is stochastic, and that if random_state is not fixed,
         repeated calls, or permuted input, will yield different results.
-
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
             The input data to complete.
-
         Returns
         -------
         Xt : array-like, shape (n_samples, n_features)
@@ -1017,10 +977,8 @@ class IterativeImputer(_BaseImputer):
         imputations_per_round = len(self.imputation_sequence_) // self.n_iter_
         i_rnd = 0
         if self.verbose > 0:
-            print(
-                "[IterativeImputer] Completing matrix with shape %s"
-                % (X.shape,)
-            )
+            print("[IterativeImputer] Completing matrix with shape %s"
+                  % (X.shape,))
         start_t = time()
         for it, estimator_triplet in enumerate(self.imputation_sequence_):
             Xt, _ = self._impute_one_feature(
@@ -1029,15 +987,13 @@ class IterativeImputer(_BaseImputer):
                 estimator_triplet.feat_idx,
                 estimator_triplet.neighbor_feat_idx,
                 estimator=estimator_triplet.estimator,
-                fit_mode=False,
+                fit_mode=False
             )
             if not (it + 1) % imputations_per_round:
                 if self.verbose > 1:
-                    print(
-                        "[IterativeImputer] Ending imputation round "
-                        "%d/%d, elapsed time %0.2f"
-                        % (i_rnd + 1, self.n_iter_, time() - start_t)
-                    )
+                    print('[IterativeImputer] Ending imputation round '
+                          '%d/%d, elapsed time %0.2f'
+                          % (i_rnd + 1, self.n_iter_, time() - start_t))
                 i_rnd += 1
 
         Xt[~mask_missing_values] = X[~mask_missing_values]
@@ -1046,15 +1002,12 @@ class IterativeImputer(_BaseImputer):
 
     def fit(self, X, y=None):
         """Fits the imputer on X and return self.
-
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
             Input data, where "n_samples" is the number of samples and
             "n_features" is the number of features.
-
         y : ignored
-
         Returns
         -------
         self : object
