@@ -395,10 +395,10 @@ def median_absolute_error(y_true, y_pred, *, multioutput='uniform_average',
     """
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput)
-    sample_weight = _check_sample_weight(sample_weight, y_pred)
     if sample_weight is None:
         output_errors = np.median(np.abs(y_pred - y_true), axis=0)
     else:
+        sample_weight = _check_sample_weight(sample_weight, y_pred)
         output_errors = _weighted_percentile(np.abs(y_pred - y_true),
                                              sample_weight=sample_weight)
     if isinstance(multioutput, str):
