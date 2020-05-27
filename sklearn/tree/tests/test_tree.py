@@ -279,7 +279,7 @@ def test_diabetes():
                    random_state=0)
         reg.fit(diabetes.data, diabetes.target)
         score = mean_squared_error(diabetes.target, reg.predict(diabetes.data))
-        assert score < 11, (
+        assert score < 22, (
             "Failed with {0}, criterion = {1} and score = {2}"
             "".format(name, criterion, score))
 
