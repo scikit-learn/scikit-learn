@@ -275,11 +275,11 @@ def test_diabetes():
 
         # using fewer features and limiting tree depth reduces the learning
         # ability of this tree, but reduces training time.
-        reg = Tree(criterion=criterion, max_features=6, max_depth=18,
+        reg = Tree(criterion=criterion, max_features=6, max_depth=20,
                    random_state=0)
         reg.fit(diabetes.data, diabetes.target)
         score = mean_squared_error(diabetes.target, reg.predict(diabetes.data))
-        assert score < 22, (
+        assert score < 10, (
             "Failed with {0}, criterion = {1} and score = {2}"
             "".format(name, criterion, score))
 
