@@ -88,7 +88,8 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
     True
     >>> v.transform({'foo': 4, 'unseen_feature': 3})
     array([[0., 0., 4.]])
-    >>> # Multiple values for one categorical values
+
+    Multiple values for one categorical values
     >>> D2 = [{'foo': '1', 'bar': '2'}, {'foo': '3', 'baz': '1'},
               {'foo': ['1', '3']}]
     >>> X = v.fit_transform(D2)
