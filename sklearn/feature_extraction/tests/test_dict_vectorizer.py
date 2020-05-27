@@ -4,7 +4,6 @@
 
 from random import Random
 import numpy as np
-import pytest
 import scipy.sparse as sp
 from numpy.testing import assert_array_equal
 
@@ -94,37 +93,6 @@ def test_iterable_value():
     assert "version" not in names
 
 
-def test_iterable_value_with_generator():
-    D_in = [{"version": map(str, range(1, 3)), "ham": 2},
-            {"version": "2", "spam": .3},
-            {"version=3": True, "spam": -1}]
-    v = DictVectorizer(sparse=False)
-    X = v.fit_transform(D_in)
-    assert X.shape == (3, 5)
-
-    D_out = v.inverse_transform(X)
-    assert D_out[0] == {"version=1": 1, "version=2": 1, "ham": 2}
-
-    actual_x0 = v.transform({"version": map(str, range(1, 3)), "ham": 2})
-    assert_array_equal(actual_x0, X[0:1])
-
-    names = v.get_feature_names()
-    assert "version=2" in names
-    assert "version=1" in names
-    assert "version=3" in names
-    assert "version" not in names
-
-
-def test_iterable_value_fail_with_mapping():
-    D_in = [{"version": dict((i, str(i)) for i in range(1, 3)), "ham": 2},
-            {"version": "2", "spam": .3},
-            {"version=3": True, "spam": -1}]
-    v = DictVectorizer()
-    with pytest.raises(ValueError) as e:
-        v.fit(D_in)
-    assert "Unsupported Value Type" in str(e)
-
-
 def test_unseen_or_no_features():
     D = [{"camelot": 0, "spamalot": 1}]
     for sparse in [True, False]:
@@ -139,9 +107,11 @@ def test_unseen_or_no_features():
         if sparse:
             X = X.toarray()
         assert_array_equal(X, np.zeros((1, 2)))
-        with pytest.raises(ValueError) as e:
+
+        try:
             v.transform([])
-        assert "empty" in str(e)
+        except ValueError as e:
+            assert "empty" in str(e)
 
 
 def test_deterministic_vocabulary():

@@ -88,6 +88,7 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
     True
     >>> v.transform({'foo': 4, 'unseen_feature': 3})
     array([[0., 0., 4.]])
+    >>> # Multiple values for one categorical values
     >>> D2 = [{'foo': '1', 'bar': '2'}, {'foo': '3', 'baz': '1'},
               {'foo': ['1', '3']}]
     >>> X = v.fit_transform(D2)
@@ -136,11 +137,6 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
         for x in X:
             for f, v in x.items():
                 self.add_element(f, v, feature_names, vocab)
-#                if isinstance(v, str):
-#                    f = "%s%s%s" % (f, self.separator, v)
-#                if f not in vocab:
-#                    feature_names.append(f)
-#                    vocab[f] = len(vocab)
 
         if self.sort:
             feature_names.sort()
@@ -158,7 +154,7 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
             v = 1
         elif isinstance(v, Number) or (v is None):
             feature_name = f
-        elif isinstance(v, Iterable) and not isinstance(v, Mapping):
+        elif isinstance(v, Iterable) and not isinstance(v, str):
             for vv in v:
                 self.add_element(f, vv, feature_names, vocab,
                                  fitting, transforming, indices, values)
@@ -212,18 +208,6 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
             for f, v in x.items():
                 self.add_element(f, v, feature_names, vocab,
                                  fitting, transforming, indices, values)
-#                if isinstance(v, str):
-#                    f = "%s%s%s" % (f, self.separator, v)
-#                    v = 1
-#                if f in vocab:
-#                    indices.append(vocab[f])
-#                    values.append(dtype(v))
-#                else:
-#                    if fitting:
-#                        feature_names.append(f)
-#                        vocab[f] = len(vocab)
-#                        indices.append(vocab[f])
-#                        values.append(dtype(v))
 
             indptr.append(len(indices))
 
