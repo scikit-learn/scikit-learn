@@ -47,7 +47,7 @@ def test_one_hot_encoder_diff_n_features():
         enc.transform(X2)
 
 
-# TODO: Remove when 'ignore' is deprecated in 0.25
+# TODO: Remove when 'ignore' is deprecated in 0.26
 @pytest.mark.filterwarnings("ignore:handle_unknown='ignore':FutureWarning")
 @pytest.mark.parametrize("handle_unknown", ['ignore', 'auto'])
 def test_one_hot_encoder_handle_unknown(handle_unknown):
@@ -1091,7 +1091,7 @@ def test_ohe_infrequent_user_cats_unknown_training_errors(kwargs):
         ohe.fit(X_train)
 
 
-# TODO: Remove when 'ignore' is deprecated in 0.25
+# TODO: Remove when 'ignore' is deprecated in 0.26
 @pytest.mark.filterwarnings("ignore:handle_unknown='ignore':FutureWarning")
 @pytest.mark.parametrize("kwargs, error_msg", [
     ({'max_categories': 1}, 'max_categories must be greater than 1'),
@@ -1114,12 +1114,12 @@ def test_ohe_infrequent_invalid_parameters_error(kwargs, error_msg):
         ohe.fit(X_train)
 
 
-# TODO: Remove in 0.25 when 'ignore' is deprecated
+# TODO: Remove in 0.26 when 'ignore' is deprecated
 def test_ohe_ignore_deprecated():
     X_train = np.array([['a'] * 5 + ['b'] * 20 + ['c'] * 10 + ['d'] * 2]).T
     ohe = OneHotEncoder(handle_unknown='ignore')
 
     msg = (r"handle_unknown='ignore' is deprecated in favor of 'auto' in "
-           r"version 0\.23 and will be removed in version 0\.25")
+           r"version 0\.24 and will be removed in version 0\.26")
     with pytest.warns(FutureWarning, match=msg):
         ohe.fit(X_train)
