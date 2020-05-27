@@ -667,7 +667,7 @@ class TransformerMixin:
         ----------
         X : {array-like, sparse matrix, dataframe} of shape \
                 (n_samples, n_features)
-            The input samples.
+            Input samples.
 
         y : ndarray of shape (n_samples,), default=None
             Target values (None for unsupervised transformations).
