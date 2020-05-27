@@ -344,11 +344,11 @@ def _maybe_mark_xfail(estimator, check, strict_mode, pytest):
     # This is similar to _maybe_skip(), but this one is used by
     # @parametrize_with_checks() instead of check_estimator()
 
-    if not _should_be_skipped_or_marked(estimator, check, strict_mode):
+    should_be_marked, reason = _should_be_skipped_or_marked(estimator, check,
+                                                            strict_mode)
+    if not should_be_marked:
         return estimator, check
     else:
-        reason = ('This check is in the _xfail_checks tag, or it is '
-                  'a strict check and strict mode is off.')
         return pytest.param(estimator, check,
                             marks=pytest.mark.xfail(reason=reason))
 
@@ -359,8 +359,9 @@ def _maybe_skip(estimator, check, strict_mode):
     # This is similar to _maybe_mark_xfail(), but this one is used by
     # check_estimator() instead of @parametrize_with_checks which requires
     # pytest
-
-    if not _should_be_skipped_or_marked(estimator, check, strict_mode):
+    should_be_skipped, reason = _should_be_skipped_or_marked(estimator, check,
+                                                             strict_mode)
+    if not should_be_skipped:
         return check
 
     check_name = (check.func.__name__ if isinstance(check, partial)
@@ -369,7 +370,8 @@ def _maybe_skip(estimator, check, strict_mode):
     @wraps(check)
     def wrapped(*args, **kwargs):
         raise SkipTest(
-            f"Skipping {check_name} for {estimator.__class__.__name__}"
+            f"Skipping {check_name} for {estimator.__class__.__name__}: "
+            f"{reason}"
         )
 
     return wrapped
@@ -382,10 +384,13 @@ def _should_be_skipped_or_marked(estimator, check, strict_mode):
 
     xfail_checks = estimator._get_tags()['_xfail_checks'] or {}
 
-    return (
-        check_name in xfail_checks or
-        check_name in _FULLY_STRICT_CHECKS and not strict_mode
-    )
+    if check_name in _FULLY_STRICT_CHECKS and not strict_mode:
+        return True, 'The check is fully strict and strict mode is off'
+
+    if check_name in xfail_checks:
+        return True, xfail_checks[check_name]
+
+    return False, 'placeholder reason that will never be used'
 
 
 def parametrize_with_checks(estimators, strict_mode=True):
