@@ -72,7 +72,6 @@ SPHINX_MIN_VERSION = '2.1.2'
 SPHINX_GALLERY_MIN_VERSION = '0.7.0'
 PILLOW_MIN_VERSION = '7.1.2'
 MEMORY_PROFILER_MIN_VERSION = '0.57.0'
-PACKAGING_MIN_VERSION = '20.4'
 NUMPY_DOC_MIN_VERSION = '0.9.2'
 
 # Optional setuptools features
@@ -117,7 +116,6 @@ if SETUPTOOLS_COMMANDS.intersection(sys.argv):
             'docs': (
                 f'sphinx>={SPHINX_MIN_VERSION}',
                 f'sphinx-gallery>={SPHINX_GALLERY_MIN_VERSION}',
-                f'packaging>={PACKAGING_MIN_VERSION}',
                 f'numpydoc>={NUMPY_DOC_MIN_VERSION}'
             ),
         },
