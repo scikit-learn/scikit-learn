@@ -96,7 +96,8 @@ if SETUPTOOLS_COMMANDS.intersection(sys.argv):
                 f'scikit-image>={SCIKIT_IMAGE_MIN_VERSION}',
                 f'pandas>={PANDAS_MIN_VERSION}',
                 f'seaborn>={SEABORN_MIN_VERSION}',
-                f'Pillow>={PILLOW_MIN_VERSION}',
+            ),
+            'benchmark': (
                 f'memory_profiler>={MEMORY_PROFILER_MIN_VERSION}'
             ),
             'tests': (
@@ -110,6 +111,7 @@ if SETUPTOOLS_COMMANDS.intersection(sys.argv):
                 f'sphinx>={SPHINX_MIN_VERSION}',
                 f'sphinx-gallery>={SPHINX_GALLERY_MIN_VERSION}',
                 f'numpydoc>={NUMPY_DOC_MIN_VERSION}'
+                f'Pillow>={PILLOW_MIN_VERSION}',
             ),
         },
     )
