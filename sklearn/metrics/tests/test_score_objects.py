@@ -494,29 +494,30 @@ def test_classification_scorer_sample_weight():
     estimator = _make_estimators(X_train, y_train, y_ml_train)
 
     for name, scorer in SCORERS.items():
-        if name not in REGRESSION_SCORERS:
-            if name in MULTILABEL_ONLY_SCORERS:
-                target = y_ml_test
-            else:
-                target = y_test
-            try:
-                weighted = scorer(estimator[name], X_test, target,
-                                  sample_weight=sample_weight)
-                ignored = scorer(estimator[name], X_test[10:], target[10:])
-                unweighted = scorer(estimator[name], X_test, target)
-                assert weighted != unweighted, (
-                    f"scorer {name} behaves identically when called with "
-                    f"sample weights: {weighted} vs {unweighted}")
-                assert_almost_equal(weighted, ignored,
-                                    err_msg=f"scorer {name} behaves "
-                                    "differently when ignoring samples and "
-                                    "setting sample_weight to 0: "
-                                    "{weighted} vs {ignored}")
+        if name in REGRESSION_SCORERS:
+            # skip the regression scores
+            continue
+        if name in MULTILABEL_ONLY_SCORERS:
+            target = y_ml_test
+        else:
+            target = y_test
+        try:
+            weighted = scorer(estimator[name], X_test, target,
+                              sample_weight=sample_weight)
+            ignored = scorer(estimator[name], X_test[10:], target[10:])
+            unweighted = scorer(estimator[name], X_test, target)
+            assert weighted != unweighted, (
+                f"scorer {name} behaves identically when called with "
+                f"sample weights: {weighted} vs {unweighted}")
+            assert_almost_equal(weighted, ignored,
+                                err_msg=f"scorer {name} behaves differently "
+                                "when ignoring samples and setting "
+                                "sample_weight to 0: {weighted} vs {ignored}")
 
-            except TypeError as e:
-                assert "sample_weight" in str(e), (
-                    f"scorer {name} raises unhelpful exception when called "
-                    f"with sample weights: {str(e)}")
+        except TypeError as e:
+            assert "sample_weight" in str(e), (
+                   f"scorer {name} raises unhelpful exception when called "
+                   f"with sample weights: {str(e)}")
 
 
 @ignore_warnings
@@ -537,25 +538,26 @@ def test_regression_scorer_sample_weight():
     reg.fit(X_train, y_train)
 
     for name, scorer in SCORERS.items():
-        if name in REGRESSION_SCORERS:
-            try:
-                weighted = scorer(reg, X_test, y_test,
-                                  sample_weight=sample_weight)
-                ignored = scorer(reg, X_test[11:], y_test[11:])
-                unweighted = scorer(reg, X_test, y_test)
-                assert weighted != unweighted, (
-                    f"scorer {name} behaves identically when called with "
-                    f"sample weights: {weighted} vs {unweighted}")
-                assert_almost_equal(weighted, ignored,
-                                    err_msg=f"scorer {name} behaves "
-                                    "differently when ignoring samples and "
-                                    "setting sample_weight to 0: "
-                                    "{weighted} vs {ignored}")
+        if name not in REGRESSION_SCORERS:
+            # skip classification scorers
+            continue
+        try:
+            weighted = scorer(reg, X_test, y_test,
+                              sample_weight=sample_weight)
+            ignored = scorer(reg, X_test[11:], y_test[11:])
+            unweighted = scorer(reg, X_test, y_test)
+            assert weighted != unweighted, (
+                f"scorer {name} behaves identically when called with "
+                f"sample weights: {weighted} vs {unweighted}")
+            assert_almost_equal(weighted, ignored,
+                                err_msg=f"scorer {name} behaves differently "
+                                "when ignoring samples and setting "
+                                "sample_weight to 0: {weighted} vs {ignored}")
 
-            except TypeError as e:
-                assert "sample_weight" in str(e), (
-                    f"scorer {name} raises unhelpful exception when called "
-                    f"with sample weights: {str(e)}")
+        except TypeError as e:
+            assert "sample_weight" in str(e), (
+                   f"scorer {name} raises unhelpful exception when called "
+                   f"with sample weights: {str(e)}")
 
 
 @pytest.mark.parametrize('name', SCORERS)
