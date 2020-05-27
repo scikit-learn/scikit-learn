@@ -775,8 +775,6 @@ class IterativeImputer(_BaseImputer):
             self._split_cols = split_cols
             self._transformers = np.asarray(tfs)
         Xtf = np.concatenate(transformed, axis=1)
-        if Xtf.ndim == 2 and Xt.ndim == 1 and Xtf.shape[1] == 1:
-            return np.squeeze(Xtf, axis=1)
         return Xtf
 
     @staticmethod
@@ -810,9 +808,6 @@ class IterativeImputer(_BaseImputer):
             )
         )
         Xt = np.concatenate(transformed, axis=1)
-        if Xt.ndim == 2 and Xt.shape[1] == 1:
-            # Always squeeze singleton dimension
-            return np.squeeze(Xt, axis=1)
         return Xt
 
     def fit_transform(self, X, y=None):
