@@ -84,7 +84,13 @@ Changelog
   attribute name/path or a `callable` for extracting feature importance from
   the estimator.  :pr:`15361` by :user:`Venkatachalam N <venkyyuvy>`
 
-  
+:mod:`sklearn.metrics`
+......................
+
+- |Enhancement| Add `sample_weight` parameter to
+  :class:`metrics.median_absolute_error`.
+  :pr:`17225` by :user:`Lucy Liu <lucyleeow>`.
+
 :mod:`sklearn.tree`
 ...................
 
