@@ -4,7 +4,6 @@
 
 from array import array
 from collections.abc import Mapping, Iterable
-from collections.abc import Mapping
 from operator import itemgetter
 from numbers import Number
 
@@ -37,8 +36,9 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
     a feature "f" that can take on the values "ham" and "spam" will become two
     features in the output, one signifying "f=ham", the other "f=spam".
 
-    When feature values are iterables but not mapping, this transformer will iterate
-    over the values to perform the same transformation to every element.
+    When feature values are iterables but not mapping, this transformer will
+    iterate over the values to perform the same transformation to every
+    element.
 
     However, note that this transformer will only do a binary one-hot encoding
     when feature values are of type string. If categorical features are
@@ -88,14 +88,16 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
     True
     >>> v.transform({'foo': 4, 'unseen_feature': 3})
     array([[0., 0., 4.]])
-    >>> D2 = [{'foo': '1', 'bar': '2'}, {'foo': '3', 'baz': '1'}, {'foo': ['1', '3']}]
+    >>> D2 = [{'foo': '1', 'bar': '2'}, {'foo': '3', 'baz': '1'},
+              {'foo': ['1', '3']}]
     >>> X = v.fit_transform(D2)
     >>> X
     array([[ 1.,  0.,  1.,  0.],
            [ 0.,  1.,  0.,  1.],
            [ 0.,  0.,  1.,  1.]])
     >>> v.inverse_transform(X) == \
-    ... [{'foo=1': 1.0, 'bar=2': 1.0}, {'foo=3': 1.0, 'baz=1': 1.0}, {'foo=3': 1.0, 'foo=1': 1.0}]
+    ... [{'foo=1': 1.0, 'bar=2': 1.0}, {'foo=3': 1.0, 'baz=1': 1.0},
+         {'foo=3': 1.0, 'foo=1': 1.0}]
     True
     >>> v.transform({'foo': '1', 'unseen_feature': [3]})
     array([[ 0.,  0.,  1.,  0.]])
@@ -134,11 +136,11 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
         for x in X:
             for f, v in x.items():
                 self.add_element(f, v, feature_names, vocab)
-                if isinstance(v, str):
-                    f = "%s%s%s" % (f, self.separator, v)
-                if f not in vocab:
-                    feature_names.append(f)
-                    vocab[f] = len(vocab)
+#                if isinstance(v, str):
+#                    f = "%s%s%s" % (f, self.separator, v)
+#                if f not in vocab:
+#                    feature_names.append(f)
+#                    vocab[f] = len(vocab)
 
         if self.sort:
             feature_names.sort()
@@ -151,7 +153,7 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
 
     def add_element(self, f, v, feature_names, vocab, fitting=True,
                     transforming=False, indices=None, values=None):
-        if isinstance(v, six.string_types):
+        if isinstance(v, str):
             feature_name = "%s%s%s" % (f, self.separator, v)
             v = 1
         elif isinstance(v, Number) or (v is None):
@@ -210,18 +212,18 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
             for f, v in x.items():
                 self.add_element(f, v, feature_names, vocab,
                                  fitting, transforming, indices, values)
-                if isinstance(v, str):
-                    f = "%s%s%s" % (f, self.separator, v)
-                    v = 1
-                if f in vocab:
-                    indices.append(vocab[f])
-                    values.append(dtype(v))
-                else:
-                    if fitting:
-                        feature_names.append(f)
-                        vocab[f] = len(vocab)
-                        indices.append(vocab[f])
-                        values.append(dtype(v))
+#                if isinstance(v, str):
+#                    f = "%s%s%s" % (f, self.separator, v)
+#                    v = 1
+#                if f in vocab:
+#                    indices.append(vocab[f])
+#                    values.append(dtype(v))
+#                else:
+#                    if fitting:
+#                        feature_names.append(f)
+#                        vocab[f] = len(vocab)
+#                        indices.append(vocab[f])
+#                        values.append(dtype(v))
 
             indptr.append(len(indices))
 
