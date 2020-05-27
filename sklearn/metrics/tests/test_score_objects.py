@@ -511,8 +511,8 @@ def test_classification_scorer_sample_weight():
                 f"sample weights: {weighted} vs {unweighted}")
             assert_almost_equal(weighted, ignored,
                                 err_msg=f"scorer {name} behaves differently "
-                                "when ignoring samples and setting "
-                                "sample_weight to 0: {weighted} vs {ignored}")
+                                f"when ignoring samples and setting "
+                                f"sample_weight to 0: {weighted} vs {ignored}")
 
         except TypeError as e:
             assert "sample_weight" in str(e), (
@@ -551,8 +551,8 @@ def test_regression_scorer_sample_weight():
                 f"sample weights: {weighted} vs {unweighted}")
             assert_almost_equal(weighted, ignored,
                                 err_msg=f"scorer {name} behaves differently "
-                                "when ignoring samples and setting "
-                                "sample_weight to 0: {weighted} vs {ignored}")
+                                f"when ignoring samples and setting "
+                                f"sample_weight to 0: {weighted} vs {ignored}")
 
         except TypeError as e:
             assert "sample_weight" in str(e), (
