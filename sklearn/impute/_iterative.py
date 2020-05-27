@@ -404,14 +404,12 @@ class IterativeImputer(_BaseImputer):
         missing_row_mask = mask_missing_values[:, feat_idx]
         if fit_mode:
             X_train = _safe_indexing(
-                X_filled[:, neighbor_feat_idx], ~missing_row_mask
+                X_filled[:, self._col_mapping(neighbor_feat_idx)],
+                ~missing_row_mask
             )
-            X_train = self._fit_transform_filled(
-                X_train, neighbor_feat_idx, fit_mode=False
-            )
-            y_train = _safe_indexing(X_filled[:, feat_idx], ~missing_row_mask)
-            y_train = self._fit_transform_filled(
-                y_train, [feat_idx], fit_mode=False
+            y_train = _safe_indexing(
+                X_filled[:, self._col_mapping(feat_idx)],
+                ~missing_row_mask
             )
             estimator.fit(X_train, y_train)
 
@@ -420,8 +418,10 @@ class IterativeImputer(_BaseImputer):
             return X_filled, estimator
 
         # get posterior samples if there is at least one missing value
-        X_test = _safe_indexing(X_filled[:, neighbor_feat_idx],
-                                missing_row_mask)
+        X_test = _safe_indexing(
+            X_filled[:, self._col_mapping(neighbor_feat_idx)],
+            missing_row_mask
+        )
         if self.sample_posterior:
             mus, sigmas = estimator.predict(X_test, return_std=True)
             imputed_values = np.zeros(mus.shape, dtype=X_filled.dtype)
@@ -446,13 +446,7 @@ class IterativeImputer(_BaseImputer):
             imputed_values[inrange_mask] = truncated_normal.rvs(
                 random_state=self.random_state_)
         else:
-            X_test = self._fit_transform_filled(
-                X_test, neighbor_feat_idx, fit_mode=False
-            )
             imputed_values = estimator.predict(X_test)
-            imputed_values = self._inverse_transform_filled(
-                imputed_values, [feat_idx],
-            )
             min_val = self._min_value[feat_idx]
             min_val = min_val if not np.isnan(min_val) else None
             max_val = self._max_value[feat_idx]
@@ -461,8 +455,40 @@ class IterativeImputer(_BaseImputer):
                 imputed_values = np.clip(imputed_values, min_val, max_val,)
 
         # Update the feature
-        X_filled[missing_row_mask, feat_idx] = imputed_values
+        X_filled[missing_row_mask, self._col_mapping(feat_idx)] = \
+            imputed_values
         return X_filled, estimator
+
+    def _col_mapping(self, cols):
+        """Maps Xt columns to Xtf columns.
+
+        Parameters
+        ----------
+        cols : {int, iterable}
+            Column number (int) or numbers (iterable) from Xt.
+
+        Returns
+        -------
+        {int, list}
+            Column number (int) or numbers (iterable) from Xtf.
+            If a single int was given as input and a single column
+            is the output, the output is unpacked to a single int.
+            Otherwise, a list of columns is returned.
+        """
+        single_in = False
+        try:
+            cols = list(cols)
+        except TypeError:
+            single_in = True
+            cols = [cols]
+        end_idx = np.asarray(list(accumulate(self._split_cols)), dtype=int)
+        start_idx = np.asarray([0, *end_idx[:-1]], dtype=int)
+        ranges = [
+            idx for i in cols for idx in list(range(start_idx[i], end_idx[i]))
+        ]
+        if len(ranges) == 1 and single_in:
+            return ranges[0]
+        return ranges
 
     def _get_neighbor_feat_idx(self,
                                n_features,
@@ -647,7 +673,7 @@ class IterativeImputer(_BaseImputer):
         Xt = X[:, valid_mask]
         mask_missing_values = mask_missing_values[:, valid_mask]
 
-        return Xt, X_filled, mask_missing_values
+        return Xt, X_filled, mask_missing_values, valid_mask
 
     def _validate_limit(self, limit_type, n_features):
         """Validate the limits (min/max) of the feature values
@@ -714,16 +740,13 @@ class IterativeImputer(_BaseImputer):
             Xtf = transformer.transform(indexed)
         return (split_cols, transformer, Xtf.reshape(Xtf.shape[0], -1))
 
-    def _fit_transform_filled(self, Xt, columns, fit_mode):
+    def _fit_transform_filled(self, Xt, fit_mode):
         """Transform Xt using transformers indexed by columns.
 
         Parameters
         ----------
         Xt : np.array
             Filled data to transform
-        columns : {np.array, list, tuple}
-            Column numbers in complete Xt present in this slice
-            of Xt.
         fit_mode : bool
             If True, transformers will be fit or re-fit.
             If False, transformers are assumed to be fit and
@@ -734,20 +757,17 @@ class IterativeImputer(_BaseImputer):
         Xtf
             Transformation of Xt.
         """
-        if not np.asarray(columns).size:
-            return np.empty(dtype=Xt.dtype, shape=(0,))
-
         split_cols, tfs, transformed = zip(
             *Parallel(n_jobs=self.n_jobs)(
                 delayed(self._transform_one_column)(
                     transformer=tf, Xt=Xt, col_num=col_num, fit_mode=fit_mode,
                 )
-                for col_num, tf in enumerate(self._transformers[columns])
+                for col_num, tf in enumerate(self._transformers)
             )
         )
         if fit_mode:
-            self._split_cols[columns] = split_cols
-            self._transformers[columns] = tfs
+            self._split_cols = split_cols
+            self._transformers = tfs
         Xtf = np.concatenate(transformed, axis=1)
         if Xtf.ndim == 2 and Xt.ndim == 1 and Xtf.shape[1] == 1:
             return np.squeeze(Xtf, axis=1)
@@ -758,7 +778,7 @@ class IterativeImputer(_BaseImputer):
         inverse = transformer.inverse_transform(Xtf)
         return inverse.reshape(inverse.shape[0], -1)
 
-    def _inverse_transform_filled(self, Xtf, columns):
+    def _inverse_transform_filled(self, Xtf):
         """Inverts the transformation on Xtf using transformers
         indexed by columns.
 
@@ -766,28 +786,21 @@ class IterativeImputer(_BaseImputer):
         ----------
         Xtf : np.array
             Numpy array of transformed data with no missing values.
-        columns : {np.array, list, tuple}
-            Iterable of column numbers to map filled back to.
 
         Returns
         -------
         Xt
             Inverse-transform of filled.
         """
-        if not np.asarray(columns).size:
-            return np.empty(dtype=Xtf.dtype, shape=(0,))
-        split_cols = list(accumulate(self._split_cols[columns]))[:-1]
-        if Xtf.ndim > 1:
-            inverse_tf = np.split(Xtf, split_cols, axis=1)
-        else:
-            inverse_tf = [Xtf]
+        split_cols = list(accumulate(self._split_cols))[:-1]
+        inverse_tf = np.split(Xtf, split_cols, axis=1)
 
         transformed = Parallel(n_jobs=self.n_jobs)(
             delayed(self._inverse_one_column)(
                 transformer=transformer, Xtf=Xtf,
             )
             for transformer, Xtf in zip(
-                self._transformers[columns], inverse_tf
+                self._transformers, inverse_tf
             )
         )
         Xt = np.concatenate(transformed, axis=1)
@@ -834,8 +847,7 @@ class IterativeImputer(_BaseImputer):
             # Pandas dataframe
             self._columns = {col: i for i, col in enumerate(X.columns)}
 
-        # Basic validation
-        # Ensure X is an array-like
+        # Process estimators and transformers
         self._validate_estimators(X)
         self._validate_transformers(X)
 
@@ -861,17 +873,17 @@ class IterativeImputer(_BaseImputer):
         self.initial_imputer_ = None
         super()._fit_indicator(X)
         X_indicator = super()._transform_indicator(X)
-        X, Xt, mask_missing_values = self._initial_imputation(X)
+        X, Xt, mask_missing_values, valid_mask = self._initial_imputation(X)
 
-        # Initial fit of transformers
-        self._fit_transform_filled(
-            Xt, columns=range(X.shape[1]), fit_mode=True
-        )
+        # Mask estimators and transformers
+        self._estimators = self._estimators[valid_mask]
+        self._transformers = self._transformers[valid_mask]
+        self._split_cols = self._split_cols[valid_mask]
 
         # Edge cases:
         #  - No missing values
         #  - 0 iterations requested
-        #  - Single colume (can't iterate)
+        #  - Single column (can't iterate)
         # In all cases, return initial imputation
         if (
             self.max_iter == 0
@@ -906,13 +918,15 @@ class IterativeImputer(_BaseImputer):
             print("[IterativeImputer] Completing matrix with shape %s"
                   % (X.shape,))
         start_t = time()
+        self.imputation_sequence_ = []
+        # Initial fit of transformers
+        Xtf = self._fit_transform_filled(Xt, fit_mode=True)
         if not self.sample_posterior:
-            Xt_previous = Xt.copy()
+            Xtf_previous = Xtf.copy()
             if not np.any(self._is_cls_task):
                 normalized_tol = self.tol * np.max(
                     np.abs(X[~mask_missing_values])
                 )
-        self.imputation_sequence_ = []
         for self.n_iter_ in range(1, self.max_iter + 1):
             if self.imputation_order == 'random':
                 ordered_idx = self._get_ordered_idx(mask_missing_values)
@@ -921,8 +935,8 @@ class IterativeImputer(_BaseImputer):
                 neighbor_feat_idx = self._get_neighbor_feat_idx(n_features,
                                                                 feat_idx,
                                                                 abs_corr_mat)
-                Xt, estimator = self._impute_one_feature(
-                    Xt, mask_missing_values, feat_idx, neighbor_feat_idx,
+                Xtf, estimator = self._impute_one_feature(
+                    Xtf, mask_missing_values, feat_idx, neighbor_feat_idx,
                     estimator=None, fit_mode=True)
                 estimator_triplet = _ImputerTriplet(feat_idx,
                                                     neighbor_feat_idx,
@@ -937,7 +951,7 @@ class IterativeImputer(_BaseImputer):
             if not self.sample_posterior:
                 if not np.any(self._is_cls_task):
                     inf_norm = np.linalg.norm(
-                        Xt - Xt_previous, ord=np.inf, axis=None
+                        Xtf - Xtf_previous, ord=np.inf, axis=None
                     )
                     if self.verbose > 0:
                         print(
@@ -953,11 +967,13 @@ class IterativeImputer(_BaseImputer):
                                 'criterion reached.'
                             )
                         break
-                Xt_previous = Xt.copy()
+                Xtf_previous = Xtf.copy()
         else:
             if not self.sample_posterior:
                 warnings.warn("[IterativeImputer] Early stopping criterion not"
                               " reached.", ConvergenceWarning)
+        # Invert transforms
+        Xt = self._inverse_transform_filled(Xtf)
         Xt[~mask_missing_values] = X[~mask_missing_values]
         return super()._concatenate_indicator(Xt, X_indicator)
 
@@ -980,7 +996,7 @@ class IterativeImputer(_BaseImputer):
         check_is_fitted(self)
 
         X_indicator = super()._transform_indicator(X)
-        X, Xt, mask_missing_values = self._initial_imputation(X)
+        X, Xt, mask_missing_values, _ = self._initial_imputation(X)
 
         if self.n_iter_ == 0 or np.all(mask_missing_values):
             return super()._concatenate_indicator(Xt, X_indicator)
@@ -991,9 +1007,11 @@ class IterativeImputer(_BaseImputer):
             print("[IterativeImputer] Completing matrix with shape %s"
                   % (X.shape,))
         start_t = time()
+        # Apply transforms
+        Xtf = self._fit_transform_filled(Xt, fit_mode=False)
         for it, estimator_triplet in enumerate(self.imputation_sequence_):
-            Xt, _ = self._impute_one_feature(
-                Xt,
+            Xtf, _ = self._impute_one_feature(
+                Xtf,
                 mask_missing_values,
                 estimator_triplet.feat_idx,
                 estimator_triplet.neighbor_feat_idx,
@@ -1006,7 +1024,8 @@ class IterativeImputer(_BaseImputer):
                           '%d/%d, elapsed time %0.2f'
                           % (i_rnd + 1, self.n_iter_, time() - start_t))
                 i_rnd += 1
-
+        # Invert transforms
+        Xt = self._inverse_transform_filled(Xtf)
         Xt[~mask_missing_values] = X[~mask_missing_values]
 
         return super()._concatenate_indicator(Xt, X_indicator)
