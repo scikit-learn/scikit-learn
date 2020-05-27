@@ -265,18 +265,21 @@ def test_diabetes():
 
     for (name, Tree), criterion in product(REG_TREES.items(), REG_CRITERIONS):
         reg = Tree(criterion=criterion, random_state=0)
+        # fitting a fully grown tree should completely overfit the data
+        # and lead to an MSE of 0 (or near of 0)
         reg.fit(diabetes.data, diabetes.target)
         score = mean_squared_error(diabetes.target, reg.predict(diabetes.data))
-        assert score < 1, (
+        assert score == pytest.approx(0), (
             "Failed with {0}, criterion = {1} and score = {2}"
             "".format(name, criterion, score))
 
-        # using fewer features reduces the learning ability of this tree,
-        # but reduces training time.
-        reg = Tree(criterion=criterion, max_features=6, random_state=0)
+        # using fewer features and limiting tree depth reduces the learning
+        # ability of this tree, but reduces training time.
+        reg = Tree(criterion=criterion, max_features=6, max_depth=18,
+                   random_state=0)
         reg.fit(diabetes.data, diabetes.target)
         score = mean_squared_error(diabetes.target, reg.predict(diabetes.data))
-        assert score < 2, (
+        assert score < 11, (
             "Failed with {0}, criterion = {1} and score = {2}"
             "".format(name, criterion, score))
 
