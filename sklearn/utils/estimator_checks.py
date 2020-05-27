@@ -339,8 +339,8 @@ def _construct_instance(Estimator):
 
 
 def _maybe_mark_xfail(estimator, check, strict_mode, pytest):
-    # Mark (estimator, check) pairs as XFAIL if the check is in the
-    # _xfail_checks tag or if it's a strict check and strict_mode=False.
+    # Mark (estimator, check) pairs as XFAIL if needed (see conditions in
+    # strict_mode_xfails_partially_strict_checks())
     # This is similar to _maybe_skip(), but this one is used by
     # @parametrize_with_checks() instead of check_estimator()
 
@@ -354,8 +354,8 @@ def _maybe_mark_xfail(estimator, check, strict_mode, pytest):
 
 
 def _maybe_skip(estimator, check, strict_mode):
-    # Wrap a check so that it's skipped with a warning if it's part of the
-    # xfail_checks tag, or if it's a strict check and strict_mode=False
+    # Wrap a check so that it's skipped if needed (see conditions in
+    # strict_mode_xfails_partially_strict_checks())
     # This is similar to _maybe_mark_xfail(), but this one is used by
     # check_estimator() instead of @parametrize_with_checks which requires
     # pytest
@@ -378,17 +378,24 @@ def _maybe_skip(estimator, check, strict_mode):
 
 
 def _should_be_skipped_or_marked(estimator, check, strict_mode):
+    # Return whether a check should be skipped (when using check_estimator())
+    # or marked as XFAIL (when using @parametrize_with_checks()), along with a
+    # reason.
+    # A check should be skipped or marked if:
+    # - the check is in the _xfail_checks tag of the estimator
+    # - the check is fully strict and strict mode is off
+    # Checks that are only partially strict will not be skipped since we want
+    # to run their non-strict parts.
 
     check_name = (check.func.__name__ if isinstance(check, partial)
                   else check.__name__)
 
     xfail_checks = estimator._get_tags()['_xfail_checks'] or {}
+    if check_name in xfail_checks:
+        return True, xfail_checks[check_name]
 
     if check_name in _FULLY_STRICT_CHECKS and not strict_mode:
         return True, 'The check is fully strict and strict mode is off'
-
-    if check_name in xfail_checks:
-        return True, xfail_checks[check_name]
 
     return False, 'placeholder reason that will never be used'
 
@@ -412,11 +419,19 @@ def parametrize_with_checks(estimators, strict_mode=True):
            classes was removed in 0.24. Pass an instance instead.
 
     strict_mode : bool, default=True
-        If False, the strict checks will be treated as if they were in the
-        estimators' `_xfails_checks` tag: they will be marked as `xfail` for
-        pytest. See :ref:`estimator_tags` for more info on the
-        `_xfails_check` tag. The set of strict checks is in
-        `sklearn.utils.estimator_checks._STRICT_CHECKS`.
+        If True, the full check suite is run.
+        If False, only the non-strict part of the check suite is run.
+
+        In non-strict mode, some checks will be easier to pass: e.g., they
+        will only make sure an error is raised instead of also checking the
+        full error message.
+        Some checks are considered completely strict, in which case they are
+        treated as if they were in the estimators' `_xfails_checks` tag: they
+        will be marked as `xfail` for pytest. See :ref:`estimator_tags` for
+        more info on the `_xfails_check` tag. The set of strict checks is in
+        `sklearn.utils.estimator_checks._FULLY_STRICT_CHECKS`.
+
+        .. versionadded:: 0.24
 
     Returns
     -------
@@ -494,11 +509,19 @@ def check_estimator(Estimator, generate_only=False, strict_mode=True):
         .. versionadded:: 0.22
 
     strict_mode : bool, default=True
-        If False, the strict checks will be treated as if they were in the
-        estimator's `_xfails_checks` tag: they will be ignored with a
-        warning. See :ref:`estimator_tags` for more info on the
-        `_xfails_check` tag. The set of strict checks is in
-        `sklearn.utils.estimator_checks._STRICT_CHECKS`.
+        If True, the full check suite is run.
+        If False, only the non-strict part of the check suite is run.
+
+        In non-strict mode, some checks will be easier to pass: e.g., they
+        will only make sure an error is raised instead of also checking the
+        full error message.
+        Some checks are considered completely strict, in which case they are
+        treated as if they were in the estimators' `_xfails_checks` tag: they
+        will be ignored with a warning. See :ref:`estimator_tags` for more
+        info on the `_xfails_check` tag. The set of strict checks is in
+        `sklearn.utils.estimator_checks._FULLY_STRICT_CHECKS`.
+
+        .. versionadded:: 0.24
 
     Returns
     -------

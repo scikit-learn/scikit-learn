@@ -350,7 +350,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
             'poor_score': True, 'no_validation': True,
             '_xfail_checks': {
                 'check_methods_subset_invariance':
-                'fails for the predict method',
+                'fails for the predict method'
             }
         }
 

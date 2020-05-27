@@ -866,7 +866,7 @@ class NuSVC(BaseSVC):
             '_xfail_checks': {
                 'check_methods_subset_invariance':
                 'fails for the decision_function method',
-                'check_class_weight_classifiers': 'class_weight is ignored'
+                'check_class_weight_classifiers': 'class_weight is ignored.'
             }
         }
 

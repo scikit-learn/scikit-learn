@@ -225,25 +225,42 @@ class MyNMFWithBadErrorMessage(NMF):
 
 
 def test_strict_mode_check_estimator():
-    # Make sure the strict checks are properly ignored when strict mode is off
-    # in check_estimator.
-    # We can't check the message because check_estimator doesn't give one.
+    # Tests various conditions for the strict mode of check_estimator()
+    # Details are in the comments
 
-    with pytest.warns(SkipTestWarning):
-        # LogisticRegression has no _xfail_checks, but check_n_features_in is
-        # still skipped because it's a fully strict check
+    # LogisticRegression has no _xfail_checks, so when strict_mode is on, there
+    # should be no skipped tests.
+    with pytest.warns(None) as catched_warnings:
+        check_estimator(LogisticRegression(), strict_mode=True)
+    assert not any(isinstance(w, SkipTestWarning) for w in catched_warnings)
+    # When strict mode is off, check_n_features should be skipped because it's
+    # a fully strict check
+    with pytest.warns(SkipTestWarning,
+                      match='check is fully strict and strict mode is off'):
         check_estimator(LogisticRegression(), strict_mode=False)
 
-    with pytest.warns(SkipTestWarning):
-        # NuSVC has some _xfail_checks. check_n_features_in is skipped along
-        # with the other checks in the tag.
+    # NuSVC has some _xfail_checks. They should be skipped regardless of
+    # strict_mode
+    with pytest.warns(SkipTestWarning,
+                      match='fails for the decision_function method'):
+        check_estimator(NuSVC(), strict_mode=True)
+    # When strict mode is off, check_n_features_in is skipped along with the
+    # rest of the xfail_checks
+    with pytest.warns(SkipTestWarning,
+                      match='check is fully strict and strict mode is off'):
         check_estimator(NuSVC(), strict_mode=False)
 
-    # MyNMF will fail check_fit_non_negative in strict mode, but it will pass
-    # in non-strict mode which doesn't check the exact error message.
+    # MyNMF will fail check_fit_non_negative() in strict mode because it yields
+    # a bad error message
     with pytest.raises(AssertionError, match='does not match'):
         check_estimator(MyNMFWithBadErrorMessage(), strict_mode=True)
-    check_estimator(MyNMFWithBadErrorMessage(), strict_mode=False)
+    # However, it should pass the test suite in non-strict mode because when
+    # strict mode is off, check_fit_non_negative() will not check the exact
+    # error messsage. (We still assert that the warning from
+    # check_n_features_in is raised)
+    with pytest.warns(SkipTestWarning,
+                      match='check is fully strict and strict mode is off'):
+        check_estimator(MyNMFWithBadErrorMessage(), strict_mode=False)
 
 
 @parametrize_with_checks([LogisticRegression(),

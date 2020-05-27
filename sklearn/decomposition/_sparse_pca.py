@@ -208,8 +208,8 @@ class SparsePCA(TransformerMixin, BaseEstimator):
     def _more_tags(self):
         return {
             '_xfail_checks': {
-                "check_methods_subset_invariance": 
-                'fails for the transform method',
+                "check_methods_subset_invariance":
+                "fails for the transform method"
             }
         }
 
