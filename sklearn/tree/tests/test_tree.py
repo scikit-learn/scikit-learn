@@ -260,28 +260,37 @@ def test_iris():
             "".format(name, criterion, score))
 
 
-def test_diabetes():
-    # Check consistency on diabetes dataset.
+@pytest.mark.parametrize("name, Tree", REG_TREES.items())
+@pytest.mark.parametrize("criterion", REG_CRITERIONS)
+def test_diabetes_overfit(name, Tree, criterion):
+    # check consistency of overfitted trees on the diabetes dataset
+    # since the trees will overfit, we expect an MSE of 0
+    reg = Tree(criterion=criterion, random_state=0)
+    reg.fit(diabetes.data, diabetes.target)
+    score = mean_squared_error(diabetes.target, reg.predict(diabetes.data))
+    assert score == pytest.approx(0), (
+        f"Failed with {name}, criterion = {criterion} and score = {score}"
+    )
 
-    for (name, Tree), criterion in product(REG_TREES.items(), REG_CRITERIONS):
-        reg = Tree(criterion=criterion, random_state=0)
-        # fitting a fully grown tree should completely overfit the data
-        # and lead to an MSE of 0 (or near of 0)
-        reg.fit(diabetes.data, diabetes.target)
-        score = mean_squared_error(diabetes.target, reg.predict(diabetes.data))
-        assert score == pytest.approx(0), (
-            "Failed with {0}, criterion = {1} and score = {2}"
-            "".format(name, criterion, score))
 
-        # using fewer features and limiting tree depth reduces the learning
-        # ability of this tree, but reduces training time.
-        reg = Tree(criterion=criterion, max_features=6, max_depth=20,
-                   random_state=0)
-        reg.fit(diabetes.data, diabetes.target)
-        score = mean_squared_error(diabetes.target, reg.predict(diabetes.data))
-        assert score < 10, (
-            "Failed with {0}, criterion = {1} and score = {2}"
-            "".format(name, criterion, score))
+@pytest.mark.parametrize("name, Tree", REG_TREES.items())
+@pytest.mark.parametrize(
+    "criterion, max_depth",
+    [("mse", 15), ("mae", 20), ("friedman_mse", 15)]
+)
+def test_diabetes_underfit(name, Tree, criterion, max_depth):
+    # check consistency of trees when the depth and the number of features are
+    # limited
+
+    reg = Tree(
+        criterion=criterion, max_depth=max_depth,
+        max_features=6, random_state=0
+    )
+    reg.fit(diabetes.data, diabetes.target)
+    score = mean_squared_error(diabetes.target, reg.predict(diabetes.data))
+    assert score < 60 and score > 0, (
+        f"Failed with {name}, criterion = {criterion} and score = {score}"
+    )
 
 
 def test_probability():
