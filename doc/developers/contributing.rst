@@ -674,7 +674,7 @@ Finally, follow the formatting rules below to make it consistently good:
         literal (either `hello` or `goodbye`), a bool, or an int. The default
         value is True.
 
-    array_parameter : {array-like, sparse matrix, dataframe} of shape (n_samples, n_features) or (n_samples,)
+    array_parameter : {array-like, sparse matrix} of shape (n_samples, n_features) or (n_samples,)
         This parameter accepts data in either of the mentioned forms, with one
         of the mentioned shapes. The default value is
         `np.ones(shape=(n_samples,))`.
@@ -695,7 +695,7 @@ In general have the following in mind:
     4. 1D or 2D data can be a subset of
        ``{array-like, ndarray, sparse matrix, dataframe}``. Note that ``array-like``
        can also be a ``list``, while ``ndarray`` is explicitly only a ``numpy.ndarray``.
-    5. Specific ``dataframe`` when "frame-like" features are being used, such
+    5. Specify ``dataframe`` when "frame-like" features are being used, such
        as the column names.
     6. When specifying the data type of a list, use ``of`` as a delimiter:
        ``list of int``.
