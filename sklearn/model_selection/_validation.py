@@ -967,7 +967,7 @@ def permutation_test_score(estimator, X, y, *, groups=None, cv=None,
                            verbose=0, scoring=None):
     """Evaluates the significance of a cross-validated score using permutations
 
-    Permutes targest to generate 'randomized data' and compute the empirical
+    Permutes targets to generate 'randomized data' and compute the empirical
     p-value against the null hypothesis that features and targets are
     independent.
 
@@ -975,6 +975,9 @@ def permutation_test_score(estimator, X, y, *, groups=None, cv=None,
     estimator performed as well or better than in the original data. A small
     p-value suggests that there is a real dependency between features and
     targets which has been used by the estimator to give good predictions.
+    A large p-value may be due to lack of real dependency between features
+    and targets or the estimator was not able to use the dependency to
+    give good predictions.
 
     Parameters
     ----------
