@@ -107,7 +107,7 @@ def test_dict_learning_lars_positive_parameter():
     alpha = 1
     err_msg = "Positive constraint not supported for 'lars' coding method."
     with pytest.raises(ValueError, match=err_msg):
-        dict_learning(X, n_components, alpha, positive_code=True)
+        dict_learning(X, n_components, alpha=alpha, positive_code=True)
 
 
 @pytest.mark.parametrize("transform_algorithm", [
@@ -247,7 +247,7 @@ def test_dict_learning_online_lars_positive_parameter():
     alpha = 1
     err_msg = "Positive constraint not supported for 'lars' coding method."
     with pytest.raises(ValueError, match=err_msg):
-        dict_learning_online(X, alpha, positive_code=True)
+        dict_learning_online(X, alpha=alpha, positive_code=True)
 
 
 @pytest.mark.parametrize("transform_algorithm", [

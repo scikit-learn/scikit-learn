@@ -18,7 +18,8 @@ from ..manifold import spectral_embedding
 from ._kmeans import k_means
 
 
-def discretize(vectors, copy=True, max_svd_restarts=30, n_iter_max=20,
+@_deprecate_positional_args
+def discretize(vectors, *, copy=True, max_svd_restarts=30, n_iter_max=20,
                random_state=None):
     """Search for a partition matrix (clustering) which is closest to the
     eigenvector embedding.
@@ -156,7 +157,8 @@ def discretize(vectors, copy=True, max_svd_restarts=30, n_iter_max=20,
     return labels
 
 
-def spectral_clustering(affinity, n_clusters=8, n_components=None,
+@_deprecate_positional_args
+def spectral_clustering(affinity, *, n_clusters=8, n_components=None,
                         eigen_solver=None, random_state=None, n_init=10,
                         eigen_tol=0.0, assign_labels='kmeans'):
     """Apply clustering to a projection of the normalized Laplacian.
