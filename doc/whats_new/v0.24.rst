@@ -92,7 +92,7 @@ Changelog
   :pr:`17225` by :user:`Lucy Liu <lucyleeow>`.
 
 :mod:`sklearn.preprocessing`
-..............................
+............................
 
 - |Enhancement| Add ``unit_variance`` to :class:`preprocessing.RobustScaler`,
   which scales output data such that normally distributed features have a
