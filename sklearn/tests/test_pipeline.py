@@ -1225,16 +1225,3 @@ def test_feature_union_fit_params():
 
     t.fit(X, y, a=0)
     t.fit_transform(X, y, a=0)
-
-
-# TODO: Remove in 0.24 when None is removed
-def test_feature_union_warns_with_none():
-    msg = (r"Using None as a transformer is deprecated in version 0\.22 and "
-           r"will be removed in version 0\.24\. Please use 'drop' instead\.")
-    X = [[1, 2, 3], [4, 5, 6]]
-
-    with pytest.warns(FutureWarning, match=msg):
-        union = FeatureUnion([('multi1', None), ('multi2', Mult())]).fit(X)
-
-    with pytest.warns(FutureWarning, match=msg):
-        union.fit_transform(X)
