@@ -25,6 +25,7 @@ from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import assert_warns_message
 from sklearn.utils._testing import create_memmap_backed_data
 from sklearn.utils._testing import ignore_warnings
+from sklearn.utils._testing import skip_if_32bit
 
 from sklearn.utils.validation import check_random_state
 
@@ -273,6 +274,7 @@ def test_diabetes_overfit(name, Tree, criterion):
     )
 
 
+@skip_if_32bit
 @pytest.mark.parametrize("name, Tree", REG_TREES.items())
 @pytest.mark.parametrize(
     "criterion, max_depth",
