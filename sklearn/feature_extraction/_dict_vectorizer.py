@@ -105,7 +105,7 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
          {'foo=3': 1.0, 'foo=1': 1.0}]
     True
     >>> v.transform({'foo': '1', 'unseen_feature': [3]})
-    array([[ 0.,  0.,  1.,  0.]])
+    array([[0., 0., 1., 0.]])
 
     See also
     --------
