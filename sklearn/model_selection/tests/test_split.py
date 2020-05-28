@@ -1628,8 +1628,6 @@ def test_group_time_series_work_even_if_groups_are_none():
     X = [0, 1, 2, 3, 4, 5, 6, 7]
     unique_groups = ['A', 'B', 'C', 'D']
     groups = np.array(unique_groups*2)
-    n_samples = len(groups)
-    
     # expected_result = TimeSeriesSplit(n_splits=4).split(X)
     tscv = TimeSeriesSplit(n_splits=4)
     expected_result = []
@@ -1638,11 +1636,11 @@ def test_group_time_series_work_even_if_groups_are_none():
         expected_result.append((train, test))
 
     # A = GroupTimeSeriesSplit.split(X) with no groups
-    
+
     A = [(array([0, 1, 2, 3]), array([4])),
-            (array([0, 1, 2, 3, 4]), array([5])),
-            (array([0, 1, 2, 3, 4, 5]), array([6])),
-            (array([0, 1, 2, 3, 4, 5, 6]), array([7]))]
+        (array([0, 1, 2, 3, 4]), array([5])),
+        (array([0, 1, 2, 3, 4, 5]), array([6])),
+        (array([0, 1, 2, 3, 4, 5, 6]), array([7]))]
     
     for i in range(len(A)):
         assert_array_equal(all(A), all(expected_result))
@@ -1733,10 +1731,9 @@ def test_group_time_series_fail_if_more_folds_than_group():
     with pytest.raises(ValueError) as excinfo:
         n_splits > n_groups
         raise ValueError('Cannot have number of folds n_splits=%d'
-        'greater than the number of groups: %d."')
-        
-    assert str(excinfo.value) == ('Cannot have number of folds n_splits=%d'
-        'greater than the number of groups: %d."')
+            'greater than the number of groups: %d."')
+        assert str(excinfo.value) == ('Cannot have number of folds n_splits=%d'
+            'greater than the number of groups: %d."')
 
 # assert_raises_regexp(ValueError, "Cannot have number of folds.*greater",
 # next,
@@ -1777,7 +1774,7 @@ def test_all_groups_get_to_be_test_set_at_least_once():
 
 
 def _check_group_time_series_max_train_size(splits, check_splits,
-            max_train_size):
+                max_train_size):
 
     for (train, test), (check_train, check_test) in zip(splits, check_splits):
         assert_array_equal(test, check_test)
@@ -1796,7 +1793,7 @@ def test_group_time_series_max_train_size():
     
     # splits = GroupTimeSeriesSplit(n_splits=5).split(X)
     splits = np.array([([1, 2], [3]),
-            ([0, 1, 3, 4, 5], [7]),
+                ([0, 1, 3, 4, 5], [7]),
         ([0, 2, 3, 4, 5, 6, 7], [9]),
         ([0, 1, 2, 3, 6, 7, 8, 9, 10], [11]),
         ([0, 2, 3, 4, 5, 6, 7, 10, 11, 12, 13, 14], [15])])
@@ -1804,26 +1801,24 @@ def test_group_time_series_max_train_size():
     # check_splits = GroupTimeSeriesSplit(n_splits=5,
     # max_train_size=3).split(X)
     # 5 and 8 would not be there in the 3rd and 4th train set??
-    max_train_size = 3
     check_splits = np.array([([1, 2], [3]),
-            ([3, 4, 5], [7]),
+                ([3, 4, 5], [7]),
         ([5, 6, 7], [9]),
         ([8, 9, 10], [11]),
         ([12, 13, 14], [15])])
     _check_group_time_series_max_train_size(splits, check_splits,
-                max_train_size=3)
-
+                    max_train_size=3)
+    
     # Test for the case where the size of a fold is greater than max_train_size
     # check_splits = GroupTimeSeriesSplit(n_splits=5,
     # max_train_size=2).split(X)
-    
     check_splits = np.array([([1, 2], [3]),
-            ([4, 5], [7]),
+                ([4, 5], [7]),
         ([6, 7], [9]),
         ([9, 10], [11]),
         ([13, 14], [15])])
     _check_group_time_series_max_train_size(splits, check_splits,
-                max_train_size=2)
+                    max_train_size=2)
 
     # Test for the case where the size of each fold is less than max_train_size
 <<<<<<< HEAD
@@ -1846,14 +1841,18 @@ def test_group_time_series_max_train_size():
 >>>>>>> linting2
 
     check_splits = np.array([([1, 2], [3]),
-            ([0, 1, 3, 4, 5], [7]),
+                ([0, 1, 3, 4, 5], [7]),
         ([3, 4, 5, 6, 7], [9]),
         ([6, 7, 8, 9, 10], [11]),
         ([10, 11, 12, 13, 14], [15])])
     _check_group_time_series_max_train_size(splits, check_splits,
+<<<<<<< HEAD
 <<<<<<< HEAD
         max_train_size=5)
 >>>>>>> linting
 =======
                 max_train_size=5)
 >>>>>>> linting2
+=======
+                    max_train_size=5)
+>>>>>>> [WIP] fixes #14257 linting#3
