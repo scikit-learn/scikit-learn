@@ -93,7 +93,7 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
     Multiple values for one categorical values
 
 
-    >>> D2 = [{'foo': '1', 'bar': '2'}, {'foo': '3', 'baz': '1'},
+    >>> D2 = [{'foo': '1', 'bar': '2'}, {'foo': '3', 'baz': '1'}, \
               {'foo': ['1', '3']}]
     >>> X = v.fit_transform(D2)
     >>> X
