@@ -13,10 +13,10 @@ from sklearn.metrics.cluster import homogeneity_score
 from sklearn.metrics.cluster import mutual_info_score
 from sklearn.metrics.cluster import normalized_mutual_info_score
 from sklearn.metrics.cluster import v_measure_score
-from sklearn.metrics.cluster.supervised import _generalized_average
+from sklearn.metrics.cluster._supervised import _generalized_average
 
 from sklearn.utils import assert_all_finite
-from sklearn.utils.testing import (
+from sklearn.utils._testing import (
         assert_almost_equal, ignore_warnings)
 from numpy.testing import assert_array_almost_equal
 
@@ -34,8 +34,8 @@ score_funcs = [
 @ignore_warnings(category=FutureWarning)
 def test_error_messages_on_wrong_input():
     for score_func in score_funcs:
-        expected = ('labels_true and labels_pred must have same size,'
-                    ' got 2 and 3')
+        expected = (r'Found input variables with inconsistent numbers '
+                    r'of samples: \[2, 3\]')
         with pytest.raises(ValueError, match=expected):
             score_func([0, 1], [1, 1, 1])
 
@@ -337,3 +337,14 @@ def test_fowlkes_mallows_score_properties():
     # symmetric and permutation(both together)
     score_both = fowlkes_mallows_score(labels_b, (labels_a + 2) % 3)
     assert_almost_equal(score_both, expected)
+
+
+@pytest.mark.parametrize('labels_true, labels_pred', [
+    (['a'] * 6, [1, 1, 0, 0, 1, 1]),
+    ([1] * 6, [1, 1, 0, 0, 1, 1]),
+    ([1, 1, 0, 0, 1, 1], ['a'] * 6),
+    ([1, 1, 0, 0, 1, 1], [1] * 6),
+])
+def test_mutual_info_score_positive_constant_label(labels_true, labels_pred):
+    # non-regression test for #16355
+    assert mutual_info_score(labels_true, labels_pred) >= 0

@@ -105,9 +105,12 @@ imputation round are returned.
 
 .. note::
 
-   This estimator is still **experimental** for now: the predictions
-   and the API might change without any deprecation cycle. To use it,
-   you need to explicitly import ``enable_iterative_imputer``.
+   This estimator is still **experimental** for now: default parameters or
+   details of behaviour might change without any deprecation cycle. Resolving
+   the following issues would help stabilize :class:`IterativeImputer`:
+   convergence criteria (:issue:`14338`), default estimators (:issue:`13286`),
+   and use of random state (:issue:`15611`). To use it, you need to explicitly
+   import ``enable_iterative_imputer``.
 
 ::
 
@@ -137,7 +140,7 @@ out to be a particular instance of different sequential imputation algorithms
 that can all be implemented with :class:`IterativeImputer` by passing in
 different regressors to be used for predicting missing feature values. In the
 case of missForest, this regressor is a Random Forest.
-See :ref:`sphx_glr_auto_examples_plot_iterative_imputer_variants_comparison.py`.
+See :ref:`sphx_glr_auto_examples_impute_plot_iterative_imputer_variants_comparison.py`.
 
 
 .. _multiple_imputation:
@@ -216,9 +219,9 @@ neighbors of samples with missing values::
            [5.5, 6. , 5. ],
            [8. , 8. , 7. ]])
 
-.. [OL2001] Olga Troyanskaya, Michael Cantor, Gavin Sherlock, Pat Brown, 
-    Trevor Hastie, Robert Tibshirani, David Botstein and Russ B. Altman, 
-    Missing value estimation methods for DNA microarrays, BIOINFORMATICS 
+.. [OL2001] Olga Troyanskaya, Michael Cantor, Gavin Sherlock, Pat Brown,
+    Trevor Hastie, Robert Tibshirani, David Botstein and Russ B. Altman,
+    Missing value estimation methods for DNA microarrays, BIOINFORMATICS
     Vol. 17 no. 6, 2001 Pages 520-525.
 
 .. _missing_indicator:
@@ -310,4 +313,3 @@ wrap this in a :class:`Pipeline` with a classifier (e.g., a
   >>> results = clf.predict(X_test)
   >>> results.shape
   (100,)
-

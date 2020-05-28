@@ -6,18 +6,17 @@ from scipy.sparse import csr_matrix, issparse
 
 from sklearn.model_selection import ParameterGrid
 
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import SkipTest
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_array_almost_equal
 
 from sklearn.base import BaseEstimator, BiclusterMixin
 
-from sklearn.cluster.bicluster import SpectralCoclustering
-from sklearn.cluster.bicluster import SpectralBiclustering
-from sklearn.cluster.bicluster import _scale_normalize
-from sklearn.cluster.bicluster import _bistochastic_normalize
-from sklearn.cluster.bicluster import _log_normalize
+from sklearn.cluster import SpectralCoclustering
+from sklearn.cluster import SpectralBiclustering
+from sklearn.cluster._bicluster import _scale_normalize
+from sklearn.cluster._bicluster import _bistochastic_normalize
+from sklearn.cluster._bicluster import _log_normalize
 
 from sklearn.metrics import (consensus_score, v_measure_score)
 
@@ -67,8 +66,7 @@ def test_spectral_coclustering():
                   'n_svd_vecs': [None, 20],
                   'mini_batch': [False, True],
                   'init': ['k-means++'],
-                  'n_init': [10],
-                  'n_jobs': [1]}
+                  'n_init': [10]}
     random_state = 0
     S, rows, cols = make_biclusters((30, 30), 3, noise=0.5,
                                     random_state=random_state)
@@ -201,16 +199,13 @@ def test_project_and_cluster():
                         [0, 1],
                         [0, 0]])
     for mat in (data, csr_matrix(data)):
-        labels = model._project_and_cluster(data, vectors,
+        labels = model._project_and_cluster(mat, vectors,
                                             n_clusters=2)
         assert_almost_equal(v_measure_score(labels, [0, 0, 1, 1]), 1.0)
 
 
 def test_perfect_checkerboard():
-    # XXX test always skipped
-    raise SkipTest("This test is failing on the buildbot, but cannot"
-                   " reproduce. Temporarily disabling it until it can be"
-                   " reproduced and  fixed.")
+    # XXX Previously failed on build bot (not reproducible)
     model = SpectralBiclustering(3, svd_method="arpack", random_state=0)
 
     S, rows, cols = make_checkerboard((30, 30), 3, noise=0,
@@ -256,3 +251,27 @@ def test_wrong_shape():
     data = np.arange(27).reshape((3, 3, 3))
     with pytest.raises(ValueError):
         model.fit(data)
+
+
+@pytest.mark.parametrize('est',
+                         (SpectralBiclustering(), SpectralCoclustering()))
+def test_n_features_in_(est):
+
+    X, _, _ = make_biclusters((3, 3), 3, random_state=0)
+
+    assert not hasattr(est, 'n_features_in_')
+    est.fit(X)
+    assert est.n_features_in_ == 3
+
+
+@pytest.mark.parametrize("klass", [SpectralBiclustering, SpectralCoclustering])
+@pytest.mark.parametrize("n_jobs", [None, 1])
+def test_n_jobs_deprecated(klass, n_jobs):
+    # FIXME: remove in 0.25
+    depr_msg = ("'n_jobs' was deprecated in version 0.23 and will be removed "
+                "in 0.25.")
+    S, _, _ = make_biclusters((30, 30), 3, noise=0.5, random_state=0)
+    est = klass(random_state=0, n_jobs=n_jobs)
+
+    with pytest.warns(FutureWarning, match=depr_msg):
+        est.fit(S)

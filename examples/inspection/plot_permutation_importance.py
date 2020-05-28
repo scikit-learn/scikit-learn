@@ -20,7 +20,7 @@ can mitigate those limitations.
 
 .. topic:: References:
 
-   .. [1] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32,
+   [1] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32,
        2001. https://doi.org/10.1023/A:1010933404324
 """
 print(__doc__)
@@ -51,8 +51,9 @@ from sklearn.preprocessing import OneHotEncoder
 # - ``random_cat`` is a low cardinality categorical variable (3 possible
 #   values).
 X, y = fetch_openml("titanic", version=1, as_frame=True, return_X_y=True)
-X['random_cat'] = np.random.randint(3, size=X.shape[0])
-X['random_num'] = np.random.randn(X.shape[0])
+rng = np.random.RandomState(seed=42)
+X['random_cat'] = rng.randint(3, size=X.shape[0])
+X['random_num'] = rng.randn(X.shape[0])
 
 categorical_columns = ['pclass', 'sex', 'embarked', 'random_cat']
 numerical_columns = ['age', 'sibsp', 'parch', 'fare', 'random_num']

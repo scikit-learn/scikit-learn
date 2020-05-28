@@ -24,7 +24,7 @@ that learns :math:`n` components in its ``fit`` method, and can be used on new
 data to project it on these components.
 
 PCA centers but does not scale the input data for each feature before
-applying the SVD. The optional parameter parameter ``whiten=True`` makes it
+applying the SVD. The optional parameter ``whiten=True`` makes it
 possible to project the data onto the singular space while scaling each
 component to unit variance. This is often useful if the models down-stream make
 strong assumptions on the isotropy of the signal: this is for example the case
@@ -288,7 +288,8 @@ Truncated singular value decomposition and latent semantic analysis
 where :math:`k` is a user-specified parameter.
 
 When truncated SVD is applied to term-document matrices
-(as returned by ``CountVectorizer`` or ``TfidfVectorizer``),
+(as returned by :class:`~sklearn.feature_extraction.text.CountVectorizer` or
+:class:`~sklearn.feature_extraction.text.TfidfVectorizer`),
 this transformation is known as
 `latent semantic analysis <https://nlp.stanford.edu/IR-book/pdf/18lsi.pdf>`_
 (LSA), because it transforms such matrices
@@ -327,8 +328,7 @@ To also transform a test set :math:`X`, we multiply it with :math:`V_k`:
     but the singular values found are the same.
 
 :class:`TruncatedSVD` is very similar to :class:`PCA`, but differs
-in that it works on sample matrices :math:`X` directly
-instead of their covariance matrices.
+in that the matrix :math:`X` does not need to be centered.
 When the columnwise (per-feature) means of :math:`X`
 are subtracted from the feature values,
 truncated SVD on the resulting matrix is equivalent to PCA.
@@ -338,7 +338,7 @@ matrices without the need to densify them,
 as densifying may fill up memory even for medium-sized document collections.
 
 While the :class:`TruncatedSVD` transformer
-works with any (sparse) feature matrix,
+works with any feature matrix,
 using it on tf–idf matrices is recommended over raw frequency counts
 in an LSA/document processing setting.
 In particular, sublinear scaling and inverse document frequency

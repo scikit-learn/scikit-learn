@@ -16,12 +16,16 @@ from ..base import BaseEstimator, TransformerMixin
 from ..utils.validation import check_array
 from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
+from ..utils.validation import _deprecate_positional_args
 
 
 class KBinsDiscretizer(TransformerMixin, BaseEstimator):
-    """Bin continuous data into intervals.
+    """
+    Bin continuous data into intervals.
 
     Read more in the :ref:`User Guide <preprocessing_discretization>`.
+
+    .. versionadded:: 0.20
 
     Parameters
     ----------
@@ -63,6 +67,27 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         The edges of each bin. Contain arrays of varying shapes ``(n_bins_, )``
         Ignored features will have empty arrays.
 
+    See Also
+    --------
+     sklearn.preprocessing.Binarizer : Class used to bin values as ``0`` or
+        ``1`` based on a parameter ``threshold``.
+
+    Notes
+    -----
+    In bin edges for feature ``i``, the first and last values are used only for
+    ``inverse_transform``. During transform, bin edges are extended to::
+
+      np.concatenate([-np.inf, bin_edges_[i][1:-1], np.inf])
+
+    You can combine ``KBinsDiscretizer`` with
+    :class:`sklearn.compose.ColumnTransformer` if you only want to preprocess
+    part of the features.
+
+    ``KBinsDiscretizer`` might produce constant features (e.g., when
+    ``encode = 'onehot'`` and certain bins do not contain any data).
+    These features can be removed with feature selection algorithms
+    (e.g., :class:`sklearn.feature_selection.VarianceThreshold`).
+
     Examples
     --------
     >>> X = [[-2, 1, -4,   -1],
@@ -92,48 +117,32 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
            [ 0.5,  3.5, -1.5,  0.5],
            [ 0.5,  3.5, -1.5,  1.5]])
 
-    Notes
-    -----
-    In bin edges for feature ``i``, the first and last values are used only for
-    ``inverse_transform``. During transform, bin edges are extended to::
-
-      np.concatenate([-np.inf, bin_edges_[i][1:-1], np.inf])
-
-    You can combine ``KBinsDiscretizer`` with
-    :class:`sklearn.compose.ColumnTransformer` if you only want to preprocess
-    part of the features.
-
-    ``KBinsDiscretizer`` might produce constant features (e.g., when
-    ``encode = 'onehot'`` and certain bins do not contain any data).
-    These features can be removed with feature selection algorithms
-    (e.g., :class:`sklearn.feature_selection.VarianceThreshold`).
-
-    See also
-    --------
-     sklearn.preprocessing.Binarizer : class used to bin values as ``0`` or
-        ``1`` based on a parameter ``threshold``.
     """
 
-    def __init__(self, n_bins=5, encode='onehot', strategy='quantile'):
+    @_deprecate_positional_args
+    def __init__(self, n_bins=5, *, encode='onehot', strategy='quantile'):
         self.n_bins = n_bins
         self.encode = encode
         self.strategy = strategy
 
     def fit(self, X, y=None):
-        """Fits the estimator.
+        """
+        Fit the estimator.
 
         Parameters
         ----------
         X : numeric array-like, shape (n_samples, n_features)
             Data to be discretized.
 
-        y : ignored
+        y : None
+            Ignored. This parameter exists only for compatibility with
+            :class:`sklearn.pipeline.Pipeline`.
 
         Returns
         -------
         self
         """
-        X = check_array(X, dtype='numeric')
+        X = self._validate_data(X, dtype='numeric')
 
         valid_encode = ('onehot', 'onehot-dense', 'ordinal')
         if self.encode not in valid_encode:
@@ -241,7 +250,8 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         return n_bins
 
     def transform(self, X):
-        """Discretizes the data.
+        """
+        Discretize the data.
 
         Parameters
         ----------
@@ -279,7 +289,8 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         return self._encoder.transform(Xt)
 
     def inverse_transform(self, Xt):
-        """Transforms discretized data back to original feature space.
+        """
+        Transform discretized data back to original feature space.
 
         Note that this function does not regenerate the original data
         due to discretization rounding.

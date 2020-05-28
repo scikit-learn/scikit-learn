@@ -1,7 +1,7 @@
 #include <stdlib.h>
 #include <numpy/arrayobject.h>
 #include "svm.h"
-
+#include "_svm_cython_blas_helpers.h"
 /*
  * Some helper methods for libsvm bindings.
  *
@@ -293,7 +293,7 @@ void copy_probB(char *data, struct svm_model *model, npy_intp * dims)
  *  It will return -1 if we run out of memory.
  */
 int copy_predict(char *predict, struct svm_model *model, npy_intp *predict_dims,
-                 char *dec_values)
+                 char *dec_values, BlasFunctions *blas_functions)
 {
     double *t = (double *) dec_values;
     struct svm_node *predict_nodes;
@@ -304,7 +304,7 @@ int copy_predict(char *predict, struct svm_model *model, npy_intp *predict_dims,
     if (predict_nodes == NULL)
         return -1;
     for(i=0; i<predict_dims[0]; ++i) {
-        *t = svm_predict(model, &predict_nodes[i]);
+        *t = svm_predict(model, &predict_nodes[i], blas_functions);
         ++t;
     }
     free(predict_nodes);
@@ -312,7 +312,7 @@ int copy_predict(char *predict, struct svm_model *model, npy_intp *predict_dims,
 }
 
 int copy_predict_values(char *predict, struct svm_model *model,
-                        npy_intp *predict_dims, char *dec_values, int nr_class)
+                        npy_intp *predict_dims, char *dec_values, int nr_class, BlasFunctions *blas_functions)
 {
     npy_intp i;
     struct svm_node *predict_nodes;
@@ -321,7 +321,8 @@ int copy_predict_values(char *predict, struct svm_model *model,
         return -1;
     for(i=0; i<predict_dims[0]; ++i) {
         svm_predict_values(model, &predict_nodes[i],
-                                ((double *) dec_values) + i*nr_class);
+                                ((double *) dec_values) + i*nr_class,
+				blas_functions);
     }
 
     free(predict_nodes);
@@ -331,7 +332,7 @@ int copy_predict_values(char *predict, struct svm_model *model,
 
 
 int copy_predict_proba(char *predict, struct svm_model *model, npy_intp *predict_dims,
-                 char *dec_values)
+                 char *dec_values, BlasFunctions *blas_functions)
 {
     npy_intp i, n, m;
     struct svm_node *predict_nodes;
@@ -342,7 +343,8 @@ int copy_predict_proba(char *predict, struct svm_model *model, npy_intp *predict
         return -1;
     for(i=0; i<n; ++i) {
         svm_predict_probability(model, &predict_nodes[i],
-                                ((double *) dec_values) + i*m);
+                                ((double *) dec_values) + i*m,
+				blas_functions);
     }
     free(predict_nodes);
     return 0;

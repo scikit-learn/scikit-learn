@@ -7,11 +7,11 @@ Testing for the base module (sklearn.ensemble.base).
 
 import numpy as np
 
-from sklearn.utils.testing import assert_raise_message
+from sklearn.utils._testing import assert_raise_message
 
 from sklearn.datasets import load_iris
 from sklearn.ensemble import BaggingClassifier
-from sklearn.ensemble.base import _set_random_states
+from sklearn.ensemble._base import _set_random_states
 from sklearn.linear_model import Perceptron
 from collections import OrderedDict
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
