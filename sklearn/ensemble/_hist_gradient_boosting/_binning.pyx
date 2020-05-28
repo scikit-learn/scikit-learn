@@ -89,7 +89,7 @@ def _map_cat_to_bins(const X_DTYPE_C [:, :] data,
     data : ndarray of shape (n_samples, n_features)
         data to encoded.
     bin_categories : dict of int to arrays
-        For each categorical feature, this gives a maps categorical indicies
+        For each categorical feature, this gives a maps categorical indices
         to the categories corresponding to each bin.
     missing_values_bin_idx : uint8
         The index of the bin where missing values are mapped.

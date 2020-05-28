@@ -90,18 +90,16 @@ def _find_categories(data, max_bins, is_categorical):
     data : ndarray of shape (n_samples, n_features)
         The data to bin.
     max_bins: int
-        The maximum number of bins to use for non-missing values. If for a
-        given feature the number of unique values is less than ``max_bins``,
-        then those unique values will be used to compute the bin thresholds,
-        instead of the quantiles
+        The maximum number of bins to be used for categories.
     is_categorical : ndarray of bool of shape (n_features,) or None
         Indicates categorical features.
 
     Return
     ------
     bin_categories_ : dict of int to arrays
-        For each categorical feature, this gives a maps categorical indicies
-        to the categories corresponding to each bin.
+        For each categorical feature, this gives a map from bin index to
+        categorical value. The size of each array is equal to minimum of
+        `max_bins` and categories' cardinality.
     """
     if is_categorical is None or ~np.any(is_categorical):
         return {}
@@ -109,13 +107,13 @@ def _find_categories(data, max_bins, is_categorical):
     categorical_indices = np.flatnonzero(is_categorical)
     bin_categories = {}
 
-    for idx in categorical_indices:
-        col_data = data[:, idx]
+    for f_idx in categorical_indices:
+        col_data = data[:, f_idx]
 
         categories, counts = np.unique(col_data, return_counts=True)
 
         # sort by highest count
-        sorted_idx = np.argsort(-counts)
+        sorted_idx = np.argsort(counts)[::-1]
         categories = categories[sorted_idx]
 
         # nans and negative values will be considered missing
@@ -126,9 +124,9 @@ def _find_categories(data, max_bins, is_categorical):
             categories = categories[~both]
 
         # keep at most max_bins categories
-        # needs to be sorted, because `_map_cat_col_to_bins` will assumes
+        # needs to be sorted, because `_map_cat_col_to_bins` will assume
         # that the categories are sorted
-        bin_categories[idx] = np.sort(categories[:max_bins])
+        bin_categories[f_idx] = np.sort(categories[:max_bins])
 
     return bin_categories
 
@@ -182,8 +180,9 @@ class _BinMapper(TransformerMixin, BaseEstimator):
         If ``bin_thresholds_`` corresponds to a categorical feature, then
         ``bin_thresholds_[categorical_index]`` is None.
     bin_categories_ : dict of int to arrays
-        For each categorical feature, this gives a maps categorical indicies
-        to the categories corresponding to each bin.
+        For each categorical feature, this gives a map from bin index to
+        categorical value. The size of each array is equal to minimum of
+        `max_bins` and categories' cardinality.
     n_bins_non_missing_ : array of uint32
         For each feature, gives the number of bins actually used for
         non-missing values. For features with a lot of unique values, this is

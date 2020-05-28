@@ -102,9 +102,10 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             self.is_categorical_ = None
             return
 
-        # for pandas dataframes
+        # check for pandas dataframe
         if (isinstance(self.categorical_features, str) and
                 self.categorical_features == 'pandas'):
+            # is pandas dataframe
             if not hasattr(X_orig, "dtypes"):
                 raise ValueError("categorical_features='pandas' can only be "
                                  "used with a pandas dataframe")
@@ -116,12 +117,12 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             raise ValueError("categorical_features must be an array-like of "
                              "bool, array-like of ints, or 'pandas'")
 
-        # check for categorical features as indicies
+        # check for categorical features as indices
         if cat_features_input.dtype.kind == 'i':
             if (np.max(cat_features_input) >= n_features
                     or np.min(cat_features_input) < 0):
                 raise ValueError("categorical_features set as integer "
-                                 "indicies must be in [0, n_features)")
+                                 "indices must be in [0, n_features - 1]")
             cat_feats = np.zeros(n_features, dtype=bool)
             cat_feats[cat_features_input] = True
 
@@ -131,8 +132,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                                  "must have shape (n_features,)")
             cat_feats = cat_features_input
 
-        if np.any(cat_feats):
-            self.is_categorical_ = np.asarray(cat_feats, dtype=bool)
+        if not np.any(cat_feats):
+            self.is_categorical_ = cat_feats
         else:
             # no categories
             self.is_categorical_ = None
@@ -934,17 +935,17 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         and 0 respectively correspond to a positive constraint, negative
         constraint and no constraint. Read more in the :ref:`User Guide
         <monotonic_cst_gbdt>`.
-    categorical_features : array-like of bool of shape (n_features) or \
+    categorical_features : array-like of bool or int of shape (n_features) or \
         `'pandas'`, default=None.
         Indicates the categorical features.
 
-        - None : no features will be considered categorical.
-        - `'pandas'` : categorical features will be infered using pandas
+        - None : no feature will be considered categorical.
+        - `'pandas'` : categorical features will be inferred using pandas
           categorical dtypes.
         - boolean array-like : boolean mask indicating categorical features.
           The categories must have been already be numerical i.e. encoded by
           an :class:`~sklearn.preprocessing.OrdinalEncoder`.
-        - integer array-like : integer indicies indicating categorical
+        - integer array-like : integer indices indicating categorical
           features. The categories must have been already be numerical i.e.
           encoded by an :class:`~sklearn.preprocessing.OrdinalEncoder`.
 
@@ -1180,21 +1181,21 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
         and 0 respectively correspond to a positive constraint, negative
         constraint and no constraint. Read more in the :ref:`User Guide
         <monotonic_cst_gbdt>`.
-    categorical_features : array-like of bool of shape (n_features) or \
+    categorical_features : array-like of bool or int of shape (n_features) or \
         `'pandas'`, default=None.
         Indicates the categorical features.
 
-        - None : no features will be considered categorical.
-        - `'pandas'` : categorical features will be infered using pandas
+        - None : no feature will be considered categorical.
+        - `'pandas'` : categorical features will be inferred using pandas
           categorical dtypes.
         - boolean array-like : boolean mask indicating categorical features.
           The categories must have been already be numerical i.e. encoded by
           an :class:`~sklearn.preprocessing.OrdinalEncoder`.
-        - integer array-like : integer indicies indicating categorical
+        - integer array-like : integer indices indicating categorical
           features. The categories must have been already be numerical i.e.
           encoded by an :class:`~sklearn.preprocessing.OrdinalEncoder`.
 
-        If the number of features is greater than ``max_bins``, then the top
+        If the number of categories is greater than ``max_bins``, then the top
         ``max_bins`` categories based on cardinality are kept. Categories
         encoded as negative number will be considered missing. Read more in
         the :ref:`User Guide <categorical_support_gbdt>`.

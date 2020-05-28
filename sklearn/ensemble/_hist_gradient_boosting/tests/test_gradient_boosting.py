@@ -808,7 +808,7 @@ def test_categorical_sanity(insert_missing, make_dataset, Est,
     # Test support categories with or without missing data
     X, y = make_dataset(n_samples=1000, n_features=8, random_state=0)
 
-    # even indicies are categorical
+    # even indices are categorical
     categorical = np.zeros(X.shape[1], dtype=bool)
     categorical[::2] = True
 
@@ -848,7 +848,7 @@ def test_categorical_pandas():
     X, y = make_regression(n_samples=n_samples, n_features=n_features,
                            random_state=0)
 
-    # even indicies are categorical
+    # even indices are categorical
     categorical = np.zeros(X.shape[1], dtype=bool)
     categorical[::2] = 1
 
@@ -859,9 +859,9 @@ def test_categorical_pandas():
                       columns=[f'col_{i}' for i in range(n_features)])
 
     # make columns pandas categoricals
-    categorical_indicies = np.flatnonzero(categorical)
+    categorical_indices = np.flatnonzero(categorical)
     rng = np.random.RandomState(42)
-    for idx in categorical_indicies:
+    for idx in categorical_indices:
         df.iloc[:, idx] = df.iloc[:, idx].astype('category')
 
         # insesrt some missing categories
@@ -869,7 +869,7 @@ def test_categorical_pandas():
         df.iloc[mask, idx] = np.nan
 
     # uses strings for some categorical names
-    for idx in categorical_indicies[::2]:
+    for idx in categorical_indices[::2]:
         df.iloc[:, idx] = (df.iloc[:, 0].cat.rename_categories(
             [f'cat_name_{i}' for i in range(20)]))
 
@@ -895,8 +895,8 @@ def test_categorical_pandas():
      ("categorical_features must be an array-like of bool, array-like of "
       "ints, or 'pandas'")),
     ([0, -1], None,
-     (r"categorical_features set as integer indicies must be in "
-      r"\[0, n_features\)")),
+     (r"categorical_features set as integer indices must be in "
+      r"\[0, n_features - 1\]")),
     ([True, True, False, False, True], None,
      r"categorical_features set as a boolean mask must have shape "
      r"\(n_features,\)"),

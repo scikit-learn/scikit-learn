@@ -359,8 +359,8 @@ def test_categorical_n_bins_greater_than_equal_cardinality(n_bins):
 @pytest.mark.parametrize(
     "n_bins, expected_trans, expected_bin_categories",
     [
-        (3, [2, 2, 2, 2, 2, 1, 2, 2, 0], [0, 7]),
-        # 0 is choosen instead of 10 because it comes before in lexicon
+        (3, [1, 2, 2, 2, 2, 0, 2, 2, 2], [7, 10]),
+        # 0 is choosen instead of 10 because it comes after in lexicon
         # order
         (4, [2, 3, 3, 3, 3, 1, 3, 3, 0], [0, 7, 10]),
         (5, [3, 1, 4, 4, 4, 2, 4, 4, 0], [0, 1, 7, 10]),
@@ -393,24 +393,24 @@ def test_categorical_n_bins_less_than_cardinality_ties():
                   [4] * 2 + [5] * 2 + [6] * 1], dtype=X_DTYPE).T
     X_test = np.array([[1, 2, 3, 4, 5, 6, 7]], dtype=X_DTYPE).T
 
-    # With 4 bins used for non missing values. categories 1, 2, 3, 4
+    # With 4 bins used for non missing values. categories 1, 2, 3, 5
     # will have their own bin, the rest will be placed in the missing bin.
     bin_mapper = _BinMapper(n_bins=5, is_categorical=np.array([True])).fit(X)
     assert bin_mapper.n_bins_non_missing_ == [4]
-    assert_allclose(bin_mapper.bin_categories_[0], [1, 2, 3, 4])
+    assert_allclose(bin_mapper.bin_categories_[0], [1, 2, 3, 5])
 
     X_trans = bin_mapper.transform(X_test)
-    expected_trans = np.array([[0, 1, 2, 3, 4, 4, 4]]).T
+    expected_trans = np.array([[0, 1, 2, 4, 3, 4, 4]]).T
     assert_array_equal(X_trans, expected_trans)
 
-    # With 3 bins usd for non missing values. categoires 1, 2
+    # With 3 bins usd for non missing values. categoires 2, 3
     # will have their own bin, the rest will be placed in the missing bin.
     bin_mapper = _BinMapper(n_bins=3, is_categorical=np.array([True])).fit(X)
     assert bin_mapper.n_bins_non_missing_ == [2]
-    assert_allclose(bin_mapper.bin_categories_[0], [1, 2])
+    assert_allclose(bin_mapper.bin_categories_[0], [2, 3])
 
     X_trans = bin_mapper.transform(X_test)
-    expected_trans = np.array([[0, 1, 2, 2, 2, 2, 2]]).T
+    expected_trans = np.array([[2, 0, 1, 2, 2, 2, 2]]).T
     assert_array_equal(X_trans, expected_trans)
 
 
