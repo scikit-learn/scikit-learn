@@ -52,6 +52,13 @@ Changelog
   which allows monitoring of each stage.
   :pr:`16985` by :user:`Hao Chun Chang <haochunchang>`.
 
+:mod:`sklearn.feature_extraction`
+.................................
+
+- |Enhancement| :class:`feature_extraction.DictVectorizer` accepts multiple
+  values for one categorical feature. :pr:`17367` by :user:`Peng Yu <yupbank>`
+  and :user:`Chiara Marmo <cmarmo>`
+
 :mod:`sklearn.impute`
 .....................
 

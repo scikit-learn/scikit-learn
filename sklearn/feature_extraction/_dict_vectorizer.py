@@ -83,8 +83,8 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
     >>> X
     array([[2., 0., 1.],
            [0., 1., 3.]])
-    >>> v.inverse_transform(X) == \
-        [{'bar': 2.0, 'foo': 1.0}, {'baz': 1.0, 'foo': 3.0}]
+    >>> v.inverse_transform(X) ==
+    ...   [{'bar': 2.0, 'foo': 1.0}, {'baz': 1.0, 'foo': 3.0}]
     True
     >>> v.transform({'foo': 4, 'unseen_feature': 3})
     array([[0., 0., 4.]])
@@ -93,16 +93,16 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
     Example with multiple values for one categorical values:
 
 
-    >>> D2 = [{'foo': '1', 'bar': '2'}, {'foo': '3', 'baz': '1'}, \
-              {'foo': ['1', '3']}]
+    >>> D2 = [{'foo': '1', 'bar': '2'}, {'foo': '3', 'baz': '1'},
+    ...       {'foo': ['1', '3']}]
     >>> X = v.fit_transform(D2)
     >>> X
     array([[1., 0., 1., 0.],
            [0., 1., 0., 1.],
            [0., 0., 1., 1.]])
-    >>> v.inverse_transform(X) == \
-        [{'foo=1': 1.0, 'bar=2': 1.0}, {'foo=3': 1.0, 'baz=1': 1.0}, \
-         {'foo=3': 1.0, 'foo=1': 1.0}]
+    >>> v.inverse_transform(X) ==
+    ...    [{'foo=1': 1.0, 'bar=2': 1.0}, {'foo=3': 1.0, 'baz=1': 1.0},
+    ...     {'foo=3': 1.0, 'foo=1': 1.0}]
     True
     >>> v.transform({'foo': '1', 'unseen_feature': [3]})
     array([[0., 0., 1., 0.]])
@@ -120,6 +120,32 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
         self.separator = separator
         self.sparse = sparse
         self.sort = sort
+
+    def _add_element(self, f, v, feature_names, vocab, fitting=True,
+                     transforming=False, indices=None, values=None):
+        if isinstance(v, str):
+            feature_name = "%s%s%s" % (f, self.separator, v)
+            v = 1
+        elif isinstance(v, Number) or (v is None):
+            feature_name = f
+        elif isinstance(v, Iterable) and not isinstance(v, str):
+            for vv in v:
+                self._add_element(f, vv, feature_names, vocab,
+                                  fitting, transforming, indices, values)
+            return
+        else:
+            raise ValueError(
+                'Unsupported Value Type %s for {%s: %s}' % (type(v), f, v))
+
+        if fitting:
+            if feature_name not in vocab:
+                vocab[feature_name] = len(feature_names)
+                feature_names.append(feature_name)
+
+        if transforming:
+            if feature_name in vocab:
+                indices.append(vocab[feature_name])
+                values.append(self.dtype(v))
 
     def fit(self, X, y=None):
         """Learn a list of feature name -> indices mappings.
@@ -140,7 +166,7 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
 
         for x in X:
             for f, v in x.items():
-                self.add_element(f, v, feature_names, vocab)
+                self._add_element(f, v, feature_names, vocab)
 
         if self.sort:
             feature_names.sort()
@@ -150,32 +176,6 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
         self.vocabulary_ = vocab
 
         return self
-
-    def add_element(self, f, v, feature_names, vocab, fitting=True,
-                    transforming=False, indices=None, values=None):
-        if isinstance(v, str):
-            feature_name = "%s%s%s" % (f, self.separator, v)
-            v = 1
-        elif isinstance(v, Number) or (v is None):
-            feature_name = f
-        elif isinstance(v, Iterable) and not isinstance(v, str):
-            for vv in v:
-                self.add_element(f, vv, feature_names, vocab,
-                                 fitting, transforming, indices, values)
-            return
-        else:
-            raise ValueError(
-                'Unsupported Value Type %s for {%s: %s}' % (type(v), f, v))
-
-        if fitting:
-            if feature_name not in vocab:
-                vocab[feature_name] = len(feature_names)
-                feature_names.append(feature_name)
-
-        if transforming:
-            if feature_name in vocab:
-                indices.append(vocab[feature_name])
-                values.append(self.dtype(v))
 
     def _transform(self, X, fitting):
         # Sanity check: Python's array has no way of explicitly requesting the
@@ -210,8 +210,8 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
         # same time
         for x in X:
             for f, v in x.items():
-                self.add_element(f, v, feature_names, vocab,
-                                 fitting, transforming, indices, values)
+                self._add_element(f, v, feature_names, vocab,
+                                  fitting, transforming, indices, values)
 
             indptr.append(len(indices))
 
