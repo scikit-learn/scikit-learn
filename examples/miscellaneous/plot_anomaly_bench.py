@@ -110,28 +110,13 @@ for dataset_idx, dataset_name in enumerate(datasets):
     if dataset_name == "http" or dataset_name == "smtp":
         y = (y != b"normal.").astype(int)
 
-    if dataset_name == "glass":
-        data = loadmat('../../sklearn/datasets/data/glass.mat')
+    if dataset_name in ["glass", "vowels", "wbc", "letter"]:
+        data = loadmat('../../sklearn/datasets/data/'
+                       + dataset_name + '.mat')
         X = data['X']
-        y = data['y']
-
-    if dataset_name == "vowels":
-        data = loadmat('../../sklearn/datasets/data/vowels.mat')
-        X = data['X']
-        y = data['y']
-
-    if dataset_name == "wbc":
-        data = loadmat('../../sklearn/datasets/data/wbc.mat')
-        X = data['X']
-        y = data['y']
-
-    if dataset_name == "letter":
-        data = loadmat('../../sklearn/datasets/data/letter.mat')
-        X = data['X']
-        y = data['y']
+        y = data['y'].astype(int)
 
     X = X.astype(float)
-    y = y.astype(float)
 
     print("Estimator processing...")
     for model_name, model in models:
