@@ -1730,7 +1730,8 @@ def test_group_time_series_fail_if_more_folds_than_group():
         raise ValueError('Cannot have number of folds n_splits=%d'
                          'greater than the number of groups: %d."')
         assert str(excinfo.value) == ('Cannot have number of folds n_splits=%d'
-                                      'greater than the number of groups: %d."')
+                                      'greater than the number of groups: %d."'
+                                      )
 
 # assert_raises_regexp(ValueError, "Cannot have number of folds.*greater",
 # next,
