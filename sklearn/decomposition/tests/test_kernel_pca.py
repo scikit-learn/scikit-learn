@@ -55,8 +55,10 @@ def test_kernel_pca():
 
 
 def test_kernel_pca_invalid_parameters():
+    state = np.random.RandomState(0)
+    X = state.rand(10, 10)
     with pytest.raises(ValueError):
-        KernelPCA(10, fit_inverse_transform=True, kernel='precomputed')
+        KernelPCA(10, fit_inverse_transform=True, kernel='precomputed').fit(X)
 
 
 def test_kernel_pca_consistent_transform():
