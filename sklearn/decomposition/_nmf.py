@@ -913,6 +913,9 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
 
         - 'custom': use custom matrices W and H
 
+        Ignored if update_H is False, in which case the initial value of W
+        is set automatically.
+
         .. versionchanged:: 0.23
             The default value of `init` changed from 'random' to None in 0.23.
 
