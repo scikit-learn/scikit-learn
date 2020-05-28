@@ -1,0 +1,86 @@
+{%- if pagename != 'index' and pagename != 'documentation' %}
+  {%- set nav_bar_class = "sk-docs-navbar" %}
+  {%- set top_container_cls = "sk-docs-container" %}
+{%- else %}
+  {%- set nav_bar_class = "sk-landing-navbar" %}
+  {%- set top_container_cls = "sk-landing-container" %}
+{%- endif %}
+
+{%- set drop_down_navigation = [
+  ('Getting Started', pathto('getting_started')),
+  ('Tutorial', pathto('tutorial/index')),
+  ("What's new", pathto('whats_new/v' + version)),
+  ('Glossary', pathto('glossary')),
+  ('Development', pathto('developers/index')),
+  ('FAQ', pathto('faq')),
+  ('Related packages', pathto('related_projects')),
+  ('Roadmap', pathto('roadmap')),
+  ('About us', pathto('about')),
+  ('GitHub', 'https://github.com/scikit-learn/scikit-learn'),
+  ('Other Versions', 'https://scikit-learn.org/dev/versions.html')]
+-%}
+
+<nav id="navbar" class="{{ nav_bar_class }} navbar navbar-expand-md navbar-light bg-light py-0">
+  <div class="container-fluid {{ top_container_cls }} px-0">
+    {%- if logo %}
+      <a class="navbar-brand py-0" href="{{ pathto('index') }}">
+        <img
+          class="sk-brand-img"
+          src="{{ pathto('_static/' + logo, 1) }}"
+          alt="logo"/>
+      </a>
+    {%- endif %}
+    <button
+      id="sk-navbar-toggler"
+      class="navbar-toggler"
+      type="button"
+      data-toggle="collapse"
+      data-target="#navbarSupportedContent"
+      aria-controls="navbarSupportedContent"
+      aria-expanded="false"
+      aria-label="Toggle navigation"
+    >
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="sk-navbar-collapse collapse navbar-collapse" id="navbarSupportedContent">
+      <ul class="navbar-nav mr-auto">
+        <li class="nav-item">
+          <a class="sk-nav-link nav-link" href="{{ pathto('install') }}">Install</a>
+        </li>
+        <li class="nav-item">
+          <a class="sk-nav-link nav-link" href="{{ pathto('user_guide') }}">User Guide</a>
+        </li>
+        <li class="nav-item">
+          <a class="sk-nav-link nav-link" href="{{ pathto('modules/classes') }}">API</a>
+        </li>
+        <li class="nav-item">
+          <a class="sk-nav-link nav-link" href="{{ pathto('auto_examples/index') }}">Examples</a>
+        </li>
+        {%- for title, link in drop_down_navigation %}
+        <li class="nav-item">
+          <a class="sk-nav-link nav-link nav-more-item-mobile-items" href="{{ link }}">{{ title }}</a>
+        </li>
+        {%- endfor %}
+        <li class="nav-item dropdown nav-more-item-dropdown">
+          <a class="sk-nav-link nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">More</a>
+          <div class="dropdown-menu" aria-labelledby="navbarDropdown">
+            {%- for title, link in drop_down_navigation %}
+              <a class="sk-nav-dropdown-item dropdown-item" href="{{ link }}">{{ title}}</a>
+            {%- endfor %}
+          </div>
+        </li>
+      </ul>
+      {%- if pagename != "search"%}
+      <div id="searchbox" role="search">
+          <div class="searchformwrapper">
+          <form class="search" action="{{ pathto('search') }}" method="get">
+            <input class="sk-search-text-input" type="text" name="q" aria-labelledby="searchlabel" />
+            <input class="sk-search-text-btn" type="submit" value="{{ _('Go') }}" />
+          </form>
+          </div>
+      </div>
+      {%- endif %}
+    </div>
+  </div>
+</nav>

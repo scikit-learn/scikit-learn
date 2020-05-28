@@ -1,5 +1,6 @@
 
 import functools
+from typing import List, Any
 
 import numpy as np
 import scipy.sparse as sp
@@ -8,25 +9,25 @@ import pytest
 from sklearn.metrics import euclidean_distances
 
 from sklearn.random_projection import johnson_lindenstrauss_min_dim
-from sklearn.random_projection import gaussian_random_matrix
-from sklearn.random_projection import sparse_random_matrix
+from sklearn.random_projection import _gaussian_random_matrix
+from sklearn.random_projection import _sparse_random_matrix
 from sklearn.random_projection import SparseRandomProjection
 from sklearn.random_projection import GaussianRandomProjection
 
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_warns
+from sklearn.utils._testing import assert_raises
+from sklearn.utils._testing import assert_raise_message
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_warns
 from sklearn.exceptions import DataDimensionalityWarning
 
-all_sparse_random_matrix = [sparse_random_matrix]
-all_dense_random_matrix = [gaussian_random_matrix]
+all_sparse_random_matrix: List[Any] = [_sparse_random_matrix]
+all_dense_random_matrix: List[Any] = [_gaussian_random_matrix]
 all_random_matrix = all_sparse_random_matrix + all_dense_random_matrix
 
-all_SparseRandomProjection = [SparseRandomProjection]
-all_DenseRandomProjection = [GaussianRandomProjection]
+all_SparseRandomProjection: List[Any] = [SparseRandomProjection]
+all_DenseRandomProjection: List[Any] = [GaussianRandomProjection]
 all_RandomProjection = set(all_SparseRandomProjection +
                            all_DenseRandomProjection)
 
@@ -59,21 +60,21 @@ data, data_csr = make_sparse_random_data(n_samples, n_features, n_nonzeros)
 # test on JL lemma
 ###############################################################################
 def test_invalid_jl_domain():
-    assert_raises(ValueError, johnson_lindenstrauss_min_dim, 100, 1.1)
-    assert_raises(ValueError, johnson_lindenstrauss_min_dim, 100, 0.0)
-    assert_raises(ValueError, johnson_lindenstrauss_min_dim, 100, -0.1)
-    assert_raises(ValueError, johnson_lindenstrauss_min_dim, 0, 0.5)
+    assert_raises(ValueError, johnson_lindenstrauss_min_dim, 100, eps=1.1)
+    assert_raises(ValueError, johnson_lindenstrauss_min_dim, 100, eps=0.0)
+    assert_raises(ValueError, johnson_lindenstrauss_min_dim, 100, eps=-0.1)
+    assert_raises(ValueError, johnson_lindenstrauss_min_dim, 0, eps=0.5)
 
 
 def test_input_size_jl_min_dim():
     assert_raises(ValueError, johnson_lindenstrauss_min_dim,
-                  3 * [100], 2 * [0.9])
+                  3 * [100], eps=2 * [0.9])
 
     assert_raises(ValueError, johnson_lindenstrauss_min_dim, 3 * [100],
-                  2 * [0.9])
+                  eps=2 * [0.9])
 
     johnson_lindenstrauss_min_dim(np.random.randint(1, 10, size=(10, 10)),
-                                  np.full((10, 10), 0.5))
+                                  eps=np.full((10, 10), 0.5))
 
 
 ###############################################################################
@@ -137,7 +138,7 @@ def test_gaussian_random_matrix():
     #
     n_components = 100
     n_features = 1000
-    A = gaussian_random_matrix(n_components, n_features, random_state=0)
+    A = _gaussian_random_matrix(n_components, n_features, random_state=0)
 
     assert_array_almost_equal(0.0, np.mean(A), 2)
     assert_array_almost_equal(np.var(A, ddof=1), 1 / n_components, 1)
@@ -151,7 +152,7 @@ def test_sparse_random_matrix():
     for density in [0.3, 1.]:
         s = 1 / density
 
-        A = sparse_random_matrix(n_components,
+        A = _sparse_random_matrix(n_components,
                                  n_features,
                                  density=density,
                                  random_state=0)

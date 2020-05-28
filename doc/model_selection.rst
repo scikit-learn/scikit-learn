@@ -6,6 +6,7 @@ Model selection and evaluation
 ------------------------------
 
 .. toctree::
+    :maxdepth: 2
 
     modules/cross_validation
     modules/grid_search

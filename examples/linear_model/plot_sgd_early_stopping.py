@@ -48,7 +48,7 @@ import matplotlib.pyplot as plt
 from sklearn import linear_model
 from sklearn.datasets import fetch_openml
 from sklearn.model_selection import train_test_split
-from sklearn.utils.testing import ignore_warnings
+from sklearn.utils._testing import ignore_warnings
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils import shuffle
 

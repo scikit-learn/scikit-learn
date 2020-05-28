@@ -3,12 +3,12 @@ from itertools import product
 import numpy as np
 from numpy.testing import assert_almost_equal, assert_array_almost_equal
 from scipy import linalg
+import pytest
 
 from sklearn import neighbors, manifold
-from sklearn.manifold.locally_linear import barycenter_kneighbors_graph
-from sklearn.utils.testing import ignore_warnings
-from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_raises
+from sklearn.manifold._locally_linear import barycenter_kneighbors_graph
+from sklearn.utils._testing import ignore_warnings
+from sklearn.utils._testing import assert_raise_message
 
 eigen_solvers = ['dense', 'arpack']
 
@@ -130,8 +130,10 @@ def test_pipeline():
 def test_singular_matrix():
     M = np.ones((10, 3))
     f = ignore_warnings
-    assert_raises(ValueError, f(manifold.locally_linear_embedding),
-                  M, 2, 1, method='standard', eigen_solver='arpack')
+    with pytest.raises(ValueError):
+        f(manifold.locally_linear_embedding(M, n_neighbors=2, n_components=1,
+                                            method='standard',
+                                            eigen_solver='arpack'))
 
 
 # regression test for #6033

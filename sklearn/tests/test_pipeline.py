@@ -13,15 +13,15 @@ import numpy as np
 from scipy import sparse
 import joblib
 
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_raises_regex
-from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_allclose
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_no_warnings
+from sklearn.utils._testing import assert_raises
+from sklearn.utils._testing import assert_raises_regex
+from sklearn.utils._testing import assert_raise_message
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_no_warnings
 
-from sklearn.base import clone, BaseEstimator
+from sklearn.base import clone, BaseEstimator, TransformerMixin
 from sklearn.pipeline import Pipeline, FeatureUnion, make_pipeline, make_union
 from sklearn.svm import SVC
 from sklearn.neighbors import LocalOutlierFactor
@@ -34,7 +34,10 @@ from sklearn.decomposition import PCA, TruncatedSVD
 from sklearn.datasets import load_iris
 from sklearn.preprocessing import StandardScaler
 from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.experimental import enable_hist_gradient_boosting  # noqa
+from sklearn.ensemble import HistGradientBoostingClassifier
 
+iris = load_iris()
 
 JUNK_FOOD_DOCS = (
     "the pizza pizza beer copyright",
@@ -240,7 +243,6 @@ def test_pipeline_init_tuple():
 
 def test_pipeline_methods_anova():
     # Test the various methods of the pipeline (anova).
-    iris = load_iris()
     X = iris.data
     y = iris.target
     # Test with Anova + LogisticRegression
@@ -319,7 +321,6 @@ def test_pipeline_raise_set_params_error():
 
 def test_pipeline_methods_pca_svm():
     # Test the various methods of the pipeline (pca + svm).
-    iris = load_iris()
     X = iris.data
     y = iris.target
     # Test with PCA + SVC
@@ -334,7 +335,6 @@ def test_pipeline_methods_pca_svm():
 
 
 def test_pipeline_score_samples_pca_lof():
-    iris = load_iris()
     X = iris.data
     # Test that the score_samples method is implemented on a pipeline.
     # Test that the score_samples method on pipeline yields same results as
@@ -365,7 +365,6 @@ def test_score_samples_on_pipeline_without_score_samples():
 
 def test_pipeline_methods_preprocessing_svm():
     # Test the various methods of the pipeline (preprocessing + svm).
-    iris = load_iris()
     X = iris.data
     y = iris.target
     n_samples = X.shape[0]
@@ -398,7 +397,6 @@ def test_fit_predict_on_pipeline():
     # test that the fit_predict method is implemented on a pipeline
     # test that the fit_predict on pipeline yields same results as applying
     # transform and clustering steps separately
-    iris = load_iris()
     scaler = StandardScaler()
     km = KMeans(random_state=0)
     # As pipeline doesn't clone estimators on construction,
@@ -456,7 +454,6 @@ def test_predict_with_predict_params():
 
 def test_feature_union():
     # basic sanity check for feature union
-    iris = load_iris()
     X = iris.data
     X -= X.mean(axis=0)
     y = iris.target
@@ -530,7 +527,6 @@ def test_make_union_kwargs():
 def test_pipeline_transform():
     # Test whether pipeline works with a transformer at the end.
     # Also test pipeline.transform and pipeline.inverse_transform
-    iris = load_iris()
     X = iris.data
     pca = PCA(n_components=2, svd_solver='full')
     pipeline = Pipeline([('pca', pca)])
@@ -549,7 +545,6 @@ def test_pipeline_transform():
 
 def test_pipeline_fit_transform():
     # Test whether pipeline works with a transformer missing fit_transform
-    iris = load_iris()
     X = iris.data
     y = iris.target
     transf = Transf()
@@ -771,7 +766,6 @@ def test_make_pipeline():
 
 def test_feature_union_weights():
     # test feature union with transformer weights
-    iris = load_iris()
     X = iris.data
     y = iris.target
     pca = PCA(n_components=2, svd_solver='randomized', random_state=0)
@@ -865,7 +859,6 @@ def test_feature_union_feature_names():
 
 
 def test_classes_property():
-    iris = load_iris()
     X = iris.data
     y = iris.target
 
@@ -907,8 +900,7 @@ def test_set_feature_union_steps():
     assert ['mock__x5'] == ft.get_feature_names()
 
 
-@pytest.mark.parametrize('drop', ['drop', None])
-def test_set_feature_union_step_drop(drop):
+def test_set_feature_union_step_drop():
     mult2 = Mult(2)
     mult2.get_feature_names = lambda: ['x2']
     mult3 = Mult(3)
@@ -920,25 +912,33 @@ def test_set_feature_union_step_drop(drop):
     assert_array_equal([[2, 3]], ft.fit_transform(X))
     assert ['m2__x2', 'm3__x3'] == ft.get_feature_names()
 
-    ft.set_params(m2=drop)
-    assert_array_equal([[3]], ft.fit(X).transform(X))
-    assert_array_equal([[3]], ft.fit_transform(X))
+    with pytest.warns(None) as record:
+        ft.set_params(m2='drop')
+        assert_array_equal([[3]], ft.fit(X).transform(X))
+        assert_array_equal([[3]], ft.fit_transform(X))
     assert ['m3__x3'] == ft.get_feature_names()
+    assert not record
 
-    ft.set_params(m3=drop)
-    assert_array_equal([[]], ft.fit(X).transform(X))
-    assert_array_equal([[]], ft.fit_transform(X))
+    with pytest.warns(None) as record:
+        ft.set_params(m3='drop')
+        assert_array_equal([[]], ft.fit(X).transform(X))
+        assert_array_equal([[]], ft.fit_transform(X))
     assert [] == ft.get_feature_names()
+    assert not record
 
-    # check we can change back
-    ft.set_params(m3=mult3)
-    assert_array_equal([[3]], ft.fit(X).transform(X))
+    with pytest.warns(None) as record:
+        # check we can change back
+        ft.set_params(m3=mult3)
+        assert_array_equal([[3]], ft.fit(X).transform(X))
+    assert not record
 
-    # Check 'drop' step at construction time
-    ft = FeatureUnion([('m2', drop), ('m3', mult3)])
-    assert_array_equal([[3]], ft.fit(X).transform(X))
-    assert_array_equal([[3]], ft.fit_transform(X))
+    with pytest.warns(None) as record:
+        # Check 'drop' step at construction time
+        ft = FeatureUnion([('m2', 'drop'), ('m3', mult3)])
+        assert_array_equal([[3]], ft.fit(X).transform(X))
+        assert_array_equal([[3]], ft.fit_transform(X))
     assert ['m3__x3'] == ft.get_feature_names()
+    assert not record
 
 
 def test_step_name_validation():
@@ -987,7 +987,6 @@ def test_set_params_nested_pipeline():
 def test_pipeline_wrong_memory():
     # Test that an error is raised when memory is not a string or a Memory
     # instance
-    iris = load_iris()
     X = iris.data
     y = iris.target
     # Define memory as an integer
@@ -1022,7 +1021,6 @@ def test_pipeline_with_cache_attribute():
 
 
 def test_pipeline_memory():
-    iris = load_iris()
     X = iris.data
     y = iris.target
     cachedir = mkdtemp()
@@ -1138,7 +1136,7 @@ parameter_grid_test_verbose = ((est, pattern, method) for
      (FeatureUnion([('mult1', Mult()), ('mult2', Mult())]),
       r'\[FeatureUnion\].*\(step 1 of 2\) Processing mult1.* total=.*\n'
       r'\[FeatureUnion\].*\(step 2 of 2\) Processing mult2.* total=.*\n$'),
-     (FeatureUnion([('mult1', None), ('mult2', Mult()), ('mult3', None)]),
+     (FeatureUnion([('mult1', 'drop'), ('mult2', Mult()), ('mult3', 'drop')]),
       r'\[FeatureUnion\].*\(step 1 of 1\) Processing mult2.* total=.*\n$')
     ], ['fit', 'fit_transform', 'fit_predict'])
     if hasattr(est, method) and not (
@@ -1161,3 +1159,69 @@ def test_verbose(est, method, pattern, capsys):
     est.set_params(verbose=True)
     func(X, y)
     assert re.match(pattern, capsys.readouterr().out)
+
+
+def test_n_features_in_pipeline():
+    # make sure pipelines delegate n_features_in to the first step
+
+    X = [[1, 2], [3, 4], [5, 6]]
+    y = [0, 1, 2]
+
+    ss = StandardScaler()
+    gbdt = HistGradientBoostingClassifier()
+    pipe = make_pipeline(ss, gbdt)
+    assert not hasattr(pipe, 'n_features_in_')
+    pipe.fit(X, y)
+    assert pipe.n_features_in_ == ss.n_features_in_ == 2
+
+    # if the first step has the n_features_in attribute then the pipeline also
+    # has it, even though it isn't fitted.
+    ss = StandardScaler()
+    gbdt = HistGradientBoostingClassifier()
+    pipe = make_pipeline(ss, gbdt)
+    ss.fit(X, y)
+    assert pipe.n_features_in_ == ss.n_features_in_ == 2
+    assert not hasattr(gbdt, 'n_features_in_')
+
+
+def test_n_features_in_feature_union():
+    # make sure FeatureUnion delegates n_features_in to the first transformer
+
+    X = [[1, 2], [3, 4], [5, 6]]
+    y = [0, 1, 2]
+
+    ss = StandardScaler()
+    fu = make_union(ss)
+    assert not hasattr(fu, 'n_features_in_')
+    fu.fit(X, y)
+    assert fu.n_features_in_ == ss.n_features_in_ == 2
+
+    # if the first step has the n_features_in attribute then the feature_union
+    # also has it, even though it isn't fitted.
+    ss = StandardScaler()
+    fu = make_union(ss)
+    ss.fit(X, y)
+    assert fu.n_features_in_ == ss.n_features_in_ == 2
+
+
+def test_feature_union_fit_params():
+    # Regression test for issue: #15117
+    class Dummy(TransformerMixin, BaseEstimator):
+        def fit(self, X, y=None, **fit_params):
+            if fit_params != {'a': 0}:
+                raise ValueError
+            return self
+
+        def transform(self, X, y=None):
+            return X
+
+    X, y = iris.data, iris.target
+    t = FeatureUnion([('dummy0', Dummy()), ('dummy1', Dummy())])
+    with pytest.raises(ValueError):
+        t.fit(X, y)
+
+    with pytest.raises(ValueError):
+        t.fit_transform(X, y)
+
+    t.fit(X, y, a=0)
+    t.fit_transform(X, y, a=0)

@@ -384,8 +384,9 @@ removed to avoid them being construed as signal for prediction.  Sometimes,
 however, similar words are useful for prediction, such as in classifying
 writing style or personality.
 
-There are several known issues in our provided 'english' stop word list. See
-[NQY18]_.
+There are several known issues in our provided 'english' stop word list. It
+does not aim to be a general, 'one-size-fits-all' solution as some tasks 
+may require a more custom solution. See [NQY18]_ for more details. 
 
 Please take care in choosing a stop word list.
 Popular stop word lists may include words that are highly informative to
@@ -924,7 +925,7 @@ Some tips and tricks:
 
         >>> from nltk import word_tokenize          # doctest: +SKIP
         >>> from nltk.stem import WordNetLemmatizer # doctest: +SKIP
-        >>> class LemmaTokenizer(object):
+        >>> class LemmaTokenizer:
         ...     def __init__(self):
         ...         self.wnl = WordNetLemmatizer()
         ...     def __call__(self, doc):
@@ -1018,7 +1019,7 @@ The :class:`PatchExtractor` class works in the same way as
 implemented as an estimator, so it can be used in pipelines. See::
 
     >>> five_images = np.arange(5 * 4 * 4 * 3).reshape(5, 4, 4, 3)
-    >>> patches = image.PatchExtractor((2, 2)).transform(five_images)
+    >>> patches = image.PatchExtractor(patch_size=(2, 2)).transform(five_images)
     >>> patches.shape
     (45, 2, 2, 3)
 
