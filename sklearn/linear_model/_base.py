@@ -28,6 +28,7 @@ from ..base import (BaseEstimator, ClassifierMixin, RegressorMixin,
                     MultiOutputMixin)
 from ..utils import check_array
 from ..utils.validation import FLOAT_DTYPES
+from ..utils.validation import _deprecate_positional_args
 from ..utils import check_random_state
 from ..utils.extmath import safe_sparse_dot
 from ..utils.sparsefuncs import mean_variance_axis, inplace_column_scale
@@ -244,6 +245,9 @@ class LinearModel(BaseEstimator, metaclass=ABCMeta):
             self.intercept_ = y_offset - np.dot(X_offset, self.coef_.T)
         else:
             self.intercept_ = 0.
+
+    def _more_tags(self):
+        return {'requires_y': True}
 
 
 # XXX Should this derive from LinearModel? It should be a mixin, not an ABC.
@@ -466,8 +470,8 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
     >>> reg.predict(np.array([[3, 5]]))
     array([16.])
     """
-
-    def __init__(self, fit_intercept=True, normalize=False, copy_X=True,
+    @_deprecate_positional_args
+    def __init__(self, *, fit_intercept=True, normalize=False, copy_X=True,
                  n_jobs=None):
         self.fit_intercept = fit_intercept
         self.normalize = normalize
