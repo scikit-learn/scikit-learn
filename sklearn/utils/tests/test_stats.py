@@ -87,3 +87,19 @@ def test_weighted_percentile_2d():
         for i in range(x_2d.shape[1])
     ]
     assert_allclose(w_median, p_axis_0)
+
+
+def test_weighted_percentile_np_equivalent():
+    # check that our weighted percentile lead to the same results than
+    # unweighted NumPy implementation with unit weights
+    rng = np.random.RandomState(42)
+    X = rng.randn(10)
+    X.sort()
+    sample_weight = np.ones(X.shape)
+
+    np_median = np.median(X)
+    np_percentile = np.percentile(X, 50)
+    sklearn_median = _weighted_percentile(X, sample_weight, percentile=50.0)
+
+    assert sklearn_median == approx(np_median)
+    assert sklearn_median == approx(np_percentile)
