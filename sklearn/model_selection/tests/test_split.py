@@ -39,7 +39,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import RepeatedKFold
 from sklearn.model_selection import RepeatedStratifiedKFold
-from sklearn.model_selection import GroupTimeSeriesSplit
+# from sklearn.model_selection import GroupTimeSeriesSplit
 from sklearn.linear_model import Ridge
 
 from sklearn.model_selection._split import _validate_shuffle_split
@@ -1640,9 +1640,9 @@ def test_group_time_series_work_even_if_groups_are_none():
     # A = GroupTimeSeriesSplit.split(X) with no groups
     
     A = [(array([0, 1, 2, 3]), array([4])),
-        (array([0, 1, 2, 3, 4]), array([5])),
-        (array([0, 1, 2, 3, 4, 5]), array([6])),
-        (array([0, 1, 2, 3, 4, 5, 6]), array([7]))]
+            (array([0, 1, 2, 3, 4]), array([5])),
+            (array([0, 1, 2, 3, 4, 5]), array([6])),
+            (array([0, 1, 2, 3, 4, 5, 6]), array([7]))]
     
     for i in range(len(A)):
         assert_array_equal(all(A), all(expected_result))
@@ -1667,7 +1667,7 @@ def test_group_time_series_ordering_and_group_preserved():
     # splits = gts.split(X, y, groups)
     train = [0, 2, 3, 4, 6, 7, 8]
     test = [9]
-
+    
     # Get all the other entries for the groups found in test
 <<<<<<< HEAD
     #for (train, test) in splits:
@@ -1721,7 +1721,7 @@ def test_group_time_series_fail_if_more_splits_than_group():
     """ GroupTimeSeriesSplit should fail if there are more folds than group"""
 =======
 def test_group_time_series_fail_if_more_folds_than_group():
-    """ GroupTimeSeriesSplit should fail if there are 
+    """ GroupTimeSeriesSplit should fail if there are
         more folds than group"""
 >>>>>>> linting
     
@@ -1729,18 +1729,18 @@ def test_group_time_series_fail_if_more_folds_than_group():
     unique_groups = np.unique(groups)
     n_splits = 4
     n_groups = len(unique_groups)
-
+    
     with pytest.raises(ValueError) as excinfo:
         n_splits > n_groups
-        raise ValueError('Cannot have number of folds n_splits=%d greater'
-        ' than the number of groups: %d."')
-    
-    assert str(excinfo.value) == ('Cannot have number of folds n_splits=%d greater'
-    ' than the number of groups: %d."')
+        raise ValueError('Cannot have number of folds n_splits=%d'
+        'greater than the number of groups: %d."')
+        
+    assert str(excinfo.value) == ('Cannot have number of folds n_splits=%d'
+        'greater than the number of groups: %d."')
 
 # assert_raises_regexp(ValueError, "Cannot have number of folds.*greater",
-                        # next,
-                        # GroupTimeSeriesSplit(n_splits=3).split(X, y, groups))
+# next,
+# GroupTimeSeriesSplit(n_splits=3).split(X, y, groups))
 
 <<<<<<< HEAD
 # assert_raises_regexp(ValueError, "Cannot have number of splits.*greater",
@@ -1777,7 +1777,7 @@ def test_all_groups_get_to_be_test_set_at_least_once():
 
 
 def _check_group_time_series_max_train_size(splits, check_splits,
-        max_train_size):
+            max_train_size):
 
     for (train, test), (check_train, check_test) in zip(splits, check_splits):
         assert_array_equal(test, check_test)
@@ -1791,39 +1791,42 @@ def test_group_time_series_max_train_size():
     represent the latest train members"""
 
     # X = range(16)
-    # groups = ['B', 'A', 'C', 'B', 'D', 'D', 'B', 'C', 'A', 'A', 'C', 'D', 'C', 'B', 'D', 'A']
+    # groups = ['B', 'A', 'C', 'B', 'D', 'D', 'B', 'C', 'A', 'A',
+    # 'C', 'D', 'C', 'B', 'D', 'A']
     
     # splits = GroupTimeSeriesSplit(n_splits=5).split(X)
     splits = np.array([([1, 2], [3]),
-        ([0, 1, 3, 4, 5], [7]),
+            ([0, 1, 3, 4, 5], [7]),
         ([0, 2, 3, 4, 5, 6, 7], [9]),
         ([0, 1, 2, 3, 6, 7, 8, 9, 10], [11]),
         ([0, 2, 3, 4, 5, 6, 7, 10, 11, 12, 13, 14], [15])])
 
-    # check_splits = GroupTimeSeriesSplit(n_splits=5, max_train_size=3).split(X)
+    # check_splits = GroupTimeSeriesSplit(n_splits=5,
+    # max_train_size=3).split(X)
     # 5 and 8 would not be there in the 3rd and 4th train set??
     max_train_size = 3
     check_splits = np.array([([1, 2], [3]),
-        ([3, 4, 5], [7]),
+            ([3, 4, 5], [7]),
         ([5, 6, 7], [9]),
         ([8, 9, 10], [11]),
         ([12, 13, 14], [15])])
     _check_group_time_series_max_train_size(splits, check_splits,
-        max_train_size=3)
+                max_train_size=3)
 
     # Test for the case where the size of a fold is greater than max_train_size
-    # check_splits = GroupTimeSeriesSplit(n_splits=5, max_train_size=2).split(X)
+    # check_splits = GroupTimeSeriesSplit(n_splits=5,
+    # max_train_size=2).split(X)
     
-    max_train_size = 2
     check_splits = np.array([([1, 2], [3]),
-        ([4, 5], [7]),
+            ([4, 5], [7]),
         ([6, 7], [9]),
-        ([9, 10], [11]), 
+        ([9, 10], [11]),
         ([13, 14], [15])])
     _check_group_time_series_max_train_size(splits, check_splits,
-        max_train_size=2)
+                max_train_size=2)
 
     # Test for the case where the size of each fold is less than max_train_size
+<<<<<<< HEAD
 <<<<<<< HEAD
     #check_splits = GroupTimeSeriesSplit(n_splits=5, max_train_size=5).split(X)
 
@@ -1837,12 +1840,20 @@ def test_group_time_series_max_train_size():
 >>>>>>> add test each group be test group at least once and max_train_size
 =======
     # check_splits = GroupTimeSeriesSplit(n_splits=5, max_train_size=5).split(X)
+=======
+    # check_splits = GroupTimeSeriesSplit(n_splits=5,
+    # max_train_size=5).split(X)
+>>>>>>> linting2
 
     check_splits = np.array([([1, 2], [3]),
-        ([0, 1, 3, 4, 5], [7]),
+            ([0, 1, 3, 4, 5], [7]),
         ([3, 4, 5, 6, 7], [9]),
         ([6, 7, 8, 9, 10], [11]),
         ([10, 11, 12, 13, 14], [15])])
     _check_group_time_series_max_train_size(splits, check_splits,
+<<<<<<< HEAD
         max_train_size=5)
 >>>>>>> linting
+=======
+                max_train_size=5)
+>>>>>>> linting2
