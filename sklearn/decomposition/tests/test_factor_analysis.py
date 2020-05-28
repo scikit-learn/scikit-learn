@@ -33,7 +33,7 @@ def test_factor_analysis():
     X = np.dot(h, W) + noise
 
     with pytest.raises(ValueError):
-        FactorAnalysis(svd_method='foo')
+        FactorAnalysis(svd_method='foo').fit(X)
     fa_fail = FactorAnalysis()
     fa_fail.svd_method = 'foo'
     with pytest.raises(ValueError):
