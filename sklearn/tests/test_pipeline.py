@@ -900,9 +900,7 @@ def test_set_feature_union_steps():
     assert ['mock__x5'] == ft.get_feature_names()
 
 
-# TODO: Remove parametrization in 0.24 when None is removed for FeatureUnion
-@pytest.mark.parametrize('drop', ['drop', None])
-def test_set_feature_union_step_drop(drop):
+def test_set_feature_union_step_drop():
     mult2 = Mult(2)
     mult2.get_feature_names = lambda: ['x2']
     mult3 = Mult(3)
@@ -915,32 +913,32 @@ def test_set_feature_union_step_drop(drop):
     assert ['m2__x2', 'm3__x3'] == ft.get_feature_names()
 
     with pytest.warns(None) as record:
-        ft.set_params(m2=drop)
+        ft.set_params(m2='drop')
         assert_array_equal([[3]], ft.fit(X).transform(X))
         assert_array_equal([[3]], ft.fit_transform(X))
     assert ['m3__x3'] == ft.get_feature_names()
-    assert record if drop is None else not record
+    assert not record
 
     with pytest.warns(None) as record:
-        ft.set_params(m3=drop)
+        ft.set_params(m3='drop')
         assert_array_equal([[]], ft.fit(X).transform(X))
         assert_array_equal([[]], ft.fit_transform(X))
     assert [] == ft.get_feature_names()
-    assert record if drop is None else not record
+    assert not record
 
     with pytest.warns(None) as record:
         # check we can change back
         ft.set_params(m3=mult3)
         assert_array_equal([[3]], ft.fit(X).transform(X))
-    assert record if drop is None else not record
+    assert not record
 
     with pytest.warns(None) as record:
         # Check 'drop' step at construction time
-        ft = FeatureUnion([('m2', drop), ('m3', mult3)])
+        ft = FeatureUnion([('m2', 'drop'), ('m3', mult3)])
         assert_array_equal([[3]], ft.fit(X).transform(X))
         assert_array_equal([[3]], ft.fit_transform(X))
     assert ['m3__x3'] == ft.get_feature_names()
-    assert record if drop is None else not record
+    assert not record
 
 
 def test_step_name_validation():

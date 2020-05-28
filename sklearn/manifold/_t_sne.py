@@ -19,9 +19,11 @@ from ..base import BaseEstimator
 from ..utils import check_random_state
 from ..utils._openmp_helpers import _openmp_effective_n_threads
 from ..utils.validation import check_non_negative
+from ..utils.validation import _deprecate_positional_args
 from ..decomposition import PCA
 from ..metrics.pairwise import pairwise_distances
-from . import _utils
+# mypy error: Module 'sklearn.manifold' has no attribute '_utils'
+from . import _utils  # type: ignore
 # mypy error: Module 'sklearn.manifold' has no attribute '_barnes_hut_tsne'
 from . import _barnes_hut_tsne  # type: ignore
 
@@ -396,7 +398,8 @@ def _gradient_descent(objective, p0, it, n_iter,
     return p, error, i
 
 
-def trustworthiness(X, X_embedded, n_neighbors=5, metric='euclidean'):
+@_deprecate_positional_args
+def trustworthiness(X, X_embedded, *, n_neighbors=5, metric='euclidean'):
     r"""Expresses to what extent the local structure is retained.
 
     The trustworthiness is within [0, 1]. It is defined as
@@ -437,6 +440,8 @@ def trustworthiness(X, X_embedded, n_neighbors=5, metric='euclidean'):
         documentation of argument metric in sklearn.pairwise.pairwise_distances
         for a list of available metrics.
 
+        .. versionadded:: 0.20
+
     Returns
     -------
     trustworthiness : float
@@ -450,8 +455,8 @@ def trustworthiness(X, X_embedded, n_neighbors=5, metric='euclidean'):
     np.fill_diagonal(dist_X, np.inf)
     ind_X = np.argsort(dist_X, axis=1)
     # `ind_X[i]` is the index of sorted distances between i and other samples
-    ind_X_embedded = NearestNeighbors(n_neighbors).fit(X_embedded).kneighbors(
-        return_distance=False)
+    ind_X_embedded = NearestNeighbors(n_neighbors=n_neighbors).fit(
+            X_embedded).kneighbors(return_distance=False)
 
     # We build an inverted index of neighbors in the input space: For sample i,
     # we define `inverted_index[i]` as the inverted index of sorted distances:
@@ -632,7 +637,8 @@ class TSNE(BaseEstimator):
     # Control the number of iterations between progress checks
     _N_ITER_CHECK = 50
 
-    def __init__(self, n_components=2, perplexity=30.0,
+    @_deprecate_positional_args
+    def __init__(self, n_components=2, *, perplexity=30.0,
                  early_exaggeration=12.0, learning_rate=200.0, n_iter=1000,
                  n_iter_without_progress=300, min_grad_norm=1e-7,
                  metric="euclidean", init="random", verbose=0,

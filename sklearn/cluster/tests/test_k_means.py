@@ -1167,3 +1167,13 @@ def test_inertia(dtype):
     assert_allclose(inertia_dense, inertia_sparse, rtol=1e-6)
     assert_allclose(inertia_dense, expected, rtol=1e-6)
     assert_allclose(inertia_sparse, expected, rtol=1e-6)
+
+
+def test_sample_weight_unchanged():
+    # Check that sample_weight is not modified in place by KMeans (#17204)
+    X = np.array([[1], [2], [4]])
+    sample_weight = np.array([0.5, 0.2, 0.3])
+    KMeans(n_clusters=2, random_state=0).fit(X, sample_weight=sample_weight)
+
+    # internally, sample_weight is rescale to sum up to n_samples = 3
+    assert_array_equal(sample_weight, np.array([0.5, 0.2, 0.3]))
