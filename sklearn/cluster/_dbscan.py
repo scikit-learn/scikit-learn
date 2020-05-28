@@ -341,7 +341,7 @@ class DBSCAN(ClusterMixin, BaseEstimator):
                 X.setdiag(X.diagonal())  # XXX: modifies X's internals in-place
 
         neighbors_model = NearestNeighbors(
-            radius=self.eps, algorithm=self.algorithm,
+            radius=eps, algorithm=self.algorithm,
             leaf_size=self.leaf_size, metric=self.metric,
             metric_params=self.metric_params, p=self.p, n_jobs=self.n_jobs)
         neighbors_model.fit(X)

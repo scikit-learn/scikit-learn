@@ -51,6 +51,7 @@ from sklearn.utils.validation import _check_fit_params
 import sklearn
 
 from sklearn.exceptions import NotFittedError, PositiveSpectrumWarning
+from sklearn.exceptions import BadDefaultWarning
 
 from sklearn.utils._testing import TempMemmap
 
@@ -1111,6 +1112,7 @@ def test_allclose_dense_sparse_raise(toarray):
 
 def test_validate_bad_params():
     msg1 = ("There is no good default value for the following parameters in "
+            "A. Please consult the documentation on how to set them for your "
             "data."
             "\n    'param_a' - using default value: 1"
             "\n    'param_b' - using default value: 'kmeans'")
@@ -1135,16 +1137,30 @@ def test_validate_bad_params():
             _validate_bad_defaults(self)
             return self
 
-    with pytest.warns(UserWarning, match=msg1):
+    with pytest.warns(BadDefaultWarning, match=msg1):
         A().fit()
 
-    with pytest.warns(UserWarning, match=msg2):
+    # should not warn the second time
+    with warnings.catch_warnings(record=True) as warns:
+        A().fit()
+    assert not warns
+
+    with pytest.warns(BadDefaultWarning, match=msg2):
         A(param_a=1).fit()
+
+    # should not warn the second time
+    with warnings.catch_warnings(record=True) as warns:
+        A(param_a=1).fit()
+    assert not warns
 
     with warnings.catch_warnings(record=True) as warns:
         A(param_a=1, param_b='dbscan').fit()
     assert not warns
 
+
+def test_deprecate_positional_args_warns_for_function():
+
+    @_deprecate_positional_args
     def f1(a, b, *, c=1, d=1):
         pass
 
@@ -1248,4 +1264,3 @@ def test_check_sparse_pandas_sp_format(sp_format):
     assert sp.issparse(result)
     assert result.format == sp_format
     assert_allclose_dense_sparse(sp_mat, result)
->>>>>>> upstream/master
