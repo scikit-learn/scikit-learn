@@ -512,12 +512,16 @@ def test_tfidf_vectorizer_setters():
     tv = TfidfVectorizer(norm='l2', use_idf=False, smooth_idf=False,
                          sublinear_tf=False)
     tv.norm = 'l1'
+    tv.fit(ALL_FOOD_DOCS)
     assert tv._tfidf.norm == 'l1'
     tv.use_idf = True
+    tv.fit(ALL_FOOD_DOCS)
     assert tv._tfidf.use_idf
     tv.smooth_idf = True
+    tv.fit(ALL_FOOD_DOCS)
     assert tv._tfidf.smooth_idf
     tv.sublinear_tf = True
+    tv.fit(ALL_FOOD_DOCS)
     assert tv._tfidf.sublinear_tf
 
 

@@ -1746,13 +1746,17 @@ class TfidfVectorizer(CountVectorizer):
 
     @idf_.setter
     def idf_(self, value):
-        check_is_fitted(self)
         self._validate_vocabulary()
         if hasattr(self, 'vocabulary_'):
             if len(self.vocabulary_) != len(value):
                 raise ValueError("idf length = %d must be equal "
                                  "to vocabulary size = %d" %
                                  (len(value), len(self.vocabulary)))
+        if not hasattr(self, '_tfidf'):
+            self._tfidf = TfidfTransformer(norm=self.norm,
+                                           use_idf=self.use_idf,
+                                           smooth_idf=self.smooth_idf,
+                                           sublinear_tf=self.sublinear_tf)
         self._tfidf.idf_ = value
 
     def _check_params(self):
