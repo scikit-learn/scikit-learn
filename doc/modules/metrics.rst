@@ -139,7 +139,7 @@ the data is a `pandas.DataFrame`, you can use
     >>> gower_distances(X, categorical_features=selector(dtype_include=object))
     array([[0.        , 0.5      , 0.5      , 0.5      ],
            [0.5       , 0.       , 0.666... , 1.       ],
-           [0.5       , 0.666... , 0.       , 0.666... ],
+           [0.5       , 0.6666..., 0.       , 0.6666...],
            [0.5       , 1.       , 0.666... , 0.       ]])
 
 .. topic:: References:
@@ -284,4 +284,3 @@ The chi squared kernel is most commonly used on histograms (bags) of visual word
       categories: A comprehensive study
       International Journal of Computer Vision 2007
       https://research.microsoft.com/en-us/um/people/manik/projects/trade-off/papers/ZhangIJCV06.pdf
-
