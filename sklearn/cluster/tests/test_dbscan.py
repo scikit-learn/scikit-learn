@@ -17,6 +17,7 @@ from sklearn.cluster import DBSCAN
 from sklearn.cluster import dbscan
 from sklearn.cluster.tests.common import generate_clustered_data
 from sklearn.metrics.pairwise import pairwise_distances
+from sklearn import config_context
 
 
 n_clusters = 3
@@ -293,8 +294,9 @@ def test_weighted_dbscan():
                                       eps=1.5, min_samples=6)[0])
     assert_array_equal([0, 1], dbscan([[0], [1]], sample_weight=[6, 0],
                                       eps=1.5, min_samples=6)[0])
-    assert_array_equal([], dbscan([[0], [1]], sample_weight=[6, -1],
-                                  eps=1.5, min_samples=6)[0])
+    with config_context(assume_positive_sample_weights=False):
+        assert_array_equal([], dbscan([[0], [1]], sample_weight=[6, -1],
+                           eps=1.5, min_samples=6)[0])
 
     # for non-negative sample_weight, cores should be identical to repetition
     rng = np.random.RandomState(42)

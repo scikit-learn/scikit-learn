@@ -28,6 +28,7 @@ from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils import shuffle
 from sklearn.utils._mocking import NoSampleWeightWrapper
 from sklearn import datasets
+from sklearn import config_context
 
 
 # Common random state
@@ -133,7 +134,7 @@ def test_iris():
         assert len(clf.estimators_) > 1
         # Check for distinct random states (see issue #7408)
         assert (len(set(est.random_state for est in clf.estimators_)) ==
-                     len(clf.estimators_))
+                len(clf.estimators_))
 
     # Somewhat hacky regression test: prior to
     # ae7adc880d624615a34bafdb1d75ef67051b8200,
@@ -155,7 +156,7 @@ def test_boston(loss):
     assert len(reg.estimators_) > 1
     # Check for distinct random states (see issue #7408)
     assert (len(set(est.random_state for est in reg.estimators_)) ==
-                 len(reg.estimators_))
+            len(reg.estimators_))
 
 
 @pytest.mark.parametrize("algorithm", ["SAMME", "SAMME.R"])
@@ -551,6 +552,7 @@ def test_adaboostregressor_sample_weight():
     assert score_with_outlier < score_with_weight
     assert score_no_outlier == pytest.approx(score_with_weight)
 
+
 @pytest.mark.parametrize("algorithm", ["SAMME", "SAMME.R"])
 def test_adaboost_consistent_predict(algorithm):
     # check that predict_proba and predict give consistent results
@@ -577,6 +579,10 @@ def test_adaboost_negative_weight_error(model, X, y):
     sample_weight = np.ones_like(y)
     sample_weight[-1] = -10
 
-    err_msg = "sample_weight cannot contain negative weight"
+    with config_context(assume_positive_sample_weights=False):
+        err_msg = "sample_weight cannot contain negative weight"
+        with pytest.raises(ValueError, match=err_msg):
+            model.fit(X, y, sample_weight=sample_weight)
+    err_msg = "There are negative values in sample_weight"
     with pytest.raises(ValueError, match=err_msg):
         model.fit(X, y, sample_weight=sample_weight)
