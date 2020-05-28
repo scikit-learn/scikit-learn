@@ -232,6 +232,10 @@ class TreeGrower:
         else:
             is_categorical = np.asarray(is_categorical, dtype=np.uint8)
 
+        if np.any(np.logical_and(is_categorical == 1, monotonic_cst != 0)):
+            raise ValueError("categorical features can not have monotonic "
+                             "constraints")
+
         hessians_are_constant = hessians.shape[0] == 1
         self.histogram_builder = HistogramBuilder(
             X_binned, n_bins, gradients, hessians, hessians_are_constant)
@@ -419,18 +423,13 @@ class TreeGrower:
             # If no missing values are encountered at fit time, then samples
             # with missing values during predict() will go to whichever child
             # has the most samples.
-            node.split_info.missing_go_to_left = (
-                left_child_node.n_samples > right_child_node.n_samples)
-
-            # For categorical splits, where there are no missing
-            # values during fitting, samples with missing values during
-            # predict() will go to whichever child has the most samples.
-            if (node.split_info.is_categorical
-                    and node.split_info.n_samples_left >
-                    node.split_info.n_samples_right):
+            if not node.split_info.is_categorical:  # numerical
+                node.split_info.missing_go_to_left = (
+                    left_child_node.n_samples > right_child_node.n_samples)
+            elif (node.split_info.n_samples_left >
+                  node.split_info.n_samples_right):
                 set_bitset_py(self.missing_values_bin_idx,
                               node.split_info.cat_bitset)
-
 
         self.n_nodes += 2
 

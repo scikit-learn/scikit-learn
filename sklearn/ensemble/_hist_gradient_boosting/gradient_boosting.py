@@ -132,20 +132,11 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                                  "must have shape (n_features,)")
             cat_feats = cat_features_input
 
-        if not np.any(cat_feats):
+        if np.any(cat_feats):
             self.is_categorical_ = cat_feats
         else:
             # no categories
             self.is_categorical_ = None
-
-        # categorical features can not have monotonic constraints
-        if (self.is_categorical_ is not None and
-                self.monotonic_cst is not None):
-            monotonic_cst = np.asarray(self.monotonic_cst, dtype=np.uint8) != 0
-            both = self.is_categorical_ & monotonic_cst
-            if both.any():
-                raise ValueError("categorical features can not have "
-                                 "monotonic constraints")
 
     def fit(self, X, y, sample_weight=None):
         """Fit the gradient boosting model.

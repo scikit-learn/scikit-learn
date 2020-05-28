@@ -335,7 +335,7 @@ def test_categorical_only_transform_error_with_no_categoricals(is_categorical):
 
 
 @pytest.mark.parametrize("n_bins", [15, 256])
-def test_categorical_n_bins_greater_than_equal_cardinality(n_bins):
+def test_categorical_n_bins_greater_than_cardinality(n_bins):
     # test when n_bins is large enough to hold all categories (+ missing
     # values bin which is always allocated)
     X = np.array([[4] * 2 + [1] * 3 + [10] * 4 +
@@ -414,11 +414,10 @@ def test_categorical_n_bins_less_than_cardinality_ties():
     assert_array_equal(X_trans, expected_trans)
 
 
-@pytest.mark.parametrize("missing_value", [-1, np.nan])
-def test_categorical_default_categories_are_missing(missing_value):
+def test_categorical_default_categories_are_missing():
     # check that negative values are considered missing
     X = np.array([[0] * 10 + [1] * 12 +
-                  [missing_value] * 13], dtype=X_DTYPE).T
+                  [-1] * 20 + [np.nan] * 20], dtype=X_DTYPE).T
 
     bin_mapper = _BinMapper(n_bins=3, is_categorical=np.array([True])).fit(X)
     assert bin_mapper.n_bins_non_missing_ == [2]

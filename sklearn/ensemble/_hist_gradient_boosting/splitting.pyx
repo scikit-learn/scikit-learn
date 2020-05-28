@@ -141,6 +141,8 @@ cdef class Splitter:
     has_missing_values : ndarray, shape (n_features,)
         Whether missing values were observed in the training data, for each
         feature.
+    is_categorical : ndarray of bool of shape (n_features,)
+        Indicates categorical features.
     l2_regularization : float
         The L2 regularization parameter.
     min_hessian_to_split : float, default=1e-3
@@ -504,14 +506,6 @@ cdef class Splitter:
                 split_infos)
             split_info = split_infos[best_feature_idx]
 
-            # For categorical splits, where there are no missing
-            # values during fitting, samples with missing values during
-            # predict() will go to whichever child has the most samples.
-            # if (is_categorical[best_feature_idx] and
-            #         not has_missing_values[best_feature_idx] and
-            #         split_info.n_samples_left > split_info.n_samples_right):
-            #     set_bitset(self.missing_values_bin_idx, split_info.cat_bitset)
-
         out = SplitInfo(
             split_info.gain,
             split_info.feature_idx,
@@ -794,7 +788,7 @@ cdef class Splitter:
             unsigned int bin_idx
             unsigned int end = self.n_bins_non_missing[feature_idx]
             unsigned int missing_values_bin_idx = self.missing_values_bin_idx
-            categorical_info * cat_sort_infos
+            categorical_info * cat_sorted_infos
             unsigned int sorted_idx
             unsigned int n_used_bin = 0
             const hist_struct[::1] feature_hist = histograms[feature_idx, :]
@@ -807,7 +801,7 @@ cdef class Splitter:
             unsigned int MIN_CAT_SUPPORT = 10
             # Used for find best split
             unsigned int MAX_CAT_THRESHOLD = 32
-            unsigned int max_num_cat
+            unsigned int max_n_cat
             # holds directional information
             int[2] scan_direction, start_position
             int direction, position
@@ -824,28 +818,28 @@ cdef class Splitter:
             unsigned int best_n_samples_left
             unsigned int best_sorted_thres
 
-        cat_sort_infos = <categorical_info *> malloc(
+        cat_sorted_infos = <categorical_info *> malloc(
             (end + has_missing_values) * sizeof(categorical_info))
 
-        # fill cat_sort_infos while filtering out categories based on
+        # fill cat_sorted_infos while filtering out categories based on
         # MIN_CAT_SUPPORT
         for bin_idx in range(end):
             if feature_hist[bin_idx].count >= MIN_CAT_SUPPORT:
-                cat_sort_infos[n_used_bin].bin_idx = bin_idx
+                cat_sorted_infos[n_used_bin].bin_idx = bin_idx
                 sum_gradients_bin = feature_hist[bin_idx].sum_gradients
                 if self.hessians_are_constant:
                     sum_hessians_bin = feature_hist[bin_idx].count
                 else:
                     sum_hessians_bin = feature_hist[bin_idx].sum_hessians
 
-                cat_sort_infos[n_used_bin].value = \
+                cat_sorted_infos[n_used_bin].value = \
                     sum_gradients_bin / (sum_hessians_bin + MIN_CAT_SUPPORT)
                 n_used_bin += 1
 
         # check missing bin
         if has_missing_values:
             if feature_hist[missing_values_bin_idx].count >= MIN_CAT_SUPPORT:
-                cat_sort_infos[n_used_bin].bin_idx = missing_values_bin_idx
+                cat_sorted_infos[n_used_bin].bin_idx = missing_values_bin_idx
                 sum_gradients_bin = \
                     feature_hist[missing_values_bin_idx].sum_gradients
                 if self.hessians_are_constant:
@@ -855,19 +849,19 @@ cdef class Splitter:
                     sum_hessians_bin = \
                         feature_hist[missing_values_bin_idx].sum_hessians
 
-                cat_sort_infos[n_used_bin].value = \
+                cat_sorted_infos[n_used_bin].value = \
                     sum_gradients_bin / (sum_hessians_bin + MIN_CAT_SUPPORT)
                 n_used_bin += 1
 
         # not enough categories to form a split
         if n_used_bin <= 1:
-            free(cat_sort_infos)
+            free(cat_sorted_infos)
             return
 
-        qsort(cat_sort_infos, n_used_bin, sizeof(categorical_info),
+        qsort(cat_sorted_infos, n_used_bin, sizeof(categorical_info),
               compare_cat_infos)
 
-        max_num_cat = min(MAX_CAT_THRESHOLD, (n_used_bin + 1) / 2)
+        max_n_cat = min(MAX_CAT_THRESHOLD, (n_used_bin + 1) / 2)
 
         # Decide if categories from the left or right will go to the left node
         scan_direction[0], scan_direction[1] = 1, -1
@@ -879,8 +873,8 @@ cdef class Splitter:
             direction, position = scan_direction[i], start_position[i]
             sum_gradient_left, sum_hessian_left = 0., 0.
             n_samples_left = 0
-            for sorted_idx in range(max_num_cat):
-                bin_idx = cat_sort_infos[position].bin_idx;
+            for sorted_idx in range(max_n_cat):
+                bin_idx = cat_sorted_infos[position].bin_idx;
                 position += direction
 
                 n_samples_left += feature_hist[bin_idx].count
@@ -950,14 +944,14 @@ cdef class Splitter:
 
             if best_direction == 1:  # left
                 for i in range(best_sorted_thres + 1):
-                    bin_idx = cat_sort_infos[i].bin_idx
+                    bin_idx = cat_sorted_infos[i].bin_idx
                     set_bitset(bin_idx, split_info.cat_bitset)
             else:
                 for i in range(best_sorted_thres + 1):
-                    bin_idx = cat_sort_infos[n_used_bin - 1 - i].bin_idx
+                    bin_idx = cat_sorted_infos[n_used_bin - 1 - i].bin_idx
                     set_bitset(bin_idx, split_info.cat_bitset)
 
-        free(cat_sort_infos)
+        free(cat_sorted_infos)
 
 
 cdef int compare_cat_infos(const void * a, const void * b) nogil:

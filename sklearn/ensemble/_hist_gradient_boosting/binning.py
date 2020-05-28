@@ -35,7 +35,7 @@ def _find_binning_thresholds(data, max_bins, is_categorical=None):
 
     Return
     ------
-    binning_thresholds: list of arrays or None
+    binning_thresholds: list of {arrays, None}
         For each feature, stores the increasing numeric values that can
         be used to separate the bins. Thus ``len(binning_thresholds) ==
         n_features``. For categorical features, ``None`` is used as a
@@ -79,7 +79,7 @@ def _find_binning_thresholds(data, max_bins, is_categorical=None):
     return binning_thresholds
 
 
-def _find_categories(data, max_bins, is_categorical):
+def _find_bin_categories(data, max_bins, is_categorical):
     """Extract feature-wise categories from categorical data
 
     Missing values and negative values are ignored. They will be considered
@@ -234,13 +234,12 @@ class _BinMapper(TransformerMixin, BaseEstimator):
         self.bin_thresholds_ = _find_binning_thresholds(
             X, max_bins, is_categorical=self.is_categorical)
 
-        self.bin_categories_ = _find_categories(
+        self.bin_categories_ = _find_bin_categories(
             X, max_bins, is_categorical=self.is_categorical)
 
         n_bins_non_missing = []
-        n_features = X.shape[1]
 
-        for feature_idx in range(n_features):
+        for feature_idx in range(X.shape[1]):
             bin_threshold = self.bin_thresholds_[feature_idx]
             # when bin_threshold is None then the feature is categorical
             if bin_threshold is None:
@@ -310,15 +309,13 @@ class _BinMapper(TransformerMixin, BaseEstimator):
         X = check_array(X[:, self.is_categorical], dtype=[X_DTYPE],
                         force_all_finite=False)
 
-        n_samples = X.shape[0]
-        n_categories = len(self.bin_categories_)
-        binned = np.zeros((n_samples, n_categories), dtype=X_BINNED_DTYPE,
-                          order='C')
-        bin_categories_map = {
+        binned = np.zeros((X.shape[0], len(self.bin_categories_)),
+                          dtype=X_BINNED_DTYPE, order='C')
+        new_bin_categories = {
             new_idx: self.bin_categories_[orig_idx]
             for new_idx, orig_idx in enumerate(sorted(self.bin_categories_))
         }
 
-        _map_cat_to_bins(X, bin_categories_map,
+        _map_cat_to_bins(X, new_bin_categories,
                          self.missing_values_bin_idx_, binned)
         return binned

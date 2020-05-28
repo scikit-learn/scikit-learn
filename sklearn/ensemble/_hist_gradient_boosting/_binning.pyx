@@ -44,9 +44,9 @@ def _map_num_to_bins(const X_DTYPE_C [:, :] data,
         # binning_threshold is None when the feature is categorical
         if binning_threshold is not None:
             _map_num_col_to_bins(data[:, feature_idx],
-                                binning_threshold,
-                                missing_values_bin_idx,
-                                binned[:, feature_idx])
+                                 binning_threshold,
+                                 missing_values_bin_idx,
+                                 binned[:, feature_idx])
 
 
 cdef void _map_num_col_to_bins(const X_DTYPE_C [:] data,
@@ -94,10 +94,11 @@ def _map_cat_to_bins(const X_DTYPE_C [:, :] data,
     missing_values_bin_idx : uint8
         The index of the bin where missing values are mapped.
     binned : ndarray, shape (n_samples, n_features)
-        Output array
+        Output array. F-alignment can not be enforced because we bin
+        categories during predition time.
     """
     cdef:
-        long feature_idx
+        int feature_idx
         X_DTYPE_C [:] categories
 
     for feature_idx, categories in bin_categories.items():
@@ -123,7 +124,7 @@ cdef void _map_cat_col_to_bins(const X_DTYPE_C [:] data,
                 found = False
                 left, right = 0, categories.shape[0] - 1
                 while left <= right:
-                    middle = (left + right) // 2
+                    middle = left + (right - left) // 2
                     middle_value = categories[middle]
                     if middle_value < current_value:
                         left = middle + 1
