@@ -13,6 +13,9 @@ contain outliers.
 2. The ROC curve is computed on the same dataset using the knowledge
 of the labels.
 
+Some datasets such as "glass", "vowels", "wbc", and "letter"
+are from Outlier Detection DataSets (ODDS) library.
+
 
 Interpreting the ROC plot
 -------------------------
@@ -21,11 +24,19 @@ is at low value of the false positive rate (FPR). The better algorithm
 have the curve on the top-left of the plot and the area under curve (AUC)
 close to 1. The diagonal dashed line represents a random classification
 of outliers and inliers.
+
+
+Citation
+--------
+Shebuti Rayana (2016).  ODDS Library [http://odds.cs.stonybrook.edu].
+Stony Brook, NY: Stony Brook University, Department of Computer Science.
+
 """
 
 from time import time
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.io import loadmat
 from sklearn.neighbors import LocalOutlierFactor
 from sklearn.ensemble import IsolationForest
 from sklearn.metrics import roc_curve, auc
@@ -37,7 +48,9 @@ print(__doc__)
 random_state = 1  # to control the random selection of anomalies in SA
 
 # datasets
-datasets = ["http", "smtp", "SA", "SF", "forestcover"]
+datasets = ["http", "smtp", "SA", "SF", "forestcover", "glass",
+            "vowels", "wbc", "letter"]
+
 # outlier detection models
 models = [
     ("LOF", LocalOutlierFactor(n_neighbors=20, contamination="auto")),
@@ -97,7 +110,28 @@ for dataset_idx, dataset_name in enumerate(datasets):
     if dataset_name == "http" or dataset_name == "smtp":
         y = (y != b"normal.").astype(int)
 
+    if dataset_name == "glass":
+        data = loadmat('../../sklearn/datasets/data/glass.mat')
+        X = data['X']
+        y = data['y']
+
+    if dataset_name == "vowels":
+        data = loadmat('../../sklearn/datasets/data/vowels.mat')
+        X = data['X']
+        y = data['y']
+
+    if dataset_name == "wbc":
+        data = loadmat('../../sklearn/datasets/data/wbc.mat')
+        X = data['X']
+        y = data['y']
+
+    if dataset_name == "letter":
+        data = loadmat('../../sklearn/datasets/data/letter.mat')
+        X = data['X']
+        y = data['y']
+
     X = X.astype(float)
+    y = y.astype(float)
 
     print("Estimator processing...")
     for model_name, model in models:
