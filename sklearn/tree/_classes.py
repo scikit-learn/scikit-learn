@@ -60,7 +60,9 @@ __all__ = ["DecisionTreeClassifier",
 DTYPE = _tree.DTYPE
 DOUBLE = _tree.DOUBLE
 
-CRITERIA_CLF = {"gini": _criterion.Gini, "entropy": _criterion.Entropy}
+CRITERIA_CLF = {"gini": _criterion.Gini, "entropy": _criterion.Entropy,
+                "gain_ratio": _criterion.GainRatio}
+
 CRITERIA_REG = {"mse": _criterion.MSE, "friedman_mse": _criterion.FriedmanMSE,
                 "mae": _criterion.MAE}
 
@@ -592,9 +594,10 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
 
     Parameters
     ----------
-    criterion : {"gini", "entropy"}, default="gini"
+    criterion : {"gini", "entropy", "gain_ratio"}, default="gini"
         The function to measure the quality of a split. Supported criteria are
-        "gini" for the Gini impurity and "entropy" for the information gain.
+        "gini" for the Gini impurity, "entropy" for the information gain and
+        "gain_ratio" for the information gain ratio.
 
     splitter : {"best", "random"}, default="best"
         The strategy used to choose the split at each node. Supported
@@ -1265,9 +1268,10 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
 
     Parameters
     ----------
-    criterion : {"gini", "entropy"}, default="gini"
+    criterion : {"gini", "entropy", "gain_ratio"}, default="gini"
         The function to measure the quality of a split. Supported criteria are
-        "gini" for the Gini impurity and "entropy" for the information gain.
+        "gini" for the Gini impurity, "entropy" for the information gain and
+        "gain_ratio" for the information gain ratio.
 
     splitter : {"random", "best"}, default="random"
         The strategy used to choose the split at each node. Supported

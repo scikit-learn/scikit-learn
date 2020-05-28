@@ -677,6 +677,69 @@ cdef class Gini(ClassificationCriterion):
         impurity_right[0] = gini_right / self.n_outputs
 
 
+cdef class GainRatio(Entropy):
+    r"""Gain ratio impurity criterion.
+    
+    This gain ratio is just the ratio between the information gain
+    (entropy) and the intrinsic value (of an attribute) defined as
+
+        intrinsic_value = - n_left / n * log(n_left / n)
+                          - n_right / n * log(n_right / n)
+    """
+
+    cdef double node_intrinsic_value(self) nogil:
+        """Evaluate the intrinsic value of the current node."""
+        
+        cdef double intrinsic_value_node = 0.0
+        cdef double intrinsic_value_left = (self.weighted_n_left
+                                            / self.weighted_n_node_samples)
+        cdef double intrinsic_value_right = (self.weighted_n_right
+                                             / self.weighted_n_node_samples)
+
+        if intrinsic_value_left > 0.0:
+            intrinsic_value_node -= (intrinsic_value_left
+                                     * log(intrinsic_value_left))
+        if intrinsic_value_right > 0.0:
+            intrinsic_value_node -= (intrinsic_value_right
+                                     * log(intrinsic_value_right))
+
+        return intrinsic_value_node
+
+    cdef double node_impurity(self) nogil:
+        """Evaluate the impurity of the current node, i.e. the impurity of
+        samples[start:end], using the gain ratio criterion."""
+        cdef double impurity_node = Entropy.node_impurity(self)
+        cdef double intrinsic_value_node = self.node_intrinsic_value()
+
+        if intrinsic_value_node > 0.0:
+            impurity_node /= intrinsic_value_node
+
+        return impurity_node
+
+    cdef void children_impurity(self, double* impurity_left,
+                                double* impurity_right) nogil:
+        """Evaluate the impurity in children nodes
+
+        i.e. the impurity of the left child (samples[start:pos]) and the
+        impurity the right child (samples[pos:end]) using the gain ratio
+        index.
+
+        Parameters
+        ----------
+        impurity_left : double pointer
+            The memory address to save the impurity of the left node to
+        impurity_right : double pointer
+            The memory address to save the impurity of the right node to
+        """
+        Entropy.children_impurity(self, impurity_left, impurity_right)
+
+        cdef double intrinsic_value_node = self.node_intrinsic_value()
+
+        if intrinsic_value_node > 0.0:
+            impurity_left[0] /= intrinsic_value_node
+            impurity_right[0] /= intrinsic_value_node
+
+
 cdef class RegressionCriterion(Criterion):
     r"""Abstract regression criterion.
 

@@ -902,9 +902,10 @@ class RandomForestClassifier(ForestClassifier):
            The default value of ``n_estimators`` changed from 10 to 100
            in 0.22.
 
-    criterion : {"gini", "entropy"}, default="gini"
+    criterion : {"gini", "entropy", "gain_ratio"}, default="gini"
         The function to measure the quality of a split. Supported criteria are
-        "gini" for the Gini impurity and "entropy" for the information gain.
+        "gini" for the Gini impurity, "entropy" for the information gain and
+        "gain_ratio" for the information gain ratio.
         Note: this parameter is tree-specific.
 
     max_depth : int, default=None
@@ -1508,9 +1509,10 @@ class ExtraTreesClassifier(ForestClassifier):
            The default value of ``n_estimators`` changed from 10 to 100
            in 0.22.
 
-    criterion : {"gini", "entropy"}, default="gini"
+    criterion : {"gini", "entropy", "gain_ratio"}, default="gini"
         The function to measure the quality of a split. Supported criteria are
-        "gini" for the Gini impurity and "entropy" for the information gain.
+        "gini" for the Gini impurity, "entropy" for the information gain and
+        "gain_ratio" for the information gain ratio.
 
     max_depth : int, default=None
         The maximum depth of the tree. If None, then nodes are expanded until
