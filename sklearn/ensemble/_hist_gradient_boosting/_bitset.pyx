@@ -17,7 +17,7 @@ cdef inline void set_bitset(X_BINNED_DTYPE_C val,
         unsigned int i1 = val // 32
         unsigned int i2 = val % 32
 
-    # It is assumed that val < 256 or i1 < 8
+    # It is assumed that val < 256 so that i1 < 8
     bitset[i1] |= (1 << i2)
 
 cdef inline unsigned char in_bitset(X_BINNED_DTYPE_C val,

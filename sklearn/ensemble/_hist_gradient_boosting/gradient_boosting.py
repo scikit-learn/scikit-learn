@@ -104,8 +104,10 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         # for pandas dataframes
         if (isinstance(self.categorical_features, str) and
-                self.categorical_features == 'pandas' and
-                hasattr(X_orig, "dtypes")):
+                self.categorical_features == 'pandas'):
+            if not hasattr(X_orig, "dtypes"):
+                raise ValueError("categorical_features='pandas' can only be "
+                                 "used with a pandas dataframe")
             cat_features_input = np.asarray(X_orig.dtypes == 'category')
         else:
             cat_features_input = np.asarray(self.categorical_features)

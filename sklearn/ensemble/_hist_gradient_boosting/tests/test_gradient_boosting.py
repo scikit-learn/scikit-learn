@@ -912,3 +912,17 @@ def test_categorical_spec_errors(Est, categorical_features, monotonic_cst,
 
     with pytest.raises(ValueError, match=expected_msg):
         est.fit(X, y)
+
+
+@pytest.mark.parametrize("make_datasets, Est", [
+    (make_classification, HistGradientBoostingClassifier),
+    (make_regression, HistGradientBoostingRegressor)
+])
+def test_categorical_pandas_error_as_input(make_datasets, Est):
+    X, y = make_datasets(n_samples=100, random_state=0)
+    est = Est(categorical_features='pandas')
+
+    msg = ("categorical_features='pandas' can only be used with a pandas "
+           "dataframe")
+    with pytest.raises(ValueError, match=msg):
+        est.fit(X, y)

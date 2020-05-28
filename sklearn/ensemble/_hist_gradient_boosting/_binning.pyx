@@ -41,7 +41,7 @@ def _map_num_to_bins(const X_DTYPE_C [:, :] data,
 
     for feature_idx in range(data.shape[1]):
         binning_threshold = binning_thresholds[feature_idx]
-        # binned_threshold is None when the feature is categorical
+        # binning_threshold is None when the feature is categorical
         if binning_threshold is not None:
             _map_num_col_to_bins(data[:, feature_idx],
                                 binning_threshold,
