@@ -90,16 +90,16 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
     array([[0., 0., 4.]])
 
 
-    Multiple values for one categorical values
+    Example with multiple values for one categorical values:
 
 
     >>> D2 = [{'foo': '1', 'bar': '2'}, {'foo': '3', 'baz': '1'}, \
               {'foo': ['1', '3']}]
     >>> X = v.fit_transform(D2)
     >>> X
-    array([[ 1.,  0.,  1.,  0.],
-           [ 0.,  1.,  0.,  1.],
-           [ 0.,  0.,  1.,  1.]])
+    array([[1., 0., 1., 0.],
+           [0., 1., 0., 1.],
+           [0., 0., 1., 1.]])
     >>> v.inverse_transform(X) == \
     ... [{'foo=1': 1.0, 'bar=2': 1.0}, {'foo=3': 1.0, 'baz=1': 1.0},
          {'foo=3': 1.0, 'foo=1': 1.0}]
