@@ -84,6 +84,13 @@ Changelog
   attribute name/path or a `callable` for extracting feature importance from
   the estimator.  :pr:`15361` by :user:`Venkatachalam N <venkyyuvy>`
 
+:mod:`sklearn.metrics`
+......................
+
+- |Enhancement| Add `sample_weight` parameter to
+  :class:`metrics.median_absolute_error`.
+  :pr:`17225` by :user:`Lucy Liu <lucyleeow>`.
+
 :mod:`sklearn.preprocessing`
 ..............................
 
@@ -118,6 +125,15 @@ Changelog
   ``predict`` and related methods of :class:`svm.SVC`, :class:`svm.NuSVC`, 
   :class:`svm.SVR`, :class:`svm.NuSVR`, :class:`OneClassSVM`.
   :pr:`16530` by :user:`Shuhua Fan <jim0421>`.
+
+
+:mod:`sklearn.multiclass`
+.........................
+
+- |Fix| A fix to allow :class:`multiclass.OutputCodeClassifier` to accept
+  sparse input data in its `fit` and `predict` methods. The check for
+  validity of the input is now delegated to the base estimator.
+  :pr:`17233` by :user:`Zolisa Bleki <zoj613>`.
 
 
 Code and Documentation Contributors
