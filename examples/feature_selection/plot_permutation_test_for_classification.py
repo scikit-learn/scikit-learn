@@ -8,7 +8,8 @@ This example demonstrates the use of
 significance of a cross-valdiated score using permutations.
 """
 
-# Author:  Alexandre Gramfort <alexandre.gramfort@inria.fr>
+# Authors:  Alexandre Gramfort <alexandre.gramfort@inria.fr>
+#           Lucy Liu
 # License: BSD 3 clause
 
 print(__doc__)
