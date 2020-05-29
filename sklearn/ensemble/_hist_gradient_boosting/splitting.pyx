@@ -94,8 +94,8 @@ class SplitInfo:
     is_categorical : bool
         Whether split is categorical.
     cat_bitset : ndarray of shape=(8,), dtype=uint32
-        Bitset representing the categories that go to the left. This is only
-        usd when ``is_categorical`` is True.
+        Bitset representing the categories that go to the left. This is used
+        only when ``is_categorical`` is True.
     """
     def __init__(self, gain, feature_idx, bin_idx,
                  missing_go_to_left, sum_gradient_left, sum_hessian_left,
