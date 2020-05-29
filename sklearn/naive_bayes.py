@@ -134,7 +134,8 @@ class GaussianNB(_BaseNB):
 
     var_smoothing : float, default=1e-9
         Portion of the largest variance of all features that is added to
-        variances for calculation stability.
+        variances for calculation stability and smoothing of data of
+        distinct distributions.
 
         .. versionadded:: 0.20
 
