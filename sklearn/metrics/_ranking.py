@@ -120,15 +120,12 @@ def average_precision_score(y_true, y_score, *, average="macro", pos_label=1,
     trapezoidal rule, which uses linear interpolation and can be too
     optimistic.
 
-    Note: this implementation is restricted to the binary classification task
-    or multilabel classification task.
-
     Read more in the :ref:`User Guide <precision_recall_f_measure_metrics>`.
 
     Parameters
     ----------
     y_true : array, shape = [n_samples] or [n_samples, n_classes]
-        True binary labels or binary label indicators.
+        True labels or binary label indicators.
 
     y_score : array, shape = [n_samples] or [n_samples, n_classes]
         Target scores, can either be probability estimates of the positive
@@ -155,7 +152,8 @@ def average_precision_score(y_true, y_score, *, average="macro", pos_label=1,
 
     pos_label : int or str (default=1)
         The label of the positive class. Only applied to binary ``y_true``.
-        For multilabel-indicator ``y_true``, ``pos_label`` is fixed to 1.
+        For multiclass or multilabel-indicator ``y_true``, ``pos_label`` is
+        fixed to 1.
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
@@ -185,6 +183,17 @@ def average_precision_score(y_true, y_score, *, average="macro", pos_label=1,
     >>> y_scores = np.array([0.1, 0.4, 0.35, 0.8])
     >>> average_precision_score(y_true, y_scores)
     0.83...
+    >>> y_true = np.array([0, 0, 1, 1, 2, 2])
+    >>> y_scores = np.array([
+    ...     [0.7, 0.2, 0.1],
+    ...     [0.4, 0.3, 0.3],
+    ...     [0.1, 0.8, 0.1],
+    ...     [0.2, 0.3, 0.5],
+    ...     [0.4, 0.4, 0.2],
+    ...     [0.1, 0.2, 0.7],
+    ... ])
+    >>> average_precision_score(y_true, y_scores)
+    0.77...
 
     Notes
     -----
@@ -202,10 +211,16 @@ def average_precision_score(y_true, y_score, *, average="macro", pos_label=1,
         return -np.sum(np.diff(recall) * np.array(precision)[:-1])
 
     y_type = type_of_target(y_true)
+
+    # Multiclass is a specific case of the multilabel setting here
+    if y_type == "multiclass":
+        y_true = label_binarize(y_true, classes=np.unique(y_true))
+        y_type = "multilabel-indicator"
+
     if y_type == "multilabel-indicator" and pos_label != 1:
         raise ValueError("Parameter pos_label is fixed to 1 for "
-                         "multilabel-indicator y_true. Do not set "
-                         "pos_label or set pos_label to 1.")
+                         "multiclass or multilabel-indicator y_true. Do not "
+                         "set pos_label or set pos_label to 1.")
     elif y_type == "binary":
         present_labels = np.unique(y_true)
         if len(present_labels) == 2 and pos_label not in present_labels:
