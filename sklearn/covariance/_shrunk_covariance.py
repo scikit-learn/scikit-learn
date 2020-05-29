@@ -253,7 +253,8 @@ def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
     return shrinkage
 
 
-def ledoit_wolf(X, assume_centered=False, block_size=1000):
+@_deprecate_positional_args
+def ledoit_wolf(X, *, assume_centered=False, block_size=1000):
     """Estimates the shrunk Ledoit-Wolf covariance matrix.
 
     Read more in the :ref:`User Guide <shrunk_covariance>`.
@@ -430,8 +431,8 @@ class LedoitWolf(EmpiricalCovariance):
 
 
 # OAS estimator
-
-def oas(X, assume_centered=False):
+@_deprecate_positional_args
+def oas(X, *, assume_centered=False):
     """Estimate covariance with the Oracle Approximating Shrinkage algorithm.
 
     Parameters

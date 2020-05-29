@@ -7,13 +7,17 @@
 Version 0.23.1
 ==============
 
-**TBD**
+**May 18 2020**
 
 Changelog
 ---------
 
 :mod:`sklearn.cluster`
 ......................
+
+- |Efficiency| :class:`cluster.KMeans` efficiency has been improved for very
+  small datasets. In particular it cannot spawn idle threads any more.
+  :pr:`17210` and :pr:`17235` by :user:`Jeremie du Boisberranger <jeremiedbb>`.
 
 - |Fix| Fixed a bug in :class:`cluster.KMeans` where the sample weights
   provided by the user were modified in place. :pr:`17204` by
@@ -39,8 +43,6 @@ refer to
 
 
 .. include:: changelog_legend.inc
-
-Put the changes in their relevant module.
 
 Enforcing keyword-only arguments
 --------------------------------
@@ -487,7 +489,7 @@ Changelog
   :pr:`15622` by :user:`Gregory Morse <GregoryMorse>`.
 
 - |Fix| :func:`model_selection.cross_val_predict` supports
-  `method="predict_proba"` when `y=None`.:pr:`15918` by
+  `method="predict_proba"` when `y=None`. :pr:`15918` by
   :user:`Luca Kubin <lkubin>`.
 
 - |Fix| :func:`model_selection.fit_grid_point` is deprecated in 0.23 and will
@@ -647,6 +649,12 @@ Changelog
   :func:`utils.estimator_checks.parametrize_with_checks` is now deprecated,
   and support for classes will be removed in 0.24. Pass instances instead.
   :pr:`17032` by `Nicolas Hug`_.
+
+- |API| The private utility `_safe_tags` in `utils.estimator_checks` was
+  removed, hence all tags should be obtained through `estimator._get_tags()`.
+  Note that Mixins like `RegressorMixin` must come *before* base classes
+  in the MRO for `_get_tags()` to work properly.
+  :pr:`16950` by `Nicolas Hug`_.
 
 - |FIX| :func:`utils.all_estimators` now only returns public estimators.
   :pr:`15380` by `Thomas Fan`_.
