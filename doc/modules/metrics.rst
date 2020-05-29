@@ -138,9 +138,9 @@ the data is a `pandas.DataFrame`, you can use
     ...      'user_rating': [4, 5, 4, 3]})
     >>> gower_distances(X, categorical_features=selector(dtype_include=object))
     array([[0.        , 0.5      , 0.5      , 0.5      ],
-           [0.5       , 0.       , 0.666... , 1.       ],
+           [0.5       , 0.       , 0.6666..., 1.       ],
            [0.5       , 0.6666..., 0.       , 0.6666...],
-           [0.5       , 1.       , 0.666... , 0.       ]])
+           [0.5       , 1.       , 0.6666..., 0.       ]])
 
 .. topic:: References:
 
