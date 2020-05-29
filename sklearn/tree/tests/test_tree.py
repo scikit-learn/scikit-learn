@@ -8,6 +8,7 @@ import struct
 
 import pytest
 import numpy as np
+from numpy.testing import assert_allclose
 from scipy.sparse import csc_matrix
 from scipy.sparse import csr_matrix
 from scipy.sparse import coo_matrix
@@ -17,7 +18,6 @@ from sklearn.random_projection import _sparse_random_matrix
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import mean_squared_error
 
-from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_almost_equal
@@ -45,7 +45,7 @@ from sklearn import datasets
 from sklearn.utils import compute_sample_weight
 
 CLF_CRITERIONS = ("gini", "entropy")
-REG_CRITERIONS = ("mse", "mae", "friedman_mse")
+REG_CRITERIONS = ("mse", "mae", "friedman_mse", "poisson")
 
 CLF_TREES = {
     "DecisionTreeClassifier": DecisionTreeClassifier,
@@ -208,18 +208,26 @@ def test_weighted_classification_toy():
                            "Failed with {0}".format(name))
 
 
-def test_regression_toy():
+@pytest.mark.parametrize("Tree", REG_TREES.values())
+@pytest.mark.parametrize("criterion", REG_CRITERIONS)
+def test_regression_toy(Tree, criterion):
     # Check regression on a toy dataset.
-    for name, Tree in REG_TREES.items():
-        reg = Tree(random_state=1)
-        reg.fit(X, y)
-        assert_almost_equal(reg.predict(T), true_result,
-                            err_msg="Failed with {0}".format(name))
+    if criterion == "poisson":
+        # make target positive
+        a = np.abs(np.min(y)) + 1
+        y_train = np.array(y) + a
+        y_test = np.array(true_result) + a
+    else:
+        y_train = y
+        y_test = true_result
 
-        clf = Tree(max_features=1, random_state=1)
-        clf.fit(X, y)
-        assert_almost_equal(reg.predict(T), true_result,
-                            err_msg="Failed with {0}".format(name))
+    reg = Tree(criterion=criterion, random_state=1)
+    reg.fit(X, y_train)
+    assert_allclose(reg.predict(T), y_test)
+
+    clf = Tree(criterion=criterion, max_features=1, random_state=1)
+    clf.fit(X, y_train)
+    assert_allclose(reg.predict(T), y_test)
 
 
 def test_xor():
@@ -590,6 +598,13 @@ def test_error():
         with pytest.raises(NotFittedError):
             est.apply(T)
 
+    # non positive target for Poisson splitting Criterion
+    est = DecisionTreeRegressor(criterion="poisson")
+    with pytest.raises(ValueError, match="y is not positive.*Poisson"):
+        est.fit([[0, 1, 2]], [0, 0, 0])
+    with pytest.raises(ValueError, match="Some.*y are negative.*Poisson"):
+        est.fit([[0, 1, 2]], [5, -0.1, 2])
+
 
 def test_min_samples_split():
     """Test min_samples_split parameter"""
@@ -728,8 +743,8 @@ def test_min_weight_fraction_leaf_on_sparse_input(name):
 
 def check_min_weight_fraction_leaf_with_min_samples_leaf(name, datasets,
                                                          sparse=False):
-    """Test the interaction between min_weight_fraction_leaf and min_samples_leaf
-    when sample_weights is not provided in fit."""
+    """Test the interaction between min_weight_fraction_leaf and
+    min_samples_leaf when sample_weights is not provided in fit."""
     if sparse:
         X = DATASETS[datasets]["X_sparse"].astype(np.float32)
     else:
@@ -1948,3 +1963,14 @@ def check_apply_path_readonly(name):
 @pytest.mark.parametrize("name", ALL_TREES)
 def test_apply_path_readonly_all_trees(name):
     check_apply_path_readonly(name)
+
+
+@pytest.mark.parametrize("criterion", ["mse", "poisson"])
+@pytest.mark.parametrize("tree", REG_TREES.values())
+def test_balance_property(criterion, tree):
+    """Test that sum(y_pred)=sum(y_true) on training set."""
+    # Choose a training set with non-negative targets
+    X, y = diabetes.data, diabetes.target
+    reg = tree(criterion=criterion)
+    reg.fit(X, y)
+    assert np.sum(reg.predict(X)) == pytest.approx(np.sum(y))
