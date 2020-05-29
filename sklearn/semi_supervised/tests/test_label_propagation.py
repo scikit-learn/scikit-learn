@@ -1,9 +1,11 @@
 """ test the label propagation module """
 
-import numpy as np
 import pytest
+import numpy as np
+# Some tests fail for dok_matrix.
+from scipy.sparse import (bsr_matrix, coo_matrix, csc_matrix, csr_matrix,
+                          lil_matrix, issparse)
 
-from scipy.sparse import issparse
 from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import assert_no_warnings
 from sklearn.semi_supervised import _label_propagation as label_propagation
@@ -14,6 +16,9 @@ from sklearn.datasets import make_classification
 from sklearn.exceptions import ConvergenceWarning
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
+
+SPARSE_TYPES = (bsr_matrix, coo_matrix, csc_matrix, csr_matrix, lil_matrix)
+SPARSE_OR_DENSE = SPARSE_TYPES + (np.asarray,)
 
 ESTIMATORS = [
     (label_propagation.LabelPropagation, {'kernel': 'rbf'}),
@@ -73,18 +78,19 @@ def test_label_spreading_closed_form():
     X, y = make_classification(n_classes=n_classes, n_samples=200,
                                random_state=0)
     y[::3] = -1
-    clf = label_propagation.LabelSpreading().fit(X, y)
-    # adopting notation from Zhou et al (2004):
-    S = clf._build_graph()
-    Y = np.zeros((len(y), n_classes + 1))
-    Y[np.arange(len(y)), y] = 1
-    Y = Y[:, :-1]
-    for alpha in [0.1, 0.3, 0.5, 0.7, 0.9]:
-        expected = np.dot(np.linalg.inv(np.eye(len(S)) - alpha * S), Y)
-        expected /= expected.sum(axis=1)[:, np.newaxis]
-        clf = label_propagation.LabelSpreading(max_iter=10000, alpha=alpha)
-        clf.fit(X, y)
-        assert_array_almost_equal(expected, clf.label_distributions_, 4)
+    for sparse_or_dense in SPARSE_OR_DENSE:
+        clf = label_propagation.LabelSpreading().fit(sparse_or_dense(X), y)
+        # adopting notation from Zhou et al (2004):
+        S = clf._build_graph()
+        Y = np.zeros((len(y), n_classes + 1))
+        Y[np.arange(len(y)), y] = 1
+        Y = Y[:, :-1]
+        for alpha in [0.1, 0.3, 0.5, 0.7, 0.9]:
+            expected = np.dot(np.linalg.inv(np.eye(len(S)) - alpha * S), Y)
+            expected /= expected.sum(axis=1)[:, np.newaxis]
+            clf = label_propagation.LabelSpreading(max_iter=10000, alpha=alpha)
+            clf.fit(sparse_or_dense(X), y)
+            assert_array_almost_equal(expected, clf.label_distributions_, 4)
 
 
 def test_label_propagation_closed_form():
@@ -97,6 +103,7 @@ def test_label_propagation_closed_form():
     unlabelled_idx = Y[:, (-1,)].nonzero()[0]
     labelled_idx = (Y[:, (-1,)] == 0).nonzero()[0]
 
+    # This test fails for sparse matrices!
     clf = label_propagation.LabelPropagation(max_iter=10000,
                                              gamma=0.1)
     clf.fit(X, y)
@@ -121,40 +128,43 @@ def test_valid_alpha():
     n_classes = 2
     X, y = make_classification(n_classes=n_classes, n_samples=200,
                                random_state=0)
-    for alpha in [-0.1, 0, 1, 1.1, None]:
-        with pytest.raises(ValueError):
-            label_propagation.LabelSpreading(alpha=alpha).fit(X, y)
+    for sparse_or_dense in SPARSE_OR_DENSE:
+        for alpha in [-0.1, 0, 1, 1.1, None]:
+            with pytest.raises(ValueError):
+                label_propagation.LabelSpreading(alpha=alpha).fit(sparse_or_dense(X), y)
 
 
 def test_convergence_speed():
     # This is a non-regression test for #5774
     X = np.array([[1., 0.], [0., 1.], [1., 2.5]])
     y = np.array([0, 1, -1])
-    mdl = label_propagation.LabelSpreading(kernel='rbf', max_iter=5000)
-    mdl.fit(X, y)
+    for sparse_or_dense in SPARSE_OR_DENSE:
+        mdl = label_propagation.LabelSpreading(kernel='rbf', max_iter=5000)
+        mdl.fit(sparse_or_dense(X), y)
 
-    # this should converge quickly:
-    assert mdl.n_iter_ < 10
-    assert_array_equal(mdl.predict(X), [0, 1, 1])
+        # this should converge quickly:
+        assert mdl.n_iter_ < 10
+        assert_array_equal(mdl.predict(X), [0, 1, 1])
 
 
 def test_convergence_warning():
     # This is a non-regression test for #5774
     X = np.array([[1., 0.], [0., 1.], [1., 2.5]])
     y = np.array([0, 1, -1])
-    mdl = label_propagation.LabelSpreading(kernel='rbf', max_iter=1)
-    assert_warns(ConvergenceWarning, mdl.fit, X, y)
-    assert mdl.n_iter_ == mdl.max_iter
+    for sparse_or_dense in SPARSE_OR_DENSE:
+        mdl = label_propagation.LabelSpreading(kernel='rbf', max_iter=1)
+        assert_warns(ConvergenceWarning, mdl.fit, sparse_or_dense(X), y)
+        assert mdl.n_iter_ == mdl.max_iter
 
-    mdl = label_propagation.LabelPropagation(kernel='rbf', max_iter=1)
-    assert_warns(ConvergenceWarning, mdl.fit, X, y)
-    assert mdl.n_iter_ == mdl.max_iter
+        mdl = label_propagation.LabelPropagation(kernel='rbf', max_iter=1)
+        assert_warns(ConvergenceWarning, mdl.fit, sparse_or_dense(X), y)
+        assert mdl.n_iter_ == mdl.max_iter
 
-    mdl = label_propagation.LabelSpreading(kernel='rbf', max_iter=500)
-    assert_no_warnings(mdl.fit, X, y)
+        mdl = label_propagation.LabelSpreading(kernel='rbf', max_iter=500)
+        assert_no_warnings(mdl.fit, sparse_or_dense(X), y)
 
-    mdl = label_propagation.LabelPropagation(kernel='rbf', max_iter=500)
-    assert_no_warnings(mdl.fit, X, y)
+        mdl = label_propagation.LabelPropagation(kernel='rbf', max_iter=500)
+        assert_no_warnings(mdl.fit, sparse_or_dense(X), y)
 
 
 def test_label_propagation_non_zero_normalizer():
@@ -163,10 +173,11 @@ def test_label_propagation_non_zero_normalizer():
     # https://github.com/scikit-learn/scikit-learn/pull/15946
     X = np.array([[100., 100.], [100., 100.], [0., 0.], [0., 0.]])
     y = np.array([0, 1, -1, -1])
-    mdl = label_propagation.LabelSpreading(kernel='knn',
-                                           max_iter=100,
-                                           n_neighbors=1)
-    assert_no_warnings(mdl.fit, X, y)
+    for sparse_or_dense in SPARSE_OR_DENSE:
+        mdl = label_propagation.LabelSpreading(kernel='knn',
+                                               max_iter=100,
+                                               n_neighbors=1)
+        assert_no_warnings(mdl.fit, sparse_or_dense(X), y)
 
 
 def test_predict_sparse_callable_kernel():
@@ -196,10 +207,11 @@ def test_predict_sparse_callable_kernel():
                                                         test_size=n_test,
                                                         random_state=0)
 
-    model = label_propagation.LabelSpreading(kernel=topk_rbf)
-    model.fit(X_train, y_train)
-    assert model.score(X_test, y_test) >= 0.9
+    for sparse_or_dense in SPARSE_OR_DENSE:
+        model = label_propagation.LabelSpreading(kernel=topk_rbf)
+        model.fit(sparse_or_dense(X_train), y_train)
+        assert model.score(X_test, y_test) >= 0.9
 
-    model = label_propagation.LabelPropagation(kernel=topk_rbf)
-    model.fit(X_train, y_train)
-    assert model.score(X_test, y_test) >= 0.9
+        model = label_propagation.LabelPropagation(kernel=topk_rbf)
+        model.fit(sparse_or_dense(X_train), y_train)
+        assert model.score(X_test, y_test) >= 0.9

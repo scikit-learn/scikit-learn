@@ -190,7 +190,7 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         """
         check_is_fitted(self)
 
-        X_2d = check_array(X, accept_sparse=['csc', 'csr', 'coo', 'dok',
+        X_2d = check_array(X, accept_sparse=['csc', 'csr', 'coo',
                                              'bsr', 'lil', 'dia'])
         weight_matrices = self._get_kernel(self.X_, X_2d)
         if self.kernel == 'knn':
@@ -225,7 +225,8 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         -------
         self : object
         """
-        X, y = self._validate_data(X, y)
+        X, y = self._validate_data(X, y, accept_sparse=['csc', 'csr', 'coo',
+                                                        'bsr', 'lil', 'dia'])
         self.X_ = X
         check_classification_targets(y)
 
