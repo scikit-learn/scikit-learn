@@ -5,7 +5,6 @@ import pytest
 from sklearn.utils.stats import _weighted_percentile
 
 
-@pytest.mark.parametrize("interpolation", ["linear", "nearest"])
 def test_weighted_percentile(interpolation):
     y = np.empty(102, dtype=np.float64)
     y[:50] = 0
@@ -14,7 +13,7 @@ def test_weighted_percentile(interpolation):
     y[50] = 1
     sw = np.ones(102, dtype=np.float64)
     sw[-1] = 0.0
-    score = _weighted_percentile(y, sw, 50, interpolation=interpolation)
+    score = _weighted_percentile(y, sw, 50, interpolation="nearest")
     assert score == pytest.approx(1)
 
 
@@ -124,7 +123,7 @@ def test_weighted_percentile_np_percentile(interpolation, percentile):
     rng = np.random.RandomState(0)
     X = rng.randn(10)
     X.sort()
-    sample_weight = np.ones(X.shape)
+    sample_weight = np.ones(X.shape) / X.shape[0]
 
     np_percentile = np.percentile(X, percentile, interpolation=interpolation)
     sklearn_percentile = _weighted_percentile(

@@ -91,9 +91,11 @@ def _weighted_percentile(array, sample_weight, percentile=50,
 
     elif interpolation in ("linear", "lower", "higher"):
         # compute by linear interpolation between closest ranks method
-        adjusted_percentile = (weight_cdf - 0.5 * sorted_weights)
-        with np.errstate(invalid="ignore"):
-            adjusted_percentile /= weight_cdf[-1]
+        # adjusted_percentile = (weight_cdf - 0.5 * sorted_weights)
+        # with np.errstate(invalid="ignore"):
+        #     adjusted_percentile /= weight_cdf[-1]
+        adjusted_percentile = (weight_cdf - sorted_weights)
+        adjusted_percentile /= ((weight_cdf[-1] * (n_rows - 1)) / (n_rows))
 
         if interpolation in ("lower", "higher"):
             percentile_idx = np.array([
