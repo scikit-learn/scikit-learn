@@ -508,3 +508,19 @@ def test_make_unique_dtype():
         w = np.ones_like(x)
         x, y, w = _make_unique(x, y, w)
         assert_array_equal(x, [2, 3, 5])
+
+
+def test_isotonic_2darray_1_feature():
+    # Test from GH#15012
+    # Check that IsotonicRegression can handle 2darray with only 1 feature
+    # https://github.com/scikit-learn/scikit-learn/issues/15012
+    X = np.array(list(range(10)))
+    X_2d = X.reshape(-1, 1)
+    y = shuffle(X, random_state=0)
+
+    iso_reg = IsotonicRegression().fit(X, y)
+    iso_reg_2d = IsotonicRegression().fit(X_2d, y)
+
+    y_pred1 = iso_reg.predict(X)
+    y_pred2 = iso_reg_2d.predict(X_2d)
+    assert_array_equal(y_pred1, y_pred2)

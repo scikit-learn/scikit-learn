@@ -61,6 +61,14 @@ Changelog
   change since `None` was defaulting to these values already.
   :pr:`16493` by :user:`Darshan N <DarshanGowda0>`.
 
+:mod:`sklearn.isotonic`
+.......................
+
+- |Enhancement| :method:`IsotonicRegression.fit`, :method:`IsotonicRegression.transform`
+  and :method:`IsotonicRegression.predict` now accepts 2darray with 1 feature as
+  input array.
+  :issue:`15012`
+
 :mod:`sklearn.metrics`
 ......................
 
