@@ -75,7 +75,7 @@ score_rand, perm_scores_rand, pvalue_rand = permutation_test_score(
 # Original data
 # ^^^^^^^^^^^^^
 #
-# Below we plot a histogram of the ``permutation_scores`` (the null
+# Below we plot a histogram of the permutation scores (the null
 # distribution). The red line indicates the score obtained by the classifier
 # on the original data. The score is much better than those obtained by
 # using permuted data and the p value is thus very low. This indicates that
