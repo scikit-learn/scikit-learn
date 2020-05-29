@@ -68,6 +68,7 @@ Changelog
   and :method:`IsotonicRegression.predict` now accepts 2darray with 1 feature as
   input array.
   :issue:`15012`
+  :pr:`17379` by :user:`Jiaxiang <fujiaxiang>`.
 
 :mod:`sklearn.metrics`
 ......................
