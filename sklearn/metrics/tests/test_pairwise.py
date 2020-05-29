@@ -953,9 +953,10 @@ def test_gower_distances_pairwise_equivalence():
     X = rng.randint(size=(5, 10), low=0, high=10)
     Y = rng.randint(size=(5, 10), low=-10, high=10)
     gower = gower_distances(
-        X, Y, categorical_features=slice(0, 4))
+        X, Y, categorical_features=slice(0, 4), scale=False)
     pw_gower = pairwise_distances(X, Y, metric='gower', n_jobs=2,
-                                  categorical_features=slice(0, 4))
+                                  categorical_features=slice(0, 4),
+                                  scale=False)
     assert_array_almost_equal(pw_gower, gower)
 
 
@@ -1016,17 +1017,25 @@ def test_gower_distances_scaling():
         assert_array_almost_equal(
             gower, (hamming * 6 + l1 * 4) / 10)
 
-    # the sacling should be done using both X and Y
+    # passing the scaling factor when Y is provided
     Y = (X + 1)[::2, :]
     trs = MinMaxScaler().fit(np.vstack((X[:, 6:], Y[:, 6:])))
     l1 = cdist(trs.transform(X[:, 6:]), trs.transform(Y[:, 6:]),
                metric='minkowski', p=1) / 4
     hamming = cdist(X[:, :6], Y[:, :6], metric='hamming')
     gower = gower_distances(X, Y, categorical_features=slice(0, 6),
-                            scale=True)
+                            scale=True, min_values=trs.min_,
+                            scale_factor=trs.scale_)
     assert_array_almost_equal(
         gower, (hamming * 6 + l1 * 4) / 10)
     assert gower.shape == (len(X), len(Y))
+
+    # passing Y w/o scaling factors should fail
+    with pytest.raises(ValueError, match="`scaling_factor` and `min_values` "
+                       "must be provided when `Y` is provided and `scale=True`"
+                       ):
+        gower_distances(X, Y, categorical_features=slice(0, 6),
+                        scale=True)
 
 
 @pytest.mark.parametrize('cat',
@@ -1066,8 +1075,7 @@ def test_gower_distances_nans():
     assert np.all(np.isnan(dists[4, :]))
     assert np.all(np.isnan(dists[:, 4]))
 
-    # Test X and Y with different ranges of numeric values, categorical values,
-    # and using pairwise_distances
+    # Test with a single nan, ranges don't matter for the test
     X = [[9222.22, -11, 'M', 1],
          [41934.0, -44, 'F', 1],
          [1, 1, np.nan, 0]]
@@ -1075,15 +1083,6 @@ def test_gower_distances_nans():
     Y = [[-222.22, 1, 'F', 0],
          [1934.0, 4, 'M', 0],
          [3000, 3000, 'F', 0]]
-
-    # The expected normalized values above are:
-    Xn = [[0.22403432, 0.010841, 'M', 1],
-          [1.0, 0.0, 'F', 1],
-          [0.00529507, 0.01478318, np.nan, 0]]
-
-    Yn = [[0.0, 0.01478318, 'F', 0],
-          [0.05114832, 0.01576873, 'M', 0],
-          [0.07643522, 1.0, 'F', 0]]
 
     # Simplified calculation of Gower distance for expected values
     D_expected = np.zeros((3, 3))
@@ -1093,19 +1092,20 @@ def test_gower_distances_nans():
         for j in range(0, 3):
             # The calculations below shows how it compares observation
             # by observation, attribute by attribute.
-            D_expected[i][j] = ((abs(Xn[i][0] - Yn[j][0]) +
-                                 abs(Xn[i][1] - Yn[j][1]) +
-                                 ([1, 0][Xn[i][2] == Yn[j][2]]
-                                  if (Xn[i][2] == Xn[i][2] and
-                                      Yn[i][2] == Yn[i][2]) else 0) +
-                                 abs(Xn[i][3] - Yn[j][3])) /
+            D_expected[i][j] = ((abs(X[i][0] - Y[j][0]) +
+                                 abs(X[i][1] - Y[j][1]) +
+                                 ([1, 0][X[i][2] == Y[j][2]]
+                                  if (X[i][2] == X[i][2] and
+                                      Y[i][2] == Y[i][2]) else 0) +
+                                 abs(X[i][3] - Y[j][3])) /
                                 non_missing_cols[i])
 
     # pairwise_distances will convert the input to strings and np.nan would
     # therefore be 'nan'. Passing DataFrames will avoid that.
     D = pairwise_distances(pd.DataFrame(X), pd.DataFrame(Y), metric='gower',
                            n_jobs=2,
-                           categorical_features=[2])
+                           categorical_features=[2],
+                           scale=False)
     assert_array_almost_equal(D_expected, D)
 
 

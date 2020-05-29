@@ -895,20 +895,23 @@ def gower_distances(X, Y=None, categorical_features=None, scale=True,
         By default all non-numeric columns are considered categorical.
 
     scale : bool, default=True
-        Indicates if the numerical columns will be scaled between 0 and 1.
-        If false, it is assumed the numerical columns are already scaled.
-        The scaling factors, _i.e._ min and max, are taken from both ``X`` and
-        ``Y``.
+        Indicates if the numerical columns should be scaled to [0, 1].
+        If ``False``, the numerical columns are assumed to be already scaled.
+        The scaling factors, _i.e._ ``min_values`` and ``scale_factor``, are
+        taken from ``X``. If ``X`` and ``Y`` are both provided, ``min_values``
+        and ``scale_factor`` have to be provided as well.
 
     min_values : ndarray of shape (n_features,), default=None
         Per feature adjustment for minimum. Equivalent to
         ``min_values - X.min(axis=0) * scale_factor``
         If provided, ``scale_factor`` should be provided as well.
+        Only relevant if ``scale=True``.
 
     scale_factor : ndarray of shape (n_features,), default=None
         Per feature relative scaling of the data. Equivalent to
         ``(max_values - min_values) / (X.max(axis=0) - X.min(axis=0))``
         If provided, ``min_values`` should be provided as well.
+        Only relevant if ``scale=True``.
 
     Returns
     -------
@@ -959,6 +962,12 @@ def gower_distances(X, Y=None, categorical_features=None, scale=True,
         if (scale_factor is None) != (min_values is None):
             raise ValueError("min_value and scale_factor should be provided "
                              "together.")
+
+    # scale_factor and min_values are either both None or not at this point
+    if X is not Y and Y is not None and scale_factor is None and scale:
+        raise ValueError("`scaling_factor` and `min_values` must be provided "
+                         "when `Y` is provided and `scale=True`")
+
     X_cat, X_num = _split_categorical_numerical(X, categorical_features)
     Y_cat, Y_num = _split_categorical_numerical(Y, categorical_features)
 
@@ -1617,7 +1626,6 @@ def _precompute_metric_params(X, Y, metric=None, **kwds):
         categorical_features = kwds.get('categorical_features', None)
 
         _, X_num = _split_categorical_numerical(X, categorical_features)
-        _, Y_num = _split_categorical_numerical(Y, categorical_features)
 
         scale = kwds.get('scale', True)
         if not scale:
@@ -1625,11 +1633,18 @@ def _precompute_metric_params(X, Y, metric=None, **kwds):
 
         scale_factor = kwds.get('scale_factor', None)
         min_values = kwds.get('min_values', None)
-        if min_values is None:
-            data = X_num if Y is X or Y is None else np.vstack((X_num, Y_num))
-            trs = MinMaxScaler().fit(data)
+        if (scale_factor is None) != (min_values is None):
+            raise ValueError("min_value and scale_factor should be provided "
+                             "together.")
+
+        if min_values is None and (X is Y or Y is None):
+            trs = MinMaxScaler().fit(X_num)
             min_values = trs.min_
             scale_factor = trs.scale_
+        elif min_values is None:
+            raise ValueError("`scaling_factor` and `min_values` must be "
+                             " provided when `Y` is provided and `scale=True`."
+                             )
 
         return {'min_values': min_values,
                 'scale_factor': scale_factor,
