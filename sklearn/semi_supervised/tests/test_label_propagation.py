@@ -131,7 +131,8 @@ def test_valid_alpha():
     for sparse_or_dense in SPARSE_OR_DENSE:
         for alpha in [-0.1, 0, 1, 1.1, None]:
             with pytest.raises(ValueError):
-                label_propagation.LabelSpreading(alpha=alpha).fit(sparse_or_dense(X), y)
+                label_propagation.LabelSpreading(alpha=alpha).fit(
+                    sparse_or_dense(X), y)
 
 
 def test_convergence_speed():
