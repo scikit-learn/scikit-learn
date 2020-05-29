@@ -24,7 +24,6 @@ from .class_weight import compute_class_weight, compute_sample_weight
 from . import _joblib
 from ..exceptions import DataConversionWarning
 from .deprecation import deprecated
-from .fixes import np_version
 from ._estimator_html_repr import estimator_html_repr
 from .validation import (as_float_array,
                          assert_all_finite,
