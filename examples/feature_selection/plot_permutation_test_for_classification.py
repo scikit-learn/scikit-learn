@@ -86,7 +86,7 @@ score_rand, perm_scores_rand, pvalue_rand = permutation_test_score(
 fig, ax = plt.subplots()
 
 ax.hist(perm_scores_iris, bins=20)
-ax.axvline(score, ls='--', color='r')
+ax.axvline(score_iris, ls='--', color='r')
 score_label = (f"Score on original\ndata: {score_iris:.2f}\n"
                f"(p value: {pvalue_iris:.3f})")
 ax.text(0.7, 260, score_label, fontsize=12)
