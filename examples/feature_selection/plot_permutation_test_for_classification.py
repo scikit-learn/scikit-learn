@@ -105,11 +105,11 @@ plt.show()
 
 fig, ax = plt.subplots()
 
-ax.hist(permutation_scores, bins=20)
+ax.hist(perm_scores_rand, bins=20)
 ax.set_xlim(0.13)
-ax.axvline(score, ls='--', color='r')
-score_label = (f"Score on original\ndata: {score:.2f}\n"
-               f"(p value: {pvalue:.3f})")
+ax.axvline(score_rand, ls='--', color='r')
+score_label = (f"Score on original\ndata: {score_rand:.2f}\n"
+               f"(p value: {pvalue_rand:.3f})")
 ax.text(0.14, 125, score_label, fontsize=12)
 
 # %%
