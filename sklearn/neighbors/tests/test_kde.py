@@ -148,12 +148,12 @@ def test_kde_badargs():
     with pytest.raises(ValueError):
         KernelDensity(algorithm='blah').fit(
             rng.random((200, 10)),
-            sample_weight=rng.random((200, 10)))
+            sample_weight=rng.random_sample((200, 10)))
 
     with pytest.raises(ValueError):
         KernelDensity(algorithm='blah').fit(
             rng.random((200, 10)),
-            sample_weight=-rng.random(200))
+            sample_weight=-rng.random_sample(200))
 
 
 def test_kde_pipeline_gridsearch():
