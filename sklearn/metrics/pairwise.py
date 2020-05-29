@@ -929,18 +929,8 @@ def gower_distances(X, Y=None, categorical_features=None, scale=True,
 
     Current implementation does not support sparse matrices.
 
-    All the non-numerical types (e.g., str), are treated as categorical
-    features.
-
     This implementation modifies the Gower's original similarity measure in
-    the folowing aspects:
-
-    * The values in the original similarity S range between 0 and 1. To
-    guarantee this, it is assumed the numerical features of X and Y are
-    scaled between 0 and 1.
-
-    * Different from the original similarity S, this implementation
-    returns 1-S.
+    the sense that this implementation returns 1-S.
     """
     def _nanmanhatan(x, y):
         return np.nansum(np.abs(x - y))
