@@ -111,7 +111,7 @@ ax.set_xlim(0.13)
 ax.axvline(score_rand, ls='--', color='r')
 score_label = (f"Score on original\ndata: {score_rand:.2f}\n"
                f"(p value: {pvalue_rand:.3f})")
-ax.text(0.14, 120, score_label, fontsize=12)
+ax.text(0.14, 125, score_label, fontsize=12)
 plt.show()
 
 # %%
@@ -123,7 +123,7 @@ plt.show()
 # in the data.
 #
 # Finally, note that this test has been shown to produce low p values even
-# if there is only weak structure in the data[1]_.
+# if there is only weak structure in the data [1]_.
 #
 # .. topic:: References:
 #
