@@ -62,7 +62,7 @@ X_rand = rng.normal(size=(len(X), 2200))
 # the percentage of permutations for which the score obtained is greater
 # that the score obtained using the original data.
 
-clf = SVC(kernel='linear')
+clf = SVC(kernel='linear', random_state=7)
 cv = StratifiedKFold(2)
 
 score_iris, perm_scores_iris, pvalue_iris = permutation_test_score(
@@ -111,7 +111,7 @@ ax.set_xlim(0.13)
 ax.axvline(score_rand, ls='--', color='r')
 score_label = (f"Score on original\ndata: {score_rand:.2f}\n"
                f"(p value: {pvalue_rand:.3f})")
-ax.text(0.14, 125, score_label, fontsize=12)
+ax.text(0.14, 120, score_label, fontsize=12)
 plt.show()
 
 # %%
