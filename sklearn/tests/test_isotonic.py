@@ -516,7 +516,7 @@ def test_isotonic_2darray_1_feature():
     # https://github.com/scikit-learn/scikit-learn/issues/15012
     X = np.array(list(range(10)))
     X_2d = X.reshape(-1, 1)
-    y = shuffle(X, random_state=0)
+    y = np.array([0, 1, 2, 6, 5, 4, 3, 7, 8, 9])
 
     iso_reg = IsotonicRegression().fit(X, y)
     iso_reg_2d = IsotonicRegression().fit(X_2d, y)
@@ -524,3 +524,21 @@ def test_isotonic_2darray_1_feature():
     y_pred1 = iso_reg.predict(X)
     y_pred2 = iso_reg_2d.predict(X_2d)
     assert_array_equal(y_pred1, y_pred2)
+
+
+def test_isotonic_2darray_more_than_1_feature():
+    # Ensure IsotonicRegression raises error if input has more than 1 feature
+    X = np.array(list(range(10)))
+    X_2d = np.array([[x, x] for x in range(10)])
+    y = np.array([0, 1, 2, 6, 5, 4, 3, 7, 8, 9])
+
+    msg = "1d array or 2d array with 1 feature"
+    with pytest.raises(ValueError, match=msg):
+        IsotonicRegression().fit(X_2d, y)
+
+    iso_reg = IsotonicRegression().fit(X, y)
+    with pytest.raises(ValueError, match=msg):
+        iso_reg.predict(X_2d)
+
+    with pytest.raises(ValueError, match=msg):
+        iso_reg.transform(X_2d)
