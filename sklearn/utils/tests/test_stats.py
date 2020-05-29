@@ -5,7 +5,11 @@ import pytest
 from sklearn.utils.stats import _weighted_percentile
 
 
-def test_weighted_percentile():
+@pytest.mark.parametrize(
+    "interpolation, expected_median",
+    [("lower", 0), ("linear", 1), ("higher", 1)]
+)
+def test_weighted_percentile(interpolation, expected_median):
     y = np.empty(102, dtype=np.float64)
     y[:50] = 0
     y[-51:] = 2
@@ -13,8 +17,8 @@ def test_weighted_percentile():
     y[50] = 1
     sw = np.ones(102, dtype=np.float64)
     sw[-1] = 0.0
-    score = _weighted_percentile(y, sw, 50, interpolation="lower")
-    assert score == pytest.approx(1)
+    score = _weighted_percentile(y, sw, 50, interpolation=interpolation)
+    assert score == pytest.approx(expected_median)
 
 
 @pytest.mark.parametrize("interpolation", ["linear", "lower", "higher"])
