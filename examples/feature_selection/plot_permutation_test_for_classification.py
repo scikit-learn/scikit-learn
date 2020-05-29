@@ -111,6 +111,7 @@ ax.axvline(score_rand, ls='--', color='r')
 score_label = (f"Score on original\ndata: {score_rand:.2f}\n"
                f"(p value: {pvalue_rand:.3f})")
 ax.text(0.14, 125, score_label, fontsize=12)
+plt.show()
 
 # %%
 # Another possible reason for a obtaining high p value is that the classifier
@@ -126,6 +127,7 @@ ax.text(0.14, 125, score_label, fontsize=12)
 # .. topic:: References:
 #
 #   .. [1] Ojala and Garriga. `Permutation Tests for Studying Classifier
-#       Performance
-#       <http://www.jmlr.org/papers/volume11/ojala10a/ojala10a.pdf>`_. The
-#       Journal of Machine Learning Research (2010) vol. 11
+#          Performance
+#          <http://www.jmlr.org/papers/volume11/ojala10a/ojala10a.pdf>`_. The
+#          Journal of Machine Learning Research (2010) vol. 11
+#
