@@ -6,12 +6,6 @@ Test with permutations the significance of a classification score
 This example demonstrates the use of
 :func:`~sklearn.model_selection.permutation_test_score` to evaluate the
 significance of a cross-valdiated score using permutations.
-
-In order to test if a classification score is significative a technique
-in repeating the classification procedure after randomizing, permuting,
-the labels. The p-value is then given by the percentage of runs for
-which the score obtained is greater than the classification score
-obtained in the first place.
 """
 
 # Author:  Alexandre Gramfort <alexandre.gramfort@inria.fr>
@@ -41,8 +35,8 @@ y = iris.target
 n_classes = np.unique(y).size
 
 # %%
-# We will also generate some random data, uncorrelated with the class labels in
-# the iris dataset.
+# We will also generate some random feature data, uncorrelated with the class
+# labels in the iris dataset.
 
 rng = np.random.RandomState(seed=0)
 X_rand = rng.normal(size=(len(X), 2200))
@@ -53,7 +47,7 @@ X_rand = rng.normal(size=(len(X), 2200))
 #
 # Next, we calculate the
 # :func:`~sklearn.model_selection.permutation_test_score` using the original
-# iris dataset, which has dependency between features and labels, and
+# iris dataset, which has strong structure, and
 # the randomly generated features and iris labels, which should have
 # no dependency between features and labels. The
 # :class:`~sklearn.svm.svc` classifier and :ref:`accuracy_score` are used.
@@ -63,8 +57,9 @@ X_rand = rng.normal(size=(len(X), 2200))
 # on 1000 different permutations of the dataset, where features
 # remain the same but labels undergo different permutations. This is the
 # distribution for the null hypothesis that there is no dependency between
-# the features and labels. An empirical p value is then calculated using
-# the null distribution and the score obtained using the original data.
+# the features and labels. An empirical p value is then calculated as
+# the percentage of permutations for which the score obtained is greater
+# that the score obtained using the original data.
 
 clf = SVC(kernel='linear')
 cv = StratifiedKFold(2)
@@ -85,7 +80,7 @@ score_rand, perm_scores_rand, pvalue_rand = permutation_test_score(
 # using permuted data and the p value is thus very low. This indicates that
 # there is a low likelihood that this good score would be obtained by chance
 # alone. It provides evidence that the iris dataset contains real dependency
-# between features and labels and the classifier was able to utilise this
+# between features and labels and the classifier was able to utilize this
 # to obtain good results.
 
 fig, ax = plt.subplots()
@@ -116,3 +111,21 @@ ax.axvline(score, ls='--', color='r')
 score_label = (f"Score on original\ndata: {score:.2f}\n"
                f"(p value: {pvalue:.3f})")
 ax.text(0.14, 125, score_label, fontsize=12)
+
+# %%
+# Another possible reason for a obtaining high p value is that the classifier
+# was not able to use the structure in the data. In
+# this case the p value would only be low for classifiers that are able to
+# utilize the dependency present. In our case above, where the data is random,
+# all classifiers would have a high p value as there is no structure present
+# in the data.
+#
+# Finally, note that this test has been shown to produce low p values even
+# if there is only weak structure in the data[1]_.
+#
+# .. topic:: References:
+#
+#   .. [1] Ojala and Garriga. `Permutation Tests for Studying Classifier
+#       Performance
+#       <http://www.jmlr.org/papers/volume11/ojala10a/ojala10a.pdf>`_. The
+#       Journal of Machine Learning Research (2010) vol. 11
