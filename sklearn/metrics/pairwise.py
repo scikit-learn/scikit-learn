@@ -856,10 +856,7 @@ def _split_categorical_numerical(X, categorical_features):
     if not hasattr(X, "shape"):
         X = check_array(X, dtype=np.object, force_all_finite=False)
 
-    if callable(categorical_features):
-        cols = categorical_features(X)
-    else:
-        cols = categorical_features
+    cols = categorical_features
     if cols is None:
         cols = []
 
@@ -936,7 +933,7 @@ def gower_distances(X, Y=None, categorical_features=None, scale=True,
         return np.nansum(np.abs(x - y))
 
     def _non_nans(x, y):
-        return np.sum(~_object_dtype_isnan(x) & ~_object_dtype_isnan(y))
+        return len(x) - np.sum(_object_dtype_isnan(x) | _object_dtype_isnan(y))
 
     def _nanhamming(x, y):
         return np.sum(x != y) - np.sum(
@@ -958,8 +955,12 @@ def gower_distances(X, Y=None, categorical_features=None, scale=True,
         raise ValueError("`scaling_factor` and `min_values` must be provided "
                          "when `Y` is provided and `scale=True`")
 
-    X_cat, X_num = _split_categorical_numerical(X, categorical_features)
-    Y_cat, Y_num = _split_categorical_numerical(Y, categorical_features)
+    if callable(categorical_features):
+        cols = categorical_features(X)
+    else:
+        cols = categorical_features
+    X_cat, X_num = _split_categorical_numerical(X, categorical_features=cols)
+    Y_cat, Y_num = _split_categorical_numerical(Y, categorical_features=cols)
 
     if min_values is not None:
         min_values = np.asarray(min_values)
@@ -983,6 +984,7 @@ def gower_distances(X, Y=None, categorical_features=None, scale=True,
             Y_num = trs.transform(Y_num)
 
         nan_manhatan = distance.cdist(X_num, Y_num, _nanmanhatan)
+        # nan_manhatan = np.nansum(np.abs(X_num - Y_num))
         valid_num = distance.cdist(X_num, Y_num, _non_nans)
     else:
         nan_manhatan = valid_num = None
@@ -1615,11 +1617,16 @@ def _precompute_metric_params(X, Y, metric=None, **kwds):
     if metric == 'gower':
         categorical_features = kwds.get('categorical_features', None)
 
-        _, X_num = _split_categorical_numerical(X, categorical_features)
+        if callable(categorical_features):
+            cols = categorical_features(X)
+        else:
+            cols = categorical_features
+        _, X_num = _split_categorical_numerical(X, cols)
 
         scale = kwds.get('scale', True)
         if not scale:
-            return {'min_values': None, 'scale_factor': None, 'scale': False}
+            return {'min_values': None, 'scale_factor': None, 'scale': False,
+                    'categorical_features': cols}
 
         scale_factor = kwds.get('scale_factor', None)
         min_values = kwds.get('min_values', None)
@@ -1638,7 +1645,8 @@ def _precompute_metric_params(X, Y, metric=None, **kwds):
 
         return {'min_values': min_values,
                 'scale_factor': scale_factor,
-                'scale': True}
+                'scale': True,
+                'categorical_features': cols}
 
     if metric == "seuclidean" and 'V' not in kwds:
         if X is Y:
