@@ -69,7 +69,7 @@ score_iris, perm_scores_iris, pvalue_iris = permutation_test_score(
     clf, X, y, scoring="accuracy", cv=cv, n_permutations=1000, n_jobs=1)
 
 score_rand, perm_scores_rand, pvalue_rand = permutation_test_score(
-    clf, X, y, scoring="accuracy", cv=cv, n_permutations=1000, n_jobs=1)
+    clf, X_rand, y, scoring="accuracy", cv=cv, n_permutations=1000, n_jobs=1)
 
 # %%
 # Original data
