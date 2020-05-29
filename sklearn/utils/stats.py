@@ -26,7 +26,7 @@ def _weighted_percentile(array, sample_weight, percentile=50,
     percentile: int, default=50
         Percentile to compute. Must be value between 0 and 100.
 
-    interpolation : {"linear", "lower", "higher"}, default="linear"
+    interpolation : {"linear", "lower", "higher", "nearest"}, default="linear"
         This optional parameter specifies the interpolation method to
         use when the desired percentile lies between two data points
         ``i < j``:
@@ -73,6 +73,9 @@ def _weighted_percentile(array, sample_weight, percentile=50,
 
     if interpolation == "nearest":
         # compute by nearest-rank method
+        # The rank correspond to P / 100 * N; P in [0, 100]
+        # Here, N is replaced by the sum of the weight and P will be adjusted
+        # by the weights
         adjusted_percentile = percentile * weight_cdf[-1]
         percentile_value_idx = np.array([
             np.searchsorted(weight_cdf[:, i], adjusted_percentile[i])
@@ -91,7 +94,9 @@ def _weighted_percentile(array, sample_weight, percentile=50,
 
     elif interpolation in ("linear", "lower", "higher"):
         # compute by linear interpolation between closest ranks method
-        # as in NumPy
+        # NumPy uses the variant p = (x - 1) / (N - 1); x in [1, N]
+        # Here, N is replaced by the sum of the weights and (1) is taking into
+        # account the weights.
         adjusted_percentile = (weight_cdf - sorted_weights)
         with np.errstate(invalid="ignore"):
             adjusted_percentile /= ((weight_cdf[-1] * (n_rows - 1)) / (n_rows))
@@ -103,6 +108,7 @@ def _weighted_percentile(array, sample_weight, percentile=50,
                 for col in range(adjusted_percentile.shape[1])
             ])
             if interpolation == "lower" and np.all(percentile < 1):
+                # P = 100 is a corner case for "lower"
                 percentile_idx -= 1
             percentile_idx = np.apply_along_axis(
                 lambda x: np.clip(x, 0, n_rows - 1), axis=0,

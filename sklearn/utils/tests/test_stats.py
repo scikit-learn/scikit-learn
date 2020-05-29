@@ -123,7 +123,7 @@ def test_weighted_percentile_np_percentile(interpolation, percentile):
     rng = np.random.RandomState(0)
     X = rng.randn(10)
     X.sort()
-    sample_weight = np.ones(X.shape) / X.shape[0]
+    sample_weight = np.ones(X.shape)
 
     np_percentile = np.percentile(X, percentile, interpolation=interpolation)
     sklearn_percentile = _weighted_percentile(
