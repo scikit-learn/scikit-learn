@@ -109,4 +109,7 @@ def _weighted_percentile(array, sample_weight, percentile=50,
             )
             for col in range(n_cols)
         ])
+
+        nan_value = np.isnan(percentile_value)
+        percentile_value[nan_value] = array[0, nan_value]
         return _squeeze_arr(percentile_value, n_dim)
