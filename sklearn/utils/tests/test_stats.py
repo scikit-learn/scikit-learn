@@ -5,7 +5,7 @@ import pytest
 from sklearn.utils.stats import _weighted_percentile
 
 
-def test_weighted_percentile(interpolation):
+def test_weighted_percentile():
     y = np.empty(102, dtype=np.float64)
     y[:50] = 0
     y[-51:] = 2
@@ -118,7 +118,7 @@ def test_weighted_percentile_np_median():
 
 
 @pytest.mark.parametrize("interpolation", ["linear", "lower", "higher"])
-@pytest.mark.parametrize("percentile", np.arange(0, 101, 10))
+@pytest.mark.parametrize("percentile", np.arange(0, 101, 2.5))
 def test_weighted_percentile_np_percentile(interpolation, percentile):
     rng = np.random.RandomState(0)
     X = rng.randn(10)

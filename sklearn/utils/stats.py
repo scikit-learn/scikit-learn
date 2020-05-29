@@ -65,7 +65,7 @@ def _weighted_percentile(array, sample_weight, percentile=50,
 
     sorted_idx = np.argsort(array, axis=0)
     sorted_weights = _take_along_axis(sample_weight, sorted_idx, axis=0)
-    percentile = [percentile / 100] * n_cols
+    percentile = np.array([percentile / 100] * n_cols)
     weight_cdf = stable_cumsum(sorted_weights, axis=0)
 
     def _squeeze_arr(arr, n_dim):
@@ -93,7 +93,8 @@ def _weighted_percentile(array, sample_weight, percentile=50,
         # compute by linear interpolation between closest ranks method
         # as in NumPy
         adjusted_percentile = (weight_cdf - sorted_weights)
-        adjusted_percentile /= ((weight_cdf[-1] * (n_rows - 1)) / (n_rows))
+        with np.errstate(invalid="ignore"):
+            adjusted_percentile /= ((weight_cdf[-1] * (n_rows - 1)) / (n_rows))
 
         if interpolation in ("lower", "higher"):
             percentile_idx = np.array([
@@ -101,7 +102,7 @@ def _weighted_percentile(array, sample_weight, percentile=50,
                                 side="left")
                 for col in range(adjusted_percentile.shape[1])
             ])
-            if interpolation == "lower":
+            if interpolation == "lower" and np.all(percentile < 1):
                 percentile_idx -= 1
             percentile_idx = np.apply_along_axis(
                 lambda x: np.clip(x, 0, n_rows - 1), axis=0,
