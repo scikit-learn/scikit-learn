@@ -1742,7 +1742,7 @@ class TfidfVectorizer(CountVectorizer):
             check_is_fitted(self)
             return self._tfidf.idf_
         except NotFittedError:
-            return None
+            raise AttributeError
 
     @idf_.setter
     def idf_(self, value):
