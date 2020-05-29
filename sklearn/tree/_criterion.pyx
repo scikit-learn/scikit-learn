@@ -1399,7 +1399,7 @@ cdef class Poisson(RegressionCriterion):
                 # Poisson loss does not allow non-positive predictions. We
                 # therefore forbid splits that have child nodes withs
                 # sum(y_i) <= 0.
-                return INFINITY
+                return -INFINITY
             else:
                 proxy_impurity_left += y_mean_left * log(y_mean_left)
                 proxy_impurity_right += y_mean_right * log(y_mean_right)

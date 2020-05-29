@@ -1974,3 +1974,13 @@ def test_balance_property(criterion, tree):
     reg = tree(criterion=criterion)
     reg.fit(X, y)
     assert np.sum(reg.predict(X)) == pytest.approx(np.sum(y))
+
+
+def test_poisson_zero_nodes():
+    """Test that sum(y)=0 and therefore y_pred=0 never happens on nodes."""
+    X = [[0, 0], [0, 1], [0, 2], [0, 3],
+         [1, 0], [1, 2], [1, 2], [1, 3]]
+    y = [0, 0, 0, 0, 1, 2, 3, 4]
+    reg = DecisionTreeRegressor(criterion="poisson", random_state=1)
+    reg.fit(X, y)
+    assert np.all(reg.predict(X) > 0)
