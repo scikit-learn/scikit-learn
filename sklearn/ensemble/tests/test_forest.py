@@ -259,7 +259,7 @@ def check_importances(name, criterion, dtype, tolerance):
 @pytest.mark.parametrize(
         'name, criterion',
         itertools.chain(product(FOREST_CLASSIFIERS,
-                                ["gini", "entropy"]),
+                                ["gini", "entropy", "gain_ratio"]),
                         product(FOREST_REGRESSORS,
                                 ["mse", "friedman_mse", "mae"])))
 def test_importances(dtype, name, criterion):
