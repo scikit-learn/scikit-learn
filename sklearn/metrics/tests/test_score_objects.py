@@ -520,44 +520,49 @@ def test_classification_scorer_sample_weight():
                    f"with sample weights: {str(e)}")
 
 
-@ignore_warnings
-def test_regression_scorer_sample_weight():
-    # Test that regression scorers support sample_weight or raise sensible
-    # errors
-
+@pytest.fixture
+def regressor_and_data():
     # Odd number of test samples req for neg_median_absolute_error
     X, y = make_regression(n_samples=101, n_features=20, random_state=0)
     y = _require_positive_y(y)
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
-    sample_weight = np.ones_like(y_test)
+    sample_weight_test = np.ones_like(y_test)
     # Odd number req for neg_median_absolute_error
-    sample_weight[:11] = 0
+    sample_weight_test[:11] = 0
 
     reg = DecisionTreeRegressor(random_state=0)
     reg.fit(X_train, y_train)
 
-    for name, scorer in SCORERS.items():
-        if name not in REGRESSION_SCORERS:
-            # skip classification scorers
-            continue
-        try:
-            weighted = scorer(reg, X_test, y_test,
-                              sample_weight=sample_weight)
-            ignored = scorer(reg, X_test[11:], y_test[11:])
-            unweighted = scorer(reg, X_test, y_test)
-            assert weighted != unweighted, (
-                f"scorer {name} behaves identically when called with "
-                f"sample weights: {weighted} vs {unweighted}")
-            assert_almost_equal(weighted, ignored,
-                                err_msg=f"scorer {name} behaves differently "
-                                f"when ignoring samples and setting "
-                                f"sample_weight to 0: {weighted} vs {ignored}")
+    return reg, X_test, y_test, sample_weight_test
 
-        except TypeError as e:
-            assert "sample_weight" in str(e), (
-                   f"scorer {name} raises unhelpful exception when called "
-                   f"with sample weights: {str(e)}")
+
+@ignore_warnings
+@pytest.mark.parametrize("name, scorer", SCORERS.items())
+def test_regression_scorer_sample_weight(regressor_and_data, name, scorer):
+    # Test that regression scorers support sample_weight or raise sensible
+    # errors
+    reg, X_test, y_test, sample_weight = regressor_and_data
+
+    if name not in REGRESSION_SCORERS:
+        # skip classification scorers
+        return
+    try:
+        weighted = scorer(reg, X_test, y_test, sample_weight=sample_weight)
+        ignored = scorer(reg, X_test[11:], y_test[11:])
+        unweighted = scorer(reg, X_test, y_test)
+        assert weighted != unweighted, (
+            f"scorer {name} behaves identically when called with "
+            f"sample weights: {weighted} vs {unweighted}")
+        assert_almost_equal(weighted, ignored,
+                            err_msg=f"scorer {name} behaves differently "
+                            f"when ignoring samples and setting "
+                            f"sample_weight to 0: {weighted} vs {ignored}")
+
+    except TypeError as e:
+        assert "sample_weight" in str(e), (
+                f"scorer {name} raises unhelpful exception when called "
+                f"with sample weights: {str(e)}")
 
 
 @pytest.mark.parametrize('name', SCORERS)

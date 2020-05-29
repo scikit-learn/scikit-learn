@@ -26,23 +26,15 @@ def _weighted_percentile(array, sample_weight, percentile=50,
     percentile: int, default=50
         Percentile to compute. Must be value between 0 and 100.
 
-    interpolation : {"linear", "lower", "higher", "nearest"}, default="linear"
-        This optional parameter specifies the interpolation method to
-        use when the desired percentile lies between two data points
-        ``i < j``:
-        * 'linear': ``i + (j - i) * fraction``, where ``fraction``
-          is the fractional part of the index surrounded by ``i``
-          and ``j``.
-        * 'lower': ``i``.
-        * 'higher': ``j``.
-        * 'nearest': ``i`` or ``j``, whichever is nearest.
+    interpolation : {"linear", "lower", "higher"}, default="linear"
+        FIXME
 
     Returns
     -------
     percentile_value : int if `array` 1D, ndarray if `array` 2D
         Weighted percentile.
     """
-    possible_interpolation = ("linear", "lower", "higher", "nearest")
+    possible_interpolation = ("linear", "lower", "higher")
     if interpolation not in possible_interpolation:
         raise ValueError(
             f"'interpolation' should be one of "
@@ -71,60 +63,38 @@ def _weighted_percentile(array, sample_weight, percentile=50,
     def _squeeze_arr(arr, n_dim):
         return arr[0] if n_dim == 1 else arr
 
-    if interpolation == "nearest":
-        # compute by nearest-rank method
-        # The rank correspond to P / 100 * N; P in [0, 100]
-        # Here, N is replaced by the sum of the weight and P will be adjusted
-        # by the weights
-        adjusted_percentile = percentile * weight_cdf[-1]
-        percentile_value_idx = np.array([
-            np.searchsorted(weight_cdf[:, i], adjusted_percentile[i])
-            for i in range(weight_cdf.shape[1])
+    adjusted_percentile = (weight_cdf - sorted_weights)
+    with np.errstate(invalid="ignore"):
+        adjusted_percentile /= ((weight_cdf[-1] * (n_rows - 1)) / (n_rows))
+
+    if interpolation in ("lower", "higher"):
+        percentile_idx = np.array([
+            np.searchsorted(adjusted_percentile[:, col], percentile[col],
+                            side="left")
+            for col in range(n_cols)
         ])
 
-        percentile_value_idx = np.apply_along_axis(
+        if interpolation == "lower" and np.all(percentile < 1):
+            # P = 100 is a corner case for "lower"
+            percentile_idx -= 1
+
+        percentile_idx = np.apply_along_axis(
             lambda x: np.clip(x, 0, n_rows - 1), axis=0,
-            arr=percentile_value_idx
+            arr=percentile_idx
         )
         percentile_value = array[
-            sorted_idx[percentile_value_idx, np.arange(n_cols)],
+            sorted_idx[percentile_idx, np.arange(n_cols)],
             np.arange(n_cols)
         ]
         return _squeeze_arr(percentile_value, n_dim)
 
-    elif interpolation in ("linear", "lower", "higher"):
-        # compute by linear interpolation between closest ranks method
-        # NumPy uses the variant p = (x - 1) / (N - 1); x in [1, N]
-        # Here, N is replaced by the sum of the weights and (1) is taking into
-        # account the weights.
-        adjusted_percentile = (weight_cdf - sorted_weights)
-        with np.errstate(invalid="ignore"):
-            adjusted_percentile /= ((weight_cdf[-1] * (n_rows - 1)) / (n_rows))
-
-        if interpolation in ("lower", "higher"):
-            percentile_idx = np.array([
-                np.searchsorted(adjusted_percentile[:, col], percentile[col],
-                                side="left")
-                for col in range(adjusted_percentile.shape[1])
-            ])
-            if interpolation == "lower" and np.all(percentile < 1):
-                # P = 100 is a corner case for "lower"
-                percentile_idx -= 1
-            percentile_idx = np.apply_along_axis(
-                lambda x: np.clip(x, 0, n_rows - 1), axis=0,
-                arr=percentile_idx
-            )
-            percentile = np.nan_to_num([
-                adjusted_percentile[percentile_idx[i], i]
-                for i in range(adjusted_percentile.shape[1])
-            ], nan=percentile)
-
+    else:  # interpolation == "linear"
         percentile_value = np.array([
             np.interp(
                 x=percentile[col],
                 xp=adjusted_percentile[:, col],
                 fp=array[sorted_idx[:, col], col],
             )
-            for col in range(array.shape[1])
+            for col in range(n_cols)
         ])
         return _squeeze_arr(percentile_value, n_dim)

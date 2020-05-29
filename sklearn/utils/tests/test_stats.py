@@ -13,13 +13,11 @@ def test_weighted_percentile():
     y[50] = 1
     sw = np.ones(102, dtype=np.float64)
     sw[-1] = 0.0
-    score = _weighted_percentile(y, sw, 50, interpolation="nearest")
+    score = _weighted_percentile(y, sw, 50, interpolation="lower")
     assert score == pytest.approx(1)
 
 
-@pytest.mark.parametrize(
-    "interpolation", ["linear", "lower", "higher", "nearest"]
-)
+@pytest.mark.parametrize("interpolation", ["linear", "lower", "higher"])
 def test_weighted_percentile_equal(interpolation):
     y = np.empty(102, dtype=np.float64)
     y.fill(0.0)
@@ -29,9 +27,7 @@ def test_weighted_percentile_equal(interpolation):
     assert score == 0
 
 
-@pytest.mark.parametrize(
-    "interpolation", ["linear", "lower", "higher", "nearest"]
-)
+@pytest.mark.parametrize("interpolation", ["linear", "lower", "higher"])
 def test_weighted_percentile_zero_weight(interpolation):
     y = np.empty(102, dtype=np.float64)
     y.fill(1.0)
@@ -41,8 +37,7 @@ def test_weighted_percentile_zero_weight(interpolation):
     assert pytest.approx(score) == 1.0
 
 
-@pytest.mark.parametrize("interpolation", ["linear", "nearest"])
-def test_weighted_median_equal_weights(interpolation):
+def test_weighted_median_equal_weights():
     # Checks weighted percentile=0.5 is same as median when weights equal
     rng = np.random.RandomState(0)
     # Odd size as _weighted_percentile takes lower weighted percentile
@@ -50,12 +45,11 @@ def test_weighted_median_equal_weights(interpolation):
     weights = np.ones(x.shape)
 
     median = np.median(x)
-    w_median = _weighted_percentile(x, weights, interpolation=interpolation)
+    w_median = _weighted_percentile(x, weights)
     assert median == pytest.approx(w_median)
 
 
-@pytest.mark.parametrize("interpolation", ["linear", "nearest"])
-def test_weighted_median_integer_weights(interpolation):
+def test_weighted_median_integer_weights():
     # Checks weighted percentile=0.5 is same as median when manually weight
     # data
     rng = np.random.RandomState(0)
@@ -64,14 +58,12 @@ def test_weighted_median_integer_weights(interpolation):
     x_manual = np.repeat(x, weights)
 
     median = np.median(x_manual)
-    w_median = _weighted_percentile(x, weights, interpolation=interpolation)
+    w_median = _weighted_percentile(x, weights)
 
     assert median == pytest.approx(w_median)
 
 
-@pytest.mark.parametrize(
-    "interpolation", ["linear", "lower", "higher", "nearest"]
-)
+@pytest.mark.parametrize("interpolation", ["linear", "lower", "higher"])
 def test_weighted_percentile_2d(interpolation):
     # Check for when array 2D and sample_weight 1D
     rng = np.random.RandomState(0)
