@@ -16,22 +16,31 @@ def _weighted_percentile(array, sample_weight, percentile=50,
 
     Parameters
     ----------
-    array : 1D or 2D array
+    array : ndarray of shape (n,) or (n, m)
         Values to take the weighted percentile of.
 
-    sample_weight: 1D or 2D array
+    sample_weight: ndarray of (n,) or (n, m)
         Weights for each value in `array`. Must be same shape as `array` or
         of shape `(array.shape[0],)`.
 
-    percentile: int, default=50
+    percentile: inr or float, default=50
         Percentile to compute. Must be value between 0 and 100.
 
     interpolation : {"linear", "lower", "higher"}, default="linear"
-        FIXME
+        The interpolation method to use when the percentile lies between
+        data points `i` and `j`:
+
+        * `"linear"`: `i + (j - i) * fraction`, where `fraction` is the
+          fractional part of the index surrounded by `i` and `j`;
+        * `"lower"`: i`;
+        * `"higher"`: `j`.
+
+        .. versionadded: 0.24
 
     Returns
     -------
-    percentile_value : int if `array` 1D, ndarray if `array` 2D
+    percentile_value : float or int if `array` of shape (n,), otherwise\
+            ndarray of shape (m,)
         Weighted percentile.
     """
     possible_interpolation = ("linear", "lower", "higher")
