@@ -129,7 +129,7 @@ categorical features, otherwise it will assume all features are numerical. If
 the data is a `pandas.DataFrame`, you can use
 :func:`~sklearn.compose.make_column_selector` to select features::
 
-    >>> import pandas as pd # doctest: +ELLIPSIS
+    >>> import pandas as pd
     >>> from sklearn.compose import make_column_selector as selector
     >>> from sklearn.metrics.pairwise import gower_distances
     >>> X = pd.DataFrame(
@@ -144,7 +144,7 @@ the data is a `pandas.DataFrame`, you can use
 
 .. topic:: References:
 
-    * Gower, J.C., 1971, A General Coefficient of Similarity and Some of Its 
+    * Gower, J.C., 1971, A General Coefficient of Similarity and Some of Its
       Properties, Biometrics, Vol. 27, No. 4. (Dec., 1971), pp. 857-871.
       http://members.cbio.mines-paristech.fr/~jvert/svn/bibli/local/Gower1971general.pdf
 
@@ -220,14 +220,14 @@ the kernel is known as the Gaussian kernel of variance :math:`\sigma^2`.
 
 Laplacian kernel
 ----------------
-The function :func:`laplacian_kernel` is a variant on the radial basis 
+The function :func:`laplacian_kernel` is a variant on the radial basis
 function kernel defined as:
 
 .. math::
 
     k(x, y) = \exp( -\gamma \| x-y \|_1)
 
-where ``x`` and ``y`` are the input vectors and :math:`\|x-y\|_1` is the 
+where ``x`` and ``y`` are the input vectors and :math:`\|x-y\|_1` is the
 Manhattan distance between the input vectors.
 
 It has proven useful in ML applied to noiseless data.
