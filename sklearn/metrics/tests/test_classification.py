@@ -307,19 +307,6 @@ def test_precision_recall_f_ignored_labels():
                     recall_all(average=average))
 
 
-def test_average_precision_score_score_non_binary_class():
-    # Test that average_precision_score function returns an error when trying
-    # to compute average_precision_score for multiclass task.
-    rng = check_random_state(404)
-    y_pred = rng.rand(10)
-
-    # y_true contains three different class values
-    y_true = rng.randint(0, 3, size=10)
-    err_msg = "multiclass format is not supported"
-    with pytest.raises(ValueError, match=err_msg):
-        average_precision_score(y_true, y_pred)
-
-
 def test_average_precision_score_duplicate_values():
     # Duplicate values with precision-recall require a different
     # processing than when computing the AUC of a ROC, because the

@@ -893,9 +893,9 @@ def test_average_precision_score_pos_label_errors():
     # pos_label other than 1
     y_true = np.array([[1, 0], [0, 1], [0, 1], [1, 0]])
     y_pred = np.array([[0.9, 0.1], [0.1, 0.9], [0.8, 0.2], [0.2, 0.8]])
-    error_message = ("Parameter pos_label is fixed to 1 for multilabel"
-                     "-indicator y_true. Do not set pos_label or set "
-                     "pos_label to 1.")
+    error_message = ("Parameter pos_label is fixed to 1 for multiclass or "
+                     "multilabel-indicator y_true. Do not set pos_label or "
+                     "set pos_label to 1.")
     with pytest.raises(ValueError, match=error_message):
         average_precision_score(y_true, y_pred, pos_label=0)
 
