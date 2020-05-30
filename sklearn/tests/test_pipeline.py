@@ -13,13 +13,13 @@ import numpy as np
 from scipy import sparse
 import joblib
 
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_raises_regex
-from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_allclose
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_no_warnings
+from sklearn.utils._testing import assert_raises
+from sklearn.utils._testing import assert_raises_regex
+from sklearn.utils._testing import assert_raise_message
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_no_warnings
 
 from sklearn.base import clone, BaseEstimator, TransformerMixin
 from sklearn.pipeline import Pipeline, FeatureUnion, make_pipeline, make_union
@@ -34,6 +34,8 @@ from sklearn.decomposition import PCA, TruncatedSVD
 from sklearn.datasets import load_iris
 from sklearn.preprocessing import StandardScaler
 from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.experimental import enable_hist_gradient_boosting  # noqa
+from sklearn.ensemble import HistGradientBoostingClassifier
 
 iris = load_iris()
 
@@ -898,8 +900,7 @@ def test_set_feature_union_steps():
     assert ['mock__x5'] == ft.get_feature_names()
 
 
-@pytest.mark.parametrize('drop', ['drop', None])
-def test_set_feature_union_step_drop(drop):
+def test_set_feature_union_step_drop():
     mult2 = Mult(2)
     mult2.get_feature_names = lambda: ['x2']
     mult3 = Mult(3)
@@ -911,25 +912,33 @@ def test_set_feature_union_step_drop(drop):
     assert_array_equal([[2, 3]], ft.fit_transform(X))
     assert ['m2__x2', 'm3__x3'] == ft.get_feature_names()
 
-    ft.set_params(m2=drop)
-    assert_array_equal([[3]], ft.fit(X).transform(X))
-    assert_array_equal([[3]], ft.fit_transform(X))
+    with pytest.warns(None) as record:
+        ft.set_params(m2='drop')
+        assert_array_equal([[3]], ft.fit(X).transform(X))
+        assert_array_equal([[3]], ft.fit_transform(X))
     assert ['m3__x3'] == ft.get_feature_names()
+    assert not record
 
-    ft.set_params(m3=drop)
-    assert_array_equal([[]], ft.fit(X).transform(X))
-    assert_array_equal([[]], ft.fit_transform(X))
+    with pytest.warns(None) as record:
+        ft.set_params(m3='drop')
+        assert_array_equal([[]], ft.fit(X).transform(X))
+        assert_array_equal([[]], ft.fit_transform(X))
     assert [] == ft.get_feature_names()
+    assert not record
 
-    # check we can change back
-    ft.set_params(m3=mult3)
-    assert_array_equal([[3]], ft.fit(X).transform(X))
+    with pytest.warns(None) as record:
+        # check we can change back
+        ft.set_params(m3=mult3)
+        assert_array_equal([[3]], ft.fit(X).transform(X))
+    assert not record
 
-    # Check 'drop' step at construction time
-    ft = FeatureUnion([('m2', drop), ('m3', mult3)])
-    assert_array_equal([[3]], ft.fit(X).transform(X))
-    assert_array_equal([[3]], ft.fit_transform(X))
+    with pytest.warns(None) as record:
+        # Check 'drop' step at construction time
+        ft = FeatureUnion([('m2', 'drop'), ('m3', mult3)])
+        assert_array_equal([[3]], ft.fit(X).transform(X))
+        assert_array_equal([[3]], ft.fit_transform(X))
     assert ['m3__x3'] == ft.get_feature_names()
+    assert not record
 
 
 def test_step_name_validation():
@@ -1127,7 +1136,7 @@ parameter_grid_test_verbose = ((est, pattern, method) for
      (FeatureUnion([('mult1', Mult()), ('mult2', Mult())]),
       r'\[FeatureUnion\].*\(step 1 of 2\) Processing mult1.* total=.*\n'
       r'\[FeatureUnion\].*\(step 2 of 2\) Processing mult2.* total=.*\n$'),
-     (FeatureUnion([('mult1', None), ('mult2', Mult()), ('mult3', None)]),
+     (FeatureUnion([('mult1', 'drop'), ('mult2', Mult()), ('mult3', 'drop')]),
       r'\[FeatureUnion\].*\(step 1 of 1\) Processing mult2.* total=.*\n$')
     ], ['fit', 'fit_transform', 'fit_predict'])
     if hasattr(est, method) and not (
@@ -1150,6 +1159,49 @@ def test_verbose(est, method, pattern, capsys):
     est.set_params(verbose=True)
     func(X, y)
     assert re.match(pattern, capsys.readouterr().out)
+
+
+def test_n_features_in_pipeline():
+    # make sure pipelines delegate n_features_in to the first step
+
+    X = [[1, 2], [3, 4], [5, 6]]
+    y = [0, 1, 2]
+
+    ss = StandardScaler()
+    gbdt = HistGradientBoostingClassifier()
+    pipe = make_pipeline(ss, gbdt)
+    assert not hasattr(pipe, 'n_features_in_')
+    pipe.fit(X, y)
+    assert pipe.n_features_in_ == ss.n_features_in_ == 2
+
+    # if the first step has the n_features_in attribute then the pipeline also
+    # has it, even though it isn't fitted.
+    ss = StandardScaler()
+    gbdt = HistGradientBoostingClassifier()
+    pipe = make_pipeline(ss, gbdt)
+    ss.fit(X, y)
+    assert pipe.n_features_in_ == ss.n_features_in_ == 2
+    assert not hasattr(gbdt, 'n_features_in_')
+
+
+def test_n_features_in_feature_union():
+    # make sure FeatureUnion delegates n_features_in to the first transformer
+
+    X = [[1, 2], [3, 4], [5, 6]]
+    y = [0, 1, 2]
+
+    ss = StandardScaler()
+    fu = make_union(ss)
+    assert not hasattr(fu, 'n_features_in_')
+    fu.fit(X, y)
+    assert fu.n_features_in_ == ss.n_features_in_ == 2
+
+    # if the first step has the n_features_in attribute then the feature_union
+    # also has it, even though it isn't fitted.
+    ss = StandardScaler()
+    fu = make_union(ss)
+    ss.fit(X, y)
+    assert fu.n_features_in_ == ss.n_features_in_ == 2
 
 
 def test_feature_union_fit_params():

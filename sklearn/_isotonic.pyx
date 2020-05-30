@@ -11,6 +11,8 @@ cimport numpy as np
 cimport cython
 from cython cimport floating
 
+np.import_array()
+
 
 def _inplace_contiguous_isotonic_regression(floating[::1] y, floating[::1] w):
     cdef:

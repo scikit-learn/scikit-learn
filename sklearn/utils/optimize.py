@@ -18,7 +18,6 @@ import warnings
 from scipy.optimize.linesearch import line_search_wolfe2, line_search_wolfe1
 
 from ..exceptions import ConvergenceWarning
-from . import deprecated
 
 
 class _LineSearchError(RuntimeError):
@@ -112,14 +111,6 @@ def _cg(fhess_p, fgrad, maxiter, tol):
     return xsupi
 
 
-@deprecated("newton_cg is deprecated in version "
-            "0.22 and will be removed in version 0.24.")
-def newton_cg(grad_hess, func, grad, x0, args=(), tol=1e-4,
-              maxiter=100, maxinner=200, line_search=True, warn=True):
-    return _newton_cg(grad_hess, func, grad, x0, args, tol, maxiter,
-                      maxinner, line_search, warn)
-
-
 def _newton_cg(grad_hess, func, grad, x0, args=(), tol=1e-4,
                maxiter=100, maxinner=200, line_search=True, warn=True):
     """
@@ -182,7 +173,7 @@ def _newton_cg(grad_hess, func, grad, x0, args=(), tol=1e-4,
         fgrad, fhess_p = grad_hess(xk, *args)
 
         absgrad = np.abs(fgrad)
-        if np.max(absgrad) < tol:
+        if np.max(absgrad) <= tol:
             break
 
         maggrad = np.sum(absgrad)
@@ -213,7 +204,8 @@ def _newton_cg(grad_hess, func, grad, x0, args=(), tol=1e-4,
     return xk, k
 
 
-def _check_optimize_result(solver, result, max_iter=None):
+def _check_optimize_result(solver, result, max_iter=None,
+                           extra_warning_msg=None):
     """Check the OptimizeResult for successful convergence
 
     Parameters
@@ -233,10 +225,16 @@ def _check_optimize_result(solver, result, max_iter=None):
     # handle both scipy and scikit-learn solver names
     if solver == "lbfgs":
         if result.status != 0:
-            warnings.warn("{} failed to converge (status={}): {}. "
-                          "Increase the number of iterations."
-                          .format(solver, result.status, result.message),
-                          ConvergenceWarning, stacklevel=2)
+            warning_msg = (
+                "{} failed to converge (status={}):\n{}.\n\n"
+                "Increase the number of iterations (max_iter) "
+                "or scale the data as shown in:\n"
+                "    https://scikit-learn.org/stable/modules/"
+                "preprocessing.html"
+            ).format(solver, result.status, result.message.decode("latin1"))
+            if extra_warning_msg is not None:
+                warning_msg += "\n" + extra_warning_msg
+            warnings.warn(warning_msg, ConvergenceWarning, stacklevel=2)
         if max_iter is not None:
             # In scipy <= 1.0.0, nit may exceed maxiter for lbfgs.
             # See https://github.com/scipy/scipy/issues/7854

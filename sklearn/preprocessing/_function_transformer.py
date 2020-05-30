@@ -1,8 +1,8 @@
 import warnings
 
 from ..base import BaseEstimator, TransformerMixin
-from ..utils import check_array
 from ..utils.validation import _allclose_dense_sparse
+from ..utils.validation import _deprecate_positional_args
 
 
 def _identity(X):
@@ -48,7 +48,7 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
           sparse matrix. If the conversion is not possible an exception is
           raised.
 
-        .. deprecated:: 0.22
+        .. versionchanged:: 0.22
            The default of ``validate`` changed from True to False.
 
     accept_sparse : boolean, optional
@@ -66,11 +66,26 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
     kw_args : dict, optional
         Dictionary of additional keyword arguments to pass to func.
 
+        .. versionadded:: 0.18
+
     inv_kw_args : dict, optional
         Dictionary of additional keyword arguments to pass to inverse_func.
 
+        .. versionadded:: 0.18
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.preprocessing import FunctionTransformer
+    >>> transformer = FunctionTransformer(np.log1p)
+    >>> X = np.array([[0, 1], [2, 3]])
+    >>> transformer.transform(X)
+    array([[0.       , 0.6931...],
+           [1.0986..., 1.3862...]])
     """
-    def __init__(self, func=None, inverse_func=None, validate=False,
+
+    @_deprecate_positional_args
+    def __init__(self, func=None, inverse_func=None, *, validate=False,
                  accept_sparse=False, check_inverse=True, kw_args=None,
                  inv_kw_args=None):
         self.func = func
@@ -83,7 +98,7 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
 
     def _check_input(self, X):
         if self.validate:
-            return check_array(X, accept_sparse=self.accept_sparse)
+            return self._validate_data(X, accept_sparse=self.accept_sparse)
         return X
 
     def _check_inverse_transform(self, X):

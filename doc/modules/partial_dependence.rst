@@ -92,22 +92,76 @@ generated. The ``values`` field returned by
 used in the grid for each target feature. They also correspond to the axis
 of the plots.
 
-For each value of the 'target' features in the ``grid`` the partial
-dependence function needs to marginalize the predictions of the estimator
-over all possible values of the 'complement' features. With the ``'brute'``
-method, this is done by replacing every target feature value of ``X`` by those
-in the grid, and computing the average prediction.
+Mathematical Definition
+^^^^^^^^^^^^^^^^^^^^^^^
 
-In decision trees this can be evaluated efficiently without reference to the
-training data (``'recursion'`` method). For each grid point a weighted tree
-traversal is performed: if a split node involves a 'target' feature, the
-corresponding left or right branch is followed, otherwise both branches are
-followed, each branch is weighted by the fraction of training samples that
-entered that branch. Finally, the partial dependence is given by a weighted
-average of all visited leaves. Note that with the ``'recursion'`` method,
-``X`` is only used to generate the grid, not to compute the averaged
-predictions. The averaged predictions will always be computed on the data with
-which the trees were trained.
+Let :math:`X_S` be the set of target features (i.e. the `features` parameter)
+and let :math:`X_C` be its complement.
+
+The partial dependence of the response :math:`f` at a point :math:`x_S` is
+defined as:
+
+.. math::
+
+    pd_{X_S}(x_S) &\overset{def}{=} \mathbb{E}_{X_C}\left[ f(x_S, X_C) \right]\\
+                  &= \int f(x_S, x_C) p(x_C) dx_C,
+
+where :math:`f(x_S, x_C)` is the response function (:term:`predict`,
+:term:`predict_proba` or :term:`decision_function`) for a given sample whose
+values are defined by :math:`x_S` for the features in :math:`X_S`, and by
+:math:`x_C` for the features in :math:`X_C`. Note that :math:`x_S` and
+:math:`x_C` may be tuples.
+
+Computing this integral for various values of :math:`x_S` produces a plot as
+above.
+
+Computation methods
+^^^^^^^^^^^^^^^^^^^
+
+There are two main methods to approximate the integral above, namely the
+'brute' and 'recursion' methods. The `method` parameter controls which method
+to use.
+
+The 'brute' method is a generic method that works with any estimator. It
+approximates the above integral by computing an average over the data `X`:
+
+.. math::
+
+    pd_{X_S}(x_S) \approx \frac{1}{n_\text{samples}} \sum_{i=1}^n f(x_S, x_C^{(i)}),
+
+where :math:`x_C^{(i)}` is the value of the i-th sample for the features in
+:math:`X_C`. For each value of :math:`x_S`, this method requires a full pass
+over the dataset `X` which is computationally intensive.
+
+The 'recursion' method is faster than the 'brute' method, but it is only
+supported by some tree-based estimators. It is computed as follows. For a
+given point :math:`x_S`, a weighted tree traversal is performed: if a split
+node involves a 'target' feature, the corresponding left or right branch is
+followed; otherwise both branches are followed, each branch being weighted
+by the fraction of training samples that entered that branch. Finally, the
+partial dependence is given by a weighted average of all the visited leaves
+values.
+
+With the 'brute' method, the parameter `X` is used both for generating the
+grid of values :math:`x_S` and the complement feature values :math:`x_C`.
+However with the 'recursion' method, `X` is only used for the grid values:
+implicitly, the :math:`x_C` values are those of the training data.
+
+By default, the 'recursion' method is used on tree-based estimators that
+support it, and 'brute' is used for the rest.
+
+.. _pdp_method_differences:
+
+.. note::
+
+    While both methods should be close in general, they might differ in some
+    specific settings. The 'brute' method assumes the existence of the
+    data points :math:`(x_S, x_C^{(i)})`. When the features are correlated,
+    such artificial samples may have a very low probability mass. The 'brute'
+    and 'recursion' methods will likely disagree regarding the value of the
+    partial dependence, because they will treat these unlikely
+    samples differently. Remember, however, that the primary assumption for
+    interpreting PDPs is that the features should be independent.
 
 .. rubric:: Footnotes
 
@@ -121,7 +175,7 @@ which the trees were trained.
 
 .. topic:: References
 
- .. [HTF2009] T. Hastie, R. Tibshirani and J. Friedman, `The Elements of
+    T. Hastie, R. Tibshirani and J. Friedman, `The Elements of
     Statistical Learning <https://web.stanford.edu/~hastie/ElemStatLearn//>`_,
     Second Edition, Section 10.13.2, Springer, 2009.
 

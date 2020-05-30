@@ -1,8 +1,8 @@
 .. _linear_model:
 
-=========================
-Generalized Linear Models
-=========================
+=============
+Linear Models
+=============
 
 .. currentmodule:: sklearn.linear_model
 
@@ -73,8 +73,11 @@ this method has a cost of
 
 .. _ridge_regression:
 
-Ridge Regression
-================
+Ridge regression and classification
+===================================
+
+Regression
+----------
 
 :class:`Ridge` regression addresses some of the problems of
 :ref:`ordinary_least_squares` by imposing a penalty on the size of the
@@ -111,11 +114,39 @@ its ``coef_`` member::
     0.13636...
 
 
+Classification
+--------------
+
+The :class:`Ridge` regressor has a classifier variant:
+:class:`RidgeClassifier`. This classifier first converts binary targets to
+``{-1, 1}`` and then treats the problem as a regression task, optimizing the
+same objective as above. The predicted class corresponds to the sign of the
+regressor's prediction. For multiclass classification, the problem is
+treated as multi-output regression, and the predicted class corresponds to
+the output with the highest value.
+
+It might seem questionable to use a (penalized) Least Squares loss to fit a
+classification model instead of the more traditional logistic or hinge
+losses. However in practice all those models can lead to similar
+cross-validation scores in terms of accuracy or precision/recall, while the
+penalized least squares loss used by the :class:`RidgeClassifier` allows for
+a very different choice of the numerical solvers with distinct computational
+performance profiles.
+
+The :class:`RidgeClassifier` can be significantly faster than e.g.
+:class:`LogisticRegression` with a high number of classes, because it is
+able to compute the projection matrix :math:`(X^T X)^{-1} X^T` only once.
+
+This classifier is sometimes referred to as a `Least Squares Support Vector
+Machines
+<https://en.wikipedia.org/wiki/Least-squares_support-vector_machine>`_ with
+a linear kernel.
+
 .. topic:: Examples:
 
    * :ref:`sphx_glr_auto_examples_linear_model_plot_ridge_path.py`
    * :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`
-
+   * :ref:`sphx_glr_auto_examples_inspection_plot_linear_model_coefficient_interpretation.py`
 
 Ridge Complexity
 ----------------
@@ -201,6 +232,7 @@ computes the coefficients along the full path of possible values.
 
   * :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_and_elasticnet.py`
   * :ref:`sphx_glr_auto_examples_applications_plot_tomography_l1_reconstruction.py`
+  * :ref:`sphx_glr_auto_examples_inspection_plot_linear_model_coefficient_interpretation.py`
 
 
 .. note:: **Feature selection with Lasso**
@@ -525,13 +557,13 @@ orthogonal matching pursuit can approximate the optimum solution vector with a
 fixed number of non-zero elements:
 
 .. math::
-    \underset{\gamma}{\operatorname{arg\,min\,}}  ||y - X\gamma||_2^2 \text{ subject to } ||\gamma||_0 \leq n_{\text{nonzero\_coefs}}
+    \underset{w}{\operatorname{arg\,min\,}}  ||y - Xw||_2^2 \text{ subject to } ||w||_0 \leq n_{\text{nonzero\_coefs}}
 
 Alternatively, orthogonal matching pursuit can target a specific error instead
 of a specific number of non-zero coefficients. This can be expressed as:
 
 .. math::
-    \underset{\gamma}{\operatorname{arg\,min\,}} ||\gamma||_0 \text{ subject to } ||y-X\gamma||_2^2 \leq \text{tol}
+    \underset{w}{\operatorname{arg\,min\,}} ||w||_0 \text{ subject to } ||y-Xw||_2^2 \leq \text{tol}
 
 
 OMP is based on a greedy algorithm that includes at each step the atom most
@@ -566,11 +598,11 @@ not set in a hard sense but tuned to the data at hand.
 This can be done by introducing `uninformative priors
 <https://en.wikipedia.org/wiki/Non-informative_prior#Uninformative_priors>`__
 over the hyper parameters of the model.
-The :math:`\ell_{2}` regularization used in `Ridge Regression`_ is equivalent
-to finding a maximum a posteriori estimation under a Gaussian prior over the
-coefficients :math:`w` with precision :math:`\lambda^{-1}`.  Instead of setting
-`\lambda` manually, it is possible to treat it as a random variable to be
-estimated from the data.
+The :math:`\ell_{2}` regularization used in :ref:`ridge_regression` is
+equivalent to finding a maximum a posteriori estimation under a Gaussian prior
+over the coefficients :math:`w` with precision :math:`\lambda^{-1}`.
+Instead of setting `\lambda` manually, it is possible to treat it as a random
+variable to be estimated from the data.
 
 To obtain a fully probabilistic model, the output :math:`y` is assumed
 to be Gaussian distributed around :math:`X w`:
@@ -875,7 +907,7 @@ with 'log' loss, which might be even faster but requires more tuning.
     It is possible to obtain the p-values and confidence intervals for
     coefficients in cases of regression without penalization. The `statsmodels
     package <https://pypi.org/project/statsmodels/>` natively supports this.
-    Within sklearn, one could use bootstrapping instead as well.  
+    Within sklearn, one could use bootstrapping instead as well.
 
 
 :class:`LogisticRegressionCV` implements Logistic Regression with built-in
@@ -897,6 +929,149 @@ to warm-starting (see :term:`Glossary <warm_start>`).
     .. [9] `"Performance Evaluation of Lbfgs vs other solvers"
             <http://www.fuzihao.org/blog/2016/01/16/Comparison-of-Gradient-Descent-Stochastic-Gradient-Descent-and-L-BFGS/>`_
 
+.. _Generalized_linear_regression:
+
+Generalized Linear Regression
+=============================
+
+Generalized Linear Models (GLM) extend linear models in two ways
+[10]_. First, the predicted values :math:`\hat{y}` are linked to a linear
+combination of the input variables :math:`X` via an inverse link function
+:math:`h` as
+
+.. math::    \hat{y}(w, X) = h(Xw).
+
+Secondly, the squared loss function is replaced by the unit deviance
+:math:`d` of a distribution in the exponential family (or more precisely, a
+reproductive exponential dispersion model (EDM) [11]_).
+
+The minimization problem becomes:
+
+.. math::    \min_{w} \frac{1}{2 n_{\text{samples}}} \sum_i d(y_i, \hat{y}_i) + \frac{\alpha}{2} ||w||_2,
+
+where :math:`\alpha` is the L2 regularization penalty. When sample weights are
+provided, the average becomes a weighted average.
+
+The following table lists some specific EDMs and their unit deviance (all of
+these are instances of the Tweedie family):
+
+================= ===============================  ============================================
+Distribution       Target Domain                    Unit Deviance :math:`d(y, \hat{y})`
+================= ===============================  ============================================
+Normal            :math:`y \in (-\infty, \infty)`  :math:`(y-\hat{y})^2`
+Poisson           :math:`y \in [0, \infty)`        :math:`2(y\log\frac{y}{\hat{y}}-y+\hat{y})`
+Gamma             :math:`y \in (0, \infty)`        :math:`2(\log\frac{\hat{y}}{y}+\frac{y}{\hat{y}}-1)`
+Inverse Gaussian  :math:`y \in (0, \infty)`        :math:`\frac{(y-\hat{y})^2}{y\hat{y}^2}`
+================= ===============================  ============================================
+
+The Probability Density Functions (PDF) of these distributions are illustrated
+in the following figure,
+
+.. figure:: ./glm_data/poisson_gamma_tweedie_distributions.png
+   :align: center
+   :scale: 100%
+
+   PDF of a random variable Y following Poisson, Tweedie (power=1.5) and Gamma
+   distributions with different mean values (:math:`\mu`). Observe the point
+   mass at :math:`Y=0` for the Poisson distribution and the Tweedie (power=1.5)
+   distribution, but not for the Gamma distribution which has a strictly
+   positive target domain.
+
+The choice of the distribution depends on the problem at hand:
+
+* If the target values :math:`y` are counts (non-negative integer valued) or
+  relative frequencies (non-negative), you might use a Poisson deviance
+  with log-link.
+* If the target values are positive valued and skewed, you might try a
+  Gamma deviance with log-link.
+* If the target values seem to be heavier tailed than a Gamma distribution,
+  you might try an Inverse Gaussian deviance (or even higher variance powers
+  of the Tweedie family).
+
+
+Examples of use cases include:
+
+* Agriculture / weather modeling:  number of rain events per year (Poisson),
+  amount of rainfall per event (Gamma), total rainfall per year (Tweedie /
+  Compound Poisson Gamma).
+* Risk modeling / insurance policy pricing:  number of claim events /
+  policyholder per year (Poisson), cost per event (Gamma), total cost per
+  policyholder per year (Tweedie / Compound Poisson Gamma).
+* Predictive maintenance: number of production interruption events per year
+  (Poisson), duration of interruption (Gamma), total interruption time per year
+  (Tweedie / Compound Poisson Gamma).
+
+
+.. topic:: References:
+
+    .. [10] McCullagh, Peter; Nelder, John (1989). Generalized Linear Models,
+       Second Edition. Boca Raton: Chapman and Hall/CRC. ISBN 0-412-31760-5.
+
+    .. [11] Jørgensen, B. (1992). The theory of exponential dispersion models
+       and analysis of deviance. Monografias de matemática, no. 51.  See also
+       `Exponential dispersion model.
+       <https://en.wikipedia.org/wiki/Exponential_dispersion_model>`_
+
+Usage
+-----
+
+:class:`TweedieRegressor` implements a generalized linear model for the
+Tweedie distribution, that allows to model any of the above mentioned
+distributions using the appropriate ``power`` parameter. In particular:
+
+- ``power = 0``: Normal distribution. Specific estimators such as
+  :class:`Ridge`, :class:`ElasticNet` are generally more appropriate in
+  this case.
+- ``power = 1``: Poisson distribution. :class:`PoissonRegressor` is exposed
+  for convenience. However, it is strictly equivalent to
+  `TweedieRegressor(power=1, link='log')`.
+- ``power = 2``: Gamma distribution. :class:`GammaRegressor` is exposed for
+  convenience. However, it is strictly equivalent to
+  `TweedieRegressor(power=2, link='log')`.
+- ``power = 3``: Inverse Gaussian distribution.
+
+The link function is determined by the `link` parameter.
+
+Usage example::
+
+    >>> from sklearn.linear_model import TweedieRegressor
+    >>> reg = TweedieRegressor(power=1, alpha=0.5, link='log')
+    >>> reg.fit([[0, 0], [0, 1], [2, 2]], [0, 1, 2])
+    TweedieRegressor(alpha=0.5, link='log', power=1)
+    >>> reg.coef_
+    array([0.2463..., 0.4337...])
+    >>> reg.intercept_
+    -0.7638...
+
+
+.. topic:: Examples:
+
+  * :ref:`sphx_glr_auto_examples_linear_model_plot_poisson_regression_non_normal_loss.py`
+  * :ref:`sphx_glr_auto_examples_linear_model_plot_tweedie_regression_insurance_claims.py`
+
+Practical considerations
+------------------------
+
+The feature matrix `X` should be standardized before fitting. This ensures
+that the penalty treats features equally.
+
+Since the linear predictor :math:`Xw` can be negative and Poisson,
+Gamma and Inverse Gaussian distributions don't support negative values, it
+is necessary to apply an inverse link function that guarantees the
+non-negativeness. For example with `link='log'`, the inverse link function
+becomes :math:`h(Xw)=\exp(Xw)`.
+
+If you want to model a relative frequency, i.e. counts per exposure (time,
+volume, ...) you can do so by using a Poisson distribution and passing
+:math:`y=\frac{\mathrm{counts}}{\mathrm{exposure}}` as target values
+together with :math:`\mathrm{exposure}` as sample weights. For a concrete
+example see e.g.
+:ref:`sphx_glr_auto_examples_linear_model_plot_tweedie_regression_insurance_claims.py`.
+
+When performing cross-validation for the `power` parameter of
+`TweedieRegressor`, it is advisable to specify an explicit `scoring` function,
+because the default scorer :meth:`TweedieRegressor.score` is a function of
+`power` itself.
 
 Stochastic Gradient Descent - SGD
 =================================
