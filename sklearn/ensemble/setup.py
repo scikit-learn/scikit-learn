@@ -41,6 +41,11 @@ def configuration(parent_package="", top_path=None):
                          sources=["_hist_gradient_boosting/_bitset.pyx"],
                          include_dirs=[numpy.get_include()])
 
+    config.add_extension(
+        "_hist_gradient_boosting._predictor_bitset",
+        sources=["_hist_gradient_boosting/_predictor_bitset.pyx"],
+        include_dirs=[numpy.get_include()])
+
     config.add_extension("_hist_gradient_boosting.common",
                          sources=["_hist_gradient_boosting/common.pyx"],
                          include_dirs=[numpy.get_include()])

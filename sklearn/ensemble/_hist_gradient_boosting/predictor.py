@@ -19,8 +19,9 @@ class TreePredictor:
     nodes : ndarray of PREDICTOR_RECORD_DTYPE
         The nodes of the tree.
     """
-    def __init__(self, nodes):
+    def __init__(self, nodes, predictor_bitset):
         self.nodes = nodes
+        self.predictor_bitset = predictor_bitset
 
     def get_n_leaf_nodes(self):
         """Return number of leaves."""
@@ -73,7 +74,9 @@ class TreePredictor:
             The raw predicted values.
         """
         out = np.empty(X.shape[0], dtype=Y_DTYPE)
-        _predict_from_binned_data(self.nodes, X, missing_values_bin_idx, out)
+        _predict_from_binned_data(self.nodes,
+                                  self.predictor_bitset,
+                                  X, missing_values_bin_idx, out)
         return out
 
     def compute_partial_dependence(self, grid, target_features, out):

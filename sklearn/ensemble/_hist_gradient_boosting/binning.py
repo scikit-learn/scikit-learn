@@ -12,11 +12,11 @@ import numpy as np
 from ...utils import check_random_state, check_array
 from ...base import BaseEstimator, TransformerMixin
 from ...utils.validation import check_is_fitted
-from ._binning import _map_num_to_bins, _map_cat_to_bins
+from ._binning import _map_to_bins
 from .common import X_DTYPE, X_BINNED_DTYPE, ALMOST_INF
 
 
-def _find_binning_thresholds(data, max_bins, is_categorical=None):
+def _find_binning_threshold(col_data, max_bins):
     """Extract feature-wise quantiles from numerical data.
 
     Missing values are ignored for finding the thresholds.
@@ -30,56 +30,40 @@ def _find_binning_thresholds(data, max_bins, is_categorical=None):
         given feature the number of unique values is less than ``max_bins``,
         then those unique values will be used to compute the bin thresholds,
         instead of the quantiles
-    is_categorical : ndarray of bool or None
-        Indicates categorical features
 
     Return
     ------
-    binning_thresholds: list of {arrays, None}
-        For each feature, stores the increasing numeric values that can
-        be used to separate the bins. Thus ``len(binning_thresholds) ==
-        n_features``. For categorical features, ``None`` is used as a
-        placeholder in ``binning_thresholds``.
+    binning_thresholds: ndarray
+        The increasing numeric values that can be used to separate the bins.
     """
-    binning_thresholds = []
-    for f_idx in range(data.shape[1]):
-        # categorical feature
-        if is_categorical is not None and is_categorical[f_idx]:
-            binning_thresholds.append(None)
-            continue
+    # ignore missing values when computing bin thresholds
+    missing_mask = np.isnan(col_data)
+    if missing_mask.any():
+        col_data = col_data[~missing_mask]
+    col_data = np.ascontiguousarray(col_data, dtype=X_DTYPE)
+    distinct_values = np.unique(col_data)
+    if len(distinct_values) <= max_bins:
+        midpoints = distinct_values[:-1] + distinct_values[1:]
+        midpoints *= .5
+    else:
+        # We sort again the data in this case. We could compute
+        # approximate midpoint percentiles using the output of
+        # np.unique(col_data, return_counts) instead but this is more
+        # work and the performance benefit will be limited because we
+        # work on a fixed-size subsample of the full data.
+        percentiles = np.linspace(0, 100, num=max_bins + 1)
+        percentiles = percentiles[1:-1]
+        midpoints = np.percentile(col_data, percentiles,
+                                  interpolation='midpoint').astype(X_DTYPE)
+        assert midpoints.shape[0] == max_bins - 1
 
-        col_data = data[:, f_idx]
-        # ignore missing values when computing bin thresholds
-        missing_mask = np.isnan(col_data)
-        if missing_mask.any():
-            col_data = col_data[~missing_mask]
-        col_data = np.ascontiguousarray(col_data, dtype=X_DTYPE)
-        distinct_values = np.unique(col_data)
-        if len(distinct_values) <= max_bins:
-            midpoints = distinct_values[:-1] + distinct_values[1:]
-            midpoints *= .5
-        else:
-            # We sort again the data in this case. We could compute
-            # approximate midpoint percentiles using the output of
-            # np.unique(col_data, return_counts) instead but this is more
-            # work and the performance benefit will be limited because we
-            # work on a fixed-size subsample of the full data.
-            percentiles = np.linspace(0, 100, num=max_bins + 1)
-            percentiles = percentiles[1:-1]
-            midpoints = np.percentile(col_data, percentiles,
-                                      interpolation='midpoint').astype(X_DTYPE)
-            assert midpoints.shape[0] == max_bins - 1
-
-        # We avoid having +inf thresholds: +inf thresholds are only allowed in
-        # a "split on nan" situation.
-        np.clip(midpoints, a_min=None, a_max=ALMOST_INF, out=midpoints)
-
-        binning_thresholds.append(midpoints)
-
-    return binning_thresholds
+    # We avoid having +inf thresholds: +inf thresholds are only allowed in
+    # a "split on nan" situation.
+    np.clip(midpoints, a_min=None, a_max=ALMOST_INF, out=midpoints)
+    return midpoints
 
 
-def _find_bin_categories(data, max_bins, is_categorical):
+def _find_bin_categories(col_data, max_bins):
     """Extract feature-wise categories from categorical data
 
     Missing values and negative values are ignored. They will be considered
@@ -91,44 +75,30 @@ def _find_bin_categories(data, max_bins, is_categorical):
         The data to bin.
     max_bins: int
         The maximum number of bins to be used for categories.
-    is_categorical : ndarray of bool of shape (n_features,) or None
-        Indicates categorical features.
 
     Return
     ------
-    bin_categories_ : dict of int to arrays
-        For each categorical feature, this gives a map from bin index to
-        categorical value. The size of each array is equal to minimum of
-        `max_bins` and categories' cardinality.
+    bin: ndarray
+        Map from bin index to categorical value. The size of each array is
+        equal to minimum of `max_bins` and categories' cardinality.
     """
-    if is_categorical is None or ~np.any(is_categorical):
-        return {}
+    categories, counts = np.unique(col_data, return_counts=True)
 
-    categorical_indices = np.flatnonzero(is_categorical)
-    bin_categories = {}
+    # sort by highest count
+    sorted_idx = np.argsort(counts)[::-1]
+    categories = categories[sorted_idx]
 
-    for f_idx in categorical_indices:
-        col_data = data[:, f_idx]
+    # nans and negative values will be considered missing
+    missing = np.isnan(categories)
+    negative = categories < 0
+    both = missing | negative
+    if both.any():
+        categories = categories[~both]
 
-        categories, counts = np.unique(col_data, return_counts=True)
-
-        # sort by highest count
-        sorted_idx = np.argsort(counts)[::-1]
-        categories = categories[sorted_idx]
-
-        # nans and negative values will be considered missing
-        missing = np.isnan(categories)
-        negative = categories < 0
-        both = missing | negative
-        if both.any():
-            categories = categories[~both]
-
-        # keep at most max_bins categories
-        # needs to be sorted, because `_map_cat_col_to_bins` will assume
-        # that the categories are sorted
-        bin_categories[f_idx] = np.sort(categories[:max_bins])
-
-    return bin_categories
+    # keep at most max_bins categories
+    # needs to be sorted, because `_map_cat_col_to_bins` will assume
+    # that the categories are sorted
+    return np.sort(categories[:max_bins])
 
 
 class _BinMapper(TransformerMixin, BaseEstimator):
@@ -178,11 +148,9 @@ class _BinMapper(TransformerMixin, BaseEstimator):
         ``max_bins - 1`` thresholds, where ``max_bins = n_bins - 1`` is the
         number of bins used for non-missing values.
         If ``bin_thresholds_`` corresponds to a categorical feature, then
-        ``bin_thresholds_[categorical_index]`` is None.
-    bin_categories_ : dict of int to arrays
-        For each categorical feature, this gives a map from bin index to
-        categorical value. The size of each array is equal to minimum of
-        `max_bins` and categories' cardinality.
+        ``bin_thresholds_[categorical_index]`` gives a map from bin index
+        to the categorical value. The size of each array is equal to minimum
+        of ``max_bins`` and categories' cardinality.
     n_bins_non_missing_ : array of uint32
         For each feature, gives the number of bins actually used for
         non-missing values. For features with a lot of unique values, this is
@@ -231,25 +199,22 @@ class _BinMapper(TransformerMixin, BaseEstimator):
             subset = rng.choice(X.shape[0], self.subsample, replace=False)
             X = X.take(subset, axis=0)
 
-        self.bin_thresholds_ = _find_binning_thresholds(
-            X, max_bins, is_categorical=self.is_categorical)
-
-        self.bin_categories_ = _find_bin_categories(
-            X, max_bins, is_categorical=self.is_categorical)
-
+        bin_thresholds = []
         n_bins_non_missing = []
 
-        for feature_idx in range(X.shape[1]):
-            bin_threshold = self.bin_thresholds_[feature_idx]
-            # when bin_threshold is None then the feature is categorical
-            if bin_threshold is None:
-                # categorical
-                bin_categories = self.bin_categories_[feature_idx]
-                n_bins_non_missing.append(bin_categories.shape[0])
-            else:
-                # numerical
-                n_bins_non_missing.append(bin_threshold.shape[0] + 1)
+        for f_idx in range(X.shape[1]):
+            col_data = X[:, f_idx]
 
+            if (self.is_categorical is not None and
+                    self.is_categorical[f_idx]):
+                bins = _find_bin_categories(col_data, max_bins)
+                n_bins_non_missing.append(bins.shape[0])
+            else:
+                bins = _find_binning_threshold(col_data, max_bins)
+                n_bins_non_missing.append(bins.shape[0] + 1)
+            bin_thresholds.append(bins)
+
+        self.bin_thresholds_ = bin_thresholds
         self.n_bins_non_missing_ = np.array(n_bins_non_missing,
                                             dtype=np.uint32)
         self.missing_values_bin_idx_ = self.n_bins - 1
@@ -280,42 +245,44 @@ class _BinMapper(TransformerMixin, BaseEstimator):
                                         X.shape[1])
             )
 
+        if self.is_categorical is None:
+            is_categorical = np.zeros(X.shape[1], dtype=np.uint8)
+        else:
+            is_categorical = np.asarray(self.is_categorical, dtype=np.uint8)
+
         binned = np.zeros_like(X, dtype=X_BINNED_DTYPE, order='F')
-        _map_num_to_bins(X, self.bin_thresholds_, self.missing_values_bin_idx_,
-                         binned)
-        if self.bin_categories_:
-            _map_cat_to_bins(X, self.bin_categories_,
-                             self.missing_values_bin_idx_, binned)
+        _map_to_bins(X, self.bin_thresholds_, self.missing_values_bin_idx_,
+                     is_categorical, binned)
         return binned
 
-    def transform_categories_only(self, X):
-        """Bin data in X that is categorical. The return is C aligned because
-        ``transform_categories_only`` will only be used in prediction.
+    # def transform_categories_only(self, X):
+    #     """Bin data in X that is categorical. The return is C aligned because
+    #     ``transform_categories_only`` will only be used in prediction.
 
-        Parameters
-        ----------
-        X : ndarray, shape (n_samples, n_features)
-            The data to bin.
+    #     Parameters
+    #     ----------
+    #     X : ndarray, shape (n_samples, n_features)
+    #         The data to bin.
 
-        Returns
-        -------
-        X_binned : array-like, shape (n_samples, n_categorical_features)
-            The binned data (C-aligned)
-        """
-        check_is_fitted(self)
-        if not self.bin_categories_:
-            raise ValueError("transform_categories_only can only be set when "
-                             "there are categorical features in fit")
-        X = check_array(X[:, self.is_categorical], dtype=[X_DTYPE],
-                        force_all_finite=False)
+    #     Returns
+    #     -------
+    #     X_binned : array-like, shape (n_samples, n_categorical_features)
+    #         The binned data (C-aligned)
+    #     """
+    #     check_is_fitted(self)
+    #     if self.is_categorical is None or not np.any(self.is_categorical):
+    #         raise ValueError("transform_categories_only can only be set when "
+    #                          "there are categorical features in fit")
+    #     X = check_array(X[:, self.is_categorical], dtype=[X_DTYPE],
+    #                     force_all_finite=False)
 
-        binned = np.zeros((X.shape[0], len(self.bin_categories_)),
-                          dtype=X_BINNED_DTYPE, order='C')
-        new_bin_categories = {
-            new_idx: self.bin_categories_[orig_idx]
-            for new_idx, orig_idx in enumerate(sorted(self.bin_categories_))
-        }
+    #     binned = np.zeros((X.shape[0], np.sum(self.is_categorical)),
+    #                       dtype=X_BINNED_DTYPE, order='C')
+    #     new_bin_categories = {
+    #         new_idx: self.bin_categories_[orig_idx]
+    #         for new_idx, orig_idx in enumerate(sorted(self.bin_categories_))
+    #     }
 
-        _map_cat_to_bins(X, new_bin_categories,
-                         self.missing_values_bin_idx_, binned)
-        return binned
+    #     _map_cat_to_bins(X, new_bin_categories,
+    #                      self.missing_values_bin_idx_, binned)
+    #     return binned

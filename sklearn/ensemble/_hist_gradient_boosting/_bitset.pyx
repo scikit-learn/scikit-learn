@@ -23,7 +23,7 @@ cdef inline void set_bitset(X_BINNED_DTYPE_C val,
 cdef inline unsigned char in_bitset(X_BINNED_DTYPE_C val,
                                     BITSET_DTYPE_C bitset) nogil:
     cdef:
-        unsigned int i1 = val / 32
+        unsigned int i1 = val // 32
         unsigned int i2 = val % 32
 
     return (bitset[i1] >> i2) & 1

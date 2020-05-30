@@ -19,7 +19,7 @@ from .common import PREDICTOR_RECORD_DTYPE
 from .common import Y_DTYPE
 from .common import MonotonicConstraint
 from ._bitset import set_bitset_py
-
+from ._predictor_bitset import PredictorBitSet
 
 EPS = np.finfo(Y_DTYPE).eps  # to avoid zero division errors
 
@@ -536,12 +536,14 @@ class TreeGrower:
         A TreePredictor object.
         """
         predictor_nodes = np.zeros(self.n_nodes, dtype=PREDICTOR_RECORD_DTYPE)
-        _fill_predictor_node_array(predictor_nodes, self.root,
-                                   bin_thresholds, self.n_bins_non_missing)
-        return TreePredictor(predictor_nodes)
+        predictor_bitset = PredictorBitSet()
+        _fill_predictor_node_array(predictor_nodes, predictor_bitset,
+                                   self.root, bin_thresholds,
+                                   self.n_bins_non_missing)
+        return TreePredictor(predictor_nodes, predictor_bitset)
 
 
-def _fill_predictor_node_array(predictor_nodes, grower_node,
+def _fill_predictor_node_array(predictor_nodes, predictor_bitset, grower_node,
                                bin_thresholds, n_bins_non_missing,
                                next_free_idx=0):
     """Helper used in make_predictor to set the TreePredictor fields."""
@@ -568,14 +570,17 @@ def _fill_predictor_node_array(predictor_nodes, grower_node,
         node['missing_go_to_left'] = split_info.missing_go_to_left
         node['is_categorical'] = split_info.is_categorical
 
-        if split_info.is_categorical:
-            node['cat_bitset'] = split_info.cat_bitset
-        elif split_info.bin_idx == n_bins_non_missing[feature_idx] - 1:
+        if split_info.bin_idx == n_bins_non_missing[feature_idx] - 1:
             # Split is on the last non-missing bin: it's a "split on nans".
             # All nans go to the right, the rest go to the left.
             node['threshold'] = np.inf
         elif bin_thresholds is not None:
-            node['threshold'] = bin_thresholds[feature_idx][bin_idx]
+            bins = bin_thresholds[feature_idx]
+            if not split_info.is_categorical:
+                node['threshold'] = bins[bin_idx]
+            else:
+                predictor_bitset.insert_categories(
+                    next_free_idx, bins, node['cat_bitset'])
 
         next_free_idx += 1
 

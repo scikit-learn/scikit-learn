@@ -18,6 +18,7 @@ from .common import Y_DTYPE
 from .common cimport X_BINNED_DTYPE_C
 from .common cimport node_struct
 from ._bitset cimport in_bitset
+from ._predictor_bitset cimport PredictorBitSet
 
 np.import_array()
 
@@ -75,6 +76,7 @@ cdef inline Y_DTYPE_C _predict_one_from_numeric_data(
 
 def _predict_from_binned_data(
         node_struct [:] nodes,
+        PredictorBitSet predictor_bitset,
         const X_BINNED_DTYPE_C [:, :] binned_data,
         const unsigned char missing_values_bin_idx,
         Y_DTYPE_C [:] out):
@@ -83,12 +85,14 @@ def _predict_from_binned_data(
         int i
 
     for i in prange(binned_data.shape[0], schedule='static', nogil=True):
-        out[i] = _predict_one_from_binned_data(nodes, binned_data, i,
+        out[i] = _predict_one_from_binned_data(nodes, predictor_bitset,
+                                               binned_data, i,
                                                missing_values_bin_idx)
 
 
 cdef inline Y_DTYPE_C _predict_one_from_binned_data(
         node_struct [:] nodes,
+        PredictorBitSet predictor_bitset,
         const X_BINNED_DTYPE_C [:, :] binned_data,
         const int row,
         const unsigned char missing_values_bin_idx) nogil:
@@ -103,8 +107,8 @@ cdef inline Y_DTYPE_C _predict_one_from_binned_data(
             return node.value
 
         if node.is_categorical:
-            if in_bitset(binned_data[row, node.feature_idx],
-                         node.cat_bitset):
+            if predictor_bitset.binned_category_in_bitset(
+                    node.feature_idx, binned_data[row, node.feature_idx])
                 node = nodes[node.left]
             else:
                 node = nodes[node.right]

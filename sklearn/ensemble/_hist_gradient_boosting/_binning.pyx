@@ -19,10 +19,11 @@ from .common cimport X_DTYPE_C, X_BINNED_DTYPE_C
 np.import_array()
 
 
-def _map_num_to_bins(const X_DTYPE_C [:, :] data,
-                     list binning_thresholds,
-                     const unsigned char missing_values_bin_idx,
-                     X_BINNED_DTYPE_C [::1, :] binned):
+def _map_to_bins(const X_DTYPE_C [:, :] data,
+                 list binning_thresholds,
+                 const unsigned char missing_values_bin_idx,
+                 const unsigned char[::1] is_categorical,
+                 X_BINNED_DTYPE_C [::1, :] binned):
     """Bin numerical values to discrete integer-coded levels.
 
     Parameters
@@ -32,6 +33,8 @@ def _map_num_to_bins(const X_DTYPE_C [:, :] data,
     binning_thresholds : list of arrays
         For each feature, stores the increasing numeric values that are
         used to separate the bins.
+    is_categorical : ndarray, shape (n_features,)
+        Indicates categorical features.
     binned : ndarray, shape (n_samples, n_features)
         Output array, must be fortran aligned.
     """
@@ -40,12 +43,14 @@ def _map_num_to_bins(const X_DTYPE_C [:, :] data,
         X_DTYPE_C [:] binning_threshold
 
     for feature_idx in range(data.shape[1]):
-        binning_threshold = binning_thresholds[feature_idx]
-        # binning_threshold is None when the feature is categorical
-        if binning_threshold is not None:
-            _map_num_col_to_bins(data[:, feature_idx],
-                                 binning_threshold,
+        bins = binning_thresholds[feature_idx]
+        if is_categorical[feature_idx]:
+            _map_cat_col_to_bins(data[:, feature_idx], bins,
                                  missing_values_bin_idx,
+                                 binned[:, feature_idx])
+        else:
+            _map_num_col_to_bins(data[:, feature_idx],
+                                 bins, missing_values_bin_idx,
                                  binned[:, feature_idx])
 
 
@@ -74,36 +79,6 @@ cdef void _map_num_col_to_bins(const X_DTYPE_C [:] data,
                 else:
                     left = middle + 1
             binned[i] = left
-
-
-def _map_cat_to_bins(const X_DTYPE_C [:, :] data,
-                     dict bin_categories,
-                     const unsigned char missing_values_bin_idx,
-                     X_BINNED_DTYPE_C [:, :] binned):
-    """Encode categories.
-
-    Missing values and unknown values are mapped to the missing bin.
-
-    Parameters
-    ----------
-    data : ndarray of shape (n_samples, n_features)
-        data to encoded.
-    bin_categories : dict of int to arrays
-        For each categorical feature, this gives a maps categorical indices
-        to the categories corresponding to each bin.
-    missing_values_bin_idx : uint8
-        The index of the bin where missing values are mapped.
-    binned : ndarray, shape (n_samples, n_features)
-        Output array. F-alignment can not be enforced because we bin
-        categories during predition time.
-    """
-    cdef:
-        int feature_idx
-        X_DTYPE_C [:] categories
-
-    for feature_idx, categories in bin_categories.items():
-        _map_cat_col_to_bins(data[:, feature_idx], categories,
-                             missing_values_bin_idx, binned[:, feature_idx])
 
 
 cdef void _map_cat_col_to_bins(const X_DTYPE_C [:] data,
