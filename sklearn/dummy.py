@@ -272,7 +272,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
 
         Returns
         -------
-        P : array-like or list of array-like of shape (n_samples, n_classes)
+        P : ndarray of shape (n_samples, n_classes) or list of ndarray
             Returns the probability of the sample for each class in
             the model, where classes are ordered arithmetically, for each
             output.
@@ -335,7 +335,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
 
         Returns
         -------
-        P : array-like or list of array-like of shape (n_samples, n_classes)
+        P : ndarray of shape (n_samples, n_classes) or list of ndarray
             Returns the log probability of the sample for each class in
             the model, where classes are ordered arithmetically for each
             output.
