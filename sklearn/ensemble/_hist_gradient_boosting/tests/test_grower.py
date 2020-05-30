@@ -5,6 +5,7 @@ from pytest import approx
 from sklearn.ensemble._hist_gradient_boosting.grower import TreeGrower
 from sklearn.ensemble._hist_gradient_boosting.binning import _BinMapper
 from sklearn.ensemble._hist_gradient_boosting.common import X_BINNED_DTYPE
+from sklearn.ensemble._hist_gradient_boosting.common import X_DTYPE
 from sklearn.ensemble._hist_gradient_boosting.common import Y_DTYPE
 from sklearn.ensemble._hist_gradient_boosting.common import G_H_DTYPE
 
@@ -416,13 +417,17 @@ def test_grow_tree_categories():
     grower.grow()
     assert grower.n_nodes == 3
 
-    predictor = grower.make_predictor()
+    bin_thresholds = [np.array([4.0, 10.0], dtype=X_DTYPE)]
+    predictor = grower.make_predictor(bin_thresholds=bin_thresholds)
     root = predictor.nodes[0]
     assert root['count'] == 23
     assert root['depth'] == 0
     assert root['is_categorical']
 
+    raw_categories = predictor.predictor_bitset.get_raw_categories(0)
+    assert set([bin_thresholds[0][0]]) == raw_categories
     # missing values goes left because it has more samples
     # and category 0 goes left -> bitset 1001000 -> 1 + 8 = 9
     expected_cat_bitset = [9] + [0] * 7
-    np.testing.assert_array_equal(root['cat_bitset'], expected_cat_bitset)
+    cat_bitset = predictor.predictor_bitset.get_binned_categories(0)
+    np.testing.assert_array_equal(cat_bitset, expected_cat_bitset)

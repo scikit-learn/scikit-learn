@@ -577,24 +577,24 @@ def _fill_predictor_node_array(predictor_nodes, predictor_bitset, grower_node,
             node['threshold'] = np.inf
         elif bin_thresholds is not None:
             bins = bin_thresholds[feature_idx]
-            if not split_info.is_categorical:
+            if split_info.is_categorical:
+                predictor_bitset.insert_categories_bitset(
+                    next_free_idx, bins, split_info.cat_bitset)
+            else:  # numerical
                 node['threshold'] = bins[bin_idx]
-            else:
-                predictor_bitset.insert_categories(
-                    next_free_idx, bins, node['cat_bitset'])
 
         next_free_idx += 1
 
         node['left'] = next_free_idx
         next_free_idx = _fill_predictor_node_array(
-            predictor_nodes, grower_node.left_child,
+            predictor_nodes, predictor_bitset, grower_node.left_child,
             bin_thresholds=bin_thresholds,
             n_bins_non_missing=n_bins_non_missing,
             next_free_idx=next_free_idx)
 
         node['right'] = next_free_idx
         return _fill_predictor_node_array(
-            predictor_nodes, grower_node.right_child,
+            predictor_nodes, predictor_bitset, grower_node.right_child,
             bin_thresholds=bin_thresholds,
             n_bins_non_missing=n_bins_non_missing,
             next_free_idx=next_free_idx)

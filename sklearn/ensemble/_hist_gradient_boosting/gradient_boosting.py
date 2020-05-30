@@ -633,10 +633,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             X_binned = self.bin_mapper_.fit_transform(X)  # F-aligned array
         else:
             # F-aligned array
-            if categorical_only:
-                X_binned = self.bin_mapper_.transform_categories_only(X)
-            else:
-                X_binned = self.bin_mapper_.transform(X)
+            X_binned = self.bin_mapper_.transform(X)
             # We convert the array to C-contiguous since predicting is faster
             # with this layout (training is faster on F-arrays though)
             X_binned = np.ascontiguousarray(X_binned)
@@ -727,22 +724,6 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
     def _predict_iterations(self, X, predictors, raw_predictions, is_binned):
         """Add the predictions of the predictors to raw_predictions."""
         # bin categorical features when predicting outside of training loop
-        bin_categories = (not is_binned and
-                          self.is_categorical_ is not None)
-        if bin_categories:
-            X_binned_cat = self._bin_data(X, is_training_data=False,
-                                          categorical_only=True)
-
-            # maps from original feature to categorical feature in
-            # X_binned_cat
-            orig_feature_to_binned_cat = np.zeros_like(
-                self.is_categorical_, dtype=int)
-            orig_feature_to_binned_cat[self.is_categorical_] = \
-                np.arange(np.sum(self.is_categorical_))
-        else:
-            X_binned_cat = None
-            orig_feature_to_binned_cat = None
-
         for predictors_of_ith_iteration in predictors:
             for k, predictor in enumerate(predictors_of_ith_iteration):
                 if is_binned:
@@ -751,9 +732,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                         missing_values_bin_idx=self.bin_mapper_.missing_values_bin_idx_  # noqa
                     )
                 else:
-                    predict = partial(
-                        predictor.predict, X_binned_cat=X_binned_cat,
-                        orig_feature_to_binned_cat=orig_feature_to_binned_cat)
+                    predict = predictor.predict
                 raw_predictions[k, :] += predict(X)
 
     def _staged_raw_predict(self, X):

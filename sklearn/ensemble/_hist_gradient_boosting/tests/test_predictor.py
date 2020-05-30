@@ -11,6 +11,8 @@ from sklearn.ensemble._hist_gradient_boosting.predictor import TreePredictor
 from sklearn.ensemble._hist_gradient_boosting.common import (
     G_H_DTYPE, PREDICTOR_RECORD_DTYPE, ALMOST_INF, X_BINNED_DTYPE,
     X_BITSET_INNER_DTYPE, X_DTYPE)
+from sklearn.ensemble._hist_gradient_boosting._predictor_bitset import \
+    PredictorBitSet
 
 
 @pytest.mark.parametrize('n_bins', [200, 256])
@@ -72,34 +74,34 @@ def test_infinite_values_and_thresholds(threshold, expected_predictions):
     nodes[2]['is_leaf'] = True
     nodes[2]['value'] = 1
 
-    predictor = TreePredictor(nodes)
+    predictor = TreePredictor(nodes, PredictorBitSet())
     predictions = predictor.predict(X)
 
     assert np.all(predictions == expected_predictions)
 
 
-def _construct_bitset(thresholds):
+def _construct_bitset(bins_go_left):
     output = np.zeros(8, dtype=X_BITSET_INNER_DTYPE)
 
-    for thres in thresholds:
-        i1 = thres // 32
-        i2 = thres % 32
+    for threshold in bins_go_left:
+        i1 = threshold // 32
+        i2 = threshold % 32
         output[i1] |= X_BITSET_INNER_DTYPE(1) << X_BITSET_INNER_DTYPE(i2)
 
     return output
 
 
-@pytest.mark.parametrize('thresholds, expected_predictions', [
-    ([0, 124, 240],  [1, 0, 0, 1, 1, 0]),
-    ([0, 4, 60],  [1, 1, 1, 0, 0, 0]),
-    ([124, 255],  [0, 0, 0, 1, 0, 1]),
-    ([10, 14],  [0, 0, 0, 0, 0, 0]),
-])
-def test_categorical_predictor(thresholds, expected_predictions):
+@pytest.mark.parametrize(
+    'bins_go_left, expected_predictions', [
+        ([0, 3, 4], [1, 0, 0, 1, 1, 0]),
+        ([0, 1, 2], [1, 1, 1, 0, 0, 0]),
+        ([3, 5], [0, 0, 0, 1, 0, 1])
+    ])
+def test_categorical_predictor(bins_go_left, expected_predictions):
     # Test predictor outputs are correct with categorical features
 
-    cat_bitset = _construct_bitset(thresholds)
-    X_binned = np.array([[0, 4, 60, 124, 240, 255]], dtype=X_BINNED_DTYPE).T
+    X_binned = np.array([[0, 1, 2, 3, 4, 5]], dtype=X_BINNED_DTYPE).T
+    category_bins = np.array([2, 5, 6, 8, 10, 15], dtype=X_DTYPE)
     nodes = np.zeros(3, dtype=PREDICTOR_RECORD_DTYPE)
 
     # We just construct a simple tree with 1 root and 2 children
@@ -108,7 +110,6 @@ def test_categorical_predictor(thresholds, expected_predictions):
     nodes[0]['right'] = 2
     nodes[0]['feature_idx'] = 0
     nodes[0]['is_categorical'] = True
-    nodes[0]['cat_bitset'] = cat_bitset
 
     # left child
     nodes[1]['is_leaf'] = True
@@ -118,17 +119,20 @@ def test_categorical_predictor(thresholds, expected_predictions):
     nodes[2]['is_leaf'] = True
     nodes[2]['value'] = 0
 
-    predictor = TreePredictor(nodes)
-    # missing_values_bin_idx is ignored for categories because it is already
-    # encoded in cat_bitset
-    predictions = predictor.predict_binned(X_binned,
-                                           missing_values_bin_idx=255)
+    cat_bitset = _construct_bitset(bins_go_left)
+    predictor_bitset = PredictorBitSet()
+    predictor_bitset.insert_categories_bitset(0, category_bins, cat_bitset)
+
+    expected_raw_categories = category_bins[bins_go_left]
+    assert (set(expected_raw_categories) ==
+            predictor_bitset.get_raw_categories(0))
+
+    predictor = TreePredictor(nodes, predictor_bitset)
+    prediction_binned = predictor.predict_binned(X_binned,
+                                                 missing_values_bin_idx=6)
+    assert_allclose(prediction_binned, expected_predictions)
+
+    predictions = predictor.predict(category_bins.reshape(-1, 1))
     assert_allclose(predictions, expected_predictions)
 
-    # There is only categorical features thus X = X_binned
-    # maps from original feature to categorical feature in X_binned
-    orig_feature_to_binned_cat = np.array([0], dtype=int)
-    predictions = predictor.predict(
-        X_binned.astype(X_DTYPE), X_binned_cat=X_binned,
-        orig_feature_to_binned_cat=orig_feature_to_binned_cat)
-    assert_allclose(predictions, expected_predictions)
+    assert False

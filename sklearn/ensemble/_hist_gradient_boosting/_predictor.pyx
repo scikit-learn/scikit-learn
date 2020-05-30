@@ -27,8 +27,6 @@ def _predict_from_data(
         node_struct [:] nodes,
         PredictorBitSet predictor_bitset,
         const X_DTYPE_C [:, :] numeric_data,
-        const X_BINNED_DTYPE_C [:, :] categorical_data,
-        const long[:] orig_feature_to_binned_cat,
         Y_DTYPE_C [:] out):
 
     cdef:
@@ -36,23 +34,20 @@ def _predict_from_data(
 
     for i in prange(numeric_data.shape[0], schedule='static', nogil=True):
         out[i] = _predict_one_from_numeric_data(
-            nodes, predictor_bitset, numeric_data, categorical_data,
-            orig_feature_to_binned_cat, i)
+            nodes, predictor_bitset, numeric_data, i)
 
 
 cdef inline Y_DTYPE_C _predict_one_from_numeric_data(
         node_struct [:] nodes,
         PredictorBitSet predictor_bitset,
         const X_DTYPE_C [:, :] numeric_data,
-        const X_BINNED_DTYPE_C [:, :] categorical_data,
-        const long[:] orig_feature_to_binned_cat,
         const int row) nogil:
     # Need to pass the whole array and the row index, else prange won't work.
     # See issue Cython #2798
 
     cdef:
         node_struct node = nodes[0]
-        long cat_idx
+        unsigned int node_idx = 0
 
     while True:
         if node.is_leaf:
@@ -60,20 +55,21 @@ cdef inline Y_DTYPE_C _predict_one_from_numeric_data(
 
         if isnan(numeric_data[row, node.feature_idx]):
             if node.missing_go_to_left:
-                node = nodes[node.left]
+                node_idx = node.left
             else:
-                node = nodes[node.right]
+                node_idx = node.right
         elif node.is_categorical:
             if predictor_bitset.raw_category_in_bitset(
-                    node.feature_idx, numeric_data[row, node.feature_idx]):
-                node = nodes[node.left]
+                    node_idx, numeric_data[row, node.feature_idx]):
+                node_idx = node.left
             else:
-                node = nodes[node.right]
+                node_idx = node.right
         else:
             if numeric_data[row, node.feature_idx] <= node.threshold:
-                node = nodes[node.left]
+                node_idx = node.left
             else:
-                node = nodes[node.right]
+                node_idx = node.right
+        node = nodes[node_idx]
 
 
 def _predict_from_binned_data(
@@ -103,6 +99,7 @@ cdef inline Y_DTYPE_C _predict_one_from_binned_data(
 
     cdef:
         node_struct node = nodes[0]
+        unsigned int node_idx = 0
 
     while True:
         if node.is_leaf:
@@ -110,20 +107,22 @@ cdef inline Y_DTYPE_C _predict_one_from_binned_data(
 
         if binned_data[row, node.feature_idx] ==  missing_values_bin_idx:
             if node.missing_go_to_left:
-                node = nodes[node.left]
+                node_idx = node.left
             else:
-                node = nodes[node.right]
+                node_idx = node.right
         elif node.is_categorical:
             if predictor_bitset.binned_category_in_bitset(
-                    node.feature_idx, binned_data[row, node.feature_idx]):
-                node = nodes[node.left]
+                    node_idx, binned_data[row, node.feature_idx]):
+                node_idx = node.left
             else:
-                node = nodes[node.right]
+                node_idx = node.right
         else:
             if binned_data[row, node.feature_idx] <= node.bin_threshold:
-                node = nodes[node.left]
+                node_idx = node.left
             else:
-                node = nodes[node.right]
+                node_idx = node.right
+        node = nodes[node_idx]
+
 
 def _compute_partial_dependence(
     node_struct [:] nodes,

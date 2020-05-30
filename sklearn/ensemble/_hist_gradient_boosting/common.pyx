@@ -17,7 +17,6 @@ HISTOGRAM_DTYPE = np.dtype([
 ])
 
 PREDICTOR_RECORD_DTYPE = np.dtype([
-    ('cat_bitset', (X_BITSET_INNER_DTYPE, 8)),
     ('value', Y_DTYPE),
     ('count', np.uint32),
     ('feature_idx', np.uint32),
