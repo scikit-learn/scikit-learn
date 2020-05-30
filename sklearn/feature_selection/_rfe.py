@@ -594,11 +594,11 @@ class RFECV(RFE):
         self.cv_results_["std_score"] = np.std(grid_scores, axis=0)
         return self
 
-    @deprecated(
+    @deprecated(  # type: ignore
         "The grid_scores_ attribute is deprecated in version 0.23 in favor "
         "of cv_results_ and will be removed in version 0.25"
     )
-    @property
+    @property  # type: ignore
     def grid_scores_(self):
         # remove 2 for mean_score, std_score
         grid_size = len(self.cv_results_) - 2
