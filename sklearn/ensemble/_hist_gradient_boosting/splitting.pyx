@@ -918,11 +918,6 @@ cdef class Splitter:
             # instead and set below
             split_info.bin_idx = 0
 
-            # missing_go_to_left is unused for categorical splits, during
-            # predit the categories will always be binned and use
-            # cat_bitset
-            split_info.missing_go_to_left = False
-
             split_info.sum_gradient_left = best_sum_gradient_left
             split_info.sum_gradient_right = sum_gradients - best_sum_gradient_left
             split_info.sum_hessian_left = best_sum_hessian_left
@@ -950,6 +945,10 @@ cdef class Splitter:
                 for i in range(best_sorted_thres + 1):
                     bin_idx = cat_sorted_infos[n_used_bin - 1 - i].bin_idx
                     set_bitset(bin_idx, split_info.cat_bitset)
+
+            if has_missing_values:
+                split_info.missing_go_to_left = in_bitset(
+                    missing_values_bin_idx, split_info.cat_bitset)
 
         free(cat_sorted_infos)
 

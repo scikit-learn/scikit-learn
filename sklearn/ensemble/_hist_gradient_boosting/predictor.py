@@ -53,7 +53,8 @@ class TreePredictor:
         """
         out = np.empty(X.shape[0], dtype=Y_DTYPE)
         _predict_from_data(
-            self.nodes, X, X_binned_cat, orig_feature_to_binned_cat, out)
+            self.nodes, self.predictor_bitset,
+            X, X_binned_cat, orig_feature_to_binned_cat, out)
         return out
 
     def predict_binned(self, X, missing_values_bin_idx):

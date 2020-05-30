@@ -30,9 +30,11 @@ cdef class PredictorBitSet:
         self.node_to_binned_bitset[node_idx] = cat_bitset[0]
 
     cdef unsigned char raw_category_in_bitset(self, unsigned int node_idx, floating category) nogil:
-        # assumes that node_idx is valid
+        if self.node_to_raw_bitset.count(node_idx) == 0:
+            return 0
         return self.node_to_raw_bitset[node_idx].count(<int>category)
 
     cdef unsigned char binned_category_in_bitset(self, unsigned int node_idx, X_BINNED_DTYPE_C category) nogil:
-        # assumes that node_idx is valid
+        if self.node_to_binned_bitset.count(node_idx) == 0:
+            return 0
         return in_bitset(category, &self.node_to_binned_bitset[node_idx])

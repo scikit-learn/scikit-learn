@@ -423,11 +423,12 @@ class TreeGrower:
             # If no missing values are encountered at fit time, then samples
             # with missing values during predict() will go to whichever child
             # has the most samples.
-            if not node.split_info.is_categorical:  # numerical
-                node.split_info.missing_go_to_left = (
-                    left_child_node.n_samples > right_child_node.n_samples)
-            elif (node.split_info.n_samples_left >
-                  node.split_info.n_samples_right):
+            node.split_info.missing_go_to_left = (
+                left_child_node.n_samples > right_child_node.n_samples)
+
+            # For binned predictions the bitset
+            if (node.split_info.is_categorical and
+                    node.split_info.missing_go_to_left):
                 set_bitset_py(self.missing_values_bin_idx,
                               node.split_info.cat_bitset)
 

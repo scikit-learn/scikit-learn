@@ -25,6 +25,7 @@ np.import_array()
 
 def _predict_from_data(
         node_struct [:] nodes,
+        PredictorBitSet predictor_bitset,
         const X_DTYPE_C [:, :] numeric_data,
         const X_BINNED_DTYPE_C [:, :] categorical_data,
         const long[:] orig_feature_to_binned_cat,
@@ -35,12 +36,13 @@ def _predict_from_data(
 
     for i in prange(numeric_data.shape[0], schedule='static', nogil=True):
         out[i] = _predict_one_from_numeric_data(
-            nodes, numeric_data, categorical_data,
+            nodes, predictor_bitset, numeric_data, categorical_data,
             orig_feature_to_binned_cat, i)
 
 
 cdef inline Y_DTYPE_C _predict_one_from_numeric_data(
         node_struct [:] nodes,
+        PredictorBitSet predictor_bitset,
         const X_DTYPE_C [:, :] numeric_data,
         const X_BINNED_DTYPE_C [:, :] categorical_data,
         const long[:] orig_feature_to_binned_cat,
@@ -56,14 +58,14 @@ cdef inline Y_DTYPE_C _predict_one_from_numeric_data(
         if node.is_leaf:
             return node.value
 
-        if node.is_categorical:
-            cat_idx = orig_feature_to_binned_cat[node.feature_idx]
-            if in_bitset(categorical_data[row, cat_idx], node.cat_bitset):
+        if isnan(numeric_data[row, node.feature_idx]):
+            if node.missing_go_to_left:
                 node = nodes[node.left]
             else:
                 node = nodes[node.right]
-        elif isnan(numeric_data[row, node.feature_idx]):
-            if node.missing_go_to_left:
+        elif node.is_categorical:
+            if predictor_bitset.raw_category_in_bitset(
+                    node.feature_idx, numeric_data[row, node.feature_idx]):
                 node = nodes[node.left]
             else:
                 node = nodes[node.right]
@@ -106,14 +108,14 @@ cdef inline Y_DTYPE_C _predict_one_from_binned_data(
         if node.is_leaf:
             return node.value
 
-        if node.is_categorical:
-            if predictor_bitset.binned_category_in_bitset(
-                    node.feature_idx, binned_data[row, node.feature_idx])
+        if binned_data[row, node.feature_idx] ==  missing_values_bin_idx:
+            if node.missing_go_to_left:
                 node = nodes[node.left]
             else:
                 node = nodes[node.right]
-        elif binned_data[row, node.feature_idx] ==  missing_values_bin_idx:
-            if node.missing_go_to_left:
+        elif node.is_categorical:
+            if predictor_bitset.binned_category_in_bitset(
+                    node.feature_idx, binned_data[row, node.feature_idx]):
                 node = nodes[node.left]
             else:
                 node = nodes[node.right]
