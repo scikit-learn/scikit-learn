@@ -1840,14 +1840,14 @@ static void solve_nu_svr(
 
 static void solve_svdd_l1(
 	const PREFIX(problem) *prob, const svm_parameter *param,
-	double *alpha, Solver::SolutionInfo* si)
+	double *alpha, Solver::SolutionInfo* si, BlasFunctions *blas_functions)
 {
 	int l = prob->l;
 	int i, j;
 
 	double r_square;
 
-	ONE_CLASS_Q Q = ONE_CLASS_Q(*prob, *param);
+	ONE_CLASS_Q Q = ONE_CLASS_Q(*prob, *param, blas_functions);
 
 	if(param->nu < 1) {
 		// case \nu < 1: the dual problem is
@@ -1990,7 +1990,7 @@ static decision_function svm_train_one(
  			break;
 		case SVDD_L1:
 			si.upper_bound = Malloc(double,prob->l);
-			solve_svdd_l1(prob,param,alpha,&si);
+			solve_svdd_l1(prob,param,alpha,&si,blas_functions);
 			break;
 	}
 
@@ -2945,7 +2945,7 @@ double PREFIX(predict_values)(const PREFIX(model) *model, const PREFIX(node) *x,
 
 		if(model->param.svm_type == SVDD_L1)
 		{
-			double K_xx = NAMESPACE::Kernel::k_function(x,x,model->param) / 2;
+			double K_xx = NAMESPACE::Kernel::k_function(x,x,model->param,blas_functions) / 2;
 			for(int i=0;i<model->l;i++)
 				sum -= sv_coef[i] * K_xx;
 		}
@@ -3266,7 +3266,8 @@ const char *PREFIX(check_parameter)(const PREFIX(problem) *prob, const svm_param
 	if(svm_type == C_SVC ||
 	   svm_type == EPSILON_SVR ||
 	   svm_type == NU_SVR ||
-	   svm_type == ONE_CLASS)
+	   svm_type == ONE_CLASS ||
+	   svm_type == SVDD_L1)
 	{
 		PREFIX(problem) newprob;
 		// filter samples with negative and null weights 

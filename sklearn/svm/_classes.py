@@ -1919,7 +1919,7 @@ class SVDD(OutlierMixin, BaseLibSVM):
     >>> clf = SVDD(gamma='auto').fit(X)
     >>> clf.predict(X)
     array([-1,  1,  1,  1, -1])
-    >>> clf.score_samples(X)  # doctest: +ELLIPSIS
+    >>> clf.score_samples(X)
     array([0.5298..., 0.8047..., 0.8056..., 0.8061..., 0.4832...])
 
     References
@@ -1936,7 +1936,7 @@ class SVDD(OutlierMixin, BaseLibSVM):
 
     _impl = 'svdd_l1'
 
-    def __init__(self, kernel='rbf', degree=3, gamma='scale',
+    def __init__(self, *, kernel='rbf', degree=3, gamma='scale',
                  coef0=0.0, tol=1e-3, nu=0.5, shrinking=True, cache_size=200,
                  verbose=False, max_iter=-1):
 
