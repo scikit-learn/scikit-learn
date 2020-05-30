@@ -52,7 +52,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
              The default value of `strategy` has changed to "prior" in version
              0.24.
 
-    random_state : int or RandomState instance, default=None
+    random_state : int or RandomState instance or None, default=None
         Controls the randomness to generate the predictions when
         ``strategy='stratified'`` or ``strategy='uniform'``.
         Pass an int for reproducible output across multiple function calls.
@@ -64,13 +64,13 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
 
     Attributes
     ----------
-    classes_ : ndarray or list of ndarray of shape (n_classes,)
+    classes_ : ndarray of shape (n_classes,) or list of ndarray
         Class labels for each output.
 
-    n_classes_ : ndarray or list of ndarray of shape (n_classes,)
+    n_classes_ : int or list of int
         Number of label for each output.
 
-    class_prior_ : ndarray or list of ndarray of shape (n_classes,)
+    class_prior_ : ndarray of shape (n_classes,) or list of ndarray
         Probability of each class for each output.
 
     n_outputs_ : int
