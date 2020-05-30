@@ -34,17 +34,17 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
                              MetaEstimatorMixin):
     """Probability calibration with isotonic regression or logistic regression.
 
-    This class uses cross-validation to both estimate the parameters of a classifier and
-    subsequently calibrate a classifier. For each cross-validation split it fits a copy of the base
-    estimator to the training folds, and calibrates it using the testing
-    fold. For prediction, predicted probabilities are averaged across these
-    individual calibrated classifiers.
+    This class uses cross-validation to both estimate the parameters of a
+    classifier and subsequently calibrate a classifier. For each cv split it
+    fits a copy of the base estimator to the training folds, and calibrates it
+    using the testing fold. For prediction, predicted probabilities are
+    averaged across these individual calibrated classifiers.
 
     Already fitted classifiers can be calibrated via the parameter cv="prefit".
     In this case, no cross-validation is used and all provided data is used
     for calibration. The user has to take care manually that data for model
     fitting and calibration are disjoint.
-    
+
     The calibration is based on the :term:`decision_function` method of the
     `base_estimator` if it exists, else on :term:`predict_proba`.
 
