@@ -427,9 +427,9 @@ class RFECV(RFE):
         ``grid_scores_[i]`` corresponds to
         the CV score of the i-th subset of features.
 
-        .. deprecated:: 0.23
-        The `grid_scores_` attribute is deprecated in version 0.23 in favor
-        of `cv_results_` and will be removed in version 0.25
+        .. deprecated:: 0.24
+            The `grid_scores_` attribute is deprecated in version 0.24 in favor
+            of `cv_results_` and will be removed in version 0.25
 
     cv_results_ : dict of floats
         A dict with keys:
@@ -443,7 +443,7 @@ class RFECV(RFE):
         std_score : float
         std of split(i)_score values in dict
 
-        .. versionadded:: 0.23
+        .. versionadded:: 0.24
 
     estimator_ : object
         The external estimator fit on the reduced dataset.
@@ -595,7 +595,7 @@ class RFECV(RFE):
         return self
 
     @deprecated(  # type: ignore
-        "The grid_scores_ attribute is deprecated in version 0.23 in favor "
+        "The grid_scores_ attribute is deprecated in version 0.24 in favor "
         "of cv_results_ and will be removed in version 0.25"
     )
     @property  # type: ignore

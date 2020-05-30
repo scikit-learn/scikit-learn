@@ -132,7 +132,7 @@ def test_rfecv():
     # non-regression test for missing worst feature:
 
     # TODO: Remove in 0.25 when grid_scores_ is deprecated
-    msg = (r"The grid_scores_ attribute is deprecated in version 0\.23 in "
+    msg = (r"The grid_scores_ attribute is deprecated in version 0\.24 in "
            r"favor of cv_results_ and will be removed in version 0\.25")
     with pytest.warns(FutureWarning, match=msg):
         assert len(rfecv.grid_scores_) == X.shape[1]
@@ -171,6 +171,7 @@ def test_rfecv():
     rfecv = RFECV(estimator=SVC(kernel="linear"), step=1, scoring=test_scorer)
     rfecv.fit(X, y)
 
+    # TODO: Remove in 0.25 when grid_scores_ is deprecated
     with pytest.warns(FutureWarning, match=msg):
         assert_array_equal(rfecv.grid_scores_,
                            np.ones(len(rfecv.grid_scores_)))
@@ -226,7 +227,7 @@ def test_rfecv_mockclassifier():
     # non-regression test for missing worst feature:
 
     # TODO: Remove in 0.25 when grid_scores_ is deprecated
-    msg = (r"The grid_scores_ attribute is deprecated in version 0\.23 in "
+    msg = (r"The grid_scores_ attribute is deprecated in version 0\.24 in "
            r"favor of cv_results_ and will be removed in version 0\.25")
     with pytest.warns(FutureWarning, match=msg):
         assert len(rfecv.grid_scores_) == X.shape[1]
@@ -271,7 +272,7 @@ def test_rfecv_cv_results_size():
             (X.shape[1] - min_features_to_select) / step) + 1
 
         # TODO: Remove in 0.25 when grid_scores_ is deprecated
-        msg = (r"The grid_scores_ attribute is deprecated in version 0\.23 in "
+        msg = (r"The grid_scores_ attribute is deprecated in version 0\.24 in "
                r"favor of cv_results_ and will be removed in version 0\.25")
         with pytest.warns(FutureWarning, match=msg):
             assert len(rfecv.grid_scores_) == score_len
@@ -367,7 +368,7 @@ def test_number_of_subsets_of_features():
         rfecv.fit(X, y)
 
         # TODO: Remove in 0.25 when grid_scores_ is deprecated
-        msg = (r"The grid_scores_ attribute is deprecated in version 0\.23 in "
+        msg = (r"The grid_scores_ attribute is deprecated in version 0\.24 in "
                r"favor of cv_results_ and will be removed in version 0\.25")
         with pytest.warns(FutureWarning, match=msg):
             assert (len(rfecv.grid_scores_) ==
@@ -392,7 +393,7 @@ def test_rfe_cv_n_jobs():
     rfecv_ranking = rfecv.ranking_
 
     # TODO: Remove in 0.25 when grid_scores_ is deprecated
-    msg = (r"The grid_scores_ attribute is deprecated in version 0\.23 in "
+    msg = (r"The grid_scores_ attribute is deprecated in version 0\.24 in "
            r"favor of cv_results_ and will be removed in version 0\.25")
     with pytest.warns(FutureWarning, match=msg):
         rfecv_grid_scores = rfecv.grid_scores_
