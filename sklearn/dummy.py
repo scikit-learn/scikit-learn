@@ -64,13 +64,13 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
 
     Attributes
     ----------
-    classes_ : ndarray of shape (n_classes,) or list of ndarray
+    classes_ : ndarray of shape (n_classes,) or list thereof
         Class labels for each output.
 
     n_classes_ : int or list of int
         Number of label for each output.
 
-    class_prior_ : ndarray of shape (n_classes,) or list of ndarray
+    class_prior_ : ndarray of shape (n_classes,) or list thereof
         Probability of each class for each output.
 
     n_outputs_ : int
@@ -272,7 +272,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
 
         Returns
         -------
-        P : ndarray of shape (n_samples, n_classes) or list of ndarray
+        P : ndarray of shape (n_samples, n_classes) or list thereof
             Returns the probability of the sample for each class in
             the model, where classes are ordered arithmetically, for each
             output.
@@ -335,7 +335,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
 
         Returns
         -------
-        P : ndarray of shape (n_samples, n_classes) or list of ndarray
+        P : ndarray of shape (n_samples, n_classes) or list thereof
             Returns the log probability of the sample for each class in
             the model, where classes are ordered arithmetically for each
             output.
