@@ -20,6 +20,7 @@ from ..base import is_classifier
 from ..model_selection import check_cv
 from ..model_selection._validation import _score
 from ..metrics import check_scoring
+from ..utils.deprecation import deprecated
 from ._base import SelectorMixin
 from ._base import _get_feature_importances
 
@@ -457,6 +458,24 @@ class RFECV(RFE):
         ``grid_scores_[i]`` corresponds to
         the CV score of the i-th subset of features.
 
+        .. deprecated:: 0.23
+        The `grid_scores_` attribute is deprecated in version 0.23 in favor
+        of `cv_results_` and will be removed in version 0.25
+
+    cv_results_ : dict of floats
+        A dict with keys:
+
+        split(i)_score : float
+        corresponds to the CV score of the i-th subset of features
+
+        mean_score : float
+        mean of split(i)_score values in dict
+
+        std_score : float
+        std of split(i)_score values in dict
+
+        .. versionadded:: 0.23
+
     estimator_ : object
         The external estimator fit on the reduced dataset.
 
@@ -603,5 +622,23 @@ class RFECV(RFE):
 
         # Fixing a normalization error, n is equal to get_n_splits(X, y) - 1
         # here, the scores are normalized by get_n_splits(X, y)
-        self.grid_scores_ = scores[::-1] / cv.get_n_splits(X, y, groups)
+        grid_scores = scores[::-1] / cv.get_n_splits(X, y, groups)
+        self.cv_results_ = {}
+        for i in range(grid_scores.shape[0]):
+            key = "split%d_score" % i
+            self.cv_results_[key] = grid_scores[i]
+        self.cv_results_["mean_score"] = np.mean(grid_scores, axis=0)
+        self.cv_results_["std_score"] = np.std(grid_scores, axis=0)
         return self
+
+    @deprecated(  # type: ignore
+        "The grid_scores_ attribute is deprecated in version 0.23 in favor "
+        "of cv_results_ and will be removed in version 0.25"
+    )
+    @property  # type: ignore
+    def grid_scores_(self):
+        # remove 2 for mean_score, std_score
+        grid_size = len(self.cv_results_) - 2
+        return np.asarray(
+            [self.cv_results_["split{}_score".format(i)]
+                for i in range(grid_size)]).T
