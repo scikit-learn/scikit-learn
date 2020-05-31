@@ -50,7 +50,7 @@ Changelog
 - |Enhancement| :func:`datasets.fetch_openml` now allows argument `as_frame`
   to be 'auto', which tries to convert returned data to pandas DataFrame
   unless data is sparse.
-  :pr:`TBD` by :user:`Jiaxiang <fujiaxiang>`.
+  :pr:`17396` by :user:`Jiaxiang <fujiaxiang>`.
 
 :mod:`sklearn.ensemble`
 .......................
