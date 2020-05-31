@@ -65,3 +65,12 @@ def test_query_haversine():
 
     assert_array_almost_equal(dist1, dist2)
     assert_array_almost_equal(ind1, ind2)
+
+
+def test_different_dimension_size():
+    X = [(1, 2, 3), (2, 5), (5, 5, 1, 2)]
+    Y = np.array(X)
+    msg = ("Not all elements had the same number of dimensions"
+           " - proceeding after extending those with zeros")
+    with pytest.warns(UserWarning, match=msg):
+        BallTree(Y)
