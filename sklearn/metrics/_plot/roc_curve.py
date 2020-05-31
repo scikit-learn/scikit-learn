@@ -4,6 +4,7 @@ from .. import roc_curve
 from .base import _check_classifer_response_method
 from ...utils import check_matplotlib_support
 from ...base import is_classifier
+from ...utils.validation import _deprecate_positional_args
 
 
 class RocCurveDisplay:
@@ -22,11 +23,11 @@ class RocCurveDisplay:
     tpr : ndarray
         True positive rate.
 
-    roc_auc : float
-        Area under ROC curve.
+    roc_auc : float, default=None
+        Area under ROC curve. If None, the roc_auc score is not shown.
 
-    estimator_name : str
-        Name of estimator.
+    estimator_name : str, default=None
+        Name of estimator. If None, the estimator name is not shown.
 
     Attributes
     ----------
@@ -53,14 +54,14 @@ class RocCurveDisplay:
     >>> display.plot()  # doctest: +SKIP
     >>> plt.show()      # doctest: +SKIP
     """
-
-    def __init__(self, fpr, tpr, roc_auc, estimator_name):
+    def __init__(self, *, fpr, tpr, roc_auc=None, estimator_name=None):
         self.fpr = fpr
         self.tpr = tpr
         self.roc_auc = roc_auc
         self.estimator_name = estimator_name
 
-    def plot(self, ax=None, name=None, **kwargs):
+    @_deprecate_positional_args
+    def plot(self, ax=None, *, name=None, **kwargs):
         """Plot visualization
 
         Extra keyword arguments will be passed to matplotlib's ``plot``.
@@ -88,22 +89,30 @@ class RocCurveDisplay:
 
         name = self.estimator_name if name is None else name
 
-        line_kwargs = {
-            'label': "{} (AUC = {:0.2f})".format(name, self.roc_auc)
-        }
+        line_kwargs = {}
+        if self.roc_auc is not None and name is not None:
+            line_kwargs["label"] = f"{name} (AUC = {self.roc_auc:0.2f})"
+        elif self.roc_auc is not None:
+            line_kwargs["label"] = f"AUC = {self.roc_auc:0.2f}"
+        elif name is not None:
+            line_kwargs["label"] = name
+
         line_kwargs.update(**kwargs)
 
         self.line_ = ax.plot(self.fpr, self.tpr, **line_kwargs)[0]
         ax.set_xlabel("False Positive Rate")
         ax.set_ylabel("True Positive Rate")
-        ax.legend(loc='lower right')
+
+        if "label" in line_kwargs:
+            ax.legend(loc='lower right')
 
         self.ax_ = ax
         self.figure_ = ax.figure
         return self
 
 
-def plot_roc_curve(estimator, X, y, sample_weight=None,
+@_deprecate_positional_args
+def plot_roc_curve(estimator, X, y, *, sample_weight=None,
                    drop_intermediate=True, response_method="auto",
                    name=None, ax=None, **kwargs):
     """Plot Receiver operating characteristic (ROC) curve.
@@ -115,7 +124,8 @@ def plot_roc_curve(estimator, X, y, sample_weight=None,
     Parameters
     ----------
     estimator : estimator instance
-        Trained classifier.
+        Fitted classifier or a fitted :class:`~sklearn.pipeline.Pipeline`
+        in which the last estimator is a classifier.
 
     X : {array-like, sparse matrix} of shape (n_samples, n_features)
         Input values.

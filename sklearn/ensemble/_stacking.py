@@ -13,6 +13,7 @@ import scipy.sparse as sparse
 from ..base import clone
 from ..base import ClassifierMixin, RegressorMixin, TransformerMixin
 from ..base import is_classifier, is_regressor
+from ..utils._estimator_html_repr import _VisualBlock
 
 from ._base import _fit_single_estimator
 from ._base import _BaseHeterogeneousEnsemble
@@ -30,6 +31,7 @@ from ..utils.metaestimators import if_delegate_has_method
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
 from ..utils.validation import column_or_1d
+from ..utils.validation import _deprecate_positional_args
 
 
 class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble,
@@ -37,7 +39,7 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble,
     """Base class for stacking method."""
 
     @abstractmethod
-    def __init__(self, estimators, final_estimator=None, cv=None,
+    def __init__(self, estimators, final_estimator=None, *, cv=None,
                  stack_method='auto', n_jobs=None, verbose=0,
                  passthrough=False):
         super().__init__(estimators=estimators)
@@ -232,6 +234,14 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble,
             self.transform(X), **predict_params
         )
 
+    def _sk_visual_block_(self, final_estimator):
+        names, estimators = zip(*self.estimators)
+        parallel = _VisualBlock('parallel', estimators, names=names,
+                                dash_wrapped=False)
+        serial = _VisualBlock('serial', (parallel, final_estimator),
+                              dash_wrapped=False)
+        return _VisualBlock('serial', [serial])
+
 
 class StackingClassifier(ClassifierMixin, _BaseStacking):
     """Stack of estimators with a final classifier.
@@ -366,7 +376,8 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
     0.9...
 
     """
-    def __init__(self, estimators, final_estimator=None, cv=None,
+    @_deprecate_positional_args
+    def __init__(self, estimators, final_estimator=None, *, cv=None,
                  stack_method='auto', n_jobs=None, passthrough=False,
                  verbose=0):
         super().__init__(
@@ -494,6 +505,15 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         """
         return self._transform(X)
 
+    def _sk_visual_block_(self):
+        # If final_estimator's default changes then this should be
+        # updated.
+        if self.final_estimator is None:
+            final_estimator = LogisticRegression()
+        else:
+            final_estimator = self.final_estimator
+        return super()._sk_visual_block_(final_estimator)
+
 
 class StackingRegressor(RegressorMixin, _BaseStacking):
     """Stack of estimators with a final regressor.
@@ -603,8 +623,9 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
     0.3...
 
     """
-    def __init__(self, estimators, final_estimator=None, cv=None, n_jobs=None,
-                 passthrough=False, verbose=0):
+    @_deprecate_positional_args
+    def __init__(self, estimators, final_estimator=None, *, cv=None,
+                 n_jobs=None, passthrough=False, verbose=0):
         super().__init__(
             estimators=estimators,
             final_estimator=final_estimator,
@@ -662,3 +683,12 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
             Prediction outputs for each estimator.
         """
         return self._transform(X)
+
+    def _sk_visual_block_(self):
+        # If final_estimator's default changes then this should be
+        # updated.
+        if self.final_estimator is None:
+            final_estimator = RidgeCV()
+        else:
+            final_estimator = self.final_estimator
+        return super()._sk_visual_block_(final_estimator)

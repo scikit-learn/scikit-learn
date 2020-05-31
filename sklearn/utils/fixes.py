@@ -17,6 +17,9 @@ import scipy.sparse as sp
 import scipy
 import scipy.stats
 from scipy.sparse.linalg import lsqr as sparse_lsqr  # noqa
+from numpy.ma import MaskedArray as _MaskedArray  # TODO: remove in 0.25
+
+from .deprecation import deprecated
 
 
 def _parse_version(version_string):
@@ -39,14 +42,8 @@ if sp_version >= (1, 4):
 else:
     # Backport of lobpcg functionality from scipy 1.4.0, can be removed
     # once support for sp_version < (1, 4) is dropped
-    from ..externals._lobpcg import lobpcg  # noqa
-
-if sp_version >= (1, 3):
-    # Preserves earlier default choice of pinvh cutoff `cond` value.
-    # Can be removed once issue #14055 is fully addressed.
-    from ..externals._scipy_linalg import pinvh
-else:
-    from scipy.linalg import pinvh # noqa
+    # mypy error: Name 'lobpcg' already defined (possibly by an import)
+    from ..externals._lobpcg import lobpcg  # type: ignore  # noqa
 
 
 def _object_dtype_isnan(X):
@@ -160,3 +157,11 @@ class loguniform(scipy.stats.reciprocal):
     >>> rvs.max()  # doctest: +SKIP
     9.97403052786026
     """
+
+
+@deprecated(
+    'MaskedArray is deprecated in version 0.23 and will be removed in version '
+    '0.25. Use numpy.ma.MaskedArray instead.'
+)
+class MaskedArray(_MaskedArray):
+    pass  # TODO: remove in 0.25

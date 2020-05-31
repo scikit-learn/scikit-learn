@@ -25,11 +25,13 @@ from . import _joblib
 from ..exceptions import DataConversionWarning
 from .deprecation import deprecated
 from .fixes import np_version
+from ._estimator_html_repr import estimator_html_repr
 from .validation import (as_float_array,
                          assert_all_finite,
                          check_random_state, column_or_1d, check_array,
                          check_consistent_length, check_X_y, indexable,
-                         check_symmetric, check_scalar)
+                         check_symmetric, check_scalar,
+                         _deprecate_positional_args)
 from .. import get_config
 
 
@@ -46,12 +48,12 @@ __all__ = ["murmurhash3_32", "as_float_array",
            "assert_all_finite", "check_array",
            "check_random_state",
            "compute_class_weight", "compute_sample_weight",
-           "column_or_1d", "safe_indexing",
+           "column_or_1d",
            "check_consistent_length", "check_X_y", "check_scalar", 'indexable',
            "check_symmetric", "indices_to_mask", "deprecated",
            "parallel_backend", "register_parallel_backend",
            "resample", "shuffle", "check_matplotlib_support", "all_estimators",
-           "DataConversionWarning"
+           "DataConversionWarning", "estimator_html_repr"
            ]
 
 IS_PYPY = platform.python_implementation() == 'PyPy'
@@ -268,56 +270,7 @@ def _determine_key_type(key, accept_slice=True):
     raise ValueError(err_msg)
 
 
-# TODO: remove in 0.24
-@deprecated("safe_indexing is deprecated in version "
-            "0.22 and will be removed in version 0.24.")
-def safe_indexing(X, indices, axis=0):
-    """Return rows, items or columns of X using indices.
-
-    .. deprecated:: 0.22
-        This function was deprecated in version 0.22 and will be removed in
-        version 0.24.
-
-    Parameters
-    ----------
-    X : array-like, sparse-matrix, list, pandas.DataFrame, pandas.Series
-        Data from which to sample rows, items or columns. `list` are only
-        supported when `axis=0`.
-
-    indices : bool, int, str, slice, array-like
-
-        - If `axis=0`, boolean and integer array-like, integer slice,
-          and scalar integer are supported.
-        - If `axis=1`:
-
-            - to select a single column, `indices` can be of `int` type for
-              all `X` types and `str` only for dataframe. The selected subset
-              will be 1D, unless `X` is a sparse matrix in which case it will
-              be 2D.
-            - to select multiples columns, `indices` can be one of the
-              following: `list`, `array`, `slice`. The type used in
-              these containers can be one of the following: `int`, 'bool' and
-              `str`. However, `str` is only supported when `X` is a dataframe.
-              The selected subset will be 2D.
-
-    axis : int, default=0
-        The axis along which `X` will be subsampled. `axis=0` will select
-        rows while `axis=1` will select columns.
-
-    Returns
-    -------
-    subset
-        Subset of X on axis 0 or 1.
-
-    Notes
-    -----
-    CSR, CSC, and LIL sparse matrices are supported. COO sparse matrices are
-    not supported.
-    """
-    return _safe_indexing(X, indices, axis)
-
-
-def _safe_indexing(X, indices, axis=0):
+def _safe_indexing(X, indices, *, axis=0):
     """Return rows, items or columns of X using indices.
 
     .. warning::
@@ -684,7 +637,8 @@ def shuffle(*arrays, **options):
     return resample(*arrays, **options)
 
 
-def safe_sqr(X, copy=True):
+@_deprecate_positional_args
+def safe_sqr(X, *, copy=True):
     """Element wise squaring of array-likes and sparse matrices.
 
     Parameters
@@ -723,7 +677,8 @@ def _chunk_generator(gen, chunksize):
             return
 
 
-def gen_batches(n, batch_size, min_batch_size=0):
+@_deprecate_positional_args
+def gen_batches(n, batch_size, *, min_batch_size=0):
     """Generator to create slices containing batch_size elements, from 0 to n.
 
     The last slice may contain less than batch_size elements, when batch_size
@@ -772,7 +727,8 @@ def gen_batches(n, batch_size, min_batch_size=0):
         yield slice(start, n)
 
 
-def gen_even_slices(n, n_packs, n_samples=None):
+@_deprecate_positional_args
+def gen_even_slices(n, n_packs, *, n_samples=None):
     """Generator to create n_packs slices going up to n.
 
     Parameters
@@ -957,8 +913,8 @@ def _print_elapsed_time(source, message=None):
                                timeit.default_timer() - start))
 
 
-def get_chunk_n_rows(row_bytes, max_n_rows=None,
-                     working_memory=None):
+@_deprecate_positional_args
+def get_chunk_n_rows(row_bytes, *, max_n_rows=None, working_memory=None):
     """Calculates how many rows can be processed within working_memory
 
     Parameters
