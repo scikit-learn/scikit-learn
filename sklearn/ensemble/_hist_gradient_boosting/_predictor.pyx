@@ -19,6 +19,7 @@ from .common cimport X_BINNED_DTYPE_C
 from .common cimport node_struct
 from ._bitset cimport in_bitset
 from ._predictor_bitset cimport PredictorBitSet
+from ._cat_mapper cimport CategoryMapper
 
 np.import_array()
 
@@ -26,6 +27,7 @@ np.import_array()
 def _predict_from_data(
         node_struct [:] nodes,
         PredictorBitSet predictor_bitset,
+        CategoryMapper category_mapper,
         const X_DTYPE_C [:, :] numeric_data,
         Y_DTYPE_C [:] out):
 
@@ -34,12 +36,13 @@ def _predict_from_data(
 
     for i in prange(numeric_data.shape[0], schedule='static', nogil=True):
         out[i] = _predict_one_from_numeric_data(
-            nodes, predictor_bitset, numeric_data, i)
+            nodes, predictor_bitset, category_mapper, numeric_data, i)
 
 
 cdef inline Y_DTYPE_C _predict_one_from_numeric_data(
         node_struct [:] nodes,
         PredictorBitSet predictor_bitset,
+        CategoryMapper category_mapper,
         const X_DTYPE_C [:, :] numeric_data,
         const int row) nogil:
     # Need to pass the whole array and the row index, else prange won't work.
@@ -53,14 +56,16 @@ cdef inline Y_DTYPE_C _predict_one_from_numeric_data(
         if node.is_leaf:
             return node.value
 
-        if isnan(numeric_data[row, node.feature_idx]):
-            if node.missing_go_to_left:
+        if node.is_categorical:
+            if predictor_bitset.binned_category_in_bitset(
+                    node_idx,
+                    category_mapper.map_to_bin(
+                        node.feature_idx, numeric_data[row, node.feature_idx])):
                 node_idx = node.left
             else:
                 node_idx = node.right
-        elif node.is_categorical:
-            if predictor_bitset.raw_category_in_bitset(
-                    node_idx, numeric_data[row, node.feature_idx]):
+        elif isnan(numeric_data[row, node.feature_idx]):
+            if node.missing_go_to_left:
                 node_idx = node.left
             else:
                 node_idx = node.right
@@ -75,6 +80,7 @@ cdef inline Y_DTYPE_C _predict_one_from_numeric_data(
 def _predict_from_binned_data(
         node_struct [:] nodes,
         PredictorBitSet predictor_bitset,
+        CategoryMapper category_mapper,
         const X_BINNED_DTYPE_C [:, :] binned_data,
         const unsigned char missing_values_bin_idx,
         Y_DTYPE_C [:] out):
@@ -84,6 +90,7 @@ def _predict_from_binned_data(
 
     for i in prange(binned_data.shape[0], schedule='static', nogil=True):
         out[i] = _predict_one_from_binned_data(nodes, predictor_bitset,
+                                               category_mapper,
                                                binned_data, i,
                                                missing_values_bin_idx)
 
@@ -91,6 +98,7 @@ def _predict_from_binned_data(
 cdef inline Y_DTYPE_C _predict_one_from_binned_data(
         node_struct [:] nodes,
         PredictorBitSet predictor_bitset,
+        CategoryMapper category_mapper,
         const X_BINNED_DTYPE_C [:, :] binned_data,
         const int row,
         const unsigned char missing_values_bin_idx) nogil:
@@ -105,14 +113,14 @@ cdef inline Y_DTYPE_C _predict_one_from_binned_data(
         if node.is_leaf:
             return node.value
 
-        if binned_data[row, node.feature_idx] ==  missing_values_bin_idx:
-            if node.missing_go_to_left:
+        if node.is_categorical:
+            if predictor_bitset.binned_category_in_bitset(
+                    node_idx, binned_data[row, node.feature_idx]):
                 node_idx = node.left
             else:
                 node_idx = node.right
-        elif node.is_categorical:
-            if predictor_bitset.binned_category_in_bitset(
-                    node_idx, binned_data[row, node.feature_idx]):
+        elif binned_data[row, node.feature_idx] ==  missing_values_bin_idx:
+            if node.missing_go_to_left:
                 node_idx = node.left
             else:
                 node_idx = node.right

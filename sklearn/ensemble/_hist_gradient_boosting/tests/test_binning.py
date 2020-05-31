@@ -10,6 +10,7 @@ from sklearn.ensemble._hist_gradient_boosting.binning import (
 from sklearn.ensemble._hist_gradient_boosting.common import X_DTYPE
 from sklearn.ensemble._hist_gradient_boosting.common import X_BINNED_DTYPE
 from sklearn.ensemble._hist_gradient_boosting.common import ALMOST_INF
+from sklearn.ensemble._hist_gradient_boosting._cat_mapper import CategoryMapper
 
 
 DATA = np.random.RandomState(42).normal(
@@ -88,7 +89,9 @@ def test_map_to_bins(max_bins):
     binned = np.zeros_like(DATA, dtype=X_BINNED_DTYPE, order='F')
     is_categorical = np.zeros(2, dtype=np.uint8)
     last_bin_idx = max_bins
-    _map_to_bins(DATA, bin_thresholds, last_bin_idx, is_categorical, binned)
+    category_mapper = CategoryMapper(255)
+    _map_to_bins(DATA, bin_thresholds, last_bin_idx, category_mapper,
+                 is_categorical, binned)
     assert binned.shape == DATA.shape
     assert binned.dtype == np.uint8
     assert binned.flags.f_contiguous
@@ -322,7 +325,7 @@ def test_categorical_n_bins_greater_than_cardinality(n_bins):
     # test when n_bins is large enough to hold all categories (+ missing
     # values bin which is always allocated)
     X = np.array([[4] * 2 + [1] * 3 + [10] * 4 +
-                  [0] * 4 + [9] + [7] * 5], dtype=float).T
+                  [0] * 4 + [9] + [7] * 5], dtype=X_DTYPE).T
 
     bin_mapper = _BinMapper(n_bins=n_bins,
                             is_categorical=np.array([True])).fit(X)
@@ -343,7 +346,7 @@ def test_categorical_n_bins_greater_than_cardinality(n_bins):
     "n_bins, expected_trans, expected_bin_categories",
     [
         (3, [1, 2, 2, 2, 2, 0, 2, 2, 2], [7, 10]),
-        # 0 is choosen instead of 10 because it comes after in lexicon
+        # 0 is chosen instead of 10 because it comes after in lexicon
         # order
         (4, [2, 3, 3, 3, 3, 1, 3, 3, 0], [0, 7, 10]),
         (5, [3, 1, 4, 4, 4, 2, 4, 4, 0], [0, 1, 7, 10]),

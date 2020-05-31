@@ -13,6 +13,8 @@ from sklearn.ensemble._hist_gradient_boosting.common import (
     X_BITSET_INNER_DTYPE, X_DTYPE)
 from sklearn.ensemble._hist_gradient_boosting._predictor_bitset import \
     PredictorBitSet
+from sklearn.ensemble._hist_gradient_boosting._cat_mapper import \
+    CategoryMapper
 
 
 @pytest.mark.parametrize('n_bins', [200, 256])
@@ -37,7 +39,9 @@ def test_regression_dataset(n_bins):
                         n_bins_non_missing=mapper.n_bins_non_missing_)
     grower.grow()
 
-    predictor = grower.make_predictor(bin_thresholds=mapper.bin_thresholds_)
+    predictor = grower.make_predictor(
+        bin_thresholds=mapper.bin_thresholds_,
+        category_mapper=CategoryMapper(n_bins - 1))
 
     assert r2_score(y_train, predictor.predict(X_train)) > 0.82
     assert r2_score(y_test, predictor.predict(X_test)) > 0.67
@@ -74,7 +78,7 @@ def test_infinite_values_and_thresholds(threshold, expected_predictions):
     nodes[2]['is_leaf'] = True
     nodes[2]['value'] = 1
 
-    predictor = TreePredictor(nodes, PredictorBitSet())
+    predictor = TreePredictor(nodes, PredictorBitSet(), CategoryMapper(3))
     predictions = predictor.predict(X)
 
     assert np.all(predictions == expected_predictions)
@@ -93,9 +97,9 @@ def _construct_bitset(bins_go_left):
 
 @pytest.mark.parametrize(
     'bins_go_left, expected_predictions', [
-        ([0, 3, 4], [1, 0, 0, 1, 1, 0]),
-        ([0, 1, 2], [1, 1, 1, 0, 0, 0]),
-        ([3, 5], [0, 0, 0, 1, 0, 1])
+        ([0, 3, 4, 6], [1, 0, 0, 1, 1, 0]),
+        ([0, 1, 2, 6], [1, 1, 1, 0, 0, 0]),
+        ([3, 5, 6], [0, 0, 0, 1, 0, 1])
     ])
 def test_categorical_predictor(bins_go_left, expected_predictions):
     # Test predictor outputs are correct with categorical features
@@ -123,16 +127,26 @@ def test_categorical_predictor(bins_go_left, expected_predictions):
     predictor_bitset = PredictorBitSet()
     predictor_bitset.insert_categories_bitset(0, category_bins, cat_bitset)
 
-    expected_raw_categories = category_bins[bins_go_left]
-    assert (set(expected_raw_categories) ==
-            predictor_bitset.get_raw_categories(0))
+    category_mapper = CategoryMapper(missing_values_bin_idx=6)
+    category_mapper.insert(0, category_bins)
+    predictor = TreePredictor(nodes, predictor_bitset, category_mapper)
 
-    predictor = TreePredictor(nodes, predictor_bitset)
+    # Check binned data gives correct predictions
     prediction_binned = predictor.predict_binned(X_binned,
                                                  missing_values_bin_idx=6)
     assert_allclose(prediction_binned, expected_predictions)
 
+    # Check with un-binned data
     predictions = predictor.predict(category_bins.reshape(-1, 1))
     assert_allclose(predictions, expected_predictions)
 
-    assert False
+    # Check missing goes left because missing_values_bin_idx=6
+    X_binned_missing = np.array([[6]], dtype=X_BINNED_DTYPE).T
+    predictions = predictor.predict_binned(X_binned_missing,
+                                           missing_values_bin_idx=6)
+    assert_allclose(predictions, [1])
+
+    # missing and unknown go left
+    predictions = predictor.predict(np.array([[np.nan, 17.0]],
+                                             dtype=X_DTYPE).T)
+    assert_allclose(predictions, [1, 1])

@@ -18,10 +18,15 @@ class TreePredictor:
     ----------
     nodes : ndarray of PREDICTOR_RECORD_DTYPE
         The nodes of the tree.
+    predictor_bitset : PredictorBitSet
+        Bitset used to check for predictions.
+    category_mapper : CategoryMapper
+        Object used to map raw categories into its bin.
     """
-    def __init__(self, nodes, predictor_bitset):
+    def __init__(self, nodes, predictor_bitset, category_mapper):
         self.nodes = nodes
         self.predictor_bitset = predictor_bitset
+        self.category_mapper = category_mapper
 
     def get_n_leaf_nodes(self):
         """Return number of leaves."""
@@ -39,12 +44,6 @@ class TreePredictor:
         ----------
         X : ndarray, shape (n_samples, n_features)
             The input samples.
-        X_binned_cat : ndarray, shape (n_samples, n_categorical_features), \
-            default=None
-            Binned category features.
-        orig_feature_to_binned_cat : ndarray, shape (n_features), default=None
-            Mapping from originl feature index to column corresponding to
-            ``X_binned_cat``.
 
         Returns
         -------
@@ -52,7 +51,8 @@ class TreePredictor:
             The raw predicted values.
         """
         out = np.empty(X.shape[0], dtype=Y_DTYPE)
-        _predict_from_data(self.nodes, self.predictor_bitset, X, out)
+        _predict_from_data(self.nodes, self.predictor_bitset,
+                           self.category_mapper, X, out)
         return out
 
     def predict_binned(self, X, missing_values_bin_idx):
@@ -74,6 +74,7 @@ class TreePredictor:
         """
         out = np.empty(X.shape[0], dtype=Y_DTYPE)
         _predict_from_binned_data(self.nodes, self.predictor_bitset,
+                                  self.category_mapper,
                                   X, missing_values_bin_idx, out)
         return out
 

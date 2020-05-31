@@ -15,6 +15,7 @@ from cython.parallel import prange
 from libc.math cimport isnan
 
 from .common cimport X_DTYPE_C, X_BINNED_DTYPE_C
+from ._cat_mapper cimport CategoryMapper
 
 np.import_array()
 
@@ -22,6 +23,7 @@ np.import_array()
 def _map_to_bins(const X_DTYPE_C [:, :] data,
                  list binning_thresholds,
                  const unsigned char missing_values_bin_idx,
+                 CategoryMapper category_mapper,
                  const unsigned char[::1] is_categorical,
                  X_BINNED_DTYPE_C [::1, :] binned):
     """Bin numerical values to discrete integer-coded levels.
@@ -43,14 +45,14 @@ def _map_to_bins(const X_DTYPE_C [:, :] data,
         X_DTYPE_C [:] binning_threshold
 
     for feature_idx in range(data.shape[1]):
-        bins = binning_thresholds[feature_idx]
         if is_categorical[feature_idx]:
-            _map_cat_col_to_bins(data[:, feature_idx], bins,
-                                 missing_values_bin_idx,
+            _map_cat_col_to_bins(data[:, feature_idx], feature_idx,
+                                 category_mapper, missing_values_bin_idx,
                                  binned[:, feature_idx])
         else:
-            _map_num_col_to_bins(data[:, feature_idx],
-                                 bins, missing_values_bin_idx,
+            bins = binning_thresholds[feature_idx]
+            _map_num_col_to_bins(data[:, feature_idx], bins,
+                                 missing_values_bin_idx,
                                  binned[:, feature_idx])
 
 
@@ -82,35 +84,13 @@ cdef void _map_num_col_to_bins(const X_DTYPE_C [:] data,
 
 
 cdef void _map_cat_col_to_bins(const X_DTYPE_C [:] data,
-                               const X_DTYPE_C [:] categories,
+                               int feature_idx,
+                               CategoryMapper category_mapper,
                                const unsigned char missing_values_bin_idx,
                                X_BINNED_DTYPE_C [:] binned):
-        """Binary search for categories."""
-        cdef:
-            int i, left, right, middle
-            unsigned char found
-            X_DTYPE_C middle_value, current_value
-
-        for i in prange(data.shape[0], schedule='static', nogil=True):
-            if isnan(data[i]) or data[i] < 0:
-                binned[i] = missing_values_bin_idx
-            else:
-                current_value = data[i]
-                found = False
-                left, right = 0, categories.shape[0] - 1
-                while left <= right:
-                    middle = left + (right - left) // 2
-                    middle_value = categories[middle]
-                    if middle_value < current_value:
-                        left = middle + 1
-                    elif middle_value > current_value:
-                        right = middle - 1
-                    else:
-                        binned[i] = middle
-                        found = True
-                        break
-                # unknown
-                if not found:
-                    binned[i] = missing_values_bin_idx
+        """Map form raw categories to bin"""
+        cdef int i
+        for i in range(data.shape[0]):
+            binned[i] = category_mapper.map_to_bin(feature_idx, data[i])
 
 

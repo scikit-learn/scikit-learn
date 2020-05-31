@@ -34,7 +34,7 @@ cdef packed struct node_struct:
     unsigned char is_leaf
     X_BINNED_DTYPE_C bin_threshold
     unsigned char is_categorical
-
+    # int category_bitset_idx
 
 cpdef enum MonotonicConstraint:
     NO_CST = 0
