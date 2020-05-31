@@ -78,7 +78,9 @@ def test_infinite_values_and_thresholds(threshold, expected_predictions):
     nodes[2]['is_leaf'] = True
     nodes[2]['value'] = 1
 
-    predictor = TreePredictor(nodes, PredictorBitSet(), CategoryMapper(3))
+    predictor = TreePredictor(
+        nodes, PredictorBitSet([], np.array([False], dtype=np.uint8)),
+        CategoryMapper(3))
     predictions = predictor.predict(X)
 
     assert np.all(predictions == expected_predictions)
@@ -125,7 +127,8 @@ def test_categorical_predictor(bins_go_left, expected_predictions):
     nodes[2]['value'] = 0
 
     cat_bitset = _construct_bitset(bins_go_left)
-    predictor_bitset = PredictorBitSet()
+    predictor_bitset = PredictorBitSet([category_bins],
+                                       np.array([True], dtype=np.uint8))
     predictor_bitset.insert_categories_bitset(0, category_bins, cat_bitset)
 
     category_mapper = CategoryMapper(missing_values_bin_idx=6)
@@ -147,8 +150,7 @@ def test_categorical_predictor(bins_go_left, expected_predictions):
                                            missing_values_bin_idx=6)
     assert_allclose(predictions, [1])
 
-    # TODO: Uncomment someday
     # missing and unknown go left
-    # predictions = predictor.predict(np.array([[np.nan, 17.0]],
-    #                                          dtype=X_DTYPE).T)
-    # assert_allclose(predictions, [1, 1])
+    predictions = predictor.predict(np.array([[np.nan, 17.0]],
+                                             dtype=X_DTYPE).T)
+    assert_allclose(predictions, [1, 1])

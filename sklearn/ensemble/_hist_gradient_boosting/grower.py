@@ -20,7 +20,6 @@ from .common import Y_DTYPE
 from .common import MonotonicConstraint
 from ._bitset import set_bitset_py
 from ._predictor_bitset import PredictorBitSet
-from ._cat_mapper import CategoryMapper
 
 EPS = np.finfo(Y_DTYPE).eps  # to avoid zero division errors
 
@@ -525,7 +524,8 @@ class TreeGrower:
             node = self.splittable_nodes.pop()
             self._finalize_leaf(node)
 
-    def make_predictor(self, bin_thresholds=None, category_mapper=None):
+    def make_predictor(self, bin_thresholds=None, category_mapper=None,
+                       is_categorical=None):
         """Make a TreePredictor object out of the current tree.
 
         Parameters
@@ -541,7 +541,7 @@ class TreeGrower:
         """
         predictor_nodes = np.zeros(self.n_nodes, dtype=PREDICTOR_RECORD_DTYPE)
         # category_bitsets = []
-        predictor_bitset = PredictorBitSet()
+        predictor_bitset = PredictorBitSet(bin_thresholds, is_categorical)
         _fill_predictor_node_array(predictor_nodes, predictor_bitset,
                                    self.root, bin_thresholds,
                                    self.n_bins_non_missing)

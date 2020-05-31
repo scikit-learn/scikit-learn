@@ -10,6 +10,21 @@ from libc.limits cimport CHAR_BIT
 
 
 cdef class PredictorBitSet:
+
+    def __init__(self, list bin_thresholds,
+                 const unsigned char [:] is_categorical):
+        if is_categorical is None or bin_thresholds is None:
+            return
+        cdef:
+            int i
+            X_DTYPE_C category
+
+        for i in range(is_categorical.shape[0]):
+            if is_categorical[i] == 0:
+                continue
+            for category in bin_thresholds[i]:
+                self.feature_idx_raw_cats[i].insert(<int>category)
+
     def insert_categories_bitset(self, unsigned int node_idx,
                                  X_DTYPE_C[:] category_bins,
                                  BITSET_INNER_DTYPE_C[:] cat_bitset):
@@ -32,6 +47,10 @@ cdef class PredictorBitSet:
                     self.node_to_raw_bitset[node_idx].insert(cat_bin)
                 val = val // 2
                 offset += 1
+
+    cdef unsigned char is_known_category(self, unsigned int feature_idx,
+                                         X_DTYPE_C category) nogil:
+        return self.feature_idx_raw_cats[feature_idx].count(<int>category)
 
     cdef unsigned char raw_category_in_bitset(self, unsigned int node_idx,
                                               X_DTYPE_C category) nogil:

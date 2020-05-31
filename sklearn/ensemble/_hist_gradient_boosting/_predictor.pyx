@@ -62,7 +62,13 @@ cdef inline Y_DTYPE_C _predict_one_from_numeric_data(
             else:
                 node_idx = node.right
         elif node.is_categorical:
-            if predictor_bitset.raw_category_in_bitset(
+            if not predictor_bitset.is_known_category(
+                    node.feature_idx, numeric_data[row, node.feature_idx]):
+                if node.missing_go_to_left:
+                    node_idx = node.left
+                else:
+                    node_idx = node.right
+            elif predictor_bitset.raw_category_in_bitset(
                     node_idx, numeric_data[row, node.feature_idx]):
                 node_idx = node.left
             else:
