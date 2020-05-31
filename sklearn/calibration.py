@@ -109,7 +109,12 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
     CalibratedClassifierCV(base_estimator=GaussianNB(), cv=3)
     >>> len(calibrated_clf.calibrated_classifiers_)
     3
-    >>> calibrated_clf.predict_proba(X)[:5, :] # doctest: +SKIP
+    >>> calibrated_clf.predict_proba(X)[:5, :]
+    array([[0.110..., 0.889...],
+           [0.072..., 0.927...],
+           [0.928..., 0.071...],
+           [0.928..., 0.071...],
+           [0.071..., 0.928...]])
 
     >>> from sklearn.datasets import make_classification
     >>> from sklearn.model_selection import train_test_split
