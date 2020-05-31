@@ -49,7 +49,7 @@ preprocessor = make_column_transformer(
     remainder='passthrough')
 
 hist_one_hot = make_pipeline(preprocessor,
-                             HistGradientBoostingRegressor(random_state=0))
+                             HistGradientBoostingRegressor(random_state=42))
 
 ##############################################################################
 # Create gradient boosting estimator with native categorical support
@@ -58,7 +58,10 @@ hist_one_hot = make_pipeline(preprocessor,
 # for categorical features using the `categorical_features` parameter:
 
 hist_native = HistGradientBoostingRegressor(categorical_features='pandas',
-                                            random_state=0)
+                                            random_state=42)
+
+# hist_native.fit(X, y)
+# hist_native.predict(X)
 
 ##############################################################################
 # Train the models with cross-validation

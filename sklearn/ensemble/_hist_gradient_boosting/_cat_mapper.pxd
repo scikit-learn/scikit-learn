@@ -6,6 +6,7 @@
 # distutils: language=c++
 
 from libcpp.map cimport map
+from libcpp.vector cimport vector
 from .common cimport X_DTYPE_C
 from .common cimport X_BINNED_DTYPE_C
 

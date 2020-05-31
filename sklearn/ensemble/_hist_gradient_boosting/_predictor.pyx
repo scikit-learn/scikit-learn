@@ -56,16 +56,14 @@ cdef inline Y_DTYPE_C _predict_one_from_numeric_data(
         if node.is_leaf:
             return node.value
 
-        if node.is_categorical:
-            if predictor_bitset.binned_category_in_bitset(
-                    node_idx,
-                    category_mapper.map_to_bin(
-                        node.feature_idx, numeric_data[row, node.feature_idx])):
+        if isnan(numeric_data[row, node.feature_idx]):
+            if node.missing_go_to_left:
                 node_idx = node.left
             else:
                 node_idx = node.right
-        elif isnan(numeric_data[row, node.feature_idx]):
-            if node.missing_go_to_left:
+        elif node.is_categorical:
+            if predictor_bitset.raw_category_in_bitset(
+                    node_idx, numeric_data[row, node.feature_idx]):
                 node_idx = node.left
             else:
                 node_idx = node.right
