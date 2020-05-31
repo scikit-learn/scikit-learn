@@ -777,8 +777,11 @@ def pairwise_wasserstein_distances(X, Y, feature_slicer = None, stdev_slicer = N
 
     >>> from sklearn.metrics.pairwise import pairwise_wasserstein_distances
     >>> import numpy as np
-    >>> A = np.array([[1.1, 2.2, 1.1, 0.01, 0.02, 0.01], [1.2, 2.3, 4.1, 0.02, 0.03, 0.01], [-3.2, 0.1, -2.1, 0.02, 0.01, 0.01]])
-    >>> B = np.array([[0.1, 5.2, 1.1, 0.01, 0.01, 0.01], [-1.2, 1.3, 4.1, 0.02, 0.01, 0.05]])
+    >>> A = np.array([[1.1, 2.2, 1.1, 0.01, 0.02, 0.01],
+    ...               [1.2, 2.3, 4.1, 0.02, 0.03, 0.01],
+    ...               [-3.2, 0.1, -2.1, 0.02, 0.01, 0.01]])
+    >>> B = np.array([[0.1, 5.2, 1.1, 0.01, 0.01, 0.01],
+    ...               [-1.2, 1.3, 4.1, 0.02, 0.01, 0.05]])
     >>> result = pairwise_wasserstein_distances(A, B, [0,1,2], [3,4,5])
     >>> result
     array([[3.16399339, 3.90458194],
