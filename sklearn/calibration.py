@@ -21,7 +21,7 @@ from .preprocessing import LabelEncoder
 from .base import (BaseEstimator, ClassifierMixin, RegressorMixin, clone,
                    MetaEstimatorMixin)
 from .preprocessing import label_binarize, LabelBinarizer
-from .utils import check_X_y, check_array, indexable, column_or_1d
+from .utils import check_array, indexable, column_or_1d
 from .utils.validation import check_is_fitted, check_consistent_length
 from .utils.validation import _check_sample_weight
 from .isotonic import IsotonicRegression
@@ -124,8 +124,8 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
         self : object
             Returns an instance of self.
         """
-        X, y = check_X_y(X, y, accept_sparse=['csc', 'csr', 'coo'],
-                         force_all_finite=False, allow_nd=True)
+        X, y = self._validate_data(X, y, accept_sparse=['csc', 'csr', 'coo'],
+                                   force_all_finite=False, allow_nd=True)
         X, y = indexable(X, y)
         le = LabelBinarizer().fit(y)
         self.classes_ = le.classes_
@@ -329,7 +329,7 @@ class _CalibratedClassifier:
             self.label_encoder_.fit(self.classes)
 
         self.classes_ = self.label_encoder_.classes_
-        Y = label_binarize(y, self.classes_)
+        Y = label_binarize(y, classes=self.classes_)
 
         df, idx_pos_class = self._preproc(X)
         self.calibrators_ = []
@@ -506,7 +506,8 @@ class _SigmoidCalibration(RegressorMixin, BaseEstimator):
         return expit(-(self.a_ * T + self.b_))
 
 
-def calibration_curve(y_true, y_prob, normalize=False, n_bins=5,
+@_deprecate_positional_args
+def calibration_curve(y_true, y_prob, *, normalize=False, n_bins=5,
                       strategy='uniform'):
     """Compute true and predicted probabilities for a calibration curve.
 
@@ -574,7 +575,7 @@ def calibration_curve(y_true, y_prob, normalize=False, n_bins=5,
     if len(labels) > 2:
         raise ValueError("Only binary classification is supported. "
                          "Provided labels %s." % labels)
-    y_true = label_binarize(y_true, labels)[:, 0]
+    y_true = label_binarize(y_true, classes=labels)[:, 0]
 
     if strategy == 'quantile':  # Determine bin edges by distribution of data
         quantiles = np.linspace(0, 1, n_bins + 1)

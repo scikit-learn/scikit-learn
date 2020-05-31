@@ -19,6 +19,7 @@ from ..exceptions import ConvergenceWarning
 from ..utils import check_random_state, check_array
 from ..utils.extmath import randomized_svd, safe_sparse_dot, squared_norm
 from ..utils.validation import check_is_fitted, check_non_negative
+from ..utils.validation import _deprecate_positional_args
 
 EPSILON = np.finfo(np.float32).eps
 
@@ -501,7 +502,7 @@ def _fit_coordinate_descent(X, W, H, tol=1e-4, max_iter=200, l1_reg_W=0,
 
     rng = check_random_state(random_state)
 
-    for n_iter in range(max_iter):
+    for n_iter in range(1, max_iter + 1):
         violation = 0.
 
         # Update W
@@ -512,7 +513,7 @@ def _fit_coordinate_descent(X, W, H, tol=1e-4, max_iter=200, l1_reg_W=0,
             violation += _update_coordinate_descent(X.T, Ht, W, l1_reg_H,
                                                     l2_reg_H, shuffle, rng)
 
-        if n_iter == 0:
+        if n_iter == 1:
             violation_init = violation
 
         if violation_init == 0:
@@ -840,7 +841,8 @@ def _fit_multiplicative_update(X, W, H, beta_loss='frobenius',
     return W, H, n_iter
 
 
-def non_negative_factorization(X, W=None, H=None, n_components=None,
+@_deprecate_positional_args
+def non_negative_factorization(X, W=None, H=None, n_components=None, *,
                                init=None, update_H=True, solver='cd',
                                beta_loss='frobenius', tol=1e-4,
                                max_iter=200, alpha=0., l1_ratio=0.,
@@ -1071,7 +1073,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None,
         raise ValueError("Invalid solver parameter '%s'." % solver)
 
     if n_iter == max_iter and tol > 0:
-        warnings.warn("Maximum number of iteration %d reached. Increase it to"
+        warnings.warn("Maximum number of iterations %d reached. Increase it to"
                       " improve convergence." % max_iter, ConvergenceWarning)
 
     return W, H, n_iter
@@ -1232,8 +1234,8 @@ class NMF(TransformerMixin, BaseEstimator):
     Fevotte, C., & Idier, J. (2011). Algorithms for nonnegative matrix
     factorization with the beta-divergence. Neural Computation, 23(9).
     """
-
-    def __init__(self, n_components=None, init=None, solver='cd',
+    @_deprecate_positional_args
+    def __init__(self, n_components=None, *, init=None, solver='cd',
                  beta_loss='frobenius', tol=1e-4, max_iter=200,
                  random_state=None, alpha=0., l1_ratio=0., verbose=0,
                  shuffle=False):
@@ -1275,8 +1277,8 @@ class NMF(TransformerMixin, BaseEstimator):
         W : array, shape (n_samples, n_components)
             Transformed data.
         """
-        X = check_array(X, accept_sparse=('csr', 'csc'),
-                        dtype=[np.float64, np.float32])
+        X = self._validate_data(X, accept_sparse=('csr', 'csc'),
+                                dtype=[np.float64, np.float32])
 
         W, H, n_iter_ = non_negative_factorization(
             X=X, W=W, H=H, n_components=self.n_components, init=self.init,

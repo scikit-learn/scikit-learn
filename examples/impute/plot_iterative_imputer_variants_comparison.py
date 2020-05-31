@@ -119,7 +119,7 @@ scores = pd.concat(
     keys=['Original', 'SimpleImputer', 'IterativeImputer'], axis=1
 )
 
-# plot boston results
+# plot california housing results
 fig, ax = plt.subplots(figsize=(13, 6))
 means = -scores.mean()
 errors = scores.std()

@@ -14,6 +14,7 @@ from ..utils import check_array
 from ..utils import is_scalar_nan
 from ..utils._mask import _get_mask
 from ..utils.validation import check_is_fitted
+from ..utils.validation import _deprecate_positional_args
 
 
 class KNNImputer(_BaseImputer):
@@ -31,7 +32,9 @@ class KNNImputer(_BaseImputer):
     ----------
     missing_values : number, string, np.nan or None, default=`np.nan`
         The placeholder for the missing values. All occurrences of
-        `missing_values` will be imputed.
+        `missing_values` will be imputed. For pandas' dataframes with
+        nullable integer dtypes with missing values, `missing_values`
+        should be set to `np.nan`, since `pd.NA` will be converted to `np.nan`.
 
     n_neighbors : int, default=5
         Number of neighboring samples to use for imputation.
@@ -94,8 +97,8 @@ class KNNImputer(_BaseImputer):
            [5.5, 6. , 5. ],
            [8. , 8. , 7. ]])
     """
-
-    def __init__(self, missing_values=np.nan, n_neighbors=5,
+    @_deprecate_positional_args
+    def __init__(self, *, missing_values=np.nan, n_neighbors=5,
                  weights="uniform", metric="nan_euclidean", copy=True,
                  add_indicator=False):
         super().__init__(
@@ -178,8 +181,9 @@ class KNNImputer(_BaseImputer):
             raise ValueError(
                 "Expected n_neighbors > 0. Got {}".format(self.n_neighbors))
 
-        X = check_array(X, accept_sparse=False, dtype=FLOAT_DTYPES,
-                        force_all_finite=force_all_finite, copy=self.copy)
+        X = self._validate_data(X, accept_sparse=False, dtype=FLOAT_DTYPES,
+                                force_all_finite=force_all_finite,
+                                copy=self.copy)
         super()._fit_indicator(X)
 
         _check_weights(self.weights)

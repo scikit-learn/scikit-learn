@@ -10,8 +10,8 @@ import warnings
 
 from ..exceptions import ConvergenceWarning
 from ..base import BaseEstimator, ClusterMixin
-from ..utils import as_float_array, check_array
-from ..utils.validation import check_is_fitted
+from ..utils import as_float_array, check_array, check_random_state
+from ..utils.validation import check_is_fitted, _deprecate_positional_args
 from ..metrics import euclidean_distances
 from ..metrics import pairwise_distances_argmin
 
@@ -30,9 +30,10 @@ def _equal_similarities_and_preferences(S, preference):
     return all_equal_preferences() and all_equal_similarities()
 
 
-def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
-                         damping=0.5, copy=True, verbose=False,
-                         return_n_iter=False):
+@_deprecate_positional_args
+def affinity_propagation(S, *, preference=None, convergence_iter=15,
+                         max_iter=200, damping=0.5, copy=True, verbose=False,
+                         return_n_iter=False, random_state='warn'):
     """Perform Affinity Propagation Clustering of data
 
     Read more in the :ref:`User Guide <affinity_propagation>`.
@@ -71,6 +72,14 @@ def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
 
     return_n_iter : bool, default False
         Whether or not to return the number of iterations.
+
+    random_state : int or np.random.RandomStateInstance, default: 0
+        Pseudo-random number generator to control the starting state.
+        Use an int for reproducible results across function calls.
+        See the :term:`Glossary <random_state>`.
+
+        .. versionadded:: 0.23
+            this parameter was previously hardcoded as 0.
 
     Returns
     -------
@@ -133,7 +142,16 @@ def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
                     if return_n_iter
                     else (np.array([0]), np.array([0] * n_samples)))
 
-    random_state = np.random.RandomState(0)
+    if random_state == 'warn':
+        warnings.warn(("'random_state' has been introduced in 0.23. "
+                       "It will be set to None starting from 0.25 which "
+                       "means that results will differ at every function "
+                       "call. Set 'random_state' to None to silence this "
+                       "warning, or to 0 to keep the behavior of versions "
+                       "<0.23."),
+                      FutureWarning)
+        random_state = 0
+    random_state = check_random_state(random_state)
 
     # Place preference on the diagonal of S
     S.flat[::(n_samples + 1)] = preference
@@ -274,6 +292,13 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
     verbose : bool, default=False
         Whether to be verbose.
 
+    random_state : int or np.random.RandomStateInstance, default: 0
+        Pseudo-random number generator to control the starting state.
+        Use an int for reproducible results across function calls.
+        See the :term:`Glossary <random_state>`.
+
+        .. versionadded:: 0.23
+            this parameter was previously hardcoded as 0.
 
     Attributes
     ----------
@@ -291,23 +316,6 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
 
     n_iter_ : int
         Number of iterations taken to converge.
-
-    Examples
-    --------
-    >>> from sklearn.cluster import AffinityPropagation
-    >>> import numpy as np
-    >>> X = np.array([[1, 2], [1, 4], [1, 0],
-    ...               [4, 2], [4, 4], [4, 0]])
-    >>> clustering = AffinityPropagation().fit(X)
-    >>> clustering
-    AffinityPropagation()
-    >>> clustering.labels_
-    array([0, 0, 0, 1, 1, 1])
-    >>> clustering.predict([[0, 0], [4, 4]])
-    array([0, 1])
-    >>> clustering.cluster_centers_
-    array([[1, 2],
-           [4, 2]])
 
     Notes
     -----
@@ -333,11 +341,28 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
 
     Brendan J. Frey and Delbert Dueck, "Clustering by Passing Messages
     Between Data Points", Science Feb. 2007
-    """
 
-    def __init__(self, damping=.5, max_iter=200, convergence_iter=15,
+    Examples
+    --------
+    >>> from sklearn.cluster import AffinityPropagation
+    >>> import numpy as np
+    >>> X = np.array([[1, 2], [1, 4], [1, 0],
+    ...               [4, 2], [4, 4], [4, 0]])
+    >>> clustering = AffinityPropagation(random_state=5).fit(X)
+    >>> clustering
+    AffinityPropagation(random_state=5)
+    >>> clustering.labels_
+    array([0, 0, 0, 1, 1, 1])
+    >>> clustering.predict([[0, 0], [4, 4]])
+    array([0, 1])
+    >>> clustering.cluster_centers_
+    array([[1, 2],
+           [4, 2]])
+    """
+    @_deprecate_positional_args
+    def __init__(self, *, damping=.5, max_iter=200, convergence_iter=15,
                  copy=True, preference=None, affinity='euclidean',
-                 verbose=False):
+                 verbose=False, random_state='warn'):
 
         self.damping = damping
         self.max_iter = max_iter
@@ -346,6 +371,7 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
         self.verbose = verbose
         self.preference = preference
         self.affinity = affinity
+        self.random_state = random_state
 
     @property
     def _pairwise(self):
@@ -374,7 +400,7 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
             accept_sparse = False
         else:
             accept_sparse = 'csr'
-        X = check_array(X, accept_sparse=accept_sparse)
+        X = self._validate_data(X, accept_sparse=accept_sparse)
         if self.affinity == "precomputed":
             self.affinity_matrix_ = X
         elif self.affinity == "euclidean":
@@ -386,9 +412,11 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
 
         self.cluster_centers_indices_, self.labels_, self.n_iter_ = \
             affinity_propagation(
-                self.affinity_matrix_, self.preference, max_iter=self.max_iter,
+                self.affinity_matrix_, preference=self.preference,
+                max_iter=self.max_iter,
                 convergence_iter=self.convergence_iter, damping=self.damping,
-                copy=self.copy, verbose=self.verbose, return_n_iter=True)
+                copy=self.copy, verbose=self.verbose, return_n_iter=True,
+                random_state=self.random_state)
 
         if self.affinity != "precomputed":
             self.cluster_centers_ = X[self.cluster_centers_indices_].copy()

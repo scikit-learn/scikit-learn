@@ -20,7 +20,7 @@ from joblib import Parallel, delayed, effective_n_jobs
 from ._base import LinearModel
 from ..base import RegressorMixin
 from ..utils import check_random_state
-from ..utils import check_X_y
+from ..utils.validation import _deprecate_positional_args
 from ..exceptions import ConvergenceWarning
 
 _EPSILON = np.finfo(np.double).eps
@@ -291,8 +291,8 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
       Xin Dang, Hanxiang Peng, Xueqin Wang and Heping Zhang
       http://home.olemiss.edu/~xdang/papers/MTSE.pdf
     """
-
-    def __init__(self, fit_intercept=True, copy_X=True,
+    @_deprecate_positional_args
+    def __init__(self, *, fit_intercept=True, copy_X=True,
                  max_subpopulation=1e4, n_subsamples=None, max_iter=300,
                  tol=1.e-3, random_state=None, n_jobs=None, verbose=False):
         self.fit_intercept = fit_intercept
@@ -357,7 +357,7 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
         self : returns an instance of self.
         """
         random_state = check_random_state(self.random_state)
-        X, y = check_X_y(X, y, y_numeric=True)
+        X, y = self._validate_data(X, y, y_numeric=True)
         n_samples, n_features = X.shape
         n_subsamples, self.n_subpopulation_ = self._check_subparams(n_samples,
                                                                     n_features)

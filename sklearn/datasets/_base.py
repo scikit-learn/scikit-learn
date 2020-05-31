@@ -9,7 +9,6 @@ Base IO code for all datasets
 import os
 import csv
 import shutil
-import warnings
 from collections import namedtuple
 from os import environ, listdir, makedirs
 from os.path import dirname, exists, expanduser, isdir, join, splitext
@@ -18,6 +17,7 @@ import hashlib
 from ..utils import Bunch
 from ..utils import check_random_state
 from ..utils import check_pandas_support
+from ..utils.validation import _deprecate_positional_args
 
 import numpy as np
 
@@ -81,7 +81,8 @@ def _convert_data_dataframe(caller_name, data, target,
     return combined_df, X, y
 
 
-def load_files(container_path, description=None, categories=None,
+@_deprecate_positional_args
+def load_files(container_path, *, description=None, categories=None,
                load_content=True, shuffle=True, encoding=None,
                decode_error='strict', random_state=0):
     """Load text files with categories as subfolder names.
@@ -163,12 +164,20 @@ def load_files(container_path, description=None, categories=None,
 
     Returns
     -------
-    data : Bunch
-        Dictionary-like object, the interesting attributes are: either
-        data, the raw text data to learn, or 'filenames', the files
-        holding it, 'target', the classification labels (integer index),
-        'target_names', the meaning of the labels, and 'DESCR', the full
-        description of the dataset.
+    data : :class:`~sklearn.utils.Bunch`
+        Dictionary-like object, with the following attributes.
+
+        data : list of str
+            Only present when `load_content=True`.
+            The raw text data to learn.
+        target : ndarray
+            The target labels (integer index).
+        target_names : list
+            The names of target classes.
+        DESCR : str
+            The full description of the dataset.
+        filenames: ndarray
+            The filenames holding the dataset.
     """
     target = []
     target_names = []
@@ -260,7 +269,8 @@ def load_data(module_path, data_file_name):
     return data, target, target_names
 
 
-def load_wine(return_X_y=False, as_frame=False):
+@_deprecate_positional_args
+def load_wine(*, return_X_y=False, as_frame=False):
     """Load and return the wine dataset (classification).
 
     .. versionadded:: 0.18
@@ -295,8 +305,8 @@ def load_wine(return_X_y=False, as_frame=False):
 
     Returns
     -------
-    data : Bunch
-        Dictionary-like object, with attributes:
+    data : :class:`~sklearn.utils.Bunch`
+        Dictionary-like object, with the following attributes.
 
         data : {ndarray, dataframe} of shape (178, 13)
             The data matrix. If `as_frame=True`, `data` will be a pandas
@@ -374,7 +384,8 @@ def load_wine(return_X_y=False, as_frame=False):
                  feature_names=feature_names)
 
 
-def load_iris(return_X_y=False, as_frame=False):
+@_deprecate_positional_args
+def load_iris(*, return_X_y=False, as_frame=False):
     """Load and return the iris dataset (classification).
 
     The iris dataset is a classic and very easy multi-class classification
@@ -409,8 +420,8 @@ def load_iris(return_X_y=False, as_frame=False):
 
     Returns
     -------
-    data : Bunch
-        Dictionary-like object, with attributes:
+    data : :class:`~sklearn.utils.Bunch`
+        Dictionary-like object, with the following attributes.
 
         data : {ndarray, dataframe} of shape (150, 4)
             The data matrix. If `as_frame=True`, `data` will be a pandas
@@ -431,6 +442,8 @@ def load_iris(return_X_y=False, as_frame=False):
             The full description of the dataset.
         filename: str
             The path to the location of the data.
+
+            .. versionadded:: 0.20
 
     (data, target) : tuple if ``return_X_y`` is True
 
@@ -486,7 +499,8 @@ def load_iris(return_X_y=False, as_frame=False):
                  filename=iris_csv_filename)
 
 
-def load_breast_cancer(return_X_y=False, as_frame=False):
+@_deprecate_positional_args
+def load_breast_cancer(*, return_X_y=False, as_frame=False):
     """Load and return the breast cancer wisconsin dataset (classification).
 
     The breast cancer dataset is a classic and very easy binary classification
@@ -521,8 +535,8 @@ def load_breast_cancer(return_X_y=False, as_frame=False):
 
     Returns
     -------
-    data : Bunch
-        Dictionary-like object, with attributes:
+    data : :class:`~sklearn.utils.Bunch`
+        Dictionary-like object, with the following attributes.
 
         data : {ndarray, dataframe} of shape (569, 30)
             The data matrix. If `as_frame=True`, `data` will be a pandas
@@ -543,6 +557,8 @@ def load_breast_cancer(return_X_y=False, as_frame=False):
             The full description of the dataset.
         filename: str
             The path to the location of the data.
+
+            .. versionadded:: 0.20
 
     (data, target) : tuple if ``return_X_y`` is True
 
@@ -608,7 +624,8 @@ def load_breast_cancer(return_X_y=False, as_frame=False):
                  filename=csv_filename)
 
 
-def load_digits(n_class=10, return_X_y=False, as_frame=False):
+@_deprecate_positional_args
+def load_digits(*, n_class=10, return_X_y=False, as_frame=False):
     """Load and return the digits dataset (classification).
 
     Each datapoint is a 8x8 image of a digit.
@@ -645,8 +662,8 @@ def load_digits(n_class=10, return_X_y=False, as_frame=False):
 
     Returns
     -------
-    data : Bunch
-        Dictionary-like object, with attributes:
+    data : :class:`~sklearn.utils.Bunch`
+        Dictionary-like object, with the following attributes.
 
         data : {ndarray, dataframe} of shape (1797, 64)
             The flattened data matrix. If `as_frame=True`, `data` will be
@@ -658,6 +675,9 @@ def load_digits(n_class=10, return_X_y=False, as_frame=False):
             The names of the dataset columns.
         target_names: list
             The names of target classes.
+
+            .. versionadded:: 0.20
+
         frame: DataFrame of shape (1797, 65)
             Only present when `as_frame=True`. DataFrame with `data` and
             `target`.
@@ -728,7 +748,8 @@ def load_digits(n_class=10, return_X_y=False, as_frame=False):
                  DESCR=descr)
 
 
-def load_diabetes(return_X_y=False, as_frame=False):
+@_deprecate_positional_args
+def load_diabetes(*, return_X_y=False, as_frame=False):
     """Load and return the diabetes dataset (regression).
 
     ==============   ==================
@@ -759,8 +780,8 @@ def load_diabetes(return_X_y=False, as_frame=False):
 
     Returns
     -------
-    data : Bunch
-        Dictionary-like object, with attributes:
+    data : :class:`~sklearn.utils.Bunch`
+        Dictionary-like object, with the following attributes.
 
         data : {ndarray, dataframe} of shape (442, 10)
             The data matrix. If `as_frame=True`, `data` will be a pandas
@@ -820,7 +841,8 @@ def load_diabetes(return_X_y=False, as_frame=False):
                  target_filename=target_filename)
 
 
-def load_linnerud(return_X_y=False, as_frame=False):
+@_deprecate_positional_args
+def load_linnerud(*, return_X_y=False, as_frame=False):
     """Load and return the physical excercise linnerud dataset.
 
     This dataset is suitable for multi-ouput regression tasks.
@@ -853,8 +875,8 @@ def load_linnerud(return_X_y=False, as_frame=False):
 
     Returns
     -------
-    data : Bunch
-        Dictionary-like object, with attributes:
+    data : :class:`~sklearn.utils.Bunch`
+        Dictionary-like object, with the following attributes.
 
         data : {ndarray, dataframe} of shape (20, 3)
             The data matrix. If `as_frame=True`, `data` will be a pandas
@@ -877,6 +899,8 @@ def load_linnerud(return_X_y=False, as_frame=False):
             The path to the location of the data.
         target_filename: str
             The path to the location of the target.
+
+            .. versionadded:: 0.20
 
     (data, target) : tuple if ``return_X_y`` is True
 
@@ -921,7 +945,8 @@ def load_linnerud(return_X_y=False, as_frame=False):
                  target_filename=target_filename)
 
 
-def load_boston(return_X_y=False):
+@_deprecate_positional_args
+def load_boston(*, return_X_y=False):
     """Load and return the boston house-prices dataset (regression).
 
     ==============   ==============
@@ -943,12 +968,22 @@ def load_boston(return_X_y=False):
 
     Returns
     -------
-    data : Bunch
-        Dictionary-like object, the interesting attributes are:
-        'data', the data to learn, 'target', the regression targets,
-        'DESCR', the full description of the dataset,
-        and 'filename', the physical location of boston
-        csv dataset (added in version `0.20`).
+    data : :class:`~sklearn.utils.Bunch`
+        Dictionary-like object, with the following attributes.
+
+        data : ndarray of shape (506, 13)
+            The data matrix.
+        target : ndarray of shape (506, )
+            The regression target.
+        filename : str
+            The physical location of boston csv dataset.
+
+            .. versionadded:: 0.20
+
+        DESCR : str
+            The full description of the dataset.
+        feature_names : ndarray
+            The names of features
 
     (data, target) : tuple if ``return_X_y`` is True
 
@@ -1007,10 +1042,15 @@ def load_sample_images():
 
     Returns
     -------
-    data : Bunch
-        Dictionary-like object with the following attributes : 'images', the
-        two sample images, 'filenames', the file names for the images, and
-        'DESCR' the full description of the dataset.
+    data : :class:`~sklearn.utils.Bunch`
+        Dictionary-like object, with the following attributes.
+
+        images : list of ndarray of shape (427, 640, 3)
+            The two sample image.
+        filenames : list
+            The filenames for the images.
+        DESCR : str
+            The full description of the dataset.
 
     Examples
     --------
