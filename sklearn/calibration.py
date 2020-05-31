@@ -134,7 +134,8 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
     CalibratedClassifierCV(base_estimator=GaussianNB(), cv='prefit')
     >>> len(calibrated_clf.calibrated_classifiers_)
     1
-    >>> calibrated_clf.predict_proba([[-0.5, 0.5]]) # doctest: +SKIP
+    >>> calibrated_clf.predict_proba([[-0.5, 0.5]])
+    array([[0.937..., 0.062...]])
 
     References
     ----------
