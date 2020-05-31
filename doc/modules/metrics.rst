@@ -165,14 +165,14 @@ the kernel is known as the Gaussian kernel of variance :math:`\sigma^2`.
 
 Laplacian kernel
 ----------------
-The function :func:`laplacian_kernel` is a variant on the radial basis 
+The function :func:`laplacian_kernel` is a variant on the radial basis
 function kernel defined as:
 
 .. math::
 
     k(x, y) = \exp( -\gamma \| x-y \|_1)
 
-where ``x`` and ``y`` are the input vectors and :math:`\|x-y\|_1` is the 
+where ``x`` and ``y`` are the input vectors and :math:`\|x-y\|_1` is the
 Manhattan distance between the input vectors.
 
 It has proven useful in ML applied to noiseless data.
@@ -230,3 +230,50 @@ The chi squared kernel is most commonly used on histograms (bags) of visual word
       International Journal of Computer Vision 2007
       https://research.microsoft.com/en-us/um/people/manik/projects/trade-off/papers/ZhangIJCV06.pdf
 
+.. _pairwise_wasserstein_distances:
+
+Wasserstein Distance
+--------------------
+The Wasserstein Distance is also known as the Kantorovich-Monge-Rubinstein metric;
+it is the distance metric between probability measures, or between samples that have
+uncertainties. In this implementation, two samples X and Y are data points with their
+mean values and uncertainty values concatenated. Note, this implementation assumes no
+covariances between features/dimensions, i.e the uncertainties among different dimensions
+DO NOT covariate.
+
+.. math::
+    X_u = X[:, feature_slicer]
+
+    Y_u = Y[:, feature_slicer]
+
+    X_d = X[:, stdev_slicer]
+
+    Y_d = Y[:, stdev_slicer]
+
+    WassDist = PairwiseEuclideanDistance(X_u, Y_u) +
+    \sum_{i \in X_nsamples}} \sum_{j \in Y_nsamples}} (X_i+Y_j-2*sqrt(X_i*Y_j))
+
+Example:
+
+Let's assume we collected 3D data points measurements from two
+experiments A and B; along with each measurement, we have the
+uncertainties as well. Let's compute pairwise distances
+between data points in A and data points in B, taking uncertainties
+into consideration.
+
+>>> from sklearn.metrics.pairwise import pairwise_wasserstein_distances
+>>> A = [[1.1, 2.2, 1.1, 0.01, 0.02, 0.01],
+            [1.2, 2.3, 4.1, 0.02, 0.03, 0.01],
+            [-3.2, 0.1, -2.1, 0.02, 0.01, 0.01]]
+>>> B = [[0.1, 5.2, 1.1, 0.01, 0.01, 0.01],
+            [-1.2, 1.3, 4.1, 0.02, 0.01, 0.05]]
+>>> result = pairwise_wasserstein_distances(A, B, [0,1,2], [3,4,5])
+>>> result
+array([[3.16399339, 3.90458194],
+        [4.32216451, 2.62063762],
+        [6.86757329, 6.63947671]])
+
+.. topic:: References:
+
+    * https://arxiv.org/pdf/1806.05500.pdf
+    * https://statweb.stanford.edu/~souravc/Lecture2.pdf

@@ -720,25 +720,40 @@ def haversine_distances(X, Y=None):
     return DistanceMetric.get_metric('haversine').pairwise(X, Y)
 
 
-def pairwise_wasserstein_distances(X, Y, X_d, Y_d):
-    """Computes the pairwise wasserstein distances of two groups of
-    data points with uncertainties
-    wikipedia: https://en.wikipedia.org/wiki/Wasserstein_metric
+def pairwise_wasserstein_distances(X, Y, feature_slicer = None, stdev_slicer = None):
+    """Computes the pairwise wasserstein distances between samples in X and Y
 
+    The Wasserstein Distance is also known as the Kantorovich-Monge-Rubinstein metric;
+    it is the distance metric between probability measures, or between samples that have
+    uncertainties. In this implementation, two samples X and Y are data points with their
+    mean values and uncertainty values concatenated. Note, this implementation assumes no
+    covariances between features/dimensions, i.e the uncertainties among different dimensions
+    DO NOT covariate.
+
+    ref: Statistical Aspects of Wasserstein Distances https://arxiv.org/pdf/1806.05500.pdf
+         https://statweb.stanford.edu/~souravc/Lecture2.pdf
     .. math::
-       D(X, Y, X_d, Y_d) = PairwiseEuclideanDistance(X, Y) +
+       X_u = X[:, feature_slicer]
+       Y_u = Y[:, feature_slicer]
+       X_d = X[:, stdev_slicer]
+       Y_d = Y[:, stdev_slicer]
+       D(X_u, Y_u, X_d, Y_d) = PairwiseEuclideanDistance(X_u, Y_u) +
         sum(X_d[i]+Y_d[i]-2*sqrt(X_d[i]*Y_d[i])) for i in range(n_features)
-        for every pair of X and Y
+        for every pair of X_u and Y_u
 
     Parameters
     ----------
-    X    : array_like, shape (n_samples_1, n_features)
+    X : array_like, shape (n_samples_1, 2 * n_features)
+        2D matrix that contains full features (or mean measurements) and uncertainties
 
-    Y    : array_like, shape (n_samples_2, n_features)
+    Y : array_like, shape (n_samples_2, 2 * n_features)
+        2D matrix that contains full features (or mean measurements) and uncertainties
 
-    X_d  : array_like, shape (n_samples_1, n_features)
+    feature_slicer : array_like, (n_features), optional
+        1D array that contains the column indices of features in X and Y
 
-    Y_d  : array_like, shape (n_samples_2, n_features)
+    stdev_slicer : array_like, (n_features), optional
+        1D array that contains the column indices of uncertainties in X and Y
 
     Returns
     -------
@@ -746,6 +761,11 @@ def pairwise_wasserstein_distances(X, Y, X_d, Y_d):
 
     Notes
     -----
+    This function assumes no covariance among features; moreover, it is assumed that
+    feature_slicer and stdev_slicer are of same shape, i.e n_features. feature_slicer
+    and stdev_slicer must be all None (by default), or all not None. By default,
+    when feature_slicer and stdev_slicer are None, we automatically consider first halves
+    columns in X and Y as features, and the latter halves as uncertainties.
 
     Examples
     --------
@@ -756,26 +776,42 @@ def pairwise_wasserstein_distances(X, Y, X_d, Y_d):
     into consideration.
 
     >>> from sklearn.metrics.pairwise import pairwise_wasserstein_distances
-    >>> A = [[1.1, 2.2, 1.1],[1.2, 2.3, 4.1],[-3.2, 0.1, -2.1]]
-    >>> B = [[0.1, 5.2, 1.1],[-1.2, 1.3, 4.1]]
-    >>> A_uncrtnty = [[0.01, 0.02, 0.01],[0.02, 0.03, 0.01],[0.02, 0.01, 0.01]]
-    >>> B_uncrtnty = [[0.01, 0.01, 0.01],[0.02, 0.01, 0.05]]
-    >>> result = pairwise_wasserstein_distances(A, B, A_uncrtnty, B_uncrtnty)
+    >>> A = [[1.1, 2.2, 1.1, 0.01, 0.02, 0.01],
+             [1.2, 2.3, 4.1, 0.02, 0.03, 0.01],
+             [-3.2, 0.1, -2.1, 0.02, 0.01, 0.01]]
+    >>> B = [[0.1, 5.2, 1.1, 0.01, 0.01, 0.01],
+             [-1.2, 1.3, 4.1, 0.02, 0.01, 0.05]]
+    >>> result = pairwise_wasserstein_distances(A, B, [0,1,2], [3,4,5])
     >>> result
     array([[3.16399339, 3.90458194],
            [4.32216451, 2.62063762],
            [6.86757329, 6.63947671]])
     """
     X, Y = check_pairwise_arrays(X, Y)
-    X_d, Y_d = check_pairwise_arrays(X_d, Y_d)
+    if feature_slicer and not stdev_slicer:
+        raise Exception("feature_slicer and stdev_slicer must be both None or both not None")
+        return
+    elif stdev_slicer and not feature_slicer:
+        raise Exception("feature_slicer and stdev_slicer must be both None or both not None")
+        return
+    elif stdev_slicer and feature_slicer:
+        X_u = X[:, feature_slicer]
+        Y_u = Y[:, feature_slicer]
+        X_d = X[:, stdev_slicer]
+        Y_d = Y[:, stdev_slicer]
+    elif not stdev_slicer and not feature_slicer:
+        if X.shape[1]%2 or Y.shape[1]%2 or X.shape[1] != Y.shape[1]:
+            raise Exception("X and Y must have equal number of feature columns and uncertainty columns")
+            return
+        else:
+            n_feat = int(X.shape[1]/2)
+            X_u = X[:, :n_feat]
+            Y_u = Y[:, :n_feat]
+            X_d = X[:, n_feat:]
+            Y_d = Y[:, n_feat:]
 
     # compute pairwise euclidean dist between X, Y
-    X_Y_dist = euclidean_distances(X, Y)
-
-    n_feat = len(X[0])
-    if n_feat != len(Y[0]):
-        raise Exception("X, Y must have the same dimension")
-        return
+    X_Y_dist = euclidean_distances(X_u, Y_u)
 
     # sum(X_d[i]+Y_d[i]-2*sqrt(X_d[i]*Y_d[i])) for i in range(n_features)
     # for every pair of X and Y
