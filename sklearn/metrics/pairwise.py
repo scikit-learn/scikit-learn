@@ -720,7 +720,8 @@ def haversine_distances(X, Y=None):
     return DistanceMetric.get_metric('haversine').pairwise(X, Y)
 
 
-def pairwise_wasserstein_distances(X, Y, feature_slicer=None, stdev_slicer=None):
+def pairwise_wasserstein_distances(X, Y, feature_slicer=None,
+                                   stdev_slicer=None):
     """Computes the pairwise wasserstein distances between samples in X and Y
 
     The Wasserstein Distance is also known as the Kantorovich-Monge-Rubinstein
