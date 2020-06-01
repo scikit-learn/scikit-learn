@@ -145,6 +145,209 @@ def contingency_matrix(labels_true, labels_pred, *, eps=None, sparse=False,
 
 # clustering measures
 
+def pair_confusion_matrix(labels_true, labels_pred):
+    """Pair confusion matrix.
+
+    The pair confusion matrix computes a 2x2 similarity matrix between
+    two clusterings by considering all pairs of samples and counting
+    pairs that are assigned in the same or different clusters in the
+    predicted and true clusterings.
+
+    The 2x2 pair confusion matrix is:
+        D00 D01
+        D10 D11
+    where
+    D00 = number of pairs with both clusterings having the samples
+    not clustered together,
+    D10 = number of pairs with the true label clusterings having the
+    samples clustered together but the other clustering not having the
+    samples clustered together,
+    D01 = number of pairs with the true label clusterings not having the
+    samples clustered together but the other clustering having the
+    samples clustered together,
+    D11 = number of pairs with both clusterings having the samples
+    clustered together.
+
+    Parameters
+    ----------
+    labels_true : int array, shape = [n_samples]
+        Ground truth class labels to be used as a reference
+
+    labels_pred : array, shape = [n_samples]
+        Cluster labels to evaluate
+
+    Returns
+    -------
+    nested list [[D00, D01], [D10, D11]].
+
+    Examples
+    --------
+
+    Perfectly matching labelings have all non-zero entries on the
+    diagonal regardless of actual label values:
+
+      >>> from sklearn.metrics.cluster import pair_confusion_matrix
+      >>> pair_confusion_matrix([0, 0, 1, 1], [0, 0, 1, 1])
+      [[8, 0], [0, 4]]
+      >>> pair_confusion_matrix([0, 0, 1, 1], [1, 1, 0, 0])
+      [[8, 0], [0, 4]]
+
+    Labelings that assign all classes members to the same clusters
+    are complete but may be not always pure, hence penalized, and
+    have some off-diagonal non-zero entries:
+
+      >>> pair_confusion_matrix([0, 0, 1, 2], [0, 0, 1, 1])  # doctest: +ELLIPSIS
+      [[8, 2], [0, 2]]
+
+    The matrix is not symmetric:
+
+      >>> pair_confusion_matrix([0, 0, 1, 1], [0, 0, 1, 2])  # doctest: +ELLIPSIS
+      [[8, 0], [2, 2]]
+
+    If classes members are completely split across different clusters, the
+    assignment is totally incomplete, hence the matrix has all zero
+    diagonal entries:
+
+      >>> pair_confusion_matrix([0, 0, 0, 0], [0, 1, 2, 3])
+      [[0, 0], [12, 0]]
+
+    References
+    ----------
+
+    .. [Hubert1985] L. Hubert and P. Arabie, Comparing Partitions,
+      Journal of Classification 1985
+      https://link.springer.com/article/10.1007%2FBF01908075
+
+    See also
+    --------
+    adjusted_pair_confusion_matrix: Adjusted Rand Score
+    adjusted_mutual_info_score: Adjusted Mutual Information
+
+    """
+    labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
+    n_samples = np.int64(labels_true.shape[0])
+    n_classes = np.unique(labels_true).shape[0]
+    n_clusters = np.unique(labels_pred).shape[0]
+
+    # Special limit cases: no clustering since the data is not split;
+    # or trivial clustering where each document is assigned a unique cluster.
+    # These are perfect matches hence all pairs are counted either under
+    # D00 or D11.
+    if n_classes == n_clusters == 1:
+        return [[0,0], [0,n_samples * (n_samples - 1)]]
+    elif n_classes == n_clusters == 0:
+        return [[0,0], [0,0]]
+    elif n_classes == n_clusters == n_samples:
+        return [[n_samples * (n_samples - 1),0], [0,0]]
+
+    # Computation using the contingency data
+    contingency = contingency_matrix(labels_true, labels_pred, sparse=True, dtype=np.int64)
+    n_c = np.ravel(contingency.sum(axis=1))
+    n_k = np.ravel(contingency.sum(axis=0))
+    #rows,cols = contingency.nonzero()
+    #D11 = sum(n_ij*(n_ij-1) for n_ij in contingency.data)
+    Sum_Squares = sum(n_ij*n_ij for n_ij in contingency.data)
+    D11 = Sum_Squares - n_samples
+    #D01 = sum(contingency[c,k] * (n_k[k] - contingency[c,k]) for c,k in zip(rows,cols))
+    D01 = sum(contingency.dot(n_k)) - Sum_Squares
+    #D10 = sum(contingency[c,k] * (n_c[c] - contingency[c,k]) for c,k in zip(rows,cols))
+    D10 = sum(contingency.transpose().dot(n_c)) - Sum_Squares
+    #D00 = sum(contingency[c,k] * (n_samples - n_c[c] - n_k[k] + contingency[c,k]) for c,k in zip(rows,cols))
+    D00 = n_samples * n_samples - D01 - D10 - Sum_Squares
+    return [[D00, D01], [D10, D11]]
+
+
+def rand_score(labels_true, labels_pred):
+    """Rand index.
+
+    The Rand Index computes a similarity measure between two clusterings
+    by considering all pairs of samples and counting pairs that are
+    assigned in the same or different clusters in the predicted and
+    true clusterings.
+
+    The raw RI score is:
+
+        RI = (D00 + D11) / (number of pairs)
+
+    where D00 = number of pairs with both clusterings having the samples
+    not clustered together, and D11 = number of pairs with both clusterings
+    having the samples clustered together.
+
+    RI is a symmetric measure::
+
+        rand_score(a, b) == rand_score(b, a)
+
+    Parameters
+    ----------
+    labels_true : int array, shape = [n_samples]
+        Ground truth class labels to be used as a reference
+
+    labels_pred : array, shape = [n_samples]
+        Cluster labels to evaluate
+
+    Returns
+    -------
+    ri : float
+       Similarity score between 0.0 and 1.0, inclusive. 1.0 stands for
+       perfect match.
+
+    Examples
+    --------
+
+    Perfectly matching labelings have a score of 1 even
+
+      >>> from sklearn.metrics.cluster import rand_score
+      >>> rand_score([0, 0, 1, 1], [0, 0, 1, 1])
+      1.0
+      >>> rand_score([0, 0, 1, 1], [1, 1, 0, 0])
+      1.0
+
+    Labelings that assign all classes members to the same clusters
+    are complete but may be not always pure, hence penalized:
+
+      >>> rand_score([0, 0, 1, 2], [0, 0, 1, 1])  # doctest: +ELLIPSIS
+      0.83...
+
+    RI is symmetric, so labelings that have pure clusters with members
+    coming from the same classes but unnecessary splits are penalized::
+
+      >>> rand_score([0, 0, 1, 1], [0, 0, 1, 2])  # doctest: +ELLIPSIS
+      0.83...
+
+    If classes members are completely split across different clusters, the
+    assignment is totally incomplete, hence the RI is minimized:
+
+      >>> rand_score([0, 0, 0, 0], [0, 1, 2, 3])
+      0.0
+
+    References
+    ----------
+
+    .. [Hubert1985] L. Hubert and P. Arabie, Comparing Partitions,
+      Journal of Classification 1985
+      https://link.springer.com/article/10.1007%2FBF01908075
+
+    .. [wk] https://en.wikipedia.org/wiki/Simple_matching_coefficient
+
+    See also
+    --------
+    adjusted_rand_score: Adjusted Rand Score
+    adjusted_mutual_info_score: Adjusted Mutual Information
+
+    """
+    m = pair_confusion_matrix(labels_true, labels_pred)
+    m_diag = m[0][0] + m[1][1]
+    m_sum = m_diag + m[0][1] + m[1][0]
+
+    # Special limit cases: no clustering since the data is not split;
+    # or trivial clustering where each document is assigned a unique cluster.
+    # These are perfect matches hence return 1.0.
+    if m_diag == m_sum or m_sum == 0:
+        return 1.0
+
+    return m_diag / m_sum
+
+
 def adjusted_rand_score(labels_true, labels_pred):
     """Rand index adjusted for chance.
 
