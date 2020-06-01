@@ -122,7 +122,9 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
     >>> from sklearn.calibration import CalibratedClassifierCV
     >>> X, y = make_classification(n_samples=100, n_features=2,
     ...                            n_redundant=0, random_state=42)
-    >>> X_train, X_calib, y_train, y_calib = train_test_split(X, y)
+    >>> X_train, X_calib, y_train, y_calib = train_test_split(
+    ...        X, y, random_state=42
+    ... )
     >>> base_clf = GaussianNB()
     >>> base_clf.fit(X_train, y_train)
     GaussianNB()
@@ -135,7 +137,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
     >>> len(calibrated_clf.calibrated_classifiers_)
     1
     >>> calibrated_clf.predict_proba([[-0.5, 0.5]])
-    array([[0.937..., 0.062...]])
+    array([[0.936..., 0.063...]])
 
     References
     ----------
