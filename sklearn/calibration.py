@@ -43,8 +43,8 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
     ----------
     base_estimator : BaseEstimator instance, default=None
         The classifier whose output need to be calibrated to provide more
-        accurate `predict_proba` outputs. If None, then
-        :class:`~sklearn.svm.LinearSVC` is calibrated.
+        accurate `predict_proba` outputs. The default classifier is
+        a :class:`~sklearn.svm.LinearSVC`.
 
     method : 'sigmoid' or 'isotonic'
         The method to use for calibration. Can be 'sigmoid' which
