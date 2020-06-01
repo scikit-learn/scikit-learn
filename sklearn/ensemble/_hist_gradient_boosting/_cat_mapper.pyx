@@ -3,8 +3,6 @@
 # cython: wraparound=False
 # cython: language_level=3
 # cython: nonecheck=False
-# distutils: language=c++
-# cython: linetrace=True
 # distutils: define_macros=CYTHON_TRACE_NOGIL=1
 
 from .common cimport X_DTYPE_C
