@@ -902,7 +902,7 @@ def test_nan_euclidean_distances_one_feature_match_positive(missing_value):
     assert_allclose(dist, 0.0)
 
 
-def test_wasserstein_distance():
+def test_pairwise_wasserstein_distances():
     # Test wasserstein distance between two samples of measurement, X, Y
     # with their corresponding uncertainties X_d, Y_d
     X = np.array([[1.1,  2.2,  1.1, 0.01, 0.02, 0.01],
