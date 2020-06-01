@@ -518,7 +518,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         check_is_fitted(self)
 
         decision = self.decision_function(X)
-        if self.classes_.size == 2:
+        if self.classes_.size <= 2:
             proba = expit(decision)
             return np.vstack([1-proba, proba]).T
         else:

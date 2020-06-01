@@ -487,3 +487,17 @@ def test_raises_value_error_on_same_number_of_classes_and_samples(solver):
     clf = LinearDiscriminantAnalysis(solver=solver)
     with pytest.raises(ValueError, match="The number of samples must be more"):
         clf.fit(X, y)
+
+
+def test_constant_target_lda():
+    # Test LDA with constant target
+    # Non regression test for
+    # https://github.com/scikit-learn/scikit-learn/issues/17401
+
+    rng = np.random.RandomState(0)
+    X = rng.uniform(size=(10, 3))
+    y = np.ones(10)
+    lda = LinearDiscriminantAnalysis().fit(X, y)
+
+    assert_allclose(lda.predict_proba(X), .5)
+    assert (lda.predict(X) == y).all()
