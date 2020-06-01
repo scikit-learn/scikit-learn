@@ -193,14 +193,6 @@ Changelog
   a column name that is not unique in the dataframe. :pr:`16431` by
   `Thomas Fan`_.
 
-:mod:`sklearn.covariance`
-.........................
-
-- |API| Deprecates `cv_alphas_` in favor of `cv_results['alphas']` and
-  `grid_scores_` in favor of split scores in `cv_results_` in
-  :class:`covariance.GraphicalLassoCV`. `cv_alphas_` and `grid_scores_` will be
-  removed in version 0.25. :pr:`16392` by `Thomas Fan`_.
-
 :mod:`sklearn.datasets`
 .......................
 

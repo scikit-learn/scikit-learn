@@ -152,7 +152,7 @@ def test_graphical_lasso_cv(random_state=1):
     GraphicalLassoCV(alphas=[0.8, 0.5], tol=1e-1, n_jobs=1).fit(X)
 
 
-# TODO: Remove in 0.25 when grid_scores_ is deprecated
+# TODO: Remove in 0.26 when grid_scores_ is deprecated
 def test_graphical_lasso_cv_grid_scores_and_cv_alphas_deprecated():
     splits = 4
     n_alphas = 5
@@ -167,14 +167,14 @@ def test_graphical_lasso_cv_grid_scores_and_cv_alphas_deprecated():
                            n_refinements=n_refinements).fit(X)
 
     total_alphas = n_refinements * n_alphas + 1
-    msg = (r"The grid_scores_ attribute is deprecated in version 0\.23 in "
-           r"favor of cv_results_ and will be removed in version 0\.25")
+    msg = (r"The grid_scores_ attribute is deprecated in version 0\.24 in "
+           r"favor of cv_results_ and will be removed in version 0\.26")
     with pytest.warns(FutureWarning, match=msg):
         assert cov.grid_scores_.shape == (total_alphas, splits)
 
-    msg = (r"The cv_alphas_ attribute is deprecated in version 0\.23 in "
+    msg = (r"The cv_alphas_ attribute is deprecated in version 0\.24 in "
            r"favor of cv_results_\['alpha'\] and will be removed in version "
-           r"0\.25")
+           r"0\.26")
     with pytest.warns(FutureWarning, match=msg):
         assert len(cov.cv_alphas_) == total_alphas
 
