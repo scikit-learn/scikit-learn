@@ -13,8 +13,6 @@ from sklearn.ensemble._hist_gradient_boosting.common import (
     X_BITSET_INNER_DTYPE, X_DTYPE)
 from sklearn.ensemble._hist_gradient_boosting._predictor_bitset import \
     PredictorBitSet
-from sklearn.ensemble._hist_gradient_boosting._cat_mapper import \
-    CategoryMapper
 
 
 @pytest.mark.parametrize('n_bins', [200, 256])
@@ -40,8 +38,7 @@ def test_regression_dataset(n_bins):
     grower.grow()
 
     predictor = grower.make_predictor(
-        bin_thresholds=mapper.bin_thresholds_,
-        category_mapper=CategoryMapper(n_bins - 1))
+        bin_thresholds=mapper.bin_thresholds_)
 
     assert r2_score(y_train, predictor.predict(X_train)) > 0.82
     assert r2_score(y_test, predictor.predict(X_test)) > 0.67
