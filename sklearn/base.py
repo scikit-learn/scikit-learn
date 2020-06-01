@@ -17,6 +17,7 @@ from ._config import get_config
 from .utils import _IS_32BIT
 from .utils.validation import check_X_y
 from .utils.validation import check_array
+from .utils.validation import _is_dataframe
 from .utils._estimator_html_repr import estimator_html_repr
 from .utils.validation import _deprecate_positional_args
 
@@ -376,6 +377,21 @@ class BaseEstimator:
                                        self.n_features_in_)
                 )
 
+    def _check_feature_names(self, df, reset):
+        # set _feature_names_in attribute or check against it
+
+        if reset:
+            self._feature_names_in = df.columns.values
+        elif hasattr(self, '_feature_names_in'):
+            feature_names = df.columns.values
+            if np.any(feature_names != self._feature_names_in):
+                raise ValueError(
+                    "The column names of the dataframe must match those "
+                    "that were passed during fit(), in the same order. "
+                    f"Got ({feature_names}), expected "
+                    f"({self._feature_names_in})."
+                )
+
     def _validate_data(self, X, y=None, reset=True,
                        validate_separately=False, **check_params):
         """Validate input data and set or check the `n_features_in_` attribute.
@@ -406,9 +422,11 @@ class BaseEstimator:
         out : {ndarray, sparse matrix} or tuple of these
             The validated input. A tuple is returned if `y` is not None.
         """
+        is_df = _is_dataframe(X)
+        X_orig = X
 
         if y is None:
-            if self._get_tags()['requires_y']:
+            if reset and self._get_tags()['requires_y']:
                 raise ValueError(
                     f"This {self.__class__.__name__} estimator "
                     f"requires y to be passed, but the target y is None."
@@ -430,6 +448,8 @@ class BaseEstimator:
 
         if check_params.get('ensure_2d', True):
             self._check_n_features(X, reset=reset)
+            if is_df:
+                self._check_feature_names(X_orig, reset=reset)
 
         return out
 

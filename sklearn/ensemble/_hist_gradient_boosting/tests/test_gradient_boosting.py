@@ -794,3 +794,10 @@ def test_staged_predict(HistGradientBoosting, X, y):
 
             assert_allclose(staged_predictions, pred_aux)
             assert staged_predictions.shape == pred_aux.shape
+
+
+def test_df_column_names():
+    from sklearn.utils.estimator_checks import check_dataframe_column_names_consistency  # noqa
+
+    check_dataframe_column_names_consistency('hgbdt',
+                                             HistGradientBoostingRegressor())

@@ -640,8 +640,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         raw_predictions : array, shape (n_trees_per_iteration, n_samples)
             The raw predicted values.
         """
-        X = check_array(X, dtype=[X_DTYPE, X_BINNED_DTYPE],
-                        force_all_finite=False)
+        X = self._validate_data(X, dtype=[X_DTYPE, X_BINNED_DTYPE],
+                                force_all_finite=False, reset=False)
         check_is_fitted(self)
         if X.shape[1] != self.n_features_:
             raise ValueError(

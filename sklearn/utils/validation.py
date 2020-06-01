@@ -1378,3 +1378,8 @@ def _check_fit_params(X, fit_params, indices=None):
             )
 
     return fit_params_validated
+
+
+def _is_dataframe(X):
+    # Return True if X is a pandas dataframe (or a Series)
+    return hasattr(X, 'iloc')

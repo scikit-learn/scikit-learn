@@ -43,6 +43,7 @@ from sklearn.utils.validation import (
     _deprecate_positional_args,
     _check_sample_weight,
     _allclose_dense_sparse,
+    _is_dataframe,
     FLOAT_DTYPES)
 from sklearn.utils.validation import _check_fit_params
 
@@ -1213,3 +1214,15 @@ def test_check_sparse_pandas_sp_format(sp_format):
     assert sp.issparse(result)
     assert result.format == sp_format
     assert_allclose_dense_sparse(sp_mat, result)
+
+
+def test_is_dataframe():
+    pd = pytest.importorskip('pandas')
+
+    assert _is_dataframe(pd.DataFrame(np.arange(10)))
+    assert _is_dataframe(pd.Series(np.arange(10)))
+
+    assert not _is_dataframe(np.arange(10))
+    assert not _is_dataframe(list(range(10)))
+    assert not _is_dataframe(1234)
+    assert not _is_dataframe('still not a df')

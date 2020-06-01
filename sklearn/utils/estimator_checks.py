@@ -2991,3 +2991,45 @@ def check_requires_y_none(name, estimator_orig):
     except ValueError as ve:
         if not any(msg in str(ve) for msg in expected_err_msgs):
             warnings.warn(warning_msg, FutureWarning)
+
+
+def check_dataframe_column_names_consistency(name, estimator_orig):
+    try:
+        import pandas as pd
+    except ImportError:
+        raise SkipTest(
+            "pandas is not installed: not checking column names consistency"
+        )
+
+    rng = np.random.RandomState(0)
+
+    estimator = clone(estimator_orig)
+    set_random_state(estimator)
+    if 'warm_start' in estimator.get_params():
+        estimator.set_params(warm_start=False)
+
+    n_samples = 100
+    X = rng.normal(loc=100, size=(n_samples, 2))
+    X = _pairwise_estimator_convert_X(X, estimator)
+    X = pd.DataFrame(X)
+
+    if is_regressor(estimator_orig):
+        y = rng.normal(size=n_samples)
+    else:
+        y = rng.randint(low=0, high=2, size=n_samples)
+    y = _enforce_estimator_tags_y(estimator, y)
+
+    estimator.fit(X, y)
+    if hasattr(estimator, '_feature_names_in'):
+        assert_array_equal(estimator._feature_names_in, X.columns.values)
+
+    bad_X = X[X.columns[::-1]]  # reverse column order
+
+    for method in ["predict", "transform", "decision_function",
+                   "predict_proba"]:
+        if hasattr(estimator, method):
+            estimator.predict(X)
+            msg = ("column names of the dataframe must match those that were "
+                   "passed during fit")
+            assert_raises_regex(ValueError, msg, getattr(estimator, method),
+                                bad_X)
