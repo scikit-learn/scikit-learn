@@ -94,7 +94,7 @@ for i, (mean, cov, color) in enumerate(zip(clf.means_, clf.covariances_,
 
 plt.xticks(())
 plt.yticks(())
-plt.title('Selected GMM: {} model, {} components'.format(best_gmm.covariance_type,
-                                                         best_gmm.n_components))
+plt.title('Selected GMM: {} model, {} components'.format(
+    best_gmm.covariance_type, best_gmm.n_components))
 plt.subplots_adjust(hspace=.35, bottom=.02)
 plt.show()
