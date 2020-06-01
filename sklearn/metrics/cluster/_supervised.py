@@ -79,7 +79,8 @@ def _generalized_average(U, V, average_method):
 
 
 @_deprecate_positional_args
-def contingency_matrix(labels_true, labels_pred, *, eps=None, sparse=False):
+def contingency_matrix(labels_true, labels_pred, *, eps=None, sparse=False,
+                       dtype=np.int):
     """Build a contingency matrix describing the relationship between labels.
 
     Parameters
@@ -101,14 +102,20 @@ def contingency_matrix(labels_true, labels_pred, *, eps=None, sparse=False):
 
         .. versionadded:: 0.18
 
+    dtype : numeric data type, optional.
+        Defaults to np.int, but see the notes on ``eps`` below.
+
+        .. versionadded:: 0.22.2
+
     Returns
     -------
     contingency : {array-like, sparse}, shape=[n_classes_true, n_classes_pred]
         Matrix :math:`C` such that :math:`C_{i, j}` is the number of samples in
         true class :math:`i` and in predicted class :math:`j`. If
-        ``eps is None``, the dtype of this array will be integer. If ``eps`` is
-        given, the dtype will be float.
-        Will be a ``scipy.sparse.csr_matrix`` if ``sparse=True``.
+        ``eps is None``, the dtype of this array will be integer unless set
+        otherwise with the ``dtype`` argument. If ``eps`` is given, the dtype will
+        be float.
+        Will be a ``sklearn.sparse.csr_matrix`` if ``sparse=True``.
     """
 
     if eps is not None and sparse:
@@ -124,7 +131,7 @@ def contingency_matrix(labels_true, labels_pred, *, eps=None, sparse=False):
     contingency = sp.coo_matrix((np.ones(class_idx.shape[0]),
                                  (class_idx, cluster_idx)),
                                 shape=(n_classes, n_clusters),
-                                dtype=np.int)
+                                dtype=dtype)
     if sparse:
         contingency = contingency.tocsr()
         contingency.sum_duplicates()
