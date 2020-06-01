@@ -34,5 +34,5 @@ def set_bitset_py(X_BINNED_DTYPE_C val, BITSET_INNER_DTYPE_C[:] bitset):
         unsigned int i1 = val // 32
         unsigned int i2 = val % 32
 
-    # It is assumed that val < 256 or i1 < 8
+    # It is assumed that val < 256 so that i1 < 8
     bitset[i1] |= (1 << i2)
