@@ -4,7 +4,6 @@
 
 import numpy as np
 from scipy import sparse
-import numbers
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
@@ -623,13 +622,12 @@ class OrdinalEncoder(_BaseEncoder):
     dtype : number type, default np.float64
         Desired dtype of output.
 
-    unknown_value : 'error' or int, default='error'
-        When set to 'raise' an error will be raised in case an unknown
-        categorical feature is present during transform. When unknown_value is
-        an integer, the encoded value of unknown categories will be set to
-        this value. The integer can be negative and must not be an integer
-        already used for encoded categories seen in :meth:fit. In
-        :meth:inverse_transform, an unknown category will be denoted as None.
+    handle_unknown : 'error' or 'use_encoded_value', default='error'
+        When set to 'error' an error will be raised in case an unknown
+        categorical feature is present during transform. When set to
+        'use_encoded_value', the encoded value of unknown categories will be
+        set to -2. In :meth:inverse_transform, an unknown category will be
+        denoted as None.
 
     Attributes
     ----------
@@ -668,10 +666,10 @@ class OrdinalEncoder(_BaseEncoder):
 
     @_deprecate_positional_args
     def __init__(self, *, categories='auto', dtype=np.float64,
-                 unknown_value='error'):
+                 handle_unknown='error'):
         self.categories = categories
         self.dtype = dtype
-        self.unknown_value = unknown_value
+        self.handle_unknown = handle_unknown
 
     def fit(self, X, y=None):
         """
@@ -708,21 +706,12 @@ class OrdinalEncoder(_BaseEncoder):
         X_out : sparse matrix or a 2-d array
             Transformed input.
         """
-        X_int, X_mask = self._transform(X, handle_unknown=self.unknown_value)
+        X_int, X_mask = self._transform(X, handle_unknown=self.handle_unknown)
 
         # create separate category for unknown values
-        if self.unknown_value != 'error':
-            if not isinstance(self.unknown_value, numbers.Integral):
-                raise TypeError("The used value for unknown_value "
-                                f"{self.unknown_value} is not an integer as "
-                                "required.")
+        if self.handle_unknown == 'use_encoded_value':
             for i in range(len(self.categories_)):
-                if 0 <= self.unknown_value < len(self.categories_[i]):
-                    raise ValueError(
-                        "The used value for unknown_value "
-                        f"{self.unknown_value} is one of the values already "
-                        "used for encoding the seen categories.")
-                X_int[~X_mask[:, i], i] = self.unknown_value
+                X_int[~X_mask[:, i], i] = -2
         return X_int.astype(self.dtype, copy=False)
 
     def inverse_transform(self, X):
@@ -758,11 +747,11 @@ class OrdinalEncoder(_BaseEncoder):
         for i in range(n_features):
             labels = X[:, i].astype('int64', copy=False)
             # set unknown values to None
-            if self.unknown_value != 'error':
+            if self.handle_unknown == 'use_encoded_value':
                 X_tr[:, i] = np.where(
-                    labels == self.unknown_value, None,
+                    labels == -2, None,
                     self.categories_[i][np.where(
-                        labels == self.unknown_value, 0, labels)])
+                        labels == -2, 0, labels)])
             else:
                 X_tr[:, i] = self.categories_[i][labels]
 
