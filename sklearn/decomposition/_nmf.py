@@ -1163,6 +1163,12 @@ class NMF(TransformerMixin, BaseEstimator):
     max_iter : integer, default: 200
         Maximum number of iterations before timing out.
 
+    regularization : 'both' | 'components' | 'transformation' | None
+        Select whether the regularization affects the components (H), the
+        transformation (W), both or none of them. Defaults to 'both'.
+
+        .. versionadded:: 0.24
+
     random_state : int, RandomState instance, default=None
         Used for initialisation (when ``init`` == 'nndsvdar' or
         'random'), and in Coordinate Descent. Pass an int for reproducible
@@ -1236,14 +1242,15 @@ class NMF(TransformerMixin, BaseEstimator):
     @_deprecate_positional_args
     def __init__(self, n_components=None, *, init=None, solver='cd',
                  beta_loss='frobenius', tol=1e-4, max_iter=200,
-                 random_state=None, alpha=0., l1_ratio=0., verbose=0,
-                 shuffle=False):
+                 regularization='both', random_state=None, alpha=0.,
+                 l1_ratio=0., verbose=0, shuffle=False):
         self.n_components = n_components
         self.init = init
         self.solver = solver
         self.beta_loss = beta_loss
         self.tol = tol
         self.max_iter = max_iter
+        self.regularization = regularization
         self.random_state = random_state
         self.alpha = alpha
         self.l1_ratio = l1_ratio
@@ -1283,7 +1290,7 @@ class NMF(TransformerMixin, BaseEstimator):
             X=X, W=W, H=H, n_components=self.n_components, init=self.init,
             update_H=True, solver=self.solver, beta_loss=self.beta_loss,
             tol=self.tol, max_iter=self.max_iter, alpha=self.alpha,
-            l1_ratio=self.l1_ratio, regularization='both',
+            l1_ratio=self.l1_ratio, regularization=self.regularization,
             random_state=self.random_state, verbose=self.verbose,
             shuffle=self.shuffle)
 
@@ -1332,9 +1339,10 @@ class NMF(TransformerMixin, BaseEstimator):
             X=X, W=None, H=self.components_, n_components=self.n_components_,
             init=self.init, update_H=False, solver=self.solver,
             beta_loss=self.beta_loss, tol=self.tol, max_iter=self.max_iter,
-            alpha=self.alpha, l1_ratio=self.l1_ratio, regularization='both',
-            random_state=self.random_state, verbose=self.verbose,
-            shuffle=self.shuffle)
+            alpha=self.alpha, l1_ratio=self.l1_ratio,
+            regularization=self.regularization,
+            random_state=self.random_state,
+            verbose=self.verbose, shuffle=self.shuffle)
 
         return W
 
