@@ -93,7 +93,7 @@ class SplitInfo:
         The number of samples in the right child.
     is_categorical : bool
         Whether split is categorical.
-    cat_bitset : ndarray of shape=(8,), dtype=uint32
+    cat_bitset : ndarray of shape=(8,), dtype=uint32 or None
         Bitset representing the categories that go to the left. This is used
         only when ``is_categorical`` is True.
     """
@@ -301,7 +301,7 @@ cdef class Splitter:
             unsigned char is_categorical = split_info.is_categorical
             BITSET_INNER_DTYPE_C [:] cat_bitset_tmp = \
                 split_info.cat_bitset
-            BITSET_DTYPE_C cat_bitset = &cat_bitset_tmp[0]
+            BITSET_DTYPE_C cat_bitset
             IF SKLEARN_OPENMP_PARALLELISM_ENABLED:
                 int n_threads = omp_get_max_threads()
             ELSE:
@@ -323,6 +323,10 @@ cdef class Splitter:
             unsigned char turn_left
             int [:] left_offset = np.zeros(n_threads, dtype=np.int32)
             int [:] right_offset = np.zeros(n_threads, dtype=np.int32)
+
+        # only set cat_bitset when is_categorical is True
+        if is_categorical:
+            cat_bitset = &cat_bitset_tmp[0]
 
         with nogil:
             for thread_idx in range(n_samples % n_threads):
@@ -520,8 +524,12 @@ cdef class Splitter:
             split_info.value_left,
             split_info.value_right,
             split_info.is_categorical,
-            np.asarray(split_info.cat_bitset, dtype=np.uint32)
+            None,  # will only be set if the splt is categorical
         )
+        # Only set bitset if the split is categorical
+        if split_info.is_categorical:
+            out.cat_bitset = np.asarray(split_info.cat_bitset, dtype=np.uint32)
+
         free(split_infos)
         return out
 
