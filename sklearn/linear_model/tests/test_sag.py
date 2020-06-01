@@ -7,6 +7,7 @@ import math
 import pytest
 import numpy as np
 import scipy.sparse as sp
+from scipy.special import logsumexp
 
 from sklearn.linear_model._sag import get_auto_step_size
 from sklearn.linear_model._sag_fast import _multinomial_grad_loss_all_samples
@@ -14,7 +15,6 @@ from sklearn.linear_model import LogisticRegression, Ridge
 from sklearn.linear_model._base import make_dataset
 from sklearn.linear_model._logistic import _multinomial_loss_grad
 
-from sklearn.utils.fixes import logsumexp
 from sklearn.utils.extmath import row_norms
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_almost_equal
@@ -644,7 +644,8 @@ def test_binary_classifier_class_weight():
     clf2.fit(sp.csr_matrix(X), y)
 
     le = LabelEncoder()
-    class_weight_ = compute_class_weight(class_weight, np.unique(y), y)
+    class_weight_ = compute_class_weight(class_weight, classes=np.unique(y),
+                                         y=y)
     sample_weight = class_weight_[le.fit_transform(y)]
     spweights, spintercept = sag_sparse(X, y, step_size, alpha, n_iter=n_iter,
                                         dloss=log_dloss,
@@ -690,7 +691,8 @@ def test_multiclass_classifier_class_weight():
     clf2.fit(sp.csr_matrix(X), y)
 
     le = LabelEncoder()
-    class_weight_ = compute_class_weight(class_weight, np.unique(y), y)
+    class_weight_ = compute_class_weight(class_weight, classes=np.unique(y),
+                                         y=y)
     sample_weight = class_weight_[le.fit_transform(y)]
 
     coef1 = []

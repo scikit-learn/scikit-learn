@@ -13,7 +13,6 @@ import pytest
 
 from sklearn import datasets
 from sklearn.base import clone
-from sklearn.base import BaseEstimator
 from sklearn.datasets import (make_classification, fetch_california_housing,
                               make_regression)
 from sklearn.ensemble import GradientBoostingClassifier
@@ -33,7 +32,6 @@ from sklearn.utils._testing import assert_raise_message
 from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import assert_warns_message
 from sklearn.utils._testing import skip_if_32bit
-from sklearn.utils._testing import ignore_warnings
 from sklearn.exceptions import DataConversionWarning
 from sklearn.exceptions import NotFittedError
 from sklearn.dummy import DummyClassifier, DummyRegressor
@@ -1296,8 +1294,6 @@ def _make_multiclass():
     return make_classification(n_classes=3, n_clusters_per_class=1)
 
 
-# TODO: Remove in 0.24 when DummyClassifier's `strategy` default updates
-@ignore_warnings(category=FutureWarning)
 @pytest.mark.parametrize(
     "gb, dataset_maker, init_estimator",
     [(GradientBoostingClassifier, make_classification, DummyClassifier),

@@ -22,10 +22,10 @@ from ..preprocessing import LabelBinarizer
 from ..utils import gen_batches, check_random_state
 from ..utils import shuffle
 from ..utils import _safe_indexing
-from ..utils import check_array, check_X_y, column_or_1d
+from ..utils import check_array, column_or_1d
 from ..exceptions import ConvergenceWarning
 from ..utils.extmath import safe_sparse_dot
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, _deprecate_positional_args
 from ..utils.multiclass import _check_partial_fit_first_call, unique_labels
 from ..utils.multiclass import type_of_target
 from ..utils.optimize import _check_optimize_result
@@ -890,6 +890,23 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
     out_activation_ : string
         Name of the output activation function.
 
+
+    Examples
+    --------
+    >>> from sklearn.neural_network import MLPClassifier
+    >>> from sklearn.datasets import make_classification
+    >>> from sklearn.model_selection import train_test_split
+    >>> X, y = make_classification(n_samples=100, random_state=1)
+    >>> X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y,
+    ...                                                     random_state=1)
+    >>> clf = MLPClassifier(random_state=1, max_iter=300).fit(X_train, y_train)
+    >>> clf.predict_proba(X_test[:1])
+    array([[0.038..., 0.961...]])
+    >>> clf.predict(X_test[:5, :])
+    array([1, 0, 1, 0, 1])
+    >>> clf.score(X_test, y_test)
+    0.8...
+
     Notes
     -----
     MLPClassifier trains iteratively since at each time step
@@ -919,7 +936,8 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
     Kingma, Diederik, and Jimmy Ba. "Adam: A method for stochastic
         optimization." arXiv preprint arXiv:1412.6980 (2014).
     """
-    def __init__(self, hidden_layer_sizes=(100,), activation="relu",
+    @_deprecate_positional_args
+    def __init__(self, hidden_layer_sizes=(100,), activation="relu", *,
                  solver='adam', alpha=0.0001,
                  batch_size='auto', learning_rate="constant",
                  learning_rate_init=0.001, power_t=0.5, max_iter=200,
@@ -943,8 +961,8 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
             n_iter_no_change=n_iter_no_change, max_fun=max_fun)
 
     def _validate_input(self, X, y, incremental):
-        X, y = check_X_y(X, y, accept_sparse=['csr', 'csc'],
-                         multi_output=True)
+        X, y = self._validate_data(X, y, accept_sparse=['csr', 'csc'],
+                                   multi_output=True)
         if y.ndim == 2 and y.shape[1] == 1:
             y = column_or_1d(y, warn=True)
 
@@ -1279,6 +1297,20 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
     out_activation_ : string
         Name of the output activation function.
 
+    Examples
+    --------
+    >>> from sklearn.neural_network import MLPRegressor
+    >>> from sklearn.datasets import make_regression
+    >>> from sklearn.model_selection import train_test_split
+    >>> X, y = make_regression(n_samples=200, random_state=1)
+    >>> X_train, X_test, y_train, y_test = train_test_split(X, y,
+    ...                                                     random_state=1)
+    >>> regr = MLPRegressor(random_state=1, max_iter=500).fit(X_train, y_train)
+    >>> regr.predict(X_test[:2])
+    array([-0.9..., -7.1...])
+    >>> regr.score(X_test, y_test)
+    0.4...
+
     Notes
     -----
     MLPRegressor trains iteratively since at each time step
@@ -1308,7 +1340,8 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
     Kingma, Diederik, and Jimmy Ba. "Adam: A method for stochastic
         optimization." arXiv preprint arXiv:1412.6980 (2014).
     """
-    def __init__(self, hidden_layer_sizes=(100,), activation="relu",
+    @_deprecate_positional_args
+    def __init__(self, hidden_layer_sizes=(100,), activation="relu", *,
                  solver='adam', alpha=0.0001,
                  batch_size='auto', learning_rate="constant",
                  learning_rate_init=0.001,
@@ -1352,8 +1385,8 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
         return y_pred
 
     def _validate_input(self, X, y, incremental):
-        X, y = check_X_y(X, y, accept_sparse=['csr', 'csc'],
-                         multi_output=True, y_numeric=True)
+        X, y = self._validate_data(X, y, accept_sparse=['csr', 'csc'],
+                                   multi_output=True, y_numeric=True)
         if y.ndim == 2 and y.shape[1] == 1:
             y = column_or_1d(y, warn=True)
         return X, y
