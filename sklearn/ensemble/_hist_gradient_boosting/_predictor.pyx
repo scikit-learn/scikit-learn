@@ -34,7 +34,8 @@ def _predict_from_data(
     cdef:
         int i
 
-    for i in prange(numeric_data.shape[0], schedule='static', nogil=True):
+    # for i in prange(numeric_data.shape[0], schedule='static', nogil=True):
+    for i in range(numeric_data.shape[0]):
         out[i] = _predict_one_from_numeric_data(
             nodes, predictor_bitset, category_mapper, numeric_data, i)
 
@@ -62,13 +63,13 @@ cdef inline Y_DTYPE_C _predict_one_from_numeric_data(
             else:
                 node_idx = node.right
         elif node.is_categorical:
-            if not predictor_bitset.is_known_category(
-                    node.feature_idx, numeric_data[row, node.feature_idx]):
-                if node.missing_go_to_left:
-                    node_idx = node.left
-                else:
-                    node_idx = node.right
-            elif predictor_bitset.raw_category_in_bitset(
+            # if not predictor_bitset.is_known_category(
+            #         node.feature_idx, numeric_data[row, node.feature_idx]):
+            #     if node.missing_go_to_left:
+            #         node_idx = node.left
+            #     else:
+            #         node_idx = node.right
+            if predictor_bitset.raw_category_in_bitset(
                     node_idx, numeric_data[row, node.feature_idx]):
                 node_idx = node.left
             else:
@@ -92,7 +93,8 @@ def _predict_from_binned_data(
     cdef:
         int i
 
-    for i in prange(binned_data.shape[0], schedule='static', nogil=True):
+    # for i in prange(binned_data.shape[0], schedule='static', nogil=True):
+    for i in range(binned_data.shape[0]):
         out[i] = _predict_one_from_binned_data(nodes, predictor_bitset,
                                                category_mapper,
                                                binned_data, i,
