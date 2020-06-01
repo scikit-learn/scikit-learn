@@ -19,8 +19,18 @@ cdef inline unsigned char in_vec_bitset(vector[BITSET_INNER_DTYPE_C] bitset,
 
     if bitset.size() < i1:
         return 0
-
     return (bitset[i1] >> i2) & 1
+
+
+cdef inline void insert_vec_bitset(vector[BITSET_INNER_DTYPE_C]& bitset,
+                                   int value) nogil:
+    cdef:
+        unsigned int i1 = value // 32
+        unsigned int i2 = value % 32
+
+    if bitset.size() < i1 + 1:
+        bitset.resize(i1 + 1, 0)
+    bitset[i1] |= (1 << i2)
 
 
 cdef class PredictorBitSet:
@@ -32,7 +42,6 @@ cdef class PredictorBitSet:
         cdef:
             int i
             X_DTYPE_C category
-            int category_value
             unsigned int i1
             unsigned int i2
 
@@ -40,22 +49,15 @@ cdef class PredictorBitSet:
             if is_categorical[i] == 0:
                 continue
             for category in bin_thresholds[i]:
-                category_value = <int>(category)
-                i1 = category_value // 32
-                i2 = category_value % 32
-
-                if self.feature_idx_raw_cats[i].size() < i1 + 1:
-                    self.feature_idx_raw_cats[i].resize(i1 + 1, 0)
-                self.feature_idx_raw_cats[i][i1] |= (1 << i2)
-
+                insert_vec_bitset(self.feature_idx_raw_cats[i],
+                                  <int>(category))
 
     def insert_categories_bitset(self, unsigned int node_idx,
                                  X_DTYPE_C[:] category_bins,
                                  BITSET_INNER_DTYPE_C[:] cat_bitset):
-        # get cateogries from cat_bitset
         cdef:
             BITSET_INNER_DTYPE_C val
-            int k, offset, category_value
+            int k, offset
             int cardinality = category_bins.shape[0]
             int BITSET_SIZE = sizeof(BITSET_INNER_DTYPE_C) * CHAR_BIT
             unsigned int i1, i2
@@ -67,13 +69,8 @@ cdef class PredictorBitSet:
             self.node_to_binned_bitset[node_idx][k] = val
             while val and offset < cardinality:
                 if val % 2:
-                    category_value = <int>(category_bins[offset])
-                    i1 = category_value // 32
-                    i2 = category_value % 32
-
-                    if self.node_to_raw_bitset[node_idx].size() < i1 + 1:
-                        self.node_to_raw_bitset[node_idx].resize(i1 + 1, 0)
-                    self.node_to_raw_bitset[node_idx][i1] |= (1 << i2)
+                    insert_vec_bitset(self.node_to_raw_bitset[node_idx],
+                                      <int>(category_bins[offset]))
 
                 val = val // 2
                 offset += 1
@@ -89,12 +86,8 @@ cdef class PredictorBitSet:
 
     cdef unsigned char binned_category_in_bitset(self, unsigned int node_idx,
                                                  X_BINNED_DTYPE_C category) nogil:
-        cdef:
-            unsigned int i1 = category // 32
-            unsigned int i2 = category % 32
-            vector[BITSET_INNER_DTYPE_C] bitset = \
-                self.node_to_binned_bitset[node_idx]
-        return (bitset[i1] >> i2) & 1
+        return in_vec_bitset(self.node_to_binned_bitset[node_idx],
+                             <int>category)
 
     def get_binned_categories(self, unsigned int node_idx):
         """Used for testing"""

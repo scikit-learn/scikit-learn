@@ -79,8 +79,7 @@ def test_infinite_values_and_thresholds(threshold, expected_predictions):
     nodes[2]['value'] = 1
 
     predictor = TreePredictor(
-        nodes, PredictorBitSet([], np.array([False], dtype=np.uint8)),
-        CategoryMapper(3))
+        nodes, PredictorBitSet([], np.array([False], dtype=np.uint8)))
     predictions = predictor.predict(X)
 
     assert np.all(predictions == expected_predictions)
@@ -130,10 +129,7 @@ def test_categorical_predictor(bins_go_left, expected_predictions):
     predictor_bitset = PredictorBitSet([category_bins],
                                        np.array([True], dtype=np.uint8))
     predictor_bitset.insert_categories_bitset(0, category_bins, cat_bitset)
-
-    category_mapper = CategoryMapper(missing_values_bin_idx=6)
-    category_mapper.insert(0, category_bins)
-    predictor = TreePredictor(nodes, predictor_bitset, category_mapper)
+    predictor = TreePredictor(nodes, predictor_bitset)
 
     # Check binned data gives correct predictions
     prediction_binned = predictor.predict_binned(X_binned,

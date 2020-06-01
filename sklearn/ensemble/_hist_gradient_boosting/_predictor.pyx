@@ -27,23 +27,20 @@ np.import_array()
 def _predict_from_data(
         node_struct [:] nodes,
         PredictorBitSet predictor_bitset,
-        CategoryMapper category_mapper,
         const X_DTYPE_C [:, :] numeric_data,
         Y_DTYPE_C [:] out):
 
     cdef:
         int i
 
-    # for i in prange(numeric_data.shape[0], schedule='static', nogil=True):
-    for i in range(numeric_data.shape[0]):
+    for i in prange(numeric_data.shape[0], schedule='static', nogil=True):
         out[i] = _predict_one_from_numeric_data(
-            nodes, predictor_bitset, category_mapper, numeric_data, i)
+            nodes, predictor_bitset, numeric_data, i)
 
 
 cdef inline Y_DTYPE_C _predict_one_from_numeric_data(
         node_struct [:] nodes,
         PredictorBitSet predictor_bitset,
-        CategoryMapper category_mapper,
         const X_DTYPE_C [:, :] numeric_data,
         const int row) nogil:
     # Need to pass the whole array and the row index, else prange won't work.
@@ -85,7 +82,6 @@ cdef inline Y_DTYPE_C _predict_one_from_numeric_data(
 def _predict_from_binned_data(
         node_struct [:] nodes,
         PredictorBitSet predictor_bitset,
-        CategoryMapper category_mapper,
         const X_BINNED_DTYPE_C [:, :] binned_data,
         const unsigned char missing_values_bin_idx,
         Y_DTYPE_C [:] out):
@@ -93,10 +89,8 @@ def _predict_from_binned_data(
     cdef:
         int i
 
-    # for i in prange(binned_data.shape[0], schedule='static', nogil=True):
-    for i in range(binned_data.shape[0]):
+    for i in prange(binned_data.shape[0], schedule='static', nogil=True):
         out[i] = _predict_one_from_binned_data(nodes, predictor_bitset,
-                                               category_mapper,
                                                binned_data, i,
                                                missing_values_bin_idx)
 
@@ -104,7 +98,6 @@ def _predict_from_binned_data(
 cdef inline Y_DTYPE_C _predict_one_from_binned_data(
         node_struct [:] nodes,
         PredictorBitSet predictor_bitset,
-        CategoryMapper category_mapper,
         const X_BINNED_DTYPE_C [:, :] binned_data,
         const int row,
         const unsigned char missing_values_bin_idx) nogil:

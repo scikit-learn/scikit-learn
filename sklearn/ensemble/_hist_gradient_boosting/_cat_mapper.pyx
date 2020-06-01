@@ -3,7 +3,6 @@
 # cython: wraparound=False
 # cython: language_level=3
 # cython: nonecheck=False
-# distutils: define_macros=CYTHON_TRACE_NOGIL=1
 
 from .common cimport X_DTYPE_C
 from libc.math cimport isnan
@@ -38,5 +37,4 @@ cdef class CategoryMapper:
         if category_to_bin.count(int_value) == 0:
             return self.missing_values_bin_idx
 
-        # return self.missing_values_bin_idx
         return category_to_bin[int_value]

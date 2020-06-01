@@ -20,13 +20,10 @@ class TreePredictor:
         The nodes of the tree.
     predictor_bitset : PredictorBitSet
         Bitset used to check for predictions.
-    category_mapper : CategoryMapper
-        Object used to map raw categories into its bin.
     """
-    def __init__(self, nodes, predictor_bitset, category_mapper):
+    def __init__(self, nodes, predictor_bitset):
         self.nodes = nodes
         self.predictor_bitset = predictor_bitset
-        self.category_mapper = category_mapper
 
     def get_n_leaf_nodes(self):
         """Return number of leaves."""
@@ -51,8 +48,7 @@ class TreePredictor:
             The raw predicted values.
         """
         out = np.empty(X.shape[0], dtype=Y_DTYPE)
-        _predict_from_data(self.nodes, self.predictor_bitset,
-                           self.category_mapper, X, out)
+        _predict_from_data(self.nodes, self.predictor_bitset, X, out)
         return out
 
     def predict_binned(self, X, missing_values_bin_idx):
@@ -74,7 +70,6 @@ class TreePredictor:
         """
         out = np.empty(X.shape[0], dtype=Y_DTYPE)
         _predict_from_binned_data(self.nodes, self.predictor_bitset,
-                                  self.category_mapper,
                                   X, missing_values_bin_idx, out)
         return out
 

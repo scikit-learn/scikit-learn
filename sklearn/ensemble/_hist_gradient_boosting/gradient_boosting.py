@@ -433,7 +433,6 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
                 predictor = grower.make_predictor(
                     bin_thresholds=self.bin_mapper_.bin_thresholds_,
-                    category_mapper=self.bin_mapper_.category_mapper_,
                     is_categorical=self.bin_mapper_.is_categorical_,
                 )
                 predictors[-1].append(predictor)

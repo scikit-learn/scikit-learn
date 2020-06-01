@@ -15,7 +15,7 @@ and categorical features, where the houses' sales prices is the target.
 ##############################################################################
 # Load Ames Housing dataset
 # -------------------------
-# First, we load the Ames housing data as a pandas dataframe. The features
+# First, we load the ames housing data as a pandas dataframe. The features
 # are either categorical or numerical:
 print(__doc__)
 
@@ -27,8 +27,8 @@ n_features = X.shape[1]
 n_categorical_features = (X.dtypes == 'category').sum()
 n_numerical_features = (X.dtypes == 'float').sum()
 print(f"Number of features: {X.shape[1]}")
-print(f"Number of categorical features: {n_categorical_features}")
-print(f"Number of numerical features: {n_numerical_features}")
+print(f"Number of categorical featuers: {n_categorical_features}")
+print(f"Number of numerical featuers: {n_numerical_features}")
 
 ##############################################################################
 # Create gradient boosting estimator with one hot encoding
@@ -86,6 +86,6 @@ for key, title, ax in plot_info:
     ax.bar(x, [np.mean(item) for item in items],
            width, yerr=[np.std(item) for item in items],
            color=['b', 'r'])
-    ax.set(xlabel='Encoding type', title=title, xticks=[0, 1],
+    ax.set(xlabel='Split number', title=title, xticks=[0, 1],
            xticklabels=['Native', "One Hot"])
 plt.show()
