@@ -612,7 +612,7 @@ def _assert_threshold_equals_bitset(expected_thresholds, bitset):
         # split on even categories
         (list(range(60)) * 12,  # X_binned
          [1, 10] * 360,  # all_gradients
-         list(range(0, 60, 2)),  # expected_categories_left
+         list(range(1, 60, 2)),  # expected_categories_left
          59,  # n_bins_non_missing
          59,  # missing_values_bin_idx
          True),  # has_missing_values
