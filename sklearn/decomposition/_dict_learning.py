@@ -72,7 +72,7 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
         Initialization value of the sparse code. Only used if
         `algorithm='lasso_cd'`.
 
-    max_iter : int, 1000 by default
+    max_iter : int, default=1000
         Maximum number of iterations to perform if `algorithm='lasso_cd'` or
         `lasso_lars`.
 
