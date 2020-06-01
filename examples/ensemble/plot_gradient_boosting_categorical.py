@@ -15,7 +15,7 @@ and categorical features, where the houses' sales prices is the target.
 ##############################################################################
 # Load Ames Housing dataset
 # -------------------------
-# First, we load the ames housing data as a pandas dataframe. The features
+# First, we load the Ames housing data as a pandas dataframe. The features
 # are either categorical or numerical:
 print(__doc__)
 
@@ -27,8 +27,8 @@ n_features = X.shape[1]
 n_categorical_features = (X.dtypes == 'category').sum()
 n_numerical_features = (X.dtypes == 'float').sum()
 print(f"Number of features: {X.shape[1]}")
-print(f"Number of categorical featuers: {n_categorical_features}")
-print(f"Number of numerical featuers: {n_numerical_features}")
+print(f"Number of categorical features: {n_categorical_features}")
+print(f"Number of numerical features: {n_numerical_features}")
 
 ##############################################################################
 # Create gradient boosting estimator with one hot encoding
@@ -60,9 +60,6 @@ hist_one_hot = make_pipeline(preprocessor,
 hist_native = HistGradientBoostingRegressor(categorical_features='pandas',
                                             random_state=42)
 
-# hist_native.fit(X, y)
-# hist_native.predict(X)
-
 ##############################################################################
 # Train the models with cross-validation
 # --------------------------------
@@ -78,11 +75,10 @@ import numpy as np
 one_hot_result = cross_validate(hist_one_hot, X, y)
 native_result = cross_validate(hist_native, X, y)
 
-fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(12, 8))
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 8))
 
 plot_info = [('fit_time', 'Fit times (s)', ax1),
-             ('score_time', 'Score times (s)', ax2),
-             ('test_score', 'Test Scores (r2 score)', ax3)]
+             ('test_score', 'Test Scores (r2 score)', ax2)]
 
 x, width = np.arange(2), 0.9
 for key, title, ax in plot_info:
@@ -90,6 +86,6 @@ for key, title, ax in plot_info:
     ax.bar(x, [np.mean(item) for item in items],
            width, yerr=[np.std(item) for item in items],
            color=['b', 'r'])
-    ax.set(xlabel='Split number', title=title, xticks=[0, 1],
+    ax.set(xlabel='Encoding type', title=title, xticks=[0, 1],
            xticklabels=['Native', "One Hot"])
 plt.show()
