@@ -135,3 +135,20 @@ def test_weighted_percentile_wrong_interpolation():
         X = np.random.randn(10)
         sample_weight = np.ones(X.shape)
         _weighted_percentile(X, sample_weight, 50, interpolation="xxxx")
+
+
+@pytest.mark.parametrize("percentile", np.arange(2.5, 100, 2.5))
+def test_weighted_percentile_non_unit_weight(percentile):
+    # check the cumulative sum of the weight on the left and right side of the
+    # percentile
+    rng = np.random.RandomState(42)
+    X = rng.randn(1000)
+    X.sort()
+    sample_weight = rng.random(X.shape)
+    sample_weight = sample_weight / sample_weight.sum()
+    sample_weight *= 100
+
+    percentile_value = _weighted_percentile(X, sample_weight, percentile)
+    X_percentile_idx = np.searchsorted(X, percentile_value)
+    assert sample_weight[:X_percentile_idx - 1].sum() < percentile
+    assert sample_weight[:X_percentile_idx + 1].sum() > percentile

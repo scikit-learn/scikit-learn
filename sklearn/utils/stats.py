@@ -68,14 +68,13 @@ def _weighted_percentile(array, sample_weight, percentile=50,
     sorted_weights = _take_along_axis(sample_weight, sorted_idx, axis=0)
     percentile = np.array([percentile / 100] * n_cols)
     weight_cdf = stable_cumsum(sorted_weights, axis=0)
-    non_zero = np.count_nonzero(sorted_weights, axis=0)
 
     def _squeeze_arr(arr, n_dim):
         return arr[0] if n_dim == 1 else arr
 
     adjusted_percentile = (weight_cdf - sorted_weights)
     with np.errstate(invalid="ignore"):
-        adjusted_percentile /= ((weight_cdf[-1] * (non_zero - 1)) / (non_zero))
+        adjusted_percentile /= weight_cdf[-1] - sorted_weights
 
     if interpolation in ("lower", "higher"):
         percentile_idx = np.array([
