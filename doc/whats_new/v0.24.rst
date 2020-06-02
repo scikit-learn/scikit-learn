@@ -66,8 +66,7 @@ Changelog
 
 - |Enhancement| :meth:`IsotonicRegression.fit`, :meth:`IsotonicRegression.transform`
   and :meth:`IsotonicRegression.predict` now accepts 2darray with 1 feature as
-  input array.
-  :pr:`17379` by :user:`Jiaxiang <fujiaxiang>`.
+  input array. :pr:`17379` by :user:`Jiaxiang <fujiaxiang>`.
 
 :mod:`sklearn.metrics`
 ......................
