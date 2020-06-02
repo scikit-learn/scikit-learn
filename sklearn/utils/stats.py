@@ -1,3 +1,5 @@
+from collections.abc import Iterable
+
 import numpy as np
 
 from .extmath import stable_cumsum
@@ -75,6 +77,7 @@ def _weighted_percentile(array, sample_weight, percentile=50,
     adjusted_percentile = (weight_cdf - sorted_weights)
     with np.errstate(invalid="ignore"):
         adjusted_percentile /= weight_cdf[-1] - sorted_weights
+        adjusted_percentile = np.nan_to_num(adjusted_percentile, nan=1)
 
     if interpolation in ("lower", "higher"):
         percentile_idx = np.array([
@@ -97,7 +100,7 @@ def _weighted_percentile(array, sample_weight, percentile=50,
             sorted_idx[percentile_idx, np.arange(n_cols)],
             np.arange(n_cols)
         ]
-        return _squeeze_arr(percentile_value, n_dim)
+        percentile_value = _squeeze_arr(percentile_value, n_dim)
 
     else:  # interpolation == "linear"
         percentile_value = np.array([
@@ -109,6 +112,19 @@ def _weighted_percentile(array, sample_weight, percentile=50,
             for col in range(n_cols)
         ])
 
-        nan_value = np.isnan(percentile_value)
-        percentile_value[nan_value] = array[0, nan_value]
-        return _squeeze_arr(percentile_value, n_dim)
+        percentile_value = _squeeze_arr(percentile_value, n_dim)
+
+    single_sample_weight = np.count_nonzero(sample_weight, axis=0)
+    if np.any(single_sample_weight == 1):
+        if not isinstance(percentile_value, Iterable):
+            percentile_value = _squeeze_arr(
+                array[np.nonzero(sample_weight)], n_dim
+            )
+        else:
+            percentile_value = np.array([
+                array[np.flatnonzero(sample_weight[:, col])[0], col]
+                if n_nonzero == 1 else percentile_value[col]
+                for col, n_nonzero in enumerate(single_sample_weight)
+            ])
+
+    return percentile_value

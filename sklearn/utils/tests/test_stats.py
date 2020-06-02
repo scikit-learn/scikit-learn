@@ -152,3 +152,16 @@ def test_weighted_percentile_non_unit_weight(percentile):
     X_percentile_idx = np.searchsorted(X, percentile_value)
     assert sample_weight[:X_percentile_idx - 1].sum() < percentile
     assert sample_weight[:X_percentile_idx + 1].sum() > percentile
+
+
+@pytest.mark.parametrize("n_features", [None, 2])
+def test_weighted_percentile_single_weight(n_features):
+    rng = np.random.RandomState(42)
+    X = rng.randn(10) if n_features is None else rng.randn(10, n_features)
+    X.sort(axis=0)
+    sample_weight = np.zeros(X.shape)
+    pos_weight_idx = 4
+    sample_weight[pos_weight_idx] = 1
+
+    percentile_value = _weighted_percentile(X, sample_weight, 50)
+    assert percentile_value == pytest.approx(X[pos_weight_idx])
