@@ -702,10 +702,6 @@ class TransformerMixin:
         output_feature_names : list of string
             Feature names for transformer output.
         """
-        # OneToOneMixin is higher in the class hierarchy
-        # because we put mixins on the wrong side
-        if hasattr(super(), 'get_feature_names'):
-            return super().get_feature_names(input_features)
         # generate feature names from class name by default
         # would be much less guessing if we stored the number
         # of output features.
