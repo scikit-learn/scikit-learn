@@ -61,8 +61,7 @@ def _calibrate_classifier(estimator, X, y, train, test,
     calibrated_classifier : estimator object
         The calibrated estimator
     """
-    if sample_weight is not None \
-            and supports_sw:
+    if sample_weight is not and supports_sw:
         estimator.fit(X[train], y[train],
                       sample_weight=sample_weight[train])
     else:
