@@ -1948,4 +1948,3 @@ def check_apply_path_readonly(name):
 @pytest.mark.parametrize("name", ALL_TREES)
 def test_apply_path_readonly_all_trees(name):
     check_apply_path_readonly(name)
-

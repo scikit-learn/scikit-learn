@@ -205,7 +205,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 ccp_alpha=self.ccp_alpha,
                 monotonic_cst=self.monotonic_cst)
 
-
             if self.subsample < 1.0:
                 # no inplace multiplication!
                 sample_weight = sample_weight * sample_mask.astype(np.float64)
