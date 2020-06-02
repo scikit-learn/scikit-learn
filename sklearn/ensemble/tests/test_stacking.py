@@ -501,12 +501,16 @@ def test_stacking_cv_influence(stacker, X, y):
 
 
 class ProdClassifier(BaseEstimator, ClassifierMixin):
-    def __init__(self, idx=None):
+    def __init__(self, idx=None, is_base_estimator=True):
         self.idx = idx
         self.n_features_in_ = 0
+        self.is_base_estimator = is_base_estimator
 
     def fit(self, X, y=None):
-        return self
+        if self.is_base_estimator:
+            raise AttributeError("fit should not be called when using as base estimator!")
+        else:
+            return self
 
     def predict(self, X):
         if not self.idx:
@@ -516,12 +520,16 @@ class ProdClassifier(BaseEstimator, ClassifierMixin):
 
 
 class SumRegressor(BaseEstimator, RegressorMixin):
-    def __init__(self, idx=None):
+    def __init__(self, idx=None, is_base_estimator=True):
         self.idx = idx
         self.n_features_in_ = 0
+        self.is_base_estimator = is_base_estimator
 
     def fit(self, X, y=None):
-        return self
+        if self.is_base_estimator:
+            raise AttributeError("fit should not be called when using as base estimator!")
+        else:
+            return self
 
     def predict(self, X):
         if not self.idx:
@@ -536,13 +544,13 @@ class SumRegressor(BaseEstimator, RegressorMixin):
         estimators=[('d0', ProdClassifier([0])),
                     ('d1', ProdClassifier([1]))],
         cv="prefit",
-        final_estimator=ProdClassifier([0, 1])),
+        final_estimator=ProdClassifier([0, 1], False)),
       X_dummy_classification, y_dummy_classification),
      (StackingRegressor(
          estimators=[('d0', SumRegressor([0])),
                      ('d1', SumRegressor([1]))],
          cv="prefit",
-         final_estimator=SumRegressor([0, 1])),
+         final_estimator=SumRegressor([0, 1], False)),
       X_dummy_regression, y_dummy_regression)],
     ids=['StackingClassifier', 'StackingRegressor']
 )
