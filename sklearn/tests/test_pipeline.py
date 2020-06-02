@@ -1120,7 +1120,7 @@ def test_feature_names_basic():
     assert_array_equal(pipe[:-1].get_feature_names(), xs[mask])
     with pytest.raises(
             TypeError,
-            match="Transformer clf does provide get_feature_names."):
+            match="Estimator clf does provide get_feature_names."):
         pipe.get_feature_names(iris.feature_names)
     assert_array_equal(pipe[:1].get_feature_names(iris.feature_names),
                        iris.feature_names)

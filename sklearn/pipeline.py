@@ -639,7 +639,7 @@ class Pipeline(_BaseComposition):
         for i, name, transform in self._iter():
             if not hasattr(transform, "get_feature_names"):
                 raise TypeError(
-                    "Transformer {} does provide get_feature_names."
+                    "Estimator {} does provide get_feature_names. "
                     "Did you mean to call Pipeline[:-1].get_feature_names"
                     "()?".format(name))
             try:
