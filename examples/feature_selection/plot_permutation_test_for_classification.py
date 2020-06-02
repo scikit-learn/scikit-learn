@@ -48,17 +48,17 @@ X_rand = rng.normal(size=(len(X), 2200))
 #
 # Next, we calculate the
 # :func:`~sklearn.model_selection.permutation_test_score` using the original
-# iris dataset, which has strong structure, and
+# iris dataset, which strongly predict the labels and
 # the randomly generated features and iris labels, which should have
 # no dependency between features and labels. The
-# :class:`~sklearn.svm.svc` classifier and :ref:`accuracy_score` are used.
+# :class:`~sklearn.svm.SVC` classifier and :ref:`accuracy_score` are used.
 #
 # :func:`~sklearn.model_selection.permutation_test_score` generates a null
 # distribution by calculating the accuracy of the classifier
 # on 1000 different permutations of the dataset, where features
 # remain the same but labels undergo different permutations. This is the
-# distribution for the null hypothesis that there is no dependency between
-# the features and labels. An empirical p value is then calculated as
+# distribution for the null hypothesis which states there is no dependency
+# between the features and labels. An empirical p value is then calculated as
 # the percentage of permutations for which the score obtained is greater
 # that the score obtained using the original data.
 
@@ -66,10 +66,10 @@ clf = SVC(kernel='linear', random_state=7)
 cv = StratifiedKFold(2)
 
 score_iris, perm_scores_iris, pvalue_iris = permutation_test_score(
-    clf, X, y, scoring="accuracy", cv=cv, n_permutations=1000, n_jobs=1)
+    clf, X, y, scoring="accuracy", cv=cv, n_permutations=1000)
 
 score_rand, perm_scores_rand, pvalue_rand = permutation_test_score(
-    clf, X_rand, y, scoring="accuracy", cv=cv, n_permutations=1000, n_jobs=1)
+    clf, X_rand, y, scoring="accuracy", cv=cv, n_permutations=1000)
 
 # %%
 # Original data
