@@ -92,15 +92,15 @@ jobs:
     dependsOn: [linting]
     condition: and(ne(variables['Build.Reason'], 'Schedule'), succeeded('linting'))
     matrix:
-#       # Linux environment to test that scikit-learn can be built against
-#       # versions of numpy, scipy with ATLAS that comes with Ubuntu Bionic 18.04
-#       # i.e. numpy 1.13.3 and scipy 0.19
-#       py36_ubuntu_atlas:
-#         DISTRIB: 'ubuntu'
-#         PYTHON_VERSION: '3.6'
-#         JOBLIB_VERSION: '0.11'
-#         THREADPOOLCTL_VERSION: '2.0.0'
-#       # Linux + Python 3.6 build with OpenBLAS and without SITE_JOBLIB
+      # Linux environment to test that scikit-learn can be built against
+      # versions of numpy, scipy with ATLAS that comes with Ubuntu Bionic 18.04
+      # i.e. numpy 1.13.3 and scipy 0.19
+      py36_ubuntu_atlas:
+        DISTRIB: 'ubuntu'
+        PYTHON_VERSION: '3.6'
+        JOBLIB_VERSION: '0.11'
+        THREADPOOLCTL_VERSION: '2.0.0'
+      # Linux + Python 3.6 build with OpenBLAS and without SITE_JOBLIB
       py36_conda_openblas:
         DISTRIB: 'conda'
         PYTHON_VERSION: '3.6'
@@ -118,77 +118,77 @@ jobs:
         JOBLIB_VERSION: '0.13.2'
         THREADPOOLCTL_VERSION: '2.0.0'
         COVERAGE: 'true'
-#       # Linux environment to test the latest available dependencies and MKL.
-#       # It runs tests requiring lightgbm, pandas and PyAMG.
-#       pylatest_pip_openblas_pandas:
-#         DISTRIB: 'conda-pip-latest'
-#         PYTHON_VERSION: '3.8'
-#         PYTEST_VERSION: '4.6.2'
-#         COVERAGE: 'true'
-#         CHECK_PYTEST_SOFT_DEPENDENCY: 'true'
-#         TEST_DOCSTRINGS: 'true'
-#         CHECK_WARNINGS: 'true'
+      # Linux environment to test the latest available dependencies and MKL.
+      # It runs tests requiring lightgbm, pandas and PyAMG.
+      pylatest_pip_openblas_pandas:
+        DISTRIB: 'conda-pip-latest'
+        PYTHON_VERSION: '3.8'
+        PYTEST_VERSION: '4.6.2'
+        COVERAGE: 'true'
+        CHECK_PYTEST_SOFT_DEPENDENCY: 'true'
+        TEST_DOCSTRINGS: 'true'
+        CHECK_WARNINGS: 'true'
 
-# - template: build_tools/azure/posix-32.yml
-#   parameters:
-#     name: Linux32
-#     vmImage: ubuntu-18.04
-#     dependsOn: [linting]
-#     condition: and(ne(variables['Build.Reason'], 'Schedule'), succeeded('linting'))
-#     matrix:
-#       py36_ubuntu_atlas_32bit:
-#         DISTRIB: 'ubuntu-32'
-#         PYTHON_VERSION: '3.6'
-#         JOBLIB_VERSION: '0.13'
-#         THREADPOOLCTL_VERSION: '2.0.0'
+- template: build_tools/azure/posix-32.yml
+  parameters:
+    name: Linux32
+    vmImage: ubuntu-18.04
+    dependsOn: [linting]
+    condition: and(ne(variables['Build.Reason'], 'Schedule'), succeeded('linting'))
+    matrix:
+      py36_ubuntu_atlas_32bit:
+        DISTRIB: 'ubuntu-32'
+        PYTHON_VERSION: '3.6'
+        JOBLIB_VERSION: '0.13'
+        THREADPOOLCTL_VERSION: '2.0.0'
 
-# - template: build_tools/azure/posix.yml
-#   parameters:
-#     name: macOS
-#     vmImage: macOS-10.14
-#     dependsOn: [linting]
-#     condition: and(ne(variables['Build.Reason'], 'Schedule'), succeeded('linting'))
-#     matrix:
-#       pylatest_conda_mkl:
-#         DISTRIB: 'conda'
-#         PYTHON_VERSION: '*'
-#         BLAS: 'mkl'
-#         NUMPY_VERSION: '*'
-#         SCIPY_VERSION: '*'
-#         CYTHON_VERSION: '*'
-#         PILLOW_VERSION: '*'
-#         PYTEST_VERSION: '*'
-#         JOBLIB_VERSION: '*'
-#         THREADPOOLCTL_VERSION: '2.0.0'
-#         COVERAGE: 'true'
-      # pylatest_conda_mkl_no_openmp:
-      #   DISTRIB: 'conda'
-      #   PYTHON_VERSION: '*'
-      #   BLAS: 'mkl'
-      #   NUMPY_VERSION: '*'
-      #   SCIPY_VERSION: '*'
-      #   CYTHON_VERSION: '*'
-      #   PILLOW_VERSION: '*'
-      #   PYTEST_VERSION: '*'
-      #   JOBLIB_VERSION: '*'
-      #   THREADPOOLCTL_VERSION: '2.0.0'
-      #   COVERAGE: 'true'
-      #   SKLEARN_TEST_NO_OPENMP: 'true'
-      #   SKLEARN_SKIP_OPENMP_TEST: 'true'
+- template: build_tools/azure/posix.yml
+  parameters:
+    name: macOS
+    vmImage: macOS-10.14
+    dependsOn: [linting]
+    condition: and(ne(variables['Build.Reason'], 'Schedule'), succeeded('linting'))
+    matrix:
+      pylatest_conda_mkl:
+        DISTRIB: 'conda'
+        PYTHON_VERSION: '*'
+        BLAS: 'mkl'
+        NUMPY_VERSION: '*'
+        SCIPY_VERSION: '*'
+        CYTHON_VERSION: '*'
+        PILLOW_VERSION: '*'
+        PYTEST_VERSION: '*'
+        JOBLIB_VERSION: '*'
+        THREADPOOLCTL_VERSION: '2.0.0'
+        COVERAGE: 'true'
+      pylatest_conda_mkl_no_openmp:
+        DISTRIB: 'conda'
+        PYTHON_VERSION: '*'
+        BLAS: 'mkl'
+        NUMPY_VERSION: '*'
+        SCIPY_VERSION: '*'
+        CYTHON_VERSION: '*'
+        PILLOW_VERSION: '*'
+        PYTEST_VERSION: '*'
+        JOBLIB_VERSION: '*'
+        THREADPOOLCTL_VERSION: '2.0.0'
+        COVERAGE: 'true'
+        SKLEARN_TEST_NO_OPENMP: 'true'
+        SKLEARN_SKIP_OPENMP_TEST: 'true'
 
-# - template: build_tools/azure/windows.yml
-#   parameters:
-#     name: Windows
-#     vmImage: vs2017-win2016
-#     dependsOn: [linting]
-#     condition: and(ne(variables['Build.Reason'], 'Schedule'), succeeded('linting'))
-#     matrix:
-#       py37_conda_mkl:
-#         PYTHON_VERSION: '3.7'
-#         CHECK_WARNINGS: 'true'
-#         PYTHON_ARCH: '64'
-#         PYTEST_VERSION: '*'
-#         COVERAGE: 'true'
-#       py36_pip_openblas_32bit:
-#         PYTHON_VERSION: '3.6'
-#         PYTHON_ARCH: '32'
+- template: build_tools/azure/windows.yml
+  parameters:
+    name: Windows
+    vmImage: vs2017-win2016
+    dependsOn: [linting]
+    condition: and(ne(variables['Build.Reason'], 'Schedule'), succeeded('linting'))
+    matrix:
+      py37_conda_mkl:
+        PYTHON_VERSION: '3.7'
+        CHECK_WARNINGS: 'true'
+        PYTHON_ARCH: '64'
+        PYTEST_VERSION: '*'
+        COVERAGE: 'true'
+      py36_pip_openblas_32bit:
+        PYTHON_VERSION: '3.6'
+        PYTHON_ARCH: '32'

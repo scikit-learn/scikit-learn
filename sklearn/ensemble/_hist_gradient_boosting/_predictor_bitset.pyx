@@ -17,7 +17,7 @@ cdef inline unsigned char in_vec_bitset(vector[BITSET_INNER_DTYPE_C] bitset,
         unsigned int i1 = value // 32
         unsigned int i2 = value % 32
 
-    if bitset.size() < i1:
+    if bitset.size() < i1 + 1:
         return 0
     return (bitset[i1] >> i2) & 1
 

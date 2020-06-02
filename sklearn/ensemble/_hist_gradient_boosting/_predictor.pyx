@@ -33,7 +33,8 @@ def _predict_from_data(
     cdef:
         int i
 
-    for i in prange(numeric_data.shape[0], schedule='static', nogil=True):
+    # for i in prange(numeric_data.shape[0], schedule='static', nogil=True):
+    for i in range(numeric_data.shape[0]):
         out[i] = _predict_one_from_numeric_data(
             nodes, predictor_bitset, numeric_data, i)
 

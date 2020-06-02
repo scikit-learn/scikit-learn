@@ -878,7 +878,7 @@ def test_categorical_pandas():
     assert_array_equal(est.is_categorical_, categorical)
 
     y_pred = est.predict(df)
-    assert r2_score(y, y_pred) >= 0.8
+    assert r2_score(y, y_pred) >= 0.7
 
     X_test = np.zeros((1, X.shape[1]), dtype=float)
     X_test[:, ::2] = 30  # unknown category
