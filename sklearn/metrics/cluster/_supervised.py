@@ -196,12 +196,12 @@ def pair_confusion_matrix(labels_true, labels_pred):
     are complete but may be not always pure, hence penalized, and
     have some off-diagonal non-zero entries:
 
-      >>> pair_confusion_matrix([0, 0, 1, 2], [0, 0, 1, 1])  # doctest: +ELLIPSIS
+      >>> pair_confusion_matrix([0, 0, 1, 2], [0, 0, 1, 1])
       [[8, 2], [0, 2]]
 
     The matrix is not symmetric:
 
-      >>> pair_confusion_matrix([0, 0, 1, 1], [0, 0, 1, 2])  # doctest: +ELLIPSIS
+      >>> pair_confusion_matrix([0, 0, 1, 1], [0, 0, 1, 2])
       [[8, 0], [2, 2]]
 
     If classes members are completely split across different clusters, the
@@ -300,13 +300,13 @@ def rand_score(labels_true, labels_pred):
     Labelings that assign all classes members to the same clusters
     are complete but may be not always pure, hence penalized:
 
-      >>> rand_score([0, 0, 1, 2], [0, 0, 1, 1])  # doctest: +ELLIPSIS
+      >>> rand_score([0, 0, 1, 2], [0, 0, 1, 1])
       0.83...
 
     RI is symmetric, so labelings that have pure clusters with members
     coming from the same classes but unnecessary splits are penalized::
 
-      >>> rand_score([0, 0, 1, 1], [0, 0, 1, 2])  # doctest: +ELLIPSIS
+      >>> rand_score([0, 0, 1, 1], [0, 0, 1, 2])
       0.83...
 
     If classes members are completely split across different clusters, the
