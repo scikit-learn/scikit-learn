@@ -125,6 +125,21 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
         Xt[:, support] = X
         return Xt
 
+    def get_feature_names(self, input_features=None):
+        """Mask feature names according to selected features.
+
+        Parameters
+        ----------
+        input_features : list of string or None
+            Input features to select from. If none, they are generated as
+            x0, x1, ..., xn.
+        """
+        mask = self.get_support()
+        if input_features is None:
+            input_features = ['x%d' % i
+                              for i in range(mask.shape[0])]
+        return np.array(input_features)[mask]
+
 
 def _get_feature_importances(estimator, getter, transform_func=None,
                              norm_order=1):

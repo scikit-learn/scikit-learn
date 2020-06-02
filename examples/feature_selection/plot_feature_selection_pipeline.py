@@ -9,6 +9,7 @@ feature selection with anova and then a SVM of the selected features.
 Using a sub-pipeline, the fitted coefficients can be mapped back into
 the original feature space.
 """
+import matplotlib.pyplot as plt
 from sklearn import svm
 from sklearn.datasets import make_classification
 from sklearn.feature_selection import SelectKBest, f_regression
@@ -36,5 +37,7 @@ anova_svm.fit(X_train, y_train)
 y_pred = anova_svm.predict(X_test)
 print(classification_report(y_test, y_pred))
 
-coef = anova_svm[:-1].inverse_transform(anova_svm['linearsvc'].coef_)
-print(coef)
+# access and plot the coefficients of the fitted model
+plt.barh((0, 1, 2), anova_svm[-1].coef_.ravel())
+plt.yticks((0, 1, 2), anova_svm[:-1].get_feature_names())
+plt.show()

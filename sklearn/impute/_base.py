@@ -312,6 +312,15 @@ class SimpleImputer(_BaseImputer):
                                                self.strategy,
                                                self.missing_values,
                                                fill_value)
+
+        if self.add_indicator:
+            self.indicator_ = MissingIndicator(
+                missing_values=self.missing_values)
+            self.indicator_.fit(X)
+        else:
+            self.indicator_ = None
+        invalid_mask = _get_mask(self.statistics_, np.nan)
+        self._valid_mask = np.logical_not(invalid_mask)
         return self
 
     def _sparse_fit(self, X, strategy, missing_values, fill_value):
@@ -461,6 +470,28 @@ class SimpleImputer(_BaseImputer):
             X[coordinates] = values
 
         return super()._concatenate_indicator(X, X_indicator)
+
+    def _more_tags(self):
+        return {'allow_nan': True}
+
+    def get_feature_names(self, input_features=None):
+        """Get feature names for transformation.
+
+        Parameters
+        ----------
+        input_features : array-like of string
+            Input feature names.
+
+        Returns
+        -------
+        feature_names : array-like of string
+            Transformed feature names
+        """
+        check_is_fitted(self, 'statistics_')
+        if input_features is None:
+            input_features = ['x%d' % i
+                              for i in range(self.statistics_.shape[0])]
+        return np.array(input_features)[self._valid_mask]
 
 
 class MissingIndicator(TransformerMixin, BaseEstimator):

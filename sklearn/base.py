@@ -688,6 +688,49 @@ class TransformerMixin:
             # fit method of arity 2 (supervised transformation)
             return self.fit(X, y, **fit_params).transform(X)
 
+    def get_feature_names(self, input_features=None):
+        """Get output feature names.
+
+        Parameters
+        ----------
+        input_features : list of string or None
+            String names of the input features.
+
+        Returns
+        -------
+        output_feature_names : list of string
+            Feature names for transformer output.
+        """
+        # OneToOneMixin is higher in the class hierarchy
+        # because we put mixins on the wrong side
+        if hasattr(super(), 'get_feature_names'):
+            return super().get_feature_names(input_features)
+        # generate feature names from class name by default
+        # would be much less guessing if we stored the number
+        # of output features.
+        # Ideally this would be done in each class.
+        if hasattr(self, 'n_clusters'):
+            # this is before n_components_
+            # because n_components_ means something else
+            # in agglomerative clustering
+            n_features = self.n_clusters
+        elif hasattr(self, '_max_components'):
+            # special case for LinearDiscriminantAnalysis
+            n_components = self.n_components or np.inf
+            n_features = min(self._max_components, n_components)
+        elif hasattr(self, 'n_components_'):
+            # n_components could be auto or None
+            # this is more likely to be an int
+            n_features = self.n_components_
+        elif hasattr(self, 'n_components') and self.n_components is not None:
+            n_features = self.n_components
+        elif hasattr(self, 'components_'):
+            n_features = self.components_.shape[0]
+        else:
+            return None
+        return ["{}{}".format(type(self).__name__.lower(), i)
+                for i in range(n_features)]
+
 
 class DensityMixin:
     """Mixin class for all density estimators in scikit-learn."""
