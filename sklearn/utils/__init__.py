@@ -413,43 +413,48 @@ def _get_column_indices(X, key):
                          "strings, or boolean mask is allowed")
 
 
-def resample(*arrays, **options):
-    """Resample arrays or sparse matrices in a consistent way
+def resample(*arrays,
+             replace=True,
+             n_samples=None,
+             random_state=None,
+             stratify=None):
+    """Resample arrays or sparse matrices in a consistent way.
 
     The default strategy implements one step of the bootstrapping
     procedure.
 
     Parameters
     ----------
-    *arrays : sequence of indexable data-structures
+    *arrays : sequence of array-like of shape (n_samples,) or \
+            (n_samples, n_outputs)
         Indexable data-structures can be arrays, lists, dataframes or scipy
         sparse matrices with consistent first dimension.
 
-    Other Parameters
-    ----------------
-    replace : boolean, True by default
+    replace : bool, default=True
         Implements resampling with replacement. If False, this will implement
         (sliced) random permutations.
 
-    n_samples : int, None by default
+    n_samples : int, default=None
         Number of samples to generate. If left to None this is
         automatically set to the first dimension of the arrays.
         If replace is False it should not be larger than the length of
         arrays.
 
-    random_state : int, RandomState instance or None, optional (default=None)
+    random_state : int or RandomState instance, default=None
         Determines random number generation for shuffling
         the data.
         Pass an int for reproducible results across multiple function calls.
         See :term:`Glossary <random_state>`.
 
-    stratify : array-like or None (default=None)
+    stratify : array-like of shape (n_samples,) or (n_samples, n_outputs), \
+            default=None
         If not None, data is split in a stratified fashion, using this as
         the class labels.
 
     Returns
     -------
-    resampled_arrays : sequence of indexable data-structures
+    resampled_arrays : sequence of array-like of shape (n_samples,) or \
+            (n_samples, n_outputs)
         Sequence of resampled copies of the collections. The original arrays
         are not impacted.
 
@@ -492,18 +497,12 @@ def resample(*arrays, **options):
       ...          random_state=0)
       [1, 1, 1, 0, 1]
 
-
     See also
     --------
     :func:`sklearn.utils.shuffle`
     """
-
-    random_state = check_random_state(options.pop('random_state', None))
-    replace = options.pop('replace', True)
-    max_n_samples = options.pop('n_samples', None)
-    stratify = options.pop('stratify', None)
-    if options:
-        raise ValueError("Unexpected kw arguments: %r" % options.keys())
+    max_n_samples = n_samples
+    random_state = check_random_state(random_state)
 
     if len(arrays) == 0:
         return None
@@ -555,7 +554,6 @@ def resample(*arrays, **options):
             indices.extend(indices_i)
 
         indices = random_state.permutation(indices)
-
 
     # convert sparse matrices to CSR for row-based indexing
     arrays = [a.tocsr() if issparse(a) else a for a in arrays]
