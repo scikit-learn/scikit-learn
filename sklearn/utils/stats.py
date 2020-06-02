@@ -100,7 +100,6 @@ def _weighted_percentile(array, sample_weight, percentile=50,
             lambda x: np.clip(x, 0, n_rows - 1), axis=0,
             arr=percentile_idx
         )
-        percentile_idx = np.nan_to_num(percentile_idx, nan=0)
 
         percentile_value = array[
             sorted_idx[percentile_idx, np.arange(n_cols)],
