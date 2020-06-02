@@ -5,9 +5,6 @@ from sklearn.utils._testing import (assert_array_equal,
 
 from sklearn.metrics import pair_confusion_matrix, rand_score
 
-import numpy as np
-#from sklearn.metrics import pair_confusion_matrix, rand_score
-
 def test_pair_confusion_matrix():
     n = 10
     N = n * n
@@ -40,9 +37,6 @@ def test_pair_confusion_matrix():
     assert_array_equal(expected, pair_confusion_matrix(clustering1,
                                                        clustering2))
 
-
-import numpy as np
-#from sklearn.metrics import pair_confusion_matrix, rand_score
 
 def test_rand_score():
     n = 10
