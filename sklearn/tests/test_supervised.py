@@ -5,6 +5,7 @@ from sklearn.utils._testing import (assert_array_equal,
 
 from sklearn.metrics import pair_confusion_matrix, rand_score
 
+
 def test_pair_confusion_matrix():
     n = 10
     N = n * n
