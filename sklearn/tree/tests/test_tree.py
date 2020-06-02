@@ -285,10 +285,11 @@ def test_diabetes_overfit(name, Tree, criterion):
 @skip_if_32bit
 @pytest.mark.parametrize("name, Tree", REG_TREES.items())
 @pytest.mark.parametrize(
-    "criterion, max_depth",
-    [("mse", 15), ("mae", 20), ("friedman_mse", 15)]
+    "criterion, max_depth, max_loss",
+    [("mse", 15, 60), ("mae", 20, 60), ("friedman_mse", 15, 60),
+     ("poisson", 20, 4000)]
 )
-def test_diabetes_underfit(name, Tree, criterion, max_depth):
+def test_diabetes_underfit(name, Tree, criterion, max_depth, max_loss):
     # check consistency of trees when the depth and the number of features are
     # limited
 
@@ -297,9 +298,9 @@ def test_diabetes_underfit(name, Tree, criterion, max_depth):
         max_features=6, random_state=0
     )
     reg.fit(diabetes.data, diabetes.target)
-    score = mean_squared_error(diabetes.target, reg.predict(diabetes.data))
-    assert score < 60 and score > 0, (
-        f"Failed with {name}, criterion = {criterion} and score = {score}"
+    loss = mean_squared_error(diabetes.target, reg.predict(diabetes.data))
+    assert loss < max_loss and loss > 0, (
+        f"Failed with {name}, criterion = {criterion} and loss = {loss}"
     )
 
 
