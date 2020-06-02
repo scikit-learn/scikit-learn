@@ -512,9 +512,8 @@ def test_make_unique_dtype():
 
 
 def test_input_shape_validation():
-    # Test from GH#15012
+    # Test from #15012
     # Check that IsotonicRegression can handle 2darray with only 1 feature
-    # https://github.com/scikit-learn/scikit-learn/issues/15012
     X = np.arange(10)
     X_2d = X.reshape(-1, 1)
     y = np.arange(10)
