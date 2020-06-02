@@ -113,8 +113,8 @@ def contingency_matrix(labels_true, labels_pred, *, eps=None, sparse=False,
         Matrix :math:`C` such that :math:`C_{i, j}` is the number of samples in
         true class :math:`i` and in predicted class :math:`j`. If
         ``eps is None``, the dtype of this array will be integer unless set
-        otherwise with the ``dtype`` argument. If ``eps`` is given, the dtype will
-        be float.
+        otherwise with the ``dtype`` argument. If ``eps`` is given, the dtype
+        will be float.
         Will be a ``sklearn.sparse.csr_matrix`` if ``sparse=True``.
     """
 
@@ -241,7 +241,8 @@ def pair_confusion_matrix(labels_true, labels_pred):
         return [[n_samples * (n_samples - 1),0], [0,0]]
 
     # Computation using the contingency data
-    contingency = contingency_matrix(labels_true, labels_pred, sparse=True, dtype=np.int64)
+    contingency = contingency_matrix(labels_true, labels_pred, sparse=True,
+                                     dtype=np.int64)
     n_c = np.ravel(contingency.sum(axis=1))
     n_k = np.ravel(contingency.sum(axis=0))
     Sum_Squares = sum(n_ij*n_ij for n_ij in contingency.data)
