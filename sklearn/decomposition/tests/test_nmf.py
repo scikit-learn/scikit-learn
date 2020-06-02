@@ -33,7 +33,7 @@ def test_initialize_nn_output():
     rng = np.random.mtrand.RandomState(42)
     data = np.abs(rng.randn(10, 10))
     for init in ('random', 'nndsvd', 'nndsvda', 'nndsvdar'):
-        W, H = nmf._initialize_nmf(data, 10, init=init, random_state=0)
+        W, H, _, _ = nmf._initialize_nmf(data, 10, init=init, random_state=0)
         assert not ((W < 0).any() or (H < 0).any())
 
 
@@ -74,7 +74,7 @@ def test_initialize_close():
     # the entries in the matrix.
     rng = np.random.mtrand.RandomState(42)
     A = np.abs(rng.randn(10, 10))
-    W, H = nmf._initialize_nmf(A, 10, init='nndsvd')
+    W, H, _, _ = nmf._initialize_nmf(A, 10, init='nndsvd')
     error = linalg.norm(np.dot(W, H) - A)
     sdev = linalg.norm(A - A.mean())
     assert error <= sdev
@@ -86,9 +86,9 @@ def test_initialize_variants():
     # 'nndsvd' only where the basic version has zeros.
     rng = np.random.mtrand.RandomState(42)
     data = np.abs(rng.randn(10, 10))
-    W0, H0 = nmf._initialize_nmf(data, 10, init='nndsvd')
-    Wa, Ha = nmf._initialize_nmf(data, 10, init='nndsvda')
-    War, Har = nmf._initialize_nmf(data, 10, init='nndsvdar',
+    W0, H0, _, _ = nmf._initialize_nmf(data, 10, init='nndsvd')
+    Wa, Ha, _, _ = nmf._initialize_nmf(data, 10, init='nndsvda')
+    War, Har, _, _ = nmf._initialize_nmf(data, 10, init='nndsvdar',
                                    random_state=0)
 
     for ref, evl in ((W0, Wa), (W0, War), (H0, Ha), (H0, Har)):
@@ -291,7 +291,7 @@ def test_beta_divergence():
     X = rng.randn(n_samples, n_features)
     np.clip(X, 0, None, out=X)
     X_csr = sp.csr_matrix(X)
-    W, H = nmf._initialize_nmf(X, n_components, init='random', random_state=42)
+    W, H, _, _ = nmf._initialize_nmf(X, n_components, init='random', random_state=42)
 
     for beta in beta_losses:
         ref = _beta_divergence_dense(X, W, H, beta)
@@ -345,7 +345,7 @@ def test_nmf_multiplicative_update_sparse():
     X = rng.randn(n_samples, n_features)
     X = np.abs(X)
     X_csr = sp.csr_matrix(X)
-    W0, H0 = nmf._initialize_nmf(X, n_components, init='random',
+    W0, H0, _, _ = nmf._initialize_nmf(X, n_components, init='random',
                                  random_state=42)
 
     for beta_loss in (-1.2, 0, 0.2, 1., 2., 2.5):
@@ -470,7 +470,7 @@ def test_nmf_decreasing():
     rng = np.random.mtrand.RandomState(42)
     X = rng.randn(n_samples, n_features)
     np.abs(X, X)
-    W0, H0 = nmf._initialize_nmf(X, n_components, init='random',
+    W0, H0, _, _ = nmf._initialize_nmf(X, n_components, init='random',
                                  random_state=42)
 
     for beta_loss in (-1.2, 0, 0.2, 1., 2., 2.5):

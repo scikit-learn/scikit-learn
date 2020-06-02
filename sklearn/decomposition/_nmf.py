@@ -707,18 +707,24 @@ def _multiplicative_update_h(X, W, H, A, B,
         denominator = denominator + l2_reg_H * H
     denominator[denominator == 0] = EPSILON
 
-    # r = .1
-    # rho = r ** (1 / n_iter)
-    rho = .99
-    A *= rho
-    B *= rho
-    A += numerator * H
-    B += denominator
-    H = np.divide(A, B)
+    numerator /= denominator
+    delta_H = numerator
+
+    if A is not None and B is not None:
+        # r = .1
+        # rho = r ** (1 / n_iter)
+        rho = .99
+        A *= rho
+        B *= rho
+        A += delta_H * H
+        B += denominator
+        H = np.divide(A, B)    
 
     # gamma is in ]0, 1]
     if gamma != 1:
         delta_H **= gamma
+
+    H *= delta_H
 
     return H, A, B
 
@@ -822,17 +828,18 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
     n_iter_update_h_ = 1
     max_iter_update_w_ = 5
 
+    if batch_size is None:
+        batch_size = n_samples
     for n_iter in range(1, max_iter + 1):
         for i, slice in enumerate(gen_batches(n=n_samples,
                                               batch_size=batch_size)):
-
             # update W
             # H_sum, HHt and XHt are saved and reused if not update_H
-            for j in range(max_iter_update_w_):
-                delta_W, H_sum, HHt, XHt = _multiplicative_update_w(
+            #for j in range(max_iter_update_w_):
+            delta_W, H_sum, HHt, XHt = _multiplicative_update_w(
                     X[slice], W[slice], H, beta_loss, l1_reg_W, l2_reg_W,
                     gamma, H_sum, HHt, XHt, update_H)
-                W[slice] *= delta_W
+            W[slice] *= delta_W
 
             # necessary for stability with beta_loss < 1
             if beta_loss < 1:
@@ -879,6 +886,248 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
 
 @_deprecate_positional_args
 def non_negative_factorization(X, W=None, H=None, n_components=None, *,
+                               init=None, update_H=True, solver='cd',
+                               beta_loss='frobenius', tol=1e-4,
+                               max_iter=200, alpha=0., l1_ratio=0.,
+                               regularization=None, random_state=None,
+                               verbose=0, shuffle=False):
+    r"""Compute Non-negative Matrix Factorization (NMF)
+
+    Find two non-negative matrices (W, H) whose product approximates the non-
+    negative matrix X. This factorization can be used for example for
+    dimensionality reduction, source separation or topic extraction.
+
+    The objective function is::
+
+        0.5 * ||X - WH||_Fro^2
+        + alpha * l1_ratio * ||vec(W)||_1
+        + alpha * l1_ratio * ||vec(H)||_1
+        + 0.5 * alpha * (1 - l1_ratio) * ||W||_Fro^2
+        + 0.5 * alpha * (1 - l1_ratio) * ||H||_Fro^2
+
+    Where::
+
+        ||A||_Fro^2 = \sum_{i,j} A_{ij}^2 (Frobenius norm)
+        ||vec(A)||_1 = \sum_{i,j} abs(A_{ij}) (Elementwise L1 norm)
+
+    For multiplicative-update ('mu') solver, the Frobenius norm
+    (0.5 * ||X - WH||_Fro^2) can be changed into another beta-divergence loss,
+    by changing the beta_loss parameter.
+
+    The objective function is minimized with an alternating minimization of W
+    and H. If H is given and update_H=False, it solves for W only.
+
+    Parameters
+    ----------
+    X : array-like, shape (n_samples, n_features)
+        Constant matrix.
+
+    W : array-like, shape (n_samples, n_components)
+        If init='custom', it is used as initial guess for the solution.
+
+    H : array-like, shape (n_components, n_features)
+        If init='custom', it is used as initial guess for the solution.
+        If update_H=False, it is used as a constant, to solve for W only.
+
+    n_components : integer
+        Number of components, if n_components is not set all features
+        are kept.
+
+    init : None | 'random' | 'nndsvd' | 'nndsvda' | 'nndsvdar' | 'custom'
+        Method used to initialize the procedure.
+        Default: None.
+
+        Valid options:
+
+        - None: 'nndsvd' if n_components < n_features, otherwise 'random'.
+
+        - 'random': non-negative random matrices, scaled with:
+            sqrt(X.mean() / n_components)
+
+        - 'nndsvd': Nonnegative Double Singular Value Decomposition (NNDSVD)
+            initialization (better for sparseness)
+
+        - 'nndsvda': NNDSVD with zeros filled with the average of X
+            (better when sparsity is not desired)
+
+        - 'nndsvdar': NNDSVD with zeros filled with small random values
+            (generally faster, less accurate alternative to NNDSVDa
+            for when sparsity is not desired)
+
+        - 'custom': use custom matrices W and H
+
+        .. versionchanged:: 0.23
+            The default value of `init` changed from 'random' to None in 0.23.
+
+    update_H : boolean, default: True
+        Set to True, both W and H will be estimated from initial guesses.
+        Set to False, only W will be estimated.
+
+    solver : 'cd' | 'mu'
+        Numerical solver to use:
+
+        - 'cd' is a Coordinate Descent solver that uses Fast Hierarchical
+            Alternating Least Squares (Fast HALS).
+
+        - 'mu' is a Multiplicative Update solver.
+
+        .. versionadded:: 0.17
+           Coordinate Descent solver.
+
+        .. versionadded:: 0.19
+           Multiplicative Update solver.
+
+    beta_loss : float or string, default 'frobenius'
+        String must be in {'frobenius', 'kullback-leibler', 'itakura-saito'}.
+        Beta divergence to be minimized, measuring the distance between X
+        and the dot product WH. Note that values different from 'frobenius'
+        (or 2) and 'kullback-leibler' (or 1) lead to significantly slower
+        fits. Note that for beta_loss <= 0 (or 'itakura-saito'), the input
+        matrix X cannot contain zeros. Used only in 'mu' solver.
+
+        .. versionadded:: 0.19
+
+    tol : float, default: 1e-4
+        Tolerance of the stopping condition.
+
+    max_iter : integer, default: 200
+        Maximum number of iterations before timing out.
+
+    alpha : double, default: 0.
+        Constant that multiplies the regularization terms.
+
+    l1_ratio : double, default: 0.
+        The regularization mixing parameter, with 0 <= l1_ratio <= 1.
+        For l1_ratio = 0 the penalty is an elementwise L2 penalty
+        (aka Frobenius Norm).
+        For l1_ratio = 1 it is an elementwise L1 penalty.
+        For 0 < l1_ratio < 1, the penalty is a combination of L1 and L2.
+
+    regularization : 'both' | 'components' | 'transformation' | None
+        Select whether the regularization affects the components (H), the
+        transformation (W), both or none of them.
+
+    random_state : int, RandomState instance, default=None
+        Used for NMF initialisation (when ``init`` == 'nndsvdar' or
+        'random'), and in Coordinate Descent. Pass an int for reproducible
+        results across multiple function calls.
+        See :term:`Glossary <random_state>`.
+
+    verbose : integer, default: 0
+        The verbosity level.
+
+    shuffle : boolean, default: False
+        If true, randomize the order of coordinates in the CD solver.
+
+    Returns
+    -------
+    W : array-like, shape (n_samples, n_components)
+        Solution to the non-negative least squares problem.
+
+    H : array-like, shape (n_components, n_features)
+        Solution to the non-negative least squares problem.
+
+    n_iter : int
+        Actual number of iterations.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> X = np.array([[1,1], [2, 1], [3, 1.2], [4, 1], [5, 0.8], [6, 1]])
+    >>> from sklearn.decomposition import non_negative_factorization
+    >>> W, H, n_iter = non_negative_factorization(X, n_components=2,
+    ... init='random', random_state=0)
+
+    References
+    ----------
+    Cichocki, Andrzej, and P. H. A. N. Anh-Huy. "Fast local algorithms for
+    large scale nonnegative matrix and tensor factorizations."
+    IEICE transactions on fundamentals of electronics, communications and
+    computer sciences 92.3: 708-721, 2009.
+
+    Fevotte, C., & Idier, J. (2011). Algorithms for nonnegative matrix
+    factorization with the beta-divergence. Neural Computation, 23(9).
+    """
+    X = check_array(X, accept_sparse=('csr', 'csc'),
+                    dtype=[np.float64, np.float32])
+    check_non_negative(X, "NMF (input X)")
+    beta_loss = _check_string_param(solver, regularization, beta_loss, init)
+
+    if X.min() == 0 and beta_loss <= 0:
+        raise ValueError("When beta_loss <= 0 and X contains zeros, "
+                         "the solver may diverge. Please add small values to "
+                         "X, or use a positive beta_loss.")
+
+    n_samples, n_features = X.shape
+    if n_components is None:
+        n_components = n_features
+
+    if not isinstance(n_components, numbers.Integral) or n_components <= 0:
+        raise ValueError("Number of components must be a positive integer;"
+                         " got (n_components=%r)" % n_components)
+    if not isinstance(max_iter, numbers.Integral) or max_iter < 0:
+        raise ValueError("Maximum number of iterations must be a positive "
+                         "integer; got (max_iter=%r)" % max_iter)
+    if not isinstance(tol, numbers.Number) or tol < 0:
+        raise ValueError("Tolerance for stopping criteria must be "
+                         "positive; got (tol=%r)" % tol)
+
+    # check W and H, or initialize them
+    if init == 'custom' and update_H:
+        _check_init(H, (n_components, n_features), "NMF (input H)")
+        _check_init(W, (n_samples, n_components), "NMF (input W)")
+        if H.dtype != X.dtype or W.dtype != X.dtype:
+            raise TypeError("H and W should have the same dtype as X. Got "
+                            "H.dtype = {} and W.dtype = {}."
+                            .format(H.dtype, W.dtype))
+    elif not update_H:
+        _check_init(H, (n_components, n_features), "NMF (input H)")
+        if H.dtype != X.dtype:
+            raise TypeError("H should have the same dtype as X. Got H.dtype = "
+                            "{}.".format(H.dtype))
+        # 'mu' solver should not be initialized by zeros
+        if solver == 'mu':
+            avg = np.sqrt(X.mean() / n_components)
+            W = np.full((n_samples, n_components), avg, dtype=X.dtype)
+        else:
+            W = np.zeros((n_samples, n_components), dtype=X.dtype)
+    else:
+        W, H, _, _ = _initialize_nmf(X, n_components, init=init,
+                               random_state=random_state)
+
+    l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H = _compute_regularization(
+        alpha, l1_ratio, regularization)
+
+    if solver == 'cd':
+        W, H, n_iter = _fit_coordinate_descent(X, W, H, tol, max_iter,
+                                               l1_reg_W, l1_reg_H,
+                                               l2_reg_W, l2_reg_H,
+                                               update_H=update_H,
+                                               verbose=verbose,
+                                               shuffle=shuffle,
+                                               random_state=random_state)
+    elif solver == 'mu':
+        batch_size = None
+        A = None
+        B = None
+        W, H, n_iter = _fit_multiplicative_update(X, W, H, A, B, beta_loss,
+                                                  batch_size, max_iter,
+                                                  tol, l1_reg_W, l1_reg_H,
+                                                  l2_reg_W, l2_reg_H, update_H,
+                                                  verbose)
+
+    else:
+        raise ValueError("Invalid solver parameter '%s'." % solver)
+
+    if n_iter == max_iter and tol > 0:
+        warnings.warn("Maximum number of iterations %d reached. Increase it to"
+                      " improve convergence." % max_iter, ConvergenceWarning)
+
+    return W, H, n_iter
+
+
+@_deprecate_positional_args
+def non_negative_factorization_online(X, W=None, H=None, n_components=None, *,
                                init=None, update_H=True, solver='cd',
                                A=None, B=None, batch_size=1024,
                                beta_loss='frobenius', tol=1e-4,
@@ -1126,7 +1375,6 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
 
     return W, H, A, B, n_iter
 
-
 class NMF(TransformerMixin, BaseEstimator):
     r"""Non-Negative Matrix Factorization (NMF)
 
@@ -1285,6 +1533,294 @@ class NMF(TransformerMixin, BaseEstimator):
 
     @_deprecate_positional_args
     def __init__(self, n_components=None, init=None, solver='cd',
+                 beta_loss='frobenius', tol=1e-4, max_iter=200,
+                 random_state=None, alpha=0., l1_ratio=0., verbose=0,
+                 shuffle=False):
+        self.n_components = n_components
+        self.init = init
+        self.solver = solver
+        self.beta_loss = beta_loss
+        self.tol = tol
+        self.max_iter = max_iter
+        self.random_state = random_state
+        self.alpha = alpha
+        self.l1_ratio = l1_ratio
+        self.verbose = verbose
+        self.shuffle = shuffle
+
+    def _more_tags(self):
+        return {'requires_positive_X': True}
+
+    def fit_transform(self, X, y=None, W=None, H=None):
+        """Learn a NMF model for the data X and returns the transformed data.
+
+        This is more efficient than calling fit followed by transform.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            Data matrix to be decomposed
+
+        y : Ignored
+
+        W : array-like, shape (n_samples, n_components)
+            If init='custom', it is used as initial guess for the solution.
+
+        H : array-like, shape (n_components, n_features)
+            If init='custom', it is used as initial guess for the solution.
+
+        Returns
+        -------
+        W : array, shape (n_samples, n_components)
+            Transformed data.
+        """
+        X = self._validate_data(X, accept_sparse=('csr', 'csc'),
+                                dtype=[np.float64, np.float32])
+
+        W, H, n_iter_ = non_negative_factorization(
+            X=X, W=W, H=H, n_components=self.n_components, init=self.init,
+            update_H=True, solver=self.solver, beta_loss=self.beta_loss,
+            tol=self.tol, max_iter=self.max_iter, alpha=self.alpha,
+            l1_ratio=self.l1_ratio, regularization='both',
+            random_state=self.random_state, verbose=self.verbose,
+            shuffle=self.shuffle)
+
+        self.reconstruction_err_ = _beta_divergence(X, W, H, self.beta_loss,
+                                                    square_root=True)
+
+        self.n_components_ = H.shape[0]
+        self.components_ = H
+        self.n_iter_ = n_iter_
+
+        return W
+
+    def fit(self, X, y=None, **params):
+        """Learn a NMF model for the data X.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            Data matrix to be decomposed
+
+        y : Ignored
+
+        Returns
+        -------
+        self
+        """
+        self.fit_transform(X, **params)
+        return self
+
+    def transform(self, X):
+        """Transform the data X according to the fitted NMF model
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            Data matrix to be transformed by the model
+
+        Returns
+        -------
+        W : array, shape (n_samples, n_components)
+            Transformed data
+        """
+        check_is_fitted(self)
+
+        W, _, n_iter_ = non_negative_factorization(
+            X=X, W=None, H=self.components_, n_components=self.n_components_,
+            init=self.init, update_H=False, solver=self.solver,
+            beta_loss=self.beta_loss, tol=self.tol, max_iter=self.max_iter,
+            alpha=self.alpha, l1_ratio=self.l1_ratio, regularization='both',
+            random_state=self.random_state, verbose=self.verbose,
+            shuffle=self.shuffle)
+
+        return W
+
+    def inverse_transform(self, W):
+        """Transform data back to its original space.
+
+        Parameters
+        ----------
+        W : {array-like, sparse matrix}, shape (n_samples, n_components)
+            Transformed data matrix
+
+        Returns
+        -------
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            Data matrix of original shape
+
+        .. versionadded:: 0.18
+        """
+        check_is_fitted(self)
+        return np.dot(W, self.components_)
+
+
+class MiniBatchNMF(TransformerMixin, BaseEstimator):
+    r"""Mini-Batch Non-Negative Matrix Factorization (NMF)
+
+    Find two non-negative matrices (W, H) whose product approximates the non-
+    negative matrix X. This factorization can be used for example for
+    dimensionality reduction, source separation or topic extraction.
+
+    The objective function is::
+
+        0.5 * ||X - WH||_Fro^2
+        + alpha * l1_ratio * ||vec(W)||_1
+        + alpha * l1_ratio * ||vec(H)||_1
+        + 0.5 * alpha * (1 - l1_ratio) * ||W||_Fro^2
+        + 0.5 * alpha * (1 - l1_ratio) * ||H||_Fro^2
+
+    Where::
+
+        ||A||_Fro^2 = \sum_{i,j} A_{ij}^2 (Frobenius norm)
+        ||vec(A)||_1 = \sum_{i,j} abs(A_{ij}) (Elementwise L1 norm)
+
+    For multiplicative-update ('mu') solver, the Frobenius norm
+    (0.5 * ||X - WH||_Fro^2) can be changed into another beta-divergence loss,
+    by changing the beta_loss parameter.
+
+    The objective function is minimized with an alternating minimization of W
+    and H.
+
+    Read more in the :ref:`User Guide <NMF>`.
+
+    Parameters
+    ----------
+    n_components : int or None
+        Number of components, if n_components is not set all features
+        are kept.
+
+    init : None | 'random' | 'nndsvd' |  'nndsvda' | 'nndsvdar' | 'custom'
+        Method used to initialize the procedure.
+        Default: None.
+        Valid options:
+
+        - None: 'nndsvd' if n_components <= min(n_samples, n_features),
+            otherwise random.
+
+        - 'random': non-negative random matrices, scaled with:
+            sqrt(X.mean() / n_components)
+
+        - 'nndsvd': Nonnegative Double Singular Value Decomposition (NNDSVD)
+            initialization (better for sparseness)
+
+        - 'nndsvda': NNDSVD with zeros filled with the average of X
+            (better when sparsity is not desired)
+
+        - 'nndsvdar': NNDSVD with zeros filled with small random values
+            (generally faster, less accurate alternative to NNDSVDa
+            for when sparsity is not desired)
+
+        - 'custom': use custom matrices W and H
+
+    batch_size : int,
+        number of samples in each mini-batch 
+
+    solver : 'cd' | 'mu'
+        Numerical solver to use:
+        'cd' is a Coordinate Descent solver.
+        'mu' is a Multiplicative Update solver.
+
+        .. versionadded:: 0.17
+           Coordinate Descent solver.
+
+        .. versionadded:: 0.19
+           Multiplicative Update solver.
+
+    beta_loss : float or string, default 'frobenius'
+        String must be in {'frobenius', 'kullback-leibler', 'itakura-saito'}.
+        Beta divergence to be minimized, measuring the distance between X
+        and the dot product WH. Note that values different from 'frobenius'
+        (or 2) and 'kullback-leibler' (or 1) lead to significantly slower
+        fits. Note that for beta_loss <= 0 (or 'itakura-saito'), the input
+        matrix X cannot contain zeros. Used only in 'mu' solver.
+
+        .. versionadded:: 0.19
+
+    tol : float, default: 1e-4
+        Tolerance of the stopping condition.
+
+    max_iter : integer, default: 200
+        Maximum number of iterations before timing out.
+
+    random_state : int, RandomState instance, default=None
+        Used for initialisation (when ``init`` == 'nndsvdar' or
+        'random'), and in Coordinate Descent. Pass an int for reproducible
+        results across multiple function calls.
+        See :term:`Glossary <random_state>`.
+
+    alpha : double, default: 0.
+        Constant that multiplies the regularization terms. Set it to zero to
+        have no regularization.
+
+        .. versionadded:: 0.17
+           *alpha* used in the Coordinate Descent solver.
+
+    l1_ratio : double, default: 0.
+        The regularization mixing parameter, with 0 <= l1_ratio <= 1.
+        For l1_ratio = 0 the penalty is an elementwise L2 penalty
+        (aka Frobenius Norm).
+        For l1_ratio = 1 it is an elementwise L1 penalty.
+        For 0 < l1_ratio < 1, the penalty is a combination of L1 and L2.
+
+        .. versionadded:: 0.17
+           Regularization parameter *l1_ratio* used in the Coordinate Descent
+           solver.
+
+    verbose : bool, default=False
+        Whether to be verbose.
+
+    shuffle : boolean, default: False
+        If true, randomize the order of coordinates in the CD solver.
+
+        .. versionadded:: 0.17
+           *shuffle* parameter used in the Coordinate Descent solver.
+
+    Attributes
+    ----------
+    components_ : array, [n_components, n_features]
+        Factorization matrix, sometimes called 'dictionary'.
+
+    n_components_ : integer
+        The number of components. It is same as the `n_components` parameter
+        if it was given. Otherwise, it will be same as the number of
+        features.
+
+    reconstruction_err_ : number
+        Frobenius norm of the matrix difference, or beta-divergence, between
+        the training data ``X`` and the reconstructed data ``WH`` from
+        the fitted model.
+
+    n_iter_ : int
+        Actual number of iterations.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> X = np.array([[1, 1], [2, 1], [3, 1.2], [4, 1], [5, 0.8], [6, 1]])
+    >>> from sklearn.decomposition import MiniBatchNMF
+    >>> model = MiniBatchNMF(n_components=2, init='random', random_state=0)
+    >>> W = model.fit_transform(X)
+    >>> H = model.components_
+
+    References
+    ----------
+    Cichocki, Andrzej, and P. H. A. N. Anh-Huy. "Fast local algorithms for
+    large scale nonnegative matrix and tensor factorizations."
+    IEICE transactions on fundamentals of electronics, communications and
+    computer sciences 92.3: 708-721, 2009.
+
+    Fevotte, C., & Idier, J. (2011). Algorithms for nonnegative matrix
+    factorization with the beta-divergence. Neural Computation, 23(9).
+
+    Lefevre, A., Bach, F., Fevotte, C. (2011). Online algorithms for
+    nonnegative matrix factorization with the Itakura-Saito divergence.
+    WASPA (https://doi.org/10.1109/ASPAA.2011.6082314,
+           https://hal.archives-ouvertes.fr/hal-00602050)
+    """
+
+    @_deprecate_positional_args
+    def __init__(self, n_components=None, init=None, solver='cd',
                  batch_size=1024,
                  beta_loss='frobenius', tol=1e-4, max_iter=200,
                  random_state=None, alpha=0., l1_ratio=0., verbose=0,
@@ -1331,11 +1867,11 @@ class NMF(TransformerMixin, BaseEstimator):
         X = self._validate_data(X, accept_sparse=('csr', 'csc'),
                                 dtype=[np.float64, np.float32])
 
-        W, H, A, B, n_iter_ = non_negative_factorization(
+        W, H, A, B, n_iter_ = non_negative_factorization_online(
             X=X, W=W, H=H, A=None, B=None, n_components=self.n_components,
             batch_size=self.batch_size, init=self.init,
             update_H=True, solver=self.solver, beta_loss=self.beta_loss,
-            tol=self.tol, max_iter=self.max_iter, alpha=self.alpha,
+            tol=0, max_iter=1, alpha=self.alpha,
             l1_ratio=self.l1_ratio, regularization='both',
             random_state=self.random_state, verbose=self.verbose,
             shuffle=self.shuffle)
@@ -1373,7 +1909,7 @@ class NMF(TransformerMixin, BaseEstimator):
             W = np.ones((X.shape[0], self.n_components))
             W *= np.maximum(1e-6, X.sum(axis=1).A)
             W /= W.sum(axis=1, keepdims=True)
-            W, H, A, B, n_iter_ = non_negative_factorization(
+            W, H, A, B, n_iter_ = non_negative_factorization_online(
                 X=X, W=W, H=self.components_,
                 A=self.components_numerator_, B=self.components_denominator_,
                 n_components=self.n_components,
@@ -1415,7 +1951,7 @@ class NMF(TransformerMixin, BaseEstimator):
         """
         check_is_fitted(self)
 
-        W, _, _, _, n_iter_ = non_negative_factorization(
+        W, _, _, _, n_iter_ = non_negative_factorization_online(
             X=X, W=None, H=self.components_, A=None, B=None,
             n_components=self.n_components_,
             batch_size=self.batch_size,
@@ -1426,21 +1962,3 @@ class NMF(TransformerMixin, BaseEstimator):
             shuffle=self.shuffle)
 
         return W
-
-    def inverse_transform(self, W):
-        """Transform data back to its original space.
-
-        Parameters
-        ----------
-        W : {array-like, sparse matrix}, shape (n_samples, n_components)
-            Transformed data matrix
-
-        Returns
-        -------
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            Data matrix of original shape
-
-        .. versionadded:: 0.18
-        """
-        check_is_fitted(self)
-        return np.dot(W, self.components_)
