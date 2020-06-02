@@ -1082,7 +1082,7 @@ To enable categorical support, a boolean mask can be passed to the
 `categorical_features` parameter. In the following, the first feature will be
 treated as categorical and the second feature as nummerical::
 
-  >>> gbdt = HistGradientBoostingRegressor(categorical_features=[True, False])
+  >>> gbdt = HistGradientBoostingClassifier(categorical_features=[True, False])
 
 Another way to enable categorical support is to pass `'pandas'` to the
 `categorical` parameter, and pass a pandas dataframe to `fit`. This will infer

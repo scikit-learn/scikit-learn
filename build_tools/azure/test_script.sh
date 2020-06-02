@@ -41,5 +41,5 @@ cp setup.cfg $TEST_DIR
 cd $TEST_DIR
 
 set -x
-$TEST_CMD --pyargs sklearn
+$TEST_CMD --pyargs sklearn.ensemble._hist_gradient_boosting -vv
 set +x
