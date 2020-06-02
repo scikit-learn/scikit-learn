@@ -77,7 +77,8 @@ def _weighted_percentile(array, sample_weight, percentile=50,
     adjusted_percentile = (weight_cdf - sorted_weights)
     with np.errstate(invalid="ignore"):
         adjusted_percentile /= weight_cdf[-1] - sorted_weights
-        adjusted_percentile = np.nan_to_num(adjusted_percentile, nan=1)
+        nan_mask = np.isnan(adjusted_percentile)
+        adjusted_percentile[nan_mask] = 1
 
     if interpolation in ("lower", "higher"):
         percentile_idx = np.array([
