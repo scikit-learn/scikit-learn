@@ -236,7 +236,7 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
     def _build_y(self, X, y, sample_weight, trim_duplicates=True):
         """Build the y_ IsotonicRegression."""
         self._check_fit_data(X, y, sample_weight)
-        X = X.flatten()
+        X = X.reshape(-1)
 
         # Determine increasing if auto-determination requested
         if self.increasing == 'auto':
