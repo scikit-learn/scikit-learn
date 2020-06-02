@@ -313,12 +313,6 @@ class SimpleImputer(_BaseImputer):
                                                self.missing_values,
                                                fill_value)
 
-        if self.add_indicator:
-            self.indicator_ = MissingIndicator(
-                missing_values=self.missing_values)
-            self.indicator_.fit(X)
-        else:
-            self.indicator_ = None
         invalid_mask = _get_mask(self.statistics_, np.nan)
         self._valid_mask = np.logical_not(invalid_mask)
         return self
