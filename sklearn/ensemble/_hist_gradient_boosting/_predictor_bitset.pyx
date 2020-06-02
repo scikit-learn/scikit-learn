@@ -71,7 +71,6 @@ cdef class PredictorBitSet:
                 if val % 2:
                     insert_vec_bitset(self.node_to_raw_bitset[node_idx],
                                       <int>(category_bins[offset]))
-
                 val = val // 2
                 offset += 1
 
@@ -92,3 +91,7 @@ cdef class PredictorBitSet:
     def get_binned_categories(self, unsigned int node_idx):
         """Used for testing"""
         return self.node_to_binned_bitset[node_idx]
+
+    def get_raw_categories(self, unsigned int node_idx):
+        """Used for testing"""
+        return self.node_to_raw_bitset[node_idx]

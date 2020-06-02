@@ -402,9 +402,7 @@ def test_split_on_nan_with_infinite_values():
 
 def test_grow_tree_categories():
     # Checks growing the tree with categorical features
-
-    X_binned = np.array([[0, 1] * 11 + [0]],
-                        dtype=X_BINNED_DTYPE).reshape(-1, 1)
+    X_binned = np.array([[0, 1] * 11 + [1]], dtype=X_BINNED_DTYPE).T
     X_binned = np.asfortranarray(X_binned)
 
     all_gradients = np.array([1, 10] * 11 + [1], dtype=G_H_DTYPE)
@@ -424,10 +422,11 @@ def test_grow_tree_categories():
     assert root['depth'] == 0
     assert root['is_categorical']
 
-    # raw_categories = predictor.predictor_bitset.get_raw_categories(0)
-    # assert set([bin_thresholds[0][0]]) == raw_categories
-    # missing values goes left because it has more samples
-    # and category 0 goes left -> bitset 1001000 -> 1 + 8 = 9
-    expected_cat_bitset = [9] + [0] * 7
+    raw_categories = predictor.predictor_bitset.get_raw_categories(0)
+    np.testing.assert_array_equal(raw_categories, [2**10])
+
+    # missing values with n_bins = 4 goes left because it has more samples
+    # and category 1 goes left -> bitset 0101000 -> 2 + 8 = 10
+    expected_cat_bitset = [10] + [0] * 7
     cat_bitset = predictor.predictor_bitset.get_binned_categories(0)
     np.testing.assert_array_equal(cat_bitset, expected_cat_bitset)
