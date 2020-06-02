@@ -155,7 +155,10 @@ def test_weighted_percentile_non_unit_weight(percentile):
 
 
 @pytest.mark.parametrize("n_features", [None, 2])
-def test_weighted_percentile_single_weight(n_features):
+@pytest.mark.parametrize("interpolation", ["linear", "higher", "lower"])
+@pytest.mark.parametrize("percentile", np.arange(0, 101, 25))
+def test_weighted_percentile_single_weight(n_features, interpolation,
+                                           percentile):
     rng = np.random.RandomState(42)
     X = rng.randn(10) if n_features is None else rng.randn(10, n_features)
     X.sort(axis=0)
@@ -163,5 +166,7 @@ def test_weighted_percentile_single_weight(n_features):
     pos_weight_idx = 4
     sample_weight[pos_weight_idx] = 1
 
-    percentile_value = _weighted_percentile(X, sample_weight, 50)
+    percentile_value = _weighted_percentile(
+        X, sample_weight, percentile=percentile, interpolation=interpolation
+    )
     assert percentile_value == pytest.approx(X[pos_weight_idx])

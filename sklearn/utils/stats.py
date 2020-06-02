@@ -117,6 +117,8 @@ def _weighted_percentile(array, sample_weight, percentile=50,
 
     single_sample_weight = np.count_nonzero(sample_weight, axis=0)
     if np.any(single_sample_weight == 1):
+        # edge case where a single weight is non-null in which case the
+        # previous methods will fail
         if not isinstance(percentile_value, Iterable):
             percentile_value = _squeeze_arr(
                 array[np.nonzero(sample_weight)], n_dim
