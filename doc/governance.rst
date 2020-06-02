@@ -73,7 +73,7 @@ with the TC duties are expected to resign.
 
 The initial Technical Committee of scikit-learn consists of :user:`Alexandre
 Gramfort <agramfort>`, :user:`Olivier Grisel <ogrisel>`, :user:`Adrin Jalali
-<adrinjalali>_`, :user:`Andreas Müller <amueller>`, :user:`Joel Nothman
+<adrinjalali>`, :user:`Andreas Müller <amueller>`, :user:`Joel Nothman
 <jnothman>`, :user:`Hanmin Qin <qinhanmin2014>`, :user:`Gaël Varoquaux
 <GaelVaroquaux>`, and :user:`Roman Yurchak <rth>`.
 
