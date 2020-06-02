@@ -514,7 +514,7 @@ def test_isotonic_2darray_1_feature():
     # Test from GH#15012
     # Check that IsotonicRegression can handle 2darray with only 1 feature
     # https://github.com/scikit-learn/scikit-learn/issues/15012
-    X = np.array(list(range(10)))
+    X = np.arange(10)
     X_2d = X.reshape(-1, 1)
     y = np.array([0, 1, 2, 6, 5, 4, 3, 7, 8, 9])
 
