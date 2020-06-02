@@ -211,9 +211,10 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         self.increasing = increasing
         self.out_of_bounds = out_of_bounds
 
-    def _check_fit_data(self, X, y, sample_weight=None):
+    def _check_input_data_shape(self, X, y=None, sample_weight=None):
         if not (len(X.shape) == 1 or (len(X.shape) == 2 and X.shape[1] == 1)):
-            msg = "X should be a 1d array or 2d array with 1 feature"
+            msg = "Isotonic regression input X should be a 1d array or " \
+                  "2d array with 1 feature"
             raise ValueError(msg)
 
     def _build_f(self, X, y):
@@ -235,7 +236,7 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
 
     def _build_y(self, X, y, sample_weight, trim_duplicates=True):
         """Build the y_ IsotonicRegression."""
-        self._check_fit_data(X, y, sample_weight)
+        self._check_input_data_shape(X, y, sample_weight)
         X = X.reshape(-1)
 
         # Determine increasing if auto-determination requested
@@ -345,11 +346,7 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
 
         T = check_array(T, dtype=dtype, ensure_2d=False)
 
-        if not (len(T.shape) == 1 or (len(T.shape) == 2 and T.shape[1] == 1)):
-            msg = "Isotonic regression input should be a 1d array or " \
-                  "2d array with 1 feature"
-            raise ValueError(msg)
-
+        self._check_input_data_shape(T)
         T = T.reshape(-1)
 
         # Handle the out_of_bounds argument by clipping if needed

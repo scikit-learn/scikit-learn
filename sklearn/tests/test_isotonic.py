@@ -9,9 +9,10 @@ from sklearn.isotonic import (check_increasing, isotonic_regression,
                               IsotonicRegression, _make_unique)
 
 from sklearn.utils.validation import check_array
-from sklearn.utils._testing import (assert_raises, assert_array_equal,
-                                   assert_array_almost_equal,
-                                   assert_warns_message, assert_no_warnings)
+from sklearn.utils._testing import (assert_raises, assert_allclose,
+                                    assert_array_equal,
+                                    assert_array_almost_equal,
+                                    assert_warns_message, assert_no_warnings)
 from sklearn.utils import shuffle
 
 from scipy.special import expit
@@ -510,7 +511,7 @@ def test_make_unique_dtype():
         assert_array_equal(x, [2, 3, 5])
 
 
-def test_isotonic_2darray_1_feature():
+def test_input_shape_validation():
     # Test from GH#15012
     # Check that IsotonicRegression can handle 2darray with only 1 feature
     # https://github.com/scikit-learn/scikit-learn/issues/15012
@@ -530,9 +531,9 @@ def test_isotonic_2darray_more_than_1_feature():
     # Ensure IsotonicRegression raises error if input has more than 1 feature
     X = np.arange(10)
     X_2d = np.c_[X, X]
-    y = np.array([0, 1, 2, 6, 5, 4, 3, 7, 8, 9])
+    y = np.arange(10)
 
-    msg = "1d array or 2d array with 1 feature"
+    msg = "should be a 1d array or 2d array with 1 feature"
     with pytest.raises(ValueError, match=msg):
         IsotonicRegression().fit(X_2d, y)
 
