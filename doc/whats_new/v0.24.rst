@@ -114,7 +114,7 @@ Changelog
 :mod:`sklearn.svm`
 ....................
 - |Enhancement| invoke scipy blas api for svm kernel function in ``fit``,
-  ``predict`` and related methods of :class:`svm.SVC`, :class:`svm.NuSVC`,
+  ``predict`` and related methods of :class:`svm.SVC`, :class:`svm.NuSVC`, 
   :class:`svm.SVR`, :class:`svm.NuSVR`, :class:`OneClassSVM`.
   :pr:`16530` by :user:`Shuhua Fan <jim0421>`.
 
