@@ -134,7 +134,7 @@ def test_weighted_percentile_non_unit_weight(percentile):
     rng = np.random.RandomState(42)
     X = rng.randn(1000)
     X.sort()
-    sample_weight = rng.random(X.shape)
+    sample_weight = rng.uniform(1, 30, X.shape)
     sample_weight = sample_weight / sample_weight.sum()
     sample_weight *= 100
 
