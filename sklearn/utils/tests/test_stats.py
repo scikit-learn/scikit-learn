@@ -170,3 +170,14 @@ def test_weighted_percentile_single_weight(n_features, interpolation,
         X, sample_weight, percentile=percentile, interpolation=interpolation
     )
     assert percentile_value == pytest.approx(X[pos_weight_idx])
+
+
+@pytest.mark.parametrize("n_features", [None, 2])
+def test_weighted_percentile_all_null_weight(n_features):
+    rng = np.random.RandomState(42)
+    X = rng.randn(10) if n_features is None else rng.randn(10, n_features)
+    sample_weight = np.zeros(X.shape)
+
+    err_msg = "All weights cannot be null when computing a weighted percentile"
+    with pytest.raises(ValueError, match=err_msg):
+        _weighted_percentile(X, sample_weight, 50)

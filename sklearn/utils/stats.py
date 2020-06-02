@@ -53,6 +53,11 @@ def _weighted_percentile(array, sample_weight, percentile=50,
             f"instead."
         )
 
+    if np.any(np.count_nonzero(sample_weight, axis=0) < 1):
+        raise ValueError(
+            "All weights cannot be null when computing a weighted percentile."
+        )
+
     n_dim = array.ndim
     if n_dim == 0:
         return array[()]
