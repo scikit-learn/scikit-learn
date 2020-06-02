@@ -91,6 +91,14 @@ Changelog
   :class:`metrics.median_absolute_error`.
   :pr:`17225` by :user:`Lucy Liu <lucyleeow>`.
 
+:mod:`sklearn.preprocessing`
+............................
+
+- |Enhancement| Add ``unit_variance`` to :class:`preprocessing.RobustScaler`,
+  which scales output data such that normally distributed features have a
+  variance of 1. :pr:`17193` by :user:`Lucy Liu <lucyleeow>` and
+  :user:`Mabel Villalba <mabelvj>`.
+
 :mod:`sklearn.tree`
 ...................
 
