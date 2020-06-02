@@ -193,6 +193,17 @@ def test_gnb_naive_bayes_scale_invariance():
     assert_array_equal(labels[1], labels[2])
 
 
+@pytest.mark.parametrize('cls', [MultinomialNB, CategoricalNB])
+def test_discretenb_deprecated_coef_intercept(cls):
+    est = cls().fit(X2, y2)
+
+    msg = "Attribute {} was deprecated"
+
+    for att in ['coef_', 'intercept_']:
+        with pytest.warns(FutureWarning, match=msg.format(att)):
+            getattr(est, att)
+
+
 @pytest.mark.parametrize("cls", [MultinomialNB, BernoulliNB, CategoricalNB])
 def test_discretenb_prior(cls):
     # Test whether class priors are properly set.
@@ -407,19 +418,6 @@ def test_discretenb_sample_weight_multiclass(cls):
     clf.partial_fit(X[2:3], y[2:3], sample_weight=sample_weight[2:3])
     clf.partial_fit(X[3:], y[3:], sample_weight=sample_weight[3:])
     assert_array_equal(clf.predict(X), [0, 1, 1, 2])
-
-
-@pytest.mark.parametrize('cls', [BernoulliNB, MultinomialNB])
-def test_discretenb_coef_intercept_shape(cls):
-    # coef_ and intercept_ should have shapes as in other linear models.
-    # Non-regression test for issue #2127.
-    X = [[1, 0, 0], [1, 1, 1]]
-    y = [1, 2]  # binary classification
-    clf = cls()
-
-    clf.fit(X, y)
-    assert clf.coef_.shape == (1, 3)
-    assert clf.intercept_.shape == (1,)
 
 
 @pytest.mark.parametrize('kind', ('dense', 'sparse'))
