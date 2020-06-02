@@ -350,7 +350,7 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
                   "2d array with 1 feature"
             raise ValueError(msg)
 
-        T = T.flatten()
+        T = T.reshape(-1)
 
         # Handle the out_of_bounds argument by clipping if needed
         if self.out_of_bounds not in ["raise", "nan", "clip"]:
