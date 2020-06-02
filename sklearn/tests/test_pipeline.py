@@ -1148,7 +1148,8 @@ def test_input_feature_names_pandas():
     df = pd.DataFrame(iris.data, columns=iris.feature_names)
     pipe.fit(df, iris.target)
     mask = pipe.named_steps.select.get_support()
-    assert_array_equal(pipe[:-1].get_feature_names(),
+    # for now assuming we have to pass these explicitly
+    assert_array_equal(pipe[:-1].get_feature_names(iris.feature_names),
                        np.array(iris.feature_names)[mask])
 
 
@@ -1200,7 +1201,6 @@ def test_feature_names_meta_pipe():
     iris = load_iris()
     pipe.fit(iris.data, iris.target)
     xs = np.array(['x0', 'x1', 'x2', 'x3'])
-    assert_array_equal(pipe[:-1].get_feature_names(), xs)
     # check 0ths estimator in OVR only
     inner_pipe = pipe['ovr'].estimators_[0]
     mask = inner_pipe['select'].get_support()
