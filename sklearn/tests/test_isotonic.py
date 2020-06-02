@@ -523,7 +523,7 @@ def test_isotonic_2darray_1_feature():
 
     y_pred1 = iso_reg.predict(X)
     y_pred2 = iso_reg_2d.predict(X_2d)
-    assert_array_equal(y_pred1, y_pred2)
+    assert_allclose(y_pred1, y_pred2)
 
 
 def test_isotonic_2darray_more_than_1_feature():
