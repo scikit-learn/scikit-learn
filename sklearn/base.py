@@ -723,10 +723,10 @@ class TransformerMixin:
             # n_components could be auto or None
             # this is more likely to be an int
             n_features = self.n_components_
-        elif hasattr(self, 'n_components') and self.n_components is not None:
-            n_features = self.n_components
         elif hasattr(self, 'components_'):
             n_features = self.components_.shape[0]
+        elif hasattr(self, 'n_components') and self.n_components is not None:
+            n_features = self.n_components
         else:
             return None
         return ["{}{}".format(type(self).__name__.lower(), i)
