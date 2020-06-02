@@ -116,10 +116,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
            [0.928..., 0.071...],
            [0.071..., 0.928...]])
 
-    >>> from sklearn.datasets import make_classification
     >>> from sklearn.model_selection import train_test_split
-    >>> from sklearn.naive_bayes import GaussianNB
-    >>> from sklearn.calibration import CalibratedClassifierCV
     >>> X, y = make_classification(n_samples=100, n_features=2,
     ...                            n_redundant=0, random_state=42)
     >>> X_train, X_calib, y_train, y_calib = train_test_split(
