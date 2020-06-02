@@ -234,11 +234,11 @@ def pair_confusion_matrix(labels_true, labels_pred):
     # These are perfect matches hence all pairs are counted either under
     # D00 or D11.
     if n_classes == n_clusters == 1:
-        return [[0,0], [0,n_samples * (n_samples - 1)]]
+        return [[0, 0], [0, n_samples * (n_samples - 1)]]
     elif n_classes == n_clusters == 0:
-        return [[0,0], [0,0]]
+        return [[0, 0], [0, 0]]
     elif n_classes == n_clusters == n_samples:
-        return [[n_samples * (n_samples - 1),0], [0,0]]
+        return [[n_samples * (n_samples - 1), 0], [0, 0]]
 
     # Computation using the contingency data
     contingency = contingency_matrix(labels_true, labels_pred, sparse=True,
