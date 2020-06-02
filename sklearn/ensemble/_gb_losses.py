@@ -319,6 +319,7 @@ class LeastAbsoluteError(RegressionLossFunction):
                 raw_predictions.take(terminal_region, axis=0))
         tree.value[leaf, 0, 0] = _weighted_percentile(diff, sample_weight,
                                                       percentile=50)
+        print(f'diff: {diff} tree: {tree.value[leaf,0,0]}')
 
 
 class HuberLossFunction(RegressionLossFunction):

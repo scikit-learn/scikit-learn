@@ -1668,10 +1668,6 @@ def test_robust_scaler_unit_variance():
 
     assert robust_scaler.center_ == pytest.approx(0, abs=1e-3)
     assert robust_scaler.scale_ == pytest.approx(1, abs=1e-2)
-    q_min_empirical, q_max_empirical = np.percentile(X, quantile_range)
-    assert robust_scaler.adjust_ == pytest.approx(
-        q_max_empirical - q_min_empirical, abs=1e-2
-    )
     assert X_trans.std() == pytest.approx(1, abs=1e-2)
 
 
