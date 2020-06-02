@@ -193,13 +193,13 @@ def test_gnb_naive_bayes_scale_invariance():
     assert_array_equal(labels[1], labels[2])
 
 
-@pytest.mark.parametrize('cls', [MultinomialNB, CategoricalNB])
+@pytest.mark.parametrize("cls", [MultinomialNB, BernoulliNB, CategoricalNB])
 def test_discretenb_deprecated_coef_intercept(cls):
     est = cls().fit(X2, y2)
 
     msg = "Attribute {} was deprecated"
 
-    for att in ['coef_', 'intercept_']:
+    for att in ["coef_", "intercept_"]:
         with pytest.warns(FutureWarning, match=msg.format(att)):
             getattr(est, att)
 
