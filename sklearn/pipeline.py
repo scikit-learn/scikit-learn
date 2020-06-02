@@ -11,16 +11,17 @@ estimator, as a chain of transforms and estimators.
 
 from collections import defaultdict
 from itertools import islice
-import warnings
 
 import numpy as np
 from scipy import sparse
 from joblib import Parallel, delayed
 
 from .base import clone, TransformerMixin
+from .utils._estimator_html_repr import _VisualBlock
 from .utils.metaestimators import if_delegate_has_method
 from .utils import Bunch, _print_elapsed_time
 from .utils.validation import check_memory
+from .utils.validation import _deprecate_positional_args
 
 from .utils.metaestimators import _BaseComposition
 
@@ -104,7 +105,8 @@ class Pipeline(_BaseComposition):
     # BaseEstimator interface
     _required_parameters = ['steps']
 
-    def __init__(self, steps, memory=None, verbose=False):
+    @_deprecate_positional_args
+    def __init__(self, steps, *, memory=None, verbose=False):
         self.steps = steps
         self.memory = memory
         self.verbose = verbose
@@ -394,6 +396,8 @@ class Pipeline(_BaseComposition):
             transformations in the pipeline are not propagated to the
             final estimator.
 
+            .. versionadded:: 0.20
+
         Returns
         -------
         y_pred : array-like
@@ -620,6 +624,21 @@ class Pipeline(_BaseComposition):
         # delegate to first step (which will call _check_is_fitted)
         return self.steps[0][1].n_features_in_
 
+    def _sk_visual_block_(self):
+        _, estimators = zip(*self.steps)
+
+        def _get_name(name, est):
+            if est is None or est == 'passthrough':
+                return f'{name}: passthrough'
+            # Is an estimator
+            return f'{name}: {est.__class__.__name__}'
+        names = [_get_name(name, est) for name, est in self.steps]
+        name_details = [str(est) for est in estimators]
+        return _VisualBlock('serial', estimators,
+                            names=names,
+                            name_details=name_details,
+                            dash_wrapped=False)
+
 
 def _name_estimators(estimators):
     """Generate names for estimators."""
@@ -761,7 +780,8 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
     ----------
     transformer_list : list of (string, transformer) tuples
         List of transformer objects to be applied to the data. The first
-        half of each tuple is the name of the transformer.
+        half of each tuple is the name of the transformer. The tranformer can
+        be 'drop' for it to be ignored.
 
         .. versionchanged:: 0.22
            Deprecated `None` as a transformer in favor of 'drop'.
@@ -771,6 +791,9 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
+
+        .. versionchanged:: v0.20
+           `n_jobs` default changed from 1 to None
 
     transformer_weights : dict, default=None
         Multiplicative weights for features per transformer.
@@ -798,7 +821,8 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
     """
     _required_parameters = ["transformer_list"]
 
-    def __init__(self, transformer_list, n_jobs=None,
+    @_deprecate_positional_args
+    def __init__(self, transformer_list, *, n_jobs=None,
                  transformer_weights=None, verbose=False):
         self.transformer_list = transformer_list
         self.n_jobs = n_jobs
@@ -842,13 +866,6 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
         # validate estimators
         for t in transformers:
-            # TODO: Remove in 0.24 when None is removed
-            if t is None:
-                warnings.warn("Using None as a transformer is deprecated "
-                              "in version 0.22 and will be removed in "
-                              "version 0.24. Please use 'drop' instead.",
-                              FutureWarning)
-                continue
             if t == 'drop':
                 continue
             if (not (hasattr(t, "fit") or hasattr(t, "fit_transform")) or not
@@ -865,7 +882,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         get_weight = (self.transformer_weights or {}).get
         return ((name, trans, get_weight(name))
                 for name, trans in self.transformer_list
-                if trans is not None and trans != 'drop')
+                if trans != 'drop')
 
     def get_feature_names(self):
         """Get feature names from all transformers.
@@ -988,7 +1005,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
     def _update_transformer_list(self, transformers):
         transformers = iter(transformers)
-        self.transformer_list[:] = [(name, old if old is None or old == 'drop'
+        self.transformer_list[:] = [(name, old if old == 'drop'
                                      else next(transformers))
                                     for name, old in self.transformer_list]
 
@@ -996,6 +1013,10 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
     def n_features_in_(self):
         # X is passed to all transformers so we just delegate to the first one
         return self.transformer_list[0][1].n_features_in_
+
+    def _sk_visual_block_(self):
+        names, transformers = zip(*self.transformer_list)
+        return _VisualBlock('parallel', transformers, names=names)
 
 
 def make_union(*transformers, **kwargs):
@@ -1015,6 +1036,9 @@ def make_union(*transformers, **kwargs):
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
+
+        .. versionchanged:: v0.20
+           `n_jobs` default changed from 1 to None
 
     verbose : bool, default=False
         If True, the time elapsed while fitting each transformer will be

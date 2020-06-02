@@ -105,14 +105,17 @@ def test_incr_mean_variance_axis():
         X_csr = sp.csr_matrix(X_lil)
 
         with pytest.raises(TypeError):
-            incr_mean_variance_axis(axis, last_mean, last_var, last_n)
+            incr_mean_variance_axis(X=axis, axis=last_mean, last_mean=last_var,
+                                    last_var=last_n)
         with pytest.raises(TypeError):
-            incr_mean_variance_axis(X_lil, axis, last_mean, last_var, last_n)
+            incr_mean_variance_axis(X_lil, axis=axis, last_mean=last_mean,
+                                    last_var=last_var, last_n=last_n)
 
         # Test _incr_mean_and_var with a 1 row input
         X_means, X_vars = mean_variance_axis(X_csr, axis)
         X_means_incr, X_vars_incr, n_incr = \
-            incr_mean_variance_axis(X_csr, axis, last_mean, last_var, last_n)
+            incr_mean_variance_axis(X_csr, axis=axis, last_mean=last_mean,
+                                    last_var=last_var, last_n=last_n)
         assert_array_almost_equal(X_means, X_means_incr)
         assert_array_almost_equal(X_vars, X_vars_incr)
         # X.shape[axis] picks # samples
@@ -142,8 +145,10 @@ def test_incr_mean_variance_axis():
                 last_var = last_var.astype(output_dtype)
                 X_means, X_vars = mean_variance_axis(X_sparse, axis)
                 X_means_incr, X_vars_incr, n_incr = \
-                    incr_mean_variance_axis(X_sparse, axis, last_mean,
-                                            last_var, last_n)
+                    incr_mean_variance_axis(X_sparse, axis=axis,
+                                            last_mean=last_mean,
+                                            last_var=last_var,
+                                            last_n=last_n)
                 assert X_means_incr.dtype == output_dtype
                 assert X_vars_incr.dtype == output_dtype
                 assert_array_almost_equal(X_means, X_means_incr)
@@ -171,10 +176,11 @@ def test_incr_mean_variance_axis_equivalence_mean_variance(X1, X2):
     last_mean, last_var = np.zeros(X1.shape[1]), np.zeros(X1.shape[1])
     last_n = np.zeros(X1.shape[1], dtype=np.int64)
     updated_mean, updated_var, updated_n = incr_mean_variance_axis(
-        X1, axis, last_mean, last_var, last_n
+        X1, axis=axis, last_mean=last_mean, last_var=last_var, last_n=last_n
     )
     updated_mean, updated_var, updated_n = incr_mean_variance_axis(
-        X2, axis, updated_mean, updated_var, updated_n
+        X2, axis=axis, last_mean=updated_mean, last_var=updated_var,
+        last_n=updated_n
     )
     X = sp.vstack([X1, X2])
     assert_allclose(updated_mean, np.nanmean(X.A, axis=axis))
@@ -190,11 +196,11 @@ def test_incr_mean_variance_no_new_n():
     last_mean, last_var = np.zeros(X1.shape[1]), np.zeros(X1.shape[1])
     last_n = np.zeros(X1.shape[1], dtype=np.int64)
     last_mean, last_var, last_n = incr_mean_variance_axis(
-        X1, axis, last_mean, last_var, last_n
+        X1, axis=axis, last_mean=last_mean, last_var=last_var, last_n=last_n
     )
     # update statistic with a column which should ignored
     updated_mean, updated_var, updated_n = incr_mean_variance_axis(
-        X2, axis, last_mean, last_var, last_n
+        X2, axis=axis, last_mean=last_mean, last_var=last_var, last_n=last_n
     )
     assert_allclose(updated_mean, last_mean)
     assert_allclose(updated_var, last_var)
@@ -227,11 +233,11 @@ def test_incr_mean_variance_axis_ignore_nan(axis, sparse_constructor):
 
     # take a copy of the old statistics since they are modified in place.
     X_means, X_vars, X_sample_count = incr_mean_variance_axis(
-        X, axis, old_means.copy(), old_variances.copy(),
-        old_sample_count.copy())
+        X, axis=axis, last_mean=old_means.copy(),
+        last_var=old_variances.copy(), last_n=old_sample_count.copy())
     X_nan_means, X_nan_vars, X_nan_sample_count = incr_mean_variance_axis(
-        X_nan, axis, old_means.copy(), old_variances.copy(),
-        old_sample_count.copy())
+        X_nan, axis=axis, last_mean=old_means.copy(),
+        last_var=old_variances.copy(), last_n=old_sample_count.copy())
 
     assert_allclose(X_nan_means, X_means)
     assert_allclose(X_nan_vars, X_vars)

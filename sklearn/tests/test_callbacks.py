@@ -12,10 +12,10 @@ from sklearn.compose import make_column_transformer
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.base import is_classifier, is_regressor, ClusterMixin, clone
 from sklearn._callbacks import BaseCallback, _check_callback_params
-from sklearn.utils.testing import all_estimators, set_random_state
+from sklearn.utils import all_estimators
+from sklearn.utils._testing import set_random_state
 from sklearn.utils.estimator_checks import (
     _construct_instance,
-    _safe_tags,
     _enforce_estimator_tags_y,
 )
 
@@ -82,7 +82,7 @@ def test_callback(name, Estimator, iris):
 
     estimator = _construct_instance(Estimator)
 
-    tags = _safe_tags(estimator)
+    tags = estimator._get_tags()
 
     callback = CheckCallback()
     estimator._set_callbacks([callback])

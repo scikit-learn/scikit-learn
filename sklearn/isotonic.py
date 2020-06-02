@@ -76,7 +76,8 @@ def check_increasing(x, y):
     return increasing_bool
 
 
-def isotonic_regression(y, sample_weight=None, y_min=None, y_max=None,
+@_deprecate_positional_args
+def isotonic_regression(y, *, sample_weight=None, y_min=None, y_max=None,
                         increasing=True):
     """Solve the isotonic regression model.
 
@@ -253,8 +254,8 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
             X, y, sample_weight)
 
         X = unique_X
-        y = isotonic_regression(unique_y, unique_sample_weight,
-                                self.y_min, self.y_max,
+        y = isotonic_regression(unique_y, sample_weight=unique_sample_weight,
+                                y_min=self.y_min, y_max=self.y_max,
                                 increasing=self.increasing_)
 
         # Handle the left and right bounds on X
