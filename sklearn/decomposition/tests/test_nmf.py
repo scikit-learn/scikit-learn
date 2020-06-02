@@ -89,7 +89,7 @@ def test_initialize_variants():
     W0, H0, _, _ = nmf._initialize_nmf(data, 10, init='nndsvd')
     Wa, Ha, _, _ = nmf._initialize_nmf(data, 10, init='nndsvda')
     War, Har, _, _ = nmf._initialize_nmf(data, 10, init='nndsvdar',
-                                   random_state=0)
+                                         random_state=0)
 
     for ref, evl in ((W0, Wa), (W0, War), (H0, Ha), (H0, Har)):
         assert_almost_equal(evl[ref != 0], ref[ref != 0])
@@ -291,7 +291,8 @@ def test_beta_divergence():
     X = rng.randn(n_samples, n_features)
     np.clip(X, 0, None, out=X)
     X_csr = sp.csr_matrix(X)
-    W, H, _, _ = nmf._initialize_nmf(X, n_components, init='random', random_state=42)
+    W, H, _, _ = nmf._initialize_nmf(X, n_components, init='random',
+                                     random_state=42)
 
     for beta in beta_losses:
         ref = _beta_divergence_dense(X, W, H, beta)
@@ -346,7 +347,7 @@ def test_nmf_multiplicative_update_sparse():
     X = np.abs(X)
     X_csr = sp.csr_matrix(X)
     W0, H0, _, _ = nmf._initialize_nmf(X, n_components, init='random',
-                                 random_state=42)
+                                       random_state=42)
 
     for beta_loss in (-1.2, 0, 0.2, 1., 2., 2.5):
         # Reference with dense array X
@@ -471,7 +472,7 @@ def test_nmf_decreasing():
     X = rng.randn(n_samples, n_features)
     np.abs(X, X)
     W0, H0, _, _ = nmf._initialize_nmf(X, n_components, init='random',
-                                 random_state=42)
+                                       random_state=42)
 
     for beta_loss in (-1.2, 0, 0.2, 1., 2., 2.5):
         for solver in ('cd', 'mu'):

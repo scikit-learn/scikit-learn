@@ -718,7 +718,7 @@ def _multiplicative_update_h(X, W, H, A, B,
         B *= rho
         A += delta_H * H
         B += denominator
-        H = np.divide(A, B)    
+        H = np.divide(A, B)
 
     # gamma is in ]0, 1]
     if gamma != 1:
@@ -826,7 +826,7 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
 
     n_samples = X.shape[0]
     n_iter_update_h_ = 1
-    max_iter_update_w_ = 5
+    # max_iter_update_w_ = 5
 
     if batch_size is None:
         batch_size = n_samples
@@ -835,7 +835,7 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
                                               batch_size=batch_size)):
             # update W
             # H_sum, HHt and XHt are saved and reused if not update_H
-            #for j in range(max_iter_update_w_):
+            # for j in range(max_iter_update_w_):
             delta_W, H_sum, HHt, XHt = _multiplicative_update_w(
                     X[slice], W[slice], H, beta_loss, l1_reg_W, l2_reg_W,
                     gamma, H_sum, HHt, XHt, update_H)
@@ -1093,7 +1093,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
             W = np.zeros((n_samples, n_components), dtype=X.dtype)
     else:
         W, H, _, _ = _initialize_nmf(X, n_components, init=init,
-                               random_state=random_state)
+                                     random_state=random_state)
 
     l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H = _compute_regularization(
         alpha, l1_ratio, regularization)
@@ -1128,12 +1128,12 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
 
 @_deprecate_positional_args
 def non_negative_factorization_online(X, W=None, H=None, n_components=None, *,
-                               init=None, update_H=True, solver='cd',
-                               A=None, B=None, batch_size=1024,
-                               beta_loss='frobenius', tol=1e-4,
-                               max_iter=200, alpha=0., l1_ratio=0.,
-                               regularization=None, random_state=None,
-                               verbose=0, shuffle=False):
+                                      init=None, update_H=True, solver='cd',
+                                      A=None, B=None, batch_size=1024,
+                                      beta_loss='frobenius', tol=1e-4,
+                                      max_iter=200, alpha=0., l1_ratio=0.,
+                                      regularization=None, random_state=None,
+                                      verbose=0, shuffle=False):
     r"""Compute Non-negative Matrix Factorization (NMF)
 
     Find two non-negative matrices (W, H) whose product approximates the non-
@@ -1374,6 +1374,7 @@ def non_negative_factorization_online(X, W=None, H=None, n_components=None, *,
                       " improve convergence." % max_iter, ConvergenceWarning)
 
     return W, H, A, B, n_iter
+
 
 class NMF(TransformerMixin, BaseEstimator):
     r"""Non-Negative Matrix Factorization (NMF)
@@ -1714,7 +1715,7 @@ class MiniBatchNMF(TransformerMixin, BaseEstimator):
         - 'custom': use custom matrices W and H
 
     batch_size : int,
-        number of samples in each mini-batch 
+        number of samples in each mini-batch
 
     solver : 'cd' | 'mu'
         Numerical solver to use:
