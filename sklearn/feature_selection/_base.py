@@ -15,6 +15,7 @@ from ..base import TransformerMixin
 from ..utils import check_array
 from ..utils import safe_mask
 from ..utils import safe_sqr
+from ..utils._feature_names import _make_feature_names
 
 
 class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
@@ -135,9 +136,8 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
             x0, x1, ..., xn.
         """
         mask = self.get_support()
-        if input_features is None:
-            input_features = ['x%d' % i
-                              for i in range(mask.shape[0])]
+        input_features = _make_feature_names(mask.shape[0],
+                                             input_features=input_features)
         return np.array(input_features)[mask]
 
 

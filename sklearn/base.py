@@ -17,6 +17,7 @@ from ._config import get_config
 from .utils import _IS_32BIT
 from .utils.validation import check_X_y
 from .utils.validation import check_array
+from .utils._feature_names import _make_feature_names
 from .utils._estimator_html_repr import estimator_html_repr
 from .utils.validation import _deprecate_positional_args
 
@@ -725,8 +726,8 @@ class TransformerMixin:
             n_features = self.n_components
         else:
             return None
-        return ["{}{}".format(type(self).__name__.lower(), i)
-                for i in range(n_features)]
+        return _make_feature_names(n_features=n_features,
+                                   prefix=type(self).__name__.lower())
 
 
 class DensityMixin:
@@ -799,11 +800,9 @@ class OneToOneMixin(object):
         feature_names : array-like of string
             Transformed feature names
         """
-        if input_features is not None:
-            return input_features
-        else:
-            return ["x{}".format(i)
-                    for i in range(self.n_features_in_)]
+
+        return _make_feature_names(self.n_features_in_,
+                                   input_features=input_features)
 
 
 class MetaEstimatorMixin:

@@ -16,6 +16,7 @@ from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
 from ..utils.validation import _deprecate_positional_args
 from ..utils._mask import _get_mask
+from ..utils._feature_names import _make_feature_names
 from ..utils import is_scalar_nan
 
 
@@ -482,9 +483,8 @@ class SimpleImputer(_BaseImputer):
             Transformed feature names
         """
         check_is_fitted(self, 'statistics_')
-        if input_features is None:
-            input_features = ['x%d' % i
-                              for i in range(self.statistics_.shape[0])]
+        input_features = _make_feature_names(self.statistics_.shape[0],
+                                             input_features=input_features)
         return np.array(input_features)[self._valid_mask]
 
 
