@@ -31,16 +31,6 @@ def test_weighted_percentile_equal(interpolation):
     assert score == 0
 
 
-@pytest.mark.parametrize("interpolation", ["linear", "lower", "higher"])
-def test_weighted_percentile_zero_weight(interpolation):
-    y = np.empty(102, dtype=np.float64)
-    y.fill(1.0)
-    sw = np.ones(102, dtype=np.float64)
-    sw.fill(0.0)
-    score = _weighted_percentile(y, sw, 50, interpolation=interpolation)
-    assert pytest.approx(score) == 1.0
-
-
 def test_weighted_median_equal_weights():
     # Checks weighted percentile=0.5 is same as median when weights equal
     rng = np.random.RandomState(0)
