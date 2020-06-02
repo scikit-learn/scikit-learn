@@ -254,7 +254,7 @@ def pair_confusion_matrix(labels_true, labels_pred):
     D10 = sum(contingency.transpose().dot(n_c)) - Sum_Squares
     #D00 = sum(contingency[c,k] * (n_samples - n_c[c] - n_k[k] + contingency[c,k]) for c,k in zip(rows,cols))
     D00 = n_samples * n_samples - D01 - D10 - Sum_Squares
-    return [[D00, D01], [D10, D11]]
+    return np.array([[D00, D01], [D10, D11]])
 
 
 def rand_score(labels_true, labels_pred):
