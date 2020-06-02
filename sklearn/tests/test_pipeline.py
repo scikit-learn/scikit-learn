@@ -1199,32 +1199,12 @@ def test_feature_names_meta_pipe():
     iris = load_iris()
     pipe.fit(iris.data, iris.target)
     xs = np.array(['x0', 'x1', 'x2', 'x3'])
-    assert_array_equal(pipe.input_features_, xs)
+    assert_array_equal(pipe[:-1].get_feature_names(), xs)
     # check 0ths estimator in OVR only
-    inner_pipe = pipe.named_steps.ovr.estimators_[0]
-    mask = inner_pipe.named_steps.select.get_support()
-    assert_array_equal(inner_pipe.named_steps.clf.input_features_, xs[mask])
-    pipe.get_feature_names(iris.feature_names)
-    assert_array_equal(pipe.input_features_, iris.feature_names)
-    assert_array_equal(inner_pipe.input_features_, iris.feature_names)
-    assert_array_equal(inner_pipe.named_steps.clf.input_features_,
-                       np.array(iris.feature_names)[mask])
-
-
-def test_input_features_meta():
-    ovr = OneVsRestClassifier(LogisticRegression())
-    pipe = Pipeline(steps=[('select', SelectKBest(k=2)), ('ovr', ovr)])
-    iris = load_iris()
-    pipe.fit(iris.data, iris.target)
-    xs = np.array(['x0', 'x1', 'x2', 'x3'])
-    assert_array_equal(pipe.input_features_, xs)
-    # check 0ths estimator in OVR only
-    one_logreg = pipe.named_steps.ovr.estimators_[0]
-    mask = pipe.named_steps.select.get_support()
-    assert_array_equal(one_logreg.input_features_, xs[mask])
-    pipe.get_feature_names(iris.feature_names)
-    assert_array_equal(pipe.input_features_, iris.feature_names)
-    assert_array_equal(one_logreg.input_features_,
+    inner_pipe = pipe['ovr'].estimators_[0]
+    mask = inner_pipe['select'].get_support()
+    assert_array_equal(inner_pipe[:-1].get_feature_names(), xs[mask])
+    assert_array_equal(inner_pipe[:-1].get_feature_names(iris.feature_names),
                        np.array(iris.feature_names)[mask])
 
 
