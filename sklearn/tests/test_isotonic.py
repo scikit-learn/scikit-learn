@@ -529,7 +529,7 @@ def test_isotonic_2darray_1_feature():
 def test_isotonic_2darray_more_than_1_feature():
     # Ensure IsotonicRegression raises error if input has more than 1 feature
     X = np.arange(10)
-    X_2d = np.array([[x, x] for x in range(10)])
+    X_2d = np.c_[X, X]
     y = np.array([0, 1, 2, 6, 5, 4, 3, 7, 8, 9])
 
     msg = "1d array or 2d array with 1 feature"
