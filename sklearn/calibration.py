@@ -93,7 +93,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
 
     calibrated_classifiers_ : list (len() equal to cv or 1 if cv == "prefit")
         The list of calibrated classifiers, one for each cross-validation
-        split, which has been fitted on all but the testing fold and
+        split, which has been fitted on training folds and
         calibrated on the testing fold.
 
     Examples
