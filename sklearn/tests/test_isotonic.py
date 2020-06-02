@@ -516,7 +516,7 @@ def test_isotonic_2darray_1_feature():
     # https://github.com/scikit-learn/scikit-learn/issues/15012
     X = np.arange(10)
     X_2d = X.reshape(-1, 1)
-    y = np.array([0, 1, 2, 6, 5, 4, 3, 7, 8, 9])
+    y = np.arange(10)
 
     iso_reg = IsotonicRegression().fit(X, y)
     iso_reg_2d = IsotonicRegression().fit(X_2d, y)
