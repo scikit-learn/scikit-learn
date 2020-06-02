@@ -1104,22 +1104,23 @@ def test_make_pipeline_memory():
     shutil.rmtree(cachedir)
 
 
-def test_set_input_features():
+def test_feature_names_basic():
     pipe = Pipeline(steps=[
         ('imputer', SimpleImputer(strategy='median')),
         ('scaler', StandardScaler()),
         ('select', SelectKBest(k=2)),
         ('clf', LogisticRegression())])
-    assert_raises(NotFittedError, pipe.get_feature_names)
+    with pytest.raises(NotFittedError):
+        pipe.get_feature_names()
     iris = load_iris()
     pipe.fit(iris.data, iris.target)
     xs = np.array(['x0', 'x1', 'x2', 'x3'])
     assert_array_equal(pipe[:1].get_feature_names(), xs)
     mask = pipe.named_steps.select.get_support()
     assert_array_equal(pipe[:-1].get_feature_names(), xs[mask])
-    res = pipe.get_feature_names(iris.feature_names)
-    # LogisticRegression doesn't have get_feature_names
-    assert res is None
+    with pytest.raises(TypeError,
+                       match="Transformer clf does provide get_feature_names."):
+        pipe.get_feature_names(iris.feature_names)
     assert_array_equal(pipe[:1].get_feature_names(iris.feature_names),
                        iris.feature_names)
     assert_array_equal(pipe[:-1].get_feature_names(iris.feature_names),

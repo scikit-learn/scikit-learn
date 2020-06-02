@@ -806,8 +806,8 @@ class OneToOneMixin(object):
         if input_features is not None:
             return input_features
         else:
-            raise ValueError("Don't know how to get"
-                             " input feature names for {}".format(self))
+            return ["x{}".format(i)
+                    for i in range(self.n_features_in_)]
 
 
 class MetaEstimatorMixin:
