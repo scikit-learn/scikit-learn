@@ -552,8 +552,7 @@ class _MPLTreeExporter(_BaseTreeExporter):
         self.colors = {'bounds': None}
 
         self.characters = ['#', '[', ']', '<=', '\n', '', '']
-
-        self.bbox_args = dict(fc='w')
+        self.bbox_args = dict()
         if self.rounded:
             self.bbox_args['boxstyle'] = "round"
 
@@ -625,8 +624,11 @@ class _MPLTreeExporter(_BaseTreeExporter):
         return anns
 
     def recurse(self, node, tree, ax, scale_x, scale_y, height, depth=0):
-        kwargs = dict(bbox=self.bbox_args, ha='center', va='center',
-                      zorder=100 - 10 * depth, xycoords='axes pixels')
+        import matplotlib.pyplot as plt
+        kwargs = dict(bbox=self.bbox_args.copy(), ha='center', va='center',
+                      zorder=100 - 10 * depth, xycoords='axes pixels',
+                      arrowprops=self.arrow_args.copy())
+        kwargs['arrowprops']['edgecolor'] = plt.rcParams['text.color']
 
         if self.fontsize is not None:
             kwargs['fontsize'] = self.fontsize
@@ -638,13 +640,15 @@ class _MPLTreeExporter(_BaseTreeExporter):
             if self.filled:
                 kwargs['bbox']['fc'] = self.get_fill_color(tree,
                                                            node.tree.node_id)
+            else:
+                kwargs['bbox']['fc'] = ax.get_facecolor()
+
             if node.parent is None:
                 # root
                 ax.annotate(node.tree.label, xy, **kwargs)
             else:
                 xy_parent = ((node.parent.x + .5) * scale_x,
                              height - (node.parent.y + .5) * scale_y)
-                kwargs["arrowprops"] = self.arrow_args
                 ax.annotate(node.tree.label, xy_parent, xy, **kwargs)
             for child in node.children:
                 self.recurse(child, tree, ax, scale_x, scale_y, height,
@@ -653,7 +657,6 @@ class _MPLTreeExporter(_BaseTreeExporter):
         else:
             xy_parent = ((node.parent.x + .5) * scale_x,
                          height - (node.parent.y + .5) * scale_y)
-            kwargs["arrowprops"] = self.arrow_args
             kwargs['bbox']['fc'] = 'grey'
             ax.annotate("\n  (...)  \n", xy_parent, xy, **kwargs)
 

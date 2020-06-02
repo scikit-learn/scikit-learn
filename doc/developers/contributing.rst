@@ -22,7 +22,10 @@ See :ref:`new_contributors` to get started.
     We are a community based on openness and friendly, didactic,
     discussions.
 
-    We aspire to treat everybody equally, and value their contributions.
+    We aspire to treat everybody equally, and value their contributions.  We
+    are particularly seeking people from underrepresented backgrounds in Open
+    Source Software and scikit-learn in particular to participate and
+    contribute their expertise and experience.
 
     Decisions are made based on technical merit and consensus.
 
@@ -434,8 +437,9 @@ You can check for common programming errors with the following tools:
   must not produce new errors in your pull request. Using `# type: ignore`
   annotation can be a workaround for a few cases that are not supported by
   mypy, in particular,
-   - when importing C or Cython modules
-   - on properties with decorators
+
+  - when importing C or Cython modules
+  - on properties with decorators
 
 Bonus points for contributions that include a performance analysis with
 a benchmark script and profiling output (please report on the mailing

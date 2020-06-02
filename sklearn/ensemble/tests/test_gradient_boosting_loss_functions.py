@@ -8,7 +8,6 @@ from numpy.testing import assert_allclose
 import pytest
 
 from sklearn.utils import check_random_state
-from sklearn.utils.stats import _weighted_percentile
 from sklearn.ensemble._gb_losses import RegressionLossFunction
 from sklearn.ensemble._gb_losses import LeastSquaresError
 from sklearn.ensemble._gb_losses import LeastAbsoluteError
@@ -101,36 +100,6 @@ def test_sample_weight_init_estimators():
 
         # check if predictions match
         assert_allclose(out, sw_out, rtol=1e-2)
-
-
-def test_weighted_percentile():
-    y = np.empty(102, dtype=np.float64)
-    y[:50] = 0
-    y[-51:] = 2
-    y[-1] = 100000
-    y[50] = 1
-    sw = np.ones(102, dtype=np.float64)
-    sw[-1] = 0.0
-    score = _weighted_percentile(y, sw, 50)
-    assert score == 1
-
-
-def test_weighted_percentile_equal():
-    y = np.empty(102, dtype=np.float64)
-    y.fill(0.0)
-    sw = np.ones(102, dtype=np.float64)
-    sw[-1] = 0.0
-    score = _weighted_percentile(y, sw, 50)
-    assert score == 0
-
-
-def test_weighted_percentile_zero_weight():
-    y = np.empty(102, dtype=np.float64)
-    y.fill(1.0)
-    sw = np.ones(102, dtype=np.float64)
-    sw.fill(0.0)
-    score = _weighted_percentile(y, sw, 50)
-    assert score == 1.0
 
 
 def test_quantile_loss_function():

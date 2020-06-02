@@ -75,8 +75,8 @@ def alpha_max(emp_cov):
 
 
 # The g-lasso algorithm
-
-def graphical_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
+@_deprecate_positional_args
+def graphical_lasso(emp_cov, alpha, *, cov_init=None, mode='cd', tol=1e-4,
                     enet_tol=1e-4, max_iter=100, verbose=False,
                     return_costs=False, eps=np.finfo(np.float64).eps,
                     return_n_iter=False):

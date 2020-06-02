@@ -97,7 +97,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                  min_impurity_decrease,
                  min_impurity_split,
                  class_weight=None,
-                 presort='deprecated',
                  monotonic_cst=None,
                  ccp_alpha=0.0):
 
@@ -113,7 +112,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         self.min_impurity_decrease = min_impurity_decrease
         self.min_impurity_split = min_impurity_split
         self.class_weight = class_weight
-        self.presort = presort
         self.monotonic_cst = monotonic_cst
         self.ccp_alpha = ccp_alpha
 
@@ -321,13 +319,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         if self.min_impurity_decrease < 0.:
             raise ValueError("min_impurity_decrease must be greater than "
                              "or equal to 0")
-
-        if self.presort != 'deprecated':
-            warnings.warn("The parameter 'presort' is deprecated and has no "
-                          "effect. It will be removed in v0.24. You can "
-                          "suppress this warning by not passing any value "
-                          "to the 'presort' parameter.",
-                          FutureWarning)
 
         # Build tree
         criterion = self.criterion
@@ -755,11 +746,6 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         Note that these weights will be multiplied with sample_weight (passed
         through the fit method) if sample_weight is specified.
 
-    presort : deprecated, default='deprecated'
-        This parameter is deprecated and will be removed in v0.24.
-
-        .. deprecated:: 0.22
-
     ccp_alpha : non-negative float, default=0.0
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
         subtree with the largest cost complexity that is smaller than
@@ -863,7 +849,6 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
                  min_impurity_decrease=0.,
                  min_impurity_split=None,
                  class_weight=None,
-                 presort='deprecated',
                  monotonic_cst=None,
                  ccp_alpha=0.0):
 
@@ -880,7 +865,6 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             random_state=random_state,
             min_impurity_decrease=min_impurity_decrease,
             min_impurity_split=min_impurity_split,
-            presort=presort,
             monotonic_cst=monotonic_cst,
             ccp_alpha=ccp_alpha)
 
@@ -1127,11 +1111,6 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
            ``min_impurity_split`` has changed from 1e-7 to 0 in 0.23 and it
            will be removed in 0.25. Use ``min_impurity_decrease`` instead.
 
-    presort : deprecated, default='deprecated'
-        This parameter is deprecated and will be removed in v0.24.
-
-        .. deprecated:: 0.22
-
     ccp_alpha : non-negative float, default=0.0
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
         subtree with the largest cost complexity that is smaller than
@@ -1225,7 +1204,6 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
                  max_leaf_nodes=None,
                  min_impurity_decrease=0.,
                  min_impurity_split=None,
-                 presort='deprecated',
                  ccp_alpha=0.0,
                  monotonic_cst=None):
         super().__init__(
@@ -1240,7 +1218,6 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
             random_state=random_state,
             min_impurity_decrease=min_impurity_decrease,
             min_impurity_split=min_impurity_split,
-            presort=presort,
             ccp_alpha=ccp_alpha,
             monotonic_cst=monotonic_cst)
 
@@ -1287,22 +1264,6 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
             check_input=check_input,
             X_idx_sorted=X_idx_sorted)
         return self
-
-    @property
-    def classes_(self):
-        # TODO: Remove method in 0.24
-        msg = ("the classes_ attribute is to be deprecated from version "
-               "0.22 and will be removed in 0.24.")
-        warnings.warn(msg, FutureWarning)
-        return np.array([None] * self.n_outputs_)
-
-    @property
-    def n_classes_(self):
-        # TODO: Remove method in 0.24
-        msg = ("the n_classes_ attribute is to be deprecated from version "
-               "0.22 and will be removed in 0.24.")
-        warnings.warn(msg, FutureWarning)
-        return np.array([1] * self.n_outputs_, dtype=np.intp)
 
     def _compute_partial_dependence_recursion(self, grid, target_features):
         """Fast partial dependence computation.
