@@ -1140,10 +1140,12 @@ def test_non_uniform_weights_toy_edge_case_reg(loss):
     # ignore the first 2 training samples by setting their weight to 0
     sample_weight = [0, 0, 1, 1]
     gb = GradientBoostingRegressor(
-        learning_rate=0.01, n_estimators=5, loss=loss,
+        learning_rate=0.01, n_estimators=50, loss=loss,
     )
     gb.fit(X, y, sample_weight=sample_weight)
     assert gb.predict([[1]])[0] > 0.5
+    # check that the loss is always decreasing
+    assert np.all(np.diff(gb.train_score_) <= 0)
 
 
 def test_non_uniform_weights_toy_edge_case_clf():
