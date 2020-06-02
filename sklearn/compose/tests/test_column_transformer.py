@@ -1379,4 +1379,5 @@ def test_feature_names_empty_columns(empty_col):
     )
 
     ct.fit(df)
-    assert ct.get_feature_names() == ['ohe__col1_a', 'ohe__col1_b', 'ohe__col2_z']
+    assert ct.get_feature_names() == ['ohe__col1_a', 'ohe__col1_b',
+                                      'ohe__col2_z']
