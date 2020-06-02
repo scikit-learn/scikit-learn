@@ -1295,7 +1295,7 @@ class RobustScaler(TransformerMixin, BaseEstimator):
             self.scale_ = _handle_zeros_in_scale(self.scale_, copy=False)
             if self.unit_variance:
                 adjust = (stats.norm.ppf(q_max / 100.0) -
-                           stats.norm.ppf(q_min / 100.0))
+                          stats.norm.ppf(q_min / 100.0))
                 self.scale_ = self.scale_ / adjust
         else:
             self.scale_ = None
