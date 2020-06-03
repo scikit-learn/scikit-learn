@@ -21,7 +21,7 @@ print(__doc__)
 
 # import some data to play with
 X, y = make_classification(
-    n_features=20, n_informative=3, n_redundant=0, n_classes=4,
+    n_features=20, n_informative=3, n_redundant=0, n_classes=2,
     n_clusters_per_class=2)
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
