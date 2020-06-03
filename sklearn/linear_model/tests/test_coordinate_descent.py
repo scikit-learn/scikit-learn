@@ -10,7 +10,7 @@ from copy import deepcopy
 import joblib
 from distutils.version import LooseVersion
 
-from sklearn.datasets import load_boston
+from sklearn.datasets import load_diabetes
 from sklearn.datasets import make_regression
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils._testing import assert_array_almost_equal
@@ -596,7 +596,7 @@ def test_warm_start_convergence():
 
 
 def test_warm_start_convergence_with_regularizer_decrement():
-    X, y = load_boston(return_X_y=True)
+    X, y = load_diabetes(return_X_y=True)
 
     # Train a model to converge on a lightly regularized problem
     final_alpha = 1e-5
@@ -882,9 +882,9 @@ def test_convergence_warnings():
     X = random_state.standard_normal((1000, 500))
     y = random_state.standard_normal((1000, 3))
 
-    # check that the model fails to converge
+    # check that the model fails to converge (a negative dual gap cannot occur)
     with pytest.warns(ConvergenceWarning):
-        MultiTaskElasticNet(max_iter=1, tol=0).fit(X, y)
+        MultiTaskElasticNet(max_iter=1, tol=-1).fit(X, y)
 
     # check that the model converges w/o warnings
     with pytest.warns(None) as record:

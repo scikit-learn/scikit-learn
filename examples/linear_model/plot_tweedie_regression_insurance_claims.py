@@ -115,7 +115,7 @@ def plot_obs_pred(df, feature, weight, observed, predicted, y_label=None,
     df_["observed"] = df[observed] * df[weight]
     df_["predicted"] = predicted * df[weight]
     df_ = (
-        df_.groupby([feature])[weight, "observed", "predicted"]
+        df_.groupby([feature])[[weight, "observed", "predicted"]]
         .sum()
         .assign(observed=lambda x: x["observed"] / x[weight])
         .assign(predicted=lambda x: x["predicted"] / x[weight])
@@ -173,9 +173,9 @@ def score_estimator(
             if metric is None:
                 if not hasattr(estimator, "score"):
                     continue
-                score = estimator.score(X, y, _weights)
+                score = estimator.score(X, y, sample_weight=_weights)
             else:
-                score = metric(y, y_pred, _weights)
+                score = metric(y, y_pred, sample_weight=_weights)
 
             res.append(
                 {"subset": subset_label, "metric": score_label, "score": score}

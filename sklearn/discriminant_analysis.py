@@ -378,11 +378,11 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         # 2) Within variance scaling
         X = np.sqrt(fac) * (Xc / std)
         # SVD of centered (within)scaled data
-        U, S, V = linalg.svd(X, full_matrices=False)
+        U, S, Vt = linalg.svd(X, full_matrices=False)
 
         rank = np.sum(S > self.tol)
         # Scaling of within covariance is: V' 1/S
-        scalings = (V[:rank] / std).T / S[:rank]
+        scalings = (Vt[:rank] / std).T / S[:rank]
 
         # 3) Between variance scaling
         # Scale weighted centers
@@ -391,12 +391,12 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         # Centers are living in a space with n_classes-1 dim (maximum)
         # Use SVD to find projection in the space spanned by the
         # (n_classes) centers
-        _, S, V = linalg.svd(X, full_matrices=0)
+        _, S, Vt = linalg.svd(X, full_matrices=0)
 
         self.explained_variance_ratio_ = (S**2 / np.sum(
             S**2))[:self._max_components]
         rank = np.sum(S > self.tol * S[0])
-        self.scalings_ = np.dot(scalings, V.T[:, :rank])
+        self.scalings_ = np.dot(scalings, Vt.T[:, :rank])
         coef = np.dot(self.means_ - self.xbar_, self.scalings_)
         self.intercept_ = (-0.5 * np.sum(coef ** 2, axis=1) +
                            np.log(self.priors_))

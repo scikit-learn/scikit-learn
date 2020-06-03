@@ -16,7 +16,7 @@ from sklearn.utils import IS_PYPY
 from sklearn.utils._testing import check_docstring_parameters
 from sklearn.utils._testing import _get_func_name
 from sklearn.utils._testing import ignore_warnings
-from sklearn.utils._testing import all_estimators
+from sklearn.utils import all_estimators
 from sklearn.utils.estimator_checks import _enforce_estimator_tags_y
 from sklearn.utils.estimator_checks import _enforce_estimator_tags_x
 from sklearn.utils.deprecation import _is_deprecated
@@ -198,6 +198,10 @@ def test_fit_docstring_attributes(name, Estimator):
     if Estimator.__name__ == 'DummyClassifier':
         est.strategy = "stratified"
 
+    # TO BE REMOVED for v0.25 (avoid FutureWarning)
+    if Estimator.__name__ == 'AffinityPropagation':
+        est.random_state = 63
+
     X, y = make_classification(n_samples=20, n_features=3,
                                n_redundant=0, n_classes=2,
                                random_state=2)
@@ -235,7 +239,7 @@ def test_fit_docstring_attributes(name, Estimator):
                'MiniBatchKMeans', 'MLPClassifier', 'MLPRegressor',
                'MultiTaskElasticNet', 'MultiTaskElasticNetCV',
                'MultiTaskLasso', 'MultiTaskLassoCV', 'NearestNeighbors',
-               'NuSVR', 'OAS', 'OneClassSVM', 'OrthogonalMatchingPursuit',
+               'NuSVR', 'OneClassSVM', 'OrthogonalMatchingPursuit',
                'PLSCanonical', 'PLSRegression', 'PLSSVD',
                'PassiveAggressiveClassifier', 'Perceptron', 'RBFSampler',
                'RadiusNeighborsClassifier', 'RadiusNeighborsRegressor',

@@ -111,15 +111,15 @@ class IterativeImputer(_BaseImputer):
         many features with no missing values at both ``fit`` and ``transform``
         time to save compute.
 
-    min_value : float or array-like of shape (n_features,), default=None.
+    min_value : float or array-like of shape (n_features,), default=-np.inf
         Minimum possible imputed value. Broadcast to shape (n_features,) if
         scalar. If array-like, expects shape (n_features,), one min value for
-        each feature. `None` (default) is converted to -np.inf.
+        each feature. The default is `-np.inf`.
 
-    max_value : float or array-like of shape (n_features,), default=None.
+    max_value : float or array-like of shape (n_features,), default=np.inf
         Maximum possible imputed value. Broadcast to shape (n_features,) if
         scalar. If array-like, expects shape (n_features,), one max value for
-        each feature. `None` (default) is converted to np.inf.
+        each feature. The default is `np.inf`.
 
     verbose : int, default=0
         Verbosity flag, controls the debug messages that are issued
@@ -218,8 +218,8 @@ class IterativeImputer(_BaseImputer):
                  initial_strategy="mean",
                  imputation_order='ascending',
                  skip_complete=False,
-                 min_value=None,
-                 max_value=None,
+                 min_value=-np.inf,
+                 max_value=np.inf,
                  verbose=0,
                  random_state=None,
                  add_indicator=False):
@@ -602,9 +602,9 @@ class IterativeImputer(_BaseImputer):
             self.n_iter_ = 0
             return super()._concatenate_indicator(Xt, X_indicator)
 
-        self._min_value = IterativeImputer._validate_limit(
+        self._min_value = self._validate_limit(
             self.min_value, "min", X.shape[1])
-        self._max_value = IterativeImputer._validate_limit(
+        self._max_value = self._validate_limit(
             self.max_value, "max", X.shape[1])
 
         if not np.all(np.greater(self._max_value, self._min_value)):

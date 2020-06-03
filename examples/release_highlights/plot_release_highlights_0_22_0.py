@@ -100,10 +100,15 @@ clf.fit(X_train, y_train).score(X_test, y_test)
 # The :func:`inspection.permutation_importance` can be used to get an
 # estimate of the importance of each feature, for any fitted estimator:
 
+import numpy as np
+import matplotlib.pyplot as plt
+from sklearn.datasets import make_classification
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.inspection import permutation_importance
 
 X, y = make_classification(random_state=0, n_features=5, n_informative=3)
+feature_names = np.array([f'x_{i}' for i in range(X.shape[1])])
+
 rf = RandomForestClassifier(random_state=0).fit(X, y)
 result = permutation_importance(rf, X, y, n_repeats=10, random_state=0,
                                 n_jobs=-1)
@@ -111,7 +116,7 @@ result = permutation_importance(rf, X, y, n_repeats=10, random_state=0,
 fig, ax = plt.subplots()
 sorted_idx = result.importances_mean.argsort()
 ax.boxplot(result.importances[sorted_idx].T,
-           vert=False, labels=range(X.shape[1]))
+           vert=False, labels=feature_names[sorted_idx])
 ax.set_title("Permutation Importance of each feature")
 ax.set_ylabel("Features")
 fig.tight_layout()
@@ -225,17 +230,21 @@ print(titanic.data.head()[['pclass', 'embarked']])
 # ---------------------------------------------------
 # Developers can check the compatibility of their scikit-learn compatible
 # estimators using :func:`~utils.estimator_checks.check_estimator`. For
-# instance, the ``check_estimator(LinearSVC)`` passes.
+# instance, the ``check_estimator(LinearSVC())`` passes.
 #
 # We now provide a ``pytest`` specific decorator which allows ``pytest``
 # to run all checks independently and report the checks that are failing.
+#
+# ..note::
+#   This entry was slightly updated in version 0.24, where passing classes
+#   isn't supported anymore: pass instances instead.
 
 from sklearn.linear_model import LogisticRegression
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.utils.estimator_checks import parametrize_with_checks
 
 
-@parametrize_with_checks([LogisticRegression, DecisionTreeRegressor])
+@parametrize_with_checks([LogisticRegression(), DecisionTreeRegressor()])
 def test_sklearn_compatible_estimator(estimator, check):
     check(estimator)
 
