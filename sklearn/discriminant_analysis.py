@@ -581,6 +581,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         return _make_feature_names(n_features=n_features,
                                    prefix=type(self).__name__.lower())
 
+
 class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
     """Quadratic Discriminant Analysis
 

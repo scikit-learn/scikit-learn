@@ -28,6 +28,7 @@ from ..utils import gen_batches
 from ..utils import check_random_state
 from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils._openmp_helpers import _openmp_effective_n_threads
+from ..utils._feature_names import _make_feature_names
 from ..exceptions import ConvergenceWarning
 from ._k_means_fast import _inertia_dense
 from ._k_means_fast import _inertia_sparse
@@ -1215,6 +1216,23 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         return -_labels_inertia(X, sample_weight, x_squared_norms,
                                 self.cluster_centers_)[1]
 
+    def get_feature_names(self, input_features=None):
+        """Get output feature names.
+
+        Parameters
+        ----------
+        input_features : list of string or None
+            String names of the input features.
+
+        Returns
+        -------
+        output_feature_names : list of string
+            Feature names for transformer output.
+        """
+        return _make_feature_names(
+            n_features=self.n_clusters,
+            prefix=type(self).__name__.lower())
+
 
 def _mini_batch_step(X, sample_weight, x_squared_norms, centers, weight_sums,
                      old_center_buffer, compute_squared_diff,
@@ -1871,3 +1889,20 @@ class MiniBatchKMeans(KMeans):
 
         X = self._check_test_data(X)
         return self._labels_inertia_minibatch(X, sample_weight)[0]
+
+    def get_feature_names(self, input_features=None):
+        """Get output feature names.
+
+        Parameters
+        ----------
+        input_features : list of string or None
+            String names of the input features.
+
+        Returns
+        -------
+        output_feature_names : list of string
+            Feature names for transformer output.
+        """
+        return _make_feature_names(
+            n_features=self.n_clusters,
+            prefix=type(self).__name__.lower())

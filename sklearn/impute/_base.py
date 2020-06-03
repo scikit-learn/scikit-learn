@@ -758,3 +758,20 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
     def _more_tags(self):
         return {'allow_nan': True,
                 'X_types': ['2darray', 'string']}
+
+    def get_feature_names(self, input_features=None):
+        """Get output feature names.
+
+        Parameters
+        ----------
+        input_features : list of string or None
+            String names of the input features.
+
+        Returns
+        -------
+        output_feature_names : list of string
+            Feature names for transformer output.
+        """
+        return _make_feature_names(
+            n_features=len(self.features_),
+            prefix=type(self).__name__.lower())

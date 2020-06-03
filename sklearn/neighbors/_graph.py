@@ -10,6 +10,7 @@ from ._base import UnsupervisedMixin
 from ._unsupervised import NearestNeighbors
 from ..base import TransformerMixin
 from ..utils.validation import check_is_fitted, _deprecate_positional_args
+from ..utils._feature_names import _make_feature_names
 
 
 def _check_params(X, metric, p, metric_params):
@@ -338,6 +339,23 @@ class KNeighborsTransformer(KNeighborsMixin, UnsupervisedMixin,
         """
         return self.fit(X).transform(X)
 
+    def get_feature_names(self, input_features=None):
+        """Get output feature names.
+
+        Parameters
+        ----------
+        input_features : list of string or None
+            String names of the input features.
+
+        Returns
+        -------
+        output_feature_names : list of string
+            Feature names for transformer output.
+        """
+        return _make_feature_names(
+            n_features=self.n_samples_fit_,
+            prefix=type(self).__name__.lower())
+
 
 class RadiusNeighborsTransformer(RadiusNeighborsMixin, UnsupervisedMixin,
                                  TransformerMixin, NeighborsBase):
@@ -478,3 +496,20 @@ class RadiusNeighborsTransformer(RadiusNeighborsMixin, UnsupervisedMixin,
             The matrix is of CSR format.
         """
         return self.fit(X).transform(X)
+
+    def get_feature_names(self, input_features=None):
+        """Get output feature names.
+
+        Parameters
+        ----------
+        input_features : list of string or None
+            String names of the input features.
+
+        Returns
+        -------
+        output_feature_names : list of string
+            Feature names for transformer output.
+        """
+        return _make_feature_names(
+            n_features=self.n_samples_fit_,
+            prefix=type(self).__name__.lower())
