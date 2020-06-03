@@ -808,6 +808,7 @@ def dict_learning_online(X, n_components=2, *, alpha=1, n_iter=100,
 
     # If n_iter is zero, we need to return zero.
     ii = iter_offset - 1
+
     for ii, batch in zip(range(iter_offset, iter_offset + n_iter), batches):
         this_X = X_train[batch]
         dt = (time.time() - t0)
