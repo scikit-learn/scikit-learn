@@ -24,6 +24,7 @@ from .utils.multiclass import check_classification_targets
 from .utils.extmath import softmax
 from .preprocessing import StandardScaler
 from .utils.validation import _deprecate_positional_args
+from .utils._feature_names import _make_feature_names
 
 
 __all__ = ['LinearDiscriminantAnalysis', 'QuadraticDiscriminantAnalysis']
@@ -562,6 +563,23 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         # Only override for the doc
         return super().decision_function(X)
 
+    def get_feature_names(self, input_features=None):
+        """Get output feature names.
+
+        Parameters
+        ----------
+        input_features : list of string or None
+            String names of the input features.
+
+        Returns
+        -------
+        output_feature_names : list of string
+            Feature names for transformer output.
+        """
+        n_components = self.n_components or np.inf
+        n_features = min(self._max_components, n_components)
+        return _make_feature_names(n_features=n_features,
+                                   prefix=type(self).__name__.lower())
 
 class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
     """Quadratic Discriminant Analysis

@@ -15,6 +15,7 @@ from ..base import TransformerMixin, ClusterMixin, BaseEstimator
 from ..utils import check_array
 from ..utils.extmath import row_norms
 from ..utils.validation import check_is_fitted, _deprecate_positional_args
+from ..utils._feature_names import _make_feature_names
 from ..exceptions import ConvergenceWarning
 from . import AgglomerativeClustering
 
@@ -656,3 +657,20 @@ class Birch(ClusterMixin, TransformerMixin, BaseEstimator):
 
         if compute_labels:
             self.labels_ = self.predict(X)
+
+    def get_feature_names(self, input_features=None):
+        """Get output feature names.
+
+        Parameters
+        ----------
+        input_features : list of string or None
+            String names of the input features.
+
+        Returns
+        -------
+        output_feature_names : list of string
+            Feature names for transformer output.
+        """
+        return _make_feature_names(
+            n_features=self.subcluster_centers_.shape[0],
+            prefix=type(self).__name__.lower())
