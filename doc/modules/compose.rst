@@ -150,8 +150,7 @@ going into each step::
     ...    ('select', SelectKBest(k=2)),
     ...    ('clf', LogisticRegression())])
     >>> pipe.fit(iris.data, iris.target)
-    Pipeline(memory=None,
-              steps=[('select', SelectKBest(...)), ('clf', LogisticRegression(...))])
+    Pipeline(steps=[('select', SelectKBest(...)), ('clf', LogisticRegression(...))])
     >>> pipe[:-1].get_feature_names()
     array(['x2', 'x3'], dtype='<U2')
 
@@ -159,7 +158,7 @@ You can also provide custom feature names for a more human readable format using
 ``get_feature_names``::
 
     >>> pipe[:-1].get_feature_names(iris.feature_names)
-    ['sepal length (cm)', 'sepal width (cm)', 'petal length (cm)', 'petal width (cm)']
+    array(['petal length (cm)', 'petal width (cm)'], dtype='<U17')
 
 .. topic:: Examples:
 
@@ -455,7 +454,7 @@ By default, the remaining rating columns are ignored (``remainder='drop'``)::
   ...     remainder='drop')
 
   >>> column_trans.fit(X)
-  ColumnTransformer(transformers=[('city_category', OneHotEncoder(dtype='int'),
+  ColumnTransformer(transformers=[('categories', OneHotEncoder(dtype='int'),
                                    ['city']),
                                   ('title_bow', CountVectorizer(), 'title')])
 
