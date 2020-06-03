@@ -93,8 +93,8 @@ evaluated and the best combination is retained.
       :class:`GridSearchCV`. The example shows how this interface adds certain
       amount of flexibility in identifying the "best" estimator. This interface
       can also be used in multiple metrics evaluation.
-    
-    - See :ref:`sphx_glr_auto_examples_model_selection_grid_search_stats.py`
+
+    - See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_stats.py`
       for an example of how to compare statistically the outputs of
       :class:`GridSearchCV`.
 
