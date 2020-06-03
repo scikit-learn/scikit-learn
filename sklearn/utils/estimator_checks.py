@@ -395,7 +395,7 @@ def _should_be_skipped_or_marked(estimator, check, strict_mode):
         return True, xfail_checks[check_name]
 
     if check_name in _FULLY_STRICT_CHECKS and not strict_mode:
-        return True, 'The check is fully strict and strict mode is off'
+        return True, f'{check_name} is fully strict and strict mode is off'
 
     return False, 'placeholder reason that will never be used'
 

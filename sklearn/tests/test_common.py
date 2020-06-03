@@ -235,8 +235,8 @@ def test_strict_mode_check_estimator():
     assert not any(isinstance(w, SkipTestWarning) for w in catched_warnings)
     # When strict mode is off, check_n_features should be skipped because it's
     # a fully strict check
-    with pytest.warns(SkipTestWarning,
-                      match='check is fully strict and strict mode is off'):
+    msg_check_n_features_in = 'check_n_features_in is fully strict '
+    with pytest.warns(SkipTestWarning, match=msg_check_n_features_in):
         check_estimator(LogisticRegression(), strict_mode=False)
 
     # NuSVC has some _xfail_checks. They should be skipped regardless of
@@ -246,8 +246,7 @@ def test_strict_mode_check_estimator():
         check_estimator(NuSVC(), strict_mode=True)
     # When strict mode is off, check_n_features_in is skipped along with the
     # rest of the xfail_checks
-    with pytest.warns(SkipTestWarning,
-                      match='check is fully strict and strict mode is off'):
+    with pytest.warns(SkipTestWarning, match=msg_check_n_features_in):
         check_estimator(NuSVC(), strict_mode=False)
 
     # MyNMF will fail check_fit_non_negative() in strict mode because it yields
@@ -258,8 +257,7 @@ def test_strict_mode_check_estimator():
     # strict mode is off, check_fit_non_negative() will not check the exact
     # error messsage. (We still assert that the warning from
     # check_n_features_in is raised)
-    with pytest.warns(SkipTestWarning,
-                      match='check is fully strict and strict mode is off'):
+    with pytest.warns(SkipTestWarning, match=msg_check_n_features_in):
         check_estimator(MyNMFWithBadErrorMessage(), strict_mode=False)
 
 
