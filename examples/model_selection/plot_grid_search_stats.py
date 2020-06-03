@@ -36,7 +36,6 @@ sns.scatterplot(
     X[:, 0], X[:, 1], hue=y,
     marker='o', s=25, edgecolor='k', legend=False
     ).set_title("Data")
-plt.show()
 
 
 ###############################################################################
@@ -113,7 +112,6 @@ sns.lineplot(
 ax.set_xlabel("CV fold", size=12, labelpad=10)
 ax.set_ylabel("Model AUC", size=12)
 ax.tick_params(bottom=True, labelbottom=False)
-plt.show()
 
 # print correlation of AUC scores across folds
 print(f"Correlation of models:\n {model_scores.transpose().corr()}")
@@ -274,7 +272,6 @@ plt.fill_between(x, t_post.pdf(x), 0, facecolor='blue', alpha=.2)
 plt.ylabel("Probability density")
 plt.xlabel("Mean difference")
 plt.title("Posterior distribution")
-plt.show()
 
 
 ###############################################################################
@@ -338,7 +335,6 @@ plt.fill_between(x_rope, t_post.pdf(x_rope), 0, facecolor='blue', alpha=.2)
 plt.ylabel("Probability density")
 plt.xlabel("Mean difference")
 plt.title("Posterior distribution under the ROPE")
-plt.show()
 
 
 ###############################################################################
