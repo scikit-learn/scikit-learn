@@ -919,6 +919,17 @@ def test_pairwise_wasserstein_distances():
     assert_allclose(dist, answer)
     assert_allclose(dist_dflt, answer)
 
+    err_msg = "feature_slicer and stdev_slicer must be both None or\
+                        both not None"
+    with pytest.raises(Exception, match=err_msg):
+        pairwise_wasserstein_distances(X, Y, feature_slicer=[0, 1, 2])
+
+    with pytest.raises(Exception, match=err_msg):
+        pairwise_wasserstein_distances(X, Y, stdev_slicer=[0, 1, 2])
+
+    err_msg = "X and Y must have even number of columns"
+    with pytest.raises(Exception, match=err_msg):
+        pairwise_wasserstein_distances(X[:, :5], Y[:,:5])
 
 def test_cosine_distances():
     # Check the pairwise Cosine distances computation
