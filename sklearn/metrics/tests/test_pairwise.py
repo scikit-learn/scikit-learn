@@ -929,7 +929,7 @@ def test_pairwise_wasserstein_distances():
 
     err_msg = "X and Y must have even number of columns"
     with pytest.raises(Exception, match=err_msg):
-        pairwise_wasserstein_distances(X[:, :5], Y[:,:5])
+        pairwise_wasserstein_distances(X[:, :5], Y[:, :5])
 
 def test_cosine_distances():
     # Check the pairwise Cosine distances computation
