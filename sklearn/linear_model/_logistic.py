@@ -662,7 +662,8 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     # the class_weights are assigned after masking the labels with a OvR.
     le = LabelEncoder()
     if isinstance(class_weight, dict) or multi_class == 'multinomial':
-        class_weight_ = compute_class_weight(class_weight, classes, y)
+        class_weight_ = compute_class_weight(class_weight,
+                                             classes=classes, y=y)
         sample_weight *= class_weight_[le.fit_transform(y)]
 
     # For doing a ovr, we need to mask the labels first. for the
@@ -676,8 +677,9 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         # for compute_class_weight
 
         if class_weight == "balanced":
-            class_weight_ = compute_class_weight(class_weight, mask_classes,
-                                                 y_bin)
+            class_weight_ = compute_class_weight(class_weight,
+                                                 classes=mask_classes,
+                                                 y=y_bin)
             sample_weight *= class_weight_[le.fit_transform(y_bin)]
 
     else:
@@ -1867,9 +1869,8 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
 
         # compute the class weights for the entire dataset y
         if class_weight == "balanced":
-            class_weight = compute_class_weight(class_weight,
-                                                np.arange(len(self.classes_)),
-                                                y)
+            class_weight = compute_class_weight(
+                class_weight, classes=np.arange(len(self.classes_)), y=y)
             class_weight = dict(enumerate(class_weight))
 
         path_func = delayed(_log_reg_scoring_path)

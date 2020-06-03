@@ -497,8 +497,8 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
         n_classes = self.classes_.shape[0]
 
         # Allocate datastructures from input arguments
-        self._expanded_class_weight = compute_class_weight(self.class_weight,
-                                                           self.classes_, y)
+        self._expanded_class_weight = compute_class_weight(
+            self.class_weight, classes=self.classes_, y=y)
         sample_weight = _check_sample_weight(sample_weight, X)
 
         if getattr(self, "coef_", None) is None or coef_init is not None:
@@ -681,7 +681,8 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
         if self.class_weight in ['balanced']:
             raise ValueError("class_weight '{0}' is not supported for "
                              "partial_fit. In order to use 'balanced' weights,"
-                             " use compute_class_weight('{0}', classes, y). "
+                             " use compute_class_weight('{0}', "
+                             "classes=classes, y=y). "
                              "In place of y you can us a large enough sample "
                              "of the full training set target to properly "
                              "estimate the class frequency distributions. "

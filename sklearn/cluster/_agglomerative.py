@@ -135,7 +135,8 @@ def _single_linkage_tree(connectivity, n_samples, n_nodes, n_clusters,
 ###############################################################################
 # Hierarchical tree building functions
 
-def ward_tree(X, connectivity=None, n_clusters=None, return_distance=False):
+@_deprecate_positional_args
+def ward_tree(X, *, connectivity=None, n_clusters=None, return_distance=False):
     """Ward clustering based on a Feature matrix.
 
     Recursively merges the pair of clusters that minimally increases
@@ -876,7 +877,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         distance_threshold = self.distance_threshold
 
         return_distance = distance_threshold is not None
-        out = memory.cache(tree_builder)(X, connectivity,
+        out = memory.cache(tree_builder)(X, connectivity=connectivity,
                                          n_clusters=n_clusters,
                                          return_distance=return_distance,
                                          **kwargs)

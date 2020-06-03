@@ -93,20 +93,6 @@ class IsolationForest(OutlierMixin, BaseBagging):
         :obj:`joblib.parallel_backend` context. ``-1`` means using all
         processors. See :term:`Glossary <n_jobs>` for more details.
 
-    behaviour : str, default='deprecated'
-        This parameter has no effect, is deprecated, and will be removed.
-
-        .. versionadded:: 0.20
-           ``behaviour`` is added in 0.20 for back-compatibility purpose.
-
-        .. deprecated:: 0.20
-           ``behaviour='old'`` is deprecated in 0.20 and will not be possible
-           in 0.22.
-
-        .. deprecated:: 0.22
-           ``behaviour`` parameter is deprecated in 0.22 and removed in
-           0.24.
-
     random_state : int or RandomState, default=None
         Controls the pseudo-randomness of the selection of the feature
         and split values for each branching step and each tree in the forest.
@@ -192,7 +178,6 @@ class IsolationForest(OutlierMixin, BaseBagging):
                  max_features=1.,
                  bootstrap=False,
                  n_jobs=None,
-                 behaviour='deprecated',
                  random_state=None,
                  verbose=0,
                  warm_start=False):
@@ -212,7 +197,6 @@ class IsolationForest(OutlierMixin, BaseBagging):
             random_state=random_state,
             verbose=verbose)
 
-        self.behaviour = behaviour
         self.contamination = contamination
 
     def _set_oob_score(self, X, y):
@@ -247,19 +231,6 @@ class IsolationForest(OutlierMixin, BaseBagging):
         self : object
             Fitted estimator.
         """
-        if self.behaviour != 'deprecated':
-            if self.behaviour == 'new':
-                warn(
-                    "'behaviour' is deprecated in 0.22 and will be removed "
-                    "in 0.24. You should not pass or set this parameter.",
-                    FutureWarning
-                )
-            else:
-                raise NotImplementedError(
-                    "The old behaviour of IsolationForest is not implemented "
-                    "anymore. Remove the 'behaviour' parameter."
-                )
-
         X = check_array(X, accept_sparse=['csc'])
         if issparse(X):
             # Pre-sort indices to avoid that each individual tree of the

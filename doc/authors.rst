@@ -19,7 +19,7 @@
     </div>
     <div>
     <a href='https://github.com/thomasjpfan'><img src='https://avatars2.githubusercontent.com/u/5402633?v=4' class='avatar' /></a> <br />
-    <p>Thomas J Fan</p>
+    <p>Thomas J. Fan</p>
     </div>
     <div>
     <a href='https://github.com/agramfort'><img src='https://avatars2.githubusercontent.com/u/161052?v=4' class='avatar' /></a> <br />
