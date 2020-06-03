@@ -46,7 +46,7 @@ X, y = fetch_openml("titanic", version=1, as_frame=True, return_X_y=True)
 
 # %%
 # Use ``ColumnTransformer`` by selecting column by names
-##############################################################################
+###############################################################################
 # We will train our classifier with the following features:
 #
 # Numeric Features:
@@ -102,7 +102,7 @@ clf
 
 # %%
 # Use ``ColumnTransformer`` by selecting column by data types
-#############################################################
+###############################################################################
 # When dealing with a cleaned dataset, the preprocessing can be automatic by
 # using the data types of the column to decide whether to treat a column as a
 # numerical or categorical feature.
@@ -158,7 +158,7 @@ selector(dtype_include="category")(X_train)
 
 # %%
 # Using the prediction pipeline in a grid search
-################################################
+##############################################################################
 # Grid search can also be performed on the different preprocessing steps
 # defined in the ``ColumnTransformer`` object, together with the classifier's
 # hyperparameters as part of the ``Pipeline``.

@@ -121,8 +121,7 @@ f.tight_layout(rect=[0.05, 0.05, 0.95, 0.95])
 # %%
 # Real-world data set
 ###############################################################################
-
-# %%
+#
 # In a similar manner, the Ames housing data set is used to show the impact
 # of transforming the targets before learning a model. In this example, the
 # target to be predicted is the selling price of each house.
