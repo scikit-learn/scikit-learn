@@ -346,7 +346,6 @@ def test_discretenb_predict_proba():
         assert_almost_equal(np.sum(clf.predict_proba([X[1]])), 1)
         assert_almost_equal(np.sum(clf.predict_proba([X[-1]])), 1)
         assert_almost_equal(np.sum(np.exp(clf.class_log_prior_)), 1)
-        assert_almost_equal(np.sum(np.exp(clf.intercept_)), 1)
 
 
 @pytest.mark.parametrize('cls', [BernoulliNB, MultinomialNB, CategoricalNB])
@@ -497,17 +496,6 @@ def test_mnb_prior_unobserved_targets():
     assert clf.predict([[0, 1]]) == 0
     assert clf.predict([[1, 0]]) == 1
     assert clf.predict([[1, 1]]) == 2
-
-
-def test_mnb_sample_weight():
-    clf = MultinomialNB()
-    clf.fit([[1, 2], [1, 2], [1, 0]],
-            [0, 0, 1],
-            sample_weight=[1, 1, 4])
-    assert_array_equal(clf.predict([[1, 0]]), [1])
-    positive_prior = np.exp(clf.intercept_[0])
-    assert_array_almost_equal([1 - positive_prior, positive_prior],
-                              [1 / 3., 2 / 3.])
 
 
 def test_bnb():

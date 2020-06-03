@@ -216,7 +216,8 @@ def test_fit_docstring_attributes(name, Estimator):
     else:
         est.fit(X, y)
 
-    skipped_attributes = {'n_features_in_'}
+    # TODO: Remove "coef_" and "intercept_" in version 0.26
+    skipped_attributes = {'n_features_in_', 'coef_', 'intercept_'}
 
     for attr in attributes:
         if attr.name in skipped_attributes:
