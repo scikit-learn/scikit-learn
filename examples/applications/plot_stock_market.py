@@ -78,7 +78,7 @@ print(__doc__)
 
 # #############################################################################
 # Retrieve the data from Internet
-#
+
 # The data is from 2003 - 2008. This is reasonably calm: (not too long ago so
 # that we get high-tech firms, and before the 2008 crash). This kind of
 # historical data can be obtained for from APIs like the quandl.com and
@@ -164,7 +164,6 @@ variation = close_prices - open_prices
 # Learn a graphical structure from the correlations
 edge_model = covariance.GraphicalLassoCV()
 
-# %%
 # standardize the time series: using correlations rather than covariance
 # is more efficient for structure recovery
 X = variation.copy().T
@@ -183,7 +182,7 @@ for i in range(n_labels + 1):
 # #############################################################################
 # Find a low-dimension embedding for visualization: find the best position of
 # the nodes (the stocks) on a 2D plane
-#
+
 # We use a dense eigen_solver to achieve reproducibility (arpack is
 # initiated with random vectors that we don't control). In addition, we
 # use a large number of neighbors to capture the large-scale structure.
@@ -224,7 +223,6 @@ lc.set_array(values)
 lc.set_linewidths(15 * values)
 ax.add_collection(lc)
 
-# %%
 # Add a label to each node. The challenge here is that we want to
 # position the labels to avoid overlap with other labels
 for index, (name, label, (x, y)) in enumerate(

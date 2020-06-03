@@ -66,7 +66,7 @@ X_test = np.dot(base_X_test, coloring_matrix)
 
 # #############################################################################
 # Compute the likelihood on test data
-#
+
 # spanning a range of possible shrinkage coefficient values
 shrinkages = np.logspace(-2, 0, 30)
 negative_logliks = [-ShrunkCovariance(shrinkage=s).fit(X_train).score(X_test)
@@ -80,7 +80,7 @@ loglik_real = -log_likelihood(emp_cov, linalg.inv(real_cov))
 
 # #############################################################################
 # Compare different approaches to setting the parameter
-#
+
 # GridSearch for an optimal shrinkage coefficient
 tuned_parameters = [{'shrinkage': shrinkages}]
 cv = GridSearchCV(ShrunkCovariance(), tuned_parameters)

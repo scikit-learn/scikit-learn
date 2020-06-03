@@ -48,7 +48,7 @@ print(np.round(np.corrcoef(Y.T), 2))
 
 # #############################################################################
 # Canonical (symmetric) PLS
-#
+
 # Transform data
 # ~~~~~~~~~~~~~~
 plsca = PLSCanonical(n_components=2)
@@ -56,7 +56,6 @@ plsca.fit(X_train, Y_train)
 X_train_r, Y_train_r = plsca.transform(X_train, Y_train)
 X_test_r, Y_test_r = plsca.transform(X_test, Y_test)
 
-# %%
 # Scatter plot of scores
 # ~~~~~~~~~~~~~~~~~~~~~~
 # 1) On diagonal plot X vs Y scores on each components

@@ -42,7 +42,7 @@ from sklearn.model_selection import StratifiedKFold
 
 # #############################################################################
 # Data IO and generation
-#
+
 # Import some data to play with
 iris = datasets.load_iris()
 X = iris.data
@@ -56,7 +56,7 @@ X = np.c_[X, random_state.randn(n_samples, 200 * n_features)]
 
 # #############################################################################
 # Classification and ROC analysis
-#
+
 # Run classifier with cross-validation and plot ROC curves
 cv = StratifiedKFold(n_splits=6)
 classifier = svm.SVC(kernel='linear', probability=True,

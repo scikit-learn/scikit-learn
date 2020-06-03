@@ -23,7 +23,7 @@ X, _ = make_blobs(n_samples=10000, centers=centers, cluster_std=0.6)
 
 # #############################################################################
 # Compute clustering with MeanShift
-#
+
 # The following bandwidth can be automatically detected using
 bandwidth = estimate_bandwidth(X, quantile=0.2, n_samples=500)
 

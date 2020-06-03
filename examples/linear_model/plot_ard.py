@@ -32,7 +32,7 @@ from sklearn.linear_model import ARDRegression, LinearRegression
 
 # #############################################################################
 # Generating simulated data with Gaussian weights
-#
+
 # Parameters of the example
 np.random.seed(0)
 n_samples, n_features = 100, 100
