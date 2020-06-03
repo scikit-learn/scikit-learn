@@ -16,6 +16,7 @@ from ._univariate_selection import SelectFwe
 from ._univariate_selection import GenericUnivariateSelect
 
 from ._variance_threshold import VarianceThreshold
+from ._correlation_threshold import CorrelationThreshold
 
 from ._rfe import RFE
 from ._rfe import RFECV
@@ -37,6 +38,7 @@ __all__ = ['GenericUnivariateSelect',
            'SelectFromModel',
            'SelectPercentile',
            'VarianceThreshold',
+           'CorrelationThreshold',
            'chi2',
            'f_classif',
            'f_oneway',
