@@ -1504,5 +1504,5 @@ class MiniBatchDictionaryLearning(SparseCodingMixin, BaseEstimator):
         # Keep track of the state of the algorithm to be able to do
         # some online fitting (partial_fit)
         self.inner_stats_ = (A, B)
-        self.iter_offset_ = iter_offset + self.n_iter
+        self.iter_offset_ = iter_offset + 1
         return self
