@@ -150,7 +150,6 @@ going into each step::
     ...    ('select', SelectKBest(k=2)),
     ...    ('clf', LogisticRegression())])
     >>> pipe.fit(iris.data, iris.target)
-    ... # doctest: +NORMALIZE_WHITESPACE, +ELLIPSIS
     Pipeline(memory=None,
               steps=[('select', SelectKBest(...)), ('clf', LogisticRegression(...))])
     >>> pipe[:-1].get_feature_names()
