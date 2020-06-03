@@ -798,11 +798,9 @@ def pairwise_wasserstein_distances(X, Y, feature_slicer=None,
     if feature_slicer and not stdev_slicer:
         raise Exception("feature_slicer and stdev_slicer must be both None or\
                         both not None")
-        return
     elif stdev_slicer and not feature_slicer:
         raise Exception("feature_slicer and stdev_slicer must be both None or\
                         both not None")
-        return
     elif stdev_slicer and feature_slicer:
         X_u = X[:, feature_slicer]
         Y_u = Y[:, feature_slicer]
@@ -811,7 +809,6 @@ def pairwise_wasserstein_distances(X, Y, feature_slicer=None,
     elif not stdev_slicer and not feature_slicer:
         if X.shape[1] % 2 or Y.shape[1] % 2:
             raise Exception("X and Y must have even number of columns")
-            return
         else:
             n_feat = int(X.shape[1]/2)
             X_u = X[:, :n_feat]
