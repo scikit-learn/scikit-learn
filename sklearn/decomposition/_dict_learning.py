@@ -808,7 +808,6 @@ def dict_learning_online(X, n_components=2, *, alpha=1, n_iter=100,
 
     # If n_iter is zero, we need to return zero.
     ii = iter_offset - 1
-
     for ii, batch in zip(range(iter_offset, iter_offset + n_iter), batches):
         this_X = X_train[batch]
         dt = (time.time() - t0)
@@ -1490,7 +1489,7 @@ class MiniBatchDictionaryLearning(SparseCodingMixin, BaseEstimator):
             iter_offset = getattr(self, 'iter_offset_', 0)
         U, (A, B) = dict_learning_online(
             X, self.n_components, alpha=self.alpha,
-            n_iter=self.n_iter, method=self.fit_algorithm,
+            n_iter=1, method=self.fit_algorithm,
             method_max_iter=self.transform_max_iter,
             n_jobs=self.n_jobs, dict_init=dict_init,
             batch_size=len(X), shuffle=False,
