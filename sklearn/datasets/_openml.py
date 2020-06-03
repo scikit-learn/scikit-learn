@@ -230,7 +230,7 @@ def _sparse_data_to_array(
 
 
 def _convert_arff_data(
-    arff: Dict[str, Any],
+    arff: ArffContainerType,
     col_slice_x: List[int],
     col_slice_y: List[int],
     shape: Optional[Tuple] = None
@@ -307,7 +307,7 @@ def _feature_to_dtype(feature: Dict[str, str]):
 
 
 def _convert_arff_data_dataframe(
-    arff, columns: List, features_dict: Dict[str, Any]
+    arff: ArffContainerType, columns: List, features_dict: Dict[str, Any]
 ) -> Tuple:
     """Convert the ARFF object into a pandas DataFrame.
 
