@@ -1966,19 +1966,22 @@ def test_apply_path_readonly_all_trees(name):
     check_apply_path_readonly(name)
 
 
-@pytest.mark.parametrize("criterion", ["mse", "poisson"])
-@pytest.mark.parametrize("tree", REG_TREES.values())
-def test_balance_property(criterion, tree):
-    """Test that sum(y_pred)=sum(y_true) on training set."""
-    # Choose a training set with non-negative targets
+@pytest.mark.parametrize("criterion", ["mse", "friedman_mse", "poisson"])
+@pytest.mark.parametrize("Tree", REG_TREES.values())
+def test_balance_property(criterion, Tree):
+    # Test that sum(y_pred)=sum(y_true) on training set.
+    # This works if the mean is predicted (should even be true for each leaf).
+    # MAE predicts the median and is therefore excluded from this test.
+
+    # Choose a training set with non-negative targets (for poisson)
     X, y = diabetes.data, diabetes.target
-    reg = tree(criterion=criterion)
+    reg = Tree(criterion=criterion)
     reg.fit(X, y)
     assert np.sum(reg.predict(X)) == pytest.approx(np.sum(y))
 
 
 def test_poisson_zero_nodes():
-    """Test that sum(y)=0 and therefore y_pred=0 never happens on nodes."""
+    # Test that sum(y)=0 and therefore y_pred=0 is forbidden on nodes.
     X = [[0, 0], [0, 1], [0, 2], [0, 3],
          [1, 0], [1, 2], [1, 2], [1, 3]]
     y = [0, 0, 0, 0, 1, 2, 3, 4]

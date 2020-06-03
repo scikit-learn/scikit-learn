@@ -26,15 +26,13 @@ import numpy as np
 cimport numpy as np
 np.import_array()
 
+from numpy.math cimport INFINITY
 from scipy.special.cython_special cimport xlogy
 
 from ._utils cimport log
 from ._utils cimport safe_realloc
 from ._utils cimport sizet_ptr_to_ndarray
 from ._utils cimport WeightedMedianCalculator
-
-
-cdef double INFINITY = np.inf
 
 
 cdef class Criterion:
@@ -1334,10 +1332,10 @@ cdef class Poisson(RegressionCriterion):
 
     Poisson deviance = 2/n * sum(y_true * log(y_true/y_pred) + y_pred - y_true)
 
-    Note that the deviance is >= 0, and for trees with `y_pred = mean(y_true)`,
-    one always has `sum(y_pred - y_true) = 0`. It remains the implemented
-    impurity:
-        1/n * sum(y_i * log(y_i/y_pred)
+    Note that the deviance is >= 0, and since we have `y_pred = mean(y_true)`
+    at the leaves, one always has `sum(y_pred - y_true) = 0`. It remains the
+    implemented impurity:
+        1/n * sum(y_true * log(y_true/y_pred)
     """
     # FIXME in 0.25:
     # min_impurity_split with default = 0 forces to use a non-negative
@@ -1368,7 +1366,7 @@ cdef class Poisson(RegressionCriterion):
                 if self.sample_weight != NULL:
                     w = self.sample_weight[i]
 
-                impurity += w * xlogy(self.y[i, k], self.y[i, k]/y_mean)
+                impurity += w * xlogy(self.y[i, k], self.y[i, k] / y_mean)
 
         return impurity / (self.weighted_n_node_samples * self.n_outputs)
 
@@ -1432,7 +1430,7 @@ cdef class Poisson(RegressionCriterion):
                 if self.sample_weight != NULL:
                     w = self.sample_weight[i]
 
-                impurity_left[0] += w * xlogy(y[i, k], y[i, k]/y_mean)
+                impurity_left[0] += w * xlogy(y[i, k], y[i, k] / y_mean)
         impurity_left[0] /= self.weighted_n_left * self.n_outputs
 
         impurity_right[0] = 0.
@@ -1444,5 +1442,5 @@ cdef class Poisson(RegressionCriterion):
                 if self.sample_weight != NULL:
                     w = self.sample_weight[i]
 
-                impurity_right[0] += w * xlogy(y[i, k], y[i, k]/y_mean)
+                impurity_right[0] += w * xlogy(y[i, k], y[i, k] / y_mean)
         impurity_right[0] /= self.weighted_n_right * self.n_outputs
