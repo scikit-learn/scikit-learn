@@ -221,14 +221,13 @@ command::
     $ sudo port install py36-scikit-learn
 
 
-Canopy and Anaconda for all supported platforms
------------------------------------------------
+Anaconda and Enthought Deployment Manager for all supported platforms
+---------------------------------------------------------------------
 
-`Canopy
-<https://www.enthought.com/products/canopy>`_ and `Anaconda
-<https://www.anaconda.com/download>`_ both ship a recent
-version of scikit-learn, in addition to a large set of scientific python
-library for Windows, Mac OSX and Linux.
+`Anaconda <https://www.anaconda.com/download>`_ and
+`Enthought Deployment Manager <https://assets.enthought.com/downloads/>`_
+both ship with scikit-learn in addition to a large set of scientific
+python library for Windows, Mac OSX and Linux.
 
 Anaconda offers scikit-learn as part of its free distribution.
 
