@@ -46,7 +46,7 @@ X, y = fetch_openml("titanic", version=1, as_frame=True, return_X_y=True)
 
 # %%
 # Use ``ColumnTransformer`` by selecting column by names
-# %%
+##############################################################################
 # We will train our classifier with the following features:
 #
 # Numeric Features:

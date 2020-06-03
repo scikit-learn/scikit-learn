@@ -22,7 +22,7 @@ fitting of a transformer is costly.
 
 # %%
 Illustration of ``Pipeline`` and ``GridSearchCV``
-# %%
+##############################################################################
 
 This section illustrates the use of a ``Pipeline`` with ``GridSearchCV``
 """
@@ -91,7 +91,7 @@ plt.show()
 
 # %%
 # Caching transformers within a ``Pipeline``
-# %%
+###############################################################################
 # It is sometimes worthwhile storing the state of a specific transformer
 # since it could be used again. Using a pipeline in ``GridSearchCV`` triggers
 # such situations. Therefore, we use the argument ``memory`` to enable caching.

@@ -36,7 +36,7 @@ if LooseVersion(matplotlib.__version__) >= '2.1':
     density_param = {'density': True}
 else:
     density_param = {'normed': True}
-  
+
 # %%
 # A synthetic random regression dataset is generated. The targets ``y`` are
 # modified by:
@@ -120,7 +120,7 @@ f.tight_layout(rect=[0.05, 0.05, 0.95, 0.95])
 
 # %%
 # Real-world data set
-# %%
+###############################################################################
 
 # %%
 # In a similar manner, the Ames housing data set is used to show the impact
