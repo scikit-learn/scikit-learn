@@ -153,8 +153,8 @@ but regular, observation outside the frontier.
 .. topic:: References:
 
     * `Estimating the support of a high-dimensional distribution
-      <https://dl.acm.org/citation.cfm?id=1119749>`_ Schölkopf,
-      Bernhard, et al. Neural computation 13.7 (2001): 1443-1471.
+      <http://www.recognition.mccme.ru/pub/papers/SVM/sch99estimating.pdf>`_
+      Schölkopf, Bernhard, et al. Neural computation 13.7 (2001): 1443-1471.
 
 .. topic:: Examples:
 
