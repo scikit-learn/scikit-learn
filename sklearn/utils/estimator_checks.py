@@ -67,7 +67,12 @@ def _yield_checks(estimator):
     yield check_sample_weights_not_an_array
     yield check_sample_weights_list
     yield check_sample_weights_shape
-    yield check_sample_weights_invariance
+    if (has_fit_parameter(estimator, "sample_weight")
+            and not (hasattr(estimator, "_pairwise")
+                     and estimator._pairwise)):
+        # We skip pairwise because the data is not pairwise
+        yield partial(check_sample_weights_invariance, kind='ones')
+        yield partial(check_sample_weights_invariance, kind='zeros')
     yield check_estimators_fit_returns_self
     yield partial(check_estimators_fit_returns_self, readonly_memmap=True)
 
@@ -836,41 +841,55 @@ def check_sample_weights_shape(name, estimator_orig):
 
 
 @ignore_warnings(category=FutureWarning)
-def check_sample_weights_invariance(name, estimator_orig):
-    # check that the estimators yield same results for
+def check_sample_weights_invariance(name, estimator_orig, kind="ones"):
+    # For kind="ones" check that the estimators yield same results for
     # unit weights and no weights
-    if (has_fit_parameter(estimator_orig, "sample_weight") and
-            not (hasattr(estimator_orig, "_pairwise")
-                 and estimator_orig._pairwise)):
-        # We skip pairwise because the data is not pairwise
+    # For kind="zeros" check that setting sample_weight to 0 is equivalent
+    # to removing corresponding samples.
+    estimator1 = clone(estimator_orig)
+    estimator2 = clone(estimator_orig)
+    set_random_state(estimator1, random_state=0)
+    set_random_state(estimator2, random_state=0)
 
-        estimator1 = clone(estimator_orig)
-        estimator2 = clone(estimator_orig)
-        set_random_state(estimator1, random_state=0)
-        set_random_state(estimator2, random_state=0)
+    X1 = np.array([[1, 3], [1, 3], [1, 3], [1, 3],
+                  [2, 1], [2, 1], [2, 1], [2, 1],
+                  [3, 3], [3, 3], [3, 3], [3, 3],
+                  [4, 1], [4, 1], [4, 1], [4, 1]], dtype=np.float64)
+    y1 = np.array([1, 1, 1, 1, 2, 2, 2, 2,
+                  1, 1, 1, 1, 2, 2, 2, 2], dtype=np.int)
 
-        X = np.array([[1, 3], [1, 3], [1, 3], [1, 3],
-                      [2, 1], [2, 1], [2, 1], [2, 1],
-                      [3, 3], [3, 3], [3, 3], [3, 3],
-                      [4, 1], [4, 1], [4, 1], [4, 1]], dtype=np.dtype('float'))
-        y = np.array([1, 1, 1, 1, 2, 2, 2, 2,
-                      1, 1, 1, 1, 2, 2, 2, 2], dtype=np.dtype('int'))
-        y = _enforce_estimator_tags_y(estimator1, y)
+    if kind == 'ones':
+        X2 = X1
+        y2 = y1
+        sw2 = np.ones(shape=len(y1))
+        err_msg = (f"For {name} sample_weight=None is not equivalent to "
+                   f"sample_weight=ones")
+    elif kind == 'zeros':
+        # Construct a dataset that is very different to (X, y) if weights
+        # are disregarded, but identical to (X, y) given weights.
+        X2 = np.vstack([X1, X1 + 1])
+        y2 = np.hstack([y1, 3 - y1])
+        sw2 = np.ones(shape=len(y1) * 2)
+        sw2[len(y1):] = 0
+        X2, y2, sw2 = shuffle(X2, y2, sw2, random_state=0)
 
-        estimator1.fit(X, y=y, sample_weight=np.ones(shape=len(y)))
-        estimator2.fit(X, y=y, sample_weight=None)
+        err_msg = (f"For {name}, a zero sample_weight is not equivalent "
+                   f"to removing the sample")
+    else:  # pragma: no cover
+        raise ValueError
 
-        for method in ["predict", "transform"]:
-            if hasattr(estimator_orig, method):
-                X_pred1 = getattr(estimator1, method)(X)
-                X_pred2 = getattr(estimator2, method)(X)
-                if sparse.issparse(X_pred1):
-                    X_pred1 = X_pred1.toarray()
-                    X_pred2 = X_pred2.toarray()
-                assert_allclose(X_pred1, X_pred2,
-                                err_msg="For %s sample_weight=None is not"
-                                        " equivalent to sample_weight=ones"
-                                        % name)
+    y1 = _enforce_estimator_tags_y(estimator1, y1)
+    y2 = _enforce_estimator_tags_y(estimator2, y2)
+
+    estimator1.fit(X1, y=y1, sample_weight=None)
+    estimator2.fit(X2, y=y2, sample_weight=sw2)
+
+    for method in ["predict", "predict_proba",
+                   "decision_function", "transform"]:
+        if hasattr(estimator_orig, method):
+            X_pred1 = getattr(estimator1, method)(X1)
+            X_pred2 = getattr(estimator2, method)(X1)
+            assert_allclose_dense_sparse(X_pred1, X_pred2, err_msg=err_msg)
 
 
 @ignore_warnings(category=(FutureWarning, UserWarning))
