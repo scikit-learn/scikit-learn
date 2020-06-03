@@ -889,10 +889,7 @@ def check_sample_weights_invariance(name, estimator_orig, kind="ones"):
         if hasattr(estimator_orig, method):
             X_pred1 = getattr(estimator1, method)(X1)
             X_pred2 = getattr(estimator2, method)(X1)
-            if sparse.issparse(X_pred1):
-                X_pred1 = X_pred1.toarray()
-                X_pred2 = X_pred2.toarray()
-            assert_allclose(X_pred1, X_pred2, err_msg=err_msg)
+            assert_allclose_dense_sparse(X_pred1, X_pred2, err_msg=err_msg)
 
 
 @ignore_warnings(category=(FutureWarning, UserWarning))
