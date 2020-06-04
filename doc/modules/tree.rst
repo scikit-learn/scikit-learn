@@ -65,7 +65,7 @@ The disadvantages of decision trees include:
       This problem is mitigated by using decision trees within an
       ensemble.
 
-    - Predictions of decision trees are neither continuous nor smooth for
+    - Predictions of decision trees are neither smooth nor continuous for
       continuous features, but piecewise constant approximations as seen in the
       above figure.
 
