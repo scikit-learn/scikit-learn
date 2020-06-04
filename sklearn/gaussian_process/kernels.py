@@ -78,6 +78,11 @@ class Hyperparameter(namedtuple('Hyperparameter',
         Whether the value of this hyperparameter is fixed, i.e., cannot be
         changed during hyperparameter tuning. If None is passed, the "fixed" is
         derived based on the given bounds.
+    
+    Examples
+    --------
+    >>> from sklearn.gaussian_process.kernels import Hyperparameter
+    >>> from sklearn.datasets import
 
     """
     # A raw namedtuple is very memory efficient as it packs the attributes
