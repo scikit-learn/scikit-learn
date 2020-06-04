@@ -1,6 +1,5 @@
 from .base import _check_classifer_response_method
 from ...utils import check_matplotlib_support
-from ...utils.validation import _deprecate_positional_args
 from ...base import is_classifier
 from ...calibration import calibration_curve
 
