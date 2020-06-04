@@ -3,8 +3,8 @@ import itertools
 from inspect import signature
 from typing import Optional, List, Dict, Any
 
+from sklearn.base import is_regressor
 from sklearn.datasets import load_iris
-from sklearn.base import is_classifier, is_regressor
 from sklearn.tree._classes import BaseDecisionTree
 from sklearn.ensemble._forest import BaseForest
 from sklearn.ensemble._gb import BaseGradientBoosting
@@ -13,6 +13,7 @@ from sklearn.utils.estimator_checks import (
     _enforce_estimator_tags_y,
     parametrize_with_checks,
 )
+from sklearn.utils._testing import ignore_warnings
 
 
 categorical_params = [
@@ -24,6 +25,11 @@ categorical_params = [
     "criterion",
     "multi_class",
     "kernel",
+    "affinity",
+    "linkage",
+    "metric",
+    "init",
+    "eigen_solver"
 ]
 bool_params = [
     "fit_prior",
@@ -69,12 +75,6 @@ class FakeParam(str):
         self.values.add(other)
         return False
 
-    def __getattr__(self, key):
-        if key == "requires_vector_input":
-            # Workaround for GaussianProcessClassifier
-            return False
-        raise AttributeError
-
 
 def detect_valid_categorical_params(
     Estimator, param: str = "solver"
@@ -94,9 +94,6 @@ def detect_valid_categorical_params(
     >>> detect_valid_categorical_params(LogisticRegression, param="solver")
     ['lbfgs', 'liblinear', 'newton-cg', 'sag', 'saga']
     """
-    if not (is_regressor(Estimator) or is_classifier(Estimator)):
-        return None
-
     est_signature = signature(Estimator)
     if param not in est_signature.parameters:
         return None
@@ -152,6 +149,16 @@ def detect_valid_categorical_params(
         ):
             # these kernels are not string but instances, skip
             return None
+    elif param == "affinity":
+        from sklearn.cluster import AgglomerativeClustering
+
+        if issubclass(Estimator, AgglomerativeClustering):
+            return ["euclidean", "l1", "l2", "manhattan", "cosine"]
+    elif param == "linkage":
+        from sklearn.cluster import AgglomerativeClustering
+        if issubclass(Estimator, AgglomerativeClustering):
+            return ['ward', 'complete', 'average', 'single']
+
     fp = FakeParam()
 
     X, y = load_iris(return_X_y=True)
@@ -161,7 +168,8 @@ def detect_valid_categorical_params(
         args = {param: fp}
         est = Estimator(**args)
         y = _enforce_estimator_tags_y(est, y)
-        est.fit(X, y)
+        with ignore_warnings():
+            est.fit(X, y)
     except Exception:
         if not fp.values:
             raise
@@ -222,9 +230,11 @@ def _make_all_estimator_instances(verbose=False):
     X_raw, y_raw = load_iris(return_X_y=True)
 
     for name, Estimator in all_estimators(
-        type_filter=["classifier", "regressor"]
+        type_filter=["cluster"]  # "classifier", "regressor",
     ):
         valid_params = detect_all_params(Estimator)
+        if verbose:
+            print(f"{name}")
         if valid_params:
             for params in _merge_dict_product(**valid_params):
                 # Check that we can train Iris, otherwise parameters
@@ -232,7 +242,8 @@ def _make_all_estimator_instances(verbose=False):
                 try:
                     est = Estimator(**params)
                     y = _enforce_estimator_tags_y(est, y_raw)
-                    est.fit(X_raw.copy(), y)
+                    with ignore_warnings():
+                        est.fit(X_raw.copy(), y)
                     # Parameters should be OK
                     yield Estimator(**params)
                 except Exception:
@@ -240,7 +251,6 @@ def _make_all_estimator_instances(verbose=False):
                     pass
 
             if verbose:
-                print(f"{name}")
                 pprint.pp(valid_params, sort_dicts=True)
 
 
