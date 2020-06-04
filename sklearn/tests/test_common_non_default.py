@@ -218,13 +218,27 @@ def _merge_dict_product(**kwargs) -> List[Dict]:
 
 
 def _make_all_estimator_instances(verbose=False):
+
+    X_raw, y_raw = load_iris(return_X_y=True)
+
     for name, Estimator in all_estimators(
         type_filter=["classifier", "regressor"]
     ):
         valid_params = detect_all_params(Estimator)
         if valid_params:
             for params in _merge_dict_product(**valid_params):
-                yield Estimator(**params)
+                # Check that we can train Iris, otherwise parameters
+                # are likely incompatible
+                try:
+                    est = Estimator(**params)
+                    y = _enforce_estimator_tags_y(est, y_raw)
+                    est.fit(X_raw.copy(), y)
+                    # Parameters should be OK
+                    yield Estimator(**params)
+                except Exception:
+                    # Likely wrong parameters, skipping
+                    pass
+
             if verbose:
                 print(f"{name}")
                 pprint.pp(valid_params, sort_dicts=True)
