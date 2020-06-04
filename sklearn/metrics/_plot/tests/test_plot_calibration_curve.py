@@ -4,10 +4,13 @@ from numpy.testing import assert_allclose
 from sklearn.datasets import load_iris
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.linear_model import LogisticRegression
-from sklearn.svm import LinearSVC
+from sklearn.base import ClassifierMixin
 from sklearn.calibration import calibration_curve
 from sklearn.metrics import plot_calibration_curve
 from sklearn.exceptions import NotFittedError
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.compose import make_column_transformer
 
 
 @pytest.fixture(scope="module")
@@ -56,24 +59,21 @@ def test_plot_calibration_curve_not_fitted(pyplot, data_binary):
 
 @pytest.mark.parametrize("n_bins", [5, 10])
 @pytest.mark.parametrize("strategy", ["uniform", "quantile"])
-def test_plot_calibration_curve(pyplot, n_bins, strategy):
+def test_plot_calibration_curve(pyplot, data_binary, n_bins, strategy):
     X, y = data_binary
-
-    lr = LogisticRegression
-    lr.fit(X, y)
+    lr = LogisticRegression().fit(X, y)
 
     viz = plot_calibration_curve(
         lr, X, y, n_bins=n_bins, strategy=strategy, alpha=0.8
     )
 
     y_proba = lr.predict_proba(X)[:, 1]
-
     prob_true, prob_pred = calibration_curve(
-        y, y_prob, n_bins=n_bins, strategy=strategy
+        y, y_proba, n_bins=n_bins, strategy=strategy
     )
 
-    assert_allclose(viz.prob_true, y)
-    assert_allclose(viz.prob_pred, y_proba)
+    assert_allclose(viz.prob_true, prob_true)
+    assert_allclose(viz.prob_pred, prob_pred)
 
     assert viz.estimator_name == "LogisticRegression"
 
@@ -127,5 +127,5 @@ def test_plot_calibration_curve_ref_line(pyplot, data_binary):
     viz = plot_calibration_curve(lr, X, y)
     viz2 = plot_calibration_curve(dt, X, y, ax=viz.ax_)
 
-    labels = viz2.axs_.get_legend_handles_labels()[1]
+    labels = viz2.ax_.get_legend_handles_labels()[1]
     assert labels.count('Perfectly calibrated') == 1

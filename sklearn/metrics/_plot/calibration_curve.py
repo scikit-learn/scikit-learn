@@ -1,5 +1,4 @@
 from .base import _check_classifer_response_method
-
 from ...utils import check_matplotlib_support
 from ...utils.validation import _deprecate_positional_args
 from ...base import is_classifier
@@ -88,7 +87,7 @@ class CalibrationDisplay:
         if ref_line and not existing_ref_line:
             ax.plot([0, 1], [0, 1], "k:", label="Perfectly calibrated")
         self.line_ = ax.plot(self.prob_pred, self.prob_true, "s-",
-                             **line_kwargs)
+                             **line_kwargs)[0]
 
         if "label" in line_kwargs:
             ax.legend(loc="lower right")
@@ -161,8 +160,6 @@ def plot_calibration_curve(estimator, X, y, *,
     if not is_classifier(estimator):
         raise ValueError("The estimator parameter should be a fitted binary "
                          "classifier")
-    if not len(estimator.classes_) == 2:
-        raise ValueError(binary_error)
 
     try:
         prediction_method = _check_classifer_response_method(
@@ -170,10 +167,12 @@ def plot_calibration_curve(estimator, X, y, *,
         )
     except ValueError:
         raise ValueError("Response method 'predict_proba' not defined in "
-                         f"{estimator.__class__.__name__)}")
+                         f"{estimator.__class__.__name__}")
 
     y_prob = prediction_method(X)
 
+    if not len(estimator.classes_) == 2:
+        raise ValueError(binary_error)
     if y_prob.ndim != 1:
         if y_prob.shape[1] != 2:
             raise ValueError(binary_error)
