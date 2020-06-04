@@ -584,7 +584,7 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
             self._expanded_class_weight[0],
             sample_weight,
             random_state=self.random_state,
-            callbacks=getattr(self, '_callbacks', [])
+            callbacks=getattr(self, '_callbacks', None)
         )
 
         self.t_ += n_iter_ * X.shape[0]
@@ -628,7 +628,7 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
                                 1., sample_weight,
                                 validation_mask=validation_mask,
                                 random_state=seed,
-                                callbacks=getattr(self, '_callbacks', []))
+                                callbacks=getattr(self, '_callbacks', None))
             for i, seed in enumerate(seeds))
 
         # take the maximum of n_iter_ over every binary fit
@@ -1337,7 +1337,7 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
                        learning_rate_type,
                        self.eta0, self.power_t, self.t_,
                        intercept_decay, self.average,
-                       getattr(self, '_callbacks', []))
+                       getattr(self, '_callbacks', None))
 
         self.t_ += self.n_iter_ * X.shape[0]
 

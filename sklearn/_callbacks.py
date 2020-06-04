@@ -1,5 +1,5 @@
 # License: BSD 3 clause
-from typing import List, Callable
+from typing import List, Callable, Optional
 from abc import ABC, abstractmethod
 
 import numpy as np
@@ -40,7 +40,7 @@ def _check_callback_params(**kwargs):
         raise ValueError(msg)
 
 
-def _eval_callbacks(callbacks: List[Callable], **kwargs) -> None:
+def _eval_callbacks(callbacks: Optional[List[Callable]], **kwargs) -> None:
     if callbacks is None:
         return
 

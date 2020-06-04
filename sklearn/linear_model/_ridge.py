@@ -104,8 +104,7 @@ def _solve_sparse_cg(X, y, alpha, max_iter=None, tol=1e-3, verbose=0,
                 # old scipy
                 coefs[i], info = sp_linalg.cg(C, y_column, maxiter=max_iter,
                                               tol=tol)
-        if callbacks is not None:
-            _eval_callbacks(callbacks, n_iter=i, coef=coefs)
+        _eval_callbacks(callbacks, n_iter=i, coef=coefs)
 
         if info < 0:
             raise ValueError("Failed with error code %d" % info)
@@ -585,7 +584,7 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
                 max_iter=self.max_iter, tol=self.tol, solver='sag',
                 random_state=self.random_state, return_n_iter=True,
                 return_intercept=True, check_input=False,
-                callbacks=getattr(self, '_callbacks', []))
+                callbacks=getattr(self, '_callbacks', None))
             # add the offset which was subtracted by _preprocess_data
             self.intercept_ += y_offset
 
@@ -602,7 +601,7 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
                 max_iter=self.max_iter, tol=self.tol, solver=solver,
                 random_state=self.random_state, return_n_iter=True,
                 return_intercept=False, check_input=False,
-                callbacks=getattr(self, '_callbacks', []), **params)
+                callbacks=getattr(self, '_callbacks', None), **params)
             self._set_intercept(X_offset, y_offset, X_scale)
 
         return self

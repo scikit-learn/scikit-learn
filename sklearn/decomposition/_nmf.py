@@ -1296,7 +1296,7 @@ class NMF(TransformerMixin, BaseEstimator):
             tol=self.tol, max_iter=self.max_iter, alpha=self.alpha,
             l1_ratio=self.l1_ratio, regularization='both',
             random_state=self.random_state, verbose=self.verbose,
-            shuffle=self.shuffle, callbacks=getattr(self, "_callbacks", []))
+            shuffle=self.shuffle, callbacks=getattr(self, "_callbacks", None))
 
         self.reconstruction_err_ = _beta_divergence(X, W, H, self.beta_loss,
                                                     square_root=True)
@@ -1345,7 +1345,7 @@ class NMF(TransformerMixin, BaseEstimator):
             beta_loss=self.beta_loss, tol=self.tol, max_iter=self.max_iter,
             alpha=self.alpha, l1_ratio=self.l1_ratio, regularization='both',
             random_state=self.random_state, verbose=self.verbose,
-            shuffle=self.shuffle, callbacks=getattr(self, '_callbacks', []))
+            shuffle=self.shuffle, callbacks=getattr(self, '_callbacks', None))
 
         return W
 

@@ -14,6 +14,7 @@ import numpy as np
 
 from . import __version__
 from ._config import get_config
+from sklearn._callbacks import BaseCallback
 from .utils import _IS_32BIT
 from .utils.validation import check_X_y
 from .utils.validation import check_array
@@ -439,18 +440,27 @@ class BaseEstimator:
 
         return out
 
-    def _set_callbacks(self, callbacks):
+    def _set_callbacks(self, callbacks, deep: bool = True):
         """Set callbacks for the estimator.
 
-        In the case of meta-estmators, callbacks are also set recursively
-        for all child estimators.
+        Parameters
+        ----------
+        callbacks : callback or list of callbacks
+            the callbacks to set.
+
+        deep: bool=True
+            If True, in the case of meta-estmators, callbacks are also set
+            recursively for all child estimators.
         """
-        from sklearn._callbacks import BaseCallback
         if isinstance(callbacks, BaseCallback):
             self._callbacks = [callbacks]
         else:
             self._callbacks = callbacks
 
+        if not deep:
+            return
+
+        # set callbacks recursively
         for attr_name in getattr(self, "_required_parameters", []):
             # likely a meta-estimator
             if attr_name in ['steps', 'transformers']:

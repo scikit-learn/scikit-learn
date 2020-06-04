@@ -713,6 +713,9 @@ hence the validation in ``fit``, not ``__init__``.
 Estimator callbacks
 ===================
 
+.. note:: Callbacks are currently experimental and the API can change without
+          notice.
+
 To add (optional) support of callbacks, for instance to support progress
 bars or monitoring convergence, the estimator must implement the following
 points:

@@ -71,15 +71,6 @@ class CheckCallback(BaseCallback):
 
 @pytest.mark.parametrize("name, Estimator", _supported_estimators())
 def test_callback(name, Estimator, iris):
-
-    # if name in [
-    #    "DictionaryLearning",
-    #    "MiniBatchDictionaryLearning",
-    #    "TheilSenRegressor",
-    # ]:
-    #    # TODO: make these tests faster
-    #    pytest.skip("Slow tests, skipping for now")
-
     estimator = _construct_instance(Estimator)
 
     tags = estimator._get_tags()
@@ -101,7 +92,7 @@ def test_callback(name, Estimator, iris):
 
 
 def check_has_callback(est, callback):
-    assert getattr(est, "_callbacks", None) is not None
+    assert hasattr(est, "_callbacks") and est._callbacks is not None
     assert est._callbacks[0] is callback
     return True
 
@@ -122,9 +113,8 @@ def test_set_callbacks():
 
     X, y = load_iris(return_X_y=True)
 
-    # check simple pipeline
+    # check simple pipeline (recursive)
     callback = CheckCallback()
-    print(id(callback))
     pipe = make_pipeline(StandardScaler(), LogisticRegression(max_iter=3))
     pipe._set_callbacks(callback)
     with warnings.catch_warnings():
@@ -133,6 +123,16 @@ def test_set_callbacks():
     check_has_callback(pipe, callback)
     check_has_callback(pipe.named_steps['standardscaler'], callback)
     check_has_callback(pipe.named_steps['logisticregression'], callback)
+
+    # check simple pipeline (non recursive)
+    callback = CheckCallback()
+    pipe = make_pipeline(StandardScaler())
+    pipe._set_callbacks(callback, deep=False)
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=ConvergenceWarning)
+        pipe.fit(X, y)
+    check_has_callback(pipe, callback)
+    assert not hasattr(pipe.named_steps['standardscaler'], "_callbacks")
 
     # check column transformer
     callback = CheckCallback()
