@@ -2,8 +2,8 @@ import numpy as np
 
 from .base import _check_classifer_response_method
 
-from ...utils.validation import _deprecate_positional_args
 from ...utils import check_matplotlib_support
+from ...utils.validation import _deprecate_positional_args
 from ...base import is_classifier
 from ...calibration import calibration_curve
 
@@ -13,6 +13,8 @@ class CalibrationDisplay:
 
     It is recommend to use :func:`~sklearn.metrics.plot_calibration_curve`
     to create a visualizer. All parameters are stored as attributes.
+
+    Read more in the :ref:`User Guide <calibration>`.
 
     Parameters
     -----------
@@ -52,12 +54,15 @@ class CalibrationDisplay:
         Parameters
         ----------
         ax : Matplotlib Axes, default=None
-            Axes object to plot on. If `None`, a new figure and axes is
-            created.
+            Axes object to plot on. If `None`, a new figure and axes is created.
 
         name : str, default=None
             Name of calibration curve for labeling. If `None`, use the
             name of the estimator.
+
+        ref_line : bool, default=True
+            If `True`, plots a reference line representing a perfectly
+            calibrated classifier.
 
         **kwargs : dict
             Keyword arguments to be passed to matplotlib's `plot`.
@@ -80,17 +85,20 @@ class CalibrationDisplay:
             line_kwargs["label"] = name
         line_kwargs.update(**kwargs)
 
-        if ref_line:
+        existing_ref_line = ('Perfectly calibrated' in
+                             ax.get_legend_handles_labels()[1])
+        if ref_line and not existing_ref_line:
             ax.plot([0, 1], [0, 1], "k:", label="Perfectly calibrated")
+        self.line_ = ax.plot(self.prob_pred, self.prob_true, "s-",
+                             **line_kwargs)
 
-        self.line_, = ax.plot(self.prob_pred, self.prob_true, **line_kwargs)
+        if "label" in line_kwargs:
+            ax.legend(loc="lower right")
+
         ax.set(xlabel="Mean predicted probability",
                ylabel="Fraction of positives")
 
-        if "label" in line_kwargs:
-            ax.legend(loc='lower right')
-
-        self.ax_ = ax
+        self.axs_ = ax
         self.figure_ = ax.figure
         return self
 
@@ -98,10 +106,12 @@ class CalibrationDisplay:
 @_deprecate_positional_args
 def plot_calibration_curve(estimator, X, y, *,
                            normalize=False, n_bins=5, strategy='uniform',
-                           name=None, ax=None, ref_line=True, **kwargs):
+                           name=None, ref_line=True, ax=None, **kwargs):
     """Plot calibration curve for binary classifiers.
 
     Extra keyword arguments will be passed to matplotlib's `plot`.
+
+    Read more in the :ref:`User Guide <calibration>`.
 
     Parameters
     ----------
@@ -117,9 +127,7 @@ def plot_calibration_curve(estimator, X, y, *,
         Input values.
 
     y : array-like of shape (n_samples,)
-        Binary target values.    name : str, default=None
-        Name for labeling curve. If `None`, the name of the
-        estimator is used.
+        Binary target values.
 
     normalize : bool, default=False
         Whether the output of `estimator.predict_proba(X)` needs to be
@@ -140,8 +148,7 @@ def plot_calibration_curve(estimator, X, y, *,
             The bins have the same number of samples and depend on `y_prob`.
 
     name : str, default=None
-        Name for labeling curve. If `None`, the name of the
-        estimator is used.
+        Name for labeling curve. If `None`, the name of the estimator is used.
 
     ref_line : bool, default=True
         If `True`, plots a reference line representing a perfectly calibrated
@@ -151,7 +158,7 @@ def plot_calibration_curve(estimator, X, y, *,
         Axes object to plot on. If `None`, a new figure and axes is created.
 
     **kwargs : dict
-        Keyword arguments to be passed to matplotlib's `plot`.
+        Keyword arguments to be passed to :func:`matplotlib.pyplot.plot`.
 
     Returns
     -------
