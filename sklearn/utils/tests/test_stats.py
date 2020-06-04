@@ -171,3 +171,22 @@ def test_weighted_percentile_all_null_weight(n_features):
     err_msg = "All weights cannot be null when computing a weighted percentile"
     with pytest.raises(ValueError, match=err_msg):
         _weighted_percentile(X, sample_weight, 50)
+
+
+@pytest.mark.parametrize("percentile", np.arange(0, 101, 25))
+def test_weighted_percentile_equivalence_weights_repeated_samples(percentile):
+    X_repeated = np.array([1, 2, 2, 3, 3, 3, 4, 4])
+    sample_weight_unit = np.ones(X_repeated.shape[0])
+    p_npy_repeated = np.percentile(X_repeated, percentile)
+    p_sklearn_repeated = _weighted_percentile(
+        X_repeated, sample_weight_unit, percentile
+    )
+
+    assert p_sklearn_repeated == pytest.approx(p_npy_repeated)
+
+    X = np.array([1, 2, 3, 4])
+    sample_weight = np.array([1, 2, 3, 2])
+    p_sklearn_weighted = _weighted_percentile(X, sample_weight, percentile)
+
+    assert p_sklearn_weighted == pytest.approx(p_npy_repeated)
+    assert p_sklearn_weighted == pytest.approx(p_sklearn_repeated)
