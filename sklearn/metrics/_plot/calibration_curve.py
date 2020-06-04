@@ -43,7 +43,6 @@ class CalibrationDisplay:
         self.prob_pred = prob_pred
         self.estimator_name = estimator_name
 
-    @_deprecate_positional_args
     def plot(self, ax=None, *, name=None, ref_line=True, **kwargs):
         """Plot visualization.
 
@@ -97,14 +96,13 @@ class CalibrationDisplay:
         ax.set(xlabel="Mean predicted probability",
                ylabel="Fraction of positives")
 
-        self.axs_ = ax
+        self.ax_ = ax
         self.figure_ = ax.figure
         return self
 
 
-@_deprecate_positional_args
 def plot_calibration_curve(estimator, X, y, *,
-                           normalize=False, n_bins=5, strategy='uniform',
+                           n_bins=5, strategy='uniform',
                            name=None, ref_line=True, ax=None, **kwargs):
     """Plot calibration curve for binary classifiers.
 
@@ -117,7 +115,7 @@ def plot_calibration_curve(estimator, X, y, *,
     estimator : estimator instance
         Fitted classifier or a fitted :class:`~sklearn.pipeline.Pipeline`
         in which the last estimator is a classifier. The classifier must
-        have a `predict_proba` method; set `probability=True` for
+        have a :term:`predict_proba` method; set `probability=True` for
         :class:`~sklearn.svm.SVC` and :class:`~sklearn.svm.NuSVC`
         (see: :ref:`User Guide <scores_probabilities>`) or use
         :class:`~sklearn.calibration.CalibratedClassifierCV`.
@@ -128,23 +126,16 @@ def plot_calibration_curve(estimator, X, y, *,
     y : array-like of shape (n_samples,)
         Binary target values.
 
-    normalize : bool, default=False
-        Whether the output of `estimator.predict_proba(X)` needs to be
-        normalized into the [0, 1] interval (i.e. is not a proper probability).
-        If `True`, the smallest value is linearly mapped onto 0 and the largest
-        one onto 1.
-
     n_bins : int, default=5
         Number of bins to discretize the [0, 1] interval into when calculating
         the calibration curve.
 
-    strategy : {‘uniform’, ‘quantile’}, default=’uniform’
+    strategy : {'uniform', 'quantile'}, default='uniform'
         Strategy used to define the widths of the bins.
 
-        uniform
-            The bins have identical widths.
-        quantile
-            The bins have the same number of samples and depend on `y_prob`.
+        `'uniform'`: The bins have identical widths.
+        `'quantile'`: The bins have the same number of samples and depend on
+        `estimator.predict_proba(X)`.
 
     name : str, default=None
         Name for labeling curve. If `None`, the name of the estimator is used.
@@ -161,30 +152,36 @@ def plot_calibration_curve(estimator, X, y, *,
 
     Returns
     -------
-    display : :class:`~sklearn.metrics.CalibrationDisplay`
+    display : :class:`~sklearn.metrics.CalibrationDisplay`.
         Object that stores computed values.
     """
     check_matplotlib_support("plot_calibration_curve")
+    binary_error = "Only binary classification is supported."
 
-    classification_error = ("{} should be a binary classifier".format(
-        estimator.__class__.__name__))
     if not is_classifier(estimator):
-        raise ValueError(classification_error)
+        raise ValueError("The estimator parameter should be a fitted binary "
+                         "classifier")
+    if not len(estimator.classes_) == 2:
+        raise ValueError(binary_error)
 
-    prediction_method = _check_classifer_response_method(
-        estimator, response_method='predict_proba'
-    )
+    try:
+        prediction_method = _check_classifer_response_method(
+            estimator, response_method='predict_proba'
+        )
+    except ValueError:
+        raise ValueError("Response method 'predict_proba' not defined in "
+                         f"{estimator.__class__.__name__)}")
 
     y_prob = prediction_method(X)
 
     if y_prob.ndim != 1:
         if y_prob.shape[1] != 2:
-            raise ValueError(classification_error)
+            raise ValueError(binary_error)
         else:
             y_prob = y_prob[:, 1]
 
     prob_true, prob_pred = calibration_curve(
-        y, y_prob, normalize=normalize, n_bins=n_bins, strategy=strategy
+        y, y_prob, n_bins=n_bins, strategy=strategy
     )
     name = name if name is not None else estimator.__class__.__name__
     viz = CalibrationDisplay(
