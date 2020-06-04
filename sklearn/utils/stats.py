@@ -74,14 +74,24 @@ def _weighted_percentile(array, sample_weight, percentile=50,
     sorted_idx = np.argsort(array, axis=0)
     sorted_weights = _take_along_axis(sample_weight, sorted_idx, axis=0)
     percentile = np.array([percentile / 100] * n_cols)
-    weight_cdf = stable_cumsum(sorted_weights, axis=0)
+    cum_weigths = stable_cumsum(sorted_weights, axis=0)
 
     def _squeeze_arr(arr, n_dim):
         return arr[0] if n_dim == 1 else arr
 
-    adjusted_percentile = (weight_cdf - sorted_weights)
+    # Percentile can be computed with 3 different alternative:
+    # https://en.wikipedia.org/wiki/Percentile
+    # These 3 alternatives depend of the value of a parameter C. NumPy uses
+    # the variant where C=0 which allows to obtained a strictly monotically
+    # increasing function which is defined as:
+    # P = (x - 1) / (N - 1); x in [1, N]
+    # Weighted percentile change this formula by taking into account the
+    # weights instead of the data frequency.
+    # P_w = (x - w) / (S_w - w), x in [1, N], w being the weight and S_n being
+    # the sum of the weights.
+    adjusted_percentile = (cum_weigths - sorted_weights)
     with np.errstate(invalid="ignore"):
-        adjusted_percentile /= weight_cdf[-1] - sorted_weights
+        adjusted_percentile /= cum_weigths[-1] - sorted_weights
         nan_mask = np.isnan(adjusted_percentile)
         adjusted_percentile[nan_mask] = 1
 
