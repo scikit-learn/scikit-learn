@@ -25,7 +25,6 @@ from .utils import check_array, indexable, column_or_1d
 from .utils.validation import check_is_fitted, check_consistent_length
 from .utils.validation import _check_sample_weight
 from .isotonic import IsotonicRegression
-from .svm import LinearSVC
 from .utils.validation import _deprecate_positional_args
 
 
@@ -142,6 +141,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
 
         self.calibrated_classifiers_ = []
         if self.base_estimator is None:
+            from .svm import LinearSVC
             # we want all classifiers that don't expose a random_state
             # to be deterministic (and we don't want to expose this one).
             base_estimator = LinearSVC(random_state=0)
