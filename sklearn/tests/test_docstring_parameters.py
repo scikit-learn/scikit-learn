@@ -20,7 +20,6 @@ from sklearn.utils import all_estimators
 from sklearn.utils.estimator_checks import _enforce_estimator_tags_y
 from sklearn.utils.estimator_checks import _enforce_estimator_tags_x
 from sklearn.utils.deprecation import _is_deprecated
-from sklearn.utils._testing import assert_warns
 from sklearn.externals._pep562 import Pep562
 from sklearn.datasets import make_classification
 
