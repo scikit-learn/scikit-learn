@@ -1420,7 +1420,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
                       random_state=self.random_state, coef=warm_start_coef_,
                       penalty=penalty, max_squared_sum=max_squared_sum,
                       sample_weight=sample_weight,
-                      callbacks=getattr(self, '_callbacks', []))
+                      callbacks=getattr(self, '_callbacks', None))
             for class_, warm_start_coef_ in zip(classes_, warm_start_coef))
 
         fold_coefs_, _, n_iter_ = zip(*fold_coefs_)
@@ -1902,7 +1902,7 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                       max_squared_sum=max_squared_sum,
                       sample_weight=sample_weight,
                       l1_ratio=l1_ratio,
-                      callbacks=getattr(self, '_callbacks', [])
+                      callbacks=getattr(self, '_callbacks', None)
                       )
             for label in iter_encoded_labels
             for train, test in folds

@@ -536,8 +536,8 @@ def sag{{name}}(SequentialDataset{{name}} dataset,
             elif verbose:
                 printf('Epoch %d, change: %.8f\n', n_iter + 1,
                                                   max_change / max_weight)
-            if callbacks is not None:
-                with gil:
+            with gil:
+                if callbacks is not None:
                     _eval_callbacks(callbacks, n_iter=n_iter, coef=weights_array,
                                     intercept=intercept_array)
     n_iter += 1

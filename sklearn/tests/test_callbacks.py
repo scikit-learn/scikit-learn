@@ -42,10 +42,8 @@ def _supported_estimators():
     for (name, Estimator) in all_estimators():
         if name.startswith("_"):
             continue
-        if name in [
-            # need to make appropriate 1D test data
-            "IsotonicRegression"
-        ]:
+        # need to make appropriate 1D test data
+        if name == "IsotonicRegression":
             continue
 
         if (
@@ -89,6 +87,8 @@ def test_callback(name, Estimator, iris):
     estimator.fit(X, y)
     if callback.n_fit_calls == 0:
         pytest.skip("callbacks not implemented")
+    else:
+        assert callback.n_fit_calls >= 1
 
 
 def check_has_callback(est, callback):
