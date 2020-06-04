@@ -23,6 +23,8 @@ from ._base import RemoteFileMetadata
 from ..utils import Bunch
 from ..utils import check_random_state
 from ..utils import shuffle as shuffle_method
+from ..utils.validation import _deprecate_positional_args
+
 
 # The original data can be found at:
 # https://archive.ics.uci.edu/ml/machine-learning-databases/kddcup99-mld/kddcup.data.gz
@@ -43,7 +45,8 @@ ARCHIVE_10_PERCENT = RemoteFileMetadata(
 logger = logging.getLogger(__name__)
 
 
-def fetch_kddcup99(subset=None, data_home=None, shuffle=False,
+@_deprecate_positional_args
+def fetch_kddcup99(*, subset=None, data_home=None, shuffle=False,
                    random_state=None,
                    percent10=True, download_if_missing=True, return_X_y=False):
     """Load the kddcup99 dataset (classification).
@@ -96,11 +99,15 @@ def fetch_kddcup99(subset=None, data_home=None, shuffle=False,
 
     Returns
     -------
-    data : Bunch
-        Dictionary-like object, the interesting attributes are:
-         - 'data', the data to learn.
-         - 'target', the regression target for each sample.
-         - 'DESCR', a description of the dataset.
+    data : :class:`~sklearn.utils.Bunch`
+        Dictionary-like object, with the following attributes.
+
+        data : ndarray of shape (494021, 41)
+            The data matrix to learn.
+        target : ndarray of shape (494021,)
+            The regression target for each sample.
+        DESCR : str
+            The full description of the dataset.
 
     (data, target) : tuple if ``return_X_y`` is True
 
@@ -190,13 +197,15 @@ def _fetch_brute_kddcup99(data_home=None,
 
     Returns
     -------
-    dataset : dict-like object with the following attributes:
-        dataset.data : numpy array of shape (494021, 41)
+    dataset : :class:`~sklearn.utils.Bunch`
+        Dictionary-like object, with the following attributes.
+
+        data : numpy array of shape (494021, 41)
             Each row corresponds to the 41 features in the dataset.
-        dataset.target : numpy array of shape (494021,)
+        target : numpy array of shape (494021,)
             Each value corresponds to one of the 21 attack types or to the
             label 'normal.'.
-        dataset.DESCR : string
+        DESCR : string
             Description of the kddcup99 dataset.
 
     """

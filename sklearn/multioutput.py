@@ -25,9 +25,8 @@ from .model_selection import cross_val_predict
 from .utils import check_array, check_X_y, check_random_state
 from .utils.metaestimators import if_delegate_has_method
 from .utils.validation import (check_is_fitted, has_fit_parameter,
-                               _check_fit_params)
+                               _check_fit_params, _deprecate_positional_args)
 from .utils.multiclass import check_classification_targets
-from .utils import deprecated
 
 __all__ = ["MultiOutputRegressor", "MultiOutputClassifier",
            "ClassifierChain", "RegressorChain"]
@@ -64,7 +63,8 @@ def _partial_fit_estimator(estimator, X, y, classes=None, sample_weight=None,
 class _MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
                             metaclass=ABCMeta):
     @abstractmethod
-    def __init__(self, estimator, n_jobs=None):
+    @_deprecate_positional_args
+    def __init__(self, estimator, *, n_jobs=None):
         self.estimator = estimator
         self.n_jobs = n_jobs
 
@@ -152,9 +152,7 @@ class _MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
             raise ValueError("The base estimator should implement"
                              " a fit method")
 
-        X, y = check_X_y(X, y,
-                         multi_output=True,
-                         accept_sparse=True)
+        X, y = self._validate_data(X, y, multi_output=True, accept_sparse=True)
 
         if is_classifier(self):
             check_classification_targets(y)
@@ -216,6 +214,8 @@ class MultiOutputRegressor(RegressorMixin, _MultiOutputEstimator):
     simple strategy for extending regressors that do not natively support
     multi-target regression.
 
+    .. versionadded:: 0.18
+
     Parameters
     ----------
     estimator : estimator object
@@ -231,14 +231,28 @@ class MultiOutputRegressor(RegressorMixin, _MultiOutputEstimator):
         using `n_jobs>1` can result in slower performance due
         to the overhead of spawning processes.
 
+        .. versionchanged:: v0.20
+           `n_jobs` default changed from 1 to None
+
     Attributes
     ----------
     estimators_ : list of ``n_output`` estimators
         Estimators used for predictions.
-    """
 
-    def __init__(self, estimator, n_jobs=None):
-        super().__init__(estimator, n_jobs)
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.datasets import load_linnerud
+    >>> from sklearn.multioutput import MultiOutputRegressor
+    >>> from sklearn.linear_model import Ridge
+    >>> X, y = load_linnerud(return_X_y=True)
+    >>> clf = MultiOutputRegressor(Ridge(random_state=123)).fit(X, y)
+    >>> clf.predict(X[[0]])
+    array([[176..., 35..., 57...]])
+    """
+    @_deprecate_positional_args
+    def __init__(self, estimator, *, n_jobs=None):
+        super().__init__(estimator, n_jobs=n_jobs)
 
     @if_delegate_has_method('estimator')
     def partial_fit(self, X, y, sample_weight=None):
@@ -286,6 +300,9 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
+        .. versionchanged:: v0.20
+           `n_jobs` default changed from 1 to None
+
     Attributes
     ----------
     classes_ : array, shape = (n_classes,)
@@ -306,9 +323,9 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
     >>> clf.predict(X[-2:])
     array([[1, 1, 0], [1, 1, 1]])
     """
-
-    def __init__(self, estimator, n_jobs=None):
-        super().__init__(estimator, n_jobs)
+    @_deprecate_positional_args
+    def __init__(self, estimator, *, n_jobs=None):
+        super().__init__(estimator, n_jobs=n_jobs)
 
     def fit(self, X, Y, sample_weight=None, **fit_params):
         """Fit the model to data matrix X and targets Y.
@@ -353,6 +370,11 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
             such arrays if n_outputs > 1.
             The class probabilities of the input samples. The order of the
             classes corresponds to that in the attribute :term:`classes_`.
+
+            .. versionchanged:: 0.19
+                This function now returns a list of arrays where the length of
+                the list is ``n_outputs``, and each array is (``n_samples``,
+                ``n_classes``) for that particular output.
         """
         check_is_fitted(self)
         if not all([hasattr(estimator, "predict_proba")
@@ -400,14 +422,16 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
 
 
 class _BaseChain(BaseEstimator, metaclass=ABCMeta):
-    def __init__(self, base_estimator, order=None, cv=None, random_state=None):
+    @_deprecate_positional_args
+    def __init__(self, base_estimator, *, order=None, cv=None,
+                 random_state=None):
         self.base_estimator = base_estimator
         self.order = order
         self.cv = cv
         self.random_state = random_state
 
     @abstractmethod
-    def fit(self, X, Y):
+    def fit(self, X, Y, **fit_params):
         """Fit the model to data matrix X and targets Y.
 
         Parameters
@@ -416,12 +440,14 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
             The input data.
         Y : array-like, shape (n_samples, n_classes)
             The target values.
+        **fit_params : dict of string -> object
+            Parameters passed to the `fit` method of each step.
 
         Returns
         -------
         self : object
         """
-        X, Y = check_X_y(X, Y, multi_output=True, accept_sparse=True)
+        X, Y = self._validate_data(X, Y, multi_output=True, accept_sparse=True)
 
         random_state = check_random_state(self.random_state)
         check_array(X, accept_sparse=True)
@@ -457,7 +483,8 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
 
         for chain_idx, estimator in enumerate(self.estimators_):
             y = Y[:, self.order_[chain_idx]]
-            estimator.fit(X_aug[:, :(X.shape[1] + chain_idx)], y)
+            estimator.fit(X_aug[:, :(X.shape[1] + chain_idx)], y,
+                          **fit_params)
             if self.cv is not None and chain_idx < len(self.estimators_) - 1:
                 col_idx = X.shape[1] + chain_idx
                 cv_result = cross_val_predict(
@@ -677,6 +704,8 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
 
     Read more in the :ref:`User Guide <regressorchain>`.
 
+    .. versionadded:: 0.20
+
     Parameters
     ----------
     base_estimator : estimator
@@ -734,7 +763,8 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
         chaining.
 
     """
-    def fit(self, X, Y):
+
+    def fit(self, X, Y, **fit_params):
         """Fit the model to data matrix X and targets Y.
 
         Parameters
@@ -744,19 +774,16 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
         Y : array-like, shape (n_samples, n_classes)
             The target values.
 
+        **fit_params : dict of string -> object
+            Parameters passed to the `fit` method at each step
+            of the regressor chain.
+
         Returns
         -------
         self : object
         """
-        super().fit(X, Y)
+        super().fit(X, Y, **fit_params)
         return self
 
     def _more_tags(self):
         return {'multioutput_only': True}
-
-
-# TODO: remove in 0.24
-@deprecated("MultiOutputEstimator is deprecated in version "
-            "0.22 and will be removed in version 0.24.")
-class MultiOutputEstimator(_MultiOutputEstimator):
-    pass

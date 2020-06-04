@@ -22,12 +22,12 @@ from ._sag import sag_solver
 from ..base import RegressorMixin, MultiOutputMixin, is_classifier
 from ..utils.extmath import safe_sparse_dot
 from ..utils.extmath import row_norms
-from ..utils import check_X_y
 from ..utils import check_array
 from ..utils import check_consistent_length
 from ..utils import compute_sample_weight
 from ..utils import column_or_1d
 from ..utils.validation import _check_sample_weight
+from ..utils.validation import _deprecate_positional_args
 from ..preprocessing import LabelBinarizer
 from ..model_selection import GridSearchCV
 from ..metrics import check_scoring
@@ -235,7 +235,8 @@ def _get_valid_accept_sparse(is_X_sparse, solver):
         return ['csr', 'csc', 'coo']
 
 
-def ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
+@_deprecate_positional_args
+def ridge_regression(X, y, alpha, *, sample_weight=None, solver='auto',
                      max_iter=None, tol=1e-3, verbose=0, random_state=None,
                      return_n_iter=False, return_intercept=False,
                      check_input=True):
@@ -519,7 +520,8 @@ def _ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
 
 class _BaseRidge(LinearModel, metaclass=ABCMeta):
     @abstractmethod
-    def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
+    @_deprecate_positional_args
+    def __init__(self, alpha=1.0, *, fit_intercept=True, normalize=False,
                  copy_X=True, max_iter=None, tol=1e-3, solver="auto",
                  random_state=None):
         self.alpha = alpha
@@ -537,10 +539,10 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
         _dtype = [np.float64, np.float32]
         _accept_sparse = _get_valid_accept_sparse(sparse.issparse(X),
                                                   self.solver)
-        X, y = check_X_y(X, y,
-                         accept_sparse=_accept_sparse,
-                         dtype=_dtype,
-                         multi_output=True, y_numeric=True)
+        X, y = self._validate_data(X, y,
+                                   accept_sparse=_accept_sparse,
+                                   dtype=_dtype,
+                                   multi_output=True, y_numeric=True)
         if sparse.issparse(X) and self.fit_intercept:
             if self.solver not in ['auto', 'sparse_cg', 'sag']:
                 raise ValueError(
@@ -626,9 +628,9 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         number.
 
     fit_intercept : bool, default=True
-        Whether to calculate the intercept for this model. If set
+        Whether to fit the intercept for this model. If set
         to false, no intercept will be used in calculations
-        (i.e. data is expected to be centered).
+        (i.e. ``X`` and ``y`` are expected to be centered).
 
     normalize : bool, default=False
         This parameter is ignored when ``fit_intercept`` is set to False.
@@ -728,8 +730,8 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
     >>> clf.fit(X, y)
     Ridge()
     """
-
-    def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
+    @_deprecate_positional_args
+    def __init__(self, alpha=1.0, *, fit_intercept=True, normalize=False,
                  copy_X=True, max_iter=None, tol=1e-3, solver="auto",
                  random_state=None):
         super().__init__(
@@ -886,8 +888,8 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
     >>> clf.score(X, y)
     0.9595...
     """
-
-    def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
+    @_deprecate_positional_args
+    def __init__(self, alpha=1.0, *, fit_intercept=True, normalize=False,
                  copy_X=True, max_iter=None, tol=1e-3, class_weight=None,
                  solver="auto", random_state=None):
         super().__init__(
@@ -921,8 +923,8 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         """
         _accept_sparse = _get_valid_accept_sparse(sparse.issparse(X),
                                                   self.solver)
-        X, y = check_X_y(X, y, accept_sparse=_accept_sparse, multi_output=True,
-                         y_numeric=False)
+        X, y = self._validate_data(X, y, accept_sparse=_accept_sparse,
+                                   multi_output=True, y_numeric=False)
         sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
         self._label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
@@ -1113,8 +1115,8 @@ class _RidgeGCV(LinearModel):
     http://cbcl.mit.edu/publications/ps/MIT-CSAIL-TR-2007-025.pdf
     https://www.mit.edu/~9.520/spring07/Classes/rlsslides.pdf
     """
-
-    def __init__(self, alphas=(0.1, 1.0, 10.0),
+    @_deprecate_positional_args
+    def __init__(self, alphas=(0.1, 1.0, 10.0), *,
                  fit_intercept=True, normalize=False,
                  scoring=None, copy_X=True,
                  gcv_mode=None, store_cv_values=False,
@@ -1450,8 +1452,9 @@ class _RidgeGCV(LinearModel):
         -------
         self : object
         """
-        X, y = check_X_y(X, y, ['csr', 'csc', 'coo'], dtype=[np.float64],
-                         multi_output=True, y_numeric=True)
+        X, y = self._validate_data(X, y, accept_sparse=['csr', 'csc', 'coo'],
+                                   dtype=[np.float64],
+                                   multi_output=True, y_numeric=True)
 
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X,
@@ -1546,7 +1549,8 @@ class _RidgeGCV(LinearModel):
 
 
 class _BaseRidgeCV(LinearModel):
-    def __init__(self, alphas=(0.1, 1.0, 10.0),
+    @_deprecate_positional_args
+    def __init__(self, alphas=(0.1, 1.0, 10.0), *,
                  fit_intercept=True, normalize=False, scoring=None,
                  cv=None, gcv_mode=None,
                  store_cv_values=False):
@@ -1618,6 +1622,7 @@ class _BaseRidgeCV(LinearModel):
 
         self.coef_ = estimator.coef_
         self.intercept_ = estimator.intercept_
+        self.n_features_in_ = estimator.n_features_in_
 
         return self
 
@@ -1703,10 +1708,11 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
     ----------
     cv_values_ : ndarray of shape (n_samples, n_alphas) or \
         shape (n_samples, n_targets, n_alphas), optional
-        Cross-validation values for each alpha (if ``store_cv_values=True``\
-        and ``cv=None``). After ``fit()`` has been called, this attribute \
-        will contain the mean squared errors (by default) or the values \
-        of the ``{loss,score}_func`` function (if provided in the constructor).
+        Cross-validation values for each alpha (only available if \
+        ``store_cv_values=True`` and ``cv=None``). After ``fit()`` has been \
+        called, this attribute will contain the mean squared errors \
+        (by default) or the values of the ``{loss,score}_func`` function \
+        (if provided in the constructor).
 
     coef_ : ndarray of shape (n_features) or (n_targets, n_features)
         Weight vector(s).
@@ -1852,8 +1858,8 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
     a one-versus-all approach. Concretely, this is implemented by taking
     advantage of the multi-variate response support in Ridge.
     """
-
-    def __init__(self, alphas=(0.1, 1.0, 10.0), fit_intercept=True,
+    @_deprecate_positional_args
+    def __init__(self, alphas=(0.1, 1.0, 10.0), *, fit_intercept=True,
                  normalize=False, scoring=None, cv=None, class_weight=None,
                  store_cv_values=False):
         super().__init__(
@@ -1882,8 +1888,8 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
         -------
         self : object
         """
-        X, y = check_X_y(X, y, accept_sparse=['csr', 'csc', 'coo'],
-                         multi_output=True, y_numeric=False)
+        X, y = self._validate_data(X, y, accept_sparse=['csr', 'csc', 'coo'],
+                                   multi_output=True, y_numeric=False)
         sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
         self._label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
@@ -1903,3 +1909,11 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
     @property
     def classes_(self):
         return self._label_binarizer.classes_
+
+    def _more_tags(self):
+        return {
+            '_xfail_checks': {
+                'check_sample_weights_invariance(kind=zeros)':
+                'zero sample_weight is not equivalent to removing samples',
+            }
+        }

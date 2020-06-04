@@ -20,6 +20,10 @@ X /= X.sum(axis=1)[:, np.newaxis]
 Y /= Y.sum(axis=1)[:, np.newaxis]
 
 
+def _linear_kernel(X, Y):
+    return np.dot(X, Y.T)
+
+
 def test_additive_chi2_sampler():
     # test that AdditiveChi2Sampler approximates kernel on random data
 
@@ -176,9 +180,7 @@ def test_nystroem_approximation():
     assert X_transformed.shape == (X.shape[0], 2)
 
     # test callable kernel
-    def linear_kernel(X, Y):
-        return np.dot(X, Y.T)
-    trans = Nystroem(n_components=2, kernel=linear_kernel, random_state=rnd)
+    trans = Nystroem(n_components=2, kernel=_linear_kernel, random_state=rnd)
     X_transformed = trans.fit(X).transform(X)
     assert X_transformed.shape == (X.shape[0], 2)
 
@@ -256,14 +258,11 @@ def test_nystroem_callable():
              kernel_params={'log': kernel_log}).fit(X)
     assert len(kernel_log) == n_samples * (n_samples - 1) / 2
 
-    def linear_kernel(X, Y):
-        return np.dot(X, Y.T)
-
     # if degree, gamma or coef0 is passed, we raise a warning
     msg = "Don't pass gamma, coef0 or degree to Nystroem"
     params = ({'gamma': 1}, {'coef0': 1}, {'degree': 2})
     for param in params:
-        ny = Nystroem(kernel=linear_kernel, **param)
+        ny = Nystroem(kernel=_linear_kernel, **param)
         with pytest.raises(ValueError, match=msg):
             ny.fit(X)
 
