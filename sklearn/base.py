@@ -202,12 +202,8 @@ class BaseEstimator:
             try:
                 value = getattr(self, key)
             except AttributeError:
-                warnings.warn('From version 0.24, get_params will raise an '
-                              'AttributeError if a parameter cannot be '
-                              'retrieved as an instance attribute. Previously '
-                              'it would return None.',
-                              FutureWarning)
-                value = None
+                raise AttributeError('The parameter {} cannot be retrieved '
+                                     'as an instance attribute.'.format(key))
             if deep and hasattr(value, 'get_params'):
                 deep_items = value.get_params().items()
                 out.update((key + '__' + k, val) for k, val in deep_items)

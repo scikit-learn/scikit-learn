@@ -499,7 +499,7 @@ def test_tag_inheritance():
     assert inherit_diamond_tag_est._get_tags()['allow_nan']
 
 
-def test_warns_on_get_params_non_attribute():
+def test_raises_on_get_params_non_attribute():
     class MyEstimator(BaseEstimator):
         def __init__(self, param=5):
             pass
@@ -508,10 +508,8 @@ def test_warns_on_get_params_non_attribute():
             return self
 
     est = MyEstimator()
-    with pytest.warns(FutureWarning, match='AttributeError'):
-        params = est.get_params()
 
-    assert params['param'] is None
+    assert_raises(AttributeError, est.get_params)
 
 
 def test_repr_mimebundle_():
