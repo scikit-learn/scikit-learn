@@ -916,6 +916,6 @@ def test_bagging_with_early_stopping():
     X, y = iris.data, iris.target
     bagging = BaggingRegressor(Perceptron(early_stopping=True))
     assert_raise_message(ValueError,
-                         "The bagging class doesn't support "
-                         "the base estimator",
+                         "The bagging estimator doesn't support "
+                         "the base estimator with early_stopping",
                          bagging.fit, X, y)

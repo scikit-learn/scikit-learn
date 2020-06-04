@@ -75,8 +75,8 @@ def _parallel_build_estimators(n_estimators, ensemble, X, y, sample_weight,
 
     if getattr(ensemble.base_estimator, 'early_stopping', False)\
        and support_sample_weight:
-        raise ValueError("The bagging class doesn't support the base estimator"
-                         "with both of early_stopping and sample_weight")
+        raise ValueError("The bagging estimator doesn't support "
+                         "the base estimator with early_stopping")
 
     # Build estimators
     estimators = []
