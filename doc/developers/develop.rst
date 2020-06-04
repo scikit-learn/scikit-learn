@@ -721,17 +721,14 @@ bars or monitoring convergence, the estimator must implement the following
 points:
 
 - At the beginning of ``fit`` either explicitly call
-  .. code:: python
-
-      self._eval_callbacks(method='on_fit_begin', X=X, y=y)
-
+  ``self._eval_callbacks(method='on_fit_begin', X=X, y=y)``
   or use ``self._validate_data(X, y)`` which makes this call internally.
 - For iterative solvers call ``self._eval_callbacks(n_iter=.., **kwargs)`` at
   each iteration, where ``kwargs`` keys must be part of supported callback
   arguments (cf. list below).
 
 User defined callbacks must extend the ``sklearn._callbacks.BaseCallback``
-absract base class and define the following methods,
+abstract base class and define the following methods,
 
 .. code:: python
 
@@ -754,7 +751,8 @@ Callback API
 on_fit_begin method
 ^^^^^^^^^^^^^^^^^^^
 
-**Parameters**
+Parameters
+""""""""""
 
 X: array_like
   Training data
@@ -762,14 +760,16 @@ X: array_like
 y: array_like
   Target values
 
-**Returns**
+Returns
+"""""""
 
 Any. The return value is ignored.
 
 on_iter_end method
 ^^^^^^^^^^^^^^^^^^
 
-**Parameters**
+Parameters
+""""""""""
 
 n_iter: int
   current iteration number for iterative solvers.
@@ -797,6 +797,7 @@ validation_score: float or ordered dict
 coef: ndarray
   coefficients of linear models.
 
-**Returns**
+Returns
+"""""""
 
 Any. The return value is ignored.
