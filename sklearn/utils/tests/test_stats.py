@@ -173,20 +173,26 @@ def test_weighted_percentile_all_null_weight(n_features):
         _weighted_percentile(X, sample_weight, 50)
 
 
-@pytest.mark.parametrize("percentile", np.arange(0, 101, 25))
-def test_weighted_percentile_equivalence_weights_repeated_samples(percentile):
+@pytest.mark.parametrize("interpolation", ["linear", "lower", "higher"])
+@pytest.mark.parametrize("percentile", [0, 25, 50, 75, 100])
+def test_weighted_percentile_equivalence_weights_repeated_samples(
+    interpolation, percentile,
+):
     X_repeated = np.array([1, 2, 2, 3, 3, 3, 4, 4])
     sample_weight_unit = np.ones(X_repeated.shape[0])
     p_npy_repeated = np.percentile(X_repeated, percentile)
     p_sklearn_repeated = _weighted_percentile(
-        X_repeated, sample_weight_unit, percentile
+        X_repeated, sample_weight_unit, percentile,
+        interpolation=interpolation,
     )
 
     assert p_sklearn_repeated == pytest.approx(p_npy_repeated)
 
     X = np.array([1, 2, 3, 4])
     sample_weight = np.array([1, 2, 3, 2])
-    p_sklearn_weighted = _weighted_percentile(X, sample_weight, percentile)
+    p_sklearn_weighted = _weighted_percentile(
+        X, sample_weight, percentile, interpolation=interpolation,
+    )
 
     assert p_sklearn_weighted == pytest.approx(p_npy_repeated)
     assert p_sklearn_weighted == pytest.approx(p_sklearn_repeated)
