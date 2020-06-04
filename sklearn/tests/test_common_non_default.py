@@ -29,7 +29,18 @@ categorical_params = [
     "linkage",
     "metric",
     "init",
-    "eigen_solver"
+    "eigen_solver",
+    "initial_strategy",
+    "imputation_order",
+    "encode",
+    "learning_method",
+    "method",
+    "fit_algorithm",
+    "norm",
+    "svd_solver",
+    "order",
+    "mode",
+    "output_distribution",
 ]
 bool_params = [
     "fit_prior",
@@ -39,6 +50,15 @@ bool_params = [
     "dual",
     "average",
     "shuffle",
+    "whiten",
+    "path_method",
+    "include_bias",
+    "interaction_only",
+    "standardize",
+    "with_centering",
+    "with_scaling",
+    "with_mean",
+    "with_std",
 ]
 
 
@@ -94,6 +114,7 @@ def detect_valid_categorical_params(
     >>> detect_valid_categorical_params(LogisticRegression, param="solver")
     ['lbfgs', 'liblinear', 'newton-cg', 'sag', 'saga']
     """
+    name = Estimator.__name__
     est_signature = signature(Estimator)
     if param not in est_signature.parameters:
         return None
@@ -113,13 +134,11 @@ def detect_valid_categorical_params(
     elif param == "loss":
         # hardcode a few other cases that can't be auto-detected
         from sklearn.linear_model import (
-            PassiveAggressiveClassifier,
-            PassiveAggressiveRegressor,
             SGDClassifier,
             SGDRegressor,
         )
 
-        if issubclass(Estimator, PassiveAggressiveClassifier):
+        if name == "PassiveAggressiveClassifier":
             return ["hinge", "squared_hinge"]
         elif issubclass(Estimator, SGDClassifier):
             return [
@@ -129,7 +148,7 @@ def detect_valid_categorical_params(
                 "squared_hinge",
                 "perceptron",
             ]
-        elif issubclass(Estimator, PassiveAggressiveRegressor):
+        elif name == "PassiveAggressiveRegressor":
             return ["epsilon_insensitive", "squared_epsilon_insensitive"]
         elif issubclass(Estimator, SGDRegressor):
             return [
@@ -139,25 +158,37 @@ def detect_valid_categorical_params(
                 "squared_epsilon_insensitive",
             ]
     elif param == "kernel":
-        from sklearn.gaussian_process import (
-            GaussianProcessClassifier,
-            GaussianProcessRegressor,
-        )
-
-        if issubclass(
-            Estimator, (GaussianProcessClassifier, GaussianProcessRegressor)
-        ):
+        if name in [
+            "GaussianProcessClassifier",
+            "GaussianProcessRegressor",
+            "Nystroem",
+        ]:
             # these kernels are not string but instances, skip
             return None
+        elif name == "KernelPCA":
+            return ["linear", "poly", "rbf", "sigmoid", "cosine"]
     elif param == "affinity":
-        from sklearn.cluster import AgglomerativeClustering
-
-        if issubclass(Estimator, AgglomerativeClustering):
+        if name in ["AgglomerativeClustering", "FeatureAgglomeration"]:
             return ["euclidean", "l1", "l2", "manhattan", "cosine"]
     elif param == "linkage":
-        from sklearn.cluster import AgglomerativeClustering
-        if issubclass(Estimator, AgglomerativeClustering):
-            return ['ward', 'complete', 'average', 'single']
+        if name in ["AgglomerativeClustering", "FeatureAgglomeration"]:
+            return ["ward", "complete", "average", "single"]
+    elif param == "norm":
+        if name in ["HashingVectorizer", "TfidfTransformer"]:
+            # Vectorizers are not suppored in common tests for now
+            return None
+        elif name == "Normalizer":
+            return ["l1", "l2", "max"]
+        elif name == "ComplementNB":
+            return [True, False]
+    elif param == "order":
+        if name == "PolynomialFeatures":
+            return ["F", "C"]
+    elif param == "mode":
+        if name == "GenericUnivariateSelect":
+            return ["percentile", "k_best", "fpr", "fdr", "fwe"]
+        elif name in ["KNeighborsTransformer", "RadiusNeighborsTransformer"]:
+            return ["distance", "connectivity"]
 
     fp = FakeParam()
 
@@ -173,6 +204,12 @@ def detect_valid_categorical_params(
     except Exception:
         if not fp.values:
             raise
+    if not fp.values:
+        raise ValueError(
+            f"{Estimator.__name__}: {param}={fp.values} "
+            f"should contain at least one element"
+        )
+
     return list(sorted(fp.values))
 
 
@@ -188,14 +225,21 @@ def detect_all_params(Estimator) -> Dict[str, List]:
      'fit_intercept': [False, True],
      'dual': [False, True]}
     """
-    res = {}
-    for param_name in categorical_params:
-        values = detect_valid_categorical_params(Estimator, param=param_name)
-        if values is not None:
-            res[param_name] = values
-    for param_name in bool_params:
-        est_signature = signature(Estimator)
-        if param_name in est_signature.parameters:
+    res: Dict[str, Any] = {}
+    name = Estimator.__name__
+    if name in ["ClassifierChain", "RegressorChain"]:
+        # skip meta-estimators for now
+        return res
+
+    est_signature = signature(Estimator)
+    for param_name in est_signature.parameters:
+        if param_name in categorical_params:
+            values = detect_valid_categorical_params(
+                Estimator, param=param_name
+            )
+            if values is not None:
+                res[param_name] = values
+        elif param_name in bool_params:
             res[param_name] = [False, True]
     return res
 
@@ -230,7 +274,7 @@ def _make_all_estimator_instances(verbose=False):
     X_raw, y_raw = load_iris(return_X_y=True)
 
     for name, Estimator in all_estimators(
-        type_filter=["cluster"]  # "classifier", "regressor",
+        type_filter=["transformer", "cluster", "classifier", "regressor"]
     ):
         valid_params = detect_all_params(Estimator)
         if verbose:
