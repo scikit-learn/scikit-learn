@@ -49,6 +49,7 @@ class ParameterGrid:
 
     Can be used to iterate over parameter value combinations with the
     Python built-in function iter.
+    The order of the generated parameter combinations is deterministic.
 
     Read more in the :ref:`User Guide <grid_search>`.
 
