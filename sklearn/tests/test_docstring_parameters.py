@@ -20,6 +20,7 @@ from sklearn.utils import all_estimators
 from sklearn.utils.estimator_checks import _enforce_estimator_tags_y
 from sklearn.utils.estimator_checks import _enforce_estimator_tags_x
 from sklearn.utils.deprecation import _is_deprecated
+from sklearn.utils._testing import assert_warns
 from sklearn.externals._pep562 import Pep562
 from sklearn.datasets import make_classification
 
@@ -216,8 +217,7 @@ def test_fit_docstring_attributes(name, Estimator):
     else:
         est.fit(X, y)
 
-    # TODO: Remove "coef_" and "intercept_" in version 0.26
-    skipped_attributes = {'n_features_in_', 'coef_', 'intercept_'}
+    skipped_attributes = {'n_features_in_'}
 
     for attr in attributes:
         if attr.name in skipped_attributes:
@@ -227,7 +227,11 @@ def test_fit_docstring_attributes(name, Estimator):
         # provided, this checks if the word "only" is present in the attribute
         # description, and if not the attribute is required to be present.
         if 'only ' not in desc:
-            assert hasattr(est, attr.name)
+            try:
+                assert hasattr(est, attr.name)
+            except FutureWarning:
+                # FutureWarning should be raised for deprecated attributes
+                assert_warns(FutureWarning, hasattr, est, attr.name)
 
     IGNORED = {'BayesianRidge', 'Birch', 'CCA', 'CategoricalNB', 'ElasticNet',
                'ElasticNetCV', 'GaussianProcessClassifier',

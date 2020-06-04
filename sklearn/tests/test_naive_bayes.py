@@ -17,6 +17,7 @@ from sklearn.utils._testing import assert_raises
 from sklearn.utils._testing import assert_raise_message
 from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import assert_no_warnings
+from sklearn.utils._testing import ignore_warnings
 
 from sklearn.naive_bayes import GaussianNB, BernoulliNB
 from sklearn.naive_bayes import MultinomialNB, ComplementNB
@@ -193,15 +194,13 @@ def test_gnb_naive_bayes_scale_invariance():
     assert_array_equal(labels[1], labels[2])
 
 
+# TODO: Remove in version 0.26
 @pytest.mark.parametrize("cls", [MultinomialNB, BernoulliNB, CategoricalNB])
 def test_discretenb_deprecated_coef_intercept(cls):
     est = cls().fit(X2, y2)
 
-    msg = "Attribute {} was deprecated"
-
     for att in ["coef_", "intercept_"]:
-        with pytest.warns(FutureWarning, match=msg.format(att)):
-            getattr(est, att)
+        assert_warns(FutureWarning, hasattr, est, att)
 
 
 @pytest.mark.parametrize("cls", [MultinomialNB, BernoulliNB, CategoricalNB])
@@ -419,6 +418,21 @@ def test_discretenb_sample_weight_multiclass(cls):
     assert_array_equal(clf.predict(X), [0, 1, 1, 2])
 
 
+# TODO: Remove in version 0.26
+@ignore_warnings(category=FutureWarning)
+@pytest.mark.parametrize('cls', [BernoulliNB, MultinomialNB])
+def test_discretenb_coef_intercept_shape(cls):
+    # coef_ and intercept_ should have shapes as in other linear models.
+    # Non-regression test for issue #2127.
+    X = [[1, 0, 0], [1, 1, 1]]
+    y = [1, 2]  # binary classification
+    clf = cls()
+
+    clf.fit(X, y)
+    assert clf.coef_.shape == (1, 3)
+    assert clf.intercept_.shape == (1,)
+
+
 @pytest.mark.parametrize('kind', ('dense', 'sparse'))
 def test_mnnb(kind):
     # Test Multinomial Naive Bayes classification.
@@ -496,6 +510,19 @@ def test_mnb_prior_unobserved_targets():
     assert clf.predict([[0, 1]]) == 0
     assert clf.predict([[1, 0]]) == 1
     assert clf.predict([[1, 1]]) == 2
+
+
+# TODO: Remove in version 0.26
+@ignore_warnings(category=FutureWarning)
+def test_mnb_sample_weight():
+    clf = MultinomialNB()
+    clf.fit([[1, 2], [1, 2], [1, 0]],
+            [0, 0, 1],
+            sample_weight=[1, 1, 4])
+    assert_array_equal(clf.predict([[1, 0]]), [1])
+    positive_prior = np.exp(clf.intercept_[0])
+    assert_array_almost_equal([1 - positive_prior, positive_prior],
+                              [1 / 3., 2 / 3.])
 
 
 def test_bnb():
