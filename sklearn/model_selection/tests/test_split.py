@@ -1662,7 +1662,7 @@ def test_group_time_series_ordering_and_group_preserved():
     train = [0, 2, 3, 4, 6, 7, 8]
     test = [9]
     # Get all the other entries for the groups found in test
-    #for (train, test) in splits:
+    # for (train, test) in splits:
     print(f"Test: {test}")
     print(f"Train: {train}")
     # verify that they are not in the test set
@@ -1693,6 +1693,7 @@ def test_group_time_series_fail_if_more_folds_than_group():
 # assert_raises_regexp(ValueError, "Cannot have number of folds.*greater",
 # next,
 # GroupTimeSeriesSplit(n_splits=3).split(X, y, groups))
+
 
 def test_all_groups_get_to_be_test_set_at_least_once():
     """ Each group has to be the test group"""
