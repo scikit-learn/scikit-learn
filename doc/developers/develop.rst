@@ -723,7 +723,7 @@ points:
 - At the beginning of ``fit`` either explicitly call
   .. code:: python
 
-    self._eval_callbacks(method='on_fit_begin', X=X, y=y)
+      self._eval_callbacks(method='on_fit_begin', X=X, y=y)
 
   or use ``self._validate_data(X, y)`` which makes this call internally.
 - For iterative solvers call ``self._eval_callbacks(n_iter=.., **kwargs)`` at
@@ -746,22 +746,7 @@ absract base class and define the following methods,
             ...
 
 
-
-For instance some callbacks are implemented in the
-`sklearn-callbacks <https://github.com/rth/sklearn-callbacks>`_ package
-and can be used as follows,
-
-.. code::
-
-    from sklearn.linear_model import LogisticRegression
-    from sklearn_callbacks import ProgressBar
-
-    est = LogisticRegression()
-    pbar = ProgressBar()
-    est._set_callbacks(pbar)
-
-    est.fit(X, y)   # will display a progress bar
-
+For more details, see the Callback API documentation below.
 
 Callback API
 ------------
