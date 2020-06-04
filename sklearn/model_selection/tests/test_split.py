@@ -1662,26 +1662,10 @@ def test_group_time_series_ordering_and_group_preserved():
     train = [0, 2, 3, 4, 6, 7, 8]
     test = [9]
     # Get all the other entries for the groups found in test
-<<<<<<< HEAD
     #for (train, test) in splits:
-<<<<<<< HEAD
-<<<<<<< HEAD
-
-=======
->>>>>>> add hard-code expected result from split function
-        print(f"Test: {test}")
-        print(f"Train: {train}")
-=======
-    print(f"Test: {test}")
-    print(f"Train: {train}")
->>>>>>> 3 new tests pytest passed locally
-        # verify that they are not in the test set
-=======
-    # for (train, test) in splits:
     print(f"Test: {test}")
     print(f"Train: {train}")
     # verify that they are not in the test set
->>>>>>> add test each group be test group at least once and max_train_size
     assert len(np.intersect1d(groups[train], groups[test])) == 0
 
 # All the elements in the training set should be in past of the
@@ -1690,37 +1674,10 @@ def test_group_time_series_ordering_and_group_preserved():
         assert (e < time_stamps[test]).all()
 
 
-<<<<<<< HEAD
-
-<<<<<<< HEAD
-<<<<<<< HEAD
-
-=======
->>>>>>> add hard-code expected result from split function
-def test_group_time_series_more_splits_than_group():
-    # Should fail if there are more folds than groups
-    groups = np.array([1, 1, 1, 2, 2])
-    X = y = np.ones(len(groups))
-    assert_raises_regexp(ValueError, "Cannot have number of splits.*greater",
-                         next,
-                         GroupTimeSeriesSplit(n_splits=3).split(X, y, groups))
-<<<<<<< HEAD
-
->>>>>>> 8712a44e2... WIP Added initial tests for evaluation
-=======
->>>>>>> add hard-code expected result from split function
-=======
-def test_group_time_series_fail_if_more_splits_than_group():
-    """ GroupTimeSeriesSplit should fail if there are more folds than group"""
-=======
 def test_group_time_series_fail_if_more_folds_than_group():
     """ GroupTimeSeriesSplit should fail if there are
         more folds than group"""
-<<<<<<< HEAD
->>>>>>> linting
-    
-=======
->>>>>>> linting5
+
     groups = np.array([1, 1, 1, 2, 2])
     unique_groups = np.unique(groups)
     n_splits = 4
@@ -1736,16 +1693,6 @@ def test_group_time_series_fail_if_more_folds_than_group():
 # assert_raises_regexp(ValueError, "Cannot have number of folds.*greater",
 # next,
 # GroupTimeSeriesSplit(n_splits=3).split(X, y, groups))
-
-<<<<<<< HEAD
-# assert_raises_regexp(ValueError, "Cannot have number of splits.*greater",
-                         #next,
-                         #GroupTimeSeriesSplit(n_splits=3).split(X, y, groups))
-<<<<<<< HEAD
->>>>>>> 3 new tests pytest passed locally
-=======
-=======
->>>>>>> linting
 
 def test_all_groups_get_to_be_test_set_at_least_once():
     """ Each group has to be the test group"""
@@ -1817,54 +1764,12 @@ def test_group_time_series_max_train_size():
                                             max_train_size=2)
 
     # Test for the case where the size of each fold is less than max_train_size
-<<<<<<< HEAD
-<<<<<<< HEAD
-    #check_splits = GroupTimeSeriesSplit(n_splits=5, max_train_size=5).split(X)
-
-    max_train_size = 5
-    check_splits = np.array([([1, 2], [3]), 
-    ([0, 1, 3, 4, 5], [7]), 
-    ([3, 4, 5, 6, 7], [9]),
-    ([6, 7, 8, 9, 10], [11]), 
-    ([10, 11, 12, 13, 14], [15])])
-    _check_group_time_series_max_train_size(splits, check_splits, max_train_size=5)
->>>>>>> add test each group be test group at least once and max_train_size
-=======
-    # check_splits = GroupTimeSeriesSplit(n_splits=5, max_train_size=5).split(X)
-=======
     # check_splits = GroupTimeSeriesSplit(n_splits=5,
     # max_train_size=5).split(X)
->>>>>>> linting2
-
     check_splits = np.array([([1, 2], [3]),
                              ([0, 1, 3, 4, 5], [7]),
                              ([3, 4, 5, 6, 7], [9]),
                              ([6, 7, 8, 9, 10], [11]),
                              ([10, 11, 12, 13, 14], [15])])
     _check_group_time_series_max_train_size(splits, check_splits,
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-        max_train_size=5)
->>>>>>> linting
-=======
-                max_train_size=5)
->>>>>>> linting2
-=======
-                    max_train_size=5)
->>>>>>> [WIP] fixes #14257 linting#3
-=======
-                        max_train_size=5)
->>>>>>> linting4
-=======
-                            max_train_size=5)
->>>>>>> linting5
-=======
-                                max_train_size=5)
->>>>>>> linting6
-=======
                                             max_train_size=5)
->>>>>>> linting7
