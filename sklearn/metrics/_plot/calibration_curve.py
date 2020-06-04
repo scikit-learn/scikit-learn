@@ -1,5 +1,3 @@
-import numpy as np
-
 from .base import _check_classifer_response_method
 
 from ...utils import check_matplotlib_support
@@ -54,7 +52,8 @@ class CalibrationDisplay:
         Parameters
         ----------
         ax : Matplotlib Axes, default=None
-            Axes object to plot on. If `None`, a new figure and axes is created.
+            Axes object to plot on. If `None`, a new figure and axes is
+            created.
 
         name : str, default=None
             Name of calibration curve for labeling. If `None`, use the
