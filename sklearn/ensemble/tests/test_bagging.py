@@ -907,3 +907,15 @@ def test_bagging_get_estimators_indices():
 
     assert_array_equal(clf.estimators_[0]._sample_indices,
                        clf.estimators_samples_[0])
+
+
+def test_bagging_with_early_stopping():
+    # Verify that a exception can be raised by a base estimator
+    # with early_stopping
+    # See: https://github.com/scikit-learn/scikit-learn/pull/17435
+    X, y = iris.data, iris.target
+    bagging = BaggingRegressor(Perceptron(early_stopping=True))
+    assert_raise_message(ValueError,
+                         "The bagging class doesn't support "
+                         "the base estimator",
+                         bagging.fit, X, y)
