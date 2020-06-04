@@ -412,7 +412,7 @@ class BaseEstimator:
         out : {ndarray, sparse matrix} or tuple of these
             The validated input. A tuple is returned if `y` is not None.
         """
-        self._fit_callbacks(X, y)
+        self._eval_callbacks('on_fit_begin', X=X, y=y)
 
         if y is None:
             if self._get_tags()['requires_y']:
@@ -472,20 +472,13 @@ class BaseEstimator:
                           and isinstance(attr[1], BaseEstimator)):
                         attr[1]._set_callbacks(callbacks)
 
-    def _fit_callbacks(self, X, y):
-        """Send the signal to callbacks that the estimator is being fitted"""
-        callbacks = getattr(self, '_callbacks', [])
-
-        for callback in callbacks:
-            callback.fit(self, X, y)
-
-    def _eval_callbacks(self, **kwargs):
+    def _eval_callbacks(self, method='on_iter_end', **kwargs):
         """Call callbacks, e.g. in each iteration of an iterative solver"""
         from ._callbacks import _eval_callbacks
 
-        callbacks = getattr(self, '_callbacks', [])
+        callbacks = getattr(self, '_callbacks', None)
 
-        _eval_callbacks(callbacks)
+        _eval_callbacks(callbacks, method=method, estimator=self, **kwargs)
 
     @property
     def _repr_html_(self):

@@ -326,7 +326,7 @@ class Pipeline(_BaseComposition):
             This estimator
         """
         fit_params_steps = self._check_fit_params(**fit_params)
-        self._fit_callbacks(X, y)
+        self._eval_callbacks(method='on_fit_begin', X=X, y=y)
         Xt = self._fit(X, y, **fit_params_steps)
         with _print_elapsed_time('Pipeline',
                                  self._log_message(len(self.steps) - 1)):

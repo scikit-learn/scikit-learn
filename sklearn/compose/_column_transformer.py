@@ -516,7 +516,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             sparse matrices.
 
         """
-        self._fit_callbacks(X, y)
+        self._eval_callbacks(method='on_fit_begin', X=X, y=y)
         # TODO: this should be `feature_names_in_` when we start having it
         if hasattr(X, "columns"):
             self._feature_names_in = np.asarray(X.columns)

@@ -12,7 +12,7 @@ CALLBACK_PARAM_TYPES = {
     "validation_loss": (float, dict),
     "validation_score": (float, dict),
     "coef": np.ndarray,
-    "intercept": (np.ndarray, float)
+    "intercept": (np.ndarray, float),
 }
 
 
@@ -25,14 +25,11 @@ def _check_callback_params(**kwargs):
         else:
             val_types = CALLBACK_PARAM_TYPES[key]
             if not isinstance(val, val_types):
-                invalid_types.append(
-                    f"{key}={val} is not of type {val_types}"
-                )
+                invalid_types.append(f"{key}={val} is not of type {val_types}")
     msg = ""
     if invalid_params:
         msg += ("Invalid callback parameters: {}, must be one of {}. ").format(
-                ", ".join(invalid_params),
-                ", ".join(CALLBACK_PARAM_TYPES.keys())
+            ", ".join(invalid_params), ", ".join(CALLBACK_PARAM_TYPES.keys())
         )
     if invalid_types:
         msg += "Invalid callback parameters: " + ", ".join(invalid_types)
@@ -40,19 +37,21 @@ def _check_callback_params(**kwargs):
         raise ValueError(msg)
 
 
-def _eval_callbacks(callbacks: Optional[List[Callable]], **kwargs) -> None:
+def _eval_callbacks(
+    callbacks: Optional[List[Callable]], method="on_iter_end", **kwargs
+) -> None:
     if callbacks is None:
         return
 
     for callback in callbacks:
-        callback(**kwargs)
+        getattr(callback, method)(**kwargs)
 
 
 class BaseCallback(ABC):
     @abstractmethod
-    def fit(self, estimator, X, y) -> None:
+    def on_fit_begin(self, estimator, X, y) -> None:
         pass
 
     @abstractmethod
-    def __call__(self, **kwargs) -> None:
+    def on_iter_end(self, **kwargs) -> None:
         pass

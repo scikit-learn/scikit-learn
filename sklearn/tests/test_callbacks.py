@@ -35,7 +35,7 @@ def test_check_callback_params():
 
     msg = "Invalid callback parameters: max_iter=1.0 is not of type .*int"
     with pytest.raises(ValueError, match=msg):
-        _check_callback_params(max_iter=1.)
+        _check_callback_params(max_iter=1.0)
 
 
 def _supported_estimators():
@@ -59,10 +59,10 @@ class CheckCallback(BaseCallback):
         self.n_calls = 0
         self.n_fit_calls = 0
 
-    def fit(self, estimator, X, y):
+    def on_fit_begin(self, estimator, X, y):
         self.n_fit_calls += 1
 
-    def __call__(self, **kwargs):
+    def on_iter_end(self, **kwargs):
         self.n_calls += 1
         _check_callback_params(**kwargs)
 
@@ -121,8 +121,8 @@ def test_set_callbacks():
         warnings.filterwarnings("ignore", category=ConvergenceWarning)
         pipe.fit(X, y)
     check_has_callback(pipe, callback)
-    check_has_callback(pipe.named_steps['standardscaler'], callback)
-    check_has_callback(pipe.named_steps['logisticregression'], callback)
+    check_has_callback(pipe.named_steps["standardscaler"], callback)
+    check_has_callback(pipe.named_steps["logisticregression"], callback)
 
     # check simple pipeline (non recursive)
     callback = CheckCallback()
@@ -132,12 +132,12 @@ def test_set_callbacks():
         warnings.filterwarnings("ignore", category=ConvergenceWarning)
         pipe.fit(X, y)
     check_has_callback(pipe, callback)
-    assert not hasattr(pipe.named_steps['standardscaler'], "_callbacks")
+    assert not hasattr(pipe.named_steps["standardscaler"], "_callbacks")
 
     # check column transformer
     callback = CheckCallback()
     pipe = make_column_transformer(
-            (StandardScaler(), [0, 1]), (MinMaxScaler(), [2, 3]),
+        (StandardScaler(), [0, 1]), (MinMaxScaler(), [2, 3]),
     )
 
     pipe._set_callbacks(callback)
@@ -145,5 +145,5 @@ def test_set_callbacks():
         warnings.filterwarnings("ignore", category=ConvergenceWarning)
         pipe.fit(X, y)
     check_has_callback(pipe, callback)
-    check_has_callback(pipe.named_transformers_['standardscaler'], callback)
-    check_has_callback(pipe.named_transformers_['minmaxscaler'], callback)
+    check_has_callback(pipe.named_transformers_["standardscaler"], callback)
+    check_has_callback(pipe.named_transformers_["minmaxscaler"], callback)
