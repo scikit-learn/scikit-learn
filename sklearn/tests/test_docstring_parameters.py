@@ -227,11 +227,9 @@ def test_fit_docstring_attributes(name, Estimator):
         # provided, this checks if the word "only" is present in the attribute
         # description, and if not the attribute is required to be present.
         if 'only ' not in desc:
-            try:
+            # Ignore "FutureWarning" of deprecated attributes
+            with ignore_warnings(category=FutureWarning):
                 assert hasattr(est, attr.name)
-            except FutureWarning:
-                # FutureWarning should be raised for deprecated attributes
-                assert_warns(FutureWarning, hasattr, est, attr.name)
 
     IGNORED = {'BayesianRidge', 'Birch', 'CCA', 'CategoricalNB', 'ElasticNet',
                'ElasticNetCV', 'GaussianProcessClassifier',
