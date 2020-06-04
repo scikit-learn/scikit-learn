@@ -25,7 +25,7 @@ from .utils import check_array, indexable, column_or_1d
 from .utils.validation import check_is_fitted, check_consistent_length
 from .utils.validation import _check_sample_weight
 from .isotonic import IsotonicRegression
-from .model_selection import check_cv
+from .svm import LinearSVC
 from .utils.validation import _deprecate_positional_args
 
 
@@ -144,7 +144,6 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
         if self.base_estimator is None:
             # we want all classifiers that don't expose a random_state
             # to be deterministic (and we don't want to expose this one).
-            from .svm import LinearSVC
             base_estimator = LinearSVC(random_state=0)
         else:
             base_estimator = self.base_estimator
@@ -155,6 +154,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
             calibrated_classifier.fit(X, y, sample_weight)
             self.calibrated_classifiers_.append(calibrated_classifier)
         else:
+            from .model_selection import check_cv
             cv = check_cv(self.cv, y, classifier=True)
             fit_parameters = signature(base_estimator.fit).parameters
             base_estimator_supports_sw = "sample_weight" in fit_parameters
