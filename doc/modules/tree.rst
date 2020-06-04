@@ -496,9 +496,10 @@ Regression criteria
 If the target is a continuous value, then for node :math:`m`,
 representing a region :math:`R_m` with :math:`N_m` observations, common
 criteria to minimise as for determining locations for future
-splits are Mean Squared Error, which minimizes the L2 error
-using mean values at terminal nodes, and Mean Absolute Error, which
-minimizes the L1 error using median values at terminal nodes.
+splits are Mean Squared Error (or L2 error) and Poisson deviance, which set the
+predicted value of terminal nodes to the mean values of the node, as well as
+Mean Absolute Error (or L1 error), which sets the predicted value of terminal
+nodes to the median.
 
 Mean Squared Error:
 
@@ -508,6 +509,15 @@ Mean Squared Error:
 
     H(X_m) = \frac{1}{N_m} \sum_{i \in N_m} (y_i - \bar{y}_m)^2
 
+Half Poisson deviance:
+
+.. math::
+
+    \bar{y}_m = \frac{1}{N_m} \sum_{i \in N_m} y_i
+
+    H(X_m) = \frac{1}{N_m} \sum_{i \in N_m} (y_i \log\frac{y_i}{\bar{y}_m}
+    - y_i + \bar{y}_m)
+
 Mean Absolute Error:
 
 .. math::
@@ -516,7 +526,7 @@ Mean Absolute Error:
 
     H(X_m) = \frac{1}{N_m} \sum_{i \in N_m} |y_i - median(y)_m|
 
-where :math:`X_m` is the training data in node :math:`m`
+Again, :math:`X_m` is the training data in node :math:`m`.
 
 
 .. _minimal_cost_complexity_pruning:
