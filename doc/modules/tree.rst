@@ -10,7 +10,7 @@ Decision Trees
 for :ref:`classification <tree_classification>` and :ref:`regression
 <tree_regression>`. The goal is to create a model that predicts the value of a
 target variable by learning simple decision rules inferred from the data
-features.
+features. A tree can be seen as a piecewise constant approximation.
 
 For instance, in the example below, decision trees learn from data to
 approximate a sine curve with a set of if-then-else decision rules. The deeper
@@ -64,6 +64,10 @@ The disadvantages of decision trees include:
       data might result in a completely different tree being generated.
       This problem is mitigated by using decision trees within an
       ensemble.
+
+    - Predictions of decision trees are neither continuous nor smooth for
+      continuous features, but piecewise constant approximations as seen in the
+      above figure.
 
     - The problem of learning an optimal decision tree is known to be
       NP-complete under several aspects of optimality and even for simple
@@ -424,8 +428,9 @@ Mathematical formulation
 ========================
 
 Given training vectors :math:`x_i \in R^n`, i=1,..., l and a label vector
-:math:`y \in R^l`, a decision tree recursively partitions the space such
-that the samples with the same labels are grouped together.
+:math:`y \in R^l`, a decision tree recursively partitions the feature space
+such that the samples with the same labels or similar target values are grouped
+together.
 
 Let the data at node :math:`m` be represented by :math:`Q`. For
 each candidate split :math:`\theta = (j, t_m)` consisting of a
@@ -438,9 +443,9 @@ feature :math:`j` and threshold :math:`t_m`, partition the data into
 
     Q_{right}(\theta) = Q \setminus Q_{left}(\theta)
 
-The impurity at :math:`m` is computed using an impurity function
-:math:`H()`, the choice of which depends on the task being solved
-(classification or regression)
+The quality of a candidate split of node :math:`m` is then computed using an
+impurity function :math:`H()` (decision tree slang for a loss function), the
+choice of which depends on the task being solved (classification or regression)
 
 .. math::
 
@@ -468,27 +473,29 @@ observations, let
 
     p_{mk} = 1/ N_m \sum_{x_i \in R_m} I(y_i = k)
 
-be the proportion of class k observations in node :math:`m`
+be the proportion of class k observations in node :math:`m`. If :math:`m` is a
+terminal node, `predict_proba` for this region is set to :math:`p_{mk}`.
+Common measures of impurity are the following.
 
-Common measures of impurity are Gini
+Gini:
 
 .. math::
 
     H(X_m) = \sum_k p_{mk} (1 - p_{mk})
 
-Entropy
+Entropy:
 
 .. math::
 
     H(X_m) = - \sum_k p_{mk} \log(p_{mk})
 
-and Misclassification
+Misclassification:
 
 .. math::
 
     H(X_m) = 1 - \max(p_{mk})
 
-where :math:`X_m` is the training data in node :math:`m`
+Here, :math:`X_m` is the training data in node :math:`m`.
 
 Regression criteria
 -------------------
