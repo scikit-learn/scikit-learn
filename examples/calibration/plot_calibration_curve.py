@@ -98,11 +98,13 @@ ax1.set(xlabel="")
 # Add histogram
 for _, name in clf_list:
     ax2.hist(viz_objects[name].y_prob, range=(0, 1), bins=10, label=name,
-             histtype="step", lw=2)
+             histtype="step", lw=2, alpha=0.8)
 
 ax2.legend(loc="upper center", ncol=2)
 ax2.set(xlabel="Mean predicted probability",
         ylabel="Count")
+
+plt.show()
 
 # %%
 # Next, we will compare:
@@ -164,7 +166,7 @@ ax1.set(xlabel="")
 # Add histogram
 for _, name in clf_list:
     ax2.hist(viz_objects[name].y_prob, range=(0, 1), bins=10, label=name,
-             histtype="step", lw=2)
+             histtype="step", lw=2, alpha=0.8)
 
 ax2.legend(loc="upper center", ncol=2)
 ax2.set(xlabel="Mean predicted probability",
