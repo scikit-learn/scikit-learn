@@ -106,7 +106,7 @@ def test_plot_calibration_curve(pyplot, data_binary, n_bins, strategy,
         )
         assert_allclose(brier_score_value, viz.brier_score_value)
         expected_label = \
-            f"LogisticRegression (BS = {viz.brier_score_value:.3f})"
+            f"LogisticRegression (Brier: {viz.brier_score_value:.3f})"
         assert viz.line_.get_label() == expected_label
     else:
         assert viz.line_.get_label() == "LogisticRegression"
@@ -157,9 +157,9 @@ def test_plot_calibration_curve_ref_line(pyplot, data_binary):
 @pytest.mark.parametrize(
     "brier_score_value, estimator_name, expected_label",
     [
-        (0.07, None, "BS = 0.070"),
+        (0.07, None, "Brier: 0.070"),
         (None, "my_est", "my_est"),
-        (0.07, "my_est2", "my_est2 (BS = 0.070)"),
+        (0.07, "my_est2", "my_est2 (Brier: 0.070)"),
     ]
 )
 def test_calibration_display_default_labels(pyplot, brier_score_value,

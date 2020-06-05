@@ -84,9 +84,9 @@ class CalibrationDisplay:
         line_kwargs = {}
         if self.brier_score_value is not None and name is not None:
             line_kwargs["label"] = \
-                f"{name} (BS = {self.brier_score_value:0.3f})"
+                f"{name} (Brier: {self.brier_score_value:0.3f})"
         elif self.brier_score_value is not None:
-            line_kwargs["label"] = f"BS = {self.brier_score_value:0.3f}"
+            line_kwargs["label"] = f"Brier: {self.brier_score_value:0.3f}"
         elif name is not None:
             line_kwargs["label"] = name
         line_kwargs.update(**kwargs)
