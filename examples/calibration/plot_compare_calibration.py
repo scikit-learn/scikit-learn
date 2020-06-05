@@ -95,7 +95,6 @@ clf_list = [(lr, 'Logistic'),
             (rfc, 'Random forest')]
 
 fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1)
-fig.figure(figsize=(10, 10))
 
 viz_objects = {}
 for clf, name in clf_list:
