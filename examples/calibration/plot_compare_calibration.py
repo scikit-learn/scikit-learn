@@ -9,7 +9,6 @@ For instance, a well calibrated (binary) classifier should classify the samples
 such that for the samples to which it gave a `predict_proba` value close to
 0.8, approximately 80% actually belong to the positive class.
 """
-print(__doc__)
 
 # Author: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
 # License: BSD Style.

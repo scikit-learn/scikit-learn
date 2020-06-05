@@ -9,7 +9,6 @@ kind of confidence on the prediction. This example demonstrates how to
 visualize how well calibrated the predicted probabilities are and how to
 calibrate an uncalibrated classifier.
 """
-print(__doc__)
 
 # Author: Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
 #         Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
