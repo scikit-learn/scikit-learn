@@ -176,7 +176,7 @@ def spectral_clustering(affinity, *, n_clusters=8, n_components=None,
 
     Parameters
     ----------
-    affinity : array-like or sparse matrix of shape (n_samples, n_samples)
+    affinity : {array-like, sparse matrix} of shape (n_samples, n_samples)
         The affinity matrix describing the relationship of the samples to
         embed. **Must be symmetric**.
 
@@ -185,10 +185,10 @@ def spectral_clustering(affinity, *, n_clusters=8, n_components=None,
           - heat kernel of the pairwise distance matrix of the samples,
           - symmetric k-nearest neighbours connectivity matrix of the samples.
 
-    n_clusters : integer, default=None
+    n_clusters : int, default=None
         Number of clusters to extract.
 
-    n_components : integer, default=n_clusters
+    n_components : int, default=n_clusters
         Number of eigen vectors to use for the spectral embedding
 
     eigen_solver : {None, 'arpack', 'lobpcg', or 'amg'}
@@ -328,7 +328,7 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         Kernel coefficient for rbf, poly, sigmoid, laplacian and chi2 kernels.
         Ignored for ``affinity='nearest_neighbors'``.
 
-    affinity : string or callable, default='rbf'
+    affinity : str or callable, default='rbf'
         How to construct the affinity matrix.
          - 'nearest_neighbors' : construct the affinity matrix by computing a
            graph of nearest neighbors.
@@ -383,7 +383,7 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         Affinity matrix used for clustering. Available only if after calling
         ``fit``.
 
-    labels_ : array of shape (n_samples,)
+    labels_ : ndarray of shape (n_samples,)
         Labels of each point
 
     Examples
@@ -460,7 +460,7 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like or sparse matrix of shape (n_samples, n_features), or \
+        X : {array-like, sparse matrix} of shape (n_samples, n_features), or \
             array-like of shape (n_samples, n_samples)
             Training instances to cluster, or similarities / affinities between
             instances if ``affinity='precomputed'``. If a sparse matrix is
@@ -528,7 +528,7 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like or sparse matrix of shape (n_samples, n_features), or \
+        X : {array-like, sparse matrix} of shape (n_samples, n_features), or \
             array-like of shape (n_samples, n_samples)
             Training instances to cluster, or similarities / affinities between
             instances if ``affinity='precomputed'``. If a sparse matrix is

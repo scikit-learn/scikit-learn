@@ -1234,23 +1234,23 @@ def _mini_batch_step(X, sample_weight, x_squared_norms, centers, weight_sums,
     Parameters
     ----------
 
-    X : array of shape (n_samples, n_features)
+    X : ndarray of shape (n_samples, n_features)
         The original data array.
 
     sample_weight : array-like of shape (n_samples,)
         The weights for each observation in X.
 
-    x_squared_norms : array of shape (n_samples,)
+    x_squared_norms : ndarray of shape (n_samples,)
         Squared euclidean norm of each data point.
 
-    centers : array of shape (k, n_features)
+    centers : ndarray of shape (k, n_features)
         The cluster centers. This array is MODIFIED IN PLACE
 
-    counts : array of shape (k,)
+    counts : ndarray of shape (k,)
          The vector in which we keep track of the numbers of elements in a
          cluster. This array is MODIFIED IN PLACE
 
-    distances : array of shape (n_samples,), dtype=float, default=None
+    distances : ndarray of shape (n_samples,), dtype=float, default=None
         If not None, should be a pre-allocated array that will be used to store
         the distances of each sample to its closest center.
         May not be None when random_reassign is True.
@@ -1286,7 +1286,7 @@ def _mini_batch_step(X, sample_weight, x_squared_norms, centers, weight_sums,
     inertia : float
         Sum of squared distances of samples to their closest cluster center.
 
-    squared_diff : numpy array of shape (n_clusters,)
+    squared_diff : ndarray of shape (n_clusters,)
         Squared distances between previous and updated cluster centers.
 
     """
@@ -1594,7 +1594,7 @@ class MiniBatchKMeans(KMeans):
 
         Parameters
         ----------
-        X : array-like or sparse matrix of shape=(n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training instances to cluster. It must be noted that the data
             will be converted to C ordering, which will cause a memory copy
             if the given data is not C-contiguous.
@@ -1761,7 +1761,7 @@ class MiniBatchKMeans(KMeans):
 
         Returns
         -------
-        labels : array of shape (n_samples,)
+        labels : ndarray of shape (n_samples,)
             Cluster labels for each point.
 
         inertia : float
@@ -1872,7 +1872,7 @@ class MiniBatchKMeans(KMeans):
 
         Returns
         -------
-        labels : array of shape (n_samples,)
+        labels : ndarray of shape (n_samples,)
             Index of the cluster each sample belongs to.
         """
         check_is_fitted(self)

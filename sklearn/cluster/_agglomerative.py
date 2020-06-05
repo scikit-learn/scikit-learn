@@ -151,7 +151,7 @@ def ward_tree(X, *, connectivity=None, n_clusters=None, return_distance=False):
 
     Parameters
     ----------
-    X : array of shape (n_samples, n_features)
+    X : array-like of shape (n_samples, n_features)
         feature matrix representing n_samples samples to be clustered
 
     connectivity : sparse matrix, default=None
@@ -173,7 +173,7 @@ def ward_tree(X, *, connectivity=None, n_clusters=None, return_distance=False):
 
     Returns
     -------
-    children : 2D array of shape (n_nodes-1, 2)
+    children : ndarray of shape (n_nodes-1, 2)
         The children of each non-leaf node. Values less than `n_samples`
         correspond to leaves of the tree which are the original samples.
         A node `i` greater than or equal to `n_samples` is a non-leaf
@@ -187,11 +187,11 @@ def ward_tree(X, *, connectivity=None, n_clusters=None, return_distance=False):
     n_leaves : int
         The number of leaves in the tree
 
-    parents : 1D array of shape (n_nodes, ) or None
+    parents : ndarray of shape (n_nodes,) or None
         The parent of each node. Only returned when a connectivity matrix
         is specified, elsewhere 'None' is returned.
 
-    distances : 1D array of shape (n_nodes-1, )
+    distances : ndarray of shape (n_nodes-1,)
         Only returned if return_distance is set to True (for compatibility).
         The distances between the centers of the nodes. `distances[i]`
         corresponds to a weighted euclidean distance between
@@ -357,7 +357,7 @@ def linkage_tree(X, connectivity=None, n_clusters=None, linkage='complete',
 
     Parameters
     ----------
-    X : array of shape (n_samples, n_features)
+    X : ndarray of shape (n_samples, n_features)
         feature matrix representing n_samples samples to be clustered
 
     connectivity : sparse matrix, default=None
@@ -384,7 +384,7 @@ def linkage_tree(X, connectivity=None, n_clusters=None, linkage='complete',
             - single uses the minimum of the distances between all observations
               of the two sets.
 
-    affinity : string or callable, default="euclidean".
+    affinity : str or callable, default="euclidean".
         which metric to use. Can be "euclidean", "manhattan", or any
         distance know to paired distance (see metric.pairwise)
 
@@ -393,7 +393,7 @@ def linkage_tree(X, connectivity=None, n_clusters=None, linkage='complete',
 
     Returns
     -------
-    children : 2D array of shape (n_nodes-1, 2)
+    children : ndarray of shape (n_nodes-1, 2)
         The children of each non-leaf node. Values less than `n_samples`
         correspond to leaves of the tree which are the original samples.
         A node `i` greater than or equal to `n_samples` is a non-leaf
@@ -407,7 +407,7 @@ def linkage_tree(X, connectivity=None, n_clusters=None, linkage='complete',
     n_leaves : int
         The number of leaves in the tree.
 
-    parents : 1D array of shape (n_nodes, ) or None
+    parents : ndarray of shape (n_nodes, ) or None
         The parent of each node. Only returned when a connectivity matrix
         is specified, elsewhere 'None' is returned.
 
@@ -637,7 +637,7 @@ def _hc_cut(n_clusters, children, n_leaves):
     n_clusters : int or ndarray
         The number of clusters to form.
 
-    children : 2D array of shape (n_nodes-1, 2)
+    children : ndarray of shape (n_nodes-1, 2)
         The children of each non-leaf node. Values less than `n_samples`
         correspond to leaves of the tree which are the original samples.
         A node `i` greater than or equal to `n_samples` is a non-leaf

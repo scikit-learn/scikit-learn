@@ -44,7 +44,7 @@ def affinity_propagation(S, *, preference=None, convergence_iter=15,
     S : array-like of shape (n_samples, n_samples)
         Matrix of similarities between points
 
-    preference : array-like of shape (n_samples,) or float, optional
+    preference : array-like of shape (n_samples,) or float, default=None
         Preferences for each point - points with larger values of
         preferences are more likely to be chosen as exemplars. The number of
         exemplars, i.e. of clusters, is influenced by the input preferences
@@ -73,7 +73,7 @@ def affinity_propagation(S, *, preference=None, convergence_iter=15,
     return_n_iter : bool, default=False
         Whether or not to return the number of iterations.
 
-    random_state : int or np.random.RandomStateInstance, default=0
+    random_state : int or RandomState instance, default=0
         Pseudo-random number generator to control the starting state.
         Use an int for reproducible results across function calls.
         See the :term:`Glossary <random_state>`.
@@ -84,10 +84,10 @@ def affinity_propagation(S, *, preference=None, convergence_iter=15,
     Returns
     -------
 
-    cluster_centers_indices : array of shape (n_clusters,)
+    cluster_centers_indices : ndarray of shape (n_clusters,)
         index of clusters centers
 
-    labels : array of shape (n_samples,)
+    labels : ndarray of shape (n_samples,)
         cluster labels for each point
 
     n_iter : int
@@ -292,7 +292,7 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
     verbose : bool, default=False
         Whether to be verbose.
 
-    random_state : int or np.random.RandomStateInstance, default=0
+    random_state : int or RandomState instance, default=0
         Pseudo-random number generator to control the starting state.
         Use an int for reproducible results across function calls.
         See the :term:`Glossary <random_state>`.
@@ -382,7 +382,7 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like or sparse matrix of shape (n_samples, n_features), or \
+        X : {array-like, sparse matrix} of shape (n_samples, n_features), or \
             array-like of shape (n_samples, n_samples)
             Training instances to cluster, or similarities / affinities between
             instances if ``affinity='precomputed'``. If a sparse feature matrix
@@ -428,7 +428,7 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like or sparse matrix of shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             New data to predict. If a sparse matrix is provided, it will be
             converted into a sparse ``csr_matrix``.
 
@@ -457,7 +457,7 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like or sparse matrix of shape (n_samples, n_features), or \
+        X : {array-like, sparse matrix} of shape (n_samples, n_features), or \
             array-like of shape (n_samples, n_samples)
             Training instances to cluster, or similarities / affinities between
             instances if ``affinity='precomputed'``. If a sparse feature matrix

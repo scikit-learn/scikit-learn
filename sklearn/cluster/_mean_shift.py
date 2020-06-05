@@ -169,10 +169,10 @@ def mean_shift(X, *, bandwidth=None, seeds=None, bin_seeding=False,
     Returns
     -------
 
-    cluster_centers : array of shape (n_clusters, n_features)
+    cluster_centers : ndarray of shape (n_clusters, n_features)
         Coordinates of cluster centers.
 
-    labels : array of shape (n_samples,)
+    labels : ndarray of shape (n_samples,)
         Cluster labels for each point.
 
     Notes
@@ -298,10 +298,10 @@ class MeanShift(ClusterMixin, BaseEstimator):
 
     Attributes
     ----------
-    cluster_centers_ : array of shape (n_clusters, n_features)
+    cluster_centers_ : ndarray of shape (n_clusters, n_features)
         Coordinates of cluster centers.
 
-    labels_ : array of shape (n_samples,)
+    labels_ : ndarray of shape (n_samples,)
         Labels of each point.
 
     n_iter_ : int
@@ -455,7 +455,7 @@ class MeanShift(ClusterMixin, BaseEstimator):
 
         Returns
         -------
-        labels : array of shape (n_samples,)
+        labels : ndarray of shape (n_samples,)
             Index of the cluster each sample belongs to.
         """
         check_is_fitted(self)
