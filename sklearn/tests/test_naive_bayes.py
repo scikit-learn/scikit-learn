@@ -200,7 +200,8 @@ def test_discretenb_deprecated_coef_intercept(cls):
     est = cls().fit(X2, y2)
 
     for att in ["coef_", "intercept_"]:
-        assert_warns(FutureWarning, hasattr, est, att)
+        with pytest.warns(FutureWarning):
+            hasattr(est, att)
 
 
 @pytest.mark.parametrize("cls", [MultinomialNB, BernoulliNB, CategoricalNB])
@@ -317,6 +318,8 @@ def test_discretenb_input_check_partial_fit(cls):
     assert_raises(ValueError, clf.predict, X2[:, :-1])
 
 
+# TODO: Remove in version 0.26
+@ignore_warnings(category=FutureWarning)
 def test_discretenb_predict_proba():
     # Test discrete NB classes' probability scores
 
@@ -345,6 +348,7 @@ def test_discretenb_predict_proba():
         assert_almost_equal(np.sum(clf.predict_proba([X[1]])), 1)
         assert_almost_equal(np.sum(clf.predict_proba([X[-1]])), 1)
         assert_almost_equal(np.sum(np.exp(clf.class_log_prior_)), 1)
+        assert_almost_equal(np.sum(np.exp(clf.intercept_)), 1)
 
 
 @pytest.mark.parametrize('cls', [BernoulliNB, MultinomialNB, CategoricalNB])
