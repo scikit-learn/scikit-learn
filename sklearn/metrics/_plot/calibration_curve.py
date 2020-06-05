@@ -15,8 +15,8 @@ class CalibrationDisplay:
     Parameters
     -----------
     prob_true : ndarray
-        The proportion of samples whose class is the positive class, in each
-        bin (fraction of positives).
+        The proportion of samples whose class is the positive class (fraction
+        of positives), in each bin.
 
     prob_pred : ndarray
         The mean predicted probability in each bin.

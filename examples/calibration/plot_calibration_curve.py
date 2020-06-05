@@ -24,8 +24,7 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.svm import LinearSVC
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (brier_score_loss, precision_score, recall_score,
-                             f1_score, plot_calibration_curve,
-                             CalibrationDisplay)
+                             f1_score, plot_calibration_curve)
 from sklearn.calibration import calibration_curve, CalibratedClassifierCV
 
 # %%
@@ -50,11 +49,12 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.99,
 #
 # First, we will compare:
 #
-# * :class:`~sklearn.linear_model.LogisticRegression` (used as baseline as it
-#   returns well calibrated predictions as it directly optimizes log-loss)
+# * :class:`~sklearn.linear_model.LogisticRegression` (used as baseline
+#   since very often, properly regularized logistic regression is well
+#   calibrated by default thanks to the use of log-loss)
 # * Raw :class:`~sklearn.naive_bayes.GaussianNB`
-# * :class:`~sklearn.naive_bayes.GaussianNB` calibrated with isotonic and
-#   sigmoid calibration (see :ref:`User Guide <calibration>`)
+# * :class:`~sklearn.naive_bayes.GaussianNB` with isotonic and sigmoid
+#   calibration (see :ref:`User Guide <calibration>`)
 #
 # Calibration curves for all 4 conditions are plotted below, with the average
 # predicted probability for each bin on the x-axis and the fraction of positive
@@ -128,11 +128,11 @@ for clf, name in clf_list:
 # %%
 # Next, we will compare:
 #
-# * :class:`~sklearn.linear_model.LogisticRegression` (used as baseline as it
-#   returns well calibrated predictions as it directly optimizes log-loss)
-# * :class:`~sklearn.svm.LinearSVC` with linear, isotonic and sigmoid
-#   calibration (note as `LinearSVC` only has a :term:`decision_function`
-#   method and thus always needs calibration to probability in [0,1])
+# * :class:`~sklearn.linear_model.LogisticRegression`
+# * :class:`~sklearn.svm.LinearSVC` (:term:`decision_function` scores
+#   min-max scaled to [0,1], since they are not proper probabilities)
+# * :class:`~sklearn.svm.LinearSVC` with isotonic and sigmoid
+#   calibration
 #
 # Linearly calibrated :class:`~sklearn.svm.LinearSVC` shows the opposite
 # behavior as :class:`~sklearn.naive_bayes.GaussianNB`; the calibration
