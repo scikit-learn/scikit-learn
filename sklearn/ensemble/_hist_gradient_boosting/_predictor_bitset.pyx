@@ -11,7 +11,7 @@ from libc.limits cimport CHAR_BIT
 from libcpp.vector cimport vector
 
 
-cdef inline unsigned char in_vec_bitset(vector[BITSET_INNER_DTYPE_C] bitset,
+cdef inline unsigned char in_vec_bitset(vector[BITSET_INNER_DTYPE_C]& bitset,
                                         int value) nogil:
     cdef:
         unsigned int i1 = value // 32
