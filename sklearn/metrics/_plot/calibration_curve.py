@@ -1,4 +1,5 @@
 from .base import _check_classifer_response_method
+from .. import brier_score_loss
 from ...utils import check_matplotlib_support
 from ...base import is_classifier
 from ...calibration import calibration_curve
@@ -21,6 +22,9 @@ class CalibrationDisplay:
     prob_pred : ndarray
         The mean predicted probability in each bin.
 
+    brier_score_value : int or None
+        The Brier score. If None, the Brier score is not shown.
+
     estimator_name : str, default=None
         Name of estimator. If None, then the estimator name is not shown.
 
@@ -36,9 +40,10 @@ class CalibrationDisplay:
         Figure containing the curve.
     """
     def __init__(self, prob_true, prob_pred, *,
-                 estimator_name=None):
+                 brier_score_value=None, estimator_name=None):
         self.prob_true = prob_true
         self.prob_pred = prob_pred
+        self.brier_score_value = brier_score_value
         self.estimator_name = estimator_name
 
     def plot(self, ax=None, *, name=None, ref_line=True, **kwargs):
@@ -77,7 +82,12 @@ class CalibrationDisplay:
         name = self.estimator_name if name is None else name
 
         line_kwargs = {}
-        if name is not None:
+        if self.brier_score_value is not None and name is not None:
+            line_kwargs["label"] = \
+                f"{name} (BS = {self.brier_score_value:0.3f})"
+        elif self.brier_score_value is not None:
+            line_kwargs["label"] = f"BS = {self.brier_score_value:0.3f}"
+        elif name is not None:
             line_kwargs["label"] = name
         line_kwargs.update(**kwargs)
 
@@ -101,7 +111,8 @@ class CalibrationDisplay:
 
 def plot_calibration_curve(estimator, X, y, *,
                            n_bins=5, strategy='uniform',
-                           name=None, ref_line=True, ax=None, **kwargs):
+                           name=None, ref_line=True, brier_score=True,
+                           ax=None, **kwargs):
     """Plot calibration curve for binary classifiers.
 
     Extra keyword arguments will be passed to matplotlib's `plot`.
@@ -137,6 +148,9 @@ def plot_calibration_curve(estimator, X, y, *,
 
     name : str, default=None
         Name for labeling curve. If `None`, the name of the estimator is used.
+
+    brier_score: bool, default=True
+        If `True`, include Brier score in legend.
 
     ref_line : bool, default=True
         If `True`, plots a reference line representing a perfectly calibrated
@@ -181,8 +195,14 @@ def plot_calibration_curve(estimator, X, y, *,
     prob_true, prob_pred = calibration_curve(
         y, y_prob, n_bins=n_bins, strategy=strategy
     )
+    if brier_score:
+        pos_label = estimator.classes_[1]
+        brier_score_value = brier_score_loss(y, y_prob, pos_label=pos_label)
+    else:
+        brier_score_value = None
     name = name if name is not None else estimator.__class__.__name__
     viz = CalibrationDisplay(
-        prob_true=prob_true, prob_pred=prob_pred, estimator_name=name
+        prob_true=prob_true, prob_pred=prob_pred,
+        brier_score_value=brier_score_value, estimator_name=name
     )
     return viz.plot(ax=ax, name=name, ref_line=ref_line, **kwargs)
