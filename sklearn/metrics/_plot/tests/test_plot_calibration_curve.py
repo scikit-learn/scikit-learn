@@ -101,12 +101,12 @@ def test_plot_calibration_curve(pyplot, data_binary, n_bins, strategy,
     assert viz.ax_.get_ylabel() == "Fraction of positives"
 
     if brier_score:
-        brier_score_value = brier_score_loss(
+        brier_value = brier_score_loss(
             y, y_prob, pos_label=pos_label
         )
-        assert_allclose(brier_score_value, viz.brier_score_value)
+        assert_allclose(brier_value, viz.brier_value)
         expected_label = \
-            f"LogisticRegression (Brier: {viz.brier_score_value:.3f})"
+            f"LogisticRegression (Brier: {viz.brier_value:.3f})"
         assert viz.line_.get_label() == expected_label
     else:
         assert viz.line_.get_label() == "LogisticRegression"
@@ -155,20 +155,20 @@ def test_plot_calibration_curve_ref_line(pyplot, data_binary):
 
 
 @pytest.mark.parametrize(
-    "brier_score_value, estimator_name, expected_label",
+    "brier_value, estimator_name, expected_label",
     [
         (0.07, None, "Brier: 0.070"),
         (None, "my_est", "my_est"),
         (0.07, "my_est2", "my_est2 (Brier: 0.070)"),
     ]
 )
-def test_calibration_display_default_labels(pyplot, brier_score_value,
+def test_calibration_display_default_labels(pyplot, brier_value,
                                             estimator_name, expected_label):
     y_true = np.array([0, 1, 1, 0])
     y_prob = np.array([0.2, 0.8, 0.8, 0.4])
 
     viz = CalibrationDisplay(y_true, y_prob,
-                             brier_score_value=brier_score_value,
+                             brier_value=brier_value,
                              estimator_name=estimator_name)
     viz.plot()
     assert viz.line_.get_label() == expected_label
