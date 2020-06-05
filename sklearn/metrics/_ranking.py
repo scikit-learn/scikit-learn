@@ -710,7 +710,7 @@ def roc_curve(y_true, y_score, *, pos_label=None, sample_weight=None,
 
     pos_label : int or str, default=None
         The label of the positive class.
-        When ``pos_label=None``, if y_true is in {-1, 1} or {0, 1},
+        When ``pos_label=None``, if `y_true` is in {-1, 1} or {0, 1},
         ``pos_label`` is set to 1, otherwise an error will be raised.
 
     sample_weight : array-like of shape (n_samples,), default=None
