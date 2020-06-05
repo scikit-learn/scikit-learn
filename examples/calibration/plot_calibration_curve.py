@@ -92,6 +92,9 @@ for clf, name in clf_list:
     )
     viz_objects[name] = viz
 
+ax1.set_title('Calibration plots (Naive Bayes)')
+ax1.set(xlabel="")
+
 # Add histogram
 for _, name in clf_list:
     ax2.hist(viz_objects[name].y_prob, range=(0, 1), bins=10, label=name,
@@ -100,8 +103,6 @@ for _, name in clf_list:
 ax2.legend(loc="upper center", ncol=2)
 ax2.set(xlabel="Mean predicted probability",
         ylabel="Count")
-
-plt.suptitle('Calibration plots (Naive Bayes)')
 
 # %%
 # Next, we will compare:
@@ -157,6 +158,9 @@ for clf, name in clf_list:
         viz.plot(ax=ax1)
         viz_objects[name] = viz
 
+ax1.set_title('Calibration plots (SVC)')
+ax1.set(xlabel="")
+
 # Add histogram
 for _, name in clf_list:
     ax2.hist(viz_objects[name].y_prob, range=(0, 1), bins=10, label=name,
@@ -166,7 +170,6 @@ ax2.legend(loc="upper center", ncol=2)
 ax2.set(xlabel="Mean predicted probability",
         ylabel="Count")
 
-plt.suptitle('Calibration plots (SVC)')
 plt.show()
 
 # %%
