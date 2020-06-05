@@ -5,6 +5,7 @@ from numpy.testing import assert_allclose
 from sklearn.datasets import load_iris
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.linear_model import LogisticRegression
+from sklearn.svm import LinearSVC
 from sklearn.base import ClassifierMixin
 from sklearn.calibration import calibration_curve
 from sklearn.metrics import plot_calibration_curve
@@ -37,7 +38,7 @@ def test_plot_calibration_curve_error_non_binary(pyplot, data):
         plot_calibration_curve(clf, X, y)
 
 
-def test_plot_calibration_curve_no_predict_proba(pyplot, data_binary):
+def test_plot_calibration_curve_no_method(pyplot, data_binary):
     X, y = data_binary
 
     class MyClassifier(ClassifierMixin):
@@ -47,7 +48,8 @@ def test_plot_calibration_curve_no_predict_proba(pyplot, data_binary):
 
     clf = MyClassifier().fit(X, y)
 
-    msg = "Response method 'predict_proba' not defined in"
+    msg = ("Neither response method 'predict_proba' nor 'decision_function' "
+           "are defined in")
     with pytest.raises(ValueError, match=msg):
         plot_calibration_curve(clf, X, y)
 
@@ -113,6 +115,33 @@ def test_plot_calibration_curve(pyplot, data_binary, n_bins, strategy,
         assert viz.line_.get_label() == "LogisticRegression"
 
 
+def test_plot_calibration_curve_decision_function(pyplot, data_binary):
+    X, y = data_binary
+    svc = LinearSVC().fit(X, y)
+
+    viz = plot_calibration_curve(svc, X, y)
+
+    y_prob = svc.decision_function(X)
+    y_prob_pos = (y_prob - y_prob.min()) / (y_prob.max() - y_prob.min())
+    prob_true, prob_pred = calibration_curve(y, y_prob_pos)
+
+    assert_allclose(viz.prob_true, prob_true)
+    assert_allclose(viz.prob_pred, prob_pred)
+    assert_allclose(viz.y_prob, y_prob_pos)
+
+    assert viz.estimator_name == "LinearSVC"
+
+    # cannot fail thanks to pyplot fixture
+    import matplotlib as mpl  # noqa
+    assert isinstance(viz.line_, mpl.lines.Line2D)
+    assert viz.line_.get_alpha() == 0.8
+    assert isinstance(viz.ax_, mpl.axes.Axes)
+    assert isinstance(viz.figure_, mpl.figure.Figure)
+
+    assert viz.ax_.get_xlabel() == "Mean predicted probability"
+    assert viz.ax_.get_ylabel() == "Fraction of positives"
+
+
 @pytest.mark.parametrize(
     "clf", [make_pipeline(StandardScaler(), LogisticRegression()),
             make_pipeline(make_column_transformer((StandardScaler(), [0, 1])),
@@ -157,18 +186,17 @@ def test_plot_calibration_curve_ref_line(pyplot, data_binary):
 
 @pytest.mark.parametrize(
     "brier_value, estimator_name, expected_label",
-    [
-        (0.07, None, "Brier: 0.070"),
-        (None, "my_est", "my_est"),
-        (0.07, "my_est2", "my_est2 (Brier: 0.070)"),
-    ]
+    [(0.07, None, "Brier: 0.070"),
+     (None, "my_est", "my_est"),
+     (0.07, "my_est2", "my_est2 (Brier: 0.070)")]
 )
 def test_calibration_display_default_labels(pyplot, brier_value,
                                             estimator_name, expected_label):
-    y_true = np.array([0, 1, 1, 0])
-    y_prob = np.array([0.2, 0.8, 0.8, 0.4])
+    prob_true = np.array([0, 1, 1, 0])
+    prob_pred = np.array([0.2, 0.8, 0.8, 0.4])
+    y_prob = np.array([])
 
-    viz = CalibrationDisplay(y_true, y_prob,
+    viz = CalibrationDisplay(prob_true, prob_pred, y_prob,
                              brier_value=brier_value,
                              estimator_name=estimator_name)
     viz.plot()

@@ -1,4 +1,3 @@
-from .base import _check_classifer_response_method
 from .. import brier_score_loss
 from ...utils import check_matplotlib_support
 from ...base import is_classifier
@@ -126,50 +125,46 @@ def plot_calibration_curve(estimator, X, y, *,
     Parameters
     ----------
     estimator : estimator instance
-        Fitted classifier or a fitted :class:`~sklearn.pipeline.Pipeline`
-        in which the last estimator is a classifier. The classifier must
-        have a :term:`predict_proba` method; set `probability=True` for
-        :class:`~sklearn.svm.SVC` and :class:`~sklearn.svm.NuSVC`
-        (see: :ref:`User Guide <scores_probabilities>`) or use
-        :class:`~sklearn.calibration.CalibratedClassifierCV`.
+        Fitted classifier or a fitted :class:`~sklearn.pipeline.Pipeline` in
+        which the last estimator is a classifier.
+        To calculate probability estimates :term:`predict_proba` will be used
+        in priority. Otherwise, if no :term:`predict_proba` method exists,
+        :term:`decision_function` will be used and the output confidence
+        scores will be min-max scaled to the range [0,1].
 
-    X : {array-like, sparse matrix} of shape (n_samples, n_features)
-        Input values.
+    X : {array-like, sparse matrix} of shape (n_samples, n_features) Input
+        values.
 
-    y : array-like of shape (n_samples,)
-        Binary target values.
+    y : array-like of shape (n_samples,) Binary target values.
 
-    n_bins : int, default=5
-        Number of bins to discretize the [0, 1] interval into when calculating
-        the calibration curve.
+    n_bins : int, default=5 Number of bins to discretize the [0, 1] interval
+        into when calculating the calibration curve.
 
-    strategy : {'uniform', 'quantile'}, default='uniform'
-        Strategy used to define the widths of the bins.
+    strategy : {'uniform', 'quantile'}, default='uniform' Strategy used to
+        define the widths of the bins.
 
         `'uniform'`: The bins have identical widths.
         `'quantile'`: The bins have the same number of samples and depend on
         `estimator.predict_proba(X)`.
 
-    name : str, default=None
-        Name for labeling curve. If `None`, the name of the estimator is used.
+    name : str, default=None Name for labeling curve. If `None`, the name of the
+        estimator is used.
 
-    brier_score: bool, default=True
-        If `True`, include Brier score in legend.
+    brier_score: bool, default=True If `True`, include Brier score in legend.
 
-    ref_line : bool, default=True
-        If `True`, plots a reference line representing a perfectly calibrated
-        classifier.
+    ref_line : bool, default=True If `True`, plots a reference line representing
+        a perfectly calibrated classifier.
 
-    ax : matplotlib axes, default=None
-        Axes object to plot on. If `None`, a new figure and axes is created.
+    ax : matplotlib axes, default=None Axes object to plot on. If `None`, a new
+        figure and axes is created.
 
-    **kwargs : dict
-        Keyword arguments to be passed to :func:`matplotlib.pyplot.plot`.
+    **kwargs : dict Keyword arguments to be passed to
+        :func:`matplotlib.pyplot.plot`.
 
     Returns
     -------
-    display : :class:`~sklearn.metrics.CalibrationDisplay`.
-        Object that stores computed values.
+    display : :class:`~sklearn.metrics.CalibrationDisplay`. Object that stores
+        computed values.
     """
     check_matplotlib_support("plot_calibration_curve")
     binary_error = "Only binary classification is supported."
@@ -178,23 +173,27 @@ def plot_calibration_curve(estimator, X, y, *,
         raise ValueError("The estimator parameter should be a fitted binary "
                          "classifier")
 
-    try:
-        prediction_method = _check_classifer_response_method(
-            estimator, response_method='predict_proba'
-        )
-    except ValueError:
-        raise ValueError("Response method 'predict_proba' not defined in "
-                         f"{estimator.__class__.__name__}")
+    predict_proba = getattr(estimator, 'predict_proba', None)
+    decision_function = getattr(estimator, 'decision_function', None)
+    prediction_method = predict_proba or decision_function
+    if prediction_method is None:
+        msg = ("Neither response method 'predict_proba' nor "
+               "'decision_function' are defined in "
+               f"{estimator.__class__.__name__}")
+        raise ValueError(msg)
 
     y_prob = prediction_method(X)
 
-    if not len(estimator.classes_) == 2:
-        raise ValueError(binary_error)
-    if y_prob.ndim != 1:
-        if y_prob.shape[1] != 2:
+    if predict_proba is None:
+        y_prob = (y_prob - y_prob.min()) / (y_prob.max() - y_prob.min())
+    else:
+        if not len(estimator.classes_) == 2:
             raise ValueError(binary_error)
-        else:
-            y_prob = y_prob[:, 1]
+        if y_prob.ndim != 1:
+            if y_prob.shape[1] != 2:
+                raise ValueError(binary_error)
+            else:
+                y_prob = y_prob[:, 1]
 
     prob_true, prob_pred = calibration_curve(
         y, y_prob, n_bins=n_bins, strategy=strategy

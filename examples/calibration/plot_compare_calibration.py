@@ -10,6 +10,8 @@ such that for the samples to which it gave a `predict_proba` value close to
 0.8, approximately 80% actually belong to the positive class.
 """
 
+# %%
+
 # Author: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
 # License: BSD Style.
 
@@ -100,24 +102,10 @@ fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, figsize=(10, 10))
 viz_objects = {}
 for clf, name in clf_list:
     clf.fit(X_train, y_train)
-    if name != 'SVC':
-        viz = plot_calibration_curve(
-            clf, X_test, y_test, n_bins=10, name=name, ax=ax1
-        )
-        viz_objects[name] = viz
-    else:
-        # As `LinearSVC` has no `predict_proba` method
-        y_prob = clf.decision_function(X_test)
-        y_prob = (y_prob - y_prob.min()) / (y_prob.max() - y_prob.min())
-        prob_true, prob_pred = calibration_curve(y_test, y_prob, n_bins=10)
-        brier = brier_score_loss(prob_true, prob_pred)
-
-        viz = CalibrationDisplay(
-            prob_true, prob_pred, y_prob, brier_value=brier,
-            estimator_name=name
-        )
-        viz.plot(ax=ax1)
-        viz_objects[name] = viz
+    viz = plot_calibration_curve(
+        clf, X_test, y_test, n_bins=10, name=name, ax=ax1
+    )
+    viz_objects[name] = viz
 
 ax1.set_title('Calibration plots')
 ax1.set(xlabel="")
