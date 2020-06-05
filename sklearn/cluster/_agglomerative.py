@@ -7,8 +7,8 @@ Authors : Vincent Michel, Bertrand Thirion, Alexandre Gramfort,
           Gael Varoquaux
 License: BSD 3 clause
 """
-from heapq import heapify, heappop, heappush, heappushpop
 import warnings
+from heapq import heapify, heappop, heappush, heappushpop
 
 import numpy as np
 from scipy import sparse
@@ -16,20 +16,19 @@ from scipy.sparse.csgraph import connected_components
 
 from ..base import BaseEstimator, ClusterMixin
 from ..metrics.pairwise import paired_distances, pairwise_distances
-from ..utils import check_array
-from ..utils.validation import check_memory, _deprecate_positional_args
 from ..neighbors import DistanceMetric
 from ..neighbors._dist_metrics import METRIC_MAPPING
-
+from ..utils import check_array
+from ..utils._fast_dict import IntFloatDict
+from ..utils.fixes import _astype_copy_false
+from ..utils.validation import _deprecate_positional_args, check_memory
 # mypy error: Module 'sklearn.cluster' has no attribute '_hierarchical_fast'
 from . import _hierarchical_fast as _hierarchical  # type: ignore
 from ._feature_agglomeration import AgglomerationTransform
-from ..utils._fast_dict import IntFloatDict
-from ..utils.fixes import _astype_copy_false
-
 
 ###############################################################################
 # For non fully-connected graphs
+
 
 def _fix_connectivity(X, connectivity, affinity):
     """
@@ -314,7 +313,7 @@ def ward_tree(X, *, connectivity=None, n_clusters=None, return_distance=False):
         _hierarchical._get_parents(A[i], coord_col, parent, not_visited)
         _hierarchical._get_parents(A[j], coord_col, parent, not_visited)
         # List comprehension is faster than a for loop
-        [A[l].append(k) for l in coord_col]
+        [A[col].append(k) for col in coord_col]
         A.append(coord_col)
         coord_col = np.array(coord_col, dtype=np.intp, order='C')
         coord_row = np.empty(coord_col.shape, dtype=np.intp, order='C')
@@ -583,11 +582,11 @@ def linkage_tree(X, connectivity=None, n_clusters=None, linkage='complete',
         # update the structure matrix A and the inertia matrix
         # a clever 'min', or 'max' operation between A[i] and A[j]
         coord_col = join_func(A[i], A[j], used_node, n_i, n_j)
-        for l, d in coord_col:
-            A[l].append(k, d)
+        for col, d in coord_col:
+            A[col].append(k, d)
             # Here we use the information from coord_col (containing the
             # distances) to update the heap
-            heappush(inertia, _hierarchical.WeightedEdge(d, k, l))
+            heappush(inertia, _hierarchical.WeightedEdge(d, k, col))
         A[k] = coord_col
         # Clear A[i] and A[j] to save memory
         A[i] = A[j] = 0
@@ -710,14 +709,14 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         samples following a given structure of the data.
         This can be a connectivity matrix itself or a callable that transforms
         the data into a connectivity matrix, such as derived from
-        kneighbors_graph. Default is None, i.e, the
+        kneighbors_graph. Default is ``None``, i.e, the
         hierarchical clustering algorithm is unstructured.
 
     compute_full_tree : 'auto' or bool, default='auto'
-        Stop early the construction of the tree at n_clusters. This is useful
-        to decrease computation time if the number of clusters is not small
-        compared to the number of samples. This option is useful only when
-        specifying a connectivity matrix. Note also that when varying the
+        Stop early the construction of the tree at ``n_clusters``. This is
+        useful to decrease computation time if the number of clusters is not
+        small compared to the number of samples. This option is useful only
+        when specifying a connectivity matrix. Note also that when varying the
         number of clusters and using caching, it may be advantageous to compute
         the full tree. It must be ``True`` if ``distance_threshold`` is not
         ``None``. By default `compute_full_tree` is "auto", which is equivalent
@@ -725,17 +724,17 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         is inferior to the maximum between 100 or `0.02 * n_samples`.
         Otherwise, "auto" is equivalent to `False`.
 
-    linkage : {"ward", "complete", "average", "single"}, default="ward"
+    linkage : {'ward', 'complete', 'average', 'single'}, default='ward'
         Which linkage criterion to use. The linkage criterion determines which
         distance to use between sets of observation. The algorithm will merge
         the pairs of cluster that minimize this criterion.
 
-        - ward minimizes the variance of the clusters being merged.
-        - average uses the average of the distances of each observation of
+        - 'ward' minimizes the variance of the clusters being merged.
+        - 'average' uses the average of the distances of each observation of
           the two sets.
-        - complete or maximum linkage uses the maximum distances between
+        - 'complete' or 'maximum' linkage uses the maximum distances between
           all observations of the two sets.
-        - single uses the minimum of the distances between all observations
+        - 'single' uses the minimum of the distances between all observations
           of the two sets.
 
         .. versionadded:: 0.20
