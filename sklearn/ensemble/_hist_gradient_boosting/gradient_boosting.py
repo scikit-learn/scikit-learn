@@ -920,7 +920,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
           features. The categories must have been already be numerical i.e.
           encoded by an :class:`~sklearn.preprocessing.OrdinalEncoder`.
 
-        If the number of features is greater than ``max_bins``, then the top
+        If the number of categories is greater than ``max_bins``, then the top
         ``max_bins`` categories based on cardinality are kept. Categories
         encoded as negative number will be considered missing. Read more in
         the :ref:`User Guide <categorical_support_gbdt>`.
