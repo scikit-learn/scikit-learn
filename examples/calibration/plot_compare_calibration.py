@@ -22,8 +22,7 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import LinearSVC
-from sklearn.metrics import plot_calibration_curve, brier_score_loss
-from sklearn.calibration import calibration_curve
+from sklearn.metrics import plot_calibration_curve
 
 # %%
 # Dataset
