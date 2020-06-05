@@ -430,6 +430,19 @@ class PoissonRegressor(GeneralizedLinearRegressor):
 
     n_iter_ : int
         Actual number of iterations used in the solver.
+
+    Examples
+    ----------
+    >>> from sklearn import linear_model
+    >>> clf = linear_model.PoissonRegressor(alpha=0.95)
+    >>> X = [[0, 0], [1, 1], [2, 2]]
+    >>> y = [0, 1, 2]
+    >>> clf.fit(X, y)
+    PoissonRegressor(alpha=0.95)
+    >>> print(clf.coef_)
+    [0.30189415 0.30189415]
+    >>> print(clf.intercept_)
+    -0.7218104894636085
     """
     def __init__(self, *, alpha=1.0, fit_intercept=True, max_iter=100,
                  tol=1e-4, warm_start=False, verbose=0):
