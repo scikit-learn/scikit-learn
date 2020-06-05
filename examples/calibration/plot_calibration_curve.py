@@ -81,8 +81,10 @@ clf_list = [(lr, 'Logistic'),
             (gnb, 'Naive Bayes'),
             (gnb_isotonic, 'Naive Bayes + Isotonic'),
             (gnb_sigmoid, 'Naive Bayes + Sigmoid')]
-viz_objects = {}
+
 fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1)
+
+viz_objects = {}
 for clf, name in clf_list:
     clf.fit(X_train, y_train)
     viz = plot_calibration_curve(
@@ -128,8 +130,10 @@ clf_list = [(lr, 'Logistic'),
             (svc, 'SVC'),
             (svc_isotonic, 'SVC + Isotonic'),
             (svc_sigmoid, 'SVC + Sigmoid')]
-viz_objects = {}
+
 fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1)
+
+viz_objects = {}
 for clf, name in clf_list:
     clf.fit(X_train, y_train)
     if name != 'SVC':
@@ -143,7 +147,7 @@ for clf, name in clf_list:
         y_prob = (y_prob - y_prob.min()) / (y_prob.max() - y_prob.min())
         brier = brier_score_loss(y_test, y_prob)
         viz = CalibrationDisplay(
-            y_test, y_prob, brier_score_value=brier, estimator_name=name
+            y_test, y_prob, brier_value=brier, estimator_name=name
         )
         viz.plot(ax=ax1)
         viz_objects[name] = viz
