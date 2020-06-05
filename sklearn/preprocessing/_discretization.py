@@ -56,7 +56,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
             Values in each bin have the same nearest center of a 1D k-means
             cluster.
 
-    dtype : data-type, default=None
+    dtype : {np.float32, np.float64}, default=None
         The desired data-type for the output. If None, output dtype is
         consistent with input dtype. Only np.float32 and np.float64 are
         supported.
@@ -149,14 +149,16 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         self
         """
         X = self._validate_data(X, dtype='numeric')
-        if self.dtype in (np.float64, np.float32):
+
+        supported_dtype = (np.float64, np.float32)
+        if self.dtype in supported_dtype:
             output_dtype = self.dtype
         elif self.dtype is None:
             output_dtype = X.dtype
         else:
             raise ValueError(
                 f"Valid options for 'dtype' are "
-                f"{(np.float64, np.float32, None)}. Got dtype={self.dtype} "
+                f"{supported_dtype + (None,)}. Got dtype={self.dtype} "
                 f" instead."
             )
 
