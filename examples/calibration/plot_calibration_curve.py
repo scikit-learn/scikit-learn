@@ -24,6 +24,7 @@ from sklearn.svm import LinearSVC
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (brier_score_loss, plot_calibration_curve,
                              CalibrationDisplay)
+# TODO
 # from sklearn.metrics import (brier_score_loss, precision_score, recall_score,
 #                              f1_score, plot_calibration_curve,
 #                              CalibrationDisplay)

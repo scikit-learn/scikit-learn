@@ -8,26 +8,21 @@ of :term:`predict_proba` can be directly interpreted as a confidence level.
 For instance, a well calibrated (binary) classifier should classify the samples
 such that for the samples to which it gave a `predict_proba` value close to
 0.8, approximately 80% actually belong to the positive class.
-
-.. topic:: References:
-
-    .. [1] Predicting Good Probabilities with Supervised Learning,
-          A. Niculescu-Mizil & R. Caruana, ICML 2005
 """
 print(__doc__)
 
 # Author: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
 # License: BSD Style.
 
-import numpy as np
 import matplotlib.pyplot as plt
 
-from sklearn import datasets
+from sklearn.datasets import make_classification
 from sklearn.naive_bayes import GaussianNB
 from sklearn.linear_model import LogisticRegression
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import LinearSVC
-from sklearn.calibration import calibration_curve
+from sklearn.metrics import (plot_calibration_curve, CalibrationDisplay,
+                             brier_score_loss)
 
 # %%
 # Dataset
@@ -39,7 +34,7 @@ from sklearn.calibration import calibration_curve
 # remaining 16 are 'useless' (random numbers). Of the 100,000 samples, only
 # 100 will be used for model fitting.
 
-X, y = datasets.make_classification(
+X, y = make_classification(
   n_samples=100000, n_features=20, n_informative=2, n_redundant=2,
   random_state=42
 )
@@ -53,12 +48,13 @@ y_test = y[train_samples:]
 # %%
 # Calibration curves
 # ------------------
+#
 # :class:`~sklearn.linear_model.LogisticRegression` returns well calibrated
 # predictions as it directly optimizes log-loss. In contrast, the other methods
 # return biased probabilities, with different biases per method:
 #
 # * :class:`~sklearn.naive_bayes.GaussianNaiveBayes` tends to push
-#   probabilities to 0 or 1 (note the counts in the histograms). This is mainly
+#   probabilities to 0 or 1 (see histogram). This is mainly
 #   because it makes the assumption that features are conditionally independent
 #   given the class, which is not the case in this dataset which contains 2
 #   redundant features.
@@ -131,3 +127,11 @@ for _, name in clf_list:
 ax2.legend(loc="upper center", ncol=2)
 ax2.set(xlabel="Mean predicted probability",
         ylabel="Count")
+
+# %%
+# References
+# ----------
+#
+# .. [1] `Predicting Good Probabilities with Supervised Learning
+#        <https://dl.acm.org/doi/pdf/10.1145/1102351.1102430>`_,
+#        A. Niculescu-Mizil & R. Caruana, ICML 2005
