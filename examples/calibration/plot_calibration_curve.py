@@ -22,10 +22,12 @@ from sklearn.model_selection import train_test_split
 from sklearn.naive_bayes import GaussianNB
 from sklearn.svm import LinearSVC
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import (brier_score_loss, precision_score, recall_score,
-                             f1_score, plot_calibration_curve,
+from sklearn.metrics import (brier_score_loss, plot_calibration_curve,
                              CalibrationDisplay)
-from sklearn.calibration import CalibratedClassifierCV, calibration_curve
+# from sklearn.metrics import (brier_score_loss, precision_score, recall_score,
+#                              f1_score, plot_calibration_curve,
+#                              CalibrationDisplay)
+from sklearn.calibration import CalibratedClassifierCV
 
 # %%
 # Dataset
