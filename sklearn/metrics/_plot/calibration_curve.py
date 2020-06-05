@@ -69,7 +69,7 @@ class CalibrationDisplay:
             calibrated classifier.
 
         **kwargs : dict
-            Keyword arguments to be passed to matplotlib's `plot`.
+            Keyword arguments to be passed to :func:`matplotlib.pyplot.plot`.
 
         Returns
         -------
@@ -132,39 +132,43 @@ def plot_calibration_curve(estimator, X, y, *,
         :term:`decision_function` will be used and the output confidence
         scores will be min-max scaled to the range [0,1].
 
-    X : {array-like, sparse matrix} of shape (n_samples, n_features) Input
-        values.
+    X : {array-like, sparse matrix} of shape (n_samples, n_features)
+        Input values.
 
-    y : array-like of shape (n_samples,) Binary target values.
+    y : array-like of shape (n_samples,)
+        Binary target values.
 
-    n_bins : int, default=5 Number of bins to discretize the [0, 1] interval
-        into when calculating the calibration curve.
+    n_bins : int, default=5
+        Number of bins to discretize the [0, 1] interval into when calculating
+        the calibration curve.
 
-    strategy : {'uniform', 'quantile'}, default='uniform' Strategy used to
-        define the widths of the bins.
+    strategy : {'uniform', 'quantile'}, default='uniform'
+        Strategy used to define the widths of the bins.
 
         `'uniform'`: The bins have identical widths.
         `'quantile'`: The bins have the same number of samples and depend on
         `estimator.predict_proba(X)`.
 
-    name : str, default=None Name for labeling curve. If `None`, the name of the
-        estimator is used.
+    name : str, default=None
+        Name for labeling curve. If `None`, the name of the estimator is used.
 
-    brier_score: bool, default=True If `True`, include Brier score in legend.
+    brier_score: bool, default=True
+        If `True`, include Brier score in legend.
 
-    ref_line : bool, default=True If `True`, plots a reference line representing
-        a perfectly calibrated classifier.
+    ref_line : bool, default=True
+        If `True`, plots a reference line representing a perfectly calibrated
+        classifier.
 
-    ax : matplotlib axes, default=None Axes object to plot on. If `None`, a new
-        figure and axes is created.
+    ax : matplotlib axes, default=None
+        Axes object to plot on. If `None`, a new figure and axes is created.
 
-    **kwargs : dict Keyword arguments to be passed to
-        :func:`matplotlib.pyplot.plot`.
+    **kwargs : dict
+        Keyword arguments to be passed to :func:`matplotlib.pyplot.plot`.
 
     Returns
     -------
-    display : :class:`~sklearn.metrics.CalibrationDisplay`. Object that stores
-        computed values.
+    display : :class:`~sklearn.metrics.CalibrationDisplay`.
+        Object that stores computed values.
     """
     check_matplotlib_support("plot_calibration_curve")
     binary_error = "Only binary classification is supported."
