@@ -21,12 +21,9 @@ from sklearn.model_selection import train_test_split
 from sklearn.naive_bayes import GaussianNB
 from sklearn.svm import LinearSVC
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import (brier_score_loss, plot_calibration_curve,
+from sklearn.metrics import (brier_score_loss, precision_score, recall_score,
+                             f1_score, plot_calibration_curve,
                              CalibrationDisplay)
-# TODO
-# from sklearn.metrics import (brier_score_loss, precision_score, recall_score,
-#                              f1_score, plot_calibration_curve,
-#                              CalibrationDisplay)
 from sklearn.calibration import calibration_curve, CalibratedClassifierCV
 
 # %%
@@ -67,10 +64,10 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.99,
 # typical transposed-sigmoid curve. Calibration of the probabilities of
 # :class:`~sklearn.naive_bayes.GaussianNB` with isotonic regression can fix
 # this issue as can be seen from the nearly diagonal calibration curve. Sigmoid
-# calibration also improves the Brier score slightly, albeit not as strongly as
-# the non-parametric isotonic regression. This can be attributed to the fact
-# that we have plenty of calibration data such that the greater flexibility of
-# the non-parametric model can be exploited.
+# calibration also improves the Brier score (smaller is better) slightly,
+# albeit not as strongly as the non-parametric isotonic regression. This can be
+# attributed to the fact that we have plenty of calibration data such that the
+# greater flexibility of the non-parametric model can be exploited.
 
 lr = LogisticRegression(C=1.)
 gnb = GaussianNB()
@@ -105,6 +102,26 @@ ax2.set(xlabel="Mean predicted probability",
         ylabel="Count")
 
 plt.show()
+
+# %%
+# Below we show the Brier score, precision, recall and F1 score (see
+# :ref:`User Guide <precision_recall_f_measure_metrics>`). Notice that
+# although calibration improves the Brier score, it does not significantly
+# alter the prediction accuracy measures (precision, recall and F1 score).
+# This is because calibration should not significantly move at the location of
+# the decision threshold (at x = 0.5 on the graph). Calibration should
+# however make the `predict_proba` more accurate and thus more useful for
+# making allocation decisions under uncertainty.
+
+for clf, name in clf_list:
+    clf.fit(X_train, y_train)
+    y_pred = clf.predict(X_test)
+
+    print(f"{name}\n"
+          f"\tBrier score: {viz_objects[name].brier_value}\n"
+          f"\tPrecision: {precision_score(y_test, y_pred)}\n"
+          f"\tRecall: {recall_score(y_test, y_pred)}\n"
+          f"\tF1: {f1_score(y_test, y_pred)}\n")
 
 # %%
 # Next, we will compare:
@@ -150,7 +167,7 @@ for clf, name in clf_list:
         # As LinearSVC has no `predict_proba` method
         y_prob = clf.decision_function(X_test)
         y_prob = (y_prob - y_prob.min()) / (y_prob.max() - y_prob.min())
-        prob_true, prob_pred = calibration_curve(y, y_prob, n_bins=10)
+        prob_true, prob_pred = calibration_curve(y_test, y_prob, n_bins=10)
         brier = brier_score_loss(prob_true, prob_pred)
 
         viz = CalibrationDisplay(
@@ -173,6 +190,19 @@ ax2.set(xlabel="Mean predicted probability",
         ylabel="Count")
 
 plt.show()
+
+# %%
+# Again we print the Brier score, precision, recall and F1 score.
+
+for clf, name in clf_list:
+    clf.fit(X_train, y_train)
+    y_pred = clf.predict(X_test)
+
+    print(f"{name}\n"
+          f"\tBrier Score: {viz_objects[name].brier_value}\n"
+          f"\tPrecision: {precision_score(y_test, y_pred)}\n"
+          f"\tRecall: {recall_score(y_test, y_pred)}\n"
+          f"\tF1: {f1_score(y_test, y_pred)}\n")
 
 # %%
 # Summary

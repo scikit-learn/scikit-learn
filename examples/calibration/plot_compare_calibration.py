@@ -109,7 +109,7 @@ for clf, name in clf_list:
         # As `LinearSVC` has no `predict_proba` method
         y_prob = clf.decision_function(X_test)
         y_prob = (y_prob - y_prob.min()) / (y_prob.max() - y_prob.min())
-        prob_true, prob_pred = calibration_curve(y, y_prob, n_bins=10)
+        prob_true, prob_pred = calibration_curve(y_test, y_prob, n_bins=10)
         brier = brier_score_loss(prob_true, prob_pred)
 
         viz = CalibrationDisplay(
