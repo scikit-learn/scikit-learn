@@ -22,6 +22,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import LinearSVC
 from sklearn.metrics import (plot_calibration_curve, CalibrationDisplay,
                              brier_score_loss)
+from sklearn.calibration import calibration_curve
 
 # %%
 # Dataset
@@ -94,7 +95,7 @@ clf_list = [(lr, 'Logistic'),
             (svc, 'SVC'),
             (rfc, 'Random forest')]
 
-fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1)
+fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, figsize=(10, 10))
 
 viz_objects = {}
 for clf, name in clf_list:
@@ -108,23 +109,27 @@ for clf, name in clf_list:
         # As `LinearSVC` has no `predict_proba` method
         y_prob = clf.decision_function(X_test)
         y_prob = (y_prob - y_prob.min()) / (y_prob.max() - y_prob.min())
-        brier = brier_score_loss(y_test, y_prob)
+        prob_true, prob_pred = calibration_curve(y, y_prob, n_bins=10)
+        brier = brier_score_loss(prob_true, prob_pred)
+
         viz = CalibrationDisplay(
-            y_test, y_prob, brier_value=brier, estimator_name=name
+            prob_true, prob_pred, y_prob, brier_value=brier,
+            estimator_name=name
         )
         viz.plot(ax=ax1)
         viz_objects[name] = viz
 
-ax1.set_title('Calibration plots (reliability curve)')
-
 # Add histogram
 for _, name in clf_list:
-    ax2.hist(viz_objects[name].prob_pred, range=(0, 1), bins=10, label=name,
+    ax2.hist(viz_objects[name].y_prob, range=(0, 1), bins=10, label=name,
              histtype="step", lw=2)
 
 ax2.legend(loc="upper center", ncol=2)
 ax2.set(xlabel="Mean predicted probability",
         ylabel="Count")
+
+plt.suptitle('Calibration plots (reliability curve)')
+plt.show()
 
 # %%
 # References

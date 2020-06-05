@@ -27,7 +27,7 @@ from sklearn.metrics import (brier_score_loss, plot_calibration_curve,
 # from sklearn.metrics import (brier_score_loss, precision_score, recall_score,
 #                              f1_score, plot_calibration_curve,
 #                              CalibrationDisplay)
-from sklearn.calibration import CalibratedClassifierCV
+from sklearn.calibration import calibration_curve, CalibratedClassifierCV
 
 # %%
 # Dataset
@@ -82,7 +82,7 @@ clf_list = [(lr, 'Logistic'),
             (gnb_isotonic, 'Naive Bayes + Isotonic'),
             (gnb_sigmoid, 'Naive Bayes + Sigmoid')]
 
-fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1)
+fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, figsize=(10, 10))
 
 viz_objects = {}
 for clf, name in clf_list:
@@ -94,12 +94,14 @@ for clf, name in clf_list:
 
 # Add histogram
 for _, name in clf_list:
-    ax2.hist(viz_objects[name].prob_pred, range=(0, 1), bins=10, label=name,
+    ax2.hist(viz_objects[name].y_prob, range=(0, 1), bins=10, label=name,
              histtype="step", lw=2)
 
 ax2.legend(loc="upper center", ncol=2)
 ax2.set(xlabel="Mean predicted probability",
         ylabel="Count")
+
+plt.suptitle('Calibration plots (Naive Bayes)')
 
 # %%
 # Next, we will compare:
@@ -145,21 +147,27 @@ for clf, name in clf_list:
         # As LinearSVC has no `predict_proba` method
         y_prob = clf.decision_function(X_test)
         y_prob = (y_prob - y_prob.min()) / (y_prob.max() - y_prob.min())
-        brier = brier_score_loss(y_test, y_prob)
+        prob_true, prob_pred = calibration_curve(y, y_prob, n_bins=10)
+        brier = brier_score_loss(prob_true, prob_pred)
+
         viz = CalibrationDisplay(
-            y_test, y_prob, brier_value=brier, estimator_name=name
+            prob_true, prob_pred, y_prob, brier_value=brier,
+            estimator_name=name
         )
         viz.plot(ax=ax1)
         viz_objects[name] = viz
 
 # Add histogram
 for _, name in clf_list:
-    ax2.hist(viz_objects[name].prob_pred, range=(0, 1), bins=10, label=name,
+    ax2.hist(viz_objects[name].y_prob, range=(0, 1), bins=10, label=name,
              histtype="step", lw=2)
 
 ax2.legend(loc="upper center", ncol=2)
 ax2.set(xlabel="Mean predicted probability",
         ylabel="Count")
+
+plt.suptitle('Calibration plots (SVC)')
+plt.show()
 
 # %%
 # Summary
