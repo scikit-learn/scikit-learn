@@ -4,6 +4,6 @@ from .common cimport BITSET_DTYPE_C
 
 cdef void init_bitset(BITSET_DTYPE_C bitset) nogil
 
-cdef void set_bitset(X_BINNED_DTYPE_C val, BITSET_DTYPE_C bitset) nogil
+cdef void set_bitset(BITSET_DTYPE_C bitset, X_BINNED_DTYPE_C val) nogil
 
-cdef unsigned char in_bitset(X_BINNED_DTYPE_C val, BITSET_DTYPE_C bitset) nogil
+cdef unsigned char in_bitset(BITSET_DTYPE_C bitset, X_BINNED_DTYPE_C val) nogil

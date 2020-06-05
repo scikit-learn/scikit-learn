@@ -22,7 +22,7 @@ cdef inline unsigned char in_vec_bitset(vector[BITSET_INNER_DTYPE_C] bitset,
     return (bitset[i1] >> i2) & 1
 
 
-cdef inline void insert_vec_bitset(vector[BITSET_INNER_DTYPE_C]& bitset,
+cdef inline void insert_vec_bitset(vector[BITSET_INNER_DTYPE_C]& bitset,  # OUT
                                    int value) nogil:
     cdef:
         unsigned int i1 = value // 32
@@ -36,6 +36,7 @@ cdef inline void insert_vec_bitset(vector[BITSET_INNER_DTYPE_C]& bitset,
 cdef class PredictorBitSet:
     def __init__(self, list bin_thresholds,
                  const unsigned char [:] is_categorical):
+        """Creates bitset for all known categories"""
         if is_categorical is None or bin_thresholds is None:
             return
 
@@ -55,6 +56,9 @@ cdef class PredictorBitSet:
     def insert_categories_bitset(self, unsigned int node_idx,
                                  X_DTYPE_C[:] category_bins,
                                  BITSET_INNER_DTYPE_C[:] cat_bitset):
+        """Insert category into bitset for raw categories and binned cateogires
+        for node_idx.
+        """
         cdef:
             BITSET_INNER_DTYPE_C val
             int k, offset
@@ -76,15 +80,18 @@ cdef class PredictorBitSet:
 
     cdef unsigned char is_known_category(self, unsigned int feature_idx,
                                          X_DTYPE_C category) nogil:
+        """Check if category is known"""
         return in_vec_bitset(self.feature_idx_raw_cats[feature_idx],
                              <int>category)
 
     cdef unsigned char raw_category_in_bitset(self, unsigned int node_idx,
                                               X_DTYPE_C category) nogil:
+        """Check if raw category is in bitset for node_idx"""
         return in_vec_bitset(self.node_to_raw_bitset[node_idx], <int>category)
 
     cdef unsigned char binned_category_in_bitset(self, unsigned int node_idx,
                                                  X_BINNED_DTYPE_C category) nogil:
+        """Check if binned cateogry is in bitset for node_idx"""
         return in_vec_bitset(self.node_to_binned_bitset[node_idx],
                              <int>category)
 

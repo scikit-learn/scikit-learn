@@ -90,33 +90,5 @@ cdef void _map_cat_col_to_bins(const X_DTYPE_C [:] data,
                                X_BINNED_DTYPE_C [:] binned):
         """Map form raw categories to bin"""
         cdef int i
-        for i in range(data.shape[0]):
+        for i in prange(data.shape[0], schedule='static', nogil=True):
             binned[i] = category_mapper.map_to_bin(feature_idx, data[i])
-
-        # cdef:
-        #     int i, left, right, middle
-        #     unsigned char found
-        #     X_DTYPE_C middle_value, current_value
-
-        # for i in prange(data.shape[0], schedule='static', nogil=True):
-        #     if isnan(data[i]) or data[i] < 0:
-        #         binned[i] = missing_values_bin_idx
-        #     else:
-        #         current_value = data[i]
-        #         found = False
-        #         left, right = 0, categories.shape[0] - 1
-        #         while left <= right:
-        #             middle = left + (right - left) // 2
-        #             middle_value = categories[middle]
-        #             if middle_value < current_value:
-        #                 left = middle + 1
-        #             elif middle_value > current_value:
-        #                 right = middle - 1
-        #             else:
-        #                 binned[i] = middle
-        #                 found = True
-        #                 break
-        #         # unknown
-        #         if not found:
-        #             binned[i] = missing_values_bin_idx
-

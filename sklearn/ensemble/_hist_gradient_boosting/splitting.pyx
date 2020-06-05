@@ -932,11 +932,11 @@ cdef class Splitter:
 
             for i in range(best_sorted_thres + 1):
                 bin_idx = cat_sorted_infos[i].bin_idx
-                set_bitset(bin_idx, split_info.cat_bitset)
+                set_bitset( split_info.cat_bitset, bin_idx)
 
             if has_missing_values:
                 split_info.missing_go_to_left = in_bitset(
-                    missing_values_bin_idx, split_info.cat_bitset)
+                    split_info.cat_bitset, missing_values_bin_idx)
 
         free(cat_sorted_infos)
 
@@ -1018,7 +1018,7 @@ cdef inline unsigned char sample_goes_left(
 
     if is_categorical:
         # missing value is encoded in cat_bitset
-        return in_bitset(bin_value, cat_bitset)
+        return in_bitset(cat_bitset, bin_value)
     else:  # numerical
         return (
             (
