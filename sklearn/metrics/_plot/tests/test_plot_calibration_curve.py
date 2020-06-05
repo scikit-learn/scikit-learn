@@ -116,6 +116,8 @@ def test_plot_calibration_curve(pyplot, data_binary, n_bins, strategy,
 
 
 def test_plot_calibration_curve_decision_function(pyplot, data_binary):
+    # Check when `estimator` has no `predict_proba` and `decision_function`
+    # used
     X, y = data_binary
     svc = LinearSVC().fit(X, y)
 
