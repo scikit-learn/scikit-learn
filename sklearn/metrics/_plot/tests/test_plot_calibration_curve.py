@@ -87,6 +87,7 @@ def test_plot_calibration_curve(pyplot, data_binary, n_bins, strategy,
 
     assert_allclose(viz.prob_true, prob_true)
     assert_allclose(viz.prob_pred, prob_pred)
+    assert_allclose(viz.y_prob, y_prob)
 
     assert viz.estimator_name == "LogisticRegression"
 

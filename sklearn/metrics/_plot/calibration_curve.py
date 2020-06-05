@@ -22,6 +22,9 @@ class CalibrationDisplay:
     prob_pred : ndarray
         The mean predicted probability in each bin.
 
+    y_prob : ndarray of shape (n_samples,)
+        Probability estimates for the positive class.
+
     brier_value : int or None
         The Brier score value. If None, the Brier score is not shown.
 
@@ -39,10 +42,11 @@ class CalibrationDisplay:
     figure_ : matplotlib Figure
         Figure containing the curve.
     """
-    def __init__(self, prob_true, prob_pred, *,
+    def __init__(self, prob_true, prob_pred, y_prob, *,
                  brier_value=None, estimator_name=None):
         self.prob_true = prob_true
         self.prob_pred = prob_pred
+        self.y_prob = y_prob
         self.brier_value = brier_value
         self.estimator_name = estimator_name
 
@@ -202,7 +206,7 @@ def plot_calibration_curve(estimator, X, y, *,
         brier_value = None
     name = name if name is not None else estimator.__class__.__name__
     viz = CalibrationDisplay(
-        prob_true=prob_true, prob_pred=prob_pred,
+        prob_true=prob_true, prob_pred=prob_pred, y_prob=y_prob,
         brier_value=brier_value, estimator_name=name
     )
     return viz.plot(ax=ax, name=name, ref_line=ref_line, **kwargs)
