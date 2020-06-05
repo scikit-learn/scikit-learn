@@ -73,7 +73,7 @@ class CalibrationDisplay:
         display : :class:`~sklearn.metrics.CalibrationDisplay`
             Object that stores computed values.
         """
-        check_matplotlib_support("CalifrationDisplay.plot")
+        check_matplotlib_support("CalibrationDisplay.plot")
         import matplotlib.pyplot as plt
 
         if ax is None:
