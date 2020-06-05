@@ -728,7 +728,7 @@ def roc_curve(y_true, y_score, *, pos_label=None, sample_weight=None,
     -------
     fpr : array, shape = (>2,)
         Increasing false positive rates such that element i is the false
-        positive rate of predictions with score >= thresholds[i].
+        positive rate of predictions with score >= `thresholds[i]`.
 
     tpr : array, shape = (>2,)
         Increasing true positive rates such that element `i` is the true
