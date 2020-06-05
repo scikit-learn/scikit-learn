@@ -2433,7 +2433,7 @@ def check_estimators_overwrite_params(name, estimator_orig):
 @ignore_warnings(category=FutureWarning)
 def check_no_attributes_set_in_init(name, estimator_orig):
     """Check setting during init. """
-    estimator = clone(estimator_orig)
+    estimator = _construct_instance(estimator_orig.__class__)
     if hasattr(type(estimator).__init__, "deprecated_original"):
         return
 
