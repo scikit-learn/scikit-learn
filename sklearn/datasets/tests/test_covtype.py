@@ -24,6 +24,7 @@ def test_fetch(fetch_covtype_fxt):
     fetch_func = partial(fetch_covtype_fxt)
     check_return_X_y(data1, fetch_func)
 
+
 def test_fetch_asframe(fetch_covtype_fxt):
     pd = pytest.importorskip('pandas')
     bunch = fetch_covtype_fxt(as_frame=True)
@@ -32,6 +33,7 @@ def test_fetch_asframe(fetch_covtype_fxt):
     assert frame.shape == (581012, 55)
     assert isinstance(bunch.data, pd.DataFrame)
     assert isinstance(bunch.target, pd.Series)
+
 
 def test_pandas_dependency_message(fetch_covtype_fxt,
                                    hide_available_pandas):

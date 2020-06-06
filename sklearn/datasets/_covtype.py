@@ -154,7 +154,8 @@ def fetch_covtype(*, data_home=None, download_if_missing=True,
 
     if as_frame:
         """
-        Column names reference: https://archive.ics.uci.edu/ml/machine-learning-databases/covtype/covtype.info
+        Column names reference:
+        https://archive.ics.uci.edu/ml/machine-learning-databases/covtype/covtype.info
         """
         feat_cols = ["Elevation",
                      "Aspect",
@@ -166,8 +167,8 @@ def fetch_covtype(*, data_home=None, download_if_missing=True,
                      "Hillshade_Noon",
                      "Hillshade_3pm",
                      "Horizontal_Distance_To_Fire_Points"]
-        feat_cols += ['Wilderness_Area_'+str(i) for i in range(1,5)]
-        feat_cols += ['Soil_Type_'+str(i) for i in range(1,41)]
+        feat_cols += ['Wilderness_Area_'+str(i) for i in range(1, 5)]
+        feat_cols += ['Soil_Type_'+str(i) for i in range(1, 41)]
         target_col = ["Cover_Type"]
 
         frame, X, y = _convert_data_dataframe("fetch_covtype", X, y,
