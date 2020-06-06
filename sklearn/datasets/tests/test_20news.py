@@ -3,6 +3,8 @@ or if specifically requested via environment variable
 (e.g. for travis cron job)."""
 from functools import partial
 
+import pytest
+
 import numpy as np
 import scipy.sparse as sp
 
@@ -88,3 +90,14 @@ def test_20news_normalization(fetch_20newsgroups_vectorized_fxt):
 
     assert_allclose_dense_sparse(X_norm, normalize(X))
     assert np.allclose(np.linalg.norm(X_norm.todense(), axis=1), 1)
+
+
+def test_20news_asframe(fetch_20newsgroups_vectorized_fxt):
+    pd = pytest.importorskip('pandas')
+
+    bunch = fetch_20newsgroups_vectorized_fxt(as_frame=True)
+    frame = bunch.frame
+
+    assert frame.shape == (11314, 130108)
+    assert isinstance(bunch.data, pd.DataFrame)
+    assert isinstance(bunch.target, pd.Series)

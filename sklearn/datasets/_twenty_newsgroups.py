@@ -42,6 +42,7 @@ from . import load_files
 from ._base import _pkl_filepath
 from ._base import _fetch_remote
 from ._base import RemoteFileMetadata
+from ._base import _convert_data_dataframe
 from ..feature_extraction.text import CountVectorizer
 from .. import preprocessing
 from ..utils import check_random_state, Bunch
@@ -232,6 +233,7 @@ def fetch_20newsgroups(*, data_home=None, subset='train', categories=None,
 
     (data, target) : tuple if `return_X_y=True`
         .. versionadded:: 0.22
+
     """
 
     data_home = get_data_home(data_home=data_home)
@@ -321,13 +323,14 @@ def fetch_20newsgroups(*, data_home=None, subset='train', categories=None,
 
     if return_X_y:
         return data.data, data.target
+
     return data
 
 
 @_deprecate_positional_args
 def fetch_20newsgroups_vectorized(*, subset="train", remove=(), data_home=None,
                                   download_if_missing=True, return_X_y=False,
-                                  normalize=True):
+                                  normalize=True, as_frame=False):
     """Load the 20 newsgroups dataset and vectorize it into token counts \
 (classification).
 
@@ -391,6 +394,13 @@ def fetch_20newsgroups_vectorized(*, subset="train", remove=(), data_home=None,
 
         .. versionadded:: 0.22
 
+    as_frame : bool, default=False
+        If True, the data is a pandas DataFrame including columns with
+        appropriate dtypes (numeric, string or categorical). The target is
+        a pandas DataFrame or Series depending on the number of target_columns.
+
+        .. versionadded:: 0.24
+
     Returns
     -------
     bunch : :class:`~sklearn.utils.Bunch`
@@ -398,16 +408,25 @@ def fetch_20newsgroups_vectorized(*, subset="train", remove=(), data_home=None,
 
         data: sparse matrix, shape [n_samples, n_features]
             The data matrix to learn.
+            If ``as_frame`` is True, ``data`` is a pandas object.
         target: array, shape [n_samples]
             The target labels.
         target_names: list, length [n_classes]
             The names of target classes.
+            If ``as_frame`` is True, ``target`` is a pandas object.
         DESCR: str
             The full description of the dataset.
 
     (data, target) : tuple if ``return_X_y`` is True
 
         .. versionadded:: 0.20
+
+    frame : pandas DataFrame
+        Only present when `as_frame=True`. DataFrame with ``data`` and
+        ``target``.
+
+        .. versionadded:: 0.24
+
     """
     data_home = get_data_home(data_home=data_home)
     filebase = '20newsgroup_vectorized'
@@ -433,12 +452,14 @@ def fetch_20newsgroups_vectorized(*, subset="train", remove=(), data_home=None,
                                    download_if_missing=download_if_missing)
 
     if os.path.exists(target_file):
-        X_train, X_test = joblib.load(target_file)
+        X_train, X_test, feature_names = joblib.load(target_file)
     else:
         vectorizer = CountVectorizer(dtype=np.int16)
         X_train = vectorizer.fit_transform(data_train.data).tocsr()
         X_test = vectorizer.transform(data_test.data).tocsr()
-        joblib.dump((X_train, X_test), target_file, compress=9)
+        feature_names = vectorizer.get_feature_names()
+
+        joblib.dump((X_train, X_test, feature_names), target_file, compress=9)
 
     # the data is stored as int16 for compactness
     # but normalize needs floats
@@ -467,10 +488,24 @@ def fetch_20newsgroups_vectorized(*, subset="train", remove=(), data_home=None,
     with open(join(module_path, 'descr', 'twenty_newsgroups.rst')) as rst_file:
         fdescr = rst_file.read()
 
-    if return_X_y:
-        return data, target
+    X = data
+    y = target
+    frame = None
+    target_name = ['Category_class',]
 
-    return Bunch(data=data,
-                 target=target,
+    if as_frame:
+        frame, X, y = _convert_data_dataframe("fetch_20newsgroups_vectorized",
+                                              data.toarray(),
+                                              target,
+                                              feature_names,
+                                              target_names=target_name)
+
+    if return_X_y:
+        return X, y
+
+    return Bunch(data=X,
+                 target=y,
+                 frame=frame,
                  target_names=target_names,
+                 feature_names=feature_names,
                  DESCR=fdescr)
