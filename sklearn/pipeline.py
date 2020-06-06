@@ -11,16 +11,20 @@ estimator, as a chain of transforms and estimators.
 
 from collections import defaultdict
 from itertools import islice
+import warnings
 
 import numpy as np
-from joblib import Parallel, delayed
 from scipy import sparse
+from joblib import Parallel, delayed
 
-from .base import TransformerMixin, clone
-from .utils import Bunch, _print_elapsed_time
+from .base import clone, TransformerMixin
 from .utils._estimator_html_repr import _VisualBlock
-from .utils.metaestimators import _BaseComposition, if_delegate_has_method
-from .utils.validation import _deprecate_positional_args, check_memory
+from .utils.metaestimators import if_delegate_has_method
+from .utils import Bunch, _print_elapsed_time
+from .utils.validation import check_memory
+from .utils.validation import _deprecate_positional_args
+
+from .utils.metaestimators import _BaseComposition
 
 __all__ = ['Pipeline', 'FeatureUnion', 'make_pipeline', 'make_union']
 
