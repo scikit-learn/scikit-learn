@@ -22,6 +22,7 @@ from . import get_data_home
 from ._base import _pkl_filepath
 from ._base import _fetch_remote
 from ._base import RemoteFileMetadata
+from ._base import _convert_data_dataframe
 from ._svmlight_format_io import load_svmlight_files
 from ..utils import shuffle as shuffle_
 from ..utils import Bunch
@@ -78,7 +79,7 @@ logger = logging.getLogger(__name__)
 
 @_deprecate_positional_args
 def fetch_rcv1(*, data_home=None, subset='all', download_if_missing=True,
-               random_state=None, shuffle=False, return_X_y=False):
+               random_state=None, shuffle=False, return_X_y=False, as_frame=False):
     """Load the RCV1 multilabel dataset (classification).
 
     Download it if necessary.
@@ -266,11 +267,22 @@ def fetch_rcv1(*, data_home=None, subset='all', download_if_missing=True,
     with open(join(module_path, 'descr', 'rcv1.rst')) as rst_file:
         fdescr = rst_file.read()
 
+    if as_frame:
+        frame, X, y = _convert_data_dataframe("fetch_rcv1",
+                                              X,
+                                              y,
+                                              feature_names,
+                                              target_columns)
+
     if return_X_y:
         return X, y
 
-    return Bunch(data=X, target=y, sample_id=sample_id,
-                 target_names=categories, DESCR=fdescr)
+    return Bunch(data=X, 
+                 target=y, 
+                 frame=frame,
+                 sample_id=sample_id,
+                 target_names=categories, 
+                 DESCR=fdescr)
 
 
 def _inverse_permutation(p):
