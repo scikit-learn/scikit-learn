@@ -1,7 +1,8 @@
 name: "Pull Request Labeler"
-on:
-  schedule:
-    - cron: "*/10 * * * *"
+on: push
+
+  # schedule:
+  #   - cron: "*/10 * * * *"
 
 jobs:
   triage:
