@@ -802,7 +802,7 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         -------
         self
         """
-        X, y = self._validate_data(X, y)
+        X, y = self._validate_data(X, y, accept_sparse=True)
         if self.code_size <= 0:
             raise ValueError("code_size should be greater than 0, got {0}"
                              "".format(self.code_size))
@@ -850,7 +850,7 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
             Predicted multi-class targets.
         """
         check_is_fitted(self)
-        X = check_array(X)
+        X = check_array(X, accept_sparse=True)
         Y = np.array([_predict_binary(e, X) for e in self.estimators_]).T
         pred = euclidean_distances(Y, self.code_book_).argmin(axis=1)
         return self.classes_[pred]
