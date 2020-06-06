@@ -1,25 +1,14 @@
-"""Test the covtype loader.
+"""Test the covtype loader, if the data is available,
+or if specifically requested via environment variable
+(e.g. for travis cron job)."""
 
-Skipped if covtype is not already downloaded to data_home.
-"""
-
-from sklearn.datasets import fetch_covtype
-from sklearn.utils.testing import SkipTest
 from sklearn.datasets.tests.test_common import check_return_X_y
 from functools import partial
 
 
-def fetch(*args, **kwargs):
-    return fetch_covtype(*args, download_if_missing=False, **kwargs)
-
-
-def test_fetch():
-    try:
-        data1 = fetch(shuffle=True, random_state=42)
-    except IOError:
-        raise SkipTest("Covertype dataset can not be loaded.")
-
-    data2 = fetch(shuffle=True, random_state=37)
+def test_fetch(fetch_covtype_fxt):
+    data1 = fetch_covtype_fxt(shuffle=True, random_state=42)
+    data2 = fetch_covtype_fxt(shuffle=True, random_state=37)
 
     X1, X2 = data1['data'], data2['data']
     assert (581012, 54) == X1.shape
@@ -32,5 +21,5 @@ def test_fetch():
     assert (X1.shape[0],) == y2.shape
 
     # test return_X_y option
-    fetch_func = partial(fetch)
+    fetch_func = partial(fetch_covtype_fxt)
     check_return_X_y(data1, fetch_func)

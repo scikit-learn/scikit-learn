@@ -1,18 +1,23 @@
+# Authors: Ashim Bhattarai <ashimb9@gmail.com>
+#          Thomas J Fan <thomasjpfan@gmail.com>
+# License: BSD 3 clause
+
 import numpy as np
 
-from ..base import BaseEstimator, TransformerMixin
+from ._base import _BaseImputer
 from ..utils.validation import FLOAT_DTYPES
-from ..metrics import pairwise_distances
+from ..metrics import pairwise_distances_chunked
 from ..metrics.pairwise import _NAN_METRICS
-from ..neighbors.base import _get_weights
-from ..neighbors.base import _check_weights
+from ..neighbors._base import _get_weights
+from ..neighbors._base import _check_weights
 from ..utils import check_array
 from ..utils import is_scalar_nan
 from ..utils._mask import _get_mask
 from ..utils.validation import check_is_fitted
+from ..utils.validation import _deprecate_positional_args
 
 
-class KNNImputer(TransformerMixin, BaseEstimator):
+class KNNImputer(_BaseImputer):
     """Imputation for completing missing values using k-Nearest Neighbors.
 
     Each sample's missing values are imputed using the mean value from
@@ -27,12 +32,14 @@ class KNNImputer(TransformerMixin, BaseEstimator):
     ----------
     missing_values : number, string, np.nan or None, default=`np.nan`
         The placeholder for the missing values. All occurrences of
-        `missing_values` will be imputed.
+        `missing_values` will be imputed. For pandas' dataframes with
+        nullable integer dtypes with missing values, `missing_values`
+        should be set to `np.nan`, since `pd.NA` will be converted to `np.nan`.
 
     n_neighbors : int, default=5
         Number of neighboring samples to use for imputation.
 
-    weights : str or callable, default='uniform'
+    weights : {'uniform', 'distance'} or callable, default='uniform'
         Weight function used in prediction.  Possible values:
 
         - 'uniform' : uniform weights. All points in each neighborhood are
@@ -44,7 +51,7 @@ class KNNImputer(TransformerMixin, BaseEstimator):
           array of distances, and returns an array of the same shape
           containing the weights.
 
-    metric : str or callable, default='nan_euclidean'
+    metric : {'nan_euclidean'} or callable, default='nan_euclidean'
         Distance metric for searching neighbors. Possible values:
 
         - 'nan_euclidean'
@@ -53,9 +60,23 @@ class KNNImputer(TransformerMixin, BaseEstimator):
           accepts two arrays, X and Y, and a `missing_values` keyword in
           `kwds` and returns a scalar distance value.
 
-    copy : boolean, default=True
+    copy : bool, default=True
         If True, a copy of X will be created. If False, imputation will
         be done in-place whenever possible.
+
+    add_indicator : bool, default=False
+        If True, a :class:`MissingIndicator` transform will stack onto the
+        output of the imputer's transform. This allows a predictive estimator
+        to account for missingness despite imputation. If a feature has no
+        missing values at fit/train time, the feature won't appear on the
+        missing indicator even if there are missing values at transform/test
+        time.
+
+    Attributes
+    ----------
+    indicator_ : :class:`sklearn.impute.MissingIndicator`
+        Indicator used to add binary indicators for missing values.
+        ``None`` if add_indicator is False.
 
     References
     ----------
@@ -66,9 +87,9 @@ class KNNImputer(TransformerMixin, BaseEstimator):
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn.impute import KNNImputer
-    >>> nan = float("NaN")
-    >>> X = [[1, 2, nan], [3, 4, 3], [nan, 6, 5], [8, 8, 7]]
+    >>> X = [[1, 2, np.nan], [3, 4, 3], [np.nan, 6, 5], [8, 8, 7]]
     >>> imputer = KNNImputer(n_neighbors=2)
     >>> imputer.fit_transform(X)
     array([[1. , 2. , 4. ],
@@ -76,11 +97,14 @@ class KNNImputer(TransformerMixin, BaseEstimator):
            [5.5, 6. , 5. ],
            [8. , 8. , 7. ]])
     """
-
-    def __init__(self, missing_values=np.nan, n_neighbors=5,
-                 weights="uniform", metric="nan_euclidean", copy=True):
-
-        self.missing_values = missing_values
+    @_deprecate_positional_args
+    def __init__(self, *, missing_values=np.nan, n_neighbors=5,
+                 weights="uniform", metric="nan_euclidean", copy=True,
+                 add_indicator=False):
+        super().__init__(
+            missing_values=missing_values,
+            add_indicator=add_indicator
+        )
         self.n_neighbors = n_neighbors
         self.weights = weights
         self.metric = metric
@@ -145,7 +169,6 @@ class KNNImputer(TransformerMixin, BaseEstimator):
         -------
         self : object
         """
-
         # Check data integrity and calling arguments
         if not is_scalar_nan(self.missing_values):
             force_all_finite = True
@@ -158,13 +181,14 @@ class KNNImputer(TransformerMixin, BaseEstimator):
             raise ValueError(
                 "Expected n_neighbors > 0. Got {}".format(self.n_neighbors))
 
-        X = check_array(X, accept_sparse=False, dtype=FLOAT_DTYPES,
-                        force_all_finite=force_all_finite, copy=self.copy)
+        X = self._validate_data(X, accept_sparse=False, dtype=FLOAT_DTYPES,
+                                force_all_finite=force_all_finite,
+                                copy=self.copy)
+        super()._fit_indicator(X)
 
         _check_weights(self.weights)
         self._fit_X = X
         self._mask_fit_X = _get_mask(self._fit_X, self.missing_values)
-
         return self
 
     def transform(self, X):
@@ -189,6 +213,7 @@ class KNNImputer(TransformerMixin, BaseEstimator):
             force_all_finite = "allow-nan"
         X = check_array(X, accept_sparse=False, dtype=FLOAT_DTYPES,
                         force_all_finite=force_all_finite, copy=self.copy)
+        X_indicator = super()._transform_indicator(X)
 
         if X.shape[1] != self._fit_X.shape[1]:
             raise ValueError("Incompatible dimension between the fitted "
@@ -196,74 +221,81 @@ class KNNImputer(TransformerMixin, BaseEstimator):
 
         mask = _get_mask(X, self.missing_values)
         mask_fit_X = self._mask_fit_X
+        valid_mask = ~np.all(mask_fit_X, axis=0)
 
-        # Removes columns where the training data is all nan
         if not np.any(mask):
-            valid_mask = ~np.all(mask_fit_X, axis=0)
+            # No missing values in X
+            # Remove columns where the training data is all nan
             return X[:, valid_mask]
 
         row_missing_idx = np.flatnonzero(mask.any(axis=1))
 
-        # Pairwise distances between receivers and fitted samples
-        dist = pairwise_distances(X[row_missing_idx, :], self._fit_X,
-                                  metric=self.metric,
-                                  missing_values=self.missing_values,
-                                  force_all_finite=force_all_finite)
+        non_missing_fix_X = np.logical_not(mask_fit_X)
 
         # Maps from indices from X to indices in dist matrix
         dist_idx_map = np.zeros(X.shape[0], dtype=np.int)
         dist_idx_map[row_missing_idx] = np.arange(row_missing_idx.shape[0])
 
-        non_missing_fix_X = np.logical_not(mask_fit_X)
+        def process_chunk(dist_chunk, start):
+            row_missing_chunk = row_missing_idx[start:start + len(dist_chunk)]
 
-        # Find and impute missing
-        valid_idx = []
-        for col in range(X.shape[1]):
-
-            potential_donors_idx = np.flatnonzero(non_missing_fix_X[:, col])
-
-            # column was all missing during training
-            if len(potential_donors_idx) == 0:
-                continue
-
-            # column has no missing values
-            if not np.any(mask[:, col]):
-                valid_idx.append(col)
-                continue
-
-            valid_idx.append(col)
-
-            receivers_idx = np.flatnonzero(mask[:, col])
-
-            # distances for samples that needed imputation for column
-            dist_subset = (dist[dist_idx_map[receivers_idx]]
-                               [:, potential_donors_idx])
-
-            # receivers with all nan distances impute with mean
-            all_nan_dist_mask = np.isnan(dist_subset).all(axis=1)
-            all_nan_receivers_idx = receivers_idx[all_nan_dist_mask]
-
-            if all_nan_receivers_idx.size:
-                col_mean = np.ma.array(self._fit_X[:, col],
-                                       mask=mask_fit_X[:, col]).mean()
-                X[all_nan_receivers_idx, col] = col_mean
-
-                if len(all_nan_receivers_idx) == len(receivers_idx):
-                    # all receivers imputed with mean
+            # Find and impute missing by column
+            for col in range(X.shape[1]):
+                if not valid_mask[col]:
+                    # column was all missing during training
                     continue
 
-                # receivers with at least one defined distance
-                receivers_idx = receivers_idx[~all_nan_dist_mask]
-                dist_subset = (dist[dist_idx_map[receivers_idx]]
+                col_mask = mask[row_missing_chunk, col]
+                if not np.any(col_mask):
+                    # column has no missing values
+                    continue
+
+                potential_donors_idx, = np.nonzero(non_missing_fix_X[:, col])
+
+                # receivers_idx are indices in X
+                receivers_idx = row_missing_chunk[np.flatnonzero(col_mask)]
+
+                # distances for samples that needed imputation for column
+                dist_subset = (dist_chunk[dist_idx_map[receivers_idx] - start]
+                               [:, potential_donors_idx])
+
+                # receivers with all nan distances impute with mean
+                all_nan_dist_mask = np.isnan(dist_subset).all(axis=1)
+                all_nan_receivers_idx = receivers_idx[all_nan_dist_mask]
+
+                if all_nan_receivers_idx.size:
+                    col_mean = np.ma.array(self._fit_X[:, col],
+                                           mask=mask_fit_X[:, col]).mean()
+                    X[all_nan_receivers_idx, col] = col_mean
+
+                    if len(all_nan_receivers_idx) == len(receivers_idx):
+                        # all receivers imputed with mean
+                        continue
+
+                    # receivers with at least one defined distance
+                    receivers_idx = receivers_idx[~all_nan_dist_mask]
+                    dist_subset = (dist_chunk[dist_idx_map[receivers_idx]
+                                              - start]
                                    [:, potential_donors_idx])
 
-            n_neighbors = min(self.n_neighbors, len(potential_donors_idx))
-            value = self._calc_impute(dist_subset, n_neighbors,
-                                      self._fit_X[potential_donors_idx, col],
-                                      mask_fit_X[potential_donors_idx, col])
-            X[receivers_idx, col] = value
+                n_neighbors = min(self.n_neighbors, len(potential_donors_idx))
+                value = self._calc_impute(
+                    dist_subset,
+                    n_neighbors,
+                    self._fit_X[potential_donors_idx, col],
+                    mask_fit_X[potential_donors_idx, col])
+                X[receivers_idx, col] = value
 
-        return X[:, valid_idx]
+        # process in fixed-memory chunks
+        gen = pairwise_distances_chunked(
+            X[row_missing_idx, :],
+            self._fit_X,
+            metric=self.metric,
+            missing_values=self.missing_values,
+            force_all_finite=force_all_finite,
+            reduce_func=process_chunk)
+        for chunk in gen:
+            # process_chunk modifies X in place. No return value.
+            pass
 
-    def _more_tags(self):
-        return {'allow_nan': is_scalar_nan(self.missing_values)}
+        return super()._concatenate_indicator(X[:, valid_mask], X_indicator)

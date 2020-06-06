@@ -6,6 +6,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+#include "_svm_cython_blas_helpers.h"
 
 struct svm_node
 {
@@ -79,7 +80,7 @@ struct svm_model
 	int *sv_ind;            /* index of support vectors */
 
 	double *rho;		/* constants in decision functions (rho[k*(k-1)/2]) */
-	double *probA;		/* pariwise probability information */
+	double *probA;		/* pairwise probability information */
 	double *probB;
 
 	/* for classification only */
@@ -104,7 +105,7 @@ struct svm_csr_model
         int *sv_ind;            /* index of support vectors */
 
 	double *rho;		/* constants in decision functions (rho[k*(k-1)/2]) */
-	double *probA;		/* pariwise probability information */
+	double *probA;		/* pairwise probability information */
 	double *probB;
 
 	/* for classification only */
@@ -118,8 +119,8 @@ struct svm_csr_model
 };
 
 
-struct svm_model *svm_train(const struct svm_problem *prob, const struct svm_parameter *param, int *status);
-void svm_cross_validation(const struct svm_problem *prob, const struct svm_parameter *param, int nr_fold, double *target);
+struct svm_model *svm_train(const struct svm_problem *prob, const struct svm_parameter *param, int *status, BlasFunctions *blas_functions);
+void svm_cross_validation(const struct svm_problem *prob, const struct svm_parameter *param, int nr_fold, double *target, BlasFunctions *blas_functions);
 
 int svm_save_model(const char *model_file_name, const struct svm_model *model);
 struct svm_model *svm_load_model(const char *model_file_name);
@@ -129,9 +130,9 @@ int svm_get_nr_class(const struct svm_model *model);
 void svm_get_labels(const struct svm_model *model, int *label);
 double svm_get_svr_probability(const struct svm_model *model);
 
-double svm_predict_values(const struct svm_model *model, const struct svm_node *x, double* dec_values);
-double svm_predict(const struct svm_model *model, const struct svm_node *x);
-double svm_predict_probability(const struct svm_model *model, const struct svm_node *x, double* prob_estimates);
+double svm_predict_values(const struct svm_model *model, const struct svm_node *x, double* dec_values, BlasFunctions *blas_functions);
+double svm_predict(const struct svm_model *model, const struct svm_node *x, BlasFunctions *blas_functions);
+double svm_predict_probability(const struct svm_model *model, const struct svm_node *x, double* prob_estimates, BlasFunctions *blas_functions);
 
 void svm_free_model_content(struct svm_model *model_ptr);
 void svm_free_and_destroy_model(struct svm_model **model_ptr_ptr);
@@ -144,17 +145,17 @@ void svm_set_print_string_function(void (*print_func)(const char *));
 
 /* sparse version */
 
-struct svm_csr_model *svm_csr_train(const struct svm_csr_problem *prob, const struct svm_parameter *param, int *status);
-void svm_csr_cross_validation(const struct svm_csr_problem *prob, const struct svm_parameter *param, int nr_fold, double *target);
+struct svm_csr_model *svm_csr_train(const struct svm_csr_problem *prob, const struct svm_parameter *param, int *status, BlasFunctions *blas_functions);
+void svm_csr_cross_validation(const struct svm_csr_problem *prob, const struct svm_parameter *param, int nr_fold, double *target, BlasFunctions *blas_functions);
 
 int svm_csr_get_svm_type(const struct svm_csr_model *model);
 int svm_csr_get_nr_class(const struct svm_csr_model *model);
 void svm_csr_get_labels(const struct svm_csr_model *model, int *label);
 double svm_csr_get_svr_probability(const struct svm_csr_model *model);
 
-double svm_csr_predict_values(const struct svm_csr_model *model, const struct svm_csr_node *x, double* dec_values);
-double svm_csr_predict(const struct svm_csr_model *model, const struct svm_csr_node *x);
-double svm_csr_predict_probability(const struct svm_csr_model *model, const struct svm_csr_node *x, double* prob_estimates);
+double svm_csr_predict_values(const struct svm_csr_model *model, const struct svm_csr_node *x, double* dec_values, BlasFunctions *blas_functions);
+double svm_csr_predict(const struct svm_csr_model *model, const struct svm_csr_node *x, BlasFunctions *blas_functions);
+double svm_csr_predict_probability(const struct svm_csr_model *model, const struct svm_csr_node *x, double* prob_estimates, BlasFunctions *blas_functions);
 
 void svm_csr_free_model_content(struct svm_csr_model *model_ptr);
 void svm_csr_free_and_destroy_model(struct svm_csr_model **model_ptr_ptr);

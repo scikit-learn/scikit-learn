@@ -16,11 +16,11 @@ from sklearn.utils.validation import _num_samples
 from sklearn.utils.validation import check_random_state
 from sklearn.utils import shuffle
 
-from sklearn.utils.testing import assert_allclose
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_array_less
-from sklearn.utils.testing import ignore_warnings
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_array_less
+from sklearn.utils._testing import ignore_warnings
 
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import average_precision_score
@@ -57,7 +57,7 @@ from sklearn.metrics import zero_one_loss
 from sklearn.metrics import ndcg_score
 from sklearn.metrics import dcg_score
 
-from sklearn.metrics.base import _average_binary_score
+from sklearn.metrics._base import _average_binary_score
 
 
 # Note toward developers about metric testing
@@ -115,7 +115,7 @@ CLASSIFICATION_METRICS = {
     "unnormalized_accuracy_score": partial(accuracy_score, normalize=False),
 
     # `confusion_matrix` returns absolute values and hence behaves unnormalized
-    # . Naming it with an unnormalized_ prefix is neccessary for this module to
+    # . Naming it with an unnormalized_ prefix is necessary for this module to
     # skip sample_weight scaling checks which will fail for unnormalized
     # metrics.
     "unnormalized_confusion_matrix": confusion_matrix,
@@ -351,8 +351,6 @@ METRICS_WITH_LABELS = {
     "roc_curve",
     "precision_recall_curve",
 
-    "hamming_loss",
-
     "precision_score", "recall_score", "f1_score", "f2_score", "f0.5_score",
     "jaccard_score",
 
@@ -426,8 +424,8 @@ MULTILABELS_METRICS = {
 
 # Regression metrics with "multioutput-continuous" format support
 MULTIOUTPUT_METRICS = {
-    "mean_absolute_error", "mean_squared_error", "r2_score",
-    "explained_variance_score"
+    "mean_absolute_error", "median_absolute_error", "mean_squared_error",
+    "r2_score", "explained_variance_score"
 }
 
 # Symmetric with respect to their input arguments y_true and y_pred
@@ -900,6 +898,12 @@ def test_multilabel_representation_invariance():
     y1_sparse_indicator = sp.coo_matrix(y1)
     y2_sparse_indicator = sp.coo_matrix(y2)
 
+    y1_list_array_indicator = list(y1)
+    y2_list_array_indicator = list(y2)
+
+    y1_list_list_indicator = [list(a) for a in y1_list_array_indicator]
+    y2_list_list_indicator = [list(a) for a in y2_list_array_indicator]
+
     for name in MULTILABELS_METRICS:
         metric = ALL_METRICS[name]
 
@@ -915,13 +919,24 @@ def test_multilabel_representation_invariance():
                         measure,
                         err_msg="%s failed representation invariance between "
                                 "dense and sparse indicator formats." % name)
+        assert_almost_equal(metric(y1_list_list_indicator,
+                                   y2_list_list_indicator),
+                            measure,
+                            err_msg="%s failed representation invariance  "
+                                    "between dense array and list of list "
+                                    "indicator formats." % name)
+        assert_almost_equal(metric(y1_list_array_indicator,
+                                   y2_list_array_indicator),
+                            measure,
+                            err_msg="%s failed representation invariance  "
+                                    "between dense and list of array "
+                                    "indicator formats." % name)
 
 
 @pytest.mark.parametrize('name', sorted(MULTILABELS_METRICS))
 def test_raise_value_error_multilabel_sequences(name):
     # make sure the multilabel-sequence format raises ValueError
     multilabel_sequences = [
-        [[0, 1]],
         [[1], [2], [0, 1]],
         [(), (2), (0, 1)],
         [[]],
@@ -1153,8 +1168,7 @@ def check_sample_weight_invariance(name, metric, y1, y2):
         assert_allclose(unweighted_score, weighted_score)
         raise ValueError("Unweighted and weighted scores are unexpectedly "
                          "almost equal (%s) and (%s) "
-                         "for %s" % (unweighted_score,
-                                     weighted_score, name))
+                         "for %s" % (unweighted_score, weighted_score, name))
 
     # check that sample_weight can be a list
     weighted_score_list = metric(y1, y2,

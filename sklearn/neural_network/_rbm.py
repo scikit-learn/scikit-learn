@@ -20,7 +20,7 @@ from ..utils import check_random_state
 from ..utils import gen_even_slices
 from ..utils.extmath import safe_sparse_dot
 from ..utils.extmath import log_logistic
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, _deprecate_positional_args
 
 
 class BernoulliRBM(TransformerMixin, BaseEstimator):
@@ -38,28 +38,35 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
 
     Parameters
     ----------
-    n_components : int, optional
+    n_components : int, default=256
         Number of binary hidden units.
 
-    learning_rate : float, optional
+    learning_rate : float, default=0.1
         The learning rate for weight updates. It is *highly* recommended
         to tune this hyper-parameter. Reasonable values are in the
         10**[0., -3.] range.
 
-    batch_size : int, optional
+    batch_size : int, default=10
         Number of examples per minibatch.
 
-    n_iter : int, optional
+    n_iter : int, default=10
         Number of iterations/sweeps over the training dataset to perform
         during training.
 
-    verbose : int, optional
+    verbose : int, default=0
         The verbosity level. The default, zero, means silent mode.
 
-    random_state : integer or RandomState, optional
-        A random number generator instance to define the state of the
-        random permutations generator. If an integer is given, it fixes the
-        seed. Defaults to the global numpy random number generator.
+    random_state : integer or RandomState, default=None
+        Determines random number generation for:
+
+        - Gibbs sampling from visible and hidden layers.
+
+        - Initializing components, sampling from layers during fit.
+
+        - Corrupting the data when scoring samples.
+
+        Pass an int for reproducible results across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     Attributes
     ----------
@@ -99,7 +106,8 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
         Approximations to the Likelihood Gradient. International Conference
         on Machine Learning (ICML) 2008
     """
-    def __init__(self, n_components=256, learning_rate=0.1, batch_size=10,
+    @_deprecate_positional_args
+    def __init__(self, n_components=256, *, learning_rate=0.1, batch_size=10,
                  n_iter=10, verbose=0, random_state=None):
         self.n_components = n_components
         self.learning_rate = learning_rate
@@ -113,12 +121,12 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix} shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The data to be transformed.
 
         Returns
         -------
-        h : array, shape (n_samples, n_components)
+        h : ndarray of shape (n_samples, n_components)
             Latent representations of the data.
         """
         check_is_fitted(self)
@@ -131,12 +139,12 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        v : array-like, shape (n_samples, n_features)
+        v : ndarray of shape (n_samples, n_features)
             Values of the visible layer.
 
         Returns
         -------
-        h : array-like, shape (n_samples, n_components)
+        h : ndarray of shape (n_samples, n_components)
             Corresponding mean field values for the hidden layer.
         """
         p = safe_sparse_dot(v, self.components_.T)
@@ -148,7 +156,7 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        v : array-like, shape (n_samples, n_features)
+        v : ndarray of shape (n_samples, n_features)
             Values of the visible layer to sample from.
 
         rng : RandomState
@@ -156,7 +164,7 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        h : array-like, shape (n_samples, n_components)
+        h : ndarray of shape (n_samples, n_components)
             Values of the hidden layer.
         """
         p = self._mean_hiddens(v)
@@ -167,7 +175,7 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        h : array-like, shape (n_samples, n_components)
+        h : ndarray of shape (n_samples, n_components)
             Values of the hidden layer to sample from.
 
         rng : RandomState
@@ -175,7 +183,7 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        v : array-like, shape (n_samples, n_features)
+        v : ndarray of shape (n_samples, n_features)
             Values of the visible layer.
         """
         p = np.dot(h, self.components_)
@@ -188,12 +196,12 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        v : array-like, shape (n_samples, n_features)
+        v : ndarray of shape (n_samples, n_features)
             Values of the visible layer.
 
         Returns
         -------
-        free_energy : array-like, shape (n_samples,)
+        free_energy : ndarray of shape (n_samples,)
             The value of the free energy.
         """
         return (- safe_sparse_dot(v, self.intercept_visible_)
@@ -205,12 +213,12 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        v : array-like, shape (n_samples, n_features)
+        v : ndarray of shape (n_samples, n_features)
             Values of the visible layer to start from.
 
         Returns
         -------
-        v_new : array-like, shape (n_samples, n_features)
+        v_new : ndarray of shape (n_samples, n_features)
             Values of the visible layer after one Gibbs step.
         """
         check_is_fitted(self)
@@ -227,7 +235,7 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : ndarray of shape (n_samples, n_features)
             Training data.
 
         Returns
@@ -263,7 +271,7 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        v_pos : array-like, shape (n_samples, n_features)
+        v_pos : ndarray of shape (n_samples, n_features)
             The data to use for training.
 
         rng : RandomState
@@ -290,12 +298,12 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix} shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Values of the visible layer. Must be all-boolean (not checked).
 
         Returns
         -------
-        pseudo_likelihood : array-like, shape (n_samples,)
+        pseudo_likelihood : ndarray of shape (n_samples,)
             Value of the pseudo-likelihood (proxy for likelihood).
 
         Notes
@@ -328,7 +336,7 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix} shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training data.
 
         Returns
@@ -336,7 +344,7 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
         self : BernoulliRBM
             The fitted model.
         """
-        X = check_array(X, accept_sparse='csr', dtype=np.float64)
+        X = self._validate_data(X, accept_sparse='csr', dtype=np.float64)
         n_samples = X.shape[0]
         rng = check_random_state(self.random_state)
 
@@ -349,7 +357,7 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
 
         n_batches = int(np.ceil(float(n_samples) / self.batch_size))
         batch_slices = list(gen_even_slices(n_batches * self.batch_size,
-                                            n_batches, n_samples))
+                                            n_batches, n_samples=n_samples))
         verbose = self.verbose
         begin = time.time()
         for iteration in range(1, self.n_iter + 1):
@@ -365,3 +373,11 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
                 begin = end
 
         return self
+
+    def _more_tags(self):
+        return {
+            '_xfail_checks': {
+                'check_methods_subset_invariance':
+                'fails for the decision_function method'
+            }
+        }

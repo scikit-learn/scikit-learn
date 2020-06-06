@@ -24,8 +24,8 @@ ROC curve for a fitted support vector machine:
 
     svc_disp = plot_roc_curve(svc, X_test, y_test)
 
-.. figure:: auto_examples/images/sphx_glr_plot_roc_curve_visualization_api_001.png
-    :target: auto_examples/plot_roc_curve_visualization_api.html
+.. figure:: auto_examples/miscellaneous/images/sphx_glr_plot_roc_curve_visualization_api_001.png
+    :target: auto_examples/miscellaneous/plot_roc_curve_visualization_api.html
     :align: center
     :scale: 75%
 
@@ -48,8 +48,8 @@ method of the `Display` object.
     rfc_disp = plot_roc_curve(rfc, X_test, y_test, ax=ax, alpha=0.8)
     svc_disp.plot(ax=ax, alpha=0.8)
 
-.. figure:: auto_examples/images/sphx_glr_plot_roc_curve_visualization_api_002.png
-    :target: auto_examples/plot_roc_curve_visualization_api.html
+.. figure:: auto_examples/miscellaneous/images/sphx_glr_plot_roc_curve_visualization_api_002.png
+    :target: auto_examples/miscellaneous/plot_roc_curve_visualization_api.html
     :align: center
     :scale: 75%
 
@@ -58,8 +58,9 @@ values of the curves.
 
 .. topic:: Examples:
 
-    * :ref:`sphx_glr_auto_examples_plot_roc_curve_visualization_api.py`
-    * :ref:`sphx_glr_auto_examples_plot_partial_dependence_visualization_api.py`
+    * :ref:`sphx_glr_auto_examples_miscellaneous_plot_roc_curve_visualization_api.py`
+    * :ref:`sphx_glr_auto_examples_miscellaneous_plot_partial_dependence_visualization_api.py`
+    * :ref:`sphx_glr_auto_examples_miscellaneous_plot_display_object_visualization.py`
 
 Available Plotting Utilities
 ============================
@@ -72,6 +73,8 @@ Functions
 .. autosummary::
 
    inspection.plot_partial_dependence
+   metrics.plot_confusion_matrix
+   metrics.plot_precision_recall_curve
    metrics.plot_roc_curve
 
 
@@ -83,4 +86,6 @@ Display Objects
 .. autosummary::
 
    inspection.PartialDependenceDisplay
+   metrics.ConfusionMatrixDisplay
+   metrics.PrecisionRecallDisplay
    metrics.RocCurveDisplay

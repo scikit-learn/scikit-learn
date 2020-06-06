@@ -1,8 +1,10 @@
 """Testing for Gaussian process regression """
 
 # Author: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
+# Modified by: Pete Green <p.l.green@liverpool.ac.uk>
 # License: BSD 3 clause
 
+import sys
 import numpy as np
 
 from scipy.optimize import approx_fprime
@@ -13,11 +15,13 @@ from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels \
     import RBF, ConstantKernel as C, WhiteKernel
 from sklearn.gaussian_process.kernels import DotProduct
+from sklearn.gaussian_process.tests._mini_sequence_kernel import MiniSeqKernel
 
-from sklearn.utils.testing \
+from sklearn.utils._testing \
     import (assert_array_less,
             assert_almost_equal, assert_raise_message,
-            assert_array_almost_equal, assert_array_equal)
+            assert_array_almost_equal, assert_array_equal,
+            assert_allclose)
 
 
 def f(x):
@@ -45,6 +49,9 @@ non_fixed_kernels = [kernel for kernel in kernels
 
 @pytest.mark.parametrize('kernel', kernels)
 def test_gpr_interpolation(kernel):
+    if sys.maxsize <= 2 ** 32 and sys.version_info[:2] == (3, 6):
+        pytest.xfail("This test may fail on 32bit Py3.6")
+
     # Test the interpolating property for different kernels.
     gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
     y_pred, y_cov = gpr.predict(X, return_cov=True)
@@ -53,12 +60,29 @@ def test_gpr_interpolation(kernel):
     assert_almost_equal(np.diag(y_cov), 0.)
 
 
+def test_gpr_interpolation_structured():
+    # Test the interpolating property for different kernels.
+    kernel = MiniSeqKernel(baseline_similarity_bounds='fixed')
+    X = ['A', 'B', 'C']
+    y = np.array([1, 2, 3])
+    gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
+    y_pred, y_cov = gpr.predict(X, return_cov=True)
+
+    assert_almost_equal(kernel(X, eval_gradient=True)[1].ravel(),
+                        (1 - np.eye(len(X))).ravel())
+    assert_almost_equal(y_pred, y)
+    assert_almost_equal(np.diag(y_cov), 0.)
+
+
 @pytest.mark.parametrize('kernel', non_fixed_kernels)
 def test_lml_improving(kernel):
+    if sys.maxsize <= 2 ** 32 and sys.version_info[:2] == (3, 6):
+        pytest.xfail("This test may fail on 32bit Py3.6")
+
     # Test that hyperparameter-tuning improves log-marginal likelihood.
     gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
     assert (gpr.log_marginal_likelihood(gpr.kernel_.theta) >
-                   gpr.log_marginal_likelihood(kernel.theta))
+            gpr.log_marginal_likelihood(kernel.theta))
 
 
 @pytest.mark.parametrize('kernel', kernels)
@@ -66,7 +90,7 @@ def test_lml_precomputed(kernel):
     # Test that lml of optimized kernel is stored correctly.
     gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
     assert (gpr.log_marginal_likelihood(gpr.kernel_.theta) ==
-                 gpr.log_marginal_likelihood())
+            gpr.log_marginal_likelihood())
 
 
 @pytest.mark.parametrize('kernel', kernels)
@@ -160,6 +184,9 @@ def test_no_optimizer():
 
 @pytest.mark.parametrize('kernel', kernels)
 def test_predict_cov_vs_std(kernel):
+    if sys.maxsize <= 2 ** 32 and sys.version_info[:2] == (3, 6):
+        pytest.xfail("This test may fail on 32bit Py3.6")
+
     # Test that predicted std.-dev. is consistent with cov's diagonal.
     gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
     y_mean, y_cov = gpr.predict(X2, return_cov=True)
@@ -179,7 +206,7 @@ def test_anisotropic_kernel():
     kernel = RBF([1.0, 1.0])
     gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
     assert (np.exp(gpr.kernel_.theta[1]) >
-                   np.exp(gpr.kernel_.theta[0]) * 5)
+            np.exp(gpr.kernel_.theta[0]) * 5)
 
 
 def test_random_starts():
@@ -207,31 +234,101 @@ def test_random_starts():
 
 @pytest.mark.parametrize('kernel', kernels)
 def test_y_normalization(kernel):
-    # Test normalization of the target values in GP
+    """
+    Test normalization of the target values in GP
 
-    # Fitting non-normalizing GP on normalized y and fitting normalizing GP
-    # on unnormalized y should yield identical results
-    y_mean = y.mean(0)
-    y_norm = y - y_mean
+    Fitting non-normalizing GP on normalized y and fitting normalizing GP
+    on unnormalized y should yield identical results. Note that, here,
+    'normalized y' refers to y that has been made zero mean and unit
+    variance.
+
+    """
+
+    y_mean = np.mean(y)
+    y_std = np.std(y)
+    y_norm = (y - y_mean) / y_std
 
     # Fit non-normalizing GP on normalized y
     gpr = GaussianProcessRegressor(kernel=kernel)
     gpr.fit(X, y_norm)
+
     # Fit normalizing GP on unnormalized y
     gpr_norm = GaussianProcessRegressor(kernel=kernel, normalize_y=True)
     gpr_norm.fit(X, y)
 
     # Compare predicted mean, std-devs and covariances
     y_pred, y_pred_std = gpr.predict(X2, return_std=True)
-    y_pred = y_mean + y_pred
+    y_pred = y_pred * y_std + y_mean
+    y_pred_std = y_pred_std * y_std
     y_pred_norm, y_pred_std_norm = gpr_norm.predict(X2, return_std=True)
 
     assert_almost_equal(y_pred, y_pred_norm)
     assert_almost_equal(y_pred_std, y_pred_std_norm)
 
     _, y_cov = gpr.predict(X2, return_cov=True)
+    y_cov = y_cov * y_std**2
     _, y_cov_norm = gpr_norm.predict(X2, return_cov=True)
+
     assert_almost_equal(y_cov, y_cov_norm)
+
+
+def test_large_variance_y():
+    """
+    Here we test that, when noramlize_y=True, our GP can produce a
+    sensible fit to training data whose variance is significantly
+    larger than unity. This test was made in response to issue #15612.
+
+    GP predictions are verified against predictions that were made
+    using GPy which, here, is treated as the 'gold standard'. Note that we
+    only investigate the RBF kernel here, as that is what was used in the
+    GPy implementation.
+
+    The following code can be used to recreate the GPy data:
+
+    --------------------------------------------------------------------------
+    import GPy
+
+    kernel_gpy = GPy.kern.RBF(input_dim=1, lengthscale=1.)
+    gpy = GPy.models.GPRegression(X, np.vstack(y_large), kernel_gpy)
+    gpy.optimize()
+    y_pred_gpy, y_var_gpy = gpy.predict(X2)
+    y_pred_std_gpy = np.sqrt(y_var_gpy)
+    --------------------------------------------------------------------------
+    """
+
+    # Here we utilise a larger variance version of the training data
+    y_large = 10 * y
+
+    # Standard GP with normalize_y=True
+    RBF_params = {'length_scale': 1.0}
+    kernel = RBF(**RBF_params)
+    gpr = GaussianProcessRegressor(kernel=kernel, normalize_y=True)
+    gpr.fit(X, y_large)
+    y_pred, y_pred_std = gpr.predict(X2, return_std=True)
+
+    # 'Gold standard' mean predictions from GPy
+    y_pred_gpy = np.array([15.16918303,
+                           -27.98707845,
+                           -39.31636019,
+                           14.52605515,
+                           69.18503589])
+
+    # 'Gold standard' std predictions from GPy
+    y_pred_std_gpy = np.array([7.78860962,
+                               3.83179178,
+                               0.63149951,
+                               0.52745188,
+                               0.86170042])
+
+    # Based on numerical experiments, it's reasonable to expect our
+    # GP's mean predictions to get within 7% of predictions of those
+    # made by GPy.
+    assert_allclose(y_pred, y_pred_gpy, rtol=0.07, atol=0)
+
+    # Based on numerical experiments, it's reasonable to expect our
+    # GP's std predictions to get within 15% of predictions of those
+    # made by GPy.
+    assert_allclose(y_pred_std, y_pred_std_gpy, rtol=0.15, atol=0)
 
 
 def test_y_multioutput():
@@ -297,7 +394,7 @@ def test_custom_optimizer(kernel):
     gpr.fit(X, y)
     # Checks that optimizer improved marginal likelihood
     assert (gpr.log_marginal_likelihood(gpr.kernel_.theta) >
-                   gpr.log_marginal_likelihood(gpr.kernel.theta))
+            gpr.log_marginal_likelihood(gpr.kernel.theta))
 
 
 def test_gpr_correct_error_message():
