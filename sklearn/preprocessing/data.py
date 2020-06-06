@@ -135,15 +135,15 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
 
     .. warning:: Risk of data leak
 
-    Do not use :func:`~sklearn.preprocessing.scale` unless you know
-    what you are doing. A common mistake is to apply it to the entire data
-    *before* splitting into training and test sets. This will bias the model
-    evaluation because information would have leaked from the test set to
-    the training set.
-    In general, we recommend using
-    :class:`~sklearn.preprocessing.StandardScaler` within a
-    :ref:`Pipeline <pipeline>` in order to prevent most risks of data
-    leaking: `pipe = make_pipeline(StandardScaler(), LogisticRegression)`.
+        Do not use :func:`~sklearn.preprocessing.scale` unless you know what
+        you are doing. A common mistake is to apply it to the entire data
+        *before* splitting into training and test sets. This will bias the
+        model evaluation because information would have leaked from the test
+        set to the training set.
+        In general, we recommend using
+        :class:`~sklearn.preprocessing.StandardScaler` within a
+        :ref:`Pipeline <pipeline>` in order to prevent most risks of data
+        leaking: `pipe = make_pipeline(StandardScaler(), LogisticRegression)`.
 
     See also
     --------
@@ -1287,15 +1287,15 @@ def robust_scale(X, axis=0, with_centering=True, with_scaling=True,
 
     .. warning:: Risk of data leak
 
-    Do not use :func:`~sklearn.preprocessing.robust_scale` unless you know
-    what you are doing. A common mistake is to apply it to the entire data
-    *before* splitting into training and test sets. This will bias the model
-    evaluation because information would have leaked from the test set to
-    the training set.
-    In general, we recommend using
-    :class:`~sklearn.preprocessing.StandardScaler` within a
-    :ref:`Pipeline <pipeline>` in order to prevent most risks of data
-    leaking: `pipe = make_pipeline(StandardScaler(), LogisticRegression)`.
+        Do not use :func:`~sklearn.preprocessing.robust_scale` unless you know
+        what you are doing. A common mistake is to apply it to the entire data
+        *before* splitting into training and test sets. This will bias the
+        model evaluation because information would have leaked from the test
+        set to the training set.
+        In general, we recommend using
+        :class:`~sklearn.preprocessing.StandardScaler` within a
+        :ref:`Pipeline <pipeline>` in order to prevent most risks of data
+        leaking: `pipe = make_pipeline(StandardScaler(), LogisticRegression)`.
 
     See also
     --------
