@@ -57,22 +57,22 @@ def test_asframe(fetch_kddcup99_fxt):
     assert data.target.shape == (494021,)
     assert data.frame.shape == (494021, 41+1)
 
-    data = fetch_kddcup99_fxt('SA',as_frame=True)
+    data = fetch_kddcup99_fxt('SA', as_frame=True)
     assert data.data.shape == (100655, 41)
     assert data.target.shape == (100655,)
     assert data.frame.shape == (100655, 41+1)
 
-    data = fetch_kddcup99_fxt('SF',as_frame=True)
+    data = fetch_kddcup99_fxt('SF', as_frame=True)
     assert data.data.shape == (73237, 4)
     assert data.target.shape == (73237,)
     assert data.frame.shape == (73237, 4+1)
 
-    data = fetch_kddcup99_fxt('http',as_frame=True)
+    data = fetch_kddcup99_fxt('http', as_frame=True)
     assert data.data.shape == (58725, 3)
     assert data.target.shape == (58725,)
     assert data.frame.shape == (58725, 3+1)
 
-    data = fetch_kddcup99_fxt('smtp',as_frame=True)
+    data = fetch_kddcup99_fxt('smtp', as_frame=True)
     assert data.data.shape == (9571, 3)
     assert data.target.shape == (9571,)
     assert data.frame.shape == (9571, 3+1)
