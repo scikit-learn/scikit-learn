@@ -160,7 +160,8 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
         :term:`decision_function` or :term:`predict_proba`.
 
     n_jobs : int or None, optional (default=None)
-        The number of jobs to use for the computation.
+        The number of jobs to use for the computation, where each job computes a classifier in parallel.
+
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
@@ -504,7 +505,8 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         :term:`decision_function` or :term:`predict_proba`.
 
     n_jobs : int or None, optional (default=None)
-        The number of jobs to use for the computation.
+        The number of jobs to use for the computation, where each job computes a classifier in parallel.
+
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
@@ -731,7 +733,8 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         See :term:`Glossary <random_state>`.
 
     n_jobs : int or None, optional (default=None)
-        The number of jobs to use for the computation.
+        The number of jobs to use for the computation, where each job computes a classifier in parallel based on provided code_size parameter.
+
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
