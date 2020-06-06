@@ -73,7 +73,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         or a non-fitted estimator. The estimator must have either a
         ``feature_importances_`` or ``coef_`` attribute after fitting.
 
-    threshold : string, float, default=None
+    threshold : string or float, default=None
         The threshold value to use for feature selection. Features whose
         importance is greater or equal are kept while the others are
         discarded. If "median" (resp. "mean"), then the ``threshold`` value is
@@ -198,7 +198,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         X : array-like of shape (n_samples, n_features)
             The training input samples.
 
-        y : array-like, shape (n_samples,), default=None
+        y : array-like of shape (n_samples,), default=None
             The target values (integers that correspond to classes in
             classification, real numbers in regression).
 
@@ -242,7 +242,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         X : array-like of shape (n_samples, n_features)
             The training input samples.
 
-        y : array-like, shape (n_samples,), default=None
+        y : array-like of shape (n_samples,), default=None
             The target values (integers that correspond to classes in
             classification, real numbers in regression).
 
