@@ -157,15 +157,15 @@ def fetch_covtype(*, data_home=None, download_if_missing=True,
         Column names reference: https://archive.ics.uci.edu/ml/machine-learning-databases/covtype/covtype.info
         """
         feat_cols = ["Elevation",
-                    "Aspect",
-                    "Slope",
-                    "Horizontal_Distance_To_Hydrology",
-                    "Vertical_Distance_To_Hydrology",
-                    "Horizontal_Distance_To_Roadways",
-                    "Hillshade_9am",
-                    "Hillshade_Noon",
-                    "Hillshade_3pm",
-                    "Horizontal_Distance_To_Fire_Points"]
+                     "Aspect",
+                     "Slope",
+                     "Horizontal_Distance_To_Hydrology",
+                     "Vertical_Distance_To_Hydrology",
+                     "Horizontal_Distance_To_Roadways",
+                     "Hillshade_9am",
+                     "Hillshade_Noon",
+                     "Hillshade_3pm",
+                     "Horizontal_Distance_To_Fire_Points"]
         feat_cols += ['Wilderness_Area_'+str(i) for i in range(1,5)]
         feat_cols += ['Soil_Type_'+str(i) for i in range(1,41)]
         target_col = ["Cover_Type"]
