@@ -136,7 +136,6 @@ def test_plot_calibration_curve_decision_function(pyplot, data_binary):
     # cannot fail thanks to pyplot fixture
     import matplotlib as mpl  # noqa
     assert isinstance(viz.line_, mpl.lines.Line2D)
-    assert viz.line_.get_alpha() == 0.8
     assert isinstance(viz.ax_, mpl.axes.Axes)
     assert isinstance(viz.figure_, mpl.figure.Figure)
 
