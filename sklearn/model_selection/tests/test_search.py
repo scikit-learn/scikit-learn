@@ -77,6 +77,7 @@ from sklearn.model_selection.tests.common import OneTimeSplitter
 # to test hyperparameter search on user-defined classifiers.
 class MockClassifier:
     """Dummy classifier to test the parameter search algorithms"""
+
     def __init__(self, foo_param=0):
         self.foo_param = foo_param
 
@@ -161,8 +162,8 @@ def test_parameter_grid():
         # tuple + chain transforms {"a": 1, "b": 2} to ("a", 1, "b", 2)
         points = set(tuple(chain(*(sorted(p.items())))) for p in grid2)
         assert (points ==
-                     set(("bar", x, "foo", y)
-                         for x, y in product(params2["bar"], params2["foo"])))
+                set(("bar", x, "foo", y)
+                    for x, y in product(params2["bar"], params2["foo"])))
     assert_grid_iter_equals_getitem(grid2)
 
     # Special case: empty grid (useful to get default estimator settings)
@@ -691,8 +692,8 @@ def test_gridsearch_nd():
     # Pass X as list in GridSearchCV
     X_4d = np.arange(10 * 5 * 3 * 2).reshape(10, 5, 3, 2)
     y_3d = np.arange(10 * 7 * 11).reshape(10, 7, 11)
-    check_X = lambda x: x.shape[1:] == (5, 3, 2)
-    check_y = lambda x: x.shape[1:] == (7, 11)
+    def check_X(x): return x.shape[1:] == (5, 3, 2)
+    def check_y(x): return x.shape[1:] == (7, 11)
     clf = CheckingClassifier(
         check_X=check_X, check_y=check_y, methods_to_check=["fit"],
     )
@@ -1099,16 +1100,14 @@ def compare_refit_methods_when_refit_with_acc(search_multi, search_acc, refit):
 
 
 @pytest.mark.parametrize('search_cv',
-[
-    RandomizedSearchCV(estimator=DecisionTreeClassifier(),
-                       param_distributions={'max_depth': [5, 10]}),
-    GridSearchCV(estimator=DecisionTreeClassifier(),
-                 param_grid={'max_depth': [5, 10]})
-])
+                         [RandomizedSearchCV(estimator=DecisionTreeClassifier(),
+                                             param_distributions={'max_depth': [5, 10]}),
+                          GridSearchCV(estimator=DecisionTreeClassifier(),
+                                       param_grid={'max_depth': [5, 10]})
+                          ])
 def test_search_cv_score_samples_error(search_cv):
     X, y = make_blobs(n_samples=100, n_features=4, random_state=42)
-    clf = search_cv
-    clf.fit(X, y)
+    search_cv.fit(X, y)
 
     # Make sure to error out when underlying estimator does not implement
     # the method `score_samples`
@@ -1116,17 +1115,18 @@ def test_search_cv_score_samples_error(search_cv):
                "'score_samples'")
 
     with pytest.raises(AttributeError, match=err_msg):
-        clf.score_samples(X)
+        search_cv.score_samples(X)
 
 
 @pytest.mark.parametrize('search_cv',
-[RandomizedSearchCV(estimator=LocalOutlierFactor(novelty=True),
-                        param_distributions={'n_neighbors': [5, 10]},
-                        scoring="precision"),
-GridSearchCV(estimator=LocalOutlierFactor(novelty=True),
-                        param_grid={'n_neighbors': [5, 10]},
-                        scoring="precision")
-])
+                         [RandomizedSearchCV(estimator=LocalOutlierFactor(novelty=True),
+                                             param_distributions={
+                                                 'n_neighbors': [5, 10]},
+                                             scoring="precision"),
+                          GridSearchCV(estimator=LocalOutlierFactor(novelty=True),
+                                       param_grid={'n_neighbors': [5, 10]},
+                                       scoring="precision")
+                          ])
 def test_search_cv_score_samples_method(search_cv):
     # Set parameters
     rng = np.random.RandomState(42)
@@ -1136,9 +1136,8 @@ def test_search_cv_score_samples_method(search_cv):
     n_inliers = n_samples - n_outliers
 
     # Create dataset
-    blobs_params = dict(random_state=0, n_samples=n_inliers, n_features=2)
-    X = make_blobs(centers=[[0, 0], [0, 0]], cluster_std=0.5,
-                   **blobs_params)[0]
+    X = make_blobs(n_samples=n_inliers, n_features=2, centers=[[0, 0], [0, 0]],
+                   cluster_std=0.5, random_state=0)[0]
     # Add some noisy points
     X = np.concatenate([X, rng.uniform(low=-6, high=6,
                                        size=(n_outliers, 2))], axis=0)
@@ -1147,22 +1146,15 @@ def test_search_cv_score_samples_method(search_cv):
     y_true = np.array([1] * n_samples)
     y_true[-n_outliers:] = [-1] * n_outliers
 
-    clf = search_cv
-
     # Fit on data
-    clf.fit(X, y_true)
-
-    # Define estimator with the best params obtained in
-    # the *SearchCV
-    lof = LocalOutlierFactor(novelty=True,
-                             n_neighbors=clf.best_params_["n_neighbors"])
+    search_cv.fit(X, y_true)
 
     # Fit the estimator
-    lof.fit(X)
+    lof = search_cv.best_estimator_
 
     # Verify that the stand alone estimator yields the same results
     # as the ones obtained with *SearchCV
-    assert_allclose(clf.score_samples(X), lof.score_samples(X))
+    assert_allclose(search_cv.score_samples(X), lof.score_samples(X))
 
 
 def test_search_cv_results_rank_tie_breaking():
