@@ -25,8 +25,8 @@ def _random_choice_csc(n_samples, classes, class_probability=None,
 
     class_probability : list of size n_outputs of arrays of size (n_classes,),\
         default=None. 
-        Class distribution of each column. If None the
-        uniform distribution is assumed.
+        Class distribution of each column. If None uniform distribution is 
+        assumed.
 
     random_state : int, RandomState instance, default=None
         Controls the randomness of the sampled classes.
