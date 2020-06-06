@@ -1098,17 +1098,16 @@ def compare_refit_methods_when_refit_with_acc(search_multi, search_acc, refit):
         assert getattr(search_multi, key) == getattr(search_acc, key)
 
 
-@pytest.mark.filterwarnings("ignore:The parameter 'iid' is deprecated")  # 0.24
-@pytest.mark.parametrize('search_cv', [RandomizedSearchCV, GridSearchCV])
+@pytest.mark.parametrize('search_cv',
+[
+    RandomizedSearchCV(estimator=DecisionTreeClassifier(),
+                       param_distributions={'max_depth': [5, 10]}),
+    GridSearchCV(estimator=DecisionTreeClassifier(),
+                 param_grid={'max_depth': [5, 10]})
+])
 def test_search_cv_score_samples_error(search_cv):
-    if search_cv == RandomizedSearchCV:
-        clf = search_cv(estimator=DecisionTreeClassifier(),
-                        param_distributions={'max_depth': [5, 10]})
-    else:
-        clf = search_cv(estimator=DecisionTreeClassifier(),
-                        param_grid={'max_depth': [5, 10]})
-
     X, y = make_blobs(n_samples=100, n_features=4, random_state=42)
+    clf = search_cv
     clf.fit(X, y)
 
     # Make sure to error out when underlying estimator does not implement
@@ -1120,8 +1119,14 @@ def test_search_cv_score_samples_error(search_cv):
         clf.score_samples(X)
 
 
-@pytest.mark.filterwarnings("ignore:The parameter 'iid' is deprecated")  # 0.24
-@pytest.mark.parametrize('search_cv', [RandomizedSearchCV, GridSearchCV])
+@pytest.mark.parametrize('search_cv',
+[RandomizedSearchCV(estimator=LocalOutlierFactor(novelty=True),
+                        param_distributions={'n_neighbors': [5, 10]},
+                        scoring="precision"),
+GridSearchCV(estimator=LocalOutlierFactor(novelty=True),
+                        param_grid={'n_neighbors': [5, 10]},
+                        scoring="precision")
+])
 def test_search_cv_score_samples_method(search_cv):
     # Set parameters
     rng = np.random.RandomState(42)
@@ -1142,14 +1147,8 @@ def test_search_cv_score_samples_method(search_cv):
     y_true = np.array([1] * n_samples)
     y_true[-n_outliers:] = [-1] * n_outliers
 
-    if search_cv == RandomizedSearchCV:
-        clf = search_cv(estimator=LocalOutlierFactor(novelty=True),
-                        param_distributions={'n_neighbors': [5, 10]},
-                        scoring="precision")
-    else:
-        clf = search_cv(estimator=LocalOutlierFactor(novelty=True),
-                        param_grid={'n_neighbors': [5, 10]},
-                        scoring="precision")
+    clf = search_cv
+
     # Fit on data
     clf.fit(X, y_true)
 
