@@ -82,7 +82,7 @@ def johnson_lindenstrauss_min_dim(n_samples, *, eps=0.1):
         Number of samples. If an array is given, it will compute
         a safe number of components array-wise.
 
-    eps : float or numpy array of float in ]0,1[, default = 0.1
+    eps : float or numpy array of float in ]0,1[, default=0.1
         Maximum distortion rate as defined by the Johnson-Lindenstrauss lemma.
         If an array is given, it will compute a safe number of components
         array-wise.
@@ -424,7 +424,7 @@ class GaussianRandomProjection(BaseRandomProjection):
 
     Parameters
     ----------
-    n_components : int or 'auto', default = 'auto'
+    n_components : int or 'auto', default='auto'
         Dimensionality of the target projection space.
 
         n_components can be automatically adjusted according to the
