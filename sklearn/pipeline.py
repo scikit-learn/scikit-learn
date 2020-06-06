@@ -1020,7 +1020,6 @@ def make_union(*transformers,
                verbose=False):
     """
     Construct a FeatureUnion from the given transformers.
-    Making changes to make_union.
 
     This is a shorthand for the FeatureUnion constructor; it does not require,
     and does not permit, naming the transformers. Instead, they will be given
