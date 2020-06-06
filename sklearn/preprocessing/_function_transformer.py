@@ -39,7 +39,7 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
         kwargs forwarded. If inverse_func is None, then inverse_func
         will be the identity function.
 
-    validate : boolean, default=False
+    validate : bool, default=False
         Indicate that the input X array should be checked before calling
         ``func``. The possibilities are:
 
@@ -51,12 +51,12 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
         .. versionchanged:: 0.22
            The default of ``validate`` changed from True to False.
 
-    accept_sparse : boolean, default=False
+    accept_sparse : bool, default=False
         Indicate that func accepts a sparse matrix as input. If validate is
         False, this has no effect. Otherwise, if accept_sparse is false,
         sparse matrix inputs will cause an exception to be raised.
 
-    check_inverse : boolean, default=True
+    check_inverse : bool, default=True
        Whether to check that or ``func`` followed by ``inverse_func`` leads to
        the original inputs. It can be used for a sanity check, raising a
        warning when the condition is not fulfilled.
