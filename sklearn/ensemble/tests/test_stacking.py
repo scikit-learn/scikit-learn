@@ -50,10 +50,10 @@ from sklearn.exceptions import NotFittedError
 X_diabetes, y_diabetes = load_diabetes(return_X_y=True)
 X_iris, y_iris = load_iris(return_X_y=True)
 np.random.seed(42)
-X_dummy_classification = np.random.choice([0, 1], (20, 2))
-y_dummy_classification = np.prod(X_dummy_classification, axis=1)
-X_dummy_regression = np.random.rand(20, 2)
-y_dummy_regression = np.sum(X_dummy_regression, axis=1)
+X_classification = np.random.rand(100, 2)
+y_classification = np.random.choice([0, 1], size=(100, 1), p=[0.2, 0.8])
+X_regression = np.random.rand(100, 2)
+y_regression = np.random.choice([0, 0.7], size=(100, 1), p=[0.2, 0.8])
 
 
 @pytest.mark.parametrize(
@@ -500,67 +500,53 @@ def test_stacking_cv_influence(stacker, X, y):
                         stacker_cv_5.final_estimator_.coef_)
 
 
-class ProdClassifier(BaseEstimator, ClassifierMixin):
-    def __init__(self, idx=None, is_base_estimator=True):
-        self.idx = idx
-        self.n_features_in_ = 0
-        self.is_base_estimator = is_base_estimator
+class NoFitRegressor(DummyRegressor):
+    def __init__(self, X, y, constant=0):
+        super().__init__(strategy="constant", constant=constant)
+        super().fit(X, y)
 
-    def fit(self, X, y=None):
-        if self.is_base_estimator:
-            raise AttributeError("fit should not be called when using as base estimator!")
-        else:
-            return self
-
-    def predict(self, X):
-        if not self.idx:
-            return np.prod(X, axis=1)
-        else:
-            return np.prod(X[:, self.idx], axis=1)
+    def fit(self, X, y, sample_weight=None):
+        raise AttributeError("fit is not allowed by this estimator!")
 
 
-class SumRegressor(BaseEstimator, RegressorMixin):
-    def __init__(self, idx=None, is_base_estimator=True):
-        self.idx = idx
-        self.n_features_in_ = 0
-        self.is_base_estimator = is_base_estimator
+class NoFitClassifier(DummyClassifier):
+    def __init__(self, X, y):
+        super().__init__(strategy="most_frequent")
+        super().fit(X, y)
 
-    def fit(self, X, y=None):
-        if self.is_base_estimator:
-            raise AttributeError("fit should not be called when using as base estimator!")
-        else:
-            return self
-
-    def predict(self, X):
-        if not self.idx:
-            return np.sum(X, axis=1)
-        else:
-            return np.sum(X[:, self.idx], axis=1)
+    def fit(self, X, y, sample_weight=None):
+        raise AttributeError("fit is not allowed by this estimator!")
 
 
 @pytest.mark.parametrize(
-    "stacker, X, y",
+    "stacker, X, y, acceptable_score",
     [(StackingClassifier(
-        estimators=[('d0', ProdClassifier([0])),
-                    ('d1', ProdClassifier([1]))],
+        estimators=[
+            ('d0', NoFitClassifier(X=X_classification, y=y_classification)),
+            ('d1', NoFitClassifier(X=X_classification, y=y_classification))
+        ],
         cv="prefit",
-        final_estimator=ProdClassifier([0, 1], False)),
-      X_dummy_classification, y_dummy_classification),
+        final_estimator=LogisticRegression()),
+      X_classification, y_classification, 0.8),
      (StackingRegressor(
-         estimators=[('d0', SumRegressor([0])),
-                     ('d1', SumRegressor([1]))],
+         estimators=[
+             ('d0', NoFitRegressor(X=X_regression, y=y_regression)),
+             ('d1', NoFitRegressor(X=X_regression, y=y_regression, constant=1))
+         ],
          cv="prefit",
-         final_estimator=SumRegressor([0, 1], False)),
-      X_dummy_regression, y_dummy_regression)],
+         final_estimator=LinearRegression()),
+      X_regression, y_regression, 0)],
     ids=['StackingClassifier', 'StackingRegressor']
 )
-def test_stacking_prefit(stacker, X, y):
+def test_stacking_prefit(stacker, X, y, acceptable_score):
+    # check if fit is not called when using prefit models
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, random_state=42
     )
     stacker.fit(X_train, y_train)
-    y_pred = stacker.predict(X_test)
-    np.testing.assert_array_almost_equal(y_test, y_pred)
+    assert np.isclose(
+        stacker.score(X_test, y_test), acceptable_score, atol=0.05
+    )
 
 
 @pytest.mark.parametrize(
@@ -569,13 +555,15 @@ def test_stacking_prefit(stacker, X, y):
         estimators=[('lr', LogisticRegression()),
                     ('svm', SVC(max_iter=5e4))],
         cv="prefit"),
-     X_dummy_classification, y_dummy_classification),
+     X_classification, y_classification),
      (StackingRegressor(
          estimators=[('lr', LinearRegression()),
                      ('svm', LinearSVR(random_state=42))],
          cv="prefit"),
-      X_dummy_regression, y_dummy_regression)]
+      X_regression, y_regression)]
 )
 def test_stacking_prefit_error(stacker, X, y):
+    # check that NotFittedError is raised
+    # if base estimators are not fitted when cv="prefit"
     with pytest.raises(NotFittedError):
         stacker.fit(X, y)
