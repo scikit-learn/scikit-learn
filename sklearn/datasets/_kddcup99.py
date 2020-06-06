@@ -18,6 +18,7 @@ import numpy as np
 import joblib
 
 from ._base import _fetch_remote
+from ._base import _convert_data_dataframe
 from . import get_data_home
 from ._base import RemoteFileMetadata
 from ..utils import Bunch
@@ -48,7 +49,8 @@ logger = logging.getLogger(__name__)
 @_deprecate_positional_args
 def fetch_kddcup99(*, subset=None, data_home=None, shuffle=False,
                    random_state=None,
-                   percent10=True, download_if_missing=True, return_X_y=False):
+                   percent10=True, download_if_missing=True, return_X_y=False,
+                   as_frame=False):
     """Load the kddcup99 dataset (classification).
 
     Download it if necessary.
@@ -114,13 +116,15 @@ def fetch_kddcup99(*, subset=None, data_home=None, shuffle=False,
         .. versionadded:: 0.20
     """
     data_home = get_data_home(data_home=data_home)
-    kddcup99 = _fetch_brute_kddcup99(data_home=data_home,
+    kddcup99 = _fetch_brute_kddcup99(
+                                     data_home=data_home,
                                      percent10=percent10,
-                                     download_if_missing=download_if_missing)
+                                     download_if_missing=download_if_missing,
+                                     as_frame=as_frame)
 
     data = kddcup99.data
     target = kddcup99.target
-
+    frame = kddcup99.frame if as_frame else None
     if subset == 'SA':
         s = target == b'normal.'
         t = np.logical_not(s)
@@ -174,11 +178,14 @@ def fetch_kddcup99(*, subset=None, data_home=None, shuffle=False,
     if return_X_y:
         return data, target
 
+    if as_frame:
+        pass
     return Bunch(data=data, target=target, DESCR=fdescr)
 
 
 def _fetch_brute_kddcup99(data_home=None,
-                          download_if_missing=True, percent10=True):
+                          download_if_missing=True, percent10=True,
+                          as_frame=False):
 
     """Load the kddcup99 dataset, downloading it if necessary.
 
@@ -224,6 +231,8 @@ def _fetch_brute_kddcup99(data_home=None,
     targets_path = join(kddcup_dir, "targets")
     available = exists(samples_path)
 
+    feat_cols = []
+    target_col = []
     if download_if_missing and not available:
         _mkdirp(kddcup_dir)
         logger.info("Downloading %s" % archive.url)
@@ -270,6 +279,9 @@ def _fetch_brute_kddcup99(data_home=None,
               ('dst_host_rerror_rate', float),
               ('dst_host_srv_rerror_rate', float),
               ('labels', 'S16')]
+        feat_cols = [c[0] for c in dt]
+        target_col = feat_cols[-1]
+        feat_cols = feat_cols[:-1]
         DT = np.dtype(dt)
         logger.debug("extracting archive")
         archive_path = join(kddcup_dir, archive.filename)
@@ -304,6 +316,17 @@ def _fetch_brute_kddcup99(data_home=None,
         X = joblib.load(samples_path)
         y = joblib.load(targets_path)
 
+    if as_frame:
+        frame, X, y = _convert_data_dataframe("_fetch_brute_kddcup99",
+                                              data,
+                                              target,
+                                              feature_cols,
+                                              target_col)
+        return Bunch(data=X,
+                    target=y,
+                    frame=frame,
+                    target_names=target_col,
+                    feature_names=feature_cols)
     return Bunch(data=X, target=y)
 
 
