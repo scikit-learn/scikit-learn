@@ -271,7 +271,7 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
 
     Parameters
     ----------
-    sample_steps : int
+    sample_steps : int, default=2
         Gives the number of (complex) sampling points.
     sample_interval : float, default=None
         Sampling interval. Must be specified when sample_steps not in {1,2,3}.
@@ -490,13 +490,13 @@ class Nystroem(TransformerMixin, BaseEstimator):
 
     Attributes
     ----------
-    components_ : array-like of shape (n_components, n_features)
+    components_ : ndarray of shape (n_components, n_features)
         Subset of training points used to construct the feature map.
 
-    component_indices_ : array-like of shape (n_components)
+    component_indices_ : ndarray of shape (n_components)
         Indices of ``components_`` in the training set.
 
-    normalization_ : array-like of shape (n_components, n_components)
+    normalization_ : ndarray of shape (n_components, n_components)
         Normalization matrix needed for embedding.
         Square root of the kernel matrix on ``components_``.
 
@@ -601,7 +601,7 @@ class Nystroem(TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        X_transformed : array-like of shape (n_samples, n_components)
+        X_transformed : ndarray of shape (n_samples, n_components)
             Transformed data.
         """
         check_is_fitted(self)
