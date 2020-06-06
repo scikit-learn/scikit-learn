@@ -664,7 +664,7 @@ def _name_estimators(estimators):
     return list(zip(names, estimators))
 
 
-def make_pipeline(*steps, **kwargs):
+def make_pipeline(*steps, memory=None, verbose=False):
     """Construct a Pipeline from the given estimators.
 
     This is a shorthand for the Pipeline constructor; it does not require, and
@@ -706,11 +706,6 @@ def make_pipeline(*steps, **kwargs):
     -------
     p : Pipeline
     """
-    memory = kwargs.pop('memory', None)
-    verbose = kwargs.pop('verbose', False)
-    if kwargs:
-        raise TypeError('Unknown keyword arguments: "{}"'
-                        .format(list(kwargs.keys())[0]))
     return Pipeline(_name_estimators(steps), memory=memory, verbose=verbose)
 
 
