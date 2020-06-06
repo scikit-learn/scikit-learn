@@ -126,7 +126,6 @@ def test_sample_weight():
 
 def test_parallel_execution():
     """Test parallel calibration"""
-    n_samples = 100
     X, y = make_classification(random_state=42)
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
 
