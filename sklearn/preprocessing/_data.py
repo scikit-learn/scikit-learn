@@ -1104,7 +1104,7 @@ def maxabs_scale(X, *, axis=0, copy=True):
         In general, we recommend using
         :class:`~sklearn.preprocessing.MaxAbsScaler` within a
         :ref:`Pipeline <pipeline>` in order to prevent most risks of data
-        leaking: `pipe = make_pipeline(MaxAbsScaler(), LogisticRegression)`.
+        leaking: `pipe = make_pipeline(MaxAbsScaler(), LogisticRegression())`.
 
     See also
     --------
