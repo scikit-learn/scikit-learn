@@ -686,9 +686,9 @@ def haversine_distances(X, Y=None):
 
     Parameters
     ----------
-    X : array_like, shape (n_samples_1, 2)
+    X : array-like, shape (n_samples_1, 2)
 
-    Y : array_like, shape (n_samples_2, 2), optional
+    Y : array-like, shape (n_samples_2, 2), optional
 
     Returns
     -------
@@ -731,10 +731,10 @@ def manhattan_distances(X, Y=None, *, sum_over_features=True):
 
     Parameters
     ----------
-    X : array_like
+    X : array-like
         An array with shape (n_samples_X, n_features).
 
-    Y : array_like, optional
+    Y : array-like, optional
         An array with shape (n_samples_Y, n_features).
 
     sum_over_features : bool, default=True
@@ -811,10 +811,10 @@ def cosine_distances(X, Y=None):
 
     Parameters
     ----------
-    X : array_like, sparse matrix
+    X : array-like, sparse matrix
         with shape (n_samples_X, n_features).
 
-    Y : array_like, sparse matrix (optional)
+    Y : array-like, sparse matrix (optional)
         with shape (n_samples_Y, n_features).
 
     Returns
