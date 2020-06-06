@@ -6,7 +6,7 @@ import numpy as np
 from scipy import sparse
 
 from sklearn.base import BaseEstimator
-from sklearn.model_selection import LeaveOneOut
+from sklearn.model_selection import LeaveOneOut, train_test_split
 
 from sklearn.utils._testing import (assert_array_almost_equal,
                                    assert_almost_equal,
@@ -127,10 +127,8 @@ def test_sample_weight():
 def test_parallel_execution():
     """Test parallel calibration"""
     n_samples = 100
-    X, y = make_classification(n_samples=2 * n_samples, n_features=6,
-                               random_state=42)
-    X_train, y_train = X[:n_samples], y[:n_samples]
-    X_test = X[n_samples:]
+    X, y = make_classification(random_state=42)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
 
     for method in ['sigmoid', 'isotonic']:
         base_estimator = LinearSVC(random_state=42)
