@@ -39,7 +39,7 @@ class RBFSampler(TransformerMixin, BaseEstimator):
         Number of Monte Carlo samples per original feature.
         Equals the dimensionality of the computed feature space.
 
-    random_state : int, RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Pseudo-random number generator to control the generation of the random
         weights and random offset when fitting the training data.
         Pass an int for reproducible output across multiple function calls.
