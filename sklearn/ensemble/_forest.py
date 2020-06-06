@@ -880,6 +880,7 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
 
         return averaged_predictions
 
+
 class RandomForestClassifier(ForestClassifier):
     """
     A random forest classifier.
@@ -1004,7 +1005,10 @@ class RandomForestClassifier(ForestClassifier):
     n_jobs : int, default=None
         The number of jobs to run in parallel. :meth:`fit`, :meth:`predict`,
         :meth:`decision_path` and :meth:`apply` are all parallelized over the
-        trees. ``None`` means 1 unless in a :obj:`joblib.parallel_backend`
+        trees. This works by creating n_jobs sets of trees and computing them
+        in parallel.
+
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend`
         context. ``-1`` means using all processors. See :term:`Glossary
         <n_jobs>` for more details.
 
@@ -1326,7 +1330,10 @@ class RandomForestRegressor(ForestRegressor):
     n_jobs : int, default=None
         The number of jobs to run in parallel. :meth:`fit`, :meth:`predict`,
         :meth:`decision_path` and :meth:`apply` are all parallelized over the
-        trees. ``None`` means 1 unless in a :obj:`joblib.parallel_backend`
+        trees. This works by creating n_jobs sets of trees and computing them
+        in parallel.
+
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend`
         context. ``-1`` means using all processors. See :term:`Glossary
         <n_jobs>` for more details.
 
@@ -1608,7 +1615,10 @@ class ExtraTreesClassifier(ForestClassifier):
     n_jobs : int, default=None
         The number of jobs to run in parallel. :meth:`fit`, :meth:`predict`,
         :meth:`decision_path` and :meth:`apply` are all parallelized over the
-        trees. ``None`` means 1 unless in a :obj:`joblib.parallel_backend`
+        trees. This works by creating n_jobs sets of trees and computing them
+        in parallel.
+
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend`
         context. ``-1`` means using all processors. See :term:`Glossary
         <n_jobs>` for more details.
 
@@ -1925,7 +1935,10 @@ class ExtraTreesRegressor(ForestRegressor):
     n_jobs : int, default=None
         The number of jobs to run in parallel. :meth:`fit`, :meth:`predict`,
         :meth:`decision_path` and :meth:`apply` are all parallelized over the
-        trees. ``None`` means 1 unless in a :obj:`joblib.parallel_backend`
+        trees. This works by creating n_jobs sets of trees and computing them
+        in parallel.
+
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend`
         context. ``-1`` means using all processors. See :term:`Glossary
         <n_jobs>` for more details.
 
@@ -2181,7 +2194,10 @@ class RandomTreesEmbedding(BaseForest):
     n_jobs : int, default=None
         The number of jobs to run in parallel. :meth:`fit`, :meth:`transform`,
         :meth:`decision_path` and :meth:`apply` are all parallelized over the
-        trees. ``None`` means 1 unless in a :obj:`joblib.parallel_backend`
+        trees. This works by creating n_jobs sets of trees and computing them
+        in parallel.
+
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend`
         context. ``-1`` means using all processors. See :term:`Glossary
         <n_jobs>` for more details.
 
