@@ -47,6 +47,59 @@ from ._tree import _build_pruned_tree_ccp
 from ._tree import ccp_pruning_path
 from . import _tree, _splitter, _criterion
 
+
+
+def _get_n_samples_bootstrap(n_samples, max_samples):
+    """
+    Get the number of samples in a bootstrap sample.
+
+    Parameters
+    ----------
+    n_samples : int
+        Number of samples in the dataset.
+    max_samples : int or float
+        The maximum number of samples to draw from the total available:
+            - if float, this indicates a fraction of the total and should be
+              the interval `(0, 1)`;
+            - if int, this indicates the exact number of samples;
+            - if None, this indicates the total number of samples.
+
+    Returns
+    -------
+    n_samples_bootstrap : int
+        The total number of samples to draw for the bootstrap sample.
+    """
+    if max_samples is None:
+        return n_samples
+
+    if isinstance(max_samples, numbers.Integral):
+        if not (1 <= max_samples <= n_samples):
+            msg = "`max_samples` must be in range 1 to {} but got value {}"
+            raise ValueError(msg.format(n_samples, max_samples))
+        return max_samples
+
+    if isinstance(max_samples, numbers.Real):
+        if not (0 < max_samples < 1):
+            msg = "`max_samples` must be in range (0, 1) but got value {}"
+            raise ValueError(msg.format(max_samples))
+        return int(round(n_samples * max_samples))
+
+    msg = "`max_samples` should be int or float, but got type '{}'"
+    raise TypeError(msg.format(type(max_samples)))
+
+
+def _generate_sample_indices(random_state, n_samples, n_samples_bootstrap):
+    """
+    Private function used to _parallel_build_trees function."""
+
+    random_instance = check_random_state(random_state)
+    sample_indices = random_instance.randint(0, n_samples, n_samples_bootstrap)
+
+    return sample_indices
+
+
+
+
 __all__ = ["DecisionTreeClassifier",
            "DecisionTreeRegressor",
            "ExtraTreeClassifier",
@@ -362,8 +415,13 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                                            max_leaf_nodes,
                                            self.min_impurity_decrease,
                                            min_impurity_split)
-
-        builder.build(self.tree_, X, y, sample_weight, X_idx_sorted)
+        proportion = 0.99 
+        boot_size = _get_n_samples_bootstrap(X.shape[0], proportion)
+        ind = _generate_sample_indices(self.random_state, X.shape[0], boot_size)
+        if X_idx_sorted is not None:
+            builder.build(self.tree_, X[ind], y[ind], sample_weight, X_idx_sorted[idx])
+        else:
+            builder.build(self.tree_, X[ind], y[ind], sample_weight, X_idx_sorted)
 
         if self.n_outputs_ == 1 and is_classifier(self):
             self.n_classes_ = self.n_classes_[0]
