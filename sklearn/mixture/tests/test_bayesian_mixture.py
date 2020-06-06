@@ -316,7 +316,8 @@ def test_compare_covar_type():
     rng = np.random.RandomState(0)
     rand_data = RandomData(rng, scale=7)
     X = rand_data.X['full']
-    n_components = rand_data.n_components
+    n_samples, n_components = rand_data.n_samples, rand_data.n_components
+    sample_weight = np.ones(n_samples)
 
     for prior_type in PRIOR_TYPE:
         # Computation of the full_covariance
@@ -325,7 +326,7 @@ def test_compare_covar_type():
             n_components=2 * n_components, covariance_type='full',
             max_iter=1, random_state=0, tol=1e-7)
         bgmm._check_initial_parameters(X)
-        bgmm._initialize_parameters(X, np.random.RandomState(0))
+        bgmm._initialize_parameters(X, sample_weight, np.random.RandomState(0))
         full_covariances = (
             bgmm.covariances_ *
             bgmm.degrees_of_freedom_[:, np.newaxis, np.newaxis])
@@ -336,7 +337,7 @@ def test_compare_covar_type():
             n_components=2 * n_components, covariance_type='tied',
             max_iter=1, random_state=0, tol=1e-7)
         bgmm._check_initial_parameters(X)
-        bgmm._initialize_parameters(X, np.random.RandomState(0))
+        bgmm._initialize_parameters(X, sample_weight, np.random.RandomState(0))
 
         tied_covariance = bgmm.covariances_ * bgmm.degrees_of_freedom_
         assert_almost_equal(tied_covariance, np.mean(full_covariances, 0))
@@ -347,7 +348,7 @@ def test_compare_covar_type():
             n_components=2 * n_components, covariance_type='diag',
             max_iter=1, random_state=0, tol=1e-7)
         bgmm._check_initial_parameters(X)
-        bgmm._initialize_parameters(X, np.random.RandomState(0))
+        bgmm._initialize_parameters(X, sample_weight, np.random.RandomState(0))
 
         diag_covariances = (bgmm.covariances_ *
                             bgmm.degrees_of_freedom_[:, np.newaxis])
@@ -361,7 +362,7 @@ def test_compare_covar_type():
             n_components=2 * n_components, covariance_type='spherical',
             max_iter=1, random_state=0, tol=1e-7)
         bgmm._check_initial_parameters(X)
-        bgmm._initialize_parameters(X, np.random.RandomState(0))
+        bgmm._initialize_parameters(X, sample_weight, np.random.RandomState(0))
 
         spherical_covariances = bgmm.covariances_ * bgmm.degrees_of_freedom_
         assert_almost_equal(
