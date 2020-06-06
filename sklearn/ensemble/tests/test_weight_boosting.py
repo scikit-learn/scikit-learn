@@ -28,7 +28,6 @@ from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils import shuffle
 from sklearn.utils._mocking import NoSampleWeightWrapper
 from sklearn import datasets
-from sklearn import config_context
 
 
 # Common random state
@@ -579,10 +578,6 @@ def test_adaboost_negative_weight_error(model, X, y):
     sample_weight = np.ones_like(y)
     sample_weight[-1] = -10
 
-    with config_context(assume_positive_sample_weights=False):
-        err_msg = "sample_weight cannot contain negative weight"
-        with pytest.raises(ValueError, match=err_msg):
-            model.fit(X, y, sample_weight=sample_weight)
     err_msg = "There are negative values in sample_weight"
     with pytest.raises(ValueError, match=err_msg):
         model.fit(X, y, sample_weight=sample_weight)

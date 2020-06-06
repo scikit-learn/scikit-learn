@@ -161,7 +161,7 @@ class KernelDensity(BaseEstimator):
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X, DTYPE)
             if sample_weight.min() <= 0:
-                raise ValueError("sample_weight must have positive values")
+                raise ValueError("There are negative values in sample_weight")
 
         kwargs = self.metric_params
         if kwargs is None:

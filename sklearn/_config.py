@@ -69,6 +69,10 @@ def set_config(assume_finite=None, working_memory=None,
 
         .. versionadded:: 0.23
 
+    assume_positive_sample_weights : bool, optional
+        If in function _check_sample_weight parameter force_positive is set
+        to None, then it's value is set to assume_positive_sample_weights.
+
     See Also
     --------
     config_context: Context manager for global scikit-learn configuration

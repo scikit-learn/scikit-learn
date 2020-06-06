@@ -1275,11 +1275,11 @@ def _check_sample_weight(sample_weight, X, dtype=None, force_positive=None):
        is be allocated.  If `dtype` is not one of `float32`, `float64`,
        `None`, the output will be of dtype `float64`.
 
-    force_positive : {True, False or None}
+    force_positive : bool, default=None
         If True, 'sample_weight' will raise error on negative values.
         If False, 'sample_weight' being negative won't raise an error.
-        If None, assumes value of assume_positive_sample_weights,
-        which is initially set to True.
+        If None, assumes value of assume_positive_sample_weights
+        from the global config which is initially set to True.
 
     Returns
     -------
@@ -1290,9 +1290,6 @@ def _check_sample_weight(sample_weight, X, dtype=None, force_positive=None):
 
     if force_positive is None:
         force_positive = _get_config()['assume_positive_sample_weights']
-        if force_positive is False:
-            warnings.warn("assume_positive_sample_weights=False - negative "
-                          "values in sample_weight won't raise an error.")
 
     if dtype is not None and dtype not in [np.float32, np.float64]:
         dtype = np.float64

@@ -12,8 +12,6 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.exceptions import NotFittedError
 import joblib
 
-from sklearn._config import config_context
-
 
 # XXX Duplicated in test_neighbors_tree, test_kde
 def compute_kernel_slow(Y, X, kernel, h):
@@ -214,11 +212,6 @@ def test_sample_weight_invalid():
     data = np.reshape([1., 2., 3.], (-1, 1))
 
     sample_weight = [0.1, -0.2, 0.3]
-
-    with config_context(assume_positive_sample_weights=False):
-        expected_err = "sample_weight must have positive values"
-        with pytest.raises(ValueError, match=expected_err):
-            kde.fit(data, sample_weight=sample_weight)
 
     expected_err = "There are negative values in sample_weight"
     with pytest.raises(ValueError, match=expected_err):
