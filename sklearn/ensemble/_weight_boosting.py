@@ -5,14 +5,14 @@ regression.
 
 The module structure is the following:
 
-- The ``BaseWeightBoosting`` base class implements a common ``fit`` method
+- The :class:`~sklearn.ensemble.BaseWeightBoosting` base class implements a common ``fit`` method
   for all the estimators in the module. Regression and classification
   only differ from each other in the loss function that is optimized.
 
-- ``AdaBoostClassifier`` implements adaptive boosting (AdaBoost-SAMME) for
+- :class:`~sklearn.ensemble.AdaBoostClassifier` implements adaptive boosting (AdaBoost-SAMME) for
   classification problems.
 
-- ``AdaBoostRegressor`` implements adaptive boosting (AdaBoost.R2) for
+- :class:`~sklearn.ensemble.AdaBoostRegressor` implements adaptive boosting (AdaBoost.R2) for
   regression problems.
 """
 
@@ -303,7 +303,8 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         The base estimator from which the boosted ensemble is built.
         Support for sample weighting is required, as well as proper
         ``classes_`` and ``n_classes_`` attributes. If ``None``, then
-        the base estimator is ``DecisionTreeClassifier(max_depth=1)``.
+        the base estimator is :class:`~sklearn.tree.DecisionTreeClassifier` initialized with
+        `max_depth=1`.
 
     n_estimators : int, default=50
         The maximum number of estimators at which boosting is terminated.
@@ -359,19 +360,19 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
 
     See Also
     --------
-    AdaBoostRegressor
+    :class:`~sklearn.ensemble.AdaBoostRegressor`
         An AdaBoost regressor that begins by fitting a regressor on the
         original dataset and then fits additional copies of the regressor
         on the same dataset but where the weights of instances are
         adjusted according to the error of the current prediction.
 
-    GradientBoostingClassifier
+    :class:`~sklearn.ensemble.GradientBoostingClassifier`
         GB builds an additive model in a forward stage-wise fashion. Regression
         trees are fit on the negative gradient of the binomial or multinomial
         deviance loss function. Binary classification is a special case where
         only a single regression tree is induced.
 
-    sklearn.tree.DecisionTreeClassifier
+    :class:`~sklearn.tree.DecisionTreeClassifier`
         A non-parametric supervised learning method used for classification.
         Creates a model that predicts the value of a target variable by
         learning simple decision rules inferred from the data features.
