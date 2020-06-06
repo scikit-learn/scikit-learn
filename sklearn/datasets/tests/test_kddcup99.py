@@ -5,7 +5,7 @@ or if specifically requested via environment variable
 Only 'percent10' mode is tested, as the full data
 is too big to use in unit-testing.
 """
-
+import pytest
 from sklearn.datasets.tests.test_common import check_return_X_y
 from functools import partial
 
@@ -44,3 +44,35 @@ def test_shuffle(fetch_kddcup99_fxt):
     dataset = fetch_kddcup99_fxt(random_state=0, subset='SA', shuffle=True,
                                  percent10=True)
     assert(any(dataset.target[-100:] == b'normal.'))
+
+
+def test_asframe(fetch_kddcup99_fxt):
+    pd = pytest.importorskip('pandas')
+
+    data = fetch_kddcup99_fxt(as_frame=True)
+    assert hasattr(data, 'frame') is True
+    assert isinstance(data.frame, pd.DataFrame)
+
+    assert data.data.shape == (494021, 41)
+    assert data.target.shape == (494021,)
+    assert data.frame.shape == (494021, 41+1)
+
+    data = fetch_kddcup99_fxt('SA',as_frame=True)
+    assert data.data.shape == (100655, 41)
+    assert data.target.shape == (100655,)
+    assert data.frame.shape == (100655, 41+1)
+
+    data = fetch_kddcup99_fxt('SF',as_frame=True)
+    assert data.data.shape == (73237, 4)
+    assert data.target.shape == (73237,)
+    assert data.frame.shape == (73237, 4+1)
+
+    data = fetch_kddcup99_fxt('http',as_frame=True)
+    assert data.data.shape == (58725, 3)
+    assert data.target.shape == (58725,)
+    assert data.frame.shape == (58725, 3+1)
+
+    data = fetch_kddcup99_fxt('smtp',as_frame=True)
+    assert data.data.shape == (9571, 3)
+    assert data.target.shape == (9571,)
+    assert data.frame.shape == (9571, 3+1)

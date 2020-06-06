@@ -116,15 +116,14 @@ def fetch_kddcup99(*, subset=None, data_home=None, shuffle=False,
         .. versionadded:: 0.20
     """
     data_home = get_data_home(data_home=data_home)
-    kddcup99 = _fetch_brute_kddcup99(
+    kddcup99, feat_cols, target_col = _fetch_brute_kddcup99(
                                      data_home=data_home,
                                      percent10=percent10,
-                                     download_if_missing=download_if_missing,
-                                     as_frame=as_frame)
+                                     download_if_missing=download_if_missing)
 
     data = kddcup99.data
     target = kddcup99.target
-    frame = kddcup99.frame if as_frame else None
+
     if subset == 'SA':
         s = target == b'normal.'
         t = np.logical_not(s)
@@ -147,6 +146,7 @@ def fetch_kddcup99(*, subset=None, data_home=None, shuffle=False,
         # select all samples with positive logged_in attribute:
         s = data[:, 11] == 1
         data = np.c_[data[s, :11], data[s, 12:]]
+        feat_cols = feat_cols[:11] + feat_cols[12:]
         target = target[s]
 
         data[:, 0] = np.log((data[:, 0] + 0.1).astype(float, copy=False))
@@ -158,15 +158,18 @@ def fetch_kddcup99(*, subset=None, data_home=None, shuffle=False,
             data = data[s]
             target = target[s]
             data = np.c_[data[:, 0], data[:, 4], data[:, 5]]
+            feat_cols = [feat_cols[0], feat_cols[4], feat_cols[5]]
 
         if subset == 'smtp':
             s = data[:, 2] == b'smtp'
             data = data[s]
             target = target[s]
             data = np.c_[data[:, 0], data[:, 4], data[:, 5]]
+            feat_cols = [feat_cols[0], feat_cols[4], feat_cols[5]]
 
         if subset == 'SF':
             data = np.c_[data[:, 0], data[:, 2], data[:, 4], data[:, 5]]
+            feat_cols = [feat_cols[0], feat_cols[2], feat_cols[4], feat_cols[5]]
 
     if shuffle:
         data, target = shuffle_method(data, target, random_state=random_state)
@@ -179,13 +182,22 @@ def fetch_kddcup99(*, subset=None, data_home=None, shuffle=False,
         return data, target
 
     if as_frame:
-        pass
+        frame, X, y = _convert_data_dataframe("fetch_kddcup99",
+                                              data,
+                                              target,
+                                              feat_cols,
+                                              target_col)
+        return  Bunch(data=X,
+                      target=y,
+                      frame=frame,
+                      target_names=target_col,
+                      feature_names=feat_cols,
+                      DESCR=fdescr)
     return Bunch(data=data, target=target, DESCR=fdescr)
 
 
 def _fetch_brute_kddcup99(data_home=None,
-                          download_if_missing=True, percent10=True,
-                          as_frame=False):
+                          download_if_missing=True, percent10=True):
 
     """Load the kddcup99 dataset, downloading it if necessary.
 
@@ -231,57 +243,55 @@ def _fetch_brute_kddcup99(data_home=None,
     targets_path = join(kddcup_dir, "targets")
     available = exists(samples_path)
 
-    feat_cols = []
-    target_col = []
+    dt = [('duration', int),
+            ('protocol_type', 'S4'),
+            ('service', 'S11'),
+            ('flag', 'S6'),
+            ('src_bytes', int),
+            ('dst_bytes', int),
+            ('land', int),
+            ('wrong_fragment', int),
+            ('urgent', int),
+            ('hot', int),
+            ('num_failed_logins', int),
+            ('logged_in', int),
+            ('num_compromised', int),
+            ('root_shell', int),
+            ('su_attempted', int),
+            ('num_root', int),
+            ('num_file_creations', int),
+            ('num_shells', int),
+            ('num_access_files', int),
+            ('num_outbound_cmds', int),
+            ('is_host_login', int),
+            ('is_guest_login', int),
+            ('count', int),
+            ('srv_count', int),
+            ('serror_rate', float),
+            ('srv_serror_rate', float),
+            ('rerror_rate', float),
+            ('srv_rerror_rate', float),
+            ('same_srv_rate', float),
+            ('diff_srv_rate', float),
+            ('srv_diff_host_rate', float),
+            ('dst_host_count', int),
+            ('dst_host_srv_count', int),
+            ('dst_host_same_srv_rate', float),
+            ('dst_host_diff_srv_rate', float),
+            ('dst_host_same_src_port_rate', float),
+            ('dst_host_srv_diff_host_rate', float),
+            ('dst_host_serror_rate', float),
+            ('dst_host_srv_serror_rate', float),
+            ('dst_host_rerror_rate', float),
+            ('dst_host_srv_rerror_rate', float),
+            ('labels', 'S16')]
+    feat_cols = [c[0] for c in dt]
+    target_col = feat_cols[-1]
+    feat_cols = feat_cols[:-1]
     if download_if_missing and not available:
         _mkdirp(kddcup_dir)
         logger.info("Downloading %s" % archive.url)
         _fetch_remote(archive, dirname=kddcup_dir)
-        dt = [('duration', int),
-              ('protocol_type', 'S4'),
-              ('service', 'S11'),
-              ('flag', 'S6'),
-              ('src_bytes', int),
-              ('dst_bytes', int),
-              ('land', int),
-              ('wrong_fragment', int),
-              ('urgent', int),
-              ('hot', int),
-              ('num_failed_logins', int),
-              ('logged_in', int),
-              ('num_compromised', int),
-              ('root_shell', int),
-              ('su_attempted', int),
-              ('num_root', int),
-              ('num_file_creations', int),
-              ('num_shells', int),
-              ('num_access_files', int),
-              ('num_outbound_cmds', int),
-              ('is_host_login', int),
-              ('is_guest_login', int),
-              ('count', int),
-              ('srv_count', int),
-              ('serror_rate', float),
-              ('srv_serror_rate', float),
-              ('rerror_rate', float),
-              ('srv_rerror_rate', float),
-              ('same_srv_rate', float),
-              ('diff_srv_rate', float),
-              ('srv_diff_host_rate', float),
-              ('dst_host_count', int),
-              ('dst_host_srv_count', int),
-              ('dst_host_same_srv_rate', float),
-              ('dst_host_diff_srv_rate', float),
-              ('dst_host_same_src_port_rate', float),
-              ('dst_host_srv_diff_host_rate', float),
-              ('dst_host_serror_rate', float),
-              ('dst_host_srv_serror_rate', float),
-              ('dst_host_rerror_rate', float),
-              ('dst_host_srv_rerror_rate', float),
-              ('labels', 'S16')]
-        feat_cols = [c[0] for c in dt]
-        target_col = feat_cols[-1]
-        feat_cols = feat_cols[:-1]
         DT = np.dtype(dt)
         logger.debug("extracting archive")
         archive_path = join(kddcup_dir, archive.filename)
@@ -315,19 +325,7 @@ def _fetch_brute_kddcup99(data_home=None,
     except NameError:
         X = joblib.load(samples_path)
         y = joblib.load(targets_path)
-
-    if as_frame:
-        frame, X, y = _convert_data_dataframe("_fetch_brute_kddcup99",
-                                              data,
-                                              target,
-                                              feature_cols,
-                                              target_col)
-        return Bunch(data=X,
-                    target=y,
-                    frame=frame,
-                    target_names=target_col,
-                    feature_names=feature_cols)
-    return Bunch(data=X, target=y)
+    return Bunch(data=X, target=y), feat_cols, target_col
 
 
 def _mkdirp(d):
