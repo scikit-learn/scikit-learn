@@ -1,3 +1,0 @@
-[console_scripts]
-f2py = numpy.f2py.f2py2e:main
-
