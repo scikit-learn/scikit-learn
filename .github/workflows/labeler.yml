@@ -7,8 +7,13 @@ jobs:
   triage:
     runs-on: ubuntu-latest
     steps:
-    - uses: thomasjpfan/labeler@v2.4.6
-      if: github.repository == 'scikit-learn/scikit-learn'
-      with:
-        repo-token: "${{ secrets.GITHUB_TOKEN }}"
-        max-labels: "3"
+      - name: Hello
+        run: |
+          exit 1
+        shell: bash
+    # - uses: thomasjpfan/labeler@v2.4.6
+    #   if: github.repository == 'scikit-learn/scikit-learn'
+    #   continue-on-error: true
+    #   with:
+    #     repo-token: "${{ secrets.GITHUB_TOKEN }}"
+    #     max-labels: "3"
