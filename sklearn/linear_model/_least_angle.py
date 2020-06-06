@@ -1028,7 +1028,7 @@ class LassoLars(Lars):
     max_iter : int, default=500
         Maximum number of iterations to perform.
 
-    eps : float, optional
+    eps : float, default=np.finfo(np.float).eps
         The machine-precision regularization in the computation of the
         Cholesky diagonal factors. Increase this for very ill-conditioned
         systems. Unlike the ``tol`` parameter in some iterative
@@ -1060,7 +1060,7 @@ class LassoLars(Lars):
         `y` values, to satisfy the model's assumption of
         one-at-a-time computations. Might help with stability.
 
-    random_state : int, RandomState instance or None (default)
+    random_state : int, RandomState instance, default=None
         Determines random number generation for jittering. Pass an int
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`. Ignored if `jitter` is None.
