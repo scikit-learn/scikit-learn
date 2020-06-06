@@ -82,14 +82,14 @@ class BayesianGaussianMixture(BaseMixture):
 
     Parameters
     ----------
-    n_components : int, defaults to 1.
+    n_components : int, defaults=1.
         The number of mixture components. Depending on the data and the value
         of the `weight_concentration_prior` the model can decide to not use
         all the components by setting some component `weights_` to values very
         close to zero. The number of effective components is therefore smaller
         than n_components.
 
-    covariance_type : {'full', 'tied', 'diag', 'spherical'}, defaults to 'full'
+    covariance_type : {'full', 'tied', 'diag', 'spherical'}, default='full'
         String describing the type of covariance parameters to use.
         Must be one of::
 
@@ -98,23 +98,23 @@ class BayesianGaussianMixture(BaseMixture):
             'diag' (each component has its own diagonal covariance matrix),
             'spherical' (each component has its own single variance).
 
-    tol : float, defaults to 1e-3.
+    tol : float, defaults=1e-3.
         The convergence threshold. EM iterations will stop when the
         lower bound average gain on the likelihood (of the training data with
         respect to the model) is below this threshold.
 
-    reg_covar : float, defaults to 1e-6.
+    reg_covar : float, defaults=1e-6.
         Non-negative regularization added to the diagonal of covariance.
         Allows to assure that the covariance matrices are all positive.
 
-    max_iter : int, defaults to 100.
+    max_iter : int, defaults=100.
         The number of EM iterations to perform.
 
-    n_init : int, defaults to 1.
+    n_init : int, defaults=1.
         The number of initializations to perform. The result with the highest
         lower bound value on the likelihood is kept.
 
-    init_params : {'kmeans', 'random'}, defaults to 'kmeans'.
+    init_params : {'kmeans', 'random'}, defaults='kmeans'.
         The method used to initialize the weights, the means and the
         covariances.
         Must be one of::
@@ -122,14 +122,14 @@ class BayesianGaussianMixture(BaseMixture):
             'kmeans' : responsibilities are initialized using kmeans.
             'random' : responsibilities are initialized randomly.
 
-    weight_concentration_prior_type : str, defaults to 'dirichlet_process'.
+    weight_concentration_prior_type : str, defaults='dirichlet_process'.
         String describing the type of the weight concentration prior.
         Must be one of::
 
             'dirichlet_process' (using the Stick-breaking representation),
             'dirichlet_distribution' (can favor more uniform weights).
 
-    weight_concentration_prior : float | None, optional.
+    weight_concentration_prior : float | None, default=None.
         The dirichlet concentration of each component on the weight
         distribution (Dirichlet). This is commonly called gamma in the
         literature. The higher concentration puts more mass in
@@ -138,22 +138,22 @@ class BayesianGaussianMixture(BaseMixture):
         mixture weights simplex. The value of the parameter must be greater
         than 0. If it is None, it's set to ``1. / n_components``.
 
-    mean_precision_prior : float | None, optional.
+    mean_precision_prior : float | None, default=None.
         The precision prior on the mean distribution (Gaussian).
         Controls the extent of where means can be placed. Larger
         values concentrate the cluster means around `mean_prior`.
         The value of the parameter must be greater than 0.
         If it is None, it is set to 1.
 
-    mean_prior : array-like, shape (n_features,), optional
+    mean_prior : array-like, shape (n_features,), default=None.
         The prior on the mean distribution (Gaussian).
         If it is None, it is set to the mean of X.
 
-    degrees_of_freedom_prior : float | None, optional.
+    degrees_of_freedom_prior : float | None, default=None.
         The prior of the number of degrees of freedom on the covariance
         distributions (Wishart). If it is None, it's set to `n_features`.
 
-    covariance_prior : float or array-like, optional
+    covariance_prior : float or array-like, default=None.
         The prior on the covariance distribution (Wishart).
         If it is None, the emiprical covariance prior is initialized using the
         covariance of X. The shape depends on `covariance_type`::
@@ -163,7 +163,7 @@ class BayesianGaussianMixture(BaseMixture):
                 (n_features)             if 'diag',
                 float                    if 'spherical'
 
-    random_state : int, RandomState instance or None, optional (default=None)
+    random_state : int, RandomState instance or None, default=None.
         Controls the random seed given to the method chosen to initialize the
         parameters (see `init_params`).
         In addition, it controls the generation of random samples from the
@@ -171,19 +171,19 @@ class BayesianGaussianMixture(BaseMixture):
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
-    warm_start : bool, default to False.
+    warm_start : bool, default=False.
         If 'warm_start' is True, the solution of the last fitting is used as
         initialization for the next call of fit(). This can speed up
         convergence when fit is called several times on similar problems.
         See :term:`the Glossary <warm_start>`.
 
-    verbose : int, default to 0.
+    verbose : int, default=0.
         Enable verbose output. If 1 then it prints the current
         initialization and each iteration step. If greater than 1 then
         it prints also the log probability and the time needed
         for each step.
 
-    verbose_interval : int, default to 10.
+    verbose_interval : int, default=10.
         Number of iteration done before the next print.
 
     Attributes
