@@ -271,8 +271,8 @@ def fetch_rcv1(*, data_home=None, subset='all', download_if_missing=True,
         frame, X, y = _convert_data_dataframe("fetch_rcv1",
                                               X,
                                               y,
-                                              feature_names,
-                                              target_columns)
+                                              None,
+                                              categories)
 
     if return_X_y:
         return X, y
