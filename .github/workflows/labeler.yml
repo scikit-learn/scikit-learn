@@ -9,6 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Hello
+        continue-on-error: true
         run: |
           exit 1
         shell: bash
