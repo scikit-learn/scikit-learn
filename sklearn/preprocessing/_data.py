@@ -3205,7 +3205,7 @@ def power_transform(X, method='yeo-johnson', *, standardize=True, copy=True):
 
     Read more in the :ref:`User Guide <preprocessing_transformer>`.
 
-        .. warning:: Risk of data leak
+    .. warning:: Risk of data leak
 
         Do not use :func:`~sklearn.preprocessing.power_transform` unless you
         know what you are doing. A common mistake is to apply it to the entire
