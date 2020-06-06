@@ -69,7 +69,7 @@ newly transformed sample matrix ``X``::
   >>> from sklearn.preprocessing import StandardScaler
   >>> X = [[0, 15],
   ...      [1, -10]]
-  >>> StandardScaler().fit(X).transform(X)
+  >>> StandardScaler().fit(X).transform(X) # scale data based on the standard score
   array([[-1.,  1.],
          [ 1., -1.]])
 
