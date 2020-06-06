@@ -172,7 +172,7 @@ def test_dbscan_metric_params():
     p = 1
 
     # Compute DBSCAN with metric_params arg
-    db = DBSCAN(metric='minkowski', metric_params={'p': p}, eps=eps,
+    db = DBSCAN(metric='minkowski', metric_params={'p': p}, eps=eps, p=None,
                 min_samples=min_samples, algorithm='ball_tree').fit(X)
     core_sample_1, labels_1 = db.core_sample_indices_, db.labels_
 
