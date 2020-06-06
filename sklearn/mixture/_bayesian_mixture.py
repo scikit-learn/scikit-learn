@@ -23,7 +23,7 @@ def _log_dirichlet_norm(dirichlet_concentration):
 
     Parameters
     ----------
-    dirichlet_concentration : array-like, shape (n_samples,)
+    dirichlet_concentration : array-like of shape (n_samples,)
         The parameters values of the Dirichlet distribution.
 
     Returns
@@ -40,11 +40,11 @@ def _log_wishart_norm(degrees_of_freedom, log_det_precisions_chol, n_features):
 
     Parameters
     ----------
-    degrees_of_freedom : array-like, shape (n_components,)
+    degrees_of_freedom : array-like of shape (n_components,)
         The number of degrees of freedom on the covariance Wishart
         distributions.
 
-    log_det_precision_chol : array-like, shape (n_components,)
+    log_det_precision_chol : array-like of shape (n_components,)
          The determinant of the precision matrix for each component.
 
     n_features : int
@@ -52,7 +52,7 @@ def _log_wishart_norm(degrees_of_freedom, log_det_precisions_chol, n_features):
 
     Return
     ------
-    log_wishart_norm : array-like, shape (n_components,)
+    log_wishart_norm : array-like of shape (n_components,)
         The log normalization of the Wishart distribution.
     """
     # To simplify the computation we have removed the np.log(np.pi) term
@@ -145,7 +145,7 @@ class BayesianGaussianMixture(BaseMixture):
         The value of the parameter must be greater than 0.
         If it is None, it is set to 1.
 
-    mean_prior : array-like, shape (n_features,), optional
+    mean_prior : array-like of shape (n_features,), optional
         The prior on the mean distribution (Gaussian).
         If it is None, it is set to the mean of X.
 
@@ -188,10 +188,10 @@ class BayesianGaussianMixture(BaseMixture):
 
     Attributes
     ----------
-    weights_ : array-like, shape (n_components,)
+    weights_ : array-like of shape (n_components,)
         The weights of each mixture components.
 
-    means_ : array-like, shape (n_components, n_features)
+    means_ : array-like of shape (n_components, n_features)
         The mean of each mixture component.
 
     covariances_ : array-like
@@ -255,7 +255,7 @@ class BayesianGaussianMixture(BaseMixture):
         concentration parameter will lead to more mass at the edge of the
         simplex.
 
-    weight_concentration_ : array-like, shape (n_components,)
+    weight_concentration_ : array-like of shape (n_components,)
         The dirichlet concentration of each component on the weight
         distribution (Dirichlet).
 
@@ -266,17 +266,17 @@ class BayesianGaussianMixture(BaseMixture):
         If mean_precision_prior is set to None, `mean_precision_prior_` is set
         to 1.
 
-    mean_precision_ : array-like, shape (n_components,)
+    mean_precision_ : array-like of shape (n_components,)
         The precision of each components on the mean distribution (Gaussian).
 
-    mean_prior_ : array-like, shape (n_features,)
+    mean_prior_ : array-like of shape (n_features,)
         The prior on the mean distribution (Gaussian).
 
     degrees_of_freedom_prior_ : float
         The prior of the number of degrees of freedom on the covariance
         distributions (Wishart).
 
-    degrees_of_freedom_ : array-like, shape (n_components,)
+    degrees_of_freedom_ : array-like of shape (n_components,)
         The number of degrees of freedom of each components in the model.
 
     covariance_prior_ : float or array-like
@@ -348,7 +348,7 @@ class BayesianGaussianMixture(BaseMixture):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
         """
         if self.covariance_type not in ['spherical', 'tied', 'diag', 'full']:
             raise ValueError("Invalid value for 'covariance_type': %s "
@@ -386,7 +386,7 @@ class BayesianGaussianMixture(BaseMixture):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
         """
         _, n_features = X.shape
 
@@ -412,7 +412,7 @@ class BayesianGaussianMixture(BaseMixture):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
         """
         _, n_features = X.shape
 
@@ -430,7 +430,7 @@ class BayesianGaussianMixture(BaseMixture):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
         """
         _, n_features = X.shape
 
@@ -471,9 +471,9 @@ class BayesianGaussianMixture(BaseMixture):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
 
-        resp : array-like, shape (n_samples, n_components)
+        resp : array-like of shape (n_samples, n_components)
         """
         nk, xk, sk = _estimate_gaussian_parameters(X, resp, self.reg_covar,
                                                    self.covariance_type)
@@ -487,7 +487,7 @@ class BayesianGaussianMixture(BaseMixture):
 
         Parameters
         ----------
-        nk : array-like, shape (n_components,)
+        nk : array-like of shape (n_components,)
         """
         if self.weight_concentration_prior_type == 'dirichlet_process':
             # For dirichlet process weight_concentration will be a tuple
@@ -505,9 +505,9 @@ class BayesianGaussianMixture(BaseMixture):
 
         Parameters
         ----------
-        nk : array-like, shape (n_components,)
+        nk : array-like of shape (n_components,)
 
-        xk : array-like, shape (n_components, n_features)
+        xk : array-like of shape (n_components, n_features)
         """
         self.mean_precision_ = self.mean_precision_prior_ + nk
         self.means_ = ((self.mean_precision_prior_ * self.mean_prior_ +
@@ -519,9 +519,9 @@ class BayesianGaussianMixture(BaseMixture):
 
         Parameters
         ----------
-        nk : array-like, shape (n_components,)
+        nk : array-like of shape (n_components,)
 
-        xk : array-like, shape (n_components, n_features)
+        xk : array-like of shape (n_components, n_features)
 
         sk : array-like
             The shape depends of `covariance_type`:
@@ -544,13 +544,13 @@ class BayesianGaussianMixture(BaseMixture):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
 
-        nk : array-like, shape (n_components,)
+        nk : array-like of shape (n_components,)
 
-        xk : array-like, shape (n_components, n_features)
+        xk : array-like of shape (n_components, n_features)
 
-        sk : array-like, shape (n_components, n_features, n_features)
+        sk : array-like of shape (n_components, n_features, n_features)
         """
         _, n_features = xk.shape
 
@@ -578,13 +578,13 @@ class BayesianGaussianMixture(BaseMixture):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
 
-        nk : array-like, shape (n_components,)
+        nk : array-like of shape (n_components,)
 
-        xk : array-like, shape (n_components, n_features)
+        xk : array-like of shape (n_components, n_features)
 
-        sk : array-like, shape (n_features, n_features)
+        sk : array-like of shape (n_features, n_features)
         """
         _, n_features = xk.shape
 
@@ -608,13 +608,13 @@ class BayesianGaussianMixture(BaseMixture):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
 
-        nk : array-like, shape (n_components,)
+        nk : array-like of shape (n_components,)
 
-        xk : array-like, shape (n_components, n_features)
+        xk : array-like of shape (n_components, n_features)
 
-        sk : array-like, shape (n_components, n_features)
+        sk : array-like of shape (n_components, n_features)
         """
         _, n_features = xk.shape
 
@@ -637,13 +637,13 @@ class BayesianGaussianMixture(BaseMixture):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
 
-        nk : array-like, shape (n_components,)
+        nk : array-like of shape (n_components,)
 
-        xk : array-like, shape (n_components, n_features)
+        xk : array-like of shape (n_components, n_features)
 
-        sk : array-like, shape (n_components,)
+        sk : array-like of shape (n_components,)
         """
         _, n_features = xk.shape
 
@@ -666,9 +666,9 @@ class BayesianGaussianMixture(BaseMixture):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
 
-        log_resp : array-like, shape (n_samples, n_components)
+        log_resp : array-like of shape (n_samples, n_components)
             Logarithm of the posterior probabilities (or responsibilities) of
             the point of each sample in X.
         """
@@ -717,7 +717,7 @@ class BayesianGaussianMixture(BaseMixture):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
 
         log_resp : array, shape (n_samples, n_components)
             Logarithm of the posterior probabilities (or responsibilities) of
