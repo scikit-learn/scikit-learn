@@ -1295,7 +1295,7 @@ def robust_scale(X, axis=0, with_centering=True, with_scaling=True,
         In general, we recommend using
         :class:`~sklearn.preprocessing.RobustScaler` within a
         :ref:`Pipeline <pipeline>` in order to prevent most risks of data
-        leaking: `pipe = make_pipeline(StandardScaler(), LogisticRegression)`.
+        leaking: `pipe = make_pipeline(RobustScaler(), LogisticRegression())`.
 
     See also
     --------
