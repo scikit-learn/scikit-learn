@@ -72,7 +72,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         This can be both a fitted (if ``prefit`` is set to True)
         or a non-fitted estimator. The estimator must have either a
         ``feature_importances_`` or ``coef_`` attribute after fitting.
- 
+
     threshold : string, float, default=None
         The threshold value to use for feature selection. Features whose
         importance is greater or equal are kept while the others are
