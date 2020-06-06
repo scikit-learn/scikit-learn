@@ -1118,15 +1118,14 @@ def test_search_cv_score_samples_error(search_cv):
         search_cv.score_samples(X)
 
 
-@pytest.mark.parametrize('search_cv',
-                         [RandomizedSearchCV(estimator=LocalOutlierFactor(novelty=True),
-                                             param_distributions={
-                                                 'n_neighbors': [5, 10]},
-                                             scoring="precision"),
-                          GridSearchCV(estimator=LocalOutlierFactor(novelty=True),
-                                       param_grid={'n_neighbors': [5, 10]},
-                                       scoring="precision")
-                          ])
+@pytest.mark.parametrize('search_cv', [
+    RandomizedSearchCV(estimator=LocalOutlierFactor(novelty=True),
+                       param_distributions={'n_neighbors': [5, 10]},
+                       scoring="precision"),
+    GridSearchCV(estimator=LocalOutlierFactor(novelty=True),
+                 param_grid={'n_neighbors': [5, 10]},
+                 scoring="precision")
+])
 def test_search_cv_score_samples_method(search_cv):
     # Set parameters
     rng = np.random.RandomState(42)
@@ -1144,7 +1143,7 @@ def test_search_cv_score_samples_method(search_cv):
 
     # Define labels to be able to score the estimator with `search_cv`
     y_true = np.array([1] * n_samples)
-    y_true[-n_outliers:] = [-1] * n_outliers
+    y_true[-n_outliers:] = -1
 
     # Fit on data
     search_cv.fit(X, y_true)
