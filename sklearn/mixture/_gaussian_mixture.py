@@ -444,10 +444,10 @@ class GaussianMixture(BaseMixture):
 
     Parameters
     ----------
-    n_components : int, defaults to 1.
+    n_components : int, default=1
         The number of mixture components.
 
-    covariance_type : {'full' (default), 'tied', 'diag', 'spherical'}
+    covariance_type : {'full', 'tied', 'diag', 'spherical'}, default='full'
         String describing the type of covariance parameters to use.
         Must be one of:
 
@@ -460,21 +460,21 @@ class GaussianMixture(BaseMixture):
         'spherical'
             each component has its own single variance
 
-    tol : float, defaults to 1e-3.
+    tol : float, default=1e-3
         The convergence threshold. EM iterations will stop when the
         lower bound average gain is below this threshold.
 
-    reg_covar : float, defaults to 1e-6.
+    reg_covar : float, default=1e-6
         Non-negative regularization added to the diagonal of covariance.
         Allows to assure that the covariance matrices are all positive.
 
-    max_iter : int, defaults to 100.
+    max_iter : int, default=100
         The number of EM iterations to perform.
 
-    n_init : int, defaults to 1.
+    n_init : int, default=1
         The number of initializations to perform. The best results are kept.
 
-    init_params : {'kmeans', 'random'}, defaults to 'kmeans'.
+    init_params : {'kmeans', 'random'}, default='kmeans'
         The method used to initialize the weights, the means and the
         precisions.
         Must be one of::
@@ -482,17 +482,17 @@ class GaussianMixture(BaseMixture):
             'kmeans' : responsibilities are initialized using kmeans.
             'random' : responsibilities are initialized randomly.
 
-    weights_init : array-like, shape (n_components, ), optional
-        The user-provided initial weights, defaults to None.
+    weights_init : array-like, shape (n_components, ), default=None
+        The user-provided initial weights.
         If it None, weights are initialized using the `init_params` method.
 
-    means_init : array-like, shape (n_components, n_features), optional
-        The user-provided initial means, defaults to None,
+    means_init : array-like, shape (n_components, n_features), default=None
+        The user-provided initial means,
         If it None, means are initialized using the `init_params` method.
 
-    precisions_init : array-like, optional.
+    precisions_init : array-like, default=None
         The user-provided initial precisions (inverse of the covariance
-        matrices), defaults to None.
+        matrices).
         If it None, precisions are initialized using the 'init_params' method.
         The shape depends on 'covariance_type'::
 
@@ -501,7 +501,7 @@ class GaussianMixture(BaseMixture):
             (n_components, n_features)             if 'diag',
             (n_components, n_features, n_features) if 'full'
 
-    random_state : int, RandomState instance or None, optional (default=None)
+    random_state : int, RandomState instance or None, default=None
         Controls the random seed given to the method chosen to initialize the
         parameters (see `init_params`).
         In addition, it controls the generation of random samples from the
@@ -509,7 +509,7 @@ class GaussianMixture(BaseMixture):
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
-    warm_start : bool, default to False.
+    warm_start : bool, default=False
         If 'warm_start' is True, the solution of the last fitting is used as
         initialization for the next call of fit(). This can speed up
         convergence when fit is called several times on similar problems.
@@ -517,13 +517,13 @@ class GaussianMixture(BaseMixture):
         occurs upon the first call.
         See :term:`the Glossary <warm_start>`.
 
-    verbose : int, default to 0.
+    verbose : int, default=0
         Enable verbose output. If 1 then it prints the current
         initialization and each iteration step. If greater than 1 then
         it prints also the log probability and the time needed
         for each step.
 
-    verbose_interval : int, default to 10.
+    verbose_interval : int, default=10
         Number of iteration done before the next print.
 
     Attributes

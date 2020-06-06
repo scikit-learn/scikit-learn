@@ -398,8 +398,8 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
 
         Parameters
         ----------
-        n_samples : int, optional
-            Number of samples to generate. Defaults to 1.
+        n_samples : int, default=1
+            Number of samples to generate.
 
         Returns
         -------
