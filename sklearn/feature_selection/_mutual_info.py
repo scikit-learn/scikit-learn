@@ -171,7 +171,7 @@ def _iterate_columns(X, columns=None):
     X : ndarray or csc_matrix, shape (n_samples, n_features)
         Matrix over which to iterate.
 
-    columns : iterable or None, default None
+    columns : iterable or None, default=None
         Indices of columns to iterate over. If None, iterate over all columns.
 
     Yields
@@ -205,26 +205,26 @@ def _estimate_mi(X, y, discrete_features='auto', discrete_target=False,
     y : array-like, shape (n_samples,)
         Target vector.
 
-    discrete_features : {'auto', bool, array-like}, default 'auto'
+    discrete_features : {'auto', bool, array-like}, default='auto'
         If bool, then determines whether to consider all features discrete
         or continuous. If array, then it should be either a boolean mask
         with shape (n_features,) or array with indices of discrete features.
         If 'auto', it is assigned to False for dense `X` and to True for
         sparse `X`.
 
-    discrete_target : bool, default False
+    discrete_target : bool, default=False
         Whether to consider `y` as a discrete variable.
 
-    n_neighbors : int, default 3
+    n_neighbors : int, default=3
         Number of neighbors to use for MI estimation for continuous variables,
         see [1]_ and [2]_. Higher values reduce variance of the estimation, but
         could introduce a bias.
 
-    copy : bool, default True
+    copy : bool, default=True
         Whether to make a copy of the given data. If set to False, the initial
         data will be overwritten.
 
-    random_state : int, RandomState instance or None, optional, default None
+    random_state : int, RandomState instance or None, default=None
         Determines random number generation for adding small noise to
         continuous variables in order to remove repeated values.
         Pass an int for reproducible results across multiple function calls.
@@ -316,23 +316,23 @@ def mutual_info_regression(X, y, *, discrete_features='auto', n_neighbors=3,
     y : array-like, shape (n_samples,)
         Target vector.
 
-    discrete_features : {'auto', bool, array-like}, default 'auto'
+    discrete_features : {'auto', bool, array-like}, default='auto'
         If bool, then determines whether to consider all features discrete
         or continuous. If array, then it should be either a boolean mask
         with shape (n_features,) or array with indices of discrete features.
         If 'auto', it is assigned to False for dense `X` and to True for
         sparse `X`.
 
-    n_neighbors : int, default 3
+    n_neighbors : int, default=3
         Number of neighbors to use for MI estimation for continuous variables,
         see [2]_ and [3]_. Higher values reduce variance of the estimation, but
         could introduce a bias.
 
-    copy : bool, default True
+    copy : bool, default=True
         Whether to make a copy of the given data. If set to False, the initial
         data will be overwritten.
 
-    random_state : int, RandomState instance or None, optional, default None
+    random_state : int, RandomState instance or None, default=None
         Determines random number generation for adding small noise to
         continuous variables in order to remove repeated values.
         Pass an int for reproducible results across multiple function calls.
@@ -394,23 +394,23 @@ def mutual_info_classif(X, y, *, discrete_features='auto', n_neighbors=3,
     y : array-like, shape (n_samples,)
         Target vector.
 
-    discrete_features : {'auto', bool, array-like}, default 'auto'
+    discrete_features : {'auto', bool, array-like}, default='auto'
         If bool, then determines whether to consider all features discrete
         or continuous. If array, then it should be either a boolean mask
         with shape (n_features,) or array with indices of discrete features.
         If 'auto', it is assigned to False for dense `X` and to True for
         sparse `X`.
 
-    n_neighbors : int, default 3
+    n_neighbors : int, default=3
         Number of neighbors to use for MI estimation for continuous variables,
         see [2]_ and [3]_. Higher values reduce variance of the estimation, but
         could introduce a bias.
 
-    copy : bool, default True
+    copy : bool, default=True
         Whether to make a copy of the given data. If set to False, the initial
         data will be overwritten.
 
-    random_state : int, RandomState instance or None, optional, default None
+    random_state : int, RandomState instance or None, default=None
         Determines random number generation for adding small noise to
         continuous variables in order to remove repeated values.
         Pass an int for reproducible results across multiple function calls.

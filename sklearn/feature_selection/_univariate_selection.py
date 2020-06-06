@@ -254,7 +254,7 @@ def f_regression(X, y, *, center=True):
     y : array of shape(n_samples).
         The data matrix
 
-    center : True, bool,
+    center : bool, default=True
         If true, X and y will be centered.
 
     Returns
@@ -379,7 +379,7 @@ class SelectPercentile(_BaseFilter):
 
     Parameters
     ----------
-    score_func : callable
+    score_func : callable, default=f_classif
         Function taking two arrays X and y, and returning a pair of arrays
         (scores, pvalues) or a single array with scores.
         Default is f_classif (see below "See also"). The default function only
@@ -387,7 +387,7 @@ class SelectPercentile(_BaseFilter):
 
         .. versionadded:: 0.18
 
-    percentile : int, optional, default=10
+    percentile : int, default=10
         Percent of features to keep.
 
     Attributes
@@ -464,7 +464,7 @@ class SelectKBest(_BaseFilter):
 
     Parameters
     ----------
-    score_func : callable
+    score_func : callable, default=f_classif
         Function taking two arrays X and y, and returning a pair of arrays
         (scores, pvalues) or a single array with scores.
         Default is f_classif (see below "See also"). The default function only
@@ -472,7 +472,7 @@ class SelectKBest(_BaseFilter):
 
         .. versionadded:: 0.18
 
-    k : int or "all", optional, default=10
+    k : int or "all", default=10
         Number of top features to select.
         The "all" option bypasses selection, for use in a parameter search.
 
@@ -551,13 +551,13 @@ class SelectFpr(_BaseFilter):
 
     Parameters
     ----------
-    score_func : callable
+    score_func : callable, default=f_classif
         Function taking two arrays X and y, and returning a pair of arrays
         (scores, pvalues).
         Default is f_classif (see below "See also"). The default function only
         works with classification tasks.
 
-    alpha : float, optional
+    alpha : float, default=5e-2
         The highest p-value for features to be kept.
 
     Attributes
@@ -613,13 +613,13 @@ class SelectFdr(_BaseFilter):
 
     Parameters
     ----------
-    score_func : callable
+    score_func : callable, default=f_classif
         Function taking two arrays X and y, and returning a pair of arrays
         (scores, pvalues).
         Default is f_classif (see below "See also"). The default function only
         works with classification tasks.
 
-    alpha : float, optional
+    alpha : float, default=5e-2
         The highest uncorrected p-value for features to keep.
 
     Examples
@@ -682,13 +682,13 @@ class SelectFwe(_BaseFilter):
 
     Parameters
     ----------
-    score_func : callable
+    score_func : callable, default=f_classif
         Function taking two arrays X and y, and returning a pair of arrays
         (scores, pvalues).
         Default is f_classif (see below "See also"). The default function only
         works with classification tasks.
 
-    alpha : float, optional
+    alpha : float, default=5e-2
         The highest uncorrected p-value for features to keep.
 
     Examples
@@ -745,15 +745,15 @@ class GenericUnivariateSelect(_BaseFilter):
 
     Parameters
     ----------
-    score_func : callable
+    score_func : callable, default=f_classif
         Function taking two arrays X and y, and returning a pair of arrays
         (scores, pvalues). For modes 'percentile' or 'kbest' it can return
         a single array scores.
 
-    mode : {'percentile', 'k_best', 'fpr', 'fdr', 'fwe'}
+    mode : {'percentile', 'k_best', 'fpr', 'fdr', 'fwe'}, default='percentile'
         Feature selection mode.
 
-    param : float or int depending on the feature selection mode
+    param : float or int depending on the feature selection mode, default=1e-5
         Parameter of the corresponding mode.
 
     Attributes
