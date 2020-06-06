@@ -79,7 +79,8 @@ def kneighbors_graph(X, n_neighbors, *, mode='connectivity',
         for mode='distance'.
 
     n_jobs : int, default=None
-        The number of parallel jobs to run for neighbors search.
+        The number of jobs to run in parallel; the k-nearest neighbor
+        computations are performed parallel to each other.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
@@ -159,7 +160,8 @@ def radius_neighbors_graph(X, radius, *, mode='connectivity',
         for mode='distance'.
 
     n_jobs : int, default=None
-        The number of parallel jobs to run for neighbors search.
+        The number of jobs to run in parallel; the k-nearest neighbor
+        computations are performed parallel to each other.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
@@ -272,7 +274,8 @@ class KNeighborsTransformer(KNeighborsMixin, UnsupervisedMixin,
         Additional keyword arguments for the metric function.
 
     n_jobs : int, default=1
-        The number of parallel jobs to run for neighbors search.
+        The number of jobs to run in parallel; the k-nearest neighbor
+        computations are performed parallel to each other.
         If ``-1``, then the number of jobs is set to the number of CPU cores.
 
     Examples
@@ -414,7 +417,8 @@ class RadiusNeighborsTransformer(RadiusNeighborsMixin, UnsupervisedMixin,
         Additional keyword arguments for the metric function.
 
     n_jobs : int, default=1
-        The number of parallel jobs to run for neighbors search.
+        The number of jobs to run in parallel; the k-nearest neighbor
+        computations are performed parallel to each other.
         If ``-1``, then the number of jobs is set to the number of CPU cores.
 
     Examples
