@@ -37,25 +37,7 @@ def _calibrate_classifier(estimator, X, y, train, test,
                           classes,
                           sample_weight=None):
     """Calibrate estimator for a given dataset split.
-    Parameters
-    ----------
-    estimator : estimator object implementing 'fit'
-        The object to use to fit the data.
-    X : array-like of shape at least 2D
-        The data to fit.
-    y : array-like, optional, default: None
-        The target variable to try to predict in the case of
-        supervised learning.
-    train : array-like, shape (n_train_samples,)
-        Indices of training samples.
-    test : array-like, shape (n_test_samples,)
-        Indices of test samples.
-    method : 'sigmoid' or 'isotonic'
-        The method to use for calibration.
-    classes : array, shape (n_classes)
-        The class labels.
-    sample_weight : array-like of shape (n_samples,), default=None
-        Sample weights. If None, then samples are equally weighted.
+
     Returns
     -------
     calibrated_classifier : estimator object
