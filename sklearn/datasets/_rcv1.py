@@ -78,8 +78,9 @@ logger = logging.getLogger(__name__)
 
 
 @_deprecate_positional_args
-def fetch_rcv1(*, data_home=None, subset='all', download_if_missing=True,
-               random_state=None, shuffle=False, return_X_y=False, as_frame=False):
+def fetch_rcv1(*, data_home=None, subset='all',
+               download_if_missing=True, random_state=None,
+               shuffle=False, return_X_y=False, as_frame=False):
     """Load the RCV1 multilabel dataset (classification).
 
     Download it if necessary.
@@ -127,7 +128,7 @@ def fetch_rcv1(*, data_home=None, subset='all', download_if_missing=True,
         `dataset.target` object.
 
         .. versionadded:: 0.20
-    
+
     as_frame : bool, default=False
         If True, the data is a pandas DataFrame including columns with
         appropriate dtypes (numeric, string or categorical). The target is
@@ -159,7 +160,7 @@ def fetch_rcv1(*, data_home=None, subset='all', download_if_missing=True,
     frame : pandas DataFrame
         Only present when `as_frame=True`. DataFrame with ``data`` and
         ``target``.
-        
+
         .. versionadded:: 0.24
     """
     N_SAMPLES = 804414
@@ -290,11 +291,11 @@ def fetch_rcv1(*, data_home=None, subset='all', download_if_missing=True,
     if return_X_y:
         return X, y
 
-    return Bunch(data=X, 
-                 target=y, 
+    return Bunch(data=X,
+                 target=y,
                  frame=frame,
                  sample_id=sample_id,
-                 target_names=categories, 
+                 target_names=categories,
                  DESCR=fdescr)
 
 
