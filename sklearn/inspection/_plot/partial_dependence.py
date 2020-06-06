@@ -22,21 +22,16 @@ def plot_partial_dependence(estimator, X, features, *, feature_names=None,
                             method='auto', n_jobs=None, verbose=0,
                             line_kw=None, contour_kw=None, ax=None):
     """Partial dependence plots.
-
     The ``len(features)`` plots are arranged in a grid with ``n_cols``
     columns. Two-way partial dependence plots are plotted as contour plots. The
     deciles of the feature values will be shown with tick marks on the x-axes
     for one-way plots, and on both axes for two-way plots.
-
     Read more in the :ref:`User Guide <partial_dependence>`.
-
     .. note::
-
         :func:`plot_partial_dependence` does not support using the same axes
         with multiple calls. To plot the the partial dependence for multiple
         estimators, please pass the axes created by the first call to the
         second call::
-
           >>> from sklearn.inspection import plot_partial_dependence
           >>> from sklearn.datasets import make_friedman1
           >>> from sklearn.linear_model import LinearRegression
@@ -45,9 +40,7 @@ def plot_partial_dependence(estimator, X, features, *, feature_names=None,
           >>> disp1 = plot_partial_dependence(est, X)  # doctest: +SKIP
           >>> disp2 = plot_partial_dependence(est, X,
           ...                                 ax=disp1.axes_)  # doctest: +SKIP
-
     .. warning::
-
         For :class:`~sklearn.ensemble.GradientBoostingClassifier` and
         :class:`~sklearn.ensemble.GradientBoostingRegressor`, the
         'recursion' method (used by default) will not account for the `init`
@@ -62,43 +55,37 @@ def plot_partial_dependence(estimator, X, features, *, feature_names=None,
         :class:`~sklearn.ensemble.GradientBoostingRegressor`, not to
         :class:`~sklearn.ensemble.HistGradientBoostingClassifier` and
         :class:`~sklearn.ensemble.HistGradientBoostingRegressor`.
-
     Parameters
     ----------
     estimator : BaseEstimator
         A fitted estimator object implementing :term:`predict`,
         :term:`predict_proba`, or :term:`decision_function`.
         Multioutput-multiclass classifiers are not supported.
-
     X : {array-like or dataframe} of shape (n_samples, n_features)
         ``X`` is used to generate a grid of values for the target
         ``features`` (where the partial dependence will be evaluated), and
         also to generate values for the complement features when the
         `method` is 'brute'.
-
     features : list of {int, str, pair of int, pair of str}
         The target features for which to create the PDPs.
         If features[i] is an int or a string, a one-way PDP is created; if
         features[i] is a tuple, a two-way PDP is created. Each tuple must be
         of size 2.
         if any entry is a string, then it must be in ``feature_names``.
-
     feature_names : array-like of shape (n_features,), dtype=str, default=None
         Name of each feature; feature_names[i] holds the name of the feature
         with index i.
         By default, the name of the feature corresponds to their numerical
         index for NumPy array and their column name for pandas dataframe.
-
-    target : int, default=None
+    target : int, optional (default=None)
         - In a multiclass setting, specifies the class for which the PDPs
           should be computed. Note that for binary classification, the
           positive class (index 1) is always used.
         - In a multioutput setting, specifies the task for which the PDPs
           should be computed.
-
         Ignored in binary classification or classical regression settings.
-
-    response_method : 'auto', 'predict_proba' or 'decision_function', default='auto'
+    response_method : 'auto', 'predict_proba' or 'decision_function', \
+            optional (default='auto')
         Specifies whether to use :term:`predict_proba` or
         :term:`decision_function` as the target response. For regressors
         this parameter is ignored and the response is always the output of
@@ -106,22 +93,17 @@ def plot_partial_dependence(estimator, X, features, *, feature_names=None,
         and we revert to :term:`decision_function` if it doesn't exist. If
         ``method`` is 'recursion', the response is always the output of
         :term:`decision_function`.
-
-    n_cols : int, default=3
+    n_cols : int, optional (default=3)
         The maximum number of columns in the grid plot. Only active when `ax`
         is a single axis or `None`.
-
-    grid_resolution : int, default=100
+    grid_resolution : int, optional (default=100)
         The number of equally spaced points on the axes of the plots, for each
         target feature.
-
-    percentiles : tuple of float, default=(0.05, 0.95)
+    percentiles : tuple of float, optional (default=(0.05, 0.95))
         The lower and upper percentile used to create the extreme values
         for the PDP axes. Must be in [0, 1].
-
-    method : str, default='auto'
+    method : str, optional (default='auto')
         The method used to calculate the averaged predictions:
-
         - 'recursion' is only supported for some tree-based estimators (namely
           :class:`~sklearn.ensemble.GradientBoostingClassifier`,
           :class:`~sklearn.ensemble.GradientBoostingRegressor`,
@@ -133,33 +115,25 @@ def plot_partial_dependence(estimator, X, features, *, feature_names=None,
           With this method, the target response of a
           classifier is always the decision function, not the predicted
           probabilities.
-
         - 'brute' is supported for any estimator, but is more
           computationally intensive.
-
         - 'auto': the 'recursion' is used for estimators that support it,
           and 'brute' is used otherwise.
-
         Please see :ref:`this note <pdp_method_differences>` for
         differences between the 'brute' and 'recursion' method.
-
-    n_jobs : int, default=None
+    n_jobs : int, optional (default=None)
         The number of CPUs to use to compute the partial dependences.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
-
-    verbose : int, default=0
+    verbose : int, optional (default=0)
         Verbose output during PD computations.
-
     line_kw : dict, optional
         Dict with keywords passed to the ``matplotlib.pyplot.plot`` call.
         For one-way partial dependence plots.
-
     contour_kw : dict, optional
         Dict with keywords passed to the ``matplotlib.pyplot.contourf`` call.
         For two-way partial dependence plots.
-
     ax : Matplotlib axes or array-like of Matplotlib axes, default=None
         - If a single axis is passed in, it is treated as a bounding axes
             and a grid of partial dependence plots will be drawn within
@@ -169,13 +143,10 @@ def plot_partial_dependence(estimator, X, features, *, feature_names=None,
             plots will be drawn directly into these axes.
         - If `None`, a figure and a bounding axes is created and treated
             as the single axes case.
-
         .. versionadded:: 0.22
-
     Returns
     -------
     display: :class:`~sklearn.inspection.PartialDependenceDisplay`
-
     Examples
     --------
     >>> from sklearn.datasets import make_friedman1
@@ -183,7 +154,6 @@ def plot_partial_dependence(estimator, X, features, *, feature_names=None,
     >>> X, y = make_friedman1()
     >>> clf = GradientBoostingRegressor(n_estimators=10).fit(X, y)
     >>> plot_partial_dependence(clf, X, [0, (0, 1)]) #doctest: +SKIP
-
     See also
     --------
     sklearn.inspection.partial_dependence: Return raw partial
@@ -320,71 +290,56 @@ def plot_partial_dependence(estimator, X, features, *, feature_names=None,
 
 class PartialDependenceDisplay:
     """Partial Dependence Plot (PDP) visualization.
-
     It is recommended to use
     :func:`~sklearn.inspection.plot_partial_dependence` to create a
     :class:`~sklearn.inspection.PartialDependenceDisplay`. All parameters are
     stored as attributes.
-
     Read more in
     :ref:`sphx_glr_auto_examples_miscellaneous_plot_partial_dependence_visualization_api.py`
     and the :ref:`User Guide <visualizations>`.
-
         .. versionadded:: 0.22
-
     Parameters
     ----------
     pd_results : list of (ndarray, ndarray)
         Results of :func:`~sklearn.inspection.partial_dependence` for
         ``features``. Each tuple corresponds to a (averaged_predictions, grid).
-
     features : list of (int,) or list of (int, int)
         Indices of features for a given plot. A tuple of one integer will plot
         a partial dependence curve of one feature. A tuple of two integers will
         plot a two-way partial dependence curve as a contour plot.
-
     feature_names : list of str
         Feature names corresponding to the indices in ``features``.
-
     target_idx : int
-
         - In a multiclass setting, specifies the class for which the PDPs
           should be computed. Note that for binary classification, the
           positive class (index 1) is always used.
         - In a multioutput setting, specifies the task for which the PDPs
           should be computed.
-
         Ignored in binary classification or classical regression settings.
-
     pdp_lim : dict
         Global min and max average predictions, such that all plots will have
         the same scale and y limits. `pdp_lim[1]` is the global min and max for
         single partial dependence curves. `pdp_lim[2]` is the global min and
         max for two-way partial dependence curves.
-
     deciles : dict
         Deciles for feature indices in ``features``.
-
     Attributes
     ----------
     bounding_ax_ : matplotlib Axes or None
         If `ax` is an axes or None, the `bounding_ax_` is the axes where the
         grid of partial dependence plots are drawn. If `ax` is a list of axes
         or a numpy array of axes, `bounding_ax_` is None.
-
     axes_ : ndarray of matplotlib Axes
         If `ax` is an axes or None, `axes_[i, j]` is the axes on the i-th row
         and j-th column. If `ax` is a list of axes, `axes_[i]` is the i-th item
         in `ax`. Elements that are None correspond to a nonexisting axes in
         that position.
-
     lines_ : ndarray of matplotlib Artists
         If `ax` is an axes or None, `lines_[i, j]` is the partial dependence
         curve on the i-th row and j-th column. If `ax` is a list of axes,
         `lines_[i]` is the partial dependence curve corresponding to the i-th
         item in `ax`. Elements that are None correspond to a nonexisting axes
         or an axes that does not include a line plot.
-
     deciles_vlines_ : ndarray of matplotlib LineCollection
         If `ax` is an axes or None, `vlines_[i, j]` is the line collection
         representing the x axis deciles of the i-th row and j-th column. If
@@ -399,17 +354,14 @@ class PartialDependenceDisplay:
         `ax`. Elements that are None correspond to a nonexisting axes or an
         axes that does not include a 2-way plot.
         .. versionadded:: 0.23
-
     contours_ : ndarray of matplotlib Artists
         If `ax` is an axes or None, `contours_[i, j]` is the partial dependence
         plot on the i-th row and j-th column. If `ax` is a list of axes,
         `contours_[i]` is the partial dependence plot corresponding to the i-th
         item in `ax`. Elements that are None correspond to a nonexisting axes
         or an axes that does not include a contour plot.
-
     figure_ : matplotlib Figure
         Figure containing partial dependence plots.
-
     """
     @_deprecate_positional_args
     def __init__(self, pd_results, *, features, feature_names, target_idx,
@@ -423,7 +375,6 @@ class PartialDependenceDisplay:
 
     def plot(self, ax=None, n_cols=3, line_kw=None, contour_kw=None):
         """Plot partial dependence plots.
-
         Parameters
         ----------
         ax : Matplotlib axes or array-like of Matplotlib axes, default=None
@@ -435,19 +386,15 @@ class PartialDependenceDisplay:
                 plots will be drawn directly into these axes.
             - If `None`, a figure and a bounding axes is created and treated
                 as the single axes case.
-
         n_cols : int, default=3
             The maximum number of columns in the grid plot. Only active when
             `ax` is a single axes or `None`.
-
         line_kw : dict, default=None
             Dict with keywords passed to the `matplotlib.pyplot.plot` call.
             For one-way partial dependence plots.
-
         contour_kw : dict, default=None
             Dict with keywords passed to the `matplotlib.pyplot.contourf`
             call for two-way partial dependence plots.
-
         Returns
         -------
         display: :class:`~sklearn.inspection.PartialDependenceDisplay`

@@ -36,32 +36,26 @@ __all__ = [
 
 def _grid_from_X(X, percentiles, grid_resolution):
     """Generate a grid of points based on the percentiles of X.
-
     The grid is a cartesian product between the columns of ``values``. The
     ith column of ``values`` consists in ``grid_resolution`` equally-spaced
     points between the percentiles of the jth column of X.
     If ``grid_resolution`` is bigger than the number of unique values in the
     jth column of X, then those unique values will be used instead.
-
     Parameters
     ----------
     X : ndarray, shape (n_samples, n_target_features)
         The data
-
     percentiles : tuple of floats
         The percentiles which are used to construct the extreme values of
         the grid. Must be in [0, 1].
-
     grid_resolution : int
         The number of equally spaced points to be placed on the grid for each
         feature.
-
     Returns
     -------
     grid : ndarray, shape (n_points, n_target_features)
         A value for each feature at each point in the grid. ``n_points`` is
         always ``<= grid_resolution ** X.shape[1]``.
-
     values : list of 1d ndarrays
         The values with which the grid has been created. The size of each
         array ``values[j]`` is either ``grid_resolution``, or the number of
@@ -187,15 +181,11 @@ def partial_dependence(estimator, X, features, *, response_method='auto',
                        percentiles=(0.05, 0.95), grid_resolution=100,
                        method='auto'):
     """Partial dependence of ``features``.
-
     Partial dependence of a feature (or a set of features) corresponds to
     the average response of an estimator for each possible value of the
     feature.
-
     Read more in the :ref:`User Guide <partial_dependence>`.
-
     .. warning::
-
         For :class:`~sklearn.ensemble.GradientBoostingClassifier` and
         :class:`~sklearn.ensemble.GradientBoostingRegressor`, the
         'recursion' method (used by default) will not account for the `init`
@@ -210,25 +200,22 @@ def partial_dependence(estimator, X, features, *, response_method='auto',
         :class:`~sklearn.ensemble.GradientBoostingRegressor`, not to
         :class:`~sklearn.ensemble.HistGradientBoostingClassifier` and
         :class:`~sklearn.ensemble.HistGradientBoostingRegressor`.
-
     Parameters
     ----------
     estimator : BaseEstimator
         A fitted estimator object implementing :term:`predict`,
         :term:`predict_proba`, or :term:`decision_function`.
         Multioutput-multiclass classifiers are not supported.
-
     X : {array-like or dataframe} of shape (n_samples, n_features)
         ``X`` is used to generate a grid of values for the target
         ``features`` (where the partial dependence will be evaluated), and
         also to generate values for the complement features when the
         `method` is 'brute'.
-
     features : array-like of {int, str}
         The feature (e.g. `[0]`) or pair of interacting features
         (e.g. `[(0, 1)]`) for which the partial dependency should be computed.
-
-    response_method : 'auto', 'predict_proba' or 'decision_function', default='auto'
+    response_method : 'auto', 'predict_proba' or 'decision_function', \
+            optional (default='auto')
         Specifies whether to use :term:`predict_proba` or
         :term:`decision_function` as the target response. For regressors
         this parameter is ignored and the response is always the output of
@@ -236,18 +223,14 @@ def partial_dependence(estimator, X, features, *, response_method='auto',
         and we revert to :term:`decision_function` if it doesn't exist. If
         ``method`` is 'recursion', the response is always the output of
         :term:`decision_function`.
-
-    percentiles : tuple of float, default=(0.05, 0.95)
+    percentiles : tuple of float, optional (default=(0.05, 0.95))
         The lower and upper percentile used to create the extreme values
         for the grid. Must be in [0, 1].
-
-    grid_resolution : int, default=100
+    grid_resolution : int, optional (default=100)
         The number of equally spaced points on the grid, for each target
         feature.
-
-    method : str, default='auto'
+    method : str, optional (default='auto')
         The method used to calculate the averaged predictions:
-
         - 'recursion' is only supported for some tree-based estimators (namely
           :class:`~sklearn.ensemble.GradientBoostingClassifier`,
           :class:`~sklearn.ensemble.GradientBoostingRegressor`,
@@ -260,16 +243,12 @@ def partial_dependence(estimator, X, features, *, response_method='auto',
           With this method, the target response of a
           classifier is always the decision function, not the predicted
           probabilities.
-
         - 'brute' is supported for any estimator, but is more
           computationally intensive.
-
         - 'auto': the 'recursion' is used for estimators that support it,
           and 'brute' is used otherwise.
-
         Please see :ref:`this note <pdp_method_differences>` for
         differences between the 'brute' and 'recursion' method.
-
     Returns
     -------
     averaged_predictions : ndarray, \
@@ -281,14 +260,12 @@ def partial_dependence(estimator, X, features, *, response_method='auto',
         regression. For classical regression and binary classification
         ``n_outputs==1``. ``n_values_feature_j`` corresponds to the size
         ``values[j]``.
-
     values : seq of 1d ndarrays
         The values with which the grid has been created. The generated grid
         is a cartesian product of the arrays in ``values``. ``len(values) ==
         len(features)``. The size of each array ``values[j]`` is either
         ``grid_resolution``, or the number of unique values in ``X[:, j]``,
         whichever is smaller.
-
     Examples
     --------
     >>> X = [[0, 0, 2], [1, 0, 0]]
@@ -298,7 +275,6 @@ def partial_dependence(estimator, X, features, *, response_method='auto',
     >>> partial_dependence(gb, features=[0], X=X, percentiles=(0, 1),
     ...                    grid_resolution=2) # doctest: +SKIP
     (array([[-4.52...,  4.52...]]), [array([ 0.,  1.])])
-
     See also
     --------
     sklearn.inspection.plot_partial_dependence: Plot partial dependence
