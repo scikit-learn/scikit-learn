@@ -1754,6 +1754,18 @@ def normalize(X, norm='l2', *, axis=1, copy=True, return_norm=False):
         An array of norms along given axis for X.
         When X is sparse, a NotImplementedError will be raised
         for norm 'l1' or 'l2'.
+    
+    Warning:: Risk of data leak
+
+        Do not use :func:'~sklearn.preprocessing.normalize' unless you know what
+        you are doing. A common mistake is to apply it to the entire data
+        *before* splitting into training and test sets. This will bias the
+        model evaluation because information would have leaked from the test
+        set to the training set.
+        In general, we recommend using
+        :class:'~sklearn.preprocessing.Normalizer' within a
+        :ref:'Pipeline <pipeline>' in order to prevent most risks of data
+        leaking: 'pipe = make_pipeline(Normalizer(), LogisticRegression)'.
 
     See also
     --------
