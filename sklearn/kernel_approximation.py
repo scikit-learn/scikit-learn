@@ -153,7 +153,7 @@ class SkewedChi2Sampler(TransformerMixin, BaseEstimator):
         number of Monte Carlo samples per original feature.
         Equals the dimensionality of the computed feature space.
 
-    random_state : int, RandomState instance or None, default=None
+    rrandom_state : int, RandomState instance, default=None
         Pseudo-random number generator to control the generation of the random
         weights and random offset when fitting the training data.
         Pass an int for reproducible output across multiple function calls.
@@ -364,7 +364,7 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
 
         Returns
         -------
-         X_new : {ndarray, sparse matrix}, \
+        X_new : {ndarray, sparse matrix}, \
                shape = (n_samples, n_features * (2*sample_steps + 1))
             Whether the return value is an array of sparse matrix depends on
             the type of the input X.
