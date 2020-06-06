@@ -140,7 +140,7 @@ def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
     See also
     --------
     StandardScaler: Performs scaling to unit variance using the``Transformer`` API
-        (e.g. as part of a preprocessing :class:`sklearn.pipeline.Pipeline`).
+        (e.g. as part of a preprocessing :class:`~sklearn.pipeline.Pipeline`).
 
     """  # noqa
     X = check_array(X, accept_sparse='csc', copy=copy, ensure_2d=False,
@@ -469,7 +469,7 @@ def minmax_scale(X, feature_range=(0, 1), *, axis=0, copy=True):
 
     .. versionadded:: 0.17
        *minmax_scale* function interface
-       to :class:`sklearn.preprocessing.MinMaxScaler`.
+       to :class:`~sklearn.preprocessing.MinMaxScaler`.
 
     Parameters
     ----------
@@ -495,7 +495,7 @@ def minmax_scale(X, feature_range=(0, 1), *, axis=0, copy=True):
     See also
     --------
     MinMaxScaler: Performs scaling to a given range using the``Transformer`` API
-        (e.g. as part of a preprocessing :class:`sklearn.pipeline.Pipeline`).
+        (e.g. as part of a preprocessing :class:`~sklearn.pipeline.Pipeline`).
 
     Notes
     -----
@@ -622,7 +622,7 @@ class StandardScaler(TransformerMixin, BaseEstimator):
     --------
     scale: Equivalent function without the estimator API.
 
-    :class:`sklearn.decomposition.PCA`
+    :class:`~sklearn.decomposition.PCA`
         Further removes the linear correlation across features with 'whiten=True'.
 
     Notes
@@ -1097,7 +1097,7 @@ def maxabs_scale(X, *, axis=0, copy=True):
     See also
     --------
     MaxAbsScaler: Performs scaling to the [-1, 1] range using the``Transformer`` API
-        (e.g. as part of a preprocessing :class:`sklearn.pipeline.Pipeline`).
+        (e.g. as part of a preprocessing :class:`~sklearn.pipeline.Pipeline`).
 
     Notes
     -----
@@ -1216,7 +1216,7 @@ class RobustScaler(TransformerMixin, BaseEstimator):
     --------
     robust_scale: Equivalent function without the estimator API.
 
-    :class:`sklearn.decomposition.PCA`
+    :class:`~sklearn.decomposition.PCA`
         Further removes the linear correlation across features with
         'whiten=True'.
 
@@ -1434,7 +1434,7 @@ def robust_scale(X, *, axis=0, with_centering=True, with_scaling=True,
     See also
     --------
     RobustScaler: Performs centering and scaling using the ``Transformer`` API
-        (e.g. as part of a preprocessing :class:`sklearn.pipeline.Pipeline`).
+        (e.g. as part of a preprocessing :class:`~sklearn.pipeline.Pipeline`).
     """
     X = check_array(X, accept_sparse=('csr', 'csc'), copy=False,
                     ensure_2d=False, dtype=FLOAT_DTYPES,
@@ -1782,7 +1782,7 @@ def normalize(X, norm='l2', *, axis=1, copy=True, return_norm=False):
     See also
     --------
     Normalizer: Performs normalization using the ``Transformer`` API
-        (e.g. as part of a preprocessing :class:`sklearn.pipeline.Pipeline`).
+        (e.g. as part of a preprocessing :class:`~sklearn.pipeline.Pipeline`).
 
     Notes
     -----
@@ -1981,7 +1981,7 @@ def binarize(X, *, threshold=0.0, copy=True):
     See also
     --------
     Binarizer: Performs binarization using the ``Transformer`` API
-        (e.g. as part of a preprocessing :class:`sklearn.pipeline.Pipeline`).
+        (e.g. as part of a preprocessing :class:`~sklearn.pipeline.Pipeline`).
     """
     X = check_array(X, accept_sparse=['csr', 'csc'], copy=copy)
     if sparse.issparse(X):
@@ -2797,7 +2797,7 @@ def quantile_transform(X, *, axis=0, n_quantiles=1000,
     --------
     QuantileTransformer : Performs quantile-based scaling using the
         ``Transformer`` API (e.g. as part of a preprocessing
-        :class:`sklearn.pipeline.Pipeline`).
+        :class:`~sklearn.pipeline.Pipeline`).
     power_transform : Maps data to a normal distribution using a
         power transformation.
     scale : Performs standardization that is faster, but less robust
@@ -3246,7 +3246,7 @@ def power_transform(X, method='yeo-johnson', *, standardize=True, copy=True):
     --------
     PowerTransformer : Equivalent transformation with the
         ``Transformer`` API (e.g. as part of a preprocessing
-        :class:`sklearn.pipeline.Pipeline`).
+        :class:`~sklearn.pipeline.Pipeline`).
 
     quantile_transform : Maps data to a standard normal distribution with
         the parameter `output_distribution='normal'`.

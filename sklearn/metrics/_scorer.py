@@ -4,7 +4,7 @@ interface for model selection and evaluation using
 arbitrary score functions.
 
 A scorer object is a callable that can be passed to
-:class:`sklearn.model_selection.GridSearchCV` or
+:class:`~sklearn.model_selection.GridSearchCV` or
 :func:`sklearn.model_selection.cross_val_score` as the ``scoring``
 parameter, to specify how a model should be evaluated.
 
