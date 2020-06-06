@@ -3,25 +3,33 @@
 
 import pytest
 import numpy as np
+from numpy.testing import assert_allclose
 from scipy import sparse
 
 from sklearn.base import BaseEstimator
+from sklearn.base import ClassifierMixin
 from sklearn.model_selection import LeaveOneOut
 
 from sklearn.utils._testing import (assert_array_almost_equal,
                                    assert_almost_equal,
                                    assert_array_equal,
                                    assert_raises, ignore_warnings)
-from sklearn.datasets import make_classification, make_blobs
+from sklearn.exceptions import NotFittedError
+from sklearn.datasets import make_classification, make_blobs, load_iris
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.linear_model import LogisticRegression
 from sklearn.svm import LinearSVC
-from sklearn.pipeline import Pipeline
+from sklearn.pipeline import Pipeline, make_pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.compose import make_column_transformer
 from sklearn.impute import SimpleImputer
 from sklearn.metrics import brier_score_loss, log_loss
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.calibration import _sigmoid_calibration, _SigmoidCalibration
-from sklearn.calibration import calibration_curve
+from sklearn.calibration import (calibration_curve, plot_calibration_curve,
+                                 CalibrationDisplay)
 
 
 def test_calibration():
@@ -341,3 +349,190 @@ def test_calibration_accepts_ndarray(X):
     calibrated_clf = CalibratedClassifierCV(MockTensorClassifier())
     # we should be able to fit this classifier with no error
     calibrated_clf.fit(X, y)
+
+
+@pytest.fixture(scope="module")
+def data():
+    return load_iris(return_X_y=True)
+
+
+@pytest.fixture(scope="module")
+def data_binary(data):
+    X, y = data
+    return X[y < 2], y[y < 2]
+
+
+def test_plot_calibration_curve_error_non_binary(pyplot, data):
+    X, y = data
+    clf = DecisionTreeClassifier()
+    clf.fit(X, y)
+
+    msg = "Only binary classification is supported."
+    with pytest.raises(ValueError, match=msg):
+        plot_calibration_curve(clf, X, y)
+
+
+def test_plot_calibration_curve_no_method(pyplot, data_binary):
+    X, y = data_binary
+
+    class MyClassifier(ClassifierMixin):
+        def fit(self, X, y):
+            self.classes_ = [0, 1]
+            return self
+
+    clf = MyClassifier().fit(X, y)
+
+    msg = ("Neither response method 'predict_proba' nor 'decision_function' "
+           "are defined in")
+    with pytest.raises(ValueError, match=msg):
+        plot_calibration_curve(clf, X, y)
+
+
+def test_plot_calibration_curve_not_fitted(pyplot, data_binary):
+    X, y = data_binary
+    clf = LogisticRegression()
+
+    with pytest.raises(NotFittedError):
+        plot_calibration_curve(clf, X, y)
+
+
+@pytest.mark.parametrize("n_bins", [5, 10])
+@pytest.mark.parametrize("strategy", ["uniform", "quantile"])
+@pytest.mark.parametrize("brier_score", [True, False])
+@pytest.mark.parametrize("with_strings", [True, False])
+def test_plot_calibration_curve(pyplot, data_binary, n_bins, strategy,
+                                brier_score, with_strings):
+    X, y = data_binary
+
+    pos_label = None
+    if with_strings:
+        y = np.array(["c", "b"])[y]
+        pos_label = "c"
+
+    lr = LogisticRegression().fit(X, y)
+
+    viz = plot_calibration_curve(
+        lr, X, y, n_bins=n_bins, strategy=strategy, brier_score=brier_score,
+        alpha=0.8
+    )
+
+    y_prob = lr.predict_proba(X)[:, 1]
+    prob_true, prob_pred = calibration_curve(
+        y, y_prob, n_bins=n_bins, strategy=strategy
+    )
+
+    assert_allclose(viz.prob_true, prob_true)
+    assert_allclose(viz.prob_pred, prob_pred)
+    assert_allclose(viz.y_prob, y_prob)
+
+    assert viz.estimator_name == "LogisticRegression"
+
+    # cannot fail thanks to pyplot fixture
+    import matplotlib as mpl  # noqa
+    assert isinstance(viz.line_, mpl.lines.Line2D)
+    assert viz.line_.get_alpha() == 0.8
+    assert isinstance(viz.ax_, mpl.axes.Axes)
+    assert isinstance(viz.figure_, mpl.figure.Figure)
+
+    assert viz.ax_.get_xlabel() == "Mean predicted probability"
+    assert viz.ax_.get_ylabel() == "Fraction of positives"
+
+    if brier_score:
+        brier_value = brier_score_loss(
+            y, y_prob, pos_label=pos_label
+        )
+        assert_allclose(brier_value, viz.brier_value)
+        expected_label = \
+            f"LogisticRegression (Brier: {viz.brier_value:.3f})"
+        assert viz.line_.get_label() == expected_label
+    else:
+        assert viz.line_.get_label() == "LogisticRegression"
+
+
+def test_plot_calibration_curve_decision_function(pyplot, data_binary):
+    # Check when `estimator` has no `predict_proba` and `decision_function`
+    # used
+    X, y = data_binary
+    svc = LinearSVC().fit(X, y)
+
+    viz = plot_calibration_curve(svc, X, y)
+
+    y_prob = svc.decision_function(X)
+    y_prob_pos = (y_prob - y_prob.min()) / (y_prob.max() - y_prob.min())
+    prob_true, prob_pred = calibration_curve(y, y_prob_pos)
+
+    assert_allclose(viz.prob_true, prob_true)
+    assert_allclose(viz.prob_pred, prob_pred)
+    assert_allclose(viz.y_prob, y_prob_pos)
+
+    assert viz.estimator_name == "LinearSVC"
+
+    # cannot fail thanks to pyplot fixture
+    import matplotlib as mpl  # noqa
+    assert isinstance(viz.line_, mpl.lines.Line2D)
+    assert isinstance(viz.ax_, mpl.axes.Axes)
+    assert isinstance(viz.figure_, mpl.figure.Figure)
+
+    assert viz.ax_.get_xlabel() == "Mean predicted probability"
+    assert viz.ax_.get_ylabel() == "Fraction of positives"
+
+
+@pytest.mark.parametrize(
+    "clf", [make_pipeline(StandardScaler(), LogisticRegression()),
+            make_pipeline(make_column_transformer((StandardScaler(), [0, 1])),
+                          LogisticRegression())])
+def test_plot_calibration_curve_pipeline(pyplot, data_binary, clf):
+    X, y = data_binary
+    clf.fit(X, y)
+    viz = plot_calibration_curve(clf, X, y)
+    assert clf.__class__.__name__ in viz.line_.get_label()
+    assert viz.estimator_name == clf.__class__.__name__
+
+
+def test_plot_roc_curve_estimator_name_multiple_calls(pyplot, data_binary):
+    # non-regression test checking that the `name` used when calling
+    # `plot_calibration_curve` is used as well when calling `viz.plot()`
+    X, y = data_binary
+    clf_name = "my hand-crafted name"
+    clf = LogisticRegression().fit(X, y)
+    viz = plot_calibration_curve(clf, X, y, name=clf_name)
+    assert viz.estimator_name == clf_name
+    pyplot.close("all")
+    viz.plot()
+    assert clf_name in viz.line_.get_label()
+    pyplot.close("all")
+    clf_name = "another_name"
+    viz.plot(name=clf_name)
+    assert clf_name in viz.line_.get_label()
+
+
+def test_plot_calibration_curve_ref_line(pyplot, data_binary):
+    # Check that `ref_line` only appears once
+    X, y = data_binary
+    lr = LogisticRegression().fit(X, y)
+    dt = DecisionTreeClassifier().fit(X, y)
+
+    viz = plot_calibration_curve(lr, X, y)
+    viz2 = plot_calibration_curve(dt, X, y, ax=viz.ax_)
+
+    labels = viz2.ax_.get_legend_handles_labels()[1]
+    assert labels.count('Perfectly calibrated') == 1
+
+
+@pytest.mark.parametrize(
+    "brier_value, estimator_name, expected_label",
+    [(0.07, None, "Brier: 0.070"),
+     (None, "my_est", "my_est"),
+     (0.07, "my_est2", "my_est2 (Brier: 0.070)")]
+)
+def test_calibration_display_default_labels(pyplot, brier_value,
+                                            estimator_name, expected_label):
+    prob_true = np.array([0, 1, 1, 0])
+    prob_pred = np.array([0.2, 0.8, 0.8, 0.4])
+    y_prob = np.array([])
+
+    viz = CalibrationDisplay(prob_true, prob_pred, y_prob,
+                             brier_value=brier_value,
+                             estimator_name=estimator_name)
+    viz.plot()
+    assert viz.line_.get_label() == expected_label
