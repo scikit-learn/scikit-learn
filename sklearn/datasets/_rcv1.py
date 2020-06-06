@@ -127,6 +127,13 @@ def fetch_rcv1(*, data_home=None, subset='all', download_if_missing=True,
         `dataset.target` object.
 
         .. versionadded:: 0.20
+    
+    as_frame : bool, default=False
+        If True, the data is a pandas DataFrame including columns with
+        appropriate dtypes (numeric, string or categorical). The target is
+        a pandas DataFrame or Series depending on the number of target_columns.
+
+        .. versionadded:: 0.24
 
     Returns
     -------
@@ -148,6 +155,12 @@ def fetch_rcv1(*, data_home=None, subset='all', download_if_missing=True,
     (data, target) : tuple if ``return_X_y`` is True
 
         .. versionadded:: 0.20
+
+    frame : pandas DataFrame
+        Only present when `as_frame=True`. DataFrame with ``data`` and
+        ``target``.
+        
+        .. versionadded:: 0.24
     """
     N_SAMPLES = 804414
     N_FEATURES = 47236
