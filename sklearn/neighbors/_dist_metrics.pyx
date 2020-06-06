@@ -378,9 +378,9 @@ cdef class DistanceMetric:
 
         Parameters
         ----------
-        X : array_like
+        X : array-like
             Array of shape (Nx, D), representing Nx points in D dimensions.
-        Y : array_like (optional)
+        Y : array-like (optional)
             Array of shape (Ny, D), representing Ny points in D dimensions.
             If not specified, then Y=X.
         Returns
@@ -593,7 +593,7 @@ cdef class WMinkowskiDistance(DistanceMetric):
     ----------
     p : int
         The order of the norm of the difference :math:`{||u-v||}_p`.
-    w : (N,) array_like
+    w : (N,) array-like
         The weight vector.
 
     """
@@ -649,10 +649,10 @@ cdef class MahalanobisDistance(DistanceMetric):
 
     Parameters
     ----------
-    V : array_like
+    V : array-like
         Symmetric positive-definite covariance matrix.
         The inverse of this matrix will be explicitly computed.
-    VI : array_like
+    VI : array-like
         optionally specify the inverse directly.  If VI is passed,
         then V is not referenced.
     """

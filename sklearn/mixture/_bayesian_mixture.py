@@ -129,7 +129,7 @@ class BayesianGaussianMixture(BaseMixture):
             'dirichlet_process' (using the Stick-breaking representation),
             'dirichlet_distribution' (can favor more uniform weights).
 
-    weight_concentration_prior : float | None, optional.
+    weight_concentration_prior : float | None, default=None.
         The dirichlet concentration of each component on the weight
         distribution (Dirichlet). This is commonly called gamma in the
         literature. The higher concentration puts more mass in
@@ -138,22 +138,22 @@ class BayesianGaussianMixture(BaseMixture):
         mixture weights simplex. The value of the parameter must be greater
         than 0. If it is None, it's set to ``1. / n_components``.
 
-    mean_precision_prior : float | None, optional.
+    mean_precision_prior : float | None, default=None.
         The precision prior on the mean distribution (Gaussian).
         Controls the extent of where means can be placed. Larger
         values concentrate the cluster means around `mean_prior`.
         The value of the parameter must be greater than 0.
         If it is None, it is set to 1.
 
-    mean_prior : array-like of shape (n_features,), optional
+    mean_prior : array-like, shape (n_features,), default=None.
         The prior on the mean distribution (Gaussian).
         If it is None, it is set to the mean of X.
 
-    degrees_of_freedom_prior : float | None, optional.
+    degrees_of_freedom_prior : float | None, default=None.
         The prior of the number of degrees of freedom on the covariance
         distributions (Wishart). If it is None, it's set to `n_features`.
 
-    covariance_prior : float or array-like, optional
+    covariance_prior : float or array-like, default=None.
         The prior on the covariance distribution (Wishart).
         If it is None, the emiprical covariance prior is initialized using the
         covariance of X. The shape depends on `covariance_type`::

@@ -1094,6 +1094,18 @@ def maxabs_scale(X, *, axis=0, copy=True):
     X_tr : {ndarray, sparse matrix} of shape (n_samples, n_features)
         The transformed data.
 
+    .. warning:: Risk of data leak
+
+        Do not use :func:`~sklearn.preprocessing.maxabs_scale` unless you know what
+        you are doing. A common mistake is to apply it to the entire data
+        *before* splitting into training and test sets. This will bias the
+        model evaluation because information would have leaked from the test
+        set to the training set.
+        In general, we recommend using
+        :class:`~sklearn.preprocessing.MaxAbsScaler` within a
+        :ref:`Pipeline <pipeline>` in order to prevent most risks of data
+        leaking: `pipe = make_pipeline(MaxAbsScaler(), LogisticRegression())`.
+
     See also
     --------
     MaxAbsScaler: Performs scaling to the [-1, 1] range using the``Transformer`` API

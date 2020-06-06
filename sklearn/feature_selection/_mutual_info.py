@@ -199,13 +199,13 @@ def _estimate_mi(X, y, discrete_features='auto', discrete_target=False,
 
     Parameters
     ----------
-    X : array_like or sparse matrix, shape (n_samples, n_features)
+    X : array-like or sparse matrix, shape (n_samples, n_features)
         Feature matrix.
 
-    y : array_like, shape (n_samples,)
+    y : array-like, shape (n_samples,)
         Target vector.
 
-    discrete_features : {'auto', bool, array_like}, default 'auto'
+    discrete_features : {'auto', bool, array-like}, default 'auto'
         If bool, then determines whether to consider all features discrete
         or continuous. If array, then it should be either a boolean mask
         with shape (n_features,) or array with indices of discrete features.
@@ -310,13 +310,13 @@ def mutual_info_regression(X, y, *, discrete_features='auto', n_neighbors=3,
 
     Parameters
     ----------
-    X : array_like or sparse matrix, shape (n_samples, n_features)
+    X : array-like or sparse matrix, shape (n_samples, n_features)
         Feature matrix.
 
-    y : array_like, shape (n_samples,)
+    y : array-like, shape (n_samples,)
         Target vector.
 
-    discrete_features : {'auto', bool, array_like}, default 'auto'
+    discrete_features : {'auto', bool, array-like}, default 'auto'
         If bool, then determines whether to consider all features discrete
         or continuous. If array, then it should be either a boolean mask
         with shape (n_features,) or array with indices of discrete features.
@@ -388,13 +388,13 @@ def mutual_info_classif(X, y, *, discrete_features='auto', n_neighbors=3,
 
     Parameters
     ----------
-    X : array_like or sparse matrix, shape (n_samples, n_features)
+    X : array-like or sparse matrix, shape (n_samples, n_features)
         Feature matrix.
 
-    y : array_like, shape (n_samples,)
+    y : array-like, shape (n_samples,)
         Target vector.
 
-    discrete_features : {'auto', bool, array_like}, default 'auto'
+    discrete_features : {'auto', bool, array-like}, default 'auto'
         If bool, then determines whether to consider all features discrete
         or continuous. If array, then it should be either a boolean mask
         with shape (n_features,) or array with indices of discrete features.

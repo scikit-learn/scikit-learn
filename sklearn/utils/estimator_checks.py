@@ -599,7 +599,7 @@ class _NotAnArray:
 
     Parameters
     ----------
-    data : array_like
+    data : array-like
         The data.
     """
 
