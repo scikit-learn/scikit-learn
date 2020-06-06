@@ -467,8 +467,8 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         Parameters
         ----------
         X : iterable
-            Data to predict on. Must fulfill input requirements of first step
-            of the pipeline.
+            Data to predict on. Must fulfill input requirements
+            of the underlying estimator.
         Returns
         -------
         y_score : ndarray, shape (n_samples,)

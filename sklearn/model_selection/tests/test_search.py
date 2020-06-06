@@ -1113,9 +1113,11 @@ def test_search_cv_score_samples_error(search_cv):
 
     # Make sure to error out when underlying estimator does not implement
     # the method `score_samples`
-    err_msg = "AttributeError: 'DecisionTreeClassifier' object has " \
-              "no attribute 'score_samples'"
-    assert_raise_message(AttributeError, err_msg, clf.score_samples, X)
+    err_msg = ("'DecisionTreeClassifier' object has no attribute "
+               "'score_samples'")
+
+    with pytest.raises(AttributeError, match=err_msg):
+        clf.score_samples(X)
 
 
 @pytest.mark.filterwarnings("ignore:The parameter 'iid' is deprecated")  # 0.24
