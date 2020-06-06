@@ -193,7 +193,7 @@ def test_dbscan_metric_params():
     assert_array_equal(labels_1, labels_3)
 
     with pytest.warns(SyntaxWarning):
-        # Test that checks p is ignored in favor of metric_params={'p': <value>}
+        # Test that checks p is ignored in favor of metric_params={'p': <val>}
         db = DBSCAN(metric='minkowski', metric_params={'p': p}, eps=eps, p=p+1,
                     min_samples=min_samples, algorithm='ball_tree').fit(X)
         core_sample_4, labels_4 = db.core_sample_indices_, db.labels_
