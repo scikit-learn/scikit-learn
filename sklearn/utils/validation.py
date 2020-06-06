@@ -1062,11 +1062,11 @@ def check_scalar(x, name, target_type, *, min_val=None, max_val=None):
     target_type : type or tuple
         Acceptable data types for the parameter.
 
-    min_val : float or int, optional (default=None)
+    min_val : float or int, default=None
         The minimum valid value the parameter can take. If None (default) it
         is implied that the parameter does not have a lower bound.
 
-    max_val : float or int, optional (default=None)
+    max_val : float or int, default=None
         The maximum valid value the parameter can take. If None (default) it
         is implied that the parameter does not have an upper bound.
 
