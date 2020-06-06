@@ -23,6 +23,7 @@ import numpy as np
 import joblib
 
 from . import get_data_home
+from ._base import _convert_data_dataframe
 from ._base import _fetch_remote
 from ._base import RemoteFileMetadata
 from ..utils import Bunch
@@ -44,7 +45,8 @@ logger = logging.getLogger(__name__)
 
 @_deprecate_positional_args
 def fetch_covtype(*, data_home=None, download_if_missing=True,
-                  random_state=None, shuffle=False, return_X_y=False):
+                  random_state=None, shuffle=False, return_X_y=False,
+                  as_frame=False):
     """Load the covertype dataset (classification).
 
     Download it if necessary.
@@ -80,6 +82,8 @@ def fetch_covtype(*, data_home=None, download_if_missing=True,
         If True, returns ``(data.data, data.target)`` instead of a Bunch
         object.
 
+    as_frame : boolean, default=False.
+        If True, returns ``pandas.DataFrame`` instead of a Bunch object
         .. versionadded:: 0.20
 
     Returns
@@ -97,6 +101,9 @@ def fetch_covtype(*, data_home=None, download_if_missing=True,
             Description of the forest covertype dataset.
 
     (data, target) : tuple if ``return_X_y`` is True
+
+    dataframe: :class: `pandas.DataFrame`
+        Pandas dataframe
 
         .. versionadded:: 0.20
     """
@@ -144,5 +151,32 @@ def fetch_covtype(*, data_home=None, download_if_missing=True,
 
     if return_X_y:
         return X, y
+
+    if as_frame:
+        """
+        Column names reference: https://archive.ics.uci.edu/ml/machine-learning-databases/covtype/covtype.info
+        """
+        feat_cols = ["Elevation",
+                    "Aspect",
+                    "Slope",
+                    "Horizontal_Distance_To_Hydrology",
+                    "Vertical_Distance_To_Hydrology",
+                    "Horizontal_Distance_To_Roadways",
+                    "Hillshade_9am",
+                    "Hillshade_Noon",
+                    "Hillshade_3pm",
+                    "Horizontal_Distance_To_Fire_Points"]
+        feat_cols += ['Wilderness_Area_'+str(i) for i in range(1,5)]
+        feat_cols += ['Soil_Type_'+str(i) for i in range(1,41)]
+        target_col = ["Cover_Type"]
+
+        frame, X, y = _convert_data_dataframe("fetch_covtype", X, y,
+                                              feat_cols, target_col)
+        return Bunch(data=X,
+                     target=y,
+                     frame=frame,
+                     target_names=target_col,
+                     feature_names=feat_cols,
+                     DESCR=fdescr)
 
     return Bunch(data=X, target=y, DESCR=fdescr)
