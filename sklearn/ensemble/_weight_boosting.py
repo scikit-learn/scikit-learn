@@ -888,7 +888,7 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
     base_estimator : object, default=None
         The base estimator from which the boosted ensemble is built.
         If ``None``, then the base estimator is
-        ``DecisionTreeRegressor(max_depth=3)``.
+        :class:`~sklearn.tree.DecisionTreeRegressor` initialized with `max_depth=3`.
 
     n_estimators : int, default=50
         The maximum number of estimators at which boosting is terminated.
@@ -950,8 +950,9 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
 
     See also
     --------
-    AdaBoostClassifier, GradientBoostingRegressor,
-    sklearn.tree.DecisionTreeRegressor
+    :class:`~sklearn.ensemble.AdaBoostClassifier`,
+    :class:`~sklearn.ensemble.GradientBoostingRegressor`,
+    :class:`~sklearn.tree.DecisionTreeRegressor`
 
     References
     ----------
