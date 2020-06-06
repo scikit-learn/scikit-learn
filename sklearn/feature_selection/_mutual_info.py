@@ -350,13 +350,15 @@ def mutual_info_regression(X, y, *, discrete_features='auto', n_neighbors=3,
        For example, pixel intensities of an image are discrete features
        (but hardly categorical) and you will get better results if mark them
        as such. Also note, that treating a continuous variable as discrete and
-       vice versa will usually give incorrect results, so be attentive about that.
+       vice versa will usually give incorrect results, so be attentive about
+       that.
     2. True mutual information can't be negative. If its estimate turns out
        to be negative, it is replaced by zero.
 
     References
     ----------
-    .. [1] `Mutual Information <https://en.wikipedia.org/wiki/Mutual_information>`_
+    .. [1] `Mutual Information
+           <https://en.wikipedia.org/wiki/Mutual_information>`_
            on Wikipedia.
     .. [2] A. Kraskov, H. Stogbauer and P. Grassberger, "Estimating mutual
            information". Phys. Rev. E 69, 2004.
@@ -428,13 +430,15 @@ def mutual_info_classif(X, y, *, discrete_features='auto', n_neighbors=3,
        For example, pixel intensities of an image are discrete features
        (but hardly categorical) and you will get better results if mark them
        as such. Also note, that treating a continuous variable as discrete and
-       vice versa will usually give incorrect results, so be attentive about that.
+       vice versa will usually give incorrect results, so be attentive about
+       that.
     2. True mutual information can't be negative. If its estimate turns out
        to be negative, it is replaced by zero.
 
     References
     ----------
-    .. [1] `Mutual Information <https://en.wikipedia.org/wiki/Mutual_information>`_
+    .. [1] `Mutual Information
+           <https://en.wikipedia.org/wiki/Mutual_information>`_
            on Wikipedia.
     .. [2] A. Kraskov, H. Stogbauer and P. Grassberger, "Estimating mutual
            information". Phys. Rev. E 69, 2004.

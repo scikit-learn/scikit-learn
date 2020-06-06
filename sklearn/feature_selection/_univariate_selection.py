@@ -425,7 +425,8 @@ class SelectPercentile(_BaseFilter):
     SelectFpr: Select features based on a false positive rate test.
     SelectFdr: Select features based on an estimated false discovery rate.
     SelectFwe: Select features based on family-wise error rate.
-    GenericUnivariateSelect: Univariate feature selector with configurable mode.
+    GenericUnivariateSelect: Univariate feature selector with configurable
+    mode.
     """
     @_deprecate_positional_args
     def __init__(self, score_func=f_classif, *, percentile=10):
@@ -507,11 +508,13 @@ class SelectKBest(_BaseFilter):
     chi2: Chi-squared stats of non-negative features for classification tasks.
     f_regression: F-value between label/feature for regression tasks.
     mutual_info_regression: Mutual information for a continuous target.
-    SelectPercentile: Select features based on percentile of the highest scores.
+    SelectPercentile: Select features based on percentile of the highest
+    scores.
     SelectFpr: Select features based on a false positive rate test.
     SelectFdr: Select features based on an estimated false discovery rate.
     SelectFwe: Select features based on family-wise error rate.
-    GenericUnivariateSelect: Univariate feature selector with configurable mode.
+    GenericUnivariateSelect: Univariate feature selector with configurable
+    mode.
     """
     @_deprecate_positional_args
     def __init__(self, score_func=f_classif, *, k=10):
@@ -586,11 +589,13 @@ class SelectFpr(_BaseFilter):
     mutual_info_classif:
     f_regression: F-value between label/feature for regression tasks.
     mutual_info_regression: Mutual information between features and the target.
-    SelectPercentile: Select features based on percentile of the highest scores.
+    SelectPercentile: Select features based on percentile of the highest
+    scores.
     SelectKBest: Select features based on the k highest scores.
     SelectFdr: Select features based on an estimated false discovery rate.
     SelectFwe: Select features based on family-wise error rate.
-    GenericUnivariateSelect: Univariate feature selector with configurable mode.
+    GenericUnivariateSelect: Univariate feature selector with configurable
+    mode.
     """
     @_deprecate_positional_args
     def __init__(self, score_func=f_classif, *, alpha=5e-2):
@@ -652,11 +657,13 @@ class SelectFdr(_BaseFilter):
     chi2: Chi-squared stats of non-negative features for classification tasks.
     f_regression: F-value between label/feature for regression tasks.
     mutual_info_regression: Mutual information for a contnuous target.
-    SelectPercentile: Select features based on percentile of the highest scores.
+    SelectPercentile: Select features based on percentile of the highest
+    scores.
     SelectKBest: Select features based on the k highest scores.
     SelectFpr: Select features based on a false positive rate test.
     SelectFwe: Select features based on family-wise error rate.
-    GenericUnivariateSelect: Univariate feature selector with configurable mode.
+    GenericUnivariateSelect: Univariate feature selector with configurable
+    mode.
     """
     @_deprecate_positional_args
     def __init__(self, score_func=f_classif, *, alpha=5e-2):
@@ -715,11 +722,13 @@ class SelectFwe(_BaseFilter):
     f_classif: ANOVA F-value between label/feature for classification tasks.
     chi2: Chi-squared stats of non-negative features for classification tasks.
     f_regression: F-value between label/feature for regression tasks.
-    SelectPercentile: Select features based on percentile of the highest scores.
+    SelectPercentile: Select features based on percentile of the highest
+    scores.
     SelectKBest: Select features based on the k highest scores.
     SelectFpr: Select features based on a false positive rate test.
     SelectFdr: Select features based on an estimated false discovery rate.
-    GenericUnivariateSelect: Univariate feature selector with configurable mode.
+    GenericUnivariateSelect: Univariate feature selector with configurable
+    mode.
     """
     @_deprecate_positional_args
     def __init__(self, score_func=f_classif, *, alpha=5e-2):
@@ -783,7 +792,8 @@ class GenericUnivariateSelect(_BaseFilter):
     chi2: Chi-squared stats of non-negative features for classification tasks.
     f_regression: F-value between label/feature for regression tasks.
     mutual_info_regression: Mutual information for a continuous target.
-    SelectPercentile: Select features based on percentile of the highest scores.
+    SelectPercentile: Select features based on percentile of the highest
+    scores.
     SelectKBest: Select features based on the k highest scores.
     SelectFpr: Select features based on a false positive rate test.
     SelectFdr: Select features based on an estimated false discovery rate.
