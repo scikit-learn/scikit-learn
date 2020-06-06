@@ -54,10 +54,10 @@ def make_dataset(X, y, sample_weight, random_state=None):
 
     Parameters
     ----------
-    X : array_like, shape (n_samples, n_features)
+    X : array-like, shape (n_samples, n_features)
         Training data
 
-    y : array_like, shape (n_samples, )
+    y : array-like, shape (n_samples, )
         Target values.
 
     sample_weight : numpy array of shape (n_samples,)
@@ -225,7 +225,7 @@ class LinearModel(BaseEstimator, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : array_like or sparse matrix, shape (n_samples, n_features)
+        X : array-like or sparse matrix, shape (n_samples, n_features)
             Samples.
 
         Returns
@@ -267,7 +267,7 @@ class LinearClassifierMixin(ClassifierMixin):
 
         Parameters
         ----------
-        X : array_like or sparse matrix, shape (n_samples, n_features)
+        X : array-like or sparse matrix, shape (n_samples, n_features)
             Samples.
 
         Returns
@@ -296,7 +296,7 @@ class LinearClassifierMixin(ClassifierMixin):
 
         Parameters
         ----------
-        X : array_like or sparse matrix, shape (n_samples, n_features)
+        X : array-like or sparse matrix, shape (n_samples, n_features)
             Samples.
 
         Returns

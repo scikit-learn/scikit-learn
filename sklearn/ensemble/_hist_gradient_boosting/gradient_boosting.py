@@ -637,7 +637,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         Returns
         -------
-        raw_predictions : array, shape (n_samples * n_trees_per_iteration,)
+        raw_predictions : array, shape (n_trees_per_iteration, n_samples)
             The raw predicted values.
         """
         X = check_array(X, dtype=[X_DTYPE, X_BINNED_DTYPE],
@@ -655,7 +655,14 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             dtype=self._baseline_prediction.dtype
         )
         raw_predictions += self._baseline_prediction
-        for predictors_of_ith_iteration in self._predictors:
+        self._predict_iterations(
+            X, self._predictors, raw_predictions, is_binned
+        )
+        return raw_predictions
+
+    def _predict_iterations(self, X, predictors, raw_predictions, is_binned):
+        """Add the predictions of the predictors to raw_predictions."""
+        for predictors_of_ith_iteration in predictors:
             for k, predictor in enumerate(predictors_of_ith_iteration):
                 if is_binned:
                     predict = partial(
@@ -666,7 +673,45 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     predict = predictor.predict
                 raw_predictions[k, :] += predict(X)
 
-        return raw_predictions
+    def _staged_raw_predict(self, X):
+        """Compute raw predictions of ``X`` for each iteration.
+
+        This method allows monitoring (i.e. determine error on testing set)
+        after each stage.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            The input samples.
+
+        Yields
+        -------
+        raw_predictions : generator of ndarray of shape \
+            (n_trees_per_iteration, n_samples)
+            The raw predictions of the input samples. The order of the
+            classes corresponds to that in the attribute :term:`classes_`.
+        """
+        X = check_array(X, dtype=X_DTYPE, force_all_finite=False)
+        check_is_fitted(self)
+        if X.shape[1] != self.n_features_:
+            raise ValueError(
+                'X has {} features but this estimator was trained with '
+                '{} features.'.format(X.shape[1], self.n_features_)
+            )
+        n_samples = X.shape[0]
+        raw_predictions = np.zeros(
+            shape=(self.n_trees_per_iteration_, n_samples),
+            dtype=self._baseline_prediction.dtype
+        )
+        raw_predictions += self._baseline_prediction
+        for iteration in range(len(self._predictors)):
+            self._predict_iterations(
+                X,
+                self._predictors[iteration:iteration + 1],
+                raw_predictions,
+                is_binned=False
+            )
+            yield raw_predictions.copy()
 
     def _compute_partial_dependence_recursion(self, grid, target_features):
         """Fast partial dependence computation.
@@ -910,6 +955,25 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         # shape (n_samples, 1) to (n_samples,)
         return self.loss_.inverse_link_function(self._raw_predict(X).ravel())
 
+    def staged_predict(self, X):
+        """Predict regression target for each iteration
+
+        This method allows monitoring (i.e. determine error on testing set)
+        after each stage.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            The input samples.
+
+        Yields
+        -------
+        y : generator of ndarray of shape (n_samples,)
+            The predicted values of the input samples, for each iteration.
+        """
+        for raw_predictions in self._staged_raw_predict(X):
+            yield self.loss_.inverse_link_function(raw_predictions.ravel())
+
     def _encode_y(self, y):
         # Just convert y to the expected dtype
         self.n_trees_per_iteration_ = 1
@@ -1114,6 +1178,26 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
         encoded_classes = np.argmax(self.predict_proba(X), axis=1)
         return self.classes_[encoded_classes]
 
+    def staged_predict(self, X):
+        """Predict classes at each iteration.
+
+        This method allows monitoring (i.e. determine error on testing set)
+        after each stage.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            The input samples.
+
+        Yields
+        -------
+        y : generator of ndarray of shape (n_samples,)
+            The predicted classes of the input samples, for each iteration.
+        """
+        for proba in self.staged_predict_proba(X):
+            encoded_classes = np.argmax(proba, axis=1)
+            yield self.classes_.take(encoded_classes, axis=0)
+
     def predict_proba(self, X):
         """Predict class probabilities for X.
 
@@ -1130,8 +1214,28 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
         raw_predictions = self._raw_predict(X)
         return self.loss_.predict_proba(raw_predictions)
 
+    def staged_predict_proba(self, X):
+        """Predict class probabilities at each iteration.
+
+        This method allows monitoring (i.e. determine error on testing set)
+        after each stage.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            The input samples.
+
+        Yields
+        -------
+        y : generator of ndarray of shape (n_samples,)
+            The predicted class probabilities of the input samples,
+            for each iteration.
+        """
+        for raw_predictions in self._staged_raw_predict(X):
+            yield self.loss_.predict_proba(raw_predictions)
+
     def decision_function(self, X):
-        """Compute the decision function of X.
+        """Compute the decision function of ``X``.
 
         Parameters
         ----------
@@ -1150,6 +1254,30 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
         if decision.shape[0] == 1:
             decision = decision.ravel()
         return decision.T
+
+    def staged_decision_function(self, X):
+        """Compute decision function of ``X`` for each iteration.
+
+        This method allows monitoring (i.e. determine error on testing set)
+        after each stage.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            The input samples.
+
+        Yields
+        -------
+        decision : generator of ndarray of shape (n_samples,) or \
+                (n_samples, n_trees_per_iteration)
+            The decision function of the input samples, which corresponds to
+            the raw values predicted from the trees of the ensemble . The
+            classes corresponds to that in the attribute :term:`classes_`.
+        """
+        for staged_decision in self._staged_raw_predict(X):
+            if staged_decision.shape[0] == 1:
+                staged_decision = staged_decision.ravel()
+            yield staged_decision.T
 
     def _encode_y(self, y):
         # encode classes into 0 ... n_classes - 1 and sets attributes classes_
