@@ -153,7 +153,7 @@ class SkewedChi2Sampler(TransformerMixin, BaseEstimator):
         number of Monte Carlo samples per original feature.
         Equals the dimensionality of the computed feature space.
 
-    random_state : int, RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Pseudo-random number generator to control the generation of the random
         weights and random offset when fitting the training data.
         Pass an int for reproducible output across multiple function calls.
@@ -481,7 +481,7 @@ class Nystroem(TransformerMixin, BaseEstimator):
         Number of features to construct.
         How many data points will be used to construct the mapping.
 
-    random_state : int, RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=None
         Pseudo-random number generator to control the uniform sampling without
         replacement of n_components of the training data to construct the basis
         kernel.
