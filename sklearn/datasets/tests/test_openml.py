@@ -8,7 +8,6 @@ import re
 import scipy.sparse
 import sklearn
 import pytest
-import shutil
 
 from sklearn import config_context
 from sklearn.datasets import fetch_openml
@@ -147,6 +146,38 @@ def _fetch_dataset_from_openml(data_id, data_name, data_version,
     return data_by_id
 
 
+class MockHTTPResponse:
+    def __init__(self, data, is_gzip):
+        self.data = data
+        self.is_gzip = is_gzip
+
+    def read(self, amt=-1):
+        return self.data.read(amt)
+
+    def tell(self):
+        return self.data.tell()
+
+    def seek(self, pos, whence=0):
+        return self.data.seek(pos, whence)
+
+    def close(self):
+        self.data.close()
+
+    def info(self):
+        if self.is_gzip:
+            return {'Content-Encoding': 'gzip'}
+        return {}
+
+    def __iter__(self):
+        return iter(self.data)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        return False
+
+
 def _monkey_patch_webbased_functions(context,
                                      data_id,
                                      gzip_response):
@@ -160,37 +191,6 @@ def _monkey_patch_webbased_functions(context,
 
     path_suffix = '.gz'
     read_fn = gzip.open
-
-    class MockHTTPResponse:
-        def __init__(self, data, is_gzip):
-            self.data = data
-            self.is_gzip = is_gzip
-
-        def read(self, amt=-1):
-            return self.data.read(amt)
-
-        def tell(self):
-            return self.data.tell()
-
-        def seek(self, pos, whence=0):
-            return self.data.seek(pos, whence)
-
-        def close(self):
-            self.data.close()
-
-        def info(self):
-            if self.is_gzip:
-                return {'Content-Encoding': 'gzip'}
-            return {}
-
-        def __iter__(self):
-            return iter(self.data)
-
-        def __enter__(self):
-            return self
-
-        def __exit__(self, exc_type, exc_val, exc_tb):
-            return False
 
     def _file_name(url, suffix):
         return (re.sub(r'\W', '-', url[len("https://openml.org/"):])
@@ -1193,38 +1193,42 @@ def test_fetch_openml_with_ignored_feature(monkeypatch, gzip_response):
     assert 'animal' not in dataset['feature_names']
 
 
-@pytest.mark.parametrize('as_frame,cache', [
-    (True, True),
-    (True, False),
-    (False, True),
-    (False, False)
-])
+@pytest.mark.parametrize('as_frame', [True, False])
 def test_fetch_openml_verify_checksum(monkeypatch, as_frame, cache):
     data_id = 2
     _monkey_patch_webbased_functions(monkeypatch, data_id, True)
 
-    # modify a mocked file content to change checksum
+    # create a modified (local) arff file
     dataset_dir = os.path.join(currdir, 'data', 'openml', str(data_id))
     original_data_path = os.path.join(dataset_dir,
                                       'data-v1-download-1666876.arff.gz')
-    backup_data_path = original_data_path + ".back"
-    shutil.copy(original_data_path, backup_data_path)
+    corrupt_copy = original_data_path + ".test_corrupt_arff"
+    with gzip.GzipFile(original_data_path, "rb") as orig_gzip, \
+         gzip.GzipFile(corrupt_copy, "wb") as modified_gzip:
+        data = bytearray(orig_gzip.read())
+        data[len(data)-1] = 37
+        modified_gzip.write(data)
 
-    try:
-        with gzip.GzipFile(backup_data_path, "rb") as orig_gzip, \
-             gzip.GzipFile(original_data_path, "wb") as modified_gzip:
-            data = bytearray(orig_gzip.read())
-            data[len(data)-1] = 37
-            modified_gzip.write(data)
+    # simulate request to return modified file
+    mocked_openml_url = sklearn.datasets._openml.urlopen
 
-        # should fail checksum validation
-        if as_frame:
-            pytest.importorskip('pandas')
-        with pytest.raises(ValueError) as exc:
-            sklearn.datasets.fetch_openml(data_id=data_id, cache=cache,
-                                          as_frame=as_frame)
-        # exception message should have file-path
-        assert exc.match("1666876")
-    finally:
-        shutil.copy(backup_data_path, original_data_path)
-        os.remove(backup_data_path)
+    def swap_file_mock(request):
+        url = request.get_full_url()
+        if url.endswith('data/v1/download/1666876'):
+            return MockHTTPResponse(open(corrupt_copy, "rb"), is_gzip=True)
+        else:
+            return mocked_openml_url(request)
+
+    monkeypatch.setattr(sklearn.datasets._openml, 'urlopen', swap_file_mock)
+
+    # validate failed checksum
+    if as_frame:
+        pytest.importorskip('pandas')
+    with pytest.raises(ValueError) as exc:
+        sklearn.datasets.fetch_openml(data_id=data_id, cache=False,
+                                      as_frame=as_frame)
+    # exception message should have file-path
+    assert exc.match("1666876")
+
+    # cleanup fake local file
+    os.remove(corrupt_copy)
