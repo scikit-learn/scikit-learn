@@ -82,7 +82,7 @@ def johnson_lindenstrauss_min_dim(n_samples, *, eps=0.1):
         Number of samples. If an array is given, it will compute
         a safe number of components array-wise.
 
-    eps : float or numpy array of float in ]0,1[, default=0.1
+    eps : float or numpy array of float in (0, 1), default=0.1
         Maximum distortion rate as defined by the Johnson-Lindenstrauss lemma.
         If an array is given, it will compute a safe number of components
         array-wise.
@@ -217,7 +217,7 @@ def _sparse_random_matrix(n_components, n_features, density='auto',
     n_features : int,
         Dimensionality of the original source space.
 
-    density : float in range ]0, 1] or 'auto', default='auto'
+    density : float in range (0, 1] or 'auto', default='auto'
         Ratio of non-zero component in the random projection matrix.
 
         If density = 'auto', the value is set to the minimum density
@@ -538,7 +538,7 @@ class SparseRandomProjection(BaseRandomProjection):
         very conservative estimated of the required number of components
         as it makes no assumption on the structure of the dataset.
 
-    density : float in range ]0, 1], default='auto'
+    density : float in range (0, 1], default='auto'
         Ratio of non-zero component in the random projection matrix.
 
         If density = 'auto', the value is set to the minimum density

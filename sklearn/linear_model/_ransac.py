@@ -77,7 +77,7 @@ class RANSACRegressor(MetaEstimatorMixin, RegressorMixin,
            which is used to compute residual error using loss function.
 
         If `base_estimator` is None, then
-        ``base_estimator=sklearn.linear_model.LinearRegression()`` is used for
+        :class:`~sklearn.linear_model.LinearRegression` is used for
         target values of dtype float.
 
         Note that the current implementation only supports regression
