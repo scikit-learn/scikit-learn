@@ -66,7 +66,7 @@ def fetch_california_housing(*, data_home=None, download_if_missing=True,
 
     Parameters
     ----------
-    data_home : optional, default: None
+    data_home : optional, default=None
         Specify another download and cache folder for the datasets. By default
         all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 

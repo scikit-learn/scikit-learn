@@ -648,11 +648,11 @@ def fetch_openml(name=None, *, version='active', data_id=None, data_home=None,
         dataset. If data_id is not given, name (and potential version) are
         used to obtain a dataset.
 
-    data_home : string or None, default None
+    data_home : string or None, default=None
         Specify another download and cache folder for the data sets. By default
         all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 
-    target_column : string, list or None, default 'default-target'
+    target_column : string, list or None, default='default-target'
         Specify the column name in the data to use as target. If
         'default-target', the standard target column a stored on the server
         is used. If ``None``, all columns are returned as data and the
@@ -663,7 +663,7 @@ def fetch_openml(name=None, *, version='active', data_id=None, data_home=None,
     cache : boolean, default=True
         Whether to cache downloaded datasets using joblib.
 
-    return_X_y : boolean, default=False.
+    return_X_y : boolean, default=False
         If True, returns ``(data, target)`` instead of a Bunch object. See
         below for more information about the `data` and `target` objects.
 

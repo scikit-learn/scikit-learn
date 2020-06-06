@@ -54,7 +54,7 @@ def fetch_olivetti_faces(*, data_home=None, shuffle=False, random_state=0,
 
     Parameters
     ----------
-    data_home : optional, default: None
+    data_home : optional, default=None
         Specify another download and cache folder for the datasets. By default
         all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 
@@ -67,11 +67,11 @@ def fetch_olivetti_faces(*, data_home=None, shuffle=False, random_state=0,
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
-    download_if_missing : optional, True by default
+    download_if_missing : optional, default=True
         If False, raise a IOError if the data is not locally available
         instead of trying to download the data from the source site.
 
-    return_X_y : boolean, default=False.
+    return_X_y : boolean, default=False
         If True, returns `(data, target)` instead of a `Bunch` object. See
         below for more information about the `data` and `target` object.
 

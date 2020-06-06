@@ -168,7 +168,7 @@ def fetch_20newsgroups(*, data_home=None, subset='train', categories=None,
 
     Parameters
     ----------
-    data_home : optional, default: None
+    data_home : optional, default=None
         Specify a download and cache folder for the datasets. If None,
         all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 
@@ -204,11 +204,11 @@ def fetch_20newsgroups(*, data_home=None, subset='train', categories=None,
         'headers' follows an exact standard; the other filters are not always
         correct.
 
-    download_if_missing : optional, True by default
+    download_if_missing : optional, default=True
         If False, raise an IOError if the data is not locally available
         instead of trying to download the data from the source site.
 
-    return_X_y : bool, default=False.
+    return_X_y : bool, default=False
         If True, returns `(data.data, data.target)` instead of a Bunch
         object.
 
@@ -371,11 +371,11 @@ def fetch_20newsgroups_vectorized(*, subset="train", remove=(), data_home=None,
         ends of posts that look like signatures, and 'quotes' removes lines
         that appear to be quoting another post.
 
-    data_home : optional, default: None
+    data_home : optional, default=None
         Specify an download and cache folder for the datasets. If None,
         all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 
-    download_if_missing : optional, True by default
+    download_if_missing : optional, default=True
         If False, raise an IOError if the data is not locally available
         instead of trying to download the data from the source site.
 

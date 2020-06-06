@@ -91,7 +91,7 @@ def fetch_kddcup99(*, subset=None, data_home=None, shuffle=False,
         If False, raise a IOError if the data is not locally available
         instead of trying to download the data from the source site.
 
-    return_X_y : boolean, default=False.
+    return_X_y : boolean, default=False
         If True, returns ``(data, target)`` instead of a Bunch object. See
         below for more information about the `data` and `target` object.
 
