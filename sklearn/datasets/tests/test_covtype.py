@@ -35,7 +35,7 @@ def test_fetch_asframe(fetch_covtype_fxt):
 
 def test_pandas_dependency_message(fetch_covtype_fxt,
                                    hide_available_pandas):
-    expected_msg = ('fetch_covtype_fxt with as_frame=True'
+    expected_msg = ('fetch_covtype with as_frame=True'
                     ' requires pandas')
     with pytest.raises(ImportError, match=expected_msg):
         fetch_covtype_fxt(as_frame=True)
