@@ -437,18 +437,17 @@ class PoissonRegressor(GeneralizedLinearRegressor):
     >>> from sklearn import linear_model
     >>> clf = linear_model.PoissonRegressor()
     >>> X = [[1, 2], [2, 3], [3, 4], [4, 3]]
-    >>> # y = 2 * x_0 + 3 * x_1 + 4
-    ... y = np.dot(X, np.array([2, 3])) + 4
+    >>> y = [12, 17, 22, 21]
     >>> clf.fit(X, y)
     PoissonRegressor()
-    >>> print(clf.score(X, y))
+    >>> clf.score(X, y)
     0.990...
-    >>> print(clf.coef_)
-    [0.121... 0.158...]
-    >>> print(clf.intercept_)
+    >>> clf.coef_
+    array([0.121..., 0.158...])
+    >>> clf.intercept_
     2.088...
-    >>> print(clf.predict([[1, 1], [3, 4]]))
-    [10.676... 21.875...]
+    >>> clf.predict([[1, 1], [3, 4]])
+    array([10.676..., 21.875...])
     """
     def __init__(self, *, alpha=1.0, fit_intercept=True, max_iter=100,
                  tol=1e-4, warm_start=False, verbose=0):
