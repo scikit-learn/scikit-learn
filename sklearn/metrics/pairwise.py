@@ -814,7 +814,7 @@ def cosine_distances(X, Y=None):
     X : array_like, sparse matrix
         with shape (n_samples_X, n_features).
 
-    Y : array_like, sparse matrix with shape 
+    Y : array_like, sparse matrix with shape
         (n_samples_Y, n_features), default=None.
 
     Returns
