@@ -1202,7 +1202,7 @@ def test_fetch_openml_verify_checksum(monkeypatch, as_frame, cache, tmpdir):
     dataset_dir = os.path.join(currdir, 'data', 'openml', str(data_id))
     original_data_path = os.path.join(dataset_dir,
                                       'data-v1-download-1666876.arff.gz')
-    corrupt_copy = tmpdir + "/test_invalid_checksum.arff"
+    corrupt_copy = os.path.join(tmpdir, "test_invalid_checksum.arff")
     with gzip.GzipFile(original_data_path, "rb") as orig_gzip, \
             gzip.GzipFile(corrupt_copy, "wb") as modified_gzip:
         data = bytearray(orig_gzip.read())
