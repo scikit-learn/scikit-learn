@@ -1013,7 +1013,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         return _VisualBlock('parallel', transformers, names=names)
 
 
-def make_union(*transformers, **kwargs):
+def make_union(*transformers, n_jobs=None, verbose=False):
     """
     Construct a FeatureUnion from the given transformers.
 
@@ -1055,12 +1055,5 @@ def make_union(*transformers, **kwargs):
      FeatureUnion(transformer_list=[('pca', PCA()),
                                    ('truncatedsvd', TruncatedSVD())])
     """
-    n_jobs = kwargs.pop('n_jobs', None)
-    verbose = kwargs.pop('verbose', False)
-    if kwargs:
-        # We do not currently support `transformer_weights` as we may want to
-        # change its type spec in make_union
-        raise TypeError('Unknown keyword arguments: "{}"'
-                        .format(list(kwargs.keys())[0]))
     return FeatureUnion(
         _name_estimators(transformers), n_jobs=n_jobs, verbose=verbose)
