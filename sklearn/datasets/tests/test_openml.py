@@ -146,19 +146,13 @@ def _fetch_dataset_from_openml(data_id, data_name, data_version,
     return data_by_id
 
 
-class MockHTTPResponse:
+class _MockHTTPResponse:
     def __init__(self, data, is_gzip):
         self.data = data
         self.is_gzip = is_gzip
 
     def read(self, amt=-1):
         return self.data.read(amt)
-
-    def tell(self):
-        return self.data.tell()
-
-    def seek(self, pos, whence=0):
-        return self.data.seek(pos, whence)
 
     def close(self):
         self.data.close()
@@ -204,10 +198,10 @@ def _monkey_patch_webbased_functions(context,
 
         if has_gzip_header and gzip_response:
             fp = open(path, 'rb')
-            return MockHTTPResponse(fp, True)
+            return _MockHTTPResponse(fp, True)
         else:
             fp = read_fn(path, 'rb')
-            return MockHTTPResponse(fp, False)
+            return _MockHTTPResponse(fp, False)
 
     def _mock_urlopen_data_features(url, has_gzip_header):
         assert url.startswith(url_prefix_data_features)
@@ -215,10 +209,10 @@ def _monkey_patch_webbased_functions(context,
                             _file_name(url, '.json'))
         if has_gzip_header and gzip_response:
             fp = open(path, 'rb')
-            return MockHTTPResponse(fp, True)
+            return _MockHTTPResponse(fp, True)
         else:
             fp = read_fn(path, 'rb')
-            return MockHTTPResponse(fp, False)
+            return _MockHTTPResponse(fp, False)
 
     def _mock_urlopen_download_data(url, has_gzip_header):
         assert (url.startswith(url_prefix_download_data))
@@ -228,10 +222,10 @@ def _monkey_patch_webbased_functions(context,
 
         if has_gzip_header and gzip_response:
             fp = open(path, 'rb')
-            return MockHTTPResponse(fp, True)
+            return _MockHTTPResponse(fp, True)
         else:
             fp = read_fn(path, 'rb')
-            return MockHTTPResponse(fp, False)
+            return _MockHTTPResponse(fp, False)
 
     def _mock_urlopen_data_list(url, has_gzip_header):
         assert url.startswith(url_prefix_data_list)
@@ -248,10 +242,10 @@ def _monkey_patch_webbased_functions(context,
 
         if has_gzip_header:
             fp = open(json_file_path, 'rb')
-            return MockHTTPResponse(fp, True)
+            return _MockHTTPResponse(fp, True)
         else:
             fp = read_fn(json_file_path, 'rb')
-            return MockHTTPResponse(fp, False)
+            return _MockHTTPResponse(fp, False)
 
     def _mock_urlopen(request):
         url = request.get_full_url()
@@ -1217,7 +1211,7 @@ def test_fetch_openml_verify_checksum(monkeypatch, as_frame, cache, tmpdir):
     def swap_file_mock(request):
         url = request.get_full_url()
         if url.endswith('data/v1/download/1666876'):
-            return MockHTTPResponse(open(corrupt_copy, "rb"), is_gzip=True)
+            return _MockHTTPResponse(open(corrupt_copy, "rb"), is_gzip=True)
         else:
             return mocked_openml_url(request)
 
