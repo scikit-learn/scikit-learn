@@ -442,13 +442,13 @@ class PoissonRegressor(GeneralizedLinearRegressor):
     >>> clf.fit(X, y)
     PoissonRegressor()
     >>> print(clf.score(X, y))
-    0.9904855148891633
+    0.990...
     >>> print(clf.coef_)
-    [0.12109212 0.15836976]
+    [0.121... 0.158...]
     >>> print(clf.intercept_)
-    2.0885914156053205
+    2.088...
     >>> print(clf.predict([[1, 1], [3, 4]]))
-    [10.67658784 21.87505182]
+    [10.676... 21.875...]
     """
     def __init__(self, *, alpha=1.0, fit_intercept=True, max_iter=100,
                  tol=1e-4, warm_start=False, verbose=0):
