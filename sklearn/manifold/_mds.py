@@ -26,26 +26,26 @@ def _smacof_single(dissimilarities, metric=True, n_components=2, init=None,
     dissimilarities : ndarray, shape (n_samples, n_samples)
         Pairwise dissimilarities between the points. Must be symmetric.
 
-    metric : boolean, optional, default: True
+    metric : boolean, default=True
         Compute metric or nonmetric SMACOF algorithm.
 
-    n_components : int, optional, default: 2
+    n_components : int, default=2
         Number of dimensions in which to immerse the dissimilarities. If an
         ``init`` array is provided, this option is overridden and the shape of
         ``init`` is used to determine the dimensionality of the embedding
         space.
 
-    init : ndarray, shape (n_samples, n_components), optional, default: None
+    init : ndarray, shape (n_samples, n_components), default=None
         Starting configuration of the embedding to initialize the algorithm. By
         default, the algorithm is initialized with a randomly chosen array.
 
-    max_iter : int, optional, default: 300
+    max_iter : int, default=300
         Maximum number of iterations of the SMACOF algorithm for a single run.
 
-    verbose : int, optional, default: 0
+    verbose : int, default=0
         Level of verbosity.
 
-    eps : float, optional, default: 1e-3
+    eps : float, default=1e-3
         Relative tolerance with respect to stress at which to declare
         convergence.
 
@@ -158,26 +158,26 @@ def smacof(dissimilarities, *, metric=True, n_components=2, init=None,
     dissimilarities : ndarray, shape (n_samples, n_samples)
         Pairwise dissimilarities between the points. Must be symmetric.
 
-    metric : boolean, optional, default: True
+    metric : boolean, default=True
         Compute metric or nonmetric SMACOF algorithm.
 
-    n_components : int, optional, default: 2
+    n_components : int, default=2
         Number of dimensions in which to immerse the dissimilarities. If an
         ``init`` array is provided, this option is overridden and the shape of
         ``init`` is used to determine the dimensionality of the embedding
         space.
 
-    init : ndarray, shape (n_samples, n_components), optional, default: None
+    init : ndarray, shape (n_samples, n_components), default=None
         Starting configuration of the embedding to initialize the algorithm. By
         default, the algorithm is initialized with a randomly chosen array.
 
-    n_init : int, optional, default: 8
+    n_init : int, default=8
         Number of times the SMACOF algorithm will be run with different
         initializations. The final results will be the best output of the runs,
         determined by the run with the smallest final stress. If ``init`` is
         provided, this option is overridden and a single run is performed.
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int or None, default=None
         The number of jobs to use for the computation. If multiple
         initializations are used (``n_init``), each run of the algorithm is
         computed in parallel.
@@ -189,10 +189,10 @@ def smacof(dissimilarities, *, metric=True, n_components=2, init=None,
     max_iter : int, optional, default: 300
         Maximum number of iterations of the SMACOF algorithm for a single run.
 
-    verbose : int, optional, default: 0
+    verbose : int, default=0
         Level of verbosity.
 
-    eps : float, optional, default: 1e-3
+    eps : float, default=1e-3
         Relative tolerance with respect to stress at which to declare
         convergence.
 
@@ -201,7 +201,7 @@ def smacof(dissimilarities, *, metric=True, n_components=2, init=None,
         Pass an int for reproducible results across multiple function calls.
         See :term: `Glossary <random_state>`.
 
-    return_n_iter : bool, optional, default: False
+    return_n_iter : bool, default=False
         Whether or not to return the number of iterations.
 
     Returns
@@ -281,28 +281,28 @@ class MDS(BaseEstimator):
 
     Parameters
     ----------
-    n_components : int, optional, default: 2
+    n_components : int, default=2
         Number of dimensions in which to immerse the dissimilarities.
 
-    metric : boolean, optional, default: True
+    metric : boolean, default=True
         If ``True``, perform metric MDS; otherwise, perform nonmetric MDS.
 
-    n_init : int, optional, default: 4
+    n_init : int, default=4
         Number of times the SMACOF algorithm will be run with different
         initializations. The final results will be the best output of the runs,
         determined by the run with the smallest final stress.
 
-    max_iter : int, optional, default: 300
+    max_iter : int, default=300
         Maximum number of iterations of the SMACOF algorithm for a single run.
 
-    verbose : int, optional, default: 0
+    verbose : int, default=0
         Level of verbosity.
 
-    eps : float, optional, default: 1e-3
+    eps : float, default=1e-3
         Relative tolerance with respect to stress at which to declare
         convergence.
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int or None, default=None
         The number of jobs to use for the computation. If multiple
         initializations are used (``n_init``), each run of the algorithm is
         computed in parallel.
@@ -316,7 +316,7 @@ class MDS(BaseEstimator):
         Pass an int for reproducible results across multiple function calls.
         See :term: `Glossary <random_state>`.
 
-    dissimilarity : 'euclidean' | 'precomputed', optional, default: 'euclidean'
+    dissimilarity : 'euclidean' | 'precomputed', default='euclidean'
         Dissimilarity measure to use:
 
         - 'euclidean':

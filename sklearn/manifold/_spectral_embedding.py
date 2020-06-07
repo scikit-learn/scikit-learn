@@ -162,10 +162,10 @@ def spectral_embedding(adjacency, *, n_components=8, eigen_solver=None,
     adjacency : array-like or sparse graph, shape: (n_samples, n_samples)
         The adjacency matrix of the graph to embed.
 
-    n_components : integer, optional, default 8
+    n_components : integer, default=8
         The dimension of the projection subspace.
 
-    eigen_solver : {None, 'arpack', 'lobpcg', or 'amg'}, default None
+    eigen_solver : {None, 'arpack', 'lobpcg', or 'amg'}, default=None
         The eigenvalue decomposition strategy to use. AMG requires pyamg
         to be installed. It can be faster on very large, sparse problems,
         but may also lead to instabilities.
@@ -176,14 +176,14 @@ def spectral_embedding(adjacency, *, n_components=8, eigen_solver=None,
         an int for reproducible results across multiple function calls.
         See :term: `Glossary <random_state>`.
 
-    eigen_tol : float, optional, default=0.0
+    eigen_tol : float, default=0.0
         Stopping criterion for eigendecomposition of the Laplacian matrix
         when using arpack eigen_solver.
 
-    norm_laplacian : bool, optional, default=True
+    norm_laplacian : bool, default=True
         If True, then compute normalized Laplacian.
 
-    drop_first : bool, optional, default=True
+    drop_first : bool, default=True
         Whether to drop the first eigenvector. For spectral embedding, this
         should be True as the first eigenvector should be constant vector for
         connected graph, but for spectral clustering, this should be kept as
@@ -368,7 +368,7 @@ class SpectralEmbedding(BaseEstimator):
     n_components : integer, default: 2
         The dimension of the projected subspace.
 
-    affinity : string or callable, default : "nearest_neighbors"
+    affinity : string or callable, default="nearest_neighbors"
         How to construct the affinity matrix.
          - 'nearest_neighbors' : construct the affinity matrix by computing a
            graph of nearest neighbors.
@@ -382,7 +382,7 @@ class SpectralEmbedding(BaseEstimator):
            the function takes in data matrix (n_samples, n_features)
            and return affinity matrix (n_samples, n_samples).
 
-    gamma : float, optional, default : 1/n_features
+    gamma : float, default=1/n_features
         Kernel coefficient for rbf kernel.
 
     random_state : int, RandomState instance, default=None
@@ -391,14 +391,14 @@ class SpectralEmbedding(BaseEstimator):
         reproducible results across multiple function calls.
         See :term: `Glossary <random_state>`.
 
-    eigen_solver : {None, 'arpack', 'lobpcg', or 'amg'}
+    eigen_solver : {None, 'arpack', 'lobpcg', or 'amg'}, default=None
         The eigenvalue decomposition strategy to use. AMG requires pyamg
         to be installed. It can be faster on very large, sparse problems.
 
-    n_neighbors : int, default : max(n_samples/10 , 1)
+    n_neighbors : int, default=max(n_samples/10 , 1)
         Number of nearest neighbors for nearest_neighbors graph building.
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int or None, default=None
         The number of parallel jobs to run.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
