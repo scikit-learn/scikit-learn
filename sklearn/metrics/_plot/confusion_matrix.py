@@ -49,13 +49,13 @@ class ConfusionMatrixDisplay:
     >>> from sklearn.svm import SVC
     >>> X, y = make_classification(random_state=0)
     >>> X_train, X_test, y_train, y_test = train_test_split(X, y,
-    >>>                                                     random_state=0)
+    ...                                                     random_state=0)
     >>> clf = SVC(random_state=0)
     >>> clf.fit(X_train, y_train)
     >>> predictions = clf.predict(X_test)
     >>> cm = confusion_matrix(y_test, predictions, labels=clf.classes_)
     >>> disp = ConfusionMatrixDisplay(confusion_matrix=cm,
-    >>>                               display_labels=clf.classes_)
+    ...                               display_labels=clf.classes_)
     >>> disp.plot() # doctest: +SKIP
     """
     def __init__(self, confusion_matrix, *, display_labels=None):
