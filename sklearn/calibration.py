@@ -27,6 +27,7 @@ from .utils import (check_array, indexable, column_or_1d,
 from .utils.validation import check_is_fitted, check_consistent_length
 from .utils.validation import _check_sample_weight
 from .isotonic import IsotonicRegression
+from .svm import LinearSVC
 from .model_selection import check_cv
 from .utils.validation import _deprecate_positional_args
 
@@ -711,7 +712,7 @@ class CalibrationDisplay:
 
 def plot_calibration_curve(estimator, X, y, *,
                            n_bins=5, strategy='uniform',
-                           name=None, ref_line=True, brier_score=True,
+                           name=None, brier_score=True, ref_line=True,
                            ax=None, **kwargs):
     """Plot calibration curve for binary classifiers.
 
