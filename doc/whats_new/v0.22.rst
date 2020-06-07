@@ -1114,7 +1114,7 @@ Code and Documentation Contributors
 -----------------------------------
 
 Thanks to everyone who has contributed to the maintenance and improvement of the
-project since version 0.20, including:
+project since version 0.21, including:
 
 Aaron Alphonsus, Abbie Popa, Abdur-Rahmaan Janhangeer, abenbihi, Abhinav Sagar,
 Abhishek Jana, Abraham K. Lagat, Adam J. Stewart, Aditya Vyas, Adrin Jalali,

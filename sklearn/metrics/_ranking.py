@@ -34,7 +34,7 @@ from ..utils.sparsefuncs import count_nonzero
 from ..utils.validation import _deprecate_positional_args
 from ..exceptions import UndefinedMetricWarning
 from ..preprocessing import label_binarize
-from ..preprocessing._label import _encode
+from ..utils._encode import _encode, _unique
 
 from ._base import _average_binary_score, _average_multiclass_ovo_score
 
@@ -460,7 +460,7 @@ def _multiclass_roc_auc_score(y_true, y_score, labels,
 
     if labels is not None:
         labels = column_or_1d(labels)
-        classes = _encode(labels)
+        classes = _unique(labels)
         if len(classes) != len(labels):
             raise ValueError("Parameter 'labels' must be unique")
         if not np.array_equal(classes, labels):
@@ -474,7 +474,7 @@ def _multiclass_roc_auc_score(y_true, y_score, labels,
             raise ValueError(
                 "'y_true' contains labels not in parameter 'labels'")
     else:
-        classes = _encode(y_true)
+        classes = _unique(y_true)
         if len(classes) != y_score.shape[1]:
             raise ValueError(
                 "Number of classes in y_true not equal to the number of "
@@ -485,7 +485,7 @@ def _multiclass_roc_auc_score(y_true, y_score, labels,
             raise ValueError("sample_weight is not supported "
                              "for multiclass one-vs-one ROC AUC, "
                              "'sample_weight' must be None in this case.")
-        _, y_true_encoded = _encode(y_true, uniques=classes, encode=True)
+        y_true_encoded = _encode(y_true, uniques=classes)
         # Hand & Till (2001) implementation (ovo)
         return _average_multiclass_ovo_score(_binary_roc_auc_score,
                                              y_true_encoded,
@@ -699,18 +699,18 @@ def roc_curve(y_true, y_score, *, pos_label=None, sample_weight=None,
     Parameters
     ----------
 
-    y_true : array, shape = [n_samples]
+    y_true : array, shape (n_samples,)
         True binary labels. If labels are not either {-1, 1} or {0, 1}, then
         pos_label should be explicitly given.
 
-    y_score : array, shape = [n_samples]
+    y_score : array, shape (n_samples,)
         Target scores, can either be probability estimates of the positive
         class, confidence values, or non-thresholded measure of decisions
         (as returned by "decision_function" on some classifiers).
 
     pos_label : int or str, default=None
         The label of the positive class.
-        When ``pos_label=None``, if y_true is in {-1, 1} or {0, 1},
+        When ``pos_label=None``, if `y_true` is in {-1, 1} or {0, 1},
         ``pos_label`` is set to 1, otherwise an error will be raised.
 
     sample_weight : array-like of shape (n_samples,), default=None
@@ -726,15 +726,15 @@ def roc_curve(y_true, y_score, *, pos_label=None, sample_weight=None,
 
     Returns
     -------
-    fpr : array, shape = [>2]
+    fpr : array, shape = (>2,)
         Increasing false positive rates such that element i is the false
-        positive rate of predictions with score >= thresholds[i].
+        positive rate of predictions with score >= `thresholds[i]`.
 
-    tpr : array, shape = [>2]
-        Increasing true positive rates such that element i is the true
-        positive rate of predictions with score >= thresholds[i].
+    tpr : array, shape = (>2,)
+        Increasing true positive rates such that element `i` is the true
+        positive rate of predictions with score >= `thresholds[i]`.
 
-    thresholds : array, shape = [n_thresholds]
+    thresholds : array, shape = (n_thresholds,)
         Decreasing thresholds on the decision function used to compute
         fpr and tpr. `thresholds[0]` represents no instances being predicted
         and is arbitrarily set to `max(y_score) + 1`.

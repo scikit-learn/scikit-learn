@@ -51,7 +51,7 @@ def f_oneway(*args):
 
     Parameters
     ----------
-    *args : array_like, sparse matrices
+    *args : array-like, sparse matrices
         sample1, sample2... The sample measurements should be given as
         arguments.
 
@@ -229,7 +229,8 @@ def chi2(X, y):
     return _chisquare(observed, expected)
 
 
-def f_regression(X, y, center=True):
+@_deprecate_positional_args
+def f_regression(X, y, *, center=True):
     """Univariate linear regression tests.
 
     Linear model for testing the individual effect of each of many regressors.
