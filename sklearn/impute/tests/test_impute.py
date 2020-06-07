@@ -1364,3 +1364,17 @@ def test_imputation_order(order, idx_order):
                                random_state=0).fit(X)
         idx = [x.feat_idx for x in trs.imputation_sequence_]
         assert idx == idx_order
+
+
+@pytest.mark.parametrize(
+    "strategy, X, expected_X",
+    [("most_frequent", [['a'], [np.nan]],
+      np.array([['a'], ['a']], dtype=np.object)),
+     ("constant", [['a'], [np.nan]],
+      np.array([['a'], ['missing_value']], dtype=np.object))]
+)
+def test_simple_imputation_for_string(strategy, X, expected_X):
+    imputer = SimpleImputer(strategy=strategy)
+    X_trans = imputer.fit_transform(X)
+
+    assert_array_equal(X_trans, expected_X)
