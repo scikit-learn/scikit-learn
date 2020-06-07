@@ -1018,9 +1018,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         return _VisualBlock('parallel', transformers, names=names)
 
 
-def make_union(*transformers,
-               n_jobs=None,
-               verbose=False):
+def make_union(*transformers, n_jobs=None, verbose=False):
     """
     Construct a FeatureUnion from the given transformers.
 
