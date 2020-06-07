@@ -757,12 +757,6 @@ def test_make_pipeline():
     assert pipe.steps[1][0] == "transf-2"
     assert pipe.steps[2][0] == "fitparamt"
 
-    assert_raise_message(
-        TypeError,
-        'Unknown keyword arguments: "random_parameter"',
-        make_pipeline, t1, t2, random_parameter='rnd'
-    )
-
 
 def test_feature_union_weights():
     # test feature union with transformer weights
