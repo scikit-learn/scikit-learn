@@ -228,7 +228,11 @@ class SimpleImputer(_BaseImputer):
                                                         self.strategy))
 
         if self.strategy in ("most_frequent", "constant"):
-            dtype = None
+            if isinstance(X, (list, tuple)) and \
+               any(isinstance(elem, str) for row in X for elem in row):
+                dtype = np.object
+            else:
+                dtype = None
         else:
             dtype = FLOAT_DTYPES
 
