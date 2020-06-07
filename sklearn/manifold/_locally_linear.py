@@ -577,7 +577,7 @@ class LocallyLinearEmbedding(TransformerMixin,
         Tolerance for modified LLE method.
         Only used if ``method == 'modified'``
 
-    neighbors_algorithm : string ['auto'|'brute'|'kd_tree'|'ball_tree'],
+    neighbors_algorithm : {'auto', 'brute', 'kd_tree', 'ball_tree'}, \
                           default='auto'
         algorithm to use for nearest neighbors search,
         passed to neighbors.NearestNeighbors instance
