@@ -715,6 +715,14 @@ def plot_calibration_curve(estimator, X, y, *,
                            ax=None, **kwargs):
     """Plot calibration curve for binary classifiers.
 
+    The average predicted probability for each bin is plotted on the x-axis
+    and the fraction of positive classes in each bin is plotted on the y-axis.
+
+    To calculate probability estimates :term:`predict_proba` will be used
+    in priority. If no :term:`predict_proba` method exists,
+    :term:`decision_function` will be used instead and the output confidence
+    scores will be min-max scaled to the range [0,1].
+
     Extra keyword arguments will be passed to matplotlib's `plot`.
 
     Read more in the :ref:`User Guide <calibration>`.
@@ -724,10 +732,6 @@ def plot_calibration_curve(estimator, X, y, *,
     estimator : estimator instance
         Fitted classifier or a fitted :class:`~sklearn.pipeline.Pipeline` in
         which the last estimator is a classifier.
-        To calculate probability estimates :term:`predict_proba` will be used
-        in priority. Otherwise, if no :term:`predict_proba` method exists,
-        :term:`decision_function` will be used and the output confidence
-        scores will be min-max scaled to the range [0,1].
 
     X : {array-like, sparse matrix} of shape (n_samples, n_features)
         Input values.
@@ -749,7 +753,7 @@ def plot_calibration_curve(estimator, X, y, *,
     name : str, default=None
         Name for labeling curve. If `None`, the name of the estimator is used.
 
-    brier_score: bool, default=True
+    brier_score : bool, default=True
         If `True`, include Brier score in legend.
 
     ref_line : bool, default=True
