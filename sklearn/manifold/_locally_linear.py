@@ -554,7 +554,7 @@ class LocallyLinearEmbedding(TransformerMixin,
         Tolerance for 'arpack' method
         Not used if eigen_solver=='dense'.
 
-    max_iter : integer, default=100
+    max_iter : int, default=100
         maximum number of iterations for the arpack solver.
         Not used if eigen_solver=='dense'.
 
