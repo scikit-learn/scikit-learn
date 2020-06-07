@@ -43,7 +43,6 @@ class PrecisionRecallDisplay:
 
     Examples
     --------
-    >>> import matplotlib.pyplot as plt
     >>> from sklearn.datasets import make_classification
     >>> from sklearn.metrics import (precision_recall_curve,
     >>>                              PrecisionRecallDisplay)
@@ -57,8 +56,8 @@ class PrecisionRecallDisplay:
     >>> clf.fit(X_train, y_train)
     >>> predictions = clf.predict(X_test)
     >>> precision, recall, _ = precision_recall_curve(y_test, predictions)
-    >>> viz = PrecisionRecallDisplay(precision=precision, recall=recall)
-    >>> viz.plot()
+    >>> disp = PrecisionRecallDisplay(precision=precision, recall=recall)
+    >>> disp.plot() # doctest: +SKIP
     """
     def __init__(self, precision, recall, *,
                  average_precision=None, estimator_name=None):
