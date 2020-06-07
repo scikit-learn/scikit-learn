@@ -1113,7 +1113,7 @@ def maxabs_scale(X, *, axis=0, copy=True):
 
     Notes
     -----
-    NaNs are treated as missing values: disregarded to compute the statistics,
+    NaNs are treated as missing values: which are disregarded to compute the statistics,
     and maintained during the data transformation.
 
     For a comparison of the different scalers, transformers, and normalizers,
@@ -1151,7 +1151,7 @@ class RobustScaler(TransformerMixin, BaseEstimator):
     The IQR is the range between the 1st quartile (25th quantile)
     and the 3rd quartile (75th quantile).
 
-    Centering and scaling happen independently on each feature by
+    Centering and scaling happens independently on each feature by
     computing the relevant statistics on the samples in the training
     set. Median and interquartile range are then stored to be used on
     later data using the ``transform`` method.
