@@ -114,9 +114,9 @@ colors = plt.cm.get_cmap('tab10')
 # Add histogram
 for i, (_, name) in enumerate(clf_list):
     if i <= 1:
-        ax = plt.subplot2grid((4, 2), (3, i + 1))
+        ax = plt.subplot2grid((4, 2), (2, i))
     else:
-        ax = plt.subplot2grid((4, 2), (4, i - 1))
+        ax = plt.subplot2grid((4, 2), (3, i - 2))
 
     ax.hist(
         viz_objects[name].y_prob, range=(0, 1), bins=10, label=name,
