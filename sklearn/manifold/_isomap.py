@@ -28,7 +28,7 @@ class Isomap(TransformerMixin, BaseEstimator):
     n_components : int, default=2
         number of coordinates for the manifold
 
-    eigen_solver : ['auto'|'arpack'|'dense'], default='auto'
+    eigen_solver : {'auto', 'arpack', 'dense'}, default='auto'
         'auto' : Attempt to choose the most efficient solver
         for the given problem.
 
