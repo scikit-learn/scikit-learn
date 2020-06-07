@@ -120,7 +120,7 @@ for i, (_, name) in enumerate(clf_list):
 
     ax.hist(
         viz_objects[name].y_prob, range=(0, 1), bins=10, label=name,
-        color=colors[i]
+        color=colors(i)
     )
     ax.set(title=name, xlabel="Mean predicted probability", ylabel="Count")
 
