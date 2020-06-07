@@ -284,6 +284,14 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
         check_is_fitted(self)
         return self.classes_[np.argmax(self.predict_proba(X), axis=1)]
 
+    def _more_tags(self):
+        return {
+            '_xfail_checks': {
+                'check_sample_weights_invariance(kind=zeros)':
+                'zero sample_weight is not equivalent to removing samples',
+            }
+        }
+
 
 class _CalibratedClassifier:
     """Probability calibration with isotonic regression or sigmoid.
