@@ -512,7 +512,7 @@ class GammaRegressor(GeneralizedLinearRegressor):
         Actual number of iterations used in the solver.
 
     Examples
-    ----------
+    --------
     >>> from sklearn import linear_model
     >>> clf = linear_model.GammaRegressor()
     >>> X = [[1, 2], [2, 3], [3, 4], [4, 3]]
