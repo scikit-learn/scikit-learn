@@ -22,7 +22,7 @@ class Isomap(TransformerMixin, BaseEstimator):
 
     Parameters
     ----------
-    n_neighbors : integer, default=5
+    n_neighbors : int, default=5
         number of neighbors to consider for each point.
 
     n_components : integer, default=2
