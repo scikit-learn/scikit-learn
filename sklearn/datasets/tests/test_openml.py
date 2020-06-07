@@ -1194,22 +1194,24 @@ def test_fetch_openml_with_ignored_feature(monkeypatch, gzip_response):
 
 
 @pytest.mark.parametrize('as_frame', [True, False])
-def test_fetch_openml_verify_checksum(monkeypatch, as_frame, cache):
+def test_fetch_openml_verify_checksum(monkeypatch, as_frame, cache, tmpdir):
     data_id = 2
     _monkey_patch_webbased_functions(monkeypatch, data_id, True)
 
-    # create a modified (local) arff file
+    # create a temporary modified arff file
     dataset_dir = os.path.join(currdir, 'data', 'openml', str(data_id))
     original_data_path = os.path.join(dataset_dir,
                                       'data-v1-download-1666876.arff.gz')
-    corrupt_copy = original_data_path + ".test_corrupt_arff"
+    corrupt_copy = tmpdir + "/test_invalid_checksum.arff"
     with gzip.GzipFile(original_data_path, "rb") as orig_gzip, \
          gzip.GzipFile(corrupt_copy, "wb") as modified_gzip:
         data = bytearray(orig_gzip.read())
         data[len(data)-1] = 37
         modified_gzip.write(data)
 
-    # simulate request to return modified file
+    # Requests are already mocked by monkey_patch_webbased_functions.
+    # We want to re-use that mock for all requests except file download,
+    # hence creating a thin mock over the original mock
     mocked_openml_url = sklearn.datasets._openml.urlopen
 
     def swap_file_mock(request):
