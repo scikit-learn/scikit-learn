@@ -558,8 +558,7 @@ class LocallyLinearEmbedding(TransformerMixin,
         maximum number of iterations for the arpack solver.
         Not used if eigen_solver=='dense'.
 
-    method : string ('standard', 'hessian', 'modified' or 'ltsa'),
-             default='standard'
+    method : {'standard', 'hessian', 'modified', 'ltsa'}, default='standard'
         standard : use the standard locally linear embedding algorithm.  see
                    reference [1]
         hessian  : use the Hessian eigenmap method. This method requires
