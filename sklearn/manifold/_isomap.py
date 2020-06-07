@@ -42,7 +42,7 @@ class Isomap(TransformerMixin, BaseEstimator):
         Convergence tolerance passed to arpack or lobpcg.
         not used if eigen_solver == 'dense'.
 
-    max_iter : integer, default=None
+    max_iter : int, default=None
         Maximum number of iterations for the arpack solver.
         not used if eigen_solver == 'dense'.
 
