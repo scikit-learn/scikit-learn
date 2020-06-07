@@ -1231,6 +1231,3 @@ def test_fetch_openml_verify_checksum(monkeypatch, as_frame, cache, tmpdir):
                                       as_frame=as_frame)
     # exception message should have file-path
     assert exc.match("1666876")
-
-    # cleanup fake local file
-    os.remove(corrupt_copy)
