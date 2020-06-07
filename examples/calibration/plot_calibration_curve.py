@@ -154,7 +154,7 @@ clf_list = [(lr, 'Logistic'),
             (svc_isotonic, 'SVC + Isotonic'),
             (svc_sigmoid, 'SVC + Sigmoid')]
 
-fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1)
+fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, figsize=(10, 10))
 
 viz_objects = {}
 for clf, name in clf_list:

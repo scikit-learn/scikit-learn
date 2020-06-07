@@ -95,7 +95,8 @@ clf_list = [(lr, 'Logistic'),
             (svc, 'SVC'),
             (rfc, 'Random forest')]
 
-fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, figsize=(10, 10))
+fig = plt.figure(figsize=(10, 10))
+ax1 = plt.subplot2grid((4, 2), (0, 0), rowspan=2, colspan=2)
 
 viz_objects = {}
 for clf, name in clf_list:
@@ -108,14 +109,19 @@ for clf, name in clf_list:
 ax1.set_title('Calibration plots')
 ax1.set(xlabel="")
 
+colors = plt.cm.get_cmap('tab10')
 # Add histogram
-for _, name in clf_list:
-    ax2.hist(viz_objects[name].y_prob, range=(0, 1), bins=10, label=name,
-             histtype="step", lw=2, alpha=0.8)
+for i, (_, name) in enumerate(clf_list):
+    if i <= 1:
+        ax = plt.subplot2grid((4, 2), (3, i + 1))
+    else:
+        ax = plt.subplot2grid((4, 2), (4, i - 1))
 
-ax2.legend(loc="upper center", ncol=2)
-ax2.set(xlabel="Mean predicted probability",
-        ylabel="Count")
+    ax.hist(
+        viz_objects[name].y_prob, range=(0, 1), bins=10, label=name,
+        color=colors[i]
+    )
+    ax.set(title=name, xlabel="Mean predicted probability", ylabel="Count")
 
 plt.show()
 
