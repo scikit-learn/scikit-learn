@@ -1060,7 +1060,7 @@ class DictionaryLearning(SparseCodingMixin, BaseEstimator):
 
     Solves the optimization problem::
 
-        (U^*,V^*) = argmin 0.5 || Y - U V ||_2^2 + alpha * || U ||_1
+        (U^*,V^*) = argmin 0.5 || X - U V ||_2^2 + alpha * || U ||_1
                     (U,V)
                     with || V_k ||_2 = 1 for all  0 <= k < n_components
 
@@ -1173,6 +1173,21 @@ class DictionaryLearning(SparseCodingMixin, BaseEstimator):
     n_iter_ : int
         Number of iterations run.
 
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.datasets import make_sparse_coded_signal
+    >>> from sklearn.decomposition import DictionaryLearning
+    >>>
+    >>> np.random.seed(42)
+    >>> X, dictionary, code = make_sparse_coded_signal(
+    ... n_samples=100, n_components=15,  n_features=20, n_nonzero_coefs=10)
+    >>> dico = DictionaryLearning(n_components=15,
+    ...                           transform_algorithm='lasso_lars')
+    >>> X_transformed = dico.fit_transform(X)
+    >>> np.mean(X_transformed == 0)  # represents data using a sparse code
+    0.87
+
     Notes
     -----
     **References:**
@@ -1258,7 +1273,7 @@ class MiniBatchDictionaryLearning(SparseCodingMixin, BaseEstimator):
 
     Solves the optimization problem::
 
-       (U^*,V^*) = argmin 0.5 || Y - U V ||_2^2 + alpha * || U ||_1
+       (U^*,V^*) = argmin 0.5 || X - U V ||_2^2 + alpha * || U ||_1
                     (U,V)
                     with || V_k ||_2 = 1 for all  0 <= k < n_components
 
@@ -1377,6 +1392,21 @@ class MiniBatchDictionaryLearning(SparseCodingMixin, BaseEstimator):
     random_state_ : RandomState
         RandomState instance that is generated either from a seed, the random
         number generattor or by `np.random`.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.datasets import make_sparse_coded_signal
+    >>> from sklearn.decomposition import MiniBatchDictionaryLearning
+    >>>
+    >>> np.random.seed(42)
+    >>> X, dictionary, code = make_sparse_coded_signal(
+    ... n_samples=100, n_components=15, n_features=20, n_nonzero_coefs=10)
+    >>> dico = MiniBatchDictionaryLearning(n_components=15,
+    ...                                    transform_algorithm='lasso_lars')
+    >>> X_transformed = dico.fit_transform(X)
+    >>> np.mean(X_transformed == 0)  # represents data using a sparse code
+    0.83...
 
     Notes
     -----
