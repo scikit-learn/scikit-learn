@@ -53,6 +53,7 @@ class PrecisionRecallDisplay:
     ...                                                     random_state=0)
     >>> clf = SVC(random_state=0)
     >>> clf.fit(X_train, y_train)
+    SVC(random_state=0)
     >>> predictions = clf.predict(X_test)
     >>> precision, recall, _ = precision_recall_curve(y_test, predictions)
     >>> disp = PrecisionRecallDisplay(precision=precision, recall=recall)

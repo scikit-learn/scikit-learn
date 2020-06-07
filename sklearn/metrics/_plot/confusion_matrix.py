@@ -52,6 +52,7 @@ class ConfusionMatrixDisplay:
     ...                                                     random_state=0)
     >>> clf = SVC(random_state=0)
     >>> clf.fit(X_train, y_train)
+    SVC(random_state=0)
     >>> predictions = clf.predict(X_test)
     >>> cm = confusion_matrix(y_test, predictions, labels=clf.classes_)
     >>> disp = ConfusionMatrixDisplay(confusion_matrix=cm,
