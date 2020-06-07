@@ -587,6 +587,23 @@ class TweedieRegressor(GeneralizedLinearRegressor):
 
     n_iter_ : int
         Actual number of iterations used in the solver.
+
+    Examples
+    ----------
+    >>> from sklearn import linear_model
+    >>> clf = linear_model.TweedieRegressor(alpha=0)
+    >>> X = [[1, 2], [2, 3], [3, 4], [4, 3]]
+    >>> y = [2, 3.5, 5, 5.5]
+    >>> clf.fit(X, y)
+    TweedieRegressor(alpha=0)
+    >>> clf.score(X, y)
+    0.999...
+    >>> clf.coef_
+    array([0.999..., 0.499...])
+    >>> clf.intercept_
+    0.000...
+    >>> clf.predict([[1, 1], [3, 4]])
+    array([1.500..., 4.999...])
     """
     def __init__(self, *, power=0.0, alpha=1.0, fit_intercept=True,
                  link='auto', max_iter=100, tol=1e-4,
