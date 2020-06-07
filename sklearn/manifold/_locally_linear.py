@@ -529,7 +529,7 @@ class LocallyLinearEmbedding(TransformerMixin,
     n_neighbors : integer, default=5
         number of neighbors to consider for each point.
 
-    n_components : integer, default=2
+    n_components : int, default=2
         number of coordinates for the manifold
 
     reg : float, default=1e-3
