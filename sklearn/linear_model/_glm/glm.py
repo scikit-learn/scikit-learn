@@ -591,19 +591,19 @@ class TweedieRegressor(GeneralizedLinearRegressor):
     Examples
     ----------
     >>> from sklearn import linear_model
-    >>> clf = linear_model.TweedieRegressor(alpha=0)
+    >>> clf = linear_model.TweedieRegressor()
     >>> X = [[1, 2], [2, 3], [3, 4], [4, 3]]
     >>> y = [2, 3.5, 5, 5.5]
     >>> clf.fit(X, y)
-    TweedieRegressor(alpha=0)
+    TweedieRegressor()
     >>> clf.score(X, y)
-    0.999...
+    0.839...
     >>> clf.coef_
-    array([0.999..., 0.499...])
+    array([0.599..., 0.299...])
     >>> clf.intercept_
-    0.000...
+    1.600...
     >>> clf.predict([[1, 1], [3, 4]])
-    array([1.500..., 4.999...])
+    array([2.500..., 4.599...])
     """
     def __init__(self, *, power=0.0, alpha=1.0, fit_intercept=True,
                  link='auto', max_iter=100, tol=1e-4,
