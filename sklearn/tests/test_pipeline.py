@@ -519,7 +519,8 @@ def test_make_union_kwargs():
     # invalid keyword parameters should raise an error message
     assert_raise_message(
         TypeError,
-        'Unknown keyword arguments: "transformer_weights"',
+        "make_union() got an unexpected "
+        "keyword argument 'transformer_weights'",
         make_union, pca, mock, transformer_weights={'pca': 10, 'Transf': 1}
     )
 
