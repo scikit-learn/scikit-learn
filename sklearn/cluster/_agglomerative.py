@@ -357,7 +357,7 @@ def linkage_tree(X, connectivity=None, n_clusters=None, linkage='complete',
 
     Parameters
     ----------
-    X : ndarray of shape (n_samples, n_features)
+    X : array-like of shape (n_samples, n_features)
         feature matrix representing n_samples samples to be clustered
 
     connectivity : sparse matrix, default=None
@@ -912,7 +912,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features) or \
-            (n_samples, n_samples)
+                (n_samples, n_samples)
             Training instances to cluster, or distances between instances if
             ``affinity='precomputed'``.
 

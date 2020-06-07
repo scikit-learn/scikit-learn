@@ -101,7 +101,7 @@ class OPTICS(ClusterMixin, BaseEstimator):
         as ``max_eps``.
         Used only when ``cluster_method='dbscan'``.
 
-    xi : float, between 0 and 1, default=0.05
+    xi : float between 0 and 1, default=0.05
         Determines the minimum steepness on the reachability plot that
         constitutes a cluster boundary. For example, an upwards point in the
         reachability plot is defined by the ratio from one point to its
@@ -137,7 +137,7 @@ class OPTICS(ClusterMixin, BaseEstimator):
         required to store the tree. The optimal value depends on the
         nature of the problem.
 
-    n_jobs : int or None, default=None
+    n_jobs : int, default=None
         The number of parallel jobs to run for neighbors search.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
@@ -145,28 +145,28 @@ class OPTICS(ClusterMixin, BaseEstimator):
 
     Attributes
     ----------
-    labels_ : array of shape (n_samples,)
+    labels_ : ndarray of shape (n_samples,)
         Cluster labels for each point in the dataset given to fit().
         Noisy samples and points which are not included in a leaf cluster
         of ``cluster_hierarchy_`` are labeled as -1.
 
-    reachability_ : array of shape (n_samples,)
+    reachability_ : ndarray of shape (n_samples,)
         Reachability distances per sample, indexed by object order. Use
         ``clust.reachability_[clust.ordering_]`` to access in cluster order.
 
-    ordering_ : array of shape (n_samples,)
+    ordering_ : ndarray of shape (n_samples,)
         The cluster ordered list of sample indices.
 
-    core_distances_ : array of shape (n_samples,)
+    core_distances_ : ndarray of shape (n_samples,)
         Distance at which each sample becomes a core point, indexed by object
         order. Points which will never be core have a distance of inf. Use
         ``clust.core_distances_[clust.ordering_]`` to access in cluster order.
 
-    predecessor_ : array of shape (n_samples,)
+    predecessor_ : ndarray of shape (n_samples,)
         Point that a sample was reached from, indexed by object order.
         Seed points have a predecessor of -1.
 
-    cluster_hierarchy_ : array of shape (n_clusters, 2)
+    cluster_hierarchy_ : ndarray of shape (n_clusters, 2)
         The list of clusters in the form of ``[start, end]`` in each row, with
         all indices inclusive. The clusters are ordered according to
         ``(end, -start)`` (ascending) so that larger clusters encompassing
@@ -231,8 +231,8 @@ class OPTICS(ClusterMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array of shape (n_samples, n_features), or \
-        (n_samples, n_samples) if metric=’precomputed’
+        X : ndarray of shape (n_samples, n_features), or \
+                (n_samples, n_samples) if metric=’precomputed’
             A feature array, or array of distances between samples if
             metric='precomputed'.
 
@@ -310,7 +310,7 @@ def _compute_core_distances_(X, neighbors, min_samples, working_memory):
 
     Parameters
     ----------
-    X : array of shape (n_samples, n_features)
+    X : array-like of shape (n_samples, n_features)
         The data.
     neighbors : NearestNeighbors instance
         The fitted nearest neighbors estimator.
@@ -321,7 +321,7 @@ def _compute_core_distances_(X, neighbors, min_samples, working_memory):
 
     Returns
     -------
-    core_distances : array of shape (n_samples,)
+    core_distances : ndarray of shape (n_samples,)
         Distance at which each sample becomes a core point.
         Points which will never be core have a distance of inf.
     """
@@ -348,8 +348,8 @@ def compute_optics_graph(X, *, min_samples, max_eps, metric, p, metric_params,
 
     Parameters
     ----------
-    X : array of shape (n_samples, n_features), or (n_samples, n_samples)  \
-if metric=’precomputed’.
+    X : ndarray of shape (n_samples, n_features), or \
+            (n_samples, n_samples) if metric=’precomputed’.
         A feature array, or array of distances between samples if
         metric='precomputed'
 
@@ -364,7 +364,7 @@ if metric=’precomputed’.
         identify clusters across all scales; reducing ``max_eps`` will result
         in shorter run times.
 
-    metric : string or callable, default='minkowski'
+    metric : str or callable, default='minkowski'
         Metric to use for distance computation. Any metric from scikit-learn
         or scipy.spatial.distance can be used.
 
@@ -389,7 +389,7 @@ if metric=’precomputed’.
         See the documentation for scipy.spatial.distance for details on these
         metrics.
 
-    p : integer, default=2
+    p : int, default=2
         Parameter for the Minkowski metric from
         :class:`sklearn.metrics.pairwise_distances`. When p = 1, this is
         equivalent to using manhattan_distance (l1), and euclidean_distance
@@ -416,7 +416,7 @@ if metric=’precomputed’.
         required to store the tree. The optimal value depends on the
         nature of the problem.
 
-    n_jobs : int or None, default=None
+    n_jobs : int, default=None
         The number of parallel jobs to run for neighbors search.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
@@ -586,13 +586,13 @@ def cluster_optics_xi(*, reachability, predecessor, ordering, min_samples,
 
     Parameters
     ----------
-    reachability : array of shape (n_samples,)
+    reachability : ndarray of shape (n_samples,)
         Reachability distances calculated by OPTICS (`reachability_`)
 
-    predecessor : array of shape (n_samples,)
+    predecessor : ndarray of shape (n_samples,)
         Predecessors calculated by OPTICS.
 
-    ordering : array of shape (n_samples,)
+    ordering : ndarray of shape (n_samples,)
         OPTICS ordered point indices (`ordering_`)
 
     min_samples : int > 1 or float between 0 and 1
@@ -606,7 +606,7 @@ def cluster_optics_xi(*, reachability, predecessor, ordering, min_samples,
         absolute number or a fraction of the number of samples (rounded to be
         at least 2). If ``None``, the value of ``min_samples`` is used instead.
 
-    xi : float, between 0 and 1, default=0.05
+    xi : float between 0 and 1, default=0.05
         Determines the minimum steepness on the reachability plot that
         constitutes a cluster boundary. For example, an upwards point in the
         reachability plot is defined by the ratio from one point to its
@@ -617,11 +617,11 @@ def cluster_optics_xi(*, reachability, predecessor, ordering, min_samples,
 
     Returns
     -------
-    labels : array of shape (n_samples,)
+    labels : ndarray of shape (n_samples,)
         The labels assigned to samples. Points which are not included
         in any cluster are labeled as -1.
 
-    clusters : array of shape (n_clusters, 2)
+    clusters : ndarray of shape (n_clusters, 2)
         The list of clusters in the form of ``[start, end]`` in each row, with
         all indices inclusive. The clusters are ordered according to ``(end,
         -start)`` (ascending) so that larger clusters encompassing smaller
@@ -664,10 +664,10 @@ def _extend_region(steep_point, xward_point, start, min_samples):
 
     Parameters
     ----------
-    steep_point : bool array of shape (n_samples,)
+    steep_point : ndarray of shape (n_samples,), dtype=np.bool
         True if the point is steep downward (upward).
 
-    xward_point : bool array of shape (n_samples,)
+    xward_point : ndarray of shape (n_samples,), dtype=np.bool
         True if the point is an upward (respectively downward) point.
 
     start : int
@@ -753,11 +753,11 @@ def _xi_cluster(reachability_plot, predecessor_plot, ordering, xi, min_samples,
 
     Parameters
     ----------
-    reachability_plot : array of shape (n_samples,)
+    reachability_plot : array-like of shape (n_samples,)
         The reachability plot, i.e. reachability ordered according to
         the calculated ordering, all computed by OPTICS.
 
-    predecessor_plot : array of shape (n_samples,)
+    predecessor_plot : array-like of shape (n_samples,)
         Predecessors ordered according to the calculated ordering.
 
     xi : float, between 0 and 1
@@ -778,7 +778,7 @@ def _xi_cluster(reachability_plot, predecessor_plot, ordering, xi, min_samples,
 
     Returns
     -------
-    clusters : array of shape (n_clusters, 2)
+    clusters : ndarray of shape (n_clusters, 2)
         The list of clusters in the form of [start, end] in each row, with all
         indices inclusive. The clusters are ordered in a way that larger
         clusters encompassing smaller clusters come after those smaller
@@ -906,16 +906,16 @@ def _extract_xi_labels(ordering, clusters):
 
     Parameters
     ----------
-    ordering : array of shape (n_samples,)
+    ordering : array-like of shape (n_samples,)
         The ordering of points calculated by OPTICS
 
-    clusters : array of shape (n_clusters, 2)
+    clusters : array-like of shape (n_clusters, 2)
         List of clusters i.e. (start, end) tuples,
         as returned by `_xi_cluster`.
 
     Returns
     -------
-    labels : array of shape (n_samples,)
+    labels : ndarray of shape (n_samples,)
     """
 
     labels = np.full(len(ordering), -1, dtype=int)

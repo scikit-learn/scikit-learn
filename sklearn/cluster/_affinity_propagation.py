@@ -383,7 +383,7 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features), or \
-            array-like of shape (n_samples, n_samples)
+                array-like of shape (n_samples, n_samples)
             Training instances to cluster, or similarities / affinities between
             instances if ``affinity='precomputed'``. If a sparse feature matrix
             is provided, it will be converted into a sparse ``csr_matrix``.
@@ -458,7 +458,7 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features), or \
-            array-like of shape (n_samples, n_samples)
+                array-like of shape (n_samples, n_samples)
             Training instances to cluster, or similarities / affinities between
             instances if ``affinity='precomputed'``. If a sparse feature matrix
             is provided, it will be converted into a sparse ``csr_matrix``.

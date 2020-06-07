@@ -301,10 +301,10 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
 
     Parameters
     ----------
-    n_clusters : integer, default=8
+    n_clusters : int, default=8
         The dimension of the projection subspace.
 
-    eigen_solver : {None, 'arpack', 'lobpcg', or 'amg'}
+    eigen_solver : {'arpack', 'lobpcg', 'amg'}, default=None
         The eigenvalue decomposition strategy to use. AMG requires pyamg
         to be installed. It can be faster on very large, sparse problems,
         but may also lead to instabilities.
@@ -367,11 +367,11 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         Zero coefficient for polynomial and sigmoid kernels.
         Ignored by other kernels.
 
-    kernel_params : dictionary of str to any, default=None
+    kernel_params : dict of str to any, default=None
         Parameters (keyword arguments) and values for kernel passed as
         callable object. Ignored by other kernels.
 
-    n_jobs : int or None, default=None
+    n_jobs : int, default=None
         The number of parallel jobs to run.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
@@ -461,7 +461,7 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features), or \
-            array-like of shape (n_samples, n_samples)
+                array-like of shape (n_samples, n_samples)
             Training instances to cluster, or similarities / affinities between
             instances if ``affinity='precomputed'``. If a sparse matrix is
             provided in a format other than ``csr_matrix``, ``csc_matrix``,
@@ -529,7 +529,7 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features), or \
-            array-like of shape (n_samples, n_samples)
+                array-like of shape (n_samples, n_samples)
             Training instances to cluster, or similarities / affinities between
             instances if ``affinity='precomputed'``. If a sparse matrix is
             provided in a format other than ``csr_matrix``, ``csc_matrix``,
