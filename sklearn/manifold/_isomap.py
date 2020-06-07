@@ -46,7 +46,7 @@ class Isomap(TransformerMixin, BaseEstimator):
         Maximum number of iterations for the arpack solver.
         not used if eigen_solver == 'dense'.
 
-    path_method : string ['auto'|'FW'|'D'], default='auto'
+    path_method : {'auto', 'FW', 'D'}, default='auto'
         Method to use in finding shortest path.
 
         'auto' : attempt to choose the best algorithm automatically.
