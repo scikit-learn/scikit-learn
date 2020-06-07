@@ -106,6 +106,7 @@ for clf, name in clf_list:
     )
     viz_objects[name] = viz
 
+ax1.grid()
 ax1.set_title('Calibration plots')
 ax1.set(xlabel="")
 
