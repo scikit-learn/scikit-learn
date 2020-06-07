@@ -433,7 +433,6 @@ class PoissonRegressor(GeneralizedLinearRegressor):
 
     Examples
     ----------
-    >>> import numpy as np
     >>> from sklearn import linear_model
     >>> clf = linear_model.PoissonRegressor()
     >>> X = [[1, 2], [2, 3], [3, 4], [4, 3]]
