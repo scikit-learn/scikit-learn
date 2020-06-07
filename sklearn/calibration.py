@@ -56,14 +56,15 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
         The classifier whose output need to be calibrated to provide more
         accurate `predict_proba` outputs.
 
-    method : 'sigmoid' or 'isotonic'
+    method : {'sigmoid', 'isotonic'}, default='sigmoid'
         The method to use for calibration. Can be 'sigmoid' which
         corresponds to Platt's method (i.e. a logistic regression model) or
         'isotonic' which is a non-parametric approach. It is not advised to
         use isotonic calibration with too few calibration samples
         ``(<<1000)`` since it tends to overfit.
 
-    cv : integer, cross-validation generator, iterable or "prefit", optional
+    cv : integer, cross-validation generator, iterable or "prefit", \
+            default=None
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 
