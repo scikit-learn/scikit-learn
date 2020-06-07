@@ -25,7 +25,7 @@ class Isomap(TransformerMixin, BaseEstimator):
     n_neighbors : int, default=5
         number of neighbors to consider for each point.
 
-    n_components : integer, default=2
+    n_components : int, default=2
         number of coordinates for the manifold
 
     eigen_solver : ['auto'|'arpack'|'dense'], default='auto'
