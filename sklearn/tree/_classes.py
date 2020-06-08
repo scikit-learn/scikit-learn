@@ -48,7 +48,6 @@ from ._tree import ccp_pruning_path
 from . import _tree, _splitter, _criterion
 
 
-
 def _get_n_samples_bootstrap(n_samples, max_samples):
     """
     Get the number of samples in a bootstrap sample.
@@ -96,8 +95,6 @@ def _generate_sample_indices(random_state, n_samples, n_samples_bootstrap):
     sample_indices = random_instance.randint(0, n_samples, n_samples_bootstrap)
 
     return sample_indices
-
-
 
 
 __all__ = ["DecisionTreeClassifier",

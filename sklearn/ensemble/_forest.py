@@ -888,6 +888,7 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
 
         return averaged_predictions
 
+
 class RandomForestClassifier(ForestClassifier):
     """
     A random forest classifier.
