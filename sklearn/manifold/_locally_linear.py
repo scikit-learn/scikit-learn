@@ -209,7 +209,7 @@ def locally_linear_embedding(
         regularization constant, multiplies the trace of the local covariance
         matrix of the distances.
 
-    eigen_solver : string, {'auto', 'arpack', 'dense'}, default='auto'
+    eigen_solver : {'auto', 'arpack', 'dense'}, default='auto'
         auto : algorithm will attempt to choose the best method for input data
 
         arpack : use arnoldi iteration in shift-invert mode.
