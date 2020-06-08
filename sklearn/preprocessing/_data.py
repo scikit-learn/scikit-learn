@@ -3270,21 +3270,7 @@ def power_transform(X, method='yeo-johnson', *, standardize=True, copy=True):
      [ 1.076...  1.414...]]
 
 
-     .. warning:: Risk of data leak
-     -------------------------------
-
-	     Do not use :func:`~sklearn.preprocessing.power_transform` unless you
-	     know what youare doing. A common mistake is to apply it to the entire
-	     data *before* splitting into traing and test sets. This will bias th
-	     model evaluation because information would have leaked from the test
-	     set to the training set.
-	     In general, we recommend using
-	     :class:`~sklearn.preprocessing.PowerTransformer` within a
-	     :ref:`Pipeline <pipeline>` in order to prevent most risks of data
-	     #for example#
-	     leaking: `pipe = make_pipeline(PowerTransformer(), LogisticRegression())`.
-
-
+    
     See also
     --------
     PowerTransformer : Equivalent transformation with the
