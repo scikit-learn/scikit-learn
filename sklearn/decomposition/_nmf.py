@@ -829,10 +829,11 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
     if batch_size is None:
         batch_size = n_samples
         max_iter_update_w_ = 1
+        i, slice = list(enumerate(gen_batches(n=n_samples, batch_size=batch_size)))[0]
 
     for n_iter in range(1, max_iter + 1):
-        for i, slice in enumerate(gen_batches(n=n_samples,
-                                              batch_size=batch_size)):
+        #for i, slice in enumerate(gen_batches(n=n_samples,
+        #                                      batch_size=batch_size)):
 
             # update W
             # H_sum, HHt and XHt are saved and reused if not update_H
