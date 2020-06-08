@@ -1148,12 +1148,10 @@ def test_search_cv_score_samples_method(search_cv):
     # Fit on data
     search_cv.fit(X, y_true)
 
-    # Fit the estimator
-    lof = search_cv.best_estimator_
-
     # Verify that the stand alone estimator yields the same results
     # as the ones obtained with *SearchCV
-    assert_allclose(search_cv.score_samples(X), lof.score_samples(X))
+    assert_allclose(search_cv.score_samples(X),
+                    search_cv.best_estimator_.score_samples(X))
 
 
 def test_search_cv_results_rank_tie_breaking():
