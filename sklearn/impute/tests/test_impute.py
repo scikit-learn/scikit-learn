@@ -351,6 +351,21 @@ def test_imputation_most_frequent_pandas(dtype):
     assert_array_equal(X_trans, X_true)
 
 
+def test_imputation_most_frequent_string_list():
+    X = [['a', 'b'],
+         ['c', np.nan]]
+
+    X_true = np.array([
+        ['a', 'b'],
+        ['c', 'b']
+    ], dtype=np.object)
+
+    imputer = SimpleImputer(strategy="most_frequent")
+    X_trans = imputer.fit_transform(X)
+
+    assert_array_equal(X_trans, X_true)
+
+
 @pytest.mark.parametrize("X_data, missing_value", [(1, 0), (1., np.nan)])
 def test_imputation_constant_error_invalid_type(X_data, missing_value):
     # Verify that exceptions are raised on invalid fill_value type
@@ -460,6 +475,21 @@ def test_imputation_constant_pandas(dtype):
 
     imputer = SimpleImputer(strategy="constant")
     X_trans = imputer.fit_transform(df)
+
+    assert_array_equal(X_trans, X_true)
+
+
+def test_imputation_constant_string_list():
+    X = [['a', 'b'],
+         ['c', np.nan]]
+
+    X_true = np.array([
+        ['a', 'b'],
+        ['c', 'missing_value']
+    ], dtype=np.object)
+
+    imputer = SimpleImputer(strategy="constant")
+    X_trans = imputer.fit_transform(X)
 
     assert_array_equal(X_trans, X_true)
 
@@ -1364,33 +1394,3 @@ def test_imputation_order(order, idx_order):
                                random_state=0).fit(X)
         idx = [x.feat_idx for x in trs.imputation_sequence_]
         assert idx == idx_order
-
-
-def test_imputation_most_frequent_string_list():
-    X = [['a', 'b'],
-         ['c', np.nan]]
-
-    X_true = np.array([
-        ['a', 'b'],
-        ['c', 'b']
-    ], dtype=np.object)
-
-    imputer = SimpleImputer(strategy="most_frequent")
-    X_trans = imputer.fit_transform(X)
-
-    assert_array_equal(X_trans, X_true)
-
-
-def test_imputation_constant_string_list():
-    X = [['a', 'b'],
-         ['c', np.nan]]
-
-    X_true = np.array([
-        ['a', 'b'],
-        ['c', 'missing_value']
-    ], dtype=np.object)
-
-    imputer = SimpleImputer(strategy="constant")
-    X_trans = imputer.fit_transform(X)
-
-    assert_array_equal(X_trans, X_true)
