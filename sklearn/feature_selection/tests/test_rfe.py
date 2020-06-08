@@ -511,6 +511,22 @@ def test_w_pipeline_2d_coef_():
     assert sfm.transform(data).shape[1] == 2
 
 
+def test_std_and_mean():
+    generator = check_random_state(0)
+    iris = load_iris()
+    X = np.c_[iris.data, generator.normal(size=(len(iris.data), 6))]
+    y = iris.target
+
+    rfecv = RFECV(estimator=SVC(kernel='linear'))
+    rfecv.fit(X, y)
+    results_size = len(rfecv.cv_results_)
+    values = np.asarray(
+            [rfecv.cv_results_["split{}_score".format(i)]
+                for i in range(results_size - 2)]).T
+    assert rfecv.cv_results_["mean_score"] == np.mean(values)
+    assert rfecv.cv_results_["std_score"] == np.std(values)
+
+
 @pytest.mark.parametrize('ClsRFE', [
     RFE,
     RFECV

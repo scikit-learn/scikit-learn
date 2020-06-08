@@ -466,13 +466,13 @@ class RFECV(RFE):
         A dict with keys:
 
         split(i)_score : float
-        corresponds to the CV score of the i-th subset of features
+            corresponds to the CV score of the i-th subset of features
 
         mean_score : float
-        mean of split(i)_score values in dict
+            mean of split(i)_score values in dict
 
         std_score : float
-        std of split(i)_score values in dict
+            std of split(i)_score values in dict
 
         .. versionadded:: 0.24
 
@@ -631,11 +631,12 @@ class RFECV(RFE):
         self.cv_results_["std_score"] = np.std(grid_scores, axis=0)
         return self
 
-    @deprecated(  # type: ignore
+    # mypy error: Decorated property not supported
+    @deprecated(
         "The grid_scores_ attribute is deprecated in version 0.24 in favor "
         "of cv_results_ and will be removed in version 0.25"
     )
-    @property  # type: ignore
+    @property
     def grid_scores_(self):
         # remove 2 for mean_score, std_score
         grid_size = len(self.cv_results_) - 2
