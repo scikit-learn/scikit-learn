@@ -25,10 +25,13 @@ Calibration curves
 ------------------
 
 The following plot compares how well the probabilistic predictions of
-different classifiers are calibrated, using :func:`calibration_curve`.
+different classifiers are calibrated.
 The x axis represents the average predicted probability in each bin. The
 y axis is the *fraction of positives*, i.e. the proportion of samples whose
-class is the positive class (in each bin).
+class is the positive class (in each bin). The top calibration curve plot
+is created with :func:`plot_calibration_curve`, which uses
+:func:`calibration_curve` to calculate the per bin average predicted
+probabilities and fraction of positives.
 
 .. figure:: ../auto_examples/calibration/images/sphx_glr_plot_compare_calibration_001.png
    :target: ../auto_examples/calibration/plot_compare_calibration.html
