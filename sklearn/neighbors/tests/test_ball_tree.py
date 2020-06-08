@@ -70,7 +70,6 @@ def test_query_haversine():
 def test_different_dimension_size():
     X = [(1, 2, 3), (2, 5), (5, 5, 1, 2)]
     Y = np.array(X)
-    msg = ("Not all elements had the same number of dimensions"
-           " - proceeding after extending those with zeros")
-    with pytest.warns(UserWarning, match=msg):
+    msg = ("Input points must have the same number of dimensions")
+    with pytest.raises(ValueError, match=msg):
         BallTree(Y)

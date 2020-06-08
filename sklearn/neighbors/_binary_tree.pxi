@@ -1054,22 +1054,10 @@ cdef class BinaryTree:
             raise ValueError("leaf_size must be greater than or equal to 1")
 
         longest_data = max(len(item) for item in data)
-        padded_data = []
-        padding = False
+        if np.any([len(item) < longest_data for item in data]):
+            raise ValueError("Input points must have "
+                             "the same number of dimensions")
 
-        for item in data:
-            if len(item) < longest_data:
-                item = np.asarray(item)
-                padded_item = np.zeros(longest_data)
-                padded_item[:item.shape[0]] = item
-                padded_data.append(padded_item)
-                padding = True
-            else:
-                padded_data.append(np.asarray(item))
-        if padding:
-            warnings.warn("Not all elements had the same number of dimensions"
-                          " - proceeding after extending those with zeros")
-        data = np.asarray(padded_data)
         n_samples = data.shape[0]
         n_features = data.shape[1]
         self.data_arr = np.asarray(data, dtype=DTYPE, order='C')
