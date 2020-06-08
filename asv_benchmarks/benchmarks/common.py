@@ -19,9 +19,13 @@ def get_from_config():
                               if line and '//' not in line)
         config = json.loads(config_file)
 
-    profile = config['profile']
+    profile = os.getenv('SKLBENCH_PROFILE', config['profile'])
 
-    n_jobs_vals = config['n_jobs_vals']
+    n_jobs_vals_env = os.getenv('SKLBENCH_NJOBS')
+    if n_jobs_vals_env:
+        n_jobs_vals = eval(n_jobs_vals_env)
+    else:
+        n_jobs_vals = config['n_jobs_vals']
     if not n_jobs_vals:
         n_jobs_vals = list(range(1, 1 + cpu_count()))
 
@@ -35,7 +39,8 @@ def get_from_config():
     if not os.path.exists(tmp_path):
         os.mkdir(tmp_path)
 
-    save_estimators = config['save_estimators']
+    save_estimators = os.getenv('SKLBENCH_SAVE_ESTIMATORS',
+                                config['save_estimators'])
     save_folder = os.getenv('ASV_COMMIT', 'new')[:8]
 
     if save_estimators:
@@ -43,12 +48,13 @@ def get_from_config():
         if not os.path.exists(save_path):
             os.mkdir(save_path)
 
-    base_folder = config['base_folder']
+    base_commit = os.getenv('SKLBENCH_BASE_COMMIT', config['base_commit'])
 
-    bench_predict = config['bench_predict']
-    bench_transform = config['bench_transform']
+    bench_predict = os.getenv('SKLBENCH_PREDICT', config['bench_predict'])
+    bench_transform = os.getenv('SKLBENCH_TRANSFORM',
+                                config['bench_transform'])
 
-    return (profile, n_jobs_vals, save_estimators, save_folder, base_folder,
+    return (profile, n_jobs_vals, save_estimators, save_folder, base_commit,
             bench_predict, bench_transform)
 
 
@@ -85,7 +91,7 @@ class Benchmark(ABC):
     processes = 1
     timeout = 500
 
-    (profile, n_jobs_vals, save_estimators, save_folder, base_folder,
+    (profile, n_jobs_vals, save_estimators, save_folder, base_commit,
      bench_predict, bench_transform) = get_from_config()
 
     if profile == 'fast':
@@ -192,9 +198,9 @@ class Predictor(ABC):
         def peakmem_predict(self, *args):
             self.estimator.predict(self.X)
 
-        if Benchmark.base_folder is not None:
+        if Benchmark.base_commit is not None:
             def track_same_prediction(self, *args):
-                file_path = get_estimator_path(self, Benchmark.base_folder,
+                file_path = get_estimator_path(self, Benchmark.base_commit,
                                                args, True)
                 with open(file_path, 'rb') as f:
                     estimator_base = pickle.load(f)
@@ -220,9 +226,9 @@ class Transformer(ABC):
         def peakmem_transform(self, *args):
             self.estimator.transform(self.X)
 
-        if Benchmark.base_folder is not None:
+        if Benchmark.base_commit is not None:
             def track_same_transform(self, *args):
-                file_path = get_estimator_path(self, Benchmark.base_folder,
+                file_path = get_estimator_path(self, Benchmark.base_commit,
                                                args, True)
                 with open(file_path, 'rb') as f:
                     estimator_base = pickle.load(f)
