@@ -408,7 +408,7 @@ def test_rfe_cv_n_jobs():
     # TODO: Remove in 0.25 when grid_scores_ is deprecated
     assert_array_almost_equal(rfecv.grid_scores_, rfecv_grid_scores)
 
-    assert (rfecv_cv_results_.keys() == rfecv.cv_results_.keys())
+    assert rfecv_cv_results_.keys() == rfecv.cv_results_.keys()
     for key in rfecv_cv_results_.keys():
         assert rfecv_cv_results_[key] == pytest.approx(rfecv.cv_results_[key])
 
