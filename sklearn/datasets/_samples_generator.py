@@ -701,10 +701,10 @@ def make_moons(n_samples=100, *, shuffle=True, noise=None, random_state=None):
 
     Returns
     -------
-    X : array of shape [n_samples, 2]
+    X : array of shape (n_samples, 2)
         The generated samples.
 
-    y : array of shape [n_samples]
+    y : array of shape (n_samples,)
         The integer labels (0 or 1) for class membership of each sample.
     """
 
