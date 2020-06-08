@@ -1158,6 +1158,10 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         ``ccp_alpha`` will be chosen. By default, no pruning is performed. See
         :ref:`minimal_cost_complexity_pruning` for details.
 
+    node_bootstrap : FIXME
+
+    node_max_samples : FIXME
+
         .. versionadded:: 0.22
 
     Attributes
@@ -1240,7 +1244,9 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
                  max_leaf_nodes=None,
                  min_impurity_decrease=0.,
                  min_impurity_split=None,
-                 ccp_alpha=0.0):
+                 ccp_alpha=0.0,
+                 node_bootstrap=False,
+                 node_max_samples=None):
         super().__init__(
             criterion=criterion,
             splitter=splitter,
@@ -1253,7 +1259,9 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
             random_state=random_state,
             min_impurity_decrease=min_impurity_decrease,
             min_impurity_split=min_impurity_split,
-            ccp_alpha=ccp_alpha)
+            ccp_alpha=ccp_alpha,
+            node_bootstrap=node_bootstrap,
+            node_max_samples=node_max_samples)
 
     def fit(self, X, y, sample_weight=None, check_input=True,
             X_idx_sorted="deprecated"):

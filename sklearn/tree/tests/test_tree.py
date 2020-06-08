@@ -1961,3 +1961,28 @@ def test_X_idx_sorted_deprecated(TreeEstimator):
     with pytest.warns(FutureWarning,
                       match="The parameter 'X_idx_sorted' is deprecated"):
         tree.fit(X, y, X_idx_sorted=X_idx_sorted)
+
+
+@pytest.mark.parametrize("tree_type,dataset",
+                         [(DecisionTreeRegressor, diabetes),
+                             (DecisionTreeClassifier, iris)])
+def test_node_bootstrap(tree_type, dataset):
+    rng = np.random.RandomState(1)
+
+    est = tree_type(
+            random_state=rng,
+            node_bootstrap=False,
+            node_max_samples=None)
+    est_bootstrap = tree_type(
+            random_state=rng,
+            node_bootstrap=True,
+            node_max_samples=0.75)
+
+    est.fit(dataset.data, dataset.target)
+    est_bootstrap.fit(dataset.data, dataset.target)
+    score = accuracy_score(est.predict(dataset.data), dataset.target)
+    score_bootstrap = accuracy_score(
+            est_bootstrap.predict(dataset.data), dataset.target)
+    assert score > score_bootstrap, (
+            f'''Failed with a full_sample tree score of {score} and a
+            bootstrapped tree score of {score_bootstrap}.''')
