@@ -1366,15 +1366,31 @@ def test_imputation_order(order, idx_order):
         assert idx == idx_order
 
 
-@pytest.mark.parametrize(
-    "strategy, X, expected_X",
-    [("most_frequent", [['a'], [np.nan]],
-      np.array([['a'], ['a']], dtype=np.object)),
-     ("constant", [['a'], [np.nan]],
-      np.array([['a'], ['missing_value']], dtype=np.object))]
-)
-def test_simple_imputation_for_string(strategy, X, expected_X):
-    imputer = SimpleImputer(strategy=strategy)
+def test_imputation_most_frequent_string_list():
+    X = [['a', 'b'],
+         ['c', np.nan]]
+
+    X_true = np.array([
+        ['a', 'b'],
+        ['c', 'b']
+    ], dtype=np.object)
+
+    imputer = SimpleImputer(strategy="most_frequent")
     X_trans = imputer.fit_transform(X)
 
-    assert_array_equal(X_trans, expected_X)
+    assert_array_equal(X_trans, X_true)
+
+
+def test_imputation_constant_string_list():
+    X = [['a', 'b'],
+         ['c', np.nan]]
+
+    X_true = np.array([
+        ['a', 'b'],
+        ['c', 'missing_value']
+    ], dtype=np.object)
+
+    imputer = SimpleImputer(strategy="constant")
+    X_trans = imputer.fit_transform(X)
+
+    assert_array_equal(X_trans, X_true)
