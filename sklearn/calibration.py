@@ -749,7 +749,7 @@ def plot_calibration_curve(estimator, X, y, *,
 
         - `'uniform'`: The bins have identical widths.
         - `'quantile'`: The bins have the same number of samples and depend on
-          `estimator.predict_proba(X)`.
+          predicted probabilities.
 
     name : str, default=None
         Name for labeling curve. If `None`, the name of the estimator is used.
