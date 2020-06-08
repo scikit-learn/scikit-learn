@@ -66,7 +66,7 @@ jobs:
         # Here we make sure, that they are still run on a regular basis.
         SKLEARN_SKIP_NETWORK_TESTS: '0'
 
-Will run all the time regardless of linting outcome.
+# Will run all the time regardless of linting outcome.
 - template: build_tools/azure/posix.yml
   parameters:
     name: Linux_Runs
