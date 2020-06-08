@@ -96,6 +96,15 @@ Changelog
   :pr:`17478` by :user:`Teon Brooks <teonbrooks>` and
   :user:`Mohamed Maskani <maskani-moh>`.
 
+:mod:`sklearn.naive_bayes`
+..........................
+
+- |Fix| A new parameter `force_alpha` was added to :class:`BernoulliNB` and
+  class:`MultinomialNB`, allowing user to set parameter alpha to a very
+  small number, greater or equal 0, which was earlier automatically changed
+  to `_ALPHA_MIN` instead.
+  :pr:`16747` by :user:`arka204`
+
 :mod:`sklearn.preprocessing`
 ............................
 
@@ -103,7 +112,7 @@ Changelog
   which scales output data such that normally distributed features have a
   variance of 1. :pr:`17193` by :user:`Lucy Liu <lucyleeow>` and
   :user:`Mabel Villalba <mabelvj>`.
-
+  
 :mod:`sklearn.tree`
 ...................
 
