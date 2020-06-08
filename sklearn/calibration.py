@@ -605,7 +605,7 @@ def calibration_curve(y_true, y_prob, *, normalize=False, n_bins=5,
 class CalibrationDisplay:
     """Calibration visualization.
 
-    It is recommend to use :func:`~sklearn.metrics.plot_calibration_curve`
+    It is recommend to use :func:`~sklearn.calibration.plot_calibration_curve`
     to create a visualizer. All parameters are stored as attributes.
 
     Read more in the :ref:`User Guide <calibration>`.
@@ -620,13 +620,13 @@ class CalibrationDisplay:
         The mean predicted probability in each bin.
 
     y_prob : ndarray of shape (n_samples,)
-        Probability estimates for the positive class.
+        Probability estimates for the positive class, for each sample.
 
     brier_value : int or None
-        The Brier score value. If None, the Brier score is not shown.
+        The Brier score value. If `None`, the Brier score is not shown.
 
     estimator_name : str, default=None
-        Name of estimator. If None, then the estimator name is not shown.
+        Name of estimator. If `None`, then the estimator name is not shown.
 
     Attributes
     ----------
@@ -719,12 +719,12 @@ def plot_calibration_curve(estimator, X, y, *,
     The average predicted probability for each bin is plotted on the x-axis
     and the fraction of positive classes in each bin is plotted on the y-axis.
 
-    To calculate probability estimates :term:`predict_proba` will be used
-    in priority. If no :term:`predict_proba` method exists,
-    :term:`decision_function` will be used instead and the output confidence
-    scores will be min-max scaled to the range [0,1].
+    To calculate probability estimates of `X`, the :term:`predict_proba`
+    method of `estimator` will be used in priority. If no :term:`predict_proba`
+    method exists, :term:`decision_function` will be used and the output
+    confidence scores will be min-max scaled to the range [0,1].
 
-    Extra keyword arguments will be passed to matplotlib's `plot`.
+    Extra keyword arguments will be passed to :func:`matplotlib.pyplot.plot`.
 
     Read more in the :ref:`User Guide <calibration>`.
 
@@ -742,14 +742,14 @@ def plot_calibration_curve(estimator, X, y, *,
 
     n_bins : int, default=5
         Number of bins to discretize the [0, 1] interval into when calculating
-        the calibration curve.
+        the calibration curve. A bigger number requires more data.
 
     strategy : {'uniform', 'quantile'}, default='uniform'
         Strategy used to define the widths of the bins.
 
-        `'uniform'`: The bins have identical widths.
-        `'quantile'`: The bins have the same number of samples and depend on
-        `estimator.predict_proba(X)`.
+        - `'uniform'`: The bins have identical widths.
+        - `'quantile'`: The bins have the same number of samples and depend on
+          `estimator.predict_proba(X)`.
 
     name : str, default=None
         Name for labeling curve. If `None`, the name of the estimator is used.
@@ -774,7 +774,7 @@ def plot_calibration_curve(estimator, X, y, *,
 
     Examples
     --------
-    >>> import matplotlib.pyplot as plt  # doctest: +SKIP
+    >>> import matplotlib.pyplot as plt                     # doctest: +SKIP
     >>> from sklearn import (datasets, calibration, model_selection,
     ...                      linear_model)
     >>> X, y = datasets.make_classification(random_state=0)
