@@ -618,7 +618,7 @@ def _labels_inertia(X, sample_weight, x_squared_norms, centers,
         Precomputed squared euclidean norm of each data point, to speed up
         computations.
 
-    centers : ndarray, shape (n_clusters, n_features)
+    centers : ndarray of shape (n_clusters, n_features)
         The cluster centers.
 
     n_threads : int, default=None
@@ -1234,23 +1234,23 @@ def _mini_batch_step(X, sample_weight, x_squared_norms, centers, weight_sums,
     Parameters
     ----------
 
-    X : array, shape (n_samples, n_features)
+    X : ndarray of shape (n_samples, n_features)
         The original data array.
 
-    sample_weight : array-like, shape (n_samples,)
+    sample_weight : array-like of shape (n_samples,)
         The weights for each observation in X.
 
-    x_squared_norms : array, shape (n_samples,)
+    x_squared_norms : ndarray of shape (n_samples,)
         Squared euclidean norm of each data point.
 
-    centers : array, shape (k, n_features)
+    centers : ndarray of shape (k, n_features)
         The cluster centers. This array is MODIFIED IN PLACE
 
-    counts : array, shape (k,)
+    counts : ndarray of shape (k,)
          The vector in which we keep track of the numbers of elements in a
          cluster. This array is MODIFIED IN PLACE
 
-    distances : array, dtype float, shape (n_samples), optional
+    distances : ndarray of shape (n_samples,), dtype=float, default=None
         If not None, should be a pre-allocated array that will be used to store
         the distances of each sample to its closest center.
         May not be None when random_reassign is True.
@@ -1261,18 +1261,18 @@ def _mini_batch_step(X, sample_weight, x_squared_norms, centers, weight_sums,
         an int to make the randomness deterministic.
         See :term:`Glossary <random_state>`.
 
-    random_reassign : boolean, optional
+    random_reassign : bool, default=None
         If True, centers with very low counts are randomly reassigned
         to observations.
 
-    reassignment_ratio : float, optional
+    reassignment_ratio : float, default=None
         Control the fraction of the maximum number of counts for a
         center to be reassigned. A higher value means that low count
         centers are more likely to be reassigned, which means that the
         model will take longer to converge, but should converge in a
         better clustering.
 
-    verbose : bool, optional, default False
+    verbose : bool, default=False
         Controls the verbosity.
 
     compute_squared_diff : bool
@@ -1286,7 +1286,7 @@ def _mini_batch_step(X, sample_weight, x_squared_norms, centers, weight_sums,
     inertia : float
         Sum of squared distances of samples to their closest cluster center.
 
-    squared_diff : numpy array, shape (n_clusters,)
+    squared_diff : ndarray of shape (n_clusters,)
         Squared distances between previous and updated cluster centers.
 
     """
@@ -1594,7 +1594,7 @@ class MiniBatchKMeans(KMeans):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape=(n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training instances to cluster. It must be noted that the data
             will be converted to C ordering, which will cause a memory copy
             if the given data is not C-contiguous.
@@ -1602,7 +1602,7 @@ class MiniBatchKMeans(KMeans):
         y : Ignored
             Not used, present here for API consistency by convention.
 
-        sample_weight : array-like, shape (n_samples,), optional
+        sample_weight : array-like of shape (n_samples,), default=None
             The weights for each observation in X. If None, all observations
             are assigned equal weight (default: None).
 
@@ -1753,15 +1753,15 @@ class MiniBatchKMeans(KMeans):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Input data.
 
-        sample_weight : array-like, shape (n_samples,)
+        sample_weight : array-like of shape (n_samples,)
             The weights for each observation in X.
 
         Returns
         -------
-        labels : array, shape (n_samples,)
+        labels : ndarray of shape (n_samples,)
             Cluster labels for each point.
 
         inertia : float
@@ -1789,7 +1789,7 @@ class MiniBatchKMeans(KMeans):
         y : Ignored
             Not used, present here for API consistency by convention.
 
-        sample_weight : array-like, shape (n_samples,), optional
+        sample_weight : array-like of shape (n_samples,), default=None
             The weights for each observation in X. If None, all observations
             are assigned equal weight (default: None).
 
@@ -1866,13 +1866,13 @@ class MiniBatchKMeans(KMeans):
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             New data to predict.
 
-        sample_weight : array-like, shape (n_samples,), optional
+        sample_weight : array-like of shape (n_samples,), default=None
             The weights for each observation in X. If None, all observations
             are assigned equal weight (default: None).
 
         Returns
         -------
-        labels : array, shape [n_samples,]
+        labels : ndarray of shape (n_samples,)
             Index of the cluster each sample belongs to.
         """
         check_is_fitted(self)

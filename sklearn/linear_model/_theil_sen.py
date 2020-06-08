@@ -209,14 +209,14 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
 
     Parameters
     ----------
-    fit_intercept : boolean, optional, default True
+    fit_intercept : boolean, default=True
         Whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations.
 
-    copy_X : boolean, optional, default True
+    copy_X : boolean, default=True
         If True, X will be copied; else, it may be overwritten.
 
-    max_subpopulation : int, optional, default 1e4
+    max_subpopulation : int, default=1e4
         Instead of computing with a set of cardinality 'n choose k', where n is
         the number of samples and k is the number of subsamples (at least
         number of features), consider only a stochastic subpopulation of a
@@ -224,7 +224,7 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
         For other than small problem sizes this parameter will determine
         memory usage and runtime if n_subsamples is not changed.
 
-    n_subsamples : int, optional, default None
+    n_subsamples : int, default=None
         Number of samples to calculate the parameters. This is at least the
         number of features (plus 1 if fit_intercept=True) and the number of
         samples as a maximum. A lower number leads to a higher breakdown
@@ -234,10 +234,10 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
         If n_subsamples is set to n_samples, Theil-Sen is identical to least
         squares.
 
-    max_iter : int, optional, default 300
+    max_iter : int, default=300
         Maximum number of iterations for the calculation of spatial median.
 
-    tol : float, optional, default 1.e-3
+    tol : float, default=1.e-3
         Tolerance when calculating spatial median.
 
     random_state : int, RandomState instance, default=None
@@ -246,13 +246,13 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
         multiple function calls.
         See :term:`Glossary <random_state>`
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int or None, default=None
         Number of CPUs to use during the cross validation.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    verbose : boolean, optional, default False
+    verbose : boolean, default=False
         Verbose mode when fitting the model.
 
     Attributes
