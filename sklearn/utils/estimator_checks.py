@@ -49,11 +49,12 @@ from ..metrics.pairwise import (rbf_kernel, linear_kernel, pairwise_distances)
 from .import shuffle
 from .validation import has_fit_parameter, _num_samples
 from ..preprocessing import StandardScaler
-from ..datasets import (load_iris, load_boston, make_blobs,
+from ..preprocessing import scale
+from ..datasets import (load_iris, make_blobs,
                         make_multilabel_classification, make_regression)
 
 
-BOSTON = None
+REGRESSION_DATASET = None
 CROSS_DECOMPOSITION = ['PLSCanonical', 'PLSRegression', 'CCA', 'PLSSVD']
 
 
@@ -500,15 +501,16 @@ def check_estimator(Estimator, generate_only=False):
             warnings.warn(str(exception), SkipTestWarning)
 
 
-def _boston_subset(n_samples=200):
-    global BOSTON
-    if BOSTON is None:
-        X, y = load_boston(return_X_y=True)
-        X, y = shuffle(X, y, random_state=0)
-        X, y = X[:n_samples], y[:n_samples]
+def _regression_dataset():
+    global REGRESSION_DATASET
+    if REGRESSION_DATASET is None:
+        X, y = make_regression(
+            n_samples=200, n_features=10, n_informative=1,
+            bias=5.0, noise=20, random_state=42,
+        )
         X = StandardScaler().fit_transform(X)
-        BOSTON = X, y
-    return BOSTON
+        REGRESSION_DATASET = X, y
+    return REGRESSION_DATASET
 
 
 def _set_checking_parameters(estimator):
@@ -1246,7 +1248,7 @@ def check_transformer_data_not_an_array(name, transformer):
 
 @ignore_warnings(category=FutureWarning)
 def check_transformers_unfitted(name, transformer):
-    X, y = _boston_subset()
+    X, y = _regression_dataset()
 
     transformer = clone(transformer)
     with assert_raises((AttributeError, ValueError), msg="The unfitted "
@@ -2071,7 +2073,7 @@ def check_estimators_unfitted(name, estimator_orig):
     Unfitted estimators should raise a NotFittedError.
     """
     # Common test for Regressors, Classifiers and Outlier detection estimators
-    X, y = _boston_subset()
+    X, y = _regression_dataset()
 
     estimator = clone(estimator_orig)
     for method in ('decision_function', 'predict', 'predict_proba',
@@ -2207,7 +2209,7 @@ def check_classifiers_classes(name, classifier_orig):
 
 @ignore_warnings(category=FutureWarning)
 def check_regressors_int(name, regressor_orig):
-    X, _ = _boston_subset()
+    X, _ = _regression_dataset()
     X = _pairwise_estimator_convert_X(X[:50], regressor_orig)
     rnd = np.random.RandomState(0)
     y = rnd.randint(3, size=X.shape[0])
@@ -2236,11 +2238,10 @@ def check_regressors_int(name, regressor_orig):
 @ignore_warnings(category=FutureWarning)
 def check_regressors_train(name, regressor_orig, readonly_memmap=False,
                            X_dtype=np.float64):
-    X, y = _boston_subset()
+    X, y = _regression_dataset()
     X = X.astype(X_dtype)
     X = _pairwise_estimator_convert_X(X, regressor_orig)
-    y = StandardScaler().fit_transform(y.reshape(-1, 1))  # X is already scaled
-    y = y.ravel()
+    y = scale(y)  # X is already scaled
     regressor = clone(regressor_orig)
     y = _enforce_estimator_tags_y(regressor, y)
     if name in CROSS_DECOMPOSITION:
@@ -2520,7 +2521,7 @@ def check_classifier_data_not_an_array(name, estimator_orig):
 
 @ignore_warnings(category=FutureWarning)
 def check_regressor_data_not_an_array(name, estimator_orig):
-    X, y = _boston_subset(n_samples=50)
+    X, y = _regression_dataset()
     X = _pairwise_estimator_convert_X(X, estimator_orig)
     y = _enforce_estimator_tags_y(estimator_orig, y)
     for obj_type in ["NotAnArray", "PandasDataframe"]:
@@ -2800,7 +2801,9 @@ def check_set_params(name, estimator_orig):
 def check_classifiers_regression_target(name, estimator_orig):
     # Check if classifier throws an exception when fed regression targets
 
-    X, y = load_boston(return_X_y=True)
+    X, y = _regression_dataset()
+
+    X = X + 1 + abs(X.min(axis=0))  # be sure that X is non-negative
     e = clone(estimator_orig)
     msg = 'Unknown label type: '
     if not e._get_tags()["no_validation"]:
