@@ -146,6 +146,9 @@ and tasks.
 - `mlxtend <https://github.com/rasbt/mlxtend>`_ Includes a number of additional
   estimators as well as model visualization utilities.
 
+- `scikit-lego <https://github.com/koaning/scikit-lego>`_ A number of scikit-learn compatible 
+  custom transformers, models and metrics, focusing on solving practical industry tasks.
+
 **Other regression and classification**
 
 - `xgboost <https://github.com/dmlc/xgboost>`_ Optimised gradient boosted decision
