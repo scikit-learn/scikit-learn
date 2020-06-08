@@ -230,8 +230,7 @@ def locally_linear_embedding(
     max_iter : int, default=100
         maximum number of iterations for the arpack solver.
 
-    method : {'standard', 'hessian', 'modified', 'ltsa'},
-             default='standard'
+    method : {'standard', 'hessian', 'modified', 'ltsa'}, default='standard'
         standard : use the standard locally linear embedding algorithm.
                    see reference [1]_
         hessian  : use the Hessian eigenmap method.  This method requires
