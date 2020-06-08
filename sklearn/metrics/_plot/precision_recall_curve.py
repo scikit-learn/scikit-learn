@@ -1,4 +1,4 @@
-from .base import _check_classifer_response_method
+from .base import _check_classifier_response_method
 
 from .. import average_precision_score
 from .. import precision_recall_curve
@@ -174,7 +174,7 @@ def plot_precision_recall_curve(estimator, X, y, *,
     if not is_classifier(estimator):
         raise ValueError(classification_error)
 
-    prediction_method = _check_classifer_response_method(estimator,
+    prediction_method = _check_classifier_response_method(estimator,
                                                          response_method)
     y_pred = prediction_method(X)
 
