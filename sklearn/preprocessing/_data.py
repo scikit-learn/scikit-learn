@@ -2630,7 +2630,7 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
         return X
 
     def _check_is_fitted(self, X):
-        # Check the inputs before transforming
+        """Check the inputs before transforming"""
         check_is_fitted(self)
         # check that the dimension of X are adequate with the fitted data
         if X.shape[1] != self.quantiles_.shape[1]:
@@ -2640,8 +2640,7 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
                                            self.quantiles_.shape[1]))
 
     def _transform(self, X, inverse=False):
-        """
-        Forward and inverse transform.
+        """Forward and inverse transform.
 
         Parameters
         ----------
@@ -2674,8 +2673,7 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
         return X
 
     def transform(self, X):
-        """
-        Feature-wise transformation of the data.
+        """Feature-wise transformation of the data.
 
         Parameters
         ----------
@@ -2696,8 +2694,7 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
         return self._transform(X, inverse=False)
 
     def inverse_transform(self, X):
-        """
-        Back-projection to the original space.
+        """Back-projection to the original space.
 
         Parameters
         ----------
@@ -2729,8 +2726,7 @@ def quantile_transform(X, *, axis=0, n_quantiles=1000,
                        subsample=int(1e5),
                        random_state=None,
                        copy=True):
-    """
-    Transform features using quantiles information.
+    """Transform features using quantiles information.
 
     This method transforms the features to follow a uniform or a normal
     distribution. Therefore, for a given feature, this transformation tends
@@ -2846,8 +2842,7 @@ def quantile_transform(X, *, axis=0, n_quantiles=1000,
 
 
 class PowerTransformer(TransformerMixin, BaseEstimator):
-    """
-    Apply a power transform featurewise to make data more Gaussian-like.
+    """Apply a power transform featurewise to make data more Gaussian-like.
 
     Power transforms are a family of parametric, monotonic transformations
     that are applied to make data more Gaussian-like. This is useful for
@@ -2936,8 +2931,7 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
         self.copy = copy
 
     def fit(self, X, y=None):
-        """
-        Estimate the optimal parameter lambda for each feature.
+        """Estimate the optimal parameter lambda for each feature.
 
         The optimal lambda parameter for minimizing skewness is estimated on
         each feature independently using maximum likelihood.
@@ -2992,8 +2986,7 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
         return X
 
     def transform(self, X):
-        """
-        Apply the power transform to each feature using the fitted lambdas.
+        """Apply the power transform to each feature using the fitted lambdas.
 
         Parameters
         ----------
@@ -3022,8 +3015,7 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
         return X
 
     def inverse_transform(self, X):
-        """
-        Apply the inverse power transformation using the fitted lambdas.
+        """Apply the inverse power transformation using the fitted lambdas.
 
         The inverse of the Box-Cox transformation is given by::
 
@@ -3069,8 +3061,7 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
         return X
 
     def _box_cox_inverse_tranform(self, x, lmbda):
-        """
-        Return inverse-transformed input x following Box-Cox inverse
+        """Return inverse-transformed input x following Box-Cox inverse
         transform with parameter lambda.
         """
         if lmbda == 0:
@@ -3081,8 +3072,7 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
         return x_inv
 
     def _yeo_johnson_inverse_transform(self, x, lmbda):
-        """
-        Return inverse-transformed input x following Yeo-Johnson inverse
+        """Return inverse-transformed input x following Yeo-Johnson inverse
         transform with parameter lambda.
         """
         x_inv = np.zeros_like(x)
@@ -3104,8 +3094,7 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
         return x_inv
 
     def _yeo_johnson_transform(self, x, lmbda):
-        """
-        Return transformed input x following Yeo-Johnson transform with
+        """Return transformed input x following Yeo-Johnson transform with
         parameter lambda.
         """
 
@@ -3127,8 +3116,7 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
         return out
 
     def _box_cox_optimize(self, x):
-        """
-        Find and return optimal lambda parameter of the Box-Cox transform by
+        """Find and return optimal lambda parameter of the Box-Cox transform by
         MLE, for observed data x.
 
         We here use scipy builtins which uses the brent optimizer.
@@ -3140,8 +3128,7 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
         return lmbda
 
     def _yeo_johnson_optimize(self, x):
-        """
-        Find and return optimal lambda parameter of the Yeo-Johnson
+        """Find and return optimal lambda parameter of the Yeo-Johnson
         transform by MLE, for observed data x.
 
         Like for Box-Cox, MLE is done via the brent optimizer.
@@ -3166,8 +3153,7 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
 
     def _check_input(self, X, in_fit, check_positive=False, check_shape=False,
                      check_method=False):
-        """
-        Validate the input before fit and transform.
+        """Validate the input before fit and transform.
 
         Parameters
         ----------
