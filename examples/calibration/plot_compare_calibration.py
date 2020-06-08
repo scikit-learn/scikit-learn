@@ -31,8 +31,8 @@ from sklearn.calibration import plot_calibration_curve
 # We will use a synthetic binary classification dataset with 100,000 samples
 # and 20 features. Of the 20 features, only 2 are informative, 2 are
 # redundant (random combinations of the informative features) and the
-# remaining 16 are 'useless' (random numbers). Of the 100,000 samples, only
-# 100 will be used for model fitting.
+# remaining 16 are 'useless' (random numbers). Of the 100,000 samples,
+# 100 will be used for model fitting and the remaining for testing.
 
 X, y = make_classification(
   n_samples=100000, n_features=20, n_informative=2, n_redundant=2,
@@ -53,7 +53,7 @@ y_test = y[train_samples:]
 # predictions as it directly optimizes log-loss. In contrast, the other methods
 # return biased probabilities, with different biases per method:
 #
-# * :class:`~sklearn.naive_bayes.GaussianNaiveBayes` tends to push
+# * :class:`~sklearn.naive_bayes.GaussianNB` tends to push
 #   probabilities to 0 or 1 (see histogram). This is mainly
 #   because it makes the assumption that features are conditionally independent
 #   given the class, which is not the case in this dataset which contains 2
@@ -79,7 +79,7 @@ y_test = y[train_samples:]
 #   sigmoid shape, indicating that the classifier could trust its "intuition"
 #   more and return probabilities closer to 0 or 1 typically.
 #
-# * :class:`~sklearn.svm.LinearSVC` shows an even more sigmoid curve as the
+# * :class:`~sklearn.svm.LinearSVC` shows an even more sigmoid curve than the
 #   :class:`~sklearn.ensemble.RandomForestClassifier`, which is typical for
 #   maximum-margin methods [1]_, which focus on difficult to classify samples
 #   that are close to the decision boundary (the support vectors).

@@ -34,7 +34,7 @@ from sklearn.calibration import CalibratedClassifierCV, plot_calibration_curve
 # and 20 features. Of the 20 features, only 2 are informative, 10 are
 # redundant (random combinations of the informative features) and the
 # remaining 8 are 'useless' (random numbers). Of the 100,000 samples, 1,000
-# will be used for model fitting.
+# will be used for model fitting and the rest for testing.
 
 X, y = make_classification(n_samples=100000, n_features=20, n_informative=2,
                            n_redundant=10, random_state=42)
@@ -59,16 +59,6 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.99,
 # predicted probability for each bin on the x-axis and the fraction of positive
 # classes in each bin on the y-axis.
 #
-# Raw :class:`~sklearn.naive_bayes.GaussianNB` performs very badly because of
-# the redundant features which violate the assumption of feature-independence
-# and result in an overly confident classifier, which is indicated by the
-# typical transposed-sigmoid curve. Calibration of the probabilities of
-# :class:`~sklearn.naive_bayes.GaussianNB` with isotonic regression can fix
-# this issue as can be seen from the nearly diagonal calibration curve. Sigmoid
-# calibration also improves the Brier score (smaller is better) slightly,
-# albeit not as strongly as the non-parametric isotonic regression. This can be
-# attributed to the fact that we have plenty of calibration data such that the
-# greater flexibility of the non-parametric model can be exploited.
 
 lr = LogisticRegression(C=1.)
 gnb = GaussianNB()
@@ -113,14 +103,25 @@ plt.tight_layout()
 plt.show()
 
 # %%
+# Raw :class:`~sklearn.naive_bayes.GaussianNB` performs very badly because of
+# the redundant features which violate the assumption of feature-independence
+# and result in an overly confident classifier, which is indicated by the
+# typical transposed-sigmoid curve. Calibration of the probabilities of
+# :class:`~sklearn.naive_bayes.GaussianNB` with isotonic regression can fix
+# this issue as can be seen from the nearly diagonal calibration curve. Sigmoid
+# calibration also improves the Brier score (smaller is better) slightly,
+# albeit not as strongly as the non-parametric isotonic regression. This can be
+# attributed to the fact that we have plenty of calibration data such that the
+# greater flexibility of the non-parametric model can be exploited.
+#
 # Below we show the Brier score, precision, recall and F1 score (see
 # :ref:`User Guide <precision_recall_f_measure_metrics>`). Notice that
 # although calibration improves the Brier score, it does not significantly
 # alter the prediction accuracy measures (precision, recall and F1 score).
 # This is because calibration should not significantly move at the location of
 # the decision threshold (at x = 0.5 on the graph). Calibration should
-# however make the `predict_proba` more accurate and thus more useful for
-# making allocation decisions under uncertainty.
+# however make the predicted probabilities more accurate and thus more useful
+# for making allocation decisions under uncertainty.
 
 for clf, name in clf_list:
     clf.fit(X_train, y_train)
@@ -135,22 +136,12 @@ for clf, name in clf_list:
 # %%
 # Next, we will compare:
 #
-# * :class:`~sklearn.linear_model.LogisticRegression`
+# * :class:`~sklearn.linear_model.LogisticRegression` (baseline)
 # * :class:`~sklearn.svm.LinearSVC` (:term:`decision_function` scores
 #   min-max scaled to [0,1], since they are not proper probabilities)
 # * :class:`~sklearn.svm.LinearSVC` with isotonic and sigmoid
-#   calibration
+#   calibration (see :ref:`User Guide <calibration>`)
 #
-# Linearly calibrated :class:`~sklearn.svm.LinearSVC` shows the opposite
-# behavior as :class:`~sklearn.naive_bayes.GaussianNB`; the calibration
-# curve has a sigmoid curve, which is typical for an under-confident
-# classifier. In the case of :class:`~sklearn.svm.LinearSVC`, this is caused
-# by the margin property of the hinge loss, which lets the model focus on
-# difficult samples that are close to the decision boundary (the support
-# vectors).
-#
-# Both kinds of calibration (sigmoid and isotonic) can fix this issue and
-# yield nearly identical results.
 
 lr = LogisticRegression(C=1.)
 svc = LinearSVC(max_iter=10000)
@@ -194,7 +185,18 @@ plt.tight_layout()
 plt.show()
 
 # %%
-# Again we print the Brier score, precision, recall and F1 score.
+# :class:`~sklearn.svm.LinearSVC` shows the opposite
+# behavior to :class:`~sklearn.naive_bayes.GaussianNB`; the calibration
+# curve has a sigmoid shape, which is typical for an under-confident
+# classifier. In the case of :class:`~sklearn.svm.LinearSVC`, this is caused
+# by the margin property of the hinge loss, which lets the model focus on
+# difficult samples that are close to the decision boundary (the support
+# vectors).
+#
+# Both kinds of calibration (sigmoid and isotonic) can fix this issue and
+# yield nearly identical results.
+#
+# Below, we print the Brier score, precision, recall and F1 score again.
 
 for clf, name in clf_list:
     clf.fit(X_train, y_train)
@@ -215,4 +217,4 @@ for clf, name in clf_list:
 # :class:`~sklearn.svm.LinearSVC`) but not where it is transposed-sigmoid
 # (e.g., :class:`~sklearn.naive_bayes.GaussianNB`). Non-parametric
 # isotonic calibration can deal with both situations but may require more
-# data.
+# data to produce good results.

@@ -77,6 +77,19 @@ Functions
 
    calibration.calibration_curve
 
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   calibration.CalibrationDisplay
+
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   calibration.plot_calibration_curve
+
 .. _cluster_ref:
 
 :mod:`sklearn.cluster`: Clustering
