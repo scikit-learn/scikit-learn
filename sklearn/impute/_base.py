@@ -228,6 +228,10 @@ class SimpleImputer(_BaseImputer):
                                                         self.strategy))
 
         if self.strategy in ("most_frequent", "constant"):
+            # If input is a list of strings, dtype = object.
+            # Otherwise ValueError is raised in SimpleImputer
+            # with strategy='most_frequent' or 'constant'
+            # because the list is converted to Unicode numpy array
             if isinstance(X, list) and \
                any(isinstance(elem, str) for row in X for elem in row):
                 dtype = object
