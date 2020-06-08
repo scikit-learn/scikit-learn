@@ -230,7 +230,7 @@ class SimpleImputer(_BaseImputer):
         if self.strategy in ("most_frequent", "constant"):
             if isinstance(X, list) and \
                any(isinstance(elem, str) for row in X for elem in row):
-                dtype = np.object
+                dtype = object
             else:
                 dtype = None
         else:
