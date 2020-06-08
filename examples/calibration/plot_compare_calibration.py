@@ -97,12 +97,13 @@ clf_list = [(lr, 'Logistic'),
 
 fig = plt.figure(figsize=(10, 10))
 ax1 = plt.subplot2grid((4, 2), (0, 0), rowspan=2, colspan=2)
+colors = plt.cm.get_cmap('Dark2')
 
 viz_objects = {}
-for clf, name in clf_list:
+for i, (clf, name) in enumerate(clf_list):
     clf.fit(X_train, y_train)
     viz = plot_calibration_curve(
-        clf, X_test, y_test, n_bins=10, name=name, ax=ax1
+        clf, X_test, y_test, n_bins=10, name=name, ax=ax1, color=colors(i)
     )
     viz_objects[name] = viz
 
@@ -110,7 +111,6 @@ ax1.grid()
 ax1.set_title('Calibration plots')
 ax1.set(xlabel="")
 
-colors = plt.cm.get_cmap('tab10')
 # Add histogram
 for i, (_, name) in enumerate(clf_list):
     if i <= 1:

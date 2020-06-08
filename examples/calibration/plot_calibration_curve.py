@@ -80,28 +80,36 @@ clf_list = [(lr, 'Logistic'),
             (gnb_isotonic, 'Naive Bayes + Isotonic'),
             (gnb_sigmoid, 'Naive Bayes + Sigmoid')]
 
-fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, figsize=(10, 10))
+fig = plt.figure(figsize=(10, 10))
+ax1 = plt.subplot2grid((4, 2), (0, 0), rowspan=2, colspan=2)
+colors = plt.cm.get_cmap('Dark2')
 
 viz_objects = {}
-for clf, name in clf_list:
+for i, (clf, name) in enumerate(clf_list):
     clf.fit(X_train, y_train)
     viz = plot_calibration_curve(
-        clf, X_test, y_test, n_bins=10, name=name, ax=ax1
+        clf, X_test, y_test, n_bins=10, name=name, ax=ax1, color=colors(i)
     )
     viz_objects[name] = viz
 
+ax1.grid()
 ax1.set_title('Calibration plots (Naive Bayes)')
 ax1.set(xlabel="")
 
 # Add histogram
-for _, name in clf_list:
-    ax2.hist(viz_objects[name].y_prob, range=(0, 1), bins=10, label=name,
-             histtype="step", lw=2, alpha=0.8)
+for i, (_, name) in enumerate(clf_list):
+    if i <= 1:
+        ax = plt.subplot2grid((4, 2), (2, i))
+    else:
+        ax = plt.subplot2grid((4, 2), (3, i - 2))
 
-ax2.legend(loc="upper center", ncol=2)
-ax2.set(xlabel="Mean predicted probability",
-        ylabel="Count")
+    ax.hist(
+        viz_objects[name].y_prob, range=(0, 1), bins=10, label=name,
+        color=colors(i)
+    )
+    ax.set(title=name, xlabel="Mean predicted probability", ylabel="Count")
 
+plt.tight_layout()
 plt.show()
 
 # %%
@@ -154,29 +162,35 @@ clf_list = [(lr, 'Logistic'),
             (svc_isotonic, 'SVC + Isotonic'),
             (svc_sigmoid, 'SVC + Sigmoid')]
 
-fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, figsize=(10, 10))
+fig = plt.figure(figsize=(10, 10))
+ax1 = plt.subplot2grid((4, 2), (0, 0), rowspan=2, colspan=2)
 
 viz_objects = {}
-for clf, name in clf_list:
+for i, (clf, name) in enumerate(clf_list):
     clf.fit(X_train, y_train)
     viz = plot_calibration_curve(
-        clf, X_test, y_test, n_bins=10, name=name, ax=ax1
+        clf, X_test, y_test, n_bins=10, name=name, ax=ax1, color=colors(i)
     )
     viz_objects[name] = viz
 
-
+ax1.grid()
 ax1.set_title('Calibration plots (SVC)')
 ax1.set(xlabel="")
 
 # Add histogram
-for _, name in clf_list:
-    ax2.hist(viz_objects[name].y_prob, range=(0, 1), bins=10, label=name,
-             histtype="step", lw=2, alpha=0.8)
+for i, (_, name) in enumerate(clf_list):
+    if i <= 1:
+        ax = plt.subplot2grid((4, 2), (2, i))
+    else:
+        ax = plt.subplot2grid((4, 2), (3, i - 2))
 
-ax2.legend(loc="upper center", ncol=2)
-ax2.set(xlabel="Mean predicted probability",
-        ylabel="Count")
+    ax.hist(
+        viz_objects[name].y_prob, range=(0, 1), bins=10, label=name,
+        olor=colors(i)
+    )
+    ax.set(title=name, xlabel="Mean predicted probability", ylabel="Count")
 
+plt.tight_layout()
 plt.show()
 
 # %%
