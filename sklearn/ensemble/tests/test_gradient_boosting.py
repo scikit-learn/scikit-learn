@@ -1389,14 +1389,3 @@ def test_gbr_degenerate_feature_importances():
     gbr = GradientBoostingRegressor().fit(X, y)
     assert_array_equal(gbr.feature_importances_,
                        np.zeros(10, dtype=np.float64))
-
-
-@pytest.mark.parametrize('Cls', GRADIENT_BOOSTING_ESTIMATORS)
-@pytest.mark.parametrize('presort', ['auto', True, False])
-def test_presort_deprecated(Cls, presort):
-    X = np.zeros((10, 10))
-    y = np.r_[[0] * 5, [1] * 5]
-    gb = Cls(presort=presort)
-    with pytest.warns(FutureWarning,
-                      match="The parameter 'presort' is deprecated "):
-        gb.fit(X, y)

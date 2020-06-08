@@ -56,14 +56,15 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
         The classifier whose output need to be calibrated to provide more
         accurate `predict_proba` outputs.
 
-    method : 'sigmoid' or 'isotonic'
+    method : {'sigmoid', 'isotonic'}, default='sigmoid'
         The method to use for calibration. Can be 'sigmoid' which
         corresponds to Platt's method (i.e. a logistic regression model) or
         'isotonic' which is a non-parametric approach. It is not advised to
         use isotonic calibration with too few calibration samples
         ``(<<1000)`` since it tends to overfit.
 
-    cv : integer, cross-validation generator, iterable or "prefit", optional
+    cv : integer, cross-validation generator, iterable or "prefit", \
+            default=None
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 
@@ -283,6 +284,14 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
         """
         check_is_fitted(self)
         return self.classes_[np.argmax(self.predict_proba(X), axis=1)]
+
+    def _more_tags(self):
+        return {
+            '_xfail_checks': {
+                'check_sample_weights_invariance(kind=zeros)':
+                'zero sample_weight is not equivalent to removing samples',
+            }
+        }
 
 
 class _CalibratedClassifier:

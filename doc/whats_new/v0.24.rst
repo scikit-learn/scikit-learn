@@ -52,6 +52,15 @@ Changelog
   which allows monitoring of each stage.
   :pr:`16985` by :user:`Hao Chun Chang <haochunchang>`.
 
+:mod:`sklearn.feature_selection`
+................................
+
+- |Feature| A new parameter `importance_getter` was added to
+  :class:`feature_selection.RFE`, :class:`feature_selection.RFECV` and
+  :class:`feature_selection.SelectFromModel`, allowing the user to specify an
+  attribute name/path or a `callable` for extracting feature importance from
+  the estimator.  :pr:`15361` by :user:`Venkatachalam N <venkyyuvy>`
+
 :mod:`sklearn.impute`
 .....................
 
@@ -69,6 +78,10 @@ Changelog
   average of multiple MSE values.
   :pr:`17309` by :user:`Swier Heeres <swierh>`
 
+- |Enhancement| Add `sample_weight` parameter to
+  :class:`metrics.median_absolute_error`. :pr:`17225` by
+  :user:`Lucy Liu <lucyleeow>`.
+
 :mod:`sklearn.model_selection`
 ..............................
 
@@ -77,19 +90,6 @@ Changelog
   time series length to be fixed for all folds. `gap` removes a fixed number of
   samples between the train and test set on each fold.
   :pr:`13204` by :user:`Kyle Kosic <kykosic>`.
-
-- |Feature| A new parameter `importance_getter` was added to
-  :class:`feature_selection.RFE`, :class:`feature_selection.RFECV` and
-  :class:`feature_selection.SelectFromModel`, allowing the user to specify an
-  attribute name/path or a `callable` for extracting feature importance from
-  the estimator.  :pr:`15361` by :user:`Venkatachalam N <venkyyuvy>`
-
-:mod:`sklearn.metrics`
-......................
-
-- |Enhancement| Add `sample_weight` parameter to
-  :class:`metrics.median_absolute_error`.
-  :pr:`17225` by :user:`Lucy Liu <lucyleeow>`.
 
 :mod:`sklearn.preprocessing`
 ............................
