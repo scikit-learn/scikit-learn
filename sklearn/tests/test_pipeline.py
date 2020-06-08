@@ -519,7 +519,8 @@ def test_make_union_kwargs():
     # invalid keyword parameters should raise an error message
     assert_raise_message(
         TypeError,
-        'Unknown keyword arguments: "transformer_weights"',
+        "make_union() got an unexpected "
+        "keyword argument 'transformer_weights'",
         make_union, pca, mock, transformer_weights={'pca': 10, 'Transf': 1}
     )
 
@@ -756,12 +757,6 @@ def test_make_pipeline():
     assert pipe.steps[0][0] == "transf-1"
     assert pipe.steps[1][0] == "transf-2"
     assert pipe.steps[2][0] == "fitparamt"
-
-    assert_raise_message(
-        TypeError,
-        'Unknown keyword arguments: "random_parameter"',
-        make_pipeline, t1, t2, random_parameter='rnd'
-    )
 
 
 def test_feature_union_weights():
