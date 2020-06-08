@@ -4,7 +4,7 @@ Statistical comparison of models using grid search
 ==================================================
 
 This example illustrates how to statistically compare the performance of models
-trained and evaluated using :class:`sklearn.model_selection.GridSearchCV`.
+trained and evaluated using :class:`~sklearn.model_selection.GridSearchCV`.
 
 """
 
@@ -27,7 +27,9 @@ sns.set_style("darkgrid")
 
 ###############################################################################
 # We will start by simulating moon shaped data (where the ideal separation
-# between classes is non-linear), adding to it a moderate degree of noise:
+# between classes is non-linear), adding to it a moderate degree of noise.
+# Datapoints will belong to one of two possible classes represented
+# by two features. We will simulate 50 samples for each class:
 
 X, y = make_moons(noise=0.352, random_state=1)
 
@@ -36,15 +38,17 @@ sns.scatterplot(
     X[:, 0], X[:, 1], hue=y,
     marker='o', s=25, edgecolor='k', legend=False
     ).set_title("Data")
+plt.show()
 
 
 ###############################################################################
 # We will compare the performance of SVC estimators that vary on their `kernel`
 # parameter, to decide which choice of this hyper-parameter predicts our
 # simulated data best. We will evaluate the performance of the models using
-# :class:`sklearn.model_selection.RepeatedStratifiedKFold`, repeating 10 times
+# :class:`~sklearn.model_selection.RepeatedStratifiedKFold`, repeating 10 times
 # a 10-fold stratified cross validation using a different randomization of the
-# data in each repetition.
+# data in each repetition. The performance will be evaluated using
+# :class:`~sklearn.metrics.roc_auc_score`.
 
 param_grid = [
     {'kernel': ['linear']},
@@ -64,13 +68,19 @@ search = GridSearchCV(
     )
 search.fit(X, y)
 
+
 ###############################################################################
-# We can now inspect the results of our search:
+# We can now inspect the results of our search, sorted by their
+# `mean_test_score`:
 
 results_df = pd.DataFrame(search.cv_results_)
+results_df = results_df.rename(
+    index={0: 'linear', 1: 'poly2', 2: 'poly3', 3: 'rbf'}
+    ).sort_values(by=['rank_test_score'])
 results_df[
     ['params', 'rank_test_score', 'mean_test_score', 'std_test_score']
     ]
+
 
 ###############################################################################
 # We can see that the estimator using the `rbf` kernel performed better,
@@ -78,30 +88,24 @@ results_df[
 # worse, with the one using a two degree polynomial achieving a much lower
 # perfomance than all other models.
 #
-# The output of GridSearchCV does not provide information on the certainty we
-# have on the differences between the models. To evaluate this, we need to
-# conduct a statistical test. Specifically, to contrast the performance of two
-# models we should statistically compare their vectors of AUC scores (where
-# each observation is the performance obtained per fold and run).
+# The output of GridSearchCV does not provide information on the certainty of
+# the differences between the models. To evaluate this, we need to conduct a
+# statistical test. Specifically, to contrast the performance of two models we
+# should statistically compare their AUC scores. There are 100 observations
+# (AUC scores) for each model as we repreated 10 times a 10-fold
+# cross-validation.
 #
-# However, the score vectors of the models are not independent: we iteratively
-# used the same partitions of the data to evaluate them, increasing the
-# correlation between the performance of the models. This means that some
-# partitions of the data can make the distinction of the classes particularly
-# easy or hard to find for all models, and thus their scores will co-vary.
+# However, the scores of the models are not independent: we iteratively used
+# the same partitions of the data to evaluate them, increasing the correlation
+# between the performance of the models. This means that some partitions of the
+# data can make the distinction of the classes particularly easy or hard to
+# find for all models, and thus their scores will co-vary.
 #
 # Let's inspect this partition effect by plotting the performance of all models
 # in each fold, and calculating the correlation between models across folds:
 
 # create df of model scores ordered by perfomance
-model_scores = results_df.rename(
-    index={0: 'linear', 1: 'poly2', 2: 'poly3', 3: 'rbf'}
-    )
-model_scores = (
-    model_scores.sort_values(
-        by=['rank_test_score']
-        ).filter(like='split')
-    )
+model_scores = results_df.filter(like='split')
 
 # plot 30 examples of dependency between cv fold and AUC scores
 fig, ax = plt.subplots()
@@ -112,6 +116,7 @@ sns.lineplot(
 ax.set_xlabel("CV fold", size=12, labelpad=10)
 ax.set_ylabel("Model AUC", size=12)
 ax.tick_params(bottom=True, labelbottom=False)
+plt.show()
 
 # print correlation of AUC scores across folds
 print(f"Correlation of models:\n {model_scores.transpose().corr()}")
@@ -119,14 +124,14 @@ print(f"Correlation of models:\n {model_scores.transpose().corr()}")
 ###############################################################################
 # We can observe that the performance of the models highly depends on the fold.
 #
-# As a consequence we will be underestimating the variance computed in our
-# statistical tests, increasing the number of false positive errors (i.e.
-# detecting a significant difference between models when such does no exist)
-# [1]_.
+# As a consequence, if we assume independence between observations we will be
+# underestimating the variance computed in our statistical tests, increasing
+# the number of false positive errors (i.e. detecting a significant difference
+# between models when such does no exist) [1]_.
 #
-# Several approaches have been developed to correct for the variance in these
-# cases. In this example we will explore one of these possibilities implemented
-# using two different statistical approaches: one Frequentist and one Bayesian.
+# Several methods have been developed to correct for the variance in these
+# cases. In this example we will explore one of these methods implemented
+# using two different statistical approaches: Frequentist and Bayesian.
 
 
 ###############################################################################
@@ -138,16 +143,17 @@ print(f"Correlation of models:\n {model_scores.transpose().corr()}")
 #
 # If we wanted to answer this question using a Frequentist approach we could
 # run a paired t-test. Many variants of the latter have been developed to
-# account for the partition effect described in the previous section. We will
-# use the one proven to obtain the highest replicability scores while
-# mantaining a low rate of false postitives and false negatives: the Nadeau and
-# Bengio's corrected t-test [2]_ that uses a 10 times repeated 10-fold cross
-# validation [3]_.
+# account for the 'non-independence of observations problem' described in the
+# previous section. We will use the one proven to obtain the highest
+# replicability scores while mantaining a low rate of false postitives and
+# false negatives: the Nadeau and Bengio's corrected t-test [2]_ that uses a 10
+# times repeated 10-fold cross validation [3]_.
 #
 # This corrected paired t-test is computed as:
 #
-# :math:`t=\frac{\frac{1}{k.r}\sum_{i=1}^{k}\sum_{j=1}^{r}x_{ij}}
-# {\sqrt{(\frac{1}{k.r}+\frac{n_2}{n_1})\hat{\sigma}^2}}`
+# .. math::
+#    t=\frac{\frac{1}{k.r}\sum_{i=1}^{k}\sum_{j=1}^{r}x_{ij}}
+#    {\sqrt{(\frac{1}{k.r}+\frac{n_2}{n_1})\hat{\sigma}^2}}
 #
 # where :math:`k` is the number of folds and :math:`r` the number of
 # repetitions in the cross-validation, and :math:`n_2` is the number of
@@ -155,7 +161,7 @@ print(f"Correlation of models:\n {model_scores.transpose().corr()}")
 # observations used for training.
 #
 # Let's implement a corrected one tailed paired t-test to compare the first and
-# sencond model, and let's compute the corresponding p-value:
+# second model, and compute the corresponding p-value:
 
 
 def correct_std(differences, n, n_train, n_test):
@@ -211,7 +217,7 @@ print(f"Uncorrected t-value: {np.round(t_stat_uncorrected, 3)}\n"
 # uncorrected t-test concludes that the first model is significantly better
 # than the second.
 #
-# The corrected approach, in contrast, fails to detect this difference.
+# With the corrected approach, in contrast, we fail to detect this difference.
 #
 # In the latter case, however, the Frequentist approach does not let us
 # conclude that the first and second model have an equivalent performance. If
@@ -223,13 +229,14 @@ print(f"Uncorrected t-value: {np.round(t_stat_uncorrected, 3)}\n"
 # ---------------------------------------
 # We can use Bayesian estimation to calculate the probability that the first
 # model is better than the second. Bayesian estimation will output a
-# distribution that specifies the probability of each parameter value, in this
-# example being the mean of the differences in the performance of two models.
+# distribution that specifies the probability of each parameter value, which in
+# this example is the mean of the differences in the performance of two models.
 #
 # To obtain the posterior distribution we need to define a prior that models
-# our beliefs of how those means are distributed before looking at the data,
-# and multiply it by a likelihood function that computes how likely are our
-# observations given the values that the mean of differences could take.
+# our beliefs of how the means are distributed before looking at the data,
+# and multiply it by a likelihood function that computes how likely our
+# observed mean differences are, given the values that the mean of differences
+# could take.
 #
 # Bayesian estimation can be carried out in many forms to answer our question,
 # but in this example we will implement the approach suggested by Benavoli and
@@ -246,7 +253,8 @@ print(f"Uncorrected t-value: {np.round(t_stat_uncorrected, 3)}\n"
 # Marginalizing out the variance from this normal posterior, we can define the
 # posterior of the mean parameter as a Student T distribution. Specifically:
 #
-# :math:`St(\mu;n-1,\overline{x},(\frac{1}{n}+\frac{n_2}{n_1})\hat{\sigma}^2)`
+# .. math::
+#    St(\mu;n-1,\overline{x},(\frac{1}{n}+\frac{n_2}{n_1})\hat{\sigma}^2)
 #
 # where :math:`n` is the total number of observations.
 #
@@ -272,6 +280,7 @@ plt.fill_between(x, t_post.pdf(x), 0, facecolor='blue', alpha=.2)
 plt.ylabel("Probability density")
 plt.xlabel("Mean difference")
 plt.title("Posterior distribution")
+plt.show()
 
 
 ###############################################################################
@@ -287,6 +296,7 @@ print(f"Probability of {model_scores.index[0]} being more accurate than "
       f"{model_scores.index[1]}: {np.round(better_prob, 3)}")
 print(f"Probability of {model_scores.index[1]} being more accurate than "
       f"{model_scores.index[0]}: {np.round((1-better_prob), 3)}")
+
 
 ###############################################################################
 # In contrast with the Frequentist approach, we can compute the probability
@@ -308,7 +318,7 @@ print(f"Probability of {model_scores.index[1]} being more accurate than "
 # our business.
 #
 # In this example we are going to follow the suggestion in [4]_ and define the
-# region of practical equivalence (ROPE) to be [-0.01, 0.01]. That is, we will
+# Region of Practical Equivalence (ROPE) to be [-0.01, 0.01]. That is, we will
 # consider two models as practically equivelent if they differ by less than 1%
 # in their performance.
 #
@@ -335,6 +345,7 @@ plt.fill_between(x_rope, t_post.pdf(x_rope), 0, facecolor='blue', alpha=.2)
 plt.ylabel("Probability density")
 plt.xlabel("Mean difference")
 plt.title("Posterior distribution under the ROPE")
+plt.show()
 
 
 ###############################################################################
@@ -361,7 +372,7 @@ for interval in intervals:
 
 cred_int_df = pd.DataFrame(
     cred_intervals,
-    columns=['interval', 'lower value', 'uper value']
+    columns=['interval', 'lower value', 'upper value']
     ).set_index('interval')
 cred_int_df
 
@@ -371,15 +382,16 @@ cred_int_df
 # -------------------------------------------------------
 #
 # We could also be interested in comparing the performance of all our models
-# evaluated with GridSearchCV. In these case we are running our statistical
-# test multiple times, which leads us to the `multiple comparisons
-# problem <https://en.wikipedia.org/wiki/Multiple_comparisons_problem>`_.
+# evaluated with :class:`~sklearn.model_selection.GridSearchCV`. In this case
+# we would be running our statistical test multiple times, which leads us to
+# the `multiple comparisons problem
+# <https://en.wikipedia.org/wiki/Multiple_comparisons_problem>`_.
 #
-# There are many possible ways to tackle the latter problem, but a standard
-# approach is to apply a `Bonferroni
-# correction <https://en.wikipedia.org/wiki/Bonferroni_correction>`_. The
-# Bonferroni can be computed by multiplying the p-value by the number of
-# comparisons we are testing.
+# There are many possible ways to tackle this problem, but a standard approach
+# is to apply a `Bonferroni correction
+# <https://en.wikipedia.org/wiki/Bonferroni_correction>`_. Bonferroni can be
+# computed by multiplying the p-value by the number of comparisons we are
+# testing.
 #
 # Let's compare the performance of the models using the corrected t-test:
 
@@ -415,7 +427,8 @@ pairwise_comp_df
 # We observe that after correcting for multiple comparisons, the only model
 # that significantly differs from the others is `poly2`.
 #
-# `rbf`, the model ranked first by our GridSearch, does not significantly
+# `rbf`, the model ranked first by
+# :class:`~sklearn.model_selection.GridSearchCV`, does not significantly
 # differ from `linear` or `poly3`.
 
 
@@ -458,9 +471,10 @@ pairwise_comp_df
 # Using the Bayesian approach we can compute the probability that a model
 # performs better, worse or practically equivalent to another.
 #
-# Results show that the model ranked first by our GridSearch, `rbf`, has
-# approximately a 6.8% chance of being worse than `linear`, and a 1.8% chance
-# of being worse than `poly3`.
+# Results show that the model ranked first by
+# :class:`~sklearn.model_selection.GridSearchCV` `rbf`, has approximately a
+# 6.8% chance of being worse than `linear`, and a 1.8% chance of being worse
+# than `poly3`.
 #
 # `rbf` and `linear` have a 43% probability of being practically equivalent,
 # while `rbf` and `poly3` have a 10% chance of being so.
@@ -474,8 +488,8 @@ pairwise_comp_df
 # Take-home messages
 # ------------------
 # - When statistically comparing the performance of two models evaluated in
-#   GridSearchCV, it is necessary to correct the calculated variance that could
-#   be underestimated given that the scores of the models are not independent
+#   GridSearchCV, it is necessary to correct the calculated variance which
+#   could be underestimated since the scores of the models are not independent
 #   from each other.
 # - A Frequentist approach that uses a (variance-corrected) paired t-test can
 #   tell us if the performance of one model is better that another with a
@@ -491,16 +505,23 @@ pairwise_comp_df
 ###############################################################################
 # References:
 # ___________
-# .. [1] Dietterich, T. G. (1998). Approximate statistical tests for comparing
-#        supervised classification learning algorithms. Neural computation,
-#        10(7).
-# .. [2] Nadeau, C., & Bengio, Y. (2000). Inference for the generalization
-#        error. In Advances in neural information processing systems.
-# .. [3] Bouckaert, R. R., & Frank, E. (2004). Evaluating the replicability of
-#        significance tests for comparing learning algorithms. In Pacific-Asia
-#        Conference on Knowledge Discovery and Data Mining.
-# .. [4] Benavoli, A., Corani, G., Demšar, J., & Zaffalon, M. (2017). Time for
+# .. [1] Dietterich, T. G. (1998). `Approximate statistical tests for comparing
+#        supervised classification learning algorithms
+#        <http://web.cs.iastate.edu/~jtian/cs573/Papers/Dietterich-98.pdf>`_.
+#        Neural computation, 10(7).
+# .. [2] Nadeau, C., & Bengio, Y. (2000). `Inference for the generalization
+#        error
+#        <https://papers.nips.cc/paper/1661-inference-for-the-generalization-error.pdf>`_.
+#        In Advances in neural information processing systems.
+# .. [3] Bouckaert, R. R., & Frank, E. (2004). `Evaluating the replicability of
+#        significance tests for comparing learning algorithms
+#        <https://www.cms.waikato.ac.nz/~ml/publications/2004/bouckaert-frank.pdf>`_.
+#        In Pacific-Asia Conference on Knowledge Discovery and Data Mining.
+# .. [4] Benavoli, A., Corani, G., Demšar, J., & Zaffalon, M. (2017). `Time for
 #        a change: a tutorial for comparing multiple classifiers through
-#        Bayesian analysis. The Journal of Machine Learning Research, 18(1).
-#           - See the Python library that accompanies this paper
-#             `here <https://github.com/janezd/baycomp>`_.
+#        Bayesian analysis
+#        <http://www.jmlr.org/papers/volume18/16-305/16-305.pdf>`_.
+#        The Journal of Machine Learning Research, 18(1). See the Python
+#        library that accompanies this paper `here
+#        <https://github.com/janezd/baycomp>`_.
+#
