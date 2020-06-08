@@ -150,7 +150,9 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                  min_impurity_decrease,
                  min_impurity_split,
                  class_weight=None,
-                 ccp_alpha=0.0):
+                 ccp_alpha=0.0,
+                 node_bootstrap=False,
+                 node_max_samples=None):
         self.criterion = criterion
         self.splitter = splitter
         self.max_depth = max_depth
@@ -164,6 +166,8 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         self.min_impurity_split = min_impurity_split
         self.class_weight = class_weight
         self.ccp_alpha = ccp_alpha
+        self.node_bootstrap = node_bootstrap
+        self.node_max_samples = node_max_samples
 
     def get_depth(self):
         """Return the depth of the decision tree.
@@ -423,10 +427,14 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                                            self.min_impurity_decrease,
                                            min_impurity_split)
 
-        proportion = 0.99
-        boot_size = _get_n_samples_bootstrap(X.shape[0], proportion)
-        ind = _generate_sample_indices(self.random_state, X.shape[0], boot_size)
-        builder.build(self.tree_, X[ind], y[ind], sample_weight)
+        if self.node_bootstrap:
+            boot_size = _get_n_samples_bootstrap(X.shape[0],
+                                                 self.node_max_samples)
+            ind = _generate_sample_indices(self.random_state, X.shape[0],
+                                           boot_size)
+            builder.build(self.tree_, X[ind], y[ind], sample_weight)
+        else:
+            builder.build(self.tree_, X, y, sample_weight)
 
         if self.n_outputs_ == 1 and is_classifier(self):
             self.n_classes_ = self.n_classes_[0]
@@ -788,6 +796,11 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         ``ccp_alpha`` will be chosen. By default, no pruning is performed. See
         :ref:`minimal_cost_complexity_pruning` for details.
 
+    node_bootstrap : FIXME (do we want to show this param ? or only use it
+        with ensemble methods ?)
+
+    node_max_samples : FIXME
+
         .. versionadded:: 0.22
 
     Attributes
@@ -880,7 +893,9 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
                  min_impurity_decrease=0.,
                  min_impurity_split=None,
                  class_weight=None,
-                 ccp_alpha=0.0):
+                 ccp_alpha=0.0,
+                 node_bootstrap=False,
+                 node_max_samples=None):
         super().__init__(
             criterion=criterion,
             splitter=splitter,
@@ -894,7 +909,9 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             random_state=random_state,
             min_impurity_decrease=min_impurity_decrease,
             min_impurity_split=min_impurity_split,
-            ccp_alpha=ccp_alpha)
+            ccp_alpha=ccp_alpha,
+            node_bootstrap=node_bootstrap,
+            node_max_samples=node_max_samples)
 
     def fit(self, X, y, sample_weight=None, check_input=True,
             X_idx_sorted="deprecated"):

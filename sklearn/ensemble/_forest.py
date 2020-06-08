@@ -186,19 +186,22 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                  n_estimators=100, *,
                  estimator_params=tuple(),
                  bootstrap=False,
+                 node_bootstrap=False,
                  oob_score=False,
                  n_jobs=None,
                  random_state=None,
                  verbose=0,
                  warm_start=False,
                  class_weight=None,
-                 max_samples=None):
+                 max_samples=None,
+                 node_max_samples=None):
         super().__init__(
             base_estimator=base_estimator,
             n_estimators=n_estimators,
             estimator_params=estimator_params)
 
         self.bootstrap = bootstrap
+        self.node_bootstrap = node_bootstrap
         self.oob_score = oob_score
         self.n_jobs = n_jobs
         self.random_state = random_state
@@ -206,6 +209,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         self.warm_start = warm_start
         self.class_weight = class_weight
         self.max_samples = max_samples
+        self.node_max_samples = node_max_samples
 
     def apply(self, X):
         """
@@ -486,25 +490,29 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
                  n_estimators=100, *,
                  estimator_params=tuple(),
                  bootstrap=False,
+                 node_bootstrap=False,
                  oob_score=False,
                  n_jobs=None,
                  random_state=None,
                  verbose=0,
                  warm_start=False,
                  class_weight=None,
-                 max_samples=None):
+                 max_samples=None,
+                 node_max_samples=None):
         super().__init__(
             base_estimator,
             n_estimators=n_estimators,
             estimator_params=estimator_params,
             bootstrap=bootstrap,
+            node_bootstrap=node_bootstrap,
             oob_score=oob_score,
             n_jobs=n_jobs,
             random_state=random_state,
             verbose=verbose,
             warm_start=warm_start,
             class_weight=class_weight,
-            max_samples=max_samples)
+            max_samples=max_samples,
+            node_max_samples=node_max_samples)
 
     def _set_oob_score(self, X, y):
         """
@@ -997,6 +1005,9 @@ class RandomForestClassifier(ForestClassifier):
         Whether bootstrap samples are used when building trees. If False, the
         whole dataset is used to build each tree.
 
+    node_bootstrap : bool, default=False
+        Whether bootstrap samples are selected at each node.
+
     oob_score : bool, default=False
         Whether to use out-of-bag samples to estimate
         the generalization accuracy.
@@ -1065,6 +1076,16 @@ class RandomForestClassifier(ForestClassifier):
         - If int, then draw `max_samples` samples.
         - If float, then draw `max_samples * X.shape[0]` samples. Thus,
           `max_samples` should be in the interval `(0, 1)`.
+
+    node_max_samples : int or float, default=None
+        If node_bootstrap is True, the number of samples to draw at each node
+        to select the best split criterion.
+
+        - If None (default), then draw `X.shape[0]` samples. # FIXME
+        - If int, then draw `node_max_samples` samples.
+        - If float, then draw `node_max_samples * node size` samples. Thus,
+          `node_max_samples` should be in the interval `(0, 1)`. # FIXME
+
 
         .. versionadded:: 0.22
 
@@ -1162,6 +1183,7 @@ class RandomForestClassifier(ForestClassifier):
                  min_impurity_decrease=0.,
                  min_impurity_split=None,
                  bootstrap=True,
+                 node_bootstrap=False,
                  oob_score=False,
                  n_jobs=None,
                  random_state=None,
@@ -1169,7 +1191,8 @@ class RandomForestClassifier(ForestClassifier):
                  warm_start=False,
                  class_weight=None,
                  ccp_alpha=0.0,
-                 max_samples=None):
+                 max_samples=None,
+                 node_max_samples=None):
         super().__init__(
             base_estimator=DecisionTreeClassifier(),
             n_estimators=n_estimators,
@@ -1177,7 +1200,8 @@ class RandomForestClassifier(ForestClassifier):
                               "min_samples_leaf", "min_weight_fraction_leaf",
                               "max_features", "max_leaf_nodes",
                               "min_impurity_decrease", "min_impurity_split",
-                              "random_state", "ccp_alpha"),
+                              "random_state", "ccp_alpha", "node_bootstrap",
+                              "node_max_samples"),
             bootstrap=bootstrap,
             oob_score=oob_score,
             n_jobs=n_jobs,
