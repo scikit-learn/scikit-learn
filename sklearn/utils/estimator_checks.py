@@ -496,11 +496,11 @@ def check_estimator(Estimator, generate_only=False):
             warnings.warn(str(exception), SkipTestWarning)
 
 
-def _regression_dataset(n_samples=200):
+def _regression_dataset():
     global REGRESSION_DATASET
     if REGRESSION_DATASET is None:
         X, y = make_regression(
-            n_samples=n_samples, n_features=10, n_informative=1,
+            n_samples=200, n_features=10, n_informative=1,
             bias=5.0, noise=20, random_state=42,
         )
         X = StandardScaler().fit_transform(X)
@@ -2502,7 +2502,7 @@ def check_classifier_data_not_an_array(name, estimator_orig):
 
 @ignore_warnings(category=FutureWarning)
 def check_regressor_data_not_an_array(name, estimator_orig):
-    X, y = _regression_dataset(n_samples=50)
+    X, y = _regression_dataset()
     X = _pairwise_estimator_convert_X(X, estimator_orig)
     y = _enforce_estimator_tags_y(estimator_orig, y)
     for obj_type in ["NotAnArray", "PandasDataframe"]:
@@ -2782,7 +2782,7 @@ def check_set_params(name, estimator_orig):
 def check_classifiers_regression_target(name, estimator_orig):
     # Check if classifier throws an exception when fed regression targets
 
-    X, y = _regression_dataset(n_samples=50)
+    X, y = _regression_dataset()
 
     X = X + 1 + abs(X.min(axis=0))  # be sure that X is non-negative
     e = clone(estimator_orig)
