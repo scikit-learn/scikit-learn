@@ -3281,11 +3281,8 @@ def power_transform(X, method='yeo-johnson', *, standardize=True, copy=True):
 	     In general, we recommend using
 	     :class:`~sklearn.preprocessing.PowerTransformer` within a
 	     :ref:`Pipeline <pipeline>` in order to prevent most risks of data
-	     leaking:
-
-	     "for example"
-	     
-	     `pipe = make_pipeline(PowerTransformer(), LogisticRegression())`.
+	     #for example#
+	     leaking: `pipe = make_pipeline(PowerTransformer(), LogisticRegression())`.
 
 
     See also
