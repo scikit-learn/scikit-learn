@@ -632,7 +632,7 @@ class RFECV(RFE):
         return self
 
     # mypy error: Decorated property not supported
-    @deprecated(
+    @deprecated(  # type: ignore
         "The grid_scores_ attribute is deprecated in version 0.24 in favor "
         "of cv_results_ and will be removed in version 0.25"
     )
