@@ -124,7 +124,7 @@ def null_space(M, k, k_skip=1, eigen_solver='arpack', tol=1E-6, max_iter=100,
     k_skip : int, default=1
         Number of low eigenvalues to skip.
 
-    eigen_solver : string, {'auto', 'arpack', 'dense'}, default='arpack'
+    eigen_solver : {'auto', 'arpack', 'dense'}, default='arpack'
         auto : algorithm will attempt to choose the best method for input data
         arpack : use arnoldi iteration in shift-invert mode.
                     For this method, M may be a dense matrix, sparse matrix,
