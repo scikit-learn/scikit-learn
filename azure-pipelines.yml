@@ -13,24 +13,19 @@ jobs:
   pool:
     vmImage: ubuntu-18.04
   steps:
-    - bash: echo "##vso[task.prependpath]$CONDA/bin"
-      displayName: Add conda to PATH
-    - bash: sudo chown -R $USER $CONDA
-      displayName: Take ownership of conda installation
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '3.8'
     - bash: |
-        set -ex
-        conda create --name flake8_env --yes python=3.8
-        source activate flake8_env
         pip install flake8 mypy==0.770
-      displayName: Install flake8
+      displayName: Install linters
     - bash: |
         set -ex
         if [[ $BUILD_SOURCEVERSIONMESSAGE =~ \[lint\ skip\] ]]; then
           # skip linting
-          echo "Skipping linting"
+          echo "Skipping flake8 linting"
           exit 0
         else
-          source activate flake8_env
           ./build_tools/circle/linting.sh
         fi
       displayName: Run linting
@@ -38,10 +33,9 @@ jobs:
         set -ex
         if [[ $BUILD_SOURCEVERSIONMESSAGE =~ \[lint\ skip\] ]]; then
           # skip linting
-          echo "Skipping linting"
+          echo "Skipping mypy linting"
           exit 0
         else
-          source activate flake8_env
           mypy sklearn/ --ignore-missing-imports
         fi
       displayName: Run mypy
