@@ -118,10 +118,10 @@ def null_space(M, k, k_skip=1, eigen_solver='arpack', tol=1E-6, max_iter=100,
     M : {array, matrix, sparse matrix, LinearOperator}
         Input covariance matrix: should be symmetric positive semi-definite
 
-    k : integer
+    k : int
         Number of eigenvalues/vectors to return
 
-    k_skip : integer, default=1
+    k_skip : int, default=1
         Number of low eigenvalues to skip.
 
     eigen_solver : string, {'auto', 'arpack', 'dense'}, default='arpack'
@@ -199,10 +199,10 @@ def locally_linear_embedding(
         Sample data, shape = (n_samples, n_features), in the form of a
         numpy array or a NearestNeighbors object.
 
-    n_neighbors : integer
+    n_neighbors : int
         number of neighbors to consider for each point.
 
-    n_components : integer
+    n_components : int
         number of coordinates for the manifold.
 
     reg : float, default=1e-3
@@ -227,7 +227,7 @@ def locally_linear_embedding(
         Tolerance for 'arpack' method
         Not used if eigen_solver=='dense'.
 
-    max_iter : integer, default=100
+    max_iter : int, default=100
         maximum number of iterations for the arpack solver.
 
     method : {'standard', 'hessian', 'modified', 'ltsa'},
@@ -526,7 +526,7 @@ class LocallyLinearEmbedding(TransformerMixin,
 
     Parameters
     ----------
-    n_neighbors : integer, default=5
+    n_neighbors : int, default=5
         number of neighbors to consider for each point.
 
     n_components : int, default=2
