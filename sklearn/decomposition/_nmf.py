@@ -724,9 +724,7 @@ def _multiplicative_update_h(X, W, H, A, B,
     if gamma != 1:
         delta_H **= gamma
 
-    H *= delta_H
-
-    return H, A, B
+    return delta_H, A, B
 
 
 def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
@@ -826,20 +824,24 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
 
     n_samples = X.shape[0]
     n_iter_update_h_ = 1
-    # max_iter_update_w_ = 5
+    max_iter_update_w_ = 5
 
     if batch_size is None:
         batch_size = n_samples
+        max_iter_update_w_ = 1
+
     for n_iter in range(1, max_iter + 1):
         for i, slice in enumerate(gen_batches(n=n_samples,
                                               batch_size=batch_size)):
+
             # update W
             # H_sum, HHt and XHt are saved and reused if not update_H
-            # for j in range(max_iter_update_w_):
-            delta_W, H_sum, HHt, XHt = _multiplicative_update_w(
+            for j in range(max_iter_update_w_):
+                print(n_iter, i, j)
+                delta_W, H_sum, HHt, XHt = _multiplicative_update_w(
                     X[slice], W[slice], H, beta_loss, l1_reg_W, l2_reg_W,
                     gamma, H_sum, HHt, XHt, update_H)
-            W[slice] *= delta_W
+                W[slice] *= delta_W
 
             # necessary for stability with beta_loss < 1
             if beta_loss < 1:
@@ -847,11 +849,13 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
 
             # update H
             if update_H:
-                H, A, B = _multiplicative_update_h(X[slice], W[slice], H,
+                delta_H, A, B = _multiplicative_update_h(X[slice], W[slice], H,
                                                    A, B,
                                                    beta_loss, l1_reg_H,
                                                    l2_reg_H, gamma,
                                                    n_iter_update_h_)
+                H *= delta_H
+
                 n_iter_update_h_ += 1
 
                 # These values will be recomputed since H changed
