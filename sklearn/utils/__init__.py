@@ -1185,3 +1185,55 @@ def all_estimators(type_filter=None):
     # itemgetter is used to ensure the sort does not extend to the 2nd item of
     # the tuple
     return sorted(set(estimators), key=itemgetter(0))
+
+
+def _get_n_samples_bootstrap(n_samples, max_samples):
+    """
+    Get the number of samples in a bootstrap sample.
+
+    Parameters
+    ----------
+    n_samples : int
+        Number of samples in the dataset.
+    max_samples : int or float
+        The maximum number of samples to draw from the total available:
+            - if float, this indicates a fraction of the total and should be
+              the interval `(0, 1)`;
+            - if int, this indicates the exact number of samples;
+            - if None, this indicates the total number of samples.
+
+    Returns
+    -------
+    n_samples_bootstrap : int
+        The total number of samples to draw for the bootstrap sample.
+    """
+    if max_samples is None:
+        return n_samples
+
+    if isinstance(max_samples, numbers.Integral):
+        if not (1 <= max_samples <= n_samples):
+            msg = "`max_samples` must be in range 1 to {} but got value {}"
+            raise ValueError(msg.format(n_samples, max_samples))
+        return max_samples
+
+    if isinstance(max_samples, numbers.Real):
+        if not (0 < max_samples < 1):
+            msg = "`max_samples` must be in range (0, 1) but got value {}"
+            raise ValueError(msg.format(max_samples))
+        return int(round(n_samples * max_samples))
+
+    msg = "`max_samples` should be int or float, but got type '{}'"
+    raise TypeError(msg.format(type(max_samples)))
+
+
+def _generate_sample_indices(random_state, n_samples, n_samples_bootstrap):
+    """
+    Private function used to _parallel_build_trees function."""
+
+    random_instance = check_random_state(random_state)
+    sample_indices = random_instance.randint(0, n_samples, n_samples_bootstrap)
+
+    return sample_indices
+
+
+
