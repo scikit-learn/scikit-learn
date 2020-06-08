@@ -91,6 +91,11 @@ Changelog
   samples between the train and test set on each fold.
   :pr:`13204` by :user:`Kyle Kosic <kykosic>`.
 
+- |Feature| :class:`model_selection.RandomizedSearchCV` and
+  :class:`model_selection.GridSearchCV` now have the method, ``score_samples``
+  :pr:`17478` by :user:`Teon Brooks <teonbrooks>` and
+  :user:`Mohamed Maskani <maskani-moh>`.
+
 :mod:`sklearn.preprocessing`
 ............................
 
@@ -122,7 +127,7 @@ Changelog
 :mod:`sklearn.svm`
 ....................
 - |Enhancement| invoke scipy blas api for svm kernel function in ``fit``,
-  ``predict`` and related methods of :class:`svm.SVC`, :class:`svm.NuSVC`, 
+  ``predict`` and related methods of :class:`svm.SVC`, :class:`svm.NuSVC`,
   :class:`svm.SVR`, :class:`svm.NuSVR`, :class:`OneClassSVM`.
   :pr:`16530` by :user:`Shuhua Fan <jim0421>`.
 
