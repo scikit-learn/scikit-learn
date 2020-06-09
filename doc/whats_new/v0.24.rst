@@ -63,7 +63,7 @@ Changelog
 
 - |Feature| :class:`impute.SimpleImputer` now supports a list of strings
   when `strategy='most_frequent'` or `strategy='constant'`.
-  :pr:`17526` by :user:`Ayako YAGI <yagi-3>` and `Juan Carlos Alfaro Jiménez <alfaro96>`.
+  :pr:`17526` by :user:`Ayako YAGI <yagi-3>` and :user:`Juan Carlos Alfaro Jiménez <alfaro96>`.
 
 :mod:`sklearn.metrics`
 ......................
