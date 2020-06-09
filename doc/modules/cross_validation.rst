@@ -757,10 +757,11 @@ To perform the train, test split, use the indicies for the train and test
 subsets yielded by the generator output by the `split()` method of the
 cross-validation iterator. For example::
 
+  >>> import numpy as np
   >>> from sklearn.model_selection import GroupShuffleSplit
 
-  >>> X = [0.1, 0.2, 2.2, 2.4, 2.3, 4.55, 5.8, 0.001]
-  >>> y = ["a", "b", "b", "b", "c", "c", "c", "a"]
+  >>> X = np.array([0.1, 0.2, 2.2, 2.4, 2.3, 4.55, 5.8, 0.001])
+  >>> y = np.array(["a", "b", "b", "b", "c", "c", "c", "a"])
   >>> groups = [1, 1, 2, 2, 3, 3, 4, 4]
   >>> train_indx, test_indx = next(GroupShuffleSplit().split(X, y, groups))
   >>> X_train, X_test, y_train, y_test = \
