@@ -1207,7 +1207,7 @@ def dcg_score(y_true, y_score, *, k=None,
         Base of the logarithm used for the discount. A low value means a
         sharper discount (top results are more important).
 
-    sample_weight : ndarray, shape (n_samples,), default=None
+    sample_weight : ndarray of shape (n_samples,), default=None
         Sample weights. If None, all samples are given the same weight.
 
     ignore_ties : bool, default=False
