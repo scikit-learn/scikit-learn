@@ -273,10 +273,10 @@ def setup_package():
                     cmdclass=cmdclass,
                     python_requires=">=3.6",
                     install_requires=[
-                        f'numpy>={NUMPY_MIN_VERSION}',
-                        f'scipy>={SCIPY_MIN_VERSION}',
-                        f'joblib>={JOBLIB_MIN_VERSION}',
-                        f'threadpoolctl>={THREADPOOLCTL_MIN_VERSION}'
+                        'numpy>={}'.format(NUMPY_MIN_VERSION),
+                        'scipy>={}'.format(SCIPY_MIN_VERSION),
+                        'joblib>={}'.format(JOBLIB_MIN_VERSION),
+                        'threadpoolctl>={}'.format(THREADPOOLCTL_MIN_VERSION)
                     ],
                     package_data={'': ['*.pxd']},
                     **extra_setuptools_args)
