@@ -40,7 +40,6 @@ Single and multi-output problems are both handled.
 # License: BSD 3 clause
 
 
-import numbers
 from warnings import catch_warnings, simplefilter, warn
 import threading
 
