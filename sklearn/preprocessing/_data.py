@@ -492,6 +492,18 @@ def minmax_scale(X, feature_range=(0, 1), *, axis=0, copy=True):
     X_tr : ndarray of shape (n_samples, n_features)
         The transformed data.
 
+    .. warning:: Risk of data leak
+
+        Do not use :func:`~sklearn.preprocessing.minmax_scale` unless you know
+        what you are doing. A common mistake is to apply it to the entire data
+        *before* splitting into training and test sets. This will bias the
+        model evaluation because information would have leaked from the test
+        set to the training set.
+        In general, we recommend using
+        :class:`~sklearn.preprocessing.MinMaxScaler` within a
+        :ref:`Pipeline <pipeline>` in order to prevent most risks of data
+        leaking: `pipe = make_pipeline(MinMaxScaler(), LogisticRegression())`.
+
     See also
     --------
     MinMaxScaler: Performs scaling to a given range using the``Transformer`` API

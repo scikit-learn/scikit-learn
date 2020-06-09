@@ -457,6 +457,26 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         score = self.scorer_[self.refit] if self.multimetric_ else self.scorer_
         return score(self.best_estimator_, X, y)
 
+    @if_delegate_has_method(delegate=('best_estimator_', 'estimator'))
+    def score_samples(self, X):
+        """Call score_samples on the estimator with the best found parameters.
+
+        Only available if ``refit=True`` and the underlying estimator supports
+        ``score_samples``.
+
+        Parameters
+        ----------
+        X : iterable
+            Data to predict on. Must fulfill input requirements
+            of the underlying estimator.
+
+        Returns
+        -------
+        y_score : ndarray, shape (n_samples,)
+        """
+        self._check_is_fitted('score_samples')
+        return self.best_estimator_.score_samples(X)
+
     def _check_is_fitted(self, method_name):
         if not self.refit:
             raise NotFittedError('This %s instance was initialized '
@@ -861,9 +881,9 @@ class GridSearchCV(BaseSearchCV):
     Important members are fit, predict.
 
     GridSearchCV implements a "fit" and a "score" method.
-    It also implements "predict", "predict_proba", "decision_function",
-    "transform" and "inverse_transform" if they are implemented in the
-    estimator used.
+    It also implements "score_samples", "predict", "predict_proba",
+    "decision_function", "transform" and "inverse_transform" if they are
+    implemented in the estimator used.
 
     The parameters of the estimator used to apply these methods are optimized
     by cross-validated grid-search over a parameter grid.
@@ -1174,9 +1194,9 @@ class RandomizedSearchCV(BaseSearchCV):
     """Randomized search on hyper parameters.
 
     RandomizedSearchCV implements a "fit" and a "score" method.
-    It also implements "predict", "predict_proba", "decision_function",
-    "transform" and "inverse_transform" if they are implemented in the
-    estimator used.
+    It also implements "score_samples", "predict", "predict_proba",
+    "decision_function", "transform" and "inverse_transform" if they are
+    implemented in the estimator used.
 
     The parameters of the estimator used to apply these methods are optimized
     by cross-validated search over parameter settings.

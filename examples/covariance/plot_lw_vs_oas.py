@@ -29,7 +29,7 @@ from scipy.linalg import toeplitz, cholesky
 from sklearn.covariance import LedoitWolf, OAS
 
 np.random.seed(0)
-###############################################################################
+# %%
 n_features = 100
 # simulation covariance matrix (AR(1) process)
 r = 0.1
