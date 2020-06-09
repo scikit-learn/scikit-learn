@@ -1892,7 +1892,7 @@ def pairwise_kernels(X, Y=None, metric="linear", *, filter_params=False,
     filter_params : boolean, default=False
         Whether to filter invalid parameters or not.
 
-    n_jobs : int or None, default=None
+    n_jobs : int, default=None
         The number of jobs to use for the computation. This works by breaking
         down the pairwise matrix into n_jobs even slices and computing them in
         parallel.
