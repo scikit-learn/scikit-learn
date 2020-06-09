@@ -16,6 +16,7 @@ from sklearn.datasets import make_classification, make_blobs
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.svm import LinearSVC
+from sklearn.feature_extraction import DictVectorizer
 from sklearn.pipeline import Pipeline
 from sklearn.impute import SimpleImputer
 from sklearn.metrics import brier_score_loss, log_loss
@@ -325,7 +326,7 @@ def test_calibration_less_classes():
                                np.random.RandomState(42).randn(15, 5, 2, 6)])
 def test_calibration_accepts_ndarray(X):
     """Test that calibration accepts n-dimensional arrays as input"""
-    y = [1, 0, 0, 1, 1, 0, 1, 1, 0, 0, 1, 0, 0, 1, 0]
+    y = np.array([1, 0, 0, 1, 1, 0, 1, 1, 0, 0, 1, 0, 0, 1, 0])
 
     class MockTensorClassifier(BaseEstimator):
         """A toy estimator that accepts tensor inputs"""
@@ -341,3 +342,25 @@ def test_calibration_accepts_ndarray(X):
     calibrated_clf = CalibratedClassifierCV(MockTensorClassifier())
     # we should be able to fit this classifier with no error
     calibrated_clf.fit(X, y)
+
+
+def test_calibration_pipeline():
+    """Test that calibration works in pipeline with transformer, where X
+    is not array-like, sparse matrix or dataframe at the start. See issue
+    #8710"""
+    fake_features = [
+        {'state':'NY','age':'adult'},
+        {'state':'TX','age':'adult'},
+        {'state':'VT','age':'child'},
+        {'state':'TX','age':'child'}
+    ]
+    labels = [1, 0, 1, 0]
+
+    pipeline = Pipeline([
+                ('vectorizer',DictVectorizer()),
+                ('clf',RandomForestClassifier())
+        ])
+    pipeline.fit(fake_features, labels)
+
+    calib_clf = CalibratedClassifierCV(pipeline, cv='prefit')
+    calib_clf.fit(fake_features, labels)
