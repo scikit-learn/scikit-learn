@@ -772,7 +772,6 @@ def fetch_openml(name=None, *, version='active', data_id=None, data_home=None,
         return_sparse = True
 
     if as_frame == 'auto':
-        # GH#14888: 'auto' means returning frame unless data is sparse
         as_frame = not return_sparse
 
     if as_frame and return_sparse:
