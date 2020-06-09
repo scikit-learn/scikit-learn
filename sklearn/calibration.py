@@ -180,17 +180,6 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
         le = LabelBinarizer().fit(y)
         self.classes_ = le.classes_
 
-        # Check that each cross-validation fold can have at least one
-        # example per class
-        n_folds = self.cv if isinstance(self.cv, int) \
-            else self.cv.n_folds if hasattr(self.cv, "n_folds") else None
-        if n_folds and \
-                np.any([np.sum(y == class_) < n_folds for class_ in
-                        self.classes_]):
-            raise ValueError("Requesting %d-fold cross-validation but provided"
-                             " less than %d examples for at least one class."
-                             % (n_folds, n_folds))
-
         self.calibrated_classifiers_ = []
         if self.base_estimator is None:
             # we want all classifiers that don't expose a random_state
@@ -209,6 +198,18 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
                 X, y, accept_sparse=['csc', 'csr', 'coo'],
                 force_all_finite=False, allow_nd=True
             )
+
+            # Check that each cross-validation fold can have at least one
+            # example per class
+            n_folds = self.cv if isinstance(self.cv, int) \
+                else self.cv.n_folds if hasattr(self.cv, "n_folds") else None
+            if n_folds and \
+                    np.any([np.sum(y == class_) < n_folds for class_ in
+                            self.classes_]):
+                raise ValueError(f"Requesting {n_folds}-fold cross-validation "
+                                 f"but provided less than {n_folds} examples "
+                                 "for at least one class.")
+
             cv = check_cv(self.cv, y, classifier=True)
             fit_parameters = signature(base_estimator.fit).parameters
             base_estimator_supports_sw = "sample_weight" in fit_parameters
