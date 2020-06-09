@@ -351,25 +351,6 @@ def test_imputation_most_frequent_pandas(dtype):
     assert_array_equal(X_trans, X_true)
 
 
-@pytest.mark.parametrize(
-    'strategy, expected',
-    [('most_frequent', 'b'), ('constant', 'missing_value')]
-)
-def test_simple_imputation_string_list(strategy, expected):
-    X = [['a', 'b'],
-         ['c', np.nan]]
-
-    X_true = np.array([
-        ['a', 'b'],
-        ['c', expected]
-    ], dtype=object)
-
-    imputer = SimpleImputer(strategy=strategy)
-    X_trans = imputer.fit_transform(X)
-
-    assert_array_equal(X_trans, X_true)
-
-
 @pytest.mark.parametrize("X_data, missing_value", [(1, 0), (1., np.nan)])
 def test_imputation_constant_error_invalid_type(X_data, missing_value):
     # Verify that exceptions are raised on invalid fill_value type
@@ -1359,6 +1340,25 @@ def test_simple_imputation_add_indicator_sparse_matrix(arr_type):
     assert sparse.issparse(X_trans)
     assert X_trans.shape == X_true.shape
     assert_allclose(X_trans.toarray(), X_true)
+
+
+@pytest.mark.parametrize(
+    'strategy, expected',
+    [('most_frequent', 'b'), ('constant', 'missing_value')]
+)
+def test_simple_imputation_string_list(strategy, expected):
+    X = [['a', 'b'],
+         ['c', np.nan]]
+
+    X_true = np.array([
+        ['a', 'b'],
+        ['c', expected]
+    ], dtype=object)
+
+    imputer = SimpleImputer(strategy=strategy)
+    X_trans = imputer.fit_transform(X)
+
+    assert_array_equal(X_trans, X_true)
 
 
 @pytest.mark.parametrize(
