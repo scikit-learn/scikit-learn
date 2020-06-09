@@ -748,12 +748,13 @@ Using cross-validation iterators to split train and test
 --------------------------------------------------------
 
 The above group cross-validation functions may also be useful for spitting a
-dataset into training and testing subsets. This is because the convenience
-function :func:`train_test_split` only allows splitting in a stratified
-fashion (using the class labels) but cannot account for groups.
+dataset into training and testing subsets. Note that the convenience
+function :func:`train_test_split` is a wrapper around :func:`ShuffleSplit`
+and thus only allows for stratified splitting (using the class labels)
+and cannot account for groups.
 
-To perform the split, use the indicies for the train and test subsets
-yielded by the generator output by the `split()` method of the
+To perform the train, test split, use the indicies for the train and test
+subsets yielded by the generator output by the `split()` method of the
 cross-validation iterator. For example::
 
   >>> from sklearn.model_selection import GroupShuffleSplit
@@ -763,7 +764,7 @@ cross-validation iterator. For example::
   >>> groups = [1, 1, 2, 2, 3, 3, 4, 4]
   >>> train_indx, test_indx = next(GroupShuffleSplit().split(X, y, groups))
   >>> X_train, X_test, y_train, y_test = \
-  ...     X[train_inds], X[test_inds], y[train_inds], y[test_inds]
+  ...     X[train_indx], X[test_indx], y[train_indx], y[test_indx]
 
 .. _timeseries_cv:
 
