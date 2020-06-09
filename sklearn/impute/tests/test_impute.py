@@ -486,7 +486,7 @@ def test_imputation_constant_string_list():
     X_true = np.array([
         ['a', 'b'],
         ['c', 'missing_value']
-    ], dtype=np.object)
+    ], dtype=object)
 
     imputer = SimpleImputer(strategy="constant")
     X_trans = imputer.fit_transform(X)
