@@ -72,7 +72,7 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
         Initialization value of the sparse code. Only used if
         `algorithm='lasso_cd'`.
 
-    max_iter : int, 1000 by default
+    max_iter : int, default=1000
         Maximum number of iterations to perform if `algorithm='lasso_cd'` or
         `lasso_lars`.
 
@@ -1490,7 +1490,7 @@ class MiniBatchDictionaryLearning(SparseCodingMixin, BaseEstimator):
             iter_offset = getattr(self, 'iter_offset_', 0)
         U, (A, B) = dict_learning_online(
             X, self.n_components, alpha=self.alpha,
-            n_iter=self.n_iter, method=self.fit_algorithm,
+            n_iter=1, method=self.fit_algorithm,
             method_max_iter=self.transform_max_iter,
             n_jobs=self.n_jobs, dict_init=dict_init,
             batch_size=len(X), shuffle=False,
@@ -1504,5 +1504,5 @@ class MiniBatchDictionaryLearning(SparseCodingMixin, BaseEstimator):
         # Keep track of the state of the algorithm to be able to do
         # some online fitting (partial_fit)
         self.inner_stats_ = (A, B)
-        self.iter_offset_ = iter_offset + self.n_iter
+        self.iter_offset_ = iter_offset + 1
         return self

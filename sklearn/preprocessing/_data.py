@@ -492,6 +492,18 @@ def minmax_scale(X, feature_range=(0, 1), *, axis=0, copy=True):
     X_tr : ndarray of shape (n_samples, n_features)
         The transformed data.
 
+    .. warning:: Risk of data leak
+
+        Do not use :func:`~sklearn.preprocessing.minmax_scale` unless you know
+        what you are doing. A common mistake is to apply it to the entire data
+        *before* splitting into training and test sets. This will bias the
+        model evaluation because information would have leaked from the test
+        set to the training set.
+        In general, we recommend using
+        :class:`~sklearn.preprocessing.MinMaxScaler` within a
+        :ref:`Pipeline <pipeline>` in order to prevent most risks of data
+        leaking: `pipe = make_pipeline(MinMaxScaler(), LogisticRegression())`.
+
     See also
     --------
     MinMaxScaler: Performs scaling to a given range using the``Transformer`` API
@@ -1094,6 +1106,18 @@ def maxabs_scale(X, *, axis=0, copy=True):
     X_tr : {ndarray, sparse matrix} of shape (n_samples, n_features)
         The transformed data.
 
+    .. warning:: Risk of data leak
+
+        Do not use :func:`~sklearn.preprocessing.maxabs_scale` unless you know what
+        you are doing. A common mistake is to apply it to the entire data
+        *before* splitting into training and test sets. This will bias the
+        model evaluation because information would have leaked from the test
+        set to the training set.
+        In general, we recommend using
+        :class:`~sklearn.preprocessing.MaxAbsScaler` within a
+        :ref:`Pipeline <pipeline>` in order to prevent most risks of data
+        leaking: `pipe = make_pipeline(MaxAbsScaler(), LogisticRegression())`.
+
     See also
     --------
     MaxAbsScaler: Performs scaling to the [-1, 1] range using the``Transformer`` API
@@ -1178,6 +1202,15 @@ class RobustScaler(TransformerMixin, BaseEstimator):
         not a NumPy array or scipy.sparse CSR matrix, a copy may still be
         returned.
 
+    unit_variance : bool, default=False
+        If True, scale data so that normally distributed features have a
+        variance of 1. In general, if the difference between the x-values of
+        ``q_max`` and ``q_min`` for a standard normal distribution is greater
+        than 1, the dataset will be scaled down. If less than 1, the dataset
+        will be scaled up.
+
+        .. versionadded:: 0.24
+
     Attributes
     ----------
     center_ : array of floats
@@ -1222,10 +1255,11 @@ class RobustScaler(TransformerMixin, BaseEstimator):
     """
     @_deprecate_positional_args
     def __init__(self, *, with_centering=True, with_scaling=True,
-                 quantile_range=(25.0, 75.0), copy=True):
+                 quantile_range=(25.0, 75.0), copy=True, unit_variance=False):
         self.with_centering = with_centering
         self.with_scaling = with_scaling
         self.quantile_range = quantile_range
+        self.unit_variance = unit_variance
         self.copy = copy
 
     def fit(self, X, y=None):
@@ -1283,6 +1317,10 @@ class RobustScaler(TransformerMixin, BaseEstimator):
 
             self.scale_ = quantiles[1] - quantiles[0]
             self.scale_ = _handle_zeros_in_scale(self.scale_, copy=False)
+            if self.unit_variance:
+                adjust = (stats.norm.ppf(q_max / 100.0) -
+                          stats.norm.ppf(q_min / 100.0))
+                self.scale_ = self.scale_ / adjust
         else:
             self.scale_ = None
 
@@ -1350,7 +1388,7 @@ class RobustScaler(TransformerMixin, BaseEstimator):
 
 @_deprecate_positional_args
 def robust_scale(X, *, axis=0, with_centering=True, with_scaling=True,
-                 quantile_range=(25.0, 75.0), copy=True):
+                 quantile_range=(25.0, 75.0), copy=True, unit_variance=False):
     """Standardize a dataset along any axis
 
     Center to the median and component wise scale
@@ -1385,6 +1423,15 @@ def robust_scale(X, *, axis=0, with_centering=True, with_scaling=True,
         set to False to perform inplace row normalization and avoid a
         copy (if the input is already a numpy array or a scipy.sparse
         CSR matrix and if axis is 1).
+
+    unit_variance : bool, default=False
+        If True, scale data so that normally distributed features have a
+        variance of 1. In general, if the difference between the x-values of
+        ``q_max`` and ``q_min`` for a standard normal distribution is greater
+        than 1, the dataset will be scaled down. If less than 1, the dataset
+        will be scaled up.
+
+        .. versionadded:: 0.24
 
     Returns
     -------
@@ -1422,7 +1469,8 @@ def robust_scale(X, *, axis=0, with_centering=True, with_scaling=True,
         X = X.reshape(X.shape[0], 1)
 
     s = RobustScaler(with_centering=with_centering, with_scaling=with_scaling,
-                     quantile_range=quantile_range, copy=copy)
+                     quantile_range=quantile_range,
+                     unit_variance=unit_variance, copy=copy)
     if axis == 0:
         X = s.fit_transform(X)
     else:
@@ -3181,6 +3229,7 @@ def power_transform(X, method='yeo-johnson', *, standardize=True, copy=True):
 
     Read more in the :ref:`User Guide <preprocessing_transformer>`.
 
+
     Parameters
     ----------
     X : array-like of shape (n_samples, n_features)
@@ -3217,6 +3266,18 @@ def power_transform(X, method='yeo-johnson', *, standardize=True, copy=True):
     [[-1.332... -0.707...]
      [ 0.256... -0.707...]
      [ 1.076...  1.414...]]
+
+    .. warning:: Risk of data leak.
+        Do not use :func:`~sklearn.preprocessing.power_transform` unless you
+        know what you are doing. A common mistake is to apply it to the entire
+        data *before* splitting into training and test sets. This will bias the
+        model evaluation because information would have leaked from the test
+        set to the training set.
+        In general, we recommend using
+        :class:`~sklearn.preprocessing.PowerTransformer` within a
+        :ref:`Pipeline <pipeline>` in order to prevent most risks of data
+        leaking, e.g.: `pipe = make_pipeline(PowerTransformer(),
+        LogisticRegression())`.
 
     See also
     --------

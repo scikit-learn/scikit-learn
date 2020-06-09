@@ -44,7 +44,7 @@ X, y = fetch_openml("titanic", version=1, as_frame=True, return_X_y=True)
 # X = titanic.frame.drop('survived', axis=1)
 # y = titanic.frame['survived']
 
-###############################################################################
+# %%
 # Use ``ColumnTransformer`` by selecting column by names
 ###############################################################################
 # We will train our classifier with the following features:
@@ -90,7 +90,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2,
 clf.fit(X_train, y_train)
 print("model score: %.3f" % clf.score(X_test, y_test))
 
-##############################################################################
+# %%
 # HTML representation of ``Pipeline``
 ###############################################################################
 # When the ``Pipeline`` is printed out in a jupyter notebook an HTML
@@ -100,7 +100,7 @@ from sklearn import set_config
 set_config(display='diagram')
 clf
 
-###############################################################################
+# %%
 # Use ``ColumnTransformer`` by selecting column by data types
 ###############################################################################
 # When dealing with a cleaned dataset, the preprocessing can be automatic by
@@ -113,19 +113,19 @@ clf
 subset_feature = ['embarked', 'sex', 'pclass', 'age', 'fare']
 X_train, X_test = X_train[subset_feature], X_test[subset_feature]
 
-###############################################################################
+# %%
 # Then, we introspect the information regarding each column data type.
 
 X_train.info()
 
-###############################################################################
+# %%
 # We can observe that the `embarked` and `sex` columns were tagged as
 # `category` columns when loading the data with ``fetch_openml``. Therefore, we
 # can use this information to dispatch the categorical columns to the
 # ``categorical_transformer`` and the remaining columns to the
 # ``numerical_transformer``.
 
-###############################################################################
+# %%
 # .. note:: In practice, you will have to handle yourself the column data type.
 #    If you want some columns to be considered as `category`, you will have to
 #    convert them into categorical columns. If you are using pandas, you can
@@ -145,20 +145,20 @@ clf = Pipeline(steps=[('preprocessor', preprocessor),
 clf.fit(X_train, y_train)
 print("model score: %.3f" % clf.score(X_test, y_test))
 
-###############################################################################
+# %%
 # The resulting score is not exactly the same as the one from the previous
 # pipeline becase the dtype-based selector treats the ``pclass`` columns as
 # a numeric features instead of a categorical feature as previously:
 
 selector(dtype_exclude="category")(X_train)
 
-###############################################################################
+# %%
 
 selector(dtype_include="category")(X_train)
 
-###############################################################################
+# %%
 # Using the prediction pipeline in a grid search
-###############################################################################
+##############################################################################
 # Grid search can also be performed on the different preprocessing steps
 # defined in the ``ColumnTransformer`` object, together with the classifier's
 # hyperparameters as part of the ``Pipeline``.
@@ -174,7 +174,7 @@ param_grid = {
 grid_search = GridSearchCV(clf, param_grid, cv=10)
 grid_search
 
-###############################################################################
+# %%
 # Calling 'fit' triggers the cross-validated search for the best
 # hyper-parameters combination:
 #
@@ -183,11 +183,11 @@ grid_search.fit(X_train, y_train)
 print(f"Best params:")
 print(grid_search.best_params_)
 
-###############################################################################
+# %%
 # The internal cross-validation scores obtained by those parameters is:
 print(f"Internal CV score: {grid_search.best_score_:.3f}")
 
-###############################################################################
+# %%
 # We can also introspect the top grid search results as a pandas dataframe:
 import pandas as pd
 
@@ -198,7 +198,7 @@ cv_results[["mean_test_score", "std_test_score",
             "param_classifier__C"
             ]].head(5)
 
-###############################################################################
+# %%
 # The best hyper-parameters have be used to re-fit a final model on the full
 # training set. We can evaluate that final model on held out test data that was
 # not used for hyparameter tuning.
