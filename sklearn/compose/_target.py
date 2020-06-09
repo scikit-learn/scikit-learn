@@ -12,10 +12,11 @@ from ..utils import check_array, _safe_indexing
 from ..preprocessing import FunctionTransformer
 from ..utils.validation import _deprecate_positional_args
 from ..exceptions import NotFittedError
+from ..linear_model import LinearRegression
 
 __all__ = ['TransformedTargetRegressor']
 
-
+# pylint: disable=too-many-instance-attributes
 class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
     """Meta-estimator to regress on a transformed target.
 
@@ -117,7 +118,11 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
         self.func = func
         self.inverse_func = inverse_func
         self.check_inverse = check_inverse
+        self._training_dim = None
+        self.transformer_ = None
+        self.regressor_ = None
 
+    # pylint: disable=invalid-name
     def _fit_transformer(self, y):
         """Check transformer and fit transformer.
 
@@ -199,7 +204,6 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
             y_trans = y_trans.squeeze(axis=1)
 
         if self.regressor is None:
-            from ..linear_model import LinearRegression
             self.regressor_ = LinearRegression()
         else:
             self.regressor_ = clone(self.regressor)
@@ -243,6 +247,10 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
 
     @property
     def n_features_in_(self):
+        """n_features_in_
+
+        :returns: number of features in
+        """
         # For consistency with other estimators we raise a AttributeError so
         # that hasattr() returns False the estimator isn't fitted.
         try:
