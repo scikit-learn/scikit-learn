@@ -176,8 +176,6 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
         self : object
             Returns an instance of self.
         """
-        # X, y = self._validate_data(X, y, accept_sparse=['csc', 'csr', 'coo'],
-        #                            force_all_finite=False, allow_nd=True)
         X, y = indexable(X, y)
         le = LabelBinarizer().fit(y)
         self.classes_ = le.classes_
@@ -207,6 +205,10 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
             calibrated_classifier.fit(X, y, sample_weight)
             self.calibrated_classifiers_.append(calibrated_classifier)
         else:
+            X, y = self._validate_data(
+                X, y, accept_sparse=['csc', 'csr', 'coo'],
+                force_all_finite=False, allow_nd=True
+            )
             cv = check_cv(self.cv, y, classifier=True)
             fit_parameters = signature(base_estimator.fit).parameters
             base_estimator_supports_sw = "sample_weight" in fit_parameters
@@ -227,6 +229,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
                     this_estimator.fit(X[train], y[train],
                                        sample_weight=sample_weight[train])
                 else:
+                    print(f'X {type(X)} {X} y {type(y)}')
                     this_estimator.fit(X[train], y[train])
 
                 calibrated_classifier = _CalibratedClassifier(

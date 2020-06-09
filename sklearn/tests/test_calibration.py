@@ -326,7 +326,7 @@ def test_calibration_less_classes():
                                np.random.RandomState(42).randn(15, 5, 2, 6)])
 def test_calibration_accepts_ndarray(X):
     """Test that calibration accepts n-dimensional arrays as input"""
-    y = np.array([1, 0, 0, 1, 1, 0, 1, 1, 0, 0, 1, 0, 0, 1, 0])
+    y = [1, 0, 0, 1, 1, 0, 1, 1, 0, 0, 1, 0, 0, 1, 0]
 
     class MockTensorClassifier(BaseEstimator):
         """A toy estimator that accepts tensor inputs"""
@@ -345,16 +345,15 @@ def test_calibration_accepts_ndarray(X):
 
 
 def test_calibration_pipeline():
-    """Test that calibration works in pipeline with transformer, where X
-    is not array-like, sparse matrix or dataframe at the start. See issue
-    #8710"""
+    """Test that calibration works in pre-fit pipeline with transformer,
+    where X is not array-like, sparse matrix or dataframe at the start. See
+    issue #8710"""
     fake_features = [
         {'state':'NY','age':'adult'},
         {'state':'TX','age':'adult'},
         {'state':'VT','age':'child'},
-        {'state':'TX','age':'child'}
     ]
-    labels = [1, 0, 1, 0]
+    labels = [1, 0, 1]
 
     pipeline = Pipeline([
                 ('vectorizer',DictVectorizer()),
