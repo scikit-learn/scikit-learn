@@ -82,8 +82,12 @@ def fetch_covtype(*, data_home=None, download_if_missing=True,
         If True, returns ``(data.data, data.target)`` instead of a Bunch
         object.
 
-    as_frame : boolean, default=False.
-        If True, returns ``pandas.DataFrame`` instead of a Bunch object
+    as_frame : bool, default=False
+        If True, the data is a pandas DataFrame including columns with
+        appropriate dtypes (numeric). The target is
+        a pandas DataFrame or Series depending on the number of target columns.
+        If `return_X_y` is True, then (`data`, `target`) will be pandas
+        DataFrames or Series as described below.
         .. versionadded:: 0.20
 
     Returns
@@ -149,35 +153,37 @@ def fetch_covtype(*, data_home=None, download_if_missing=True,
     with open(join(module_path, 'descr', 'covtype.rst')) as rst_file:
         fdescr = rst_file.read()
 
-    if return_X_y:
-        return X, y
-
-    if as_frame:
+    if as_frame or return_X_y:
         """
         Column names reference:
         https://archive.ics.uci.edu/ml/machine-learning-databases/covtype/covtype.info
         """
         feat_cols = ["Elevation",
-                     "Aspect",
-                     "Slope",
-                     "Horizontal_Distance_To_Hydrology",
-                     "Vertical_Distance_To_Hydrology",
-                     "Horizontal_Distance_To_Roadways",
-                     "Hillshade_9am",
-                     "Hillshade_Noon",
-                     "Hillshade_3pm",
-                     "Horizontal_Distance_To_Fire_Points"]
+                        "Aspect",
+                        "Slope",
+                        "Horizontal_Distance_To_Hydrology",
+                        "Vertical_Distance_To_Hydrology",
+                        "Horizontal_Distance_To_Roadways",
+                        "Hillshade_9am",
+                        "Hillshade_Noon",
+                        "Hillshade_3pm",
+                        "Horizontal_Distance_To_Fire_Points"]
         feat_cols += ['Wilderness_Area_'+str(i) for i in range(1, 5)]
         feat_cols += ['Soil_Type_'+str(i) for i in range(1, 41)]
         target_col = ["Cover_Type"]
 
         frame, X, y = _convert_data_dataframe("fetch_covtype", X, y,
                                               feat_cols, target_col)
-        return Bunch(data=X,
-                     target=y,
-                     frame=frame,
-                     target_names=target_col,
-                     feature_names=feat_cols,
-                     DESCR=fdescr)
+
+        if as_frame:
+            return Bunch(data=X,
+                        target=y,
+                        frame=frame,
+                        target_names=target_col,
+                        feature_names=feat_cols,
+                        DESCR=fdescr)
+
+        if return_X_y:
+            return X, y
 
     return Bunch(data=X, target=y, DESCR=fdescr)

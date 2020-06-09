@@ -31,6 +31,7 @@ def test_fetch_asframe(fetch_covtype_fxt):
     frame = bunch.frame
     assert hasattr(bunch, frame) is True
     assert frame.shape == (581012, 55)
+    assert isinstance(bunch.frame, pd.DataFrame)
     assert isinstance(bunch.data, pd.DataFrame)
     assert isinstance(bunch.target, pd.Series)
 
