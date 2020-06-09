@@ -1073,7 +1073,7 @@ def fbeta_score(y_true, y_pred, *, beta, labels=None, pos_label=1,
     beta : float
         Determines the weight of recall in the combined score.
 
-    labels : list, default=None
+    labels : array-like, default=None
         The set of labels to include when ``average != 'binary'``, and their
         order if ``average is None``. Labels present in the data can be
         excluded, for example to calculate a multiclass average ignoring a
