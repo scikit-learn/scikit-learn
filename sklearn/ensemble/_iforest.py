@@ -447,6 +447,14 @@ class IsolationForest(OutlierMixin, BaseBagging):
         )
         return scores
 
+    def _more_tags(self):
+        return {
+            '_xfail_checks': {
+                'check_sample_weights_invariance(kind=zeros)':
+                'zero sample_weight is not equivalent to removing samples',
+            }
+        }
+
 
 def _average_path_length(n_samples_leaf):
     """
