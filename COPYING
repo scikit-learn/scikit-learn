@@ -15,7 +15,7 @@ modification, are permitted provided that the following conditions are met:
   c. Neither the name of the Scikit-learn Developers  nor the names of
      its contributors may be used to endorse or promote products
      derived from this software without specific prior written
-     permission. 
+     permission.
 
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
@@ -29,4 +29,3 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
 LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
 DAMAGE.
-

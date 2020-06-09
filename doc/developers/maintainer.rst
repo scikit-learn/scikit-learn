@@ -46,8 +46,8 @@ permissions given to maintainers, which includes:
 
 - *maintainer* role on ``scikit-learn`` projects on ``pypi.org`` and
   ``test.pypi.org``, separately.
-- become a member of the *scikit-learn* team on conda-forge by editing the 
-  ``recipe/meta.yaml`` file on 
+- become a member of the *scikit-learn* team on conda-forge by editing the
+  ``recipe/meta.yaml`` file on
   ``https://github.com/conda-forge/scikit-learn-feedstock``
 - *maintainer* on ``https://github.com/MacPython/scikit-learn-wheels``
 

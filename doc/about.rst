@@ -115,7 +115,7 @@ Funding
 Scikit-Learn is a community driven project, however institutional and private
 grants help to assure its sustainability.
 
-The project would like to thank the following funders. 
+The project would like to thank the following funders.
 
 ...................................
 
@@ -181,7 +181,7 @@ Grisel, Guillaume Lemaitre, Jérémie du Boisberranger and Chiara Marmo.
    | |msn|   |  |bcg|   |
    +---------+----------+
    |                    |
-   +---------+----------+ 
+   +---------+----------+
    |  |axa|  |   |bnp|  |
    +---------+----------+
    ||fujitsu||  |intel| |
@@ -200,7 +200,7 @@ Grisel, Guillaume Lemaitre, Jérémie du Boisberranger and Chiara Marmo.
    </div>
    </div>
 
-........  
+........
 
 .. raw:: html
 
@@ -215,7 +215,7 @@ Grisel, Guillaume Lemaitre, Jérémie du Boisberranger and Chiara Marmo.
 
    <div class="sk-sponsor-div-box">
 
-.. image:: themes/scikit-learn/static/img/columbia.png 
+.. image:: themes/scikit-learn/static/img/columbia.png
    :width: 50pt
    :align: center
    :target: https://www.columbia.edu/
@@ -229,7 +229,7 @@ Grisel, Guillaume Lemaitre, Jérémie du Boisberranger and Chiara Marmo.
 
 .. raw:: html
 
-   <div class="sk-sponsor-div">   
+   <div class="sk-sponsor-div">
    <div class="sk-sponsor-div-box">
 
 Andreas Müller received a grant to improve scikit-learn from the

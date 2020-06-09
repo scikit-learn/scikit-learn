@@ -116,7 +116,7 @@ components by sample in a more than 30000-dimensional space
   >>> vectors.nnz / float(vectors.shape[0])
   159.01327...
 
-:func:`sklearn.datasets.fetch_20newsgroups_vectorized` is a function which 
+:func:`sklearn.datasets.fetch_20newsgroups_vectorized` is a function which
 returns ready-to-use token counts features instead of file names.
 
 .. _`20 newsgroups website`: http://people.csail.mit.edu/jrennie/20Newsgroups/

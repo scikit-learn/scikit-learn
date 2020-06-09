@@ -6,23 +6,23 @@ According to that project, this file is licensed under the LGPL
 """
 
 try:
-    from pyparsing import (ParserElement, Literal, Word, CaselessLiteral, 
+    from pyparsing import (ParserElement, Literal, Word, CaselessLiteral,
         Optional, Combine, Forward, ZeroOrMore, nums, oneOf, Group, ParseException, OneOrMore)
 except ImportError:
     import sys
     sys.exit("pyparsing is required")
-    
-    
+
+
 #ParserElement.enablePackrat()
 
 def Command(char):
     """ Case insensitive but case preserving"""
     return CaselessPreservingLiteral(char)
-    
+
 def Arguments(token):
     return Group(token)
-    
-    
+
+
 class CaselessPreservingLiteral(CaselessLiteral):
     """ Like CaselessLiteral, but returns the match as found
         instead of as defined.
@@ -41,8 +41,8 @@ class CaselessPreservingLiteral(CaselessLiteral):
         exc = self.myException
         exc.loc = loc
         exc.pstr = instring
-        raise exc   
-    
+        raise exc
+
 def Sequence(token):
     """ A sequence of the token"""
     return OneOrMore(token+maybeComma)
@@ -59,13 +59,13 @@ def convertToFloat(s, loc, toks):
 
 exponent = CaselessLiteral("e")+Optional(sign)+Word(nums)
 
-#note that almost all these fields are optional, 
+#note that almost all these fields are optional,
 #and this can match almost anything. We rely on Pythons built-in
 #float() function to clear out invalid values - loosely matching like this
 #speeds up parsing quite a lot
 floatingPointConstant = Combine(
-    Optional(sign) + 
-    Optional(Word(nums)) + 
+    Optional(sign) +
+    Optional(Word(nums)) +
     Optional(Literal(".") + Optional(Word(nums)))+
     Optional(exponent)
 )
@@ -76,7 +76,7 @@ number = floatingPointConstant
 
 #same as FP constant but don't allow a - sign
 nonnegativeNumber = Combine(
-    Optional(Word(nums)) + 
+    Optional(Word(nums)) +
     Optional(Literal(".") + Optional(Word(nums)))+
     Optional(exponent)
 )

@@ -34,7 +34,7 @@ The bundled version of joblib was upgraded from 0.13.0 to 0.13.2.
 :mod:`sklearn.decomposition`
 ............................
 
-- |Fix| Fixed a bug in :class:`cross_decomposition.CCA` improving numerical 
+- |Fix| Fixed a bug in :class:`cross_decomposition.CCA` improving numerical
   stability when `Y` is close to zero. :pr:`13903` by `Thomas Fan`_.
 
 
@@ -104,7 +104,7 @@ Changelog
 :mod:`sklearn.feature_extraction`
 .................................
 
-- |Fix| Fixed a bug in :class:`feature_extraction.text.CountVectorizer` which 
+- |Fix| Fixed a bug in :class:`feature_extraction.text.CountVectorizer` which
   would result in the sparse feature matrix having conflicting `indptr` and
   `indices` precisions under very large vocabularies. :issue:`11295` by
   :user:`Gabriel Vacaliuc <gvacaliuc>`.
@@ -399,7 +399,7 @@ Changelog
   :issue:`12522` by :user:`Nicolas Hug<NicolasHug>`.
 
 - |Fix| Fixed a bug in :class:`preprocessing.OneHotEncoder` where transform
-  failed when set to ignore unknown numpy strings of different lengths 
+  failed when set to ignore unknown numpy strings of different lengths
   :issue:`12471` by :user:`Gabriel Marzinotto<GMarzinotto>`.
 
 - |API| The default value of the :code:`method` argument in
@@ -419,7 +419,7 @@ Changelog
 - |Fix| Calling :func:`utils.check_array` on `pandas.Series`, which
   raised an error in 0.20.0, now returns the expected output again.
   :issue:`12625` by `Andreas Müller`_
-  
+
 Miscellaneous
 .............
 

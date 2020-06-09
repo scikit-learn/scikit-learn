@@ -98,4 +98,3 @@ for lang, page in pages.items():
             j += 1
             if j >= 1000:
                 break
-

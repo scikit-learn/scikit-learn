@@ -362,9 +362,9 @@ Different choices for :math:`L` entail different classifiers or regressors:
 
 - Hinge (soft-margin): equivalent to Support Vector Classification.
   :math:`L(y_i, f(x_i)) = \max(0, 1 - y_i f(x_i))`.
-- Perceptron: 
+- Perceptron:
   :math:`L(y_i, f(x_i)) = \max(0, - y_i f(x_i))`.
-- Modified Huber: 
+- Modified Huber:
   :math:`L(y_i, f(x_i)) = \max(0, 1 - y_i f(x_i))^2` if :math:`y_i f(x_i) >
   1`, and :math:`L(y_i, f(x_i)) = -4 y_i f(x_i)` otherwise.
 - Log: equivalent to Logistic Regression.

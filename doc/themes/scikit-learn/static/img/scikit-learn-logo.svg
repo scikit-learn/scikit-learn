@@ -18,8 +18,8 @@
     <meta name="hostname" content="fe4.rs.github.com">
     <link rel="assets" href="https://github.global.ssl.fastly.net/">
     <link rel="xhr-socket" href="/_sockets" />
-    
-    
+
+
 
 
     <meta name="msapplication-TileImage" content="/windows-tile.png" />
@@ -27,8 +27,8 @@
     <meta name="selected-link" value="repo_source" data-pjax-transient />
     <meta content="collector.githubapp.com" name="octolytics-host" /><meta content="github" name="octolytics-app-id" /><meta content="295195" name="octolytics-actor-id" /><meta content="vmichel" name="octolytics-actor-login" /><meta content="12af56ff3873f70afc40e04ed1de8c6d1d3afc81672a2e87a8ac3fafdaff894c" name="octolytics-actor-hash" />
 
-    
-    
+
+
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
 
     <meta content="authenticity_token" name="csrf-param" />
@@ -36,12 +36,12 @@
 
     <link href="https://github.global.ssl.fastly.net/assets/github-8921d913c104b05dbca482140b50a4899d808da0.css" media="all" rel="stylesheet" type="text/css" />
     <link href="https://github.global.ssl.fastly.net/assets/github2-3d41bb4cf621d85b14f818b30d303826fdcc6556.css" media="all" rel="stylesheet" type="text/css" />
-    
+
 
 
       <script src="https://github.global.ssl.fastly.net/assets/frameworks-e8054ad804a1cf9e9849130fee5a4a5487b663ed.js" type="text/javascript"></script>
       <script src="https://github.global.ssl.fastly.net/assets/github-1b7840e1ec2954c0675f2263b9e3789a0fee0808.js" type="text/javascript"></script>
-      
+
       <meta http-equiv="x-pjax-version" content="937fa06ecc5e3385af78bf5912d4a166">
 
         <link data-pjax-transient rel='permalink' href='/scikit-learn/scikit-learn/blob/798f44265472ff4d954c0f78674bb64742408a76/doc/logos/scikit-learn-logo.svg'>
@@ -63,9 +63,9 @@
   <body class="logged_in page-blob linux vis-public env-production ">
 
     <div class="wrapper">
-      
-      
-      
+
+
+
 
 
       <div class="header header-logged-in true">
@@ -87,7 +87,7 @@
           <form accept-charset="UTF-8" action="/search" class="command-bar-form" id="top_search_form" method="get">
 
 <input type="text" data-hotkey=" s" name="q" id="js-command-bar-field" placeholder="Search or type a command" tabindex="1" autocapitalize="off"
-    
+
     data-username="vmichel"
       data-repo="scikit-learn/scikit-learn"
       data-branch="master"
@@ -136,9 +136,9 @@
         </ul>
       </div>
 
-    
 
-  
+
+
 
     <ul id="user-links">
       <li>
@@ -171,7 +171,7 @@
 
 
 <div class="js-new-dropdown-contents hidden">
-  
+
 
 <ul class="dropdown-menu">
   <li>
@@ -206,22 +206,22 @@
 </div>
 
 
-    
+
   </div>
 </div>
 
-      
 
-      
+
+
 
 
 
 
           <div class="site" itemscope itemtype="http://schema.org/WebPage">
-    
+
     <div class="pagehead repohead instapaper_ignore readability-menu">
       <div class="container">
-        
+
 
 <ul class="pagehead-actions">
 
@@ -297,7 +297,7 @@
     </li>
 
   <li>
-  
+
 <div class="js-toggler-container js-social-container starring-container on">
   <a href="/scikit-learn/scikit-learn/unstar" class="minibutton with-count js-toggler-target star-button starred upwards" title="Unstar this repo" data-remote="true" data-method="post" rel="nofollow">
     <span class="octicon octicon-star-delete"></span><span class="text">Unstar</span>
@@ -342,7 +342,7 @@
       <div class="repository-with-sidebar repo-container ">
 
         <div class="repository-sidebar">
-            
+
 
 <div class="repo-nav repo-nav-full js-repository-container-pjax js-octicon-loaders">
   <div class="repo-nav-contents">
@@ -411,9 +411,9 @@
 </div>
 
             <div class="only-with-full-nav">
-              
 
-  
+
+
 
 <div class="clone-url open"
   data-protocol-type="http"
@@ -426,7 +426,7 @@
   <span class="js-zeroclipboard url-box-clippy minibutton zeroclipboard-button" data-clipboard-text="https://github.com/scikit-learn/scikit-learn.git" data-copied-hint="copied!" title="copy to clipboard"><span class="octicon octicon-clippy"></span></span>
 </div>
 
-  
+
 
 <div class="clone-url "
   data-protocol-type="ssh"
@@ -439,7 +439,7 @@
   <span class="js-zeroclipboard url-box-clippy minibutton zeroclipboard-button" data-clipboard-text="git@github.com:scikit-learn/scikit-learn.git" data-copied-hint="copied!" title="copy to clipboard"><span class="octicon octicon-clippy"></span></span>
 </div>
 
-  
+
 
 <div class="clone-url "
   data-protocol-type="subversion"
@@ -474,7 +474,7 @@
         </div><!-- /.repository-sidebar -->
 
         <div id="js-repo-pjax-container" class="repository-content context-loader-container" data-pjax-container>
-          
+
 
 
 <!-- blob contrib key: blob_contributors:v21:d840ac6fb3b8fa9e89a48bb05435b185 -->
@@ -485,7 +485,7 @@
 <a href="/scikit-learn/scikit-learn/find/master" data-pjax data-hotkey="t" style="display:none">Show File Finder</a>
 
 <div class="file-navigation">
-  
+
 
 
 <div class="select-menu js-menu-container js-select-menu" >
@@ -1044,7 +1044,6 @@
       Something went wrong with that request. Please try again.
     </div>
 
-    
+
   </body>
 </html>
-

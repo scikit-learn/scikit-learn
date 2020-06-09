@@ -1066,4 +1066,3 @@ Dai, Greg Stupp, Grzegorz Szpak, Bertrand Thirion, Hadrien Bertrand, Harizo
 Rajaona, zxcvbnius, Henry Lin, Holger Peters, Icyblade Dai, Igor
 Andriushchenko, Ilya, Isaac Laughlin, Iván Vallés, Aurélien Bellet, JPFrancoia,
 Jacob Schreiber, Asish Mahapatra
-
