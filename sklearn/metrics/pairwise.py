@@ -1876,7 +1876,7 @@ def pairwise_kernels(X, Y=None, metric="linear", *, filter_params=False,
     Y : array [n_samples_b, n_features], default=None
         A second feature array only if X has shape [n_samples_a, n_features].
 
-    metric : string, or callable, default="linear"
+    metric : str or callable, default="linear"
         The metric to use when calculating kernel between instances in a
         feature array. If metric is a string, it must be one of the metrics
         in pairwise.PAIRWISE_KERNEL_FUNCTIONS.
