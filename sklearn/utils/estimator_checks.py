@@ -139,34 +139,30 @@ def _yield_classifier_checks(classifier):
     yield check_decision_proba_consistency
 
 
-def default_dataset_factory(n_samples=50, X_types="2darray", multioutput=False,
-                            continuous_y=False, binary_y=False):
+def default_dataset_factory(n_samples=50, continuous_y=False, **tags):
     rng = np.random.RandomState(0)
     n_features = 5
-    if X_types == "2darray":
-        X = rng.randn(n_samples, n_features)
-    else:
-        raise NotImplementedError
+    X = rng.randn(n_samples, n_features)
     if continuous_y:
         y = rng.rand(n_samples)
     else:
-        if binary_y:
+        if tags['binary_only']:
             n_classes = 2
         else:
             n_classes = 3
         y = rng.randint(low=0, high=n_classes, size=n_samples)
-        if multioutput:  # TODO: real multioutput
+        if tags["multioutput"]:
+            # TODO: differentiate between multioutput and multioutput_only?
             y = LabelBinarizer().fit_transform(y)
     return X, y
 
 
 @ignore_warnings(category=FutureWarning)
-def check_supervised_y_no_nan(name, estimator_orig, dataset_factory=None):
-    if dataset_factory is None:
-        dataset_factory = default_dataset_factory
+def check_supervised_y_no_nan(name, estimator_orig,
+                              dataset_factory=default_dataset_factory):
     # Checks that the Estimator targets are not NaN.
     estimator = clone(estimator_orig)
-    X, y = dataset_factory()
+    X, y = dataset_factory(**estimator_orig.get_tags())
     y[:] = np.inf
     y = _enforce_estimator_tags_y(estimator, y)
 
@@ -840,16 +836,15 @@ def check_sample_weights_list(name, estimator_orig):
 
 
 @ignore_warnings(category=FutureWarning)
-def check_sample_weights_shape(name, estimator_orig, dataset_factory=None):
+def check_sample_weights_shape(name, estimator_orig,
+                               dataset_factory=default_dataset_factory):
     # check that estimators raise an error if sample_weight
     # shape mismatches the input
-    if dataset_factory is None:
-        dataset_factory = default_dataset_factory
     if (has_fit_parameter(estimator_orig, "sample_weight") and
             not (hasattr(estimator_orig, "_pairwise")
                  and estimator_orig._pairwise)):
         estimator = clone(estimator_orig)
-        X, y = dataset_factory()
+        X, y = dataset_factory(**estimator_orig.get_tags())
         y = _enforce_estimator_tags_y(estimator, y)
 
         estimator.fit(X, y, sample_weight=np.ones(len(y)))
@@ -862,7 +857,8 @@ def check_sample_weights_shape(name, estimator_orig, dataset_factory=None):
 
 
 @ignore_warnings(category=FutureWarning)
-def check_sample_weights_invariance(name, estimator_orig, kind="ones"):
+def check_sample_weights_invariance(name, estimator_orig, kind="ones",
+                                    dataset_factory=default_dataset_factory):
     # For kind="ones" check that the estimators yield same results for
     # unit weights and no weights
     # For kind="zeros" check that setting sample_weight to 0 is equivalent
@@ -872,12 +868,7 @@ def check_sample_weights_invariance(name, estimator_orig, kind="ones"):
     set_random_state(estimator1, random_state=0)
     set_random_state(estimator2, random_state=0)
 
-    X1 = np.array([[1, 3], [1, 3], [1, 3], [1, 3],
-                  [2, 1], [2, 1], [2, 1], [2, 1],
-                  [3, 3], [3, 3], [3, 3], [3, 3],
-                  [4, 1], [4, 1], [4, 1], [4, 1]], dtype=np.float64)
-    y1 = np.array([1, 1, 1, 1, 2, 2, 2, 2,
-                  1, 1, 1, 1, 2, 2, 2, 2], dtype=np.int)
+    X1, y1 = dataset_factory(**estimator_orig.get_tags())
 
     if kind == 'ones':
         X2 = X1
@@ -2818,11 +2809,10 @@ def check_set_params(name, estimator_orig):
 
 @ignore_warnings(category=FutureWarning)
 def check_classifiers_regression_target(name, estimator_orig,
-                                        dataset_factory=None):
+                                        dataset_factory=default_dataset_factory):
     # Check if classifier throws an exception when fed regression targets
-    if dataset_factory is None:
-        dataset_factory = default_dataset_factory
-    X, y = dataset_factory(continuous_y=True)
+    X, y = dataset_factory(continuous_y=True, **estimator_orig.get_tags())
+    X += X.min(axis=0)
     e = clone(estimator_orig)
     msg = 'Unknown label type: '
     if not e._get_tags()["no_validation"]:
@@ -2852,12 +2842,11 @@ def check_decision_proba_consistency(name, estimator_orig):
         assert_array_equal(rankdata(a), rankdata(b))
 
 
-def check_outliers_fit_predict(name, estimator_orig, dataset_factory=None):
+def check_outliers_fit_predict(name, estimator_orig,
+                               dataset_factory=default_dataset_factory):
     # Check fit_predict for outlier detectors.
-    if dataset_factory is None:
-        dataset_factory = default_dataset_factory
     n_samples = 300
-    X, _ = dataset_factory(n_samples=n_samples)
+    X, _ = dataset_factory(n_samples=n_samples, **estimator_orig.get_tags())
     estimator = clone(estimator_orig)
 
     set_random_state(estimator)
