@@ -744,6 +744,27 @@ e.g. when searching for hyperparameters.
 For example, when using a validation set, set the ``test_fold`` to 0 for all
 samples that are part of the validation set, and to -1 for all other samples.
 
+Using cross-validation iterators to split train and test
+--------------------------------------------------------
+
+The above group cross-validation functions may also be useful for spitting a
+dataset into training and testing subsets. This is because the convenience
+function :func:`train_test_split` only allows splitting in a stratified
+fashion (using the class labels) but cannot account for groups.
+
+To perform the split, use the indicies for the train and test subsets
+yielded by the generator output by the `split()` method of the
+cross-validation iterator. For example::
+
+  >>> from sklearn.model_selection import GroupShuffleSplit
+
+  >>> X = [0.1, 0.2, 2.2, 2.4, 2.3, 4.55, 5.8, 0.001]
+  >>> y = ["a", "b", "b", "b", "c", "c", "c", "a"]
+  >>> groups = [1, 1, 2, 2, 3, 3, 4, 4]
+  >>> train_indx, test_indx = next(GroupShuffleSplit().split(X, y, groups))
+  >>> X_train, X_test, y_train, y_test = \
+  ...     X[train_inds], X[test_inds], y[train_inds], y[test_inds]
+
 .. _timeseries_cv:
 
 Cross validation of time series data
