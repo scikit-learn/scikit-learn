@@ -99,6 +99,7 @@ jobs:
         DISTRIB: 'ubuntu'
         PYTHON_VERSION: '3.6'
         JOBLIB_VERSION: '0.11'
+        PYTEST_XDIST: 'false'
         THREADPOOLCTL_VERSION: '2.0.0'
       # Linux + Python 3.6 build with OpenBLAS and without SITE_JOBLIB
       py36_conda_openblas:
@@ -117,6 +118,7 @@ jobs:
         # latest version of joblib available in conda for Python 3.6
         JOBLIB_VERSION: '0.13.2'
         THREADPOOLCTL_VERSION: '2.0.0'
+        PYTEST_XDIST: 'false'
         COVERAGE: 'true'
       # Linux environment to test the latest available dependencies and MKL.
       # It runs tests requiring lightgbm, pandas and PyAMG.
@@ -127,6 +129,7 @@ jobs:
         COVERAGE: 'true'
         CHECK_PYTEST_SOFT_DEPENDENCY: 'true'
         TEST_DOCSTRINGS: 'true'
+        PYTEST_XDIST: 'false'
         CHECK_WARNINGS: 'true'
 
 - template: build_tools/azure/posix-32.yml
@@ -140,6 +143,7 @@ jobs:
         DISTRIB: 'ubuntu-32'
         PYTHON_VERSION: '3.6'
         JOBLIB_VERSION: '0.13'
+        PYTEST_XDIST: 'false'
         THREADPOOLCTL_VERSION: '2.0.0'
 
 - template: build_tools/azure/posix.yml
@@ -191,4 +195,5 @@ jobs:
         COVERAGE: 'true'
       py36_pip_openblas_32bit:
         PYTHON_VERSION: '3.6'
+        PYTEST_XDIST: 'false'
         PYTHON_ARCH: '32'
