@@ -198,7 +198,7 @@ def _split_sparse_columns(
 
     Returns
     -------
-    arff_data_new : list
+    arff_data_new : tuple
         Subset of arff data with only the include columns indicated by the
         include_columns argument.
     """
