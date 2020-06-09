@@ -50,11 +50,11 @@ def clone(estimator, *, safe=True):
 
     Parameters
     ----------
-    estimator : {list, tuple, set} of estimator objects or estimator object
+    estimator : list, tuple or set of BaseEstimator
         The estimator or group of estimators to be cloned.
 
     safe : bool, default=True
-        If safe is false, clone will fall back to a deep copy on objects
+        If safe is False, clone will fall back to a deep copy on objects
         that are not estimators.
 
     """
@@ -219,9 +219,9 @@ class BaseEstimator:
         Set the parameters of this estimator.
 
         The method works on simple estimators as well as on nested objects
-        (such as pipelines). The latter have parameters of the form
-        ``<component>__<parameter>`` so that it's possible to update each
-        component of a nested object.
+        (such as :class:`~sklearn.pipeline.Pipeline`). The latter have
+        parameters of the form ``<component>__<parameter>`` so that it's
+        possible to update each component of a nested object.
 
         Parameters
         ----------
@@ -519,7 +519,7 @@ class RegressorMixin:
         ----------
         X : array-like of shape (n_samples, n_features)
             Test samples. For some estimators this may be a precomputed
-            kernel matrix or a list of generic objects instead, with shape
+            kernel matrix or a list of generic objects instead with shape
             ``(n_samples, n_samples_fitted)``, where ``n_samples_fitted``
             is the number of samples used in the fitting for the estimator.
 
@@ -661,8 +661,8 @@ class TransformerMixin:
         """
         Fit to data, then transform it.
 
-        Fits transformer to X and y with optional parameters fit_params
-        and returns a transformed version of X.
+        Fits transformer to `X` and `y` with optional parameters `fit_params`
+        and returns a transformed version of `X`.
 
         Parameters
         ----------
@@ -778,7 +778,7 @@ def is_regressor(estimator):
 
     Parameters
     ----------
-    estimator : object
+    estimator : BaseEstimator
         Estimator object to test.
 
     Returns
@@ -794,7 +794,7 @@ def is_outlier_detector(estimator):
 
     Parameters
     ----------
-    estimator : object
+    estimator : BaseEstimator
         Estimator object to test.
 
     Returns
