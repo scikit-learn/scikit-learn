@@ -1,8 +1,7 @@
-import os
-
 import numpy as np
 import scipy.sparse as sp
 from joblib import Memory
+from pathlib import Path
 
 from sklearn.decomposition import TruncatedSVD
 from sklearn.datasets import (make_blobs, fetch_20newsgroups,
@@ -13,7 +12,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.model_selection import train_test_split
 
 # memory location for caching datasets
-M = Memory(location=os.path.dirname(os.path.realpath(__file__)) + "/cache")
+M = Memory(location=str(Path(__file__).resolve().parent / 'cache'))
 
 
 @M.cache
