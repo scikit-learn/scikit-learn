@@ -355,7 +355,7 @@ def test_imputation_most_frequent_pandas(dtype):
     'strategy, expected',
     [('most_frequent', 'b'), ('constant', 'missing_value')]
 )
-def test_imputation_most_frequent_string_list(strategy, expected):
+def test_simple_imputation_string_list(strategy, expected):
     X = [['a', 'b'],
          ['c', np.nan]]
 
@@ -479,21 +479,6 @@ def test_imputation_constant_pandas(dtype):
 
     imputer = SimpleImputer(strategy="constant")
     X_trans = imputer.fit_transform(df)
-
-    assert_array_equal(X_trans, X_true)
-
-
-def test_imputation_constant_string_list():
-    X = [['a', 'b'],
-         ['c', np.nan]]
-
-    X_true = np.array([
-        ['a', 'b'],
-        ['c', 'missing_value']
-    ], dtype=object)
-
-    imputer = SimpleImputer(strategy="constant")
-    X_trans = imputer.fit_transform(X)
 
     assert_array_equal(X_trans, X_true)
 
