@@ -1330,8 +1330,8 @@ def precision_recall_fscore_support(y_true, y_pred, *, beta=1.0, labels=None,
         setting ``labels=[pos_label]`` and ``average != 'binary'`` will report
         scores for that label only.
 
-    average : string, ['binary', 'micro', 'macro', 'samples','weighted', \
-            default=None]
+    average : {'binary', 'micro', 'macro', 'samples','weighted'}, \
+            default=None
         If ``None``, the scores for each class are returned. Otherwise, this
         determines the type of averaging performed on the data:
 
