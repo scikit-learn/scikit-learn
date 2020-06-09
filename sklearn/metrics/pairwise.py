@@ -1889,7 +1889,7 @@ def pairwise_kernels(X, Y=None, metric="linear", *, filter_params=False,
         matrices, not single samples. Use the string identifying the kernel
         instead.
 
-    filter_params : boolean, default=False
+    filter_params : bool, default=False
         Whether to filter invalid parameters or not.
 
     n_jobs : int, default=None
