@@ -148,6 +148,13 @@ Changelog
   validity of the input is now delegated to the base estimator.
   :pr:`17233` by :user:`Zolisa Bleki <zoj613>`.
 
+:mod:`sklearn.calibration`
+...........................
+
+- |Enhancement| Add ``class_weight`` to :class:`calibration.CalibratedClassifierCV`,
+  which enables putting weights to classes when training the calibration methods (sigmoid
+  or isotonic).
+  :pr:`17541` by :user: `Achille Mascia <amascia>`.
 
 Code and Documentation Contributors
 -----------------------------------
