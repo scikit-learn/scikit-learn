@@ -25,6 +25,7 @@ from ..utils import Bunch
 from ..utils import get_chunk_n_rows
 from ..utils import _chunk_generator
 from ..utils import check_pandas_support  # noqa
+from ..utils.validation import _deprecate_positional_args
 
 __all__ = ['fetch_openml']
 
@@ -659,6 +660,7 @@ def _valid_data_column_names(features_list, target_columns):
 
 def fetch_openml(
     name: Optional[str] = None,
+    *,
     version: Union[str, int] = 'active',
     data_id: Optional[int] = None,
     data_home: Optional[str] = None,

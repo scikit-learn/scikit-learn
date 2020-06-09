@@ -487,8 +487,8 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
                      loss, learning_rate, max_iter,
                      classes, sample_weight,
                      coef_init, intercept_init):
-        X, y = check_X_y(X, y, 'csr', dtype=np.float64, order="C",
-                         accept_large_sparse=False)
+        X, y = check_X_y(X, y, accept_sparse='csr', dtype=np.float64,
+                         order="C", accept_large_sparse=False)
 
         n_samples, n_features = X.shape
 
@@ -497,8 +497,8 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
         n_classes = self.classes_.shape[0]
 
         # Allocate datastructures from input arguments
-        self._expanded_class_weight = compute_class_weight(self.class_weight,
-                                                           self.classes_, y)
+        self._expanded_class_weight = compute_class_weight(
+            self.class_weight, classes=self.classes_, y=y)
         sample_weight = _check_sample_weight(sample_weight, X)
 
         if getattr(self, "coef_", None) is None or coef_init is not None:
@@ -681,7 +681,8 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
         if self.class_weight in ['balanced']:
             raise ValueError("class_weight '{0}' is not supported for "
                              "partial_fit. In order to use 'balanced' weights,"
-                             " use compute_class_weight('{0}', classes, y). "
+                             " use compute_class_weight('{0}', "
+                             "classes=classes, y=y). "
                              "In place of y you can us a large enough sample "
                              "of the full training set target to properly "
                              "estimate the class frequency distributions. "
@@ -1093,6 +1094,14 @@ class SGDClassifier(BaseSGDClassifier):
 
     def _predict_log_proba(self, X):
         return np.log(self.predict_proba(X))
+
+    def _more_tags(self):
+        return {
+            '_xfail_checks': {
+                'check_sample_weights_invariance(kind=zeros)':
+                'zero sample_weight is not equivalent to removing samples',
+            }
+        }
 
 
 class BaseSGDRegressor(RegressorMixin, BaseSGD):
@@ -1575,3 +1584,11 @@ class SGDRegressor(BaseSGDRegressor):
             validation_fraction=validation_fraction,
             n_iter_no_change=n_iter_no_change, warm_start=warm_start,
             average=average)
+
+    def _more_tags(self):
+        return {
+            '_xfail_checks': {
+                'check_sample_weights_invariance(kind=zeros)':
+                'zero sample_weight is not equivalent to removing samples',
+            }
+        }
