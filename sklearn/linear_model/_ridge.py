@@ -628,9 +628,9 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         number.
 
     fit_intercept : bool, default=True
-        Whether to calculate the intercept for this model. If set
+        Whether to fit the intercept for this model. If set
         to false, no intercept will be used in calculations
-        (i.e. data is expected to be centered).
+        (i.e. ``X`` and ``y`` are expected to be centered).
 
     normalize : bool, default=False
         This parameter is ignored when ``fit_intercept`` is set to False.
@@ -1909,3 +1909,11 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
     @property
     def classes_(self):
         return self._label_binarizer.classes_
+
+    def _more_tags(self):
+        return {
+            '_xfail_checks': {
+                'check_sample_weights_invariance(kind=zeros)':
+                'zero sample_weight is not equivalent to removing samples',
+            }
+        }

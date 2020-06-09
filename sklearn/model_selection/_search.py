@@ -49,6 +49,7 @@ class ParameterGrid:
 
     Can be used to iterate over parameter value combinations with the
     Python built-in function iter.
+    The order of the generated parameter combinations is deterministic.
 
     Read more in the :ref:`User Guide <grid_search>`.
 
@@ -404,14 +405,13 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
     @abstractmethod
     @_deprecate_positional_args
     def __init__(self, estimator, *, scoring=None, n_jobs=None,
-                 iid='deprecated', refit=True, cv=None, verbose=0,
+                 refit=True, cv=None, verbose=0,
                  pre_dispatch='2*n_jobs', error_score=np.nan,
                  return_train_score=True):
 
         self.scoring = scoring
         self.estimator = estimator
         self.n_jobs = n_jobs
-        self.iid = iid
         self.refit = refit
         self.cv = cv
         self.verbose = verbose
@@ -456,6 +456,26 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                              % self.best_estimator_)
         score = self.scorer_[self.refit] if self.multimetric_ else self.scorer_
         return score(self.best_estimator_, X, y)
+
+    @if_delegate_has_method(delegate=('best_estimator_', 'estimator'))
+    def score_samples(self, X):
+        """Call score_samples on the estimator with the best found parameters.
+
+        Only available if ``refit=True`` and the underlying estimator supports
+        ``score_samples``.
+
+        Parameters
+        ----------
+        X : iterable
+            Data to predict on. Must fulfill input requirements
+            of the underlying estimator.
+
+        Returns
+        -------
+        y_score : ndarray, shape (n_samples,)
+        """
+        self._check_is_fitted('score_samples')
+        return self.best_estimator_.score_samples(X)
 
     def _check_is_fitted(self, method_name):
         if not self.refit:
@@ -843,20 +863,11 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         test_sample_counts = np.array(test_sample_counts[:n_splits],
                                       dtype=np.int)
 
-        if self.iid != 'deprecated':
-            warnings.warn(
-                "The parameter 'iid' is deprecated in 0.22 and will be "
-                "removed in 0.24.", FutureWarning
-            )
-            iid = self.iid
-        else:
-            iid = False
-
         for scorer_name in scorers.keys():
             # Computed the (weighted) mean and std for test scores alone
             _store('test_%s' % scorer_name, test_scores[scorer_name],
                    splits=True, rank=True,
-                   weights=test_sample_counts if iid else None)
+                   weights=None)
             if self.return_train_score:
                 _store('train_%s' % scorer_name, train_scores[scorer_name],
                        splits=True)
@@ -870,9 +881,9 @@ class GridSearchCV(BaseSearchCV):
     Important members are fit, predict.
 
     GridSearchCV implements a "fit" and a "score" method.
-    It also implements "predict", "predict_proba", "decision_function",
-    "transform" and "inverse_transform" if they are implemented in the
-    estimator used.
+    It also implements "score_samples", "predict", "predict_proba",
+    "decision_function", "transform" and "inverse_transform" if they are
+    implemented in the estimator used.
 
     The parameters of the estimator used to apply these methods are optimized
     by cross-validated grid-search over a parameter grid.
@@ -933,15 +944,6 @@ class GridSearchCV(BaseSearchCV):
 
             - A str, giving an expression as a function of n_jobs,
               as in '2*n_jobs'
-
-    iid : bool, default=False
-        If True, return the average score across folds, weighted by the number
-        of samples in each test set. In this case, the data is assumed to be
-        identically distributed across the folds, and the loss minimized is
-        the total loss per sample, and not the mean loss across the folds.
-
-        .. deprecated:: 0.22
-            Parameter ``iid`` is deprecated in 0.22 and will be removed in 0.24
 
     cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy.
@@ -1172,12 +1174,12 @@ class GridSearchCV(BaseSearchCV):
 
     @_deprecate_positional_args
     def __init__(self, estimator, param_grid, *, scoring=None,
-                 n_jobs=None, iid='deprecated', refit=True, cv=None,
+                 n_jobs=None, refit=True, cv=None,
                  verbose=0, pre_dispatch='2*n_jobs',
                  error_score=np.nan, return_train_score=False):
         super().__init__(
             estimator=estimator, scoring=scoring,
-            n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,
+            n_jobs=n_jobs, refit=refit, cv=cv, verbose=verbose,
             pre_dispatch=pre_dispatch, error_score=error_score,
             return_train_score=return_train_score)
         self.param_grid = param_grid
@@ -1192,9 +1194,9 @@ class RandomizedSearchCV(BaseSearchCV):
     """Randomized search on hyper parameters.
 
     RandomizedSearchCV implements a "fit" and a "score" method.
-    It also implements "predict", "predict_proba", "decision_function",
-    "transform" and "inverse_transform" if they are implemented in the
-    estimator used.
+    It also implements "score_samples", "predict", "predict_proba",
+    "decision_function", "transform" and "inverse_transform" if they are
+    implemented in the estimator used.
 
     The parameters of the estimator used to apply these methods are optimized
     by cross-validated search over parameter settings.
@@ -1275,18 +1277,10 @@ class RandomizedSearchCV(BaseSearchCV):
             - A str, giving an expression as a function of n_jobs,
               as in '2*n_jobs'
 
-    iid : bool, default=False
-        If True, return the average score across folds, weighted by the number
-        of samples in each test set. In this case, the data is assumed to be
-        identically distributed across the folds, and the loss minimized is
-        the total loss per sample, and not the mean loss across the folds.
-
-        .. deprecated:: 0.22
-            Parameter ``iid`` is deprecated in 0.22 and will be removed in 0.24
-
     cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
+
         - None, to use the default 5-fold cross validation,
         - integer, to specify the number of folds in a `(Stratified)KFold`,
         - :term:`CV splitter`,
@@ -1373,11 +1367,11 @@ class RandomizedSearchCV(BaseSearchCV):
         +--------------+-------------+-------------------+---+---------------+
         | param_kernel | param_gamma | split0_test_score |...|rank_test_score|
         +==============+=============+===================+===+===============+
-        |    'rbf'     |     0.1     |       0.80        |...|       2       |
+        |    'rbf'     |     0.1     |       0.80        |...|       1       |
         +--------------+-------------+-------------------+---+---------------+
-        |    'rbf'     |     0.2     |       0.90        |...|       1       |
+        |    'rbf'     |     0.2     |       0.84        |...|       3       |
         +--------------+-------------+-------------------+---+---------------+
-        |    'rbf'     |     0.3     |       0.70        |...|       1       |
+        |    'rbf'     |     0.3     |       0.70        |...|       2       |
         +--------------+-------------+-------------------+---+---------------+
 
         will be represented by a ``cv_results_`` dict of::
@@ -1386,11 +1380,11 @@ class RandomizedSearchCV(BaseSearchCV):
             'param_kernel' : masked_array(data = ['rbf', 'rbf', 'rbf'],
                                           mask = False),
             'param_gamma'  : masked_array(data = [0.1 0.2 0.3], mask = False),
-            'split0_test_score'  : [0.80, 0.90, 0.70],
+            'split0_test_score'  : [0.80, 0.84, 0.70],
             'split1_test_score'  : [0.82, 0.50, 0.70],
-            'mean_test_score'    : [0.81, 0.70, 0.70],
-            'std_test_score'     : [0.01, 0.20, 0.00],
-            'rank_test_score'    : [3, 1, 1],
+            'mean_test_score'    : [0.81, 0.67, 0.70],
+            'std_test_score'     : [0.01, 0.24, 0.00],
+            'rank_test_score'    : [1, 3, 2],
             'split0_train_score' : [0.80, 0.92, 0.70],
             'split1_train_score' : [0.82, 0.55, 0.70],
             'mean_train_score'   : [0.81, 0.74, 0.70],
@@ -1510,7 +1504,7 @@ class RandomizedSearchCV(BaseSearchCV):
 
     @_deprecate_positional_args
     def __init__(self, estimator, param_distributions, *, n_iter=10,
-                 scoring=None, n_jobs=None, iid='deprecated', refit=True,
+                 scoring=None, n_jobs=None, refit=True,
                  cv=None, verbose=0, pre_dispatch='2*n_jobs',
                  random_state=None, error_score=np.nan,
                  return_train_score=False):
@@ -1519,7 +1513,7 @@ class RandomizedSearchCV(BaseSearchCV):
         self.random_state = random_state
         super().__init__(
             estimator=estimator, scoring=scoring,
-            n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,
+            n_jobs=n_jobs, refit=refit, cv=cv, verbose=verbose,
             pre_dispatch=pre_dispatch, error_score=error_score,
             return_train_score=return_train_score)
 

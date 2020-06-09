@@ -2,17 +2,47 @@
 
 .. currentmodule:: sklearn
 
+.. _changes_0_23_1:
+
+Version 0.23.1
+==============
+
+**May 18 2020**
+
+Changelog
+---------
+
+:mod:`sklearn.cluster`
+......................
+
+- |Efficiency| :class:`cluster.KMeans` efficiency has been improved for very
+  small datasets. In particular it cannot spawn idle threads any more.
+  :pr:`17210` and :pr:`17235` by :user:`Jeremie du Boisberranger <jeremiedbb>`.
+
+- |Fix| Fixed a bug in :class:`cluster.KMeans` where the sample weights
+  provided by the user were modified in place. :pr:`17204` by
+  :user:`Jeremie du Boisberranger <jeremiedbb>`.
+
+Miscellaneous
+.............
+
+- |Fix| Fixed a bug in the `repr` of third-party estimators that use a
+  `**kwargs` parameter in their constructor, when `changed_only` is True
+  which is now the default. :pr:`17205` by `Nicolas Hug`_.
+
 .. _changes_0_23:
 
 Version 0.23.0
 ==============
 
-**In Development**
+**May 12 2020**
+
+For a short description of the main highlights of the release, please
+refer to
+:ref:`sphx_glr_auto_examples_release_highlights_plot_release_highlights_0_23_0.py`.
 
 
 .. include:: changelog_legend.inc
-
-Put the changes in their relevant module.
 
 Enforcing keyword-only arguments
 --------------------------------
@@ -103,9 +133,9 @@ Changelog
   :pr:`16149` by :user:`Jeremie du Boisberranger <jeremiedbb>` and
   :user:`Alex Shacked <alexshacked>`.
 
-- |Efficiency| The critical parts of :class:`cluster.KMeans` have a more
-  optimized implementation. Parallelism is now over the data instead of over
-  initializations allowing better scalability. :pr:`11950` by
+- |Efficiency| |MajorFeature| The critical parts of :class:`cluster.KMeans`
+  have a more optimized implementation. Parallelism is now over the data
+  instead of over initializations allowing better scalability. :pr:`11950` by
   :user:`Jeremie du Boisberranger <jeremiedbb>`.
 
 - |Enhancement| :class:`cluster.KMeans` now supports sparse data when
@@ -124,6 +154,10 @@ Changelog
   could not have a `np.int64` type. :pr:`16484`
   by :user:`Jeremie du Boisberranger <jeremiedbb>`.
 
+- |Fix| :class:`cluster.AgglomerativeCluClustering` add specific error when
+  distance matrix is not square and `affinity=precomputed`.
+  :pr:`16257` by :user:`Simona Maggio <simonamaggio>`.
+
 - |API| The ``n_jobs`` parameter of :class:`cluster.KMeans`,
   :class:`cluster.SpectralCoclustering` and
   :class:`cluster.SpectralBiclustering` is deprecated. They now use OpenMP
@@ -134,6 +168,10 @@ Changelog
 - |API| The ``precompute_distances`` parameter of :class:`cluster.KMeans` is
   deprecated. It has no effect. :pr:`11950` by
   :user:`Jeremie du Boisberranger <jeremiedbb>`.
+
+- |API| The ``random_state`` parameter has been added to 
+  :class:`cluster.AffinityPropagation`. :pr:`16801` by :user:`rcwoolston`
+  and :user:`Chiara Marmo <cmarmo>`.
 
 :mod:`sklearn.compose`
 ......................
@@ -187,6 +225,12 @@ Changelog
   `ValueError` for arguments `n_classes < 1` OR `length < 1`.
   :pr:`16006` by :user:`Rushabh Vasani <rushabh-v>`.
 
+- |API| The `StreamHandler` was removed from `sklearn.logger` to avoid
+  double logging of messages in common cases where a hander is attached
+  to the root logger, and to follow the Python logging documentation
+  recommendation for libraries to leave the log message handling to
+  users and application code. :pr:`16451` by :user:`Christoph Deil <cdeil>`.
+
 :mod:`sklearn.decomposition`
 ............................
 
@@ -234,7 +278,7 @@ Changelog
   samples in the training set. :pr:`14516` by :user:`Johann Faouzi
   <johannfaouzi>`.
 
-- |Feature| :class:`ensemble.HistGradientBoostingClassifier` and
+- |MajorFeature| :class:`ensemble.HistGradientBoostingClassifier` and
   :class:`ensemble.HistGradientBoostingRegressor` now support monotonic
   constraints, useful when features are supposed to have a positive/negative
   effect on the target. :pr:`15582` by `Nicolas Hug`_.
@@ -340,9 +384,10 @@ Changelog
   :pr:`14300` by :user:`Christian Lorentzen <lorentzenchr>`, `Roman Yurchak`_,
   and `Olivier Grisel`_.
 
-- |Feature| Support of `sample_weight` in :class:`linear_model.ElasticNet` and
-  :class:`linear_model.Lasso` for dense feature matrix `X`.
-  :pr:`15436` by :user:`Christian Lorentzen <lorentzenchr>`.
+- |MajorFeature| Support of `sample_weight` in
+  :class:`linear_model.ElasticNet` and :class:`linear_model.Lasso` for dense
+  feature matrix `X`. :pr:`15436` by :user:`Christian Lorentzen
+  <lorentzenchr>`.
 
 - |Efficiency| :class:`linear_model.RidgeCV` and
   :class:`linear_model.RidgeClassifierCV` now does not allocate a
@@ -395,6 +440,13 @@ Changelog
   using joblib loky backend. :pr:`14264` by
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+- |Efficiency| Speed up :class:`linear_model.MultiTaskLasso`,
+  :class:`linear_model.MultiTaskLassoCV`, :class:`linear_model.MultiTaskElasticNet`,
+  :class:`linear_model.MultiTaskElasticNetCV` by avoiding slower
+  BLAS Level 2 calls on small arrays
+  :pr:`17021` by :user:`Alex Gramfort <agramfort>` and
+  :user:`Mathurin Massias <mathurinm>`.
+
 :mod:`sklearn.metrics`
 ......................
 
@@ -436,9 +488,9 @@ Changelog
   type and details.
   :pr:`15622` by :user:`Gregory Morse <GregoryMorse>`.
 
-- |Fix| :func: `cross_val_predict` supports `method="predict_proba"`
-  when `y=None`.
-  :pr:`15918` by :user:`Luca Kubin <lkubin>`.
+- |Fix| :func:`model_selection.cross_val_predict` supports
+  `method="predict_proba"` when `y=None`. :pr:`15918` by
+  :user:`Luca Kubin <lkubin>`.
 
 - |Fix| :func:`model_selection.fit_grid_point` is deprecated in 0.23 and will
   be removed in 0.25. :pr:`16401` by
@@ -567,8 +619,11 @@ Changelog
 :mod:`sklearn.utils`
 ....................
 
-- |Feature| Adds :func:`utils.estimator_html_repr` for returning a
-  HTML representation of an estimator. :pr:`14180` by `Thomas Fan`_.
+- |MajorFeature| Estimators can now be displayed with a rich html
+  representation. This can be enabled in Jupyter notebooks by setting
+  `display='diagram'` in :func:`~sklearn.set_config`. The raw html can be
+  returned by using :func:`utils.estimator_html_repr`.
+  :pr:`14180` by `Thomas Fan`_.
 
 - |Enhancement| improve error message in :func:`utils.validation.column_or_1d`.
   :pr:`15926` by :user:`Loïc Estève <lesteve>`.
@@ -595,15 +650,14 @@ Changelog
   and support for classes will be removed in 0.24. Pass instances instead.
   :pr:`17032` by `Nicolas Hug`_.
 
+- |API| The private utility `_safe_tags` in `utils.estimator_checks` was
+  removed, hence all tags should be obtained through `estimator._get_tags()`.
+  Note that Mixins like `RegressorMixin` must come *before* base classes
+  in the MRO for `_get_tags()` to work properly.
+  :pr:`16950` by `Nicolas Hug`_.
+
 - |FIX| :func:`utils.all_estimators` now only returns public estimators.
   :pr:`15380` by `Thomas Fan`_.
-
-:mod:`sklearn.cluster`
-......................
-
-- |Fix| :class:`cluster.AgglomerativeClustering` add specific error when
-  distance matrix is not square and `affinity=precomputed`.
-  :pr:`16257` by :user:`Simona Maggio <simonamaggio>`.
 
 Miscellaneous
 .............
@@ -640,4 +694,44 @@ Code and Documentation Contributors
 -----------------------------------
 
 Thanks to everyone who has contributed to the maintenance and improvement of the
-project since version 0.20, including:
+project since version 0.22, including:
+
+Abbie Popa, Adrin Jalali, Aleksandra Kocot, Alexandre Batisse, Alexandre
+Gramfort, Alex Henrie, Alex Itkes, Alex Liang, alexshacked, Alonso Silva
+Allende, Ana Casado, Andreas Mueller, Angela Ambroz, Ankit810, Arie Pratama
+Sutiono, Arunav Konwar, Baptiste Maingret, Benjamin Beier Liu, bernie gray,
+Bharathi Srinivasan, Bharat Raghunathan, Bibhash Chandra Mitra, Brian Wignall,
+brigi, Brigitta Sipőcz, Carlos H Brandt, CastaChick, castor, cgsavard, Chiara
+Marmo, Chris Gregory, Christian Kastner, Christian Lorentzen, Corrie
+Bartelheimer, Daniël van Gelder, Daphne, David Breuer, david-cortes, dbauer9,
+Divyaprabha M, Edward Qian, Ekaterina Borovikova, ELNS, Emily Taylor, Erich
+Schubert, Eric Leung, Evgeni Chasnovski, Fabiana, Facundo Ferrín, Fan,
+Franziska Boenisch, Gael Varoquaux, Gaurav Sharma, Geoffrey Bolmier, Georgi
+Peev, gholdman1, Gonthier Nicolas, Gregory Morse, Gregory R. Lee, Guillaume
+Lemaitre, Gui Miotto, Hailey Nguyen, Hanmin Qin, Hao Chun Chang, HaoYin, Hélion
+du Mas des Bourboux, Himanshu Garg, Hirofumi Suzuki, huangk10, Hugo van
+Kemenade, Hye Sung Jung, indecisiveuser, inderjeet, J-A16, Jérémie du
+Boisberranger, Jin-Hwan CHO, JJmistry, Joel Nothman, Johann Faouzi, Jon Haitz
+Legarreta Gorroño, Juan Carlos Alfaro Jiménez, judithabk6, jumon, Kathryn
+Poole, Katrina Ni, Kesshi Jordan, Kevin Loftis, Kevin Markham,
+krishnachaitanya9, Lam Gia Thuan, Leland McInnes, Lisa Schwetlick, lkubin, Loic
+Esteve, lopusz, lrjball, lucgiffon, lucyleeow, Lucy Liu, Lukas Kemkes, Maciej J
+Mikulski, Madhura Jayaratne, Magda Zielinska, maikia, Mandy Gu, Manimaran,
+Manish Aradwad, Maren Westermann, Maria, Mariana Meireles, Marie Douriez,
+Marielle, Mateusz Górski, mathurinm, Matt Hall, Maura Pintor, mc4229, meyer89,
+m.fab, Michael Shoemaker, Michał Słapek, Mina Naghshhnejad, mo, Mohamed
+Maskani, Mojca Bertoncelj, narendramukherjee, ngshya, Nicholas Won, Nicolas
+Hug, nicolasservel, Niklas, @nkish, Noa Tamir, Oleksandr Pavlyk, olicairns,
+Oliver Urs Lenz, Olivier Grisel, parsons-kyle-89, Paula, Pete Green, Pierre
+Delanoue, pspachtholz, Pulkit Mehta, Qizhi  Jiang, Quang Nguyen, rachelcjordan,
+raduspaimoc, Reshama Shaikh, Riccardo Folloni, Rick Mackenbach, Ritchie Ng,
+Roman Feldbauer, Roman Yurchak, Rory Hartong-Redden, Rüdiger Busche, Rushabh
+Vasani, Sambhav Kothari, Samesh Lakhotia, Samuel Duan, SanthoshBala18, Santiago
+M. Mola, Sarat Addepalli, scibol, Sebastian Kießling, SergioDSR, Sergul Aydore,
+Shiki-H, shivamgargsya, SHUBH CHATTERJEE, Siddharth Gupta, simonamaggio,
+smarie, Snowhite, stareh, Stephen Blystone, Stephen Marsh, Sunmi Yoon,
+SylvainLan, talgatomarov, tamirlan1, th0rwas, theoptips, Thomas J Fan, Thomas
+Li, Thomas Schmitt, Tim Nonner, Tim Vink, Tiphaine Viard, Tirth Patel, Titus
+Christian, Tom Dupré la Tour, trimeta, Vachan D A, Vandana Iyer, Venkatachalam
+N, waelbenamara, wconnell, wderose, wenliwyan, Windber, wornbb, Yu-Hang "Maxin"
+Tang

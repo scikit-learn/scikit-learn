@@ -1651,6 +1651,26 @@ def test_robust_scaler_zero_variance_features():
     assert_array_almost_equal(X_trans_new, X_expected_new, decimal=3)
 
 
+def test_robust_scaler_unit_variance():
+    # Check RobustScaler with unit_variance=True on standard normal data with
+    # outliers
+    rng = np.random.RandomState(42)
+    X = rng.randn(1000000, 1)
+    X_with_outliers = np.vstack(
+        [X, np.ones((100, 1)) * 100, np.ones((100, 1)) * -100]
+    )
+
+    quantile_range = (1, 99)
+    robust_scaler = RobustScaler(
+        quantile_range=quantile_range, unit_variance=True
+    ).fit(X_with_outliers)
+    X_trans = robust_scaler.transform(X)
+
+    assert robust_scaler.center_ == pytest.approx(0, abs=1e-3)
+    assert robust_scaler.scale_ == pytest.approx(1, abs=1e-2)
+    assert X_trans.std() == pytest.approx(1, abs=1e-2)
+
+
 def test_maxabs_scaler_zero_variance_features():
     # Check MaxAbsScaler on toy data with zero variance features
     X = [[0., 1., +0.5],
