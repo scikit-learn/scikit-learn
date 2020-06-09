@@ -351,16 +351,20 @@ def test_imputation_most_frequent_pandas(dtype):
     assert_array_equal(X_trans, X_true)
 
 
-def test_imputation_most_frequent_string_list():
+@pytest.mark.parametrize(
+    'strategy, expected',
+    [('most_frequent', 'b'), ('constant', 'missing_value')]
+)
+def test_imputation_most_frequent_string_list(strategy, expected):
     X = [['a', 'b'],
          ['c', np.nan]]
 
     X_true = np.array([
         ['a', 'b'],
-        ['c', 'b']
+        ['c', expected]
     ], dtype=object)
 
-    imputer = SimpleImputer(strategy="most_frequent")
+    imputer = SimpleImputer(strategy=strategy)
     X_trans = imputer.fit_transform(X)
 
     assert_array_equal(X_trans, X_true)
