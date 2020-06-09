@@ -641,7 +641,7 @@ def jaccard_score(y_true, y_pred, *, labels=None, pos_label=1,
     y_pred : 1d array-like, or label indicator array / sparse matrix
         Predicted labels, as returned by a classifier.
 
-    labels : list, default=None
+    labels : array-like, default=None
         The set of labels to include when ``average != 'binary'``, and their
         order if ``average is None``. Labels present in the data can be
         excluded, for example to calculate a multiclass average ignoring a
