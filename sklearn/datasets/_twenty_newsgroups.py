@@ -491,14 +491,15 @@ def fetch_20newsgroups_vectorized(*, subset="train", remove=(), data_home=None,
     X = data
     y = target
     frame = None
-    target_name = ['Category_class',]
+    target_name = ['Category_class', ]
 
     if as_frame:
         frame, X, y = _convert_data_dataframe("fetch_20newsgroups_vectorized",
-                                              data.toarray(),
+                                              data,
                                               target,
                                               feature_names,
-                                              target_names=target_name)
+                                              target_names=target_name,
+                                              sparse_data=True)
 
     if return_X_y:
         return X, y

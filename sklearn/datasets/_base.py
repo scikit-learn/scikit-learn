@@ -69,9 +69,14 @@ def clear_data_home(data_home=None):
 
 
 def _convert_data_dataframe(caller_name, data, target,
-                            feature_names, target_names):
+                            feature_names, target_names, sparse_data=False):
     pd = check_pandas_support('{} with as_frame=True'.format(caller_name))
-    data_df = pd.DataFrame(data, columns=feature_names)
+    if not sparse_data:
+        data_df = pd.DataFrame(data, columns=feature_names)
+    else:
+        data_df = pd.DataFrame.sparse.from_spmatrix(data,
+                                                    columns=feature_names)
+
     target_df = pd.DataFrame(target, columns=target_names)
     combined_df = pd.concat([data_df, target_df], axis=1)
     X = combined_df[feature_names]

@@ -101,3 +101,5 @@ def test_20news_asframe(fetch_20newsgroups_vectorized_fxt):
     assert frame.shape == (11314, 130108)
     assert isinstance(bunch.data, pd.DataFrame)
     assert isinstance(bunch.target, pd.Series)
+
+    assert isinstance(bunch.frame.dtypes[0], pd.SparseDtype)
