@@ -358,7 +358,7 @@ def test_imputation_most_frequent_string_list():
     X_true = np.array([
         ['a', 'b'],
         ['c', 'b']
-    ], dtype=np.object)
+    ], dtype=object)
 
     imputer = SimpleImputer(strategy="most_frequent")
     X_trans = imputer.fit_transform(X)
