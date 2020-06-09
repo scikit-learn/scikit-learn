@@ -28,7 +28,7 @@ from sklearn.inspection import permutation_importance
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import train_test_split
 
-##############################################################################
+# %%
 # Load the data
 # -------------------------------------
 #
@@ -37,7 +37,7 @@ from sklearn.model_selection import train_test_split
 diabetes = datasets.load_diabetes()
 X, y = diabetes.data, diabetes.target
 
-##############################################################################
+# %%
 # Data preprocessing
 # -------------------------------------
 #
@@ -69,7 +69,7 @@ params = {'n_estimators': 500,
           'learning_rate': 0.01,
           'loss': 'ls'}
 
-##############################################################################
+# %%
 # Fit regression model
 # -------------------------------------
 #
@@ -82,7 +82,7 @@ reg.fit(X_train, y_train)
 mse = mean_squared_error(y_test, reg.predict(X_test))
 print("The mean squared error (MSE) on test set: {:.4f}".format(mse))
 
-##############################################################################
+# %%
 # Plot training deviance
 # -------------------------------------
 #
@@ -106,7 +106,7 @@ plt.ylabel('Deviance')
 fig.tight_layout()
 plt.show()
 
-##############################################################################
+# %%
 # Plot feature importance
 # -------------------------------------
 #
