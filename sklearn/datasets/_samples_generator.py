@@ -677,24 +677,24 @@ def make_circles(n_samples=100, *, shuffle=True, noise=None, random_state=None,
 
 @_deprecate_positional_args
 def make_moons(n_samples=100, *, shuffle=True, noise=None, random_state=None):
-    """Make two interleaving half circles
+    """Make two interleaving half circles.
 
     A simple toy dataset to visualize clustering and classification
     algorithms. Read more in the :ref:`User Guide <sample_generators>`.
 
     Parameters
     ----------
-    n_samples : int or two-element tuple, optional (default=100)
+    n_samples : int or two-element tuple, default=100
         If int, the total number of points generated.
         If two-element tuple, number of points in each of two moons.
 
-    shuffle : bool, optional (default=True)
+    shuffle : bool, default=True
         Whether to shuffle the samples.
 
-    noise : double or None (default=None)
+    noise : double or None, default=None
         Standard deviation of Gaussian noise added to the data.
 
-    random_state : int, RandomState instance, default=None
+    random_state : int or RandomState instance, default=None
         Determines random number generation for dataset shuffling and noise.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
