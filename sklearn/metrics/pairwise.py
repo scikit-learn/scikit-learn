@@ -1873,7 +1873,7 @@ def pairwise_kernels(X, Y=None, metric="linear", *, filter_params=False,
              [n_samples_a, n_features] otherwise
         Array of pairwise kernels between samples, or a feature array.
 
-    Y : array [n_samples_b, n_features], default=None
+    Y : array of shape (n_samples_b, n_features), default=None
         A second feature array only if X has shape [n_samples_a, n_features].
 
     metric : str or callable, default="linear"
