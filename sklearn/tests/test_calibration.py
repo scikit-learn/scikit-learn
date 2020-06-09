@@ -349,15 +349,15 @@ def test_calibration_pipeline():
     where X is not array-like, sparse matrix or dataframe at the start. See
     issue #8710"""
     fake_features = [
-        {'state':'NY','age':'adult'},
-        {'state':'TX','age':'adult'},
-        {'state':'VT','age':'child'},
+        {'state': 'NY', 'age': 'adult'},
+        {'state': 'TX', 'age': 'adult'},
+        {'state': 'VT', 'age': 'child'},
     ]
     labels = [1, 0, 1]
 
     pipeline = Pipeline([
-                ('vectorizer',DictVectorizer()),
-                ('clf',RandomForestClassifier())
+                ('vectorizer', DictVectorizer()),
+                ('clf', RandomForestClassifier())
         ])
     pipeline.fit(fake_features, labels)
 
