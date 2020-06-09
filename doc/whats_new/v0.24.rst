@@ -44,6 +44,14 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
+:mod:`sklearn.decomposition`
+............................
+
+- |Fix| Fixed a bug in
+  :func:`decomposition.MiniBatchDictionaryLearning.partial_fit` which should
+  update the dictionary by iterating only once over a mini-batch.
+  :pr:`17433` by :user:`Chiara Marmo <cmarmo>`
+
 :mod:`sklearn.ensemble`
 .......................
 
