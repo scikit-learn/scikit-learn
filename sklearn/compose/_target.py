@@ -118,9 +118,6 @@ class TransformedTargetRegressor(RegressorMixin, BaseEstimator):
         self.func = func
         self.inverse_func = inverse_func
         self.check_inverse = check_inverse
-        self._training_dim = None
-        self.transformer_ = None
-        self.regressor_ = None
 
     # pylint: disable=invalid-name
     def _fit_transformer(self, y):
