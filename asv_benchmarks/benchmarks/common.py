@@ -63,10 +63,10 @@ def get_estimator_path(benchmark, directory, params, save=False):
     return path / filename
 
 
-def get_data_path(benchmark, params):
+def get_data_path(benchmark):
     """Get path of pickled dataset"""
     filename = (benchmark.__class__.__name__
-                + '_data_' + '_'.join(list(map(str, params))) + '.pkl')
+                + '_data_makers.pkl')
     return Path(__file__).resolve().parent / 'cache' / 'tmp' / filename
 
 
@@ -125,15 +125,9 @@ class Estimator(ABC):
         param_grid = list(itertools.product(*self.params))
 
         for params in param_grid:
-            data, estimator = self.setup_cache_(params) or (None, None)
-            if data is None:
-                continue
+            estimator = self.make_estimator(params)
+            X, _, y, _ = self.make_data(params)
 
-            data_path = get_data_path(self, params)
-            with data_path.open(mode='wb') as f:
-                pickle.dump(data, f)
-
-            X, _, y, _ = data
             estimator.fit(X, y)
 
             est_path = get_estimator_path(self, Benchmark.save_dir,
@@ -149,9 +143,7 @@ class Estimator(ABC):
         if hasattr(self, 'setup_'):
             self.setup_(params)
 
-        data_path = get_data_path(self, params)
-        with data_path.open(mode='rb') as f:
-            self.X, self.X_val, self.y, self.y_val = pickle.load(f)
+        self.X, self.X_val, self.y, self.y_val = self.make_data(params)
 
         est_path = get_estimator_path(self, Benchmark.save_dir,
                                       params, Benchmark.save_estimators)
