@@ -50,7 +50,7 @@ from ..metrics.pairwise import (rbf_kernel, linear_kernel, pairwise_distances)
 from .import shuffle
 from .import deprecated
 from .validation import has_fit_parameter, _num_samples
-from ..preprocessing import StandardScaler
+from ..preprocessing import StandardScaler, LabelBinarizer
 from ..datasets import (load_iris, load_boston, make_blobs,
                         make_multilabel_classification, make_regression)
 
@@ -134,13 +134,35 @@ def _yield_classifier_checks(name, classifier):
     yield check_decision_proba_consistency
 
 
+def default_dataset_factory(n_samples=50, X_types="2darray", multioutput=False,
+                            continuous_y=False, binary_y=False):
+    rng = np.random.RandomState(0)
+    n_features = 5
+    if X_types == "2darray":
+        X = rng.randn(n_samples, n_features)
+    else:
+        raise NotImplementedError
+    if continuous_y:
+        y = rng.rand(n_samples)
+    else:
+        if binary_y:
+            n_classes = 2
+        else:
+            n_classes = 3
+        y = rng.randint(low=0, high=n_classes, size=n_samples)
+        if multioutput:  # TODO: real multioutput
+            y = LabelBinarizer().fit_transform(y)
+    return X, y
+
+
 @ignore_warnings(category=FutureWarning)
-def check_supervised_y_no_nan(name, estimator_orig):
+def check_supervised_y_no_nan(name, estimator_orig, dataset_factory=None):
+    if dataset_factory is None:
+        dataset_factory = default_dataset_factory
     # Checks that the Estimator targets are not NaN.
     estimator = clone(estimator_orig)
-    rng = np.random.RandomState(888)
-    X = rng.randn(10, 5)
-    y = np.full(10, np.inf)
+    X, y = dataset_factory()
+    y[:] = np.inf
     y = _enforce_estimator_tags_y(estimator, y)
 
     errmsg = "Input contains NaN, infinity or a value too large for " \
@@ -800,19 +822,16 @@ def check_sample_weights_list(name, estimator_orig):
 
 
 @ignore_warnings(category=FutureWarning)
-def check_sample_weights_shape(name, estimator_orig):
+def check_sample_weights_shape(name, estimator_orig, dataset_factory=None):
     # check that estimators raise an error if sample_weight
     # shape mismatches the input
+    if dataset_factory is None:
+        dataset_factory = default_dataset_factory
     if (has_fit_parameter(estimator_orig, "sample_weight") and
             not (hasattr(estimator_orig, "_pairwise")
                  and estimator_orig._pairwise)):
         estimator = clone(estimator_orig)
-        X = np.array([[1, 3], [1, 3], [1, 3], [1, 3],
-                      [2, 1], [2, 1], [2, 1], [2, 1],
-                      [3, 3], [3, 3], [3, 3], [3, 3],
-                      [4, 1], [4, 1], [4, 1], [4, 1]])
-        y = np.array([1, 1, 1, 1, 2, 2, 2, 2,
-                      1, 1, 1, 1, 2, 2, 2, 2])
+        X, y = dataset_factory()
         y = _enforce_estimator_tags_y(estimator, y)
 
         estimator.fit(X, y, sample_weight=np.ones(len(y)))
@@ -825,9 +844,12 @@ def check_sample_weights_shape(name, estimator_orig):
 
 
 @ignore_warnings(category=FutureWarning)
-def check_sample_weights_invariance(name, estimator_orig):
+def check_sample_weights_invariance(name, estimator_orig,
+                                    dataset_factory=None):
     # check that the estimators yield same results for
     # unit weights and no weights
+    if dataset_factory is None:
+        dataset_factory = default_dataset_factory
     if (has_fit_parameter(estimator_orig, "sample_weight") and
             not (hasattr(estimator_orig, "_pairwise")
                  and estimator_orig._pairwise)):
@@ -838,12 +860,7 @@ def check_sample_weights_invariance(name, estimator_orig):
         set_random_state(estimator1, random_state=0)
         set_random_state(estimator2, random_state=0)
 
-        X = np.array([[1, 3], [1, 3], [1, 3], [1, 3],
-                      [2, 1], [2, 1], [2, 1], [2, 1],
-                      [3, 3], [3, 3], [3, 3], [3, 3],
-                      [4, 1], [4, 1], [4, 1], [4, 1]], dtype=np.dtype('float'))
-        y = np.array([1, 1, 1, 1, 2, 2, 2, 2,
-                      1, 1, 1, 1, 2, 2, 2, 2], dtype=np.dtype('int'))
+        X, y = dataset_factory()
         y = _enforce_estimator_tags_y(estimator1, y)
 
         estimator1.fit(X, y=y, sample_weight=np.ones(shape=len(y)))
@@ -2787,10 +2804,12 @@ def check_set_params(name, estimator_orig):
 
 
 @ignore_warnings(category=FutureWarning)
-def check_classifiers_regression_target(name, estimator_orig):
+def check_classifiers_regression_target(name, estimator_orig,
+                                        dataset_factory=None):
     # Check if classifier throws an exception when fed regression targets
-
-    X, y = load_boston(return_X_y=True)
+    if dataset_factory is None:
+        dataset_factory = default_dataset_factory
+    X, y = dataset_factory(continuous_y=True)
     e = clone(estimator_orig)
     msg = 'Unknown label type: '
     if not e._get_tags()["no_validation"]:
@@ -2820,13 +2839,12 @@ def check_decision_proba_consistency(name, estimator_orig):
         assert_array_equal(rankdata(a), rankdata(b))
 
 
-def check_outliers_fit_predict(name, estimator_orig):
+def check_outliers_fit_predict(name, estimator_orig, dataset_factory=None):
     # Check fit_predict for outlier detectors.
-
+    if dataset_factory is None:
+        dataset_factory = default_dataset_factory
     n_samples = 300
-    X, _ = make_blobs(n_samples=n_samples, random_state=0)
-    X = shuffle(X, random_state=7)
-    n_samples, n_features = X.shape
+    X, _ = dataset_factory(n_samples=n_samples)
     estimator = clone(estimator_orig)
 
     set_random_state(estimator)
