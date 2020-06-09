@@ -401,11 +401,11 @@ def test_dict_learning_iter_offset():
     dict2 = MiniBatchDictionaryLearning(n_components, n_iter=10,
                                         dict_init=V, random_state=0,
                                         shuffle=False)
-    dictV_fit = dict1.fit(X)
+    dict1.fit(X)
     for sample in X:
-        dictV_pfit = dict2.partial_fit(sample[np.newaxis, :])
+        dict2.partial_fit(sample[np.newaxis, :])
 
-    assert dictV_fit.iter_offset_ == dictV_pfit.iter_offset_
+    assert dict1.iter_offset_ == dict2.iter_offset_
 
 
 def test_sparse_encode_shapes():
