@@ -568,7 +568,7 @@ def cohen_kappa_score(y1, y2, *, labels=None, weights=None,
         Labels assigned by the second annotator. The kappa statistic is
         symmetric, so swapping ``y1`` and ``y2`` doesn't change the value.
 
-    labels : array, shape = [n_classes], default=None
+    labels : array-like of shape (n_classes,), default=None
         List of labels to index the matrix. This may be used to select a
         subset of labels. If None, all labels that appear at least once in
         ``y1`` or ``y2`` are used.
