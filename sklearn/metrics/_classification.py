@@ -966,8 +966,8 @@ def f1_score(y_true, y_pred, *, labels=None, pos_label=1, average='binary',
         setting ``labels=[pos_label]`` and ``average != 'binary'`` will report
         scores for that label only.
 
-    average : string, [None, 'micro', 'macro', 'samples','weighted', \
-            default='binary']
+    average : {'micro', 'macro', 'samples','weighted', 'binary'} or None, \
+            default='binary'
         This parameter is required for multiclass/multilabel targets.
         If ``None``, the scores for each class are returned. Otherwise, this
         determines the type of averaging performed on the data:
