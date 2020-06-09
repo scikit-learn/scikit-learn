@@ -149,7 +149,7 @@ __author_email__ = ('renato.ppontes@gmail.com, '
 __version__ = '2.4.0'
 
 import typing
-from typing import Optional, Tuple, List, Dict, Any
+from typing import Optional, List, Dict, Any
 
 import re
 import sys
@@ -172,9 +172,10 @@ _RE_ESCAPE_CHARS = re.compile(r'(?=["\'\\%])|[\n\r\t\000-\031]')
 _RE_SPARSE_LINE = re.compile(r'^\s*\{.*\}\s*$', re.UNICODE)
 _RE_NONTRIVIAL_DATA = re.compile('["\'{}\\s]', re.UNICODE)
 
-ArffDataType = Tuple[List, ...]
+ArffDataType = List[List]
 
 if typing.TYPE_CHECKING:
+    # typing_extensions is only available is mypy is installed
     from typing_extensions import TypedDict
 
     class ArffContainerType(TypedDict):
@@ -184,6 +185,7 @@ if typing.TYPE_CHECKING:
         data: ArffDataType
 else:
     ArffContainerType = Dict[str, Any]
+
 
 def _build_re_values():
     quoted_re = r'''

@@ -198,11 +198,11 @@ def _split_sparse_columns(
 
     Returns
     -------
-    arff_data_new : tuple
+    arff_data_new : list
         Subset of arff data with only the include columns indicated by the
         include_columns argument.
     """
-    arff_data_new: ArffDataType = (list(), list(), list())
+    arff_data_new: ArffDataType = [list(), list(), list()]
     reindexed_columns = {column_idx: array_idx for array_idx, column_idx
                          in enumerate(include_columns)}
     for val, row_idx, col_idx in zip(arff_data[0], arff_data[1], arff_data[2]):
@@ -334,6 +334,7 @@ def _convert_arff_data_dataframe(
     arff_columns = list(attributes)
 
     # calculate chunksize
+    raise ValueError
     first_row = next(arff['data'])
     first_df = pd.DataFrame([first_row], columns=arff_columns)
 
@@ -407,10 +408,7 @@ def _get_data_info_by_name(
         json_data = _get_json_content_from_openml_api(
             url, error_message=None, data_home=data_home
         )
-        retry = False
     except OpenMLError:
-        retry = True
-    if retry:
         # we can do this in 1 function call if OpenML does not require the
         # specification of the dataset status (i.e., return datasets with a
         # given name / version regardless of active, deactivated, etc. )
@@ -658,6 +656,7 @@ def _valid_data_column_names(features_list, target_columns):
     return valid_data_column_names
 
 
+@_deprecate_positional_args
 def fetch_openml(
     name: Optional[str] = None,
     *,
