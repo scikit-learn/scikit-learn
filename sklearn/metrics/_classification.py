@@ -1315,7 +1315,7 @@ def precision_recall_fscore_support(y_true, y_pred, *, beta=1.0, labels=None,
     beta : float, default=1.0
         The strength of recall versus precision in the F-score.
 
-    labels : list, default=None
+    labels : array-like, default=None
         The set of labels to include when ``average != 'binary'``, and their
         order if ``average is None``. Labels present in the data can be
         excluded, for example to calculate a multiclass average ignoring a
