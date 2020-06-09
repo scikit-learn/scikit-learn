@@ -229,7 +229,6 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
                     this_estimator.fit(X[train], y[train],
                                        sample_weight=sample_weight[train])
                 else:
-                    print(f'X {type(X)} {X} y {type(y)}')
                     this_estimator.fit(X[train], y[train])
 
                 calibrated_classifier = _CalibratedClassifier(
