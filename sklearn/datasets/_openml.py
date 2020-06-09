@@ -18,7 +18,7 @@ import numpy as np
 import scipy.sparse
 
 from ..externals import _arff
-from ..externals._arff import ArffDataType, ArffContainerType
+from ..externals._arff import ArffSparseDataType, ArffContainerType
 from . import get_data_home
 from urllib.error import HTTPError
 from ..utils import Bunch
@@ -179,8 +179,8 @@ def _get_json_content_from_openml_api(
 
 
 def _split_sparse_columns(
-    arff_data: ArffDataType, include_columns: List
-) -> ArffDataType:
+    arff_data: ArffSparseDataType, include_columns: List
+) -> ArffSparseDataType:
     """
     obtains several columns from sparse arff representation. Additionally, the
     column indices are re-labelled, given the columns that are not included.
@@ -202,7 +202,7 @@ def _split_sparse_columns(
         Subset of arff data with only the include columns indicated by the
         include_columns argument.
     """
-    arff_data_new: ArffDataType = [list(), list(), list()]
+    arff_data_new: ArffSparseDataType = (list(), list(), list())
     reindexed_columns = {column_idx: array_idx for array_idx, column_idx
                          in enumerate(include_columns)}
     for val, row_idx, col_idx in zip(arff_data[0], arff_data[1], arff_data[2]):
@@ -214,7 +214,7 @@ def _split_sparse_columns(
 
 
 def _sparse_data_to_array(
-    arff_data: ArffDataType, include_columns: List
+    arff_data: ArffSparseDataType, include_columns: List
 ) -> np.ndarray:
     # turns the sparse data back into an array (can't use toarray() function,
     # as this does only work on numeric data)
@@ -333,8 +333,10 @@ def _convert_arff_data_dataframe(
     attributes = OrderedDict(arff['attributes'])
     arff_columns = list(attributes)
 
+    if isinstance(arff['data'], tuple):
+        raise ValueError("Unreachable code. arff['data'] must be a generator.")
+
     # calculate chunksize
-    raise ValueError
     first_row = next(arff['data'])
     first_df = pd.DataFrame([first_row], columns=arff_columns)
 

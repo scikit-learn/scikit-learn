@@ -149,7 +149,7 @@ __author_email__ = ('renato.ppontes@gmail.com, '
 __version__ = '2.4.0'
 
 import typing
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Iterator, Union, Tuple
 
 import re
 import sys
@@ -172,7 +172,9 @@ _RE_ESCAPE_CHARS = re.compile(r'(?=["\'\\%])|[\n\r\t\000-\031]')
 _RE_SPARSE_LINE = re.compile(r'^\s*\{.*\}\s*$', re.UNICODE)
 _RE_NONTRIVIAL_DATA = re.compile('["\'{}\\s]', re.UNICODE)
 
-ArffDataType = List[List]
+ArffDenseDataType = Iterator[List]
+ArffSparseDataType = Tuple[List, ...]
+
 
 if typing.TYPE_CHECKING:
     # typing_extensions is only available is mypy is installed
@@ -182,7 +184,8 @@ if typing.TYPE_CHECKING:
         description: str
         relation: str
         attributes: List
-        data: ArffDataType
+        data: Union[ArffDenseDataType, ArffSparseDataType]
+
 else:
     ArffContainerType = Dict[str, Any]
 
