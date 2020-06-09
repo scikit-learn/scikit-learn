@@ -3267,7 +3267,7 @@ def power_transform(X, method='yeo-johnson', *, standardize=True, copy=True):
      [ 0.256... -0.707...]
      [ 1.076...  1.414...]]
 
-    .. warning:: Risk of data leak
+    .. warning:: Risk of data leak.
         Do not use :func:`~sklearn.preprocessing.power_transform` unless you
         know what you are doing. A common mistake is to apply it to the entire
         data *before* splitting into traing and test sets. This will bias the
