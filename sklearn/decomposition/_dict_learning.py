@@ -1197,9 +1197,9 @@ class DictionaryLearning(SparseCodingMixin, BaseEstimator):
     >>> np.random.seed(42)
     >>> X, dictionary, code = make_sparse_coded_signal(
     ... n_samples=100, n_components=15,  n_features=20, n_nonzero_coefs=10)
-    >>> dico = DictionaryLearning(n_components=15,
+    >>> dict_learner = DictionaryLearning(n_components=15,
     ...                           transform_algorithm='lasso_lars')
-    >>> X_transformed = dico.fit_transform(X)
+    >>> X_transformed = dict_learner.fit_transform(X)
     >>> np.mean(X_transformed == 0)  # represents data using a sparse code
     0.87
 
@@ -1417,10 +1417,10 @@ class MiniBatchDictionaryLearning(SparseCodingMixin, BaseEstimator):
     >>> np.random.seed(42)
     >>> X, dictionary, code = make_sparse_coded_signal(
     ... n_samples=100, n_components=15, n_features=20, n_nonzero_coefs=10)
-    >>> dico = MiniBatchDictionaryLearning(n_components=15,
+    >>> dict_learner = MiniBatchDictionaryLearning(n_components=15,
     ...                                    transform_algorithm='lasso_lars')
-    >>> X_transformed = dico.fit_transform(X)
-    >>> np.mean(X_transformed == 0)  # represents data using a sparse code
+    >>> X_transformed = dict_learner.fit_transform(X)
+    >>> np.mean(np.sum((X_transformed @ dico.components_ - X) ** 2, axis=1) / np.sum(X ** 2, axis=1))
     0.83...
 
     Notes
