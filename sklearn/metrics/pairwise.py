@@ -1695,7 +1695,7 @@ def pairwise_distances(X, Y=None, metric="euclidean", *, n_jobs=None,
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    force_all_finite : boolean or 'allow-nan', default=True
+    force_all_finite : bool or 'allow-nan', default=True
         Whether to raise an error on np.inf, np.nan, pd.NA in array. The
         possibilities are:
 
