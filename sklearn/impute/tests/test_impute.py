@@ -1343,6 +1343,25 @@ def test_simple_imputation_add_indicator_sparse_matrix(arr_type):
 
 
 @pytest.mark.parametrize(
+    'strategy, expected',
+    [('most_frequent', 'b'), ('constant', 'missing_value')]
+)
+def test_simple_imputation_string_list(strategy, expected):
+    X = [['a', 'b'],
+         ['c', np.nan]]
+
+    X_true = np.array([
+        ['a', 'b'],
+        ['c', expected]
+    ], dtype=object)
+
+    imputer = SimpleImputer(strategy=strategy)
+    X_trans = imputer.fit_transform(X)
+
+    assert_array_equal(X_trans, X_true)
+
+
+@pytest.mark.parametrize(
     "order, idx_order",
     [
         ("ascending", [3, 4, 2, 0, 1]),
