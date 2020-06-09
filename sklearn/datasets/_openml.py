@@ -333,8 +333,10 @@ def _convert_arff_data_dataframe(
     attributes = OrderedDict(arff['attributes'])
     arff_columns = list(attributes)
 
-    if isinstance(arff['data'], tuple):
-        raise ValueError("Unreachable code. arff['data'] must be a generator.")
+    if not isinstance(arff['data'], Generator):
+        raise ValueError(
+            "arff['data'] must be a generator when converting to pd.DataFrame."
+        )
 
     # calculate chunksize
     first_row = next(arff['data'])
