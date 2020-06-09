@@ -38,6 +38,14 @@ Changelog
   weighted by the sample weights. :pr:`17848` by
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+:mod:`sklearn.decomposition`
+............................
+
+- |Fix| Fixed a bug in
+  :func:`decomposition.MiniBatchDictionaryLearning.partial_fit` which should
+  update the dictionary by iterating only once over a mini-batch.
+  :pr:`17433` by :user:`Chiara Marmo <cmarmo>`
+
 :mod:`sklearn.ensemble`
 .......................
 
