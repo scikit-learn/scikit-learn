@@ -52,6 +52,14 @@ Changelog
   unless data is sparse.
   :pr:`17396` by :user:`Jiaxiang <fujiaxiang>`.
 
+:mod:`sklearn.decomposition`
+............................
+
+- |Fix| Fixed a bug in
+  :func:`decomposition.MiniBatchDictionaryLearning.partial_fit` which should
+  update the dictionary by iterating only once over a mini-batch.
+  :pr:`17433` by :user:`Chiara Marmo <cmarmo>`
+
 :mod:`sklearn.ensemble`
 .......................
 
@@ -59,6 +67,15 @@ Changelog
   :class:`ensemble.HistGradientClassifier` now support `staged_predict`,
   which allows monitoring of each stage.
   :pr:`16985` by :user:`Hao Chun Chang <haochunchang>`.
+
+:mod:`sklearn.feature_selection`
+................................
+
+- |Feature| A new parameter `importance_getter` was added to
+  :class:`feature_selection.RFE`, :class:`feature_selection.RFECV` and
+  :class:`feature_selection.SelectFromModel`, allowing the user to specify an
+  attribute name/path or a `callable` for extracting feature importance from
+  the estimator.  :pr:`15361` by :user:`Venkatachalam N <venkyyuvy>`
 
 :mod:`sklearn.impute`
 .....................
@@ -69,6 +86,10 @@ Changelog
   change since `None` was defaulting to these values already.
   :pr:`16493` by :user:`Darshan N <DarshanGowda0>`.
 
+- |Feature| :class:`impute.SimpleImputer` now supports a list of strings
+  when ``strategy='most_frequent'`` or ``strategy='constant'``.
+  :pr:`17526` by :user:`Ayako YAGI <yagi-3>` and :user:`Juan Carlos Alfaro Jiménez <alfaro96>`.
+
 :mod:`sklearn.metrics`
 ......................
 
@@ -76,6 +97,10 @@ Changelog
   average of multiple RMSE values was incorrectly calculated as the root of the
   average of multiple MSE values.
   :pr:`17309` by :user:`Swier Heeres <swierh>`
+
+- |Enhancement| Add `sample_weight` parameter to
+  :class:`metrics.median_absolute_error`. :pr:`17225` by
+  :user:`Lucy Liu <lucyleeow>`.
 
 :mod:`sklearn.model_selection`
 ..............................
@@ -86,18 +111,18 @@ Changelog
   samples between the train and test set on each fold.
   :pr:`13204` by :user:`Kyle Kosic <kykosic>`.
 
-- |Feature| A new parameter `importance_getter` was added to
-  :class:`feature_selection.RFE`, :class:`feature_selection.RFECV` and
-  :class:`feature_selection.SelectFromModel`, allowing the user to specify an
-  attribute name/path or a `callable` for extracting feature importance from
-  the estimator.  :pr:`15361` by :user:`Venkatachalam N <venkyyuvy>`
+- |Feature| :class:`model_selection.RandomizedSearchCV` and
+  :class:`model_selection.GridSearchCV` now have the method, ``score_samples``
+  :pr:`17478` by :user:`Teon Brooks <teonbrooks>` and
+  :user:`Mohamed Maskani <maskani-moh>`.
 
-:mod:`sklearn.metrics`
-......................
+:mod:`sklearn.preprocessing`
+............................
 
-- |Enhancement| Add `sample_weight` parameter to
-  :class:`metrics.median_absolute_error`.
-  :pr:`17225` by :user:`Lucy Liu <lucyleeow>`.
+- |Enhancement| Add ``unit_variance`` to :class:`preprocessing.RobustScaler`,
+  which scales output data such that normally distributed features have a
+  variance of 1. :pr:`17193` by :user:`Lucy Liu <lucyleeow>` and
+  :user:`Mabel Villalba <mabelvj>`.
 
 :mod:`sklearn.tree`
 ...................
@@ -122,7 +147,7 @@ Changelog
 :mod:`sklearn.svm`
 ....................
 - |Enhancement| invoke scipy blas api for svm kernel function in ``fit``,
-  ``predict`` and related methods of :class:`svm.SVC`, :class:`svm.NuSVC`, 
+  ``predict`` and related methods of :class:`svm.SVC`, :class:`svm.NuSVC`,
   :class:`svm.SVR`, :class:`svm.NuSVR`, :class:`OneClassSVM`.
   :pr:`16530` by :user:`Shuhua Fan <jim0421>`.
 

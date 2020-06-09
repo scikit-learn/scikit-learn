@@ -756,6 +756,18 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
     order_ : list
         The order of labels in the classifier chain.
 
+    Examples
+    --------
+    >>> from sklearn.multioutput import RegressorChain
+    >>> from sklearn.linear_model import LogisticRegression
+    >>> logreg = LogisticRegression(solver='lbfgs',multi_class='multinomial')
+    >>> X, Y = [[1, 0], [0, 1], [1, 1]], [[0, 2], [1, 1], [2, 0]]
+    >>> chain = RegressorChain(base_estimator=logreg, order=[0, 1]).fit(X, Y)
+    >>> chain.predict(X)
+    array([[0., 2.],
+           [1., 1.],
+           [2., 0.]])
+
     See also
     --------
     ClassifierChain: Equivalent for classification
