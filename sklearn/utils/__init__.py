@@ -1234,6 +1234,3 @@ def _generate_sample_indices(random_state, n_samples, n_samples_bootstrap):
     sample_indices = random_instance.randint(0, n_samples, n_samples_bootstrap)
 
     return sample_indices
-
-
-
