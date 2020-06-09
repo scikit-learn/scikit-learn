@@ -263,7 +263,7 @@ modifying code and submitting a PR:
 10. Develop the feature on your feature branch on your computer, using Git to
     do the version control. When you're done editing, add changed files using
     ``git add`` and then ``git commit``::
-
+ 
         $ git add modified_files
         $ git commit
 

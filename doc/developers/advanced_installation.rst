@@ -256,7 +256,7 @@ scikit-learn from source::
 You can check that the custom compilers are properly installed from conda
 forge using the following command::
 
-    conda list
+    conda list 
 
 which should include ``compilers`` and ``llvm-openmp``.
 

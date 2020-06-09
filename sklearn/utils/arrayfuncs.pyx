@@ -63,7 +63,7 @@ def cholesky_delete(np.ndarray[floating, ndim=2] L, int go_out):
       floating c, s
       floating *L1
       int i
-
+   
    if floating is float:
       m /= sizeof(float)
    else:

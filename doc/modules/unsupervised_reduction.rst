@@ -55,5 +55,6 @@ similarly.
 
    Note that if features have very different scaling or statistical
    properties, :class:`cluster.FeatureAgglomeration` may not be able to
-   capture the links between related features. Using a
+   capture the links between related features. Using a 
    :class:`preprocessing.StandardScaler` can be useful in these settings.
+

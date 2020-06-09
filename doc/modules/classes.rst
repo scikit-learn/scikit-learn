@@ -900,7 +900,7 @@ Miscellaneous
     manifold.smacof
     manifold.spectral_embedding
     manifold.trustworthiness
-
+	
 
 .. _metrics_ref:
 

@@ -378,3 +378,4 @@ Novelty detection with Local Outlier Factor is illustrated below.
      :target: ../auto_examples/neighbors/sphx_glr_plot_lof_novelty_detection.html
      :align: center
      :scale: 75%
+

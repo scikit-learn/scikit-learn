@@ -1,5 +1,5 @@
-..
-    File to ..include in a document with a very big table of content, to
+..  
+    File to ..include in a document with a very big table of content, to 
     give it 'style'
 
 .. raw:: html
@@ -29,7 +29,7 @@
     li.toctree-l1 a {
         padding: 0 0 0 10px ;
     }
-
+ 
     li.toctree-l2 {
         padding: 0.25em 0 0.25em 0 ;
         list-style-type: none;
@@ -53,5 +53,8 @@
         list-style-type: none;
 	font-weight: normal;
         }
-
+ 
   </style>
+
+
+

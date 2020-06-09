@@ -27,7 +27,7 @@ Label Propagation
 =================
 
 Label propagation denotes a few variations of semi-supervised graph
-inference algorithms.
+inference algorithms. 
 
 A few features available in this model:
   * Can be used for classification and regression tasks
@@ -35,7 +35,7 @@ A few features available in this model:
 
 `scikit-learn` provides two label propagation models:
 :class:`LabelPropagation` and :class:`LabelSpreading`. Both work by
-constructing a similarity graph over all items in the input dataset.
+constructing a similarity graph over all items in the input dataset. 
 
 .. figure:: ../auto_examples/semi_supervised/images/sphx_glr_plot_label_propagation_structure_001.png
     :target: ../auto_examples/semi_supervised/plot_label_propagation_structure.html
@@ -97,3 +97,4 @@ which can drastically reduce running times.
     [2] Olivier Delalleau, Yoshua Bengio, Nicolas Le Roux. Efficient
     Non-Parametric Function Induction in Semi-Supervised Learning. AISTAT 2005
     https://research.microsoft.com/en-us/people/nicolasl/efficient_ssl.pdf
+

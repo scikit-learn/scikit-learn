@@ -183,7 +183,7 @@ the last item from ``digits.data``::
   SVC(C=100.0, gamma=0.001)
 
 Now you can *predict* new values. In this case, you'll predict using the last
-image from ``digits.data``. By predicting, you'll determine the image from the
+image from ``digits.data``. By predicting, you'll determine the image from the 
 training set that best matches the last image.
 
 

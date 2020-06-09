@@ -46,7 +46,7 @@ attributes::
                       drop_intermediate=True, response_method="auto",
                       name=None, ax=None, **kwargs):
        # do computation
-       viz = RocCurveDisplay(fpr, tpr, roc_auc,
+       viz = RocCurveDisplay(fpr, tpr, roc_auc, 
                                 estimator.__class__.__name__)
        return viz.plot(ax=ax, name=name, **kwargs)
 

@@ -50,7 +50,7 @@ def train_wrap(X, np.ndarray[np.float64_t, ndim=1, mode='c'] Y,
         free_problem(problem)
         free_parameter(param)
         raise ValueError(error_msg)
-
+    
     cdef BlasFunctions blas_functions
     blas_functions.dot = _dot[double]
     blas_functions.axpy = _axpy[double]

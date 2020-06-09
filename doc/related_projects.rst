@@ -108,7 +108,7 @@ and tasks.
 
 **Structured learning**
 
-- `tslearn <https://github.com/tslearn-team/tslearn>`_ A machine learning library for time series
+- `tslearn <https://github.com/tslearn-team/tslearn>`_ A machine learning library for time series 
   that offers tools for pre-processing and feature extraction as well as dedicated models for clustering, classification and regression.
 
 - `sktime <https://github.com/alan-turing-institute/sktime>`_ A scikit-learn compatible toolbox for machine learning with time series including time series classification/regression and (supervised/panel) forecasting.
@@ -146,7 +146,7 @@ and tasks.
 - `mlxtend <https://github.com/rasbt/mlxtend>`_ Includes a number of additional
   estimators as well as model visualization utilities.
 
-- `scikit-lego <https://github.com/koaning/scikit-lego>`_ A number of scikit-learn compatible
+- `scikit-lego <https://github.com/koaning/scikit-lego>`_ A number of scikit-learn compatible 
   custom transformers, models and metrics, focusing on solving practical industry tasks.
 
 **Other regression and classification**

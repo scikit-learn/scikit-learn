@@ -4,3 +4,4 @@ Miscellaneous
 -------------
 
 Miscellaneous and introductory examples for scikit-learn.
+
