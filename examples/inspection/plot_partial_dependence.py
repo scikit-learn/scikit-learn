@@ -13,7 +13,7 @@ Similarly, an individual conditional expectation (ICE) plot [3]_
 shows the dependence between the target function and a feature of interest.
 However, unlike partial dependence plots, which show the average effect of the
 features of interest, ICE plots visualize the dependence of the prediction on a
-feature for each :term:sample: separately, with one line per :term:sample:.
+feature for each :term:`sample` separately, with one line per sample.
 Only one feature of interest is supported for ICE plots.
 
 This example shows how to obtain partial dependence and ICE plots from a
