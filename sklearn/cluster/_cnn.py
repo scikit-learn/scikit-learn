@@ -226,9 +226,13 @@ class CNN(ClusterMixin, BaseEstimator):
 
     See also
     --------
-    DBSCAN A similar clustering providing a different notion of the
+    DBSCAN
+        A similar clustering providing a different notion of the
         point density. The implementation is (like this present CNN
-        implementation) optimized for speed. OPTICS A similar clustering
+        implementation) optimized for speed.
+
+    OPTICS
+        A similar clustering
         at multiple values of eps. The implementation is optimized for
         memory usage.
 
@@ -357,7 +361,7 @@ class CNN(ClusterMixin, BaseEstimator):
         return self
 
     def fit_predict(self, X, y=None, sample_weight=None):
-        """Perform DBSCAN clustering from features or distance matrix,
+        """Perform CNN clustering from features or distance matrix,
         and return cluster labels.
 
         Parameters
