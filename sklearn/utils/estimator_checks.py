@@ -2808,8 +2808,10 @@ def check_set_params(name, estimator_orig):
 
 
 @ignore_warnings(category=FutureWarning)
-def check_classifiers_regression_target(name, estimator_orig,
-                                        dataset_factory=default_dataset_factory):
+def check_classifiers_regression_target(
+        name,
+        estimator_orig,
+        dataset_factory=default_dataset_factory):
     # Check if classifier throws an exception when fed regression targets
     X, y = dataset_factory(continuous_y=True, **estimator_orig.get_tags())
     X += X.min(axis=0)
