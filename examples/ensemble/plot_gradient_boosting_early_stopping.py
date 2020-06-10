@@ -91,7 +91,7 @@ n = len(data_list)
 index = np.arange(0, n * bar_width, bar_width) * 2.5
 index = index[0:n]
 
-#######################################################################
+# %%
 # Compare scores with and without early stopping
 # ----------------------------------------------
 
@@ -129,7 +129,7 @@ plt.ylabel('Test score')
 plt.show()
 
 
-#######################################################################
+# %%
 # Compare fit times with and without early stopping
 # -------------------------------------------------
 

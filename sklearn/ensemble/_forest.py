@@ -107,7 +107,7 @@ def _get_n_samples_bootstrap(n_samples, max_samples):
         if not (0 < max_samples < 1):
             msg = "`max_samples` must be in range (0, 1) but got value {}"
             raise ValueError(msg.format(max_samples))
-        return int(round(n_samples * max_samples))
+        return round(n_samples * max_samples)
 
     msg = "`max_samples` should be int or float, but got type '{}'"
     raise TypeError(msg.format(type(max_samples)))
@@ -159,9 +159,11 @@ def _parallel_build_trees(tree, forest, X, y, sample_weight, tree_idx, n_trees,
         if class_weight == 'subsample':
             with catch_warnings():
                 simplefilter('ignore', DeprecationWarning)
-                curr_sample_weight *= compute_sample_weight('auto', y, indices)
+                curr_sample_weight *= compute_sample_weight('auto', y,
+                                                            indices=indices)
         elif class_weight == 'balanced_subsample':
-            curr_sample_weight *= compute_sample_weight('balanced', y, indices)
+            curr_sample_weight *= compute_sample_weight('balanced', y,
+                                                        indices=indices)
 
         tree.fit(X, y, sample_weight=curr_sample_weight, check_input=False)
     else:

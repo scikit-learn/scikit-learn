@@ -26,7 +26,8 @@ from ..neighbors import NearestNeighbors
 from ..metrics.pairwise import pairwise_distances_argmin
 
 
-def estimate_bandwidth(X, quantile=0.3, n_samples=None, random_state=0,
+@_deprecate_positional_args
+def estimate_bandwidth(X, *, quantile=0.3, n_samples=None, random_state=0,
                        n_jobs=None):
     """Estimate the bandwidth to use with the mean-shift algorithm.
 
@@ -106,7 +107,8 @@ def _mean_shift_single_seed(my_mean, X, nbrs, max_iter):
     return tuple(my_mean), len(points_within), completed_iterations
 
 
-def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
+@_deprecate_positional_args
+def mean_shift(X, *, bandwidth=None, seeds=None, bin_seeding=False,
                min_bin_freq=1, cluster_all=True, max_iter=300,
                n_jobs=None):
     """Perform mean shift clustering of data using a flat kernel.
@@ -132,7 +134,7 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
         each data point is used as a seed. If None and bin_seeding=True,
         see bin_seeding.
 
-    bin_seeding : boolean, default=False
+    bin_seeding : bool, default=False
         If true, initial kernel locations are not locations of all
         points, but rather the location of the discretized version of
         points, where points are binned onto a grid whose coarseness
@@ -167,10 +169,10 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
     Returns
     -------
 
-    cluster_centers : array, shape=[n_clusters, n_features]
+    cluster_centers : ndarray of shape (n_clusters, n_features)
         Coordinates of cluster centers.
 
-    labels : array, shape=[n_samples]
+    labels : ndarray of shape (n_samples,)
         Cluster labels for each point.
 
     Notes
@@ -296,10 +298,10 @@ class MeanShift(ClusterMixin, BaseEstimator):
 
     Attributes
     ----------
-    cluster_centers_ : array, [n_clusters, n_features]
+    cluster_centers_ : ndarray of shape (n_clusters, n_features)
         Coordinates of cluster centers.
 
-    labels_ : array of shape (n_samples,)
+    labels_ : ndarray of shape (n_samples,)
         Labels of each point.
 
     n_iter_ : int
@@ -448,12 +450,12 @@ class MeanShift(ClusterMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape=[n_samples, n_features]
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             New data to predict.
 
         Returns
         -------
-        labels : array, shape [n_samples,]
+        labels : ndarray of shape (n_samples,)
             Index of the cluster each sample belongs to.
         """
         check_is_fitted(self)

@@ -25,9 +25,8 @@ from .model_selection import cross_val_predict
 from .utils import check_array, check_X_y, check_random_state
 from .utils.metaestimators import if_delegate_has_method
 from .utils.validation import (check_is_fitted, has_fit_parameter,
-                               _check_fit_params)
+                               _check_fit_params, _deprecate_positional_args)
 from .utils.multiclass import check_classification_targets
-from .utils import deprecated
 
 __all__ = ["MultiOutputRegressor", "MultiOutputClassifier",
            "ClassifierChain", "RegressorChain"]
@@ -64,7 +63,8 @@ def _partial_fit_estimator(estimator, X, y, classes=None, sample_weight=None,
 class _MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
                             metaclass=ABCMeta):
     @abstractmethod
-    def __init__(self, estimator, n_jobs=None):
+    @_deprecate_positional_args
+    def __init__(self, estimator, *, n_jobs=None):
         self.estimator = estimator
         self.n_jobs = n_jobs
 
@@ -214,6 +214,8 @@ class MultiOutputRegressor(RegressorMixin, _MultiOutputEstimator):
     simple strategy for extending regressors that do not natively support
     multi-target regression.
 
+    .. versionadded:: 0.18
+
     Parameters
     ----------
     estimator : estimator object
@@ -228,6 +230,9 @@ class MultiOutputRegressor(RegressorMixin, _MultiOutputEstimator):
         When individual estimators are fast to train or predict
         using `n_jobs>1` can result in slower performance due
         to the overhead of spawning processes.
+
+        .. versionchanged:: v0.20
+           `n_jobs` default changed from 1 to None
 
     Attributes
     ----------
@@ -245,9 +250,9 @@ class MultiOutputRegressor(RegressorMixin, _MultiOutputEstimator):
     >>> clf.predict(X[[0]])
     array([[176..., 35..., 57...]])
     """
-
-    def __init__(self, estimator, n_jobs=None):
-        super().__init__(estimator, n_jobs)
+    @_deprecate_positional_args
+    def __init__(self, estimator, *, n_jobs=None):
+        super().__init__(estimator, n_jobs=n_jobs)
 
     @if_delegate_has_method('estimator')
     def partial_fit(self, X, y, sample_weight=None):
@@ -295,6 +300,9 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
+        .. versionchanged:: v0.20
+           `n_jobs` default changed from 1 to None
+
     Attributes
     ----------
     classes_ : array, shape = (n_classes,)
@@ -315,9 +323,9 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
     >>> clf.predict(X[-2:])
     array([[1, 1, 0], [1, 1, 1]])
     """
-
-    def __init__(self, estimator, n_jobs=None):
-        super().__init__(estimator, n_jobs)
+    @_deprecate_positional_args
+    def __init__(self, estimator, *, n_jobs=None):
+        super().__init__(estimator, n_jobs=n_jobs)
 
     def fit(self, X, Y, sample_weight=None, **fit_params):
         """Fit the model to data matrix X and targets Y.
@@ -414,7 +422,9 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
 
 
 class _BaseChain(BaseEstimator, metaclass=ABCMeta):
-    def __init__(self, base_estimator, order=None, cv=None, random_state=None):
+    @_deprecate_positional_args
+    def __init__(self, base_estimator, *, order=None, cv=None,
+                 random_state=None):
         self.base_estimator = base_estimator
         self.order = order
         self.cv = cv
@@ -694,6 +704,8 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
 
     Read more in the :ref:`User Guide <regressorchain>`.
 
+    .. versionadded:: 0.20
+
     Parameters
     ----------
     base_estimator : estimator
@@ -744,6 +756,18 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
     order_ : list
         The order of labels in the classifier chain.
 
+    Examples
+    --------
+    >>> from sklearn.multioutput import RegressorChain
+    >>> from sklearn.linear_model import LogisticRegression
+    >>> logreg = LogisticRegression(solver='lbfgs',multi_class='multinomial')
+    >>> X, Y = [[1, 0], [0, 1], [1, 1]], [[0, 2], [1, 1], [2, 0]]
+    >>> chain = RegressorChain(base_estimator=logreg, order=[0, 1]).fit(X, Y)
+    >>> chain.predict(X)
+    array([[0., 2.],
+           [1., 1.],
+           [2., 0.]])
+
     See also
     --------
     ClassifierChain: Equivalent for classification
@@ -775,10 +799,3 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
 
     def _more_tags(self):
         return {'multioutput_only': True}
-
-
-# TODO: remove in 0.24
-@deprecated("MultiOutputEstimator is deprecated in version "
-            "0.22 and will be removed in version 0.24.")
-class MultiOutputEstimator(_MultiOutputEstimator):
-    pass
