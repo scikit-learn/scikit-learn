@@ -293,39 +293,39 @@ def _gradient_descent(objective, p0, it, n_iter,
     n_iter : int
         Maximum number of gradient descent iterations.
 
-    n_iter_check : int
+    n_iter_check : int, default=1
         Number of iterations before evaluating the global error. If the error
         is sufficiently low, we abort the optimization.
 
-    n_iter_without_progress : int, optional (default: 300)
+    n_iter_without_progress : int, default=300
         Maximum number of iterations without progress before we abort the
         optimization.
 
-    momentum : float, within (0.0, 1.0), optional (default: 0.8)
+    momentum : float, within (0.0, 1.0), default=0.8
         The momentum generates a weight for previous gradients that decays
         exponentially.
 
-    learning_rate : float, optional (default: 200.0)
+    learning_rate : float, default=200.0
         The learning rate for t-SNE is usually in the range [10.0, 1000.0]. If
         the learning rate is too high, the data may look like a 'ball' with any
         point approximately equidistant from its nearest neighbours. If the
         learning rate is too low, most points may look compressed in a dense
         cloud with few outliers.
 
-    min_gain : float, optional (default: 0.01)
+    min_gain : float, default=0.01
         Minimum individual gain for each parameter.
 
-    min_grad_norm : float, optional (default: 1e-7)
+    min_grad_norm : float, default=1e-7
         If the gradient norm is below this threshold, the optimization will
         be aborted.
 
-    verbose : int, optional (default: 0)
+    verbose : int, default=0
         Verbosity level.
 
-    args : sequence
+    args : sequence, default=None
         Arguments to pass to objective function.
 
-    kwargs : dict
+    kwargs : dict, default=None
         Keyword arguments to pass to objective function.
 
     Returns
@@ -430,10 +430,10 @@ def trustworthiness(X, X_embedded, *, n_neighbors=5, metric='euclidean'):
     X_embedded : array, shape (n_samples, n_components)
         Embedding of the training data in low-dimensional space.
 
-    n_neighbors : int, optional (default: 5)
+    n_neighbors : int, default=5
         Number of neighbors k that will be considered.
 
-    metric : string, or callable, optional, default 'euclidean'
+    metric : string, or callable, default='euclidean'
         Which metric to use for computing pairwise distances between samples
         from the original input space. If metric is 'precomputed', X must be a
         matrix of pairwise distances or squared distances. Otherwise, see the
@@ -495,17 +495,17 @@ class TSNE(BaseEstimator):
 
     Parameters
     ----------
-    n_components : int, optional (default: 2)
+    n_components : int, default=2
         Dimension of the embedded space.
 
-    perplexity : float, optional (default: 30)
+    perplexity : float, default=30
         The perplexity is related to the number of nearest neighbors that
         is used in other manifold learning algorithms. Larger datasets
         usually require a larger perplexity. Consider selecting a value
         between 5 and 50. Different values can result in significanlty
         different results.
 
-    early_exaggeration : float, optional (default: 12.0)
+    early_exaggeration : float, default=12.0
         Controls how tight natural clusters in the original space are in
         the embedded space and how much space will be between them. For
         larger values, the space between natural clusters will be larger
@@ -514,7 +514,7 @@ class TSNE(BaseEstimator):
         optimization, the early exaggeration factor or the learning rate
         might be too high.
 
-    learning_rate : float, optional (default: 200.0)
+    learning_rate : float, default=200.0
         The learning rate for t-SNE is usually in the range [10.0, 1000.0]. If
         the learning rate is too high, the data may look like a 'ball' with any
         point approximately equidistant from its nearest neighbours. If the
@@ -522,11 +522,11 @@ class TSNE(BaseEstimator):
         cloud with few outliers. If the cost function gets stuck in a bad local
         minimum increasing the learning rate may help.
 
-    n_iter : int, optional (default: 1000)
+    n_iter : int, default=1000
         Maximum number of iterations for the optimization. Should be at
         least 250.
 
-    n_iter_without_progress : int, optional (default: 300)
+    n_iter_without_progress : int, default=300
         Maximum number of iterations without progress before we abort the
         optimization, used after 250 initial iterations with early
         exaggeration. Note that progress is only checked every 50 iterations so
@@ -535,11 +535,11 @@ class TSNE(BaseEstimator):
         .. versionadded:: 0.17
            parameter *n_iter_without_progress* to control stopping criteria.
 
-    min_grad_norm : float, optional (default: 1e-7)
+    min_grad_norm : float, default=1e-7
         If the gradient norm is below this threshold, the optimization will
         be stopped.
 
-    metric : string or callable, optional
+    metric : string or callable, default='euclidean'
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string, it must be one of the options
         allowed by scipy.spatial.distance.pdist for its metric parameter, or
@@ -551,13 +551,13 @@ class TSNE(BaseEstimator):
         the distance between them. The default is "euclidean" which is
         interpreted as squared euclidean distance.
 
-    init : string or numpy array, optional (default: "random")
+    init : string or numpy array, default="random"
         Initialization of embedding. Possible options are 'random', 'pca',
         and a numpy array of shape (n_samples, n_components).
         PCA initialization cannot be used with precomputed distances and is
         usually more globally stable than random initialization.
 
-    verbose : int, optional (default: 0)
+    verbose : int, default=0
         Verbosity level.
 
     random_state : int, RandomState instance, default=None
@@ -566,7 +566,7 @@ class TSNE(BaseEstimator):
         initializations might result in different local minima of the cost
         function. See :term: `Glossary <random_state>`.
 
-    method : string (default: 'barnes_hut')
+    method : string, default='barnes_hut'
         By default the gradient calculation algorithm uses Barnes-Hut
         approximation running in O(NlogN) time. method='exact'
         will run on the slower, but exact, algorithm in O(N^2) time. The
@@ -577,7 +577,7 @@ class TSNE(BaseEstimator):
         .. versionadded:: 0.17
            Approximate optimization *method* via the Barnes-Hut.
 
-    angle : float (default: 0.5)
+    angle : float, default=0.5
         Only used if method='barnes_hut'
         This is the trade-off between speed and accuracy for Barnes-Hut T-SNE.
         'angle' is the angular size (referred to as theta in [3]) of a distant
@@ -587,7 +587,7 @@ class TSNE(BaseEstimator):
         in the range of 0.2 - 0.8. Angle less than 0.2 has quickly increasing
         computation time and angle greater 0.8 has quickly increasing error.
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int or None, default=None
         The number of parallel jobs to run for neighbors search. This parameter
         has no impact when ``metric="precomputed"`` or
         (``metric="euclidean"`` and ``method="exact"``).

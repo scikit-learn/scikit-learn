@@ -35,7 +35,7 @@ California housing dataset. The example is taken from [1]_.
 
 print(__doc__)
 
-##############################################################################
+# %%
 # California Housing data preprocessing
 # -------------------------------------
 #
@@ -57,7 +57,7 @@ X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.1, random_state=0
 )
 
-##############################################################################
+# %%
 # 1-way partial dependence with different models
 # ----------------------------------------------
 #
@@ -88,7 +88,7 @@ est.fit(X_train, y_train)
 print(f"done in {time() - tic:.3f}s")
 print(f"Test R2 score: {est.score(X_test, y_test):.2f}")
 
-##############################################################################
+# %%
 # We configured a pipeline to scale the numerical input features and tuned the
 # neural network size and learning rate to get a reasonable compromise between
 # training time and predictive performance on a test set.
@@ -127,7 +127,7 @@ display.figure_.suptitle(
 )
 display.figure_.subplots_adjust(hspace=0.3)
 
-##############################################################################
+# %%
 # Gradient boosting
 # .................
 #
@@ -144,7 +144,7 @@ est.fit(X_train, y_train)
 print(f"done in {time() - tic:.3f}s")
 print(f"Test R2 score: {est.score(X_test, y_test):.2f}")
 
-##############################################################################
+# %%
 # Here, we used the default hyperparameters for the gradient boosting model
 # without any preprocessing as tree-based models are naturally robust to
 # monotonic transformations of numerical features.
@@ -170,7 +170,7 @@ display.figure_.suptitle(
 )
 display.figure_.subplots_adjust(wspace=0.4, hspace=0.3)
 
-##############################################################################
+# %%
 # Analysis of the plots
 # .....................
 #
@@ -200,7 +200,7 @@ display.figure_.subplots_adjust(wspace=0.4, hspace=0.3)
 # However, it is worth noting that we are creating potential meaningless
 # synthetic samples if features are correlated.
 
-##############################################################################
+# %%
 # 2D interaction plots
 # --------------------
 #
@@ -225,7 +225,7 @@ display.figure_.suptitle(
 )
 display.figure_.subplots_adjust(wspace=0.4, hspace=0.3)
 
-#############################################################################
+# %%
 # The two-way partial dependence plot shows the dependence of median house
 # price on joint values of house age and average occupants per household. We
 # can clearly see an interaction between the two features: for an average

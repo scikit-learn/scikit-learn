@@ -58,7 +58,7 @@ from sklearn.datasets import fetch_openml
 df = fetch_openml(data_id=41214, as_frame=True).frame
 df
 
-##############################################################################
+# %%
 # The number of claims (``ClaimNb``) is a positive integer that can be modeled
 # as a Poisson distribution. It is then assumed to be the number of discrete
 # events occurring with a constant rate in a given time interval (``Exposure``,
@@ -85,7 +85,7 @@ _ = df["Exposure"].hist(bins=30, log=True, ax=ax1)
 ax2.set_title("Frequency (number of claims per year)")
 _ = df["Frequency"].hist(bins=30, log=True, ax=ax2)
 
-##############################################################################
+# %%
 # The remaining columns can be used to predict the frequency of claim events.
 # Those columns are very heterogeneous with a mix of categorical and numeric
 # variables with different scales, possibly very unevenly distributed.
@@ -118,8 +118,7 @@ linear_model_preprocessor = ColumnTransformer(
     remainder="drop",
 )
 
-
-##############################################################################
+# %%
 # A constant prediction baseline
 # ------------------------------
 #
@@ -183,7 +182,7 @@ def score_estimator(estimator, df_test):
 print("Constant mean frequency evaluation:")
 score_estimator(dummy, df_test)
 
-##############################################################################
+# %%
 # (Generalized) linear models
 # ---------------------------
 #
@@ -201,7 +200,7 @@ ridge_glm = Pipeline([
 ]).fit(df_train, df_train["Frequency"],
        regressor__sample_weight=df_train["Exposure"])
 
-##############################################################################
+# %%
 # The Poisson deviance cannot be computed on non-positive values predicted by
 # the model. For models that do return a few non-positive predictions (e.g.
 # :class:`~sklearn.linear_model.Ridge`) we ignore the corresponding samples,
@@ -212,7 +211,7 @@ ridge_glm = Pipeline([
 print("Ridge evaluation:")
 score_estimator(ridge_glm, df_test)
 
-##############################################################################
+# %%
 # Next we fit the Poisson regressor on the target variable. We set the
 # regularization strength ``alpha`` to approximately 1e-6 over number of
 # samples (i.e. `1e-12`) in order to mimic the Ridge regressor whose L2 penalty
@@ -238,7 +237,7 @@ poisson_glm.fit(df_train, df_train["Frequency"],
 print("PoissonRegressor evaluation:")
 score_estimator(poisson_glm, df_test)
 
-##############################################################################
+# %%
 # Gradient Boosting Regression Trees for Poisson regression
 # ---------------------------------------------------------
 #
@@ -284,8 +283,7 @@ poisson_gbrt.fit(df_train, df_train["Frequency"],
 print("Poisson Gradient Boosted Trees evaluation:")
 score_estimator(poisson_gbrt, df_test)
 
-
-##############################################################################
+# %%
 # Like the Poisson GLM above, the gradient boosted trees model minimizes
 # the Poisson deviance. However, because of a higher predictive power,
 # it reaches lower values of Poisson deviance.
@@ -325,7 +323,7 @@ for row_idx, label, df in zip(range(2),
         )
 plt.tight_layout()
 
-##############################################################################
+# %%
 # The experimental data presents a long tail distribution for ``y``. In all
 # models, we predict the expected frequency of a random variable, so we will
 # have necessarily fewer extreme values than for the observed realizations of
@@ -437,7 +435,7 @@ for axi, model in zip(ax.ravel(), [ridge_glm, poisson_glm, poisson_gbrt,
     axi.legend()
 plt.tight_layout()
 
-###############################################################################
+# %%
 # The dummy regression model predicts a constant frequency. This model does not
 # attribute the same tied rank to all samples but is none-the-less globally
 # well calibrated (to estimate the mean frequency of the entire population).
@@ -517,7 +515,7 @@ ax.set(
 )
 ax.legend(loc="upper left")
 
-##############################################################################
+# %%
 # As expected, the dummy regressor is unable to correctly rank the samples and
 # therefore performs the worst on this plot.
 #
