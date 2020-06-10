@@ -317,7 +317,7 @@ def partial_dependence(estimator, X, features, *, response_method='auto',
     predictions : ndarray or :class:`~sklearn.utils.Bunch`
 
         - if `kind='legacy'`, return value is ndarray of shape (n_outputs,
-        len(values[0]), len(values[1]), ...)
+          len(values[0]), len(values[1]), ...)
             The predictions for all the points in the grid, averaged
             over all samples in X (or over the training data if ``method``
             is 'recursion').
