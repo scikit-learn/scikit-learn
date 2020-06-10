@@ -1008,18 +1008,22 @@ class SparseCoder(SparseCodingMixin, BaseEstimator):
 
     Examples
     --------
-    >>> import numpy as np
-    >>> from sklearn.decomposition import SparseCoder
-    >>> X = np.array([[1, 1, 1, 1]])
-    >>> dictionary = np.array([
-    ...             [10, 10, 10, 10],
-    ...             [5, 5, 5, 5]
-    ... ])
-    >>> coder = SparseCoder(dictionary=dictionary,
-    ...                     transform_algorithm='threshold',
-    ...                     transform_alpha=5)
-    >>> coder.transform(X)
-    array([[35, 15]])
+    import numpy as np  
+    >>> from sklearn.decomposition import SparseCoder  
+    >>> X = np.array([[-1, -1, -1], [0, 0, 3]])  
+    >>> dictionary = np.array([  
+    ...             [0, 1, 0],  
+    ...             [-1, -1, 2],  
+    ...             [1, 1, 1],  
+    ...             [0, 1, 1], 
+    ...             [0, 2, 1], 
+    ... ]).astype(np.float64)  
+    >>> coder = SparseCoder(dictionary=dictionary,  
+    ...                     transform_algorithm='lasso_lars',
+    ...                     transform_alpha=1e-10) 
+    >>> coder.transform(X)                                                                                                                                                 
+    array([[ 0.,  0., -1.,  0.,  0.],
+        [ 0.,  1.,  1.,  0.,  0.]])
 
     See also
     --------
@@ -1421,7 +1425,7 @@ class MiniBatchDictionaryLearning(SparseCodingMixin, BaseEstimator):
     ...                                    transform_algorithm='lasso_lars')
     >>> X_transformed = dict_learner.fit_transform(X)
     >>> np.mean(np.sum((X_transformed @ dico.components_ - X) ** 2, axis=1) / np.sum(X ** 2, axis=1))
-    0.83...
+    0.100...
 
     Notes
     -----
