@@ -228,7 +228,8 @@ def partial_dependence(estimator, X, features, *, response_method='auto',
         The feature (e.g. `[0]`) or pair of interacting features
         (e.g. `[(0, 1)]`) for which the partial dependency should be computed.
 
-    response_method : 'auto', 'predict_proba' or 'decision_function', default='auto'
+    response_method : {'auto', 'predict_proba', 'decision_function'}, \
+         default='auto'
         Specifies whether to use :term:`predict_proba` or
         :term:`decision_function` as the target response. For regressors
         this parameter is ignored and the response is always the output of
@@ -245,7 +246,7 @@ def partial_dependence(estimator, X, features, *, response_method='auto',
         The number of equally spaced points on the grid, for each target
         feature.
 
-    method : str, default='auto'
+    method : {'auto', 'recursion', 'brute'}, default='auto'
         The method used to calculate the averaged predictions:
 
         - 'recursion' is only supported for some tree-based estimators (namely
