@@ -15,6 +15,9 @@ from _pytest.doctest import DoctestItem
 
 from sklearn.utils import _IS_32BIT
 from sklearn.externals import _pilutil
+from threadpoolctl import threadpool_limits
+from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
+
 
 PYTEST_MIN_VERSION = '3.3.0'
 
@@ -80,6 +83,16 @@ def pytest_collection_modifyitems(config, items):
                     "sklearn.feature_extraction.image.PatchExtractor",
                     "sklearn.feature_extraction.image.extract_patches_2d"]:
                 item.add_marker(skip_marker)
+
+
+@pytest.fixture(autouse=True, scope='session')
+def set_openmp_threadpool():
+    """Set the number of openmp threads based on the number of workers
+    xdist is using to prevent oversubscription."""
+    xdist_worker_count = int(os.environ.get("PYTEST_XDIST_WORKER_COUNT", 1))
+    openmp_threads = _openmp_effective_n_threads()
+    threads_per_worker = max(openmp_threads // xdist_worker_count, 1)
+    threadpool_limits(threads_per_worker, user_api='openmp')
 
 
 def pytest_configure(config):
