@@ -444,7 +444,7 @@ class GaussianRandomProjection(BaseRandomProjection):
         Smaller values lead to better embedding and higher number of
         dimensions (n_components) in the target projection space.
 
-    random_state : int, RandomState instance or None, default=None
+    random_state : int or RandomState instance, default=None
         Controls the pseudo random number generator used to generate the
         projection matrix at fit time.
         Pass an int for reproducible output across multiple function calls.
