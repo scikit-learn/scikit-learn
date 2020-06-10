@@ -436,7 +436,7 @@ class GaussianRandomProjection(BaseRandomProjection):
         very conservative estimated of the required number of components
         as it makes no assumption on the structure of the dataset.
 
-    eps : strictly positive float, default=0.1
+    eps : float, default=0.1
         Parameter to control the quality of the embedding according to
         the Johnson-Lindenstrauss lemma when n_components is set to
         'auto'.
