@@ -29,32 +29,8 @@ cdef extern from "numpy/arrayobject.h":
                                 np.npy_intp* strides,
                                 void* data, int flags, object obj)
 
-# Dummy variable to avoid computing member offsets using a null pointer.
 cdef Cell dummy;
-
-# Repeat struct definition for numpy
-CELL_DTYPE = np.dtype({
-    'names': ['parent', 'children', 'cell_id', 'point_index', 'is_leaf',
-              'max_width', 'depth', 'cumulative_size', 'center', 'barycenter',
-              'min_bounds', 'max_bounds'],
-    'formats': [np.intp, (np.intp, 8), np.intp, np.intp, np.int32, np.float32,
-                np.intp, np.intp, (np.float32, 3), (np.float32, 3),
-                (np.float32, 3), (np.float32, 3)],
-    'offsets': [
-        (<Py_ssize_t>&(dummy.parent) - <Py_ssize_t>&(dummy)),
-        (<Py_ssize_t>&(dummy.children) - <Py_ssize_t>&(dummy)),
-        (<Py_ssize_t>&(dummy.cell_id) - <Py_ssize_t>&(dummy)),
-        (<Py_ssize_t>&(dummy.point_index) - <Py_ssize_t>&(dummy)),
-        (<Py_ssize_t>&(dummy.is_leaf) - <Py_ssize_t>&(dummy)),
-        (<Py_ssize_t>&(dummy.squared_max_width) - <Py_ssize_t>&(dummy)),
-        (<Py_ssize_t>&(dummy.depth) - <Py_ssize_t>&(dummy)),
-        (<Py_ssize_t>&(dummy.cumulative_size) - <Py_ssize_t>&(dummy)),
-        (<Py_ssize_t>&(dummy.center) - <Py_ssize_t>&(dummy)),
-        (<Py_ssize_t>&(dummy.barycenter) - <Py_ssize_t>&(dummy)),
-        (<Py_ssize_t>&(dummy.min_bounds) - <Py_ssize_t>&(dummy)),
-        (<Py_ssize_t>&(dummy.max_bounds) - <Py_ssize_t>&(dummy)),
-    ]
-})
+CELL_DTYPE = np.asarray(<Cell[:1]>(&dummy)).dtype
 
 assert CELL_DTYPE.itemsize == sizeof(Cell)
 
