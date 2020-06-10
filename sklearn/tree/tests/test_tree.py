@@ -1966,7 +1966,8 @@ def test_X_idx_sorted_deprecated(TreeEstimator):
 @pytest.mark.parametrize("tree_type,dataset",
                          [(DecisionTreeRegressor, diabetes),
                              (DecisionTreeClassifier, iris)])
-def test_node_bootstrap(tree_type, dataset):
+def test_node_bootstrap_accuracy(tree_type, dataset):
+    error_threshold = 0.1
     rng = np.random.RandomState(1)
 
     est = tree_type(
@@ -1980,9 +1981,10 @@ def test_node_bootstrap(tree_type, dataset):
 
     est.fit(dataset.data, dataset.target)
     est_bootstrap.fit(dataset.data, dataset.target)
-    score = accuracy_score(est.predict(dataset.data), dataset.target)
-    score_bootstrap = accuracy_score(
-            est_bootstrap.predict(dataset.data), dataset.target)
-    assert score > score_bootstrap, (
-            f'''Failed with a full_sample tree score of {score} and a
-            bootstrapped tree score of {score_bootstrap}.''')
+
+    error = mean_squared_error(
+                    est.feature_importances_,
+                    est_bootstrap.feature_importances_)
+
+    assert error < error_threshold, (f'''Difference between bootstrap
+            and full_sample is {error}, exceeding {error_threshold}''')
