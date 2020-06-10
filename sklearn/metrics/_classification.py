@@ -1838,7 +1838,7 @@ def classification_report(y_true, y_pred, *, labels=None, target_names=None,
     y_pred : 1d array-like, or label indicator array / sparse matrix
         Estimated targets as returned by a classifier.
 
-    labels : array, shape = [n_labels], default=None
+    labels : array-like of shape (n_labels,), default=None
         Optional list of label indices to include in the report.
 
     target_names : list of strings, default=None
