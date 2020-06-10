@@ -829,16 +829,14 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
     if batch_size is None:
         batch_size = n_samples
         max_iter_update_w_ = 1
-        i, slice = list(enumerate(gen_batches(n=n_samples, batch_size=batch_size)))[0]
 
     for n_iter in range(1, max_iter + 1):
-        #for i, slice in enumerate(gen_batches(n=n_samples,
-        #                                      batch_size=batch_size)):
+        for i, slice in enumerate(gen_batches(n=n_samples,
+                                              batch_size=batch_size)):
 
             # update W
             # H_sum, HHt and XHt are saved and reused if not update_H
             for j in range(max_iter_update_w_):
-                print(n_iter, i, j)
                 delta_W, H_sum, HHt, XHt = _multiplicative_update_w(
                     X[slice], W[slice], H, beta_loss, l1_reg_W, l2_reg_W,
                     gamma, H_sum, HHt, XHt, update_H)
@@ -866,19 +864,19 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
                 if beta_loss <= 1:
                     H[H < np.finfo(np.float64).eps] = 0.
 
-            # test convergence criterion every 10 iterations
-            if tol > 0 and n_iter % 10 == 0:
-                error = _beta_divergence(X, W, H, beta_loss,
-                                         square_root=True)
+        # test convergence criterion every 10 iterations
+        if tol > 0 and n_iter % 10 == 0:
+            error = _beta_divergence(X, W, H, beta_loss,
+                                     square_root=True)
 
-                if verbose:
-                    iter_time = time.time()
-                    print("Epoch %02d reached after %.3f seconds, error: %f" %
-                          (n_iter, iter_time - start_time, error))
+            if verbose:
+                iter_time = time.time()
+                print("Epoch %02d reached after %.3f seconds, error: %f" %
+                      (n_iter, iter_time - start_time, error))
 
-                if (previous_error - error) / error_at_init < tol:
-                    break
-                previous_error = error
+            if (previous_error - error) / error_at_init < tol:
+                break
+            previous_error = error
 
     # do not print if we have already printed in the convergence test
     if verbose and (tol == 0 or n_iter % 10 != 0):
