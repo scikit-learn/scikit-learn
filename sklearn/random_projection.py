@@ -547,7 +547,7 @@ class SparseRandomProjection(BaseRandomProjection):
         Use density = 1 / 3.0 if you want to reproduce the results from
         Achlioptas, 2001.
 
-    eps : strictly positive float, default=0.1
+    eps : float, default=0.1
         Parameter to control the quality of the embedding according to
         the Johnson-Lindenstrauss lemma when n_components is set to
         'auto'.
