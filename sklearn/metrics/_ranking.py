@@ -135,7 +135,8 @@ def average_precision_score(y_true, y_score, *, average="macro", pos_label=1,
         class, confidence values, or non-thresholded measure of decisions
         (as returned by "decision_function" on some classifiers).
 
-    average : string, [None, 'micro', 'samples', 'weighted', default="macro"]
+    average : {'micro', 'samples', 'weighted', 'macro'} or None, \
+            default='macro'
         If ``None``, the scores for each class are returned. Otherwise,
         this determines the type of averaging performed on the data:
 
