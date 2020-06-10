@@ -323,7 +323,7 @@ def partial_dependence(estimator, X, features, *, response_method='auto',
             is 'recursion').
 
         - if `kind='individual'`, `'average'` or `'both'`, return value is
-        :class:`~sklearn.utils.Bunch` Dictionary-like object, with the
+          :class:`~sklearn.utils.Bunch` Dictionary-like object, with the
         following attributes.
 
             individual : ndarray of shape (n_outputs, n_instances,
