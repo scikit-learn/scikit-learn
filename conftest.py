@@ -85,8 +85,7 @@ def pytest_collection_modifyitems(config, items):
                 item.add_marker(skip_marker)
 
 
-@pytest.fixture(autouse=True, scope='session')
-def set_openmp_threadpool():
+def pytest_testnodeready(node):
     """Set the number of openmp threads based on the number of workers
     xdist is using to prevent oversubscription."""
     xdist_worker_count = int(os.environ.get("PYTEST_XDIST_WORKER_COUNT", 1))
