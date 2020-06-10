@@ -83,9 +83,11 @@ def johnson_lindenstrauss_min_dim(n_samples, *, eps=0.1):
         a safe number of components array-wise.
 
     eps : float or ndarray of shape (n_components,), dtype=float, default=0.1
-        Maximum distortion rate as defined by the Johnson-Lindenstrauss lemma.
+        float in range(0, 1)
+        Maximum distortion rate as defined by the \
+        Johnson-Lindenstrauss lemma.
         If an array is given, it will compute a safe number of components
-        array-wise.
+        array-wise. 
 
     Returns
     -------
@@ -218,6 +220,7 @@ def _sparse_random_matrix(n_components, n_features, density='auto',
         Dimensionality of the original source space.
 
     density : float or 'auto', default='auto'
+        float in range (0,1]
         Ratio of non-zero component in the random projection matrix.
 
         If density = 'auto', the value is set to the minimum density
@@ -437,6 +440,7 @@ class GaussianRandomProjection(BaseRandomProjection):
         as it makes no assumption on the structure of the dataset.
 
     eps : float, default=0.1
+        Strictly positive.
         Parameter to control the quality of the embedding according to
         the Johnson-Lindenstrauss lemma when n_components is set to
         'auto'.
@@ -539,6 +543,7 @@ class SparseRandomProjection(BaseRandomProjection):
         as it makes no assumption on the structure of the dataset.
 
     density : float or 'auto', default='auto'
+        float in range (0,1]
         Ratio of non-zero component in the random projection matrix.
 
         If density = 'auto', the value is set to the minimum density
@@ -548,10 +553,11 @@ class SparseRandomProjection(BaseRandomProjection):
         Achlioptas, 2001.
 
     eps : float, default=0.1
+        Strictly positive.
         Parameter to control the quality of the embedding according to
         the Johnson-Lindenstrauss lemma when n_components is set to
         'auto'.
-
+    
         Smaller values lead to better embedding and higher number of
         dimensions (n_components) in the target projection space.
 
