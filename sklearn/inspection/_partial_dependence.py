@@ -316,23 +316,24 @@ def partial_dependence(estimator, X, features, *, response_method='auto',
     -------
     predictions : ndarray or :class:`~sklearn.utils.Bunch`
 
-        - if `kind='legacy'`, return value is ndarray of shape (n_outputs,
-          len(values[0]), len(values[1]), ...)
+        - if `kind='legacy'`, return value is ndarray of shape (n_outputs, \
+                len(values[0]), len(values[1]), ...)
             The predictions for all the points in the grid, averaged
             over all samples in X (or over the training data if ``method``
             is 'recursion').
 
-        - if `kind='individual'`, `'average'` or `'both'`, return value is
-          :class:`~sklearn.utils.Bunch` Dictionary-like object, with the
-          following attributes.
+        - if `kind='individual'`, `'average'` or `'both'`, return value is \
+                :class:`~sklearn.utils.Bunch` Dictionary-like object, with \
+                the following attributes.
 
-            individual : ndarray of shape (n_outputs, n_instances,
-            len(values[0]), len(values[1]), ...)
+            individual : ndarray of shape (n_outputs, n_instances, \
+                    len(values[0]), len(values[1]), ...)
                 The predictions for all the points in the grid for all
                 samples in X. This is also known as Individual
                 Conditional Expectation (ICE)
-            average : ndarray of shape (n_outputs, len(values[0]),
-            len(values[1]), ...)
+
+            average : ndarray of shape (n_outputs, len(values[0]), \
+                    len(values[1]), ...)
                 The predictions for all the points in the grid, averaged
                 over all samples in X (or over the training data if
                 ``method`` is 'recursion').
