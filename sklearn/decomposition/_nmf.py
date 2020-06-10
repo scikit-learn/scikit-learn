@@ -849,10 +849,10 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
             # update H
             if update_H:
                 delta_H, A, B = _multiplicative_update_h(X[slice], W[slice], H,
-                                                   A, B,
-                                                   beta_loss, l1_reg_H,
-                                                   l2_reg_H, gamma,
-                                                   n_iter_update_h_)
+                                                         A, B,
+                                                         beta_loss, l1_reg_H,
+                                                         l2_reg_H, gamma,
+                                                         n_iter_update_h_)
                 H *= delta_H
 
                 n_iter_update_h_ += 1
