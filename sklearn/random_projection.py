@@ -424,7 +424,7 @@ class GaussianRandomProjection(BaseRandomProjection):
 
     Parameters
     ----------
-    n_components : int or 'auto', default=auto'
+    n_components : int or 'auto', default='auto'
         Dimensionality of the target projection space.
 
         n_components can be automatically adjusted according to the
