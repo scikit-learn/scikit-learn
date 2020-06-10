@@ -42,7 +42,7 @@ cp setup.cfg $TEST_DIR
 cd $TEST_DIR
 
 set -x
-if [[ "$SKLEARN_RUN_NETWORK_TESTS" == "true" ]]; then
+if [[ "$SKLEARN_SKIP_NETWORK_TESTS" == "false" ]]; then
     # Tests that require large downloads over the networks are skipped in CI.
     # Here we make sure, that they are still run on a regular basis.
     $TEST_CMD --pyargs sklearn -m 'not skipnetwork'
