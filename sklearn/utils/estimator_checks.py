@@ -162,7 +162,7 @@ def check_supervised_y_no_nan(name, estimator_orig,
                               dataset_factory=default_dataset_factory):
     # Checks that the Estimator targets are not NaN.
     estimator = clone(estimator_orig)
-    X, y = dataset_factory(**estimator_orig.get_tags())
+    X, y = dataset_factory(**estimator_orig._get_tags())
     y[:] = np.inf
     y = _enforce_estimator_tags_y(estimator, y)
 
@@ -844,7 +844,7 @@ def check_sample_weights_shape(name, estimator_orig,
             not (hasattr(estimator_orig, "_pairwise")
                  and estimator_orig._pairwise)):
         estimator = clone(estimator_orig)
-        X, y = dataset_factory(**estimator_orig.get_tags())
+        X, y = dataset_factory(**estimator_orig._get_tags())
         y = _enforce_estimator_tags_y(estimator, y)
 
         estimator.fit(X, y, sample_weight=np.ones(len(y)))
@@ -868,7 +868,7 @@ def check_sample_weights_invariance(name, estimator_orig, kind="ones",
     set_random_state(estimator1, random_state=0)
     set_random_state(estimator2, random_state=0)
 
-    X1, y1 = dataset_factory(**estimator_orig.get_tags())
+    X1, y1 = dataset_factory(**estimator_orig._get_tags())
 
     if kind == 'ones':
         X2 = X1
@@ -2813,7 +2813,7 @@ def check_classifiers_regression_target(
         estimator_orig,
         dataset_factory=default_dataset_factory):
     # Check if classifier throws an exception when fed regression targets
-    X, y = dataset_factory(continuous_y=True, **estimator_orig.get_tags())
+    X, y = dataset_factory(continuous_y=True, **estimator_orig._get_tags())
     X += X.min(axis=0)
     e = clone(estimator_orig)
     msg = 'Unknown label type: '
@@ -2848,7 +2848,7 @@ def check_outliers_fit_predict(name, estimator_orig,
                                dataset_factory=default_dataset_factory):
     # Check fit_predict for outlier detectors.
     n_samples = 300
-    X, _ = dataset_factory(n_samples=n_samples, **estimator_orig.get_tags())
+    X, _ = dataset_factory(n_samples=n_samples, **estimator_orig._get_tags())
     estimator = clone(estimator_orig)
 
     set_random_state(estimator)
