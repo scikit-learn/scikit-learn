@@ -11,6 +11,7 @@ from ._agglomerative import (ward_tree, AgglomerativeClustering,
                              linkage_tree, FeatureAgglomeration)
 from ._kmeans import k_means, KMeans, MiniBatchKMeans
 from ._dbscan import dbscan, DBSCAN
+from ._cnn import cnn, CNN
 from ._optics import (OPTICS, cluster_optics_dbscan, compute_optics_graph,
                       cluster_optics_xi)
 from ._bicluster import SpectralBiclustering, SpectralCoclustering
@@ -20,6 +21,7 @@ __all__ = ['AffinityPropagation',
            'AgglomerativeClustering',
            'Birch',
            'DBSCAN',
+           'CNN',
            'OPTICS',
            'cluster_optics_dbscan',
            'cluster_optics_xi',
@@ -31,6 +33,7 @@ __all__ = ['AffinityPropagation',
            'SpectralClustering',
            'affinity_propagation',
            'dbscan',
+           'cnn',
            'estimate_bandwidth',
            'get_bin_seeds',
            'k_means',
