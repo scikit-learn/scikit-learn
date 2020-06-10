@@ -130,9 +130,6 @@ def test_docstring_parameters():
                 continue
             if fname == "configuration" and name.endswith("setup"):
                 continue
-            # ignore functions in conftest
-            if name.endswith("conftest"):
-                continue
             name_ = _get_func_name(func)
             if (not any(d in name_ for d in _DOCSTRING_IGNORES) and
                     not _is_deprecated(func)):

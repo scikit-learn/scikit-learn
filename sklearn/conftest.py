@@ -28,8 +28,13 @@ def pyplot():
 
 def pytest_runtest_setup(item):
     """Set the number of openmp threads based on the number of workers
-    xdist is using to prevent oversubscription."""
+    xdist is using to prevent oversubscription.
 
+    Parameters
+    ----------
+    item : pytest item
+        item to be processed
+    """
     try:
         xdist_worker_count = int(os.environ['PYTEST_XDIST_WORKER_COUNT'])
     except KeyError:
