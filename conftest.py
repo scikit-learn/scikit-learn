@@ -84,7 +84,8 @@ def pytest_collection_modifyitems(config, items):
     datasets_to_download = set()
 
     for item in items:
-        dataset_to_fetch = set(item.keywords) & dataset_features_set
+        item_keywords = set(item.keywords)
+        dataset_to_fetch = item_keywords & dataset_features_set
         if not dataset_to_fetch:
             continue
 
@@ -134,9 +135,20 @@ def pytest_collection_modifyitems(config, items):
                 item.add_marker(skip_marker)
 
 
+def pytest_runtest_setup(item):
+    run_network_tests = 'not skipnetwork' in item.config.getoption("markexpr")
+    if "network" in item.keywords and not run_network_tests:
+        pytest.skip("test requires -m 'not skipnetwork' to run")
+
+
 def pytest_configure(config):
     import sys
     sys._is_pytest_session = True
+    # declare our custom markers to avoid PytestUnknownMarkWarning
+    config.addinivalue_line(
+        "markers",
+        "network: mark a test for execution if network available."
+    )
 
 
 def pytest_unconfigure(config):
