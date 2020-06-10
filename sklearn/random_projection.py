@@ -226,7 +226,7 @@ def _sparse_random_matrix(n_components, n_features, density='auto',
         Use density = 1 / 3.0 if you want to reproduce the results from
         Achlioptas, 2001.
 
-    random_state : int, RandomState instance or None, default=None
+    random_state : int or RandomState instance, default=None
         Controls the pseudo random number generator used to generate the matrix
         at fit time.
         Pass an int for reproducible output across multiple function calls.
