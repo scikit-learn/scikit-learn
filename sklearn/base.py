@@ -50,7 +50,7 @@ def clone(estimator, *, safe=True):
 
     Parameters
     ----------
-    estimator : list, tuple or set of BaseEstimator
+    estimator : {list, tuple, set} of BaseEstimator or a single BaseEstimator
         The estimator or group of estimators to be cloned.
 
     safe : bool, default=True
@@ -591,7 +591,7 @@ class BiclusterMixin:
         return self.rows_, self.columns_
 
     def get_indices(self, i):
-        """Row and column indices of the i'th bicluster.
+        """Row and column indices of the `i`'th bicluster.
 
         Only works if ``rows_`` and ``columns_`` attributes exist.
 
@@ -613,7 +613,7 @@ class BiclusterMixin:
         return np.nonzero(rows)[0], np.nonzero(columns)[0]
 
     def get_shape(self, i):
-        """Shape of the i'th bicluster.
+        """Shape of the `i`'th bicluster.
 
         Parameters
         ----------
@@ -622,8 +622,11 @@ class BiclusterMixin:
 
         Returns
         -------
-        shape : tuple (int, int)
-            Number of rows and columns (resp.) in the bicluster.
+        n_rows : int
+            Number of rows in the bicluster.
+
+        n_cols : int
+            Number of columns in the bicluster.
         """
         indices = self.get_indices(i)
         return tuple(len(i) for i in indices)
@@ -635,13 +638,13 @@ class BiclusterMixin:
         ----------
         i : int
             The index of the cluster.
-        data : array-like
+        data : array-like of shape (n_samples, n_features)
             The data.
 
         Returns
         -------
-        submatrix : ndarray
-            The submatrix corresponding to bicluster i.
+        submatrix : ndarray of shape (n_rows, n_cols)
+            The submatrix corresponding to bicluster `i`.
 
         Notes
         -----
@@ -666,12 +669,11 @@ class TransformerMixin:
 
         Parameters
         ----------
-        X : {array-like, sparse matrix, dataframe} of shape \
-                (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Input samples.
 
-        y :  {array-like, sparse matrix, dataframe} of shape (n_samples,) \
-                or (n_samples, n_outputs), default=None
+        y :  array-like of shape (n_samples,) or (n_samples, n_outputs), \
+                default=None
             Target values (None for unsupervised transformations).
 
         **fit_params : dict
@@ -697,11 +699,12 @@ class DensityMixin:
     _estimator_type = "DensityEstimator"
 
     def score(self, X, y=None):
-        """Return the score of the model on the data X.
+        """Return the score of the model on the data `X`.
 
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
+            Test samples.
 
         y : Ignored
             Not used, present for API consistency by convention.
