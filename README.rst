@@ -24,9 +24,6 @@
 .. _DOI: https://zenodo.org/badge/latestdoi/21369/scikit-learn/scikit-learn
 
 .. image:: doc/logos/scikit-learn-logo.png
-  :width: 600
-  :align: center
-  :alt: sklearn logo
   :target: https://scikit-learn.org/
 
 **scikit-learn** is a Python module for machine learning built on top of
