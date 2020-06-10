@@ -2269,7 +2269,7 @@ def hinge_loss(y_true, pred_decision, *, labels=None, sample_weight=None):
     pred_decision : array, shape = [n_samples] or [n_samples, n_classes]
         Predicted decisions, as output by decision_function (floats).
 
-    labels : array, default=None
+    labels : array-like, default=None
         Contains all the labels for the problem. Used in multiclass hinge loss.
 
     sample_weight : array-like of shape (n_samples,), default=None
