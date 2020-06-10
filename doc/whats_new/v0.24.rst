@@ -44,6 +44,14 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
+:mod:`sklearn.datasets`
+.......................
+
+- |Enhancement| :func:`datasets.fetch_openml` now allows argument `as_frame`
+  to be 'auto', which tries to convert returned data to pandas DataFrame
+  unless data is sparse.
+  :pr:`17396` by :user:`Jiaxiang <fujiaxiang>`.
+
 :mod:`sklearn.decomposition`
 ............................
 
