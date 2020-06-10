@@ -19,6 +19,11 @@ def configuration(parent_package='', top_path=None):
                          include_dirs=[numpy.get_include()],
                          language="c++")
 
+    config.add_extension('_cnn_inner',
+                         sources=['_cnn_inner.pyx'],
+                         include_dirs=[numpy.get_include()],
+                         language="c++")
+
     config.add_extension('_hierarchical_fast',
                          sources=['_hierarchical_fast.pyx'],
                          language="c++",
