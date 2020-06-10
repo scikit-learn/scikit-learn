@@ -538,7 +538,7 @@ class SparseRandomProjection(BaseRandomProjection):
         very conservative estimated of the required number of components
         as it makes no assumption on the structure of the dataset.
 
-    density : float in range (0, 1], default='auto'
+    density : float or 'auto', default='auto'
         Ratio of non-zero component in the random projection matrix.
 
         If density = 'auto', the value is set to the minimum density
