@@ -566,7 +566,7 @@ class SparseRandomProjection(BaseRandomProjection):
         If False, the projected data uses a sparse representation if
         the input is sparse.
 
-    random_state : int, RandomState instance or None, default=None
+    random_state : int or RandomState instance, default=None
         Controls the pseudo random number generator used to generate the
         projection matrix at fit time.
         Pass an int for reproducible output across multiple function calls.
