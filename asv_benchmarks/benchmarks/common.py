@@ -63,13 +63,6 @@ def get_estimator_path(benchmark, directory, params, save=False):
     return path / filename
 
 
-def get_data_path(benchmark):
-    """Get path of pickled dataset"""
-    filename = (benchmark.__class__.__name__
-                + '_data_makers.pkl')
-    return Path(__file__).resolve().parent / 'cache' / 'tmp' / filename
-
-
 def clear_tmp():
     """Clean the tmp directory"""
     path = Path(__file__).resolve().parent / 'cache' / 'tmp'
@@ -150,10 +143,7 @@ class Estimator(ABC):
                 pickle.dump(estimator, f)
 
     def setup(self, *params):
-        """Run for each param combination
-
-        Load the pickled dataset and fitted estimator and run the benchmark.
-        """
+        """Generate dataset and load the fitted estimator"""
         # This is run once per combination of parameters and per repeat so we
         # need to avoid doing expensive operations there.
 
