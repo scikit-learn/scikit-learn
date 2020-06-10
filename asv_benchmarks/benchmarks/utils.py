@@ -42,11 +42,3 @@ def make_pca_scorers(caller):
     caller.test_scorer = lambda _, __: (
         explained_variance_ratio(caller.estimator.transform(caller.X_val),
                                  caller.X_val))
-
-
-def optimal_cache_size(n_features, dtype=np.float32):
-    byte_size = np.empty(0, dtype=dtype).itemsize
-    optimal_cache_size_bytes = n_features * n_features * byte_size
-    eight_gb = 8e9
-    cache_size_bytes = min(optimal_cache_size_bytes, eight_gb)
-    return cache_size_bytes

@@ -18,7 +18,7 @@ class KNeighborsClassifierBenchmark(Predictor, Estimator, Benchmark):
     def setup_cache(self):
         super().setup_cache()
 
-    def setup_cache_(self, params):
+    def make_data(self, params):
         algorithm, dimension, n_jobs = params
 
         if Benchmark.data_size == 'large':
@@ -28,10 +28,15 @@ class KNeighborsClassifierBenchmark(Predictor, Estimator, Benchmark):
 
         data = _20newsgroups_lowdim_dataset(n_components=n_components)
 
+        return data
+
+    def make_estimator(self, params):
+        algorithm, dimension, n_jobs = params
+
         estimator = KNeighborsClassifier(algorithm=algorithm,
                                          n_jobs=n_jobs)
 
-        return data, estimator
+        return estimator
 
     def make_scorers(self):
         make_gen_classif_scorers(self)

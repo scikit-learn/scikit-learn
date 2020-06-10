@@ -55,10 +55,13 @@ class GridSearchBenchmark(Predictor, Estimator, Benchmark):
     def setup_cache(self):
         super().setup_cache()
 
-    def setup_cache_(self, params):
-        n_jobs, = params
-
+    def make_data(self, params):
         data = _synth_classification_dataset(n_samples=10000, n_features=100)
+
+        return data
+
+    def make_estimator(self, params):
+        n_jobs, = params
 
         clf = RandomForestClassifier(random_state=0)
 
@@ -77,7 +80,7 @@ class GridSearchBenchmark(Predictor, Estimator, Benchmark):
 
         estimator = GridSearchCV(clf, param_grid, n_jobs=n_jobs, cv=4)
 
-        return data, estimator
+        return estimator
 
     def make_scorers(self):
         make_gen_classif_scorers(self)

@@ -111,20 +111,34 @@ class Benchmark(ABC):
 class Estimator(ABC):
     """Abstract base class for all benchmarks of estimators"""
     @abstractmethod
-    def setup_cache_(self, params):
+    def make_data(self, params):
+        """Return the dataset for a combination of parameters"""
+        # The datasets are cached using joblib.Memory so it's fast and can be
+        # called for each repeat
         pass
 
-    def setup_cache(self):
-        """Run once per benchmark class
-
-        Create and pickle all datasets needed for all param combinations.
-        Pickle a fitted estimator for all param combinations.
+    @abstractmethod
+    def make_estimator(self, params):
+        """Return an instance of the estimator for a combination of parameters
         """
+        pass
+
+    def skip(self, params):
+        """Return True if the benchmark should be skipped for these params"""
+        return False
+
+    def setup_cache(self):
+        """Pickle a fitted estimator for all combinations of parameters"""
+        # This is run once per benchmark class.
+
         clear_tmp()
 
         param_grid = list(itertools.product(*self.params))
 
         for params in param_grid:
+            if self.skip(params):
+                continue
+
             estimator = self.make_estimator(params)
             X, _, y, _ = self.make_data(params)
 
@@ -140,8 +154,11 @@ class Estimator(ABC):
 
         Load the pickled dataset and fitted estimator and run the benchmark.
         """
-        if hasattr(self, 'setup_'):
-            self.setup_(params)
+        # This is run once per combination of parameters and per repeat so we
+        # need to avoid doing expensive operations there.
+
+        if self.skip(params):
+            raise NotImplementedError
 
         self.X, self.X_val, self.y, self.y_val = self.make_data(params)
 

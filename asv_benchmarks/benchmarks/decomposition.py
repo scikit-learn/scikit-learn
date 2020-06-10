@@ -5,8 +5,6 @@ from .common import Benchmark, Estimator, Transformer
 from .datasets import _olivetti_faces_dataset, _mnist_dataset
 from .utils import make_pca_scorers, make_dict_learning_scorers
 
-from functools import partial
-
 
 class PCABenchmark(Transformer, Estimator, Benchmark):
     """
@@ -18,9 +16,6 @@ class PCABenchmark(Transformer, Estimator, Benchmark):
 
     def setup_cache(self):
         super().setup_cache()
-
-    def setup_cache_(self, params):
-        pass
 
     def make_data(self, params):
         return _mnist_dataset()
@@ -49,10 +44,11 @@ class DictionaryLearningBenchmark(Transformer, Estimator, Benchmark):
     def setup_cache(self):
         super().setup_cache()
 
-    def setup_cache_(self, params):
-        fit_algorithm, n_jobs = params
+    def make_data(self, params):
+        return _olivetti_faces_dataset()
 
-        data = _olivetti_faces_dataset()
+    def make_estimator(self, params):
+        fit_algorithm, n_jobs = params
 
         estimator = DictionaryLearning(n_components=15,
                                        fit_algorithm=fit_algorithm,
@@ -62,7 +58,7 @@ class DictionaryLearningBenchmark(Transformer, Estimator, Benchmark):
                                        random_state=0,
                                        n_jobs=n_jobs)
 
-        return data, estimator
+        return estimator
 
     def make_scorers(self):
         make_dict_learning_scorers(self)
@@ -79,10 +75,11 @@ class MiniBatchDictionaryLearningBenchmark(Transformer, Estimator, Benchmark):
     def setup_cache(self):
         super().setup_cache()
 
-    def setup_cache_(self, params):
-        fit_algorithm, n_jobs = params
+    def make_data(self, params):
+        return _olivetti_faces_dataset()
 
-        data = _olivetti_faces_dataset()
+    def make_estimator(self, params):
+        fit_algorithm, n_jobs = params
 
         estimator = MiniBatchDictionaryLearning(n_components=15,
                                                 fit_algorithm=fit_algorithm,
@@ -91,7 +88,7 @@ class MiniBatchDictionaryLearningBenchmark(Transformer, Estimator, Benchmark):
                                                 random_state=0,
                                                 n_jobs=n_jobs)
 
-        return data, estimator
+        return estimator
 
     def make_scorers(self):
         make_dict_learning_scorers(self)

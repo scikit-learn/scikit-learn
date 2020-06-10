@@ -2,7 +2,7 @@ from sklearn.svm import SVC
 
 from .common import Benchmark, Estimator, Predictor
 from .datasets import _synth_classification_dataset
-from .utils import optimal_cache_size, make_gen_classif_scorers
+from .utils import make_gen_classif_scorers
 
 
 class SVCBenchmark(Predictor, Estimator, Benchmark):
@@ -14,19 +14,19 @@ class SVCBenchmark(Predictor, Estimator, Benchmark):
     def setup_cache(self):
         super().setup_cache()
 
-    def setup_cache_(self, params):
+    def make_data(self, params):
+        return _synth_classification_dataset()
+
+    def make_estimator(self, params):
         kernel, = params
 
-        data = _synth_classification_dataset()
-
-        estimator = SVC(cache_size=optimal_cache_size(data[0].shape[1]),
-                        max_iter=100,
+        estimator = SVC(max_iter=100,
                         tol=1e-16,
                         kernel=kernel,
                         random_state=0,
                         gamma='scale')
 
-        return data, estimator
+        return estimator
 
     def make_scorers(self):
         make_gen_classif_scorers(self)

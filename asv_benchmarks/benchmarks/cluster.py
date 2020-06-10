@@ -20,23 +20,29 @@ class KMeansBenchmark(Predictor, Transformer, Estimator, Benchmark):
     def setup_cache(self):
         super().setup_cache()
 
-    def setup_cache_(self, params):
+    def make_data(self, params):
         representation, algorithm = params
 
         if Benchmark.data_size == 'large':
             if representation == 'sparse':
                 data = _20newsgroups_highdim_dataset(ngrams=(1, 2))
-                n_clusters = 20
             else:
                 data = _blobs_dataset()
-                n_clusters = 1024
         else:
             if representation == 'sparse':
                 data = _20newsgroups_highdim_dataset()
-                n_clusters = 20
             else:
                 data = _blobs_dataset()
-                n_clusters = 256
+
+        return data
+
+    def make_estimator(self, params):
+        representation, algorithm = params
+
+        if representation == 'sparse':
+            n_clusters = 20
+        else:
+            n_clusters = 1024 if Benchmark.data_size == 'large' else 256
 
         estimator = KMeans(n_clusters=n_clusters,
                            algorithm=algorithm,
@@ -46,7 +52,7 @@ class KMeansBenchmark(Predictor, Transformer, Estimator, Benchmark):
                            tol=1e-16,
                            random_state=0)
 
-        return data, estimator
+        return estimator
 
     def make_scorers(self):
         self.train_scorer = (

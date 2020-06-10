@@ -17,15 +17,20 @@ class RandomForestClassifierBenchmark(Predictor, Estimator, Benchmark):
     def setup_cache(self):
         super().setup_cache()
 
-    def setup_cache_(self, params):
+    def make_data(self, params):
         representation, n_jobs = params
-
-        n_estimators = 500 if Benchmark.data_size == 'large' else 100
 
         if representation == 'sparse':
             data = _20newsgroups_highdim_dataset()
         else:
             data = _20newsgroups_lowdim_dataset()
+
+        return data
+
+    def make_estimator(self, params):
+        representation, n_jobs = params
+
+        n_estimators = 500 if Benchmark.data_size == 'large' else 100
 
         estimator = RandomForestClassifier(n_estimators=n_estimators,
                                            min_samples_split=10,
@@ -33,7 +38,7 @@ class RandomForestClassifierBenchmark(Predictor, Estimator, Benchmark):
                                            n_jobs=n_jobs,
                                            random_state=0)
 
-        return data, estimator
+        return estimator
 
     def make_scorers(self):
         make_gen_classif_scorers(self)
@@ -50,22 +55,27 @@ class GradientBoostingClassifierBenchmark(Predictor, Estimator, Benchmark):
     def setup_cache(self):
         super().setup_cache()
 
-    def setup_cache_(self, params):
+    def make_data(self, params):
         representation, = params
-
-        n_estimators = 100 if Benchmark.data_size == 'large' else 10
 
         if representation == 'sparse':
             data = _20newsgroups_highdim_dataset()
         else:
             data = _20newsgroups_lowdim_dataset()
 
+        return data
+
+    def make_estimator(self, params):
+        representation, = params
+
+        n_estimators = 100 if Benchmark.data_size == 'large' else 10
+
         estimator = GradientBoostingClassifier(n_estimators=n_estimators,
                                                max_features='log2',
                                                subsample=0.5,
                                                random_state=0)
 
-        return data, estimator
+        return estimator
 
     def make_scorers(self):
         make_gen_classif_scorers(self)
