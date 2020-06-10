@@ -217,7 +217,7 @@ def _sparse_random_matrix(n_components, n_features, density='auto',
     n_features : int,
         Dimensionality of the original source space.
 
-    density : float in range (0, 1] or 'auto', default='auto'
+    density : float or 'auto', default='auto'
         Ratio of non-zero component in the random projection matrix.
 
         If density = 'auto', the value is set to the minimum density
