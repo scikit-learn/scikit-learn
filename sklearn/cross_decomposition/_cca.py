@@ -1,5 +1,6 @@
 from ._pls import _PLS
 from ..base import _UnstableArchMixin
+from ..utils.validation import _deprecate_positional_args
 
 __all__ = ['CCA']
 
@@ -13,19 +14,19 @@ class CCA(_UnstableArchMixin, _PLS):
 
     Parameters
     ----------
-    n_components : int, (default 2).
+    n_components : int, default=2
         number of components to keep.
 
-    scale : boolean, (default True)
+    scale : boolean, default=True
         whether to scale the data?
 
-    max_iter : an integer, (default 500)
+    max_iter : an integer, default=500
         the maximum number of iterations of the NIPALS inner loop
 
-    tol : non-negative real, default 1e-06.
+    tol : non-negative real, default=1e-06.
         the tolerance used in the iterative algorithm
 
-    copy : boolean
+    copy : boolean, default=True
         Whether the deflation be done on a copy. Let the default value
         to True unless you don't care about side effects
 
@@ -54,6 +55,9 @@ class CCA(_UnstableArchMixin, _PLS):
 
     y_rotations_ : array, [q, n_components]
         Y block to latents rotations.
+
+    coef_ : array of shape (p, q)
+        The coefficients of the linear model: ``Y = X coef_ + Err``
 
     n_iter_ : array-like
         Number of iterations of the NIPALS inner loop for each
@@ -99,7 +103,8 @@ class CCA(_UnstableArchMixin, _PLS):
     PLSSVD
     """
 
-    def __init__(self, n_components=2, scale=True,
+    @_deprecate_positional_args
+    def __init__(self, n_components=2, *, scale=True,
                  max_iter=500, tol=1e-06, copy=True):
         super().__init__(n_components=n_components, scale=scale,
                          deflation_mode="canonical", mode="B",

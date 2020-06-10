@@ -17,6 +17,8 @@ from .common cimport hist_struct
 from .common cimport X_BINNED_DTYPE_C
 from .common cimport G_H_DTYPE_C
 
+np.import_array()
+
 # Notes:
 # - IN views are read-only, OUT views are write-only
 # - In a lot of functions here, we pass feature_idx and the whole 2d

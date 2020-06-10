@@ -4,6 +4,7 @@ import pytest
 import numpy as np
 from scipy.sparse import coo_matrix, csc_matrix, csr_matrix
 from scipy import stats
+from scipy.special import comb
 from itertools import combinations
 from itertools import combinations_with_replacement
 from itertools import permutations
@@ -46,8 +47,6 @@ from sklearn.model_selection._split import _build_repr
 from sklearn.datasets import load_digits
 from sklearn.datasets import make_classification
 
-from sklearn.utils.fixes import comb
-
 from sklearn.svm import SVC
 
 X = np.ones(10)
@@ -61,69 +60,6 @@ test_groups = (
     [1, 1, 1, 1, 2, 2, 2, 3, 3, 3, 3, 3],
     ['1', '1', '1', '1', '2', '2', '2', '3', '3', '3', '3', '3'])
 digits = load_digits()
-
-
-class MockClassifier:
-    """Dummy classifier to test the cross-validation"""
-
-    def __init__(self, a=0, allow_nd=False):
-        self.a = a
-        self.allow_nd = allow_nd
-
-    def fit(self, X, Y=None, sample_weight=None, class_prior=None,
-            sparse_sample_weight=None, sparse_param=None, dummy_int=None,
-            dummy_str=None, dummy_obj=None, callback=None):
-        """The dummy arguments are to test that this fit function can
-        accept non-array arguments through cross-validation, such as:
-            - int
-            - str (this is actually array-like)
-            - object
-            - function
-        """
-        self.dummy_int = dummy_int
-        self.dummy_str = dummy_str
-        self.dummy_obj = dummy_obj
-        if callback is not None:
-            callback(self)
-
-        if self.allow_nd:
-            X = X.reshape(len(X), -1)
-        if X.ndim >= 3 and not self.allow_nd:
-            raise ValueError('X cannot be d')
-        if sample_weight is not None:
-            assert sample_weight.shape[0] == X.shape[0], (
-                'MockClassifier extra fit_param sample_weight.shape[0]'
-                ' is {0}, should be {1}'.format(sample_weight.shape[0],
-                                                X.shape[0]))
-        if class_prior is not None:
-            assert class_prior.shape[0] == len(np.unique(y)), (
-                        'MockClassifier extra fit_param class_prior.shape[0]'
-                        ' is {0}, should be {1}'.format(class_prior.shape[0],
-                                                        len(np.unique(y))))
-        if sparse_sample_weight is not None:
-            fmt = ('MockClassifier extra fit_param sparse_sample_weight'
-                   '.shape[0] is {0}, should be {1}')
-            assert sparse_sample_weight.shape[0] == X.shape[0], \
-                fmt.format(sparse_sample_weight.shape[0], X.shape[0])
-        if sparse_param is not None:
-            fmt = ('MockClassifier extra fit_param sparse_param.shape '
-                   'is ({0}, {1}), should be ({2}, {3})')
-            assert sparse_param.shape == P_sparse.shape, (
-                fmt.format(sparse_param.shape[0],
-                           sparse_param.shape[1],
-                           P_sparse.shape[0], P_sparse.shape[1]))
-        return self
-
-    def predict(self, T):
-        if self.allow_nd:
-            T = T.reshape(len(T), -1)
-        return T[:, 0]
-
-    def score(self, X=None, Y=None):
-        return 1. / (1 + np.abs(self.a))
-
-    def get_params(self, deep=False):
-        return {'a': self.a, 'allow_nd': self.allow_nd}
 
 
 @ignore_warnings
@@ -227,13 +163,10 @@ def check_valid_split(train, test, n_samples=None):
         assert train.union(test) == set(range(n_samples))
 
 
-def check_cv_coverage(cv, X, y, groups, expected_n_splits=None):
+def check_cv_coverage(cv, X, y, groups, expected_n_splits):
     n_samples = _num_samples(X)
     # Check that a all the samples appear at least once in a test fold
-    if expected_n_splits is not None:
-        assert cv.get_n_splits(X, y, groups) == expected_n_splits
-    else:
-        expected_n_splits = cv.get_n_splits(X, y, groups)
+    assert cv.get_n_splits(X, y, groups) == expected_n_splits
 
     collected_test_samples = set()
     iterations = 0
@@ -1027,7 +960,7 @@ def test_repeated_kfold_determinstic_split():
 def test_get_n_splits_for_repeated_kfold():
     n_splits = 3
     n_repeats = 4
-    rkf = RepeatedKFold(n_splits, n_repeats)
+    rkf = RepeatedKFold(n_splits=n_splits, n_repeats=n_repeats)
     expected_n_splits = n_splits * n_repeats
     assert expected_n_splits == rkf.get_n_splits()
 
@@ -1035,7 +968,7 @@ def test_get_n_splits_for_repeated_kfold():
 def test_get_n_splits_for_repeated_stratified_kfold():
     n_splits = 3
     n_repeats = 4
-    rskf = RepeatedStratifiedKFold(n_splits, n_repeats)
+    rskf = RepeatedStratifiedKFold(n_splits=n_splits, n_repeats=n_repeats)
     expected_n_splits = n_splits * n_repeats
     assert expected_n_splits == rskf.get_n_splits()
 
@@ -1345,9 +1278,9 @@ def test_cv_iterable_wrapper():
                             list(kf_randomized_iter_wrapped.split(X, y)))
 
     try:
+        splits_are_equal = True
         np.testing.assert_equal(list(kf_iter_wrapped.split(X, y)),
                                 list(kf_randomized_iter_wrapped.split(X, y)))
-        splits_are_equal = True
     except AssertionError:
         splits_are_equal = False
     assert not splits_are_equal, (
@@ -1507,6 +1440,100 @@ def test_time_series_max_train_size():
     _check_time_series_max_train_size(splits, check_splits, max_train_size=2)
 
 
+def test_time_series_test_size():
+    X = np.zeros((10, 1))
+
+    # Test alone
+    splits = TimeSeriesSplit(n_splits=3, test_size=3).split(X)
+
+    train, test = next(splits)
+    assert_array_equal(train, [0])
+    assert_array_equal(test, [1, 2, 3])
+
+    train, test = next(splits)
+    assert_array_equal(train, [0, 1, 2, 3])
+    assert_array_equal(test, [4, 5, 6])
+
+    train, test = next(splits)
+    assert_array_equal(train, [0, 1, 2, 3, 4, 5, 6])
+    assert_array_equal(test, [7, 8, 9])
+
+    # Test with max_train_size
+    splits = TimeSeriesSplit(n_splits=2, test_size=2,
+                             max_train_size=4).split(X)
+
+    train, test = next(splits)
+    assert_array_equal(train, [2, 3, 4, 5])
+    assert_array_equal(test, [6, 7])
+
+    train, test = next(splits)
+    assert_array_equal(train, [4, 5, 6, 7])
+    assert_array_equal(test, [8, 9])
+
+    # Should fail with not enough data points for configuration
+    with pytest.raises(ValueError, match="Too many splits.*with test_size"):
+        splits = TimeSeriesSplit(n_splits=5, test_size=2).split(X)
+        next(splits)
+
+
+def test_time_series_gap():
+    X = np.zeros((10, 1))
+
+    # Test alone
+    splits = TimeSeriesSplit(n_splits=2, gap=2).split(X)
+
+    train, test = next(splits)
+    assert_array_equal(train, [0, 1])
+    assert_array_equal(test, [4, 5, 6])
+
+    train, test = next(splits)
+    assert_array_equal(train, [0, 1, 2, 3, 4])
+    assert_array_equal(test, [7, 8, 9])
+
+    # Test with max_train_size
+    splits = TimeSeriesSplit(n_splits=3, gap=2, max_train_size=2).split(X)
+
+    train, test = next(splits)
+    assert_array_equal(train, [0, 1])
+    assert_array_equal(test, [4, 5])
+
+    train, test = next(splits)
+    assert_array_equal(train, [2, 3])
+    assert_array_equal(test, [6, 7])
+
+    train, test = next(splits)
+    assert_array_equal(train, [4, 5])
+    assert_array_equal(test, [8, 9])
+
+    # Test with test_size
+    splits = TimeSeriesSplit(n_splits=2, gap=2,
+                             max_train_size=4, test_size=2).split(X)
+
+    train, test = next(splits)
+    assert_array_equal(train, [0, 1, 2, 3])
+    assert_array_equal(test, [6, 7])
+
+    train, test = next(splits)
+    assert_array_equal(train, [2, 3, 4, 5])
+    assert_array_equal(test, [8, 9])
+
+    # Test with additional test_size
+    splits = TimeSeriesSplit(n_splits=2, gap=2, test_size=3).split(X)
+
+    train, test = next(splits)
+    assert_array_equal(train, [0, 1])
+    assert_array_equal(test, [4, 5, 6])
+
+    train, test = next(splits)
+    assert_array_equal(train, [0, 1, 2, 3, 4])
+    assert_array_equal(test, [7, 8, 9])
+
+    # Verify proper error is thrown
+    with pytest.raises(ValueError, match="Too many splits.*and gap"):
+        splits = TimeSeriesSplit(n_splits=4, gap=2).split(X)
+        next(splits)
+
+
 def test_nested_cv():
     # Test if nested cross validation works with different combinations of cv
     rng = np.random.RandomState(0)
@@ -1589,7 +1616,6 @@ def test_leave_p_out_empty_trainset():
 @pytest.mark.parametrize('Klass', (KFold, StratifiedKFold))
 def test_random_state_shuffle_false(Klass):
     # passing a non-default random_state when shuffle=False makes no sense
-    # TODO 0.24: raise a ValueError instead of a warning
-    with pytest.warns(FutureWarning,
-                      match='has no effect since shuffle is False'):
+    with pytest.raises(ValueError,
+                       match='has no effect since shuffle is False'):
         Klass(3, shuffle=False, random_state=0)

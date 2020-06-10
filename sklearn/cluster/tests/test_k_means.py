@@ -3,6 +3,7 @@ import sys
 
 import numpy as np
 from scipy import sparse as sp
+from threadpoolctl import threadpool_limits
 
 import pytest
 
@@ -12,18 +13,24 @@ from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import assert_warns_message
-from sklearn.utils._testing import if_safe_multiprocessing_with_blas
 from sklearn.utils._testing import assert_raise_message
 from sklearn.utils.validation import _num_samples
 from sklearn.base import clone
 from sklearn.exceptions import ConvergenceWarning
 
 from sklearn.utils.extmath import row_norms
+from sklearn.metrics import pairwise_distances_argmin
 from sklearn.metrics.cluster import v_measure_score
 from sklearn.cluster import KMeans, k_means
 from sklearn.cluster import MiniBatchKMeans
 from sklearn.cluster._kmeans import _labels_inertia
 from sklearn.cluster._kmeans import _mini_batch_step
+from sklearn.cluster._k_means_fast import _relocate_empty_clusters_dense
+from sklearn.cluster._k_means_fast import _relocate_empty_clusters_sparse
+from sklearn.cluster._k_means_fast import _euclidean_dense_dense_wrapper
+from sklearn.cluster._k_means_fast import _euclidean_sparse_dense_wrapper
+from sklearn.cluster._k_means_fast import _inertia_dense
+from sklearn.cluster._k_means_fast import _inertia_sparse
 from sklearn.datasets import make_blobs
 from io import StringIO
 from sklearn.metrics.cluster import homogeneity_score
@@ -42,10 +49,8 @@ X, true_labels = make_blobs(n_samples=n_samples, centers=centers,
 X_csr = sp.csr_matrix(X)
 
 
-@pytest.mark.parametrize("representation, algo",
-                         [('dense', 'full'),
-                          ('dense', 'elkan'),
-                          ('sparse', 'full')])
+@pytest.mark.parametrize("representation", ["dense", "sparse"])
+@pytest.mark.parametrize("algo", ["full", "elkan"])
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
 def test_kmeans_results(representation, algo, dtype):
     # cheks that kmeans works as intended
@@ -68,6 +73,68 @@ def test_kmeans_results(representation, algo, dtype):
     assert kmeans.n_iter_ == expected_n_iter
 
 
+@pytest.mark.parametrize("array_constr",
+                         [np.array, sp.csr_matrix],
+                         ids=['dense', 'sparse'])
+@pytest.mark.parametrize("algo", ['full', 'elkan'])
+def test_relocated_clusters(array_constr, algo):
+    # check that empty clusters are relocated as expected
+    X = array_constr([[0, 0], [0.5, 0], [0.5, 1], [1, 1]])
+
+    # second center too far from others points will be empty at first iter
+    init_centers = np.array([[0.5, 0.5], [3, 3]])
+
+    expected_labels = [0, 0, 1, 1]
+    expected_inertia = 0.25
+    expected_centers = [[0.25, 0], [0.75, 1]]
+    expected_n_iter = 3
+
+    kmeans = KMeans(n_clusters=2, n_init=1, init=init_centers, algorithm=algo)
+    kmeans.fit(X)
+
+    assert_array_equal(kmeans.labels_, expected_labels)
+    assert_almost_equal(kmeans.inertia_, expected_inertia)
+    assert_array_almost_equal(kmeans.cluster_centers_, expected_centers)
+    assert kmeans.n_iter_ == expected_n_iter
+
+
+@pytest.mark.parametrize("representation", ["dense", "sparse"])
+def test_relocate_empty_clusters(representation):
+    # test for the _relocate_empty_clusters_(dense/sparse) helpers
+
+    # Synthetic dataset with 3 obvious clusters of different sizes
+    X = np.array(
+        [-10., -9.5, -9, -8.5, -8, -1, 1, 9, 9.5, 10]).reshape(-1, 1)
+    if representation == "sparse":
+        X = sp.csr_matrix(X)
+    sample_weight = np.full(shape=10, fill_value=1.)
+
+    # centers all initialized to the first point of X
+    centers_old = np.array([-10., -10, -10]).reshape(-1, 1)
+
+    # With this initialization, all points will be assigned to the first center
+    # At this point a center in centers_new is the weighted sum of the points
+    # it contains if it's not empty, otherwise it is the same as before.
+    centers_new = np.array([-16.5, -10, -10]).reshape(-1, 1)
+    weight_in_clusters = np.array([10., 0, 0])
+    labels = np.zeros(10, dtype=np.int32)
+
+    if representation == "dense":
+        _relocate_empty_clusters_dense(X, sample_weight, centers_old,
+                                       centers_new, weight_in_clusters, labels)
+    else:
+        _relocate_empty_clusters_sparse(X.data, X.indices, X.indptr,
+                                        sample_weight, centers_old,
+                                        centers_new, weight_in_clusters,
+                                        labels)
+
+    # The relocation scheme will take the 2 points farthest from the center and
+    # assign them to the 2 empty clusters, i.e. points at 10 and at 9.9. The
+    # first center will be updated to contain the other 8 points.
+    assert_array_equal(weight_in_clusters, [8, 1, 1])
+    assert_allclose(centers_new, [[-36], [10], [9.5]])
+
+
 @pytest.mark.parametrize('distribution', ['normal', 'blobs'])
 @pytest.mark.parametrize('tol', [1e-2, 1e-4, 1e-8])
 def test_elkan_results(distribution, tol):
@@ -85,14 +152,45 @@ def test_elkan_results(distribution, tol):
 
     km_full.fit(X)
     km_elkan.fit(X)
-    assert_array_almost_equal(km_elkan.cluster_centers_,
-                              km_full.cluster_centers_)
+    assert_allclose(km_elkan.cluster_centers_, km_full.cluster_centers_)
     assert_array_equal(km_elkan.labels_, km_full.labels_)
 
-    # The number of iterations and inertia should be close but not
-    # necessarily exactly the same because of rounding errors.
-    assert km_elkan.n_iter_ == pytest.approx(km_full.n_iter_, rel=0.01)
+    assert km_elkan.n_iter_ == km_full.n_iter_
     assert km_elkan.inertia_ == pytest.approx(km_full.inertia_, rel=1e-6)
+
+
+@pytest.mark.parametrize('algorithm', ['full', 'elkan'])
+def test_kmeans_convergence(algorithm):
+    # Check that KMeans stops when convergence is reached when tol=0. (#16075)
+    rnd = np.random.RandomState(0)
+    X = rnd.normal(size=(5000, 10))
+
+    km = KMeans(algorithm=algorithm, n_clusters=5, random_state=0, n_init=1,
+                tol=0, max_iter=300).fit(X)
+
+    assert km.n_iter_ < 300
+
+
+@pytest.mark.parametrize('distribution', ['normal', 'blobs'])
+def test_elkan_results_sparse(distribution):
+    # check that results are identical between lloyd and elkan algorithms
+    # with sparse input
+    rnd = np.random.RandomState(0)
+    if distribution == 'normal':
+        X = sp.random(100, 100, density=0.1, format='csr', random_state=rnd)
+        X.data = rnd.randn(len(X.data))
+    else:
+        X, _ = make_blobs(n_samples=100, n_features=100, random_state=rnd)
+        X = sp.csr_matrix(X)
+
+    km_full = KMeans(algorithm='full', n_clusters=5, random_state=0, n_init=1)
+    km_elkan = KMeans(algorithm='elkan', n_clusters=5,
+                      random_state=0, n_init=1)
+
+    km_full.fit(X)
+    km_elkan.fit(X)
+    assert_allclose(km_elkan.cluster_centers_, km_full.cluster_centers_)
+    assert_allclose(km_elkan.labels_, km_full.labels_)
 
 
 def test_labels_assignment_and_inertia():
@@ -237,33 +335,6 @@ def test_k_means_new_centers():
         np.testing.assert_array_equal(this_labels, labels)
 
 
-@if_safe_multiprocessing_with_blas
-def test_k_means_plus_plus_init_2_jobs():
-    km = KMeans(init="k-means++", n_clusters=n_clusters, n_jobs=2,
-                random_state=42).fit(X)
-    _check_fitted_model(km)
-
-
-def test_k_means_precompute_distances_flag():
-    # check that a warning is raised if the precompute_distances flag is not
-    # supported
-    km = KMeans(precompute_distances="wrong")
-    with pytest.raises(ValueError):
-        km.fit(X)
-
-
-def test_k_means_plus_plus_init_not_precomputed():
-    km = KMeans(init="k-means++", n_clusters=n_clusters, random_state=42,
-                precompute_distances=False).fit(X)
-    _check_fitted_model(km)
-
-
-def test_k_means_random_init_not_precomputed():
-    km = KMeans(init="random", n_clusters=n_clusters, random_state=42,
-                precompute_distances=False).fit(X)
-    _check_fitted_model(km)
-
-
 @pytest.mark.parametrize('data', [X, X_csr], ids=['dense', 'sparse'])
 @pytest.mark.parametrize('init', ['random', 'k-means++', centers.copy()])
 def test_k_means_init(data, init):
@@ -320,8 +391,7 @@ def test_k_means_fortran_aligned_data():
     X = np.asfortranarray([[0, 0], [0, 1], [0, 1]])
     centers = np.array([[0, 0], [0, 1]])
     labels = np.array([0, 1, 1])
-    km = KMeans(n_init=1, init=centers, precompute_distances=False,
-                random_state=42, n_clusters=2)
+    km = KMeans(n_init=1, init=centers, random_state=42, n_clusters=2)
     km.fit(X)
     assert_array_almost_equal(km.cluster_centers_, centers)
     assert_array_equal(km.labels_, labels)
@@ -349,20 +419,24 @@ def test_k_means_fit_predict(algo, dtype, constructor, seed, max_iter, tol):
         pytest.xfail(
             "Known failures on MacOS, See "
             "https://github.com/scikit-learn/scikit-learn/issues/12644")
-    if not (algo == 'elkan' and constructor is sp.csr_matrix):
-        rng = np.random.RandomState(seed)
 
-        X = make_blobs(n_samples=1000, n_features=10, centers=10,
-                       random_state=rng)[0].astype(dtype, copy=False)
-        X = constructor(X)
+    rng = np.random.RandomState(seed)
 
-        kmeans = KMeans(algorithm=algo, n_clusters=10, random_state=seed,
-                        tol=tol, max_iter=max_iter, n_jobs=1)
+    X = make_blobs(n_samples=1000, n_features=10, centers=10,
+                   random_state=rng)[0].astype(dtype, copy=False)
+    X = constructor(X)
 
-        labels_1 = kmeans.fit(X).predict(X)
-        labels_2 = kmeans.fit_predict(X)
+    kmeans = KMeans(algorithm=algo, n_clusters=10, random_state=seed,
+                    tol=tol, max_iter=max_iter)
 
-        assert_array_equal(labels_1, labels_2)
+    labels_1 = kmeans.fit(X).predict(X)
+    labels_2 = kmeans.fit_predict(X)
+
+    # Due to randomness in the order in which chunks of data are processed when
+    # using more than one thread, the absolute values of the labels can be
+    # different between the 2 strategies but they should correspond to the same
+    # clustering.
+    assert v_measure_score(labels_1, labels_2) == 1
 
 
 def test_mb_kmeans_verbose():
@@ -673,7 +747,7 @@ def test_fit_transform():
 
 @pytest.mark.parametrize('algo', ['full', 'elkan'])
 def test_predict_equal_labels(algo):
-    km = KMeans(random_state=13, n_jobs=1, n_init=1, max_iter=1,
+    km = KMeans(random_state=13, n_init=1, max_iter=1,
                 algorithm=algo)
     km.fit(X)
     assert_array_equal(km.predict(X), km.labels_)
@@ -733,11 +807,6 @@ def test_k_means_function():
     with pytest.raises(ValueError):
         k_means(X, n_clusters=X.shape[0] + 1, sample_weight=None)
 
-    # kmeans for algorithm='elkan' raises TypeError on sparse matrix
-    assert_raise_message(TypeError, "algorithm='elkan' not supported for "
-                         "sparse input X", k_means, X=X_csr, n_clusters=2,
-                         sample_weight=None, algorithm="elkan")
-
 
 def test_x_squared_norms_init_centroids():
     # Test that x_squared_norms can be None in _init_centroids
@@ -780,8 +849,7 @@ def test_float_precision(Estimator, is_sparse):
         X_new[dtype] = estimator.transform(X_test)
         centers[dtype] = estimator.cluster_centers_
         # ensure the extracted row is a 2d array
-        assert (estimator.predict(X_test[:1]) ==
-                     estimator.labels_[0])
+        assert estimator.predict(X_test[:1]) == estimator.labels_[0]
         if hasattr(estimator, 'partial_fit'):
             estimator.partial_fit(X_test[0:3])
             # dtype of cluster centers has to stay the same after
@@ -966,11 +1034,146 @@ def test_minibatch_kmeans_partial_fit_int_data():
     assert km.cluster_centers_.dtype.kind == "f"
 
 
-def test_result_of_kmeans_equal_in_diff_n_jobs():
-    # PR 9288
+def test_result_of_kmeans_equal_in_diff_n_threads():
+    # Check that KMeans gives the same results in parallel mode than in
+    # sequential mode.
     rnd = np.random.RandomState(0)
     X = rnd.normal(size=(50, 10))
 
-    result_1 = KMeans(n_clusters=3, random_state=0, n_jobs=1).fit(X).labels_
-    result_2 = KMeans(n_clusters=3, random_state=0, n_jobs=2).fit(X).labels_
+    with threadpool_limits(limits=1, user_api="openmp"):
+        result_1 = KMeans(
+            n_clusters=3, random_state=0).fit(X).labels_
+    with threadpool_limits(limits=2, user_api="openmp"):
+        result_2 = KMeans(
+            n_clusters=3, random_state=0).fit(X).labels_
     assert_array_equal(result_1, result_2)
+
+
+@pytest.mark.parametrize("precompute_distances", ["auto", False, True])
+def test_precompute_distance_deprecated(precompute_distances):
+    # FIXME: remove in 0.25
+    depr_msg = ("'precompute_distances' was deprecated in version 0.23 and "
+                "will be removed in 0.25.")
+    X, _ = make_blobs(n_samples=10, n_features=2, centers=2, random_state=0)
+    kmeans = KMeans(n_clusters=2, n_init=1, init='random', random_state=0,
+                    precompute_distances=precompute_distances)
+
+    with pytest.warns(FutureWarning, match=depr_msg):
+        kmeans.fit(X)
+
+
+@pytest.mark.parametrize("n_jobs", [None, 1])
+def test_n_jobs_deprecated(n_jobs):
+    # FIXME: remove in 0.25
+    depr_msg = ("'n_jobs' was deprecated in version 0.23 and will be removed "
+                "in 0.25.")
+    X, _ = make_blobs(n_samples=10, n_features=2, centers=2, random_state=0)
+    kmeans = KMeans(n_clusters=2, n_init=1, init='random', random_state=0,
+                    n_jobs=n_jobs)
+
+    with pytest.warns(FutureWarning, match=depr_msg):
+        kmeans.fit(X)
+
+
+def test_warning_elkan_1_cluster():
+    X, _ = make_blobs(n_samples=10, n_features=2, centers=1, random_state=0)
+    kmeans = KMeans(n_clusters=1, n_init=1, init='random', random_state=0,
+                    algorithm='elkan')
+
+    with pytest.warns(RuntimeWarning,
+                      match="algorithm='elkan' doesn't make sense for a single"
+                            " cluster"):
+        kmeans.fit(X)
+
+
+def test_error_wrong_algorithm():
+    X, _ = make_blobs(n_samples=10, n_features=2, centers=2, random_state=0)
+    kmeans = KMeans(n_clusters=2, n_init=1, init='random', random_state=0,
+                    algorithm='wrong')
+
+    with pytest.raises(ValueError,
+                       match="Algorithm must be 'auto', 'full' or 'elkan'"):
+        kmeans.fit(X)
+
+
+@pytest.mark.parametrize("array_constr",
+                         [np.array, sp.csr_matrix],
+                         ids=['dense', 'sparse'])
+@pytest.mark.parametrize("algo", ['full', 'elkan'])
+def test_k_means_1_iteration(array_constr, algo):
+    # check the results after a single iteration (E-step M-step E-step) by
+    # comparing against a pure python implementation.
+    X = np.random.RandomState(0).uniform(size=(100, 5))
+    init_centers = X[:5]
+    X = array_constr(X)
+
+    def py_kmeans(X, init):
+        new_centers = init.copy()
+        labels = pairwise_distances_argmin(X, init)
+        for label in range(init.shape[0]):
+            new_centers[label] = X[labels == label].mean(axis=0)
+        labels = pairwise_distances_argmin(X, new_centers)
+        return labels, new_centers
+
+    py_labels, py_centers = py_kmeans(X, init_centers)
+
+    cy_kmeans = KMeans(n_clusters=5, n_init=1, init=init_centers,
+                       algorithm=algo, max_iter=1).fit(X)
+    cy_labels = cy_kmeans.labels_
+    cy_centers = cy_kmeans.cluster_centers_
+
+    assert_array_equal(py_labels, cy_labels)
+    assert_allclose(py_centers, cy_centers)
+
+
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+@pytest.mark.parametrize("squared", [True, False])
+def test_euclidean_distance(dtype, squared):
+    rng = np.random.RandomState(0)
+    a_sparse = sp.random(1, 100, density=0.5, format="csr", random_state=rng,
+                         dtype=dtype)
+    a_dense = a_sparse.toarray().reshape(-1)
+    b = rng.randn(100).astype(dtype, copy=False)
+    b_squared_norm = (b**2).sum()
+
+    expected = ((a_dense - b)**2).sum()
+    expected = expected if squared else np.sqrt(expected)
+
+    distance_dense_dense = _euclidean_dense_dense_wrapper(a_dense, b, squared)
+    distance_sparse_dense = _euclidean_sparse_dense_wrapper(
+        a_sparse.data, a_sparse.indices, b, b_squared_norm, squared)
+
+    assert_allclose(distance_dense_dense, distance_sparse_dense, rtol=1e-6)
+    assert_allclose(distance_dense_dense, expected, rtol=1e-6)
+    assert_allclose(distance_sparse_dense, expected, rtol=1e-6)
+
+
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_inertia(dtype):
+    rng = np.random.RandomState(0)
+    X_sparse = sp.random(100, 10, density=0.5, format="csr", random_state=rng,
+                         dtype=dtype)
+    X_dense = X_sparse.toarray()
+    sample_weight = rng.randn(100).astype(dtype, copy=False)
+    centers = rng.randn(5, 10).astype(dtype, copy=False)
+    labels = rng.randint(5, size=100, dtype=np.int32)
+
+    distances = ((X_dense - centers[labels])**2).sum(axis=1)
+    expected = np.sum(distances * sample_weight)
+
+    inertia_dense = _inertia_dense(X_dense, sample_weight, centers, labels)
+    inertia_sparse = _inertia_sparse(X_sparse, sample_weight, centers, labels)
+
+    assert_allclose(inertia_dense, inertia_sparse, rtol=1e-6)
+    assert_allclose(inertia_dense, expected, rtol=1e-6)
+    assert_allclose(inertia_sparse, expected, rtol=1e-6)
+
+
+def test_sample_weight_unchanged():
+    # Check that sample_weight is not modified in place by KMeans (#17204)
+    X = np.array([[1], [2], [4]])
+    sample_weight = np.array([0.5, 0.2, 0.3])
+    KMeans(n_clusters=2, random_state=0).fit(X, sample_weight=sample_weight)
+
+    # internally, sample_weight is rescale to sum up to n_samples = 3
+    assert_array_equal(sample_weight, np.array([0.5, 0.2, 0.3]))
