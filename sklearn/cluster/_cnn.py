@@ -96,16 +96,21 @@ def cnn(X, eps=0.5, min_samples=5, metric='minkowski', metric_params=None,
 
     See also
     --------
-    DBSCAN
+    CNN
         An estimator interface for this clustering algorithm.
+
+    DBSCAN
+        An estimator interface for a similar clustering algorithm
+        providing a different notion of the point density.
+
     OPTICS
         A similar estimator interface clustering at multiple values of eps. Our
         implementation is optimized for memory usage.
 
     Notes
     -----
-    For an example, see :ref:`examples/cluster/plot_dbscan.py
-    <sphx_glr_auto_examples_cluster_plot_dbscan.py>`.
+    For an example, see :ref:`examples/cluster/plot_cnn.py
+    <sphx_glr_auto_examples_cluster_plot_cnn.py>`.
 
     This implementation bulk-computes all neighborhood queries, which increases
     the memory complexity to O(n.d) where d is the average number of neighbors,
@@ -127,14 +132,15 @@ def cnn(X, eps=0.5, min_samples=5, metric='minkowski', metric_params=None,
 
     References
     ----------
-    Ester, M., H. P. Kriegel, J. Sander, and X. Xu, "A Density-Based
-    Algorithm for Discovering Clusters in Large Spatial Databases with Noise".
-    In: Proceedings of the 2nd International Conference on Knowledge Discovery
-    and Data Mining, Portland, OR, AAAI Press, pp. 226-231. 1996
+    B. Keller, X. Daura, W. F. van Gunsteren "Comparing Geometric and
+    Kinetic Cluster Algorithms for Molecular Simulation Data" J. Chem.
+    Phys., 2010, 132, 074110.
 
-    Schubert, E., Sander, J., Ester, M., Kriegel, H. P., & Xu, X. (2017).
-    DBSCAN revisited, revisited: why and how you should (still) use DBSCAN.
-    ACM Transactions on Database Systems (TODS), 42(3), 19.
+    O. Lemke, B.G. Keller "Density-based Cluster Algorithms for the
+    Identification of Core Sets" J. Chem. Phys., 2016, 145, 164104.
+
+    O. Lemke, B.G. Keller "Common nearest neighbor clustering - a
+    benchmark" Algorithms, 2018, 11, 19.
     """
 
     est = CNN(
@@ -203,11 +209,6 @@ class CNN(ClusterMixin, BaseEstimator):
 
     Attributes
     ----------
-    core_sample_indices_ : ndarray of shape (n_core_samples,) Indices of
-        core samples.
-
-    components_ : ndarray of shape (n_core_samples, n_features) Copy of
-        each core sample found by training.
 
     labels_ : ndarray of shape (n_samples) Cluster labels for each point
         in the dataset given to fit(). Noisy samples are given the label
