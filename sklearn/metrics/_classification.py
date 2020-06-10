@@ -1841,7 +1841,7 @@ def classification_report(y_true, y_pred, *, labels=None, target_names=None,
     labels : array-like of shape (n_labels,), default=None
         Optional list of label indices to include in the report.
 
-    target_names : list of strings, default=None
+    target_names : list of str of shape (n_labels,), default=None
         Optional display names matching the labels (same order).
 
     sample_weight : array-like of shape (n_samples,), default=None
