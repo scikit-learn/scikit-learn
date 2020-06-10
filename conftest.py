@@ -8,13 +8,20 @@
 import platform
 import sys
 from distutils.version import LooseVersion
-import os
 
 import pytest
 from _pytest.doctest import DoctestItem
 
 from sklearn.utils import _IS_32BIT
 from sklearn.externals import _pilutil
+from sklearn.datasets import fetch_20newsgroups
+from sklearn.datasets import fetch_20newsgroups_vectorized
+from sklearn.datasets import fetch_california_housing
+from sklearn.datasets import fetch_covtype
+from sklearn.datasets import fetch_kddcup99
+from sklearn.datasets import fetch_olivetti_faces
+from sklearn.datasets import fetch_rcv1
+
 
 PYTEST_MIN_VERSION = '3.3.0'
 
@@ -24,9 +31,36 @@ if LooseVersion(pytest.__version__) < PYTEST_MIN_VERSION:
                       .format(PYTEST_MIN_VERSION))
 
 
-def pytest_addoption(parser):
-    parser.addoption("--skip-network", action="store_true", default=False,
-                     help="skip network tests")
+dataset_fetchers = {
+    'fetch_20newsgroups_fxt': fetch_20newsgroups,
+    'fetch_20newsgroups_vectorized_fxt': fetch_20newsgroups_vectorized,
+    'fetch_california_housing_fxt': fetch_california_housing,
+    'fetch_covtype_fxt': fetch_covtype,
+    'fetch_kddcup99_fxt': fetch_kddcup99,
+    'fetch_olivetti_faces_fxt': fetch_olivetti_faces,
+    'fetch_rcv1_fxt': fetch_rcv1,
+}
+
+
+# fetching a dataset with this fixture will never download if missing
+def _fetch_fixture(f):
+    def wrapped(*args, **kwargs):
+        kwargs['download_if_missing'] = False
+        try:
+            return f(*args, **kwargs)
+        except IOError:
+            pytest.skip("test requires -m 'not skipnetwork' to run")
+    return pytest.fixture(lambda: wrapped)
+
+
+fetch_20newsgroups_fxt = _fetch_fixture(fetch_20newsgroups)
+fetch_20newsgroups_vectorized_fxt = \
+    _fetch_fixture(fetch_20newsgroups_vectorized)
+fetch_california_housing_fxt = _fetch_fixture(fetch_california_housing)
+fetch_covtype_fxt = _fetch_fixture(fetch_covtype)
+fetch_kddcup99_fxt = _fetch_fixture(fetch_kddcup99)
+fetch_olivetti_faces_fxt = _fetch_fixture(fetch_olivetti_faces)
+fetch_rcv1_fxt = _fetch_fixture(fetch_rcv1)
 
 
 def pytest_collection_modifyitems(config, items):
@@ -40,13 +74,31 @@ def pytest_collection_modifyitems(config, items):
                                    'text.HashingVectorizer')):
                 item.add_marker(skip_marker)
 
-    # Skip tests which require internet if the flag is provided
-    if config.getoption("--skip-network"):
-        skip_network = pytest.mark.skip(
-            reason="test requires internet connectivity")
-        for item in items:
-            if "network" in item.keywords:
-                item.add_marker(skip_network)
+    run_network_tests = 'not skipnetwork' in config.getoption("markexpr")
+    skip_network = pytest.mark.skip(
+        reason="test requires -m 'not skipnetwork' to run")
+
+    # download datasets during collection to avoid thread unsafe behavior
+    # when running pytest in parallel with pytest-xdist
+    dataset_features_set = set(dataset_fetchers)
+    datasets_to_download = set()
+
+    for item in items:
+        dataset_to_fetch = set(item.keywords) & dataset_features_set
+        if not dataset_to_fetch:
+            continue
+
+        if run_network_tests:
+            datasets_to_download |= dataset_to_fetch
+        else:
+            # network tests are skipped
+            item.add_marker(skip_network)
+
+    # download datasets that are needed to avoid thread unsafe behavior
+    # by pytest-xdist
+    if run_network_tests:
+        for name in datasets_to_download:
+            dataset_fetchers[name]()
 
     # numpy changed the str/repr formatting of numpy arrays in 1.14. We want to
     # run doctests only for numpy >= 1.14.
@@ -85,11 +137,6 @@ def pytest_collection_modifyitems(config, items):
 def pytest_configure(config):
     import sys
     sys._is_pytest_session = True
-    # declare our custom markers to avoid PytestUnknownMarkWarning
-    config.addinivalue_line(
-        "markers",
-        "network: mark a test for execution if network available."
-    )
 
 
 def pytest_unconfigure(config):

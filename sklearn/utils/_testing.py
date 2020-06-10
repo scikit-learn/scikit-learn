@@ -463,11 +463,6 @@ except ImportError:
     pass
 
 
-def check_skip_network():
-    if int(os.environ.get('SKLEARN_SKIP_NETWORK_TESTS', 0)):
-        raise SkipTest("Text tutorial requires large dataset download")
-
-
 def _delete_folder(folder_path, warn=False):
     """Utility function to cleanup a temporary folder if still existing.
 

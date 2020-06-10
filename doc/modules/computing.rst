@@ -704,8 +704,3 @@ These environment variables should be set before importing scikit-learn.
 
     Sets the seed of the global random generator when running the tests,
     for reproducibility.
-
-:SKLEARN_SKIP_NETWORK_TESTS:
-
-    When this environment variable is set to a non zero value, the tests
-    that need network access are skipped.

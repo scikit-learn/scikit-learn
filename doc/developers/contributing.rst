@@ -263,7 +263,7 @@ modifying code and submitting a PR:
 10. Develop the feature on your feature branch on your computer, using Git to
     do the version control. When you're done editing, add changed files using
     ``git add`` and then ``git commit``::
- 
+
         $ git add modified_files
         $ git commit
 
@@ -447,6 +447,11 @@ list or on the GitHub issue).
 
 Also check out the :ref:`performance-howto` guide for more details on
 profiling and Cython optimizations.
+
+* Code that uses the network such as the dataset functions prefixed with
+  `fetch_*` are off by default. These tests can be run with::
+
+    $ pytest sklearn -m 'not skipnetwork'
 
 .. note::
 

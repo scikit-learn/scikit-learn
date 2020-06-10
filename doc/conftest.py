@@ -3,11 +3,8 @@ from os.path import exists
 from os.path import join
 import warnings
 
-import numpy as np
-
 from sklearn.utils import IS_PYPY
 from sklearn.utils._testing import SkipTest
-from sklearn.utils._testing import check_skip_network
 from sklearn.datasets import get_data_home
 from sklearn.datasets._base import _pkl_filepath
 from sklearn.datasets._twenty_newsgroups import CACHE_NAME
@@ -20,7 +17,6 @@ def setup_labeled_faces():
 
 
 def setup_rcv1():
-    check_skip_network()
     # skip the test in rcv1.rst if the dataset is not already loaded
     rcv1_dir = join(get_data_home(), "RCV1")
     if not exists(rcv1_dir):
@@ -37,7 +33,6 @@ def setup_twenty_newsgroups():
 def setup_working_with_text_data():
     if IS_PYPY and os.environ.get('CI', None):
         raise SkipTest('Skipping too slow test with PyPy on CI')
-    check_skip_network()
     cache_path = _pkl_filepath(get_data_home(), CACHE_NAME)
     if not exists(cache_path):
         raise SkipTest("Skipping dataset loading doctests")
