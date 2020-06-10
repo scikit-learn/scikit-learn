@@ -24,8 +24,9 @@
 .. _DOI: https://zenodo.org/badge/latestdoi/21369/scikit-learn/scikit-learn
 
 .. image:: doc/logos/scikit-learn-logo.png
-	:width: 600
- :align: center
+  :width: 600
+  :align: center
+  :alt: sklearn logo
 
 **scikit-learn** is a Python module for machine learning built on top of
 SciPy and is distributed under the 3-Clause BSD license.
