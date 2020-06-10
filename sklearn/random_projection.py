@@ -169,7 +169,7 @@ def _gaussian_random_matrix(n_components, n_features, random_state=None):
     n_features : int,
         Dimensionality of the original source space.
 
-    random_state : int, RandomState instance or None, default=None
+    random_state : int or RandomState instance, default=None
         Controls the pseudo random number generator used to generate the matrix
         at fit time.
         Pass an int for reproducible output across multiple function calls.
