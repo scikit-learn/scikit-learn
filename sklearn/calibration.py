@@ -106,6 +106,8 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
+        .. versionadded:: 0.24
+
     pre_dispatch : int, or str, default=n_jobs
         Controls the number of jobs that get dispatched during parallel
         execution. Reducing this number can be useful to avoid an
@@ -123,8 +125,12 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
             - A str, giving an expression as a function of n_jobs,
               as in '2*n_jobs'
 
+        .. versionadded:: 0.24
+
     verbose : integer
         Controls the verbosity: the higher, the more messages.
+
+        .. versionadded:: 0.24
 
     Attributes
     ----------
