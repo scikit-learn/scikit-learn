@@ -3,6 +3,7 @@
 
 import pytest
 import numpy as np
+from numpy.testing import assert_allclose
 from scipy import sparse
 
 from sklearn.base import BaseEstimator
@@ -143,7 +144,7 @@ def test_parallel_execution():
         cal_clf_sequential.fit(X_train, y_train)
         probs_sequential = cal_clf_sequential.predict_proba(X_test)
 
-        assert np.equal(probs_parallel, probs_sequential).all()
+        assert_allclose(probs_parallel, probs_sequential)
 
 
 def test_calibration_multiclass():
