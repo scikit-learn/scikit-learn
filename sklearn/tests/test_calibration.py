@@ -9,9 +9,9 @@ from sklearn.base import BaseEstimator
 from sklearn.model_selection import LeaveOneOut, train_test_split
 
 from sklearn.utils._testing import (assert_array_almost_equal,
-                                   assert_almost_equal,
-                                   assert_array_equal,
-                                   assert_raises, ignore_warnings)
+                                    assert_almost_equal,
+                                    assert_array_equal,
+                                    assert_raises, ignore_warnings)
 from sklearn.datasets import make_classification, make_blobs
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
@@ -58,7 +58,7 @@ def test_calibration():
 
             # Check that brier score has improved after calibration
             assert (brier_score_loss(y_test, prob_pos_clf) >
-                           brier_score_loss(y_test, prob_pos_pc_clf))
+                    brier_score_loss(y_test, prob_pos_pc_clf))
 
             # Check invariance against relabeling [0, 1] -> [1, 2]
             pc_clf.fit(this_X_train, y_train + 1, sample_weight=sw_train)
@@ -84,8 +84,8 @@ def test_calibration():
                 # Isotonic calibration is not invariant against relabeling
                 # but should improve in both cases
                 assert (brier_score_loss(y_test, prob_pos_clf) >
-                               brier_score_loss((y_test + 1) % 2,
-                                                prob_pos_pc_clf_relabeled))
+                        brier_score_loss((y_test + 1) % 2,
+                                         prob_pos_pc_clf_relabeled))
 
         # Check failure cases:
         # only "isotonic" and "sigmoid" should be accepted as methods
@@ -133,7 +133,7 @@ def test_parallel_execution():
         base_estimator = LinearSVC(random_state=42)
 
         cal_clf_parallel = CalibratedClassifierCV(base_estimator,
-                                                   method=method, n_jobs=2)
+                                                  method=method, n_jobs=2)
         cal_clf_parallel.fit(X_train, y_train)
         probs_parallel = cal_clf_parallel.predict_proba(X_test)
 
@@ -143,7 +143,7 @@ def test_parallel_execution():
         cal_clf_sequential.fit(X_train, y_train)
         probs_sequential = cal_clf_sequential.predict_proba(X_test)
 
-        assert np.equal(probs__parallel, probs_sequential).all()
+        assert np.equal(probs_parallel, probs_sequential).all()
 
 
 def test_calibration_multiclass():
@@ -239,7 +239,7 @@ def test_calibration_prefit():
                                    np.array([0, 1])[np.argmax(y_prob, axis=1)])
 
                 assert (brier_score_loss(y_test, prob_pos_clf) >
-                               brier_score_loss(y_test, prob_pos_pc_clf))
+                        brier_score_loss(y_test, prob_pos_pc_clf))
 
 
 def test_sigmoid_calibration():
