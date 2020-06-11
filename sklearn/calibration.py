@@ -50,8 +50,7 @@ def _calibrate_classifier(estimator, X, y, train, test, supports_sw,
                                                   method=method,
                                                   classes=classes)
     sw = None if sample_weight is None else sample_weight[test]
-    calibrated_classifier.fit(X[test], y[test],
-                              sample_weight=sw)
+    calibrated_classifier.fit(X[test], y[test], sample_weight=sw)
     return calibrated_classifier
 
 
