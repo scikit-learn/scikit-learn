@@ -285,17 +285,16 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
             parallel = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
                                 pre_dispatch=self.pre_dispatch)
 
-            with parallel:
-                self.calibrated_classifiers_ = parallel(delayed(
-                    _calibrate_classifier)(clone(base_estimator),
-                                           X, y,
-                                           train=train, test=test,
-                                           method=self.method,
-                                           classes=self.classes_,
-                                           supports_sw=supports_sw,
-                                           sample_weight=sample_weight)
-                               for train, test
-                               in cv.split(X, y))
+            self.calibrated_classifiers_ = parallel(delayed(
+                _calibrate_classifier)(clone(base_estimator),
+                                       X, y,
+                                       train=train, test=test,
+                                       method=self.method,
+                                       classes=self.classes_,
+                                       supports_sw=supports_sw,
+                                       sample_weight=sample_weight)
+                           for train, test
+                           in cv.split(X, y))
 
         return self
 
