@@ -412,7 +412,7 @@ def _multiclass_roc_auc_score(y_true, y_score, labels,
         Target scores corresponding to probability estimates of a sample
         belonging to a particular class
 
-    labels : array, shape = [n_classes] or None
+    labels : array-like of shape (n_classes,), default=None
         List of labels to index ``y_score`` used for multiclass. If ``None``,
         the lexical order of ``y_true`` is used to index ``y_score``.
 
