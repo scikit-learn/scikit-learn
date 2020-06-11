@@ -635,6 +635,9 @@ def _multiplicative_update_w(X, W, H, beta_loss, l1_reg_W, l2_reg_W, gamma,
 def _multiplicative_update_h(X, W, H, A, B,
                              beta_loss, l1_reg_H, l2_reg_H, gamma,
                              n_iter):
+    H_old = H
+    H_old[H_old == 0] = EPSILON
+
     """update H in Multiplicative Update NMF"""
     if beta_loss == 2:
         numerator = safe_sparse_dot(W.T, X)
@@ -716,9 +719,10 @@ def _multiplicative_update_h(X, W, H, A, B,
         rho = .99
         A *= rho
         B *= rho
-        A += delta_H * H
+        A += numerator * H
         B += denominator
         H = np.divide(A, B)
+        delta_H = np.divide(H, H_old)
 
     # gamma is in ]0, 1]
     if gamma != 1:
