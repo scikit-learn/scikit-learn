@@ -81,9 +81,32 @@ class Hyperparameter(namedtuple('Hyperparameter',
 
     Examples
     --------
+    >>> from sklearn.gaussian_process.kernels import ConstantKernel, RBF
+    >>> from sklearn.datasets import make_friedman2
+    >>> from sklearn.gaussian_process import GaussianProcessRegressor
     >>> from sklearn.gaussian_process.kernels import Hyperparameter
-    >>> from sklearn.datasets import
-
+    >>> kernel = ConstantKernel(constant_value=1.0, constant_value_bounds=(0.0, 10.0)) * RBF(length_scale=0.5, length_scale_bounds=(0.0, 10.0)) + RBF(length_scale=2.0, length_scale_bounds=(0.0, 10.0))
+    >>> for hyperparameter in kernel.hyperparameters: print(hyperparameter)
+    Hyperparameter(name='k1__k1__constant_value', value_type='numeric', bounds=array([[ 0., 10.]]), n_elements=1, fixed=False)
+    Hyperparameter(name='k1__k2__length_scale', value_type='numeric', bounds=array([[ 0., 10.]]), n_elements=1, fixed=False)
+    Hyperparameter(name='k2__length_scale', value_type='numeric', bounds=array([[ 0., 10.]]), n_elements=1, fixed=False)
+    >>> params = kernel.get_params()
+    >>> for key in sorted(params): print("%s : %s" % (key, params[key]))
+    k1 : 1**2 * RBF(length_scale=0.5)
+    k1__k1 : 1**2
+    k1__k1__constant_value : 1.0
+    k1__k1__constant_value_bounds : (0.0, 10.0)
+    k1__k2 : RBF(length_scale=0.5)
+    k1__k2__length_scale : 0.5
+    k1__k2__length_scale_bounds : (0.0, 10.0)
+    k2 : RBF(length_scale=2)
+    k2__length_scale : 2.0
+    k2__length_scale_bounds : (0.0, 10.0)
+    >>> gpr = GaussianProcessRegressor(kernel=kernel, alpha=5, random_state=0).fit(X, y)
+    >>> gpr.score(X, y)
+    0.7135961476859551
+    >>> print(kernel)
+    1**2 * RBF(length_scale=0.5) + RBF(length_scale=2)
     """
     # A raw namedtuple is very memory efficient as it packs the attributes
     # in a struct to get rid of the __dict__ of attributes in particular it
