@@ -108,6 +108,24 @@ get_build_type() {
     echo "$filenames"
 }
 
+get_dep() {
+    package="$1"
+    version="$2"
+    if [[ "$version" == "none" ]]; then
+        # do not install with none
+        echo
+    elif [[ "${version%%[^0-9.]*}" ]]; then
+        # version number is explicity passed
+        echo " $package==$version"
+    elif [[ "$version" == "latest" ]]; then
+        # * means latest
+        echo " $package"
+    elif [[ "$version" == "min" ]]; then
+        echo " $package==$(python sklearn/_build_utils/dependencies.py $package)"
+    fi
+}
+
+
 build_type=$(get_build_type)
 if [[ "$build_type" =~ ^SKIP ]]
 then
@@ -164,12 +182,16 @@ if [[ "$CIRCLE_JOB" == "doc-min-dependencies" ]]; then
 fi
 
 # packaging won't be needed once setuptools starts shipping packaging>=17.0
-conda create -n $CONDA_ENV_NAME --yes --quiet python="${PYTHON_VERSION:-*}" \
-  numpy="${NUMPY_VERSION:-*}" scipy="${SCIPY_VERSION:-*}" \
-  cython="${CYTHON_VERSION:-*}" pytest coverage \
-  matplotlib="${MATPLOTLIB_VERSION:-*}" sphinx=3.0.3 pillow \
-  scikit-image="${SCIKIT_IMAGE_VERSION:-*}" pandas="${PANDAS_VERSION:-*}" \
-  joblib memory_profiler packaging seaborn
+conda create -n $CONDA_ENV_NAME --yes --quiet \
+    python="${PYTHON_VERSION:-*}" \
+    "$(get_dep numpy $NUMPY_VERSION)" \
+    "$(get_dep scipy $SCIPY_VERSION)" \
+    "$(get_dep cython $CYTHON_VERSION)" \
+    "$(get_dep matplotlib $MATPLOTLIB_VERSION)" \
+    "$(get_dep sphinx $SPHINX_VERSION)" \
+    "$(get_dep scikit-image $SCIKIT_IMAGE_VERSION)" \
+    "$(get_dep pandas $PANDAS_VERSION)" \
+    joblib memory_profiler packaging seaborn pillow pytest coverage
 
 source activate testenv
 pip install sphinx-gallery
@@ -250,4 +272,3 @@ then
         exit 1
     fi
 fi
-

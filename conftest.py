@@ -15,8 +15,8 @@ from _pytest.doctest import DoctestItem
 
 from sklearn.utils import _IS_32BIT
 from sklearn.externals import _pilutil
+from sklearn._build_utils.dependencies import PYTEST_MIN_VERSION
 
-PYTEST_MIN_VERSION = '3.3.0'
 
 if LooseVersion(pytest.__version__) < PYTEST_MIN_VERSION:
     raise ImportError('Your version of pytest is too old, you should have '
