@@ -91,11 +91,11 @@ class Hyperparameter(namedtuple('Hyperparameter',
     ...    length_scale_bounds=(0.0, 10.0))
     >>> for hyperparameter in kernel.hyperparameters: print(hyperparameter)
     Hyperparameter(name='k1__k1__constant_value', value_type='numeric',
-    ...    bounds=array([[ 0., 10.]]), n_elements=1, fixed=False)
+    bounds=array([[ 0., 10.]]), n_elements=1, fixed=False)
     Hyperparameter(name='k1__k2__length_scale', value_type='numeric',
-    ...    bounds=array([[ 0., 10.]]), n_elements=1, fixed=False)
+    bounds=array([[ 0., 10.]]), n_elements=1, fixed=False)
     Hyperparameter(name='k2__length_scale', value_type='numeric',
-    ...    bounds=array([[ 0., 10.]]), n_elements=1, fixed=False)
+    bounds=array([[ 0., 10.]]), n_elements=1, fixed=False)
     >>> params = kernel.get_params()
     >>> for key in sorted(params): print("%s : %s" % (key, params[key]))
     k1 : 1**2 * RBF(length_scale=0.5)
