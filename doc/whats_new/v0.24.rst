@@ -45,9 +45,9 @@ Changelog
     where 123456 is the *pull request* number, not the issue number.
 
 :mod:`sklearn.calibration`
-.......................
+..........................
 
-- |Enhancement| :class:`calibration.CalibratedClassifierCV.fit` now supports
+- |Efficiency| :class:`calibration.CalibratedClassifierCV.fit` now supports
   parallelization via `joblib.Parallel` using argument `n_jobs`.
   :pr:`17107` by :user:`Julien Jerphanion <jjerphan>`.
 
