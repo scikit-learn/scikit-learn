@@ -132,10 +132,10 @@ def test_parallel_execution():
     for method in ['sigmoid', 'isotonic']:
         base_estimator = LinearSVC(random_state=42)
 
-        cal_clf__parallel = CalibratedClassifierCV(base_estimator,
-                                                   method=method)
-        cal_clf__parallel.fit(X_train, y_train)
-        probs__parallel = cal_clf__parallel.predict_proba(X_test)
+        cal_clf_parallel = CalibratedClassifierCV(base_estimator,
+                                                   method=method, n_jobs=2)
+        cal_clf_parallel.fit(X_train, y_train)
+        probs_parallel = cal_clf_parallel.predict_proba(X_test)
 
         cal_clf_sequential = CalibratedClassifierCV(base_estimator,
                                                     method=method,
