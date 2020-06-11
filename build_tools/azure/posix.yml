@@ -17,8 +17,8 @@ jobs:
     JUNITXML: 'test-data.xml'
     PYTEST_VERSION: '5.2.1'
     PYTEST_XDIST: 'true'
-    OMP_NUM_THREADS: '4'
-    OPENBLAS_NUM_THREADS: '4'
+    OMP_NUM_THREADS: '2'
+    OPENBLAS_NUM_THREADS: '2'
     SKLEARN_SKIP_NETWORK_TESTS: '1'
   strategy:
     matrix:
