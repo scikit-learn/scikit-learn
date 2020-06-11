@@ -117,8 +117,8 @@ def test_plot_precision_recall(pyplot, response_method, with_sample_weight):
 
     expected_label = "LogisticRegression (AP = {:0.2f})".format(avg_prec)
     assert disp.line_.get_label() == expected_label
-    assert disp.ax_.get_xlabel() == "Recall"
-    assert disp.ax_.get_ylabel() == "Precision"
+    assert disp.ax_.get_xlabel() == "Recall (Positive label: 1)"
+    assert disp.ax_.get_ylabel() == "Precision (Positive label: 1)"
 
     # draw again with another label
     disp.plot(name="MySpecialEstimator")
