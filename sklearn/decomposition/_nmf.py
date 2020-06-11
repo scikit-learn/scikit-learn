@@ -634,7 +634,7 @@ def _multiplicative_update_w(X, W, H, beta_loss, l1_reg_W, l2_reg_W, gamma,
 
 def _multiplicative_update_h(X, W, H, A, B,
                              beta_loss, l1_reg_H, l2_reg_H, gamma):
-    H_old = H
+    H_old = H.copy()
     H_old[H_old == 0] = EPSILON
 
     """update H in Multiplicative Update NMF"""
@@ -826,8 +826,8 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
     H_sum, HHt, XHt = None, None, None
 
     n_samples = X.shape[0]
-    n_iter_update_h_ = 1
-    max_iter_update_w_ = 5
+    max_iter_update_h_ = 1
+    max_iter_update_w_ = 1
 
     if batch_size is None:
         batch_size = n_samples
@@ -851,7 +851,7 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
 
             # update H
             if update_H:
-                for j in range(n_iter_update_h_):
+                for j in range(max_iter_update_h_):
                     delta_H, A, B = _multiplicative_update_h(X[slice],
                                                              W[slice], H, A, B,
                                                              beta_loss,
@@ -866,11 +866,10 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
                 if beta_loss <= 1:
                     H[H < np.finfo(np.float64).eps] = 0.
 
-        # test convergence criterion every 10 iterations
+        # test convergence criterion every 1 iterations
         if tol > 0 and n_iter % 10 == 0:
             error = _beta_divergence(X, W, H, beta_loss,
                                      square_root=True)
-
             if verbose:
                 iter_time = time.time()
                 print("Epoch %02d reached after %.3f seconds, error: %f" %
@@ -1879,7 +1878,7 @@ class MiniBatchNMF(TransformerMixin, BaseEstimator):
             X=X, W=W, H=H, A=None, B=None, n_components=self.n_components,
             batch_size=self.batch_size, init=self.init,
             update_H=True, solver=self.solver, beta_loss=self.beta_loss,
-            tol=0, max_iter=1, alpha=self.alpha,
+            tol=self.tol, max_iter=self.max_iter, alpha=self.alpha,
             l1_ratio=self.l1_ratio, regularization='both',
             random_state=self.random_state, verbose=self.verbose,
             shuffle=self.shuffle)
@@ -1923,7 +1922,7 @@ class MiniBatchNMF(TransformerMixin, BaseEstimator):
                 n_components=self.n_components,
                 batch_size=self.batch_size, init='custom',
                 update_H=True, solver=self.solver, beta_loss=self.beta_loss,
-                tol=0, max_iter=1, alpha=self.alpha,
+                tol=self.tol, max_iter=1, alpha=self.alpha,
                 l1_ratio=self.l1_ratio, regularization='both',
                 random_state=self.random_state, verbose=self.verbose,
                 shuffle=self.shuffle)
