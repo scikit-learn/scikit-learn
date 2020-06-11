@@ -106,7 +106,7 @@ optipng:
 	find _build auto_examples */generated -name '*.png' -print0 \
 	  | xargs -0 -n 1 -P 4 optipng -o10
 
-dist: # html
+dist: html
 	# Exclude the output directory to avoid infinity recursion
 	zip -q -x $(BUILDDIR)/html/stable/_downloads \
 	       -r $(BUILDDIR)/html/stable/_downloads/scikit-learn-docs.zip \
