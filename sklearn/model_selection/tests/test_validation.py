@@ -42,7 +42,7 @@ from sklearn.model_selection._validation import _fit_and_score
 from sklearn.model_selection._validation import _score
 
 from sklearn.datasets import make_regression
-from sklearn.datasets import load_boston
+from sklearn.datasets import load_diabetes
 from sklearn.datasets import load_iris
 from sklearn.datasets import load_digits
 from sklearn.metrics import explained_variance_score
@@ -768,7 +768,7 @@ def test_cross_val_score_multilabel():
 
 
 def test_cross_val_predict():
-    X, y = load_boston(return_X_y=True)
+    X, y = load_diabetes(return_X_y=True)
     cv = KFold()
 
     est = Ridge()

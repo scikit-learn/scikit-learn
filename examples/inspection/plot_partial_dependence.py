@@ -46,7 +46,7 @@ from sklearn.neural_network import MLPRegressor
 from sklearn.datasets import fetch_california_housing
 
 
-##############################################################################
+# %%
 # California Housing data preprocessing
 # -------------------------------------
 #
@@ -63,7 +63,7 @@ y -= y.mean()
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1,
                                                     random_state=0)
 
-##############################################################################
+# %%
 # Partial Dependence computation for multi-layer perceptron
 # ---------------------------------------------------------
 #
@@ -80,7 +80,7 @@ est.fit(X_train, y_train)
 print("done in {:.3f}s".format(time() - tic))
 print("Test R2 score: {:.2f}".format(est.score(X_test, y_test)))
 
-##############################################################################
+# %%
 # We configured a pipeline to scale the numerical input features and tuned the
 # neural network size and learning rate to get a reasonable compromise between
 # training time and predictive performance on a test set.
@@ -114,7 +114,7 @@ fig.suptitle('Partial dependence of house value on non-location features\n'
              'for the California housing dataset, with MLPRegressor')
 fig.subplots_adjust(hspace=0.3)
 
-##############################################################################
+# %%
 # Partial Dependence computation for Gradient Boosting
 # ----------------------------------------------------
 #
@@ -128,7 +128,7 @@ est.fit(X_train, y_train)
 print("done in {:.3f}s".format(time() - tic))
 print("Test R2 score: {:.2f}".format(est.score(X_test, y_test)))
 
-##############################################################################
+# %%
 # Here, we used the default hyperparameters for the gradient boosting model
 # without any preprocessing as tree-based models are naturally robust to
 # monotonic transformations of numerical features.
@@ -155,7 +155,7 @@ fig.suptitle('Partial dependence of house value on non-location features\n'
 fig.subplots_adjust(wspace=0.4, hspace=0.3)
 
 
-##############################################################################
+# %%
 # Analysis of the plots
 # ---------------------
 #
@@ -185,7 +185,7 @@ fig.subplots_adjust(wspace=0.4, hspace=0.3)
 # nearly independent of the house age, whereas for values less than two there
 # is a strong dependence on age.
 
-##############################################################################
+# %%
 # 3D interaction plots
 # --------------------
 #
