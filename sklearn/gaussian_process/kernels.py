@@ -85,11 +85,17 @@ class Hyperparameter(namedtuple('Hyperparameter',
     >>> from sklearn.datasets import make_friedman2
     >>> from sklearn.gaussian_process import GaussianProcessRegressor
     >>> from sklearn.gaussian_process.kernels import Hyperparameter
-    >>> kernel = ConstantKernel(constant_value=1.0, constant_value_bounds=(0.0, 10.0)) * RBF(length_scale=0.5, length_scale_bounds=(0.0, 10.0)) + RBF(length_scale=2.0, length_scale_bounds=(0.0, 10.0))
+    >>> kernel = ConstantKernel(constant_value=1.0, 
+    ...    constant_value_bounds=(0.0, 10.0)) * RBF(length_scale=0.5,
+    ...    length_scale_bounds=(0.0, 10.0)) + RBF(length_scale=2.0, 
+    ...    length_scale_bounds=(0.0, 10.0))
     >>> for hyperparameter in kernel.hyperparameters: print(hyperparameter)
-    Hyperparameter(name='k1__k1__constant_value', value_type='numeric', bounds=array([[ 0., 10.]]), n_elements=1, fixed=False)
-    Hyperparameter(name='k1__k2__length_scale', value_type='numeric', bounds=array([[ 0., 10.]]), n_elements=1, fixed=False)
-    Hyperparameter(name='k2__length_scale', value_type='numeric', bounds=array([[ 0., 10.]]), n_elements=1, fixed=False)
+    Hyperparameter(name='k1__k1__constant_value', value_type='numeric', 
+    ...    bounds=array([[ 0., 10.]]), n_elements=1, fixed=False)
+    Hyperparameter(name='k1__k2__length_scale', value_type='numeric', 
+    ...    bounds=array([[ 0., 10.]]), n_elements=1, fixed=False)
+    Hyperparameter(name='k2__length_scale', value_type='numeric', 
+    ...    bounds=array([[ 0., 10.]]), n_elements=1, fixed=False)
     >>> params = kernel.get_params()
     >>> for key in sorted(params): print("%s : %s" % (key, params[key]))
     k1 : 1**2 * RBF(length_scale=0.5)
@@ -102,7 +108,8 @@ class Hyperparameter(namedtuple('Hyperparameter',
     k2 : RBF(length_scale=2)
     k2__length_scale : 2.0
     k2__length_scale_bounds : (0.0, 10.0)
-    >>> gpr = GaussianProcessRegressor(kernel=kernel, alpha=5, random_state=0).fit(X, y)
+    >>> gpr = GaussianProcessRegressor(kernel=kernel, alpha=5, 
+    ...         random_state=0).fit(X, y)
     >>> gpr.score(X, y)
     0.7135961476859551
     >>> print(kernel)
@@ -938,6 +945,7 @@ class Exponentiation(Kernel):
     >>> gpr.predict(X[:1,:], return_std=True)
     (array([635.5...]), array([0.559...]))
     """
+
     def __init__(self, kernel, exponent):
         self.kernel = kernel
         self.exponent = exponent
@@ -1134,6 +1142,7 @@ class ConstantKernel(StationaryKernelMixin, GenericKernelMixin,
     >>> gpr.predict(X[:1,:], return_std=True)
     (array([606.1...]), array([0.24...]))
     """
+
     def __init__(self, constant_value=1.0, constant_value_bounds=(1e-5, 1e5)):
         self.constant_value = constant_value
         self.constant_value_bounds = constant_value_bounds
@@ -1253,6 +1262,7 @@ class WhiteKernel(StationaryKernelMixin, GenericKernelMixin,
     >>> gpr.predict(X[:2,:], return_std=True)
     (array([653.0..., 592.1... ]), array([316.6..., 316.6...]))
     """
+
     def __init__(self, noise_level=1.0, noise_level_bounds=(1e-5, 1e5)):
         self.noise_level = noise_level
         self.noise_level_bounds = noise_level_bounds
@@ -1393,6 +1403,7 @@ class RBF(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
     array([[0.8354..., 0.03228..., 0.1322...],
            [0.7906..., 0.0652..., 0.1441...]])
     """
+
     def __init__(self, length_scale=1.0, length_scale_bounds=(1e-5, 1e5)):
         self.length_scale = length_scale
         self.length_scale_bounds = length_scale_bounds
@@ -1474,7 +1485,7 @@ class RBF(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
         if self.anisotropic:
             return "{0}(length_scale=[{1}])".format(
                 self.__class__.__name__, ", ".join(map("{0:.3g}".format,
-                                                   self.length_scale)))
+                                                       self.length_scale)))
         else:  # isotropic
             return "{0}(length_scale={1:.3g})".format(
                 self.__class__.__name__, np.ravel(self.length_scale)[0])
@@ -1559,6 +1570,7 @@ class Matern(RBF):
     array([[0.8513..., 0.0368..., 0.1117...],
             [0.8086..., 0.0693..., 0.1220...]])
     """
+
     def __init__(self, length_scale=1.0, length_scale_bounds=(1e-5, 1e5),
                  nu=1.5):
         super().__init__(length_scale, length_scale_bounds)
@@ -1737,6 +1749,7 @@ class RationalQuadratic(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
     array([[0.8881..., 0.0566..., 0.05518...],
             [0.8678..., 0.0707... , 0.0614...]])
     """
+
     def __init__(self, length_scale=1.0, alpha=1.0,
                  length_scale_bounds=(1e-5, 1e5), alpha_bounds=(1e-5, 1e5)):
         self.length_scale = length_scale
@@ -1879,6 +1892,7 @@ class ExpSineSquared(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
     >>> gpr.predict(X[:2,:], return_std=True)
     (array([425.6..., 457.5...]), array([0.3894..., 0.3467...]))
     """
+
     def __init__(self, length_scale=1.0, periodicity=1.0,
                  length_scale_bounds=(1e-5, 1e5),
                  periodicity_bounds=(1e-5, 1e5)):
