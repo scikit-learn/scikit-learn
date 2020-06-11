@@ -85,16 +85,16 @@ class Hyperparameter(namedtuple('Hyperparameter',
     >>> from sklearn.datasets import make_friedman2
     >>> from sklearn.gaussian_process import GaussianProcessRegressor
     >>> from sklearn.gaussian_process.kernels import Hyperparameter
-    >>> kernel = ConstantKernel(constant_value=1.0, 
+    >>> kernel = ConstantKernel(constant_value=1.0,
     ...    constant_value_bounds=(0.0, 10.0)) * RBF(length_scale=0.5,
-    ...    length_scale_bounds=(0.0, 10.0)) + RBF(length_scale=2.0, 
+    ...    length_scale_bounds=(0.0, 10.0)) + RBF(length_scale=2.0,
     ...    length_scale_bounds=(0.0, 10.0))
     >>> for hyperparameter in kernel.hyperparameters: print(hyperparameter)
-    Hyperparameter(name='k1__k1__constant_value', value_type='numeric', 
+    Hyperparameter(name='k1__k1__constant_value', value_type='numeric',
     ...    bounds=array([[ 0., 10.]]), n_elements=1, fixed=False)
-    Hyperparameter(name='k1__k2__length_scale', value_type='numeric', 
+    Hyperparameter(name='k1__k2__length_scale', value_type='numeric',
     ...    bounds=array([[ 0., 10.]]), n_elements=1, fixed=False)
-    Hyperparameter(name='k2__length_scale', value_type='numeric', 
+    Hyperparameter(name='k2__length_scale', value_type='numeric',
     ...    bounds=array([[ 0., 10.]]), n_elements=1, fixed=False)
     >>> params = kernel.get_params()
     >>> for key in sorted(params): print("%s : %s" % (key, params[key]))
@@ -108,7 +108,7 @@ class Hyperparameter(namedtuple('Hyperparameter',
     k2 : RBF(length_scale=2)
     k2__length_scale : 2.0
     k2__length_scale_bounds : (0.0, 10.0)
-    >>> gpr = GaussianProcessRegressor(kernel=kernel, alpha=5, 
+    >>> gpr = GaussianProcessRegressor(kernel=kernel, alpha=5,
     ...         random_state=0).fit(X, y)
     >>> gpr.score(X, y)
     0.7135961476859551
