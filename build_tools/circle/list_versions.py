@@ -8,6 +8,7 @@ import sys
 from distutils.version import LooseVersion
 from urllib.request import urlopen
 
+
 def json_urlread(url):
     try:
         return json.loads(urlopen(url).read().decode('utf8'))
@@ -32,10 +33,10 @@ def human_readable_data_quantity(quantity, multiple=1024):
             quantity /= multiple
 
 
-def get_pdf_size(version):
+def get_zip_size(version):
     api_url = ROOT_URL + '%s/_downloads' % version
     for path_details in json_urlread(api_url):
-        if path_details['name'] == 'scikit-learn-docs.pdf':
+        if path_details['name'] == 'scikit-learn-docs.zip':
             return human_readable_data_quantity(path_details['size'], 1000)
 
 
@@ -64,8 +65,8 @@ for path_details in root_listing:
     if path_details['type'] == 'dir':
         html = urlopen(RAW_FMT % name).read().decode('utf8')
         version_num = VERSION_RE.search(html).group(1)
-        pdf_size = get_pdf_size(name)
-        dirs[name] = (version_num, pdf_size)
+        zip_size = get_zip_size(name)
+        dirs[name] = (version_num, zip_size)
 
     if path_details['type'] == 'symlink':
         symlinks[name] = json_urlread(path_details['_links']['self'])['target']
@@ -81,7 +82,7 @@ seen = set()
 for name in (NAMED_DIRS +
              sorted((k for k in dirs if k[:1].isdigit()),
                     key=LooseVersion, reverse=True)):
-    version_num, pdf_size = dirs[name]
+    version_num, zip_size = dirs[name]
     if version_num in seen:
         # symlink came first
         continue
@@ -91,7 +92,7 @@ for name in (NAMED_DIRS +
     path = 'https://scikit-learn.org/%s/' % name
     out = ('* `Scikit-learn %s%s documentation <%s>`_'
            % (version_num, name_display, path))
-    if pdf_size is not None:
-        out += (' (`PDF %s <%s/_downloads/scikit-learn-docs.pdf>`_)'
-                % (pdf_size, path))
+    if zip_size is not None:
+        out += (' (`ZIP %s <%s/_downloads/scikit-learn-docs.zip>`_)'
+                % (zip_size, path))
     print(out)
