@@ -633,8 +633,7 @@ def _multiplicative_update_w(X, W, H, beta_loss, l1_reg_W, l2_reg_W, gamma,
 
 
 def _multiplicative_update_h(X, W, H, A, B,
-                             beta_loss, l1_reg_H, l2_reg_H, gamma,
-                             n_iter):
+                             beta_loss, l1_reg_H, l2_reg_H, gamma):
     H_old = H
     H_old[H_old == 0] = EPSILON
 
@@ -852,14 +851,13 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
 
             # update H
             if update_H:
-                delta_H, A, B = _multiplicative_update_h(X[slice], W[slice], H,
-                                                         A, B,
-                                                         beta_loss, l1_reg_H,
-                                                         l2_reg_H, gamma,
-                                                         n_iter_update_h_)
-                H *= delta_H
-
-                n_iter_update_h_ += 1
+                for j in range(n_iter_update_h_):
+                    delta_H, A, B = _multiplicative_update_h(X[slice],
+                                                             W[slice], H, A, B,
+                                                             beta_loss,
+                                                             l1_reg_H,
+                                                             l2_reg_H, gamma)
+                    H *= delta_H
 
                 # These values will be recomputed since H changed
                 H_sum, HHt, XHt = None, None, None
