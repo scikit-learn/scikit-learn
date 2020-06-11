@@ -17,6 +17,7 @@ from ..base import MultiOutputMixin
 from ..utils import check_array, check_consistent_length
 from ..utils.extmath import svd_flip
 from ..utils.validation import check_is_fitted, FLOAT_DTYPES
+from ..utils.validation import _deprecate_positional_args
 from ..exceptions import ConvergenceWarning
 
 __all__ = ['PLSCanonical', 'PLSRegression', 'PLSSVD']
@@ -158,28 +159,32 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
         with two algo. (a) the inner loop of the original NIPALS algo. or (b) a
         SVD on residuals cross-covariance matrices.
 
-    n_components : int, number of components to keep. (default 2).
+    n_components : int, default=2
+        Number of components to keep.
 
-    scale : boolean, scale data? (default True)
+    scale : boolean, default=True
+        scale data
 
-    deflation_mode : str, "canonical" or "regression". See notes.
+    deflation_mode : str, default='regression'
+        "canonical" or "regression". See notes.
 
-    mode : "A" classical PLS and "B" CCA. See notes.
+    mode : { "A", "B" }, default="A"
+        classical PLS and "B" CCA. See notes.
 
     norm_y_weights : boolean, normalize Y weights to one? (default False)
 
-    algorithm : string, "nipals" or "svd"
+    algorithm : string, "nipals" or "svd", default='nipals'
         The algorithm used to estimate the weights. It will be called
         n_components times, i.e. once for each iteration of the outer loop.
 
-    max_iter : int (default 500)
+    max_iter : int, default=500
         The maximum number of iterations
         of the NIPALS inner loop (used only if algorithm="nipals")
 
-    tol : non-negative real, default 1e-06
+    tol : non-negative real, default=1e-06
         The tolerance used in the iterative algorithm.
 
-    copy : boolean, default True
+    copy : boolean, default=True
         Whether the deflation should be done on a copy. Let the default
         value to True unless you don't care about side effects.
 
@@ -248,7 +253,8 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
     """
 
     @abstractmethod
-    def __init__(self, n_components=2, scale=True, deflation_mode="regression",
+    def __init__(self, n_components=2, *, scale=True,
+                 deflation_mode="regression",
                  mode="A", algorithm="nipals", norm_y_weights=False,
                  max_iter=500, tol=1e-06, copy=True):
         self.n_components = n_components
@@ -277,8 +283,8 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
 
         # copy since this will contains the residuals (deflated) matrices
         check_consistent_length(X, Y)
-        X = check_array(X, dtype=np.float64, copy=self.copy,
-                        ensure_min_samples=2)
+        X = self._validate_data(X, dtype=np.float64, copy=self.copy,
+                                ensure_min_samples=2)
         Y = check_array(Y, dtype=np.float64, copy=self.copy, ensure_2d=False)
         if Y.ndim == 1:
             Y = Y.reshape(-1, 1)
@@ -416,11 +422,11 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
             Training vectors, where n_samples is the number of samples and
             n_features is the number of predictors.
 
-        Y : array-like of shape (n_samples, n_targets)
+        Y : array-like of shape (n_samples, n_targets), default=None
             Target vectors, where n_samples is the number of samples and
             n_targets is the number of response variables.
 
-        copy : boolean, default True
+        copy : boolean, default=True
             Whether to copy X and Y, or perform in-place normalization.
 
         Returns
@@ -481,7 +487,7 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
             Training vectors, where n_samples is the number of samples and
             n_features is the number of predictors.
 
-        copy : boolean, default True
+        copy : boolean, default=True
             Whether to copy X and Y, or perform in-place normalization.
 
         Notes
@@ -506,7 +512,7 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
             Training vectors, where n_samples is the number of samples and
             n_features is the number of predictors.
 
-        y : array-like of shape (n_samples, n_targets)
+        y : array-like of shape (n_samples, n_targets), default=None
             Target vectors, where n_samples is the number of samples and
             n_targets is the number of response variables.
 
@@ -517,7 +523,8 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
         return self.fit(X, y).transform(X, y)
 
     def _more_tags(self):
-        return {'poor_score': True}
+        return {'poor_score': True,
+                'requires_y': False}
 
 
 class PLSRegression(_PLS):
@@ -534,20 +541,20 @@ class PLSRegression(_PLS):
 
     Parameters
     ----------
-    n_components : int, (default 2)
+    n_components : int, default=2
         Number of components to keep.
 
-    scale : boolean, (default True)
+    scale : boolean, default=True
         whether to scale the data
 
-    max_iter : an integer, (default 500)
+    max_iter : int, default=500
         the maximum number of iterations of the NIPALS inner loop (used
         only if algorithm="nipals")
 
-    tol : non-negative real
+    tol : non-negative real, default=1e-06
         Tolerance used in the iterative algorithm default 1e-06.
 
-    copy : boolean, default True
+    copy : boolean, default=True
         Whether the deflation should be done on a copy. Let the default
         value to True unless you don't care about side effect
 
@@ -650,8 +657,8 @@ class PLSRegression(_PLS):
     Tenenhaus, M. (1998). La regression PLS: theorie et pratique. Paris:
     Editions Technic.
     """
-
-    def __init__(self, n_components=2, scale=True,
+    @_deprecate_positional_args
+    def __init__(self, n_components=2, *, scale=True,
                  max_iter=500, tol=1e-06, copy=True):
         super().__init__(
             n_components=n_components, scale=scale,
@@ -674,24 +681,24 @@ class PLSCanonical(_PLS):
 
     Parameters
     ----------
-    n_components : int, (default 2).
+    n_components : int, default=2
         Number of components to keep
 
-    scale : boolean, (default True)
+    scale : boolean, default=True
         Option to scale data
 
-    algorithm : string, "nipals" or "svd"
+    algorithm : string, "nipals" or "svd", default='nipals'
         The algorithm used to estimate the weights. It will be called
         n_components times, i.e. once for each iteration of the outer loop.
 
-    max_iter : an integer, (default 500)
+    max_iter : int, default=500
         the maximum number of iterations of the NIPALS inner loop (used
         only if algorithm="nipals")
 
-    tol : non-negative real, default 1e-06
+    tol : non-negative real, default=1e-06
         the tolerance used in the iterative algorithm
 
-    copy : boolean, default True
+    copy : boolean, default=True
         Whether the deflation should be done on a copy. Let the default
         value to True unless you don't care about side effect
 
@@ -720,6 +727,9 @@ class PLSCanonical(_PLS):
 
     y_rotations_ : array, shape = [q, n_components]
         Y block to latents rotations.
+
+    coef_ : array of shape (p, q)
+        The coefficients of the linear model: ``Y = X coef_ + Err``
 
     n_iter_ : array-like
         Number of iterations of the NIPALS inner loop for each
@@ -796,8 +806,8 @@ class PLSCanonical(_PLS):
     CCA
     PLSSVD
     """
-
-    def __init__(self, n_components=2, scale=True, algorithm="nipals",
+    @_deprecate_positional_args
+    def __init__(self, n_components=2, *, scale=True, algorithm="nipals",
                  max_iter=500, tol=1e-06, copy=True):
         super().__init__(
             n_components=n_components, scale=scale,
@@ -818,13 +828,13 @@ class PLSSVD(TransformerMixin, BaseEstimator):
 
     Parameters
     ----------
-    n_components : int, default 2
+    n_components : int, default=2
         Number of components to keep.
 
-    scale : boolean, default True
+    scale : boolean, default=True
         Whether to scale X and Y.
 
-    copy : boolean, default True
+    copy : boolean, default=True
         Whether to copy X and Y, or perform in-place computations.
 
     Attributes
@@ -865,8 +875,8 @@ class PLSSVD(TransformerMixin, BaseEstimator):
     PLSCanonical
     CCA
     """
-
-    def __init__(self, n_components=2, scale=True, copy=True):
+    @_deprecate_positional_args
+    def __init__(self, n_components=2, *, scale=True, copy=True):
         self.n_components = n_components
         self.scale = scale
         self.copy = copy
@@ -886,8 +896,8 @@ class PLSSVD(TransformerMixin, BaseEstimator):
         """
         # copy since this will contains the centered data
         check_consistent_length(X, Y)
-        X = check_array(X, dtype=np.float64, copy=self.copy,
-                        ensure_min_samples=2)
+        X = self._validate_data(X, dtype=np.float64, copy=self.copy,
+                                ensure_min_samples=2)
         Y = check_array(Y, dtype=np.float64, copy=self.copy, ensure_2d=False)
         if Y.ndim == 1:
             Y = Y.reshape(-1, 1)
@@ -930,7 +940,7 @@ class PLSSVD(TransformerMixin, BaseEstimator):
             Training vectors, where n_samples is the number of samples and
             n_features is the number of predictors.
 
-        Y : array-like of shape (n_samples, n_targets)
+        Y : array-like of shape (n_samples, n_targets), default=None
             Target vectors, where n_samples is the number of samples and
             n_targets is the number of response variables.
         """
@@ -956,7 +966,7 @@ class PLSSVD(TransformerMixin, BaseEstimator):
             Training vectors, where n_samples is the number of samples and
             n_features is the number of predictors.
 
-        y : array-like of shape (n_samples, n_targets)
+        y : array-like of shape (n_samples, n_targets), default=None
             Target vectors, where n_samples is the number of samples and
             n_targets is the number of response variables.
 

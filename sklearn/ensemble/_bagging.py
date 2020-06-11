@@ -16,13 +16,13 @@ from ._base import BaseEnsemble, _partition_estimators
 from ..base import ClassifierMixin, RegressorMixin
 from ..metrics import r2_score, accuracy_score
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
-from ..utils import check_random_state, check_X_y, check_array, column_or_1d
+from ..utils import check_random_state, check_array, column_or_1d
 from ..utils import indices_to_mask
 from ..utils.metaestimators import if_delegate_has_method
 from ..utils.multiclass import check_classification_targets
 from ..utils.random import sample_without_replacement
 from ..utils.validation import has_fit_parameter, check_is_fitted, \
-    _check_sample_weight
+    _check_sample_weight, _deprecate_positional_args
 
 
 __all__ = ["BaggingClassifier",
@@ -193,7 +193,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
     @abstractmethod
     def __init__(self,
                  base_estimator=None,
-                 n_estimators=10,
+                 n_estimators=10, *,
                  max_samples=1.0,
                  max_features=1.0,
                  bootstrap=True,
@@ -278,9 +278,9 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         random_state = check_random_state(self.random_state)
 
         # Convert data (X is required to be 2d and indexable)
-        X, y = check_X_y(
-            X, y, ['csr', 'csc'], dtype=None, force_all_finite=False,
-            multi_output=True
+        X, y = self._validate_data(
+            X, y, accept_sparse=['csr', 'csc'], dtype=None,
+            force_all_finite=False, multi_output=True
         )
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X, dtype=None)
@@ -457,7 +457,8 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
     ----------
     base_estimator : object, default=None
         The base estimator to fit on random subsets of the dataset.
-        If None, then the base estimator is a decision tree.
+        If None, then the base estimator is a
+        :class:`~sklearn.tree.DecisionTreeClassifier`.
 
     n_estimators : int, default=10
         The number of base estimators in the ensemble.
@@ -577,9 +578,10 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
     .. [4] G. Louppe and P. Geurts, "Ensembles on Random Patches", Machine
            Learning and Knowledge Discovery in Databases, 346-361, 2012.
     """
+    @_deprecate_positional_args
     def __init__(self,
                  base_estimator=None,
-                 n_estimators=10,
+                 n_estimators=10, *,
                  max_samples=1.0,
                  max_features=1.0,
                  bootstrap=True,
@@ -864,7 +866,8 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
     ----------
     base_estimator : object, default=None
         The base estimator to fit on random subsets of the dataset.
-        If None, then the base estimator is a decision tree.
+        If None, then the base estimator is a
+        :class:`~sklearn.tree.DecisionTreeRegressor`.
 
     n_estimators : int, default=10
         The number of base estimators in the ensemble.
@@ -975,10 +978,10 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
     .. [4] G. Louppe and P. Geurts, "Ensembles on Random Patches", Machine
            Learning and Knowledge Discovery in Databases, 346-361, 2012.
     """
-
+    @_deprecate_positional_args
     def __init__(self,
                  base_estimator=None,
-                 n_estimators=10,
+                 n_estimators=10, *,
                  max_samples=1.0,
                  max_features=1.0,
                  bootstrap=True,

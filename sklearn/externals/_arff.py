@@ -148,6 +148,8 @@ __author_email__ = ('renato.ppontes@gmail.com, '
                     'joel.nothman@gmail.com')
 __version__ = '2.4.0'
 
+from typing import Optional
+
 import re
 import sys
 import csv
@@ -318,7 +320,7 @@ if PY2:
 
 # EXCEPTIONS ==================================================================
 class ArffException(Exception):
-    message = None
+    message : Optional[str] = None
 
     def __init__(self):
         self.line = -1

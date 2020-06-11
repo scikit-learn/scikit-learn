@@ -205,6 +205,9 @@ computing cluster centers and values of inertia. For example, assigning a
 weight of 2 to a sample is equivalent to adding a duplicate of that sample
 to the dataset :math:`X`.
 
+K-means can be used for vector quantization. This is achieved using the
+transform method of a trained model of :class:`KMeans`.
+
 Low-level parallelism
 ---------------------
 
@@ -212,16 +215,6 @@ Low-level parallelism
 chunks of data (256 samples) are processed in parallel, which in addition
 yields a low memory footprint. For more details on how to control the number of
 threads, please refer to our :ref:`parallelism` notes.
-
-.. warning::
-
-    The parallel version of K-Means is broken on OS X when `numpy` uses the
-    `Accelerate` Framework. This is expected behavior: `Accelerate` can be called
-    after a fork but you need to execv the subprocess with the Python binary
-    (which multiprocessing does not do under posix).
-
-K-means can be used for vector quantization. This is achieved using the
-transform method of a trained model of :class:`KMeans`.
 
 .. topic:: Examples:
 
@@ -1816,7 +1809,7 @@ this index, similarity is defined as a measure :math:`R_{ij}` that trades off:
   the centroid of that cluster -- also know as cluster diameter.
 - :math:`d_{ij}`, the distance between cluster centroids :math:`i` and :math:`j`.
 
-A simple choice to construct :math:`R_ij` so that it is nonnegative and
+A simple choice to construct :math:`R_{ij}` so that it is nonnegative and
 symmetric is:
 
 .. math::

@@ -3,10 +3,12 @@ parameters:
   vmImage: ''
   matrix: []
   dependsOn: []
+  condition: ''
 
 jobs:
 - job: ${{ parameters.name }}
   dependsOn: ${{ parameters.dependsOn }}
+  condition: ${{ parameters.condition }}
   pool:
     vmImage: ${{ parameters.vmImage }}
   variables:
@@ -14,8 +16,9 @@ jobs:
     VIRTUALENV: 'testvenv'
     JUNITXML: 'test-data.xml'
     PYTEST_VERSION: '5.2.1'
-    OMP_NUM_THREADS: '4'
-    OPENBLAS_NUM_THREADS: '4'
+    PYTEST_XDIST: 'true'
+    OMP_NUM_THREADS: '2'
+    OPENBLAS_NUM_THREADS: '2'
     SKLEARN_SKIP_NETWORK_TESTS: '1'
     CCACHE_DIR: $(Pipeline.Workspace)/ccache
     CCACHE_COMPRESS: '1'

@@ -105,14 +105,17 @@ def test_incr_mean_variance_axis():
         X_csr = sp.csr_matrix(X_lil)
 
         with pytest.raises(TypeError):
-            incr_mean_variance_axis(axis, last_mean, last_var, last_n)
+            incr_mean_variance_axis(X=axis, axis=last_mean, last_mean=last_var,
+                                    last_var=last_n)
         with pytest.raises(TypeError):
-            incr_mean_variance_axis(X_lil, axis, last_mean, last_var, last_n)
+            incr_mean_variance_axis(X_lil, axis=axis, last_mean=last_mean,
+                                    last_var=last_var, last_n=last_n)
 
         # Test _incr_mean_and_var with a 1 row input
         X_means, X_vars = mean_variance_axis(X_csr, axis)
         X_means_incr, X_vars_incr, n_incr = \
-            incr_mean_variance_axis(X_csr, axis, last_mean, last_var, last_n)
+            incr_mean_variance_axis(X_csr, axis=axis, last_mean=last_mean,
+                                    last_var=last_var, last_n=last_n)
         assert_array_almost_equal(X_means, X_means_incr)
         assert_array_almost_equal(X_vars, X_vars_incr)
         # X.shape[axis] picks # samples
@@ -142,13 +145,66 @@ def test_incr_mean_variance_axis():
                 last_var = last_var.astype(output_dtype)
                 X_means, X_vars = mean_variance_axis(X_sparse, axis)
                 X_means_incr, X_vars_incr, n_incr = \
-                    incr_mean_variance_axis(X_sparse, axis, last_mean,
-                                            last_var, last_n)
+                    incr_mean_variance_axis(X_sparse, axis=axis,
+                                            last_mean=last_mean,
+                                            last_var=last_var,
+                                            last_n=last_n)
                 assert X_means_incr.dtype == output_dtype
                 assert X_vars_incr.dtype == output_dtype
                 assert_array_almost_equal(X_means, X_means_incr)
                 assert_array_almost_equal(X_vars, X_vars_incr)
                 assert_array_equal(X.shape[axis], n_incr)
+
+
+@pytest.mark.parametrize(
+    "X1, X2",
+    [
+        (sp.random(5, 2, density=0.8, format='csr', random_state=0),
+         sp.random(13, 2, density=0.8, format='csr', random_state=0)),
+        (sp.random(5, 2, density=0.8, format='csr', random_state=0),
+         sp.hstack([sp.csr_matrix(np.full((13, 1), fill_value=np.nan)),
+                    sp.random(13, 1, density=0.8, random_state=42)],
+                   format="csr"))
+    ]
+)
+def test_incr_mean_variance_axis_equivalence_mean_variance(X1, X2):
+    # non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/16448
+    # check that computing the incremental mean and variance is equivalent to
+    # computing the mean and variance on the stacked dataset.
+    axis = 0
+    last_mean, last_var = np.zeros(X1.shape[1]), np.zeros(X1.shape[1])
+    last_n = np.zeros(X1.shape[1], dtype=np.int64)
+    updated_mean, updated_var, updated_n = incr_mean_variance_axis(
+        X1, axis=axis, last_mean=last_mean, last_var=last_var, last_n=last_n
+    )
+    updated_mean, updated_var, updated_n = incr_mean_variance_axis(
+        X2, axis=axis, last_mean=updated_mean, last_var=updated_var,
+        last_n=updated_n
+    )
+    X = sp.vstack([X1, X2])
+    assert_allclose(updated_mean, np.nanmean(X.A, axis=axis))
+    assert_allclose(updated_var, np.nanvar(X.A, axis=axis))
+    assert_allclose(updated_n, np.count_nonzero(~np.isnan(X.A), axis=0))
+
+
+def test_incr_mean_variance_no_new_n():
+    # check the behaviour when we update the variance with an empty matrix
+    axis = 0
+    X1 = sp.random(5, 1, density=0.8, random_state=0).tocsr()
+    X2 = sp.random(0, 1, density=0.8, random_state=0).tocsr()
+    last_mean, last_var = np.zeros(X1.shape[1]), np.zeros(X1.shape[1])
+    last_n = np.zeros(X1.shape[1], dtype=np.int64)
+    last_mean, last_var, last_n = incr_mean_variance_axis(
+        X1, axis=axis, last_mean=last_mean, last_var=last_var, last_n=last_n
+    )
+    # update statistic with a column which should ignored
+    updated_mean, updated_var, updated_n = incr_mean_variance_axis(
+        X2, axis=axis, last_mean=last_mean, last_var=last_var, last_n=last_n
+    )
+    assert_allclose(updated_mean, last_mean)
+    assert_allclose(updated_var, last_var)
+    assert_allclose(updated_n, last_n)
 
 
 @pytest.mark.parametrize("axis", [0, 1])
@@ -177,11 +233,11 @@ def test_incr_mean_variance_axis_ignore_nan(axis, sparse_constructor):
 
     # take a copy of the old statistics since they are modified in place.
     X_means, X_vars, X_sample_count = incr_mean_variance_axis(
-        X, axis, old_means.copy(), old_variances.copy(),
-        old_sample_count.copy())
+        X, axis=axis, last_mean=old_means.copy(),
+        last_var=old_variances.copy(), last_n=old_sample_count.copy())
     X_nan_means, X_nan_vars, X_nan_sample_count = incr_mean_variance_axis(
-        X_nan, axis, old_means.copy(), old_variances.copy(),
-        old_sample_count.copy())
+        X_nan, axis=axis, last_mean=old_means.copy(),
+        last_var=old_variances.copy(), last_n=old_sample_count.copy())
 
     assert_allclose(X_nan_means, X_means)
     assert_allclose(X_nan_vars, X_vars)
@@ -551,10 +607,11 @@ def test_inplace_normalize():
 def test_csr_row_norms(dtype):
     # checks that csr_row_norms returns the same output as
     # scipy.sparse.linalg.norm, and that the dype is the same as X.dtype.
-    X = sp.random(100, 10, format='csr', dtype=dtype)
+    X = sp.random(100, 10, format='csr', dtype=dtype, random_state=42)
 
     scipy_norms = sp.linalg.norm(X, axis=1)**2
     norms = csr_row_norms(X)
 
     assert norms.dtype == dtype
-    assert_allclose(norms, scipy_norms)
+    rtol = 1e-6 if dtype == np.float32 else 1e-7
+    assert_allclose(norms, scipy_norms, rtol=rtol)
