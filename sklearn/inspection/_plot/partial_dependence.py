@@ -89,7 +89,7 @@ def plot_partial_dependence(estimator, X, features, *, feature_names=None,
         By default, the name of the feature corresponds to their numerical
         index for NumPy array and their column name for pandas dataframe.
 
-    target : int, optional (default=None)
+    target : int, default=None
         - In a multiclass setting, specifies the class for which the PDPs
           should be computed. Note that for binary classification, the
           positive class (index 1) is always used.
@@ -98,8 +98,8 @@ def plot_partial_dependence(estimator, X, features, *, feature_names=None,
 
         Ignored in binary classification or classical regression settings.
 
-    response_method : 'auto', 'predict_proba' or 'decision_function', \
-            optional (default='auto')
+    response_method : {'auto', 'predict_proba', 'decision_function'}, \
+        default='auto'
         Specifies whether to use :term:`predict_proba` or
         :term:`decision_function` as the target response. For regressors
         this parameter is ignored and the response is always the output of
@@ -108,19 +108,19 @@ def plot_partial_dependence(estimator, X, features, *, feature_names=None,
         ``method`` is 'recursion', the response is always the output of
         :term:`decision_function`.
 
-    n_cols : int, optional (default=3)
+    n_cols : int, default=3
         The maximum number of columns in the grid plot. Only active when `ax`
         is a single axis or `None`.
 
-    grid_resolution : int, optional (default=100)
+    grid_resolution : int, default=100
         The number of equally spaced points on the axes of the plots, for each
         target feature.
 
-    percentiles : tuple of float, optional (default=(0.05, 0.95))
+    percentiles : tuple of float, default=(0.05, 0.95)
         The lower and upper percentile used to create the extreme values
         for the PDP axes. Must be in [0, 1].
 
-    method : str, optional (default='auto')
+    method :{'auto', 'recursion', 'brute'}, default='auto'
         The method used to calculate the averaged predictions:
 
         - 'recursion' is only supported for some tree-based estimators (namely
@@ -144,13 +144,13 @@ def plot_partial_dependence(estimator, X, features, *, feature_names=None,
         Please see :ref:`this note <pdp_method_differences>` for
         differences between the 'brute' and 'recursion' method.
 
-    n_jobs : int, optional (default=None)
+    n_jobs : int, default=None
         The number of CPUs to use to compute the partial dependences.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    verbose : int, optional (default=0)
+    verbose : int, default=0
         Verbose output during PD computations.
 
     line_kw : dict, optional

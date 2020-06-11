@@ -341,7 +341,7 @@ create complex models.
 
 (A :class:`FeatureUnion` has no way of checking whether two transformers
 might produce identical features. It only produces a union when the
-feature sets are disjoint, and making sure they are the caller's
+feature sets are disjoint, and making sure they are is the caller's
 responsibility.)
 
 

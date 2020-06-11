@@ -32,7 +32,7 @@ if LooseVersion(matplotlib.__version__) >= '2.1':
 else:
     density_param = {'normed': True}
 
-##########################################################
+# %%
 # Theoretical bounds
 # ==================
 # The distortion introduced by a random projection `p` is asserted by
@@ -76,7 +76,7 @@ plt.title("Johnson-Lindenstrauss bounds:\nn_samples vs n_components")
 plt.show()
 
 
-##########################################################
+# %%
 # The second plot shows that an increase of the admissible
 # distortion ``eps`` allows to reduce drastically the minimal number of
 # dimensions ``n_components`` for a given number of samples ``n_samples``
@@ -99,7 +99,7 @@ plt.ylabel("Minimum number of dimensions")
 plt.title("Johnson-Lindenstrauss bounds:\nn_components vs eps")
 plt.show()
 
-##########################################################
+# %%
 # Empirical validation
 # ====================
 #
@@ -124,7 +124,7 @@ if '--use-digits-dataset' in sys.argv:
 else:
     data = fetch_20newsgroups_vectorized().data[:500]
 
-##########################################################
+# %%
 # For each value of ``n_components``, we plot:
 #
 # - 2D distribution of sample pairs with pairwise distances in original
@@ -186,7 +186,7 @@ for n_components in n_components_range:
 plt.show()
 
 
-##########################################################
+# %%
 # We can see that for low values of ``n_components`` the distribution is wide
 # with many distorted pairs and a skewed distribution (due to the hard
 # limit of zero ratio on the left as distances are always positives)
@@ -194,7 +194,7 @@ plt.show()
 # and the distances are well preserved by the random projection.
 
 
-##########################################################
+# %%
 # Remarks
 # =======
 #
