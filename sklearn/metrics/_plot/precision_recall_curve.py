@@ -1,3 +1,5 @@
+import numpy as np
+
 from .base import _check_classifier_response_method
 
 from .. import average_precision_score
@@ -123,7 +125,7 @@ class PrecisionRecallDisplay:
 @_deprecate_positional_args
 def plot_precision_recall_curve(estimator, X, y, *,
                                 sample_weight=None, response_method="auto",
-                                name=None, ax=None, **kwargs):
+                                name=None, ax=None, pos_label=None, **kwargs):
     """Plot Precision Recall Curve for binary classifiers.
 
     Extra keyword arguments will be passed to matplotlib's `plot`.
@@ -159,6 +161,11 @@ def plot_precision_recall_curve(estimator, X, y, *,
     ax : matplotlib axes, default=None
         Axes object to plot on. If `None`, a new figure and axes is created.
 
+    pos_label : str or int, default=None
+        The class considered as the positive class when computing the precision
+        and recall metrics. By default, `estimators.classes_[1]` is considered
+        as the positive class.
+
     **kwargs : dict
         Keyword arguments to be passed to matplotlib's `plot`.
 
@@ -175,16 +182,23 @@ def plot_precision_recall_curve(estimator, X, y, *,
         raise ValueError(classification_error)
 
     prediction_method = _check_classifier_response_method(estimator,
-                                                         response_method)
+                                                          response_method)
     y_pred = prediction_method(X)
+    if y_pred.ndim != 1 and y_pred.shape[1] != 2:
+        raise ValueError(classification_error)
 
-    if y_pred.ndim != 1:
-        if y_pred.shape[1] != 2:
-            raise ValueError(classification_error)
-        else:
-            y_pred = y_pred[:, 1]
+    if pos_label is None:
+        pos_label = estimator.classes_[1]
+        y_pred = y_pred[:, 1]
+    else:
+        if pos_label not in estimator.classes_:
+            raise ValueError(
+                f"The class provided by 'pos_label' is unknown. Got "
+                f"{pos_label} instead of one of {estimator.classes_}"
+            )
+        class_idx = np.flatnonzero(estimator.classes_ == pos_label)
+        y_pred = y_pred[:, class_idx]
 
-    pos_label = estimator.classes_[1]
     precision, recall, _ = precision_recall_curve(y, y_pred,
                                                   pos_label=pos_label,
                                                   sample_weight=sample_weight)
