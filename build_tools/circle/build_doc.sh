@@ -117,7 +117,7 @@ fi
 if [[ "$CIRCLE_BRANCH" =~ ^master$|^[0-9]+\.[0-9]+\.X$ && -z "$CI_PULL_REQUEST" ]]
 then
     # ZIP linked into HTML
-    make_args="dist"
+    make_args=dist
 elif [[ "$build_type" =~ ^QUICK ]]
 then
     make_args=html-noplot
@@ -127,7 +127,9 @@ then
     pattern=$(echo "$build_type" | tail -n 1)
     make_args="html EXAMPLES_PATTERN=$pattern"
 else
-    make_args=html
+    # Remove before merging
+    make_args=dist
+    # make_args=html
 fi
 
 make_args="SPHINXOPTS=-T $make_args"  # show full traceback on exception
@@ -178,11 +180,12 @@ python setup.py develop
 
 export OMP_NUM_THREADS=1
 
-if [[ "$CIRCLE_BRANCH" =~ ^master$ && -z "$CI_PULL_REQUEST" ]]
-then
-    # List available documentation versions if on master
-    python build_tools/circle/list_versions.py > doc/versions.rst
-fi
+# Activate before merging
+# if [[ "$CIRCLE_BRANCH" =~ ^master$ && -z "$CI_PULL_REQUEST" ]]
+# then
+# List available documentation versions if on master
+python build_tools/circle/list_versions.py > doc/versions.rst
+# fi
 
 # The pipefail is requested to propagate exit code
 set -o pipefail && cd doc && make $make_args 2>&1 | tee ~/log.txt
