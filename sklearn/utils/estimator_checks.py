@@ -269,8 +269,8 @@ def _yield_all_checks(estimator):
             yield check
     yield check_parameters_default_constructible
     yield check_fit2d_predict1d
-    yield check_methods_subset_invariance
     yield check_methods_sample_order_invariance
+    yield check_methods_subset_invariance
     yield check_fit2d_1sample
     yield check_fit2d_1feature
     yield check_fit1d
@@ -1146,7 +1146,7 @@ def check_methods_sample_order_invariance(name, estimator_orig):
     set_random_state(estimator, 1)
     estimator.fit(X, y)
 
-    idx = np.random.randint(X.shape[0], size=X.shape[0] // 2)
+    idx = np.random.permutation(X.shape[0])
 
     for method in ["predict", "transform", "decision_function",
                    "score_samples", "predict_proba"]:
