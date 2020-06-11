@@ -195,7 +195,15 @@ def test_default_labels(pyplot, average_precision, estimator_name,
     assert disp.line_.get_label() == expected_label
 
 
-def test_plot_precision_recall_pos_label(pyplot):
+class DummyClassifierWithDecisionFunction(DummyClassifier):
+    def decision_function(self, X):
+        return self.predict_proba(X)[:, 1]
+
+
+@pytest.mark.parametrize(
+    "response_method", ["predict_proba", "decision_function"]
+)
+def test_plot_precision_recall_pos_label(pyplot, response_method):
     # check that we can provide the positive label and display the proper
     # statistics
     X, y = load_breast_cancer(return_X_y=True)
@@ -212,7 +220,9 @@ def test_plot_precision_recall_pos_label(pyplot):
         X, y, stratify=y, random_state=0,
     )
 
-    classifier = DummyClassifier(strategy="stratified", random_state=42)
+    classifier = DummyClassifierWithDecisionFunction(
+        strategy="stratified", random_state=42
+    )
     classifier.fit(X_train, y_train)
 
     # sanity check to be sure the positive class is classes_[0] and that we
@@ -221,10 +231,13 @@ def test_plot_precision_recall_pos_label(pyplot):
 
     disp = plot_precision_recall_curve(
         classifier, X_test, y_test, pos_label="cancer",
+        response_method=response_method
     )
     # we should obtain the statistics of the "cancer" class
     assert disp.average_precision < 0.15
 
     # otherwise we should obtain the statistics of the "not cancer" class
-    disp = plot_precision_recall_curve(classifier, X_test, y_test)
+    disp = plot_precision_recall_curve(
+        classifier, X_test, y_test, response_method=response_method,
+    )
     assert disp.average_precision > 0.85

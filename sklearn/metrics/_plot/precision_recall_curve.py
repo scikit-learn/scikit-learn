@@ -184,20 +184,25 @@ def plot_precision_recall_curve(estimator, X, y, *,
     prediction_method = _check_classifier_response_method(estimator,
                                                           response_method)
     y_pred = prediction_method(X)
-    if y_pred.ndim != 1 and y_pred.shape[1] != 2:
-        raise ValueError(classification_error)
 
-    if pos_label is None:
-        pos_label = estimator.classes_[1]
-        y_pred = y_pred[:, 1]
-    else:
-        if pos_label not in estimator.classes_:
-            raise ValueError(
-                f"The class provided by 'pos_label' is unknown. Got "
-                f"{pos_label} instead of one of {estimator.classes_}"
-            )
-        class_idx = np.flatnonzero(estimator.classes_ == pos_label)
-        y_pred = y_pred[:, class_idx]
+    if pos_label is not None and pos_label not in estimator.classes_:
+        raise ValueError(
+            f"The class provided by 'pos_label' is unknown. Got "
+            f"{pos_label} instead of one of {estimator.classes_}"
+        )
+
+    if y_pred.ndim != 1:  # `predict_proba`
+        if y_pred.shape[1] != 2:
+            raise ValueError(classification_error)
+        if pos_label is None:
+            pos_label = estimator.classes_[1]
+            y_pred = y_pred[:, 1]
+        else:
+            class_idx = np.flatnonzero(estimator.classes_ == pos_label)
+            y_pred = y_pred[:, class_idx]
+    else:  # `decision_function`
+        if pos_label is None:
+            pos_label = estimator.classes_[1]
 
     precision, recall, _ = precision_recall_curve(y, y_pred,
                                                   pos_label=pos_label,
