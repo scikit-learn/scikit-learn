@@ -489,6 +489,20 @@ def test_fetch_openml_australian_pandas_error_sparse(monkeypatch):
         fetch_openml(data_id=data_id, as_frame=True, cache=False)
 
 
+def test_fetch_openml_as_frame_auto(monkeypatch):
+    pd = pytest.importorskip('pandas')
+
+    data_id = 61  # iris dataset version 1
+    _monkey_patch_webbased_functions(monkeypatch, data_id, True)
+    data = fetch_openml(data_id=data_id, as_frame='auto')
+    assert isinstance(data.data, pd.DataFrame)
+
+    data_id = 292  # Australian dataset version 1
+    _monkey_patch_webbased_functions(monkeypatch, data_id, True)
+    data = fetch_openml(data_id=data_id, as_frame='auto')
+    assert isinstance(data.data, scipy.sparse.csr_matrix)
+
+
 def test_convert_arff_data_dataframe_warning_low_memory_pandas(monkeypatch):
     pytest.importorskip('pandas')
 

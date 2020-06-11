@@ -32,10 +32,10 @@ class RBFSampler(TransformerMixin, BaseEstimator):
 
     Parameters
     ----------
-    gamma : float
+    gamma : float, default=1.0
         Parameter of RBF kernel: exp(-gamma * x^2)
 
-    n_components : int
+    n_components : int, default=100
         Number of Monte Carlo samples per original feature.
         Equals the dimensionality of the computed feature space.
 
@@ -146,10 +146,10 @@ class SkewedChi2Sampler(TransformerMixin, BaseEstimator):
 
     Parameters
     ----------
-    skewedness : float
+    skewedness : float, default=1.0
         "skewedness" parameter of the kernel. Needs to be cross-validated.
 
-    n_components : int
+    n_components : int, default=100
         number of Monte Carlo samples per original feature.
         Equals the dimensionality of the computed feature space.
 
@@ -455,7 +455,7 @@ class Nystroem(TransformerMixin, BaseEstimator):
 
     Parameters
     ----------
-    kernel : string or callable, default="rbf"
+    kernel : string or callable, default='rbf'
         Kernel map to be approximated. A callable should accept two arguments
         and the keyword arguments passed to this object as kernel_params, and
         should return a floating point number.
@@ -477,7 +477,7 @@ class Nystroem(TransformerMixin, BaseEstimator):
         Additional parameters (keyword arguments) for kernel function passed
         as callable object.
 
-    n_components : int
+    n_components : int, default=100
         Number of features to construct.
         How many data points will be used to construct the mapping.
 
