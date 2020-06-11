@@ -33,14 +33,13 @@ dependent_packages = {
     'seaborn': ('0.9.0', 'docs,examples'),
     'memory_profiler': ('0.57.0', 'benchmark,docs'),
     'pytest': (PYTEST_MIN_VERSION, 'tests'),
-    'pytest-xdist': ('1.32.0', 'tests'),
     'pytest-cov': ('2.9.0', 'tests'),
     'flake8': ('3.8.2', 'tests'),
     'mypy': ('0.770', 'tests'),
     'pyamg': ('4.0.0', 'tests'),
     'sphinx': ('3.0.3', 'docs'),
     'sphinx-gallery': ('0.7.0', 'docs'),
-    'numpydoc': ('0.9.2', 'docs'),
+    'numpydoc': ('1.0.0', 'docs'),
     'Pillow': ('7.1.2', 'docs'),
 }
 
