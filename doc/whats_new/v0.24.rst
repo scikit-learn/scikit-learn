@@ -102,6 +102,11 @@ Changelog
   :class:`metrics.median_absolute_error`. :pr:`17225` by
   :user:`Lucy Liu <lucyleeow>`.
 
+- |Enhancement| Add `pos_label` parameter in
+  :func:`metrics.plot_precision_recall_curve` in order to specify the positive
+  class to be used when computing the precision and recall statistics.
+  :pr:`17569` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.model_selection`
 ..............................
 
