@@ -85,6 +85,7 @@ class Hyperparameter(namedtuple('Hyperparameter',
     >>> from sklearn.datasets import make_friedman2
     >>> from sklearn.gaussian_process import GaussianProcessRegressor
     >>> from sklearn.gaussian_process.kernels import Hyperparameter
+    >>> X, y = make_friedman2(n_samples=50, noise=0, random_state=0)
     >>> kernel = ConstantKernel(constant_value=1.0,
     ...    constant_value_bounds=(0.0, 10.0)) * RBF(length_scale=0.5,
     ...    length_scale_bounds=(0.0, 10.0)) + RBF(length_scale=2.0,
