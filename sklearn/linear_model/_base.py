@@ -725,7 +725,8 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
                 )
                 self.coef_ = np.vstack([out[0] for out in outs])
         else:
-            self.coef_, _, self.rank_, self.singular_ = linalg.lstsq(X, y)
+            self.coef_, self._residues, self.rank_, self.singular_ = \
+                linalg.lstsq(X, y, check_finite=False)
             self.coef_ = self.coef_.T
 
         if y.ndim == 1:
