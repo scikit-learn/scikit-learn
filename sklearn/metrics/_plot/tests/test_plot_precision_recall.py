@@ -3,7 +3,6 @@ import numpy as np
 from numpy.testing import assert_allclose
 
 from sklearn.base import BaseEstimator, ClassifierMixin
-from sklearn.metrics import balanced_accuracy_score
 from sklearn.metrics import plot_precision_recall_curve
 from sklearn.metrics import PrecisionRecallDisplay
 from sklearn.metrics import average_precision_score
@@ -215,7 +214,6 @@ def test_plot_precision_recall_pos_label(pyplot):
 
     classifier = DummyClassifier(strategy="stratified", random_state=42)
     classifier.fit(X_train, y_train)
-    y_pred = classifier.predict(X_test)
 
     # sanity check to be sure the positive class is classes_[0] and that we
     # are betrayed by the class imbalance
