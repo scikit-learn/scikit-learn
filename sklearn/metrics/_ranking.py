@@ -1361,7 +1361,7 @@ def ndcg_score(y_true, y_score, *, k=None, sample_weight=None,
         Only consider the highest k scores in the ranking. If None, use all
         outputs.
 
-    sample_weight : ndarray, shape (n_samples,),default=None
+    sample_weight : ndarray of shape (n_samples,),default=None
         Sample weights. If None, all samples are given the same weight.
 
     ignore_ties : bool, default=False
