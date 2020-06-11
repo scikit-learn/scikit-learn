@@ -107,8 +107,9 @@ optipng:
 	  | xargs -0 -n 1 -P 4 optipng -o10
 
 dist: html
+	# Optimize the images to reduce the size of the ZIP
+	optipng $(BUILDDIR)/html/stable/_images/*.png
 	# Exclude the output directory to avoid infinity recursion
 	zip -q -x $(BUILDDIR)/html/stable/_downloads \
 	       -r $(BUILDDIR)/html/stable/_downloads/scikit-learn-docs.zip \
 		      $(BUILDDIR)/html/stable
-		
