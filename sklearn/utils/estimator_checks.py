@@ -1150,7 +1150,7 @@ def check_methods_sample_order_invariance(name, estimator_orig):
 
     for method in ["predict", "transform", "decision_function",
                    "score_samples", "predict_proba"]:
-        msg = ("{method} of {name} is not invariant when applied to a subset"
+        msg = ("{method} of {name} is not invariant when applied to a dataset"
                "with different sample order.").format(method=method, name=name)
 
         if hasattr(estimator, method):

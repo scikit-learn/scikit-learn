@@ -259,20 +259,15 @@ class NotInvariantSampleOrder(BaseEstimator):
             accept_sparse=("csr", "csc"),
             multi_output=True,
             y_numeric=True)
-
-        self.first = X[0]
+        # store the original X to check for sample order later
+        self._X = X
         return self
 
     def predict(self, X):
         X = check_array(X)
-        # check if the sample order is different from the original
-        # or not. If the sample order is different, then just return
-        # an array of zeros.
-        # TODO: For now, im just checking if the first instance in the sample
-        # is the same, but I will write a function to check this
-        if (X[0] != self.first).all():
+        # if the sample order is different, return zeros
+        if (X != self._X).any():
             return np.zeros(X.shape[0])
-
         return X[:,0]
 
 class LargeSparseNotSupportedClassifier(BaseEstimator):
@@ -439,7 +434,7 @@ def test_check_estimator():
     # check for sample order invariance
     name = NotInvariantSampleOrder.__name__
     method = 'predict'
-    msg = ("{method} of {name} is not invariant when applied to a subset"
+    msg = ("{method} of {name} is not invariant when applied to a dataset"
         "with different sample order.").format(method=method, name=name)
     assert_raises_regex(AssertionError, msg,
                         check_estimator, NotInvariantSampleOrder())
