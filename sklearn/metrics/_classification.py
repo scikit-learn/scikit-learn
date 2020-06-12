@@ -370,7 +370,7 @@ def multilabel_confusion_matrix(y_true, y_pred, *, sample_weight=None,
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights
 
-    labels : array-like, default=None
+    labels : array-like of shape (n_classes,), default=None
         A list of classes or column indices to select some (or to force
         inclusion of classes absent from the data)
 
@@ -641,7 +641,7 @@ def jaccard_score(y_true, y_pred, *, labels=None, pos_label=1,
     y_pred : 1d array-like, or label indicator array / sparse matrix
         Predicted labels, as returned by a classifier.
 
-    labels : array-like, default=None
+    labels : array-like of shape (n_classes,), default=None
         The set of labels to include when ``average != 'binary'``, and their
         order if ``average is None``. Labels present in the data can be
         excluded, for example to calculate a multiclass average ignoring a
