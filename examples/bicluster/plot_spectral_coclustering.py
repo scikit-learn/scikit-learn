@@ -23,8 +23,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 from sklearn.datasets import make_biclusters
-from sklearn.datasets import samples_generator as sg
-from sklearn.cluster.bicluster import SpectralCoclustering
+from sklearn.cluster import SpectralCoclustering
 from sklearn.metrics import consensus_score
 
 data, rows, columns = make_biclusters(
@@ -34,7 +33,12 @@ data, rows, columns = make_biclusters(
 plt.matshow(data, cmap=plt.cm.Blues)
 plt.title("Original dataset")
 
-data, row_idx, col_idx = sg._shuffle(data, random_state=0)
+# shuffle clusters
+rng = np.random.RandomState(0)
+row_idx = rng.permutation(data.shape[0])
+col_idx = rng.permutation(data.shape[1])
+data = data[row_idx][:, col_idx]
+
 plt.matshow(data, cmap=plt.cm.Blues)
 plt.title("Shuffled dataset")
 

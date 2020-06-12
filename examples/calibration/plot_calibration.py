@@ -47,8 +47,8 @@ n_bins = 3  # use 3 bins for calibration_curve as we have 3 clusters here
 # half positive samples and half negative samples. Probability in this
 # blob is therefore 0.5.
 centers = [(-5, -5), (0, 0), (5, 5)]
-X, y = make_blobs(n_samples=n_samples, n_features=2, cluster_std=1.0,
-                  centers=centers, shuffle=False, random_state=42)
+X, y = make_blobs(n_samples=n_samples, centers=centers, shuffle=False,
+                  random_state=42)
 
 y[:n_samples // 2] = 0
 y[n_samples // 2:] = 1
@@ -65,23 +65,25 @@ prob_pos_clf = clf.predict_proba(X_test)[:, 1]
 
 # Gaussian Naive-Bayes with isotonic calibration
 clf_isotonic = CalibratedClassifierCV(clf, cv=2, method='isotonic')
-clf_isotonic.fit(X_train, y_train, sw_train)
+clf_isotonic.fit(X_train, y_train, sample_weight=sw_train)
 prob_pos_isotonic = clf_isotonic.predict_proba(X_test)[:, 1]
 
 # Gaussian Naive-Bayes with sigmoid calibration
 clf_sigmoid = CalibratedClassifierCV(clf, cv=2, method='sigmoid')
-clf_sigmoid.fit(X_train, y_train, sw_train)
+clf_sigmoid.fit(X_train, y_train, sample_weight=sw_train)
 prob_pos_sigmoid = clf_sigmoid.predict_proba(X_test)[:, 1]
 
 print("Brier scores: (the smaller the better)")
 
-clf_score = brier_score_loss(y_test, prob_pos_clf, sw_test)
+clf_score = brier_score_loss(y_test, prob_pos_clf, sample_weight=sw_test)
 print("No calibration: %1.3f" % clf_score)
 
-clf_isotonic_score = brier_score_loss(y_test, prob_pos_isotonic, sw_test)
+clf_isotonic_score = brier_score_loss(y_test, prob_pos_isotonic,
+                                      sample_weight=sw_test)
 print("With isotonic calibration: %1.3f" % clf_isotonic_score)
 
-clf_sigmoid_score = brier_score_loss(y_test, prob_pos_sigmoid, sw_test)
+clf_sigmoid_score = brier_score_loss(y_test, prob_pos_sigmoid,
+                                     sample_weight=sw_test)
 print("With sigmoid calibration: %1.3f" % clf_sigmoid_score)
 
 # #############################################################################
@@ -92,7 +94,8 @@ colors = cm.rainbow(np.linspace(0.0, 1.0, y_unique.size))
 for this_y, color in zip(y_unique, colors):
     this_X = X_train[y_train == this_y]
     this_sw = sw_train[y_train == this_y]
-    plt.scatter(this_X[:, 0], this_X[:, 1], s=this_sw * 50, c=color,
+    plt.scatter(this_X[:, 0], this_X[:, 1], s=this_sw * 50,
+                c=color[np.newaxis, :],
                 alpha=0.5, edgecolor='k',
                 label="Class %s" % this_y)
 plt.legend(loc="best")

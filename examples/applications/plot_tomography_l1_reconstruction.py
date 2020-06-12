@@ -34,7 +34,6 @@ reconstructed image, contrary to the L1 penalization. Note in particular
 the circular artifact separating the pixels in the corners, that have
 contributed to fewer projections than the central disk.
 """
-from __future__ import division
 
 print(__doc__)
 
