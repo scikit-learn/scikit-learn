@@ -425,7 +425,7 @@ def _multiclass_roc_auc_score(y_true, y_score, labels,
             Calculate metrics for the multiclass case using the one-vs-one
             approach.
 
-    average : 'macro' or 'weighted'
+    average : {'macro', 'weighted'}, default='macro'
         Determines the type of averaging performed on the pairwise binary
         metric scores
         ``'macro'``:
