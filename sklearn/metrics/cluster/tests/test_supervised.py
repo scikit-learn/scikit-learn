@@ -19,9 +19,9 @@ from sklearn.metrics.cluster._supervised import _generalized_average
 
 from sklearn.utils import assert_all_finite
 from sklearn.utils._testing import (
-        assert_almost_equal, ignore_warnings)
-from numpy.testing import (assert_array_equal,
-        assert_array_almost_equal)
+    assert_almost_equal, ignore_warnings)
+from numpy.testing import (
+    assert_array_equal, assert_array_almost_equal)
 
 
 score_funcs = [
