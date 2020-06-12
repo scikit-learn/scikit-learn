@@ -13,6 +13,7 @@ from collections import namedtuple
 from os import environ, listdir, makedirs
 from os.path import dirname, exists, expanduser, isdir, join, splitext
 import hashlib
+from distutils.version import LooseVersion
 
 from ..utils import Bunch
 from ..utils import check_random_state
@@ -74,8 +75,12 @@ def _convert_data_dataframe(caller_name, data, target,
     if not sparse_data:
         data_df = pd.DataFrame(data, columns=feature_names)
     else:
-        data_df = pd.DataFrame.sparse.from_spmatrix(data,
-                                                    columns=feature_names)
+        if LooseVersion(pd.__version__) < '0.25':
+            raise ValueError("Loading sparse datasets as a DataFrame requires "
+                             "Pandas v0.25+.")
+        else:
+            data_df = pd.DataFrame.sparse.from_spmatrix(data,
+                                                        columns=feature_names)
 
     target_df = pd.DataFrame(target, columns=target_names)
     combined_df = pd.concat([data_df, target_df], axis=1)

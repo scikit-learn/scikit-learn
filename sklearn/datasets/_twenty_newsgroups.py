@@ -416,16 +416,15 @@ def fetch_20newsgroups_vectorized(*, subset="train", remove=(), data_home=None,
             If ``as_frame`` is True, ``target`` is a pandas object.
         DESCR: str
             The full description of the dataset.
+        frame : pandas DataFrame
+            Only present when `as_frame=True`. DataFrame with ``data`` and
+            ``target``.
+
+            .. versionadded:: 0.24
 
     (data, target) : tuple if ``return_X_y`` is True
 
         .. versionadded:: 0.20
-
-    frame : pandas DataFrame
-        Only present when `as_frame=True`. DataFrame with ``data`` and
-        ``target``.
-
-        .. versionadded:: 0.24
 
     """
     data_home = get_data_home(data_home=data_home)
@@ -488,24 +487,23 @@ def fetch_20newsgroups_vectorized(*, subset="train", remove=(), data_home=None,
     with open(join(module_path, 'descr', 'twenty_newsgroups.rst')) as rst_file:
         fdescr = rst_file.read()
 
-    X = data
-    y = target
     frame = None
     target_name = ['Category_class', ]
 
     if as_frame:
-        frame, X, y = _convert_data_dataframe("fetch_20newsgroups_vectorized",
-                                              data,
-                                              target,
-                                              feature_names,
-                                              target_names=target_name,
-                                              sparse_data=True)
+        frame, data, target = _convert_data_dataframe(
+            "fetch_20newsgroups_vectorized",
+            data,
+            target,
+            feature_names,
+            target_names=target_name,
+            sparse_data=True)
 
     if return_X_y:
-        return X, y
+        return data, target
 
-    return Bunch(data=X,
-                 target=y,
+    return Bunch(data=data,
+                 target=target,
                  frame=frame,
                  target_names=target_names,
                  feature_names=feature_names,
