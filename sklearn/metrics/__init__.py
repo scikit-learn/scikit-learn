@@ -37,6 +37,8 @@ from ._classification import multilabel_confusion_matrix
 from . import cluster
 from .cluster import adjusted_mutual_info_score
 from .cluster import adjusted_rand_score
+from .cluster import rand_score
+from .cluster import pair_confusion_matrix
 from .cluster import completeness_score
 from .cluster import consensus_score
 from .cluster import homogeneity_completeness_v_measure

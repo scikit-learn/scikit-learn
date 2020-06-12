@@ -8,8 +8,10 @@ cluster analysis results. There are two forms of evaluation:
 from ._supervised import adjusted_mutual_info_score
 from ._supervised import normalized_mutual_info_score
 from ._supervised import adjusted_rand_score
+from ._supervised import rand_score
 from ._supervised import completeness_score
 from ._supervised import contingency_matrix
+from ._supervised import pair_confusion_matrix
 from ._supervised import expected_mutual_information
 from ._supervised import homogeneity_completeness_v_measure
 from ._supervised import homogeneity_score
@@ -24,7 +26,8 @@ from ._unsupervised import davies_bouldin_score
 from ._bicluster import consensus_score
 
 __all__ = ["adjusted_mutual_info_score", "normalized_mutual_info_score",
-           "adjusted_rand_score", "completeness_score", "contingency_matrix",
+           "adjusted_rand_score", "rand_score", "completeness_score",
+           "pair_confusion_matrix", "contingency_matrix",
            "expected_mutual_information", "homogeneity_completeness_v_measure",
            "homogeneity_score", "mutual_info_score", "v_measure_score",
            "fowlkes_mallows_score", "entropy", "silhouette_samples",
