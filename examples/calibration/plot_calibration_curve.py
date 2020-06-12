@@ -122,7 +122,7 @@ plt.show()
 # alter the prediction accuracy measures (precision, recall and F1 score).
 # This is because calibration should not significantly move at the location of
 # the decision threshold (at x = 0.5 on the graph). Calibration should
-# however make the predicted probabilities more accurate and thus more useful
+# however, make the predicted probabilities more accurate and thus more useful
 # for making allocation decisions under uncertainty.
 
 index = {}
@@ -213,7 +213,7 @@ plt.show()
 # Both kinds of calibration (sigmoid and isotonic) can fix this issue and
 # yield nearly identical results.
 #
-# Below, we print the Brier score, precision, recall and F1 score again.
+# As before, we show the Brier score, precision, recall and F1 score below.
 
 index = {}
 brier = []
