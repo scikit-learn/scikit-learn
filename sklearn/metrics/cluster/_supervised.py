@@ -188,28 +188,34 @@ def pair_confusion_matrix(labels_true, labels_pred):
 
       >>> from sklearn.metrics.cluster import pair_confusion_matrix
       >>> pair_confusion_matrix([0, 0, 1, 1], [0, 0, 1, 1])
-      [[8, 0], [0, 4]]
+      array([[8, 0],
+             [0, 4]], dtype=int64)
+
       >>> pair_confusion_matrix([0, 0, 1, 1], [1, 1, 0, 0])
-      [[8, 0], [0, 4]]
+      array([[8, 0],
+             [0, 4]], dtype=int64)
 
     Labelings that assign all classes members to the same clusters
     are complete but may be not always pure, hence penalized, and
     have some off-diagonal non-zero entries:
 
       >>> pair_confusion_matrix([0, 0, 1, 2], [0, 0, 1, 1])
-      [[8, 2], [0, 2]]
+      array([[8, 2],
+             [0, 2]], dtype=int64)
 
     The matrix is not symmetric:
 
       >>> pair_confusion_matrix([0, 0, 1, 1], [0, 0, 1, 2])
-      [[8, 0], [2, 2]]
+      array([[8, 0],
+             [2, 2]], dtype=int64)
 
     If classes members are completely split across different clusters, the
     assignment is totally incomplete, hence the matrix has all zero
     diagonal entries:
 
       >>> pair_confusion_matrix([0, 0, 0, 0], [0, 1, 2, 3])
-      [[0, 0], [12, 0]]
+      array([[ 0,  0],
+             [12,  0]], dtype=int64)
 
     References
     ----------
