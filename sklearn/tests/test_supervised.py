@@ -30,7 +30,7 @@ def test_pair_confusion_matrix():
     # basic quadratic implementation
     expected = np.full(shape=(2, 2), fill_value=0, dtype=np.int64)
     for i in range(len(clustering1)):
-        for j in range(len(clustering1)):
+        for j in range(len(clustering2)):
             if i != j:
                 same_cluster_1 = int(clustering1[i] == clustering1[j])
                 same_cluster_2 = int(clustering2[i] == clustering2[j])
@@ -63,12 +63,12 @@ def test_rand_score():
     # basic quadratic implementation
     expected = np.full(shape=(2, 2), fill_value=0, dtype=np.int64)
     for i in range(len(clustering1)):
-        for j in range(len(clustering1)):
+        for j in range(len(clustering2)):
             if i != j:
                 same_cluster_1 = int(clustering1[i] == clustering1[j])
                 same_cluster_2 = int(clustering2[i] == clustering2[j])
                 expected[same_cluster_1, same_cluster_2] += 1
-        expected_numerator = expected[0, 0] + expected[1, 1]
+    expected_numerator = expected[0, 0] + expected[1, 1]
     expected_denominator = (expected[0, 0] + expected[1, 1] + expected[0, 1] +
                             expected[1, 0])
     expected_score = expected_numerator / expected_denominator
