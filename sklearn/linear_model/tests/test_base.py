@@ -15,7 +15,6 @@ from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import assert_raises
 from sklearn.utils import check_random_state
 from sklearn.linear_model import LinearRegression
 from sklearn.linear_model._base import _preprocess_data
@@ -102,8 +101,8 @@ def test_raises_value_error_if_positive_and_sparse():
 
     reg = LinearRegression(positive=True)
 
-    assert_raises(TypeError, reg.fit, X, y)
-
+    with pytest.raises(TypeError):
+        reg.fit(X, y)
 
 def test_raises_value_error_if_sample_weights_greater_than_1d():
     # Sample weights must be either scalar or 1D
@@ -236,9 +235,9 @@ def test_linear_regression_positive():
 
     reg = LinearRegression(positive=True)
     reg.fit(X, Y)
-    assert_array_almost_equal(reg.coef_, [0])
-    assert_array_almost_equal(reg.intercept_, [0])
-    assert_array_almost_equal(reg.predict(X), [0])
+    assert_allclose(reg.coef_, [0])
+    assert_allclose(reg.intercept_, [0])
+    assert_allclose(reg.predict(X), [0])
 
 
 def test_linear_regression_positive_multiple_outcome(random_state=0):
@@ -254,7 +253,7 @@ def test_linear_regression_positive_multiple_outcome(random_state=0):
     Y_pred = ols.predict(X)
     ols.fit(X, y.ravel())
     y_pred = ols.predict(X)
-    assert_array_almost_equal(np.vstack((y_pred, y_pred)).T, Y_pred, decimal=3)
+    assert_allclose(np.vstack((y_pred, y_pred)).T, Y_pred)
 
 
 def test_linear_regression_pd_sparse_dataframe_warning():
