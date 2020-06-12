@@ -139,7 +139,7 @@ for i, (clf, name) in enumerate(clf_list):
     index[i] = name
     # Store column data
     brier.append(viz_objects[name].brier_value)
-    precision.append(precision_score(y_test, y_pred)
+    precision.append(precision_score(y_test, y_pred))
     recall.append(recall_score(y_test, y_pred))
     f1.append(f1_score(y_test, y_pred))
 
@@ -229,7 +229,7 @@ for i, (clf, name) in enumerate(clf_list):
     index[i] = name
     # Store column data
     brier.append(viz_objects[name].brier_value)
-    precision.append(precision_score(y_test, y_pred)
+    precision.append(precision_score(y_test, y_pred))
     recall.append(recall_score(y_test, y_pred))
     f1.append(f1_score(y_test, y_pred))
 
