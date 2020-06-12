@@ -139,7 +139,7 @@ def mean_absolute_error(y_true, y_pred, *,
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
-    multioutput : string in ['raw_values', 'uniform_average'] \
+    multioutput : {'raw_values', 'uniform_average'} \
                 or array-like of shape (n_outputs), default='uniform_average'
         Defines aggregating of multiple output values.
         Array-like value defines weights used to average errors.
