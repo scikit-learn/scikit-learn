@@ -16,6 +16,7 @@ such that for the samples to which it gave a `predict_proba` value close to
 # License: BSD Style.
 
 import matplotlib.pyplot as plt
+from matplotlib.gridspec import GridSpec
 
 from sklearn.datasets import make_classification
 from sklearn.naive_bayes import GaussianNB
@@ -96,9 +97,10 @@ clf_list = [(lr, 'Logistic'),
             (rfc, 'Random forest')]
 
 fig = plt.figure(figsize=(10, 10))
-ax1 = plt.subplot2grid((4, 2), (0, 0), rowspan=2, colspan=2)
+gs = GridSpec(4, 2)
 colors = plt.cm.get_cmap('Dark2')
 
+ax1 = fig.add_subplot(gs[:2, :2])
 viz_objects = {}
 for i, (clf, name) in enumerate(clf_list):
     clf.fit(X_train, y_train)
@@ -112,11 +114,10 @@ ax1.set_title('Calibration plots')
 ax1.set(xlabel="")
 
 # Add histogram
+grid_positions = [(2, 0), (2, 1), (3, 0), (3, 1)]
 for i, (_, name) in enumerate(clf_list):
-    if i <= 1:
-        ax = plt.subplot2grid((4, 2), (2, i))
-    else:
-        ax = plt.subplot2grid((4, 2), (3, i - 2))
+    row, col = grid_positions[i]
+    ax = fig.add_subplot(gs[row, col])
 
     ax.hist(
         viz_objects[name].y_prob, range=(0, 1), bins=10, label=name,
@@ -124,7 +125,6 @@ for i, (_, name) in enumerate(clf_list):
     )
     ax.set(title=name, xlabel="Mean predicted probability", ylabel="Count")
 
-plt.tight_layout()
 plt.show()
 
 # %%
