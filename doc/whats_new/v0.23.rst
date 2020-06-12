@@ -44,8 +44,6 @@ refer to
 
 .. include:: changelog_legend.inc
 
-Put the changes in their relevant module.
-
 Enforcing keyword-only arguments
 --------------------------------
 
@@ -491,7 +489,7 @@ Changelog
   :pr:`15622` by :user:`Gregory Morse <GregoryMorse>`.
 
 - |Fix| :func:`model_selection.cross_val_predict` supports
-  `method="predict_proba"` when `y=None`.:pr:`15918` by
+  `method="predict_proba"` when `y=None`. :pr:`15918` by
   :user:`Luca Kubin <lkubin>`.
 
 - |Fix| :func:`model_selection.fit_grid_point` is deprecated in 0.23 and will
