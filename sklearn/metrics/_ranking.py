@@ -436,7 +436,7 @@ def _multiclass_roc_auc_score(y_true, y_score, labels,
             Calculate metrics for each label, taking into account the
             prevalence of the classes.
 
-    sample_weight : array-like of shape (n_samples,)
+    sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
     """
