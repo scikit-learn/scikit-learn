@@ -477,12 +477,12 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
     """
     @_deprecate_positional_args
     def __init__(self, *, fit_intercept=True, normalize=False, copy_X=True,
-                 positive=False, n_jobs=None):
+                 n_jobs=None, positive=False):
         self.fit_intercept = fit_intercept
         self.normalize = normalize
         self.copy_X = copy_X
-        self.positive = positive
         self.n_jobs = n_jobs
+        self.positive = positive
 
     def fit(self, X, y, sample_weight=None):
         """
