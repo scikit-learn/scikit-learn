@@ -6,8 +6,8 @@ Comparison of Calibration of Classifiers
 Well calibrated classifiers are probabilistic classifiers for which the output
 of :term:`predict_proba` can be directly interpreted as a confidence level.
 For instance, a well calibrated (binary) classifier should classify the samples
-such that for the samples to which it gave a `predict_proba` value close to
-0.8, approximately 80% actually belong to the positive class.
+such that for the samples to which it gave a :term:`predict_proba` value close
+to 0.8, approximately 80% actually belong to the positive class.
 """
 
 # %%
@@ -125,6 +125,7 @@ for i, (_, name) in enumerate(clf_list):
     )
     ax.set(title=name, xlabel="Mean predicted probability", ylabel="Count")
 
+plt.tight_layout()
 plt.show()
 
 # %%

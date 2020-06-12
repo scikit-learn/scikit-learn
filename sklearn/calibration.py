@@ -731,7 +731,7 @@ class CalibrationDisplay:
 
         Returns
         -------
-        display : :class:`~sklearn.metrics.CalibrationDisplay`
+        display : :class:`~sklearn.calibration.CalibrationDisplay`
             Object that stores computed values.
         """
         check_matplotlib_support("CalibrationDisplay.plot")
@@ -829,7 +829,7 @@ def plot_calibration_curve(estimator, X, y, *,
 
     Returns
     -------
-    display : :class:`~sklearn.metrics.CalibrationDisplay`.
+    display : :class:`~sklearn.calibration.CalibrationDisplay`.
         Object that stores computed values.
 
     Examples
@@ -864,7 +864,7 @@ def plot_calibration_curve(estimator, X, y, *,
 
     y_prob = prediction_method(X)
 
-    if predict_proba is None:
+    if predict_proba is None:  # decision_function
         y_prob = (y_prob - y_prob.min()) / (y_prob.max() - y_prob.min())
     else:
         if not len(estimator.classes_) == 2:
