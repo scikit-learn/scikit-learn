@@ -1,4 +1,11 @@
-"""All dependencies for scikit-learn."""
+"""All dependencies for scikit-learn.
+
+When this is updated be sure to run
+
+build_tools/generate_dependency_table.py
+
+to update the dependencies in `install.rst`.
+"""
 from collections import defaultdict
 import platform
 import argparse
@@ -22,16 +29,16 @@ CYTHON_MIN_VERSION = '0.28.5'
 # It will NOT be included in setup's extras_require
 # The values are (version_spec, comma seperated tags)
 dependent_packages = {
-    'numpy': (NUMPY_MIN_VERSION, 'build,install'),
-    'scipy': (SCIPY_MIN_VERSION, 'build,install'),
+    'numpy': (NUMPY_MIN_VERSION, 'build, install'),
+    'scipy': (SCIPY_MIN_VERSION, 'build, install'),
     'joblib': (JOBLIB_MIN_VERSION, 'install'),
     'threadpoolctl': (THREADPOOLCTL_MIN_VERSION, 'install'),
     'cython': (CYTHON_MIN_VERSION, 'build'),
-    'matplotlib': ('2.1.1', 'benchmark,docs,examples,tests'),
-    'scikit-image': ('0.13', 'docs,examples,tests'),
-    'pandas': ('0.25.3', 'benchmark,docs,examples,tests'),
-    'seaborn': ('0.9.0', 'docs,examples'),
-    'memory_profiler': ('0.57.0', 'benchmark,docs'),
+    'matplotlib': ('2.1.1', 'benchmark, docs, examples, tests'),
+    'scikit-image': ('0.13', 'docs, examples, tests'),
+    'pandas': ('0.25.3', 'benchmark, docs, examples, tests'),
+    'seaborn': ('0.9.0', 'docs, examples'),
+    'memory_profiler': ('0.57.0', 'benchmark, docs'),
     'pytest': (PYTEST_MIN_VERSION, 'tests'),
     'pytest-cov': ('2.9.0', 'tests'),
     'flake8': ('3.8.2', 'tests'),
@@ -47,7 +54,7 @@ dependent_packages = {
 # create inverse mapping for setuptools
 tag_to_packages: dict = defaultdict(set)
 for package, (min_version, extras) in dependent_packages.items():
-    for extra in extras.split(','):
+    for extra in extras.split(', '):
         tag_to_packages[extra].add("{}>={}".format(package, min_version))
 
 
