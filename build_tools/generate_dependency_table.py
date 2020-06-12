@@ -12,8 +12,6 @@ version_header_len = len('Minimum Version') + 4
 tags_header_len = max(len(tags) for _, tags in dependent_packages.values()) + 4
 
 output = StringIO()
-
-
 output.write(' '.join(['=' * package_header_len,
                        '=' * version_header_len,
                        '=' * tags_header_len]))
