@@ -292,7 +292,7 @@ def mean_squared_log_error(y_true, y_pred, *,
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
-    multioutput : string in ['raw_values', 'uniform_average'] \
+    multioutput : {'raw_values', 'uniform_average'} \
             or array-like of shape (n_outputs), default='uniform_average'
 
         Defines aggregating of multiple output values.
@@ -533,7 +533,7 @@ def r2_score(y_true, y_pred, *, sample_weight=None,
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
-    multioutput : string in ['raw_values', 'uniform_average', \
+    multioutput : {'raw_values', 'uniform_average', 'variance_weigthed'}, None or \
                 'variance_weighted'] or None or array-like of \
                 shape (n_outputs), default='uniform_average'
 

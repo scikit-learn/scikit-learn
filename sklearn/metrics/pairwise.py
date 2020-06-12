@@ -86,20 +86,20 @@ def check_pairwise_arrays(X, Y, *, precomputed=False, dtype=None,
         True if X is to be treated as precomputed distances to the samples in
         Y.
 
-    dtype : string, type, list of types or None, default=None
+    dtype : str, type, list of types, default=None
         Data type required for X and Y. If None, the dtype will be an
         appropriate float type selected by _return_float_dtype.
 
         .. versionadded:: 0.18
 
-    accept_sparse : string, boolean or list/tuple of strings, default='csr'
+    accept_sparse : str, bool or list/tuple of strings, default='csr'
         String[s] representing allowed sparse matrix formats, such as 'csc',
         'csr', etc. If the input is sparse but not in the allowed format,
         it will be converted to the first listed format. True allows the input
         to be any format. False means that a sparse matrix input will
         raise an error.
 
-    force_all_finite : boolean or 'allow-nan', default=True
+    force_all_finite : bool or 'allow-nan', default=True
         Whether to raise an error on np.inf, np.nan, pd.NA in array. The
         possibilities are:
 
@@ -226,12 +226,12 @@ def euclidean_distances(X, Y=None, *, Y_norm_squared=None, squared=False,
 
     Y : {array-like, sparse matrix}, shape (n_samples_2, n_features)
 
-    Y_norm_squared : array-like, shape (n_samples_2, ), default=None
+    Y_norm_squared : array-like of shape (n_samples_2, ), default=None
         Pre-computed dot-products of vectors in Y (e.g.,
         ``(Y**2).sum(axis=1)``)
         May be ignored in some cases, see the note below.
 
-    squared : boolean, default=False
+    squared : bool, default=False
         Return squared Euclidean distances.
 
     X_norm_squared : array-like of shape (n_samples,), default=None
@@ -534,10 +534,10 @@ def pairwise_distances_argmin_min(X, Y, *, axis=1, metric="euclidean",
     Y : {array-like, sparse matrix}, shape (n_samples2, n_features)
         Arrays containing points.
 
-    axis : int, optional, default=1
+    axis : int, default=1
         Axis along which the argmin and distances are to be computed.
 
-    metric : string or callable, default='euclidean'
+    metric : str or callable, default='euclidean'
         metric to use for distance computation. Any metric from scikit-learn
         or scipy.spatial.distance can be used.
 
@@ -623,10 +623,10 @@ def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean",
         Arrays containing points. Respective shapes (n_samples1, n_features)
         and (n_samples2, n_features)
 
-    axis : int, optional, default=1
+    axis : int, default=1
         Axis along which the argmin and distances are to be computed.
 
-    metric : string or callable, default="euclidean"
+    metric : str or callable, default="euclidean"
         metric to use for distance computation. Any metric from scikit-learn
         or scipy.spatial.distance can be used.
 
@@ -688,7 +688,7 @@ def haversine_distances(X, Y=None):
     ----------
     X : array-like, shape (n_samples_1, 2)
 
-    Y : array_like, shape (n_samples_2, 2), default=None
+    Y : array_like of shape (n_samples_2, 2), default=None
 
     Returns
     -------
@@ -814,8 +814,8 @@ def cosine_distances(X, Y=None):
     X : array-like, sparse matrix
         with shape (n_samples_X, n_features).
 
-    Y : array_like, sparse matrix with shape \
-        (n_samples_Y, n_features), default=None.
+    Y : {array-like, sparse matrix} of shape \
+        (n_samples_Y, n_features), default=None
 
 
     Returns
@@ -990,7 +990,7 @@ def linear_kernel(X, Y=None, dense_output=True):
 
     Y : array of shape (n_samples_2, n_features), default=None
 
-    dense_output : boolean (optional), default=True
+    dense_output : bool, default=True
         Whether to return dense output even when the input is sparse. If
         ``False``, the output is sparse if both input arrays are sparse.
 
@@ -1158,12 +1158,12 @@ def cosine_similarity(X, Y=None, dense_output=True):
     X : ndarray or sparse array, shape: (n_samples_X, n_features)
         Input data.
 
-    Y : ndarray or sparse array, shape: (n_samples_Y, n_features), \
+    Y : {ndarray, sparse matrix} of shape (n_samples_Y, n_features), \
             default=None
         Input data. If ``None``, the output will be the pairwise
         similarities between all samples in ``X``.
 
-    dense_output : boolean (optional), default=True
+    dense_output : bool, default=True
         Whether to return dense output even when the input is sparse. If
         ``False``, the output is sparse if both input arrays are sparse.
 
@@ -1481,7 +1481,7 @@ def pairwise_distances_chunked(X, Y=None, *, reduce_func=None,
         [n_samples_a, n_features] otherwise
         Array of pairwise distances between samples, or a feature array.
 
-    Y : array [n_samples_b, n_features], default=None
+    Y : array of shape (n_samples_b, n_features), default=None
         An optional second feature array. Only allowed if
         metric != "precomputed".
 
@@ -1497,7 +1497,7 @@ def pairwise_distances_chunked(X, Y=None, *, reduce_func=None,
         If None, pairwise_distances_chunked returns a generator of vertical
         chunks of the distance matrix.
 
-    metric : string, or callable, default='euclidean'
+    metric : str or callable, default='euclidean'
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string, it must be one of the options
         allowed by scipy.spatial.distance.pdist for its metric parameter, or
@@ -1508,7 +1508,7 @@ def pairwise_distances_chunked(X, Y=None, *, reduce_func=None,
         should take two arrays from X as input and return a value indicating
         the distance between them.
 
-    n_jobs : int or None, default=None
+    n_jobs : int, default=None
         The number of jobs to use for the computation. This works by breaking
         down the pairwise matrix into n_jobs even slices and computing them in
         parallel.
@@ -1671,11 +1671,11 @@ def pairwise_distances(X, Y=None, metric="euclidean", *, n_jobs=None,
              [n_samples_a, n_features] otherwise
         Array of pairwise distances between samples, or a feature array.
 
-    Y : array [n_samples_b, n_features], default=None
+    Y : array of shape (n_samples_b, n_features), default=None
         An optional second feature array. Only allowed if
         metric != "precomputed".
 
-    metric : string, or callable, default='euclidean'
+    metric : str or callable, default='euclidean'
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string, it must be one of the options
         allowed by scipy.spatial.distance.pdist for its metric parameter, or
@@ -1686,7 +1686,7 @@ def pairwise_distances(X, Y=None, metric="euclidean", *, n_jobs=None,
         should take two arrays from X as input and return a value indicating
         the distance between them.
 
-    n_jobs : int or None, default=None
+    n_jobs : int, default=None
         The number of jobs to use for the computation. This works by breaking
         down the pairwise matrix into n_jobs even slices and computing them in
         parallel.
