@@ -145,7 +145,7 @@ for i, (clf, name) in enumerate(clf_list):
 
 score_df = pd.DataFrame(
     data={'Brier score': brier, 'Precision': precision, 'Recall': recall,
-          'F1': f1}
+          'F1': f1},
     index=index,
 )
 score_df
@@ -235,7 +235,7 @@ for i, (clf, name) in enumerate(clf_list):
 
 score_df = pd.DataFrame(
     data={'Brier score': brier, 'Precision': precision, 'Recall': recall,
-          'F1': f1}
+          'F1': f1},
     index=index,
 )
 score_df
