@@ -109,12 +109,6 @@ class Hyperparameter(namedtuple('Hyperparameter',
     k2 : RBF(length_scale=2)
     k2__length_scale : 2.0
     k2__length_scale_bounds : (0.0, 10.0)
-    >>> gpr = GaussianProcessRegressor(kernel=kernel, alpha=5,
-    ...         random_state=0).fit(X, y)
-    >>> gpr.score(X, y)
-    0.7135961476859551
-    >>> print(kernel)
-    1**2 * RBF(length_scale=0.5) + RBF(length_scale=2)
     """
     # A raw namedtuple is very memory efficient as it packs the attributes
     # in a struct to get rid of the __dict__ of attributes in particular it
