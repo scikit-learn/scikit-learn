@@ -583,6 +583,7 @@ class KNeighborsMixin:
 
         """
         check_is_fitted(self)
+        original_n_neighbors = n_neighbors
 
         if n_neighbors is None:
             n_neighbors = self.n_neighbors
@@ -609,7 +610,6 @@ class KNeighborsMixin:
             X = self._fit_X
             # Include an extra neighbor to account for the sample itself being
             # returned, which is removed later
-            original_n_neighbors = n_neighbors
             n_neighbors += 1
 
         n_samples_fit = self.n_samples_fit_
