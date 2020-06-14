@@ -402,6 +402,16 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         to False, no intercept will be used in calculations
         (i.e. data is expected to be centered).
 
+    copy_X : bool, default=True
+        If True, X will be copied; else, it may be overwritten.
+
+    n_jobs : int, default=None
+        The number of jobs to use for the computation. This will only provide
+        speedup for n_targets > 1 and sufficient large problems.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
+
     normalize : bool, default=False
         This parameter is ignored when ``fit_intercept`` is set to False.
         If True, the regressors X will be normalized before regression by
@@ -414,15 +424,14 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         When set to ``True``, forces the coefficients to be positive. This
         option is only supported for dense arrays.
 
-    copy_X : bool, default=True
-        If True, X will be copied; else, it may be overwritten.
+        .. versionadded:: 0.24
+           LinearRegression might force the coefficients to be positive.
 
-    n_jobs : int, default=None
-        The number of jobs to use for the computation. This will only provide
-        speedup for n_targets > 1 and sufficient large problems.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
-        for more details.
+    max_ter : int, default=None
+        When positive set to ``True`` maximum number of iterations in
+        ``scipy.optimize.nnls``
+
+        .. versionadded:: 0.24
 
     Attributes
     ----------
@@ -456,7 +465,8 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
     Notes
     -----
     From the implementation point of view, this is just plain Ordinary
-    Least Squares (scipy.linalg.lstsq) wrapped as a predictor object.
+    Least Squares (scipy.linalg.lstsq) or Non Negative Least Squares
+    (scipy.optimize.nnls) wrapped as a predictor object.
 
     Examples
     --------
@@ -477,12 +487,13 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
     """
     @_deprecate_positional_args
     def __init__(self, *, fit_intercept=True, normalize=False, copy_X=True,
-                 n_jobs=None, positive=False):
+                 n_jobs=None, positive=False, max_iter=None):
         self.fit_intercept = fit_intercept
         self.normalize = normalize
         self.copy_X = copy_X
         self.n_jobs = n_jobs
         self.positive = positive
+        self.max_iter = max_iter
 
     def fit(self, X, y, sample_weight=None):
         """
@@ -529,11 +540,13 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
 
         if self.positive:
             if y.ndim < 2:
-                self.coef_, self._residues = optimize.nnls(X, y)
+                self.coef_, self._residues = optimize.nnls(
+                                               X, y, maxiter=self.max_iter)
             else:
                 # scipy.optimize.nnls cannot handle y with shape (M, K)
                 outs = Parallel(n_jobs=n_jobs_)(
-                        delayed(optimize.nnls)(X, y[:, j])
+                        delayed(optimize.nnls)(
+                                X, y[:, j], maxiter=self.max_iter)
                         for j in range(y.shape[1]))
                 self.coef_, self._residues = map(np.vstack, zip(*outs))
         elif sp.issparse(X):
