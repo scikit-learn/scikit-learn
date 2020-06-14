@@ -427,7 +427,7 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         .. versionadded:: 0.24
            LinearRegression might force the coefficients to be positive.
 
-    max_ter : int, default=None
+    maxiter : int, default=None
         When positive set to ``True`` maximum number of iterations in
         ``scipy.optimize.nnls``
 
@@ -487,13 +487,13 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
     """
     @_deprecate_positional_args
     def __init__(self, *, fit_intercept=True, normalize=False, copy_X=True,
-                 n_jobs=None, positive=False, max_iter=None):
+                 n_jobs=None, positive=False, maxiter=None):
         self.fit_intercept = fit_intercept
         self.normalize = normalize
         self.copy_X = copy_X
         self.n_jobs = n_jobs
         self.positive = positive
-        self.max_iter = max_iter
+        self.maxiter = maxiter
 
     def fit(self, X, y, sample_weight=None):
         """
@@ -541,12 +541,12 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         if self.positive:
             if y.ndim < 2:
                 self.coef_, self._residues = optimize.nnls(
-                                               X, y, maxiter=self.max_iter)
+                                               X, y, maxiter=self.maxiter)
             else:
                 # scipy.optimize.nnls cannot handle y with shape (M, K)
                 outs = Parallel(n_jobs=n_jobs_)(
                         delayed(optimize.nnls)(
-                                X, y[:, j], maxiter=self.max_iter)
+                                X, y[:, j], maxiter=self.maxiter)
                         for j in range(y.shape[1]))
                 self.coef_, self._residues = map(np.vstack, zip(*outs))
         elif sp.issparse(X):
