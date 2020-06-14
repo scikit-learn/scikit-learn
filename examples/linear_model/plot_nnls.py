@@ -31,18 +31,17 @@ X_train, y_train = X[:n_samples // 2], y[:n_samples // 2]
 X_test, y_test = X[n_samples // 2:], y[n_samples // 2:]
 
 ###############################################################################
-# Fit the Non-Negative least squares.
-from sklearn.linear_model import NNLS
+from sklearn.linear_model import LinearRegression
 
-reg_nnls = NNLS()
+###############################################################################
+# Fit the Non-Negative least squares.
+reg_nnls = LinearRegression(positive=True)
 y_pred_nnls = reg_nnls.fit(X_train, y_train).predict(X_test)
 r2_score_nnls = r2_score(y_test, y_pred_nnls)
 print("NNLS R2 score", r2_score_nnls)
 
 ###############################################################################
 # Fit an OLS.
-from sklearn.linear_model import LinearRegression
-
 reg_ols = LinearRegression()
 y_pred_ols = reg_ols.fit(X_train, y_train).predict(X_test)
 r2_score_ols = r2_score(y_test, y_pred_ols)
@@ -57,4 +56,4 @@ print("OLS R2 score", r2_score_ols)
 fig, ax = plt.subplots()
 ax.plot(reg_ols.coef_, reg_nnls.coef_, linewidth=0, marker=".")
 ax.set_xlabel("OLS regression parameters", fontweight="bold")
-ax.set_xlabel("NNLS regression parameters", fontweight="bold")
+ax.set_ylabel("NNLS regression parameters", fontweight="bold")
