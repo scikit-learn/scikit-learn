@@ -529,7 +529,7 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
 
         if self.positive:
             if y.ndim < 2:
-                self.coef_ = optimize.nnls(X, y)[0]
+                self.coef_, self._residues = optimize.nnls(X, y)
             else:
                 # scipy.optimize.nnls cannot handle y with shape (M, K)
                 outs = Parallel(n_jobs=n_jobs_)(
