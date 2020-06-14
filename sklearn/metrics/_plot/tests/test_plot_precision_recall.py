@@ -9,7 +9,6 @@ from sklearn.metrics import average_precision_score
 from sklearn.metrics import precision_recall_curve
 from sklearn.datasets import make_classification
 from sklearn.datasets import load_breast_cancer
-from sklearn.dummy import DummyClassifier
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
