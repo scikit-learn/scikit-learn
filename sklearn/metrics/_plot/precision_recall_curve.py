@@ -212,6 +212,8 @@ def plot_precision_recall_curve(estimator, X, y, *,
     else:  # `decision_function`
         if pos_label is None:
             pos_label = estimator.classes_[1]
+        elif pos_label == estimator.classes_[0]:
+            y_pred *= -1
 
     precision, recall, _ = precision_recall_curve(y, y_pred,
                                                   pos_label=pos_label,

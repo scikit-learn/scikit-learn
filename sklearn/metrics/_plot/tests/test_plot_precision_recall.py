@@ -195,11 +195,6 @@ def test_default_labels(pyplot, average_precision, estimator_name,
     assert disp.line_.get_label() == expected_label
 
 
-class DummyClassifierWithDecisionFunction(DummyClassifier):
-    def decision_function(self, X):
-        return self.predict_proba(X)[:, 1]
-
-
 @pytest.mark.parametrize(
     "response_method", ["predict_proba", "decision_function"]
 )
@@ -213,6 +208,8 @@ def test_plot_precision_recall_pos_label(pyplot, response_method):
     idx_selected = np.hstack([idx_negative, idx_positive[:25]])
     X, y = X[idx_selected], y[idx_selected]
     X, y = shuffle(X, y, random_state=42)
+    # only use 2 features to make the problem even harder
+    X = X[:, :2]
     y = np.array(
         ["cancer" if c == 1 else "not cancer" for c in y], dtype=object
     )
@@ -220,9 +217,7 @@ def test_plot_precision_recall_pos_label(pyplot, response_method):
         X, y, stratify=y, random_state=0,
     )
 
-    classifier = DummyClassifierWithDecisionFunction(
-        strategy="stratified", random_state=42
-    )
+    classifier = LogisticRegression()
     classifier.fit(X_train, y_train)
 
     # sanity check to be sure the positive class is classes_[0] and that we
@@ -234,10 +229,14 @@ def test_plot_precision_recall_pos_label(pyplot, response_method):
         response_method=response_method
     )
     # we should obtain the statistics of the "cancer" class
-    assert disp.average_precision < 0.15
+    avg_prec_limit = 0.65
+    assert disp.average_precision < avg_prec_limit
+    assert -np.trapz(disp.precision, disp.recall) < avg_prec_limit
 
     # otherwise we should obtain the statistics of the "not cancer" class
     disp = plot_precision_recall_curve(
         classifier, X_test, y_test, response_method=response_method,
     )
-    assert disp.average_precision > 0.85
+    avg_prec_limit = 0.95
+    assert disp.average_precision > avg_prec_limit
+    assert -np.trapz(disp.precision, disp.recall) > avg_prec_limit
