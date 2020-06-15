@@ -426,12 +426,6 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
 
         .. versionadded:: 0.24
 
-    maxiter : int, default=None
-        When positive set to ``True`` maximum number of iterations in
-        ``scipy.optimize.nnls``
-
-        .. versionadded:: 0.24
-
     Attributes
     ----------
     coef_ : array of shape (n_features, ) or (n_targets, n_features)
@@ -486,13 +480,12 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
     """
     @_deprecate_positional_args
     def __init__(self, *, fit_intercept=True, normalize=False, copy_X=True,
-                 n_jobs=None, positive=False, maxiter=None):
+                 n_jobs=None, positive=False):
         self.fit_intercept = fit_intercept
         self.normalize = normalize
         self.copy_X = copy_X
         self.n_jobs = n_jobs
         self.positive = positive
-        self.maxiter = maxiter
 
     def fit(self, X, y, sample_weight=None):
         """
@@ -540,12 +533,12 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         if self.positive:
             if y.ndim < 2:
                 self.coef_, self._residues = optimize.nnls(
-                                               X, y, maxiter=self.maxiter)
+                                               X, y)
             else:
                 # scipy.optimize.nnls cannot handle y with shape (M, K)
                 outs = Parallel(n_jobs=n_jobs_)(
                         delayed(optimize.nnls)(
-                                X, y[:, j], maxiter=self.maxiter)
+                                X, y[:, j])
                         for j in range(y.shape[1]))
                 self.coef_, self._residues = map(np.vstack, zip(*outs))
         elif sp.issparse(X):
