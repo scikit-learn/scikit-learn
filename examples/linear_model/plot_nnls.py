@@ -4,7 +4,7 @@ Non-negative least squares
 ==========================
 
 Estimates a linear model with positive constraints on the regression
-paramaters and compare the estimated parameters to a classic linear
+parameters and compare the estimated parameters to a classic linear
 regression.
 """
 print(__doc__)
@@ -30,17 +30,17 @@ y += 5 * np.random.normal(size=(n_samples, ))
 X_train, y_train = X[:n_samples // 2], y[:n_samples // 2]
 X_test, y_test = X[n_samples // 2:], y[n_samples // 2:]
 
-###############################################################################
+# %%
 from sklearn.linear_model import LinearRegression
 
-###############################################################################
+# %%
 # Fit the Non-Negative least squares.
 reg_nnls = LinearRegression(positive=True)
 y_pred_nnls = reg_nnls.fit(X_train, y_train).predict(X_test)
 r2_score_nnls = r2_score(y_test, y_pred_nnls)
 print("NNLS R2 score", r2_score_nnls)
 
-###############################################################################
+# %%
 # Fit an OLS.
 reg_ols = LinearRegression()
 y_pred_ols = reg_ols.fit(X_train, y_train).predict(X_test)
@@ -48,7 +48,7 @@ r2_score_ols = r2_score(y_test, y_pred_ols)
 print("OLS R2 score", r2_score_ols)
 
 
-###############################################################################
+# %%
 # Comparing the regression parameters between OLS and NNLS, we can observe
 # they are highly correlated, but the non-negative constraint shrink some to
 # 0. The Non-Negative Least square inherently yield sparse results.
