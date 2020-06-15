@@ -90,6 +90,14 @@ Changelog
   when ``strategy='most_frequent'`` or ``strategy='constant'``.
   :pr:`17526` by :user:`Ayako YAGI <yagi-3>` and :user:`Juan Carlos Alfaro Jiménez <alfaro96>`.
 
+:mod:`sklearn.linear_model`
+..............................
+
+- |Feature| :class:`linear_model.LinearRegression` now forces coefficients
+  to be all positive when ``positive`` is set to ``True``.
+  :pr:`17578` by :user:`Joseph Knox <jknox13>`, :user:`Nelle Varoquaux <NelleV>`
+  and :user:`Chiara Marmo <cmarmo>`.
+
 :mod:`sklearn.metrics`
 ......................
 
