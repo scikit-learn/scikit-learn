@@ -1208,6 +1208,11 @@ class DictionaryLearning(SparseCodingMixin, BaseEstimator):
     ... )
     >>> X_transformed = dict_learner.fit_transform(X)
 
+    We can check the level of sparsity of `X_transformed`:
+
+    >>> np.mean(X_transformed == 0)
+    0.88...
+
     We can compare the average squared euclidean norm of the reconstruction
     error of the sparse coded signal relative to the squared euclidean norm of
     the original signal:
@@ -1433,6 +1438,11 @@ class MiniBatchDictionaryLearning(SparseCodingMixin, BaseEstimator):
     ...     n_components=15, transform_algorithm='lasso_lars', random_state=42,
     ... )
     >>> X_transformed = dict_learner.fit_transform(X)
+
+    We can check the level of sparsity of `X_transformed`:
+
+    >>> np.mean(X_transformed == 0)
+    0.87...
 
     We can compare the average squared euclidean norm of the reconstruction
     error of the sparse coded signal relative to the squared euclidean norm of
