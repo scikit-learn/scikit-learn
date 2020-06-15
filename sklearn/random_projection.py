@@ -82,7 +82,8 @@ def johnson_lindenstrauss_min_dim(n_samples, *, eps=0.1):
         Number of samples. If an array is given, it will compute
         a safe number of components array-wise.
 
-    eps : float or ndarray of shape (n_components,), dtype=float, default=0.1
+    eps : float or ndarray of shape (n_components,), dtype=float, \
+            default=0.1
         float in range(0, 1)
         Maximum distortion rate as defined by the \
         Johnson-Lindenstrauss lemma.
