@@ -1207,8 +1207,14 @@ class DictionaryLearning(SparseCodingMixin, BaseEstimator):
     ...     n_components=15, transform_algorithm='lasso_lars', random_state=42,
     ... )
     >>> X_transformed = dict_learner.fit_transform(X)
-    >>> np.mean(X_transformed == 0)  # represents data using a sparse code
-    0.88...
+
+    We can compare the average squared euclidean norm of the reconstruction
+    error of the sparse coded signal relative to the squared euclidean norm of
+    the original signal:
+
+    >>> X_hat = X_transformed @ dict_learner.components_
+    >>> np.mean(np.sum((X_hat - X) ** 2, axis=1) / np.sum(X ** 2, axis=1))
+    0.07...
 
     Notes
     -----
@@ -1427,6 +1433,11 @@ class MiniBatchDictionaryLearning(SparseCodingMixin, BaseEstimator):
     ...     n_components=15, transform_algorithm='lasso_lars', random_state=42,
     ... )
     >>> X_transformed = dict_learner.fit_transform(X)
+
+    We can compare the average squared euclidean norm of the reconstruction
+    error of the sparse coded signal relative to the squared euclidean norm of
+    the original signal:
+
     >>> X_hat = X_transformed @ dict_learner.components_
     >>> np.mean(np.sum((X_hat - X) ** 2, axis=1) / np.sum(X ** 2, axis=1))
     0.10...
