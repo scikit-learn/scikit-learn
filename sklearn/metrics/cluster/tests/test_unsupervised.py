@@ -5,7 +5,6 @@ from scipy.sparse import csr_matrix
 
 from sklearn import datasets
 from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_warns_message
 from sklearn.metrics.cluster import silhouette_score
 from sklearn.metrics.cluster import silhouette_samples
 from sklearn.metrics import pairwise_distances

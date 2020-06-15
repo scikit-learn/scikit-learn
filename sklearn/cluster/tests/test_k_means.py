@@ -9,8 +9,6 @@ import pytest
 
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils.validation import _num_samples
 from sklearn.base import clone
 from sklearn.exceptions import ConvergenceWarning
 
@@ -714,62 +712,55 @@ def test_minibatch_reassign(data):
 
 
 @pytest.mark.parametrize("estimator", [KMeans, MiniBatchKMeans])
-def test_wrong_params(estimator):
+@pytest.mark.parametrize("param, match", [
+    ({"n_init": 0}, r"n_init should be > 0"),
+    ({"max_iter": 0}, r"max_iter should be > 0"),
+    ({"n_clusters": n_samples + 1}, r"n_samples.* should be >= n_clusters"),
+    ({"tol": -1}, r"tol should be >= 0"),
+    ({"init": X[:2]},
+     r"The shape of the initial centers .* does not match"
+     r" the number of clusters"),
+    ({"init": lambda X_, k, random_state: X_[:2]},
+     r"The shape of the initial centers .* does not match"
+     r" the number of clusters"),
+    ({"init": X[:8, :2]},
+     r"The shape of the initial centers .* does not match"
+     r" the number of features of the data"),
+    ({"init": lambda X_, k, random_state: X_[:8, :2]},
+     r"The shape of the initial centers .* does not match"
+     r" the number of features of the data"),
+    ({"init": "wrong"},
+     r"init should be either 'k-means\+\+', 'random', "
+     r"a ndarray or a callable")]
+)
+def test_wrong_params(estimator, param, match):
     # Check that error are raised with clear error message when wrong values
     # are passed for the parameters
-    with pytest.raises(ValueError, match=r"n_init should be > 0"):
-        estimator(n_init=0).fit(X)
-
-    with pytest.raises(ValueError, match=r"max_iter should be > 0"):
-        estimator(max_iter=0).fit(X)
-
-    with pytest.raises(ValueError,
-                       match=r"n_samples.* should be >= n_clusters"):
-        estimator(n_clusters=n_samples + 1).fit(X)
-
-    with pytest.raises(ValueError, match=r"tol should be >= 0"):
-        estimator(tol=-1).fit(X)
-
-    match = (r"The shape of the initial centers .* does not match "
-             r"the number of clusters")
     with pytest.raises(ValueError, match=match):
-        estimator(init=X[:2]).fit(X)
+        estimator(**param).fit(X)
+
+
+@pytest.mark.parametrize("param, match", [
+    ({"algorithm": "wrong"}, r"Algorithm must be 'auto', 'full' or 'elkan'")]
+)
+def test_kmeans_wrong_params(param, match):
+    # Check that error are raised with clear error message when wrong values
+    # are passed for the KMeans specific parameters
     with pytest.raises(ValueError, match=match):
-        estimator(init=lambda X_, k, random_state: X_[:2]).fit(X)
+        KMeans(**param).fit(X)
 
-    match = (r"The shape of the initial centers .* does not match "
-             r"the number of features of the data")
+
+@pytest.mark.parametrize("param, match", [
+    ({"max_no_improvement": -1}, r"max_no_improvement should be >= 0"),
+    ({"batch_size": -1}, r"batch_size should be > 0"),
+    ({"init_size": -1}, r"init_size should be > 0"),
+    ({"reassignment_ratio": -1}, r"reassignment_ratio should be >= 0")]
+)
+def test_minibatch_kmeans_wrong_params(param, match):
+    # Check that error are raised with clear error message when wrong values
+    # are passed for the MiniBatchKMeans specific parameters
     with pytest.raises(ValueError, match=match):
-        estimator(init=X[:8, :2]).fit(X)
-    with pytest.raises(ValueError, match=match):
-        estimator(init=lambda X_, k, random_state: X_[:8, :2]).fit(X)
-
-    with pytest.raises(ValueError,
-                       match=r"init should be either 'k-means\+\+', 'random', "
-                             r"a ndarray or a callable"):
-        estimator(init="wrong").fit(X)
-
-    # specific to KMeans
-    if estimator is KMeans:
-        with pytest.raises(ValueError, match=r"Algorithm must be 'auto', "
-                                             r"'full' or 'elkan'"):
-            KMeans(algorithm="wrong").fit(X)
-
-    # specific to MiniBatchKMeans
-    if estimator is MiniBatchKMeans:
-        with pytest.raises(ValueError, match=r"max_no_improvement should be "
-                                             r">= 0"):
-            MiniBatchKMeans(max_no_improvement=-1).fit(X)
-
-        with pytest.raises(ValueError, match=r"batch_size should be > 0"):
-            MiniBatchKMeans(batch_size=-1).fit(X)
-
-        with pytest.raises(ValueError, match=r"init_size should be > 0"):
-            MiniBatchKMeans(init_size=-1).fit(X)
-
-        with pytest.raises(ValueError, match=r"reassignment_ratio should be "
-                                             r">= 0"):
-            MiniBatchKMeans(reassignment_ratio=-1).fit(X)
+        MiniBatchKMeans(**param).fit(X)
 
 
 @pytest.mark.parametrize("estimator", [KMeans, MiniBatchKMeans])
@@ -838,3 +829,13 @@ def test_n_jobs_deprecated(n_jobs):
 
     with pytest.warns(FutureWarning, match=depr_msg):
         kmeans.fit(X)
+
+
+def test_sample_weight_unchanged():
+    # Check that sample_weight is not modified in place by KMeans (#17204)
+    X = np.array([[1], [2], [4]])
+    sample_weight = np.array([0.5, 0.2, 0.3])
+    KMeans(n_clusters=2, random_state=0).fit(X, sample_weight=sample_weight)
+
+    # internally, sample_weight is rescale to sum up to n_samples = 3
+    assert_array_equal(sample_weight, np.array([0.5, 0.2, 0.3]))

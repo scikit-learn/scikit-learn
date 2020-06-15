@@ -5,6 +5,10 @@ cimport cython
 import numpy as np
 cimport numpy as np
 from libc.stdio cimport printf
+
+np.import_array()
+
+
 cdef extern from "numpy/npy_math.h":
     float NPY_INFINITY
 

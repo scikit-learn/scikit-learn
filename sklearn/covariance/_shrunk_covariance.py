@@ -82,11 +82,11 @@ class ShrunkCovariance(EmpiricalCovariance):
 
     Attributes
     ----------
-    location_ : ndarray of shape (n_features,)
-        Estimated location, i.e. the estimated mean.
-
     covariance_ : ndarray of shape (n_features, n_features)
         Estimated covariance matrix
+
+    location_ : ndarray of shape (n_features,)
+        Estimated location, i.e. the estimated mean.
 
     precision_ : ndarray of shape (n_features, n_features)
         Estimated pseudo inverse matrix.
@@ -253,7 +253,8 @@ def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
     return shrinkage
 
 
-def ledoit_wolf(X, assume_centered=False, block_size=1000):
+@_deprecate_positional_args
+def ledoit_wolf(X, *, assume_centered=False, block_size=1000):
     """Estimates the shrunk Ledoit-Wolf covariance matrix.
 
     Read more in the :ref:`User Guide <shrunk_covariance>`.
@@ -344,11 +345,11 @@ class LedoitWolf(EmpiricalCovariance):
 
     Attributes
     ----------
-    location_ : ndarray of shape (n_features,)
-        Estimated location, i.e. the estimated mean.
-
     covariance_ : ndarray of shape (n_features, n_features)
         Estimated covariance matrix.
+
+    location_ : ndarray of shape (n_features,)
+        Estimated location, i.e. the estimated mean.
 
     precision_ : ndarray of shape (n_features, n_features)
         Estimated pseudo inverse matrix.
@@ -430,8 +431,8 @@ class LedoitWolf(EmpiricalCovariance):
 
 
 # OAS estimator
-
-def oas(X, assume_centered=False):
+@_deprecate_positional_args
+def oas(X, *, assume_centered=False):
     """Estimate covariance with the Oracle Approximating Shrinkage algorithm.
 
     Parameters
@@ -526,6 +527,9 @@ class OAS(EmpiricalCovariance):
     covariance_ : ndarray of shape (n_features, n_features)
         Estimated covariance matrix.
 
+    location_ : ndarray of shape (n_features,)
+        Estimated location, i.e. the estimated mean.
+
     precision_ : ndarray of shape (n_features, n_features)
         Estimated pseudo inverse matrix.
         (stored only if store_precision is True)
@@ -533,6 +537,27 @@ class OAS(EmpiricalCovariance):
     shrinkage_ : float
       coefficient in the convex combination used for the computation
       of the shrunk estimate. Range is [0, 1].
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.covariance import OAS
+    >>> from sklearn.datasets import make_gaussian_quantiles
+    >>> real_cov = np.array([[.8, .3],
+    ...                      [.3, .4]])
+    >>> rng = np.random.RandomState(0)
+    >>> X = rng.multivariate_normal(mean=[0, 0],
+    ...                             cov=real_cov,
+    ...                             size=500)
+    >>> oas = OAS().fit(X)
+    >>> oas.covariance_
+    array([[0.7533..., 0.2763...],
+           [0.2763..., 0.3964...]])
+    >>> oas.precision_
+    array([[ 1.7833..., -1.2431... ],
+           [-1.2431...,  3.3889...]])
+    >>> oas.shrinkage_
+    0.0195...
 
     Notes
     -----

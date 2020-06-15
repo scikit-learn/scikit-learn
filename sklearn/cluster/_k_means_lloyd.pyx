@@ -25,7 +25,7 @@ from ._k_means_common cimport _average_centers, _center_shift
 np.import_array()
 
 
-def _lloyd_iter_chunked_dense(
+def lloyd_iter_chunked_dense(
         np.ndarray[floating, ndim=2, mode='c'] X,  # IN
         floating[::1] sample_weight,               # IN
         floating[::1] x_squared_norms,             # IN
@@ -106,6 +106,9 @@ def _lloyd_iter_chunked_dense(
 
     # count remainder chunk in total number of chunks
     n_chunks += n_samples != n_chunks * n_samples_chunk
+
+    # number of threads should not be bigger than number of chunks
+    n_threads = min(n_threads, n_chunks)
 
     if update_centers:
         memset(&centers_new[0, 0], 0, n_clusters * n_features * sizeof(floating))
@@ -214,7 +217,7 @@ cdef void _update_chunk_dense(
                 centers_new[label * n_features + k] += X[i * n_features + k] * sample_weight[i]
 
 
-def _lloyd_iter_chunked_sparse(
+def lloyd_iter_chunked_sparse(
         X,                                 # IN
         floating[::1] sample_weight,       # IN
         floating[::1] x_squared_norms,     # IN
@@ -300,6 +303,9 @@ def _lloyd_iter_chunked_sparse(
 
     # count remainder chunk in total number of chunks
     n_chunks += n_samples != n_chunks * n_samples_chunk
+
+    # number of threads should not be bigger than number of chunks
+    n_threads = min(n_threads, n_chunks)
 
     if update_centers:
         memset(&centers_new[0, 0], 0, n_clusters * n_features * sizeof(floating))
