@@ -29,7 +29,7 @@ dependent_packages = {
     'cython': (CYTHON_MIN_VERSION, 'build'),
     'matplotlib': ('2.1.1', 'benchmark, docs, examples, tests'),
     'scikit-image': ('0.13', 'docs, examples, tests'),
-    'pandas': ('0.25.3', 'benchmark, docs, examples, tests'),
+    'pandas': ('0.25.0', 'benchmark, docs, examples, tests'),
     'seaborn': ('0.9.0', 'docs, examples'),
     'memory_profiler': ('0.57.0', 'benchmark, docs'),
     'pytest': (PYTEST_MIN_VERSION, 'tests'),
