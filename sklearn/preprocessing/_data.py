@@ -2821,7 +2821,8 @@ def quantile_transform(X, *, axis=0, n_quantiles=1000,
         In general, we recommend using
         :class:`~sklearn.preprocessing.QuantileTransformer` within a
         :ref:`Pipeline <pipeline>` in order to prevent most risks of data
-        leaking:`pipe=make_pipeline(QuantileTransformer(),LogisticRegression)`.
+        leaking:`pipe = make_pipeline(QuantileTransformer(),
+        LogisticRegression())`.
 
     For a comparison of the different scalers, transformers, and normalizers,
     see :ref:`examples/preprocessing/plot_all_scaling.py
