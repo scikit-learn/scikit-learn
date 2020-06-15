@@ -263,7 +263,7 @@ modifying code and submitting a PR:
 10. Develop the feature on your feature branch on your computer, using Git to
     do the version control. When you're done editing, add changed files using
     ``git add`` and then ``git commit``::
- 
+
         $ git add modified_files
         $ git commit
 
@@ -486,6 +486,8 @@ message, the following actions are taken.
     [doc build]            Docs built including example gallery plots
     ====================== ===================
 
+.. _stalled_pull_request:
+
 Stalled pull requests
 ^^^^^^^^^^^^^^^^^^^^^
 
@@ -519,6 +521,32 @@ A good etiquette to take over is:
   comment on the stalled PR that you are taking over and to link from the
   new PR to the old one. The new PR should be created by pulling from the
   old one.
+
+Stalled and Unclaimed Issues
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Issues may have conversation that has not yet resulted in a pull request,
+or that is linked to :ref:`stalled pull request`.
+In general, if a pull request has already been opened, it is best to follow
+the procedure described in the :ref:`stalled pull request` section rather
+than working in an issue.
+
+If, however, a pull request has not yet been opened, we also provide a
+suggested workflow for claiming and working on stalled or unclaimed issues:
+
+* First, to **determine if an issue is claimed**:
+
+  * Check for linked pull requests
+  * Check the conversation to see if anyone has said that they're working on
+    creating a pull request
+
+* If a contributor comments on an issue to say they are working on it,
+  a pull request is expected within 2 weeks (new contributor) or 4 weeks
+  (contributor or core dev), unless an larger time frame is explicitly given.
+  Beyond that time, another contributor can take the issue and make a
+  pull request for it. We encourage contributors to comment directly on the
+  stalled or unclaimed issue to let community members know that they will be
+  working on it.
 
 .. _new_contributors:
 
@@ -558,28 +586,6 @@ underestimate how easy an issue is to solve!
     `here <https://github.com/scikit-learn/scikit-learn/labels/help%20wanted>`__ .
 
     Note that not all issues which need contributors will have this tag.
-
-Stalled and Unclaimed Issues
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-The preferred workflow for claiming and working on issues is:
-
-* To determine if an issue is taken   
-
-  * Check the conversation to see if anyone has said that they're working on it 
-  * Check for linked PRs 
-
-* When a contributor comments on an issue to say they are working on it,
-  a PR is expected within 2 weeks (new contributor) or 4 weeks 
-  (contributor or core dev), unless an larger time frame is explicitly given.
-  Beyond that time, another contributor can take the issue without 
-  asking for permission and make a PR for it.
-
-* PRs that have a requested change and no response from the author for 1 month 
-  are considered stale. For stale PRs, another contributor may ask if the author 
-  plans to work on it, and if no response is given within 2 weeks make a new PR 
-  to continue the work.
-
-These are the general guidelines to follow, the specifics may vary from issue to issue. 
 
 .. _contribute_documentation:
 
