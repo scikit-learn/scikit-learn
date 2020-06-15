@@ -678,7 +678,7 @@ def make_circles(n_samples=100, *, shuffle=True, noise=None, random_state=None,
 
 @_deprecate_positional_args
 def make_moons(n_samples=100, *, shuffle=True, noise=None, random_state=None):
-    """Make two interleaving half circles
+    """Make two interleaving half circles.
 
     A simple toy dataset to visualize clustering and classification
     algorithms. Read more in the :ref:`User Guide <sample_generators>`.
@@ -702,10 +702,10 @@ def make_moons(n_samples=100, *, shuffle=True, noise=None, random_state=None):
 
     Returns
     -------
-    X : array of shape [n_samples, 2]
+    X : ndarray of shape (n_samples, 2)
         The generated samples.
 
-    y : array of shape [n_samples]
+    y : ndarray of shape (n_samples,)
         The integer labels (0 or 1) for class membership of each sample.
     """
 

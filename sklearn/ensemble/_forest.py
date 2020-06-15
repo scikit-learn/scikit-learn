@@ -107,7 +107,7 @@ def _get_n_samples_bootstrap(n_samples, max_samples):
         if not (0 < max_samples < 1):
             msg = "`max_samples` must be in range (0, 1) but got value {}"
             raise ValueError(msg.format(max_samples))
-        return int(round(n_samples * max_samples))
+        return round(n_samples * max_samples)
 
     msg = "`max_samples` should be int or float, but got type '{}'"
     raise TypeError(msg.format(type(max_samples)))
