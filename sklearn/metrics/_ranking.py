@@ -334,6 +334,8 @@ def roc_auc_score(y_true, y_score, *, average="macro", sample_weight=None,
         `pos_label=None`, if `y_true` is in {-1, 1} or {0, 1}, `pos_label` is
         set to 1, otherwise an error will be raised.
 
+        .. versionadded:: 0.24
+
     Returns
     -------
     auc : float
