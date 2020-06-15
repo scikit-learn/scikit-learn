@@ -71,7 +71,7 @@ Non-Negative Least Squares
 When the coefficients represent some physical or naturally non-negative
 quantities (e.g., frequency counts or prices of goods), it is possible
 to constrain all the coefficients to be non-negative.
-The :class:`LinearRegression` ``fit`` method accepts a boolean ``positive``
+The :class:`LinearRegression` accepts a boolean ``positive``
 parameter: when set to `True` `Non Negative Least Squares
 <https://en.wikipedia.org/wiki/Non-negative_least_squares>`_ are then applied.
 
