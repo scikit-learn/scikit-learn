@@ -372,7 +372,7 @@ def test_plot_calibration_curve_error_non_binary(pyplot, data):
         plot_calibration_curve(clf, X, y)
 
 
-def test_plot_calibration_curve_no_method(pyplot, data_binary):
+def test_plot_calibration_curve_no_predict_proba(pyplot, data_binary):
     X, y = data_binary
 
     class MyClassifier(ClassifierMixin):
@@ -382,8 +382,7 @@ def test_plot_calibration_curve_no_method(pyplot, data_binary):
 
     clf = MyClassifier().fit(X, y)
 
-    msg = ("Neither response method 'predict_proba' nor 'decision_function' "
-           "are defined in")
+    msg = "Response method 'predict_proba' not defined in"
     with pytest.raises(ValueError, match=msg):
         plot_calibration_curve(clf, X, y)
 
@@ -447,34 +446,6 @@ def test_plot_calibration_curve(pyplot, data_binary, n_bins, strategy,
         assert viz.line_.get_label() == expected_label
     else:
         assert viz.line_.get_label() == "LogisticRegression"
-
-
-def test_plot_calibration_curve_decision_function(pyplot, data_binary):
-    # Check when `estimator` has no `predict_proba` and `decision_function`
-    # used
-    X, y = data_binary
-    svc = LinearSVC().fit(X, y)
-
-    viz = plot_calibration_curve(svc, X, y)
-
-    y_prob = svc.decision_function(X)
-    y_prob_pos = (y_prob - y_prob.min()) / (y_prob.max() - y_prob.min())
-    prob_true, prob_pred = calibration_curve(y, y_prob_pos)
-
-    assert_allclose(viz.prob_true, prob_true)
-    assert_allclose(viz.prob_pred, prob_pred)
-    assert_allclose(viz.y_prob, y_prob_pos)
-
-    assert viz.estimator_name == "LinearSVC"
-
-    # cannot fail thanks to pyplot fixture
-    import matplotlib as mpl  # noqa
-    assert isinstance(viz.line_, mpl.lines.Line2D)
-    assert isinstance(viz.ax_, mpl.axes.Axes)
-    assert isinstance(viz.figure_, mpl.figure.Figure)
-
-    assert viz.ax_.get_xlabel() == "Mean predicted probability"
-    assert viz.ax_.get_ylabel() == "Fraction of positives"
 
 
 @pytest.mark.parametrize(

@@ -20,6 +20,7 @@ from .preprocessing import LabelEncoder
 
 from .base import (BaseEstimator, ClassifierMixin, RegressorMixin, clone,
                    MetaEstimatorMixin, is_classifier)
+from .metrics._plot.base import _check_classifier_response_method
 from .metrics import brier_score_loss
 from .preprocessing import label_binarize, LabelBinarizer
 from .utils import (check_array, indexable, column_or_1d,
@@ -853,7 +854,7 @@ def plot_calibration_curve(estimator, X, y, *,
                          "classifier")
 
     try:
-        prediction_method = _check_classifer_response_method(
+        prediction_method = _check_classifier_response_method(
             estimator, response_method='predict_proba'
         )
     except ValueError:
@@ -862,16 +863,13 @@ def plot_calibration_curve(estimator, X, y, *,
 
     y_prob = prediction_method(X)
 
-    if predict_proba is None:  # decision_function
-        y_prob = (y_prob - y_prob.min()) / (y_prob.max() - y_prob.min())
-    else:
-        if not len(estimator.classes_) == 2:
+    if not len(estimator.classes_) == 2:
+        raise ValueError(binary_error)
+    if y_prob.ndim != 1:
+        if y_prob.shape[1] != 2:
             raise ValueError(binary_error)
-        if y_prob.ndim != 1:
-            if y_prob.shape[1] != 2:
-                raise ValueError(binary_error)
-            else:
-                y_prob = y_prob[:, 1]
+        else:
+            y_prob = y_prob[:, 1]
 
     prob_true, prob_pred = calibration_curve(
         y, y_prob, n_bins=n_bins, strategy=strategy
