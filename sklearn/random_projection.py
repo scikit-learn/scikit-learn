@@ -220,8 +220,8 @@ def _sparse_random_matrix(n_components, n_features, density='auto',
         Dimensionality of the original source space.
 
     density : float or 'auto', default='auto'
-        float in range (0,1]
-        Ratio of non-zero component in the random projection matrix.
+        Ratio of non-zero component in the random projection matrix in the
+        range `(0, 1]`
 
         If density = 'auto', the value is set to the minimum density
         as recommended by Ping Li et al.: 1 / sqrt(n_features).
