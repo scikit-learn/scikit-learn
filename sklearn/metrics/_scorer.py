@@ -150,7 +150,7 @@ class _BaseScorer:
         y_true : array-like
             Gold standard target values for X.
 
-        sample_weight : array-like, optional (default=None)
+        sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
 
         Returns
@@ -186,7 +186,7 @@ class _PredictScorer(_BaseScorer):
         y_true : array-like
             Gold standard target values for X.
 
-        sample_weight : array-like, optional (default=None)
+        sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
 
         Returns
@@ -371,12 +371,12 @@ def check_scoring(estimator, scoring=None, *, allow_none=False):
     estimator : estimator object implementing 'fit'
         The object to use to fit the data.
 
-    scoring : string, callable or None, optional, default: None
+    scoring : str or callable, default=None
         A string (see model evaluation documentation) or
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
 
-    allow_none : boolean, optional, default: False
+    allow_none : bool, default=False
         If no scoring is specified and the estimator has no score function, we
         can either return None or raise an exception.
 
@@ -431,7 +431,7 @@ def _check_multimetric_scoring(estimator, scoring=None):
     estimator : sklearn estimator instance
         The estimator for which the scoring will be applied.
 
-    scoring : string, callable, list/tuple, dict or None, default: None
+    scoring : str, callable, list, tuple or dict, default=None
         A single string (see :ref:`scoring_parameter`) or a callable
         (see :ref:`scoring`) to evaluate the predictions on the test set.
 
