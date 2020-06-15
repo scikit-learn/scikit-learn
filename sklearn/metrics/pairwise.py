@@ -226,7 +226,7 @@ def euclidean_distances(X, Y=None, *, Y_norm_squared=None, squared=False,
 
     Y : {array-like, sparse matrix}, shape (n_samples_2, n_features)
 
-    Y_norm_squared : array-like of shape (n_samples_2, ), default=None
+    Y_norm_squared : array-like of shape (n_samples_2,), default=None
         Pre-computed dot-products of vectors in Y (e.g.,
         ``(Y**2).sum(axis=1)``)
         May be ignored in some cases, see the note below.
@@ -688,7 +688,7 @@ def haversine_distances(X, Y=None):
     ----------
     X : array-like, shape (n_samples_1, 2)
 
-    Y : array_like of shape (n_samples_2, 2), default=None
+    Y : array-like of shape (n_samples_2, 2), default=None
 
     Returns
     -------
@@ -811,11 +811,12 @@ def cosine_distances(X, Y=None):
 
     Parameters
     ----------
-    X : array-like, sparse matrix
-        with shape (n_samples_X, n_features).
+    X : {array-like, sparse matrix} of shape (n_samples_X, n_features)
+        Matrix `X`.
 
-    Y : {array-like, sparse matrix} of shape \
-        (n_samples_Y, n_features), default=None
+    Y : {array-like, sparse matrix} of shape (n_samples_Y, n_features), \
+            default=None
+        Matrix `Y`.
 
 
     Returns
@@ -936,7 +937,7 @@ def paired_distances(X, Y, *, metric="euclidean", **kwds):
     Y : ndarray (n_samples, n_features)
         Array 2 for distance computation.
 
-    metric : string or callable, default="euclidean"
+    metric : str or callable, default="euclidean"
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string, it must be one of the options
         specified in PAIRED_DISTANCES, including "euclidean",
@@ -1477,8 +1478,8 @@ def pairwise_distances_chunked(X, Y=None, *, reduce_func=None,
 
     Parameters
     ----------
-    X : array [n_samples_a, n_samples_a] if metric == "precomputed", or,
-        [n_samples_a, n_features] otherwise
+    X : array of shape (n_samples_a, n_samples_a) if metric == "precomputed", \
+        or of shape (n_samples_a, n_features) otherwise
         Array of pairwise distances between samples, or a feature array.
 
     Y : array of shape (n_samples_b, n_features), default=None

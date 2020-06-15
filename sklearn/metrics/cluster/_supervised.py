@@ -601,9 +601,8 @@ def mutual_info_score(labels_true, labels_pred, *, contingency=None):
     labels_pred : int array-like of shape (n_samples,)
         A clustering of the data into disjoint subsets.
 
-    contingency : {ndarray, sparse matrix} of \
-                  shape (n_classes_true, n_classes_pred), \
-                  default=None
+    contingency : {ndarray, sparse matrix} of shape \
+            (n_classes_true, n_classes_pred), default=None
         A contingency matrix given by the :func:`contingency_matrix` function.
         If value is ``None``, it will be computed, otherwise the given value is
         used, with ``labels_true`` and ``labels_pred`` ignored.

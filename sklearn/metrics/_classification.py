@@ -573,7 +573,7 @@ def cohen_kappa_score(y1, y2, *, labels=None, weights=None,
         subset of labels. If None, all labels that appear at least once in
         ``y1`` or ``y2`` are used.
 
-    weights : {'linear', 'quatratic'}, default=None
+    weights : {'linear', 'quadratic'}, default=None
         Weighting type to calculate the score. None means no weighted;
         "linear" means linear weighted; "quadratic" means quadratic weighted.
 
