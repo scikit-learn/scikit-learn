@@ -629,6 +629,63 @@ def test_k_means_function():
     assert inertia > 0.0
 
 
+def test_minibatch_update_consistency():
+    # Check that dense and sparse minibatch update give the same results
+    rng = np.random.RandomState(42)
+
+    centers_old = centers + rng.normal(size=centers.shape)
+    centers_old_csr = centers_old.copy()
+
+    centers_new = np.zeros_like(centers_old)
+    centers_new_csr = np.zeros_like(centers_old_csr)
+
+    weight_sums = np.zeros(centers_old.shape[0], dtype=X.dtype)
+    weight_sums_csr = np.zeros(centers_old.shape[0], dtype=X.dtype)
+
+    x_squared_norms = (X ** 2).sum(axis=1)
+    x_squared_norms_csr = row_norms(X_csr, squared=True)
+
+    sample_weight = np.ones(X.shape[0], dtype=X.dtype)
+
+    # extract a small minibatch
+    X_mb = X[:10]
+    X_mb_csr = X_csr[:10]
+    x_mb_squared_norms = x_squared_norms[:10]
+    x_mb_squared_norms_csr = x_squared_norms_csr[:10]
+    sample_weight_mb = sample_weight[:10]
+
+    # step 1: compute the dense minibatch update
+    old_inertia = _mini_batch_step(
+        X_mb, x_mb_squared_norms, sample_weight_mb, centers_old, centers_new,
+        weight_sums, np.random.RandomState(0), random_reassign=False)
+    assert old_inertia > 0.0
+
+    # compute the new inertia on the same batch to check that it decreased
+    labels, new_inertia = _labels_inertia(
+        X_mb, sample_weight_mb, x_mb_squared_norms, centers_new)
+    assert new_inertia > 0.0
+    assert new_inertia < old_inertia
+
+    # step 2: compute the sparse minibatch update
+    old_inertia_csr = _mini_batch_step(
+        X_mb_csr, x_mb_squared_norms_csr, sample_weight_mb, centers_old_csr,
+        centers_new_csr, weight_sums_csr, np.random.RandomState(0),
+        random_reassign=False)
+    assert old_inertia_csr > 0.0
+
+    # compute the new inertia on the same batch to check that it decreased
+    labels_csr, new_inertia_csr = _labels_inertia(
+        X_mb_csr, sample_weight_mb, x_mb_squared_norms_csr, centers_new_csr)
+    assert new_inertia_csr > 0.0
+    assert new_inertia_csr < old_inertia_csr
+
+    # step 3: check that sparse and dense updates lead to the same results
+    assert_array_equal(labels, labels_csr)
+    assert_allclose(centers_new, centers_new_csr)
+    assert_allclose(old_inertia, old_inertia_csr)
+    assert_allclose(new_inertia, new_inertia_csr)
+
+
 def test_minibatch_kmeans_init_size():
     # Check the internal _init_size attribute of MiniBatchKMeans
 
@@ -709,6 +766,18 @@ def test_minibatch_reassign(data):
                      reassignment_ratio=1e-15)
 
     assert_allclose(centers_new, perfect_centers)
+
+
+def test_minibatch_with_many_reassignments():
+    # Test for the case that the number of clusters to reassign is bigger
+    # than the batch_size. Run the test with 100 clusters and a batch_size of
+    # 10 because it turned out that these values ensure that the number of
+    # clusters to reassign is always bigger than the batch_size.
+    MiniBatchKMeans(n_clusters=100,
+                    batch_size=10,
+                    init_size=n_samples,
+                    random_state=42,
+                    verbose=True).fit(X)
 
 
 @pytest.mark.parametrize("estimator", [KMeans, MiniBatchKMeans])
