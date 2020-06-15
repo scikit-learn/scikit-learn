@@ -526,9 +526,9 @@ Stalled and Unclaimed Issues
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Issues may have conversation that has not yet resulted in a pull request,
-or that is linked to :ref:`stalled pull request`.
+or that is linked to a :ref:`stalled pull request <stalled_pull_request>`.
 In general, if a pull request has already been opened, it is best to follow
-the procedure described in the :ref:`stalled pull request` section rather
+the procedure described in the :ref:`stalled_pull_request` section rather
 than working in an issue.
 
 If, however, a pull request has not yet been opened, we also provide a
