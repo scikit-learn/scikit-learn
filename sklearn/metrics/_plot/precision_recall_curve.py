@@ -175,6 +175,8 @@ def plot_precision_recall_curve(estimator, X, y, *,
         and recall metrics. By default, `estimators.classes_[1]` is considered
         as the positive class.
 
+        .. versionadded:: 0.24
+
     **kwargs : dict
         Keyword arguments to be passed to matplotlib's `plot`.
 
