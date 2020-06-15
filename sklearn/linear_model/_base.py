@@ -541,12 +541,12 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         if self.positive:
             if y.ndim < 2:
                 self.coef_, self._residues = optimize.nnls(
-                                               X, y, self.maxiter)
+                                               X, y, maxiter=self.maxiter)
             else:
                 # scipy.optimize.nnls cannot handle y with shape (M, K)
                 outs = Parallel(n_jobs=n_jobs_)(
                         delayed(optimize.nnls)(
-                                X, y[:, j], self.maxiter)
+                                X, y[:, j], maxiter=self.maxiter)
                         for j in range(y.shape[1]))
                 self.coef_, self._residues = map(np.vstack, zip(*outs))
         elif sp.issparse(X):
