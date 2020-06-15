@@ -240,6 +240,9 @@ Changelog
   ``metric='seuclidean'`` and ``X`` is not type ``np.float64``.
   :pr:`15730` by :user:`Forrest Koch <ForrestCKoch>`.
 
+- |Enhancement| Add `pos_label` parameter to :func:`roc_auc_score`.
+  :pr:`17594` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.model_selection`
 ..............................
 
