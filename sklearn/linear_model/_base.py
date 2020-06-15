@@ -425,7 +425,6 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         option is only supported for dense arrays.
 
         .. versionadded:: 0.24
-           LinearRegression might force the coefficients to be positive.
 
     maxiter : int, default=None
         When positive set to ``True`` maximum number of iterations in
