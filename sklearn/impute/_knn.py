@@ -30,11 +30,11 @@ class KNNImputer(_BaseImputer):
 
     Parameters
     ----------
-    missing_values : number, string, np.nan or None, default=`np.nan`
+    missing_values : int, float, str, np.nan or None, default=np.nan
         The placeholder for the missing values. All occurrences of
         `missing_values` will be imputed. For pandas' dataframes with
         nullable integer dtypes with missing values, `missing_values`
-        should be set to `np.nan`, since `pd.NA` will be converted to `np.nan`.
+        should be set to np.nan, since `pd.NA` will be converted to np.nan.
 
     n_neighbors : int, default=5
         Number of neighboring samples to use for imputation.
