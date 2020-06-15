@@ -217,14 +217,16 @@ def average_precision_score(y_true, y_score, *, average="macro", pos_label=1,
                                  average, sample_weight=sample_weight)
 
 
-def _binary_roc_auc_score(y_true, y_score, sample_weight=None, max_fpr=None):
+def _binary_roc_auc_score(y_true, y_score, sample_weight=None, max_fpr=None,
+                          pos_label=None):
     """Binary roc auc score"""
     if len(np.unique(y_true)) != 2:
         raise ValueError("Only one class present in y_true. ROC AUC score "
                          "is not defined in that case.")
 
-    fpr, tpr, _ = roc_curve(y_true, y_score,
-                            sample_weight=sample_weight)
+    fpr, tpr, _ = roc_curve(
+        y_true, y_score, sample_weight=sample_weight, pos_label=pos_label,
+    )
     if max_fpr is None or max_fpr == 1:
         return auc(fpr, tpr)
     if max_fpr <= 0 or max_fpr > 1:
@@ -247,7 +249,8 @@ def _binary_roc_auc_score(y_true, y_score, sample_weight=None, max_fpr=None):
 
 @_deprecate_positional_args
 def roc_auc_score(y_true, y_score, *, average="macro", sample_weight=None,
-                  max_fpr=None, multi_class="raise", labels=None):
+                  max_fpr=None, multi_class="raise", labels=None,
+                  pos_label=None):
     """Compute Area Under the Receiver Operating Characteristic Curve (ROC AUC)
     from prediction scores.
 
@@ -385,10 +388,9 @@ def roc_auc_score(y_true, y_score, *, average="macro", sample_weight=None,
         return _multiclass_roc_auc_score(y_true, y_score, labels,
                                          multi_class, average, sample_weight)
     elif y_type == "binary":
-        labels = np.unique(y_true)
-        y_true = label_binarize(y_true, classes=labels)[:, 0]
         return _average_binary_score(partial(_binary_roc_auc_score,
-                                             max_fpr=max_fpr),
+                                             max_fpr=max_fpr,
+                                             pos_label=pos_label),
                                      y_true, y_score, average,
                                      sample_weight=sample_weight)
     else:  # multilabel-indicator
