@@ -329,6 +329,11 @@ def roc_auc_score(y_true, y_score, *, average="macro", sample_weight=None,
         If ``None``, the numerical or lexicographical order of the labels in
         ``y_true`` is used.
 
+    pos_label : int or str, default=None
+        The label of the positive class in the binary case. When
+        `pos_label=None`, if `y_true` is in {-1, 1} or {0, 1}, `pos_label` is
+        set to 1, otherwise an error will be raised.
+
     Returns
     -------
     auc : float
