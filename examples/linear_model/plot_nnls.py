@@ -3,7 +3,7 @@
 Non-negative least squares
 ==========================
 
-Estimates a linear model with positive constraints on the regression
+In this example, we fit a linear model with positive constraints on the regression
 parameters and compare the estimated parameters to a classic linear
 regression.
 """
