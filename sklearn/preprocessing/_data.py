@@ -2858,6 +2858,20 @@ def quantile_transform(X, *, axis=0, n_quantiles=1000,
     NaNs are treated as missing values: disregarded in fit, and maintained in
     transform.
 
+    .. warning:: Risk of data leak
+
+        Do not use :func:`~sklearn.preprocessing.quantile_transform` unless
+        you know what you are doing. A common mistake is to apply it
+        to the entire data *before* splitting into training and
+        test sets. This will bias the model evaluation because
+        information would have leaked from the test set to the
+        training set.
+        In general, we recommend using
+        :class:`~sklearn.preprocessing.QuantileTransformer` within a
+        :ref:`Pipeline <pipeline>` in order to prevent most risks of data
+        leaking:`pipe = make_pipeline(QuantileTransformer(),
+        LogisticRegression())`.
+
     For a comparison of the different scalers, transformers, and normalizers,
     see :ref:`examples/preprocessing/plot_all_scaling.py
     <sphx_glr_auto_examples_preprocessing_plot_all_scaling.py>`.
