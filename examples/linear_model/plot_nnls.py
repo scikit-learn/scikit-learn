@@ -3,8 +3,8 @@
 Non-negative least squares
 ==========================
 
-In this example, we fit a linear model with positive constraints on the regression
-parameters and compare the estimated parameters to a classic linear
+In this example, we fit a linear model with positive constraints on the
+regression parameters and compare the estimated parameters to a classic linear
 regression.
 """
 print(__doc__)
