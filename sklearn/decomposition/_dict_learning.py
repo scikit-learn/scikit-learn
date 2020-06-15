@@ -1008,24 +1008,26 @@ class SparseCoder(SparseCodingMixin, BaseEstimator):
 
     Examples
     --------
-    import numpy as np  
+    >>> import numpy as np  
     >>> from sklearn.decomposition import SparseCoder  
     >>> X = np.array([[-1, -1, -1], [0, 0, 3]])  
-    >>> dictionary = np.array([  
-    ...             [0, 1, 0],  
-    ...             [-1, -1, 2],  
-    ...             [1, 1, 1],  
-    ...             [0, 1, 1], 
-    ...             [0, 2, 1], 
-    ... ]).astype(np.float64)  
-    >>> coder = SparseCoder(dictionary=dictionary,  
-    ...                     transform_algorithm='lasso_lars',
-    ...                     transform_alpha=1e-10) 
+    >>> dictionary = np.array(
+    ...     [[0, 1, 0],  
+    ...      [-1, -1, 2],  
+    ...      [1, 1, 1],  
+    ...      [0, 1, 1], 
+    ...      [0, 2, 1]],
+    ...     dtype=np.float64
+    ... )  
+    >>> coder = SparseCoder(
+    ....     dictionary=dictionary, transform_algorithm='lasso_lars',
+    ...      transform_alpha=1e-10,
+    ... ) 
     >>> coder.transform(X)                                                                                                                                                 
     array([[ 0.,  0., -1.,  0.,  0.],
-        [ 0.,  1.,  1.,  0.,  0.]])
+           [ 0.,  1.,  1.,  0.,  0.]])
 
-    See also
+    See Also
     --------
     DictionaryLearning
     MiniBatchDictionaryLearning
@@ -1200,9 +1202,12 @@ class DictionaryLearning(SparseCodingMixin, BaseEstimator):
     >>>
     >>> np.random.seed(42)
     >>> X, dictionary, code = make_sparse_coded_signal(
-    ... n_samples=100, n_components=15,  n_features=20, n_nonzero_coefs=10)
-    >>> dict_learner = DictionaryLearning(n_components=15,
-    ...                           transform_algorithm='lasso_lars')
+    ...     n_samples=100, n_components=15, n_features=20,
+    ...     n_nonzero_coefs=10,
+    ... )
+    >>> dict_learner = DictionaryLearning(
+    ...     n_components=15, transform_algorithm='lasso_lars'
+    ... )
     >>> X_transformed = dict_learner.fit_transform(X)
     >>> np.mean(X_transformed == 0)  # represents data using a sparse code
     0.87
