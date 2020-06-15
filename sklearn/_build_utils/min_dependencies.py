@@ -1,11 +1,4 @@
-"""All dependencies for scikit-learn.
-
-When this is updated be sure to run
-
-build_tools/generate_dependency_table.py
-
-to update the dependencies in `install.rst`.
-"""
+"""All minimum dependencies for scikit-learn."""
 from collections import defaultdict
 import platform
 import argparse
