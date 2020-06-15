@@ -245,7 +245,7 @@ def setup_package():
                                  ],
                     cmdclass=cmdclass,
                     python_requires=">=3.6",
-                    install_requires=list(min_deps.tag_to_packages['install']),
+                    install_requires=min_deps.tag_to_packages['install'],
                     package_data={'': ['*.pxd']},
                     **extra_setuptools_args)
 
