@@ -137,7 +137,7 @@ Matplotlib and some examples require scikit-image, pandas, or seaborn. The
 minimum version of Scikit-learn dependencies are listed below along with its
 purpose.
 
-.. include:: dependency.rst
+.. include:: min_dependency.rst
 
 .. warning::
 

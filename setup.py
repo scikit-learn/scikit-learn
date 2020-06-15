@@ -45,7 +45,7 @@ PROJECT_URLS = {
 # We can actually import a restricted version of sklearn that
 # does not need the compiled code
 import sklearn
-import sklearn._build_utils.dependencies as deps  # noqa
+import sklearn._build_utils.min_dependencies as min_deps  # noqa
 
 
 VERSION = sklearn.__version__
@@ -67,7 +67,7 @@ if SETUPTOOLS_COMMANDS.intersection(sys.argv):
         zip_safe=False,  # the package can run out of an .egg file
         include_package_data=True,
         extras_require={
-            key: deps.tag_to_packages[key] for
+            key: min_deps.tag_to_packages[key] for
             key in ['examples', 'docs', 'tests', 'benchmark']
         },
     )
@@ -245,7 +245,7 @@ def setup_package():
                                  ],
                     cmdclass=cmdclass,
                     python_requires=">=3.6",
-                    install_requires=list(deps.tag_to_packages['install']),
+                    install_requires=list(min_deps.tag_to_packages['install']),
                     package_data={'': ['*.pxd']},
                     **extra_setuptools_args)
 
@@ -274,9 +274,9 @@ def setup_package():
                 " Python version is %s installed in %s."
                 % (platform.python_version(), sys.executable))
 
-        check_package_status('numpy', deps.NUMPY_MIN_VERSION)
+        check_package_status('numpy', min_deps.NUMPY_MIN_VERSION)
 
-        check_package_status('scipy', deps.SCIPY_MIN_VERSION)
+        check_package_status('scipy', min_deps.SCIPY_MIN_VERSION)
 
         from numpy.distutils.core import setup
 

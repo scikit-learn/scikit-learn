@@ -2,7 +2,7 @@
 from io import StringIO
 from pathlib import Path
 
-from sklearn._build_utils.dependencies import dependent_packages
+from sklearn._build_utils.min_dependencies import dependent_packages
 
 REPO_FOLDER = Path(__file__).parent.parent.resolve()
 
@@ -22,7 +22,7 @@ tags_title = "Purpose"
 
 output.write(f'{dependency_title:<{package_header_len}} '
              f'{version_title:<{version_header_len}} '
-             f'{tags_title:<{tags_header_len}}\n')
+             f'{tags_title}\n')
 
 output.write(' '.join(['=' * package_header_len,
                        '=' * version_header_len,
@@ -32,7 +32,7 @@ output.write('\n')
 for package, (version, tags) in dependent_packages.items():
     output.write(f'{package:<{package_header_len}} '
                  f'{version:<{version_header_len}} '
-                 f'{tags:<{tags_header_len}}\n')
+                 f'{tags}\n')
 
 output.write(' '.join(['=' * package_header_len,
                        '=' * version_header_len,
@@ -41,5 +41,5 @@ output.write('\n')
 
 output = output.getvalue()
 print(output)
-with (REPO_FOLDER / "doc" / "dependency.rst").open('w') as f:
+with (REPO_FOLDER / "doc" / "min_dependency.rst").open('w') as f:
     f.write(output)
