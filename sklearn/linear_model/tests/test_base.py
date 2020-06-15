@@ -95,14 +95,18 @@ def test_linear_regression_sample_weights():
 
 
 def test_raises_value_error_if_positive_and_sparse():
+    error_value = ('A sparse matrix was passed, '
+                   'but dense data is required. Use X.toarray() to '
+                   'convert to a dense numpy array.')
     # X, y must not be sparse if positive == True
     X = sparse.eye(10)
     y = np.ones(10)
 
     reg = LinearRegression(positive=True)
 
-    with pytest.raises(TypeError):
+    with pytest.raises(TypeError) as error:
         reg.fit(X, y)
+    assert str(error.value) == error_value
 
 def test_raises_value_error_if_sample_weights_greater_than_1d():
     # Sample weights must be either scalar or 1D
