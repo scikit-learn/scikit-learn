@@ -779,11 +779,6 @@ def plot_calibration_curve(estimator, X, y, *,
     The average predicted probability for each bin is plotted on the x-axis
     and the fraction of positive classes in each bin is plotted on the y-axis.
 
-    To calculate probability estimates of `X`, the :term:`predict_proba`
-    method of `estimator` will be used in priority. If no :term:`predict_proba`
-    method exists, :term:`decision_function` will be used and the output
-    confidence scores will be min-max scaled to the range [0,1].
-
     Extra keyword arguments will be passed to :func:`matplotlib.pyplot.plot`.
 
     Read more in the :ref:`User Guide <calibration>`.
@@ -792,7 +787,11 @@ def plot_calibration_curve(estimator, X, y, *,
     ----------
     estimator : estimator instance
         Fitted classifier or a fitted :class:`~sklearn.pipeline.Pipeline` in
-        which the last estimator is a classifier.
+        which the last estimator is a classifier. The classifier must
+        have a :term:`predict_proba` method; set `probability=True` for
+        :mod:`~sklearn.svm` estimators (see:
+        :ref:`User Guide <scores_probabilities>`) or use
+        :class:`~sklearn.calibration.CalibratedClassifierCV`.
 
     X : {array-like, sparse matrix} of shape (n_samples, n_features)
         Input values.
@@ -853,14 +852,13 @@ def plot_calibration_curve(estimator, X, y, *,
         raise ValueError("The estimator parameter should be a fitted binary "
                          "classifier")
 
-    predict_proba = getattr(estimator, 'predict_proba', None)
-    decision_function = getattr(estimator, 'decision_function', None)
-    prediction_method = predict_proba or decision_function
-    if prediction_method is None:
-        msg = ("Neither response method 'predict_proba' nor "
-               "'decision_function' are defined in "
-               f"{estimator.__class__.__name__}")
-        raise ValueError(msg)
+    try:
+        prediction_method = _check_classifer_response_method(
+            estimator, response_method='predict_proba'
+        )
+    except ValueError:
+        raise ValueError("Response method 'predict_proba' not defined in "
+                         f"{estimator.__class__.__name__}")
 
     y_prob = prediction_method(X)
 
