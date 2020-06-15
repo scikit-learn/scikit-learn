@@ -6,9 +6,6 @@ import os
 import pytest
 import numpy as np
 
-from sklearn.utils._testing import check_skip_network
-from sklearn.utils._testing import SkipTest
-
 import sklearn.datasets
 
 
