@@ -2131,6 +2131,20 @@ class PairwiseKernel(Kernel):
         All entries of this dict (if any) are passed as keyword arguments to
         the pairwise kernel function.
 
+    Examples
+    --------
+    >>> from sklearn.datasets import make_friedman2
+    >>> from sklearn.gaussian_process import GaussianProcessRegressor
+    >>> from sklearn.gaussian_process.kernels import PairwiseKernel
+
+    >>> X, y = make_friedman2(n_samples=500, noise=0, random_state=0)
+    >>> kernel = PairwiseKernel(metric='rbf')
+    >>> gpr = GaussianProcessRegressor(kernel=kernel,
+    ...         random_state=0).fit(X, y)
+    >>> gpr.score(X, y)
+    1.0
+    >>> gpr.predict(X[:2,:], return_std=True)
+    (array([781.9..., 518.4... ]), array([1.0...e-05, 1.0...e-05]))
     """
 
     def __init__(self, gamma=1.0, gamma_bounds=(1e-5, 1e5), metric="linear",
