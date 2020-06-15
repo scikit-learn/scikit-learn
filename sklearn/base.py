@@ -50,7 +50,8 @@ def clone(estimator, *, safe=True):
 
     Parameters
     ----------
-    estimator : {list, tuple, set} of BaseEstimator or a single BaseEstimator
+    estimator : {list, tuple, set} of estimator instance or a single \
+            estimator instance
         The estimator or group of estimators to be cloned.
 
     safe : bool, default=True
@@ -230,7 +231,7 @@ class BaseEstimator:
 
         Returns
         -------
-        self : BaseEstimator
+        self : estimator instance
             Estimator instance.
         """
         if not params:
@@ -781,7 +782,7 @@ def is_regressor(estimator):
 
     Parameters
     ----------
-    estimator : BaseEstimator
+    estimator : estimator instance
         Estimator object to test.
 
     Returns
@@ -797,7 +798,7 @@ def is_outlier_detector(estimator):
 
     Parameters
     ----------
-    estimator : BaseEstimator
+    estimator : estimator instance
         Estimator object to test.
 
     Returns
