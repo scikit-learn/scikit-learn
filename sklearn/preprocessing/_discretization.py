@@ -287,10 +287,6 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         # check input and attribute dtypes
         dtype = (np.float64, np.float32) if self.dtype is None else self.dtype
         Xt = check_array(X, copy=True, dtype=dtype)
-        dtype_init = None
-        if 'onehot' in self.encode:
-            dtype_init = self._encoder.dtype
-            self._encoder.dtype = Xt.dtype
 
         n_features = self.n_bins_.shape[0]
         if Xt.shape[1] != n_features:
@@ -312,9 +308,15 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         if self.encode == 'ordinal':
             return Xt
 
-        Xt_enc = self._encoder.transform(Xt)
-        # revert the initial dtype to avoid modifying self.
-        self._encoder.dtype = dtype_init
+        dtype_init = None
+        if 'onehot' in self.encode:
+            dtype_init = self._encoder.dtype
+            self._encoder.dtype = Xt.dtype
+        try:
+            Xt_enc = self._encoder.transform(Xt)
+        finally:
+            # revert the initial dtype to avoid modifying self.
+            self._encoder.dtype = dtype_init
         return Xt_enc
 
     def inverse_transform(self, Xt):
