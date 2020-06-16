@@ -196,7 +196,7 @@ def test_loader(loader_func, data_shape, target_shape, n_target, has_descr,
 ])
 def test_toy_dataset_frame_dtype(loader_func, data_dtype, target_dtype):
     default_result = loader_func()
-    check_as_frame(default_result, partial(loader_func),
+    check_as_frame(default_result, loader_func,
                    expected_data_dtype=data_dtype,
                    expected_target_dtype=target_dtype)
 

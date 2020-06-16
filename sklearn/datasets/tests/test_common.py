@@ -1,5 +1,4 @@
 """Test loaders for common functionality."""
-from functools import partial
 import inspect
 import os
 
@@ -39,17 +38,17 @@ def check_pandas_dependency_message(fetch_func):
             fetch_func(as_frame=True)
 
 
-def check_return_X_y(bunch, fetch_func_partial):
-    X_y_tuple = fetch_func_partial(return_X_y=True)
+def check_return_X_y(bunch, dataset_func):
+    X_y_tuple = dataset_func(return_X_y=True)
     assert isinstance(X_y_tuple, tuple)
     assert X_y_tuple[0].shape == bunch.data.shape
     assert X_y_tuple[1].shape == bunch.target.shape
 
 
-def check_as_frame(bunch, fetch_func_partial,
+def check_as_frame(bunch, dataset_func,
                    expected_data_dtype=None, expected_target_dtype=None):
     pd = pytest.importorskip('pandas')
-    frame_bunch = fetch_func_partial(as_frame=True)
+    frame_bunch = dataset_func(as_frame=True)
     assert hasattr(frame_bunch, 'frame')
     assert isinstance(frame_bunch.frame, pd.DataFrame)
     assert isinstance(frame_bunch.data, pd.DataFrame)
@@ -93,7 +92,7 @@ def _generate_func_supporting_param(param, dataset_type=("load", "fetch")):
 )
 def test_common_check_return_X_y(name, dataset_func):
     bunch = dataset_func()
-    check_return_X_y(bunch, partial(dataset_func))
+    check_return_X_y(bunch, dataset_func)
 
 
 @pytest.mark.parametrize(
@@ -101,7 +100,7 @@ def test_common_check_return_X_y(name, dataset_func):
 )
 def test_common_check_as_frame(name, dataset_func):
     bunch = dataset_func()
-    check_as_frame(bunch, partial(dataset_func))
+    check_as_frame(bunch, dataset_func)
 
 
 @pytest.mark.parametrize(
