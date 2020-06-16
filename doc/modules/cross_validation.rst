@@ -753,7 +753,7 @@ function :func:`train_test_split` is a wrapper around :func:`ShuffleSplit`
 and thus only allows for stratified splitting (using the class labels)
 and cannot account for groups.
 
-To perform the train, test split, use the indicies for the train and test
+To perform the train and test split, use the indices for the train and test
 subsets yielded by the generator output by the `split()` method of the
 cross-validation iterator. For example::
 
@@ -766,6 +766,10 @@ cross-validation iterator. For example::
   >>> train_indx, test_indx = next(GroupShuffleSplit().split(X, y, groups))
   >>> X_train, X_test, y_train, y_test = \
   ...     X[train_indx], X[test_indx], y[train_indx], y[test_indx]
+  >>> X_train.shape, X_test.shape
+  ((6,), (2,))
+  >>> y_train.shape, y_test.shape
+  ((6,), (2,))
 
 .. _timeseries_cv:
 
