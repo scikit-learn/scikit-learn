@@ -236,7 +236,7 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
 
     def _build_y(self, X, y, sample_weight, trim_duplicates=True):
         """Build the y_ IsotonicRegression."""
-        self._check_input_data_shape(X, y, sample_weight)
+        self._check_input_data_shape(X)
         X = X.reshape(-1)  # use 1d view
 
         # Determine increasing if auto-determination requested
