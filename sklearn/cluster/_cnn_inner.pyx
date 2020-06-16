@@ -92,7 +92,7 @@ def cnn_inner(
 
                 neighbor_neighbors = neighborhoods[member]
                 if check_similarity(             # Conditional growth
-                        neighbors, m, neighbor_neighbors, min_samples):
+                        neighbors, m, neighbor_neighbors, min_samples + 1):
                     core_candidates[member] = 0  # Point included
                     labels[member] = current     # Assign cluster label
                     membercount += 1             # Cluster grows
