@@ -217,11 +217,11 @@ def test_stacking_regressor_sparse_passthrough(fmt):
     )
     estimators = [('lr', LinearRegression()), ('svr', LinearSVR())]
     rf = RandomForestRegressor(n_estimators=10, random_state=42)
-    clf = StackingRegressor(
+    reg = StackingRegressor(
         estimators=estimators, final_estimator=rf, cv=5, passthrough=True
     )
-    clf.fit(X_train, y_train)
-    X_trans = clf.transform(X_test)
+    reg.fit(X_train, y_train)
+    X_trans = reg.transform(X_test)
     assert_allclose_dense_sparse(X_test, X_trans[:, -10:])
     assert sparse.issparse(X_trans)
     assert X_test.format == X_trans.format
@@ -442,7 +442,7 @@ def test_stacking_with_sample_weight(stacker, X, y):
 
 def test_stacking_classifier_sample_weight_fit_param():
     # check sample_weight is passed to all invocations of fit
-    stacker = StackingClassifier(
+    clf = StackingClassifier(
         estimators=[
             ('lr', CheckingClassifier(expected_fit_params=['sample_weight']))
         ],
@@ -450,7 +450,7 @@ def test_stacking_classifier_sample_weight_fit_param():
             expected_fit_params=['sample_weight']
         )
     )
-    stacker.fit(X_iris, y_iris, sample_weight=np.ones(X_iris.shape[0]))
+    clf.fit(X_iris, y_iris, sample_weight=np.ones(X_iris.shape[0]))
 
 
 @pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
