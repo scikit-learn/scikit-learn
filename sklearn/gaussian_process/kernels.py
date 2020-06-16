@@ -2142,8 +2142,8 @@ class PairwiseKernel(Kernel):
     ...         random_state=0).fit(X, y)
     >>> gpr.score(X, y)
     1.0
-    >>> gpr.predict(X[:2,:], return_std=True)
-    (array([781.9..., 518.4... ]), array([1.0...e-05, 1.0...e-05]))
+    >>> gpr.predict(X[:2,:])
+    array([781.9..., 518.4...])
     """
 
     def __init__(self, gamma=1.0, gamma_bounds=(1e-5, 1e5), metric="linear",
