@@ -96,6 +96,7 @@ jobs:
         THREADPOOLCTL_VERSION: 'min'
         PYTEST_VERSION: 'min'
         PYTEST_XDIST_VERSION: 'none'
+        COVERAGE: 'false'
       # Linux + Python 3.6 build with OpenBLAS and without SITE_JOBLIB
       py36_conda_openblas:
         DISTRIB: 'conda'
