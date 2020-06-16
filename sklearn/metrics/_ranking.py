@@ -31,9 +31,10 @@ from ..utils import column_or_1d, check_array
 from ..utils.multiclass import type_of_target
 from ..utils.extmath import stable_cumsum
 from ..utils.sparsefuncs import count_nonzero
+from ..utils.validation import _deprecate_positional_args
 from ..exceptions import UndefinedMetricWarning
 from ..preprocessing import label_binarize
-from ..preprocessing._label import _encode
+from ..utils._encode import _encode, _unique
 
 from ._base import _average_binary_score, _average_multiclass_ovo_score
 
@@ -101,7 +102,8 @@ def auc(x, y):
     return area
 
 
-def average_precision_score(y_true, y_score, average="macro", pos_label=1,
+@_deprecate_positional_args
+def average_precision_score(y_true, y_score, *, average="macro", pos_label=1,
                             sample_weight=None):
     """Compute average precision (AP) from prediction scores
 
@@ -133,7 +135,8 @@ def average_precision_score(y_true, y_score, average="macro", pos_label=1,
         class, confidence values, or non-thresholded measure of decisions
         (as returned by "decision_function" on some classifiers).
 
-    average : string, [None, 'micro', 'macro' (default), 'samples', 'weighted']
+    average : {'micro', 'samples', 'weighted', 'macro'} or None, \
+            default='macro'
         If ``None``, the scores for each class are returned. Otherwise,
         this determines the type of averaging performed on the data:
 
@@ -151,7 +154,7 @@ def average_precision_score(y_true, y_score, average="macro", pos_label=1,
 
         Will be ignored when ``y_true`` is binary.
 
-    pos_label : int or str (default=1)
+    pos_label : int or str, default=1
         The label of the positive class. Only applied to binary ``y_true``.
         For multilabel-indicator ``y_true``, ``pos_label`` is fixed to 1.
 
@@ -243,7 +246,8 @@ def _binary_roc_auc_score(y_true, y_score, sample_weight=None, max_fpr=None):
     return 0.5 * (1 + (partial_auc - min_area) / (max_area - min_area))
 
 
-def roc_auc_score(y_true, y_score, average="macro", sample_weight=None,
+@_deprecate_positional_args
+def roc_auc_score(y_true, y_score, *, average="macro", sample_weight=None,
                   max_fpr=None, multi_class="raise", labels=None):
     """Compute Area Under the Receiver Operating Characteristic Curve (ROC AUC)
     from prediction scores.
@@ -354,6 +358,8 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None,
 
     roc_curve : Compute Receiver operating characteristic (ROC) curve
 
+    plot_roc_curve : Plot Receiver operating characteristic (ROC) curve
+
     Examples
     --------
     >>> import numpy as np
@@ -383,7 +389,7 @@ def roc_auc_score(y_true, y_score, average="macro", sample_weight=None,
                                          multi_class, average, sample_weight)
     elif y_type == "binary":
         labels = np.unique(y_true)
-        y_true = label_binarize(y_true, labels)[:, 0]
+        y_true = label_binarize(y_true, classes=labels)[:, 0]
         return _average_binary_score(partial(_binary_roc_auc_score,
                                              max_fpr=max_fpr),
                                      y_true, y_score, average,
@@ -408,7 +414,7 @@ def _multiclass_roc_auc_score(y_true, y_score, labels,
         Target scores corresponding to probability estimates of a sample
         belonging to a particular class
 
-    labels : array, shape = [n_classes] or None, optional (default=None)
+    labels : array-like of shape (n_classes,), default=None
         List of labels to index ``y_score`` used for multiclass. If ``None``,
         the lexical order of ``y_true`` is used to index ``y_score``.
 
@@ -421,7 +427,7 @@ def _multiclass_roc_auc_score(y_true, y_score, labels,
             Calculate metrics for the multiclass case using the one-vs-one
             approach.
 
-    average : 'macro' or 'weighted', optional (default='macro')
+    average : {'macro', 'weighted'}, default='macro'
         Determines the type of averaging performed on the pairwise binary
         metric scores
         ``'macro'``:
@@ -457,7 +463,7 @@ def _multiclass_roc_auc_score(y_true, y_score, labels,
 
     if labels is not None:
         labels = column_or_1d(labels)
-        classes = _encode(labels)
+        classes = _unique(labels)
         if len(classes) != len(labels):
             raise ValueError("Parameter 'labels' must be unique")
         if not np.array_equal(classes, labels):
@@ -471,7 +477,7 @@ def _multiclass_roc_auc_score(y_true, y_score, labels,
             raise ValueError(
                 "'y_true' contains labels not in parameter 'labels'")
     else:
-        classes = _encode(y_true)
+        classes = _unique(y_true)
         if len(classes) != y_score.shape[1]:
             raise ValueError(
                 "Number of classes in y_true not equal to the number of "
@@ -482,14 +488,14 @@ def _multiclass_roc_auc_score(y_true, y_score, labels,
             raise ValueError("sample_weight is not supported "
                              "for multiclass one-vs-one ROC AUC, "
                              "'sample_weight' must be None in this case.")
-        _, y_true_encoded = _encode(y_true, uniques=classes, encode=True)
+        y_true_encoded = _encode(y_true, uniques=classes)
         # Hand & Till (2001) implementation (ovo)
         return _average_multiclass_ovo_score(_binary_roc_auc_score,
                                              y_true_encoded,
                                              y_score, average=average)
     else:
         # ovr is same as multi-label
-        y_true_multilabel = label_binarize(y_true, classes)
+        y_true_multilabel = label_binarize(y_true, classes=classes)
         return _average_binary_score(_binary_roc_auc_score, y_true_multilabel,
                                      y_score, average,
                                      sample_weight=sample_weight)
@@ -594,7 +600,8 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
     return fps, tps, y_score[threshold_idxs]
 
 
-def precision_recall_curve(y_true, probas_pred, pos_label=None,
+@_deprecate_positional_args
+def precision_recall_curve(y_true, probas_pred, *, pos_label=None,
                            sample_weight=None):
     """Compute precision-recall pairs for different probability thresholds
 
@@ -683,7 +690,8 @@ def precision_recall_curve(y_true, probas_pred, pos_label=None,
     return np.r_[precision[sl], 1], np.r_[recall[sl], 0], thresholds[sl]
 
 
-def roc_curve(y_true, y_score, pos_label=None, sample_weight=None,
+@_deprecate_positional_args
+def roc_curve(y_true, y_score, *, pos_label=None, sample_weight=None,
               drop_intermediate=True):
     """Compute Receiver operating characteristic (ROC)
 
@@ -694,18 +702,18 @@ def roc_curve(y_true, y_score, pos_label=None, sample_weight=None,
     Parameters
     ----------
 
-    y_true : array, shape = [n_samples]
+    y_true : array, shape (n_samples,)
         True binary labels. If labels are not either {-1, 1} or {0, 1}, then
         pos_label should be explicitly given.
 
-    y_score : array, shape = [n_samples]
+    y_score : array, shape (n_samples,)
         Target scores, can either be probability estimates of the positive
         class, confidence values, or non-thresholded measure of decisions
         (as returned by "decision_function" on some classifiers).
 
     pos_label : int or str, default=None
         The label of the positive class.
-        When ``pos_label=None``, if y_true is in {-1, 1} or {0, 1},
+        When ``pos_label=None``, if `y_true` is in {-1, 1} or {0, 1},
         ``pos_label`` is set to 1, otherwise an error will be raised.
 
     sample_weight : array-like of shape (n_samples,), default=None
@@ -721,15 +729,15 @@ def roc_curve(y_true, y_score, pos_label=None, sample_weight=None,
 
     Returns
     -------
-    fpr : array, shape = [>2]
+    fpr : array, shape = (>2,)
         Increasing false positive rates such that element i is the false
-        positive rate of predictions with score >= thresholds[i].
+        positive rate of predictions with score >= `thresholds[i]`.
 
-    tpr : array, shape = [>2]
-        Increasing true positive rates such that element i is the true
-        positive rate of predictions with score >= thresholds[i].
+    tpr : array, shape = (>2,)
+        Increasing true positive rates such that element `i` is the true
+        positive rate of predictions with score >= `thresholds[i]`.
 
-    thresholds : array, shape = [n_thresholds]
+    thresholds : array, shape = (n_thresholds,)
         Decreasing thresholds on the decision function used to compute
         fpr and tpr. `thresholds[0]` represents no instances being predicted
         and is arbitrarily set to `max(y_score) + 1`.
@@ -737,6 +745,8 @@ def roc_curve(y_true, y_score, pos_label=None, sample_weight=None,
     See also
     --------
     roc_auc_score : Compute the area under the ROC curve
+
+    plot_roc_curve : Plot Receiver operating characteristic (ROC) curve
 
     Notes
     -----
@@ -813,7 +823,9 @@ def roc_curve(y_true, y_score, pos_label=None, sample_weight=None,
     return fpr, tpr, thresholds
 
 
-def label_ranking_average_precision_score(y_true, y_score, sample_weight=None):
+@_deprecate_positional_args
+def label_ranking_average_precision_score(y_true, y_score, *,
+                                          sample_weight=None):
     """Compute ranking-based average precision
 
     Label ranking average precision (LRAP) is the average over each ground
@@ -840,6 +852,8 @@ def label_ranking_average_precision_score(y_true, y_score, sample_weight=None):
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
+
+        .. versionadded:: 0.20
 
     Returns
     -------
@@ -899,7 +913,8 @@ def label_ranking_average_precision_score(y_true, y_score, sample_weight=None):
     return out
 
 
-def coverage_error(y_true, y_score, sample_weight=None):
+@_deprecate_positional_args
+def coverage_error(y_true, y_score, *, sample_weight=None):
     """Coverage error measure
 
     Compute how far we need to go through the ranked scores to cover all
@@ -958,7 +973,8 @@ def coverage_error(y_true, y_score, sample_weight=None):
     return np.average(coverage, weights=sample_weight)
 
 
-def label_ranking_loss(y_true, y_score, sample_weight=None):
+@_deprecate_positional_args
+def label_ranking_loss(y_true, y_score, *, sample_weight=None):
     """Compute Ranking loss measure
 
     Compute the average number of label pairs that are incorrectly ordered
@@ -1022,7 +1038,7 @@ def label_ranking_loss(y_true, y_score, sample_weight=None):
             unique_inverse[y_true.indices[start:stop]],
             minlength=len(unique_scores))
         all_at_reversed_rank = np.bincount(unique_inverse,
-                                        minlength=len(unique_scores))
+                                           minlength=len(unique_scores))
         false_at_reversed_rank = all_at_reversed_rank - true_at_reversed_rank
 
         # if the scores are ordered, it's possible to count the number of
@@ -1064,15 +1080,15 @@ def _dcg_sample_scores(y_true, y_score, k=None,
         or non-thresholded measure of decisions (as returned by
         "decision_function" on some classifiers).
 
-    k : int, optional (default=None)
+    k : int, default=None
         Only consider the highest k scores in the ranking. If None, use all
         outputs.
 
-    log_base : float, optional (default=2)
+    log_base : float, default=2
         Base of the logarithm used for the discount. A low value means a
         sharper discount (top results are more important).
 
-    ignore_ties : bool, optional (default=False)
+    ignore_ties : bool, default=False
         Assume that there are no ties in y_score (which is likely to be the
         case if y_score is continuous) for efficiency gains.
 
@@ -1163,7 +1179,8 @@ def _check_dcg_target_type(y_true):
                 supported_fmt, y_type))
 
 
-def dcg_score(y_true, y_score, k=None,
+@_deprecate_positional_args
+def dcg_score(y_true, y_score, *, k=None,
               log_base=2, sample_weight=None, ignore_ties=False):
     """Compute Discounted Cumulative Gain.
 
@@ -1187,18 +1204,18 @@ def dcg_score(y_true, y_score, k=None,
         or non-thresholded measure of decisions (as returned by
         "decision_function" on some classifiers).
 
-    k : int, optional (default=None)
+    k : int, default=None
         Only consider the highest k scores in the ranking. If None, use all
         outputs.
 
-    log_base : float, optional (default=2)
+    log_base : float, default=2
         Base of the logarithm used for the discount. A low value means a
         sharper discount (top results are more important).
 
-    sample_weight : ndarray, shape (n_samples,), optional (default=None)
+    sample_weight : ndarray of shape (n_samples,), default=None
         Sample weights. If None, all samples are given the same weight.
 
-    ignore_ties : bool, optional (default=False)
+    ignore_ties : bool, default=False
         Assume that there are no ties in y_score (which is likely to be the
         case if y_score is continuous) for efficiency gains.
 
@@ -1239,22 +1256,22 @@ def dcg_score(y_true, y_score, k=None,
     >>> true_relevance = np.asarray([[10, 0, 0, 1, 5]])
     >>> # we predict scores for the answers
     >>> scores = np.asarray([[.1, .2, .3, 4, 70]])
-    >>> dcg_score(true_relevance, scores) # doctest: +ELLIPSIS
+    >>> dcg_score(true_relevance, scores)
     9.49...
     >>> # we can set k to truncate the sum; only top k answers contribute
-    >>> dcg_score(true_relevance, scores, k=2) # doctest: +ELLIPSIS
+    >>> dcg_score(true_relevance, scores, k=2)
     5.63...
     >>> # now we have some ties in our prediction
     >>> scores = np.asarray([[1, 0, 0, 0, 1]])
     >>> # by default ties are averaged, so here we get the average true
     >>> # relevance of our top predictions: (10 + 5) / 2 = 7.5
-    >>> dcg_score(true_relevance, scores, k=1) # doctest: +ELLIPSIS
+    >>> dcg_score(true_relevance, scores, k=1)
     7.5
     >>> # we can choose to ignore ties for faster results, but only
     >>> # if we know there aren't ties in our scores, otherwise we get
     >>> # wrong results:
     >>> dcg_score(true_relevance,
-    ...           scores, k=1, ignore_ties=True) # doctest: +ELLIPSIS
+    ...           scores, k=1, ignore_ties=True)
     5.0
 
     """
@@ -1291,11 +1308,11 @@ def _ndcg_sample_scores(y_true, y_score, k=None, ignore_ties=False):
         or non-thresholded measure of decisions (as returned by
         "decision_function" on some classifiers).
 
-    k : int, optional (default=None)
+    k : int, default=None
         Only consider the highest k scores in the ranking. If None, use all
         outputs.
 
-    ignore_ties : bool, optional (default=False)
+    ignore_ties : bool, default=False
         Assume that there are no ties in y_score (which is likely to be the
         case if y_score is continuous) for efficiency gains.
 
@@ -1320,7 +1337,9 @@ def _ndcg_sample_scores(y_true, y_score, k=None, ignore_ties=False):
     return gain
 
 
-def ndcg_score(y_true, y_score, k=None, sample_weight=None, ignore_ties=False):
+@_deprecate_positional_args
+def ndcg_score(y_true, y_score, *, k=None, sample_weight=None,
+               ignore_ties=False):
     """Compute Normalized Discounted Cumulative Gain.
 
     Sum the true scores ranked in the order induced by the predicted scores,
@@ -1342,14 +1361,14 @@ def ndcg_score(y_true, y_score, k=None, sample_weight=None, ignore_ties=False):
         or non-thresholded measure of decisions (as returned by
         "decision_function" on some classifiers).
 
-    k : int, optional (default=None)
+    k : int, default=None
         Only consider the highest k scores in the ranking. If None, use all
         outputs.
 
-    sample_weight : ndarray, shape (n_samples,), optional (default=None)
+    sample_weight : ndarray of shape (n_samples,),default=None
         Sample weights. If None, all samples are given the same weight.
 
-    ignore_ties : bool, optional (default=False)
+    ignore_ties : bool, default=False
         Assume that there are no ties in y_score (which is likely to be the
         case if y_score is continuous) for efficiency gains.
 
@@ -1387,29 +1406,29 @@ def ndcg_score(y_true, y_score, k=None, sample_weight=None, ignore_ties=False):
     >>> true_relevance = np.asarray([[10, 0, 0, 1, 5]])
     >>> # we predict some scores (relevance) for the answers
     >>> scores = np.asarray([[.1, .2, .3, 4, 70]])
-    >>> ndcg_score(true_relevance, scores) # doctest: +ELLIPSIS
+    >>> ndcg_score(true_relevance, scores)
     0.69...
     >>> scores = np.asarray([[.05, 1.1, 1., .5, .0]])
-    >>> ndcg_score(true_relevance, scores) # doctest: +ELLIPSIS
+    >>> ndcg_score(true_relevance, scores)
     0.49...
     >>> # we can set k to truncate the sum; only top k answers contribute.
-    >>> ndcg_score(true_relevance, scores, k=4) # doctest: +ELLIPSIS
+    >>> ndcg_score(true_relevance, scores, k=4)
     0.35...
     >>> # the normalization takes k into account so a perfect answer
     >>> # would still get 1.0
-    >>> ndcg_score(true_relevance, true_relevance, k=4) # doctest: +ELLIPSIS
+    >>> ndcg_score(true_relevance, true_relevance, k=4)
     1.0
     >>> # now we have some ties in our prediction
     >>> scores = np.asarray([[1, 0, 0, 0, 1]])
     >>> # by default ties are averaged, so here we get the average (normalized)
     >>> # true relevance of our top predictions: (10 / 10 + 5 / 10) / 2 = .75
-    >>> ndcg_score(true_relevance, scores, k=1) # doctest: +ELLIPSIS
+    >>> ndcg_score(true_relevance, scores, k=1)
     0.75
     >>> # we can choose to ignore ties for faster results, but only
     >>> # if we know there aren't ties in our scores, otherwise we get
     >>> # wrong results:
     >>> ndcg_score(true_relevance,
-    ...           scores, k=1, ignore_ties=True) # doctest: +ELLIPSIS
+    ...           scores, k=1, ignore_ties=True)
     0.5
 
     """

@@ -34,6 +34,8 @@ from sklearn.decomposition import PCA, TruncatedSVD
 from sklearn.datasets import load_iris
 from sklearn.preprocessing import StandardScaler
 from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.experimental import enable_hist_gradient_boosting  # noqa
+from sklearn.ensemble import HistGradientBoostingClassifier
 
 iris = load_iris()
 
@@ -517,7 +519,8 @@ def test_make_union_kwargs():
     # invalid keyword parameters should raise an error message
     assert_raise_message(
         TypeError,
-        'Unknown keyword arguments: "transformer_weights"',
+        "make_union() got an unexpected "
+        "keyword argument 'transformer_weights'",
         make_union, pca, mock, transformer_weights={'pca': 10, 'Transf': 1}
     )
 
@@ -755,12 +758,6 @@ def test_make_pipeline():
     assert pipe.steps[1][0] == "transf-2"
     assert pipe.steps[2][0] == "fitparamt"
 
-    assert_raise_message(
-        TypeError,
-        'Unknown keyword arguments: "random_parameter"',
-        make_pipeline, t1, t2, random_parameter='rnd'
-    )
-
 
 def test_feature_union_weights():
     # test feature union with transformer weights
@@ -898,9 +895,7 @@ def test_set_feature_union_steps():
     assert ['mock__x5'] == ft.get_feature_names()
 
 
-# TODO: Remove parametrization in 0.24 when None is removed for FeatureUnion
-@pytest.mark.parametrize('drop', ['drop', None])
-def test_set_feature_union_step_drop(drop):
+def test_set_feature_union_step_drop():
     mult2 = Mult(2)
     mult2.get_feature_names = lambda: ['x2']
     mult3 = Mult(3)
@@ -913,32 +908,32 @@ def test_set_feature_union_step_drop(drop):
     assert ['m2__x2', 'm3__x3'] == ft.get_feature_names()
 
     with pytest.warns(None) as record:
-        ft.set_params(m2=drop)
+        ft.set_params(m2='drop')
         assert_array_equal([[3]], ft.fit(X).transform(X))
         assert_array_equal([[3]], ft.fit_transform(X))
     assert ['m3__x3'] == ft.get_feature_names()
-    assert record if drop is None else not record
+    assert not record
 
     with pytest.warns(None) as record:
-        ft.set_params(m3=drop)
+        ft.set_params(m3='drop')
         assert_array_equal([[]], ft.fit(X).transform(X))
         assert_array_equal([[]], ft.fit_transform(X))
     assert [] == ft.get_feature_names()
-    assert record if drop is None else not record
+    assert not record
 
     with pytest.warns(None) as record:
         # check we can change back
         ft.set_params(m3=mult3)
         assert_array_equal([[3]], ft.fit(X).transform(X))
-    assert record if drop is None else not record
+    assert not record
 
     with pytest.warns(None) as record:
         # Check 'drop' step at construction time
-        ft = FeatureUnion([('m2', drop), ('m3', mult3)])
+        ft = FeatureUnion([('m2', 'drop'), ('m3', mult3)])
         assert_array_equal([[3]], ft.fit(X).transform(X))
         assert_array_equal([[3]], ft.fit_transform(X))
     assert ['m3__x3'] == ft.get_feature_names()
-    assert record if drop is None else not record
+    assert not record
 
 
 def test_step_name_validation():
@@ -1161,6 +1156,49 @@ def test_verbose(est, method, pattern, capsys):
     assert re.match(pattern, capsys.readouterr().out)
 
 
+def test_n_features_in_pipeline():
+    # make sure pipelines delegate n_features_in to the first step
+
+    X = [[1, 2], [3, 4], [5, 6]]
+    y = [0, 1, 2]
+
+    ss = StandardScaler()
+    gbdt = HistGradientBoostingClassifier()
+    pipe = make_pipeline(ss, gbdt)
+    assert not hasattr(pipe, 'n_features_in_')
+    pipe.fit(X, y)
+    assert pipe.n_features_in_ == ss.n_features_in_ == 2
+
+    # if the first step has the n_features_in attribute then the pipeline also
+    # has it, even though it isn't fitted.
+    ss = StandardScaler()
+    gbdt = HistGradientBoostingClassifier()
+    pipe = make_pipeline(ss, gbdt)
+    ss.fit(X, y)
+    assert pipe.n_features_in_ == ss.n_features_in_ == 2
+    assert not hasattr(gbdt, 'n_features_in_')
+
+
+def test_n_features_in_feature_union():
+    # make sure FeatureUnion delegates n_features_in to the first transformer
+
+    X = [[1, 2], [3, 4], [5, 6]]
+    y = [0, 1, 2]
+
+    ss = StandardScaler()
+    fu = make_union(ss)
+    assert not hasattr(fu, 'n_features_in_')
+    fu.fit(X, y)
+    assert fu.n_features_in_ == ss.n_features_in_ == 2
+
+    # if the first step has the n_features_in attribute then the feature_union
+    # also has it, even though it isn't fitted.
+    ss = StandardScaler()
+    fu = make_union(ss)
+    ss.fit(X, y)
+    assert fu.n_features_in_ == ss.n_features_in_ == 2
+
+
 def test_feature_union_fit_params():
     # Regression test for issue: #15117
     class Dummy(TransformerMixin, BaseEstimator):
@@ -1182,16 +1220,3 @@ def test_feature_union_fit_params():
 
     t.fit(X, y, a=0)
     t.fit_transform(X, y, a=0)
-
-
-# TODO: Remove in 0.24 when None is removed
-def test_feature_union_warns_with_none():
-    msg = (r"Using None as a transformer is deprecated in version 0\.22 and "
-           r"will be removed in version 0\.24\. Please use 'drop' instead\.")
-    with pytest.warns(FutureWarning, match=msg):
-        union = FeatureUnion([('multi1', None), ('multi2', Mult())])
-
-    X = [[1, 2, 3], [4, 5, 6]]
-
-    with pytest.warns(FutureWarning, match=msg):
-        union.fit_transform(X)

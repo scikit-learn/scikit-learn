@@ -4,10 +4,8 @@ import pytest
 
 from scipy import linalg
 
-from sklearn.exceptions import ChangedBehaviorWarning
 from sklearn.utils import check_random_state
-from sklearn.utils._testing import (assert_array_equal, assert_no_warnings,
-                                   assert_warns_message)
+from sklearn.utils._testing import assert_array_equal, assert_no_warnings
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_almost_equal
@@ -83,14 +81,9 @@ def test_lda_predict():
         y_proba_pred1 = clf.predict_proba(X1)
         assert_array_equal((y_proba_pred1[:, 1] > 0.5) + 1, y,
                            'solver %s' % solver)
-
-        # Some classes are predicted with probability 0
-        # so this causes issues when taking the log.
-        # We remove the associated warnings.
-        with ignore_warnings():
-            y_log_proba_pred1 = clf.predict_log_proba(X1)
-            assert_allclose(np.exp(y_log_proba_pred1), y_proba_pred1,
-                            rtol=1e-6, err_msg='solver %s' % solver)
+        y_log_proba_pred1 = clf.predict_log_proba(X1)
+        assert_allclose(np.exp(y_log_proba_pred1), y_proba_pred1,
+                        rtol=1e-6, atol=1e-6, err_msg='solver %s' % solver)
 
         # Primarily test for commit 2f34950 -- "reuse" of priors
         y_pred3 = clf.fit(X, y3).predict(X)

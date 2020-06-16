@@ -350,7 +350,7 @@ def test_pairwise_kernels_filter_param():
     assert_array_almost_equal(K, K2)
 
     with pytest.raises(TypeError):
-        pairwise_kernels(X, Y, "rbf", **params)
+        pairwise_kernels(X, Y, metric="rbf", **params)
 
 
 @pytest.mark.parametrize('metric, func', PAIRED_DISTANCES.items())
@@ -1281,8 +1281,16 @@ def test_pairwise_distances_data_derived_params(n_jobs, metric, dist_function,
                 params = {'VI': np.linalg.inv(np.cov(np.vstack([X, Y]).T)).T}
 
         expected_dist_explicit_params = cdist(X, Y, metric=metric, **params)
-        dist = np.vstack(tuple(dist_function(X, Y,
-                                             metric=metric, n_jobs=n_jobs)))
+        # TODO: Remove warn_checker in 0.25
+        if y_is_x:
+            warn_checker = pytest.warns(None)
+        else:
+            warn_checker = pytest.warns(FutureWarning,
+                                        match="to be specified if Y is passed")
+        with warn_checker:
+            dist = np.vstack(tuple(dist_function(X, Y,
+                                                 metric=metric,
+                                                 n_jobs=n_jobs)))
 
         assert_allclose(dist, expected_dist_explicit_params)
         assert_allclose(dist, expected_dist_default_params)

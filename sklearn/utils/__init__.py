@@ -25,11 +25,13 @@ from . import _joblib
 from ..exceptions import DataConversionWarning
 from .deprecation import deprecated
 from .fixes import np_version
+from ._estimator_html_repr import estimator_html_repr
 from .validation import (as_float_array,
                          assert_all_finite,
                          check_random_state, column_or_1d, check_array,
                          check_consistent_length, check_X_y, indexable,
-                         check_symmetric, check_scalar)
+                         check_symmetric, check_scalar,
+                         _deprecate_positional_args)
 from .. import get_config
 
 
@@ -46,11 +48,12 @@ __all__ = ["murmurhash3_32", "as_float_array",
            "assert_all_finite", "check_array",
            "check_random_state",
            "compute_class_weight", "compute_sample_weight",
-           "column_or_1d", "safe_indexing",
+           "column_or_1d",
            "check_consistent_length", "check_X_y", "check_scalar", 'indexable',
            "check_symmetric", "indices_to_mask", "deprecated",
            "parallel_backend", "register_parallel_backend",
            "resample", "shuffle", "check_matplotlib_support", "all_estimators",
+           "DataConversionWarning", "estimator_html_repr"
            ]
 
 IS_PYPY = platform.python_implementation() == 'PyPy'
@@ -64,7 +67,8 @@ class Bunch(dict):
     They extend dictionaries by enabling values to be accessed by key,
     `bunch["value_key"]`, or by an attribute, `bunch.value_key`.
 
-
+    Examples
+    --------
     >>> b = Bunch(a=1, b=2)
     >>> b['b']
     2
@@ -76,7 +80,6 @@ class Bunch(dict):
     >>> b.c = 6
     >>> b['c']
     6
-
     """
 
     def __init__(self, **kwargs):
@@ -267,56 +270,7 @@ def _determine_key_type(key, accept_slice=True):
     raise ValueError(err_msg)
 
 
-# TODO: remove in 0.24
-@deprecated("safe_indexing is deprecated in version "
-            "0.22 and will be removed in version 0.24.")
-def safe_indexing(X, indices, axis=0):
-    """Return rows, items or columns of X using indices.
-
-    .. deprecated:: 0.22
-        This function was deprecated in version 0.22 and will be removed in
-        version 0.24.
-
-    Parameters
-    ----------
-    X : array-like, sparse-matrix, list, pandas.DataFrame, pandas.Series
-        Data from which to sample rows, items or columns. `list` are only
-        supported when `axis=0`.
-
-    indices : bool, int, str, slice, array-like
-
-        - If `axis=0`, boolean and integer array-like, integer slice,
-          and scalar integer are supported.
-        - If `axis=1`:
-
-            - to select a single column, `indices` can be of `int` type for
-              all `X` types and `str` only for dataframe. The selected subset
-              will be 1D, unless `X` is a sparse matrix in which case it will
-              be 2D.
-            - to select multiples columns, `indices` can be one of the
-              following: `list`, `array`, `slice`. The type used in
-              these containers can be one of the following: `int`, 'bool' and
-              `str`. However, `str` is only supported when `X` is a dataframe.
-              The selected subset will be 2D.
-
-    axis : int, default=0
-        The axis along which `X` will be subsampled. `axis=0` will select
-        rows while `axis=1` will select columns.
-
-    Returns
-    -------
-    subset
-        Subset of X on axis 0 or 1.
-
-    Notes
-    -----
-    CSR, CSC, and LIL sparse matrices are supported. COO sparse matrices are
-    not supported.
-    """
-    return _safe_indexing(X, indices, axis)
-
-
-def _safe_indexing(X, indices, axis=0):
+def _safe_indexing(X, indices, *, axis=0):
     """Return rows, items or columns of X using indices.
 
     .. warning::
@@ -459,43 +413,48 @@ def _get_column_indices(X, key):
                          "strings, or boolean mask is allowed")
 
 
-def resample(*arrays, **options):
-    """Resample arrays or sparse matrices in a consistent way
+def resample(*arrays,
+             replace=True,
+             n_samples=None,
+             random_state=None,
+             stratify=None):
+    """Resample arrays or sparse matrices in a consistent way.
 
     The default strategy implements one step of the bootstrapping
     procedure.
 
     Parameters
     ----------
-    *arrays : sequence of indexable data-structures
+    *arrays : sequence of array-like of shape (n_samples,) or \
+            (n_samples, n_outputs)
         Indexable data-structures can be arrays, lists, dataframes or scipy
         sparse matrices with consistent first dimension.
 
-    Other Parameters
-    ----------------
-    replace : boolean, True by default
+    replace : bool, default=True
         Implements resampling with replacement. If False, this will implement
         (sliced) random permutations.
 
-    n_samples : int, None by default
+    n_samples : int, default=None
         Number of samples to generate. If left to None this is
         automatically set to the first dimension of the arrays.
         If replace is False it should not be larger than the length of
         arrays.
 
-    random_state : int, RandomState instance or None, optional (default=None)
+    random_state : int or RandomState instance, default=None
         Determines random number generation for shuffling
         the data.
         Pass an int for reproducible results across multiple function calls.
         See :term:`Glossary <random_state>`.
 
-    stratify : array-like or None (default=None)
+    stratify : array-like of shape (n_samples,) or (n_samples, n_outputs), \
+            default=None
         If not None, data is split in a stratified fashion, using this as
         the class labels.
 
     Returns
     -------
-    resampled_arrays : sequence of indexable data-structures
+    resampled_arrays : sequence of array-like of shape (n_samples,) or \
+            (n_samples, n_outputs)
         Sequence of resampled copies of the collections. The original arrays
         are not impacted.
 
@@ -538,18 +497,12 @@ def resample(*arrays, **options):
       ...          random_state=0)
       [1, 1, 1, 0, 1]
 
-
     See also
     --------
     :func:`sklearn.utils.shuffle`
     """
-
-    random_state = check_random_state(options.pop('random_state', None))
-    replace = options.pop('replace', True)
-    max_n_samples = options.pop('n_samples', None)
-    stratify = options.pop('stratify', None)
-    if options:
-        raise ValueError("Unexpected kw arguments: %r" % options.keys())
+    max_n_samples = n_samples
+    random_state = check_random_state(random_state)
 
     if len(arrays) == 0:
         return None
@@ -602,7 +555,6 @@ def resample(*arrays, **options):
 
         indices = random_state.permutation(indices)
 
-
     # convert sparse matrices to CSR for row-based indexing
     arrays = [a.tocsr() if issparse(a) else a for a in arrays]
     resampled_arrays = [_safe_indexing(a, indices) for a in arrays]
@@ -613,7 +565,7 @@ def resample(*arrays, **options):
         return resampled_arrays
 
 
-def shuffle(*arrays, **options):
+def shuffle(*arrays, random_state=None, n_samples=None):
     """Shuffle arrays or sparse matrices in a consistent way
 
     This is a convenience alias to ``resample(*arrays, replace=False)`` to do
@@ -625,17 +577,16 @@ def shuffle(*arrays, **options):
         Indexable data-structures can be arrays, lists, dataframes or scipy
         sparse matrices with consistent first dimension.
 
-    Other Parameters
-    ----------------
-    random_state : int, RandomState instance or None, optional (default=None)
+    random_state : int or RandomState instance, default=None
         Determines random number generation for shuffling
         the data.
         Pass an int for reproducible results across multiple function calls.
         See :term:`Glossary <random_state>`.
 
-    n_samples : int, None by default
+    n_samples : int, default=None
         Number of samples to generate. If left to None this is
-        automatically set to the first dimension of the arrays.
+        automatically set to the first dimension of the arrays.  It should
+        not be larger than the length of arrays.
 
     Returns
     -------
@@ -679,11 +630,12 @@ def shuffle(*arrays, **options):
     --------
     :func:`sklearn.utils.resample`
     """
-    options['replace'] = False
-    return resample(*arrays, **options)
+    return resample(*arrays, replace=False, n_samples=n_samples,
+                    random_state=random_state)
 
 
-def safe_sqr(X, copy=True):
+@_deprecate_positional_args
+def safe_sqr(X, *, copy=True):
     """Element wise squaring of array-likes and sparse matrices.
 
     Parameters
@@ -722,7 +674,8 @@ def _chunk_generator(gen, chunksize):
             return
 
 
-def gen_batches(n, batch_size, min_batch_size=0):
+@_deprecate_positional_args
+def gen_batches(n, batch_size, *, min_batch_size=0):
     """Generator to create slices containing batch_size elements, from 0 to n.
 
     The last slice may contain less than batch_size elements, when batch_size
@@ -771,7 +724,8 @@ def gen_batches(n, batch_size, min_batch_size=0):
         yield slice(start, n)
 
 
-def gen_even_slices(n, n_packs, n_samples=None):
+@_deprecate_positional_args
+def gen_even_slices(n, n_packs, *, n_samples=None):
     """Generator to create n_packs slices going up to n.
 
     Parameters
@@ -956,8 +910,8 @@ def _print_elapsed_time(source, message=None):
                                timeit.default_timer() - start))
 
 
-def get_chunk_n_rows(row_bytes, max_n_rows=None,
-                     working_memory=None):
+@_deprecate_positional_args
+def get_chunk_n_rows(row_bytes, *, max_n_rows=None, working_memory=None):
     """Calculates how many rows can be processed within working_memory
 
     Parameters

@@ -32,11 +32,12 @@ from sklearn.mixture import GaussianMixture
 from sklearn.cluster import MiniBatchKMeans
 from sklearn.decomposition import NMF
 from sklearn.linear_model import MultiTaskElasticNet, LogisticRegression
-from sklearn.svm import SVC
+from sklearn.svm import SVC, NuSVC
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.utils.validation import check_X_y, check_array
+from sklearn.utils.validation import check_array
 from sklearn.utils import all_estimators
+from sklearn.exceptions import SkipTestWarning
 
 
 class CorrectNotFittedError(ValueError):
@@ -60,7 +61,7 @@ class ChangesDict(BaseEstimator):
         self.key = key
 
     def fit(self, X, y=None):
-        X, y = check_X_y(X, y)
+        X, y = self._validate_data(X, y)
         return self
 
     def predict(self, X):
@@ -75,7 +76,7 @@ class SetsWrongAttribute(BaseEstimator):
 
     def fit(self, X, y=None):
         self.wrong_attribute = 0
-        X, y = check_X_y(X, y)
+        X, y = self._validate_data(X, y)
         return self
 
 
@@ -85,14 +86,14 @@ class ChangesWrongAttribute(BaseEstimator):
 
     def fit(self, X, y=None):
         self.wrong_attribute = 1
-        X, y = check_X_y(X, y)
+        X, y = self._validate_data(X, y)
         return self
 
 
 class ChangesUnderscoreAttribute(BaseEstimator):
     def fit(self, X, y=None):
         self._good_attribute = 1
-        X, y = check_X_y(X, y)
+        X, y = self._validate_data(X, y)
         return self
 
 
@@ -109,7 +110,7 @@ class RaisesErrorInSetParams(BaseEstimator):
         return super().set_params(**kwargs)
 
     def fit(self, X, y=None):
-        X, y = check_X_y(X, y)
+        X, y = self._validate_data(X, y)
         return self
 
 
@@ -126,7 +127,7 @@ class ModifiesValueInsteadOfRaisingError(BaseEstimator):
         return super().set_params(**kwargs)
 
     def fit(self, X, y=None):
-        X, y = check_X_y(X, y)
+        X, y = self._validate_data(X, y)
         return self
 
 
@@ -145,19 +146,19 @@ class ModifiesAnotherValue(BaseEstimator):
         return super().set_params(**kwargs)
 
     def fit(self, X, y=None):
-        X, y = check_X_y(X, y)
+        X, y = self._validate_data(X, y)
         return self
 
 
 class NoCheckinPredict(BaseBadClassifier):
     def fit(self, X, y):
-        X, y = check_X_y(X, y)
+        X, y = self._validate_data(X, y)
         return self
 
 
 class NoSparseClassifier(BaseBadClassifier):
     def fit(self, X, y):
-        X, y = check_X_y(X, y, accept_sparse=['csr', 'csc'])
+        X, y = self._validate_data(X, y, accept_sparse=['csr', 'csc'])
         if sp.issparse(X):
             raise ValueError("Nonsensical Error")
         return self
@@ -169,7 +170,7 @@ class NoSparseClassifier(BaseBadClassifier):
 
 class CorrectNotFittedErrorClassifier(BaseBadClassifier):
     def fit(self, X, y):
-        X, y = check_X_y(X, y)
+        X, y = self._validate_data(X, y)
         self.coef_ = np.ones(X.shape[1])
         return self
 
@@ -182,10 +183,11 @@ class CorrectNotFittedErrorClassifier(BaseBadClassifier):
 class NoSampleWeightPandasSeriesType(BaseEstimator):
     def fit(self, X, y, sample_weight=None):
         # Convert data
-        X, y = check_X_y(X, y,
-                         accept_sparse=("csr", "csc"),
-                         multi_output=True,
-                         y_numeric=True)
+        X, y = self._validate_data(
+            X, y,
+            accept_sparse=("csr", "csc"),
+            multi_output=True,
+            y_numeric=True)
         # Function is only called after we verify that pandas is installed
         from pandas import Series
         if isinstance(sample_weight, Series):
@@ -208,7 +210,8 @@ class BadBalancedWeightsClassifier(BaseBadClassifier):
 
         label_encoder = LabelEncoder().fit(y)
         classes = label_encoder.classes_
-        class_weight = compute_class_weight(self.class_weight, classes, y)
+        class_weight = compute_class_weight(self.class_weight, classes=classes,
+                                            y=y)
 
         # Intentionally modify the balanced class_weight
         # to simulate a bug and raise an exception
@@ -222,7 +225,7 @@ class BadBalancedWeightsClassifier(BaseBadClassifier):
 
 class BadTransformerWithoutMixin(BaseEstimator):
     def fit(self, X, y=None):
-        X = check_array(X)
+        X = self._validate_data(X)
         return self
 
     def transform(self, X):
@@ -233,10 +236,11 @@ class BadTransformerWithoutMixin(BaseEstimator):
 class NotInvariantPredict(BaseEstimator):
     def fit(self, X, y):
         # Convert data
-        X, y = check_X_y(X, y,
-                         accept_sparse=("csr", "csc"),
-                         multi_output=True,
-                         y_numeric=True)
+        X, y = self._validate_data(
+            X, y,
+            accept_sparse=("csr", "csc"),
+            multi_output=True,
+            y_numeric=True)
         return self
 
     def predict(self, X):
@@ -249,11 +253,12 @@ class NotInvariantPredict(BaseEstimator):
 
 class LargeSparseNotSupportedClassifier(BaseEstimator):
     def fit(self, X, y):
-        X, y = check_X_y(X, y,
-                         accept_sparse=("csr", "csc", "coo"),
-                         accept_large_sparse=True,
-                         multi_output=True,
-                         y_numeric=True)
+        X, y = self._validate_data(
+            X, y,
+            accept_sparse=("csr", "csc", "coo"),
+            accept_large_sparse=True,
+            multi_output=True,
+            y_numeric=True)
         if sp.issparse(X):
             if X.getformat() == "coo":
                 if X.row.dtype == "int64" or X.col.dtype == "int64":
@@ -268,7 +273,7 @@ class LargeSparseNotSupportedClassifier(BaseEstimator):
 
 class SparseTransformer(BaseEstimator):
     def fit(self, X, y=None):
-        self.X_shape_ = check_array(X).shape
+        self.X_shape_ = self._validate_data(X).shape
         return self
 
     def fit_transform(self, X, y=None):
@@ -320,7 +325,7 @@ class TaggedBinaryClassifier(UntaggedBinaryClassifier):
 class RequiresPositiveYRegressor(LinearRegression):
 
     def fit(self, X, y):
-        X, y = check_X_y(X, y, multi_output=True)
+        X, y = self._validate_data(X, y, multi_output=True)
         if (y <= 0).any():
             raise ValueError('negative y values not supported!')
         return super().fit(X, y)
@@ -358,9 +363,10 @@ def test_check_estimator():
     # not a complete test of all checks, which are very extensive.
 
     # check that we have a set_params and can clone
-    msg = "it does not implement a 'get_params' method"
+    msg = "Passing a class was deprecated"
     assert_raises_regex(TypeError, msg, check_estimator, object)
-    assert_raises_regex(TypeError, msg, check_estimator, object())
+    msg = "object has no attribute '_get_tags'"
+    assert_raises_regex(AttributeError, msg, check_estimator, object())
     # check that values returned by get_params match set_params
     msg = "get_params result does not match what was passed to set_params"
     assert_raises_regex(AssertionError, msg, check_estimator,
@@ -370,12 +376,9 @@ def test_check_estimator():
                         ModifiesAnotherValue())
     # check that we have a fit method
     msg = "object has no attribute 'fit'"
-    assert_raises_regex(AttributeError, msg, check_estimator, BaseEstimator)
     assert_raises_regex(AttributeError, msg, check_estimator, BaseEstimator())
     # check that fit does input validation
     msg = "ValueError not raised"
-    assert_raises_regex(AssertionError, msg, check_estimator,
-                        BaseBadClassifier)
     assert_raises_regex(AssertionError, msg, check_estimator,
                         BaseBadClassifier())
     # check that sample_weights in fit accepts pandas.Series type
@@ -384,39 +387,38 @@ def test_check_estimator():
         msg = ("Estimator NoSampleWeightPandasSeriesType raises error if "
                "'sample_weight' parameter is of type pandas.Series")
         assert_raises_regex(
-            ValueError, msg, check_estimator, NoSampleWeightPandasSeriesType)
+            ValueError, msg, check_estimator, NoSampleWeightPandasSeriesType())
     except ImportError:
         pass
     # check that predict does input validation (doesn't accept dicts in input)
     msg = "Estimator doesn't check for NaN and inf in predict"
-    assert_raises_regex(AssertionError, msg, check_estimator, NoCheckinPredict)
     assert_raises_regex(AssertionError, msg, check_estimator,
                         NoCheckinPredict())
     # check that estimator state does not change
     # at transform/predict/predict_proba time
     msg = 'Estimator changes __dict__ during predict'
-    assert_raises_regex(AssertionError, msg, check_estimator, ChangesDict)
+    assert_raises_regex(AssertionError, msg, check_estimator, ChangesDict())
     # check that `fit` only changes attribures that
     # are private (start with an _ or end with a _).
     msg = ('Estimator ChangesWrongAttribute should not change or mutate  '
            'the parameter wrong_attribute from 0 to 1 during fit.')
     assert_raises_regex(AssertionError, msg,
-                        check_estimator, ChangesWrongAttribute)
-    check_estimator(ChangesUnderscoreAttribute)
+                        check_estimator, ChangesWrongAttribute())
+    check_estimator(ChangesUnderscoreAttribute())
     # check that `fit` doesn't add any public attribute
     msg = (r'Estimator adds public attribute\(s\) during the fit method.'
            ' Estimators are only allowed to add private attributes'
            ' either started with _ or ended'
            ' with _ but wrong_attribute added')
     assert_raises_regex(AssertionError, msg,
-                        check_estimator, SetsWrongAttribute)
+                        check_estimator, SetsWrongAttribute())
     # check for invariant method
     name = NotInvariantPredict.__name__
     method = 'predict'
     msg = ("{method} of {name} is not invariant when applied "
            "to a subset.").format(method=method, name=name)
     assert_raises_regex(AssertionError, msg,
-                        check_estimator, NotInvariantPredict)
+                        check_estimator, NotInvariantPredict())
     # check for sparse matrix input handling
     name = NoSparseClassifier.__name__
     msg = "Estimator %s doesn't seem to fail gracefully on sparse data" % name
@@ -427,8 +429,8 @@ def test_check_estimator():
     string_buffer = StringIO()
     sys.stdout = string_buffer
     try:
-        check_estimator(NoSparseClassifier)
-    except:
+        check_estimator(NoSparseClassifier())
+    except Exception:
         pass
     finally:
         sys.stdout = old_stdout
@@ -438,29 +440,28 @@ def test_check_estimator():
     msg = ('Estimator LargeSparseNotSupportedClassifier doesn\'t seem to '
            r'support \S{3}_64 matrix, and is not failing gracefully.*')
     assert_raises_regex(AssertionError, msg, check_estimator,
-                        LargeSparseNotSupportedClassifier)
+                        LargeSparseNotSupportedClassifier())
 
     # does error on binary_only untagged estimator
     msg = 'Only 2 classes are supported'
     assert_raises_regex(ValueError, msg, check_estimator,
-                        UntaggedBinaryClassifier)
+                        UntaggedBinaryClassifier())
 
     # non-regression test for estimators transforming to sparse data
     check_estimator(SparseTransformer())
 
     # doesn't error on actual estimator
-    check_estimator(LogisticRegression)
+    check_estimator(LogisticRegression())
     check_estimator(LogisticRegression(C=0.01))
-    check_estimator(MultiTaskElasticNet)
     check_estimator(MultiTaskElasticNet())
 
     # doesn't error on binary_only tagged estimator
-    check_estimator(TaggedBinaryClassifier)
+    check_estimator(TaggedBinaryClassifier())
 
     # Check regressor with requires_positive_y estimator tag
     msg = 'negative y values not supported!'
     assert_raises_regex(ValueError, msg, check_estimator,
-                        RequiresPositiveYRegressor)
+                        RequiresPositiveYRegressor())
 
 
 def test_check_outlier_corruption():
@@ -575,19 +576,6 @@ def test_check_regressor_data_not_an_array():
                         EstimatorInconsistentForPandas())
 
 
-def test_check_estimator_required_parameters_skip():
-    class MyEstimator(BaseEstimator):
-        _required_parameters = ["special_parameter"]
-
-        def __init__(self, special_parameter):
-            self.special_parameter = special_parameter
-
-    assert_raises_regex(SkipTest, r"Can't instantiate estimator MyEstimator "
-                                  r"which requires parameters "
-                                  r"\['special_parameter'\]",
-                                  check_estimator, MyEstimator)
-
-
 def run_tests_without_pytest():
     """Runs the tests in this file without using pytest.
     """
@@ -623,3 +611,9 @@ if __name__ == '__main__':
     # This module is run as a script to check that we have no dependency on
     # pytest for estimator checks.
     run_tests_without_pytest()
+
+
+def test_xfail_ignored_in_check_estimator():
+    # Make sure checks marked as xfail are just ignored and not run by
+    # check_estimator(), but still raise a warning.
+    assert_warns(SkipTestWarning, check_estimator, NuSVC())

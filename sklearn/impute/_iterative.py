@@ -1,10 +1,8 @@
 
 from time import time
-from distutils.version import LooseVersion
 from collections import namedtuple
 import warnings
 
-import scipy
 from scipy import stats
 import numpy as np
 
@@ -56,7 +54,9 @@ class IterativeImputer(_BaseImputer):
 
     missing_values : int, np.nan, default=np.nan
         The placeholder for the missing values. All occurrences of
-        ``missing_values`` will be imputed.
+        `missing_values` will be imputed. For pandas' dataframes with
+        nullable integer dtypes with missing values, `missing_values`
+        should be set to `np.nan`, since `pd.NA` will be converted to `np.nan`.
 
     sample_posterior : boolean, default=False
         Whether to sample from the (Gaussian) predictive posterior of the
@@ -87,7 +87,7 @@ class IterativeImputer(_BaseImputer):
 
     initial_strategy : str, default='mean'
         Which strategy to use to initialize the missing values. Same as the
-        ``strategy`` parameter in :class:`sklearn.impute.SimpleImputer`
+        ``strategy`` parameter in :class:`~sklearn.impute.SimpleImputer`
         Valid values: {"mean", "median", "most_frequent", or "constant"}.
 
     imputation_order : str, default='ascending'
@@ -111,15 +111,15 @@ class IterativeImputer(_BaseImputer):
         many features with no missing values at both ``fit`` and ``transform``
         time to save compute.
 
-    min_value : float or array-like of shape (n_features,), default=None.
+    min_value : float or array-like of shape (n_features,), default=-np.inf
         Minimum possible imputed value. Broadcast to shape (n_features,) if
         scalar. If array-like, expects shape (n_features,), one min value for
-        each feature. `None` (default) is converted to -np.inf.
+        each feature. The default is `-np.inf`.
 
-    max_value : float or array-like of shape (n_features,), default=None.
+    max_value : float or array-like of shape (n_features,), default=np.inf
         Maximum possible imputed value. Broadcast to shape (n_features,) if
         scalar. If array-like, expects shape (n_features,), one max value for
-        each feature. `None` (default) is converted to np.inf.
+        each feature. The default is `np.inf`.
 
     verbose : int, default=0
         Verbosity flag, controls the debug messages that are issued
@@ -143,7 +143,7 @@ class IterativeImputer(_BaseImputer):
 
     Attributes
     ----------
-    initial_imputer_ : object of type :class:`sklearn.impute.SimpleImputer`
+    initial_imputer_ : object of type :class:`~sklearn.impute.SimpleImputer`
         Imputer used to initialize the missing values.
 
     imputation_sequence_ : list of tuples
@@ -161,7 +161,7 @@ class IterativeImputer(_BaseImputer):
     n_features_with_missing_ : int
         Number of features with missing values.
 
-    indicator_ : :class:`sklearn.impute.MissingIndicator`
+    indicator_ : :class:`~sklearn.impute.MissingIndicator`
         Indicator used to add binary indicators for missing values.
         ``None`` if add_indicator is False.
 
@@ -208,9 +208,8 @@ class IterativeImputer(_BaseImputer):
         Journal of the Royal Statistical Society 22(2): 302-306.
         <https://www.jstor.org/stable/2984099>`_
     """
-
     def __init__(self,
-                 estimator=None,
+                 estimator=None, *,
                  missing_values=np.nan,
                  sample_posterior=False,
                  max_iter=10,
@@ -219,8 +218,8 @@ class IterativeImputer(_BaseImputer):
                  initial_strategy="mean",
                  imputation_order='ascending',
                  skip_complete=False,
-                 min_value=None,
-                 max_value=None,
+                 min_value=-np.inf,
+                 max_value=np.inf,
                  verbose=0,
                  random_state=None,
                  add_indicator=False):
@@ -329,19 +328,10 @@ class IterativeImputer(_BaseImputer):
             a = (self._min_value[feat_idx] - mus) / sigmas
             b = (self._max_value[feat_idx] - mus) / sigmas
 
-            if scipy.__version__ < LooseVersion('0.18'):
-                # bug with vector-valued `a` in old scipy
-                imputed_values[inrange_mask] = [
-                    stats.truncnorm(a=a_, b=b_,
-                                    loc=loc_, scale=scale_).rvs(
-                                        random_state=self.random_state_)
-                    for a_, b_, loc_, scale_
-                    in zip(a, b, mus, sigmas)]
-            else:
-                truncated_normal = stats.truncnorm(a=a, b=b,
-                                                   loc=mus, scale=sigmas)
-                imputed_values[inrange_mask] = truncated_normal.rvs(
-                    random_state=self.random_state_)
+            truncated_normal = stats.truncnorm(a=a, b=b,
+                                               loc=mus, scale=sigmas)
+            imputed_values[inrange_mask] = truncated_normal.rvs(
+                random_state=self.random_state_)
         else:
             imputed_values = estimator.predict(X_test)
             imputed_values = np.clip(imputed_values,
@@ -505,8 +495,8 @@ class IterativeImputer(_BaseImputer):
         else:
             force_all_finite = True
 
-        X = check_array(X, dtype=FLOAT_DTYPES, order="F",
-                        force_all_finite=force_all_finite)
+        X = self._validate_data(X, dtype=FLOAT_DTYPES, order="F",
+                                force_all_finite=force_all_finite)
         _check_inputs_dtype(X, self.missing_values)
 
         mask_missing_values = _get_mask(X, self.missing_values)
@@ -612,9 +602,9 @@ class IterativeImputer(_BaseImputer):
             self.n_iter_ = 0
             return super()._concatenate_indicator(Xt, X_indicator)
 
-        self._min_value = IterativeImputer._validate_limit(
+        self._min_value = self._validate_limit(
             self.min_value, "min", X.shape[1])
-        self._max_value = IterativeImputer._validate_limit(
+        self._max_value = self._validate_limit(
             self.max_value, "max", X.shape[1])
 
         if not np.all(np.greater(self._max_value, self._min_value)):

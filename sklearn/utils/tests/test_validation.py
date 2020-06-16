@@ -63,7 +63,7 @@ def test_as_float_array():
     X = X.astype(np.int64)
     X2 = as_float_array(X, copy=True)
     # Checking that the array wasn't overwritten
-    assert as_float_array(X, False) is not X
+    assert as_float_array(X, copy=False) is not X
     assert X2.dtype == np.float64
     # Test int dtypes <= 32bit
     tested_dtypes = [np.bool,
@@ -347,6 +347,37 @@ def test_check_array():
     for X in [X_bytes, np.array(X_bytes, dtype='V1')]:
         with pytest.warns(FutureWarning, match=expected_warn_regex):
             check_array(X, dtype="numeric")
+
+
+@pytest.mark.parametrize("pd_dtype", ["Int8", "Int16", "UInt8", "UInt16"])
+@pytest.mark.parametrize("dtype, expected_dtype", [
+    ([np.float32, np.float64], np.float32),
+    (np.float64, np.float64),
+    ("numeric", np.float64),
+])
+def test_check_array_pandas_na_support(pd_dtype, dtype, expected_dtype):
+    # Test pandas IntegerArray with pd.NA
+    pd = pytest.importorskip('pandas', minversion="1.0")
+
+    X_np = np.array([[1, 2, 3, np.nan, np.nan],
+                     [np.nan, np.nan, 8, 4, 6],
+                     [1, 2, 3, 4, 5]]).T
+
+    # Creates dataframe with IntegerArrays with pd.NA
+    X = pd.DataFrame(X_np, dtype=pd_dtype, columns=['a', 'b', 'c'])
+    # column c has no nans
+    X['c'] = X['c'].astype('float')
+    X_checked = check_array(X, force_all_finite='allow-nan', dtype=dtype)
+    assert_allclose(X_checked, X_np)
+    assert X_checked.dtype == expected_dtype
+
+    X_checked = check_array(X, force_all_finite=False, dtype=dtype)
+    assert_allclose(X_checked, X_np)
+    assert X_checked.dtype == expected_dtype
+
+    msg = "Input contains NaN, infinity"
+    with pytest.raises(ValueError, match=msg):
+        check_array(X, force_all_finite=True)
 
 
 def test_check_array_pandas_dtype_object_conversion():
@@ -912,7 +943,8 @@ def test_check_scalar_valid(x, target_type, min_val, max_val):
     """Test that check_scalar returns no error/warning if valid inputs are
     provided"""
     with pytest.warns(None) as record:
-        check_scalar(x, "test_name", target_type, min_val, max_val)
+        check_scalar(x, "test_name", target_type=target_type,
+                     min_val=min_val, max_val=max_val)
     assert len(record) == 0
 
 
@@ -1097,6 +1129,15 @@ def test_deprecate_positional_args_warns_for_function():
                       match=r"Pass b=2 as keyword args"):
         f2(1, 2)
 
+    # The * is place before a keyword only argument without a default value
+    @_deprecate_positional_args
+    def f3(a, *, b, c=1, d=1):
+        pass
+
+    with pytest.warns(FutureWarning,
+                      match=r"Pass b=2 as keyword args"):
+        f3(1, 2)
+
 
 def test_deprecate_positional_args_warns_for_class():
 
@@ -1153,3 +1194,22 @@ def test_check_fit_params(indices):
         result['sparse-col'],
         _safe_indexing(fit_params['sparse-col'], indices_)
     )
+
+
+@pytest.mark.parametrize('sp_format', [True, 'csr', 'csc', 'coo', 'bsr'])
+def test_check_sparse_pandas_sp_format(sp_format):
+    # check_array converts pandas dataframe with only sparse arrays into
+    # sparse matrix
+    pd = pytest.importorskip("pandas")
+    sp_mat = _sparse_random_matrix(10, 3)
+
+    sdf = pd.DataFrame.sparse.from_spmatrix(sp_mat)
+    result = check_array(sdf, accept_sparse=sp_format)
+
+    if sp_format is True:
+        # by default pandas converts to coo when accept_sparse is True
+        sp_format = 'coo'
+
+    assert sp.issparse(result)
+    assert result.format == sp_format
+    assert_allclose_dense_sparse(sp_mat, result)
