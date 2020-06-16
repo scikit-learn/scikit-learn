@@ -22,20 +22,24 @@ __all__ = [
 
 
 def _get_counts(values, uniques):
-    """Get the number of times each of the values comes up `values`
+    """Get the count of each of the `uniques` in `values`.
 
-    For object dtypes, the counts returned will use the order passed in by
+    For object dtypes, the counts will use the order passed in by
     `uniques`.
+
+    For non-object dtypes, the counts will be lexiconally ordered. In other
+    words, it is assumed that `uniques` is also lexiconally ordered.
     """
     if values.dtype == object:
-        uniques_dict = Counter(values)
-        counts = np.array([uniques_dict[item] for item in uniques],
+        counter = Counter(values)
+        counts = np.array([counter[item] for item in uniques],
                           dtype=int)
         return counts
 
-    # numerical
-    uniq_values, counts = np.unique(values, return_counts=True)
-    indices_in_uniq = np.isin(uniq_values, uniques, assume_unique=True)
+    unique_values, counts = np.unique(values, return_counts=True)
+    indices_in_uniq = np.isin(unique_values, uniques, assume_unique=True)
+
+    # remove counts that are not in `uniques`
     counts[~indices_in_uniq] = 0
     return counts
 

@@ -6,9 +6,9 @@ Target Encoder for Regressors
 .. currentmodule:: sklearn.preprocessing
 
 The :class:`TargetRegressorEncoder` uses target statistics conditioned on
-categories as an encoder to be consumed by a regression model. In this example,
-we will compare :class:`TargetRegressorEncoder`, :class:`OrdinalEncoder`,
-and dropping the category on a wine review dataset.
+the categorical features for encoding. In this example, we will compare
+:class:`TargetRegressorEncoder`, :class:`OrdinalEncoder`, and dropping the
+category on a wine review dataset.
 """
 
 # %%

@@ -476,6 +476,9 @@ Such features can be efficiently coded as integers, for instance
 ``[0, 1, 3]`` while ``["female", "from Asia", "uses Chrome"]`` would be
 ``[1, 2, 1]``.
 
+OrdinalEncoder
+--------------
+
 To convert categorical features to such integer codes, we can use the
 :class:`OrdinalEncoder`. This estimator transforms each categorical feature to one
 new feature of integers (0 to n_categories - 1)::
@@ -491,6 +494,9 @@ Such integer representation can, however, not be used directly with all
 scikit-learn estimators, as these expect continuous input, and would interpret
 the categories as being ordered, which is often not desired (i.e. the set of
 browsers was ordered arbitrarily).
+
+OneHotEncoder
+-------------
 
 Another possibility to convert categorical features to features that can be used
 with scikit-learn estimators is to use a one-of-K, also known as one-hot or
@@ -596,13 +602,19 @@ represented as a dict, not as scalars.
 .. _target_regressor_encoder:
 
 Target Regressor Encoder
-========================
-The :class:`~sklearn.preprocessing.TargetRegressorEncoder` uses statistics of
-the target conditioned on the categorical feature. The target encoding scheme
-takes a weighted average of the overall target mean and the target mean
-conditioned on categories. A multilevel linear model, where the levels are the
-categories, is used to construct the weighted average is estimated in Chapter
-12 of [GEL]_:
+------------------------
+
+The :class:`~sklearn.preprocessing.TargetRegressorEncoder` uses target
+statistics conditioned on the categorical feature for encoding [FLO]_ [MIC]_.
+This encoding scheme is useful with categorical features with high cardinality,
+where one hot encoding would inflate the feature space making it more expensive
+for a downstream model to process. A classical example of high cardinality
+categories are location based such as zip code or region. The
+:class:`~sklearn.preprocessing.TargetRegressorEncoder` implementation uses
+partial-pooling estimates from a multilevel model to encode categorical
+features. Specifically, we use a multilevel generalized linear model (GLM)
+approach for estimating the partial-pooling values as shown in Chapter 12.2 of
+[GEL]_:
 
 .. math::
 
@@ -625,12 +637,12 @@ encoding for `'cat'` is pulled toward the overall mean of `53` when compared to
 
     >>> from sklearn.preprocessing import TargetRegressorEncoder
     >>> X = np.array([['cat'] * 3 + ['dog'] * 50]).T
-    >>> y = np.array([0, 30, 60] + [50, 60] * 25)
+    >>> y = np.array([0, 30, 60] + [60, 62] * 25)
     >>> enc = TargetRegressorEncoder().fit(X, y)
     >>> enc.transform([['cat'], ['dog']])
     array([[46...],
            [54...]])
-    >>> enc.y_mean_
+    >>> enc.encoding_mean_
     53...
 
 .. topic:: Examples:
@@ -639,8 +651,15 @@ encoding for `'cat'` is pulled toward the overall mean of `53` when compared to
 
 .. topic:: References
 
-    .. [GEL] Andrew Gelman and Jennifer Hill. Data Analysis Using Regression
-       and Multilevel/Hierarchical Models. Cambridge University Press, 2007
+    .. [GEL] Gelman A, Hill J. Data Analysis using Regression and
+       Multilevel/Hierarchical Models. Cambridge University Press, 2007
+    .. [FLO] Pargent, Florian. `A Benchmark Experiment on How to Encode
+       Categorical Features in Predictive Modeling <https://osf.io/356ed/>`
+       OSF, 24 Mar. 2019.
+    .. [MIC] Micci-Barreca D (2001) `A preprocessing scheme for
+       high-cardinality categorical attributes in classification and prediction
+       problems <https://dl.acm.org/doi/abs/10.1145/507533.507538>`, ACM SIGKDD
+       Explorations Newsletter, 3(1), 27-32.
 
 .. _preprocessing_discretization:
 
