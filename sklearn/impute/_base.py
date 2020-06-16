@@ -181,7 +181,7 @@ class SimpleImputer(_BaseImputer):
         During :meth:`transform`, features corresponding to `np.nan`
         statistics will be discarded.
 
-    indicator_ : :class:`sklearn.impute.MissingIndicator`
+    indicator_ : :class:`~sklearn.impute.MissingIndicator`
         Indicator used to add binary indicators for missing values.
         ``None`` if add_indicator is False.
 
