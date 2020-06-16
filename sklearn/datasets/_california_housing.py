@@ -104,16 +104,15 @@ def fetch_california_housing(*, data_home=None, download_if_missing=True,
             Array of ordered feature names used in the dataset.
         DESCR : string
             Description of the California housing dataset.
+        frame : pandas DataFrame
+            Only present when `as_frame=True`. DataFrame with ``data`` and
+            ``target``.
+
+            .. versionadded:: 0.23
 
     (data, target) : tuple if ``return_X_y`` is True
 
         .. versionadded:: 0.20
-
-    frame : pandas DataFrame
-        Only present when `as_frame=True`. DataFrame with ``data`` and
-        ``target``.
-
-        .. versionadded:: 0.23
 
     Notes
     -----
