@@ -1383,3 +1383,20 @@ def test_imputation_order(order, idx_order):
                                random_state=0).fit(X)
         idx = [x.feat_idx for x in trs.imputation_sequence_]
         assert idx == idx_order
+
+
+def test_simple_imputation_inverse_transform():
+    # Test inverse_transform feature for np.nan
+    X = np.array([
+        [-1, np.nan, 3, -1],
+        [4, -1, 5, -1],
+        [6, 7, np.nan, -1],
+        [8, 9, 0, np.nan]
+    ])
+
+    imputer = SimpleImputer(missing_values=np.nan, strategy='mean',
+                            add_indicator=True)
+    X_trans = imputer.fit_transform(X)
+    X_orig = imputer.inverse_transform(X_trans)
+
+    assert_array_equal(X_orig, X)
