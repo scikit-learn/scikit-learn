@@ -181,7 +181,7 @@ class SimpleImputer(_BaseImputer):
         During :meth:`transform`, features corresponding to `np.nan`
         statistics will be discarded.
 
-    indicator_ : :class:`~sklearn.impute.MissingIndicator`
+    indicator_ : :class:`sklearn.impute.MissingIndicator`
         Indicator used to add binary indicators for missing values.
         ``None`` if add_indicator is False.
 
@@ -468,36 +468,36 @@ class SimpleImputer(_BaseImputer):
             X[coordinates] = values
 
         return super()._concatenate_indicator(X, X_indicator)
-    
+
     def inverse_transform(self, X):
         """Convert the data back to the original representation.
-        
+
         Inverts the `fit_transform` operation performed on an array.
         This operation can only be performed after :class:`SimpleImputer` is
         used with `add_indicator` set to `True`.
 
         Parameters
         ----------
-        X : array-like, 
+        X : array-like,
             shape (n_samples, n_features + missing_feature_count)
             The imputed data to be reverted to original data. It has to be
             an augmented array of imputed data and the missing indicator mask.
         """
         check_is_fitted(self)
         missing_feature_count = len(self.indicator_.features_)
-        
+
         # Split the augmented array into imputed array and it's missing
         # indicator mask.
         feature_count = X.shape[1] - missing_feature_count
         imputed_arr = X[:, :feature_count].copy()
         missing_mask = X[:, feature_count:].copy()
         missing_mask = missing_mask.astype(np.bool)
-        
+
         # Iterate over features and replace the imputed values
         # with original missing value types.
         for i in range(missing_feature_count):
             f_idx = self.indicator_.features_[i]
-            imputed_arr[:,f_idx][missing_mask[:,i]] = self.missing_values
+            imputed_arr[:, f_idx][missing_mask[:, i]] = self.missing_values
         return imputed_arr
 
 
