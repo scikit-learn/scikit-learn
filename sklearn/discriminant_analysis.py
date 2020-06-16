@@ -53,7 +53,7 @@ def _cov(X, shrinkage=None, covariance_estimator=None):
         like the estimators in :mod:`sklearn.covariance``.
         if None the shrinkage parameter drives the estimate.
 
-        .. versionadded:: 0.23
+        .. versionadded:: 0.24
 
     Returns
     -------
@@ -147,7 +147,7 @@ def _class_cov(X, y, priors, shrinkage=None, covariance_estimator=None):
         like the estimators in sklearn.covariance.
         if None the shrinkage parameter drives the estimate.
 
-        .. versionadded:: 0.23
+        .. versionadded:: 0.24
 
     Returns
     -------
@@ -241,7 +241,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         Note that `covariance_estimator` works only with 'lsqr' and 'eigen'
         solvers.
 
-        .. versionadded:: 0.23
+        .. versionadded:: 0.24
 
     Attributes
     ----------
@@ -344,7 +344,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
             like the estimators in sklearn.covariance.
             if None the shrinkage parameter drives the estimate.
 
-            .. versionadded:: 0.23
+            .. versionadded:: 0.24
 
         Notes
         -----
@@ -397,7 +397,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
             like the estimators in sklearn.covariance.
             if None the shrinkage parameter drives the estimate.
 
-            .. versionadded:: 0.23
+            .. versionadded:: 0.24
 
         Notes
         -----
