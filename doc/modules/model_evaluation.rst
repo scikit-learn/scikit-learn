@@ -278,7 +278,7 @@ permitted and will require a wrapper to return a single metric::
     >>> def tp(y_true, y_pred): return confusion_matrix(y_true, y_pred)[1, 1]
     >>> scoring = {'tp': make_scorer(tp), 'tn': make_scorer(tn),
     ...            'fp': make_scorer(fp), 'fn': make_scorer(fn)}
-    >>> cv_results = cross_validate(svm.fit(X, y), X, y, cv=5, scoring=scoring)
+    >>> cv_results = cross_validate(svm, X, y, cv=5, scoring=scoring)
     >>> # Getting the test set true positive scores
     >>> print(cv_results['test_tp'])
     [10  9  8  7  8]

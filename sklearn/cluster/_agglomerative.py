@@ -774,6 +774,10 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         at the i-th iteration, children[i][0] and children[i][1]
         are merged to form node `n_samples + i`
 
+    distances_ : array-like of shape (n_nodes-1,)
+        Distances between nodes in the corresponding place in `children_`.
+        Only computed if distance_threshold is not None.
+
     Examples
     --------
     >>> from sklearn.cluster import AgglomerativeClustering

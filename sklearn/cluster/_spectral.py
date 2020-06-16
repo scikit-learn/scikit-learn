@@ -194,7 +194,8 @@ def spectral_clustering(affinity, *, n_clusters=8, n_components=None,
     eigen_solver : {None, 'arpack', 'lobpcg', or 'amg'}
         The eigenvalue decomposition strategy to use. AMG requires pyamg
         to be installed. It can be faster on very large, sparse problems,
-        but may also lead to instabilities
+        but may also lead to instabilities. If None, then ``'arpack'`` is
+        used.
 
     random_state : int, RandomState instance, default=None
         A pseudo random number generator used for the initialization of the
@@ -307,7 +308,8 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
     eigen_solver : {'arpack', 'lobpcg', 'amg'}, default=None
         The eigenvalue decomposition strategy to use. AMG requires pyamg
         to be installed. It can be faster on very large, sparse problems,
-        but may also lead to instabilities.
+        but may also lead to instabilities. If None, then ``'arpack'`` is
+        used.
 
     n_components : int, default=n_clusters
         Number of eigen vectors to use for the spectral embedding
