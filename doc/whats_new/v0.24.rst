@@ -53,8 +53,8 @@ Changelog
   :pr:`17396` by :user:`Jiaxiang <fujiaxiang>`.
 
 - |Enhancement| :func:`datasets.fetch_20newsgroups_vectorized` now supports
-  heterogeneous data using pandas by setting `as_frame=True`.
-  :pr:`17499` by :user:`Brigitta Sipőcz <bsipocz>`.
+  loading as a pandas ``DataFrame`` by setting ``as_frame=True``. Requires
+  pandas v0.25 or newer. :pr:`17499` by :user:`Brigitta Sipőcz <bsipocz>`.
 
 :mod:`sklearn.decomposition`
 ............................
