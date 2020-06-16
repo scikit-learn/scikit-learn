@@ -5,9 +5,10 @@ or if specifically requested via environment variable
 Only 'percent10' mode is tested, as the full data
 is too big to use in unit-testing.
 """
-import pytest
-from sklearn.datasets.tests.test_common import check_return_X_y
+
 from functools import partial
+import pytest
+from sklearn.datasets.tests.test_common import check_return_X_y, check_as_frame
 
 
 def test_percent10(fetch_kddcup99_fxt):
@@ -50,8 +51,10 @@ def test_asframe(fetch_kddcup99_fxt):
     pd = pytest.importorskip('pandas')
 
     data = fetch_kddcup99_fxt(as_frame=True)
+    fetch_func = partial(fetch_kddcup99_fxt, 'smtp')
+
     assert hasattr(data, 'frame') is True
-    assert isinstance(data.frame, pd.DataFrame)
+    assert check_as_frame(data, fetch_func)
 
     assert data.data.shape == (494021, 41)
     assert data.target.shape == (494021,)

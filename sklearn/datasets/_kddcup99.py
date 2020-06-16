@@ -116,7 +116,7 @@ def fetch_kddcup99(*, subset=None, data_home=None, shuffle=False,
         .. versionadded:: 0.20
     """
     data_home = get_data_home(data_home=data_home)
-    kddcup99, feat_cols, target_col = _fetch_brute_kddcup99(
+    kddcup99, feature_names, target_names = _fetch_brute_kddcup99(
                                      data_home=data_home,
                                      percent10=percent10,
                                      download_if_missing=download_if_missing)
@@ -146,7 +146,7 @@ def fetch_kddcup99(*, subset=None, data_home=None, shuffle=False,
         # select all samples with positive logged_in attribute:
         s = data[:, 11] == 1
         data = np.c_[data[s, :11], data[s, 12:]]
-        feat_cols = feat_cols[:11] + feat_cols[12:]
+        feature_names = feature_names[:11] + feature_names[12:]
         target = target[s]
 
         data[:, 0] = np.log((data[:, 0] + 0.1).astype(float, copy=False))
@@ -158,19 +158,21 @@ def fetch_kddcup99(*, subset=None, data_home=None, shuffle=False,
             data = data[s]
             target = target[s]
             data = np.c_[data[:, 0], data[:, 4], data[:, 5]]
-            feat_cols = [feat_cols[0], feat_cols[4], feat_cols[5]]
+            feature_names = [feature_names[0], feature_names[4],
+                             feature_names[5]]
 
         if subset == 'smtp':
             s = data[:, 2] == b'smtp'
             data = data[s]
             target = target[s]
             data = np.c_[data[:, 0], data[:, 4], data[:, 5]]
-            feat_cols = [feat_cols[0], feat_cols[4], feat_cols[5]]
+            feature_names = [feature_names[0], feature_names[4],
+                             feature_names[5]]
 
         if subset == 'SF':
             data = np.c_[data[:, 0], data[:, 2], data[:, 4], data[:, 5]]
-            feat_cols = [feat_cols[0], feat_cols[2], feat_cols[4],
-                         feat_cols[5]]
+            feature_names = [feature_names[0], feature_names[2],
+                             feature_names[4], feature_names[5]]
 
     if shuffle:
         data, target = shuffle_method(data, target, random_state=random_state)
@@ -186,13 +188,13 @@ def fetch_kddcup99(*, subset=None, data_home=None, shuffle=False,
         frame, X, y = _convert_data_dataframe("fetch_kddcup99",
                                               data,
                                               target,
-                                              feat_cols,
-                                              target_col)
+                                              feature_names,
+                                              target_names)
         return Bunch(data=X,
                      target=y,
                      frame=frame,
-                     target_names=target_col,
-                     feature_names=feat_cols,
+                     target_names=target_names,
+                     feature_names=feature_names,
                      DESCR=fdescr)
     return Bunch(data=data, target=target, DESCR=fdescr)
 
@@ -286,9 +288,9 @@ def _fetch_brute_kddcup99(data_home=None,
           ('dst_host_rerror_rate', float),
           ('dst_host_srv_rerror_rate', float),
           ('labels', 'S16')]
-    feat_cols = [c[0] for c in dt]
-    target_col = feat_cols[-1]
-    feat_cols = feat_cols[:-1]
+    feature_names = [c[0] for c in dt]
+    target_names = feature_names[-1]
+    feature_names = feature_names[:-1]
     if download_if_missing and not available:
         _mkdirp(kddcup_dir)
         logger.info("Downloading %s" % archive.url)
@@ -326,7 +328,7 @@ def _fetch_brute_kddcup99(data_home=None,
     except NameError:
         X = joblib.load(samples_path)
         y = joblib.load(targets_path)
-    return Bunch(data=X, target=y), feat_cols, target_col
+    return Bunch(data=X, target=y), feature_names, target_names
 
 
 def _mkdirp(d):
