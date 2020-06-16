@@ -11,7 +11,8 @@ from sklearn.model_selection import LeaveOneOut
 from sklearn.utils._testing import (assert_array_almost_equal,
                                    assert_almost_equal,
                                    assert_array_equal,
-                                   assert_raises, ignore_warnings)
+                                   assert_raises, ignore_warnings,
+                                   assert_raises_regex)
 from sklearn.datasets import make_classification, make_blobs
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
@@ -345,9 +346,9 @@ def test_calibration_accepts_ndarray(X):
 
 
 def test_calibration_pipeline():
-    """Test that calibration works in pre-fit pipeline with transformer,
-    where X is not array-like, sparse matrix or dataframe at the start. See
-    issue #8710"""
+    # Test that calibration works in pre-fit pipeline with transformer,
+    # where X is not array-like, sparse matrix or dataframe at the start. See
+    # issue #8710
     fake_features = [
         {'state': 'NY', 'age': 'adult'},
         {'state': 'TX', 'age': 'adult'},
@@ -363,3 +364,9 @@ def test_calibration_pipeline():
 
     calib_clf = CalibratedClassifierCV(pipeline, cv='prefit')
     calib_clf.fit(fake_features, labels)
+
+    # Check attributes are obtained from fitted estimator
+    assert_array_equal(calib_clf.classes_, [0, 1])
+    msg = "'DictVectorizer' object has no attribute 'n_features_in_'"
+    with pytest.raises(AttributeError, match=msg):
+        calib_clf.n_features_in_
