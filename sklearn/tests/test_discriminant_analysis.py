@@ -355,8 +355,8 @@ def test_lda_shrinkage():
     shrinkage parameter behave the same
     """
     rng = np.random.RandomState(0)
-    X = rng.random.rand(100, 10)
-    Y = rng.random.randint(3, size=(100))
+    X = rng.rand(100, 10)
+    Y = rng.randint(3, size=(100))
     c1 = LinearDiscriminantAnalysis(store_covariance=True, shrinkage=0.5,
                                     solver="lsqr")
     c2 = LinearDiscriminantAnalysis(
