@@ -326,7 +326,7 @@ def k_means(X, n_clusters, *, sample_weight=None, init='k-means++',
 def _kmeans_single_elkan(X, sample_weight, n_clusters, max_iter=300,
                          init='k-means++', verbose=False, x_squared_norms=None,
                          random_state=None, tol=1e-4, n_threads=1):
-    """A single run of k-means lloyd, assumes preparation completed prior.
+    """A single run of k-means elkan, assumes preparation completed prior.
 
     Parameters
     ----------
