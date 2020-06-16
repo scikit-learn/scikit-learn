@@ -28,6 +28,7 @@ from .isotonic import IsotonicRegression
 from .svm import LinearSVC
 from .model_selection import check_cv
 from .utils.validation import _deprecate_positional_args
+from sklearn.exceptions import NotFittedError
 
 
 class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
