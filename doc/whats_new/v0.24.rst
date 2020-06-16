@@ -134,6 +134,10 @@ Changelog
   variance of 1. :pr:`17193` by :user:`Lucy Liu <lucyleeow>` and
   :user:`Mabel Villalba <mabelvj>`.
 
+- |Enhancement| Add `dtype` parameter to
+  :class:`preprocessing.KBinsDiscretizer`.
+  :pr:`16335` by :user:`Arthur Imbert <Henley13>`.
+
 :mod:`sklearn.tree`
 ...................
 
