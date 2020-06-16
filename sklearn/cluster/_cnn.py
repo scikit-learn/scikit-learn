@@ -88,9 +88,6 @@ def cnn(X, eps=0.5, min_samples=5, metric='minkowski', metric_params=None,
 
     Returns
     -------
-    core_samples : ndarray of shape (n_core_samples,)
-        Indices of core samples.
-
     labels : ndarray of shape (n_samples,)
         Cluster labels for each point.  Noisy samples are given the label -1.
 
@@ -352,9 +349,10 @@ class CNN(ClusterMixin, BaseEstimator):
         # Array tracking points qualified for similarity check
         core_candidates = np.asarray(n_neighbors >= (self.min_samples + 2))
 
+        # Account for self neighbour membership (self.min_samples + 1)
         cnn_inner(
             neighborhoods, labels, core_candidates,
-            self.min_samples + 1  # Account for self neighbour membership
+            self.min_samples + 1
             )
 
         self.labels_ = labels
