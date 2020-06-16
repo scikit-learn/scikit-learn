@@ -27,7 +27,13 @@ from scipy.sparse.linalg import lsqr
 from scipy.special import expit
 from joblib import Parallel
 
-from ..base import BaseEstimator, ClassifierMixin, RegressorMixin, MultiOutputMixin
+from ._ridge_solvers import _solve_cholesky, _solve_cholesky_kernel, _solve_svd
+from ..base import (
+    BaseEstimator,
+    ClassifierMixin,
+    RegressorMixin,
+    MultiOutputMixin,
+)
 from ..preprocessing._data import _is_constant_feature
 from ..utils import check_array
 from ..utils.validation import FLOAT_DTYPES
@@ -724,6 +730,38 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
                     for j in range(y.shape[1])
                 )
                 self.coef_ = np.vstack([out[0] for out in outs])
+                self._residues = np.vstack([out[3] for out in outs])
+        elif X.shape[1] <= 2 and np.all(np.linalg.eigvals(X @ X.T) > 0):
+            # Use Cholesky for 2 or fewer dimensions and positive-definite X @ X.T
+            n_samples, n_features = X.shape
+            if y.ndim == 1:
+                y = y.reshape(-1, 1)
+            n_samples_, n_targets = y.shape
+            alpha = np.asarray(0, dtype=X.dtype).ravel()
+            if alpha.size not in [1, n_targets]:
+                raise ValueError("Number of targets and number of penalties "
+                                "do not correspond: %d != %d"
+                                % (alpha.size, n_targets))
+
+            if alpha.size == 1 and n_targets > 1:
+                alpha = np.repeat(alpha, n_targets)
+
+            if n_features > n_samples:
+                K = safe_sparse_dot(X, X.T, dense_output=True)
+                try:
+                    dual_coef = _solve_cholesky_kernel(K, y, alpha)
+
+                    self.coef_ = safe_sparse_dot(X.T, dual_coef, dense_output=True).T
+                except linalg.LinAlgError:
+                    # use SVD solver if matrix is singular
+                    self.coef_ = _solve_svd(X, y, alpha)
+            else:
+                try:
+                    self.coef_ = _solve_cholesky(X, y, alpha)
+                except linalg.LinAlgError:
+                    # use SVD solver if matrix is singular
+                    self.coef_ = _solve_svd(X, y, alpha)
+            self.coef_ = self.coef_.reshape((self.coef_.shape[1],))
         else:
             self.coef_, self._residues, self.rank_, self.singular_ = \
                 linalg.lstsq(X, y, check_finite=False)
