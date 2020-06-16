@@ -126,7 +126,7 @@ class SimpleImputer(_BaseImputer):
 
     Parameters
     ----------
-    missing_values : number, string, np.nan (default) or None
+    missing_values : int, float, str, np.nan or None, default=np.nan
         The placeholder for the missing values. All occurrences of
         `missing_values` will be imputed. For pandas' dataframes with
         nullable integer dtypes with missing values, `missing_values`
@@ -181,7 +181,7 @@ class SimpleImputer(_BaseImputer):
         During :meth:`transform`, features corresponding to `np.nan`
         statistics will be discarded.
 
-    indicator_ : :class:`sklearn.impute.MissingIndicator`
+    indicator_ : :class:`~sklearn.impute.MissingIndicator`
         Indicator used to add binary indicators for missing values.
         ``None`` if add_indicator is False.
 
@@ -484,7 +484,7 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
 
     Parameters
     ----------
-    missing_values : number, string, np.nan (default) or None
+    missing_values : int, float, string, np.nan or None, default=np.nan
         The placeholder for the missing values. All occurrences of
         `missing_values` will be imputed. For pandas' dataframes with
         nullable integer dtypes with missing values, `missing_values`

@@ -80,13 +80,13 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
       np.concatenate([-np.inf, bin_edges_[i][1:-1], np.inf])
 
     You can combine ``KBinsDiscretizer`` with
-    :class:`sklearn.compose.ColumnTransformer` if you only want to preprocess
+    :class:`~sklearn.compose.ColumnTransformer` if you only want to preprocess
     part of the features.
 
     ``KBinsDiscretizer`` might produce constant features (e.g., when
     ``encode = 'onehot'`` and certain bins do not contain any data).
     These features can be removed with feature selection algorithms
-    (e.g., :class:`sklearn.feature_selection.VarianceThreshold`).
+    (e.g., :class:`~sklearn.feature_selection.VarianceThreshold`).
 
     Examples
     --------
@@ -136,7 +136,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
         y : None
             Ignored. This parameter exists only for compatibility with
-            :class:`sklearn.pipeline.Pipeline`.
+            :class:`~sklearn.pipeline.Pipeline`.
 
         Returns
         -------
