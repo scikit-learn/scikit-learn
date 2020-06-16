@@ -997,7 +997,7 @@ class SGDClassifier(BaseSGDClassifier):
         (clip(decision_function(X), -1, 1) + 1) / 2. For other loss functions
         it is necessary to perform proper probability calibration by wrapping
         the classifier with
-        :class:`sklearn.calibration.CalibratedClassifierCV` instead.
+        :class:`~sklearn.calibration.CalibratedClassifierCV` instead.
 
         Parameters
         ----------

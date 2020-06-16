@@ -5,7 +5,7 @@ Sparse coding with a precomputed dictionary
 
 Transform a signal as a sparse combination of Ricker wavelets. This example
 visually compares different sparse coding methods using the
-:class:`sklearn.decomposition.SparseCoder` estimator. The Ricker (also known
+:class:`~sklearn.decomposition.SparseCoder` estimator. The Ricker (also known
 as Mexican hat or the second derivative of a Gaussian) is not a particularly
 good kernel to represent piecewise constant signals like this one. It can
 therefore be seen how much adding different widths of atoms matters and it
