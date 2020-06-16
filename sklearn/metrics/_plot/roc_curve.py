@@ -160,7 +160,7 @@ def plot_roc_curve(estimator, X, y, *, sample_weight=None,
     display : :class:`~sklearn.metrics.RocCurveDisplay`
         Object that stores computed values.
 
-    See also
+    See Also
     --------
     roc_auc_score : Compute the area under the ROC curve
 
