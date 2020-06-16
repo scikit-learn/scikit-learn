@@ -28,10 +28,12 @@ from sklearn.linear_model._ridge import _RidgeGCV
 from sklearn.linear_model import RidgeCV
 from sklearn.linear_model import RidgeClassifier
 from sklearn.linear_model import RidgeClassifierCV
-from sklearn.linear_model._ridge import _solve_cholesky
-from sklearn.linear_model._ridge import _solve_cholesky_kernel
-from sklearn.linear_model._ridge import _solve_svd
-from sklearn.linear_model._ridge import _solve_lbfgs
+from sklearn.linear_model._ridge_solvers import (
+    _solve_cholesky,
+    _solve_cholesky_kernel,
+    _solve_svd,
+    _solve_lbfgs,
+)
 from sklearn.linear_model._ridge import _check_gcv_mode
 from sklearn.linear_model._ridge import _X_CenterStackOp
 from sklearn.datasets import make_regression
