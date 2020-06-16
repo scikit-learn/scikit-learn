@@ -358,6 +358,8 @@ def roc_auc_score(y_true, y_score, *, average="macro", sample_weight=None,
 
     roc_curve : Compute Receiver operating characteristic (ROC) curve
 
+    plot_roc_curve : Plot Receiver operating characteristic (ROC) curve
+
     Examples
     --------
     >>> import numpy as np
@@ -743,6 +745,8 @@ def roc_curve(y_true, y_score, *, pos_label=None, sample_weight=None,
     See also
     --------
     roc_auc_score : Compute the area under the ROC curve
+
+    plot_roc_curve : Plot Receiver operating characteristic (ROC) curve
 
     Notes
     -----
