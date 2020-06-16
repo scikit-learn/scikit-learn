@@ -411,6 +411,21 @@ class IterativeImputer(_BaseImputer):
                 X_filled[:, self._col_mapping(feat_idx)],
                 ~missing_row_mask
             )
+            # Reverse transformation, we do not want to encode labels
+            if y_train.ndim == 1:
+                y_train = y_train.reshape(-1, 1) # inverse_transform requires 2D inputs
+            y_train = self._transformers[feat_idx].inverse_transform(
+                y_train
+            )
+            if y_train.shape[1] == 1:
+                # Convert back to a 1D array, which many estimators require
+                y_train = y_train.reshape(-1, )
+            # Make y_train float dtype to avoid issues with label type detection
+            try:
+                y_train = y_train.astype(float)
+            except ValueError:
+                # y_train contains non-numeric values
+                pass
             estimator.fit(X_train, y_train)
 
         # if no missing values, don't predict
@@ -461,7 +476,12 @@ class IterativeImputer(_BaseImputer):
             np.where(missing_row_mask)[0],
             np.atleast_1d(self._col_mapping(feat_idx))
         )
+        # Re-apply transformation to predictions since now they will be features
+        if imputed_values.ndim == 1:
+            imputed_values = imputed_values.reshape(-1, 1)  # transform expects 2D
+        imputed_values = self._transformers[feat_idx].transform(imputed_values)
         # Reshape imputed_values, X_filled[ix] will always be at least 2D
+        # Cast dtypes to preserve dtype of X_filled
         X_filled[ix] = imputed_values.reshape(imputed_values.shape[0], -1)
         return X_filled, estimator
 
