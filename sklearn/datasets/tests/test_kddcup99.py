@@ -20,23 +20,23 @@ def test_percent10(fetch_kddcup99_fxt):
     assert data.data.shape == data_shuffled.data.shape
     assert data.target.shape == data_shuffled.target.shape
 
-    data = fetch_kddcup99_fxt('SA')
+    data = fetch_kddcup99_fxt(subset='SA')
     assert data.data.shape == (100655, 41)
     assert data.target.shape == (100655,)
 
-    data = fetch_kddcup99_fxt('SF')
+    data = fetch_kddcup99_fxt(subset='SF')
     assert data.data.shape == (73237, 4)
     assert data.target.shape == (73237,)
 
-    data = fetch_kddcup99_fxt('http')
+    data = fetch_kddcup99_fxt(subset='http')
     assert data.data.shape == (58725, 3)
     assert data.target.shape == (58725,)
 
-    data = fetch_kddcup99_fxt('smtp')
+    data = fetch_kddcup99_fxt(subset='smtp')
     assert data.data.shape == (9571, 3)
     assert data.target.shape == (9571,)
 
-    fetch_func = partial(fetch_kddcup99_fxt, 'smtp')
+    fetch_func = partial(fetch_kddcup99_fxt, subset='smtp')
     check_return_X_y(data, fetch_func)
 
 

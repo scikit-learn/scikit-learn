@@ -30,6 +30,7 @@ Details are listed in the changelog below.
 (While we are trying to better inform users by providing this information, we
 cannot assure that this list is complete.)
 
+
 Changelog
 ---------
 
@@ -43,6 +44,14 @@ Changelog
     Entries should end with:
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
+
+:mod:`sklearn.datasets`
+.......................
+
+- |Enhancement| :func:`datasets.fetch_openml` now allows argument `as_frame`
+  to be 'auto', which tries to convert returned data to pandas DataFrame
+  unless data is sparse.
+  :pr:`17396` by :user:`Jiaxiang <fujiaxiang>`.
 
 :mod:`sklearn.decomposition`
 ............................
@@ -82,6 +91,15 @@ Changelog
   when ``strategy='most_frequent'`` or ``strategy='constant'``.
   :pr:`17526` by :user:`Ayako YAGI <yagi-3>` and :user:`Juan Carlos Alfaro Jiménez <alfaro96>`.
 
+:mod:`sklearn.inspection`
+.........................
+
+- |Feature| :func:`inspection.partial_dependence` and
+  :func:`inspection.plot_partial_dependence` now support calculating and
+  plotting Individual Conditional Expectation (ICE) curves controlled by the
+  ``kind`` parameter.
+  :pr:`16619` by :user:`Madhura Jayratne <madhuracj>`.
+
 :mod:`sklearn.metrics`
 ......................
 
@@ -115,6 +133,10 @@ Changelog
   which scales output data such that normally distributed features have a
   variance of 1. :pr:`17193` by :user:`Lucy Liu <lucyleeow>` and
   :user:`Mabel Villalba <mabelvj>`.
+
+- |Enhancement| Add `dtype` parameter to
+  :class:`preprocessing.KBinsDiscretizer`.
+  :pr:`16335` by :user:`Arthur Imbert <Henley13>`.
 
 :mod:`sklearn.tree`
 ...................
