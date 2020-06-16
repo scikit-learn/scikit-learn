@@ -97,13 +97,14 @@ def test_zero_variance_target(categories):
                  dtype=int).T,  # 3 is unknown
         [[0, 1, 2]]),
     (
-        np.array([['cat'] * 3 + ['dog'] * 4 + ['snake']],
+        np.array([['cat'] * 10 + ['dog'] * 10 + ['snake']],
                  dtype=object).T,  # snake is unknown
         [['dog', 'cat', 'cow']]
     ),
 ])
 def test_custom_categories(X, categories):
-    # Test custom categoires with unknown categories
+    # Test custom categoires with known categories that is unseen during
+    # fit time
     rng = np.random.RandomState(42)
     y = rng.uniform(low=-10, high=20, size=X.shape[0])
 
@@ -114,7 +115,7 @@ def test_custom_categories(X, categories):
     assert_allclose(X_trans[-1], [y.mean()])
 
     assert len(enc.encodings_) == 1
-    # known category that is unseen during fit time is mapped to the mean
+    # known category that is unseen during fit time
     assert enc.encodings_[0][-1] == pytest.approx(y.mean())
 
 

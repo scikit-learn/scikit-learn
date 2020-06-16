@@ -22,13 +22,10 @@ __all__ = [
 
 
 def _get_counts(values, uniques):
-    """Get the count of each of the `uniques` in `values`.
+    """Get the count of each of the `uniques` in `values`. The counts will use
+    the order passed in by `uniques`.
 
-    For object dtypes, the counts will use the order passed in by
-    `uniques`.
-
-    For non-object dtypes, the counts will be lexiconally ordered. In other
-    words, it is assumed that `uniques` is also lexiconally ordered.
+    For non-object dtypes, `uniques` is assumed to be sorted.
     """
     if values.dtype == object:
         counter = Counter(values)
@@ -37,11 +34,13 @@ def _get_counts(values, uniques):
         return counts
 
     unique_values, counts = np.unique(values, return_counts=True)
-    indices_in_uniq = np.isin(unique_values, uniques, assume_unique=True)
+    uniques_in_values = np.isin(uniques, unique_values, assume_unique=True)
+    unique_valid_indices = np.searchsorted(unique_values,
+                                           uniques[uniques_in_values])
 
-    # remove counts that are not in `uniques`
-    counts[~indices_in_uniq] = 0
-    return counts
+    output = np.zeros_like(uniques)
+    output[uniques_in_values] = counts[unique_valid_indices]
+    return output
 
 
 class _BaseEncoder(TransformerMixin, BaseEstimator):
