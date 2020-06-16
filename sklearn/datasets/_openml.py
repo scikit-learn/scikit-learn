@@ -612,7 +612,7 @@ def _valid_data_column_names(features_list, target_columns):
 @_deprecate_positional_args
 def fetch_openml(name=None, *, version='active', data_id=None, data_home=None,
                  target_column='default-target', cache=True, return_X_y=False,
-                 as_frame=False):
+                 as_frame='auto'):
     """Fetch dataset from openml by name or dataset id.
 
     Datasets are uniquely identified by either an integer ID or by a
@@ -667,7 +667,7 @@ def fetch_openml(name=None, *, version='active', data_id=None, data_home=None,
         If True, returns ``(data, target)`` instead of a Bunch object. See
         below for more information about the `data` and `target` objects.
 
-    as_frame : bool or 'auto', default=False
+    as_frame : bool or 'auto', default='auto'
         If True, the data is a pandas DataFrame including columns with
         appropriate dtypes (numeric, string or categorical). The target is
         a pandas DataFrame or Series depending on the number of target_columns.
