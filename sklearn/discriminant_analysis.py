@@ -414,7 +414,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
                                       covariance_estimator)
 
         Sw = self.covariance_  # within scatter
-        St = _cov(X, shrinkage, covariance_estimator) # total scatter
+        St = _cov(X, shrinkage, covariance_estimator)  # total scatter
         Sb = St - Sw  # between scatter
 
         evals, evecs = linalg.eigh(Sb, Sw)
