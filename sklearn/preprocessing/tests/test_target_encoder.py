@@ -171,7 +171,6 @@ def test_multiple_features_sanity(to_pandas):
     assert_allclose(expected_encoding, enc.encodings_)
     assert enc.encoding_mean_ == pytest.approx(y_mean)
 
-
     X_trans = enc.transform(X_test)
     X_trans_expected = np.array([
        [feat_0_cat_0_encoding, feat_1_cat_1_encoding],
