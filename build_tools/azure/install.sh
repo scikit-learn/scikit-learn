@@ -19,23 +19,8 @@ version_ge() {
     test "$(printf "${1}\n${2}" | sort -rV | head -n 1)" == "$1"
 }
 
-
-get_dep() {
-    package="$1"
-    version="$2"
-    if [[ "$version" == "none" ]]; then
-        # do not install with none
-        echo
-    elif [[ "${version%%[^0-9.]*}" ]]; then
-        # version number is explicity passed
-        echo "$package==$version"
-    elif [[ "$version" == "latest" ]]; then
-        # use latest
-        echo "$package"
-    elif [[ "$version" == "min" ]]; then
-        echo "$package==$(python sklearn/_build_utils/min_dependencies.py $package)"
-    fi
-}
+# imports get_dep
+source build_tools/shared.sh
 
 if [[ "$DISTRIB" == "conda" ]]; then
 

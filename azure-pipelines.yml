@@ -111,14 +111,12 @@ jobs:
         # python 3.6
         PYTEST_VERSION: 'min'
         PYTEST_XDIST_VERSION: 'none'
-        COVERAGE: 'true'
       # Linux environment to test the latest available dependencies and MKL.
       # It runs tests requiring lightgbm, pandas and PyAMG.
       pylatest_pip_openblas_pandas:
         DISTRIB: 'conda-pip-latest'
         PYTHON_VERSION: '3.8'
         PANDAS_VERSION: 'none'
-        COVERAGE: 'true'
         CHECK_PYTEST_SOFT_DEPENDENCY: 'true'
         TEST_DOCSTRINGS: 'true'
         CHECK_WARNINGS: 'true'
@@ -150,11 +148,9 @@ jobs:
       pylatest_conda_mkl:
         DISTRIB: 'conda'
         BLAS: 'mkl'
-        COVERAGE: 'true'
       pylatest_conda_mkl_no_openmp:
         DISTRIB: 'conda'
         BLAS: 'mkl'
-        COVERAGE: 'true'
         SKLEARN_TEST_NO_OPENMP: 'true'
         SKLEARN_SKIP_OPENMP_TEST: 'true'
 

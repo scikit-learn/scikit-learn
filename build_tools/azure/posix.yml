@@ -29,7 +29,7 @@ jobs:
     PYTEST_VERSION: 'latest'
     PYTEST_XDIST_VERSION: 'latest'
     THREADPOOLCTL_VERSION: 'latest'
-    COVERAGE: 'false'
+    COVERAGE: 'true'
     TEST_DOCSTRINGS: 'false'
   strategy:
     matrix:
