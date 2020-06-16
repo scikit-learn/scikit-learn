@@ -366,6 +366,7 @@ def test_calibration_pipeline():
 
     # Check attributes are obtained from fitted estimator
     assert_array_equal(calib_clf.classes_, [0, 1])
-    msg = "'DictVectorizer' object has no attribute 'n_features_in_'"
+    # `DictVectorizer` has no `n_features_in_`
+    msg = "'CalibratedClassifierCV' object has no attribute 'n_features_in_'"
     with pytest.raises(AttributeError, match=msg):
         calib_clf.n_features_in_

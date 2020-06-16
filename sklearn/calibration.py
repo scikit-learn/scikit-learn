@@ -188,14 +188,28 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
             base_estimator = self.base_estimator
 
         if self.cv == "prefit":
+            # Set `n_features_in_` attribute
+            try:
+                check_is_fitted(self)
+            except NotFittedError as nfe:
+                raise AttributeError(
+                    "{} object has no n_features_in_ attribute."
+                    .format(self.__class__.__name__)
+                ) from nfe
+            else:
+                try:
+                    self.n_features_in_ = self.base_estimator.n_features_in_
+                except AttributeError:
+                    pass
             self.classes_ = base_estimator.classes_
+
             calibrated_classifier = _CalibratedClassifier(
                 base_estimator, method=self.method)
             calibrated_classifier.fit(X, y, sample_weight)
             self.calibrated_classifiers_.append(calibrated_classifier)
         else:
             X, y = self._validate_data(
-                X, y, reset=False, accept_sparse=['csc', 'csr', 'coo'],
+                X, y, accept_sparse=['csc', 'csr', 'coo'],
                 force_all_finite=False, allow_nd=True
             )
             le = LabelBinarizer().fit(y)
@@ -209,10 +223,8 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
                 n_folds = self.cv.n_folds
             else:
                 n_folds = None
-            not_enough_samples = np.any([
-                np.sum(y == class_) < n_folds for class_ in self.classes_
-            ])
-            if n_folds and not_enough_samples:
+            if n_folds and np.any([np.sum(y == class_) < n_folds
+                                  for class_ in self.classes_]):
                 raise ValueError(f"Requesting {n_folds}-fold cross-validation "
                                  f"but provided less than {n_folds} examples "
                                  "for at least one class.")
@@ -302,19 +314,6 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
                 'zero sample_weight is not equivalent to removing samples',
             }
         }
-
-    @property
-    def n_features_in_(self):
-        # For consistency with other estimators we raise a AttributeError so
-        # that hasattr() returns False if the estimator isn't fitted.
-        try:
-            check_is_fitted(self)
-        except NotFittedError as nfe:
-            raise AttributeError(
-                "{} object has no n_features_in_ attribute."
-                .format(self.__class__.__name__)
-            ) from nfe
-        return self.calibrated_classifiers_[0].n_features_in_
 
 
 class _CalibratedClassifier:
@@ -470,20 +469,6 @@ class _CalibratedClassifier:
         proba[(1.0 < proba) & (proba <= 1.0 + 1e-5)] = 1.0
 
         return proba
-
-    @property
-    def n_features_in_(self):
-        # For consistency with other estimators we raise a AttributeError so
-        # that hasattr() returns False the estimator isn't fitted.
-        try:
-            check_is_fitted(self)
-        except NotFittedError as nfe:
-            raise AttributeError(
-                "{} object has no n_features_in_ attribute."
-                .format(self.__class__.__name__)
-            ) from nfe
-        print(self.base_estimator)
-        return self.base_estimator.n_features_in_
 
 
 def _sigmoid_calibration(df, y, sample_weight=None):
