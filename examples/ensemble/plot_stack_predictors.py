@@ -80,7 +80,7 @@ X, y = load_ames_housing()
 # <sklearn.preprocessing.OneHotEncoder>` or
 # :class:`~sklearn.preprocessing.OrdinalEncoder
 # <sklearn.preprocessing.OrdinalEncoder>` depending for which type of model we
-# will use them (linear or non-linear model). To falicitate this preprocessing
+# will use them (linear or non-linear model). To facilitate this preprocessing
 # we will make two pipelines.
 # You can skip this section if your data is ready to use and does
 # not need preprocessing

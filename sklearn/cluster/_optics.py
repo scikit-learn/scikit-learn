@@ -84,7 +84,7 @@ class OPTICS(ClusterMixin, BaseEstimator):
 
     p : int, optional (default=2)
         Parameter for the Minkowski metric from
-        :class:`sklearn.metrics.pairwise_distances`. When p = 1, this is
+        :class:`~sklearn.metrics.pairwise_distances`. When p = 1, this is
         equivalent to using manhattan_distance (l1), and euclidean_distance
         (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
 
@@ -391,7 +391,7 @@ if metric=’precomputed’.
 
     p : integer, optional (default=2)
         Parameter for the Minkowski metric from
-        :class:`sklearn.metrics.pairwise_distances`. When p = 1, this is
+        :class:`~sklearn.metrics.pairwise_distances`. When p = 1, this is
         equivalent to using manhattan_distance (l1), and euclidean_distance
         (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
 

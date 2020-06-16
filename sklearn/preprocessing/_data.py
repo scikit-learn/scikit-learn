@@ -139,8 +139,9 @@ def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
 
     See also
     --------
-    StandardScaler: Performs scaling to unit variance using the``Transformer`` API
-        (e.g. as part of a preprocessing :class:`~sklearn.pipeline.Pipeline`).
+    StandardScaler: Performs scaling to unit variance using the``Transformer``
+        API (e.g. as part of a preprocessing
+        :class:`~sklearn.pipeline.Pipeline`).
 
     """  # noqa
     X = check_array(X, accept_sparse='csc', copy=copy, ensure_2d=False,
@@ -494,8 +495,9 @@ def minmax_scale(X, feature_range=(0, 1), *, axis=0, copy=True):
 
     See also
     --------
-    MinMaxScaler: Performs scaling to a given range using the``Transformer`` API
-        (e.g. as part of a preprocessing :class:`~sklearn.pipeline.Pipeline`).
+    MinMaxScaler: Performs scaling to a given range using the``Transformer``
+        API (e.g. as part of a preprocessing
+        :class:`~sklearn.pipeline.Pipeline`).
 
     Notes
     -----
@@ -622,8 +624,8 @@ class StandardScaler(TransformerMixin, BaseEstimator):
     --------
     scale: Equivalent function without the estimator API.
 
-    :class:`~sklearn.decomposition.PCA`
-        Further removes the linear correlation across features with 'whiten=True'.
+    :class:`~sklearn.decomposition.PCA`: Further removes the linear correlation
+        across features with 'whiten=True'.
 
     Notes
     -----
@@ -1096,8 +1098,9 @@ def maxabs_scale(X, *, axis=0, copy=True):
 
     See also
     --------
-    MaxAbsScaler: Performs scaling to the [-1, 1] range using the``Transformer`` API
-        (e.g. as part of a preprocessing :class:`~sklearn.pipeline.Pipeline`).
+    MaxAbsScaler: Performs scaling to the [-1, 1] range using
+        the``Transformer`` API (e.g. as part of a preprocessing
+        :class:`~sklearn.pipeline.Pipeline`).
 
     Notes
     -----
