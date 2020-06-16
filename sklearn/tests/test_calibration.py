@@ -9,10 +9,9 @@ from sklearn.base import BaseEstimator
 from sklearn.model_selection import LeaveOneOut
 
 from sklearn.utils._testing import (assert_array_almost_equal,
-                                   assert_almost_equal,
-                                   assert_array_equal,
-                                   assert_raises, ignore_warnings,
-                                   assert_raises_regex)
+                                    assert_almost_equal,
+                                    assert_array_equal,
+                                    assert_raises, ignore_warnings)
 from sklearn.datasets import make_classification, make_blobs
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
