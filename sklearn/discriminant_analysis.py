@@ -47,10 +47,10 @@ def _cov(X, shrinkage=None, covariance_estimator=None):
 
     covariance_estimator : estimator, default=None
         If not None, `covariance_estimator` is used to estimate
-        the covariance matrices instead of relying the empirical
+        the covariance matrices instead of relying on the empirical
         covariance estimator (with potential shrinkage).
         The object should have a fit method and a ``covariance_`` attribute
-        like the estimators in sklearn.covariance.
+        like the estimators in :mod:`sklearn.covariance``.
         if None the shrinkage parameter drives the estimate.
 
         .. versionadded:: 0.23
@@ -232,13 +232,13 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
 
     covariance_estimator : estimator, default=None
         If not None, `covariance_estimator` is used to estimate
-        the covariance matrices instead of relying the empirical
+        the covariance matrices instead of relying on the empirical
         covariance estimator (with potential shrinkage).
         The object should have a fit method and a ``covariance_`` attribute
-        like the estimators in sklearn.covariance.
+        like the estimators in :mod:`sklearn.covariance`.
         if None the shrinkage parameter drives the estimate.
 
-        Note that covariance_estimator works only with 'lsqr' and 'eigen'
+        Note that `covariance_estimator` works only with 'lsqr' and 'eigen'
         solvers.
 
         .. versionadded:: 0.23
@@ -363,8 +363,8 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         self.intercept_ = (-0.5 * np.diag(np.dot(self.means_, self.coef_.T)) +
                            np.log(self.priors_))
 
-    def _solve_eigen(self, X, y, shrinkage, covariance_estimator,
-                     ):
+    def _solve_eigen(self, X, y, shrinkage,
+                     covariance_estimator):
         """Eigenvalue solver.
 
         The eigenvalue solver computes the optimal solution of the Rayleigh
@@ -414,8 +414,7 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
                                       covariance_estimator)
 
         Sw = self.covariance_  # within scatter
-        # total scatter
-        St = _cov(X, shrinkage, covariance_estimator)
+        St = _cov(X, shrinkage, covariance_estimator) # total scatter
         Sb = St - Sw  # between scatter
 
         evals, evecs = linalg.eigh(Sb, Sw)
@@ -467,8 +466,6 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         U, S, Vt = linalg.svd(X, full_matrices=False)
 
         rank = np.sum(S > self.tol)
-        if rank < n_features:
-            warnings.warn("Variables are collinear.")
         # Scaling of within covariance is: V' 1/S
         scalings = (Vt[:rank] / std).T / S[:rank]
 

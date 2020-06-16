@@ -64,7 +64,7 @@ Changelog
 :mod:`sklearn.discriminant_analysis`
 ....................................
 
-- |Enhancement| Disciminant analysis methods can now use custom
+- |Enhancement| Linear Disciminant analysis methods can now use custom
   covariance estimate by setting the `covariance_estimator` parameter of
   :class:`discriminant_analysis.LinearDiscriminantAnalysis`
   :pr:`14446` by :user:`Hugo Richard <hugorichard>`

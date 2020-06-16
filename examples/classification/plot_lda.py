@@ -71,7 +71,7 @@ plt.plot(features_samples_ratio, acc_clf3, linewidth=2,
 plt.xlabel('n_features / n_samples')
 plt.ylabel('Classification accuracy')
 
-plt.legend(loc=1, prop={'size': 12})
+plt.legend(loc='bottom', prop={'size': 12})
 plt.suptitle('Linear Discriminant Analysis vs. ' + '\n'
              + 'Shrinkage Linear Discriminant Analysis vs. ' + '\n'
              + 'OAS Linear Discriminant Analysis (1 discriminative feature)')

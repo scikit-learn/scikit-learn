@@ -50,10 +50,6 @@ X2 = np.array([[-3, 0], [-2, 0], [-1, 0], [-1, 0], [0, 0], [1, 0], [1, 0],
 # One element class
 y4 = np.array([1, 1, 1, 1, 1, 1, 1, 1, 2])
 
-# n_samples == n_classes
-X8 = np.random.rand(5, 2)
-y8 = np.array([0, 1, 2, 3, 4])
-
 # Data with less samples in a class than n_features
 X5 = np.c_[np.arange(8), np.zeros((8, 3))]
 y5 = np.array([0, 0, 0, 0, 0, 1, 1, 1])
@@ -358,8 +354,9 @@ def test_lda_shrinkage():
     Test that shrunk covariance estimator and
     shrinkage parameter behave the same
     """
-    X = np.random.rand(100, 10)
-    Y = np.random.randint(3, size=(100))
+    rng = np.random.RandomState(0)
+    X = rng.random.rand(100, 10)
+    Y = rng.random.randint(3, size=(100))
     c1 = LinearDiscriminantAnalysis(store_covariance=True, shrinkage=0.5,
                                     solver="lsqr")
     c2 = LinearDiscriminantAnalysis(
@@ -368,8 +365,7 @@ def test_lda_shrinkage():
             solver="lsqr")
     c1.fit(X, Y)
     c2.fit(X, Y)
-    for i in range(2):
-        np.testing.assert_allclose(c1.means_[i], c2.means_[i])
+    np.testing.assert_allclose(c1.means_, c2.means_)
     np.testing.assert_allclose(c1.covariance_, c2.covariance_)
 
 
@@ -402,8 +398,7 @@ def test_lda_ledoitwolf():
             )
     c1.fit(X, Y)
     c2.fit(X, Y)
-    for i in range(2):
-        np.testing.assert_allclose(c1.means_[i], c2.means_[i])
+    np.testing.assert_allclose(c1.means_, c2.means_)
     np.testing.assert_allclose(c1.covariance_, c2.covariance_)
 
 
