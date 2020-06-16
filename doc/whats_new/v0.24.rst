@@ -53,6 +53,10 @@ Changelog
   unless data is sparse.
   :pr:`17396` by :user:`Jiaxiang <fujiaxiang>`.
 
+- |API| The argument `as_frame` in :func:`datasets.fetch_openml` now defaults
+  to 'auto' instead of False.
+  :pr:`17610` by :user:`Jiaxiang <fujiaxiang>`.
+
 :mod:`sklearn.decomposition`
 ............................
 
