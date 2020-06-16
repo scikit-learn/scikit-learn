@@ -481,7 +481,6 @@ class IterativeImputer(_BaseImputer):
             imputed_values = imputed_values.reshape(-1, 1)  # transform expects 2D
         imputed_values = self._transformers[feat_idx].transform(imputed_values)
         # Reshape imputed_values, X_filled[ix] will always be at least 2D
-        # Cast dtypes to preserve dtype of X_filled
         X_filled[ix] = imputed_values.reshape(imputed_values.shape[0], -1)
         return X_filled, estimator
 
