@@ -633,6 +633,10 @@ encoding for `'cat'` is pulled toward the overall mean of `53` when compared to
     >>> enc.y_mean_
     53...
 
+.. topic:: Examples:
+
+  * :ref:`sphx_glr_auto_examples_preprocessing_plot_target_regressor_encoder.py`
+
 .. topic:: References
 
     .. [GEL] Andrew Gelman and Jennifer Hill. Data Analysis Using Regression
