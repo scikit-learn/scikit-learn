@@ -84,11 +84,9 @@ def johnson_lindenstrauss_min_dim(n_samples, *, eps=0.1):
 
     eps : float or ndarray of shape (n_components,), dtype=float, \
             default=0.1
-        float in range(0, 1)
-        Maximum distortion rate as defined by the \
-        Johnson-Lindenstrauss lemma.
-        If an array is given, it will compute a safe number of components
-        array-wise. 
+        Maximum distortion rate in the range (0,1 ) as defined by the
+        Johnson-Lindenstrauss lemma. If an array is given, it will compute a
+        safe number of components array-wise.
 
     Returns
     -------
@@ -441,10 +439,9 @@ class GaussianRandomProjection(BaseRandomProjection):
         as it makes no assumption on the structure of the dataset.
 
     eps : float, default=0.1
-        Strictly positive.
         Parameter to control the quality of the embedding according to
-        the Johnson-Lindenstrauss lemma when n_components is set to
-        'auto'.
+        the Johnson-Lindenstrauss lemma when `n_components` is set to
+        'auto'. The value should be strictly positive.
 
         Smaller values lead to better embedding and higher number of
         dimensions (n_components) in the target projection space.
@@ -544,8 +541,8 @@ class SparseRandomProjection(BaseRandomProjection):
         as it makes no assumption on the structure of the dataset.
 
     density : float or 'auto', default='auto'
-        float in range (0,1]
-        Ratio of non-zero component in the random projection matrix.
+        Ratio in the range (0, 1] of non-zero component in the random
+        projection matrix.
 
         If density = 'auto', the value is set to the minimum density
         as recommended by Ping Li et al.: 1 / sqrt(n_features).
@@ -554,11 +551,10 @@ class SparseRandomProjection(BaseRandomProjection):
         Achlioptas, 2001.
 
     eps : float, default=0.1
-        Strictly positive.
         Parameter to control the quality of the embedding according to
         the Johnson-Lindenstrauss lemma when n_components is set to
-        'auto'.
-    
+        'auto'. This value should be strictly positive.
+
         Smaller values lead to better embedding and higher number of
         dimensions (n_components) in the target projection space.
 
