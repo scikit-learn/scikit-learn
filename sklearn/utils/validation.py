@@ -70,7 +70,7 @@ def _deprecate_positional_args(f):
                           "passing these as positional arguments will "
                           "result in an error".format(", ".join(args_msg)),
                           FutureWarning)
-        kwargs.update({k: arg for k, arg in zip(sig.parameters, args)})
+        kwargs.update(zip(sig.parameters, args))
         return f(**kwargs)
     return inner_f
 
