@@ -35,7 +35,7 @@ class PrecisionRecallDisplay:
     pos_label : str or int, default=None
         The class considered as the positive class. If None, the class will not
         be shown in the legend.
-        
+
         .. versionadded:: 0.24
 
     Attributes
