@@ -90,32 +90,24 @@ def _sort_centers(centers):
     return np.sort(centers, axis=0)
 
 
-@pytest.mark.parametrize("init", ["k-means++", centers],
-                         ids=["k-means++", "ndarray"])
-@pytest.mark.parametrize("estimator", [KMeans, MiniBatchKMeans])
-def test_weighted_vs_repeated(estimator, init):
+def test_weighted_vs_repeated():
     # Check that a sample weight of N should yield the same result as an N-fold
-    # repetition of the sample
+    # repetition of the sample. Valid only if init is precomputed, otherwise
+    # rng produces different results. Not valid for MinibatchKMeans due to rng
+    # to extract minibatches.
     sample_weight = np.random.RandomState(0).randint(1, 5, size=n_samples)
     X_repeat = np.repeat(X, sample_weight, axis=0)
 
-    km = estimator(init=init, n_clusters=n_clusters, random_state=0)
-    if estimator is MiniBatchKMeans:
-        km.set_params(batch_size=10)
+    km = KMeans(init=centers, n_init=1, n_clusters=n_clusters, random_state=0)
 
     km_weighted = clone(km).fit(X, sample_weight=sample_weight)
     repeated_labels = np.repeat(km_weighted.labels_, sample_weight)
     km_repeated = clone(km).fit(X_repeat)
 
-    # We can't expect labels to be equal because k-means++ will lead to
-    # a different initialization on duplicated X.
-    assert_allclose(v_measure_score(km_repeated.labels_, repeated_labels), 1)
-
-    # TODO: FIXME
-    if estimator is not MiniBatchKMeans:
-        assert_allclose(km_weighted.inertia_, km_repeated.inertia_)
-        assert_allclose(_sort_centers(km_weighted.cluster_centers_),
-                        _sort_centers(km_repeated.cluster_centers_))
+    assert_array_equal(km_repeated.labels_, repeated_labels)
+    assert_allclose(km_weighted.inertia_, km_repeated.inertia_)
+    assert_allclose(_sort_centers(km_weighted.cluster_centers_),
+                    _sort_centers(km_repeated.cluster_centers_))
 
 
 @pytest.mark.parametrize("estimator", [KMeans, MiniBatchKMeans])
@@ -192,7 +184,7 @@ def test_centers_not_mutated(estimator, dtype):
 @pytest.mark.parametrize("data", [X, X_csr], ids=["dense", "sparse"])
 @pytest.mark.parametrize("estimator", [KMeans, MiniBatchKMeans])
 def test_float_precision(estimator, data):
-    # TODO
+    # Check that the results are the same for single and double precision.
     km = estimator(n_init=1, random_state=0)
 
     inertia = {}
