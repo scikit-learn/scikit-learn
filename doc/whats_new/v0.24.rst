@@ -144,6 +144,11 @@ Changelog
 - |Enhancement| :func:`tree.plot_tree` now uses colors from the matplotlib
   configuration settings. :pr:`17187` by `Andreas Müller`_.
 
+- |API|: The parameter ``X_idx_sorted`` is now deprecated in
+  :meth:`tree.DecisionTreeClassifier.fit` and
+  :meth:`tree.DecisionTreeRegressor.fit`, and has not effect.
+  :pr:`17614` by :user:`Juan Carlos Alfaro Jiménez <alfaro96>`.
+
 :mod:`sklearn.neighbors`
 .............................
 
