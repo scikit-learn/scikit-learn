@@ -472,9 +472,15 @@ class SimpleImputer(_BaseImputer):
     def inverse_transform(self, X):
         """Convert the data back to the original representation.
 
-        Inverts the `fit_transform` operation performed on an array.
+        Inverts the ``fit_transform`` operation performed on an array.
         This operation can only be performed after :class:`SimpleImputer` is
-        used with `add_indicator` set to `True`.
+        instantiated with ``add_indicator`` parameter set to `True`.
+
+        Note that ``inverse_transform`` can only regenerate data for the
+        features that have missing indicators present in the fitting data.
+        This limitation exists because the imputer learns missing indicators
+        based on features of fitting-data, and they are only set during
+        the ``fit`` phase.
 
         Parameters
         ----------
