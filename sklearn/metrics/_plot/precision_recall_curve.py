@@ -166,6 +166,11 @@ def plot_precision_recall_curve(estimator, X, y, *,
     -------
     display : :class:`~sklearn.metrics.PrecisionRecallDisplay`
         Object that stores computed values.
+
+    See Also
+    --------
+    precision_recall_curve :
+        Compute precision-recall pairs for different probability thresholds
     """
     check_matplotlib_support("plot_precision_recall_curve")
 
