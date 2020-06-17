@@ -1477,6 +1477,13 @@ class MiniBatchKMeans(KMeans):
         # batch_size changes
         batch_inertia /= self.batch_size
 
+        # Ignore first iteration because it's inertia from initialization.
+        if iteration_idx == 0:
+            if self.verbose:
+                print(f"Minibatch iteration {iteration_idx + 1}/{n_iter}: "
+                      f"mean batch inertia: {batch_inertia}")
+            return False
+
         # Compute an Exponentially Weighted Average of the inertia to
         # monitor the convergence while discarding minibatch-local stochastic
         # variability: https://en.wikipedia.org/wiki/Moving_average
