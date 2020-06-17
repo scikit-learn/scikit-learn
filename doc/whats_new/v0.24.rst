@@ -155,7 +155,7 @@ Changelog
 - |Enhancement| Added the option for the number of n_features_to_select to be
   given as a float representing the percentage of features to select.
   :pr:`17090` by :user:`Lisa Schwetlick <lschwetlick>` and
-  Marija Vlajic Wheeler <marijavlajic>.
+  :user:`Marija Vlajic Wheeler <marijavlajic>`.
 
 
 Code and Documentation Contributors
