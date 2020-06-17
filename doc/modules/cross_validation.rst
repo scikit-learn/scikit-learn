@@ -755,7 +755,7 @@ and cannot account for groups.
 
 To perform the train and test split, use the indices for the train and test
 subsets yielded by the generator output by the `split()` method of the
-cross-validation iterator. For example::
+cross-validation splitter. For example::
 
   >>> import numpy as np
   >>> from sklearn.model_selection import GroupShuffleSplit
