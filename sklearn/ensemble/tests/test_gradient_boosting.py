@@ -53,6 +53,7 @@ true_result = [-1, 1, 1]
 rng = np.random.RandomState(0)
 # also load the diabetes dataset
 # and randomly permute it
+X_reg, y_reg = make_regression(n_samples=500, n_features=10, noise=4)
 diabetes = datasets.load_diabetes()
 perm = rng.permutation(diabetes.target.size)
 diabetes.data = diabetes.data[perm]
@@ -215,11 +216,7 @@ def test_classification_synthetic(loss):
 def check_california(loss, subsample):
     # Check consistency on dataset california house prices with least squares
     # and least absolute deviation.
-    california = datasets.fetch_california_housing()
-    perm = rng.permutation(500)
-    california.data = california.data[perm]
-    california.target = california.target[perm]
-    ones = np.ones(len(california.target))
+    ones = np.ones(len(y_reg))
     last_y_pred = None
     for sample_weight in None, ones, 2 * ones:
         clf = GradientBoostingRegressor(n_estimators=100,
@@ -230,13 +227,12 @@ def check_california(loss, subsample):
                                         random_state=1)
 
         assert_raises(ValueError, clf.predict, california.data)
-        clf.fit(california.data, california.target,
-                sample_weight=sample_weight)
-        leaves = clf.apply(california.data)
+        clf.fit(X_reg, y_reg, sample_weight=sample_weight)
+        leaves = clf.apply(X_reg)
         assert leaves.shape == (500, 100)
 
-        y_pred = clf.predict(california.data)
-        mse = mean_squared_error(california.target, y_pred)
+        y_pred = clf.predict(X_reg)
+        mse = mean_squared_error(y_reg, y_pred)
         assert mse < 0.1
 
         if last_y_pred is not None:
