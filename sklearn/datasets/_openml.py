@@ -667,16 +667,19 @@ def fetch_openml(name=None, *, version='active', data_id=None, data_home=None,
         If True, returns ``(data, target)`` instead of a Bunch object. See
         below for more information about the `data` and `target` objects.
 
-    as_frame : bool or 'auto', default='auto'
+    as_frame : bool or 'auto', default=False
         If True, the data is a pandas DataFrame including columns with
         appropriate dtypes (numeric, string or categorical). The target is
         a pandas DataFrame or Series depending on the number of target_columns.
         The Bunch will contain a ``frame`` attribute with the target and the
         data. If ``return_X_y`` is True, then ``(data, target)`` will be pandas
         DataFrames or Series as describe above.
+
         If as_frame is 'auto', the data and target will be converted to
         DataFrame or Series as if as_frame is set to True, unless the dataset
         is stored in sparse format.
+
+        The default value will change from False to 'auto' in 0.25.
 
     Returns
     -------
