@@ -7,7 +7,6 @@
 """Recursive feature elimination for feature ranking"""
 
 import numpy as np
-import numbers
 from joblib import Parallel, delayed, effective_n_jobs
 
 from ..utils.metaestimators import if_delegate_has_method
