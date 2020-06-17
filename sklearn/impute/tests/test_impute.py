@@ -1400,13 +1400,13 @@ def test_simple_imputation_inverse_transform():
         [6, 4, 2, np.nan]
     ])
 
-    imputer_1 = SimpleImputer(missing_values=np.nan, strategy='mean',
-                              add_indicator=True)
-    X_1_trans = imputer_1.fit_transform(X_1)
-    X_1_orig = imputer_1.inverse_transform(X_1_trans)
+    imputer = SimpleImputer(missing_values=np.nan, strategy='mean',
+                            add_indicator=True)
+    X_1_trans = imputer.fit_transform(X_1)
+    X_1_orig = imputer.inverse_transform(X_1_trans)
 
-    X_2_trans = imputer_1.transform(X_2)
-    X_2_orig = imputer_1.inverse_transform(X_2_trans)
+    X_2_trans = imputer.transform(X_2)
+    X_2_orig = imputer.inverse_transform(X_2_trans)
 
     assert_array_equal(X_1_orig, X_1)
     assert_array_equal(X_2_orig, X_2)
