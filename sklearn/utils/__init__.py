@@ -565,7 +565,7 @@ def resample(*arrays,
         return resampled_arrays
 
 
-def shuffle(*arrays, **options):
+def shuffle(*arrays, random_state=None, n_samples=None):
     """Shuffle arrays or sparse matrices in a consistent way
 
     This is a convenience alias to ``resample(*arrays, replace=False)`` to do
@@ -577,17 +577,16 @@ def shuffle(*arrays, **options):
         Indexable data-structures can be arrays, lists, dataframes or scipy
         sparse matrices with consistent first dimension.
 
-    Other Parameters
-    ----------------
-    random_state : int, RandomState instance or None, optional (default=None)
+    random_state : int or RandomState instance, default=None
         Determines random number generation for shuffling
         the data.
         Pass an int for reproducible results across multiple function calls.
         See :term:`Glossary <random_state>`.
 
-    n_samples : int, None by default
+    n_samples : int, default=None
         Number of samples to generate. If left to None this is
-        automatically set to the first dimension of the arrays.
+        automatically set to the first dimension of the arrays.  It should
+        not be larger than the length of arrays.
 
     Returns
     -------
@@ -631,8 +630,8 @@ def shuffle(*arrays, **options):
     --------
     :func:`sklearn.utils.resample`
     """
-    options['replace'] = False
-    return resample(*arrays, **options)
+    return resample(*arrays, replace=False, n_samples=n_samples,
+                    random_state=random_state)
 
 
 @_deprecate_positional_args

@@ -147,11 +147,11 @@ def fetch_species_distributions(*, data_home=None,
 
     Parameters
     ----------
-    data_home : optional, default: None
+    data_home : str, default=None
         Specify another download and cache folder for the datasets. By default
         all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 
-    download_if_missing : optional, True by default
+    download_if_missing : bool, default=True
         If False, raise a IOError if the data is not locally available
         instead of trying to download the data from the source site.
 
