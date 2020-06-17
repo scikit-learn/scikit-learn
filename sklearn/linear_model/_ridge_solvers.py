@@ -8,6 +8,7 @@ from ..utils.extmath import safe_sparse_dot
 from ..exceptions import ConvergenceWarning
 from scipy.sparse import linalg as sp_linalg
 
+
 def _solve_sparse_cg(X, y, alpha, max_iter=None, tol=1e-3, verbose=0,
                      X_offset=None, X_scale=None):
 

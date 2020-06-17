@@ -17,7 +17,10 @@ from scipy import linalg
 from scipy import sparse
 
 from ._base import LinearClassifierMixin, LinearModel, _rescale_data
-from ._ridge_solvers import _solve_sparse_cg, _solve_lsqr, _solve_cholesky, _solve_cholesky_kernel, _solve_svd
+from ._ridge_solvers import (
+    _solve_sparse_cg, _solve_lsqr, _solve_cholesky,
+    _solve_cholesky_kernel, _solve_svd
+)
 from ._sag import sag_solver
 from ..base import RegressorMixin, MultiOutputMixin, is_classifier
 from ..utils.extmath import safe_sparse_dot
