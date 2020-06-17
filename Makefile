@@ -18,8 +18,6 @@ clean-ctags:
 clean: clean-ctags
 	$(PYTHON) setup.py clean
 	rm -rf dist
-	# TODO: Remove in when all modules are removed.
-	$(PYTHON) sklearn/_build_utils/deprecated_modules.py
 
 in: inplace # just a shortcut
 inplace:
@@ -67,4 +65,4 @@ code-analysis:
 	pylint -E -i y sklearn/ -d E1103,E0611,E1101
 
 flake8-diff:
-	./build_tools/circle/flake8_diff.sh
+	git diff upstream/master -u -- "*.py" | flake8 --diff

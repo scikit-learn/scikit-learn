@@ -15,7 +15,6 @@
   <meta charset="utf-8">
   {{ metatags }}
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="Description" content="scikit-learn: machine learning in Python">
 
   {% block htmltitle %}
   <title>{{ title|striptags|e }}{{ titlesuffix }}</title>
@@ -35,7 +34,8 @@
     {%- endif %}
   {%- endfor %}
   <link rel="stylesheet" href="{{ pathto('_static/' + style, 1) }}" type="text/css" />
-
+<script id="documentation_options" data-url_root="{{ pathto('', 1) }}" src="{{ pathto('_static/documentation_options.js', 1) }}"></script>
+<script src="{{ pathto('_static/jquery.js', 1) }}"></script>
 {%- block extrahead %} {% endblock %}
 </head>
 <body>
@@ -63,7 +63,7 @@
             <a href="#" role="button" class="btn sk-btn-rellink py-1 disabled"">Prev</a>
           {%- endif %}
           {%- if parents -%}
-            <a href="{{ parents[-1].link }}" role="button" class="btn sk-btn-rellink py-1" sk-rellink-tooltip="{{ parents[-1].title }}">Up</a>
+            <a href="{{ parents[-1].link|e }}" role="button" class="btn sk-btn-rellink py-1" sk-rellink-tooltip="{{ parents[-1].title|striptags }}">Up</a>
           {%- else %}
             <a href="#" role="button" class="btn sk-btn-rellink disabled py-1">Up</a>
           {%- endif %}
@@ -76,7 +76,7 @@
         {%- if pagename != "install" %}
         <div class="alert alert-danger p-1 mb-2" role="alert">
           <p class="text-center mb-0">
-          <strong>scikit-learn {{ version }}</strong><br/>
+          <strong>scikit-learn {{ release }}</strong><br/>
           <a href="http://scikit-learn.org/dev/versions.html">Other versions</a>
           </p>
         </div>
@@ -123,6 +123,7 @@
   </div>
 </div>
 {%- endblock %}
+<script src="{{ pathto('_static/js/vendor/bootstrap.min.js', 1) }}"></script>
 {% include "javascript.html" %}
 </body>
 </html>

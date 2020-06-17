@@ -9,15 +9,15 @@ import pytest
 
 from scipy import sparse
 
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_raise_message
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_raise_message
 
 from sklearn.cluster import MeanShift
 from sklearn.cluster import mean_shift
 from sklearn.cluster import estimate_bandwidth
 from sklearn.cluster import get_bin_seeds
-from sklearn.datasets.samples_generator import make_blobs
+from sklearn.datasets import make_blobs
 
 
 n_clusters = 3
@@ -71,7 +71,7 @@ def test_estimate_bandwidth_with_sparse_matrix():
     # Test estimate_bandwidth with sparse matrix
     X = sparse.lil_matrix((1000, 1000))
     msg = "A sparse matrix was passed, but dense data is required."
-    assert_raise_message(TypeError, msg, estimate_bandwidth, X, 200)
+    assert_raise_message(TypeError, msg, estimate_bandwidth, X)
 
 
 def test_parallel():

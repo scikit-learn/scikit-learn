@@ -9,14 +9,14 @@ from sklearn import svm
 
 from sklearn.utils.extmath import softmax
 from sklearn.datasets import make_multilabel_classification
-from sklearn.random_projection import sparse_random_matrix
+from sklearn.random_projection import _sparse_random_matrix
 from sklearn.utils.validation import check_array, check_consistent_length
 from sklearn.utils.validation import check_random_state
 
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_warns
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_warns
 
 from sklearn.metrics import auc
 from sklearn.metrics import average_precision_score
@@ -26,8 +26,8 @@ from sklearn.metrics import precision_recall_curve
 from sklearn.metrics import label_ranking_loss
 from sklearn.metrics import roc_auc_score
 from sklearn.metrics import roc_curve
-from sklearn.metrics.ranking import _ndcg_sample_scores, _dcg_sample_scores
-from sklearn.metrics.ranking import ndcg_score, dcg_score
+from sklearn.metrics._ranking import _ndcg_sample_scores, _dcg_sample_scores
+from sklearn.metrics import ndcg_score, dcg_score
 
 from sklearn.exceptions import UndefinedMetricWarning
 
@@ -554,7 +554,7 @@ def test_multiclass_ovr_roc_auc_toydata(y_true, labels):
         result_unweighted)
 
     # Tests the weighted, one-vs-rest multiclass ROC AUC algorithm
-    # on the same input (Provost & Domingos, 2001)
+    # on the same input (Provost & Domingos, 2000)
     result_weighted = out_0 * 0.25 + out_1 * 0.25 + out_2 * 0.5
     assert_almost_equal(
         roc_auc_score(
@@ -662,13 +662,52 @@ def test_auc_score_non_binary_class():
             roc_auc_score(y_true, y_pred)
 
 
-def test_binary_clf_curve():
+def test_binary_clf_curve_multiclass_error():
     rng = check_random_state(404)
     y_true = rng.randint(0, 3, size=10)
     y_pred = rng.rand(10)
     msg = "multiclass format is not supported"
+
     with pytest.raises(ValueError, match=msg):
         precision_recall_curve(y_true, y_pred)
+
+    with pytest.raises(ValueError, match=msg):
+        roc_curve(y_true, y_pred)
+
+
+@pytest.mark.parametrize("curve_func", [
+    precision_recall_curve,
+    roc_curve,
+])
+def test_binary_clf_curve_implicit_pos_label(curve_func):
+    # Check that using string class labels raises an informative
+    # error for any supported string dtype:
+    msg = ("y_true takes value in {'a', 'b'} and pos_label is "
+           "not specified: either make y_true take "
+           "value in {0, 1} or {-1, 1} or pass pos_label "
+           "explicitly.")
+    with pytest.raises(ValueError, match=msg):
+        roc_curve(np.array(["a", "b"], dtype='<U1'), [0., 1.])
+
+    with pytest.raises(ValueError, match=msg):
+        roc_curve(np.array(["a", "b"], dtype=object), [0., 1.])
+
+    # The error message is slightly different for bytes-encoded
+    # class labels, but otherwise the behavior is the same:
+    msg = ("y_true takes value in {b'a', b'b'} and pos_label is "
+           "not specified: either make y_true take "
+           "value in {0, 1} or {-1, 1} or pass pos_label "
+           "explicitly.")
+    with pytest.raises(ValueError, match=msg):
+        roc_curve(np.array([b"a", b"b"], dtype='<S1'), [0., 1.])
+
+    # Check that it is possible to use floating point class labels
+    # that are interpreted similarly to integer class labels:
+    y_pred = [0., 1., 0.2, 0.42]
+    int_curve = roc_curve([0, 1, 1, 0], y_pred)
+    float_curve = roc_curve([0., 1., 1., 0.], y_pred)
+    for int_curve_part, float_curve_part in zip(int_curve, float_curve):
+        np.testing.assert_allclose(int_curve_part, float_curve_part)
 
 
 def test_precision_recall_curve():
@@ -698,8 +737,9 @@ def _test_precision_recall_curve(y_true, probas_pred):
     assert_array_almost_equal(precision_recall_auc, 0.859, 3)
     assert_array_almost_equal(precision_recall_auc,
                               average_precision_score(y_true, probas_pred))
+    # `_average_precision` is not very precise in case of 0.5 ties: be tolerant
     assert_almost_equal(_average_precision(y_true, probas_pred),
-                        precision_recall_auc, decimal=3)
+                        precision_recall_auc, decimal=2)
     assert p.size == r.size
     assert p.size == thresholds.size + 1
     # Smoke test in the case of proba having only one value
@@ -1076,9 +1116,9 @@ def check_alternative_lrap_implementation(lrap_score, n_classes=5,
                                                n_samples=n_samples)
 
     # Score with ties
-    y_score = sparse_random_matrix(n_components=y_true.shape[0],
-                                   n_features=y_true.shape[1],
-                                   random_state=random_state)
+    y_score = _sparse_random_matrix(n_components=y_true.shape[0],
+                                    n_features=y_true.shape[1],
+                                    random_state=random_state)
 
     if hasattr(y_score, "toarray"):
         y_score = y_score.toarray()

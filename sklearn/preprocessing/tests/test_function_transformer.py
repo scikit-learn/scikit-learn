@@ -3,9 +3,9 @@ import numpy as np
 from scipy import sparse
 
 from sklearn.preprocessing import FunctionTransformer
-from sklearn.utils.testing import (assert_array_equal,
+from sklearn.utils._testing import (assert_array_equal,
                                    assert_allclose_dense_sparse)
-from sklearn.utils.testing import assert_warns_message, assert_no_warnings
+from sklearn.utils._testing import assert_warns_message, assert_no_warnings
 
 
 def _make_func(args_store, kwargs_store, func=lambda X, *a, **k: X):

@@ -3,7 +3,7 @@ import re
 
 import numpy as np
 from scipy.sparse import csc_matrix, csr_matrix, lil_matrix
-from sklearn.utils.testing import (assert_almost_equal, assert_array_equal)
+from sklearn.utils._testing import (assert_almost_equal, assert_array_equal)
 
 from sklearn.datasets import load_digits
 from io import StringIO
