@@ -749,8 +749,7 @@ def test_ohe_infrequent_infrequent_is_a_cat():
     {'max_categories': 2, 'min_frequency': 6},
     {'max_categories': 4, 'min_frequency': 12},
 ])
-@pytest.mark.parametrize("categories",
-                         ["auto", [['a', 'b', 'c', 'd']]])
+@pytest.mark.parametrize("categories", ["auto", [['a', 'b', 'c', 'd']]])
 def test_ohe_infrequent_two_levels(kwargs, categories):
     # Test that different parameters for combine 'a', 'c', and 'd' into
     # the infrequent category works as expected

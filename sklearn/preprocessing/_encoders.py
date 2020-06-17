@@ -526,8 +526,9 @@ class OneHotEncoder(_BaseEncoder):
             min_frequency_abs = n_samples * self.min_frequency
             infrequent_mask = category_count < min_frequency_abs
 
+        n_current_features = category_count.size - infrequent_mask.sum() + 1
         if (self.max_categories is not None
-                and self.max_categories < category_count.size):
+                and self.max_categories < n_current_features):
             # stable sort to preserve original count order
             smallest_levels = np.argsort(
                 category_count, kind='mergesort'
@@ -537,7 +538,7 @@ class OneHotEncoder(_BaseEncoder):
         output = np.flatnonzero(infrequent_mask)
         if output.size == category_count.size:
             raise ValueError(f"All categories in column {col_idx} are "
-                             "infrequent")
+                             "infrequent, try decreasing min_frequency")
         return output if output.size > 0 else None
 
     def _fit_infrequent_category_mapping(self, fit_results):
