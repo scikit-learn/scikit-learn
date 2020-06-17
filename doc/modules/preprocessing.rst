@@ -603,15 +603,15 @@ output. The parameters to enable the gathering of infrequent categories are
 `min_frequency` and `max_categories`.
 
 1. `min_frequency` is either an  integer greater or equal to 1, or a float in
-the interval `(0.0, 1.0)`. If `min_frequency` is an integer, categories with a
-cardinality smaller than `min_frequency`  will be considered
-infrequent. If `min_frequency` is a float, categories with a cardinality smaller
-than this fraction of the total number of samples will be considered infrequent.
+   the interval `(0.0, 1.0)`. If `min_frequency` is an integer, categories with
+   a cardinality smaller than `min_frequency`  will be considered infrequent.
+   If `min_frequency` is a float, categories with a cardinality smaller than
+   this fraction of the total number of samples will be considered infrequent.
 
 2. `max_categories` is either `None` or any integer greater than 1. This
-parameter sets an upper limit to the number of output features for each input
-feature. `max_categories` includes the feature that combines infrequent
-categories.
+   parameter sets an upper limit to the number of output features for each
+   input feature. `max_categories` includes the feature that combines
+   infrequent categories.
 
 In the following example, the categories, `'dog', 'snake'` are considered
 infrequent::
@@ -637,6 +637,19 @@ feature name::
 
    >>> enc.get_feature_names()
    array(['x0_cat', 'x0_rabbit', 'x0_infrequent'], dtype=object)
+
+When this `'handle_unknown'` is set to 'auto' and an unknown category is
+encountered in transform:
+
+1. If infrequent category support was not configured or there were no
+   infrequent category during training, the resulting one-hot encoded columns
+   for this feature will be all zeros. In the inverse transform, an unknown
+   category will be denoted as `None`.
+
+2. If there is an infrequent category during training, the unknown category
+   will be considered infrequent. In the inverse transform, 'infrequent' will
+   be used to represent the infrequent category. If `'infrequent'` is already a
+   category, `'infrequent_sklearn'` will be used instead.
 
 Infrequent categories can be filtered out using `min_frequency` and
 `max_categories`. In the following example, we set `max_categories=2` to

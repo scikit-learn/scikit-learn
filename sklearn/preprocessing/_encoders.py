@@ -259,24 +259,11 @@ class OneHotEncoder(_BaseEncoder):
     handle_unknown : {'error', 'ignore', 'auto'}, default='error'
         Whether to raise an error or ignore if an unknown categorical feature
         is present during transform (default is to raise). When this parameter
-        is set to 'ignore' and an unknown category is encountered during
+        is set to 'auto' and an unknown category is encountered during
         transform, the resulting one-hot encoded columns for this feature
         will be all zeros. In the inverse transform, an unknown category
-        will be denoted as None.
-
-        When this parameter is set to 'auto' and an unknown category is
-        encountered in transform:
-
-            1. If infrequent category support was not configured or there were
-            no infrequent category during training, the resulting one-hot
-            encoded columns for this feature will be all zeros. In the inverse
-            transform, an unknown category will be denoted as `None`.
-
-            2. If there is an infrequent category during training, the unknown
-            category will be considered infrequent. In the inverse transform,
-            'infrequent' will be used to represent the infrequent category. If
-            'infrequent' is already a category, 'infrequent_sklearn' will be
-            used instead.
+        will be denoted as None. Read more in the
+        :ref:`User Guide <one_hot_encoder_infrequent_categories>F`
 
         .. versionadded:: 0.24
             `'auto'` was added to automatically handle unknown categories
@@ -414,20 +401,6 @@ class OneHotEncoder(_BaseEncoder):
                 "specified, as both would create categories that are all "
                 "zero.")
 
-        # validates infrequent category features
-        if self.drop is not None and self._infrequent_enabled():
-            raise ValueError("infrequent categories are not supported when "
-                             "drop is specified")
-
-        # TODO: Remove when handle_unknown='ignore' is deprecated
-        if self.handle_unknown == 'ignore':
-            warnings.warn("handle_unknown='ignore' is deprecated in favor "
-                          "of 'auto' in version 0.24 and will be removed in "
-                          "version 0.26", FutureWarning)
-            if self._infrequent_enabled():
-                raise ValueError("infrequent categories are only supported "
-                                 "when handle_unknown is 'error' or 'auto'")
-
         if self.max_categories is not None and self.max_categories <= 1:
             raise ValueError("max_categories must be greater than 1")
 
@@ -441,6 +414,30 @@ class OneHotEncoder(_BaseEncoder):
                 raise ValueError("min_frequency must be an integer at least "
                                  "1 or a float in (0.0, 1.0); got the "
                                  f"float {self.min_frequency}")
+
+        self._infrequent_enabled = (
+            (self.max_categories is not None and self.max_categories > 1)
+            or
+            (isinstance(self.min_frequency, numbers.Integral) and
+             self.min_frequency > 1)
+            or
+            (isinstance(self.min_frequency, numbers.Real) and
+             self.min_frequency < 1.0)
+        )
+
+        # validates infrequent category features
+        if self.drop is not None and self._infrequent_enabled:
+            raise ValueError("infrequent categories are not supported when "
+                             "drop is specified")
+
+        # TODO: Remove when handle_unknown='ignore' is deprecated
+        if self.handle_unknown == 'ignore':
+            warnings.warn("handle_unknown='ignore' is deprecated in favor "
+                          "of 'auto' in version 0.24 and will be removed in "
+                          "version 0.26", FutureWarning)
+            if self._infrequent_enabled:
+                raise ValueError("infrequent categories are only supported "
+                                 "when handle_unknown is 'error' or 'auto'")
 
     def _compute_drop_idx(self):
         if self.drop is None:
@@ -487,18 +484,6 @@ class OneHotEncoder(_BaseEncoder):
                              for (val, cat_list) in
                              zip(self.drop, self.categories_)],
                             dtype=np.object)
-
-    def _infrequent_enabled(self):
-        """Infrequent category is enabled."""
-        if self.max_categories is not None and self.max_categories > 1:
-            return True
-        if (isinstance(self.min_frequency, numbers.Integral)
-                and self.min_frequency > 1):
-            return True
-        if (isinstance(self.min_frequency, numbers.Real)
-                and 0.0 < self.min_frequency < 1.0):
-            return True
-        return False
 
     def _identify_infrequent(self, category_count, n_samples, col_idx):
         """Compute the infrequent indices
@@ -555,7 +540,7 @@ class OneHotEncoder(_BaseEncoder):
         fit_results : dict
             return values from `super()._fit()`
         """
-        if not self._infrequent_enabled():
+        if not self._infrequent_enabled:
             return
 
         n_samples = fit_results["n_samples"]
@@ -601,7 +586,7 @@ class OneHotEncoder(_BaseEncoder):
         X_int: ndarray of shape (n_samples, n_features)
             Integer encoded categories.
         """
-        if not self._infrequent_enabled():
+        if not self._infrequent_enabled:
             return
 
         n_features = X_int.shape[1]
@@ -637,7 +622,7 @@ class OneHotEncoder(_BaseEncoder):
             return np.delete(cats, self.drop_idx_[i])
 
         # drop is None
-        if not self._infrequent_enabled():
+        if not self._infrequent_enabled:
             return cats
 
         # infrequent is enabled
@@ -673,7 +658,7 @@ class OneHotEncoder(_BaseEncoder):
         # drop is None
         output = [len(cats) for cats in self.categories_]
 
-        if not self._infrequent_enabled():
+        if not self._infrequent_enabled:
             return output
 
         # infrequent is enabled
@@ -703,7 +688,7 @@ class OneHotEncoder(_BaseEncoder):
         """
         self._validate_keywords()
         fit_results = self._fit(X, handle_unknown=self.handle_unknown,
-                                return_counts=self._infrequent_enabled())
+                                return_counts=self._infrequent_enabled)
         self._fit_infrequent_category_mapping(fit_results)
         self.drop_idx_ = self._compute_drop_idx()
         return self
@@ -831,7 +816,7 @@ class OneHotEncoder(_BaseEncoder):
         j = 0
         found_unknown = {}
 
-        if self._infrequent_enabled():
+        if self._infrequent_enabled:
             infrequent_indices = self.infrequent_indices_
         else:
             infrequent_indices = [None] * n_features
