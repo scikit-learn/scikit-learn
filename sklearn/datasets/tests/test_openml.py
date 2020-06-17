@@ -1056,7 +1056,7 @@ def test_fetch_openml_cache(monkeypatch, gzip_response, tmpdir):
 
 @pytest.mark.parametrize('gzip_response', [True, False])
 @pytest.mark.filterwarnings(
-    "ignore:default value of as_frame will change:FutureWarning"
+    "ignore:The default value of as_frame will change:FutureWarning"
 )
 def test_fetch_openml_notarget(monkeypatch, gzip_response):
     data_id = 61
@@ -1073,7 +1073,7 @@ def test_fetch_openml_notarget(monkeypatch, gzip_response):
 
 @pytest.mark.parametrize('gzip_response', [True, False])
 @pytest.mark.filterwarnings(
-    "ignore:default value of as_frame will change:FutureWarning"
+    "ignore:The default value of as_frame will change:FutureWarning"
 )
 def test_fetch_openml_inactive(monkeypatch, gzip_response):
     # fetch inactive dataset by id
@@ -1092,7 +1092,7 @@ def test_fetch_openml_inactive(monkeypatch, gzip_response):
 
 @pytest.mark.parametrize('gzip_response', [True, False])
 @pytest.mark.filterwarnings(
-    "ignore:default value of as_frame will change:FutureWarning"
+    "ignore:The default value of as_frame will change:FutureWarning"
 )
 def test_fetch_nonexiting(monkeypatch, gzip_response):
     # there is no active version of glass2
@@ -1117,7 +1117,7 @@ def test_raises_illegal_multitarget(monkeypatch, gzip_response):
 
 @pytest.mark.parametrize('gzip_response', [True, False])
 @pytest.mark.filterwarnings(
-    "ignore:default value of as_frame will change:FutureWarning"
+    "ignore:The default value of as_frame will change:FutureWarning"
 )
 def test_warn_ignore_attribute(monkeypatch, gzip_response):
     data_id = 40966
@@ -1158,7 +1158,7 @@ def test_string_attribute_without_dataframe(monkeypatch, gzip_response):
 
 @pytest.mark.parametrize('gzip_response', [True, False])
 @pytest.mark.filterwarnings(
-    "ignore:default value of as_frame will change:FutureWarning"
+    "ignore:The default value of as_frame will change:FutureWarning"
 )
 def test_dataset_with_openml_error(monkeypatch, gzip_response):
     data_id = 1
@@ -1173,7 +1173,7 @@ def test_dataset_with_openml_error(monkeypatch, gzip_response):
 
 @pytest.mark.parametrize('gzip_response', [True, False])
 @pytest.mark.filterwarnings(
-    "ignore:default value of as_frame will change:FutureWarning"
+    "ignore:The default value of as_frame will change:FutureWarning"
 )
 def test_dataset_with_openml_warning(monkeypatch, gzip_response):
     data_id = 3
@@ -1188,7 +1188,7 @@ def test_dataset_with_openml_warning(monkeypatch, gzip_response):
 
 @pytest.mark.parametrize('gzip_response', [True, False])
 @pytest.mark.filterwarnings(
-    "ignore:default value of as_frame will change:FutureWarning"
+    "ignore:The default value of as_frame will change:FutureWarning"
 )
 def test_illegal_column(monkeypatch, gzip_response):
     data_id = 61
@@ -1205,7 +1205,7 @@ def test_illegal_column(monkeypatch, gzip_response):
 
 @pytest.mark.parametrize('gzip_response', [True, False])
 @pytest.mark.filterwarnings(
-    "ignore:default value of as_frame will change:FutureWarning"
+    "ignore:The default value of as_frame will change:FutureWarning"
 )
 def test_fetch_openml_raises_missing_values_target(monkeypatch, gzip_response):
     data_id = 2
@@ -1215,7 +1215,7 @@ def test_fetch_openml_raises_missing_values_target(monkeypatch, gzip_response):
 
 
 @pytest.mark.filterwarnings(
-    "ignore:default value of as_frame will change:FutureWarning"
+    "ignore:The default value of as_frame will change:FutureWarning"
 )
 def test_fetch_openml_raises_illegal_argument():
     assert_raise_message(ValueError, "Dataset data_id=",
@@ -1235,7 +1235,7 @@ def test_fetch_openml_raises_illegal_argument():
 
 @pytest.mark.parametrize('gzip_response', [True, False])
 @pytest.mark.filterwarnings(
-    "ignore:default value of as_frame will change:FutureWarning"
+    "ignore:The default value of as_frame will change:FutureWarning"
 )
 def test_fetch_openml_with_ignored_feature(monkeypatch, gzip_response):
     # Regression test for #14340
