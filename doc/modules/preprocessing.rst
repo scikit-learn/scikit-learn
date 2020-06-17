@@ -598,14 +598,13 @@ represented as a dict, not as scalars.
 Infrequent categories
 ---------------------
 
-:class:`OneHotEncoder` supports outputing a feature that combines infrequent
-categories in the training data. For each input feature that has an infrequent
-category a new column is formed to represent it. The parameters to enable the
-gathering of infrequent categories are `min_frequency` and `max_categories`.
+:class:`OneHotEncoder` supports aggregating infrequent categories into a single
+output. The parameters to enable the gathering of infrequent categories are
+`min_frequency` and `max_categories`.
 
 1. `min_frequency` is either an  integer greater or equal to 1, or a float in
 the interval `(0.0, 1.0)`. If `min_frequency` is an integer, categories with a
-cardinality smaller than `min_frequency * n_samples`  will be considered
+cardinality smaller than `min_frequency`  will be considered
 infrequent. If `min_frequency` is a float, categories with a cardinality smaller
 than this fraction of the total number of samples will be considered infrequent.
 
@@ -617,7 +616,7 @@ categories.
 In the following example, the categories, `'dog', 'snake'` are considered
 infrequent::
 
-   >>> X = np.array([['dog'] * 5 + ['cat'] * 20 + ['rabbit'] * 10 + 
+   >>> X = np.array([['dog'] * 5 + ['cat'] * 20 + ['rabbit'] * 10 +
    ...               ['snake'] * 3]).T
    >>> enc = preprocessing.OneHotEncoder(min_frequency=6,
    ...                                   handle_unknown='auto').fit(X)
@@ -641,7 +640,9 @@ feature name::
 
 Infrequent categories can be filtered out using `min_frequency` and
 `max_categories`. In the following example, we set `max_categories=2` to
-limit the number of features in the output::
+limit the number of features in the output. This will result in all but
+the `'cat'` category to be considered infrequent, leading to two features,
+one for `'cat'` and one for infrequent categories - which are all the others::
 
    >>> enc = preprocessing.OneHotEncoder(min_frequency=6, max_categories=2,
    ...                                   handle_unknown='auto').fit(X)

@@ -24,22 +24,25 @@ __all__ = [
 
 
 def _get_counts(values, uniques):
-    """Get the number of times each of the values comes up `values`
+    """Get the count of each of the `uniques` in `values`. The counts will use
+    the order passed in by `uniques`.
 
-    For object dtypes, the counts returned will use the order passed in by
-    `uniques`.
+    For non-object dtypes, `uniques` is assumed to be sorted.
     """
-    if values.dtype == object:
-        uniques_dict = Counter(values)
-        counts = np.array([uniques_dict[item] for item in uniques],
+    if values.dtype.kind in 'UO':
+        counter = Counter(values)
+        counts = np.array([counter[item] for item in uniques],
                           dtype=int)
         return counts
 
-    # numerical
-    uniq_values, counts = np.unique(values, return_counts=True)
-    indices_in_uniq = np.isin(uniq_values, uniques, assume_unique=True)
-    counts[~indices_in_uniq] = 0
-    return counts
+    unique_values, counts = np.unique(values, return_counts=True)
+    uniques_in_values = np.isin(uniques, unique_values, assume_unique=True)
+    unique_valid_indices = np.searchsorted(unique_values,
+                                           uniques[uniques_in_values])
+
+    output = np.zeros_like(uniques)
+    output[uniques_in_values] = counts[unique_valid_indices]
+    return output
 
 
 class _BaseEncoder(TransformerMixin, BaseEstimator):
@@ -131,8 +134,10 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
 
             self.categories_.append(cats)
 
-        return {'category_counts': category_counts,
-                'n_samples': n_samples}
+        output = {'n_samples': n_samples}
+        if return_counts:
+            output['category_counts'] = category_counts
+        return output
 
     def _transform(self, X, handle_unknown='error'):
         X_list, n_samples, n_features = self._check_X(X)
@@ -236,10 +241,6 @@ class OneHotEncoder(_BaseEncoder):
         representation and can therefore induce a bias in downstream models,
         for instance for penalized linear classification or regression models.
 
-        However, dropping one category breaks the symmetry of the original
-        representation and can therefore induce a bias in downstream models,
-        for instance for penalized linear classification or regression models.
-
         - None : retain all features (the default).
         - 'first' : drop the first category in each feature. If only one
           category is present, the feature will be dropped entirely.
@@ -286,7 +287,8 @@ class OneHotEncoder(_BaseEncoder):
             removed in 0.26.
 
     min_frequency : int or float, default=1
-        Specifies the categories to be considered infrequent.
+        Specifies the minimum frequency for a category not to be considered
+        infrequent.
 
             1. If int, categories with a smaller cardinality will be considered
             infrequent.
@@ -325,7 +327,7 @@ class OneHotEncoder(_BaseEncoder):
     infrequent_indices_ : list of shape (n_features,)
         Defined only when `min_frequency` or `max_categories` is set to a
         non-default value. `infrequent_indices_[i]` is an array of indices
-        corresponding to `categories_[i]` of the infrequent categories.
+        mapping from `categories_[i]` to the infrequent categories.
         `infrequent_indices_[i]` is None if the ith input feature has no
         infrequent categories.
 
@@ -499,8 +501,7 @@ class OneHotEncoder(_BaseEncoder):
         return False
 
     def _identify_infrequent(self, category_count, n_samples, col_idx):
-        """Compute the infrequent indicies based on max_categories and
-        min_frequency.
+        """Compute the infrequent indices
 
         Parameters
         ----------
@@ -516,19 +517,16 @@ class OneHotEncoder(_BaseEncoder):
         Returns
         -------
         output : ndarray of shape (n_infrequent_categories,) or None
-            If there are infrequent categories, indicies of infrequent
+            If there are infrequent categories, indices of infrequent
             categories. Otherwise None.
         """
-        # categories with no count are infrequent
-        infrequent_mask = category_count == 0
-
         if isinstance(self.min_frequency, numbers.Integral):
-            infrequent_mask |= category_count < self.min_frequency
+            infrequent_mask = category_count < self.min_frequency
         else:  # float
             min_frequency_abs = n_samples * self.min_frequency
-            infrequent_mask |= category_count < min_frequency_abs
+            infrequent_mask = category_count < min_frequency_abs
 
-        if (self.max_categories is not None and self.max_categories > 1
+        if (self.max_categories is not None
                 and self.max_categories < category_count.size):
             # stable sort to preserve original count order
             smallest_levels = np.argsort(
@@ -545,16 +543,20 @@ class OneHotEncoder(_BaseEncoder):
     def _fit_infrequent_category_mapping(self, fit_results):
         """Fit infrequent categories.
 
-        Defines:
-            1. infrequent_indices_ to be the categories that are infrequent.
-            2. _default_to_infrequent_mappings to be the mapping from the
-               default mapping provided by _encode to the infrequent categories
+        Defines the private attribute: `_default_to_infrequent_mappings`.
+        For feature `i`, `_default_to_infrequent_mappings[i]` defines the
+        mapping from the integer encoding from `super().transform()` into
+        infrequent categories. If `_default_to_infrequent_mappings[i]` is
+        None, there were no infrequent categories in the training set.
 
         Parameters
         ----------
         fit_results : dict
             return values from `super()._fit()`
         """
+        if not self._infrequent_enabled():
+            return
+
         n_samples = fit_results["n_samples"]
         category_counts = fit_results["category_counts"]
 
@@ -574,11 +576,11 @@ class OneHotEncoder(_BaseEncoder):
                 continue
 
             n_cats = len(cats)
-            # infrequent indicies exist
+            # infrequent indices exist
             mapping = np.empty(n_cats, dtype=int)
             n_infrequent_cats = infreq_idx.size
 
-            # infrequent categories are apped to the last element.
+            # infrequent categories are mapped to the last element.
             n_frequent_cats = n_cats - n_infrequent_cats
             mapping[infreq_idx] = n_frequent_cats
 
@@ -590,8 +592,8 @@ class OneHotEncoder(_BaseEncoder):
         self._default_to_infrequent_mappings = default_to_infrequent_mappings
 
     def _map_to_infrequent_categories(self, X_int, X_mask):
-        """Map categories to infrequent categories.
-        This modifies X_int in-place.
+        """Map categories to infrequent categories. This modifies X_int
+        in-place.
 
         Parameters
         ----------

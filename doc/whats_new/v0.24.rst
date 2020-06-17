@@ -142,9 +142,9 @@ Changelog
 ............................
 
 - |MajorFeature| :class:`preprocessing.OneHotEncoder` now supports grouping
-  infrequent categories into a single infrequent category. This feature is
-  enabled by setting `handle_unknown='auto'` and specifying how to select
-  infrequent categories with `min_frequency` or `max_categories`.
+  infrequent categories ito a single feature. Infrequent categories is
+  enabled by setting `handle_unknown` to `'auto'` or `'error'` and specifying
+  how to select infrequent categories with `min_frequency` or `max_categories`.
   :pr:`16018` by `Thomas Fan`_.
 
 :mod:`sklearn.tree`
