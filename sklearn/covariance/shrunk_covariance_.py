@@ -552,18 +552,16 @@ class OAS(EmpiricalCovariance):
     --------
     >>> from sklearn.covariance import OAS
     >>> import numpy as np
-    >>> np.random.seed(42)
+    >>> rng = np.random.RandomState(42)
     >>> real_cov = np.array([[.4, .2],
     ...                      [.2, .8]])
-    >>> X = np.random.multivariate_normal(mean=[0, 0],
-    ...                                        cov=real_cov,
-    ...                                        size=50)
+    >>> X = rng.multivariate_normal(mean=[0, 0], cov=real_cov, size=50)
     >>> cov = OAS(store_precision=True, assume_centered=False).fit(X)
     >>> cov.covariance_
-    array([[0.40833806, 0.05471143],
-        [0.05471143, 0.49496884]])
+    array([[0.408..., 0.054...],
+           [0.054..., 0.494...]])
     >>> cov.location_
-    array([-0.08625521, -0.10225575])
+    array([-0.086..., -0.102...])
 
     References
     ----------
