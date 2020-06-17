@@ -129,7 +129,7 @@ def test_rfe_percent_n_features():
     rfe_perc = RFE(estimator=clf, n_features_to_select=0.5, step=0.1)
     rfe_perc.fit(X, y)
 
-    rfe_other = RFE(estimator=clf, n_features_to_select=2, step=0.1)
+    rfe_other = RFE(estimator=clf, n_features_to_select=0.01, step=0.1)
     rfe_other.fit(X, y)
 
     assert all(rfe_perc.ranking_ == rfe_num.ranking_)
