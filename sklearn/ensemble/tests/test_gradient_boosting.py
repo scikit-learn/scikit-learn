@@ -216,7 +216,6 @@ def check_regression_dataset(loss, subsample):
     # and least absolute deviation.
     ones = np.ones(len(y_reg))
     last_y_pred = None
-    from sklearn.metrics import r2_score
     for sample_weight in None, ones, 2 * ones:
         clf = GradientBoostingRegressor(n_estimators=100,
                                         loss=loss,
