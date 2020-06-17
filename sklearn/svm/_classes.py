@@ -127,7 +127,7 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
         Furthermore SVC multi-class mode is implemented using one
         vs one scheme while LinearSVC uses one vs the rest. It is
         possible to implement one vs the rest with SVC by using the
-        :class:`sklearn.multiclass.OneVsRestClassifier` wrapper.
+        :class:`~sklearn.multiclass.OneVsRestClassifier` wrapper.
 
         Finally SVC can fit dense data without memory copy if the input
         is C-contiguous. Sparse data will still incur memory copy though.
@@ -243,6 +243,14 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
                 self.intercept_ = np.array([intercept])
 
         return self
+
+    def _more_tags(self):
+        return {
+            '_xfail_checks': {
+                'check_sample_weights_invariance(kind=zeros)':
+                'zero sample_weight is not equivalent to removing samples',
+            }
+        }
 
 
 class LinearSVR(RegressorMixin, LinearModel):
@@ -424,6 +432,14 @@ class LinearSVR(RegressorMixin, LinearModel):
 
         return self
 
+    def _more_tags(self):
+        return {
+            '_xfail_checks': {
+                'check_sample_weights_invariance(kind=zeros)':
+                'zero sample_weight is not equivalent to removing samples',
+            }
+        }
+
 
 class SVC(BaseSVC):
     """C-Support Vector Classification.
@@ -431,9 +447,9 @@ class SVC(BaseSVC):
     The implementation is based on libsvm. The fit time scales at least
     quadratically with the number of samples and may be impractical
     beyond tens of thousands of samples. For large datasets
-    consider using :class:`sklearn.svm.LinearSVC` or
-    :class:`sklearn.linear_model.SGDClassifier` instead, possibly after a
-    :class:`sklearn.kernel_approximation.Nystroem` transformer.
+    consider using :class:`~sklearn.svm.LinearSVC` or
+    :class:`~sklearn.linear_model.SGDClassifier` instead, possibly after a
+    :class:`~sklearn.kernel_approximation.Nystroem` transformer.
 
     The multiclass support is handled according to a one-vs-one scheme.
 
@@ -649,6 +665,14 @@ class SVC(BaseSVC):
             decision_function_shape=decision_function_shape,
             break_ties=break_ties,
             random_state=random_state)
+
+    def _more_tags(self):
+        return {
+            '_xfail_checks': {
+                'check_sample_weights_invariance(kind=zeros)':
+                'zero sample_weight is not equivalent to removing samples',
+            }
+        }
 
 
 class NuSVC(BaseSVC):
@@ -866,7 +890,9 @@ class NuSVC(BaseSVC):
             '_xfail_checks': {
                 'check_methods_subset_invariance':
                 'fails for the decision_function method',
-                'check_class_weight_classifiers': 'class_weight is ignored.'
+                'check_class_weight_classifiers': 'class_weight is ignored.',
+                'check_sample_weights_invariance(kind=zeros)':
+                'zero sample_weight is not equivalent to removing samples',
             }
         }
 
@@ -879,9 +905,9 @@ class SVR(RegressorMixin, BaseLibSVM):
     The implementation is based on libsvm. The fit time complexity
     is more than quadratic with the number of samples which makes it hard
     to scale to datasets with more than a couple of 10000 samples. For large
-    datasets consider using :class:`sklearn.svm.LinearSVR` or
-    :class:`sklearn.linear_model.SGDRegressor` instead, possibly after a
-    :class:`sklearn.kernel_approximation.Nystroem` transformer.
+    datasets consider using :class:`~sklearn.svm.LinearSVR` or
+    :class:`~sklearn.linear_model.SGDRegressor` instead, possibly after a
+    :class:`~sklearn.kernel_approximation.Nystroem` transformer.
 
     Read more in the :ref:`User Guide <svm_regression>`.
 
@@ -1027,6 +1053,14 @@ class SVR(RegressorMixin, BaseLibSVM):
     def probB_(self):
         return self._probB
 
+    def _more_tags(self):
+        return {
+            '_xfail_checks': {
+                'check_sample_weights_invariance(kind=zeros)':
+                'zero sample_weight is not equivalent to removing samples',
+            }
+        }
+
 
 class NuSVR(RegressorMixin, BaseLibSVM):
     """Nu Support Vector Regression.
@@ -1156,6 +1190,14 @@ class NuSVR(RegressorMixin, BaseLibSVM):
             tol=tol, C=C, nu=nu, epsilon=0., shrinking=shrinking,
             probability=False, cache_size=cache_size, class_weight=None,
             verbose=verbose, max_iter=max_iter, random_state=None)
+
+    def _more_tags(self):
+        return {
+            '_xfail_checks': {
+                'check_sample_weights_invariance(kind=zeros)':
+                'zero sample_weight is not equivalent to removing samples',
+            }
+        }
 
 
 class OneClassSVM(OutlierMixin, BaseLibSVM):
@@ -1371,3 +1413,11 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
     @property
     def probB_(self):
         return self._probB
+
+    def _more_tags(self):
+        return {
+            '_xfail_checks': {
+                'check_sample_weights_invariance(kind=zeros)':
+                'zero sample_weight is not equivalent to removing samples',
+            }
+        }

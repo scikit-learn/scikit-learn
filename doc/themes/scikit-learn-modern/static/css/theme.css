@@ -36,7 +36,6 @@ code {
   color: #222;
   background-color: #ecf0f3;
   border-radius: 0.2rem;
-  white-space: nowrap;
   padding: 0.15rem;
 }
 
@@ -722,11 +721,11 @@ dd {
   margin-top: 1rem;
 }
 
-ul.simple li p {
+ul.simple li p, ol.simple li p {
   margin-bottom: 0;
 }
 
-ul.simple {
+ul.simple, ol.simple {
   padding-left: 1.5rem;
 }
 

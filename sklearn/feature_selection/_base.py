@@ -32,7 +32,7 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
 
         Parameters
         ----------
-        indices : boolean (default False)
+        indices : bool, default=False
             If True, the return value will be an array of integers, rather
             than a boolean mask.
 

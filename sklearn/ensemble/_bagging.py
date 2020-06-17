@@ -457,7 +457,8 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
     ----------
     base_estimator : object, default=None
         The base estimator to fit on random subsets of the dataset.
-        If None, then the base estimator is a decision tree.
+        If None, then the base estimator is a
+        :class:`~sklearn.tree.DecisionTreeClassifier`.
 
     n_estimators : int, default=10
         The number of base estimators in the ensemble.
@@ -865,7 +866,8 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
     ----------
     base_estimator : object, default=None
         The base estimator to fit on random subsets of the dataset.
-        If None, then the base estimator is a decision tree.
+        If None, then the base estimator is a
+        :class:`~sklearn.tree.DecisionTreeRegressor`.
 
     n_estimators : int, default=10
         The number of base estimators in the ensemble.
