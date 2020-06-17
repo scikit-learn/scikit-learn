@@ -734,8 +734,10 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         elif X.shape[1] <= 2 and np.all(np.linalg.eigvals(X @ X.T) > 0):
         # Use Cholesky for 2 or fewer dimensions and positive-definite X @ X.T
             n_samples, n_features = X.shape
+            ravel = False
             if y.ndim == 1:
                 y = y.reshape(-1, 1)
+                ravel = True
             n_samples_, n_targets = y.shape
             alpha = np.asarray(0, dtype=X.dtype).ravel()
             if alpha.size not in [1, n_targets]:
@@ -762,7 +764,9 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
                 except linalg.LinAlgError:
                     # use SVD solver if matrix is singular
                     self.coef_ = _solve_svd(X, y, alpha)
-            self.coef_ = self.coef_.reshape((self.coef_.shape[1],))
+            if ravel:
+                # When y was passed as a 1d-array, we flatten the coefficients.
+                self.coef_ = self.coef_.ravel()
         else:
             self.coef_, self._residues, self.rank_, self.singular_ = \
                 linalg.lstsq(X, y, check_finite=False)
