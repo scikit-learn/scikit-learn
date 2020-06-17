@@ -7,6 +7,7 @@
 """Recursive feature elimination for feature ranking"""
 
 import numpy as np
+import numbers
 from joblib import Parallel, delayed, effective_n_jobs
 
 from ..utils.metaestimators import if_delegate_has_method
@@ -191,7 +192,9 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         n_features = X.shape[1]
         if self.n_features_to_select is None:
             n_features_to_select = n_features // 2
-        elif (isinstance(self.n_features_to_select, numbers.Real) and 
+        elif self.n_features_to_select < 0:
+            raise ValueError("n_features_to_select must be positive.")
+        elif (isinstance(self.n_features_to_select, numbers.Real) and
               0.0 < self.n_features_to_select <= 1.0):
             n_features_to_select = int(n_features * self.n_features_to_select)
         else:
