@@ -1104,6 +1104,9 @@ def test_fetch_nonexiting(monkeypatch, gzip_response):
 
 
 @pytest.mark.parametrize('gzip_response', [True, False])
+@pytest.mark.filterwarnings(
+    "ignore:The default value of as_frame will change:FutureWarning"
+)
 def test_raises_illegal_multitarget(monkeypatch, gzip_response):
     data_id = 61
     targets = ['sepalwidth', 'class']
