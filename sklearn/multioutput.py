@@ -603,15 +603,15 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
     >>> from sklearn.linear_model import LogisticRegression
     >>> from sklearn.model_selection import train_test_split
     >>> from sklearn.multioutput import ClassifierChain
-
-    >>> X, Y = make_multilabel_classification(n_samples=12, n_classes=3,
-    ...                                       random_state=0)
-    >>> X_train, X_test, Y_train, Y_test = train_test_split(X, Y,
-    ...                                                     random_state=0)
+    >>> X, Y = make_multilabel_classification(
+    ...    n_samples=12, n_classes=3, random_state=0
+    ... )
+    >>> X_train, X_test, Y_train, Y_test = train_test_split(
+    ...    X, Y, random_state=0
+    ... )
     >>> base_lr = LogisticRegression(solver='lbfgs', random_state=0)
-    >>> chain = ClassifierChain(
-    ...    base_lr, order='random', random_state=0).fit(X_train, Y_train)
-    >>> chain.predict(X_test)
+    >>> chain = ClassifierChain(base_lr, order='random', random_state=0)
+    >>> chain.fit(X_train, Y_train).predict(X_test)
     array([[1., 1., 0.],
            [1., 0., 0.],
            [0., 1., 0.]])
@@ -620,7 +620,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
            [0.8878..., 0.3684..., 0.2640...],
            [0.0321..., 0.9935..., 0.0625...]])
 
-    See also
+    See Also
     --------
     RegressorChain: Equivalent for regression
     MultioutputClassifier: Classifies each output independently rather than
@@ -630,7 +630,6 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
     ----------
     Jesse Read, Bernhard Pfahringer, Geoff Holmes, Eibe Frank, "Classifier
     Chains for Multi-label Classification", 2009.
-
     """
 
     def fit(self, X, Y):
