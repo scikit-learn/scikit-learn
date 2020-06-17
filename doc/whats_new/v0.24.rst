@@ -68,6 +68,7 @@ Changelog
   :class:`feature_selection.SelectFromModel`, allowing the user to specify an
   attribute name/path or a `callable` for extracting feature importance from
   the estimator.  :pr:`15361` by :user:`Venkatachalam N <venkyyuvy>`
+
 - |Enhancement| Added the option for the number of n_features_to_select to be
   given as a float representing the percentage of features to select.
   :pr:`17090` by :user:`Lisa Schwetlick <lschwetlick>` and
