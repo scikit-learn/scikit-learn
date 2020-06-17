@@ -16,12 +16,13 @@ np.import_array()
 
 
 def _minibatch_update_dense(
-        np.ndarray[floating, ndim=2, mode='c'] X,  # IN
+        np.ndarray[floating, ndim=2, mode="c"] X,  # IN
         floating[::1] sample_weight,               # IN
         floating[:, ::1] centers_old,              # IN
         floating[:, ::1] centers_new,              # OUT
         floating[::1] weight_sums,                 # INOUT
-        int[::1] labels):                          # IN
+        int[::1] labels,                           # IN
+        int n_threads):
     """Update of the centers for dense MiniBatchKMeans.
 
     Parameters
@@ -45,6 +46,9 @@ def _minibatch_update_dense(
     
     labels : ndarray of shape (n_samples,), dtype=int
         labels assignment.
+
+    n_threads : int
+        The number of threads to be used by openmp.
     """
     cdef:
         int n_samples = X.shape[0]
@@ -53,10 +57,10 @@ def _minibatch_update_dense(
 
         int *indices
     
-    with nogil, parallel():
+    with nogil, parallel(num_threads=n_threads):
         indices = <int*> malloc(n_samples * sizeof(int))
 
-        for i in prange(n_clusters):
+        for i in prange(n_clusters, schedule="static"):
             update_center_dense(i, &X[0, 0], sample_weight, centers_old,
                                 centers_new, weight_sums, labels, indices)
         
@@ -123,7 +127,8 @@ def _minibatch_update_sparse(
         floating[:, ::1] centers_old,  # IN
         floating[:, ::1] centers_new,  # OUT
         floating[::1] weight_sums,     # INOUT
-        int[::1] labels):              # IN
+        int[::1] labels,               # IN
+        int n_threads):
     """Update of the centers for sparse MiniBatchKMeans.
 
     Parameters
@@ -144,9 +149,12 @@ def _minibatch_update_sparse(
 
     weight_sums : ndarray of shape (n_clusters,), dtype=floating
         Current sums of the accumulated weights for each center.
-    
+
     labels : ndarray of shape (n_samples,), dtype=int
         labels assignment.
+
+    n_threads : int
+        The number of threads to be used by openmp.
     """
     cdef:
         floating[::1] X_data = X.data
@@ -158,10 +166,10 @@ def _minibatch_update_sparse(
 
         int *indices
     
-    with nogil, parallel():
+    with nogil, parallel(num_threads=n_threads):
         indices = <int*> malloc(n_samples * sizeof(int))
 
-        for i in prange(n_clusters):
+        for i in prange(n_clusters, schedule="static"):
             update_center_sparse(i, X_data, X_indices, X_indptr, sample_weight,
                                  centers_old, centers_new, weight_sums, labels,
                                  indices)

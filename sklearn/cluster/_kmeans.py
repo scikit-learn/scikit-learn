@@ -1141,7 +1141,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
 
 def _mini_batch_step(X, x_squared_norms, sample_weight, centers, centers_new,
                      weight_sums, random_state, random_reassign=False,
-                     reassignment_ratio=0.01, verbose=False):
+                     reassignment_ratio=0.01, verbose=False, n_threads=1):
     """Incremental update of the centers for the Minibatch K-Means algorithm.
 
     Parameters
@@ -1184,6 +1184,9 @@ def _mini_batch_step(X, x_squared_norms, sample_weight, centers, centers_new,
     verbose : bool, default=False
         Controls the verbosity.
 
+    n_threads : int, default=1
+        The number of OpenMP threads to use for the computation.
+
     Returns
     -------
     inertia : float
@@ -1191,15 +1194,16 @@ def _mini_batch_step(X, x_squared_norms, sample_weight, centers, centers_new,
     """
     # Perform label assignment to nearest centers
     labels, inertia = _labels_inertia(X, sample_weight,
-                                      x_squared_norms, centers)
+                                      x_squared_norms, centers,
+                                      n_threads=n_threads)
 
     # Update centers according to the labels
     if sp.issparse(X):
-        _minibatch_update_sparse(
-            X, sample_weight, centers, centers_new, weight_sums, labels)
+        _minibatch_update_sparse(X, sample_weight, centers, centers_new,
+                                 weight_sums, labels, n_threads)
     else:
-        _minibatch_update_dense(
-            X, sample_weight, centers, centers_new, weight_sums, labels)
+        _minibatch_update_dense(X, sample_weight, centers, centers_new,
+                                weight_sums, labels, n_threads)
 
     # Reassign clusters that have very low weight
     if random_reassign and reassignment_ratio > 0:
@@ -1466,7 +1470,8 @@ class MiniBatchKMeans(KMeans):
             print('Computing label assignment and total inertia')
         slices = gen_batches(X.shape[0], self.batch_size)
         results = [_labels_inertia(X[s], sample_weight[s], x_squared_norms[s],
-                                   centers) for s in slices]
+                                   centers, n_threads=self._n_threads)
+                   for s in slices]
         labels, inertia = zip(*results)
         return np.hstack(labels), np.sum(inertia)
 
@@ -1648,7 +1653,8 @@ class MiniBatchKMeans(KMeans):
                 random_state=random_state,
                 random_reassign=random_reassign,
                 reassignment_ratio=self.reassignment_ratio,
-                verbose=self.verbose)
+                verbose=self.verbose,
+                n_threads=self._n_threads)
 
             if self._tol > 0.0:
                 centers_squared_diff = np.sum((centers_new - centers)**2)
@@ -1747,11 +1753,13 @@ class MiniBatchKMeans(KMeans):
                          random_state=self._random_state,
                          random_reassign=random_reassign,
                          reassignment_ratio=self.reassignment_ratio,
-                         verbose=self.verbose)
+                         verbose=self.verbose,
+                         n_threads=self._n_threads)
 
         if self.compute_labels:
             self.labels_, self.inertia_ = _labels_inertia(
-                X, sample_weight, x_squared_norms, self.cluster_centers_)
+                X, sample_weight, x_squared_norms, self.cluster_centers_,
+                n_threads=self._n_threads)
 
         return self
 
