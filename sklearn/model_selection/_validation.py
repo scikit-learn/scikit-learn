@@ -18,7 +18,7 @@ from contextlib import suppress
 
 import numpy as np
 import scipy.sparse as sp
-from joblib import Parallel, delayed
+from joblib import Parallel
 
 from ..base import is_classifier, clone
 from ..utils import (indexable, check_random_state, _safe_indexing,
@@ -26,6 +26,7 @@ from ..utils import (indexable, check_random_state, _safe_indexing,
 from ..utils.validation import _check_fit_params
 from ..utils.validation import _num_samples
 from ..utils.validation import _deprecate_positional_args
+from ..utils._parallel import delayed
 from ..utils.metaestimators import _safe_split
 from ..metrics import check_scoring
 from ..metrics._scorer import _check_multimetric_scoring, _MultimetricScorer
