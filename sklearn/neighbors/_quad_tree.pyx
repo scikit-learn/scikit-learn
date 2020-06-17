@@ -23,11 +23,13 @@ np.import_array()
 cdef extern from "math.h":
     float fabsf(float x) nogil
 
+
 cdef extern from "numpy/arrayobject.h":
     object PyArray_NewFromDescr(PyTypeObject* subtype, np.dtype descr,
                                 int nd, np.npy_intp* dims,
                                 np.npy_intp* strides,
                                 void* data, int flags, object obj)
+    int PyArray_SetBaseObject(np.ndarray arr, PyObject* obj)
 
 
 # Repeat struct definition for numpy
@@ -573,7 +575,7 @@ cdef class _QuadTree:
                                    strides, <void*> self.cells,
                                    np.NPY_DEFAULT, None)
         Py_INCREF(self)
-        arr.base = <PyObject*> self
+        PyArray_SetBaseObject(arr, <PyObject*> self)
         return arr
 
     cdef int _resize(self, SIZE_t capacity) nogil except -1:
