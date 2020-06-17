@@ -3,7 +3,7 @@
    - New random number generator using a mersenne twister + tweaked lemire
      postprocessor. This fixed a convergence issue on windows targets for
      libsvm and liblinear.
-     Sylvain Marie
+     Sylvain Marie, Schneider Electric
      See <https://github.com/scikit-learn/scikit-learn/pull/13511#issuecomment-481729756>
 
  */
