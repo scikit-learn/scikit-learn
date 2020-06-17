@@ -66,7 +66,7 @@ graph.data = np.exp(-beta * graph.data / graph.data.std()) + eps
 # installed)
 N_REGIONS = 25
 
-#############################################################################
+# %%
 # Visualize the resulting regions
 
 for assign_labels in ('kmeans', 'discretize'):

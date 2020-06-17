@@ -22,8 +22,8 @@ from ..preprocessing import LabelEncoder
 from ..decomposition import PCA
 from ..utils.multiclass import check_classification_targets
 from ..utils.random import check_random_state
-from ..utils.validation import (check_is_fitted, check_array, check_X_y,
-                                check_scalar)
+from ..utils.validation import check_is_fitted, check_array, check_scalar
+from ..utils.validation import _deprecate_positional_args
 from ..exceptions import ConvergenceWarning
 
 
@@ -39,11 +39,12 @@ class NeighborhoodComponentsAnalysis(TransformerMixin, BaseEstimator):
 
     Parameters
     ----------
-    n_components : int, optional (default=None)
+    n_components : int, default=None
         Preferred dimensionality of the projected space.
         If None it will be set to ``n_features``.
 
-    init : string or numpy array, optional (default='auto')
+    init : {'auto', 'pca', 'lda', 'identity', 'random'} or ndarray of shape \
+            (n_features_a, n_features_b), default='auto'
         Initialization of the linear transformation. Possible options are
         'auto', 'pca', 'lda', 'identity', 'random', and a numpy array of shape
         (n_features_a, n_features_b).
@@ -83,40 +84,42 @@ class NeighborhoodComponentsAnalysis(TransformerMixin, BaseEstimator):
             :meth:`fit` and n_features_a must be less than or equal to that.
             If ``n_components`` is not None, n_features_a must match it.
 
-    warm_start : bool, optional, (default=False)
+    warm_start : bool, default=False
         If True and :meth:`fit` has been called before, the solution of the
         previous call to :meth:`fit` is used as the initial linear
         transformation (``n_components`` and ``init`` will be ignored).
 
-    max_iter : int, optional (default=50)
+    max_iter : int, default=50
         Maximum number of iterations in the optimization.
 
-    tol : float, optional (default=1e-5)
+    tol : float, default=1e-5
         Convergence tolerance for the optimization.
 
-    callback : callable, optional (default=None)
+    callback : callable, default=None
         If not None, this function is called after every iteration of the
         optimizer, taking as arguments the current solution (flattened
         transformation matrix) and the number of iterations. This might be
         useful in case one wants to examine or store the transformation
         found after each iteration.
 
-    verbose : int, optional (default=0)
+    verbose : int, default=0
         If 0, no progress messages will be printed.
         If 1, progress messages will be printed to stdout.
         If > 1, progress messages will be printed and the ``disp``
         parameter of :func:`scipy.optimize.minimize` will be set to
         ``verbose - 2``.
 
-    random_state : int or numpy.RandomState or None, optional (default=None)
+    random_state : int or numpy.RandomState, default=None
         A pseudo random number generator object or a seed for it if int. If
         ``init='random'``, ``random_state`` is used to initialize the random
         transformation. If ``init='pca'``, ``random_state`` is passed as an
-        argument to PCA when initializing the transformation.
+        argument to PCA when initializing the transformation. Pass an int
+        for reproducible results across multiple function calls.
+        See :term: `Glossary <random_state>`.
 
     Attributes
     ----------
-    components_ : array, shape (n_components, n_features)
+    components_ : ndarray of shape (n_components, n_features)
         The linear transformation learned during fitting.
 
     n_iter_ : int
@@ -159,7 +162,8 @@ class NeighborhoodComponentsAnalysis(TransformerMixin, BaseEstimator):
 
     """
 
-    def __init__(self, n_components=None, init='auto', warm_start=False,
+    @_deprecate_positional_args
+    def __init__(self, n_components=None, *, init='auto', warm_start=False,
                  max_iter=50, tol=1e-5, callback=None, verbose=0,
                  random_state=None):
         self.n_components = n_components
@@ -176,10 +180,10 @@ class NeighborhoodComponentsAnalysis(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             The training samples.
 
-        y : array-like, shape (n_samples,)
+        y : array-like of shape (n_samples,)
             The corresponding training labels.
 
         Returns
@@ -244,12 +248,12 @@ class NeighborhoodComponentsAnalysis(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Data samples.
 
         Returns
         -------
-        X_embedded: array, shape (n_samples, n_components)
+        X_embedded: ndarray of shape (n_samples, n_components)
             The data samples transformed.
 
         Raises
@@ -268,22 +272,22 @@ class NeighborhoodComponentsAnalysis(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             The training samples.
 
-        y : array-like, shape (n_samples,)
+        y : array-like of shape (n_samples,)
             The corresponding training labels.
 
         Returns
         -------
-        X : array, shape (n_samples, n_features)
+        X : ndarray of shape (n_samples, n_features)
             The validated training samples.
 
-        y : array, shape (n_samples,)
+        y : ndarray of shape (n_samples,)
             The validated training labels, encoded to be integers in
             the range(0, n_classes).
 
-        init : string or numpy array of shape (n_features_a, n_features_b)
+        init : str or ndarray of shape (n_features_a, n_features_b)
             The validated initialization of the linear transformation.
 
         Raises
@@ -297,14 +301,14 @@ class NeighborhoodComponentsAnalysis(TransformerMixin, BaseEstimator):
         """
 
         # Validate the inputs X and y, and converts y to numerical classes.
-        X, y = check_X_y(X, y, ensure_min_samples=2)
+        X, y = self._validate_data(X, y, ensure_min_samples=2)
         check_classification_targets(y)
         y = LabelEncoder().fit_transform(y)
 
         # Check the preferred dimensionality of the projected space
         if self.n_components is not None:
             check_scalar(
-                self.n_components, 'n_components', numbers.Integral, 1)
+                self.n_components, 'n_components', numbers.Integral, min_val=1)
 
             if self.n_components > X.shape[1]:
                 raise ValueError('The preferred dimensionality of the '
@@ -323,9 +327,9 @@ class NeighborhoodComponentsAnalysis(TransformerMixin, BaseEstimator):
                                  .format(X.shape[1],
                                          self.components_.shape[1]))
 
-        check_scalar(self.max_iter, 'max_iter', numbers.Integral, 1)
-        check_scalar(self.tol, 'tol', numbers.Real, 0.)
-        check_scalar(self.verbose, 'verbose', numbers.Integral, 0)
+        check_scalar(self.max_iter, 'max_iter', numbers.Integral, min_val=1)
+        check_scalar(self.tol, 'tol', numbers.Real, min_val=0.)
+        check_scalar(self.verbose, 'verbose', numbers.Integral, min_val=0)
 
         if self.callback is not None:
             if not callable(self.callback):
@@ -377,18 +381,18 @@ class NeighborhoodComponentsAnalysis(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             The training samples.
 
-        y : array-like, shape (n_samples,)
+        y : array-like of shape (n_samples,)
             The training labels.
 
-        init : string or numpy array of shape (n_features_a, n_features_b)
+        init : str or ndarray of shape (n_features_a, n_features_b)
             The validated initialization of the linear transformation.
 
         Returns
         -------
-        transformation : array, shape (n_components, n_features)
+        transformation : ndarray of shape (n_components, n_features)
             The initialized linear transformation.
 
         """
@@ -443,7 +447,7 @@ class NeighborhoodComponentsAnalysis(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        transformation : array, shape=(n_components * n_features,)
+        transformation : ndarray of shape (n_components * n_features,)
             The solution computed by the optimizer in this iteration.
         """
         if self.callback is not None:
@@ -456,14 +460,14 @@ class NeighborhoodComponentsAnalysis(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        transformation : array, shape (n_components * n_features,)
+        transformation : ndarray of shape (n_components * n_features,)
             The raveled linear transformation on which to compute loss and
             evaluate gradient.
 
-        X : array, shape (n_samples, n_features)
+        X : ndarray of shape (n_samples, n_features)
             The training samples.
 
-        same_class_mask : array, shape (n_samples, n_samples)
+        same_class_mask : ndarray of shape (n_samples, n_samples)
             A mask where ``mask[i, j] == 1`` if ``X[i]`` and ``X[j]`` belong
             to the same class, and ``0`` otherwise.
 
@@ -472,7 +476,7 @@ class NeighborhoodComponentsAnalysis(TransformerMixin, BaseEstimator):
         loss : float
             The loss computed for the given transformation.
 
-        gradient : array, shape (n_components * n_features,)
+        gradient : ndarray of shape (n_components * n_features,)
             The new (flattened) gradient of the loss.
         """
 
@@ -518,3 +522,6 @@ class NeighborhoodComponentsAnalysis(TransformerMixin, BaseEstimator):
             sys.stdout.flush()
 
         return sign * loss, sign * gradient.ravel()
+
+    def _more_tags(self):
+        return {'requires_y': True}

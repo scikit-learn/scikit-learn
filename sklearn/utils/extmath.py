@@ -20,7 +20,7 @@ from . import check_random_state
 from ._logistic_sigmoid import _log_logistic_sigmoid
 from .sparsefuncs_fast import csr_row_norms
 from .validation import check_array
-from .deprecation import deprecated
+from .validation import _deprecate_positional_args
 
 
 def squared_norm(x):
@@ -30,7 +30,7 @@ def squared_norm(x):
 
     Parameters
     ----------
-    x : array_like
+    x : array-like
 
     Returns
     -------
@@ -56,14 +56,14 @@ def row_norms(X, squared=False):
 
     Parameters
     ----------
-    X : array_like
+    X : array-like
         The input array
     squared : bool, optional (default = False)
         If True, return squared norms.
 
     Returns
     -------
-    array_like
+    array-like
         The row-wise (squared) Euclidean norm of X.
     """
     if sparse.issparse(X):
@@ -86,7 +86,7 @@ def fast_logdet(A):
 
     Parameters
     ----------
-    A : array_like
+    A : array-like
         The matrix
     """
     sign, ld = np.linalg.slogdet(A)
@@ -100,7 +100,7 @@ def density(w, **kwargs):
 
     Parameters
     ----------
-    w : array_like
+    w : array-like
         The sparse vector
 
     Returns
@@ -115,7 +115,8 @@ def density(w, **kwargs):
     return d
 
 
-def safe_sparse_dot(a, b, dense_output=False):
+@_deprecate_positional_args
+def safe_sparse_dot(a, b, *, dense_output=False):
     """Dot product that handle the sparse matrix case correctly
 
     Parameters
@@ -156,7 +157,8 @@ def safe_sparse_dot(a, b, dense_output=False):
     return ret
 
 
-def randomized_range_finder(A, size, n_iter,
+@_deprecate_positional_args
+def randomized_range_finder(A, *, size, n_iter,
                             power_iteration_normalizer='auto',
                             random_state=None):
     """Computes an orthonormal matrix whose range approximates the range of A.
@@ -184,10 +186,9 @@ def randomized_range_finder(A, size, n_iter,
 
     random_state : int, RandomState instance or None, optional (default=None)
         The seed of the pseudo random number generator to use when shuffling
-        the data.  If int, random_state is the seed used by the random number
-        generator; If RandomState instance, random_state is the random number
-        generator; If None, the random number generator is the RandomState
-        instance used by `np.random`.
+        the data, i.e. getting the random vectors to initialize the algorithm.
+        Pass an int for reproducible results across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     Returns
     -------
@@ -241,7 +242,8 @@ def randomized_range_finder(A, size, n_iter,
     return Q
 
 
-def randomized_svd(M, n_components, n_oversamples=10, n_iter='auto',
+@_deprecate_positional_args
+def randomized_svd(M, n_components, *, n_oversamples=10, n_iter='auto',
                    power_iteration_normalizer='auto', transpose='auto',
                    flip_sign=True, random_state=0):
     """Computes a truncated randomized SVD
@@ -296,10 +298,9 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter='auto',
 
     random_state : int, RandomState instance or None, optional (default=None)
         The seed of the pseudo random number generator to use when shuffling
-        the data.  If int, random_state is the seed used by the random number
-        generator; If RandomState instance, random_state is the random number
-        generator; If None, the random number generator is the RandomState
-        instance used by `np.random`.
+        the data, i.e. getting the random vectors to initialize the algorithm.
+        Pass an int for reproducible results across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     Notes
     -----
@@ -344,34 +345,37 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter='auto',
         # this implementation is a bit faster with smaller shape[1]
         M = M.T
 
-    Q = randomized_range_finder(M, n_random, n_iter,
-                                power_iteration_normalizer, random_state)
+    Q = randomized_range_finder(
+        M, size=n_random, n_iter=n_iter,
+        power_iteration_normalizer=power_iteration_normalizer,
+        random_state=random_state)
 
     # project M to the (k + p) dimensional space using the basis vectors
     B = safe_sparse_dot(Q.T, M)
 
     # compute the SVD on the thin matrix: (k + p) wide
-    Uhat, s, V = linalg.svd(B, full_matrices=False)
+    Uhat, s, Vt = linalg.svd(B, full_matrices=False)
 
     del B
     U = np.dot(Q, Uhat)
 
     if flip_sign:
         if not transpose:
-            U, V = svd_flip(U, V)
+            U, Vt = svd_flip(U, Vt)
         else:
             # In case of transpose u_based_decision=false
             # to actually flip based on u and not v.
-            U, V = svd_flip(U, V, u_based_decision=False)
+            U, Vt = svd_flip(U, Vt, u_based_decision=False)
 
     if transpose:
         # transpose back the results according to the input convention
-        return V[:n_components, :].T, s[:n_components], U[:, :n_components].T
+        return Vt[:n_components, :].T, s[:n_components], U[:, :n_components].T
     else:
-        return U[:, :n_components], s[:n_components], V[:n_components, :]
+        return U[:, :n_components], s[:n_components], Vt[:n_components, :]
 
 
-def weighted_mode(a, w, axis=0):
+@_deprecate_positional_args
+def weighted_mode(a, w, *, axis=0):
     """Returns an array of the weighted modal (most common) value in a
 
     If there is more than one such value, only the first is returned.
@@ -381,9 +385,9 @@ def weighted_mode(a, w, axis=0):
 
     Parameters
     ----------
-    a : array_like
+    a : array-like
         n-dimensional array of which to find mode(s).
-    w : array_like
+    w : array-like
         n-dimensional array of weights for each value
     axis : int, optional
         Axis along which to operate. Default is 0, i.e. the first axis.
@@ -510,6 +514,8 @@ def svd_flip(u, v, u_based_decision=True):
         u and v are the output of `linalg.svd` or
         :func:`~sklearn.utils.extmath.randomized_svd`, with matching inner
         dimensions so one can compute `np.dot(u * s, v)`.
+        The input v should really be called vt to be consistent with scipy's
+        ouput.
 
     u_based_decision : boolean, (default=True)
         If True, use the columns of u as the basis for sign flipping.
@@ -616,47 +622,19 @@ def softmax(X, copy=True):
     return X
 
 
-@deprecated("safe_min is deprecated in version 0.22 and will be removed "
-            "in version 0.24.")
-def safe_min(X):
-    """Returns the minimum value of a dense or a CSR/CSC matrix.
-
-    Adapated from https://stackoverflow.com/q/13426580
-
-    .. deprecated:: 0.22.0
-
-    Parameters
-    ----------
-    X : array_like
-        The input array or sparse matrix
-
-    Returns
-    -------
-    Float
-        The min value of X
-    """
-    if sparse.issparse(X):
-        if len(X.data) == 0:
-            return 0
-        m = X.data.min()
-        return m if X.getnnz() == X.size else min(m, 0)
-    else:
-        return X.min()
-
-
 def make_nonnegative(X, min_value=0):
     """Ensure `X.min()` >= `min_value`.
 
     Parameters
     ----------
-    X : array_like
+    X : array-like
         The matrix to make non-negative
     min_value : float
         The threshold value
 
     Returns
     -------
-    array_like
+    array-like
         The thresholded array
 
     Raises

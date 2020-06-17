@@ -1,8 +1,8 @@
 import warnings
 
 from ..base import BaseEstimator, TransformerMixin
-from ..utils import check_array
 from ..utils.validation import _allclose_dense_sparse
+from ..utils.validation import _deprecate_positional_args
 
 
 def _identity(X):
@@ -28,18 +28,18 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
 
     Parameters
     ----------
-    func : callable, optional default=None
+    func : callable, default=None
         The callable to use for the transformation. This will be passed
         the same arguments as transform, with args and kwargs forwarded.
         If func is None, then func will be the identity function.
 
-    inverse_func : callable, optional default=None
+    inverse_func : callable, default=None
         The callable to use for the inverse transformation. This will be
         passed the same arguments as inverse transform, with args and
         kwargs forwarded. If inverse_func is None, then inverse_func
         will be the identity function.
 
-    validate : bool, optional default=False
+    validate : bool, default=False
         Indicate that the input X array should be checked before calling
         ``func``. The possibilities are:
 
@@ -51,7 +51,7 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
         .. versionchanged:: 0.22
            The default of ``validate`` changed from True to False.
 
-    accept_sparse : boolean, optional
+    accept_sparse : bool, default=False
         Indicate that func accepts a sparse matrix as input. If validate is
         False, this has no effect. Otherwise, if accept_sparse is false,
         sparse matrix inputs will cause an exception to be raised.
@@ -63,11 +63,15 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
 
        .. versionadded:: 0.20
 
-    kw_args : dict, optional
+    kw_args : dict, default=None
         Dictionary of additional keyword arguments to pass to func.
 
-    inv_kw_args : dict, optional
+        .. versionadded:: 0.18
+
+    inv_kw_args : dict, default=None
         Dictionary of additional keyword arguments to pass to inverse_func.
+
+        .. versionadded:: 0.18
 
     Examples
     --------
@@ -79,7 +83,9 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
     array([[0.       , 0.6931...],
            [1.0986..., 1.3862...]])
     """
-    def __init__(self, func=None, inverse_func=None, validate=False,
+
+    @_deprecate_positional_args
+    def __init__(self, func=None, inverse_func=None, *, validate=False,
                  accept_sparse=False, check_inverse=True, kw_args=None,
                  inv_kw_args=None):
         self.func = func
@@ -92,7 +98,7 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
 
     def _check_input(self, X):
         if self.validate:
-            return check_array(X, accept_sparse=self.accept_sparse)
+            return self._validate_data(X, accept_sparse=self.accept_sparse)
         return X
 
     def _check_inverse_transform(self, X):

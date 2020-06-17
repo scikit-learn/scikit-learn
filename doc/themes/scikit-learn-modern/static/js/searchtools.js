@@ -11,7 +11,9 @@
  * - Removes ajax call to get context for each result
  * - Adjusts Search.query to remove duplicates in search results.
  * - Adjusts Scorer to rank objects higher.
- * - Adds Search._total_results to limit the number of search results.
+ * - Adds Search._total_non_object_results to limit the number of search non
+ * object results. Object results do not perform another GET resquest, so they
+ * are cheap to display.
  */
 
 if (!Scorer) {
@@ -63,10 +65,10 @@ var Search = {
     _index: null,
     _queued_query: null,
     _pulse_status: -1,
-    _total_results: 10,
+    _total_non_object_results: 10,
 
     htmlToText: function (htmlString) {
-        var htmlString = htmlString.replace(/<img.+?>/g, "");
+        var htmlString = htmlString.replace(/<img[\s\S]+?>/g, "");
         var htmlElement = document.createElement("span");
         htmlElement.innerHTML = htmlString;
         $(htmlElement)
@@ -218,22 +220,23 @@ var Search = {
                 objectterms.slice(i + 1, objectterms.length)
             );
 
-            if (results.length < this._total_results) {
-                results = $u.uniq(results.concat(
-                    this.performObjectSearch(objectterms[i], others)
-                ), false, function (item) {return item[1]});
-            }
+            results = $u.uniq(results.concat(
+                this.performObjectSearch(objectterms[i], others)
+            ), false, function (item) {return item[1]});
         }
 
-        if (results.length < this._total_results) {
-            // lookup as search terms in fulltext
-            results = results.concat(
-                this.performTermsSearch(searchterms, excluded, terms, titleterms)
-            );
-        }
+        var total_object_results = results.length;
 
-        if (results.length > this._total_results) {
-            results = results.slice(0, this._total_results);
+        // lookup as search terms in fulltext
+        results = results.concat(
+            this.performTermsSearch(searchterms, excluded, terms, titleterms)
+        );
+
+        // Only have _total_non_object_results results above the number of
+        // total number of object results
+        var results_limit = total_object_results + this._total_non_object_results
+        if (results.length > results_limit) {
+            results = results.slice(0, results_limit);
         }
 
         // let the scorer override scores with a custom scoring function

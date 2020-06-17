@@ -175,3 +175,5 @@
 .. _Thomas Fan: https://github.com/thomasjpfan
 
 .. _Nicolas Hug: https://github.com/NicolasHug
+
+.. _Guillaume Lemaitre: https://github.com/glemaitre
