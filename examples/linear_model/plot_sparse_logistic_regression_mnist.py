@@ -1,6 +1,6 @@
 """
 =====================================================
-MNIST classfification using multinomial logistic + L1
+MNIST classification using multinomial logistic + L1
 =====================================================
 
 Here we fit a multinomial logistic regression with L1 penalty on a subset of

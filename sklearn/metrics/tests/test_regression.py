@@ -4,9 +4,9 @@ from numpy.testing import assert_allclose
 from itertools import product
 import pytest
 
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_array_almost_equal
 
 from sklearn.metrics import explained_variance_score
 from sklearn.metrics import mean_absolute_error
@@ -17,7 +17,7 @@ from sklearn.metrics import max_error
 from sklearn.metrics import r2_score
 from sklearn.metrics import mean_tweedie_deviance
 
-from sklearn.metrics.regression import _check_reg_targets
+from sklearn.metrics._regression import _check_reg_targets
 
 from ...exceptions import UndefinedMetricWarning
 
@@ -56,6 +56,18 @@ def test_regression_metrics(n_samples=50):
                         np.sum(1 / y_true) / (4 * n))
 
 
+def test_mean_squared_error_multioutput_raw_value_squared():
+    # non-regression test for
+    # https://github.com/scikit-learn/scikit-learn/pull/16323
+    mse1 = mean_squared_error(
+        [[1]], [[10]], multioutput="raw_values", squared=True
+    )
+    mse2 = mean_squared_error(
+        [[1]], [[10]], multioutput="raw_values", squared=False
+    )
+    assert np.sqrt(mse1) == pytest.approx(mse2)
+
+
 def test_multioutput_regression():
     y_true = np.array([[1, 0, 0, 1], [0, 1, 1, 1], [1, 1, 0, 1]])
     y_pred = np.array([[0, 0, 0, 1], [1, 0, 1, 1], [0, 0, 0, 1]])
@@ -64,7 +76,7 @@ def test_multioutput_regression():
     assert_almost_equal(error, (1. / 3 + 2. / 3 + 2. / 3) / 4.)
 
     error = mean_squared_error(y_true, y_pred, squared=False)
-    assert_almost_equal(error, 0.645, decimal=2)
+    assert_almost_equal(error, 0.454, decimal=2)
 
     error = mean_squared_log_error(y_true, y_pred)
     assert_almost_equal(error, 0.200, decimal=2)
@@ -73,6 +85,9 @@ def test_multioutput_regression():
     # it is a binary problem.
     error = mean_absolute_error(y_true, y_pred)
     assert_almost_equal(error, (1. + 2. / 3) / 4.)
+
+    error = median_absolute_error(y_true, y_pred)
+    assert_almost_equal(error, (1. + 1.) / 4.)
 
     error = r2_score(y_true, y_pred, multioutput='variance_weighted')
     assert_almost_equal(error, 1. - 5. / 2)
@@ -111,27 +126,27 @@ def test_regression_metrics_at_limits():
         mean_tweedie_deviance([0.], [0.], power=power)
     assert_almost_equal(mean_tweedie_deviance([0.], [0.], power=0), 0.00, 2)
 
-    msg = "only be used on non-negative y_true and strictly positive y_pred."
+    msg = "only be used on non-negative y and strictly positive y_pred."
     with pytest.raises(ValueError, match=msg):
         mean_tweedie_deviance([0.], [0.], power=1.0)
 
     power = 1.5
     assert_allclose(mean_tweedie_deviance([0.], [1.], power=power),
                     2 / (2 - power))
-    msg = "only be used on non-negative y_true and strictly positive y_pred."
+    msg = "only be used on non-negative y and strictly positive y_pred."
     with pytest.raises(ValueError, match=msg):
         mean_tweedie_deviance([0.], [0.], power=power)
     power = 2.
     assert_allclose(mean_tweedie_deviance([1.], [1.], power=power), 0.00,
                     atol=1e-8)
-    msg = "can only be used on strictly positive y_true and y_pred."
+    msg = "can only be used on strictly positive y and y_pred."
     with pytest.raises(ValueError, match=msg):
         mean_tweedie_deviance([0.], [0.], power=power)
     power = 3.
     assert_allclose(mean_tweedie_deviance([1.], [1.], power=power),
                     0.00, atol=1e-8)
 
-    msg = "can only be used on strictly positive y_true and y_pred."
+    msg = "can only be used on strictly positive y and y_pred."
     with pytest.raises(ValueError, match=msg):
         mean_tweedie_deviance([0.], [0.], power=power)
 
@@ -243,7 +258,7 @@ def test_regression_custom_weights():
     evsw = explained_variance_score(y_true, y_pred, multioutput=[0.4, 0.6])
 
     assert_almost_equal(msew, 0.39, decimal=2)
-    assert_almost_equal(rmsew, 0.62, decimal=2)
+    assert_almost_equal(rmsew, 0.59, decimal=2)
     assert_almost_equal(maew, 0.475, decimal=3)
     assert_almost_equal(rw, 0.94, decimal=2)
     assert_almost_equal(evsw, 0.94, decimal=2)

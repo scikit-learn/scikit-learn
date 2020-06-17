@@ -33,6 +33,7 @@ Base classes
    base.DensityMixin
    base.RegressorMixin
    base.TransformerMixin
+   feature_selection.SelectorMixin
 
 Functions
 ---------
@@ -85,7 +86,8 @@ Functions
    :no-members:
    :no-inherited-members:
 
-**User guide:** See the :ref:`clustering` section for further details.
+**User guide:** See the :ref:`clustering` and :ref:`biclustering` sections for
+further details.
 
 Classes
 -------
@@ -105,6 +107,8 @@ Classes
    cluster.MeanShift
    cluster.OPTICS
    cluster.SpectralClustering
+   cluster.SpectralBiclustering
+   cluster.SpectralCoclustering
 
 Functions
 ---------
@@ -122,28 +126,6 @@ Functions
    cluster.mean_shift
    cluster.spectral_clustering
    cluster.ward_tree
-
-.. _bicluster_ref:
-
-:mod:`sklearn.cluster.bicluster`: Biclustering
-==============================================
-
-.. automodule:: sklearn.cluster.bicluster
-   :no-members:
-   :no-inherited-members:
-
-**User guide:** See the :ref:`biclustering` section for further details.
-
-Classes
--------
-.. currentmodule:: sklearn.cluster.bicluster
-
-.. autosummary::
-   :toctree: generated/
-   :template: class.rst
-
-   SpectralBiclustering
-   SpectralCoclustering
 
 .. _compose_ref:
 
@@ -171,6 +153,7 @@ details.
    :template: function.rst
 
    compose.make_column_transformer
+   compose.make_column_selector
 
 .. _covariance_ref:
 
@@ -448,7 +431,7 @@ Samples generator
 
 .. autosummary::
    :toctree: generated/
-   :template: class_without_init.rst
+   :template: class.rst
 
    exceptions.ChangedBehaviorWarning
    exceptions.ConvergenceWarning
@@ -854,6 +837,21 @@ Any estimator using the Huber loss would also be robust to outliers, e.g.
    linear_model.RANSACRegressor
    linear_model.TheilSenRegressor
 
+Generalized linear models (GLM) for regression
+----------------------------------------------
+
+These models allow for response variables to have error distributions other
+than a normal distribution:
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   linear_model.PoissonRegressor
+   linear_model.TweedieRegressor
+   linear_model.GammaRegressor
+
+
 Miscellaneous
 -------------
 
@@ -901,7 +899,7 @@ Miscellaneous
     manifold.locally_linear_embedding
     manifold.smacof
     manifold.spectral_embedding
-    manifold.t_sne.trustworthiness
+    manifold.trustworthiness
 	
 
 .. _metrics_ref:
@@ -1100,12 +1098,16 @@ See the :ref:`visualizations` section of the user guide for further details.
    :toctree: generated/
    :template: function.rst
 
+   metrics.plot_confusion_matrix
+   metrics.plot_precision_recall_curve
    metrics.plot_roc_curve
 
 .. autosummary::
    :toctree: generated/
    :template: class.rst
 
+   metrics.ConfusionMatrixDisplay
+   metrics.PrecisionRecallDisplay
    metrics.RocCurveDisplay
 
 
@@ -1191,12 +1193,6 @@ Hyper-parameter optimizers
    model_selection.ParameterSampler
    model_selection.RandomizedSearchCV
 
-
-.. autosummary::
-   :toctree: generated/
-   :template: function.rst
-
-   model_selection.fit_grid_point
 
 Model validation
 ----------------
@@ -1350,6 +1346,9 @@ Model validation
    :no-members:
    :no-inherited-members:
 
+**User guide:** See the :ref:`combining_estimators` section for further
+details.
+
 .. currentmodule:: sklearn
 
 .. autosummary::
@@ -1499,20 +1498,6 @@ Estimators
 
    svm.l1_min_c
 
-Low-level methods
------------------
-
-.. autosummary::
-   :toctree: generated
-   :template: function.rst
-
-   svm.libsvm.cross_validation
-   svm.libsvm.decision_function
-   svm.libsvm.fit
-   svm.libsvm.predict
-   svm.libsvm.predict_proba
-
-
 .. _tree_ref:
 
 :mod:`sklearn.tree`: Decision Trees
@@ -1570,10 +1555,10 @@ Plotting
    :toctree: generated/
    :template: function.rst
 
-   utils.arrayfuncs.cholesky_delete
    utils.arrayfuncs.min_pos
    utils.as_float_array
    utils.assert_all_finite
+   utils.Bunch
    utils.check_X_y
    utils.check_array
    utils.check_scalar
@@ -1584,6 +1569,7 @@ Plotting
    utils.deprecated
    utils.estimator_checks.check_estimator
    utils.estimator_checks.parametrize_with_checks
+   utils.estimator_html_repr
    utils.extmath.safe_sparse_dot
    utils.extmath.randomized_range_finder
    utils.extmath.randomized_svd
@@ -1619,10 +1605,7 @@ Plotting
    utils.validation.check_symmetric
    utils.validation.column_or_1d
    utils.validation.has_fit_parameter
-   utils.testing.assert_in
-   utils.testing.assert_not_in
-   utils.testing.assert_raise_message
-   utils.testing.all_estimators
+   utils.all_estimators
 
 Utilities from joblib:
 
@@ -1637,30 +1620,5 @@ Utilities from joblib:
 Recently deprecated
 ===================
 
-To be removed in 0.23
+To be removed in 0.25
 ---------------------
-
-.. autosummary::
-   :toctree: generated/
-   :template: deprecated_class.rst
-
-   utils.Memory
-   utils.Parallel
-
-.. autosummary::
-   :toctree: generated/
-   :template: deprecated_function.rst
-
-   utils.cpu_count
-   utils.delayed
-   metrics.calinski_harabaz_score
-   metrics.jaccard_similarity_score
-   linear_model.logistic_regression_path
-   utils.safe_indexing
-
-.. autosummary::
-   :toctree: generated/
-   :template: function.rst
-
-   ensemble.partial_dependence.partial_dependence
-   ensemble.partial_dependence.plot_partial_dependence

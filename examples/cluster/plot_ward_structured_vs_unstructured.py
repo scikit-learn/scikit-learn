@@ -31,13 +31,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 import mpl_toolkits.mplot3d.axes3d as p3
 from sklearn.cluster import AgglomerativeClustering
-from sklearn.datasets.samples_generator import make_swiss_roll
+from sklearn.datasets import make_swiss_roll
 
 # #############################################################################
 # Generate data (swiss roll dataset)
 n_samples = 1500
 noise = 0.05
-X, _ = make_swiss_roll(n_samples, noise)
+X, _ = make_swiss_roll(n_samples, noise=noise)
 # Make it thinner
 X[:, 1] *= .5
 

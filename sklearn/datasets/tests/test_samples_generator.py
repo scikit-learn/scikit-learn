@@ -6,10 +6,10 @@ import numpy as np
 import pytest
 import scipy.sparse as sp
 
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_raise_message
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_raise_message
 
 from sklearn.datasets import make_classification
 from sklearn.datasets import make_multilabel_classification
@@ -222,6 +222,18 @@ def test_make_multilabel_classification_return_indicator_sparse():
         assert sp.issparse(Y)
 
 
+@pytest.mark.parametrize(
+    "params, err_msg",
+    [
+        ({"n_classes": 0}, "'n_classes' should be an integer"),
+        ({"length": 0}, "'length' should be an integer")
+    ]
+)
+def test_make_multilabel_classification_valid_arguments(params, err_msg):
+    with pytest.raises(ValueError, match=err_msg):
+        make_multilabel_classification(**params)
+
+
 def test_make_hastie_10_2():
     X, y = make_hastie_10_2(n_samples=100, random_state=0)
     assert X.shape == (100, 10), "X shape mismatch"
@@ -310,6 +322,15 @@ def test_make_blobs_n_samples_centers_none(n_samples):
     assert X.shape == (sum(n_samples), 2), "X shape mismatch"
     assert all(np.bincount(y, minlength=len(n_samples)) == n_samples), \
         "Incorrect number of samples per blob"
+
+
+def test_make_blobs_return_centers():
+    n_samples = [10, 20]
+    n_features = 3
+    X, y, centers = make_blobs(n_samples=n_samples, n_features=n_features,
+                               return_centers=True, random_state=0)
+
+    assert centers.shape == (len(n_samples), n_features)
 
 
 def test_make_blobs_error():
@@ -476,6 +497,22 @@ def test_make_moons():
                             err_msg="Point is not on expected unit circle")
 
 
+def test_make_moons_unbalanced():
+    X, y = make_moons(n_samples=(7, 5))
+    assert np.sum(y == 0) == 7 and np.sum(y == 1) == 5, \
+        'Number of samples in a moon is wrong'
+    assert X.shape == (12, 2), "X shape mismatch"
+    assert y.shape == (12,), "y shape mismatch"
+
+    with pytest.raises(ValueError, match=r'`n_samples` can be either an int '
+                                         r'or a two-element tuple.'):
+        make_moons(n_samples=[1, 2, 3])
+
+    with pytest.raises(ValueError, match=r'`n_samples` can be either an int '
+                                         r'or a two-element tuple.'):
+        make_moons(n_samples=(10,))
+
+
 def test_make_circles():
     factor = 0.3
 
@@ -490,6 +527,7 @@ def test_make_circles():
         for x, label in zip(X, y):
             dist_sqr = ((x - center) ** 2).sum()
             dist_exp = 1.0 if label == 0 else factor**2
+            dist_exp = 1.0 if label == 0 else factor ** 2
             assert_almost_equal(dist_sqr, dist_exp,
                                 err_msg="Point is not on expected circle")
 
@@ -502,3 +540,20 @@ def test_make_circles():
         make_circles(factor=-0.01)
     with pytest.raises(ValueError):
         make_circles(factor=1.)
+
+
+def test_make_circles_unbalanced():
+    X, y = make_circles(n_samples=(2, 8))
+
+    assert np.sum(y == 0) == 2, 'Number of samples in inner circle is wrong'
+    assert np.sum(y == 1) == 8, 'Number of samples in outer circle is wrong'
+    assert X.shape == (10, 2), "X shape mismatch"
+    assert y.shape == (10,), "y shape mismatch"
+
+    with pytest.raises(ValueError, match=r'`n_samples` can be either an int '
+                                         r'or a two-element tuple.'):
+        make_circles(n_samples=[1, 2, 3])
+
+    with pytest.raises(ValueError, match=r'`n_samples` can be either an int '
+                                         r'or a two-element tuple.'):
+        make_circles(n_samples=(10,))

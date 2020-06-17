@@ -11,6 +11,7 @@ from sklearn.datasets import make_classification, make_regression
 from sklearn.experimental import enable_hist_gradient_boosting  # noqa
 from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.ensemble import HistGradientBoostingClassifier
+from sklearn.metrics import check_scoring
 
 
 X_classification, y_classification = make_classification(random_state=0)
@@ -37,10 +38,11 @@ def test_max_iter_with_warm_start_validation(GradientBoosting, X, y):
     # is smaller than the number of iterations from the previous fit when warm
     # start is True.
 
-    estimator = GradientBoosting(max_iter=50, warm_start=True)
+    estimator = GradientBoosting(max_iter=10, early_stopping=False,
+                                 warm_start=True)
     estimator.fit(X, y)
-    estimator.set_params(max_iter=25)
-    err_msg = ('max_iter=25 must be larger than or equal to n_iter_=50 '
+    estimator.set_params(max_iter=5)
+    err_msg = ('max_iter=5 must be larger than or equal to n_iter_=10 '
                'when warm_start==True')
     with pytest.raises(ValueError, match=err_msg):
         estimator.fit(X, y)
@@ -75,14 +77,14 @@ def test_warm_start_yields_identical_results(GradientBoosting, X, y):
 ])
 def test_warm_start_max_depth(GradientBoosting, X, y):
     # Test if possible to fit trees of different depth in ensemble.
-    gb = GradientBoosting(max_iter=100, min_samples_leaf=1,
-                          warm_start=True, max_depth=2)
+    gb = GradientBoosting(max_iter=20, min_samples_leaf=1,
+                          warm_start=True, max_depth=2, early_stopping=False)
     gb.fit(X, y)
-    gb.set_params(max_iter=110, max_depth=3)
+    gb.set_params(max_iter=30, max_depth=3, n_iter_no_change=110)
     gb.fit(X, y)
 
-    # First 100 trees have max_depth == 2
-    for i in range(100):
+    # First 20 trees have max_depth == 2
+    for i in range(20):
         assert gb._predictors[i][0].get_max_depth() == 2
     # Last 10 trees have max_depth == 3
     for i in range(1, 11):
@@ -93,20 +95,21 @@ def test_warm_start_max_depth(GradientBoosting, X, y):
     (HistGradientBoostingClassifier, X_classification, y_classification),
     (HistGradientBoostingRegressor, X_regression, y_regression)
 ])
-def test_warm_start_early_stopping(GradientBoosting, X, y):
+@pytest.mark.parametrize('scoring', (None, 'loss'))
+def test_warm_start_early_stopping(GradientBoosting, X, y, scoring):
     # Make sure that early stopping occurs after a small number of iterations
     # when fitting a second time with warm starting.
 
     n_iter_no_change = 5
     gb = GradientBoosting(
-        n_iter_no_change=n_iter_no_change, max_iter=10000,
-        random_state=42, warm_start=True, tol=1e-3
+        n_iter_no_change=n_iter_no_change, max_iter=10000, early_stopping=True,
+        random_state=42, warm_start=True, tol=1e-3, scoring=scoring,
     )
     gb.fit(X, y)
     n_iter_first_fit = gb.n_iter_
     gb.fit(X, y)
     n_iter_second_fit = gb.n_iter_
-    assert n_iter_second_fit - n_iter_first_fit < n_iter_no_change
+    assert 0 < n_iter_second_fit - n_iter_first_fit < n_iter_no_change
 
 
 @pytest.mark.parametrize('GradientBoosting, X, y', [
@@ -115,11 +118,12 @@ def test_warm_start_early_stopping(GradientBoosting, X, y):
 ])
 def test_warm_start_equal_n_estimators(GradientBoosting, X, y):
     # Test if warm start with equal n_estimators does nothing
-    gb_1 = GradientBoosting(max_depth=2)
+    gb_1 = GradientBoosting(max_depth=2, early_stopping=False)
     gb_1.fit(X, y)
 
     gb_2 = clone(gb_1)
-    gb_2.set_params(max_iter=gb_1.max_iter, warm_start=True)
+    gb_2.set_params(max_iter=gb_1.max_iter, warm_start=True,
+                    n_iter_no_change=5)
     gb_2.fit(X, y)
 
     # Check that both predictors are equal
@@ -168,8 +172,9 @@ def test_random_seeds_warm_start(GradientBoosting, X, y, rng_type):
             return np.random.RandomState(0)
 
     random_state = _get_rng(rng_type)
-    gb_1 = GradientBoosting(n_iter_no_change=5, max_iter=2,
+    gb_1 = GradientBoosting(early_stopping=True, max_iter=2,
                             random_state=random_state)
+    gb_1.set_params(scoring=check_scoring(gb_1))
     gb_1.fit(X, y)
     random_seed_1_1 = gb_1._random_seed
 
@@ -177,8 +182,9 @@ def test_random_seeds_warm_start(GradientBoosting, X, y, rng_type):
     random_seed_1_2 = gb_1._random_seed  # clear the old state, different seed
 
     random_state = _get_rng(rng_type)
-    gb_2 = GradientBoosting(n_iter_no_change=5, max_iter=2,
+    gb_2 = GradientBoosting(early_stopping=True, max_iter=2,
                             random_state=random_state, warm_start=True)
+    gb_2.set_params(scoring=check_scoring(gb_2))
     gb_2.fit(X, y)  # inits state
     random_seed_2_1 = gb_2._random_seed
     gb_2.fit(X, y)  # clears old state and equals est

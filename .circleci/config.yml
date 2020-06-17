@@ -9,12 +9,17 @@ jobs:
       - MKL_NUM_THREADS: 2
       - MINICONDA_PATH: ~/miniconda
       - CONDA_ENV_NAME: testenv
-      - PYTHON_VERSION: 3.5
-      - NUMPY_VERSION: 1.11.0
-      - SCIPY_VERSION: 0.17.0
-      - MATPLOTLIB_VERSION: 1.5.1
+      - PYTHON_VERSION: 3.6
+      - NUMPY_VERSION: 1.13.3
+      - SCIPY_VERSION: 0.19.1
+      - MATPLOTLIB_VERSION: 2.1.1
+      # on conda, this is the latest for python 3.5
+      # The following places need to be in sync with regard to Cython version:
+      # - .circleci config file
+      # - sklearn/_build_utils/__init__.py
+      # - advanced installation guide
       - CYTHON_VERSION: 0.28.5
-      - SCIKIT_IMAGE_VERSION: 0.12.3
+      - SCIKIT_IMAGE_VERSION: 0.13
     steps:
       - checkout
       - run: ./build_tools/circle/checkout_merge_commit.sh
@@ -91,15 +96,12 @@ jobs:
           name: dependencies
           command: sudo pip install flake8
       - run:
-          name: flake8
-          command: ./build_tools/circle/flake8_diff.sh
-      - run:
-          name: deprecated_properties_checks
-          command: ./build_tools/circle/check_deprecated_properties.sh
+          name: linting
+          command: ./build_tools/circle/linting.sh
 
   pypy3:
     docker:
-      - image: pypy:3.6-7.1.1
+      - image: pypy:3.6-7.2.0
     steps:
       - restore_cache:
           keys:
