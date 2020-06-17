@@ -147,8 +147,6 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
                  verbose=0, importance_getter='auto'):
         self.estimator = estimator
         self.n_features_to_select = n_features_to_select
-        if n_features_to_select is not None and n_features_to_select < 0:
-            raise ValueError("n_features_to_select must be positive.")
         self.step = step
         self.importance_getter = importance_getter
         self.verbose = verbose
