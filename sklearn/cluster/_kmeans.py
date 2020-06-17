@@ -1601,13 +1601,10 @@ class MiniBatchKMeans(KMeans):
                 X, x_squared_norms=x_squared_norms, init=init,
                 random_state=random_state, init_size=self._init_size)
 
-            # Preform one iteration of KMeans to make the centers being the
-            # mean of their cluster.
-            labels, inertia, cluster_centers, _ = _kmeans_single_lloyd(
-                X=X_valid, x_squared_norms=x_squared_norms_valid,
-                sample_weight=sample_weight_valid,
-                centers_init=cluster_centers, max_iter=1, tol=0,
-                n_threads=self._n_threads)
+            # Compute inertia on a validation set.
+            _, inertia = _labels_inertia(
+                X_valid, sample_weight_valid, x_squared_norms_valid,
+                cluster_centers, n_threads=self._n_threads)
 
             if self.verbose:
                 print(f"Inertia for init {init_idx + 1}/{self._n_init}: "
