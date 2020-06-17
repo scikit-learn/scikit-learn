@@ -529,11 +529,11 @@ class OneHotEncoder(_BaseEncoder):
     def _fit_infrequent_category_mapping(self, fit_results):
         """Fit infrequent categories.
 
-        Defines the private attribute: `_default_to_infrequent_mappings`.
-        For feature `i`, `_default_to_infrequent_mappings[i]` defines the
-        mapping from the integer encoding from `super().transform()` into
-        infrequent categories. If `_default_to_infrequent_mappings[i]` is
-        None, there were no infrequent categories in the training set.
+        Defines the private attribute: `_default_to_infrequent_mappings`. For
+        feature `i`, `_default_to_infrequent_mappings[i]` defines the mapping
+        from the integer encoding returned by `super().transform()` into
+        infrequent categories. If `_default_to_infrequent_mappings[i]` is None,
+        there were no infrequent categories in the training set.
 
         Parameters
         ----------
