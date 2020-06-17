@@ -580,7 +580,6 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
                              " numeric value. (Hint: if using 'raise', please"
                              " make sure that it has been spelled correctly.)")
 
-
     if verbose > 1:
         total_time = score_time + fit_time
         end_msg = f"[CV{progress_msg}] END "
