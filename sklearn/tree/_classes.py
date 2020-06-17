@@ -322,7 +322,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             warnings.warn("The parameter 'X_idx_sorted' is deprecated and has "
                           "no effect. It will be removed in v0.26. You can "
                           "suppress this warning by not passing any value to "
-                          "the 'X_idx_sorted' parameter.", DeprecationWarning)
+                          "the 'X_idx_sorted' parameter.", FutureWarning)
 
         # Build tree
         criterion = self.criterion
@@ -866,7 +866,8 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             Don't use this parameter unless you know what you do.
 
         X_idx_sorted : deprecated, default="deprecated"
-            This parameter is deprecated and will be removed in v0.26.
+            This parameter is deprecated and has no effect.
+            It will be removed in v0.26.
 
             .. deprecated :: 0.24
 
@@ -1209,7 +1210,8 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
             Don't use this parameter unless you know what you do.
 
         X_idx_sorted : deprecated, default="deprecated"
-            This parameter is deprecated and will be removed in v0.26.
+            This parameter is deprecated and has no effect.
+            It will be removed in v0.26.
 
             .. deprecated :: 0.24
 
