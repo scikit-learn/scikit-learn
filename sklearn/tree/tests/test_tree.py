@@ -1958,6 +1958,6 @@ def test_X_idx_sorted_deprecated(TreeEstimator):
 
     tree = TreeEstimator()
 
-    with pytest.warns(DeprecationWarning,
+    with pytest.warns(FutureWarning,
                       match="The parameter 'X_idx_sorted' is deprecated"):
         tree.fit(X, y, X_idx_sorted=X_idx_sorted)
