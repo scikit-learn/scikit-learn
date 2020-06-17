@@ -1387,16 +1387,29 @@ def test_imputation_order(order, idx_order):
 
 def test_simple_imputation_inverse_transform():
     # Test inverse_transform feature for np.nan
-    X = np.array([
-        [-1, np.nan, 3, -1],
+    X_1 = np.array([
+        [9, np.nan, 3, -1],
         [4, -1, 5, -1],
         [6, 7, np.nan, -1],
         [8, 9, 0, np.nan]
     ])
+    X_2 = np.array([
+        [np.nan, 4, 2, 1],
+        [2, 1, np.nan, 3],
+        [9, np.nan, 7, 1],
+        [6, 4, 2, np.nan]
+    ])
 
-    imputer = SimpleImputer(missing_values=np.nan, strategy='mean',
-                            add_indicator=True)
-    X_trans = imputer.fit_transform(X)
-    X_orig = imputer.inverse_transform(X_trans)
+    imputer_1 = SimpleImputer(missing_values=np.nan, strategy='mean',
+                              add_indicator=True)
+    X_1_trans = imputer_1.fit_transform(X_1)
+    X_1_orig = imputer_1.inverse_transform(X_1_trans)
 
-    assert_array_equal(X_orig, X)
+    imputer_2 = SimpleImputer(missing_values=np.nan, strategy='mean',
+                              add_indicator=True)
+    imputer_2.fit(X_2)
+    X_2_trans = imputer_2.transform(X_2)
+    X_2_orig = imputer_2.inverse_transform(X_2_trans)
+
+    assert_array_equal(X_1_orig, X_1)
+    assert_array_equal(X_2_orig, X_2)

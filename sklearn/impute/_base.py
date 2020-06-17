@@ -486,18 +486,16 @@ class SimpleImputer(_BaseImputer):
         check_is_fitted(self)
         missing_feature_count = len(self.indicator_.features_)
 
-        # Split the augmented array into imputed array and it's missing
+        # Split the augmented array into imputed array and its missing
         # indicator mask.
         feature_count = X.shape[1] - missing_feature_count
         imputed_arr = X[:, :feature_count].copy()
-        missing_mask = X[:, feature_count:].copy()
-        missing_mask = missing_mask.astype(np.bool)
+        missing_mask = X[:, feature_count:].astype(np.bool)
 
-        # Iterate over features and replace the imputed values
-        # with original missing value types.
-        for i in range(missing_feature_count):
-            f_idx = self.indicator_.features_[i]
-            imputed_arr[:, f_idx][missing_mask[:, i]] = self.missing_values
+        # Replace the imputed values with original missing value types.
+        full_mask = np.zeros(imputed_arr.shape, dtype=np.bool)
+        full_mask[:, self.indicator_.features_] = missing_mask
+        imputed_arr[full_mask] = self.missing_values
         return imputed_arr
 
 
