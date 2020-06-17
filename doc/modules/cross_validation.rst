@@ -762,7 +762,7 @@ cross-validation iterator. For example::
 
   >>> X = np.array([0.1, 0.2, 2.2, 2.4, 2.3, 4.55, 5.8, 0.001])
   >>> y = np.array(["a", "b", "b", "b", "c", "c", "c", "a"])
-  >>> groups = [1, 1, 2, 2, 3, 3, 4, 4]
+  >>> groups = np.array([1, 1, 2, 2, 3, 3, 4, 4])
   >>> train_indx, test_indx = next(GroupShuffleSplit().split(X, y, groups))
   >>> X_train, X_test, y_train, y_test = \
   ...     X[train_indx], X[test_indx], y[train_indx], y[test_indx]
