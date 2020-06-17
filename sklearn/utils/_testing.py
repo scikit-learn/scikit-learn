@@ -13,7 +13,6 @@
 import os
 import os.path as op
 import inspect
-import pkgutil
 import warnings
 import sys
 import functools
@@ -23,7 +22,6 @@ from subprocess import TimeoutExpired
 
 import scipy as sp
 from functools import wraps
-from operator import itemgetter
 from inspect import signature
 
 import shutil
@@ -47,37 +45,21 @@ import numpy as np
 import joblib
 
 import sklearn
-from sklearn.base import (BaseEstimator, ClassifierMixin, ClusterMixin,
-                          RegressorMixin, TransformerMixin)
-from sklearn.utils import deprecated, IS_PYPY, _IS_32BIT
+from sklearn.utils import IS_PYPY, _IS_32BIT
 
 
-__all__ = ["assert_equal", "assert_not_equal", "assert_raises",
+__all__ = ["assert_raises",
            "assert_raises_regexp",
-           "assert_almost_equal", "assert_array_equal",
+           "assert_array_equal",
+           "assert_almost_equal",
            "assert_array_almost_equal", "assert_array_less",
-           "assert_less", "assert_less_equal",
-           "assert_greater", "assert_greater_equal",
            "assert_approx_equal", "assert_allclose",
-           "assert_run_python_script", "SkipTest", "all_estimators"]
+           "assert_run_python_script", "SkipTest"]
 
 _dummy = TestCase('__init__')
-deprecation_message = (
-    'This helper is deprecated in version 0.22 and will be removed in version '
-    '0.24. Please use "assert" instead'
-)
-assert_equal = deprecated(deprecation_message)(_dummy.assertEqual)
-assert_not_equal = deprecated(deprecation_message)(_dummy.assertNotEqual)
 assert_raises = _dummy.assertRaises
 SkipTest = unittest.case.SkipTest
 assert_dict_equal = _dummy.assertDictEqual
-assert_in = deprecated(deprecation_message)(_dummy.assertIn)
-assert_not_in = deprecated(deprecation_message)(_dummy.assertNotIn)
-assert_less = deprecated(deprecation_message)(_dummy.assertLess)
-assert_greater = deprecated(deprecation_message)(_dummy.assertGreater)
-assert_less_equal = deprecated(deprecation_message)(_dummy.assertLessEqual)
-assert_greater_equal = deprecated(deprecation_message)(
-    _dummy.assertGreaterEqual)
 
 assert_raises_regex = _dummy.assertRaisesRegex
 # assert_raises_regexp is deprecated in Python 3.4 in favor of
@@ -425,90 +407,6 @@ def assert_allclose_dense_sparse(x, y, rtol=1e-07, atol=1e-9, err_msg=''):
     else:
         raise ValueError("Can only compare two sparse matrices,"
                          " not a sparse matrix and an array.")
-
-
-# TODO: Remove in 0.24. This class is now in utils.__init__.
-def all_estimators(type_filter=None):
-    """Get a list of all estimators from sklearn.
-
-    This function crawls the module and gets all classes that inherit
-    from BaseEstimator. Classes that are defined in test-modules are not
-    included.
-    By default meta_estimators such as GridSearchCV are also not included.
-
-    Parameters
-    ----------
-
-    type_filter : string, list of string,  or None, default=None
-        Which kind of estimators should be returned. If None, no filter is
-        applied and all estimators are returned.  Possible values are
-        'classifier', 'regressor', 'cluster' and 'transformer' to get
-        estimators only of these specific types, or a list of these to
-        get the estimators that fit at least one of the types.
-
-    Returns
-    -------
-    estimators : list of tuples
-        List of (name, class), where ``name`` is the class name as string
-        and ``class`` is the actual type of the class.
-    """
-    def is_abstract(c):
-        if not(hasattr(c, '__abstractmethods__')):
-            return False
-        if not len(c.__abstractmethods__):
-            return False
-        return True
-
-    all_classes = []
-    # get parent folder
-    path = sklearn.__path__
-    for importer, modname, ispkg in pkgutil.walk_packages(
-            path=path, prefix='sklearn.', onerror=lambda x: None):
-        if ".tests." in modname or "externals" in modname:
-            continue
-        if IS_PYPY and ('_svmlight_format_io' in modname or
-                        'feature_extraction._hashing_fast' in modname):
-            continue
-        # Ignore deprecation warnings triggered at import time.
-        with ignore_warnings(category=FutureWarning):
-            module = __import__(modname, fromlist="dummy")
-        classes = inspect.getmembers(module, inspect.isclass)
-        all_classes.extend(classes)
-
-    all_classes = set(all_classes)
-
-    estimators = [c for c in all_classes
-                  if (issubclass(c[1], BaseEstimator) and
-                      c[0] != 'BaseEstimator')]
-    # get rid of abstract base classes
-    estimators = [c for c in estimators if not is_abstract(c[1])]
-
-    if type_filter is not None:
-        if not isinstance(type_filter, list):
-            type_filter = [type_filter]
-        else:
-            type_filter = list(type_filter)  # copy
-        filtered_estimators = []
-        filters = {'classifier': ClassifierMixin,
-                   'regressor': RegressorMixin,
-                   'transformer': TransformerMixin,
-                   'cluster': ClusterMixin}
-        for name, mixin in filters.items():
-            if name in type_filter:
-                type_filter.remove(name)
-                filtered_estimators.extend([est for est in estimators
-                                            if issubclass(est[1], mixin)])
-        estimators = filtered_estimators
-        if type_filter:
-            raise ValueError("Parameter type_filter must be 'classifier', "
-                             "'regressor', 'transformer', 'cluster' or "
-                             "None, got"
-                             " %s." % repr(type_filter))
-
-    # drop duplicates, sort for reproducibility
-    # itemgetter is used to ensure the sort does not extend to the 2nd item of
-    # the tuple
-    return sorted(set(estimators), key=itemgetter(0))
 
 
 def set_random_state(estimator, random_state=0):

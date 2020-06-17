@@ -32,7 +32,7 @@ print(__doc__)
 # Authors: Maria Telenczuk  <https://github.com/maikia>
 # License: BSD 3 clause
 
-###############################################################################
+# %%
 # Download the data and make missing values sets
 ################################################
 #
@@ -83,7 +83,7 @@ X_miss_diabetes, y_miss_diabetes = add_missing_values(
     X_diabetes, y_diabetes)
 
 
-###############################################################################
+# %%
 # Impute the missing data and score
 # #################################
 # Now we will write a function which will score the results on the differently
@@ -104,7 +104,7 @@ from sklearn.pipeline import make_pipeline
 N_SPLITS = 5
 regressor = RandomForestRegressor(random_state=0)
 
-###############################################################################
+# %%
 # Missing information
 # -------------------
 # In addition to imputing the missing values, the imputers have an
@@ -132,7 +132,7 @@ stds_california = np.zeros(5)
 mses_diabetes = np.zeros(5)
 stds_diabetes = np.zeros(5)
 
-###############################################################################
+# %%
 # Estimate the score
 # ------------------
 # First, we want to estimate the score on the original data:
@@ -151,7 +151,7 @@ mses_california[0], stds_california[0] = get_full_score(X_california,
 mses_diabetes[0], stds_diabetes[0] = get_full_score(X_diabetes, y_diabetes)
 
 
-###############################################################################
+# %%
 # Replace missing values by 0
 # ---------------------------
 #
@@ -174,7 +174,7 @@ mses_diabetes[1], stds_diabetes[1] = get_impute_zero_score(X_miss_diabetes,
                                                            y_miss_diabetes)
 
 
-###############################################################################
+# %%
 # kNN-imputation of the missing values
 # ------------------------------------
 #
@@ -193,7 +193,7 @@ mses_diabetes[2], stds_diabetes[2] = get_impute_knn_score(X_miss_diabetes,
                                                           y_miss_diabetes)
 
 
-###############################################################################
+# %%
 # Impute missing values with mean
 # -------------------------------
 #
@@ -211,7 +211,7 @@ mses_diabetes[3], stds_diabetes[3] = get_impute_mean(X_miss_diabetes,
                                                      y_miss_diabetes)
 
 
-###############################################################################
+# %%
 # Iterative imputation of the missing values
 # ------------------------------------------
 #
@@ -241,7 +241,7 @@ mses_diabetes[4], stds_diabetes[4] = get_impute_iterative(X_miss_diabetes,
 mses_diabetes = mses_diabetes * -1
 mses_california = mses_california * -1
 
-###############################################################################
+# %%
 # Plot the results
 # ################
 #

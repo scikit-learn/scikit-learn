@@ -47,14 +47,14 @@ from ..model_selection._validation import _safe_split
 from ..metrics.pairwise import (rbf_kernel, linear_kernel, pairwise_distances)
 
 from .import shuffle
-from .import deprecated
 from .validation import has_fit_parameter, _num_samples
 from ..preprocessing import StandardScaler
-from ..datasets import (load_iris, load_boston, make_blobs,
+from ..preprocessing import scale
+from ..datasets import (load_iris, make_blobs,
                         make_multilabel_classification, make_regression)
 
 
-BOSTON = None
+REGRESSION_DATASET = None
 CROSS_DECOMPOSITION = ['PLSCanonical', 'PLSRegression', 'CCA', 'PLSSVD']
 
 
@@ -68,7 +68,12 @@ def _yield_checks(estimator):
     yield check_sample_weights_not_an_array
     yield check_sample_weights_list
     yield check_sample_weights_shape
-    yield check_sample_weights_invariance
+    if (has_fit_parameter(estimator, "sample_weight")
+            and not (hasattr(estimator, "_pairwise")
+                     and estimator._pairwise)):
+        # We skip pairwise because the data is not pairwise
+        yield partial(check_sample_weights_invariance, kind='ones')
+        yield partial(check_sample_weights_invariance, kind='zeros')
     yield check_estimators_fit_returns_self
     yield partial(check_estimators_fit_returns_self, readonly_memmap=True)
 
@@ -496,21 +501,16 @@ def check_estimator(Estimator, generate_only=False):
             warnings.warn(str(exception), SkipTestWarning)
 
 
-def _boston_subset(n_samples=200):
-    global BOSTON
-    if BOSTON is None:
-        X, y = load_boston(return_X_y=True)
-        X, y = shuffle(X, y, random_state=0)
-        X, y = X[:n_samples], y[:n_samples]
+def _regression_dataset():
+    global REGRESSION_DATASET
+    if REGRESSION_DATASET is None:
+        X, y = make_regression(
+            n_samples=200, n_features=10, n_informative=1,
+            bias=5.0, noise=20, random_state=42,
+        )
         X = StandardScaler().fit_transform(X)
-        BOSTON = X, y
-    return BOSTON
-
-
-@deprecated("set_checking_parameters is deprecated in version "
-            "0.22 and will be removed in version 0.24.")
-def set_checking_parameters(estimator):
-    _set_checking_parameters(estimator)
+        REGRESSION_DATASET = X, y
+    return REGRESSION_DATASET
 
 
 def _set_checking_parameters(estimator):
@@ -580,6 +580,11 @@ def _set_checking_parameters(estimator):
         # datasets (only very shallow trees are built) that the checks use.
         estimator.set_params(min_samples_leaf=5)
 
+    if name == 'DummyClassifier':
+        # the default strategy prior would output constant predictions and fail
+        # for check_classifiers_predictions
+        estimator.set_params(strategy='stratified')
+
     # Speed-up by reducing the number of CV or splits for CV estimators
     loo_cv = ['RidgeCV']
     if name not in loo_cv and hasattr(estimator, 'cv'):
@@ -596,7 +601,7 @@ class _NotAnArray:
 
     Parameters
     ----------
-    data : array_like
+    data : array-like
         The data.
     """
 
@@ -611,13 +616,6 @@ class _NotAnArray:
             return True
         raise TypeError("Don't want to call array_function {}!".format(
             func.__name__))
-
-
-@deprecated("NotAnArray is deprecated in version "
-            "0.22 and will be removed in version 0.24.")
-class NotAnArray(_NotAnArray):
-    # TODO: remove in 0.24
-    pass
 
 
 def _is_pairwise(estimator):
@@ -652,12 +650,6 @@ def _is_pairwise_metric(estimator):
     metric = getattr(estimator, "metric", None)
 
     return bool(metric == 'precomputed')
-
-
-@deprecated("pairwise_estimator_convert_X is deprecated in version "
-            "0.22 and will be removed in version 0.24.")
-def pairwise_estimator_convert_X(X, estimator, kernel=linear_kernel):
-    return _pairwise_estimator_convert_X(X, estimator, kernel)
 
 
 def _pairwise_estimator_convert_X(X, estimator, kernel=linear_kernel):
@@ -797,7 +789,7 @@ def check_sample_weights_not_an_array(name, estimator_orig):
         X = np.array([[1, 1], [1, 2], [1, 3], [1, 4],
                       [2, 1], [2, 2], [2, 3], [2, 4],
                       [3, 1], [3, 2], [3, 3], [3, 4]])
-        X = _NotAnArray(pairwise_estimator_convert_X(X, estimator_orig))
+        X = _NotAnArray(_pairwise_estimator_convert_X(X, estimator_orig))
         y = _NotAnArray([1, 1, 1, 1, 2, 2, 2, 2, 1, 1, 2, 2])
         weights = _NotAnArray([1] * 12)
         if estimator._get_tags()["multioutput_only"]:
@@ -851,41 +843,55 @@ def check_sample_weights_shape(name, estimator_orig):
 
 
 @ignore_warnings(category=FutureWarning)
-def check_sample_weights_invariance(name, estimator_orig):
-    # check that the estimators yield same results for
+def check_sample_weights_invariance(name, estimator_orig, kind="ones"):
+    # For kind="ones" check that the estimators yield same results for
     # unit weights and no weights
-    if (has_fit_parameter(estimator_orig, "sample_weight") and
-            not (hasattr(estimator_orig, "_pairwise")
-                 and estimator_orig._pairwise)):
-        # We skip pairwise because the data is not pairwise
+    # For kind="zeros" check that setting sample_weight to 0 is equivalent
+    # to removing corresponding samples.
+    estimator1 = clone(estimator_orig)
+    estimator2 = clone(estimator_orig)
+    set_random_state(estimator1, random_state=0)
+    set_random_state(estimator2, random_state=0)
 
-        estimator1 = clone(estimator_orig)
-        estimator2 = clone(estimator_orig)
-        set_random_state(estimator1, random_state=0)
-        set_random_state(estimator2, random_state=0)
+    X1 = np.array([[1, 3], [1, 3], [1, 3], [1, 3],
+                  [2, 1], [2, 1], [2, 1], [2, 1],
+                  [3, 3], [3, 3], [3, 3], [3, 3],
+                  [4, 1], [4, 1], [4, 1], [4, 1]], dtype=np.float64)
+    y1 = np.array([1, 1, 1, 1, 2, 2, 2, 2,
+                  1, 1, 1, 1, 2, 2, 2, 2], dtype=np.int)
 
-        X = np.array([[1, 3], [1, 3], [1, 3], [1, 3],
-                      [2, 1], [2, 1], [2, 1], [2, 1],
-                      [3, 3], [3, 3], [3, 3], [3, 3],
-                      [4, 1], [4, 1], [4, 1], [4, 1]], dtype=np.dtype('float'))
-        y = np.array([1, 1, 1, 1, 2, 2, 2, 2,
-                      1, 1, 1, 1, 2, 2, 2, 2], dtype=np.dtype('int'))
-        y = _enforce_estimator_tags_y(estimator1, y)
+    if kind == 'ones':
+        X2 = X1
+        y2 = y1
+        sw2 = np.ones(shape=len(y1))
+        err_msg = (f"For {name} sample_weight=None is not equivalent to "
+                   f"sample_weight=ones")
+    elif kind == 'zeros':
+        # Construct a dataset that is very different to (X, y) if weights
+        # are disregarded, but identical to (X, y) given weights.
+        X2 = np.vstack([X1, X1 + 1])
+        y2 = np.hstack([y1, 3 - y1])
+        sw2 = np.ones(shape=len(y1) * 2)
+        sw2[len(y1):] = 0
+        X2, y2, sw2 = shuffle(X2, y2, sw2, random_state=0)
 
-        estimator1.fit(X, y=y, sample_weight=np.ones(shape=len(y)))
-        estimator2.fit(X, y=y, sample_weight=None)
+        err_msg = (f"For {name}, a zero sample_weight is not equivalent "
+                   f"to removing the sample")
+    else:  # pragma: no cover
+        raise ValueError
 
-        for method in ["predict", "transform"]:
-            if hasattr(estimator_orig, method):
-                X_pred1 = getattr(estimator1, method)(X)
-                X_pred2 = getattr(estimator2, method)(X)
-                if sparse.issparse(X_pred1):
-                    X_pred1 = X_pred1.toarray()
-                    X_pred2 = X_pred2.toarray()
-                assert_allclose(X_pred1, X_pred2,
-                                err_msg="For %s sample_weight=None is not"
-                                        " equivalent to sample_weight=ones"
-                                        % name)
+    y1 = _enforce_estimator_tags_y(estimator1, y1)
+    y2 = _enforce_estimator_tags_y(estimator2, y2)
+
+    estimator1.fit(X1, y=y1, sample_weight=None)
+    estimator2.fit(X2, y=y2, sample_weight=sw2)
+
+    for method in ["predict", "predict_proba",
+                   "decision_function", "transform"]:
+        if hasattr(estimator_orig, method):
+            X_pred1 = getattr(estimator1, method)(X1)
+            X_pred2 = getattr(estimator2, method)(X1)
+            assert_allclose_dense_sparse(X_pred1, X_pred2, err_msg=err_msg)
 
 
 @ignore_warnings(category=(FutureWarning, UserWarning))
@@ -975,12 +981,6 @@ def check_dict_unchanged(name, estimator_orig):
             getattr(estimator, method)(X)
             assert estimator.__dict__ == dict_before, (
                 'Estimator changes __dict__ during %s' % method)
-
-
-@deprecated("is_public_parameter is deprecated in version "
-            "0.22 and will be removed in version 0.24.")
-def is_public_parameter(attr):
-    return _is_public_parameter(attr)
 
 
 def _is_public_parameter(attr):
@@ -1248,7 +1248,7 @@ def check_transformer_data_not_an_array(name, transformer):
 
 @ignore_warnings(category=FutureWarning)
 def check_transformers_unfitted(name, transformer):
-    X, y = _boston_subset()
+    X, y = _regression_dataset()
 
     transformer = clone(transformer)
     with assert_raises((AttributeError, ValueError), msg="The unfitted "
@@ -1667,7 +1667,7 @@ def check_regressor_multioutput(name, estimator):
 
     X, y = make_regression(random_state=42, n_targets=5,
                            n_samples=n_samples, n_features=n_features)
-    X = pairwise_estimator_convert_X(X, estimator)
+    X = _pairwise_estimator_convert_X(X, estimator)
 
     estimator.fit(X, y)
     y_pred = estimator.predict(X)
@@ -2073,7 +2073,7 @@ def check_estimators_unfitted(name, estimator_orig):
     Unfitted estimators should raise a NotFittedError.
     """
     # Common test for Regressors, Classifiers and Outlier detection estimators
-    X, y = _boston_subset()
+    X, y = _regression_dataset()
 
     estimator = clone(estimator_orig)
     for method in ('decision_function', 'predict', 'predict_proba',
@@ -2166,13 +2166,6 @@ def check_classifiers_predictions(X, y, name, classifier_orig):
                         ", ".join(map(str, classifier.classes_))))
 
 
-# TODO: remove in 0.24
-@deprecated("choose_check_classifiers_labels is deprecated in version "
-            "0.22 and will be removed in version 0.24.")
-def choose_check_classifiers_labels(name, y, y_names):
-    return _choose_check_classifiers_labels(name, y, y_names)
-
-
 def _choose_check_classifiers_labels(name, y, y_names):
     return y if name in ["LabelPropagation", "LabelSpreading"] else y_names
 
@@ -2216,7 +2209,7 @@ def check_classifiers_classes(name, classifier_orig):
 
 @ignore_warnings(category=FutureWarning)
 def check_regressors_int(name, regressor_orig):
-    X, _ = _boston_subset()
+    X, _ = _regression_dataset()
     X = _pairwise_estimator_convert_X(X[:50], regressor_orig)
     rnd = np.random.RandomState(0)
     y = rnd.randint(3, size=X.shape[0])
@@ -2245,11 +2238,10 @@ def check_regressors_int(name, regressor_orig):
 @ignore_warnings(category=FutureWarning)
 def check_regressors_train(name, regressor_orig, readonly_memmap=False,
                            X_dtype=np.float64):
-    X, y = _boston_subset()
+    X, y = _regression_dataset()
     X = X.astype(X_dtype)
     X = _pairwise_estimator_convert_X(X, regressor_orig)
-    y = StandardScaler().fit_transform(y.reshape(-1, 1))  # X is already scaled
-    y = y.ravel()
+    y = scale(y)  # X is already scaled
     regressor = clone(regressor_orig)
     y = _enforce_estimator_tags_y(regressor, y)
     if name in CROSS_DECOMPOSITION:
@@ -2529,7 +2521,7 @@ def check_classifier_data_not_an_array(name, estimator_orig):
 
 @ignore_warnings(category=FutureWarning)
 def check_regressor_data_not_an_array(name, estimator_orig):
-    X, y = _boston_subset(n_samples=50)
+    X, y = _regression_dataset()
     X = _pairwise_estimator_convert_X(X, estimator_orig)
     y = _enforce_estimator_tags_y(estimator_orig, y)
     for obj_type in ["NotAnArray", "PandasDataframe"]:
@@ -2647,13 +2639,6 @@ def check_parameters_default_constructible(name, Estimator):
                     assert param_value is init_param.default, init_param.name
                 else:
                     assert param_value == init_param.default, init_param.name
-
-
-# TODO: remove in 0.24
-@deprecated("enforce_estimator_tags_y is deprecated in version "
-            "0.22 and will be removed in version 0.24.")
-def enforce_estimator_tags_y(estimator, y):
-    return _enforce_estimator_tags_y(estimator, y)
 
 
 def _enforce_estimator_tags_y(estimator, y):
@@ -2816,7 +2801,9 @@ def check_set_params(name, estimator_orig):
 def check_classifiers_regression_target(name, estimator_orig):
     # Check if classifier throws an exception when fed regression targets
 
-    X, y = load_boston(return_X_y=True)
+    X, y = _regression_dataset()
+
+    X = X + 1 + abs(X.min(axis=0))  # be sure that X is non-negative
     e = clone(estimator_orig)
     msg = 'Unknown label type: '
     if not e._get_tags()["no_validation"]:

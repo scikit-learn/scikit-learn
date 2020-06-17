@@ -129,8 +129,6 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
 
         intercept_grads[layer] = np.mean(deltas[layer], 0)
 
-        return coef_grads, intercept_grads
-
     def _loss_grad_lbfgs(self, packed_coef_inter, X, y, activations, deltas,
                          coef_grads, intercept_grads):
         """Compute the MLP loss function and its corresponding derivatives
@@ -227,8 +225,10 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             loss_func_name = 'binary_log_loss'
         loss = LOSS_FUNCTIONS[loss_func_name](y, activations[-1])
         # Add L2 regularization term to loss
-        values = np.sum(
-            np.array([np.dot(s.ravel(), s.ravel()) for s in self.coefs_]))
+        values = 0
+        for s in self.coefs_:
+            s = s.ravel()
+            values += np.dot(s, s)
         loss += (0.5 * self.alpha) * values / n_samples
 
         # Backward propagate
@@ -241,7 +241,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         deltas[last] = activations[-1] - y
 
         # Compute gradient for the last layer
-        coef_grads, intercept_grads = self._compute_loss_grad(
+        self._compute_loss_grad(
             last, n_samples, activations, deltas, coef_grads, intercept_grads)
 
         # Iterate over the hidden layers
@@ -250,7 +250,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             inplace_derivative = DERIVATIVES[self.activation]
             inplace_derivative(activations[i], deltas[i - 1])
 
-            coef_grads, intercept_grads = self._compute_loss_grad(
+            self._compute_loss_grad(
                 i - 1, n_samples, activations, deltas, coef_grads,
                 intercept_grads)
 

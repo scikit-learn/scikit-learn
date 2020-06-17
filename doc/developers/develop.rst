@@ -247,8 +247,9 @@ several internals of scikit-learn that you should be aware of in addition to
 the scikit-learn API outlined above. You can check whether your estimator
 adheres to the scikit-learn interface and standards by running
 :func:`~sklearn.utils.estimator_checks.check_estimator` on an instance. The
-:func:`~sklearn.utils.parametrize_with_checks` pytest decorator can also be
-used (see its docstring for details and possible interactions with `pytest`)::
+:func:`~sklearn.utils.estimator_checks.parametrize_with_checks` pytest
+decorator can also be used (see its docstring for details and possible
+interactions with `pytest`)::
 
   >>> from sklearn.utils.estimator_checks import check_estimator
   >>> from sklearn.svm import LinearSVC
@@ -695,6 +696,7 @@ The following example should make this clear::
 
         def __init__(self, n_components=100, random_state=None):
             self.random_state = random_state
+            self.n_components = n_components
 
         # the arguments are ignored anyway, so we make them optional
         def fit(self, X=None, y=None):
@@ -702,7 +704,7 @@ The following example should make this clear::
 
         def transform(self, X):
             n_samples = X.shape[0]
-            return self.random_state_.randn(n_samples, n_components)
+            return self.random_state_.randn(n_samples, self.n_components)
 
 The reason for this setup is reproducibility:
 when an estimator is ``fit`` twice to the same data,
