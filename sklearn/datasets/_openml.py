@@ -612,7 +612,7 @@ def _valid_data_column_names(features_list, target_columns):
 @_deprecate_positional_args
 def fetch_openml(name=None, *, version='active', data_id=None, data_home=None,
                  target_column='default-target', cache=True, return_X_y=False,
-                 as_frame='auto'):
+                 as_frame='warn'):
     """Fetch dataset from openml by name or dataset id.
 
     Datasets are uniquely identified by either an integer ID or by a
@@ -721,6 +721,11 @@ def fetch_openml(name=None, *, version='active', data_id=None, data_home=None,
         in 'target' are represented as NaN's (numerical target) or None
         (categorical target)
     """
+    if as_frame == 'warn':
+        warn("The default value of as_frame will change from False "
+             "to 'auto' in 0.25.", FutureWarning)
+        as_frame = False
+
     data_home = get_data_home(data_home=data_home)
     data_home = join(data_home, 'openml')
     if cache is False:

@@ -505,6 +505,18 @@ def test_fetch_openml_as_frame_auto(monkeypatch):
     assert isinstance(data.data, scipy.sparse.csr_matrix)
 
 
+def test_fetch_openml_default_as_frame_warning(monkeypatch):
+    data_id = 61  # iris dataset version 1
+    _monkey_patch_webbased_functions(monkeypatch, data_id, True)
+    assert_warns_message(
+        FutureWarning,
+        "The default value of as_frame will change from False "
+        "to 'auto' in 0.25.",
+        fetch_openml,
+        data_id=data_id
+    )
+
+
 def test_convert_arff_data_dataframe_warning_low_memory_pandas(monkeypatch):
     pytest.importorskip('pandas')
 
@@ -1043,6 +1055,9 @@ def test_fetch_openml_cache(monkeypatch, gzip_response, tmpdir):
 
 
 @pytest.mark.parametrize('gzip_response', [True, False])
+@pytest.mark.filterwarnings(
+    "ignore:default value of as_frame will change:FutureWarning"
+)
 def test_fetch_openml_notarget(monkeypatch, gzip_response):
     data_id = 61
     target_column = None
@@ -1057,6 +1072,9 @@ def test_fetch_openml_notarget(monkeypatch, gzip_response):
 
 
 @pytest.mark.parametrize('gzip_response', [True, False])
+@pytest.mark.filterwarnings(
+    "ignore:default value of as_frame will change:FutureWarning"
+)
 def test_fetch_openml_inactive(monkeypatch, gzip_response):
     # fetch inactive dataset by id
     data_id = 40675
@@ -1073,6 +1091,9 @@ def test_fetch_openml_inactive(monkeypatch, gzip_response):
 
 
 @pytest.mark.parametrize('gzip_response', [True, False])
+@pytest.mark.filterwarnings(
+    "ignore:default value of as_frame will change:FutureWarning"
+)
 def test_fetch_nonexiting(monkeypatch, gzip_response):
     # there is no active version of glass2
     data_id = 40675
@@ -1095,6 +1116,9 @@ def test_raises_illegal_multitarget(monkeypatch, gzip_response):
 
 
 @pytest.mark.parametrize('gzip_response', [True, False])
+@pytest.mark.filterwarnings(
+    "ignore:default value of as_frame will change:FutureWarning"
+)
 def test_warn_ignore_attribute(monkeypatch, gzip_response):
     data_id = 40966
     expected_row_id_msg = "target_column={} has flag is_row_identifier."
@@ -1133,6 +1157,9 @@ def test_string_attribute_without_dataframe(monkeypatch, gzip_response):
 
 
 @pytest.mark.parametrize('gzip_response', [True, False])
+@pytest.mark.filterwarnings(
+    "ignore:default value of as_frame will change:FutureWarning"
+)
 def test_dataset_with_openml_error(monkeypatch, gzip_response):
     data_id = 1
     _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
@@ -1145,6 +1172,9 @@ def test_dataset_with_openml_error(monkeypatch, gzip_response):
 
 
 @pytest.mark.parametrize('gzip_response', [True, False])
+@pytest.mark.filterwarnings(
+    "ignore:default value of as_frame will change:FutureWarning"
+)
 def test_dataset_with_openml_warning(monkeypatch, gzip_response):
     data_id = 3
     _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
@@ -1157,6 +1187,9 @@ def test_dataset_with_openml_warning(monkeypatch, gzip_response):
 
 
 @pytest.mark.parametrize('gzip_response', [True, False])
+@pytest.mark.filterwarnings(
+    "ignore:default value of as_frame will change:FutureWarning"
+)
 def test_illegal_column(monkeypatch, gzip_response):
     data_id = 61
     _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
@@ -1171,6 +1204,9 @@ def test_illegal_column(monkeypatch, gzip_response):
 
 
 @pytest.mark.parametrize('gzip_response', [True, False])
+@pytest.mark.filterwarnings(
+    "ignore:default value of as_frame will change:FutureWarning"
+)
 def test_fetch_openml_raises_missing_values_target(monkeypatch, gzip_response):
     data_id = 2
     _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
@@ -1178,6 +1214,9 @@ def test_fetch_openml_raises_missing_values_target(monkeypatch, gzip_response):
                          fetch_openml, data_id=data_id, target_column='family')
 
 
+@pytest.mark.filterwarnings(
+    "ignore:default value of as_frame will change:FutureWarning"
+)
 def test_fetch_openml_raises_illegal_argument():
     assert_raise_message(ValueError, "Dataset data_id=",
                          fetch_openml, data_id=-1, name="name")
@@ -1195,6 +1234,9 @@ def test_fetch_openml_raises_illegal_argument():
 
 
 @pytest.mark.parametrize('gzip_response', [True, False])
+@pytest.mark.filterwarnings(
+    "ignore:default value of as_frame will change:FutureWarning"
+)
 def test_fetch_openml_with_ignored_feature(monkeypatch, gzip_response):
     # Regression test for #14340
     # 62 is the ID of the ZOO dataset

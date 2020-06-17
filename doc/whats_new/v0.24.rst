@@ -53,8 +53,9 @@ Changelog
   unless data is sparse.
   :pr:`17396` by :user:`Jiaxiang <fujiaxiang>`.
 
-- |API| The argument `as_frame` in :func:`datasets.fetch_openml` now defaults
-  to 'auto' instead of False.
+- |API| The default value of `as_frame` in :func:`datasets.fetch_openml` will
+  change from False to 'auto' in 0.25. It now issues a `FutureWarning` when
+  `as_frame` is not explicitly specified.
   :pr:`17610` by :user:`Jiaxiang <fujiaxiang>`.
 
 :mod:`sklearn.decomposition`
