@@ -18,7 +18,13 @@ import numbers
 from scipy import linalg
 from scipy import sparse
 
-from ._base import LinearClassifierMixin, LinearModel, _rescale_data, _deprecate_normalize, _preprocess_data
+from ._base import (
+    LinearClassifierMixin,
+    LinearModel,
+    _rescale_data,
+    _deprecate_normalize,
+    _preprocess_data,
+)
 from ._ridge_solvers import (
     _solve_sparse_cg,
     _solve_lsqr,

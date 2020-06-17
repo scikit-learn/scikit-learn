@@ -732,16 +732,16 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
                 self.coef_ = np.vstack([out[0] for out in outs])
                 self._residues = np.vstack([out[3] for out in outs])
         elif X.shape[1] <= 2 and np.all(np.linalg.eigvals(X @ X.T) > 0):
-            # Use Cholesky for 2 or fewer dimensions and positive-definite X @ X.T
+        # Use Cholesky for 2 or fewer dimensions and positive-definite X @ X.T
             n_samples, n_features = X.shape
             if y.ndim == 1:
                 y = y.reshape(-1, 1)
             n_samples_, n_targets = y.shape
             alpha = np.asarray(0, dtype=X.dtype).ravel()
             if alpha.size not in [1, n_targets]:
-                raise ValueError("Number of targets and number of penalties "
-                                "do not correspond: %d != %d"
-                                % (alpha.size, n_targets))
+                raise ValueError("Number of targets and number of penalties"
+                                 "do not correspond: %d != %d"
+                                 % (alpha.size, n_targets))
 
             if alpha.size == 1 and n_targets > 1:
                 alpha = np.repeat(alpha, n_targets)
@@ -751,7 +751,8 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
                 try:
                     dual_coef = _solve_cholesky_kernel(K, y, alpha)
 
-                    self.coef_ = safe_sparse_dot(X.T, dual_coef, dense_output=True).T
+                    self.coef_ = safe_sparse_dot(X.T, dual_coef,
+                                                 dense_output=True).T
                 except linalg.LinAlgError:
                     # use SVD solver if matrix is singular
                     self.coef_ = _solve_svd(X, y, alpha)
