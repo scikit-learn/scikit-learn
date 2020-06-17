@@ -238,11 +238,6 @@ cdef class BaseDenseSplitter(Splitter):
 
     cdef SIZE_t n_total_samples
 
-    def __cinit__(self, Criterion criterion, SIZE_t max_features,
-                  SIZE_t min_samples_leaf, double min_weight_leaf,
-                  object random_state):
-        pass
-
     cdef int init(self,
                   object X,
                   const DOUBLE_t[:, ::1] y,
