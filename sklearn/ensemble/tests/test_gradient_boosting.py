@@ -234,12 +234,12 @@ def check_regression_dataset(loss, subsample):
         assert mse < 0.04
 
         if last_y_pred is not None:
-            # FIXME: `rtol=65` is very permissive. This is due to the fact that
+            # FIXME: `rtol=75` is very permissive. This is due to the fact that
             # GBRT with and without `sample_weight` do not use the same
             # implementation of the median during the initialization with the
             # `DummyRegressor`. In the future, we should make sure that both
             # implementations should be the same. See PR #17377 for more.
-            assert_allclose(last_y_pred, y_pred, rtol=65)
+            assert_allclose(last_y_pred, y_pred, rtol=75)
 
         last_y_pred = y_pred
 
