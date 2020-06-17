@@ -43,7 +43,7 @@ def _minibatch_update_dense(
 
     weight_sums : ndarray of shape (n_clusters,), dtype=floating
         Current sums of the accumulated weights for each center.
-    
+
     labels : ndarray of shape (n_samples,), dtype=int
         labels assignment.
 
@@ -56,14 +56,14 @@ def _minibatch_update_dense(
         int i
 
         int *indices
-    
+
     with nogil, parallel(num_threads=n_threads):
         indices = <int*> malloc(n_samples * sizeof(int))
 
         for i in prange(n_clusters, schedule="static"):
             update_center_dense(i, &X[0, 0], sample_weight, centers_old,
                                 centers_new, weight_sums, labels, indices)
-        
+
         free(indices)
 
 
@@ -165,7 +165,7 @@ def _minibatch_update_sparse(
         int i
 
         int *indices
-    
+
     with nogil, parallel(num_threads=n_threads):
         indices = <int*> malloc(n_samples * sizeof(int))
 
@@ -173,7 +173,7 @@ def _minibatch_update_sparse(
             update_center_sparse(i, X_data, X_indices, X_indptr, sample_weight,
                                  centers_old, centers_new, weight_sums, labels,
                                  indices)
-        
+
         free(indices)
 
 
