@@ -768,8 +768,8 @@ cross-validation iterator. For example::
   ...     X[train_indx], X[test_indx], y[train_indx], y[test_indx]
   >>> X_train.shape, X_test.shape
   ((6,), (2,))
-  >>> y_train.shape, y_test.shape
-  ((6,), (2,))
+  >>> np.unique(groups[train_indx]), np.unique(groups[test_indx])
+  (array([1, 3, 4]), array([2]))
 
 .. _timeseries_cv:
 
