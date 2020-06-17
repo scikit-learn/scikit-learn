@@ -11,8 +11,11 @@ import pytest
 import joblib
 
 from numpy.testing import assert_allclose
+from sklearn.exceptions import FitFailedWarning
+
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import ignore_warnings
 
 from sklearn.base import BaseEstimator
@@ -465,12 +468,13 @@ def test_raises_on_score_list():
     X, y = make_blobs(random_state=0)
     f1_scorer_no_average = make_scorer(f1_score, average=None)
     clf = DecisionTreeClassifier()
-    with pytest.raises(ValueError):
-        cross_val_score(clf, X, y, scoring=f1_scorer_no_average)
+    assert_warns(FitFailedWarning,
+                 cross_val_score, clf, X, y,
+                 scoring=f1_scorer_no_average)
+
     grid_search = GridSearchCV(clf, scoring=f1_scorer_no_average,
                                param_grid={'max_depth': [1, 2]})
-    with pytest.raises(ValueError):
-        grid_search.fit(X, y)
+    assert_warns(FitFailedWarning, grid_search.fit, X, y)
 
 
 @ignore_warnings

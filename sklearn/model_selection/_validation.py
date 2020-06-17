@@ -549,6 +549,12 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
         else:
             estimator.fit(X_train, y_train, **fit_params)
 
+        fit_time = time.time() - start_time
+        test_scores = _score(estimator, X_test, y_test, scorer)
+        score_time = time.time() - start_time - fit_time
+        if return_train_score:
+            train_scores = _score(estimator, X_train, y_train, scorer)
+
     except Exception as e:
         # Note fit time as time until error
         fit_time = time.time() - start_time
@@ -574,12 +580,6 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
                              " numeric value. (Hint: if using 'raise', please"
                              " make sure that it has been spelled correctly.)")
 
-    else:
-        fit_time = time.time() - start_time
-        test_scores = _score(estimator, X_test, y_test, scorer)
-        score_time = time.time() - start_time - fit_time
-        if return_train_score:
-            train_scores = _score(estimator, X_train, y_train, scorer)
 
     if verbose > 1:
         total_time = score_time + fit_time
