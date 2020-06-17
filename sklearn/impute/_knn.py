@@ -74,7 +74,7 @@ class KNNImputer(_BaseImputer):
 
     Attributes
     ----------
-    indicator_ : :class:`sklearn.impute.MissingIndicator`
+    indicator_ : :class:`~sklearn.impute.MissingIndicator`
         Indicator used to add binary indicators for missing values.
         ``None`` if add_indicator is False.
 
