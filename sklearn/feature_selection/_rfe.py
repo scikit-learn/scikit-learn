@@ -195,10 +195,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         elif 0.0 < self.n_features_to_select < 1.0:
             n_features_to_select = int(n_features * self.n_features_to_select)
         else:
-            n_features_to_select = (self.n_features_to_select
-                                    if isinstance(self.n_features_to_select,
-                                                  numbers.Integral)
-                                    else int(self.n_features_to_select))
+            n_features_to_select = int(self.n_features_to_select)
 
         if 0.0 < self.step < 1.0:
             step = int(max(1, self.step * n_features))
