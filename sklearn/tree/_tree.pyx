@@ -1098,7 +1098,8 @@ cdef class Tree:
         cdef np.ndarray arr
         arr = np.PyArray_SimpleNewFromData(3, shape, np.NPY_DOUBLE, self.value)
         Py_INCREF(self)
-        PyArray_SetBaseObject(arr, <PyObject*> self)
+        if PyArray_SetBaseObject(arr, <PyObject*> self) < 0:
+            raise ValueError("Can't initialize array.")
         return arr
 
     cdef np.ndarray _get_node_ndarray(self):
@@ -1119,7 +1120,8 @@ cdef class Tree:
                                    strides, <void*> self.nodes,
                                    np.NPY_DEFAULT, None)
         Py_INCREF(self)
-        PyArray_SetBaseObject(arr, <PyObject*> self)
+        if PyArray_SetBaseObject(arr, <PyObject*> self) < 0:
+            raise ValueError("Can't initialize array.")
         return arr
 
     def compute_partial_dependence(self, DTYPE_t[:, ::1] X,
