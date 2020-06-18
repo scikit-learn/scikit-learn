@@ -594,14 +594,15 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
                     if return_train_score:
                         train_scores = error_score
                 warnings.warn("Scoring failed. The score on this train-test "
-                              "partition for these parameters will be set to %f. "
-                              "Details: \n%s" %
+                              "partition for these parameters will be set "
+                              "to %f. Details: \n%s" %
                               (error_score, format_exc()),
                               UserWarning)
             else:
-                raise ValueError("error_score must be the string 'raise' or a"
-                                 " numeric value. (Hint: if using 'raise', please"
-                                 " make sure that it has been spelled correctly.)")
+                raise ValueError("error_score must be the string 'raise' or a "
+                                 "numeric value. (Hint: if using 'raise', "
+                                 "please make sure that it has been "
+                                 "spelled correctly.)")
 
     if verbose > 1:
         total_time = score_time + fit_time
