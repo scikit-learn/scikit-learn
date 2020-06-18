@@ -191,12 +191,11 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         if self.n_features_to_select is None:
             n_features_to_select = n_features // 2
         elif self.n_features_to_select < 0:
-            raise ValueError("n_features_to_select must be positive or None.")
-        elif (isinstance(self.n_features_to_select, numbers.Real) and
-              0.0 < self.n_features_to_select <= 1.0):
+            raise ValueError("n_features_to_select must be positive or None")
+        elif isinstance(self.n_features_to_select, numbers.Integral):
+            n_features_to_select = self.n_features_to_select
+        else:  # float
             n_features_to_select = int(n_features * self.n_features_to_select)
-        else:
-            n_features_to_select = int(self.n_features_to_select)
 
         if 0.0 < self.step < 1.0:
             step = int(max(1, self.step * n_features))
