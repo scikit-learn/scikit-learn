@@ -2200,11 +2200,11 @@ class RandomTreesEmbedding(BaseForest):
 
     Attributes
     ----------
-    base_estimator_ : DecisionTreeClassifier
+    base_estimator_ : DecisionTreeClassifier instance
         The child estimator template used to create the collection of fitted
         sub-estimators.
 
-    estimators_ : list of DecisionTreeClassifier
+    estimators_ : list of DecisionTreeClassifier instances
         The collection of fitted sub-estimators.
 
     feature_importances_ : ndarray of shape (n_features,)
@@ -2216,8 +2216,8 @@ class RandomTreesEmbedding(BaseForest):
     n_outputs_ : int
         The number of outputs when ``fit`` is performed.
 
-    one_hot_encoder_ : OneHotEncoder
-        Returns the one-hot encoder used to create the sparse matrix.
+    one_hot_encoder_ : OneHotEncoder instance
+        One-hot encoder used to create the sparse embedding.
 
     References
     ----------
