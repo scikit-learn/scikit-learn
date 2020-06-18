@@ -559,21 +559,21 @@ class SVC(BaseSVC):
 
     Attributes
     ----------
-    class_weight_ : ndarray of shape (n_class,)
+    class_weight_ : ndarray of shape (n_classes,)
         Multipliers of parameter C for each class.
         Computed based on the ``class_weight`` parameter.
 
     classes_ : array of shape (n_classes,)
         The classes labels.
 
-    coef_ : ndarray of shape (n_class * (n_class-1) / 2, n_features)
+    coef_ : ndarray of shape (n_classes * (n_classes - 1) / 2, n_features)
         Weights assigned to the features (coefficients in the primal
         problem). This is only available in the case of a linear kernel.
 
         `coef_` is a readonly property derived from `dual_coef_` and
         `support_vectors_`.
 
-    dual_coef_ : ndarray of shape (n_class-1, n_SV)
+    dual_coef_ : ndarray of shape (n_classes -1, n_SV)
         Dual coefficients of the support vector in the decision
         function (see :ref:`sgd_mathematical_formulation`), multiplied by
         their targets.
@@ -585,7 +585,7 @@ class SVC(BaseSVC):
     fit_status_ : int
         0 if correctly fitted, 1 otherwise (will raise warning)
 
-    intercept_ : ndarray of shape (n_class * (n_class-1) / 2,)
+    intercept_ : ndarray of shape (n_classes * (n_classes - 1) / 2,)
         Constants in decision function.
 
     support_ : ndarray of shape (n_SV)
@@ -594,11 +594,11 @@ class SVC(BaseSVC):
     support_vectors_ : ndarray of shape (n_SV, n_features)
         Support vectors.
 
-    n_support_ : ndarray of shape (n_class,), dtype=int32
+    n_support_ : ndarray of shape (n_classes,), dtype=int32
         Number of support vectors for each class.
 
-    probA_ : ndarray of shape (n_class * (n_class-1) / 2)
-    probB_ : ndarray of shape (n_class * (n_class-1) / 2)
+    probA_ : ndarray of shape (n_classes * (n_classes - 1) / 2)
+    probB_ : ndarray of shape (n_classes * (n_classes - 1) / 2)
         If `probability=True`, it corresponds to the parameters learned in
         Platt scaling to produce probability estimates from decision values.
         If `probability=False`, it's an empty array. Platt scaling uses the
@@ -782,21 +782,21 @@ class NuSVC(BaseSVC):
 
     Attributes
     ----------
-    class_weight_ : ndarray of shape (n_class,)
+    class_weight_ : ndarray of shape (n_classes,)
         Multipliers of parameter C of each class.
         Computed based on the ``class_weight`` parameter.
 
     classes_ : ndarray of shape (n_classes,)
         The unique classes labels.
 
-    coef_ : ndarray of shape (n_class * (n_class-1) / 2, n_features)
+    coef_ : ndarray of shape (n_classes * (n_classes -1) / 2, n_features)
         Weights assigned to the features (coefficients in the primal
         problem). This is only available in the case of a linear kernel.
 
         `coef_` is readonly property derived from `dual_coef_` and
         `support_vectors_`.
 
-    dual_coef_ : ndarray of shape (n_class-1, n_SV)
+    dual_coef_ : ndarray of shape (n_classes - 1, n_SV)
         Dual coefficients of the support vector in the decision
         function (see :ref:`sgd_mathematical_formulation`), multiplied by
         their targets.
@@ -808,7 +808,7 @@ class NuSVC(BaseSVC):
     fit_status_ : int
         0 if correctly fitted, 1 if the algorithm did not converge.
 
-    intercept_ : ndarray of shape (n_class * (n_class-1) / 2,)
+    intercept_ : ndarray of shape (n_classes * (n_classes - 1) / 2,)
         Constants in decision function.
 
     support_ : ndarray of shape (n_SV,)
@@ -817,14 +817,14 @@ class NuSVC(BaseSVC):
     support_vectors_ : ndarray of shape (n_SV, n_features)
         Support vectors.
 
-    n_support_ : ndarray of shape (n_class,), dtype=int32
+    n_support_ : ndarray of shape (n_classes,), dtype=int32
         Number of support vectors for each class.
 
     fit_status_ : int
         0 if correctly fitted, 1 if the algorithm did not converge.
 
-    probA_ : ndarray of shape (n_class * (n_class-1) / 2,)
-    probB_ : ndarray of shape (n_class * (n_class-1) / 2,)
+    probA_ : ndarray of shape (n_classes * (n_classes - 1) / 2,)
+    probB_ : ndarray of shape (n_classes * (n_classes - 1) / 2,)
         If `probability=True`, it corresponds to the parameters learned in
         Platt scaling to produce probability estimates from decision values.
         If `probability=False`, it's an empty array. Platt scaling uses the
@@ -972,7 +972,7 @@ class SVR(RegressorMixin, BaseLibSVM):
 
     Attributes
     ----------
-    class_weight_ : ndarray of shape (n_class,)
+    class_weight_ : ndarray of shape (n_classes,)
         Multipliers of parameter C for each class.
         Computed based on the ``class_weight`` parameter.
 
@@ -992,11 +992,11 @@ class SVR(RegressorMixin, BaseLibSVM):
     intercept_ : ndarray of shape (1,)
         Constants in decision function.
 
-    n_support_ : ndarray of shape (n_class,), dtype=int32
+    n_support_ : ndarray of shape (n_classes,), dtype=int32
         Number of support vectors for each class.
 
-    probA_ : ndarray of shape (n_class * (n_class-1) / 2,)
-    probB_ : ndarray of shape (n_class * (n_class-1) / 2,)
+    probA_ : ndarray of shape (n_classes * (n_classes - 1) / 2,)
+    probB_ : ndarray of shape (n_classes * (n_classes - 1) / 2,)
         If `probability=True`, it corresponds to the parameters learned in
         Platt scaling to produce probability estimates from decision values.
         If `probability=False`, it's an empty array. Platt scaling uses the
@@ -1154,7 +1154,7 @@ class NuSVR(RegressorMixin, BaseLibSVM):
 
     Attributes
     ----------
-    class_weight_ : ndarray of shape (n_class,)
+    class_weight_ : ndarray of shape (n_classes,)
         Multipliers of parameter C for each class.
         Computed based on the ``class_weight`` parameter.
 
@@ -1174,11 +1174,11 @@ class NuSVR(RegressorMixin, BaseLibSVM):
     intercept_ : ndarray of shape (1,)
         Constants in decision function.
 
-    n_support_ : ndarray of shape (n_class,), dtype=int32
+    n_support_ : ndarray of shape (n_classes,), dtype=int32
         Number of support vectors for each class.
 
-    probA_ : ndarray of shape (n_class * (n_class-1) / 2,)
-    probB_ : ndarray of shape (n_class * (n_class-1) / 2,)
+    probA_ : ndarray of shape (n_classes * (n_classes - 1) / 2,)
+    probB_ : ndarray of shape (n_classes * (n_classes - 1) / 2,)
         If `probability=True`, it corresponds to the parameters learned in
         Platt scaling to produce probability estimates from decision values.
         If `probability=False`, it's an empty array. Platt scaling uses the
@@ -1315,7 +1315,7 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
 
     Attributes
     ----------
-    class_weight_ : ndarray of shape (n_class,)
+    class_weight_ : ndarray of shape (n_classes,)
         Multipliers of parameter C for each class.
         Computed based on the ``class_weight`` parameter.
 
@@ -1335,7 +1335,7 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
     intercept_ : ndarray of shape (1,)
         Constant in the decision function.
 
-    n_support_ : array-like, dtype=int32, shape = [n_class]
+    n_support_ : ndarray of shape (n_classes,), dtype=int32
         Number of support vectors for each class.
 
     offset_ : float
