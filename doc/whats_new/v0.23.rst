@@ -44,15 +44,6 @@ Changelog
   provided by the user were modified in place. :pr:`17204` by
   :user:`Jeremie du Boisberranger <jeremiedbb>`.
 
-:mod:`sklearn.gaussian_process`
-...............................
-
-- |Enhancement| A new method
-  :class:`gaussian_process.Kernel._check_bounds_params` is called after
-  fitting a Gaussian Process and raises a ``ConvergenceWarning`` if the bounds
-  of the hyperparameters are too tight. :issue:`12638` by
-  :user:`Sylvain Lannuzel`<SylvainLan>
-
 
 Miscellaneous
 .............
