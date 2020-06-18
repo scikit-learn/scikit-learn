@@ -111,8 +111,11 @@ def test_rfe():
 
 def test_rfe_negative_n_features():
     clf = SVC(kernel="linear")
+
+    iris = load_iris()
+    rfe = RFE(estimator=clf, n_features_to_select=-1, step=0.1)
     with pytest.raises(ValueError, match=r"n_features_to_select must be *"):
-        RFE(estimator=clf, n_features_to_select=-1, step=0.1).fit(...)
+        rfe.fit(iris.data, iris.target)
 
 
 def test_rfe_percent_n_features():
