@@ -92,8 +92,7 @@ score_label = (f"Score on original\ndata: {score_iris:.2f}\n"
                f"(p-value: {pvalue_iris:.3f})")
 ax.text(0.7, 260, score_label, fontsize=12)
 ax.set_xlabel("Accuracy score")
-ax.set_ylabel("Probability")
-plt.show()
+_ = ax.set_ylabel("Probability")
 
 # %%
 # Random data
