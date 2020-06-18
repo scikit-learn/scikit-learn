@@ -580,7 +580,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
             score_time = time.time() - start_time - fit_time
             if return_train_score:
                 train_scores = _score(estimator, X_train, y_train, scorer)
-        except Exception as e:
+        except Exception:
             if error_score == 'raise':
                 raise
             elif isinstance(error_score, numbers.Number):
