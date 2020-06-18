@@ -472,7 +472,7 @@ class SimpleImputer(_BaseImputer):
     def inverse_transform(self, X):
         """Convert the data back to the original representation.
 
-        Inverts the ``fit_transform`` operation performed on an array.
+        Inverts the `transform` operation performed on an array.
         This operation can only be performed after :class:`SimpleImputer` is
         instantiated with ``add_indicator`` parameter set to `True`.
 
