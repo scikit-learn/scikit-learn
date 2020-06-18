@@ -134,11 +134,20 @@ Changelog
   variance of 1. :pr:`17193` by :user:`Lucy Liu <lucyleeow>` and
   :user:`Mabel Villalba <mabelvj>`.
 
+- |Enhancement| Add `dtype` parameter to
+  :class:`preprocessing.KBinsDiscretizer`.
+  :pr:`16335` by :user:`Arthur Imbert <Henley13>`.
+
 :mod:`sklearn.tree`
 ...................
 
 - |Enhancement| :func:`tree.plot_tree` now uses colors from the matplotlib
   configuration settings. :pr:`17187` by `Andreas Müller`_.
+
+- |API|: The parameter ``X_idx_sorted`` is now deprecated in
+  :meth:`tree.DecisionTreeClassifier.fit` and
+  :meth:`tree.DecisionTreeRegressor.fit`, and has not effect.
+  :pr:`17614` by :user:`Juan Carlos Alfaro Jiménez <alfaro96>`.
 
 :mod:`sklearn.neighbors`
 .............................

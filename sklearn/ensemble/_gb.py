@@ -166,7 +166,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         self.tol = tol
 
     def _fit_stage(self, i, X, y, raw_predictions, sample_weight, sample_mask,
-                   random_state, X_idx_sorted, X_csc=None, X_csr=None):
+                   random_state, X_csc=None, X_csr=None):
         """Fit another stage of ``n_classes_`` trees to the boosting model. """
 
         assert sample_mask.dtype == np.bool
@@ -207,7 +207,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
             X = X_csr if X_csr is not None else X
             tree.fit(X, residual, sample_weight=sample_weight,
-                     check_input=False, X_idx_sorted=X_idx_sorted)
+                     check_input=False)
 
             # update tree leaves
             loss.update_terminal_regions(
@@ -482,12 +482,10 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             raw_predictions = self._raw_predict(X)
             self._resize_state()
 
-        X_idx_sorted = None
-
         # fit the boosting stages
         n_stages = self._fit_stages(
             X, y, raw_predictions, sample_weight, self._rng, X_val, y_val,
-            sample_weight_val, begin_at_stage, monitor, X_idx_sorted)
+            sample_weight_val, begin_at_stage, monitor)
 
         # change shape of arrays after fit (early-stopping or additional ests)
         if n_stages != self.estimators_.shape[0]:
@@ -501,7 +499,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
     def _fit_stages(self, X, y, raw_predictions, sample_weight, random_state,
                     X_val, y_val, sample_weight_val,
-                    begin_at_stage=0, monitor=None, X_idx_sorted=None):
+                    begin_at_stage=0, monitor=None):
         """Iteratively fits the stages.
 
         For each stage it computes the progress (OOB, train score)
@@ -544,7 +542,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             # fit next stage of trees
             raw_predictions = self._fit_stage(
                 i, X, y, raw_predictions, sample_weight, sample_mask,
-                random_state, X_idx_sorted, X_csc, X_csr)
+                random_state, X_csc, X_csr)
 
             # track deviance (= loss)
             if do_oob:

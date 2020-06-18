@@ -242,6 +242,10 @@ def confusion_matrix(y_true, y_pred, *, labels=None, sample_weight=None,
         samples with true label being i-th class
         and prediced label being j-th class.
 
+    See Also
+    --------
+    plot_confusion_matrix : Plot Confusion Matrix
+
     References
     ----------
     .. [1] `Wikipedia entry for the Confusion matrix
