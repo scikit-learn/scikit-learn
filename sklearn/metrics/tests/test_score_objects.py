@@ -12,7 +12,6 @@ import warnings
 import joblib
 
 from numpy.testing import assert_allclose
-
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import ignore_warnings
@@ -467,13 +466,26 @@ def test_raises_on_score_list():
     X, y = make_blobs(random_state=0)
     f1_scorer_no_average = make_scorer(f1_score, average=None)
     clf = DecisionTreeClassifier()
+    fit_and_score_kwargs = {'error_score': np.nan}
+
+    # since we're using FailingClassfier, our error will be the following
+    error_message = "ValueError: scoring must return a number"
+
+    # the warning message we're expecting to see
+    warning_message = ("Scoring failed. The score on this train-test "
+                       "partition for these parameters will be set to %f. "
+                       "Details: \n%s" % (fit_and_score_kwargs['error_score'],
+                                          error_message))
+
     with warnings.catch_warnings(record=True) as record:
         warnings.simplefilter("always")
         cross_val_score(clf, X, y, scoring=f1_scorer_no_average)
         assert len(record) > 0
         for item in record:
-            msg = ('Scoring failed.')
-            assert msg in str(item.message)
+            assert 'Traceback (most recent call last):\n' in str(item.message)
+            split = str(item.message).splitlines()
+            mtb = split[0] + '\n' + split[-1]
+            assert warning_message in mtb
 
     grid_search = GridSearchCV(clf, scoring=f1_scorer_no_average,
                                param_grid={'max_depth': [1, 2]})
@@ -482,8 +494,11 @@ def test_raises_on_score_list():
         grid_search.fit(X, y)
         assert len(record) > 0
         for item in record:
-            msg = ('Scoring failed.')
-            assert msg in str(item.message)
+            assert 'Traceback (most recent call last):\n' in str(item.message)
+            split = str(item.message).splitlines()
+            mtb = split[0] + '\n' + split[-1]
+            assert warning_message in mtb
+
 
 @ignore_warnings
 def test_classification_scorer_sample_weight():
