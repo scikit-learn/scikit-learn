@@ -1381,10 +1381,10 @@ class MiniBatchKMeans(KMeans):
     ...                          batch_size=6,
     ...                          max_iter=10).fit(X)
     >>> kmeans.cluster_centers_
-    array([[3.95918367, 2.40816327],
-           [1.12195122, 1.3902439 ]])
+    array([[2.32394366, 1.16901408],
+           [3.4       , 4.36      ]])
     >>> kmeans.predict([[0, 0], [4, 4]])
-    array([1, 0], dtype=int32)
+    array([0, 1], dtype=int32)
     """
     @_deprecate_positional_args
     def __init__(self, n_clusters=8, *, init='k-means++', max_iter=100,
