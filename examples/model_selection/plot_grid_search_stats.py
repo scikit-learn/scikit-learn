@@ -8,36 +8,23 @@ trained and evaluated using :class:`~sklearn.model_selection.GridSearchCV`.
 
 """
 
-print(__doc__)
-
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-import seaborn as sns
-
-from itertools import combinations
-from math import factorial
-from scipy.stats import t
-from sklearn.datasets import make_moons
-from sklearn.model_selection import GridSearchCV, RepeatedStratifiedKFold
-from sklearn.svm import SVC
-
-# set seaborn parameters
-sns.set_style("darkgrid")
-
 ###############################################################################
 # We will start by simulating moon shaped data (where the ideal separation
 # between classes is non-linear), adding to it a moderate degree of noise.
 # Datapoints will belong to one of two possible classes represented
 # by two features. We will simulate 50 samples for each class:
 
-X, y = make_moons(noise=0.352, random_state=1)
+print(__doc__)
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.datasets import make_moons
 
-# plot simulated data
+X, y = make_moons(noise=0.352, random_state=1, n_samples=100)
+
 sns.scatterplot(
     X[:, 0], X[:, 1], hue=y,
     marker='o', s=25, edgecolor='k', legend=False
-    ).set_title("Data")
+).set_title("Data")
 plt.show()
 
 
@@ -50,22 +37,25 @@ plt.show()
 # data in each repetition. The performance will be evaluated using
 # :class:`~sklearn.metrics.roc_auc_score`.
 
+from sklearn.model_selection import GridSearchCV, RepeatedStratifiedKFold
+from sklearn.svm import SVC
+
 param_grid = [
     {'kernel': ['linear']},
     {'kernel': ['poly'], 'degree': [2, 3]},
     {'kernel': ['rbf']}
-    ]
+]
 
 svc = SVC(random_state=0)
 
 cv = RepeatedStratifiedKFold(
     n_splits=10, n_repeats=10, random_state=0
-    )
+)
 
 search = GridSearchCV(
     estimator=svc, param_grid=param_grid,
     scoring='roc_auc', cv=cv
-    )
+)
 search.fit(X, y)
 
 
@@ -73,13 +63,20 @@ search.fit(X, y)
 # We can now inspect the results of our search, sorted by their
 # `mean_test_score`:
 
+import pandas as pd
+
 results_df = pd.DataFrame(search.cv_results_)
-results_df = results_df.rename(
-    index={0: 'linear', 1: 'poly2', 2: 'poly3', 3: 'rbf'}
-    ).sort_values(by=['rank_test_score'])
+results_df = (
+    results_df
+    .sort_values(by=['rank_test_score'])
+    .set_index(results_df["params"].apply(
+        lambda x: "_".join(str(val) for val in x.values()))
+    )
+    .rename_axis('model')
+)
 results_df[
     ['params', 'rank_test_score', 'mean_test_score', 'std_test_score']
-    ]
+]
 
 
 ###############################################################################
@@ -88,7 +85,7 @@ results_df[
 # worse, with the one using a two degree polynomial achieving a much lower
 # perfomance than all other models.
 #
-# The output of GridSearchCV does not provide information on the certainty of
+# The output of `GridSearchCV` does not provide information on the certainty of
 # the differences between the models. To evaluate this, we need to conduct a
 # statistical test. Specifically, to contrast the performance of two models we
 # should statistically compare their AUC scores. There are 100 observations
@@ -112,7 +109,7 @@ fig, ax = plt.subplots()
 sns.lineplot(
     data=model_scores.transpose().iloc[:30],
     dashes='', palette='Set1', marker='o', alpha=.5, ax=ax
-    )
+)
 ax.set_xlabel("CV fold", size=12, labelpad=10)
 ax.set_ylabel("Model AUC", size=12)
 ax.tick_params(bottom=True, labelbottom=False)
@@ -120,6 +117,7 @@ plt.show()
 
 # print correlation of AUC scores across folds
 print(f"Correlation of models:\n {model_scores.transpose().corr()}")
+
 
 ###############################################################################
 # We can observe that the performance of the models highly depends on the fold.
@@ -131,17 +129,17 @@ print(f"Correlation of models:\n {model_scores.transpose().corr()}")
 #
 # Several methods have been developed to correct for the variance in these
 # cases. In this example we will explore one of these methods implemented
-# using two different statistical approaches: Frequentist and Bayesian.
+# using two different statistical approaches: frequentist and Bayesian.
 
 
 ###############################################################################
-# Comparing two models: Frequentist approach
+# Comparing two models: frequentist approach
 # ------------------------------------------
 #
 # We can start by asking: "Is the first model significantly better than the
 # second model (when ranked by `mean_test_score`)?"
 #
-# If we wanted to answer this question using a Frequentist approach we could
+# If we wanted to answer this question using a frequentist approach we could
 # run a paired t-test. Many variants of the latter have been developed to
 # account for the 'non-independence of observations problem' described in the
 # previous section. We will use the one proven to obtain the highest
@@ -163,20 +161,58 @@ print(f"Correlation of models:\n {model_scores.transpose().corr()}")
 # Let's implement a corrected one tailed paired t-test to compare the first and
 # second model, and compute the corresponding p-value:
 
+import numpy as np
+from scipy.stats import t
+
 
 def correct_std(differences, n, n_train, n_test):
+    """Corrects standard deviation using Nadeau and Bengio's approach.
+
+    Parameters
+    ----------
+    differences : ndarray of shape (n_observations, 1)
+        Vector containing the differences in the score metrics of two models.
+    n : int
+        Total number of observations.
+    n_train : int
+        Number of observations in the training set.
+    n_test : int
+        Number of observations in the testing set.
+
+    Returns
+    -------
+    corrected_std : int
+        Variance-corrected standard deviation of the set of differences.
     """
-    Calculates the standard deviation of a set of observations implementing
-    Nadeau and Bengio's variance correction
-    """
-    corrected_var = np.var(differences, ddof=1) * ((1/n) + (n_test/n_train))
+    corrected_var = (
+        np.var(differences, ddof=1) * ((1 / n) + (n_test / n_train))
+    )
     corrected_std = np.sqrt(corrected_var)
     return corrected_std
 
 
 def compute_corrected_ttest(differences, n, df, n_train, n_test):
-    """
-    Computes right-tailed paired t-test with corrected variance
+    """Computes right-tailed paired t-test with corrected variance.
+
+    Parameters
+    ----------
+    differences : array-like of shape (n_observations, 1)
+        Vector containing the differences in the score metrics of two models.
+    n : int
+        Total number of observations.
+    df : int
+        Degrees of freedom.
+    n_train : int
+        Number of observations in the training set.
+    n_test : int
+        Number of observations in the testing set.
+
+    Returns
+    -------
+    t_stat : float
+        Variance-corrected t-statistic.
+    p_val : float
+        Variance-corrected p-value.
     """
     mean = np.mean(differences)
     corrected_std = correct_std(differences, n, n_train, n_test)
@@ -185,19 +221,20 @@ def compute_corrected_ttest(differences, n, df, n_train, n_test):
     return t_stat, p_val
 
 
-model_1_scores = model_scores.iloc[0].values
-model_2_scores = model_scores.iloc[1].values
+model_1_scores = model_scores.iloc[0].values  # scores of the best model
+model_2_scores = model_scores.iloc[1].values  # scores of the second-best model
 
+# compute the difference in performance between the models on each test set
 differences = model_1_scores - model_2_scores
 
-n = differences.shape[0]
+n = differences.shape[0]  # number of test sets
 df = n - 1
 n_train = len(list(cv.split(X, y))[0][0])
 n_test = len(list(cv.split(X, y))[0][1])
 
 t_stat, p_val = compute_corrected_ttest(differences, n, df, n_train, n_test)
-print(f"Corrected t-value: {np.round(t_stat, 3)}\n"
-      f"Corrected p-value: {np.round(p_val, 3)}")
+print(f"Corrected t-value: {t_stat:.3f}\n"
+      f"Corrected p-value: {p_val:.3f}")
 
 
 ###############################################################################
@@ -205,21 +242,21 @@ print(f"Corrected t-value: {np.round(t_stat, 3)}\n"
 
 t_stat_uncorrected = (
     np.mean(differences) / np.sqrt(np.var(differences, ddof=1) / n)
-    )
+)
 p_val_uncorrected = t.sf(np.abs(t_stat_uncorrected), df)
 
-print(f"Uncorrected t-value: {np.round(t_stat_uncorrected, 3)}\n"
-      f"Uncorrected p-value: {np.round(p_val_uncorrected, 3)}")
+print(f"Uncorrected t-value: {t_stat_uncorrected:.3f}\n"
+      f"Uncorrected p-value: {p_val_uncorrected:.3f}")
 
 
 ###############################################################################
-# Using the conventional significance alpha level at .05, we observe that the
-# uncorrected t-test concludes that the first model is significantly better
+# Using the conventional significance alpha level at `p=0.05`, we observe that
+# the uncorrected t-test concludes that the first model is significantly better
 # than the second.
 #
 # With the corrected approach, in contrast, we fail to detect this difference.
 #
-# In the latter case, however, the Frequentist approach does not let us
+# In the latter case, however, the frequentist approach does not let us
 # conclude that the first and second model have an equivalent performance. If
 # we wanted to make this assertion we need to use a Bayesian approach.
 
@@ -267,7 +304,8 @@ print(f"Uncorrected t-value: {np.round(t_stat_uncorrected, 3)}\n"
 t_post = t(
     df, loc=np.mean(differences),
     scale=correct_std(differences, n, n_train, n_test)
-    )
+)
+
 
 ###############################################################################
 # Let's plot the posterior distribution:
@@ -293,16 +331,16 @@ plt.show()
 better_prob = t_post.sf(0)
 
 print(f"Probability of {model_scores.index[0]} being more accurate than "
-      f"{model_scores.index[1]}: {np.round(better_prob, 3)}")
+      f"{model_scores.index[1]}: {better_prob:.3f}")
 print(f"Probability of {model_scores.index[1]} being more accurate than "
-      f"{model_scores.index[0]}: {np.round((1-better_prob), 3)}")
+      f"{model_scores.index[0]}: {1 - better_prob:.3f}")
 
 
 ###############################################################################
-# In contrast with the Frequentist approach, we can compute the probability
+# In contrast with the frequentist approach, we can compute the probability
 # that one model is better than the other.
 #
-# Note that we obtained similar results as those in the Frequentist approach.
+# Note that we obtained similar results as those in the frequentist approach.
 # Given our choice of priors we are in essence performing the same
 # computations, but we are allowed to make different assertions.
 
@@ -330,7 +368,7 @@ rope_interval = [-0.01, 0.01]
 rope_prob = t_post.cdf(rope_interval[1]) - t_post.cdf(rope_interval[0])
 
 print(f"Probability of {model_scores.index[0]} and {model_scores.index[1]} "
-      f"being practically equivalent: {np.round(rope_prob, 3)}")
+      f"being practically equivalent: {rope_prob:.3f}")
 
 
 ###############################################################################
@@ -350,7 +388,7 @@ plt.show()
 
 ###############################################################################
 # As suggested in [4]_, we can further interpret these probabilities using the
-# same criteria as the Frequentist approach: Is the probability of falling
+# same criteria as the frequentist approach: Is the probability of falling
 # inside the ROPE bigger than 95% (alpha value of 5%)?  In that case we can
 # conclude that both models are practically equivalent.
 
@@ -373,12 +411,12 @@ for interval in intervals:
 cred_int_df = pd.DataFrame(
     cred_intervals,
     columns=['interval', 'lower value', 'upper value']
-    ).set_index('interval')
+).set_index('interval')
 cred_int_df
 
 
 ###############################################################################
-# Pairwise comparison of all models: Frequentist approach
+# Pairwise comparison of all models: frequentist approach
 # -------------------------------------------------------
 #
 # We could also be interested in comparing the performance of all our models
@@ -395,10 +433,13 @@ cred_int_df
 #
 # Let's compare the performance of the models using the corrected t-test:
 
+from itertools import combinations
+from math import factorial
+
 n_comparisons = (
     factorial(len(model_scores))
     / (factorial(2) * factorial(len(model_scores) - 2))
-    )
+)
 pairwise_t_test = []
 
 for model_i, model_k in combinations(range(len(model_scores)), 2):
@@ -407,19 +448,19 @@ for model_i, model_k in combinations(range(len(model_scores)), 2):
     differences = model_i_scores - model_k_scores
     t_stat, p_val = compute_corrected_ttest(
         differences, n, df, n_train, n_test
-        )
+    )
     p_val *= n_comparisons  # implement Bonferroni correction
-    if p_val > 1:
-        p_val = 1  # Bonferroni can output p-values higher than 1
+    # Bonferroni can output p-values higher than 1
+    p_val = 1 if p_val > 1 else p_val
     pairwise_t_test.append(
         [model_scores.index[model_i], model_scores.index[model_k],
-            t_stat, p_val]
-        )
+         t_stat, p_val]
+    )
 
 pairwise_comp_df = pd.DataFrame(
     pairwise_t_test,
     columns=['model_1', 'model_2', 't_stat', 'p_val']
-    ).round(3)
+).round(3)
 pairwise_comp_df
 
 
@@ -451,7 +492,7 @@ for model_i, model_k in combinations(range(len(model_scores)), 2):
     t_post = t(
         df, loc=np.mean(differences),
         scale=correct_std(differences, n, n_train, n_test)
-        )
+    )
     left_prob = t_post.cdf(rope_interval[0])
     right_prob = t_post.sf(rope_interval[1])
     rope_prob = t_post.cdf(rope_interval[1]) - t_post.cdf(rope_interval[0])
@@ -461,7 +502,7 @@ for model_i, model_k in combinations(range(len(model_scores)), 2):
 pairwise_bayesian_df = (pd.DataFrame(
     pairwise_bayesian,
     columns=['worse_prob', 'better_prob', 'rope_prob']
-    ).round(3))
+).round(3))
 
 pairwise_comp_df = pairwise_comp_df.join(pairwise_bayesian_df)
 pairwise_comp_df
@@ -479,7 +520,7 @@ pairwise_comp_df
 # `rbf` and `linear` have a 43% probability of being practically equivalent,
 # while `rbf` and `poly3` have a 10% chance of being so.
 #
-# Similarly to the conclusions obtained using the Frequentist approach, all
+# Similarly to the conclusions obtained using the frequentist approach, all
 # models have a 100% probability of being better than `poly2`, and none have a
 # practically equivalent performance with the latter.
 
@@ -491,7 +532,7 @@ pairwise_comp_df
 #   GridSearchCV, it is necessary to correct the calculated variance which
 #   could be underestimated since the scores of the models are not independent
 #   from each other.
-# - A Frequentist approach that uses a (variance-corrected) paired t-test can
+# - A frequentist approach that uses a (variance-corrected) paired t-test can
 #   tell us if the performance of one model is better that another with a
 #   degree of certainty above chance.
 # - A Bayesian approach can provide the probabilities of one model being
@@ -499,7 +540,7 @@ pairwise_comp_df
 #   how confident we are of knowing that the true differences of our models
 #   fall under a certain range of values.
 # - If multiple models are statistically compared, a multiple comparisons
-#   correction is needed when using the Frequentist approach.
+#   correction is needed when using the frequentist approach.
 
 
 ###############################################################################
