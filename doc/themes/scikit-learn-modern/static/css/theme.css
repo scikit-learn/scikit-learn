@@ -36,6 +36,7 @@ code {
   color: #222;
   background-color: #ecf0f3;
   border-radius: 0.2rem;
+  white-space: nowrap;
   padding: 0.15rem;
 }
 
@@ -71,6 +72,7 @@ a code {
   color: #2878A2;
   border-radius: 0;
   padding: 0;
+  white-space: nowrap;
 }
 
 img {
