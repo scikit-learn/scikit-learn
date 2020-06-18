@@ -9,10 +9,10 @@
 import numpy as np
 from joblib import Parallel, delayed, effective_n_jobs
 
-from ..utils import check_X_y, safe_sqr
 from ..utils.metaestimators import if_delegate_has_method
 from ..utils.metaestimators import _safe_split
 from ..utils.validation import check_is_fitted
+from ..utils.validation import _deprecate_positional_args
 from ..base import BaseEstimator
 from ..base import MetaEstimatorMixin
 from ..base import clone
@@ -21,6 +21,7 @@ from ..model_selection import check_cv
 from ..model_selection._validation import _score
 from ..metrics import check_scoring
 from ._base import SelectorMixin
+from ._base import _get_feature_importances
 
 
 def _rfe_single_fit(rfe, estimator, X, y, train, test, scorer):
@@ -41,8 +42,8 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
     coefficients of a linear model), the goal of recursive feature elimination
     (RFE) is to select features by recursively considering smaller and smaller
     sets of features. First, the estimator is trained on the initial set of
-    features and the importance of each feature is obtained either through a
-    ``coef_`` attribute or through a ``feature_importances_`` attribute.
+    features and the importance of each feature is obtained either through
+    any specific attribute or callable.
     Then, the least important features are pruned from current set of features.
     That procedure is recursively repeated on the pruned set until the desired
     number of features to select is eventually reached.
@@ -53,21 +54,38 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
     ----------
     estimator : estimator instance
         A supervised learning estimator with a ``fit`` method that provides
-        information about feature importance either through a ``coef_``
-        attribute or through a ``feature_importances_`` attribute.
+        information about feature importance
+        (e.g. `coef_`, `feature_importances_`).
 
-    n_features_to_select : int or None (default=None)
+    n_features_to_select : int or None, default=None
         The number of features to select. If `None`, half of the features
         are selected.
 
-    step : int or float, optional (default=1)
+    step : int or float, default=1
         If greater than or equal to 1, then ``step`` corresponds to the
         (integer) number of features to remove at each iteration.
         If within (0.0, 1.0), then ``step`` corresponds to the percentage
         (rounded down) of features to remove at each iteration.
 
-    verbose : int, (default=0)
+    verbose : int, default=0
         Controls verbosity of output.
+
+    importance_getter : str or callable, default='auto'
+        If 'auto', uses the feature importance either through a `coef_`
+        or `feature_importances_` attributes of estimator.
+
+        Also accepts a string that specifies an attribute name/path
+        for extracting feature importance (implemented with `attrgetter`).
+        For example, give `regressor_.coef_` in case of
+        :class:`~sklearn.compose.TransformedTargetRegressor`  or
+        `named_steps.clf.feature_importances_` in case of
+        class:`~sklearn.pipeline.Pipeline` with its last step named `clf`.
+
+        If `callable`, overrides the default feature importance getter.
+        The callable is passed with the fitted estimator and it should
+        return importance for each feature.
+
+        .. versionadded:: 0.24
 
     Attributes
     ----------
@@ -98,13 +116,17 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
     >>> from sklearn.svm import SVR
     >>> X, y = make_friedman1(n_samples=50, n_features=10, random_state=0)
     >>> estimator = SVR(kernel="linear")
-    >>> selector = RFE(estimator, 5, step=1)
+    >>> selector = RFE(estimator, n_features_to_select=5, step=1)
     >>> selector = selector.fit(X, y)
     >>> selector.support_
     array([ True,  True,  True,  True,  True, False, False, False, False,
            False])
     >>> selector.ranking_
     array([1, 1, 1, 1, 1, 6, 4, 3, 2, 5])
+
+    Notes
+    -----
+    Allows NaN/Inf in the input if the underlying estimator does as well.
 
     See also
     --------
@@ -118,11 +140,13 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
            for cancer classification using support vector machines",
            Mach. Learn., 46(1-3), 389--422, 2002.
     """
-    def __init__(self, estimator, n_features_to_select=None, step=1,
-                 verbose=0):
+    @_deprecate_positional_args
+    def __init__(self, estimator, *, n_features_to_select=None, step=1,
+                 verbose=0, importance_getter='auto'):
         self.estimator = estimator
         self.n_features_to_select = n_features_to_select
         self.step = step
+        self.importance_getter = importance_getter
         self.verbose = verbose
 
     @property
@@ -153,7 +177,13 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         # and is used when implementing RFECV
         # self.scores_ will not be calculated when calling _fit through fit
 
-        X, y = check_X_y(X, y, "csc", ensure_min_features=2)
+        tags = self._get_tags()
+        X, y = self._validate_data(
+            X, y, accept_sparse="csc",
+            ensure_min_features=2,
+            force_all_finite=not tags.get('allow_nan', True),
+            multi_output=True
+        )
         # Initialization
         n_features = X.shape[1]
         if self.n_features_to_select is None:
@@ -186,21 +216,11 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
 
             estimator.fit(X[:, features], y)
 
-            # Get coefs
-            if hasattr(estimator, 'coef_'):
-                coefs = estimator.coef_
-            else:
-                coefs = getattr(estimator, 'feature_importances_', None)
-            if coefs is None:
-                raise RuntimeError('The classifier does not expose '
-                                   '"coef_" or "feature_importances_" '
-                                   'attributes')
-
-            # Get ranks
-            if coefs.ndim > 1:
-                ranks = np.argsort(safe_sqr(coefs).sum(axis=0))
-            else:
-                ranks = np.argsort(safe_sqr(coefs))
+            # Get importance and rank them
+            importances = _get_feature_importances(
+                estimator, self.importance_getter, transform_func="square",
+            )
+            ranks = np.argsort(importances)
 
             # for sparse case ranks is matrix
             ranks = np.ravel(ranks)
@@ -329,7 +349,11 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         return self.estimator_.predict_log_proba(self.transform(X))
 
     def _more_tags(self):
-        return {'poor_score': True}
+        estimator_tags = self.estimator._get_tags()
+        return {'poor_score': True,
+                'allow_nan': estimator_tags.get('allow_nan', True),
+                'requires_y': True,
+                }
 
 
 class RFECV(RFE):
@@ -347,7 +371,7 @@ class RFECV(RFE):
         information about feature importance either through a ``coef_``
         attribute or through a ``feature_importances_`` attribute.
 
-    step : int or float, optional (default=1)
+    step : int or float, default=1
         If greater than or equal to 1, then ``step`` corresponds to the
         (integer) number of features to remove at each iteration.
         If within (0.0, 1.0), then ``step`` corresponds to the percentage
@@ -355,13 +379,15 @@ class RFECV(RFE):
         Note that the last iteration may remove fewer than ``step`` features in
         order to reach ``min_features_to_select``.
 
-    min_features_to_select : int, (default=1)
+    min_features_to_select : int, default=1
         The minimum number of features to be selected. This number of features
         will always be scored, even if the difference between the original
         feature count and ``min_features_to_select`` isn't divisible by
         ``step``.
 
-    cv : int, cross-validation generator or an iterable, optional
+        .. versionadded:: 0.20
+
+    cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 
@@ -371,9 +397,9 @@ class RFECV(RFE):
         - An iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, if ``y`` is binary or multiclass,
-        :class:`sklearn.model_selection.StratifiedKFold` is used. If the
+        :class:`~sklearn.model_selection.StratifiedKFold` is used. If the
         estimator is a classifier or if ``y`` is neither binary nor multiclass,
-        :class:`sklearn.model_selection.KFold` is used.
+        :class:`~sklearn.model_selection.KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
@@ -381,19 +407,38 @@ class RFECV(RFE):
         .. versionchanged:: 0.22
             ``cv`` default value of None changed from 3-fold to 5-fold.
 
-    scoring : string, callable or None, optional, (default=None)
+    scoring : string, callable or None, default=None
         A string (see model evaluation documentation) or
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
 
-    verbose : int, (default=0)
+    verbose : int, default=0
         Controls verbosity of output.
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int or None, default=None
         Number of cores to run in parallel while fitting across folds.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
+
+        .. versionadded:: 0.18
+
+    importance_getter : str or callable, default='auto'
+        If 'auto', uses the feature importance either through a `coef_`
+        or `feature_importances_` attributes of estimator.
+
+        Also accepts a string that specifies an attribute name/path
+        for extracting feature importance.
+        For example, give `regressor_.coef_` in case of
+        :class:`~sklearn.compose.TransformedTargetRegressor`  or
+        `named_steps.clf.feature_importances_` in case of
+        :class:`~sklearn.pipeline.Pipeline` with its last step named `clf`.
+
+        If `callable`, overrides the default feature importance getter.
+        The callable is passed with the fitted estimator and it should
+        return importance for each feature.
+
+        .. versionadded:: 0.24
 
     Attributes
     ----------
@@ -427,6 +472,8 @@ class RFECV(RFE):
     ``ceil((n_features - min_features_to_select) / step) + 1``,
     where step is the number of features removed at each iteration.
 
+    Allows NaN/Inf in the input if the underlying estimator does as well.
+
     Examples
     --------
     The following example shows how to retrieve the a-priori not known 5
@@ -456,10 +503,13 @@ class RFECV(RFE):
            for cancer classification using support vector machines",
            Mach. Learn., 46(1-3), 389--422, 2002.
     """
-    def __init__(self, estimator, step=1, min_features_to_select=1, cv=None,
-                 scoring=None, verbose=0, n_jobs=None):
+    @_deprecate_positional_args
+    def __init__(self, estimator, *, step=1, min_features_to_select=1,
+                 cv=None, scoring=None, verbose=0, n_jobs=None,
+                 importance_getter='auto'):
         self.estimator = estimator
         self.step = step
+        self.importance_getter = importance_getter
         self.cv = cv
         self.scoring = scoring
         self.verbose = verbose
@@ -480,15 +530,22 @@ class RFECV(RFE):
             Target values (integers for classification, real numbers for
             regression).
 
-        groups : array-like of shape (n_samples,) or None
+        groups : array-like of shape (n_samples,) or None, default=None
             Group labels for the samples used while splitting the dataset into
             train/test set. Only used in conjunction with a "Group" :term:`cv`
             instance (e.g., :class:`~sklearn.model_selection.GroupKFold`).
+
+            .. versionadded:: 0.20
         """
-        X, y = check_X_y(X, y, "csr", ensure_min_features=2)
+        tags = self._get_tags()
+        X, y = self._validate_data(
+            X, y, accept_sparse="csr", ensure_min_features=2,
+            force_all_finite=not tags.get('allow_nan', True),
+            multi_output=True
+        )
 
         # Initialization
-        cv = check_cv(self.cv, y, is_classifier(self.estimator))
+        cv = check_cv(self.cv, y, classifier=is_classifier(self.estimator))
         scorer = check_scoring(self.estimator, scoring=self.scoring)
         n_features = X.shape[1]
 
@@ -503,6 +560,7 @@ class RFECV(RFE):
         # feature count, down to self.min_features_to_select
         rfe = RFE(estimator=self.estimator,
                   n_features_to_select=self.min_features_to_select,
+                  importance_getter=self.importance_getter,
                   step=self.step, verbose=self.verbose)
 
         # Determine the number of subsets of features by fitting across
@@ -537,6 +595,7 @@ class RFECV(RFE):
         # Re-execute an elimination with best_k over the whole set
         rfe = RFE(estimator=self.estimator,
                   n_features_to_select=n_features_to_select, step=self.step,
+                  importance_getter=self.importance_getter,
                   verbose=self.verbose)
 
         rfe.fit(X, y)

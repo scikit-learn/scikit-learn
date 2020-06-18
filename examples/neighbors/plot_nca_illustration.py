@@ -16,11 +16,11 @@ import matplotlib.pyplot as plt
 from sklearn.datasets import make_classification
 from sklearn.neighbors import NeighborhoodComponentsAnalysis
 from matplotlib import cm
-from sklearn.utils.fixes import logsumexp
+from scipy.special import logsumexp
 
 print(__doc__)
 
-##############################################################################
+# %%
 # Original points
 # ---------------
 # First we create a data set of 9 samples from 3 classes, and plot the points
@@ -71,7 +71,7 @@ i = 3
 relate_point(X, i, ax)
 plt.show()
 
-##############################################################################
+# %%
 # Learning an embedding
 # ---------------------
 # We use :class:`~sklearn.neighbors.NeighborhoodComponentsAnalysis` to learn an

@@ -10,8 +10,7 @@ import pytest
 
 from sklearn.feature_extraction.image import (
     img_to_graph, grid_to_graph, extract_patches_2d,
-    reconstruct_from_patches_2d, PatchExtractor, _extract_patches,
-    extract_patches)
+    reconstruct_from_patches_2d, PatchExtractor, _extract_patches)
 from sklearn.utils._testing import ignore_warnings
 
 
@@ -68,7 +67,7 @@ def test_connect_regions():
     face = face[::4, ::4]
     for thr in (50, 150):
         mask = face > thr
-        graph = img_to_graph(face, mask)
+        graph = img_to_graph(face, mask=mask)
         assert ndimage.label(mask)[1] == connected_components(graph)[0]
 
 
@@ -334,11 +333,3 @@ def test_width_patch():
         extract_patches_2d(x, (4, 1))
     with pytest.raises(ValueError):
         extract_patches_2d(x, (1, 4))
-
-
-# TODO: Remove in 0.24
-def test_extract_patches_deprecated():
-    msg = ("The function feature_extraction.image.extract_patches has been "
-           "deprecated in 0.22 and will be removed in 0.24.")
-    with pytest.warns(FutureWarning, match=msg):
-        extract_patches(downsampled_face)
