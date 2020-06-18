@@ -71,6 +71,7 @@ a code {
   color: #2878A2;
   border-radius: 0;
   padding: 0;
+  white-space: nowrap;
 }
 
 img {
