@@ -474,7 +474,7 @@ class SimpleImputer(_BaseImputer):
 
         Inverts the `transform` operation performed on an array.
         This operation can only be performed after :class:`SimpleImputer` is
-        instantiated with ``add_indicator`` parameter set to `True`.
+        instantiated with `add_indicator=True`.
 
         Note that ``inverse_transform`` can only invert the transform in
         features that have binary indicators for missing values. If a feature
