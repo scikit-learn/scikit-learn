@@ -19,7 +19,7 @@ from sklearn.datasets import (make_classification, fetch_california_housing,
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.ensemble._gradient_boosting import predict_stages
-from sklearn.preprocessing import OneHotEncoder, StandardScaler
+from sklearn.preprocessing import OneHotEncoder, scale
 from sklearn.svm import LinearSVC
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import train_test_split
@@ -54,7 +54,7 @@ true_result = [-1, 1, 1]
 X_reg, y_reg = make_regression(
     n_samples=500, n_features=10, n_informative=8, noise=10, random_state=7
 )
-y_reg = StandardScaler().fit_transform(y_reg.reshape((-1, 1)))
+y_reg = scale(y_reg)
 
 rng = np.random.RandomState(0)
 # also load the iris dataset
@@ -216,7 +216,7 @@ def check_regression_dataset(loss, subsample):
     # and least absolute deviation.
     ones = np.ones(len(y_reg))
     last_y_pred = None
-    for sample_weight in None, ones, 2 * ones:
+    for sample_weight in [None, ones, 2 * ones]:
         clf = GradientBoostingRegressor(n_estimators=100,
                                         loss=loss,
                                         max_depth=4,
