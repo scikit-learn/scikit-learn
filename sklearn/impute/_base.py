@@ -476,11 +476,11 @@ class SimpleImputer(_BaseImputer):
         This operation can only be performed after :class:`SimpleImputer` is
         instantiated with ``add_indicator`` parameter set to `True`.
 
-        Note that ``inverse_transform`` can only regenerate data for the
-        features that have missing indicators present in the fitting data.
-        This limitation exists because the imputer learns missing indicators
-        based on features of fitting-data, and they are only set during
-        the ``fit`` phase.
+        Note that ``inverse_transform`` can only invert the transform in
+        features that have binary indicators for missing values. If a feature
+        has no missing values at ``fit`` time, the feature won't have a binary
+        indicator, and the imputation done at ``transform`` time won't be
+        inverted. 
 
         Parameters
         ----------
