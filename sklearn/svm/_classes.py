@@ -127,7 +127,7 @@ class LinearSVC(BaseEstimator, LinearClassifierMixin,
         Furthermore SVC multi-class mode is implemented using one
         vs one scheme while LinearSVC uses one vs the rest. It is
         possible to implement one vs the rest with SVC by using the
-        :class:`sklearn.multiclass.OneVsRestClassifier` wrapper.
+        :class:`~sklearn.multiclass.OneVsRestClassifier` wrapper.
 
         Finally SVC can fit dense data without memory copy if the input
         is C-contiguous. Sparse data will still incur memory copy though.
@@ -447,9 +447,9 @@ class SVC(BaseSVC):
     The implementation is based on libsvm. The fit time scales at least
     quadratically with the number of samples and may be impractical
     beyond tens of thousands of samples. For large datasets
-    consider using :class:`sklearn.svm.LinearSVC` or
-    :class:`sklearn.linear_model.SGDClassifier` instead, possibly after a
-    :class:`sklearn.kernel_approximation.Nystroem` transformer.
+    consider using :class:`~sklearn.svm.LinearSVC` or
+    :class:`~sklearn.linear_model.SGDClassifier` instead, possibly after a
+    :class:`~sklearn.kernel_approximation.Nystroem` transformer.
 
     The multiclass support is handled according to a one-vs-one scheme.
 
@@ -905,9 +905,9 @@ class SVR(RegressorMixin, BaseLibSVM):
     The implementation is based on libsvm. The fit time complexity
     is more than quadratic with the number of samples which makes it hard
     to scale to datasets with more than a couple of 10000 samples. For large
-    datasets consider using :class:`sklearn.svm.LinearSVR` or
-    :class:`sklearn.linear_model.SGDRegressor` instead, possibly after a
-    :class:`sklearn.kernel_approximation.Nystroem` transformer.
+    datasets consider using :class:`~sklearn.svm.LinearSVR` or
+    :class:`~sklearn.linear_model.SGDRegressor` instead, possibly after a
+    :class:`~sklearn.kernel_approximation.Nystroem` transformer.
 
     Read more in the :ref:`User Guide <svm_regression>`.
 

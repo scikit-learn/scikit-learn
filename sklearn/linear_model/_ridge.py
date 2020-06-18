@@ -259,7 +259,7 @@ def ridge_regression(X, y, alpha, *, sample_weight=None, solver='auto',
         the estimates. Larger values specify stronger regularization.
         Alpha corresponds to ``1 / (2C)`` in other linear models such as
         :class:`~sklearn.linear_model.LogisticRegression` or
-        :class:`sklearn.svm.LinearSVC`. If an array is passed, penalties are
+        :class:`~sklearn.svm.LinearSVC`. If an array is passed, penalties are
         assumed to be specific to the targets. Hence they must correspond in
         number.
 
@@ -623,7 +623,7 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         the estimates. Larger values specify stronger regularization.
         Alpha corresponds to ``1 / (2C)`` in other linear models such as
         :class:`~sklearn.linear_model.LogisticRegression` or
-        :class:`sklearn.svm.LinearSVC`. If an array is passed, penalties are
+        :class:`~sklearn.svm.LinearSVC`. If an array is passed, penalties are
         assumed to be specific to the targets. Hence they must correspond in
         number.
 
@@ -637,7 +637,7 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
         If you wish to standardize, please use
-        :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
+        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
     copy_X : bool, default=True
@@ -715,7 +715,7 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
     --------
     RidgeClassifier : Ridge classifier
     RidgeCV : Ridge regression with built-in cross validation
-    :class:`sklearn.kernel_ridge.KernelRidge` : Kernel ridge regression
+    :class:`~sklearn.kernel_ridge.KernelRidge` : Kernel ridge regression
         combines ridge regression with the kernel trick
 
     Examples
@@ -779,7 +779,7 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         the estimates. Larger values specify stronger regularization.
         Alpha corresponds to ``1 / (2C)`` in other linear models such as
         :class:`~sklearn.linear_model.LogisticRegression` or
-        :class:`sklearn.svm.LinearSVC`.
+        :class:`~sklearn.svm.LinearSVC`.
 
     fit_intercept : bool, default=True
         Whether to calculate the intercept for this model. If set to false, no
@@ -791,7 +791,7 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
         If you wish to standardize, please use
-        :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
+        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
     copy_X : bool, default=True
@@ -1646,7 +1646,7 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         the estimates. Larger values specify stronger regularization.
         Alpha corresponds to ``1 / (2C)`` in other linear models such as
         :class:`~sklearn.linear_model.LogisticRegression` or
-        :class:`sklearn.svm.LinearSVC`.
+        :class:`~sklearn.svm.LinearSVC`.
         If using generalized cross-validation, alphas must be positive.
 
     fit_intercept : bool, default=True
@@ -1659,7 +1659,7 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
         If you wish to standardize, please use
-        :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
+        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
     scoring : string, callable, default=None
@@ -1680,8 +1680,8 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         - An iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, if ``y`` is binary or multiclass,
-        :class:`sklearn.model_selection.StratifiedKFold` is used, else,
-        :class:`sklearn.model_selection.KFold` is used.
+        :class:`~sklearn.model_selection.StratifiedKFold` is used, else,
+        :class:`~sklearn.model_selection.KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
@@ -1764,7 +1764,7 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
         the estimates. Larger values specify stronger regularization.
         Alpha corresponds to ``1 / (2C)`` in other linear models such as
         :class:`~sklearn.linear_model.LogisticRegression` or
-        :class:`sklearn.svm.LinearSVC`.
+        :class:`~sklearn.svm.LinearSVC`.
 
     fit_intercept : bool, default=True
         Whether to calculate the intercept for this model. If set
@@ -1776,7 +1776,7 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
         If you wish to standardize, please use
-        :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
+        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
     scoring : string, callable, default=None
