@@ -263,7 +263,7 @@ class OneHotEncoder(_BaseEncoder):
         transform, the resulting one-hot encoded columns for this feature
         will be all zeros. In the inverse transform, an unknown category
         will be denoted as None. Read more in the
-        :ref:`User Guide <one_hot_encoder_infrequent_categories>F`
+        :ref:`User Guide <one_hot_encoder_infrequent_categories>`
 
         .. versionadded:: 0.24
             `'auto'` was added to automatically handle unknown categories
