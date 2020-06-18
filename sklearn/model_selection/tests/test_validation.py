@@ -335,7 +335,7 @@ def test_cross_validate_invalid_scoring_param():
 
     # since we're using a multiclass scorer, our error will be the following
     error_message = ("ValueError: Classification metrics can't handle a mix "
-                    "of binary and continuous targets")
+                     "of binary and continuous targets")
 
     # the warning message we're expecting to see
     warning_message = ("Scoring failed. The score on this train-test "
@@ -1655,8 +1655,9 @@ def test_score_memmap():
             cross_val_score(clf, X, y, scoring=lambda est, X, y: scores)
             assert len(record) > 0
             for item in record:
-                assert 'Traceback (most recent call last):\n' in str(item.message)
-                split = str(item.message).splitlines()
+                error = str(item.message)
+                assert 'Traceback (most recent call last):\n' in error
+                split = error.splitlines()
                 mtb = split[0] + '\n' + split[-1]
                 assert warning_message in mtb
     finally:
