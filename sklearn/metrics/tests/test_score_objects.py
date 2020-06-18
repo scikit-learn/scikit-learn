@@ -468,7 +468,7 @@ def test_raises_on_score_list():
     clf = DecisionTreeClassifier()
     fit_and_score_kwargs = {'error_score': np.nan}
 
-    # since we're using FailingClassfier, our error will be the following
+    # since we're using a list of scores, our error will be the following
     error_message = "ValueError: scoring must return a number"
 
     # the warning message we're expecting to see
