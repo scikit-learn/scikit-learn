@@ -1385,28 +1385,62 @@ def test_imputation_order(order, idx_order):
         assert idx == idx_order
 
 
-def test_simple_imputation_inverse_transform():
+@pytest.mark.parametrize(
+    "missing_value",
+    [-1, np.nan]
+)
+def test_simple_imputation_inverse_transform(missing_value):
     # Test inverse_transform feature for np.nan
     X_1 = np.array([
-        [9, np.nan, 3, -1],
-        [4, -1, 5, -1],
-        [6, 7, np.nan, -1],
-        [8, 9, 0, np.nan]
-    ])
-    X_2 = np.array([
-        [5, 4, 2, 1],
-        [2, 1, np.nan, 3],
-        [9, np.nan, 7, 1],
-        [6, 4, 2, np.nan]
+        [9, missing_value, 3, -1],
+        [4, -1, 5, 4],
+        [6, 7, missing_value, -1],
+        [8, 9, 0, missing_value]
     ])
 
-    imputer = SimpleImputer(missing_values=np.nan, strategy='mean',
+    X_2 = np.array([
+        [5, 4, 2, 1],
+        [2, 1, missing_value, 3],
+        [9, missing_value, 7, 1],
+        [6, 4, 2, missing_value]
+    ])
+
+    X_3 = np.array([
+        [missing_value, missing_value, missing_value, missing_value],
+        [missing_value, missing_value, missing_value, missing_value],
+        [missing_value, missing_value, missing_value, missing_value],
+        [missing_value, missing_value, missing_value, missing_value]
+    ])
+
+    X_4 = np.array([
+        [missing_value, missing_value, 2, missing_value, missing_value, 5],
+        [missing_value, missing_value, 3, missing_value, missing_value, 6],
+        [missing_value, missing_value, 4, missing_value, missing_value, 7],
+        [missing_value, missing_value, 5, missing_value, missing_value, 8]
+    ])
+
+    imputer = SimpleImputer(missing_values=missing_value, strategy='mean',
                             add_indicator=True)
+
     X_1_trans = imputer.fit_transform(X_1)
     X_1_orig = imputer.inverse_transform(X_1_trans)
 
     X_2_trans = imputer.transform(X_2)
     X_2_orig = imputer.inverse_transform(X_2_trans)
 
+    X_3_trans = imputer.fit_transform(X_3)
+    X_3_orig = imputer.inverse_transform(X_3_trans)
+
+    X_4_trans = imputer.fit_transform(X_4)
+    X_4_orig = imputer.inverse_transform(X_4_trans)
+
     assert_array_equal(X_1_orig, X_1)
     assert_array_equal(X_2_orig, X_2)
+    assert_array_equal(X_3_orig, X_3)
+    assert_array_equal(X_4_orig, X_4)
+
+    with pytest.raises(ValueError, match="add_indicator=True"):
+        imputer = SimpleImputer(missing_values=missing_value,
+                                strategy="mean")
+        X_1_trans = imputer.fit_transform(X_1)
+        X_1_orig = imputer.inverse_transform(X_1_trans)
