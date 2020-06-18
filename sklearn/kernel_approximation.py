@@ -148,11 +148,11 @@ class SkewedChi2Sampler(TransformerMixin, BaseEstimator):
 
     Attributes
     ----------
-    random_weights_ : array-like, shape (n_features, n_components)
+    random_weights_ : ndarray of shape (n_features, n_components)
         Weight array, sampled from a secant hyperbolic distribution, which will
         be used to linearly transform the log of the data.
 
-    random_offset_ : array-like, shape (n_features, n_components)
+    random_offset_ : ndarray of shape (n_features, n_components)
         Bias term, which will be added to the data. It is uniformly distributed
         between 0 and 2*pi.
 
