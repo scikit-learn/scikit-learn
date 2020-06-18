@@ -104,6 +104,9 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         `p` parameter value if the `effective_metric_` attribute is set to
         'minkowski'.
 
+    n_samples_fit_ : int
+        Number of samples in the fitted data.
+
     outputs_2d_ : bool
         False when `y`'s shape is (n_samples, ) or (n_samples, 1) during fit
         otherwise True.
@@ -344,6 +347,13 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         `p` parameter value if the `effective_metric_` attribute is set to
         'minkowski'.
 
+    n_samples_fit_ : int
+        Number of samples in the fitted data.
+
+    outlier_label_ : int or array-like of shape (n_class,)
+        Label which is given for outlier samples (samples with no neighbors
+        on given radius).
+
     outputs_2d_ : bool
         False when `y`'s shape is (n_samples, ) or (n_samples, 1) during fit
         otherwise True.
@@ -419,7 +429,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
 
         elif self.outlier_label == 'most_frequent':
             outlier_label_ = []
-            # iterate over multi-output, get the most frequest label for each
+            # iterate over multi-output, get the most frequent label for each
             # output.
             for k, classes_k in enumerate(classes_):
                 label_count = np.bincount(_y[:, k])
