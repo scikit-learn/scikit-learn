@@ -143,9 +143,6 @@ class GaussianNB(_BaseNB):
     class_count_ : ndarray of shape (n_classes,)
         number of training samples observed in each class.
 
-    class_prior_ : array, shape (n_classes,)
-        probability of each class.
-
     class_prior_ : ndarray of shape (n_classes,)
         probability of each class.
 
@@ -924,9 +921,6 @@ class BernoulliNB(_BaseDiscreteNB):
         Number of samples encountered for each class during fitting. This
         value is weighted by the sample weight when provided.
 
-    class_log_prior_ : array, shape = [n_classes]
-        Log probability of each class (smoothed).
-
     class_log_prior_ : ndarray of shape (n_classes)
         Log probability of each class (smoothed).
 
@@ -938,19 +932,12 @@ class BernoulliNB(_BaseDiscreteNB):
         during fitting. This value is weighted by the sample weight when
         provided.
 
-    feature_log_prob_ : array, shape = [n_classes, n_features]
-        Empirical log probability of features given a class, P(x_i|y).
-
     feature_log_prob_ : ndarray of shape (n_classes, n_features)
         Empirical log probability of features given a class, P(x_i|y).
 
     n_features_ : int
         Number of features of each sample.
 
-<<<<<<< HEAD
-
-=======
->>>>>>> origin/master
     Examples
     --------
     >>> import numpy as np
@@ -1061,9 +1048,6 @@ class CategoricalNB(_BaseDiscreteNB):
     class_count_ : ndarray of shape (n_classes,)
         Number of samples encountered for each class during fitting. This
         value is weighted by the sample weight when provided.
-
-    class_log_prior_ : array, shape (n_classes, )
-        Smoothed empirical log probability for each class.
 
     class_log_prior_ : ndarray of shape (n_classes,)
         Smoothed empirical log probability for each class.
