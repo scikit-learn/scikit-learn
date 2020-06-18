@@ -91,6 +91,10 @@ Changelog
   when ``strategy='most_frequent'`` or ``strategy='constant'``.
   :pr:`17526` by :user:`Ayako YAGI <yagi-3>` and :user:`Juan Carlos Alfaro Jiménez <alfaro96>`.
 
+- |Feature| :class:`impute.SimpleImputer` now supports ``inverse_transform``
+  functionality to revert imputed data to original.
+  :pr:`17612` by :user:`Srimukh Sripada <d3b0unce>`
+
 :mod:`sklearn.inspection`
 .........................
 

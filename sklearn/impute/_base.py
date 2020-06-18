@@ -480,7 +480,7 @@ class SimpleImputer(_BaseImputer):
         features that have binary indicators for missing values. If a feature
         has no missing values at ``fit`` time, the feature won't have a binary
         indicator, and the imputation done at ``transform`` time won't be
-        inverted. 
+        inverted.
 
         Parameters
         ----------
