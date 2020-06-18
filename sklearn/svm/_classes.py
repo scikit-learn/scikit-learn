@@ -1324,6 +1324,9 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
 
         .. versionadded:: 0.20
 
+    shape_fit_ : tuple of int of shape (n_dimensions_of_X,)
+        Array dimensions of training vector ``X``.
+
     support_ : ndarray of shape (n_SV,)
         Indices of support vectors.
 
