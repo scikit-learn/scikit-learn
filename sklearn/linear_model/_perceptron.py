@@ -97,14 +97,14 @@ class Perceptron(BaseSGDClassifier):
 
     Attributes
     ----------
-    classes_ : array of shape (n_classes,)
+    classes_ : ndarray of shape (n_classes,)
         The unique classes labels.
 
-    coef_ : array, shape = [1, n_features] if n_classes == 2 else [n_classes,\
-            n_features]
+    coef_ : ndarray of shape (1, n_features) if n_classes == 2 else \
+            (n_classes, n_features)
         Weights assigned to the features.
 
-    intercept_ : array, shape = [1] if n_classes == 2 else [n_classes]
+    intercept_ : ndarray of shape (1,) if n_classes == 2 else (n_classes,)
         Constants in decision function.
 
     loss_function_ : concrete LossFunction
