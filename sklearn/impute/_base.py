@@ -484,7 +484,7 @@ class SimpleImputer(_BaseImputer):
 
         Parameters
         ----------
-        X : array-like,
+        X : array-like, \
             shape (n_samples, n_features + missing_feature_count)
             The imputed data to be reverted to original data. It has to be
             an augmented array of imputed data and the missing indicator mask.
