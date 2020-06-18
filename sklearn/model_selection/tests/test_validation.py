@@ -331,22 +331,22 @@ def test_cross_validate_invalid_scoring_param():
     multiclass_scorer = make_scorer(precision_recall_fscore_support)
 
     # Multiclass Scorers that return multiple values are not supported yet
-    assert_warns(FitFailedWarning,
+    assert_warns(UserWarning,
                  cross_validate, estimator, X, y,
                  scoring=multiclass_scorer)
 
-    assert_warns(FitFailedWarning,
+    assert_warns(UserWarning,
                  cross_validate, estimator, X, y,
                  scoring={"foo": multiclass_scorer})
 
     multivalued_scorer = make_scorer(confusion_matrix)
 
     # Multiclass Scorers that return multiple values are not supported yet
-    assert_warns(FitFailedWarning,
+    assert_warns(UserWarning,
                  cross_validate, SVC(), X, y,
                  scoring=multivalued_scorer)
 
-    assert_warns(FitFailedWarning,
+    assert_warns(UserWarning,
                  cross_validate, SVC(), X, y,
                  scoring={"foo": multivalued_scorer})
 
@@ -1595,8 +1595,8 @@ def test_score_memmap():
     try:
         cross_val_score(clf, X, y, scoring=lambda est, X, y: score)
         # non-scalar should still fail
-        assert_warns(FitFailedWarning, cross_val_score, clf, X, y,
-                      scoring=lambda est, X, y: scores)
+        assert_warns(UserWarning, cross_val_score, clf, X, y,
+                     scoring=lambda est, X, y: scores)
     finally:
         # Best effort to release the mmap file handles before deleting the
         # backing file under Windows

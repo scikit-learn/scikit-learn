@@ -549,12 +549,6 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
         else:
             estimator.fit(X_train, y_train, **fit_params)
 
-        fit_time = time.time() - start_time
-        test_scores = _score(estimator, X_test, y_test, scorer)
-        score_time = time.time() - start_time - fit_time
-        if return_train_score:
-            train_scores = _score(estimator, X_train, y_train, scorer)
-
     except Exception as e:
         # Note fit time as time until error
         fit_time = time.time() - start_time
@@ -579,6 +573,35 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
             raise ValueError("error_score must be the string 'raise' or a"
                              " numeric value. (Hint: if using 'raise', please"
                              " make sure that it has been spelled correctly.)")
+    else:
+        try:
+            fit_time = time.time() - start_time
+            test_scores = _score(estimator, X_test, y_test, scorer)
+            score_time = time.time() - start_time - fit_time
+            if return_train_score:
+                train_scores = _score(estimator, X_train, y_train, scorer)
+        except Exception as e:
+            if error_score == 'raise':
+                raise
+            elif isinstance(error_score, numbers.Number):
+                score_time = time.time() - start_time - fit_time
+                if isinstance(scorer, dict):
+                    test_scores = {name: error_score for name in scorer}
+                    if return_train_score:
+                        train_scores = test_scores.copy()
+                else:
+                    test_scores = error_score
+                    if return_train_score:
+                        train_scores = error_score
+                warnings.warn("Scoring failed. The score on this train-test "
+                              "partition for these parameters will be set to %f. "
+                              "Details: \n%s" %
+                              (error_score, format_exc()),
+                              UserWarning)
+            else:
+                raise ValueError("error_score must be the string 'raise' or a"
+                                 " numeric value. (Hint: if using 'raise', please"
+                                 " make sure that it has been spelled correctly.)")
 
     if verbose > 1:
         total_time = score_time + fit_time
