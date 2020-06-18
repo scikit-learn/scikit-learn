@@ -460,13 +460,12 @@ def test_supervised_cluster_scorers():
         assert_almost_equal(score1, score2)
 
 
-@ignore_warnings
 def test_raises_on_score_list():
     # Test that when a list of scores is returned, we raise proper errors.
     X, y = make_blobs(random_state=0)
     f1_scorer_no_average = make_scorer(f1_score, average=None)
     clf = DecisionTreeClassifier()
-    fit_and_score_kwargs = {'error_score': np.nan}
+    score_kwargs = {'error_score': np.nan}
 
     # since we're using a list of scores, our error will be the following
     error_message = "ValueError: scoring must return a number"
@@ -474,7 +473,7 @@ def test_raises_on_score_list():
     # the warning message we're expecting to see
     warning_message = ("Scoring failed. The score on this train-test "
                        "partition for these parameters will be set to %f. "
-                       "Details: \n%s" % (fit_and_score_kwargs['error_score'],
+                       "Details: \n%s" % (score_kwargs['error_score'],
                                           error_message))
 
     with warnings.catch_warnings(record=True) as record:

@@ -331,24 +331,69 @@ def test_cross_validate_invalid_scoring_param():
     multiclass_scorer = make_scorer(precision_recall_fscore_support)
 
     # Multiclass Scorers that return multiple values are not supported yet
-    assert_warns(UserWarning,
-                 cross_validate, estimator, X, y,
-                 scoring=multiclass_scorer)
+    fit_and_score_kwargs = {'error_score': np.nan}
 
-    assert_warns(UserWarning,
-                 cross_validate, estimator, X, y,
-                 scoring={"foo": multiclass_scorer})
+    # since we're using a multiclass scorer, our error will be the following
+    error_message = ("ValueError: Classification metrics can't handle a mix "
+                    "of binary and continuous targets")
+
+    # the warning message we're expecting to see
+    warning_message = ("Scoring failed. The score on this train-test "
+                       "partition for these parameters will be set to %f. "
+                       "Details: \n%s" % (fit_and_score_kwargs['error_score'],
+                                          error_message))
+
+    with warnings.catch_warnings(record=True) as record:
+        warnings.simplefilter("always")
+        cross_validate(estimator, X, y, scoring=multiclass_scorer)
+        assert len(record) > 0
+        for item in record:
+            assert 'Traceback (most recent call last):\n' in str(item.message)
+            split = str(item.message).splitlines()
+            mtb = split[0] + '\n' + split[-1]
+            assert warning_message in mtb
+
+    with warnings.catch_warnings(record=True) as record:
+        warnings.simplefilter("always")
+        cross_validate(estimator, X, y, scoring={"foo": multiclass_scorer})
+        assert len(record) > 0
+        for item in record:
+            assert 'Traceback (most recent call last):\n' in str(item.message)
+            split = str(item.message).splitlines()
+            mtb = split[0] + '\n' + split[-1]
+            assert warning_message in mtb
 
     multivalued_scorer = make_scorer(confusion_matrix)
 
     # Multiclass Scorers that return multiple values are not supported yet
-    assert_warns(UserWarning,
-                 cross_validate, SVC(), X, y,
-                 scoring=multivalued_scorer)
+    # since we're using a multiclass scorer, our error will be the following
+    error_message = "ValueError: scoring must return a number"
 
-    assert_warns(UserWarning,
-                 cross_validate, SVC(), X, y,
-                 scoring={"foo": multivalued_scorer})
+    # the warning message we're expecting to see
+    warning_message = ("Scoring failed. The score on this train-test "
+                       "partition for these parameters will be set to %f. "
+                       "Details: \n%s" % (fit_and_score_kwargs['error_score'],
+                                          error_message))
+
+    with warnings.catch_warnings(record=True) as record:
+        warnings.simplefilter("always")
+        cross_validate(SVC(), X, y, scoring=multivalued_scorer)
+        assert len(record) > 0
+        for item in record:
+            assert 'Traceback (most recent call last):\n' in str(item.message)
+            split = str(item.message).splitlines()
+            mtb = split[0] + '\n' + '\n'.join(split[-2:])
+            assert warning_message in mtb
+
+    with warnings.catch_warnings(record=True) as record:
+        warnings.simplefilter("always")
+        cross_validate(SVC(), X, y, scoring={"foo": multivalued_scorer})
+        assert len(record) > 0
+        for item in record:
+            assert 'Traceback (most recent call last):\n' in str(item.message)
+            split = str(item.message).splitlines()
+            mtb = split[0] + '\n' + '\n'.join(split[-2:])
+            assert warning_message in mtb
 
     assert_raises_regex(ValueError, "'mse' is not a valid scoring value.",
                         cross_validate, SVC(), X, y, scoring="mse")
@@ -1592,11 +1637,28 @@ def test_score_memmap():
     tf.close()
     scores = np.memmap(tf.name, dtype=np.float64)
     score = np.memmap(tf.name, shape=(), mode='r', dtype=np.float64)
+    score_kwargs = {'error_score': np.nan}
     try:
+        # since we're using a non-scalar score, our error will be the following
+        error_message = "ValueError: scoring must return a number"
+
+        # the warning message we're expecting to see
+        warning_message = ("Scoring failed. The score on this train-test "
+                           "partition for these parameters will be set to %f. "
+                           "Details: \n%s" % (score_kwargs['error_score'],
+                                              error_message))
+
+        # No error with the scalar score
         cross_val_score(clf, X, y, scoring=lambda est, X, y: score)
-        # non-scalar should still fail
-        assert_warns(UserWarning, cross_val_score, clf, X, y,
-                     scoring=lambda est, X, y: scores)
+        with warnings.catch_warnings(record=True) as record:
+            warnings.simplefilter("always")
+            cross_val_score(clf, X, y, scoring=lambda est, X, y: scores)
+            assert len(record) > 0
+            for item in record:
+                assert 'Traceback (most recent call last):\n' in str(item.message)
+                split = str(item.message).splitlines()
+                mtb = split[0] + '\n' + split[-1]
+                assert warning_message in mtb
     finally:
         # Best effort to release the mmap file handles before deleting the
         # backing file under Windows
