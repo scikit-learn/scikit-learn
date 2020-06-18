@@ -107,11 +107,11 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
 
             # For the hidden layers
             if (i + 1) != (self.n_layers_ - 1):
-                activations[i + 1] = hidden_activation(activations[i + 1])
+                hidden_activation(activations[i + 1])
 
         # For the last layer
         output_activation = ACTIVATIONS[self.out_activation_]
-        activations[i + 1] = output_activation(activations[i + 1])
+        output_activation(activations[i + 1])
 
         return activations
 
