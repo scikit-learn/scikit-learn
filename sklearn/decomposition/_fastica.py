@@ -20,6 +20,7 @@ from ..exceptions import ConvergenceWarning
 from ..utils import check_array, as_float_array, check_random_state
 from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
+from ..utils.validation import _deprecate_positional_args
 
 __all__ = ['fastica', 'FastICA']
 
@@ -146,7 +147,8 @@ def _cube(x, fun_args):
     return x ** 3, (3 * x ** 2).mean(axis=-1)
 
 
-def fastica(X, n_components=None, algorithm="parallel", whiten=True,
+@_deprecate_positional_args
+def fastica(X, n_components=None, *, algorithm="parallel", whiten=True,
             fun="logcosh", fun_args=None, max_iter=200, tol=1e-04, w_init=None,
             random_state=None, return_X_mean=False, compute_sources=True,
             return_n_iter=False):
@@ -202,11 +204,11 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
         Initial un-mixing array of dimension (n.comp,n.comp).
         If None (default) then an array of normal r.v.'s is used.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance, default=None
+        Used to initialize ``w_init`` when not specified, with a
+        normal distribution. Pass an int, for reproducible results
+        across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     return_X_mean : bool, optional
         If True, X_mean is returned too.
@@ -341,11 +343,11 @@ class FastICA(TransformerMixin, BaseEstimator):
     w_init : None of an (n_components, n_components) ndarray
         The mixing matrix to be used to initialize the algorithm.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+    random_state : int, RandomState instance, default=None
+        Used to initialize ``w_init`` when not specified, with a
+        normal distribution. Pass an int, for reproducible results
+        across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     Attributes
     ----------
@@ -390,7 +392,8 @@ class FastICA(TransformerMixin, BaseEstimator):
     pp. 411-430*
 
     """
-    def __init__(self, n_components=None, algorithm='parallel', whiten=True,
+    @_deprecate_positional_args
+    def __init__(self, n_components=None, *, algorithm='parallel', whiten=True,
                  fun='logcosh', fun_args=None, max_iter=200, tol=1e-4,
                  w_init=None, random_state=None):
         super().__init__()
@@ -424,13 +427,11 @@ class FastICA(TransformerMixin, BaseEstimator):
         -------
             X_new : array-like, shape (n_samples, n_components)
         """
+
+        X = self._validate_data(X, copy=self.whiten, dtype=FLOAT_DTYPES,
+                                ensure_min_samples=2).T
         fun_args = {} if self.fun_args is None else self.fun_args
         random_state = check_random_state(self.random_state)
-
-        # make interface compatible with other decompositions
-        # a copy is required only for non whitened data
-        X = check_array(X, copy=self.whiten, dtype=FLOAT_DTYPES,
-                        ensure_min_samples=2).T
 
         alpha = fun_args.get('alpha', 1.0)
         if not 1 <= alpha <= 2:

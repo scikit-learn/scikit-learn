@@ -20,7 +20,7 @@ from joblib import Parallel, delayed, effective_n_jobs
 from ._base import LinearModel
 from ..base import RegressorMixin
 from ..utils import check_random_state
-from ..utils import check_X_y
+from ..utils.validation import _deprecate_positional_args
 from ..exceptions import ConvergenceWarning
 
 _EPSILON = np.finfo(np.double).eps
@@ -209,14 +209,14 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
 
     Parameters
     ----------
-    fit_intercept : boolean, optional, default True
+    fit_intercept : boolean, default=True
         Whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations.
 
-    copy_X : boolean, optional, default True
+    copy_X : boolean, default=True
         If True, X will be copied; else, it may be overwritten.
 
-    max_subpopulation : int, optional, default 1e4
+    max_subpopulation : int, default=1e4
         Instead of computing with a set of cardinality 'n choose k', where n is
         the number of samples and k is the number of subsamples (at least
         number of features), consider only a stochastic subpopulation of a
@@ -224,7 +224,7 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
         For other than small problem sizes this parameter will determine
         memory usage and runtime if n_subsamples is not changed.
 
-    n_subsamples : int, optional, default None
+    n_subsamples : int, default=None
         Number of samples to calculate the parameters. This is at least the
         number of features (plus 1 if fit_intercept=True) and the number of
         samples as a maximum. A lower number leads to a higher breakdown
@@ -234,26 +234,25 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
         If n_subsamples is set to n_samples, Theil-Sen is identical to least
         squares.
 
-    max_iter : int, optional, default 300
+    max_iter : int, default=300
         Maximum number of iterations for the calculation of spatial median.
 
-    tol : float, optional, default 1.e-3
+    tol : float, default=1.e-3
         Tolerance when calculating spatial median.
 
-    random_state : int, RandomState instance or None, optional, default None
+    random_state : int, RandomState instance, default=None
         A random number generator instance to define the state of the random
-        permutations generator.  If int, random_state is the seed used by the
-        random number generator; If RandomState instance, random_state is the
-        random number generator; If None, the random number generator is the
-        RandomState instance used by `np.random`.
+        permutations generator. Pass an int for reproducible output across
+        multiple function calls.
+        See :term:`Glossary <random_state>`
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int or None, default=None
         Number of CPUs to use during the cross validation.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    verbose : boolean, optional, default False
+    verbose : boolean, default=False
         Verbose mode when fitting the model.
 
     Attributes
@@ -292,8 +291,8 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
       Xin Dang, Hanxiang Peng, Xueqin Wang and Heping Zhang
       http://home.olemiss.edu/~xdang/papers/MTSE.pdf
     """
-
-    def __init__(self, fit_intercept=True, copy_X=True,
+    @_deprecate_positional_args
+    def __init__(self, *, fit_intercept=True, copy_X=True,
                  max_subpopulation=1e4, n_subsamples=None, max_iter=300,
                  tol=1.e-3, random_state=None, n_jobs=None, verbose=False):
         self.fit_intercept = fit_intercept
@@ -358,7 +357,7 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
         self : returns an instance of self.
         """
         random_state = check_random_state(self.random_state)
-        X, y = check_X_y(X, y, y_numeric=True)
+        X, y = self._validate_data(X, y, y_numeric=True)
         n_samples, n_features = X.shape
         n_subsamples, self.n_subpopulation_ = self._check_subparams(n_samples,
                                                                     n_features)
