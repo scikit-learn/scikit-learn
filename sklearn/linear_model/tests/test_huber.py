@@ -3,7 +3,6 @@
 
 import numpy as np
 from scipy import optimize, sparse
-import pytest
 
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_equal

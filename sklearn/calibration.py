@@ -21,46 +21,50 @@ from .preprocessing import LabelEncoder
 from .base import (BaseEstimator, ClassifierMixin, RegressorMixin, clone,
                    MetaEstimatorMixin)
 from .preprocessing import label_binarize, LabelBinarizer
-from .utils import check_X_y, check_array, indexable, column_or_1d
+from .utils import check_array, indexable, column_or_1d
 from .utils.validation import check_is_fitted, check_consistent_length
 from .utils.validation import _check_sample_weight
 from .isotonic import IsotonicRegression
 from .svm import LinearSVC
 from .model_selection import check_cv
+from .utils.validation import _deprecate_positional_args
 
 
 class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
                              MetaEstimatorMixin):
-    """Probability calibration with isotonic regression or sigmoid.
+    """Probability calibration with isotonic regression or logistic regression.
 
-    See glossary entry for :term:`cross-validation estimator`.
+    This class uses cross-validation to both estimate the parameters of a
+    classifier and subsequently calibrate a classifier. For each cv split it
+    fits a copy of the base estimator to the training folds, and calibrates it
+    using the testing fold. For prediction, predicted probabilities are
+    averaged across these individual calibrated classifiers.
 
-    With this class, the base_estimator is fit on the train set of the
-    cross-validation generator and the test set is used for calibration.
-    The probabilities for each of the folds are then averaged
-    for prediction. In case that cv="prefit" is passed to __init__,
-    it is assumed that base_estimator has been fitted already and all
-    data is used for calibration. Note that data for fitting the
-    classifier and for calibrating it must be disjoint.
+    Already fitted classifiers can be calibrated via the parameter cv="prefit".
+    In this case, no cross-validation is used and all provided data is used
+    for calibration. The user has to take care manually that data for model
+    fitting and calibration are disjoint.
+
+    The calibration is based on the :term:`decision_function` method of the
+    `base_estimator` if it exists, else on :term:`predict_proba`.
 
     Read more in the :ref:`User Guide <calibration>`.
 
     Parameters
     ----------
     base_estimator : instance BaseEstimator
-        The classifier whose output decision function needs to be calibrated
-        to offer more accurate predict_proba outputs. If cv=prefit, the
-        classifier must have been fit already on data.
+        The classifier whose output need to be calibrated to provide more
+        accurate `predict_proba` outputs.
 
-    method : 'sigmoid' or 'isotonic'
+    method : {'sigmoid', 'isotonic'}, default='sigmoid'
         The method to use for calibration. Can be 'sigmoid' which
-        corresponds to Platt's method or 'isotonic' which is a
-        non-parametric approach. It is not advised to use isotonic calibration
-        with too few calibration samples ``(<<1000)`` since it tends to
-        overfit.
-        Use sigmoids (Platt's calibration) in this case.
+        corresponds to Platt's method (i.e. a logistic regression model) or
+        'isotonic' which is a non-parametric approach. It is not advised to
+        use isotonic calibration with too few calibration samples
+        ``(<<1000)`` since it tends to overfit.
 
-    cv : integer, cross-validation generator, iterable or "prefit", optional
+    cv : integer, cross-validation generator, iterable or "prefit", \
+            default=None
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 
@@ -70,14 +74,14 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
         - An iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, if ``y`` is binary or multiclass,
-        :class:`sklearn.model_selection.StratifiedKFold` is used. If ``y`` is
-        neither binary nor multiclass, :class:`sklearn.model_selection.KFold`
+        :class:`~sklearn.model_selection.StratifiedKFold` is used. If ``y`` is
+        neither binary nor multiclass, :class:`~sklearn.model_selection.KFold`
         is used.
 
-        Refer :ref:`User Guide <cross_validation>` for the various
+        Refer to the :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
-        If "prefit" is passed, it is assumed that base_estimator has been
+        If "prefit" is passed, it is assumed that `base_estimator` has been
         fitted already and all data is used for calibration.
 
         .. versionchanged:: 0.22
@@ -89,9 +93,49 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
         The class labels.
 
     calibrated_classifiers_ : list (len() equal to cv or 1 if cv == "prefit")
-        The list of calibrated classifiers, one for each crossvalidation fold,
-        which has been fitted on all but the validation fold and calibrated
-        on the validation fold.
+        The list of calibrated classifiers, one for each cross-validation
+        split, which has been fitted on training folds and
+        calibrated on the testing fold.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_classification
+    >>> from sklearn.naive_bayes import GaussianNB
+    >>> from sklearn.calibration import CalibratedClassifierCV
+    >>> X, y = make_classification(n_samples=100, n_features=2,
+    ...                            n_redundant=0, random_state=42)
+    >>> base_clf = GaussianNB()
+    >>> calibrated_clf = CalibratedClassifierCV(base_estimator=base_clf, cv=3)
+    >>> calibrated_clf.fit(X, y)
+    CalibratedClassifierCV(base_estimator=GaussianNB(), cv=3)
+    >>> len(calibrated_clf.calibrated_classifiers_)
+    3
+    >>> calibrated_clf.predict_proba(X)[:5, :]
+    array([[0.110..., 0.889...],
+           [0.072..., 0.927...],
+           [0.928..., 0.071...],
+           [0.928..., 0.071...],
+           [0.071..., 0.928...]])
+
+    >>> from sklearn.model_selection import train_test_split
+    >>> X, y = make_classification(n_samples=100, n_features=2,
+    ...                            n_redundant=0, random_state=42)
+    >>> X_train, X_calib, y_train, y_calib = train_test_split(
+    ...        X, y, random_state=42
+    ... )
+    >>> base_clf = GaussianNB()
+    >>> base_clf.fit(X_train, y_train)
+    GaussianNB()
+    >>> calibrated_clf = CalibratedClassifierCV(
+    ...     base_estimator=base_clf,
+    ...     cv="prefit"
+    ... )
+    >>> calibrated_clf.fit(X_calib, y_calib)
+    CalibratedClassifierCV(base_estimator=GaussianNB(), cv='prefit')
+    >>> len(calibrated_clf.calibrated_classifiers_)
+    1
+    >>> calibrated_clf.predict_proba([[-0.5, 0.5]])
+    array([[0.936..., 0.063...]])
 
     References
     ----------
@@ -107,7 +151,8 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
     .. [4] Predicting Good Probabilities with Supervised Learning,
            A. Niculescu-Mizil & R. Caruana, ICML 2005
     """
-    def __init__(self, base_estimator=None, method='sigmoid', cv=None):
+    @_deprecate_positional_args
+    def __init__(self, base_estimator=None, *, method='sigmoid', cv=None):
         self.base_estimator = base_estimator
         self.method = method
         self.cv = cv
@@ -131,8 +176,8 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
         self : object
             Returns an instance of self.
         """
-        X, y = check_X_y(X, y, accept_sparse=['csc', 'csr', 'coo'],
-                         force_all_finite=False, allow_nd=True)
+        X, y = self._validate_data(X, y, accept_sparse=['csc', 'csr', 'coo'],
+                                   force_all_finite=False, allow_nd=True)
         X, y = indexable(X, y)
         le = LabelBinarizer().fit(y)
         self.classes_ = le.classes_
@@ -223,8 +268,9 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
         return mean_proba
 
     def predict(self, X):
-        """Predict the target of new samples. Can be different from the
-        prediction of the uncalibrated classifier.
+        """Predict the target of new samples. The predicted class is the
+        class that has the highest probability, and can thus be different
+        from the prediction of the uncalibrated classifier.
 
         Parameters
         ----------
@@ -238,6 +284,14 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
         """
         check_is_fitted(self)
         return self.classes_[np.argmax(self.predict_proba(X), axis=1)]
+
+    def _more_tags(self):
+        return {
+            '_xfail_checks': {
+                'check_sample_weights_invariance(kind=zeros)':
+                'zero sample_weight is not equivalent to removing samples',
+            }
+        }
 
 
 class _CalibratedClassifier:
@@ -283,7 +337,8 @@ class _CalibratedClassifier:
     .. [4] Predicting Good Probabilities with Supervised Learning,
            A. Niculescu-Mizil & R. Caruana, ICML 2005
     """
-    def __init__(self, base_estimator, method='sigmoid', classes=None):
+    @_deprecate_positional_args
+    def __init__(self, base_estimator, *, method='sigmoid', classes=None):
         self.base_estimator = base_estimator
         self.method = method
         self.classes = classes
@@ -334,7 +389,7 @@ class _CalibratedClassifier:
             self.label_encoder_.fit(self.classes)
 
         self.classes_ = self.label_encoder_.classes_
-        Y = label_binarize(y, self.classes_)
+        Y = label_binarize(y, classes=self.classes_)
 
         df, idx_pos_class = self._preproc(X)
         self.calibrators_ = []
@@ -511,7 +566,8 @@ class _SigmoidCalibration(RegressorMixin, BaseEstimator):
         return expit(-(self.a_ * T + self.b_))
 
 
-def calibration_curve(y_true, y_prob, normalize=False, n_bins=5,
+@_deprecate_positional_args
+def calibration_curve(y_true, y_prob, *, normalize=False, n_bins=5,
                       strategy='uniform'):
     """Compute true and predicted probabilities for a calibration curve.
 
@@ -579,7 +635,7 @@ def calibration_curve(y_true, y_prob, normalize=False, n_bins=5,
     if len(labels) > 2:
         raise ValueError("Only binary classification is supported. "
                          "Provided labels %s." % labels)
-    y_true = label_binarize(y_true, labels)[:, 0]
+    y_true = label_binarize(y_true, classes=labels)[:, 0]
 
     if strategy == 'quantile':  # Determine bin edges by distribution of data
         quantiles = np.linspace(0, 1, n_bins + 1)

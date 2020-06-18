@@ -8,10 +8,8 @@ import pytest
 import numpy as np
 import scipy.sparse as sp
 
-from sklearn.utils._testing import (assert_raises,
-                                    assert_array_equal,
+from sklearn.utils._testing import (assert_array_equal,
                                     assert_allclose_dense_sparse,
-                                    assert_raises_regex,
                                     assert_warns_message,
                                     assert_no_warnings,
                                     _convert_container)
@@ -51,7 +49,8 @@ def test_make_rng():
     rng_42 = np.random.RandomState(42)
     assert check_random_state(43).randint(100) != rng_42.randint(100)
 
-    assert_raises(ValueError, check_random_state, "some invalid seed")
+    with pytest.raises(ValueError):
+        check_random_state("some invalid seed")
 
 
 def test_gen_batches():
@@ -112,10 +111,11 @@ def test_resample():
     assert resample() is None
 
     # Check that invalid arguments yield ValueError
-    assert_raises(ValueError, resample, [0], [0, 1])
-    assert_raises(ValueError, resample, [0, 1], [0, 1],
-                  replace=False, n_samples=3)
-    assert_raises(ValueError, resample, [0, 1], [0, 1], meaning_of_life=42)
+    with pytest.raises(ValueError):
+        resample([0], [0, 1])
+    with pytest.raises(ValueError):
+        resample([0, 1], [0, 1], replace=False, n_samples=3)
+
     # Issue:6581, n_samples can be more when replace is True (default).
     assert len(resample([1, 2], n_samples=5)) == 5
 
@@ -214,7 +214,8 @@ def test_column_or_1d():
         if y_type in ["binary", 'multiclass', "continuous"]:
             assert_array_equal(column_or_1d(y), np.ravel(y))
         else:
-            assert_raises(ValueError, column_or_1d, y)
+            with pytest.raises(ValueError):
+                column_or_1d(y)
 
 
 @pytest.mark.parametrize(
@@ -487,6 +488,22 @@ def test_get_column_indices_error(key, err_msg):
         _get_column_indices(X_df, key)
 
 
+@pytest.mark.parametrize(
+    "key",
+    [['col1'], ['col2'], ['col1', 'col2'], ['col1', 'col3'], ['col2', 'col3']]
+)
+def test_get_column_indices_pandas_nonunique_columns_error(key):
+    pd = pytest.importorskip('pandas')
+    toy = np.zeros((1, 5), dtype=int)
+    columns = ['col1', 'col1', 'col2', 'col3', 'col2']
+    X = pd.DataFrame(toy, columns=columns)
+
+    err_msg = "Selected columns, {}, are not unique in dataframe".format(key)
+    with pytest.raises(ValueError) as exc_info:
+        _get_column_indices(X, key)
+    assert str(exc_info.value) == err_msg
+
+
 def test_shuffle_on_ndim_equals_three():
     def to_tuple(A):    # to make the inner arrays hashable
         return tuple(tuple(tuple(C) for C in B) for B in A)
@@ -539,8 +556,9 @@ def test_gen_even_slices():
 
     # check that passing negative n_chunks raises an error
     slices = gen_even_slices(10, -1)
-    assert_raises_regex(ValueError, "gen_even_slices got n_packs=-1, must be"
-                        " >=1", next, slices)
+    with pytest.raises(ValueError, match="gen_even_slices got n_packs=-1,"
+                                         " must be >=1"):
+        next(slices)
 
 
 @pytest.mark.parametrize(
@@ -637,9 +655,9 @@ def test_print_elapsed_time(message, expected, capsys, monkeypatch):
 
 @pytest.mark.parametrize("value, result", [(float("nan"), True),
                                            (np.nan, True),
-                                           (np.float("nan"), True),
-                                           (np.float32("nan"), True),
-                                           (np.float64("nan"), True),
+                                           (np.float(np.nan), True),
+                                           (np.float32(np.nan), True),
+                                           (np.float64(np.nan), True),
                                            (0, False),
                                            (0., False),
                                            (None, False),

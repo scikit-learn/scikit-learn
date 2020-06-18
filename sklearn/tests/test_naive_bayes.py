@@ -21,7 +21,6 @@ from sklearn.utils._testing import assert_no_warnings
 from sklearn.naive_bayes import GaussianNB, BernoulliNB
 from sklearn.naive_bayes import MultinomialNB, ComplementNB
 from sklearn.naive_bayes import CategoricalNB
-from sklearn.naive_bayes import BaseNB, BaseDiscreteNB
 
 
 # Data is just 6 separable points in the plane
@@ -122,7 +121,7 @@ def test_gnb_priors_sum_isclose():
     priors = np.array([0.08, 0.14, 0.03, 0.16, 0.11, 0.16, 0.07, 0.14,
                        0.11, 0.0])
     Y = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
-    clf = GaussianNB(priors)
+    clf = GaussianNB(priors=priors)
     # smoke test for issue #9633
     clf.fit(X, Y)
 
@@ -664,7 +663,7 @@ def test_categoricalnb():
     # Check error is raised for X with negative entries
     X = np.array([[0, -1]])
     y = np.array([1])
-    error_msg = "X must not contain negative values."
+    error_msg = "Negative values in data passed to CategoricalNB (input X)"
     assert_raise_message(ValueError, error_msg, clf.predict, X)
     assert_raise_message(ValueError, error_msg, clf.fit, X, y)
 
@@ -884,19 +883,3 @@ def test_check_accuracy_on_digits():
 
     scores = cross_val_score(GaussianNB(), X_3v8, y_3v8, cv=10)
     assert scores.mean() > 0.86
-
-
-# TODO: remove in 0.24
-def test_deprecations():
-
-    class A(BaseNB, GaussianNB):
-        pass
-
-    class B(BaseDiscreteNB, CategoricalNB):
-        pass
-
-    with pytest.warns(FutureWarning, match="is deprecated in version 0.22"):
-        A()
-
-    with pytest.warns(FutureWarning, match="is deprecated in version 0.22"):
-        B()

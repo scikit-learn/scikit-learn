@@ -16,6 +16,7 @@ from ..utils import (
 )
 from ..utils.fixes import _joblib_parallel_args
 from ..utils.validation import check_is_fitted, _num_samples
+from ..utils.validation import _deprecate_positional_args
 from ..base import OutlierMixin
 
 from ._bagging import BaseBagging
@@ -92,25 +93,12 @@ class IsolationForest(OutlierMixin, BaseBagging):
         :obj:`joblib.parallel_backend` context. ``-1`` means using all
         processors. See :term:`Glossary <n_jobs>` for more details.
 
-    behaviour : str, default='deprecated'
-        This parameter has not effect, is deprecated, and will be removed.
+    random_state : int or RandomState, default=None
+        Controls the pseudo-randomness of the selection of the feature
+        and split values for each branching step and each tree in the forest.
 
-        .. versionadded:: 0.20
-           ``behaviour`` is added in 0.20 for back-compatibility purpose.
-
-        .. deprecated:: 0.20
-           ``behaviour='old'`` is deprecated in 0.20 and will not be possible
-           in 0.22.
-
-        .. deprecated:: 0.22
-           ``behaviour`` parameter is deprecated in 0.22 and removed in
-           0.24.
-
-    random_state : int, RandomState instance, default=None
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        Pass an int for reproducible results across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     verbose : int, default=0
         Controls the verbosity of the tree building process.
@@ -143,6 +131,11 @@ class IsolationForest(OutlierMixin, BaseBagging):
         contamination parameter different than "auto" is provided, the offset
         is defined in such a way we obtain the expected number of outliers
         (samples with decision function < 0) in training.
+
+        .. versionadded:: 0.20
+
+    estimators_features_ : list of arrays
+        The subset of drawn features for each base estimator.
 
     Notes
     -----
@@ -177,15 +170,14 @@ class IsolationForest(OutlierMixin, BaseBagging):
     >>> clf.predict([[0.1], [0], [90]])
     array([ 1,  1, -1])
     """
-
-    def __init__(self,
+    @_deprecate_positional_args
+    def __init__(self, *,
                  n_estimators=100,
                  max_samples="auto",
                  contamination="auto",
                  max_features=1.,
                  bootstrap=False,
                  n_jobs=None,
-                 behaviour='deprecated',
                  random_state=None,
                  verbose=0,
                  warm_start=False):
@@ -205,7 +197,6 @@ class IsolationForest(OutlierMixin, BaseBagging):
             random_state=random_state,
             verbose=verbose)
 
-        self.behaviour = behaviour
         self.contamination = contamination
 
     def _set_oob_score(self, X, y):
@@ -240,19 +231,6 @@ class IsolationForest(OutlierMixin, BaseBagging):
         self : object
             Fitted estimator.
         """
-        if self.behaviour != 'deprecated':
-            if self.behaviour == 'new':
-                warn(
-                    "'behaviour' is deprecated in 0.22 and will be removed "
-                    "in 0.24. You should not pass or set this parameter.",
-                    FutureWarning
-                )
-            else:
-                raise NotImplementedError(
-                    "The old behaviour of IsolationForest is not implemented "
-                    "anymore. Remove the 'behaviour' parameter."
-                )
-
         X = check_array(X, accept_sparse=['csc'])
         if issparse(X):
             # Pre-sort indices to avoid that each individual tree of the
@@ -386,6 +364,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
             The lower, the more abnormal.
         """
         # code structure from ForestClassifier/predict_proba
+
         check_is_fitted(self)
 
         # Check data
@@ -468,6 +447,14 @@ class IsolationForest(OutlierMixin, BaseBagging):
         )
         return scores
 
+    def _more_tags(self):
+        return {
+            '_xfail_checks': {
+                'check_sample_weights_invariance(kind=zeros)':
+                'zero sample_weight is not equivalent to removing samples',
+            }
+        }
+
 
 def _average_path_length(n_samples_leaf):
     """
@@ -482,7 +469,7 @@ def _average_path_length(n_samples_leaf):
 
     Returns
     -------
-    average_path_length : array of same shape as n_samples_leaf
+    average_path_length : ndarray of shape (n_samples,)
     """
 
     n_samples_leaf = check_array(n_samples_leaf, ensure_2d=False)

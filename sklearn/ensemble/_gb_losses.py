@@ -6,10 +6,9 @@ from abc import ABCMeta
 from abc import abstractmethod
 
 import numpy as np
-from scipy.special import expit
+from scipy.special import expit, logsumexp
 
 from ..tree._tree import TREE_LEAF
-from ..utils.fixes import logsumexp
 from ..utils.stats import _weighted_percentile
 from ..dummy import DummyClassifier
 from ..dummy import DummyRegressor
@@ -443,7 +442,7 @@ class QuantileLossFunction(RegressionLossFunction):
     n_classes : int
         Number of classes.
 
-    alpha : float, default = 0.9
+    alpha : float, default=0.9
         The percentile.
     """
     def __init__(self, n_classes, alpha=0.9):
