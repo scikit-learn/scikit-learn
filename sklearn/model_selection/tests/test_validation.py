@@ -331,7 +331,7 @@ def test_cross_validate_invalid_scoring_param():
     multiclass_scorer = make_scorer(precision_recall_fscore_support)
 
     # Multiclass Scorers that return multiple values are not supported yet
-    fit_and_score_kwargs = {'error_score': np.nan}
+    score_kwargs = {'error_score': np.nan}
 
     # since we're using a multiclass scorer, our error will be the following
     error_message = ("ValueError: Classification metrics can't handle a mix "
@@ -340,7 +340,7 @@ def test_cross_validate_invalid_scoring_param():
     # the warning message we're expecting to see
     warning_message = ("Scoring failed. The score on this train-test "
                        "partition for these parameters will be set to %f. "
-                       "Details: \n%s" % (fit_and_score_kwargs['error_score'],
+                       "Details: \n%s" % (score_kwargs['error_score'],
                                           error_message))
 
     with warnings.catch_warnings(record=True) as record:
@@ -372,7 +372,7 @@ def test_cross_validate_invalid_scoring_param():
     # the warning message we're expecting to see
     warning_message = ("Scoring failed. The score on this train-test "
                        "partition for these parameters will be set to %f. "
-                       "Details: \n%s" % (fit_and_score_kwargs['error_score'],
+                       "Details: \n%s" % (score_kwargs['error_score'],
                                           error_message))
 
     with warnings.catch_warnings(record=True) as record:
@@ -394,6 +394,22 @@ def test_cross_validate_invalid_scoring_param():
             split = str(item.message).splitlines()
             mtb = split[0] + '\n' + '\n'.join(split[-2:])
             assert warning_message in mtb
+
+    # Test if an exception is raised on error_score='raise'
+    assert_raises_regex(ValueError, "scoring must return a number, got",
+                        cross_validate, SVC(), X, y,
+                        scoring={"foo": multivalued_scorer},
+                        error_score='raise')
+
+    error_message = ("error_score must be the string 'raise' or a"
+                     " numeric value. (Hint: if using 'raise', please"
+                     " make sure that it has been spelled correctly.)")
+
+    # Test if an exception is raised when error_score is invalid string
+    assert_raise_message(ValueError, error_message,
+                         cross_validate, SVC(), X, y,
+                         scoring={"foo": multivalued_scorer},
+                         error_score='unvalid-string')
 
     assert_raises_regex(ValueError, "'mse' is not a valid scoring value.",
                         cross_validate, SVC(), X, y, scoring="mse")
