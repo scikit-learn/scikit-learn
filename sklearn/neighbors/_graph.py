@@ -338,6 +338,14 @@ class KNeighborsTransformer(KNeighborsMixin, UnsupervisedMixin,
         """
         return self.fit(X).transform(X)
 
+    def _more_tags(self):
+        return {
+            '_xfail_checks': {
+                'check_methods_sample_order_invariance':
+                'fails for the transform method'
+            }
+        }
+
 
 class RadiusNeighborsTransformer(RadiusNeighborsMixin, UnsupervisedMixin,
                                  TransformerMixin, NeighborsBase):
@@ -483,6 +491,6 @@ class RadiusNeighborsTransformer(RadiusNeighborsMixin, UnsupervisedMixin,
         return {
             '_xfail_checks': {
                 'check_methods_sample_order_invariance':
-                'fails for the predict method'
+                'fails for the transform method'
             }
         }

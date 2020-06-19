@@ -4,7 +4,6 @@ import sys
 import numpy as np
 import scipy.sparse as sp
 import joblib
-import pytest
 
 from io import StringIO
 
@@ -440,10 +439,8 @@ def test_check_estimator():
     method = 'predict'
     msg = ("{method} of {name} is not invariant when applied to a dataset"
            "with different sample order.").format(method=method, name=name)
-    with pytest.raises(AssertionError) as excinfo:
-        check_estimator(NotInvariantSampleOrder())
-    assert msg in str(excinfo.value)
-
+    assert_raises_regex(AssertionError, msg,
+                    check_estimator, NotInvariantSampleOrder())
     # check for invariant method
     name = NotInvariantPredict.__name__
     method = 'predict'
