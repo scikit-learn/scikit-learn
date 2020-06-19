@@ -1,9 +1,9 @@
 """Test the covtype loader, if the data is available,
 or if specifically requested via environment variable
 (e.g. for travis cron job)."""
+from functools import partial
 import pytest
 from sklearn.datasets.tests.test_common import check_return_X_y
-from functools import partial
 
 
 def test_fetch(fetch_covtype_fxt):
@@ -25,15 +25,11 @@ def test_fetch(fetch_covtype_fxt):
     check_return_X_y(data1, fetch_func)
 
 
-def test_fetch_asframe(fetch_covtype_fxt):
-    pd = pytest.importorskip('pandas')
+def test_fetch_asframe_shape(fetch_covtype_fxt):
     bunch = fetch_covtype_fxt(as_frame=True)
+    assert hasattr(bunch, 'frame')
     frame = bunch.frame
-    assert hasattr(bunch, frame) is True
     assert frame.shape == (581012, 55)
-    assert isinstance(bunch.frame, pd.DataFrame)
-    assert isinstance(bunch.data, pd.DataFrame)
-    assert isinstance(bunch.target, pd.Series)
 
 
 def test_pandas_dependency_message(fetch_covtype_fxt,

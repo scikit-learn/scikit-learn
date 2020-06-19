@@ -42,6 +42,24 @@ ARCHIVE = RemoteFileMetadata(
 
 logger = logging.getLogger(__name__)
 
+"""
+Column names reference:
+https://archive.ics.uci.edu/ml/machine-learning-databases/covtype/covtype.info
+"""
+FEATURE_NAMES = ["Elevation",
+                 "Aspect",
+                 "Slope",
+                 "Horizontal_Distance_To_Hydrology",
+                 "Vertical_Distance_To_Hydrology",
+                 "Horizontal_Distance_To_Roadways",
+                 "Hillshade_9am",
+                 "Hillshade_Noon",
+                 "Hillshade_3pm",
+                 "Horizontal_Distance_To_Fire_Points"]
+FEATURE_NAMES += ['Wilderness_Area_'+str(i) for i in range(1, 5)]
+FEATURE_NAMES += ['Soil_Type_'+str(i) for i in range(1, 41)]
+TARGET_NAMES = ["Cover_Type"]
+
 
 @_deprecate_positional_args
 def fetch_covtype(*, data_home=None, download_if_missing=True,
@@ -88,7 +106,7 @@ def fetch_covtype(*, data_home=None, download_if_missing=True,
         a pandas DataFrame or Series depending on the number of target columns.
         If `return_X_y` is True, then (`data`, `target`) will be pandas
         DataFrames or Series as described below.
-        .. versionadded:: 0.20
+        .. versionadded:: 0.24
 
     Returns
     -------
@@ -101,15 +119,16 @@ def fetch_covtype(*, data_home=None, download_if_missing=True,
             Each value corresponds to one of
             the 7 forest covertypes with values
             ranging between 1 to 7.
+        frame : dataframe of shape (581012, 53)
+            Only present when `as_frame=True`. Contains `data` and `target`.
         DESCR : str
             Description of the forest covertype dataset.
 
     (data, target) : tuple if ``return_X_y`` is True
 
-    dataframe: :class: `pandas.DataFrame`
-        Pandas dataframe
 
-        .. versionadded:: 0.20
+
+        .. versionadded:: 0.24
     """
 
     data_home = get_data_home(data_home=data_home)
@@ -153,37 +172,19 @@ def fetch_covtype(*, data_home=None, download_if_missing=True,
     with open(join(module_path, 'descr', 'covtype.rst')) as rst_file:
         fdescr = rst_file.read()
 
-    if as_frame or return_X_y:
-        """
-        Column names reference:
-        https://archive.ics.uci.edu/ml/machine-learning-databases/covtype/covtype.info
-        """
-        feat_cols = ["Elevation",
-                     "Aspect",
-                     "Slope",
-                     "Horizontal_Distance_To_Hydrology",
-                     "Vertical_Distance_To_Hydrology",
-                     "Horizontal_Distance_To_Roadways",
-                     "Hillshade_9am",
-                     "Hillshade_Noon",
-                     "Hillshade_3pm",
-                     "Horizontal_Distance_To_Fire_Points"]
-        feat_cols += ['Wilderness_Area_'+str(i) for i in range(1, 5)]
-        feat_cols += ['Soil_Type_'+str(i) for i in range(1, 41)]
-        target_col = ["Cover_Type"]
+    frame = None
+    if as_frame:
+        frame, X, y = _convert_data_dataframe(caller_name="fetch_covtype",
+                                              data=X,
+                                              target=y,
+                                              feature_names=FEATURE_NAMES,
+                                              target_names=TARGET_NAMES)
+    if return_X_y:
+        return X, y
 
-        frame, X, y = _convert_data_dataframe("fetch_covtype", X, y,
-                                              feat_cols, target_col)
-
-        if as_frame:
-            return Bunch(data=X,
-                         target=y,
-                         frame=frame,
-                         target_names=target_col,
-                         feature_names=feat_cols,
-                         DESCR=fdescr)
-
-        if return_X_y:
-            return X, y
-
-    return Bunch(data=X, target=y, DESCR=fdescr)
+    return Bunch(data=X,
+                 target=y,
+                 frame=frame,
+                 target_names=TARGET_NAMES,
+                 feature_names=FEATURE_NAMES,
+                 DESCR=fdescr)
