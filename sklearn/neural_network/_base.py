@@ -216,8 +216,6 @@ def log_loss(y_true, y_prob):
     y_prob = np.clip(y_prob, eps, 1 - eps)
     if y_prob.shape[1] == 1:
         y_prob = np.append(1 - y_prob, y_prob, axis=1)
-
-    if y_true.shape[1] == 1:
         y_true = np.append(1 - y_true, y_true, axis=1)
 
     return - xlogy(y_true, y_prob).sum() / y_prob.shape[0]
