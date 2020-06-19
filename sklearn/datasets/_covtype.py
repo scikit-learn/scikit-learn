@@ -127,7 +127,6 @@ def fetch_covtype(*, data_home=None, download_if_missing=True,
     (data, target) : tuple if ``return_X_y`` is True
 
 
-
         .. versionadded:: 0.24
     """
 
