@@ -9,6 +9,7 @@ is too big to use in unit-testing.
 from functools import partial
 from sklearn.datasets.tests.test_common import check_return_X_y
 
+
 def test_percent10(fetch_kddcup99_fxt):
     data = fetch_kddcup99_fxt()
 
@@ -43,6 +44,7 @@ def test_shuffle(fetch_kddcup99_fxt):
     dataset = fetch_kddcup99_fxt(random_state=0, subset='SA', shuffle=True,
                                  percent10=True)
     assert(any(dataset.target[-100:] == b'normal.'))
+
 
 def test_fetch_kddcup99_check_as_frame_shape(fetch_kddcup99_fxt):
 

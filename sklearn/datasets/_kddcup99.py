@@ -187,17 +187,17 @@ def fetch_kddcup99(*, subset=None, data_home=None, shuffle=False,
     frame = None
     if as_frame:
         frame, data, target = _convert_data_dataframe("fetch_kddcup99",
-                                              data,
-                                              target,
-                                              feature_names,
-                                              target_names)
+                                                      data,
+                                                      target,
+                                                      feature_names,
+                                                      target_names)
 
     return Bunch(data=data,
-                    target=target,
-                    frame=frame,
-                    target_names=target_names,
-                    feature_names=feature_names,
-                    DESCR=fdescr)
+                 target=target,
+                 frame=frame,
+                 target_names=target_names,
+                 feature_names=feature_names,
+                 DESCR=fdescr)
 
 
 def _fetch_brute_kddcup99(data_home=None,
@@ -329,7 +329,7 @@ def _fetch_brute_kddcup99(data_home=None,
     except NameError:
         X = joblib.load(samples_path)
         y = joblib.load(targets_path)
-    return Bunch(data=X, target=y), feature_names, target_names
+    return Bunch(data=X, target=y), feature_names, [target_names]
 
 
 def _mkdirp(d):
