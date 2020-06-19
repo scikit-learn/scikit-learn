@@ -73,3 +73,9 @@ def test_fetch_kddcup99_check_as_frame_shape(fetch_kddcup99_fxt):
     assert data.data.shape == (9571, 3)
     assert data.target.shape == (9571,)
     assert data.frame.shape == (9571, 3+1)
+
+
+def test_fetch_kddcup99_return_X_y_shape(fetch_kddcup99_fxt):
+    X, y = fetch_kddcup99_fxt(return_X_y=True)
+    assert X.shape == (494021, 41)
+    assert y.shape == (494021,)
