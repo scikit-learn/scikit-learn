@@ -525,8 +525,12 @@ A good etiquette to take over is:
 Stalled and Unclaimed Issues
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Generally speaking, issues which are up for grab have a "help wanted" tag. However, the "help wanted" tags is not always up-to-date with the state of the issue. Contributors can find issues which are still up for grab using the following guidelines:
-
+Generally speaking, issues which are up for grabs will have a
+`"help wanted" <https://github.com/scikit-learn/scikit-learn/labels/help%20wanted>`__ .
+tag. However, not all issues which need contributors will have this tag,
+as the "help wanted" tag is not always up-to-date with the state
+of the issue. Contributors can find issues which are still up for grabs
+using the following guidelines:
 
 * First, to **determine if an issue is claimed**:
 
@@ -541,6 +545,10 @@ Generally speaking, issues which are up for grab have a "help wanted" tag. Howev
   pull request for it. We encourage contributors to comment directly on the
   stalled or unclaimed issue to let community members know that they will be
   working on it.
+
+* If the issue is linked to a :ref:`stalled pull request <stalled_pull_request>`,
+we recommend that contributors follow the procedure described in the
+:ref:`stalled_pull_request` section rather than working directly on the issue.
 
 .. _new_contributors:
 
