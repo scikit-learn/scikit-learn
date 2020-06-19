@@ -395,22 +395,6 @@ def test_cross_validate_invalid_scoring_param():
             mtb = split[0] + '\n' + '\n'.join(split[-2:])
             assert warning_message in mtb
 
-    # Test if an exception is raised on error_score='raise'
-    assert_raises_regex(ValueError, "scoring must return a number, got",
-                        cross_validate, SVC(), X, y,
-                        scoring={"foo": multivalued_scorer},
-                        error_score='raise')
-
-    error_message = ("error_score must be the string 'raise' or a"
-                     " numeric value. (Hint: if using 'raise', please"
-                     " make sure that it has been spelled correctly.)")
-
-    # Test if an exception is raised when error_score is invalid string
-    assert_raise_message(ValueError, error_message,
-                         cross_validate, SVC(), X, y,
-                         scoring={"foo": multivalued_scorer},
-                         error_score='unvalid-string')
-
     assert_raises_regex(ValueError, "'mse' is not a valid scoring value.",
                         cross_validate, SVC(), X, y, scoring="mse")
 
@@ -1778,6 +1762,50 @@ def test_fit_and_score_working():
     result = _fit_and_score(*fit_and_score_args,
                             **fit_and_score_kwargs)
     assert result[-1] == fit_and_score_kwargs['parameters']
+
+
+def test_score_failing():
+    iris = load_iris()
+    X, y = iris.data, iris.target
+    clf = MockClassifier()
+    score_kwargs = {'error_score': np.nan}
+
+    # the error message we're expecting to see
+    error_message = ("ValueError: Classification metrics can't handle a mix "
+                     "of binary and continuous targets")
+
+    # the warning message we're expecting to see
+    warning_message = ("Scoring failed. The score on this train-test "
+                       "partition for these parameters will be set to %f. "
+                       "Details: \n%s" % (score_kwargs['error_score'],
+                                          error_message))
+
+    with warnings.catch_warnings(record=True) as record:
+        warnings.simplefilter("always")
+        cross_val_score(clf, X, y, scoring='accuracy')
+        assert len(record) > 0
+        for item in record:
+            assert 'Traceback (most recent call last):\n' in str(item.message)
+            split = str(item.message).splitlines()
+            mtb = split[0] + '\n' + split[-1]
+            assert warning_message in mtb
+
+    # Test if an exception is raised on error_score='raise'
+    assert_raises_regex(ValueError, ("Classification metrics can't handle "
+                        "a mix of binary and continuous targets"),
+                        cross_val_score, clf, X, y,
+                        scoring='accuracy',
+                        error_score='raise')
+
+    error_message = ("error_score must be the string 'raise' or a"
+                     " numeric value. (Hint: if using 'raise', please"
+                     " make sure that it has been spelled correctly.)")
+
+    # Test if an exception is raised when error_score is invalid string
+    assert_raise_message(ValueError, error_message,
+                         cross_val_score, clf, X, y,
+                         scoring='accuracy',
+                         error_score='unvalid-string')
 
 
 def three_params_scorer(i, j, k):
