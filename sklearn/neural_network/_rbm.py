@@ -380,7 +380,6 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
                 'check_methods_subset_invariance':
                 'fails for the decision_function method',
                 'check_methods_sample_order_invariance':
-                'fails for the predict method'
-
+                'fails for the score_samples method',
             }
         }

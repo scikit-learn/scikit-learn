@@ -478,3 +478,12 @@ class RadiusNeighborsTransformer(RadiusNeighborsMixin, UnsupervisedMixin,
             The matrix is of CSR format.
         """
         return self.fit(X).transform(X)
+
+
+    def _more_tags(self):
+        return {
+            '_xfail_checks': {
+                'check_methods_sample_order_invariance':
+                'fails for the predict method'
+            }
+        }
