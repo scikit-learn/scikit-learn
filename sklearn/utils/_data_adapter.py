@@ -42,7 +42,12 @@ class _DataTransformer:
 
         # no names are found
         if feature_names_out is None:
-            return X
+            if array_out == 'pydata/sparse' and sp_sparse.issparse(X):
+                # hack support for pydata sparse
+                import sparse as pydata_sparse
+                return pydata_sparse.COO.from_scipy_sparse(X)
+            else:
+                return X
 
         if array_out == 'pandas':
             import pandas as pd

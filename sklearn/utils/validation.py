@@ -504,9 +504,34 @@ def check_array(array, accept_sparse=False, accept_large_sparse=True,
     if hasattr(array, 'sparse') and array.ndim > 1:
         array = array.sparse.to_coo()
 
-    # xarray's pydata/sparse
-    if hasattr(array, 'coords') and hasattr(array.data, 'to_scipy_sparse'):
-        array = array.data.to_scipy_sparse()
+    # pydata/sparse
+    if hasattr(array, 'coords') and (hasattr(array, 'to_scipy_sparse') or
+                                     hasattr(array.data, 'to_scipy_sparse')):
+        if hasattr(array.data, 'to_scipy_sparse'):
+            # xarray wrapping pydata/sparse array
+            sparse_array = array.data
+        else:
+            # pure pydata/sparse array
+            sparse_array = array
+        first_sparse = accept_sparse
+
+        # be smart about format
+        if isinstance(accept_sparse, bool):
+            if not accept_sparse:
+                raise ValueError("Why are you passing a sparse here?")
+            first_sparse = 'csr'
+
+        if isinstance(accept_sparse, (list, tuple)):
+            first_sparse = first_sparse[0]
+
+        if first_sparse == 'csr':
+            array = sparse_array.tocsr()
+        elif first_sparse == 'csc':
+            array = sparse_array.tocsc()
+        elif first_sparse == 'coo':
+            array = sparse_array.to_scipy_sparse()
+        else:
+            array = sparse_array.tocsr()
 
     if sp.issparse(array):
         _ensure_no_complex_data(array)
