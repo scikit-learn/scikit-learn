@@ -671,7 +671,6 @@ cdef class Tree:
                 raise ValueError('Did not recognise loaded array dytpe')
 
         if (node_ndarray.ndim != 1 or
-                node_ndarray.dtype != NODE_DTYPE or
                 not node_ndarray.flags.c_contiguous or
                 value_ndarray.shape != value_shape or
                 not value_ndarray.flags.c_contiguous or
