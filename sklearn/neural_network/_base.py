@@ -72,7 +72,7 @@ def relu(X):
     X_new : {array-like, sparse matrix}, shape (n_samples, n_features)
         The transformed data.
     """
-    np.clip(X, 0, np.finfo(X.dtype).max, out=X)
+    np.maximum(X, 0, out=X)
     return X
 
 

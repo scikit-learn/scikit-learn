@@ -36,7 +36,6 @@ code {
   color: #222;
   background-color: #ecf0f3;
   border-radius: 0.2rem;
-  white-space: nowrap;
   padding: 0.15rem;
 }
 
@@ -72,6 +71,7 @@ a code {
   color: #2878A2;
   border-radius: 0;
   padding: 0;
+  white-space: nowrap;
 }
 
 img {
@@ -90,7 +90,7 @@ div.highlight {
 
 div.highlight pre {
   margin-bottom: 0;
-  line-height: 1rem;
+  line-height: 1.2rem;
 }
 
 div.highlight a {
@@ -722,11 +722,11 @@ dd {
   margin-top: 1rem;
 }
 
-ul.simple li p {
+ul.simple li p, ol.simple li p {
   margin-bottom: 0;
 }
 
-ul.simple {
+ul.simple, ol.simple {
   padding-left: 1.5rem;
 }
 

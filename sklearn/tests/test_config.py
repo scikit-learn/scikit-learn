@@ -4,7 +4,8 @@ from sklearn.utils._testing import assert_raises
 
 def test_config_context():
     assert get_config() == {'assume_finite': False, 'working_memory': 1024,
-                            'print_changed_only': False,
+                            'print_changed_only': True,
+                            'display': 'text',
                             'array_out': 'default'}
 
     # Not using as a context manager affects nothing
@@ -13,7 +14,8 @@ def test_config_context():
 
     with config_context(assume_finite=True):
         assert get_config() == {'assume_finite': True, 'working_memory': 1024,
-                                'print_changed_only': False,
+                                'print_changed_only': True,
+                                'display': 'text',
                                 'array_out': 'default'}
     assert get_config()['assume_finite'] is False
 
@@ -39,7 +41,8 @@ def test_config_context():
         assert get_config()['assume_finite'] is True
 
     assert get_config() == {'assume_finite': False, 'working_memory': 1024,
-                            'print_changed_only': False,
+                            'print_changed_only': True,
+                            'display': 'text',
                             'array_out': 'default'}
 
     # No positional arguments

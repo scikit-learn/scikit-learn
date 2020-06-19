@@ -6,7 +6,8 @@ from contextlib import contextmanager as contextmanager
 _global_config = {
     'assume_finite': bool(os.environ.get('SKLEARN_ASSUME_FINITE', False)),
     'working_memory': int(os.environ.get('SKLEARN_WORKING_MEMORY', 1024)),
-    'print_changed_only': False,
+    'print_changed_only': True,
+    'display': 'text',
     'array_out': 'default',
 }
 
@@ -28,7 +29,7 @@ def get_config():
 
 
 def set_config(assume_finite=None, working_memory=None,
-               print_changed_only=None, array_out=None):
+               print_changed_only=None, display=None, array_out=None):
     """Set global scikit-learn configuration
 
     .. versionadded:: 0.19
@@ -60,6 +61,13 @@ def set_config(assume_finite=None, working_memory=None,
 
         .. versionadded:: 0.21
 
+    display : {'text', 'diagram'}, optional
+        If 'diagram', estimators will be displayed as a diagram in a Jupyter
+        lab or notebook context. If 'text', estimators will be displayed as
+        text. Default is 'text'.
+
+        .. versionadded:: 0.23
+
     array_out : {'default', 'pandas', 'xarray'}, optional
         Kind of array output for transformers
 
@@ -74,6 +82,8 @@ def set_config(assume_finite=None, working_memory=None,
         _global_config['working_memory'] = working_memory
     if print_changed_only is not None:
         _global_config['print_changed_only'] = print_changed_only
+    if display is not None:
+        _global_config['display'] = display
     if array_out is not None:
         _global_config['array_out'] = array_out
 
@@ -99,9 +109,19 @@ def config_context(**new_config):
     print_changed_only : bool, optional
         If True, only the parameters that were set to non-default
         values will be printed when printing an estimator. For example,
-        ``print(SVC())`` while True will only print 'SVC()' while the default
-        behaviour would be to print 'SVC(C=1.0, cache_size=200, ...)' with
-        all the non-changed parameters.
+        ``print(SVC())`` while True will only print 'SVC()', but would print
+        'SVC(C=1.0, cache_size=200, ...)' with all the non-changed parameters
+        when False. Default is True.
+
+        .. versionchanged:: 0.23
+           Default changed from False to True.
+
+    display : {'text', 'diagram'}, optional
+        If 'diagram', estimators will be displayed as a diagram in a Jupyter
+        lab or notebook context. If 'text', estimators will be displayed as
+        text. Default is 'text'.
+
+        .. versionadded:: 0.23
 
     Notes
     -----
