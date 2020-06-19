@@ -402,6 +402,14 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         to False, no intercept will be used in calculations
         (i.e. data is expected to be centered).
 
+    normalize : bool, default=False
+        This parameter is ignored when ``fit_intercept`` is set to False.
+        If True, the regressors X will be normalized before regression by
+        subtracting the mean and dividing by the l2-norm.
+        If you wish to standardize, please use
+        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
+        on an estimator with ``normalize=False``.
+
     copy_X : bool, default=True
         If True, X will be copied; else, it may be overwritten.
 
