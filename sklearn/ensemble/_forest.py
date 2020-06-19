@@ -948,7 +948,7 @@ class RandomForestClassifier(ForestClassifier):
 
         - If int, then consider `max_features` features at each split.
         - If float, then `max_features` is a fraction and
-          `int(max_features * n_features)` features are considered at each
+          `round(max_features * n_features)` features are considered at each
           split.
         - If "auto", then `max_features=sqrt(n_features)`.
         - If "sqrt", then `max_features=sqrt(n_features)` (same as "auto").
@@ -1271,7 +1271,7 @@ class RandomForestRegressor(ForestRegressor):
 
         - If int, then consider `max_features` features at each split.
         - If float, then `max_features` is a fraction and
-          `int(max_features * n_features)` features are considered at each
+          `round(max_features * n_features)` features are considered at each
           split.
         - If "auto", then `max_features=n_features`.
         - If "sqrt", then `max_features=sqrt(n_features)`.
@@ -1553,7 +1553,7 @@ class ExtraTreesClassifier(ForestClassifier):
 
         - If int, then consider `max_features` features at each split.
         - If float, then `max_features` is a fraction and
-          `int(max_features * n_features)` features are considered at each
+          `round(max_features * n_features)` features are considered at each
           split.
         - If "auto", then `max_features=sqrt(n_features)`.
         - If "sqrt", then `max_features=sqrt(n_features)`.
@@ -1866,12 +1866,12 @@ class ExtraTreesRegressor(ForestRegressor):
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
 
-    max_features : {"auto", "sqrt", "log2"} int or float, default="auto"
+    max_features : {"auto", "sqrt", "log2"}, int or float, default="auto"
         The number of features to consider when looking for the best split:
 
         - If int, then consider `max_features` features at each split.
         - If float, then `max_features` is a fraction and
-          `int(max_features * n_features)` features are considered at each
+          `round(max_features * n_features)` features are considered at each
           split.
         - If "auto", then `max_features=n_features`.
         - If "sqrt", then `max_features=sqrt(n_features)`.
@@ -2200,8 +2200,24 @@ class RandomTreesEmbedding(BaseForest):
 
     Attributes
     ----------
-    estimators_ : list of DecisionTreeClassifier
+    base_estimator_ : DecisionTreeClassifier instance
+        The child estimator template used to create the collection of fitted
+        sub-estimators.
+
+    estimators_ : list of DecisionTreeClassifier instances
         The collection of fitted sub-estimators.
+
+    feature_importances_ : ndarray of shape (n_features,)
+        The feature importances (the higher, the more important the feature).
+
+    n_features_ : int
+        The number of features when ``fit`` is performed.
+
+    n_outputs_ : int
+        The number of outputs when ``fit`` is performed.
+
+    one_hot_encoder_ : OneHotEncoder instance
+        One-hot encoder used to create the sparse embedding.
 
     References
     ----------

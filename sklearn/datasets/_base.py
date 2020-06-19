@@ -125,34 +125,34 @@ def load_files(container_path, *, description=None, categories=None,
 
     Parameters
     ----------
-    container_path : string or unicode
+    container_path : str or unicode
         Path to the main folder holding one subfolder per category
 
-    description : string or unicode, optional (default=None)
+    description : str or unicode, default=None
         A paragraph describing the characteristic of the dataset: its source,
         reference, etc.
 
-    categories : A collection of strings or None, optional (default=None)
+    categories : list of str, default=None
         If None (default), load all the categories. If not None, list of
         category names to load (other categories ignored).
 
-    load_content : bool, optional (default=True)
+    load_content : bool, default=True
         Whether to load or not the content of the different files. If true a
         'data' attribute containing the text information is present in the data
         structure returned. If not, a filenames attribute gives the path to the
         files.
 
-    shuffle : bool, optional (default=True)
+    shuffle : bool, default=True
         Whether or not to shuffle the data: might be important for models that
         make the assumption that the samples are independent and identically
         distributed (i.i.d.), such as stochastic gradient descent.
 
-    encoding : string or None (default is None)
+    encoding : str, default=None
         If None, do not try to decode the content of the files (e.g. for images
         or other non-text content). If not None, encoding to use to decode text
         files to Unicode if load_content is True.
 
-    decode_error : {'strict', 'ignore', 'replace'}, optional
+    decode_error : {'strict', 'ignore', 'replace'}, default='strict'
         Instruction on what to do if a byte sequence is given to analyze that
         contains characters not of the given `encoding`. Passed as keyword
         argument 'errors' to bytes.decode.
@@ -290,7 +290,7 @@ def load_wine(*, return_X_y=False, as_frame=False):
 
     Parameters
     ----------
-    return_X_y : bool, default=False.
+    return_X_y : bool, default=False
         If True, returns ``(data, target)`` instead of a Bunch object.
         See below for more information about the `data` and `target` object.
 
@@ -403,7 +403,7 @@ def load_iris(*, return_X_y=False, as_frame=False):
 
     Parameters
     ----------
-    return_X_y : bool, default=False.
+    return_X_y : bool, default=False
         If True, returns ``(data, target)`` instead of a Bunch object. See
         below for more information about the `data` and `target` object.
 
@@ -642,10 +642,10 @@ def load_digits(*, n_class=10, return_X_y=False, as_frame=False):
 
     Parameters
     ----------
-    n_class : integer, between 0 and 10, optional (default=10)
-        The number of classes to return.
+    n_class : int, default=10
+        The number of classes to return. Between 0 and 10.
 
-    return_X_y : bool, default=False.
+    return_X_y : bool, default=False
         If True, returns ``(data, target)`` instead of a Bunch object.
         See below for more information about the `data` and `target` object.
 
@@ -858,7 +858,7 @@ def load_linnerud(*, return_X_y=False, as_frame=False):
 
     Parameters
     ----------
-    return_X_y : bool, default=False.
+    return_X_y : bool, default=False
         If True, returns ``(data, target)`` instead of a Bunch object.
         See below for more information about the `data` and `target` object.
 
@@ -960,7 +960,7 @@ def load_boston(*, return_X_y=False):
 
     Parameters
     ----------
-    return_X_y : bool, default=False.
+    return_X_y : bool, default=False
         If True, returns ``(data, target)`` instead of a Bunch object.
         See below for more information about the `data` and `target` object.
 

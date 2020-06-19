@@ -232,22 +232,18 @@ def test_fit_docstring_attributes(name, Estimator):
                'ElasticNetCV', 'GaussianProcessClassifier',
                'GradientBoostingRegressor', 'HistGradientBoostingClassifier',
                'HistGradientBoostingRegressor', 'IsolationForest',
-               'KNeighborsClassifier', 'KNeighborsRegressor',
-               'KNeighborsTransformer', 'KernelCenterer', 'KernelDensity',
+               'KernelCenterer', 'KernelDensity',
                'LarsCV', 'Lasso', 'LassoLarsCV', 'LassoLarsIC',
                'LatentDirichletAllocation', 'LocalOutlierFactor', 'MDS',
                'MiniBatchKMeans', 'MLPClassifier', 'MLPRegressor',
                'MultiTaskElasticNet', 'MultiTaskElasticNetCV',
-               'MultiTaskLasso', 'MultiTaskLassoCV', 'NearestNeighbors',
-               'NuSVR', 'OneClassSVM', 'OrthogonalMatchingPursuit',
+               'MultiTaskLasso', 'MultiTaskLassoCV',
+               'OrthogonalMatchingPursuit',
                'PLSCanonical', 'PLSRegression', 'PLSSVD',
-               'PassiveAggressiveClassifier', 'Perceptron', 'RBFSampler',
-               'RadiusNeighborsClassifier', 'RadiusNeighborsRegressor',
-               'RadiusNeighborsTransformer', 'RandomTreesEmbedding', 'SVR',
-               'SkewedChi2Sampler'}
+               'PassiveAggressiveClassifier', 'RBFSampler'}
     if Estimator.__name__ in IGNORED:
         pytest.xfail(
-            reason="Classifier has too many undocumented attributes.")
+            reason="Estimator has too many undocumented attributes.")
 
     fit_attr = [k for k in est.__dict__.keys() if k.endswith('_')
                 and not k.startswith('_')]
