@@ -207,6 +207,12 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
     >>> clf.predict([[-19, -20], [9, 9], [-5, 5]])
     array([2, 0, 1])
 
+    See Also
+    --------
+    sklearn.multioutput.MultiOutputClassifier : Alternate way of extending an
+        estimator for multilabel classification.
+    sklearn.preprocessing.MultiLabelBinarizer : Transform iterable of iterables
+        to binary indicator matrix.
     """
     @_deprecate_positional_args
     def __init__(self, estimator, *, n_jobs=None):
