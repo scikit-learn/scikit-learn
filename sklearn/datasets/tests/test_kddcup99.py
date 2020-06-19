@@ -7,9 +7,7 @@ is too big to use in unit-testing.
 """
 
 from functools import partial
-import pytest
-from sklearn.datasets.tests.test_common import check_return_X_y, check_as_frame
-
+from sklearn.datasets.tests.test_common import check_return_X_y
 
 def test_percent10(fetch_kddcup99_fxt):
     data = fetch_kddcup99_fxt()
@@ -46,15 +44,9 @@ def test_shuffle(fetch_kddcup99_fxt):
                                  percent10=True)
     assert(any(dataset.target[-100:] == b'normal.'))
 
-
-def test_asframe(fetch_kddcup99_fxt):
-    pd = pytest.importorskip('pandas')
+def test_fetch_kddcup99_check_as_frame_shape(fetch_kddcup99_fxt):
 
     data = fetch_kddcup99_fxt(as_frame=True)
-    fetch_func = partial(fetch_kddcup99_fxt, 'smtp')
-
-    assert hasattr(data, 'frame') is True
-    assert check_as_frame(data, fetch_func)
 
     assert data.data.shape == (494021, 41)
     assert data.target.shape == (494021,)

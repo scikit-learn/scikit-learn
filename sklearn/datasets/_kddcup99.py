@@ -184,19 +184,20 @@ def fetch_kddcup99(*, subset=None, data_home=None, shuffle=False,
     if return_X_y:
         return data, target
 
+    frame = None
     if as_frame:
-        frame, X, y = _convert_data_dataframe("fetch_kddcup99",
+        frame, data, target = _convert_data_dataframe("fetch_kddcup99",
                                               data,
                                               target,
                                               feature_names,
                                               target_names)
-        return Bunch(data=X,
-                     target=y,
-                     frame=frame,
-                     target_names=target_names,
-                     feature_names=feature_names,
-                     DESCR=fdescr)
-    return Bunch(data=data, target=target, DESCR=fdescr)
+
+    return Bunch(data=data,
+                    target=target,
+                    frame=frame,
+                    target_names=target_names,
+                    feature_names=feature_names,
+                    DESCR=fdescr)
 
 
 def _fetch_brute_kddcup99(data_home=None,
