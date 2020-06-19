@@ -129,6 +129,10 @@ Changelog
 :mod:`sklearn.preprocessing`
 ............................
 
+- |Enhancement| Verbose output of :class:`model_selection.GridSearchCV` has
+  been improved for readability. :pr:`16935` by :user:`Raghav Rajagopalan
+  <raghavrv>` and :user:`Chiara Marmo <cmarmo>`.
+
 - |Enhancement| Add ``unit_variance`` to :class:`preprocessing.RobustScaler`,
   which scales output data such that normally distributed features have a
   variance of 1. :pr:`17193` by :user:`Lucy Liu <lucyleeow>` and
