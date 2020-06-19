@@ -289,6 +289,7 @@ def _fetch_brute_kddcup99(data_home=None,
           ('dst_host_rerror_rate', float),
           ('dst_host_srv_rerror_rate', float),
           ('labels', 'S16')]
+
     feature_names = [c[0] for c in dt]
     target_names = feature_names[-1]
     feature_names = feature_names[:-1]
