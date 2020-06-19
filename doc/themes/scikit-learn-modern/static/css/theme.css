@@ -718,6 +718,16 @@ dd {
   padding-left: 1rem;
 }
 
+dl.class > dd {
+  padding-left: 0;
+}
+
+@media screen and (min-width: 768px) {
+  dl.class > dd {
+    padding-left: 1rem;
+  }
+}
+
 .rubric {
   font-weight: bold;
   margin-top: 1rem;
