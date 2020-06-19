@@ -525,14 +525,8 @@ A good etiquette to take over is:
 Stalled and Unclaimed Issues
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Issues may have conversation that has not yet resulted in a pull request,
-or that is linked to a :ref:`stalled pull request <stalled_pull_request>`.
-In general, if a pull request has already been opened, it is best to follow
-the procedure described in the :ref:`stalled_pull_request` section rather
-than working in an issue.
+Generally speaking, issues which are up for grab have a "help wanted" tag. However, the "help wanted" tags is not always up-to-date with the state of the issue. Contributors can find issues which are still up for grab using the following guidelines:
 
-If, however, a pull request has not yet been opened, we also provide a
-suggested workflow for claiming and working on stalled or unclaimed issues:
 
 * First, to **determine if an issue is claimed**:
 
