@@ -547,8 +547,9 @@ using the following guidelines:
   working on it.
 
 * If the issue is linked to a :ref:`stalled pull request <stalled_pull_request>`,
-we recommend that contributors follow the procedure described in the
-:ref:`stalled_pull_request` section rather than working directly on the issue.
+  we recommend that contributors follow the procedure
+  described in the :ref:`stalled_pull_request`
+  section rather than working directly on the issue.
 
 .. _new_contributors:
 
