@@ -83,12 +83,12 @@ span.highlighted {
 }
 
 div.highlight {
-  padding: 0.2rem 0.5rem;
   border: 1px solid #ddd;
   margin-bottom: 1rem;
 }
 
 div.highlight pre {
+  padding: 0.2rem 0.5rem;
   margin-bottom: 0;
   line-height: 1.2rem;
 }
