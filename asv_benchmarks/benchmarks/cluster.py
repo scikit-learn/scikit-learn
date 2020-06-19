@@ -1,8 +1,4 @@
-import numpy as np
-
-from sklearn.cluster import KMeans
-from sklearn.cluster._kmeans import _k_init
-from sklearn.utils.extmath import row_norms
+from sklearn.cluster import KMeans, MiniBatchKMeans
 
 from .common import Benchmark, Estimator, Predictor, Transformer
 from .datasets import _blobs_dataset, _20newsgroups_highdim_dataset
@@ -14,42 +10,33 @@ class KMeansBenchmark(Predictor, Transformer, Estimator, Benchmark):
     Benchmarks for KMeans.
     """
 
-    param_names = ['representation', 'algorithm']
-    params = (['dense', 'sparse'], ['full', 'elkan'])
+    param_names = ['representation', 'algorithm', 'init']
+    params = (['dense', 'sparse'], ['full', 'elkan'], ['random', 'k-means++'])
 
     def setup_cache(self):
         super().setup_cache()
 
     def make_data(self, params):
-        representation, algorithm = params
+        representation, algorithm, init = params
 
-        if Benchmark.data_size == 'large':
-            if representation == 'sparse':
-                data = _20newsgroups_highdim_dataset(ngrams=(1, 2))
-            else:
-                data = _blobs_dataset()
+        if representation == 'sparse':
+            data = _20newsgroups_highdim_dataset(n_samples=8000)
         else:
-            if representation == 'sparse':
-                data = _20newsgroups_highdim_dataset()
-            else:
-                data = _blobs_dataset()
+            data = _blobs_dataset(n_clusters=20)
 
         return data
 
     def make_estimator(self, params):
-        representation, algorithm = params
+        representation, algorithm, init = params
 
-        if representation == 'sparse':
-            n_clusters = 20
-        else:
-            n_clusters = 1024 if Benchmark.data_size == 'large' else 256
+        max_iter = 30 if representation == 'sparse' else 100
 
-        estimator = KMeans(n_clusters=n_clusters,
+        estimator = KMeans(n_clusters=20,
                            algorithm=algorithm,
+                           init=init,
                            n_init=1,
-                           init='random',
-                           max_iter=30,
-                           tol=1e-16,
+                           max_iter=max_iter,
+                           tol=-1,
                            random_state=0)
 
         return estimator
@@ -65,31 +52,49 @@ class KMeansBenchmark(Predictor, Transformer, Estimator, Benchmark):
                                            self.estimator.cluster_centers_))
 
 
-class KMeansPlusPlusBenchmark(Benchmark):
+class MiniBatchKMeansBenchmark(Predictor, Transformer, Estimator, Benchmark):
     """
-    Benchmarks for k-means++ init.
+    Benchmarks for MiniBatchKMeans.
     """
 
-    param_names = ['representation']
-    params = (['dense', 'sparse'],)
+    param_names = ['representation', 'init']
+    params = (['dense', 'sparse'], ['random', 'k-means++'])
 
-    def setup(self, *params):
-        representation, = params
+    def setup_cache(self):
+        super().setup_cache()
+
+    def make_data(self, params):
+        representation, init = params
 
         if representation == 'sparse':
-            data = _20newsgroups_highdim_dataset(ngrams=(1, 2))
-            self.n_clusters = 20
+            data = _20newsgroups_highdim_dataset()
         else:
-            data = _blobs_dataset()
-            self.n_clusters = 256
-        self.X, self.X_val, self.y, self.y_val = data
+            data = _blobs_dataset(n_clusters=20)
 
-        self.x_squared_norms = row_norms(self.X, squared=True)
+        return data
 
-    def time_kmeansplusplus(self, *args):
-        _k_init(self.X, self.n_clusters, self.x_squared_norms,
-                random_state=np.random.RandomState(0))
+    def make_estimator(self, params):
+        representation, init = params
 
-    def peakmem_kmeansplusplus(self, *args):
-        _k_init(self.X, self.n_clusters, self.x_squared_norms,
-                random_state=np.random.RandomState(0))
+        max_iter = 5 if representation == 'sparse' else 2
+
+        estimator = MiniBatchKMeans(n_clusters=20,
+                                    init=init,
+                                    n_init=1,
+                                    max_iter=max_iter,
+                                    batch_size=1000,
+                                    max_no_improvement=None,
+                                    compute_labels=False,
+                                    random_state=0)
+
+        return estimator
+
+    def make_scorers(self):
+        self.train_scorer = (
+            lambda _, __: neg_mean_inertia(self.X,
+                                           self.estimator.predict(self.X),
+                                           self.estimator.cluster_centers_))
+        self.test_scorer = (
+            lambda _, __: neg_mean_inertia(self.X_val,
+                                           self.estimator.predict(self.X_val),
+                                           self.estimator.cluster_centers_))
