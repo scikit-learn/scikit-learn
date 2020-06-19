@@ -1,7 +1,7 @@
 from .. import auc
 from .. import roc_curve
 
-from .base import _check_classifer_response_method
+from .base import _check_classifier_response_method
 from ...utils import check_matplotlib_support
 from ...base import is_classifier
 from ...utils.validation import _deprecate_positional_args
@@ -160,6 +160,12 @@ def plot_roc_curve(estimator, X, y, *, sample_weight=None,
     display : :class:`~sklearn.metrics.RocCurveDisplay`
         Object that stores computed values.
 
+    See Also
+    --------
+    roc_auc_score : Compute the area under the ROC curve
+
+    roc_curve : Compute Receiver operating characteristic (ROC) curve
+
     Examples
     --------
     >>> import matplotlib.pyplot as plt  # doctest: +SKIP
@@ -181,7 +187,7 @@ def plot_roc_curve(estimator, X, y, *, sample_weight=None,
     if not is_classifier(estimator):
         raise ValueError(classification_error)
 
-    prediction_method = _check_classifer_response_method(estimator,
+    prediction_method = _check_classifier_response_method(estimator,
                                                          response_method)
     y_pred = prediction_method(X)
 

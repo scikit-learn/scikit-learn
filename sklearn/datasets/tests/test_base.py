@@ -23,9 +23,7 @@ from sklearn.datasets import load_breast_cancer
 from sklearn.datasets import load_boston
 from sklearn.datasets import load_wine
 from sklearn.utils import Bunch
-from sklearn.datasets.tests.test_common import check_return_X_y
 from sklearn.datasets.tests.test_common import check_as_frame
-from sklearn.datasets.tests.test_common import check_pandas_dependency_message
 
 from sklearn.externals._pilutil import pillow_installed
 
@@ -142,21 +140,6 @@ def test_load_sample_images():
         warnings.warn("Could not load sample images, PIL is not available.")
 
 
-def test_load_digits():
-    digits = load_digits()
-    assert digits.data.shape == (1797, 64)
-    assert numpy.unique(digits.target).size == 10
-
-    # test return_X_y option
-    check_return_X_y(digits, partial(load_digits))
-
-
-def test_load_digits_n_class_lt_10():
-    digits = load_digits(n_class=9)
-    assert digits.data.shape == (1617, 64)
-    assert numpy.unique(digits.target).size == 9
-
-
 def test_load_sample_image():
     try:
         china = load_sample_image('china.jpg')
@@ -174,63 +157,33 @@ def test_load_missing_sample_image_error():
         warnings.warn("Could not load sample images, PIL is not available.")
 
 
-def test_load_diabetes():
-    res = load_diabetes()
-    assert res.data.shape == (442, 10)
-    assert res.target.size, 442
-    assert len(res.feature_names) == 10
-    assert res.DESCR
+@pytest.mark.parametrize(
+    "loader_func, data_shape, target_shape, n_target, has_descr, filenames",
+    [(load_breast_cancer, (569, 30), (569,), 2, True, ["filename"]),
+     (load_wine, (178, 13), (178,), 3, True, []),
+     (load_iris, (150, 4), (150,), 3, True, ["filename"]),
+     (load_linnerud, (20, 3), (20, 3), 3, True,
+      ["data_filename", "target_filename"]),
+     (load_diabetes, (442, 10), (442,), None, True, []),
+     (load_digits, (1797, 64), (1797,), 10, True, []),
+     (partial(load_digits, n_class=9), (1617, 64), (1617,), 10, True, []),
+     (load_boston, (506, 13), (506,), None, True, ["filename"])]
+)
+def test_loader(loader_func, data_shape, target_shape, n_target, has_descr,
+                filenames):
+    bunch = loader_func()
 
-    # test return_X_y option
-    check_return_X_y(res, partial(load_diabetes))
-
-
-def test_load_linnerud():
-    res = load_linnerud()
-    assert res.data.shape == (20, 3)
-    assert res.target.shape == (20, 3)
-    assert len(res.target_names) == 3
-    assert res.DESCR
-    assert os.path.exists(res.data_filename)
-    assert os.path.exists(res.target_filename)
-
-    # test return_X_y option
-    check_return_X_y(res, partial(load_linnerud))
-
-
-def test_load_iris():
-    res = load_iris()
-    assert res.data.shape == (150, 4)
-    assert res.target.size == 150
-    assert res.target_names.size == 3
-    assert res.DESCR
-    assert os.path.exists(res.filename)
-
-    # test return_X_y option
-    check_return_X_y(res, partial(load_iris))
-
-
-def test_load_wine():
-    res = load_wine()
-    assert res.data.shape == (178, 13)
-    assert res.target.size == 178
-    assert res.target_names.size == 3
-    assert res.DESCR
-
-    # test return_X_y option
-    check_return_X_y(res, partial(load_wine))
-
-
-def test_load_breast_cancer():
-    res = load_breast_cancer()
-    assert res.data.shape == (569, 30)
-    assert res.target.size == 569
-    assert res.target_names.size == 2
-    assert res.DESCR
-    assert os.path.exists(res.filename)
-
-    # test return_X_y option
-    check_return_X_y(res, partial(load_breast_cancer))
+    assert isinstance(bunch, Bunch)
+    assert bunch.data.shape == data_shape
+    assert bunch.target.shape == target_shape
+    if hasattr(bunch, "feature_names"):
+        assert len(bunch.feature_names) == data_shape[1]
+    if n_target is not None:
+        assert len(bunch.target_names) == n_target
+    if has_descr:
+        assert bunch.DESCR
+    if filenames:
+        assert all([os.path.exists(bunch.get(f, False)) for f in filenames])
 
 
 @pytest.mark.parametrize("loader_func, data_dtype, target_dtype", [
@@ -241,35 +194,11 @@ def test_load_breast_cancer():
     (load_linnerud, np.float64, np.float64),
     (load_wine, np.float64, np.int64),
 ])
-def test_toy_dataset_as_frame(loader_func, data_dtype, target_dtype):
+def test_toy_dataset_frame_dtype(loader_func, data_dtype, target_dtype):
     default_result = loader_func()
-    check_as_frame(default_result, partial(loader_func),
+    check_as_frame(default_result, loader_func,
                    expected_data_dtype=data_dtype,
                    expected_target_dtype=target_dtype)
-
-
-@pytest.mark.parametrize("loader_func", [
-    load_breast_cancer,
-    load_diabetes,
-    load_digits,
-    load_iris,
-    load_linnerud,
-    load_wine,
-])
-def test_toy_dataset_as_frame_no_pandas(loader_func):
-    check_pandas_dependency_message(loader_func)
-
-
-def test_load_boston():
-    res = load_boston()
-    assert res.data.shape == (506, 13)
-    assert res.target.size == 506
-    assert res.feature_names.size == 13
-    assert res.DESCR
-    assert os.path.exists(res.filename)
-
-    # test return_X_y option
-    check_return_X_y(res, partial(load_boston))
 
 
 def test_loads_dumps_bunch():
