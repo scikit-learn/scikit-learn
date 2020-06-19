@@ -479,7 +479,6 @@ class RadiusNeighborsTransformer(RadiusNeighborsMixin, UnsupervisedMixin,
         """
         return self.fit(X).transform(X)
 
-
     def _more_tags(self):
         return {
             '_xfail_checks': {
