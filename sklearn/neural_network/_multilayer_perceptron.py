@@ -225,8 +225,10 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             loss_func_name = 'binary_log_loss'
         loss = LOSS_FUNCTIONS[loss_func_name](y, activations[-1])
         # Add L2 regularization term to loss
-        values = np.sum(
-            np.array([np.dot(s.ravel(), s.ravel()) for s in self.coefs_]))
+        values = 0
+        for s in self.coefs_:
+            s = s.ravel()
+            values += np.dot(s, s)
         loss += (0.5 * self.alpha) * values / n_samples
 
         # Backward propagate

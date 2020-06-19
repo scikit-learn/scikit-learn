@@ -956,14 +956,15 @@ class SparseCoder(SparseCodingMixin, BaseEstimator):
     transform_algorithm : {'lasso_lars', 'lasso_cd', 'lars', 'omp', \
     'threshold'}, default='omp'
         Algorithm used to transform the data:
-        lars: uses the least angle regression method (linear_model.lars_path)
-        lasso_lars: uses Lars to compute the Lasso solution
-        lasso_cd: uses the coordinate descent method to compute the
-        Lasso solution (linear_model.Lasso). lasso_lars will be faster if
-        the estimated components are sparse.
-        omp: uses orthogonal matching pursuit to estimate the sparse solution
-        threshold: squashes to zero all coefficients less than alpha from
-        the projection ``dictionary * X'``
+
+        - lars: uses the least angle regression method (linear_model.lars_path)
+        - lasso_lars: uses Lars to compute the Lasso solution
+        - lasso_cd: uses the coordinate descent method to compute the
+          Lasso solution (linear_model.Lasso). lasso_lars will be faster if
+          the estimated components are sparse.
+        - omp: uses orthogonal matching pursuit to estimate the sparse solution
+        - threshold: squashes to zero all coefficients less than alpha from
+          the projection ``dictionary * X'``
 
     transform_n_nonzero_coefs : int, default=0.1*n_features
         Number of nonzero coefficients to target in each column of the
@@ -1114,14 +1115,15 @@ class DictionaryLearning(SparseCodingMixin, BaseEstimator):
     transform_algorithm : {'lasso_lars', 'lasso_cd', 'lars', 'omp', \
     'threshold'}, default='omp'
         Algorithm used to transform the data
-        lars: uses the least angle regression method (linear_model.lars_path)
-        lasso_lars: uses Lars to compute the Lasso solution
-        lasso_cd: uses the coordinate descent method to compute the
-        Lasso solution (linear_model.Lasso). lasso_lars will be faster if
-        the estimated components are sparse.
-        omp: uses orthogonal matching pursuit to estimate the sparse solution
-        threshold: squashes to zero all coefficients less than alpha from
-        the projection ``dictionary * X'``
+
+        - lars: uses the least angle regression method (linear_model.lars_path)
+        - lasso_lars: uses Lars to compute the Lasso solution
+        - lasso_cd: uses the coordinate descent method to compute the
+          Lasso solution (linear_model.Lasso). lasso_lars will be faster if
+          the estimated components are sparse.
+        - omp: uses orthogonal matching pursuit to estimate the sparse solution
+        - threshold: squashes to zero all coefficients less than alpha from
+          the projection ``dictionary * X'``
 
         .. versionadded:: 0.17
            *lasso_cd* coordinate descent method to improve speed.
