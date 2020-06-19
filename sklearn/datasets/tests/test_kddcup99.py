@@ -7,6 +7,7 @@ is too big to use in unit-testing.
 """
 
 from functools import partial
+import pytest
 from sklearn.datasets.tests.test_common import check_return_X_y
 
 
@@ -79,3 +80,19 @@ def test_fetch_kddcup99_return_X_y_shape(fetch_kddcup99_fxt):
     X, y = fetch_kddcup99_fxt(return_X_y=True)
     assert X.shape == (494021, 41)
     assert y.shape == (494021,)
+
+
+def test_pandas_dependency_message(fetch_kddcup99_fxt,
+                                   hide_available_pandas):
+
+    expected_msg = ('fetch_kddcup99 with as_frame=True'
+                    ' requires pandas')
+    with pytest.raises(ImportError, match=expected_msg):
+        fetch_kddcup99_fxt(as_frame=True)
+
+
+def test_IOerror_message(fetch_kddcup99_fxt):
+    expected_msg = ('Download kddcup99 to run this test')
+    with pytest.raises(IOError, match=expected_msg):
+        fetch_kddcup99_fxt(data_home="./",
+                           download_if_missing=False)
