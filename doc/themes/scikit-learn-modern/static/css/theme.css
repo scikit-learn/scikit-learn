@@ -663,6 +663,7 @@ code.descclassname {
 dl.field-list {
   display: flex;
   flex-wrap: wrap;
+  overflow-x: scroll;
 }
 
 dl.field-list > dt {
