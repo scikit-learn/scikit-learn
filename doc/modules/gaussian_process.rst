@@ -384,7 +384,7 @@ equivalent call to ``__call__``: ``np.diag(k(X, X)) == k.diag(X)``
 
 Kernels are parameterized by a vector :math:`\theta` of hyperparameters. These
 hyperparameters can for instance control length-scales or periodicity of a
-kernel (see below). All kernels support computing analytic gradients 
+kernel (see below). All kernels support computing analytic gradients
 of the kernel's auto-covariance with respect to :math:`\theta` via setting
 ``eval_gradient=True`` in the ``__call__`` method. This gradient is used by the
 Gaussian process (both regressor and classifier) in computing the gradient
@@ -604,6 +604,10 @@ shown in the following figure:
 .. figure:: ../auto_examples/gaussian_process/images/sphx_glr_plot_gpr_prior_posterior_004.png
    :target: ../auto_examples/gaussian_process/plot_gpr_prior_posterior.html
    :align: center
+
+Custom kernel
+------------------
+
 
 References
 ----------
