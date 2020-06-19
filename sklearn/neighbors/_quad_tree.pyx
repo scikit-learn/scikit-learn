@@ -29,7 +29,7 @@ cdef extern from "numpy/arrayobject.h":
                                 np.npy_intp* strides,
                                 void* data, int flags, object obj)
 
-# Build the corresponding numpy dtyle for Cell.
+# Build the corresponding numpy dtype for Cell.
 # This works by casting `dummy` to an array of Cell of length 1, which numpy
 # can construct a `dtype`-object for. See https://stackoverflow.com/q/62448946
 # for a more detailed explanation.
