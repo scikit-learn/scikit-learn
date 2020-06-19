@@ -3,12 +3,12 @@
 Imputing missing values with variants of IterativeImputer
 =========================================================
 
-The :class:`sklearn.impute.IterativeImputer` class is very flexible - it can be
+The :class:`~sklearn.impute.IterativeImputer` class is very flexible - it can be
 used with a variety of estimators to do round-robin regression, treating every
 variable as an output in turn.
 
 In this example we compare some estimators for the purpose of missing feature
-imputation with :class:`sklearn.impute.IterativeImputer`:
+imputation with :class:`~sklearn.impute.IterativeImputer`:
 
 * :class:`~sklearn.linear_model.BayesianRidge`: regularized linear regression
 * :class:`~sklearn.tree.DecisionTreeRegressor`: non-linear regression
@@ -17,24 +17,24 @@ imputation with :class:`sklearn.impute.IterativeImputer`:
   imputation approaches
 
 Of particular interest is the ability of
-:class:`sklearn.impute.IterativeImputer` to mimic the behavior of missForest, a
+:class:`~sklearn.impute.IterativeImputer` to mimic the behavior of missForest, a
 popular imputation package for R. In this example, we have chosen to use
-:class:`sklearn.ensemble.ExtraTreesRegressor` instead of
-:class:`sklearn.ensemble.RandomForestRegressor` (as in missForest) due to its
+:class:`~sklearn.ensemble.ExtraTreesRegressor` instead of
+:class:`~sklearn.ensemble.RandomForestRegressor` (as in missForest) due to its
 increased speed.
 
-Note that :class:`sklearn.neighbors.KNeighborsRegressor` is different from KNN
+Note that :class:`~sklearn.neighbors.KNeighborsRegressor` is different from KNN
 imputation, which learns from samples with missing values by using a distance
 metric that accounts for missing values, rather than imputing them.
 
 The goal is to compare different estimators to see which one is best for the
-:class:`sklearn.impute.IterativeImputer` when using a
-:class:`sklearn.linear_model.BayesianRidge` estimator on the California housing
+:class:`~sklearn.impute.IterativeImputer` when using a
+:class:`~sklearn.linear_model.BayesianRidge` estimator on the California housing
 dataset with a single value randomly removed from each row.
 
 For this particular pattern of missing values we see that
-:class:`sklearn.ensemble.ExtraTreesRegressor` and
-:class:`sklearn.linear_model.BayesianRidge` give the best results.
+:class:`~sklearn.ensemble.ExtraTreesRegressor` and
+:class:`~sklearn.linear_model.BayesianRidge` give the best results.
 """
 print(__doc__)
 
