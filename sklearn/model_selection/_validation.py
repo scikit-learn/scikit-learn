@@ -585,14 +585,9 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
                 raise
             elif isinstance(error_score, numbers.Number):
                 score_time = time.time() - start_time - fit_time
-                if isinstance(scorer, dict):
-                    test_scores = {name: error_score for name in scorer}
-                    if return_train_score:
-                        train_scores = test_scores.copy()
-                else:
-                    test_scores = error_score
-                    if return_train_score:
-                        train_scores = error_score
+                test_scores = {name: error_score for name in scorer}
+                if return_train_score:
+                    train_scores = test_scores.copy()
                 warnings.warn("Scoring failed. The score on this train-test "
                               "partition for these parameters will be set "
                               "to %f. Details: \n%s" %
