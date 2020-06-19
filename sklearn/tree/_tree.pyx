@@ -662,6 +662,14 @@ cdef class Tree:
 
         value_shape = (node_ndarray.shape[0], self.n_outputs,
                        self.max_n_classes)
+
+        if (node_ndarray.dtype != NODE_DTYPE):
+            swapped_node_ndarray = node_ndarray.byteswap().newbyteorder();
+            if(swapped_node_ndarray.dypte == NODE_DTYPE):
+                node_ndarray = swapped_node_ndarray
+            else:
+                raise ValueError('Did not recognise loaded array dytpe')
+
         if (node_ndarray.ndim != 1 or
                 node_ndarray.dtype != NODE_DTYPE or
                 not node_ndarray.flags.c_contiguous or
