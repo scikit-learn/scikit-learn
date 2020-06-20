@@ -114,8 +114,14 @@ def fetch_kddcup99(*, subset=None, data_home=None, shuffle=False,
             The data matrix to learn.
         target : ndarray of shape (494021,)
             The regression target for each sample.
+        frame : dataframe of shape (494021, 41)
+            Only present when `as_frame=True`. Contains `data` and `target`.
         DESCR : str
             The full description of the dataset.
+        feature_names : list
+            The names of the dataset columns
+        target_names: list
+            The names of the target columns
 
     (data, target) : tuple if ``return_X_y`` is True
 
