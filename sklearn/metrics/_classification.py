@@ -2479,7 +2479,7 @@ def calibration_loss(y_true, y_prob, sample_weight=None, norm='l2',
     Parameters
     ----------
     y_true : array, shape (n_samples,)
-        True targets.
+        True targets of a binary classification task.
 
     y_prob : array, shape (n_samples,)
         Probabilities of the positive class.
