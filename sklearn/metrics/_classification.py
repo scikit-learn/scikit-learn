@@ -2540,16 +2540,24 @@ def calibration_loss(y_true, y_prob, sample_weight=None, norm='l2',
     if any(y_prob < 0) or any(y_prob > 1):
         raise ValueError("y_prob has values outside of [0, 1] range")
 
+    labels = np.unique(y_true)
+    if len(labels) > 2:
+        raise ValueError("Only binary classification is supported. "
+                         "Provided labels %s." % labels)
+
+    if pos_label is None:
+        pos_label = y_true.max()
+    if pos_label not in labels:
+        raise ValueError("pos_label=%r is not a valid label: "
+                         "%r" % (pos_label, labels))
+    y_true = np.array(y_true == pos_label, int)
+
     norm_options = ('l1', 'l2', 'max')
     if norm not in norm_options:
         raise ValueError('norm has to be one of ' +
                          str(norm_options))
 
     n_bins = int(n_bins)
-
-    if pos_label is None:
-        pos_label = y_true.max()
-    y_true = np.array(y_true == pos_label, int)
 
     loss = 0.
     count = 0.
