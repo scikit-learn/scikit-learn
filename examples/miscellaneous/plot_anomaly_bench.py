@@ -13,9 +13,6 @@ contain outliers.
 2. The ROC curve is computed on the same dataset using the knowledge
 of the labels.
 
-Some datasets such as "glass", "vowels", "wbc", and "letter"
-are from Outlier Detection DataSets (ODDS) library.
-
 
 Interpreting the ROC plot
 -------------------------
@@ -24,23 +21,15 @@ is at low value of the false positive rate (FPR). The better algorithm
 have the curve on the top-left of the plot and the area under curve (AUC)
 close to 1. The diagonal dashed line represents a random classification
 of outliers and inliers.
-
-
-Citation
---------
-Shebuti Rayana (2016).  ODDS Library [http://odds.cs.stonybrook.edu].
-Stony Brook, NY: Stony Brook University, Department of Computer Science.
-
 """
 
 from time import time
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.io import loadmat
 from sklearn.neighbors import LocalOutlierFactor
 from sklearn.ensemble import IsolationForest
 from sklearn.metrics import roc_curve, auc
-from sklearn.datasets import fetch_kddcup99, fetch_covtype
+from sklearn.datasets import fetch_kddcup99, fetch_covtype, fetch_openml
 from sklearn.preprocessing import LabelBinarizer
 
 print(__doc__)
@@ -48,8 +37,8 @@ print(__doc__)
 random_state = 1  # to control the random selection of anomalies in SA
 
 # datasets
-datasets = ["http", "smtp", "SA", "SF", "forestcover", "glass",
-            "vowels", "wbc", "letter"]
+datasets = ["http", "smtp", "SA", "SF", "forestcover",
+            "glass", "wdbc", "cardiotocography"]
 
 # outlier detection models
 models = [
@@ -61,6 +50,7 @@ models = [
 plt.figure(figsize=(5, len(datasets) * 3))
 for dataset_idx, dataset_name in enumerate(datasets):
     plt.subplot(len(datasets), 1, dataset_idx + 1)
+
     # loading and vectorization
     print("loading data: ", str(dataset_idx + 1))
     if dataset_name in ["http", "smtp", "SA", "SF"]:
@@ -110,11 +100,33 @@ for dataset_idx, dataset_name in enumerate(datasets):
     if dataset_name == "http" or dataset_name == "smtp":
         y = (y != b"normal.").astype(int)
 
-    if dataset_name in ["glass", "vowels", "wbc", "letter"]:
-        data = loadmat('../../sklearn/datasets/data/'
-                       + dataset_name + '.mat')
-        X = data['X']
-        y = data['y'].astype(int)
+    if dataset_name in ["glass", "wdbc", "cardiotocography"]:
+        dataset = fetch_openml(name=dataset_name, version=1)
+        X = dataset.data
+        y = dataset.target
+
+        if dataset_name == "glass":
+            s = y == 'tableware'
+            y = s.astype(int)
+
+        if dataset_name == "wdbc":
+            s = y == '2'
+            y = s.astype(int)
+            X_mal, y_mal = X[s], y[s]
+            X_ben, y_ben = X[~s], y[~s]
+
+            # downsampled to 39 points (9.8% outliers)
+            idx = np.random.choice(
+                y_mal.shape[0], 39, replace=False)
+
+            X_mal2 = X_mal[idx, :]
+            y_mal2 = y_mal[idx]
+            X = np.concatenate((X_ben, X_mal2), axis=0)
+            y = np.concatenate((y_ben, y_mal2), axis=0)
+
+        if dataset_name == "cardiotocography":
+            s = y == '3'
+            y = s.astype(int)
 
     X = X.astype(float)
 
