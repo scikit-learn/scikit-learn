@@ -1966,6 +1966,7 @@ def test_X_idx_sorted_deprecated(TreeEstimator):
 @pytest.mark.parametrize("tree_type,dataset",
                          [(DecisionTreeRegressor, diabetes),
                              (DecisionTreeClassifier, iris)])
+@skip_if_32bit
 def test_node_bootstrap_accuracy(tree_type, dataset):
     error_threshold = 0.1
     rng = np.random.RandomState(1)
