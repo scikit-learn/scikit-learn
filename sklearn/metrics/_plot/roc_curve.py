@@ -1,7 +1,11 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
 from .. import auc
 from .. import roc_curve
 
 from .base import _check_classifer_response_method
+from ...preprocessing import label_binarize
 from ...utils import check_matplotlib_support
 from ...base import is_classifier
 from ...utils.validation import _deprecate_positional_args
@@ -54,6 +58,7 @@ class RocCurveDisplay:
     >>> display.plot()  # doctest: +SKIP
     >>> plt.show()      # doctest: +SKIP
     """
+
     def __init__(self, *, fpr, tpr, roc_auc=None, estimator_name=None):
         self.fpr = fpr
         self.tpr = tpr
@@ -82,7 +87,6 @@ class RocCurveDisplay:
             Object that stores computed values.
         """
         check_matplotlib_support('RocCurveDisplay.plot')
-        import matplotlib.pyplot as plt
 
         if ax is None:
             fig, ax = plt.subplots()
@@ -109,6 +113,18 @@ class RocCurveDisplay:
         self.ax_ = ax
         self.figure_ = ax.figure
         return self
+
+
+def _setup_display(y, y_pred,
+                   pos_label=1, sample_weight=None,
+                   drop_intermediate=True, name=None):
+    fpr, tpr, _ = roc_curve(y, y_pred, pos_label=pos_label,
+                            sample_weight=sample_weight,
+                            drop_intermediate=drop_intermediate)
+    roc_auc = auc(fpr, tpr)
+    return RocCurveDisplay(
+        fpr=fpr, tpr=tpr, roc_auc=roc_auc, estimator_name=name
+    )
 
 
 @_deprecate_positional_args
@@ -185,19 +201,47 @@ def plot_roc_curve(estimator, X, y, *, sample_weight=None,
                                                          response_method)
     y_pred = prediction_method(X)
 
+    n_classes = y_pred.shape[1]
+
+    '''
     if y_pred.ndim != 1:
         if y_pred.shape[1] != 2:
             raise ValueError(classification_error)
         else:
             y_pred = y_pred[:, 1]
+    '''
 
-    pos_label = estimator.classes_[1]
-    fpr, tpr, _ = roc_curve(y, y_pred, pos_label=pos_label,
-                            sample_weight=sample_weight,
-                            drop_intermediate=drop_intermediate)
-    roc_auc = auc(fpr, tpr)
     name = estimator.__class__.__name__ if name is None else name
-    viz = RocCurveDisplay(
-        fpr=fpr, tpr=tpr, roc_auc=roc_auc, estimator_name=name
-    )
-    return viz.plot(ax=ax, name=name, **kwargs)
+
+    if n_classes == 2:
+        pos_label = estimator.classes_[1]
+
+        viz = _setup_display(y, y_pred, pos_label=pos_label,
+                             sample_weight=sample_weight,
+                             drop_intermediate=drop_intermediate)
+
+        return viz.plot(ax=ax, name=name, **kwargs)
+    else:
+        # binarize if y is a vector
+        if y.ndim == 1:
+            y = label_binarize(y, classes=np.unique(y))
+
+        # exit if the axes does not have the correct number of axes
+        if ax is not None and not isinstance(ax, plt.Axes):
+            axes = np.asarray(ax, dtype=object)
+            if axes.size != n_classes:
+                raise ValueError("Expected ax to have {} axes, got {}".format(
+                    len(n_classes), axes.size))
+
+        viz = dict()
+        for i in range(n_classes):
+            viz[i] = _setup_display(y[:, i], y_pred[:, i],
+                                    sample_weight=sample_weight,
+                                    drop_intermediate=drop_intermediate)
+
+            if isinstance(ax, plt.Axes):
+                viz[i].plot(ax=ax, name='{} (class {})'.format(name, i), **kwargs)
+            else:
+                viz[i].plot(ax=ax[i], name='{} (class {})'.format(name, i), **kwargs)
+
+        return viz

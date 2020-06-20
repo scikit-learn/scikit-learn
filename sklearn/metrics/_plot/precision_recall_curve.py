@@ -1,3 +1,7 @@
+from sklearn.preprocessing import label_binarize
+import numpy as np
+import matplotlib.pyplot as plt
+
 from .base import _check_classifer_response_method
 
 from .. import average_precision_score
@@ -41,6 +45,7 @@ class PrecisionRecallDisplay:
     figure_ : matplotlib Figure
         Figure containing the curve.
     """
+
     def __init__(self, precision, recall, *,
                  average_precision=None, estimator_name=None):
         self.precision = precision
@@ -73,7 +78,6 @@ class PrecisionRecallDisplay:
             Object that stores computed values.
         """
         check_matplotlib_support("PrecisionRecallDisplay.plot")
-        import matplotlib.pyplot as plt
 
         if ax is None:
             fig, ax = plt.subplots()
@@ -102,11 +106,39 @@ class PrecisionRecallDisplay:
         return self
 
 
+def _setup_display(y, y_pred,
+                   pos_label=1, sample_weight=None, name=None):
+    """
+    Setup Precision Recall visualization.
+
+    :param y:
+    :param y_pred:
+    :param pos_label:
+    :param sample_weight : array-like of shape (n_samples,), default=None
+        Sample weights.
+    :param name: str, default=None
+        Name for labeling curve. If `None`, the name of the
+        estimator is used.
+    :return:
+    """
+    precision, recall, _ = precision_recall_curve(y, y_pred,
+                                                  pos_label=pos_label,
+                                                  sample_weight=sample_weight)
+    average_precision = average_precision_score(y, y_pred,
+                                                pos_label=pos_label,
+                                                sample_weight=sample_weight)
+
+    return PrecisionRecallDisplay(
+        precision=precision, recall=recall,
+        average_precision=average_precision, estimator_name=name
+    )
+
+
 @_deprecate_positional_args
 def plot_precision_recall_curve(estimator, X, y, *,
                                 sample_weight=None, response_method="auto",
                                 name=None, ax=None, **kwargs):
-    """Plot Precision Recall Curve for binary classifiers.
+    """Plot Precision Recall Curve for binary or multiclass classifiers.
 
     Extra keyword arguments will be passed to matplotlib's `plot`.
 
@@ -121,10 +153,10 @@ def plot_precision_recall_curve(estimator, X, y, *,
     X : {array-like, sparse matrix} of shape (n_samples, n_features)
         Input values.
 
-    y : array-like of shape (n_samples,)
-        Binary target values.
+    y : array-like of shape (n_samples,) or (n_samples, n_classes)
+        Target values.
 
-    sample_weight : array-like of shape (n_samples,), default=None
+    sample_weight : array-like of shape (n_samples,) or (n_samples, n_classes), default=None
         Sample weights.
 
     response_method : {'predict_proba', 'decision_function', 'auto'}, \
@@ -160,22 +192,41 @@ def plot_precision_recall_curve(estimator, X, y, *,
                                                          response_method)
     y_pred = prediction_method(X)
 
-    if y_pred.ndim != 1:
-        if y_pred.shape[1] != 2:
-            raise ValueError(classification_error)
-        else:
-            y_pred = y_pred[:, 1]
+    n_classes = y_pred.shape[1]
 
-    pos_label = estimator.classes_[1]
-    precision, recall, _ = precision_recall_curve(y, y_pred,
-                                                  pos_label=pos_label,
-                                                  sample_weight=sample_weight)
-    average_precision = average_precision_score(y, y_pred,
-                                                pos_label=pos_label,
-                                                sample_weight=sample_weight)
     name = name if name is not None else estimator.__class__.__name__
-    viz = PrecisionRecallDisplay(
-        precision=precision, recall=recall,
-        average_precision=average_precision, estimator_name=name
-    )
-    return viz.plot(ax=ax, name=name, **kwargs)
+
+    if n_classes == 2:
+        pos_label = estimator.classes_[1]
+
+        viz = _setup_display(y, y_pred,
+                             pos_label=pos_label,
+                             sample_weight=sample_weight,
+                             name=name)
+
+        return viz.plot(ax=ax, name=name, **kwargs)
+    else:
+        # binarize if y is a vector
+        if y.ndim == 1:
+            y = label_binarize(y, classes=np.unique(y))
+
+        # exit if the axes does not have the correct number of axes
+        if ax is not None and not isinstance(ax, plt.Axes):
+            axes = np.asarray(ax, dtype=object)
+            if axes.size != n_classes:
+                raise ValueError("Expected ax to have {} axes, got {}".format(
+                    n_classes, axes.size))
+
+        viz = dict()
+
+        for i in range(n_classes):
+            viz[i] = _setup_display(y[:, i], y_pred[:, i],
+                                    sample_weight=sample_weight,
+                                    name=name)
+
+            if isinstance(ax, plt.Axes):
+                viz[i].plot(ax=ax, name='{} (class {})'.format(name, i), **kwargs)
+            else:
+                viz[i].plot(ax=ax[i], name='{} (class {})'.format(name, i), **kwargs)
+
+        return viz
