@@ -142,6 +142,11 @@ Changelog
   :class:`preprocessing.KBinsDiscretizer`.
   :pr:`16335` by :user:`Arthur Imbert <Henley13>`.
 
+- |API| `categories='auto'` is no more supported for string values in
+  :class:`preprocessing.OrdinalEncoder`. `categories='sort'` or explicit
+  category order will be required.
+  :pr:`14984` by :user:`Venkatachalam N <venkyyuvy>`.
+
 :mod:`sklearn.tree`
 ...................
 
