@@ -124,6 +124,10 @@ def fetch_covtype(*, data_home=None, download_if_missing=True,
             Only present when `as_frame=True`. Contains `data` and `target`.
         DESCR : str
             Description of the forest covertype dataset.
+        feature_names : list
+            The names of the dataset columns
+        target_names: list
+            The names of the target columns
 
     (data, target) : tuple if ``return_X_y`` is True
 
