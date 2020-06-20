@@ -99,7 +99,7 @@ def fetch_covtype(*, data_home=None, download_if_missing=True,
     return_X_y : bool, default=False
         If True, returns ``(data.data, data.target)`` instead of a Bunch
         object.
-
+    .. versionadded:: 0.20
     as_frame : bool, default=False
         If True, the data is a pandas DataFrame including columns with
         appropriate dtypes (numeric). The target is
@@ -126,8 +126,8 @@ def fetch_covtype(*, data_home=None, download_if_missing=True,
 
     (data, target) : tuple if ``return_X_y`` is True
 
+        .. versionadded:: 0.20
 
-        .. versionadded:: 0.24
     """
 
     data_home = get_data_home(data_home=data_home)
