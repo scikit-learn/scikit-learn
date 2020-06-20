@@ -607,7 +607,97 @@ shown in the following figure:
 
 Custom kernel
 ------------------
+If you want to implement a new custom gaussian process kernel that is scikit-learn-compatible,
+you should subclass `sklearn.gaussian_process.kernels.Kernel` and implement
+the abstract methods `__call__`, `diag`, and `is_stationary`.
 
+Here is a step-by-step construction of the Sigmoid Kernel
+
+.. math::
+   k(x_i, x_j)= \tanh(\alpha x_i \cdot x_j + \sigma)
+
+
+First, we read in :math:`\alpha` and :math:`\sigma` and store these
+hyperparameters::
+
+   from sklearn.gaussian_process.kernels import Kernel, Hyperparameter
+
+   class MySigmoidKernel(Kernel):
+      def __init__(self, alpha_0=0.05,
+                  alpha_0_bounds=(1e-5, 1e5),
+                  sigma_0=5,
+                  sigma_0_bounds=(1e-5, 1e5)):
+         self.alpha_0 = alpha_0
+         self.alpha_0_bounds = alpha_0_bounds
+         self.sigma_0 = sigma_0
+         self.sigma_0_bounds = sigma_0_bounds
+
+      @property
+      def hyperparameter_scaling(self):
+         return Hyperparameter("alpha_0", "numeric", self.alpha_0_bounds)
+
+      @property
+      def hyperparameter_shifting(self):
+         return Hyperparameter("sigma_0", "numeric", self.sigma_0_bounds)
+
+Note that your custom kernel must be positive-definite for the choice of the
+hyperparameters.
+
+Now, from the kernel formula, we know that this kernel is non-stationary. If your custom
+kernel is stationary, you could subclass
+`sklearn.gaussian_process.kernels.StationaryKernelMixin` and skip this step; otherwise, we
+implement the method `is_stationary` as follows::
+
+      def is_stationary(self):
+         return False
+
+To calculate the diagonal, we will apply the kernel function on `X` (if your custom
+kernel is normalized, i.e. :math:`k(x,x)=1`, then you can subclass
+`sklearn.gaussian_process.kernels.NormalizedKernelMixin` and skip this step)::
+
+      def diag(self, X):
+         return np.apply_along_axis(self, 1, X).ravel()
+
+Finally, for the `__call__` method, we have to calculate the gradient with respect
+to the log-transformed hyperparameters. In this case, we have two hyperparameters:
+:math:`\alpha` and :math:`\sigma` with respect to which
+we need to take the partial derivatives (note that if either of them is fixed,
+then we just return an empty matrix as the partial derivative).
+Now, after taking the partial derivatives,
+we will use `numpy.dstack` to combine them into a variable `K_gradient`::
+
+      def __call__(self, X, Y=None, eval_gradient=False):
+         X = np.atleast_2d(X)
+         if Y is None:
+               K = np.tanh(self.sigma_0 + self.alpha_0 * np.inner(X, X))
+         else:
+               if eval_gradient:
+                  raise ValueError(
+                     "Gradient can only be evaluated when Y is None.")
+               K = np.tanh(self.sigma_0 + self.alpha_0 * np.inner(X, Y))
+
+         if eval_gradient:
+               # gradient with respect to log-transformed constant
+               if not self.hyperparameter_shifting.fixed:
+                  sigma_gradient = np.empty((K.shape[0], K.shape[1], 1))
+                  sigma_gradient[...,0] = self.sigma_0 * (1 - K**2)
+               else:
+                  sigma_gradient = np.empty((X.shape[0], X.shape[1], 0))
+
+               # gradient with respect to log-transformed alpha
+               if not self.hyperparameter_scaling.fixed:
+                  alpha_gradient = np.empty((K.shape[0], K.shape[1], 1))
+                  alpha_gradient[...,0] = self.alpha_0 * np.inner(X,X) * (1-K**2)
+               else:
+                  alpha_gradient = np.empty((K.shape[0], K.shape[1], 0))
+
+               K_gradient = np.dstack((alpha_gradient, sigma_gradient))
+               return K, K_gradient
+
+         else:
+               return K
+
+Once you have implemented these methods, your custom kernel is ready to be used.
 
 References
 ----------
