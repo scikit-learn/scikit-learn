@@ -99,6 +99,12 @@ def fetch_kddcup99(*, subset=None, data_home=None, shuffle=False,
 
         .. versionadded:: 0.20
 
+    as_frame : bool, default=False
+        If True, returns pandas Dataframe for the ``data`` and ``target``
+        objects in the Bunch return object; Bunch return object will also
+        have a ``frame`` member.
+
+        .. versionadded:: 0.24
     Returns
     -------
     data : :class:`~sklearn.utils.Bunch`
