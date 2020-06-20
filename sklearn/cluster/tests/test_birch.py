@@ -159,3 +159,11 @@ def test_threshold():
     brc = Birch(threshold=5.0, n_clusters=None)
     brc.fit(X)
     check_threshold(brc, 5.)
+
+
+def test_birch_n_clusters_long_int():
+    # Check that birch supports n_clusters with np.int64 dtype, for instance
+    # coming from np.arange. #16484
+    X, _ = make_blobs(random_state=0)
+    n_clusters = np.int64(5)
+    Birch(n_clusters=n_clusters).fit(X)

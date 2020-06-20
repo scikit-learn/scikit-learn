@@ -43,7 +43,7 @@ def _not_in_sphinx():
     # Hack to detect whether we are running by the sphinx builder
     return '__file__' in globals()
 
-###############################################################################
+# %%
 # Reuters Dataset related routines
 # --------------------------------
 #
@@ -178,7 +178,7 @@ def stream_reuters_documents(data_path=None):
             yield doc
 
 
-###############################################################################
+# %%
 # Main
 # ----
 #
@@ -311,7 +311,7 @@ for i, (X_train_text, y_train) in enumerate(minibatch_iterators):
         print('\n')
 
 
-###############################################################################
+# %%
 # Plot results
 # ------------
 #

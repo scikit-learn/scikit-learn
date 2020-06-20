@@ -37,7 +37,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder
 
 
-##############################################################################
+# %%
 # Data Loading and Feature Engineering
 # ------------------------------------
 # Let's use pandas to load a copy of the titanic dataset. The following shows
@@ -81,7 +81,7 @@ rf = Pipeline([
 ])
 rf.fit(X_train, y_train)
 
-##############################################################################
+# %%
 # Accuracy of the Model
 # ---------------------
 # Prior to inspecting the feature importances, it is important to check that
@@ -106,7 +106,7 @@ print("RF train accuracy: %0.3f" % rf.score(X_train, y_train))
 print("RF test accuracy: %0.3f" % rf.score(X_test, y_test))
 
 
-##############################################################################
+# %%
 # Tree's Feature Importance from Mean Decrease in Impurity (MDI)
 # --------------------------------------------------------------
 # The impurity-based feature importance ranks the numerical features to be the
@@ -141,7 +141,7 @@ fig.tight_layout()
 plt.show()
 
 
-##############################################################################
+# %%
 # As an alternative, the permutation importances of ``rf`` are computed on a
 # held out test set. This shows that the low cardinality categorical feature,
 # ``sex`` is the most important feature.
@@ -159,7 +159,7 @@ ax.set_title("Permutation Importances (test set)")
 fig.tight_layout()
 plt.show()
 
-##############################################################################
+# %%
 # It is also possible to compute the permutation importances on the training
 # set. This reveals that ``random_num`` gets a significantly higher importance
 # ranking than when computed on the test set. The difference between those two

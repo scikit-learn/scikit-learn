@@ -14,6 +14,7 @@ from ..base import BaseEstimator
 from ..metrics import euclidean_distances
 from ..utils import check_random_state, check_array, check_symmetric
 from ..isotonic import IsotonicRegression
+from ..utils.validation import _deprecate_positional_args
 
 
 def _smacof_single(dissimilarities, metric=True, n_components=2, init=None,
@@ -48,11 +49,10 @@ def _smacof_single(dissimilarities, metric=True, n_components=2, init=None,
         Relative tolerance with respect to stress at which to declare
         convergence.
 
-    random_state : int, RandomState instance or None, optional, default: None
-        The generator used to initialize the centers.  If int, random_state is
-        the seed used by the random number generator; If RandomState instance,
-        random_state is the random number generator; If None, the random number
-        generator is the RandomState instance used by `np.random`.
+    random_state : int, RandomState instance, default=None
+        Determines the random number generator used to initialize the centers.
+        Pass an int for reproducible results across multiple function calls.
+        See :term: `Glossary <random_state>`.
 
     Returns
     -------
@@ -130,9 +130,10 @@ def _smacof_single(dissimilarities, metric=True, n_components=2, init=None,
     return X, stress, it + 1
 
 
-def smacof(dissimilarities, metric=True, n_components=2, init=None, n_init=8,
-           n_jobs=None, max_iter=300, verbose=0, eps=1e-3, random_state=None,
-           return_n_iter=False):
+@_deprecate_positional_args
+def smacof(dissimilarities, *, metric=True, n_components=2, init=None,
+           n_init=8, n_jobs=None, max_iter=300, verbose=0, eps=1e-3,
+           random_state=None, return_n_iter=False):
     """Computes multidimensional scaling using the SMACOF algorithm.
 
     The SMACOF (Scaling by MAjorizing a COmplicated Function) algorithm is a
@@ -195,11 +196,10 @@ def smacof(dissimilarities, metric=True, n_components=2, init=None, n_init=8,
         Relative tolerance with respect to stress at which to declare
         convergence.
 
-    random_state : int, RandomState instance or None, optional, default: None
-        The generator used to initialize the centers.  If int, random_state is
-        the seed used by the random number generator; If RandomState instance,
-        random_state is the random number generator; If None, the random number
-        generator is the RandomState instance used by `np.random`.
+    random_state : int, RandomState instance, default=None
+        Determines the random number generator used to initialize the centers.
+        Pass an int for reproducible results across multiple function calls.
+        See :term: `Glossary <random_state>`.
 
     return_n_iter : bool, optional, default: False
         Whether or not to return the number of iterations.
@@ -311,11 +311,10 @@ class MDS(BaseEstimator):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    random_state : int, RandomState instance or None, optional, default: None
-        The generator used to initialize the centers.  If int, random_state is
-        the seed used by the random number generator; If RandomState instance,
-        random_state is the random number generator; If None, the random number
-        generator is the RandomState instance used by `np.random`.
+    random_state : int, RandomState instance, default=None
+        Determines the random number generator used to initialize the centers.
+        Pass an int for reproducible results across multiple function calls.
+        See :term: `Glossary <random_state>`.
 
     dissimilarity : 'euclidean' | 'precomputed', optional, default: 'euclidean'
         Dissimilarity measure to use:
@@ -360,7 +359,8 @@ class MDS(BaseEstimator):
     hypothesis" Kruskal, J. Psychometrika, 29, (1964)
 
     """
-    def __init__(self, n_components=2, metric=True, n_init=4,
+    @_deprecate_positional_args
+    def __init__(self, n_components=2, *, metric=True, n_init=4,
                  max_iter=300, verbose=0, eps=1e-3, n_jobs=None,
                  random_state=None, dissimilarity="euclidean"):
         self.n_components = n_components
@@ -414,7 +414,7 @@ class MDS(BaseEstimator):
             algorithm. By default, the algorithm is initialized with a randomly
             chosen array.
         """
-        X = check_array(X)
+        X = self._validate_data(X)
         if X.shape[0] == X.shape[1] and self.dissimilarity != "precomputed":
             warnings.warn("The MDS API has changed. ``fit`` now constructs an"
                           " dissimilarity matrix from data. To use a custom "

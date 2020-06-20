@@ -22,8 +22,9 @@ from sklearn.utils._testing import ignore_warnings
 
 from sklearn.cluster import ward_tree
 from sklearn.cluster import AgglomerativeClustering, FeatureAgglomeration
-from sklearn.cluster._hierarchical import (_hc_cut, _TREE_BUILDERS,
-                                           linkage_tree, _fix_connectivity)
+from sklearn.cluster._agglomerative import (_hc_cut, _TREE_BUILDERS,
+                                            linkage_tree,
+                                            _fix_connectivity)
 from sklearn.feature_extraction.image import grid_to_graph
 from sklearn.metrics.pairwise import PAIRED_DISTANCES, cosine_distances,\
     manhattan_distances, pairwise_distances
@@ -73,16 +74,16 @@ def test_structured_linkage_tree():
     connectivity = grid_to_graph(*mask.shape)
     for tree_builder in _TREE_BUILDERS.values():
         children, n_components, n_leaves, parent = \
-            tree_builder(X.T, connectivity)
+            tree_builder(X.T, connectivity=connectivity)
         n_nodes = 2 * X.shape[1] - 1
         assert len(children) + n_leaves == n_nodes
         # Check that ward_tree raises a ValueError with a connectivity matrix
         # of the wrong shape
         with pytest.raises(ValueError):
-            tree_builder(X.T, np.ones((4, 4)))
+            tree_builder(X.T, connectivity=np.ones((4, 4)))
         # Check that fitting with no samples raises an error
         with pytest.raises(ValueError):
-            tree_builder(X.T[:0], connectivity)
+            tree_builder(X.T[:0], connectivity=connectivity)
 
 
 def test_unstructured_linkage_tree():
@@ -115,7 +116,8 @@ def test_height_linkage_tree():
     X = rng.randn(50, 100)
     connectivity = grid_to_graph(*mask.shape)
     for linkage_func in _TREE_BUILDERS.values():
-        children, n_nodes, n_leaves, parent = linkage_func(X.T, connectivity)
+        children, n_nodes, n_leaves, parent = linkage_func(
+            X.T, connectivity=connectivity)
         n_nodes = 2 * X.shape[1] - 1
         assert len(children) + n_leaves == n_nodes
 
@@ -297,7 +299,8 @@ def test_sparse_scikit_vs_scipy():
             out = hierarchy.linkage(X, method=linkage)
 
             children_ = out[:, :2].astype(np.int, copy=False)
-            children, _, n_leaves, _ = _TREE_BUILDERS[linkage](X, connectivity)
+            children, _, n_leaves, _ = _TREE_BUILDERS[linkage](
+                X, connectivity=connectivity)
 
             # Sort the order of child nodes per row for consistency
             children.sort(axis=1)
@@ -750,3 +753,13 @@ def test_dist_threshold_invalid_parameters():
         AgglomerativeClustering(n_clusters=None,
                                 distance_threshold=1,
                                 compute_full_tree=False).fit(X)
+
+
+def test_invalid_shape_precomputed_dist_matrix():
+    # Check that an error is raised when affinity='precomputed'
+    # and a non square matrix is passed (PR #16257).
+    rng = np.random.RandomState(0)
+    X = rng.rand(5, 3)
+    with pytest.raises(ValueError, match="Distance matrix should be square, "):
+        AgglomerativeClustering(affinity='precomputed',
+                                linkage='complete').fit(X)

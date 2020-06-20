@@ -5,7 +5,7 @@ images.
 """
 
 from ._dict_vectorizer import DictVectorizer
-from ._hashing import FeatureHasher
+from ._hash import FeatureHasher
 from .image import img_to_graph, grid_to_graph
 from . import text
 

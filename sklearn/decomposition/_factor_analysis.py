@@ -28,7 +28,7 @@ from scipy import linalg
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array, check_random_state
 from ..utils.extmath import fast_logdet, randomized_svd, squared_norm
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, _deprecate_positional_args
 from ..exceptions import ConvergenceWarning
 
 
@@ -89,11 +89,10 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
         Number of iterations for the power method. 3 by default. Only used
         if ``svd_method`` equals 'randomized'
 
-    random_state : int, RandomState instance or None, optional (default=0)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`. Only used when ``svd_method`` equals 'randomized'.
+    random_state : int, RandomState instance, default=0
+        Only used when ``svd_method`` equals 'randomized'. Pass an int for
+        reproducible results across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
     Attributes
     ----------
@@ -139,7 +138,9 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
     FastICA: Independent component analysis, a latent variable model with
         non-Gaussian latent variables.
     """
-    def __init__(self, n_components=None, tol=1e-2, copy=True, max_iter=1000,
+    @_deprecate_positional_args
+    def __init__(self, n_components=None, *, tol=1e-2, copy=True,
+                 max_iter=1000,
                  noise_variance_init=None, svd_method='randomized',
                  iterated_power=3, random_state=0):
         self.n_components = n_components
@@ -169,7 +170,7 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
         -------
         self
         """
-        X = check_array(X, copy=self.copy, dtype=np.float64)
+        X = self._validate_data(X, copy=self.copy, dtype=np.float64)
 
         n_samples, n_features = X.shape
         n_components = self.n_components
@@ -200,17 +201,17 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
         # to allow for unified computation of loglikelihood
         if self.svd_method == 'lapack':
             def my_svd(X):
-                _, s, V = linalg.svd(X, full_matrices=False)
-                return (s[:n_components], V[:n_components],
+                _, s, Vt = linalg.svd(X, full_matrices=False)
+                return (s[:n_components], Vt[:n_components],
                         squared_norm(s[n_components:]))
         elif self.svd_method == 'randomized':
             random_state = check_random_state(self.random_state)
 
             def my_svd(X):
-                _, s, V = randomized_svd(X, n_components,
-                                         random_state=random_state,
-                                         n_iter=self.iterated_power)
-                return s, V, squared_norm(X) - squared_norm(s)
+                _, s, Vt = randomized_svd(X, n_components,
+                                          random_state=random_state,
+                                          n_iter=self.iterated_power)
+                return s, Vt, squared_norm(X) - squared_norm(s)
         else:
             raise ValueError('SVD method %s is not supported. Please consider'
                              ' the documentation' % self.svd_method)
@@ -218,11 +219,11 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
         for i in range(self.max_iter):
             # SMALL helps numerics
             sqrt_psi = np.sqrt(psi) + SMALL
-            s, V, unexp_var = my_svd(X / (sqrt_psi * nsqrt))
+            s, Vt, unexp_var = my_svd(X / (sqrt_psi * nsqrt))
             s **= 2
             # Use 'maximum' here to avoid sqrt problems.
-            W = np.sqrt(np.maximum(s - 1., 0.))[:, np.newaxis] * V
-            del V
+            W = np.sqrt(np.maximum(s - 1., 0.))[:, np.newaxis] * Vt
+            del Vt
             W *= sqrt_psi
 
             # loglikelihood

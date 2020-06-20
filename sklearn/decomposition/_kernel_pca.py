@@ -9,12 +9,12 @@ from scipy.sparse.linalg import eigsh
 
 from ..utils import check_random_state
 from ..utils.extmath import svd_flip
-from ..utils.validation import (check_is_fitted, check_array,
-                                _check_psd_eigenvalues)
+from ..utils.validation import check_is_fitted, _check_psd_eigenvalues
 from ..exceptions import NotFittedError
 from ..base import BaseEstimator, TransformerMixin
 from ..preprocessing import KernelCenterer
 from ..metrics.pairwise import pairwise_kernels
+from ..utils.validation import _deprecate_positional_args
 
 
 class KernelPCA(TransformerMixin, BaseEstimator):
@@ -76,11 +76,10 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         When n_components is None, this parameter is ignored and components
         with zero eigenvalues are removed regardless.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`. Used when ``eigen_solver`` == 'arpack'.
+    random_state : int, RandomState instance, default=None
+        Used when ``eigen_solver`` == 'arpack'. Pass an int for reproducible
+        results across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
         .. versionadded:: 0.18
 
@@ -140,8 +139,8 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         component analysis. In Advances in kernel methods,
         MIT Press, Cambridge, MA, USA 327-352.
     """
-
-    def __init__(self, n_components=None, kernel="linear",
+    @_deprecate_positional_args
+    def __init__(self, n_components=None, *, kernel="linear",
                  gamma=None, degree=3, coef0=1, kernel_params=None,
                  alpha=1.0, fit_inverse_transform=False, eigen_solver='auto',
                  tol=0, max_iter=None, remove_zero_eig=False,
@@ -218,7 +217,7 @@ class KernelPCA(TransformerMixin, BaseEstimator):
 
         # flip eigenvectors' sign to enforce deterministic output
         self.alphas_, _ = svd_flip(self.alphas_,
-                                   np.empty_like(self.alphas_).T)
+                                   np.zeros_like(self.alphas_).T)
 
         # sort eigenvectors in descending order
         indices = self.lambdas_.argsort()[::-1]
@@ -237,7 +236,7 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         # if v is an eigenvector of K
         #     then Phi(X)v  is an eigenvector of Phi(X)Phi(X)'
         # if u is an eigenvector of Phi(X)Phi(X)'
-        #     then Phi(X)'u is an eigenvector of Phi(X)Phi(X)'
+        #     then Phi(X)'u is an eigenvector of Phi(X)'Phi(X)
         #
         # At this stage our self.alphas_ (the v) have norm 1, we need to scale
         # them so that eigenvectors in kernel feature space (the u) have norm=1
@@ -276,7 +275,7 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         self : object
             Returns the instance itself.
         """
-        X = check_array(X, accept_sparse='csr', copy=self.copy_X)
+        X = self._validate_data(X, accept_sparse='csr', copy=self.copy_X)
         self._centerer = KernelCenterer()
         K = self._get_kernel(X)
         self._fit_transform(K)
@@ -359,5 +358,6 @@ class KernelPCA(TransformerMixin, BaseEstimator):
                                  "the inverse transform is not available.")
 
         K = self._get_kernel(X, self.X_transformed_fit_)
-
+        n_samples = self.X_transformed_fit_.shape[0]
+        K.flat[::n_samples + 1] += self.alpha
         return np.dot(K, self.dual_coef_)

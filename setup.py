@@ -15,7 +15,7 @@ import importlib
 try:
     import builtins
 except ImportError:
-    # Python 2 compat: just to be able to declare that Python >=3.5 is needed.
+    # Python 2 compat: just to be able to declare that Python >=3.6 is needed.
     import __builtin__ as builtins
 
 # This is a bit (!) hackish: we are setting a global variable so that the
@@ -52,10 +52,11 @@ if platform.python_implementation() == 'PyPy':
     SCIPY_MIN_VERSION = '1.1.0'
     NUMPY_MIN_VERSION = '1.14.0'
 else:
-    SCIPY_MIN_VERSION = '0.17.0'
-    NUMPY_MIN_VERSION = '1.11.0'
+    SCIPY_MIN_VERSION = '0.19.1'
+    NUMPY_MIN_VERSION = '1.13.3'
 
 JOBLIB_MIN_VERSION = '0.11'
+THREADPOOLCTL_MIN_VERSION = '2.0.0'
 
 # Optional setuptools features
 # We need to import setuptools early, if we want setuptools features,
@@ -74,9 +75,26 @@ if SETUPTOOLS_COMMANDS.intersection(sys.argv):
         zip_safe=False,  # the package can run out of an .egg file
         include_package_data=True,
         extras_require={
-            'alldeps': (
-                'numpy >= {}'.format(NUMPY_MIN_VERSION),
-                'scipy >= {}'.format(SCIPY_MIN_VERSION),
+            'examples': (
+                'matplotlib>=2.1.1',
+                'scikit-image>=0.13',
+                'pandas>=0.18.0',
+                'seaborn>=0.9.0',
+            ),
+            'benchmark': (
+                'memory_profiler>=0.57.0'
+            ),
+            'tests': (
+                'pytest>=3.3.0',
+                'pytest-cov>=2.9.0',
+                'flake8>=3.8.2',
+                'mypy>=0.770',
+            ),
+            'docs': (
+                'sphinx>=2.1.2',
+                'sphinx-gallery>=0.7.0',
+                'numpydoc>=0.9.2'
+                'Pillow>=7.1.2',
             ),
         },
     )
@@ -139,7 +157,7 @@ try:
 
 except ImportError:
     # Numpy should not be a dependency just to be able to introspect
-    # that python 3.5 is required.
+    # that python 3.6 is required.
     pass
 
 
@@ -244,7 +262,6 @@ def setup_package():
                                  'Operating System :: Unix',
                                  'Operating System :: MacOS',
                                  'Programming Language :: Python :: 3',
-                                 'Programming Language :: Python :: 3.5',
                                  'Programming Language :: Python :: 3.6',
                                  'Programming Language :: Python :: 3.7',
                                  'Programming Language :: Python :: 3.8',
@@ -254,11 +271,12 @@ def setup_package():
                                   'Implementation :: PyPy')
                                  ],
                     cmdclass=cmdclass,
-                    python_requires=">=3.5",
+                    python_requires=">=3.6",
                     install_requires=[
                         'numpy>={}'.format(NUMPY_MIN_VERSION),
                         'scipy>={}'.format(SCIPY_MIN_VERSION),
-                        'joblib>={}'.format(JOBLIB_MIN_VERSION)
+                        'joblib>={}'.format(JOBLIB_MIN_VERSION),
+                        'threadpoolctl>={}'.format(THREADPOOLCTL_MIN_VERSION)
                     ],
                     package_data={'': ['*.pxd']},
                     **extra_setuptools_args)
@@ -282,9 +300,9 @@ def setup_package():
 
         metadata['version'] = VERSION
     else:
-        if sys.version_info < (3, 5):
+        if sys.version_info < (3, 6):
             raise RuntimeError(
-                "Scikit-learn requires Python 3.5 or later. The current"
+                "Scikit-learn requires Python 3.6 or later. The current"
                 " Python version is %s installed in %s."
                 % (platform.python_version(), sys.executable))
 

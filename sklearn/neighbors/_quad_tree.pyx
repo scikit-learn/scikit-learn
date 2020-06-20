@@ -28,6 +28,7 @@ cdef extern from "numpy/arrayobject.h":
                                 int nd, np.npy_intp* dims,
                                 np.npy_intp* strides,
                                 void* data, int flags, object obj)
+    int PyArray_SetBaseObject(np.ndarray arr, PyObject* obj)
 
 
 # Repeat struct definition for numpy
@@ -97,7 +98,7 @@ cdef class _QuadTree:
             return self._get_cell_ndarray()['is_leaf'][:self.cell_count]
 
     def build_tree(self, X):
-        """Build a tree from an arary of points X."""
+        """Build a tree from an array of points X."""
         cdef:
             int i
             DTYPE_t[3] pt
@@ -573,7 +574,8 @@ cdef class _QuadTree:
                                    strides, <void*> self.cells,
                                    np.NPY_DEFAULT, None)
         Py_INCREF(self)
-        arr.base = <PyObject*> self
+        if PyArray_SetBaseObject(arr, <PyObject*> self) < 0:
+            raise ValueError("Can't intialize array!")
         return arr
 
     cdef int _resize(self, SIZE_t capacity) nogil except -1:
