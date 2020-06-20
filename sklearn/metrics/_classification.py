@@ -2459,8 +2459,9 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
     return np.average((y_true - y_prob) ** 2, weights=sample_weight)
 
 
-def calibration_loss(y_true, y_prob, sample_weight=None, norm="l2",
-                     n_bins=10, pos_label=None, reduce_bias=True):
+def calibration_loss(y_true, y_prob, sample_weight=None, norm='l2',
+                     n_bins=10, strategy='uniform', pos_label=None,
+                     reduce_bias=True):
     """Compute calibration loss.
 
     Across all items in a set of N predictions, the calibration loss measures
@@ -2491,6 +2492,14 @@ def calibration_loss(y_true, y_prob, sample_weight=None, norm="l2",
 
     n_bins : int, optional (default=10)
        The number of bins to compute error on.
+
+    strategy : {'uniform', 'quantile'} (default='uniform')
+        Strategy used to define the widths of the bins.
+
+        uniform
+            All bins have identical widths.
+        quantile
+            All bins have the same number of points.
 
     pos_label : int or str, optional (default=None)
         Label of the positive class. If None, the maximum label is used as
@@ -2551,8 +2560,15 @@ def calibration_loss(y_true, y_prob, sample_weight=None, norm="l2",
     else:
         sample_weight = np.ones(y_true.shape[0])
 
-    threshold_indices = np.searchsorted(y_prob,
-                                        np.arange(0, 1, 1./n_bins)).tolist()
+    if strategy == 'quantile':
+        quantiles = np.quantile(y_prob, np.arange(0, 1, 1./n_bins))
+    elif strategy == 'uniform':
+        quantiles = np.arange(0, 1, 1./n_bins)
+    else:
+        raise ValueError("Invalid entry to 'strategy' input. Strategy "
+                         "must be either 'quantile' or 'uniform'.")
+
+    threshold_indices = np.searchsorted(y_prob, quantiles).tolist()
     threshold_indices.append(y_true.shape[0])
     avg_pred_true = np.zeros(n_bins)
     bin_centroid = np.zeros(n_bins)
