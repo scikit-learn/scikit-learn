@@ -1034,10 +1034,10 @@ class RandomForestClassifier(ForestClassifier):
         If node_bootstrap is True, the number of samples to draw at each node
         to select the best split criterion.
 
-        - If None (default), then draw `X.shape[0]` samples. # FIXME
+        - If None (default), then draw `node size` samples.
         - If int, then draw `node_max_samples` samples.
         - If float, then draw `node_max_samples * node size` samples. Thus,
-          `node_max_samples` should be in the interval `(0, 1)`. # FIXME
+          `node_max_samples` should be in the interval `(0, 1)`.
 
 
         .. versionadded:: 0.22
