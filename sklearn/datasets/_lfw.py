@@ -237,35 +237,35 @@ def fetch_lfw_people(*, data_home=None, funneled=True, resize=0.5,
 
     Parameters
     ----------
-    data_home : optional, default: None
+    data_home : str, default=None
         Specify another download and cache folder for the datasets. By default
         all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 
-    funneled : boolean, optional, default: True
+    funneled : bool, default=True
         Download and use the funneled variant of the dataset.
 
-    resize : float, optional, default 0.5
+    resize : float, default=0.5
         Ratio used to resize the each face picture.
 
-    min_faces_per_person : int, optional, default None
+    min_faces_per_person : int, default=None
         The extracted dataset will only retain pictures of people that have at
         least `min_faces_per_person` different pictures.
 
-    color : boolean, optional, default False
+    color : bool, default=False
         Keep the 3 RGB channels instead of averaging them to a single
         gray level channel. If color is True the shape of the data has
         one more dimension than the shape with color = False.
 
-    slice_ : optional
+    slice_ : tuple of slice, default=(slice(70, 195), slice(78, 172))
         Provide a custom 2D slice (height, width) to extract the
         'interesting' part of the jpeg files and avoid use statistical
         correlation from the background
 
-    download_if_missing : optional, True by default
+    download_if_missing : bool, default=True
         If False, raise a IOError if the data is not locally available
         instead of trying to download the data from the source site.
 
-    return_X_y : boolean, default=False.
+    return_X_y : bool, default=False
         If True, returns ``(dataset.data, dataset.target)`` instead of a Bunch
         object. See below for more information about the `dataset.data` and
         `dataset.target` object.
@@ -416,34 +416,34 @@ def fetch_lfw_pairs(*, subset='train', data_home=None, funneled=True,
 
     Parameters
     ----------
-    subset : optional, default: 'train'
+    subset : {'train', 'test', '10_folds'}, default='train'
         Select the dataset to load: 'train' for the development training
         set, 'test' for the development test set, and '10_folds' for the
         official evaluation set that is meant to be used with a 10-folds
         cross validation.
 
-    data_home : optional, default: None
+    data_home : str, default=None
         Specify another download and cache folder for the datasets. By
         default all scikit-learn data is stored in '~/scikit_learn_data'
         subfolders.
 
-    funneled : boolean, optional, default: True
+    funneled : bool, default=True
         Download and use the funneled variant of the dataset.
 
-    resize : float, optional, default 0.5
+    resize : float, default=0.5
         Ratio used to resize the each face picture.
 
-    color : boolean, optional, default False
+    color : bool, default=False
         Keep the 3 RGB channels instead of averaging them to a single
         gray level channel. If color is True the shape of the data has
         one more dimension than the shape with color = False.
 
-    slice_ : optional
+    slice_ : tuple of slice, default=(slice(70, 195), slice(78, 172))
         Provide a custom 2D slice (height, width) to extract the
         'interesting' part of the jpeg files and avoid use statistical
         correlation from the background
 
-    download_if_missing : optional, True by default
+    download_if_missing : bool, default=True
         If False, raise a IOError if the data is not locally available
         instead of trying to download the data from the source site.
 

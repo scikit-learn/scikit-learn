@@ -139,13 +139,13 @@ class KernelDensity(BaseEstimator):
 
         Parameters
         ----------
-        X : array_like, shape (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features)
             List of n_features-dimensional data points.  Each row
             corresponds to a single data point.
         y : None
             Ignored. This parameter exists only for compatibility with
-            :class:`sklearn.pipeline.Pipeline`.
-        sample_weight : array_like, shape (n_samples,), optional
+            :class:`~sklearn.pipeline.Pipeline`.
+        sample_weight : array-like, shape (n_samples,), optional
             List of sample weights attached to the data X.
 
             .. versionadded:: 0.20
@@ -177,7 +177,7 @@ class KernelDensity(BaseEstimator):
 
         Parameters
         ----------
-        X : array_like, shape (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features)
             An array of points to query.  Last dimension should match dimension
             of training data (n_features).
 
@@ -209,12 +209,12 @@ class KernelDensity(BaseEstimator):
 
         Parameters
         ----------
-        X : array_like, shape (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features)
             List of n_features-dimensional data points.  Each row
             corresponds to a single data point.
         y : None
             Ignored. This parameter exists only for compatibility with
-            :class:`sklearn.pipeline.Pipeline`.
+            :class:`~sklearn.pipeline.Pipeline`.
 
         Returns
         -------
@@ -243,7 +243,7 @@ class KernelDensity(BaseEstimator):
 
         Returns
         -------
-        X : array_like, shape (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features)
             List of samples.
         """
         check_is_fitted(self)
@@ -274,3 +274,11 @@ class KernelDensity(BaseEstimator):
             correction = (gammainc(0.5 * dim, 0.5 * s_sq) ** (1. / dim)
                           * self.bandwidth / np.sqrt(s_sq))
             return data[i] + X * correction[:, np.newaxis]
+
+    def _more_tags(self):
+        return {
+            '_xfail_checks': {
+                'check_sample_weights_invariance(kind=zeros)':
+                'sample_weight must have positive values',
+            }
+        }

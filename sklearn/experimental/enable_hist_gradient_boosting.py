@@ -4,8 +4,8 @@ The API and results of these estimators might change without any deprecation
 cycle.
 
 Importing this file dynamically sets the
-:class:`sklearn.ensemble.HistGradientBoostingClassifier` and
-:class:`sklearn.ensemble.HistGradientBoostingRegressor` as attributes of the
+:class:`~sklearn.ensemble.HistGradientBoostingClassifier` and
+:class:`~sklearn.ensemble.HistGradientBoostingRegressor` as attributes of the
 ensemble module::
 
     >>> # explicitly require this experimental feature
