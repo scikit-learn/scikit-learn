@@ -3,9 +3,11 @@
 Column Transformer with Mixed Types
 ===================================
 
+.. currentmodule:: sklearn
+
 This example illustrates how to apply different preprocessing and feature
 extraction pipelines to different subsets of features, using
-:class:`~sklearn.compose.ColumnTransformer`. This is particularly handy for the
+:class:`~compose.ColumnTransformer`. This is particularly handy for the
 case of datasets that contain heterogeneous data types, since we may want to
 scale the numeric features and one-hot encode the categorical ones.
 
@@ -17,7 +19,7 @@ In addition, we show two different ways to dispatch the columns to the
 particular pre-processor: by column names and by column data types.
 
 Finally, the preprocessing pipeline is integrated in a full prediction pipeline
-using :class:`~sklearn.pipeline.Pipeline`, together with a simple classification
+using :class:`~pipeline.Pipeline`, together with a simple classification
 model.
 """
 
