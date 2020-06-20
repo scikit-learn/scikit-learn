@@ -42,10 +42,8 @@ ARCHIVE = RemoteFileMetadata(
 
 logger = logging.getLogger(__name__)
 
-"""
-Column names reference:
-https://archive.ics.uci.edu/ml/machine-learning-databases/covtype/covtype.info
-"""
+# Column names reference:
+# https://archive.ics.uci.edu/ml/machine-learning-databases/covtype/covtype.info
 FEATURE_NAMES = ["Elevation",
                  "Aspect",
                  "Slope",
