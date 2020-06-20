@@ -66,19 +66,19 @@ def silhouette_score(X, labels, *, metric='euclidean', sample_size=None,
     labels : array, shape = [n_samples]
          Predicted labels for each sample.
 
-    metric : string, or callable
+    metric : str or callable, default='euclidean'
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string, it must be one of the options
         allowed by :func:`metrics.pairwise.pairwise_distances
         <sklearn.metrics.pairwise.pairwise_distances>`. If X is the distance
         array itself, use ``metric="precomputed"``.
 
-    sample_size : int or None
+    sample_size : int, default=None
         The size of the sample to use when computing the Silhouette Coefficient
         on a random subset of the data.
         If ``sample_size is None``, no sampling is used.
 
-    random_state : int, RandomState instance or None, optional (default=None)
+    random_state : int or RandomState instance, default=None
         Determines random number generation for selecting a subset of samples.
         Used when ``sample_size is not None``.
         Pass an int for reproducible results across multiple function calls.
@@ -182,7 +182,7 @@ def silhouette_samples(X, labels, *, metric='euclidean', **kwds):
     labels : array, shape = [n_samples]
              label values for each sample
 
-    metric : string, or callable
+    metric : str or callable, default='euclidean'
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string, it must be one of the options
         allowed by :func:`sklearn.metrics.pairwise.pairwise_distances`. If X is

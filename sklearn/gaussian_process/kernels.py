@@ -23,7 +23,6 @@ from abc import ABCMeta, abstractmethod
 from collections import namedtuple
 import math
 from inspect import signature
-import warnings
 
 import numpy as np
 from scipy.special import kv, gamma
@@ -159,16 +158,8 @@ class Kernel(metaclass=ABCMeta):
                                " %s doesn't follow this convention."
                                % (cls, ))
         for arg in args:
-            try:
-                value = getattr(self, arg)
-            except AttributeError:
-                warnings.warn('From version 0.24, get_params will raise an '
-                              'AttributeError if a parameter cannot be '
-                              'retrieved as an instance attribute. Previously '
-                              'it would return None.',
-                              FutureWarning)
-                value = None
-            params[arg] = value
+            params[arg] = getattr(self, arg)
+
         return params
 
     def set_params(self, **params):
@@ -2140,6 +2131,20 @@ class PairwiseKernel(Kernel):
         All entries of this dict (if any) are passed as keyword arguments to
         the pairwise kernel function.
 
+    Examples
+    --------
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn.gaussian_process import GaussianProcessClassifier
+    >>> from sklearn.gaussian_process.kernels import PairwiseKernel
+    >>> X, y = load_iris(return_X_y=True)
+    >>> kernel = PairwiseKernel(metric='rbf')
+    >>> gpc = GaussianProcessClassifier(kernel=kernel,
+    ...         random_state=0).fit(X, y)
+    >>> gpc.score(X, y)
+    0.9733...
+    >>> gpc.predict_proba(X[:2,:])
+    array([[0.8880..., 0.05663..., 0.05532...],
+           [0.8676..., 0.07073..., 0.06165...]])
     """
 
     def __init__(self, gamma=1.0, gamma_bounds=(1e-5, 1e5), metric="linear",

@@ -72,7 +72,7 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
         Initialization value of the sparse code. Only used if
         `algorithm='lasso_cd'`.
 
-    max_iter : int, 1000 by default
+    max_iter : int, default=1000
         Maximum number of iterations to perform if `algorithm='lasso_cd'` or
         `lasso_lars`.
 
@@ -185,10 +185,11 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
 
 
 # XXX : could be moved to the linear_model module
-def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
-                  n_nonzero_coefs=None, alpha=None, copy_cov=True, init=None,
-                  max_iter=1000, n_jobs=None, check_input=True, verbose=0,
-                  positive=False):
+@_deprecate_positional_args
+def sparse_encode(X, dictionary, *, gram=None, cov=None,
+                  algorithm='lasso_lars', n_nonzero_coefs=None, alpha=None,
+                  copy_cov=True, init=None, max_iter=1000, n_jobs=None,
+                  check_input=True, verbose=0, positive=False):
     """Sparse coding
 
     Each row of the result is the solution to a sparse coding problem.
@@ -421,7 +422,8 @@ def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
     return dictionary
 
 
-def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
+@_deprecate_positional_args
+def dict_learning(X, n_components, *, alpha, max_iter=100, tol=1e-8,
                   method='lars', n_jobs=None, dict_init=None, code_init=None,
                   callback=None, verbose=False, random_state=None,
                   return_n_iter=False, positive_dict=False,
@@ -615,7 +617,8 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
         return code, dictionary, errors
 
 
-def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
+@_deprecate_positional_args
+def dict_learning_online(X, n_components=2, *, alpha=1, n_iter=100,
                          return_code=True, dict_init=None, callback=None,
                          batch_size=3, verbose=False, shuffle=True,
                          n_jobs=None, method='lars', iter_offset=0,
@@ -953,14 +956,15 @@ class SparseCoder(SparseCodingMixin, BaseEstimator):
     transform_algorithm : {'lasso_lars', 'lasso_cd', 'lars', 'omp', \
     'threshold'}, default='omp'
         Algorithm used to transform the data:
-        lars: uses the least angle regression method (linear_model.lars_path)
-        lasso_lars: uses Lars to compute the Lasso solution
-        lasso_cd: uses the coordinate descent method to compute the
-        Lasso solution (linear_model.Lasso). lasso_lars will be faster if
-        the estimated components are sparse.
-        omp: uses orthogonal matching pursuit to estimate the sparse solution
-        threshold: squashes to zero all coefficients less than alpha from
-        the projection ``dictionary * X'``
+
+        - lars: uses the least angle regression method (linear_model.lars_path)
+        - lasso_lars: uses Lars to compute the Lasso solution
+        - lasso_cd: uses the coordinate descent method to compute the
+          Lasso solution (linear_model.Lasso). lasso_lars will be faster if
+          the estimated components are sparse.
+        - omp: uses orthogonal matching pursuit to estimate the sparse solution
+        - threshold: squashes to zero all coefficients less than alpha from
+          the projection ``dictionary * X'``
 
     transform_n_nonzero_coefs : int, default=0.1*n_features
         Number of nonzero coefficients to target in each column of the
@@ -1003,7 +1007,28 @@ class SparseCoder(SparseCodingMixin, BaseEstimator):
     components_ : array, [n_components, n_features]
         The unchanged dictionary atoms
 
-    See also
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.decomposition import SparseCoder
+    >>> X = np.array([[-1, -1, -1], [0, 0, 3]])
+    >>> dictionary = np.array(
+    ...     [[0, 1, 0],
+    ...      [-1, -1, 2],
+    ...      [1, 1, 1],
+    ...      [0, 1, 1],
+    ...      [0, 2, 1]],
+    ...    dtype=np.float64
+    ... )
+    >>> coder = SparseCoder(
+    ...     dictionary=dictionary, transform_algorithm='lasso_lars',
+    ...     transform_alpha=1e-10,
+    ... )
+    >>> coder.transform(X)
+    array([[ 0.,  0., -1.,  0.,  0.],
+           [ 0.,  1.,  1.,  0.,  0.]])
+
+    See Also
     --------
     DictionaryLearning
     MiniBatchDictionaryLearning
@@ -1057,7 +1082,7 @@ class DictionaryLearning(SparseCodingMixin, BaseEstimator):
 
     Solves the optimization problem::
 
-        (U^*,V^*) = argmin 0.5 || Y - U V ||_2^2 + alpha * || U ||_1
+        (U^*,V^*) = argmin 0.5 || X - U V ||_2^2 + alpha * || U ||_1
                     (U,V)
                     with || V_k ||_2 = 1 for all  0 <= k < n_components
 
@@ -1090,14 +1115,15 @@ class DictionaryLearning(SparseCodingMixin, BaseEstimator):
     transform_algorithm : {'lasso_lars', 'lasso_cd', 'lars', 'omp', \
     'threshold'}, default='omp'
         Algorithm used to transform the data
-        lars: uses the least angle regression method (linear_model.lars_path)
-        lasso_lars: uses Lars to compute the Lasso solution
-        lasso_cd: uses the coordinate descent method to compute the
-        Lasso solution (linear_model.Lasso). lasso_lars will be faster if
-        the estimated components are sparse.
-        omp: uses orthogonal matching pursuit to estimate the sparse solution
-        threshold: squashes to zero all coefficients less than alpha from
-        the projection ``dictionary * X'``
+
+        - lars: uses the least angle regression method (linear_model.lars_path)
+        - lasso_lars: uses Lars to compute the Lasso solution
+        - lasso_cd: uses the coordinate descent method to compute the
+          Lasso solution (linear_model.Lasso). lasso_lars will be faster if
+          the estimated components are sparse.
+        - omp: uses orthogonal matching pursuit to estimate the sparse solution
+        - threshold: squashes to zero all coefficients less than alpha from
+          the projection ``dictionary * X'``
 
         .. versionadded:: 0.17
            *lasso_cd* coordinate descent method to improve speed.
@@ -1170,6 +1196,33 @@ class DictionaryLearning(SparseCodingMixin, BaseEstimator):
     n_iter_ : int
         Number of iterations run.
 
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.datasets import make_sparse_coded_signal
+    >>> from sklearn.decomposition import DictionaryLearning
+    >>> X, dictionary, code = make_sparse_coded_signal(
+    ...     n_samples=100, n_components=15, n_features=20, n_nonzero_coefs=10,
+    ...     random_state=42,
+    ... )
+    >>> dict_learner = DictionaryLearning(
+    ...     n_components=15, transform_algorithm='lasso_lars', random_state=42,
+    ... )
+    >>> X_transformed = dict_learner.fit_transform(X)
+
+    We can check the level of sparsity of `X_transformed`:
+
+    >>> np.mean(X_transformed == 0)
+    0.88...
+
+    We can compare the average squared euclidean norm of the reconstruction
+    error of the sparse coded signal relative to the squared euclidean norm of
+    the original signal:
+
+    >>> X_hat = X_transformed @ dict_learner.components_
+    >>> np.mean(np.sum((X_hat - X) ** 2, axis=1) / np.sum(X ** 2, axis=1))
+    0.07...
+
     Notes
     -----
     **References:**
@@ -1230,7 +1283,7 @@ class DictionaryLearning(SparseCodingMixin, BaseEstimator):
             n_components = self.n_components
 
         V, U, E, self.n_iter_ = dict_learning(
-            X, n_components, self.alpha,
+            X, n_components, alpha=self.alpha,
             tol=self.tol, max_iter=self.max_iter,
             method=self.fit_algorithm,
             method_max_iter=self.transform_max_iter,
@@ -1255,7 +1308,7 @@ class MiniBatchDictionaryLearning(SparseCodingMixin, BaseEstimator):
 
     Solves the optimization problem::
 
-       (U^*,V^*) = argmin 0.5 || Y - U V ||_2^2 + alpha * || U ||_1
+       (U^*,V^*) = argmin 0.5 || X - U V ||_2^2 + alpha * || U ||_1
                     (U,V)
                     with || V_k ||_2 = 1 for all  0 <= k < n_components
 
@@ -1375,6 +1428,32 @@ class MiniBatchDictionaryLearning(SparseCodingMixin, BaseEstimator):
         RandomState instance that is generated either from a seed, the random
         number generattor or by `np.random`.
 
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.datasets import make_sparse_coded_signal
+    >>> from sklearn.decomposition import MiniBatchDictionaryLearning
+    >>> X, dictionary, code = make_sparse_coded_signal(
+    ...     n_samples=100, n_components=15, n_features=20, n_nonzero_coefs=10,
+    ...     random_state=42)
+    >>> dict_learner = MiniBatchDictionaryLearning(
+    ...     n_components=15, transform_algorithm='lasso_lars', random_state=42,
+    ... )
+    >>> X_transformed = dict_learner.fit_transform(X)
+
+    We can check the level of sparsity of `X_transformed`:
+
+    >>> np.mean(X_transformed == 0)
+    0.87...
+
+    We can compare the average squared euclidean norm of the reconstruction
+    error of the sparse coded signal relative to the squared euclidean norm of
+    the original signal:
+
+    >>> X_hat = X_transformed @ dict_learner.components_
+    >>> np.mean(np.sum((X_hat - X) ** 2, axis=1) / np.sum(X ** 2, axis=1))
+    0.10...
+
     Notes
     -----
     **References:**
@@ -1434,7 +1513,7 @@ class MiniBatchDictionaryLearning(SparseCodingMixin, BaseEstimator):
         X = self._validate_data(X)
 
         U, (A, B), self.n_iter_ = dict_learning_online(
-            X, self.n_components, self.alpha,
+            X, self.n_components, alpha=self.alpha,
             n_iter=self.n_iter, return_code=False,
             method=self.fit_algorithm,
             method_max_iter=self.transform_max_iter,
@@ -1486,8 +1565,8 @@ class MiniBatchDictionaryLearning(SparseCodingMixin, BaseEstimator):
         if iter_offset is None:
             iter_offset = getattr(self, 'iter_offset_', 0)
         U, (A, B) = dict_learning_online(
-            X, self.n_components, self.alpha,
-            n_iter=self.n_iter, method=self.fit_algorithm,
+            X, self.n_components, alpha=self.alpha,
+            n_iter=1, method=self.fit_algorithm,
             method_max_iter=self.transform_max_iter,
             n_jobs=self.n_jobs, dict_init=dict_init,
             batch_size=len(X), shuffle=False,
@@ -1501,5 +1580,5 @@ class MiniBatchDictionaryLearning(SparseCodingMixin, BaseEstimator):
         # Keep track of the state of the algorithm to be able to do
         # some online fitting (partial_fit)
         self.inner_stats_ = (A, B)
-        self.iter_offset_ = iter_offset + self.n_iter
+        self.iter_offset_ = iter_offset + 1
         return self

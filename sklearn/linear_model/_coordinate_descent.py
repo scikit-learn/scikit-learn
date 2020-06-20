@@ -114,7 +114,7 @@ def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
         If you wish to standardize, please use
-        :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
+        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
     copy_X : bool, default=True
@@ -168,7 +168,8 @@ def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
                        num=n_alphas)[::-1]
 
 
-def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
+@_deprecate_positional_args
+def lasso_path(X, y, *, eps=1e-3, n_alphas=100, alphas=None,
                precompute='auto', Xy=None, copy_X=True, coef_init=None,
                verbose=False, return_n_iter=False, positive=False, **params):
     """Compute Lasso path with coordinate descent
@@ -313,7 +314,8 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
                      positive=positive, return_n_iter=return_n_iter, **params)
 
 
-def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
+@_deprecate_positional_args
+def enet_path(X, y, *, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
               precompute='auto', Xy=None, copy_X=True, coef_init=None,
               verbose=False, return_n_iter=False, positive=False,
               check_input=True, **params):
@@ -602,7 +604,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
         If you wish to standardize, please use
-        :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
+        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
     precompute : bool or array-like of shape (n_features, n_features),\
@@ -918,7 +920,7 @@ class Lasso(ElasticNet):
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
         If you wish to standardize, please use
-        :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
+        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
     precompute : 'auto', bool or array-like of shape (n_features, n_features),\
@@ -1374,7 +1376,7 @@ class LassoCV(RegressorMixin, LinearModelCV):
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
         If you wish to standardize, please use
-        :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
+        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
     precompute : 'auto', bool or array-like of shape (n_features, n_features),\
@@ -1556,7 +1558,7 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
         If you wish to standardize, please use
-        :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
+        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
     precompute : 'auto', bool or array-like of shape (n_features, n_features),\
@@ -1769,7 +1771,7 @@ class MultiTaskElasticNet(Lasso):
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
         If you wish to standardize, please use
-        :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
+        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
     copy_X : bool, default=True
@@ -1959,7 +1961,7 @@ class MultiTaskLasso(MultiTaskElasticNet):
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
         If you wish to standardize, please use
-        :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
+        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
     copy_X : bool, default=True
@@ -2101,7 +2103,7 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
         If you wish to standardize, please use
-        :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
+        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
     max_iter : int, default=1000
@@ -2282,7 +2284,7 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
         If you wish to standardize, please use
-        :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
+        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
     max_iter : int, default=1000

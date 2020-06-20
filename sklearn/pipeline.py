@@ -11,7 +11,6 @@ estimator, as a chain of transforms and estimators.
 
 from collections import defaultdict
 from itertools import islice
-import warnings
 
 import numpy as np
 from scipy import sparse
@@ -665,7 +664,7 @@ def _name_estimators(estimators):
     return list(zip(names, estimators))
 
 
-def make_pipeline(*steps, **kwargs):
+def make_pipeline(*steps, memory=None, verbose=False):
     """Construct a Pipeline from the given estimators.
 
     This is a shorthand for the Pipeline constructor; it does not require, and
@@ -707,11 +706,6 @@ def make_pipeline(*steps, **kwargs):
     -------
     p : Pipeline
     """
-    memory = kwargs.pop('memory', None)
-    verbose = kwargs.pop('verbose', False)
-    if kwargs:
-        raise TypeError('Unknown keyword arguments: "{}"'
-                        .format(list(kwargs.keys())[0]))
     return Pipeline(_name_estimators(steps), memory=memory, verbose=verbose)
 
 
@@ -780,7 +774,8 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
     ----------
     transformer_list : list of (string, transformer) tuples
         List of transformer objects to be applied to the data. The first
-        half of each tuple is the name of the transformer.
+        half of each tuple is the name of the transformer. The tranformer can
+        be 'drop' for it to be ignored.
 
         .. versionchanged:: 0.22
            Deprecated `None` as a transformer in favor of 'drop'.
@@ -865,13 +860,6 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
         # validate estimators
         for t in transformers:
-            # TODO: Remove in 0.24 when None is removed
-            if t is None:
-                warnings.warn("Using None as a transformer is deprecated "
-                              "in version 0.22 and will be removed in "
-                              "version 0.24. Please use 'drop' instead.",
-                              FutureWarning)
-                continue
             if t == 'drop':
                 continue
             if (not (hasattr(t, "fit") or hasattr(t, "fit_transform")) or not
@@ -888,7 +876,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         get_weight = (self.transformer_weights or {}).get
         return ((name, trans, get_weight(name))
                 for name, trans in self.transformer_list
-                if trans is not None and trans != 'drop')
+                if trans != 'drop')
 
     def get_feature_names(self):
         """Get feature names from all transformers.
@@ -1011,7 +999,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
     def _update_transformer_list(self, transformers):
         transformers = iter(transformers)
-        self.transformer_list[:] = [(name, old if old is None or old == 'drop'
+        self.transformer_list[:] = [(name, old if old == 'drop'
                                      else next(transformers))
                                     for name, old in self.transformer_list]
 
@@ -1025,7 +1013,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         return _VisualBlock('parallel', transformers, names=names)
 
 
-def make_union(*transformers, **kwargs):
+def make_union(*transformers, n_jobs=None, verbose=False):
     """
     Construct a FeatureUnion from the given transformers.
 
@@ -1067,12 +1055,5 @@ def make_union(*transformers, **kwargs):
      FeatureUnion(transformer_list=[('pca', PCA()),
                                    ('truncatedsvd', TruncatedSVD())])
     """
-    n_jobs = kwargs.pop('n_jobs', None)
-    verbose = kwargs.pop('verbose', False)
-    if kwargs:
-        # We do not currently support `transformer_weights` as we may want to
-        # change its type spec in make_union
-        raise TypeError('Unknown keyword arguments: "{}"'
-                        .format(list(kwargs.keys())[0]))
     return FeatureUnion(
         _name_estimators(transformers), n_jobs=n_jobs, verbose=verbose)

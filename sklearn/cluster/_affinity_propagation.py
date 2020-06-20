@@ -30,8 +30,9 @@ def _equal_similarities_and_preferences(S, preference):
     return all_equal_preferences() and all_equal_similarities()
 
 
-def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
-                         damping=0.5, copy=True, verbose=False,
+@_deprecate_positional_args
+def affinity_propagation(S, *, preference=None, convergence_iter=15,
+                         max_iter=200, damping=0.5, copy=True, verbose=False,
                          return_n_iter=False, random_state='warn'):
     """Perform Affinity Propagation Clustering of data
 
@@ -40,10 +41,10 @@ def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
     Parameters
     ----------
 
-    S : array-like, shape (n_samples, n_samples)
+    S : array-like of shape (n_samples, n_samples)
         Matrix of similarities between points
 
-    preference : array-like, shape (n_samples,) or float, optional
+    preference : array-like of shape (n_samples,) or float, default=None
         Preferences for each point - points with larger values of
         preferences are more likely to be chosen as exemplars. The number of
         exemplars, i.e. of clusters, is influenced by the input preferences
@@ -52,27 +53,27 @@ def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
         number of clusters). For a smaller amount of clusters, this can be set
         to the minimum value of the similarities.
 
-    convergence_iter : int, optional, default: 15
+    convergence_iter : int, default=15
         Number of iterations with no change in the number
         of estimated clusters that stops the convergence.
 
-    max_iter : int, optional, default: 200
+    max_iter : int, default=200
         Maximum number of iterations
 
-    damping : float, optional, default: 0.5
+    damping : float, default=0.5
         Damping factor between 0.5 and 1.
 
-    copy : boolean, optional, default: True
+    copy : bool, default=True
         If copy is False, the affinity matrix is modified inplace by the
         algorithm, for memory efficiency
 
-    verbose : boolean, optional, default: False
+    verbose : bool, default=False
         The verbosity level
 
-    return_n_iter : bool, default False
+    return_n_iter : bool, default=False
         Whether or not to return the number of iterations.
 
-    random_state : int or np.random.RandomStateInstance, default: 0
+    random_state : int or RandomState instance, default=0
         Pseudo-random number generator to control the starting state.
         Use an int for reproducible results across function calls.
         See the :term:`Glossary <random_state>`.
@@ -83,10 +84,10 @@ def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
     Returns
     -------
 
-    cluster_centers_indices : array, shape (n_clusters,)
+    cluster_centers_indices : ndarray of shape (n_clusters,)
         index of clusters centers
 
-    labels : array, shape (n_samples,)
+    labels : ndarray of shape (n_samples,)
         cluster labels for each point
 
     n_iter : int
@@ -291,7 +292,7 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
     verbose : bool, default=False
         Whether to be verbose.
 
-    random_state : int or np.random.RandomStateInstance, default: 0
+    random_state : int or RandomState instance, default=0
         Pseudo-random number generator to control the starting state.
         Use an int for reproducible results across function calls.
         See the :term:`Glossary <random_state>`.
@@ -381,8 +382,8 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape (n_samples, n_features), or \
-            array-like, shape (n_samples, n_samples)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features), or \
+                array-like of shape (n_samples, n_samples)
             Training instances to cluster, or similarities / affinities between
             instances if ``affinity='precomputed'``. If a sparse feature matrix
             is provided, it will be converted into a sparse ``csr_matrix``.
@@ -411,7 +412,8 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
 
         self.cluster_centers_indices_, self.labels_, self.n_iter_ = \
             affinity_propagation(
-                self.affinity_matrix_, self.preference, max_iter=self.max_iter,
+                self.affinity_matrix_, preference=self.preference,
+                max_iter=self.max_iter,
                 convergence_iter=self.convergence_iter, damping=self.damping,
                 copy=self.copy, verbose=self.verbose, return_n_iter=True,
                 random_state=self.random_state)
@@ -426,13 +428,13 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             New data to predict. If a sparse matrix is provided, it will be
             converted into a sparse ``csr_matrix``.
 
         Returns
         -------
-        labels : ndarray, shape (n_samples,)
+        labels : ndarray of shape (n_samples,)
             Cluster labels.
         """
         check_is_fitted(self)
@@ -455,8 +457,8 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape (n_samples, n_features), or \
-            array-like, shape (n_samples, n_samples)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features), or \
+                array-like of shape (n_samples, n_samples)
             Training instances to cluster, or similarities / affinities between
             instances if ``affinity='precomputed'``. If a sparse feature matrix
             is provided, it will be converted into a sparse ``csr_matrix``.
@@ -466,7 +468,7 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
 
         Returns
         -------
-        labels : ndarray, shape (n_samples,)
+        labels : ndarray of shape (n_samples,)
             Cluster labels.
         """
         return super().fit_predict(X, y)
