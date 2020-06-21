@@ -53,6 +53,11 @@ Changelog
   unless data is sparse.
   :pr:`17396` by :user:`Jiaxiang <fujiaxiang>`.
 
+- |Enhancement| :func:`datasets.fetch_covtype` now now supports the optional
+  argument `as_frame`; when it is set to True, the returned Bunch object's
+  `data` and `frame` members are pandas DataFrames, and the `target` member is
+  a pandas Series. :pr:`17491` by :user:`Alex Liang <tianchuliang>`.
+
 :mod:`sklearn.decomposition`
 ............................
 
