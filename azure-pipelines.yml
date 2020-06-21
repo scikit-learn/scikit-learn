@@ -85,13 +85,13 @@ jobs:
         THREADPOOLCTL_VERSION: '2.0.0'
         COVERAGE: 'true'
 
-# - template: build_tools/azure/posix.yml
-#   parameters:
-#     name: Linux
-#     vmImage: ubuntu-18.04
-#     dependsOn: [linting]
-#     condition: and(ne(variables['Build.Reason'], 'Schedule'), succeeded('linting'))
-#     matrix:
+- template: build_tools/azure/posix.yml
+  parameters:
+    name: Linux
+    vmImage: ubuntu-18.04
+    dependsOn: [linting]
+    condition: and(ne(variables['Build.Reason'], 'Schedule'), succeeded('linting'))
+    matrix:
 #       # Linux environment to test that scikit-learn can be built against
 #       # versions of numpy, scipy with ATLAS that comes with Ubuntu Bionic 18.04
 #       # i.e. numpy 1.13.3 and scipy 0.19
@@ -120,16 +120,16 @@ jobs:
 #         THREADPOOLCTL_VERSION: '2.0.0'
 #         PYTEST_XDIST: 'false'
 #         COVERAGE: 'true'
-#       # Linux environment to test the latest available dependencies and MKL.
-#       # It runs tests requiring lightgbm, pandas and PyAMG.
-#       pylatest_pip_openblas_pandas:
-#         DISTRIB: 'conda-pip-latest'
-#         PYTHON_VERSION: '3.8'
-#         PYTEST_VERSION: '4.6.2'
-#         COVERAGE: 'true'
-#         CHECK_PYTEST_SOFT_DEPENDENCY: 'true'
-#         TEST_DOCSTRINGS: 'true'
-#         CHECK_WARNINGS: 'true'
+      # Linux environment to test the latest available dependencies and MKL.
+      # It runs tests requiring lightgbm, pandas and PyAMG.
+      pylatest_pip_openblas_pandas:
+        DISTRIB: 'conda-pip-latest'
+        PYTHON_VERSION: '3.8'
+        PYTEST_VERSION: '4.6.2'
+        COVERAGE: 'true'
+        CHECK_PYTEST_SOFT_DEPENDENCY: 'true'
+        TEST_DOCSTRINGS: 'true'
+        CHECK_WARNINGS: 'true'
 
 # - template: build_tools/azure/posix-32.yml
 #   parameters:
@@ -191,6 +191,6 @@ jobs:
         PYTHON_ARCH: '64'
         PYTEST_VERSION: '*'
         COVERAGE: 'true'
-      py36_pip_openblas_32bit:
-        PYTHON_VERSION: '3.6'
-        PYTHON_ARCH: '32'
+      # py36_pip_openblas_32bit:
+      #   PYTHON_VERSION: '3.6'
+      #   PYTHON_ARCH: '32'
