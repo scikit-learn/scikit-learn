@@ -30,6 +30,8 @@ def test_fetch_asframe(fetch_covtype_fxt):
     assert hasattr(bunch, 'frame')
     frame = bunch.frame
     assert frame.shape == (581012, 55)
+    assert bunch.data.shape == (581012, 54)
+    assert bunch.target.shape == (581012,)
 
     column_names = set(frame.columns)
 
