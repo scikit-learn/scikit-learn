@@ -146,11 +146,11 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
 
     OneVsRestClassifier can also be used for multilabel classification. To use
     this feature, provide an indicator matrix for the target `y` when calling
-    `.fit`. In other words, the target labels should be formatted as a 2D binary
-    (0/1) matrix, where [i, j] == 1 indicates the presence of label j in sample
-    i. This estimator uses the binary relevance method to perform multilabel
-    classification, which involves training one binary classifier independently
-    for each label.
+    `.fit`. In other words, the target labels should be formatted as a 2D
+    binary (0/1) matrix, where [i, j] == 1 indicates the presence of label j
+    in sample i. This estimator uses the binary relevance method to perform
+    multilabel classification, which involves training one binary classifier
+    independently for each label.
 
     Read more in the :ref:`User Guide <ovr_classification>`.
 
