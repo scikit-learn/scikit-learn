@@ -1699,8 +1699,9 @@ Normalized Discounted Cumulative Gain
 -------------------------------------
 
 Discounted Cumulative Gain (DCG) and Normalized Discounted Cumulative Gain
-(NDCG) are ranking metrics; they compare a predicted order to ground-truth
-scores, such as the relevance of answers to a query.
+(NDCG) are ranking metrics implemented in :func:`~sklearn.metrics.dcg_score`
+and :func:`~sklearn.metrics.ndcg_score` ; they compare a predicted order to
+ground-truth scores, such as the relevance of answers to a query.
 
 From the Wikipedia page for Discounted Cumulative Gain:
 
