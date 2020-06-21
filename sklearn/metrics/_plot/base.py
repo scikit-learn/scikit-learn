@@ -64,16 +64,19 @@ def _get_target_scores(X, estimator, response_method, pos_label=None):
         :term:`decision_function` is tried next.
 
     pos_label : str or int, default=None
-        The class considered as the positive class when computing the metrics.
-        By default, `estimators.classes_[1]` is considered as the positive class.
+        The class considered as the positive class when computing
+        the metrics. By default, `estimators.classes_[1]` is
+        considered as the positive class.
 
     Returns
     -------
     y_pred: array, shape=(n_samples,)
-        Target scores calculated from the provided response_method and pos_label.
+        Target scores calculated from the provided response_method
+        and pos_label.
 
     pos_label: str or int
-        The class considered as the positive class when computing the metrics.
+        The class considered as the positive class when computing
+        the metrics.
     """
     classification_error = (
         "{} should be a binary classifier".format(estimator.__class__.__name__)
@@ -120,8 +123,9 @@ class Display:
         Name of estimator. If None, then the estimator name is not shown.
 
     pos_label : str or int, default=None
-        The class considered as the positive class when computing the metrics.
-        By default, `estimators.classes_[1]` is considered as the positive class.
+        The class considered as the positive class when computing
+        the metrics. By default, `estimators.classes_[1]` is
+        considered as the positive class.
 
     Attributes
     ----------

@@ -61,7 +61,8 @@ class RocCurveDisplay(Display):
     >>> plt.show()      # doctest: +SKIP
     """
 
-    def __init__(self, *, fpr, tpr, roc_auc=None, estimator_name=None, pos_label=None):
+    def __init__(self, *, fpr, tpr,
+                 roc_auc=None, estimator_name=None, pos_label=None):
         super().__init__(estimator_name, pos_label)
         self.fpr = fpr
         self.tpr = tpr
