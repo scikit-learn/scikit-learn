@@ -1,9 +1,8 @@
 from .. import auc
 from .. import roc_curve
 
-from .base import _check_classifier_response_method, _get_target_scores, Display
+from .base import _get_target_scores, Display
 from ...utils import check_matplotlib_support
-from ...base import is_classifier
 from ...utils.validation import _deprecate_positional_args
 
 
@@ -28,6 +27,13 @@ class RocCurveDisplay(Display):
 
     estimator_name : str, default=None
         Name of estimator. If None, the estimator name is not shown.
+
+    pos_label : str or int, default=None
+        The class considered as the positive class when computing the roc auc
+        metrics. By default, `estimators.classes_[1]` is considered
+        as the positive class.
+
+        .. versionadded:: 0.24
 
     Attributes
     ----------
@@ -152,8 +158,8 @@ def plot_roc_curve(estimator, X, y, *, sample_weight=None,
         Axes object to plot on. If `None`, a new figure and axes is created.
 
     pos_label : str or int, default=None
-        The class considered as the positive class when computing the precision
-        and recall metrics. By default, `estimators.classes_[1]` is considered
+        The class considered as the positive class when computing the roc auc
+        metrics. By default, `estimators.classes_[1]` is considered
         as the positive class.
 
         .. versionadded:: 0.24

@@ -46,7 +46,7 @@ def _check_classifier_response_method(estimator, response_method):
 
 
 def _get_target_scores(X, estimator, response_method, pos_label=None):
-    """Return target scores.
+    """Return target scores and positive label.
 
     Parameters
     ----------
@@ -64,17 +64,16 @@ def _get_target_scores(X, estimator, response_method, pos_label=None):
         :term:`decision_function` is tried next.
 
     pos_label : str or int, default=None
-        The class considered as the positive class when computing the precision
-        and recall metrics. By default, `estimators.classes_[1]` is considered
-        as the positive class.
+        The class considered as the positive class when computing the metrics.
+        By default, `estimators.classes_[1]` is considered as the positive class.
 
     Returns
     -------
-    y_pred:
+    y_pred: array, shape=(n_samples,)
+        Target scores calculated from the provided response_method and pos_label.
 
     pos_label: str or int
-        The class considered as the positive class when computing the precision.
-
+        The class considered as the positive class when computing the metrics.
     """
     classification_error = (
         "{} should be a binary classifier".format(estimator.__class__.__name__)
@@ -113,7 +112,7 @@ def _get_target_scores(X, estimator, response_method, pos_label=None):
 
 
 class Display:
-    """ Visualization base class.
+    """Metrics visualization base class.
 
     Parameters
     -----------
@@ -121,21 +120,19 @@ class Display:
         Name of estimator. If None, then the estimator name is not shown.
 
     pos_label : str or int, default=None
-        The class considered as the positive class when computing the precision
-        and recall metrics. By default, `estimators.classes_[1]` is considered
-        as the positive class.
+        The class considered as the positive class when computing the metrics.
+        By default, `estimators.classes_[1]` is considered as the positive class.
 
     Attributes
     ----------
     line_ : matplotlib Artist
-        Precision recall curve.
+        Metrics curve.
 
     ax_ : matplotlib Axes
-        Axes with precision recall curve.
+        Axes with the curve.
 
     figure_ : matplotlib Figure
         Figure containing the curve.
-
     """
 
     def __init__(self, estimator_name=None, pos_label=None):
@@ -151,13 +148,17 @@ class Display:
         x, y : array-like or scalar
             The horizontal / vertical coordinates of the data points.
 
-        line_kwargs :
+        line_kwargs : dict
+            Keyword arguments to be passed to matplotlib's `plot`.
 
-        xlabel : label of the horizontal axes
+        xlabel : str
+            Label of the horizontal axis
 
-        ylabel : label of the vertical axes
+        ylabel : str
+            Label of the vertical axis
 
-        loc : location of the legend
+        loc : str
+            Location of the legend.
 
         ax : Matplotlib Axes, default=None
             Axes object to plot on. If `None`, a new figure and axes is
