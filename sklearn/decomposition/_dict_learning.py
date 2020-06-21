@@ -53,7 +53,8 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
     cov : array of shape (n_components, n_samples), default=None
         Precomputed covariance, dictionary * X'
 
-    algorithm : {'lasso_lars', 'lasso_cd', 'lars', 'omp', 'threshold'}, default='lasso_lars'
+    algorithm : {'lasso_lars', 'lasso_cd', 'lars', 'omp', 'threshold'}, \
+    default='lasso_lars'
         lars: uses the least angle regression method (linear_model.lars_path)
         lasso_lars: uses Lars to compute the Lasso solution
         lasso_cd: uses the coordinate descent method to compute the
@@ -215,7 +216,8 @@ def sparse_encode(X, dictionary, *, gram=None, cov=None,
     cov : array of shape (n_components, n_samples), default=None
         Precomputed covariance, dictionary' * X
 
-    algorithm : {'lasso_lars', 'lasso_cd', 'lars', 'omp', 'threshold'}, default='lasso_lars'
+    algorithm : {'lasso_lars', 'lasso_cd', 'lars', 'omp', 'threshold'}, \
+    default='lasso_lars'
         lars: uses the least angle regression method (linear_model.lars_path)
         lasso_lars: uses Lars to compute the Lasso solution
         lasso_cd: uses the coordinate descent method to compute the
