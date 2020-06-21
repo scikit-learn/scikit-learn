@@ -1,7 +1,9 @@
+from .base import _get_target_scores
+from .base import Display
+
 from .. import auc
 from .. import roc_curve
 
-from .base import _get_target_scores, Display
 from ...utils import check_matplotlib_support
 from ...utils.validation import _deprecate_positional_args
 

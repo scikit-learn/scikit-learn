@@ -1,4 +1,5 @@
-from .base import _get_target_scores, Display
+from .base import _get_target_scores
+from .base import Display
 
 from .. import average_precision_score
 from .. import precision_recall_curve

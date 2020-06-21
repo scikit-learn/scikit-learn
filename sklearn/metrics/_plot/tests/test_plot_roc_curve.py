@@ -1,23 +1,24 @@
 import pytest
-from numpy.testing import assert_allclose
 import numpy as np
+from numpy.testing import assert_allclose
 
-from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import plot_roc_curve
 from sklearn.metrics import RocCurveDisplay
-from sklearn.datasets import load_iris, load_breast_cancer
+from sklearn.metrics import roc_curve
+from sklearn.metrics import auc
+from sklearn.datasets import load_iris
+from sklearn.datasets import load_breast_cancer
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import roc_curve, auc
+from sklearn.model_selection import train_test_split
 from sklearn.base import ClassifierMixin
 from sklearn.exceptions import NotFittedError
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
+from sklearn.utils import shuffle
 from sklearn.compose import make_column_transformer
 
 # TODO: Remove when https://github.com/numpy/numpy/issues/14397 is resolved
-from sklearn.utils import shuffle
-
 pytestmark = pytest.mark.filterwarnings(
     "ignore:In future, it will be an error for 'np.bool_':DeprecationWarning:"
     "matplotlib.*")
