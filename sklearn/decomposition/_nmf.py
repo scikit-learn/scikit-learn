@@ -1135,11 +1135,11 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
 def non_negative_factorization_online(X, W=None, H=None, n_components=None, *,
                                       init=None, update_H=True, solver='cd',
                                       A=None, B=None, batch_size=1024,
-                                      beta_loss='frobenius', tol=1e-4,
+                                      beta_loss='kullback-leibler', tol=1e-4,
                                       max_iter=200, alpha=0., l1_ratio=0.,
                                       regularization=None, random_state=None,
                                       verbose=0, shuffle=False):
-    r"""Compute Non-negative Matrix Factorization (NMF)
+    r"""Compute Non-negative Matrix Factorization online (MiniBatchNMF)
 
     Find two non-negative matrices (W, H) whose product approximates the non-
     negative matrix X. This factorization can be used for example for
@@ -1231,7 +1231,7 @@ def non_negative_factorization_online(X, W=None, H=None, n_components=None, *,
         .. versionadded:: 0.19
            Multiplicative Update solver.
 
-    beta_loss : float or string, default 'frobenius'
+    beta_loss : float or string, default 'kullback-leibler'
         String must be in {'frobenius', 'kullback-leibler', 'itakura-saito'}.
         Beta divergence to be minimized, measuring the distance between X
         and the dot product WH. Note that values different from 'frobenius'
@@ -1913,8 +1913,9 @@ class MiniBatchNMF(TransformerMixin, BaseEstimator):
 
     def partial_fit(self, X, y=None, **params):
         if hasattr(self, 'components_'):
-            W = np.ones((X.shape[0], self.n_components))
-            W *= np.maximum(1e-6, X.sum(axis=1).A)
+            W = np.ones((X.shape[0], self.n_components_))
+            #  commented only to check tests
+            #W *= np.maximum(1e-6, X.sum(axis=1).A)
             W /= W.sum(axis=1, keepdims=True)
             W, H, A, B, n_iter_ = non_negative_factorization_online(
                 X=X, W=W, H=self.components_,
