@@ -92,7 +92,7 @@ class Hyperparameter(namedtuple('Hyperparameter',
     We can access each hyperparameter:
 
     >>> for hyperparameter in kernel.hyperparameters: print(hyperparameter)
-    Hyperparameter(name='k1__k1__constant_value', value_type='numeric',
+    Hyperparameter(name='constant_value', value_type='numeric',
     bounds=array([[ 0., 10.]]), n_elements=1, fixed=False)
 
     >>> params = kernel.get_params()
