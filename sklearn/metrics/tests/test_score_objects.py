@@ -8,7 +8,6 @@ from functools import partial
 
 import numpy as np
 import pytest
-import warnings
 import joblib
 
 from numpy.testing import assert_allclose
