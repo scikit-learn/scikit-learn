@@ -1361,7 +1361,8 @@ class MiniBatchDictionaryLearning(SparseCodingMixin, BaseEstimator):
         threshold: squashes to zero all coefficients less than alpha from
         the projection dictionary * X'
 
-    transform_n_nonzero_coefs : int, ``0.1 * n_features`` by default Number of nonzero coefficients to target in each column of the
+    transform_n_nonzero_coefs : int, ``0.1 * n_features`` by default
+        Number of nonzero coefficients to target in each column of the
         solution. This is only used by `algorithm='lars'` and `algorithm='omp'`
         and is overridden by `alpha` in the `omp` case.
 
