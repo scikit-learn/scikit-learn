@@ -14,7 +14,7 @@ if "%PYTEST_XDIST%" == "true" (
 
 if "%CHECK_WARNINGS%" == "true" (
     REM numpy's 1.19.0's tostring() deprecation is ignored until scipy and joblib removes its usage
-    set PYTEST_ARGS=%PYTEST_ARGS% -Werror::DeprecationWarning -Werror::FutureWarning -Wignore:tostring:DeprecationWarning
+    set PYTEST_ARGS=%PYTEST_ARGS% -Werror::DeprecationWarning -Werror::FutureWarning -Wignore:tostring() is deprecated:DeprecationWarning
 )
 
 if "%COVERAGE%" == "true" (
