@@ -42,10 +42,8 @@ ARCHIVE = RemoteFileMetadata(
 
 logger = logging.getLogger(__name__)
 
-"""
-Column names reference:
-https://archive.ics.uci.edu/ml/machine-learning-databases/covtype/covtype.info
-"""
+# Column names reference:
+# https://archive.ics.uci.edu/ml/machine-learning-databases/covtype/covtype.info
 FEATURE_NAMES = ["Elevation",
                  "Aspect",
                  "Slope",
@@ -56,8 +54,8 @@ FEATURE_NAMES = ["Elevation",
                  "Hillshade_Noon",
                  "Hillshade_3pm",
                  "Horizontal_Distance_To_Fire_Points"]
-FEATURE_NAMES += ['Wilderness_Area_'+str(i) for i in range(1, 5)]
-FEATURE_NAMES += ['Soil_Type_'+str(i) for i in range(1, 41)]
+FEATURE_NAMES += [f"Wilderness_Area_{i}" for i in range(4)]
+FEATURE_NAMES += [f"Soil_Type_{i}" for i in range(40)]
 TARGET_NAMES = ["Cover_Type"]
 
 
@@ -99,13 +97,16 @@ def fetch_covtype(*, data_home=None, download_if_missing=True,
     return_X_y : bool, default=False
         If True, returns ``(data.data, data.target)`` instead of a Bunch
         object.
-    .. versionadded:: 0.20
+
+        .. versionadded:: 0.20
+
     as_frame : bool, default=False
         If True, the data is a pandas DataFrame including columns with
-        appropriate dtypes (numeric). The target is
-        a pandas DataFrame or Series depending on the number of target columns.
-        If `return_X_y` is True, then (`data`, `target`) will be pandas
-        DataFrames or Series as described below.
+        appropriate dtypes (numeric). The target is a pandas DataFrame or
+        Series depending on the number of target columns. If `return_X_y` is
+        True, then (`data`, `target`) will be pandas DataFrames or Series as
+        described below.
+
         .. versionadded:: 0.24
 
     Returns
@@ -123,6 +124,10 @@ def fetch_covtype(*, data_home=None, download_if_missing=True,
             Only present when `as_frame=True`. Contains `data` and `target`.
         DESCR : str
             Description of the forest covertype dataset.
+        feature_names : list
+            The names of the dataset columns
+        target_names: list
+            The names of the target columns
 
     (data, target) : tuple if ``return_X_y`` is True
 
