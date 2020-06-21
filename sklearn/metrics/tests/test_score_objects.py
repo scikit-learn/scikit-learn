@@ -473,30 +473,25 @@ def test_raises_on_score_list():
     # the warning message we're expecting to see
     warning_message = ("Scoring failed. The score on this train-test "
                        "partition for these parameters will be set to %f. "
-                       "Details: \n%s" % (score_kwargs['error_score'],
-                                          error_message))
+                       "Details: \n" % score_kwargs['error_score'])
 
-    with warnings.catch_warnings(record=True) as record:
-        warnings.simplefilter("always")
+    with pytest.warns(UserWarning, match=warning_message) as record:
         cross_val_score(clf, X, y, scoring=f1_scorer_no_average)
-        assert len(record) > 0
-        for item in record:
-            assert 'Traceback (most recent call last):\n' in str(item.message)
-            split = str(item.message).splitlines()
-            mtb = split[0] + '\n' + split[-1]
-            assert warning_message in mtb
+    assert len(record) > 0
+    for item in record:
+        assert 'Traceback (most recent call last):\n' in str(item.message)
+        split = str(item.message).splitlines()
+        assert error_message in split[-1]
 
     grid_search = GridSearchCV(clf, scoring=f1_scorer_no_average,
                                param_grid={'max_depth': [1, 2]})
-    with warnings.catch_warnings(record=True) as record:
-        warnings.simplefilter("always")
+    with pytest.warns(UserWarning, match=warning_message) as record:
         grid_search.fit(X, y)
-        assert len(record) > 0
-        for item in record:
-            assert 'Traceback (most recent call last):\n' in str(item.message)
-            split = str(item.message).splitlines()
-            mtb = split[0] + '\n' + split[-1]
-            assert warning_message in mtb
+    assert len(record) > 0
+    for item in record:
+        assert 'Traceback (most recent call last):\n' in str(item.message)
+        split = str(item.message).splitlines()
+        assert error_message in split[-1]
 
 
 @ignore_warnings

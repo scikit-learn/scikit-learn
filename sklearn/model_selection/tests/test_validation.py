@@ -340,28 +340,23 @@ def test_cross_validate_invalid_scoring_param():
     # the warning message we're expecting to see
     warning_message = ("Scoring failed. The score on this train-test "
                        "partition for these parameters will be set to %f. "
-                       "Details: \n%s" % (score_kwargs['error_score'],
-                                          error_message))
+                       "Details: \n" % score_kwargs['error_score'])
 
-    with warnings.catch_warnings(record=True) as record:
-        warnings.simplefilter("always")
+    with pytest.warns(UserWarning, match=warning_message) as record:
         cross_validate(estimator, X, y, scoring=multiclass_scorer)
-        assert len(record) > 0
-        for item in record:
-            assert 'Traceback (most recent call last):\n' in str(item.message)
-            split = str(item.message).splitlines()
-            mtb = split[0] + '\n' + split[-1]
-            assert warning_message in mtb
+    assert len(record) > 0
+    for item in record:
+        assert 'Traceback (most recent call last):\n' in str(item.message)
+        split = str(item.message).splitlines()
+        assert error_message in split[-1]
 
-    with warnings.catch_warnings(record=True) as record:
-        warnings.simplefilter("always")
+    with pytest.warns(UserWarning, match=warning_message) as record:
         cross_validate(estimator, X, y, scoring={"foo": multiclass_scorer})
-        assert len(record) > 0
-        for item in record:
-            assert 'Traceback (most recent call last):\n' in str(item.message)
-            split = str(item.message).splitlines()
-            mtb = split[0] + '\n' + split[-1]
-            assert warning_message in mtb
+    assert len(record) > 0
+    for item in record:
+        assert 'Traceback (most recent call last):\n' in str(item.message)
+        split = str(item.message).splitlines()
+        assert error_message in split[-1]
 
     multivalued_scorer = make_scorer(confusion_matrix)
 
@@ -372,28 +367,25 @@ def test_cross_validate_invalid_scoring_param():
     # the warning message we're expecting to see
     warning_message = ("Scoring failed. The score on this train-test "
                        "partition for these parameters will be set to %f. "
-                       "Details: \n%s" % (score_kwargs['error_score'],
-                                          error_message))
+                       "Details: \n" % score_kwargs['error_score'])
 
-    with warnings.catch_warnings(record=True) as record:
-        warnings.simplefilter("always")
+    with pytest.warns(UserWarning, match=warning_message) as record:
         cross_validate(SVC(), X, y, scoring=multivalued_scorer)
-        assert len(record) > 0
-        for item in record:
-            assert 'Traceback (most recent call last):\n' in str(item.message)
-            split = str(item.message).splitlines()
-            mtb = split[0] + '\n' + '\n'.join(split[-2:])
-            assert warning_message in mtb
+    assert len(record) > 0
+    for item in record:
+        assert 'Traceback (most recent call last):\n' in str(item.message)
+        split = str(item.message).splitlines()
+        mtb = '\n'.join(split[-2:])
+        assert error_message in mtb
 
-    with warnings.catch_warnings(record=True) as record:
-        warnings.simplefilter("always")
+    with pytest.warns(UserWarning, match=warning_message) as record:
         cross_validate(SVC(), X, y, scoring={"foo": multivalued_scorer})
-        assert len(record) > 0
-        for item in record:
-            assert 'Traceback (most recent call last):\n' in str(item.message)
-            split = str(item.message).splitlines()
-            mtb = split[0] + '\n' + '\n'.join(split[-2:])
-            assert warning_message in mtb
+    assert len(record) > 0
+    for item in record:
+        assert 'Traceback (most recent call last):\n' in str(item.message)
+        split = str(item.message).splitlines()
+        mtb = '\n'.join(split[-2:])
+        assert error_message in mtb
 
     assert_raises_regex(ValueError, "'mse' is not a valid scoring value.",
                         cross_validate, SVC(), X, y, scoring="mse")
@@ -1645,21 +1637,17 @@ def test_score_memmap():
         # the warning message we're expecting to see
         warning_message = ("Scoring failed. The score on this train-test "
                            "partition for these parameters will be set to %f. "
-                           "Details: \n%s" % (score_kwargs['error_score'],
-                                              error_message))
+                           "Details: \n" % score_kwargs['error_score'])
 
         # No error with the scalar score
         cross_val_score(clf, X, y, scoring=lambda est, X, y: score)
-        with warnings.catch_warnings(record=True) as record:
-            warnings.simplefilter("always")
+        with pytest.warns(UserWarning, match=warning_message) as record:
             cross_val_score(clf, X, y, scoring=lambda est, X, y: scores)
-            assert len(record) > 0
-            for item in record:
-                error = str(item.message)
-                assert 'Traceback (most recent call last):\n' in error
-                split = error.splitlines()
-                mtb = split[0] + '\n' + split[-1]
-                assert warning_message in mtb
+        assert len(record) > 0
+        for item in record:
+            assert 'Traceback (most recent call last):\n' in str(item.message)
+            split = str(item.message).splitlines()
+            assert error_message in split[-1]
     finally:
         # Best effort to release the mmap file handles before deleting the
         # backing file under Windows
@@ -1777,18 +1765,15 @@ def test_score_failing():
     # the warning message we're expecting to see
     warning_message = ("Scoring failed. The score on this train-test "
                        "partition for these parameters will be set to %f. "
-                       "Details: \n%s" % (score_kwargs['error_score'],
-                                          error_message))
+                       "Details: \n" % score_kwargs['error_score'])
 
-    with warnings.catch_warnings(record=True) as record:
-        warnings.simplefilter("always")
+    with pytest.warns(UserWarning, match=warning_message) as record:
         cross_val_score(clf, X, y, scoring='accuracy')
-        assert len(record) > 0
-        for item in record:
-            assert 'Traceback (most recent call last):\n' in str(item.message)
-            split = str(item.message).splitlines()
-            mtb = split[0] + '\n' + split[-1]
-            assert warning_message in mtb
+    assert len(record) > 0
+    for item in record:
+        assert 'Traceback (most recent call last):\n' in str(item.message)
+        split = str(item.message).splitlines()
+        assert error_message in split[-1]
 
     # Test if an exception is raised on error_score='raise'
     assert_raises_regex(ValueError, ("Classification metrics can't handle "
