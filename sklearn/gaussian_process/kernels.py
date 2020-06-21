@@ -81,35 +81,26 @@ class Hyperparameter(namedtuple('Hyperparameter',
 
     Examples
     --------
-    >>> from sklearn.gaussian_process.kernels import ConstantKernel, RBF
+    >>> from sklearn.gaussian_process.kernels import ConstantKernel
     >>> from sklearn.datasets import make_friedman2
     >>> from sklearn.gaussian_process import GaussianProcessRegressor
     >>> from sklearn.gaussian_process.kernels import Hyperparameter
     >>> X, y = make_friedman2(n_samples=50, noise=0, random_state=0)
     >>> kernel = ConstantKernel(constant_value=1.0,
-    ...    constant_value_bounds=(0.0, 10.0)) * RBF(length_scale=0.5,
-    ...    length_scale_bounds=(0.0, 10.0)) + RBF(length_scale=2.0,
-    ...    length_scale_bounds=(0.0, 10.0))
+    ...    constant_value_bounds=(0.0, 10.0))
+
+    We can access each hyperparameter:
+
     >>> for hyperparameter in kernel.hyperparameters: print(hyperparameter)
     Hyperparameter(name='k1__k1__constant_value', value_type='numeric',
     bounds=array([[ 0., 10.]]), n_elements=1, fixed=False)
-    Hyperparameter(name='k1__k2__length_scale', value_type='numeric',
-    bounds=array([[ 0., 10.]]), n_elements=1, fixed=False)
-    Hyperparameter(name='k2__length_scale', value_type='numeric',
-    bounds=array([[ 0., 10.]]), n_elements=1, fixed=False)
+
     >>> params = kernel.get_params()
-    >>> for key in sorted(params): print("%s : %s" % (key, params[key]))
-    k1 : 1**2 * RBF(length_scale=0.5)
-    k1__k1 : 1**2
-    k1__k1__constant_value : 1.0
-    k1__k1__constant_value_bounds : (0.0, 10.0)
-    k1__k2 : RBF(length_scale=0.5)
-    k1__k2__length_scale : 0.5
-    k1__k2__length_scale_bounds : (0.0, 10.0)
-    k2 : RBF(length_scale=2)
-    k2__length_scale : 2.0
-    k2__length_scale_bounds : (0.0, 10.0)
+    >>> for key in sorted(params): print(f"{key} : {params[key]}")
+    constant_value : 1.0
+    constant_value_bounds : (0.0, 10.0)
     """
+
     # A raw namedtuple is very memory efficient as it packs the attributes
     # in a struct to get rid of the __dict__ of attributes in particular it
     # does not copy the string for the keys on each instance.
@@ -1257,7 +1248,6 @@ class WhiteKernel(StationaryKernelMixin, GenericKernelMixin,
     >>> gpr.predict(X[:2,:], return_std=True)
     (array([653.0..., 592.1... ]), array([316.6..., 316.6...]))
     """
-
     def __init__(self, noise_level=1.0, noise_level_bounds=(1e-5, 1e5)):
         self.noise_level = noise_level
         self.noise_level_bounds = noise_level_bounds
@@ -1398,7 +1388,6 @@ class RBF(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
     array([[0.8354..., 0.03228..., 0.1322...],
            [0.7906..., 0.0652..., 0.1441...]])
     """
-
     def __init__(self, length_scale=1.0, length_scale_bounds=(1e-5, 1e5)):
         self.length_scale = length_scale
         self.length_scale_bounds = length_scale_bounds
@@ -1565,7 +1554,6 @@ class Matern(RBF):
     array([[0.8513..., 0.0368..., 0.1117...],
             [0.8086..., 0.0693..., 0.1220...]])
     """
-
     def __init__(self, length_scale=1.0, length_scale_bounds=(1e-5, 1e5),
                  nu=1.5):
         super().__init__(length_scale, length_scale_bounds)
@@ -1744,7 +1732,6 @@ class RationalQuadratic(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
     array([[0.8881..., 0.0566..., 0.05518...],
             [0.8678..., 0.0707... , 0.0614...]])
     """
-
     def __init__(self, length_scale=1.0, alpha=1.0,
                  length_scale_bounds=(1e-5, 1e5), alpha_bounds=(1e-5, 1e5)):
         self.length_scale = length_scale
@@ -1887,7 +1874,6 @@ class ExpSineSquared(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
     >>> gpr.predict(X[:2,:], return_std=True)
     (array([425.6..., 457.5...]), array([0.3894..., 0.3467...]))
     """
-
     def __init__(self, length_scale=1.0, periodicity=1.0,
                  length_scale_bounds=(1e-5, 1e5),
                  periodicity_bounds=(1e-5, 1e5)):
@@ -2031,7 +2017,6 @@ class DotProduct(Kernel):
     >>> gpr.predict(X[:2,:], return_std=True)
     (array([653.0..., 592.1...]), array([316.6..., 316.6...]))
     """
-
     def __init__(self, sigma_0=1.0, sigma_0_bounds=(1e-5, 1e5)):
         self.sigma_0 = sigma_0
         self.sigma_0_bounds = sigma_0_bounds
@@ -2183,7 +2168,6 @@ class PairwiseKernel(Kernel):
     array([[0.8880..., 0.05663..., 0.05532...],
            [0.8676..., 0.07073..., 0.06165...]])
     """
-
     def __init__(self, gamma=1.0, gamma_bounds=(1e-5, 1e5), metric="linear",
                  pairwise_kernels_kwargs=None):
         self.gamma = gamma
