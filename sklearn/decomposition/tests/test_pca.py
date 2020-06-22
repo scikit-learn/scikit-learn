@@ -641,7 +641,11 @@ def test_assess_dimesion_rank_one():
         assert _assess_dimension(s, rank, n_samples) == -np.inf
 
 
-@pytest.mark.parametrize('svd_solver', PCA_SOLVERS)
+# XXX: it should be possible to support 'randomized' by adding npx=np
+# in appropriate locations. The 'arpack' svd_solver, on the other-hand,
+# cannot easily be adapted to work on non-numpy allocated arrays.
+# @pytest.mark.parametrize('svd_solver', ["full", "randomized", "auto"])
+@pytest.mark.parametrize('svd_solver', ["full"])
 @pytest.mark.parametrize('copy', [True, False])
 def test_pca_jax_data(svd_solver, copy):
     jnp = pytest.importorskip("jax.numpy")
