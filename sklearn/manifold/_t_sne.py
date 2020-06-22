@@ -728,7 +728,7 @@ class TSNE(BaseEstimator):
                 distances = pairwise_distances(X, metric=self.metric)
 
             if (
-                self.square_distance
+                self.square_distance is True
                 or (self.square_distance == 'legacy'
                     and self.metric == 'euclidean')
             ):
@@ -781,7 +781,7 @@ class TSNE(BaseEstimator):
             del knn
 
             if (
-                    self.square_distance
+                    self.square_distance is True
                     or (self.square_distance == 'legacy'
                         and self.metric == 'euclidean')
             ):
