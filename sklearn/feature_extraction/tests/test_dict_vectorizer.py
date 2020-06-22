@@ -77,20 +77,24 @@ def test_one_of_k():
 
 
 def test_iterable_value():
+    D_names = ['ham', 'spam', 'version=1', 'version=2', 'version=3']
+    X_data = [[2.0, 0.0, 1.0, 1.0, 0.0],
+              [0.0, 0.3, 0.0, 1.0, 0.0],
+              [0.0, -1.0, 0.0, 0.0, 1.0]]
     D_in = [{"version": ["1", "2"], "ham": 2},
             {"version": "2", "spam": .3},
             {"version=3": True, "spam": -1}]
     v = DictVectorizer()
     X = v.fit_transform(D_in)
-    assert X.shape == (3, 5)
+    X = X.toarray()
+    assert_array_equal(X, X_data)
 
     D_out = v.inverse_transform(X)
     assert D_out[0] == {"version=1": 1, "version=2": 1, "ham": 2}
 
     names = v.get_feature_names()
-    assert "version=2" in names
-    assert "version=1" in names
-    assert "version" not in names
+
+    assert names == D_names
 
 
 def test_unseen_or_no_features():
