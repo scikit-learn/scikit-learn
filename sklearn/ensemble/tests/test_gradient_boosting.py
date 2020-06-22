@@ -1143,7 +1143,6 @@ def test_non_uniform_weights_toy_edge_case_reg(loss):
         learning_rate=0.1, n_estimators=200, loss=loss,
     )
     gb.fit(X, y, sample_weight=sample_weight)
-    print(gb.train_score_)
     assert gb.predict([[1]])[0] > 0.5
     # check that the loss is always decreasing
     assert np.all(np.diff(gb.train_score_) <= 0)
