@@ -34,6 +34,17 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
                              MetaEstimatorMixin):
     """Probability calibration with isotonic regression or logistic regression.
 
+    This class uses cross-validation to both estimate the parameters of a
+    classifier and subsequently calibrate a classifier. For each cv split it
+    fits a copy of the base estimator to the training folds, and calibrates it
+    using the testing fold. For prediction, predicted probabilities are
+    averaged across these individual calibrated classifiers.
+
+    Already fitted classifiers can be calibrated via the parameter cv="prefit".
+    In this case, no cross-validation is used and all provided data is used
+    for calibration. The user has to take care manually that data for model
+    fitting and calibration are disjoint.
+
     The calibration is based on the :term:`decision_function` method of the
     `base_estimator` if it exists, else on :term:`predict_proba`.
 
@@ -45,14 +56,15 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
         The classifier whose output need to be calibrated to provide more
         accurate `predict_proba` outputs.
 
-    method : 'sigmoid' or 'isotonic'
+    method : {'sigmoid', 'isotonic'}, default='sigmoid'
         The method to use for calibration. Can be 'sigmoid' which
         corresponds to Platt's method (i.e. a logistic regression model) or
         'isotonic' which is a non-parametric approach. It is not advised to
         use isotonic calibration with too few calibration samples
         ``(<<1000)`` since it tends to overfit.
 
-    cv : integer, cross-validation generator, iterable or "prefit", optional
+    cv : integer, cross-validation generator, iterable or "prefit", \
+            default=None
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 
@@ -62,11 +74,11 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
         - An iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, if ``y`` is binary or multiclass,
-        :class:`sklearn.model_selection.StratifiedKFold` is used. If ``y`` is
-        neither binary nor multiclass, :class:`sklearn.model_selection.KFold`
+        :class:`~sklearn.model_selection.StratifiedKFold` is used. If ``y`` is
+        neither binary nor multiclass, :class:`~sklearn.model_selection.KFold`
         is used.
 
-        Refer :ref:`User Guide <cross_validation>` for the various
+        Refer to the :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
         If "prefit" is passed, it is assumed that `base_estimator` has been
@@ -81,9 +93,49 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
         The class labels.
 
     calibrated_classifiers_ : list (len() equal to cv or 1 if cv == "prefit")
-        The list of calibrated classifiers, one for each cross-validation fold,
-        which has been fitted on all but the validation fold and calibrated
-        on the validation fold.
+        The list of calibrated classifiers, one for each cross-validation
+        split, which has been fitted on training folds and
+        calibrated on the testing fold.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_classification
+    >>> from sklearn.naive_bayes import GaussianNB
+    >>> from sklearn.calibration import CalibratedClassifierCV
+    >>> X, y = make_classification(n_samples=100, n_features=2,
+    ...                            n_redundant=0, random_state=42)
+    >>> base_clf = GaussianNB()
+    >>> calibrated_clf = CalibratedClassifierCV(base_estimator=base_clf, cv=3)
+    >>> calibrated_clf.fit(X, y)
+    CalibratedClassifierCV(base_estimator=GaussianNB(), cv=3)
+    >>> len(calibrated_clf.calibrated_classifiers_)
+    3
+    >>> calibrated_clf.predict_proba(X)[:5, :]
+    array([[0.110..., 0.889...],
+           [0.072..., 0.927...],
+           [0.928..., 0.071...],
+           [0.928..., 0.071...],
+           [0.071..., 0.928...]])
+
+    >>> from sklearn.model_selection import train_test_split
+    >>> X, y = make_classification(n_samples=100, n_features=2,
+    ...                            n_redundant=0, random_state=42)
+    >>> X_train, X_calib, y_train, y_calib = train_test_split(
+    ...        X, y, random_state=42
+    ... )
+    >>> base_clf = GaussianNB()
+    >>> base_clf.fit(X_train, y_train)
+    GaussianNB()
+    >>> calibrated_clf = CalibratedClassifierCV(
+    ...     base_estimator=base_clf,
+    ...     cv="prefit"
+    ... )
+    >>> calibrated_clf.fit(X_calib, y_calib)
+    CalibratedClassifierCV(base_estimator=GaussianNB(), cv='prefit')
+    >>> len(calibrated_clf.calibrated_classifiers_)
+    1
+    >>> calibrated_clf.predict_proba([[-0.5, 0.5]])
+    array([[0.936..., 0.063...]])
 
     References
     ----------
@@ -232,6 +284,14 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
         """
         check_is_fitted(self)
         return self.classes_[np.argmax(self.predict_proba(X), axis=1)]
+
+    def _more_tags(self):
+        return {
+            '_xfail_checks': {
+                'check_sample_weights_invariance(kind=zeros)':
+                'zero sample_weight is not equivalent to removing samples',
+            }
+        }
 
 
 class _CalibratedClassifier:

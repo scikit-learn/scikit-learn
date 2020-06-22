@@ -100,7 +100,7 @@ def isotonic_regression(y, *, sample_weight=None, y_min=None, y_max=None,
         Upper bound on the highest predicted value (the maximum may still be
         lower). If not set, defaults to +inf.
 
-    increasing : boolean, optional, default: True
+    increasing : bool, default=True
         Whether to compute ``y_`` is increasing (if set to True) or decreasing
         (if set to False)
 
