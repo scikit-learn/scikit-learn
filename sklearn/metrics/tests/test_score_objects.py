@@ -471,12 +471,12 @@ def test_raises_on_score_list():
                        "partition for these parameters will be set to %f. "
                        "Details: \n" % score_kwargs['error_score'])
 
-    with pytest.warns(UserWarning, match=warning_message) as record:
+    with pytest.warns(UserWarning, match=warning_message):
         cross_val_score(clf, X, y, scoring=f1_scorer_no_average)
 
     grid_search = GridSearchCV(clf, scoring=f1_scorer_no_average,
                                param_grid={'max_depth': [1, 2]})
-    with pytest.warns(UserWarning, match=warning_message) as record:
+    with pytest.warns(UserWarning, match=warning_message):
         grid_search.fit(X, y)
 
 
