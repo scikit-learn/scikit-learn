@@ -523,6 +523,11 @@ def svd_flip(u, v, u_based_decision=True, npx=np):
         decision on is generally algorithm dependent.
 
 
+    npx : module
+        Module compatible with the numpy API to make it possible to use this
+        utility function with alternative array libraries by following NEP 37
+        idioms.
+
     Returns
     -------
     u_adjusted, v_adjusted : arrays with the same dimensions as the input.
