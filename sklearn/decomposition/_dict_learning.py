@@ -46,7 +46,7 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
         The dictionary matrix against which to solve the sparse coding of
         the data. Some of the algorithms assume normalized rows.
 
-    gram : None | array of shape (n_components, n_components)
+    gram : None or array of shape (n_components, n_components)
         Precomputed Gram matrix, dictionary * dictionary'
         gram can be None if method is 'threshold'.
 
@@ -64,7 +64,7 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
         threshold: squashes to zero all coefficients less than regularization
         from the projection dictionary * data'
 
-    regularization : int | float, default=None
+    regularization : int or float, default=None
         The regularization parameter. It corresponds to alpha when
         algorithm is 'lasso_lars', 'lasso_cd' or 'threshold'.
         Otherwise it corresponds to n_nonzero_coefs.
@@ -253,7 +253,7 @@ def sparse_encode(X, dictionary, *, gram=None, cov=None,
         Maximum number of iterations to perform if `algorithm='lasso_cd'` or
         `lasso_lars`.
 
-    n_jobs : int or None, default=None
+    n_jobs : int, default=None
         Number of parallel jobs to run.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
@@ -364,7 +364,7 @@ def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
         Whether to compute and return the residual sum of squares corresponding
         to the computed solution.
 
-    random_state : int, RandomState instance, default=None
+    random_state : int or RandomState instance, default=None
         Used for randomly initializing the dictionary. Pass an int for
         reproducible results across multiple function calls.
         See :term:`Glossary <random_state>`.
@@ -485,7 +485,7 @@ def dict_learning(X, n_components, *, alpha, max_iter=100, tol=1e-8,
     verbose : bool, default=False
         To control the verbosity of the procedure.
 
-    random_state : int, RandomState instance or None, default=None
+    random_state : int or RandomState instance, default=None
         Used for randomly initializing the dictionary. Pass an int for
         reproducible results across multiple function calls.
         See :term:`Glossary <random_state>`.
@@ -692,7 +692,7 @@ def dict_learning_online(X, n_components=2, *, alpha=1, n_iter=100,
         Number of previous iterations completed on the dictionary used for
         initialization.
 
-    random_state : int, RandomState instance, default=None
+    random_state : int or RandomState instance, default=None
         Used for initializing the dictionary when ``dict_init`` is not
         specified, randomly shuffling the data when ``shuffle`` is set to
         ``True``, and updating the dictionary. Pass an int for reproducible
@@ -1164,7 +1164,7 @@ class DictionaryLearning(SparseCodingMixin, BaseEstimator):
         its negative part and its positive part. This can improve the
         performance of downstream classifiers.
 
-    random_state : int, RandomState instance, default=None
+    random_state : int or RandomState instance, default=None
         Used for initializing the dictionary when ``dict_init`` is not
         specified, randomly shuffling the data when ``shuffle`` is set to
         ``True``, and updating the dictionary. Pass an int for reproducible
@@ -1383,7 +1383,7 @@ class MiniBatchDictionaryLearning(SparseCodingMixin, BaseEstimator):
         its negative part and its positive part. This can improve the
         performance of downstream classifiers.
 
-    random_state : int, RandomState instance, default=None
+    random_state : int or RandomState instance, default=None
         Used for initializing the dictionary when ``dict_init`` is not
         specified, randomly shuffling the data when ``shuffle`` is set to
         ``True``, and updating the dictionary. Pass an int for reproducible
