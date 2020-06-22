@@ -491,6 +491,6 @@ class RadiusNeighborsTransformer(RadiusNeighborsMixin, UnsupervisedMixin,
         return {
             '_xfail_checks': {
                 'check_methods_sample_order_invariance':
-                'fails for the transform method'
+                'check is not applicable.'
             }
         }
