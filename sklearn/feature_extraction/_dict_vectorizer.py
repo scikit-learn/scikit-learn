@@ -122,45 +122,26 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
         self.sort = sort
 
     def _add_iterable_element(self, f, v, feature_names, vocab, fitting=True,
-                     transforming=False, indices=None, values=None):
-        if isinstance(v, str):
-            feature_name = "%s%s%s" % (f, self.separator, v)
-            v = 1
-        elif isinstance(v, Number) or (v is None):
-            feature_name = f
-        elif isinstance(v, Iterable):
-            for vv in v:
-                if isinstance(vv, str):
-                    feature_name = "%s%s%s" % (f, self.separator, vv)
-                    vv = 1
-                elif isinstance(vv, Number) or (vv is None):
-                    feature_name = vv
+                              transforming=False, indices=None, values=None):
+    """Add feature names for iterable elements"""
+        for vv in v:
+            if isinstance(vv, str):
+                feature_name = "%s%s%s" % (f, self.separator, vv)
+                vv = 1
+            elif isinstance(vv, Number) or (vv is None):
+                feature_name = vv
 
-                if fitting:
-                    if feature_name not in vocab:
-                        vocab[feature_name] = len(feature_names)
-                        feature_names.append(feature_name)
+            if fitting:
+                if feature_name not in vocab:
+                    vocab[feature_name] = len(feature_names)
+                    feature_names.append(feature_name)
 
-                if transforming:
-                    if feature_name in vocab:
-                        indices.append(vocab[feature_name])
-                        values.append(self.dtype(vv))
+            if transforming:
+                if feature_name in vocab:
+                    indices.append(vocab[feature_name])
+                    values.append(self.dtype(vv))
 
-
-            return
-        else:
-            raise ValueError(
-                'Unsupported Value Type %s for {%s: %s}' % (type(v), f, v))
-
-        if fitting:
-            if feature_name not in vocab:
-                vocab[feature_name] = len(feature_names)
-                feature_names.append(feature_name)
-
-        if transforming:
-            if feature_name in vocab:
-                indices.append(vocab[feature_name])
-                values.append(self.dtype(v))
+        return
 
     def fit(self, X, y=None):
         """Learn a list of feature name -> indices mappings.
@@ -181,7 +162,17 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
 
         for x in X:
             for f, v in x.items():
-                self._add_iterable_element(f, v, feature_names, vocab)
+                if isinstance(v, str):
+                    feature_name = "%s%s%s" % (f, self.separator, v)
+                    v = 1
+                elif isinstance(v, Number) or (v is None):
+                    feature_name = f
+                elif isinstance(v, Iterable):
+                    self._add_iterable_element(f, v, feature_names, vocab)
+
+                if feature_name not in vocab:
+                    vocab[feature_name] = len(feature_names)
+                    feature_names.append(feature_name)
 
         if self.sort:
             feature_names.sort()
@@ -225,8 +216,26 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
         # same time
         for x in X:
             for f, v in x.items():
-                self._add_iterable_element(f, v, feature_names, vocab,
-                                  fitting, transforming, indices, values)
+                if isinstance(v, str):
+                    feature_name = "%s%s%s" % (f, self.separator, v)
+                    v = 1
+                elif isinstance(v, Number) or (v is None):
+                    feature_name = f
+                elif isinstance(v, Iterable):
+                    feature_name = None
+                    self._add_iterable_element(f, v, feature_names, vocab,
+                                               fitting, transforming,
+                                               indices, values)
+
+                if feature_name is not None:
+                    if fitting:
+                        if feature_name not in vocab:
+                            vocab[feature_name] = len(feature_names)
+                            feature_names.append(feature_name)
+
+                    if feature_name in vocab:
+                        indices.append(vocab[feature_name])
+                        values.append(self.dtype(v))
 
             indptr.append(len(indices))
 
