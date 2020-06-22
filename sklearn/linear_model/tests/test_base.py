@@ -53,6 +53,30 @@ def test_linear_regression():
     assert_array_almost_equal(reg.predict(X), [0])
 
 
+def test_linear_regression_cholesky():
+    # Test LinearRegression on a simple dataset.
+    # a simple dataset
+    X = [[1], [2]]
+    Y = [1, 2]
+
+    reg = LinearRegression()
+    reg.fit(X, Y, cholesky=True)
+
+    assert_array_almost_equal(reg.coef_, [1])
+    assert_array_almost_equal(reg.intercept_, [0])
+    assert_array_almost_equal(reg.predict(X), [1, 2])
+
+    # test it also for degenerate input
+    X = [[1]]
+    Y = [0]
+
+    reg = LinearRegression()
+    reg.fit(X, Y, cholesky=True)
+    assert_array_almost_equal(reg.coef_, [0])
+    assert_array_almost_equal(reg.intercept_, [0])
+    assert_array_almost_equal(reg.predict(X), [0])
+
+
 def test_linear_regression_sample_weights():
     # TODO: loop over sparse data as well
 
@@ -70,6 +94,48 @@ def test_linear_regression_sample_weights():
             # LinearRegression with explicit sample_weight
             reg = LinearRegression(fit_intercept=intercept)
             reg.fit(X, y, sample_weight=sample_weight)
+            coefs1 = reg.coef_
+            inter1 = reg.intercept_
+
+            assert reg.coef_.shape == (X.shape[1], )  # sanity checks
+            assert reg.score(X, y) > 0.5
+
+            # Closed form of the weighted least square
+            # theta = (X^T W X)^(-1) * X^T W y
+            W = np.diag(sample_weight)
+            if intercept is False:
+                X_aug = X
+            else:
+                dummy_column = np.ones(shape=(n_samples, 1))
+                X_aug = np.concatenate((dummy_column, X), axis=1)
+
+            coefs2 = linalg.solve(X_aug.T.dot(W).dot(X_aug),
+                                  X_aug.T.dot(W).dot(y))
+
+            if intercept is False:
+                assert_array_almost_equal(coefs1, coefs2)
+            else:
+                assert_array_almost_equal(coefs1, coefs2[1:])
+                assert_almost_equal(inter1, coefs2[0])
+
+
+def test_linear_regression_sample_weights_cholesky():
+    # TODO: loop over sparse data as well
+
+    rng = np.random.RandomState(0)
+
+    # It would not work with under-determined systems
+    for n_samples, n_features in ((6, 5), ):
+
+        y = rng.randn(n_samples)
+        X = rng.randn(n_samples, n_features)
+        sample_weight = 1.0 + rng.rand(n_samples)
+
+        for intercept in (True, False):
+
+            # LinearRegression with explicit sample_weight
+            reg = LinearRegression(fit_intercept=intercept)
+            reg.fit(X, y, sample_weight=sample_weight, cholesky=True)
             coefs1 = reg.coef_
             inter1 = reg.intercept_
 
@@ -129,6 +195,30 @@ def test_fit_intercept():
 
     lr3_without_intercept = LinearRegression(fit_intercept=False).fit(X3, y)
     lr3_with_intercept = LinearRegression().fit(X3, y)
+
+    assert (lr2_with_intercept.coef_.shape ==
+            lr2_without_intercept.coef_.shape)
+    assert (lr3_with_intercept.coef_.shape ==
+            lr3_without_intercept.coef_.shape)
+    assert (lr2_without_intercept.coef_.ndim ==
+            lr3_without_intercept.coef_.ndim)
+
+
+def test_fit_intercept_cholesky():
+    # Test assertions on betas shape.
+    X2 = np.array([[0.38349978, 0.61650022],
+                   [0.58853682, 0.41146318]])
+    X3 = np.array([[0.27677969, 0.70693172, 0.01628859],
+                   [0.08385139, 0.20692515, 0.70922346]])
+    y = np.array([1, 1])
+
+    lr2_without_intercept = LinearRegression(fit_intercept=False)
+    lr2_without_intercept.fit(X2, y, cholesky=True)
+    lr2_with_intercept = LinearRegression().fit(X2, y, cholesky=True)
+
+    lr3_without_intercept = LinearRegression(fit_intercept=False)
+    lr3_without_intercept.fit(X3, y, cholesky=True)
+    lr3_with_intercept = LinearRegression().fit(X3, y, cholesky=True)
 
     assert (lr2_with_intercept.coef_.shape ==
             lr2_without_intercept.coef_.shape)
