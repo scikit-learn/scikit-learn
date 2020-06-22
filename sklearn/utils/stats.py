@@ -35,7 +35,8 @@ def _weighted_percentile(array, sample_weight, percentile=50,
         * `"linear"`: `i + (j - i) * fraction`, where `fraction` is the
           fractional part of the index surrounded by `i` and `j`;
         * `"lower"`: i`;
-        * `"higher"`: `j`.
+        * `"higher"`: `j`;
+        * `"nearest"`: `i` or `j`, whichever is nearest.
 
         .. versionadded: 0.24
 
@@ -45,7 +46,7 @@ def _weighted_percentile(array, sample_weight, percentile=50,
             ndarray of shape (m,)
         Weighted percentile.
     """
-    possible_interpolation = ("linear", "lower", "higher")
+    possible_interpolation = ("linear", "lower", "higher", "nearest")
     if interpolation not in possible_interpolation:
         raise ValueError(
             f"'interpolation' should be one of "
@@ -95,7 +96,7 @@ def _weighted_percentile(array, sample_weight, percentile=50,
         nan_mask = np.isnan(adjusted_percentile)
         adjusted_percentile[nan_mask] = 1
 
-    if interpolation in ("lower", "higher"):
+    if interpolation in ("lower", "higher", "nearest"):
         percentile_idx = np.array([
             np.searchsorted(adjusted_percentile[:, col], percentile[col],
                             side="left")
@@ -105,6 +106,18 @@ def _weighted_percentile(array, sample_weight, percentile=50,
         if interpolation == "lower" and np.all(percentile < 1):
             # P = 100 is a corner case for "lower"
             percentile_idx -= 1
+        elif interpolation == "nearest" and np.all(percentile < 1):
+            for col in range(n_cols):
+                error_higher = abs(
+                    adjusted_percentile[percentile_idx[col], col] -
+                    percentile[col]
+                )
+                error_lower = abs(
+                    adjusted_percentile[percentile_idx[col] - 1, col] -
+                    percentile[col]
+                )
+                if error_higher >= error_lower:
+                    percentile_idx[col] -= 1
 
         percentile_idx = np.apply_along_axis(
             lambda x: np.clip(x, 0, n_rows - 1), axis=0,

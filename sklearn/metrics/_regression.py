@@ -401,11 +401,15 @@ def median_absolute_error(y_true, y_pred, *, multioutput='uniform_average',
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput)
     if sample_weight is None:
-        output_errors = np.median(np.abs(y_pred - y_true), axis=0)
+        output_errors = np.percentile(
+            np.abs(y_pred - y_true), 50., interpolation="nearest", axis=0,
+        )
     else:
         sample_weight = _check_sample_weight(sample_weight, y_pred)
-        output_errors = _weighted_percentile(np.abs(y_pred - y_true),
-                                             sample_weight=sample_weight)
+        output_errors = _weighted_percentile(
+            np.abs(y_pred - y_true), percentile=50,
+            sample_weight=sample_weight, interpolation="nearest",
+        )
     if isinstance(multioutput, str):
         if multioutput == 'raw_values':
             return output_errors

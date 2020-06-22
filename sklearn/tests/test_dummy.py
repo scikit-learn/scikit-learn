@@ -665,11 +665,15 @@ def test_dummy_regressor_sample_weight(n_samples=10):
     assert est.constant_ == np.average(y, weights=sample_weight)
 
     est = DummyRegressor(strategy="median").fit(X, y, sample_weight)
-    assert est.constant_ == _weighted_percentile(y, sample_weight, 50.)
+    assert est.constant_ == _weighted_percentile(
+        y, sample_weight, 50., interpolation="nearest",
+    )
 
     est = DummyRegressor(strategy="quantile", quantile=.95).fit(X, y,
                                                                 sample_weight)
-    assert est.constant_ == _weighted_percentile(y, sample_weight, 95.)
+    assert est.constant_ == _weighted_percentile(
+        y, sample_weight, 95., interpolation="nearest",
+    )
 
 
 def test_dummy_regressor_on_3D_array():

@@ -317,8 +317,11 @@ class LeastAbsoluteError(RegressionLossFunction):
         sample_weight = sample_weight.take(terminal_region, axis=0)
         diff = (y.take(terminal_region, axis=0) -
                 raw_predictions.take(terminal_region, axis=0))
-        tree.value[leaf, 0, 0] = _weighted_percentile(diff, sample_weight,
-                                                      percentile=50)
+        tree.value[leaf, 0, 0] = _weighted_percentile(
+            diff, sample_weight, percentile=50, interpolation="nearest",
+        )
+        # print(diff)
+        # print(sample_weight)
 
 
 class HuberLossFunction(RegressionLossFunction):
@@ -368,10 +371,14 @@ class HuberLossFunction(RegressionLossFunction):
         gamma = self.gamma
         if gamma is None:
             if sample_weight is None:
-                gamma = np.percentile(np.abs(diff), self.alpha * 100)
+                gamma = np.percentile(
+                    np.abs(diff), self.alpha * 100, interpolation="nearest",
+                )
             else:
-                gamma = _weighted_percentile(np.abs(diff), sample_weight,
-                                             self.alpha * 100)
+                gamma = _weighted_percentile(
+                    np.abs(diff), sample_weight=sample_weight,
+                    percentile=self.alpha * 100, interpolation="nearest",
+                )
 
         gamma_mask = np.abs(diff) <= gamma
         if sample_weight is None:
@@ -424,7 +431,9 @@ class HuberLossFunction(RegressionLossFunction):
         gamma = self.gamma
         diff = (y.take(terminal_region, axis=0)
                 - raw_predictions.take(terminal_region, axis=0))
-        median = _weighted_percentile(diff, sample_weight, percentile=50)
+        median = _weighted_percentile(
+            diff, sample_weight, percentile=50, interpolation="nearest",
+        )
         diff_minus_median = diff - median
         tree.value[leaf, 0] = median + np.mean(
             np.sign(diff_minus_median) *
@@ -506,7 +515,9 @@ class QuantileLossFunction(RegressionLossFunction):
                 - raw_predictions.take(terminal_region, axis=0))
         sample_weight = sample_weight.take(terminal_region, axis=0)
 
-        val = _weighted_percentile(diff, sample_weight, self.percentile)
+        val = _weighted_percentile(
+            diff, sample_weight, self.percentile, interpolation="nearest",
+        )
         tree.value[leaf, 0] = val
 
 
