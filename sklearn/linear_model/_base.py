@@ -646,7 +646,7 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         self.n_jobs = n_jobs
         self.positive = positive
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, cholesky=False):
         """
         Fit linear model.
 
@@ -708,6 +708,37 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
                     delayed(optimize.nnls)(X, y[:, j]) for j in range(y.shape[1])
                 )
                 self.coef_ = np.vstack([out[0] for out in outs])
+        elif cholesky:
+            n_samples, n_features = X.shape
+            ravel = False
+            if y.ndim == 1:
+                y = y.reshape(-1, 1)
+                ravel = True
+            n_samples_, n_targets = y.shape
+            alpha = np.asarray(0, dtype=X.dtype).ravel()
+
+            if n_targets > 1:
+                alpha = np.repeat(alpha, n_targets)
+
+            if n_features > n_samples:
+                K = safe_sparse_dot(X, X.T, dense_output=True)
+                try:
+                    dual_coef = _solve_cholesky_kernel(K, y, alpha)
+
+                    self.coef_ = safe_sparse_dot(X.T, dual_coef,
+                                                 dense_output=True).T
+                except linalg.LinAlgError:
+                    # use SVD solver if matrix is singular
+                    self.coef_ = _solve_svd(X, y, alpha)
+            else:
+                try:
+                    self.coef_ = _solve_cholesky(X, y, alpha)
+                except linalg.LinAlgError:
+                    # use SVD solver if matrix is singular
+                    self.coef_ = _solve_svd(X, y, alpha)
+            if ravel:
+                # When y was passed as a 1d-array, we flatten the coefficients.
+                self.coef_ = self.coef_.ravel()
         elif sp.issparse(X):
             X_offset_scale = X_offset / X_scale
 
@@ -731,42 +762,6 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
                 )
                 self.coef_ = np.vstack([out[0] for out in outs])
                 self._residues = np.vstack([out[3] for out in outs])
-        elif X.shape[1] <= 2 and np.all(np.linalg.eigvals(X @ X.T) > 0):
-        # Use Cholesky for 2 or fewer dimensions and positive-definite X @ X.T
-            n_samples, n_features = X.shape
-            ravel = False
-            if y.ndim == 1:
-                y = y.reshape(-1, 1)
-                ravel = True
-            n_samples_, n_targets = y.shape
-            alpha = np.asarray(0, dtype=X.dtype).ravel()
-            if alpha.size not in [1, n_targets]:
-                raise ValueError("Number of targets and number of penalties"
-                                 "do not correspond: %d != %d"
-                                 % (alpha.size, n_targets))
-
-            if alpha.size == 1 and n_targets > 1:
-                alpha = np.repeat(alpha, n_targets)
-
-            if n_features > n_samples:
-                K = safe_sparse_dot(X, X.T, dense_output=True)
-                try:
-                    dual_coef = _solve_cholesky_kernel(K, y, alpha)
-
-                    self.coef_ = safe_sparse_dot(X.T, dual_coef,
-                                                 dense_output=True).T
-                except linalg.LinAlgError:
-                    # use SVD solver if matrix is singular
-                    self.coef_ = _solve_svd(X, y, alpha)
-            else:
-                try:
-                    self.coef_ = _solve_cholesky(X, y, alpha)
-                except linalg.LinAlgError:
-                    # use SVD solver if matrix is singular
-                    self.coef_ = _solve_svd(X, y, alpha)
-            if ravel:
-                # When y was passed as a 1d-array, we flatten the coefficients.
-                self.coef_ = self.coef_.ravel()
         else:
             self.coef_, self._residues, self.rank_, self.singular_ = \
                 linalg.lstsq(X, y, check_finite=False)
