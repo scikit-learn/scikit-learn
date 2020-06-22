@@ -627,6 +627,7 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
             The predicted classes.
         """
         proba = self.predict_proba(X)
+        #return 0
 
         if self.n_outputs_ == 1:
             return self.classes_.take(np.argmax(proba, axis=1), axis=0)
