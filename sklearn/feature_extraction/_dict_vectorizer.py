@@ -169,11 +169,9 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
                     feature_name = f
                 elif isinstance(v, Iterable):
                     self._add_iterable_element(f, v, feature_names, vocab)
-
                 else:
-                    raise ValueError(
-                        'Unsupported Value Type %s for {%s: %s}'
-                                % (type(v), f, v))
+                    raise ValueError(f'Unsupported Value Type {type(v)} '
+                                     f'for {f}: {v}')
 
                 if feature_name not in vocab:
                     vocab[feature_name] = len(feature_names)
@@ -233,9 +231,8 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
                                                indices, values)
 
                 else:
-                    raise ValueError(
-                        'Unsupported Value Type %s for {%s: %s}'
-                                % (type(v), f, v))
+                    raise ValueError(f'Unsupported Value Type {type(v)} '
+                                     f'for {f}: {v}')
                 if feature_name is not None:
                     if fitting:
                         if feature_name not in vocab:
