@@ -10,7 +10,7 @@
 #define _NEWRAND_H
 
 #ifdef __cplusplus
-#include <random>
+#include <random>  // needed for cython to generate a .cpp file from newrand.h
 extern "C" {
 #endif
 
