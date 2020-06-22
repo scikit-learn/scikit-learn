@@ -3,6 +3,7 @@ import scipy as sp
 
 import pytest
 
+import sklearn
 from sklearn.utils._testing import assert_allclose
 
 from sklearn import datasets
@@ -638,3 +639,26 @@ def test_assess_dimesion_rank_one():
     assert np.isfinite(_assess_dimension(s, rank=1, n_samples=n_samples))
     for rank in range(2, n_features):
         assert _assess_dimension(s, rank, n_samples) == -np.inf
+
+
+@pytest.mark.parametrize('svd_solver', PCA_SOLVERS)
+@pytest.mark.parametrize('copy', [True, False])
+def test_pca_jax_data(svd_solver, copy):
+    jnp = pytest.importorskip("jax.numpy")
+    X_np = np.random.RandomState(42).randn(1000, 100)
+    X_np = X_np.astype(np.float32)
+    X_jnp = jnp.asarray(X_np)
+
+    pca_np = PCA(n_components=3, svd_solver=svd_solver, copy=copy,
+                 random_state=0)
+    X_pca_np = pca_np.fit_transform(X_np)
+
+    with sklearn.config_context(enable_duck_array=True):
+        pca_jnp = PCA(**pca_np.get_params())
+        X_pca_jnp = pca_jnp.fit_transform(X_jnp)
+
+    assert isinstance(X_pca_jnp, type(X_jnp))
+    assert isinstance(pca_jnp.components_, type(X_jnp))
+
+    assert_allclose(X_pca_np, X_pca_jnp, atol=1e-3)
+    assert_allclose(pca_np.components_, pca_jnp.components_, atol=1e-3)

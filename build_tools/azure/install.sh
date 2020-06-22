@@ -94,7 +94,7 @@ elif [[ "$DISTRIB" == "conda-pip-latest" ]]; then
     python -m pip install -U pip
     python -m pip install pytest==$PYTEST_VERSION pytest-cov
 
-    python -m pip install pandas matplotlib pyamg scikit-image
+    python -m pip install pandas matplotlib pyamg scikit-image jax jaxlib
     # do not install dependencies for lightgbm since it requires scikit-learn
     python -m pip install lightgbm --no-deps
 elif [[ "$DISTRIB" == "conda-pip-scipy-dev" ]]; then
