@@ -691,8 +691,10 @@ class TSNE(BaseEstimator):
             if X.shape[0] != X.shape[1]:
                 raise ValueError("X should be a square distance matrix")
 
-            check_non_negative(X, "TSNE.fit(). With metric='precomputed', X "
-                                  "should contain positive distances.")
+            if self.square_distance is not True:
+                check_non_negative(X, "TSNE.fit(). With metric='precomputed', "
+                                      "X should contain positive distances "
+                                      "unless square_distance=True.")
 
             if self.method == "exact" and issparse(X):
                 raise TypeError(
@@ -734,8 +736,6 @@ class TSNE(BaseEstimator):
             ):
                 distances **= 2
 
-            # Q: By moving this outside of the 'precomputed' if/else, is the
-            # non-neg check for 'precomputed' on L694 still necessary?
             if np.any(distances < 0):
                 raise ValueError("All distances should be positive, the "
                                  "metric given is not correct")
