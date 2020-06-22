@@ -1133,7 +1133,8 @@ def test_probability_exponential():
     assert_array_equal(y_pred, true_result)
 
 
-def test_non_uniform_weights_toy_edge_case_reg():
+@pytest.mark.parametrize("loss", ["huber", "ls", "lad", "quantile"])
+def test_non_uniform_weights_toy_edge_case_reg(loss):
     X = [[1, 0],
          [1, 0],
          [1, 0],
@@ -1141,11 +1142,12 @@ def test_non_uniform_weights_toy_edge_case_reg():
     y = [0, 0, 1, 0]
     # ignore the first 2 training samples by setting their weight to 0
     sample_weight = [0, 0, 1, 1]
-    for loss in ('huber', 'ls', 'lad', 'quantile'):
-        gb = GradientBoostingRegressor(learning_rate=1.0, n_estimators=2,
-                                       loss=loss)
-        gb.fit(X, y, sample_weight=sample_weight)
-        assert gb.predict([[1, 0]])[0] > 0.5
+    gb = GradientBoostingRegressor(
+        learning_rate=0.01, n_estimators=50, loss=loss
+    )
+    gb.fit(X, y, sample_weight=sample_weight)
+    assert np.all(np.diff(gb.train_score_) <= 0)
+    assert gb.predict([[1, 0]])[0] > 0.5
 
 
 def test_non_uniform_weights_toy_edge_case_clf():
