@@ -487,8 +487,8 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
                      loss, learning_rate, max_iter,
                      classes, sample_weight,
                      coef_init, intercept_init):
-        X, y = check_X_y(X, y, 'csr', dtype=np.float64, order="C",
-                         accept_large_sparse=False)
+        X, y = check_X_y(X, y, accept_sparse='csr', dtype=np.float64,
+                         order="C", accept_large_sparse=False)
 
         n_samples, n_features = X.shape
 
@@ -497,8 +497,8 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
         n_classes = self.classes_.shape[0]
 
         # Allocate datastructures from input arguments
-        self._expanded_class_weight = compute_class_weight(self.class_weight,
-                                                           self.classes_, y)
+        self._expanded_class_weight = compute_class_weight(
+            self.class_weight, classes=self.classes_, y=y)
         sample_weight = _check_sample_weight(sample_weight, X)
 
         if getattr(self, "coef_", None) is None or coef_init is not None:
@@ -681,7 +681,8 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
         if self.class_weight in ['balanced']:
             raise ValueError("class_weight '{0}' is not supported for "
                              "partial_fit. In order to use 'balanced' weights,"
-                             " use compute_class_weight('{0}', classes, y). "
+                             " use compute_class_weight('{0}', "
+                             "classes=classes, y=y). "
                              "In place of y you can us a large enough sample "
                              "of the full training set target to properly "
                              "estimate the class frequency distributions. "
@@ -847,6 +848,9 @@ class SGDClassifier(BaseSGDClassifier):
           training loss by tol or fail to increase validation score by tol if
           early_stopping is True, the current learning rate is divided by 5.
 
+            .. versionadded:: 0.20
+                Added 'adaptive' option
+
     eta0 : double, default=0.0
         The initial learning rate for the 'constant', 'invscaling' or
         'adaptive' schedules. The default value is 0.0 as eta0 is not used by
@@ -863,6 +867,7 @@ class SGDClassifier(BaseSGDClassifier):
         improving by at least tol for n_iter_no_change consecutive epochs.
 
         .. versionadded:: 0.20
+            Added 'early_stopping' option
 
     validation_fraction : float, default=0.1
         The proportion of training data to set aside as validation set for
@@ -870,11 +875,13 @@ class SGDClassifier(BaseSGDClassifier):
         Only used if `early_stopping` is True.
 
         .. versionadded:: 0.20
+            Added 'validation_fraction' option
 
     n_iter_no_change : int, default=5
         Number of iterations with no improvement to wait before early stopping.
 
         .. versionadded:: 0.20
+            Added 'n_iter_no_change' option
 
     class_weight : dict, {class_label: weight} or "balanced", default=None
         Preset for the class_weight fit parameter.
@@ -990,7 +997,7 @@ class SGDClassifier(BaseSGDClassifier):
         (clip(decision_function(X), -1, 1) + 1) / 2. For other loss functions
         it is necessary to perform proper probability calibration by wrapping
         the classifier with
-        :class:`sklearn.calibration.CalibratedClassifierCV` instead.
+        :class:`~sklearn.calibration.CalibratedClassifierCV` instead.
 
         Parameters
         ----------
@@ -1087,6 +1094,14 @@ class SGDClassifier(BaseSGDClassifier):
 
     def _predict_log_proba(self, X):
         return np.log(self.predict_proba(X))
+
+    def _more_tags(self):
+        return {
+            '_xfail_checks': {
+                'check_sample_weights_invariance(kind=zeros)':
+                'zero sample_weight is not equivalent to removing samples',
+            }
+        }
 
 
 class BaseSGDRegressor(RegressorMixin, BaseSGD):
@@ -1446,6 +1461,9 @@ class SGDRegressor(BaseSGDRegressor):
           training loss by tol or fail to increase validation score by tol if
           early_stopping is True, the current learning rate is divided by 5.
 
+            .. versionadded:: 0.20
+                Added 'adaptive' option
+
     eta0 : double, default=0.01
         The initial learning rate for the 'constant', 'invscaling' or
         'adaptive' schedules. The default value is 0.01.
@@ -1462,6 +1480,7 @@ class SGDRegressor(BaseSGDRegressor):
         epochs.
 
         .. versionadded:: 0.20
+            Added 'early_stopping' option
 
     validation_fraction : float, default=0.1
         The proportion of training data to set aside as validation set for
@@ -1469,11 +1488,13 @@ class SGDRegressor(BaseSGDRegressor):
         Only used if `early_stopping` is True.
 
         .. versionadded:: 0.20
+            Added 'validation_fraction' option
 
     n_iter_no_change : int, default=5
         Number of iterations with no improvement to wait before early stopping.
 
         .. versionadded:: 0.20
+            Added 'n_iter_no_change' option
 
     warm_start : bool, default=False
         When set to True, reuse the solution of the previous call to fit as
@@ -1563,3 +1584,11 @@ class SGDRegressor(BaseSGDRegressor):
             validation_fraction=validation_fraction,
             n_iter_no_change=n_iter_no_change, warm_start=warm_start,
             average=average)
+
+    def _more_tags(self):
+        return {
+            '_xfail_checks': {
+                'check_sample_weights_invariance(kind=zeros)':
+                'zero sample_weight is not equivalent to removing samples',
+            }
+        }

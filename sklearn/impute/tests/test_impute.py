@@ -16,7 +16,7 @@ from sklearn.utils._testing import assert_array_almost_equal
 # make IterativeImputer available
 from sklearn.experimental import enable_iterative_imputer  # noqa
 
-from sklearn.datasets import load_boston
+from sklearn.datasets import load_diabetes
 from sklearn.impute import MissingIndicator
 from sklearn.impute import SimpleImputer, IterativeImputer
 from sklearn.dummy import DummyRegressor
@@ -947,7 +947,7 @@ def test_iterative_imputer_early_stopping():
 def test_iterative_imputer_catch_warning():
     # check that we catch a RuntimeWarning due to a division by zero when a
     # feature is constant in the dataset
-    X, y = load_boston(return_X_y=True)
+    X, y = load_diabetes(return_X_y=True)
     n_samples, n_features = X.shape
 
     # simulate that a feature only contain one category during fit
@@ -1340,6 +1340,25 @@ def test_simple_imputation_add_indicator_sparse_matrix(arr_type):
     assert sparse.issparse(X_trans)
     assert X_trans.shape == X_true.shape
     assert_allclose(X_trans.toarray(), X_true)
+
+
+@pytest.mark.parametrize(
+    'strategy, expected',
+    [('most_frequent', 'b'), ('constant', 'missing_value')]
+)
+def test_simple_imputation_string_list(strategy, expected):
+    X = [['a', 'b'],
+         ['c', np.nan]]
+
+    X_true = np.array([
+        ['a', 'b'],
+        ['c', expected]
+    ], dtype=object)
+
+    imputer = SimpleImputer(strategy=strategy)
+    X_trans = imputer.fit_transform(X)
+
+    assert_array_equal(X_trans, X_true)
 
 
 @pytest.mark.parametrize(

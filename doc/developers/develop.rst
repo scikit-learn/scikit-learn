@@ -246,13 +246,14 @@ whether it is just for you or for contributing it to scikit-learn, there are
 several internals of scikit-learn that you should be aware of in addition to
 the scikit-learn API outlined above. You can check whether your estimator
 adheres to the scikit-learn interface and standards by running
-:func:`utils.estimator_checks.check_estimator` on the class or using
-:func:`~sklearn.utils.parametrize_with_checks` pytest decorator (see its
-docstring for details and possible interactions with `pytest`)::
+:func:`~sklearn.utils.estimator_checks.check_estimator` on an instance. The
+:func:`~sklearn.utils.estimator_checks.parametrize_with_checks` pytest
+decorator can also be used (see its docstring for details and possible
+interactions with `pytest`)::
 
   >>> from sklearn.utils.estimator_checks import check_estimator
   >>> from sklearn.svm import LinearSVC
-  >>> check_estimator(LinearSVC)  # passes
+  >>> check_estimator(LinearSVC())  # passes
 
 The main motivation to make a class compatible to the scikit-learn estimator
 interface might be that you want to use it together with model evaluation and
@@ -510,6 +511,11 @@ requires_fit (default=True)
 requires_positive_X (default=False)
     whether the estimator requires positive X.
 
+requires_y (default=False)
+    whether the estimator requires y to be passed to `fit`, `fit_predict` or
+    `fit_transform` methods. The tag is True for estimators inheriting from
+    `~sklearn.base.RegressorMixin` and `~sklearn.base.ClassifierMixin`.
+
 requires_positive_y (default=False)
     whether the estimator requires a positive y (only applicable for regression).
 
@@ -520,9 +526,10 @@ _skip_test (default=False)
 _xfail_checks (default=False)
     dictionary ``{check_name: reason}`` of common checks that will be marked
     as `XFAIL` for pytest, when using
-    :func:`~sklearn.utils.estimator_checks.parametrize_with_checks`. This tag
-    currently has no effect on
-    :func:`~sklearn.utils.estimator_checks.check_estimator`.
+    :func:`~sklearn.utils.estimator_checks.parametrize_with_checks`. These
+    checks will be simply ignored and not run by
+    :func:`~sklearn.utils.estimator_checks.check_estimator`, but a
+    `SkipTestWarning` will be raised.
     Don't use this unless there is a *very good* reason for your estimator
     not to pass the check.
     Also note that the usage of this tag is highly subject to change because
@@ -689,6 +696,7 @@ The following example should make this clear::
 
         def __init__(self, n_components=100, random_state=None):
             self.random_state = random_state
+            self.n_components = n_components
 
         # the arguments are ignored anyway, so we make them optional
         def fit(self, X=None, y=None):
@@ -696,7 +704,7 @@ The following example should make this clear::
 
         def transform(self, X):
             n_samples = X.shape[0]
-            return self.random_state_.randn(n_samples, n_components)
+            return self.random_state_.randn(n_samples, self.n_components)
 
 The reason for this setup is reproducibility:
 when an estimator is ``fit`` twice to the same data,

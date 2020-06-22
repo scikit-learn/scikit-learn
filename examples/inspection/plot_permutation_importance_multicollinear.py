@@ -29,7 +29,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.inspection import permutation_importance
 from sklearn.model_selection import train_test_split
 
-##############################################################################
+# %%
 # Random Forest Feature Importance on Breast Cancer Data
 # ------------------------------------------------------
 # First, we train a random forest on the breast cancer dataset and evaluate
@@ -42,7 +42,7 @@ clf = RandomForestClassifier(n_estimators=100, random_state=42)
 clf.fit(X_train, y_train)
 print("Accuracy on test data: {:.2f}".format(clf.score(X_test, y_test)))
 
-##############################################################################
+# %%
 # Next, we plot the tree based feature importance and the permutation
 # importance. The permutation importance plot shows that permuting a feature
 # drops the accuracy by at most `0.012`, which would suggest that none of the
@@ -68,7 +68,7 @@ ax2.boxplot(result.importances[perm_sorted_idx].T, vert=False,
 fig.tight_layout()
 plt.show()
 
-##############################################################################
+# %%
 # Handling Multicollinear Features
 # --------------------------------
 # When features are collinear, permutating one feature will have little
@@ -92,7 +92,7 @@ ax2.set_yticklabels(dendro['ivl'])
 fig.tight_layout()
 plt.show()
 
-##############################################################################
+# %%
 # Next, we manually pick a threshold by visual inspection of the dendrogram
 # to group our features into clusters and choose a feature from each cluster to
 # keep, select those features from our dataset, and train a new random forest.

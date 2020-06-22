@@ -12,8 +12,9 @@ import pytest
 from sklearn import config_context
 from sklearn.datasets import fetch_openml
 from sklearn.datasets._openml import (_open_openml_url,
+                                      _arff,
+                                      _DATA_FILE,
                                       _get_data_description_by_id,
-                                      _download_data_arff,
                                       _get_local_path,
                                       _retry_with_clean_cache,
                                       _feature_to_dtype)
@@ -56,8 +57,13 @@ def _test_features_list(data_id):
     if sparse is True:
         raise ValueError('This test is not intended for sparse data, to keep '
                          'code relatively simple')
-    data_arff = _download_data_arff(data_description['file_id'],
-                                    sparse, None, False)
+    url = _DATA_FILE.format(data_description['file_id'])
+    with _open_openml_url(url, data_home=None) as f:
+        data_arff = _arff.load((line.decode('utf-8') for line in f),
+                               return_type=(_arff.COO if sparse
+                                            else _arff.DENSE_GEN),
+                               encode_nominal=False)
+
     data_downloaded = np.array(list(data_arff['data']), dtype='O')
 
     for i in range(len(data_bunch.feature_names)):
@@ -175,6 +181,15 @@ def _monkey_patch_webbased_functions(context,
             if self.is_gzip:
                 return {'Content-Encoding': 'gzip'}
             return {}
+
+        def __iter__(self):
+            return iter(self.data)
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc_val, exc_tb):
+            return False
 
     def _file_name(url, suffix):
         return (re.sub(r'\W', '-', url[len("https://openml.org/"):])
@@ -472,6 +487,20 @@ def test_fetch_openml_australian_pandas_error_sparse(monkeypatch):
     msg = 'Cannot return dataframe with sparse data'
     with pytest.raises(ValueError, match=msg):
         fetch_openml(data_id=data_id, as_frame=True, cache=False)
+
+
+def test_fetch_openml_as_frame_auto(monkeypatch):
+    pd = pytest.importorskip('pandas')
+
+    data_id = 61  # iris dataset version 1
+    _monkey_patch_webbased_functions(monkeypatch, data_id, True)
+    data = fetch_openml(data_id=data_id, as_frame='auto')
+    assert isinstance(data.data, pd.DataFrame)
+
+    data_id = 292  # Australian dataset version 1
+    _monkey_patch_webbased_functions(monkeypatch, data_id, True)
+    data = fetch_openml(data_id=data_id, as_frame='auto')
+    assert isinstance(data.data, scipy.sparse.csr_matrix)
 
 
 def test_convert_arff_data_dataframe_warning_low_memory_pandas(monkeypatch):

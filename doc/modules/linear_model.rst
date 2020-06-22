@@ -997,8 +997,8 @@ Examples of use cases include:
 * Risk modeling / insurance policy pricing:  number of claim events /
   policyholder per year (Poisson), cost per event (Gamma), total cost per
   policyholder per year (Tweedie / Compound Poisson Gamma).
-* Predictive maintenance: number of production interruption events per year:
-  Poisson, duration of interruption: Gamma, total interruption time per year
+* Predictive maintenance: number of production interruption events per year
+  (Poisson), duration of interruption (Gamma), total interruption time per year
   (Tweedie / Compound Poisson Gamma).
 
 
