@@ -208,8 +208,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 sample_weight = sample_weight * sample_mask.astype(np.float64)
 
             X = X_csr if X_csr is not None else X
-            print(sample_weight)
-            print(residual)
             tree.fit(X, residual, sample_weight=sample_weight,
                      check_input=False, X_idx_sorted=X_idx_sorted)
 

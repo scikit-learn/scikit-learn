@@ -320,8 +320,6 @@ class LeastAbsoluteError(RegressionLossFunction):
         tree.value[leaf, 0, 0] = _weighted_percentile(
             diff, sample_weight, percentile=50, interpolation="nearest",
         )
-        # print(diff)
-        # print(sample_weight)
 
 
 class HuberLossFunction(RegressionLossFunction):
