@@ -179,7 +179,6 @@ Changelog
   :class:`svm.SVR`, :class:`svm.NuSVR`, :class:`OneClassSVM`.
   :pr:`16530` by :user:`Shuhua Fan <jim0421>`.
 
-
 :mod:`sklearn.multiclass`
 .........................
 
@@ -187,6 +186,13 @@ Changelog
   sparse input data in its `fit` and `predict` methods. The check for
   validity of the input is now delegated to the base estimator.
   :pr:`17233` by :user:`Zolisa Bleki <zoj613>`.
+
+:mod:`sklearn.neural_network`
+.............................
+
+- |Efficiency| Neural net training is now a little faster.
+  :pr:`17603`, :pr:`17604`, :pr:`17606`, :pr:`17608`, :pr:`17609`, :pr:`17633`
+  by :user:`Alex Henrie <alexhenrie>`.
 
 
 Code and Documentation Contributors
