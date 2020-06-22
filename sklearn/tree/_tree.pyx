@@ -44,6 +44,7 @@ cdef extern from "numpy/arrayobject.h":
                                 int nd, np.npy_intp* dims,
                                 np.npy_intp* strides,
                                 void* data, int flags, object obj)
+    int PyArray_SetBaseObject(np.ndarray arr, PyObject* obj)
 
 # =============================================================================
 # Types and constants
@@ -92,8 +93,7 @@ cdef class TreeBuilder:
     """Interface for different tree building strategies."""
 
     cpdef build(self, Tree tree, object X, np.ndarray y,
-                np.ndarray sample_weight=None,
-                np.ndarray X_idx_sorted=None):
+                np.ndarray sample_weight=None):
         """Build a decision tree from the training set (X, y)."""
         pass
 
@@ -144,8 +144,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         self.min_impurity_split = min_impurity_split
 
     cpdef build(self, Tree tree, object X, np.ndarray y,
-                np.ndarray sample_weight=None,
-                np.ndarray X_idx_sorted=None):
+                np.ndarray sample_weight=None):
         """Build a decision tree from the training set (X, y)."""
 
         # check input
@@ -175,7 +174,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef double min_impurity_split = self.min_impurity_split
 
         # Recursive partition (without actual recursion)
-        splitter.init(X, y, sample_weight_ptr, X_idx_sorted)
+        splitter.init(X, y, sample_weight_ptr)
 
         cdef SIZE_t start
         cdef SIZE_t end
@@ -314,8 +313,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         self.min_impurity_split = min_impurity_split
 
     cpdef build(self, Tree tree, object X, np.ndarray y,
-                np.ndarray sample_weight=None,
-                np.ndarray X_idx_sorted=None):
+                np.ndarray sample_weight=None):
         """Build a decision tree from the training set (X, y)."""
 
         # check input
@@ -333,7 +331,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         cdef SIZE_t min_samples_split = self.min_samples_split
 
         # Recursive partition (without actual recursion)
-        splitter.init(X, y, sample_weight_ptr, X_idx_sorted)
+        splitter.init(X, y, sample_weight_ptr)
 
         cdef PriorityHeap frontier = PriorityHeap(INITIAL_STACK_SIZE)
         cdef PriorityHeapRecord record
@@ -1100,7 +1098,8 @@ cdef class Tree:
         cdef np.ndarray arr
         arr = np.PyArray_SimpleNewFromData(3, shape, np.NPY_DOUBLE, self.value)
         Py_INCREF(self)
-        arr.base = <PyObject*> self
+        if PyArray_SetBaseObject(arr, <PyObject*> self) < 0:
+            raise ValueError("Can't initialize array.")
         return arr
 
     cdef np.ndarray _get_node_ndarray(self):
@@ -1121,7 +1120,8 @@ cdef class Tree:
                                    strides, <void*> self.nodes,
                                    np.NPY_DEFAULT, None)
         Py_INCREF(self)
-        arr.base = <PyObject*> self
+        if PyArray_SetBaseObject(arr, <PyObject*> self) < 0:
+            raise ValueError("Can't initialize array.")
         return arr
 
     def compute_partial_dependence(self, DTYPE_t[:, ::1] X,
