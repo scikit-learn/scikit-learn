@@ -446,6 +446,18 @@ class CompoundKernel(Kernel):
     ----------
     kernels : list of Kernels
         The other kernels
+
+    Examples
+    --------
+    >>> from sklearn.gaussian_process.kernels import WhiteKernel, RBF, CompoundKernel
+    >>> kernel = CompoundKernel([WhiteKernel(noise_level=3.0), RBF(length_scale=2.0)])
+    >>> print(kernel.bounds)
+    [[-11.51292546  11.51292546]
+     [-11.51292546  11.51292546]]
+    >>> print(kernel.n_dims)
+    2
+    >>> print(kernel.theta)
+    [1.09861229 0.69314718]
     """
 
     def __init__(self, kernels):
