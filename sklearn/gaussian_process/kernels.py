@@ -449,10 +449,10 @@ class CompoundKernel(Kernel):
 
     Examples
     --------
-    >>> from sklearn.gaussian_process import kernels
-    >>> from sklearn.gaussian_process.kernels import CompoundKernel
+    >>> from sklearn.gaussian_process.kernels import (WhiteKernel, RBF,
+    ...                                               CompoundKernel)
     >>> kernel = CompoundKernel(
-    ... [kernels.WhiteKernel(noise_level=3.0), kernels.RBF(length_scale=2.0)])
+    ... [WhiteKernel(noise_level=3.0), RBF(length_scale=2.0)])
     >>> print(kernel.bounds)
     [[-11.51292546  11.51292546]
      [-11.51292546  11.51292546]]
