@@ -1248,4 +1248,4 @@ def _get_array_module(array):
         import jax.numpy as npx
         return npx
     else:
-        raise ValueError("Unexpected array object")
+        raise ValueError(f"Unexpected array object from module: {npx_str}")

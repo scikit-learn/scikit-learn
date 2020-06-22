@@ -28,7 +28,7 @@ from ..utils.validation import _deprecate_positional_args
 from ..utils import _get_array_module
 
 
-def _assess_dimension(spectrum, rank, n_samples, n_features):
+def _assess_dimension(spectrum, rank, n_samples):
     """Compute the log-likelihood of a rank ``rank`` dataset.
 
     The dataset is assumed to be embedded in gaussian noise of shape(n,
