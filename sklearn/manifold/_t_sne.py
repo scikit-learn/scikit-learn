@@ -8,6 +8,7 @@
 # * Fast Optimization for t-SNE:
 #   https://cseweb.ucsd.edu/~lvdmaaten/workshops/nips2010/papers/vandermaaten.pdf
 
+import warnings
 from time import time
 import numpy as np
 from scipy import linalg
@@ -643,7 +644,7 @@ class TSNE(BaseEstimator):
                  n_iter_without_progress=300, min_grad_norm=1e-7,
                  metric="euclidean", init="random", verbose=0,
                  random_state=None, method='barnes_hut', angle=0.5,
-                 n_jobs=None):
+                 n_jobs=None, square_distance='legacy'):
         self.n_components = n_components
         self.perplexity = perplexity
         self.early_exaggeration = early_exaggeration
@@ -658,6 +659,7 @@ class TSNE(BaseEstimator):
         self.method = method
         self.angle = angle
         self.n_jobs = n_jobs
+        self.square_distance = square_distance
 
     def _fit(self, X, skip_num_points=0):
         """Private function to fit the model using X as training data."""
@@ -666,6 +668,15 @@ class TSNE(BaseEstimator):
             raise ValueError("'method' must be 'barnes_hut' or 'exact'")
         if self.angle < 0.0 or self.angle > 1.0:
             raise ValueError("'angle' must be between 0.0 - 1.0")
+        if self.square_distance not in [True, False, 'legacy']:
+            raise ValueError("'square_distance' must be True, False, or "
+                             "'legacy'")
+        if self.square_distance == 'legacy' and self.metric != "euclidean":
+            warnings.warn(("'square_distance' has been introduced in 0.24. "
+                           "It will be set to True starting from 0.26 which "
+                           "means that all distance metrics will be squared "
+                           "by default. Set 'square_distance' to either True "
+                           "or False to silence this warning."), FutureWarning)
         if self.method == 'barnes_hut':
             X = self._validate_data(X, accept_sparse=['csr'],
                                     ensure_min_samples=2,
@@ -714,16 +725,20 @@ class TSNE(BaseEstimator):
                 if self.verbose:
                     print("[t-SNE] Computing pairwise distances...")
 
-                if self.metric == "euclidean":
-                    distances = pairwise_distances(X, metric=self.metric,
-                                                   squared=True)
-                else:
-                    distances = pairwise_distances(X, metric=self.metric,
-                                                   n_jobs=self.n_jobs)
+                distances = pairwise_distances(X, metric=self.metric)
 
-                if np.any(distances < 0):
-                    raise ValueError("All distances should be positive, the "
-                                     "metric given is not correct")
+            if (
+                self.square_distance
+                or (self.square_distance == 'legacy'
+                    and self.metric == 'euclidean')
+            ):
+                distances **= 2
+
+            # Q: By moving this outside of the 'precomputed' if/else, is the
+            # non-neg check for 'precomputed' on L694 still necessary?
+            if np.any(distances < 0):
+                raise ValueError("All distances should be positive, the "
+                                 "metric given is not correct")
 
             # compute the joint probability distribution for the input space
             P = _joint_probabilities(distances, self.perplexity, self.verbose)
@@ -765,7 +780,11 @@ class TSNE(BaseEstimator):
             # Free the memory used by the ball_tree
             del knn
 
-            if self.metric == "euclidean":
+            if (
+                    self.square_distance
+                    or (self.square_distance == 'legacy'
+                        and self.metric == 'euclidean')
+            ):
                 # knn return the euclidean distance but we need it squared
                 # to be consistent with the 'exact' method. Note that the
                 # the method was derived using the euclidean method as in the
