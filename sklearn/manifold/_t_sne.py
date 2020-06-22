@@ -691,10 +691,9 @@ class TSNE(BaseEstimator):
             if X.shape[0] != X.shape[1]:
                 raise ValueError("X should be a square distance matrix")
 
-            if self.square_distance is not True:
-                check_non_negative(X, "TSNE.fit(). With metric='precomputed', "
-                                      "X should contain positive distances "
-                                      "unless square_distance=True.")
+            check_non_negative(X, "TSNE.fit(). With metric='precomputed', "
+                                  "X should contain positive distances "
+                                  "unless square_distance=True.")
 
             if self.method == "exact" and issparse(X):
                 raise TypeError(
