@@ -270,8 +270,8 @@ def test_model_pipeline_same_as_normalize_true(linear_model):
     # print(clf_norm.coef_)
     # print(clf_pipe[1].coef_)
 
-    assert clf_pipe[1].coef_ == clf_norm.coef_
-    assert y_pred_norm == y_pred_pipe
+    assert np.all(clf_pipe[1].coef_ == clf_norm.coef_)
+    assert np.all(y_pred_norm == y_pred_pipe)
 
 
 def test_lasso_path_return_models_vs_new_return_gives_same_coefficients():
