@@ -25,6 +25,7 @@ from ..utils import (indexable, check_random_state, _safe_indexing,
                      _message_with_time)
 from ..utils.validation import _check_fit_params
 from ..utils.validation import _num_samples
+from ..utils.validation import _deprecate_positional_args
 from ..utils.metaestimators import _safe_split
 from ..metrics import check_scoring
 from ..metrics._scorer import _check_multimetric_scoring, _MultimetricScorer
@@ -37,7 +38,8 @@ __all__ = ['cross_validate', 'cross_val_score', 'cross_val_predict',
            'permutation_test_score', 'learning_curve', 'validation_curve']
 
 
-def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
+@_deprecate_positional_args
+def cross_validate(estimator, X, y=None, *, groups=None, scoring=None, cv=None,
                    n_jobs=None, verbose=0, fit_params=None,
                    pre_dispatch='2*n_jobs', return_train_score=False,
                    return_estimator=False, error_score=np.nan):
@@ -134,14 +136,23 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
         expensive and is not strictly required to select the parameters that
         yield the best generalization performance.
 
+        .. versionadded:: 0.19
+
+        .. versionchanged:: 0.21
+            Default value was changed from ``True`` to ``False``
+
     return_estimator : bool, default=False
         Whether to return the estimators fitted on each split.
+
+        .. versionadded:: 0.20
 
     error_score : 'raise' or numeric
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised.
         If a numeric value is given, FitFailedWarning is raised. This parameter
         does not affect the refit step, which will always raise the error.
+
+        .. versionadded:: 0.20
 
     Returns
     -------
@@ -231,7 +242,10 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
     scores = parallel(
         delayed(_fit_and_score)(
             clone(estimator), X, y, scorers, train, test, verbose, None,
-            fit_params, return_train_score=return_train_score,
+            fit_params=fit_params,
+            # TODO: support score_params here
+            score_params=None,
+            return_train_score=return_train_score,
             return_times=True, return_estimator=return_estimator,
             error_score=error_score)
         for train, test in cv.split(X, y, groups))
@@ -261,8 +275,9 @@ def cross_validate(estimator, X, y=None, groups=None, scoring=None, cv=None,
     return ret
 
 
-def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
-                    n_jobs=None, verbose=0, fit_params=None,
+@_deprecate_positional_args
+def cross_val_score(estimator, X, y=None, *, groups=None, scoring=None,
+                    cv=None, n_jobs=None, verbose=0, fit_params=None,
                     pre_dispatch='2*n_jobs', error_score=np.nan):
     """Evaluate a score by cross-validation
 
@@ -351,6 +366,8 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
         If a numeric value is given, FitFailedWarning is raised. This parameter
         does not affect the refit step, which will always raise the error.
 
+        .. versionadded:: 0.20
+
     Returns
     -------
     scores : array of float, shape=(len(list(cv)),)
@@ -394,7 +411,8 @@ def cross_val_score(estimator, X, y=None, groups=None, scoring=None, cv=None,
 
 
 def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
-                   parameters, fit_params, return_train_score=False,
+                   parameters, fit_params, score_params,
+                   return_train_score=False,
                    return_parameters=False, return_n_test_samples=False,
                    return_times=False, return_estimator=False,
                    error_score=np.nan):
@@ -443,6 +461,9 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     fit_params : dict or None
         Parameters that will be passed to ``estimator.fit``.
 
+    score_params : dict or None
+        Parameters that will be passed to the scorer.
+
     return_train_score : bool, default=False
         Compute and return score on training set.
 
@@ -487,12 +508,15 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
             msg = ''
         else:
             msg = '%s' % (', '.join('%s=%s' % (k, v)
-                          for k, v in parameters.items()))
+                                    for k, v in parameters.items()))
         print("[CV] %s %s" % (msg, (64 - len(msg)) * '.'))
 
     # Adjust length of sample weights
     fit_params = fit_params if fit_params is not None else {}
     fit_params = _check_fit_params(X, fit_params, train)
+    score_params_train = score_params if score_params is not None else {}
+    score_params_train = _check_fit_params(X, score_params, train)
+    score_params_test = _check_fit_params(X, score_params, test)
 
     train_scores = {}
     if parameters is not None:
@@ -516,7 +540,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
         else:
             estimator.fit(X_train, y_train, **fit_params)
 
-    except Exception as e:
+    except Exception:
         # Note fit time as time until error
         fit_time = time.time() - start_time
         score_time = 0.0
@@ -543,10 +567,12 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
 
     else:
         fit_time = time.time() - start_time
-        test_scores = _score(estimator, X_test, y_test, scorer)
+        test_scores = _score(estimator, X_test, y_test, scorer,
+                             score_params_train)
         score_time = time.time() - start_time - fit_time
         if return_train_score:
-            train_scores = _score(estimator, X_train, y_train, scorer)
+            train_scores = _score(estimator, X_train, y_train, scorer,
+                                  score_params_test)
     if verbose > 2:
         if isinstance(test_scores, dict):
             for scorer_name in sorted(test_scores):
@@ -578,7 +604,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     return ret
 
 
-def _score(estimator, X_test, y_test, scorer):
+def _score(estimator, X_test, y_test, scorer, score_params):
     """Compute the score(s) of an estimator on a given test set.
 
     Will return a dict of floats if `scorer` is a dict, otherwise a single
@@ -588,9 +614,9 @@ def _score(estimator, X_test, y_test, scorer):
         # will cache method calls if needed. scorer() returns a dict
         scorer = _MultimetricScorer(**scorer)
     if y_test is None:
-        scores = scorer(estimator, X_test)
+        scores = scorer(estimator, X_test, **score_params)
     else:
-        scores = scorer(estimator, X_test, y_test)
+        scores = scorer(estimator, X_test, y_test, **score_params)
 
     error_msg = ("scoring must return a number, got %s (%s) "
                  "instead. (scorer=%s)")
@@ -613,7 +639,8 @@ def _score(estimator, X_test, y_test, scorer):
     return scores
 
 
-def cross_val_predict(estimator, X, y=None, groups=None, cv=None,
+@_deprecate_positional_args
+def cross_val_predict(estimator, X, y=None, *, groups=None, cv=None,
                       n_jobs=None, verbose=0, fit_params=None,
                       pre_dispatch='2*n_jobs', method='predict'):
     """Generate cross-validated estimates for each input data point
@@ -804,6 +831,9 @@ def _fit_and_predict(estimator, X, y, train, test, verbose, fit_params,
     X : array-like of shape (n_samples, n_features)
         The data to fit.
 
+        .. versionchanged:: 0.20
+            X is only required to be an object with finite length or shape now
+
     y : array-like of shape (n_samples,) or (n_samples, n_outputs) or None
         The target variable to try to predict in the case of
         supervised learning.
@@ -943,7 +973,8 @@ def _check_is_permutation(indices, n_samples):
     return True
 
 
-def permutation_test_score(estimator, X, y, groups=None, cv=None,
+@_deprecate_positional_args
+def permutation_test_score(estimator, X, y, *, groups=None, cv=None,
                            n_permutations=100, n_jobs=None, random_state=0,
                            verbose=0, scoring=None):
     """Evaluate the significance of a cross-validated score with permutations
@@ -1083,7 +1114,8 @@ def _shuffle(y, groups, random_state):
     return _safe_indexing(y, indices)
 
 
-def learning_curve(estimator, X, y, groups=None,
+@_deprecate_positional_args
+def learning_curve(estimator, X, y, *, groups=None,
                    train_sizes=np.linspace(0.1, 1.0, 5), cv=None,
                    scoring=None, exploit_incremental_learning=False,
                    n_jobs=None, pre_dispatch="all", verbose=0, shuffle=False,
@@ -1186,6 +1218,8 @@ def learning_curve(estimator, X, y, groups=None,
         If a numeric value is given, FitFailedWarning is raised. This parameter
         does not affect the refit step, which will always raise the error.
 
+        .. versionadded:: 0.20
+
     return_times : bool, default=False
         Whether to return the fit and score times.
 
@@ -1256,7 +1290,8 @@ def learning_curve(estimator, X, y, groups=None,
 
         out = parallel(delayed(_fit_and_score)(
             clone(estimator), X, y, scorer, train, test, verbose,
-            parameters=None, fit_params=None, return_train_score=True,
+            parameters=None, fit_params=None, score_params=None,
+            return_train_score=True,
             error_score=error_score, return_times=return_times)
             for train, test in train_test_proportions)
         out = np.array(out)
@@ -1367,7 +1402,8 @@ def _incremental_fit_estimator(estimator, X, y, classes, train, test,
     return np.array(ret).T
 
 
-def validation_curve(estimator, X, y, param_name, param_range, groups=None,
+@_deprecate_positional_args
+def validation_curve(estimator, X, y, *, param_name, param_range, groups=None,
                      cv=None, scoring=None, n_jobs=None, pre_dispatch="all",
                      verbose=0, error_score=np.nan):
     """Validation curve.
@@ -1379,7 +1415,7 @@ def validation_curve(estimator, X, y, param_name, param_range, groups=None,
     will also compute training scores and is merely a utility for plotting the
     results.
 
-    Read more in the :ref:`User Guide <learning_curve>`.
+    Read more in the :ref:`User Guide <validation_curve>`.
 
     Parameters
     ----------
@@ -1449,6 +1485,8 @@ def validation_curve(estimator, X, y, param_name, param_range, groups=None,
         If a numeric value is given, FitFailedWarning is raised. This parameter
         does not affect the refit step, which will always raise the error.
 
+        .. versionadded:: 0.20
+
     Returns
     -------
     train_scores : array of shape (n_ticks, n_cv_folds)
@@ -1471,7 +1509,8 @@ def validation_curve(estimator, X, y, param_name, param_range, groups=None,
                         verbose=verbose)
     out = parallel(delayed(_fit_and_score)(
         clone(estimator), X, y, scorer, train, test, verbose,
-        parameters={param_name: v}, fit_params=None, return_train_score=True,
+        parameters={param_name: v}, fit_params=None, score_params=None,
+        return_train_score=True,
         error_score=error_score)
         # NOTE do not change order of iteration to allow one time cv splitters
         for train, test in cv.split(X, y, groups) for v in param_range)

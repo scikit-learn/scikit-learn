@@ -75,6 +75,7 @@ def test_pipeline():
 
     param_grid = {'myest__C': [0.1, 1]}
 
+    print("@" * 150 + " GS")
     gs = GridSearchCV(clf, param_grid=param_grid, scoring=scorer)
-    print(gs.get_props_request())
-    gs.fit(X, y, new_param=brand, sample_weight=sw ,my_sw=sw, brand=brand)
+    print("GS props request: ", gs.get_props_request())
+    gs.fit(X, y, new_param=brand, sample_weight=sw, my_sw=sw, brand=brand)
