@@ -1,5 +1,5 @@
 from .base import _get_target_scores
-from .base import Display
+from .base import CurveDisplay
 
 from .. import average_precision_score
 from .. import precision_recall_curve
@@ -8,7 +8,7 @@ from ...utils import check_matplotlib_support
 from ...utils.validation import _deprecate_positional_args
 
 
-class PrecisionRecallDisplay(Display):
+class PrecisionRecallDisplay(CurveDisplay):
     """Precision Recall visualization.
 
     It is recommend to use :func:`~sklearn.metrics.plot_precision_recall_curve`
@@ -34,6 +34,8 @@ class PrecisionRecallDisplay(Display):
         The class considered as the positive class when computing the precision
         and recall metrics. By default, `estimators.classes_[1]` is considered
         as the positive class.
+
+        .. versionadded:: 0.24
 
     Attributes
     ----------

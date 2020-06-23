@@ -1,5 +1,5 @@
 from .base import _get_target_scores
-from .base import Display
+from .base import CurveDisplay
 
 from .. import auc
 from .. import roc_curve
@@ -8,7 +8,7 @@ from ...utils import check_matplotlib_support
 from ...utils.validation import _deprecate_positional_args
 
 
-class RocCurveDisplay(Display):
+class RocCurveDisplay(CurveDisplay):
     """ROC Curve visualization.
 
     It is recommend to use :func:`~sklearn.metrics.plot_roc_curve` to create a

@@ -121,14 +121,9 @@ def test_plot_roc_curve(pyplot, response_method, data_binary,
     expected_label = "LogisticRegression (AUC = {:0.2f})".format(viz.roc_auc)
     assert viz.line_.get_label() == expected_label
 
-    if pos_label is None:
-        expected_ylabel = "True Positive Rate (Positive label: 1)"
-        expected_xlabel = "False Positive Rate (Positive label: 1)"
-    else:
-        expected_ylabel = "True Positive Rate (Positive label: {})".format(
-            pos_label)
-        expected_xlabel = "False Positive Rate (Positive label: {})".format(
-            pos_label)
+    expected_pos_label = 1 if pos_label is None else pos_label
+    expected_ylabel = f"True Positive Rate (Positive label: {expected_pos_label})"
+    expected_xlabel = f"False Positive Rate (Positive label: {expected_pos_label})"
 
     assert viz.ax_.get_ylabel() == expected_ylabel
     assert viz.ax_.get_xlabel() == expected_xlabel

@@ -114,7 +114,7 @@ def _get_target_scores(X, estimator, response_method, pos_label=None):
     return y_pred, pos_label
 
 
-class Display:
+class CurveDisplay:
     """Metrics visualization base class.
 
     Parameters
