@@ -256,7 +256,6 @@ def test_model_pipeline_same_as_normalize_true(linear_model):
     X, y, X_test, y_test = build_dataset(n_features=10)
 
     # normalize is True
-    # sparse_X = sparse.csr_matrix(X)  # use this for sparse
     clf_norm = linear_model(alpha=0.1, normalize=True)
     clf_norm.fit(X, y)
     y_pred_norm = clf_norm.predict(X_test)
@@ -269,9 +268,42 @@ def test_model_pipeline_same_as_normalize_true(linear_model):
     y_pred_pipe = clf_pipe.predict(X_test)
     # print(clf_norm.coef_)
     # print(clf_pipe[1].coef_)
-
+    import pdb; pdb.set_trace()
     assert np.all(clf_pipe[1].coef_ == clf_norm.coef_)
     assert np.all(y_pred_norm == y_pred_pipe)
+
+
+@pytest.mark.parametrize("linear_model", [Lasso])
+def test_model_pipeline_same_dense_and_sparse(linear_model):
+    # Test that linear model preceeded by StandardScaler in the pipeline and
+    # with normalize set to False gives the same y_pred and the same .coef_
+    # given X sparse or dense
+
+    X_sparse = sparse.csc_matrix(np.identity(3))
+    X_test_sparse = sparse.csc_matrix(np.zeros((3, 3)))
+    y = np.array([-1, 0, 1])
+
+    X = X_sparse.todense()
+    X_test = X_test_sparse.todense()
+
+    clf_pipe_dense = make_pipeline(
+        StandardScaler(with_mean=False),
+        linear_model(alpha=0.1, normalize=False)
+    )
+    clf_pipe_dense.fit(X, y)
+
+    clf_pipe_sparse = make_pipeline(
+        StandardScaler(with_mean=False),
+        linear_model(alpha=0.1, normalize=False)
+    )
+    clf_pipe_sparse.fit(X_sparse, y)
+    assert_almost_equal(clf_pipe_sparse[1].coef_,
+                        clf_pipe_dense[1].coef_)
+
+    y_pred_dense = clf_pipe_dense.predict(X_test)
+    y_pred_sparse = clf_pipe_sparse.predict(X_test_sparse)
+
+    assert_almost_equal(y_pred_dense, y_pred_sparse)
 
 
 def test_lasso_path_return_models_vs_new_return_gives_same_coefficients():
