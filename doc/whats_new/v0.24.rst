@@ -122,7 +122,7 @@ Changelog
 :mod:`sklearn.svm`
 ....................
 - |Enhancement| invoke scipy blas api for svm kernel function in ``fit``,
-  ``predict`` and related methods of :class:`svm.SVC`, :class:`svm.NuSVC`, 
+  ``predict`` and related methods of :class:`svm.SVC`, :class:`svm.NuSVC`,
   :class:`svm.SVR`, :class:`svm.NuSVR`, :class:`OneClassSVM`.
   :pr:`16530` by :user:`Shuhua Fan <jim0421>`.
 
@@ -134,6 +134,15 @@ Changelog
   sparse input data in its `fit` and `predict` methods. The check for
   validity of the input is now delegated to the base estimator.
   :pr:`17233` by :user:`Zolisa Bleki <zoj613>`.
+
+
+:mod:`sklearn.utils`
+.........................
+
+- |Enhancement| Add ``check_methods_sample_order_invariance`` to
+  :func:`~utils.estimator_checks.check_estimator`, which checks that
+  estimator methods are invariant if applied to the same dataset
+  with different sample order :pr:`17598` by :user:`Jason Ngo <ngojason9>`.
 
 
 Code and Documentation Contributors

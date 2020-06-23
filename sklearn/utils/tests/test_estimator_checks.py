@@ -253,7 +253,6 @@ class NotInvariantPredict(BaseEstimator):
 
 class NotInvariantSampleOrder(BaseEstimator):
     def fit(self, X, y):
-        # Convert data
         X, y = self._validate_data(
             X, y,
             accept_sparse=("csr", "csc"),
