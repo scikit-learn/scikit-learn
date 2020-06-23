@@ -96,6 +96,8 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
         <https://link.springer.com/article/10.1007%2FBF02289233>`_
         H. F. Kaiser, 1958
 
+        .. versionadded:: 0.24
+
     random_state : int, RandomState instance, default=0
         Only used when ``svd_method`` equals 'randomized'. Pass an int for
         reproducible results across multiple function calls.
