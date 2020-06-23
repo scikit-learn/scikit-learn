@@ -166,6 +166,10 @@ Changelog
   :pr:`17603`, :pr:`17604`, :pr:`17606`, :pr:`17608`, :pr:`17609`, :pr:`17633`
   by :user:`Alex Henrie <alexhenrie>`.
 
+- |Enhancement| Avoid converting float32 input to float64 in
+  :class:`neural_network.BernoulliRBM`.
+  :pr:`16352` by :user:`Arthur Imbert <Henley13>`.  
+
 :mod:`sklearn.preprocessing`
 ............................
 
