@@ -880,13 +880,14 @@ def dict_learning_online(X, n_components=2, *, alpha=1, n_iter=100,
 class SparseCodingMixin(TransformerMixin):
     """Sparse coding mixin"""
 
-    def _set_sparse_coding_params(self, dictionary,
+    def _set_sparse_coding_params(self, dictionary, n_components,
                                   transform_algorithm='omp',
                                   transform_n_nonzero_coefs=None,
                                   transform_alpha=None, split_sign=False,
                                   n_jobs=None, positive_code=False,
                                   transform_max_iter=1000):
         self.dictionary = dictionary
+        self.n_components = n_components
         self.transform_algorithm = transform_algorithm
         self.transform_n_nonzero_coefs = transform_n_nonzero_coefs
         self.transform_alpha = transform_alpha
@@ -1043,7 +1044,7 @@ class SparseCoder(SparseCodingMixin, BaseEstimator):
                  transform_n_nonzero_coefs=None, transform_alpha=None,
                  split_sign=False, n_jobs=None, positive_code=False,
                  transform_max_iter=1000):
-        self._set_sparse_coding_params(dictionary,
+        self._set_sparse_coding_params(dictionary, None,
                                        transform_algorithm,
                                        transform_n_nonzero_coefs,
                                        transform_alpha, split_sign, n_jobs,
@@ -1255,7 +1256,8 @@ class DictionaryLearning(SparseCodingMixin, BaseEstimator):
                  split_sign=False, random_state=None, positive_code=False,
                  positive_dict=False, transform_max_iter=1000):
 
-        self._set_sparse_coding_params(n_components, transform_algorithm,
+        self._set_sparse_coding_params(None, n_components,
+                                       transform_algorithm,
                                        transform_n_nonzero_coefs,
                                        transform_alpha, split_sign, n_jobs,
                                        positive_code, transform_max_iter)
@@ -1488,7 +1490,8 @@ class MiniBatchDictionaryLearning(SparseCodingMixin, BaseEstimator):
                  positive_code=False, positive_dict=False,
                  transform_max_iter=1000):
 
-        self._set_sparse_coding_params(n_components, transform_algorithm,
+        self._set_sparse_coding_params(None, n_components,
+                                       transform_algorithm,
                                        transform_n_nonzero_coefs,
                                        transform_alpha, split_sign, n_jobs,
                                        positive_code, transform_max_iter)
