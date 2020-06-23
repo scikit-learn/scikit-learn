@@ -122,7 +122,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
     estimators_features_ : list of ndarray
         The subset of drawn features for each base estimator.
 
-    estimators_samples_ : list of arrays
+    estimators_samples_ : list of ndarray
         The subset of drawn samples (i.e., the in-bag samples) for each base
         estimator.
 
