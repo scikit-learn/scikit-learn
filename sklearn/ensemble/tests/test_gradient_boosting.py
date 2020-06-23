@@ -3,7 +3,6 @@ Testing for the gradient boosting module (sklearn.ensemble.gradient_boosting).
 """
 import warnings
 import numpy as np
-from numpy.testing import assert_allclose
 
 from scipy.sparse import csr_matrix
 from scipy.sparse import csc_matrix
