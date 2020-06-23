@@ -146,7 +146,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         # called from fit() (this current method), and that the data it has
         # received is pre-binned.
         # predicting is faster on pre-binned data, so we want early stopping
-        # predictions to be made on pre-binned data. Unfortunately the scorer_
+        # predictions to be made on pre-binned data. Unfortunately the _scorer_
         # can only call predict() or predict_proba(), not raw_predict(), and
         # there's no way to tell the scorer that it needs to predict binned
         # data.
@@ -238,7 +238,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             self._predictors = predictors = []
 
             # Initialize structures and attributes related to early stopping
-            self.scorer_ = None  # set if scoring != loss
+            self._scorer_ = None  # set if scoring != loss
             raw_predictions_val = None  # set if scoring == loss and use val
             self.train_score_ = []
             self.validation_score_ = []
@@ -271,11 +271,11 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                                                     raw_predictions_val, y_val,
                                                     sample_weight_val)
                 else:
-                    self.scorer_ = check_scoring(self, self.scoring)
-                    # scorer_ is a callable with signature (est, X, y) and
+                    self._scorer_ = check_scoring(self, self.scoring)
+                    # _scorer_ is a callable with signature (est, X, y) and
                     # calls est.predict() or est.predict_proba() depending on
                     # its nature.
-                    # Unfortunately, each call to scorer_() will compute
+                    # Unfortunately, each call to _scorer_() will compute
                     # the predictions of all the trees. So we use a subset of
                     # the training set to compute train scores.
 
@@ -493,11 +493,11 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         if sample_weight_small_train is None:
             self.train_score_.append(
-                self.scorer_(self, X_binned_small_train, y_small_train)
+                self._scorer_(self, X_binned_small_train, y_small_train)
             )
         else:
             self.train_score_.append(
-                self.scorer_(self, X_binned_small_train, y_small_train,
+                self._scorer_(self, X_binned_small_train, y_small_train,
                              sample_weight=sample_weight_small_train)
             )
 
@@ -506,11 +506,11 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 y_val = self.classes_[y_val.astype(int)]
             if sample_weight_val is None:
                 self.validation_score_.append(
-                    self.scorer_(self, X_binned_val, y_val)
+                    self._scorer_(self, X_binned_val, y_val)
                 )
             else:
                 self.validation_score_.append(
-                    self.scorer_(self, X_binned_val, y_val,
+                    self._scorer_(self, X_binned_val, y_val,
                                  sample_weight=sample_weight_val)
                 )
             return self._should_stop(self.validation_score_)
