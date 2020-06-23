@@ -9,9 +9,9 @@ from sklearn.base import BaseEstimator
 from sklearn.model_selection import LeaveOneOut
 
 from sklearn.utils._testing import (assert_array_almost_equal,
-                                   assert_almost_equal,
-                                   assert_array_equal,
-                                   assert_raises, ignore_warnings)
+                                    assert_almost_equal,
+                                    assert_array_equal,
+                                    assert_raises, ignore_warnings)
 from sklearn.datasets import make_classification, make_blobs
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
@@ -89,7 +89,7 @@ def test_calibration():
                 # but should improve in both cases
                 assert (calibration_error(y_test, prob_pos_clf) >
                         calibration_error((y_test + 1) % 2,
-                                         prob_pos_pc_clf_relabeled))
+                                          prob_pos_pc_clf_relabeled))
 
                 assert (brier_score_loss(y_test, prob_pos_clf) >
                         brier_score_loss((y_test + 1) % 2,
@@ -229,7 +229,6 @@ def test_calibration_prefit():
 
                 assert (brier_score_loss(y_test, prob_pos_clf) >
                         brier_score_loss(y_test, prob_pos_pc_clf))
-
 
 
 def test_sigmoid_calibration():
