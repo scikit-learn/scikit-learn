@@ -873,17 +873,17 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
     best_loss_ : float
         The minimum loss reached by the solver throughout fitting.
 
-    loss_curve_ : list of shape (length n_iter_,)
+    loss_curve_ : list of shape (n_iter_,)
         The ith element in the list represents the loss at the ith iteration.
 
     t_ : int
         The number of training samples seen by the solver during fitting.
 
-    coefs_ : list of shape (length n_layers - 1,)
+    coefs_ : list of shape (n_layers - 1,)
         The ith element in the list represents the weight matrix corresponding
         to layer i.
 
-    intercepts_ : list of shape (length n_layers - 1,)
+    intercepts_ : list of shape (n_layers - 1,)
         The ith element in the list represents the bias vector corresponding to
         layer i + 1.
 
@@ -1295,11 +1295,11 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
     t_ : int
         The number of training samples seen by the solver during fitting.
 
-    coefs_ : list of shape (length n_layers - 1,)
+    coefs_ : list of shape (n_layers - 1,)
         The ith element in the list represents the weight matrix corresponding
         to layer i.
 
-    intercepts_ : list of shape (length n_layers - 1,)
+    intercepts_ : list of shape (n_layers - 1,)
         The ith element in the list represents the bias vector corresponding to
         layer i + 1.
 
