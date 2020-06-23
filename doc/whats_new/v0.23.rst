@@ -374,15 +374,6 @@ Changelog
   :class:`tree.DecisionTreeRegressor`. :pr:`15864` by
   `Nicolas Hug`_.
 
-:mod:`sklearn.isotonic`
-.......................
-
-- |Feature| Expose fitted attributes ``X_thresholds_`` and ``y_thresholds_``
-  that hold the de-duplicated interpolation thresholds of an
-  :class:`IsotonicRegression` instance for model inspection purpose.
-  :pr:`16289` by :user:`Masashi Kishimoto <kishimoto-banana>` and
-  :user:`Olivier Grisel <ogrisel>`.
-
 :mod:`sklearn.linear_model`
 ...........................
 
