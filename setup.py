@@ -9,6 +9,7 @@ import os
 import platform
 import shutil
 from distutils.command.clean import clean as Clean
+from distutils.command.sdist import sdist
 from pkg_resources import parse_version
 import traceback
 import importlib
@@ -132,7 +133,7 @@ class CleanCommand(Clean):
                     shutil.rmtree(os.path.join(dirpath, dirname))
 
 
-cmdclass = {'clean': CleanCommand}
+cmdclass = {'clean': CleanCommand, 'sdist': sdist}
 
 # custom build_ext command to set OpenMP compile flags depending on os and
 # compiler
@@ -310,6 +311,7 @@ def setup_package():
 
         check_package_status('scipy', SCIPY_MIN_VERSION)
 
+        import setuptools  # noqa
         from numpy.distutils.core import setup
 
         metadata['configuration'] = configuration
