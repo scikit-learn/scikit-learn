@@ -39,22 +39,22 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
 
     Parameters
     ----------
-    X : array of shape (n_samples, n_features)
+    X : ndarray of shape (n_samples, n_features)
         Data matrix.
 
-    dictionary : array of shape (n_components, n_features)
+    dictionary : ndarray of shape (n_components, n_features)
         The dictionary matrix against which to solve the sparse coding of
         the data. Some of the algorithms assume normalized rows.
 
-    gram : None or array of shape (n_components, n_components)
+    gram : ndarray of shape (n_components, n_components) or None
         Precomputed Gram matrix, dictionary * dictionary'
         gram can be None if method is 'threshold'.
 
-    cov : array of shape (n_components, n_samples), default=None
+    cov : ndarray of shape (n_components, n_samples), default=None
         Precomputed covariance, dictionary * X'
 
     algorithm : {'lasso_lars', 'lasso_cd', 'lars', 'omp', 'threshold'}, \
-    default='lasso_lars'
+        default='lasso_lars'
         lars: uses the least angle regression method (linear_model.lars_path)
         lasso_lars: uses Lars to compute the Lasso solution
         lasso_cd: uses the coordinate descent method to compute the
@@ -69,7 +69,7 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
         algorithm is 'lasso_lars', 'lasso_cd' or 'threshold'.
         Otherwise it corresponds to n_nonzero_coefs.
 
-    init : array of shape (n_samples, n_components), default=None
+    init : ndarray of shape (n_samples, n_components), default=None
         Initialization value of the sparse code. Only used if
         `algorithm='lasso_cd'`.
 
@@ -77,24 +77,24 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
         Maximum number of iterations to perform if `algorithm='lasso_cd'` or
         `lasso_lars`.
 
-    copy_cov : boolean, default=True
+    copy_cov : bool, default=True
         Whether to copy the precomputed covariance matrix; if False, it may be
         overwritten.
 
-    check_input : boolean, default=True
+    check_input : bool, default=True
         If False, the input arrays X and dictionary will not be checked.
 
     verbose : int, default=0
         Controls the verbosity; the higher, the more messages. Defaults to 0.
 
-    positive: boolean, default=False
+    positive: bool, default=False
         Whether to enforce a positivity constraint on the sparse code.
 
         .. versionadded:: 0.20
 
     Returns
     -------
-    code : array of shape (n_components, n_features)
+    code : ndarray of shape (n_components, n_features)
         The sparse codes
 
     See also
@@ -202,22 +202,22 @@ def sparse_encode(X, dictionary, *, gram=None, cov=None,
 
     Parameters
     ----------
-    X : array of shape (n_samples, n_features)
+    X : ndarray of shape (n_samples, n_features)
         Data matrix
 
-    dictionary : array of shape (n_components, n_features)
+    dictionary : ndarray of shape (n_components, n_features)
         The dictionary matrix against which to solve the sparse coding of
         the data. Some of the algorithms assume normalized rows for meaningful
         output.
 
-    gram : array of shape (n_components, n_components), default=None
+    gram : ndarray of shape (n_components, n_components), default=None
         Precomputed Gram matrix, dictionary * dictionary'
 
-    cov : array of shape (n_components, n_samples), default=None
+    cov : ndarray of shape (n_components, n_samples), default=None
         Precomputed covariance, dictionary' * X
 
     algorithm : {'lasso_lars', 'lasso_cd', 'lars', 'omp', 'threshold'}, \
-    default='lasso_lars'
+        default='lasso_lars'
         lars: uses the least angle regression method (linear_model.lars_path)
         lasso_lars: uses Lars to compute the Lasso solution
         lasso_cd: uses the coordinate descent method to compute the
@@ -241,11 +241,11 @@ def sparse_encode(X, dictionary, *, gram=None, cov=None,
         the reconstruction error targeted. In this case, it overrides
         `n_nonzero_coefs`.
 
-    copy_cov : boolean, default=True
+    copy_cov : bool, default=True
         Whether to copy the precomputed covariance matrix; if False, it may be
         overwritten.
 
-    init : array of shape (n_samples, n_components), default=None
+    init : ndarray of shape (n_samples, n_components), default=None
         Initialization value of the sparse codes. Only used if
         `algorithm='lasso_cd'`.
 
@@ -259,20 +259,20 @@ def sparse_encode(X, dictionary, *, gram=None, cov=None,
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    check_input : boolean, default=True
+    check_input : bool, default=True
         If False, the input arrays X and dictionary will not be checked.
 
     verbose : int, default=0
         Controls the verbosity; the higher, the more messages. Defaults to 0.
 
-    positive : boolean, default=False
+    positive : bool, default=False
         Whether to enforce positivity when finding the encoding.
 
         .. versionadded:: 0.20
 
     Returns
     -------
-    code : array of shape (n_samples, n_components)
+    code : ndarray of shape (n_samples, n_components)
         The sparse codes
 
     See also
@@ -348,13 +348,13 @@ def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
 
     Parameters
     ----------
-    dictionary : array of shape (n_features, n_components)
+    dictionary : ndarray of shape (n_features, n_components)
         Value of the dictionary at the previous iteration.
 
-    Y : array of shape (n_features, n_samples)
+    Y : ndarray of shape (n_features, n_samples)
         Data matrix.
 
-    code : array of shape (n_components, n_samples)
+    code : ndarray of shape (n_components, n_samples)
         Sparse coding of the data against which to optimize the dictionary.
 
     verbose: bool, default=False
@@ -376,7 +376,7 @@ def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
 
     Returns
     -------
-    dictionary : array of shape (n_features, n_components)
+    dictionary : ndarray of shape (n_features, n_components)
         Updated dictionary.
 
     """
@@ -473,10 +473,10 @@ def dict_learning(X, n_components, *, alpha, max_iter=100, tol=1e-8,
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    dict_init : array of shape (n_components, n_features), default=None
+    dict_init : ndarray of shape (n_components, n_features), default=None
         Initial value for the dictionary for warm restart scenarios.
 
-    code_init : array of shape (n_samples, n_components), default=None
+    code_init : ndarray of shape (n_samples, n_components), default=None
         Initial value for the sparse code for warm restart scenarios.
 
     callback : callable, default=None
@@ -510,10 +510,10 @@ def dict_learning(X, n_components, *, alpha, max_iter=100, tol=1e-8,
 
     Returns
     -------
-    code : array of shape (n_samples, n_components)
+    code : ndarray of shape (n_samples, n_components)
         The sparse code factor in the matrix factorization.
 
-    dictionary : array of shape (n_components, n_features),
+    dictionary : ndarray of shape (n_components, n_features),
         The dictionary factor in the matrix factorization.
 
     errors : array
@@ -645,7 +645,7 @@ def dict_learning_online(X, n_components=2, *, alpha=1, n_iter=100,
 
     Parameters
     ----------
-    X : array of shape (n_samples, n_features)
+    X : ndarray of shape (n_samples, n_features)
         Data matrix.
 
     n_components : int, default=2
@@ -660,7 +660,7 @@ def dict_learning_online(X, n_components=2, *, alpha=1, n_iter=100,
     return_code : bool, default = True
         Whether to also return the code U or just the dictionary V.
 
-    dict_init : array of shape (n_components, n_features), default = None
+    dict_init : ndarray of shape (n_components, n_features), default = None
         Initial value for the dictionary for warm restart scenarios.
 
     callback : callable, default=None
@@ -732,10 +732,10 @@ def dict_learning_online(X, n_components=2, *, alpha=1, n_iter=100,
 
     Returns
     -------
-    code : array of shape (n_samples, n_components),
+    code : ndarray of shape (n_samples, n_components),
         the sparse code (only returned if `return_code=True`)
 
-    dictionary : array of shape (n_components, n_features),
+    dictionary : ndarray of shape (n_components, n_features),
         the solutions to the dictionary learning problem
 
     n_iter : int
@@ -905,13 +905,13 @@ class SparseCodingMixin(TransformerMixin):
 
         Parameters
         ----------
-        X : array of shape (n_samples, n_features)
+        X : ndarray of shape (n_samples, n_features)
             Test data to be transformed, must have the same number of
             features as the data used to train the model.
 
         Returns
         -------
-        X_new : array, shape (n_samples, n_components)
+        X_new : ndarray of shape (n_samples, n_components)
             Transformed data
 
         """
@@ -951,7 +951,7 @@ class SparseCoder(SparseCodingMixin, BaseEstimator):
 
     Parameters
     ----------
-    dictionary : array of shape (n_components, n_features)
+    dictionary : ndarray of shape (n_components, n_features)
         The dictionary atoms used for sparse coding. Lines are assumed to be
         normalized to unit norm.
 
@@ -1006,7 +1006,7 @@ class SparseCoder(SparseCodingMixin, BaseEstimator):
 
     Attributes
     ----------
-    components_ : array, [n_components, n_features]
+    components_ : ndarray of shape (n_components, n_features)
         The unchanged dictionary atoms
 
     Examples
@@ -1150,10 +1150,10 @@ class DictionaryLearning(SparseCodingMixin, BaseEstimator):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    code_init : array of shape (n_samples, n_components), default=None
+    code_init : ndarray of shape (n_samples, n_components), default=None
         initial value for the code, for warm restart
 
-    dict_init : array of shape (n_components, n_features), default=None
+    dict_init : ndarray of shape (n_components, n_features), default=None
         initial values for the dictionary, for warm restart
 
     verbose : bool, default=False
@@ -1189,7 +1189,7 @@ class DictionaryLearning(SparseCodingMixin, BaseEstimator):
 
     Attributes
     ----------
-    components_ : array, [n_components, n_features]
+    components_ : ndarray of shape (n_components, n_features)
         dictionary atoms extracted from the data
 
     error_ : array
@@ -1346,11 +1346,11 @@ class MiniBatchDictionaryLearning(SparseCodingMixin, BaseEstimator):
     shuffle : bool, default=True
         whether to shuffle the samples before forming batches
 
-    dict_init : array of shape (n_components, n_features), default=None
+    dict_init : nbarray of shape (n_components, n_features), default=None
         initial value of the dictionary for warm restart scenarios
 
     transform_algorithm : {'lasso_lars', 'lasso_cd', 'lars', 'omp', \
-    'threshold'}, default='omp'
+        'threshold'}, default='omp'
         Algorithm used to transform the data.
         lars: uses the least angle regression method (linear_model.lars_path)
         lasso_lars: uses Lars to compute the Lasso solution
@@ -1408,7 +1408,7 @@ class MiniBatchDictionaryLearning(SparseCodingMixin, BaseEstimator):
 
     Attributes
     ----------
-    components_ : array of shape (n_components, n_features)
+    components_ : ndarray of shape (n_components, n_features)
         components extracted from the data
 
     inner_stats_ : tuple of (A, B) ndarrays
