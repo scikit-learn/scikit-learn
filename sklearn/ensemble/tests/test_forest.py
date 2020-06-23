@@ -1378,36 +1378,3 @@ def test_little_tree_with_small_max_samples(ForestClass):
     msg = "Tree without `max_samples` restriction should have more nodes"
     assert tree1.node_count > tree2.node_count, msg
 
-
-# check that a RandomForestRegressor never predicts numerical values outside of the range of values observed in the training set.
-def test_rf_regressor_prediction_range():
-    # Create a Random Number Generator with 42 as a fixed seed.
-    rng = np.random.RandomState(42)
-    n_samples = 100
-    n_features = 10
-    # TODO: define the n_samples and n_features variables
-    X_train = rng.normal(size=(n_samples, n_features))
-    y_train = rng.normal(size=n_samples)
-
-    rfr = RandomForestRegressor(random_state=42)
-    rfr.fit(X_train, y_train)
-
-    # TODO: np.min() and np.max() to measure the minimum and
-    # maximum values of the training set target values y_train.
-    maxi = np.max(y_train)
-    mini = np.min(y_train)
-    # TODO: generate some random data X_test with the same number
-    # of features.
-
-    # TODO: compute the model predictions on the test data:
-    # rfr.predict(X_test) and store the results in a variable y_preds.
-    X_test = rng.normal(size=(100, n_features))
-
-    y_preds = rfr.predict(X_test)
-    # TODO: check that all the values in y_preds lie between the minimum
-    # and maximum values of y_train.
-    msg = "NO IN THE RANGE"
-    print("----", y_preds)
-    for i in y_preds:
-        assert i > mini, msg
-        assert i < maxi, msg

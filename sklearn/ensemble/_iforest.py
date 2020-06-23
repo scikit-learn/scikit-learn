@@ -116,7 +116,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
         The child estimator template used to create the collection of
         fitted sub-estimators.
 
-    estimators_ : list of DecisionTreeClassifier
+    estimators_ : list of ExtraTreeRegressor instances
         The collection of fitted sub-estimators.
 
     estimators_features_ : list of arrays
