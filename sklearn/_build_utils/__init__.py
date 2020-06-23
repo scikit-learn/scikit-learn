@@ -9,11 +9,10 @@ import os
 import sklearn
 import contextlib
 
-from distutils.version import LooseVersion
-
 from .pre_build_helpers import basic_check_build
 from .openmp_helpers import check_openmp_support
 
+from sklearn.utils.fixes import parse_version
 
 DEFAULT_ROOT = 'sklearn'
 
@@ -34,7 +33,7 @@ def _check_cython_version():
         # Re-raise with more informative error message instead:
         raise ModuleNotFoundError(message)
 
-    if LooseVersion(Cython.__version__) < CYTHON_MIN_VERSION:
+    if parse_version(Cython.__version__) < parse_version(CYTHON_MIN_VERSION):
         message += (' The current version of Cython is {} installed in {}.'
                     .format(Cython.__version__, Cython.__path__))
         raise ValueError(message)
@@ -66,7 +65,7 @@ def cythonize_extensions(top_path, config):
     n_jobs = 1
     with contextlib.suppress(ImportError):
         import joblib
-        if LooseVersion(joblib.__version__) > LooseVersion("0.13.0"):
+        if parse_version(joblib.__version__) > parse_version("0.13.0"):
             # earlier joblib versions don't account for CPU affinity
             # constraints, and may over-estimate the number of available
             # CPU particularly in CI (cf loky#114)

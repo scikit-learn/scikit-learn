@@ -7,7 +7,6 @@
 #
 # License: BSD 3 clause (C) INRIA, University of Amsterdam
 from functools import partial
-from distutils.version import LooseVersion
 
 import warnings
 from abc import ABCMeta, abstractmethod
@@ -28,6 +27,7 @@ from ..utils import _to_object_array
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
 from ..utils.validation import check_non_negative
+from ..utils.fixes import parse_version
 from ..exceptions import DataConversionWarning, EfficiencyWarning
 
 VALID_METRICS = dict(ball_tree=BallTree.valid_metrics,
@@ -650,7 +650,7 @@ class KNeighborsMixin:
                     "%s does not work with sparse matrices. Densify the data, "
                     "or set algorithm='brute'" % self._fit_method)
             old_joblib = (
-                    LooseVersion(joblib.__version__) < LooseVersion('0.12'))
+                    parse_version(joblib.__version__) < parse_version('0.12'))
             if old_joblib:
                 # Deal with change of API in joblib
                 check_pickle = False if old_joblib else None
@@ -957,7 +957,7 @@ class RadiusNeighborsMixin:
                     "or set algorithm='brute'" % self._fit_method)
 
             n_jobs = effective_n_jobs(self.n_jobs)
-            if LooseVersion(joblib.__version__) < LooseVersion('0.12'):
+            if parse_version(joblib.__version__) < parse_version('0.12'):
                 # Deal with change of API in joblib
                 delayed_query = delayed(_tree_query_radius_parallel_helper,
                                         check_pickle=False)
