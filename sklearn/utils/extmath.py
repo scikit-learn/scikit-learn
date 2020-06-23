@@ -160,7 +160,7 @@ def safe_sparse_dot(a, b, *, dense_output=False):
 @_deprecate_positional_args
 def randomized_range_finder(A, *, size, n_iter,
                             power_iteration_normalizer='auto',
-                            random_state=None):
+                            random_state=None, npx=np):
     """Computes an orthonormal matrix whose range approximates the range of A.
 
     Parameters
@@ -208,7 +208,7 @@ def randomized_range_finder(A, *, size, n_iter,
     analysis
     A. Szlam et al. 2014
     """
-    random_state = check_random_state(random_state)
+    random_state = check_random_state(random_state, npx)
 
     # Generating normal random vectors with shape: (A.shape[1], size)
     Q = random_state.normal(size=(A.shape[1], size))
@@ -238,14 +238,14 @@ def randomized_range_finder(A, *, size, n_iter,
 
     # Sample the range of A using by linear projection of Q
     # Extract an orthonormal basis
-    Q, _ = linalg.qr(safe_sparse_dot(A, Q), mode='economic')
+    Q, _ = npx.linalg.qr(safe_sparse_dot(A, Q))
     return Q
 
 
 @_deprecate_positional_args
 def randomized_svd(M, n_components, *, n_oversamples=10, n_iter='auto',
                    power_iteration_normalizer='auto', transpose='auto',
-                   flip_sign=True, random_state=0):
+                   flip_sign=True, random_state=0, npx=np):
     """Computes a truncated randomized SVD
 
     Parameters
@@ -330,7 +330,7 @@ def randomized_svd(M, n_components, *, n_oversamples=10, n_iter='auto',
                           type(M).__name__),
                       sparse.SparseEfficiencyWarning)
 
-    random_state = check_random_state(random_state)
+    random_state = check_random_state(random_state, npx=npx)
     n_random = n_components + n_oversamples
     n_samples, n_features = M.shape
 
@@ -348,16 +348,16 @@ def randomized_svd(M, n_components, *, n_oversamples=10, n_iter='auto',
     Q = randomized_range_finder(
         M, size=n_random, n_iter=n_iter,
         power_iteration_normalizer=power_iteration_normalizer,
-        random_state=random_state)
+        random_state=random_state, npx=npx)
 
     # project M to the (k + p) dimensional space using the basis vectors
     B = safe_sparse_dot(Q.T, M)
 
     # compute the SVD on the thin matrix: (k + p) wide
-    Uhat, s, Vt = linalg.svd(B, full_matrices=False)
+    Uhat, s, Vt = npx.linalg.svd(B, full_matrices=False)
 
     del B
-    U = np.dot(Q, Uhat)
+    U = npx.dot(Q, Uhat)
 
     if flip_sign:
         if not transpose:

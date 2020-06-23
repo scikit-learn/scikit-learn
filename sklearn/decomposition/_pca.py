@@ -423,7 +423,8 @@ class PCA(_BasePCA):
         if self._fit_svd_solver == 'full':
             return self._fit_full(X, n_components, npx=npx)
         elif self._fit_svd_solver in ['arpack', 'randomized']:
-            return self._fit_truncated(X, n_components, self._fit_svd_solver)
+            return self._fit_truncated(X, n_components, self._fit_svd_solver,
+                                       npx=npx)
         else:
             raise ValueError("Unrecognized svd_solver='{0}'"
                              "".format(self._fit_svd_solver))
@@ -494,7 +495,7 @@ class PCA(_BasePCA):
 
         return U, S, Vt
 
-    def _fit_truncated(self, X, n_components, svd_solver):
+    def _fit_truncated(self, X, n_components, svd_solver, npx=np):
         """Fit the model by computing truncated SVD (by ARPACK or randomized)
         on X
         """
@@ -522,10 +523,10 @@ class PCA(_BasePCA):
                              % (n_components, min(n_samples, n_features),
                                 svd_solver))
 
-        random_state = check_random_state(self.random_state)
+        random_state = check_random_state(self.random_state, npx=npx)
 
         # Center data
-        self.mean_ = np.mean(X, axis=0)
+        self.mean_ = npx.mean(X, axis=0)
         X -= self.mean_
 
         if svd_solver == 'arpack':
@@ -543,7 +544,8 @@ class PCA(_BasePCA):
             U, S, Vt = randomized_svd(X, n_components=n_components,
                                       n_iter=self.iterated_power,
                                       flip_sign=True,
-                                      random_state=random_state)
+                                      random_state=random_state,
+                                      npx=npx)
 
         self.n_samples_, self.n_features_ = n_samples, n_features
         self.components_ = Vt
@@ -551,7 +553,7 @@ class PCA(_BasePCA):
 
         # Get variance explained by singular values
         self.explained_variance_ = (S ** 2) / (n_samples - 1)
-        total_var = np.var(X, ddof=1, axis=0)
+        total_var = npx.var(X, ddof=1, axis=0)
         self.explained_variance_ratio_ = \
             self.explained_variance_ / total_var.sum()
         self.singular_values_ = S.copy()  # Store the singular values.
