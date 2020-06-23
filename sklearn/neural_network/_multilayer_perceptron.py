@@ -870,6 +870,15 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
     loss_ : float
         The current loss computed with the loss function.
 
+    best_loss_ : float
+        The minimum loss reached by the solver throughout fitting.
+
+    loss_curve_ : list, length n_iter_
+        The ith element in the list represents the loss at the ith iteration.
+
+    t_ : int
+        The number of training samples seen by the solver during fitting.
+
     coefs_ : list, length n_layers - 1
         The ith element in the list represents the weight matrix corresponding
         to layer i.
@@ -1276,6 +1285,15 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
     ----------
     loss_ : float
         The current loss computed with the loss function.
+
+    best_loss_ : float
+        The minimum loss reached by the solver throughout fitting.
+
+    loss_curve_ : list, length n_iter_
+        The ith element in the list represents the loss at the ith iteration.
+
+    t_ : int
+        The number of training samples seen by the solver during fitting.
 
     coefs_ : list, length n_layers - 1
         The ith element in the list represents the weight matrix corresponding
