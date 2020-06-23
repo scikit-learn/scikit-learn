@@ -1575,7 +1575,7 @@ The aggregation method ``norm`` can be either:
   the square root of the squared calibration error with
   the "plugin" estimator if ``reduce_bias`` is set to ``False``, or
   or with the "debiased" estimator (adding a non-positive term in the sum)
-  if ``reduce_bias`` is set to ``True`` [3]_.
+  if ``reduce_bias`` is set to ``True`` [2]_.
 - ``'max'`` this computes :math:`\max_k \delta_k`.
   This is the maximum calibration error (MCE) defined in [1]_.
 
@@ -1622,13 +1622,8 @@ Here is a small example of usage of this function:::
       of Modern Neural Networks. Proceedings of the 34th International
       Conference on Machine Learning, PMLR 70:1321-1330, 2017.
       <http://proceedings.mlr.press/v70/guo17a.html>`_
-
-  [2] `An experimental comparison of performance measures for classification.
-      C. Ferri, J. Hernandez-Orallo, R. Modroiu. Pattern Recognition Letters,
-      Volume 30, Issue 1, 2009.
-      <https://www.math.ucdavis.edu/~saito/data/roc/ferri-class-perf-metrics.pdf>`_
         
-  [3] `Verified Uncertainty Calibration. Ananya Kumar, Percy Liang, Tengyu
+  [2] `Verified Uncertainty Calibration. Ananya Kumar, Percy Liang, Tengyu
       Ma. Advances in Neural Information Processing Systems (NeurIPS),
       2019 <https://arxiv.org/abs/1909.10155>`_
 
