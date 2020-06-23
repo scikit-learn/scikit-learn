@@ -7,7 +7,7 @@ import pytest
 from sklearn.svm._bounds import l1_min_c
 from sklearn.svm import LinearSVC
 from sklearn.linear_model import LogisticRegression
-from sklearn.svm._newrand import bounded_rand_int_wrap
+from sklearn.svm._newrand import set_seed_wrap, bounded_rand_int_wrap
 
 from sklearn.utils._testing import assert_raise_message
 
@@ -86,7 +86,7 @@ _MAX_INT = 2147483647
                          [(None, 81),
                           (0, 54),
                           (_MAX_UNSIGNED_INT, 9)])
-def test_set_seed(seed, val32, val64):
+def test_set_seed(seed, val):
     if seed is not None:
         set_seed_wrap(seed)
     x = bounded_rand_int_wrap(100)
