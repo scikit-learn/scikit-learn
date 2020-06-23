@@ -230,7 +230,7 @@ def check_regression_dataset(loss, subsample):
 
         y_pred = reg.predict(X_reg)
         mse = mean_squared_error(y_reg, y_pred)
-        assert mse < 0.04
+        assert mse < 0.05
 
         if last_y_pred is not None:
             assert_allclose(last_y_pred, y_pred)
