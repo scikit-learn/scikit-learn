@@ -1606,7 +1606,7 @@ Here is a small example of usage of this function:::
     0.25
     >>> calibration_loss(y_true, y_pred, n_bins=2, norm="max")
     0.25
-    >>> from sklearn.metrics.scorer import make_scorer
+    >>> from sklearn.metrics import make_scorer
     >>> calibration_scorer = make_scorer(calibration_loss, greater_is_better=False)
     >>> from sklearn.ensemble import RandomForestClassifier
     >>> from sklearn.model_selection import GridSearchCV

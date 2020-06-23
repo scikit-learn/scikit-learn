@@ -2488,8 +2488,8 @@ def calibration_loss(y_true, y_prob, sample_weight=None, norm='l2',
         Sample weights.
 
     norm : 'l1' | 'l2' | 'max'
-        Norm method. The l1-norm corresponds to Expected Calibration Error (ECE),
-        and theax-norm to Maximum Calibration Error (MCE). 
+        Norm method. The l1-norm is the Expected Calibration Error (ECE),
+        and the max-norm corresponds to Maximum Calibration Error (MCE).
 
     n_bins : int, optional (default=10)
        The number of bins to compute error on.
@@ -2554,8 +2554,7 @@ def calibration_loss(y_true, y_prob, sample_weight=None, norm='l2',
 
     norm_options = ('l1', 'l2', 'max')
     if norm not in norm_options:
-        raise ValueError('norm has to be one of ' +
-                         str(norm_options))
+        raise ValueError(f'norm has to be one of {norm_options}, got: {norm}.')
 
     n_bins = int(n_bins)
 
