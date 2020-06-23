@@ -240,7 +240,8 @@ def test_fit_docstring_attributes(name, Estimator):
                'MultiTaskLasso', 'MultiTaskLassoCV',
                'OrthogonalMatchingPursuit',
                'PLSCanonical', 'PLSSVD',
-               'PassiveAggressiveClassifier', 'RBFSampler'}
+               'PassiveAggressiveClassifier'}
+
     if Estimator.__name__ in IGNORED:
         pytest.xfail(
             reason="Estimator has too many undocumented attributes.")
