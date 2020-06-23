@@ -351,7 +351,7 @@ def _fetch_lfw_pairs(index_file_path, data_folder_path, slice_=None,
 
     # iterating over the metadata lines for each pair to find the filename to
     # decode and load in memory
-    target = np.zeros(n_pairs, dtype=np.int)
+    target = np.zeros(n_pairs, dtype=int)
     file_paths = list()
     for i, components in enumerate(pair_specs):
         if len(components) == 3:

@@ -850,7 +850,7 @@ def indices_to_mask(indices, mask_length):
     if mask_length <= np.max(indices):
         raise ValueError("mask_length must be greater than max(indices)")
 
-    mask = np.zeros(mask_length, dtype=np.bool)
+    mask = np.zeros(mask_length, dtype=bool)
     mask[indices] = True
 
     return mask
@@ -953,7 +953,7 @@ def is_scalar_nan(x):
     """Tests if x is NaN
 
     This function is meant to overcome the issue that np.isnan does not allow
-    non-numerical types as input, and that np.nan is not np.float('nan').
+    non-numerical types as input, and that np.nan is not float('nan').
 
     Parameters
     ----------
@@ -1047,7 +1047,7 @@ def _approximate_mode(class_counts, n_draws, rng):
             need_to_add -= add_now
             if need_to_add == 0:
                 break
-    return floored.astype(np.int)
+    return floored.astype(int)
 
 
 def check_matplotlib_support(caller_name):

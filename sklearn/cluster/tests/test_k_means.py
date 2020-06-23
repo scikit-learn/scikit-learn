@@ -198,7 +198,7 @@ def test_labels_assignment_and_inertia():
     # implementation
     rng = np.random.RandomState(42)
     noisy_centers = centers + rng.normal(size=centers.shape)
-    labels_gold = np.full(n_samples, -1, dtype=np.int)
+    labels_gold = np.full(n_samples, -1, dtype=int)
     mindist = np.empty(n_samples)
     mindist.fill(np.infty)
     for center_id in range(n_clusters):
@@ -1031,7 +1031,7 @@ def test_k_means_empty_cluster_relocated():
 
 def test_minibatch_kmeans_partial_fit_int_data():
     # Issue GH #14314
-    X = np.array([[-1], [1]], dtype=np.int)
+    X = np.array([[-1], [1]], dtype=int)
     km = MiniBatchKMeans(n_clusters=2)
     km.partial_fit(X)
     assert km.cluster_centers_.dtype.kind == "f"

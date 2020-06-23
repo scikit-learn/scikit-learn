@@ -305,7 +305,7 @@ def test_importances_asymptotic():
             for B in combinations(features, k):
                 # For all values B=b
                 for b in product(*[values[B[j]] for j in range(k)]):
-                    mask_b = np.ones(n_samples, dtype=np.bool)
+                    mask_b = np.ones(n_samples, dtype=bool)
 
                     for j in range(k):
                         mask_b &= X[:, B[j]] == b[j]
@@ -339,7 +339,7 @@ def test_importances_asymptotic():
                      [1, 1, 1, 1, 0, 1, 1, 9],
                      [1, 1, 1, 0, 1, 1, 1, 0]])
 
-    X, y = np.array(data[:, :7], dtype=np.bool), data[:, 7]
+    X, y = np.array(data[:, :7], dtype=bool), data[:, 7]
     n_features = X.shape[1]
 
     # Compute true importances
