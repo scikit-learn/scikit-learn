@@ -111,11 +111,13 @@ def test_bounded_rand_int(orig_range, n_pts):
         res = stats.kstest(sample, uniform_dist.cdf)
         ks_pvals.append(res.pvalue)
     # Null hypothesis = samples come from an uniform distribution.
-    # Under the null hypothesis, p-values should be uniformly distributed and not concentrated 
-    # on low values (this may seem counter-intuitive but is backed by multiple refs)
+    # Under the null hypothesis,
+    #   p-values should be uniformly distributed and not concentrated
+    # on low values
+    #   (this may seem counter-intuitive but is backed by multiple refs)
     # So we can do two checks:
 
-    # (1) check uniformity of p-values 
+    # (1) check uniformity of p-values
     uniform_p_vals_dist = stats.uniform(loc=0, scale=1)
     res_pvals = stats.kstest(ks_pvals, uniform_p_vals_dist.cdf)
     assert res_pvals.pvalue > 0.05,\
