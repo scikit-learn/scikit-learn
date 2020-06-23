@@ -930,6 +930,29 @@ def test_tsne_with_different_square_distances(method):
                            X_transformed_tsne_precomputed)
 
 
+def test_tsne_square_distance_futurewarning():
+    """Make sure that a FutureWarning is only raised when a non-Euclidean
+     metric is specified and square_metric is not True or False."""
+    random_state = check_random_state(0)
+    X = random_state.randn(5, 2)
+    metrics = ['euclidean', 'manhattan']
+    square_distances = [True, False, 'legacy', '']
+    for metric in metrics:
+        for square_distance in square_distances:
+            if square_distance == '':
+                tsne = TSNE(metric=metric)
+            else:
+                tsne = TSNE(metric=metric, square_distance=square_distance)
+
+            if metric != 'euclidean' and square_distance not in [True, False]:
+                with pytest.warns(FutureWarning, match="'square_distance'.*"):
+                    tsne.fit_transform(X)
+            else:
+                with pytest.warns(None) as record:
+                    tsne.fit_transform(X)
+                assert not record
+
+
 @pytest.mark.parametrize('method', ['exact', 'barnes_hut'])
 def test_tsne_n_jobs(method):
     """Make sure that the n_jobs parameter doesn't impact the output"""
