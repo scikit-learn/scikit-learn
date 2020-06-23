@@ -25,7 +25,7 @@ from ..utils import _safe_indexing
 from ..utils import check_array, column_or_1d
 from ..exceptions import ConvergenceWarning
 from ..utils.extmath import safe_sparse_dot
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, _deprecate_positional_args
 from ..utils.multiclass import _check_partial_fit_first_call, unique_labels
 from ..utils.multiclass import type_of_target
 from ..utils.optimize import _check_optimize_result
@@ -107,11 +107,11 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
 
             # For the hidden layers
             if (i + 1) != (self.n_layers_ - 1):
-                activations[i + 1] = hidden_activation(activations[i + 1])
+                hidden_activation(activations[i + 1])
 
         # For the last layer
         output_activation = ACTIVATIONS[self.out_activation_]
-        activations[i + 1] = output_activation(activations[i + 1])
+        output_activation(activations[i + 1])
 
         return activations
 
@@ -128,8 +128,6 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         coef_grads[layer] /= n_samples
 
         intercept_grads[layer] = np.mean(deltas[layer], 0)
-
-        return coef_grads, intercept_grads
 
     def _loss_grad_lbfgs(self, packed_coef_inter, X, y, activations, deltas,
                          coef_grads, intercept_grads):
@@ -227,8 +225,10 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             loss_func_name = 'binary_log_loss'
         loss = LOSS_FUNCTIONS[loss_func_name](y, activations[-1])
         # Add L2 regularization term to loss
-        values = np.sum(
-            np.array([np.dot(s.ravel(), s.ravel()) for s in self.coefs_]))
+        values = 0
+        for s in self.coefs_:
+            s = s.ravel()
+            values += np.dot(s, s)
         loss += (0.5 * self.alpha) * values / n_samples
 
         # Backward propagate
@@ -241,16 +241,16 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         deltas[last] = activations[-1] - y
 
         # Compute gradient for the last layer
-        coef_grads, intercept_grads = self._compute_loss_grad(
+        self._compute_loss_grad(
             last, n_samples, activations, deltas, coef_grads, intercept_grads)
 
+        inplace_derivative = DERIVATIVES[self.activation]
         # Iterate over the hidden layers
         for i in range(self.n_layers_ - 2, 0, -1):
             deltas[i - 1] = safe_sparse_dot(deltas[i], self.coefs_[i].T)
-            inplace_derivative = DERIVATIVES[self.activation]
             inplace_derivative(activations[i], deltas[i - 1])
 
-            coef_grads, intercept_grads = self._compute_loss_grad(
+            self._compute_loss_grad(
                 i - 1, n_samples, activations, deltas, coef_grads,
                 intercept_grads)
 
@@ -945,7 +945,8 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
     Kingma, Diederik, and Jimmy Ba. "Adam: A method for stochastic
         optimization." arXiv preprint arXiv:1412.6980 (2014).
     """
-    def __init__(self, hidden_layer_sizes=(100,), activation="relu",
+    @_deprecate_positional_args
+    def __init__(self, hidden_layer_sizes=(100,), activation="relu", *,
                  solver='adam', alpha=0.0001,
                  batch_size='auto', learning_rate="constant",
                  learning_rate_init=0.001, power_t=0.5, max_iter=200,
@@ -1358,7 +1359,8 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
     Kingma, Diederik, and Jimmy Ba. "Adam: A method for stochastic
         optimization." arXiv preprint arXiv:1412.6980 (2014).
     """
-    def __init__(self, hidden_layer_sizes=(100,), activation="relu",
+    @_deprecate_positional_args
+    def __init__(self, hidden_layer_sizes=(100,), activation="relu", *,
                  solver='adam', alpha=0.0001,
                  batch_size='auto', learning_rate="constant",
                  learning_rate_init=0.001,

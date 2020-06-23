@@ -143,6 +143,9 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
     n_components : int, optional (default=10)
         Number of topics.
 
+        .. versionchanged:: 0.19
+            ``n_topics `` was renamed to ``n_components``
+
     doc_topic_prior : float, optional (default=None)
         Prior of document topic distribution `theta`. If the value is None,
         defaults to `1 / n_components`.
@@ -227,7 +230,7 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
 
     Attributes
     ----------
-    components_ : array, [n_components, n_features]
+    components_ : ndarray of shape (n_components, n_features)
         Variational parameters for topic word distribution. Since the complete
         conditional for topic word distribution is a Dirichlet,
         ``components_[i, j]`` can be viewed as pseudocount that represents the
@@ -235,6 +238,10 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
         It can also be viewed as distribution over the words for each topic
         after normalization:
         ``model.components_ / model.components_.sum(axis=1)[:, np.newaxis]``.
+
+    exp_dirichlet_component_ : ndarray of shape (n_components, n_features)
+        Exponential value of expectation of log topic word distribution.
+        In the literature, this is `exp(E[log(beta)])`.
 
     n_batch_iter_ : int
         Number of iterations of the EM step.
@@ -248,6 +255,10 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
     doc_topic_prior_ : float
         Prior of document topic distribution `theta`. If the value is None,
         it is `1 / n_components`.
+
+    random_state_ : RandomState instance
+        RandomState instance that is generated either from a seed, the random
+        number generator or by `np.random`.
 
     topic_word_prior_ : float
         Prior of topic word distribution `beta`. If the value is None, it is

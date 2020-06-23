@@ -14,6 +14,7 @@ from ..base import BaseEstimator, TransformerMixin
 from ..utils.sparsefuncs import _get_median
 from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
+from ..utils.validation import _deprecate_positional_args
 from ..utils._mask import _get_mask
 from ..utils import is_scalar_nan
 
@@ -67,7 +68,7 @@ class _BaseImputer(TransformerMixin, BaseEstimator):
     It adds automatically support for `add_indicator`.
     """
 
-    def __init__(self, missing_values=np.nan, add_indicator=False):
+    def __init__(self, *, missing_values=np.nan, add_indicator=False):
         self.missing_values = missing_values
         self.add_indicator = add_indicator
 
@@ -125,9 +126,11 @@ class SimpleImputer(_BaseImputer):
 
     Parameters
     ----------
-    missing_values : number, string, np.nan (default) or None
+    missing_values : int, float, str, np.nan or None, default=np.nan
         The placeholder for the missing values. All occurrences of
-        `missing_values` will be imputed.
+        `missing_values` will be imputed. For pandas' dataframes with
+        nullable integer dtypes with missing values, `missing_values`
+        should be set to `np.nan`, since `pd.NA` will be converted to `np.nan`.
 
     strategy : string, default='mean'
         The imputation strategy.
@@ -178,7 +181,7 @@ class SimpleImputer(_BaseImputer):
         During :meth:`transform`, features corresponding to `np.nan`
         statistics will be discarded.
 
-    indicator_ : :class:`sklearn.impute.MissingIndicator`
+    indicator_ : :class:`~sklearn.impute.MissingIndicator`
         Indicator used to add binary indicators for missing values.
         ``None`` if add_indicator is False.
 
@@ -205,7 +208,8 @@ class SimpleImputer(_BaseImputer):
     upon :meth:`transform` if strategy is not "constant".
 
     """
-    def __init__(self, missing_values=np.nan, strategy="mean",
+    @_deprecate_positional_args
+    def __init__(self, *, missing_values=np.nan, strategy="mean",
                  fill_value=None, verbose=0, copy=True, add_indicator=False):
         super().__init__(
             missing_values=missing_values,
@@ -224,7 +228,15 @@ class SimpleImputer(_BaseImputer):
                                                         self.strategy))
 
         if self.strategy in ("most_frequent", "constant"):
-            dtype = None
+            # If input is a list of strings, dtype = object.
+            # Otherwise ValueError is raised in SimpleImputer
+            # with strategy='most_frequent' or 'constant'
+            # because the list is converted to Unicode numpy array
+            if isinstance(X, list) and \
+               any(isinstance(elem, str) for row in X for elem in row):
+                dtype = object
+            else:
+                dtype = None
         else:
             dtype = FLOAT_DTYPES
 
@@ -472,10 +484,11 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
 
     Parameters
     ----------
-    missing_values : number, string, np.nan (default) or None
+    missing_values : int, float, string, np.nan or None, default=np.nan
         The placeholder for the missing values. All occurrences of
-        `missing_values` will be indicated (True in the output array), the
-        other values will be marked as False.
+        `missing_values` will be imputed. For pandas' dataframes with
+        nullable integer dtypes with missing values, `missing_values`
+        should be set to `np.nan`, since `pd.NA` will be converted to `np.nan`.
 
     features : str, default=None
         Whether the imputer mask should represent all or a subset of
@@ -525,8 +538,8 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
            [False, False]])
 
     """
-
-    def __init__(self, missing_values=np.nan, features="missing-only",
+    @_deprecate_positional_args
+    def __init__(self, *, missing_values=np.nan, features="missing-only",
                  sparse="auto", error_on_new=True):
         self.missing_values = missing_values
         self.features = features

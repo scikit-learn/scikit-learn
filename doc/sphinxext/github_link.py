@@ -40,11 +40,12 @@ def _linkcode_resolve(domain, info, package, url_fmt, revision):
         return
 
     class_name = info['fullname'].split('.')[0]
-    if type(class_name) != str:
-        # Python 2 only
-        class_name = class_name.encode('utf-8')
     module = __import__(info['module'], fromlist=[class_name])
     obj = attrgetter(info['fullname'])(module)
+
+    # Unwrap the object to get the correct source
+    # file in case that is wrapped by a decorator
+    obj = inspect.unwrap(obj)
 
     try:
         fn = inspect.getsourcefile(obj)

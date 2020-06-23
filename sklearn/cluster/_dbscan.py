@@ -20,9 +20,10 @@ from ..neighbors import NearestNeighbors
 from ._dbscan_inner import dbscan_inner
 
 
-def dbscan(X, eps=0.5, min_samples=5, metric='minkowski', metric_params=None,
-           algorithm='auto', leaf_size=30, p=2, sample_weight=None,
-           n_jobs=None):
+@_deprecate_positional_args
+def dbscan(X, eps=0.5, *, min_samples=5, metric='minkowski',
+           metric_params=None, algorithm='auto', leaf_size=30, p=2,
+           sample_weight=None, n_jobs=None):
     """Perform DBSCAN clustering from vector array or distance matrix.
 
     Read more in the :ref:`User Guide <dbscan>`.
@@ -45,7 +46,7 @@ def dbscan(X, eps=0.5, min_samples=5, metric='minkowski', metric_params=None,
         The number of samples (or total weight) in a neighborhood for a point
         to be considered as a core point. This includes the point itself.
 
-    metric : string, or callable
+    metric : str or callable, default='minkowski'
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string or callable, it must be one of
         the options allowed by :func:`sklearn.metrics.pairwise_distances` for
@@ -198,7 +199,8 @@ class DBSCAN(ClusterMixin, BaseEstimator):
 
     p : float, default=None
         The power of the Minkowski metric to be used to calculate distance
-        between points.
+        between points. If None, then ``p=2`` (equivalent to the Euclidean
+        distance).
 
     n_jobs : int, default=None
         The number of parallel jobs to run.
