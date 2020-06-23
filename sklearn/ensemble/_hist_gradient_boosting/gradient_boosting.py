@@ -885,24 +885,24 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
 
     Attributes
     ----------
-    bin_mapper_ : instance of binning._BinMapper
+    bin_mapper_ : instance of ``binning._BinMapper``
         The transformer that maps the input dataset into integer-valued bins.
 
     do_early_stopping_ : bool
         If True, early stopping is enabled, otherwise early stopping is
-        disabled. If `early_stopping is 'auto' and the sample size is larger than
+        disabled. If ``early_stopping`` is 'auto' and the sample size is larger than
         10000, this flag is set to True. 
 
-    loss_ : instance of loss.BaseLoss
-        The loss used in the boosting process. It can be one of [LeastSquares, 
-        LeastAbsoluteDeviation, BinaryCrossEntropy, CategoricalCrossEntropy, Poisson].
+    loss_ : instance of ``loss.BaseLoss``
+        The loss used in the boosting process. It can be one of ``[LeastSquares, 
+        LeastAbsoluteDeviation, BinaryCrossEntropy, CategoricalCrossEntropy, Poisson]``.
     
     n_features_ : int
         The number of features. It is set to ``X.shape[1]``.
     
     n_iter_ : int
         The number of iterations as selected by early stopping, depending on
-        the `early_stopping` parameter. Otherwise it corresponds to max_iter.
+        the ``early_stopping`` parameter. Otherwise it corresponds to ``max_iter``.
     
     n_trees_per_iteration_ : int
         The number of tree that are built at each iteration. For regressors,
@@ -910,9 +910,9 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
 
     scorer_ : callable 
         The function scoring the train or validation data to check whether to early stop.
-        Only used when `scoring` is not 'loss'. 
-        If `scoring` is ``None`` it uses the current class ``score()`` function.
-        Otherwise it uses one of the metrics in metrics._scorer.SCORERS as defined in `scoring`.
+        Only used when ``scoring`` is not 'loss'. 
+        If ``scoring`` is ``None`` it uses the current class ``score()`` function.
+        Otherwise it uses one of the metrics in `metrics._scorer.SCORERS` as defined in ``scoring``.
         
     train_score_ : ndarray, shape (n_iter_+1,)
         The scores at each iteration on the training data. The first entry
