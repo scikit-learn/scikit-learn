@@ -449,8 +449,9 @@ class CompoundKernel(Kernel):
 
     Examples
     --------
-    >>> from sklearn.gaussian_process.kernels import (WhiteKernel, RBF,
-    ...                                               CompoundKernel)
+    >>> from sklearn.gaussian_process.kernels import WhiteKernel
+     >>> from sklearn.gaussian_process.kernels import RBF
+     >>> from sklearn.gaussian_process.kernels import CompoundKernel
     >>> kernel = CompoundKernel(
     ... [WhiteKernel(noise_level=3.0), RBF(length_scale=2.0)])
     >>> print(kernel.bounds)
