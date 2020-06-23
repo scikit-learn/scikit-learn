@@ -231,15 +231,15 @@ def test_fit_docstring_attributes(name, Estimator):
     IGNORED = {'BayesianRidge', 'Birch', 'CCA', 'CategoricalNB', 'ElasticNet',
                'ElasticNetCV', 'GaussianProcessClassifier',
                'GradientBoostingRegressor', 'HistGradientBoostingClassifier',
-               'HistGradientBoostingRegressor', 'IsolationForest',
+               'HistGradientBoostingRegressor',
                'KernelCenterer', 'KernelDensity',
                'LarsCV', 'Lasso', 'LassoLarsCV', 'LassoLarsIC',
-               'LatentDirichletAllocation', 'LocalOutlierFactor', 'MDS',
+               'LocalOutlierFactor', 'MDS',
                'MiniBatchKMeans', 'MLPClassifier', 'MLPRegressor',
                'MultiTaskElasticNet', 'MultiTaskElasticNetCV',
                'MultiTaskLasso', 'MultiTaskLassoCV',
                'OrthogonalMatchingPursuit',
-               'PLSCanonical', 'PLSRegression', 'PLSSVD',
+               'PLSCanonical', 'PLSSVD',
                'PassiveAggressiveClassifier', 'RBFSampler'}
     if Estimator.__name__ in IGNORED:
         pytest.xfail(
