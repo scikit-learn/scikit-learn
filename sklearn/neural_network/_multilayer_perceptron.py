@@ -107,11 +107,11 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
 
             # For the hidden layers
             if (i + 1) != (self.n_layers_ - 1):
-                activations[i + 1] = hidden_activation(activations[i + 1])
+                hidden_activation(activations[i + 1])
 
         # For the last layer
         output_activation = ACTIVATIONS[self.out_activation_]
-        activations[i + 1] = output_activation(activations[i + 1])
+        output_activation(activations[i + 1])
 
         return activations
 
@@ -244,10 +244,10 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         self._compute_loss_grad(
             last, n_samples, activations, deltas, coef_grads, intercept_grads)
 
+        inplace_derivative = DERIVATIVES[self.activation]
         # Iterate over the hidden layers
         for i in range(self.n_layers_ - 2, 0, -1):
             deltas[i - 1] = safe_sparse_dot(deltas[i], self.coefs_[i].T)
-            inplace_derivative = DERIVATIVES[self.activation]
             inplace_derivative(activations[i], deltas[i - 1])
 
             self._compute_loss_grad(
