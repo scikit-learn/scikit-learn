@@ -173,9 +173,13 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         De-duplicated ascending `X` values suitable to interpolate
         the y = f(X) monotonic function.
 
+        .. versionadded:: 0.24
+
     y_thresholds_ : ndarray of shape (n_thresholds,)
         De-duplicated ascending `y` values suitable to interpolate
         the y = f(X) monotonic function.
+
+        .. versionadded:: 0.24
 
     f_ : function
         The stepwise interpolating function that covers the input domain ``X``.
