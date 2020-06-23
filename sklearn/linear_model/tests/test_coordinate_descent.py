@@ -14,6 +14,7 @@ from sklearn.datasets import load_diabetes
 from sklearn.datasets import make_regression
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import train_test_split
 
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils._testing import assert_array_almost_equal
@@ -253,24 +254,38 @@ def test_model_pipeline_same_as_normalize_true(linear_model):
     # Test that linear model set with normalize set to True is doing the same
     # as the same linear model preceeded by StandardScaler in the pipeline and
     # with normalize set to False
-    X, y, X_test, y_test = build_dataset(n_features=10)
+
+    n_samples, n_features = 300, 2
+    random_state = np.random.RandomState(0)
+    w = random_state.randn(n_features)
+    X = random_state.randn(n_samples, n_features)
+    X += 10  # make features non-zero mean
+    y = X.dot(w)
+
+    X, X_test, y, y_test = train_test_split(X, y, random_state=42)
+
+    alpha = 0.1
+    tol = 1e-16
 
     # normalize is True
-    clf_norm = linear_model(alpha=0.1, normalize=True)
+    # sparse_X = sparse.csr_matrix(X)  # use this for sparse
+    clf_norm = linear_model(alpha=alpha, normalize=True, fit_intercept=True,
+                            tol=tol)
     clf_norm.fit(X, y)
     y_pred_norm = clf_norm.predict(X_test)
 
     clf_pipe = make_pipeline(
         StandardScaler(),
-        linear_model(alpha=0.1, normalize=False)
+        linear_model(alpha=alpha * np.sqrt(X.shape[0]),
+                     normalize=False, fit_intercept=True,
+                     tol=tol)
     )
     clf_pipe.fit(X, y)
     y_pred_pipe = clf_pipe.predict(X_test)
-    # print(clf_norm.coef_)
-    # print(clf_pipe[1].coef_)
-    import pdb; pdb.set_trace()
-    assert np.all(clf_pipe[1].coef_ == clf_norm.coef_)
-    assert np.all(y_pred_norm == y_pred_pipe)
+
+    assert_array_almost_equal(clf_norm.coef_, clf_pipe[1].coef_, decimal=2)
+    assert abs(clf_norm.intercept_ - clf_pipe[1].intercept_) > 1.
+    assert_array_almost_equal(y_pred_norm, y_pred_pipe)
 
 
 @pytest.mark.parametrize("linear_model", [Lasso])
