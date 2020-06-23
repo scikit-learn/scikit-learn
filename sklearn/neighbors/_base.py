@@ -336,9 +336,10 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                              % (self.metric, alg_check))
 
         if self.metric_params is not None and 'p' in self.metric_params:
-            warnings.warn("Parameter p is found in metric_params. "
-                          "The corresponding parameter from __init__ "
-                          "is ignored.", SyntaxWarning, stacklevel=3)
+            if self.p is not None:
+                warnings.warn("Parameter p is found in metric_params. "
+                              "The corresponding parameter from __init__ "
+                              "is ignored.", SyntaxWarning, stacklevel=3)
             effective_p = self.metric_params['p']
         else:
             effective_p = self.p

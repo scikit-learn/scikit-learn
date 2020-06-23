@@ -13,10 +13,8 @@ import os
 import pytest
 from _pytest.doctest import DoctestItem
 
-from sklearn import set_config
 from sklearn.utils import _IS_32BIT
 from sklearn.externals import _pilutil
-from sklearn._build_utils.deprecated_modules import _DEPRECATED_MODULES
 
 PYTEST_MIN_VERSION = '3.3.0'
 
@@ -97,10 +95,3 @@ def pytest_configure(config):
 def pytest_unconfigure(config):
     import sys
     del sys._is_pytest_session
-
-
-# TODO: Remove when modules are deprecated in 0.24
-# Configures pytest to ignore deprecated modules.
-collect_ignore_glob = [
-    os.path.join(*deprecated_path.split(".")) + ".py"
-    for _, deprecated_path, _, _ in _DEPRECATED_MODULES]

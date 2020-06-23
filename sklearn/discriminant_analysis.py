@@ -537,7 +537,9 @@ class LinearDiscriminantAnalysis(BaseEstimator, LinearClassifierMixin,
         C : ndarray of shape (n_samples, n_classes)
             Estimated log probabilities.
         """
-        return np.log(self.predict_proba(X))
+        prediction = self.predict_proba(X)
+        prediction[prediction == 0.0] += np.finfo(prediction.dtype).tiny
+        return np.log(prediction)
 
     def decision_function(self, X):
         """Apply decision function to an array of samples.
