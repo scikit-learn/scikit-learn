@@ -880,13 +880,13 @@ def dict_learning_online(X, n_components=2, *, alpha=1, n_iter=100,
 class SparseCodingMixin(TransformerMixin):
     """Sparse coding mixin"""
 
-    def _set_sparse_coding_params(self, n_components,
+    def _set_sparse_coding_params(self, dictionary,
                                   transform_algorithm='omp',
                                   transform_n_nonzero_coefs=None,
                                   transform_alpha=None, split_sign=False,
                                   n_jobs=None, positive_code=False,
                                   transform_max_iter=1000):
-        self.n_components = n_components
+        self.dictionary = dictionary
         self.transform_algorithm = transform_algorithm
         self.transform_n_nonzero_coefs = transform_n_nonzero_coefs
         self.transform_alpha = transform_alpha
@@ -1043,12 +1043,14 @@ class SparseCoder(SparseCodingMixin, BaseEstimator):
                  transform_n_nonzero_coefs=None, transform_alpha=None,
                  split_sign=False, n_jobs=None, positive_code=False,
                  transform_max_iter=1000):
-        self._set_sparse_coding_params(dictionary.shape[0],
+        self._set_sparse_coding_params(dictionary,
                                        transform_algorithm,
                                        transform_n_nonzero_coefs,
                                        transform_alpha, split_sign, n_jobs,
                                        positive_code, transform_max_iter)
-        self.components_ = dictionary
+        # The object may be used without being fit.
+        # It preserves the previous behaviour.
+        self.fitted_ = True   
 
     def fit(self, X, y=None):
         """Do nothing and return the estimator unchanged
@@ -1068,6 +1070,14 @@ class SparseCoder(SparseCodingMixin, BaseEstimator):
             Returns the object itself
         """
         return self
+
+    @property
+    def components_(self):
+        return self.dictionary
+
+    @property
+    def n_components_(self):
+        return self.dictionary.shape[0]
 
     @property
     def n_features_in_(self):

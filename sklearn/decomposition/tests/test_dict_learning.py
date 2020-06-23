@@ -3,6 +3,8 @@ import pytest
 import numpy as np
 import itertools
 
+from sklearn.base import clone
+
 from sklearn.exceptions import ConvergenceWarning
 
 from sklearn.utils import check_array
@@ -496,6 +498,20 @@ def test_sparse_coder_estimator():
                        transform_alpha=0.001).transform(X)
     assert not np.all(code == 0)
     assert np.sqrt(np.sum((np.dot(code, V) - X) ** 2)) < 0.1
+
+
+def test_sparse_coder_estimator_clone():
+    n_components = 12
+    rng = np.random.RandomState(0)
+    V = rng.randn(n_components, n_features)  # random init
+    V /= np.sum(V ** 2, axis=1)[:, np.newaxis]
+    code = SparseCoder(dictionary=V, transform_algorithm='lasso_lars',
+                       transform_alpha=0.001)
+    cloned = clone(code)
+    assert cloned.dictionary.tolist() == code.dictionary.tolist()
+    assert cloned.n_components_ == code.n_components_
+    assert cloned.components_.tolist() == code.components_.tolist()
+    assert cloned.n_features_in_ == code.n_features_in_
 
 
 def test_sparse_coder_parallel_mmap():
