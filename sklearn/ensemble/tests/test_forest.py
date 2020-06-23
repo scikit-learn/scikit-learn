@@ -845,6 +845,7 @@ def check_min_weight_fraction_leaf(name):
                 "Failed with {0} min_weight_fraction_leaf={1}".format(
                     name, est.min_weight_fraction_leaf))
 
+
 @pytest.mark.parametrize('name', FOREST_ESTIMATORS)
 def test_min_weight_fraction_leaf(name):
     check_min_weight_fraction_leaf(name)
@@ -1377,4 +1378,3 @@ def test_little_tree_with_small_max_samples(ForestClass):
 
     msg = "Tree without `max_samples` restriction should have more nodes"
     assert tree1.node_count > tree2.node_count, msg
-
