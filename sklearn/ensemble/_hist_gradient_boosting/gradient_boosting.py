@@ -153,9 +153,9 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         self._in_fit = True
 
         if isinstance(self.loss, str):
-            self.loss_ = self._get_loss(sample_weight=sample_weight)
+            self._loss_ = self._get_loss(sample_weight=sample_weight)
         elif isinstance(self.loss, BaseLoss):
-            self.loss_ = self.loss
+            self._loss_ = self.loss
 
         if self.early_stopping == 'auto':
             self.do_early_stopping_ = n_samples > 10000
@@ -166,7 +166,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         self._use_validation_data = self.validation_fraction is not None
         if self.do_early_stopping_ and self._use_validation_data:
             # stratify for classification
-            stratify = y if hasattr(self.loss_, 'predict_proba') else None
+            stratify = y if hasattr(self._loss_, 'predict_proba') else None
 
             # Save the state of the RNG for the training and validation split.
             # This is needed in order to have the same split when using
@@ -224,7 +224,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             # shape (n_trees_per_iteration, n_samples) where
             # n_trees_per_iterations is n_classes in multiclass classification,
             # else 1.
-            self._baseline_prediction = self.loss_.get_baseline_prediction(
+            self._baseline_prediction = self._loss_.get_baseline_prediction(
                 y_train, sample_weight_train, self.n_trees_per_iteration_
             )
             raw_predictions = np.zeros(
@@ -330,7 +330,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         # initialize gradients and hessians (empty arrays).
         # shape = (n_trees_per_iteration, n_samples).
-        gradients, hessians = self.loss_.init_gradients_and_hessians(
+        gradients, hessians = self._loss_.init_gradients_and_hessians(
             n_samples=n_samples,
             prediction_dim=self.n_trees_per_iteration_,
             sample_weight=sample_weight_train
@@ -344,7 +344,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                       end='', flush=True)
 
             # Update gradients and hessians, inplace
-            self.loss_.update_gradients_and_hessians(gradients, hessians,
+            self._loss_.update_gradients_and_hessians(gradients, hessians,
                                                      y_train, raw_predictions,
                                                      sample_weight_train)
 
@@ -370,8 +370,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 acc_find_split_time += grower.total_find_split_time
                 acc_compute_hist_time += grower.total_compute_hist_time
 
-                if self.loss_.need_update_leaves_values:
-                    self.loss_.update_leaves_values(grower, y_train,
+                if self._loss_.need_update_leaves_values:
+                    self._loss_.update_leaves_values(grower, y_train,
                                                     raw_predictions[k, :],
                                                     sample_weight_train)
 
@@ -530,12 +530,12 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         """
 
         self.train_score_.append(
-            -self.loss_(y_train, raw_predictions, sample_weight_train)
+            -self._loss_(y_train, raw_predictions, sample_weight_train)
         )
 
         if self._use_validation_data:
             self.validation_score_.append(
-                -self.loss_(y_val, raw_predictions_val, sample_weight_val)
+                -self._loss_(y_val, raw_predictions_val, sample_weight_val)
             )
             return self._should_stop(self.validation_score_)
         else:
@@ -953,7 +953,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         check_is_fitted(self)
         # Return inverse link of raw predictions after converting
         # shape (n_samples, 1) to (n_samples,)
-        return self.loss_.inverse_link_function(self._raw_predict(X).ravel())
+        return self._loss_.inverse_link_function(self._raw_predict(X).ravel())
 
     def staged_predict(self, X):
         """Predict regression target for each iteration
@@ -972,7 +972,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
             The predicted values of the input samples, for each iteration.
         """
         for raw_predictions in self._staged_raw_predict(X):
-            yield self.loss_.inverse_link_function(raw_predictions.ravel())
+            yield self._loss_.inverse_link_function(raw_predictions.ravel())
 
     def _encode_y(self, y):
         # Just convert y to the expected dtype
@@ -1214,7 +1214,7 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
             The class probabilities of the input samples.
         """
         raw_predictions = self._raw_predict(X)
-        return self.loss_.predict_proba(raw_predictions)
+        return self._loss_.predict_proba(raw_predictions)
 
     def staged_predict_proba(self, X):
         """Predict class probabilities at each iteration.
@@ -1234,7 +1234,7 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
             for each iteration.
         """
         for raw_predictions in self._staged_raw_predict(X):
-            yield self.loss_.predict_proba(raw_predictions)
+            yield self._loss_.predict_proba(raw_predictions)
 
     def decision_function(self, X):
         """Compute the decision function of ``X``.
