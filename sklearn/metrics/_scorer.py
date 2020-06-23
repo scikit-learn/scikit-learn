@@ -30,7 +30,7 @@ from . import (r2_score, median_absolute_error, max_error, mean_absolute_error,
                f1_score, roc_auc_score, average_precision_score,
                precision_score, recall_score, log_loss,
                balanced_accuracy_score, explained_variance_score,
-               brier_score_loss, jaccard_score)
+               brier_score_loss, jaccard_score, calibration_loss)
 
 from .cluster import adjusted_rand_score
 from .cluster import homogeneity_score
@@ -656,6 +656,8 @@ neg_brier_score_scorer = make_scorer(brier_score_loss,
 brier_score_loss_scorer = make_scorer(brier_score_loss,
                                       greater_is_better=False,
                                       needs_proba=True)
+neg_calibration_loss_scorer = make_scorer(calibration_loss,
+                                      greater_is_better=False)
 
 
 # Clustering scores
@@ -688,6 +690,7 @@ SCORERS = dict(explained_variance=explained_variance_scorer,
                average_precision=average_precision_scorer,
                neg_log_loss=neg_log_loss_scorer,
                neg_brier_score=neg_brier_score_scorer,
+               neg_calibration_score=neg_calibration_loss_scorer,
                # Cluster metrics that use supervised evaluation
                adjusted_rand_score=adjusted_rand_scorer,
                homogeneity_score=homogeneity_scorer,

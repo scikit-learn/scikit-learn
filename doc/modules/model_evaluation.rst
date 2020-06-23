@@ -64,6 +64,7 @@ Scoring                           Function                                      
 'brier_score_loss'                :func:`metrics.brier_score_loss`
 'neg_brier_score'                 :func:`metrics.brier_score_loss`
 'calibration_loss'                :func:`metrics.calibration_loss`
+'neg_calibration_score'           :func:`metrics.calibration_loss`
 'f1'                              :func:`metrics.f1_score`                          for binary targets
 'f1_micro'                        :func:`metrics.f1_score`                          micro-averaged
 'f1_macro'                        :func:`metrics.f1_score`                          macro-averaged
@@ -1607,11 +1608,13 @@ Here is a small example of usage of this function:::
     >>> calibration_loss(y_true, y_pred, n_bins=2, norm="max")
     0.25
     >>> from sklearn.metrics import make_scorer
-    >>> calibration_scorer = make_scorer(calibration_loss, greater_is_better=False)
+    >>> from functools import partial
+    >>> max_calibration_loss = partial(calibration_loss, norm = "max")
+    >>> neg_max_calibration_scorer = make_scorer(max_calibration_loss, greater_is_better=False)
     >>> from sklearn.ensemble import RandomForestClassifier
     >>> from sklearn.model_selection import GridSearchCV
     >>> grid = GridSearchCV(RandomForestClassifier(), param_grid={'max_depth': [3, 5, 7]},
-    ...             scoring=calibration_scorer)
+    ...             scoring=neg_max_calibration_scorer)
 
 .. topic:: References:
 
