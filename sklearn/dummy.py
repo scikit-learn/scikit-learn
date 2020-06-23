@@ -490,7 +490,9 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
         elif self.strategy == "median":
             if sample_weight is None:
-                self.constant_ = np.median(y, axis=0)
+                self.constant_ = np.percentile(
+                    y, 50, interpolation="nearest", axis=0
+                )
             else:
                 self.constant_ = [
                     _weighted_percentile(

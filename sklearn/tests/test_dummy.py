@@ -311,7 +311,10 @@ def test_median_strategy_regressor():
 
     reg = DummyRegressor(strategy="median")
     reg.fit(X, y)
-    assert_array_equal(reg.predict(X), [np.median(y)] * len(X))
+    assert_array_equal(
+        reg.predict(X),
+        [np.percentile(y, 50, interpolation="nearest")] * len(X)
+    )
 
 
 def test_median_strategy_multioutput_regressor():
@@ -321,7 +324,9 @@ def test_median_strategy_multioutput_regressor():
     X_learn = random_state.randn(10, 10)
     y_learn = random_state.randn(10, 5)
 
-    median = np.median(y_learn, axis=0).reshape((1, -1))
+    median = np.percentile(
+        y_learn, 50, interpolation="nearest", axis=0
+    ).reshape((1, -1))
 
     X_test = random_state.randn(20, 10)
     y_test = random_state.randn(20, 5)
@@ -346,7 +351,10 @@ def test_quantile_strategy_regressor():
 
     reg = DummyRegressor(strategy="quantile", quantile=0.5)
     reg.fit(X, y)
-    assert_array_equal(reg.predict(X), [np.median(y)] * len(X))
+    assert_array_equal(
+        reg.predict(X),
+        [np.percentile(y, 50, interpolation="nearest")] * len(X)
+    )
 
     reg = DummyRegressor(strategy="quantile", quantile=0)
     reg.fit(X, y)
@@ -358,7 +366,10 @@ def test_quantile_strategy_regressor():
 
     reg = DummyRegressor(strategy="quantile", quantile=0.3)
     reg.fit(X, y)
-    assert_array_equal(reg.predict(X), [np.percentile(y, q=30)] * len(X))
+    assert_array_equal(
+        reg.predict(X),
+        [np.percentile(y, q=30, interpolation="nearest")] * len(X)
+    )
 
 
 def test_quantile_strategy_multioutput_regressor():
@@ -368,8 +379,12 @@ def test_quantile_strategy_multioutput_regressor():
     X_learn = random_state.randn(10, 10)
     y_learn = random_state.randn(10, 5)
 
-    median = np.median(y_learn, axis=0).reshape((1, -1))
-    quantile_values = np.percentile(y_learn, axis=0, q=80).reshape((1, -1))
+    median = np.percentile(
+        y_learn, 50, interpolation="nearest", axis=0
+    ).reshape((1, -1))
+    quantile_values = np.percentile(
+        y_learn, axis=0, q=80, interpolation="nearest"
+    ).reshape((1, -1))
 
     X_test = random_state.randn(20, 10)
     y_test = random_state.randn(20, 5)

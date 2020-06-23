@@ -65,41 +65,41 @@ def test_sample_weight_smoke():
     assert_almost_equal(loss_wo_sw, loss_w_sw)
 
 
-def test_sample_weight_init_estimators():
+@pytest.mark.parametrize("Loss", LOSS_FUNCTIONS.values())
+def test_sample_weight_init_estimators(Loss):
     # Smoke test for init estimators with sample weights.
     rng = check_random_state(13)
-    X = rng.rand(100, 2)
-    sample_weight = np.ones(100)
-    reg_y = rng.rand(100)
+    X = rng.rand(101, 2)
+    sample_weight = np.ones(101)
+    reg_y = rng.rand(101)
 
-    clf_y = rng.randint(0, 2, size=100)
+    clf_y = rng.randint(0, 2, size=101)
 
-    for Loss in LOSS_FUNCTIONS.values():
-        if Loss is None:
-            continue
-        if issubclass(Loss, RegressionLossFunction):
-            k = 1
-            y = reg_y
-        else:
-            k = 2
-            y = clf_y
-            if Loss.is_multi_class:
-                # skip multiclass
-                continue
+    if Loss is None:
+        return
+    if issubclass(Loss, RegressionLossFunction):
+        k = 1
+        y = reg_y
+    else:
+        k = 2
+        y = clf_y
+        if Loss.is_multi_class:
+            # skip multiclass
+            return
 
-        loss = Loss(k)
-        init_est = loss.init_estimator()
-        init_est.fit(X, y)
-        out = loss.get_init_raw_predictions(X, init_est)
-        assert out.shape == (y.shape[0], 1)
+    loss = Loss(k)
+    init_est = loss.init_estimator()
+    init_est.fit(X, y)
+    out = loss.get_init_raw_predictions(X, init_est)
+    assert out.shape == (y.shape[0], 1)
 
-        sw_init_est = loss.init_estimator()
-        sw_init_est.fit(X, y, sample_weight=sample_weight)
-        sw_out = loss.get_init_raw_predictions(X, sw_init_est)
-        assert sw_out.shape == (y.shape[0], 1)
+    sw_init_est = loss.init_estimator()
+    sw_init_est.fit(X, y, sample_weight=sample_weight)
+    sw_out = loss.get_init_raw_predictions(X, sw_init_est)
+    assert sw_out.shape == (y.shape[0], 1)
 
-        # check if predictions match
-        assert_allclose(out, sw_out, rtol=1e-2)
+    # check if predictions match
+    assert_allclose(out, sw_out)
 
 
 def test_quantile_loss_function():
@@ -202,7 +202,9 @@ def test_init_raw_predictions_values():
         init_estimator = loss.init_estimator().fit(X, y)
         raw_predictions = loss.get_init_raw_predictions(y, init_estimator)
         # Make sure baseline prediction is the median of all targets
-        assert_almost_equal(raw_predictions, np.median(y))
+        assert_almost_equal(
+            raw_predictions, np.percentile(y, 50, interpolation="nearest")
+        )
 
     # Quantile loss
     for alpha in (.1, .5, .9):
@@ -210,7 +212,10 @@ def test_init_raw_predictions_values():
         init_estimator = loss.init_estimator().fit(X, y)
         raw_predictions = loss.get_init_raw_predictions(y, init_estimator)
         # Make sure baseline prediction is the alpha-quantile of all targets
-        assert_almost_equal(raw_predictions, np.percentile(y, alpha * 100))
+        assert_almost_equal(
+            raw_predictions,
+            np.percentile(y, alpha * 100, interpolation="nearest")
+        )
 
     y = rng.randint(0, 2, size=n_samples)
 
