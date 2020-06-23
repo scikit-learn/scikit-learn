@@ -112,8 +112,15 @@ class IsolationForest(OutlierMixin, BaseBagging):
 
     Attributes
     ----------
+    base_estimator_ : ExtraTreeRegressor
+        The child estimator template used to create the collection of
+        fitted sub-estimators.
+
     estimators_ : list of DecisionTreeClassifier
         The collection of fitted sub-estimators.
+
+    estimators_features_ : list of arrays
+        The subset of drawn features for each base estimator.
 
     estimators_samples_ : list of arrays
         The subset of drawn samples (i.e., the in-bag samples) for each base
@@ -134,8 +141,8 @@ class IsolationForest(OutlierMixin, BaseBagging):
 
         .. versionadded:: 0.20
 
-    estimators_features_ : list of arrays
-        The subset of drawn features for each base estimator.
+    n_features_ : int
+        The number of features when ``fit`` is performed.
 
     Notes
     -----
