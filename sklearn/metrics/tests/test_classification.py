@@ -2265,6 +2265,7 @@ def test_calibration_error_calibrated_predictions(norm, strategy):
                           strategy=strategy, reduce_bias=False),
         0.)
 
+
 @pytest.mark.parametrize('norm', ["l1", "l2", "max"])
 @pytest.mark.parametrize('strategy', ["uniform", "quantile"])
 def test_calibration_error_uncalibrated_predictions(norm, strategy):
@@ -2295,6 +2296,7 @@ def test_calibration_error_sample_weights():
         calibration_error(y_true, y_pred, sample_weight=sample_weight,
                           n_bins=ratio, norm="l2", reduce_bias=False),
         0.2165063)
+
 
 def test_calibration_error_raises():
     y_true = np.array([0, 0, 0, 1] + [1, 1, 1, 1])
