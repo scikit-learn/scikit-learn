@@ -248,24 +248,64 @@ def test_lasso_cv_positive_constraint():
     clf_constrained.fit(X, y)
     assert min(clf_constrained.coef_) >= 0
 
+
 # linear models which use parameter normalize
 # ok:
 from sklearn.linear_model import Lasso, LassoLars
-# do not accept alpha
+# do not accept alpha and fail on .coef_
 from sklearn.linear_model import Lars, LassoCV, LinearRegression
-from sklearn.linear_model import RidgeClassifierCV, ElasticNetCV, LarsCV
-from sklearn.linear_model import BayesianRidge, ARDRegression, RidgeCV
-from sklearn.linear_model import MultiTaskElasticNetCV, MultiTaskLassoCV
+from sklearn.linear_model import LarsCV
+from sklearn.linear_model import BayesianRidge, ARDRegression
 from sklearn.linear_model import LassoLarsCV, OrthogonalMatchingPursuit
 from sklearn.linear_model import OrthogonalMatchingPursuitCV, LassoLarsIC
+# do not accept alpha and fail on the y_pred
+from sklearn.linear_model import ElasticNetCV, RidgeCV
+# do not accept alpha and ValueError: For mono-task outputs, use ElasticNetCVCV
+from sklearn.linear_model import MultiTaskElasticNetCV, MultiTaskLassoCV
+# do not accept alpha and raise ValueError("Unknown label type: %s" % repr(ys))
+from sklearn.linear_model import RidgeClassifierCV
 # assert: arrays are not almost equals
 from sklearn.linear_model import ElasticNet, Ridge
-
 # ValueError: For mono-task outputs, use ElasticNet
 from sklearn.linear_model import MultiTaskElasticNet, MultiTaskLasso
-
 # raise ValueError("Unknown label type: %s" % repr(ys))
 from sklearn.linear_model import RidgeClassifier
+
+@pytest.mark.parametrize("test_model, args",
+    [(Lars, {}), (LassoCV, {}), (LinearRegression, {}),
+     (OrthogonalMatchingPursuitCV, {}), (OrthogonalMatchingPursuit, {}),
+     (LarsCV, {}), (BayesianRidge, {}), (ARDRegression, {}), (LassoLarsCV, {}),
+     (LassoLarsIC, {})])
+def test_model_pipeline_same_as_normalize_true_no_alpha(test_model, args):
+    # Test that linear model set with normalize set to True is doing the same
+    # as the same linear model preceeded by StandardScaler in the pipeline and
+    # with normalize set to False
+
+    n_samples, n_features = 300, 2
+    random_state = np.random.RandomState(0)
+    w = random_state.randn(n_features)
+    X = random_state.randn(n_samples, n_features)
+    X += 10  # make features non-zero mean
+    y = X.dot(w)
+
+    X, X_test, y, y_test = train_test_split(X, y, random_state=42)
+
+    # normalize is True
+    clf_norm = test_model(normalize=True, fit_intercept=True,
+                          **args)
+    clf_norm.fit(X, y)
+    y_pred_norm = clf_norm.predict(X_test)
+
+    clf_pipe = make_pipeline(
+        StandardScaler(),
+        test_model(normalize=False, fit_intercept=True, **args)
+    )
+    clf_pipe.fit(X, y)
+    y_pred_pipe = clf_pipe.predict(X_test)
+
+    # assert_array_almost_equal(clf_norm.coef_, clf_pipe[1].coef_, decimal=2)
+    assert abs(clf_norm.intercept_ - clf_pipe[1].intercept_) > 1.
+    assert_array_almost_equal(y_pred_norm, y_pred_pipe)
 
 
 @pytest.mark.parametrize("test_model, args",
