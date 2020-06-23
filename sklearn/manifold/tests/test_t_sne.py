@@ -278,6 +278,7 @@ def test_fit_csr_matrix(method):
                     1.0, rtol=1.1e-1)
 
 
+@ignore_warnings(category=FutureWarning)
 def test_preserve_trustworthiness_approximately_with_precomputed_distances():
     # Nearest neighbors should be preserved approximately.
     random_state = check_random_state(0)
@@ -325,18 +326,21 @@ def test_too_few_iterations():
     ([[0.0], [1.0]], ".* square distance matrix"),
     ([[0., -1.], [1., 0.]], ".* positive.*"),
 ])
+@ignore_warnings(category=FutureWarning)
 def test_bad_precomputed_distances(method, D, retype, message_regex):
     tsne = TSNE(metric="precomputed", method=method)
     with pytest.raises(ValueError, match=message_regex):
         tsne.fit_transform(retype(D))
 
 
+@ignore_warnings(category=FutureWarning)
 def test_exact_no_precomputed_sparse():
     tsne = TSNE(metric='precomputed', method='exact')
     with pytest.raises(TypeError, match='sparse'):
         tsne.fit_transform(sp.csr_matrix([[0, 5], [5, 0]]))
 
 
+@ignore_warnings(category=FutureWarning)
 def test_high_perplexity_precomputed_sparse_distances():
     # Perplexity should be less than 50
     dist = np.array([[1., 0., 0.], [0., 1., 0.], [1., 0., 0.]])
@@ -348,6 +352,7 @@ def test_high_perplexity_precomputed_sparse_distances():
 
 
 @ignore_warnings(category=EfficiencyWarning)
+@ignore_warnings(category=FutureWarning)
 def test_sparse_precomputed_distance():
     """Make sure that TSNE works identically for sparse and dense matrix"""
     random_state = check_random_state(0)
@@ -393,6 +398,7 @@ def test_init_ndarray():
     assert_array_equal(np.zeros((100, 2)), X_embedded)
 
 
+@ignore_warnings(category=FutureWarning)
 def test_init_ndarray_precomputed():
     # Initialize TSNE with ndarray and metric 'precomputed'
     # Make sure no FutureWarning is thrown from _fit
@@ -400,6 +406,7 @@ def test_init_ndarray_precomputed():
     tsne.fit(np.zeros((100, 100)))
 
 
+@ignore_warnings(category=FutureWarning)
 def test_distance_not_available():
     # 'metric' must be valid.
     tsne = TSNE(metric="not available", method='exact')
@@ -434,6 +441,7 @@ def test_angle_out_of_range_checks():
             tsne.fit_transform(np.array([[0.0], [1.0]]))
 
 
+@ignore_warnings(category=FutureWarning)
 def test_pca_initialization_not_compatible_with_precomputed_kernel():
     # Precomputed distance matrices must be square matrices.
     tsne = TSNE(metric="precomputed", init="pca")
@@ -591,6 +599,7 @@ def test_verbose():
     assert("early exaggeration" in out)
 
 
+@ignore_warnings(category=FutureWarning)
 def test_chebyshev_metric():
     # t-SNE should allow metrics that cannot be squared (issue #3526).
     random_state = check_random_state(0)
@@ -869,6 +878,7 @@ def test_gradient_bh_multithread_match_sequential():
         assert_allclose(grad_multithread, grad_multithread)
 
 
+@ignore_warnings(category=FutureWarning)
 def test_tsne_with_different_distance_metrics():
     """Make sure that TSNE works for different distance metrics"""
     random_state = check_random_state(0)
@@ -888,6 +898,7 @@ def test_tsne_with_different_distance_metrics():
 
 
 @pytest.mark.parametrize('method', ['exact', 'barnes_hut'])
+@ignore_warnings(category=FutureWarning)
 def test_tsne_with_legacy_euclidean_squaring(method):
     """Make sure that TSNE preserves legacy Euclidean squaring behavior
 
