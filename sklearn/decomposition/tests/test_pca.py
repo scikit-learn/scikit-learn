@@ -669,7 +669,7 @@ def test_pca_jax_data(svd_solver, copy):
 
 
 @pytest.mark.parametrize('svd_solver', ["full", "randomized"])
-@pytest.mark.parametrize('iterated_power', [2])
+@pytest.mark.parametrize('iterated_power', [2, 10])
 @pytest.mark.parametrize('copy', [True, False])
 def test_pca_cupy_data(svd_solver, iterated_power, copy):
     cp = pytest.importorskip("cupy")
@@ -679,7 +679,7 @@ def test_pca_cupy_data(svd_solver, iterated_power, copy):
 
     pca_np = PCA(n_components=3, svd_solver=svd_solver, copy=copy,
                  random_state=0, iterated_power=iterated_power)
-    X_pca_np = pca_np.fit_transform(X_np)
+    pca_np.fit(X_np)
 
     with sklearn.config_context(enable_duck_array=True):
         pca_cp = PCA(**pca_np.get_params())
@@ -688,7 +688,18 @@ def test_pca_cupy_data(svd_solver, iterated_power, copy):
     assert isinstance(X_pca_cp, type(X_cp))
     assert isinstance(pca_cp.components_, type(X_cp))
 
-    X_pca_cp = cp.asnumpy(X_pca_cp)
-    pca_cp.components_ = cp.asnumpy(pca_cp.components_)
-    assert_allclose(X_pca_np, X_pca_cp, atol=1e-3)
-    assert_allclose(pca_np.components_, pca_cp.components_, atol=1e-3)
+    """
+    Since Numpy and Cupy RandomState produce different values
+    from similar integer seed, the resulting embeddings
+    cannot be directly compared. Because of that, this test only check for
+    the approximative similarity of the singular values and scores.
+    """
+
+    sv_np = pca_np.singular_values_
+    sv_cp = cp.asnumpy(pca_cp.singular_values_)
+    assert_allclose(sv_np, sv_cp, rtol=5e-2)
+
+    with sklearn.config_context(enable_duck_array=True):
+        score = pca_cp.score(X_cp)
+        score = cp.asnumpy(score)
+        assert_allclose(pca_np.score(X_np), score, rtol=8e-3)

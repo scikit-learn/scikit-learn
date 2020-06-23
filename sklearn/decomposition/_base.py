@@ -9,7 +9,6 @@
 # License: BSD 3 clause
 
 import numpy as np
-from scipy import linalg
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
@@ -44,7 +43,7 @@ class _BasePCA(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
         cov.flat[::len(cov) + 1] += self.noise_variance_  # modify diag inplace
         return cov
 
-    def get_precision(self):
+    def get_precision(self, npx=np):
         """Compute data precision matrix with the generative model.
 
         Equals the inverse of the covariance but computed with
@@ -61,7 +60,7 @@ class _BasePCA(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
         if self.n_components_ == 0:
             return np.eye(n_features) / self.noise_variance_
         if self.n_components_ == n_features:
-            return linalg.inv(self.get_covariance())
+            return npx.linalg.inv(self.get_covariance())
 
         # Get precision using matrix inversion lemma
         components_ = self.components_
@@ -70,11 +69,11 @@ class _BasePCA(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
             components_ = components_ * np.sqrt(exp_var[:, np.newaxis])
         exp_var_diff = np.maximum(exp_var - self.noise_variance_, 0.)
         precision = np.dot(components_, components_.T) / self.noise_variance_
-        precision.flat[::len(precision) + 1] += 1. / exp_var_diff
-        precision = np.dot(components_.T,
-                           np.dot(linalg.inv(precision), components_))
+        precision.ravel()[::len(precision) + 1] += 1. / exp_var_diff
+        precision = npx.dot(components_.T,
+                            npx.dot(npx.linalg.inv(precision), components_))
         precision /= -(self.noise_variance_ ** 2)
-        precision.flat[::len(precision) + 1] += 1. / self.noise_variance_
+        precision.ravel()[::len(precision) + 1] += 1. / self.noise_variance_
         return precision
 
     @abstractmethod

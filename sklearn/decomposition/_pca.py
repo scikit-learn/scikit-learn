@@ -587,9 +587,11 @@ class PCA(_BasePCA):
         check_is_fitted(self)
 
         X = check_array(X)
+        npx = _get_array_module(X)
+
         Xr = X - self.mean_
         n_features = X.shape[1]
-        precision = self.get_precision()
+        precision = self.get_precision(npx=npx)
         log_like = -.5 * (Xr * (np.dot(Xr, precision))).sum(axis=1)
         log_like -= .5 * (n_features * log(2. * np.pi) -
                           fast_logdet(precision))
