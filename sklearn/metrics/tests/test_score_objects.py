@@ -33,7 +33,7 @@ from sklearn.cluster import KMeans
 from sklearn.linear_model import Ridge, LogisticRegression, Perceptron
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.datasets import make_blobs
-from sklearn.datasets import make_classification
+from sklearn.datasets import make_classification, make_regression
 from sklearn.datasets import make_multilabel_classification
 from sklearn.datasets import load_diabetes
 from sklearn.model_selection import train_test_split, cross_val_score
@@ -89,7 +89,7 @@ def _make_estimators(X_train, y_train, y_ml_train):
     # Make estimators that make sense to test various scoring methods
     sensible_regr = DecisionTreeRegressor(random_state=0)
     # some of the regressions scorers require strictly positive input.
-    sensible_regr.fit(X_train, y_train + 1)
+    sensible_regr.fit(X_train, _require_positive_y(y_train))
     sensible_clf = DecisionTreeClassifier(random_state=0)
     sensible_clf.fit(X_train, y_train)
     sensible_ml_clf = DecisionTreeClassifier(random_state=0)
@@ -474,8 +474,9 @@ def test_raises_on_score_list():
 
 
 @ignore_warnings
-def test_scorer_sample_weight():
-    # Test that scorers support sample_weight or raise sensible errors
+def test_classification_scorer_sample_weight():
+    # Test that classification scorers support sample_weight or raise sensible
+    # errors
 
     # Unlike the metrics invariance test, in the scorer case it's harder
     # to ensure that, on the classifier output, weighted and unweighted
@@ -493,31 +494,70 @@ def test_scorer_sample_weight():
     estimator = _make_estimators(X_train, y_train, y_ml_train)
 
     for name, scorer in SCORERS.items():
+        if name in REGRESSION_SCORERS:
+            # skip the regression scores
+            continue
         if name in MULTILABEL_ONLY_SCORERS:
             target = y_ml_test
         else:
             target = y_test
-        if name in REQUIRE_POSITIVE_Y_SCORERS:
-            target = _require_positive_y(target)
         try:
             weighted = scorer(estimator[name], X_test, target,
                               sample_weight=sample_weight)
             ignored = scorer(estimator[name], X_test[10:], target[10:])
             unweighted = scorer(estimator[name], X_test, target)
             assert weighted != unweighted, (
-                "scorer {0} behaves identically when "
-                "called with sample weights: {1} vs "
-                "{2}".format(name, weighted, unweighted))
+                f"scorer {name} behaves identically when called with "
+                f"sample weights: {weighted} vs {unweighted}")
             assert_almost_equal(weighted, ignored,
-                                err_msg="scorer {0} behaves differently when "
-                                "ignoring samples and setting sample_weight to"
-                                " 0: {1} vs {2}".format(name, weighted,
-                                                        ignored))
+                                err_msg=f"scorer {name} behaves differently "
+                                f"when ignoring samples and setting "
+                                f"sample_weight to 0: {weighted} vs {ignored}")
 
         except TypeError as e:
             assert "sample_weight" in str(e), (
-                "scorer {0} raises unhelpful exception when called "
-                "with sample weights: {1}".format(name, str(e)))
+                   f"scorer {name} raises unhelpful exception when called "
+                   f"with sample weights: {str(e)}")
+
+
+@ignore_warnings
+def test_regression_scorer_sample_weight():
+    # Test that regression scorers support sample_weight or raise sensible
+    # errors
+
+    # Odd number of test samples req for neg_median_absolute_error
+    X, y = make_regression(n_samples=101, n_features=20, random_state=0)
+    y = _require_positive_y(y)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+
+    sample_weight = np.ones_like(y_test)
+    # Odd number req for neg_median_absolute_error
+    sample_weight[:11] = 0
+
+    reg = DecisionTreeRegressor(random_state=0)
+    reg.fit(X_train, y_train)
+
+    for name, scorer in SCORERS.items():
+        if name not in REGRESSION_SCORERS:
+            # skip classification scorers
+            continue
+        try:
+            weighted = scorer(reg, X_test, y_test,
+                              sample_weight=sample_weight)
+            ignored = scorer(reg, X_test[11:], y_test[11:])
+            unweighted = scorer(reg, X_test, y_test)
+            assert weighted != unweighted, (
+                f"scorer {name} behaves identically when called with "
+                f"sample weights: {weighted} vs {unweighted}")
+            assert_almost_equal(weighted, ignored,
+                                err_msg=f"scorer {name} behaves differently "
+                                f"when ignoring samples and setting "
+                                f"sample_weight to 0: {weighted} vs {ignored}")
+
+        except TypeError as e:
+            assert "sample_weight" in str(e), (
+                   f"scorer {name} raises unhelpful exception when called "
+                   f"with sample weights: {str(e)}")
 
 
 @pytest.mark.parametrize('name', SCORERS)

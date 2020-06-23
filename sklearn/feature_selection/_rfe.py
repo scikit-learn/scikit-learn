@@ -52,22 +52,22 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
 
     Parameters
     ----------
-    estimator : object
+    estimator : estimator instance
         A supervised learning estimator with a ``fit`` method that provides
         information about feature importance
         (e.g. `coef_`, `feature_importances_`).
 
-    n_features_to_select : int or None (default=None)
+    n_features_to_select : int or None, default=None
         The number of features to select. If `None`, half of the features
         are selected.
 
-    step : int or float, optional (default=1)
+    step : int or float, default=1
         If greater than or equal to 1, then ``step`` corresponds to the
         (integer) number of features to remove at each iteration.
         If within (0.0, 1.0), then ``step`` corresponds to the percentage
         (rounded down) of features to remove at each iteration.
 
-    verbose : int, (default=0)
+    verbose : int, default=0
         Controls verbosity of output.
 
     importance_getter : str or callable, default='auto'
@@ -77,9 +77,9 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         Also accepts a string that specifies an attribute name/path
         for extracting feature importance (implemented with `attrgetter`).
         For example, give `regressor_.coef_` in case of
-        :class:`sklearn.compose.TransformedTargetRegressor`  or
+        :class:`~sklearn.compose.TransformedTargetRegressor`  or
         `named_steps.clf.feature_importances_` in case of
-        class:`sklearn.pipeline.Pipeline` with its last step named `clf`.
+        class:`~sklearn.pipeline.Pipeline` with its last step named `clf`.
 
         If `callable`, overrides the default feature importance getter.
         The callable is passed with the fitted estimator and it should
@@ -89,19 +89,22 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
 
     Attributes
     ----------
+    classes_ : ndarray of shape (n_classes,)
+        Unique class labels.
+
+    estimator_ : estimator instance
+        The fitted estimator used to select features.
+
     n_features_ : int
         The number of selected features.
 
-    support_ : array of shape [n_features]
-        The mask of selected features.
-
-    ranking_ : array of shape [n_features]
+    ranking_ : ndarray of shape (n_features,)
         The feature ranking, such that ``ranking_[i]`` corresponds to the
         ranking position of the i-th feature. Selected (i.e., estimated
         best) features are assigned rank 1.
 
-    estimator_ : object
-        The external estimator fit on the reduced dataset.
+    support_ : ndarray of shape (n_features,)
+        The mask of selected features.
 
     Examples
     --------
@@ -363,12 +366,12 @@ class RFECV(RFE):
 
     Parameters
     ----------
-    estimator : object
+    estimator : estimator instance
         A supervised learning estimator with a ``fit`` method that provides
         information about feature importance either through a ``coef_``
         attribute or through a ``feature_importances_`` attribute.
 
-    step : int or float, optional (default=1)
+    step : int or float, default=1
         If greater than or equal to 1, then ``step`` corresponds to the
         (integer) number of features to remove at each iteration.
         If within (0.0, 1.0), then ``step`` corresponds to the percentage
@@ -376,7 +379,7 @@ class RFECV(RFE):
         Note that the last iteration may remove fewer than ``step`` features in
         order to reach ``min_features_to_select``.
 
-    min_features_to_select : int, (default=1)
+    min_features_to_select : int, default=1
         The minimum number of features to be selected. This number of features
         will always be scored, even if the difference between the original
         feature count and ``min_features_to_select`` isn't divisible by
@@ -384,7 +387,7 @@ class RFECV(RFE):
 
         .. versionadded:: 0.20
 
-    cv : int, cross-validation generator or an iterable, optional
+    cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 
@@ -394,9 +397,9 @@ class RFECV(RFE):
         - An iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, if ``y`` is binary or multiclass,
-        :class:`sklearn.model_selection.StratifiedKFold` is used. If the
+        :class:`~sklearn.model_selection.StratifiedKFold` is used. If the
         estimator is a classifier or if ``y`` is neither binary nor multiclass,
-        :class:`sklearn.model_selection.KFold` is used.
+        :class:`~sklearn.model_selection.KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
@@ -404,15 +407,15 @@ class RFECV(RFE):
         .. versionchanged:: 0.22
             ``cv`` default value of None changed from 3-fold to 5-fold.
 
-    scoring : string, callable or None, optional, (default=None)
+    scoring : string, callable or None, default=None
         A string (see model evaluation documentation) or
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
 
-    verbose : int, (default=0)
+    verbose : int, default=0
         Controls verbosity of output.
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int or None, default=None
         Number of cores to run in parallel while fitting across folds.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
@@ -420,16 +423,16 @@ class RFECV(RFE):
 
         .. versionadded:: 0.18
 
-    importance_getter : str or callable, optional (default='auto')
+    importance_getter : str or callable, default='auto'
         If 'auto', uses the feature importance either through a `coef_`
         or `feature_importances_` attributes of estimator.
 
         Also accepts a string that specifies an attribute name/path
         for extracting feature importance.
         For example, give `regressor_.coef_` in case of
-        :class:`sklearn.compose.TransformedTargetRegressor`  or
+        :class:`~sklearn.compose.TransformedTargetRegressor`  or
         `named_steps.clf.feature_importances_` in case of
-        :class:`sklearn.pipeline.Pipeline` with its last step named `clf`.
+        :class:`~sklearn.pipeline.Pipeline` with its last step named `clf`.
 
         If `callable`, overrides the default feature importance getter.
         The callable is passed with the fitted estimator and it should
@@ -439,26 +442,29 @@ class RFECV(RFE):
 
     Attributes
     ----------
+    classes_ : ndarray of shape (n_classes,)
+        Unique class labels.
+
+    estimator_ : estimator instance
+        The fitted estimator used to select features.
+
+    grid_scores_ : ndarray of shape (n_subsets_of_features)
+        The cross-validation scores such that
+        ``grid_scores_[i]`` corresponds to
+        the CV score of the i-th subset of features.
+
     n_features_ : int
         The number of selected features with cross-validation.
 
-    support_ : array of shape [n_features]
-        The mask of selected features.
-
-    ranking_ : array of shape [n_features]
+    ranking_ : narray of shape (n_features,)
         The feature ranking, such that `ranking_[i]`
         corresponds to the ranking
         position of the i-th feature.
         Selected (i.e., estimated best)
         features are assigned rank 1.
 
-    grid_scores_ : array of shape [n_subsets_of_features]
-        The cross-validation scores such that
-        ``grid_scores_[i]`` corresponds to
-        the CV score of the i-th subset of features.
-
-    estimator_ : object
-        The external estimator fit on the reduced dataset.
+    support_ : ndarray of shape (n_features,)
+        The mask of selected features.
 
     Notes
     -----
@@ -524,7 +530,7 @@ class RFECV(RFE):
             Target values (integers for classification, real numbers for
             regression).
 
-        groups : array-like of shape (n_samples,) or None
+        groups : array-like of shape (n_samples,) or None, default=None
             Group labels for the samples used while splitting the dataset into
             train/test set. Only used in conjunction with a "Group" :term:`cv`
             instance (e.g., :class:`~sklearn.model_selection.GroupKFold`).

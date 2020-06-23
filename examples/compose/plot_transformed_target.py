@@ -27,7 +27,7 @@ from sklearn.linear_model import RidgeCV
 from sklearn.compose import TransformedTargetRegressor
 from sklearn.metrics import median_absolute_error, r2_score
 
-###############################################################################
+# %%
 # Synthetic example
 ##############################################################################
 
@@ -37,7 +37,7 @@ if LooseVersion(matplotlib.__version__) >= '2.1':
 else:
     density_param = {'normed': True}
 
-###############################################################################
+# %%
 # A synthetic random regression dataset is generated. The targets ``y`` are
 # modified by:
 #
@@ -54,7 +54,7 @@ X, y = make_regression(n_samples=10000, noise=100, random_state=0)
 y = np.expm1((y + abs(y.min())) / 200)
 y_trans = np.log1p(y)
 
-###############################################################################
+# %%
 # Below we plot the probability density functions of the target
 # before and after applying the logarithmic functions.
 
@@ -76,7 +76,7 @@ f.tight_layout(rect=[0.05, 0.05, 0.95, 0.95])
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
-###############################################################################
+# %%
 # At first, a linear model will be applied on the original targets. Due to the
 # non-linearity, the model trained will not be precise during
 # prediction. Subsequently, a logarithmic function is used to linearize the
@@ -118,11 +118,10 @@ ax1.set_ylim([0, 2000])
 f.suptitle("Synthetic data", y=0.035)
 f.tight_layout(rect=[0.05, 0.05, 0.95, 0.95])
 
-###############################################################################
+# %%
 # Real-world data set
 ###############################################################################
-
-###############################################################################
+#
 # In a similar manner, the Ames housing data set is used to show the impact
 # of transforming the targets before learning a model. In this example, the
 # target to be predicted is the selling price of each house.
@@ -140,8 +139,7 @@ y_trans = quantile_transform(y.to_frame(),
                              n_quantiles=900,
                              output_distribution='normal',
                              copy=True).squeeze()
-
-###############################################################################
+# %%
 # A :class:`~sklearn.preprocessing.QuantileTransformer` is used to normalize
 # the target distribution before applying a
 # :class:`~sklearn.linear_model.RidgeCV` model.
@@ -164,7 +162,7 @@ f.tight_layout(rect=[0.05, 0.05, 0.95, 0.95])
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=1)
 
-###############################################################################
+# %%
 # The effect of the transformer is weaker than on the synthetic data. However,
 # the transformation results in an increase in :math:`R^2` and large decrease
 # of the MAE. The residual plot (predicted target - true target vs predicted
