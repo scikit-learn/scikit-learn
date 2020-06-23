@@ -140,7 +140,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                                             dtype='u8')
 
         self._validate_parameters()
-        n_samples, self.n_features_ = X.shape  # used for validation in predict
+        n_samples, self._n_features_ = X.shape  # used for validation in predict
 
         # we need this stateful variable to tell raw_predict() that it was
         # called from fit() (this current method), and that the data it has
@@ -643,10 +643,10 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         X = check_array(X, dtype=[X_DTYPE, X_BINNED_DTYPE],
                         force_all_finite=False)
         check_is_fitted(self)
-        if X.shape[1] != self.n_features_:
+        if X.shape[1] != self._n_features_:
             raise ValueError(
                 'X has {} features but this estimator was trained with '
-                '{} features.'.format(X.shape[1], self.n_features_)
+                '{} features.'.format(X.shape[1], self._n_features_)
             )
         is_binned = getattr(self, '_in_fit', False)
         n_samples = X.shape[0]
@@ -693,10 +693,10 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         """
         X = check_array(X, dtype=X_DTYPE, force_all_finite=False)
         check_is_fitted(self)
-        if X.shape[1] != self.n_features_:
+        if X.shape[1] != self._n_features_:
             raise ValueError(
                 'X has {} features but this estimator was trained with '
-                '{} features.'.format(X.shape[1], self.n_features_)
+                '{} features.'.format(X.shape[1], self._n_features_)
             )
         n_samples = X.shape[0]
         raw_predictions = np.zeros(
