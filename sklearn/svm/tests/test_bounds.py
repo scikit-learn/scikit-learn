@@ -122,8 +122,8 @@ def test_bounded_rand_int(orig_range, n_pts):
     res_pvals = stats.kstest(ks_pvals, uniform_p_vals_dist.cdf)
     assert res_pvals.pvalue > 0.05,\
         "Null hypothesis rejected: generated random numbers are not uniform."\
-        " Details: the (meta) p-value of the test of uniform distribution of p-values"\
-        " is {} which is not > 0.05".format(res_pvals.pvalue)
+        " Details: the (meta) p-value of the test of uniform distribution"\
+        " of p-values is {} which is not > 0.05".format(res_pvals.pvalue)
 
     # (2) (safety belt) check that most p-values are above 0.05
     min_10pct_pval = np.percentile(ks_pvals, q=10)
