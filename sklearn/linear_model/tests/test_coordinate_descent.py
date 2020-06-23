@@ -12,6 +12,9 @@ from distutils.version import LooseVersion
 
 from sklearn.datasets import load_diabetes
 from sklearn.datasets import make_regression
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
+
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_almost_equal
@@ -213,8 +216,6 @@ def test_lasso_cv():
 
 
 def test_lasso_cv_with_some_model_selection():
-    from sklearn.pipeline import make_pipeline
-    from sklearn.preprocessing import StandardScaler
     from sklearn.model_selection import ShuffleSplit
     from sklearn import datasets
     from sklearn.linear_model import LassoCV
@@ -245,6 +246,32 @@ def test_lasso_cv_positive_constraint():
                               positive=True, cv=2, n_jobs=1)
     clf_constrained.fit(X, y)
     assert min(clf_constrained.coef_) >= 0
+
+
+@pytest.mark.parametrize("linear_model", [Lasso])
+def test_model_pipeline_same_as_normalize_true(linear_model):
+    # Test that linear model set with normalize set to True is doing the same
+    # as the same linear model preceeded by StandardScaler in the pipeline and
+    # with normalize set to False
+    X, y, X_test, y_test = build_dataset(n_features=10)
+
+    # normalize is True
+    # sparse_X = sparse.csr_matrix(X)  # use this for sparse
+    clf_norm = linear_model(alpha=0.1, normalize=True)
+    clf_norm.fit(X, y)
+    y_pred_norm = clf_norm.predict(X_test)
+
+    clf_pipe = make_pipeline(
+        StandardScaler(),
+        linear_model(alpha=0.1, normalize=False)
+    )
+    clf_pipe.fit(X, y)
+    y_pred_pipe = clf_pipe.predict(X_test)
+    # print(clf_norm.coef_)
+    # print(clf_pipe[1].coef_)
+
+    assert clf_pipe[1].coef_ == clf_norm.coef_
+    assert y_pred_norm == y_pred_pipe
 
 
 def test_lasso_path_return_models_vs_new_return_gives_same_coefficients():
