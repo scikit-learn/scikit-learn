@@ -230,7 +230,7 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
 
     Attributes
     ----------
-    components_ : array, [n_components, n_features]
+    components_ : ndarray of shape (n_components, n_features)
         Variational parameters for topic word distribution. Since the complete
         conditional for topic word distribution is a Dirichlet,
         ``components_[i, j]`` can be viewed as pseudocount that represents the
@@ -239,7 +239,7 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
         after normalization:
         ``model.components_ / model.components_.sum(axis=1)[:, np.newaxis]``.
 
-    exp_dirichlet_component_ : array, [n_components, n_features]
+    exp_dirichlet_component_ : ndarray of shape (n_components, n_features)
         Exponential value of expectation of log topic word distribution.
         In the literature, this is `exp(E[log(beta)])`.
 
