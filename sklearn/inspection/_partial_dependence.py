@@ -6,6 +6,7 @@
 # License: BSD 3 clause
 
 from collections.abc import Iterable
+import warnings
 
 import numpy as np
 from scipy import sparse
@@ -20,6 +21,7 @@ from ..utils import _safe_indexing
 from ..utils import _determine_key_type
 from ..utils import _get_column_indices
 from ..utils.validation import check_is_fitted
+from ..utils import Bunch
 from ..utils.validation import _deprecate_positional_args
 from ..tree import DecisionTreeRegressor
 from ..ensemble import RandomForestRegressor
@@ -114,6 +116,8 @@ def _partial_dependence_recursion(est, grid, features):
 
 
 def _partial_dependence_brute(est, grid, features, X, response_method):
+
+    predictions = []
     averaged_predictions = []
 
     # define the prediction_method (predict, predict_proba, decision_function).
@@ -149,22 +153,39 @@ def _partial_dependence_brute(est, grid, features, X, response_method):
                 X_eval[:, variable] = new_values[i]
 
         try:
-            predictions = prediction_method(X_eval)
+            # Note: predictions is of shape
+            # (n_points,) for non-multioutput regressors
+            # (n_points, n_tasks) for multioutput regressors
+            # (n_points, 1) for the regressors in cross_decomposition (I think)
+            # (n_points, 2) for binary classification
+            # (n_points, n_classes) for multiclass classification
+            pred = prediction_method(X_eval)
+
+            predictions.append(pred)
+            # average over samples
+            averaged_predictions.append(np.mean(pred, axis=0))
         except NotFittedError:
             raise ValueError(
                 "'estimator' parameter must be a fitted estimator")
 
-        # Note: predictions is of shape
-        # (n_points,) for non-multioutput regressors
-        # (n_points, n_tasks) for multioutput regressors
-        # (n_points, 1) for the regressors in cross_decomposition (I think)
-        # (n_points, 2) for binary classification
-        # (n_points, n_classes) for multiclass classification
+    n_samples = X.shape[0]
 
-        # average over samples
-        averaged_predictions.append(np.mean(predictions, axis=0))
+    # reshape to (n_targets, n_instances, n_points) where n_targets is:
+    # - 1 for non-multioutput regression and binary classification (shape is
+    #   already correct in those cases)
+    # - n_tasks for multi-output regression
+    # - n_classes for multiclass classification.
+    predictions = np.array(predictions).T
+    if is_regressor(est) and predictions.ndim == 2:
+        # non-multioutput regression, shape is (n_instances, n_points,)
+        predictions = predictions.reshape(n_samples, -1)
+    elif is_classifier(est) and predictions.shape[0] == 2:
+        # Binary classification, shape is (2, n_instances, n_points).
+        # we output the effect of **positive** class
+        predictions = predictions[1]
+        predictions = predictions.reshape(n_samples, -1)
 
-    # reshape to (n_targets, n_points) where n_targets is:
+    # reshape averaged_predictions to (n_targets, n_points) where n_targets is:
     # - 1 for non-multioutput regression and binary classification (shape is
     #   already correct in those cases)
     # - n_tasks for multi-output regression
@@ -179,13 +200,13 @@ def _partial_dependence_brute(est, grid, features, X, response_method):
         averaged_predictions = averaged_predictions[1]
         averaged_predictions = averaged_predictions.reshape(1, -1)
 
-    return averaged_predictions
+    return averaged_predictions, predictions
 
 
 @_deprecate_positional_args
 def partial_dependence(estimator, X, features, *, response_method='auto',
                        percentiles=(0.05, 0.95), grid_resolution=100,
-                       method='auto'):
+                       method='auto', kind='legacy'):
     """Partial dependence of ``features``.
 
     Partial dependence of a feature (or a set of features) corresponds to
@@ -198,13 +219,13 @@ def partial_dependence(estimator, X, features, *, response_method='auto',
 
         For :class:`~sklearn.ensemble.GradientBoostingClassifier` and
         :class:`~sklearn.ensemble.GradientBoostingRegressor`, the
-        'recursion' method (used by default) will not account for the `init`
+        `'recursion'` method (used by default) will not account for the `init`
         predictor of the boosting process. In practice, this will produce
-        the same values as 'brute' up to a constant offset in the target
+        the same values as `'brute'` up to a constant offset in the target
         response, provided that `init` is a constant estimator (which is the
         default). However, if `init` is not a constant estimator, the
-        partial dependence values are incorrect for 'recursion' because the
-        offset will be sample-dependent. It is preferable to use the 'brute'
+        partial dependence values are incorrect for `'recursion'` because the
+        offset will be sample-dependent. It is preferable to use the `'brute'`
         method. Note that this only applies to
         :class:`~sklearn.ensemble.GradientBoostingClassifier` and
         :class:`~sklearn.ensemble.GradientBoostingRegressor`, not to
@@ -229,7 +250,7 @@ def partial_dependence(estimator, X, features, *, response_method='auto',
         (e.g. `[(0, 1)]`) for which the partial dependency should be computed.
 
     response_method : {'auto', 'predict_proba', 'decision_function'}, \
-         default='auto'
+            default='auto'
         Specifies whether to use :term:`predict_proba` or
         :term:`decision_function` as the target response. For regressors
         this parameter is ignored and the response is always the output of
@@ -249,46 +270,93 @@ def partial_dependence(estimator, X, features, *, response_method='auto',
     method : {'auto', 'recursion', 'brute'}, default='auto'
         The method used to calculate the averaged predictions:
 
-        - 'recursion' is only supported for some tree-based estimators (namely
+        - `'recursion'` is only supported for some tree-based estimators
+          (namely
           :class:`~sklearn.ensemble.GradientBoostingClassifier`,
           :class:`~sklearn.ensemble.GradientBoostingRegressor`,
           :class:`~sklearn.ensemble.HistGradientBoostingClassifier`,
           :class:`~sklearn.ensemble.HistGradientBoostingRegressor`,
           :class:`~sklearn.tree.DecisionTreeRegressor`,
           :class:`~sklearn.ensemble.RandomForestRegressor`,
-          )
-          but is more efficient in terms of speed.
+          ) when `kind='average'`.
+          This is more efficient in terms of speed.
           With this method, the target response of a
           classifier is always the decision function, not the predicted
-          probabilities.
+          probabilities. Since the `'recursion'` method implicitely computes
+          the average of the Individual Conditional Expectation (ICE) by
+          design, it is not compatible with ICE and thus `kind` must be
+          `'average'`.
 
-        - 'brute' is supported for any estimator, but is more
+        - `'brute'` is supported for any estimator, but is more
           computationally intensive.
 
-        - 'auto': the 'recursion' is used for estimators that support it,
-          and 'brute' is used otherwise.
+        - `'auto'`: the `'recursion'` is used for estimators that support it,
+          and `'brute'` is used otherwise.
 
         Please see :ref:`this note <pdp_method_differences>` for
-        differences between the 'brute' and 'recursion' method.
+        differences between the `'brute'` and `'recursion'` method.
+
+    kind : {'legacy', 'average', 'individual', 'both'}, default='legacy'
+        Whether to return the partial dependence averaged across all the
+        samples in the dataset or one line per sample or both.
+        See Returns below.
+
+        Note that the fast `method='recursion'` option is only available for
+        `kind='average'`. Plotting individual dependencies requires using the
+        slower `method='brute'` option.
+
+        .. versionadded:: 0.24
+        .. deprecated:: 0.24
+            `kind='legacy'` is deprecated and will be removed in version 0.26.
+            `kind='average'` will be the new default. It is intended to migrate
+            from the ndarray output to :class:`~sklearn.utils.Bunch` output.
+
 
     Returns
     -------
-    averaged_predictions : ndarray, \
-            shape (n_outputs, len(values[0]), len(values[1]), ...)
-        The predictions for all the points in the grid, averaged over all
-        samples in X (or over the training data if ``method`` is
-        'recursion'). ``n_outputs`` corresponds to the number of classes in
-        a multi-class setting, or to the number of tasks for multi-output
-        regression. For classical regression and binary classification
-        ``n_outputs==1``. ``n_values_feature_j`` corresponds to the size
-        ``values[j]``.
+    predictions : ndarray or :class:`~sklearn.utils.Bunch`
+
+        - if `kind='legacy'`, return value is ndarray of shape (n_outputs, \
+                len(values[0]), len(values[1]), ...)
+            The predictions for all the points in the grid, averaged
+            over all samples in X (or over the training data if ``method``
+            is 'recursion').
+
+        - if `kind='individual'`, `'average'` or `'both'`, return value is \
+                :class:`~sklearn.utils.Bunch`
+            Dictionary-like object, with the following attributes.
+
+            individual : ndarray of shape (n_outputs, n_instances, \
+                    len(values[0]), len(values[1]), ...)
+                The predictions for all the points in the grid for all
+                samples in X. This is also known as Individual
+                Conditional Expectation (ICE)
+
+            average : ndarray of shape (n_outputs, len(values[0]), \
+                    len(values[1]), ...)
+                The predictions for all the points in the grid, averaged
+                over all samples in X (or over the training data if
+                ``method`` is 'recursion').
+                Only available when kind='both'.
+
+            values : seq of 1d ndarrays
+                The values with which the grid has been created. The generated
+                grid is a cartesian product of the arrays in ``values``.
+                ``len(values) == len(features)``. The size of each array
+                ``values[j]`` is either ``grid_resolution``, or the number of
+                unique values in ``X[:, j]``, whichever is smaller.
+
+        ``n_outputs`` corresponds to the number of classes in a multi-class
+        setting, or to the number of tasks for multi-output regression.
+        For classical regression and binary classification ``n_outputs==1``.
+        ``n_values_feature_j`` corresponds to the size ``values[j]``.
 
     values : seq of 1d ndarrays
         The values with which the grid has been created. The generated grid
         is a cartesian product of the arrays in ``values``. ``len(values) ==
         len(features)``. The size of each array ``values[j]`` is either
         ``grid_resolution``, or the number of unique values in ``X[:, j]``,
-        whichever is smaller.
+        whichever is smaller. Only available when `kind="legacy"`.
 
     Examples
     --------
@@ -349,6 +417,14 @@ def partial_dependence(estimator, X, features, *, response_method='auto',
             'method {} is invalid. Accepted method names are {}.'.format(
                 method, ', '.join(accepted_methods)))
 
+    if kind != 'average' and kind != 'legacy':
+        if method == 'recursion':
+            raise ValueError(
+                "The 'recursion' method only applies when 'kind' is set "
+                "to 'average'"
+            )
+        method = 'brute'
+
     if method == 'auto':
         if (isinstance(estimator, BaseGradientBoosting) and
                 estimator.init is None):
@@ -405,8 +481,14 @@ def partial_dependence(estimator, X, features, *, response_method='auto',
     )
 
     if method == 'brute':
-        averaged_predictions = _partial_dependence_brute(
+        averaged_predictions, predictions = _partial_dependence_brute(
             estimator, grid, features_indices, X, response_method
+        )
+
+        # reshape predictions to
+        # (n_outputs, n_instances, n_values_feature_0, n_values_feature_1, ...)
+        predictions = predictions.reshape(
+            -1, X.shape[0], *[val.shape[0] for val in values]
         )
     else:
         averaged_predictions = _partial_dependence_recursion(
@@ -418,4 +500,22 @@ def partial_dependence(estimator, X, features, *, response_method='auto',
     averaged_predictions = averaged_predictions.reshape(
         -1, *[val.shape[0] for val in values])
 
-    return averaged_predictions, values
+    if kind == 'legacy':
+        warnings.warn(
+            "A Bunch will be returned in place of 'predictions' from version"
+            " 0.26 with partial dependence results accessible via the "
+            "'average' key. In the meantime, pass kind='average' to get the "
+            "future behaviour.",
+            FutureWarning
+        )
+        # TODO 0.26: Remove kind == 'legacy' section
+        return averaged_predictions, values
+    elif kind == 'average':
+        return Bunch(average=averaged_predictions, values=values)
+    elif kind == 'individual':
+        return Bunch(individual=predictions, values=values)
+    else:  # kind='both'
+        return Bunch(
+            average=averaged_predictions, individual=predictions,
+            values=values,
+        )

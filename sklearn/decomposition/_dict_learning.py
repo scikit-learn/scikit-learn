@@ -956,14 +956,15 @@ class SparseCoder(SparseCodingMixin, BaseEstimator):
     transform_algorithm : {'lasso_lars', 'lasso_cd', 'lars', 'omp', \
     'threshold'}, default='omp'
         Algorithm used to transform the data:
-        lars: uses the least angle regression method (linear_model.lars_path)
-        lasso_lars: uses Lars to compute the Lasso solution
-        lasso_cd: uses the coordinate descent method to compute the
-        Lasso solution (linear_model.Lasso). lasso_lars will be faster if
-        the estimated components are sparse.
-        omp: uses orthogonal matching pursuit to estimate the sparse solution
-        threshold: squashes to zero all coefficients less than alpha from
-        the projection ``dictionary * X'``
+
+        - lars: uses the least angle regression method (linear_model.lars_path)
+        - lasso_lars: uses Lars to compute the Lasso solution
+        - lasso_cd: uses the coordinate descent method to compute the
+          Lasso solution (linear_model.Lasso). lasso_lars will be faster if
+          the estimated components are sparse.
+        - omp: uses orthogonal matching pursuit to estimate the sparse solution
+        - threshold: squashes to zero all coefficients less than alpha from
+          the projection ``dictionary * X'``
 
     transform_n_nonzero_coefs : int, default=0.1*n_features
         Number of nonzero coefficients to target in each column of the
@@ -1006,7 +1007,28 @@ class SparseCoder(SparseCodingMixin, BaseEstimator):
     components_ : array, [n_components, n_features]
         The unchanged dictionary atoms
 
-    See also
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.decomposition import SparseCoder
+    >>> X = np.array([[-1, -1, -1], [0, 0, 3]])
+    >>> dictionary = np.array(
+    ...     [[0, 1, 0],
+    ...      [-1, -1, 2],
+    ...      [1, 1, 1],
+    ...      [0, 1, 1],
+    ...      [0, 2, 1]],
+    ...    dtype=np.float64
+    ... )
+    >>> coder = SparseCoder(
+    ...     dictionary=dictionary, transform_algorithm='lasso_lars',
+    ...     transform_alpha=1e-10,
+    ... )
+    >>> coder.transform(X)
+    array([[ 0.,  0., -1.,  0.,  0.],
+           [ 0.,  1.,  1.,  0.,  0.]])
+
+    See Also
     --------
     DictionaryLearning
     MiniBatchDictionaryLearning
@@ -1060,7 +1082,7 @@ class DictionaryLearning(SparseCodingMixin, BaseEstimator):
 
     Solves the optimization problem::
 
-        (U^*,V^*) = argmin 0.5 || Y - U V ||_2^2 + alpha * || U ||_1
+        (U^*,V^*) = argmin 0.5 || X - U V ||_2^2 + alpha * || U ||_1
                     (U,V)
                     with || V_k ||_2 = 1 for all  0 <= k < n_components
 
@@ -1093,14 +1115,15 @@ class DictionaryLearning(SparseCodingMixin, BaseEstimator):
     transform_algorithm : {'lasso_lars', 'lasso_cd', 'lars', 'omp', \
     'threshold'}, default='omp'
         Algorithm used to transform the data
-        lars: uses the least angle regression method (linear_model.lars_path)
-        lasso_lars: uses Lars to compute the Lasso solution
-        lasso_cd: uses the coordinate descent method to compute the
-        Lasso solution (linear_model.Lasso). lasso_lars will be faster if
-        the estimated components are sparse.
-        omp: uses orthogonal matching pursuit to estimate the sparse solution
-        threshold: squashes to zero all coefficients less than alpha from
-        the projection ``dictionary * X'``
+
+        - lars: uses the least angle regression method (linear_model.lars_path)
+        - lasso_lars: uses Lars to compute the Lasso solution
+        - lasso_cd: uses the coordinate descent method to compute the
+          Lasso solution (linear_model.Lasso). lasso_lars will be faster if
+          the estimated components are sparse.
+        - omp: uses orthogonal matching pursuit to estimate the sparse solution
+        - threshold: squashes to zero all coefficients less than alpha from
+          the projection ``dictionary * X'``
 
         .. versionadded:: 0.17
            *lasso_cd* coordinate descent method to improve speed.
@@ -1172,6 +1195,33 @@ class DictionaryLearning(SparseCodingMixin, BaseEstimator):
 
     n_iter_ : int
         Number of iterations run.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.datasets import make_sparse_coded_signal
+    >>> from sklearn.decomposition import DictionaryLearning
+    >>> X, dictionary, code = make_sparse_coded_signal(
+    ...     n_samples=100, n_components=15, n_features=20, n_nonzero_coefs=10,
+    ...     random_state=42,
+    ... )
+    >>> dict_learner = DictionaryLearning(
+    ...     n_components=15, transform_algorithm='lasso_lars', random_state=42,
+    ... )
+    >>> X_transformed = dict_learner.fit_transform(X)
+
+    We can check the level of sparsity of `X_transformed`:
+
+    >>> np.mean(X_transformed == 0)
+    0.88...
+
+    We can compare the average squared euclidean norm of the reconstruction
+    error of the sparse coded signal relative to the squared euclidean norm of
+    the original signal:
+
+    >>> X_hat = X_transformed @ dict_learner.components_
+    >>> np.mean(np.sum((X_hat - X) ** 2, axis=1) / np.sum(X ** 2, axis=1))
+    0.07...
 
     Notes
     -----
@@ -1258,7 +1308,7 @@ class MiniBatchDictionaryLearning(SparseCodingMixin, BaseEstimator):
 
     Solves the optimization problem::
 
-       (U^*,V^*) = argmin 0.5 || Y - U V ||_2^2 + alpha * || U ||_1
+       (U^*,V^*) = argmin 0.5 || X - U V ||_2^2 + alpha * || U ||_1
                     (U,V)
                     with || V_k ||_2 = 1 for all  0 <= k < n_components
 
@@ -1377,6 +1427,32 @@ class MiniBatchDictionaryLearning(SparseCodingMixin, BaseEstimator):
     random_state_ : RandomState
         RandomState instance that is generated either from a seed, the random
         number generattor or by `np.random`.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.datasets import make_sparse_coded_signal
+    >>> from sklearn.decomposition import MiniBatchDictionaryLearning
+    >>> X, dictionary, code = make_sparse_coded_signal(
+    ...     n_samples=100, n_components=15, n_features=20, n_nonzero_coefs=10,
+    ...     random_state=42)
+    >>> dict_learner = MiniBatchDictionaryLearning(
+    ...     n_components=15, transform_algorithm='lasso_lars', random_state=42,
+    ... )
+    >>> X_transformed = dict_learner.fit_transform(X)
+
+    We can check the level of sparsity of `X_transformed`:
+
+    >>> np.mean(X_transformed == 0)
+    0.87...
+
+    We can compare the average squared euclidean norm of the reconstruction
+    error of the sparse coded signal relative to the squared euclidean norm of
+    the original signal:
+
+    >>> X_hat = X_transformed @ dict_learner.components_
+    >>> np.mean(np.sum((X_hat - X) ** 2, axis=1) / np.sum(X ** 2, axis=1))
+    0.10...
 
     Notes
     -----

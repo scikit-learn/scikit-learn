@@ -729,7 +729,7 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         one-vs-the-rest. A number greater than 1 will require more classifiers
         than one-vs-the-rest.
 
-    random_state : int, RandomState instance or None, optional, default: None
+    random_state : int, RandomState instance or None, default=None
         The generator used to initialize the codebook.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.

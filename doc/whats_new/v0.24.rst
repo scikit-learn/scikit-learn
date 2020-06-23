@@ -30,6 +30,7 @@ Details are listed in the changelog below.
 (While we are trying to better inform users by providing this information, we
 cannot assure that this list is complete.)
 
+
 Changelog
 ---------
 
@@ -51,6 +52,11 @@ Changelog
   to be 'auto', which tries to convert returned data to pandas DataFrame
   unless data is sparse.
   :pr:`17396` by :user:`Jiaxiang <fujiaxiang>`.
+
+- |Enhancement| :func:`datasets.fetch_covtype` now now supports the optional
+  argument `as_frame`; when it is set to True, the returned Bunch object's
+  `data` and `frame` members are pandas DataFrames, and the `target` member is
+  a pandas Series. :pr:`17491` by :user:`Alex Liang <tianchuliang>`.
 
 :mod:`sklearn.decomposition`
 ............................
@@ -90,6 +96,15 @@ Changelog
   when ``strategy='most_frequent'`` or ``strategy='constant'``.
   :pr:`17526` by :user:`Ayako YAGI <yagi-3>` and :user:`Juan Carlos Alfaro Jiménez <alfaro96>`.
 
+:mod:`sklearn.inspection`
+.........................
+
+- |Feature| :func:`inspection.partial_dependence` and
+  :func:`inspection.plot_partial_dependence` now support calculating and
+  plotting Individual Conditional Expectation (ICE) curves controlled by the
+  ``kind`` parameter.
+  :pr:`16619` by :user:`Madhura Jayratne <madhuracj>`.
+
 :mod:`sklearn.metrics`
 ......................
 
@@ -119,16 +134,29 @@ Changelog
 :mod:`sklearn.preprocessing`
 ............................
 
+- |Enhancement| Verbose output of :class:`model_selection.GridSearchCV` has
+  been improved for readability. :pr:`16935` by :user:`Raghav Rajagopalan
+  <raghavrv>` and :user:`Chiara Marmo <cmarmo>`.
+
 - |Enhancement| Add ``unit_variance`` to :class:`preprocessing.RobustScaler`,
   which scales output data such that normally distributed features have a
   variance of 1. :pr:`17193` by :user:`Lucy Liu <lucyleeow>` and
   :user:`Mabel Villalba <mabelvj>`.
+
+- |Enhancement| Add `dtype` parameter to
+  :class:`preprocessing.KBinsDiscretizer`.
+  :pr:`16335` by :user:`Arthur Imbert <Henley13>`.
 
 :mod:`sklearn.tree`
 ...................
 
 - |Enhancement| :func:`tree.plot_tree` now uses colors from the matplotlib
   configuration settings. :pr:`17187` by `Andreas Müller`_.
+
+- |API|: The parameter ``X_idx_sorted`` is now deprecated in
+  :meth:`tree.DecisionTreeClassifier.fit` and
+  :meth:`tree.DecisionTreeRegressor.fit`, and has not effect.
+  :pr:`17614` by :user:`Juan Carlos Alfaro Jiménez <alfaro96>`.
 
 :mod:`sklearn.neighbors`
 .............................
@@ -151,7 +179,6 @@ Changelog
   :class:`svm.SVR`, :class:`svm.NuSVR`, :class:`OneClassSVM`.
   :pr:`16530` by :user:`Shuhua Fan <jim0421>`.
 
-
 :mod:`sklearn.multiclass`
 .........................
 
@@ -159,6 +186,13 @@ Changelog
   sparse input data in its `fit` and `predict` methods. The check for
   validity of the input is now delegated to the base estimator.
   :pr:`17233` by :user:`Zolisa Bleki <zoj613>`.
+
+:mod:`sklearn.neural_network`
+.............................
+
+- |Efficiency| Neural net training is now a little faster.
+  :pr:`17603`, :pr:`17604`, :pr:`17606`, :pr:`17608`, :pr:`17609`, :pr:`17633`
+  by :user:`Alex Henrie <alexhenrie>`.
 
 
 Code and Documentation Contributors

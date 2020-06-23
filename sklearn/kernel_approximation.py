@@ -159,6 +159,16 @@ class SkewedChi2Sampler(TransformerMixin, BaseEstimator):
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
+    Attributes
+    ----------
+    random_weights_ : ndarray of shape (n_features, n_components)
+        Weight array, sampled from a secant hyperbolic distribution, which will
+        be used to linearly transform the log of the data.
+
+    random_offset_ : ndarray of shape (n_features, n_components)
+        Bias term, which will be added to the data. It is uniformly distributed
+        between 0 and 2*pi.
+
     Examples
     --------
     >>> from sklearn.kernel_approximation import SkewedChi2Sampler
