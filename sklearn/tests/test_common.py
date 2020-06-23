@@ -33,6 +33,7 @@ from sklearn.utils.estimator_checks import (
     _construct_instance,
     _set_checking_parameters,
     _set_check_estimator_ids,
+    check_no_attributes_set_in_init,
     check_class_weight_balanced_linear_classifier,
     parametrize_with_checks)
 
@@ -204,3 +205,23 @@ def test_class_support_removed():
 
     with pytest.raises(TypeError, match=msg):
         parametrize_with_checks([LogisticRegression])
+
+if False:
+    fcts = [v for k, v in locals().items() if k.startswith('test_')]
+    for fct in fcts:
+        print("run", fct.__name__)
+        try:
+            fct()
+        except Exception as e:
+            if 'missing' in str(e):
+                print(e)
+                continue
+            raise e
+
+for est in list(_tested_estimators()):
+    _set_checking_parameters(est)
+    try:
+        check_no_attributes_set_in_init(est.__class__.__name__, est)
+    except AssertionError as e:
+        print(est.__class__.__name__, e)
+    

@@ -537,3 +537,15 @@ def test_sparse_coder_n_features_in():
     d = np.array([[1, 2, 3], [1, 2, 3]])
     sc = SparseCoder(d)
     assert sc.n_features_in_ == d.shape[1]
+
+
+fcts = [v for k, v in locals().items() if k.startswith('test_')]
+for fct in fcts:
+    print("run", fct.__name__)
+    try:
+        fct()
+    except Exception as e:
+        if 'missing' in str(e):
+            print(e)
+            continue
+        raise e
