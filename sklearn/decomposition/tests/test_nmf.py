@@ -1,6 +1,5 @@
 import numpy as np
 import scipy.sparse as sp
-import numbers
 
 from scipy import linalg
 from sklearn.decomposition import NMF, non_negative_factorization
@@ -10,7 +9,6 @@ from scipy.sparse import csc_matrix
 import pytest
 
 from sklearn.utils._testing import assert_raise_message
-from sklearn.utils._testing import assert_warns_message
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_almost_equal
@@ -19,6 +17,15 @@ from sklearn.utils._testing import ignore_warnings
 from sklearn.utils.extmath import squared_norm
 from sklearn.base import clone
 from sklearn.exceptions import ConvergenceWarning
+
+
+@pytest.mark.parametrize('solver', ['cd', 'mu'])
+def test_convergence_warning(solver):
+    convergence_warning = ("Maximum number of iterations 1 reached. "
+                           "Increase it to improve convergence.")
+    A = np.ones((2, 2))
+    with pytest.warns(ConvergenceWarning, match=convergence_warning):
+        NMF(solver=solver, max_iter=1).fit(A)
 
 
 def test_initialize_nn_output():
@@ -56,7 +63,7 @@ def test_parameter_checking():
         msg = ("init = '{}' can only be used when "
                "n_components <= min(n_samples, n_features)"
                .format(init))
-        assert_raise_message(ValueError, msg, NMF(3, init).fit, A)
+        assert_raise_message(ValueError, msg, NMF(3, init=init).fit, A)
         assert_raise_message(ValueError, msg, nmf._initialize_nmf, A,
                              3, init)
 
@@ -227,19 +234,19 @@ def test_non_negative_factorization_checking():
     nnmf = non_negative_factorization
     msg = ("Number of components must be a positive integer; "
            "got (n_components=1.5)")
-    assert_raise_message(ValueError, msg, nnmf, A, A, A, 1.5, 'random')
+    assert_raise_message(ValueError, msg, nnmf, A, A, A, 1.5, init='random')
     msg = ("Number of components must be a positive integer; "
            "got (n_components='2')")
-    assert_raise_message(ValueError, msg, nnmf, A, A, A, '2', 'random')
+    assert_raise_message(ValueError, msg, nnmf, A, A, A, '2', init='random')
     msg = "Negative values in data passed to NMF (input H)"
-    assert_raise_message(ValueError, msg, nnmf, A, A, -A, 2, 'custom')
+    assert_raise_message(ValueError, msg, nnmf, A, A, -A, 2, init='custom')
     msg = "Negative values in data passed to NMF (input W)"
-    assert_raise_message(ValueError, msg, nnmf, A, -A, A, 2, 'custom')
+    assert_raise_message(ValueError, msg, nnmf, A, -A, A, 2, init='custom')
     msg = "Array passed to NMF (input H) is full of zeros"
-    assert_raise_message(ValueError, msg, nnmf, A, A, 0 * A, 2, 'custom')
+    assert_raise_message(ValueError, msg, nnmf, A, A, 0 * A, 2, init='custom')
     msg = "Invalid regularization parameter: got 'spam' instead of one of"
-    assert_raise_message(ValueError, msg, nnmf, A, A, 0 * A, 2, 'custom', True,
-                         'cd', 2., 1e-4, 200, 0., 0., 'spam')
+    assert_raise_message(ValueError, msg, nnmf, A, A, 0 * A, 2, init='custom',
+                         regularization='spam')
 
 
 def _beta_divergence_dense(X, W, H, beta):
@@ -247,11 +254,6 @@ def _beta_divergence_dense(X, W, H, beta):
 
     Used as a reference for testing nmf._beta_divergence.
     """
-    if isinstance(X, numbers.Number):
-        W = np.array([[W]])
-        H = np.array([[H]])
-        X = np.array([[X]])
-
     WH = np.dot(W, H)
 
     if beta == 2:

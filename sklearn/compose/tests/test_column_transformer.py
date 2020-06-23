@@ -523,7 +523,8 @@ def test_column_transformer_invalid_transformer():
 
     X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
     ct = ColumnTransformer([('trans', NoTrans(), [0])])
-    assert_raise_message(TypeError, "All estimators should implement fit",
+    assert_raise_message(TypeError,
+                         "All estimators should implement fit and transform",
                          ct.fit, X_array)
 
 
@@ -562,7 +563,8 @@ def test_make_column_transformer_kwargs():
     # invalid keyword parameters should raise an error message
     assert_raise_message(
         TypeError,
-        'Unknown keyword arguments: "transformer_weights"',
+        "make_column_transformer() got an unexpected "
+        "keyword argument 'transformer_weights'",
         make_column_transformer, (scaler, 'first'), (norm, ['second']),
         transformer_weights={'pca': 10, 'Transf': 1}
     )
@@ -667,25 +669,88 @@ def test_column_transformer_get_feature_names():
     ct.fit(X)
     assert ct.get_feature_names() == ['col0__a', 'col0__b', 'col1__c']
 
-    # passthrough transformers not supported
-    ct = ColumnTransformer([('trans', 'passthrough', [0, 1])])
-    ct.fit(X)
-    assert_raise_message(
-        NotImplementedError, 'get_feature_names is not yet supported',
-        ct.get_feature_names)
-
-    ct = ColumnTransformer([('trans', DictVectorizer(), 0)],
-                           remainder='passthrough')
-    ct.fit(X)
-    assert_raise_message(
-        NotImplementedError, 'get_feature_names is not yet supported',
-        ct.get_feature_names)
-
     # drop transformer
     ct = ColumnTransformer(
         [('col0', DictVectorizer(), 0), ('col1', 'drop', 1)])
     ct.fit(X)
     assert ct.get_feature_names() == ['col0__a', 'col0__b']
+
+    # passthrough transformer
+    ct = ColumnTransformer([('trans', 'passthrough', [0, 1])])
+    ct.fit(X)
+    assert ct.get_feature_names() == ['x0', 'x1']
+
+    ct = ColumnTransformer([('trans', DictVectorizer(), 0)],
+                           remainder='passthrough')
+    ct.fit(X)
+    assert ct.get_feature_names() == ['trans__a', 'trans__b', 'x1']
+
+    ct = ColumnTransformer([('trans', 'passthrough', [1])],
+                           remainder='passthrough')
+    ct.fit(X)
+    assert ct.get_feature_names() == ['x1', 'x0']
+
+    ct = ColumnTransformer([('trans', 'passthrough', lambda x: [1])],
+                           remainder='passthrough')
+    ct.fit(X)
+    assert ct.get_feature_names() == ['x1', 'x0']
+
+    ct = ColumnTransformer([('trans', 'passthrough', np.array([False, True]))],
+                           remainder='passthrough')
+    ct.fit(X)
+    assert ct.get_feature_names() == ['x1', 'x0']
+
+    ct = ColumnTransformer([('trans', 'passthrough', slice(1, 2))],
+                           remainder='passthrough')
+    ct.fit(X)
+    assert ct.get_feature_names() == ['x1', 'x0']
+
+
+def test_column_transformer_get_feature_names_dataframe():
+    # passthough transformer with a dataframe
+    pd = pytest.importorskip('pandas')
+    X = np.array([[{'a': 1, 'b': 2}, {'a': 3, 'b': 4}],
+                  [{'c': 5}, {'c': 6}]], dtype=object).T
+    X_df = pd.DataFrame(X, columns=['col0', 'col1'])
+
+    ct = ColumnTransformer([('trans', 'passthrough', ['col0', 'col1'])])
+    ct.fit(X_df)
+    assert ct.get_feature_names() == ['col0', 'col1']
+
+    ct = ColumnTransformer([('trans', 'passthrough', [0, 1])])
+    ct.fit(X_df)
+    assert ct.get_feature_names() == ['col0', 'col1']
+
+    ct = ColumnTransformer([('col0', DictVectorizer(), 0)],
+                           remainder='passthrough')
+    ct.fit(X_df)
+    assert ct.get_feature_names() == ['col0__a', 'col0__b', 'col1']
+
+    ct = ColumnTransformer([('trans', 'passthrough', ['col1'])],
+                           remainder='passthrough')
+    ct.fit(X_df)
+    assert ct.get_feature_names() == ['col1', 'col0']
+
+    ct = ColumnTransformer([('trans', 'passthrough',
+                             lambda x: x[['col1']].columns)],
+                           remainder='passthrough')
+    ct.fit(X_df)
+    assert ct.get_feature_names() == ['col1', 'col0']
+
+    ct = ColumnTransformer([('trans', 'passthrough', np.array([False, True]))],
+                           remainder='passthrough')
+    ct.fit(X_df)
+    assert ct.get_feature_names() == ['col1', 'col0']
+
+    ct = ColumnTransformer([('trans', 'passthrough', slice(1, 2))],
+                           remainder='passthrough')
+    ct.fit(X_df)
+    assert ct.get_feature_names() == ['col1', 'col0']
+
+    ct = ColumnTransformer([('trans', 'passthrough', [1])],
+                           remainder='passthrough')
+    ct.fit(X_df)
+    assert ct.get_feature_names() == ['col1', 'col0']
 
 
 def test_column_transformer_special_strings():
@@ -1039,7 +1104,7 @@ def test_column_transformer_no_estimators_set_params():
 
 
 def test_column_transformer_callable_specifier():
-    # assert that function gets the full array / dataframe
+    # assert that function gets the full array
     X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
     X_res_first = np.array([[0, 1, 2]]).T
 
@@ -1054,7 +1119,13 @@ def test_column_transformer_callable_specifier():
     assert callable(ct.transformers[0][2])
     assert ct.transformers_[0][2] == [0]
 
+
+def test_column_transformer_callable_specifier_dataframe():
+    # assert that function gets the full dataframe
     pd = pytest.importorskip('pandas')
+    X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
+    X_res_first = np.array([[0, 1, 2]]).T
+
     X_df = pd.DataFrame(X_array, columns=['first', 'second'])
 
     def func(X):
@@ -1184,6 +1255,18 @@ def test_column_transformer_mask_indexing(array_type):
     )
     X_trans = column_transformer.fit_transform(X)
     assert X_trans.shape == (3, 2)
+
+
+def test_n_features_in():
+    # make sure n_features_in is what is passed as input to the column
+    # transformer.
+
+    X = [[1, 2], [3, 4], [5, 6]]
+    ct = ColumnTransformer([('a', DoubleTrans(), [0]),
+                            ('b', DoubleTrans(), [1])])
+    assert not hasattr(ct, 'n_features_in_')
+    ct.fit(X)
+    assert ct.n_features_in_ == 2
 
 
 @pytest.mark.parametrize('cols, pattern, include, exclude', [

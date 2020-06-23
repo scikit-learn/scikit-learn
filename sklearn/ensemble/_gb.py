@@ -40,25 +40,20 @@ import numpy as np
 from scipy.sparse import csc_matrix
 from scipy.sparse import csr_matrix
 from scipy.sparse import issparse
-from scipy.special import expit
 
 from time import time
 from ..model_selection import train_test_split
 from ..tree import DecisionTreeRegressor
 from ..tree._tree import DTYPE, DOUBLE
-from ..tree._tree import TREE_LEAF
 from . import _gb_losses
 
 from ..utils import check_random_state
 from ..utils import check_array
 from ..utils import column_or_1d
-from ..utils import check_consistent_length
-from ..utils import deprecated
-from ..utils.fixes import logsumexp
-from ..utils.stats import _weighted_percentile
 from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils.multiclass import check_classification_targets
 from ..exceptions import NotFittedError
+from ..utils.validation import _deprecate_positional_args
 
 
 class VerboseReporter:
@@ -71,7 +66,6 @@ class VerboseReporter:
         (when iteration mod verbose_mod is zero).; if larger than 1 then output
         is printed for each update.
     """
-
     def __init__(self, verbose):
         self.verbose = verbose
 
@@ -140,14 +134,13 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
     """Abstract base class for Gradient Boosting. """
 
     @abstractmethod
-    def __init__(self, loss, learning_rate, n_estimators, criterion,
+    def __init__(self, *, loss, learning_rate, n_estimators, criterion,
                  min_samples_split, min_samples_leaf, min_weight_fraction_leaf,
                  max_depth, min_impurity_decrease, min_impurity_split,
                  init, subsample, max_features, ccp_alpha,
                  random_state, alpha=0.9, verbose=0, max_leaf_nodes=None,
-                 warm_start=False, presort='deprecated',
-                 validation_fraction=0.1, n_iter_no_change=None,
-                 tol=1e-4):
+                 warm_start=False, validation_fraction=0.1,
+                 n_iter_no_change=None, tol=1e-4):
 
         self.n_estimators = n_estimators
         self.learning_rate = learning_rate
@@ -168,13 +161,12 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         self.verbose = verbose
         self.max_leaf_nodes = max_leaf_nodes
         self.warm_start = warm_start
-        self.presort = presort
         self.validation_fraction = validation_fraction
         self.n_iter_no_change = n_iter_no_change
         self.tol = tol
 
     def _fit_stage(self, i, X, y, raw_predictions, sample_weight, sample_mask,
-                   random_state, X_idx_sorted, X_csc=None, X_csr=None):
+                   random_state, X_csc=None, X_csr=None):
         """Fit another stage of ``n_classes_`` trees to the boosting model. """
 
         assert sample_mask.dtype == np.bool
@@ -215,7 +207,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
             X = X_csr if X_csr is not None else X
             tree.fit(X, residual, sample_weight=sample_weight,
-                     check_input=False, X_idx_sorted=X_idx_sorted)
+                     check_input=False)
 
             # update tree leaves
             loss.update_terminal_regions(
@@ -305,14 +297,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             raise ValueError("n_iter_no_change should either be None or an "
                              "integer. %r was passed"
                              % self.n_iter_no_change)
-
-        if self.presort != 'deprecated':
-            warnings.warn("The parameter 'presort' is deprecated and has no "
-                          "effect. It will be removed in v0.24. You can "
-                          "suppress this warning by not passing any value "
-                          "to the 'presort' parameter. We also recommend "
-                          "using HistGradientBoosting models instead.",
-                          FutureWarning)
 
     def _init_state(self):
         """Initialize model state and allocate model state data structures. """
@@ -411,14 +395,15 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         # Check input
         # Since check_array converts both X and y to the same dtype, but the
         # trees use different types for X and y, checking them separately.
-        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'], dtype=DTYPE)
+
+        X, y = self._validate_data(X, y, accept_sparse=['csr', 'csc', 'coo'],
+                                   dtype=DTYPE, multi_output=True)
         n_samples, self.n_features_ = X.shape
 
         sample_weight_is_none = sample_weight is None
 
         sample_weight = _check_sample_weight(sample_weight, X)
 
-        y = check_array(y, accept_sparse='csc', ensure_2d=False, dtype=None)
         y = column_or_1d(y, warn=True)
         y = self._validate_y(y, sample_weight)
 
@@ -497,12 +482,10 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             raw_predictions = self._raw_predict(X)
             self._resize_state()
 
-        X_idx_sorted = None
-
         # fit the boosting stages
         n_stages = self._fit_stages(
             X, y, raw_predictions, sample_weight, self._rng, X_val, y_val,
-            sample_weight_val, begin_at_stage, monitor, X_idx_sorted)
+            sample_weight_val, begin_at_stage, monitor)
 
         # change shape of arrays after fit (early-stopping or additional ests)
         if n_stages != self.estimators_.shape[0]:
@@ -516,7 +499,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
     def _fit_stages(self, X, y, raw_predictions, sample_weight, random_state,
                     X_val, y_val, sample_weight_val,
-                    begin_at_stage=0, monitor=None, X_idx_sorted=None):
+                    begin_at_stage=0, monitor=None):
         """Iteratively fits the stages.
 
         For each stage it computes the progress (OOB, train score)
@@ -531,7 +514,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         loss_ = self.loss_
 
         if self.verbose:
-            verbose_reporter = VerboseReporter(self.verbose)
+            verbose_reporter = VerboseReporter(verbose=self.verbose)
             verbose_reporter.init(self, begin_at_stage)
 
         X_csc = csc_matrix(X) if issparse(X) else None
@@ -559,7 +542,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             # fit next stage of trees
             raw_predictions = self._fit_stage(
                 i, X, y, raw_predictions, sample_weight, sample_mask,
-                random_state, X_idx_sorted, X_csc, X_csr)
+                random_state, X_csc, X_csr)
 
             # track deviance (= loss)
             if do_oob:
@@ -708,8 +691,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 (n_trees_per_iteration, n_samples)
             The value of the partial dependence function on each grid point.
         """
-        check_is_fitted(self,
-                        msg="'estimator' parameter must be a fitted estimator")
         if self.init is not None:
             warnings.warn(
                 'Using recursion method with a non-constant init predictor '
@@ -936,11 +917,6 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         and add more estimators to the ensemble, otherwise, just erase the
         previous solution. See :term:`the Glossary <warm_start>`.
 
-    presort : deprecated, default='deprecated'
-        This parameter is deprecated and will be removed in v0.24.
-
-        .. deprecated :: 0.22
-
     validation_fraction : float, default=0.1
         The proportion of training data to set aside as validation set for
         early stopping. Must be between 0 and 1.
@@ -1021,6 +997,15 @@ shape (n_estimators, ``loss_.K``)
     classes_ : ndarray of shape (n_classes,)
         The classes labels.
 
+    n_features_ : int
+        The number of data features.
+
+    n_classes_ : int
+        The number of classes.
+
+    max_features_ : int
+        The inferred value of max_features.
+
     Notes
     -----
     The features are always randomly permuted at each split. Therefore,
@@ -1029,6 +1014,22 @@ shape (n_estimators, ``loss_.K``)
     identical for several splits enumerated during the search of the best
     split. To obtain a deterministic behaviour during fitting,
     ``random_state`` has to be fixed.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_classification
+    >>> from sklearn.ensemble import GradientBoostingClassifier
+    >>> from sklearn.model_selection import train_test_split
+    >>> X, y = make_classification(random_state=0)
+    >>> X_train, X_test, y_train, y_test = train_test_split(
+    ...     X, y, random_state=0)
+    >>> clf = GradientBoostingClassifier(random_state=0)
+    >>> clf.fit(X_train, y_train)
+    GradientBoostingClassifier(random_state=0)
+    >>> clf.predict(X_test[:2])
+    array([1, 0])
+    >>> clf.score(X_test, y_test)
+    0.88
 
     See also
     --------
@@ -1049,15 +1050,16 @@ shape (n_estimators, ``loss_.K``)
 
     _SUPPORTED_LOSS = ('deviance', 'exponential')
 
-    def __init__(self, loss='deviance', learning_rate=0.1, n_estimators=100,
+    @_deprecate_positional_args
+    def __init__(self, *, loss='deviance', learning_rate=0.1, n_estimators=100,
                  subsample=1.0, criterion='friedman_mse', min_samples_split=2,
                  min_samples_leaf=1, min_weight_fraction_leaf=0.,
                  max_depth=3, min_impurity_decrease=0.,
                  min_impurity_split=None, init=None,
                  random_state=None, max_features=None, verbose=0,
                  max_leaf_nodes=None, warm_start=False,
-                 presort='deprecated', validation_fraction=0.1,
-                 n_iter_no_change=None, tol=1e-4, ccp_alpha=0.0):
+                 validation_fraction=0.1, n_iter_no_change=None, tol=1e-4,
+                 ccp_alpha=0.0):
 
         super().__init__(
             loss=loss, learning_rate=learning_rate, n_estimators=n_estimators,
@@ -1070,8 +1072,7 @@ shape (n_estimators, ``loss_.K``)
             max_leaf_nodes=max_leaf_nodes,
             min_impurity_decrease=min_impurity_decrease,
             min_impurity_split=min_impurity_split,
-            warm_start=warm_start, presort=presort,
-            validation_fraction=validation_fraction,
+            warm_start=warm_start, validation_fraction=validation_fraction,
             n_iter_no_change=n_iter_no_change, tol=tol, ccp_alpha=ccp_alpha)
 
     def _validate_y(self, y, sample_weight):
@@ -1425,11 +1426,6 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         and add more estimators to the ensemble, otherwise, just erase the
         previous solution. See :term:`the Glossary <warm_start>`.
 
-    presort : deprecated, default='deprecated'
-        This parameter is deprecated and will be removed in v0.24.
-
-        .. deprecated :: 0.22
-
     validation_fraction : float, default=0.1
         The proportion of training data to set aside as validation set for
         early stopping. Must be between 0 and 1.
@@ -1498,6 +1494,12 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     estimators_ : ndarray of DecisionTreeRegressor of shape (n_estimators, 1)
         The collection of fitted sub-estimators.
 
+    n_features_ : int
+        The number of data features.
+
+    max_features_ : int
+        The inferred value of max_features.
+
     Notes
     -----
     The features are always randomly permuted at each split. Therefore,
@@ -1506,6 +1508,22 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     identical for several splits enumerated during the search of the best
     split. To obtain a deterministic behaviour during fitting,
     ``random_state`` has to be fixed.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_regression
+    >>> from sklearn.ensemble import GradientBoostingRegressor
+    >>> from sklearn.model_selection import train_test_split
+    >>> X, y = make_regression(random_state=0)
+    >>> X_train, X_test, y_train, y_test = train_test_split(
+    ...     X, y, random_state=0)
+    >>> reg = GradientBoostingRegressor(random_state=0)
+    >>> reg.fit(X_train, y_train)
+    GradientBoostingRegressor(random_state=0)
+    >>> reg.predict(X_test[1:2])
+    array([-61...])
+    >>> reg.score(X_test, y_test)
+    0.4...
 
     See also
     --------
@@ -1525,14 +1543,14 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
 
     _SUPPORTED_LOSS = ('ls', 'lad', 'huber', 'quantile')
 
-    def __init__(self, loss='ls', learning_rate=0.1, n_estimators=100,
+    @_deprecate_positional_args
+    def __init__(self, *, loss='ls', learning_rate=0.1, n_estimators=100,
                  subsample=1.0, criterion='friedman_mse', min_samples_split=2,
                  min_samples_leaf=1, min_weight_fraction_leaf=0.,
                  max_depth=3, min_impurity_decrease=0.,
                  min_impurity_split=None, init=None, random_state=None,
                  max_features=None, alpha=0.9, verbose=0, max_leaf_nodes=None,
-                 warm_start=False, presort='deprecated',
-                 validation_fraction=0.1,
+                 warm_start=False, validation_fraction=0.1,
                  n_iter_no_change=None, tol=1e-4, ccp_alpha=0.0):
 
         super().__init__(
@@ -1546,7 +1564,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
             min_impurity_split=min_impurity_split,
             random_state=random_state, alpha=alpha, verbose=verbose,
             max_leaf_nodes=max_leaf_nodes, warm_start=warm_start,
-            presort=presort, validation_fraction=validation_fraction,
+            validation_fraction=validation_fraction,
             n_iter_no_change=n_iter_no_change, tol=tol, ccp_alpha=ccp_alpha)
 
     def predict(self, X):
