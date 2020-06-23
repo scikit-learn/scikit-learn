@@ -239,6 +239,10 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
         after normalization:
         ``model.components_ / model.components_.sum(axis=1)[:, np.newaxis]``.
 
+    exp_dirichlet_component_ : array, [n_components, n_features]
+        Exponential value of expectation of log topic word distribution.
+        In the literature, this is `exp(E[log(beta)])`.
+
     n_batch_iter_ : int
         Number of iterations of the EM step.
 
@@ -252,6 +256,10 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
         Prior of document topic distribution `theta`. If the value is None,
         it is `1 / n_components`.
 
+    random_state_ : RandomState instance
+        RandomState instance that is generated either from a seed, the random
+        number generator or by `np.random`.
+        
     topic_word_prior_ : float
         Prior of topic word distribution `beta`. If the value is None, it is
         `1 / n_components`.
