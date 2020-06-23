@@ -140,7 +140,9 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                                             dtype='u8')
 
         self._validate_parameters()
-        n_samples, self._n_features_ = X.shape  # used for validation in predict
+
+        # used for validation in predict
+        n_samples, self._n_features_ = X.shape
 
         # we need this stateful variable to tell raw_predict() that it was
         # called from fit() (this current method), and that the data it has
@@ -202,7 +204,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         # convention is that n_bins == max_bins + 1
         n_bins = self.max_bins + 1  # + 1 for missing values
         self._bin_mapper_ = _BinMapper(n_bins=n_bins,
-                                      random_state=self._random_seed)
+                                       random_state=self._random_seed)
         X_binned_train = self._bin_data(X_train, is_training_data=True)
         if X_val is not None:
             X_binned_val = self._bin_data(X_val, is_training_data=False)
@@ -345,8 +347,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
             # Update gradients and hessians, inplace
             self._loss_.update_gradients_and_hessians(gradients, hessians,
-                                                     y_train, raw_predictions,
-                                                     sample_weight_train)
+                                                      y_train, raw_predictions,
+                                                      sample_weight_train)
 
             # Append a list since there may be more than 1 predictor per iter
             predictors.append([])
@@ -372,8 +374,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
                 if self._loss_.need_update_leaves_values:
                     self._loss_.update_leaves_values(grower, y_train,
-                                                    raw_predictions[k, :],
-                                                    sample_weight_train)
+                                                     raw_predictions[k, :],
+                                                     sample_weight_train)
 
                 predictor = grower.make_predictor(
                     bin_thresholds=self._bin_mapper_.bin_thresholds_
@@ -498,7 +500,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         else:
             self.train_score_.append(
                 self._scorer_(self, X_binned_small_train, y_small_train,
-                             sample_weight=sample_weight_small_train)
+                              sample_weight=sample_weight_small_train)
             )
 
         if self._use_validation_data:
@@ -511,7 +513,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             else:
                 self.validation_score_.append(
                     self._scorer_(self, X_binned_val, y_val,
-                                 sample_weight=sample_weight_val)
+                                  sample_weight=sample_weight_val)
                 )
             return self._should_stop(self.validation_score_)
         else:
