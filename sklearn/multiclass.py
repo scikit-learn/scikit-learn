@@ -133,7 +133,7 @@ class _ConstantPredictor(BaseEstimator):
 
 class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
                           MetaEstimatorMixin, BaseEstimator):
-    """One-vs-the-rest (OvR) multiclass strategy
+    """One-vs-the-rest (OvR) multiclass strategy.
 
     Also known as one-vs-all, this strategy consists in fitting one classifier
     per class. For each classifier, the class is fitted against all the other
