@@ -217,11 +217,3 @@ if False:
                 print(e)
                 continue
             raise e
-
-for est in list(_tested_estimators()):
-    _set_checking_parameters(est)
-    try:
-        check_no_attributes_set_in_init(est.__class__.__name__, est)
-    except AssertionError as e:
-        print(est.__class__.__name__, e)
-    
