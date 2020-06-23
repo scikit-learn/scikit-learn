@@ -249,8 +249,9 @@ def test_lasso_cv_positive_constraint():
     assert min(clf_constrained.coef_) >= 0
 
 
-@pytest.mark.parametrize("linear_model", [Lasso])
-def test_model_pipeline_same_as_normalize_true(linear_model):
+from sklearn.linear_model import Lars, LassoLars
+@pytest.mark.parametrize("test_model, args", [(Lasso, {"tol":1e-16})])
+def test_model_pipeline_same_as_normalize_true(test_model, args):
     # Test that linear model set with normalize set to True is doing the same
     # as the same linear model preceeded by StandardScaler in the pipeline and
     # with normalize set to False
@@ -265,18 +266,16 @@ def test_model_pipeline_same_as_normalize_true(linear_model):
     X, X_test, y, y_test = train_test_split(X, y, random_state=42)
 
     alpha = 0.1
-    tol = 1e-16
 
     # normalize is True
-    # sparse_X = sparse.csr_matrix(X)  # use this for sparse
-    clf_norm = linear_model(alpha=alpha, normalize=True, fit_intercept=True,
-                            tol=tol)
+    clf_norm = test_model(alpha=alpha, normalize=True, fit_intercept=True,
+                          **args)
     clf_norm.fit(X, y)
     y_pred_norm = clf_norm.predict(X_test)
 
     clf_pipe = make_pipeline(
         StandardScaler(),
-        linear_model(alpha=alpha * np.sqrt(X.shape[0]),
+        test_model(alpha=alpha * np.sqrt(X.shape[0]),
                      normalize=False, fit_intercept=True,
                      tol=tol)
     )
