@@ -76,7 +76,8 @@ def check_increasing(x, y):
     return increasing_bool
 
 
-def isotonic_regression(y, sample_weight=None, y_min=None, y_max=None,
+@_deprecate_positional_args
+def isotonic_regression(y, *, sample_weight=None, y_min=None, y_max=None,
                         increasing=True):
     """Solve the isotonic regression model.
 
@@ -99,7 +100,7 @@ def isotonic_regression(y, sample_weight=None, y_min=None, y_max=None,
         Upper bound on the highest predicted value (the maximum may still be
         lower). If not set, defaults to +inf.
 
-    increasing : boolean, optional, default: True
+    increasing : bool, default=True
         Whether to compute ``y_`` is increasing (if set to True) or decreasing
         (if set to False)
 
@@ -260,12 +261,10 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         unique_X, unique_y, unique_sample_weight = _make_unique(
             X, y, sample_weight)
 
-        # Store _X_ and _y_ to maintain backward compat during the deprecation
-        # period of X_ and y_
-        self._X_ = X = unique_X
-        self._y_ = y = isotonic_regression(unique_y, unique_sample_weight,
-                                           self.y_min, self.y_max,
-                                           increasing=self.increasing_)
+        X = unique_X
+        y = isotonic_regression(unique_y, sample_weight=unique_sample_weight,
+                                y_min=self.y_min, y_max=self.y_max,
+                                increasing=self.increasing_)
 
         # Handle the left and right bounds on X
         self.X_min_, self.X_max_ = np.min(X), np.max(X)
