@@ -18,8 +18,7 @@ from scipy import sparse
 
 from ._base import LinearClassifierMixin, LinearModel, _rescale_data
 from ._ridge_solvers import (
-    _solve_sparse_cg, _solve_lsqr, _solve_cholesky,
-    _solve_cholesky_kernel, _solve_svd
+    _solve_sparse_cg, _solve_lsqr, _solve_svd, _cholesky_helper
 )
 from ._sag import sag_solver
 from ..base import RegressorMixin, MultiOutputMixin, is_classifier
@@ -266,21 +265,7 @@ def _ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
         coef, n_iter = _solve_lsqr(X, y, alpha, max_iter, tol)
 
     elif solver == 'cholesky':
-        if n_features > n_samples:
-            K = safe_sparse_dot(X, X.T, dense_output=True)
-            try:
-                dual_coef = _solve_cholesky_kernel(K, y, alpha)
-
-                coef = safe_sparse_dot(X.T, dual_coef, dense_output=True).T
-            except linalg.LinAlgError:
-                # use SVD solver if matrix is singular
-                solver = 'svd'
-        else:
-            try:
-                coef = _solve_cholesky(X, y, alpha)
-            except linalg.LinAlgError:
-                # use SVD solver if matrix is singular
-                solver = 'svd'
+        coef = _cholesky_helper(X, y, alpha, n_features, n_samples)
 
     elif solver in ['sag', 'saga']:
         # precompute max_squared_sum for all targets
