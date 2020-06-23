@@ -259,7 +259,7 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
     random_state_ : RandomState instance
         RandomState instance that is generated either from a seed, the random
         number generator or by `np.random`.
-        
+
     topic_word_prior_ : float
         Prior of topic word distribution `beta`. If the value is None, it is
         `1 / n_components`.
