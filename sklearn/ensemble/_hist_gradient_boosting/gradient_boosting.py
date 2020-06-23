@@ -914,13 +914,13 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         If `scoring` is ``None`` it uses the current class ``score()`` function.
         Otherwise it uses one of the metrics in metrics._scorer.SCORERS as defined in `scoring`.
         
-    
     train_score_ : ndarray, shape (n_iter_+1,)
         The scores at each iteration on the training data. The first entry
         is the score of the ensemble before the first iteration. Scores are
         computed according to the ``scoring`` parameter. If ``scoring`` is
         not 'loss', scores are computed on a subset of at most 10 000
         samples. Empty if no early stopping.
+    
     validation_score_ : ndarray, shape (n_iter_+1,)
         The scores at each iteration on the held-out validation data. The
         first entry is the score of the ensemble before the first iteration.
