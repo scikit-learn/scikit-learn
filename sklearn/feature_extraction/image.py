@@ -15,7 +15,7 @@ import numpy as np
 from scipy import sparse
 from numpy.lib.stride_tricks import as_strided
 
-from ..utils import check_array, check_random_state, deprecated
+from ..utils import check_array, check_random_state
 from ..utils.validation import _deprecate_positional_args
 from ..base import BaseEstimator
 
@@ -130,7 +130,8 @@ def _to_graph(n_x, n_y, n_z, mask=None, img=None,
     return return_as(graph)
 
 
-def img_to_graph(img, mask=None, return_as=sparse.coo_matrix, dtype=None):
+@_deprecate_positional_args
+def img_to_graph(img, *, mask=None, return_as=sparse.coo_matrix, dtype=None):
     """Graph of the pixel-to-pixel gradient connections
 
     Edges are weighted with the gradient values.
@@ -166,7 +167,8 @@ def img_to_graph(img, mask=None, return_as=sparse.coo_matrix, dtype=None):
     return _to_graph(n_x, n_y, n_z, mask, img, return_as, dtype)
 
 
-def grid_to_graph(n_x, n_y, n_z=1, mask=None, return_as=sparse.coo_matrix,
+@_deprecate_positional_args
+def grid_to_graph(n_x, n_y, n_z=1, *, mask=None, return_as=sparse.coo_matrix,
                   dtype=np.int):
     """Graph of the pixel-to-pixel connections
 
@@ -303,48 +305,9 @@ def _extract_patches(arr, patch_shape=8, extraction_step=1):
     return patches
 
 
-@deprecated("The function feature_extraction.image.extract_patches has been "
-            "deprecated in 0.22 and will be removed in 0.24.")
-def extract_patches(arr, patch_shape=8, extraction_step=1):
-    """Extracts patches of any n-dimensional array in place using strides.
-
-    Given an n-dimensional array it will return a 2n-dimensional array with
-    the first n dimensions indexing patch position and the last n indexing
-    the patch content. This operation is immediate (O(1)). A reshape
-    performed on the first n dimensions will cause numpy to copy data, leading
-    to a list of extracted patches.
-
-    Read more in the :ref:`User Guide <image_feature_extraction>`.
-
-    Parameters
-    ----------
-    arr : ndarray
-        n-dimensional array of which patches are to be extracted
-
-    patch_shape : int or tuple of length arr.ndim, default=8
-        Indicates the shape of the patches to be extracted. If an
-        integer is given, the shape will be a hypercube of
-        sidelength given by its value.
-
-    extraction_step : int or tuple of length arr.ndim, default=1
-        Indicates step size at which extraction shall be performed.
-        If integer is given, then the step is uniform in all dimensions.
-
-
-    Returns
-    -------
-    patches : strided ndarray
-        2n-dimensional array indexing patches on first n dimensions and
-        containing patches on the last n dimensions. These dimensions
-        are fake, but this way no data is copied. A simple reshape invokes
-        a copying operation to obtain a list of patches:
-        result.reshape([-1] + list(patch_shape))
-    """
-    return _extract_patches(arr, patch_shape=patch_shape,
-                            extraction_step=extraction_step)
-
-
-def extract_patches_2d(image, patch_size, max_patches=None, random_state=None):
+@_deprecate_positional_args
+def extract_patches_2d(image, patch_size, *, max_patches=None,
+                       random_state=None):
     """Reshape a 2D image into a collection of patches
 
     The resulting patches are allocated in a dedicated array.
@@ -579,7 +542,8 @@ class PatchExtractor(BaseEstimator):
         patches = np.empty(patches_shape)
         for ii, image in enumerate(X):
             patches[ii * n_patches:(ii + 1) * n_patches] = extract_patches_2d(
-                image, patch_size, self.max_patches, self.random_state)
+                image, patch_size, max_patches=self.max_patches,
+                random_state=self.random_state)
         return patches
 
     def _more_tags(self):

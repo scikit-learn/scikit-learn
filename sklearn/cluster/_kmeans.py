@@ -15,6 +15,7 @@ import warnings
 
 import numpy as np
 import scipy.sparse as sp
+from threadpoolctl import threadpool_limits
 
 from ..base import BaseEstimator, ClusterMixin, TransformerMixin
 from ..metrics.pairwise import euclidean_distances
@@ -177,11 +178,12 @@ def _check_normalize_sample_weight(sample_weight, X):
         # an array of 1 (i.e. samples_weight is None) is already normalized
         n_samples = len(sample_weight)
         scale = n_samples / sample_weight.sum()
-        sample_weight *= scale
+        sample_weight = sample_weight * scale
     return sample_weight
 
 
-def k_means(X, n_clusters, sample_weight=None, init='k-means++',
+@_deprecate_positional_args
+def k_means(X, n_clusters, *, sample_weight=None, init='k-means++',
             precompute_distances='deprecated', n_init=10, max_iter=300,
             verbose=False, tol=1e-4, random_state=None, copy_x=True,
             n_jobs='deprecated', algorithm="auto", return_n_iter=False):
@@ -324,7 +326,7 @@ def k_means(X, n_clusters, sample_weight=None, init='k-means++',
 def _kmeans_single_elkan(X, sample_weight, n_clusters, max_iter=300,
                          init='k-means++', verbose=False, x_squared_norms=None,
                          random_state=None, tol=1e-4, n_threads=1):
-    """A single run of k-means lloyd, assumes preparation completed prior.
+    """A single run of k-means elkan, assumes preparation completed prior.
 
     Parameters
     ----------
@@ -431,15 +433,16 @@ def _kmeans_single_elkan(X, sample_weight, n_clusters, max_iter=300,
                 labels, upper_bounds, lower_bounds)
 
     for i in range(max_iter):
-        elkan_iter(X, sample_weight, centers, centers_new, weight_in_clusters,
-                   center_half_distances, distance_next_center, upper_bounds,
-                   lower_bounds, labels, center_shift, n_threads)
+        elkan_iter(X, sample_weight, centers, centers_new,
+                   weight_in_clusters, center_half_distances,
+                   distance_next_center, upper_bounds, lower_bounds,
+                   labels, center_shift, n_threads)
 
         # compute new pairwise distances between centers and closest other
         # center of each center for next iterations
         center_half_distances = euclidean_distances(centers_new) / 2
-        distance_next_center = np.partition(np.asarray(center_half_distances),
-                                            kth=1, axis=0)[1]
+        distance_next_center = np.partition(
+            np.asarray(center_half_distances), kth=1, axis=0)[1]
 
         if verbose:
             inertia = _inertia(X, sample_weight, centers, labels)
@@ -458,9 +461,9 @@ def _kmeans_single_elkan(X, sample_weight, n_clusters, max_iter=300,
     if center_shift_tot > 0:
         # rerun E-step so that predicted labels match cluster centers
         elkan_iter(X, sample_weight, centers, centers, weight_in_clusters,
-                   center_half_distances, distance_next_center, upper_bounds,
-                   lower_bounds, labels, center_shift, n_threads,
-                   update_centers=False)
+                   center_half_distances, distance_next_center,
+                   upper_bounds, lower_bounds, labels, center_shift,
+                   n_threads, update_centers=False)
 
     inertia = _inertia(X, sample_weight, centers, labels)
 
@@ -564,29 +567,32 @@ def _kmeans_single_lloyd(X, sample_weight, n_clusters, max_iter=300,
         lloyd_iter = lloyd_iter_chunked_dense
         _inertia = _inertia_dense
 
-    for i in range(max_iter):
-        lloyd_iter(X, sample_weight, x_squared_norms, centers, centers_new,
-                   weight_in_clusters, labels, center_shift, n_threads)
+    # Threadpoolctl context to limit the number of threads in second level of
+    # nested parallelism (i.e. BLAS) to avoid oversubsciption.
+    with threadpool_limits(limits=1, user_api="blas"):
+        for i in range(max_iter):
+            lloyd_iter(X, sample_weight, x_squared_norms, centers, centers_new,
+                       weight_in_clusters, labels, center_shift, n_threads)
 
-        if verbose:
-            inertia = _inertia(X, sample_weight, centers, labels)
-            print("Iteration {0}, inertia {1}" .format(i, inertia))
-
-        center_shift_tot = (center_shift**2).sum()
-        if center_shift_tot <= tol:
             if verbose:
-                print("Converged at iteration {0}: "
-                      "center shift {1} within tolerance {2}"
-                      .format(i, center_shift_tot, tol))
-            break
+                inertia = _inertia(X, sample_weight, centers, labels)
+                print("Iteration {0}, inertia {1}" .format(i, inertia))
 
-        centers, centers_new = centers_new, centers
+            center_shift_tot = (center_shift**2).sum()
+            if center_shift_tot <= tol:
+                if verbose:
+                    print("Converged at iteration {0}: "
+                          "center shift {1} within tolerance {2}"
+                          .format(i, center_shift_tot, tol))
+                break
 
-    if center_shift_tot > 0:
-        # rerun E-step so that predicted labels match cluster centers
-        lloyd_iter(X, sample_weight, x_squared_norms, centers, centers,
-                   weight_in_clusters, labels, center_shift, n_threads,
-                   update_centers=False)
+            centers, centers_new = centers_new, centers
+
+        if center_shift_tot > 0:
+            # rerun E-step so that predicted labels match cluster centers
+            lloyd_iter(X, sample_weight, x_squared_norms, centers, centers,
+                       weight_in_clusters, labels, center_shift, n_threads,
+                       update_centers=False)
 
     inertia = _inertia(X, sample_weight, centers, labels)
 
@@ -612,7 +618,7 @@ def _labels_inertia(X, sample_weight, x_squared_norms, centers,
         Precomputed squared euclidean norm of each data point, to speed up
         computations.
 
-    centers : ndarray, shape (n_clusters, n_features)
+    centers : ndarray of shape (n_clusters, n_features)
         The cluster centers.
 
     n_threads : int, default=None
@@ -1209,6 +1215,14 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         return -_labels_inertia(X, sample_weight, x_squared_norms,
                                 self.cluster_centers_)[1]
 
+    def _more_tags(self):
+        return {
+            '_xfail_checks': {
+                'check_sample_weights_invariance(kind=zeros)':
+                'zero sample_weight is not equivalent to removing samples',
+            }
+        }
+
 
 def _mini_batch_step(X, sample_weight, x_squared_norms, centers, weight_sums,
                      old_center_buffer, compute_squared_diff,
@@ -1220,23 +1234,23 @@ def _mini_batch_step(X, sample_weight, x_squared_norms, centers, weight_sums,
     Parameters
     ----------
 
-    X : array, shape (n_samples, n_features)
+    X : ndarray of shape (n_samples, n_features)
         The original data array.
 
-    sample_weight : array-like, shape (n_samples,)
+    sample_weight : array-like of shape (n_samples,)
         The weights for each observation in X.
 
-    x_squared_norms : array, shape (n_samples,)
+    x_squared_norms : ndarray of shape (n_samples,)
         Squared euclidean norm of each data point.
 
-    centers : array, shape (k, n_features)
+    centers : ndarray of shape (k, n_features)
         The cluster centers. This array is MODIFIED IN PLACE
 
-    counts : array, shape (k,)
+    counts : ndarray of shape (k,)
          The vector in which we keep track of the numbers of elements in a
          cluster. This array is MODIFIED IN PLACE
 
-    distances : array, dtype float, shape (n_samples), optional
+    distances : ndarray of shape (n_samples,), dtype=float, default=None
         If not None, should be a pre-allocated array that will be used to store
         the distances of each sample to its closest center.
         May not be None when random_reassign is True.
@@ -1247,18 +1261,18 @@ def _mini_batch_step(X, sample_weight, x_squared_norms, centers, weight_sums,
         an int to make the randomness deterministic.
         See :term:`Glossary <random_state>`.
 
-    random_reassign : boolean, optional
+    random_reassign : bool, default=None
         If True, centers with very low counts are randomly reassigned
         to observations.
 
-    reassignment_ratio : float, optional
+    reassignment_ratio : float, default=None
         Control the fraction of the maximum number of counts for a
         center to be reassigned. A higher value means that low count
         centers are more likely to be reassigned, which means that the
         model will take longer to converge, but should converge in a
         better clustering.
 
-    verbose : bool, optional, default False
+    verbose : bool, default=False
         Controls the verbosity.
 
     compute_squared_diff : bool
@@ -1272,7 +1286,7 @@ def _mini_batch_step(X, sample_weight, x_squared_norms, centers, weight_sums,
     inertia : float
         Sum of squared distances of samples to their closest cluster center.
 
-    squared_diff : numpy array, shape (n_clusters,)
+    squared_diff : ndarray of shape (n_clusters,)
         Squared distances between previous and updated cluster centers.
 
     """
@@ -1580,7 +1594,7 @@ class MiniBatchKMeans(KMeans):
 
         Parameters
         ----------
-        X : array-like or sparse matrix, shape=(n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training instances to cluster. It must be noted that the data
             will be converted to C ordering, which will cause a memory copy
             if the given data is not C-contiguous.
@@ -1588,7 +1602,7 @@ class MiniBatchKMeans(KMeans):
         y : Ignored
             Not used, present here for API consistency by convention.
 
-        sample_weight : array-like, shape (n_samples,), optional
+        sample_weight : array-like of shape (n_samples,), default=None
             The weights for each observation in X. If None, all observations
             are assigned equal weight (default: None).
 
@@ -1739,15 +1753,15 @@ class MiniBatchKMeans(KMeans):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Input data.
 
-        sample_weight : array-like, shape (n_samples,)
+        sample_weight : array-like of shape (n_samples,)
             The weights for each observation in X.
 
         Returns
         -------
-        labels : array, shape (n_samples,)
+        labels : ndarray of shape (n_samples,)
             Cluster labels for each point.
 
         inertia : float
@@ -1775,7 +1789,7 @@ class MiniBatchKMeans(KMeans):
         y : Ignored
             Not used, present here for API consistency by convention.
 
-        sample_weight : array-like, shape (n_samples,), optional
+        sample_weight : array-like of shape (n_samples,), default=None
             The weights for each observation in X. If None, all observations
             are assigned equal weight (default: None).
 
@@ -1852,16 +1866,24 @@ class MiniBatchKMeans(KMeans):
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             New data to predict.
 
-        sample_weight : array-like, shape (n_samples,), optional
+        sample_weight : array-like of shape (n_samples,), default=None
             The weights for each observation in X. If None, all observations
             are assigned equal weight (default: None).
 
         Returns
         -------
-        labels : array, shape [n_samples,]
+        labels : ndarray of shape (n_samples,)
             Index of the cluster each sample belongs to.
         """
         check_is_fitted(self)
 
         X = self._check_test_data(X)
         return self._labels_inertia_minibatch(X, sample_weight)[0]
+
+    def _more_tags(self):
+        return {
+            '_xfail_checks': {
+                'check_sample_weights_invariance(kind=zeros)':
+                'zero sample_weight is not equivalent to removing samples',
+            }
+        }

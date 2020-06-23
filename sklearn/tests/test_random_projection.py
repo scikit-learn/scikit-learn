@@ -10,9 +10,7 @@ from sklearn.metrics import euclidean_distances
 
 from sklearn.random_projection import johnson_lindenstrauss_min_dim
 from sklearn.random_projection import _gaussian_random_matrix
-from sklearn.random_projection import gaussian_random_matrix
 from sklearn.random_projection import _sparse_random_matrix
-from sklearn.random_projection import sparse_random_matrix
 from sklearn.random_projection import SparseRandomProjection
 from sklearn.random_projection import GaussianRandomProjection
 
@@ -354,13 +352,3 @@ def test_works_with_sparse_data():
                                      random_state=1).fit(sp.csr_matrix(data))
         assert_array_almost_equal(densify(rp_dense.components_),
                                   densify(rp_sparse.components_))
-
-
-# TODO remove in 0.24
-def test_deprecations():
-
-    with pytest.warns(FutureWarning, match="deprecated in 0.22"):
-        gaussian_random_matrix(10, 100)
-
-    with pytest.warns(FutureWarning, match="deprecated in 0.22"):
-        sparse_random_matrix(10, 100)

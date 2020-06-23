@@ -15,6 +15,7 @@ from scipy import sparse
 from joblib import Parallel, delayed
 
 from ..base import clone, TransformerMixin
+from ..utils._estimator_html_repr import _VisualBlock
 from ..pipeline import _fit_transform_one, _transform_one, _name_estimators
 from ..preprocessing import FunctionTransformer
 from ..utils import Bunch
@@ -637,6 +638,11 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             Xs = [f.toarray() if sparse.issparse(f) else f for f in Xs]
             return np.hstack(Xs)
 
+    def _sk_visual_block_(self):
+        names, transformers, name_details = zip(*self.transformers)
+        return _VisualBlock('parallel', transformers,
+                            names=names, name_details=name_details)
+
 
 def _check_X(X):
     """Use check_array only on lists and other non-array-likes / sparse"""
@@ -671,7 +677,11 @@ def _get_transformer_list(estimators):
     return transformer_list
 
 
-def make_column_transformer(*transformers, **kwargs):
+def make_column_transformer(*transformers,
+                            remainder='drop',
+                            sparse_threshold=0.3,
+                            n_jobs=None,
+                            verbose=False):
     """Construct a ColumnTransformer from the given transformers.
 
     This is a shorthand for the ColumnTransformer constructor; it does not
@@ -758,13 +768,6 @@ def make_column_transformer(*transformers, **kwargs):
     """
     # transformer_weights keyword is not passed through because the user
     # would need to know the automatically generated names of the transformers
-    n_jobs = kwargs.pop('n_jobs', None)
-    remainder = kwargs.pop('remainder', 'drop')
-    sparse_threshold = kwargs.pop('sparse_threshold', 0.3)
-    verbose = kwargs.pop('verbose', False)
-    if kwargs:
-        raise TypeError('Unknown keyword arguments: "{}"'
-                        .format(list(kwargs.keys())[0]))
     transformer_list = _get_transformer_list(transformers)
     return ColumnTransformer(transformer_list, n_jobs=n_jobs,
                              remainder=remainder,
