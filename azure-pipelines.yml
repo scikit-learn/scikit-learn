@@ -43,8 +43,10 @@ jobs:
         if [[ $BUILD_SOURCEVERSIONMESSAGE =~ \[scipy-dev\] ]] || \
            [[ $BUILD_REASON == "Schedule" ]]; then
           echo "##vso[task.setvariable variable=runScipyDev;isOutput=true]true"
+          echo "Running scipy-dev build"
         else
           echo "##vso[task.setvariable variable=runScipyDev;isOutput=true]false"
+          echo "Skipping scipy-dev build"
         fi
       name: gitCommitMessage
       displayName: Determine to run scipy-dev
