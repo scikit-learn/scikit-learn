@@ -2556,10 +2556,6 @@ def calibration_loss(y_true, y_prob, sample_weight=None, norm='l2',
     if norm not in norm_options:
         raise ValueError(f'norm has to be one of {norm_options}, got: {norm}.')
 
-    n_bins = int(n_bins)
-
-    loss = 0.
-    count = 0.
     remapping = np.argsort(y_prob)
     y_true = y_true[remapping]
     y_prob = y_prob[remapping]
@@ -2567,7 +2563,8 @@ def calibration_loss(y_true, y_prob, sample_weight=None, norm='l2',
         sample_weight = sample_weight[remapping]
     else:
         sample_weight = np.ones(y_true.shape[0])
-
+   
+    n_bins = int(n_bins)
     if strategy == 'quantile':
         quantiles = np.quantile(y_prob, np.arange(0, 1, 1./n_bins))
     elif strategy == 'uniform':
@@ -2582,6 +2579,9 @@ def calibration_loss(y_true, y_prob, sample_weight=None, norm='l2',
     bin_centroid = np.zeros(n_bins)
     delta_count = np.zeros(n_bins)
     debias = np.zeros(n_bins)
+    
+    loss = 0.
+    count = float(sample_weight.sum())
     for i, i_start in enumerate(threshold_indices[:-1]):
         i_end = threshold_indices[i+1]
         # ignore empty bins
@@ -2594,11 +2594,10 @@ def calibration_loss(y_true, y_prob, sample_weight=None, norm='l2',
         bin_centroid[i] = (np.dot(y_prob[i_start:i_end],
                                   sample_weight[i_start:i_end])
                            / delta_count[i])
-        count += delta_count[i]
         if norm == "l2" and reduce_bias:
             delta_debias = avg_pred_true[i] * (avg_pred_true[i] - 1) \
                            * delta_count[i]
-            delta_debias /= (y_true.shape[0] * delta_count[i] - 1)
+            delta_debias /= (count * delta_count[i] - 1)
             debias[i] = delta_debias
 
     if norm == "max":
