@@ -8,7 +8,7 @@ import numpy as np
 
 from .base import BaseEstimator, RegressorMixin, MultiOutputMixin
 from .metrics.pairwise import pairwise_kernels
-from .linear_model._ridge import _solve_cholesky_kernel
+from .linear_model._ridge_solvers import _solve_cholesky_kernel
 from .utils.validation import check_is_fitted, _check_sample_weight
 
 
