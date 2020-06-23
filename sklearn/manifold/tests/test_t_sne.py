@@ -29,6 +29,7 @@ from scipy.optimize import check_grad
 from scipy.spatial.distance import pdist
 from scipy.spatial.distance import squareform
 from sklearn.metrics.pairwise import pairwise_distances
+from sklearn.metrics.pairwise import euclidean_distances
 from sklearn.metrics.pairwise import manhattan_distances
 from sklearn.metrics.pairwise import cosine_distances
 
@@ -414,6 +415,13 @@ def test_method_not_available():
     # 'nethod' must be 'barnes_hut' or 'exact'
     tsne = TSNE(method='not available')
     with pytest.raises(ValueError, match="'method' must be 'barnes_hut' or "):
+        tsne.fit_transform(np.array([[0.0], [1.0]]))
+
+
+def test_square_distance_not_available():
+    # square_distance must be True, False, or 'legacy'.
+    tsne = TSNE(square_distance="not_available")
+    with pytest.raises(ValueError, match="'square_distance' must be True, "):
         tsne.fit_transform(np.array([[0.0], [1.0]]))
 
 
@@ -877,6 +885,49 @@ def test_tsne_with_different_distance_metrics():
             metric='precomputed', n_components=n_components_embedding,
             random_state=0, n_iter=300).fit_transform(dist_func(X))
         assert_array_equal(X_transformed_tsne, X_transformed_tsne_precomputed)
+
+
+@pytest.mark.parametrize('method', ['exact', 'barnes_hut'])
+def test_tsne_with_legacy_euclidean_squaring(method):
+    """Make sure that TSNE preserves legacy Euclidean squaring behavior
+
+    Note: If 'legacy' is deprecated when the default for square_distance
+    is set to True, then this test can be removed, and 'euclidean' can
+    be included in `test_tsne_with_different_distance_metrics`."""
+    random_state = check_random_state(0)
+    n_components_original = 3
+    n_components_embedding = 2
+    X = random_state.randn(50, n_components_original).astype(np.float32)
+    X_transformed_tsne = TSNE(
+        metric='euclidean', n_components=n_components_embedding,
+        random_state=0, square_distance="legacy",
+        method=method).fit_transform(X)
+    X_transformed_tsne_precomputed = TSNE(
+        metric='precomputed', n_components=n_components_embedding,
+        random_state=0, square_distance="legacy",
+        method=method).fit_transform(euclidean_distances(X)**2)
+    assert_array_equal(X_transformed_tsne, X_transformed_tsne_precomputed)
+
+
+@pytest.mark.parametrize('method', ['exact', 'barnes_hut'])
+def test_tsne_with_different_square_distances(method):
+    """Make sure that TSNE works for different square_distance settings"""
+    random_state = check_random_state(0)
+    n_components_original = 3
+    n_components_embedding = 2
+    X = random_state.randn(50, n_components_original).astype(np.float32)
+    square_distances = [True, False]
+    for square_distance in square_distances:
+        X_transformed_tsne = TSNE(
+            metric='euclidean', n_components=n_components_embedding,
+            random_state=0, square_distance=square_distance,
+            method=method).fit_transform(X)
+        X_transformed_tsne_precomputed = TSNE(
+            metric='precomputed', n_components=n_components_embedding,
+            random_state=0, square_distance=square_distance,
+            method=method).fit_transform(euclidean_distances(X))
+        assert_array_equal(X_transformed_tsne,
+                           X_transformed_tsne_precomputed)
 
 
 @pytest.mark.parametrize('method', ['exact', 'barnes_hut'])
