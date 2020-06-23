@@ -61,8 +61,8 @@ def test_linear_regression_cholesky():
     X = [[1], [2]]
     Y = [1, 2]
 
-    reg = LinearRegression()
-    reg.fit(X, Y, cholesky=True)
+    reg = LinearRegression(solver="cholesky")
+    reg.fit(X, Y)
 
     assert_array_almost_equal(reg.coef_, [1])
     assert_array_almost_equal(reg.intercept_, [0])
@@ -72,8 +72,8 @@ def test_linear_regression_cholesky():
     X = [[1]]
     Y = [0]
 
-    reg = LinearRegression()
-    reg.fit(X, Y, cholesky=True)
+    reg = LinearRegression(solver="cholesky")
+    reg.fit(X, Y)
     assert_array_almost_equal(reg.coef_, [0])
     assert_array_almost_equal(reg.intercept_, [0])
     assert_array_almost_equal(reg.predict(X), [0])
@@ -141,8 +141,8 @@ def test_linear_regression_sample_weights_cholesky(fit_intercept):
     sample_weight = 1.0 + rng.rand(n_samples)
 
     # LinearRegression with explicit sample_weight
-    reg = LinearRegression(fit_intercept=fit_intercept)
-    reg.fit(X, y, sample_weight=sample_weight, cholesky=True)
+    reg = LinearRegression(fit_intercept=fit_intercept, solver="cholesky")
+    reg.fit(X, y, sample_weight=sample_weight)
     coefs1 = reg.coef_
     inter1 = reg.intercept_
 
@@ -265,13 +265,15 @@ def test_fit_intercept_cholesky():
                    [0.08385139, 0.20692515, 0.70922346]])
     y = np.array([1, 1])
 
-    lr2_without_intercept = LinearRegression(fit_intercept=False)
-    lr2_without_intercept.fit(X2, y, cholesky=True)
-    lr2_with_intercept = LinearRegression().fit(X2, y, cholesky=True)
+    lr2_without_intercept = LinearRegression(fit_intercept=False,
+                                             solver="cholesky")
+    lr2_without_intercept.fit(X2, y)
+    lr2_with_intercept = LinearRegression(solver="cholesky").fit(X2, y)
 
-    lr3_without_intercept = LinearRegression(fit_intercept=False)
-    lr3_without_intercept.fit(X3, y, cholesky=True)
-    lr3_with_intercept = LinearRegression().fit(X3, y, cholesky=True)
+    lr3_without_intercept = LinearRegression(fit_intercept=False,
+                                             solver="cholesky")
+    lr3_without_intercept.fit(X3, y)
+    lr3_with_intercept = LinearRegression(solver="cholesky").fit(X3, y)
 
     assert (lr2_with_intercept.coef_.shape ==
             lr2_without_intercept.coef_.shape)

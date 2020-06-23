@@ -26,6 +26,7 @@ from ._base import (
     _preprocess_data,
 )
 from ._ridge_solvers import (
+    _cholesky_helper,
     _solve_sparse_cg,
     _solve_lsqr,
     _solve_cholesky,
@@ -360,24 +361,8 @@ def _ridge_regression(
 
     elif solver == "lsqr":
         coef, n_iter = _solve_lsqr(X, y, alpha, max_iter, tol)
-
-    elif solver == "cholesky":
-        if n_features > n_samples:
-            K = safe_sparse_dot(X, X.T, dense_output=True)
-            try:
-                dual_coef = _solve_cholesky_kernel(K, y, alpha)
-
-                coef = safe_sparse_dot(X.T, dual_coef, dense_output=True).T
-            except linalg.LinAlgError:
-                # use SVD solver if matrix is singular
-                solver = "svd"
-        else:
-            try:
-                coef = _solve_cholesky(X, y, alpha)
-            except linalg.LinAlgError:
-                # use SVD solver if matrix is singular
-                solver = "svd"
-
+    elif solver == 'cholesky':
+        coef = _cholesky_helper(X, y, alpha, n_features, n_samples)
     elif solver in ["sag", "saga"]:
         # precompute max_squared_sum for all targets
         max_squared_sum = row_norms(X, squared=True).max()

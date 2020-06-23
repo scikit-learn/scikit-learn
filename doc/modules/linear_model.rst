@@ -63,10 +63,11 @@ example, when data are collected without an experimental design.
 
 
 Ordinary Least Squares uses a Singular Value Decomposition (SVD) based
-approach. The ``fit`` method has an additional, optional ``cholesky``
-parameter, which if ``True`` uses the Cholesky factorization instead. See
-`these notes <https://www.cs.ubc.ca/~schmidtm/Courses/540-F14/leastSquares.pdf>`
-for a discussion of the tradeoffs.
+approach. The ``LinearRegression`` class has an additional, optional
+``solver`` parameter, which if set to ``"cholesky"`` uses the Cholesky
+factorization instead. See `these notes
+<https://www.cs.ubc.ca/~schmidtm/Courses/540-F14/leastSquares.pdf>` for a
+discussion of the tradeoffs.
 
 Non-Negative Least Squares
 --------------------------

@@ -9,6 +9,25 @@ from ..utils.extmath import safe_sparse_dot
 from ..exceptions import ConvergenceWarning
 from scipy.sparse import linalg as sp_linalg
 
+
+def _cholesky_helper(X, y, alpha, n_features, n_samples):
+    if n_features > n_samples:
+        K = safe_sparse_dot(X, X.T, dense_output=True)
+        try:
+            dual_coef = _solve_cholesky_kernel(K, y, alpha)
+
+            coef = safe_sparse_dot(X.T, dual_coef, dense_output=True).T
+        except linalg.LinAlgError:
+            # use SVD solver if matrix is singular
+            coef = _solve_svd(X, y, alpha)
+    else:
+        try:
+            coef = _solve_cholesky(X, y, alpha)
+        except linalg.LinAlgError:
+            # use SVD solver if matrix is singular
+            coef = _solve_svd(X, y, alpha)
+    return coef
+
 def _solve_sparse_cg(
     X,
     y,
