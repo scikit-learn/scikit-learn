@@ -201,7 +201,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         # actual total number of bins. Everywhere in the code, the
         # convention is that n_bins == max_bins + 1
         n_bins = self.max_bins + 1  # + 1 for missing values
-        self.bin_mapper_ = _BinMapper(n_bins=n_bins,
+        self._bin_mapper_ = _BinMapper(n_bins=n_bins,
                                       random_state=self._random_seed)
         X_binned_train = self._bin_data(X_train, is_training_data=True)
         if X_val is not None:
@@ -356,7 +356,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 grower = TreeGrower(
                     X_binned_train, gradients[k, :], hessians[k, :],
                     n_bins=n_bins,
-                    n_bins_non_missing=self.bin_mapper_.n_bins_non_missing_,
+                    n_bins_non_missing=self._bin_mapper_.n_bins_non_missing_,
                     has_missing_values=has_missing_values,
                     monotonic_cst=self.monotonic_cst,
                     max_leaf_nodes=self.max_leaf_nodes,
@@ -376,7 +376,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                                                     sample_weight_train)
 
                 predictor = grower.make_predictor(
-                    bin_thresholds=self.bin_mapper_.bin_thresholds_
+                    bin_thresholds=self._bin_mapper_.bin_thresholds_
                 )
                 predictors[-1].append(predictor)
 
@@ -396,7 +396,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                             raw_predictions_val[k, :] += (
                                 pred.predict_binned(
                                     X_binned_val,
-                                    self.bin_mapper_.missing_values_bin_idx_
+                                    self._bin_mapper_.missing_values_bin_idx_
                                 )
                             )
 
@@ -564,7 +564,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
     def _bin_data(self, X, is_training_data):
         """Bin data X.
 
-        If is_training_data, then set the bin_mapper_ attribute.
+        If is_training_data, then set the _bin_mapper_ attribute.
         Else, the binned data is converted to a C-contiguous array.
         """
 
@@ -574,9 +574,9 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 X.nbytes / 1e9, description), end="", flush=True)
         tic = time()
         if is_training_data:
-            X_binned = self.bin_mapper_.fit_transform(X)  # F-aligned array
+            X_binned = self._bin_mapper_.fit_transform(X)  # F-aligned array
         else:
-            X_binned = self.bin_mapper_.transform(X)  # F-aligned array
+            X_binned = self._bin_mapper_.transform(X)  # F-aligned array
             # We convert the array to C-contiguous since predicting is faster
             # with this layout (training is faster on F-arrays though)
             X_binned = np.ascontiguousarray(X_binned)
@@ -667,7 +667,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 if is_binned:
                     predict = partial(
                         predictor.predict_binned,
-                        missing_values_bin_idx=self.bin_mapper_.missing_values_bin_idx_  # noqa
+                        missing_values_bin_idx=self._bin_mapper_.missing_values_bin_idx_  # noqa
                     )
                 else:
                     predict = predictor.predict
