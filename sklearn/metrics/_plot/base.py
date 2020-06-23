@@ -70,7 +70,7 @@ def _get_target_scores(X, estimator, response_method, pos_label=None):
 
     Returns
     -------
-    y_pred: array, shape=(n_samples,)
+    y_pred: ndarray of shape (n_samples,)
         Target scores calculated from the provided response_method
         and pos_label.
 
