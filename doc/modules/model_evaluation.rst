@@ -1556,7 +1556,7 @@ Calibration loss
 ----------------
 
 The :func:`calibration_error` function computes the expected and maximum
-calibration losses as defined in [1] for binary classes.
+calibration losses as defined in [1]_ for binary classes.
 
 Given a set of bins over predicted probabilities, the calibration loss
 measures the overall discrepancy per bin between
@@ -1618,12 +1618,12 @@ Here is a small example of usage of this function:::
 
 .. topic:: References:
 
-  [1] `Chuan Guo, Geoff Pleiss, Yu Sun, Kilian Q. Weinberger. On Calibration
+  .. [1] `Chuan Guo, Geoff Pleiss, Yu Sun, Kilian Q. Weinberger. On Calibration
       of Modern Neural Networks. Proceedings of the 34th International
       Conference on Machine Learning, PMLR 70:1321-1330, 2017.
       <http://proceedings.mlr.press/v70/guo17a.html>`_
         
-  [2] `Verified Uncertainty Calibration. Ananya Kumar, Percy Liang, Tengyu
+  .. [2] `Verified Uncertainty Calibration. Ananya Kumar, Percy Liang, Tengyu
       Ma. Advances in Neural Information Processing Systems (NeurIPS),
       2019 <https://arxiv.org/abs/1909.10155>`_
 
