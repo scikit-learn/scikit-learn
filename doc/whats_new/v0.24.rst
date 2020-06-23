@@ -131,6 +131,41 @@ Changelog
   :pr:`17478` by :user:`Teon Brooks <teonbrooks>` and
   :user:`Mohamed Maskani <maskani-moh>`.
 
+:mod:`sklearn.multiclass`
+.........................
+
+- |Fix| A fix to allow :class:`multiclass.OutputCodeClassifier` to accept
+  sparse input data in its `fit` and `predict` methods. The check for
+  validity of the input is now delegated to the base estimator.
+  :pr:`17233` by :user:`Zolisa Bleki <zoj613>`.
+
+:mod:`sklearn.neighbors`
+........................
+
+- |Efficiency| Speed up ``seuclidean``, ``wminkowski``, ``mahalanobis`` and
+  ``haversine`` metrics in :class:`neighbors.DistanceMetric` by avoiding
+  unexpected GIL acquiring in Cython when setting ``n_jobs>1`` in
+  :class:`neighbors.KNeighborsClassifier`,
+  :class:`neighbors.KNeighborsRegressor`,
+  :class:`neighbors.RadiusNeighborsClassifier`,
+  :class:`neighbors.RadiusNeighborsRegressor`,
+  :func:`metrics.pairwise_distances`
+  and by validating data out of loops.
+  :pr:`17038` by :user:`Wenbo Zhao <webber26232>`.
+
+- |Efficiency| :class:`neighbors.NeighborsBase` benefits of an improved
+  `algorithm = 'auto'` heuristic. In addition to the previous set of rules,
+  now, when the number of features exceeds 15, `brute` is selected, assuming
+  the data intrinsic dimensionality is too high for tree-based methods.
+  :pr:`17148` by :user:`Geoffrey Bolmier <gbolmier>`.
+
+:mod:`sklearn.neural_network`
+.............................
+
+- |Efficiency| Neural net training is now a little faster.
+  :pr:`17603`, :pr:`17604`, :pr:`17606`, :pr:`17608`, :pr:`17609`, :pr:`17633`
+  by :user:`Alex Henrie <alexhenrie>`.
+
 :mod:`sklearn.preprocessing`
 ............................
 
@@ -147,6 +182,14 @@ Changelog
   :class:`preprocessing.KBinsDiscretizer`.
   :pr:`16335` by :user:`Arthur Imbert <Henley13>`.
 
+:mod:`sklearn.svm`
+..................
+
+- |Enhancement| invoke scipy blas api for svm kernel function in ``fit``,
+  ``predict`` and related methods of :class:`svm.SVC`, :class:`svm.NuSVC`,
+  :class:`svm.SVR`, :class:`svm.NuSVR`, :class:`OneClassSVM`.
+  :pr:`16530` by :user:`Shuhua Fan <jim0421>`.
+
 :mod:`sklearn.tree`
 ...................
 
@@ -157,42 +200,6 @@ Changelog
   :meth:`tree.DecisionTreeClassifier.fit` and
   :meth:`tree.DecisionTreeRegressor.fit`, and has not effect.
   :pr:`17614` by :user:`Juan Carlos Alfaro Jiménez <alfaro96>`.
-
-:mod:`sklearn.neighbors`
-.............................
-
-- |Efficiency| Speed up ``seuclidean``, ``wminkowski``, ``mahalanobis`` and
-  ``haversine`` metrics in :class:`neighbors.DistanceMetric` by avoiding
-  unexpected GIL acquiring in Cython when setting ``n_jobs>1`` in
-  :class:`neighbors.KNeighborsClassifier`,
-  :class:`neighbors.KNeighborsRegressor`,
-  :class:`neighbors.RadiusNeighborsClassifier`,
-  :class:`neighbors.RadiusNeighborsRegressor`,
-  :func:`metrics.pairwise_distances`
-  and by validating data out of loops.
-  :pr:`17038` by :user:`Wenbo Zhao <webber26232>`.
-
-:mod:`sklearn.svm`
-....................
-- |Enhancement| invoke scipy blas api for svm kernel function in ``fit``,
-  ``predict`` and related methods of :class:`svm.SVC`, :class:`svm.NuSVC`,
-  :class:`svm.SVR`, :class:`svm.NuSVR`, :class:`OneClassSVM`.
-  :pr:`16530` by :user:`Shuhua Fan <jim0421>`.
-
-:mod:`sklearn.multiclass`
-.........................
-
-- |Fix| A fix to allow :class:`multiclass.OutputCodeClassifier` to accept
-  sparse input data in its `fit` and `predict` methods. The check for
-  validity of the input is now delegated to the base estimator.
-  :pr:`17233` by :user:`Zolisa Bleki <zoj613>`.
-
-:mod:`sklearn.neural_network`
-.............................
-
-- |Efficiency| Neural net training is now a little faster.
-  :pr:`17603`, :pr:`17604`, :pr:`17606`, :pr:`17608`, :pr:`17609`, :pr:`17633`
-  by :user:`Alex Henrie <alexhenrie>`.
 
 
 Code and Documentation Contributors
