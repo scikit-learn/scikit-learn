@@ -122,8 +122,10 @@ def test_plot_roc_curve(pyplot, response_method, data_binary,
     assert viz.line_.get_label() == expected_label
 
     expected_pos_label = 1 if pos_label is None else pos_label
-    expected_ylabel = f"True Positive Rate (Positive label: {expected_pos_label})"
-    expected_xlabel = f"False Positive Rate (Positive label: {expected_pos_label})"
+    expected_ylabel = f"True Positive Rate (Positive label: " \
+                      f"{expected_pos_label})"
+    expected_xlabel = f"False Positive Rate (Positive label: " \
+                      f"{expected_pos_label})"
 
     assert viz.ax_.get_ylabel() == expected_ylabel
     assert viz.ax_.get_xlabel() == expected_xlabel
@@ -212,7 +214,8 @@ def test_plot_roc_curve_pos_label(pyplot, response_method):
         response_method=response_method
     )
 
-    roc_auc_limit = 0.96
+    roc_auc_limit = 0.9567901234567902
+
     assert disp.roc_auc == pytest.approx(roc_auc_limit)
     assert np.trapz(disp.tpr, disp.fpr) == pytest.approx(roc_auc_limit)
 
@@ -221,6 +224,5 @@ def test_plot_roc_curve_pos_label(pyplot, response_method):
         response_method=response_method,
     )
 
-    roc_auc_limit = 0.96
-    assert disp.roc_auc < roc_auc_limit
-    assert -np.trapz(disp.tpr, disp.fpr) < roc_auc_limit
+    assert disp.roc_auc == pytest.approx(roc_auc_limit)
+    assert np.trapz(disp.tpr, disp.fpr) == pytest.approx(roc_auc_limit)
