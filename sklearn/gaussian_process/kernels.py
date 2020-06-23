@@ -453,7 +453,7 @@ class CompoundKernel(Kernel):
      >>> from sklearn.gaussian_process.kernels import RBF
      >>> from sklearn.gaussian_process.kernels import CompoundKernel
     >>> kernel = CompoundKernel(
-    ... [WhiteKernel(noise_level=3.0), RBF(length_scale=2.0)])
+    ...     [WhiteKernel(noise_level=3.0), RBF(length_scale=2.0)])
     >>> print(kernel.bounds)
     [[-11.51292546  11.51292546]
      [-11.51292546  11.51292546]]
