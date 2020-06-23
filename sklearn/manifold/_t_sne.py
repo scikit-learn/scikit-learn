@@ -733,7 +733,8 @@ class TSNE(BaseEstimator):
                 if self.verbose:
                     print("[t-SNE] Computing pairwise distances...")
 
-                distances = pairwise_distances(X, metric=self.metric)
+                distances = pairwise_distances(X, metric=self.metric,
+                                               n_jobs=self.n_jobs)
 
             if (
                 self.square_distance is True
