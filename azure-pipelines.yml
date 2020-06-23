@@ -40,6 +40,7 @@ jobs:
         fi
       displayName: Run mypy
     - bash: |
+        echo "$BUILD_SOURCEVERSIONMESSAGE"
         if [[ $BUILD_SOURCEVERSIONMESSAGE =~ \[scipy-dev\] ]] || \
            [[ $BUILD_REASON == "Schedule" ]]; then
           echo "##vso[task.setvariable variable=runScipyDev;isOutput=true]true"
