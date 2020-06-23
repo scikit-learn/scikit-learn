@@ -57,6 +57,7 @@ CLF_SCORERS = ['accuracy', 'balanced_accuracy',
                'precision_weighted', 'precision_macro', 'precision_micro',
                'recall', 'recall_weighted', 'recall_macro', 'recall_micro',
                'neg_log_loss', 'log_loss', 'neg_brier_score',
+               'neg_calibration_score',
                'jaccard', 'jaccard_weighted', 'jaccard_macro',
                'jaccard_micro', 'roc_auc_ovr', 'roc_auc_ovo',
                'roc_auc_ovr_weighted', 'roc_auc_ovo_weighted']
