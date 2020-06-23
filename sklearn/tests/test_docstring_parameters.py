@@ -234,7 +234,7 @@ def test_fit_docstring_attributes(name, Estimator):
                'HistGradientBoostingRegressor', 'IsolationForest',
                'KernelCenterer', 'KernelDensity',
                'LarsCV', 'Lasso', 'LassoLarsCV', 'LassoLarsIC',
-               'LatentDirichletAllocation', 'LocalOutlierFactor', 'MDS',
+               'LocalOutlierFactor', 'MDS',
                'MiniBatchKMeans', 'MLPClassifier', 'MLPRegressor',
                'MultiTaskElasticNet', 'MultiTaskElasticNetCV',
                'MultiTaskLasso', 'MultiTaskLassoCV',
