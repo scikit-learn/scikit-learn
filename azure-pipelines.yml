@@ -21,7 +21,8 @@ jobs:
       displayName: Install linters
     - bash: |
         set -ex
-        if [[ $BUILD_SOURCEVERSIONMESSAGE =~ \[lint\ skip\] ]]; then
+        latest_commit_msg=$(git show -s --format=%s)
+        if [[ $latest_commit_msg =~ \[lint\ skip\] ]]; then
           # skip linting
           echo "Skipping flake8 linting"
           exit 0
@@ -31,7 +32,8 @@ jobs:
       displayName: Run linting
     - bash: |
         set -ex
-        if [[ $BUILD_SOURCEVERSIONMESSAGE =~ \[lint\ skip\] ]]; then
+        latest_commit_msg=$(git show -s --format=%s)
+        if [[ $latest_commit_msg =~ \[lint\ skip\] ]]; then
           # skip linting
           echo "Skipping mypy linting"
           exit 0
@@ -40,8 +42,9 @@ jobs:
         fi
       displayName: Run mypy
     - bash: |
-        echo "$BUILD_SOURCEVERSIONMESSAGE"
-        if [[ $BUILD_SOURCEVERSIONMESSAGE =~ \[scipy-dev\] ]] || \
+        latest_commit_msg=$(git show -s --format=%s)
+        echo "$latest_commit_msg"
+        if [[ $latest_commit_msg =~ \[scipy-dev\] ]] || \
            [[ $BUILD_REASON == "Schedule" ]]; then
           echo "##vso[task.setvariable variable=runScipyDev;isOutput=true]true"
           echo "Running scipy-dev build"
