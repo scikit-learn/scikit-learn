@@ -217,19 +217,18 @@ def check_regression_dataset(loss, subsample):
     ones = np.ones(len(y_reg))
     last_y_pred = None
     for sample_weight in [None, ones, 2 * ones]:
-        clf = GradientBoostingRegressor(n_estimators=100,
+        reg = GradientBoostingRegressor(n_estimators=100,
                                         loss=loss,
                                         max_depth=4,
                                         subsample=subsample,
                                         min_samples_split=2,
                                         random_state=1)
 
-        assert_raises(ValueError, clf.predict, X_reg)
-        clf.fit(X_reg, y_reg, sample_weight=sample_weight)
-        leaves = clf.apply(X_reg)
+        reg.fit(X_reg, y_reg, sample_weight=sample_weight)
+        leaves = reg.apply(X_reg)
         assert leaves.shape == (500, 100)
 
-        y_pred = clf.predict(X_reg)
+        y_pred = reg.predict(X_reg)
         mse = mean_squared_error(y_reg, y_pred)
         assert mse < 0.04
 
