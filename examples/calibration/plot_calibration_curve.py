@@ -53,7 +53,7 @@ from sklearn import datasets
 from sklearn.naive_bayes import GaussianNB
 from sklearn.svm import LinearSVC
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import (calibration_loss, precision_score, recall_score,
+from sklearn.metrics import (calibration_error, precision_score, recall_score,
                              f1_score)
 from sklearn.calibration import CalibratedClassifierCV, calibration_curve
 from sklearn.model_selection import train_test_split
@@ -98,7 +98,7 @@ def plot_calibration_curve(est, name, fig_index):
             prob_pos = \
                 (prob_pos - prob_pos.min()) / (prob_pos.max() - prob_pos.min())
 
-        clf_score = calibration_loss(y_test, prob_pos, pos_label=y.max())
+        clf_score = calibration_error(y_test, prob_pos, pos_label=y.max())
         print("%s:" % name)
         print("\tCalibration loss: %1.3f" % (clf_score))
         print("\tPrecision: %1.3f" % precision_score(y_test, y_pred))

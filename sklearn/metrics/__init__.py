@@ -33,7 +33,7 @@ from ._classification import recall_score
 from ._classification import zero_one_loss
 from ._classification import brier_score_loss
 from ._classification import multilabel_confusion_matrix
-from ._classification import calibration_loss
+from ._classification import calibration_error
 
 from . import cluster
 from .cluster import adjusted_mutual_info_score
@@ -156,5 +156,5 @@ __all__ = [
     'v_measure_score',
     'zero_one_loss',
     'brier_score_loss',
-    'calibration_loss',
+    'calibration_error',
 ]

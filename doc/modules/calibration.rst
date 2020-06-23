@@ -120,7 +120,7 @@ redundant. The figure shows the estimated probabilities obtained with
 logistic regression, a linear support-vector classifier (SVC), and linear SVC with
 both isotonic calibration and sigmoid calibration.
 The calibration loss is a metric which measures the mean absolute distance between the
-calibration curve and the diagonal (perfectly calibrated model), :func:`calibration_loss`,
+calibration curve and the diagonal (perfectly calibrated model), :func:`calibration_error`,
 reported in the legend (the smaller the better).
 
 .. figure:: ../auto_examples/calibration/images/sphx_glr_plot_calibration_curve_002.png

@@ -2459,12 +2459,12 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
     return np.average((y_true - y_prob) ** 2, weights=sample_weight)
 
 
-def calibration_loss(y_true, y_prob, sample_weight=None, norm='l2',
+def calibration_error(y_true, y_prob, sample_weight=None, norm='l2',
                      n_bins=10, strategy='uniform', pos_label=None,
                      reduce_bias=True):
-    """Compute calibration loss.
+    """Compute calibration error of a binary classifier.
 
-    Across all items in a set of N predictions, the calibration loss measures
+    Across all items in a set of N predictions, the calibration error measures
     the aggregated difference between (1) the average predicted probabilities
     assigned to the positive class, and (2) the frequencies
     of the positive class in the actual outcome.
@@ -2517,18 +2517,18 @@ def calibration_loss(y_true, y_prob, sample_weight=None, norm='l2',
     Examples
     --------
     >>> import numpy as np
-    >>> from sklearn.metrics import calibration_loss
+    >>> from sklearn.metrics import calibration_error
     >>> y_true = np.array([0, 0, 0, 1] + [0, 1, 1, 1])
     >>> y_pred = np.array([0.25, 0.25, 0.25, 0.25] + [0.75, 0.75, 0.75, 0.75])
-    >>> calibration_loss(y_true, y_pred, n_bins=5)
+    >>> calibration_error(y_true, y_pred, n_bins=5)
     0.0
-    >>> calibration_loss(y_true, y_pred, n_bins=5, \
+    >>> calibration_error(y_true, y_pred, n_bins=5, \
                          norm="max")
     0.0
     >>> y_true = np.array([0, 0, 0, 0] + [1, 1, 1, 1])
-    >>> calibration_loss(y_true, y_pred, n_bins=5)
+    >>> calibration_error(y_true, y_pred, n_bins=5)
     0.25
-    >>> calibration_loss(y_true, y_pred, n_bins=5, \
+    >>> calibration_error(y_true, y_pred, n_bins=5, \
                          norm="max")
     0.25
     """

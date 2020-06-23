@@ -944,7 +944,7 @@ details.
    metrics.average_precision_score
    metrics.balanced_accuracy_score
    metrics.brier_score_loss
-   metrics.calibration_loss
+   metrics.calibration_error
    metrics.classification_report
    metrics.cohen_kappa_score
    metrics.confusion_matrix
