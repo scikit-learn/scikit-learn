@@ -1245,9 +1245,9 @@ def test_callable_metric():
         return np.sqrt(np.sum(x1 ** 2 + x2 ** 2))
 
     X = np.random.RandomState(42).rand(20, 2)
-    nbrs1 = neighbors.NearestNeighbors(3, algorithm='auto',
+    nbrs1 = neighbors.NearestNeighbors(n_neighbors=3, algorithm='auto',
                                        metric=custom_metric)
-    nbrs2 = neighbors.NearestNeighbors(3, algorithm='brute',
+    nbrs2 = neighbors.NearestNeighbors(n_neighbors=3, algorithm='brute',
                                        metric=custom_metric)
 
     nbrs1.fit(X)
@@ -1339,7 +1339,7 @@ def test_non_euclidean_kneighbors():
         nbrs_graph = neighbors.kneighbors_graph(
             X, 3, metric=metric, mode='connectivity',
             include_self=True).toarray()
-        nbrs1 = neighbors.NearestNeighbors(3, metric=metric).fit(X)
+        nbrs1 = neighbors.NearestNeighbors(n_neighbors=3, metric=metric).fit(X)
         assert_array_equal(nbrs_graph, nbrs1.kneighbors_graph(X).toarray())
 
     # Test radiusneighbors_graph
@@ -1351,7 +1351,7 @@ def test_non_euclidean_kneighbors():
         assert_array_equal(nbrs_graph, nbrs1.radius_neighbors_graph(X).A)
 
     # Raise error when wrong parameters are supplied,
-    X_nbrs = neighbors.NearestNeighbors(3, metric='manhattan')
+    X_nbrs = neighbors.NearestNeighbors(n_neighbors=3, metric='manhattan')
     X_nbrs.fit(X)
     assert_raises(ValueError, neighbors.kneighbors_graph, X_nbrs, 3,
                   metric='euclidean')
@@ -1458,7 +1458,7 @@ def test_k_and_radius_neighbors_duplicates():
 
         # Mask the first duplicates when n_duplicates > n_neighbors.
         X = np.ones((3, 1))
-        nn = neighbors.NearestNeighbors(n_neighbors=1)
+        nn = neighbors.NearestNeighbors(n_neighbors=1, algorithm='brute')
         nn.fit(X)
         dist, ind = nn.kneighbors()
         assert_array_equal(dist, np.zeros((3, 1)))
@@ -1674,3 +1674,22 @@ def test_pipeline_with_nearest_neighbors_transformer():
         y_pred_chain = reg_chain.fit(X, y).predict(X2)
         y_pred_compact = reg_compact.fit(X, y).predict(X2)
         assert_array_almost_equal(y_pred_chain, y_pred_compact)
+
+
+@pytest.mark.parametrize('X, metric, metric_params, expected_algo', [
+    (np.random.randint(10, size=(10, 10)), 'precomputed', None, 'brute'),
+    (np.random.randn(10, 20), 'euclidean', None, 'brute'),
+    (np.random.randn(8, 5), 'euclidean', None, 'brute'),
+    (np.random.randn(10, 5), 'euclidean', None, 'kd_tree'),
+    (np.random.randn(10, 5), 'seuclidean', {'V': [2]*5}, 'ball_tree'),
+    (np.random.randn(10, 5), 'correlation', None, 'brute'),
+])
+def test_auto_algorithm(X, metric, metric_params, expected_algo):
+    model = neighbors.NearestNeighbors(
+        n_neighbors=4,
+        algorithm='auto',
+        metric=metric,
+        metric_params=metric_params
+    )
+    model.fit(X)
+    assert model._fit_method == expected_algo

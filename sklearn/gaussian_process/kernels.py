@@ -23,7 +23,6 @@ from abc import ABCMeta, abstractmethod
 from collections import namedtuple
 import math
 from inspect import signature
-import warnings
 
 import numpy as np
 from scipy.special import kv, gamma
@@ -80,7 +79,29 @@ class Hyperparameter(namedtuple('Hyperparameter',
         changed during hyperparameter tuning. If None is passed, the "fixed" is
         derived based on the given bounds.
 
+    Examples
+    --------
+    >>> from sklearn.gaussian_process.kernels import ConstantKernel
+    >>> from sklearn.datasets import make_friedman2
+    >>> from sklearn.gaussian_process import GaussianProcessRegressor
+    >>> from sklearn.gaussian_process.kernels import Hyperparameter
+    >>> X, y = make_friedman2(n_samples=50, noise=0, random_state=0)
+    >>> kernel = ConstantKernel(constant_value=1.0,
+    ...    constant_value_bounds=(0.0, 10.0))
+
+    We can access each hyperparameter:
+
+    >>> for hyperparameter in kernel.hyperparameters:
+    ...    print(hyperparameter)
+    Hyperparameter(name='constant_value', value_type='numeric',
+    bounds=array([[ 0., 10.]]), n_elements=1, fixed=False)
+
+    >>> params = kernel.get_params()
+    >>> for key in sorted(params): print(f"{key} : {params[key]}")
+    constant_value : 1.0
+    constant_value_bounds : (0.0, 10.0)
     """
+
     # A raw namedtuple is very memory efficient as it packs the attributes
     # in a struct to get rid of the __dict__ of attributes in particular it
     # does not copy the string for the keys on each instance.
@@ -159,16 +180,8 @@ class Kernel(metaclass=ABCMeta):
                                " %s doesn't follow this convention."
                                % (cls, ))
         for arg in args:
-            try:
-                value = getattr(self, arg)
-            except AttributeError:
-                warnings.warn('From version 0.24, get_params will raise an '
-                              'AttributeError if a parameter cannot be '
-                              'retrieved as an instance attribute. Previously '
-                              'it would return None.',
-                              FutureWarning)
-                value = None
-            params[arg] = value
+            params[arg] = getattr(self, arg)
+
         return params
 
     def set_params(self, **params):
@@ -433,6 +446,21 @@ class CompoundKernel(Kernel):
     ----------
     kernels : list of Kernels
         The other kernels
+
+    Examples
+    --------
+    >>> from sklearn.gaussian_process.kernels import WhiteKernel
+    >>> from sklearn.gaussian_process.kernels import RBF
+    >>> from sklearn.gaussian_process.kernels import CompoundKernel
+    >>> kernel = CompoundKernel(
+    ...     [WhiteKernel(noise_level=3.0), RBF(length_scale=2.0)])
+    >>> print(kernel.bounds)
+    [[-11.51292546  11.51292546]
+     [-11.51292546  11.51292546]]
+    >>> print(kernel.n_dims)
+    2
+    >>> print(kernel.theta)
+    [1.09861229 0.69314718]
     """
 
     def __init__(self, kernels):
@@ -919,6 +947,7 @@ class Exponentiation(Kernel):
     >>> gpr.predict(X[:1,:], return_std=True)
     (array([635.5...]), array([0.559...]))
     """
+
     def __init__(self, kernel, exponent):
         self.kernel = kernel
         self.exponent = exponent
@@ -1096,9 +1125,10 @@ class ConstantKernel(StationaryKernelMixin, GenericKernelMixin,
         The constant value which defines the covariance:
         k(x_1, x_2) = constant_value
 
-    constant_value_bounds : pair of floats >= 0, default=(1e-5, 1e5)
-        The lower and upper bound on constant_value
-
+    constant_value_bounds : pair of floats >= 0 or "fixed", default=(1e-5, 1e5)
+        The lower and upper bound on `constant_value`.
+        If set to "fixed", `constant_value` cannot be changed during
+        hyperparameter tuning.
 
     Examples
     --------
@@ -1114,6 +1144,7 @@ class ConstantKernel(StationaryKernelMixin, GenericKernelMixin,
     >>> gpr.predict(X[:1,:], return_std=True)
     (array([606.1...]), array([0.24...]))
     """
+
     def __init__(self, constant_value=1.0, constant_value_bounds=(1e-5, 1e5)):
         self.constant_value = constant_value
         self.constant_value_bounds = constant_value_bounds
@@ -1214,9 +1245,10 @@ class WhiteKernel(StationaryKernelMixin, GenericKernelMixin,
     noise_level : float, default=1.0
         Parameter controlling the noise level (variance)
 
-    noise_level_bounds : pair of floats >= 0, default=(1e-5, 1e5)
-        The lower and upper bound on noise_level
-
+    noise_level_bounds : pair of floats >= 0 or "fixed", default=(1e-5, 1e5)
+        The lower and upper bound on 'noise_level'.
+        If set to "fixed", 'noise_level' cannot be changed during
+        hyperparameter tuning.
 
     Examples
     --------
@@ -1342,8 +1374,10 @@ class RBF(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
         used. If an array, an anisotropic kernel is used where each dimension
         of l defines the length-scale of the respective feature dimension.
 
-    length_scale_bounds : pair of floats >= 0, default=(1e-5, 1e5)
-        The lower and upper bound on length_scale
+    length_scale_bounds : pair of floats >= 0 or "fixed", default=(1e-5, 1e5)
+        The lower and upper bound on 'length_scale'.
+        If set to "fixed", 'length_scale' cannot be changed during
+        hyperparameter tuning.
 
     References
     ----------
@@ -1498,8 +1532,10 @@ class Matern(RBF):
         used. If an array, an anisotropic kernel is used where each dimension
         of l defines the length-scale of the respective feature dimension.
 
-    length_scale_bounds : pair of floats >= 0, default=(1e-5, 1e5)
-        The lower and upper bound on length_scale
+    length_scale_bounds : pair of floats >= 0 or "fixed", default=(1e-5, 1e5)
+        The lower and upper bound on 'length_scale'.
+        If set to "fixed", 'length_scale' cannot be changed during
+        hyperparameter tuning.
 
     nu : float, default=1.5
         The parameter nu controlling the smoothness of the learned function.
@@ -1681,11 +1717,15 @@ class RationalQuadratic(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
     alpha : float > 0, default=1.0
         Scale mixture parameter
 
-    length_scale_bounds : pair of floats >= 0, default=(1e-5, 1e5)
-        The lower and upper bound on length_scale
+    length_scale_bounds : pair of floats >= 0 or "fixed", default=(1e-5, 1e5)
+        The lower and upper bound on 'length_scale'.
+        If set to "fixed", 'length_scale' cannot be changed during
+        hyperparameter tuning.
 
-    alpha_bounds : pair of floats >= 0, default=(1e-5, 1e5)
-        The lower and upper bound on alpha
+    alpha_bounds : pair of floats >= 0 or "fixed", default=(1e-5, 1e5)
+        The lower and upper bound on 'alpha'.
+        If set to "fixed", 'alpha' cannot be changed during
+        hyperparameter tuning.
 
     References
     ----------
@@ -1819,17 +1859,22 @@ class ExpSineSquared(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
 
     Parameters
     ----------
-    length_scale : float, default=1.0
-        The length scale of the kernel. It should be strictly positive.
 
-    periodicity : float, default=1.0
-        The periodicity of the kernel. It should be strictly positive.
+    length_scale : float > 0, default=1.0
+        The length scale of the kernel.
 
-    length_scale_bounds : pair of floats >= 0, default=(1e-5, 1e5)
-        The lower and upper bound on length scale.
+    periodicity : float > 0, default=1.0
+        The periodicity of the kernel.
 
-    periodicity_bounds : pair of floats >= 0, default=(1e-5, 1e5)
-        The lower and upper bound on periodicity.
+    length_scale_bounds : pair of floats >= 0 or "fixed", default=(1e-5, 1e5)
+        The lower and upper bound on 'length_scale'.
+        If set to "fixed", 'length_scale' cannot be changed during
+        hyperparameter tuning.
+
+    periodicity_bounds : pair of floats >= 0 or "fixed", default=(1e-5, 1e5)
+        The lower and upper bound on 'periodicity'.
+        If set to "fixed", 'periodicity' cannot be changed during
+        hyperparameter tuning.
 
     Examples
     --------
@@ -1963,8 +2008,10 @@ class DotProduct(Kernel):
         Parameter controlling the inhomogenity of the kernel. If sigma_0=0,
         the kernel is homogenous.
 
-    sigma_0_bounds : pair of floats >= 0, default=(1e-5, 1e5)
-        The lower and upper bound on l.
+    sigma_0_bounds : pair of floats >= 0 or "fixed", default=(1e-5, 1e5)
+        The lower and upper bound on 'sigma_0'.
+        If set to "fixed", 'sigma_0' cannot be changed during
+        hyperparameter tuning.
 
     References
     ----------
@@ -1986,7 +2033,6 @@ class DotProduct(Kernel):
     >>> gpr.predict(X[:2,:], return_std=True)
     (array([653.0..., 592.1...]), array([316.6..., 316.6...]))
     """
-
     def __init__(self, sigma_0=1.0, sigma_0_bounds=(1e-5, 1e5)):
         self.sigma_0 = sigma_0
         self.sigma_0_bounds = sigma_0_bounds
@@ -2102,8 +2148,10 @@ class PairwiseKernel(Kernel):
         Parameter gamma of the pairwise kernel specified by metric. It should
         be positive.
 
-    gamma_bounds : pair of floats, default=(1e-5, 1e5)
-        The lower and upper bound on gamma. They should be positive.
+    gamma_bounds : pair of floats >= 0 or "fixed", default=(1e-5, 1e5)
+        The lower and upper bound on 'gamma'.
+        If set to "fixed", 'gamma' cannot be changed during
+        hyperparameter tuning.
 
     metric : {"linear", "additive_chi2", "chi2", "poly", "polynomial", \
               "rbf", "laplacian", "sigmoid", "cosine"} or callable, \
@@ -2121,8 +2169,21 @@ class PairwiseKernel(Kernel):
         All entries of this dict (if any) are passed as keyword arguments to
         the pairwise kernel function.
 
+    Examples
+    --------
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn.gaussian_process import GaussianProcessClassifier
+    >>> from sklearn.gaussian_process.kernels import PairwiseKernel
+    >>> X, y = load_iris(return_X_y=True)
+    >>> kernel = PairwiseKernel(metric='rbf')
+    >>> gpc = GaussianProcessClassifier(kernel=kernel,
+    ...         random_state=0).fit(X, y)
+    >>> gpc.score(X, y)
+    0.9733...
+    >>> gpc.predict_proba(X[:2,:])
+    array([[0.8880..., 0.05663..., 0.05532...],
+           [0.8676..., 0.07073..., 0.06165...]])
     """
-
     def __init__(self, gamma=1.0, gamma_bounds=(1e-5, 1e5), metric="linear",
                  pairwise_kernels_kwargs=None):
         self.gamma = gamma

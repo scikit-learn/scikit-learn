@@ -552,7 +552,7 @@ def test_nans():
     X = [[0, 1, 0], [0, -1, -1], [0, .5, .5]]
     y = [1, 0, 1]
 
-    for select in (SelectKBest(f_classif, 2),
+    for select in (SelectKBest(f_classif, k=2),
                    SelectPercentile(f_classif, percentile=67)):
         ignore_warnings(select.fit)(X, y)
         assert_array_equal(select.get_support(indices=True), np.array([1, 2]))

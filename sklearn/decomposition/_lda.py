@@ -13,15 +13,14 @@ Link: https://github.com/blei-lab/onlineldavb
 
 import numpy as np
 import scipy.sparse as sp
-from scipy.special import gammaln
+from scipy.special import gammaln, logsumexp
 from joblib import Parallel, delayed, effective_n_jobs
 
 from ..base import BaseEstimator, TransformerMixin
-from ..utils import (check_random_state, check_array,
-                     gen_batches, gen_even_slices)
-from ..utils.fixes import logsumexp
+from ..utils import check_random_state, gen_batches, gen_even_slices
 from ..utils.validation import check_non_negative
 from ..utils.validation import check_is_fitted
+from ..utils.validation import _deprecate_positional_args
 
 from ._online_lda_fast import (mean_change, _dirichlet_expectation_1d,
                                _dirichlet_expectation_2d)
@@ -144,6 +143,9 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
     n_components : int, optional (default=10)
         Number of topics.
 
+        .. versionchanged:: 0.19
+            ``n_topics `` was renamed to ``n_components``
+
     doc_topic_prior : float, optional (default=None)
         Prior of document topic distribution `theta`. If the value is None,
         defaults to `1 / n_components`.
@@ -228,7 +230,7 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
 
     Attributes
     ----------
-    components_ : array, [n_components, n_features]
+    components_ : ndarray of shape (n_components, n_features)
         Variational parameters for topic word distribution. Since the complete
         conditional for topic word distribution is a Dirichlet,
         ``components_[i, j]`` can be viewed as pseudocount that represents the
@@ -236,6 +238,10 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
         It can also be viewed as distribution over the words for each topic
         after normalization:
         ``model.components_ / model.components_.sum(axis=1)[:, np.newaxis]``.
+
+    exp_dirichlet_component_ : ndarray of shape (n_components, n_features)
+        Exponential value of expectation of log topic word distribution.
+        In the literature, this is `exp(E[log(beta)])`.
 
     n_batch_iter_ : int
         Number of iterations of the EM step.
@@ -249,6 +255,10 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
     doc_topic_prior_ : float
         Prior of document topic distribution `theta`. If the value is None,
         it is `1 / n_components`.
+
+    random_state_ : RandomState instance
+        RandomState instance that is generated either from a seed, the random
+        number generator or by `np.random`.
 
     topic_word_prior_ : float
         Prior of topic word distribution `beta`. If the value is None, it is
@@ -282,8 +292,8 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
         https://github.com/blei-lab/onlineldavb
 
     """
-
-    def __init__(self, n_components=10, doc_topic_prior=None,
+    @_deprecate_positional_args
+    def __init__(self, n_components=10, *, doc_topic_prior=None,
                  topic_word_prior=None, learning_method='batch',
                  learning_decay=.7, learning_offset=10., max_iter=10,
                  batch_size=128, evaluate_every=-1, total_samples=1e6,
@@ -467,7 +477,7 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
     def _more_tags(self):
         return {'requires_positive_X': True}
 
-    def _check_non_neg_array(self, X, whom):
+    def _check_non_neg_array(self, X, reset_n_features, whom):
         """check X format
 
         check X format and make sure no negative value in X.
@@ -477,7 +487,8 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
         X :  array-like or sparse matrix
 
         """
-        X = check_array(X, accept_sparse='csr')
+        X = self._validate_data(X, reset=reset_n_features,
+                                accept_sparse='csr')
         check_non_negative(X, whom)
         return X
 
@@ -496,13 +507,23 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
         self
         """
         self._check_params()
-        X = self._check_non_neg_array(X,
+        first_time = not hasattr(self, 'components_')
+
+        # In theory reset should be equal to `first_time`, but there are tests
+        # checking the input number of feature and they expect a specific
+        # string, which is not the same one raised by check_n_features. So we
+        # don't check n_features_in_ here for now (it's done with adhoc code in
+        # the estimator anyway).
+        # TODO: set reset=first_time when addressing reset in
+        # predict/transform/etc.
+        reset_n_features = True
+        X = self._check_non_neg_array(X, reset_n_features,
                                       "LatentDirichletAllocation.partial_fit")
         n_samples, n_features = X.shape
         batch_size = self.batch_size
 
         # initialize parameters or check
-        if not hasattr(self, 'components_'):
+        if first_time:
             self._init_latent_vars(n_features)
 
         if n_features != self.components_.shape[1]:
@@ -540,7 +561,8 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
         self
         """
         self._check_params()
-        X = self._check_non_neg_array(X, "LatentDirichletAllocation.fit")
+        X = self._check_non_neg_array(X, reset_n_features=True,
+                                      whom="LatentDirichletAllocation.fit")
         n_samples, n_features = X.shape
         max_iter = self.max_iter
         evaluate_every = self.evaluate_every
@@ -609,7 +631,9 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
         check_is_fitted(self)
 
         # make sure feature size is the same in fitted model and in X
-        X = self._check_non_neg_array(X, "LatentDirichletAllocation.transform")
+        X = self._check_non_neg_array(
+            X, reset_n_features=True,
+            whom="LatentDirichletAllocation.transform")
         n_samples, n_features = X.shape
         if n_features != self.components_.shape[1]:
             raise ValueError(
@@ -733,7 +757,8 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
         score : float
             Use approximate bound as score.
         """
-        X = self._check_non_neg_array(X, "LatentDirichletAllocation.score")
+        X = self._check_non_neg_array(X, reset_n_features=True,
+                                      whom="LatentDirichletAllocation.score")
 
         doc_topic_distr = self._unnormalized_transform(X)
         score = self._approx_bound(X, doc_topic_distr, sub_sampling=False)
@@ -762,8 +787,9 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
         """
         check_is_fitted(self)
 
-        X = self._check_non_neg_array(X,
-                                      "LatentDirichletAllocation.perplexity")
+        X = self._check_non_neg_array(
+            X, reset_n_features=True,
+            whom="LatentDirichletAllocation.perplexity")
 
         if doc_topic_distr is None:
             doc_topic_distr = self._unnormalized_transform(X)

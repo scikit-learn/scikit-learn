@@ -16,10 +16,12 @@ diabetes patients. This example shows how to use SelectFromModel and LassoCv to
 find the best two features predicting disease progression after one year from
 the baseline.
 
-Authors: Manoj Kumar <mks542@nyu.edu>
-         Maria Telenczuk <https://github.com/maikia>
+Authors: `Manoj Kumar <mks542@nyu.edu>`_,
+`Maria Telenczuk <https://github.com/maikia>`_
+
 License: BSD 3 clause
 """
+
 print(__doc__)
 
 import matplotlib.pyplot as plt
@@ -29,7 +31,7 @@ from sklearn.datasets import load_diabetes
 from sklearn.feature_selection import SelectFromModel
 from sklearn.linear_model import LassoCV
 
-##############################################################################
+# %%
 # Load the data
 # ---------------------------------------------------------
 #
@@ -45,27 +47,27 @@ y = diabetes.target
 feature_names = diabetes.feature_names
 print(feature_names)
 
-##############################################################################
+# %%
 # Find importance of the features
 # ---------------------------------------------------------
 #
 # To decide on the importance of the features we are going to use LassoCV
-# estimator. The features with the highest absolute coef_ value are considered
-# the most important
+# estimator. The features with the highest absolute `coef_` value are
+# considered the most important
 
 clf = LassoCV().fit(X, y)
 importance = np.abs(clf.coef_)
 print(importance)
 
-##############################################################################
+# %%
 # Select from the model features with the higest score
 # ---------------------------------------------------------
 #
 # Now we want to select the two features which are the most important.
 # SelectFromModel() allows for setting the threshold. Only the features with
-# the coef_ higher than the threshold will remain. Here, we want to set the
-# threshold slightly above the third highest coef_ calculated by LassoCV() from
-# our data.
+# the `coef_` higher than the threshold will remain. Here, we want to set the
+# threshold slightly above the third highest `coef_` calculated by LassoCV()
+# from our data.
 
 idx_third = importance.argsort()[-3]
 threshold = importance[idx_third] + 0.01
@@ -80,7 +82,7 @@ X_transform = sfm.transform(X)
 
 n_features = sfm.transform(X).shape[1]
 
-##############################################################################
+# %%
 # Plot the two most important features
 # ---------------------------------------------------------
 #
