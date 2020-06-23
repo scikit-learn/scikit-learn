@@ -119,7 +119,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
     estimators_ : list of DecisionTreeClassifier
         The collection of fitted sub-estimators.
 
-    estimators_features_ : list of arrays
+    estimators_features_ : list of ndarray
         The subset of drawn features for each base estimator.
 
     estimators_samples_ : list of arrays
