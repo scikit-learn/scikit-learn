@@ -78,24 +78,19 @@ def test_unsupported_loss():
         l1_min_c(dense_X, Y1, loss='l1')
 
 
-# TODO test deterministic results on differing systems
-# def test_set_seed():
-#     def _test(seed, val):
-#         # TODO currently causes 99% coverage in test_bounds.py
-#         if seed is not None:
-#             set_seed_wrap(seed)
-#         x = bounded_rand_int_wrap(100)
-#         assert(x == val), 'Expected {} but got {} instead'.format(val, x)
-
-#     # TODO should be default seed for std::mt19937,
-#     # but different results on jupyter lab
-#     # _test(None, 81)
-#     _test(5489, 81)  # default seed for std::mt19937
-#     _test(0, 54)
-#     _test(4294967295, 9)  # max unsigned int size
-
-
+_MAX_UNSIGNED_INT = 4294967295
 _MAX_INT = 2147483647
+
+
+@pytest.mark.parametrize('seed, val',
+                         [(None, 81),
+                          (0, 54),
+                          (_MAX_UNSIGNED_INT, 9)])
+def test_set_seed(seed, val32, val64):
+    if seed is not None:
+        set_seed_wrap(seed)
+    x = bounded_rand_int_wrap(100)
+    assert(x == val), 'Expected {} but got {} instead'.format(val, x)
 
 
 @pytest.mark.parametrize('orig_range, n_pts',
