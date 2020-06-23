@@ -1048,7 +1048,7 @@ class SparseCoder(SparseCodingMixin, BaseEstimator):
                                        positive_code, transform_max_iter)
         self.dictionary = dictionary
         # The object may be used without being fit.
-        # It preserves the previous behaviour.        
+        # It preserves the previous behaviour.
         self.fitted_ = True
 
     def fit(self, X, y=None):
