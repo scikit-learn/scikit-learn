@@ -58,7 +58,7 @@ fig, (ax0, ax1) = plt.subplots(ncols=2, figsize=(12, 6))
 
 ax0.plot(x, y, 'C0.', markersize=12)
 ax0.plot(x, y_, 'C1.-', markersize=12)
-ax0.plot(x, lr.predict(x[:, np.newaxis]), 'C1-')
+ax0.plot(x, lr.predict(x[:, np.newaxis]), 'C2-')
 ax0.add_collection(lc)
 ax0.legend(('Training data', 'Isotonic fit', 'Linear fit'), loc='lower right')
 ax0.set_title('Isotonic regression fit on noisy data (n=%d)' % n)
