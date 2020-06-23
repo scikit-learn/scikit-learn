@@ -239,7 +239,7 @@ def test_fit_docstring_attributes(name, Estimator):
                'MultiTaskElasticNet', 'MultiTaskElasticNetCV',
                'MultiTaskLasso', 'MultiTaskLassoCV',
                'OrthogonalMatchingPursuit',
-               'PLSCanonical', 'PLSRegression', 'PLSSVD',
+               'PLSCanonical', 'PLSSVD',
                'PassiveAggressiveClassifier', 'RBFSampler'}
     if Estimator.__name__ in IGNORED:
         pytest.xfail(
