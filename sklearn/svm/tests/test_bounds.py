@@ -113,8 +113,8 @@ def test_bounded_rand_int(orig_range, n_pts):
     # Null hypothesis = samples come from an uniform distribution.
     # Under the null hypothesis, p-values should be uniformly distributed and not concentrated 
     # on low values (this may seem counter-intuitive but is backed by multiple refs)
-    # So we can do two checks: 
-    
+    # So we can do two checks:
+
     # (1) check uniformity of p-values 
     uniform_p_vals_dist = stats.uniform(loc=0, scale=1)
     res_pvals = stats.kstest(ks_pvals, uniform_p_vals_dist.cdf)
@@ -122,7 +122,7 @@ def test_bounded_rand_int(orig_range, n_pts):
         "Null hypothesis rejected: generated random numbers are not uniform."\
         " Details: the (meta) p-value of the test of uniform distribution of p-values"\
         " is {} which is not > 0.05".format(res_pvals.pvalue)
-    
+
     # (2) (safety belt) check that most p-values are above 0.05
     min_10pct_pval = np.percentile(ks_pvals, q=10)
     # lower 10th quantile pvalue <= 0.05 means that the test rejects the
