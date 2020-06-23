@@ -248,11 +248,28 @@ def test_lasso_cv_positive_constraint():
     clf_constrained.fit(X, y)
     assert min(clf_constrained.coef_) >= 0
 
+# linear models which use parameter normalize
+# ok:
+from sklearn.linear_model import Lasso, LassoLars
+# do not accept alpha
+from sklearn.linear_model import Lars, LassoCV, LinearRegression
+from sklearn.linear_model import RidgeClassifierCV, ElasticNetCV, LarsCV
+from sklearn.linear_model import BayesianRidge, ARDRegression, RidgeCV
+from sklearn.linear_model import MultiTaskElasticNetCV, MultiTaskLassoCV
+from sklearn.linear_model import LassoLarsCV, OrthogonalMatchingPursuit
+from sklearn.linear_model import OrthogonalMatchingPursuitCV, LassoLarsIC
+# assert: arrays are not almost equals
+from sklearn.linear_model import ElasticNet, Ridge
 
-from sklearn.linear_model import Lars, LassoLars, LassoCV
+# ValueError: For mono-task outputs, use ElasticNet
+from sklearn.linear_model import MultiTaskElasticNet, MultiTaskLasso
+
+# raise ValueError("Unknown label type: %s" % repr(ys))
+from sklearn.linear_model import RidgeClassifier
+
+
 @pytest.mark.parametrize("test_model, args",
-    [(Lasso, {"tol":1e-16}), (LassoLars, {})
-                    ])
+    [(Lasso, {"tol":1e-16}), (LassoLars, {})])
 def test_model_pipeline_same_as_normalize_true(test_model, args):
     # Test that linear model set with normalize set to True is doing the same
     # as the same linear model preceeded by StandardScaler in the pipeline and
