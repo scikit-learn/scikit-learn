@@ -48,7 +48,7 @@ pip install --upgrade pip setuptools
 echo "Installing numpy and scipy master wheels"
 dev_anaconda_url=https://pypi.anaconda.org/scipy-wheels-nightly/simple
 pip install --pre --upgrade --timeout=60 --extra-index $dev_anaconda_url numpy scipy pandas
-# Cython nightly build should be still fetch from the rackspace container
+# Cython nightly build should be still fetch from the Rackspace container
 dev_rackspace_url=https://7933911d6844c6c53a7d-47bd50c35cd79bd838daf386af554a83.ssl.cf2.rackcdn.com
 pip install --pre --upgrade --timeout=60 -f $dev_rackspace_url cython
 echo "Installing joblib master"
