@@ -1502,8 +1502,6 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         ``n_iter_no_change`` is specified). Otherwise it is set to
         ``n_estimators``.
 
-        .. versionadded:: 0.20
-
     n_features_ : int
         The number of data features.
 
