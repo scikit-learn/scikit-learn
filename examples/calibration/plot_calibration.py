@@ -80,11 +80,11 @@ clf_score = calibration_error(y_test, prob_pos_clf, sw_test)
 print("No calibration: %1.3f" % clf_score)
 
 clf_isotonic_score = calibration_error(y_test, prob_pos_isotonic,
-                                      sample_weight=sw_test)
+                                       sample_weight=sw_test)
 print("With isotonic calibration: %1.3f" % clf_isotonic_score)
 
 clf_sigmoid_score = calibration_error(y_test, prob_pos_sigmoid,
-                                     sample_weight=sw_test)
+                                      sample_weight=sw_test)
 
 print("With sigmoid calibration: %1.3f" % clf_sigmoid_score)
 

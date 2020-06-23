@@ -2460,8 +2460,8 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
 
 
 def calibration_error(y_true, y_prob, sample_weight=None, norm='l2',
-                     n_bins=10, strategy='uniform', pos_label=None,
-                     reduce_bias=True):
+                      n_bins=10, strategy='uniform', pos_label=None,
+                      reduce_bias=True):
     """Compute calibration error of a binary classifier.
 
     Across all items in a set of N predictions, the calibration error measures

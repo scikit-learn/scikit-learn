@@ -2268,7 +2268,7 @@ def test_calibration_error():
         0.)
     assert_almost_equal(
         calibration_error(y_true, y_pred, n_bins=ratio, norm="l2",
-                         reduce_bias=False), 0.)
+                          reduce_bias=False), 0.)
 
     y_true = np.array([0, 0, 0, 0] + [1, 1, 1, 1])
     assert_almost_equal(
@@ -2279,7 +2279,7 @@ def test_calibration_error():
         0.25)
     assert_almost_equal(
         calibration_error(y_true, y_pred, n_bins=ratio, norm="l2",
-                         reduce_bias=False),
+                          reduce_bias=False),
         0.25)
 
     y_true = np.array([0, 0, 0, 1] + [1, 1, 1, 1])
@@ -2287,15 +2287,15 @@ def test_calibration_error():
 
     assert_almost_equal(
         calibration_error(y_true, y_pred, sample_weight=sample_weight,
-                         n_bins=ratio, norm="l1"),
+                          n_bins=ratio, norm="l1"),
         0.1875)
     assert_almost_equal(
         calibration_error(y_true, y_pred, sample_weight=sample_weight,
-                         n_bins=ratio, norm="max"),
+                          n_bins=ratio, norm="max"),
         0.25)
     assert_almost_equal(
         calibration_error(y_true, y_pred, sample_weight=sample_weight,
-                         n_bins=ratio, norm="l2", reduce_bias=False),
+                          n_bins=ratio, norm="l2", reduce_bias=False),
         0.2165063)
 
     assert_raises(ValueError, calibration_error, y_true, y_pred[1:])
@@ -2315,7 +2315,7 @@ def test_calibration_error():
         0.25)
     assert_almost_equal(
         calibration_error(y_true, y_pred, n_bins=ratio, norm="l2",
-                         reduce_bias=False), .25)
+                          reduce_bias=False), .25)
 
     # edge case with one element per bin only
     ratio = 4
@@ -2330,7 +2330,7 @@ def test_calibration_error():
         0.375)
     assert_almost_equal(
         calibration_error(y_true, y_pred, n_bins=ratio, norm="l2",
-                         reduce_bias=False), 0.4677071)
+                          reduce_bias=False), 0.4677071)
 
     # edge case with one bin only
     ratio = 1.
@@ -2345,7 +2345,7 @@ def test_calibration_error():
         0.)
     assert_almost_equal(
         calibration_error(y_true, y_pred, n_bins=ratio, norm="l2",
-                         reduce_bias=False),
+                          reduce_bias=False),
         0.)
 
 
