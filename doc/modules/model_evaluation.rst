@@ -1622,10 +1622,12 @@ Here is a small example of usage of this function:::
         of Modern Neural Networks. Proceedings of the 34th International
         Conference on Machine Learning, PMLR 70:1321-1330, 2017.
         <http://proceedings.mlr.press/v70/guo17a.html>`_
+
   * [2] `An experimental comparison of performance measures for classification.
         C. Ferri, J. Hernandez-Orallo, R. Modroiu. Pattern Recognition Letters,
         Volume 30, Issue 1, 2009.
         <https://www.math.ucdavis.edu/~saito/data/roc/ferri-class-perf-metrics.pdf>`_
+        
   * [3] `Verified Uncertainty Calibration. Ananya Kumar, Percy Liang, Tengyu
         Ma. Advances in Neural Information Processing Systems (NeurIPS),
         2019 <https://arxiv.org/abs/1909.10155>`_
