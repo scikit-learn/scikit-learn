@@ -234,7 +234,7 @@ def test_fit_docstring_attributes(name, Estimator):
                'HistGradientBoostingRegressor',
                'KernelCenterer', 'KernelDensity',
                'LarsCV', 'Lasso', 'LassoLarsCV', 'LassoLarsIC',
-               'MDS','MiniBatchKMeans', 
+               'MDS', 'MiniBatchKMeans',
                'MultiTaskElasticNet', 'MultiTaskElasticNetCV',
                'MultiTaskLasso', 'MultiTaskLassoCV',
                'OrthogonalMatchingPursuit',
