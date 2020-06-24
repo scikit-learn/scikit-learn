@@ -27,16 +27,6 @@ except ImportError:
     # setuptools not installed
     parse_version = LooseVersion  # type: ignore
 
-def _parse_version(version_string):
-    version = []
-    for x in version_string.split('.'):
-        try:
-            version.append(int(x))
-        except ValueError:
-            # x may be of the form dev-1ea1592
-            version.append(x)
-    return tuple(version)
-
 
 np_version = parse_version(np.__version__)
 sp_version = parse_version(scipy.__version__)
