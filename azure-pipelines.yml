@@ -21,12 +21,11 @@ jobs:
       displayName: Install linters
     - bash: |
         set -ex
-        git log -2 HEAD --format=%B
         if [[ $BUILD_REASON == "PullRequest" ]]; then
           # By default pull requests use refs/pull/PULL_ID/merge as the source branch
           # which has a "Merge ID into ID" as a commit message. The latest commit
           # message is the second to last commit
-          COMMIT_MESSAGE=$(git show -s --format=%s HEAD)
+          COMMIT_MESSAGE=$(git log -2 HEAD --format=%B)
         else
           COMMIT_MESSAGE=$BUILD_SOURCEVERSIONMESSAGE
         fi
@@ -53,6 +52,7 @@ jobs:
         fi
       displayName: Run mypy
     - bash: |
+        set -ex
         if [[ $COMMIT_MESSAGE =~ \[scipy-dev\] ]] || \
            [[ $BUILD_REASON == "Schedule" ]]; then
           echo "##vso[task.setvariable variable=runScipyDev;isOutput=true]true"
