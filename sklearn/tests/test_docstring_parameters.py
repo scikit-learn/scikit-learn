@@ -229,8 +229,8 @@ def test_fit_docstring_attributes(name, Estimator):
             assert hasattr(est, attr.name)
 
     IGNORED = {'BayesianRidge', 'Birch', 'CCA', 'CategoricalNB', 'ElasticNet',
-               'ElasticNetCV'
-               'KernelCenterer', 'KernelDensity',
+               'ElasticNetCV',
+               'KernelCenterer',
                'LarsCV', 'Lasso', 'LassoLarsCV', 'LassoLarsIC',
                'LocalOutlierFactor', 'MDS',
                'MiniBatchKMeans',
