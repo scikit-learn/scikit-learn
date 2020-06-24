@@ -80,8 +80,9 @@ plt.show()
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 8))
 corr = spearmanr(X).correlation
 corr_linkage = hierarchy.ward(corr)
-dendro = hierarchy.dendrogram(corr_linkage, labels=data.feature_names, ax=ax1,
-                              leaf_rotation=90)
+dendro = hierarchy.dendrogram(
+    corr_linkage, labels=data.feature_names.tolist(), ax=ax1, leaf_rotation=90
+)
 dendro_idx = np.arange(0, len(dendro['ivl']))
 
 ax2.imshow(corr[dendro['leaves'], :][:, dendro['leaves']])
