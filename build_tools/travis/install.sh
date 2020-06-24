@@ -50,8 +50,8 @@ dev_url=https://7933911d6844c6c53a7d-47bd50c35cd79bd838daf386af554a83.ssl.cf2.ra
 pip install --pre --upgrade --timeout=60 -f $dev_url numpy scipy pandas cython
 echo "Installing joblib master"
 pip install https://github.com/joblib/joblib/archive/master.zip
-echo "Installing pillow master"
-pip install https://github.com/python-pillow/Pillow/archive/master.zip
+# echo "Installing pillow master"
+# pip install https://github.com/python-pillow/Pillow/archive/master.zip
 pip install pytest==4.6.4 pytest-cov
 
 # Build scikit-learn in the install.sh script to collapse the verbose
