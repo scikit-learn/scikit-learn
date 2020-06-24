@@ -5,6 +5,6 @@ amounts of unlabeled data for classification tasks. This module includes Label
 Propagation.
 """
 
-from .label_propagation import LabelPropagation, LabelSpreading
+from ._label_propagation import LabelPropagation, LabelSpreading
 
 __all__ = ['LabelPropagation', 'LabelSpreading']

@@ -1,0 +1,196 @@
+# Adapted from https://github.com/pandas-dev/pandas/blob/master/azure-pipelines.yml
+schedules:
+- cron: "30 2 * * *"
+  displayName: Run nightly build
+  branches:
+    include:
+    - master
+  always: true
+
+jobs:
+- job: linting
+  displayName: Linting
+  pool:
+    vmImage: ubuntu-18.04
+  steps:
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '3.8'
+    - bash: |
+        pip install flake8 mypy==0.770
+      displayName: Install linters
+    - bash: |
+        set -ex
+        if [[ $BUILD_SOURCEVERSIONMESSAGE =~ \[lint\ skip\] ]]; then
+          # skip linting
+          echo "Skipping flake8 linting"
+          exit 0
+        else
+          ./build_tools/circle/linting.sh
+        fi
+      displayName: Run linting
+    - bash: |
+        set -ex
+        if [[ $BUILD_SOURCEVERSIONMESSAGE =~ \[lint\ skip\] ]]; then
+          # skip linting
+          echo "Skipping mypy linting"
+          exit 0
+        else
+          mypy sklearn/ --ignore-missing-imports
+        fi
+      displayName: Run mypy
+    - bash: |
+        if [[ $BUILD_SOURCEVERSIONMESSAGE =~ \[scipy-dev\] ]] || \
+           [[ $BUILD_REASON == "Schedule" ]]; then
+          echo "##vso[task.setvariable variable=runScipyDev;isOutput=true]true"
+        else
+          echo "##vso[task.setvariable variable=runScipyDev;isOutput=true]false"
+        fi
+      name: gitCommitMessage
+      displayName: Determine to run scipy-dev
+
+- template: build_tools/azure/posix.yml
+  parameters:
+    name: Linux_Nightly
+    vmImage: ubuntu-18.04
+    dependsOn: [linting]
+    condition: eq(dependencies['linting']['outputs']['gitCommitMessage.runScipyDev'], 'true')
+    matrix:
+      pylatest_pip_scipy_dev:
+        DISTRIB: 'conda-pip-scipy-dev'
+        PYTHON_VERSION: '*'
+        CHECK_WARNINGS: 'true'
+        CHECK_PYTEST_SOFT_DEPENDENCY: 'true'
+        TEST_DOCSTRINGS: 'true'
+        # Tests that require large downloads over the networks are skipped in CI.
+        # Here we make sure, that they are still run on a regular basis.
+        SKLEARN_SKIP_NETWORK_TESTS: '0'
+
+# Will run all the time regardless of linting outcome.
+- template: build_tools/azure/posix.yml
+  parameters:
+    name: Linux_Runs
+    vmImage: ubuntu-18.04
+    matrix:
+      pylatest_conda_mkl:
+        DISTRIB: 'conda'
+        PYTHON_VERSION: '*'
+        BLAS: 'mkl'
+        NUMPY_VERSION: '*'
+        SCIPY_VERSION: '*'
+        CYTHON_VERSION: '*'
+        PILLOW_VERSION: '*'
+        PYTEST_VERSION: '*'
+        JOBLIB_VERSION: '*'
+        THREADPOOLCTL_VERSION: '2.0.0'
+        COVERAGE: 'true'
+
+- template: build_tools/azure/posix.yml
+  parameters:
+    name: Linux
+    vmImage: ubuntu-18.04
+    dependsOn: [linting]
+    condition: and(ne(variables['Build.Reason'], 'Schedule'), succeeded('linting'))
+    matrix:
+      # Linux environment to test that scikit-learn can be built against
+      # versions of numpy, scipy with ATLAS that comes with Ubuntu Bionic 18.04
+      # i.e. numpy 1.13.3 and scipy 0.19
+      py36_ubuntu_atlas:
+        DISTRIB: 'ubuntu'
+        PYTHON_VERSION: '3.6'
+        JOBLIB_VERSION: '0.11'
+        PYTEST_XDIST: 'false'
+        THREADPOOLCTL_VERSION: '2.0.0'
+      # Linux + Python 3.6 build with OpenBLAS and without SITE_JOBLIB
+      py36_conda_openblas:
+        DISTRIB: 'conda'
+        PYTHON_VERSION: '3.6'
+        BLAS: 'openblas'
+        NUMPY_VERSION: '1.13.3'
+        SCIPY_VERSION: '0.19.1'
+        PANDAS_VERSION: '*'
+        CYTHON_VERSION: '*'
+        # temporary pin pytest due to unknown failure with pytest 5.3
+        PYTEST_VERSION: '5.2'
+        PILLOW_VERSION: '4.2.1'
+        MATPLOTLIB_VERSION: '2.1.1'
+        SCIKIT_IMAGE_VERSION: '*'
+        # latest version of joblib available in conda for Python 3.6
+        JOBLIB_VERSION: '0.13.2'
+        THREADPOOLCTL_VERSION: '2.0.0'
+        PYTEST_XDIST: 'false'
+        COVERAGE: 'true'
+      # Linux environment to test the latest available dependencies and MKL.
+      # It runs tests requiring lightgbm, pandas and PyAMG.
+      pylatest_pip_openblas_pandas:
+        DISTRIB: 'conda-pip-latest'
+        PYTHON_VERSION: '3.8'
+        PYTEST_VERSION: '4.6.2'
+        COVERAGE: 'true'
+        CHECK_PYTEST_SOFT_DEPENDENCY: 'true'
+        TEST_DOCSTRINGS: 'true'
+        CHECK_WARNINGS: 'true'
+
+- template: build_tools/azure/posix-32.yml
+  parameters:
+    name: Linux32
+    vmImage: ubuntu-18.04
+    dependsOn: [linting]
+    condition: and(ne(variables['Build.Reason'], 'Schedule'), succeeded('linting'))
+    matrix:
+      py36_ubuntu_atlas_32bit:
+        DISTRIB: 'ubuntu-32'
+        PYTHON_VERSION: '3.6'
+        JOBLIB_VERSION: '0.13'
+        THREADPOOLCTL_VERSION: '2.0.0'
+
+- template: build_tools/azure/posix.yml
+  parameters:
+    name: macOS
+    vmImage: macOS-10.14
+    dependsOn: [linting]
+    condition: and(ne(variables['Build.Reason'], 'Schedule'), succeeded('linting'))
+    matrix:
+      pylatest_conda_mkl:
+        DISTRIB: 'conda'
+        PYTHON_VERSION: '*'
+        BLAS: 'mkl'
+        NUMPY_VERSION: '*'
+        SCIPY_VERSION: '*'
+        CYTHON_VERSION: '*'
+        PILLOW_VERSION: '*'
+        PYTEST_VERSION: '*'
+        JOBLIB_VERSION: '*'
+        THREADPOOLCTL_VERSION: '2.0.0'
+        COVERAGE: 'true'
+      pylatest_conda_mkl_no_openmp:
+        DISTRIB: 'conda'
+        PYTHON_VERSION: '*'
+        BLAS: 'mkl'
+        NUMPY_VERSION: '*'
+        SCIPY_VERSION: '*'
+        CYTHON_VERSION: '*'
+        PILLOW_VERSION: '*'
+        PYTEST_VERSION: '*'
+        JOBLIB_VERSION: '*'
+        THREADPOOLCTL_VERSION: '2.0.0'
+        COVERAGE: 'true'
+        SKLEARN_TEST_NO_OPENMP: 'true'
+        SKLEARN_SKIP_OPENMP_TEST: 'true'
+
+- template: build_tools/azure/windows.yml
+  parameters:
+    name: Windows
+    vmImage: vs2017-win2016
+    dependsOn: [linting]
+    condition: and(ne(variables['Build.Reason'], 'Schedule'), succeeded('linting'))
+    matrix:
+      py37_conda_mkl:
+        PYTHON_VERSION: '3.7'
+        CHECK_WARNINGS: 'true'
+        PYTHON_ARCH: '64'
+        PYTEST_VERSION: '*'
+        COVERAGE: 'true'
+      py36_pip_openblas_32bit:
+        PYTHON_VERSION: '3.6'
+        PYTHON_ARCH: '32'

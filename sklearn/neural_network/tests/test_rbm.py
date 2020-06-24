@@ -1,18 +1,18 @@
 import sys
 import re
+import pytest
 
 import numpy as np
 from scipy.sparse import csc_matrix, csr_matrix, lil_matrix
-from sklearn.utils.testing import (assert_almost_equal, assert_array_equal,
-                                   assert_true)
+from sklearn.utils._testing import (assert_almost_equal, assert_array_equal,
+                                    assert_allclose)
 
 from sklearn.datasets import load_digits
-from sklearn.externals.six.moves import cStringIO as StringIO
+from io import StringIO
 from sklearn.neural_network import BernoulliRBM
 from sklearn.utils.validation import assert_all_finite
-np.seterr(all='warn')
 
-Xdigits = load_digits().data
+Xdigits, _ = load_digits(return_X_y=True)
 Xdigits -= Xdigits.min()
 Xdigits /= Xdigits.max()
 
@@ -136,7 +136,7 @@ def test_gibbs_smoke():
     X_sampled = rbm1.gibbs(X)
     assert_all_finite(X_sampled)
     X_sampled2 = rbm1.gibbs(X)
-    assert_true(np.all((X_sampled != X_sampled2).max(axis=1)))
+    assert np.all((X_sampled != X_sampled2).max(axis=1))
 
 
 def test_score_samples():
@@ -148,7 +148,7 @@ def test_score_samples():
     rbm1 = BernoulliRBM(n_components=10, batch_size=2,
                         n_iter=10, random_state=rng)
     rbm1.fit(X)
-    assert_true((rbm1.score_samples(X) < -300).all())
+    assert (rbm1.score_samples(X) < -300).all()
 
     # Sparse vs. dense should not affect the output. Also test sparse input
     # validation.
@@ -186,9 +186,48 @@ def test_sparse_and_verbose():
         rbm.fit(X)
         s = sys.stdout.getvalue()
         # make sure output is sound
-        assert_true(re.match(r"\[BernoulliRBM\] Iteration 1,"
-                             r" pseudo-likelihood = -?(\d)+(\.\d+)?,"
-                             r" time = (\d|\.)+s",
-                             s))
+        assert re.match(r"\[BernoulliRBM\] Iteration 1,"
+                        r" pseudo-likelihood = -?(\d)+(\.\d+)?,"
+                        r" time = (\d|\.)+s", s)
     finally:
         sys.stdout = old_stdout
+
+
+@pytest.mark.parametrize("dtype_in, dtype_out", [
+    (np.float32, np.float32),
+    (np.float64, np.float64),
+    (np.int, np.float64)])
+def test_transformer_dtypes_casting(dtype_in, dtype_out):
+    X = Xdigits[:100].astype(dtype_in)
+    rbm = BernoulliRBM(n_components=16, batch_size=5, n_iter=5,
+                       random_state=42)
+    Xt = rbm.fit_transform(X)
+
+    # dtype_in and dtype_out should be consistent
+    assert Xt.dtype == dtype_out, ('transform dtype: {} - original dtype: {}'
+                                   .format(Xt.dtype, X.dtype))
+
+
+def test_convergence_dtype_consistency():
+    # float 64 transformer
+    X_64 = Xdigits[:100].astype(np.float64)
+    rbm_64 = BernoulliRBM(n_components=16, batch_size=5, n_iter=5,
+                          random_state=42)
+    Xt_64 = rbm_64.fit_transform(X_64)
+
+    # float 32 transformer
+    X_32 = Xdigits[:100].astype(np.float32)
+    rbm_32 = BernoulliRBM(n_components=16, batch_size=5, n_iter=5,
+                          random_state=42)
+    Xt_32 = rbm_32.fit_transform(X_32)
+
+    # results and attributes should be close enough in 32 bit and 64 bit
+    assert_allclose(Xt_64, Xt_32,
+                    rtol=1e-06, atol=0)
+    assert_allclose(rbm_64.intercept_hidden_, rbm_32.intercept_hidden_,
+                    rtol=1e-06, atol=0)
+    assert_allclose(rbm_64.intercept_visible_, rbm_32.intercept_visible_,
+                    rtol=1e-05, atol=0)
+    assert_allclose(rbm_64.components_, rbm_32.components_,
+                    rtol=1e-03, atol=0)
+    assert_allclose(rbm_64.h_samples_, rbm_32.h_samples_)

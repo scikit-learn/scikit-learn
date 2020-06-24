@@ -1,0 +1,58 @@
+parameters:
+  name: ''
+  vmImage: ''
+  matrix: []
+  dependsOn: []
+  condition: ''
+
+jobs:
+- job: ${{ parameters.name }}
+  dependsOn: ${{ parameters.dependsOn }}
+  condition: ${{ parameters.condition }}
+  pool:
+    vmImage: ${{ parameters.vmImage }}
+  variables:
+    TEST_DIR: '$(Agent.WorkFolder)/tmp_folder'
+    VIRTUALENV: 'testvenv'
+    JUNITXML: 'test-data.xml'
+    PYTEST_VERSION: '5.2.1'
+    PYTEST_XDIST: 'true'
+    OMP_NUM_THREADS: '2'
+    OPENBLAS_NUM_THREADS: '2'
+    SKLEARN_SKIP_NETWORK_TESTS: '1'
+  strategy:
+    matrix:
+      ${{ insert }}: ${{ parameters.matrix }}
+
+  steps:
+    - bash: echo "##vso[task.prependpath]$CONDA/bin"
+      displayName: Add conda to PATH
+      condition: startsWith(variables['DISTRIB'], 'conda')
+    - bash: sudo chown -R $USER $CONDA
+      displayName: Take ownership of conda installation
+      condition: startsWith(variables['DISTRIB'], 'conda')
+    - script: |
+        build_tools/azure/install.sh
+      displayName: 'Install'
+    - script: |
+        build_tools/azure/test_script.sh
+      displayName: 'Test Library'
+    - script: |
+        build_tools/azure/test_docs.sh
+      displayName: 'Test Docs'
+    - script: |
+        build_tools/azure/test_pytest_soft_dependency.sh
+      displayName: 'Test Soft Dependency'
+      condition: eq(variables['CHECK_PYTEST_SOFT_DEPENDENCY'], 'true')
+    - task: PublishTestResults@2
+      inputs:
+        testResultsFiles: '$(TEST_DIR)/$(JUNITXML)'
+        testRunTitle: ${{ format('{0}-$(Agent.JobName)', parameters.name) }}
+      displayName: 'Publish Test Results'
+      condition: succeededOrFailed()
+    - script: |
+        build_tools/azure/upload_codecov.sh
+      condition: and(succeeded(), eq(variables['COVERAGE'], 'true'))
+      displayName: 'Upload To Codecov'
+      env:
+        CODECOV_TOKEN: $(CODECOV_TOKEN)

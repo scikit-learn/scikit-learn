@@ -6,8 +6,7 @@ Multi-class / multi-label utility function
 ==========================================
 
 """
-from __future__ import division
-from collections import Sequence
+from collections.abc import Sequence
 from itertools import chain
 
 from scipy.sparse import issparse
@@ -17,9 +16,7 @@ from scipy.sparse import lil_matrix
 
 import numpy as np
 
-from ..externals.six import string_types
-from .validation import check_array
-
+from .validation import check_array, _assert_all_finite
 
 
 def _unique_multiclass(y):
@@ -30,7 +27,9 @@ def _unique_multiclass(y):
 
 
 def _unique_indicator(y):
-    return np.arange(check_array(y, ['csr', 'csc', 'coo']).shape[1])
+    return np.arange(
+        check_array(y, accept_sparse=['csr', 'csc', 'coo']).shape[1]
+    )
 
 
 _FN_UNIQUE_LABELS = {
@@ -54,7 +53,7 @@ def unique_labels(*ys):
 
     Parameters
     ----------
-    *ys : array-likes,
+    *ys : array-likes
 
     Returns
     -------
@@ -76,8 +75,8 @@ def unique_labels(*ys):
     # Check that we don't mix label format
 
     ys_types = set(type_of_target(x) for x in ys)
-    if ys_types == set(["binary", "multiclass"]):
-        ys_types = set(["multiclass"])
+    if ys_types == {"binary", "multiclass"}:
+        ys_types = {"multiclass"}
 
     if len(ys_types) > 1:
         raise ValueError("Mix type of y not allowed, got types %s" % ys_types)
@@ -86,7 +85,8 @@ def unique_labels(*ys):
 
     # Check consistency for the indicator format
     if (label_type == "multilabel-indicator" and
-            len(set(check_array(y, ['csr', 'csc', 'coo']).shape[1]
+            len(set(check_array(y,
+                                accept_sparse=['csr', 'csc', 'coo']).shape[1]
                     for y in ys)) > 1):
         raise ValueError("Multi-label binary indicator input with "
                          "different numbers of labels")
@@ -99,7 +99,7 @@ def unique_labels(*ys):
     ys_labels = set(chain.from_iterable(_unique_labels(y) for y in ys))
 
     # Check that we don't mix string type with number type
-    if (len(set(isinstance(label, string_types) for label in ys_labels)) > 1):
+    if (len(set(isinstance(label, str) for label in ys_labels)) > 1):
         raise ValueError("Mix of label input types (string and number)")
 
     return np.array(sorted(ys_labels))
@@ -137,7 +137,7 @@ def is_multilabel(y):
     >>> is_multilabel(np.array([[1, 0, 0]]))
     True
     """
-    if hasattr(y, '__array__'):
+    if hasattr(y, '__array__') or isinstance(y, Sequence):
         y = np.asarray(y)
     if not (hasattr(y, "shape") and y.ndim == 2 and y.shape[1] > 1):
         return False
@@ -230,22 +230,22 @@ def type_of_target(y):
     >>> type_of_target(np.array([[1, 2], [3, 1]]))
     'multiclass-multioutput'
     >>> type_of_target([[1, 2]])
-    'multiclass-multioutput'
+    'multilabel-indicator'
     >>> type_of_target(np.array([[1.5, 2.0], [3.0, 1.6]]))
     'continuous-multioutput'
     >>> type_of_target(np.array([[0, 1], [1, 1]]))
     'multilabel-indicator'
     """
     valid = ((isinstance(y, (Sequence, spmatrix)) or hasattr(y, '__array__'))
-             and not isinstance(y, string_types))
+             and not isinstance(y, str))
 
     if not valid:
         raise ValueError('Expected array-like (array or non-string sequence), '
                          'got %r' % y)
 
-    sparseseries = (y.__class__.__name__ == 'SparseSeries')
-    if sparseseries:
-        raise ValueError("y cannot be class 'SparseSeries'.")
+    sparse_pandas = (y.__class__.__name__ in ['SparseSeries', 'SparseArray'])
+    if sparse_pandas:
+        raise ValueError("y cannot be class 'SparseSeries' or 'SparseArray'")
 
     if is_multilabel(y):
         return 'multilabel-indicator'
@@ -259,17 +259,18 @@ def type_of_target(y):
     # The old sequence of sequences format
     try:
         if (not hasattr(y[0], '__array__') and isinstance(y[0], Sequence)
-                and not isinstance(y[0], string_types)):
+                and not isinstance(y[0], str)):
             raise ValueError('You appear to be using a legacy multi-label data'
                              ' representation. Sequence of sequences are no'
                              ' longer supported; use a binary array or sparse'
-                             ' matrix instead.')
+                             ' matrix instead - the MultiLabelBinarizer'
+                             ' transformer can convert to this format.')
     except IndexError:
         pass
 
     # Invalid inputs
     if y.ndim > 2 or (y.dtype == object and len(y) and
-                      not isinstance(y.flat[0], string_types)):
+                      not isinstance(y.flat[0], str)):
         return 'unknown'  # [[[1, 2]]] or [obj_1] and not ["label_1"]
 
     if y.ndim == 2 and y.shape[1] == 0:
@@ -283,6 +284,7 @@ def type_of_target(y):
     # check float and contains non-integer float values
     if y.dtype.kind == 'f' and np.any(y != y.astype(int)):
         # [.1, .2, 3] or [[.1, .2, 3]] or [[1., .2]] and not [1., 2., 3.]
+        _assert_all_finite(y)
         return 'continuous' + suffix
 
     if (len(np.unique(y)) > 2) or (y.ndim >= 2 and len(y[0]) > 1):
@@ -334,7 +336,7 @@ def class_distribution(y, sample_weight=None):
     y : array like or sparse matrix of size (n_samples, n_outputs)
         The labels for each example.
 
-    sample_weight : array-like of shape = (n_samples,), optional
+    sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
     Returns
@@ -354,6 +356,8 @@ def class_distribution(y, sample_weight=None):
     class_prior = []
 
     n_samples, n_outputs = y.shape
+    if sample_weight is not None:
+        sample_weight = np.asarray(sample_weight)
 
     if issparse(y):
         y = y.tocsc()
@@ -363,7 +367,7 @@ def class_distribution(y, sample_weight=None):
             col_nonzero = y.indices[y.indptr[k]:y.indptr[k + 1]]
             # separate sample weights for zero and non-zero elements
             if sample_weight is not None:
-                nz_samp_weight = np.asarray(sample_weight)[col_nonzero]
+                nz_samp_weight = sample_weight[col_nonzero]
                 zeros_samp_weight_sum = (np.sum(sample_weight) -
                                          np.sum(nz_samp_weight))
             else:
@@ -401,7 +405,7 @@ def class_distribution(y, sample_weight=None):
 
 
 def _ovr_decision_function(predictions, confidences, n_classes):
-    """Compute a continuous, tie-breaking ovr decision function.
+    """Compute a continuous, tie-breaking OvR decision function from OvO.
 
     It is important to include a continuous value, not only votes,
     to make computing AUC or calibration meaningful.
@@ -432,17 +436,13 @@ def _ovr_decision_function(predictions, confidences, n_classes):
             votes[predictions[:, k] == 1, j] += 1
             k += 1
 
-    max_confidences = sum_of_confidences.max()
-    min_confidences = sum_of_confidences.min()
-
-    if max_confidences == min_confidences:
-        return votes
-
-    # Scale the sum_of_confidences to (-0.5, 0.5) and add it with votes.
+    # Monotonically transform the sum_of_confidences to (-1/3, 1/3)
+    # and add it with votes. The monotonic transformation  is
+    # f: x -> x / (3 * (|x| + 1)), it uses 1/3 instead of 1/2
+    # to ensure that we won't reach the limits and change vote order.
     # The motivation is to use confidence levels as a way to break ties in
     # the votes without switching any decision made based on a difference
     # of 1 vote.
-    eps = np.finfo(sum_of_confidences.dtype).eps
-    max_abs_confidence = max(abs(max_confidences), abs(min_confidences))
-    scale = (0.5 - eps) / max_abs_confidence
-    return votes + sum_of_confidences * scale
+    transformed_confidences = (sum_of_confidences /
+                               (3 * (np.abs(sum_of_confidences) + 1)))
+    return votes + transformed_confidences

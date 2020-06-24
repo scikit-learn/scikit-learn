@@ -23,12 +23,13 @@ scikit-learn, :class:`PCA` is implemented as a *transformer* object
 that learns :math:`n` components in its ``fit`` method, and can be used on new
 data to project it on these components.
 
-The optional parameter ``whiten=True`` makes it possible to
-project the data onto the singular space while scaling each component
-to unit variance. This is often useful if the models down-stream make
-strong assumptions on the isotropy of the signal: this is for example
-the case for Support Vector Machines with the RBF kernel and the K-Means
-clustering algorithm.
+PCA centers but does not scale the input data for each feature before
+applying the SVD. The optional parameter ``whiten=True`` makes it
+possible to project the data onto the singular space while scaling each
+component to unit variance. This is often useful if the models down-stream make
+strong assumptions on the isotropy of the signal: this is for example the case
+for Support Vector Machines with the RBF kernel and the K-Means clustering
+algorithm.
 
 Below is an example of the iris dataset, which is comprised of 4
 features, projected on the 2 dimensions that explain most variance:
@@ -42,7 +43,7 @@ features, projected on the 2 dimensions that explain most variance:
 The :class:`PCA` object also provides a
 probabilistic interpretation of the PCA that can give a likelihood of
 data based on the amount of variance it explains. As such it implements a
-`score` method that can be used in cross-validation:
+:term:`score` method that can be used in cross-validation:
 
 .. figure:: ../auto_examples/decomposition/images/sphx_glr_plot_pca_vs_fa_model_selection_001.png
     :target: ../auto_examples/decomposition/plot_pca_vs_fa_model_selection.html
@@ -73,12 +74,16 @@ out-of-core Principal Component Analysis either by:
  * Using its ``partial_fit`` method on chunks of data fetched sequentially
    from the local hard drive or a network database.
 
- * Calling its fit method on a memory mapped file using ``numpy.memmap``.
+ * Calling its fit method on a sparse matrix or a memory mapped file using
+   ``numpy.memmap``.
 
 :class:`IncrementalPCA` only stores estimates of component and noise variances,
 in order update ``explained_variance_ratio_`` incrementally. This is why
 memory usage depends on the number of samples per batch, rather than the
 number of samples to be processed in the dataset.
+
+As in :class:`PCA`, :class:`IncrementalPCA` centers but does not scale the
+input data for each feature before applying the SVD.
 
 .. figure:: ../auto_examples/decomposition/images/sphx_glr_plot_incremental_pca_001.png
     :target: ../auto_examples/decomposition/plot_incremental_pca.html
@@ -139,10 +144,6 @@ less than 1s:
 
 .. centered:: |orig_img| |pca_img|
 
-Note: with the optional parameter ``svd_solver='randomized'``, we also
-need to give :class:`PCA` the size of the lower-dimensional space
-``n_components`` as a mandatory input parameter.
-
 If we note :math:`n_{\max} = \max(n_{\mathrm{samples}}, n_{\mathrm{features}})` and
 :math:`n_{\min} = \min(n_{\mathrm{samples}}, n_{\mathrm{features}})`, the time complexity
 of the randomized :class:`PCA` is :math:`O(n_{\max}^2 \cdot n_{\mathrm{components}})`
@@ -167,7 +168,7 @@ Note: the implementation of ``inverse_transform`` in :class:`PCA` with
 
     * `"Finding structure with randomness: Stochastic algorithms for
       constructing approximate matrix decompositions"
-      <http://arxiv.org/abs/0909.4061>`_
+      <https://arxiv.org/abs/0909.4061>`_
       Halko, et al., 2009
 
 
@@ -246,7 +247,7 @@ problem solved is a PCA problem (dictionary learning) with an
 .. math::
    (U^*, V^*) = \underset{U, V}{\operatorname{arg\,min\,}} & \frac{1}{2}
                 ||X-UV||_2^2+\alpha||V||_1 \\
-                \text{subject to\,} & ||U_k||_2 = 1 \text{ for all }
+                \text{subject to } & ||U_k||_2 = 1 \text{ for all }
                 0 \leq k < n_{components}
 
 
@@ -270,10 +271,10 @@ factorization, while larger values shrink many coefficients to zero.
 .. topic:: References:
 
   .. [Mrl09] `"Online Dictionary Learning for Sparse Coding"
-     <http://www.di.ens.fr/sierra/pdfs/icml09.pdf>`_
+     <https://www.di.ens.fr/sierra/pdfs/icml09.pdf>`_
      J. Mairal, F. Bach, J. Ponce, G. Sapiro, 2009
   .. [Jen09] `"Structured Sparse Principal Component Analysis"
-     <www.di.ens.fr/~fbach/sspca_AISTATS2010.pdf>`_
+     <https://www.di.ens.fr/~fbach/sspca_AISTATS2010.pdf>`_
      R. Jenatton, G. Obozinski, F. Bach, 2009
 
 
@@ -287,9 +288,10 @@ Truncated singular value decomposition and latent semantic analysis
 where :math:`k` is a user-specified parameter.
 
 When truncated SVD is applied to term-document matrices
-(as returned by ``CountVectorizer`` or ``TfidfVectorizer``),
+(as returned by :class:`~sklearn.feature_extraction.text.CountVectorizer` or
+:class:`~sklearn.feature_extraction.text.TfidfVectorizer`),
 this transformation is known as
-`latent semantic analysis <http://nlp.stanford.edu/IR-book/pdf/18lsi.pdf>`_
+`latent semantic analysis <https://nlp.stanford.edu/IR-book/pdf/18lsi.pdf>`_
 (LSA), because it transforms such matrices
 to a "semantic" space of low dimensionality.
 In particular, LSA is known to combat the effects of synonymy and polysemy
@@ -326,8 +328,7 @@ To also transform a test set :math:`X`, we multiply it with :math:`V_k`:
     but the singular values found are the same.
 
 :class:`TruncatedSVD` is very similar to :class:`PCA`, but differs
-in that it works on sample matrices :math:`X` directly
-instead of their covariance matrices.
+in that the matrix :math:`X` does not need to be centered.
 When the columnwise (per-feature) means of :math:`X`
 are subtracted from the feature values,
 truncated SVD on the resulting matrix is equivalent to PCA.
@@ -337,7 +338,7 @@ matrices without the need to densify them,
 as densifying may fill up memory even for medium-sized document collections.
 
 While the :class:`TruncatedSVD` transformer
-works with any (sparse) feature matrix,
+works with any feature matrix,
 using it on tf–idf matrices is recommended over raw frequency counts
 in an LSA/document processing setting.
 In particular, sublinear scaling and inverse document frequency
@@ -347,14 +348,14 @@ compensating for LSA's erroneous assumptions about textual data.
 
 .. topic:: Examples:
 
-   * :ref:`sphx_glr_auto_examples_text_document_clustering.py`
+   * :ref:`sphx_glr_auto_examples_text_plot_document_clustering.py`
 
 .. topic:: References:
 
   * Christopher D. Manning, Prabhakar Raghavan and Hinrich Schütze (2008),
     *Introduction to Information Retrieval*, Cambridge University Press,
     chapter 18: `Matrix decompositions & latent semantic indexing
-    <http://nlp.stanford.edu/IR-book/pdf/18lsi.pdf>`_
+    <https://nlp.stanford.edu/IR-book/pdf/18lsi.pdf>`_
 
 
 .. _DictionaryLearning:
@@ -417,10 +418,10 @@ Generic dictionary learning
 
 Dictionary learning (:class:`DictionaryLearning`) is a matrix factorization
 problem that amounts to finding a (usually overcomplete) dictionary that will
-perform good at sparsely encoding the fitted data.
+perform well at sparsely encoding the fitted data.
 
 Representing data as sparse combinations of atoms from an overcomplete
-dictionary is suggested to be the way the mammal primary visual cortex works.
+dictionary is suggested to be the way the mammalian primary visual cortex works.
 Consequently, dictionary learning applied on image patches has been shown to
 give good results in image processing tasks such as image completion,
 inpainting and denoising, as well as for supervised recognition tasks.
@@ -432,7 +433,7 @@ dictionary fixed, and then updating the dictionary to best fit the sparse code.
 .. math::
    (U^*, V^*) = \underset{U, V}{\operatorname{arg\,min\,}} & \frac{1}{2}
                 ||X-UV||_2^2+\alpha||U||_1 \\
-                \text{subject to\,} & ||V_k||_2 = 1 \text{ for all }
+                \text{subject to } & ||V_k||_2 = 1 \text{ for all }
                 0 \leq k < n_{\mathrm{atoms}}
 
 
@@ -450,6 +451,32 @@ dictionary fixed, and then updating the dictionary to best fit the sparse code.
 After using such a procedure to fit the dictionary, the transform is simply a
 sparse coding step that shares the same implementation with all dictionary
 learning objects (see :ref:`SparseCoder`).
+
+It is also possible to constrain the dictionary and/or code to be positive to
+match constraints that may be present in the data. Below are the faces with
+different positivity constraints applied. Red indicates negative values, blue
+indicates positive values, and white represents zeros.
+
+
+.. |dict_img_pos1| image:: ../auto_examples/decomposition/images/sphx_glr_plot_faces_decomposition_011.png
+    :target: ../auto_examples/decomposition/plot_image_denoising.html
+    :scale: 60%
+
+.. |dict_img_pos2| image:: ../auto_examples/decomposition/images/sphx_glr_plot_faces_decomposition_012.png
+    :target: ../auto_examples/decomposition/plot_image_denoising.html
+    :scale: 60%
+
+.. |dict_img_pos3| image:: ../auto_examples/decomposition/images/sphx_glr_plot_faces_decomposition_013.png
+    :target: ../auto_examples/decomposition/plot_image_denoising.html
+    :scale: 60%
+
+.. |dict_img_pos4| image:: ../auto_examples/decomposition/images/sphx_glr_plot_faces_decomposition_014.png
+    :target: ../auto_examples/decomposition/plot_image_denoising.html
+    :scale: 60%
+
+.. centered:: |dict_img_pos1| |dict_img_pos2|
+.. centered:: |dict_img_pos3| |dict_img_pos4|
+
 
 The following image shows how a dictionary learned from 4x4 pixel image patches
 extracted from part of the image of a raccoon face looks like.
@@ -469,7 +496,7 @@ extracted from part of the image of a raccoon face looks like.
 .. topic:: References:
 
   * `"Online dictionary learning for sparse coding"
-    <http://www.di.ens.fr/sierra/pdfs/icml09.pdf>`_
+    <https://www.di.ens.fr/sierra/pdfs/icml09.pdf>`_
     J. Mairal, F. Bach, J. Ponce, G. Sapiro, 2009
 
 .. _MiniBatchDictionaryLearning:
@@ -578,7 +605,7 @@ about these components (e.g. whether they are orthogonal):
 
 .. centered:: |pca_img3| |fa_img3|
 
-The main advantage for Factor Analysis (over :class:`PCA` is that
+The main advantage for Factor Analysis over :class:`PCA` is that
 it can model the variance in every direction of the input space independently
 (heteroscedastic noise):
 
@@ -802,7 +829,7 @@ stored components::
 .. topic:: References:
 
     .. [1] `"Learning the parts of objects by non-negative matrix factorization"
-      <http://www.columbia.edu/~jwp2128/Teaching/W4721/papers/nmf_nature.pdf>`_
+      <http://www.columbia.edu/~jwp2128/Teaching/E4903/papers/nmf_nature.pdf>`_
       D. Lee, S. Seung, 1999
 
     .. [2] `"Non-negative Matrix Factorization with Sparseness Constraints"
@@ -817,10 +844,10 @@ stored components::
     .. [5] `"Fast local algorithms for large scale nonnegative matrix and tensor
       factorizations."
       <http://www.bsp.brain.riken.jp/publications/2009/Cichocki-Phan-IEICE_col.pdf>`_
-      A. Cichocki, P. Anh-Huy, 2009
+      A. Cichocki, A. Phan, 2009
 
     .. [6] `"Algorithms for nonnegative matrix factorization with the beta-divergence"
-      <http://http://arxiv.org/pdf/1010.1763v3.pdf>`_
+      <https://arxiv.org/pdf/1010.1763.pdf>`_
       C. Fevotte, J. Idier, 2011
 
 
@@ -833,22 +860,46 @@ Latent Dirichlet Allocation is a generative probabilistic model for collections 
 discrete dataset such as text corpora. It is also a topic model that is used for
 discovering abstract topics from a collection of documents.
 
-The graphical model of LDA is a three-level Bayesian model:
+The graphical model of LDA is a three-level generative model:
 
 .. image:: ../images/lda_model_graph.png
    :align: center
 
-When modeling text corpora, the model assumes the following generative process for
-a corpus with :math:`D` documents and :math:`K` topics:
+Note on notations presented in the graphical model above, which can be found in 
+Hoffman et al. (2013):
 
-  1. For each topic :math:`k`, draw :math:`\beta_k \sim \mathrm{Dirichlet}(\eta),\: k =1...K`
+  * The corpus is a collection of :math:`D` documents.
+  * A document is a sequence of :math:`N` words.
+  * There are :math:`K` topics in the corpus. 
+  * The boxes represent repeated sampling. 
 
-  2. For each document :math:`d`, draw :math:`\theta_d \sim \mathrm{Dirichlet}(\alpha), \: d=1...D`
+In the graphical model, each node is a random variable and has a role in the 
+generative process. A shaded node indicates an observed variable and an unshaded 
+node indicates a hidden (latent) variable. In this case, words in the corpus are 
+the only data that we observe. The latent variables determine the random mixture 
+of topics in the corpus and the distribution of words in the documents. 
+The goal of LDA is to use the observed words to infer the hidden topic 
+structure. 
+
+When modeling text corpora, the model assumes the following generative process 
+for a corpus with :math:`D` documents and :math:`K` topics, with :math:`K` 
+corresponding to :attr:`n_components` in the API:
+
+  1. For each topic :math:`k \in K`, draw :math:`\beta_k \sim 
+     \mathrm{Dirichlet}(\eta)`. This provides a distribution over the words, 
+     i.e. the probability of a word appearing in topic :math:`k`. 
+     :math:`\eta` corresponds to :attr:`topic_word_prior`. 
+
+  2. For each document :math:`d \in D`, draw the topic proportions 
+     :math:`\theta_d \sim \mathrm{Dirichlet}(\alpha)`. :math:`\alpha` 
+     corresponds to :attr:`doc_topic_prior`. 
 
   3. For each word :math:`i` in document :math:`d`:
 
-    a. Draw a topic index :math:`z_{di} \sim \mathrm{Multinomial}(\theta_d)`
-    b. Draw the observed word :math:`w_{ij} \sim \mathrm{Multinomial}(beta_{z_{di}}.)`
+    a. Draw the topic assignment :math:`z_{di} \sim \mathrm{Multinomial}
+       (\theta_d)`
+    b. Draw the observed word :math:`w_{ij} \sim \mathrm{Multinomial}
+       (\beta_{z_{di}})`
 
 For parameter estimation, the posterior distribution is:
 
@@ -858,8 +909,9 @@ For parameter estimation, the posterior distribution is:
 
 Since the posterior is intractable, variational Bayesian method
 uses a simpler distribution :math:`q(z,\theta,\beta | \lambda, \phi, \gamma)`
-to approximate it, and those variational parameters :math:`\lambda`, :math:`\phi`,
-:math:`\gamma` are optimized to maximize the Evidence Lower Bound (ELBO):
+to approximate it, and those variational parameters :math:`\lambda`, 
+:math:`\phi`, :math:`\gamma` are optimized to maximize the Evidence 
+Lower Bound (ELBO):
 
 .. math::
   \log\: P(w | \alpha, \eta) \geq L(w,\phi,\gamma,\lambda) \overset{\triangle}{=}
@@ -869,14 +921,15 @@ Maximizing ELBO is equivalent to minimizing the Kullback-Leibler(KL) divergence
 between :math:`q(z,\theta,\beta)` and the true posterior
 :math:`p(z, \theta, \beta |w, \alpha, \eta)`.
 
-:class:`LatentDirichletAllocation` implements online variational Bayes algorithm and supports
-both online and batch update method.
-While batch method updates variational variables after each full pass through the data,
-online method updates variational variables from mini-batch data points.
+:class:`LatentDirichletAllocation` implements the online variational Bayes 
+algorithm and supports both online and batch update methods.
+While the batch method updates variational variables after each full pass through 
+the data, the online method updates variational variables from mini-batch data 
+points.
 
 .. note::
 
-  Although online method is guaranteed to converge to a local optimum point, the quality of
+  Although the online method is guaranteed to converge to a local optimum point, the quality of
   the optimum point and the speed of convergence may depend on mini-batch size and
   attributes related to learning rate setting.
 
@@ -895,13 +948,17 @@ when data can be fetched sequentially.
 .. topic:: References:
 
     * `"Latent Dirichlet Allocation"
-      <https://www.cs.princeton.edu/~blei/papers/BleiNgJordan2003.pdf>`_
+      <http://www.jmlr.org/papers/volume3/blei03a/blei03a.pdf>`_
       D. Blei, A. Ng, M. Jordan, 2003
 
     * `"Online Learning for Latent Dirichlet Allocation”
-      <https://www.cs.princeton.edu/~blei/papers/HoffmanBleiBach2010b.pdf>`_
+      <https://papers.nips.cc/paper/3902-online-learning-for-latent-dirichlet-allocation.pdf>`_
       M. Hoffman, D. Blei, F. Bach, 2010
 
     * `"Stochastic Variational Inference"
       <http://www.columbia.edu/~jwp2128/Papers/HoffmanBleiWangPaisley2013.pdf>`_
       M. Hoffman, D. Blei, C. Wang, J. Paisley, 2013
+
+
+See also :ref:`nca_dim_reduction` for dimensionality reduction with
+Neighborhood Components Analysis.

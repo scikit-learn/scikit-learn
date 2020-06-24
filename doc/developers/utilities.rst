@@ -30,9 +30,10 @@ should be used when applicable.
 - :func:`as_float_array`: convert input to an array of floats.  If a sparse
   matrix is passed, a sparse matrix will be returned.
 
-- :func:`check_array`: convert input to 2d array, raise error on sparse
-  matrices.  Allowed sparse matrix formats can be given optionally, as well as
-  allowing 1d or nd arrays.  Calls :func:`assert_all_finite` by default.
+- :func:`check_array`: check that input is a 2D array, raise error on sparse
+  matrices. Allowed sparse matrix formats can be given optionally, as well as
+  allowing 1D or N-dimensional arrays. Calls :func:`assert_all_finite` by
+  default.
 
 - :func:`check_X_y`: check that X and y have consistent length, calls
   check_array on X, and column_or_1d on y. For multilabel classification or
@@ -45,7 +46,7 @@ should be used when applicable.
 
 - :func:`validation.check_memory` checks that input is ``joblib.Memory``-like,
   which means that it can be converted into a
-  ``sklearn.externals.joblib.Memory`` instance (typically a str denoting
+  ``sklearn.utils.Memory`` instance (typically a str denoting
   the ``cachedir``) or has the same interface.
 
 If your code relies on a random number generator, it should never use
@@ -71,7 +72,7 @@ For example::
     >>> random_state = 0
     >>> random_state = check_random_state(random_state)
     >>> random_state.rand(4)
-    array([ 0.5488135 ,  0.71518937,  0.60276338,  0.54488318])
+    array([0.5488135 , 0.71518937, 0.60276338, 0.54488318])
 
 When developing your own scikit-learn compatible estimator, the following
 helpers are available.
@@ -97,7 +98,7 @@ Efficient Linear Algebra & Array Operations
   number of components.
 
 - :func:`arrayfuncs.cholesky_delete`:
-  (used in :func:`sklearn.linear_model.least_angle.lars_path`)  Remove an
+  (used in :func:`sklearn.linear_model.lars_path`)  Remove an
   item from a cholesky factorization.
 
 - :func:`arrayfuncs.min_pos`: (used in ``sklearn.linear_model.least_angle``)
@@ -120,7 +121,7 @@ Efficient Linear Algebra & Array Operations
   used in :func:`shuffle`, below.
 
 - :func:`shuffle`: Shuffle arrays or sparse matrices in a consistent way.
-  Used in ``sklearn.cluster.k_means``.
+  Used in :func:`sklearn.cluster.k_means`.
 
 
 Efficient Random Sampling
@@ -140,10 +141,10 @@ efficiently process ``scipy.sparse`` data.
 - :func:`sparsefuncs.mean_variance_axis`: compute the means and
   variances along a specified axis of a CSR matrix.
   Used for normalizing the tolerance stopping criterion in
-  :class:`sklearn.cluster.k_means_.KMeans`.
+  :class:`sklearn.cluster.KMeans`.
 
-- :func:`sparsefuncs.inplace_csr_row_normalize_l1` and
-  :func:`sparsefuncs.inplace_csr_row_normalize_l2`: can be used to normalize
+- :func:`sparsefuncs_fast.inplace_csr_row_normalize_l1` and
+  :func:`sparsefuncs_fast.inplace_csr_row_normalize_l2`: can be used to normalize
   individual sparse samples to unit L1 or L2 norm as done in
   :class:`sklearn.preprocessing.Normalizer`.
 
@@ -172,26 +173,10 @@ Graph Routines
   connectivity matrix is a ``scipy.sparse.csr_matrix``.
 
 
-Benchmarking
-------------
-
-- :func:`bench.total_seconds` (back-ported from ``timedelta.total_seconds``
-  in Python 2.7).  Used in ``benchmarks/bench_glm.py``.
-
-
 Testing Functions
 =================
 
-- :func:`testing.assert_in`, :func:`testing.assert_not_in`: Assertions for
-  container membership. Designed for forward compatibility with Nose 1.0.
-
-- :func:`testing.assert_raise_message`: Assertions for checking the
-  error raise message.
-
-- :func:`testing.mock_mldata_urlopen`: Mocks the urlopen function to fake
-  requests to mldata.org. Used in tests of :mod:`sklearn.datasets`.
-
-- :func:`testing.all_estimators` : returns a list of all estimators in
+- :func:`all_estimators` : returns a list of all estimators in
   scikit-learn to test for consistent behavior and interfaces.
 
 Multiclass and multilabel utility function
@@ -199,9 +184,6 @@ Multiclass and multilabel utility function
 
 - :func:`multiclass.is_multilabel`: Helper function to check if the task
   is a multi-label classification one.
-
-- :func:`multiclass.is_label_indicator_matrix`: Helper function to check if
-  a classification output is in label indicator matrix format.
 
 - :func:`multiclass.unique_labels`: Helper function to extract an ordered
   array of unique labels from different formats of target.
@@ -211,8 +193,8 @@ Helper Functions
 ================
 
 - :class:`gen_even_slices`: generator to create ``n``-packs of slices going up
-  to ``n``.  Used in ``sklearn.decomposition.dict_learning`` and
-  ``sklearn.cluster.k_means``.
+  to ``n``.  Used in :func:`sklearn.decomposition.dict_learning` and
+  :func:`sklearn.cluster.k_means`.
 
 - :func:`safe_mask`: Helper function to convert a mask to the format expected
   by the numpy array or scipy sparse matrix on which to use it (sparse
@@ -250,4 +232,4 @@ Warnings and Exceptions
 - :class:`deprecated`: Decorator to mark a function or class as deprecated.
 
 - :class:`sklearn.exceptions.ConvergenceWarning`: Custom warning to catch
-  convergence problems. Used in ``sklearn.covariance.graph_lasso``.
+  convergence problems. Used in ``sklearn.covariance.graphical_lasso``.

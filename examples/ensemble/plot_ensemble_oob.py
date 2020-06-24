@@ -23,7 +23,7 @@ import matplotlib.pyplot as plt
 
 from collections import OrderedDict
 from sklearn.datasets import make_classification
-from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier
+from sklearn.ensemble import RandomForestClassifier
 
 # Author: Kian Ho <hui.kian.ho@gmail.com>
 #         Gilles Louppe <g.louppe@gmail.com>

@@ -3,55 +3,40 @@
 # License: BSD 3 clause
 
 import inspect
-import sys
 import warnings
 import importlib
 
 from pkgutil import walk_packages
-from inspect import getsource, isabstract
+from inspect import signature
+
+import numpy as np
 
 import sklearn
-from sklearn.base import signature
-from sklearn.utils.testing import SkipTest
-from sklearn.utils.testing import check_docstring_parameters
-from sklearn.utils.testing import _get_func_name
-from sklearn.utils.testing import ignore_warnings
+from sklearn.utils import IS_PYPY
+from sklearn.utils._testing import check_docstring_parameters
+from sklearn.utils._testing import _get_func_name
+from sklearn.utils._testing import ignore_warnings
+from sklearn.utils import all_estimators
+from sklearn.utils.estimator_checks import _enforce_estimator_tags_y
+from sklearn.utils.estimator_checks import _enforce_estimator_tags_x
 from sklearn.utils.deprecation import _is_deprecated
+from sklearn.externals._pep562 import Pep562
+from sklearn.datasets import make_classification
 
-PUBLIC_MODULES = set([pckg[1] for pckg in walk_packages(prefix='sklearn.',
-                                                        path=sklearn.__path__)
-                      if not ("._" in pckg[1] or ".tests." in pckg[1])])
+import pytest
 
-# TODO Uncomment all modules and fix doc inconsistencies everywhere
-# The list of modules that are not tested for now
-IGNORED_MODULES = (
-    'cross_decomposition',
-    'covariance',
-    'cluster',
-    'datasets',
-    'decomposition',
-    'feature_extraction',
-    'gaussian_process',
-    'linear_model',
-    'manifold',
-    'metrics',
-    'discriminant_analysis',
-    'ensemble',
-    'feature_selection',
-    'kernel_approximation',
-    'model_selection',
-    'multioutput',
-    'random_projection',
-    'setup',
-    'svm',
-    'utils',
-    'neighbors',
-    # Deprecated modules
-    'cross_validation',
-    'grid_search',
-    'learning_curve',
-)
 
+# walk_packages() ignores DeprecationWarnings, now we need to ignore
+# FutureWarnings
+with warnings.catch_warnings():
+    warnings.simplefilter('ignore', FutureWarning)
+    PUBLIC_MODULES = set([
+        pckg[1] for pckg in walk_packages(
+            prefix='sklearn.',
+            # mypy error: Module has no attribute "__path__"
+            path=sklearn.__path__)  # type: ignore  # mypy issue #1422
+        if not ("._" in pckg[1] or ".tests." in pckg[1])
+    ])
 
 # functions to ignore args / docstring of
 _DOCSTRING_IGNORES = [
@@ -59,6 +44,7 @@ _DOCSTRING_IGNORES = [
     'sklearn.pipeline.make_pipeline',
     'sklearn.pipeline.make_union',
     'sklearn.utils.extmath.safe_sparse_dot',
+    'sklearn.utils._joblib'
 ]
 
 # Methods where y param should be ignored if y=None by default
@@ -72,22 +58,25 @@ _METHODS_IGNORE_NONE_Y = [
 ]
 
 
+# numpydoc 0.8.0's docscrape tool raises because of collections.abc under
+# Python 3.7
+@pytest.mark.filterwarnings('ignore::FutureWarning')
+@pytest.mark.filterwarnings('ignore::DeprecationWarning')
+@pytest.mark.skipif(IS_PYPY, reason='test segfaults on PyPy')
 def test_docstring_parameters():
     # Test module docstring formatting
 
-    # Skip test if numpydoc is not found or if python version is < 3.5
-    try:
-        import numpydoc  # noqa
-        assert sys.version_info >= (3, 5)
-    except (ImportError, AssertionError):
-        raise SkipTest("numpydoc is required to test the docstrings, "
-                       "as well as python version >= 3.5")
+    # Skip test if numpydoc is not found
+    pytest.importorskip('numpydoc',
+                        reason="numpydoc is required to test the docstrings")
 
+    # XXX unreached code as of v0.22
     from numpydoc import docscrape
 
     incorrect = []
     for name in PUBLIC_MODULES:
-        if name.startswith('_') or name.split(".")[1] in IGNORED_MODULES:
+        if name == 'sklearn.utils.fixes':
+            # We cannot always control these docstrings
             continue
         with warnings.catch_warnings(record=True):
             module = importlib.import_module(name)
@@ -98,7 +87,7 @@ def test_docstring_parameters():
             this_incorrect = []
             if cname in _DOCSTRING_IGNORES or cname.startswith('_'):
                 continue
-            if isabstract(cls):
+            if inspect.isabstract(cls):
                 continue
             with warnings.catch_warnings(record=True) as w:
                 cdoc = docscrape.ClassDoc(cls)
@@ -110,10 +99,10 @@ def test_docstring_parameters():
 
             if _is_deprecated(cls_init):
                 continue
-
             elif cls_init is not None:
                 this_incorrect += check_docstring_parameters(
-                    cls.__init__, cdoc, class_name=cname)
+                    cls.__init__, cdoc)
+
             for method_name in cdoc.methods:
                 method = getattr(cls, method_name)
                 if _is_deprecated(method):
@@ -127,7 +116,7 @@ def test_docstring_parameters():
                             sig.parameters['y'].default is None):
                         param_ignore = ['y']  # ignore y for fit and score
                 result = check_docstring_parameters(
-                    method, ignore=param_ignore, class_name=cname)
+                    method, ignore=param_ignore)
                 this_incorrect += result
 
             incorrect += this_incorrect
@@ -145,22 +134,122 @@ def test_docstring_parameters():
             if (not any(d in name_ for d in _DOCSTRING_IGNORES) and
                     not _is_deprecated(func)):
                 incorrect += check_docstring_parameters(func)
-    msg = '\n' + '\n'.join(sorted(list(set(incorrect))))
+
+    msg = '\n'.join(incorrect)
     if len(incorrect) > 0:
-        raise AssertionError("Docstring Error: " + msg)
+        raise AssertionError("Docstring Error:\n" + msg)
 
 
-@ignore_warnings(category=DeprecationWarning)
+@ignore_warnings(category=FutureWarning)
 def test_tabs():
     # Test that there are no tabs in our source files
     for importer, modname, ispkg in walk_packages(sklearn.__path__,
                                                   prefix='sklearn.'):
+
+        if IS_PYPY and ('_svmlight_format_io' in modname or
+                        'feature_extraction._hashing_fast' in modname):
+            continue
+
         # because we don't import
         mod = importlib.import_module(modname)
+
+        # TODO: Remove when minimum python version is 3.7
+        # unwrap to get module because Pep562 backport wraps the original
+        # module
+        if isinstance(mod, Pep562):
+            mod = mod._module
+
         try:
-            source = getsource(mod)
+            source = inspect.getsource(mod)
         except IOError:  # user probably should have run "make clean"
             continue
         assert '\t' not in source, ('"%s" has tabs, please remove them ',
-                                    'or add it to theignore list'
+                                    'or add it to the ignore list'
                                     % modname)
+
+
+@pytest.mark.parametrize('name, Estimator',
+                         all_estimators())
+def test_fit_docstring_attributes(name, Estimator):
+    pytest.importorskip('numpydoc')
+    from numpydoc import docscrape
+
+    doc = docscrape.ClassDoc(Estimator)
+    attributes = doc['Attributes']
+
+    IGNORED = {'ClassifierChain', 'ColumnTransformer', 'CountVectorizer',
+               'DictVectorizer', 'FeatureUnion', 'GaussianRandomProjection',
+               'GridSearchCV', 'MultiOutputClassifier', 'MultiOutputRegressor',
+               'NoSampleWeightWrapper', 'OneVsOneClassifier',
+               'OneVsRestClassifier', 'OutputCodeClassifier', 'Pipeline',
+               'RFE', 'RFECV', 'RandomizedSearchCV', 'RegressorChain',
+               'SelectFromModel', 'SparseCoder', 'SparseRandomProjection',
+               'SpectralBiclustering', 'StackingClassifier',
+               'StackingRegressor', 'TfidfVectorizer', 'VotingClassifier',
+               'VotingRegressor'}
+    if Estimator.__name__ in IGNORED or Estimator.__name__.startswith('_'):
+        pytest.skip("Estimator cannot be fit easily to test fit attributes")
+
+    est = Estimator()
+
+    if Estimator.__name__ == 'SelectKBest':
+        est.k = 2
+
+    if Estimator.__name__ == 'DummyClassifier':
+        est.strategy = "stratified"
+
+    # TO BE REMOVED for v0.25 (avoid FutureWarning)
+    if Estimator.__name__ == 'AffinityPropagation':
+        est.random_state = 63
+
+    X, y = make_classification(n_samples=20, n_features=3,
+                               n_redundant=0, n_classes=2,
+                               random_state=2)
+
+    y = _enforce_estimator_tags_y(est, y)
+    X = _enforce_estimator_tags_x(est, X)
+
+    if '1dlabels' in est._get_tags()['X_types']:
+        est.fit(y)
+    elif '2dlabels' in est._get_tags()['X_types']:
+        est.fit(np.c_[y, y])
+    else:
+        est.fit(X, y)
+
+    skipped_attributes = {'n_features_in_'}
+
+    for attr in attributes:
+        if attr.name in skipped_attributes:
+            continue
+        desc = ' '.join(attr.desc).lower()
+        # As certain attributes are present "only" if a certain parameter is
+        # provided, this checks if the word "only" is present in the attribute
+        # description, and if not the attribute is required to be present.
+        if 'only ' not in desc:
+            assert hasattr(est, attr.name)
+
+    IGNORED = {'BayesianRidge', 'Birch', 'CCA', 'CategoricalNB', 'ElasticNet',
+               'ElasticNetCV', 'GaussianProcessClassifier',
+               'GradientBoostingRegressor', 'HistGradientBoostingClassifier',
+               'HistGradientBoostingRegressor',
+               'KernelCenterer', 'KernelDensity',
+               'LarsCV', 'Lasso', 'LassoLarsCV', 'LassoLarsIC',
+               'LocalOutlierFactor', 'MDS',
+               'MiniBatchKMeans', 'MLPClassifier', 'MLPRegressor',
+               'MultiTaskElasticNet', 'MultiTaskElasticNetCV',
+               'MultiTaskLasso', 'MultiTaskLassoCV',
+               'OrthogonalMatchingPursuit',
+               'PLSCanonical', 'PLSSVD',
+               'PassiveAggressiveClassifier'}
+
+    if Estimator.__name__ in IGNORED:
+        pytest.xfail(
+            reason="Estimator has too many undocumented attributes.")
+
+    fit_attr = [k for k in est.__dict__.keys() if k.endswith('_')
+                and not k.startswith('_')]
+    fit_attr_names = [attr.name for attr in attributes]
+    undocumented_attrs = set(fit_attr).difference(fit_attr_names)
+    undocumented_attrs = set(undocumented_attrs).difference(skipped_attributes)
+    assert not undocumented_attrs,\
+        "Undocumented attributes: {}".format(undocumented_attrs)

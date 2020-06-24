@@ -39,6 +39,7 @@ doc/samples
 *.prof
 .tox/
 .coverage
+pip-wheel-metadata
 
 lfw_preprocessed/
 nips2010_pdf/
@@ -54,14 +55,25 @@ benchmarks/bench_covertype_data/
 *.prefs
 .pydevproject
 .idea
+.vscode
 
 *.c
 *.cpp
 
-!*/src/*.c
-!*/src/*.cpp
+!/**/src/**/*.c
+!/**/src/**/*.cpp
 *.sln
 *.pyproj
 
 # Used by py.test
 .cache
+.pytest_cache/
+_configtest.o.d
+
+# Used by mypy
+.mypy_cache/
+
+# files generated from a template
+sklearn/utils/_seq_dataset.pyx
+sklearn/utils/_seq_dataset.pxd
+sklearn/linear_model/_sag_fast.pyx

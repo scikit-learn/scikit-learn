@@ -1,6 +1,6 @@
 #!/bin/bash
 # This script is meant to be called by the "script" step defined in
-# .travis.yml. See http://docs.travis-ci.com/ for more details.
+# .travis.yml. See https://docs.travis-ci.com/ for more details.
 # The behavior of the script is controlled by environment variabled defined
 # in the .travis.yml in the top level folder of the project.
 
@@ -21,49 +21,30 @@ except ImportError:
 python -c "import multiprocessing as mp; print('%d CPUs' % mp.cpu_count())"
 
 run_tests() {
-    if [[ "$USE_PYTEST" == "true" ]]; then
-        TEST_CMD="pytest --showlocals --durations=20 --pyargs"
-    else
-        TEST_CMD="nosetests --with-timer --timer-top-n 20"
-    fi
+    TEST_CMD="pytest --showlocals --durations=20 --pyargs"
+
     # Get into a temp directory to run test from the installed scikit-learn and
     # check if we do not leave artifacts
     mkdir -p $TEST_DIR
-    # We need the setup.cfg for the nose settings
+    # We need the setup.cfg for the pytest settings
     cp setup.cfg $TEST_DIR
     cd $TEST_DIR
 
-    # Skip tests that require large downloads over the network to save bandwidth
-    # usage as travis workers are stateless and therefore traditional local
-    # disk caching does not work.
-    export SKLEARN_SKIP_NETWORK_TESTS=1
+    # Tests that require large downloads over the networks are skipped in CI.
+    # Here we make sure, that they are still run on a regular basis.
+    export SKLEARN_SKIP_NETWORK_TESTS=0
 
     if [[ "$COVERAGE" == "true" ]]; then
-        TEST_CMD="$TEST_CMD --with-coverage"
+        TEST_CMD="$TEST_CMD --cov sklearn"
     fi
+
+    if [[ -n "$CHECK_WARNINGS" ]]; then
+        TEST_CMD="$TEST_CMD -Werror::DeprecationWarning -Werror::FutureWarning"
+    fi
+
+    set -x  # print executed commands to the terminal
+
     $TEST_CMD sklearn
-
-    # Going back to git checkout folder needed to test documentation
-    cd $OLDPWD
-
-    if [[ "$USE_PYTEST" == "true" ]]; then
-        # Do not run doctests in scipy-dev-wheels build for now
-        # (broken by numpy 1.14.dev array repr/str formatting
-        # change even with np.set_printoptions(sign='legacy')).
-        # See https://github.com/numpy/numpy/issues/9804 for more details
-        if [[ "$DISTRIB" != "scipy-dev-wheels" ]]; then
-            pytest $(find doc -name '*.rst' | sort)
-        fi
-    else
-        # Makefile is using nose
-        make test-doc
-    fi
 }
 
-if [[ "$RUN_FLAKE8" == "true" ]]; then
-    source build_tools/travis/flake8_diff.sh
-fi
-
-if [[ "$SKIP_TESTS" != "true" ]]; then
-    run_tests
-fi
+run_tests

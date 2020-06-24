@@ -132,7 +132,7 @@ The Isomap algorithm comprises three stages:
    :math:`N \times N` isomap kernel.  For a dense solver, the cost is
    approximately :math:`O[d N^2]`.  This cost can often be improved using
    the ``ARPACK`` solver.  The eigensolver can be specified by the user
-   with the ``path_method`` keyword of ``Isomap``.  If unspecified, the
+   with the ``eigen_solver`` keyword of ``Isomap``.  If unspecified, the
    code attempts to choose the best algorithm for the input data.
 
 The overall complexity of Isomap is
@@ -234,7 +234,7 @@ The MLLE algorithm comprises three stages:
    to that of standard LLE.  The second term has to do with constructing the
    weight matrix from multiple weights.  In practice, the added cost of
    constructing the MLLE weight matrix is relatively small compared to the
-   cost of steps 1 and 3.
+   cost of stages 1 and 3.
 
 3. **Partial Eigenvalue Decomposition**. Same as standard LLE
 
@@ -343,7 +343,7 @@ The overall complexity of spectral embedding is
 
    * `"Laplacian Eigenmaps for Dimensionality Reduction
      and Data Representation"
-     <http://web.cse.ohio-state.edu/~mbelkin/papers/LEM_NC_03.pdf>`_
+     <https://web.cse.ohio-state.edu/~mbelkin/papers/LEM_NC_03.pdf>`_
      M. Belkin, P. Niyogi, Neural Computation, June 2003; 15 (6):1373-1396
 
 
@@ -402,8 +402,8 @@ Multi-dimensional Scaling (MDS)
 representation of the data in which the distances respect well the
 distances in the original high-dimensional space.
 
-In general, is a technique used for analyzing similarity or
-dissimilarity data. :class:`MDS` attempts to model similarity or dissimilarity data as
+In general, :class:`MDS` is a technique used for analyzing similarity or
+dissimilarity data. It attempts to model similarity or dissimilarity data as
 distances in a geometric spaces. The data can be ratings of similarity between
 objects, interaction frequencies of molecules, or trade indices between
 countries.
@@ -426,7 +426,7 @@ space and the similarities/dissimilarities.
 Let :math:`S` be the similarity matrix, and :math:`X` the coordinates of the
 :math:`n` input points. Disparities :math:`\hat{d}_{ij}` are transformation of
 the similarities chosen in some optimal ways. The objective, called the
-stress, is then defined by :math:`sum_{i < j} d_{ij}(X) - \hat{d}_{ij}(X)`
+stress, is then defined by :math:`\sum_{i < j} d_{ij}(X) - \hat{d}_{ij}(X)`
 
 
 Metric MDS
@@ -443,7 +443,7 @@ Nonmetric MDS
 -------------
 
 Non metric :class:`MDS` focuses on the ordination of the data. If
-:math:`S_{ij} < S_{kl}`, then the embedding should enforce :math:`d_{ij} <
+:math:`S_{ij} < S_{jk}`, then the embedding should enforce :math:`d_{ij} <
 d_{jk}`. A simple algorithm to enforce that is to use a monotonic regression
 of :math:`d_{ij}` on :math:`S_{ij}`, yielding disparities :math:`\hat{d}_{ij}`
 in the same order as :math:`S_{ij}`.
@@ -461,15 +461,15 @@ order to avoid that, the disparities :math:`\hat{d}_{ij}` are normalized.
 .. topic:: References:
 
   * `"Modern Multidimensional Scaling - Theory and Applications"
-    <http://www.springer.com/fr/book/9780387251509>`_
+    <https://www.springer.com/fr/book/9780387251509>`_
     Borg, I.; Groenen P. Springer Series in Statistics (1997)
 
   * `"Nonmetric multidimensional scaling: a numerical method"
-    <http://link.springer.com/article/10.1007%2FBF02289694>`_
+    <https://link.springer.com/article/10.1007%2FBF02289694>`_
     Kruskal, J. Psychometrika, 29 (1964)
 
   * `"Multidimensional scaling by optimizing goodness of fit to a nonmetric hypothesis"
-    <http://link.springer.com/article/10.1007%2FBF02289565>`_
+    <https://link.springer.com/article/10.1007%2FBF02289565>`_
     Kruskal, J. Psychometrika, 29, (1964)
 
 .. _t_sne:
@@ -509,7 +509,7 @@ The disadvantages to using t-SNE are roughly:
 * The algorithm is stochastic and multiple restarts with different seeds can
   yield different embeddings. However, it is perfectly legitimate to pick the
   embedding with the least error.
-* Global structure is not explicitly preserved. This is problem is mitigated by
+* Global structure is not explicitly preserved. This problem is mitigated by
   initializing points with PCA (using `init='pca'`).
 
 
@@ -561,7 +561,7 @@ is a tradeoff between performance and accuracy. Larger angles imply that we
 can approximate larger regions by a single point, leading to better speed
 but less accurate results.
 
-`"How to Use t-SNE Effectively" <http://distill.pub/2016/misread-tsne/>`_
+`"How to Use t-SNE Effectively" <https://distill.pub/2016/misread-tsne/>`_
 provides a good discussion of the effects of the various parameters, as well
 as interactive plots to explore the effects of different parameters.
 
@@ -611,7 +611,7 @@ the internal structure of the data.
     (2008)
 
   * `"t-Distributed Stochastic Neighbor Embedding"
-    <http://lvdmaaten.github.io/tsne/>`_
+    <https://lvdmaaten.github.io/tsne/>`_
     van der Maaten, L.J.P.
 
   * `"Accelerating t-SNE using Tree-Based Algorithms."

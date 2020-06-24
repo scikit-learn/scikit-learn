@@ -1,0 +1,66 @@
+parameters:
+  name: ''
+  vmImage: ''
+  matrix: []
+  dependsOn: []
+  condition: ne(variables['Build.Reason'], 'Schedule')
+
+jobs:
+- job: ${{ parameters.name }}
+  dependsOn: ${{ parameters.dependsOn }}
+  condition: ${{ parameters.condition }}
+  pool:
+    vmImage: ${{ parameters.vmImage }}
+  variables:
+    TEST_DIR: '$(Agent.WorkFolder)/tmp_folder'
+    JUNITXML: 'test-data.xml'
+    OMP_NUM_THREADS: '2'
+    PYTEST_VERSION: '5.2.1'
+    PYTEST_XDIST: 'true'
+    OPENBLAS_NUM_THREADS: '2'
+    SKLEARN_SKIP_NETWORK_TESTS: '1'
+  strategy:
+    matrix:
+      ${{ insert }}: ${{ parameters.matrix }}
+
+  steps:
+    # Container is detached and sleeping, allowing steps to run commmands
+    # in the container. The TEST_DIR is mapped allowing the host to access
+    # the JUNITXML file
+    - script: >
+        docker container run --rm
+        --volume $TEST_DIR:/temp_dir
+        --volume $PWD:/io
+        -w /io
+        --detach
+        --name skcontainer
+        -e DISTRIB=ubuntu-32
+        -e TEST_DIR=/temp_dir
+        -e JUNITXML=$JUNITXML
+        -e VIRTUALENV=testvenv
+        -e JOBLIB_VERSION=$JOBLIB_VERSION
+        -e THREADPOOLCTL_VERSION=$THREADPOOLCTL_VERSION
+        -e PYTEST_VERSION=$PYTEST_VERSION
+        -e PYTEST_XDIST=$PYTEST_XDIST
+        -e OMP_NUM_THREADS=$OMP_NUM_THREADS
+        -e OPENBLAS_NUM_THREADS=$OPENBLAS_NUM_THREADS
+        -e SKLEARN_SKIP_NETWORK_TESTS=$SKLEARN_SKIP_NETWORK_TESTS
+        i386/ubuntu:18.04
+        sleep 1000000
+      displayName: 'Start container'
+    - script: >
+        docker exec skcontainer ./build_tools/azure/install.sh
+      displayName: 'Install'
+    - script: >
+        docker exec skcontainer ./build_tools/azure/test_script.sh
+      displayName: 'Test Library'
+    - task: PublishTestResults@2
+      inputs:
+        testResultsFiles: '$(TEST_DIR)/$(JUNITXML)'
+        testRunTitle: ${{ format('{0}-$(Agent.JobName)', parameters.name) }}
+      displayName: 'Publish Test Results'
+      condition: succeededOrFailed()
+    - script: >
+        docker container stop skcontainer
+      displayName: 'Stop container'
+      condition: always()

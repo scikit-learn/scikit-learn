@@ -1,5 +1,5 @@
 """ Module to give helpful messages to the user that did not
-compile the scikit properly.
+compile scikit-learn properly.
 """
 import os
 

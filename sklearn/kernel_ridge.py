@@ -6,14 +6,14 @@
 
 import numpy as np
 
-from .base import BaseEstimator, RegressorMixin
+from .base import BaseEstimator, RegressorMixin, MultiOutputMixin
 from .metrics.pairwise import pairwise_kernels
-from .linear_model.ridge import _solve_cholesky_kernel
-from .utils import check_array, check_X_y
-from .utils.validation import check_is_fitted
+from .linear_model._ridge import _solve_cholesky_kernel
+from .utils.validation import check_is_fitted, _check_sample_weight
+from .utils.validation import _deprecate_positional_args
 
 
-class KernelRidge(BaseEstimator, RegressorMixin):
+class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
     """Kernel ridge regression.
 
     Kernel ridge regression (KRR) combines ridge regression (linear least
@@ -27,7 +27,7 @@ class KernelRidge(BaseEstimator, RegressorMixin):
     squared error loss while support vector regression uses epsilon-insensitive
     loss, both combined with l2 regularization. In contrast to SVR, fitting a
     KRR model can be done in closed-form and is typically faster for
-    medium-sized datasets. On the other  hand, the learned model is non-sparse
+    medium-sized datasets. On the other hand, the learned model is non-sparse
     and thus slower than SVR, which learns a sparse model for epsilon > 0, at
     prediction-time.
 
@@ -38,17 +38,29 @@ class KernelRidge(BaseEstimator, RegressorMixin):
 
     Parameters
     ----------
-    alpha : {float, array-like}, shape = [n_targets]
-        Small positive values of alpha improve the conditioning of the problem
-        and reduce the variance of the estimates.  Alpha corresponds to
-        ``(2*C)^-1`` in other linear models such as LogisticRegression or
-        LinearSVC. If an array is passed, penalties are assumed to be specific
-        to the targets. Hence they must correspond in number.
+    alpha : float or array-like of shape (n_targets,)
+        Regularization strength; must be a positive float. Regularization
+        improves the conditioning of the problem and reduces the variance of
+        the estimates. Larger values specify stronger regularization.
+        Alpha corresponds to ``1 / (2C)`` in other linear models such as
+        :class:`~sklearn.linear_model.LogisticRegression` or
+        :class:`~sklearn.svm.LinearSVC`. If an array is passed, penalties are
+        assumed to be specific to the targets. Hence they must correspond in
+        number. See :ref:`ridge_regression` for formula.
 
     kernel : string or callable, default="linear"
-        Kernel mapping used internally. A callable should accept two arguments
-        and the keyword arguments passed to this object as kernel_params, and
-        should return a floating point number.
+        Kernel mapping used internally. This parameter is directly passed to
+        :class:`~sklearn.metrics.pairwise.pairwise_kernel`.
+        If `kernel` is a string, it must be one of the metrics
+        in `pairwise.PAIRWISE_KERNEL_FUNCTIONS`.
+        If `kernel` is "precomputed", X is assumed to be a kernel matrix.
+        Alternatively, if `kernel` is a callable function, it is called on
+        each pair of instances (rows) and the resulting value recorded. The
+        callable should take two rows from X as input and return the
+        corresponding kernel value as a single number. This means that
+        callables from :mod:`sklearn.metrics.pairwise` are not allowed, as
+        they operate on matrices, not single samples. Use the string
+        identifying the kernel instead.
 
     gamma : float, default=None
         Gamma parameter for the RBF, laplacian, polynomial, exponential chi2
@@ -69,11 +81,13 @@ class KernelRidge(BaseEstimator, RegressorMixin):
 
     Attributes
     ----------
-    dual_coef_ : array, shape = [n_samples] or [n_samples, n_targets]
+    dual_coef_ : ndarray of shape (n_samples,) or (n_samples, n_targets)
         Representation of weight vector(s) in kernel space
 
-    X_fit_ : {array-like, sparse matrix}, shape = [n_samples, n_features]
-        Training data, which is also required for prediction
+    X_fit_ : {ndarray, sparse matrix} of shape (n_samples, n_features)
+        Training data, which is also required for prediction. If
+        kernel == "precomputed" this is instead the precomputed
+        training matrix, of shape (n_samples, n_samples).
 
     References
     ----------
@@ -97,12 +111,12 @@ class KernelRidge(BaseEstimator, RegressorMixin):
     >>> y = rng.randn(n_samples)
     >>> X = rng.randn(n_samples, n_features)
     >>> clf = KernelRidge(alpha=1.0)
-    >>> clf.fit(X, y) # doctest: +NORMALIZE_WHITESPACE
-    KernelRidge(alpha=1.0, coef0=1, degree=3, gamma=None, kernel='linear',
-                kernel_params=None)
+    >>> clf.fit(X, y)
+    KernelRidge(alpha=1.0)
     """
-    def __init__(self, alpha=1, kernel="linear", gamma=None, degree=3, coef0=1,
-                 kernel_params=None):
+    @_deprecate_positional_args
+    def __init__(self, alpha=1, *, kernel="linear", gamma=None, degree=3,
+                 coef0=1, kernel_params=None):
         self.alpha = alpha
         self.kernel = kernel
         self.gamma = gamma
@@ -129,10 +143,11 @@ class KernelRidge(BaseEstimator, RegressorMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
-            Training data
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Training data. If kernel == "precomputed" this is instead
+            a precomputed kernel matrix, of shape (n_samples, n_samples).
 
-        y : array-like, shape = [n_samples] or [n_samples, n_targets]
+        y : array-like of shape (n_samples,) or (n_samples, n_targets)
             Target values
 
         sample_weight : float or array-like of shape [n_samples]
@@ -143,10 +158,10 @@ class KernelRidge(BaseEstimator, RegressorMixin):
         self : returns an instance of self.
         """
         # Convert data
-        X, y = check_X_y(X, y, accept_sparse=("csr", "csc"), multi_output=True,
-                         y_numeric=True)
+        X, y = self._validate_data(X, y, accept_sparse=("csr", "csc"),
+                                   multi_output=True, y_numeric=True)
         if sample_weight is not None and not isinstance(sample_weight, float):
-            sample_weight = check_array(sample_weight, ensure_2d=False)
+            sample_weight = _check_sample_weight(sample_weight, X)
 
         K = self._get_kernel(X)
         alpha = np.atleast_1d(self.alpha)
@@ -172,14 +187,17 @@ class KernelRidge(BaseEstimator, RegressorMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
-            Samples.
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Samples. If kernel == "precomputed" this is instead a
+            precomputed kernel matrix, shape = [n_samples,
+            n_samples_fitted], where n_samples_fitted is the number of
+            samples used in the fitting for this estimator.
 
         Returns
         -------
-        C : array, shape = [n_samples] or [n_samples, n_targets]
+        C : ndarray of shape (n_samples,) or (n_samples, n_targets)
             Returns predicted values.
         """
-        check_is_fitted(self, ["X_fit_", "dual_coef_"])
+        check_is_fitted(self)
         K = self._get_kernel(X, self.X_fit_)
         return np.dot(K, self.dual_coef_)

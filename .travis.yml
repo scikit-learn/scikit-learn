@@ -1,6 +1,4 @@
 # make it explicit that we favor the new container-based travis workers
-sudo: false
-
 language: python
 
 cache:
@@ -9,61 +7,29 @@ cache:
   - $HOME/.cache/pip
   - $HOME/.ccache
 
-dist: trusty
+dist: xenial
 
 env:
   global:
     # Directory where tests are run from
     - TEST_DIR=/tmp/sklearn
-    - OMP_NUM_THREADS=4
-    - OPENBLAS_NUM_THREADS=4
+    - OMP_NUM_THREADS=2
+    - OPENBLAS_NUM_THREADS=2
 
 matrix:
   include:
-    # This environment tests that scikit-learn can be built against
-    # versions of numpy, scipy with ATLAS that comes with Ubuntu Trusty 14.04
-    - env: DISTRIB="ubuntu" PYTHON_VERSION="2.7" CYTHON_VERSION="0.23.5"
-           COVERAGE=true
-      if: type != cron
-      addons:
-        apt:
-          packages:
-            # these only required by the DISTRIB="ubuntu" builds:
-            - python-scipy
-            - libatlas3gf-base
-            - libatlas-dev
-    # This environment tests the oldest supported anaconda env
-    - env: DISTRIB="conda" PYTHON_VERSION="2.7" INSTALL_MKL="false"
-           NUMPY_VERSION="1.8.2" SCIPY_VERSION="0.13.3" CYTHON_VERSION="0.23.5"
-           COVERAGE=true
-      if: type != cron
-    # This environment tests the newest supported Anaconda release (5.0.0)
-    # It also runs tests requiring Pandas.
-    - env: DISTRIB="conda" PYTHON_VERSION="3.6.2" INSTALL_MKL="true"
-           NUMPY_VERSION="1.13.1" SCIPY_VERSION="0.19.1" PANDAS_VERSION="0.20.3"
-           CYTHON_VERSION="0.26.1" COVERAGE=true
-      if: type != cron
-    # This environment use pytest to run the tests. It uses the newest
-    # supported Anaconda release (5.0.0). It also runs tests requiring Pandas.
-    - env: USE_PYTEST="true" DISTRIB="conda" PYTHON_VERSION="3.6.2"
-           INSTALL_MKL="true" NUMPY_VERSION="1.13.1" SCIPY_VERSION="0.19.1"
-           PANDAS_VERSION="0.20.3" CYTHON_VERSION="0.26.1"
-           TEST_DOCSTRINGS="true"
-      if: type != cron
-    # flake8 linting on diff wrt common ancestor with upstream/master
-    - env: RUN_FLAKE8="true" SKIP_TESTS="true"
-           DISTRIB="conda" PYTHON_VERSION="3.5" INSTALL_MKL="true"
-           NUMPY_VERSION="1.13.1" SCIPY_VERSION="0.19.1" CYTHON_VERSION="0.26.1"
-      if: type != cron
-    # This environment tests scikit-learn against numpy and scipy master
+    # Linux environment to test scikit-learn against numpy and scipy master
     # installed from their CI wheels in a virtualenv with the Python
     # interpreter provided by travis.
-    -  python: 3.6
-       env: USE_PYTEST="true" DISTRIB="scipy-dev-wheels"
-       if: type = cron
+    -  python: 3.7
+       env: CHECK_WARNINGS="true"
+       if: type = cron OR commit_message =~ /\[scipy-dev\]/
 
 install: source build_tools/travis/install.sh
-script: bash build_tools/travis/test_script.sh
+script:
+  - bash build_tools/travis/test_script.sh
+  - bash build_tools/travis/test_docs.sh
+  - bash build_tools/travis/test_pytest_soft_dependency.sh
 after_success: source build_tools/travis/after_success.sh
 notifications:
   webhooks:

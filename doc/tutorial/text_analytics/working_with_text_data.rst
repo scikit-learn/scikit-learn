@@ -5,7 +5,7 @@ Working With Text Data
 ======================
 
 The goal of this guide is to explore some of the main ``scikit-learn``
-tools on a single practical task: analysing a collection of text
+tools on a single practical task: analyzing a collection of text
 documents (newsgroups posts) on twenty different topics.
 
 In this section we will see how to:
@@ -20,22 +20,23 @@ In this section we will see how to:
     the feature extraction components and the classifier
 
 
-
 Tutorial setup
 --------------
 
-To get started with this tutorial, you firstly must have the
-*scikit-learn* and all of its required dependencies installed.
+To get started with this tutorial, you must first install
+*scikit-learn* and all of its required dependencies.
 
 Please refer to the :ref:`installation instructions <installation-instructions>`
-page for more information and for per-system instructions.
+page for more information and for system-specific instructions.
 
-The source of this tutorial can be found within your
-scikit-learn folder::
+The source of this tutorial can be found within your scikit-learn folder::
 
     scikit-learn/doc/tutorial/text_analytics/
 
-The tutorial folder, should contain the following folders:
+The source can also be found `on Github
+<https://github.com/scikit-learn/scikit-learn/tree/master/doc/tutorial/text_analytics>`_.
+
+The tutorial folder should contain the following sub-folders:
 
   * ``*.rst files`` - the source of the tutorial document written with sphinx
 
@@ -53,7 +54,7 @@ the original skeletons intact::
 
     % cp -r skeletons work_directory/sklearn_tut_workspace
 
-Machine Learning algorithms need data. Go to each ``$TUTORIAL_HOME/data``
+Machine learning algorithms need data. Go to each ``$TUTORIAL_HOME/data``
 sub-folder and run the ``fetch_data.py`` script from there (after
 having read them first).
 
@@ -82,8 +83,8 @@ description, quoted from the `website
 
 In the following we will use the built-in dataset loader for 20 newsgroups
 from scikit-learn. Alternatively, it is possible to download the dataset
-manually from the web-site and use the :func:`sklearn.datasets.load_files`
-function by pointing it to the ``20news-bydate-train`` subfolder of the
+manually from the website and use the :func:`sklearn.datasets.load_files`
+function by pointing it to the ``20news-bydate-train`` sub-folder of the
 uncompressed archive folder.
 
 In order to get faster execution times for this first example we will
@@ -154,10 +155,10 @@ It is possible to get back the category names as follows::
   sci.med
   sci.med
 
-You can notice that the samples have been shuffled randomly (with
-a fixed RNG seed): this is useful if you select only the first
-samples to quickly train a model and get a first idea of the results
-before re-training on the complete dataset later.
+You might have noticed that the samples were shuffled randomly when we called
+``fetch_20newsgroups(..., shuffle=True, random_state=42)``: this is useful if
+you wish to select only a subset of samples to quickly train a model and get a
+first idea of the results before re-training on the complete dataset later.
 
 
 Extracting features from text files
@@ -172,26 +173,26 @@ turn the text content into numerical feature vectors.
 Bags of words
 ~~~~~~~~~~~~~
 
-The most intuitive way to do so is the bags of words representation:
+The most intuitive way to do so is to use a bags of words representation:
 
-  1. assign a fixed integer id to each word occurring in any document
+  1. Assign a fixed integer id to each word occurring in any document
      of the training set (for instance by building a dictionary
      from words to integer indices).
 
-  2. for each document ``#i``, count the number of occurrences of each
+  2. For each document ``#i``, count the number of occurrences of each
      word ``w`` and store it in ``X[i, j]`` as the value of feature
-     ``#j`` where ``j`` is the index of word ``w`` in the dictionary
+     ``#j`` where ``j`` is the index of word ``w`` in the dictionary.
 
 The bags of words representation implies that ``n_features`` is
 the number of distinct words in the corpus: this number is typically
 larger than 100,000.
 
-If ``n_samples == 10000``, storing ``X`` as a numpy array of type
+If ``n_samples == 10000``, storing ``X`` as a NumPy array of type
 float32 would require 10000 x 100000 x 4 bytes = **4GB in RAM** which
 is barely manageable on today's computers.
 
 Fortunately, **most values in X will be zeros** since for a given
-document less than a couple thousands of distinct words will be
+document less than a few thousand distinct words will be
 used. For this reason we say that bags of words are typically
 **high-dimensional sparse datasets**. We can save a lot of memory by
 only storing the non-zero parts of the feature vectors in memory.
@@ -203,8 +204,9 @@ and ``scikit-learn`` has built-in support for these structures.
 Tokenizing text with ``scikit-learn``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Text preprocessing, tokenizing and filtering of stopwords are included in a high level component that is able to build a
-dictionary of features and transform documents to feature vectors::
+Text preprocessing, tokenizing and filtering of stopwords are all included
+in :class:`CountVectorizer`, which builds a dictionary of features and
+transforms documents to feature vectors::
 
   >>> from sklearn.feature_extraction.text import CountVectorizer
   >>> count_vect = CountVectorizer()
@@ -212,8 +214,9 @@ dictionary of features and transform documents to feature vectors::
   >>> X_train_counts.shape
   (2257, 35788)
 
-:class:`CountVectorizer` supports counts of N-grams of words or consecutive characters.
-Once fitted, the vectorizer has built a dictionary of feature indices::
+:class:`CountVectorizer` supports counts of N-grams of words or consecutive
+characters. Once fitted, the vectorizer has built a dictionary of feature
+indices::
 
   >>> count_vect.vocabulary_.get(u'algorithm')
   4690
@@ -251,10 +254,11 @@ corpus.
 This downscaling is called `tf–idf`_ for "Term Frequency times
 Inverse Document Frequency".
 
-.. _`tf–idf`: https://en.wikipedia.org/wiki/Tf–idf
+.. _`tf–idf`: https://en.wikipedia.org/wiki/Tf-idf
 
 
-Both **tf** and **tf–idf** can be computed as follows::
+Both **tf** and **tf–idf** can be computed as follows using
+:class:`TfidfTransformer`::
 
   >>> from sklearn.feature_extraction.text import TfidfTransformer
   >>> tf_transformer = TfidfTransformer(use_idf=False).fit(X_train_counts)
@@ -311,20 +315,22 @@ Building a pipeline
 -------------------
 
 In order to make the vectorizer => transformer => classifier easier
-to work with, ``scikit-learn`` provides a ``Pipeline`` class that behaves
+to work with, ``scikit-learn`` provides a :class:`~sklearn.pipeline.Pipeline` class that behaves
 like a compound classifier::
 
   >>> from sklearn.pipeline import Pipeline
-  >>> text_clf = Pipeline([('vect', CountVectorizer()),
-  ...                      ('tfidf', TfidfTransformer()),
-  ...                      ('clf', MultinomialNB()),
+  >>> text_clf = Pipeline([
+  ...     ('vect', CountVectorizer()),
+  ...     ('tfidf', TfidfTransformer()),
+  ...     ('clf', MultinomialNB()),
   ... ])
 
+
 The names ``vect``, ``tfidf`` and ``clf`` (classifier) are arbitrary.
-We shall see their use in the section on grid search, below.
+We will use them to perform grid search for suitable hyperparameters below.
 We can now train the model with a single command::
 
-  >>> text_clf.fit(twenty_train.data, twenty_train.target)  # doctest: +ELLIPSIS
+  >>> text_clf.fit(twenty_train.data, twenty_train.target)
   Pipeline(...)
 
 
@@ -338,55 +344,57 @@ Evaluating the predictive accuracy of the model is equally easy::
   ...     categories=categories, shuffle=True, random_state=42)
   >>> docs_test = twenty_test.data
   >>> predicted = text_clf.predict(docs_test)
-  >>> np.mean(predicted == twenty_test.target)            # doctest: +ELLIPSIS
-  0.834...
+  >>> np.mean(predicted == twenty_test.target)
+  0.8348...
 
-I.e., we achieved 83.4% accuracy. Let's see if we can do better with a
+We achieved 83.5% accuracy. Let's see if we can do better with a
 linear :ref:`support vector machine (SVM) <svm>`,
 which is widely regarded as one of
 the best text classification algorithms (although it's also a bit slower
-than naïve Bayes). We can change the learner by just plugging a different
+than naïve Bayes). We can change the learner by simply plugging a different
 classifier object into our pipeline::
 
   >>> from sklearn.linear_model import SGDClassifier
-  >>> text_clf = Pipeline([('vect', CountVectorizer()),
-  ...                      ('tfidf', TfidfTransformer()),
-  ...                      ('clf', SGDClassifier(loss='hinge', penalty='l2',
-  ...                                            alpha=1e-3, random_state=42,
-  ...                                            max_iter=5, tol=None)),
+  >>> text_clf = Pipeline([
+  ...     ('vect', CountVectorizer()),
+  ...     ('tfidf', TfidfTransformer()),
+  ...     ('clf', SGDClassifier(loss='hinge', penalty='l2',
+  ...                           alpha=1e-3, random_state=42,
+  ...                           max_iter=5, tol=None)),
   ... ])
-  >>> text_clf.fit(twenty_train.data, twenty_train.target)  # doctest: +ELLIPSIS
+
+  >>> text_clf.fit(twenty_train.data, twenty_train.target)
   Pipeline(...)
   >>> predicted = text_clf.predict(docs_test)
-  >>> np.mean(predicted == twenty_test.target)            # doctest: +ELLIPSIS
-  0.912...
+  >>> np.mean(predicted == twenty_test.target)
+  0.9101...
 
-``scikit-learn`` further provides utilities for more detailed performance
-analysis of the results::
+We achieved 91.3% accuracy using the SVM. ``scikit-learn`` provides further
+utilities for more detailed performance analysis of the results::
 
   >>> from sklearn import metrics
   >>> print(metrics.classification_report(twenty_test.target, predicted,
   ...     target_names=twenty_test.target_names))
-  ...                                         # doctest: +NORMALIZE_WHITESPACE
                           precision    recall  f1-score   support
   <BLANKLINE>
-             alt.atheism       0.95      0.81      0.87       319
-           comp.graphics       0.88      0.97      0.92       389
-                 sci.med       0.94      0.90      0.92       396
+             alt.atheism       0.95      0.80      0.87       319
+           comp.graphics       0.87      0.98      0.92       389
+                 sci.med       0.94      0.89      0.91       396
   soc.religion.christian       0.90      0.95      0.93       398
   <BLANKLINE>
-             avg / total       0.92      0.91      0.91      1502
+                accuracy                           0.91      1502
+               macro avg       0.91      0.91      0.91      1502
+            weighted avg       0.91      0.91      0.91      1502
   <BLANKLINE>
 
   >>> metrics.confusion_matrix(twenty_test.target, predicted)
-  array([[258,  11,  15,  35],
-         [  4, 379,   3,   3],
-         [  5,  33, 355,   3],
-         [  5,  10,   4, 379]])
-
+  array([[256,  11,  16,  36],
+         [  4, 380,   3,   2],
+         [  5,  35, 353,   3],
+         [  5,  11,   4, 378]])
 
 As expected the confusion matrix shows that posts from the newsgroups
-on atheism and christian are more often confused for one another than
+on atheism and Christianity are more often confused for one another than
 with computer graphics.
 
 .. note:
@@ -404,7 +412,7 @@ with computer graphics.
   optimizer for the same cost function based on the liblinear_ C++
   library.
 
-.. _liblinear: http://www.csie.ntu.edu.tw/~cjlin/liblinear/
+.. _liblinear: https://www.csie.ntu.edu.tw/~cjlin/liblinear/
 
 
 Parameter tuning using grid search
@@ -415,7 +423,7 @@ We've already encountered some parameters such as ``use_idf`` in the
 e.g., ``MultinomialNB`` includes a smoothing parameter ``alpha`` and
 ``SGDClassifier`` has a penalty parameter ``alpha`` and configurable loss
 and penalty terms in the objective function (see the module documentation,
-or use the Python ``help`` function, to get a description of these).
+or use the Python ``help`` function to get a description of these).
 
 Instead of tweaking the parameters of the various components of the
 chain, it is possible to run an exhaustive search of the best
@@ -424,18 +432,20 @@ on either words or bigrams, with or without idf, and with a penalty
 parameter of either 0.01 or 0.001 for the linear SVM::
 
   >>> from sklearn.model_selection import GridSearchCV
-  >>> parameters = {'vect__ngram_range': [(1, 1), (1, 2)],
-  ...               'tfidf__use_idf': (True, False),
-  ...               'clf__alpha': (1e-2, 1e-3),
+  >>> parameters = {
+  ...     'vect__ngram_range': [(1, 1), (1, 2)],
+  ...     'tfidf__use_idf': (True, False),
+  ...     'clf__alpha': (1e-2, 1e-3),
   ... }
+
 
 Obviously, such an exhaustive search can be expensive. If we have multiple
 CPU cores at our disposal, we can tell the grid searcher to try these eight
 parameter combinations in parallel with the ``n_jobs`` parameter. If we give
 this parameter a value of ``-1``, grid search will detect how many cores
-are installed and uses them all::
+are installed and use them all::
 
-  >>> gs_clf = GridSearchCV(text_clf, parameters, n_jobs=-1)
+  >>> gs_clf = GridSearchCV(text_clf, parameters, cv=5, n_jobs=-1)
 
 The grid search instance behaves like a normal ``scikit-learn``
 model. Let's perform the search on a smaller subset of the training data
@@ -452,8 +462,8 @@ that we can use to ``predict``::
 The object's ``best_score_`` and ``best_params_`` attributes store the best
 mean score and the parameters setting corresponding to that score::
 
-  >>> gs_clf.best_score_                                  # doctest: +ELLIPSIS
-  0.900...
+  >>> gs_clf.best_score_
+  0.9...
   >>> for param_name in sorted(parameters.keys()):
   ...     print("%s: %r" % (param_name, gs_clf.best_params_[param_name]))
   ...
@@ -481,7 +491,7 @@ a new folder named 'workspace'::
 
   % cp -r skeletons workspace
 
-You can then edit the content of the workspace without fear of loosing
+You can then edit the content of the workspace without fear of losing
 the original exercise instructions.
 
 Then fire an ipython shell and run the work-in-progress script with::
@@ -547,14 +557,14 @@ upon the completion of this tutorial:
 
 
 * Try playing around with the ``analyzer`` and ``token normalisation`` under
-  :class:`CountVectorizer`
+  :class:`CountVectorizer`.
 
 * If you don't have labels, try using
-  :ref:`Clustering <sphx_glr_auto_examples_text_document_clustering.py>`
+  :ref:`Clustering <sphx_glr_auto_examples_text_plot_document_clustering.py>`
   on your problem.
 
 * If you have multiple labels per document, e.g categories, have a look
-  at the :ref:`Multiclass and multilabel section <multiclass>`
+  at the :ref:`Multiclass and multilabel section <multiclass>`.
 
 * Try using :ref:`Truncated SVD <LSA>` for
   `latent semantic analysis <https://en.wikipedia.org/wiki/Latent_semantic_analysis>`_.

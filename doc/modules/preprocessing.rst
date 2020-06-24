@@ -51,7 +51,7 @@ operation on a single array-like dataset::
   ...                     [ 0.,  1., -1.]])
   >>> X_scaled = preprocessing.scale(X_train)
 
-  >>> X_scaled                                          # doctest: +ELLIPSIS
+  >>> X_scaled
   array([[ 0.  ..., -1.22...,  1.33...],
          [ 1.22...,  0.  ..., -0.26...],
          [-1.22...,  1.22..., -1.06...]])
@@ -64,10 +64,10 @@ operation on a single array-like dataset::
 Scaled data has zero mean and unit variance::
 
   >>> X_scaled.mean(axis=0)
-  array([ 0.,  0.,  0.])
+  array([0., 0., 0.])
 
   >>> X_scaled.std(axis=0)
-  array([ 1.,  1.,  1.])
+  array([1., 1., 1.])
 
 ..    >>> print_options = np.set_printoptions(print_options)
 
@@ -80,15 +80,15 @@ This class is hence suitable for use in the early steps of a
 
   >>> scaler = preprocessing.StandardScaler().fit(X_train)
   >>> scaler
-  StandardScaler(copy=True, with_mean=True, with_std=True)
+  StandardScaler()
 
-  >>> scaler.mean_                                      # doctest: +ELLIPSIS
-  array([ 1. ...,  0. ...,  0.33...])
+  >>> scaler.mean_
+  array([1. ..., 0. ..., 0.33...])
 
-  >>> scaler.scale_                                       # doctest: +ELLIPSIS
-  array([ 0.81...,  0.81...,  1.24...])
+  >>> scaler.scale_
+  array([0.81..., 0.81..., 1.24...])
 
-  >>> scaler.transform(X_train)                           # doctest: +ELLIPSIS
+  >>> scaler.transform(X_train)
   array([[ 0.  ..., -1.22...,  1.33...],
          [ 1.22...,  0.  ..., -0.26...],
          [-1.22...,  1.22..., -1.06...]])
@@ -98,7 +98,7 @@ The scaler instance can then be used on new data to transform it the
 same way it did on the training set::
 
   >>> X_test = [[-1., 1., 0.]]
-  >>> scaler.transform(X_test)                # doctest: +ELLIPSIS
+  >>> scaler.transform(X_test)
   array([[-2.44...,  1.22..., -0.26...]])
 
 It is possible to disable either centering or scaling by either
@@ -127,15 +127,15 @@ Here is an example to scale a toy data matrix to the ``[0, 1]`` range::
   >>> min_max_scaler = preprocessing.MinMaxScaler()
   >>> X_train_minmax = min_max_scaler.fit_transform(X_train)
   >>> X_train_minmax
-  array([[ 0.5       ,  0.        ,  1.        ],
-         [ 1.        ,  0.5       ,  0.33333333],
-         [ 0.        ,  1.        ,  0.        ]])
+  array([[0.5       , 0.        , 1.        ],
+         [1.        , 0.5       , 0.33333333],
+         [0.        , 1.        , 0.        ]])
 
 The same instance of the transformer can then be applied to some new test data
 unseen during the fit call: the same scaling and shifting operations will be
 applied to be consistent with the transformation performed on the train data::
 
-  >>> X_test = np.array([[ -3., -1.,  4.]])
+  >>> X_test = np.array([[-3., -1.,  4.]])
   >>> X_test_minmax = min_max_scaler.transform(X_test)
   >>> X_test_minmax
   array([[-1.5       ,  0.        ,  1.66666667]])
@@ -143,11 +143,11 @@ applied to be consistent with the transformation performed on the train data::
 It is possible to introspect the scaler attributes to find about the exact
 nature of the transformation learned on the training data::
 
-  >>> min_max_scaler.scale_                             # doctest: +ELLIPSIS
-  array([ 0.5       ,  0.5       ,  0.33...])
+  >>> min_max_scaler.scale_
+  array([0.5       , 0.5       , 0.33...])
 
-  >>> min_max_scaler.min_                               # doctest: +ELLIPSIS
-  array([ 0.        ,  0.5       ,  0.33...])
+  >>> min_max_scaler.min_
+  array([0.        , 0.5       , 0.33...])
 
 If :class:`MinMaxScaler` is given an explicit ``feature_range=(min, max)`` the
 full formula is::
@@ -169,16 +169,16 @@ Here is how to use the toy data from the previous example with this scaler::
   ...
   >>> max_abs_scaler = preprocessing.MaxAbsScaler()
   >>> X_train_maxabs = max_abs_scaler.fit_transform(X_train)
-  >>> X_train_maxabs                # doctest +NORMALIZE_WHITESPACE^
+  >>> X_train_maxabs
   array([[ 0.5, -1. ,  1. ],
          [ 1. ,  0. ,  0. ],
          [ 0. ,  1. , -0.5]])
   >>> X_test = np.array([[ -3., -1.,  4.]])
   >>> X_test_maxabs = max_abs_scaler.transform(X_test)
-  >>> X_test_maxabs                 # doctest: +NORMALIZE_WHITESPACE
+  >>> X_test_maxabs
   array([[-1.5, -1. ,  2. ]])
-  >>> max_abs_scaler.scale_         # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-  array([ 2.,  1.,  2.])
+  >>> max_abs_scaler.scale_
+  array([2.,  1.,  2.])
 
 
 As with :func:`scale`, the module further provides convenience functions
@@ -235,9 +235,8 @@ data.
   independently, since a downstream model can further make some assumption
   on the linear independence of the features.
 
-  To address this issue you can use :class:`sklearn.decomposition.PCA`
-  or :class:`sklearn.decomposition.RandomizedPCA` with ``whiten=True``
-  to further remove the linear correlation across features.
+  To address this issue you can use :class:`sklearn.decomposition.PCA` with
+  ``whiten=True`` to further remove the linear correlation across features.
 
 .. topic:: Scaling a 1D array
 
@@ -251,30 +250,47 @@ Centering kernel matrices
 -------------------------
 
 If you have a kernel matrix of a kernel :math:`K` that computes a dot product
-in a feature space defined by function :math:`phi`,
+in a feature space defined by function :math:`\phi`,
 a :class:`KernelCenterer` can transform the kernel matrix
 so that it contains inner products in the feature space
-defined by :math:`phi` followed by removal of the mean in that space.
+defined by :math:`\phi` followed by removal of the mean in that space.
 
 .. _preprocessing_transformer:
 
 Non-linear transformation
 =========================
 
-Like scalers, :class:`QuantileTransformer` puts each feature into the same
-range or distribution. However, by performing a rank transformation, it smooths
-out unusual distributions and is less influenced by outliers than scaling
-methods. It does, however, distort correlations and distances within and across
-features.
+Two types of transformations are available: quantile transforms and power
+transforms. Both quantile and power transforms are based on monotonic
+transformations of the features and thus preserve the rank of the values
+along each feature.
+
+Quantile transforms put all features into the same desired distribution based
+on the formula :math:`G^{-1}(F(X))` where :math:`F` is the cumulative
+distribution function of the feature and :math:`G^{-1}` the
+`quantile function <https://en.wikipedia.org/wiki/Quantile_function>`_ of the
+desired output distribution :math:`G`. This formula is using the two following
+facts: (i) if :math:`X` is a random variable with a continuous cumulative
+distribution function :math:`F` then :math:`F(X)` is uniformly distributed on
+:math:`[0,1]`; (ii) if :math:`U` is a random variable with uniform distribution
+on :math:`[0,1]` then :math:`G^{-1}(U)` has distribution :math:`G`. By performing
+a rank transformation, a quantile transform smooths out unusual distributions
+and is less influenced by outliers than scaling methods. It does, however,
+distort correlations and distances within and across features.
+
+Power transforms are a family of parametric transformations that aim to map
+data from any distribution to as close to a Gaussian distribution.
+
+Mapping to a Uniform distribution
+---------------------------------
 
 :class:`QuantileTransformer` and :func:`quantile_transform` provide a
-non-parametric transformation based on the quantile function to map the data to
-a uniform distribution with values between 0 and 1::
+non-parametric transformation to map the data to a uniform distribution
+with values between 0 and 1::
 
   >>> from sklearn.datasets import load_iris
   >>> from sklearn.model_selection import train_test_split
-  >>> iris = load_iris()
-  >>> X, y = iris.data, iris.target
+  >>> X, y = load_iris(return_X_y=True)
   >>> X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
   >>> quantile_transformer = preprocessing.QuantileTransformer(random_state=0)
   >>> X_train_trans = quantile_transformer.fit_transform(X_train)
@@ -287,7 +303,7 @@ transformation applied, those landmarks approach closely the percentiles
 previously defined::
 
   >>> np.percentile(X_train_trans[:, 0], [0, 25, 50, 75, 100])
-  ... # doctest: +ELLIPSIS +SKIP
+  ... # doctest: +SKIP
   array([ 0.00... ,  0.24...,  0.49...,  0.73...,  0.99... ])
 
 This can be confirmed on a independent testing set with similar remarks::
@@ -296,23 +312,87 @@ This can be confirmed on a independent testing set with similar remarks::
   ... # doctest: +SKIP
   array([ 4.4  ,  5.125,  5.75 ,  6.175,  7.3  ])
   >>> np.percentile(X_test_trans[:, 0], [0, 25, 50, 75, 100])
-  ... # doctest: +ELLIPSIS +SKIP
+  ... # doctest: +SKIP
   array([ 0.01...,  0.25...,  0.46...,  0.60... ,  0.94...])
 
-It is also possible to map the transformed data to a normal distribution by
-setting ``output_distribution='normal'``::
+Mapping to a Gaussian distribution
+----------------------------------
+
+In many modeling scenarios, normality of the features in a dataset is desirable.
+Power transforms are a family of parametric, monotonic transformations that aim
+to map data from any distribution to as close to a Gaussian distribution as
+possible in order to stabilize variance and minimize skewness.
+
+:class:`PowerTransformer` currently provides two such power transformations,
+the Yeo-Johnson transform and the Box-Cox transform.
+
+The Yeo-Johnson transform is given by:
+
+.. math::
+    x_i^{(\lambda)} =
+    \begin{cases}
+     [(x_i + 1)^\lambda - 1] / \lambda & \text{if } \lambda \neq 0, x_i \geq 0, \\[8pt]
+    \ln{(x_i + 1)} & \text{if } \lambda = 0, x_i \geq 0 \\[8pt]
+    -[(-x_i + 1)^{2 - \lambda} - 1] / (2 - \lambda) & \text{if } \lambda \neq 2, x_i < 0, \\[8pt]
+     - \ln (- x_i + 1) & \text{if } \lambda = 2, x_i < 0
+    \end{cases}
+
+while the Box-Cox transform is given by:
+
+.. math::
+    x_i^{(\lambda)} =
+    \begin{cases}
+    \dfrac{x_i^\lambda - 1}{\lambda} & \text{if } \lambda \neq 0, \\[8pt]
+    \ln{(x_i)} & \text{if } \lambda = 0,
+    \end{cases}
+
+
+Box-Cox can only be applied to strictly positive data. In both methods, the
+transformation is parameterized by :math:`\lambda`, which is determined through
+maximum likelihood estimation. Here is an example of using Box-Cox to map
+samples drawn from a lognormal distribution to a normal distribution::
+
+  >>> pt = preprocessing.PowerTransformer(method='box-cox', standardize=False)
+  >>> X_lognormal = np.random.RandomState(616).lognormal(size=(3, 3))
+  >>> X_lognormal
+  array([[1.28..., 1.18..., 0.84...],
+         [0.94..., 1.60..., 0.38...],
+         [1.35..., 0.21..., 1.09...]])
+  >>> pt.fit_transform(X_lognormal)
+  array([[ 0.49...,  0.17..., -0.15...],
+         [-0.05...,  0.58..., -0.57...],
+         [ 0.69..., -0.84...,  0.10...]])
+
+While the above example sets the `standardize` option to `False`,
+:class:`PowerTransformer` will apply zero-mean, unit-variance normalization
+to the transformed output by default.
+
+Below are examples of Box-Cox and Yeo-Johnson applied to various probability
+distributions.  Note that when applied to certain distributions, the power
+transforms achieve very Gaussian-like results, but with others, they are
+ineffective. This highlights the importance of visualizing the data before and
+after transformation.
+
+.. figure:: ../auto_examples/preprocessing/images/sphx_glr_plot_map_data_to_normal_001.png
+   :target: ../auto_examples/preprocessing/plot_map_data_to_normal.html
+   :align: center
+   :scale: 100
+
+It is also possible to map data to a normal distribution using
+:class:`QuantileTransformer` by setting ``output_distribution='normal'``.
+Using the earlier example with the iris dataset::
 
   >>> quantile_transformer = preprocessing.QuantileTransformer(
   ...     output_distribution='normal', random_state=0)
   >>> X_trans = quantile_transformer.fit_transform(X)
-  >>> quantile_transformer.quantiles_ # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-  array([[ 4.3...,   2...,     1...,     0.1...],
-         [ 4.31...,  2.02...,  1.01...,  0.1...],
-         [ 4.32...,  2.05...,  1.02...,  0.1...],
+  >>> quantile_transformer.quantiles_
+  array([[4.3, 2. , 1. , 0.1],
+         [4.4, 2.2, 1.1, 0.1],
+         [4.4, 2.2, 1.2, 0.1],
          ...,
-         [ 7.84...,  4.34...,  6.84...,  2.5...],
-         [ 7.87...,  4.37...,  6.87...,  2.5...],
-         [ 7.9...,   4.4...,   6.9...,   2.5...]])
+         [7.7, 4.1, 6.7, 2.5],
+         [7.7, 4.2, 6.7, 2.5],
+         [7.9, 4.4, 6.9, 2.5]])
 
 Thus the median of the input becomes the mean of the output, centered at 0. The
 normal output is clipped so that the input's minimum and maximum ---
@@ -342,7 +422,7 @@ norms::
   ...      [ 0.,  1., -1.]]
   >>> X_normalized = preprocessing.normalize(X, norm='l2')
 
-  >>> X_normalized                                      # doctest: +ELLIPSIS
+  >>> X_normalized
   array([[ 0.40..., -0.40...,  0.81...],
          [ 1.  ...,  0.  ...,  0.  ...],
          [ 0.  ...,  0.70..., -0.70...]])
@@ -357,19 +437,21 @@ This class is hence suitable for use in the early steps of a
 
   >>> normalizer = preprocessing.Normalizer().fit(X)  # fit does nothing
   >>> normalizer
-  Normalizer(copy=True, norm='l2')
+  Normalizer()
 
 
 The normalizer instance can then be used on sample vectors as any transformer::
 
-  >>> normalizer.transform(X)                            # doctest: +ELLIPSIS
+  >>> normalizer.transform(X)
   array([[ 0.40..., -0.40...,  0.81...],
          [ 1.  ...,  0.  ...,  0.  ...],
          [ 0.  ...,  0.70..., -0.70...]])
 
-  >>> normalizer.transform([[-1.,  1., 0.]])             # doctest: +ELLIPSIS
+  >>> normalizer.transform([[-1.,  1., 0.]])
   array([[-0.70...,  0.70...,  0.  ...]])
 
+
+Note: L2 normalization is also known as spatial sign preprocessing.
 
 .. topic:: Sparse input
 
@@ -381,10 +463,199 @@ The normalizer instance can then be used on sample vectors as any transformer::
   efficient Cython routines. To avoid unnecessary memory copies, it is
   recommended to choose the CSR representation upstream.
 
-.. _preprocessing_binarization:
+.. _preprocessing_categorical_features:
 
-Binarization
-============
+Encoding categorical features
+=============================
+Often features are not given as continuous values but categorical.
+For example a person could have features ``["male", "female"]``,
+``["from Europe", "from US", "from Asia"]``,
+``["uses Firefox", "uses Chrome", "uses Safari", "uses Internet Explorer"]``.
+Such features can be efficiently coded as integers, for instance
+``["male", "from US", "uses Internet Explorer"]`` could be expressed as
+``[0, 1, 3]`` while ``["female", "from Asia", "uses Chrome"]`` would be
+``[1, 2, 1]``.
+
+To convert categorical features to such integer codes, we can use the
+:class:`OrdinalEncoder`. This estimator transforms each categorical feature to one
+new feature of integers (0 to n_categories - 1)::
+
+    >>> enc = preprocessing.OrdinalEncoder()
+    >>> X = [['male', 'from US', 'uses Safari'], ['female', 'from Europe', 'uses Firefox']]
+    >>> enc.fit(X)
+    OrdinalEncoder()
+    >>> enc.transform([['female', 'from US', 'uses Safari']])
+    array([[0., 1., 1.]])
+
+Such integer representation can, however, not be used directly with all
+scikit-learn estimators, as these expect continuous input, and would interpret
+the categories as being ordered, which is often not desired (i.e. the set of
+browsers was ordered arbitrarily).
+
+Another possibility to convert categorical features to features that can be used
+with scikit-learn estimators is to use a one-of-K, also known as one-hot or
+dummy encoding.
+This type of encoding can be obtained with the :class:`OneHotEncoder`,
+which transforms each categorical feature with
+``n_categories`` possible values into ``n_categories`` binary features, with
+one of them 1, and all others 0.
+
+Continuing the example above::
+
+  >>> enc = preprocessing.OneHotEncoder()
+  >>> X = [['male', 'from US', 'uses Safari'], ['female', 'from Europe', 'uses Firefox']]
+  >>> enc.fit(X)
+  OneHotEncoder()
+  >>> enc.transform([['female', 'from US', 'uses Safari'],
+  ...                ['male', 'from Europe', 'uses Safari']]).toarray()
+  array([[1., 0., 0., 1., 0., 1.],
+         [0., 1., 1., 0., 0., 1.]])
+
+By default, the values each feature can take is inferred automatically
+from the dataset and can be found in the ``categories_`` attribute::
+
+    >>> enc.categories_
+    [array(['female', 'male'], dtype=object), array(['from Europe', 'from US'], dtype=object), array(['uses Firefox', 'uses Safari'], dtype=object)]
+
+It is possible to specify this explicitly using the parameter ``categories``.
+There are two genders, four possible continents and four web browsers in our
+dataset::
+
+    >>> genders = ['female', 'male']
+    >>> locations = ['from Africa', 'from Asia', 'from Europe', 'from US']
+    >>> browsers = ['uses Chrome', 'uses Firefox', 'uses IE', 'uses Safari']
+    >>> enc = preprocessing.OneHotEncoder(categories=[genders, locations, browsers])
+    >>> # Note that for there are missing categorical values for the 2nd and 3rd
+    >>> # feature
+    >>> X = [['male', 'from US', 'uses Safari'], ['female', 'from Europe', 'uses Firefox']]
+    >>> enc.fit(X)
+    OneHotEncoder(categories=[['female', 'male'],
+                              ['from Africa', 'from Asia', 'from Europe',
+                               'from US'],
+                              ['uses Chrome', 'uses Firefox', 'uses IE',
+                               'uses Safari']])
+    >>> enc.transform([['female', 'from Asia', 'uses Chrome']]).toarray()
+    array([[1., 0., 0., 1., 0., 0., 1., 0., 0., 0.]])
+
+If there is a possibility that the training data might have missing categorical
+features, it can often be better to specify ``handle_unknown='ignore'`` instead
+of setting the ``categories`` manually as above. When
+``handle_unknown='ignore'`` is specified and unknown categories are encountered
+during transform, no error will be raised but the resulting one-hot encoded
+columns for this feature will be all zeros
+(``handle_unknown='ignore'`` is only supported for one-hot encoding)::
+
+    >>> enc = preprocessing.OneHotEncoder(handle_unknown='ignore')
+    >>> X = [['male', 'from US', 'uses Safari'], ['female', 'from Europe', 'uses Firefox']]
+    >>> enc.fit(X)
+    OneHotEncoder(handle_unknown='ignore')
+    >>> enc.transform([['female', 'from Asia', 'uses Chrome']]).toarray()
+    array([[1., 0., 0., 0., 0., 0.]])
+
+
+It is also possible to encode each column into ``n_categories - 1`` columns
+instead of ``n_categories`` columns by using the ``drop`` parameter. This
+parameter allows the user to specify a category for each feature to be dropped.
+This is useful to avoid co-linearity in the input matrix in some classifiers.
+Such functionality is useful, for example, when using non-regularized
+regression (:class:`LinearRegression <sklearn.linear_model.LinearRegression>`),
+since co-linearity would cause the covariance matrix to be non-invertible.
+When this parameter is not None, ``handle_unknown`` must be set to
+``error``::
+
+    >>> X = [['male', 'from US', 'uses Safari'],
+    ...      ['female', 'from Europe', 'uses Firefox']]
+    >>> drop_enc = preprocessing.OneHotEncoder(drop='first').fit(X)
+    >>> drop_enc.categories_
+    [array(['female', 'male'], dtype=object), array(['from Europe', 'from US'], dtype=object), array(['uses Firefox', 'uses Safari'], dtype=object)]
+    >>> drop_enc.transform(X).toarray()
+    array([[1., 1., 1.],
+           [0., 0., 0.]])
+
+One might want to drop one of the two columns only for features with 2
+categories. In this case, you can set the parameter `drop='if_binary'`.
+
+    >>> X = [['male', 'US', 'Safari'],
+    ...      ['female', 'Europe', 'Firefox'],
+    ...      ['female', 'Asia', 'Chrome']]
+    >>> drop_enc = preprocessing.OneHotEncoder(drop='if_binary').fit(X)
+    >>> drop_enc.categories_
+    [array(['female', 'male'], dtype=object), array(['Asia', 'Europe', 'US'], dtype=object), array(['Chrome', 'Firefox', 'Safari'], dtype=object)]
+    >>> drop_enc.transform(X).toarray()
+    array([[1., 0., 0., 1., 0., 0., 1.],
+           [0., 0., 1., 0., 0., 1., 0.],
+           [0., 1., 0., 0., 1., 0., 0.]])
+
+In the transformed `X`, the first column is the encoding of the feature with
+categories "male"/"female", while the remaining 6 columns is the encoding of
+the 2 features with respectively 3 categories each.
+
+See :ref:`dict_feature_extraction` for categorical features that are
+represented as a dict, not as scalars.
+
+.. _preprocessing_discretization:
+
+Discretization
+==============
+
+`Discretization <https://en.wikipedia.org/wiki/Discretization_of_continuous_features>`_
+(otherwise known as quantization or binning) provides a way to partition continuous
+features into discrete values. Certain datasets with continuous features
+may benefit from discretization, because discretization can transform the dataset
+of continuous attributes to one with only nominal attributes.
+
+One-hot encoded discretized features can make a model more expressive, while
+maintaining interpretability. For instance, pre-processing with a discretizer
+can introduce nonlinearity to linear models.
+
+K-bins discretization
+---------------------
+
+:class:`KBinsDiscretizer` discretizes features into ``k`` bins::
+
+  >>> X = np.array([[ -3., 5., 15 ],
+  ...               [  0., 6., 14 ],
+  ...               [  6., 3., 11 ]])
+  >>> est = preprocessing.KBinsDiscretizer(n_bins=[3, 2, 2], encode='ordinal').fit(X)
+
+By default the output is one-hot encoded into a sparse matrix
+(See :ref:`preprocessing_categorical_features`)
+and this can be configured with the ``encode`` parameter.
+For each feature, the bin edges are computed during ``fit`` and together with
+the number of bins, they will define the intervals. Therefore, for the current
+example, these intervals are defined as:
+
+ - feature 1: :math:`{[-\infty, -1), [-1, 2), [2, \infty)}`
+ - feature 2: :math:`{[-\infty, 5), [5, \infty)}`
+ - feature 3: :math:`{[-\infty, 14), [14, \infty)}`
+
+Based on these bin intervals, ``X`` is transformed as follows::
+
+  >>> est.transform(X)                      # doctest: +SKIP
+  array([[ 0., 1., 1.],
+         [ 1., 1., 1.],
+         [ 2., 0., 0.]])
+
+The resulting dataset contains ordinal attributes which can be further used
+in a :class:`sklearn.pipeline.Pipeline`.
+
+Discretization is similar to constructing histograms for continuous data.
+However, histograms focus on counting features which fall into particular
+bins, whereas discretization focuses on assigning feature values to these bins.
+
+:class:`KBinsDiscretizer` implements different binning strategies, which can be
+selected with the ``strategy`` parameter. The 'uniform' strategy uses
+constant-width bins. The 'quantile' strategy uses the quantiles values to have
+equally populated bins in each feature. The 'kmeans' strategy defines bins based
+on a k-means clustering procedure performed on each feature independently.
+
+.. topic:: Examples:
+
+  * :ref:`sphx_glr_auto_examples_preprocessing_plot_discretization.py`
+  * :ref:`sphx_glr_auto_examples_preprocessing_plot_discretization_classification.py`
+  * :ref:`sphx_glr_auto_examples_preprocessing_plot_discretization_strategies.py`
+
+.. _preprocessing_binarization:
 
 Feature binarization
 --------------------
@@ -412,24 +683,27 @@ as each sample is treated independently of others::
 
   >>> binarizer = preprocessing.Binarizer().fit(X)  # fit does nothing
   >>> binarizer
-  Binarizer(copy=True, threshold=0.0)
+  Binarizer()
 
   >>> binarizer.transform(X)
-  array([[ 1.,  0.,  1.],
-         [ 1.,  0.,  0.],
-         [ 0.,  1.,  0.]])
+  array([[1., 0., 1.],
+         [1., 0., 0.],
+         [0., 1., 0.]])
 
 It is possible to adjust the threshold of the binarizer::
 
   >>> binarizer = preprocessing.Binarizer(threshold=1.1)
   >>> binarizer.transform(X)
-  array([[ 0.,  0.,  1.],
-         [ 1.,  0.,  0.],
-         [ 0.,  0.,  0.]])
+  array([[0., 0., 1.],
+         [1., 0., 0.],
+         [0., 0., 0.]])
 
 As for the :class:`StandardScaler` and :class:`Normalizer` classes, the
 preprocessing module provides a companion function :func:`binarize`
 to be used when the transformer API is not necessary.
+
+Note that the :class:`Binarizer` is similar to the :class:`KBinsDiscretizer`
+when ``k = 2``, and when the bin edge is at the value ``threshold``.
 
 .. topic:: Sparse input
 
@@ -441,115 +715,12 @@ to be used when the transformer API is not necessary.
   To avoid unnecessary memory copies, it is recommended to choose the CSR
   representation upstream.
 
-
-.. _preprocessing_categorical_features:
-
-Encoding categorical features
-=============================
-Often features are not given as continuous values but categorical.
-For example a person could have features ``["male", "female"]``,
-``["from Europe", "from US", "from Asia"]``,
-``["uses Firefox", "uses Chrome", "uses Safari", "uses Internet Explorer"]``.
-Such features can be efficiently coded as integers, for instance
-``["male", "from US", "uses Internet Explorer"]`` could be expressed as
-``[0, 1, 3]`` while ``["female", "from Asia", "uses Chrome"]`` would be
-``[1, 2, 1]``.
-
-Such integer representation can not be used directly with scikit-learn estimators, as these
-expect continuous input, and would interpret the categories as being ordered, which is often
-not desired (i.e. the set of browsers was ordered arbitrarily).
-
-One possibility to convert categorical features to features that can be used
-with scikit-learn estimators is to use a one-of-K or one-hot encoding, which is
-implemented in :class:`OneHotEncoder`.  This estimator transforms each
-categorical feature with ``m`` possible values into ``m`` binary features, with
-only one active.
-
-Continuing the example above::
-
-  >>> enc = preprocessing.OneHotEncoder()
-  >>> enc.fit([[0, 0, 3], [1, 1, 0], [0, 2, 1], [1, 0, 2]])  # doctest: +ELLIPSIS
-  OneHotEncoder(categorical_features='all', dtype=<... 'numpy.float64'>,
-         handle_unknown='error', n_values='auto', sparse=True)
-  >>> enc.transform([[0, 1, 3]]).toarray()
-  array([[ 1.,  0.,  0.,  1.,  0.,  0.,  0.,  0.,  1.]])
-
-By default, how many values each feature can take is inferred automatically from the dataset.
-It is possible to specify this explicitly using the parameter ``n_values``.
-There are two genders, three possible continents and four web browsers in our
-dataset.
-Then we fit the estimator, and transform a data point.
-In the result, the first two numbers encode the gender, the next set of three
-numbers the continent and the last four the web browser.
-
-Note that, if there is a possibility that the training data might have missing categorical
-features, one has to explicitly set ``n_values``. For example,
-
-    >>> enc = preprocessing.OneHotEncoder(n_values=[2, 3, 4])
-    >>> # Note that there are missing categorical values for the 2nd and 3rd
-    >>> # features
-    >>> enc.fit([[1, 2, 3], [0, 2, 0]])  # doctest: +ELLIPSIS
-    OneHotEncoder(categorical_features='all', dtype=<... 'numpy.float64'>,
-           handle_unknown='error', n_values=[2, 3, 4], sparse=True)
-    >>> enc.transform([[1, 0, 0]]).toarray()
-    array([[ 0.,  1.,  1.,  0.,  0.,  1.,  0.,  0.,  0.]])
-
-See :ref:`dict_feature_extraction` for categorical features that are represented
-as a dict, not as integers.
-
 .. _imputation:
 
 Imputation of missing values
 ============================
 
-For various reasons, many real world datasets contain missing values, often
-encoded as blanks, NaNs or other placeholders. Such datasets however are
-incompatible with scikit-learn estimators which assume that all values in an
-array are numerical, and that all have and hold meaning. A basic strategy to use
-incomplete datasets is to discard entire rows and/or columns containing missing
-values. However, this comes at the price of losing data which may be valuable
-(even though incomplete). A better strategy is to impute the missing values,
-i.e., to infer them from the known part of the data.
-
-The :class:`Imputer` class provides basic strategies for imputing missing
-values, either using the mean, the median or the most frequent value of
-the row or column in which the missing values are located. This class
-also allows for different missing values encodings.
-
-The following snippet demonstrates how to replace missing values,
-encoded as ``np.nan``, using the mean value of the columns (axis 0)
-that contain the missing values::
-
-    >>> import numpy as np
-    >>> from sklearn.preprocessing import Imputer
-    >>> imp = Imputer(missing_values='NaN', strategy='mean', axis=0)
-    >>> imp.fit([[1, 2], [np.nan, 3], [7, 6]])
-    Imputer(axis=0, copy=True, missing_values='NaN', strategy='mean', verbose=0)
-    >>> X = [[np.nan, 2], [6, np.nan], [7, 6]]
-    >>> print(imp.transform(X))                           # doctest: +ELLIPSIS
-    [[ 4.          2.        ]
-     [ 6.          3.666...]
-     [ 7.          6.        ]]
-
-The :class:`Imputer` class also supports sparse matrices::
-
-    >>> import scipy.sparse as sp
-    >>> X = sp.csc_matrix([[1, 2], [0, 3], [7, 6]])
-    >>> imp = Imputer(missing_values=0, strategy='mean', axis=0)
-    >>> imp.fit(X)
-    Imputer(axis=0, copy=True, missing_values=0, strategy='mean', verbose=0)
-    >>> X_test = sp.csc_matrix([[0, 2], [6, 0], [7, 6]])
-    >>> print(imp.transform(X_test))                      # doctest: +ELLIPSIS
-    [[ 4.          2.        ]
-     [ 6.          3.666...]
-     [ 7.          6.        ]]
-
-Note that, here, missing values are encoded by 0 and are thus implicitly stored
-in the matrix. This format is thus suitable when there are many more missing
-values than observed values.
-
-:class:`Imputer` can be used in a Pipeline as a way to build a composite
-estimator that supports imputation. See :ref:`sphx_glr_auto_examples_plot_missing_values.py`.
+Tools for imputing missing values are discussed at :ref:`impute`.
 
 .. _polynomial_features:
 
@@ -561,30 +732,30 @@ Often it's useful to add complexity to the model by considering nonlinear featur
     >>> import numpy as np
     >>> from sklearn.preprocessing import PolynomialFeatures
     >>> X = np.arange(6).reshape(3, 2)
-    >>> X                                                 # doctest: +ELLIPSIS
+    >>> X
     array([[0, 1],
            [2, 3],
            [4, 5]])
     >>> poly = PolynomialFeatures(2)
-    >>> poly.fit_transform(X)                             # doctest: +ELLIPSIS
-    array([[  1.,   0.,   1.,   0.,   0.,   1.],
-           [  1.,   2.,   3.,   4.,   6.,   9.],
-           [  1.,   4.,   5.,  16.,  20.,  25.]])
+    >>> poly.fit_transform(X)
+    array([[ 1.,  0.,  1.,  0.,  0.,  1.],
+           [ 1.,  2.,  3.,  4.,  6.,  9.],
+           [ 1.,  4.,  5., 16., 20., 25.]])
 
 The features of X have been transformed from :math:`(X_1, X_2)` to :math:`(1, X_1, X_2, X_1^2, X_1X_2, X_2^2)`.
 
 In some cases, only interaction terms among features are required, and it can be gotten with the setting ``interaction_only=True``::
 
     >>> X = np.arange(9).reshape(3, 3)
-    >>> X                                                 # doctest: +ELLIPSIS
+    >>> X
     array([[0, 1, 2],
            [3, 4, 5],
            [6, 7, 8]])
     >>> poly = PolynomialFeatures(degree=3, interaction_only=True)
-    >>> poly.fit_transform(X)                             # doctest: +ELLIPSIS
-    array([[   1.,    0.,    1.,    2.,    0.,    0.,    2.,    0.],
-           [   1.,    3.,    4.,    5.,   12.,   15.,   20.,   60.],
-           [   1.,    6.,    7.,    8.,   42.,   48.,   56.,  336.]])
+    >>> poly.fit_transform(X)
+    array([[  1.,   0.,   1.,   2.,   0.,   0.,   2.,   0.],
+           [  1.,   3.,   4.,   5.,  12.,  15.,  20.,  60.],
+           [  1.,   6.,   7.,   8.,  42.,  48.,  56., 336.]])
 
 The features of X have been transformed from :math:`(X_1, X_2, X_3)` to :math:`(1, X_1, X_2, X_3, X_1X_2, X_1X_3, X_2X_3, X_1X_2X_3)`.
 
@@ -604,11 +775,11 @@ a transformer that applies a log transformation in a pipeline, do::
 
     >>> import numpy as np
     >>> from sklearn.preprocessing import FunctionTransformer
-    >>> transformer = FunctionTransformer(np.log1p)
+    >>> transformer = FunctionTransformer(np.log1p, validate=True)
     >>> X = np.array([[0, 1], [2, 3]])
     >>> transformer.transform(X)
-    array([[ 0.        ,  0.69314718],
-           [ 1.09861229,  1.38629436]])
+    array([[0.        , 0.69314718],
+           [1.09861229, 1.38629436]])
 
 You can ensure that ``func`` and ``inverse_func`` are the inverse of each other
 by setting ``check_inverse=True`` and calling ``fit`` before

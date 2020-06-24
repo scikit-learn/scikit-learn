@@ -1,0 +1,163 @@
+version: 2
+
+jobs:
+  doc-min-dependencies:
+    docker:
+      - image: circleci/python:3.7.3-stretch
+    environment:
+      - OMP_NUM_THREADS: 2
+      - MKL_NUM_THREADS: 2
+      - MINICONDA_PATH: ~/miniconda
+      - CONDA_ENV_NAME: testenv
+      - PYTHON_VERSION: 3.6
+      - NUMPY_VERSION: 1.13.3
+      - SCIPY_VERSION: 0.19.1
+      - MATPLOTLIB_VERSION: 2.1.1
+      # on conda, this is the latest for python 3.5
+      # The following places need to be in sync with regard to Cython version:
+      # - .circleci config file
+      # - sklearn/_build_utils/__init__.py
+      # - advanced installation guide
+      - CYTHON_VERSION: 0.28.5
+      - SCIKIT_IMAGE_VERSION: 0.13
+    steps:
+      - checkout
+      - run: ./build_tools/circle/checkout_merge_commit.sh
+      - restore_cache:
+          key: v1-datasets-{{ .Branch }}
+      - restore_cache:
+          keys:
+            - doc-min-deps-ccache-{{ .Branch }}
+            - doc-min-deps-ccache
+      - run: ./build_tools/circle/build_doc.sh
+      - save_cache:
+          key: doc-min-deps-ccache-{{ .Branch }}-{{ .BuildNum }}
+          paths:
+            - ~/.ccache
+            - ~/.cache/pip
+      - save_cache:
+          key: v1-datasets-{{ .Branch }}
+          paths:
+            - ~/scikit_learn_data
+      - store_artifacts:
+          path: doc/_build/html/stable
+          destination: doc
+      - store_artifacts:
+          path: ~/log.txt
+          destination: log.txt
+
+  doc:
+    docker:
+      - image: circleci/python:3.7.3-stretch
+    environment:
+      - OMP_NUM_THREADS: 2
+      - MKL_NUM_THREADS: 2
+      - MINICONDA_PATH: ~/miniconda
+      - CONDA_ENV_NAME: testenv
+      - PYTHON_VERSION: 3
+    steps:
+      - checkout
+      - run: ./build_tools/circle/checkout_merge_commit.sh
+      - restore_cache:
+          key: v1-datasets-{{ .Branch }}
+      - restore_cache:
+          keys:
+            - doc-ccache-{{ .Branch }}
+            - doc-ccache
+      - run: ./build_tools/circle/build_doc.sh
+      - save_cache:
+          key: doc-ccache-{{ .Branch }}-{{ .BuildNum }}
+          paths:
+            - ~/.ccache
+            - ~/.cache/pip
+      - save_cache:
+          key: v1-datasets-{{ .Branch }}
+          paths:
+            - ~/scikit_learn_data
+      - store_artifacts:
+          path: doc/_build/html/stable
+          destination: doc
+      - store_artifacts:
+          path: ~/log.txt
+          destination: log.txt
+      # Persists generated documentation so that it can be attached and deployed
+      # in the 'deploy' step.
+      - persist_to_workspace:
+          root: doc/_build/html
+          paths: .
+
+  lint:
+    docker:
+      - image: circleci/python:3.6
+    steps:
+      - checkout
+      - run: ./build_tools/circle/checkout_merge_commit.sh
+      - run:
+          name: dependencies
+          command: sudo pip install flake8
+      - run:
+          name: linting
+          command: ./build_tools/circle/linting.sh
+
+  pypy3:
+    docker:
+      - image: pypy:3.6-7.2.0
+    steps:
+      - restore_cache:
+          keys:
+            - pypy3-ccache-{{ .Branch }}
+            - pypy3-ccache
+      - checkout
+      - run: ./build_tools/circle/build_test_pypy.sh
+      - save_cache:
+          key: pypy3-ccache-{{ .Branch }}-{{ .BuildNum }}
+          paths:
+            - ~/.ccache
+            - ~/.cache/pip
+
+  deploy:
+    docker:
+      - image: circleci/python:3.6
+    steps:
+      - checkout
+      - run: ./build_tools/circle/checkout_merge_commit.sh
+      # Attach documentation generated in the 'doc' step so that it can be
+      # deployed.
+      - attach_workspace:
+          at: doc/_build/html
+      - run: ls -ltrh doc/_build/html/stable
+      - deploy:
+          command: |
+            if [[ "${CIRCLE_BRANCH}" =~ ^master$|^[0-9]+\.[0-9]+\.X$ ]]; then
+              bash build_tools/circle/push_doc.sh doc/_build/html/stable
+            fi
+
+workflows:
+  version: 2
+  build-doc-and-deploy:
+    jobs:
+      - lint
+      - doc:
+          requires:
+            - lint
+      - doc-min-dependencies:
+          requires:
+            - lint
+      - pypy3:
+          filters:
+            branches:
+              only:
+                - 0.20.X
+      - deploy:
+          requires:
+            - doc
+  pypy:
+    triggers:
+      - schedule:
+          cron: "0 0 * * *"
+          filters:
+            branches:
+              only:
+                - master
+    jobs:
+      - pypy3
