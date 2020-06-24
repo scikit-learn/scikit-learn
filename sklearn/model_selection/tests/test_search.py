@@ -13,7 +13,6 @@ import numpy as np
 import scipy.sparse as sp
 import pytest
 
-from sklearn.utils.fixes import sp_version
 from sklearn.utils._testing import assert_raises
 from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import assert_warns_message
@@ -820,11 +819,10 @@ def test_param_sampler():
                                n_iter=3, random_state=0)
     assert [x for x in sampler] == [x for x in sampler]
 
-    if sp_version >= (0, 16):
-        param_distributions = {"C": uniform(0, 1)}
-        sampler = ParameterSampler(param_distributions=param_distributions,
-                                   n_iter=10, random_state=0)
-        assert [x for x in sampler] == [x for x in sampler]
+    param_distributions = {"C": uniform(0, 1)}
+    sampler = ParameterSampler(param_distributions=param_distributions,
+                               n_iter=10, random_state=0)
+    assert [x for x in sampler] == [x for x in sampler]
 
 
 def check_cv_results_array_types(search, param_keys, score_keys):
