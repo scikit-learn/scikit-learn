@@ -28,9 +28,11 @@ from sklearn.utils._testing import ignore_warnings
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import TempMemmap
 
-from sklearn.linear_model import Lasso, \
+from sklearn.linear_model import Lasso, LassoLars, Lars, LinearRegression, \
     LassoCV, ElasticNet, ElasticNetCV, MultiTaskLasso, MultiTaskElasticNet, \
-    MultiTaskElasticNetCV, MultiTaskLassoCV, lasso_path, enet_path
+    MultiTaskElasticNetCV, MultiTaskLassoCV, lasso_path, enet_path, Ridge, \
+    BayesianRidge, ARDRegression, OrthogonalMatchingPursuit, LassoLarsIC, \
+    RidgeClassifier
 from sklearn.linear_model import LassoLarsCV, lars_path
 from sklearn.linear_model._coordinate_descent import _set_order
 from sklearn.utils import check_array
@@ -249,123 +251,9 @@ def test_lasso_cv_positive_constraint():
     assert min(clf_constrained.coef_) >= 0
 
 
-# linear models which use parameter normalize
-# ok:
-from sklearn.linear_model import Lasso, LassoLars
-# do not accept alpha and fail on .coef_
-from sklearn.linear_model import Lars, LassoCV, LinearRegression
-from sklearn.linear_model import LarsCV
-from sklearn.linear_model import BayesianRidge, ARDRegression
-from sklearn.linear_model import LassoLarsCV, OrthogonalMatchingPursuit
-from sklearn.linear_model import OrthogonalMatchingPursuitCV, LassoLarsIC
-# do not accept alpha and fail on the y_pred and .coef_
-from sklearn.linear_model import ElasticNetCV, RidgeCV
-# do not accept alpha and ValueError: For mono-task outputs, use ElasticNetCVCV
-# arrays are not almost equals to 1 decimal
-from sklearn.linear_model import MultiTaskElasticNetCV, MultiTaskLassoCV
-# do not accept alpha and raise ValueError("Unknown label type: %s" % repr(ys))
-from sklearn.linear_model import RidgeClassifierCV
-# assert: arrays are not almost equals
-from sklearn.linear_model import ElasticNet, Ridge
-# ValueError: For mono-task outputs, use ElasticNet
-from sklearn.linear_model import MultiTaskElasticNet, MultiTaskLasso
-# raise ValueError("Unknown label type: %s" % repr(ys)), if y changed to 0s and
-# 1s fails on .coef_
-from sklearn.linear_model import RidgeClassifier
-
-
-@pytest.mark.parametrize("test_model, args",
-    [(MultiTaskElasticNetCV, {}), (MultiTaskLassoCV, {})])
-def test_model_pipeline_same_as_normalize_true_multitask(test_model, args):
-    # Test that linear model set with normalize set to True is doing the same
-    # as the same linear model preceeded by StandardScaler in the pipeline and
-    # with normalize set to False
-
-    n_samples, n_features = 300, 2
-    random_state = np.random.RandomState(0)
-    w = random_state.randn(n_features)
-    X = random_state.randn(n_samples, n_features)
-    X += 10  # make features non-zero mean
-    y = X.dot(w)
-    y = np.stack((y, y), axis=1)
-
-    if test_model == MultiTaskElasticNetCV:
-        # X = np.stack([X, X])
-        y = np.stack([y, y], axis=1)
-    X, X_test, y, y_test = train_test_split(X, y, random_state=42)
-
-    # normalize is True
-    clf_norm = test_model(normalize=True, fit_intercept=True,
-                          **args)
-    clf_norm.fit(X, y)
-    y_pred_norm = clf_norm.predict(X_test)
-
-    clf_pipe = make_pipeline(
-        StandardScaler(),
-        test_model(normalize=False, fit_intercept=True, **args)
-    )
-    clf_pipe.fit(X, y)
-    y_pred_pipe = clf_pipe.predict(X_test)
-
-    assert_array_almost_equal(clf_norm.coef_, clf_pipe[1].coef_, decimal=2)
-    if test_model == MultiTaskElasticNetCV:
-        assert np.all(abs(clf_norm.intercept_ - clf_pipe[1].intercept_) > 1.)
-    else:
-        assert abs(clf_norm.intercept_ - clf_pipe[1].intercept_) > 1.
-    assert_array_almost_equal(y_pred_norm, y_pred_pipe)
-
-
-@pytest.mark.parametrize("test_model, args",
-    [(Lars, {}), (LassoCV, {}), (LinearRegression, {}),
-     (OrthogonalMatchingPursuitCV, {}), (OrthogonalMatchingPursuit, {}),
-     (LarsCV, {}), (BayesianRidge, {}), (ARDRegression, {}), (LassoLarsCV, {}),
-     (LassoLarsIC, {}), (MultiTaskElasticNetCV, {}), (MultiTaskLasso, {}),
-     (ElasticNetCV, {}), (RidgeCV, {}), (RidgeClassifierCV, {})
-    ])
-def test_model_pipeline_same_as_normalize_true_no_alpha(test_model, args):
-    # Test that linear model set with normalize set to True is doing the same
-    # as the same linear model preceeded by StandardScaler in the pipeline and
-    # with normalize set to False
-
-    n_samples, n_features = 300, 2
-    random_state = np.random.RandomState(0)
-    w = random_state.randn(n_features)
-    X = random_state.randn(n_samples, n_features)
-    X += 10  # make features non-zero mean
-    y = X.dot(w)
-
-    if test_model == MultiTaskElasticNetCV or test_model == MultiTaskLasso:
-        y = np.stack([y, y], axis=1)
-
-    if test_model == RidgeClassifierCV:
-        y[y > np.mean(y)] = 0
-        y[y > 0] = 1
-    X, X_test, y, y_test = train_test_split(X, y, random_state=42)
-
-    # normalize is True
-    clf_norm = test_model(normalize=True, fit_intercept=True,
-                          **args)
-    clf_norm.fit(X, y)
-    y_pred_norm = clf_norm.predict(X_test)
-
-    clf_pipe = make_pipeline(
-        StandardScaler(),
-        test_model(normalize=False, fit_intercept=True, **args)
-    )
-    clf_pipe.fit(X, y)
-    y_pred_pipe = clf_pipe.predict(X_test)
-
-    assert_array_almost_equal(clf_norm.coef_, clf_pipe[1].coef_, decimal=2)
-    if test_model == MultiTaskElasticNetCV:
-        assert np.all(abs(clf_norm.intercept_ - clf_pipe[1].intercept_) > 1.)
-    else:
-        assert abs(clf_norm.intercept_ - clf_pipe[1].intercept_) > 1.
-    assert_array_almost_equal(y_pred_norm, y_pred_pipe)
-
-
-@pytest.mark.parametrize("test_model, args",
-    [
-     (Lasso, {"tol": 1e-16, "alpha": 0.1}), (LassoLars, {"alpha": 0.1}),
+@pytest.mark.parametrize(
+    "test_model, args",
+    [(Lasso, {"tol": 1e-16, "alpha": 0.1}), (LassoLars, {"alpha": 0.1}),
      (RidgeClassifier, {"solver": 'sparse_cg', "alpha": 0.1}),
      (ElasticNet, {"tol": 1e-16, 'l1_ratio': 1, "alpha": 0.1}),
      (ElasticNet, {"tol": 1e-16, 'l1_ratio': 0, "alpha": 0.1}),
@@ -373,12 +261,13 @@ def test_model_pipeline_same_as_normalize_true_no_alpha(test_model, args):
      (BayesianRidge, {}), (ARDRegression, {}), (OrthogonalMatchingPursuit, {}),
      (MultiTaskElasticNet, {"tol": 1e-16, 'l1_ratio': 1, "alpha": 0.1}),
      (MultiTaskElasticNet, {"tol": 1e-16, 'l1_ratio': 0, "alpha": 0.1}),
-     (MultiTaskLasso, {"tol": 1e-16, "alpha": 0.1}),,
-    ])
+     (MultiTaskLasso, {"tol": 1e-16, "alpha": 0.1}),
+     (Lars, {}), (LinearRegression, {}), (LassoLarsIC, {})
+     ])
 def test_model_pipeline_same_as_normalize_true(test_model, args):
-    # Test that linear model set with normalize set to True is doing the same
-    # as the same linear model preceeded by StandardScaler in the pipeline and
-    # with normalize set to False
+    # Test that linear models (test_model) set with normalize set to True are
+    # doing the same as the same linear model preceeded by StandardScaler
+    # in the pipeline and with normalize set to False
 
     n_samples, n_features = 100, 2
     random_state = np.random.RandomState(0)
@@ -396,7 +285,6 @@ def test_model_pipeline_same_as_normalize_true(test_model, args):
 
     X, X_test, y, y_test = train_test_split(X, y, random_state=42)
 
-    # alpha = 0.1
     # normalize is True
     clf_norm = test_model(normalize=True, fit_intercept=True,
                           **args)
@@ -405,7 +293,7 @@ def test_model_pipeline_same_as_normalize_true(test_model, args):
 
     if 'alpha' in args:
         alpha_scaled = args['alpha']
-    if 'Lasso' in str(test_model):
+    if 'Lasso' in str(test_model) and test_model != LassoLarsIC:
         alpha_scaled = alpha_scaled * np.sqrt(X.shape[0])
     if 'Ridge' in str(test_model) and 'alpha' in args:
         alpha_scaled = alpha_scaled * X.shape[0]
@@ -417,7 +305,6 @@ def test_model_pipeline_same_as_normalize_true(test_model, args):
 
     if 'alpha' in args:
         args['alpha'] = alpha_scaled
-
 
     clf_pipe = make_pipeline(
         StandardScaler(),
@@ -434,28 +321,61 @@ def test_model_pipeline_same_as_normalize_true(test_model, args):
     assert_array_almost_equal(y_pred_norm, y_pred_pipe)
 
 
-@pytest.mark.parametrize("linear_model", [Lasso])
-def test_model_pipeline_same_dense_and_sparse(linear_model):
+@pytest.mark.parametrize(
+    "test_model, args",
+    [
+     (Lasso, {"tol": 1e-16, "alpha": 0.1}),
+     (LassoCV, {"tol": 1e-16}), (ElasticNetCV, {}),
+     (RidgeClassifier, {"solver": 'sparse_cg', "alpha": 0.1}),
+     (ElasticNet, {"tol": 1e-16, 'l1_ratio': 1, "alpha": 0.1}),
+     (ElasticNet, {"tol": 1e-16, 'l1_ratio': 0, "alpha": 0.1}),
+     (Ridge, {"solver": 'sparse_cg', 'tol': 1e-12, "alpha": 0.1})
+     #
+     # TypeError: A sparse matrix was passed, but dense data is required:
+     # (OrthogonalMatchingPursuitCV, {})
+     # (LassoLarsCV, {}),
+     # (LarsCV, {}),
+     # (LassoLars, {"alpha": 0.1}),
+     # (BayesianRidge, {}),
+     # (MultiTaskLassoCV, {}),
+     # (ARDRegression, {}),
+     # (OrthogonalMatchingPursuit, {}),
+     # (MultiTaskElasticNet, {"tol": 1e-16, 'l1_ratio': 1, "alpha": 0.1}),
+     # (MultiTaskElasticNet, {"tol": 1e-16, 'l1_ratio': 0, "alpha": 0.1}),
+     # (MultiTaskLasso, {"tol": 1e-16, "alpha": 0.1}),
+     # (Lars, {}),
+     # (LassoLarsIC, {})
+     # (MultiTaskElasticNetCV, {})
+     #
+     # Arrays are not almost equal to 7 decimals
+     # (LinearRegression, {}),
+     #  (RidgeCV, {})
+     # (RidgeClassifierCV, {})
+     ])
+def test_model_pipeline_same_dense_and_sparse(test_model, args):
     # Test that linear model preceeded by StandardScaler in the pipeline and
     # with normalize set to False gives the same y_pred and the same .coef_
     # given X sparse or dense
+    n_samples = 50
+    X_sparse = sparse.csc_matrix(np.identity(n_samples))
+    X_test_sparse = sparse.csc_matrix(np.zeros((n_samples, n_samples)))
+    y = np.arange(-n_samples, 0)
 
-    X_sparse = sparse.csc_matrix(np.identity(3))
-    X_test_sparse = sparse.csc_matrix(np.zeros((3, 3)))
-    y = np.array([-1, 0, 1])
+    if 'MultiTask' in str(test_model):
+        y = np.stack((y, y), axis=1)
 
     X = X_sparse.todense()
     X_test = X_test_sparse.todense()
 
     clf_pipe_dense = make_pipeline(
         StandardScaler(with_mean=False),
-        linear_model(alpha=0.1, normalize=False)
+        test_model(normalize=False, **args)
     )
     clf_pipe_dense.fit(X, y)
 
     clf_pipe_sparse = make_pipeline(
         StandardScaler(with_mean=False),
-        linear_model(alpha=0.1, normalize=False)
+        test_model(normalize=False, **args)
     )
     clf_pipe_sparse.fit(X_sparse, y)
     assert_almost_equal(clf_pipe_sparse[1].coef_,
