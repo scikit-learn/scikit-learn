@@ -230,18 +230,17 @@ def test_fit_docstring_attributes(name, Estimator):
 
     IGNORED = {'BayesianRidge', 'Birch', 'CCA', 'CategoricalNB', 'ElasticNet',
                'ElasticNetCV', 'GaussianProcessClassifier',
-               'HistGradientBoostingClassifier',
+               'GradientBoostingRegressor', 'HistGradientBoostingClassifier',
                'HistGradientBoostingRegressor',
                'KernelCenterer', 'KernelDensity',
                'LarsCV', 'Lasso', 'LassoLarsCV', 'LassoLarsIC',
-               'LocalOutlierFactor', 'MDS',
-               'MiniBatchKMeans',
+               'MDS',
+               'MiniBatchKMeans', 'MLPClassifier', 'MLPRegressor',
                'MultiTaskElasticNet', 'MultiTaskElasticNetCV',
                'MultiTaskLasso', 'MultiTaskLassoCV',
                'OrthogonalMatchingPursuit',
                'PLSCanonical', 'PLSSVD',
-               'PassiveAggressiveClassifier'}
-
+               'PassiveAggressiveClassifier', 'RBFSampler'}
     if Estimator.__name__ in IGNORED:
         pytest.xfail(
             reason="Estimator has too many undocumented attributes.")
