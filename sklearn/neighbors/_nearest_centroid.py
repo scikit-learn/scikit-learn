@@ -64,7 +64,7 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
     >>> y = np.array([1, 1, 1, 2, 2, 2])
     >>> clf = NearestCentroid()
     >>> clf.fit(X, y)
-    NearestCentroid()
+    NearestCentroid(prior=None, prob=None)
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
 
