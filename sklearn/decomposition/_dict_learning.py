@@ -1052,9 +1052,6 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
             transform_max_iter
         )
         self.dictionary = dictionary
-        # The object may be used without being fit.
-        # It preserves the previous behaviour.
-        sef.fitted_ = True
 
     def fit(self, X, y=None):
         """Do nothing and return the estimator unchanged.
@@ -1101,10 +1098,6 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
 
     def _more_tags(self):
         return {"requires_fit": False}
-
-    @property
-    def components_(self):
-        return self.dictionary
 
     @property
     def n_components_(self):
