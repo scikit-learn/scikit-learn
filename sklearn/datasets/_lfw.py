@@ -12,7 +12,6 @@ from os import listdir, makedirs, remove
 from os.path import dirname, join, exists, isdir
 
 import logging
-from distutils.version import LooseVersion
 
 import numpy as np
 import joblib
@@ -21,6 +20,7 @@ from joblib import Memory
 from ._base import get_data_home, _fetch_remote, RemoteFileMetadata
 from ..utils import Bunch
 from ..utils.validation import _deprecate_positional_args
+from ..utils.fixes import parse_version
 
 logger = logging.getLogger(__name__)
 
@@ -304,7 +304,7 @@ def fetch_lfw_people(*, data_home=None, funneled=True, resize=0.5,
 
     # wrap the loader in a memoizing function that will return memmaped data
     # arrays for optimal memory usage
-    if LooseVersion(joblib.__version__) < LooseVersion('0.12'):
+    if parse_version(joblib.__version__) < parse_version('0.12'):
         # Deal with change of API in joblib
         m = Memory(cachedir=lfw_home, compress=6, verbose=0)
     else:
@@ -477,7 +477,7 @@ def fetch_lfw_pairs(*, subset='train', data_home=None, funneled=True,
 
     # wrap the loader in a memoizing function that will return memmaped data
     # arrays for optimal memory usage
-    if LooseVersion(joblib.__version__) < LooseVersion('0.12'):
+    if parse_version(joblib.__version__) < parse_version('0.12'):
         # Deal with change of API in joblib
         m = Memory(cachedir=lfw_home, compress=6, verbose=0)
     else:
