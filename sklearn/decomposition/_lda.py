@@ -25,7 +25,7 @@ from ..utils.validation import _deprecate_positional_args
 from ._online_lda_fast import (mean_change, _dirichlet_expectation_1d,
                                _dirichlet_expectation_2d)
 
-EPS = np.finfo(np.float).eps
+EPS = np.finfo(float).eps
 
 
 def _update_doc_distribution(X, exp_topic_word_distr, doc_topic_prior,

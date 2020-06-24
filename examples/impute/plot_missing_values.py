@@ -64,7 +64,7 @@ def add_missing_values(X_full, y_full):
     missing_rate = 0.75
     n_missing_samples = int(n_samples * missing_rate)
 
-    missing_samples = np.zeros(n_samples, dtype=np.bool)
+    missing_samples = np.zeros(n_samples, dtype=bool)
     missing_samples[: n_missing_samples] = True
 
     rng.shuffle(missing_samples)
