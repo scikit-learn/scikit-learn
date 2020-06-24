@@ -275,6 +275,26 @@ def test_safe_indexing_2d_container_axis_0(array_type, indices_type):
     )
 
 
+@pytest.mark.parametrize(
+    "array_type", ["list", "array", "sparse", "dataframe"]
+)
+@pytest.mark.parametrize(
+    "indices_type", ["list", "tuple", "array", "series", "slice"]
+)
+def test_safe_indexing_2d_container_axis_0_complement(
+        array_type, indices_type):
+    indices = [1, 2]
+    if indices_type == 'slice' and isinstance(indices[1], int):
+        indices[1] += 1
+    array = _convert_container([[1, 2, 3], [4, 5, 6], [7, 8, 9],
+                                [10, 11, 12]], array_type)
+    indices = _convert_container(indices, indices_type)
+    subset = _safe_indexing(array, indices, axis=0, complement=True)
+    assert_allclose_dense_sparse(
+        subset, _convert_container([[1, 2, 3], [10, 11, 12]], array_type)
+    )
+
+
 @pytest.mark.parametrize("array_type", ["list", "array", "series"])
 @pytest.mark.parametrize(
     "indices_type", ["list", "tuple", "array", "series", "slice"]
@@ -318,6 +338,38 @@ def test_safe_indexing_2d_container_axis_1(array_type, indices_type, indices):
         subset = _safe_indexing(array, indices_converted, axis=1)
         assert_allclose_dense_sparse(
             subset, _convert_container([[2, 3], [5, 6], [8, 9]], array_type)
+        )
+
+
+@pytest.mark.parametrize("array_type", ["array", "sparse", "dataframe"])
+@pytest.mark.parametrize(
+    "indices_type", ["list", "tuple", "array", "series", "slice"]
+)
+@pytest.mark.parametrize("indices", [[1, 2], ["col_1", "col_2"]])
+def test_safe_indexing_2d_container_axis_1_complement(
+        array_type, indices_type, indices):
+    # validation of complement indexing
+    # we make a copy because indices is mutable and shared between tests
+    indices_converted = copy(indices)
+    if indices_type == 'slice' and isinstance(indices[1], int):
+        indices_converted[1] += 1
+
+    columns_name = ['col_0', 'col_1', 'col_2']
+    array = _convert_container(
+        [[1, 2, 3], [4, 5, 6], [7, 8, 9]], array_type, columns_name
+    )
+    indices_converted = _convert_container(indices_converted, indices_type)
+
+    if isinstance(indices[0], str) and array_type != 'dataframe':
+        err_msg = ("Specifying the columns using strings is only supported "
+                   "for pandas DataFrames")
+        with pytest.raises(ValueError, match=err_msg):
+            _safe_indexing(array, indices_converted, axis=1, complement=True)
+    else:
+        subset = _safe_indexing(array, indices_converted, axis=1,
+                                complement=True)
+        assert_allclose_dense_sparse(
+            subset, _convert_container([[1], [4], [7]], array_type)
         )
 
 

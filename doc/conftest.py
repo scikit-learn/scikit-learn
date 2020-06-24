@@ -50,6 +50,13 @@ def setup_compose():
         raise SkipTest("Skipping compose.rst, pandas not installed")
 
 
+def setup_metrics():
+    try:
+        import pandas  # noqa
+    except ImportError:
+        raise SkipTest("Skipping metrics.rst, pandas not installed")
+
+
 def setup_impute():
     try:
         import pandas  # noqa
@@ -82,6 +89,8 @@ def pytest_runtest_setup(item):
         setup_working_with_text_data()
     elif fname.endswith('modules/compose.rst') or is_index:
         setup_compose()
+    elif fname.endswith('modules/metrics.rst') or is_index:
+        setup_metrics()
     elif IS_PYPY and fname.endswith('modules/feature_extraction.rst'):
         raise SkipTest('FeatureHasher is not compatible with PyPy')
     elif fname.endswith('modules/impute.rst'):

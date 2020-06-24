@@ -29,6 +29,7 @@ from sklearn.metrics.pairwise import laplacian_kernel
 from sklearn.metrics.pairwise import sigmoid_kernel
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.metrics.pairwise import cosine_distances
+from sklearn.metrics.pairwise import gower_distances
 from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.metrics.pairwise import pairwise_distances_chunked
 from sklearn.metrics.pairwise import pairwise_distances_argmin_min
@@ -44,8 +45,11 @@ from sklearn.metrics.pairwise import paired_distances
 from sklearn.metrics.pairwise import paired_euclidean_distances
 from sklearn.metrics.pairwise import paired_manhattan_distances
 from sklearn.metrics.pairwise import _euclidean_distances_upcast
-from sklearn.preprocessing import normalize
+from sklearn.preprocessing import normalize, minmax_scale
+from sklearn.preprocessing import OrdinalEncoder, MinMaxScaler
 from sklearn.exceptions import DataConversionWarning
+from sklearn.compose import make_column_selector
+from sklearn.utils.validation import check_random_state
 
 
 def test_pairwise_distances():
@@ -615,44 +619,37 @@ def test_pairwise_distances_chunked():
         next(gen)
 
 
-@pytest.mark.parametrize("x_array_constr", [np.array, csr_matrix],
-                         ids=["dense", "sparse"])
-@pytest.mark.parametrize("y_array_constr", [np.array, csr_matrix],
-                         ids=["dense", "sparse"])
-def test_euclidean_distances_known_result(x_array_constr, y_array_constr):
-    # Check the pairwise Euclidean distances computation on known result
-    X = x_array_constr([[0]])
-    Y = y_array_constr([[1], [2]])
+def test_euclidean_distances():
+    # Check the pairwise Euclidean distances computation
+    X = [[0]]
+    Y = [[1], [2]]
     D = euclidean_distances(X, Y)
-    assert_allclose(D, [[1., 2.]])
+    assert_array_almost_equal(D, [[1., 2.]])
 
+    X = csr_matrix(X)
+    Y = csr_matrix(Y)
+    D = euclidean_distances(X, Y)
+    assert_array_almost_equal(D, [[1., 2.]])
 
-@pytest.mark.parametrize("dtype", [np.float32, np.float64])
-@pytest.mark.parametrize("y_array_constr", [np.array, csr_matrix],
-                         ids=["dense", "sparse"])
-def test_euclidean_distances_with_norms(dtype, y_array_constr):
-    # check that we still get the right answers with {X,Y}_norm_squared
-    # and that we get a wrong answer with wrong {X,Y}_norm_squared
     rng = np.random.RandomState(0)
-    X = rng.random_sample((10, 10)).astype(dtype, copy=False)
-    Y = rng.random_sample((20, 10)).astype(dtype, copy=False)
+    X = rng.random_sample((10, 4))
+    Y = rng.random_sample((20, 4))
+    X_norm_sq = (X ** 2).sum(axis=1).reshape(1, -1)
+    Y_norm_sq = (Y ** 2).sum(axis=1).reshape(1, -1)
 
-    # norms will only be used if their dtype is float64
-    X_norm_sq = (X.astype(np.float64) ** 2).sum(axis=1).reshape(1, -1)
-    Y_norm_sq = (Y.astype(np.float64) ** 2).sum(axis=1).reshape(1, -1)
-
-    Y = y_array_constr(Y)
-
+    # check that we still get the right answers with {X,Y}_norm_squared
     D1 = euclidean_distances(X, Y)
     D2 = euclidean_distances(X, Y, X_norm_squared=X_norm_sq)
     D3 = euclidean_distances(X, Y, Y_norm_squared=Y_norm_sq)
     D4 = euclidean_distances(X, Y, X_norm_squared=X_norm_sq,
                              Y_norm_squared=Y_norm_sq)
-    assert_allclose(D2, D1)
-    assert_allclose(D3, D1)
-    assert_allclose(D4, D1)
+    assert_array_almost_equal(D2, D1)
+    assert_array_almost_equal(D3, D1)
+    assert_array_almost_equal(D4, D1)
 
     # check we get the wrong answer with wrong {X,Y}_norm_squared
+    X_norm_sq *= 0.5
+    Y_norm_sq *= 0.5
     wrong_D = euclidean_distances(X, Y,
                                   X_norm_squared=np.zeros_like(X_norm_sq),
                                   Y_norm_squared=np.zeros_like(Y_norm_sq))
@@ -665,7 +662,7 @@ def test_euclidean_distances_with_norms(dtype, y_array_constr):
                          ids=["dense", "sparse"])
 @pytest.mark.parametrize("y_array_constr", [np.array, csr_matrix],
                          ids=["dense", "sparse"])
-def test_euclidean_distances(dtype, x_array_constr, y_array_constr):
+def test_euclidean_distances_cdist(dtype, x_array_constr, y_array_constr):
     # check that euclidean distances gives same result as scipy cdist
     # when X and Y != X are provided
     rng = np.random.RandomState(0)
@@ -929,6 +926,187 @@ def test_cosine_distances():
     assert_array_almost_equal(D[np.diag_indices_from(D)], [0.] * D.shape[0])
     assert np.all(D >= 0.)
     assert np.all(D <= 2.)
+
+
+def test_gower_distance_input_validation():
+    with pytest.raises(TypeError, match="support sparse matrices"):
+        gower_distances(csr_matrix((2, 2)))
+    with pytest.raises(ValueError, match="X can not be None or empty"):
+        gower_distances(None)
+
+    pd = pytest.importorskip("pandas")
+
+    X = pd.DataFrame([['M', False, 222.22, 1],
+                      ['F', True, 333.22, 2],
+                      ['M', True, 1934.0, 4],
+                      [np.nan, np.nan, np.nan, np.nan]])
+
+    # categorical features must be provided if any exist in the data
+    with pytest.raises(ValueError, match="could not convert string to float"):
+        gower_distances(X, scale=True)
+
+
+def test_gower_distances_pairwise_equivalence():
+    # the call to pairwise_distances should yield the same results
+    # even with parallel processing
+    rng = check_random_state(42)
+    X = rng.randint(size=(5, 10), low=0, high=10)
+    Y = rng.randint(size=(5, 10), low=-10, high=10)
+    gower = gower_distances(
+        X, Y, categorical_features=slice(0, 4), scale=False)
+    pw_gower = pairwise_distances(X, Y, metric='gower', n_jobs=2,
+                                  categorical_features=slice(0, 4),
+                                  scale=False)
+    assert_array_almost_equal(pw_gower, gower)
+
+
+def test_gower_distances_cdist_equivalence():
+    # test that gower is consistent with L1 and hamming on numerical and
+    # categorical only features respectively
+    rng = check_random_state(42)
+    X = rng.randint(size=(5, 10), low=0, high=10)
+
+    l1 = cdist(X, X, metric='minkowski', p=1) / 10
+    gower_numerical = gower_distances(
+        X, categorical_features=None, scale=False)
+    assert_array_almost_equal(l1, gower_numerical)
+
+    hamming = cdist(X, X, metric='hamming')
+    gower_categorical = gower_distances(
+        X, categorical_features=slice(0, 10))
+    assert_array_almost_equal(hamming, gower_categorical)
+
+    # a mixed categorical and numerical should be equivalent to the combination
+    # of L1 and hamming
+    l1 = cdist(X[:, 6:], X[:, 6:], metric='minkowski', p=1) / 4
+    hamming = cdist(X[:, :6], X[:, :6], metric='hamming')
+    gower = gower_distances(X, categorical_features=slice(0, 6),
+                            scale=False)
+    assert_array_almost_equal(
+        gower, (hamming * 6 + l1 * 4) / 10)
+
+
+def test_gower_distances_scaling():
+    rng = check_random_state(42)
+    X = rng.randint(size=(5, 10), low=0, high=10)
+    # assuming the first 6 cols to be numerical, the rest categorical
+
+    # test scaling of the numerical values
+    X_scaled = minmax_scale(X[:, 6:])
+    l1 = cdist(X_scaled, X_scaled, metric='minkowski', p=1) / 4
+    hamming = cdist(X[:, :6], X[:, :6], metric='hamming')
+    gower = gower_distances(X, categorical_features=slice(0, 6),
+                            scale=True)
+    assert_array_almost_equal(
+        gower, (hamming * 6 + l1 * 4) / 10)
+
+    # test providing the scaling factors to gower_similarity
+    scaler = MinMaxScaler().fit(X[:, 6:])
+    gower = gower_distances(X, categorical_features=slice(0, 6),
+                            scale=True, min_values=scaler.min_,
+                            scale_factor=scaler.scale_)
+    assert_array_almost_equal(
+        gower, (hamming * 6 + l1 * 4) / 10)
+
+    # make sure given min_ and scale_ are used by providing wrong values and
+    # getting wrong distances as output
+    gower = gower_distances(X, categorical_features=slice(0, 6),
+                            scale=True, min_values=scaler.min_,
+                            scale_factor=scaler.scale_ + 1)
+    with pytest.raises(AssertionError):
+        assert_array_almost_equal(
+            gower, (hamming * 6 + l1 * 4) / 10)
+
+    # passing the scaling factor when Y is provided
+    Y = (X + 1)[::2, :]
+    trs = MinMaxScaler().fit(np.vstack((X[:, 6:], Y[:, 6:])))
+    l1 = cdist(trs.transform(X[:, 6:]), trs.transform(Y[:, 6:]),
+               metric='minkowski', p=1) / 4
+    hamming = cdist(X[:, :6], Y[:, :6], metric='hamming')
+    gower = gower_distances(X, Y, categorical_features=slice(0, 6),
+                            scale=True, min_values=trs.min_,
+                            scale_factor=trs.scale_)
+    assert_array_almost_equal(
+        gower, (hamming * 6 + l1 * 4) / 10)
+    assert gower.shape == (len(X), len(Y))
+
+    # passing Y w/o scaling factors should fail
+    with pytest.raises(ValueError, match="`scaling_factor` and `min_values` "
+                       "must be provided when `Y` is provided and `scale=True`"
+                       ):
+        gower_distances(X, Y, categorical_features=slice(0, 6),
+                        scale=True)
+
+
+@pytest.mark.parametrize('cat',
+                         [slice(0, 2),
+                          ['col_0', 'col_1'],
+                          [0, 1],
+                          make_column_selector(dtype_include=object),
+                          [True, True, False, False]])
+def test_gower_distances_dataframe(cat):
+    # test different ways of specifying categorical features on a DataFrame
+    pd = pytest.importorskip('pandas')
+
+    X = pd.DataFrame([['M', False, 222.22, 1],
+                      ['F', True, 333.22, 2],
+                      ['M', True, 1934.0, 4]],
+                     columns=[f'col_{d}' for d in range(4)])
+    X_cat = OrdinalEncoder().fit_transform(X.iloc[:, :2])
+    X_num = np.array(X.iloc[:, 2:])
+
+    l1 = cdist(X_num, X_num, metric='minkowski', p=1) / 2
+    hamming = cdist(X_cat, X_cat, metric='hamming')
+    gower = gower_distances(X, categorical_features=cat,
+                            scale=False)
+    assert_array_almost_equal(
+        gower, (hamming * 2 + l1 * 2) / 4)
+
+
+def test_gower_distances_nans():
+    pd = pytest.importorskip("pandas")
+
+    rng = check_random_state(42)
+
+    # an all np.nan sample has an np.nan distance from other data points.
+    X = rng.rand(5, 10)
+    X[4, :] = np.nan
+    dists = gower_distances(X, categorical_features=slice(0, 6))
+    assert np.all(np.isnan(dists[4, :]))
+    assert np.all(np.isnan(dists[:, 4]))
+
+    # Test with a single nan, ranges don't matter for the test
+    X = [[9222.22, -11, 'M', 1],
+         [41934.0, -44, 'F', 1],
+         [1, 1, np.nan, 0]]
+
+    Y = [[-222.22, 1, 'F', 0],
+         [1934.0, 4, 'M', 0],
+         [3000, 3000, 'F', 0]]
+
+    # Simplified calculation of Gower distance for expected values
+    D_expected = np.zeros((3, 3))
+    # This represents the number of non missing cols for each X, Y line
+    non_missing_cols = [4, 4, 3]
+    for i in range(0, 3):
+        for j in range(0, 3):
+            # The calculations below shows how it compares observation
+            # by observation, attribute by attribute.
+            D_expected[i][j] = ((abs(X[i][0] - Y[j][0]) +
+                                 abs(X[i][1] - Y[j][1]) +
+                                 ([1, 0][X[i][2] == Y[j][2]]
+                                  if (X[i][2] == X[i][2] and
+                                      Y[i][2] == Y[i][2]) else 0) +
+                                 abs(X[i][3] - Y[j][3])) /
+                                non_missing_cols[i])
+
+    # pairwise_distances will convert the input to strings and np.nan would
+    # therefore be 'nan'. Passing DataFrames will avoid that.
+    D = pairwise_distances(pd.DataFrame(X), pd.DataFrame(Y), metric='gower',
+                           n_jobs=2,
+                           categorical_features=[2],
+                           scale=False)
+    assert_array_almost_equal(D_expected, D)
 
 
 def test_haversine_distances():

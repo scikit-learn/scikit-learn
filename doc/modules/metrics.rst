@@ -93,6 +93,61 @@ is equivalent to :func:`linear_kernel`, only slower.)
       Information Retrieval. Cambridge University Press.
       https://nlp.stanford.edu/IR-book/html/htmledition/the-vector-space-model-for-scoring-1.html
 
+.. _gower_distances:
+
+Gower distances
+-----------------
+
+The function :func:`~sklearn.metrics.pairwise.gower_distances` computes the
+distances between the observations in X and Y, that may contain combinations of
+numerical, boolean, or categorical attributes, using an implementation of Gower
+Similarity.
+
+.. math::
+
+    g(\mathbf{x}, \mathbf{y}) = \frac{\sum_i(s(x_i, y_i))}{|\{i| x_i \neq \text{missing} \land y_i \neq \text{missing}\}|}
+
+Where:
+
+:math:`x, y` : array_like of shape (n_features,) are the observations to be compared.
+
+:math:`s(x_i, y_i)` : Calculates the distance as:
+
+    - :math:`s(x_i, y_i) := 0`, if either :math:`x_i` or :math:`y_i` are missing.
+    - :math:`s(x_i, y_i) := \text{int}(x_i == y_i)`, if :math:`i` represents a
+      boolean or categorical attribute.
+    - :math:`s(x_i, y_i) := abs(x_i - y_i)`, if :math:`i` represents a numerical
+      attribute.
+
+
+The Gower formula combines a Manhattan (L1) distance for numeric features
+with Hamming distance for categorical features to obtain a general coefficient
+for categorical and numeric data.
+
+The :func:`gower_distances` function expects the user to specify the
+categorical features, otherwise it will assume all features are numerical. If
+the data is a `pandas.DataFrame`, you can use
+:func:`~sklearn.compose.make_column_selector` to select features::
+
+    >>> import pandas as pd
+    >>> from sklearn.compose import make_column_selector as selector
+    >>> from sklearn.metrics.pairwise import gower_distances
+    >>> X = pd.DataFrame(
+    ...     {'city': ['London', 'London', 'Paris', 'Sallisaw'],
+    ...      'expert_rating': [5, 3, 4, 5],
+    ...      'user_rating': [4, 5, 4, 3]})
+    >>> gower_distances(X, categorical_features=selector(dtype_include=object))
+    array([[0.        , 0.5      , 0.5      , 0.5      ],
+           [0.5       , 0.       , 0.6666..., 1.       ],
+           [0.5       , 0.6666..., 0.       , 0.6666...],
+           [0.5       , 1.       , 0.6666..., 0.       ]])
+
+.. topic:: References:
+
+    * Gower, J.C., 1971, A General Coefficient of Similarity and Some of Its
+      Properties, Biometrics, Vol. 27, No. 4. (Dec., 1971), pp. 857-871.
+      http://members.cbio.mines-paristech.fr/~jvert/svn/bibli/local/Gower1971general.pdf
+
 .. _linear_kernel:
 
 Linear kernel
@@ -165,14 +220,14 @@ the kernel is known as the Gaussian kernel of variance :math:`\sigma^2`.
 
 Laplacian kernel
 ----------------
-The function :func:`laplacian_kernel` is a variant on the radial basis 
+The function :func:`laplacian_kernel` is a variant on the radial basis
 function kernel defined as:
 
 .. math::
 
     k(x, y) = \exp( -\gamma \| x-y \|_1)
 
-where ``x`` and ``y`` are the input vectors and :math:`\|x-y\|_1` is the 
+where ``x`` and ``y`` are the input vectors and :math:`\|x-y\|_1` is the
 Manhattan distance between the input vectors.
 
 It has proven useful in ML applied to noiseless data.
@@ -229,4 +284,3 @@ The chi squared kernel is most commonly used on histograms (bags) of visual word
       categories: A comprehensive study
       International Journal of Computer Vision 2007
       https://research.microsoft.com/en-us/um/people/manik/projects/trade-off/papers/ZhangIJCV06.pdf
-
