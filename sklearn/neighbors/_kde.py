@@ -74,7 +74,7 @@ class KernelDensity(BaseEstimator):
 
     Attributes
     ----------
-    tree_ : BinaryTree
+    tree_ : ``BinaryTree`` instance
         The tree algorithm for fast generalized N-point problems.
 
     See Also
