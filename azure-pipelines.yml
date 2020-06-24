@@ -34,7 +34,7 @@ jobs:
       displayName: Get source version message
     - bash: |
         set -ex
-        if [[ "$COMMIT_MESSAGE" =~ "\[lint skip\]" ]]; then
+        if [[ "$COMMIT_MESSAGE" =~ "[lint skip]" ]]; then
           # skip linting
           echo "Skipping flake8 linting"
           exit 0
@@ -44,7 +44,7 @@ jobs:
       displayName: Run linting
     - bash: |
         set -ex
-        if [[ "$COMMIT_MESSAGE" =~ "\[lint skip\]" ]]; then
+        if [[ "$COMMIT_MESSAGE" =~ "[lint skip]" ]]; then
           # skip linting
           echo "Skipping mypy linting"
           exit 0
@@ -54,7 +54,7 @@ jobs:
       displayName: Run mypy
     - bash: |
         set -ex
-        if [[ "$COMMIT_MESSAGE" =~ "\[scipy-dev\]" ]] || \
+        if [[ "$COMMIT_MESSAGE" =~ "[scipy-dev]" ]] || \
            [[ $BUILD_REASON == "Schedule" ]]; then
           echo "Running scipy-dev build"
           echo "##vso[task.setvariable variable=runScipyDev;isOutput=true]true"
