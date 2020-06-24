@@ -25,6 +25,7 @@ try:
     import pkg_resources
     parse_version = pkg_resources.parse_version
 except ImportError:
+    # setuptools not installed
     parse_version = LooseVersion
 
 def _parse_version(version_string):
