@@ -26,6 +26,8 @@ def test_fetch(fetch_covtype_fxt):
 
 
 def test_fetch_asframe(fetch_covtype_fxt):
+    pytest.importorskip("pandas")
+
     bunch = fetch_covtype_fxt(as_frame=True)
     assert hasattr(bunch, 'frame')
     frame = bunch.frame
