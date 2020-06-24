@@ -222,6 +222,8 @@ def randomized_range_finder(A, *, size, n_iter,
             power_iteration_normalizer = 'none'
         else:
             power_iteration_normalizer = 'LU'
+            if not hasattr(npx.linalg, 'lu'):
+                power_iteration_normalizer = 'QR'
 
     # Perform power iterations with Q to further 'imprint' the top
     # singular vectors of A in Q
@@ -230,11 +232,11 @@ def randomized_range_finder(A, *, size, n_iter,
             Q = safe_sparse_dot(A, Q)
             Q = safe_sparse_dot(A.T, Q)
         elif power_iteration_normalizer == 'LU':
-            Q, _ = linalg.lu(safe_sparse_dot(A, Q), permute_l=True)
-            Q, _ = linalg.lu(safe_sparse_dot(A.T, Q), permute_l=True)
+            Q, _ = npx.linalg.lu(safe_sparse_dot(A, Q), permute_l=True)
+            Q, _ = npx.linalg.lu(safe_sparse_dot(A.T, Q), permute_l=True)
         elif power_iteration_normalizer == 'QR':
-            Q, _ = linalg.qr(safe_sparse_dot(A, Q), mode='economic')
-            Q, _ = linalg.qr(safe_sparse_dot(A.T, Q), mode='economic')
+            Q, _ = npx.linalg.qr(safe_sparse_dot(A, Q))
+            Q, _ = npx.linalg.qr(safe_sparse_dot(A.T, Q))
 
     # Sample the range of A using by linear projection of Q
     # Extract an orthonormal basis
