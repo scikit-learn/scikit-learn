@@ -75,40 +75,40 @@ to 0 or 1 typically.
 
 .. currentmodule:: sklearn.svm
 
-*  Linear Support Vector Classification (:class:`LinearSVC`) shows an even more sigmoid curve
-   as the RandomForestClassifier, which is typical for maximum-margin methods
-   (compare Niculescu-Mizil and Caruana [4]_), which focus on hard samples
-   that are close to the decision boundary (the support vectors).
+Linear Support Vector Classification (:class:`LinearSVC`) shows an even more
+sigmoid curve than :class:`RandomForestClassifier`. This characteristic is
+typical of maximum-margin methods (compare Niculescu-Mizil and Caruana [4]_)
+which focus on hard samples that are close to the decision boundary (the
+support vectors).
 
 .. currentmodule:: sklearn.calibration
 
 Two approaches for performing calibration of probabilistic predictions are
 provided: a parametric approach based on Platt's sigmoid model and a
-non-parametric approach based on isotonic regression (:mod:`sklearn.isotonic`).
+non-parametric approach based on :ref:`isotonic regression <isotonic>`.
 Probability calibration should be done on new data not used for model fitting.
-The class :class:`CalibratedClassifierCV` uses a cross-validation generator and
-estimates for each split the model parameter on the train samples and the
-calibration of the test samples. The probabilities predicted for the
-folds are then averaged. Already fitted classifiers can be calibrated by
-:class:`CalibratedClassifierCV` via the parameter cv="prefit". In this case,
-the user has to take care manually that data for model fitting and calibration
-are disjoint.
+The :class:`CalibratedClassifierCV` class uses an internal cross-validation
+procedure: for each split, the model is fit on the train samples and a
+calibrator is estimated on the output of the model on the validation samples.
+The probabilities predicted for the folds are then averaged. Already fitted
+classifiers can be calibrated by :class:`CalibratedClassifierCV` via the
+parameter ``cv="prefit"``. In this case, the user has to manually ensure that
+the datasets used for model fitting and calibration are disjoint.
 
-The following images demonstrate the benefit of probability calibration.
-The first image present a dataset with 2 classes and 3 blobs of
-data. The blob in the middle contains random samples of each class.
-The probability for the samples in this blob should be 0.5.
+The following figures demonstrate the benefit of probability calibration. The
+first figure presents a dataset with 2 classes and 3 blobs of data. The blob in
+the middle contains random samples of each class. The probability for the
+samples in this blob should be close to 0.5.
 
 .. figure:: ../auto_examples/calibration/images/sphx_glr_plot_calibration_001.png
    :target: ../auto_examples/calibration/plot_calibration.html
    :align: center
 
-The following image shows on the data above the estimated probability
-using a Gaussian naive Bayes classifier without calibration,
-with a sigmoid calibration and with a non-parametric isotonic
-calibration. One can observe that the non-parametric model
-provides the most accurate probability estimates for samples
-in the middle, i.e., 0.5.
+The following figure shows the estimated probability using a Gaussian naive
+Bayes classifier fitted on the same dataset in 3 distinct ways: without
+calibration, with a sigmoid calibration and with a non-parametric isotonic
+calibration. One can observe that the non-parametric model provides the most
+accurate probability estimates for samples in the middle, i.e., 0.5.
 
 .. figure:: ../auto_examples/calibration/images/sphx_glr_plot_calibration_002.png
    :target: ../auto_examples/calibration/plot_calibration.html
