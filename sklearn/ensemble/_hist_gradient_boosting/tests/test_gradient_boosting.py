@@ -253,7 +253,7 @@ def test_binning_train_validation_are_separated():
         random_state=rng
     )
     gb.fit(X_classification, y_classification)
-    mapper_training_data = gb.bin_mapper_
+    mapper_training_data = gb._bin_mapper
 
     # Note that since the data is small there is no subsampling and the
     # random_state doesn't matter
