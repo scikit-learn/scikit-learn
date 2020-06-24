@@ -83,12 +83,12 @@ span.highlighted {
 }
 
 div.highlight {
-  padding: 0.2rem 0.5rem;
   border: 1px solid #ddd;
   margin-bottom: 1rem;
 }
 
 div.highlight pre {
+  padding: 0.2rem 0.5rem;
   margin-bottom: 0;
   line-height: 1.2rem;
 }
@@ -663,6 +663,7 @@ code.descclassname {
 dl.field-list {
   display: flex;
   flex-wrap: wrap;
+  overflow-x: scroll;
 }
 
 dl.field-list > dt {
@@ -715,6 +716,16 @@ dl.field-list > dt:after {
 
 dd {
   padding-left: 1rem;
+}
+
+dl.class > dd {
+  padding-left: 0;
+}
+
+@media screen and (min-width: 768px) {
+  dl.class > dd {
+    padding-left: 1rem;
+  }
 }
 
 .rubric {
@@ -918,6 +929,8 @@ table.docutils {
   margin-bottom: 1rem;
   line-height: 1rem;
   max-width: 100%;
+  display: block;
+  overflow-x: scroll;
 }
 
 table.docutils p {

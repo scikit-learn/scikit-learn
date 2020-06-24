@@ -24,7 +24,7 @@ Sampling more dimensions clearly leads to better classification results, but
 comes at a greater cost. This means there is a tradeoff between runtime and
 accuracy, given by the parameter n_components. Note that solving the Linear
 SVM and also the approximate kernel SVM could be greatly accelerated by using
-stochastic gradient descent via :class:`sklearn.linear_model.SGDClassifier`.
+stochastic gradient descent via :class:`~sklearn.linear_model.SGDClassifier`.
 This is not easily possible for the case of the kernelized SVM.
 
 """
