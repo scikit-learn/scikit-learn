@@ -2566,7 +2566,7 @@ def calibration_error(y_true, y_prob, sample_weight=None, norm='l2',
 
     n_bins = int(n_bins)
     if strategy == 'quantile':
-        quantiles = np.quantile(y_prob, np.arange(0, 1, 1./n_bins))
+        quantiles = np.percentile(y_prob, np.arange(0, 1, 1./n_bins)*100)
     elif strategy == 'uniform':
         quantiles = np.arange(0, 1, 1./n_bins)
     else:
