@@ -1594,8 +1594,8 @@ def test_SGDClassifier_fit_for_all_backends(backend):
     # a segmentation fault when trying to write in a readonly memory mapped
     # buffer.
 
-    if parse_version(joblib.__version__) < parse_version('0.12') \
-       and backend == 'loky':
+    if (parse_version(joblib.__version__) < parse_version('0.12')
+        and backend == 'loky'):
         pytest.skip('loky backend does not exist in joblib <0.12')
 
     random_state = np.random.RandomState(42)
