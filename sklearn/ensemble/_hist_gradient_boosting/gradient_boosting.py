@@ -1112,7 +1112,7 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
     classes_ : array, shape = (n_classes,)
         Class labels.
     do_early_stopping_ : bool
-        Specifies if early stopping is used during the training.
+        Indicates whether early stopping is used during training.
     n_iter_ : int
         The number of iterations as selected by early stopping, depending on
         the `early_stopping` parameter. Otherwise it corresponds to max_iter.
