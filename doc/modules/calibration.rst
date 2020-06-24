@@ -7,19 +7,22 @@ Probability calibration
 .. currentmodule:: sklearn.calibration
 
 
-When performing classification you often want not only to predict the class
-label, but also obtain a probability of the respective label. This probability
-gives you some kind of confidence on the prediction. Some models can give you
-poor estimates of the class probabilities and some even do not support
-probability prediction. The calibration module allows you to better calibrate
-the probabilities of a given model, or to add support for probability
-prediction.
+When performing classification, users often want both to predict the most
+likely class label, but also to obtain a probability estimate for that class.
+This probability gives some kind of confidence in the prediction. Some models
+can give poor estimates of the class probabilities and some even do not offer
+probabilistic predictions.
+
+The calibration module makes it possible to:
+- evaluate the calibration of fitted probabilistic classifiers;
+- calibrate probabilistic classifiers;
+- wrap non-probabilistic classifiers into calibrated probabilistic classifiers.
 
 Well calibrated classifiers are probabilistic classifiers for which the output
-of the predict_proba method can be directly interpreted as a confidence level.
-For instance, a well calibrated (binary) classifier should classify the samples
-such that among the samples to which it gave a predict_proba value close to 0.8,
-approximately 80% actually belong to the positive class.
+of the ``predict_proba`` method can be directly interpreted as a confidence
+level. For instance, a well calibrated (binary) classifier should classify the
+samples such that among the samples to which it gave a ``predict_proba`` value
+close to 0.8, approximately 80% actually belong to the positive class.
 
 Calibration curves
 ------------------
