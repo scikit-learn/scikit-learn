@@ -15,7 +15,6 @@ import numbers
 
 import numpy as np
 import scipy.sparse as sp
-from distutils.version import LooseVersion
 from inspect import signature, isclass, Parameter
 
 # mypy error: Module 'numpy.core.numeric' has no attribute 'ComplexWarning'
@@ -24,7 +23,7 @@ import joblib
 
 from contextlib import suppress
 
-from .fixes import _object_dtype_isnan
+from .fixes import _object_dtype_isnan, parse_version
 from .. import get_config as _get_config
 from ..exceptions import NonBLASDotWarning, PositiveSpectrumWarning
 from ..exceptions import NotFittedError
@@ -229,7 +228,7 @@ def check_memory(memory):
     """
 
     if memory is None or isinstance(memory, str):
-        if LooseVersion(joblib.__version__) < '0.12':
+        if parse_version(joblib.__version__) < parse_version('0.12'):
             memory = joblib.Memory(cachedir=memory, verbose=0)
         else:
             memory = joblib.Memory(location=memory, verbose=0)
