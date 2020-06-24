@@ -30,7 +30,8 @@ jobs:
           COMMIT_MESSAGE=$BUILD_SOURCEVERSIONMESSAGE
         fi
         echo "##vso[task.setvariable variable=COMMIT_MESSAGE]$COMMIT_MESSAGE"
-      displayName: Get source version message
+        echo "target meessage: $COMMIT_MESSAGE"
+      displayNam: Get source version message
     - bash: |
         set -ex
         if [[ $COMMIT_MESSAGE =~ \[lint\ skip\] ]]; then
