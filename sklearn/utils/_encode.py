@@ -52,23 +52,12 @@ def _unique_python(values, *, return_inverse):
     # Only used in `_uniques`, see docstring there for details
     try:
         uniques_set = set(values)
-        none_in_set = None in uniques_set
-        nan_in_set = np.nan in uniques_set
+        missing_values_in_set = [value for value in (None, np.nan)
+                                 if value in uniques_set]
 
-        if none_in_set and nan_in_set:
-            raise ValueError("Input wiith both types of missing, None and "
-                             "np.nan, is not supported")
-        if none_in_set:
-            uniques_set.remove(None)
-            uniques = sorted(uniques_set)
-            uniques.append(None)
-        elif nan_in_set:
-            uniques_set.remove(np.nan)
-            uniques = sorted(uniques_set)
-            uniques.append(np.nan)
-        else:
-            uniques = sorted(uniques_set)
-
+        uniques_set -= set(missing_values_in_set)
+        uniques = sorted(uniques_set)
+        uniques.extend(missing_values_in_set)
         uniques = np.array(uniques, dtype=values.dtype)
     except TypeError:
         types = sorted(t.__qualname__
@@ -164,22 +153,13 @@ def _check_unknown(values, known_values, return_mask=False):
             else:
                 valid_mask = np.ones(len(values), dtype=bool)
 
-        none_in_diff = None in diff
-        nan_in_diff = np.nan in diff
+        missing_values_in_diff = [value for value in (None, np.nan)
+                                  if value in diff]
 
-        if none_in_diff and nan_in_diff:
-            raise ValueError("Input wiith both types of missing, None and "
-                             "np.nan, is not supported")
-        if none_in_diff:
-            diff.remove(None)
-            diff = list(diff)
-            diff.append(None)
-        elif nan_in_diff:
-            diff.remove(np.nan)
-            diff = list(diff)
-            diff.append(np.nan)
-        else:
-            diff = list(diff)
+        diff -= set(missing_values_in_diff)
+        diff = list(diff)
+        diff.extend(missing_values_in_diff)
+
     else:
         unique_values = np.unique(values)
         diff = np.setdiff1d(unique_values, known_values,

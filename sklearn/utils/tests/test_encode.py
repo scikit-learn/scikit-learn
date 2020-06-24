@@ -101,7 +101,7 @@ def test_check_unknown(values, uniques, expected_diff, expected_mask):
 
 @pytest.mark.parametrize("missing_value", [None, np.nan])
 def test_check_unknown_missing_values(missing_value):
-    # santiy check for check_unknown with missing values with object dtypes
+    # sanity check for check_unknown with missing values with object dtypes
     values = np.array(['d', 'c', 'a', 'b', missing_value], dtype=object)
     uniques = np.array(['c', 'a', 'b', missing_value], dtype=object)
     expected_diff = ['d']
@@ -160,19 +160,36 @@ def test_unique_util_missing_values_numeric():
     assert_array_equal(encoded, expected_inverse)
 
 
-def test_unique_util_missing_values_error_both_missing():
-    # _unique does not support both types of missing
-    values = np.array(['a', 'c', 'c', None, np.nan], dtype=object)
-    msg = ("Input wiith both types of missing, None and np.nan, is not "
-           "supported")
-    with pytest.raises(ValueError, match=msg):
-        _unique(values)
+def test_unique_util_with_both_missing_values():
+    # test for both types of missing values for object dtype
+    values = np.array([np.nan, 'a', 'c', 'c', None, np.nan,
+                       None], dtype=object)
+
+    uniques = _unique(values)
+    assert_array_equal(uniques[:-1], ['a', 'c', None])
+    # last value is nan
+    assert np.isnan(uniques[-1])
+
+    expected_inverse = [3, 0, 1, 1, 2, 3, 2]
+    _, inverse = _unique(values, return_inverse=True)
+    assert_array_equal(inverse, expected_inverse)
 
 
-def test_check_unknown_errors_both_missing_values():
-    # _check_unknown does not support both types of missing
-    values = np.array(['a', 'c', 'c', None, np.nan], dtype=object)
-    msg = ("Input wiith both types of missing, None and np.nan, is not "
-           "supported")
-    with pytest.raises(ValueError, match=msg):
-        _check_unknown(values, known_values=np.array(['a', 'c']))
+def test_check_unknown_with_both_missing_values():
+    # test for both types of missing values for object dtype
+    values = np.array([np.nan, 'a', 'c', 'c', None, np.nan,
+                       None], dtype=object)
+
+    diff = _check_unknown(values,
+                          known_values=np.array(['a', 'c'], dtype=object))
+    assert diff[0] is None
+    assert np.isnan(diff[1])
+
+    diff, valid_mask = _check_unknown(
+        values, known_values=np.array(['a', 'c'], dtype=object),
+        return_mask=True)
+
+    assert diff[0] is None
+    assert np.isnan(diff[1])
+    assert_array_equal(valid_mask,
+                       [False, True, True, True, False, False, False])

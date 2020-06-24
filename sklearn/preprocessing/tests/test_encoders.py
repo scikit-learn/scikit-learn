@@ -768,7 +768,7 @@ def test_ohe_missing_value_object_different_order():
     'auto', [['a', 'b', None], [0, 2, np.nan]]
 ])
 def test_ohe_missing_value_mixed_sanity(categories):
-    # santiy check for mixed data with missing values
+    # sanity check for mixed data with missing values
     X = np.array([['a', 'b', None], [0, np.nan, 2]], dtype=object).T
     expected_X_trans = np.array([
         [1, 0, 0, 1, 0, 0],
@@ -848,3 +848,23 @@ def test_ohe_missing_value_support_pandas_categorical():
     assert len(ohe.categories_) == 1
     assert_array_equal(ohe.categories_[0][:-1], ['a', 'b', 'c'])
     assert np.isnan(ohe.categories_[0][-1])
+
+
+def test_ohe_missing_values_both_missing_values():
+    # test both types of missing of missing values are treated as its own
+    # category
+    X = np.array([['a', 'b', None, 'a', np.nan]], dtype=object).T
+    ohe = OneHotEncoder(sparse=False, handle_unknown='ignore').fit(X)
+
+    assert_array_equal(ohe.categories_[0][:-1], ['a', 'b', None])
+    assert np.isnan(ohe.categories_[0][-1])
+
+    X_trans = ohe.transform(X)
+    X_expected = np.array([
+        [1, 0, 0, 0],
+        [0, 1, 0, 0],
+        [0, 0, 1, 0],
+        [1, 0, 0, 0],
+        [0, 0, 0, 1]
+    ])
+    assert_allclose(X_expected, X_trans)
