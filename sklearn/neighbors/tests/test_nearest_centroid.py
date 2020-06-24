@@ -53,6 +53,13 @@ def test_classification_toy():
     clf.fit(X_csr.tocoo(), y)
     assert_array_equal(clf.predict(T_csr.tolil()), true_result)
 
+    # Fit and predict probability estimates
+    clf = NearestCentroid(prob=True)
+    probabilities = clf.predict_proba(X)
+    assert probabilities.shape == (n_samples, n_classes)
+    assert_array_almost_equal(probabilities.sum(axis=1), np.ones(n_samples))
+    assert_array_equal(probabilities.argmax(axis=1), y)
+
 
 def test_precomputed():
     clf = NearestCentroid(metric='precomputed')
