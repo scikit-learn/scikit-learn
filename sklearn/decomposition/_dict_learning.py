@@ -1073,8 +1073,9 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
         """
         return self
 
-    @deprecated("The attribute 'components_' is deprecated in 0.23 and will "
-                "be removed in 0.25. Use the 'dictionary' instead.")
+    @deprecated("The attribute 'components_' is deprecated "  # mypy: ignore
+                "in 0.23 and will be removed in 0.25. Use the "
+                "'dictionary' instead.")
     @property
     def components_(self):
         return self.dictionary
