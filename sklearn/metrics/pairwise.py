@@ -54,7 +54,7 @@ def _return_float_dtype(X, Y):
     if X.dtype == Y_dtype == np.float32:
         dtype = np.float32
     else:
-        dtype = np.float
+        dtype = float
 
     return X, Y, dtype
 
