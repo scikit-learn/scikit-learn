@@ -518,35 +518,16 @@ def test_sparse_coder_parallel_mmap():
     sc.fit_transform(data)
 
 
-def test_sparse_coder_init_parameters():
-    # Check that parameters are properly initialize and can be set in
-    # accordance with scikit-learn API
-    # Non-regression test for:
-    # https://github.com/scikit-learn/scikit-learn/issues/16336
-
+# TODO: remove in 0.25
+def test_sparse_coder_deprecation():
+    # check that we raise a deprecation warning when accessing `components_`
     rng = np.random.RandomState(777)
-    n_features = 3
-    init_dict = rng.randn(10, n_features)
-    data = np.random.rand(50, n_features)
+    n_components, n_features = 40, 64
+    init_dict = rng.rand(n_components, n_features)
+    sc = SparseCoder(init_dict)
 
-    sc = SparseCoder(dictionary=init_dict)
-    params = sc.get_params()
-
-    assert_allclose(params["dictionary"], init_dict)
-    assert sc.n_components == init_dict.shape[1]
-    assert not hasattr(sc, "components_")
-
-    sc.fit(data)
-    assert_allclose(sc.components_, init_dict)
-
-    next_dict = rng.randn(5, n_features)
-    sc.set_params(dictionary=next_dict)
-    params = sc.get_params()
-
-    assert_allclose(params["dictionary"], next_dict)
-    assert_allclose(sc.components_, init_dict)
-    sc.fit(data)
-    assert_allclose(sc.components_, next_dict)
+    with pytest.warns(FutureWarning, match="'components_' is deprecated"):
+        sc.components_
 
 
 def test_sparse_coder_n_features_in():

@@ -14,6 +14,7 @@ from scipy import linalg
 from joblib import Parallel, delayed, effective_n_jobs
 
 from ..base import BaseEstimator, TransformerMixin
+from ..utils import deprecated
 from ..utils import (check_array, check_random_state, gen_even_slices,
                      gen_batches)
 from ..utils.extmath import randomized_svd, row_norms
@@ -877,8 +878,39 @@ def dict_learning_online(X, n_components=2, *, alpha=1, n_iter=100,
         return dictionary.T
 
 
-class SparseCodingMixin(TransformerMixin):
-    """Sparse coding mixin"""
+class _BaseSparseCoding(TransformerMixin):
+    """Base class from SparseCoder and DictionaryLearning algorithms."""
+    def __init__(self, transform_algorithm, transform_n_nonzero_coefs,
+                 transform_alpha, split_sign, n_jobs, positive_code,
+                 transform_max_iter):
+        self.transform_algorithm = transform_algorithm
+        self.transform_n_nonzero_coefs = transform_n_nonzero_coefs
+        self.transform_alpha = transform_alpha
+        self.transform_max_iter = transform_max_iter
+        self.split_sign = split_sign
+        self.n_jobs = n_jobs
+        self.positive_code = positive_code
+
+    def _transform(self, X, dictionary):
+        """Private method allowing to accomodate both DictionaryLearning and
+        SparseCoder."""
+        X = check_array(X)
+
+        code = sparse_encode(
+            X, dictionary, algorithm=self.transform_algorithm,
+            n_nonzero_coefs=self.transform_n_nonzero_coefs,
+            alpha=self.transform_alpha, max_iter=self.transform_max_iter,
+            n_jobs=self.n_jobs, positive=self.positive_code)
+
+        if self.split_sign:
+            # feature vector is split into a positive and negative side
+            n_samples, n_features = code.shape
+            split_code = np.empty((n_samples, 2 * n_features))
+            split_code[:, :n_features] = np.maximum(code, 0)
+            split_code[:, n_features:] = -np.minimum(code, 0)
+            code = split_code
+
+        return code
 
     def transform(self, X):
         """Encode the data as a sparse combination of the dictionary atoms.
@@ -894,46 +926,14 @@ class SparseCodingMixin(TransformerMixin):
 
         Returns
         -------
-        X_new : array, shape (n_samples, n_components)
+        X_new : array of shape (n_samples, n_components)
             Transformed data
-
         """
         check_is_fitted(self)
-
-        X = check_array(X)
-
-        code = sparse_encode(
-            X, self.components_, algorithm=self.transform_algorithm,
-            n_nonzero_coefs=self.transform_n_nonzero_coefs,
-            alpha=self.transform_alpha, max_iter=self.transform_max_iter,
-            n_jobs=self.n_jobs, positive=self.positive_code)
-
-        if self.split_sign:
-            # feature vector is split into a positive and negative side
-            n_samples, n_features = code.shape
-            split_code = np.empty((n_samples, 2 * n_features))
-            split_code[:, :n_features] = np.maximum(code, 0)
-            split_code[:, n_features:] = -np.minimum(code, 0)
-            code = split_code
-
-        return code
+        return self._transform(X, self.components_)
 
 
-class _BaseSparseCoding:
-    """Base class to set shared parameters of sparse coding classes."""
-    def __init__(self, transform_algorithm, transform_n_nonzero_coefs,
-                 transform_alpha, split_sign, n_jobs, positive_code,
-                 transform_max_iter):
-        self.transform_algorithm = transform_algorithm
-        self.transform_n_nonzero_coefs = transform_n_nonzero_coefs
-        self.transform_alpha = transform_alpha
-        self.transform_max_iter = transform_max_iter
-        self.split_sign = split_sign
-        self.n_jobs = n_jobs
-        self.positive_code = positive_code
-
-
-class SparseCoder(_BaseSparseCoding, SparseCodingMixin, BaseEstimator):
+class SparseCoder(_BaseSparseCoding, BaseEstimator):
     """Sparse coding
 
     Finds a sparse representation of data against a fixed, precomputed
@@ -948,12 +948,12 @@ class SparseCoder(_BaseSparseCoding, SparseCodingMixin, BaseEstimator):
 
     Parameters
     ----------
-    dictionary : array, [n_components, n_features]
+    dictionary : array of shape (n_components, n_features)
         The dictionary atoms used for sparse coding. Lines are assumed to be
         normalized to unit norm.
 
     transform_algorithm : {'lasso_lars', 'lasso_cd', 'lars', 'omp', \
-    'threshold'}, default='omp'
+            'threshold'}, default='omp'
         Algorithm used to transform the data:
 
         - lars: uses the least angle regression method (linear_model.lars_path)
@@ -965,7 +965,7 @@ class SparseCoder(_BaseSparseCoding, SparseCodingMixin, BaseEstimator):
         - threshold: squashes to zero all coefficients less than alpha from
           the projection ``dictionary * X'``
 
-    transform_n_nonzero_coefs : int, default=0.1*n_features
+    transform_n_nonzero_coefs : int, default=0.1 * n_features
         Number of nonzero coefficients to target in each column of the
         solution. This is only used by `algorithm='lars'` and `algorithm='omp'`
         and is overridden by `alpha` in the `omp` case.
@@ -984,7 +984,7 @@ class SparseCoder(_BaseSparseCoding, SparseCodingMixin, BaseEstimator):
         its negative part and its positive part. This can improve the
         performance of downstream classifiers.
 
-    n_jobs : int or None, default=None
+    n_jobs : int, default=None
         Number of parallel jobs to run.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
@@ -1003,8 +1003,12 @@ class SparseCoder(_BaseSparseCoding, SparseCodingMixin, BaseEstimator):
 
     Attributes
     ----------
-    components_ : array, [n_components, n_features]
-        The unchanged dictionary atoms
+    components_ : ndarray of shape (n_components, n_features)
+        The unchanged dictionary atoms.
+
+        .. deprecated:: 0.23
+           This attributes is deprecated in 0.23 and will be removed in 0.25.
+           Use `dictionary` instead.
 
     Examples
     --------
@@ -1049,12 +1053,8 @@ class SparseCoder(_BaseSparseCoding, SparseCodingMixin, BaseEstimator):
         )
         self.dictionary = dictionary
 
-    @property
-    def n_components(self):
-        return self.dictionary.shape[1]
-
     def fit(self, X, y=None):
-        """Do nothing and return the estimator unchanged
+        """Do nothing and return the estimator unchanged.
 
         This method is just there to implement the usual API and hence
         work in pipelines.
@@ -1068,21 +1068,43 @@ class SparseCoder(_BaseSparseCoding, SparseCodingMixin, BaseEstimator):
         Returns
         -------
         self : object
-            Returns the object itself
         """
-        self.components_ = self.dictionary
         return self
 
+    @deprecated("The attribute 'components_' is deprecated in 0.23 and will "
+                "be removed in 0.25. Use the 'dictionary' instead.")
+    @property
+    def components_(self):
+        return self.dictionary
+
     def transform(self, X, y=None):
-        self.fit(X, y)
-        return super().transform(X)
+        """Encode the data as a sparse combination of the dictionary atoms.
+
+        Coding method is determined by the object parameter
+        `transform_algorithm`.
+
+        Parameters
+        ----------
+        X : array of shape (n_samples, n_features)
+            Test data to be transformed, must have the same number of
+            features as the data used to train the model.
+
+        Returns
+        -------
+        X_new : array of shape (n_samples, n_components)
+            Transformed data
+        """
+        return super()._transform(X, self.dictionary)
+
+    def _more_tags(self):
+        return {"requires_fit": False}
 
     @property
     def n_features_in_(self):
         return self.dictionary.shape[1]
 
 
-class DictionaryLearning(_BaseSparseCoding, SparseCodingMixin, BaseEstimator):
+class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
     """Dictionary learning
 
     Finds a dictionary (a set of atoms) that can best be used to represent data
@@ -1310,8 +1332,7 @@ class DictionaryLearning(_BaseSparseCoding, SparseCodingMixin, BaseEstimator):
         return self
 
 
-class MiniBatchDictionaryLearning(_BaseSparseCoding, SparseCodingMixin,
-                                  BaseEstimator):
+class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
     """Mini-batch dictionary learning
 
     Finds a dictionary (a set of atoms) that can best be used to represent data
