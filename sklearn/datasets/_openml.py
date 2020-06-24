@@ -680,7 +680,8 @@ def fetch_openml(name=None, *, version='active', data_id=None, data_home=None,
         is stored in sparse format.
 
         .. versionchanged:: 0.25
-        The default value of `as_frame` will change from `False` to `'auto'` in 0.25.
+        The default value of `as_frame` will change from `False` to `'auto'`
+        in 0.25.
 
     Returns
     -------

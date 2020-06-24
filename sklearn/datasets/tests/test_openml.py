@@ -508,13 +508,15 @@ def test_fetch_openml_as_frame_auto(monkeypatch):
 def test_fetch_openml_default_as_frame_warning(monkeypatch):
     data_id = 61  # iris dataset version 1
     _monkey_patch_webbased_functions(monkeypatch, data_id, True)
-    assert_warns_message(
-        FutureWarning,
-        "The default value of as_frame will change from False "
-        "to 'auto' in 0.25.",
-        fetch_openml,
-        data_id=data_id
-    )
+
+    with pytest.warns(FutureWarning) as record:
+        fetch_openml(data_id=data_id)
+
+    assert len(record) == 1
+
+    msg = "The default value of as_frame will change from False " \
+          "to 'auto' in 0.25."
+    assert record[0].message.args[0] == msg
 
 
 def test_convert_arff_data_dataframe_warning_low_memory_pandas(monkeypatch):
