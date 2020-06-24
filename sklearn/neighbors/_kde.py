@@ -144,7 +144,7 @@ class KernelDensity(BaseEstimator):
             corresponds to a single data point.
         y : None
             Ignored. This parameter exists only for compatibility with
-            :class:`sklearn.pipeline.Pipeline`.
+            :class:`~sklearn.pipeline.Pipeline`.
         sample_weight : array-like, shape (n_samples,), optional
             List of sample weights attached to the data X.
 
@@ -214,7 +214,7 @@ class KernelDensity(BaseEstimator):
             corresponds to a single data point.
         y : None
             Ignored. This parameter exists only for compatibility with
-            :class:`sklearn.pipeline.Pipeline`.
+            :class:`~sklearn.pipeline.Pipeline`.
 
         Returns
         -------

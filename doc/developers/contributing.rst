@@ -263,7 +263,7 @@ modifying code and submitting a PR:
 10. Develop the feature on your feature branch on your computer, using Git to
     do the version control. When you're done editing, add changed files using
     ``git add`` and then ``git commit``::
- 
+
         $ git add modified_files
         $ git commit
 
@@ -486,6 +486,8 @@ message, the following actions are taken.
     [doc build]            Docs built including example gallery plots
     ====================== ===================
 
+.. _stalled_pull_request:
+
 Stalled pull requests
 ^^^^^^^^^^^^^^^^^^^^^
 
@@ -519,6 +521,35 @@ A good etiquette to take over is:
   comment on the stalled PR that you are taking over and to link from the
   new PR to the old one. The new PR should be created by pulling from the
   old one.
+
+Stalled and Unclaimed Issues
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Generally speaking, issues which are up for grabs will have a
+`"help wanted" <https://github.com/scikit-learn/scikit-learn/labels/help%20wanted>`__ .
+tag. However, not all issues which need contributors will have this tag,
+as the "help wanted" tag is not always up-to-date with the state
+of the issue. Contributors can find issues which are still up for grabs
+using the following guidelines:
+
+* First, to **determine if an issue is claimed**:
+
+  * Check for linked pull requests
+  * Check the conversation to see if anyone has said that they're working on
+    creating a pull request
+
+* If a contributor comments on an issue to say they are working on it,
+  a pull request is expected within 2 weeks (new contributor) or 4 weeks
+  (contributor or core dev), unless an larger time frame is explicitly given.
+  Beyond that time, another contributor can take the issue and make a
+  pull request for it. We encourage contributors to comment directly on the
+  stalled or unclaimed issue to let community members know that they will be
+  working on it.
+
+* If the issue is linked to a :ref:`stalled pull request <stalled_pull_request>`,
+  we recommend that contributors follow the procedure
+  described in the :ref:`stalled_pull_request`
+  section rather than working directly on the issue.
 
 .. _new_contributors:
 

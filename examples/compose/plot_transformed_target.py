@@ -19,20 +19,20 @@ example is based on the Ames housing data set.
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
-from distutils.version import LooseVersion
 
 from sklearn.datasets import make_regression
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import RidgeCV
 from sklearn.compose import TransformedTargetRegressor
 from sklearn.metrics import median_absolute_error, r2_score
+from sklearn.utils.fixes import parse_version
 
 # %%
 # Synthetic example
 ##############################################################################
 
 # `normed` is being deprecated in favor of `density` in histograms
-if LooseVersion(matplotlib.__version__) >= '2.1':
+if parse_version(matplotlib.__version__) >= parse_version('2.1'):
     density_param = {'density': True}
 else:
     density_param = {'normed': True}
