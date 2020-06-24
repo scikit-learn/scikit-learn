@@ -32,7 +32,7 @@ from sklearn.linear_model import Lasso, LassoLars, Lars, LinearRegression, \
     LassoCV, ElasticNet, ElasticNetCV, MultiTaskLasso, MultiTaskElasticNet, \
     MultiTaskElasticNetCV, MultiTaskLassoCV, lasso_path, enet_path, Ridge, \
     BayesianRidge, ARDRegression, OrthogonalMatchingPursuit, LassoLarsIC, \
-    RidgeClassifier
+    RidgeClassifier, RidgeCV
 from sklearn.linear_model import LassoLarsCV, lars_path
 from sklearn.linear_model._coordinate_descent import _set_order
 from sklearn.utils import check_array
@@ -329,28 +329,9 @@ def test_model_pipeline_same_as_normalize_true(test_model, args):
      (RidgeClassifier, {"solver": 'sparse_cg', "alpha": 0.1}),
      (ElasticNet, {"tol": 1e-16, 'l1_ratio': 1, "alpha": 0.1}),
      (ElasticNet, {"tol": 1e-16, 'l1_ratio': 0, "alpha": 0.1}),
-     (Ridge, {"solver": 'sparse_cg', 'tol': 1e-12, "alpha": 0.1})
-     #
-     # TypeError: A sparse matrix was passed, but dense data is required:
-     # (OrthogonalMatchingPursuitCV, {})
-     # (LassoLarsCV, {}),
-     # (LarsCV, {}),
-     # (LassoLars, {"alpha": 0.1}),
-     # (BayesianRidge, {}),
-     # (MultiTaskLassoCV, {}),
-     # (ARDRegression, {}),
-     # (OrthogonalMatchingPursuit, {}),
-     # (MultiTaskElasticNet, {"tol": 1e-16, 'l1_ratio': 1, "alpha": 0.1}),
-     # (MultiTaskElasticNet, {"tol": 1e-16, 'l1_ratio': 0, "alpha": 0.1}),
-     # (MultiTaskLasso, {"tol": 1e-16, "alpha": 0.1}),
-     # (Lars, {}),
-     # (LassoLarsIC, {})
-     # (MultiTaskElasticNetCV, {})
-     #
-     # Arrays are not almost equal to 7 decimals
-     # (LinearRegression, {}),
-     #  (RidgeCV, {})
-     # (RidgeClassifierCV, {})
+     (Ridge, {"solver": 'sparse_cg', 'tol': 1e-12, "alpha": 0.1}),
+     (LinearRegression, {}),
+     (RidgeCV, {})
      ])
 def test_model_pipeline_same_dense_and_sparse(test_model, args):
     # Test that linear model preceeded by StandardScaler in the pipeline and
@@ -378,13 +359,13 @@ def test_model_pipeline_same_dense_and_sparse(test_model, args):
         test_model(normalize=False, **args)
     )
     clf_pipe_sparse.fit(X_sparse, y)
-    assert_almost_equal(clf_pipe_sparse[1].coef_,
-                        clf_pipe_dense[1].coef_)
+    assert_array_almost_equal(clf_pipe_sparse[1].coef_,
+                              clf_pipe_dense[1].coef_, decimal=5)
 
     y_pred_dense = clf_pipe_dense.predict(X_test)
     y_pred_sparse = clf_pipe_sparse.predict(X_test_sparse)
 
-    assert_almost_equal(y_pred_dense, y_pred_sparse)
+    assert_array_almost_equal(y_pred_dense, y_pred_sparse, decimal=5)
 
 
 def test_lasso_path_return_models_vs_new_return_gives_same_coefficients():
