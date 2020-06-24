@@ -88,7 +88,6 @@ def transform(raw_X, Py_ssize_t n_features, dtype,
     indptr_a = np.frombuffer(indptr, dtype=indices_np_dtype)
 
     if indptr[-1] > np.iinfo(np.int32).max:  # = 2**31 - 1
-        if sp_version < (0, 14):
         # both indices and indptr have the same dtype in CSR arrays
         indices_a = indices_a.astype(np.int64, copy=False)
     else:
