@@ -20,8 +20,20 @@ jobs:
         pip install flake8 mypy==0.770
       displayName: Install linters
     - bash: |
+        if [[ $BUILD_REASON == "PullRequest" ]]; then
+          # by default pull requests use refs/pull/PULL_ID/merge as the source branch
+          # which has a MERGE ID into ID as a commit message. The latest commit
+          # message is the second to last commit
+          commit_message=$(git show -s --format=%s HEAD~1)
+        else
+          commit_message=$BUILD_SOURCEVERSIONMESSAGE
+        fi
+        echo "##vso[task.setvariable variable=commit_message]$commit_message"
+        echo "Commit Message: $commit_message"
+      displayName: Get source version message
+    - bash: |
         set -ex
-        if [[ $BUILD_SOURCEVERSIONMESSAGE =~ \[lint\ skip\] ]]; then
+        if [[ $commit_message =~ \[lint\ skip\] ]]; then
           # skip linting
           echo "Skipping flake8 linting"
           exit 0
@@ -31,7 +43,7 @@ jobs:
       displayName: Run linting
     - bash: |
         set -ex
-        if [[ $BUILD_SOURCEVERSIONMESSAGE =~ \[lint\ skip\] ]]; then
+        if [[ $commit_message =~ \[lint\ skip\] ]]; then
           # skip linting
           echo "Skipping mypy linting"
           exit 0
@@ -40,7 +52,7 @@ jobs:
         fi
       displayName: Run mypy
     - bash: |
-        if [[ $BUILD_SOURCEVERSIONMESSAGE =~ \[scipy-dev\] ]] || \
+        if [[ $commit_message =~ \[scipy-dev\] ]] || \
            [[ $BUILD_REASON == "Schedule" ]]; then
           echo "##vso[task.setvariable variable=runScipyDev;isOutput=true]true"
         else
