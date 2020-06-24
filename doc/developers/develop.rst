@@ -226,6 +226,17 @@ the dataset, e.g. when ``X`` is a precomputed kernel matrix. Specifically,
 the :term:`_pairwise` property is used by ``utils.metaestimators._safe_split``
 to slice rows and columns.
 
+Universal attributes
+^^^^^^^^^^^^^^^^^^^^
+
+Estimators that expect tabular input should set a `n_features_in_`
+attribute at `fit` time to indicate the number of features that the estimator
+expects for subsequent calls to `predict` or `transform`.
+See
+`SLEP010
+<https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep010/proposal.html>`_
+for details.
+
 .. _rolling_your_own_estimator:
 
 Rolling your own estimator
@@ -235,39 +246,19 @@ whether it is just for you or for contributing it to scikit-learn, there are
 several internals of scikit-learn that you should be aware of in addition to
 the scikit-learn API outlined above. You can check whether your estimator
 adheres to the scikit-learn interface and standards by running
-:func:`utils.estimator_checks.check_estimator` on the class::
+:func:`~sklearn.utils.estimator_checks.check_estimator` on an instance. The
+:func:`~sklearn.utils.estimator_checks.parametrize_with_checks` pytest
+decorator can also be used (see its docstring for details and possible
+interactions with `pytest`)::
 
   >>> from sklearn.utils.estimator_checks import check_estimator
   >>> from sklearn.svm import LinearSVC
-  >>> check_estimator(LinearSVC)  # passes
+  >>> check_estimator(LinearSVC())  # passes
 
 The main motivation to make a class compatible to the scikit-learn estimator
 interface might be that you want to use it together with model evaluation and
 selection tools such as :class:`model_selection.GridSearchCV` and
 :class:`pipeline.Pipeline`.
-
-Setting `generate_only=True` returns a generator that yields (estimator, check)
-tuples where the check can be called independently from each other, i.e.
-`check(estimator)`. This allows all checks to be run independently and report
-the checks that are failing. scikit-learn provides a pytest specific decorator, 
-:func:`~sklearn.utils.parametrize_with_checks`, making it easier to test
-multiple estimators::
-
-  from sklearn.utils.estimator_checks import parametrize_with_checks
-  from sklearn.linear_model import LogisticRegression
-  from sklearn.tree import DecisionTreeRegressor
-
-  @parametrize_with_checks([LogisticRegression, DecisionTreeRegressor])
-  def test_sklearn_compatible_estimator(estimator, check):
-      check(estimator)
-
-This decorator sets the `id` keyword in `pytest.mark.parameterize` exposing
-the name of the underlying estimator and check in the test name. This allows
-`pytest -k` to be used to specify which tests to run.
-
-.. code-block: bash
-   
-   pytest test_check_estimators.py -k check_estimators_fit_returns_self
 
 Before detailing the required interface below, we describe two ways to achieve
 the correct interface more easily.
@@ -481,31 +472,31 @@ runtime. The default values for the estimator tags are defined in the
 
 The current set of estimator tags are:
 
-allow_nan (default=``False``)
+allow_nan (default=False)
     whether the estimator supports data with missing values encoded as np.NaN
 
-binary_only (default=``False``)
+binary_only (default=False)
     whether estimator supports binary classification but lacks multi-class
     classification support.
 
-multilabel (default=``False``)
+multilabel (default=False)
     whether the estimator supports multilabel output
 
-multioutput - unused for now (default=``False``)
+multioutput (default=False)
     whether a regressor supports multi-target outputs or a classifier supports
     multi-class multi-output.
 
-multioutput_only (default=``False``)
+multioutput_only (default=False)
     whether estimator supports only multi-output classification or regression.
 
-no_validation (default=``False``)
+no_validation (default=False)
     whether the estimator skips input-validation. This is only meant for
     stateless and dummy transformers!
 
-non_deterministic (default=``False``)
+non_deterministic (default=False)
     whether the estimator is not deterministic given a fixed ``random_state``
 
-poor_score (default=``False``)
+poor_score (default=False)
     whether the estimator fails to provide a "reasonable" test-set score, which
     currently for regression is an R2 of 0.5 on a subset of the boston housing
     dataset, and for classification an accuracy of 0.83 on
@@ -513,26 +504,44 @@ poor_score (default=``False``)
     are based on current estimators in sklearn and might be replaced by
     something more systematic.
 
-requires_fit (default=``True``)
+requires_fit (default=True)
     whether the estimator requires to be fitted before calling one of
     `transform`, `predict`, `predict_proba`, or `decision_function`.
 
-requires_positive_X (default=``False``)
+requires_positive_X (default=False)
     whether the estimator requires positive X.
 
-requires_positive_y (default=``False``)
+requires_y (default=False)
+    whether the estimator requires y to be passed to `fit`, `fit_predict` or
+    `fit_transform` methods. The tag is True for estimators inheriting from
+    `~sklearn.base.RegressorMixin` and `~sklearn.base.ClassifierMixin`.
+
+requires_positive_y (default=False)
     whether the estimator requires a positive y (only applicable for regression).
 
-_skip_test (default=``False``)
+_skip_test (default=False)
     whether to skip common tests entirely. Don't use this unless you have a
     *very good* reason.
 
-stateless (default=``False``)
+_xfail_checks (default=False)
+    dictionary ``{check_name: reason}`` of common checks that will be marked
+    as `XFAIL` for pytest, when using
+    :func:`~sklearn.utils.estimator_checks.parametrize_with_checks`. These
+    checks will be simply ignored and not run by
+    :func:`~sklearn.utils.estimator_checks.check_estimator`, but a
+    `SkipTestWarning` will be raised.
+    Don't use this unless there is a *very good* reason for your estimator
+    not to pass the check.
+    Also note that the usage of this tag is highly subject to change because
+    we are trying to make it more flexible: be prepared for breaking changes
+    in the future.
+
+stateless (default=False)
     whether the estimator needs access to data for fitting. Even though an
     estimator is stateless, it might still need a call to ``fit`` for
     initialization.
 
-X_types (default=``['2darray']``)
+X_types (default=['2darray'])
     Supported input types for X as list of strings. Tests are currently only
     run if '2darray' is contained in the list, signifying that the estimator
     takes continuous 2d numpy arrays as input. The default value is
@@ -687,6 +696,7 @@ The following example should make this clear::
 
         def __init__(self, n_components=100, random_state=None):
             self.random_state = random_state
+            self.n_components = n_components
 
         # the arguments are ignored anyway, so we make them optional
         def fit(self, X=None, y=None):
@@ -694,7 +704,7 @@ The following example should make this clear::
 
         def transform(self, X):
             n_samples = X.shape[0]
-            return self.random_state_.randn(n_samples, n_components)
+            return self.random_state_.randn(n_samples, self.n_components)
 
 The reason for this setup is reproducibility:
 when an estimator is ``fit`` twice to the same data,

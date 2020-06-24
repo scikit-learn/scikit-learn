@@ -78,10 +78,10 @@ def test_classifier_accuracy():
                 score = clf.score(data, y)
                 assert score > 0.79
                 if average:
-                    assert hasattr(clf, 'average_coef_')
-                    assert hasattr(clf, 'average_intercept_')
-                    assert hasattr(clf, 'standard_intercept_')
-                    assert hasattr(clf, 'standard_coef_')
+                    assert hasattr(clf, '_average_coef')
+                    assert hasattr(clf, '_average_intercept')
+                    assert hasattr(clf, '_standard_intercept')
+                    assert hasattr(clf, '_standard_coef')
 
 
 def test_classifier_partial_fit():
@@ -89,16 +89,17 @@ def test_classifier_partial_fit():
     for data in (X, X_csr):
         for average in (False, True):
             clf = PassiveAggressiveClassifier(random_state=0,
-                average=average, max_iter=5)
+                                              average=average,
+                                              max_iter=5)
             for t in range(30):
                 clf.partial_fit(data, y, classes)
             score = clf.score(data, y)
             assert score > 0.79
             if average:
-                assert hasattr(clf, 'average_coef_')
-                assert hasattr(clf, 'average_intercept_')
-                assert hasattr(clf, 'standard_intercept_')
-                assert hasattr(clf, 'standard_coef_')
+                assert hasattr(clf, '_average_coef')
+                assert hasattr(clf, '_average_intercept')
+                assert hasattr(clf, '_standard_intercept')
+                assert hasattr(clf, '_standard_coef')
 
 
 def test_classifier_refit():
@@ -120,7 +121,7 @@ def test_classifier_correctness(loss):
 
     for data in (X, X_csr):
         clf2 = PassiveAggressiveClassifier(loss=loss, max_iter=2,
-            shuffle=False, tol=None)
+                                           shuffle=False, tol=None)
         clf2.fit(data, y_bin)
 
         assert_array_almost_equal(clf1.w, clf2.coef_.ravel(), decimal=2)
@@ -218,10 +219,10 @@ def test_regressor_mse():
                 pred = reg.predict(data)
                 assert np.mean((pred - y_bin) ** 2) < 1.7
                 if average:
-                    assert hasattr(reg, 'average_coef_')
-                    assert hasattr(reg, 'average_intercept_')
-                    assert hasattr(reg, 'standard_intercept_')
-                    assert hasattr(reg, 'standard_coef_')
+                    assert hasattr(reg, '_average_coef')
+                    assert hasattr(reg, '_average_intercept')
+                    assert hasattr(reg, '_standard_intercept')
+                    assert hasattr(reg, '_standard_coef')
 
 
 def test_regressor_partial_fit():
@@ -231,16 +232,16 @@ def test_regressor_partial_fit():
     for data in (X, X_csr):
         for average in (False, True):
             reg = PassiveAggressiveRegressor(random_state=0,
-                average=average, max_iter=100)
+                                             average=average, max_iter=100)
             for t in range(50):
                 reg.partial_fit(data, y_bin)
             pred = reg.predict(data)
             assert np.mean((pred - y_bin) ** 2) < 1.7
             if average:
-                assert hasattr(reg, 'average_coef_')
-                assert hasattr(reg, 'average_intercept_')
-                assert hasattr(reg, 'standard_intercept_')
-                assert hasattr(reg, 'standard_coef_')
+                assert hasattr(reg, '_average_coef')
+                assert hasattr(reg, '_average_intercept')
+                assert hasattr(reg, '_standard_intercept')
+                assert hasattr(reg, '_standard_coef')
 
 
 @pytest.mark.parametrize(
@@ -255,7 +256,7 @@ def test_regressor_correctness(loss):
 
     for data in (X, X_csr):
         reg2 = PassiveAggressiveRegressor(tol=None, loss=loss, max_iter=2,
-            shuffle=False)
+                                          shuffle=False)
         reg2.fit(data, y_bin)
 
         assert_array_almost_equal(reg1.w, reg2.coef_.ravel(), decimal=2)
@@ -265,3 +266,16 @@ def test_regressor_undefined_methods():
     reg = PassiveAggressiveRegressor(max_iter=100)
     for meth in ("transform",):
         assert_raises(AttributeError, lambda x: getattr(reg, x), meth)
+
+# TODO: remove in 0.25
+@pytest.mark.parametrize('klass', [PassiveAggressiveClassifier,
+                                   PassiveAggressiveRegressor])
+def test_passive_aggressive_deprecated_attr(klass):
+    est = klass(average=True)
+    est.fit(X, y)
+
+    msg = "Attribute {} was deprecated"
+    for att in ['average_coef_', 'average_intercept_',
+                'standard_coef_', 'standard_intercept_']:
+        with pytest.warns(FutureWarning, match=msg.format(att)):
+            getattr(est, att)

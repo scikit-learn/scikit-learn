@@ -9,7 +9,7 @@ from ._base import NeighborsBase
 from ._base import UnsupervisedMixin
 from ._unsupervised import NearestNeighbors
 from ..base import TransformerMixin
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, _deprecate_positional_args
 
 
 def _check_params(X, metric, p, metric_params):
@@ -37,8 +37,10 @@ def _query_include_self(X, include_self, mode):
     return X
 
 
-def kneighbors_graph(X, n_neighbors, mode='connectivity', metric='minkowski',
-                     p=2, metric_params=None, include_self=False, n_jobs=None):
+@_deprecate_positional_args
+def kneighbors_graph(X, n_neighbors, *, mode='connectivity',
+                     metric='minkowski', p=2, metric_params=None,
+                     include_self=False, n_jobs=None):
     """Computes the (weighted) graph of k-Neighbors for points in X
 
     Read more in the :ref:`User Guide <unsupervised_neighbors>`.
@@ -103,7 +105,7 @@ def kneighbors_graph(X, n_neighbors, mode='connectivity', metric='minkowski',
     radius_neighbors_graph
     """
     if not isinstance(X, KNeighborsMixin):
-        X = NearestNeighbors(n_neighbors, metric=metric, p=p,
+        X = NearestNeighbors(n_neighbors=n_neighbors, metric=metric, p=p,
                              metric_params=metric_params, n_jobs=n_jobs).fit(X)
     else:
         _check_params(X, metric, p, metric_params)
@@ -112,9 +114,10 @@ def kneighbors_graph(X, n_neighbors, mode='connectivity', metric='minkowski',
     return X.kneighbors_graph(X=query, n_neighbors=n_neighbors, mode=mode)
 
 
-def radius_neighbors_graph(X, radius, mode='connectivity', metric='minkowski',
-                           p=2, metric_params=None, include_self=False,
-                           n_jobs=None):
+@_deprecate_positional_args
+def radius_neighbors_graph(X, radius, *, mode='connectivity',
+                           metric='minkowski', p=2, metric_params=None,
+                           include_self=False, n_jobs=None):
     """Computes the (weighted) graph of Neighbors for points in X
 
     Neighborhoods are restricted the points at a distance lower than
@@ -192,8 +195,8 @@ def radius_neighbors_graph(X, radius, mode='connectivity', metric='minkowski',
     return X.radius_neighbors_graph(query, radius, mode)
 
 
-class KNeighborsTransformer(NeighborsBase, KNeighborsMixin,
-                            UnsupervisedMixin, TransformerMixin):
+class KNeighborsTransformer(KNeighborsMixin, UnsupervisedMixin,
+                            TransformerMixin, NeighborsBase):
     """Transform X into a (weighted) graph of k nearest neighbors
 
     The transformed data is a sparse graph as returned by kneighbors_graph.
@@ -272,6 +275,22 @@ class KNeighborsTransformer(NeighborsBase, KNeighborsMixin,
         The number of parallel jobs to run for neighbors search.
         If ``-1``, then the number of jobs is set to the number of CPU cores.
 
+    Attributes
+    ----------
+    effective_metric_ : str or callable
+        The distance metric used. It will be same as the `metric` parameter
+        or a synonym of it, e.g. 'euclidean' if the `metric` parameter set to
+        'minkowski' and `p` parameter set to 2.
+
+    effective_metric_params_ : dict
+        Additional keyword arguments for the metric function. For most metrics
+        will be same with `metric_params` parameter, but may also contain the
+        `p` parameter value if the `effective_metric_` attribute is set to
+        'minkowski'.
+
+    n_samples_fit_ : int
+        Number of samples in the fitted data.
+
     Examples
     --------
     >>> from sklearn.manifold import Isomap
@@ -281,7 +300,8 @@ class KNeighborsTransformer(NeighborsBase, KNeighborsMixin,
     ...     KNeighborsTransformer(n_neighbors=5, mode='distance'),
     ...     Isomap(neighbors_algorithm='precomputed'))
     """
-    def __init__(self, mode='distance', n_neighbors=5, algorithm='auto',
+    @_deprecate_positional_args
+    def __init__(self, *, mode='distance', n_neighbors=5, algorithm='auto',
                  leaf_size=30, metric='minkowski', p=2, metric_params=None,
                  n_jobs=1):
         super(KNeighborsTransformer, self).__init__(
@@ -335,8 +355,8 @@ class KNeighborsTransformer(NeighborsBase, KNeighborsMixin,
         return self.fit(X).transform(X)
 
 
-class RadiusNeighborsTransformer(NeighborsBase, RadiusNeighborsMixin,
-                                 UnsupervisedMixin, TransformerMixin):
+class RadiusNeighborsTransformer(RadiusNeighborsMixin, UnsupervisedMixin,
+                                 TransformerMixin, NeighborsBase):
     """Transform X into a (weighted) graph of neighbors nearer than a radius
 
     The transformed data is a sparse graph as returned by
@@ -413,6 +433,22 @@ class RadiusNeighborsTransformer(NeighborsBase, RadiusNeighborsMixin,
         The number of parallel jobs to run for neighbors search.
         If ``-1``, then the number of jobs is set to the number of CPU cores.
 
+    Attributes
+    ----------
+    effective_metric_ : str or callable
+        The distance metric used. It will be same as the `metric` parameter
+        or a synonym of it, e.g. 'euclidean' if the `metric` parameter set to
+        'minkowski' and `p` parameter set to 2.
+
+    effective_metric_params_ : dict
+        Additional keyword arguments for the metric function. For most metrics
+        will be same with `metric_params` parameter, but may also contain the
+        `p` parameter value if the `effective_metric_` attribute is set to
+        'minkowski'.
+
+    n_samples_fit_ : int
+        Number of samples in the fitted data.
+
     Examples
     --------
     >>> from sklearn.cluster import DBSCAN
@@ -422,7 +458,8 @@ class RadiusNeighborsTransformer(NeighborsBase, RadiusNeighborsMixin,
     ...     RadiusNeighborsTransformer(radius=42.0, mode='distance'),
     ...     DBSCAN(min_samples=30, metric='precomputed'))
     """
-    def __init__(self, mode='distance', radius=1., algorithm='auto',
+    @_deprecate_positional_args
+    def __init__(self, *, mode='distance', radius=1., algorithm='auto',
                  leaf_size=30, metric='minkowski', p=2, metric_params=None,
                  n_jobs=1):
         super(RadiusNeighborsTransformer, self).__init__(

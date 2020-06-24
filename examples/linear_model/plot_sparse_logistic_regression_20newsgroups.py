@@ -42,7 +42,7 @@ solver = 'saga'
 # Turn down for faster run time
 n_samples = 10000
 
-X, y = fetch_20newsgroups_vectorized('all', return_X_y=True)
+X, y = fetch_20newsgroups_vectorized(subset='all', return_X_y=True)
 X = X[:n_samples]
 y = y[:n_samples]
 

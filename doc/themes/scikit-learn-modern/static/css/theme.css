@@ -36,7 +36,6 @@ code {
   color: #222;
   background-color: #ecf0f3;
   border-radius: 0.2rem;
-  white-space: nowrap;
   padding: 0.15rem;
 }
 
@@ -72,6 +71,7 @@ a code {
   color: #2878A2;
   border-radius: 0;
   padding: 0;
+  white-space: nowrap;
 }
 
 img {
@@ -83,14 +83,14 @@ span.highlighted {
 }
 
 div.highlight {
-  padding: 0.2rem 0.5rem;
   border: 1px solid #ddd;
   margin-bottom: 1rem;
 }
 
 div.highlight pre {
+  padding: 0.2rem 0.5rem;
   margin-bottom: 0;
-  line-height: 1rem;
+  line-height: 1.2rem;
 }
 
 div.highlight a {
@@ -663,6 +663,7 @@ code.descclassname {
 dl.field-list {
   display: flex;
   flex-wrap: wrap;
+  overflow-x: scroll;
 }
 
 dl.field-list > dt {
@@ -717,16 +718,26 @@ dd {
   padding-left: 1rem;
 }
 
+dl.class > dd {
+  padding-left: 0;
+}
+
+@media screen and (min-width: 768px) {
+  dl.class > dd {
+    padding-left: 1rem;
+  }
+}
+
 .rubric {
   font-weight: bold;
   margin-top: 1rem;
 }
 
-ul.simple li p {
+ul.simple li p, ol.simple li p {
   margin-bottom: 0;
 }
 
-ul.simple {
+ul.simple, ol.simple {
   padding-left: 1.5rem;
 }
 
@@ -918,6 +929,8 @@ table.docutils {
   margin-bottom: 1rem;
   line-height: 1rem;
   max-width: 100%;
+  display: block;
+  overflow-x: scroll;
 }
 
 table.docutils p {
@@ -961,6 +974,44 @@ div.sphx-glr-thumbcontainer {
     left: 98%;
     width: 20ex;
   }
+}
+
+/* Pandas dataframe css */
+/* Taken from: https://github.com/spatialaudio/nbsphinx/blob/fb3ba670fc1ba5f54d4c487573dbc1b4ecf7e9ff/src/nbsphinx.py#L587-L619 */
+/* FIXME: to be removed when sphinx-gallery >= 5.0 will be released */
+
+table.dataframe {
+  border: none !important;
+  border-collapse: collapse;
+  border-spacing: 0;
+  border-color: transparent;
+  color: black;
+  font-size: 12px;
+  table-layout: fixed;
+}
+table.dataframe thead {
+  border-bottom: 1px solid black;
+  vertical-align: bottom;
+}
+table.dataframe tr,
+table.dataframe th,
+table.dataframe td {
+  text-align: right;
+  vertical-align: middle;
+  padding: 0.5em 0.5em;
+  line-height: normal;
+  white-space: normal;
+  max-width: none;
+  border: none;
+}
+table.dataframe th {
+  font-weight: bold;
+}
+table.dataframe tbody tr:nth-child(odd) {
+  background: #f5f5f5;
+}
+table.dataframe tbody tr:hover {
+  background: rgba(66, 165, 245, 0.2);
 }
 
 /* rellinks */

@@ -108,7 +108,7 @@ def test_dict_learning_lars_positive_parameter():
     alpha = 1
     err_msg = "Positive constraint not supported for 'lars' coding method."
     with pytest.raises(ValueError, match=err_msg):
-        dict_learning(X, n_components, alpha, positive_code=True)
+        dict_learning(X, n_components, alpha=alpha, positive_code=True)
 
 
 @pytest.mark.parametrize("transform_algorithm", [
@@ -248,7 +248,7 @@ def test_dict_learning_online_lars_positive_parameter():
     alpha = 1
     err_msg = "Positive constraint not supported for 'lars' coding method."
     with pytest.raises(ValueError, match=err_msg):
-        dict_learning_online(X, alpha, positive_code=True)
+        dict_learning_online(X, alpha=alpha, positive_code=True)
 
 
 @pytest.mark.parametrize("transform_algorithm", [
@@ -392,6 +392,23 @@ def test_dict_learning_online_partial_fit():
                               decimal=2)
 
 
+def test_dict_learning_iter_offset():
+    n_components = 12
+    rng = np.random.RandomState(0)
+    V = rng.randn(n_components, n_features)
+    dict1 = MiniBatchDictionaryLearning(n_components, n_iter=10,
+                                        dict_init=V, random_state=0,
+                                        shuffle=False)
+    dict2 = MiniBatchDictionaryLearning(n_components, n_iter=10,
+                                        dict_init=V, random_state=0,
+                                        shuffle=False)
+    dict1.fit(X)
+    for sample in X:
+        dict2.partial_fit(sample[np.newaxis, :])
+
+    assert dict1.iter_offset_ == dict2.iter_offset_
+
+
 def test_sparse_encode_shapes():
     n_components = 12
     rng = np.random.RandomState(0)
@@ -530,3 +547,9 @@ def test_sparse_coder_init_parameters():
     assert_allclose(sc.components_, init_dict)
     sc.fit(data)
     assert_allclose(sc.components_, next_dict)
+
+
+def test_sparse_coder_n_features_in():
+    d = np.array([[1, 2, 3], [1, 2, 3]])
+    sc = SparseCoder(d)
+    assert sc.n_features_in_ == d.shape[1]
