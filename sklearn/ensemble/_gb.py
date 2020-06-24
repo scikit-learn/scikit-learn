@@ -241,9 +241,9 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             loss_class = _gb_losses.LOSS_FUNCTIONS[self.loss]
 
         if self.loss in ('huber', 'quantile'):
-            self.loss_ = loss_class(self.n_classes_, self.alpha)
+            self.loss_ = loss_class(self._n_classes, self.alpha)
         else:
-            self.loss_ = loss_class(self.n_classes_)
+            self.loss_ = loss_class(self._n_classes_)
 
         if not (0.0 < self.subsample <= 1.0):
             raise ValueError("subsample must be in (0,1] but "
@@ -266,7 +266,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         if isinstance(self.max_features, str):
             if self.max_features == "auto":
                 # if is_classification
-                if self.n_classes_ > 1:
+                if self._n_classes > 1:
                     max_features = max(1, int(np.sqrt(self.n_features_)))
                 else:
                     # is regression
@@ -415,7 +415,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                                  test_size=self.validation_fraction,
                                  stratify=stratify))
             if is_classifier(self):
-                if self.n_classes_ != np.unique(y).shape[0]:
+                if self._n_classes != np.unique(y).shape[0]:
                     # We choose to error here. The problem is that the init
                     # estimator would be trained on y, which has some missing
                     # classes now, so its predictions would not have the
@@ -714,7 +714,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
     def _validate_y(self, y, sample_weight):
         # 'sample_weight' is not utilised but is used for
         # consistency with similar method _validate_y of GBC
-        self.n_classes_ = 1
+        self._n_classes = 1
         if y.dtype.kind == 'O':
             y = y.astype(DOUBLE)
         # Default implementation
@@ -1084,7 +1084,9 @@ shape (n_estimators, ``loss_.K``)
                              "trimmed classes with zero weights, while a "
                              "minimum of 2 classes are required."
                              % n_trim_classes)
-        self.n_classes_ = len(self.classes_)
+        self._n_classes = len(self.classes_)
+        # expose n_classes_ attribute only for classifier
+        self.n_classes_ = self._n_classes
         return y
 
     def decision_function(self, X):
