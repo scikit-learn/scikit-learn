@@ -22,8 +22,7 @@ from numpy.ma import MaskedArray as _MaskedArray  # TODO: remove in 0.25
 from .deprecation import deprecated
 
 try:
-    import pkg_resources
-    parse_version = pkg_resources.parse_version  # type: ignore
+    from pkg_resources import parse_version  # type: ignore
 except ImportError:
     # setuptools not installed
     parse_version = LooseVersion  # type: ignore
