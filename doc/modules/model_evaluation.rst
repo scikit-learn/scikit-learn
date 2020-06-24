@@ -1586,9 +1586,7 @@ weight of bin :math:`k` and
 denotes the absolute difference between the average frequency of positive class
 and the average predicted probability of positive class in bin :math:`k`.
 
-The calibration loss is appropriate for binary and categorical outcomes
-that can be structured as true or false, but is inappropriate for ordinal
-variables which can take on three or more values.
+The calibration loss is appropriate for binary classification tasks.
 Which label is considered to be the positive label is controlled via the
 parameter pos_label, which defaults to 1.
 
