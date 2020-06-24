@@ -20,8 +20,7 @@ jobs:
         pip install flake8 mypy==0.770
       displayName: Install linters
     - bash: |
-        git show -s --format=%s
-        git show -s --format=%s HEAD~1
+        git --no-pager log -1 HEAD~1 --format=%s
         if [[ $BUILD_REASON == "PullRequest" ]]; then
           # By default pull requests use refs/pull/PULL_ID/merge as the source branch
           # which has a "Merge ID into ID" as a commit message. The latest commit
