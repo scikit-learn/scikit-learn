@@ -1034,8 +1034,8 @@ def test_linear_models_cv_fit_for_all_backends(backend, estimator):
     # memmapped when using loky backend, causing an error due to unexpected
     # behavior of fancy indexing of read-only memmaps (cf. numpy#14132).
 
-    if parse_version(joblib.__version__) < parse_version('0.12') \
-       and backend == 'loky':
+    if (parse_version(joblib.__version__) < parse_version('0.12')
+            and backend == 'loky'):
         pytest.skip('loky backend does not exist in joblib <0.12')
 
     # Create a problem sufficiently large to cause memmapping (1MB).
