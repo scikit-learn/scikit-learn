@@ -167,7 +167,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
     def _fit_stage(self, i, X, y, raw_predictions, sample_weight, sample_mask,
                    random_state, X_csc=None, X_csr=None):
-        """Fit another stage of ``n_classes_`` trees to the boosting model. """
+        """Fit another stage of ``_n_classes`` trees to the boosting model. """
 
         assert sample_mask.dtype == np.bool
         loss = self.loss_
@@ -243,7 +243,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         if self.loss in ('huber', 'quantile'):
             self.loss_ = loss_class(self._n_classes, self.alpha)
         else:
-            self.loss_ = loss_class(self._n_classes_)
+            self.loss_ = loss_class(self._n_classes)
 
         if not (0.0 < self.subsample <= 1.0):
             raise ValueError("subsample must be in (0,1] but "
@@ -1495,9 +1495,6 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
 
     estimators_ : ndarray of DecisionTreeRegressor of shape (n_estimators, 1)
         The collection of fitted sub-estimators.
-
-    n_classes_ : int
-        The number of classes, set to 1 in regression tasks.
 
     n_estimators_ : int
         The number of estimators as selected by early stopping (if
