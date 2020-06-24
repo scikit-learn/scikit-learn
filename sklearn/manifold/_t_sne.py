@@ -733,14 +733,23 @@ class TSNE(BaseEstimator):
                 if self.verbose:
                     print("[t-SNE] Computing pairwise distances...")
 
-                distances = pairwise_distances(X, metric=self.metric,
-                                               n_jobs=self.n_jobs)
+                if self.metric == 'euclidean':
+                    if self.square_distance in [True, 'legacy']:
+                        # Euclidean is squared here, rather than using **= 2,
+                        # because euclidean_distances already calculates
+                        # squared distances, and returns np.sqrt(dist) for
+                        # squared=False. So, using dist **= 2 would result in:
+                        #   ^2 -> sqrt() -> ^2
+                        distances = pairwise_distances(X, metric=self.metric,
+                                                       squared=True)
+                    else:
+                        distances = pairwise_distances(X, metric=self.metric)
+                else:
+                    # Euclidean has separate calls as it's slower for n_jobs>1
+                    distances = pairwise_distances(X, metric=self.metric,
+                                                   n_jobs=self.n_jobs)
 
-            if (
-                self.square_distance is True
-                or (self.square_distance == 'legacy'
-                    and self.metric == 'euclidean')
-            ):
+            if self.metric != 'euclidean' and self.square_distance is True:
                 distances **= 2
 
             if np.any(distances < 0):

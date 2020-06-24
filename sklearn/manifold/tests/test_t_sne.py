@@ -913,10 +913,11 @@ def test_tsne_with_legacy_euclidean_squaring(method):
         metric='euclidean', n_components=n_components_embedding,
         random_state=0, square_distance="legacy",
         method=method).fit_transform(X)
+    X_precomputed = pairwise_distances(X, metric='euclidean', squared=True)
     X_transformed_tsne_precomputed = TSNE(
         metric='precomputed', n_components=n_components_embedding,
         random_state=0, square_distance="legacy",
-        method=method).fit_transform(euclidean_distances(X)**2)
+        method=method).fit_transform(X_precomputed)
     assert_array_equal(X_transformed_tsne, X_transformed_tsne_precomputed)
 
 
