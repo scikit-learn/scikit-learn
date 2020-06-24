@@ -365,11 +365,12 @@ def test_model_pipeline_same_as_normalize_true_no_alpha(test_model, args):
 
 @pytest.mark.parametrize("test_model, args",
     [
-     (Lasso, {"tol": 1e-16}), (LassoLars, {}),
-     (RidgeClassifier, {"solver": 'sparse_cg'}),
-     (ElasticNet, {"tol": 1e-16, 'l1_ratio': 1}),
-     (ElasticNet, {"tol": 1e-16, 'l1_ratio': 0}),
-     (Ridge, {"solver": 'sparse_cg', 'tol': 1e-12})
+     (Lasso, {"tol": 1e-16, "alpha": 0.1}), (LassoLars, {"alpha": 0.1}),
+     (RidgeClassifier, {"solver": 'sparse_cg', "alpha": 0.1}),
+     (ElasticNet, {"tol": 1e-16, 'l1_ratio': 1, "alpha": 0.1}),
+     (ElasticNet, {"tol": 1e-16, 'l1_ratio': 0, "alpha": 0.1}),
+     (Ridge, {"solver": 'sparse_cg', 'tol': 1e-12, "alpha": 0.1}),
+     # (BayesianRidge, {})
     ])
 def test_model_pipeline_same_as_normalize_true(test_model, args):
     # Test that linear model set with normalize set to True is doing the same
@@ -390,28 +391,32 @@ def test_model_pipeline_same_as_normalize_true(test_model, args):
 
     X, X_test, y, y_test = train_test_split(X, y, random_state=42)
 
-    alpha = 0.1
+    # alpha = 0.1
     # normalize is True
-    clf_norm = test_model(alpha=alpha, normalize=True, fit_intercept=True,
+    clf_norm = test_model(normalize=True, fit_intercept=True,
                           **args)
     clf_norm.fit(X, y)
     y_pred_norm = clf_norm.predict(X_test)
 
-    alpha_scaled = alpha
+    if 'alpha' in args:
+        alpha_scaled = args['alpha']
     if 'Lasso' in str(test_model):
-        alpha_scaled = alpha * np.sqrt(X.shape[0])
+        alpha_scaled = alpha_scaled * np.sqrt(X.shape[0])
     if 'Ridge' in str(test_model):
-        alpha_scaled = alpha * X.shape[0]
+        alpha_scaled = alpha_scaled * X.shape[0]
     if 'Elastic' in str(test_model):
         if args['l1_ratio'] == 1:
-            alpha_scaled = alpha * np.sqrt(X.shape[0])
+            alpha_scaled = alpha_scaled * np.sqrt(X.shape[0])
         if args['l1_ratio'] == 0:
-            alpha_scaled = alpha * X.shape[0]
+            alpha_scaled = alpha_scaled * X.shape[0]
+
+    if 'alpha' in args:
+        args['alpha'] = alpha_scaled
+
 
     clf_pipe = make_pipeline(
         StandardScaler(),
-        test_model(alpha=alpha_scaled,
-                   normalize=False, fit_intercept=True, **args)
+        test_model(normalize=False, fit_intercept=True, **args)
     )
     clf_pipe.fit(X, y)
     y_pred_pipe = clf_pipe.predict(X_test)
