@@ -106,7 +106,7 @@ detection.
 :class:`ensemble.IsolationForest` and :class:`neighbors.LocalOutlierFactor`
 perform reasonably well on the data sets considered here.
 The :class:`svm.OneClassSVM` is known to be sensitive to outliers and thus
-does not perform very well for outlier detection. Finally,
+does not perform very well for outlier detection. However, :class:`svm.OneClassSVM` may provide useful results for outlier detection in certain situations depending on the value of its hyperparameters. These include outlier detection in high-dimension, or when there are no assumptions on the distribution of inlying data. Finally,
 :class:`covariance.EllipticEnvelope` assumes the data is Gaussian and learns
 an ellipse. For more details on the different estimators refer to the example
 :ref:`sphx_glr_auto_examples_miscellaneous_plot_anomaly_comparison.py` and the
@@ -378,4 +378,3 @@ Novelty detection with Local Outlier Factor is illustrated below.
      :target: ../auto_examples/neighbors/sphx_glr_plot_lof_novelty_detection.html
      :align: center
      :scale: 75%
-
