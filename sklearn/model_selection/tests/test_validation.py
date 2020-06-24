@@ -539,8 +539,8 @@ def test_cross_val_score_mask():
     kfold = KFold(5)
     cv_masks = []
     for train, test in kfold.split(X, y):
-        mask_train = np.zeros(len(y), dtype=np.bool)
-        mask_test = np.zeros(len(y), dtype=np.bool)
+        mask_train = np.zeros(len(y), dtype=bool)
+        mask_test = np.zeros(len(y), dtype=bool)
         mask_train[train] = 1
         mask_test[test] = 1
         cv_masks.append((train, test))

@@ -319,17 +319,6 @@ THRESHOLDED_METRICS_WITH_AVERAGING = {
 # Metrics with a "pos_label" argument
 METRICS_WITH_POS_LABEL = {
     "roc_curve",
-
-    "roc_auc_score",
-    "weighted_roc_auc",
-    "samples_roc_auc",
-    "micro_roc_auc",
-    "ovr_roc_auc",
-    "weighted_ovr_roc_auc",
-    "ovo_roc_auc",
-    "weighted_ovo_roc_auc",
-    "partial_roc_auc",
-
     "precision_recall_curve",
 
     "brier_score_loss",

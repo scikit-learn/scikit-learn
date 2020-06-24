@@ -979,7 +979,7 @@ def test_chi_square_kernel():
     K_add = additive_chi2_kernel(X, Y)
     gamma = 0.1
     K = chi2_kernel(X, Y, gamma=gamma)
-    assert K.dtype == np.float
+    assert K.dtype == float
     for i, x in enumerate(X):
         for j, y in enumerate(Y):
             chi2 = -np.sum((x - y) ** 2 / (x + y))
@@ -1004,7 +1004,7 @@ def test_chi_square_kernel():
     X = rng.random_sample((10, 4)).astype(np.int32)
     K = chi2_kernel(X, X)
     assert np.isfinite(K).all()
-    assert K.dtype == np.float
+    assert K.dtype == float
 
     # check that kernel of similar things is greater than dissimilar ones
     X = [[.3, .7], [1., 0]]
@@ -1240,16 +1240,16 @@ def test_check_preserve_type():
     assert XB_checked.dtype == np.float32
 
     # mismatched A
-    XA_checked, XB_checked = check_pairwise_arrays(XA.astype(np.float),
+    XA_checked, XB_checked = check_pairwise_arrays(XA.astype(float),
                                                    XB)
-    assert XA_checked.dtype == np.float
-    assert XB_checked.dtype == np.float
+    assert XA_checked.dtype == float
+    assert XB_checked.dtype == float
 
     # mismatched B
     XA_checked, XB_checked = check_pairwise_arrays(XA,
-                                                   XB.astype(np.float))
-    assert XA_checked.dtype == np.float
-    assert XB_checked.dtype == np.float
+                                                   XB.astype(float))
+    assert XA_checked.dtype == float
+    assert XB_checked.dtype == float
 
 
 @pytest.mark.parametrize("n_jobs", [1, 2])
