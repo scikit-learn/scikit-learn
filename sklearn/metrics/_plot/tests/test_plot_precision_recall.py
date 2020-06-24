@@ -200,7 +200,7 @@ def test_plot_precision_recall_pos_label(pyplot, response_method):
     # check that we can provide the positive label and display the proper
     # statistics
     X, y = load_breast_cancer(return_X_y=True)
-    # create an highly imbalanced
+    # create an highly imbalanced version of the breast cancer dataset
     idx_positive = np.flatnonzero(y == 1)
     idx_negative = np.flatnonzero(y == 0)
     idx_selected = np.hstack([idx_negative, idx_positive[:25]])
@@ -229,7 +229,6 @@ def test_plot_precision_recall_pos_label(pyplot, response_method):
     # we should obtain the statistics of the "cancer" class
     avg_prec_limit = 0.65
     assert disp.average_precision < avg_prec_limit
-
     assert -np.trapz(disp.precision, disp.recall) < avg_prec_limit
 
     # otherwise we should obtain the statistics of the "not cancer" class
