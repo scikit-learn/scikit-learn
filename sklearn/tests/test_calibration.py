@@ -341,3 +341,12 @@ def test_calibration_accepts_ndarray(X):
     calibrated_clf = CalibratedClassifierCV(MockTensorClassifier())
     # we should be able to fit this classifier with no error
     calibrated_clf.fit(X, y)
+
+
+def test_ll():
+    n_samples = 100
+    X, y = make_classification(n_samples=n_samples, n_features=6,
+                               n_classes=3, n_informative=3, random_state=42)
+    clf = CalibratedClassifierCV(RandomForestClassifier(), cv=2)
+    clf.fit(X,y)
+    clf.predict_proba(X)
