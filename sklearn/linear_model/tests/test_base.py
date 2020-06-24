@@ -247,7 +247,7 @@ def test_linear_regression_sparse(solver, random_state=0):
 @pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 @pytest.mark.parametrize("normalize", [True, False])
 @pytest.mark.parametrize("fit_intercept", [True, False])
-@pytest.mark.parametrize('solver', ['svd', 'cholesky'])
+@pytest.mark.parametrize('solver', ['svd'])
 def test_linear_regression_sparse_equal_dense(normalize, fit_intercept, solver):
     # Test that linear regression agrees between sparse and dense
     rng = check_random_state(0)
