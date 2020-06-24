@@ -533,6 +533,18 @@ def test_sparse_coder_parallel_mmap():
     sc.fit_transform(data)
 
 
+# TODO: remove in 0.25
+def test_sparse_coder_deprecation():
+    # check that we raise a deprecation warning when accessing `components_`
+    rng = np.random.RandomState(777)
+    n_components, n_features = 40, 64
+    init_dict = rng.rand(n_components, n_features)
+    sc = SparseCoder(init_dict)
+
+    with pytest.warns(FutureWarning, match="'components_' is deprecated"):
+        sc.components_
+
+
 def test_sparse_coder_n_features_in():
     d = np.array([[1, 2, 3], [1, 2, 3]])
     sc = SparseCoder(d)
