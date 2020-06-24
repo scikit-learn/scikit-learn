@@ -556,7 +556,7 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
     Attributes
     ----------
     base_estimator_ : ``_BinaryGaussianProcessClassifierLaplace``
-        The estimator template that defines the likelihood function
+        The estimator instance that defines the likelihood function
         using the observed data.
 
     kernel_ : kernel instance
