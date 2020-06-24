@@ -341,7 +341,7 @@ class MDS(BaseEstimator):
         - either uses a custom dissimilarity matrix by setting `dissimilarity`
           to ‘precomputed’;
 
-        - or constructs an dissimilarity matrix from data using
+        - or constructs a dissimilarity matrix from data using
           Euclidean distances
 
     n_iter_ : int
