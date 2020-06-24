@@ -590,6 +590,22 @@ In the transformed `X`, the first column is the encoding of the feature with
 categories "male"/"female", while the remaining 6 columns is the encoding of
 the 2 features with respectively 3 categories each.
 
+:class:`OneHotEncoder` supports categorical features with missing values by
+considering themissing values its own category::
+
+    >>> X = [['male', 'Safari'],
+    ...      ['female', None],
+    ...      [np.nan, 'Firefox']]
+    >>> enc = preprocessing.OneHotEncoder().fit(X)
+    >>> enc.categories_
+    [array(['female', 'male', nan], dtype=object),
+     array(['Firefox', 'Safari', None], dtype=object)]
+    >>> enc.transform(X).toarray()
+    array([[0., 1., 0., 0., 1., 0.],
+           [1., 0., 0., 0., 0., 1.],
+           [0., 0., 1., 1., 0., 0.]])
+
+
 See :ref:`dict_feature_extraction` for categorical features that are
 represented as a dict, not as scalars.
 
