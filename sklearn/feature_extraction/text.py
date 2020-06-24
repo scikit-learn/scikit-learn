@@ -31,7 +31,7 @@ from ._hash import FeatureHasher
 from ._stop_words import ENGLISH_STOP_WORDS
 from ..utils.validation import check_is_fitted, check_array, FLOAT_DTYPES
 from ..utils import _IS_32BIT
-from ..utils._data_adapter import _DataAdapter
+from ..utils._data_adapter import _DataTransformer
 from ..utils.fixes import _astype_copy_false
 from ..exceptions import NotFittedError
 from ..utils.validation import _deprecate_positional_args
@@ -1193,8 +1193,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
 
         vocabulary, X = self._count_vocab(raw_documents,
                                           self.fixed_vocabulary_)
-        # Fitting with None results in no feature names saved.
-        data_wrap = _DataAdapter().fit(None).get_transformer(X)
+        data_wrap = _DataTransformer(X, needs_feature_names_in=False)
 
         if self.binary:
             X.data.fill(1)
@@ -1219,7 +1218,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
 
             self.vocabulary_ = vocabulary
 
-        def get_output_feature_names(feature_names_in):
+        def get_output_feature_names():
             return self.get_feature_names()
 
         return data_wrap.transform(X, get_output_feature_names)
@@ -1248,13 +1247,12 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         # use the same matrix-building strategy as fit_transform
         _, X = self._count_vocab(raw_documents, fixed_vocab=True)
 
-        # Fitting with None results in no feature names saved.
-        data_wrap = _DataAdapter().fit(None).get_transformer(X)
+        data_wrap = _DataTransformer(X, needs_feature_names_in=False)
 
         if self.binary:
             X.data.fill(1)
 
-        def get_output_feature_names(feature_names_in):
+        def get_output_feature_names():
             return self.get_feature_names()
 
         return data_wrap.transform(X, get_output_feature_names)
@@ -1476,7 +1474,7 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
         -------
         vectors : sparse matrix of shape (n_samples, n_features)
         """
-        data_wrap = _DataAdapter().fit_get_transformer(X)
+        data_wrap = _DataTransformer(X)
         X = check_array(X, accept_sparse='csr', dtype=FLOAT_DTYPES, copy=copy)
         if not sp.issparse(X):
             X = sp.csr_matrix(X, dtype=np.float64)

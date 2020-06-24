@@ -8,7 +8,7 @@ from scipy import sparse
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
 from ..utils.validation import check_is_fitted
-from ..utils._data_adapter import _DataAdapter
+from ..utils._data_adapter import _DataTransformer
 from ..utils.validation import _deprecate_positional_args
 
 from ..utils._encode import _encode, _check_unknown, _unique
@@ -424,7 +424,7 @@ class OneHotEncoder(_BaseEncoder):
             Transformed input.
         """
         check_is_fitted(self)
-        data_wrap = _DataAdapter().fit_get_transformer(X)
+        data_wrap = _DataTransformer(X)
         # validation of X happens in _check_X called by _transform
         X_int, X_mask = self._transform(X, handle_unknown=self.handle_unknown)
 
@@ -698,7 +698,7 @@ class OrdinalEncoder(_BaseEncoder):
         X_out : sparse matrix or a 2-d array
             Transformed input.
         """
-        data_wrap = _DataAdapter().fit_get_transformer(X)
+        data_wrap = _DataTransformer(X)
         X_int, _ = self._transform(X)
         output = X_int.astype(self.dtype, copy=False)
         return data_wrap.transform(output)
