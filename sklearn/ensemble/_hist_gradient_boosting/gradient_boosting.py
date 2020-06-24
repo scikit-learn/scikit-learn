@@ -887,6 +887,8 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
 
     Attributes
     ----------
+    do_early_stopping_ : bool
+        Indicates whether early stopping is used during training.
     n_iter_ : int
         The number of iterations as selected by early stopping, depending on
         the `early_stopping` parameter. Otherwise it corresponds to max_iter.
