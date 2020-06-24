@@ -273,11 +273,54 @@ from sklearn.linear_model import MultiTaskElasticNet, MultiTaskLasso
 # 1s fails on .coef_
 from sklearn.linear_model import RidgeClassifier
 
+
+@pytest.mark.parametrize("test_model, args",
+    [(MultiTaskElasticNetCV, {}), (MultiTaskLassoCV, {})])
+def test_model_pipeline_same_as_normalize_true_multitask(test_model, args):
+    # Test that linear model set with normalize set to True is doing the same
+    # as the same linear model preceeded by StandardScaler in the pipeline and
+    # with normalize set to False
+
+    n_samples, n_features = 300, 2
+    random_state = np.random.RandomState(0)
+    w = random_state.randn(n_features)
+    X = random_state.randn(n_samples, n_features)
+    X += 10  # make features non-zero mean
+    y = X.dot(w)
+    y = np.stack((y, y), axis=1)
+
+    if test_model == MultiTaskElasticNetCV:
+        # X = np.stack([X, X])
+        y = np.stack([y, y], axis=1)
+    X, X_test, y, y_test = train_test_split(X, y, random_state=42)
+
+    # normalize is True
+    clf_norm = test_model(normalize=True, fit_intercept=True,
+                          **args)
+    clf_norm.fit(X, y)
+    y_pred_norm = clf_norm.predict(X_test)
+
+    clf_pipe = make_pipeline(
+        StandardScaler(),
+        test_model(normalize=False, fit_intercept=True, **args)
+    )
+    clf_pipe.fit(X, y)
+    y_pred_pipe = clf_pipe.predict(X_test)
+
+    assert_array_almost_equal(clf_norm.coef_, clf_pipe[1].coef_, decimal=2)
+    if test_model == MultiTaskElasticNetCV:
+        assert np.all(abs(clf_norm.intercept_ - clf_pipe[1].intercept_) > 1.)
+    else:
+        assert abs(clf_norm.intercept_ - clf_pipe[1].intercept_) > 1.
+    assert_array_almost_equal(y_pred_norm, y_pred_pipe)
+
+
 @pytest.mark.parametrize("test_model, args",
     [(Lars, {}), (LassoCV, {}), (LinearRegression, {}),
      (OrthogonalMatchingPursuitCV, {}), (OrthogonalMatchingPursuit, {}),
      (LarsCV, {}), (BayesianRidge, {}), (ARDRegression, {}), (LassoLarsCV, {}),
-     (LassoLarsIC, {}), (MultiTaskElasticNetCV, {})])
+     (LassoLarsIC, {}), (MultiTaskElasticNetCV, {}),
+     (ElasticNetCV, {}), (RidgeCV, {})])
 def test_model_pipeline_same_as_normalize_true_no_alpha(test_model, args):
     # Test that linear model set with normalize set to True is doing the same
     # as the same linear model preceeded by StandardScaler in the pipeline and
@@ -331,10 +374,10 @@ def test_model_pipeline_same_as_normalize_true(test_model, args):
     X += 10  # make features non-zero mean
 
     y = X.dot(w)
+    # make classes out of regression
     if test_model == RidgeClassifier:
         y[y > np.mean(y)] = 0
         y[y > 0] = 1
-
 
     X, X_test, y, y_test = train_test_split(X, y, random_state=42)
 
