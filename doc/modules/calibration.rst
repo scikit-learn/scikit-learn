@@ -164,12 +164,6 @@ and where there is limited calibration data, while isotonic calibration is
 preferable for non-sigmoid calibration curves and in situations where large
 amounts of data are available for calibration.
 
-Linear Support Vector Classification (:class:`LinearSVC`) shows an even more
-sigmoid curve as the RandomForestClassifier, which is typical for
-maximum-margin methods (compare Niculescu-Mizil and Caruana [1]_), which
-focus on hard samples that are close to the decision boundary (the support
-vectors).
-
 Calibrating a classifier
 ------------------------
 
