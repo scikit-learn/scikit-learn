@@ -68,7 +68,7 @@ jobs:
     name: Linux_Nightly
     vmImage: ubuntu-18.04
     dependsOn: [linting]
-    condition: eq(dependencies['linting']['outputs']['gitCommitMessage.runScipyDev'], 'true')
+    condition: eq(dependencies['linting']['outputs']['gitCommitMessage.runScipyDev'], 'true''')
     matrix:
       pylatest_pip_scipy_dev:
         DISTRIB: 'conda-pip-scipy-dev'
