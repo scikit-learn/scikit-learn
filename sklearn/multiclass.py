@@ -133,7 +133,7 @@ class _ConstantPredictor(BaseEstimator):
 
 class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
                           MetaEstimatorMixin, BaseEstimator):
-    """One-vs-the-rest (OvR) multiclass/multilabel strategy
+    """One-vs-the-rest (OvR) multiclass strategy.
 
     Also known as one-vs-all, this strategy consists in fitting one classifier
     per class. For each classifier, the class is fitted against all the other
@@ -144,12 +144,13 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
     corresponding classifier. This is the most commonly used strategy for
     multiclass classification and is a fair default choice.
 
-    This strategy can also be used for multilabel learning, where a classifier
-    is used to predict multiple labels for instance, by fitting on a 2-d matrix
-    in which cell [i, j] is 1 if sample i has label j and 0 otherwise.
-
-    In the multilabel learning literature, OvR is also known as the binary
-    relevance method.
+    OneVsRestClassifier can also be used for multilabel classification. To use
+    this feature, provide an indicator matrix for the target `y` when calling
+    `.fit`. In other words, the target labels should be formatted as a 2D
+    binary (0/1) matrix, where [i, j] == 1 indicates the presence of label j
+    in sample i. This estimator uses the binary relevance method to perform
+    multilabel classification, which involves training one binary classifier
+    independently for each label.
 
     Read more in the :ref:`User Guide <ovr_classification>`.
 
@@ -206,6 +207,12 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
     >>> clf.predict([[-19, -20], [9, 9], [-5, 5]])
     array([2, 0, 1])
 
+    See Also
+    --------
+    sklearn.multioutput.MultiOutputClassifier : Alternate way of extending an
+        estimator for multilabel classification.
+    sklearn.preprocessing.MultiLabelBinarizer : Transform iterable of iterables
+        to binary indicator matrix.
     """
     @_deprecate_positional_args
     def __init__(self, estimator, *, n_jobs=None):
