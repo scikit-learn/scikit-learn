@@ -873,7 +873,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
     best_loss_ : float
         The minimum loss reached by the solver throughout fitting.
 
-    loss_curve_ : list of shape (n_iter_,)
+    loss_curve_ : list of shape (`n_iter_`,)
         The ith element in the list represents the loss at the ith iteration.
 
     t_ : int
@@ -1289,7 +1289,7 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
     best_loss_ : float
         The minimum loss reached by the solver throughout fitting.
 
-    loss_curve_ : list of shape (n_iter_,)
+    loss_curve_ : list of shape (`n_iter_`,)
         The ith element in the list represents the loss at the ith iteration.
 
     t_ : int
