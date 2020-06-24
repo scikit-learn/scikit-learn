@@ -198,7 +198,7 @@ def test_labels_assignment_and_inertia():
     # implementation
     rng = np.random.RandomState(42)
     noisy_centers = centers + rng.normal(size=centers.shape)
-    labels_gold = np.full(n_samples, -1, dtype=np.int)
+    labels_gold = np.full(n_samples, -1, dtype=int)
     mindist = np.empty(n_samples)
     mindist.fill(np.infty)
     for center_id in range(n_clusters):
@@ -466,8 +466,9 @@ def test_minibatch_k_means_init_multiple_runs_with_explicit_centers():
 @pytest.mark.parametrize('data', [X, X_csr], ids=['dense', 'sparse'])
 @pytest.mark.parametrize('init', ["random", 'k-means++', centers.copy()])
 def test_minibatch_k_means_init(data, init):
+    n_init = 10 if type(init) is str else 1
     mb_k_means = MiniBatchKMeans(init=init, n_clusters=n_clusters,
-                                 random_state=42, n_init=10)
+                                 random_state=42, n_init=n_init)
     mb_k_means.fit(data)
     _check_fitted_model(mb_k_means)
 
@@ -672,8 +673,9 @@ def test_score(algo):
 @pytest.mark.parametrize('data', [X, X_csr], ids=['dense', 'sparse'])
 @pytest.mark.parametrize('init', ['random', 'k-means++', centers.copy()])
 def test_predict(Estimator, data, init):
+    n_init = 10 if type(init) is str else 1
     k_means = Estimator(n_clusters=n_clusters, init=init,
-                        n_init=10, random_state=0).fit(data)
+                        n_init=n_init, random_state=0).fit(data)
 
     # sanity check: re-predict labeling for training set samples
     assert_array_equal(k_means.predict(data), k_means.labels_)
@@ -691,8 +693,9 @@ def test_predict(Estimator, data, init):
 def test_predict_minibatch_dense_sparse(init):
     # check that models trained on sparse input also works for dense input at
     # predict time
+    n_init = 10 if type(init) is str else 1
     mb_k_means = MiniBatchKMeans(n_clusters=n_clusters, init=init,
-                                 n_init=10, random_state=0).fit(X_csr)
+                                 n_init=n_init, random_state=0).fit(X_csr)
 
     assert_array_equal(mb_k_means.predict(X), mb_k_means.labels_)
 
@@ -946,7 +949,7 @@ def test_weighted_vs_repeated():
                   KMeans(init="random", n_clusters=n_clusters,
                          random_state=42),
                   KMeans(init=centers.copy(), n_clusters=n_clusters,
-                         random_state=42),
+                         random_state=42, n_init=1),
                   MiniBatchKMeans(n_clusters=n_clusters, batch_size=10,
                                   random_state=42)]
     for estimator in estimators:
@@ -1028,7 +1031,7 @@ def test_k_means_empty_cluster_relocated():
 
 def test_minibatch_kmeans_partial_fit_int_data():
     # Issue GH #14314
-    X = np.array([[-1], [1]], dtype=np.int)
+    X = np.array([[-1], [1]], dtype=int)
     km = MiniBatchKMeans(n_clusters=2)
     km.partial_fit(X)
     assert km.cluster_centers_.dtype.kind == "f"

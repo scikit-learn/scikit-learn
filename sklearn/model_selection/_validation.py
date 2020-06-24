@@ -18,11 +18,10 @@ from contextlib import suppress
 
 import numpy as np
 import scipy.sparse as sp
-from joblib import Parallel, delayed
+from joblib import Parallel, delayed, logger
 
 from ..base import is_classifier, clone
-from ..utils import (indexable, check_random_state, _safe_indexing,
-                     _message_with_time)
+from ..utils import indexable, check_random_state, _safe_indexing
 from ..utils.validation import _check_fit_params
 from ..utils.validation import _num_samples
 from ..utils.validation import _deprecate_positional_args
@@ -411,7 +410,9 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
                    parameters, fit_params, return_train_score=False,
                    return_parameters=False, return_n_test_samples=False,
                    return_times=False, return_estimator=False,
+                   split_progress=None, candidate_progress=None,
                    error_score=np.nan):
+
     """Fit estimator and compute scores for a given dataset split.
 
     Parameters
@@ -463,6 +464,13 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     return_parameters : bool, default=False
         Return parameters that has been used for the estimator.
 
+    split_progress : list or tuple, optional, default: None
+        A list or tuple of format (<current_split_id>, <total_num_of_splits>)
+
+    candidate_progress : list or tuple, optional, default: None
+        A list or tuple of format
+        (<current_candidate_id>, <total_number_of_candidates>)
+
     return_n_test_samples : bool, default=False
         Whether to return the ``n_test_samples``
 
@@ -496,13 +504,24 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     estimator : estimator object
         The fitted estimator
     """
+    progress_msg = ""
+    if verbose > 2:
+        if split_progress is not None:
+            progress_msg = f" {split_progress[0]+1}/{split_progress[1]}"
+        if candidate_progress and verbose > 9:
+            progress_msg += (f"; {candidate_progress[0]+1}/"
+                             f"{candidate_progress[1]}")
+
     if verbose > 1:
         if parameters is None:
-            msg = ''
+            params_msg = ''
         else:
-            msg = '%s' % (', '.join('%s=%s' % (k, v)
-                                    for k, v in parameters.items()))
-        print("[CV] %s %s" % (msg, (64 - len(msg)) * '.'))
+            sorted_keys = sorted(parameters)  # Ensure deterministic o/p
+            params_msg = (', '.join(f'{k}={parameters[k]}'
+                                    for k in sorted_keys))
+    if verbose > 9:
+        start_msg = f"[CV{progress_msg}] START {params_msg}"
+        print(f"{start_msg}{(80 - len(start_msg)) * '.'}")
 
     # Adjust length of sample weights
     fit_params = fit_params if fit_params is not None else {}
@@ -561,23 +580,25 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
         score_time = time.time() - start_time - fit_time
         if return_train_score:
             train_scores = _score(estimator, X_train, y_train, scorer)
-    if verbose > 2:
-        if isinstance(test_scores, dict):
-            for scorer_name in sorted(test_scores):
-                msg += ", %s=" % scorer_name
-                if return_train_score:
-                    msg += "(train=%.3f," % train_scores[scorer_name]
-                    msg += " test=%.3f)" % test_scores[scorer_name]
-                else:
-                    msg += "%.3f" % test_scores[scorer_name]
-        else:
-            msg += ", score="
-            msg += ("%.3f" % test_scores if not return_train_score else
-                    "(train=%.3f, test=%.3f)" % (train_scores, test_scores))
 
     if verbose > 1:
         total_time = score_time + fit_time
-        print(_message_with_time('CV', msg, total_time))
+        end_msg = f"[CV{progress_msg}] END "
+        result_msg = params_msg + (";" if params_msg else "")
+        if verbose > 2:
+            if isinstance(test_scores, dict):
+                for scorer_name in sorted(test_scores):
+                    result_msg += f" {scorer_name}: ("
+                    if return_train_score:
+                        result_msg += (f"train="
+                                       f"{train_scores[scorer_name]:.3f}, ")
+                    result_msg += f"test={test_scores[scorer_name]:.3f})"
+        result_msg += f" total time={logger.short_format_time(total_time)}"
+
+        # Right align the result_msg
+        end_msg += "." * (80 - len(end_msg) - len(result_msg))
+        end_msg += result_msg
+        print(end_msg)
 
     ret = [train_scores, test_scores] if return_train_score else [test_scores]
 
@@ -759,7 +780,7 @@ def cross_val_predict(estimator, X, y=None, *, groups=None, cv=None,
             le = LabelEncoder()
             y = le.fit_transform(y)
         elif y.ndim == 2:
-            y_enc = np.zeros_like(y, dtype=np.int)
+            y_enc = np.zeros_like(y, dtype=int)
             for i_label in range(y.shape[1]):
                 y_enc[:, i_label] = LabelEncoder().fit_transform(y[:, i_label])
             y = y_enc
@@ -1332,7 +1353,7 @@ def _translate_train_sizes(train_sizes, n_max_training_samples):
                              % (n_min_required_samples,
                                 n_max_required_samples))
         train_sizes_abs = (train_sizes_abs * n_max_training_samples).astype(
-                             dtype=np.int, copy=False)
+                             dtype=int, copy=False)
         train_sizes_abs = np.clip(train_sizes_abs, 1,
                                   n_max_training_samples)
     else:
