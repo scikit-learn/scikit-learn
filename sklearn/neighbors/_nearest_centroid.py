@@ -234,7 +234,7 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
             where classes are ordered as they are in ``self.classes_``.
         """
 
-        check_is_fitted(self, 'centroids_')
+        check_is_fitted(self, 's_')
 
         # Tibshirani et al. (2002b), p. 109
         if self.prior_ == 'uninformative':
