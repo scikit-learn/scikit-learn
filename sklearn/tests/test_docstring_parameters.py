@@ -232,7 +232,7 @@ def test_fit_docstring_attributes(name, Estimator):
                'ElasticNetCV', 'GaussianProcessClassifier',
                'HistGradientBoostingClassifier',
                'HistGradientBoostingRegressor',
-               'KernelCenterer', 'KernelDensity',
+               'KernelCenterer',
                'LarsCV', 'Lasso', 'LassoLarsCV', 'LassoLarsIC',
                'LocalOutlierFactor', 'MDS',
                'MiniBatchKMeans',
