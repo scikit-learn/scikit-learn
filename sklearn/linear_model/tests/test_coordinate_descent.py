@@ -365,6 +365,7 @@ def test_model_pipeline_same_as_normalize_true_no_alpha(test_model, args):
 
 @pytest.mark.parametrize("test_model, args",
     [(Lasso, {"tol":1e-16}), (LassoLars, {}), (RidgeClassifier, {}),
+     (ElasticNet, {}), (Ridge, {})
     ])
 def test_model_pipeline_same_as_normalize_true(test_model, args):
     # Test that linear model set with normalize set to True is doing the same
