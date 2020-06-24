@@ -1494,6 +1494,14 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     estimators_ : ndarray of DecisionTreeRegressor of shape (n_estimators, 1)
         The collection of fitted sub-estimators.
 
+    n_classes_ : int
+        The number of classes, set to 1 in regression tasks.
+
+    n_estimators_ : int
+        The number of estimators as selected by early stopping (if
+        ``n_iter_no_change`` is specified). Otherwise it is set to
+        ``n_estimators``.
+
     n_features_ : int
         The number of data features.
 
