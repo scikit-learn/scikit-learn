@@ -71,7 +71,7 @@ def test_linear_regression_sample_weights(solver):
 
             # LinearRegression with explicit sample_weight
             reg = LinearRegression(fit_intercept=intercept,
-                                    solver=solver)
+                                   solver=solver)
             reg.fit(X, y, sample_weight=sample_weight)
             coefs1 = reg.coef_
             inter1 = reg.intercept_
@@ -89,7 +89,7 @@ def test_linear_regression_sample_weights(solver):
                 X_aug = np.concatenate((dummy_column, X), axis=1)
 
             coefs2 = linalg.solve(X_aug.T.dot(W).dot(X_aug),
-                                    X_aug.T.dot(W).dot(y))
+                                  X_aug.T.dot(W).dot(y))
 
             if intercept is False:
                 assert_array_almost_equal(coefs1, coefs2)
@@ -130,13 +130,13 @@ def test_fit_intercept(solver):
     y = np.array([1, 1])
 
     lr2_without_intercept = LinearRegression(fit_intercept=False,
-                                                solver=solver)
+                                             solver=solver)
     lr2_without_intercept.fit(X2, y)
     lr2_with_intercept = LinearRegression(solver=solver)
     lr2_with_intercept.fit(X2, y)
 
     lr3_without_intercept = LinearRegression(fit_intercept=False,
-                                                solver=solver)
+                                             solver=solver)
     lr3_without_intercept.fit(X3, y)
     lr3_with_intercept = LinearRegression(solver=solver)
     lr3_with_intercept.fit(X3, y)
@@ -168,8 +168,9 @@ def test_linear_regression_sparse(solver, random_state=0):
 
 @pytest.mark.parametrize('normalize', [True, False])
 @pytest.mark.parametrize('fit_intercept', [True, False])
-@pytest.mark.parametrize('solver', ['svd', 'cholesky'])
-def test_linear_regression_sparse_equal_dense(normalize, fit_intercept, solver):
+@pytest.mark.parametrize('solver', ['svd'])
+def test_linear_regression_sparse_equal_dense(normalize, fit_intercept,
+                                              solver):
     # Test that linear regression agrees between sparse and dense
     rng = check_random_state(0)
     n_samples = 200
@@ -203,7 +204,7 @@ def test_linear_regression_multiple_outcome(solver, random_state=0):
     reg.fit(X, y)
     y_pred = reg.predict(X)
     assert_array_almost_equal(np.vstack((y_pred, y_pred)).T, Y_pred,
-                                decimal=3)
+                              decimal=3)
 
 
 @pytest.mark.parametrize('solver', ['svd', 'cholesky'])
@@ -222,7 +223,7 @@ def test_linear_regression_sparse_multiple_outcome(solver, random_state=0):
     ols.fit(X, y.ravel())
     y_pred = ols.predict(X)
     assert_array_almost_equal(np.vstack((y_pred, y_pred)).T, Y_pred,
-                                decimal=3)
+                              decimal=3)
 
 
 @pytest.mark.parametrize('solver', ['svd', 'cholesky'])
