@@ -434,11 +434,13 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         self.n_samples_fit_ = X.shape[0]
 
         if self._fit_method == 'auto':
-            # A tree approach is better for small number of neighbors,
-            # and KDTree is generally faster when available
-            if ((self.n_neighbors is None or
-                 self.n_neighbors < self._fit_X.shape[0] // 2) and
-                    self.metric != 'precomputed'):
+            # A tree approach is better for small number of neighbors or small
+            # number of features, with KDTree generally faster when available
+            if (self.metric == 'precomputed' or self._fit_X.shape[1] > 15 or
+                    (self.n_neighbors is not None and
+                     self.n_neighbors >= self._fit_X.shape[0] // 2)):
+                self._fit_method = 'brute'
+            else:
                 if self.effective_metric_ in VALID_METRICS['kd_tree']:
                     self._fit_method = 'kd_tree'
                 elif (callable(self.effective_metric_) or
@@ -446,8 +448,6 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                     self._fit_method = 'ball_tree'
                 else:
                     self._fit_method = 'brute'
-            else:
-                self._fit_method = 'brute'
 
         if self._fit_method == 'ball_tree':
             self._tree = BallTree(X, self.leaf_size,
