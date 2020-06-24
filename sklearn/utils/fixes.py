@@ -23,10 +23,10 @@ from .deprecation import deprecated
 
 try:
     import pkg_resources
-    parse_version = pkg_resources.parse_version # type: ignore
+    parse_version = pkg_resources.parse_version  # type: ignore
 except ImportError:
     # setuptools not installed
-    parse_version = LooseVersion # type: ignore
+    parse_version = LooseVersion  # type: ignore
 
 def _parse_version(version_string):
     version = []
