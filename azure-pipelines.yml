@@ -21,6 +21,7 @@ jobs:
       displayName: Install linters
     - bash: |
         git show -s --format=%s
+        git show -s --format=%s HEAD~1
         if [[ $BUILD_REASON == "PullRequest" ]]; then
           # By default pull requests use refs/pull/PULL_ID/merge as the source branch
           # which has a "Merge ID into ID" as a commit message. The latest commit
