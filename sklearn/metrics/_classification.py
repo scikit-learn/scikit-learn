@@ -2469,8 +2469,7 @@ def calibration_error(y_true, y_prob, sample_weight=None, norm='l2',
     assigned to the positive class, and (2) the frequencies
     of the positive class in the actual outcome.
 
-    The calibration loss is appropriate for binary and categorical outcomes
-    that can be structured as true or false.
+    The calibration loss is only appropriate for binary categorical outcomes.
     Which label is considered to be the positive label is controlled via the
     parameter pos_label, which defaults to 1.
 
