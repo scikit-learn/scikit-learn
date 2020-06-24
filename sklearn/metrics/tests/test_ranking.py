@@ -7,13 +7,9 @@ from scipy.sparse import csr_matrix
 from sklearn import datasets
 from sklearn import svm
 
-from sklearn.datasets import make_multilabel_classification
-from sklearn.datasets import load_breast_cancer
-from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import train_test_split
-from sklearn.random_projection import _sparse_random_matrix
-from sklearn.utils import shuffle
 from sklearn.utils.extmath import softmax
+from sklearn.datasets import make_multilabel_classification
+from sklearn.random_projection import _sparse_random_matrix
 from sklearn.utils.validation import check_array, check_consistent_length
 from sklearn.utils.validation import check_random_state
 
@@ -1473,40 +1469,3 @@ def test_partial_roc_auc_score():
         assert_almost_equal(
             roc_auc_score(y_true, y_pred, max_fpr=max_fpr),
             _partial_roc_auc_score(y_true, y_pred, max_fpr))
-
-
-@pytest.mark.parametrize(
-    "decision_method", ["predict_proba", "decision_function"]
-)
-def test_roc_auc_score_pos_label(decision_method):
-    X, y = load_breast_cancer(return_X_y=True)
-    # create an highly imbalanced
-    idx_positive = np.flatnonzero(y == 1)
-    idx_negative = np.flatnonzero(y == 0)
-    idx_selected = np.hstack([idx_negative, idx_positive[:25]])
-    X, y = X[idx_selected], y[idx_selected]
-    X, y = shuffle(X, y, random_state=42)
-    # only use 2 features to make the problem even harder
-    X = X[:, :2]
-    y = np.array(
-        ["cancer" if c == 1 else "not cancer" for c in y], dtype=object
-    )
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, stratify=y, random_state=0,
-    )
-
-    classifier = LogisticRegression()
-    classifier.fit(X_train, y_train)
-
-    # sanity check to be sure the positive class is classes_[0] and that we
-    # are betrayed by the class imbalance
-    assert classifier.classes_.tolist() == ["cancer", "not cancer"]
-    pos_label = "cancer"
-
-    y_pred = getattr(classifier, decision_method)(X_test)
-    y_pred = y_pred[:, 0] if y_pred.ndim == 2 else -y_pred
-
-    fpr, tpr, _ = roc_curve(y_test, y_pred, pos_label=pos_label)
-    roc_auc = roc_auc_score(y_test, y_pred, pos_label=pos_label)
-
-    assert roc_auc == pytest.approx(np.trapz(tpr, fpr))

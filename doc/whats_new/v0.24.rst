@@ -122,9 +122,6 @@ Changelog
   class to be used when computing the precision and recall statistics.
   :pr:`17569` by :user:`Guillaume Lemaitre <glemaitre>`.
 
-- |Enhancement| Add `pos_label` parameter to :func:`roc_auc_score`.
-  :pr:`17594` by :user:`Guillaume Lemaitre <glemaitre>`.
-
 :mod:`sklearn.model_selection`
 ..............................
 
