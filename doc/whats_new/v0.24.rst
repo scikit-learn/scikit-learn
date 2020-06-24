@@ -114,8 +114,11 @@ Changelog
   :pr:`17309` by :user:`Swier Heeres <swierh>`
 
 - |Enhancement| Add `sample_weight` parameter to
-  :class:`metrics.median_absolute_error`. :pr:`17225` by
+  :func:`metrics.median_absolute_error`. :pr:`17225` by
   :user:`Lucy Liu <lucyleeow>`.
+
+- |Enhancement| Add `pos_label` parameter to :func:`roc_auc_score`.
+  :pr:`17594` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.model_selection`
 ..............................
