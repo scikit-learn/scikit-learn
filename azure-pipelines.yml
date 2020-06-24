@@ -21,7 +21,7 @@ jobs:
       displayName: Install linters
     - bash: |
         set -ex
-        git --no-pager log -2 $BUILD_SOURCEVERSION
+        git --no-pager log -2 $BUILD_SOURCEBRANCHNAME
         if [[ $BUILD_REASON == "PullRequest" ]]; then
           # By default pull requests use refs/pull/PULL_ID/merge as the source branch
           # which has a "Merge ID into ID" as a commit message. The latest commit
