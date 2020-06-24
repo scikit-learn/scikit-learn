@@ -337,13 +337,18 @@ def test_model_pipeline_same_dense_and_sparse(test_model, args):
     # Test that linear model preceeded by StandardScaler in the pipeline and
     # with normalize set to False gives the same y_pred and the same .coef_
     # given X sparse or dense
-    n_samples = 50
-    X_sparse = sparse.csc_matrix(np.identity(n_samples))
-    X_test_sparse = sparse.csc_matrix(np.zeros((n_samples, n_samples)))
-    y = np.arange(-n_samples, 0)
 
-    X = X_sparse.todense()
-    X_test = X_test_sparse.todense()
+    rng = np.random.RandomState(0)
+    n_samples = 200
+    n_features = 2
+    X = rng.randn(n_samples, n_features)
+    X[X < 0.1] = 0.
+
+    X_sparse = sparse.csr_matrix(X)
+    y = rng.rand(n_samples)
+
+    if 'Classifier' in str(test_model):
+        y = np.sign(y)
 
     clf_pipe_dense = make_pipeline(
         StandardScaler(with_mean=False),
@@ -359,8 +364,8 @@ def test_model_pipeline_same_dense_and_sparse(test_model, args):
     assert_array_almost_equal(clf_pipe_sparse[1].coef_,
                               clf_pipe_dense[1].coef_, decimal=5)
 
-    y_pred_dense = clf_pipe_dense.predict(X_test)
-    y_pred_sparse = clf_pipe_sparse.predict(X_test_sparse)
+    y_pred_dense = clf_pipe_dense.predict(X)
+    y_pred_sparse = clf_pipe_sparse.predict(X_sparse)
 
     assert_array_almost_equal(y_pred_dense, y_pred_sparse, decimal=5)
 
