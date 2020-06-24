@@ -87,6 +87,7 @@ def _generate_func_supporting_param(param, dataset_type=("load", "fetch")):
             yield pytest.param(name, obj, marks=marks)
 
 
+@pytest.mark.xfail
 @pytest.mark.parametrize(
     "name, dataset_func", _generate_func_supporting_param("return_X_y")
 )
