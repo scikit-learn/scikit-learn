@@ -150,23 +150,18 @@ class LocalOutlierFactor(KNeighborsMixin, UnsupervisedMixin,
         case, the offset is defined in such a way we obtain the expected
         number of outliers in training.
 
+        .. versionadded:: 0.20
+
     effective_metric_ : str
         The effective metric used for the distance computation.
-        If `metric` is 'minkowski', `effective_metric_` is equivalent to
-        Minkowski distance of order p. When p = 1, this is equivalent to
-        'manhattan'(l1), ‘euclidean’ (l2) for p = 2, and 'chebyshev' for
-        p=np.inf. For arbitrary p, minkowski_distance (l_p) is used.
-        If `metric` is not 'minkowski', `effective_metric_` is equal to metric.
 
     effective_metric_params_ : dict
         The effective additional keyword arguments for the metric function.
-        This is equivalent to `metric_params` in parameters if metric_params
-        is not None.
 
     n_samples_fit_ : int
         It is the number of samples in the fitted data.
 
-        .. versionadded:: 0.20
+
 
     Examples
     --------
