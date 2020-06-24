@@ -16,6 +16,9 @@ KNOWN_FAILURE = {
         "fetch_openml": pytest.mark.xfail(
             reason="fetch_opeml requires a dataset name or id"
         ),
+        "fetch_lfw_people": pytest.mark.xfail(
+            reason="fetch_lfw_people can fail if pillow is not installed"
+        )
     },
     "as_frame": {
         "fetch_openml": pytest.mark.xfail(
@@ -87,7 +90,6 @@ def _generate_func_supporting_param(param, dataset_type=("load", "fetch")):
             yield pytest.param(name, obj, marks=marks)
 
 
-@pytest.mark.xfail
 @pytest.mark.parametrize(
     "name, dataset_func", _generate_func_supporting_param("return_X_y")
 )
