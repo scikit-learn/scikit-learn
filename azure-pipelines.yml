@@ -53,13 +53,12 @@ jobs:
         fi
       displayName: Run mypy
     - bash: |
-        set -ex
         if [[ "$COMMIT_MESSAGE" =~ "[scipy-dev]" ]] || [[ $BUILD_REASON == "Schedule" ]]; then
-          runScipyDev="true"
+          echo "Running scipy-dev"
+          echo "##vso[task.setvariable variable=runScipyDev;isOutput=true]true"
         else
-          runScipyDev="false"
+          echo "##vso[task.setvariable variable=runScipyDev;isOutput=true]false"
         fi
-        echo "##vso[task.setvariable variable=runScipyDev;isOutput=true]$runScipyDev"
       name: gitCommitMessage
       displayName: Determine to run scipy-dev
 
