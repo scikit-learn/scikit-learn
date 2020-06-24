@@ -12,6 +12,7 @@ from sklearn.utils._testing import (assert_array_almost_equal,
                                     assert_almost_equal,
                                     assert_array_equal,
                                     assert_raises, ignore_warnings)
+from sklearn.exceptions import NotFittedError
 from sklearn.datasets import make_classification, make_blobs
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
@@ -199,6 +200,11 @@ def test_calibration_prefit():
 
     # Naive-Bayes
     clf = MultinomialNB()
+    # Check error if clf not prefit
+    unfit_clf = CalibratedClassifierCV(clf, cv="prefit")
+    with pytest.raises(NotFittedError):
+        unfit_clf.fit(X_calib, y_calib)
+
     clf.fit(X_train, y_train, sw_train)
     prob_pos_clf = clf.predict_proba(X_test)[:, 1]
 
