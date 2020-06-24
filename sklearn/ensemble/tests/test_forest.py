@@ -11,7 +11,6 @@ Testing for the forest module (sklearn.ensemble.forest).
 import pickle
 import math
 from collections import defaultdict
-from distutils.version import LooseVersion
 import itertools
 from itertools import combinations
 from itertools import product
@@ -35,6 +34,7 @@ from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import assert_warns_message
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils._testing import skip_if_no_parallel
+from sklearn.utils.fixes import parse_version
 
 from sklearn.exceptions import NotFittedError
 
@@ -1274,7 +1274,7 @@ class MyBackend(DEFAULT_JOBLIB_BACKEND):  # type: ignore
 joblib.register_parallel_backend('testing', MyBackend)
 
 
-@pytest.mark.skipif(joblib.__version__ < LooseVersion('0.12'),
+@pytest.mark.skipif(parse_version(joblib.__version__) < parse_version('0.12'),
                     reason='tests not yet supported in joblib <0.12')
 @skip_if_no_parallel
 def test_backend_respected():
