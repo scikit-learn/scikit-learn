@@ -342,9 +342,6 @@ def test_model_pipeline_same_dense_and_sparse(test_model, args):
     X_test_sparse = sparse.csc_matrix(np.zeros((n_samples, n_samples)))
     y = np.arange(-n_samples, 0)
 
-    if 'MultiTask' in str(test_model):
-        y = np.stack((y, y), axis=1)
-
     X = X_sparse.todense()
     X_test = X_test_sparse.todense()
 
