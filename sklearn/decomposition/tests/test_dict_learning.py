@@ -510,7 +510,6 @@ def test_sparse_coder_estimator_clone():
     cloned = clone(code)
     assert cloned.dictionary.tolist() == code.dictionary.tolist()
     assert cloned.n_components_ == code.n_components_
-    assert cloned.components_.tolist() == code.components_.tolist()
     assert cloned.n_features_in_ == code.n_features_in_
 
 
