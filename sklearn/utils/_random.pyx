@@ -84,7 +84,7 @@ cpdef _sample_without_replacement_with_tracking_selection(
     cdef np.int_t i
     cdef np.int_t j
     cdef np.ndarray[np.int_t, ndim=1] out = np.empty((n_samples, ),
-                                                     dtype=np.int)
+                                                     dtype=int)
 
     rng = check_random_state(random_state)
     rng_randint = rng.randint
@@ -140,10 +140,10 @@ cpdef _sample_without_replacement_with_pool(np.int_t n_population,
     cdef np.int_t i
     cdef np.int_t j
     cdef np.ndarray[np.int_t, ndim=1] out = np.empty((n_samples, ),
-                                                     dtype=np.int)
+                                                     dtype=int)
 
     cdef np.ndarray[np.int_t, ndim=1] pool = np.empty((n_population, ),
-                                                      dtype=np.int)
+                                                      dtype=int)
 
     rng = check_random_state(random_state)
     rng_randint = rng.randint
@@ -203,7 +203,7 @@ cpdef _sample_without_replacement_with_reservoir_sampling(
     cdef np.int_t i
     cdef np.int_t j
     cdef np.ndarray[np.int_t, ndim=1] out = np.empty((n_samples, ),
-                                                     dtype=np.int)
+                                                     dtype=int)
 
     rng = check_random_state(random_state)
     rng_randint = rng.randint
