@@ -29,15 +29,17 @@ from sklearn.preprocessing import add_dummy_feature
 
 rng = np.random.RandomState(0)
 rtol = 1e-6
+solvers = ["svd," "cholesky"]
 
 
-def test_linear_regression():
+@pytest.mark.parametrize("solver", solvers)
+def test_linear_regression(solver):
     # Test LinearRegression on a simple dataset.
     # a simple dataset
     X = [[1], [2]]
     Y = [1, 2]
 
-    reg = LinearRegression()
+    reg = LinearRegression(solver=solver)
     reg.fit(X, Y)
 
     assert_array_almost_equal(reg.coef_, [1])
@@ -49,30 +51,6 @@ def test_linear_regression():
     Y = [0]
 
     reg = LinearRegression()
-    reg.fit(X, Y)
-    assert_array_almost_equal(reg.coef_, [0])
-    assert_array_almost_equal(reg.intercept_, [0])
-    assert_array_almost_equal(reg.predict(X), [0])
-
-
-def test_linear_regression_cholesky():
-    # Test LinearRegression on a simple dataset.
-    # a simple dataset
-    X = [[1], [2]]
-    Y = [1, 2]
-
-    reg = LinearRegression(solver="cholesky")
-    reg.fit(X, Y)
-
-    assert_array_almost_equal(reg.coef_, [1])
-    assert_array_almost_equal(reg.intercept_, [0])
-    assert_array_almost_equal(reg.predict(X), [1, 2])
-
-    # test it also for degenerate input
-    X = [[1]]
-    Y = [0]
-
-    reg = LinearRegression(solver="cholesky")
     reg.fit(X, Y)
     assert_array_almost_equal(reg.coef_, [0])
     assert_array_almost_equal(reg.intercept_, [0])
@@ -129,67 +107,26 @@ def test_raises_value_error_if_positive_and_sparse():
         reg.fit(X, y)
 
 
-@pytest.mark.parametrize("fit_intercept", [True, False])
-def test_linear_regression_sample_weights_cholesky(fit_intercept):
-    rng = np.random.RandomState(0)
-
-    # It would not work with under-determined systems
-    n_samples, n_features = 6, 5
-
+@pytest.mark.parametrize("solver", solvers)
+@pytest.mark.parametrize("n_samples, n_features", zip([2, 3], [3, 2]))
+def test_raises_value_error_if_sample_weights_greater_than_1d(solver, n_samples, n_features):
+    # Sample weights must be either scalar or 1D
     X = rng.randn(n_samples, n_features)
     y = rng.randn(n_samples)
-    sample_weight = 1.0 + rng.rand(n_samples)
+    sample_weights_OK = rng.randn(n_samples) ** 2 + 1
+    sample_weights_OK_1 = 1.
+    sample_weights_OK_2 = 2.
 
-    # LinearRegression with explicit sample_weight
-    reg = LinearRegression(fit_intercept=fit_intercept, solver="cholesky")
-    reg.fit(X, y, sample_weight=sample_weight)
-    coefs1 = reg.coef_
-    inter1 = reg.intercept_
+    reg = LinearRegression(solver=solver)
 
-    assert reg.coef_.shape == (X.shape[1], )  # sanity checks
-    assert reg.score(X, y) > 0.5
-
-    # Closed form of the weighted least square
-    # theta = (X^T W X)^(-1) * X^T W y
-    W = np.diag(sample_weight)
-    if fit_intercept is False:
-        X_aug = X
-    else:
-        dummy_column = np.ones(shape=(n_samples, 1))
-        X_aug = np.concatenate((dummy_column, X), axis=1)
-
-    coefs2 = linalg.solve(X_aug.T.dot(W).dot(X_aug),
-                          X_aug.T.dot(W).dot(y))
-
-    if fit_intercept is False:
-        assert_array_almost_equal(coefs1, coefs2)
-    else:
-        assert_array_almost_equal(coefs1, coefs2[1:])
-        assert_allclose(inter1, coefs2[0])
+    # make sure the "OK" sample weights actually work
+    reg.fit(X, y, sample_weights_OK)
+    reg.fit(X, y, sample_weights_OK_1)
+    reg.fit(X, y, sample_weights_OK_2)
 
 
-def test_raises_value_error_if_sample_weights_greater_than_1d():
-    # Sample weights must be either scalar or 1D
-
-    n_sampless = [2, 3]
-    n_featuress = [3, 2]
-
-    for n_samples, n_features in zip(n_sampless, n_featuress):
-        X = rng.randn(n_samples, n_features)
-        y = rng.randn(n_samples)
-        sample_weights_OK = rng.randn(n_samples) ** 2 + 1
-        sample_weights_OK_1 = 1.0
-        sample_weights_OK_2 = 2.0
-
-        reg = LinearRegression()
-
-        # make sure the "OK" sample weights actually work
-        reg.fit(X, y, sample_weights_OK)
-        reg.fit(X, y, sample_weights_OK_1)
-        reg.fit(X, y, sample_weights_OK_2)
-
-
-def test_fit_intercept():
+@pytest.mark.parametrize("solver", solvers)
+def test_fit_intercept(solver):
     # Test assertions on betas shape.
     X2 = np.array([[0.38349978, 0.61650022], [0.58853682, 0.41146318]])
     X3 = np.array(
@@ -197,11 +134,17 @@ def test_fit_intercept():
     )
     y = np.array([1, 1])
 
-    lr2_without_intercept = LinearRegression(fit_intercept=False).fit(X2, y)
-    lr2_with_intercept = LinearRegression().fit(X2, y)
+    lr2_without_intercept = LinearRegression(fit_intercept=False,
+                                             solver=solver)
+    lr2_without_intercept.fit(X2, y)
+    lr2_with_intercept = LinearRegression(solver=solver)
+    lr2_with_intercept.fit(X2, y)
 
-    lr3_without_intercept = LinearRegression(fit_intercept=False).fit(X3, y)
-    lr3_with_intercept = LinearRegression().fit(X3, y)
+    lr3_without_intercept = LinearRegression(fit_intercept=False,
+                                             solver=solver)
+    lr3_without_intercept.fit(X3, y)
+    lr3_with_intercept = LinearRegression(solver=solver)
+    lr3_with_intercept.fit(X3, y)
 
     assert lr2_with_intercept.coef_.shape == lr2_without_intercept.coef_.shape
     assert lr3_with_intercept.coef_.shape == lr3_without_intercept.coef_.shape
@@ -283,7 +226,8 @@ def test_fit_intercept_cholesky():
             lr3_without_intercept.coef_.ndim)
 
 
-def test_linear_regression_sparse(random_state=0):
+@pytest.mark.parametrize("solver", solvers)
+def test_linear_regression_sparse(solver, random_state=0):
     # Test that linear regression also works with sparse data
     random_state = check_random_state(random_state)
     for i in range(10):
@@ -292,7 +236,7 @@ def test_linear_regression_sparse(random_state=0):
         beta = random_state.rand(n)
         y = X * beta[:, np.newaxis]
 
-        ols = LinearRegression()
+        ols = LinearRegression(solver=solver)
         ols.fit(X, y.ravel())
         assert_array_almost_equal(beta, ols.coef_ + ols.intercept_)
 
@@ -303,7 +247,8 @@ def test_linear_regression_sparse(random_state=0):
 @pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 @pytest.mark.parametrize("normalize", [True, False])
 @pytest.mark.parametrize("fit_intercept", [True, False])
-def test_linear_regression_sparse_equal_dense(normalize, fit_intercept):
+@pytest.mark.parametrize("solver", solvers)
+def test_linear_regression_sparse_equal_dense(normalize, fit_intercept, solver):
     # Test that linear regression agrees between sparse and dense
     rng = check_random_state(0)
     n_samples = 200
@@ -312,7 +257,7 @@ def test_linear_regression_sparse_equal_dense(normalize, fit_intercept):
     X[X < 0.1] = 0.0
     Xcsr = sparse.csr_matrix(X)
     y = rng.rand(n_samples)
-    params = dict(normalize=normalize, fit_intercept=fit_intercept)
+    params = dict(normalize=normalize, fit_intercept=fit_intercept, solver=solver)
     clf_dense = LinearRegression(**params)
     clf_sparse = LinearRegression(**params)
     clf_dense.fit(X, y)
@@ -321,14 +266,15 @@ def test_linear_regression_sparse_equal_dense(normalize, fit_intercept):
     assert_allclose(clf_dense.coef_, clf_sparse.coef_)
 
 
-def test_linear_regression_multiple_outcome(random_state=0):
+@pytest.mark.parametrize("solver", solvers)
+def test_linear_regression_multiple_outcome(solver, random_state=0):
     # Test multiple-outcome linear regressions
     X, y = make_regression(random_state=random_state)
 
     Y = np.vstack((y, y)).T
     n_features = X.shape[1]
 
-    reg = LinearRegression()
+    reg = LinearRegression(solver=solver)
     reg.fit((X), Y)
     assert reg.coef_.shape == (2, n_features)
     Y_pred = reg.predict(X)
@@ -337,7 +283,8 @@ def test_linear_regression_multiple_outcome(random_state=0):
     assert_array_almost_equal(np.vstack((y_pred, y_pred)).T, Y_pred, decimal=3)
 
 
-def test_linear_regression_sparse_multiple_outcome(random_state=0):
+@pytest.mark.parametrize("solver", solvers)
+def test_linear_regression_sparse_multiple_outcome(solver, random_state=0):
     # Test multiple-outcome linear regressions with sparse data
     random_state = check_random_state(random_state)
     X, y = make_sparse_uncorrelated(random_state=random_state)
@@ -345,7 +292,7 @@ def test_linear_regression_sparse_multiple_outcome(random_state=0):
     Y = np.vstack((y, y)).T
     n_features = X.shape[1]
 
-    ols = LinearRegression()
+    ols = LinearRegression(solver=solver)
     ols.fit(X, Y)
     assert ols.coef_.shape == (2, n_features)
     Y_pred = ols.predict(X)
@@ -421,8 +368,8 @@ def test_linear_regression_positive_vs_nonpositive_when_positive():
 
     assert np.mean((reg.coef_ - regn.coef_) ** 2) < 1e-6
 
-
-def test_linear_regression_pd_sparse_dataframe_warning():
+@pytest.mark.parametrize("solver", solvers)
+def test_linear_regression_pd_sparse_dataframe_warning(solver):
     pd = pytest.importorskip("pandas")
 
     # Warning is raised only when some of the columns is sparse
@@ -437,7 +384,7 @@ def test_linear_regression_pd_sparse_dataframe_warning():
 
     msg = "pandas.DataFrame with sparse columns found."
 
-    reg = LinearRegression()
+    reg = LinearRegression(solver=solver)
     with pytest.warns(UserWarning, match=msg):
         reg.fit(df.iloc[:, 0:2], df.iloc[:, 3])
 
