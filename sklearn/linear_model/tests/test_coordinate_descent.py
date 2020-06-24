@@ -364,24 +364,28 @@ def test_model_pipeline_same_as_normalize_true_no_alpha(test_model, args):
 
 
 @pytest.mark.parametrize("test_model, args",
-    [(Lasso, {"tol":1e-16}), (LassoLars, {}), (RidgeClassifier, {}),
-     (ElasticNet, {}), (Ridge, {})
+    [
+     (Lasso, {"tol": 1e-16}), (LassoLars, {}),
+     (RidgeClassifier, {"solver": 'sparse_cg'}),
+     (ElasticNet, {"tol": 1e-16, 'l1_ratio': 1}),
+     (ElasticNet, {"tol": 1e-16, 'l1_ratio': 0}),
+     (Ridge, {"solver": 'sparse_cg', 'tol': 1e-12})
     ])
 def test_model_pipeline_same_as_normalize_true(test_model, args):
     # Test that linear model set with normalize set to True is doing the same
     # as the same linear model preceeded by StandardScaler in the pipeline and
     # with normalize set to False
 
-    n_samples, n_features = 300, 2
+    n_samples, n_features = 100, 2
     random_state = np.random.RandomState(0)
     w = random_state.randn(n_features)
     X = random_state.randn(n_samples, n_features)
-    X += 10  # make features non-zero mean
+    X += 20  # make features non-zero mean
 
     y = X.dot(w)
     # make classes out of regression
     if test_model == RidgeClassifier:
-        y[y > np.mean(y)] = 0
+        y[y > np.mean(y)] = -1
         y[y > 0] = 1
 
     X, X_test, y, y_test = train_test_split(X, y, random_state=42)
@@ -393,16 +397,30 @@ def test_model_pipeline_same_as_normalize_true(test_model, args):
     clf_norm.fit(X, y)
     y_pred_norm = clf_norm.predict(X_test)
 
+    alpha_scaled = alpha
+    if 'Lasso' in str(test_model):
+        alpha_scaled = alpha * np.sqrt(X.shape[0])
+    if 'Ridge' in str(test_model):
+        alpha_scaled = alpha * X.shape[0]
+    if 'Elastic' in str(test_model):
+        if args['l1_ratio'] == 1:
+            alpha_scaled = alpha * np.sqrt(X.shape[0])
+        if args['l1_ratio'] == 0:
+            alpha_scaled = alpha * X.shape[0]
+
     clf_pipe = make_pipeline(
         StandardScaler(),
-        test_model(alpha=alpha * np.sqrt(X.shape[0]),
-                     normalize=False, fit_intercept=True, **args)
+        test_model(alpha=alpha_scaled,
+                   normalize=False, fit_intercept=True, **args)
     )
     clf_pipe.fit(X, y)
     y_pred_pipe = clf_pipe.predict(X_test)
 
-    assert_array_almost_equal(clf_norm.coef_, clf_pipe[1].coef_, decimal=2)
-    assert abs(clf_norm.intercept_ - clf_pipe[1].intercept_) > 1.
+    assert_array_almost_equal(clf_norm.coef_ * clf_pipe[0].scale_,
+                              clf_pipe[1].coef_, decimal=5)
+    assert clf_pipe[1].intercept_ == pytest.approx(y.mean())
+    assert (clf_norm.intercept_ ==
+            pytest.approx(y.mean() - clf_norm.coef_.dot(X.mean(0))))
     assert_array_almost_equal(y_pred_norm, y_pred_pipe)
 
 
