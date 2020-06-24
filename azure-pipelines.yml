@@ -55,9 +55,9 @@ jobs:
     - bash: |
         set -ex
         if [[ "$COMMIT_MESSAGE" =~ "[scipy-dev]" ]] || [[ $BUILD_REASON == "Schedule" ]]; then
-          echo "##vso[task.setvariable variable=runScipyDev;isOutput=true]True"
+          echo "##vso[task.setvariable variable=runScipyDev;isOutput=true]true"
         else
-          echo "##vso[task.setvariable variable=runScipyDev;isOutput=true]False"
+          echo "##vso[task.setvariable variable=runScipyDev;isOutput=true]false"
         fi
       name: gitCommitMessage
       displayName: Determine to run scipy-dev
@@ -67,7 +67,7 @@ jobs:
     name: Linux_Nightly
     vmImage: ubuntu-18.04
     dependsOn: [linting]
-    condition: eq(dependencies['linting']['outputs']['gitCommitMessage.runScipyDev'], "True")
+    condition: eq(dependencies['linting']['outputs']['gitCommitMessage.runScipyDev'], 'true''')
     matrix:
       pylatest_pip_scipy_dev:
         DISTRIB: 'conda-pip-scipy-dev'
