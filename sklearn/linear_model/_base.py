@@ -420,6 +420,12 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
+    solver : str, default="svd"
+        The solver to use. ``"svd"`` uses a Singular Value Decomposition-based
+        approach, by calling ``scipy.linalg.lstsq``. ``"cholesky"`` uses the
+        Cholesky decomposition. If X is singular, then SVD will be used in
+        either situation.
+
     Attributes
     ----------
     coef_ : array of shape (n_features, ) or (n_targets, n_features)
@@ -473,7 +479,7 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
     """
     @_deprecate_positional_args
     def __init__(self, *, fit_intercept=True, normalize=False, copy_X=True,
-                 n_jobs=None, solver="auto"):
+                 n_jobs=None, solver="svd"):
         self.fit_intercept = fit_intercept
         self.normalize = normalize
         self.copy_X = copy_X
@@ -532,7 +538,13 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
             if n_targets > 1:
                 alpha = np.repeat(alpha, n_targets)
 
-            self.coef_ = _cholesky_helper(X, y, alpha, n_features, n_samples)
+            try:
+                self.coef_ = _cholesky_helper(X, y, alpha, n_features,
+                                              n_samples)
+            except TypeError:
+                raise TypeError('X matrix is singular and sparse, and not'
+                                'supported by the Cholesky solver. ')
+
             if ravel:
                 # When y was passed as a 1d-array, we flatten the coefficients.
                 self.coef_ = self.coef_.ravel()
