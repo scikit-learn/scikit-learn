@@ -2331,14 +2331,8 @@ def test_calibration_error_one_bin(norm, strategy):
     y_pred = np.array([0.25, 0.25, 0.75, 0.75])
 
     assert_almost_equal(
-        calibration_error(y_true, y_pred, n_bins=ratio, norm="max"),
-        0.)
-    assert_almost_equal(
-        calibration_error(y_true, y_pred, n_bins=ratio, norm="l1"),
-        0.)
-    assert_almost_equal(
-        calibration_error(y_true, y_pred, n_bins=ratio, norm="l2",
-                          reduce_bias=False),
+        calibration_error(y_true, y_pred, n_bins=ratio, norm=norm,
+                          strategy=strategy, reduce_bias=False),
         0.)
 
 
