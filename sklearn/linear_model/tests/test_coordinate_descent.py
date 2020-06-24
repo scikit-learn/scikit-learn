@@ -319,8 +319,9 @@ def test_model_pipeline_same_as_normalize_true_multitask(test_model, args):
     [(Lars, {}), (LassoCV, {}), (LinearRegression, {}),
      (OrthogonalMatchingPursuitCV, {}), (OrthogonalMatchingPursuit, {}),
      (LarsCV, {}), (BayesianRidge, {}), (ARDRegression, {}), (LassoLarsCV, {}),
-     (LassoLarsIC, {}), (MultiTaskElasticNetCV, {}),
-     (ElasticNetCV, {}), (RidgeCV, {})])
+     (LassoLarsIC, {}), (MultiTaskElasticNetCV, {}), (MultiTaskLasso, {}),
+     (ElasticNetCV, {}), (RidgeCV, {}), (RidgeClassifierCV, {})
+    ])
 def test_model_pipeline_same_as_normalize_true_no_alpha(test_model, args):
     # Test that linear model set with normalize set to True is doing the same
     # as the same linear model preceeded by StandardScaler in the pipeline and
@@ -333,9 +334,12 @@ def test_model_pipeline_same_as_normalize_true_no_alpha(test_model, args):
     X += 10  # make features non-zero mean
     y = X.dot(w)
 
-    if test_model == MultiTaskElasticNetCV:
-        # X = np.stack([X, X])
+    if test_model == MultiTaskElasticNetCV or test_model == MultiTaskLasso:
         y = np.stack([y, y], axis=1)
+
+    if test_model == RidgeClassifierCV:
+        y[y > np.mean(y)] = 0
+        y[y > 0] = 1
     X, X_test, y, y_test = train_test_split(X, y, random_state=42)
 
     # normalize is True
