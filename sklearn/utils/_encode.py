@@ -185,5 +185,4 @@ def _check_unknown(values, known_values, return_mask=False):
 
     if return_mask:
         return diff, valid_mask
-    # valid_mask is
     return diff
