@@ -370,7 +370,10 @@ def test_model_pipeline_same_as_normalize_true_no_alpha(test_model, args):
      (ElasticNet, {"tol": 1e-16, 'l1_ratio': 1, "alpha": 0.1}),
      (ElasticNet, {"tol": 1e-16, 'l1_ratio': 0, "alpha": 0.1}),
      (Ridge, {"solver": 'sparse_cg', 'tol': 1e-12, "alpha": 0.1}),
-     (BayesianRidge, {}),
+     (BayesianRidge, {}), (ARDRegression, {}), (OrthogonalMatchingPursuit, {}),
+     (MultiTaskElasticNet, {"tol": 1e-16, 'l1_ratio': 1, "alpha": 0.1}),
+     (MultiTaskElasticNet, {"tol": 1e-16, 'l1_ratio': 0, "alpha": 0.1}),
+     (MultiTaskLasso, {"tol": 1e-16, "alpha": 0.1}),,
     ])
 def test_model_pipeline_same_as_normalize_true(test_model, args):
     # Test that linear model set with normalize set to True is doing the same
@@ -385,9 +388,11 @@ def test_model_pipeline_same_as_normalize_true(test_model, args):
 
     y = X.dot(w)
     # make classes out of regression
-    if test_model == RidgeClassifier:
+    if 'Classifier' in str(test_model):
         y[y > np.mean(y)] = -1
         y[y > 0] = 1
+    if 'MultiTask' in str(test_model):
+        y = np.stack((y, y), axis=1)
 
     X, X_test, y, y_test = train_test_split(X, y, random_state=42)
 
