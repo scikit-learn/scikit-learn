@@ -21,7 +21,7 @@ jobs:
       displayName: Install linters
     - bash: |
         set -ex
-        git show -s HEAD
+        git --no-pager log -2 $BUILD_SOURCEVERSION
         if [[ $BUILD_REASON == "PullRequest" ]]; then
           # By default pull requests use refs/pull/PULL_ID/merge as the source branch
           # which has a "Merge ID into ID" as a commit message. The latest commit
@@ -31,11 +31,9 @@ jobs:
           COMMIT_MESSAGE=$BUILD_SOURCEVERSIONMESSAGE
         fi
         echo "##vso[task.setvariable variable=COMMIT_MESSAGE]$COMMIT_MESSAGE"
-        echo "Commit Message: $COMMIT_MESSAGE"
       displayName: Get source version message
     - bash: |
         set -ex
-        echo "Commit Message: $COMMIT_MESSAGE"
         if [[ $COMMIT_MESSAGE =~ \[lint\ skip\] ]]; then
           # skip linting
           echo "Skipping flake8 linting"
@@ -46,7 +44,6 @@ jobs:
       displayName: Run linting
     - bash: |
         set -ex
-        echo "Commit Message: $COMMIT_MESSAGE"
         if [[ $COMMIT_MESSAGE =~ \[lint\ skip\] ]]; then
           # skip linting
           echo "Skipping mypy linting"
@@ -56,7 +53,6 @@ jobs:
         fi
       displayName: Run mypy
     - bash: |
-        echo "Commit Message: $COMMIT_MESSAGE"
         if [[ $COMMIT_MESSAGE =~ \[scipy-dev\] ]] || \
            [[ $BUILD_REASON == "Schedule" ]]; then
           echo "##vso[task.setvariable variable=runScipyDev;isOutput=true]true"
