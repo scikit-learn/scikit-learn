@@ -350,6 +350,7 @@ def test_calibration_accepts_ndarray(X):
     # we should be able to fit this classifier with no error
     calibrated_clf.fit(X, y)
 
+
 # Create prefit pipeline
 word_data = [
     {'state': 'NY', 'age': 'adult'},
