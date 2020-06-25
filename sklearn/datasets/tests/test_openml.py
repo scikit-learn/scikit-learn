@@ -14,6 +14,8 @@ from sklearn.datasets import fetch_openml
 from sklearn.datasets._openml import (_open_openml_url,
                                       _arff,
                                       _DATA_FILE,
+                                      _convert_arff_data,
+                                      _convert_arff_data_dataframe,
                                       _get_data_description_by_id,
                                       _get_local_path,
                                       _retry_with_clean_cache,
@@ -24,6 +26,7 @@ from sklearn.utils import is_scalar_nan
 from sklearn.utils._testing import assert_allclose, assert_array_equal
 from urllib.error import HTTPError
 from sklearn.datasets.tests.test_common import check_return_X_y
+from sklearn.externals._arff import ArffContainerType
 from functools import partial
 
 
@@ -487,6 +490,20 @@ def test_fetch_openml_australian_pandas_error_sparse(monkeypatch):
     msg = 'Cannot return dataframe with sparse data'
     with pytest.raises(ValueError, match=msg):
         fetch_openml(data_id=data_id, as_frame=True, cache=False)
+
+
+def test_fetch_openml_as_frame_auto(monkeypatch):
+    pd = pytest.importorskip('pandas')
+
+    data_id = 61  # iris dataset version 1
+    _monkey_patch_webbased_functions(monkeypatch, data_id, True)
+    data = fetch_openml(data_id=data_id, as_frame='auto')
+    assert isinstance(data.data, pd.DataFrame)
+
+    data_id = 292  # Australian dataset version 1
+    _monkey_patch_webbased_functions(monkeypatch, data_id, True)
+    data = fetch_openml(data_id=data_id, as_frame='auto')
+    assert isinstance(data.data, scipy.sparse.csr_matrix)
 
 
 def test_convert_arff_data_dataframe_warning_low_memory_pandas(monkeypatch):
@@ -1190,3 +1207,27 @@ def test_fetch_openml_with_ignored_feature(monkeypatch, gzip_response):
     # so we assert that we don't have the ignored feature in the final Bunch
     assert dataset['data'].shape == (101, 16)
     assert 'animal' not in dataset['feature_names']
+
+
+def test_convert_arff_data_type():
+    pytest.importorskip('pandas')
+
+    arff: ArffContainerType = {
+            'data': (el for el in range(2)),
+            'description': '',
+            'relation': '',
+            'attributes': []
+    }
+    msg = r"shape must be provided when arr\['data'\] is a Generator"
+    with pytest.raises(ValueError, match=msg):
+        _convert_arff_data(arff, [0], [0], shape=None)
+
+    arff = {
+            'data': list(range(2)),
+            'description': '',
+            'relation': '',
+            'attributes': []
+    }
+    msg = r"arff\['data'\] must be a generator when converting to pd.DataFrame"
+    with pytest.raises(ValueError, match=msg):
+        _convert_arff_data_dataframe(arff, ['a'], {})

@@ -128,7 +128,7 @@ def sag_sparse(X, y, step_size, alpha, n_iter=1,
 
     weights = np.zeros(n_features)
     sum_gradient = np.zeros(n_features)
-    last_updated = np.zeros(n_features, dtype=np.int)
+    last_updated = np.zeros(n_features, dtype=int)
     gradient_memory = np.zeros(n_samples)
     rng = check_random_state(random_state)
     intercept = 0.0
@@ -644,7 +644,8 @@ def test_binary_classifier_class_weight():
     clf2.fit(sp.csr_matrix(X), y)
 
     le = LabelEncoder()
-    class_weight_ = compute_class_weight(class_weight, np.unique(y), y)
+    class_weight_ = compute_class_weight(class_weight, classes=np.unique(y),
+                                         y=y)
     sample_weight = class_weight_[le.fit_transform(y)]
     spweights, spintercept = sag_sparse(X, y, step_size, alpha, n_iter=n_iter,
                                         dloss=log_dloss,
@@ -690,7 +691,8 @@ def test_multiclass_classifier_class_weight():
     clf2.fit(sp.csr_matrix(X), y)
 
     le = LabelEncoder()
-    class_weight_ = compute_class_weight(class_weight, np.unique(y), y)
+    class_weight_ = compute_class_weight(class_weight, classes=np.unique(y),
+                                         y=y)
     sample_weight = class_weight_[le.fit_transform(y)]
 
     coef1 = []

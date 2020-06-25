@@ -1809,7 +1809,7 @@ this index, similarity is defined as a measure :math:`R_{ij}` that trades off:
   the centroid of that cluster -- also know as cluster diameter.
 - :math:`d_{ij}`, the distance between cluster centroids :math:`i` and :math:`j`.
 
-A simple choice to construct :math:`R_ij` so that it is nonnegative and
+A simple choice to construct :math:`R_{ij}` so that it is nonnegative and
 symmetric is:
 
 .. math::

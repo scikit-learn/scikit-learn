@@ -349,7 +349,7 @@ def test_decision_function():
     assert_array_almost_equal(dec.ravel(), clf.decision_function(X))
     assert_array_almost_equal(
         prediction,
-        clf.classes_[(clf.decision_function(X) > 0).astype(np.int)])
+        clf.classes_[(clf.decision_function(X) > 0).astype(int)])
     expected = np.array([-1., -0.66, -1., 0.66, 1., 1.])
     assert_array_almost_equal(clf.decision_function(X), expected, 2)
 
@@ -599,7 +599,8 @@ def test_auto_weight():
     unbalanced = np.delete(np.arange(y.size), np.where(y > 2)[0][::2])
 
     classes = np.unique(y[unbalanced])
-    class_weights = compute_class_weight('balanced', classes, y[unbalanced])
+    class_weights = compute_class_weight('balanced', classes=classes,
+                                         y=y[unbalanced])
     assert np.argmax(class_weights) == 2
 
     for clf in (svm.SVC(kernel='linear'), svm.LinearSVC(random_state=0),
@@ -775,7 +776,7 @@ def test_linearsvc():
 
     # test also decision function
     dec = clf.decision_function(T)
-    res = (dec > 0).astype(np.int) + 1
+    res = (dec > 0).astype(int) + 1
     assert_array_equal(res, true_result)
 
 

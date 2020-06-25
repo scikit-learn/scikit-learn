@@ -44,13 +44,13 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
         the estimates. Larger values specify stronger regularization.
         Alpha corresponds to ``1 / (2C)`` in other linear models such as
         :class:`~sklearn.linear_model.LogisticRegression` or
-        :class:`sklearn.svm.LinearSVC`. If an array is passed, penalties are
+        :class:`~sklearn.svm.LinearSVC`. If an array is passed, penalties are
         assumed to be specific to the targets. Hence they must correspond in
         number. See :ref:`ridge_regression` for formula.
 
     kernel : string or callable, default="linear"
         Kernel mapping used internally. This parameter is directly passed to
-        :class:`sklearn.metrics.pairwise.pairwise_kernel`.
+        :class:`~sklearn.metrics.pairwise.pairwise_kernel`.
         If `kernel` is a string, it must be one of the metrics
         in `pairwise.PAIRWISE_KERNEL_FUNCTIONS`.
         If `kernel` is "precomputed", X is assumed to be a kernel matrix.

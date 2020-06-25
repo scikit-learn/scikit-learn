@@ -1,8 +1,4 @@
-"""
-Base classes for all estimators.
-
-Used for VotingClassifier
-"""
+"""Base classes for all estimators."""
 
 # Author: Gael Varoquaux <gael.varoquaux@normalesup.org>
 # License: BSD 3 clause
@@ -671,9 +667,10 @@ class TransformerMixin:
         ----------
         X : {array-like, sparse matrix, dataframe} of shape \
                 (n_samples, n_features)
+            Input samples.
 
         y : ndarray of shape (n_samples,), default=None
-            Target values.
+            Target values (None for unsupervised transformations).
 
         **fit_params : dict
             Additional fit parameters.

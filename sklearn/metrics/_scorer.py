@@ -4,7 +4,7 @@ interface for model selection and evaluation using
 arbitrary score functions.
 
 A scorer object is a callable that can be passed to
-:class:`sklearn.model_selection.GridSearchCV` or
+:class:`~sklearn.model_selection.GridSearchCV` or
 :func:`sklearn.model_selection.cross_val_score` as the ``scoring``
 parameter, to specify how a model should be evaluated.
 
@@ -21,7 +21,6 @@ ground truth labeling (or ``None`` in the case of unsupervised models).
 from collections.abc import Iterable
 from functools import partial
 from collections import Counter
-import warnings
 
 import numpy as np
 
@@ -127,9 +126,6 @@ class _BaseScorer:
         self._kwargs = kwargs
         self._score_func = score_func
         self._sign = sign
-        # XXX After removing the deprecated scorers (v0.24) remove the
-        # XXX deprecation_msg property again and remove __call__'s body again
-        self._deprecation_msg = None
 
     def __repr__(self):
         kwargs_string = "".join([", %s=%s" % (str(k), str(v))
@@ -154,7 +150,7 @@ class _BaseScorer:
         y_true : array-like
             Gold standard target values for X.
 
-        sample_weight : array-like, optional (default=None)
+        sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
 
         Returns
@@ -162,10 +158,6 @@ class _BaseScorer:
         score : float
             Score function applied to prediction of estimator on X.
         """
-        if self._deprecation_msg is not None:
-            warnings.warn(self._deprecation_msg,
-                          category=FutureWarning,
-                          stacklevel=2)
         return self._score(partial(_cached_call, None), estimator, X, y_true,
                            sample_weight=sample_weight)
 
@@ -194,7 +186,7 @@ class _PredictScorer(_BaseScorer):
         y_true : array-like
             Gold standard target values for X.
 
-        sample_weight : array-like, optional (default=None)
+        sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
 
         Returns
@@ -353,11 +345,7 @@ def get_scorer(scoring):
     """
     if isinstance(scoring, str):
         try:
-            if scoring == 'brier_score_loss':
-                # deprecated
-                scorer = brier_score_loss_scorer
-            else:
-                scorer = SCORERS[scoring]
+            scorer = SCORERS[scoring]
         except KeyError:
             raise ValueError('%r is not a valid scoring value. '
                              'Use sorted(sklearn.metrics.SCORERS.keys()) '
@@ -383,12 +371,12 @@ def check_scoring(estimator, scoring=None, *, allow_none=False):
     estimator : estimator object implementing 'fit'
         The object to use to fit the data.
 
-    scoring : string, callable or None, optional, default: None
+    scoring : str or callable, default=None
         A string (see model evaluation documentation) or
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``.
 
-    allow_none : boolean, optional, default: False
+    allow_none : bool, default=False
         If no scoring is specified and the estimator has no score function, we
         can either return None or raise an exception.
 
@@ -443,7 +431,7 @@ def _check_multimetric_scoring(estimator, scoring=None):
     estimator : sklearn estimator instance
         The estimator for which the scoring will be applied.
 
-    scoring : string, callable, list/tuple, dict or None, default: None
+    scoring : str, callable, list, tuple or dict, default=None
         A single string (see :ref:`scoring_parameter`) or a callable
         (see :ref:`scoring`) to evaluate the predictions on the test set.
 
@@ -668,10 +656,6 @@ neg_brier_score_scorer = make_scorer(brier_score_loss,
 brier_score_loss_scorer = make_scorer(brier_score_loss,
                                       greater_is_better=False,
                                       needs_proba=True)
-deprecation_msg = ('Scoring method brier_score_loss was renamed to '
-                   'neg_brier_score in version 0.22 and will '
-                   'be removed in 0.24.')
-brier_score_loss_scorer._deprecation_msg = deprecation_msg
 
 
 # Clustering scores
