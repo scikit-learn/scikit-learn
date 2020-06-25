@@ -548,7 +548,8 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
         estimates.
 
     n_jobs : int, default=None
-        The number of jobs to use for the computation.
+        The number of jobs to use for the computation: the specified
+        multiclass problems are computed in parallel.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
