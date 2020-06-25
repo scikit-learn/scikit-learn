@@ -3,14 +3,12 @@
 # License: BSD 3 clause
 
 import numpy as np
-
 import pytest
 from scipy import interpolate, sparse
 from copy import deepcopy
 import joblib
 
 from sklearn.base import is_classifier
-
 from sklearn.datasets import load_diabetes
 from sklearn.datasets import make_regression
 from sklearn.model_selection import train_test_split
@@ -339,14 +337,14 @@ def test_model_pipeline_same_as_normalize_true(LinearModel, params):
     y_pred_normalize = clf_norm.predict(X_test)
 
     clf_pipe.fit(X_train, y_train)
-    y_pred_pipe = clf_pipe.predict(X_test)
+    y_pred_standardize = clf_pipe.predict(X_test)
 
     assert_allclose(clf_norm.coef_ * clf_pipe[0].scale_, clf_pipe[1].coef_)
     assert clf_pipe[1].intercept_ == pytest.approx(y_train.mean())
     assert (clf_norm.intercept_ ==
             pytest.approx(y_train.mean() -
                           clf_norm.coef_.dot(X_train.mean(0))))
-    assert_allclose(y_pred_normalize, y_pred_pipe)
+    assert_allclose(y_pred_normalize, y_pred_standardize)
 
 
 @pytest.mark.parametrize(
