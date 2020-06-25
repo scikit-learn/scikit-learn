@@ -29,11 +29,8 @@ if [[ "$COVERAGE" == "true" ]]; then
 fi
 
 if [[ -n "$CHECK_WARNINGS" ]]; then
-    TEST_CMD="$TEST_CMD -Werror::DeprecationWarning -Werror::FutureWarning"
     # numpy's 1.19.0's tostring() deprecation is ignored until scipy and joblib removes its usage
-    TEST_CMD="$TEST_CMD -Wignore:tostring:DeprecationWarning"
-    # numpy's 1.20.0's np.bool, np.int, np.float and np.object deprecations are ignored until pandas removes its usage
-    TEST_CMD="$TEST_CMD -Wignore:\`np.*\`:DeprecationWarning"
+    TEST_CMD="$TEST_CMD -Werror::DeprecationWarning -Werror::FutureWarning -Wignore:tostring:DeprecationWarning"
 fi
 
 if [[ "$PYTEST_XDIST" == "true" ]]; then
