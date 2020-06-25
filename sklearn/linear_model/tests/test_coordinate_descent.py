@@ -252,17 +252,22 @@ def test_lasso_cv_positive_constraint():
 
 @pytest.mark.parametrize(
     "test_model, args",
-    [(Lasso, {"tol": 1e-16, "alpha": 0.1}), (LassoLars, {"alpha": 0.1}),
+    [(Lasso, {"tol": 1e-16, "alpha": 0.1}),
+     (LassoLars, {"alpha": 0.1}),
      (RidgeClassifier, {"solver": 'sparse_cg', "alpha": 0.1}),
      (ElasticNet, {"tol": 1e-16, 'l1_ratio': 1, "alpha": 0.1}),
      (ElasticNet, {"tol": 1e-16, 'l1_ratio': 0, "alpha": 0.1}),
      (Ridge, {"solver": 'sparse_cg', 'tol': 1e-12, "alpha": 0.1}),
-     (BayesianRidge, {}), (ARDRegression, {}), (OrthogonalMatchingPursuit, {}),
+     (BayesianRidge, {}),
+     (ARDRegression, {}),
+     (OrthogonalMatchingPursuit, {}),
      (MultiTaskElasticNet, {"tol": 1e-16, 'l1_ratio': 1, "alpha": 0.1}),
      (MultiTaskElasticNet, {"tol": 1e-16, 'l1_ratio': 0, "alpha": 0.1}),
      (MultiTaskLasso, {"tol": 1e-16, "alpha": 0.1}),
-     (Lars, {}), (LinearRegression, {}), (LassoLarsIC, {})
-     ])
+     (Lars, {}),
+     (LinearRegression, {}),
+     (LassoLarsIC, {})]
+ )
 def test_model_pipeline_same_as_normalize_true(test_model, args):
     # Test that linear models (test_model) set with normalize set to True are
     # doing the same as the same linear model preceeded by StandardScaler
