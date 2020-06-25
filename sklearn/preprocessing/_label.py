@@ -669,7 +669,7 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
         Indicates an ordering for the class labels.
         All entries should be unique (cannot contain duplicate classes).
 
-    sparse_output: bool, default: False
+    sparse_output : bool, default=False
         Set to true if output binary array is desired in CSR sparse format
 
     Attributes
