@@ -103,6 +103,24 @@ def test_calibration():
         assert_raises(RuntimeError, clf_base_regressor.fit, X_train, y_train)
 
 
+def test_calibration_default_estimator():
+    # Check base_estimator default is LinearSVC
+    X, y = make_classification(n_samples=100, n_features=6, random_state=42)
+    calib_clf = CalibratedClassifierCV(cv=2)
+    calib_clf.fit(X, y)
+
+    base_est = calib_clf.calibrated_classifiers_[0].base_estimator
+    assert isinstance(base_est, LinearSVC)
+
+
+def test_calibration_cv(classification_data):
+    # Check when `cv` is a CV splitter
+    kfold = KFold(n_splits=splits)
+    calib_clf = CalibratedClassifierCV(cv=kfold)
+    assert isinstance(calib_clf.cv, KFold)
+    assert calib_clf.cv.n_splits ==  splits
+
+
 def test_sample_weight():
     n_samples = 100
     X, y = make_classification(n_samples=2 * n_samples, n_features=6,
