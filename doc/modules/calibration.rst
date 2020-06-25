@@ -11,7 +11,7 @@ When performing classification you often want not only to predict the class
 label, but also obtain a probability of the respective label. This probability
 gives you some kind of confidence on the prediction. Some models can give you
 poor estimates of the class probabilities and some even do not support
-probability prediction (e.g., :mod:`sklearn.svm` estimators). The calibration
+probability prediction (e.g., :class:`SGDClassifier`). The calibration
 module allows you to better calibrate
 the probabilities of a given model, or to add support for probability
 prediction.
@@ -90,13 +90,13 @@ Calibrating a classifier
 
 Calibrating a classifier consists in fitting a regressor (called a
 *calibrator*) that maps the output of the classifier (as given by
-:term:`decison_function` or :term:`predict_proba`) to a calibrated probability
+:term:`decision_function` or :term:`predict_proba`) to a calibrated probability
 in [0, 1]. Denoting the output of the classifier for a given sample by :math:`f_i`,
 the calibrator tries to predict :math:`p(y_i = 1 | f_i)`.
 
 The samples that are used to fit the calibrator should not be the same
-samples used to fit classifier that is to be calibrated, as this would
-introduce bias. Classifier performance on data used to train it would be
+samples used to fit the classifier, as this would
+introduce bias. The classifier performance on its training data would be
 better than for novel data. Using the classifier output from training data
 to fit the calibrator would thus result in a biased calibrator that maps to
 probabilities closer to 0 and 1 than it should.
@@ -130,7 +130,7 @@ make sure that the data used for fitting the classifier is disjoint from the
 data used for fitting the regressor.
 
 :class:`CalibratedClassifierCV` supports the use of two 'calibration'
-regressors; 'sigmoid' and 'isotonic'. Both these regressors only
+regressors: 'sigmoid' and 'isotonic'. Both these regressors only
 support 1-dimensional data (e.g., binary classification output) but are
 extended for multiclass classification if the `base_estimator` supports
 multiclass predictions. For multiclass predictions,
@@ -153,7 +153,7 @@ The sigmoid regressor is based on Platt's logistic model [3]_:
        p(y_i = 1 | f_i) = \frac{1}{1 + \exp(A f_i + B)}
 
 where :math:`y_i` is the true label of sample :math:`i` and :math:`f_i`
-is output of the classifier for sample :math:`i`. :math:`A` and :math:`B`
+is the output of the classifier for sample :math:`i`. :math:`A` and :math:`B`
 are real numbers to be determined when fitting the regressor via maximum
 likelihood.
 
