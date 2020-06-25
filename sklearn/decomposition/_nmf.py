@@ -809,6 +809,16 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
     """
     start_time = time.time()
 
+    n_samples = X.shape[0]
+    max_iter_update_h_ = 1
+    max_iter_update_w_ = 1
+
+    if batch_size is None:
+        batch_size = n_samples
+        max_iter_update_w_ = 1
+    else:
+        beta_loss='itakura-saito'
+
     beta_loss = _beta_loss_to_float(beta_loss)
 
     # gamma for Maximization-Minimization (MM) algorithm [Fevotte 2011]
@@ -824,14 +834,6 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
     previous_error = error_at_init
 
     H_sum, HHt, XHt = None, None, None
-
-    n_samples = X.shape[0]
-    max_iter_update_h_ = 1
-    max_iter_update_w_ = 1
-
-    if batch_size is None:
-        batch_size = n_samples
-        max_iter_update_w_ = 1
 
     for n_iter in range(1, max_iter + 1):
         for i, slice in enumerate(gen_batches(n=n_samples,
@@ -1133,7 +1135,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
 
 @_deprecate_positional_args
 def non_negative_factorization_online(X, W=None, H=None, n_components=None, *,
-                                      init=None, update_H=True, solver='cd',
+                                      init=None, update_H=True, solver='mu',
                                       A=None, B=None, batch_size=1024,
                                       beta_loss='kullback-leibler', tol=1e-4,
                                       max_iter=200, alpha=0., l1_ratio=0.,
@@ -1144,23 +1146,6 @@ def non_negative_factorization_online(X, W=None, H=None, n_components=None, *,
     Find two non-negative matrices (W, H) whose product approximates the non-
     negative matrix X. This factorization can be used for example for
     dimensionality reduction, source separation or topic extraction.
-
-    The objective function is::
-
-        0.5 * ||X - WH||_Fro^2
-        + alpha * l1_ratio * ||vec(W)||_1
-        + alpha * l1_ratio * ||vec(H)||_1
-        + 0.5 * alpha * (1 - l1_ratio) * ||W||_Fro^2
-        + 0.5 * alpha * (1 - l1_ratio) * ||H||_Fro^2
-
-    Where::
-
-        ||A||_Fro^2 = \sum_{i,j} A_{ij}^2 (Frobenius norm)
-        ||vec(A)||_1 = \sum_{i,j} abs(A_{ij}) (Elementwise L1 norm)
-
-    For multiplicative-update ('mu') solver, the Frobenius norm
-    (0.5 * ||X - WH||_Fro^2) can be changed into another beta-divergence loss,
-    by changing the beta_loss parameter.
 
     The objective function is minimized with an alternating minimization of W
     and H. If H is given and update_H=False, it solves for W only.
@@ -1217,29 +1202,17 @@ def non_negative_factorization_online(X, W=None, H=None, n_components=None, *,
         Set to True, both W and H will be estimated from initial guesses.
         Set to False, only W will be estimated.
 
-    solver : 'cd' | 'mu'
+    solver : 'mu'
         Numerical solver to use:
 
-        - 'cd' is a Coordinate Descent solver that uses Fast Hierarchical
-            Alternating Least Squares (Fast HALS).
-
         - 'mu' is a Multiplicative Update solver.
-
-        .. versionadded:: 0.17
-           Coordinate Descent solver.
 
         .. versionadded:: 0.19
            Multiplicative Update solver.
 
-    beta_loss : float or string, default 'kullback-leibler'
-        String must be in {'frobenius', 'kullback-leibler', 'itakura-saito'}.
-        Beta divergence to be minimized, measuring the distance between X
-        and the dot product WH. Note that values different from 'frobenius'
-        (or 2) and 'kullback-leibler' (or 1) lead to significantly slower
-        fits. Note that for beta_loss <= 0 (or 'itakura-saito'), the input
+    beta_loss : float or string, default 'itakura-saito'
+        Note that for beta_loss <= 0 (or 'itakura-saito'), the input
         matrix X cannot contain zeros. Used only in 'mu' solver.
-
-        .. versionadded:: 0.19
 
     tol : float, default: 1e-4
         Tolerance of the stopping condition.
@@ -1342,12 +1315,10 @@ def non_negative_factorization_online(X, W=None, H=None, n_components=None, *,
         if H.dtype != X.dtype:
             raise TypeError("H should have the same dtype as X. Got H.dtype = "
                             "{}.".format(H.dtype))
-        # 'mu' solver should not be initialized by zeros
-        if solver == 'mu':
-            avg = np.sqrt(X.mean() / n_components)
-            W = np.full((n_samples, n_components), avg, dtype=X.dtype)
-        else:
-            W = np.zeros((n_samples, n_components), dtype=X.dtype)
+        # the only solver available 'mu' solver
+        # should not be initialized by zeros
+        avg = np.sqrt(X.mean() / n_components)
+        W = np.full((n_samples, n_components), avg, dtype=X.dtype)
         A = None
         B = None
     else:
@@ -1357,15 +1328,7 @@ def non_negative_factorization_online(X, W=None, H=None, n_components=None, *,
     l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H = _compute_regularization(
         alpha, l1_ratio, regularization)
 
-    if solver == 'cd':
-        W, H, n_iter = _fit_coordinate_descent(X, W, H, tol, max_iter,
-                                               l1_reg_W, l1_reg_H,
-                                               l2_reg_W, l2_reg_H,
-                                               update_H=update_H,
-                                               verbose=verbose,
-                                               shuffle=shuffle,
-                                               random_state=random_state)
-    elif solver == 'mu':
+    if solver == 'mu':
         W, H, n_iter = _fit_multiplicative_update(X, W, H, A, B, beta_loss,
                                                   batch_size, max_iter,
                                                   tol, l1_reg_W, l1_reg_H,
@@ -1723,18 +1686,11 @@ class MiniBatchNMF(TransformerMixin, BaseEstimator):
     batch_size : int,
         number of samples in each mini-batch
 
-    solver : 'cd' | 'mu'
+    solver : 'mu'
         Numerical solver to use:
-        'cd' is a Coordinate Descent solver.
         'mu' is a Multiplicative Update solver.
 
-        .. versionadded:: 0.17
-           Coordinate Descent solver.
-
-        .. versionadded:: 0.19
-           Multiplicative Update solver.
-
-    beta_loss : float or string, default 'frobenius'
+    beta_loss : float or string, default 'itakura-saito'
         String must be in {'frobenius', 'kullback-leibler', 'itakura-saito'}.
         Beta divergence to be minimized, measuring the distance between X
         and the dot product WH. Note that values different from 'frobenius'
@@ -1827,9 +1783,9 @@ class MiniBatchNMF(TransformerMixin, BaseEstimator):
     """
 
     @_deprecate_positional_args
-    def __init__(self, n_components=None, init=None, solver='cd',
+    def __init__(self, n_components=None, init=None, solver='mu',
                  batch_size=1024,
-                 beta_loss='frobenius', tol=1e-4, max_iter=200,
+                 beta_loss='itakura-saito', tol=1e-4, max_iter=200,
                  random_state=None, alpha=0., l1_ratio=0., verbose=0,
                  shuffle=False):
         self.n_components = n_components
@@ -1913,8 +1869,8 @@ class MiniBatchNMF(TransformerMixin, BaseEstimator):
 
     def partial_fit(self, X, y=None, **params):
         if hasattr(self, 'components_'):
-            W = np.ones((X.shape[0], self.n_components_))
-            W *= np.maximum(1e-6, X.sum(axis=1) * self._components_numerator_)
+            #W = np.ones((X.shape[0], self.n_components_))
+            W = np.maximum(1e-6, X.sum(axis=1) * self._components_numerator_)
             W /= W.sum(axis=1, keepdims=True)
             W, H, A, B, n_iter_ = non_negative_factorization_online(
                 X=X, W=W, H=self.components_,
