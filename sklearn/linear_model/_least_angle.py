@@ -971,7 +971,7 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
         """
         if self.normalize != "deprecate":
             warnings.warn("'normalize' was deprecated in version 0.24 and will"
-                            " be removed in 0.26.", FutureWarning)
+                          " be removed in 0.26.", FutureWarning)
         else:
             self.normalize = True
 
@@ -1433,7 +1433,7 @@ class LarsCV(Lars):
 
         if self.normalize != "deprecate":
             warnings.warn("'normalize' was deprecated in version 0.24 and will"
-                            " be removed in 0.26.", FutureWarning)
+                          " be removed in 0.26.", FutureWarning)
         else:
             self.normalize = True
 
@@ -1828,7 +1828,7 @@ class LassoLarsIC(LassoLars):
         """
         if self.normalize != "deprecate":
             warnings.warn("'normalize' was deprecated in version 0.24 and will"
-                            " be removed in 0.26.", FutureWarning)
+                          " be removed in 0.26.", FutureWarning)
         else:
             self.normalize = True
 
