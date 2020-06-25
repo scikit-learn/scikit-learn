@@ -114,10 +114,19 @@ def test_rfe_negative_n_features():
 
     iris = load_iris()
     rfe = RFE(estimator=clf, n_features_to_select=-1, step=0.1)
-    msg = "n_features_to_select must be positive or None"
+    msg = "n_features_to_select must be *"
     with pytest.raises(ValueError, match=msg):
         rfe.fit(iris.data, iris.target)
 
+
+def test_rfe_positive_float_n_features():
+    clf = SVC(kernel="linear")
+
+    iris = load_iris()
+    rfe = RFE(estimator=clf, n_features_to_select=2.1, step=0.1)
+    msg = "n_features_to_select must be *"
+    with pytest.raises(ValueError, match=msg):
+        rfe.fit(iris.data, iris.target)
 
 def test_rfe_percent_n_features():
     # test that the results are the same
