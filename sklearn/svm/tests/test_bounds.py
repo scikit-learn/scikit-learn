@@ -79,37 +79,45 @@ def test_unsupported_loss():
 
 
 _MAX_UNSIGNED_INT = 4294967295
-_MAX_INT = 2147483647
 
 
 @pytest.mark.parametrize('seed, val',
                          [(None, 81),
                           (0, 54),
                           (_MAX_UNSIGNED_INT, 9)])
-def test_set_seed(seed, val):
+def test_newrand_set_seed(seed, val):
+    """Test that `set_seed` produces deterministic results"""
     if seed is not None:
         set_seed_wrap(seed)
     x = bounded_rand_int_wrap(100)
     assert(x == val), 'Expected {} but got {} instead'.format(val, x)
 
 
-@pytest.mark.parametrize('orig_range, n_pts',
-                         [(_MAX_INT, 10000), (100, 10)])
-def test_bounded_rand_int(orig_range, n_pts):
+@pytest.mark.parametrize('seed',
+                         [-1, _MAX_UNSIGNED_INT + 1])
+def test_newrand_set_seed_overflow(seed):
+    """Test that `set_seed_wrap` is defined for unsigned 32bits ints"""
+    with pytest.raises(OverflowError):
+        set_seed_wrap(seed)
+
+
+@pytest.mark.parametrize('range_, n_pts',
+                         [(_MAX_UNSIGNED_INT, 10000), (100, 10)])
+def test_newrand_bounded_rand_int(range_, n_pts):
+    """Test that `bounded_rand_int` follows a uniform distribution"""
     n_iter = 100
     ks_pvals = []
-    uniform_dist = stats.uniform(loc=0, scale=orig_range)
+    uniform_dist = stats.uniform(loc=0, scale=range_)
     # perform multiple samplings to make chance of outlier sampling negligible
     for _ in range(n_iter):
         # Deterministic random sampling
-        sample = [bounded_rand_int_wrap(orig_range) for _ in range(n_pts)]
+        sample = [bounded_rand_int_wrap(range_) for _ in range(n_pts)]
         res = stats.kstest(sample, uniform_dist.cdf)
         ks_pvals.append(res.pvalue)
     # Null hypothesis = samples come from an uniform distribution.
-    # Under the null hypothesis,
-    #   p-values should be uniformly distributed and not concentrated
-    # on low values
-    #   (this may seem counter-intuitive but is backed by multiple refs)
+    # Under the null hypothesis, p-values should be uniformly distributed
+    # and not concentrated on low values
+    # (this may seem counter-intuitive but is backed by multiple refs)
     # So we can do two checks:
 
     # (1) check uniformity of p-values
@@ -128,3 +136,11 @@ def test_bounded_rand_int(orig_range, n_pts):
         "Null hypothesis rejected: generated random numbers are not uniform." \
         " Details: lower 10th quantile p-value of {} not > 0.05."\
         .format(min_10pct_pval)
+
+
+@pytest.mark.parametrize('range_',
+                         [-1, _MAX_UNSIGNED_INT + 1])
+def test_newrand_bounded_rand_int_limits(range_):
+    """Test that `bounded_rand_int_wrap` is defined for unsigned 32bits ints"""
+    with pytest.raises(OverflowError):
+        bounded_rand_int_wrap(range_)
