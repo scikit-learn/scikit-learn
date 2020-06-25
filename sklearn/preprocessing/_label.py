@@ -665,18 +665,19 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
 
     Parameters
     ----------
-    classes : array-like of shape [n_classes] (optional)
+    classes : array-like of shape (n_classes,), default=None
         Indicates an ordering for the class labels.
         All entries should be unique (cannot contain duplicate classes).
 
-    sparse_output : boolean (default: False),
+    sparse_output : bool, default=False
         Set to true if output binary array is desired in CSR sparse format
 
     Attributes
     ----------
-    classes_ : array of labels
-        A copy of the `classes` parameter where provided,
-        or otherwise, the sorted set of classes found when fitting.
+    classes_ : ndarray of shape (n_classes,)
+        A copy of the `classes` parameter when provided.
+        Otherwise it corresponds to the sorted set of classes found
+        when fitting.
 
     Examples
     --------
