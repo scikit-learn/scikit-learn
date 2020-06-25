@@ -1,7 +1,5 @@
 import warnings
 
-from distutils.version import LooseVersion
-
 import numpy as np
 import pytest
 from scipy import linalg
@@ -14,6 +12,7 @@ from sklearn.utils._testing import assert_raises
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import TempMemmap
+from sklearn.utils.fixes import np_version, parse_version
 from sklearn.exceptions import ConvergenceWarning
 from sklearn import linear_model, datasets
 from sklearn.linear_model._least_angle import _lars_path_residues
@@ -123,7 +122,7 @@ def test_lars_lstsq():
     clf = linear_model.LassoLars(alpha=0.)
     clf.fit(X1, y)
     # Avoid FutureWarning about default value change when numpy >= 1.14
-    rcond = None if LooseVersion(np.__version__) >= '1.14' else -1
+    rcond = None if np_version >= parse_version('1.14') else -1
     coef_lstsq = np.linalg.lstsq(X1, y, rcond=rcond)[0]
     assert_array_almost_equal(clf.coef_, coef_lstsq)
 
