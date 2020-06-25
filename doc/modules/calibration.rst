@@ -11,15 +11,20 @@ When performing classification you often want not only to predict the class
 label, but also obtain a probability of the respective label. This probability
 gives you some kind of confidence on the prediction. Some models can give you
 poor estimates of the class probabilities and some even do not support
-probability prediction. The calibration module allows you to better calibrate
+probability prediction (e.g., :mod:`sklearn.svm` estimators). The calibration
+module allows you to better calibrate
 the probabilities of a given model, or to add support for probability
 prediction.
 
 Well calibrated classifiers are probabilistic classifiers for which the output
-of the predict_proba method can be directly interpreted as a confidence level.
+of the :term:`predict_proba` method can be directly interpreted as a confidence
+level.
 For instance, a well calibrated (binary) classifier should classify the samples
-such that among the samples to which it gave a predict_proba value close to 0.8,
+such that among the samples to which it gave a :term:`predict_proba` value
+close to 0.8,
 approximately 80% actually belong to the positive class.
+
+.. _calibration_curve:
 
 Calibration curves
 ------------------
@@ -37,7 +42,7 @@ class is the positive class (in each bin).
 .. currentmodule:: sklearn.linear_model
 
 :class:`LogisticRegression` returns well calibrated predictions by default as it directly
-optimizes log-loss. In contrast, the other methods return biased probabilities;
+optimizes :ref:`log_loss`. In contrast, the other methods return biased probabilities;
 with different biases per method:
 
 .. currentmodule:: sklearn.naive_bayes
@@ -73,10 +78,10 @@ to 0 or 1 typically.
 .. currentmodule:: sklearn.svm
 
 Linear Support Vector Classification (:class:`LinearSVC`) shows an even more
-sigmoid curve as the RandomForestClassifier, which is typical for
+sigmoid curve than :class:`RandomForestClassifier`, which is typical for
 maximum-margin methods (compare Niculescu-Mizil and Caruana [1]_), which
-focus on hard samples that are close to the decision boundary (the support
-vectors).
+focus on difficult to classify samples that are close to the decision
+boundary (the support vectors).
 
 Calibrating a classifier
 ------------------------
@@ -85,12 +90,16 @@ Calibrating a classifier
 
 Calibrating a classifier consists in fitting a regressor (called a
 *calibrator*) that maps the output of the classifier (as given by
-:term:`predict` or :term:`predict_proba`) to a calibrated probability in [0,
-1]. Denoting the output of the classifier for a given sample by :math:`f_i`,
+:term:`decison_function` or :term:`predict_proba`) to a calibrated probability
+in [0, 1]. Denoting the output of the classifier for a given sample by :math:`f_i`,
 the calibrator tries to predict :math:`p(y_i = 1 | f_i)`.
 
-The samples that are used to train the calibrator should not be used to
-train the target classifier.
+The samples that are used to fit the calibrator should not be the same
+samples used to fit classifier that is to be calibrated, as this would
+introduce bias. Classifier performance on data used to train it would be
+better than for novel data. Using the classifier output from training data
+to fit the calibrator would thus result in a biased calibrator that maps to
+probabilities closer to 0 and 1 than it should.
 
 Usage
 -----
@@ -100,7 +109,9 @@ The :class:`CalibratedClassifierCV` class is used to calibrate a classifier.
 :class:`CalibratedClassifierCV` uses a cross-validation approach to fit both
 the classifier and the regressor. For each of the k `(trainset, testset)`
 couple, a classifier is trained on the train set, and its predictions on the
-test set are used to fit a regressor. We end up with k
+test set are used to fit a regressor. This ensures that the data used to fit
+the classifier is always disjoint from the data used to fit the calibrator.
+After fitting, we end up with k
 `(classifier, regressor)` couples where each regressor maps the output of
 its corresponding classifier into [0, 1]. Each couple is exposed in the
 `calibrated_classifiers_` attribute, where each entry is a calibrated
@@ -111,29 +122,59 @@ predicted probabilities of the `k` estimators in the
 `calibrated_classifiers_` list. The output of :term:`predict` is the class
 that has the highest probability.
 
-The regressor that is used for calibration depends on the `method`
-parameter. `'sigmoid'` corresponds to a parametric approach based on Platt's
-logistic model [3]_, i.e. :math:`p(y_i = 1 | f_i)` is modeled as
-:math:`\sigma(A f_i + B)` where :math:`\sigma` is the logistic function, and
-:math:`A` and :math:`B` are real numbers to be determined when fitting the
-regressor via maximum likelihood. `'isotonic'` will instead fit a
-non-parametric isotonic regressor, which outputs a step-wise non-decreasing
-function (see :mod:`sklearn.isotonic`).
-
 An already fitted classifier can be calibrated by setting `cv="prefit"`. In
 this case, the data is only used to fit the regressor. It is up to the user
 make sure that the data used for fitting the classifier is disjoint from the
 data used for fitting the regressor.
 
-:class:`CalibratedClassifierCV` can calibrate probabilities in a multiclass
-setting if the base estimator supports multiclass predictions. The classifier
-is calibrated first for each class separately in a one-vs-rest fashion [4]_.
-When predicting probabilities, the calibrated probabilities for each class
+:class:`CalibratedClassifierCV` supports the use of two 'calibration'
+regressors; 'sigmoid' and 'isotonic'. Both these regressors only
+support 1-dimensional data (e.g., binary classification output) but can be
+extended for multiclass classification if the `base_estimator` supports
+multiclass predictions. :class:`CalibratedClassifierCV` calibrates for
+each class separately in a One-Vs-The-Rest fashion [4]_. When predicting
+probabilities, the calibrated probabilities for each class
 are predicted separately. As those probabilities do not necessarily sum to
 one, a postprocessing is performed to normalize them.
 
 The :func:`sklearn.metrics.brier_score_loss` may be used to evaluate how
 well a classifier is calibrated.
+
+Sigmoid
+^^^^^^^
+
+The sigmoid regressor is based on Platt's logistic model [3]_:
+
+.. math::
+       p(y_i = 1 | f_i) = \frac{1}{1 + \exp(A f_i + B)}
+
+where :math:`y_i` is the true label of sample :math:`i` and :math:`f_i`
+is output of the classifier for sample :math:`i`. :math:`A` and :math:`B`
+are real numbers to be determined when fitting the regressor via maximum
+likelihood.
+
+The sigmoid method is biased in that it assumes the :ref:`calibration curve
+<calibration_curve>` of the un-calibrated model has a sigmoid shape [1]_. It
+is thus most effective when the un-calibrated model is over-confident.
+
+Isotonic
+^^^^^^^^
+
+The 'isotonic' method fits a non-parametric isotonic regressor, which outputs
+a step-wise non-decreasing function (see :mod:`sklearn.isotonic`). It
+minimizes:
+
+.. math::
+       \sum_i (y_i - f_i)^2
+
+subject to :math:`\f_i \le f_j`. This method is more general when compared to
+'sigmoid' as the only restriction is that the mapping function is
+monotonically increasing. It is thus more powerful as it can correct any
+monotonic distortion of the un-calibrated model. However, it is more prone
+to overfitting, especially on small datasets [5]_.
+
+Overall, 'isotonic' will perform as well as or better than 'sigmoid' when
+there is enough data (greater than ~ 1000 samples) to avoid overfitting [1]_.
 
 .. topic:: Examples:
 
@@ -144,15 +185,26 @@ well a classifier is calibrated.
 
 .. topic:: References:
 
-    .. [1] Predicting Good Probabilities with Supervised Learning,
+    .. [1] `Predicting Good Probabilities with Supervised Learning
+           <https://www.cs.cornell.edu/~alexn/papers/calibration.icml05.crc.rev3.pdf>`_,
            A. Niculescu-Mizil & R. Caruana, ICML 2005
 
-    .. [2] On the combination of forecast probabilities for
-           consecutive precipitation periods. Wea. Forecasting, 5, 640–650.,
-           Wilks, D. S., 1990a
+    .. [2] `On the combination of forecast probabilities for
+           consecutive precipitation periods.
+           <https://journals.ametsoc.org/waf/article/5/4/640/40179>`_
+           Wea. Forecasting, 5, 640–650., Wilks, D. S., 1990a
 
-    .. [3] Probabilistic Outputs for Support Vector Machines and Comparisons
-           to Regularized Likelihood Methods, J. Platt, (1999)
+    .. [3] `Probabilistic Outputs for Support Vector Machines and Comparisons
+           to Regularized Likelihood Methods.
+           <https://www.cs.colorado.edu/~mozer/Teaching/syllabi/6622/papers/Platt1999.pdf>`_
+           J. Platt, (1999)
 
-    .. [4] Transforming Classifier Scores into Accurate Multiclass
-           Probability Estimates, B. Zadrozny & C. Elkan, (KDD 2002)
+    .. [4] `Transforming Classifier Scores into Accurate Multiclass
+           Probability Estimates.
+           <https://dl.acm.org/doi/pdf/10.1145/775047.775151>`_
+           B. Zadrozny & C. Elkan, (KDD 2002)
+
+    .. [5] `Predicting accurate probabilities with a ranking loss.
+           <https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4180410/>`_
+           Menon AK, Jiang XJ, Vembu S, Elkan C, Ohno-Machado L.
+           Proc Int Conf Mach Learn. 2012;2012:703-710.
