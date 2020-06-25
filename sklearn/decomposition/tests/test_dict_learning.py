@@ -1,6 +1,7 @@
 import pytest
 
 import numpy as np
+from functools import partial
 import itertools
 
 from sklearn.base import clone
@@ -20,6 +21,9 @@ from sklearn.decomposition import SparseCoder
 from sklearn.decomposition import dict_learning
 from sklearn.decomposition import dict_learning_online
 from sklearn.decomposition import sparse_encode
+from sklearn.utils.estimator_checks import check_transformer_data_not_an_array
+from sklearn.utils.estimator_checks import check_transformer_general
+from sklearn.utils.estimator_checks import check_transformers_unfitted
 
 
 rng_global = np.random.RandomState(0)
@@ -534,6 +538,22 @@ def test_sparse_coder_parallel_mmap():
 
     sc = SparseCoder(init_dict, transform_algorithm='omp', n_jobs=2)
     sc.fit_transform(data)
+
+
+def test_sparse_coder_common_transformer():
+    rng = np.random.RandomState(777)
+    n_components, n_features = 40, 3
+    init_dict = rng.rand(n_components, n_features)
+    
+    sc = SparseCoder(init_dict)
+
+    check_transformer_data_not_an_array(sc.__class__.__name__, sc)
+    check_transformer_general(sc.__class__.__name__, sc)
+    check_transformer_general_memmap = partial(
+        check_transformer_general, readonly_memmap=True
+    )
+    check_transformer_general_memmap(sc.__class__.__name__, sc)
+    check_transformers_unfitted(sc.__class__.__name__, sc)
 
 
 # TODO: remove in 0.26
