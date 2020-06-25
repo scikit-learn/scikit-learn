@@ -90,7 +90,7 @@ class ConfusionMatrixDisplay:
             created.
 
         colorbar : bool, default=True
-            Whether to add a colorbar to the plot.
+            Whether or not to add a colorbar to the plot.
 
         Returns
         -------
@@ -214,7 +214,7 @@ def plot_confusion_matrix(estimator, X, y_true, *, labels=None,
         created.
 
     colorbar : bool, default=True
-        Whether to add a colorbar to the plot.
+        Whether or not to add a colorbar to the plot.
 
         .. versionadded:: 0.24
 
