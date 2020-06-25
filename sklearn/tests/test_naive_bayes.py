@@ -30,7 +30,7 @@ y = np.array([1, 1, 1, 2, 2, 2])
 # A bit more random tests
 rng = np.random.RandomState(0)
 X1 = rng.normal(size=(10, 3))
-y1 = (rng.normal(size=(10)) > 0).astype(np.int)
+y1 = (rng.normal(size=(10)) > 0).astype(int)
 
 # Data is 6 random integer points in a 100 dimensional space classified to
 # three classes.

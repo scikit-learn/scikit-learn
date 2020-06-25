@@ -928,7 +928,7 @@ def test_confusion_matrix_error(labels, err_msg):
 )
 def test_confusion_matrix_on_zero_length_input(labels):
     expected_n_classes = len(labels) if labels else 0
-    expected = np.zeros((expected_n_classes, expected_n_classes), dtype=np.int)
+    expected = np.zeros((expected_n_classes, expected_n_classes), dtype=int)
     cm = confusion_matrix([], [], labels=labels)
     assert_array_equal(cm, expected)
 
