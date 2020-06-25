@@ -488,6 +488,7 @@ def _get_num_samples(data_qualities: OpenmlQualitiesType) -> int:
     qualities = {d['name']: d['value'] for d in data_qualities}
     return int(float(qualities.get('NumberOfInstances', default_n_samples)))
 
+
 def _load_arff_response(
     url: str,
     data_home: Optional[str],
@@ -515,7 +516,7 @@ def _load_arff_response(
                           encode_nominal=encode_nominal)
 
         parsed_arff = parse_arff(arff)
- 
+
         # consume remaining stream, if early exited
         for _ in stream:
             pass
@@ -538,7 +539,8 @@ def _download_data_to_bunch(
     features_list: List,
     data_columns: List[int],
     target_columns: List,
-    shape: Optional[Tuple[int, int]]
+    shape: Optional[Tuple[int, int]],
+    md5_checksum: str
 ):
     """Download OpenML ARFF and convert to Bunch of data
     """
