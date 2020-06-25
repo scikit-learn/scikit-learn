@@ -158,7 +158,7 @@ def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
     if sparse_center:
         if fit_intercept:
             Xy -= mean_dot[:, np.newaxis]
-        if normalize != 'deprecate' and normalize:
+        if normalize:
             Xy /= X_scale[:, np.newaxis]
 
     alpha_max = (np.sqrt(np.sum(Xy ** 2, axis=1)).max() /
