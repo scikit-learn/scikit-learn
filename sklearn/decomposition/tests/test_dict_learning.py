@@ -532,7 +532,7 @@ def test_sparse_coder_parallel_mmap():
     sc.fit_transform(data)
 
 
-# TODO: remove in 0.25
+# TODO: remove in 0.26
 def test_sparse_coder_deprecation():
     # check that we raise a deprecation warning when accessing `components_`
     rng = np.random.RandomState(777)
