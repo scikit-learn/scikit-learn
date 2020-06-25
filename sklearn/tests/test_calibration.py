@@ -113,8 +113,9 @@ def test_calibration_default_estimator():
     assert isinstance(base_est, LinearSVC)
 
 
-def test_calibration_cv(classification_data):
+def test_calibration_cv_splitter():
     # Check when `cv` is a CV splitter
+    splits = 5
     kfold = KFold(n_splits=splits)
     calib_clf = CalibratedClassifierCV(cv=kfold)
     assert isinstance(calib_clf.cv, KFold)
