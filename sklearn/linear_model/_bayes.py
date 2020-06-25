@@ -8,6 +8,7 @@ Various bayesian regression
 from math import log
 import numpy as np
 from scipy import linalg
+import warnings
 
 from ._base import LinearModel, _rescale_data
 from ..base import RegressorMixin
