@@ -1210,6 +1210,8 @@ def test_fetch_openml_with_ignored_feature(monkeypatch, gzip_response):
 
 
 def test_convert_arff_data_type():
+    pytest.importorskip('pandas')
+
     arff: ArffContainerType = {
             'data': (el for el in range(2)),
             'description': '',
