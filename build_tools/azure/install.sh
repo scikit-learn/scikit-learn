@@ -73,10 +73,6 @@ if [[ "$DISTRIB" == "conda" ]]; then
         python -m pip install pytest=="$PYTEST_VERSION"
     fi
 
-    if [[ "$PYTHON_VERSION" == "*" ]]; then
-        python -m pip install pytest-xdist
-    fi
-
 elif [[ "$DISTRIB" == "ubuntu" ]]; then
     sudo add-apt-repository --remove ppa:ubuntu-toolchain-r/test
     sudo apt-get update
@@ -96,10 +92,7 @@ elif [[ "$DISTRIB" == "conda-pip-latest" ]]; then
     # conda is still used as a convenient way to install Python and pip.
     make_conda "python=$PYTHON_VERSION"
     python -m pip install -U pip
-    python -m pip install pytest==$PYTEST_VERSION pytest-cov pytest-xdist
-
-    # TODO: Remove pin when https://github.com/python-pillow/Pillow/issues/4518 gets fixed
-    python -m pip install "pillow>=4.3.0,!=7.1.0,!=7.1.1"
+    python -m pip install pytest==$PYTEST_VERSION pytest-cov
 
     python -m pip install pandas matplotlib pyamg scikit-image
     # do not install dependencies for lightgbm since it requires scikit-learn
@@ -107,10 +100,13 @@ elif [[ "$DISTRIB" == "conda-pip-latest" ]]; then
 elif [[ "$DISTRIB" == "conda-pip-scipy-dev" ]]; then
     make_conda "python=$PYTHON_VERSION"
     python -m pip install -U pip
-    python -m pip install pytest==$PYTEST_VERSION pytest-cov pytest-xdist
+    python -m pip install pytest==$PYTEST_VERSION pytest-cov
     echo "Installing numpy and scipy master wheels"
-    dev_url=https://7933911d6844c6c53a7d-47bd50c35cd79bd838daf386af554a83.ssl.cf2.rackcdn.com
-    pip install --pre --upgrade --timeout=60 -f $dev_url numpy scipy pandas cython
+    dev_anaconda_url=https://pypi.anaconda.org/scipy-wheels-nightly/simple
+    pip install --pre --upgrade --timeout=60 --extra-index $dev_anaconda_url numpy scipy pandas
+    # Cython nightly build should be still fetched from the Rackspace container
+    dev_rackspace_url=https://7933911d6844c6c53a7d-47bd50c35cd79bd838daf386af554a83.ssl.cf2.rackcdn.com
+    pip install --pre --upgrade --timeout=60 -f $dev_rackspace_url cython
     echo "Installing joblib master"
     pip install https://github.com/joblib/joblib/archive/master.zip
     echo "Installing pillow master"
@@ -121,11 +117,13 @@ if [[ "$COVERAGE" == "true" ]]; then
     python -m pip install coverage codecov pytest-cov
 fi
 
+if [[ "$PYTEST_XDIST" == "true" ]]; then
+    python -m pip install pytest-xdist
+fi
+
 if [[ "$TEST_DOCSTRINGS" == "true" ]]; then
     # numpydoc requires sphinx
-    # FIXME: until jinja2 2.10.2 is released with a fix the import station for
-    # collections.abc so as to not raise a spurious deprecation warning
-    python -m pip install sphinx==2.1.2
+    python -m pip install sphinx
     python -m pip install numpydoc
 fi
 

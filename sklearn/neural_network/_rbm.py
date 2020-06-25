@@ -20,7 +20,7 @@ from ..utils import check_random_state
 from ..utils import gen_even_slices
 from ..utils.extmath import safe_sparse_dot
 from ..utils.extmath import log_logistic
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, _deprecate_positional_args
 
 
 class BernoulliRBM(TransformerMixin, BaseEstimator):
@@ -106,7 +106,8 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
         Approximations to the Likelihood Gradient. International Conference
         on Machine Learning (ICML) 2008
     """
-    def __init__(self, n_components=256, learning_rate=0.1, batch_size=10,
+    @_deprecate_positional_args
+    def __init__(self, n_components=256, *, learning_rate=0.1, batch_size=10,
                  n_iter=10, verbose=0, random_state=None):
         self.n_components = n_components
         self.learning_rate = learning_rate
@@ -130,7 +131,7 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
         """
         check_is_fitted(self)
 
-        X = check_array(X, accept_sparse='csr', dtype=np.float64)
+        X = check_array(X, accept_sparse='csr', dtype=(np.float64, np.float32))
         return self._mean_hiddens(X)
 
     def _mean_hiddens(self, v):
@@ -343,20 +344,24 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
         self : BernoulliRBM
             The fitted model.
         """
-        X = self._validate_data(X, accept_sparse='csr', dtype=np.float64)
+        X = self._validate_data(
+            X, accept_sparse='csr', dtype=(np.float64, np.float32)
+        )
         n_samples = X.shape[0]
         rng = check_random_state(self.random_state)
 
         self.components_ = np.asarray(
             rng.normal(0, 0.01, (self.n_components, X.shape[1])),
-            order='F')
-        self.intercept_hidden_ = np.zeros(self.n_components, )
-        self.intercept_visible_ = np.zeros(X.shape[1], )
-        self.h_samples_ = np.zeros((self.batch_size, self.n_components))
+            order='F',
+            dtype=X.dtype)
+        self.intercept_hidden_ = np.zeros(self.n_components, dtype=X.dtype)
+        self.intercept_visible_ = np.zeros(X.shape[1], dtype=X.dtype)
+        self.h_samples_ = np.zeros((self.batch_size, self.n_components),
+                                   dtype=X.dtype)
 
         n_batches = int(np.ceil(float(n_samples) / self.batch_size))
         batch_slices = list(gen_even_slices(n_batches * self.batch_size,
-                                            n_batches, n_samples))
+                                            n_batches, n_samples=n_samples))
         verbose = self.verbose
         begin = time.time()
         for iteration in range(1, self.n_iter + 1):
@@ -375,7 +380,7 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
 
     def _more_tags(self):
         return {
-            '_xfail_test': {
+            '_xfail_checks': {
                 'check_methods_subset_invariance':
                 'fails for the decision_function method'
             }
