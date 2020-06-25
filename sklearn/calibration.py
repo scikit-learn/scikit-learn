@@ -155,7 +155,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
            J. Platt, (1999)
 
     .. [4] `Predicting Good Probabilities with Supervised Learning
-            <https://www.cs.cornell.edu/~alexn/papers/calibration.icml05.crc.rev3.pdf>`_,
+           <https://www.cs.cornell.edu/~alexn/papers/calibration.icml05.crc.rev3.pdf>`_,
            A. Niculescu-Mizil & R. Caruana, ICML 2005
     """  # noqa E501
     @_deprecate_positional_args
