@@ -779,6 +779,10 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
         :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
+    .. deprecated:: 0.24
+            ``normalize`` was deprecated in version 0.24 and will be removed in
+            0.26.
+
     precompute : bool, 'auto' or array-like , default='auto'
         Whether to use a precomputed Gram matrix to speed up
         calculations. If set to ``'auto'`` let us decide. The Gram
@@ -859,7 +863,8 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
     positive = False
 
     @_deprecate_positional_args
-    def __init__(self, *, fit_intercept=True, verbose=False, normalize=True,
+    def __init__(self, *, fit_intercept=True, verbose=False,
+                 normalize='deprecate',
                  precompute='auto', n_nonzero_coefs=500,
                  eps=np.finfo(float).eps, copy_X=True, fit_path=True,
                  jitter=None, random_state=None):
@@ -886,6 +891,7 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
 
     def _fit(self, X, y, max_iter, alpha, fit_path, Xy=None):
         """Auxiliary method to fit the model using X, y as training data"""
+
         n_features = X.shape[1]
 
         X, y, X_offset, y_offset, X_scale = self._preprocess_data(
@@ -963,6 +969,12 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
         self : object
             returns an instance of self.
         """
+        if self.normalize != "deprecate":
+            warnings.warn("'normalize' was deprecated in version 0.24 and will"
+                            " be removed in 0.26.", FutureWarning)
+        else:
+            self.normalize = True
+
         X, y = self._validate_data(X, y, y_numeric=True, multi_output=True)
 
         alpha = getattr(self, 'alpha', 0.)
@@ -1019,6 +1031,10 @@ class LassoLars(Lars):
         If you wish to standardize, please use
         :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
+
+        .. deprecated:: 0.24
+            ``normalize`` was deprecated in version 0.24 and will be removed in
+            0.26.
 
     precompute : bool, 'auto' or array-like, default='auto'
         Whether to use a precomputed Gram matrix to speed up
@@ -1116,7 +1132,7 @@ class LassoLars(Lars):
 
     @_deprecate_positional_args
     def __init__(self, alpha=1.0, *, fit_intercept=True, verbose=False,
-                 normalize=True, precompute='auto', max_iter=500,
+                 normalize='deprecate', precompute='auto', max_iter=500,
                  eps=np.finfo(float).eps, copy_X=True, fit_path=True,
                  positive=False, jitter=None, random_state=None):
         self.alpha = alpha
@@ -1144,8 +1160,8 @@ def _check_copy_and_writeable(array, copy=False):
 
 def _lars_path_residues(X_train, y_train, X_test, y_test, Gram=None,
                         copy=True, method='lars', verbose=False,
-                        fit_intercept=True, normalize=True, max_iter=500,
-                        eps=np.finfo(float).eps, positive=False):
+                        fit_intercept=True, normalize=True,
+                        max_iter=500, eps=np.finfo(float).eps, positive=False):
     """Compute the residues on left-out data for a full LARS path
 
     Parameters
@@ -1198,6 +1214,10 @@ def _lars_path_residues(X_train, y_train, X_test, y_test, Gram=None,
         If you wish to standardize, please use
         :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
+
+        .. deprecated:: 0.24
+            ``normalize`` was deprecated in version 0.24 and will be removed in
+            0.26.
 
     max_iter : int, default=500
         Maximum number of iterations to perform.
@@ -1284,6 +1304,10 @@ class LarsCV(Lars):
         If you wish to standardize, please use
         :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
+
+        .. deprecated:: 0.24
+            ``normalize`` was deprecated in version 0.24 and will be removed in
+            0.26.
 
     precompute : bool, 'auto' or array-like , default='auto'
         Whether to use a precomputed Gram matrix to speed up
@@ -1374,7 +1398,7 @@ class LarsCV(Lars):
 
     @_deprecate_positional_args
     def __init__(self, *, fit_intercept=True, verbose=False, max_iter=500,
-                 normalize=True, precompute='auto', cv=None,
+                 normalize='deprecate', precompute='auto', cv=None,
                  max_n_alphas=1000, n_jobs=None, eps=np.finfo(float).eps,
                  copy_X=True):
         self.max_iter = max_iter
@@ -1406,6 +1430,13 @@ class LarsCV(Lars):
         self : object
             returns an instance of self.
         """
+
+        if self.normalize != "deprecate":
+            warnings.warn("'normalize' was deprecated in version 0.24 and will"
+                            " be removed in 0.26.", FutureWarning)
+        else:
+            self.normalize = True
+
         X, y = self._validate_data(X, y, y_numeric=True)
         X = as_float_array(X, copy=self.copy_X)
         y = as_float_array(y, copy=self.copy_X)
@@ -1502,6 +1533,10 @@ class LassoLarsCV(LarsCV):
         If you wish to standardize, please use
         :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
+
+        .. deprecated:: 0.24
+            ``normalize`` was deprecated in version 0.24 and will be removed in
+            0.26.
 
     precompute : bool or 'auto' , default='auto'
         Whether to use a precomputed Gram matrix to speed up
@@ -1616,7 +1651,7 @@ class LassoLarsCV(LarsCV):
 
     @_deprecate_positional_args
     def __init__(self, *, fit_intercept=True, verbose=False, max_iter=500,
-                 normalize=True, precompute='auto', cv=None,
+                 normalize='deprecate', precompute='auto', cv=None,
                  max_n_alphas=1000, n_jobs=None, eps=np.finfo(float).eps,
                  copy_X=True, positive=False):
         self.fit_intercept = fit_intercept
@@ -1669,6 +1704,10 @@ class LassoLarsIC(LassoLars):
         If you wish to standardize, please use
         :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
+
+        .. deprecated:: 0.24
+            ``normalize`` was deprecated in version 0.24 and will be removed in
+            0.26.
 
     precompute : bool, 'auto' or array-like, default='auto'
         Whether to use a precomputed Gram matrix to speed up
@@ -1750,7 +1789,7 @@ class LassoLarsIC(LassoLars):
     """
     @_deprecate_positional_args
     def __init__(self, criterion='aic', *, fit_intercept=True, verbose=False,
-                 normalize=True, precompute='auto', max_iter=500,
+                 normalize='deprecate', precompute='auto', max_iter=500,
                  eps=np.finfo(float).eps, copy_X=True, positive=False):
         self.criterion = criterion
         self.fit_intercept = fit_intercept
@@ -1787,6 +1826,12 @@ class LassoLarsIC(LassoLars):
         self : object
             returns an instance of self.
         """
+        if self.normalize != "deprecate":
+            warnings.warn("'normalize' was deprecated in version 0.24 and will"
+                            " be removed in 0.26.", FutureWarning)
+        else:
+            self.normalize = True
+
         if copy_X is None:
             copy_X = self.copy_X
         X, y = self._validate_data(X, y, y_numeric=True)
