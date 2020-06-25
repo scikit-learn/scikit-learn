@@ -674,9 +674,10 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
 
     Attributes
     ----------
-    classes_: ndarray of shape (n_classes,)
-        A copy of the `classes` parameter where provided.
-        Default, the sorted set of classes found when fitting.
+    classes_ : ndarray of shape (n_classes,)
+        A copy of the `classes` parameter when provided.
+        Otherwise it corresponds to the sorted set of classes found
+        when fitting.
 
     Examples
     --------
