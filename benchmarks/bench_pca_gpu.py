@@ -4,20 +4,20 @@ A comparison of PCA with/wthout GPU
 Obtained with NVIDIA Tesla V100
 
 With svd_solver='full' and iterated_power=2:
-        Without GPU : 1.193
-        With GPU : 0.085
+        Without GPU : 1.195
+        With GPU : 0.013
 
 With svd_solver='full' and iterated_power=10:
-        Without GPU : 1.191
+        Without GPU : 1.195
         With GPU : 0.013
 
 With svd_solver='randomized' and iterated_power=2:
-        Without GPU : 0.026
-        With GPU : 0.006
+        Without GPU : 0.034
+        With GPU : 0.010
 
 With svd_solver='randomized' and iterated_power=10:
-        Without GPU : 0.258
-        With GPU : 0.016
+        Without GPU : 0.186
+        With GPU : 0.010
 """
 
 import sklearn
@@ -39,6 +39,7 @@ if __name__ == '__main__':
             pca_np = PCA(n_components=3, svd_solver=svd_solver, copy=True,
                          random_state=0, iterated_power=iterated_power)
             pca_np.fit_transform(X_np)  # Warm-up
+            pca_np.fit_transform(X_np)  # Warm-up
             t0 = time.time()
             pca_np.fit_transform(X_np)
             without_gpu_time = time.time() - t0
@@ -46,6 +47,7 @@ if __name__ == '__main__':
             with_gpu_time = 0
             with sklearn.config_context(enable_duck_array=True):
                 pca_cp = PCA(**pca_np.get_params())
+                pca_cp.fit_transform(X_cp)  # Warm-up
                 pca_cp.fit_transform(X_cp)  # Warm-up
                 t0 = time.time()
                 pca_cp.fit_transform(X_cp)
