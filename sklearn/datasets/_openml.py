@@ -728,7 +728,8 @@ def fetch_openml(name=None, *, version='active', data_id=None, data_home=None,
     """
     if as_frame == 'warn':
         warn("The default value of as_frame will change from False "
-             "to 'auto' in 0.25.", FutureWarning)
+             "to 'auto' in 0.25. Specify the value of as_frame explicitly "
+             "to silence this warning.", FutureWarning)
         as_frame = False
 
     data_home = get_data_home(data_home=data_home)
