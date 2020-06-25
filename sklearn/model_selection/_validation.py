@@ -705,8 +705,8 @@ def cross_val_predict(estimator, X, y=None, *, groups=None, cv=None,
             ``cv`` default value if None changed from 3-fold to 5-fold.
 
     n_jobs : int, default=None
-        Number of jobs to run in parallel. Training the estimator and predicting
-        are parallelized over the cross-validation splits.
+        Number of jobs to run in parallel. Training the estimator and
+        predicting are parallelized over the cross-validation splits.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
@@ -1480,8 +1480,8 @@ def validation_curve(estimator, X, y, *, param_name, param_range, groups=None,
 
     n_jobs : int, default=None
         Number of jobs to run in parallel. Training the estimator and computing
-        the score are parallelized over the combinations of each parameter value
-        and each cross-validation split.
+        the score are parallelized over the combinations of each parameter
+        value and each cross-validation split.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
