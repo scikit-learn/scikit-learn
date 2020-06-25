@@ -515,7 +515,8 @@ def test_fetch_openml_default_as_frame_warning(monkeypatch):
     assert len(record) == 1
 
     msg = "The default value of as_frame will change from False " \
-          "to 'auto' in 0.25."
+          "to 'auto' in 0.25. Specify the value of as_frame explicitly " \
+          "to silence this warning."
     assert record[0].message.args[0] == msg
 
 
