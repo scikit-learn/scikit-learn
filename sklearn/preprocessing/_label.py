@@ -665,7 +665,7 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
 
     Parameters
     ----------
-    classes: array-like of shape (n_classes,), default=None
+    classes : array-like of shape (n_classes,), default=None
         Indicates an ordering for the class labels.
         All entries should be unique (cannot contain duplicate classes).
 
