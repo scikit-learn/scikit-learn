@@ -212,7 +212,7 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
         if (self.methods_to_check == "all" or
                 "predict" in self.methods_to_check):
             X, y = self._check_X_y(X)
-        return self.classes_[np.zeros(_num_samples(X), dtype=np.int)]
+        return self.classes_[np.zeros(_num_samples(X), dtype=int)]
 
     def predict_proba(self, X):
         """Predict probabilities for each class.
