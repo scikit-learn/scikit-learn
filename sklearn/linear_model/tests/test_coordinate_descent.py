@@ -28,12 +28,29 @@ from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import TempMemmap
 from sklearn.utils.fixes import parse_version
 
-from sklearn.linear_model import Lasso, LassoLars, Lars, LinearRegression, \
-    LassoCV, ElasticNet, ElasticNetCV, MultiTaskLasso, MultiTaskElasticNet, \
-    MultiTaskElasticNetCV, MultiTaskLassoCV, lasso_path, enet_path, Ridge, \
-    BayesianRidge, ARDRegression, OrthogonalMatchingPursuit, LassoLarsIC, \
-    RidgeClassifier, RidgeCV
-from sklearn.linear_model import LassoLarsCV, lars_path
+from sklearn.linear_model import ARDRegression
+from sklearn.linear_model import BayesianRidge
+from sklearn.linear_model import ElasticNet
+from sklearn.linear_model import ElasticNetCV
+from sklearn.linear_model import enet_path
+from sklearn.linear_model import Lars
+from sklearn.linear_model import lars_path
+from sklearn.linear_model import Lasso
+from sklearn.linear_model import LassoCV
+from sklearn.linear_model import LassoLars
+from sklearn.linear_model import LassoLarsCV
+from sklearn.linear_model import LassoLarsIC
+from sklearn.linear_model import lasso_path
+from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import MultiTaskElasticNet
+from sklearn.linear_model import MultiTaskElasticNetCV
+from sklearn.linear_model import MultiTaskLasso
+from sklearn.linear_model import MultiTaskLassoCV
+from sklearn.linear_model import OrthogonalMatchingPursuit
+from sklearn.linear_model import Ridge
+from sklearn.linear_model import RidgeClassifier
+from sklearn.linear_model import RidgeCV
+
 from sklearn.linear_model._coordinate_descent import _set_order
 from sklearn.utils import check_array
 
@@ -251,7 +268,7 @@ def test_lasso_cv_positive_constraint():
 
 
 @pytest.mark.parametrize(
-    "test_model, args",
+    "LinearModel, params",
     [(Lasso, {"tol": 1e-16, "alpha": 0.1}),
      (LassoLars, {"alpha": 0.1}),
      (RidgeClassifier, {"solver": 'sparse_cg', "alpha": 0.1}),
@@ -268,8 +285,8 @@ def test_lasso_cv_positive_constraint():
      (LinearRegression, {}),
      (LassoLarsIC, {})]
  )
-def test_model_pipeline_same_as_normalize_true(test_model, args):
-    # Test that linear models (test_model) set with normalize set to True are
+def test_model_pipeline_same_as_normalize_true(LinearModel, params):
+    # Test that linear models (LinearModel) set with normalize set to True are
     # doing the same as the same linear model preceeded by StandardScaler
     # in the pipeline and with normalize set to False
 
@@ -281,38 +298,38 @@ def test_model_pipeline_same_as_normalize_true(test_model, args):
 
     y = X.dot(w)
     # make classes out of regression
-    if 'Classifier' in str(test_model):
+    if 'Classifier' in str(LinearModel):
         y[y > np.mean(y)] = -1
         y[y > 0] = 1
-    if 'MultiTask' in str(test_model):
+    if 'MultiTask' in str(LinearModel):
         y = np.stack((y, y), axis=1)
 
     X, X_test, y, y_test = train_test_split(X, y, random_state=42)
 
     # normalize is True
-    clf_norm = test_model(normalize=True, fit_intercept=True,
-                          **args)
+    clf_norm = LinearModel(normalize=True, fit_intercept=True,
+                          **params)
     clf_norm.fit(X, y)
     y_pred_norm = clf_norm.predict(X_test)
 
-    if 'alpha' in args:
-        alpha_scaled = args['alpha']
-    if 'Lasso' in str(test_model) and test_model != LassoLarsIC:
+    if 'alpha' in params:
+        alpha_scaled = params['alpha']
+    if 'Lasso' in str(LinearModel) and LinearModel != LassoLarsIC:
         alpha_scaled = alpha_scaled * np.sqrt(X.shape[0])
-    if 'Ridge' in str(test_model) and 'alpha' in args:
+    if 'Ridge' in str(LinearModel) and 'alpha' in params:
         alpha_scaled = alpha_scaled * X.shape[0]
-    if 'Elastic' in str(test_model):
-        if args['l1_ratio'] == 1:
+    if 'Elastic' in str(LinearModel):
+        if params['l1_ratio'] == 1:
             alpha_scaled = alpha_scaled * np.sqrt(X.shape[0])
-        if args['l1_ratio'] == 0:
+        if params['l1_ratio'] == 0:
             alpha_scaled = alpha_scaled * X.shape[0]
 
-    if 'alpha' in args:
-        args['alpha'] = alpha_scaled
+    if 'alpha' in params:
+        params['alpha'] = alpha_scaled
 
     clf_pipe = make_pipeline(
         StandardScaler(),
-        test_model(normalize=False, fit_intercept=True, **args)
+        LinearModel(normalize=False, fit_intercept=True, **params)
     )
     clf_pipe.fit(X, y)
     y_pred_pipe = clf_pipe.predict(X_test)
@@ -326,7 +343,7 @@ def test_model_pipeline_same_as_normalize_true(test_model, args):
 
 
 @pytest.mark.parametrize(
-    "test_model, args",
+    "LinearModel, params",
     [
      (Lasso, {"tol": 1e-16, "alpha": 0.1}),
      (LassoCV, {"tol": 1e-16}), (ElasticNetCV, {}),
@@ -337,7 +354,7 @@ def test_model_pipeline_same_as_normalize_true(test_model, args):
      (LinearRegression, {}),
      (RidgeCV, {})
      ])
-def test_model_pipeline_same_dense_and_sparse(test_model, args):
+def test_model_pipeline_same_dense_and_sparse(LinearModel, params):
     # Test that linear model preceeded by StandardScaler in the pipeline and
     # with normalize set to False gives the same y_pred and the same .coef_
     # given X sparse or dense
@@ -351,18 +368,18 @@ def test_model_pipeline_same_dense_and_sparse(test_model, args):
     X_sparse = sparse.csr_matrix(X)
     y = rng.rand(n_samples)
 
-    if 'Classifier' in str(test_model):
+    if 'Classifier' in str(LinearModel):
         y = np.sign(y)
 
     clf_pipe_dense = make_pipeline(
         StandardScaler(with_mean=False),
-        test_model(normalize=False, **args)
+        LinearModel(normalize=False, **params)
     )
     clf_pipe_dense.fit(X, y)
 
     clf_pipe_sparse = make_pipeline(
         StandardScaler(with_mean=False),
-        test_model(normalize=False, **args)
+        LinearModel(normalize=False, **params)
     )
     clf_pipe_sparse.fit(X_sparse, y)
     assert_array_almost_equal(clf_pipe_sparse[1].coef_,
