@@ -607,6 +607,10 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
+        .. deprecated:: 0.24
+            ``normalize`` was deprecated in version 0.24 and will be removed in
+            0.26.
+
     precompute : bool or array-like of shape (n_features, n_features),\
                  default=False
         Whether to use a precomputed Gram matrix to speed up
@@ -695,7 +699,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
 
     @_deprecate_positional_args
     def __init__(self, alpha=1.0, *, l1_ratio=0.5, fit_intercept=True,
-                 normalize=False, precompute=False, max_iter=1000,
+                 normalize='deprecated', precompute=False, max_iter=1000,
                  copy_X=True, tol=1e-4, warm_start=False, positive=False,
                  random_state=None, selection='cyclic'):
         self.alpha = alpha
@@ -740,6 +744,10 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         To avoid memory re-allocation it is advised to allocate the
         initial data in memory directly using that format.
         """
+
+        if self.normalize != 'deprecated':
+            warnings.warn("'normalize' was deprecated in version 0.24 and will
+                          " be removed in 0.26.", FutureWarning)
 
         if self.alpha == 0:
             warnings.warn("With alpha=0, this algorithm does not converge "
@@ -833,7 +841,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
                           l1_ratio=self.l1_ratio, eps=None,
                           n_alphas=None, alphas=[alpha],
                           precompute=precompute, Xy=this_Xy,
-                          fit_intercept=False, normalize=False, copy_X=True,
+                          fit_intercept=False, normalize='deprecated', copy_X=True,
                           verbose=False, tol=self.tol, positive=self.positive,
                           X_offset=X_offset, X_scale=X_scale,
                           return_n_iter=True, coef_init=coef_[k],
@@ -923,6 +931,10 @@ class Lasso(ElasticNet):
         :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
+        .. deprecated:: 0.24
+            ``normalize`` was deprecated in version 0.24 and will be removed in
+            0.26.
+
     precompute : 'auto', bool or array-like of shape (n_features, n_features),\
                  default=False
         Whether to use a precomputed Gram matrix to speed up
@@ -1008,7 +1020,8 @@ class Lasso(ElasticNet):
     path = staticmethod(enet_path)
 
     @_deprecate_positional_args
-    def __init__(self, alpha=1.0, *, fit_intercept=True, normalize=False,
+    def __init__(self, alpha=1.0, *, fit_intercept=True,
+                 normalize='deprecated',
                  precompute=False, copy_X=True, max_iter=1000,
                  tol=1e-4, warm_start=False, positive=False,
                  random_state=None, selection='cyclic'):
@@ -1135,8 +1148,8 @@ class LinearModelCV(MultiOutputMixin, LinearModel, metaclass=ABCMeta):
 
     @abstractmethod
     def __init__(self, eps=1e-3, n_alphas=100, alphas=None, fit_intercept=True,
-                 normalize=False, precompute='auto', max_iter=1000, tol=1e-4,
-                 copy_X=True, cv=None, verbose=False, n_jobs=None,
+                 normalize='deprecate', precompute='auto', max_iter=1000,
+                 tol=1e-4, copy_X=True, cv=None, verbose=False, n_jobs=None,
                  positive=False, random_state=None, selection='cyclic'):
         self.eps = eps
         self.n_alphas = n_alphas
@@ -1379,6 +1392,10 @@ class LassoCV(RegressorMixin, LinearModelCV):
         :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
+        .. deprecated:: 0.24
+            ``normalize`` was deprecated in version 0.24 and will be removed in
+            0.26.
+
     precompute : 'auto', bool or array-like of shape (n_features, n_features),\
                  default='auto'
         Whether to use a precomputed Gram matrix to speed up
@@ -1496,7 +1513,7 @@ class LassoCV(RegressorMixin, LinearModelCV):
     @_deprecate_positional_args
     def __init__(self, *, eps=1e-3, n_alphas=100, alphas=None,
                  fit_intercept=True,
-                 normalize=False, precompute='auto', max_iter=1000, tol=1e-4,
+                 normalize='deprecated', precompute='auto', max_iter=1000, tol=1e-4,
                  copy_X=True, cv=None, verbose=False, n_jobs=None,
                  positive=False, random_state=None, selection='cyclic'):
         super().__init__(
@@ -1560,6 +1577,10 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
         If you wish to standardize, please use
         :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
+
+        .. deprecated:: 0.24
+            ``normalize`` was deprecated in version 0.24 and will be removed in
+            0.26.
 
     precompute : 'auto', bool or array-like of shape (n_features, n_features),\
                  default='auto'
@@ -1699,7 +1720,7 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
 
     @_deprecate_positional_args
     def __init__(self, *, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
-                 fit_intercept=True, normalize=False, precompute='auto',
+                 fit_intercept=True, normalize='deprecated', precompute='auto',
                  max_iter=1000, tol=1e-4, cv=None, copy_X=True,
                  verbose=0, n_jobs=None, positive=False, random_state=None,
                  selection='cyclic'):
@@ -1774,6 +1795,10 @@ class MultiTaskElasticNet(Lasso):
         :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
+        .. deprecated:: 0.24
+            ``normalize`` was deprecated in version 0.24 and will be removed in
+            0.26.
+
     copy_X : bool, default=True
         If ``True``, X will be copied; else, it may be overwritten.
 
@@ -1845,7 +1870,7 @@ class MultiTaskElasticNet(Lasso):
     """
     @_deprecate_positional_args
     def __init__(self, alpha=1.0, *, l1_ratio=0.5, fit_intercept=True,
-                 normalize=False, copy_X=True, max_iter=1000, tol=1e-4,
+                 normalize='deprecated', copy_X=True, max_iter=1000, tol=1e-4,
                  warm_start=False, random_state=None, selection='cyclic'):
         self.l1_ratio = l1_ratio
         self.alpha = alpha
@@ -1964,6 +1989,10 @@ class MultiTaskLasso(MultiTaskElasticNet):
         :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
+        .. deprecated:: 0.24
+            ``normalize`` was deprecated in version 0.24 and will be removed in
+            0.26.
+
     copy_X : bool, default=True
         If ``True``, X will be copied; else, it may be overwritten.
 
@@ -2032,9 +2061,9 @@ class MultiTaskLasso(MultiTaskElasticNet):
     method should be directly passed as Fortran-contiguous numpy arrays.
     """
     @_deprecate_positional_args
-    def __init__(self, alpha=1.0, *, fit_intercept=True, normalize=False,
-                 copy_X=True, max_iter=1000, tol=1e-4, warm_start=False,
-                 random_state=None, selection='cyclic'):
+    def __init__(self, alpha=1.0, *, fit_intercept=True,
+                 normalize='deprecated', copy_X=True, max_iter=1000, tol=1e-4,
+                 warm_start=False, random_state=None, selection='cyclic'):
         self.alpha = alpha
         self.fit_intercept = fit_intercept
         self.normalize = normalize
@@ -2105,6 +2134,10 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
         If you wish to standardize, please use
         :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
+
+    .. deprecated:: 0.24
+            ``normalize`` was deprecated in version 0.24 and will be removed in
+            0.26.
 
     max_iter : int, default=1000
         The maximum number of iterations
@@ -2213,7 +2246,7 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
 
     @_deprecate_positional_args
     def __init__(self, *, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
-                 fit_intercept=True, normalize=False,
+                 fit_intercept=True, normalize='deprecated',
                  max_iter=1000, tol=1e-4, cv=None, copy_X=True,
                  verbose=0, n_jobs=None, random_state=None,
                  selection='cyclic'):
@@ -2286,6 +2319,10 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
         If you wish to standardize, please use
         :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
+
+    .. deprecated:: 0.24
+            ``normalize`` was deprecated in version 0.24 and will be removed in
+            0.26.
 
     max_iter : int, default=1000
         The maximum number of iterations.
@@ -2392,7 +2429,7 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
     @_deprecate_positional_args
     def __init__(self, *, eps=1e-3, n_alphas=100, alphas=None,
                  fit_intercept=True,
-                 normalize=False, max_iter=1000, tol=1e-4, copy_X=True,
+                 normalize='deprecated', max_iter=1000, tol=1e-4, copy_X=True,
                  cv=None, verbose=False, n_jobs=None, random_state=None,
                  selection='cyclic'):
         super().__init__(
