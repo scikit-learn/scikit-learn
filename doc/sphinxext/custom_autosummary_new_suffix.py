@@ -86,6 +86,7 @@ def setup(app):
             func = event_listener.handler
             if func.__name__ == "process_generate_options":
                 process_generate_options_id = event_listener.id
+                break
 
     # Override process_generate_options added by sphinx.ext.autosummary
     app.disconnect(process_generate_options_id)
