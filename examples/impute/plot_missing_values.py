@@ -4,7 +4,7 @@ Imputing missing values before building an estimator
 ====================================================
 
 Missing values can be replaced by the mean, the median or the most frequent
-value using the basic :class:`sklearn.impute.SimpleImputer`.
+value using the basic :class:`~sklearn.impute.SimpleImputer`.
 
 In this example we will investigate different imputation techniques:
 
@@ -64,7 +64,7 @@ def add_missing_values(X_full, y_full):
     missing_rate = 0.75
     n_missing_samples = int(n_samples * missing_rate)
 
-    missing_samples = np.zeros(n_samples, dtype=np.bool)
+    missing_samples = np.zeros(n_samples, dtype=bool)
     missing_samples[: n_missing_samples] = True
 
     rng.shuffle(missing_samples)
@@ -178,7 +178,7 @@ mses_diabetes[1], stds_diabetes[1] = get_impute_zero_score(X_miss_diabetes,
 # kNN-imputation of the missing values
 # ------------------------------------
 #
-# :class:`sklearn.impute.KNNImputer` imputes missing values using the weighted
+# :class:`~sklearn.impute.KNNImputer` imputes missing values using the weighted
 # or unweighted mean of the desired number of nearest neighbors.
 
 def get_impute_knn_score(X_missing, y_missing):
@@ -215,7 +215,7 @@ mses_diabetes[3], stds_diabetes[3] = get_impute_mean(X_miss_diabetes,
 # Iterative imputation of the missing values
 # ------------------------------------------
 #
-# Another option is the :class:`sklearn.impute.IterativeImputer`. This uses
+# Another option is the :class:`~sklearn.impute.IterativeImputer`. This uses
 # round-robin linear regression, modeling each feature with missing values as a
 # function of other features, in turn.
 # The version implemented assumes Gaussian (output) variables. If your features

@@ -8,7 +8,6 @@ import pytest
 from scipy import interpolate, sparse
 from copy import deepcopy
 import joblib
-from distutils.version import LooseVersion
 
 from sklearn.datasets import load_diabetes
 from sklearn.datasets import make_regression
@@ -23,6 +22,7 @@ from sklearn.utils._testing import assert_warns_message
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import TempMemmap
+from sklearn.utils.fixes import parse_version
 
 from sklearn.linear_model import Lasso, \
     LassoCV, ElasticNet, ElasticNetCV, MultiTaskLasso, MultiTaskElasticNet, \
@@ -1034,7 +1034,8 @@ def test_linear_models_cv_fit_for_all_backends(backend, estimator):
     # memmapped when using loky backend, causing an error due to unexpected
     # behavior of fancy indexing of read-only memmaps (cf. numpy#14132).
 
-    if joblib.__version__ < LooseVersion('0.12') and backend == 'loky':
+    if (parse_version(joblib.__version__) < parse_version('0.12')
+            and backend == 'loky'):
         pytest.skip('loky backend does not exist in joblib <0.12')
 
     # Create a problem sufficiently large to cause memmapping (1MB).

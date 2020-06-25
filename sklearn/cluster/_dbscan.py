@@ -199,7 +199,8 @@ class DBSCAN(ClusterMixin, BaseEstimator):
 
     p : float, default=None
         The power of the Minkowski metric to be used to calculate distance
-        between points.
+        between points. If None, then ``p=2`` (equivalent to the Euclidean
+        distance).
 
     n_jobs : int, default=None
         The number of parallel jobs to run.

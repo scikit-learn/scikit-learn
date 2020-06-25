@@ -700,7 +700,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
         base_estimator = clone(self.estimator)
 
-        parallel = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
+        parallel = Parallel(n_jobs=self.n_jobs,
                             pre_dispatch=self.pre_dispatch)
 
         fit_and_score_kwargs = dict(scorer=scorers,
@@ -729,10 +729,17 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                                                        X, y,
                                                        train=train, test=test,
                                                        parameters=parameters,
+                                                       split_progress=(
+                                                           split_idx,
+                                                           n_splits),
+                                                       candidate_progress=(
+                                                           cand_idx,
+                                                           n_candidates),
                                                        **fit_and_score_kwargs)
-                               for parameters, (train, test)
-                               in product(candidate_params,
-                                          cv.split(X, y, groups)))
+                               for (cand_idx, parameters),
+                                   (split_idx, (train, test)) in product(
+                                   enumerate(candidate_params),
+                                   enumerate(cv.split(X, y, groups))))
 
                 if len(out) < 1:
                     raise ValueError('No fits were performed. '
@@ -822,10 +829,10 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             array = np.array(array, dtype=np.float64).reshape(n_candidates,
                                                               n_splits)
             if splits:
-                for split_i in range(n_splits):
+                for split_idx in range(n_splits):
                     # Uses closure to alter the results
                     results["split%d_%s"
-                            % (split_i, key_name)] = array[:, split_i]
+                            % (split_idx, key_name)] = array[:, split_idx]
 
             array_means = np.average(array, axis=1, weights=weights)
             results['mean_%s' % key_name] = array_means
@@ -848,12 +855,12 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                                             np.empty(n_candidates,),
                                             mask=True,
                                             dtype=object))
-        for cand_i, params in enumerate(candidate_params):
+        for cand_idx, params in enumerate(candidate_params):
             for name, value in params.items():
                 # An all masked empty array gets created for the key
                 # `"param_%s" % name` at the first occurrence of `name`.
                 # Setting the value at an index also unmasks that index
-                param_results["param_%s" % name][cand_i] = value
+                param_results["param_%s" % name][cand_idx] = value
 
         results.update(param_results)
         # Store a list of param dicts at the key 'params'
@@ -861,7 +868,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
         # NOTE test_sample counts (weights) remain the same for all candidates
         test_sample_counts = np.array(test_sample_counts[:n_splits],
-                                      dtype=np.int)
+                                      dtype=int)
 
         for scorer_name in scorers.keys():
             # Computed the (weighted) mean and std for test scores alone
@@ -996,6 +1003,12 @@ class GridSearchCV(BaseSearchCV):
 
     verbose : integer
         Controls the verbosity: the higher, the more messages.
+
+        - >1 : the computation time for each fold and parameter candidate is
+          displayed;
+        - >2 : the score is also displayed;
+        - >3 : the fold and candidate parameter indexes are also displayed
+          together with the starting time of the computation.
 
     error_score : 'raise' or numeric, default=np.nan
         Value to assign to the score if an error occurs in estimator fitting.
