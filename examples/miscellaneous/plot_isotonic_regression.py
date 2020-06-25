@@ -8,9 +8,9 @@ monotonic trend with homoscedastic uniform noise).
 
 The isotonic regression algorithm finds a non-decreasing approximation of a
 function while minimizing the mean squared error on the training data. The
-benefit of such a model is that it does not assume any form for the target
-function such as linearity. For comparison a linear regression is also
-presented.
+benefit of such a non-parametric model is that it does not assume any shape for
+the target function besides monotonicity. For comparison a linear regression is
+also presented.
 
 The plot on the right-hand side shows the model prediction function that
 results from the linear interpolation of thresholds points. The thresholds
@@ -37,8 +37,8 @@ x = np.arange(n)
 rs = check_random_state(0)
 y = rs.randint(-50, 50, size=(n,)) + 50. * np.log1p(np.arange(n))
 
-# #############################################################################
-# Fit IsotonicRegression and LinearRegression models
+# %%
+# Fit IsotonicRegression and LinearRegression models:
 
 ir = IsotonicRegression(out_of_bounds="clip")
 y_ = ir.fit_transform(x, y)
@@ -46,8 +46,8 @@ y_ = ir.fit_transform(x, y)
 lr = LinearRegression()
 lr.fit(x[:, np.newaxis], y)  # x needs to be 2d for LinearRegression
 
-# #############################################################################
-# Plot result
+# %%
+# Plot results:
 
 segments = [[[i, y[i]], [i, y_[i]]] for i in range(n)]
 lc = LineCollection(segments, zorder=0)
@@ -70,7 +70,7 @@ ax1.set_title("Prediction function (%d thresholds)" % len(ir.X_thresholds_))
 
 plt.show()
 
-# #############################################################################
+# %%
 # Note that we explicitly passed `out_of_bounds="clip"` to the constructor of
 # `IsotonicRegression` to control the way the model extrapolates outside of the
 # range of data observed in the training set. This "clipping" extrapolation can
