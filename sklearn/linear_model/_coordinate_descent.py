@@ -746,7 +746,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         """
 
         if self.normalize != 'deprecated':
-            warnings.warn("'normalize' was deprecated in version 0.24 and will
+            warnings.warn("'normalize' was deprecated in version 0.24 and will"
                           " be removed in 0.26.", FutureWarning)
 
         if self.alpha == 0:
@@ -841,7 +841,8 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
                           l1_ratio=self.l1_ratio, eps=None,
                           n_alphas=None, alphas=[alpha],
                           precompute=precompute, Xy=this_Xy,
-                          fit_intercept=False, normalize='deprecated', copy_X=True,
+                          fit_intercept=False, normalize='deprecated',
+                          copy_X=True,
                           verbose=False, tol=self.tol, positive=self.positive,
                           X_offset=X_offset, X_scale=X_scale,
                           return_n_iter=True, coef_init=coef_[k],
@@ -1512,8 +1513,8 @@ class LassoCV(RegressorMixin, LinearModelCV):
 
     @_deprecate_positional_args
     def __init__(self, *, eps=1e-3, n_alphas=100, alphas=None,
-                 fit_intercept=True,
-                 normalize='deprecated', precompute='auto', max_iter=1000, tol=1e-4,
+                 fit_intercept=True, normalize='deprecated', precompute='auto',
+                 max_iter=1000, tol=1e-4,
                  copy_X=True, cv=None, verbose=False, n_jobs=None,
                  positive=False, random_state=None, selection='cyclic'):
         super().__init__(
