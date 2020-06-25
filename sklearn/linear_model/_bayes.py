@@ -84,6 +84,10 @@ class BayesianRidge(RegressorMixin, LinearModel):
         :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
+        .. deprecated:: 0.24
+            ``normalize`` was deprecated in version 0.24 and will be removed in
+            0.26.
+
     copy_X : bool, default=True
         If True, X will be copied; else, it may be overwritten.
 
@@ -150,7 +154,7 @@ class BayesianRidge(RegressorMixin, LinearModel):
     def __init__(self, *, n_iter=300, tol=1.e-3, alpha_1=1.e-6, alpha_2=1.e-6,
                  lambda_1=1.e-6, lambda_2=1.e-6, alpha_init=None,
                  lambda_init=None, compute_score=False, fit_intercept=True,
-                 normalize=False, copy_X=True, verbose=False):
+                 normalize='deprecate', copy_X=True, verbose=False):
         self.n_iter = n_iter
         self.tol = tol
         self.alpha_1 = alpha_1
@@ -185,6 +189,11 @@ class BayesianRidge(RegressorMixin, LinearModel):
         -------
         self : returns an instance of self.
         """
+        if self.normalize != "deprecate":
+            warnings.warn("'normalize' was deprecated in version 0.24 and will"
+                          " be removed in 0.26.", FutureWarning)
+        else:
+            self.normalize = False
 
         if self.n_iter < 1:
             raise ValueError('n_iter should be greater than or equal to 1.'
@@ -436,6 +445,10 @@ class ARDRegression(RegressorMixin, LinearModel):
         :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
+        .. deprecated:: 0.24
+            ``normalize`` was deprecated in version 0.24 and will be removed in
+            0.26.
+
     copy_X : bool, default=True
         If True, X will be copied; else, it may be overwritten.
 
@@ -493,8 +506,8 @@ class ARDRegression(RegressorMixin, LinearModel):
     @_deprecate_positional_args
     def __init__(self, *, n_iter=300, tol=1.e-3, alpha_1=1.e-6, alpha_2=1.e-6,
                  lambda_1=1.e-6, lambda_2=1.e-6, compute_score=False,
-                 threshold_lambda=1.e+4, fit_intercept=True, normalize=False,
-                 copy_X=True, verbose=False):
+                 threshold_lambda=1.e+4, fit_intercept=True,
+                 normalize='deprecate', copy_X=True, verbose=False):
         self.n_iter = n_iter
         self.tol = tol
         self.fit_intercept = fit_intercept
@@ -526,6 +539,12 @@ class ARDRegression(RegressorMixin, LinearModel):
         -------
         self : returns an instance of self.
         """
+        if self.normalize != "deprecate":
+            warnings.warn("'normalize' was deprecated in version 0.24 and will"
+                          " be removed in 0.26.", FutureWarning)
+        else:
+            self.normalize = False
+
         X, y = self._validate_data(X, y, dtype=np.float64, y_numeric=True,
                                    ensure_min_samples=2)
 
