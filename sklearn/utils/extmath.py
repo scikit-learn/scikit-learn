@@ -241,7 +241,7 @@ def randomized_range_finder(A, *, size, n_iter,
 
     # Sample the range of A using by linear projection of Q
     # Extract an orthonormal basis
-    Q, _ = npx.linalg.qr(safe_sparse_dot(A, Q))
+    Q, _ = npx.linalg.qr(safe_sparse_dot(A, Q), mode='reduced')
     return Q
 
 
