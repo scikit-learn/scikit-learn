@@ -544,7 +544,7 @@ def test_sparse_coder_common_transformer():
     rng = np.random.RandomState(777)
     n_components, n_features = 40, 3
     init_dict = rng.rand(n_components, n_features)
-    
+
     sc = SparseCoder(init_dict)
 
     check_transformer_data_not_an_array(sc.__class__.__name__, sc)
