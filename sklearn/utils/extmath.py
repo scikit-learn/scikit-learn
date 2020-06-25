@@ -21,6 +21,7 @@ from ._logistic_sigmoid import _log_logistic_sigmoid
 from .sparsefuncs_fast import csr_row_norms
 from .validation import check_array
 from .validation import _deprecate_positional_args
+from ..utils import _get_array_module
 
 
 def squared_norm(x):
@@ -247,7 +248,7 @@ def randomized_range_finder(A, *, size, n_iter,
 @_deprecate_positional_args
 def randomized_svd(M, n_components, *, n_oversamples=10, n_iter='auto',
                    power_iteration_normalizer='auto', transpose='auto',
-                   flip_sign=True, random_state=0, npx=np):
+                   flip_sign=True, random_state=0):
     """Computes a truncated randomized SVD
 
     Parameters
@@ -331,6 +332,8 @@ def randomized_svd(M, n_components, *, n_oversamples=10, n_iter='auto',
                       "csr_matrix is more efficient.".format(
                           type(M).__name__),
                       sparse.SparseEfficiencyWarning)
+
+    npx = _get_array_module(M)
 
     random_state = check_random_state(random_state, npx=npx)
     n_random = n_components + n_oversamples

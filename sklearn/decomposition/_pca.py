@@ -544,8 +544,7 @@ class PCA(_BasePCA):
             U, S, Vt = randomized_svd(X, n_components=n_components,
                                       n_iter=self.iterated_power,
                                       flip_sign=True,
-                                      random_state=random_state,
-                                      npx=npx)
+                                      random_state=random_state)
 
         self.n_samples_, self.n_features_ = n_samples, n_features
         self.components_ = Vt
