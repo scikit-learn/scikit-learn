@@ -1914,8 +1914,7 @@ class MiniBatchNMF(TransformerMixin, BaseEstimator):
     def partial_fit(self, X, y=None, **params):
         if hasattr(self, 'components_'):
             W = np.ones((X.shape[0], self.n_components_))
-            #  commented only to check tests
-            #W *= np.maximum(1e-6, X.sum(axis=1).A)
+            W *= np.maximum(1e-6, X.sum(axis=1) * self._components_numerator_)
             W /= W.sum(axis=1, keepdims=True)
             W, H, A, B, n_iter_ = non_negative_factorization_online(
                 X=X, W=W, H=self.components_,
