@@ -1008,8 +1008,8 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
     components_ : ndarray of shape (n_components, n_features)
         The unchanged dictionary atoms.
 
-        .. deprecated:: 0.23
-           This attribute is deprecated in 0.23 and will be removed in 0.25.
+        .. deprecated:: 0.24
+           This attribute is deprecated in 0.24 and will be removed in 0.26.
            Use `dictionary` instead.
 
     Examples
