@@ -25,7 +25,7 @@ from sklearn.utils.estimator_checks import check_classifier_data_not_an_array
 from sklearn.utils.estimator_checks import check_regressor_data_not_an_array
 from sklearn.utils.validation import check_is_fitted
 from sklearn.utils.estimator_checks import check_outlier_corruption
-from sklearn.utils.fixes import _parse_version
+from sklearn.utils.fixes import np_version, parse_version
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LinearRegression, SGDClassifier
 from sklearn.mixture import GaussianMixture
@@ -335,8 +335,7 @@ class RequiresPositiveYRegressor(LinearRegression):
 
 
 def test_not_an_array_array_function():
-    np_version = _parse_version(np.__version__)
-    if np_version < (1, 17):
+    if np_version < parse_version('1.17'):
         raise SkipTest("array_function protocol not supported in numpy <1.17")
     not_array = _NotAnArray(np.ones(10))
     msg = "Don't want to call array_function sum!"

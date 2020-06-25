@@ -107,11 +107,11 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
 
             # For the hidden layers
             if (i + 1) != (self.n_layers_ - 1):
-                activations[i + 1] = hidden_activation(activations[i + 1])
+                hidden_activation(activations[i + 1])
 
         # For the last layer
         output_activation = ACTIVATIONS[self.out_activation_]
-        activations[i + 1] = output_activation(activations[i + 1])
+        output_activation(activations[i + 1])
 
         return activations
 
@@ -128,8 +128,6 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         coef_grads[layer] /= n_samples
 
         intercept_grads[layer] = np.mean(deltas[layer], 0)
-
-        return coef_grads, intercept_grads
 
     def _loss_grad_lbfgs(self, packed_coef_inter, X, y, activations, deltas,
                          coef_grads, intercept_grads):
@@ -227,8 +225,10 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             loss_func_name = 'binary_log_loss'
         loss = LOSS_FUNCTIONS[loss_func_name](y, activations[-1])
         # Add L2 regularization term to loss
-        values = np.sum(
-            np.array([np.dot(s.ravel(), s.ravel()) for s in self.coefs_]))
+        values = 0
+        for s in self.coefs_:
+            s = s.ravel()
+            values += np.dot(s, s)
         loss += (0.5 * self.alpha) * values / n_samples
 
         # Backward propagate
@@ -241,16 +241,16 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         deltas[last] = activations[-1] - y
 
         # Compute gradient for the last layer
-        coef_grads, intercept_grads = self._compute_loss_grad(
+        self._compute_loss_grad(
             last, n_samples, activations, deltas, coef_grads, intercept_grads)
 
+        inplace_derivative = DERIVATIVES[self.activation]
         # Iterate over the hidden layers
         for i in range(self.n_layers_ - 2, 0, -1):
             deltas[i - 1] = safe_sparse_dot(deltas[i], self.coefs_[i].T)
-            inplace_derivative = DERIVATIVES[self.activation]
             inplace_derivative(activations[i], deltas[i - 1])
 
-            coef_grads, intercept_grads = self._compute_loss_grad(
+            self._compute_loss_grad(
                 i - 1, n_samples, activations, deltas, coef_grads,
                 intercept_grads)
 
@@ -818,7 +818,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         Momentum for gradient descent update. Should be between 0 and 1. Only
         used when solver='sgd'.
 
-    nesterovs_momentum : boolean, default=True
+    nesterovs_momentum : bool, default=True
         Whether to use Nesterov's momentum. Only used when solver='sgd' and
         momentum > 0.
 
@@ -870,15 +870,24 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
     loss_ : float
         The current loss computed with the loss function.
 
-    coefs_ : list, length n_layers - 1
+    best_loss_ : float
+        The minimum loss reached by the solver throughout fitting.
+
+    loss_curve_ : list of shape (`n_iter_`,)
+        The ith element in the list represents the loss at the ith iteration.
+
+    t_ : int
+        The number of training samples seen by the solver during fitting.
+
+    coefs_ : list of shape (n_layers - 1,)
         The ith element in the list represents the weight matrix corresponding
         to layer i.
 
-    intercepts_ : list, length n_layers - 1
+    intercepts_ : list of shape (n_layers - 1,)
         The ith element in the list represents the bias vector corresponding to
         layer i + 1.
 
-    n_iter_ : int,
+    n_iter_ : int
         The number of iterations the solver has ran.
 
     n_layers_ : int
@@ -887,7 +896,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
     n_outputs_ : int
         Number of outputs.
 
-    out_activation_ : string
+    out_activation_ : str
         Name of the output activation function.
 
 
@@ -1229,7 +1238,7 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
         Momentum for gradient descent update.  Should be between 0 and 1. Only
         used when solver='sgd'.
 
-    nesterovs_momentum : boolean, default=True
+    nesterovs_momentum : bool, default=True
         Whether to use Nesterov's momentum. Only used when solver='sgd' and
         momentum > 0.
 
@@ -1277,15 +1286,24 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
     loss_ : float
         The current loss computed with the loss function.
 
-    coefs_ : list, length n_layers - 1
+    best_loss_ : float
+        The minimum loss reached by the solver throughout fitting.
+
+    loss_curve_ : list of shape (`n_iter_`,)
+        The ith element in the list represents the loss at the ith iteration.
+
+    t_ : int
+        The number of training samples seen by the solver during fitting.
+
+    coefs_ : list of shape (n_layers - 1,)
         The ith element in the list represents the weight matrix corresponding
         to layer i.
 
-    intercepts_ : list, length n_layers - 1
+    intercepts_ : list of shape (n_layers - 1,)
         The ith element in the list represents the bias vector corresponding to
         layer i + 1.
 
-    n_iter_ : int,
+    n_iter_ : int
         The number of iterations the solver has ran.
 
     n_layers_ : int
@@ -1294,7 +1312,7 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
     n_outputs_ : int
         Number of outputs.
 
-    out_activation_ : string
+    out_activation_ : str
         Name of the output activation function.
 
     Examples

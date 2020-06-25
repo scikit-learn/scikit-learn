@@ -49,11 +49,12 @@ from ..metrics.pairwise import (rbf_kernel, linear_kernel, pairwise_distances)
 from .import shuffle
 from .validation import has_fit_parameter, _num_samples
 from ..preprocessing import StandardScaler
-from ..datasets import (load_iris, load_boston, make_blobs,
+from ..preprocessing import scale
+from ..datasets import (load_iris, make_blobs,
                         make_multilabel_classification, make_regression)
 
 
-BOSTON = None
+REGRESSION_DATASET = None
 CROSS_DECOMPOSITION = ['PLSCanonical', 'PLSRegression', 'CCA', 'PLSSVD']
 
 
@@ -500,15 +501,16 @@ def check_estimator(Estimator, generate_only=False):
             warnings.warn(str(exception), SkipTestWarning)
 
 
-def _boston_subset(n_samples=200):
-    global BOSTON
-    if BOSTON is None:
-        X, y = load_boston(return_X_y=True)
-        X, y = shuffle(X, y, random_state=0)
-        X, y = X[:n_samples], y[:n_samples]
+def _regression_dataset():
+    global REGRESSION_DATASET
+    if REGRESSION_DATASET is None:
+        X, y = make_regression(
+            n_samples=200, n_features=10, n_informative=1,
+            bias=5.0, noise=20, random_state=42,
+        )
         X = StandardScaler().fit_transform(X)
-        BOSTON = X, y
-    return BOSTON
+        REGRESSION_DATASET = X, y
+    return REGRESSION_DATASET
 
 
 def _set_checking_parameters(estimator):
@@ -701,9 +703,9 @@ def check_estimator_sparse_data(name, estimator_orig):
     X_csr = sparse.csr_matrix(X)
     tags = estimator_orig._get_tags()
     if tags['binary_only']:
-        y = (2 * rng.rand(40)).astype(np.int)
+        y = (2 * rng.rand(40)).astype(int)
     else:
-        y = (4 * rng.rand(40)).astype(np.int)
+        y = (4 * rng.rand(40)).astype(int)
     # catch deprecation warnings
     with ignore_warnings(category=FutureWarning):
         estimator = clone(estimator_orig)
@@ -856,7 +858,7 @@ def check_sample_weights_invariance(name, estimator_orig, kind="ones"):
                   [3, 3], [3, 3], [3, 3], [3, 3],
                   [4, 1], [4, 1], [4, 1], [4, 1]], dtype=np.float64)
     y1 = np.array([1, 1, 1, 1, 2, 2, 2, 2,
-                  1, 1, 1, 1, 2, 2, 2, 2], dtype=np.int)
+                  1, 1, 1, 1, 2, 2, 2, 2], dtype=int)
 
     if kind == 'ones':
         X2 = X1
@@ -900,9 +902,9 @@ def check_dtype_object(name, estimator_orig):
     X = X.astype(object)
     tags = estimator_orig._get_tags()
     if tags['binary_only']:
-        y = (X[:, 0] * 2).astype(np.int)
+        y = (X[:, 0] * 2).astype(int)
     else:
-        y = (X[:, 0] * 4).astype(np.int)
+        y = (X[:, 0] * 4).astype(int)
     estimator = clone(estimator_orig)
     y = _enforce_estimator_tags_y(estimator, y)
 
@@ -957,7 +959,7 @@ def check_dict_unchanged(name, estimator_orig):
 
     X = _pairwise_estimator_convert_X(X, estimator_orig)
 
-    y = X[:, 0].astype(np.int)
+    y = X[:, 0].astype(int)
     estimator = clone(estimator_orig)
     y = _enforce_estimator_tags_y(estimator, y)
     if hasattr(estimator, "n_components"):
@@ -995,7 +997,7 @@ def check_dont_overwrite_parameters(name, estimator_orig):
     rnd = np.random.RandomState(0)
     X = 3 * rnd.uniform(size=(20, 3))
     X = _pairwise_estimator_convert_X(X, estimator_orig)
-    y = X[:, 0].astype(np.int)
+    y = X[:, 0].astype(int)
     if estimator._get_tags()['binary_only']:
         y[y == 2] = 1
     y = _enforce_estimator_tags_y(estimator, y)
@@ -1046,7 +1048,7 @@ def check_fit2d_predict1d(name, estimator_orig):
     rnd = np.random.RandomState(0)
     X = 3 * rnd.uniform(size=(20, 3))
     X = _pairwise_estimator_convert_X(X, estimator_orig)
-    y = X[:, 0].astype(np.int)
+    y = X[:, 0].astype(int)
     tags = estimator_orig._get_tags()
     if tags['binary_only']:
         y[y == 2] = 1
@@ -1097,7 +1099,7 @@ def check_methods_subset_invariance(name, estimator_orig):
     rnd = np.random.RandomState(0)
     X = 3 * rnd.uniform(size=(20, 3))
     X = _pairwise_estimator_convert_X(X, estimator_orig)
-    y = X[:, 0].astype(np.int)
+    y = X[:, 0].astype(int)
     if estimator_orig._get_tags()['binary_only']:
         y[y == 2] = 1
     estimator = clone(estimator_orig)
@@ -1133,7 +1135,7 @@ def check_fit2d_1sample(name, estimator_orig):
     X = 3 * rnd.uniform(size=(1, 10))
     X = _pairwise_estimator_convert_X(X, estimator_orig)
 
-    y = X[:, 0].astype(np.int)
+    y = X[:, 0].astype(int)
     estimator = clone(estimator_orig)
     y = _enforce_estimator_tags_y(estimator, y)
 
@@ -1165,7 +1167,7 @@ def check_fit2d_1feature(name, estimator_orig):
     rnd = np.random.RandomState(0)
     X = 3 * rnd.uniform(size=(10, 1))
     X = _pairwise_estimator_convert_X(X, estimator_orig)
-    y = X[:, 0].astype(np.int)
+    y = X[:, 0].astype(int)
     estimator = clone(estimator_orig)
     y = _enforce_estimator_tags_y(estimator, y)
 
@@ -1197,7 +1199,7 @@ def check_fit1d(name, estimator_orig):
     # check fitting 1d X array raises a ValueError
     rnd = np.random.RandomState(0)
     X = 3 * rnd.uniform(size=(20))
-    y = X.astype(np.int)
+    y = X.astype(int)
     estimator = clone(estimator_orig)
     tags = estimator._get_tags()
     if tags["no_validation"]:
@@ -1246,7 +1248,7 @@ def check_transformer_data_not_an_array(name, transformer):
 
 @ignore_warnings(category=FutureWarning)
 def check_transformers_unfitted(name, transformer):
-    X, y = _boston_subset()
+    X, y = _regression_dataset()
 
     transformer = clone(transformer)
     with assert_raises((AttributeError, ValueError), msg="The unfitted "
@@ -1623,7 +1625,7 @@ def check_classifier_multioutput(name, estimator):
             "multioutput data is incorrect. Expected {}, got {}."
             .format((n_samples, n_classes), decision.shape))
 
-        dec_pred = (decision > 0).astype(np.int)
+        dec_pred = (decision > 0).astype(int)
         dec_exp = estimator.classes_[dec_pred]
         assert_array_equal(dec_exp, y_pred)
 
@@ -1637,7 +1639,7 @@ def check_classifier_multioutput(name, estimator):
                     " incorrect. Expected {}, got {}."
                     .format((n_samples, 2), y_prob[i].shape))
                 assert_array_equal(
-                    np.argmax(y_prob[i], axis=1).astype(np.int),
+                    np.argmax(y_prob[i], axis=1).astype(int),
                     y_pred[:, i]
                 )
         elif not tags['poor_score']:
@@ -1868,7 +1870,7 @@ def check_classifiers_train(name, classifier_orig, readonly_memmap=False,
                         assert decision.shape == (n_samples,)
                     else:
                         assert decision.shape == (n_samples, 1)
-                    dec_pred = (decision.ravel() > 0).astype(np.int)
+                    dec_pred = (decision.ravel() > 0).astype(int)
                     assert_array_equal(dec_pred, y_pred)
                 else:
                     assert decision.shape == (n_samples, n_classes)
@@ -1964,7 +1966,7 @@ def check_outliers_train(name, estimator_orig, readonly_memmap=True):
     assert_raises(ValueError, estimator.predict, X.T)
 
     # decision_function agrees with predict
-    dec_pred = (decision >= 0).astype(np.int)
+    dec_pred = (decision >= 0).astype(int)
     dec_pred[dec_pred == 0] = -1
     assert_array_equal(dec_pred, y_pred)
 
@@ -2071,7 +2073,7 @@ def check_estimators_unfitted(name, estimator_orig):
     Unfitted estimators should raise a NotFittedError.
     """
     # Common test for Regressors, Classifiers and Outlier detection estimators
-    X, y = _boston_subset()
+    X, y = _regression_dataset()
 
     estimator = clone(estimator_orig)
     for method in ('decision_function', 'predict', 'predict_proba',
@@ -2135,7 +2137,7 @@ def check_classifiers_predictions(X, y, name, classifier_orig):
         decision = classifier.decision_function(X)
         assert isinstance(decision, np.ndarray)
         if len(classes) == 2:
-            dec_pred = (decision.ravel() > 0).astype(np.int)
+            dec_pred = (decision.ravel() > 0).astype(int)
             dec_exp = classifier.classes_[dec_pred]
             assert_array_equal(dec_exp, y_pred,
                                err_msg="decision_function does not match "
@@ -2207,7 +2209,7 @@ def check_classifiers_classes(name, classifier_orig):
 
 @ignore_warnings(category=FutureWarning)
 def check_regressors_int(name, regressor_orig):
-    X, _ = _boston_subset()
+    X, _ = _regression_dataset()
     X = _pairwise_estimator_convert_X(X[:50], regressor_orig)
     rnd = np.random.RandomState(0)
     y = rnd.randint(3, size=X.shape[0])
@@ -2228,7 +2230,7 @@ def check_regressors_int(name, regressor_orig):
     # fit
     regressor_1.fit(X, y_)
     pred1 = regressor_1.predict(X)
-    regressor_2.fit(X, y_.astype(np.float))
+    regressor_2.fit(X, y_.astype(float))
     pred2 = regressor_2.predict(X)
     assert_allclose(pred1, pred2, atol=1e-2, err_msg=name)
 
@@ -2236,11 +2238,10 @@ def check_regressors_int(name, regressor_orig):
 @ignore_warnings(category=FutureWarning)
 def check_regressors_train(name, regressor_orig, readonly_memmap=False,
                            X_dtype=np.float64):
-    X, y = _boston_subset()
+    X, y = _regression_dataset()
     X = X.astype(X_dtype)
     X = _pairwise_estimator_convert_X(X, regressor_orig)
-    y = StandardScaler().fit_transform(y.reshape(-1, 1))  # X is already scaled
-    y = y.ravel()
+    y = scale(y)  # X is already scaled
     regressor = clone(regressor_orig)
     y = _enforce_estimator_tags_y(regressor, y)
     if name in CROSS_DECOMPOSITION:
@@ -2520,7 +2521,7 @@ def check_classifier_data_not_an_array(name, estimator_orig):
 
 @ignore_warnings(category=FutureWarning)
 def check_regressor_data_not_an_array(name, estimator_orig):
-    X, y = _boston_subset(n_samples=50)
+    X, y = _regression_dataset()
     X = _pairwise_estimator_convert_X(X, estimator_orig)
     y = _enforce_estimator_tags_y(estimator_orig, y)
     for obj_type in ["NotAnArray", "PandasDataframe"]:
@@ -2800,7 +2801,9 @@ def check_set_params(name, estimator_orig):
 def check_classifiers_regression_target(name, estimator_orig):
     # Check if classifier throws an exception when fed regression targets
 
-    X, y = load_boston(return_X_y=True)
+    X, y = _regression_dataset()
+
+    X = X + 1 + abs(X.min(axis=0))  # be sure that X is non-negative
     e = clone(estimator_orig)
     msg = 'Unknown label type: '
     if not e._get_tags()["no_validation"]:
