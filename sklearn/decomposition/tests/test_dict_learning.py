@@ -514,6 +514,7 @@ def test_sparse_coder_estimator_clone():
     cloned = clone(coder)
     assert id(cloned) != id(coder)
     np.testing.assert_allclose(cloned.dictionary, coder.dictionary)
+    assert id(cloned.dictionary) != id(coder.dictionary)
     assert cloned.n_components_ == coder.n_components_
     assert cloned.n_features_in_ == coder.n_features_in_
     data = np.random.rand(n_samples, n_features).astype(np.float32)
