@@ -520,6 +520,8 @@ def test_input_shape_validation():
 
     iso_reg = IsotonicRegression().fit(X, y)
     iso_reg_2d = IsotonicRegression().fit(X_2d, y)
+    assert_array_equal(iso_reg._necessary_X_, iso_reg_2d._necessary_X_)
+    assert_array_equal(iso_reg._necessary_y_, iso_reg_2d._necessary_y_)
 
     y_pred1 = iso_reg.predict(X)
     y_pred2 = iso_reg_2d.predict(X_2d)
