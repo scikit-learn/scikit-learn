@@ -119,7 +119,7 @@ def test_calibration_cv_splitter():
     kfold = KFold(n_splits=splits)
     calib_clf = CalibratedClassifierCV(cv=kfold)
     assert isinstance(calib_clf.cv, KFold)
-    assert calib_clf.cv.n_splits ==  splits
+    assert calib_clf.cv.n_splits == splits
 
 
 def test_sample_weight():
