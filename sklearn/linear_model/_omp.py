@@ -570,6 +570,10 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
         :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
+        .. deprecated:: 0.24
+            ``normalize`` was deprecated in version 0.24 and will be removed in
+            0.26.
+
     precompute : {True, False, 'auto'}, default='auto'
         Whether to use a precomputed Gram and Xy matrix to speed up
         calculations. Improves performance when :term:`n_targets` or
@@ -622,7 +626,7 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
     """
     @_deprecate_positional_args
     def __init__(self, *, n_nonzero_coefs=None, tol=None, fit_intercept=True,
-                 normalize=True, precompute='auto'):
+                 normalize='deprecate', precompute='auto'):
         self.n_nonzero_coefs = n_nonzero_coefs
         self.tol = tol
         self.fit_intercept = fit_intercept
@@ -646,6 +650,12 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
         self : object
             returns an instance of self.
         """
+        if self.normalize != "deprecate":
+            warnings.warn("'normalize' was deprecated in version 0.24 and will"
+                          " be removed in 0.26.", FutureWarning)
+        else:
+            self.normalize = True
+
         X, y = self._validate_data(X, y, multi_output=True, y_numeric=True)
         n_features = X.shape[1]
 
@@ -716,6 +726,10 @@ def _omp_path_residues(X_train, y_train, X_test, y_test, copy=True,
         :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
+        .. deprecated:: 0.24
+            ``normalize`` was deprecated in version 0.24 and will be removed in
+            0.26.
+
     max_iter : integer, optional
         Maximum numbers of iterations to perform, therefore maximum features
         to include. 100 by default.
@@ -784,6 +798,10 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
         If you wish to standardize, please use
         :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
+
+        .. deprecated:: 0.24
+            ``normalize`` was deprecated in version 0.24 and will be removed in
+            0.26.
 
     max_iter : integer, optional
         Maximum numbers of iterations to perform, therefore maximum features
@@ -859,7 +877,7 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
 
     """
     @_deprecate_positional_args
-    def __init__(self, *, copy=True, fit_intercept=True, normalize=True,
+    def __init__(self, *, copy=True, fit_intercept=True, normalize='deprecate',
                  max_iter=None, cv=None, n_jobs=None, verbose=False):
         self.copy = copy
         self.fit_intercept = fit_intercept
@@ -885,6 +903,13 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
         self : object
             returns an instance of self.
         """
+
+        if self.normalize != "deprecate":
+            warnings.warn("'normalize' was deprecated in version 0.24 and will"
+                          " be removed in 0.26.", FutureWarning)
+        else:
+            self.normalize = True
+
         X, y = self._validate_data(X, y, y_numeric=True, ensure_min_features=2,
                                    estimator=self)
         X = as_float_array(X, copy=False, force_all_finite=False)
