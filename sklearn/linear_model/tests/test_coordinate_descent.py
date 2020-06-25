@@ -9,6 +9,8 @@ from scipy import interpolate, sparse
 from copy import deepcopy
 import joblib
 
+from sklearn.base import is_classifier
+
 from sklearn.datasets import load_diabetes
 from sklearn.datasets import make_regression
 from sklearn.model_selection import train_test_split
@@ -290,57 +292,61 @@ def test_model_pipeline_same_as_normalize_true(LinearModel, params):
     # doing the same as the same linear model preceeded by StandardScaler
     # in the pipeline and with normalize set to False
 
-    n_samples, n_features = 100, 2
-    random_state = np.random.RandomState(0)
-    w = random_state.randn(n_features)
-    X = random_state.randn(n_samples, n_features)
-    X += 20  # make features non-zero mean
-
-    y = X.dot(w)
-
-    # make classes out of regression
-    if 'Classifier' in str(LinearModel):
-        y[y > np.mean(y)] = -1
-        y[y > 0] = 1
-    if 'MultiTask' in str(LinearModel):
-        y = np.stack((y, y), axis=1)
-
-    X, X_test, y, y_test = train_test_split(X, y, random_state=42)
-
     # normalize is True
-    clf_norm = LinearModel(normalize=True, fit_intercept=True,
-                          **params)
-    clf_norm.fit(X, y)
-    y_pred_norm = clf_norm.predict(X_test)
-
-    if 'alpha' in params:
-        alpha_scaled = params['alpha']
-    if 'Lasso' in str(LinearModel) and LinearModel != LassoLarsIC:
-        alpha_scaled = alpha_scaled * np.sqrt(X.shape[0])
-    if 'Ridge' in str(LinearModel) and 'alpha' in params:
-        alpha_scaled = alpha_scaled * X.shape[0]
-    if 'Elastic' in str(LinearModel):
-        if params['l1_ratio'] == 1:
-            alpha_scaled = alpha_scaled * np.sqrt(X.shape[0])
-        if params['l1_ratio'] == 0:
-            alpha_scaled = alpha_scaled * X.shape[0]
-
-    if 'alpha' in params:
-        params['alpha'] = alpha_scaled
+    clf_norm = LinearModel(normalize=True, fit_intercept=True, **params)
 
     clf_pipe = make_pipeline(
         StandardScaler(),
         LinearModel(normalize=False, fit_intercept=True, **params)
     )
-    clf_pipe.fit(X, y)
+
+    is_multitask = clf_norm._get_tags().get("multioutput_only", False)
+
+    # prepare the data
+    n_samples, n_features = 100, 2
+    random_state = np.random.RandomState(0)
+    w = random_state.randn(n_features)
+    X = random_state.randn(n_samples, n_features)
+    X += 20  # make features non-zero mean
+    y = X.dot(w)
+
+    # make classes out of regression
+    if is_classifier(LinearModel):
+        y[y > np.mean(y)] = -1
+        y[y > 0] = 1
+    if is_multitask:
+        y = np.stack((y, y), axis=1)
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
+
+    if 'alpha' in params:
+        clf_norm.alpha = params['alpha']
+        if isinstance(clf_norm, (Lasso, LassoLars, MultiTaskLasso)):
+            clf_pipe[1].alpha = params['alpha'] * np.sqrt(X_train.shape[0])
+        if isinstance(clf_norm, (Ridge, RidgeClassifier)):
+            clf_pipe[1].alpha = params['alpha'] * X_train.shape[0]
+    if ((isinstance(clf_norm, (ElasticNet)) and
+         not isinstance(clf_norm, Lasso)) or
+        (isinstance(clf_norm, (MultiTaskElasticNet)) and
+         not isinstance(clf_norm, MultiTaskLasso))):
+        if params['l1_ratio'] == 1:
+            clf_pipe[1].alpha = params['alpha'] * np.sqrt(X_train.shape[0])
+        if params['l1_ratio'] == 0:
+            clf_pipe[1].alpha = params['alpha'] * X_train.shape[0]
+
+    clf_norm.fit(X_train, y_train)
+    y_pred_normalize = clf_norm.predict(X_test)
+
+    clf_pipe.fit(X_train, y_train)
     y_pred_pipe = clf_pipe.predict(X_test)
 
     assert_array_almost_equal(clf_norm.coef_ * clf_pipe[0].scale_,
                               clf_pipe[1].coef_, decimal=5)
-    assert clf_pipe[1].intercept_ == pytest.approx(y.mean())
+    assert clf_pipe[1].intercept_ == pytest.approx(y_train.mean())
     assert (clf_norm.intercept_ ==
-            pytest.approx(y.mean() - clf_norm.coef_.dot(X.mean(0))))
-    assert_array_almost_equal(y_pred_norm, y_pred_pipe)
+            pytest.approx(y_train.mean() -
+                          clf_norm.coef_.dot(X_train.mean(0))))
+    assert_array_almost_equal(y_pred_normalize, y_pred_pipe)
 
 
 @pytest.mark.parametrize(
