@@ -29,7 +29,6 @@ from scipy.optimize import check_grad
 from scipy.spatial.distance import pdist
 from scipy.spatial.distance import squareform
 from sklearn.metrics.pairwise import pairwise_distances
-from sklearn.metrics.pairwise import euclidean_distances
 from sklearn.metrics.pairwise import manhattan_distances
 from sklearn.metrics.pairwise import cosine_distances
 
@@ -929,24 +928,29 @@ def test_tsne_with_legacy_euclidean_squaring(method):
     assert_array_equal(X_transformed_tsne, X_transformed_tsne_precomputed)
 
 
-def test_tsne_with_different_square_distances():
+@pytest.mark.parametrize('method', ['exact', 'barnes_hut'])
+def test_tsne_with_different_square_distances(method):
     """Make sure that TSNE works for different square_distance settings"""
     random_state = check_random_state(0)
     n_components_original = 3
     n_components_embedding = 2
 
-    X = random_state.randn(50, n_components_original).astype(np.float32)
+    X, _ = make_blobs(n_features=n_components_original,
+                      random_state=random_state)
 
     for square_distance in [True, False]:
-        X_transformed_tsne = TSNE(
-            metric='euclidean', n_components=n_components_embedding,
-            square_distance=square_distance, random_state=0).fit_transform(X)
-        X_transformed_tsne_precomputed = TSNE(
-            metric='precomputed', n_components=n_components_embedding,
-            square_distance=square_distance,
-            random_state=0).fit_transform(euclidean_distances(X))
-        assert_array_equal(X_transformed_tsne,
-                           X_transformed_tsne_precomputed)
+        for metric in ['euclidean', 'manhattan']:
+            X_precomputed = pairwise_distances(X, metric=metric)
+            X_transformed_tsne = TSNE(
+                metric=metric, n_components=n_components_embedding,
+                square_distance=square_distance, method=method,
+                random_state=0).fit_transform(X)
+            X_transformed_tsne_precomputed = TSNE(
+                metric='precomputed', n_components=n_components_embedding,
+                square_distance=square_distance, method=method,
+                random_state=0).fit_transform(X_precomputed)
+            assert_array_equal(X_transformed_tsne,
+                               X_transformed_tsne_precomputed)
 
 
 def test_tsne_square_distance_futurewarning():
