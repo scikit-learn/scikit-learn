@@ -1420,18 +1420,18 @@ def test_simple_imputation_inverse_transform(missing_value):
                             add_indicator=True)
 
     X_1_trans = imputer.fit_transform(X_1)
-    X_1_orig = imputer.inverse_transform(X_1_trans)
+    X_1_inv_trans = imputer.inverse_transform(X_1_trans)
 
     X_2_trans = imputer.transform(X_2)
-    X_2_orig = imputer.inverse_transform(X_2_trans)
+    X_2_inv_trans = imputer.inverse_transform(X_2_trans)
 
-    assert_array_equal(X_1_orig, X_1)
-    assert_array_equal(X_2_orig, X_2)
+    assert_array_equal(X_1_inv_trans, X_1)
+    assert_array_equal(X_2_inv_trans, X_2)
 
     for X in [X_3, X_4]:
         X_trans = imputer.fit_transform(X)
-        X_orig = imputer.inverse_transform(X_trans)
-        assert_array_equal(X_orig, X)
+        X_inv_trans = imputer.inverse_transform(X_trans)
+        assert_array_equal(X_inv_trans, X)
 
 
 @pytest.mark.parametrize("missing_value", [-1, np.nan])
@@ -1442,8 +1442,9 @@ def test_simple_imputation_inverse_transform_exceptions(missing_value):
         [6, 7, missing_value, -1],
         [8, 9, 0, missing_value]
     ])
-    with pytest.raises(ValueError, match="add_indicator=True"):
-        imputer = SimpleImputer(missing_values=missing_value,
-                                strategy="mean")
-        X_1_trans = imputer.fit_transform(X_1)
+
+    imputer = SimpleImputer(missing_values=missing_value, strategy="mean")
+    X_1_trans = imputer.fit_transform(X_1)
+    with pytest.raises(ValueError,
+                       match=f"Got 'add_indicator={imputer.add_indicator}'"):
         imputer.inverse_transform(X_1_trans)

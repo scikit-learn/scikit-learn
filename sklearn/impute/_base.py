@@ -515,14 +515,14 @@ class SimpleImputer(_BaseImputer):
         X_original[:, self.indicator_.features_] = missing_mask
         full_mask = X_original.astype(np.bool)
 
-        imputed_idx, orig_idx = 0, 0
+        imputed_idx, original_idx = 0, 0
         while imputed_idx < len(array_imputed.T):
-            if not np.all(X_original[:, orig_idx]):
-                X_original[:, orig_idx] = array_imputed.T[imputed_idx]
+            if not np.all(X_original[:, original_idx]):
+                X_original[:, original_idx] = array_imputed.T[imputed_idx]
                 imputed_idx += 1
-                orig_idx += 1
+                original_idx += 1
             else:
-                orig_idx += 1
+                original_idx += 1
 
         X_original[full_mask] = self.missing_values
         return X_original
