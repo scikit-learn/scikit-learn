@@ -292,14 +292,14 @@ def test_model_pipeline_same_as_normalize_true(LinearModel, params):
     # in the pipeline and with normalize set to False
 
     # normalize is True
-    clf_norm = LinearModel(normalize=True, fit_intercept=True, **params)
+    model_normalize = LinearModel(normalize=True, fit_intercept=True, **params)
 
-    clf_pipe = make_pipeline(
+    pipeline = make_pipeline(
         StandardScaler(),
         LinearModel(normalize=False, fit_intercept=True, **params)
     )
 
-    is_multitask = clf_norm._get_tags().get("multioutput_only", False)
+    is_multitask = model_normalize._get_tags().get("multioutput_only", False)
 
     # prepare the data
     n_samples, n_features = 100, 2
@@ -310,7 +310,7 @@ def test_model_pipeline_same_as_normalize_true(LinearModel, params):
     y = X.dot(w)
 
     # make classes out of regression
-    if is_classifier(LinearModel):
+    if is_classifier(model_normalize):
         y[y > np.mean(y)] = -1
         y[y > 0] = 1
     if is_multitask:
@@ -319,31 +319,33 @@ def test_model_pipeline_same_as_normalize_true(LinearModel, params):
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
 
     if 'alpha' in params:
-        clf_norm.alpha = params['alpha']
-        if isinstance(clf_norm, (Lasso, LassoLars, MultiTaskLasso)):
-            clf_pipe[1].alpha = params['alpha'] * np.sqrt(X_train.shape[0])
-        if isinstance(clf_norm, (Ridge, RidgeClassifier)):
-            clf_pipe[1].alpha = params['alpha'] * X_train.shape[0]
-    if ((isinstance(clf_norm, (ElasticNet)) and
-         not isinstance(clf_norm, Lasso)) or
-        (isinstance(clf_norm, (MultiTaskElasticNet)) and
-         not isinstance(clf_norm, MultiTaskLasso))):
+        model_normalize.set_params(alpha=params['alpha'])
+        if isinstance(model_normalize, (Lasso, LassoLars, MultiTaskLasso)):
+            pipeline[1].set_params(
+                alpha=params['alpha'] * np.sqrt(X_train.shape[0]))
+        if isinstance(model_normalize, (Ridge, RidgeClassifier)):
+            pipeline[1].set_params(alpha=params['alpha'] * X_train.shape[0])
+    if ((isinstance(model_normalize, (ElasticNet)) and
+         not isinstance(model_normalize, Lasso)) or
+        (isinstance(model_normalize, (MultiTaskElasticNet)) and
+         not isinstance(model_normalize, MultiTaskLasso))):
         if params['l1_ratio'] == 1:
-            clf_pipe[1].alpha = params['alpha'] * np.sqrt(X_train.shape[0])
+            pipeline[1].alpha = params['alpha'] * np.sqrt(X_train.shape[0])
         if params['l1_ratio'] == 0:
-            clf_pipe[1].alpha = params['alpha'] * X_train.shape[0]
+            pipeline[1].alpha = params['alpha'] * X_train.shape[0]
 
-    clf_norm.fit(X_train, y_train)
-    y_pred_normalize = clf_norm.predict(X_test)
+    model_normalize.fit(X_train, y_train)
+    y_pred_normalize = model_normalize.predict(X_test)
 
-    clf_pipe.fit(X_train, y_train)
-    y_pred_standardize = clf_pipe.predict(X_test)
+    pipeline.fit(X_train, y_train)
+    y_pred_standardize = pipeline.predict(X_test)
 
-    assert_allclose(clf_norm.coef_ * clf_pipe[0].scale_, clf_pipe[1].coef_)
-    assert clf_pipe[1].intercept_ == pytest.approx(y_train.mean())
-    assert (clf_norm.intercept_ ==
+    assert_allclose(
+        model_normalize.coef_ * pipeline[0].scale_, pipeline[1].coef_)
+    assert pipeline[1].intercept_ == pytest.approx(y_train.mean())
+    assert (model_normalize.intercept_ ==
             pytest.approx(y_train.mean() -
-                          clf_norm.coef_.dot(X_train.mean(0))))
+                          model_normalize.coef_.dot(X_train.mean(0))))
     assert_allclose(y_pred_normalize, y_pred_standardize)
 
 
