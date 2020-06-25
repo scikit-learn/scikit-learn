@@ -5,6 +5,7 @@ Nearest Centroid Classification
 
 # Author: Robert Layton <robertlayton@gmail.com>
 #         Olivier Grisel <olivier.grisel@ensta.org>
+#         Andreas W. Kempa-Liehr <a.kempa-liehr@auckland.ac.nz>
 #
 # License: BSD 3 clause
 
