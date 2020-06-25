@@ -297,6 +297,7 @@ def test_model_pipeline_same_as_normalize_true(LinearModel, params):
     X += 20  # make features non-zero mean
 
     y = X.dot(w)
+
     # make classes out of regression
     if 'Classifier' in str(LinearModel):
         y[y > np.mean(y)] = -1
@@ -346,7 +347,8 @@ def test_model_pipeline_same_as_normalize_true(LinearModel, params):
     "LinearModel, params",
     [
      (Lasso, {"tol": 1e-16, "alpha": 0.1}),
-     (LassoCV, {"tol": 1e-16}), (ElasticNetCV, {}),
+     (LassoCV, {"tol": 1e-16}),
+     (ElasticNetCV, {}),
      (RidgeClassifier, {"solver": 'sparse_cg', "alpha": 0.1}),
      (ElasticNet, {"tol": 1e-16, 'l1_ratio': 1, "alpha": 0.1}),
      (ElasticNet, {"tol": 1e-16, 'l1_ratio': 0, "alpha": 0.1}),
