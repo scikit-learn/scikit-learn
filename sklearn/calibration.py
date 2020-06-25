@@ -139,16 +139,23 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
 
     References
     ----------
-    .. [1] Obtaining calibrated probability estimates from decision trees
-           and naive Bayesian classifiers, B. Zadrozny & C. Elkan, ICML 2001
+    .. [1] `Obtaining calibrated probability estimates from decision trees
+           and naive Bayesian classifiers
+           <http://cseweb.ucsd.edu/~elkan/calibrated.pdf>`_,
+           B. Zadrozny & C. Elkan, ICML 2001
 
-    .. [2] Transforming Classifier Scores into Accurate Multiclass
-           Probability Estimates, B. Zadrozny & C. Elkan, (KDD 2002)
+    .. [2] `Transforming Classifier Scores into Accurate Multiclass
+           Probability Estimates
+           <https://dl.acm.org/doi/pdf/10.1145/775047.775151>`_,
+           B. Zadrozny & C. Elkan, (KDD 2002)
 
-    .. [3] Probabilistic Outputs for Support Vector Machines and Comparisons to
-           Regularized Likelihood Methods, J. Platt, (1999)
+    .. [3] `Probabilistic Outputs for Support Vector Machines and Comparisons to
+           Regularized Likelihood Methods
+           <https://www.cs.colorado.edu/~mozer/Teaching/syllabi/6622/papers/Platt1999.pdf>`_,
+           J. Platt, (1999)
 
-    .. [4] Predicting Good Probabilities with Supervised Learning,
+    .. [4] `Predicting Good Probabilities with Supervised Learning
+            <https://www.cs.cornell.edu/~alexn/papers/calibration.icml05.crc.rev3.pdf>`_,
            A. Niculescu-Mizil & R. Caruana, ICML 2005
     """
     @_deprecate_positional_args
