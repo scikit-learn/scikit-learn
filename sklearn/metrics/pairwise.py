@@ -214,8 +214,9 @@ def euclidean_distances(X, Y=None, *, Y_norm_squared=None, squared=False,
     Second, if one argument varies but the other remains unchanged, then
     `dot(x, x)` and/or `dot(y, y)` can be pre-computed.
 
-    However, this is not the most precise way of doing this computation, and
-    the distance matrix returned by this function may not be exactly
+    However, this is not the most precise way of doing this computation,
+    because this equation potentially suffers from "catastrophic cancellation".
+    Also, the distance matrix returned by this function may not be exactly
     symmetric as required by, e.g., ``scipy.spatial.distance`` functions.
 
     Read more in the :ref:`User Guide <metrics>`.
