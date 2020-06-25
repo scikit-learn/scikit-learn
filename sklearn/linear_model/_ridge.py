@@ -521,7 +521,7 @@ def _ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
 class _BaseRidge(LinearModel, metaclass=ABCMeta):
     @abstractmethod
     @_deprecate_positional_args
-    def __init__(self, alpha=1.0, *, fit_intercept=True, normalize=False,
+    def __init__(self, alpha=1.0, *, fit_intercept=True, normalize=True,
                  copy_X=True, max_iter=None, tol=1e-3, solver="auto",
                  random_state=None):
         self.alpha = alpha
@@ -640,6 +640,10 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
+        .. deprecated:: 0.24
+            ``normalize`` was deprecated in version 0.24 and will be removed in
+            0.26.
+
     copy_X : bool, default=True
         If True, X will be copied; else, it may be overwritten.
 
@@ -731,7 +735,7 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
     Ridge()
     """
     @_deprecate_positional_args
-    def __init__(self, alpha=1.0, *, fit_intercept=True, normalize=False,
+    def __init__(self, alpha=1.0, *, fit_intercept=True, normalize='deprecate',
                  copy_X=True, max_iter=None, tol=1e-3, solver="auto",
                  random_state=None):
         super().__init__(
@@ -759,6 +763,12 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         -------
         self : returns an instance of self.
         """
+        if self.normalize != "deprecate":
+            warnings.warn("'normalize' was deprecated in version 0.24 and will"
+                          " be removed in 0.26.", FutureWarning)
+        else:
+            self.normalize = False
+
         return super().fit(X, y, sample_weight=sample_weight)
 
 
@@ -793,6 +803,10 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         If you wish to standardize, please use
         :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
+
+        .. deprecated:: 0.24
+            ``normalize`` was deprecated in version 0.24 and will be removed in
+            0.26.
 
     copy_X : bool, default=True
         If True, X will be copied; else, it may be overwritten.
@@ -889,7 +903,7 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
     0.9595...
     """
     @_deprecate_positional_args
-    def __init__(self, alpha=1.0, *, fit_intercept=True, normalize=False,
+    def __init__(self, alpha=1.0, *, fit_intercept=True, normalize='deprecate',
                  copy_X=True, max_iter=None, tol=1e-3, class_weight=None,
                  solver="auto", random_state=None):
         super().__init__(
@@ -921,6 +935,12 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         self : object
             Instance of the estimator.
         """
+        if self.normalize != "deprecate":
+            warnings.warn("'normalize' was deprecated in version 0.24 and will"
+                          " be removed in 0.26.", FutureWarning)
+        else:
+            self.normalize = False
+
         _accept_sparse = _get_valid_accept_sparse(sparse.issparse(X),
                                                   self.solver)
         X, y = self._validate_data(X, y, accept_sparse=_accept_sparse,
@@ -1115,6 +1135,7 @@ class _RidgeGCV(LinearModel):
     http://cbcl.mit.edu/publications/ps/MIT-CSAIL-TR-2007-025.pdf
     https://www.mit.edu/~9.520/spring07/Classes/rlsslides.pdf
     """
+    # FIXME: 'normalize' to be removed in 0.26
     @_deprecate_positional_args
     def __init__(self, alphas=(0.1, 1.0, 10.0), *,
                  fit_intercept=True, normalize=False,
@@ -1452,6 +1473,13 @@ class _RidgeGCV(LinearModel):
         -------
         self : object
         """
+
+        if self.normalize != "deprecate":
+            warnings.warn("'normalize' was deprecated in version 0.24 and will"
+                          " be removed in 0.26.", FutureWarning)
+        else:
+            self.normalize = False
+
         X, y = self._validate_data(X, y, accept_sparse=['csr', 'csc', 'coo'],
                                    dtype=[np.float64],
                                    multi_output=True, y_numeric=True)
@@ -1549,6 +1577,7 @@ class _RidgeGCV(LinearModel):
 
 
 class _BaseRidgeCV(LinearModel):
+    # FIXME: 'normalize' to be removed in 0.26
     @_deprecate_positional_args
     def __init__(self, alphas=(0.1, 1.0, 10.0), *,
                  fit_intercept=True, normalize=False, scoring=None,
@@ -1661,6 +1690,10 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         If you wish to standardize, please use
         :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
+
+        .. deprecated:: 0.24
+            ``normalize`` was deprecated in version 0.24 and will be removed in
+            0.26.
 
     scoring : string, callable, default=None
         A string (see model evaluation documentation) or
@@ -1779,6 +1812,10 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
         :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
+        .. deprecated:: 0.24
+            ``normalize`` was deprecated in version 0.24 and will be removed in
+            0.26.
+
     scoring : string, callable, default=None
         A string (see model evaluation documentation) or
         a scorer callable object / function with signature
@@ -1860,8 +1897,8 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
     """
     @_deprecate_positional_args
     def __init__(self, alphas=(0.1, 1.0, 10.0), *, fit_intercept=True,
-                 normalize=False, scoring=None, cv=None, class_weight=None,
-                 store_cv_values=False):
+                 normalize='deprecate', scoring=None, cv=None,
+                 class_weight=None, store_cv_values=False):
         super().__init__(
             alphas=alphas, fit_intercept=fit_intercept, normalize=normalize,
             scoring=scoring, cv=cv, store_cv_values=store_cv_values)
@@ -1888,6 +1925,12 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
         -------
         self : object
         """
+        if self.normalize != "deprecate":
+            warnings.warn("'normalize' was deprecated in version 0.24 and will"
+                          " be removed in 0.26.", FutureWarning)
+        else:
+            self.normalize = False
+
         X, y = self._validate_data(X, y, accept_sparse=['csr', 'csc', 'coo'],
                                    multi_output=True, y_numeric=False)
         sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
