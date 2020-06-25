@@ -102,7 +102,7 @@ def test_newrand_set_seed_overflow(seed):
 
 
 @pytest.mark.parametrize('range_, n_pts',
-                         [(_MAX_UNSIGNED_INT, 10000), (100, 10)])
+                         [(_MAX_UNSIGNED_INT, 10000), (100, 25)])
 def test_newrand_bounded_rand_int(range_, n_pts):
     """Test that `bounded_rand_int` follows a uniform distribution"""
     n_iter = 100
