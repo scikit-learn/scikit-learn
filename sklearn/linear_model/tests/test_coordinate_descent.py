@@ -943,10 +943,8 @@ def test_multi_task_lasso_cv_dtype():
 
 @pytest.mark.parametrize('fit_intercept', [True, False])
 @pytest.mark.parametrize('alpha', [0.01])
-@pytest.mark.parametrize('normalize', [False, True])
 @pytest.mark.parametrize('precompute', [False, True])
-def test_enet_sample_weight_consistency(fit_intercept, alpha, normalize,
-                                        precompute):
+def test_enet_sample_weight_consistency(fit_intercept, alpha, precompute):
     """Test that the impact of sample_weight is consistent."""
     rng = np.random.RandomState(0)
     n_samples, n_features = 10, 5
