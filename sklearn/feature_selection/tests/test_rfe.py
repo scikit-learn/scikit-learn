@@ -128,6 +128,7 @@ def test_rfe_positive_float_n_features():
     with pytest.raises(ValueError, match=msg):
         rfe.fit(iris.data, iris.target)
 
+
 def test_rfe_percent_n_features():
     # test that the results are the same
     generator = check_random_state(0)
@@ -145,6 +146,7 @@ def test_rfe_percent_n_features():
     assert all(rfe_perc.ranking_ == rfe_num.ranking_)
     assert (rfe_perc.n_features_ == rfe_num.n_features_)
     assert all(rfe_perc.support_ == rfe_num.support_)
+
 
 def test_rfe_mockclassifier():
     generator = check_random_state(0)
