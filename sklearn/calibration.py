@@ -157,7 +157,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
     .. [4] `Predicting Good Probabilities with Supervised Learning
             <https://www.cs.cornell.edu/~alexn/papers/calibration.icml05.crc.rev3.pdf>`_,
            A. Niculescu-Mizil & R. Caruana, ICML 2005
-    """
+    """  # noqa E501
     @_deprecate_positional_args
     def __init__(self, base_estimator=None, *, method='sigmoid', cv=None):
         self.base_estimator = base_estimator
