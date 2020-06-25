@@ -15,6 +15,7 @@ from sklearn.utils._testing import (assert_array_almost_equal,
 from sklearn.exceptions import NotFittedError
 from sklearn.datasets import make_classification, make_blobs
 from sklearn.preprocessing import LabelBinarizer
+from sklearn.model_selection import KFold
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.svm import LinearSVC

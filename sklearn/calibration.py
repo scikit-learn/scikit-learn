@@ -213,8 +213,8 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
             # example per class
             if isinstance(self.cv, int):
                 n_folds = self.cv
-            elif hasattr(self.cv, "n_folds"):
-                n_folds = self.cv.n_folds
+            elif hasattr(self.cv, "n_splits"):
+                n_folds = self.cv.n_splits
             else:
                 n_folds = None
             if n_folds and np.any([np.sum(y == class_) < n_folds
