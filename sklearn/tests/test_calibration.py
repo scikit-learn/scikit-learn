@@ -14,6 +14,7 @@ from sklearn.utils._testing import (assert_array_almost_equal,
                                     assert_raises, ignore_warnings)
 from sklearn.exceptions import NotFittedError
 from sklearn.datasets import make_classification, make_blobs
+from sklearn.preprocessing import LabelBinarizer
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.svm import LinearSVC
@@ -349,30 +350,51 @@ def test_calibration_accepts_ndarray(X):
     # we should be able to fit this classifier with no error
     calibrated_clf.fit(X, y)
 
+# Create prefit pipeline
+word_data = [
+    {'state': 'NY', 'age': 'adult'},
+    {'state': 'TX', 'age': 'adult'},
+    {'state': 'VT', 'age': 'child'},
+]
+word_labels = [1, 0, 1]
+
+pipeline_prefit = Pipeline([
+    ('vectorizer', DictVectorizer()),
+    ('clf', RandomForestClassifier())
+])
+pipeline_prefit.fit(word_data, word_labels)
+
 
 def test_calibration_pipeline():
-    # Test that calibration works in pre-fit pipeline with transformer,
-    # where X is not array-like, sparse matrix or dataframe at the start. See
-    # issue #8710
-    fake_features = [
-        {'state': 'NY', 'age': 'adult'},
-        {'state': 'TX', 'age': 'adult'},
-        {'state': 'VT', 'age': 'child'},
-    ]
-    labels = [1, 0, 1]
-
-    pipeline = Pipeline([
-                ('vectorizer', DictVectorizer()),
-                ('clf', RandomForestClassifier())
-        ])
-    pipeline.fit(fake_features, labels)
-
-    calib_clf = CalibratedClassifierCV(pipeline, cv='prefit')
-    calib_clf.fit(fake_features, labels)
-
+    # Test that calibration works in prefit pipeline with transformer,
+    # where `X` is not array-like, sparse matrix or dataframe at the start.
+    # See issue #8710
+    calib_clf = CalibratedClassifierCV(pipeline_prefit, cv='prefit')
+    calib_clf.fit(word_data, word_labels)
     # Check attributes are obtained from fitted estimator
     assert_array_equal(calib_clf.classes_, [0, 1])
-    # `DictVectorizer` has no `n_features_in_`
+
+
+def test_calibration_n_features_in_():
+    # Check that `n_features_in_` attribute created properly
+    X, y = make_classification(n_samples=10, n_features=5,
+                               n_classes=2, random_state=7)
+    clf = LinearSVC(C=1.0)
+    # Check not-prefit clf
+    calib_clf = CalibratedClassifierCV(clf, cv=2)
+    calib_clf.fit(X, y)
+    classes = LabelBinarizer().fit(y).classes_
+    assert_array_equal(calib_clf.classes_, classes)
+    # Check prefit clf
+    clf.fit(X, y)
+    calib_clf = CalibratedClassifierCV(clf, cv="prefit")
+    calib_clf.fit(X, y)
+    classes = clf.classes_
+    assert_array_equal(calib_clf.classes_, classes)
+
+    # Pipeline with transformer (`DictVectorizer`) that does not have
+    # `n_features_in_`
+    calib_clf = CalibratedClassifierCV(pipeline_prefit, cv='prefit')
     msg = "'CalibratedClassifierCV' object has no attribute 'n_features_in_'"
     with pytest.raises(AttributeError, match=msg):
         calib_clf.n_features_in_

@@ -24,6 +24,7 @@ from .preprocessing import label_binarize, LabelBinarizer
 from .utils import check_array, indexable, column_or_1d
 from .utils.validation import check_is_fitted, check_consistent_length
 from .utils.validation import _check_sample_weight
+from .pipeline import Pipeline
 from .isotonic import IsotonicRegression
 from .svm import LinearSVC
 from .model_selection import check_cv
@@ -187,14 +188,13 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
             base_estimator = self.base_estimator
 
         if self.cv == "prefit":
-            check_is_fitted(self.base_estimator)
+            if isinstance(self.base_estimator, Pipeline):
+                check_is_fitted(self.base_estimator[-1])
+            else:
+                check_is_fitted(self.base_estimator)
             # Set `n_features_in_` attribute
-            try:
+            if hasattr(self, "n_features_in_"):
                 self.n_features_in_ = self.base_estimator.n_features_in_
-            except AttributeError:
-                # If `base_estimator` is a pipeline, `n_features_in_`
-                # may not exist
-                pass
             self.classes_ = base_estimator.classes_
 
             calibrated_classifier = _CalibratedClassifier(
@@ -218,7 +218,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
             else:
                 n_folds = None
             if n_folds and np.any([np.sum(y == class_) < n_folds
-                                  for class_ in self.classes_]):
+                                   for class_ in self.classes_]):
                 raise ValueError(f"Requesting {n_folds}-fold cross-validation "
                                  f"but provided less than {n_folds} examples "
                                  "for at least one class.")
