@@ -110,6 +110,15 @@ Changelog
   ``kind`` parameter.
   :pr:`16619` by :user:`Madhura Jayratne <madhuracj>`.
 
+:mod:`sklearn.isotonic`
+.......................
+
+- |Feature| Expose fitted attributes ``X_thresholds_`` and ``y_thresholds_``
+  that hold the de-duplicated interpolation thresholds of an
+  :class:`isotonic.IsotonicRegression` instance for model inspection purpose.
+  :pr:`16289` by :user:`Masashi Kishimoto <kishimoto-banana>` and
+  :user:`Olivier Grisel <ogrisel>`.
+
 :mod:`sklearn.metrics`
 ......................
 
