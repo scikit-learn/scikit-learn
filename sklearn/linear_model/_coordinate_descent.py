@@ -1279,6 +1279,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, metaclass=ABCMeta):
                               " will be removed in 0.26.", FutureWarning)
             else:
                 path_params['normalize'] = False
+                self.normalize = False
 
         if 'l1_ratio' in path_params:
             l1_ratios = np.atleast_1d(path_params['l1_ratio'])
