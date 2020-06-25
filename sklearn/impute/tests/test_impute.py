@@ -1422,7 +1422,7 @@ def test_simple_imputation_inverse_transform(missing_value):
     X_1_trans = imputer.fit_transform(X_1)
     X_1_inv_trans = imputer.inverse_transform(X_1_trans)
 
-    X_2_trans = imputer.transform(X_2)
+    X_2_trans = imputer.transform(X_2)  # test on new data
     X_2_inv_trans = imputer.inverse_transform(X_2_trans)
 
     assert_array_equal(X_1_inv_trans, X_1)
