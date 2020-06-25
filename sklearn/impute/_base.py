@@ -491,7 +491,7 @@ class SimpleImputer(_BaseImputer):
 
         Returns
         -------
-        original_X : ndarray, shape (n_samples, n_features)
+        X_original : ndarray of shape (n_samples, n_features)
             The original X with missing values as it was prior
             to imputation.
         """
@@ -500,36 +500,32 @@ class SimpleImputer(_BaseImputer):
         if not self.add_indicator:
             raise ValueError("'inverse_transform' works only when "
                              "'SimpleImputer' is instantiated with "
-                             "'add_indicator=True'. Got 'add_indicator={}' "
-                             "instead.".format(self.add_indicator))
+                             "'add_indicator=True'. "
+                             f"Got 'add_indicator={self.add_indicator}' "
+                             "instead.")
 
-        missing_feature_count = len(self.indicator_.features_)
+        n_features_missing = len(self.indicator_.features_)
+        non_empty_feature_count = X.shape[1] - n_features_missing
+        array_imputed = X[:, :non_empty_feature_count].copy()
+        missing_mask = X[:, non_empty_feature_count:].astype(np.bool)
 
-        # Split the augmented array into imputed array and its missing
-        # indicator mask.
-        feature_count = X.shape[1] - missing_feature_count
-        imputed_arr = X[:, :feature_count].copy()
-        missing_mask = X[:, feature_count:].astype(np.bool)
-        orig_cols = len(self.statistics_)
-        orig_shape = (X.shape[0], orig_cols)
-        orig_arr = np.zeros(orig_shape)
-        orig_arr[:, self.indicator_.features_] = missing_mask
-        full_mask = orig_arr.astype(np.bool)
+        n_features_original = len(self.statistics_)
+        shape_original = (X.shape[0], n_features_original)
+        X_original = np.zeros(shape_original)
+        X_original[:, self.indicator_.features_] = missing_mask
+        full_mask = X_original.astype(np.bool)
 
-        # Below, we iteratively regenerate the original array
-        # by keeping track of features eliminated in `transform` step
-        # for being completely empty.
-        imputed_ptr, orig_ptr = 0, 0
-        while imputed_ptr < len(imputed_arr.T):
-            if not np.all(orig_arr[:, orig_ptr]):
-                orig_arr[:, orig_ptr] = imputed_arr.T[imputed_ptr]
-                imputed_ptr += 1
-                orig_ptr += 1
+        imputed_idx, orig_idx = 0, 0
+        while imputed_idx < len(array_imputed.T):
+            if not np.all(X_original[:, orig_idx]):
+                X_original[:, orig_idx] = array_imputed.T[imputed_idx]
+                imputed_idx += 1
+                orig_idx += 1
             else:
-                orig_ptr += 1
+                orig_idx += 1
 
-        orig_arr[full_mask] = self.missing_values
-        return orig_arr
+        X_original[full_mask] = self.missing_values
+        return X_original
 
 
 class MissingIndicator(TransformerMixin, BaseEstimator):
