@@ -3,7 +3,7 @@
 # License: BSD 3 clause
 
 import numpy as np
-from numpy.testing import assert_allclose
+
 import pytest
 from scipy import interpolate, sparse
 from copy import deepcopy
@@ -18,6 +18,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
 from sklearn.exceptions import ConvergenceWarning
+from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_raises
@@ -304,9 +305,9 @@ def test_model_pipeline_same_as_normalize_true(LinearModel, params):
 
     # prepare the data
     n_samples, n_features = 100, 2
-    random_state = np.random.RandomState(0)
-    w = random_state.randn(n_features)
-    X = random_state.randn(n_samples, n_features)
+    rng = np.random.RandomState(0)
+    w = rng.randn(n_features)
+    X = rng.randn(n_samples, n_features)
     X += 20  # make features non-zero mean
     y = X.dot(w)
 
@@ -340,13 +341,12 @@ def test_model_pipeline_same_as_normalize_true(LinearModel, params):
     clf_pipe.fit(X_train, y_train)
     y_pred_pipe = clf_pipe.predict(X_test)
 
-    assert_array_almost_equal(clf_norm.coef_ * clf_pipe[0].scale_,
-                              clf_pipe[1].coef_, decimal=5)
+    assert_allclose(clf_norm.coef_ * clf_pipe[0].scale_, clf_pipe[1].coef_)
     assert clf_pipe[1].intercept_ == pytest.approx(y_train.mean())
     assert (clf_norm.intercept_ ==
             pytest.approx(y_train.mean() -
                           clf_norm.coef_.dot(X_train.mean(0))))
-    assert_array_almost_equal(y_pred_normalize, y_pred_pipe)
+    assert_allclose(y_pred_normalize, y_pred_pipe)
 
 
 @pytest.mark.parametrize(
@@ -376,27 +376,24 @@ def test_model_pipeline_same_dense_and_sparse(LinearModel, params):
     X_sparse = sparse.csr_matrix(X)
     y = rng.rand(n_samples)
 
-    if 'Classifier' in str(LinearModel):
+    if is_classifier(LinearModel):
         y = np.sign(y)
 
-    clf_pipe_dense = make_pipeline(
+    model_dense = make_pipeline(
         StandardScaler(with_mean=False),
         LinearModel(normalize=False, **params)
     )
-    clf_pipe_dense.fit(X, y)
+    model_dense.fit(X, y)
 
-    clf_pipe_sparse = make_pipeline(
+    model_sparse = make_pipeline(
         StandardScaler(with_mean=False),
         LinearModel(normalize=False, **params)
     )
-    clf_pipe_sparse.fit(X_sparse, y)
-    assert_array_almost_equal(clf_pipe_sparse[1].coef_,
-                              clf_pipe_dense[1].coef_, decimal=5)
-
-    y_pred_dense = clf_pipe_dense.predict(X)
-    y_pred_sparse = clf_pipe_sparse.predict(X_sparse)
-
-    assert_array_almost_equal(y_pred_dense, y_pred_sparse, decimal=5)
+    model_sparse.fit(X_sparse, y)
+    assert_allclose(model_sparse[1].coef_, model_dense[1].coef_)
+    y_pred_dense = model_dense.predict(X)
+    y_pred_sparse = model_sparse.predict(X_sparse)
+    assert_allclose(y_pred_dense, y_pred_sparse)
 
 
 def test_lasso_path_return_models_vs_new_return_gives_same_coefficients():
