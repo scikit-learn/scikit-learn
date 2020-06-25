@@ -4,7 +4,7 @@ Isotonic Regression
 ===================
 
 An illustration of the isotonic regression on generated data (non-linear
-monotonic trend with homoschedastic uniform noise).
+monotonic trend with homoscedastic uniform noise).
 
 The isotonic regression algorithm finds a non-decreasing approximation of a
 function while minimizing the mean squared error on the training data. The
@@ -72,6 +72,6 @@ plt.show()
 
 # #############################################################################
 # Note that we explicitly passed `out_of_bounds="clip"` to the constructor of
-# `IsotonicRegression` control the way the model extrapolate outside of the
+# `IsotonicRegression` to control the way the model extrapolates outside of the
 # range of data observed in the training set. This "clipping" extrapolation can
 # be seen on the plot of the decision function on the right-hand.
