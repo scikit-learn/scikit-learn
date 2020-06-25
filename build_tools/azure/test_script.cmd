@@ -17,7 +17,7 @@ if "%CHECK_WARNINGS%" == "true" (
     REM numpy's 1.19.0's tostring() deprecation is ignored until scipy and joblib removes its usage
     set PYTEST_ARGS=%PYTEST_ARGS% -Wignore:tostring:DeprecationWarning
     REM numpy's 1.20.0's np.bool, np.int, np.float and np.object deprecations are ignored until pandas removes its usage
-    set PYTEST_ARGS=%PYTEST_ARGS% -Wignore:\`np.*\`:DeprecationWarning:pandas
+    set PYTEST_ARGS=%PYTEST_ARGS% -Wignore:\`np.*\`:DeprecationWarning
 )
 
 if "%COVERAGE%" == "true" (
