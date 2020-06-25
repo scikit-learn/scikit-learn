@@ -14,7 +14,7 @@ Extended math utilities.
 import warnings
 
 import numpy as np
-from scipy import linalg, sparse
+from scipy import sparse
 
 from . import check_random_state
 from ._logistic_sigmoid import _log_logistic_sigmoid
