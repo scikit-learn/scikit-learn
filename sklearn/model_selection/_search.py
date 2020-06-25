@@ -868,7 +868,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
         # NOTE test_sample counts (weights) remain the same for all candidates
         test_sample_counts = np.array(test_sample_counts[:n_splits],
-                                      dtype=np.int)
+                                      dtype=int)
 
         for scorer_name in scorers.keys():
             # Computed the (weighted) mean and std for test scores alone

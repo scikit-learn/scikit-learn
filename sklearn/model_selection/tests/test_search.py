@@ -956,7 +956,7 @@ def test_search_default_iid(SearchCV, specialized_params):
                       cluster_std=0.1, shuffle=False, n_samples=80)
     # split dataset into two folds that are not iid
     # first one contains data of all 4 blobs, second only from two.
-    mask = np.ones(X.shape[0], dtype=np.bool)
+    mask = np.ones(X.shape[0], dtype=bool)
     mask[np.where(y == 1)[0][::2]] = 0
     mask[np.where(y == 2)[0][::2]] = 0
     # this leads to perfect classification on one fold and a score of 1/3 on
