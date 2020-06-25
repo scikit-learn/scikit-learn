@@ -19,7 +19,7 @@ to return a filename with a new suffix.
 ```
 """
 import os
-import inspect
+import sphinx
 from contextlib import contextmanager
 
 from sphinx.ext.autosummary import get_rst_suffix
@@ -48,7 +48,6 @@ def patch_os_path_join(generated_dirname, filename_map):
 
 
 def process_generate_options_custom_files(app):
-
     orig_suffix = get_rst_suffix(app)
     new_suffix = app.config.custom_autosummary_new_suffix
     generated_dirname = app.config.custom_autosummary_generated_dirname
@@ -70,12 +69,20 @@ def setup(app):
     app.add_config_value(
         'custom_autosummary_generated_dirname', '', None)
 
-    # Override process_generate_options added by sphinx.ext.autosummary
-    builder_inited_listeners = app.events.listeners["builder-inited"]
+    if sphinx.version_info[0] <= 2:
+        raise ModuleNotFoundError("Please install Sphinx >= 3.0 in order "
+                                  "to build docs")
 
-    for listener_id, obj in builder_inited_listeners.items():
-        if (inspect.isfunction(obj)
-                and obj.__name__ == "process_generate_options"):
-            builder_inited_listeners[listener_id] = \
-                process_generate_options_custom_files
+    # Find listener id for process_generate_options added by
+    process_generate_options_id = None
+    builder_inited_listeners = app.events.listeners["builder-inited"]
+    for event_listener in builder_inited_listeners:
+        func = event_listener.handler
+        if func.__name__ == "process_generate_options":
+            process_generate_options_id = event_listener.id
             break
+    assert process_generate_options_id is not None
+
+    # Override process_generate_options added by sphinx.ext.autosummary
+    app.disconnect(process_generate_options_id)
+    app.connect("builder-inited", process_generate_options_custom_files)
