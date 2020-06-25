@@ -161,8 +161,6 @@ class LocalOutlierFactor(KNeighborsMixin, UnsupervisedMixin,
     n_samples_fit_ : int
         It is the number of samples in the fitted data.
 
-
-
     Examples
     --------
     >>> import numpy as np
