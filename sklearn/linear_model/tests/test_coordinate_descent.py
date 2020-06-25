@@ -185,6 +185,7 @@ def build_dataset(n_samples=50, n_features=200, n_informative_features=10,
     return X, y, X_test, y_test
 
 
+# FIXME: remove 'normalize' in 0.26
 def test_lasso_cv():
     X, y, X_test, y_test = build_dataset()
     max_iter = 150
@@ -756,6 +757,7 @@ def test_lasso_non_float_y(model):
     assert_array_equal(clf.coef_, clf_float.coef_)
 
 
+# FIXME: remove 'normalize' in 0.26
 def test_enet_float_precision():
     # Generate dataset
     X, y, X_test, y_test = build_dataset(n_samples=20, n_features=10)
