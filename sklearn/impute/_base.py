@@ -126,7 +126,7 @@ class SimpleImputer(_BaseImputer):
 
     Parameters
     ----------
-    missing_values : number, string, np.nan (default) or None
+    missing_values : int, float, str, np.nan or None, default=np.nan
         The placeholder for the missing values. All occurrences of
         `missing_values` will be imputed. For pandas' dataframes with
         nullable integer dtypes with missing values, `missing_values`
@@ -181,7 +181,7 @@ class SimpleImputer(_BaseImputer):
         During :meth:`transform`, features corresponding to `np.nan`
         statistics will be discarded.
 
-    indicator_ : :class:`sklearn.impute.MissingIndicator`
+    indicator_ : :class:`~sklearn.impute.MissingIndicator`
         Indicator used to add binary indicators for missing values.
         ``None`` if add_indicator is False.
 
@@ -398,7 +398,7 @@ class SimpleImputer(_BaseImputer):
                 most_frequent = np.empty(X.shape[0])
 
             for i, (row, row_mask) in enumerate(zip(X[:], mask[:])):
-                row_mask = np.logical_not(row_mask).astype(np.bool)
+                row_mask = np.logical_not(row_mask).astype(bool)
                 row = row[row_mask]
                 most_frequent[i] = _most_frequent(row, np.nan, 0)
 
@@ -455,7 +455,7 @@ class SimpleImputer(_BaseImputer):
             else:
                 mask = _get_mask(X.data, self.missing_values)
                 indexes = np.repeat(
-                    np.arange(len(X.indptr) - 1, dtype=np.int),
+                    np.arange(len(X.indptr) - 1, dtype=int),
                     np.diff(X.indptr))[mask]
 
                 X.data[mask] = valid_statistics[indexes].astype(X.dtype,
@@ -484,7 +484,7 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
 
     Parameters
     ----------
-    missing_values : number, string, np.nan (default) or None
+    missing_values : int, float, string, np.nan or None, default=np.nan
         The placeholder for the missing values. All occurrences of
         `missing_values` will be imputed. For pandas' dataframes with
         nullable integer dtypes with missing values, `missing_values`

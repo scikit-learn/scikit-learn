@@ -101,8 +101,8 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
     def _transform(self, X, handle_unknown='error'):
         X_list, n_samples, n_features = self._check_X(X)
 
-        X_int = np.zeros((n_samples, n_features), dtype=np.int)
-        X_mask = np.ones((n_samples, n_features), dtype=np.bool)
+        X_int = np.zeros((n_samples, n_features), dtype=int)
+        X_mask = np.ones((n_samples, n_features), dtype=bool)
 
         if n_features != len(self.categories_):
             raise ValueError(
@@ -210,7 +210,7 @@ class OneHotEncoder(_BaseEncoder):
     sparse : bool, default=True
         Will return sparse matrix if set True else will return an array.
 
-    dtype : number type, default=np.float
+    dtype : number type, default=float
         Desired dtype of output.
 
     handle_unknown : {'error', 'ignore'}, default='error'
@@ -374,7 +374,7 @@ class OneHotEncoder(_BaseEncoder):
 
         y : None
             Ignored. This parameter exists only for compatibility with
-            :class:`sklearn.pipeline.Pipeline`.
+            :class:`~sklearn.pipeline.Pipeline`.
 
         Returns
         -------
@@ -398,7 +398,7 @@ class OneHotEncoder(_BaseEncoder):
 
         y : None
             Ignored. This parameter exists only for compatibility with
-            :class:`sklearn.pipeline.Pipeline`.
+            :class:`~sklearn.pipeline.Pipeline`.
 
         Returns
         -------
@@ -455,7 +455,7 @@ class OneHotEncoder(_BaseEncoder):
         feature_indices = np.cumsum([0] + n_values)
         indices = (X_int + feature_indices[:-1]).ravel()[mask]
 
-        indptr = np.empty(n_samples + 1, dtype=np.int)
+        indptr = np.empty(n_samples + 1, dtype=int)
         indptr[0] = 0
         np.sum(X_mask, axis=1, out=indptr[1:])
         np.cumsum(indptr[1:], out=indptr[1:])
@@ -672,7 +672,7 @@ class OrdinalEncoder(_BaseEncoder):
 
         y : None
             Ignored. This parameter exists only for compatibility with
-            :class:`sklearn.pipeline.Pipeline`.
+            :class:`~sklearn.pipeline.Pipeline`.
 
         Returns
         -------

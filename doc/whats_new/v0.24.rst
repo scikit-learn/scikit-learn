@@ -30,6 +30,7 @@ Details are listed in the changelog below.
 (While we are trying to better inform users by providing this information, we
 cannot assure that this list is complete.)
 
+
 Changelog
 ---------
 
@@ -51,6 +52,11 @@ Changelog
   to be 'auto', which tries to convert returned data to pandas DataFrame
   unless data is sparse.
   :pr:`17396` by :user:`Jiaxiang <fujiaxiang>`.
+
+- |Enhancement| :func:`datasets.fetch_covtype` now now supports the optional
+  argument `as_frame`; when it is set to True, the returned Bunch object's
+  `data` and `frame` members are pandas DataFrames, and the `target` member is
+  a pandas Series. :pr:`17491` by :user:`Alex Liang <tianchuliang>`.
 
 :mod:`sklearn.decomposition`
 ............................
@@ -90,6 +96,15 @@ Changelog
   when ``strategy='most_frequent'`` or ``strategy='constant'``.
   :pr:`17526` by :user:`Ayako YAGI <yagi-3>` and :user:`Juan Carlos Alfaro Jiménez <alfaro96>`.
 
+:mod:`sklearn.inspection`
+.........................
+
+- |Feature| :func:`inspection.partial_dependence` and
+  :func:`inspection.plot_partial_dependence` now support calculating and
+  plotting Individual Conditional Expectation (ICE) curves controlled by the
+  ``kind`` parameter.
+  :pr:`16619` by :user:`Madhura Jayratne <madhuracj>`.
+
 :mod:`sklearn.metrics`
 ......................
 
@@ -99,8 +114,13 @@ Changelog
   :pr:`17309` by :user:`Swier Heeres <swierh>`
 
 - |Enhancement| Add `sample_weight` parameter to
-  :class:`metrics.median_absolute_error`. :pr:`17225` by
+  :func:`metrics.median_absolute_error`. :pr:`17225` by
   :user:`Lucy Liu <lucyleeow>`.
+
+- |Enhancement| Add `pos_label` parameter in
+  :func:`metrics.plot_precision_recall_curve` in order to specify the positive
+  class to be used when computing the precision and recall statistics.
+  :pr:`17569` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.model_selection`
 ..............................
@@ -116,22 +136,16 @@ Changelog
   :pr:`17478` by :user:`Teon Brooks <teonbrooks>` and
   :user:`Mohamed Maskani <maskani-moh>`.
 
-:mod:`sklearn.preprocessing`
-............................
+:mod:`sklearn.multiclass`
+.........................
 
-- |Enhancement| Add ``unit_variance`` to :class:`preprocessing.RobustScaler`,
-  which scales output data such that normally distributed features have a
-  variance of 1. :pr:`17193` by :user:`Lucy Liu <lucyleeow>` and
-  :user:`Mabel Villalba <mabelvj>`.
-
-:mod:`sklearn.tree`
-...................
-
-- |Enhancement| :func:`tree.plot_tree` now uses colors from the matplotlib
-  configuration settings. :pr:`17187` by `Andreas Müller`_.
+- |Fix| A fix to allow :class:`multiclass.OutputCodeClassifier` to accept
+  sparse input data in its `fit` and `predict` methods. The check for
+  validity of the input is now delegated to the base estimator.
+  :pr:`17233` by :user:`Zolisa Bleki <zoj613>`.
 
 :mod:`sklearn.neighbors`
-.............................
+........................
 
 - |Efficiency| Speed up ``seuclidean``, ``wminkowski``, ``mahalanobis`` and
   ``haversine`` metrics in :class:`neighbors.DistanceMetric` by avoiding
@@ -144,21 +158,57 @@ Changelog
   and by validating data out of loops.
   :pr:`17038` by :user:`Wenbo Zhao <webber26232>`.
 
+- |Efficiency| :class:`neighbors.NeighborsBase` benefits of an improved
+  `algorithm = 'auto'` heuristic. In addition to the previous set of rules,
+  now, when the number of features exceeds 15, `brute` is selected, assuming
+  the data intrinsic dimensionality is too high for tree-based methods.
+  :pr:`17148` by :user:`Geoffrey Bolmier <gbolmier>`.
+
+:mod:`sklearn.neural_network`
+.............................
+
+- |Efficiency| Neural net training is now a little faster.
+  :pr:`17603`, :pr:`17604`, :pr:`17606`, :pr:`17608`, :pr:`17609`, :pr:`17633`
+  by :user:`Alex Henrie <alexhenrie>`.
+
+- |Enhancement| Avoid converting float32 input to float64 in
+  :class:`neural_network.BernoulliRBM`.
+  :pr:`16352` by :user:`Arthur Imbert <Henley13>`.  
+
+:mod:`sklearn.preprocessing`
+............................
+
+- |Enhancement| Verbose output of :class:`model_selection.GridSearchCV` has
+  been improved for readability. :pr:`16935` by :user:`Raghav Rajagopalan
+  <raghavrv>` and :user:`Chiara Marmo <cmarmo>`.
+
+- |Enhancement| Add ``unit_variance`` to :class:`preprocessing.RobustScaler`,
+  which scales output data such that normally distributed features have a
+  variance of 1. :pr:`17193` by :user:`Lucy Liu <lucyleeow>` and
+  :user:`Mabel Villalba <mabelvj>`.
+
+- |Enhancement| Add `dtype` parameter to
+  :class:`preprocessing.KBinsDiscretizer`.
+  :pr:`16335` by :user:`Arthur Imbert <Henley13>`.
+
 :mod:`sklearn.svm`
-....................
+..................
+
 - |Enhancement| invoke scipy blas api for svm kernel function in ``fit``,
   ``predict`` and related methods of :class:`svm.SVC`, :class:`svm.NuSVC`,
   :class:`svm.SVR`, :class:`svm.NuSVR`, :class:`OneClassSVM`.
   :pr:`16530` by :user:`Shuhua Fan <jim0421>`.
 
+:mod:`sklearn.tree`
+...................
 
-:mod:`sklearn.multiclass`
-.........................
+- |Enhancement| :func:`tree.plot_tree` now uses colors from the matplotlib
+  configuration settings. :pr:`17187` by `Andreas Müller`_.
 
-- |Fix| A fix to allow :class:`multiclass.OutputCodeClassifier` to accept
-  sparse input data in its `fit` and `predict` methods. The check for
-  validity of the input is now delegated to the base estimator.
-  :pr:`17233` by :user:`Zolisa Bleki <zoj613>`.
+- |API|: The parameter ``X_idx_sorted`` is now deprecated in
+  :meth:`tree.DecisionTreeClassifier.fit` and
+  :meth:`tree.DecisionTreeRegressor.fit`, and has not effect.
+  :pr:`17614` by :user:`Juan Carlos Alfaro Jiménez <alfaro96>`.
 
 
 Code and Documentation Contributors
