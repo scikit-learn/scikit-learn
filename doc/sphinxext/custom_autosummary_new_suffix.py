@@ -19,7 +19,7 @@ to return a filename with a new suffix.
 ```
 """
 import os
-import inspect
+import sphinx
 from contextlib import contextmanager
 
 from sphinx.ext.autosummary import get_rst_suffix
@@ -69,24 +69,18 @@ def setup(app):
     app.add_config_value(
         'custom_autosummary_generated_dirname', '', None)
 
-    # Find listener id for process_generate_options added by
-    # sphinx.ext.autosummary
-    process_generate_options_id = None
+    if sphinx.version_info[0] <= 2:
+        raise ModuleNotFoundError("Please install Sphinx >= 3.0 in order "
+                                  "to build docs")
 
+    # Find listener id for process_generate_options added by
+    process_generate_options_id = None
     builder_inited_listeners = app.events.listeners["builder-inited"]
-    # sphinx < 3.0, builder_inited_listeners is a dict
-    if isinstance(builder_inited_listeners, dict):
-        for listener_id, obj in builder_inited_listeners.items():
-            if (inspect.isfunction(obj)
-                    and obj.__name__ == "process_generate_options"):
-                process_generate_options_id = listener_id
-                break
-    else:  # sphinx > 3.0, builder_inited_listeners is a list
-        for event_listener in builder_inited_listeners:
-            func = event_listener.handler
-            if func.__name__ == "process_generate_options":
-                process_generate_options_id = event_listener.id
-                break
+    for event_listener in builder_inited_listeners:
+        func = event_listener.handler
+        if func.__name__ == "process_generate_options":
+            process_generate_options_id = event_listener.id
+            break
 
     # Override process_generate_options added by sphinx.ext.autosummary
     app.disconnect(process_generate_options_id)
