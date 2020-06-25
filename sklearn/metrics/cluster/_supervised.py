@@ -189,11 +189,11 @@ def pair_confusion_matrix(labels_true, labels_pred):
       >>> from sklearn.metrics.cluster import pair_confusion_matrix
       >>> pair_confusion_matrix([0, 0, 1, 1], [0, 0, 1, 1])
       array([[8, 0],
-             [0, 4]], dtype=int64)
+             [0, 4]])
 
       >>> pair_confusion_matrix([0, 0, 1, 1], [1, 1, 0, 0])
       array([[8, 0],
-             [0, 4]], dtype=int64)
+             [0, 4]])
 
     Labelings that assign all classes members to the same clusters
     are complete but may be not always pure, hence penalized, and
@@ -201,13 +201,13 @@ def pair_confusion_matrix(labels_true, labels_pred):
 
       >>> pair_confusion_matrix([0, 0, 1, 2], [0, 0, 1, 1])
       array([[8, 2],
-             [0, 2]], dtype=int64)
+             [0, 2]])
 
     The matrix is not symmetric:
 
       >>> pair_confusion_matrix([0, 0, 1, 1], [0, 0, 1, 2])
       array([[8, 0],
-             [2, 2]], dtype=int64)
+             [2, 2]])
 
     If classes members are completely split across different clusters, the
     assignment is totally incomplete, hence the matrix has all zero
@@ -215,7 +215,7 @@ def pair_confusion_matrix(labels_true, labels_pred):
 
       >>> pair_confusion_matrix([0, 0, 0, 0], [0, 1, 2, 3])
       array([[ 0,  0],
-             [12,  0]], dtype=int64)
+             [12,  0]])
 
     References
     ----------
