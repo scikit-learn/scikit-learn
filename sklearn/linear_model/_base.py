@@ -119,6 +119,7 @@ def _preprocess_data(X, y, fit_intercept, normalize=False, copy=True,
     This is here because nearly all linear models will want their data to be
     centered. This function also systematically makes y consistent with X.dtype
     """
+
     if isinstance(sample_weight, numbers.Number):
         sample_weight = None
     if sample_weight is not None:
@@ -409,6 +410,10 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
+        .. deprecated:: 0.24
+            ``normalize`` was deprecated in version 0.24 and will be removed in
+            0.26.
+
     copy_X : bool, default=True
         If True, X will be copied; else, it may be overwritten.
 
@@ -471,8 +476,8 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
     array([16.])
     """
     @_deprecate_positional_args
-    def __init__(self, *, fit_intercept=True, normalize=False, copy_X=True,
-                 n_jobs=None):
+    def __init__(self, *, fit_intercept=True, normalize='deprecate',
+                 copy_X=True, n_jobs=None):
         self.fit_intercept = fit_intercept
         self.normalize = normalize
         self.copy_X = copy_X
@@ -500,6 +505,12 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         -------
         self : returns an instance of self.
         """
+
+        if self.normalize != "deprecate":
+            warnings.warn("'normalize' was deprecated in version 0.24 and will"
+                            " be removed in 0.26.", FutureWarning)
+        else:
+            self.normalize = False
 
         n_jobs_ = self.n_jobs
         X, y = self._validate_data(X, y, accept_sparse=['csr', 'csc', 'coo'],

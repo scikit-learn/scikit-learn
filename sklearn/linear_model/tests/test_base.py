@@ -232,7 +232,9 @@ def test_linear_regression_pd_sparse_dataframe_warning():
     assert hasattr(df, "sparse")
 
     with pytest.warns(None) as record:
+        reg = LinearRegression()
         reg.fit(df.iloc[:, 0:2], df.iloc[:, 3])
+
     assert not record
 
 
