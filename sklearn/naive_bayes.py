@@ -700,7 +700,7 @@ class MultinomialNB(_BaseDiscreteNB):
         Class labels known to the classifier
 
     coef_ : ndarray of shape (n_classes, n_features)
-        Mirrors ``feature_log_prob_`` for interpreting MultinomialNB
+        Mirrors ``feature_log_prob_`` for interpreting `MultinomialNB`
         as a linear model.
 
     feature_count_ : ndarray of shape (n_classes, n_features)
@@ -712,8 +712,8 @@ class MultinomialNB(_BaseDiscreteNB):
         Empirical log probability of features
         given a class, ``P(x_i|y)``.
 
-    intercept_ : ndarray of shape (n_classes, )
-        Mirrors ``class_log_prior_`` for interpreting MultinomialNB
+    intercept_ : ndarray of shape (n_classes,)
+        Mirrors ``class_log_prior_`` for interpreting `MultinomialNB`
         as a linear model.
 
     n_features_ : int
@@ -816,7 +816,7 @@ class ComplementNB(_BaseDiscreteNB):
         Class labels known to the classifier
 
     coef_ : ndarray of shape (n_classes, n_features)
-        Mirrors ``feature_log_prob_`` for interpreting ComplementNB
+        Mirrors ``feature_log_prob_`` for interpreting `ComplementNB`
         as a linear model.
 
     feature_all_ : ndarray of shape (n_features,)
@@ -830,8 +830,8 @@ class ComplementNB(_BaseDiscreteNB):
     feature_log_prob_ : ndarray of shape (n_classes, n_features)
         Empirical weights for class complements.
 
-    intercept_ : ndarray of shape (n_classes, )
-        Mirrors ``class_log_prior_`` for interpreting ComplementNB
+    intercept_ : ndarray of shape (n_classes,)
+        Mirrors ``class_log_prior_`` for interpreting `ComplementNB`
         as a linear model.
 
     n_features_ : int
