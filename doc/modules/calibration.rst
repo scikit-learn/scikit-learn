@@ -107,8 +107,9 @@ Usage
 The :class:`CalibratedClassifierCV` class is used to calibrate a classifier.
 
 :class:`CalibratedClassifierCV` uses a cross-validation approach to fit both
-the classifier and the regressor. For each of the k `(trainset, testset)`
-couple, a classifier is trained on the train set, and its predictions on the
+the classifier and the regressor. The data is split into k
+`(train_set, test_set)` couples (as determined by `cv`). The classifier
+(`base_estimator`) is trained on the train set, and its predictions on the
 test set are used to fit a regressor. This ensures that the data used to fit
 the classifier is always disjoint from the data used to fit the calibrator.
 After fitting, we end up with k
@@ -122,17 +123,20 @@ predicted probabilities of the `k` estimators in the
 `calibrated_classifiers_` list. The output of :term:`predict` is the class
 that has the highest probability.
 
-An already fitted classifier can be calibrated by setting `cv="prefit"`. In
-this case, the data is only used to fit the regressor. It is up to the user
+Alternatively an already fitted classifier can be calibrated by setting
+`cv="prefit"`. In this case, the data is not split and all of it is used to
+fit the regressor. It is up to the user
 make sure that the data used for fitting the classifier is disjoint from the
 data used for fitting the regressor.
 
 :class:`CalibratedClassifierCV` supports the use of two 'calibration'
 regressors; 'sigmoid' and 'isotonic'. Both these regressors only
-support 1-dimensional data (e.g., binary classification output) but can be
+support 1-dimensional data (e.g., binary classification output) but are
 extended for multiclass classification if the `base_estimator` supports
-multiclass predictions. :class:`CalibratedClassifierCV` calibrates for
-each class separately in a One-Vs-The-Rest fashion [4]_. When predicting
+multiclass predictions. For multiclass predictions,
+:class:`CalibratedClassifierCV` calibrates for
+each class separately in a :ref:`ovr_classification` fashion [4]_. When
+predicting
 probabilities, the calibrated probabilities for each class
 are predicted separately. As those probabilities do not necessarily sum to
 one, a postprocessing is performed to normalize them.
