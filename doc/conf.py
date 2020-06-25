@@ -414,7 +414,7 @@ warnings.filterwarnings("ignore", category=UserWarning,
 
 # Used by custom extension: `custom_autosummary_new_suffix` to change the
 # suffix of the following functions. This works around the issue with
-# `sklearn.cluster.dbscan` overlapping with `klearn.cluster.DBSCAN`  on
+# `sklearn.cluster.dbscan` overlapping with `sklearn.cluster.DBSCAN`  on
 # case insensitive file systems.
 custom_autosummary_names_with_new_suffix = {
     'sklearn.cluster.dbscan',
