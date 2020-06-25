@@ -8,7 +8,7 @@ import numpy as np
 import sklearn.datasets
 
 
-KNOWN_FAILURE = {
+FETCH_MARKERS = {
     "return_X_y": {
         "fetch_20newsgroups": pytest.mark.xfail(
             reason="X is a list and does not have a shape argument"
@@ -16,8 +16,9 @@ KNOWN_FAILURE = {
         "fetch_openml": pytest.mark.xfail(
             reason="fetch_opeml requires a dataset name or id"
         ),
-        "fetch_lfw_people": pytest.mark.xfail(
-            reason="fetch_lfw_people can fail if pillow is not installed"
+        "fetch_lfw_people": pytest.mark.skipif(
+            not is_pillow_installed(),
+            reason="pillow is not installed"
         )
     },
     "as_frame": {
@@ -71,8 +72,16 @@ def _has_network():
     return bool(os.environ.get("SKLEARN_SKIP_NETWORK_TESTS", False))
 
 
+def is_pillow_installed():
+    try:
+        import PIL  # noqa
+        return True
+    except ImportError:
+        return False
+
+
 def _generate_func_supporting_param(param, dataset_type=("load", "fetch")):
-    markers_known_failure = KNOWN_FAILURE.get(param, {})
+    markers_fetch = FETCH_MARKERS.get(param, {})
     for name, obj in inspect.getmembers(sklearn.datasets):
         if not inspect.isfunction(obj):
             continue
@@ -85,7 +94,7 @@ def _generate_func_supporting_param(param, dataset_type=("load", "fetch")):
                 condition=name.startswith("fetch") and _has_network(),
                 reason="Skip because fetcher requires internet network",
             )]
-            marks.append(markers_known_failure.get(name, pytest.mark.basic))
+            marks.append(markers_fetch.get(name, pytest.mark.basic))
 
             yield pytest.param(name, obj, marks=marks)
 
