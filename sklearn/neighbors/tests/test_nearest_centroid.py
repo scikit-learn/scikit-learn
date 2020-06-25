@@ -14,6 +14,8 @@ from sklearn.utils._testing import assert_raises
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
 X_csr = sp.csr_matrix(X)  # Sparse matrix
 y = [-1, -1, -1, 1, 1, 1]
+n_samples = len(X)
+n_classes = len(set(y))
 T = [[-1, -1], [2, 2], [3, 2]]
 T_csr = sp.csr_matrix(T)
 true_result = [-1, 1, 1]
@@ -55,10 +57,12 @@ def test_classification_toy():
 
     # Fit and predict probability estimates
     clf = NearestCentroid(prob=True)
+    clf.fit(X, y)
     probabilities = clf.predict_proba(X)
     assert probabilities.shape == (n_samples, n_classes)
-    assert_array_almost_equal(probabilities.sum(axis=1), np.ones(n_samples))
-    assert_array_equal(probabilities.argmax(axis=1), y)
+    print(probabilities)
+    np.testing.assert_array_almost_equal(probabilities.sum(axis=1), np.ones(n_samples))
+    np.testing.assert_array_equal(np.choose(probabilities.argmax(axis=1), [-1, 1]), y)
 
 
 def test_precomputed():
