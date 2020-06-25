@@ -922,28 +922,6 @@ def test_tsne_with_legacy_euclidean_squaring(method):
     assert_array_equal(X_transformed_tsne, X_transformed_tsne_precomputed)
 
 
-@pytest.mark.parametrize('method', ['exact', 'barnes_hut'])
-@ignore_warnings(category=FutureWarning)
-def test_tsne_with_different_squaring_methods(method):
-    """Isolate failing behavior in
-    `test_tsne_with_legacy_euclidean_squaring.`"""
-    random_state = check_random_state(0)
-    n_components_original = 3
-    n_components_embedding = 2
-    X, _ = make_blobs(n_features=n_components_original,
-                      random_state=random_state)
-    X_precomputed_1 = pairwise_distances(X, metric='euclidean') ** 2
-    X_precomputed_2 = pairwise_distances(X, metric='euclidean', squared=True)
-    X_transformed_tsne_precomputed_1 = TSNE(
-        metric='precomputed', n_components=n_components_embedding,
-        random_state=0, method=method).fit_transform(X_precomputed_1)
-    X_transformed_tsne_precomputed_2 = TSNE(
-        metric='precomputed', n_components=n_components_embedding,
-        random_state=0, method=method).fit_transform(X_precomputed_2)
-    assert_array_equal(X_transformed_tsne_precomputed_1,
-                       X_transformed_tsne_precomputed_2)
-
-
 def test_tsne_with_different_square_distances():
     """Make sure that TSNE works for different square_distance settings"""
     random_state = check_random_state(0)
