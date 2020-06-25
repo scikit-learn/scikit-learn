@@ -152,7 +152,7 @@ def as_float_array(X, *, copy=True, force_all_finite=True):
     Returns
     -------
     XT : {array, sparse matrix}
-        An array of type np.float
+        An array of type float
     """
     if isinstance(X, np.matrix) or (not isinstance(X, np.ndarray)
                                     and not sp.issparse(X)):

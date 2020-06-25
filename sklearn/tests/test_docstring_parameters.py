@@ -230,12 +230,8 @@ def test_fit_docstring_attributes(name, Estimator):
 
     IGNORED = {'BayesianRidge', 'Birch', 'CCA', 'CategoricalNB', 'ElasticNet',
                'ElasticNetCV',
-               'HistGradientBoostingClassifier',
-               'HistGradientBoostingRegressor',
-               'KernelCenterer', 'KernelDensity',
+               'KernelCenterer',
                'LarsCV', 'Lasso', 'LassoLarsCV', 'LassoLarsIC',
-               'LocalOutlierFactor', 'MDS',
-               'MiniBatchKMeans',
                'MultiTaskElasticNet', 'MultiTaskElasticNetCV',
                'MultiTaskLasso', 'MultiTaskLassoCV',
                'OrthogonalMatchingPursuit',

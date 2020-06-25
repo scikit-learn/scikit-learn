@@ -335,6 +335,18 @@ class MDS(BaseEstimator):
         The final value of the stress (sum of squared distance of the
         disparities and the distances for all constrained points).
 
+    dissimilarity_matrix_ : ndarray, shape (n_samples, n_samples)
+        Pairwise dissimilarities between the points. Symmetric matrix that:
+
+        - either uses a custom dissimilarity matrix by setting `dissimilarity`
+          to ‘precomputed’;
+
+        - or constructs a dissimilarity matrix from data using
+          Euclidean distances
+
+    n_iter_ : int
+        The number of iterations corresponding to the best stress.
+
     Examples
     --------
     >>> from sklearn.datasets import load_digits

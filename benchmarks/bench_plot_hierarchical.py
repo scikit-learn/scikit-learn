@@ -43,7 +43,7 @@ def compute_bench(samples_range, features_range):
 if __name__ == '__main__':
     import matplotlib.pyplot as plt
 
-    samples_range = np.linspace(1000, 15000, 8).astype(np.int)
+    samples_range = np.linspace(1000, 15000, 8).astype(int)
     features_range = np.array([2, 10, 20, 50])
 
     results = compute_bench(samples_range, features_range)
