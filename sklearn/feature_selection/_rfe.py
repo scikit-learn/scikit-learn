@@ -198,8 +198,8 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         if step <= 0:
             raise ValueError("Step must be >0")
 
-        support_ = np.ones(n_features, dtype=np.bool)
-        ranking_ = np.ones(n_features, dtype=np.int)
+        support_ = np.ones(n_features, dtype=bool)
+        ranking_ = np.ones(n_features, dtype=int)
 
         if step_score:
             self.scores_ = []

@@ -73,7 +73,7 @@ def load_mtpl2(n_samples=100000):
     """
     # freMTPL2freq dataset from https://www.openml.org/d/41214
     df_freq = fetch_openml(data_id=41214, as_frame=True)['data']
-    df_freq['IDpol'] = df_freq['IDpol'].astype(np.int)
+    df_freq['IDpol'] = df_freq['IDpol'].astype(int)
     df_freq.set_index('IDpol', inplace=True)
 
     # freMTPL2sev dataset from https://www.openml.org/d/41215

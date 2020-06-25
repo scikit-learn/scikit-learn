@@ -780,7 +780,7 @@ def cross_val_predict(estimator, X, y=None, *, groups=None, cv=None,
             le = LabelEncoder()
             y = le.fit_transform(y)
         elif y.ndim == 2:
-            y_enc = np.zeros_like(y, dtype=np.int)
+            y_enc = np.zeros_like(y, dtype=int)
             for i_label in range(y.shape[1]):
                 y_enc[:, i_label] = LabelEncoder().fit_transform(y[:, i_label])
             y = y_enc
@@ -1353,7 +1353,7 @@ def _translate_train_sizes(train_sizes, n_max_training_samples):
                              % (n_min_required_samples,
                                 n_max_required_samples))
         train_sizes_abs = (train_sizes_abs * n_max_training_samples).astype(
-                             dtype=np.int, copy=False)
+                             dtype=int, copy=False)
         train_sizes_abs = np.clip(train_sizes_abs, 1,
                                   n_max_training_samples)
     else:

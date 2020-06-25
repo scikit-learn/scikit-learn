@@ -41,7 +41,7 @@ def _not_in_sphinx():
 def atomic_benchmark_estimator(estimator, X_test, verbose=False):
     """Measure runtime prediction of each instance."""
     n_instances = X_test.shape[0]
-    runtimes = np.zeros(n_instances, dtype=np.float)
+    runtimes = np.zeros(n_instances, dtype=float)
     for i in range(n_instances):
         instance = X_test[[i], :]
         start = time.time()
@@ -56,7 +56,7 @@ def atomic_benchmark_estimator(estimator, X_test, verbose=False):
 def bulk_benchmark_estimator(estimator, X_test, n_bulk_repeats, verbose):
     """Measure runtime prediction of the whole input."""
     n_instances = X_test.shape[0]
-    runtimes = np.zeros(n_bulk_repeats, dtype=np.float)
+    runtimes = np.zeros(n_bulk_repeats, dtype=float)
     for i in range(n_bulk_repeats):
         start = time.time()
         estimator.predict(X_test)
