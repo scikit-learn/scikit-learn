@@ -22,7 +22,7 @@ cmap_data = plt.cm.Paired
 cmap_cv = plt.cm.coolwarm
 n_splits = 4
 
-###############################################################################
+# %%
 # Visualize our data
 # ------------------
 #
@@ -61,7 +61,7 @@ def visualize_groups(classes, groups, name):
 
 visualize_groups(y, groups, 'no groups')
 
-###############################################################################
+# %%
 # Define a function to visualize cross-validation behavior
 # --------------------------------------------------------
 #
@@ -102,14 +102,15 @@ def plot_cv_indices(cv, X, y, group, ax, n_splits, lw=10):
     return ax
 
 
-###############################################################################
-# Let's see how it looks for the `KFold` cross-validation object:
+# %%
+# Let's see how it looks for the :class:`~sklearn.model_selection.KFold`
+# cross-validation object:
 
 fig, ax = plt.subplots()
 cv = KFold(n_splits)
 plot_cv_indices(cv, X, y, groups, ax, n_splits)
 
-###############################################################################
+# %%
 # As you can see, by default the KFold cross-validation iterator does not
 # take either datapoint class or group into consideration. We can change this
 # by using the ``StratifiedKFold`` like so.
@@ -118,7 +119,7 @@ fig, ax = plt.subplots()
 cv = StratifiedKFold(n_splits)
 plot_cv_indices(cv, X, y, groups, ax, n_splits)
 
-###############################################################################
+# %%
 # In this case, the cross-validation retained the same ratio of classes across
 # each CV split. Next we'll visualize this behavior for a number of CV
 # iterators.

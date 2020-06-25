@@ -25,11 +25,11 @@ import matplotlib.pyplot as plt
 
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
-from sklearn.datasets.samples_generator import make_regression
-from sklearn.ensemble.forest import RandomForestRegressor
-from sklearn.linear_model.ridge import Ridge
-from sklearn.linear_model.stochastic_gradient import SGDRegressor
-from sklearn.svm.classes import SVR
+from sklearn.datasets import make_regression
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.linear_model import Ridge
+from sklearn.linear_model import SGDRegressor
+from sklearn.svm import SVR
 from sklearn.utils import shuffle
 
 
@@ -41,7 +41,7 @@ def _not_in_sphinx():
 def atomic_benchmark_estimator(estimator, X_test, verbose=False):
     """Measure runtime prediction of each instance."""
     n_instances = X_test.shape[0]
-    runtimes = np.zeros(n_instances, dtype=np.float)
+    runtimes = np.zeros(n_instances, dtype=float)
     for i in range(n_instances):
         instance = X_test[[i], :]
         start = time.time()
@@ -56,7 +56,7 @@ def atomic_benchmark_estimator(estimator, X_test, verbose=False):
 def bulk_benchmark_estimator(estimator, X_test, n_bulk_repeats, verbose):
     """Measure runtime prediction of the whole input."""
     n_instances = X_test.shape[0]
-    runtimes = np.zeros(n_bulk_repeats, dtype=np.float)
+    runtimes = np.zeros(n_bulk_repeats, dtype=float)
     for i in range(n_bulk_repeats):
         start = time.time()
         estimator.predict(X_test)

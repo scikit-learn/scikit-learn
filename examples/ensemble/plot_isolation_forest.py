@@ -3,7 +3,7 @@
 IsolationForest example
 ==========================================
 
-An example using :class:`sklearn.ensemble.IsolationForest` for anomaly
+An example using :class:`~sklearn.ensemble.IsolationForest` for anomaly
 detection.
 
 The IsolationForest 'isolates' observations by randomly selecting a feature

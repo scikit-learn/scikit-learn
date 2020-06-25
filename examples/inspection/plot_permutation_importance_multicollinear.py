@@ -29,7 +29,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.inspection import permutation_importance
 from sklearn.model_selection import train_test_split
 
-##############################################################################
+# %%
 # Random Forest Feature Importance on Breast Cancer Data
 # ------------------------------------------------------
 # First, we train a random forest on the breast cancer dataset and evaluate
@@ -42,7 +42,7 @@ clf = RandomForestClassifier(n_estimators=100, random_state=42)
 clf.fit(X_train, y_train)
 print("Accuracy on test data: {:.2f}".format(clf.score(X_test, y_test)))
 
-##############################################################################
+# %%
 # Next, we plot the tree based feature importance and the permutation
 # importance. The permutation importance plot shows that permuting a feature
 # drops the accuracy by at most `0.012`, which would suggest that none of the
@@ -55,18 +55,20 @@ result = permutation_importance(clf, X_train, y_train, n_repeats=10,
 perm_sorted_idx = result.importances_mean.argsort()
 
 tree_importance_sorted_idx = np.argsort(clf.feature_importances_)
-tree_indicies = np.arange(1, len(clf.feature_importances_) + 1)
+tree_indices = np.arange(0, len(clf.feature_importances_)) + 0.5
 
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 8))
-ax1.barh(tree_indicies, clf.feature_importances_[tree_importance_sorted_idx])
-ax1.set_yticklabels(data.feature_names)
-ax1.set_yticks(tree_indicies)
+ax1.barh(tree_indices,
+         clf.feature_importances_[tree_importance_sorted_idx], height=0.7)
+ax1.set_yticklabels(data.feature_names[tree_importance_sorted_idx])
+ax1.set_yticks(tree_indices)
+ax1.set_ylim((0, len(clf.feature_importances_)))
 ax2.boxplot(result.importances[perm_sorted_idx].T, vert=False,
-            labels=data.feature_names)
+            labels=data.feature_names[perm_sorted_idx])
 fig.tight_layout()
 plt.show()
 
-##############################################################################
+# %%
 # Handling Multicollinear Features
 # --------------------------------
 # When features are collinear, permutating one feature will have little
@@ -78,8 +80,9 @@ plt.show()
 fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 8))
 corr = spearmanr(X).correlation
 corr_linkage = hierarchy.ward(corr)
-dendro = hierarchy.dendrogram(corr_linkage, labels=data.feature_names, ax=ax1,
-                              leaf_rotation=90)
+dendro = hierarchy.dendrogram(
+    corr_linkage, labels=data.feature_names.tolist(), ax=ax1, leaf_rotation=90
+)
 dendro_idx = np.arange(0, len(dendro['ivl']))
 
 ax2.imshow(corr[dendro['leaves'], :][:, dendro['leaves']])
@@ -90,7 +93,7 @@ ax2.set_yticklabels(dendro['ivl'])
 fig.tight_layout()
 plt.show()
 
-##############################################################################
+# %%
 # Next, we manually pick a threshold by visual inspection of the dendrogram
 # to group our features into clusters and choose a feature from each cluster to
 # keep, select those features from our dataset, and train a new random forest.

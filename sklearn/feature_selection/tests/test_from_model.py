@@ -1,34 +1,52 @@
 import pytest
 import numpy as np
 
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_allclose
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import skip_if_32bit
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import skip_if_32bit
 
 from sklearn import datasets
 from sklearn.linear_model import LogisticRegression, SGDClassifier, Lasso
 from sklearn.svm import LinearSVC
 from sklearn.feature_selection import SelectFromModel
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.experimental import enable_hist_gradient_boosting  # noqa
+from sklearn.ensemble import (RandomForestClassifier,
+                              HistGradientBoostingClassifier)
 from sklearn.linear_model import PassiveAggressiveClassifier
 from sklearn.base import BaseEstimator
+from sklearn.pipeline import make_pipeline
+from sklearn.decomposition import PCA
+
+
+class NaNTag(BaseEstimator):
+    def _more_tags(self):
+        return {'allow_nan': True}
+
+
+class NoNaNTag(BaseEstimator):
+    def _more_tags(self):
+        return {'allow_nan': False}
+
+
+class NaNTagRandomForest(RandomForestClassifier):
+    def _more_tags(self):
+        return {'allow_nan': True}
+
 
 iris = datasets.load_iris()
 data, y = iris.data, iris.target
 rng = np.random.RandomState(0)
 
 
-# 0.23. warning about tol not having its correct default value.
-@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_invalid_input():
     clf = SGDClassifier(alpha=0.1, max_iter=10, shuffle=True,
                         random_state=None, tol=None)
     for threshold in ["gobbledigook", ".5 * gobbledigook"]:
         model = SelectFromModel(clf, threshold=threshold)
         model.fit(data, y)
-        assert_raises(ValueError, model.transform, data)
+        with pytest.raises(ValueError):
+            model.transform(data)
 
 
 def test_input_estimator_unchanged():
@@ -100,7 +118,7 @@ def test_max_features():
 
     for n_features in range(1, X_new1.shape[1] + 1):
         transformer2 = SelectFromModel(estimator=Lasso(alpha=0.025,
-                                       random_state=42),
+                                                       random_state=42),
                                        max_features=n_features,
                                        threshold=-np.inf)
         X_new2 = transformer2.fit_transform(X, y)
@@ -202,7 +220,7 @@ def test_coef_default_threshold():
 
     # For the Lasso and related models, the threshold defaults to 1e-5
     transformer = SelectFromModel(estimator=Lasso(alpha=0.1,
-                                  random_state=42))
+                                                  random_state=42))
     transformer.fit(X, y)
     X_new = transformer.transform(X)
     mask = np.abs(transformer.estimator_.coef_) > 1e-5
@@ -234,8 +252,6 @@ def test_2d_coef():
             assert_array_almost_equal(X_new, X[:, feature_mask])
 
 
-# 0.23. warning about tol not having its correct default value.
-@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_partial_fit():
     est = PassiveAggressiveClassifier(random_state=0, shuffle=False,
                                       max_iter=5, tol=None)
@@ -266,8 +282,6 @@ def test_calling_fit_reinitializes():
     assert transformer.estimator_.C == 100
 
 
-# 0.23. warning about tol not having its correct default value.
-@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_prefit():
     # Test all possible combinations of the prefit parameter.
 
@@ -290,7 +304,8 @@ def test_prefit():
 
     # Check that prefit=True and calling fit raises a ValueError
     model = SelectFromModel(clf, prefit=True)
-    assert_raises(ValueError, model.fit, data, y)
+    with pytest.raises(ValueError):
+        model.fit(data, y)
 
 
 def test_threshold_string():
@@ -306,8 +321,6 @@ def test_threshold_string():
     assert_array_almost_equal(X_transform, data[:, mask])
 
 
-# 0.23. warning about tol not having its correct default value.
-@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_threshold_without_refitting():
     # Test that the threshold can be set without refitting the model.
     clf = SGDClassifier(alpha=0.1, max_iter=10, shuffle=True,
@@ -319,3 +332,58 @@ def test_threshold_without_refitting():
     # Set a higher threshold to filter out more features.
     model.threshold = "1.0 * mean"
     assert X_transform.shape[1] > model.transform(data).shape[1]
+
+
+def test_fit_accepts_nan_inf():
+    # Test that fit doesn't check for np.inf and np.nan values.
+    clf = HistGradientBoostingClassifier(random_state=0)
+
+    model = SelectFromModel(estimator=clf)
+
+    nan_data = data.copy()
+    nan_data[0] = np.NaN
+    nan_data[1] = np.Inf
+
+    model.fit(data, y)
+
+
+def test_transform_accepts_nan_inf():
+    # Test that transform doesn't check for np.inf and np.nan values.
+    clf = NaNTagRandomForest(n_estimators=100, random_state=0)
+    nan_data = data.copy()
+
+    model = SelectFromModel(estimator=clf)
+    model.fit(nan_data, y)
+
+    nan_data[0] = np.NaN
+    nan_data[1] = np.Inf
+
+    model.transform(nan_data)
+
+
+def test_allow_nan_tag_comes_from_estimator():
+    allow_nan_est = NaNTag()
+    model = SelectFromModel(estimator=allow_nan_est)
+    assert model._get_tags()['allow_nan'] is True
+
+    no_nan_est = NoNaNTag()
+    model = SelectFromModel(estimator=no_nan_est)
+    assert model._get_tags()['allow_nan'] is False
+
+
+def _pca_importances(pca_estimator):
+    return np.abs(pca_estimator.explained_variance_)
+
+
+@pytest.mark.parametrize(
+    "estimator, importance_getter",
+    [(make_pipeline(PCA(random_state=0), LogisticRegression()),
+      'named_steps.logisticregression.coef_'),
+     (PCA(random_state=0), _pca_importances)]
+)
+def test_importance_getter(estimator, importance_getter):
+    selector = SelectFromModel(
+        estimator, threshold="mean", importance_getter=importance_getter
+    )
+    selector.fit(data, y)
+    assert selector.transform(data).shape[1] == 1

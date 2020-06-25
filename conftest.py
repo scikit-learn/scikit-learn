@@ -6,17 +6,19 @@
 # the one from site-packages.
 
 import platform
-from distutils.version import LooseVersion
+import sys
+import os
 
 import pytest
 from _pytest.doctest import DoctestItem
 
-from sklearn import set_config
 from sklearn.utils import _IS_32BIT
+from sklearn.externals import _pilutil
+from sklearn.utils.fixes import np_version, parse_version
 
 PYTEST_MIN_VERSION = '3.3.0'
 
-if LooseVersion(pytest.__version__) < PYTEST_MIN_VERSION:
+if parse_version(pytest.__version__) < parse_version(PYTEST_MIN_VERSION):
     raise ImportError('Your version of pytest is too old, you should have '
                       'at least pytest >= {} installed.'
                       .format(PYTEST_MIN_VERSION))
@@ -34,9 +36,8 @@ def pytest_collection_modifyitems(config, items):
         skip_marker = pytest.mark.skip(
             reason='FeatureHasher is not compatible with PyPy')
         for item in items:
-            if item.name in (
-                    'sklearn.feature_extraction.hashing.FeatureHasher',
-                    'sklearn.feature_extraction.text.HashingVectorizer'):
+            if item.name.endswith(('_hash.FeatureHasher',
+                                   'text.HashingVectorizer')):
                 item.add_marker(skip_marker)
 
     # Skip tests which require internet if the flag is provided
@@ -51,13 +52,16 @@ def pytest_collection_modifyitems(config, items):
     # run doctests only for numpy >= 1.14.
     skip_doctests = False
     try:
-        import numpy as np
-        if LooseVersion(np.__version__) < LooseVersion('1.14'):
+        if np_version < parse_version('1.14'):
             reason = 'doctests are only run for numpy >= 1.14'
             skip_doctests = True
         elif _IS_32BIT:
             reason = ('doctest are only run when the default numpy int is '
                       '64 bits.')
+            skip_doctests = True
+        elif sys.platform.startswith("win32"):
+            reason = ("doctests are not run for Windows because numpy arrays "
+                      "repr is inconsistent across platforms.")
             skip_doctests = True
     except ImportError:
         pass
@@ -68,23 +72,25 @@ def pytest_collection_modifyitems(config, items):
         for item in items:
             if isinstance(item, DoctestItem):
                 item.add_marker(skip_marker)
+    elif not _pilutil.pillow_installed:
+        skip_marker = pytest.mark.skip(reason="pillow (or PIL) not installed!")
+        for item in items:
+            if item.name in [
+                    "sklearn.feature_extraction.image.PatchExtractor",
+                    "sklearn.feature_extraction.image.extract_patches_2d"]:
+                item.add_marker(skip_marker)
 
 
 def pytest_configure(config):
     import sys
     sys._is_pytest_session = True
+    # declare our custom markers to avoid PytestUnknownMarkWarning
+    config.addinivalue_line(
+        "markers",
+        "network: mark a test for execution if network available."
+    )
 
 
 def pytest_unconfigure(config):
     import sys
     del sys._is_pytest_session
-
-
-def pytest_runtest_setup(item):
-    if isinstance(item, DoctestItem):
-        set_config(print_changed_only=True)
-
-
-def pytest_runtest_teardown(item, nextitem):
-    if isinstance(item, DoctestItem):
-        set_config(print_changed_only=False)

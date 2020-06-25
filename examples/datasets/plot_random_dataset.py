@@ -3,14 +3,15 @@
 Plot randomly generated classification dataset
 ==============================================
 
-Plot several randomly generated 2D classification datasets.
-This example illustrates the :func:`datasets.make_classification`
-:func:`datasets.make_blobs` and :func:`datasets.make_gaussian_quantiles`
-functions.
+This example plots several randomly generated classification datasets.
+For easy visualization, all datasets have 2 features, plotted on the x and y
+axis. The color of each point represents its class label.
 
-For ``make_classification``, three binary and two multi-class classification
-datasets are generated, with different numbers of informative features and
-clusters per class.  """
+The first 4 plots use the :func:`~sklearn.datasets.make_classification` with
+different numbers of informative features, clusters per class and classes.
+The final 2 plots use :func:`~sklearn.datasets.make_blobs` and
+:func:`~sklearn.datasets.make_gaussian_quantiles`.
+"""
 
 print(__doc__)
 

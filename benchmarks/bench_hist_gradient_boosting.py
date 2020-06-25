@@ -2,6 +2,7 @@ from time import time
 import argparse
 
 import matplotlib.pyplot as plt
+import numpy as np
 from sklearn.model_selection import train_test_split
 # To use this experimental feature, we need to explicitly ask for it:
 from sklearn.experimental import enable_hist_gradient_boosting  # noqa
@@ -25,10 +26,15 @@ parser.add_argument('--catboost', action="store_true", default=False,
 parser.add_argument('--learning-rate', type=float, default=.1)
 parser.add_argument('--problem', type=str, default='classification',
                     choices=['classification', 'regression'])
+parser.add_argument('--loss', type=str, default='default')
+parser.add_argument('--missing-fraction', type=float, default=0)
 parser.add_argument('--n-classes', type=int, default=2)
 parser.add_argument('--n-samples-max', type=int, default=int(1e6))
 parser.add_argument('--n-features', type=int, default=20)
 parser.add_argument('--max-bins', type=int, default=255)
+parser.add_argument('--random-sample-weights', action="store_true",
+                    default=False,
+                    help="generate and use random sample weights")
 args = parser.parse_args()
 
 n_leaf_nodes = args.n_leaf_nodes
@@ -43,6 +49,7 @@ def get_estimator_and_data():
                                    n_features=args.n_features,
                                    n_classes=args.n_classes,
                                    n_clusters_per_class=1,
+                                   n_informative=args.n_classes,
                                    random_state=0)
         return X, y, HistGradientBoostingClassifier
     elif args.problem == 'regression':
@@ -52,8 +59,24 @@ def get_estimator_and_data():
 
 
 X, y, Estimator = get_estimator_and_data()
-X_train_, X_test_, y_train_, y_test_ = train_test_split(
-    X, y, test_size=0.5, random_state=0)
+if args.missing_fraction:
+    mask = np.random.binomial(1, args.missing_fraction, size=X.shape).astype(
+        bool)
+    X[mask] = np.nan
+
+if args.random_sample_weights:
+    sample_weight = np.random.rand(len(X)) * 10
+else:
+    sample_weight = None
+
+if sample_weight is not None:
+    (X_train_, X_test_, y_train_, y_test_,
+     sample_weight_train_, _) = train_test_split(
+        X, y, sample_weight, test_size=0.5, random_state=0)
+else:
+    X_train_, X_test_, y_train_, y_test_ = train_test_split(
+        X, y, test_size=0.5, random_state=0)
+    sample_weight_train_ = None
 
 
 def one_run(n_samples):
@@ -61,6 +84,10 @@ def one_run(n_samples):
     X_test = X_test_[:n_samples]
     y_train = y_train_[:n_samples]
     y_test = y_test_[:n_samples]
+    if sample_weight is not None:
+        sample_weight_train = sample_weight_train_[:n_samples]
+    else:
+        sample_weight_train = None
     assert X_train.shape[0] == n_samples
     assert X_test.shape[0] == n_samples
     print("Data size: %d samples train, %d samples test."
@@ -71,10 +98,21 @@ def one_run(n_samples):
                     max_iter=n_trees,
                     max_bins=max_bins,
                     max_leaf_nodes=n_leaf_nodes,
-                    n_iter_no_change=None,
+                    early_stopping=False,
                     random_state=0,
                     verbose=0)
-    est.fit(X_train, y_train)
+    loss = args.loss
+    if args.problem == 'classification':
+        if loss == 'default':
+            # loss='auto' does not work with get_equivalent_estimator()
+            loss = 'binary_crossentropy' if args.n_classes == 2 else \
+                'categorical_crossentropy'
+    else:
+        # regression
+        if loss == 'default':
+            loss = 'least_squares'
+    est.set_params(loss=loss)
+    est.fit(X_train, y_train, sample_weight=sample_weight_train)
     sklearn_fit_duration = time() - tic
     tic = time()
     sklearn_score = est.score(X_test, y_test)
@@ -88,15 +126,10 @@ def one_run(n_samples):
     lightgbm_score_duration = None
     if args.lightgbm:
         print("Fitting a LightGBM model...")
-        # get_lightgbm does not accept loss='auto'
-        if args.problem == 'classification':
-            loss = 'binary_crossentropy' if args.n_classes == 2 else \
-                'categorical_crossentropy'
-            est.set_params(loss=loss)
         lightgbm_est = get_equivalent_estimator(est, lib='lightgbm')
 
         tic = time()
-        lightgbm_est.fit(X_train, y_train)
+        lightgbm_est.fit(X_train, y_train, sample_weight=sample_weight_train)
         lightgbm_fit_duration = time() - tic
         tic = time()
         lightgbm_score = lightgbm_est.score(X_test, y_test)
@@ -110,15 +143,10 @@ def one_run(n_samples):
     xgb_score_duration = None
     if args.xgboost:
         print("Fitting an XGBoost model...")
-        # get_xgb does not accept loss='auto'
-        if args.problem == 'classification':
-            loss = 'binary_crossentropy' if args.n_classes == 2 else \
-                'categorical_crossentropy'
-            est.set_params(loss=loss)
         xgb_est = get_equivalent_estimator(est, lib='xgboost')
 
         tic = time()
-        xgb_est.fit(X_train, y_train)
+        xgb_est.fit(X_train, y_train, sample_weight=sample_weight_train)
         xgb_fit_duration = time() - tic
         tic = time()
         xgb_score = xgb_est.score(X_test, y_test)
@@ -132,15 +160,10 @@ def one_run(n_samples):
     cat_score_duration = None
     if args.catboost:
         print("Fitting a CatBoost model...")
-        # get_cat does not accept loss='auto'
-        if args.problem == 'classification':
-            loss = 'binary_crossentropy' if args.n_classes == 2 else \
-                'categorical_crossentropy'
-            est.set_params(loss=loss)
         cat_est = get_equivalent_estimator(est, lib='catboost')
 
         tic = time()
-        cat_est.fit(X_train, y_train)
+        cat_est.fit(X_train, y_train, sample_weight=sample_weight_train)
         cat_fit_duration = time() - tic
         tic = time()
         cat_score = cat_est.score(X_test, y_test)
