@@ -330,9 +330,10 @@ def test_model_pipeline_same_as_normalize_true(LinearModel, params):
         (isinstance(model_normalize, (MultiTaskElasticNet)) and
          not isinstance(model_normalize, MultiTaskLasso))):
         if params['l1_ratio'] == 1:
-            pipeline[1].alpha = params['alpha'] * np.sqrt(X_train.shape[0])
+            pipeline[1].set_params(
+                alpha=params['alpha'] * np.sqrt(X_train.shape[0]))
         if params['l1_ratio'] == 0:
-            pipeline[1].alpha = params['alpha'] * X_train.shape[0]
+            pipeline[1].set_params(alpha=params['alpha'] * X_train.shape[0])
 
     model_normalize.fit(X_train, y_train)
     y_pred_normalize = model_normalize.predict(X_test)
@@ -366,6 +367,17 @@ def test_model_pipeline_same_dense_and_sparse(LinearModel, params):
     # with normalize set to False gives the same y_pred and the same .coef_
     # given X sparse or dense
 
+    model_dense = make_pipeline(
+        StandardScaler(with_mean=False),
+        LinearModel(normalize=False, **params)
+    )
+
+    model_sparse = make_pipeline(
+        StandardScaler(with_mean=False),
+        LinearModel(normalize=False, **params)
+    )
+
+    # prepare the data
     rng = np.random.RandomState(0)
     n_samples = 200
     n_features = 2
@@ -378,17 +390,9 @@ def test_model_pipeline_same_dense_and_sparse(LinearModel, params):
     if is_classifier(LinearModel):
         y = np.sign(y)
 
-    model_dense = make_pipeline(
-        StandardScaler(with_mean=False),
-        LinearModel(normalize=False, **params)
-    )
     model_dense.fit(X, y)
-
-    model_sparse = make_pipeline(
-        StandardScaler(with_mean=False),
-        LinearModel(normalize=False, **params)
-    )
     model_sparse.fit(X_sparse, y)
+
     assert_allclose(model_sparse[1].coef_, model_dense[1].coef_)
     y_pred_dense = model_dense.predict(X)
     y_pred_sparse = model_sparse.predict(X_sparse)
