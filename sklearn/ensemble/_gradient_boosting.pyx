@@ -32,6 +32,7 @@ ctypedef np.uint8_t uint8
 # no namespace lookup for numpy dtype and array creation
 from numpy import zeros as np_zeros
 from numpy import ones as np_ones
+from numpy import bool as np_bool
 from numpy import float32 as np_float32
 from numpy import float64 as np_float64
 
@@ -262,7 +263,7 @@ def _random_sample_mask(np.npy_intp n_total_samples,
      cdef np.ndarray[float64, ndim=1, mode="c"] rand = \
           random_state.rand(n_total_samples)
      cdef np.ndarray[uint8, ndim=1, mode="c", cast=True] sample_mask = \
-          np_zeros((n_total_samples,), dtype=bool)
+          np_zeros((n_total_samples,), dtype=np_bool)
 
      cdef np.npy_intp n_bagged = 0
      cdef np.npy_intp i = 0
