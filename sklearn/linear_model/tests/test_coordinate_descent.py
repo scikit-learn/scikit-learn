@@ -351,8 +351,7 @@ def test_model_pipeline_same_as_normalize_true(LinearModel, params):
 
 @pytest.mark.parametrize(
     "LinearModel, params",
-    [
-     (Lasso, {"tol": 1e-16, "alpha": 0.1}),
+    [(Lasso, {"tol": 1e-16, "alpha": 0.1}),
      (LassoCV, {"tol": 1e-16}),
      (ElasticNetCV, {}),
      (RidgeClassifier, {"solver": 'sparse_cg', "alpha": 0.1}),
@@ -360,8 +359,8 @@ def test_model_pipeline_same_as_normalize_true(LinearModel, params):
      (ElasticNet, {"tol": 1e-16, 'l1_ratio': 0, "alpha": 0.1}),
      (Ridge, {"solver": 'sparse_cg', 'tol': 1e-12, "alpha": 0.1}),
      (LinearRegression, {}),
-     (RidgeCV, {})
-     ])
+     (RidgeCV, {})]
+ )
 def test_model_pipeline_same_dense_and_sparse(LinearModel, params):
     # Test that linear model preceeded by StandardScaler in the pipeline and
     # with normalize set to False gives the same y_pred and the same .coef_
