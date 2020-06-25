@@ -77,6 +77,7 @@ def _set_order(X, y, order='C'):
 ###############################################################################
 # Paths functions
 
+# FIXME: 'normalize' to be removed in 0.26
 def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
                 eps=1e-3, n_alphas=100, normalize=False, copy_X=True):
     """ Compute the grid of alpha values for elastic net parameter search
@@ -117,6 +118,10 @@ def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
         :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
+        .. deprecated:: 0.24
+            ``normalize`` was deprecated in version 0.24 and will be removed in
+            0.26.
+
     copy_X : bool, default=True
         If ``True``, X will be copied; else, it may be overwritten.
     """
@@ -153,7 +158,7 @@ def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
     if sparse_center:
         if fit_intercept:
             Xy -= mean_dot[:, np.newaxis]
-        if normalize:
+        if normalize != 'deprecate' and normalize:
             Xy /= X_scale[:, np.newaxis]
 
     alpha_max = (np.sqrt(np.sum(Xy ** 2, axis=1)).max() /
@@ -469,6 +474,7 @@ def enet_path(X, y, *, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
 
     # X should be normalized and fit already if function is called
     # from ElasticNet.fit
+    # FIXME: 'normalize' to be removed in 0.26
     if check_input:
         X, y, X_offset, y_offset, X_scale, precompute, Xy = \
             _pre_fit(X, y, Xy, precompute, normalize=False,
@@ -476,6 +482,7 @@ def enet_path(X, y, *, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     if alphas is None:
         # No need to normalize of fit_intercept: it has been done
         # above
+        # FIXME: 'normalize' to be removed in 0.26
         alphas = _alpha_grid(X, y, Xy=Xy, l1_ratio=l1_ratio,
                              fit_intercept=False, eps=eps, n_alphas=n_alphas,
                              normalize=False, copy_X=False)
@@ -699,7 +706,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
 
     @_deprecate_positional_args
     def __init__(self, alpha=1.0, *, l1_ratio=0.5, fit_intercept=True,
-                 normalize='deprecated', precompute=False, max_iter=1000,
+                 normalize='deprecate', precompute=False, max_iter=1000,
                  copy_X=True, tol=1e-4, warm_start=False, positive=False,
                  random_state=None, selection='cyclic'):
         self.alpha = alpha
@@ -745,9 +752,11 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         initial data in memory directly using that format.
         """
 
-        if self.normalize != 'deprecated':
+        if self.normalize != "deprecate":
             warnings.warn("'normalize' was deprecated in version 0.24 and will"
-                          " be removed in 0.26.", FutureWarning)
+                            " be removed in 0.26.", FutureWarning)
+        else:
+            self.normalize = False
 
         if self.alpha == 0:
             warnings.warn("With alpha=0, this algorithm does not converge "
@@ -831,6 +840,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         dual_gaps_ = np.zeros(n_targets, dtype=X.dtype)
         self.n_iter_ = []
 
+        # FIXME: 'normalize' to be removed in 0.26
         for k in range(n_targets):
             if Xy is not None:
                 this_Xy = Xy[:, k]
@@ -841,8 +851,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
                           l1_ratio=self.l1_ratio, eps=None,
                           n_alphas=None, alphas=[alpha],
                           precompute=precompute, Xy=this_Xy,
-                          fit_intercept=False, normalize='deprecated',
-                          copy_X=True,
+                          fit_intercept=False, normalize=False, copy_X=True,
                           verbose=False, tol=self.tol, positive=self.positive,
                           X_offset=X_offset, X_scale=X_scale,
                           return_n_iter=True, coef_init=coef_[k],
@@ -1022,7 +1031,7 @@ class Lasso(ElasticNet):
 
     @_deprecate_positional_args
     def __init__(self, alpha=1.0, *, fit_intercept=True,
-                 normalize='deprecated',
+                 normalize='deprecate',
                  precompute=False, copy_X=True, max_iter=1000,
                  tol=1e-4, warm_start=False, positive=False,
                  random_state=None, selection='cyclic'):
@@ -1131,7 +1140,7 @@ def _path_residuals(X, y, train, test, path, path_params, alphas=None,
         y_offset = np.atleast_1d(y_offset)
         y_test = y_test[:, np.newaxis]
 
-    if normalize:
+    if normalize != 'deprecate' and normalize:
         nonzeros = np.flatnonzero(X_scale)
         coefs[:, nonzeros] /= X_scale[nonzeros][:, np.newaxis]
 
@@ -1264,6 +1273,13 @@ class LinearModelCV(MultiOutputMixin, LinearModel, metaclass=ABCMeta):
 
         # All LinearModelCV parameters except 'cv' are acceptable
         path_params = self.get_params()
+        if 'normalize' in path_params:
+            if path_params['normalize'] != "deprecate":
+                warnings.warn("'normalize' was deprecated in version 0.24 and"
+                              " will be removed in 0.26.", FutureWarning)
+            else:
+                path_params['normalize'] = False
+
         if 'l1_ratio' in path_params:
             l1_ratios = np.atleast_1d(path_params['l1_ratio'])
             # For the first path, we need to set l1_ratio
@@ -1513,9 +1529,9 @@ class LassoCV(RegressorMixin, LinearModelCV):
 
     @_deprecate_positional_args
     def __init__(self, *, eps=1e-3, n_alphas=100, alphas=None,
-                 fit_intercept=True, normalize='deprecated', precompute='auto',
-                 max_iter=1000, tol=1e-4,
-                 copy_X=True, cv=None, verbose=False, n_jobs=None,
+                 fit_intercept=True,
+                 normalize='deprecate', precompute='auto', max_iter=1000,
+                 tol=1e-4, copy_X=True, cv=None, verbose=False, n_jobs=None,
                  positive=False, random_state=None, selection='cyclic'):
         super().__init__(
             eps=eps, n_alphas=n_alphas, alphas=alphas,
@@ -1721,10 +1737,10 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
 
     @_deprecate_positional_args
     def __init__(self, *, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
-                 fit_intercept=True, normalize='deprecated', precompute='auto',
-                 max_iter=1000, tol=1e-4, cv=None, copy_X=True,
-                 verbose=0, n_jobs=None, positive=False, random_state=None,
-                 selection='cyclic'):
+                 fit_intercept=True, normalize='deprecate',
+                 precompute='auto', max_iter=1000, tol=1e-4, cv=None,
+                 copy_X=True, verbose=0, n_jobs=None, positive=False,
+                 random_state=None, selection='cyclic'):
         self.l1_ratio = l1_ratio
         self.eps = eps
         self.n_alphas = n_alphas
@@ -1871,7 +1887,7 @@ class MultiTaskElasticNet(Lasso):
     """
     @_deprecate_positional_args
     def __init__(self, alpha=1.0, *, l1_ratio=0.5, fit_intercept=True,
-                 normalize='deprecated', copy_X=True, max_iter=1000, tol=1e-4,
+                 normalize='deprecate', copy_X=True, max_iter=1000, tol=1e-4,
                  warm_start=False, random_state=None, selection='cyclic'):
         self.l1_ratio = l1_ratio
         self.alpha = alpha
@@ -1904,6 +1920,13 @@ class MultiTaskElasticNet(Lasso):
         To avoid memory re-allocation it is advised to allocate the
         initial data in memory directly using that format.
         """
+
+        if self.normalize != "deprecate":
+            warnings.warn("'normalize' was deprecated in version 0.24 and will"
+                          " be removed in 0.26.", FutureWarning)
+        else:
+            self.normalize = False
+
         # Need to validate separately here.
         # We can't pass multi_ouput=True because that would allow y to be csr.
         check_X_params = dict(dtype=[np.float64, np.float32], order='F',
@@ -2063,8 +2086,9 @@ class MultiTaskLasso(MultiTaskElasticNet):
     """
     @_deprecate_positional_args
     def __init__(self, alpha=1.0, *, fit_intercept=True,
-                 normalize='deprecated', copy_X=True, max_iter=1000, tol=1e-4,
-                 warm_start=False, random_state=None, selection='cyclic'):
+                 normalize='deprecate', copy_X=True, max_iter=1000,
+                 tol=1e-4, warm_start=False,
+                 random_state=None, selection='cyclic'):
         self.alpha = alpha
         self.fit_intercept = fit_intercept
         self.normalize = normalize
@@ -2136,7 +2160,7 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
         :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
-    .. deprecated:: 0.24
+        .. deprecated:: 0.24
             ``normalize`` was deprecated in version 0.24 and will be removed in
             0.26.
 
@@ -2247,7 +2271,7 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
 
     @_deprecate_positional_args
     def __init__(self, *, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
-                 fit_intercept=True, normalize='deprecated',
+                 fit_intercept=True, normalize='deprecate',
                  max_iter=1000, tol=1e-4, cv=None, copy_X=True,
                  verbose=0, n_jobs=None, random_state=None,
                  selection='cyclic'):
@@ -2321,7 +2345,7 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
         :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
-    .. deprecated:: 0.24
+        .. deprecated:: 0.24
             ``normalize`` was deprecated in version 0.24 and will be removed in
             0.26.
 
@@ -2430,9 +2454,9 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
     @_deprecate_positional_args
     def __init__(self, *, eps=1e-3, n_alphas=100, alphas=None,
                  fit_intercept=True,
-                 normalize='deprecated', max_iter=1000, tol=1e-4, copy_X=True,
-                 cv=None, verbose=False, n_jobs=None, random_state=None,
-                 selection='cyclic'):
+                 normalize='deprecate', max_iter=1000, tol=1e-4,
+                 copy_X=True, cv=None, verbose=False, n_jobs=None,
+                 random_state=None, selection='cyclic'):
         super().__init__(
             eps=eps, n_alphas=n_alphas, alphas=alphas,
             fit_intercept=fit_intercept, normalize=normalize,

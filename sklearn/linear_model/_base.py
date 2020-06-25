@@ -306,7 +306,7 @@ class LinearClassifierMixin(ClassifierMixin):
         """
         scores = self.decision_function(X)
         if len(scores.shape) == 1:
-            indices = (scores > 0).astype(int)
+            indices = (scores > 0).astype(np.int)
         else:
             indices = scores.argmax(axis=1)
         return self.classes_[indices]
@@ -578,6 +578,8 @@ def _pre_fit(X, y, Xy, precompute, normalize, fit_intercept, copy,
             check_input=check_input, sample_weight=sample_weight)
     if sample_weight is not None:
         X, y = _rescale_data(X, y, sample_weight=sample_weight)
+
+    # FIXME: 'normalize' to be removed in 0.26
     if hasattr(precompute, '__array__') and (
         fit_intercept and not np.allclose(X_offset, np.zeros(n_features)) or
             normalize and not np.allclose(X_scale, np.ones(n_features))):
