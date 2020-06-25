@@ -39,7 +39,8 @@ extensions = [
     'sphinx.ext.intersphinx',
     'sphinx.ext.imgconverter',
     'sphinx_gallery.gen_gallery',
-    'sphinx_issues'
+    'sphinx_issues',
+    'custom_autosummary_new_suffix'
 ]
 
 # this is needed for some reason...
@@ -410,3 +411,16 @@ linkcode_resolve = make_linkcode_resolve('sklearn',
 warnings.filterwarnings("ignore", category=UserWarning,
                         message='Matplotlib is currently using agg, which is a'
                                 ' non-GUI backend, so cannot show the figure.')
+
+# Used by custom extension: `custom_autosummary_new_suffix` to change the
+# suffix of the following functions. This works around the issue with
+# `sklearn.cluster.dbscan` overlapping with `klearn.cluster.DBSCAN`  on
+# case insensitive file systems.
+custom_autosummary_names_with_new_suffix = {
+    'sklearn.cluster.dbscan',
+    'sklearn.cluster.optics',
+    'sklearn.covariance.oas',
+    'sklearn.decomposition.fastica'
+}
+custom_autosummary_new_suffix = '-lowercase.rst'
+custom_autosummary_generated_dirname = os.path.join('modules', 'generated')
