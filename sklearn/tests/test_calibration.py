@@ -115,11 +115,16 @@ def test_calibration_default_estimator():
 
 def test_calibration_cv_splitter():
     # Check when `cv` is a CV splitter
+    X, y = make_classification(n_samples=100, n_features=6, random_state=42)
+
     splits = 5
     kfold = KFold(n_splits=splits)
     calib_clf = CalibratedClassifierCV(cv=kfold)
     assert isinstance(calib_clf.cv, KFold)
     assert calib_clf.cv.n_splits == splits
+
+    calib_clf.fit(X, y)
+    assert len(calib_clf.calibrated_classifiers_) == splits
 
 
 def test_sample_weight():
