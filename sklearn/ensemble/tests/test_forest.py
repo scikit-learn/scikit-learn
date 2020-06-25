@@ -11,7 +11,6 @@ Testing for the forest module (sklearn.ensemble.forest).
 import pickle
 import math
 from collections import defaultdict
-from distutils.version import LooseVersion
 import itertools
 from itertools import combinations
 from itertools import product
@@ -35,6 +34,7 @@ from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import assert_warns_message
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils._testing import skip_if_no_parallel
+from sklearn.utils.fixes import parse_version
 
 from sklearn.exceptions import NotFittedError
 
@@ -305,7 +305,7 @@ def test_importances_asymptotic():
             for B in combinations(features, k):
                 # For all values B=b
                 for b in product(*[values[B[j]] for j in range(k)]):
-                    mask_b = np.ones(n_samples, dtype=np.bool)
+                    mask_b = np.ones(n_samples, dtype=bool)
 
                     for j in range(k):
                         mask_b &= X[:, B[j]] == b[j]
@@ -339,7 +339,7 @@ def test_importances_asymptotic():
                      [1, 1, 1, 1, 0, 1, 1, 9],
                      [1, 1, 1, 0, 1, 1, 1, 0]])
 
-    X, y = np.array(data[:, :7], dtype=np.bool), data[:, 7]
+    X, y = np.array(data[:, :7], dtype=bool), data[:, 7]
     n_features = X.shape[1]
 
     # Compute true importances
@@ -845,6 +845,7 @@ def check_min_weight_fraction_leaf(name):
                 "Failed with {0} min_weight_fraction_leaf={1}".format(
                     name, est.min_weight_fraction_leaf))
 
+
 @pytest.mark.parametrize('name', FOREST_ESTIMATORS)
 def test_min_weight_fraction_leaf(name):
     check_min_weight_fraction_leaf(name)
@@ -1273,7 +1274,7 @@ class MyBackend(DEFAULT_JOBLIB_BACKEND):  # type: ignore
 joblib.register_parallel_backend('testing', MyBackend)
 
 
-@pytest.mark.skipif(joblib.__version__ < LooseVersion('0.12'),
+@pytest.mark.skipif(parse_version(joblib.__version__) < parse_version('0.12'),
                     reason='tests not yet supported in joblib <0.12')
 @skip_if_no_parallel
 def test_backend_respected():

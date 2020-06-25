@@ -659,6 +659,9 @@ def precision_recall_curve(y_true, probas_pred, *, pos_label=None,
 
     roc_curve : Compute Receiver operating characteristic (ROC) curve
 
+    plot_precision_recall_curve :
+        Plot Precision Recall Curve for binary classifiers
+
     Examples
     --------
     >>> import numpy as np

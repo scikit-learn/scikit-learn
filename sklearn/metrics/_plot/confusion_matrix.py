@@ -213,6 +213,11 @@ def plot_confusion_matrix(estimator, X, y_true, *, labels=None,
     -------
     display : :class:`~sklearn.metrics.ConfusionMatrixDisplay`
 
+    See Also
+    --------
+    confusion_matrix :
+        Compute confusion matrix to evaluate the accuracy of a classification
+
     Examples
     --------
     >>> import matplotlib.pyplot as plt  # doctest: +SKIP
