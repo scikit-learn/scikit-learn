@@ -817,7 +817,7 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
         batch_size = n_samples
         max_iter_update_w_ = 1
     else:
-        beta_loss='itakura-saito'
+        beta_loss = 'itakura-saito'
 
     beta_loss = _beta_loss_to_float(beta_loss)
 
@@ -1869,7 +1869,7 @@ class MiniBatchNMF(TransformerMixin, BaseEstimator):
 
     def partial_fit(self, X, y=None, **params):
         if hasattr(self, 'components_'):
-            #W = np.ones((X.shape[0], self.n_components_))
+            # W = np.ones((X.shape[0], self.n_components_))
             W = np.maximum(1e-6, X.sum(axis=1) * self._components_numerator_)
             W /= W.sum(axis=1, keepdims=True)
             W, H, A, B, n_iter_ = non_negative_factorization_online(
