@@ -884,7 +884,9 @@ def test_tsne_with_different_distance_metrics():
     random_state = check_random_state(0)
     n_components_original = 3
     n_components_embedding = 2
+
     X = random_state.randn(50, n_components_original).astype(np.float32)
+
     metrics = ['manhattan', 'cosine']
     dist_funcs = [manhattan_distances, cosine_distances]
     for metric, dist_func in zip(metrics, dist_funcs):
@@ -894,6 +896,7 @@ def test_tsne_with_different_distance_metrics():
         X_transformed_tsne_precomputed = TSNE(
             metric='precomputed', n_components=n_components_embedding,
             random_state=0, n_iter=300).fit_transform(dist_func(X))
+
         assert_array_equal(X_transformed_tsne, X_transformed_tsne_precomputed)
 
 
@@ -908,17 +911,21 @@ def test_tsne_with_legacy_euclidean_squaring(method):
     random_state = check_random_state(0)
     n_components_original = 3
     n_components_embedding = 2
+
+    # Make_blobs is used to impose structure, which guards against instability
     X, _ = make_blobs(n_features=n_components_original,
                       random_state=random_state)
+    X_precomputed = pairwise_distances(X, metric='euclidean', squared=True)
+
     X_transformed_tsne = TSNE(
         metric='euclidean', n_components=n_components_embedding,
         random_state=0, square_distance="legacy",
         method=method).fit_transform(X)
-    X_precomputed = pairwise_distances(X, metric='euclidean', squared=True)
     X_transformed_tsne_precomputed = TSNE(
         metric='precomputed', n_components=n_components_embedding,
         random_state=0, square_distance="legacy",
         method=method).fit_transform(X_precomputed)
+
     assert_array_equal(X_transformed_tsne, X_transformed_tsne_precomputed)
 
 
@@ -927,9 +934,10 @@ def test_tsne_with_different_square_distances():
     random_state = check_random_state(0)
     n_components_original = 3
     n_components_embedding = 2
+
     X = random_state.randn(50, n_components_original).astype(np.float32)
-    square_distances = [True, False]
-    for square_distance in square_distances:
+
+    for square_distance in [True, False]:
         X_transformed_tsne = TSNE(
             metric='euclidean', n_components=n_components_embedding,
             square_distance=square_distance, random_state=0).fit_transform(X)
@@ -945,11 +953,11 @@ def test_tsne_square_distance_futurewarning():
     """Make sure that a FutureWarning is only raised when a non-Euclidean
      metric is specified and square_metric is not True or False."""
     random_state = check_random_state(0)
+
     X = random_state.randn(5, 2)
-    metrics = ['euclidean', 'manhattan']
-    square_distances = [True, False, 'legacy', '']
-    for metric in metrics:
-        for square_distance in square_distances:
+
+    for metric in ['euclidean', 'manhattan']:
+        for square_distance in [True, False, 'legacy', '']:
             if square_distance == '':
                 tsne = TSNE(metric=metric)
             else:
