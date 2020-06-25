@@ -221,7 +221,6 @@ def test_lasso_cv():
 def test_lasso_cv_with_some_model_selection():
     from sklearn.model_selection import ShuffleSplit
     from sklearn import datasets
-    from sklearn.linear_model import LassoCV
 
     diabetes = datasets.load_diabetes()
     X = diabetes.data
