@@ -555,6 +555,7 @@ def test_estimatorclasses_positive_constraint():
         assert min(estimator.coef_) >= 0
 
 
+# FIXME: 'normalize' to be removed in 0.26
 def test_lasso_lars_vs_lasso_cd_positive():
     # Test that LassoLars and Lasso using coordinate descent give the
     # same results when using the positive option
@@ -607,6 +608,7 @@ def test_lasso_lars_vs_lasso_cd_positive():
         assert error < 0.01
 
 
+# FIXME: 'normalize' to be removed in 0.26
 def test_lasso_lars_vs_R_implementation():
     # Test that sklearn LassoLars implementation agrees with the LassoLars
     # implementation available in R (lars library) under the following
