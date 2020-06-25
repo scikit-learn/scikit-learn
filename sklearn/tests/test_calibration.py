@@ -389,7 +389,7 @@ def test_calibration_pipeline(text_data, text_data_pipeline):
     pytest.param(LinearSVC(C=1), 2),
     pytest.param(LinearSVC(C=1), 'prefit'),
 ])
-def test_calibration_class_attributes(clf, cv):
+def test_calibration_attributes(clf, cv):
     # Check that `n_features_in_` and `classes_` attributes created properly
     X, y = make_classification(n_samples=10, n_features=5,
                                n_classes=2, random_state=7)
