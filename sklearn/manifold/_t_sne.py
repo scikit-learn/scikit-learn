@@ -738,8 +738,7 @@ class TSNE(BaseEstimator):
                         # Euclidean is squared here, rather than using **= 2,
                         # because euclidean_distances already calculates
                         # squared distances, and returns np.sqrt(dist) for
-                        # squared=False. So, using dist **= 2 would result in:
-                        #   ^2 -> sqrt() -> ^2
+                        # squared=False.
                         distances = pairwise_distances(X, metric=self.metric,
                                                        squared=True)
                     else:
