@@ -176,7 +176,7 @@ def test_mdl_computation_weighted():
     expected_loss = 0.8563762
     # MultinomialDeviance loss computation with weights.
     loss = MultinomialDeviance(3)
-    assert_allclose(loss(y, pred, weights), expected_loss)
+    assert loss(y_true, y_pred, weights) == pytest.approx(expected_loss)
 
 
 @pytest.mark.parametrize('n', [0, 1, 2])
