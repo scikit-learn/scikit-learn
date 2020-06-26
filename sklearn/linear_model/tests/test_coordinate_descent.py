@@ -270,6 +270,8 @@ def test_lasso_cv_positive_constraint():
     assert min(clf_constrained.coef_) >= 0
 
 
+# FIXME: 'normalize' to be removed in 0.26
+@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 @pytest.mark.parametrize(
     "LinearModel, params",
     [(Lasso, {"tol": 1e-16, "alpha": 0.1}),
@@ -353,6 +355,8 @@ def test_model_pipeline_same_as_normalize_true(LinearModel, params):
     assert_allclose(y_pred_normalize, y_pred_standardize)
 
 
+# FIXME: 'normalize' to be removed in 0.26
+@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 @pytest.mark.parametrize(
     "LinearModel, params",
     [(Lasso, {"tol": 1e-16, "alpha": 0.1}),
