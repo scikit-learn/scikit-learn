@@ -69,9 +69,11 @@ class BayesianRidge(RegressorMixin, LinearModel):
         If you wish to standardize, please use
         :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
+
         .. deprecated:: 0.24
             ``normalize`` was deprecated in version 0.24 and will be removed in
             0.26.
+
     copy_X : bool, default=True
         If True, X will be copied; else, it may be overwritten.
     verbose : bool, default=False
@@ -187,7 +189,7 @@ class BayesianRidge(RegressorMixin, LinearModel):
                                                  dtype=X.dtype)
 
         X, y, X_offset_, y_offset_, X_scale_ = self._preprocess_data(
-            X, y, self.fit_intercept, self.normalize, self.copy_X,
+            X, y, self.fit_intercept, self._normalize, self.copy_X,
             sample_weight=sample_weight)
 
         if sample_weight is not None:
@@ -302,7 +304,7 @@ class BayesianRidge(RegressorMixin, LinearModel):
         if return_std is False:
             return y_mean
         else:
-            if self.normalize:
+            if self._normalize:
                 X = (X - self.X_offset_) / self.X_scale_
             sigmas_squared_data = (np.dot(X, self.sigma_) * X).sum(axis=1)
             y_std = np.sqrt(sigmas_squared_data + (1. / self.alpha_))
@@ -407,9 +409,11 @@ class ARDRegression(RegressorMixin, LinearModel):
         If you wish to standardize, please use
         :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
+
         .. deprecated:: 0.24
             ``normalize`` was deprecated in version 0.24 and will be removed in
             0.26.
+
     copy_X : bool, default=True
         If True, X will be copied; else, it may be overwritten.
     verbose : bool, default=False
