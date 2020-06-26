@@ -1539,7 +1539,7 @@ def validation_curve(estimator, X, y, *, param_name, param_range, groups=None,
 def _aggregate_score_dicts(scores):
     """Aggregate the list of dict to dict of np ndarray
 
-    The aggregated output of _fit_and_score will be a list of dict
+    The aggregated output of _aggregate_score_dicts will be a list of dict
     of form [{'prec': 0.1, 'acc':1.0}, {'prec': 0.1, 'acc':1.0}, ...]
     Convert it to a dict of array {'prec': np.array([0.1 ...]), ...}
 
@@ -1561,7 +1561,7 @@ def _aggregate_score_dicts(scores):
     """
     return {
         key: np.asarray([score[key] for score in scores])
-        if key.endswith(("time", "score"))
+        if isinstance(scores[0][key], numbers.Number)
         else [score[key] for score in scores]
         for key in scores[0]
     }
