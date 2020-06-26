@@ -186,7 +186,7 @@ class PCA(_BasePCA):
 
         .. versionadded:: 0.18.0
 
-    tol : float >= 0, default=0.0
+    tol : float, default=0.0
         Tolerance for singular values computed by svd_solver == 'arpack'.
 
         .. versionadded:: 0.18.0
