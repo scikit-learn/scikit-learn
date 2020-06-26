@@ -406,8 +406,10 @@ def test_calibration_pipeline(text_data, text_data_pipeline):
     calib_clf = CalibratedClassifierCV(clf, cv='prefit')
     calib_clf.fit(X, y)
     # Check attributes are obtained from fitted estimator
-    assert_array_equal(calib_clf.classes_, clf[-1].classes_)
-    assert calib_clf.n_features_in_ == clf[-1].n_features_in_
+    assert_array_equal(calib_clf.classes_, clf.classes_)
+    msg = "'CalibratedClassifierCV' object has no attribute"
+    with pytest.raises(AttributeError, match=msg):
+        calib_clf.n_features_in_
 
 
 @pytest.mark.parametrize('clf, cv', [

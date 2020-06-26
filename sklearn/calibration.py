@@ -190,12 +190,12 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
         if self.cv == "prefit":
             # Set `n_features_in_` attribute
             if isinstance(self.base_estimator, Pipeline):
-                estimator = self.base_estimator[-1]
+                check_is_fitted(self.base_estimator[-1])
             else:
-                estimator = self.base_estimator
-            check_is_fitted(estimator)
-            self.n_features_in_ = estimator.n_features_in_
-            self.classes_ = estimator.classes_
+                check_is_fitted(self.base_estimator)
+            if hasattr(self.base_estimator, "n_features_in_"):
+                self.n_features_in_ = self.base_estimator.n_features_in_
+            self.classes_ = self.base_estimator.classes_
 
             calibrated_classifier = _CalibratedClassifier(
                 base_estimator, method=self.method)
