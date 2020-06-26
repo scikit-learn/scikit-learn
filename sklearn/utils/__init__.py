@@ -24,7 +24,7 @@ from .class_weight import compute_class_weight, compute_sample_weight
 from . import _joblib
 from ..exceptions import DataConversionWarning
 from .deprecation import deprecated
-from .fixes import np_version
+from .fixes import np_version, parse_version
 from ._estimator_html_repr import estimator_html_repr
 from .validation import (as_float_array,
                          assert_all_finite,
@@ -171,7 +171,7 @@ def axis0_safe_slice(X, mask, len_mask):
 
 def _array_indexing(array, key, key_dtype, axis):
     """Index an array or scipy.sparse consistently across NumPy version."""
-    if np_version < (1, 12) or issparse(array):
+    if np_version < parse_version('1.12') or issparse(array):
         # FIXME: Remove the check for NumPy when using >= 1.12
         # check if we have an boolean array-likes to make the proper indexing
         if key_dtype == 'bool':
@@ -850,7 +850,7 @@ def indices_to_mask(indices, mask_length):
     if mask_length <= np.max(indices):
         raise ValueError("mask_length must be greater than max(indices)")
 
-    mask = np.zeros(mask_length, dtype=np.bool)
+    mask = np.zeros(mask_length, dtype=bool)
     mask[indices] = True
 
     return mask
@@ -953,7 +953,7 @@ def is_scalar_nan(x):
     """Tests if x is NaN
 
     This function is meant to overcome the issue that np.isnan does not allow
-    non-numerical types as input, and that np.nan is not np.float('nan').
+    non-numerical types as input, and that np.nan is not float('nan').
 
     Parameters
     ----------
@@ -1047,7 +1047,7 @@ def _approximate_mode(class_counts, n_draws, rng):
             need_to_add -= add_now
             if need_to_add == 0:
                 break
-    return floored.astype(np.int)
+    return floored.astype(int)
 
 
 def check_matplotlib_support(caller_name):
