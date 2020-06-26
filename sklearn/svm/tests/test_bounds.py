@@ -90,7 +90,7 @@ def test_newrand_set_seed(seed, val):
     if seed is not None:
         set_seed_wrap(seed)
     x = bounded_rand_int_wrap(100)
-    assert(x == val), 'Expected {} but got {} instead'.format(val, x)
+    assert x == val, f'Expected {val} but got {x} instead'
 
 
 @pytest.mark.parametrize('seed',
