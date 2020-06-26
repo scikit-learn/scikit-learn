@@ -30,7 +30,7 @@ class KernelPCA(TransformerMixin, BaseEstimator):
     n_components : int, default=None
         Number of components. If None, all non-zero components are kept.
 
-    kernel : {"linear", "poly", "rbf", "sigmoid", "cosine", "precomputed"} \
+    kernel : {"linear", "poly", "rbf", "sigmoid", "cosine", "precomputed"}, \
             default="linear"
         Kernel.
 
