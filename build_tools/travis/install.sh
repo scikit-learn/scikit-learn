@@ -45,7 +45,9 @@ conda create -n testenv --yes python=3.7
 source activate testenv
 
 pip install --upgrade pip setuptools
-echo "Installing numpy and scipy master wheels"
+echo "Installing numpy"
+pip install numpy==1.19.0
+echo "Installing scipy master wheels"
 dev_anaconda_url=https://pypi.anaconda.org/scipy-wheels-nightly/simple
 pip install --pre --upgrade --timeout=60 --extra-index $dev_anaconda_url numpy scipy pandas
 # Cython nightly build should be still fetched from the Rackspace container
