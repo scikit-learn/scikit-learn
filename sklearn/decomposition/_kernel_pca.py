@@ -46,7 +46,7 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         Ignored by other kernels.
 
     kernel_params : dict, default=None
-        Mapping of string to any. Parameters (keyword arguments) and
+        Parameters (keyword arguments) and
         values for kernel passed as callable object.
         Ignored by other kernels.
 
