@@ -262,7 +262,6 @@ def cross_validate(estimator, X, y=None, *, groups=None, scoring=None, cv=None,
         ret['estimator'] = fitted_estimators
 
     test_scores = _aggregate_score_dicts(results["test_scores"])
-
     if return_train_score:
         train_scores = _aggregate_score_dicts(results["train_scores"])
 
