@@ -2028,7 +2028,7 @@ class MultiTaskLasso(MultiTaskElasticNet):
     sparse_coef_ : sparse matrix of shape (n_tasks, n_features)
         ``sparse_coef_`` is a readonly property derived from ``coef_``
 
-    eps_: float, default=1e-4
+    eps_: float
         Same as ``tol``.
 
     Examples
