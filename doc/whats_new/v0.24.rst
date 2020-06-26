@@ -82,7 +82,7 @@ Changelog
 
 - |Fix| Fixed bug in :func:`ensemble.MultinomialDeviance.__call__` where the
   average of logloss was incorrectly calculated as sum of logloss.
-  :pr:`17694` by :user:`Tsutomu Kusanagi <t-kusanagi2>`
+  :pr:`17694` by :user:`Tsutomu Kusanagi <t-kusanagi2>`.
 
 :mod:`sklearn.feature_selection`
 ................................
