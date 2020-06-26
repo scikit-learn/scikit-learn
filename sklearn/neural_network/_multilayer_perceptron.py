@@ -1332,7 +1332,7 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
 
     t_: int
         mathematically equals n_iters * X.shape[0], it means
-        time_step and it is used by optimizer's learning rate scheduler
+        `time_step` and it is used by optimizer's learning rate scheduler.
 
     Examples
     --------
