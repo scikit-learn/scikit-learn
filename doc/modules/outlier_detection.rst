@@ -110,7 +110,7 @@ does not perform very well for outlier detection. That being said, outlier
 detection in high-dimension, or without any assumptions on the distribution
 of the inlying data is very challenging. :class:`svm.OneClassSVM` may still
 be used with outlier detection but requires fine-tuning of its hyperparameter
-:math:`\nu` to handle outliers and prevent overfitting. Finally,
+`\nu` to handle outliers and prevent overfitting. Finally,
 :class:`covariance.EllipticEnvelope` assumes the data is Gaussian and learns
 an ellipse. For more details on the different estimators refer to the example
 :ref:`sphx_glr_auto_examples_miscellaneous_plot_anomaly_comparison.py` and the
@@ -150,7 +150,7 @@ and implemented in the :ref:`svm` module in the
 kernel and a scalar parameter to define a frontier.  The RBF kernel is
 usually chosen although there exists no exact formula or algorithm to
 set its bandwidth parameter. This is the default in the scikit-learn
-implementation. The :math:`\nu` parameter, also known as the margin of
+implementation. The `\nu` parameter, also known as the margin of
 the One-Class SVM, corresponds to the probability of finding a new,
 but regular, observation outside the frontier.
 
