@@ -294,6 +294,7 @@ def test_model_pipeline_same_as_normalize_true(LinearModel, params):
     # in the pipeline and with normalize set to False
 
     # normalize is True
+    model_name = LinearModel.__name__
     model_normalize = LinearModel(normalize=True, fit_intercept=True, **params)
 
     pipeline = make_pipeline(
@@ -322,15 +323,12 @@ def test_model_pipeline_same_as_normalize_true(LinearModel, params):
 
     if 'alpha' in params:
         model_normalize.set_params(alpha=params['alpha'])
-        if isinstance(model_normalize, (Lasso, LassoLars, MultiTaskLasso)):
+        if model_name in ['Lasso', 'LassoLars', 'MultiTaskLasso']:
             pipeline[1].set_params(
                 alpha=params['alpha'] * np.sqrt(X_train.shape[0]))
-        if isinstance(model_normalize, (Ridge, RidgeClassifier)):
+        if model_name in ['Ridge', 'RidgeClassifier']:
             pipeline[1].set_params(alpha=params['alpha'] * X_train.shape[0])
-    if ((isinstance(model_normalize, (ElasticNet)) and
-         not isinstance(model_normalize, Lasso)) or
-        (isinstance(model_normalize, (MultiTaskElasticNet)) and
-         not isinstance(model_normalize, MultiTaskLasso))):
+    if model_name in ['ElasticNet', 'MultiTaskElasticNet']:
         if params['l1_ratio'] == 1:
             pipeline[1].set_params(
                 alpha=params['alpha'] * np.sqrt(X_train.shape[0]))
