@@ -71,7 +71,7 @@ def _beta_divergence(X, W, H, beta, square_root=False):
 
     H : float or array-like of shape (n_components, n_features)
 
-    beta : float or string in {'frobenius', 'kullback-leibler', \
+    beta : float or {'frobenius', 'kullback-leibler', \
             'itakura-saito'}
         Parameter of the beta-divergence.
         If beta == 2, this is half the Frobenius *squared* norm.
