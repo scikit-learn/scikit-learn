@@ -1396,11 +1396,10 @@ def test_gbr_degenerate_feature_importances():
 
 
 def test_gbr_deprecated_attr():
-    # growing an ensemble of single node trees. See #13620
+    # check that accessing n_classes_ in GradientBoostingRegressor raises
     X = np.zeros((10, 10))
     y = np.ones((10,))
     gbr = GradientBoostingRegressor().fit(X, y)
     msg = "Attribute {} was deprecated"
-    for att in ['n_classes_']:
-        with pytest.warns(FutureWarning, match=msg.format(att)):
-            getattr(gbr, att)
+    with pytest.warns(FutureWarning, match=msg.format('n_classes_')):
+        getattr(gbr, 'n_classes_')
