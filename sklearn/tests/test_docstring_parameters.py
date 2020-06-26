@@ -232,11 +232,13 @@ def test_fit_docstring_attributes(name, Estimator):
                'ElasticNetCV',
                'KernelCenterer',
                'LarsCV', 'Lasso', 'LassoLarsCV', 'LassoLarsIC',
+               'MiniBatchKMeans',
                'MultiTaskElasticNet', 'MultiTaskElasticNetCV',
                'MultiTaskLasso', 'MultiTaskLassoCV',
                'OrthogonalMatchingPursuit',
                'PLSCanonical', 'PLSSVD',
                'PassiveAggressiveClassifier'}
+
     if Estimator.__name__ in IGNORED:
         pytest.xfail(
             reason="Estimator has too many undocumented attributes.")
