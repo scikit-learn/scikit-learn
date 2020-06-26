@@ -152,6 +152,15 @@ class LocalOutlierFactor(KNeighborsMixin, UnsupervisedMixin,
 
         .. versionadded:: 0.20
 
+    effective_metric_ : str
+        The effective metric used for the distance computation.
+
+    effective_metric_params_ : dict
+        The effective additional keyword arguments for the metric function.
+
+    n_samples_fit_ : int
+        It is the number of samples in the fitted data.
+
     Examples
     --------
     >>> import numpy as np
