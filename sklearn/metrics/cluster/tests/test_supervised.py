@@ -411,19 +411,16 @@ def test_rand_score():
                                                    clustering2))
 
     # regular case: different non-trivial clusterings
-    clustering1 = np.array([i+1 for i in range(n) for j in range(n)])
-    clustering2 = np.array([i+1 for i in range(n) for j in range(n+1)][:N])
-    # basic quadratic implementation
-    expected = np.full(shape=(2, 2), fill_value=0, dtype=np.int64)
-    for i in range(len(clustering1)):
-        for j in range(len(clustering2)):
-            if i != j:
-                same_cluster_1 = int(clustering1[i] == clustering1[j])
-                same_cluster_2 = int(clustering2[i] == clustering2[j])
-                expected[same_cluster_1, same_cluster_2] += 1
-    expected_numerator = expected[0, 0] + expected[1, 1]
-    expected_denominator = (expected[0, 0] + expected[1, 1] + expected[0, 1] +
-                            expected[1, 0])
+    clustering1 = [0, 0, 0, 1, 1, 1]
+    clustering2 = [0, 1, 0, 1, 2, 2]
+    # pair confusion matrix
+    D11 = 2 * 2 # ordered pairs (1, 3), (5, 6)
+    D10 = 2 * 4 # ordered pairs (1, 2), (2, 3), (4, 5), (4, 6)
+    D01 = 2 * 1 # ordered pair (2, 4)
+    D00 = 5 * 6 - D11 - D01 - D10 # the remaining pairs
+    # rand score
+    expected_numerator = D00 + D11
+    expected_denominator = D00 + D01 + D10 +D11
     expected_score = expected_numerator / expected_denominator
     assert_array_almost_equal(expected_score, rand_score(clustering1,
                                                          clustering2))
