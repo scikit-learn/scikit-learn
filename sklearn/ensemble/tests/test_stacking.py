@@ -495,22 +495,22 @@ def test_stacking_cv_influence(stacker, X, y):
                         stacker_cv_5.final_estimator_.coef_)
 
 
-@pytest.mark.parametrize("make_dataset, Stacking, Regression", [
+@pytest.mark.parametrize("make_dataset, Stacking, Estimator", [
     (make_classification, StackingClassifier, LogisticRegression),
     (make_regression, StackingRegressor, LinearRegression)
 ])
-def test_stacking_without_n_features_in(make_dataset, Stacking, Regression):
+def test_stacking_without_n_features_in(make_dataset, Stacking, Estimator):
     # Stacking supports estimators without `n_features_in_`. Regression test
     # for #17353
 
-    class MyLR(Regression):
-        """Regresion without n_features_in_"""
+    class MyEstimator(Estimator):
+        """Estimator without n_features_in_"""
         def fit(self, X, y):
             super().fit(X, y)
             del self.n_features_in_
 
     X, y = make_dataset(random_state=0, n_samples=100)
-    stacker = Stacking(estimators=[('lr', MyLR())])
+    stacker = Stacking(estimators=[('lr', MyEstimator())])
 
     msg = f"{Stacking.__name__} object has no attribute n_features_in_"
     with pytest.raises(AttributeError, match=msg):
@@ -519,6 +519,6 @@ def test_stacking_without_n_features_in(make_dataset, Stacking, Regression):
     # Does not raise
     stacker.fit(X, y)
 
-    msg = "'MyLR' object has no attribute 'n_features_in_'"
+    msg = "'MyEstimator' object has no attribute 'n_features_in_'"
     with pytest.raises(AttributeError, match=msg):
         stacker.n_features_in_
