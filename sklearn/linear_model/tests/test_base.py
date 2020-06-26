@@ -24,6 +24,7 @@ from sklearn.datasets import make_sparse_uncorrelated
 from sklearn.datasets import make_regression
 from sklearn.datasets import load_iris
 
+
 rng = np.random.RandomState(0)
 rtol = 1e-6
 
@@ -153,7 +154,31 @@ def test_linear_regression_sparse(random_state=0):
         assert_array_almost_equal(ols.predict(X) - y.ravel(), 0)
 
 
+@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
+@pytest.mark.parametrize('normalize, n_warnings, warning',
+                         [(True, 1, FutureWarning),
+                          (False, 1, FutureWarning),
+                          (None, 0, None)])
+def test_assure_warning_when_normalize(normalize, n_warnings, warning):
+    rng = check_random_state(0)
+    n_samples = 200
+    n_features = 2
+    X = rng.randn(n_samples, n_features)
+    X[X < 0.1] = 0.
+    y = rng.rand(n_samples)
+    params = dict()
+    if normalize is not None:
+        params['normalize'] = normalize
+
+    clf = LinearRegression(**params)
+
+    with pytest.warns(warning) as record:
+        clf.fit(X, y)
+    assert len(record) == n_warnings
+
+
 # FIXME: 'normalize' to be removed in 0.26
+@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 @pytest.mark.parametrize('normalize', [True, False])
 @pytest.mark.parametrize('fit_intercept', [True, False])
 def test_linear_regression_sparse_equal_dense(normalize, fit_intercept):
@@ -239,7 +264,6 @@ def test_linear_regression_pd_sparse_dataframe_warning():
     assert not record
 
 
-# FIXME: 'normalize' to be removed in 0.26
 def test_preprocess_data():
     n_samples = 200
     n_features = 2
