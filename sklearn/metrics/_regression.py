@@ -30,6 +30,8 @@ from ..utils.validation import (check_array, check_consistent_length,
                                 _num_samples)
 from ..utils.validation import column_or_1d
 from ..utils.validation import _deprecate_positional_args
+from ..utils.validation import _check_sample_weight
+from ..utils.stats import _weighted_percentile
 from ..exceptions import UndefinedMetricWarning
 
 
@@ -134,11 +136,11 @@ def mean_absolute_error(y_true, y_pred, *,
     y_pred : array-like of shape (n_samples,) or (n_samples, n_outputs)
         Estimated target values.
 
-    sample_weight : array-like of shape (n_samples,), optional
+    sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
-    multioutput : string in ['raw_values', 'uniform_average'] \
-                or array-like of shape (n_outputs)
+    multioutput : {'raw_values', 'uniform_average'}  or array-like of shape \
+            (n_outputs,), default='uniform_average'
         Defines aggregating of multiple output values.
         Array-like value defines weights used to average errors.
 
@@ -206,11 +208,11 @@ def mean_squared_error(y_true, y_pred, *,
     y_pred : array-like of shape (n_samples,) or (n_samples, n_outputs)
         Estimated target values.
 
-    sample_weight : array-like of shape (n_samples,), optional
+    sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
-    multioutput : string in ['raw_values', 'uniform_average'] \
-                or array-like of shape (n_outputs)
+    multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
+            (n_outputs,), default='uniform_average'
         Defines aggregating of multiple output values.
         Array-like value defines weights used to average errors.
 
@@ -220,7 +222,7 @@ def mean_squared_error(y_true, y_pred, *,
         'uniform_average' :
             Errors of all outputs are averaged with uniform weight.
 
-    squared : boolean value, optional (default = True)
+    squared : bool, default=True
         If True returns MSE value, if False returns RMSE value.
 
     Returns
@@ -287,11 +289,11 @@ def mean_squared_log_error(y_true, y_pred, *,
     y_pred : array-like of shape (n_samples,) or (n_samples, n_outputs)
         Estimated target values.
 
-    sample_weight : array-like of shape (n_samples,), optional
+    sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
-    multioutput : string in ['raw_values', 'uniform_average'] \
-            or array-like of shape (n_outputs)
+    multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
+            (n_outputs,), default='uniform_average'
 
         Defines aggregating of multiple output values.
         Array-like value defines weights used to average errors.
@@ -340,7 +342,8 @@ def mean_squared_log_error(y_true, y_pred, *,
 
 
 @_deprecate_positional_args
-def median_absolute_error(y_true, y_pred, *, multioutput='uniform_average'):
+def median_absolute_error(y_true, y_pred, *, multioutput='uniform_average',
+                          sample_weight=None):
     """Median absolute error regression loss
 
     Median absolute error output is non-negative floating point. The best value
@@ -355,7 +358,7 @@ def median_absolute_error(y_true, y_pred, *, multioutput='uniform_average'):
         Estimated target values.
 
     multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
-                (n_outputs,)
+            (n_outputs,), default='uniform_average'
         Defines aggregating of multiple output values. Array-like value defines
         weights used to average errors.
 
@@ -364,6 +367,11 @@ def median_absolute_error(y_true, y_pred, *, multioutput='uniform_average'):
 
         'uniform_average' :
             Errors of all outputs are averaged with uniform weight.
+
+    sample_weight : array-like of shape (n_samples,), default=None
+        Sample weights.
+
+        .. versionadded:: 0.24
 
     Returns
     -------
@@ -392,7 +400,12 @@ def median_absolute_error(y_true, y_pred, *, multioutput='uniform_average'):
     """
     y_type, y_true, y_pred, multioutput = _check_reg_targets(
         y_true, y_pred, multioutput)
-    output_errors = np.median(np.abs(y_pred - y_true), axis=0)
+    if sample_weight is None:
+        output_errors = np.median(np.abs(y_pred - y_true), axis=0)
+    else:
+        sample_weight = _check_sample_weight(sample_weight, y_pred)
+        output_errors = _weighted_percentile(np.abs(y_pred - y_true),
+                                             sample_weight=sample_weight)
     if isinstance(multioutput, str):
         if multioutput == 'raw_values':
             return output_errors
@@ -421,11 +434,11 @@ def explained_variance_score(y_true, y_pred, *,
     y_pred : array-like of shape (n_samples,) or (n_samples, n_outputs)
         Estimated target values.
 
-    sample_weight : array-like of shape (n_samples,), optional
+    sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
-    multioutput : string in ['raw_values', 'uniform_average', \
-                'variance_weighted'] or array-like of shape (n_outputs)
+    multioutput : {'raw_values', 'uniform_average', 'variance_weighted'} or \
+            array-like of shape (n_outputs,), default='uniform_average'
         Defines aggregating of multiple output scores.
         Array-like value defines weights used to average scores.
 
@@ -516,11 +529,11 @@ def r2_score(y_true, y_pred, *, sample_weight=None,
     y_pred : array-like of shape (n_samples,) or (n_samples, n_outputs)
         Estimated target values.
 
-    sample_weight : array-like of shape (n_samples,), optional
+    sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
-    multioutput : string in ['raw_values', 'uniform_average', \
-'variance_weighted'] or None or array-like of shape (n_outputs)
+    multioutput : {'raw_values', 'uniform_average', 'variance_weighted'}, \
+            array-like of shape (n_outputs,) or None, default='uniform_average'
 
         Defines aggregating of multiple output scores.
         Array-like value defines weights used to average scores.

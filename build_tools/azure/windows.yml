@@ -17,6 +17,7 @@ jobs:
     JUNITXML: 'test-data.xml'
     SKLEARN_SKIP_NETWORK_TESTS: '1'
     PYTEST_VERSION: '5.2.1'
+    PYTEST_XDIST: 'true'
     TMP_FOLDER: '$(Agent.WorkFolder)\tmp_folder'
   strategy:
     matrix:

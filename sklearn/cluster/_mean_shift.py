@@ -134,7 +134,7 @@ def mean_shift(X, *, bandwidth=None, seeds=None, bin_seeding=False,
         each data point is used as a seed. If None and bin_seeding=True,
         see bin_seeding.
 
-    bin_seeding : boolean, default=False
+    bin_seeding : bool, default=False
         If true, initial kernel locations are not locations of all
         points, but rather the location of the discretized version of
         points, where points are binned onto a grid whose coarseness
@@ -169,10 +169,10 @@ def mean_shift(X, *, bandwidth=None, seeds=None, bin_seeding=False,
     Returns
     -------
 
-    cluster_centers : array, shape=[n_clusters, n_features]
+    cluster_centers : ndarray of shape (n_clusters, n_features)
         Coordinates of cluster centers.
 
-    labels : array, shape=[n_samples]
+    labels : ndarray of shape (n_samples,)
         Cluster labels for each point.
 
     Notes
@@ -298,10 +298,10 @@ class MeanShift(ClusterMixin, BaseEstimator):
 
     Attributes
     ----------
-    cluster_centers_ : array, [n_clusters, n_features]
+    cluster_centers_ : ndarray of shape (n_clusters, n_features)
         Coordinates of cluster centers.
 
-    labels_ : array of shape (n_samples,)
+    labels_ : ndarray of shape (n_samples,)
         Labels of each point.
 
     n_iter_ : int
@@ -419,7 +419,7 @@ class MeanShift(ClusterMixin, BaseEstimator):
                                      key=lambda tup: (tup[1], tup[0]),
                                      reverse=True)
         sorted_centers = np.array([tup[0] for tup in sorted_by_intensity])
-        unique = np.ones(len(sorted_centers), dtype=np.bool)
+        unique = np.ones(len(sorted_centers), dtype=bool)
         nbrs = NearestNeighbors(radius=bandwidth,
                                 n_jobs=self.n_jobs).fit(sorted_centers)
         for i, center in enumerate(sorted_centers):
@@ -433,7 +433,7 @@ class MeanShift(ClusterMixin, BaseEstimator):
         # ASSIGN LABELS: a point belongs to the cluster that it is closest to
         nbrs = NearestNeighbors(n_neighbors=1,
                                 n_jobs=self.n_jobs).fit(cluster_centers)
-        labels = np.zeros(n_samples, dtype=np.int)
+        labels = np.zeros(n_samples, dtype=int)
         distances, idxs = nbrs.kneighbors(X)
         if self.cluster_all:
             labels = idxs.flatten()
@@ -450,12 +450,12 @@ class MeanShift(ClusterMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix}, shape=[n_samples, n_features]
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             New data to predict.
 
         Returns
         -------
-        labels : array, shape [n_samples,]
+        labels : ndarray of shape (n_samples,)
             Index of the cluster each sample belongs to.
         """
         check_is_fitted(self)
