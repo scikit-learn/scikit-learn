@@ -64,7 +64,13 @@ Changelog
 - |Fix| Fixed a bug in
   :func:`decomposition.MiniBatchDictionaryLearning.partial_fit` which should
   update the dictionary by iterating only once over a mini-batch.
-  :pr:`17433` by :user:`Chiara Marmo <cmarmo>`
+  :pr:`17433` by :user:`Chiara Marmo <cmarmo>`.
+
+- |Fix| Fix :class:`decomposition.SparseCoder` such that it follows
+  scikit-learn API and support cloning. The attribute `components_` is
+  deprecated in 0.24 and will be removed in 0.26. This attribute was
+  redundant with the `dictionary` attribute and constructor parameter.
+  :pr:`17679` by :user:`Xavier Dupré <sdpython>`.
 
 :mod:`sklearn.ensemble`
 .......................
