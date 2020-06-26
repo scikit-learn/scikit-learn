@@ -401,6 +401,10 @@ def test_model_pipeline_same_dense_and_sparse(LinearModel, params):
     y_pred_sparse = model_sparse.predict(X_sparse)
     assert_allclose(y_pred_dense, y_pred_sparse)
 
+    assert_allclose(model_dense[1].intercept_,
+                    model_sparse[1].intercept_ - np.mean(X, axis=0).dot(
+                        model_sparse[1].coef_))
+
 
 def test_lasso_path_return_models_vs_new_return_gives_same_coefficients():
     # Test that lasso_path with lars_path style output gives the
