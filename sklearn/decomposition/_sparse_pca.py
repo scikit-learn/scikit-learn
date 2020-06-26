@@ -192,7 +192,7 @@ class SparsePCA(TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        X_new ndarray of shape (n_samples, n_components)
+        X_new : ndarray of shape (n_samples, n_components)
             Transformed data.
         """
         check_is_fitted(self)
