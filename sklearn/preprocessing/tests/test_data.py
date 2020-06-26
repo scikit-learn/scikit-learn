@@ -2506,3 +2506,63 @@ def test_standard_scaler_sparse_partial_fit_finite_variance(X_2):
     scaler = StandardScaler(with_mean=False)
     scaler.fit(X_1).partial_fit(X_2)
     assert np.isfinite(scaler.var_[0])
+
+
+def test_minmax_scaler_cupy():
+    cp = pytest.importorskip("cupy")
+    X_np = iris.data
+    X_cp = cp.asarray(X_np)
+
+    scaler = MinMaxScaler(copy=True)
+    t_X_cp = scaler.fit_transform(X_cp)
+    assert type(t_X_cp) == type(X_cp)
+
+    r_X_cp = scaler.inverse_transform(t_X_cp)
+    assert type(r_X_cp) == type(t_X_cp)
+
+    r_X_cp = cp.asnumpy(r_X_cp)
+    assert_almost_equal(r_X_cp, X_np, decimal=3)
+
+    scaler = MinMaxScaler(copy=True)
+    t_X_np = scaler.fit_transform(X_np)
+
+    t_X_cp = cp.asnumpy(t_X_cp)
+    assert_almost_equal(t_X_cp, t_X_np, decimal=3)
+
+
+def test_minmax_scale_cupy():
+    cp = pytest.importorskip("cupy")
+    X_np = iris.data
+    X_cp = cp.asarray(X_np)
+
+    t_X_cp = minmax_scale(X_cp)
+    assert type(t_X_cp) == type(X_cp)
+
+    t_X_np = minmax_scale(X_np)
+
+    t_X_cp = cp.asnumpy(t_X_cp)
+    assert_almost_equal(t_X_cp, t_X_np, decimal=3)
+
+
+@pytest.mark.parametrize("with_mean", [True, False])
+@pytest.mark.parametrize("with_std", [True, False])
+def test_standard_scaler_cupy(with_mean, with_std):
+    cp = pytest.importorskip("cupy")
+    X_np = iris.data
+    X_cp = cp.asarray(X_np)
+
+    scaler = StandardScaler(copy=True, with_mean=with_mean, with_std=with_std)
+    t_X_cp = scaler.fit_transform(X_cp)
+    assert type(t_X_cp) == type(X_cp)
+
+    r_X_cp = scaler.inverse_transform(t_X_cp)
+    assert type(r_X_cp) == type(t_X_cp)
+
+    r_X_cp = cp.asnumpy(r_X_cp)
+    assert_almost_equal(r_X_cp, X_np, decimal=3)
+
+    scaler = StandardScaler(copy=True, with_mean=with_mean, with_std=with_std)
+    t_X_np = scaler.fit_transform(X_np)
+
+    t_X_cp = cp.asnumpy(t_X_cp)
+    assert_almost_equal(t_X_cp, t_X_np, decimal=3)

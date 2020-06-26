@@ -7,9 +7,10 @@ non-numpy arrays.
 from .fixes import np_version
 
 import numpy as np
+import cupy as cp
 
 
-def create_like(create, create_like):
+def np_create_like(create, create_like):
     """Generalization of (empty|zeros|ones)_like"""
     name = create.__name__
 
@@ -44,6 +45,38 @@ def create_like(create, create_like):
     return metafunction
 
 
-empty_like = create_like(np.empty, np.empty_like)
-zeros_like = create_like(np.zeros, np.zeros_like)
-ones_like = create_like(np.ones, np.ones_like)
+def create_like(np_ufunc, np_ugunc_like, cp_ufunc_like):
+
+    def metafunction(prototype, dtype=None, order='C',
+                     subok=True, shape=None):
+        if isinstance(prototype, np.ndarray):
+            meta_f = np_create_like(np_ufunc, np_ugunc_like)
+            return meta_f(prototype, dtype=dtype, order=order,
+                          subok=subok, shape=shape)
+        elif isinstance(prototype, cp.ndarray):
+            return cp_ufunc_like(prototype, dtype=dtype, order=order,
+                                 shape=shape)
+        else:
+            raise NotImplementedError
+        return metafunction
+
+    return metafunction
+
+
+empty_like = create_like(np.empty, np.empty_like, cp.empty_like)
+zeros_like = create_like(np.zeros, np.zeros_like, cp.zeros_like)
+ones_like = create_like(np.ones, np.ones_like, cp.ones_like)
+
+
+def asarray(X, order=None, dtype=None):
+    if isinstance(X, cp.ndarray):
+        return X
+    else:
+        return np.asarray(X, order=order, dtype=dtype)
+
+
+def asanyarray(X, order=None, dtype=None):
+    if isinstance(X, cp.ndarray):
+        return X
+    else:
+        return np.asanyarray(X, order=order, dtype=dtype)

@@ -14,6 +14,7 @@ import warnings
 from itertools import combinations_with_replacement as combinations_w_r
 
 import numpy as np
+import cupy as cp
 from scipy import sparse
 from scipy import stats
 from scipy import optimize
@@ -21,6 +22,7 @@ from scipy.special import boxcox
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
+from ..utils.array_creation import zeros_like, asarray
 from ..utils.extmath import row_norms
 from ..utils.extmath import _incremental_mean_and_var
 from ..utils.array_creation import empty_like
@@ -71,7 +73,7 @@ def _handle_zeros_in_scale(scale, copy=True):
         if scale == .0:
             scale = 1.
         return scale
-    elif isinstance(scale, np.ndarray):
+    elif isinstance(scale, (np.ndarray, cp.ndarray)):
         if copy:
             # New array to avoid side-effects
             scale = scale.copy()
@@ -740,7 +742,8 @@ class StandardScaler(TransformerMixin, BaseEstimator):
                     self.n_samples_seen_ += X.shape[0] - counts_nan
         else:
             if not hasattr(self, 'n_samples_seen_'):
-                self.n_samples_seen_ = np.zeros(X.shape[1], dtype=np.int64)
+                self.n_samples_seen_ = zeros_like(X, shape=X.shape[1],
+                                                  dtype=np.int64)
 
             # First pass
             if not hasattr(self, 'scale_'):
@@ -753,7 +756,7 @@ class StandardScaler(TransformerMixin, BaseEstimator):
             if not self.with_mean and not self.with_std:
                 self.mean_ = None
                 self.var_ = None
-                self.n_samples_seen_ += X.shape[0] - np.isnan(X).sum(axis=0)
+                self.n_samples_seen_ += (X == X).sum(axis=0)
             else:
                 self.mean_, self.var_, self.n_samples_seen_ = \
                     _incremental_mean_and_var(X, self.mean_, self.var_,
@@ -762,7 +765,8 @@ class StandardScaler(TransformerMixin, BaseEstimator):
         # for backward-compatibility, reduce n_samples_seen_ to an integer
         # if the number of samples is the same for each feature (i.e. no
         # missing values)
-        if np.ptp(self.n_samples_seen_) == 0:
+        ptp = self.n_samples_seen_.max() - self.n_samples_seen_.min()
+        if ptp == 0:
             self.n_samples_seen_ = self.n_samples_seen_[0]
 
         if self.with_std:
@@ -835,7 +839,7 @@ class StandardScaler(TransformerMixin, BaseEstimator):
             if self.scale_ is not None:
                 inplace_column_scale(X, self.scale_)
         else:
-            X = np.asarray(X)
+            X = asarray(X)
             if copy:
                 X = X.copy()
             if self.with_std:
