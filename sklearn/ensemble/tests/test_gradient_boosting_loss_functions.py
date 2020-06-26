@@ -166,7 +166,7 @@ def test_multinomial_deviance(n_classes, n_samples):
     assert loss_wo_sw > 0
     loss_w_sw = loss(y, p, np.ones(p.shape[0], dtype=np.float32))
     assert loss_wo_sw == pytest.approx(loss_w_sw)
-    loss_w_sw = loss(y, p, 0.5 * np.ones(p.shape[0], dtype=np.float32))
+    loss_w_sw = loss(y, p, sample_weight=0.5 * sample_weight)
     assert loss_wo_sw == pytest.approx(loss_w_sw)
 
 
