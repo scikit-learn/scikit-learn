@@ -26,7 +26,7 @@ def test_binomial_deviance():
 
     # pred has the same BD for y in {0, 1}
     assert (bd(np.array([0.0]), np.array([0.0])) ==
-                 bd(np.array([1.0]), np.array([0.0])))
+            bd(np.array([1.0]), np.array([0.0])))
 
     assert_almost_equal(bd(np.array([1.0, 1.0, 1.0]),
                            np.array([100.0, 100.0, 100.0])),
@@ -154,10 +154,10 @@ def test_init_raw_predictions_shapes():
     n_samples = 100
     X = rng.normal(size=(n_samples, 5))
     y = rng.normal(size=n_samples)
-    for loss in (LeastSquaresError(n_classes=1),
-                 LeastAbsoluteError(n_classes=1),
-                 QuantileLossFunction(n_classes=1),
-                 HuberLossFunction(n_classes=1)):
+    for loss in (LeastSquaresError(),
+                 LeastAbsoluteError(),
+                 QuantileLossFunction(),
+                 HuberLossFunction()):
         init_estimator = loss.init_estimator().fit(X, y)
         raw_predictions = loss.get_init_raw_predictions(y, init_estimator)
         assert raw_predictions.shape == (n_samples, 1)
@@ -190,7 +190,7 @@ def test_init_raw_predictions_values():
     y = rng.normal(size=n_samples)
 
     # Least squares loss
-    loss = LeastSquaresError(n_classes=1)
+    loss = LeastSquaresError()
     init_estimator = loss.init_estimator().fit(X, y)
     raw_predictions = loss.get_init_raw_predictions(y, init_estimator)
     # Make sure baseline prediction is the mean of all targets
@@ -198,7 +198,7 @@ def test_init_raw_predictions_values():
 
     # Least absolute and huber loss
     for Loss in (LeastAbsoluteError, HuberLossFunction):
-        loss = Loss(n_classes=1)
+        loss = Loss()
         init_estimator = loss.init_estimator().fit(X, y)
         raw_predictions = loss.get_init_raw_predictions(y, init_estimator)
         # Make sure baseline prediction is the median of all targets
@@ -206,7 +206,7 @@ def test_init_raw_predictions_values():
 
     # Quantile loss
     for alpha in (.1, .5, .9):
-        loss = QuantileLossFunction(n_classes=1, alpha=alpha)
+        loss = QuantileLossFunction(alpha=alpha)
         init_estimator = loss.init_estimator().fit(X, y)
         raw_predictions = loss.get_init_raw_predictions(y, init_estimator)
         # Make sure baseline prediction is the alpha-quantile of all targets
@@ -247,8 +247,8 @@ def test_init_raw_predictions_values():
 @pytest.mark.parametrize('seed', range(5))
 def test_lad_equals_quantile_50(seed):
     # Make sure quantile loss with alpha = .5 is equivalent to LAD
-    lad = LeastAbsoluteError(n_classes=1)
-    ql = QuantileLossFunction(n_classes=1, alpha=0.5)
+    lad = LeastAbsoluteError()
+    ql = QuantileLossFunction(alpha=0.5)
 
     n_samples = 50
     rng = np.random.RandomState(seed)

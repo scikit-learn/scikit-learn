@@ -165,6 +165,10 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         self.n_iter_no_change = n_iter_no_change
         self.tol = tol
 
+    @abstractmethod
+    def _validate_y(self, y, sample_weight=None):
+        pass
+
     def _fit_stage(self, i, X, y, raw_predictions, sample_weight, sample_mask,
                    random_state, X_csc=None, X_csr=None):
         """Fit another stage of ``_n_classes`` trees to the boosting model. """
@@ -240,10 +244,12 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         else:
             loss_class = _gb_losses.LOSS_FUNCTIONS[self.loss]
 
-        if self.loss in ('huber', 'quantile'):
-            self.loss_ = loss_class(self._n_classes, self.alpha)
+        if is_classifier(self):
+            self.loss_ = loss_class(self.n_classes_)
+        elif self.loss in ("huber", "quantile"):
+            self.loss_ = loss_class(self.alpha)
         else:
-            self.loss_ = loss_class(self._n_classes)
+            self.loss_ = loss_class()
 
         if not (0.0 < self.subsample <= 1.0):
             raise ValueError("subsample must be in (0,1] but "
@@ -265,11 +271,9 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
         if isinstance(self.max_features, str):
             if self.max_features == "auto":
-                # if is_classification
-                if self._n_classes > 1:
+                if is_classifier(self):
                     max_features = max(1, int(np.sqrt(self.n_features_)))
                 else:
-                    # is regression
                     max_features = self.n_features_
             elif self.max_features == "sqrt":
                 max_features = max(1, int(np.sqrt(self.n_features_)))
@@ -405,7 +409,11 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         sample_weight = _check_sample_weight(sample_weight, X)
 
         y = column_or_1d(y, warn=True)
-        y = self._validate_y(y, sample_weight)
+
+        if is_classifier(self):
+            y = self._validate_y(y, sample_weight)
+        else:
+            y = self._validate_y(y)
 
         if self.n_iter_no_change is not None:
             stratify = y if is_classifier(self) else None
@@ -710,15 +718,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         averaged_predictions *= self.learning_rate
 
         return averaged_predictions
-
-    def _validate_y(self, y, sample_weight):
-        # 'sample_weight' is not utilised but is used for
-        # consistency with similar method _validate_y of GBC
-        self._n_classes = 1
-        if y.dtype.kind == 'O':
-            y = y.astype(DOUBLE)
-        # Default implementation
-        return y
 
     def apply(self, X):
         """Apply trees in the ensemble to X, return leaf indices.
@@ -1085,7 +1084,7 @@ shape (n_estimators, ``loss_.K``)
                              "minimum of 2 classes are required."
                              % n_trim_classes)
         self._n_classes = len(self.classes_)
-        # expose n_classes_ attribute only for classifier
+        # expose n_classes_ attribute
         self.n_classes_ = self._n_classes
         return y
 
@@ -1573,6 +1572,11 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
             max_leaf_nodes=max_leaf_nodes, warm_start=warm_start,
             validation_fraction=validation_fraction,
             n_iter_no_change=n_iter_no_change, tol=tol, ccp_alpha=ccp_alpha)
+
+    def _validate_y(self, y):
+        if y.dtype.kind == 'O':
+            y = y.astype(DOUBLE)
+        return y
 
     def predict(self, X):
         """Predict regression target for X.

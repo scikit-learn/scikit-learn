@@ -152,11 +152,8 @@ class RegressionLossFunction(LossFunction, metaclass=ABCMeta):
     n_classes : int
         Number of classes.
     """
-    def __init__(self, n_classes):
-        if n_classes != 1:
-            raise ValueError("``n_classes`` must be 1 for regression but "
-                             "was %r" % n_classes)
-        super().__init__(n_classes)
+    def __init__(self):
+        super().__init__(n_classes=1)
 
     def check_init_estimator(self, estimator):
         """Make sure estimator has the required fit and predict methods.
@@ -340,8 +337,8 @@ class HuberLossFunction(RegressionLossFunction):
     Machine, The Annals of Statistics, Vol. 29, No. 5, 2001.
     """
 
-    def __init__(self, n_classes, alpha=0.9):
-        super().__init__(n_classes)
+    def __init__(self, alpha=0.9):
+        super().__init__()
         self.alpha = alpha
         self.gamma = None
 
@@ -445,8 +442,8 @@ class QuantileLossFunction(RegressionLossFunction):
     alpha : float, default=0.9
         The percentile.
     """
-    def __init__(self, n_classes, alpha=0.9):
-        super().__init__(n_classes)
+    def __init__(self, alpha=0.9):
+        super().__init__()
         self.alpha = alpha
         self.percentile = alpha * 100
 
