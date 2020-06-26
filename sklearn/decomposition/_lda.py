@@ -447,7 +447,7 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        doc_topic_distr : array of shape (n_samples, n_components)
+        doc_topic_distr : ndarray of shape (n_samples, n_components)
             Unnormalized document topic distribution.
         """
 
