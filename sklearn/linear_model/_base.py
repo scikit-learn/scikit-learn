@@ -119,7 +119,6 @@ def _preprocess_data(X, y, fit_intercept, normalize=False, copy=True,
     This is here because nearly all linear models will want their data to be
     centered. This function also systematically makes y consistent with X.dtype
     """
-
     if isinstance(sample_weight, numbers.Number):
         sample_weight = None
     if sample_weight is not None:
@@ -513,11 +512,9 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
             else:
                 warnings.warn("'normalize' was deprecated in version 0.24"
                               " and will be removed in 0.26."
-                              " If you wish to keep normalizing your data"
-                              " consider using a pipeline: \n"
-                              " from sklearn.preprocessing import"
-                              " StandardScaler \n"
-                              " from sklearn.pipeline import make_pipeline"
+                              " If you wish to keep equivalent behaviour, use"
+                              " Pipeline with a StandardScaler in a"
+                              " preprocessing stage:"
                               "  model = make_pipeline( \n"
                               "    StandardScaler(with_mean=False), \n"
                               "    {}())".format(type(self).__name__),
