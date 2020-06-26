@@ -20,6 +20,7 @@ Supervised learning
     modules/tree
     modules/ensemble
     modules/multiclass
+    modules/multioutput
     modules/feature_selection.rst
     modules/label_propagation.rst
     modules/isotonic.rst
