@@ -512,8 +512,8 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
             else:
                 warnings.warn("'normalize' was deprecated in version 0.24"
                               " and will be removed in 0.26."
-                              " If you wish to keep equivalent behaviour, use"
-                              " Pipeline with a StandardScaler in a"
+                              " If you wish to keep an equivalent behaviour,"
+                              " use  Pipeline with a StandardScaler in a"
                               " preprocessing stage:"
                               "  model = make_pipeline( \n"
                               "    StandardScaler(with_mean=False), \n"
