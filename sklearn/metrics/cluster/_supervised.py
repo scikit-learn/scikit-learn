@@ -237,11 +237,13 @@ def pair_confusion_matrix(labels_true, labels_pred):
                                      dtype=np.int64)
     n_c = np.ravel(contingency.sum(axis=1))
     n_k = np.ravel(contingency.sum(axis=0))
-    Sum_Squares = sum(n_ij*n_ij for n_ij in contingency.data)
-    D11 = Sum_Squares - n_samples
-    D01 = sum(contingency.dot(n_k)) - Sum_Squares
-    D10 = sum(contingency.transpose().dot(n_c)) - Sum_Squares
-    D00 = n_samples * n_samples - D01 - D10 - Sum_Squares
+    sum_comb = sum(_comb2(n_ij) for n_ij in contingency.data)
+    sum_comb_c = sum(_comb2(n_c) for n_c in np.ravel(contingency.sum(axis=1)))
+    sum_comb_k = sum(_comb2(n_k) for n_k in np.ravel(contingency.sum(axis=0)))
+    D11 = 2 * sum_comb
+    D01 = 2 * (sum_comb_k - sum_comb)
+    D10 = 2 * (sum_comb_c - sum_comb)
+    D00 = n_samples * n_samples - n_samples - D01 - D10 - D11
     return np.array([[D00, D01], [D10, D11]])
 
 
@@ -281,7 +283,6 @@ def rand_score(labels_true, labels_pred):
 
     Examples
     --------
-
     Perfectly matching labelings have a score of 1 even
 
       >>> from sklearn.metrics.cluster import rand_score
@@ -310,7 +311,6 @@ def rand_score(labels_true, labels_pred):
 
     References
     ----------
-
     .. [Hubert1985] L. Hubert and P. Arabie, Comparing Partitions,
       Journal of Classification 1985
       https://link.springer.com/article/10.1007%2FBF01908075
