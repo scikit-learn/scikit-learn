@@ -122,6 +122,10 @@ Changelog
 :mod:`sklearn.metrics`
 ......................
 
+- |Feature| Add :func:`metrics.rand_score` implementing the (unadjusted)
+  Rand index.
+  :pr:`17412` by :user:`Uwe F Mayer <ufmayer>`
+
 - |Fix| Fixed a bug in :func:`metrics.mean_squared_error` where the
   average of multiple RMSE values was incorrectly calculated as the root of the
   average of multiple MSE values.
