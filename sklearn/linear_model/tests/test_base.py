@@ -153,10 +153,12 @@ def test_linear_regression_sparse(random_state=0):
         assert_array_almost_equal(ols.predict(X) - y.ravel(), 0)
 
 
-@pytest.mark.parametrize('normalize, n_warnings, warning',
-                         [(True, 1, FutureWarning),
-                          (False, 1, FutureWarning),
-                          (None, 0, None)])
+@pytest.mark.parametrize(
+    'normalize, n_warnings, warning',
+    [(True, 1, FutureWarning),
+     (False, 1, FutureWarning),
+     ("deprecate", 0, None)]
+)
 def test_assure_warning_when_normalize(normalize, n_warnings, warning):
     rng = check_random_state(0)
     n_samples = 200
