@@ -222,7 +222,7 @@ def fastica(X, n_components=None, *, algorithm="parallel", whiten=True,
 
     Returns
     -------
-    K : ndarray of shape (n_components, n_features) or None.
+    K : ndarray of shape (n_components, n_features) or None
         If whiten is 'True', K is the pre-whitening matrix that projects data
         onto the first n_components principal components. If whiten is 'False',
         K is 'None'.
