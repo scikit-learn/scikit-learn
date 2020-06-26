@@ -29,6 +29,7 @@ from ..base import ClassifierMixin
 from ..base import RegressorMixin
 from ..base import BaseEstimator
 from ..base import is_classifier
+from ..utils import deprecated
 
 from ._gradient_boosting import predict_stages
 from ._gradient_boosting import predict_stage
@@ -1495,6 +1496,13 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     estimators_ : ndarray of DecisionTreeRegressor of shape (n_estimators, 1)
         The collection of fitted sub-estimators.
 
+    n_classes_ : int
+        The number of classes, set to 1 for regressors.
+
+        .. deprecated:: 0.24
+            Attribute n_classes_ was deprecated in version 0.24 and
+            will be removed in 0.26. Use ``classes_`` instead.
+
     n_estimators_ : int
         The number of estimators as selected by early stopping (if
         ``n_iter_no_change`` is specified). Otherwise it is set to
@@ -1640,3 +1648,10 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         leaves = super().apply(X)
         leaves = leaves.reshape(X.shape[0], self.estimators_.shape[0])
         return leaves
+
+    # FIXME: to be removed in 0.26
+    @deprecated("Attribute n_classes_ was deprecated in version 0.24 and "
+                "will be removed in 0.26. Use 'classes_' instead")
+    @property
+    def n_classes_(self):
+        return 1
