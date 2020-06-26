@@ -153,9 +153,9 @@ The sigmoid regressor is based on Platt's logistic model [3]_:
        p(y_i = 1 | f_i) = \frac{1}{1 + \exp(A f_i + B)}
 
 where :math:`y_i` is the true label of sample :math:`i` and :math:`f_i`
-is the output of the classifier for sample :math:`i`. :math:`A` and :math:`B`
-are real numbers to be determined when fitting the regressor via maximum
-likelihood.
+is the output of the un-calibrated classifier for sample :math:`i`. :math:`A`
+and :math:`B` are real numbers to be determined when fitting the regressor via
+maximum likelihood.
 
 The sigmoid method is biased in that it assumes the :ref:`calibration curve
 <calibration_curve>` of the un-calibrated model has a sigmoid shape and is
@@ -176,10 +176,10 @@ minimizes:
        \sum_{i=1}^{n} (y_i - f_i)^2 : f_i \leq f_{i+1}\quad \forall i \{1,..., n-1\}
 
 where :math:`y_i` is the true label of sample :math:`i` and :math:`f_i`
-is the output of the classifier for sample :math:`i`. This method is more
-general when compared to 'sigmoid' as the only restriction is that the mapping
-function is monotonically increasing. It is thus more powerful as it can
-correct any monotonic distortion of the un-calibrated model. However, it is
+is the output of the un-calibrated classifier for sample :math:`i`. This method
+is more general when compared to 'sigmoid' as the only restriction is that the
+mapping function is monotonically increasing. It is thus more powerful as it
+can correct any monotonic distortion of the un-calibrated model. However, it is
 more prone to overfitting, especially on small datasets [5]_.
 
 Overall, 'isotonic' will perform as well as or better than 'sigmoid' when
