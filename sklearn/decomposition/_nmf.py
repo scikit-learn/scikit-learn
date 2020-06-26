@@ -1351,7 +1351,7 @@ class NMF(TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+        X : {ndarray, sparse matrix} of shape (n_samples, n_features)
             Data matrix of original shape
 
         .. versionadded:: 0.18
