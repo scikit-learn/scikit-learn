@@ -903,7 +903,7 @@ def test_tsne_with_different_distance_metrics(square_distance):
         X_transformed_tsne_precomputed = TSNE(
             metric='precomputed', n_components=n_components_embedding,
             random_state=0, n_iter=300,
-        square_distance=square_distance).fit_transform(dist_func(X))
+            square_distance=square_distance).fit_transform(dist_func(X))
         assert_array_equal(X_transformed_tsne, X_transformed_tsne_precomputed)
 
 
