@@ -298,7 +298,6 @@ def test_preprocess_data():
     assert_array_almost_equal(yt, y - expected_y_mean)
 
 
-# FIXME: 'normalize' to be removed in 0.26
 def test_preprocess_data_multioutput():
     n_samples = 200
     n_features = 3
@@ -325,7 +324,6 @@ def test_preprocess_data_multioutput():
         assert_array_almost_equal(yt, y - y_mean)
 
 
-# FIXME: 'normalize' to be removed in 0.26
 def test_preprocess_data_weighted():
     n_samples = 200
     n_features = 2
@@ -359,7 +357,6 @@ def test_preprocess_data_weighted():
     assert_array_almost_equal(yt, y - expected_y_mean)
 
 
-# FIXME: 'normalize' to be removed in 0.26
 def test_sparse_preprocess_data_with_return_mean():
     n_samples = 200
     n_features = 2
@@ -429,7 +426,6 @@ def test_preprocess_copy_data_no_checks(is_sparse, to_copy):
         assert np.may_share_memory(X_, X)
 
 
-# FIXME: 'normalize' to be removed in 0.26
 def test_dtype_preprocess_data():
     n_samples = 200
     n_features = 2
