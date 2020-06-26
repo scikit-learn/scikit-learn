@@ -99,7 +99,7 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
     components_ : ndarray of shape (n_components, n_features)
         Components with maximum variance.
 
-    loglike_ : list of shape (n_iterations)
+    loglike_ : list of shape (n_iterations,)
         The log likelihood at each iteration.
 
     noise_variance_ : ndarray of shape (n_features,)
