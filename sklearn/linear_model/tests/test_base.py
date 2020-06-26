@@ -160,6 +160,7 @@ def test_linear_regression_sparse(random_state=0):
      ("deprecate", 0, None)]
 )
 def test_assure_warning_when_normalize(normalize, n_warnings, warning):
+    # check that we issue a FutureWarning when normalize was set
     rng = check_random_state(0)
     n_samples = 200
     n_features = 2
