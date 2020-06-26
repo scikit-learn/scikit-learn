@@ -517,7 +517,7 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
                               " preprocessing stage:"
                               "  model = make_pipeline( \n"
                               "    StandardScaler(with_mean=False), \n"
-                              "    {}())".format(type(self).__name__),
+                              "    {type(self).__name__}())",
                               FutureWarning)
             _normalize = self.normalize
         else:
