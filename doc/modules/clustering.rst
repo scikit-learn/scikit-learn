@@ -1043,6 +1043,117 @@ classes according to some similarity metric.
 
 .. currentmodule:: sklearn.metrics
 
+.. _rand_score:
+
+Rand index
+----------
+
+Given the knowledge of the ground truth class assignments ``labels_true``
+and our clustering algorithm assignments of the same samples
+``labels_pred``, the **Rand index** is a function that measures
+the **similarity** of the two assignments, ignoring permutations:
+
+  >>> from sklearn import metrics
+  >>> labels_true = [0, 0, 0, 1, 1, 1]
+  >>> labels_pred = [0, 0, 1, 1, 2, 2]
+
+  >>> metrics.rand_score(labels_true, labels_pred)
+  0.66...
+
+One can permute 0 and 1 in the predicted labels, rename 2 to 3, and get
+the same score::
+
+  >>> labels_pred = [1, 1, 0, 0, 3, 3]
+  >>> metrics.rand_score(labels_true, labels_pred)
+  0.66...
+
+Furthermore, :func:`rand_score` is **symmetric**: swapping the argument
+does not change the score. It can thus be used as a **consensus
+measure**::
+
+  >>> metrics.rand_score(labels_pred, labels_true)
+  0.66...
+
+Perfect labeling is scored 1.0::
+
+  >>> labels_pred = labels_true[:]
+  >>> metrics.rand_score(labels_true, labels_pred)
+  1.0
+
+Poorly agreeing labels (e.g. independent labelings) have lower scores
+but not necessarily close to zero (see also Adjusted Rand index)::
+
+  >>> labels_true = [0, 0, 0, 0, 0, 0, 1, 1]
+  >>> labels_pred = [0, 1, 2, 3, 4, 5, 5, 6]
+  >>> metrics.rand_score(labels_true, labels_pred)
+  0.39...
+
+
+Advantages
+~~~~~~~~~~
+
+- **Interpretable**: Taking a clustering and all possible element
+  pairs and labeling the pairs as ``same`` or ``different`` based on
+  their clusterings, the Rand index is identical to the accuracy of
+  the pair assignment using ``labels_pred`` comparing to the pair
+  assignment using the ground truth given by ``labels_true``.
+
+- **Bounded range [0, 1]**: Lower values indicate different
+  labelings, similar clusterings have a high Rand index, 1.0 is the
+  perfect match score.
+
+- **No assumption is made on the cluster structure**: The Rand index
+  can be used to compare all kinds of clustering algorithms.
+
+
+Drawbacks
+~~~~~~~~~
+
+- Contrary to inertia, the **Rand index requires knowledge of the
+  ground truth classes** which is almost never available in practice
+  or requires manual assignment by human annotators (as in the
+  supervised learning setting).
+
+- The **Rand index is often close to 1.0** even if the clusterings
+  themselves differ significantly. This can be understood when
+  interpreting the Rand index as the accuracy of element pair labeling
+  resulting from the clusterings: In practice there often is a
+  majority of element pairs that are assigned the ``different`` pair
+  label under both the predicted and the ground truth clustering
+  resulting in a high proportion of pair labels that agree, which
+  leads subsequently to a high score.
+
+
+Mathematical formulation
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+If C is a ground truth class assignment and K the clustering, let us
+define :math:`a` and :math:`b` as:
+
+- :math:`a`, the number of pairs of elements that are in the same set
+  in C and in the same set in K
+
+- :math:`b`, the number of pairs of elements that are in different sets
+  in C and in different sets in K
+
+The raw (unadjusted) Rand index is then given by:
+
+.. math:: \text{RI} = \frac{a + b}{C_2^{n_{samples}}}
+
+where :math:`C_2^{n_{samples}}` is the total number of possible pairs
+in the dataset. It does not matter if the calculation is performed
+on ordered pairs or unordered pairs as long as the calculation is
+performed consistently.
+
+However the Rand index does not guarantee that random label assignments
+will get a value close to zero (esp. if the number of clusters is in
+the same order of magnitude as the number of samples).
+
+.. topic:: References
+
+ * `Wikipedia entry for the Rand index
+   <https://en.wikipedia.org/wiki/Rand_index>`_
+
 .. _adjusted_rand_score:
 
 Adjusted Rand index
