@@ -555,7 +555,7 @@ class FastICA(TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        X_new : array-like of shape (n_samples, n_components)
+        X_new : ndarray of shape (n_samples, n_components)
         """
         return self._fit(X, compute_sources=True)
 
