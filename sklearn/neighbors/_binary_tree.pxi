@@ -1164,7 +1164,7 @@ cdef class BinaryTree:
 
     def get_tree_stats(self):
         """
-        get_tree_stats(self)
+        get_tree_stats()
 
         Get tree status.
 
@@ -1177,7 +1177,7 @@ cdef class BinaryTree:
 
     def reset_n_calls(self):
         """
-        reset_n_calls(self)
+        reset_n_calls()
 
         Reset number of calls to 0.
         """
@@ -1185,7 +1185,7 @@ cdef class BinaryTree:
 
     def get_n_calls(self):
         """
-        get_n_calls(self)
+        get_n_calls()
 
         Get number of calls.
 
@@ -1198,7 +1198,7 @@ cdef class BinaryTree:
 
     def get_arrays(self):
         """
-        get_arrays(self)
+        get_arrays()
 
         Get data and node arrays.
 
@@ -1597,7 +1597,7 @@ cdef class BinaryTree:
                        atol=0, rtol=1E-8,
                        breadth_first=True, return_log=False):
         """
-        kernel_density(self, X, h, kernel='gaussian', atol=0, rtol=1E-8,
+        kernel_density(X, h, kernel='gaussian', atol=0, rtol=1E-8,
                        breadth_first=True, return_log=False)
 
         Compute the kernel density estimate at points X with the given kernel,
