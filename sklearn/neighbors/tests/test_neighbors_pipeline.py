@@ -6,8 +6,8 @@ neighbors.
 """
 
 import numpy as np
+import pytest
 
-from sklearn.utils._testing import ignore_warnings
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.cluster.tests.common import generate_clustered_data
 from sklearn.datasets import make_blobs
@@ -112,8 +112,8 @@ def test_isomap():
     assert_array_almost_equal(Xt_chain, Xt_compact)
 
 
-@ignore_warnings(category=FutureWarning)
-def test_tsne():
+@pytest.mark.parametrize('square_distance', [True, False])
+def test_tsne(square_distance):
     # Test chaining KNeighborsTransformer and TSNE
     n_iter = 250
     perplexity = 5
@@ -129,9 +129,11 @@ def test_tsne():
             KNeighborsTransformer(n_neighbors=n_neighbors, mode='distance',
                                   metric=metric),
             TSNE(metric='precomputed', perplexity=perplexity,
-                 method="barnes_hut", random_state=42, n_iter=n_iter))
+                 method="barnes_hut", random_state=42, n_iter=n_iter,
+                 square_distance=square_distance))
         est_compact = TSNE(metric=metric, perplexity=perplexity, n_iter=n_iter,
-                           method="barnes_hut", random_state=42)
+                           method="barnes_hut", random_state=42,
+                           square_distance=square_distance)
 
         Xt_chain = est_chain.fit_transform(X)
         Xt_compact = est_compact.fit_transform(X)
