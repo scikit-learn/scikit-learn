@@ -278,7 +278,7 @@ def test_fit_csr_matrix(method):
 
 
 @pytest.mark.parametrize('square_distance', [True, False])
-def test_preserve_trustworthiness_approximately_with_precomputed_distances(square_distance):
+def test_preserve_trustworthiness_with_precomputed_distances(square_distance):
     # Nearest neighbors should be preserved approximately.
     random_state = check_random_state(0)
     for i in range(3):
@@ -449,7 +449,7 @@ def test_angle_out_of_range_checks():
 
 
 @pytest.mark.parametrize('square_distance', [True, False])
-def test_pca_initialization_not_compatible_with_precomputed_kernel(square_distance):
+def test_pca_init_not_compatible_with_precomputed_kernel(square_distance):
     # Precomputed distance matrices must be square matrices.
     tsne = TSNE(metric="precomputed", init="pca",
                 square_distance=square_distance)
