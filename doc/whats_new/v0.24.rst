@@ -80,7 +80,7 @@ Changelog
   which allows monitoring of each stage.
   :pr:`16985` by :user:`Hao Chun Chang <haochunchang>`.
 
-- |Fix| Fixed bug in :func:`ensemble.MultinomialDeviance.__call__` where the
+- |Fix| Fixed bug in :class:`ensemble.MultinomialDeviance` where the
   average of logloss was incorrectly calculated as sum of logloss.
   :pr:`17694` by :user:`Tsutomu Kusanagi <t-kusanagi2>`.
 
