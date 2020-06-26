@@ -1328,7 +1328,7 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
         minimum loss value during training
 
     loss_curve_: list of shape (n_iters,)
-        loss value evaluated at the end of each training step
+        Loss value evaluated at the end of each training step.
 
     t_: int
         Mathematically equals `n_iters * X.shape[0]`, it means
