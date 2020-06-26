@@ -69,7 +69,7 @@ def _beta_divergence(X, W, H, beta, square_root=False):
 
     W : float or dense array-like of shape (n_samples, n_components)
 
-    H : float or dense array-like of shape (n_components, n_features)
+    H : float or array-like of shape (n_components, n_features)
 
     beta : float or string in {'frobenius', 'kullback-leibler', \
             'itakura-saito'}
