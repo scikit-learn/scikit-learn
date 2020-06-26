@@ -1500,8 +1500,8 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         The number of classes, set to 1 for regressors.
 
         .. deprecated:: 0.24
-            Attribute n_classes_ was deprecated in version 0.24 and
-            will be removed in 0.26. Use ``classes_`` instead.
+            Attribute ``n_classes_`` was deprecated in version 0.24 and
+            will be removed in 0.26.
 
     n_estimators_ : int
         The number of estimators as selected by early stopping (if
