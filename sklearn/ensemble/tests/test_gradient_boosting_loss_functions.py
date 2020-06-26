@@ -171,7 +171,7 @@ def test_multinomial_deviance(n_classes, n_samples):
 
 def test_mdl_computation_weighted():
     pred = np.array([[1.0, 0, 0], [0, 0.5, 0.5]])
-    y = np.array([0, 1])
+    y_true = np.array([0, 1])
     weights = np.array([1, 3])
     expected_loss = 0.8563762
     # MultinomialDeviance loss computation with weights.
