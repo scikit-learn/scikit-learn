@@ -247,9 +247,12 @@ def cross_validate(estimator, X, y=None, *, groups=None, scoring=None, cv=None,
             error_score=error_score)
         for train, test in cv.split(X, y, groups))
 
-    results = _aggregate_score_dicts(results)
     if return_estimator:
-        fitted_estimators = results["estimator"]
+        # Extract the estimator objects for each cv split because the
+        # "_aggregate_score_dicts" converts nested estimators to arrays
+        fitted_estimators = [result["estimator"] for result in results]
+
+    results = _aggregate_score_dicts(results)
 
     ret = {}
     ret['fit_time'] = results["fit_time"]
@@ -259,6 +262,7 @@ def cross_validate(estimator, X, y=None, *, groups=None, scoring=None, cv=None,
         ret['estimator'] = fitted_estimators
 
     test_scores = _aggregate_score_dicts(results["test_scores"])
+
     if return_train_score:
         train_scores = _aggregate_score_dicts(results["train_scores"])
 
