@@ -899,9 +899,6 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
     out_activation_ : str
         Name of the output activation function.
 
-    best_loss_ : float
-        Minimum loss value during training.
-
     loss_curve_ : list of shape (n_iters,)
         Loss value evaluated at the end of each training step.
 
@@ -1323,9 +1320,6 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
 
     out_activation_ : str
         Name of the output activation function.
-
-    best_loss_ : float
-        Minimum loss value during training.
 
     loss_curve_ : list of shape (n_iters,)
         Loss value evaluated at the end of each training step.
