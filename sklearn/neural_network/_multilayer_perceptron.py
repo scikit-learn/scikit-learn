@@ -903,7 +903,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         Minimum loss value during training.
 
     loss_curve_: list of shape (n_iters,)
-        loss value evaluated at the end of each training step
+        Loss value evaluated at the end of each training step.
 
     t_: int,
         mathematically equals n_iters * X.shape[0], it means
