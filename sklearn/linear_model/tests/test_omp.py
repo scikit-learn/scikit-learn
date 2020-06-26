@@ -120,6 +120,7 @@ def test_orthogonal_mp_gram_readonly():
     assert_array_almost_equal(gamma[:, 0], gamma_gram, decimal=2)
 
 
+# FIXME: 'normalize' to be removed in 0.26
 def test_estimator():
     omp = OrthogonalMatchingPursuit(n_nonzero_coefs=n_nonzero_coefs)
     omp.fit(X, y[:, 0])
@@ -204,6 +205,7 @@ def test_omp_return_path_prop_with_gram():
     assert_array_almost_equal(path[:, :, -1], last)
 
 
+# FIXME: 'normalize' to be removed in 0.26
 def test_omp_cv():
     y_ = y[:, 0]
     gamma_ = gamma[:, 0]
