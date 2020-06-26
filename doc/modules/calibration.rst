@@ -175,7 +175,8 @@ minimizes:
 .. math::
        \sum_{i=1}^{n} (y_i - \hat{f}_i)^2
 
-subject to \hat{f}_i >= \hat{f}_j whenever f_i >= f_j. :math:`y_i` is the true
+subject to :math:`\hat{f}_i >= \hat{f}_j` whenever
+:math:`f_i >= f_j`. :math:`y_i` is the true
 label of sample :math:`i` and :math:`\hat{f}_i` is the output of the
 calibrated classifier for sample :math:`i`. This method
 is more general when compared to 'sigmoid' as the only restriction is that the
