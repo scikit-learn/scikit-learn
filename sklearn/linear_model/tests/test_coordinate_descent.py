@@ -29,28 +29,30 @@ from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import TempMemmap
 from sklearn.utils.fixes import parse_version
 
-from sklearn.linear_model import ARDRegression
-from sklearn.linear_model import BayesianRidge
-from sklearn.linear_model import ElasticNet
-from sklearn.linear_model import ElasticNetCV
-from sklearn.linear_model import enet_path
-from sklearn.linear_model import Lars
-from sklearn.linear_model import lars_path
-from sklearn.linear_model import Lasso
-from sklearn.linear_model import LassoCV
-from sklearn.linear_model import LassoLars
-from sklearn.linear_model import LassoLarsCV
-from sklearn.linear_model import LassoLarsIC
-from sklearn.linear_model import lasso_path
-from sklearn.linear_model import LinearRegression
-from sklearn.linear_model import MultiTaskElasticNet
-from sklearn.linear_model import MultiTaskElasticNetCV
-from sklearn.linear_model import MultiTaskLasso
-from sklearn.linear_model import MultiTaskLassoCV
-from sklearn.linear_model import OrthogonalMatchingPursuit
-from sklearn.linear_model import Ridge
-from sklearn.linear_model import RidgeClassifier
-from sklearn.linear_model import RidgeCV
+from sklearn.linear_model import (
+    ARDRegression,
+    BayesianRidge,
+    ElasticNet,
+    ElasticNetCV,
+    enet_path,
+    Lars,
+    lars_path,
+    Lasso,
+    LassoCV,
+    LassoLars,
+    LassoLarsCV,
+    LassoLarsIC,
+    lasso_path,
+    LinearRegression,
+    MultiTaskElasticNet,
+    MultiTaskElasticNetCV,
+    MultiTaskLasso,
+    MultiTaskLassoCV,
+    OrthogonalMatchingPursuit,
+    Ridge,
+    RidgeClassifier,
+    RidgeCV,
+)
 
 from sklearn.linear_model._coordinate_descent import _set_order
 from sklearn.utils import check_array
