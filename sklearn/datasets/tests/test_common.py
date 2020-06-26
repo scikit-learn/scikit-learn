@@ -81,7 +81,7 @@ def _has_network():
 
 
 def _generate_func_supporting_param(param, dataset_type=("load", "fetch")):
-    markers_fetch = FETCH_MARKERS.get(param, {})
+    markers_fetch = FETCH_PYTEST_MARKERS.get(param, {})
     for name, obj in inspect.getmembers(sklearn.datasets):
         if not inspect.isfunction(obj):
             continue
