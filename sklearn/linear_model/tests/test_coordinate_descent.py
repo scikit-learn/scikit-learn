@@ -324,16 +324,19 @@ def test_model_pipeline_same_as_normalize_true(LinearModel, params):
     if 'alpha' in params:
         model_normalize.set_params(alpha=params['alpha'])
         if model_name in ['Lasso', 'LassoLars', 'MultiTaskLasso']:
-            pipeline[1].set_params(
+            new_params = dict(
                 alpha=params['alpha'] * np.sqrt(X_train.shape[0]))
         if model_name in ['Ridge', 'RidgeClassifier']:
-            pipeline[1].set_params(alpha=params['alpha'] * X_train.shape[0])
+            new_params = dict(alpha=params['alpha'] * X_train.shape[0])
     if model_name in ['ElasticNet', 'MultiTaskElasticNet']:
         if params['l1_ratio'] == 1:
-            pipeline[1].set_params(
+            new_params = dict(
                 alpha=params['alpha'] * np.sqrt(X_train.shape[0]))
         if params['l1_ratio'] == 0:
-            pipeline[1].set_params(alpha=params['alpha'] * X_train.shape[0])
+            new_params = dict(alpha=params['alpha'] * X_train.shape[0])
+
+    if 'new_params' in locals():
+        pipeline[1].set_params(**new_params)
 
     model_normalize.fit(X_train, y_train)
     y_pred_normalize = model_normalize.predict(X_test)
