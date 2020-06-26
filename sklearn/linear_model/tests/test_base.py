@@ -153,6 +153,7 @@ def test_linear_regression_sparse(random_state=0):
         assert_array_almost_equal(ols.predict(X) - y.ravel(), 0)
 
 
+# FIXME: 'normalize' to be removed in 0.26
 @pytest.mark.parametrize('normalize', [True, False])
 @pytest.mark.parametrize('fit_intercept', [True, False])
 def test_linear_regression_sparse_equal_dense(normalize, fit_intercept):
@@ -232,10 +233,13 @@ def test_linear_regression_pd_sparse_dataframe_warning():
     assert hasattr(df, "sparse")
 
     with pytest.warns(None) as record:
+        reg = LinearRegression()
         reg.fit(df.iloc[:, 0:2], df.iloc[:, 3])
+
     assert not record
 
 
+# FIXME: 'normalize' to be removed in 0.26
 def test_preprocess_data():
     n_samples = 200
     n_features = 2
@@ -270,6 +274,7 @@ def test_preprocess_data():
     assert_array_almost_equal(yt, y - expected_y_mean)
 
 
+# FIXME: 'normalize' to be removed in 0.26
 def test_preprocess_data_multioutput():
     n_samples = 200
     n_features = 3
@@ -296,6 +301,7 @@ def test_preprocess_data_multioutput():
         assert_array_almost_equal(yt, y - y_mean)
 
 
+# FIXME: 'normalize' to be removed in 0.26
 def test_preprocess_data_weighted():
     n_samples = 200
     n_features = 2
@@ -329,6 +335,7 @@ def test_preprocess_data_weighted():
     assert_array_almost_equal(yt, y - expected_y_mean)
 
 
+# FIXME: 'normalize' to be removed in 0.26
 def test_sparse_preprocess_data_with_return_mean():
     n_samples = 200
     n_features = 2
@@ -398,6 +405,7 @@ def test_preprocess_copy_data_no_checks(is_sparse, to_copy):
         assert np.may_share_memory(X_, X)
 
 
+# FIXME: 'normalize' to be removed in 0.26
 def test_dtype_preprocess_data():
     n_samples = 200
     n_features = 2
