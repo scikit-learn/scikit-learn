@@ -158,8 +158,12 @@ are real numbers to be determined when fitting the regressor via maximum
 likelihood.
 
 The sigmoid method is biased in that it assumes the :ref:`calibration curve
-<calibration_curve>` of the un-calibrated model has a sigmoid shape [1]_. It
-is thus most effective when the un-calibrated model is over-confident.
+<calibration_curve>` of the un-calibrated model has a sigmoid shape and is
+symmetrical [1]_. It is thus most effective when the un-calibrated model is
+over-confident and has similar over-confidence errors for both high and low
+output errors. The symmetry assumption is of concern in highly imbalanced
+classification as un-calibrated classifiers can have asymmetric calibration
+errors.
 
 Isotonic
 ^^^^^^^^
@@ -169,13 +173,14 @@ a step-wise non-decreasing function (see :mod:`sklearn.isotonic`). It
 minimizes:
 
 .. math::
-       \sum_i (y_i - f_i)^2
+       \sum_{i=1}^{n} (y_i - f_i)^2 : f_i \leq f_{i+1}\quad \forall i \{1,..., n-1\}
 
-subject to :math:`\f_i \le f_j`. This method is more general when compared to
-'sigmoid' as the only restriction is that the mapping function is
-monotonically increasing. It is thus more powerful as it can correct any
-monotonic distortion of the un-calibrated model. However, it is more prone
-to overfitting, especially on small datasets [5]_.
+where :math:`y_i` is the true label of sample :math:`i` and :math:`f_i`
+is the output of the classifier for sample :math:`i`. This method is more
+general when compared to 'sigmoid' as the only restriction is that the mapping
+function is monotonically increasing. It is thus more powerful as it can
+correct any monotonic distortion of the un-calibrated model. However, it is
+more prone to overfitting, especially on small datasets [5]_.
 
 Overall, 'isotonic' will perform as well as or better than 'sigmoid' when
 there is enough data (greater than ~ 1000 samples) to avoid overfitting [1]_.
