@@ -235,7 +235,7 @@ def fastica(X, n_components=None, *, algorithm="parallel", whiten=True,
     S : ndarray of shape (n_samples, n_components) or None
         Estimated source matrix
 
-    X_mean : ndarray of shape (n_features, )
+    X_mean : ndarray of shape (n_features,)
         The mean over features. Returned only if return_X_mean is True.
 
     n_iter : int
