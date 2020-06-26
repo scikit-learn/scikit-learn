@@ -905,7 +905,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
     loss_curve_: list of shape (n_iters,)
         Loss value evaluated at the end of each training step.
 
-    t_: int,
+    t_: int
         mathematically equals n_iters * X.shape[0], it means
         time_step and it is used by optimizer's learning rate scheduler
 
