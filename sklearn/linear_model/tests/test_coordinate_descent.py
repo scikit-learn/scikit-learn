@@ -359,8 +359,8 @@ def test_model_pipeline_same_as_normalize_true(LinearModel, params):
      (LassoCV, {"tol": 1e-16}),
      (ElasticNetCV, {}),
      (RidgeClassifier, {"solver": 'sparse_cg', "alpha": 0.1}),
-     (ElasticNet, {"tol": 1e-16, 'l1_ratio': 1, "alpha": 0.1}),
-     (ElasticNet, {"tol": 1e-16, 'l1_ratio': 0, "alpha": 0.1}),
+     (ElasticNet, {"tol": 1e-16, 'l1_ratio': 1, "alpha": 0.01}),
+     (ElasticNet, {"tol": 1e-16, 'l1_ratio': 0, "alpha": 0.01}),
      (Ridge, {"solver": 'sparse_cg', 'tol': 1e-12, "alpha": 0.1}),
      (LinearRegression, {}),
      (RidgeCV, {})]
@@ -401,9 +401,7 @@ def test_model_pipeline_same_dense_and_sparse(LinearModel, params):
     y_pred_sparse = model_sparse.predict(X_sparse)
     assert_allclose(y_pred_dense, y_pred_sparse)
 
-    assert_allclose(model_dense[1].intercept_,
-                    model_sparse[1].intercept_ - np.mean(X, axis=0).dot(
-                        model_sparse[1].coef_))
+    assert_allclose(model_dense[1].intercept_, model_sparse[1].intercept_)
 
 
 def test_lasso_path_return_models_vs_new_return_gives_same_coefficients():
