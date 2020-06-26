@@ -199,7 +199,8 @@ def test_mdl_computation_weighted(pred, y, weights, expected_loss):
 def test_mdl_exception(n):
     # Check that MultinomialDeviance throws an exception when n_classes <= 2
     err_msg = 'MultinomialDeviance requires more than 2 classes.'
-    assert_raises_regex(ValueError, err_msg, MultinomialDeviance, n)
+    with pytest.raises(ValueError, match=err_msg):
+        MultinomialDeviance(n)
 
 
 def test_init_raw_predictions_shapes():
