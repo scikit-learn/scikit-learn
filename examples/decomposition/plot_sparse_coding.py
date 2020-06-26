@@ -16,12 +16,11 @@ is performed in order to stay on the same order of magnitude.
 """
 print(__doc__)
 
-from distutils.version import LooseVersion
-
 import numpy as np
 import matplotlib.pyplot as plt
 
 from sklearn.decomposition import SparseCoder
+from sklearn.utils.fixes import np_version, parse_version
 
 
 def ricker_function(resolution, center, width):
@@ -68,7 +67,7 @@ estimators = [('OMP', 'omp', None, 15, 'navy'),
               ('Lasso', 'lasso_lars', 2, None, 'turquoise'), ]
 lw = 2
 # Avoid FutureWarning about default value change when numpy >= 1.14
-lstsq_rcond = None if LooseVersion(np.__version__) >= '1.14' else -1
+lstsq_rcond = None if np_version >= parse_version('1.14') else -1
 
 plt.figure(figsize=(13, 6))
 for subplot, (D, title) in enumerate(zip((D_fixed, D_multi),

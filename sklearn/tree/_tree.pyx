@@ -68,22 +68,12 @@ cdef SIZE_t _TREE_LEAF = TREE_LEAF
 cdef SIZE_t _TREE_UNDEFINED = TREE_UNDEFINED
 cdef SIZE_t INITIAL_STACK_SIZE = 10
 
-# Repeat struct definition for numpy
-NODE_DTYPE = np.dtype({
-    'names': ['left_child', 'right_child', 'feature', 'threshold', 'impurity',
-              'n_node_samples', 'weighted_n_node_samples'],
-    'formats': [np.intp, np.intp, np.intp, np.float64, np.float64, np.intp,
-                np.float64],
-    'offsets': [
-        <Py_ssize_t> &(<Node*> NULL).left_child,
-        <Py_ssize_t> &(<Node*> NULL).right_child,
-        <Py_ssize_t> &(<Node*> NULL).feature,
-        <Py_ssize_t> &(<Node*> NULL).threshold,
-        <Py_ssize_t> &(<Node*> NULL).impurity,
-        <Py_ssize_t> &(<Node*> NULL).n_node_samples,
-        <Py_ssize_t> &(<Node*> NULL).weighted_n_node_samples
-    ]
-})
+# Build the corresponding numpy dtype for Node.
+# This works by casting `dummy` to an array of Node of length 1, which numpy
+# can construct a `dtype`-object for. See https://stackoverflow.com/q/62448946
+# for a more detailed explanation.
+cdef Node dummy;
+NODE_DTYPE = np.asarray(<Node[:1]>(&dummy)).dtype
 
 # =============================================================================
 # TreeBuilder
