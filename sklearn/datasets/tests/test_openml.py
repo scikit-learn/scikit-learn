@@ -1206,6 +1206,9 @@ def test_fetch_openml_with_ignored_feature(monkeypatch, gzip_response):
 
 @pytest.mark.parametrize('as_frame', [True, False])
 def test_fetch_openml_verify_checksum(monkeypatch, as_frame, cache, tmpdir):
+    if as_frame:
+        pytest.importorskip('pandas')
+
     data_id = 2
     _monkey_patch_webbased_functions(monkeypatch, data_id, True)
 
@@ -1235,8 +1238,6 @@ def test_fetch_openml_verify_checksum(monkeypatch, as_frame, cache, tmpdir):
     monkeypatch.setattr(sklearn.datasets._openml, 'urlopen', swap_file_mock)
 
     # validate failed checksum
-    if as_frame:
-        pytest.importorskip('pandas')
     with pytest.raises(ValueError) as exc:
         sklearn.datasets.fetch_openml(data_id=data_id, cache=False,
                                       as_frame=as_frame)
