@@ -183,12 +183,11 @@ def test_mdl_computation_unweighted(pred, y, expected_loss):
     assert_almost_equal(loss(y, pred), expected_loss, decimal=4)
 
 
-@pytest.mark.parametrize('pred, y, weights, expected_loss',
-                         [(np.array([[1.0, 0, 0],
-                                     [0, 0.5, 0.5]]),
-                           np.array([0, 1]),
-                           np.array([1, 3]),
-                           0.85637)])
+@pytest.mark.parametrize(
+    'pred, y, weights, expected_loss',
+    [np.array([[1.0, 0, 0], [0, 0.5, 0.5]]), np.array([0, 1]),
+     np.array([1, 3]), 0.85637]
+)
 def test_mdl_computation_weighted(pred, y, weights, expected_loss):
     # MultinomialDeviance loss computation with weights.
     loss = MultinomialDeviance(3)
