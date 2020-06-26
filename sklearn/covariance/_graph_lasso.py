@@ -98,7 +98,8 @@ def graphical_lasso(emp_cov, alpha, *, cov_init=None, mode='cd', tol=1e-4,
         Range is (0, inf].
 
     cov_init : array of shape (n_features, n_features), default=None
-        The initial guess for the covariance.
+        The initial guess for the covariance. If None, then the empirical
+        covariance is used.
 
     mode : {'cd', 'lars'}, default='cd'
         The Lasso solver to use: coordinate descent or LARS. Use LARS for

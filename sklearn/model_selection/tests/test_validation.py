@@ -539,8 +539,8 @@ def test_cross_val_score_mask():
     kfold = KFold(5)
     cv_masks = []
     for train, test in kfold.split(X, y):
-        mask_train = np.zeros(len(y), dtype=np.bool)
-        mask_test = np.zeros(len(y), dtype=np.bool)
+        mask_train = np.zeros(len(y), dtype=bool)
+        mask_test = np.zeros(len(y), dtype=bool)
         mask_train[train] = 1
         mask_test[test] = 1
         cv_masks.append((train, test))
@@ -1707,26 +1707,39 @@ def three_params_scorer(i, j, k):
     return 3.4213
 
 
-@pytest.mark.parametrize("return_train_score, scorer, expected", [
-    (False, three_params_scorer,
-     "[CV] .................................... , score=3.421, total=   0.0s"),
-    (True, three_params_scorer,
-     "[CV] ................ , score=(train=3.421, test=3.421), total=   0.0s"),
-    (True, {'sc1': three_params_scorer, 'sc2': three_params_scorer},
-     "[CV]  , sc1=(train=3.421, test=3.421)"
-     ", sc2=(train=3.421, test=3.421), total=   0.0s")
-])
-def test_fit_and_score_verbosity(capsys, return_train_score, scorer, expected):
+@pytest.mark.parametrize(
+    "train_score, scorer, verbose, split_prg, cdt_prg, expected", [
+     (False, three_params_scorer, 2, (1, 3), (0, 1),
+      "[CV] END ...................................................."
+      " total time=   0.0s"),
+     (True, {'sc1': three_params_scorer, 'sc2': three_params_scorer}, 3,
+      (1, 3), (0, 1),
+      "[CV 2/3] END  sc1: (train=3.421, test=3.421) sc2: "
+      "(train=3.421, test=3.421) total time=   0.0s"),
+     (False, {'sc1': three_params_scorer, 'sc2': three_params_scorer}, 10,
+      (1, 3), (0, 1),
+      "[CV 2/3; 1/1] END ....... sc1: (test=3.421) sc2: (test=3.421)"
+      " total time=   0.0s")
+    ])
+def test_fit_and_score_verbosity(capsys, train_score, scorer, verbose,
+                                 split_prg, cdt_prg, expected):
     X, y = make_classification(n_samples=30, random_state=0)
     clf = SVC(kernel="linear", random_state=0)
     train, test = next(ShuffleSplit().split(X))
 
     # test print without train score
-    fit_and_score_args = [clf, X, y, scorer, train, test, 10, None, None]
-    fit_and_score_kwargs = {'return_train_score': return_train_score}
+    fit_and_score_args = [clf, X, y, scorer, train, test, verbose, None, None]
+    fit_and_score_kwargs = {'return_train_score': train_score,
+                            'split_progress': split_prg,
+                            'candidate_progress': cdt_prg}
     _fit_and_score(*fit_and_score_args, **fit_and_score_kwargs)
     out, _ = capsys.readouterr()
-    assert out.split('\n')[1] == expected
+    print(out)
+    outlines = out.split('\n')
+    if len(outlines) > 2:
+        assert outlines[1] == expected
+    else:
+        assert outlines[0] == expected
 
 
 def test_score():

@@ -90,12 +90,12 @@ def contingency_matrix(labels_true, labels_pred, *, eps=None, sparse=False):
     labels_pred : array-like of shape (n_samples,)
         Cluster labels to evaluate
 
-    eps : None or float, optional.
+    eps : float, default=None
         If a float, that value is added to all values in the contingency
         matrix. This helps to stop NaN propagation.
         If ``None``, nothing is adjusted.
 
-    sparse : boolean, optional.
+    sparse : bool, default=False
         If True, return a sparse CSR continency matrix. If ``eps is not None``,
         and ``sparse is True``, will throw ValueError.
 
@@ -124,7 +124,7 @@ def contingency_matrix(labels_true, labels_pred, *, eps=None, sparse=False):
     contingency = sp.coo_matrix((np.ones(class_idx.shape[0]),
                                  (class_idx, cluster_idx)),
                                 shape=(n_classes, n_clusters),
-                                dtype=np.int)
+                                dtype=int)
     if sparse:
         contingency = contingency.tocsr()
         contingency.sum_duplicates()
@@ -280,7 +280,7 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred, *, beta=1.0):
     labels_pred : array-like of shape (n_samples,)
         cluster labels to evaluate
 
-    beta : float
+    beta : float, default=1.0
         Ratio of weight attributed to ``homogeneity`` vs ``completeness``.
         If ``beta`` is greater than 1, ``completeness`` is weighted more
         strongly in the calculation. If ``beta`` is less than 1,
@@ -498,7 +498,7 @@ def v_measure_score(labels_true, labels_pred, *, beta=1.0):
     labels_pred : array-like of shape (n_samples,)
         cluster labels to evaluate
 
-    beta : float
+    beta : float, default=1.0
         Ratio of weight attributed to ``homogeneity`` vs ``completeness``.
         If ``beta`` is greater than 1, ``completeness`` is weighted more
         strongly in the calculation. If ``beta`` is less than 1,
@@ -601,8 +601,8 @@ def mutual_info_score(labels_true, labels_pred, *, contingency=None):
     labels_pred : int array-like of shape (n_samples,)
         A clustering of the data into disjoint subsets.
 
-    contingency : {None, array, sparse matrix}, \
-                  shape = [n_classes_true, n_classes_pred]
+    contingency : {ndarray, sparse matrix} of shape \
+            (n_classes_true, n_classes_pred), default=None
         A contingency matrix given by the :func:`contingency_matrix` function.
         If value is ``None``, it will be computed, otherwise the given value is
         used, with ``labels_true`` and ``labels_pred`` ignored.
@@ -689,7 +689,7 @@ def adjusted_mutual_info_score(labels_true, labels_pred, *,
     labels_pred : int array-like of shape (n_samples,)
         A clustering of the data into disjoint subsets.
 
-    average_method : string, optional (default: 'arithmetic')
+    average_method : str, default='arithmetic'
         How to compute the normalizer in the denominator. Possible options
         are 'min', 'geometric', 'arithmetic', and 'max'.
 
@@ -809,7 +809,7 @@ def normalized_mutual_info_score(labels_true, labels_pred, *,
     labels_pred : int array-like of shape (n_samples,)
         A clustering of the data into disjoint subsets.
 
-    average_method : string, optional (default: 'arithmetic')
+    average_method : str, default='arithmetic'
         How to compute the normalizer in the denominator. Possible options
         are 'min', 'geometric', 'arithmetic', and 'max'.
 
@@ -909,7 +909,7 @@ def fowlkes_mallows_score(labels_true, labels_pred, *, sparse=False):
     labels_pred : array, shape = (``n_samples``, )
         A clustering of the data into disjoint subsets.
 
-    sparse : bool
+    sparse : bool, default=False
         Compute contingency matrix internally with sparse matrix.
 
     Returns
