@@ -173,10 +173,11 @@ a step-wise non-decreasing function (see :mod:`sklearn.isotonic`). It
 minimizes:
 
 .. math::
-       \sum_{i=1}^{n} (y_i - f_i)^2 : f_i \leq f_{i+1}\quad \forall i \{1,..., n-1\}
+       \sum_{i=1}^{n} (y_i - \hat{f}_i)^2
 
-where :math:`y_i` is the true label of sample :math:`i` and :math:`f_i`
-is the output of the un-calibrated classifier for sample :math:`i`. This method
+subject to \hat{f}_i >= \hat{f}_j whenever f_i >= f_j. :math:`y_i` is the true
+label of sample :math:`i` and :math:`\hat{f}_i` is the output of the
+calibrated classifier for sample :math:`i`. This method
 is more general when compared to 'sigmoid' as the only restriction is that the
 mapping function is monotonically increasing. It is thus more powerful as it
 can correct any monotonic distortion of the un-calibrated model. However, it is
