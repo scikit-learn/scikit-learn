@@ -162,7 +162,7 @@ def test_confusion_matrix_display(pyplot, data, fitted_clf, y_pred, n_classes):
     cm = confusion_matrix(y, y_pred)
     disp = plot_confusion_matrix(fitted_clf, X, y, normalize=None,
                                  include_values=True, cmap='viridis',
-                                 xticks_rotation=45.0, colorbar=True)
+                                 xticks_rotation=45.0)
 
     assert_allclose(disp.confusion_matrix, cm)
     assert disp.text_.shape == (n_classes, n_classes)
@@ -172,9 +172,6 @@ def test_confusion_matrix_display(pyplot, data, fitted_clf, y_pred, n_classes):
 
     image_data = disp.im_.get_array().data
     assert_allclose(image_data, cm)
-
-    disp.plot(colorbar=False)
-    assert disp.im_.colorbar is None
 
     disp.plot(cmap='plasma')
     assert disp.im_.get_cmap().name == 'plasma'
@@ -247,6 +244,17 @@ def test_confusion_matrix_pipeline(pyplot, clf, data, n_classes):
 
     assert_allclose(disp.confusion_matrix, cm)
     assert disp.text_.shape == (n_classes, n_classes)
+
+
+@pytest.mark.parametrize("colorbar", [True, False])
+def test_plot_confusion_matrix_colorbar(pyplot, data, fitted_clf, colorbar):
+    X, y = data
+    disp = plot_confusion_matrix(fitted_clf, X, y, colorbar=True)
+    assert disp.im_.colorbar is not None
+
+    # attempt a plot with the opposit effect
+    disp.plot(colorbar=False)
+    assert disp.im_.colorbar is None
 
 
 @pytest.mark.parametrize("values_format", ['e', 'n'])
