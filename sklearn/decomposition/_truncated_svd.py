@@ -48,7 +48,7 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
         The default value is useful for visualisation. For LSA, a value of
         100 is recommended.
 
-    algorithm : {'arpack', 'randomized'}, defaul ='randomized'
+    algorithm : {'arpack', 'randomized'}, default='randomized'
         SVD solver to use. Either "arpack" for the ARPACK wrapper in SciPy
         (scipy.sparse.linalg.svds), or "randomized" for the randomized
         algorithm due to Halko (2009).
