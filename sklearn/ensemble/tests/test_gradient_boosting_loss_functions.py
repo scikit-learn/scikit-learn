@@ -26,7 +26,7 @@ def test_binomial_deviance():
 
     # pred has the same BD for y in {0, 1}
     assert (bd(np.array([0.0]), np.array([0.0])) ==
-            bd(np.array([1.0]), np.array([0.0])))
+                bd(np.array([1.0]), np.array([0.0])))
 
     assert_almost_equal(bd(np.array([1.0, 1.0, 1.0]),
                            np.array([100.0, 100.0, 100.0])),
@@ -78,7 +78,6 @@ def test_sample_weight_init_estimators():
         if Loss is None:
             continue
         if issubclass(Loss, RegressionLossFunction):
-            k = 1
             y = reg_y
             loss = Loss()
         else:
@@ -125,7 +124,6 @@ def test_sample_weight_deviance():
         if Loss is None:
             continue
         if issubclass(Loss, RegressionLossFunction):
-            k = 1
             y = reg_y
             p = reg_y
             loss = Loss()
