@@ -147,6 +147,10 @@ Changelog
   class to be used when computing the precision and recall statistics.
   :pr:`17569` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |Feature| :func:`metrics.plot_confusion_matrix` now supports making colorbar 
+  optional in the matplotlib plot by setting colorbar=False. :pr:`17192` by 
+  :user:`Avi Gupta <avigupta2612>`
+
 :mod:`sklearn.model_selection`
 ..............................
 
