@@ -31,7 +31,7 @@ def _gs_decorrelation(w, W, j):
 
     Parameters
     ----------
-    w : ndarray of shape (n)
+    w : ndarray of shape (n,)
         Array to be orthogonalized
 
     W : ndarray of shape (p, n)
