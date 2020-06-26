@@ -900,7 +900,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         Name of the output activation function.
 
     best_loss_: float
-        minimum loss value during training
+        Minimum loss value during training.
 
     loss_curve_: list, n_iters
         loss value evaluated at the end of each training step
