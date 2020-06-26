@@ -169,25 +169,11 @@ def test_multinomial_deviance(n_classes, n_samples):
     assert loss_wo_sw == pytest.approx(loss_w_sw)
 
 
-@pytest.mark.parametrize(
-    'pred, y, expected_loss',
-    [(np.array([[1.0, 0, 0], [0, 0.5, 0.5]]), np.array([0, 1]), 0.75473)]
-)
-def test_mdl_computation_unweighted(pred, y, expected_loss):
-    # MultinomialDeviance loss computation with uniform/without weights.
-    weights = np.array([1, 1])
-    loss = MultinomialDeviance(3)
-    assert_almost_equal(loss(y, pred, weights), expected_loss, decimal=4)
-    assert_almost_equal(loss(y, pred, None), expected_loss, decimal=4)
-    assert_almost_equal(loss(y, pred), expected_loss, decimal=4)
-
-
-@pytest.mark.parametrize(
-    'pred, y, weights, expected_loss',
-    [np.array([[1.0, 0, 0], [0, 0.5, 0.5]]), np.array([0, 1]),
-     np.array([1, 3]), 0.85637]
-)
-def test_mdl_computation_weighted(pred, y, weights, expected_loss):
+def test_mdl_computation_weighted():
+    pred = np.array([[1.0, 0, 0], [0, 0.5, 0.5]])
+    y = np.array([0, 1])
+    weights = np.array([1, 3])
+    expected_loss = 0.8563762
     # MultinomialDeviance loss computation with weights.
     loss = MultinomialDeviance(3)
     assert_allclose(loss(y, pred, weights), expected_loss)
