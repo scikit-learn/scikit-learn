@@ -2209,7 +2209,7 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
         the specified tolerance for the optimal alpha.
 
     dual_gap_ : float
-        The dual gap at the end of the optimization for the optimal alpha
+        The dual gap at the end of the optimization for the optimal alpha.
 
     Examples
     --------
