@@ -211,7 +211,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         # Uses binned data to check for missing values
         has_missing_values = (
-            X_binned_train == self.bin_mapper_.missing_values_bin_idx_).any(
+            X_binned_train == self._bin_mapper.missing_values_bin_idx_).any(
                 axis=0).astype(np.uint8)
 
         if self.verbose:
