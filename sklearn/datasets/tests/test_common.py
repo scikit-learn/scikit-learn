@@ -8,7 +8,15 @@ import numpy as np
 import sklearn.datasets
 
 
-FETCH_MARKERS = {
+def is_pillow_installed():
+    try:
+        import PIL  # noqa
+        return True
+    except ImportError:
+        return False
+
+
+FETCH_PYTEST_MARKERS = {
     "return_X_y": {
         "fetch_20newsgroups": pytest.mark.xfail(
             reason="X is a list and does not have a shape argument"
@@ -70,14 +78,6 @@ def check_as_frame(bunch, dataset_func,
 
 def _has_network():
     return bool(os.environ.get("SKLEARN_SKIP_NETWORK_TESTS", False))
-
-
-def is_pillow_installed():
-    try:
-        import PIL  # noqa
-        return True
-    except ImportError:
-        return False
 
 
 def _generate_func_supporting_param(param, dataset_type=("load", "fetch")):
