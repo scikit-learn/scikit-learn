@@ -157,10 +157,24 @@ class BayesianRidge(RegressorMixin, LinearModel):
         self : returns an instance of self.
         """
         if self.normalize != "deprecate":
-            warnings.warn("'normalize' was deprecated in version 0.24 and will"
-                          " be removed in 0.26.", FutureWarning)
+            if not self.normalize:
+                warnings.warn(
+                    "'normalize' was deprecated in version 0.24 and will be"
+                    " removed in 0.26.", FutureWarning
+                )
+            else:
+                warnings.warn(
+                    "'normalize' was deprecated in version 0.24 and will be"
+                    " removed in 0.26. If you wish to keep an equivalent"
+                    " behaviour, use  Pipeline with a StandardScaler in a"
+                    " preprocessing stage:"
+                    "  model = make_pipeline( \n"
+                    "    StandardScaler(with_mean=False), \n"
+                    "    {type(self).__name__}())", FutureWarning
+                )
+            self._normalize = self.normalize
         else:
-            self.normalize = False
+            self._normalize = False
 
         if self.n_iter < 1:
             raise ValueError('n_iter should be greater than or equal to 1.'
@@ -473,10 +487,24 @@ class ARDRegression(RegressorMixin, LinearModel):
         self : returns an instance of self.
         """
         if self.normalize != "deprecate":
-            warnings.warn("'normalize' was deprecated in version 0.24 and will"
-                          " be removed in 0.26.", FutureWarning)
+            if not self.normalize:
+                warnings.warn(
+                    "'normalize' was deprecated in version 0.24 and will be"
+                    " removed in 0.26.", FutureWarning
+                )
+            else:
+                warnings.warn(
+                    "'normalize' was deprecated in version 0.24 and will be"
+                    " removed in 0.26. If you wish to keep an equivalent"
+                    " behaviour, use  Pipeline with a StandardScaler in a"
+                    " preprocessing stage:"
+                    "  model = make_pipeline( \n"
+                    "    StandardScaler(with_mean=False), \n"
+                    "    {type(self).__name__}())", FutureWarning
+                )
+            self._normalize = self.normalize
         else:
-            self.normalize = False
+            self._normalize = False
 
         X, y = self._validate_data(X, y, dtype=np.float64, y_numeric=True,
                                    ensure_min_samples=2)
@@ -485,7 +513,7 @@ class ARDRegression(RegressorMixin, LinearModel):
         coef_ = np.zeros(n_features)
 
         X, y, X_offset_, y_offset_, X_scale_ = self._preprocess_data(
-            X, y, self.fit_intercept, self.normalize, self.copy_X)
+            X, y, self.fit_intercept, self._normalize, self.copy_X)
 
         # Launch the convergence loop
         keep_lambda = np.ones(n_features, dtype=bool)
@@ -613,7 +641,7 @@ class ARDRegression(RegressorMixin, LinearModel):
         if return_std is False:
             return y_mean
         else:
-            if self.normalize:
+            if self._normalize:
                 X = (X - self.X_offset_) / self.X_scale_
             X = X[:, self.lambda_ < self.threshold_lambda]
             sigmas_squared_data = (np.dot(X, self.sigma_) * X).sum(axis=1)
