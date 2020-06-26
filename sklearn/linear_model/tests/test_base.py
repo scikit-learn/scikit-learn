@@ -166,7 +166,6 @@ def test_assure_warning_when_normalize(normalize, n_warnings, warning):
     X = rng.randn(n_samples, n_features)
     X[X < 0.1] = 0.
     y = rng.rand(n_samples)
-    params = dict()
 
     model = LinearRegression(normalize=normalize)
     with pytest.warns(warning) as record:
