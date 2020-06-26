@@ -38,7 +38,7 @@ def _update_doc_distribution(X, exp_topic_word_distr, doc_topic_prior,
     X : {array-like, sparse matrix} of shape (n_samples, n_features)
         Document word matrix.
 
-    exp_topic_word_distr : dense matrix of shape (n_topics, n_features)
+    exp_topic_word_distr : ndarray of shape (n_topics, n_features)
         Exponential value of expectation of log topic word distribution.
         In the literature, this is `exp(E[log(beta)])`.
 
