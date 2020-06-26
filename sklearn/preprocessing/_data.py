@@ -22,10 +22,9 @@ from scipy.special import boxcox
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
-from ..utils.array_creation import zeros_like, asarray
 from ..utils.extmath import row_norms
 from ..utils.extmath import _incremental_mean_and_var
-from ..utils.array_creation import empty_like
+from ..utils.array_creation import empty_like, zeros_like
 from ..utils.sparsefuncs_fast import (inplace_csr_row_normalize_l1,
                                       inplace_csr_row_normalize_l2)
 from ..utils.sparsefuncs import (inplace_column_scale,
@@ -73,7 +72,7 @@ def _handle_zeros_in_scale(scale, copy=True):
         if scale == .0:
             scale = 1.
         return scale
-    elif isinstance(scale, (np.ndarray, cp.ndarray)):
+    elif hasattr(scale, "__array_function__"):
         if copy:
             # New array to avoid side-effects
             scale = scale.copy()
@@ -839,7 +838,8 @@ class StandardScaler(TransformerMixin, BaseEstimator):
             if self.scale_ is not None:
                 inplace_column_scale(X, self.scale_)
         else:
-            X = asarray(X)
+            if not hasattr(X, "__array_function__"):
+                X = np.asarray(X)
             if copy:
                 X = X.copy()
             if self.with_std:

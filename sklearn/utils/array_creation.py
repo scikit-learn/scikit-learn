@@ -53,7 +53,7 @@ def create_like(np_ufunc, np_ugunc_like, cp_ufunc_like):
             meta_f = np_create_like(np_ufunc, np_ugunc_like)
             return meta_f(prototype, dtype=dtype, order=order,
                           subok=subok, shape=shape)
-        elif isinstance(prototype, cp.ndarray):
+        elif hasattr(prototype, "__array_function__"):
             return cp_ufunc_like(prototype, dtype=dtype, order=order,
                                  shape=shape)
         else:
@@ -66,17 +66,3 @@ def create_like(np_ufunc, np_ugunc_like, cp_ufunc_like):
 empty_like = create_like(np.empty, np.empty_like, cp.empty_like)
 zeros_like = create_like(np.zeros, np.zeros_like, cp.zeros_like)
 ones_like = create_like(np.ones, np.ones_like, cp.ones_like)
-
-
-def asarray(X, order=None, dtype=None):
-    if isinstance(X, cp.ndarray):
-        return X
-    else:
-        return np.asarray(X, order=order, dtype=dtype)
-
-
-def asanyarray(X, order=None, dtype=None):
-    if isinstance(X, cp.ndarray):
-        return X
-    else:
-        return np.asanyarray(X, order=order, dtype=dtype)
