@@ -212,12 +212,11 @@ def average_precision_score(y_true, y_score, *, average="macro", pos_label=1,
 
     y_type = type_of_target(y_true)
 
-    # Multiclass is a specific case of the multilabel setting here
+    # For multiclass we can reuse the multi-label case
     if y_type == "multiclass":
         y_true = label_binarize(y_true, classes=np.unique(y_true))
-        y_type = "multilabel-indicator"
 
-    if y_type == "multilabel-indicator" and pos_label != 1:
+    if y_type in ["multiclass", "multilabel-indicator"] and pos_label != 1:
         raise ValueError("Parameter pos_label is fixed to 1 for "
                          "multiclass or multilabel-indicator y_true. Do not "
                          "set pos_label or set pos_label to 1.")
