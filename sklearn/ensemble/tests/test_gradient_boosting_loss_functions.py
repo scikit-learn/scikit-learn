@@ -169,11 +169,10 @@ def test_multinomial_deviance(n_classes, n_samples):
     assert_almost_equal(loss_wo_sw, loss_w_sw)
 
 
-@pytest.mark.parametrize('pred, y, expected_loss',
-                         [(np.array([[1.0, 0, 0],
-                                     [0, 0.5, 0.5]]),
-                           np.array([0, 1]),
-                           0.75473)])
+@pytest.mark.parametrize(
+    'pred, y, expected_loss',
+    [(np.array([[1.0, 0, 0], [0, 0.5, 0.5]]), np.array([0, 1]), 0.75473)]
+)
 def test_mdl_computation_unweighted(pred, y, expected_loss):
     # MultinomialDeviance loss computation with uniform/without weights.
     weights = np.array([1, 1])
