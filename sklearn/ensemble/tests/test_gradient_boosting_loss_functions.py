@@ -157,7 +157,7 @@ def test_multinomial_deviance(n_classes, n_samples):
     sample_weight = np.ones(n_samples)
     y_true = rng.randint(0, n_classes, size=n_samples)
     p = np.zeros((n_samples, n_classes), dtype=np.float64)
-    for i in range(p.shape[1]):
+    for klass in range(y_pred.shape[1]):
         y_pred[:, klass] = y_true == klass
 
     loss = MultinomialDeviance(n_classes)
