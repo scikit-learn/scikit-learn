@@ -177,7 +177,7 @@ def test_mdl_computation_weighted():
     raw_predictions = np.array([[1., -1., -.1], [-2., 1., 2.]])
     y_true = np.array([0, 1])
     weights = np.array([1, 3])
-    expected_loss = 0.8563762
+    expected_loss = 1.0909323
     # MultinomialDeviance loss computation with weights.
     loss = MultinomialDeviance(3)
     assert (loss(y_true, raw_predictions, weights)
