@@ -1027,6 +1027,7 @@ details.
    metrics.homogeneity_score
    metrics.mutual_info_score
    metrics.normalized_mutual_info_score
+   metrics.rand_score
    metrics.silhouette_score
    metrics.silhouette_samples
    metrics.v_measure_score
