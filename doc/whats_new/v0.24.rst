@@ -64,7 +64,13 @@ Changelog
 - |Fix| Fixed a bug in
   :func:`decomposition.MiniBatchDictionaryLearning.partial_fit` which should
   update the dictionary by iterating only once over a mini-batch.
-  :pr:`17433` by :user:`Chiara Marmo <cmarmo>`
+  :pr:`17433` by :user:`Chiara Marmo <cmarmo>`.
+
+- |Fix| Fix :class:`decomposition.SparseCoder` such that it follows
+  scikit-learn API and support cloning. The attribute `components_` is
+  deprecated in 0.24 and will be removed in 0.26. This attribute was
+  redundant with the `dictionary` attribute and constructor parameter.
+  :pr:`17679` by :user:`Xavier Dupré <sdpython>`.
 
 :mod:`sklearn.ensemble`
 .......................
@@ -99,6 +105,11 @@ Changelog
   when ``strategy='most_frequent'`` or ``strategy='constant'``.
   :pr:`17526` by :user:`Ayako YAGI <yagi-3>` and :user:`Juan Carlos Alfaro Jiménez <alfaro96>`.
 
+- |Feature| :class:`impute.SimpleImputer` now supports ``inverse_transform``
+  functionality to revert imputed data to original when instantiated
+  with `add_indicator=True`.
+  :pr:`17612` by :user:`Srimukh Sripada <d3b0unce>`
+
 :mod:`sklearn.inspection`
 .........................
 
@@ -107,6 +118,15 @@ Changelog
   plotting Individual Conditional Expectation (ICE) curves controlled by the
   ``kind`` parameter.
   :pr:`16619` by :user:`Madhura Jayratne <madhuracj>`.
+
+:mod:`sklearn.isotonic`
+.......................
+
+- |Feature| Expose fitted attributes ``X_thresholds_`` and ``y_thresholds_``
+  that hold the de-duplicated interpolation thresholds of an
+  :class:`isotonic.IsotonicRegression` instance for model inspection purpose.
+  :pr:`16289` by :user:`Masashi Kishimoto <kishimoto-banana>` and
+  :user:`Olivier Grisel <ogrisel>`.
 
 :mod:`sklearn.metrics`
 ......................
@@ -213,6 +233,11 @@ Changelog
   :meth:`tree.DecisionTreeRegressor.fit`, and has not effect.
   :pr:`17614` by :user:`Juan Carlos Alfaro Jiménez <alfaro96>`.
 
+:mod:`sklearn.datasets`
+.......................
+- |Feature| :func:`datasets.fetch_openml` now validates md5checksum of arff
+  files downloaded or cached to ensure data integrity.
+  :pr:`14800` by :user:`Shashank Singh <shashanksingh28>` and `Joel Nothman`_.
 
 Code and Documentation Contributors
 -----------------------------------
