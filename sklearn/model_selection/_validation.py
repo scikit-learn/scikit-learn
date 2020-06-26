@@ -99,7 +99,8 @@ def cross_validate(estimator, X, y=None, *, groups=None, scoring=None, cv=None,
             ``cv`` default value if None changed from 3-fold to 5-fold.
 
     n_jobs : int, default=None
-        The number of CPUs to use to do the computation.
+        Number of jobs to run in parallel. Training the estimator and computing
+        the score are parallelized over the cross-validation splits.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
@@ -328,7 +329,8 @@ def cross_val_score(estimator, X, y=None, *, groups=None, scoring=None,
             ``cv`` default value if None changed from 3-fold to 5-fold.
 
     n_jobs : int, default=None
-        The number of CPUs to use to do the computation.
+        Number of jobs to run in parallel. Training the estimator and computing
+        the score are parallelized over the cross-validation splits.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
@@ -703,7 +705,8 @@ def cross_val_predict(estimator, X, y=None, *, groups=None, cv=None,
             ``cv`` default value if None changed from 3-fold to 5-fold.
 
     n_jobs : int, default=None
-        The number of CPUs to use to do the computation.
+        Number of jobs to run in parallel. Training the estimator and
+        predicting are parallelized over the cross-validation splits.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
@@ -1041,7 +1044,8 @@ def permutation_test_score(estimator, X, y, *, groups=None, cv=None,
         Number of times to permute ``y``.
 
     n_jobs : int, default=None
-        The number of CPUs to use to do the computation.
+        Number of jobs to run in parallel. Training the estimator and computing
+        the cross-validated score are parallelized over the permutations.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
@@ -1199,7 +1203,8 @@ def learning_curve(estimator, X, y, *, groups=None,
         used to speed up fitting for different training set sizes.
 
     n_jobs : int, default=None
-        Number of jobs to run in parallel.
+        Number of jobs to run in parallel. Training the estimator and computing
+        the score are parallelized over the different training and test sets.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
@@ -1474,7 +1479,9 @@ def validation_curve(estimator, X, y, *, param_name, param_range, groups=None,
         ``scorer(estimator, X, y)``.
 
     n_jobs : int, default=None
-        Number of jobs to run in parallel.
+        Number of jobs to run in parallel. Training the estimator and computing
+        the score are parallelized over the combinations of each parameter
+        value and each cross-validation split.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.

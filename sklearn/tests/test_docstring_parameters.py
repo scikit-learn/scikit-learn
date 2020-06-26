@@ -234,6 +234,7 @@ def test_fit_docstring_attributes(name, Estimator):
                'LarsCV', 'Lasso', 'LassoLarsCV', 'LassoLarsIC',
                'MiniBatchKMeans',
                'MultiTaskElasticNet', 'MultiTaskElasticNetCV',
+               'LocalOutlierFactor', 'MiniBatchKMeans',
                'MultiTaskLasso', 'MultiTaskLassoCV',
                'OrthogonalMatchingPursuit',
                'PLSCanonical', 'PLSSVD',
