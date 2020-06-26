@@ -179,11 +179,10 @@ def pair_confusion_matrix(labels_true, labels_pred):
 
     Returns
     -------
-    nested list [[D00, D01], [D10, D11]].
+    nested array [[D00, D01], [D10, D11]].
 
     Examples
     --------
-
     Perfectly matching labelings have all non-zero entries on the
     diagonal regardless of actual label values:
 
@@ -220,7 +219,6 @@ def pair_confusion_matrix(labels_true, labels_pred):
 
     References
     ----------
-
     .. [Hubert1985] L. Hubert and P. Arabie, Comparing Partitions,
       Journal of Classification 1985
       https://link.springer.com/article/10.1007%2FBF01908075
@@ -391,7 +389,6 @@ def adjusted_rand_score(labels_true, labels_pred):
 
     Examples
     --------
-
     Perfectly matching labelings have a score of 1 even
 
       >>> from sklearn.metrics.cluster import adjusted_rand_score
@@ -420,7 +417,6 @@ def adjusted_rand_score(labels_true, labels_pred):
 
     References
     ----------
-
     .. [Hubert1985] L. Hubert and P. Arabie, Comparing Partitions,
       Journal of Classification 1985
       https://link.springer.com/article/10.1007%2FBF01908075
