@@ -123,19 +123,18 @@ def test_newrand_bounded_rand_int(range_, n_pts):
     # (1) check uniformity of p-values
     uniform_p_vals_dist = stats.uniform(loc=0, scale=1)
     res_pvals = stats.kstest(ks_pvals, uniform_p_vals_dist.cdf)
-    assert res_pvals.pvalue > 0.05,\
-        "Null hypothesis rejected: generated random numbers are not uniform."\
-        " Details: the (meta) p-value of the test of uniform distribution"\
-        " of p-values is {} which is not > 0.05".format(res_pvals.pvalue)
+    assert res_pvals.pvalue > 0.05, (
+        "Null hypothesis rejected: generated random numbers are not uniform."
+        " Details: the (meta) p-value of the test of uniform distribution"
+        f" of p-values is {res_pvals.pvalue} which is not > 0.05")
 
     # (2) (safety belt) check that 90% of p-values are above 0.05
     min_10pct_pval = np.percentile(ks_pvals, q=10)
     # lower 10th quantile pvalue <= 0.05 means that the test rejects the
     # null hypothesis that the sample came from the uniform distribution
-    assert(min_10pct_pval > 0.05),\
-        "Null hypothesis rejected: generated random numbers are not uniform." \
-        " Details: lower 10th quantile p-value of {} not > 0.05."\
-        .format(min_10pct_pval)
+    assert min_10pct_pval > 0.05, (
+        "Null hypothesis rejected: generated random numbers are not uniform."
+        f" Details: lower 10th quantile p-value of {min_10pct_pval} not > 0.05.")
 
 
 @pytest.mark.parametrize('range_',
