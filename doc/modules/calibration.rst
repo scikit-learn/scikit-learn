@@ -11,8 +11,8 @@ When performing classification you often want not only to predict the class
 label, but also obtain a probability of the respective label. This probability
 gives you some kind of confidence on the prediction. Some models can give you
 poor estimates of the class probabilities and some even do not support
-probability prediction (e.g., :class:`SGDClassifier`). The calibration
-module allows you to better calibrate
+probability prediction (e.g., :class:`~sklearn.linear_model.SGDClassifier`).
+The calibration module allows you to better calibrate
 the probabilities of a given model, or to add support for probability
 prediction.
 
@@ -78,9 +78,9 @@ to 0 or 1 typically.
 .. currentmodule:: sklearn.svm
 
 Linear Support Vector Classification (:class:`LinearSVC`) shows an even more
-sigmoid curve than :class:`RandomForestClassifier`, which is typical for
-maximum-margin methods (compare Niculescu-Mizil and Caruana [1]_), which
-focus on difficult to classify samples that are close to the decision
+sigmoid curve than :class:`~sklearn.ensemble.RandomForestClassifier`, which is
+typical for maximum-margin methods (compare Niculescu-Mizil and Caruana [1]_),
+which focus on difficult to classify samples that are close to the decision
 boundary (the support vectors).
 
 Calibrating a classifier
