@@ -76,7 +76,7 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
         The initial guess of the noise variance for each feature.
         If None, it defaults to np.ones(n_features)
 
-    svd_method : {'lapack', 'randomized'}, defaul='randomized'
+    svd_method : {'lapack', 'randomized'}, default='randomized'
         Which SVD method to use. If 'lapack' use standard SVD from
         scipy.linalg, if 'randomized' use fast ``randomized_svd`` function.
         Defaults to 'randomized'. For most applications 'randomized' will
