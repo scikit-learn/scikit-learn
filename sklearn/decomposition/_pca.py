@@ -191,7 +191,7 @@ class PCA(_BasePCA):
 
         .. versionadded:: 0.18.0
 
-    iterated_power : int >= 0 or 'auto', default='auto'
+    iterated_power : int or 'auto', default='auto'
         Number of iterations for the power method computed by
         svd_solver == 'randomized'.
 
