@@ -59,7 +59,7 @@ def test_sample_weight_smoke():
     pred = rng.rand(100)
 
     # least squares
-    loss = LeastSquaresError(1)
+    loss = LeastSquaresError()
     loss_wo_sw = loss(y, pred)
     loss_w_sw = loss(y, pred, np.ones(pred.shape[0], dtype=np.float32))
     assert_almost_equal(loss_wo_sw, loss_w_sw)
@@ -80,14 +80,15 @@ def test_sample_weight_init_estimators():
         if issubclass(Loss, RegressionLossFunction):
             k = 1
             y = reg_y
+            loss = Loss()
         else:
             k = 2
             y = clf_y
             if Loss.is_multi_class:
                 # skip multiclass
                 continue
+            loss = Loss(k)
 
-        loss = Loss(k)
         init_est = loss.init_estimator()
         init_est.fit(X, y)
         out = loss.get_init_raw_predictions(X, init_est)
@@ -107,7 +108,7 @@ def test_quantile_loss_function():
     # There was a sign problem when evaluating the function
     # for negative values of 'ytrue - ypred'
     x = np.asarray([-1.0, 0.0, 1.0])
-    y_found = QuantileLossFunction(1, 0.9)(x, np.zeros_like(x))
+    y_found = QuantileLossFunction(0.9)(x, np.zeros_like(x))
     y_expected = np.asarray([0.1, 0.0, 0.9]).mean()
     np.testing.assert_allclose(y_found, y_expected)
 
@@ -127,6 +128,7 @@ def test_sample_weight_deviance():
             k = 1
             y = reg_y
             p = reg_y
+            loss = Loss()
         else:
             k = 2
             y = clf_y
@@ -138,8 +140,8 @@ def test_sample_weight_deviance():
                 p = np.zeros((y.shape[0], k), dtype=np.float64)
                 for i in range(k):
                     p[:, i] = y == i
+            loss = Loss(k)
 
-        loss = Loss(k)
         deviance_w_w = loss(y, p, sample_weight)
         deviance_wo_w = loss(y, p)
         assert deviance_wo_w == deviance_w_w
