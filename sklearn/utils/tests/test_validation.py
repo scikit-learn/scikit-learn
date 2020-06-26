@@ -211,7 +211,7 @@ def test_check_array_force_all_finite_object():
       "Input contains NaN, infinity or a value too large for.*int"),
      (np.array([[1, np.inf]]),
       "Input contains NaN, infinity or a value too large for.*int"),
-     (np.array([[1, np.nan]], dtype=np.object),
+     (np.array([[1, np.nan]], dtype=object),
       "cannot convert float NaN to integer")]
 )
 @pytest.mark.parametrize("force_all_finite", [True, False])
@@ -383,7 +383,7 @@ def test_check_array_pandas_na_support(pd_dtype, dtype, expected_dtype):
 def test_check_array_pandas_dtype_object_conversion():
     # test that data-frame like objects with dtype object
     # get converted
-    X = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=np.object)
+    X = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=object)
     X_df = MockDataFrame(X)
     assert check_array(X_df).dtype.kind == "f"
     assert check_array(X_df, ensure_2d=False).dtype.kind == "f"
