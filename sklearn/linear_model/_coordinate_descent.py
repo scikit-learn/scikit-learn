@@ -2029,7 +2029,7 @@ class MultiTaskLasso(MultiTaskElasticNet):
         ``sparse_coef_`` is a readonly property derived from ``coef_``
 
     eps_: float, default=1e-4
-        same as tol
+        Same as ``tol``.
 
     Examples
     --------
