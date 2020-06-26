@@ -72,7 +72,7 @@ def _beta_divergence(X, W, H, beta, square_root=False):
     H : float or array-like of shape (n_components, n_features)
 
     beta : float or {'frobenius', 'kullback-leibler', \
-            'itakura-saito'}
+        'itakura-saito'}
         Parameter of the beta-divergence.
         If beta == 2, this is half the Frobenius *squared* norm.
         If beta == 1, this is the generalized Kullback-Leibler divergence.
@@ -730,7 +730,7 @@ def _fit_multiplicative_update(X, W, H, beta_loss='frobenius',
         Initial guess for the solution.
 
     beta_loss : float or {'frobenius', 'kullback-leibler', \
-            'itakura-saito'}, default='frobenius'
+        'itakura-saito'}, default='frobenius'
         String must be in {'frobenius', 'kullback-leibler', 'itakura-saito'}.
         Beta divergence to be minimized, measuring the distance between X
         and the dot product WH. Note that values different from 'frobenius'
@@ -1151,7 +1151,7 @@ class NMF(TransformerMixin, BaseEstimator):
            Multiplicative Update solver.
 
     beta_loss : float or {'frobenius', 'kullback-leibler', \
-            'itakura-saito'}, default='frobenius'
+        'itakura-saito'}, default='frobenius'
         Beta divergence to be minimized, measuring the distance between X
         and the dot product WH. Note that values different from 'frobenius'
         (or 2) and 'kullback-leibler' (or 1) lead to significantly slower
