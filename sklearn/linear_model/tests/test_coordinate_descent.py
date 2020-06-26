@@ -390,7 +390,7 @@ def test_model_pipeline_same_dense_and_sparse(LinearModel, params):
     X_sparse = sparse.csr_matrix(X)
     y = rng.rand(n_samples)
 
-    if is_classifier(LinearModel):
+    if is_classifier(model_dense):
         y = np.sign(y)
 
     model_dense.fit(X, y)
