@@ -2023,7 +2023,7 @@ class MultiTaskLasso(MultiTaskElasticNet):
         the specified tolerance.
 
     dual_gap_ : ndarray of shape (n_alphas,)
-        The dual gaps at the end of the optimization for each alpha
+        The dual gaps at the end of the optimization for each alpha.
 
     sparse_coef_ : sparse matrix of shape (n_tasks, n_features)
         ``sparse_coef_`` is a readonly property derived from ``coef_``.
