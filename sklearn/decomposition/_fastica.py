@@ -176,7 +176,7 @@ def fastica(X, n_components=None, *, algorithm="parallel", whiten=True,
         Otherwise you will get incorrect results.
         In this case the parameter n_components will be ignored.
 
-    fun : string or function, default='logcosh'
+    fun : {'logcosh', 'exp', 'cube'} or callable, default='logcosh'
         The functional form of the G function used in the
         approximation to neg-entropy. Could be either 'logcosh', 'exp',
         or 'cube'.
