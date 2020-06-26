@@ -983,7 +983,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
     W : array-like of shape (n_samples, n_components)
         Solution to the non-negative least squares problem.
 
-    H : array-like of shape (n_components, n_features)
+    H : ndarray of shape (n_components, n_features)
         Solution to the non-negative least squares problem.
 
     n_iter : int
