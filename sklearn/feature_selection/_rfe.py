@@ -184,24 +184,22 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
             force_all_finite=not tags.get('allow_nan', True),
             multi_output=True
         )
+        error_msg = ("n_features_to_select must be either None, a "
+                     "positive integer representing the absolute "
+                     "number of features or a float in (0.0, 1.0] "
+                     "representing a percentage of features to "
+                     f"select. Got {self.n_features_to_select}")
+
         # Initialization
         n_features = X.shape[1]
         if self.n_features_to_select is None:
             n_features_to_select = n_features // 2
         elif self.n_features_to_select < 0:
-            raise ValueError("n_features_to_select must be either None, a "
-                             "positive integer  representing the absolute "
-                             "number of features or a float in (0.0, 1.0] "
-                             "representing a percentage of features to "
-                             "select. Got %s" % self.n_features_to_select)
+            raise ValueError(error_msg)
         elif isinstance(self.n_features_to_select, numbers.Integral):  # int
             n_features_to_select = self.n_features_to_select
-        elif self.n_features_to_select > 1.0:  # float >1
-            raise ValueError("n_features_to_select must be either None, a "
-                             "positive integer  representing the absolute "
-                             "number of features or a float in (0.0, 1.0] "
-                             "representing a percentage of features to "
-                             "select. Got %s" % self.n_features_to_select)
+        elif self.n_features_to_select > 1.0:  # float > 1
+            raise ValueError(error_msg)
         else:  # float
             n_features_to_select = int(n_features * self.n_features_to_select)
 
