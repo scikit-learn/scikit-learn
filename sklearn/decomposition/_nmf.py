@@ -1116,7 +1116,7 @@ class NMF(TransformerMixin, BaseEstimator):
         Number of components, if n_components is not set all features
         are kept.
 
-    init : {'random', 'nndsvd',  'nndsvda', 'nndsvdar', 'custom'}, default=None
+    init : {'random', 'nndsvd', 'nndsvda', 'nndsvdar', 'custom'}, default=None
         Method used to initialize the procedure.
         Default: None.
         Valid options:
