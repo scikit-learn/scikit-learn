@@ -484,7 +484,7 @@ def _fit_coordinate_descent(X, W, H, tol=1e-4, max_iter=200, l1_reg_W=0,
     W : ndarray of shape (n_samples, n_components)
         Solution to the non-negative least squares problem.
 
-    H : array-like of shape (n_components, n_features)
+    H : ndarray of shape (n_components, n_features)
         Solution to the non-negative least squares problem.
 
     n_iter : int
