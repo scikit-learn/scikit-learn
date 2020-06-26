@@ -507,8 +507,21 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         """
 
         if self.normalize != "deprecate":
-            warnings.warn("'normalize' was deprecated in version 0.24 and will"
-                          " be removed in 0.26.", FutureWarning)
+            if not self.normalize:
+                warnings.warn("'normalize' was deprecated in version 0.24"
+                              " and will be removed in 0.26.", FutureWarning)
+            else:
+                warnings.warn("'normalize' was deprecated in version 0.24"
+                              " and will be removed in 0.26."
+                              " If you wish to keep normalizing your data"
+                              " consider using a pipeline: \n"
+                              " from sklearn.preprocessing import"
+                              " StandardScaler \n"
+                              " from sklearn.pipeline import make_pipeline"
+                              "  model = make_pipeline( \n"
+                              "    StandardScaler(with_mean=False), \n"
+                              "    {}())".format(type(self).__name__),
+                              FutureWarning)
             _normalize = self.normalize
         else:
             _normalize = False
