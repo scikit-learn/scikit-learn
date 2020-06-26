@@ -829,6 +829,9 @@ class ComplementNB(_BaseDiscreteNB):
         Mirrors ``feature_log_prob_`` for interpreting `ComplementNB`
         as a linear model.
 
+        .. deprecated:: 0.24
+            ``coef_`` is deprecated in 0.24 and will be removed in 0.26.
+
     feature_all_ : ndarray of shape (n_features,)
         Number of samples encountered for each feature during fitting. This
         value is weighted by the sample weight when provided.
@@ -843,6 +846,9 @@ class ComplementNB(_BaseDiscreteNB):
     intercept_ : ndarray of shape (n_classes,)
         Mirrors ``class_log_prior_`` for interpreting `ComplementNB`
         as a linear model.
+
+        .. deprecated:: 0.24
+            ``coef_`` is deprecated in 0.24 and will be removed in 0.26.
 
     n_features_ : int
         Number of features of each sample.

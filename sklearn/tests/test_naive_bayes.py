@@ -195,7 +195,8 @@ def test_gnb_naive_bayes_scale_invariance():
 
 
 # TODO: Remove in version 0.26
-@pytest.mark.parametrize("cls", [MultinomialNB, BernoulliNB, CategoricalNB])
+@pytest.mark.parametrize("cls", [MultinomialNB, ComplementNB, BernoulliNB,
+                                 CategoricalNB])
 def test_discretenb_deprecated_coef_intercept(cls):
     est = cls().fit(X2, y2)
 
