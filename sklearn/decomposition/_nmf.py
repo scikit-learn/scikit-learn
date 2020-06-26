@@ -729,7 +729,7 @@ def _fit_multiplicative_update(X, W, H, beta_loss='frobenius',
     H : array-like of shape (n_components, n_features)
         Initial guess for the solution.
 
-    beta_loss : float or string in {'frobenius', 'kullback-leibler', \
+    beta_loss : float or {'frobenius', 'kullback-leibler', \
             'itakura-saito'}, default='frobenius'
         String must be in {'frobenius', 'kullback-leibler', 'itakura-saito'}.
         Beta divergence to be minimized, measuring the distance between X
