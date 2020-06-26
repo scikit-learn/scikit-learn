@@ -167,13 +167,10 @@ def test_assure_warning_when_normalize(normalize, n_warnings, warning):
     X[X < 0.1] = 0.
     y = rng.rand(n_samples)
     params = dict()
-    if normalize is not None:
-        params['normalize'] = normalize
 
-    clf = LinearRegression(**params)
-
+    model = LinearRegression(normalize=normalize)
     with pytest.warns(warning) as record:
-        clf.fit(X, y)
+        model.fit(X, y)
     assert len(record) == n_warnings
 
 
