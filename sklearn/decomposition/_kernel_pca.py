@@ -30,9 +30,9 @@ class KernelPCA(TransformerMixin, BaseEstimator):
     n_components : int, default=None
         Number of components. If None, all non-zero components are kept.
 
-    kernel : {"linear", "poly", "rbf", "sigmoid", "cosine", "precomputed"}, \
-            default="linear"
-        Kernel.
+    kernel : {'linear', 'poly', \
+            'rbf', 'sigmoid', 'cosine', 'precomputed'}, default='linear'
+        Kernel used for PCA.
 
     gamma : float, default=None
         Kernel coefficient for rbf, poly and sigmoid kernels. Ignored by other
@@ -45,11 +45,12 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         Independent term in poly and sigmoid kernels.
         Ignored by other kernels.
 
-    kernel_params : mapping of string to any, default=None
-        Parameters (keyword arguments) and values for kernel passed as
-        callable object. Ignored by other kernels.
+    kernel_params : dict, default=None
+        Parameters (keyword arguments) and
+        values for kernel passed as callable object.
+        Ignored by other kernels.
 
-    alpha : int, default=1.0
+    alpha : float, default=1.0
         Hyperparameter of the ridge regression that learns the
         inverse transform (when fit_inverse_transform=True).
 
@@ -114,7 +115,7 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         Inverse transform matrix. Only available when
         ``fit_inverse_transform`` is True.
 
-    X_transformed_fit_ : ndarray of (n_samples, n_components)
+    X_transformed_fit_ : ndarray of shape (n_samples, n_components)
         Projection of the fitted data on the kernel principal components.
         Only available when ``fit_inverse_transform`` is True.
 
