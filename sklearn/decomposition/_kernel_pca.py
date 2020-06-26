@@ -78,7 +78,7 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         When n_components is None, this parameter is ignored and components
         with zero eigenvalues are removed regardless.
 
-    random_state : int, default=None
+    random_state : int, RandomState instance or None, default=None
         Used when ``eigen_solver`` == 'arpack'. Pass an int for reproducible
         results across multiple function calls.
         See :term:`Glossary <random_state>`.
