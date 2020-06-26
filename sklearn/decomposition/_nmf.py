@@ -67,7 +67,7 @@ def _beta_divergence(X, W, H, beta, square_root=False):
     ----------
     X : float or array-like of shape (n_samples, n_features)
 
-    W : float or dense array-like of shape (n_samples, n_components)
+    W : float or array-like of shape (n_samples, n_components)
 
     H : float or array-like of shape (n_components, n_features)
 
