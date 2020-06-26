@@ -122,6 +122,10 @@ Changelog
 :mod:`sklearn.metrics`
 ......................
 
+- |Feature| Add :func:`metrics.cluster.pair_confusion_matrix` implementing
+  the confusion matrix arising from pairs of elements from two clusterings.
+  :pr:`17412` by :user:`Uwe F Mayer <ufmayer>`
+
 - |Feature| Add :func:`metrics.rand_score` implementing the (unadjusted)
   Rand index.
   :pr:`17412` by :user:`Uwe F Mayer <ufmayer>`

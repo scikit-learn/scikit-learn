@@ -2004,3 +2004,77 @@ Drawbacks
 
  * `Wikipedia entry for contingency matrix
    <https://en.wikipedia.org/wiki/Contingency_table>`_
+
+.. _pair_confusion_matrix:
+
+Pair Confusion Matrix
+-------------------------
+
+The pair confusion matrix
+(:func:`sklearn.metrics.cluster.pair_confusion_matrix`) is a 2x2
+similarity matrix between two clusterings computed by considering all
+pairs of samples and counting pairs that are assigned in the same or
+different clusters in the predicted and true clusterings.
+
+The 2x2 pair confusion matrix is::
+
+   D00 D01
+   D10 D11
+
+where
+
+- D00 = number of pairs with both clusterings having the samples
+  not clustered together,
+
+- D10 = number of pairs with the true label clusterings having the
+  samples clustered together but the other clustering not having the
+  samples clustered together,
+
+- D01 = number of pairs with the true label clusterings not having the
+  samples clustered together but the other clustering having the
+  samples clustered together,
+
+- D11 = number of pairs with both clusterings having the samples
+  clustered together.
+
+Perfectly matching labelings have all non-zero entries on the
+diagonal regardless of actual label values::
+
+   >>> from sklearn.metrics.cluster import pair_confusion_matrix
+   >>> pair_confusion_matrix([0, 0, 1, 1], [0, 0, 1, 1])
+   array([[8, 0],
+          [0, 4]])
+
+::
+
+   >>> pair_confusion_matrix([0, 0, 1, 1], [1, 1, 0, 0])
+   array([[8, 0],
+          [0, 4]])
+
+Labelings that assign all classes members to the same clusters
+are complete but may be not always pure, hence penalized, and
+have some off-diagonal non-zero entries::
+
+   >>> pair_confusion_matrix([0, 0, 1, 2], [0, 0, 1, 1])
+   array([[8, 2],
+          [0, 2]])
+
+The matrix is not symmetric::
+
+   >>> pair_confusion_matrix([0, 0, 1, 1], [0, 0, 1, 2])
+   array([[8, 0],
+          [2, 2]])
+
+If classes members are completely split across different clusters, the
+assignment is totally incomplete, hence the matrix has all zero
+diagonal entries::
+
+   >>> pair_confusion_matrix([0, 0, 0, 0], [0, 1, 2, 3])
+   array([[ 0,  0],
+          [12,  0]])
+
+.. topic:: References
+
+ .. [Hubert1985] L. Hubert and P. Arabie, Comparing Partitions,
+   Journal of Classification 1985
+   https://link.springer.com/article/10.1007%2FBF01908075>

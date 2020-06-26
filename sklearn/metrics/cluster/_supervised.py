@@ -147,7 +147,7 @@ def contingency_matrix(labels_true, labels_pred, *, eps=None, sparse=False,
 # clustering measures
 
 def pair_confusion_matrix(labels_true, labels_pred):
-    """Pair confusion matrix.
+    """Pair confusion matrix arising from two clusterings.
 
     The pair confusion matrix computes a 2x2 similarity matrix between
     two clusterings by considering all pairs of samples and counting

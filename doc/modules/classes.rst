@@ -1022,6 +1022,7 @@ details.
    metrics.davies_bouldin_score
    metrics.completeness_score
    metrics.cluster.contingency_matrix
+   metrics.cluster.pair_confusion_matrix
    metrics.fowlkes_mallows_score
    metrics.homogeneity_completeness_v_measure
    metrics.homogeneity_score
