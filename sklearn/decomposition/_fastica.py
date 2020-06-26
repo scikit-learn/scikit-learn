@@ -318,7 +318,7 @@ class FastICA(TransformerMixin, BaseEstimator):
         If whiten is false, the data is already considered to be
         whitened, and no whitening is performed.
 
-    fun : string or function, default='logcosh'
+    fun : {'logcosh', 'exp', 'cube'} or callable, default='logcosh'
         The functional form of the G function used in the
         approximation to neg-entropy. Could be either 'logcosh', 'exp',
         or 'cube'.
