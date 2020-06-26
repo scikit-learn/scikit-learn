@@ -730,7 +730,7 @@ def _fit_multiplicative_update(X, W, H, beta_loss='frobenius',
         Initial guess for the solution.
 
     beta_loss : float or string in {'frobenius', 'kullback-leibler', \
-        'itakura-saito'}, default='frobenius'
+            'itakura-saito'}, default='frobenius'
         String must be in {'frobenius', 'kullback-leibler', 'itakura-saito'}.
         Beta divergence to be minimized, measuring the distance between X
         and the dot product WH. Note that values different from 'frobenius'
