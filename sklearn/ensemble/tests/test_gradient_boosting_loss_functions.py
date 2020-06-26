@@ -165,18 +165,23 @@ def test_multinomial_deviance(n_classes, n_samples):
     assert loss_wo_sw > 0
     loss_w_sw = loss(y_true, y_pred, sample_weight=sample_weight)
     assert loss_wo_sw == pytest.approx(loss_w_sw)
+
+    # Multinomial deviance uses weighted average loss rather than
+    # weighted sum loss, so we make sure that the value remains the same
+    # when we device the weight by 2.
     loss_w_sw = loss(y_true, y_pred, sample_weight=0.5 * sample_weight)
     assert loss_wo_sw == pytest.approx(loss_w_sw)
 
 
 def test_mdl_computation_weighted():
-    y_pred = np.array([[1.0, 0, 0], [0, 0.5, 0.5]])
+    raw_predictions = np.array([[1., -1., -.1], [-2., 1., 2.]])
     y_true = np.array([0, 1])
     weights = np.array([1, 3])
     expected_loss = 0.8563762
     # MultinomialDeviance loss computation with weights.
     loss = MultinomialDeviance(3)
-    assert loss(y_true, y_pred, weights) == pytest.approx(expected_loss)
+    assert (loss(y_true, raw_predictions, weights)
+            == pytest.approx(expected_loss))
 
 
 @pytest.mark.parametrize('n', [0, 1, 2])
