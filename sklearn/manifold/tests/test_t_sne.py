@@ -961,24 +961,23 @@ def test_tsne_with_different_square_distances(method):
             assert_allclose(X_transformed_tsne, X_transformed_tsne_precomputed)
 
 
-def test_tsne_square_distance_futurewarning():
+@pytest.mark.parametrize('metric', ['euclidean', 'manhattan'])
+@pytest.mark.parametrize('square_distance', [True, False, 'legacy'])
+def test_tsne_square_distance_futurewarning(metric, square_distance):
     """Make sure that a FutureWarning is only raised when a non-Euclidean
      metric is specified and square_metric is not True or False."""
     random_state = check_random_state(0)
 
     X = random_state.randn(5, 2)
+    tsne = TSNE(metric=metric, square_distance=square_distance)
 
-    for metric in ['euclidean', 'manhattan']:
-        for square_distance in [True, False, 'legacy']:
-            tsne = TSNE(metric=metric, square_distance=square_distance)
-
-            if metric != 'euclidean' and square_distance not in [True, False]:
-                with pytest.warns(FutureWarning, match="'square_distance'.*"):
-                    tsne.fit_transform(X)
-            else:
-                with pytest.warns(None) as record:
-                    tsne.fit_transform(X)
-                assert not record
+    if metric != 'euclidean' and square_distance not in [True, False]:
+        with pytest.warns(FutureWarning, match="'square_distance'.*"):
+            tsne.fit_transform(X)
+    else:
+        with pytest.warns(None) as record:
+            tsne.fit_transform(X)
+        assert not record
 
 
 @pytest.mark.parametrize('method', ['exact', 'barnes_hut'])
