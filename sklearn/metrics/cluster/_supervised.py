@@ -12,6 +12,7 @@ better.
 #          Gregory Stupp <stuppie@gmail.com>
 #          Joel Nothman <joel.nothman@gmail.com>
 #          Arya McCarthy <arya@jhu.edu>
+#          Uwe F Mayer <uwe_f_mayer@yahoo.com>
 # License: BSD 3 clause
 
 
