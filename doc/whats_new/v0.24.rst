@@ -58,13 +58,23 @@ Changelog
   `data` and `frame` members are pandas DataFrames, and the `target` member is
   a pandas Series. :pr:`17491` by :user:`Alex Liang <tianchuliang>`.
 
+- |Feature| :func:`datasets.fetch_openml` now validates md5checksum of arff
+  files downloaded or cached to ensure data integrity.
+  :pr:`14800` by :user:`Shashank Singh <shashanksingh28>` and `Joel Nothman`_.
+
 :mod:`sklearn.decomposition`
 ............................
 
 - |Fix| Fixed a bug in
   :func:`decomposition.MiniBatchDictionaryLearning.partial_fit` which should
   update the dictionary by iterating only once over a mini-batch.
-  :pr:`17433` by :user:`Chiara Marmo <cmarmo>`
+  :pr:`17433` by :user:`Chiara Marmo <cmarmo>`.
+
+- |Fix| Fix :class:`decomposition.SparseCoder` such that it follows
+  scikit-learn API and support cloning. The attribute `components_` is
+  deprecated in 0.24 and will be removed in 0.26. This attribute was
+  redundant with the `dictionary` attribute and constructor parameter.
+  :pr:`17679` by :user:`Xavier Dupré <sdpython>`.
 
 :mod:`sklearn.ensemble`
 .......................
@@ -96,6 +106,11 @@ Changelog
   when ``strategy='most_frequent'`` or ``strategy='constant'``.
   :pr:`17526` by :user:`Ayako YAGI <yagi-3>` and :user:`Juan Carlos Alfaro Jiménez <alfaro96>`.
 
+- |Feature| :class:`impute.SimpleImputer` now supports ``inverse_transform``
+  functionality to revert imputed data to original when instantiated
+  with `add_indicator=True`.
+  :pr:`17612` by :user:`Srimukh Sripada <d3b0unce>`
+
 :mod:`sklearn.inspection`
 .........................
 
@@ -104,6 +119,15 @@ Changelog
   plotting Individual Conditional Expectation (ICE) curves controlled by the
   ``kind`` parameter.
   :pr:`16619` by :user:`Madhura Jayratne <madhuracj>`.
+
+:mod:`sklearn.isotonic`
+.......................
+
+- |Feature| Expose fitted attributes ``X_thresholds_`` and ``y_thresholds_``
+  that hold the de-duplicated interpolation thresholds of an
+  :class:`isotonic.IsotonicRegression` instance for model inspection purpose.
+  :pr:`16289` by :user:`Masashi Kishimoto <kishimoto-banana>` and
+  :user:`Olivier Grisel <ogrisel>`.
 
 :mod:`sklearn.metrics`
 ......................
@@ -121,8 +145,13 @@ Changelog
   :pr:`17309` by :user:`Swier Heeres <swierh>`
 
 - |Enhancement| Add `sample_weight` parameter to
-  :class:`metrics.median_absolute_error`. :pr:`17225` by
+  :func:`metrics.median_absolute_error`. :pr:`17225` by
   :user:`Lucy Liu <lucyleeow>`.
+
+- |Enhancement| Add `pos_label` parameter in
+  :func:`metrics.plot_precision_recall_curve` in order to specify the positive
+  class to be used when computing the precision and recall statistics.
+  :pr:`17569` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.model_selection`
 ..............................
@@ -160,12 +189,22 @@ Changelog
   and by validating data out of loops.
   :pr:`17038` by :user:`Wenbo Zhao <webber26232>`.
 
+- |Efficiency| :class:`neighbors.NeighborsBase` benefits of an improved
+  `algorithm = 'auto'` heuristic. In addition to the previous set of rules,
+  now, when the number of features exceeds 15, `brute` is selected, assuming
+  the data intrinsic dimensionality is too high for tree-based methods.
+  :pr:`17148` by :user:`Geoffrey Bolmier <gbolmier>`.
+
 :mod:`sklearn.neural_network`
 .............................
 
 - |Efficiency| Neural net training is now a little faster.
   :pr:`17603`, :pr:`17604`, :pr:`17606`, :pr:`17608`, :pr:`17609`, :pr:`17633`
   by :user:`Alex Henrie <alexhenrie>`.
+
+- |Enhancement| Avoid converting float32 input to float64 in
+  :class:`neural_network.BernoulliRBM`.
+  :pr:`16352` by :user:`Arthur Imbert <Henley13>`.
 
 :mod:`sklearn.preprocessing`
 ............................

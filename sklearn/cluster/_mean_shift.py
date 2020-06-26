@@ -419,7 +419,7 @@ class MeanShift(ClusterMixin, BaseEstimator):
                                      key=lambda tup: (tup[1], tup[0]),
                                      reverse=True)
         sorted_centers = np.array([tup[0] for tup in sorted_by_intensity])
-        unique = np.ones(len(sorted_centers), dtype=np.bool)
+        unique = np.ones(len(sorted_centers), dtype=bool)
         nbrs = NearestNeighbors(radius=bandwidth,
                                 n_jobs=self.n_jobs).fit(sorted_centers)
         for i, center in enumerate(sorted_centers):
@@ -433,7 +433,7 @@ class MeanShift(ClusterMixin, BaseEstimator):
         # ASSIGN LABELS: a point belongs to the cluster that it is closest to
         nbrs = NearestNeighbors(n_neighbors=1,
                                 n_jobs=self.n_jobs).fit(cluster_centers)
-        labels = np.zeros(n_samples, dtype=np.int)
+        labels = np.zeros(n_samples, dtype=int)
         distances, idxs = nbrs.kneighbors(X)
         if self.cluster_all:
             labels = idxs.flatten()

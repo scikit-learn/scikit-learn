@@ -539,8 +539,8 @@ def test_cross_val_score_mask():
     kfold = KFold(5)
     cv_masks = []
     for train, test in kfold.split(X, y):
-        mask_train = np.zeros(len(y), dtype=np.bool)
-        mask_test = np.zeros(len(y), dtype=np.bool)
+        mask_train = np.zeros(len(y), dtype=bool)
+        mask_test = np.zeros(len(y), dtype=bool)
         mask_train[train] = 1
         mask_test[test] = 1
         cv_masks.append((train, test))
@@ -1700,7 +1700,7 @@ def test_fit_and_score_working():
                             'return_parameters': True}
     result = _fit_and_score(*fit_and_score_args,
                             **fit_and_score_kwargs)
-    assert result[-1] == fit_and_score_kwargs['parameters']
+    assert result['parameters'] == fit_and_score_kwargs['parameters']
 
 
 def three_params_scorer(i, j, k):

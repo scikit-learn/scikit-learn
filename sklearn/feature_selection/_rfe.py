@@ -52,12 +52,12 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
 
     Parameters
     ----------
-    estimator : estimator instance
+    estimator : ``Estimator`` instance
         A supervised learning estimator with a ``fit`` method that provides
         information about feature importance
         (e.g. `coef_`, `feature_importances_`).
 
-    n_features_to_select : int or None, default=None
+    n_features_to_select : int, default=None
         The number of features to select. If `None`, half of the features
         are selected.
 
@@ -89,10 +89,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
 
     Attributes
     ----------
-    classes_ : ndarray of shape (n_classes,)
-        Unique class labels.
-
-    estimator_ : estimator instance
+    estimator_ : ``Estimator`` instance
         The fitted estimator used to select features.
 
     n_features_ : int
@@ -198,8 +195,8 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         if step <= 0:
             raise ValueError("Step must be >0")
 
-        support_ = np.ones(n_features, dtype=np.bool)
-        ranking_ = np.ones(n_features, dtype=np.int)
+        support_ = np.ones(n_features, dtype=bool)
+        ranking_ = np.ones(n_features, dtype=int)
 
         if step_score:
             self.scores_ = []
@@ -366,7 +363,7 @@ class RFECV(RFE):
 
     Parameters
     ----------
-    estimator : estimator instance
+    estimator : ``Estimator`` instance
         A supervised learning estimator with a ``fit`` method that provides
         information about feature importance either through a ``coef_``
         attribute or through a ``feature_importances_`` attribute.
@@ -442,13 +439,10 @@ class RFECV(RFE):
 
     Attributes
     ----------
-    classes_ : ndarray of shape (n_classes,)
-        Unique class labels.
-
-    estimator_ : estimator instance
+    estimator_ : ``Estimator`` instance
         The fitted estimator used to select features.
 
-    grid_scores_ : ndarray of shape (n_subsets_of_features)
+    grid_scores_ : ndarray of shape (n_subsets_of_features,)
         The cross-validation scores such that
         ``grid_scores_[i]`` corresponds to
         the CV score of the i-th subset of features.

@@ -253,7 +253,7 @@ def test_binning_train_validation_are_separated():
         random_state=rng
     )
     gb.fit(X_classification, y_classification)
-    mapper_training_data = gb.bin_mapper_
+    mapper_training_data = gb._bin_mapper
 
     # Note that since the data is small there is no subsampling and the
     # random_state doesn't matter
@@ -277,7 +277,7 @@ def test_missing_values_trivial():
     rng = np.random.RandomState(0)
 
     X = rng.normal(size=(n_samples, n_features))
-    mask = rng.binomial(1, .5, size=X.shape).astype(np.bool)
+    mask = rng.binomial(1, .5, size=X.shape).astype(bool)
     X[mask] = np.nan
     y = mask.ravel()
     gb = HistGradientBoostingClassifier()
@@ -314,7 +314,7 @@ def test_missing_values_resilience(problem, missing_proportion,
         gb = HistGradientBoostingClassifier()
         expected_min_score = expected_min_score_classification
 
-    mask = rng.binomial(1, missing_proportion, size=X.shape).astype(np.bool)
+    mask = rng.binomial(1, missing_proportion, size=X.shape).astype(bool)
     X[mask] = np.nan
 
     gb.fit(X, y)
