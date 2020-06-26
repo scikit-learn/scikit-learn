@@ -168,3 +168,9 @@ def test_max_iter(max_iter):
 
     for c1, c2 in zip(clusters1, clusters2):
         assert np.allclose(c1, c2)
+
+
+def test_mean_shift_zero_bandwidth():
+    # Check that mean shift works when the estimated bandwidth is 0.
+    X = np.array([1, 1, 1, 2, 2, 2, 3, 3]).reshape(-1, 1)
+    MeanShift(bin_seeding=True).fit(X)

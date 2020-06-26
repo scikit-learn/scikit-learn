@@ -218,6 +218,8 @@ def get_bin_seeds(X, bin_size, min_bin_freq=1):
     bin_seeds : array-like of shape (n_samples, n_features)
         Points used as initial kernel positions in clustering.mean_shift.
     """
+    if bin_size == 0:
+        return X
 
     # Bin points
     bin_sizes = defaultdict(int)
