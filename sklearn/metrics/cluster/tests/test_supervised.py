@@ -414,13 +414,13 @@ def test_rand_score():
     clustering1 = [0, 0, 0, 1, 1, 1]
     clustering2 = [0, 1, 0, 1, 2, 2]
     # pair confusion matrix
-    D11 = 2 * 2 # ordered pairs (1, 3), (5, 6)
-    D10 = 2 * 4 # ordered pairs (1, 2), (2, 3), (4, 5), (4, 6)
-    D01 = 2 * 1 # ordered pair (2, 4)
-    D00 = 5 * 6 - D11 - D01 - D10 # the remaining pairs
+    D11 = 2 * 2  # ordered pairs (1, 3), (5, 6)
+    D10 = 2 * 4  # ordered pairs (1, 2), (2, 3), (4, 5), (4, 6)
+    D01 = 2 * 1  # ordered pair (2, 4)
+    D00 = 5 * 6 - D11 - D01 - D10  # the remaining pairs
     # rand score
     expected_numerator = D00 + D11
-    expected_denominator = D00 + D01 + D10 +D11
+    expected_denominator = D00 + D01 + D10 + D11
     expected_score = expected_numerator / expected_denominator
     assert_array_almost_equal(expected_score, rand_score(clustering1,
                                                          clustering2))
