@@ -1282,9 +1282,8 @@ def non_negative_factorization_online(X, W=None, H=None, n_components=None, *,
     beta_loss = _check_string_param(solver, regularization, beta_loss, init)
 
     if X.min() == 0 and beta_loss <= 0:
-        raise ValueError("When beta_loss <= 0 and X contains zeros, "
-                         "the solver may diverge. Please add small values to "
-                         "X, or use a positive beta_loss.")
+        # used to avoid division by zero
+        X[X == 0] = EPSILON
 
     n_samples, n_features = X.shape
     if n_components is None:
@@ -1869,8 +1868,7 @@ class MiniBatchNMF(TransformerMixin, BaseEstimator):
 
     def partial_fit(self, X, y=None, **params):
         if hasattr(self, 'components_'):
-            # W = np.ones((X.shape[0], self.n_components_))
-            W = np.maximum(1e-6, X.sum(axis=1) * self._components_numerator_)
+            W = np.maximum(1e-6, np.dot(X, np.transpose(self.components_)))
             W /= W.sum(axis=1, keepdims=True)
             W, H, A, B, n_iter_ = non_negative_factorization_online(
                 X=X, W=W, H=self.components_,
