@@ -8,7 +8,6 @@ from numpy.testing import assert_allclose
 import pytest
 
 from sklearn.utils import check_random_state
-from sklearn.utils._testing import assert_raises_regex
 from sklearn.ensemble._gb_losses import RegressionLossFunction
 from sklearn.ensemble._gb_losses import LeastSquaresError
 from sklearn.ensemble._gb_losses import LeastAbsoluteError
@@ -191,7 +190,7 @@ def test_mdl_computation_unweighted(pred, y, expected_loss):
 def test_mdl_computation_weighted(pred, y, weights, expected_loss):
     # MultinomialDeviance loss computation with weights.
     loss = MultinomialDeviance(3)
-    assert_almost_equal(loss(y, pred, weights), expected_loss, decimal=4)
+    assert_allclose(loss(y, pred, weights), expected_loss)
 
 
 @pytest.mark.parametrize('n', [0, 1, 2])
