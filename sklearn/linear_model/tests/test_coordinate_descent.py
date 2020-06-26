@@ -3,15 +3,20 @@
 # License: BSD 3 clause
 
 import numpy as np
-from numpy.testing import assert_allclose
 import pytest
 from scipy import interpolate, sparse
 from copy import deepcopy
 import joblib
 
+from sklearn.base import is_classifier
 from sklearn.datasets import load_diabetes
 from sklearn.datasets import make_regression
+from sklearn.model_selection import train_test_split
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
+
 from sklearn.exceptions import ConvergenceWarning
+from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_raises
@@ -24,10 +29,31 @@ from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import TempMemmap
 from sklearn.utils.fixes import parse_version
 
-from sklearn.linear_model import Lasso, \
-    LassoCV, ElasticNet, ElasticNetCV, MultiTaskLasso, MultiTaskElasticNet, \
-    MultiTaskElasticNetCV, MultiTaskLassoCV, lasso_path, enet_path
-from sklearn.linear_model import LassoLarsCV, lars_path
+from sklearn.linear_model import (
+    ARDRegression,
+    BayesianRidge,
+    ElasticNet,
+    ElasticNetCV,
+    enet_path,
+    Lars,
+    lars_path,
+    Lasso,
+    LassoCV,
+    LassoLars,
+    LassoLarsCV,
+    LassoLarsIC,
+    lasso_path,
+    LinearRegression,
+    MultiTaskElasticNet,
+    MultiTaskElasticNetCV,
+    MultiTaskLasso,
+    MultiTaskLassoCV,
+    OrthogonalMatchingPursuit,
+    Ridge,
+    RidgeClassifier,
+    RidgeCV,
+)
+
 from sklearn.linear_model._coordinate_descent import _set_order
 from sklearn.utils import check_array
 
@@ -213,11 +239,8 @@ def test_lasso_cv():
 
 
 def test_lasso_cv_with_some_model_selection():
-    from sklearn.pipeline import make_pipeline
-    from sklearn.preprocessing import StandardScaler
     from sklearn.model_selection import ShuffleSplit
     from sklearn import datasets
-    from sklearn.linear_model import LassoCV
 
     diabetes = datasets.load_diabetes()
     X = diabetes.data
@@ -245,6 +268,140 @@ def test_lasso_cv_positive_constraint():
                               positive=True, cv=2, n_jobs=1)
     clf_constrained.fit(X, y)
     assert min(clf_constrained.coef_) >= 0
+
+
+@pytest.mark.parametrize(
+    "LinearModel, params",
+    [(Lasso, {"tol": 1e-16, "alpha": 0.1}),
+     (LassoLars, {"alpha": 0.1}),
+     (RidgeClassifier, {"solver": 'sparse_cg', "alpha": 0.1}),
+     (ElasticNet, {"tol": 1e-16, 'l1_ratio': 1, "alpha": 0.1}),
+     (ElasticNet, {"tol": 1e-16, 'l1_ratio': 0, "alpha": 0.1}),
+     (Ridge, {"solver": 'sparse_cg', 'tol': 1e-12, "alpha": 0.1}),
+     (BayesianRidge, {}),
+     (ARDRegression, {}),
+     (OrthogonalMatchingPursuit, {}),
+     (MultiTaskElasticNet, {"tol": 1e-16, 'l1_ratio': 1, "alpha": 0.1}),
+     (MultiTaskElasticNet, {"tol": 1e-16, 'l1_ratio': 0, "alpha": 0.1}),
+     (MultiTaskLasso, {"tol": 1e-16, "alpha": 0.1}),
+     (Lars, {}),
+     (LinearRegression, {}),
+     (LassoLarsIC, {})]
+ )
+def test_model_pipeline_same_as_normalize_true(LinearModel, params):
+    # Test that linear models (LinearModel) set with normalize set to True are
+    # doing the same as the same linear model preceeded by StandardScaler
+    # in the pipeline and with normalize set to False
+
+    # normalize is True
+    model_name = LinearModel.__name__
+    model_normalize = LinearModel(normalize=True, fit_intercept=True, **params)
+
+    pipeline = make_pipeline(
+        StandardScaler(),
+        LinearModel(normalize=False, fit_intercept=True, **params)
+    )
+
+    is_multitask = model_normalize._get_tags().get("multioutput_only", False)
+
+    # prepare the data
+    n_samples, n_features = 100, 2
+    rng = np.random.RandomState(0)
+    w = rng.randn(n_features)
+    X = rng.randn(n_samples, n_features)
+    X += 20  # make features non-zero mean
+    y = X.dot(w)
+
+    # make classes out of regression
+    if is_classifier(model_normalize):
+        y[y > np.mean(y)] = -1
+        y[y > 0] = 1
+    if is_multitask:
+        y = np.stack((y, y), axis=1)
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
+
+    if 'alpha' in params:
+        model_normalize.set_params(alpha=params['alpha'])
+        if model_name in ['Lasso', 'LassoLars', 'MultiTaskLasso']:
+            new_params = dict(
+                alpha=params['alpha'] * np.sqrt(X_train.shape[0]))
+        if model_name in ['Ridge', 'RidgeClassifier']:
+            new_params = dict(alpha=params['alpha'] * X_train.shape[0])
+    if model_name in ['ElasticNet', 'MultiTaskElasticNet']:
+        if params['l1_ratio'] == 1:
+            new_params = dict(
+                alpha=params['alpha'] * np.sqrt(X_train.shape[0]))
+        if params['l1_ratio'] == 0:
+            new_params = dict(alpha=params['alpha'] * X_train.shape[0])
+
+    if 'new_params' in locals():
+        pipeline[1].set_params(**new_params)
+
+    model_normalize.fit(X_train, y_train)
+    y_pred_normalize = model_normalize.predict(X_test)
+
+    pipeline.fit(X_train, y_train)
+    y_pred_standardize = pipeline.predict(X_test)
+
+    assert_allclose(
+        model_normalize.coef_ * pipeline[0].scale_, pipeline[1].coef_)
+    assert pipeline[1].intercept_ == pytest.approx(y_train.mean())
+    assert (model_normalize.intercept_ ==
+            pytest.approx(y_train.mean() -
+                          model_normalize.coef_.dot(X_train.mean(0))))
+    assert_allclose(y_pred_normalize, y_pred_standardize)
+
+
+@pytest.mark.parametrize(
+    "LinearModel, params",
+    [(Lasso, {"tol": 1e-16, "alpha": 0.1}),
+     (LassoCV, {"tol": 1e-16}),
+     (ElasticNetCV, {}),
+     (RidgeClassifier, {"solver": 'sparse_cg', "alpha": 0.1}),
+     (ElasticNet, {"tol": 1e-16, 'l1_ratio': 1, "alpha": 0.01}),
+     (ElasticNet, {"tol": 1e-16, 'l1_ratio': 0, "alpha": 0.01}),
+     (Ridge, {"solver": 'sparse_cg', 'tol': 1e-12, "alpha": 0.1}),
+     (LinearRegression, {}),
+     (RidgeCV, {})]
+ )
+def test_model_pipeline_same_dense_and_sparse(LinearModel, params):
+    # Test that linear model preceeded by StandardScaler in the pipeline and
+    # with normalize set to False gives the same y_pred and the same .coef_
+    # given X sparse or dense
+
+    model_dense = make_pipeline(
+        StandardScaler(with_mean=False),
+        LinearModel(normalize=False, **params)
+    )
+
+    model_sparse = make_pipeline(
+        StandardScaler(with_mean=False),
+        LinearModel(normalize=False, **params)
+    )
+
+    # prepare the data
+    rng = np.random.RandomState(0)
+    n_samples = 200
+    n_features = 2
+    X = rng.randn(n_samples, n_features)
+    X[X < 0.1] = 0.
+
+    X_sparse = sparse.csr_matrix(X)
+    y = rng.rand(n_samples)
+
+    if is_classifier(model_dense):
+        y = np.sign(y)
+
+    model_dense.fit(X, y)
+    model_sparse.fit(X_sparse, y)
+
+    assert_allclose(model_sparse[1].coef_, model_dense[1].coef_)
+    y_pred_dense = model_dense.predict(X)
+    y_pred_sparse = model_sparse.predict(X_sparse)
+    assert_allclose(y_pred_dense, y_pred_sparse)
+
+    assert_allclose(model_dense[1].intercept_, model_sparse[1].intercept_)
 
 
 def test_lasso_path_return_models_vs_new_return_gives_same_coefficients():
