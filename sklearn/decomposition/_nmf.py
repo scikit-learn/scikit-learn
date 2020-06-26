@@ -1346,7 +1346,7 @@ class NMF(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        W : {array-like, sparse matrix} of shape (n_samples, n_components)
+        W : {ndarray, sparse matrix} of shape (n_samples, n_components)
             Transformed data matrix
 
         Returns
