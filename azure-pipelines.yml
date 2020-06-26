@@ -17,7 +17,7 @@ jobs:
       inputs:
         versionSpec: '3.8'
     - bash: |
-        pip install flake8 mypy==0.770
+        pip install flake8 mypy==0.780
       displayName: Install linters
     - bash: |
         set -ex
