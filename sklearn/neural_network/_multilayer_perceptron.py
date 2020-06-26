@@ -1327,7 +1327,7 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
     best_loss_: float
         minimum loss value during training
 
-    loss_curve_: list, n_iters
+    loss_curve_: list of shape (n_iters,)
         loss value evaluated at the end of each training step
 
     t_: int,
