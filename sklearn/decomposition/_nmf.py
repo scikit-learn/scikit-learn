@@ -1150,8 +1150,8 @@ class NMF(TransformerMixin, BaseEstimator):
         .. versionadded:: 0.19
            Multiplicative Update solver.
 
-    beta_loss : float or string in {'frobenius', 'kullback-leibler', \
-        'itakura-saito'}, default='frobenius'
+    beta_loss : float or {'frobenius', 'kullback-leibler', \
+            'itakura-saito'}, default='frobenius'
         Beta divergence to be minimized, measuring the distance between X
         and the dot product WH. Note that values different from 'frobenius'
         (or 2) and 'kullback-leibler' (or 1) lead to significantly slower
