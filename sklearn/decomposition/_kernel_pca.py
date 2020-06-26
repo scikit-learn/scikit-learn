@@ -347,7 +347,7 @@ class KernelPCA(TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        X_new : array-like of shape (n_samples, n_features)
+        X_new : ndarray of shape (n_samples, n_features)
 
         References
         ----------
