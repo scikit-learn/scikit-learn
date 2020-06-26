@@ -900,7 +900,7 @@ Miscellaneous
     manifold.smacof
     manifold.spectral_embedding
     manifold.trustworthiness
-	
+
 
 .. _metrics_ref:
 
@@ -1212,7 +1212,7 @@ Model validation
 
 .. _multiclass_ref:
 
-:mod:`sklearn.multiclass`: Multiclass and multilabel classification
+:mod:`sklearn.multiclass`: Multiclass classification
 ===================================================================
 
 .. automodule:: sklearn.multiclass
@@ -1233,14 +1233,14 @@ Model validation
 
 .. _multioutput_ref:
 
-:mod:`sklearn.multioutput`: Multioutput regression and classification
-=====================================================================
+:mod:`sklearn.multioutput`: Multioutput regression and multilabel classification
+================================================================================
 
 .. automodule:: sklearn.multioutput
    :no-members:
    :no-inherited-members:
 
-**User guide:** See the :ref:`multiclass` section for further details.
+**User guide:** See the :ref:`multioutput` section for further details.
 
 .. currentmodule:: sklearn
 
