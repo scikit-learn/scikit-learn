@@ -509,8 +509,9 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         if self.normalize != "deprecate":
             warnings.warn("'normalize' was deprecated in version 0.24 and will"
                           " be removed in 0.26.", FutureWarning)
+            _normalize = self.normalize
         else:
-            self.normalize = False
+            _normalize = False
 
         n_jobs_ = self.n_jobs
         X, y = self._validate_data(X, y, accept_sparse=['csr', 'csc', 'coo'],
@@ -521,7 +522,7 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
                                                  dtype=X.dtype)
 
         X, y, X_offset, y_offset, X_scale = self._preprocess_data(
-            X, y, fit_intercept=self.fit_intercept, normalize=self.normalize,
+            X, y, fit_intercept=self.fit_intercept, normalize=_normalize,
             copy=self.copy_X, sample_weight=sample_weight,
             return_mean=True)
 
