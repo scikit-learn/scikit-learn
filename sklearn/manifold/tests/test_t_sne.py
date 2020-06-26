@@ -908,7 +908,7 @@ def test_tsne_with_legacy_euclidean_squaring(method):
     n_components_original = 3
     n_components_embedding = 2
 
-    # Make_blobs is used to impose structure, which guards against instability
+    # Used to create data with structure; this avoids unstable behavior in TSNE
     X, _ = make_blobs(n_features=n_components_original,
                       random_state=random_state)
     X_precomputed = pairwise_distances(X, metric='euclidean', squared=True)
@@ -932,6 +932,7 @@ def test_tsne_with_different_square_distances(method):
     n_components_original = 3
     n_components_embedding = 2
 
+    # Used to create data with structure; this avoids unstable behavior in TSNE
     X, _ = make_blobs(n_features=n_components_original,
                       random_state=random_state)
 
