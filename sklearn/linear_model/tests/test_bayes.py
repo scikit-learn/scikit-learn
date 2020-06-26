@@ -23,6 +23,29 @@ from sklearn.utils.extmath import fast_logdet
 diabetes = datasets.load_diabetes()
 
 
+@pytest.mark.parametrize('BayesModel', [ARDRegression, BayesianRidge])
+@pytest.mark.parametrize(
+    'normalize, n_warnings, warning',
+    [(True, 1, FutureWarning),
+     (False, 1, FutureWarning),
+     ("deprecate", 0, None)]
+)
+def test_assure_warning_when_normalize(BayesModel,
+                                       normalize, n_warnings, warning):
+    # check that we issue a FutureWarning when normalize was set
+    rng = check_random_state(0)
+    n_samples = 200
+    n_features = 2
+    X = rng.randn(n_samples, n_features)
+    X[X < 0.1] = 0.
+    y = rng.rand(n_samples)
+
+    model = BayesModel(normalize=normalize)
+    with pytest.warns(warning) as record:
+        model.fit(X, y)
+    assert len(record) == n_warnings
+
+
 def test_n_iter():
     """Check value of n_iter."""
     X = np.array([[1], [2], [6], [8], [10]])
