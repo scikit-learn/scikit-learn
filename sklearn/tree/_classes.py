@@ -1634,6 +1634,9 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
 
     n_classes_ : ndarray of shape (n_outputs,)
         Array of ones if fitted. It is not used in regression problems.
+        
+        .. deprecated:: 0.22
+           `classes_` attribute is deprecated in 0.22 and will be removed in 0.24.
 
     n_features_ : int
         The number of features when ``fit`` is performed.
