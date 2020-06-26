@@ -9,6 +9,7 @@
 
 import warnings
 from inspect import signature
+from contextlib import suppress
 
 from math import log
 import numpy as np
@@ -193,8 +194,8 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
                 check_is_fitted(self.base_estimator[-1])
             else:
                 check_is_fitted(self.base_estimator)
-            if hasattr(self.base_estimator, "n_features_in_"):
-                self.n_features_in_ = self.base_estimator.n_features_in_
+            with suppress(AttributeError):
+                self.n_features_in_ = base_estimator.n_features_in_
             self.classes_ = self.base_estimator.classes_
 
             calibrated_classifier = _CalibratedClassifier(
