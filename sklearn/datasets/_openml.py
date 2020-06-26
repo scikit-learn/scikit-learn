@@ -2,6 +2,7 @@ import gzip
 import json
 import os
 import shutil
+import hashlib
 from os.path import join
 from warnings import warn
 from contextlib import closing
@@ -492,7 +493,8 @@ def _load_arff_response(
     url: str,
     data_home: Optional[str],
     return_type, encode_nominal: bool,
-    parse_arff: Callable[[ArffContainerType], Tuple]
+    parse_arff: Callable[[ArffContainerType], Tuple],
+    md5_checksum: str
 ) -> Tuple:
     """Load arff data with url and parses arff response with parse_arff"""
     response = _open_openml_url(url, data_home)
@@ -500,10 +502,32 @@ def _load_arff_response(
     with closing(response):
         # Note that if the data is dense, no reading is done until the data
         # generator is iterated.
-        arff = _arff.load((line.decode('utf-8') for line in response),
+        actual_md5_checksum = hashlib.md5()
+
+        def _stream_checksum_generator(response):
+            for line in response:
+                actual_md5_checksum.update(line)
+                yield line.decode('utf-8')
+
+        stream = _stream_checksum_generator(response)
+
+        arff = _arff.load(stream,
                           return_type=return_type,
                           encode_nominal=encode_nominal)
-        return parse_arff(arff)
+
+        parsed_arff = parse_arff(arff)
+
+        # consume remaining stream, if early exited
+        for _ in stream:
+            pass
+
+        if actual_md5_checksum.hexdigest() != md5_checksum:
+            raise ValueError("md5 checksum of local file for " + url +
+                             " does not match description. "
+                             "Downloaded file could have been modified / "
+                             "corrupted, clean cache and retry...")
+
+        return parsed_arff
 
 
 def _download_data_to_bunch(
@@ -515,7 +539,8 @@ def _download_data_to_bunch(
     features_list: List,
     data_columns: List[int],
     target_columns: List,
-    shape: Optional[Tuple[int, int]]
+    shape: Optional[Tuple[int, int]],
+    md5_checksum: str
 ):
     """Download OpenML ARFF and convert to Bunch of data
     """
@@ -609,7 +634,8 @@ def _download_data_to_bunch(
         _load_arff_response)(url, data_home,
                              return_type=return_type,
                              encode_nominal=not as_frame,
-                             parse_arff=parse_arff)
+                             parse_arff=parse_arff,
+                             md5_checksum=md5_checksum)
     X, y, frame, nominal_attributes = postprocess(*out)
 
     return Bunch(data=X, target=y, frame=frame,
@@ -883,7 +909,9 @@ def fetch_openml(
                                     as_frame=as_frame,
                                     features_list=features_list, shape=shape,
                                     target_columns=target_columns,
-                                    data_columns=data_columns)
+                                    data_columns=data_columns,
+                                    md5_checksum=data_description[
+                                        "md5_checksum"])
 
     if return_X_y:
         return bunch.data, bunch.target
