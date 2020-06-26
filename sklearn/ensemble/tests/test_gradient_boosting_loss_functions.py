@@ -149,8 +149,9 @@ def test_sample_weight_deviance():
         assert deviance_wo_w == deviance_w_w
 
 
-@pytest.mark.parametrize('n_classes, n_samples',
-                         [(3, 100), (5, 57), (7, 13)])
+@pytest.mark.parametrize(
+    'n_classes, n_samples', [(3, 100), (5, 57), (7, 13)]
+)
 def test_multinomial_deviance(n_classes, n_samples):
     # Check multinomial deviance with and without sample weights.
     rng = check_random_state(13)
