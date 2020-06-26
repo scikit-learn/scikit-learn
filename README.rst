@@ -23,10 +23,10 @@
 .. |DOI| image:: https://zenodo.org/badge/21369/scikit-learn/scikit-learn.svg
 .. _DOI: https://zenodo.org/badge/latestdoi/21369/scikit-learn/scikit-learn
 
-scikit-learn
-============
+.. image:: doc/logos/scikit-learn-logo.png
+  :target: https://scikit-learn.org/
 
-scikit-learn is a Python module for machine learning built on top of
+**scikit-learn** is a Python module for machine learning built on top of
 SciPy and is distributed under the 3-Clause BSD license.
 
 The project was started in 2007 by David Cournapeau as a Google Summer
@@ -37,7 +37,6 @@ for a list of core contributors.
 It is currently maintained by a team of volunteers.
 
 Website: https://scikit-learn.org
-
 
 Installation
 ------------
@@ -52,6 +51,8 @@ scikit-learn requires:
 - SciPy (>= 0.19.1)
 - joblib (>= 0.11)
 - threadpoolctl (>= 2.0.0)
+
+=======
 
 **Scikit-learn 0.20 was the last version to support Python 2.7 and Python 3.4.**
 scikit-learn 0.23 and later require Python 3.6 or newer.
@@ -134,7 +135,6 @@ Before opening a Pull Request, have a look at the
 full Contributing page to make sure your code complies
 with our guidelines: https://scikit-learn.org/stable/developers/index.html
 
-
 Project History
 ---------------
 
@@ -146,7 +146,6 @@ for a list of core contributors.
 The project is currently maintained by a team of volunteers.
 
 **Note**: `scikit-learn` was previously referred to as `scikits.learn`.
-
 
 Help and Support
 ----------------

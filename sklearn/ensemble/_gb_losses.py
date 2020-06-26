@@ -859,7 +859,7 @@ class ExponentialLoss(ClassificationLossFunction):
         return proba
 
     def _raw_prediction_to_decision(self, raw_predictions):
-        return (raw_predictions.ravel() >= 0).astype(np.int)
+        return (raw_predictions.ravel() >= 0).astype(int)
 
     def get_init_raw_predictions(self, X, estimator):
         probas = estimator.predict_proba(X)

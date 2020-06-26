@@ -1,7 +1,6 @@
 """
 Test the pipeline module.
 """
-from distutils.version import LooseVersion
 from tempfile import mkdtemp
 import shutil
 import time
@@ -20,6 +19,7 @@ from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_no_warnings
+from sklearn.utils.fixes import parse_version
 
 from sklearn.base import clone, BaseEstimator, TransformerMixin
 from sklearn.pipeline import Pipeline, FeatureUnion, make_pipeline, make_union
@@ -519,7 +519,8 @@ def test_make_union_kwargs():
     # invalid keyword parameters should raise an error message
     assert_raise_message(
         TypeError,
-        'Unknown keyword arguments: "transformer_weights"',
+        "make_union() got an unexpected "
+        "keyword argument 'transformer_weights'",
         make_union, pca, mock, transformer_weights={'pca': 10, 'Transf': 1}
     )
 
@@ -756,12 +757,6 @@ def test_make_pipeline():
     assert pipe.steps[0][0] == "transf-1"
     assert pipe.steps[1][0] == "transf-2"
     assert pipe.steps[2][0] == "fitparamt"
-
-    assert_raise_message(
-        TypeError,
-        'Unknown keyword arguments: "random_parameter"',
-        make_pipeline, t1, t2, random_parameter='rnd'
-    )
 
 
 def test_feature_union_weights():
@@ -1025,7 +1020,7 @@ def test_pipeline_memory():
     y = iris.target
     cachedir = mkdtemp()
     try:
-        if LooseVersion(joblib.__version__) < LooseVersion('0.12'):
+        if parse_version(joblib.__version__) < parse_version('0.12'):
             # Deal with change of API in joblib
             memory = joblib.Memory(cachedir=cachedir, verbose=10)
         else:
@@ -1087,7 +1082,7 @@ def test_pipeline_memory():
 
 def test_make_pipeline_memory():
     cachedir = mkdtemp()
-    if LooseVersion(joblib.__version__) < LooseVersion('0.12'):
+    if parse_version(joblib.__version__) < parse_version('0.12'):
         # Deal with change of API in joblib
         memory = joblib.Memory(cachedir=cachedir, verbose=10)
     else:

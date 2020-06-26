@@ -1168,7 +1168,7 @@ def test_lrap_sample_weighting_zero_labels():
     # For these test samples, the APs are 0.5, 0.75, and 1.0 (default for zero
     # labels).
     y_true = np.array([[1, 0, 0, 0], [1, 0, 0, 1], [0, 0, 0, 0]],
-                      dtype=np.bool)
+                      dtype=bool)
     y_score = np.array([[0.3, 0.4, 0.2, 0.1], [0.1, 0.2, 0.3, 0.4],
                         [0.4, 0.3, 0.2, 0.1]])
     samplewise_lraps = np.array([0.5, 0.75, 1.0])
