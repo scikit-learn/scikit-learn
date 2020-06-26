@@ -1828,7 +1828,7 @@ class MultiTaskElasticNet(Lasso):
         The dual gaps at the end of the optimization.
 
     sparse_coef_ : sparse matrix of shape (n_tasks, n_features)
-        ``sparse_coef_`` is a readonly property derived from ``coef_``
+        ``sparse_coef_`` is a readonly property derived from ``coef_``.
 
     eps_: float
         same as tol
