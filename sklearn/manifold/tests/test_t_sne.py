@@ -969,11 +969,8 @@ def test_tsne_square_distance_futurewarning():
     X = random_state.randn(5, 2)
 
     for metric in ['euclidean', 'manhattan']:
-        for square_distance in [True, False, 'legacy', '']:
-            if square_distance == '':
-                tsne = TSNE(metric=metric)
-            else:
-                tsne = TSNE(metric=metric, square_distance=square_distance)
+        for square_distance in [True, False, 'legacy']:
+            tsne = TSNE(metric=metric, square_distance=square_distance)
 
             if metric != 'euclidean' and square_distance not in [True, False]:
                 with pytest.warns(FutureWarning, match="'square_distance'.*"):
