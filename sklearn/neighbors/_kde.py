@@ -74,9 +74,8 @@ class KernelDensity(BaseEstimator):
 
     Attributes
     ----------
-    tree_:
-        either :class:`BallTree` or :class:`KDTree`, determined by the
-        ``algorithm`` parameter.
+    tree_ : ``BinaryTree`` instance
+        The tree algorithm for fast generalized N-point problems.
 
     See Also
     --------

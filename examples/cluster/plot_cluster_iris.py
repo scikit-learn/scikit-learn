@@ -52,7 +52,7 @@ for name, est in estimators:
     labels = est.labels_
 
     ax.scatter(X[:, 3], X[:, 0], X[:, 2],
-               c=labels.astype(np.float), edgecolor='k')
+               c=labels.astype(float), edgecolor='k')
 
     ax.w_xaxis.set_ticklabels([])
     ax.w_yaxis.set_ticklabels([])
@@ -77,7 +77,7 @@ for name, label in [('Setosa', 0),
               horizontalalignment='center',
               bbox=dict(alpha=.2, edgecolor='w', facecolor='w'))
 # Reorder the labels to have colors matching the cluster results
-y = np.choose(y, [1, 2, 0]).astype(np.float)
+y = np.choose(y, [1, 2, 0]).astype(float)
 ax.scatter(X[:, 3], X[:, 0], X[:, 2], c=y, edgecolor='k')
 
 ax.w_xaxis.set_ticklabels([])
