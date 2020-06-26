@@ -23,6 +23,7 @@ from sklearn.utils.extmath import fast_logdet
 diabetes = datasets.load_diabetes()
 
 
+# FIXME: 'normalize' to be removed in 0.26
 @pytest.mark.parametrize('BayesModel', [ARDRegression, BayesianRidge])
 @pytest.mark.parametrize(
     'normalize, n_warnings, warning',
