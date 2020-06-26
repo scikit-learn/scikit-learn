@@ -235,8 +235,6 @@ def pair_confusion_matrix(labels_true, labels_pred):
     # Computation using the contingency data
     contingency = contingency_matrix(labels_true, labels_pred, sparse=True,
                                      dtype=np.int64)
-    n_c = np.ravel(contingency.sum(axis=1))
-    n_k = np.ravel(contingency.sum(axis=0))
     sum_comb = sum(_comb2(n_ij) for n_ij in contingency.data)
     sum_comb_c = sum(_comb2(n_c) for n_c in np.ravel(contingency.sum(axis=1)))
     sum_comb_k = sum(_comb2(n_k) for n_k in np.ravel(contingency.sum(axis=0)))
