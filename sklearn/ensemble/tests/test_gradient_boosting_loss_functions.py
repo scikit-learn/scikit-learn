@@ -156,7 +156,7 @@ def test_multinomial_deviance(n_classes, n_samples):
     # Check multinomial deviance with and without sample weights.
     rng = np.random.RandomState(13)
     sample_weight = np.ones(n_samples)
-    y = rng.randint(0, n_classes, size=sample_weight.shape[0])
+    y = rng.randint(0, n_classes, size=n_samples)
     p = np.zeros((y.shape[0], n_classes), dtype=np.float64)
     for i in range(p.shape[1]):
         p[:, i] = y == i
