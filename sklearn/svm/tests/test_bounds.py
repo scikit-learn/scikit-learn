@@ -133,8 +133,9 @@ def test_newrand_bounded_rand_int(range_, n_pts):
     # lower 10th quantile pvalue <= 0.05 means that the test rejects the
     # null hypothesis that the sample came from the uniform distribution
     assert min_10pct_pval > 0.05, (
-        "Null hypothesis rejected: generated random numbers are not uniform."
-        f" Details: lower 10th quantile p-value of {min_10pct_pval} not > 0.05.")
+        "Null hypothesis rejected: generated random numbers are not uniform. "
+        f"Details: lower 10th quantile p-value of {min_10pct_pval} not > 0.05."
+        )
 
 
 @pytest.mark.parametrize('range_',
