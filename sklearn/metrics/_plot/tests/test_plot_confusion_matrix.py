@@ -249,12 +249,18 @@ def test_confusion_matrix_pipeline(pyplot, clf, data, n_classes):
 @pytest.mark.parametrize("colorbar", [True, False])
 def test_plot_confusion_matrix_colorbar(pyplot, data, fitted_clf, colorbar):
     X, y = data
-    disp = plot_confusion_matrix(fitted_clf, X, y, colorbar=True)
-    assert disp.im_.colorbar is not None
 
-    # attempt a plot with the opposit effect
-    disp.plot(colorbar=False)
-    assert disp.im_.colorbar is None
+    def _check_colorbar(disp, has_colorbar):
+        if has_colorbar:
+            assert disp.im_.colorbar is not None
+            assert disp.im_.colorbar.__class__.__name__ == "Colorbar"
+        else:
+            assert disp.im_.colorbar is None
+    disp = plot_confusion_matrix(fitted_clf, X, y, colorbar=colorbar)
+    _check_colorbar(disp, colorbar)
+    # attempt a plot with the opposite effect of colorbar
+    disp.plot(colorbar=not colorbar)
+    _check_colorbar(disp, not colorbar)
 
 
 @pytest.mark.parametrize("values_format", ['e', 'n'])
