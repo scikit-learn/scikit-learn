@@ -637,9 +637,6 @@ def _score(estimator, X_test, y_test, scorer, error_score=np.nan):
     Will return a dict of floats if `scorer` is a dict, otherwise a single
     float is returned.
     """
-    error_msg = ("scoring must return a number, got %s (%s) "
-                 "instead. (scorer=%s)")
-
     if isinstance(scorer, dict):
         # will cache method calls if needed. scorer() returns a dict
         scorer = _MultimetricScorer(**scorer)
@@ -648,6 +645,8 @@ def _score(estimator, X_test, y_test, scorer, error_score=np.nan):
     else:
         scores = scorer(estimator, X_test, y_test)
 
+    error_msg = ("scoring must return a number, got %s (%s) "
+                 "instead. (scorer=%s)")
     if isinstance(scores, dict):
         for name, score in scores.items():
             if hasattr(score, 'item'):
