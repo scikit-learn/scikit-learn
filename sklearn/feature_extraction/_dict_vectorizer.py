@@ -100,9 +100,9 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
     array([[1., 0., 1., 0., 0., 0.],
            [0., 1., 0., 1., 0., 0.],
            [0., 0., 0., 0., 1., 1.]])
-    >>> v.inverse_transform(X) == [[{'bar=2': 1.0, 'foo=1': 1.0},
-    ...                             {'baz=1': 1.0, 'foo=3': 1.0},
-    ...                             {'foo=one': 1.0, 'foo=three': 1.0}]]
+    >>> v.inverse_transform(X) == [{'bar=2': 1.0, 'foo=1': 1.0},
+    ...                            {'baz=1': 1.0, 'foo=3': 1.0},
+    ...                            {'foo=one': 1.0, 'foo=three': 1.0}]
     True
     >>> v.transform({'foo': '1', 'unseen_feature': [3]})
     array([[0., 0., 1., 0., 0., 0.]])
