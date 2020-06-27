@@ -576,10 +576,10 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     else:
         try:
             fit_time = time.time() - start_time
-            test_scores = _score(estimator, X_test, y_test, scorer)
+            test_scores = _score(estimator, X_test, y_test, scorer, error_score)
             score_time = time.time() - start_time - fit_time
             if return_train_score:
-                train_scores = _score(estimator, X_train, y_train, scorer)
+                train_scores = _score(estimator, X_train, y_train, scorer, error_score)
         except Exception:
             if error_score == 'raise':
                 raise
@@ -631,12 +631,15 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     return ret
 
 
-def _score(estimator, X_test, y_test, scorer):
+def _score(estimator, X_test, y_test, scorer, error_score=np.nan):
     """Compute the score(s) of an estimator on a given test set.
 
     Will return a dict of floats if `scorer` is a dict, otherwise a single
     float is returned.
     """
+    error_msg = ("scoring must return a number, got %s (%s) "
+                 "instead. (scorer=%s)")
+
     if isinstance(scorer, dict):
         # will cache method calls if needed. scorer() returns a dict
         scorer = _MultimetricScorer(**scorer)
@@ -645,8 +648,6 @@ def _score(estimator, X_test, y_test, scorer):
     else:
         scores = scorer(estimator, X_test, y_test)
 
-    error_msg = ("scoring must return a number, got %s (%s) "
-                 "instead. (scorer=%s)")
     if isinstance(scores, dict):
         for name, score in scores.items():
             if hasattr(score, 'item'):
@@ -654,15 +655,43 @@ def _score(estimator, X_test, y_test, scorer):
                     # e.g. unwrap memmapped scalars
                     score = score.item()
             if not isinstance(score, numbers.Number):
-                raise ValueError(error_msg % (score, type(score), name))
-            scores[name] = score
+                if error_score == 'raise':
+                    raise ValueError(error_msg % (score, type(score), name))
+                elif isinstance(error_score, numbers.Number):
+                    scores[name] = error_score
+                    warnings.warn("Scoring failed. The score on this train-test "
+                                  "partition for these parameters will be set "
+                                  "to %f. Details: \n%s" %
+                                  (error_score, format_exc()),
+                                  UserWarning)
+                else:
+                    raise ValueError("error_score must be the string 'raise' or a "
+                                     "numeric value. (Hint: if using 'raise', "
+                                     "please make sure that it has been "
+                                     "spelled correctly.)")
+            else:
+                scores[name] = score
     else:  # scalar
         if hasattr(scores, 'item'):
             with suppress(ValueError):
                 # e.g. unwrap memmapped scalars
                 scores = scores.item()
         if not isinstance(scores, numbers.Number):
-            raise ValueError(error_msg % (scores, type(scores), scorer))
+            if error_score == 'raise':
+                raise ValueError(error_msg % (scores, type(scores), scorer))
+            elif isinstance(error_score, numbers.Number):
+                scores = error_score
+                warnings.warn("Scoring failed. The score on this train-test "
+                              "partition for these parameters will be set "
+                              "to %f. Details: \n%s" %
+                              (error_score, format_exc()),
+                              UserWarning)
+            else:
+                raise ValueError("error_score must be the string 'raise' or a "
+                                 "numeric value. (Hint: if using 'raise', "
+                                 "please make sure that it has been "
+                                 "spelled correctly.)")
+
     return scores
 
 

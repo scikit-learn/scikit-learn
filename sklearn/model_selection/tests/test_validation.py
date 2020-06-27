@@ -333,59 +333,30 @@ def test_cross_validate_invalid_scoring_param():
     # Multiclass Scorers that return multiple values are not supported yet
     score_kwargs = {'error_score': np.nan}
 
-    # since we're using a multiclass scorer, our error will be the following
-    error_message = ("ValueError: Classification metrics can't handle a mix "
-                     "of binary and continuous targets")
-
     # the warning message we're expecting to see
     warning_message = ("Scoring failed. The score on this train-test "
                        "partition for these parameters will be set to %f. "
                        "Details: \n" % score_kwargs['error_score'])
 
-    with pytest.warns(UserWarning, match=warning_message) as record:
+    with pytest.warns(UserWarning, match=warning_message):
         cross_validate(estimator, X, y, scoring=multiclass_scorer)
-    assert len(record) > 0
-    for item in record:
-        assert 'Traceback (most recent call last):\n' in str(item.message)
-        split = str(item.message).splitlines()
-        assert error_message in split[-1]
 
-    with pytest.warns(UserWarning, match=warning_message) as record:
+    with pytest.warns(UserWarning, match=warning_message):
         cross_validate(estimator, X, y, scoring={"foo": multiclass_scorer})
-    assert len(record) > 0
-    for item in record:
-        assert 'Traceback (most recent call last):\n' in str(item.message)
-        split = str(item.message).splitlines()
-        assert error_message in split[-1]
 
     multivalued_scorer = make_scorer(confusion_matrix)
 
     # Multiclass Scorers that return multiple values are not supported yet
-    # since we're using a multiclass scorer, our error will be the following
-    error_message = "ValueError: scoring must return a number"
-
     # the warning message we're expecting to see
     warning_message = ("Scoring failed. The score on this train-test "
                        "partition for these parameters will be set to %f. "
                        "Details: \n" % score_kwargs['error_score'])
 
-    with pytest.warns(UserWarning, match=warning_message) as record:
+    with pytest.warns(UserWarning, match=warning_message):
         cross_validate(SVC(), X, y, scoring=multivalued_scorer)
-    assert len(record) > 0
-    for item in record:
-        assert 'Traceback (most recent call last):\n' in str(item.message)
-        split = str(item.message).splitlines()
-        mtb = '\n'.join(split[-2:])
-        assert error_message in mtb
 
-    with pytest.warns(UserWarning, match=warning_message) as record:
+    with pytest.warns(UserWarning, match=warning_message):
         cross_validate(SVC(), X, y, scoring={"foo": multivalued_scorer})
-    assert len(record) > 0
-    for item in record:
-        assert 'Traceback (most recent call last):\n' in str(item.message)
-        split = str(item.message).splitlines()
-        mtb = '\n'.join(split[-2:])
-        assert error_message in mtb
 
     assert_raises_regex(ValueError, "'mse' is not a valid scoring value.",
                         cross_validate, SVC(), X, y, scoring="mse")
@@ -1631,9 +1602,6 @@ def test_score_memmap():
     score = np.memmap(tf.name, shape=(), mode='r', dtype=np.float64)
     score_kwargs = {'error_score': np.nan}
     try:
-        # since we're using a non-scalar score, our error will be the following
-        error_message = "ValueError: scoring must return a number"
-
         # the warning message we're expecting to see
         warning_message = ("Scoring failed. The score on this train-test "
                            "partition for these parameters will be set to %f. "
@@ -1641,13 +1609,8 @@ def test_score_memmap():
 
         # No error with the scalar score
         cross_val_score(clf, X, y, scoring=lambda est, X, y: score)
-        with pytest.warns(UserWarning, match=warning_message) as record:
+        with pytest.warns(UserWarning, match=warning_message):
             cross_val_score(clf, X, y, scoring=lambda est, X, y: scores)
-        assert len(record) > 0
-        for item in record:
-            assert 'Traceback (most recent call last):\n' in str(item.message)
-            split = str(item.message).splitlines()
-            assert error_message in split[-1]
     finally:
         # Best effort to release the mmap file handles before deleting the
         # backing file under Windows
@@ -1758,29 +1721,20 @@ def test_score_failing():
     clf = MockClassifier()
     score_kwargs = {'error_score': np.nan}
 
-    # the error message we're expecting to see
-    error_message = ("ValueError: Classification metrics can't handle a mix "
-                     "of binary and continuous targets")
-
     # the warning message we're expecting to see
     warning_message = ("Scoring failed. The score on this train-test "
                        "partition for these parameters will be set to %f. "
                        "Details: \n" % score_kwargs['error_score'])
 
-    with pytest.warns(UserWarning, match=warning_message) as record:
+    with pytest.warns(UserWarning, match=warning_message):
         cross_val_score(clf, X, y, scoring='accuracy')
-    assert len(record) > 0
-    for item in record:
-        assert 'Traceback (most recent call last):\n' in str(item.message)
-        split = str(item.message).splitlines()
-        assert error_message in split[-1]
+
+    error_message = ("Classification metrics can't handle a mix of "
+                     "binary and continuous targets")
 
     # Test if an exception is raised on error_score='raise'
-    assert_raises_regex(ValueError, ("Classification metrics can't handle "
-                        "a mix of binary and continuous targets"),
-                        cross_val_score, clf, X, y,
-                        scoring='accuracy',
-                        error_score='raise')
+    with pytest.raises(ValueError, match=error_message):
+        cross_val_score(clf, X, y, scoring='accuracy', error_score='raise')
 
     error_message = ("error_score must be the string 'raise' or a"
                      " numeric value. (Hint: if using 'raise', please"
@@ -1833,10 +1787,12 @@ def test_fit_and_score_verbosity(capsys, train_score, scorer, verbose,
 
 
 def test_score():
+    score_kwargs = {'error_score': 'raise'}
     error_message = "scoring must return a number, got None"
 
     def two_params_scorer(estimator, X_test):
         return None
-    fit_and_score_args = [None, None, None, two_params_scorer]
+    fit_and_score_args = [None, None, None, two_params_scorer,
+                          score_kwargs['error_score']]
     assert_raise_message(ValueError, error_message,
                          _score, *fit_and_score_args)
