@@ -75,7 +75,7 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
         X_r : array of shape [n_samples, n_selected_features]
             The input samples with only the selected features.
         """
-        data_wrap = _ArrayTransformer(X)
+        wrapper = _ArrayTransformer(X)
         tags = self._get_tags()
         X = check_array(X, dtype=None, accept_sparse='csr',
                         force_all_finite=not tags.get('allow_nan', True))
@@ -94,7 +94,7 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
             return feature_names_in[_safe_mask]
 
         out = X[:, _safe_mask]
-        return data_wrap.transform(out, get_feature_names_out)
+        return wrapper.transform(out, get_feature_names_out)
 
     def inverse_transform(self, X):
         """

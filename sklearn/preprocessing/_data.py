@@ -422,13 +422,13 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
             Transformed data.
         """
         check_is_fitted(self)
-        data_wrap = _ArrayTransformer(X)
+        wrapper = _ArrayTransformer(X)
         X = check_array(X, copy=self.copy, dtype=FLOAT_DTYPES,
                         force_all_finite="allow-nan")
 
         X *= self.scale_
         X += self.min_
-        return data_wrap.transform(X)
+        return wrapper.transform(X)
 
     def inverse_transform(self, X):
         """Undo the scaling of X according to feature_range.
@@ -833,7 +833,7 @@ class StandardScaler(TransformerMixin, BaseEstimator):
             Transformed array.
         """
         check_is_fitted(self)
-        data_wrap = _ArrayTransformer(X)
+        wrapper = _ArrayTransformer(X)
 
         copy = copy if copy is not None else self.copy
         X = self._validate_data(X, reset=False,
@@ -853,7 +853,7 @@ class StandardScaler(TransformerMixin, BaseEstimator):
                 X -= self.mean_
             if self.with_std:
                 X /= self.scale_
-        return data_wrap.transform(X)
+        return wrapper.transform(X)
 
     def inverse_transform(self, X, copy=None):
         """Scale back the data to the original representation
@@ -1056,7 +1056,7 @@ class MaxAbsScaler(TransformerMixin, BaseEstimator):
             Transformed array.
         """
         check_is_fitted(self)
-        data_wrap = _ArrayTransformer(X)
+        wrapper = _ArrayTransformer(X)
         X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
                         estimator=self, dtype=FLOAT_DTYPES,
                         force_all_finite='allow-nan')
@@ -1065,7 +1065,7 @@ class MaxAbsScaler(TransformerMixin, BaseEstimator):
             inplace_column_scale(X, 1.0 / self.scale_)
         else:
             X /= self.scale_
-        return data_wrap.transform(X)
+        return wrapper.transform(X)
 
     def inverse_transform(self, X):
         """Scale back the data to the original representation
@@ -1358,7 +1358,7 @@ class RobustScaler(TransformerMixin, BaseEstimator):
             Transformed array.
         """
         check_is_fitted(self)
-        data_wrap = _ArrayTransformer(X)
+        wrapper = _ArrayTransformer(X)
         X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
                         estimator=self, dtype=FLOAT_DTYPES,
                         force_all_finite='allow-nan')
@@ -1371,7 +1371,7 @@ class RobustScaler(TransformerMixin, BaseEstimator):
                 X -= self.center_
             if self.with_scaling:
                 X /= self.scale_
-        return data_wrap.transform(X)
+        return wrapper.transform(X)
 
     def inverse_transform(self, X):
         """Scale back the data to the original representation
@@ -1696,7 +1696,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
         """
         check_is_fitted(self)
 
-        data_wrap = _ArrayTransformer(X)
+        wrapper = _ArrayTransformer(X)
         X = check_array(X, order='F', dtype=FLOAT_DTYPES,
                         accept_sparse=('csr', 'csc'))
 
@@ -1793,7 +1793,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                     new_index.append(current_col)
                     index = new_index
 
-        return data_wrap.transform(XP, self.get_feature_names)
+        return wrapper.transform(XP, self.get_feature_names)
 
 
 @_deprecate_positional_args
@@ -1999,11 +1999,11 @@ class Normalizer(TransformerMixin, BaseEstimator):
         X_tr : {ndarray, sparse matrix} of shape (n_samples, n_features)
             Transformed array.
         """
-        data_wrap = _ArrayTransformer(X)
+        wrapper = _ArrayTransformer(X)
         copy = copy if copy is not None else self.copy
         X = check_array(X, accept_sparse='csr')
         output = normalize(X, norm=self.norm, axis=1, copy=copy)
-        return data_wrap.transform(output)
+        return wrapper.transform(output)
 
     def _more_tags(self):
         return {'stateless': True}
@@ -2734,12 +2734,12 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
         Xt : {ndarray, sparse matrix} of shape (n_samples, n_features)
             The projected data.
         """
-        data_wrap = _ArrayTransformer(X)
+        wrapper = _ArrayTransformer(X)
         X = self._check_inputs(X, in_fit=False, copy=self.copy)
         self._check_is_fitted(X)
 
         output = self._transform(X, inverse=False)
-        return data_wrap.transform(output)
+        return wrapper.transform(output)
 
     def inverse_transform(self, X):
         """Back-projection to the original space.
@@ -3015,9 +3015,9 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
         return self
 
     def fit_transform(self, X, y=None):
-        data_wrap = _ArrayTransformer(X)
+        wrapper = _ArrayTransformer(X)
         output = self._fit(X, y, force_transform=True)
-        return data_wrap.transform(output)
+        return wrapper.transform(output)
 
     def _fit(self, X, y=None, force_transform=False):
         X = self._check_input(X, in_fit=True, check_positive=True,
@@ -3063,7 +3063,7 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
             The transformed data.
         """
         check_is_fitted(self)
-        data_wrap = _ArrayTransformer(X)
+        wrapper = _ArrayTransformer(X)
         X = self._check_input(X, in_fit=False, check_positive=True,
                               check_shape=True)
 
@@ -3077,7 +3077,7 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
         if self.standardize:
             X = self._scaler.transform(X)
 
-        return data_wrap.transform(X)
+        return wrapper.transform(X)
 
     def inverse_transform(self, X):
         """Apply the inverse power transformation using the fitted lambdas.

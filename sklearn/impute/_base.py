@@ -419,7 +419,7 @@ class SimpleImputer(_BaseImputer):
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
             The input data to complete.
         """
-        data_wrap = _ArrayTransformer(X)
+        wrapper = _ArrayTransformer(X)
         check_is_fitted(self)
 
         X = self._validate_input(X, in_fit=False)
@@ -481,7 +481,7 @@ class SimpleImputer(_BaseImputer):
             return np.r_[imputed_names, indicator_names]
 
         out = super()._concatenate_indicator(X, X_indicator)
-        return data_wrap.transform(out, get_feature_names_out)
+        return wrapper.transform(out, get_feature_names_out)
 
 
 class MissingIndicator(TransformerMixin, BaseEstimator):
@@ -707,7 +707,7 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
             will be boolean.
 
         """
-        data_wrap = _ArrayTransformer(X)
+        wrapper = _ArrayTransformer(X)
         check_is_fitted(self)
         X = self._validate_input(X, in_fit=False)
 
@@ -727,7 +727,7 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
             if self.features_.size < self._n_features:
                 imputer_mask = imputer_mask[:, self.features_]
 
-        return data_wrap.transform(imputer_mask, self._get_feature_names_out)
+        return wrapper.transform(imputer_mask, self._get_feature_names_out)
 
     def fit_transform(self, X, y=None):
         """Generate missing values indicator for X.
@@ -745,13 +745,13 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
             will be boolean.
 
         """
-        data_wrap = _ArrayTransformer(X)
+        wrapper = _ArrayTransformer(X)
         imputer_mask = self._fit(X, y)
 
         if self.features_.size < self._n_features:
             imputer_mask = imputer_mask[:, self.features_]
 
-        return data_wrap.transform(imputer_mask, self._get_feature_names_out)
+        return wrapper.transform(imputer_mask, self._get_feature_names_out)
 
     def _get_feature_names_out(self, feature_names_in):
         if feature_names_in is None:

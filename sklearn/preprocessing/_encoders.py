@@ -424,7 +424,7 @@ class OneHotEncoder(_BaseEncoder):
             Transformed input.
         """
         check_is_fitted(self)
-        data_wrap = _ArrayTransformer(X)
+        wrapper = _ArrayTransformer(X)
         # validation of X happens in _check_X called by _transform
         X_int, X_mask = self._transform(X, handle_unknown=self.handle_unknown)
 
@@ -469,7 +469,7 @@ class OneHotEncoder(_BaseEncoder):
         if not self.sparse:
             out = out.toarray()
 
-        return data_wrap.transform(out, self.get_feature_names)
+        return wrapper.transform(out, self.get_feature_names)
 
     def inverse_transform(self, X):
         """
@@ -698,10 +698,10 @@ class OrdinalEncoder(_BaseEncoder):
         X_out : sparse matrix or a 2-d array
             Transformed input.
         """
-        data_wrap = _ArrayTransformer(X)
+        wrapper = _ArrayTransformer(X)
         X_int, _ = self._transform(X)
         output = X_int.astype(self.dtype, copy=False)
-        return data_wrap.transform(output)
+        return wrapper.transform(output)
 
     def inverse_transform(self, X):
         """

@@ -26,7 +26,7 @@ from ..utils.metaestimators import _BaseComposition
 from ..utils.validation import check_array, check_is_fitted
 from ..utils.validation import _deprecate_positional_args
 from .._config import get_config
-from ..utils._array_transformer import _ManyDataAdapter
+from ..utils._array_transformer import _ManyArrayTransformer
 
 
 __all__ = [
@@ -540,13 +540,13 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
         Xs, transformers = zip(*result)
 
-        data_wrap = _ManyDataAdapter().fit(Xs).get_transformer(Xs)
+        wrapper = _ManyArrayTransformer(Xs)
         # determine if concatenated output will be sparse or not
         self._check_sparse_output(Xs)
         self._update_fitted_transformers(transformers)
         self._validate_output(Xs)
 
-        return data_wrap.transform(self._hstack(list(Xs)))
+        return wrapper.transform(self._hstack(list(Xs)))
 
     def _check_sparse_output(self, Xs):
         def _get_Xtype(X):
@@ -641,8 +641,8 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             # All transformers are None
             return np.zeros((X.shape[0], 0))
 
-        data_wrap = _ManyDataAdapter().fit(Xs).get_transformer(Xs)
-        return data_wrap.transform(self._hstack(list(Xs)))
+        wrapper = _ManyArrayTransformer(Xs)
+        return wrapper.transform(self._hstack(list(Xs)))
 
     def _hstack(self, Xs):
         """Stacks Xs horizontally.

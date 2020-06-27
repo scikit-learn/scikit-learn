@@ -71,7 +71,7 @@ class _ArrayTransformer:
         return X
 
 
-class _ManyDataAdapter(_ArrayTransformer):
+class _ManyArrayTransformer(_ArrayTransformer):
 
     def __init__(self, Xs):
         # TODO: Check Xs has the same structure

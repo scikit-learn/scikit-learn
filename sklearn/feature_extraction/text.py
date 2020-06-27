@@ -1193,7 +1193,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
 
         vocabulary, X = self._count_vocab(raw_documents,
                                           self.fixed_vocabulary_)
-        data_wrap = _ArrayTransformer(X, needs_feature_names_in=False)
+        wrapper = _ArrayTransformer(X, needs_feature_names_in=False)
 
         if self.binary:
             X.data.fill(1)
@@ -1221,7 +1221,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         def get_output_feature_names():
             return self.get_feature_names()
 
-        return data_wrap.transform(X, get_output_feature_names)
+        return wrapper.transform(X, get_output_feature_names)
 
     def transform(self, raw_documents):
         """Transform documents to document-term matrix.
@@ -1247,7 +1247,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         # use the same matrix-building strategy as fit_transform
         _, X = self._count_vocab(raw_documents, fixed_vocab=True)
 
-        data_wrap = _ArrayTransformer(X, needs_feature_names_in=False)
+        wrapper = _ArrayTransformer(X, needs_feature_names_in=False)
 
         if self.binary:
             X.data.fill(1)
@@ -1255,7 +1255,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         def get_output_feature_names():
             return self.get_feature_names()
 
-        return data_wrap.transform(X, get_output_feature_names)
+        return wrapper.transform(X, get_output_feature_names)
 
     def inverse_transform(self, X):
         """Return terms per document with nonzero entries in X.
@@ -1474,7 +1474,7 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
         -------
         vectors : sparse matrix of shape (n_samples, n_features)
         """
-        data_wrap = _ArrayTransformer(X)
+        wrapper = _ArrayTransformer(X)
         X = check_array(X, accept_sparse='csr', dtype=FLOAT_DTYPES, copy=copy)
         if not sp.issparse(X):
             X = sp.csr_matrix(X, dtype=np.float64)
@@ -1503,7 +1503,7 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
         if self.norm:
             X = normalize(X, norm=self.norm, copy=False)
 
-        return data_wrap.transform(X)
+        return wrapper.transform(X)
 
     @property
     def idf_(self):

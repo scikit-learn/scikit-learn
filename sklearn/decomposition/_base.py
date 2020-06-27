@@ -124,7 +124,7 @@ class _BasePCA(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
         >>> ipca.transform(X) # doctest: +SKIP
         """
         check_is_fitted(self)
-        data_wrap = _ArrayTransformer(X, needs_feature_names_in=False)
+        wrapper = _ArrayTransformer(X, needs_feature_names_in=False)
 
         X = check_array(X)
         if self.mean_ is not None:
@@ -135,7 +135,7 @@ class _BasePCA(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
 
         def get_feature_names_out():
             return [f'pca{i}' for i in range(X_transformed.shape[1])]
-        return data_wrap.transform(X_transformed, get_feature_names_out)
+        return wrapper.transform(X_transformed, get_feature_names_out)
 
     def inverse_transform(self, X):
         """Transform data back to its original space.
