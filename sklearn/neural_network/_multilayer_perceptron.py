@@ -308,8 +308,8 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
                                                (fan_in, fan_out))
         intercept_init = self._random_state.uniform(-init_bound, init_bound,
                                                     fan_out)
-        coef_init = coef_init.astype(self.dtype, copy=False)
-        intercept_init = intercept_init.astype(self.dtype, copy=False)
+        coef_init = coef_init.astype(self._dtype, copy=False)
+        intercept_init = intercept_init.astype(self._dtype, copy=False)
         return coef_init, intercept_init
 
     def _fit(self, X, y, incremental=False):
@@ -328,7 +328,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         X = check_array(X, accept_sparse=['csr', 'csc'],
                         dtype=(np.float64, np.float32))
 
-        self.dtype = X.dtype
+        self._dtype = X.dtype
 
         X, y = self._validate_input(X, y, incremental)
 
@@ -355,12 +355,12 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         activations = [X] + [None] * (len(layer_units) - 1)
         deltas = [None] * (len(activations) - 1)
 
-        coef_grads = [np.empty((n_fan_in_, n_fan_out_), dtype=self.dtype)
+        coef_grads = [np.empty((n_fan_in_, n_fan_out_), dtype=self._dtype)
                       for n_fan_in_,
                       n_fan_out_ in zip(layer_units[:-1],
                                         layer_units[1:])]
 
-        intercept_grads = [np.empty(n_fan_out_, dtype=self.dtype)
+        intercept_grads = [np.empty(n_fan_out_, dtype=self._dtype)
                            for n_fan_out_ in
                            layer_units[1:]]
 
@@ -974,7 +974,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
     def _validate_input(self, X, y, incremental):
         X, y = self._validate_data(X, y, accept_sparse=['csr', 'csc'],
                                    multi_output=True,
-                                   dtype=self.dtype)
+                                   dtype=self._dtype)
         if y.ndim == 2 and y.shape[1] == 1:
             y = column_or_1d(y, warn=True)
 
