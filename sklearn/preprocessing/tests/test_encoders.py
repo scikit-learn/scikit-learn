@@ -634,7 +634,7 @@ def test_categories(density, drop):
                                                 ohe_test.categories_):
             assert cat_list[int(drop_idx)] == drop_cat
     assert isinstance(ohe_test.drop_idx_, np.ndarray)
-    assert ohe_test.drop_idx_.dtype == np.object
+    assert ohe_test.drop_idx_.dtype == object
 
 
 @pytest.mark.parametrize('Encoder', [OneHotEncoder, OrdinalEncoder])

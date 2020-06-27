@@ -64,7 +64,13 @@ Changelog
 - |Fix| Fixed a bug in
   :func:`decomposition.MiniBatchDictionaryLearning.partial_fit` which should
   update the dictionary by iterating only once over a mini-batch.
-  :pr:`17433` by :user:`Chiara Marmo <cmarmo>`
+  :pr:`17433` by :user:`Chiara Marmo <cmarmo>`.
+
+- |Fix| Fix :class:`decomposition.SparseCoder` such that it follows
+  scikit-learn API and support cloning. The attribute `components_` is
+  deprecated in 0.24 and will be removed in 0.26. This attribute was
+  redundant with the `dictionary` attribute and constructor parameter.
+  :pr:`17679` by :user:`Xavier Dupré <sdpython>`.
 
 :mod:`sklearn.ensemble`
 .......................
@@ -73,6 +79,11 @@ Changelog
   :class:`ensemble.HistGradientClassifier` now support `staged_predict`,
   which allows monitoring of each stage.
   :pr:`16985` by :user:`Hao Chun Chang <haochunchang>`.
+
+- |Fix| Fixed bug in :class:`ensemble.MultinomialDeviance` where the
+  average of logloss was incorrectly calculated as sum of logloss.
+  :pr:`17694` by :user:`Markus Rempfler <rempfler>` and
+  :user:`Tsutomu Kusanagi <t-kusanagi2>`.
 
 :mod:`sklearn.feature_selection`
 ................................
@@ -135,6 +146,10 @@ Changelog
   :func:`metrics.plot_precision_recall_curve` in order to specify the positive
   class to be used when computing the precision and recall statistics.
   :pr:`17569` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Feature| :func:`metrics.plot_confusion_matrix` now supports making colorbar 
+  optional in the matplotlib plot by setting colorbar=False. :pr:`17192` by 
+  :user:`Avi Gupta <avigupta2612>`
 
 :mod:`sklearn.model_selection`
 ..............................
