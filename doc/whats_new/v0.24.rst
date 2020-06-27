@@ -94,6 +94,11 @@ Changelog
   attribute name/path or a `callable` for extracting feature importance from
   the estimator.  :pr:`15361` by :user:`Venkatachalam N <venkyyuvy>`
 
+- |Enhancement| Added the option for the number of n_features_to_select to be
+  given as a float representing the percentage of features to select.
+  :pr:`17090` by :user:`Lisa Schwetlick <lschwetlick>` and
+  :user:`Marija Vlajic Wheeler <marijavlajic>`.
+
 :mod:`sklearn.impute`
 .....................
 
@@ -244,6 +249,7 @@ Changelog
 - |Feature| :func:`datasets.fetch_openml` now validates md5checksum of arff
   files downloaded or cached to ensure data integrity.
   :pr:`14800` by :user:`Shashank Singh <shashanksingh28>` and `Joel Nothman`_.
+
 
 Code and Documentation Contributors
 -----------------------------------
