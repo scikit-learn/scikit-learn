@@ -710,13 +710,11 @@ class MultinomialDeviance(ClassificationLossFunction):
         for k in range(self.K):
             Y[:, k] = y == k
 
-        if sample_weight is None:
-            return np.sum(-1 * (Y * raw_predictions).sum(axis=1) +
-                          logsumexp(raw_predictions, axis=1))
-        else:
-            return np.sum(
-                -1 * sample_weight * (Y * raw_predictions).sum(axis=1) +
-                logsumexp(raw_predictions, axis=1))
+        return np.average(
+            -1 * (Y * raw_predictions).sum(axis=1) +
+            logsumexp(raw_predictions, axis=1),
+            weights=sample_weight
+        )
 
     def negative_gradient(self, y, raw_predictions, k=0, **kwargs):
         """Compute negative gradient for the ``k``-th class.
@@ -859,7 +857,7 @@ class ExponentialLoss(ClassificationLossFunction):
         return proba
 
     def _raw_prediction_to_decision(self, raw_predictions):
-        return (raw_predictions.ravel() >= 0).astype(np.int)
+        return (raw_predictions.ravel() >= 0).astype(int)
 
     def get_init_raw_predictions(self, X, estimator):
         probas = estimator.predict_proba(X)
