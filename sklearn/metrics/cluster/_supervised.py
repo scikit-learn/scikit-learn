@@ -159,18 +159,25 @@ def pair_confusion_matrix(labels_true, labels_pred):
         D00 D01
         D10 D11
 
-    has the following entries::
+    has the following entries
 
-        D00 = number of pairs with both clusterings having the samples
-              not clustered together
-        D10 = number of pairs with the true label clusterings having the
-              samples clustered together but the other clustering not
-              having the samples clustered together
-        D01 = number of pairs with the true label clusterings not having
-              the samples clustered together but the other clustering
-              having the samples clustered together
-        D11 = number of pairs with both clusterings having the samples
-              clustered together
+    D00
+      number of pairs with both clusterings having the samples
+      not clustered together
+
+    D10
+      number of pairs with the true label clusterings having the
+      samples clustered together but the other clustering not
+      having the samples clustered together
+
+    D01
+      number of pairs with the true label clusterings not having
+      the samples clustered together but the other clustering
+      having the samples clustered together
+
+    D11
+      number of pairs with both clusterings having the samples
+      clustered together
 
     Parameters
     ----------
@@ -182,7 +189,7 @@ def pair_confusion_matrix(labels_true, labels_pred):
 
     Returns
     -------
-    nested array [[D00, D01], [D10, D11]].
+    nested array [[D00, D01], [D10, D11]]
 
     Examples
     --------
@@ -222,8 +229,8 @@ def pair_confusion_matrix(labels_true, labels_pred):
 
     References
     ----------
-    .. [Hubert1985] L. Hubert and P. Arabie, Comparing Partitions,
-      Journal of Classification 1985
+    .. L. Hubert and P. Arabie, Comparing Partitions, Journal of
+      Classification 1985
       https://link.springer.com/article/10.1007%2FBF01908075
 
     See also
@@ -279,8 +286,8 @@ def rand_score(labels_true, labels_pred):
     Returns
     -------
     ri : float
-       Similarity score between 0.0 and 1.0, inclusive. 1.0 stands for
-       perfect match.
+       Similarity score between 0.0 and 1.0, inclusive, 1.0 stands for
+       perfect match
 
     Examples
     --------
@@ -312,11 +319,13 @@ def rand_score(labels_true, labels_pred):
 
     References
     ----------
-    .. [Hubert1985] L. Hubert and P. Arabie, Comparing Partitions,
-      Journal of Classification 1985
+    .. L. Hubert and P. Arabie, Comparing Partitions, Journal of
+      Classification 1985
       https://link.springer.com/article/10.1007%2FBF01908075
 
-    .. [wk] https://en.wikipedia.org/wiki/Simple_matching_coefficient
+    .. https://en.wikipedia.org/wiki/Simple_matching_coefficient
+
+    .. https://en.wikipedia.org/wiki/Rand_index
 
     See also
     --------

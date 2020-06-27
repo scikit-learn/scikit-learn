@@ -2021,21 +2021,25 @@ The 2x2 pair confusion matrix is::
    D00 D01
    D10 D11
 
-where
+with the following entries:
 
-- D00 = number of pairs with both clusterings having the samples
-  not clustered together,
+D00
+  number of pairs with both clusterings having the samples
+  not clustered together
 
-- D10 = number of pairs with the true label clusterings having the
-  samples clustered together but the other clustering not having the
-  samples clustered together,
+D10
+  number of pairs with the true label clusterings having the
+  samples clustered together but the other clustering not
+  having the samples clustered together
 
-- D01 = number of pairs with the true label clusterings not having the
-  samples clustered together but the other clustering having the
-  samples clustered together,
+D01
+  number of pairs with the true label clusterings not having
+  the samples clustered together but the other clustering
+  having the samples clustered together
 
-- D11 = number of pairs with both clusterings having the samples
-  clustered together.
+D11
+  number of pairs with both clusterings having the samples
+  clustered together
 
 Perfectly matching labelings have all non-zero entries on the
 diagonal regardless of actual label values::
