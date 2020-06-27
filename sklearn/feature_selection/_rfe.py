@@ -53,16 +53,16 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
 
     Parameters
     ----------
-    estimator : object
+    estimator : ``Estimator`` instance
         A supervised learning estimator with a ``fit`` method that provides
         information about feature importance
         (e.g. `coef_`, `feature_importances_`).
 
-    n_features_to_select : int, float, or None (default=None)
-        The number of features to select.
-        If `None`, half of the features are selected.
-        If integer, the parameter is the absolute number of features to select.
-        If float between 0 and 1, it is the fraction of features to select.
+    n_features_to_select : int or float, default=None
+        The number of features to select. If `None`, half of the features are
+        selected. If integer, the parameter is the absolute number of features
+        to select. If float between 0 and 1, it is the fraction of features to
+        select.
 
     step : int or float, default=1
         If greater than or equal to 1, then ``step`` corresponds to the
@@ -92,19 +92,19 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
 
     Attributes
     ----------
+    estimator_ : ``Estimator`` instance
+        The fitted estimator used to select features.
+
     n_features_ : int
         The number of selected features.
 
-    support_ : array of shape [n_features]
-        The mask of selected features.
-
-    ranking_ : array of shape [n_features]
+    ranking_ : ndarray of shape (n_features,)
         The feature ranking, such that ``ranking_[i]`` corresponds to the
         ranking position of the i-th feature. Selected (i.e., estimated
         best) features are assigned rank 1.
 
-    estimator_ : object
-        The external estimator fit on the reduced dataset.
+    support_ : ndarray of shape (n_features,)
+        The mask of selected features.
 
     Examples
     --------
@@ -210,8 +210,8 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         if step <= 0:
             raise ValueError("Step must be >0")
 
-        support_ = np.ones(n_features, dtype=np.bool)
-        ranking_ = np.ones(n_features, dtype=np.int)
+        support_ = np.ones(n_features, dtype=bool)
+        ranking_ = np.ones(n_features, dtype=int)
 
         if step_score:
             self.scores_ = []
@@ -378,7 +378,7 @@ class RFECV(RFE):
 
     Parameters
     ----------
-    estimator : object
+    estimator : ``Estimator`` instance
         A supervised learning estimator with a ``fit`` method that provides
         information about feature importance either through a ``coef_``
         attribute or through a ``feature_importances_`` attribute.
@@ -454,26 +454,26 @@ class RFECV(RFE):
 
     Attributes
     ----------
+    estimator_ : ``Estimator`` instance
+        The fitted estimator used to select features.
+
+    grid_scores_ : ndarray of shape (n_subsets_of_features,)
+        The cross-validation scores such that
+        ``grid_scores_[i]`` corresponds to
+        the CV score of the i-th subset of features.
+
     n_features_ : int
         The number of selected features with cross-validation.
 
-    support_ : array of shape [n_features]
-        The mask of selected features.
-
-    ranking_ : array of shape [n_features]
+    ranking_ : narray of shape (n_features,)
         The feature ranking, such that `ranking_[i]`
         corresponds to the ranking
         position of the i-th feature.
         Selected (i.e., estimated best)
         features are assigned rank 1.
 
-    grid_scores_ : array of shape [n_subsets_of_features]
-        The cross-validation scores such that
-        ``grid_scores_[i]`` corresponds to
-        the CV score of the i-th subset of features.
-
-    estimator_ : object
-        The external estimator fit on the reduced dataset.
+    support_ : ndarray of shape (n_features,)
+        The mask of selected features.
 
     Notes
     -----
