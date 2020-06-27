@@ -718,3 +718,35 @@ def test_early_stopping_stratified():
             ValueError,
             match='The least populated class in y has only 1 member'):
         mlp.fit(X, y)
+
+
+def test_mlp_classifier_dtypes_casting():
+    mlp_64 = MLPClassifier(alpha=1e-5,
+                           hidden_layer_sizes=(10, 5, 3),
+                           random_state=1, max_iter=100)
+    mlp_64.fit(X_digits[:300], y_digits[:300])
+    pred_64 = mlp_64.predict(X_digits[300:])
+
+    mlp_32 = MLPClassifier(alpha=1e-5,
+                           hidden_layer_sizes=(10, 5, 3),
+                           random_state=1, max_iter=100)
+    mlp_32.fit(X_digits[:300].astype(np.float32), y_digits[:300])
+    pred_32 = mlp_32.predict(X_digits[300:].astype(np.float32))
+
+    assert_array_equal(pred_64, pred_32)
+
+
+def test_mlp_regressor_dtypes_casting():
+    mlp_64 = MLPRegressor(alpha=1e-5,
+                          hidden_layer_sizes=(10, 5, 3),
+                          random_state=1, max_iter=100)
+    mlp_64.fit(X_digits[:300], y_digits[:300])
+    pred_64 = mlp_64.predict(X_digits[300:])
+
+    mlp_32 = MLPRegressor(alpha=1e-5,
+                          hidden_layer_sizes=(10, 5, 3),
+                          random_state=1, max_iter=100)
+    mlp_32.fit(X_digits[:300].astype(np.float32), y_digits[:300])
+    pred_32 = mlp_32.predict(X_digits[300:].astype(np.float32))
+
+    assert_allclose(pred_64, pred_32, rtol=1e-04, atol=0)
