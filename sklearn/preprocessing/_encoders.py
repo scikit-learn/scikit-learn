@@ -93,13 +93,16 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                     sorted_cats = np.sort(cats)
                     error_msg = ("Unsorted categories are not "
                                  "supported for numerical categories")
-                    # np.nan should be the last element
-                    if np.isnan(sorted_cats[-1]):
-                        if not (np.isnan(cats[-1]) or
-                                np.all(sorted_cats[:-1] == cats[-1])):
+                    # if there are nans, nan should be the last element
+                    last_sorted_is_nan = np.isnan(sorted_cats[-1])
+                    last_cat_is_nan = np.isnan(cats[-1])
+
+                    if last_cat_is_nan or last_sorted_is_nan:
+                        if (last_cat_is_nan != last_sorted_is_nan or
+                                np.any(sorted_cats[:-1] != cats[:-1])):
                             raise ValueError(error_msg)
                     else:
-                        if not np.all(sorted_cats == cats):
+                        if np.any(sorted_cats != cats):
                             raise ValueError(error_msg)
                 if handle_unknown == 'error':
                     diff = _check_unknown(Xi, cats)
@@ -109,8 +112,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                         raise ValueError(msg)
             self.categories_.append(cats)
 
-    def _transform(self, X, handle_unknown='error',
-                   force_all_finite=False):
+    def _transform(self, X, handle_unknown='error', force_all_finite=False):
         X_list, n_samples, n_features = self._check_X(
             X, force_all_finite=force_all_finite)
 

@@ -193,7 +193,7 @@ Changelog
 ............................
 
 - |Feature| :class:`preprocessing.OneHotEncoder` now supports missing
-  values by treating them as its own category. :pr:`17317` by `Thomas Fan`_.
+  values by treating them as a category. :pr:`17317` by `Thomas Fan`_.
 
 - |Enhancement| Verbose output of :class:`model_selection.GridSearchCV` has
   been improved for readability. :pr:`16935` by :user:`Raghav Rajagopalan
