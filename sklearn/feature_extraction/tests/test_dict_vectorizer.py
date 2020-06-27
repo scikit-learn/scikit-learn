@@ -105,7 +105,7 @@ def test_iterable_error():
           {'foo': [1, 'three']}]
     v = DictVectorizer(sparse=False)
     with pytest.raises(TypeError) as error:
-        X = v.fit(D2)
+        v.fit(D2)
     assert str(error.value) == error_value
 
 
