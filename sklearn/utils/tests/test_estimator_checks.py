@@ -336,8 +336,7 @@ class RequiresPositiveYRegressor(LinearRegression):
 
 class PoorScoreLogisticRegression(LogisticRegression):
     def decision_function(self, X):
-        scores = super().decision_function(X)
-        return np.zeros_like(scores)
+        return super().decision_function(X) + 1
 
     def _more_tags(self):
         return {"poor_score": True}
