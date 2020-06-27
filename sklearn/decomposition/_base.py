@@ -14,7 +14,7 @@ from scipy import linalg
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
 from ..utils.validation import check_is_fitted
-from ..utils._data_adapter import _DataTransformer
+from ..utils._array_transformer import _ArrayTransformer
 from abc import ABCMeta, abstractmethod
 
 
@@ -124,7 +124,7 @@ class _BasePCA(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
         >>> ipca.transform(X) # doctest: +SKIP
         """
         check_is_fitted(self)
-        data_wrap = _DataTransformer(X, get_feature_names_in=False)
+        data_wrap = _ArrayTransformer(X, needs_feature_names_in=False)
 
         X = check_array(X)
         if self.mean_ is not None:

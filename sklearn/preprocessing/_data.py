@@ -30,7 +30,7 @@ from ..utils.sparsefuncs import (inplace_column_scale,
                                  min_max_axis)
 from ..utils.validation import (check_is_fitted, check_random_state,
                                 FLOAT_DTYPES, _deprecate_positional_args)
-from ..utils._data_adapter import _DataTransformer
+from ..utils._array_transformer import _ArrayTransformer
 
 from ._csr_polynomial_expansion import _csr_polynomial_expansion
 
@@ -422,7 +422,7 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
             Transformed data.
         """
         check_is_fitted(self)
-        data_wrap = _DataTransformer(X)
+        data_wrap = _ArrayTransformer(X)
         X = check_array(X, copy=self.copy, dtype=FLOAT_DTYPES,
                         force_all_finite="allow-nan")
 
@@ -833,7 +833,7 @@ class StandardScaler(TransformerMixin, BaseEstimator):
             Transformed array.
         """
         check_is_fitted(self)
-        data_wrap = _DataTransformer(X)
+        data_wrap = _ArrayTransformer(X)
 
         copy = copy if copy is not None else self.copy
         X = self._validate_data(X, reset=False,
@@ -1056,7 +1056,7 @@ class MaxAbsScaler(TransformerMixin, BaseEstimator):
             Transformed array.
         """
         check_is_fitted(self)
-        data_wrap = _DataTransformer(X)
+        data_wrap = _ArrayTransformer(X)
         X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
                         estimator=self, dtype=FLOAT_DTYPES,
                         force_all_finite='allow-nan')
@@ -1358,7 +1358,7 @@ class RobustScaler(TransformerMixin, BaseEstimator):
             Transformed array.
         """
         check_is_fitted(self)
-        data_wrap = _DataTransformer(X)
+        data_wrap = _ArrayTransformer(X)
         X = check_array(X, accept_sparse=('csr', 'csc'), copy=self.copy,
                         estimator=self, dtype=FLOAT_DTYPES,
                         force_all_finite='allow-nan')
@@ -1696,7 +1696,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
         """
         check_is_fitted(self)
 
-        data_wrap = _DataTransformer(X)
+        data_wrap = _ArrayTransformer(X)
         X = check_array(X, order='F', dtype=FLOAT_DTYPES,
                         accept_sparse=('csr', 'csc'))
 
@@ -1999,7 +1999,7 @@ class Normalizer(TransformerMixin, BaseEstimator):
         X_tr : {ndarray, sparse matrix} of shape (n_samples, n_features)
             Transformed array.
         """
-        data_wrap = _DataTransformer(X)
+        data_wrap = _ArrayTransformer(X)
         copy = copy if copy is not None else self.copy
         X = check_array(X, accept_sparse='csr')
         output = normalize(X, norm=self.norm, axis=1, copy=copy)
@@ -2734,7 +2734,7 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
         Xt : {ndarray, sparse matrix} of shape (n_samples, n_features)
             The projected data.
         """
-        data_wrap = _DataTransformer(X)
+        data_wrap = _ArrayTransformer(X)
         X = self._check_inputs(X, in_fit=False, copy=self.copy)
         self._check_is_fitted(X)
 
@@ -3015,7 +3015,7 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
         return self
 
     def fit_transform(self, X, y=None):
-        data_wrap = _DataTransformer(X)
+        data_wrap = _ArrayTransformer(X)
         output = self._fit(X, y, force_transform=True)
         return data_wrap.transform(output)
 
@@ -3063,7 +3063,7 @@ class PowerTransformer(TransformerMixin, BaseEstimator):
             The transformed data.
         """
         check_is_fitted(self)
-        data_wrap = _DataTransformer(X)
+        data_wrap = _ArrayTransformer(X)
         X = self._check_input(X, in_fit=False, check_positive=True,
                               check_shape=True)
 

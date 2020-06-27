@@ -15,7 +15,7 @@ from ..base import TransformerMixin
 from ..utils import check_array
 from ..utils import safe_mask
 from ..utils import safe_sqr
-from ..utils._data_adapter import _DataTransformer
+from ..utils._array_transformer import _ArrayTransformer
 
 
 class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
@@ -75,7 +75,7 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
         X_r : array of shape [n_samples, n_selected_features]
             The input samples with only the selected features.
         """
-        data_wrap = _DataTransformer(X)
+        data_wrap = _ArrayTransformer(X)
         tags = self._get_tags()
         X = check_array(X, dtype=None, accept_sparse='csr',
                         force_all_finite=not tags.get('allow_nan', True))

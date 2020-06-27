@@ -14,7 +14,7 @@ from ..utils import check_array
 from ..utils import is_scalar_nan
 from ..utils._mask import _get_mask
 from ..utils.validation import check_is_fitted
-from ..utils._data_adapter import _DataTransformer
+from ..utils._array_transformer import _ArrayTransformer
 from ..utils.validation import _deprecate_positional_args
 
 
@@ -206,7 +206,7 @@ class KNNImputer(_BaseImputer):
             The imputed dataset. `n_output_features` is the number of features
             that is not always missing during `fit`.
         """
-        data_wrap = _DataTransformer(X)
+        data_wrap = _ArrayTransformer(X)
 
         check_is_fitted(self)
         if not is_scalar_nan(self.missing_values):

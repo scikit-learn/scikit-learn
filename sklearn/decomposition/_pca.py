@@ -25,7 +25,7 @@ from ..utils import check_array
 from ..utils.extmath import fast_logdet, randomized_svd, svd_flip
 from ..utils.extmath import stable_cumsum
 from ..utils.validation import check_is_fitted
-from ..utils._data_adapter import _DataTransformer
+from ..utils._array_transformer import _ArrayTransformer
 from ..utils.validation import _deprecate_positional_args
 
 
@@ -374,7 +374,7 @@ class PCA(_BasePCA):
         This method returns a Fortran-ordered array. To convert it to a
         C-ordered array, use 'np.ascontiguousarray'.
         """
-        data_wrap = _DataTransformer(X, needs_feature_names_in=False)
+        data_wrap = _ArrayTransformer(X, needs_feature_names_in=False)
         U, S, Vt = self._fit(X)
         U = U[:, :self.n_components_]
 

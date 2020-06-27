@@ -17,7 +17,7 @@ def _get_feature_names(X):
         return np.array(X.coords[X.dims[1]], dtype=object)
 
 
-class _DataTransformer:
+class _ArrayTransformer:
 
     def __init__(self, X, needs_feature_names_in=True):
         if (get_config()['array_out'] == 'default'
@@ -71,11 +71,11 @@ class _DataTransformer:
         return X
 
 
-class _ManyDataAdapter(_DataTransformer):
+class _ManyDataAdapter(_ArrayTransformer):
 
     def __init__(self, Xs):
         # TODO: Check Xs has the same structure
-        transformers = [_DataTransformer(X) for X in Xs]
+        transformers = [_ArrayTransformer(X) for X in Xs]
         feature_name_ins = [trans.feature_names_in for trans in transformers]
 
         if any(names is None for names in feature_name_ins):

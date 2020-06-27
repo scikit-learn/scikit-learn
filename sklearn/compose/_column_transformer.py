@@ -26,7 +26,7 @@ from ..utils.metaestimators import _BaseComposition
 from ..utils.validation import check_array, check_is_fitted
 from ..utils.validation import _deprecate_positional_args
 from .._config import get_config
-from ..utils._data_adapter import _ManyDataAdapter
+from ..utils._array_transformer import _ManyDataAdapter
 
 
 __all__ = [

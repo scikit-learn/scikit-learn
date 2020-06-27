@@ -31,7 +31,7 @@ from ._hash import FeatureHasher
 from ._stop_words import ENGLISH_STOP_WORDS
 from ..utils.validation import check_is_fitted, check_array, FLOAT_DTYPES
 from ..utils import _IS_32BIT
-from ..utils._data_adapter import _DataTransformer
+from ..utils._array_transformer import _ArrayTransformer
 from ..utils.fixes import _astype_copy_false
 from ..exceptions import NotFittedError
 from ..utils.validation import _deprecate_positional_args
@@ -1193,7 +1193,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
 
         vocabulary, X = self._count_vocab(raw_documents,
                                           self.fixed_vocabulary_)
-        data_wrap = _DataTransformer(X, needs_feature_names_in=False)
+        data_wrap = _ArrayTransformer(X, needs_feature_names_in=False)
 
         if self.binary:
             X.data.fill(1)
@@ -1247,7 +1247,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         # use the same matrix-building strategy as fit_transform
         _, X = self._count_vocab(raw_documents, fixed_vocab=True)
 
-        data_wrap = _DataTransformer(X, needs_feature_names_in=False)
+        data_wrap = _ArrayTransformer(X, needs_feature_names_in=False)
 
         if self.binary:
             X.data.fill(1)
@@ -1474,7 +1474,7 @@ class TfidfTransformer(TransformerMixin, BaseEstimator):
         -------
         vectors : sparse matrix of shape (n_samples, n_features)
         """
-        data_wrap = _DataTransformer(X)
+        data_wrap = _ArrayTransformer(X)
         X = check_array(X, accept_sparse='csr', dtype=FLOAT_DTYPES, copy=copy)
         if not sp.issparse(X):
             X = sp.csr_matrix(X, dtype=np.float64)

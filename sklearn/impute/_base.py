@@ -17,7 +17,7 @@ from ..utils.validation import FLOAT_DTYPES
 from ..utils.validation import _deprecate_positional_args
 from ..utils._mask import _get_mask
 from ..utils import is_scalar_nan
-from ..utils._data_adapter import _DataTransformer
+from ..utils._array_transformer import _ArrayTransformer
 
 
 def _check_inputs_dtype(X, missing_values):
@@ -419,7 +419,7 @@ class SimpleImputer(_BaseImputer):
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
             The input data to complete.
         """
-        data_wrap = _DataTransformer(X)
+        data_wrap = _ArrayTransformer(X)
         check_is_fitted(self)
 
         X = self._validate_input(X, in_fit=False)
@@ -707,7 +707,7 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
             will be boolean.
 
         """
-        data_wrap = _DataTransformer(X)
+        data_wrap = _ArrayTransformer(X)
         check_is_fitted(self)
         X = self._validate_input(X, in_fit=False)
 
@@ -745,7 +745,7 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
             will be boolean.
 
         """
-        data_wrap = _DataTransformer(X)
+        data_wrap = _ArrayTransformer(X)
         imputer_mask = self._fit(X, y)
 
         if self.features_.size < self._n_features:
