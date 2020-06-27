@@ -364,13 +364,13 @@ class OneHotEncoder(_BaseEncoder):
                              if val not in self.categories_[i]]
 
             missing_drops = []
-            drop_idxs = []
+            drop_indices = []
             for i, (val, cat_list) in enumerate(zip(self.drop,
                                                     self.categories_)):
                 if not is_scalar_nan(val):
                     drop_idx = np.where(cat_list == val)[0]
                     if drop_idx.size:
-                        drop_idxs.append(drop_idx[0])
+                        drop_indices.append(drop_idx[0])
                     else:
                         missing_drops.append((i, val))
                     continue
@@ -378,7 +378,7 @@ class OneHotEncoder(_BaseEncoder):
                 # val is nan, find nan in categories manually
                 for i, cat in enumerate(cat_list):
                     if is_scalar_nan(cat):
-                        drop_idxs.append(i)
+                        drop_indices.append(i)
                         break
                 else:  # loop did not break
                     missing_drops.append((i, val))
@@ -391,10 +391,7 @@ class OneHotEncoder(_BaseEncoder):
                                 ["Category: {}, Feature: {}".format(c, v)
                                     for c, v in missing_drops])))
                 raise ValueError(msg)
-            return np.array([np.where(cat_list == val)[0][0]
-                             for (val, cat_list) in
-                             zip(self.drop, self.categories_)],
-                            dtype=object)
+            return np.array(drop_indices, dtype=object)
 
     def fit(self, X, y=None):
         """
