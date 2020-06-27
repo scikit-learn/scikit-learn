@@ -936,7 +936,8 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
            Multiplicative Update solver.
 
     beta_loss : float or {'frobenius', 'kullback-leibler', \
-        'itakura-saito'}, default='frobenius'
+            'itakura-saito'}, default='frobenius'
+
         Beta divergence to be minimized, measuring the distance between X
         and the dot product WH. Note that values different from 'frobenius'
         (or 2) and 'kullback-leibler' (or 1) lead to significantly slower
@@ -1150,7 +1151,8 @@ class NMF(TransformerMixin, BaseEstimator):
            Multiplicative Update solver.
 
     beta_loss : float or {'frobenius', 'kullback-leibler', \
-        'itakura-saito'}, default='frobenius'
+            'itakura-saito'}, default='frobenius'
+
         Beta divergence to be minimized, measuring the distance between X
         and the dot product WH. Note that values different from 'frobenius'
         (or 2) and 'kullback-leibler' (or 1) lead to significantly slower
