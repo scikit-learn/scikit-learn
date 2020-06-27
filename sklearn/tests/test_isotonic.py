@@ -1,3 +1,4 @@
+
 import warnings
 import numpy as np
 import pickle
@@ -13,8 +14,10 @@ from sklearn.utils._testing import (assert_raises, assert_array_equal,
                                    assert_array_almost_equal,
                                    assert_warns_message, assert_no_warnings)
 from sklearn.utils import shuffle
-
+from sklearn.naive_bayes import GaussianNB
+from sklearn.calibration import CalibratedClassifierCV
 from scipy.special import expit
+
 
 
 def test_permutation_invariance():
@@ -508,3 +511,20 @@ def test_make_unique_dtype():
         w = np.ones_like(x)
         x, y, w = _make_unique(x, y, w)
         assert_array_equal(x, [2, 3, 5])
+
+
+def test_infinite_probabilities():
+    # Test from  https://github.com/scikit-learn/scikit-learn/issues/10981
+
+    X_train=np.array([[1.97, 1.18], [1.34, 1.06], [2.22, 6.82], [-1.37, 0.87], [3.98, 0.32]])
+    X_test=np.array([[-1.28, 0.23], [1.67, -1.36], [1.82, -2.92]])
+    y_train=np.array([1,0,1,1,0])
+
+    clf_c = CalibratedClassifierCV(GaussianNB(), method='isotonic',cv=2)
+    clf_fit = clf_c.fit(X_train, y_train)
+    
+    y_pred = clf_fit.predict_proba(X_test)[:,1]
+    y_pred = clf_fit.predict_proba(X_test)[:,1]
+    assert(np.all(y_pred >= 0))
+    assert(np.all(y_pred <= 1))
+
