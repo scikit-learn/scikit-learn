@@ -14,6 +14,8 @@ from sklearn.datasets import fetch_openml
 from sklearn.datasets._openml import (_open_openml_url,
                                       _arff,
                                       _DATA_FILE,
+                                      _convert_arff_data,
+                                      _convert_arff_data_dataframe,
                                       _get_data_description_by_id,
                                       _get_local_path,
                                       _retry_with_clean_cache,
@@ -24,6 +26,7 @@ from sklearn.utils import is_scalar_nan
 from sklearn.utils._testing import assert_allclose, assert_array_equal
 from urllib.error import HTTPError
 from sklearn.datasets.tests.test_common import check_return_X_y
+from sklearn.externals._arff import ArffContainerType
 from functools import partial
 
 
@@ -146,6 +149,32 @@ def _fetch_dataset_from_openml(data_id, data_name, data_version,
     return data_by_id
 
 
+class _MockHTTPResponse:
+    def __init__(self, data, is_gzip):
+        self.data = data
+        self.is_gzip = is_gzip
+
+    def read(self, amt=-1):
+        return self.data.read(amt)
+
+    def close(self):
+        self.data.close()
+
+    def info(self):
+        if self.is_gzip:
+            return {'Content-Encoding': 'gzip'}
+        return {}
+
+    def __iter__(self):
+        return iter(self.data)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        return False
+
+
 def _monkey_patch_webbased_functions(context,
                                      data_id,
                                      gzip_response):
@@ -160,37 +189,6 @@ def _monkey_patch_webbased_functions(context,
     path_suffix = '.gz'
     read_fn = gzip.open
 
-    class MockHTTPResponse:
-        def __init__(self, data, is_gzip):
-            self.data = data
-            self.is_gzip = is_gzip
-
-        def read(self, amt=-1):
-            return self.data.read(amt)
-
-        def tell(self):
-            return self.data.tell()
-
-        def seek(self, pos, whence=0):
-            return self.data.seek(pos, whence)
-
-        def close(self):
-            self.data.close()
-
-        def info(self):
-            if self.is_gzip:
-                return {'Content-Encoding': 'gzip'}
-            return {}
-
-        def __iter__(self):
-            return iter(self.data)
-
-        def __enter__(self):
-            return self
-
-        def __exit__(self, exc_type, exc_val, exc_tb):
-            return False
-
     def _file_name(url, suffix):
         return (re.sub(r'\W', '-', url[len("https://openml.org/"):])
                 + suffix + path_suffix)
@@ -203,10 +201,10 @@ def _monkey_patch_webbased_functions(context,
 
         if has_gzip_header and gzip_response:
             fp = open(path, 'rb')
-            return MockHTTPResponse(fp, True)
+            return _MockHTTPResponse(fp, True)
         else:
             fp = read_fn(path, 'rb')
-            return MockHTTPResponse(fp, False)
+            return _MockHTTPResponse(fp, False)
 
     def _mock_urlopen_data_features(url, has_gzip_header):
         assert url.startswith(url_prefix_data_features)
@@ -214,10 +212,10 @@ def _monkey_patch_webbased_functions(context,
                             _file_name(url, '.json'))
         if has_gzip_header and gzip_response:
             fp = open(path, 'rb')
-            return MockHTTPResponse(fp, True)
+            return _MockHTTPResponse(fp, True)
         else:
             fp = read_fn(path, 'rb')
-            return MockHTTPResponse(fp, False)
+            return _MockHTTPResponse(fp, False)
 
     def _mock_urlopen_download_data(url, has_gzip_header):
         assert (url.startswith(url_prefix_download_data))
@@ -227,10 +225,10 @@ def _monkey_patch_webbased_functions(context,
 
         if has_gzip_header and gzip_response:
             fp = open(path, 'rb')
-            return MockHTTPResponse(fp, True)
+            return _MockHTTPResponse(fp, True)
         else:
             fp = read_fn(path, 'rb')
-            return MockHTTPResponse(fp, False)
+            return _MockHTTPResponse(fp, False)
 
     def _mock_urlopen_data_list(url, has_gzip_header):
         assert url.startswith(url_prefix_data_list)
@@ -247,10 +245,10 @@ def _monkey_patch_webbased_functions(context,
 
         if has_gzip_header:
             fp = open(json_file_path, 'rb')
-            return MockHTTPResponse(fp, True)
+            return _MockHTTPResponse(fp, True)
         else:
             fp = read_fn(json_file_path, 'rb')
-            return MockHTTPResponse(fp, False)
+            return _MockHTTPResponse(fp, False)
 
     def _mock_urlopen(request):
         url = request.get_full_url()
@@ -1204,3 +1202,68 @@ def test_fetch_openml_with_ignored_feature(monkeypatch, gzip_response):
     # so we assert that we don't have the ignored feature in the final Bunch
     assert dataset['data'].shape == (101, 16)
     assert 'animal' not in dataset['feature_names']
+
+
+@pytest.mark.parametrize('as_frame', [True, False])
+def test_fetch_openml_verify_checksum(monkeypatch, as_frame, cache, tmpdir):
+    if as_frame:
+        pytest.importorskip('pandas')
+
+    data_id = 2
+    _monkey_patch_webbased_functions(monkeypatch, data_id, True)
+
+    # create a temporary modified arff file
+    dataset_dir = os.path.join(currdir, 'data', 'openml', str(data_id))
+    original_data_path = os.path.join(dataset_dir,
+                                      'data-v1-download-1666876.arff.gz')
+    corrupt_copy = os.path.join(tmpdir, "test_invalid_checksum.arff")
+    with gzip.GzipFile(original_data_path, "rb") as orig_gzip, \
+            gzip.GzipFile(corrupt_copy, "wb") as modified_gzip:
+        data = bytearray(orig_gzip.read())
+        data[len(data)-1] = 37
+        modified_gzip.write(data)
+
+    # Requests are already mocked by monkey_patch_webbased_functions.
+    # We want to re-use that mock for all requests except file download,
+    # hence creating a thin mock over the original mock
+    mocked_openml_url = sklearn.datasets._openml.urlopen
+
+    def swap_file_mock(request):
+        url = request.get_full_url()
+        if url.endswith('data/v1/download/1666876'):
+            return _MockHTTPResponse(open(corrupt_copy, "rb"), is_gzip=True)
+        else:
+            return mocked_openml_url(request)
+
+    monkeypatch.setattr(sklearn.datasets._openml, 'urlopen', swap_file_mock)
+
+    # validate failed checksum
+    with pytest.raises(ValueError) as exc:
+        sklearn.datasets.fetch_openml(data_id=data_id, cache=False,
+                                      as_frame=as_frame)
+    # exception message should have file-path
+    assert exc.match("1666876")
+
+
+def test_convert_arff_data_type():
+    pytest.importorskip('pandas')
+
+    arff: ArffContainerType = {
+            'data': (el for el in range(2)),
+            'description': '',
+            'relation': '',
+            'attributes': []
+    }
+    msg = r"shape must be provided when arr\['data'\] is a Generator"
+    with pytest.raises(ValueError, match=msg):
+        _convert_arff_data(arff, [0], [0], shape=None)
+
+    arff = {
+            'data': list(range(2)),
+            'description': '',
+            'relation': '',
+            'attributes': []
+    }
+    msg = r"arff\['data'\] must be a generator when converting to pd.DataFrame"
+    with pytest.raises(ValueError, match=msg):
+        _convert_arff_data_dataframe(arff, ['a'], {})

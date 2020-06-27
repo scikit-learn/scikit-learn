@@ -343,17 +343,6 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             # First time training the model
             self._initialize(y, layer_units)
 
-        # lbfgs does not support mini-batches
-        if self.solver == 'lbfgs':
-            batch_size = n_samples
-        elif self.batch_size == 'auto':
-            batch_size = min(200, n_samples)
-        else:
-            if self.batch_size < 1 or self.batch_size > n_samples:
-                warnings.warn("Got `batch_size` less than 1 or larger than "
-                              "sample size. It is going to be clipped")
-            batch_size = np.clip(self.batch_size, 1, n_samples)
-
         # Initialize lists
         activations = [X] + [None] * (len(layer_units) - 1)
         deltas = [None] * (len(activations) - 1)
@@ -509,6 +498,9 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         if self.batch_size == 'auto':
             batch_size = min(200, n_samples)
         else:
+            if self.batch_size < 1 or self.batch_size > n_samples:
+                warnings.warn("Got `batch_size` less than 1 or larger than "
+                              "sample size. It is going to be clipped")
             batch_size = np.clip(self.batch_size, 1, n_samples)
 
         try:
@@ -818,7 +810,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         Momentum for gradient descent update. Should be between 0 and 1. Only
         used when solver='sgd'.
 
-    nesterovs_momentum : boolean, default=True
+    nesterovs_momentum : bool, default=True
         Whether to use Nesterov's momentum. Only used when solver='sgd' and
         momentum > 0.
 
@@ -870,15 +862,24 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
     loss_ : float
         The current loss computed with the loss function.
 
-    coefs_ : list, length n_layers - 1
+    best_loss_ : float
+        The minimum loss reached by the solver throughout fitting.
+
+    loss_curve_ : list of shape (`n_iter_`,)
+        The ith element in the list represents the loss at the ith iteration.
+
+    t_ : int
+        The number of training samples seen by the solver during fitting.
+
+    coefs_ : list of shape (n_layers - 1,)
         The ith element in the list represents the weight matrix corresponding
         to layer i.
 
-    intercepts_ : list, length n_layers - 1
+    intercepts_ : list of shape (n_layers - 1,)
         The ith element in the list represents the bias vector corresponding to
         layer i + 1.
 
-    n_iter_ : int,
+    n_iter_ : int
         The number of iterations the solver has ran.
 
     n_layers_ : int
@@ -887,7 +888,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
     n_outputs_ : int
         Number of outputs.
 
-    out_activation_ : string
+    out_activation_ : str
         Name of the output activation function.
 
 
@@ -1229,7 +1230,7 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
         Momentum for gradient descent update.  Should be between 0 and 1. Only
         used when solver='sgd'.
 
-    nesterovs_momentum : boolean, default=True
+    nesterovs_momentum : bool, default=True
         Whether to use Nesterov's momentum. Only used when solver='sgd' and
         momentum > 0.
 
@@ -1277,15 +1278,24 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
     loss_ : float
         The current loss computed with the loss function.
 
-    coefs_ : list, length n_layers - 1
+    best_loss_ : float
+        The minimum loss reached by the solver throughout fitting.
+
+    loss_curve_ : list of shape (`n_iter_`,)
+        The ith element in the list represents the loss at the ith iteration.
+
+    t_ : int
+        The number of training samples seen by the solver during fitting.
+
+    coefs_ : list of shape (n_layers - 1,)
         The ith element in the list represents the weight matrix corresponding
         to layer i.
 
-    intercepts_ : list, length n_layers - 1
+    intercepts_ : list of shape (n_layers - 1,)
         The ith element in the list represents the bias vector corresponding to
         layer i + 1.
 
-    n_iter_ : int,
+    n_iter_ : int
         The number of iterations the solver has ran.
 
     n_layers_ : int
@@ -1294,7 +1304,7 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
     n_outputs_ : int
         Number of outputs.
 
-    out_activation_ : string
+    out_activation_ : str
         Name of the output activation function.
 
     Examples

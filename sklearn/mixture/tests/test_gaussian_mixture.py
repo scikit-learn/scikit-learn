@@ -94,7 +94,7 @@ class RandomData:
             n_samples, n_features, self.weights, self.means, self.covariances,
             covar_type) for covar_type in COVARIANCE_TYPE]))
         self.Y = np.hstack([np.full(int(np.round(w * n_samples)), k,
-                                    dtype=np.int)
+                                    dtype=int)
                             for k, w in enumerate(self.weights)])
 
 
