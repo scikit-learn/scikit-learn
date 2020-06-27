@@ -849,7 +849,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
                                max_iter=200, alpha=0., l1_ratio=0.,
                                regularization=None, random_state=None,
                                verbose=0, shuffle=False):
-    r"""Compute Non-negative Matrix Factorization (NMF)
+    """Compute Non-negative Matrix Factorization (NMF)
 
     Find two non-negative matrices (W, H) whose product approximates the non-
     negative matrix X. This factorization can be used for example for
@@ -937,7 +937,6 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
 
     beta_loss : float or {'frobenius', 'kullback-leibler', \
             'itakura-saito'}, default='frobenius'
-
         Beta divergence to be minimized, measuring the distance between X
         and the dot product WH. Note that values different from 'frobenius'
         (or 2) and 'kullback-leibler' (or 1) lead to significantly slower
@@ -1082,7 +1081,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
 
 
 class NMF(TransformerMixin, BaseEstimator):
-    r"""Non-Negative Matrix Factorization (NMF)
+    """Non-Negative Matrix Factorization (NMF)
 
     Find two non-negative matrices (W, H) whose product approximates the non-
     negative matrix X. This factorization can be used for example for
@@ -1152,7 +1151,6 @@ class NMF(TransformerMixin, BaseEstimator):
 
     beta_loss : float or {'frobenius', 'kullback-leibler', \
             'itakura-saito'}, default='frobenius'
-
         Beta divergence to be minimized, measuring the distance between X
         and the dot product WH. Note that values different from 'frobenius'
         (or 2) and 'kullback-leibler' (or 1) lead to significantly slower
