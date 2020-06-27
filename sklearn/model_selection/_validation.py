@@ -576,10 +576,12 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     else:
         try:
             fit_time = time.time() - start_time
-            test_scores = _score(estimator, X_test, y_test, scorer, error_score)
+            test_scores = _score(estimator, X_test, y_test, scorer,
+                                 error_score)
             score_time = time.time() - start_time - fit_time
             if return_train_score:
-                train_scores = _score(estimator, X_train, y_train, scorer, error_score)
+                train_scores = _score(estimator, X_train, y_train, scorer,
+                                      error_score)
         except Exception:
             if error_score == 'raise':
                 raise
@@ -658,16 +660,16 @@ def _score(estimator, X_test, y_test, scorer, error_score=np.nan):
                     raise ValueError(error_msg % (score, type(score), name))
                 elif isinstance(error_score, numbers.Number):
                     scores[name] = error_score
-                    warnings.warn("Scoring failed. The score on this train-test "
-                                  "partition for these parameters will be set "
-                                  "to %f. Details: \n%s" %
+                    warnings.warn("Scoring failed. The score on this "
+                                  "train-test partition for these parameters "
+                                  "will be set to %f. Details: \n%s" %
                                   (error_score, format_exc()),
                                   UserWarning)
                 else:
-                    raise ValueError("error_score must be the string 'raise' or a "
-                                     "numeric value. (Hint: if using 'raise', "
-                                     "please make sure that it has been "
-                                     "spelled correctly.)")
+                    raise ValueError("error_score must be the string 'raise' "
+                                     "or a numeric value. (Hint: if using "
+                                     "'raise', please make sure that it has "
+                                     "been spelled correctly.)")
             else:
                 scores[name] = score
     else:  # scalar
