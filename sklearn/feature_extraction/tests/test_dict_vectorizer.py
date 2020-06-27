@@ -97,6 +97,18 @@ def test_iterable_value():
     assert names == D_names
 
 
+def test_iterable_error():
+    error_value = ('Unsupported mixed type iterable. '
+                   'Only string iterables are supported.')
+    D2 = [{'foo': '1', 'bar': '2'},
+          {'foo': '3', 'baz': '1'},
+          {'foo': [1, 'three']}]
+    v = DictVectorizer(sparse=False)
+    with pytest.raises(TypeError) as error:
+        X = v.fit(D2)
+    assert str(error.value) == error_value
+
+
 def test_unseen_or_no_features():
     D = [{"camelot": 0, "spamalot": 1}]
     for sparse in [True, False]:

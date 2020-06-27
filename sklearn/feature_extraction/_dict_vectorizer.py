@@ -94,18 +94,18 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
 
 
     >>> D2 = [{'foo': '1', 'bar': '2'}, {'foo': '3', 'baz': '1'},
-    ...       {'foo': ['1', '3']}]
+    ...       {'foo': ['one', 'three']}]
     >>> X = v.fit_transform(D2)
     >>> X
-    array([[1., 0., 1., 0.],
-           [0., 1., 0., 1.],
-           [0., 0., 1., 1.]])
-    >>> v.inverse_transform(X) == [{'foo=1': 1.0, 'bar=2': 1.0},
-    ...                            {'foo=3': 1.0, 'baz=1': 1.0},
-    ...                            {'foo=3': 1.0, 'foo=1': 1.0}]
+    array([[1., 0., 1., 0., 0., 0.],
+           [0., 1., 0., 1., 0., 0.],
+           [0., 0., 0., 0., 1., 1.]])
+    >>> v.inverse_transform(X) == [[{'bar=2': 1.0, 'foo=1': 1.0},
+    ...                             {'baz=1': 1.0, 'foo=3': 1.0},
+    ...                             {'foo=one': 1.0, 'foo=three': 1.0}]
     True
     >>> v.transform({'foo': '1', 'unseen_feature': [3]})
-    array([[0., 0., 1., 0.]])
+    array([[0., 0., 1., 0., 0., 0.]])
 
     See also
     --------
@@ -128,9 +128,9 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
             if isinstance(vv, str):
                 feature_name = "%s%s%s" % (f, self.separator, vv)
                 vv = 1
-            elif isinstance(vv, Number) or (vv is None):
-                feature_name = vv
-
+            else:
+                raise TypeError('Unsupported mixed type iterable. '
+                                 'Only string iterables are supported.')
             if fitting:
                 if feature_name not in vocab:
                     vocab[feature_name] = len(feature_names)
@@ -170,9 +170,6 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
                 elif isinstance(v, Iterable):
                     feature_name = None
                     self._add_iterable_element(f, v, feature_names, vocab)
-                else:
-                    raise ValueError(f'Unsupported Value Type {type(v)} '
-                                     f'for {f}: {v}')
 
                 if feature_name is not None:
                     if feature_name not in vocab:
@@ -234,7 +231,9 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
 
                 else:
                     raise ValueError(f'Unsupported Value Type {type(v)} '
-                                     f'for {f}: {v}')
+                                     f'for {f}: {v}\n'
+                                     f'Only string, number and iterable of '
+                                     f'string are supported.')
                 if feature_name is not None:
                     if fitting:
                         if feature_name not in vocab:
