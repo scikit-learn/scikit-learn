@@ -123,7 +123,7 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
 
     def _add_iterable_element(self, f, v, feature_names, vocab, fitting=True,
                               transforming=False, indices=None, values=None):
-        """Add feature names for iterable elements"""
+        """Add feature names for iterable of strings"""
         for vv in v:
             if isinstance(vv, str):
                 feature_name = "%s%s%s" % (f, self.separator, vv)
