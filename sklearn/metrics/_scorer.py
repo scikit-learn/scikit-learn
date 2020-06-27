@@ -526,7 +526,7 @@ def make_scorer(score_func, *, greater_is_better=True, needs_proba=False,
 
     This factory function wraps scoring functions for use in GridSearchCV
     and cross_val_score. It takes a score function, such as ``accuracy_score``,
-    ``mean_squared_error``, ``adjusted_rand_index`` or ``average_precision``
+    ``mean_squared_error``, ``adjusted_rand_score`` or ``average_precision``
     and returns a callable that scores an estimator's output.
 
     Read more in the :ref:`User Guide <scoring>`.
