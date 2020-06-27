@@ -513,7 +513,7 @@ def test_make_unique_dtype():
 
 
 def test_infinite_probabilities():
-    # Test from  https://github.com/scikit-learn/scikit-learn/issues/10981
+    # Test from  https://github.com/scikit-learn/scikit-learn/issues/10903
 
     X_train = np.array([[1.9, 1.18], [1.34, 1.06], [2.22, 6.8], [-1.37, 0.87]])
     X_test = np.array([[-1.28, 0.23], [1.67, -1.36], [1.82, -2.92]])
