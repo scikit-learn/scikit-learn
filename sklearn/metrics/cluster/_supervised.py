@@ -154,20 +154,23 @@ def pair_confusion_matrix(labels_true, labels_pred):
     pairs that are assigned in the same or different clusters in the
     predicted and true clusterings.
 
-    The 2x2 pair confusion matrix is:
+    The 2x2 pair confusion matrix::
+
         D00 D01
         D10 D11
-    where
-    D00 = number of pairs with both clusterings having the samples
-    not clustered together,
-    D10 = number of pairs with the true label clusterings having the
-    samples clustered together but the other clustering not having the
-    samples clustered together,
-    D01 = number of pairs with the true label clusterings not having the
-    samples clustered together but the other clustering having the
-    samples clustered together,
-    D11 = number of pairs with both clusterings having the samples
-    clustered together.
+
+    has the following entries::
+
+        D00 = number of pairs with both clusterings having the samples
+              not clustered together
+        D10 = number of pairs with the true label clusterings having the
+              samples clustered together but the other clustering not
+              having the samples clustered together
+        D01 = number of pairs with the true label clusterings not having
+              the samples clustered together but the other clustering
+              having the samples clustered together
+        D11 = number of pairs with both clusterings having the samples
+              clustered together
 
     Parameters
     ----------
