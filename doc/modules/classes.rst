@@ -120,7 +120,6 @@ Functions
    cluster.cluster_optics_dbscan
    cluster.cluster_optics_xi
    cluster.compute_optics_graph
-   cluster.dbscan
    cluster.estimate_bandwidth
    cluster.k_means
    cluster.mean_shift
@@ -188,7 +187,6 @@ details.
    covariance.empirical_covariance
    covariance.graphical_lasso
    covariance.ledoit_wolf
-   covariance.oas
    covariance.shrunk_covariance
 
 .. _cross_decomposition_ref:
@@ -328,7 +326,6 @@ Samples generator
 
    decomposition.dict_learning
    decomposition.dict_learning_online
-   decomposition.fastica
    decomposition.non_negative_factorization
    decomposition.sparse_encode
 
