@@ -130,7 +130,7 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
                 vv = 1
             else:
                 raise TypeError('Unsupported mixed type iterable. '
-                                 'Only string iterables are supported.')
+                                'Only string iterables are supported.')
             if fitting:
                 if feature_name not in vocab:
                     vocab[feature_name] = len(feature_names)
