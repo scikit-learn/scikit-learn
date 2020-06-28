@@ -27,7 +27,7 @@ RemoteFileMetadata = namedtuple('RemoteFileMetadata',
                                 ['filename', 'url', 'checksum'])
 
 
-def get_data_home(data_home=None):
+def get_data_home(data_home=None) -> str:
     """Return the path of the scikit-learn data dir.
 
     This folder is used by some large dataset loaders to avoid downloading the
@@ -260,11 +260,11 @@ def load_data(module_path, data_file_name):
         n_features = int(temp[1])
         target_names = np.array(temp[2:])
         data = np.empty((n_samples, n_features))
-        target = np.empty((n_samples,), dtype=np.int)
+        target = np.empty((n_samples,), dtype=int)
 
         for i, ir in enumerate(data_file):
             data[i] = np.asarray(ir[:-1], dtype=np.float64)
-            target[i] = np.asarray(ir[-1], dtype=np.int)
+            target[i] = np.asarray(ir[-1], dtype=int)
 
     return data, target, target_names
 
@@ -713,7 +713,7 @@ def load_digits(*, n_class=10, return_X_y=False, as_frame=False):
                       delimiter=',')
     with open(join(module_path, 'descr', 'digits.rst')) as f:
         descr = f.read()
-    target = data[:, -1].astype(np.int, copy=False)
+    target = data[:, -1].astype(int, copy=False)
     flat_data = data[:, :-1]
     images = flat_data.view()
     images.shape = (-1, 8, 8)
