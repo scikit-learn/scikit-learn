@@ -160,7 +160,7 @@ maximum likelihood.
 The sigmoid method is biased in that it assumes the :ref:`calibration curve
 <calibration_curve>` of the un-calibrated model has a sigmoid shape and is
 symmetrical [1]_. It is thus most effective when the un-calibrated model is
-over-confident and has similar over-confidence errors for both high and low
+under-confident and has similar errors for both high and low
 output errors. The symmetry assumption is of concern in highly imbalanced
 classification as un-calibrated classifiers can have asymmetric calibration
 errors.
