@@ -29,7 +29,7 @@ def _get_explained_variance(X, components, ridge_alpha):
     components : array of shape (n_components, n_features)
         The principal components. [1]
 
-    ridge_alpha : float,
+    ridge_alpha : float
         Amount of ridge shrinkage to apply in order to improve
         conditioning when calling the transform method.
 
@@ -75,11 +75,11 @@ def _get_explained_variance(X, components, ridge_alpha):
         (AISTATS), PMLR 9:366-373, 2010.
     """
     # Transform input
-    t_spca = ridge_regression(components.T, X.T, ridge_alpha,
+    U = ridge_regression(components.T, X.T, ridge_alpha,
                               solver="cholesky")
 
-    # QR decomposition of modified PCs
-    _, r = linalg.qr(t_spca)
+    # QR decomposition of sparse PCs
+    r = linalg.qr(U, overwrite_a=True, mode='r')[0]
     variance = np.square(np.diag(r)) / (X.shape[0]-1)
 
     # Variance in the original dataset
