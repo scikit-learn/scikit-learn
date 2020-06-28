@@ -36,9 +36,9 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
     a feature "f" that can take on the values "ham" and "spam" will become two
     features in the output, one signifying "f=ham", the other "f=spam".
 
-    When feature values are iterables but not mapping, this transformer will
-    iterate over the values to perform the same transformation to every
-    element.
+    When feature values are iterables of strings (not mappings), this
+    transformer will iterate over the values to perform the same transformation
+    to every element.
 
     However, note that this transformer will only do a binary one-hot encoding
     when feature values are of type string. If categorical features are
@@ -129,15 +129,14 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
                 feature_name = "%s%s%s" % (f, self.separator, vv)
                 vv = 1
             else:
-                raise TypeError('Unsupported mixed type iterable. '
-                                'Only string iterables are supported.')
-            if fitting:
-                if feature_name not in vocab:
+                raise TypeError(f'Unsupported type {type(vv)} in iterable '
+                                'value. Only iterables of string are '
+                                'supported.')
+            if fitting and feature_name not in vocab:
                     vocab[feature_name] = len(feature_names)
                     feature_names.append(feature_name)
 
-            if transforming:
-                if feature_name in vocab:
+            if transforming and feature_name in vocab:
                     indices.append(vocab[feature_name])
                     values.append(self.dtype(vv))
 
@@ -170,6 +169,10 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
                 elif isinstance(v, Iterable):
                     feature_name = None
                     self._add_iterable_element(f, v, feature_names, vocab)
+                if isinstance(v, Mapping):
+                    raise TypeError(f'Unsupported value Type {type(v)} '
+                                    f'for {f}: {v}.\n'
+                                    'Mapping objects are not supported.')
 
                 if feature_name is not None:
                     if feature_name not in vocab:
@@ -228,15 +231,13 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
                     self._add_iterable_element(f, v, feature_names, vocab,
                                                fitting, transforming,
                                                indices, values)
+                if isinstance(v, Mapping):
+                    raise TypeError(f'Unsupported value Type {type(v)} '
+                                    f'for {f}: {v}.\n'
+                                    'Mapping objects are not supported.')
 
-                else:
-                    raise ValueError(f'Unsupported Value Type {type(v)} '
-                                     f'for {f}: {v}\n'
-                                     f'Only string, number and iterable of '
-                                     f'string are supported.')
                 if feature_name is not None:
-                    if fitting:
-                        if feature_name not in vocab:
+                    if fitting and feature_name not in vocab:
                             vocab[feature_name] = len(feature_names)
                             feature_names.append(feature_name)
 

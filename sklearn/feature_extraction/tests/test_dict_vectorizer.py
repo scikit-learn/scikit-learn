@@ -97,12 +97,25 @@ def test_iterable_value():
     assert names == D_names
 
 
-def test_iterable_error():
-    error_value = ('Unsupported mixed type iterable. '
-                   'Only string iterables are supported.')
+def test_iterable_not_string_error():
+    error_value = ("Unsupported type <class 'int'> in iterable value. "
+                   "Only iterables of string are supported.")
     D2 = [{'foo': '1', 'bar': '2'},
           {'foo': '3', 'baz': '1'},
           {'foo': [1, 'three']}]
+    v = DictVectorizer(sparse=False)
+    with pytest.raises(TypeError) as error:
+        v.fit(D2)
+    assert str(error.value) == error_value
+
+
+def test_mapping_error():
+    error_value = ("Unsupported value Type <class 'dict'> "
+                   "for foo: {'one': 1, 'three': 3}.\n"
+                   "Mapping objects are not supported.")
+    D2 = [{'foo': '1', 'bar': '2'},
+          {'foo': '3', 'baz': '1'},
+          {'foo': {'one': 1, 'three': 3}}]
     v = DictVectorizer(sparse=False)
     with pytest.raises(TypeError) as error:
         v.fit(D2)
