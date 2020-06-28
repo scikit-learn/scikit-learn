@@ -1,5 +1,4 @@
 from .base import _get_target_scores
-from .base import CurveDisplay
 
 from .. import average_precision_score
 from .. import precision_recall_curve
@@ -8,7 +7,7 @@ from ...utils import check_matplotlib_support
 from ...utils.validation import _deprecate_positional_args
 
 
-class PrecisionRecallDisplay(CurveDisplay):
+class PrecisionRecallDisplay:
     """Precision Recall visualization.
 
     It is recommend to use :func:`~sklearn.metrics.plot_precision_recall_curve`
@@ -68,10 +67,11 @@ class PrecisionRecallDisplay(CurveDisplay):
 
     def __init__(self, precision, recall, *,
                  average_precision=None, estimator_name=None, pos_label=None):
-        super().__init__(estimator_name, pos_label)
+        self.estimator_name = estimator_name
         self.precision = precision
         self.recall = recall
         self.average_precision = average_precision
+        self.pos_label = pos_label
 
     @_deprecate_positional_args
     def plot(self, ax=None, *, name=None, **kwargs):
@@ -112,15 +112,25 @@ class PrecisionRecallDisplay(CurveDisplay):
             line_kwargs["label"] = name
         line_kwargs.update(**kwargs)
 
-        return self._setup_display(
-            x=self.recall,
-            y=self.precision,
-            line_kwargs=line_kwargs,
-            xlabel="Recall",
-            ylabel="Precision",
-            loc="lower left",
-            ax=ax
-        )
+        import matplotlib.pyplot as plt
+
+        if ax is None:
+            fig, ax = plt.subplots()
+
+        self.line_, = ax.plot(self.recall, self.precision, **line_kwargs)
+        info_pos_label = (f" (Positive label: {self.pos_label})"
+                          if self.pos_label is not None else "")
+
+        xlabel = "Recall" + info_pos_label
+        ylabel = "Precision" + info_pos_label
+        ax.set(xlabel=xlabel, ylabel=ylabel)
+
+        if "label" in line_kwargs:
+            ax.legend(loc="llower left")
+
+        self.ax_ = ax
+        self.figure_ = ax.figure
+        return self
 
 
 @_deprecate_positional_args

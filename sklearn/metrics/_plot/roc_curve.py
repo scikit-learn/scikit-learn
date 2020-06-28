@@ -1,5 +1,4 @@
 from .base import _get_target_scores
-from .base import CurveDisplay
 
 from .. import auc
 from .. import roc_curve
@@ -8,7 +7,7 @@ from ...utils import check_matplotlib_support
 from ...utils.validation import _deprecate_positional_args
 
 
-class RocCurveDisplay(CurveDisplay):
+class RocCurveDisplay:
     """ROC Curve visualization.
 
     It is recommend to use :func:`~sklearn.metrics.plot_roc_curve` to create a
@@ -65,10 +64,11 @@ class RocCurveDisplay(CurveDisplay):
 
     def __init__(self, *, fpr, tpr,
                  roc_auc=None, estimator_name=None, pos_label=None):
-        super().__init__(estimator_name, pos_label)
+        self.estimator_name = estimator_name
         self.fpr = fpr
         self.tpr = tpr
         self.roc_auc = roc_auc
+        self.pos_label = pos_label
 
     @_deprecate_positional_args
     def plot(self, ax=None, *, name=None, **kwargs):
@@ -105,15 +105,25 @@ class RocCurveDisplay(CurveDisplay):
 
         line_kwargs.update(**kwargs)
 
-        return self._setup_display(
-            x=self.fpr,
-            y=self.tpr,
-            line_kwargs=line_kwargs,
-            xlabel="False Positive Rate",
-            ylabel="True Positive Rate",
-            loc="lower right",
-            ax=ax
-        )
+        import matplotlib.pyplot as plt
+
+        if ax is None:
+            fig, ax = plt.subplots()
+
+        self.line_, = ax.plot(self.fpr, self.tpr, **line_kwargs)
+        info_pos_label = (f" (Positive label: {self.pos_label})"
+                          if self.pos_label is not None else "")
+
+        xlabel = "False Positive Rate" + info_pos_label
+        ylabel = "True Positive Rate" + info_pos_label
+        ax.set(xlabel=xlabel, ylabel=ylabel)
+
+        if "label" in line_kwargs:
+            ax.legend(loc="lower right")
+
+        self.ax_ = ax
+        self.figure_ = ax.figure
+        return self
 
 
 @_deprecate_positional_args
