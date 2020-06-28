@@ -445,7 +445,7 @@ class _CalibratedClassifier:
 
         # Deal with cases where the predicted probability minimally exceeds 1.0
 
-        np.clip(proba,0.0, 1.0,proba)
+        np.clip(proba, 0.0, 1.0, proba)
 
         return proba
 
