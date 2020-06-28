@@ -75,8 +75,7 @@ def _get_explained_variance(X, components, ridge_alpha):
         (AISTATS), PMLR 9:366-373, 2010.
     """
     # Transform input
-    U = ridge_regression(components.T, X.T, ridge_alpha,
-                              solver="cholesky")
+    U = ridge_regression(components.T, X.T, ridge_alpha, solver="cholesky")
 
     # QR decomposition of sparse PCs
     r = linalg.qr(U, overwrite_a=True, mode='r')[0]
