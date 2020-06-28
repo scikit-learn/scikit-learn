@@ -504,6 +504,11 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     estimator : estimator object
         The fitted estimator
     """
+    if not (isinstance(error_score, numbers.Number) or error_score == 'raise'):
+        raise ValueError("error_score must be the string 'raise' or a"
+                         " numeric value. (Hint: if using 'raise', please"
+                         " make sure that it has been spelled correctly.)")
+
     progress_msg = ""
     if verbose > 2:
         if split_progress is not None:
@@ -569,37 +574,14 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
                           "Details: \n%s" %
                           (error_score, format_exc()),
                           FitFailedWarning)
-        else:
-            raise ValueError("error_score must be the string 'raise' or a"
-                             " numeric value. (Hint: if using 'raise', please"
-                             " make sure that it has been spelled correctly.)")
     else:
-        try:
-            fit_time = time.time() - start_time
-            test_scores = _score(estimator, X_test, y_test, scorer,
-                                 error_score)
-            score_time = time.time() - start_time - fit_time
-            if return_train_score:
-                train_scores = _score(estimator, X_train, y_train, scorer,
-                                      error_score)
-        except Exception:
-            if error_score == 'raise':
-                raise
-            elif isinstance(error_score, numbers.Number):
-                score_time = time.time() - start_time - fit_time
-                test_scores = {name: error_score for name in scorer}
-                if return_train_score:
-                    train_scores = test_scores.copy()
-                warnings.warn("Scoring failed. The score on this train-test "
-                              "partition for these parameters will be set "
-                              "to %f. Details: \n%s" %
-                              (error_score, format_exc()),
-                              UserWarning)
-            else:
-                raise ValueError("error_score must be the string 'raise' or a "
-                                 "numeric value. (Hint: if using 'raise', "
-                                 "please make sure that it has been "
-                                 "spelled correctly.)")
+        fit_time = time.time() - start_time
+        test_scores = _score(estimator, X_test, y_test, scorer,
+                             error_score)
+        score_time = time.time() - start_time - fit_time
+        if return_train_score:
+            train_scores = _score(estimator, X_train, y_train, scorer,
+                                  error_score)
 
     if verbose > 1:
         total_time = score_time + fit_time
@@ -639,13 +621,31 @@ def _score(estimator, X_test, y_test, scorer, error_score=np.nan):
     Will return a dict of floats if `scorer` is a dict, otherwise a single
     float is returned.
     """
+    if not (isinstance(error_score, numbers.Number) or error_score == 'raise'):
+        raise ValueError("error_score must be the string 'raise' or a"
+                         " numeric value. (Hint: if using 'raise', please"
+                         " make sure that it has been spelled correctly.)")
+
     if isinstance(scorer, dict):
         # will cache method calls if needed. scorer() returns a dict
-        scorer = _MultimetricScorer(**scorer)
-    if y_test is None:
-        scores = scorer(estimator, X_test)
+        multi_scorer = _MultimetricScorer(**scorer)
     else:
-        scores = scorer(estimator, X_test, y_test)
+        multi_scorer = scorer
+    try:
+        if y_test is None:
+            scores = multi_scorer(estimator, X_test)
+        else:
+            scores = multi_scorer(estimator, X_test, y_test)
+    except Exception:
+        if error_score == 'raise':
+            raise
+        elif isinstance(error_score, numbers.Number):
+            scores = {name: error_score for name in scorer}
+            warnings.warn("Scoring failed. The score on this train-test "
+                          "partition for these parameters will be set "
+                          "to %f. Details: \n%s" %
+                          (error_score, format_exc()),
+                          UserWarning)
 
     error_msg = ("scoring must return a number, got %s (%s) "
                  "instead. (scorer=%s)")
@@ -665,11 +665,6 @@ def _score(estimator, X_test, y_test, scorer, error_score=np.nan):
                                   "will be set to %f. Details: \n%s" %
                                   (error_score, format_exc()),
                                   UserWarning)
-                else:
-                    raise ValueError("error_score must be the string 'raise' "
-                                     "or a numeric value. (Hint: if using "
-                                     "'raise', please make sure that it has "
-                                     "been spelled correctly.)")
             else:
                 scores[name] = score
     else:  # scalar
@@ -679,7 +674,8 @@ def _score(estimator, X_test, y_test, scorer, error_score=np.nan):
                 scores = scores.item()
         if not isinstance(scores, numbers.Number):
             if error_score == 'raise':
-                raise ValueError(error_msg % (scores, type(scores), scorer))
+                raise ValueError(error_msg % (scores, type(scores),
+                                 multi_scorer))
             elif isinstance(error_score, numbers.Number):
                 scores = error_score
                 warnings.warn("Scoring failed. The score on this train-test "
@@ -687,11 +683,6 @@ def _score(estimator, X_test, y_test, scorer, error_score=np.nan):
                               "to %f. Details: \n%s" %
                               (error_score, format_exc()),
                               UserWarning)
-            else:
-                raise ValueError("error_score must be the string 'raise' or a "
-                                 "numeric value. (Hint: if using 'raise', "
-                                 "please make sure that it has been "
-                                 "spelled correctly.)")
 
     return scores
 
