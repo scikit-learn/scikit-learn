@@ -133,12 +133,12 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
                                 'value. Only iterables of string are '
                                 'supported.')
             if fitting and feature_name not in vocab:
-                    vocab[feature_name] = len(feature_names)
-                    feature_names.append(feature_name)
+                vocab[feature_name] = len(feature_names)
+                feature_names.append(feature_name)
 
             if transforming and feature_name in vocab:
-                    indices.append(vocab[feature_name])
-                    values.append(self.dtype(vv))
+                indices.append(vocab[feature_name])
+                values.append(self.dtype(vv))
 
         return
 
@@ -238,8 +238,8 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
 
                 if feature_name is not None:
                     if fitting and feature_name not in vocab:
-                            vocab[feature_name] = len(feature_names)
-                            feature_names.append(feature_name)
+                        vocab[feature_name] = len(feature_names)
+                        feature_names.append(feature_name)
 
                     if feature_name in vocab:
                         indices.append(vocab[feature_name])
