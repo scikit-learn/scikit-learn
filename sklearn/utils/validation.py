@@ -805,6 +805,11 @@ def check_X_y(X, y, accept_sparse=False, *, accept_large_sparse=True,
         y = check_array(y, accept_sparse='csr', force_all_finite=True,
                         ensure_2d=False, dtype=None)
     else:
+        if hasattr(y, 'dtype') and type(y.dtype).__name__ == 'BooleanDtype':
+            if not y.isna().any():
+                y = np.asarray(y, dtype=np.bool)
+            else:
+                raise ValueError("y cannot have values of type `pd.NA`")
         y = column_or_1d(y, warn=True)
         _assert_all_finite(y)
     if y_numeric and y.dtype.kind == 'O':

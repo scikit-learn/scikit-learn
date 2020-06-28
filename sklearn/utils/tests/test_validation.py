@@ -1213,3 +1213,26 @@ def test_check_sparse_pandas_sp_format(sp_format):
     assert sp.issparse(result)
     assert result.format == sp_format
     assert_allclose_dense_sparse(sp_mat, result)
+
+
+def test_check_X_y_pandas_boolean_casting():
+    pd = pytest.importorskip('pandas')
+    df = pd.DataFrame({
+        "y": pd.Series([False, True, False, True], dtype="boolean"),
+        "x1": pd.Series([1, 2, 3, 4]),
+        "x2": pd.Series([5, 6, 7, 8])
+    })
+    X, y = check_X_y(df[["x1", "x2"]], df["y"])
+    assert y.dtype == np.bool
+
+
+def test_check_X_y_pandas_boolean_casting_na():
+    pd = pytest.importorskip('pandas')
+    df = pd.DataFrame({
+        "y": pd.Series([False, True, pd.NA, True], dtype="boolean"),
+        "x1": pd.Series([1, 2, 3, 4]),
+        "x2": pd.Series([5, 6, 7, 8])
+    })
+    msg = "y cannot have values of type `pd.NA`"
+    with pytest.raises(ValueError, match=msg):
+        X, y = check_X_y(df[["x1", "x2"]], df["y"])
