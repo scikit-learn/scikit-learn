@@ -47,9 +47,17 @@ class _ArrayTransformer:
             else:
                 return X
 
-        if array_out == 'pandas':
+        if array_out.startswith('pandas'):
             import pandas as pd
             if sp_sparse.issparse(X):
+                if array_out == 'pandas/pydata/sparse':
+                    # extremely experimental based on
+                    # https://github.com/TomAugspurger/pandas/tree/33182-sparse-block  # noqa
+                    import sparse as pydata_sparse
+                    X = pydata_sparse.COO.from_scipy_sparse(X)
+                    return pd.DataFrame(X, columns=feature_names_out)
+
+                # use standard pandas interface for sparse
                 return pd.DataFrame.sparse.from_spmatrix(
                     X, columns=feature_names_out)
 
@@ -68,6 +76,7 @@ class _ArrayTransformer:
                 X = pydata_sparse.COO.from_scipy_sparse(X)
             return xr.DataArray(X, dims=dims,
                                 coords={dims[1]: feature_names_out})
+
         return X
 
 
