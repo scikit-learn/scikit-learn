@@ -5,7 +5,6 @@ import numpy as np
 import scipy.sparse as sp
 
 from sklearn.base import clone
-from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_almost_equal
