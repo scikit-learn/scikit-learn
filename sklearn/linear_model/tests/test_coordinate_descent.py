@@ -1050,6 +1050,8 @@ def test_convergence_warnings():
     assert not record.list
 
 
+# FIXME: 'normalize' to be removed in 0.26
+@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 def test_sparse_input_convergence_warning():
     X, y, _, _ = build_dataset(n_samples=1000, n_features=500)
 
@@ -1061,7 +1063,10 @@ def test_sparse_input_convergence_warning():
     with pytest.warns(None) as record:
         Lasso(max_iter=1000).fit(sparse.csr_matrix(X, dtype=np.float32), y)
 
-    assert not record.list
+    # FIXME: 'normalize' to be removed in 0.26
+    # after it is removed, exchange lines below for
+    # assert not record.list
+    assert len(record) == 1
 
 
 @pytest.mark.parametrize("precompute, inner_precompute", [
