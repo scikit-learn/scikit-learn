@@ -598,7 +598,7 @@ class TSNE(BaseEstimator):
 
         .. versionadded:: 0.22
 
-    square_distance : {True, False, or 'legacy'}, default='legacy'
+    square_distance : {True, 'legacy', or 'warn'}, default='warn'
         Whether distance values are squared before t-SNE is run.  ``'legacy'``
         means that distances are squared only when ``metric='euclidean'``.
         The default value for this parameter will change to ``True`` in
@@ -652,7 +652,7 @@ class TSNE(BaseEstimator):
                  n_iter_without_progress=300, min_grad_norm=1e-7,
                  metric="euclidean", init="random", verbose=0,
                  random_state=None, method='barnes_hut', angle=0.5,
-                 n_jobs=None, square_distance='legacy'):
+                 n_jobs=None, square_distance='warn'):
         self.n_components = n_components
         self.perplexity = perplexity
         self.early_exaggeration = early_exaggeration
@@ -676,10 +676,10 @@ class TSNE(BaseEstimator):
             raise ValueError("'method' must be 'barnes_hut' or 'exact'")
         if self.angle < 0.0 or self.angle > 1.0:
             raise ValueError("'angle' must be between 0.0 - 1.0")
-        if self.square_distance not in [True, False, 'legacy']:
-            raise ValueError("'square_distance' must be True, False, or "
-                             "'legacy'")
-        if self.square_distance == 'legacy' and self.metric != "euclidean":
+        if self.square_distance not in [True, 'legacy', 'warn']:
+            raise ValueError("'square_distance' must be True, 'legacy', or "
+                             "'warn'.")
+        if self.square_distance == 'warn' and self.metric != "euclidean":
             warnings.warn(("'square_distance' has been introduced in 0.24. "
                            "It will be set to True starting from 0.26 which "
                            "means that all distance metrics will be squared "
@@ -734,17 +734,14 @@ class TSNE(BaseEstimator):
                     print("[t-SNE] Computing pairwise distances...")
 
                 if self.metric == 'euclidean':
-                    if self.square_distance in [True, 'legacy']:
-                        # Euclidean is squared here, rather than using **= 2,
-                        # because euclidean_distances already calculates
-                        # squared distances, and returns np.sqrt(dist) for
-                        # squared=False.
-                        distances = pairwise_distances(X, metric=self.metric,
-                                                       squared=True)
-                    else:
-                        distances = pairwise_distances(X, metric=self.metric)
+                    # Euclidean is squared here, rather than using **= 2,
+                    # because euclidean_distances already calculates
+                    # squared distances, and returns np.sqrt(dist) for
+                    # squared=False.
+                    distances = pairwise_distances(X, metric=self.metric,
+                                                   squared=True)
                 else:
-                    # Euclidean has separate calls as it's slower for n_jobs>1
+                    # Euclidean has separate call as it's slower for n_jobs>1
                     distances = pairwise_distances(X, metric=self.metric,
                                                    n_jobs=self.n_jobs)
 
@@ -795,11 +792,7 @@ class TSNE(BaseEstimator):
             # Free the memory used by the ball_tree
             del knn
 
-            if (
-                    self.square_distance is True
-                    or (self.square_distance == 'legacy'
-                        and self.metric == 'euclidean')
-            ):
+            if self.square_distance is True or self.metric == 'euclidean':
                 # knn return the euclidean distance but we need it squared
                 # to be consistent with the 'exact' method. Note that the
                 # the method was derived using the euclidean method as in the
