@@ -397,6 +397,8 @@ def test_lasso_lars_vs_lasso_cd_ill_conditioned2():
     assert lars_obj < cd_obj * (1. + 1e-8)
 
 
+# FIXME: 'normalize' to be removed in 0.26
+@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 def test_lars_add_features():
     # assure that at least some features get added if necessary
     # test for 6d2b4c
@@ -408,6 +410,8 @@ def test_lars_add_features():
     assert np.all(np.isfinite(clf.coef_))
 
 
+# FIXME: 'normalize' to be removed in 0.26
+@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 def test_lars_n_nonzero_coefs(verbose=False):
     lars = linear_model.Lars(n_nonzero_coefs=6, verbose=verbose)
     lars.fit(X, y)
@@ -483,7 +487,10 @@ def test_lars_cv_max_iter(recwarn):
     # Materialize the string representation of the warning to get a more
     # informative error message in case of AssertionError.
     recorded_warnings = [str(w) for w in recwarn]
-    assert recorded_warnings == []
+    # FIXME: when 'normalize' is removed set exchange below for:
+    # assert len(recorded_warnings) == []
+    assert len(recorded_warnings) == 1
+    assert 'normalize\' was deprecated in version 0.24' in recorded_warnings[0]
 
 
 # FIXME: 'normalize' to be removed in 0.26
