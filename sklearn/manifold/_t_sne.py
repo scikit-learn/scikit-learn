@@ -599,7 +599,7 @@ class TSNE(BaseEstimator):
         .. versionadded:: 0.22
 
     square_distance : {True, 'legacy', or 'warn'}, default='warn'
-        Whether distance values are squared before t-SNE is run.  ``'legacy'``
+        Whether distance values are squared before t-SNE is run. ``'legacy'``
         means that distances are squared only when ``metric='euclidean'``.
         The default value for this parameter will change to ``True`` in
         version 0.26.
@@ -684,7 +684,8 @@ class TSNE(BaseEstimator):
                            "It will be set to True starting from 0.26 which "
                            "means that all distance metrics will be squared "
                            "by default. Set 'square_distance' to either True "
-                           "or False to silence this warning."), FutureWarning)
+                           "or 'legacy' to silence this warning."),
+                          FutureWarning)
         if self.method == 'barnes_hut':
             X = self._validate_data(X, accept_sparse=['csr'],
                                     ensure_min_samples=2,
