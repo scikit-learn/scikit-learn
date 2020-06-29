@@ -1475,24 +1475,19 @@ def test_partial_roc_auc_score():
             _partial_roc_auc_score(y_true, y_pred, max_fpr))
 
 
-@pytest.mark.parametrize('y_true, k, normalize, sample_weight, true_score', [
-    ([0, 1, 2, 3], 1, True, None, 0.25),
-    ([0, 1, 2, 3], 1, False, None, 1),
-    ([0, 1, 2, 3], 2, True, None, 0.5),
-    ([0, 1, 2, 3], 2, False, [2, 2, 1, 1], 4),
-    ([0, 1, 2, 3], 3, True, None, 0.75),
-    ([0, 1, 2, 3], 3, True, [0, 1, 1, 2], 0.5),
+@pytest.mark.parametrize('y_true, k, true_score', [
+    ([0, 1, 2, 3], 1, 0.25),
+    ([0, 1, 2, 3], 2, 0.5),
+    ([0, 1, 2, 3], 3, 0.75),
 ])
-def test_top_k_accuracy_score(y_true, k, normalize, sample_weight, true_score):
+def test_top_k_accuracy_score(y_true, k, true_score):
     y_score = np.array([
         [0.4, 0.3, 0.2, 0.1],
         [0.1, 0.3, 0.4, 0.2],
         [0.4, 0.1, 0.2, 0.3],
         [0.3, 0.2, 0.4, 0.1],
     ])
-    score = top_k_accuracy_score(y_true, y_score, k=k, normalize=normalize,
-                                 sample_weight=sample_weight)
-
+    score = top_k_accuracy_score(y_true, y_score, k=k)
     assert score == pytest.approx(true_score)
 
 
