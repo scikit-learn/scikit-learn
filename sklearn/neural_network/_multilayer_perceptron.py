@@ -692,7 +692,8 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
 
         for i in range(self.n_layers_ - 1):
             activations.append(np.empty((X.shape[0],
-                                         layer_units[i + 1])))
+                                         layer_units[i + 1]),
+                                        dtype=X.dtype))
         # forward propagate
         self._forward_pass(activations)
         y_pred = activations[-1]
