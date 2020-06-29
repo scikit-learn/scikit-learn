@@ -277,7 +277,7 @@ def test_fit_csr_matrix(method):
                     1.0, rtol=1.1e-1)
 
 
-def test_preserve_trustworthiness_with_precomputed_distances():
+def test_preserve_trustworthiness_approximately_with_precomputed_distances():
     # Nearest neighbors should be preserved approximately.
     random_state = check_random_state(0)
     for i in range(3):
@@ -438,7 +438,7 @@ def test_angle_out_of_range_checks():
             tsne.fit_transform(np.array([[0.0], [1.0]]))
 
 
-def test_pca_init_not_compatible_with_precomputed_kernel():
+def test_pca_initialization_not_compatible_with_precomputed_kernel():
     # Precomputed distance matrices must be square matrices.
     tsne = TSNE(metric="precomputed", init="pca", square_distance=True)
     with pytest.raises(ValueError, match="The parameter init=\"pca\" cannot"
