@@ -325,11 +325,6 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             raise ValueError("hidden_layer_sizes must be > 0, got %s." %
                              hidden_layer_sizes)
 
-        X = check_array(X, accept_sparse=['csr', 'csc'],
-                        dtype=(np.float64, np.float32))
-
-        self._dtype = X.dtype
-
         X, y = self._validate_input(X, y, incremental)
 
         n_samples, n_features = X.shape
@@ -974,7 +969,8 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
     def _validate_input(self, X, y, incremental):
         X, y = self._validate_data(X, y, accept_sparse=['csr', 'csc'],
                                    multi_output=True,
-                                   dtype=self._dtype)
+                                   dtype=(np.float64, np.float32))
+        self._dtype = X.dtype
         if y.ndim == 2 and y.shape[1] == 1:
             y = column_or_1d(y, warn=True)
 
@@ -1407,7 +1403,9 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
 
     def _validate_input(self, X, y, incremental):
         X, y = self._validate_data(X, y, accept_sparse=['csr', 'csc'],
-                                   multi_output=True, y_numeric=True)
+                                   multi_output=True, y_numeric=True,
+                                   dtype=(np.float64, np.float32))
+        self._dtype = X.dtype
         if y.ndim == 2 and y.shape[1] == 1:
             y = column_or_1d(y, warn=True)
         return X, y
