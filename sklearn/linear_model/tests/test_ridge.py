@@ -56,8 +56,8 @@ X_iris = sp.csr_matrix(iris.data)
 y_iris = iris.target
 
 
-DENSE_FILTER = lambda X: X
-SPARSE_FILTER = lambda X: sp.csr_matrix(X)
+def DENSE_FILTER(X): return X
+def SPARSE_FILTER(X): return sp.csr_matrix(X)
 
 
 def _accuracy_callable(y_test, y_pred):
@@ -223,11 +223,11 @@ def test_ridge_sample_weights():
             W = np.diag(sample_weight)
             if intercept is False:
                 X_aug = X
-                I = np.eye(n_features)
+                I = np.eye(n_features)  # noqa: E741
             else:
                 dummy_column = np.ones(shape=(n_samples, 1))
                 X_aug = np.concatenate((dummy_column, X), axis=1)
-                I = np.eye(n_features + 1)
+                I = np.eye(n_features + 1)  # noqa: E741
                 I[0, 0] = 0
 
             cf_coefs = linalg.solve(X_aug.T.dot(W).dot(X_aug) + alpha * I,
@@ -644,7 +644,7 @@ def _test_ridge_loo(filter_):
     assert ridge_gcv2.alpha_ == pytest.approx(alpha_)
 
     # check that we get same best alpha with custom score_func
-    func = lambda x, y: -mean_squared_error(x, y)
+    def func(x, y): return -mean_squared_error(x, y)
     scoring = make_scorer(func)
     ridge_gcv3 = RidgeCV(fit_intercept=False, scoring=scoring)
     f(ridge_gcv3.fit)(filter_(X_diabetes), y_diabetes)

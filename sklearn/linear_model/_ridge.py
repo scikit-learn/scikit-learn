@@ -556,7 +556,6 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
         else:
             self._normalize = False
 
-
         _dtype = [np.float64, np.float32]
         _accept_sparse = _get_valid_accept_sparse(sparse.issparse(X),
                                                   self.solver)
