@@ -88,7 +88,7 @@ def _weighted_percentile(array, sample_weight, percentile=50,
     # P = (x - 1) / (N - 1); x in [1, N]
     # Weighted percentile change this formula by taking into account the
     # weights instead of the data frequency.
-    # P_w = (x - w) / (S_w - w), x in [1, N], w being the weight and S_n being
+    # P_w = (x - w) / (S_w - w), x in [1, N], w being the weight and S_w being
     # the sum of the weights.
     adjusted_percentile = (cum_weigths - sorted_weights)
     with np.errstate(invalid="ignore"):
