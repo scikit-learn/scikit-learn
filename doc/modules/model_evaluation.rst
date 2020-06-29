@@ -308,13 +308,6 @@ Some of these are restricted to the binary classification case:
    precision_recall_curve
    roc_curve
 
-Others are restricted to the multiclass case:
-
-.. autosummary::
-   :template: function.rst
-
-   top_k_accuracy_score
-
 
 Others also work in the multiclass case:
 
@@ -327,6 +320,7 @@ Others also work in the multiclass case:
    hinge_loss
    matthews_corrcoef
    roc_auc_score
+   top_k_accuracy_score
 
 
 Some also work in the multilabel case:
