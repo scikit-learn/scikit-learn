@@ -46,6 +46,31 @@ SPARSE_INTERCEPT_DECAY = 0.01
 # intercept oscillation.
 
 
+def _deprecate_normalize(normalize, default):
+    if normalize == 'deprecate':
+        _normalize = default
+    else:
+        _normalize = normalize
+
+    if default or (normalize != 'deprecate' and normalize):
+        warnings.warn(
+            "'normalize' was deprecated in version 0.24 and will be"
+            " removed in 0.26. If you wish to keep an equivalent"
+            " behaviour, use  Pipeline with a StandardScaler in a"
+            " preprocessing stage:"
+            "  model = make_pipeline( \n"
+            "    StandardScaler(), \n"
+            "    {type(self).__name__}())", FutureWarning
+        )
+    elif (normalize != 'deprecate' and not normalize):
+        warnings.warn(
+            "'normalize' was deprecated in version 0.24 and will be"
+            " removed in 0.26.", FutureWarning
+        )
+
+    return _normalize
+
+
 def make_dataset(X, y, sample_weight, random_state=None):
     """Create ``Dataset`` abstraction for sparse and dense inputs.
 
@@ -505,25 +530,7 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         self : returns an instance of self.
         """
 
-        if self.normalize != "deprecate":
-            if not self.normalize:
-                warnings.warn(
-                    "'normalize' was deprecated in version 0.24 and will be"
-                    " removed in 0.26.", FutureWarning
-                )
-            else:
-                warnings.warn(
-                    "'normalize' was deprecated in version 0.24 and will be"
-                    " removed in 0.26. If you wish to keep an equivalent"
-                    " behaviour, use  Pipeline with a StandardScaler in a"
-                    " preprocessing stage:"
-                    "  model = make_pipeline( \n"
-                    "    StandardScaler(), \n"
-                    "    {type(self).__name__}())", FutureWarning
-                )
-            _normalize = self.normalize
-        else:
-            _normalize = False
+        _normalize = _deprecate_normalize(self.normalize, default=False)
 
         n_jobs_ = self.n_jobs
         X, y = self._validate_data(X, y, accept_sparse=['csr', 'csc', 'coo'],
