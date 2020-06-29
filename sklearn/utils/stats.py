@@ -21,11 +21,11 @@ def _weighted_percentile(array, sample_weight, percentile=50,
     array : ndarray of shape (n,) or (n, m)
         Values to take the weighted percentile of.
 
-    sample_weight: ndarray of (n,) or (n, m)
+    sample_weight: ndarray of shape (n,) or (n, m)
         Weights for each value in `array`. Must be same shape as `array` or
         of shape `(array.shape[0],)`.
 
-    percentile: inr or float, default=50
+    percentile: int or float, default=50
         Percentile to compute. Must be value between 0 and 100.
 
     interpolation : {"linear", "lower", "higher", "nearest"}, default="lower"
@@ -80,10 +80,10 @@ def _weighted_percentile(array, sample_weight, percentile=50,
     def _squeeze_arr(arr, n_dim):
         return arr[0] if n_dim == 1 else arr
 
-    # Percentile can be computed with 3 different alternative:
+    # Percentile can be computed with 3 different alternatives:
     # https://en.wikipedia.org/wiki/Percentile
     # These 3 alternatives depend of the value of a parameter C. NumPy uses
-    # the variant where C=0 which allows to obtained a strictly monotically
+    # the variant where C=0 which allows to obtain a strictly monotonically
     # increasing function which is defined as:
     # P = (x - 1) / (N - 1); x in [1, N]
     # Weighted percentile change this formula by taking into account the
