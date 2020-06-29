@@ -171,7 +171,7 @@ class BayesianRidge(RegressorMixin, LinearModel):
                     " behaviour, use  Pipeline with a StandardScaler in a"
                     " preprocessing stage:"
                     "  model = make_pipeline( \n"
-                    "    StandardScaler(with_mean=False), \n"
+                    "    StandardScaler(), \n"
                     "    {type(self).__name__}())", FutureWarning
                 )
             self._normalize = self.normalize
@@ -503,7 +503,7 @@ class ARDRegression(RegressorMixin, LinearModel):
                     " behaviour, use  Pipeline with a StandardScaler in a"
                     " preprocessing stage:"
                     "  model = make_pipeline( \n"
-                    "    StandardScaler(with_mean=False), \n"
+                    "    StandardScaler(), \n"
                     "    {type(self).__name__}())", FutureWarning
                 )
             self._normalize = self.normalize
