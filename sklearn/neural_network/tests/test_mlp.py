@@ -371,8 +371,6 @@ def test_partial_fit_classification():
     # `partial_fit` should yield the same results as 'fit' for binary and
     # multi-class classification.
     for X, y in classification_datasets:
-        X = X
-        y = y
         mlp = MLPClassifier(solver='sgd', max_iter=100, random_state=1,
                             tol=0, alpha=1e-5, learning_rate_init=0.2)
 

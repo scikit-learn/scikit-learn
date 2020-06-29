@@ -515,7 +515,7 @@ def check_array(array, accept_sparse=False, *, accept_large_sparse=True,
         # pandas boolean dtype __array__ interface coerces bools to objects
         for i, dtype_iter in enumerate(dtypes_orig):
             if dtype_iter.kind == 'b':
-                dtypes_orig[i] = np.dtype(np.object)
+                dtypes_orig[i] = np.dtype(object)
             elif dtype_iter.name.startswith(("Int", "UInt")):
                 # name looks like an Integer Extension Array, now check for
                 # the dtype

@@ -343,17 +343,6 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             # First time training the model
             self._initialize(y, layer_units)
 
-        # lbfgs does not support mini-batches
-        if self.solver == 'lbfgs':
-            batch_size = n_samples
-        elif self.batch_size == 'auto':
-            batch_size = min(200, n_samples)
-        else:
-            if self.batch_size < 1 or self.batch_size > n_samples:
-                warnings.warn("Got `batch_size` less than 1 or larger than "
-                              "sample size. It is going to be clipped")
-            batch_size = np.clip(self.batch_size, 1, n_samples)
-
         # Initialize lists
         activations = [X] + [None] * (len(layer_units) - 1)
         deltas = [None] * (len(activations) - 1)
@@ -509,6 +498,9 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         if self.batch_size == 'auto':
             batch_size = min(200, n_samples)
         else:
+            if self.batch_size < 1 or self.batch_size > n_samples:
+                warnings.warn("Got `batch_size` less than 1 or larger than "
+                              "sample size. It is going to be clipped")
             batch_size = np.clip(self.batch_size, 1, n_samples)
 
         try:
