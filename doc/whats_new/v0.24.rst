@@ -248,6 +248,15 @@ Changelog
   :meth:`tree.DecisionTreeRegressor.fit`, and has not effect.
   :pr:`17614` by :user:`Juan Carlos Alfaro Jiménez <alfaro96>`.
 
+:mod:`sklearn.utils`
+....................
+
+- |Enhancement| :func:`sklearn.utils.stats._weighted_percentile` takes a new
+  parameter `interpolation` allowing to choose how to interpolate the
+  percentile value when it lies between two data points.
+  :pr:`17768` by :user:`Guillaume Lemaitre <glemaitre>` and
+  :user:`Michael Recachinas <mrecachinas>`.
+
 Code and Documentation Contributors
 -----------------------------------
 
