@@ -580,8 +580,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
         total_time = score_time + fit_time
         end_msg = f"[CV{progress_msg}] END "
         result_msg = params_msg + (";" if params_msg else "")
-        if verbose > 2:
-            if isinstance(test_scores, dict):
+        if verbose > 2 and isinstance(test_scores, dict):
                 for scorer_name in sorted(test_scores):
                     result_msg += f" {scorer_name}: ("
                     if return_train_score:
