@@ -548,7 +548,7 @@ def test_staged_functions_defensive(Estimator):
     # test that staged_functions make defensive copies
     rng = np.random.RandomState(0)
     X = rng.uniform(size=(10, 3))
-    y = (4 * X[:, 0]).astype(np.int) + 1  # don't predict zeros
+    y = (4 * X[:, 0]).astype(int) + 1  # don't predict zeros
     estimator = Estimator()
     estimator.fit(X, y)
     for func in ['predict', 'decision_function', 'predict_proba']:
@@ -879,7 +879,7 @@ def test_warm_start_oob_switch(Cls):
     assert_array_equal(est.oob_improvement_[:100], np.zeros(100))
     # the last 10 are not zeros
     assert_array_equal(est.oob_improvement_[-10:] == 0.0,
-                       np.zeros(10, dtype=np.bool))
+                       np.zeros(10, dtype=bool))
 
 
 @pytest.mark.parametrize('Cls', GRADIENT_BOOSTING_ESTIMATORS)

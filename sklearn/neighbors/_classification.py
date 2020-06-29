@@ -526,7 +526,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         n_queries = _num_samples(X)
 
         neigh_dist, neigh_ind = self.radius_neighbors(X)
-        outlier_mask = np.zeros(n_queries, dtype=np.bool)
+        outlier_mask = np.zeros(n_queries, dtype=bool)
         outlier_mask[:] = [len(nind) == 0 for nind in neigh_ind]
         outliers = np.flatnonzero(outlier_mask)
         inliers = np.flatnonzero(~outlier_mask)
