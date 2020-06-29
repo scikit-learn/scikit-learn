@@ -10,8 +10,8 @@ from sklearn.isotonic import (check_increasing, isotonic_regression,
 
 from sklearn.utils.validation import check_array
 from sklearn.utils._testing import (assert_raises, assert_array_equal,
-                                   assert_array_almost_equal,
-                                   assert_warns_message, assert_no_warnings)
+                                    assert_array_almost_equal,
+                                    assert_warns_message, assert_no_warnings)
 from sklearn.utils import shuffle
 
 from scipy.special import expit
@@ -508,3 +508,30 @@ def test_make_unique_dtype():
         w = np.ones_like(x)
         x, y, w = _make_unique(x, y, w)
         assert_array_equal(x, [2, 3, 5])
+
+
+@pytest.mark.parametrize("increasing", [True, False])
+def test_isotonic_thresholds(increasing):
+    rng = np.random.RandomState(42)
+    n_samples = 30
+    X = rng.normal(size=n_samples)
+    y = rng.normal(size=n_samples)
+    ireg = IsotonicRegression(increasing=increasing).fit(X, y)
+    X_thresholds, y_thresholds = ireg.X_thresholds_, ireg.y_thresholds_
+    assert X_thresholds.shape == y_thresholds.shape
+
+    # Input thresholds are a strict subset of the training set (unless
+    # the data is already strictly monotonic which is not the case with
+    # this random data)
+    assert X_thresholds.shape[0] < X.shape[0]
+    assert np.in1d(X_thresholds, X).all()
+
+    # Output thresholds lie in the range of the training set:
+    assert y_thresholds.max() <= y.max()
+    assert y_thresholds.min() >= y.min()
+
+    assert all(np.diff(X_thresholds) > 0)
+    if increasing:
+        assert all(np.diff(y_thresholds) >= 0)
+    else:
+        assert all(np.diff(y_thresholds) <= 0)
