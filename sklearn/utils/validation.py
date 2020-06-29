@@ -574,7 +574,8 @@ def check_array(array, accept_sparse=False, *, accept_large_sparse=True,
     # or experimental pandas with pydata/sparse based on
     # https://github.com/TomAugspurger/pandas/tree/33182-sparse-block
     if (hasattr(array, 'to_scipy_sparse') or
-            hasattr(array.data, 'to_scipy_sparse')):
+            (hasattr(array, 'data') and
+                hasattr(array.data, 'to_scipy_sparse'))):
 
         if hasattr(array.data, 'to_scipy_sparse'):
             # xarray wrapping pydata/sparse array
@@ -695,7 +696,8 @@ def check_array(array, accept_sparse=False, *, accept_large_sparse=True,
     # not xarray with pydata/sparse because may_share_memory invokes the
     # `__array__` protocol
     if not (hasattr(array_orig, 'to_scipy_sparse') or
-            hasattr(array_orig.data, 'to_scipy_sparse')):
+            (hasattr(array, 'data') and
+                hasattr(array.data, 'to_scipy_sparse'))):
         if copy and np.may_share_memory(array, array_orig):
             array = np.array(array, dtype=dtype, order=order)
 
