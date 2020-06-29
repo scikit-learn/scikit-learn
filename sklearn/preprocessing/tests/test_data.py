@@ -2516,6 +2516,8 @@ def test_minmax_scaler_cupy():
     scaler = MinMaxScaler(copy=True)
     t_X_cp = scaler.fit_transform(X_cp)
     assert type(t_X_cp) == type(X_cp)
+    assert t_X_cp.min() == 0
+    assert t_X_cp.max() == 1
 
     r_X_cp = scaler.inverse_transform(t_X_cp)
     assert type(r_X_cp) == type(t_X_cp)

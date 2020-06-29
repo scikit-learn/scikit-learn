@@ -14,7 +14,6 @@ import warnings
 from itertools import combinations_with_replacement as combinations_w_r
 
 import numpy as np
-import cupy as cp
 from scipy import sparse
 from scipy import stats
 from scipy import optimize
