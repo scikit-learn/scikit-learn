@@ -750,3 +750,33 @@ def test_mlp_regressor_dtypes_casting():
     pred_32 = mlp_32.predict(X_digits[300:].astype(np.float32))
 
     assert_allclose(pred_64, pred_32, rtol=1e-04)
+
+
+def test_mlp_param_dtypes():
+    mlp_64 = MLPRegressor(alpha=1e-5,
+                          hidden_layer_sizes=(5, 3),
+                          random_state=1, max_iter=50)
+    mlp_64.fit(X_digits[:300], y_digits[:300])
+    pred_64 = mlp_64.predict(X_digits[300:])
+
+    mlp_32 = MLPRegressor(alpha=1e-5,
+                          hidden_layer_sizes=(5, 3),
+                          random_state=1, max_iter=50)
+    mlp_32.fit(X_digits[:300].astype(np.float32), y_digits[:300])
+    pred_32 = mlp_32.predict(X_digits[300:].astype(np.float32))
+
+    assert all([intercept.dtype == np.float64
+                for intercept in mlp_64.intercepts_])
+
+    assert all([coef.dtype == np.float64
+                for coef in mlp_64.coefs_])
+
+    assert pred_64.dtype == np.float64
+
+    assert all([intercept.dtype == np.float32
+                for intercept in mlp_32.intercepts_])
+
+    assert all([coef.dtype == np.float32
+                for coef in mlp_32.coefs_])
+
+    assert pred_32.dtype == np.float32
