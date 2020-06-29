@@ -464,19 +464,12 @@ def test_raises_on_score_list():
     X, y = make_blobs(random_state=0)
     f1_scorer_no_average = make_scorer(f1_score, average=None)
     clf = DecisionTreeClassifier()
-    score_kwargs = {'error_score': np.nan}
-
-    # the warning message we're expecting to see
-    warning_message = ("Scoring failed. The score on this train-test "
-                       "partition for these parameters will be set to %f. "
-                       "Details: \n" % score_kwargs['error_score'])
-
-    with pytest.warns(UserWarning, match=warning_message):
+    with pytest.raises(ValueError):
         cross_val_score(clf, X, y, scoring=f1_scorer_no_average)
 
     grid_search = GridSearchCV(clf, scoring=f1_scorer_no_average,
                                param_grid={'max_depth': [1, 2]})
-    with pytest.warns(UserWarning, match=warning_message):
+    with pytest.raises(ValueError):
         grid_search.fit(X, y)
 
 

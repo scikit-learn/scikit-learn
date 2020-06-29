@@ -656,34 +656,16 @@ def _score(estimator, X_test, y_test, scorer, error_score=np.nan):
                     # e.g. unwrap memmapped scalars
                     score = score.item()
             if not isinstance(score, numbers.Number):
-                if error_score == 'raise':
-                    raise ValueError(error_msg % (score, type(score), name))
-                elif isinstance(error_score, numbers.Number):
-                    scores[name] = error_score
-                    warnings.warn("Scoring failed. The score on this "
-                                  "train-test partition for these parameters "
-                                  "will be set to %f. Details: \n%s" %
-                                  (error_score, format_exc()),
-                                  UserWarning)
-            else:
-                scores[name] = score
+                raise ValueError(error_msg % (score, type(score), name))
+            scores[name] = score
     else:  # scalar
         if hasattr(scores, 'item'):
             with suppress(ValueError):
                 # e.g. unwrap memmapped scalars
                 scores = scores.item()
         if not isinstance(scores, numbers.Number):
-            if error_score == 'raise':
                 raise ValueError(error_msg % (scores, type(scores),
                                  multi_scorer))
-            elif isinstance(error_score, numbers.Number):
-                scores = error_score
-                warnings.warn("Scoring failed. The score on this train-test "
-                              "partition for these parameters will be set "
-                              "to %f. Details: \n%s" %
-                              (error_score, format_exc()),
-                              UserWarning)
-
     return scores
 
 

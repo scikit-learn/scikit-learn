@@ -347,16 +347,12 @@ def test_cross_validate_invalid_scoring_param():
     multivalued_scorer = make_scorer(confusion_matrix)
 
     # Multiclass Scorers that return multiple values are not supported yet
-    # the warning message we're expecting to see
-    warning_message = ("Scoring failed. The score on this train-test "
-                       "partition for these parameters will be set to %f. "
-                       "Details: \n" % score_kwargs['error_score'])
-
-    with pytest.warns(UserWarning, match=warning_message):
-        cross_validate(SVC(), X, y, scoring=multivalued_scorer)
-
-    with pytest.warns(UserWarning, match=warning_message):
-        cross_validate(SVC(), X, y, scoring={"foo": multivalued_scorer})
+    assert_raises_regex(ValueError, "scoring must return a number, got",
+                        cross_validate, SVC(), X, y,
+                        scoring=multivalued_scorer)
+    assert_raises_regex(ValueError, "scoring must return a number, got",
+                        cross_validate, SVC(), X, y,
+                        scoring={"foo": multivalued_scorer})
 
     assert_raises_regex(ValueError, "'mse' is not a valid scoring value.",
                         cross_validate, SVC(), X, y, scoring="mse")
@@ -1600,17 +1596,10 @@ def test_score_memmap():
     tf.close()
     scores = np.memmap(tf.name, dtype=np.float64)
     score = np.memmap(tf.name, shape=(), mode='r', dtype=np.float64)
-    score_kwargs = {'error_score': np.nan}
     try:
-        # the warning message we're expecting to see
-        warning_message = ("Scoring failed. The score on this train-test "
-                           "partition for these parameters will be set to %f. "
-                           "Details: \n" % score_kwargs['error_score'])
-
-        # No error with the scalar score
         cross_val_score(clf, X, y, scoring=lambda est, X, y: score)
-        with pytest.warns(UserWarning, match=warning_message):
-            cross_val_score(clf, X, y, scoring=lambda est, X, y: scores)
+        assert_raises(ValueError, cross_val_score, clf, X, y,
+                      scoring=lambda est, X, y: scores)
     finally:
         # Best effort to release the mmap file handles before deleting the
         # backing file under Windows
