@@ -7,7 +7,7 @@ from .fixes import _take_along_axis
 
 
 def _weighted_percentile(array, sample_weight, percentile=50,
-                         interpolation="lower"):
+                         interpolation="nearest"):
     """Compute weighted percentile
 
     Computes lower weighted percentile. If `array` is a 2D array, the
@@ -34,9 +34,9 @@ def _weighted_percentile(array, sample_weight, percentile=50,
 
         * `"linear"`: `i + (j - i) * fraction`, where `fraction` is the
           fractional part of the index surrounded by `i` and `j`;
-        * `"lower"`: i` (default);
+        * `"lower"`: i`;
         * `"higher"`: `j`;
-        * `"nearest"`: `i` or `j`, whichever is nearest.
+        * `"nearest"`: `i` or `j`, whichever is nearest (default).
 
         .. versionadded: 0.24
 

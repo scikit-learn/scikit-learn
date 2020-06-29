@@ -143,7 +143,9 @@ def test_weighted_percentile_non_unit_weight(percentile):
     sample_weight = sample_weight / sample_weight.sum()
     sample_weight *= 100
 
-    percentile_value = _weighted_percentile(X, sample_weight, percentile)
+    percentile_value = _weighted_percentile(
+        X, sample_weight, percentile, interpolation="linear"
+    )
     X_percentile_idx = np.searchsorted(X, percentile_value)
     assert sample_weight[:X_percentile_idx - 1].sum() < percentile
     assert sample_weight[:X_percentile_idx + 1].sum() > percentile
