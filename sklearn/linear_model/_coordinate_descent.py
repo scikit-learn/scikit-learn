@@ -1041,7 +1041,7 @@ class Lasso(ElasticNet):
     path = staticmethod(enet_path)
 
     @_deprecate_positional_args
-    def __init__(self, alpha=1.0, *, fit_intercept=True, normalize=False,
+    def __init__(self, alpha=1.0, *, fit_intercept=True, normalize='deprecate',
                  precompute=False, copy_X=True, max_iter=1000,
                  tol=1e-4, warm_start=False, positive=False,
                  random_state=None, selection='cyclic'):
@@ -1168,7 +1168,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, metaclass=ABCMeta):
 
     @abstractmethod
     def __init__(self, eps=1e-3, n_alphas=100, alphas=None, fit_intercept=True,
-                 normalize=False, precompute='auto', max_iter=1000, tol=1e-4,
+                 normalize='deprecate', precompute='auto', max_iter=1000, tol=1e-4,
                  copy_X=True, cv=None, verbose=False, n_jobs=None,
                  positive=False, random_state=None, selection='cyclic'):
         self.eps = eps
@@ -1210,6 +1210,27 @@ class LinearModelCV(MultiOutputMixin, LinearModel, metaclass=ABCMeta):
         y : array-like of shape (n_samples,) or (n_samples, n_targets)
             Target values
         """
+
+        if self.normalize != "deprecate":
+            if not self.normalize:
+                warnings.warn(
+                    "'normalize' was deprecated in version 0.24 and will be"
+                    " removed in 0.26.", FutureWarning
+                )
+            else:
+                warnings.warn(
+                    "'normalize' was deprecated in version 0.24 and will be"
+                    " removed in 0.26. If you wish to keep an equivalent"
+                    " behaviour, use  Pipeline with a StandardScaler in a"
+                    " preprocessing stage:"
+                    "  model = make_pipeline( \n"
+                    "    StandardScaler(), \n"
+                    "    {type(self).__name__}())", FutureWarning
+                )
+            self._normalize = self.normalize
+        else:
+            self._normalize = False
+
         # This makes sure that there is no duplication in memory.
         # Dealing right with copy_X is important in the following:
         # Multiple functions touch X and subsamples of X and can induce a
@@ -1298,7 +1319,8 @@ class LinearModelCV(MultiOutputMixin, LinearModel, metaclass=ABCMeta):
             alphas = [_alpha_grid(X, y, l1_ratio=l1_ratio,
                                   fit_intercept=self.fit_intercept,
                                   eps=self.eps, n_alphas=self.n_alphas,
-                                  normalize=self.normalize, copy_X=self.copy_X)
+                                  normalize=self._normalize,
+                                  copy_X=self.copy_X)
                       for l1_ratio in l1_ratios]
         else:
             # Making sure alphas is properly ordered.
