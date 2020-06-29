@@ -382,7 +382,9 @@ def check_oob_score(name, X, y, n_estimators=20):
     est.fit(X[:n_samples // 2, :], y[:n_samples // 2])
     test_score = est.score(X[n_samples // 2:, :], y[n_samples // 2:])
 
-    assert abs(test_score - est.oob_score_) < 0.1
+    oob_score = est.oob_score_
+    assert abs(test_score - oob_score) < 0.1
+    assert oob_score > 0.5 if name in FOREST_CLASSIFIERS else oob_score > 0.7
 
     # Check warning if not enough estimators
     with np.errstate(divide="ignore", invalid="ignore"):
