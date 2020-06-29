@@ -151,7 +151,12 @@ def test_classification_report_dictionary_output():
     assert type(expected_report['macro avg']['precision']) == float
     assert type(expected_report['setosa']['support']) == int
     assert type(expected_report['macro avg']['support']) == int
-
+    
+    
+def test_classification_report_output_dict_empty_input():
+    report = classification_report(y_true=[], y_pred=[], output_dict=True)
+    assert isinstance(report, dict)
+  
 
 @pytest.mark.parametrize('zero_division', ["warn", 0, 1])
 def test_classification_report_zero_division_warning(zero_division):
