@@ -22,6 +22,7 @@ from sklearn.metrics import mean_squared_error
 from sklearn.metrics import make_scorer
 from sklearn.metrics import get_scorer
 
+from sklearn.linear_model import BayesianRidge
 from sklearn.linear_model import LinearRegression
 from sklearn.linear_model import ridge_regression
 from sklearn.linear_model import Ridge
@@ -66,6 +67,38 @@ def _accuracy_callable(y_test, y_pred):
 
 def _mean_squared_error_callable(y_test, y_pred):
     return ((y_test - y_pred) ** 2).mean()
+
+
+# FIXME: 'normalize' to be removed in 0.26
+@pytest.mark.parametrize('RidgeModel', [Ridge,
+                                        RidgeClassifier,
+                                        RidgeCV,
+                                        RidgeClassifierCV,
+                                        BayesianRidge])
+@pytest.mark.parametrize(
+    'normalize, n_warnings, warning',
+    [(True, 1, FutureWarning),
+     (False, 1, FutureWarning),
+     ("deprecate", 0, None)]
+)
+def test_assure_warning_when_normalize(RidgeModel,
+                                       normalize, n_warnings, warning):
+    # check that we issue a FutureWarning when normalize was set
+    rng = check_random_state(0)
+    n_samples = 200
+    n_features = 2
+    X = rng.randn(n_samples, n_features)
+    X[X < 0.1] = 0.
+    y = rng.rand(n_samples)
+
+    if 'Classifier' in RidgeModel.__name__:
+        y[y < 0.5] = 0
+        y[y > 0] = 1
+
+    model = RidgeModel(normalize=normalize)
+    with pytest.warns(warning) as record:
+        model.fit(X, y)
+    assert len(record) == n_warnings
 
 
 @pytest.mark.parametrize('solver',

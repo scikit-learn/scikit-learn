@@ -536,6 +536,14 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
     def fit(self, X, y, sample_weight=None):
 
         # all other solvers work at both float precision levels
+
+        if self.normalize != "deprecate":
+            _normalize = self.normalize
+        else:
+            _normalize = False
+        # warning message is raised elsewhere
+
+
         _dtype = [np.float64, np.float32]
         _accept_sparse = _get_valid_accept_sparse(sparse.issparse(X),
                                                   self.solver)
@@ -570,7 +578,7 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
 
         # when X is sparse we only remove offset from y
         X, y, X_offset, y_offset, X_scale = self._preprocess_data(
-            X, y, self.fit_intercept, self._normalize, self.copy_X,
+            X, y, self.fit_intercept, _normalize, self.copy_X,
             sample_weight=sample_weight, return_mean=True)
 
         if solver == 'sag' and sparse.issparse(X) and self.fit_intercept:
@@ -1660,24 +1668,10 @@ class _BaseRidgeCV(LinearModel):
         the validation score.
         """
         if self.normalize != "deprecate":
-            if not self.normalize:
-                warnings.warn(
-                    "'normalize' was deprecated in version 0.24 and will be"
-                    " removed in 0.26.", FutureWarning
-                )
-            else:
-                warnings.warn(
-                    "'normalize' was deprecated in version 0.24 and will be"
-                    " removed in 0.26. If you wish to keep an equivalent"
-                    " behaviour, use  Pipeline with a StandardScaler in a"
-                    " preprocessing stage:"
-                    "  model = make_pipeline( \n"
-                    "    StandardScaler(), \n"
-                    "    {type(self).__name__}())", FutureWarning
-                )
             self._normalize = self.normalize
         else:
             self._normalize = False
+        # the warning will be raised in RidgeCV
 
         cv = self.cv
         if cv is None:
