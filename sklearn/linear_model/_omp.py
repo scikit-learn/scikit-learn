@@ -923,22 +923,7 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
             _normalize = True
         else:
             _normalize = self.normalize
-
-        if not _normalize:
-            warnings.warn(
-                "'normalize' was deprecated in version 0.24 and will be"
-                " removed in 0.26.", FutureWarning
-            )
-        else:
-            warnings.warn(
-                "'normalize' was deprecated in version 0.24 and will be"
-                " removed in 0.26. If you wish to keep an equivalent"
-                " behaviour, use  Pipeline with a StandardScaler in a"
-                " preprocessing stage:"
-                "  model = make_pipeline( \n"
-                "    StandardScaler(), \n"
-                "    {type(self).__name__}())", FutureWarning
-            )
+        # the warning will be raised in the OrthogonalMatchingPursuit
 
         X, y = self._validate_data(X, y, y_numeric=True, ensure_min_features=2,
                                    estimator=self)

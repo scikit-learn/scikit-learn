@@ -2,6 +2,7 @@
 # License: BSD 3 clause
 
 import numpy as np
+import pytest
 
 from sklearn.utils._testing import assert_raises
 from sklearn.utils._testing import assert_array_equal
@@ -29,6 +30,31 @@ y *= 10
 G, Xy = np.dot(X.T, X), np.dot(X.T, y)
 # this makes X (n_samples, n_features)
 # and y (n_samples, 3)
+
+
+# FIXME: 'normalize' to be removed in 0.26
+@pytest.mark.parametrize('OmpModel', [OrthogonalMatchingPursuit,
+                                      OrthogonalMatchingPursuitCV])
+@pytest.mark.parametrize(
+    'normalize, n_warnings, warning',
+    [(True, 1, FutureWarning),
+     (False, 1, FutureWarning),
+     ("deprecate", 1, FutureWarning)]
+)
+def test_assure_warning_when_normalize(OmpModel,
+                                       normalize, n_warnings, warning):
+    # check that we issue a FutureWarning when normalize was set
+    rng = check_random_state(0)
+    n_samples = 200
+    n_features = 2
+    X = rng.randn(n_samples, n_features)
+    X[X < 0.1] = 0.
+    y = rng.rand(n_samples)
+
+    model = OmpModel(normalize=normalize)
+    with pytest.warns(warning) as record:
+        model.fit(X, y)
+    assert len(record) == n_warnings
 
 
 def test_correct_shapes():
@@ -121,6 +147,7 @@ def test_orthogonal_mp_gram_readonly():
 
 
 # FIXME: 'normalize' to be removed in 0.26
+@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 def test_estimator():
     omp = OrthogonalMatchingPursuit(n_nonzero_coefs=n_nonzero_coefs)
     omp.fit(X, y[:, 0])
@@ -206,6 +233,7 @@ def test_omp_return_path_prop_with_gram():
 
 
 # FIXME: 'normalize' to be removed in 0.26
+@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 def test_omp_cv():
     y_ = y[:, 0]
     gamma_ = gamma[:, 0]
@@ -220,6 +248,8 @@ def test_omp_cv():
     assert_array_almost_equal(ompcv.coef_, omp.coef_)
 
 
+# FIXME: 'normalize' to be removed in 0.26
+@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 def test_omp_reaches_least_squares():
     # Use small simple data; it's a sanity check but OMP can stop early
     rng = check_random_state(0)
