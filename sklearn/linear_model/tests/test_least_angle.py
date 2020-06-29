@@ -113,6 +113,8 @@ def test_all_precomputed():
             assert_array_almost_equal(expected, got)
 
 
+# FIXME: 'normalize' to be removed in 0.26
+@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 @pytest.mark.filterwarnings('ignore: `rcond` parameter will change')
 # numpy deprecation
 def test_lars_lstsq():
@@ -198,6 +200,8 @@ def test_no_path_all_precomputed():
     assert alpha_ == alphas_[-1]
 
 
+# FIXME: 'normalize' to be removed in 0.26
+@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 @pytest.mark.parametrize(
         'classifier',
         [linear_model.Lars, linear_model.LarsCV, linear_model.LassoLarsIC])
@@ -221,6 +225,8 @@ def test_singular_matrix():
     assert_array_almost_equal(coef_path.T, [[0, 0], [1, 0]])
 
 
+# FIXME: 'normalize' to be removed in 0.26
+@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 def test_rank_deficient_design():
     # consistency test that checks that LARS Lasso is handling rank
     # deficient input data (with n_features < rank) in the same way
@@ -248,6 +254,8 @@ def test_rank_deficient_design():
         assert obj_lars < obj_cd * (1. + 1e-8)
 
 
+# FIXME: 'normalize' to be removed in 0.26
+@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 def test_lasso_lars_vs_lasso_cd():
     # Test that LassoLars and Lasso using coordinate descent give the
     # same results.
@@ -285,6 +293,8 @@ def test_lasso_lars_vs_lasso_cd():
         assert error < 0.01
 
 
+# FIXME: 'normalize' to be removed in 0.26
+@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 def test_lasso_lars_vs_lasso_cd_early_stopping():
     # Test that LassoLars and Lasso using coordinate descent give the
     # same results when early stopping is used.
@@ -311,6 +321,8 @@ def test_lasso_lars_vs_lasso_cd_early_stopping():
         assert error < 0.01
 
 
+# FIXME: 'normalize' to be removed in 0.26
+@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 def test_lasso_lars_path_length():
     # Test that the path length of the LassoLars is right
     lasso = linear_model.LassoLars()
@@ -354,6 +366,8 @@ def test_lasso_lars_vs_lasso_cd_ill_conditioned():
     assert_array_almost_equal(lars_coef, lasso_coef2, decimal=1)
 
 
+# FIXME: 'normalize' to be removed in 0.26
+@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 def test_lasso_lars_vs_lasso_cd_ill_conditioned2():
     # Create an ill-conditioned situation in which the LARS has to go
     # far in the path to converge, and check that LARS and coordinate
@@ -403,6 +417,8 @@ def test_lars_n_nonzero_coefs(verbose=False):
     assert len(lars.alphas_) == 7
 
 
+# FIXME: 'normalize' to be removed in 0.26
+@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 @ignore_warnings
 def test_multitarget():
     # Assure that estimators receiving multidimensional y do the right thing
@@ -431,6 +447,8 @@ def test_multitarget():
             assert_array_almost_equal(Y_pred[:, k], y_pred)
 
 
+# FIXME: 'normalize' to be removed in 0.26
+@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 def test_lars_cv():
     # Test the LassoLarsCV object by checking that the optimal alpha
     # increases as the number of samples increases.
@@ -447,6 +465,8 @@ def test_lars_cv():
     assert not hasattr(lars_cv, 'n_nonzero_coefs')
 
 
+# FIXME: 'normalize' to be removed in 0.26
+@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 def test_lars_cv_max_iter(recwarn):
     warnings.simplefilter('always')
     with np.errstate(divide='raise', invalid='raise'):
@@ -466,6 +486,8 @@ def test_lars_cv_max_iter(recwarn):
     assert recorded_warnings == []
 
 
+# FIXME: 'normalize' to be removed in 0.26
+@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 def test_lasso_lars_ic():
     # Test the LassoLarsIC object by checking that
     # - some good features are selected.
@@ -536,6 +558,8 @@ estimator_parameter_map = {'LassoLars': {'alpha': 0.1},
                            'LassoLarsIC': {}}
 
 
+# FIXME: 'normalize' to be removed in 0.26
+@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 def test_estimatorclasses_positive_constraint():
     # testing the transmissibility for the positive option of all estimator
     # classes in this same function here
@@ -555,6 +579,8 @@ def test_estimatorclasses_positive_constraint():
         assert min(estimator.coef_) >= 0
 
 
+# FIXME: 'normalize' to be removed in 0.26
+@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 def test_lasso_lars_vs_lasso_cd_positive():
     # Test that LassoLars and Lasso using coordinate descent give the
     # same results when using the positive option
@@ -607,6 +633,8 @@ def test_lasso_lars_vs_lasso_cd_positive():
         assert error < 0.01
 
 
+# FIXME: 'normalize' to be removed in 0.26
+@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 def test_lasso_lars_vs_R_implementation():
     # Test that sklearn LassoLars implementation agrees with the LassoLars
     # implementation available in R (lars library) under the following
@@ -703,6 +731,8 @@ def test_lasso_lars_vs_R_implementation():
     ###########################################################################
 
 
+# FIXME: 'normalize' to be removed in 0.26
+@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 @pytest.mark.parametrize('copy_X', [True, False])
 def test_lasso_lars_copyX_behaviour(copy_X):
     """
@@ -719,6 +749,8 @@ def test_lasso_lars_copyX_behaviour(copy_X):
     assert copy_X == np.array_equal(X, X_copy)
 
 
+# FIXME: 'normalize' to be removed in 0.26
+@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 @pytest.mark.parametrize('copy_X', [True, False])
 def test_lasso_lars_fit_copyX_behaviour(copy_X):
     """
@@ -734,6 +766,8 @@ def test_lasso_lars_fit_copyX_behaviour(copy_X):
     assert copy_X == np.array_equal(X, X_copy)
 
 
+# FIXME: 'normalize' to be removed in 0.26
+@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 @pytest.mark.parametrize('est', (LassoLars(alpha=1e-3), Lars()))
 def test_lars_with_jitter(est):
     # Test that a small amount of jitter helps stability,
