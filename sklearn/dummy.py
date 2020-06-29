@@ -410,22 +410,37 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         * "constant": always predicts a constant value that is provided by
           the user.
 
-    constant : int or float or array-like of shape (n_outputs,)
+    constant : int or float or array-like of shape (n_outputs,), default=None
         The explicit constant as predicted by the "constant" strategy. This
         parameter is useful only for the "constant" strategy.
 
-    quantile : float in [0.0, 1.0]
+    quantile : float, default=None
         The quantile to predict using the "quantile" strategy. A quantile of
         0.5 corresponds to the median, while 0.0 to the minimum and 1.0 to the
         maximum.
 
+    interpolation : {"linear", "lower", "higher", "nearest"}, default=None
+        When `strategy="median"` or `strategy="quantile"`, this parameter is
+        the interpolation method to use when the desired median or quantile
+        lies between data points `i` and `j`:
+
+        * `"linear"`: `i + (j - i) * fraction`, where `fraction` is the
+          fractional part of the index surrounded by `i` and `j`;
+        * `"lower"`: i`;
+        * `"higher"`: `j`;
+        * `"nearest"`: `i` or `j`, whichever is nearest.
+
+        When
+
+        .. versionadded: 0.24
+
     Attributes
     ----------
-    constant_ : array, shape (1, n_outputs)
+    constant_ : array of shape (1, n_outputs)
         Mean or median or quantile of the training targets or constant value
         given by the user.
 
-    n_outputs_ : int,
+    n_outputs_ : int
         Number of outputs.
 
     Examples
@@ -443,10 +458,12 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
     0.0
     """
     @_deprecate_positional_args
-    def __init__(self, *, strategy="mean", constant=None, quantile=None):
+    def __init__(self, *, strategy="mean", constant=None, quantile=None,
+                 interpolation=None):
         self.strategy = strategy
         self.constant = constant
         self.quantile = quantile
+        self.interpolation = interpolation
 
     def fit(self, X, y, sample_weight=None):
         """Fit the random regressor.
@@ -484,30 +501,51 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X)
+            interpolation = (
+                "nearest" if self.interpolation is None else self.interpolation
+            )
+        else:
+            interpolation = (
+                "linear" if self.interpolation is None else self.interpolation
+            )
 
         if self.strategy == "mean":
             self.constant_ = np.average(y, axis=0, weights=sample_weight)
 
         elif self.strategy == "median":
             if sample_weight is None:
-                self.constant_ = np.median(y, axis=0)
+                self.constant_ = np.percentile(
+                    y, q=50.0, axis=0, interpolation=interpolation,
+                )
             else:
-                self.constant_ = [_weighted_percentile(y[:, k], sample_weight,
-                                                       percentile=50.)
-                                  for k in range(self.n_outputs_)]
+                self.constant_ = [
+                    _weighted_percentile(
+                        y[:, k], sample_weight, percentile=50.,
+                        interpolation=interpolation,
+                    )
+                    for k in range(self.n_outputs_)
+                ]
 
         elif self.strategy == "quantile":
             if self.quantile is None or not np.isscalar(self.quantile):
-                raise ValueError("Quantile must be a scalar in the range "
-                                 "[0.0, 1.0], but got %s." % self.quantile)
+                raise ValueError(
+                    f"Quantile must be a scalar in the range [0.0, 1.0], "
+                    f"but got {self.quantile}."
+                )
 
             percentile = self.quantile * 100.0
             if sample_weight is None:
-                self.constant_ = np.percentile(y, axis=0, q=percentile)
+                self.constant_ = np.percentile(
+                    y, q=percentile, axis=0, interpolation=interpolation,
+                )
             else:
-                self.constant_ = [_weighted_percentile(y[:, k], sample_weight,
-                                                       percentile=percentile)
-                                  for k in range(self.n_outputs_)]
+                self.constant_ = [
+                    _weighted_percentile(
+                        y[:, k], sample_weight, percentile=percentile,
+                        interpolation=interpolation,
+                    )
+                    for k in range(self.n_outputs_)
+                ]
 
         elif self.strategy == "constant":
             if self.constant is None:

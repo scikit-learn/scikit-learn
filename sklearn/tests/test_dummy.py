@@ -5,6 +5,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from sklearn.base import clone
+from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_almost_equal
@@ -665,11 +666,15 @@ def test_dummy_regressor_sample_weight(n_samples=10):
     assert est.constant_ == np.average(y, weights=sample_weight)
 
     est = DummyRegressor(strategy="median").fit(X, y, sample_weight)
-    assert est.constant_ == _weighted_percentile(y, sample_weight, 50.)
+    assert est.constant_ == _weighted_percentile(
+        y, sample_weight, 50., interpolation="nearest",
+    )
 
     est = DummyRegressor(strategy="quantile", quantile=.95).fit(X, y,
                                                                 sample_weight)
-    assert est.constant_ == _weighted_percentile(y, sample_weight, 95.)
+    assert est.constant_ == _weighted_percentile(
+        y, sample_weight, 95., interpolation="nearest",
+    )
 
 
 def test_dummy_regressor_on_3D_array():
@@ -764,3 +769,37 @@ def test_n_features_in_(Dummy):
     assert not hasattr(d, 'n_features_in_')
     d.fit(X, y)
     assert d.n_features_in_ is None
+
+
+@pytest.mark.parametrize(
+    "strategy, quantile", [("median", 0.5), ("quantile", 0.9)]
+)
+def test_dummy_regressor_default_legacy_behaviour(strategy, quantile):
+    # DummyRegressor will interpolate the following manner:
+    # * 'linear' if we are using np.median and np.percentile which is the case
+    #   when `sample_weight` is None.
+    # * 'nearest' if we are using `_weighted_percentile` which is the case
+    #   when `sample_weight` is not None.
+
+    rng = np.random.RandomState(seed=1)
+
+    n_samples = 100
+    X = [[0]] * n_samples
+    y = rng.rand(n_samples)
+    sample_weight = rng.rand(n_samples)
+
+    params = {"strategy": strategy, "quantile": quantile}
+    regressor = DummyRegressor(**params)
+    percentile = quantile * 100
+
+    regressor.fit(X, y)
+    assert regressor.constant_ == pytest.approx(
+        np.percentile(y, q=percentile, axis=0)
+    )
+
+    regressor.fit(X, y, sample_weight=sample_weight)
+    assert regressor.constant_ == pytest.approx(
+        _weighted_percentile(
+            y, sample_weight, percentile=percentile, interpolation="nearest",
+        )
+    )
