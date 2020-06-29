@@ -536,12 +536,25 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
     def fit(self, X, y, sample_weight=None):
 
         # all other solvers work at both float precision levels
-
         if self.normalize != "deprecate":
+            if not self.normalize:
+                warnings.warn(
+                    "AAAA1'normalize' was deprecated in version 0.24 and will be"
+                    " removed in 0.26.", FutureWarning
+                )
+            else:
+                warnings.warn(
+                    "AAAA2'normalize' was deprecated in version 0.24 and will be"
+                    " removed in 0.26. If you wish to keep an equivalent"
+                    " behaviour, use  Pipeline with a StandardScaler in a"
+                    " preprocessing stage:"
+                    "  model = make_pipeline( \n"
+                    "    StandardScaler(), \n"
+                    "    {type(self).__name__}())", FutureWarning
+                )
             _normalize = self.normalize
         else:
             _normalize = False
-        # warning message is raised elsewhere
 
 
         _dtype = [np.float64, np.float32]
@@ -772,26 +785,6 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         self : returns an instance of self.
         """
 
-        if self.normalize != "deprecate":
-            if not self.normalize:
-                warnings.warn(
-                    "'normalize' was deprecated in version 0.24 and will be"
-                    " removed in 0.26.", FutureWarning
-                )
-            else:
-                warnings.warn(
-                    "'normalize' was deprecated in version 0.24 and will be"
-                    " removed in 0.26. If you wish to keep an equivalent"
-                    " behaviour, use  Pipeline with a StandardScaler in a"
-                    " preprocessing stage:"
-                    "  model = make_pipeline( \n"
-                    "    StandardScaler(), \n"
-                    "    {type(self).__name__}())", FutureWarning
-                )
-            self._normalize = self.normalize
-        else:
-            self._normalize = False
-
         return super().fit(X, y, sample_weight=sample_weight)
 
 
@@ -958,25 +951,6 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         self : object
             Instance of the estimator.
         """
-        if self.normalize != "deprecate":
-            if not self.normalize:
-                warnings.warn(
-                    "'normalize' was deprecated in version 0.24 and will be"
-                    " removed in 0.26.", FutureWarning
-                )
-            else:
-                warnings.warn(
-                    "'normalize' was deprecated in version 0.24 and will be"
-                    " removed in 0.26. If you wish to keep an equivalent"
-                    " behaviour, use  Pipeline with a StandardScaler in a"
-                    " preprocessing stage:"
-                    "  model = make_pipeline( \n"
-                    "    StandardScaler(), \n"
-                    "    {type(self).__name__}())", FutureWarning
-                )
-            self._normalize = self.normalize
-        else:
-            self._normalize = False
 
         _accept_sparse = _get_valid_accept_sparse(sparse.issparse(X),
                                                   self.solver)
@@ -1510,24 +1484,10 @@ class _RidgeGCV(LinearModel):
         self : object
         """
         if self.normalize != "deprecate":
-            if not self.normalize:
-                warnings.warn(
-                    "'normalize' was deprecated in version 0.24 and will be"
-                    " removed in 0.26.", FutureWarning
-                )
-            else:
-                warnings.warn(
-                    "'normalize' was deprecated in version 0.24 and will be"
-                    " removed in 0.26. If you wish to keep an equivalent"
-                    " behaviour, use  Pipeline with a StandardScaler in a"
-                    " preprocessing stage:"
-                    "  model = make_pipeline( \n"
-                    "    StandardScaler(), \n"
-                    "    {type(self).__name__}())", FutureWarning
-                )
             _normalize = self.normalize
         else:
             _normalize = False
+        # warning message shown elsewhere
 
         X, y = self._validate_data(X, y, accept_sparse=['csr', 'csc', 'coo'],
                                    dtype=[np.float64],
@@ -1668,16 +1628,30 @@ class _BaseRidgeCV(LinearModel):
         the validation score.
         """
         if self.normalize != "deprecate":
-            self._normalize = self.normalize
+            if not self.normalize:
+                warnings.warn(
+                    "'normalize' was deprecated in version 0.24 and will be"
+                    " removed in 0.26.", FutureWarning
+                )
+            else:
+                warnings.warn(
+                    "'normalize' was deprecated in version 0.24 and will be"
+                    " removed in 0.26. If you wish to keep an equivalent"
+                    " behaviour, use  Pipeline with a StandardScaler in a"
+                    " preprocessing stage:"
+                    "  model = make_pipeline( \n"
+                    "    StandardScaler(), \n"
+                    "    {type(self).__name__}())", FutureWarning
+                )
+            _normalize = self.normalize
         else:
-            self._normalize = False
-        # the warning will be raised in RidgeCV
+            _normalize = False
 
         cv = self.cv
         if cv is None:
             estimator = _RidgeGCV(self.alphas,
                                   fit_intercept=self.fit_intercept,
-                                  normalize=self._normalize,
+                                  normalize=_normalize,
                                   scoring=self.scoring,
                                   gcv_mode=self.gcv_mode,
                                   store_cv_values=self.store_cv_values,
@@ -1695,7 +1669,7 @@ class _BaseRidgeCV(LinearModel):
             solver = 'sparse_cg' if sparse.issparse(X) else 'auto'
             model = RidgeClassifier if is_classifier(self) else Ridge
             gs = GridSearchCV(model(fit_intercept=self.fit_intercept,
-                                    normalize=self._normalize,
+                                    normalize=_normalize,
                                     solver=solver),
                               parameters, cv=cv, scoring=self.scoring)
             gs.fit(X, y, sample_weight=sample_weight)
@@ -1979,25 +1953,6 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
         -------
         self : object
         """
-        if self.normalize != "deprecate":
-            if not self.normalize:
-                warnings.warn(
-                    "'normalize' was deprecated in version 0.24 and will be"
-                    " removed in 0.26.", FutureWarning
-                )
-            else:
-                warnings.warn(
-                    "'normalize' was deprecated in version 0.24 and will be"
-                    " removed in 0.26. If you wish to keep an equivalent"
-                    " behaviour, use  Pipeline with a StandardScaler in a"
-                    " preprocessing stage:"
-                    "  model = make_pipeline( \n"
-                    "    StandardScaler(), \n"
-                    "    {type(self).__name__}())", FutureWarning
-                )
-            self._normalize = self.normalize
-        else:
-            self._normalize = False
 
         X, y = self._validate_data(X, y, accept_sparse=['csr', 'csc', 'coo'],
                                    multi_output=True, y_numeric=False)
