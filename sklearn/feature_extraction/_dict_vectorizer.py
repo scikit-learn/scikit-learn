@@ -36,9 +36,9 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
     a feature "f" that can take on the values "ham" and "spam" will become two
     features in the output, one signifying "f=ham", the other "f=spam".
 
-    When feature values are iterables of strings (not mappings), this
-    transformer will iterate over the values to perform the same transformation
-    to every element.
+    If a feature value is a sequence or set of strings, this transformer
+    will iterate over the values and will similarly encode each string value
+    as a binary feature.
 
     However, note that this transformer will only do a binary one-hot encoding
     when feature values are of type string. If categorical features are
@@ -98,9 +98,8 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
     array([[1., 0., 1., 0., 0., 0.],
            [0., 1., 0., 1., 0., 0.],
            [0., 0., 0., 0., 1., 1.]])
-    >>> v.inverse_transform(X) == [{'bar=2': 1.0, 'foo=1': 1.0},
-    ...                            {'baz=1': 1.0, 'foo=3': 1.0},
-    ...                            {'foo=one': 1.0, 'foo=three': 1.0}]
+    >>> v.get_feature_names() == ['bar=2', 'baz=1', 'foo=1', 'foo=3',
+    ...                           'foo=one', 'foo=three']
     True
     >>> v.transform({'foo': '1', 'unseen_feature': [3]})
     array([[0., 0., 1., 0., 0., 0.]])
