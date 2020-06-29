@@ -75,7 +75,8 @@ def permutation_importance(estimator, X, y, *, scoring=None, n_repeats=5,
         Number of times to permute a feature.
 
     n_jobs : int or None, default=None
-        The number of jobs to use for the computation.
+        Number of jobs to run in parallel. The computation is done by computing
+        permutation score for each columns and parallelized over the columns.
         `None` means 1 unless in a :obj:`joblib.parallel_backend` context.
         `-1` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.

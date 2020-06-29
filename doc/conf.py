@@ -18,6 +18,7 @@ import warnings
 import re
 from packaging.version import parse
 from pathlib import Path
+from io import StringIO
 
 # If extensions (or modules to document with autodoc) are in another
 # directory, add these directories to sys.path here. If the directory
@@ -39,7 +40,8 @@ extensions = [
     'sphinx.ext.intersphinx',
     'sphinx.ext.imgconverter',
     'sphinx_gallery.gen_gallery',
-    'sphinx_issues'
+    'sphinx_issues',
+    'custom_autosummary_new_suffix'
 ]
 
 # this is needed for some reason...
@@ -389,6 +391,49 @@ def filter_search_index(app, exception):
         f.write(searchindex_text)
 
 
+def generate_min_dependency_table(app):
+    """Generate min dependency table for docs."""
+    from sklearn._build_utils.min_dependencies import dependent_packages
+
+    # get length of header
+    package_header_len = max(len(package)
+                             for package in dependent_packages) + 4
+    version_header_len = len('Minimum Version') + 4
+    tags_header_len = max(len(tags)
+                          for _, tags in dependent_packages.values()) + 4
+
+    output = StringIO()
+    output.write(' '.join(['=' * package_header_len,
+                           '=' * version_header_len,
+                           '=' * tags_header_len]))
+    output.write('\n')
+    dependency_title = "Dependency"
+    version_title = "Minimum Version"
+    tags_title = "Purpose"
+
+    output.write(f'{dependency_title:<{package_header_len}} '
+                 f'{version_title:<{version_header_len}} '
+                 f'{tags_title}\n')
+
+    output.write(' '.join(['=' * package_header_len,
+                           '=' * version_header_len,
+                           '=' * tags_header_len]))
+    output.write('\n')
+
+    for package, (version, tags) in dependent_packages.items():
+        output.write(f'{package:<{package_header_len}} '
+                     f'{version:<{version_header_len}} '
+                     f'{tags}\n')
+
+    output.write(' '.join(['=' * package_header_len,
+                           '=' * version_header_len,
+                           '=' * tags_header_len]))
+    output.write('\n')
+    output = output.getvalue()
+
+    with (Path('.') / 'min_dependency.rst').open('w') as f:
+        f.write(output)
+
 # Config for sphinx_issues
 
 # we use the issues path for PRs since the issues URL will forward
@@ -396,6 +441,7 @@ issues_github_path = 'scikit-learn/scikit-learn'
 
 
 def setup(app):
+    app.connect('builder-inited', generate_min_dependency_table)
     # to hide/show the prompt in code examples:
     app.connect('build-finished', make_carousel_thumbs)
     app.connect('build-finished', filter_search_index)
@@ -410,3 +456,16 @@ linkcode_resolve = make_linkcode_resolve('sklearn',
 warnings.filterwarnings("ignore", category=UserWarning,
                         message='Matplotlib is currently using agg, which is a'
                                 ' non-GUI backend, so cannot show the figure.')
+
+# Used by custom extension: `custom_autosummary_new_suffix` to change the
+# suffix of the following functions. This works around the issue with
+# `sklearn.cluster.dbscan` overlapping with `sklearn.cluster.DBSCAN`  on
+# case insensitive file systems.
+custom_autosummary_names_with_new_suffix = {
+    'sklearn.cluster.dbscan',
+    'sklearn.cluster.optics',
+    'sklearn.covariance.oas',
+    'sklearn.decomposition.fastica'
+}
+custom_autosummary_new_suffix = '-lowercase.rst'
+custom_autosummary_generated_dirname = os.path.join('modules', 'generated')
