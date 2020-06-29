@@ -84,6 +84,11 @@ Changelog
   which allows monitoring of each stage.
   :pr:`16985` by :user:`Hao Chun Chang <haochunchang>`.
 
+- |Fix| Fixed bug in :class:`ensemble.MultinomialDeviance` where the
+  average of logloss was incorrectly calculated as sum of logloss.
+  :pr:`17694` by :user:`Markus Rempfler <rempfler>` and
+  :user:`Tsutomu Kusanagi <t-kusanagi2>`.
+
 :mod:`sklearn.feature_selection`
 ................................
 
@@ -92,6 +97,11 @@ Changelog
   :class:`feature_selection.SelectFromModel`, allowing the user to specify an
   attribute name/path or a `callable` for extracting feature importance from
   the estimator.  :pr:`15361` by :user:`Venkatachalam N <venkyyuvy>`
+
+- |Enhancement| Added the option for the number of n_features_to_select to be
+  given as a float representing the percentage of features to select.
+  :pr:`17090` by :user:`Lisa Schwetlick <lschwetlick>` and
+  :user:`Marija Vlajic Wheeler <marijavlajic>`.
 
 :mod:`sklearn.impute`
 .....................
@@ -132,13 +142,6 @@ Changelog
 :mod:`sklearn.metrics`
 ......................
 
-- |Feature| new metric :func:`metrics.top_k_accuracy_score`. It's a
-  generalization of :func:`metrics.top_k_accuracy_score`, the difference is
-  that a prediction is considered correct as long as the true label is
-  associated with one of the `k` highest predicted scores.
-  :func:`accuracy_score` is the special case of `k = 1`.
-  :pr:`16625` by :user:`Geoffrey Bolmier <gbolmier>`.
-
 - |Fix| Fixed a bug in :func:`metrics.mean_squared_error` where the
   average of multiple RMSE values was incorrectly calculated as the root of the
   average of multiple MSE values.
@@ -152,6 +155,17 @@ Changelog
   :func:`metrics.plot_precision_recall_curve` in order to specify the positive
   class to be used when computing the precision and recall statistics.
   :pr:`17569` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Feature| :func:`metrics.plot_confusion_matrix` now supports making colorbar
+  optional in the matplotlib plot by setting colorbar=False. :pr:`17192` by
+  :user:`Avi Gupta <avigupta2612>`
+
+- |Feature| new metric :func:`metrics.top_k_accuracy_score`. It's a
+  generalization of :func:`metrics.top_k_accuracy_score`, the difference is
+  that a prediction is considered correct as long as the true label is
+  associated with one of the `k` highest predicted scores.
+  :func:`accuracy_score` is the special case of `k = 1`.
+  :pr:`16625` by :user:`Geoffrey Bolmier <gbolmier>`.
 
 :mod:`sklearn.model_selection`
 ..............................

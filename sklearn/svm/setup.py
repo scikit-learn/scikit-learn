@@ -10,6 +10,15 @@ def configuration(parent_package='', top_path=None):
 
     config.add_subpackage('tests')
 
+    # newrand wrappers
+    config.add_extension('_newrand',
+                         sources=['_newrand.pyx'],
+                         include_dirs=[numpy.get_include(),
+                                       join('src', 'newrand')],
+                         depends=[join('src', 'newrand', 'newrand.h')],
+                         language='c++',
+                         )
+
     # Section LibSVM
 
     # we compile both libsvm and libsvm_sparse

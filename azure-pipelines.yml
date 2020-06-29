@@ -76,13 +76,6 @@ jobs:
         DISTRIB: 'conda'
         PYTHON_VERSION: '*'
         BLAS: 'mkl'
-        NUMPY_VERSION: '*'
-        SCIPY_VERSION: '*'
-        CYTHON_VERSION: '*'
-        PILLOW_VERSION: '*'
-        PYTEST_VERSION: '*'
-        JOBLIB_VERSION: '*'
-        THREADPOOLCTL_VERSION: '2.0.0'
         COVERAGE: 'true'
 
 - template: build_tools/azure/posix.yml
@@ -98,35 +91,33 @@ jobs:
       py36_ubuntu_atlas:
         DISTRIB: 'ubuntu'
         PYTHON_VERSION: '3.6'
-        JOBLIB_VERSION: '0.11'
-        PYTEST_XDIST: 'false'
-        THREADPOOLCTL_VERSION: '2.0.0'
+        JOBLIB_VERSION: 'min'
+        PANDAS_VERSION: 'none'
+        THREADPOOLCTL_VERSION: 'min'
+        PYTEST_VERSION: 'min'
+        PYTEST_XDIST_VERSION: 'none'
+        COVERAGE: 'false'
       # Linux + Python 3.6 build with OpenBLAS and without SITE_JOBLIB
       py36_conda_openblas:
         DISTRIB: 'conda'
         PYTHON_VERSION: '3.6'
         BLAS: 'openblas'
-        NUMPY_VERSION: '1.13.3'
-        SCIPY_VERSION: '0.19.1'
-        PANDAS_VERSION: '*'
-        CYTHON_VERSION: '*'
-        # temporary pin pytest due to unknown failure with pytest 5.3
-        PYTEST_VERSION: '5.2'
-        PILLOW_VERSION: '4.2.1'
-        MATPLOTLIB_VERSION: '2.1.1'
-        SCIKIT_IMAGE_VERSION: '*'
+        NUMPY_VERSION: 'min'
+        SCIPY_VERSION: 'min'
+        MATPLOTLIB_VERSION: 'min'
         # latest version of joblib available in conda for Python 3.6
         JOBLIB_VERSION: '0.13.2'
         THREADPOOLCTL_VERSION: '2.0.0'
-        PYTEST_XDIST: 'false'
-        COVERAGE: 'true'
+        # temporary pin pytest due to unknown failure with pytest 5.4 and
+        # python 3.6
+        PYTEST_VERSION: 'min'
+        PYTEST_XDIST_VERSION: 'none'
       # Linux environment to test the latest available dependencies and MKL.
       # It runs tests requiring lightgbm, pandas and PyAMG.
       pylatest_pip_openblas_pandas:
         DISTRIB: 'conda-pip-latest'
         PYTHON_VERSION: '3.8'
-        PYTEST_VERSION: '4.6.2'
-        COVERAGE: 'true'
+        PANDAS_VERSION: 'none'
         CHECK_PYTEST_SOFT_DEPENDENCY: 'true'
         TEST_DOCSTRINGS: 'true'
         CHECK_WARNINGS: 'true'
@@ -141,8 +132,12 @@ jobs:
       py36_ubuntu_atlas_32bit:
         DISTRIB: 'ubuntu-32'
         PYTHON_VERSION: '3.6'
-        JOBLIB_VERSION: '0.13'
-        THREADPOOLCTL_VERSION: '2.0.0'
+        PANDAS_VERSION: 'none'
+        JOBLIB_VERSION: 'min'
+        # temporary pin pytest due to unknown failure with pytest 5.4 and
+        # python 3.6
+        PYTEST_VERSION: 'min'
+        THREADPOOLCTL_VERSION: 'min'
 
 - template: build_tools/azure/posix.yml
   parameters:
@@ -153,28 +148,10 @@ jobs:
     matrix:
       pylatest_conda_mkl:
         DISTRIB: 'conda'
-        PYTHON_VERSION: '*'
         BLAS: 'mkl'
-        NUMPY_VERSION: '*'
-        SCIPY_VERSION: '*'
-        CYTHON_VERSION: '*'
-        PILLOW_VERSION: '*'
-        PYTEST_VERSION: '*'
-        JOBLIB_VERSION: '*'
-        THREADPOOLCTL_VERSION: '2.0.0'
-        COVERAGE: 'true'
       pylatest_conda_mkl_no_openmp:
         DISTRIB: 'conda'
-        PYTHON_VERSION: '*'
         BLAS: 'mkl'
-        NUMPY_VERSION: '*'
-        SCIPY_VERSION: '*'
-        CYTHON_VERSION: '*'
-        PILLOW_VERSION: '*'
-        PYTEST_VERSION: '*'
-        JOBLIB_VERSION: '*'
-        THREADPOOLCTL_VERSION: '2.0.0'
-        COVERAGE: 'true'
         SKLEARN_TEST_NO_OPENMP: 'true'
         SKLEARN_SKIP_OPENMP_TEST: 'true'
 
