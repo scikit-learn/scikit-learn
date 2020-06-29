@@ -22,7 +22,6 @@ from sklearn.metrics import mean_squared_error
 from sklearn.metrics import make_scorer
 from sklearn.metrics import get_scorer
 
-from sklearn.linear_model import BayesianRidge
 from sklearn.linear_model import LinearRegression
 from sklearn.linear_model import ridge_regression
 from sklearn.linear_model import Ridge
@@ -73,8 +72,7 @@ def _mean_squared_error_callable(y_test, y_pred):
 @pytest.mark.parametrize('RidgeModel', [Ridge,
                                         RidgeClassifier,
                                         RidgeCV,
-                                        RidgeClassifierCV,
-                                        BayesianRidge])
+                                        RidgeClassifierCV])
 @pytest.mark.parametrize(
     'normalize, n_warnings, warning',
     [(True, 1, FutureWarning),
@@ -433,6 +431,8 @@ def _make_sparse_offset_regression(
     return X, y
 
 
+# FIXME: 'normalize' to be removed in 0.26
+@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 @pytest.mark.parametrize(
     'solver, sparse_X',
     ((solver, sparse_X) for
@@ -468,6 +468,8 @@ def test_solver_consistency(
         ridge.intercept_, svd_ridge.intercept_, atol=1e-3, rtol=1e-3)
 
 
+# FIXME: 'normalize' to be removed in 0.26
+@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 @pytest.mark.parametrize('gcv_mode', ['svd', 'eigen'])
 @pytest.mark.parametrize('X_constructor', [np.asarray, sp.csr_matrix])
 @pytest.mark.parametrize('X_shape', [(11, 8), (11, 20)])
@@ -508,6 +510,8 @@ def test_ridge_gcv_vs_ridge_loo_cv(
     assert_allclose(gcv_ridge.intercept_, loo_ridge.intercept_, rtol=1e-3)
 
 
+# FIXME: 'normalize' to be removed in 0.26
+@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 def test_ridge_loo_cv_asym_scoring():
     # checking on asymmetric scoring
     scoring = 'explained_variance'
@@ -672,6 +676,7 @@ def _test_ridge_loo(filter_):
     return ret
 
 
+# FIXME: 'normalize' to be removed in 0.26
 def _test_ridge_cv_normalize(filter_):
     ridge_cv = RidgeCV(normalize=True, cv=3)
     ridge_cv.fit(filter_(10. * X_diabetes), y_diabetes)
@@ -817,6 +822,8 @@ def check_dense_sparse(test_func):
         assert_array_almost_equal(ret_dense, ret_sparse, decimal=3)
 
 
+# FIXME: 'normalize' to be removed in 0.26
+@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 @pytest.mark.parametrize(
         'test_func',
         (_test_ridge_loo, _test_ridge_cv, _test_ridge_cv_normalize,

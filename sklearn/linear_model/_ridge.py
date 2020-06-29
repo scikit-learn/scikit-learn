@@ -521,7 +521,7 @@ def _ridge_regression(X, y, alpha, sample_weight=None, solver='auto',
 class _BaseRidge(LinearModel, metaclass=ABCMeta):
     @abstractmethod
     @_deprecate_positional_args
-    def __init__(self, alpha=1.0, *, fit_intercept=True, normalize=False,
+    def __init__(self, alpha=1.0, *, fit_intercept=True, normalize='deprecate',
                  copy_X=True, max_iter=None, tol=1e-3, solver="auto",
                  random_state=None):
         self.alpha = alpha
@@ -539,12 +539,12 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
         if self.normalize != "deprecate":
             if not self.normalize:
                 warnings.warn(
-                    "AAAA1'normalize' was deprecated in version 0.24 and will be"
+                    "'normalize' was deprecated in version 0.24 and will be"
                     " removed in 0.26.", FutureWarning
                 )
             else:
                 warnings.warn(
-                    "AAAA2'normalize' was deprecated in version 0.24 and will be"
+                    "'normalize' was deprecated in version 0.24 and will be"
                     " removed in 0.26. If you wish to keep an equivalent"
                     " behaviour, use  Pipeline with a StandardScaler in a"
                     " preprocessing stage:"
@@ -552,9 +552,9 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
                     "    StandardScaler(), \n"
                     "    {type(self).__name__}())", FutureWarning
                 )
-            _normalize = self.normalize
+            self._normalize = self.normalize
         else:
-            _normalize = False
+            self._normalize = False
 
 
         _dtype = [np.float64, np.float32]
@@ -591,7 +591,7 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
 
         # when X is sparse we only remove offset from y
         X, y, X_offset, y_offset, X_scale = self._preprocess_data(
-            X, y, self.fit_intercept, _normalize, self.copy_X,
+            X, y, self.fit_intercept, self._normalize, self.copy_X,
             sample_weight=sample_weight, return_mean=True)
 
         if solver == 'sag' and sparse.issparse(X) and self.fit_intercept:
@@ -1148,7 +1148,7 @@ class _RidgeGCV(LinearModel):
     """
     @_deprecate_positional_args
     def __init__(self, alphas=(0.1, 1.0, 10.0), *,
-                 fit_intercept=True, normalize=False,
+                 fit_intercept=True, normalize='deprecate',
                  scoring=None, copy_X=True,
                  gcv_mode=None, store_cv_values=False,
                  is_clf=False):
@@ -1483,12 +1483,26 @@ class _RidgeGCV(LinearModel):
         -------
         self : object
         """
-        if self.normalize != "deprecate":
-            _normalize = self.normalize
-        else:
-            _normalize = False
         # warning message shown elsewhere
-
+        if self.normalize != "deprecate":
+            if not self.normalize:
+                warnings.warn(
+                    "'normalize' was deprecated in version 0.24 and will be"
+                    " removed in 0.26.", FutureWarning
+                )
+            else:
+                warnings.warn(
+                    "'normalize' was deprecated in version 0.24 and will be"
+                    " removed in 0.26. If you wish to keep an equivalent"
+                    " behaviour, use  Pipeline with a StandardScaler in a"
+                    " preprocessing stage:"
+                    "  model = make_pipeline( \n"
+                    "    StandardScaler(), \n"
+                    "    {type(self).__name__}())", FutureWarning
+                )
+            self._normalize = self.normalize
+        else:
+            self._normalize = False
         X, y = self._validate_data(X, y, accept_sparse=['csr', 'csc', 'coo'],
                                    dtype=[np.float64],
                                    multi_output=True, y_numeric=True)
@@ -1503,7 +1517,7 @@ class _RidgeGCV(LinearModel):
                 "negative or null value instead.".format(self.alphas))
 
         X, y, X_offset, y_offset, X_scale = LinearModel._preprocess_data(
-            X, y, self.fit_intercept, _normalize, self.copy_X,
+            X, y, self.fit_intercept, self._normalize, self.copy_X,
             sample_weight=sample_weight)
 
         gcv_mode = _check_gcv_mode(X, self.gcv_mode)
@@ -1588,7 +1602,7 @@ class _RidgeGCV(LinearModel):
 class _BaseRidgeCV(LinearModel):
     @_deprecate_positional_args
     def __init__(self, alphas=(0.1, 1.0, 10.0), *,
-                 fit_intercept=True, normalize=False, scoring=None,
+                 fit_intercept=True, normalize='deprecate', scoring=None,
                  cv=None, gcv_mode=None,
                  store_cv_values=False):
         self.alphas = np.asarray(alphas)
@@ -1627,31 +1641,12 @@ class _BaseRidgeCV(LinearModel):
         cross-validation takes the sample weights into account when computing
         the validation score.
         """
-        if self.normalize != "deprecate":
-            if not self.normalize:
-                warnings.warn(
-                    "'normalize' was deprecated in version 0.24 and will be"
-                    " removed in 0.26.", FutureWarning
-                )
-            else:
-                warnings.warn(
-                    "'normalize' was deprecated in version 0.24 and will be"
-                    " removed in 0.26. If you wish to keep an equivalent"
-                    " behaviour, use  Pipeline with a StandardScaler in a"
-                    " preprocessing stage:"
-                    "  model = make_pipeline( \n"
-                    "    StandardScaler(), \n"
-                    "    {type(self).__name__}())", FutureWarning
-                )
-            _normalize = self.normalize
-        else:
-            _normalize = False
 
         cv = self.cv
         if cv is None:
             estimator = _RidgeGCV(self.alphas,
                                   fit_intercept=self.fit_intercept,
-                                  normalize=_normalize,
+                                  normalize=self.normalize,
                                   scoring=self.scoring,
                                   gcv_mode=self.gcv_mode,
                                   store_cv_values=self.store_cv_values,
@@ -1669,7 +1664,7 @@ class _BaseRidgeCV(LinearModel):
             solver = 'sparse_cg' if sparse.issparse(X) else 'auto'
             model = RidgeClassifier if is_classifier(self) else Ridge
             gs = GridSearchCV(model(fit_intercept=self.fit_intercept,
-                                    normalize=_normalize,
+                                    normalize=self.normalize,
                                     solver=solver),
                               parameters, cv=cv, scoring=self.scoring)
             gs.fit(X, y, sample_weight=sample_weight)
