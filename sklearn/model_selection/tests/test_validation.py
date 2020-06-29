@@ -1725,12 +1725,11 @@ def test_score_failing():
     iris = load_iris()
     X, y = iris.data, iris.target
     clf = MockClassifier()
-    score_kwargs = {'error_score': np.nan}
 
     # the warning message we're expecting to see
     warning_message = ("Scoring failed. The score on this train-test "
                        "partition for these parameters will be set to %f. "
-                       "Details: \n" % score_kwargs['error_score'])
+                       "Details: \n" % np.nan)
 
     with pytest.warns(UserWarning, match=warning_message):
         cross_val_score(clf, X, y, scoring='accuracy')
@@ -1797,6 +1796,6 @@ def test_score():
 
     def two_params_scorer(estimator, X_test):
         return None
-    fit_and_score_args = [None, None, None, two_params_scorer]
+    fit_and_score_args = [None, None, None, two_params_scorer, np.nan]
     assert_raise_message(ValueError, error_message,
                          _score, *fit_and_score_args)

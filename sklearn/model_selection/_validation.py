@@ -500,7 +500,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
         estimator : estimator object
             The fitted estimator.
     """
-    if not (isinstance(error_score, numbers.Number) or error_score == 'raise'):
+    if not isinstance(error_score, numbers.Number) and error_score != 'raise':
         raise ValueError("error_score must be the string 'raise' or a"
                          " numeric value. (Hint: if using 'raise', please"
                          " make sure that it has been spelled correctly.)")
@@ -613,13 +613,13 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     return result
 
 
-def _score(estimator, X_test, y_test, scorer, error_score=np.nan):
+def _score(estimator, X_test, y_test, scorer, error_score):
     """Compute the score(s) of an estimator on a given test set.
 
     Will return a dict of floats if `scorer` is a dict, otherwise a single
     float is returned.
     """
-    if not (isinstance(error_score, numbers.Number) or error_score == 'raise'):
+    if not isinstance(error_score, numbers.Number) and error_score != 'raise':
         raise ValueError("error_score must be the string 'raise' or a"
                          " numeric value. (Hint: if using 'raise', please"
                          " make sure that it has been spelled correctly.)")
@@ -637,7 +637,7 @@ def _score(estimator, X_test, y_test, scorer, error_score=np.nan):
     except Exception:
         if error_score == 'raise':
             raise
-        elif isinstance(error_score, numbers.Number):
+        else:
             scores = {name: error_score for name in scorer}
             warnings.warn("Scoring failed. The score on this train-test "
                           "partition for these parameters will be set "
@@ -1311,7 +1311,8 @@ def learning_curve(estimator, X, y, *, groups=None,
         classes = np.unique(y) if is_classifier(estimator) else None
         out = parallel(delayed(_incremental_fit_estimator)(
             clone(estimator), X, y, classes, train, test, train_sizes_abs,
-            scorer, verbose, return_times) for train, test in cv_iter)
+            scorer, verbose, return_times, error_score=error_score)
+            for train, test in cv_iter)
         out = np.asarray(out).transpose((2, 1, 0))
     else:
         train_test_proportions = []
@@ -1402,7 +1403,8 @@ def _translate_train_sizes(train_sizes, n_max_training_samples):
 
 
 def _incremental_fit_estimator(estimator, X, y, classes, train, test,
-                               train_sizes, scorer, verbose, return_times):
+                               train_sizes, scorer, verbose,
+                               return_times, error_score):
     """Train estimator on training subsets incrementally and compute scores."""
     train_scores, test_scores, fit_times, score_times = [], [], [], []
     partitions = zip(train_sizes, np.split(train, train_sizes)[:-1])
@@ -1423,8 +1425,10 @@ def _incremental_fit_estimator(estimator, X, y, classes, train, test,
 
         start_score = time.time()
 
-        test_scores.append(_score(estimator, X_test, y_test, scorer))
-        train_scores.append(_score(estimator, X_train, y_train, scorer))
+        test_scores.append(_score(estimator, X_test, y_test,
+                                  scorer, error_score))
+        train_scores.append(_score(estimator, X_train, y_train,
+                                   scorer, error_score))
 
         score_time = time.time() - start_score
         score_times.append(score_time)
