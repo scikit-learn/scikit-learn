@@ -76,6 +76,15 @@ Changelog
   redundant with the `dictionary` attribute and constructor parameter.
   :pr:`17679` by :user:`Xavier Dupré <sdpython>`.
 
+:mod:`sklearn.dummy`
+....................
+
+- |Enhancement| Add a parameter `interpolation` to
+  :class:`dummy.DummyRegressor` to choose the type of interpolation with the
+  strategy `median` and `quantile`. Beware that the interpolation will always
+  be `'linear'` with and without `sample_weight` in the future.
+  :pr:`xxx` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.ensemble`
 .......................
 

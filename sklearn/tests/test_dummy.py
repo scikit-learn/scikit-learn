@@ -665,15 +665,19 @@ def test_dummy_regressor_sample_weight(n_samples=10):
     est = DummyRegressor(strategy="mean").fit(X, y, sample_weight)
     assert est.constant_ == np.average(y, weights=sample_weight)
 
-    est = DummyRegressor(strategy="median").fit(X, y, sample_weight)
+    interpolation = "linear"
+    est = DummyRegressor(strategy="median", interpolation=interpolation)
+    est.fit(X, y, sample_weight)
     assert est.constant_ == _weighted_percentile(
-        y, sample_weight, 50., interpolation="nearest",
+        y, sample_weight, 50., interpolation=interpolation,
     )
 
-    est = DummyRegressor(strategy="quantile", quantile=.95).fit(X, y,
-                                                                sample_weight)
+    est = DummyRegressor(
+        strategy="quantile", quantile=.95, interpolation=interpolation,
+    )
+    est.fit(X, y, sample_weight)
     assert est.constant_ == _weighted_percentile(
-        y, sample_weight, 95., interpolation="nearest",
+        y, sample_weight, 95., interpolation=interpolation,
     )
 
 
@@ -771,6 +775,7 @@ def test_n_features_in_(Dummy):
     assert d.n_features_in_ is None
 
 
+@pytest.mark.filterwarnings("ignore:From 0.26 and onward, interpolation will")
 @pytest.mark.parametrize(
     "strategy, quantile", [("median", 0.5), ("quantile", 0.9)]
 )
@@ -803,3 +808,29 @@ def test_dummy_regressor_default_legacy_behaviour(strategy, quantile):
             y, sample_weight, percentile=percentile, interpolation="nearest",
         )
     )
+
+
+@pytest.mark.parametrize(
+    "strategy, quantile", [("median", 0.5), ("quantile", 0.9)]
+)
+@pytest.mark.parametrize(
+    "interpolation, WarningType, expected_n_warnings",
+    [(None, FutureWarning, 1), ("linear", None, 0)]
+)
+def test_dummy_regressort_future_warning_interpolation(
+    strategy, quantile, interpolation, WarningType, expected_n_warnings,
+):
+    rng = np.random.RandomState(seed=1)
+
+    n_samples = 100
+    X = [[0]] * n_samples
+    y = rng.rand(n_samples)
+    sample_weight = rng.rand(n_samples)
+
+    regressor = DummyRegressor(
+        strategy=strategy, quantile=quantile, interpolation=interpolation,
+    )
+
+    with pytest.warns(WarningType) as record:
+        regressor.fit(X, y, sample_weight=sample_weight)
+    assert len(record) == expected_n_warnings

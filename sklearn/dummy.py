@@ -430,9 +430,14 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         * `"higher"`: `j`;
         * `"nearest"`: `i` or `j`, whichever is nearest.
 
-        When
+        By default, if `sample_weight` is `None`, `interpolation="linear"`,
+        otherwise `interpolation="nearest"`.
 
         .. versionadded: 0.24
+
+        .. versionchanged:: 0.24
+           `interpolation` will be `"linear"` whether the regressor is fitted
+           with or without `sample_weight` from 0.26.
 
     Attributes
     ----------
@@ -501,13 +506,26 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X)
-            interpolation = (
-                "nearest" if self.interpolation is None else self.interpolation
-            )
-        else:
-            interpolation = (
-                "linear" if self.interpolation is None else self.interpolation
-            )
+
+        # FIXME: change the default interpolation to "linear" in 0.26
+        if self.strategy in ("median", "quantile"):
+            if sample_weight is not None:
+                if self.interpolation is None:
+                    warnings.warn(
+                        "From 0.26 and onward, interpolation will be 'linear' "
+                        "by default when fitting with some sample weights. You"
+                        " can force `interpolation='linear'` to get the new "
+                        "behaviour and silence this warning.",
+                        FutureWarning
+                    )
+                    interpolation = "nearest"
+                else:
+                    interpolation = self.interpolation
+            else:
+                interpolation = (
+                    "linear" if self.interpolation is None
+                    else self.interpolation
+                )
 
         if self.strategy == "mean":
             self.constant_ = np.average(y, axis=0, weights=sample_weight)
