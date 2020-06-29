@@ -89,9 +89,7 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
     >>> v.transform({'foo': 4, 'unseen_feature': 3})
     array([[0., 0., 4.]])
 
-
     Example with multiple values for one categorical values:
-
 
     >>> D2 = [{'foo': '1', 'bar': '2'}, {'foo': '3', 'baz': '1'},
     ...       {'foo': ['one', 'three']}]
@@ -166,13 +164,13 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
                     v = 1
                 elif isinstance(v, Number) or (v is None):
                     feature_name = f
-                elif isinstance(v, Iterable):
-                    feature_name = None
-                    self._add_iterable_element(f, v, feature_names, vocab)
-                if isinstance(v, Mapping):
+                elif isinstance(v, Mapping):
                     raise TypeError(f'Unsupported value Type {type(v)} '
                                     f'for {f}: {v}.\n'
                                     'Mapping objects are not supported.')
+                elif isinstance(v, Iterable):
+                    feature_name = None
+                    self._add_iterable_element(f, v, feature_names, vocab)
 
                 if feature_name is not None:
                     if feature_name not in vocab:
@@ -226,15 +224,15 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
                     v = 1
                 elif isinstance(v, Number) or (v is None):
                     feature_name = f
+                elif isinstance(v, Mapping):
+                    raise TypeError(f'Unsupported value Type {type(v)} '
+                                    f'for {f}: {v}.\n'
+                                    'Mapping objects are not supported.')
                 elif isinstance(v, Iterable):
                     feature_name = None
                     self._add_iterable_element(f, v, feature_names, vocab,
                                                fitting, transforming,
                                                indices, values)
-                if isinstance(v, Mapping):
-                    raise TypeError(f'Unsupported value Type {type(v)} '
-                                    f'for {f}: {v}.\n'
-                                    'Mapping objects are not supported.')
 
                 if feature_name is not None:
                     if fitting and feature_name not in vocab:
