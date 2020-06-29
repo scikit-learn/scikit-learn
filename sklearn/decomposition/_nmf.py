@@ -804,6 +804,8 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
 
     References
     ----------
+    Lee, D. D., & Seung, H., S. (2001). Algorithms for Non-negative Matrix
+    Factorization. Adv. Neural Inform. Process. Syst.. 13.
     Fevotte, C., & Idier, J. (2011). Algorithms for nonnegative matrix
     factorization with the beta-divergence. Neural Computation, 23(9).
     """
@@ -1137,7 +1139,7 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
 def non_negative_factorization_online(X, W=None, H=None, n_components=None, *,
                                       init=None, update_H=True, solver='mu',
                                       A=None, B=None, batch_size=1024,
-                                      beta_loss='kullback-leibler', tol=1e-4,
+                                      beta_loss='itakura-saito', tol=1e-4,
                                       max_iter=200, alpha=0., l1_ratio=0.,
                                       regularization=None, random_state=None,
                                       verbose=0, shuffle=False):
@@ -1280,10 +1282,6 @@ def non_negative_factorization_online(X, W=None, H=None, n_components=None, *,
                     dtype=[np.float64, np.float32])
     check_non_negative(X, "NMF (input X)")
     beta_loss = _check_string_param(solver, regularization, beta_loss, init)
-
-    if X.min() == 0 and beta_loss <= 0:
-        # used to avoid division by zero
-        X[X == 0] = EPSILON
 
     n_samples, n_features = X.shape
     if n_components is None:
