@@ -583,7 +583,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
             for scorer_name in sorted(test_scores):
                 result_msg += f" {scorer_name}: ("
                 if return_train_score:
-                    result_msg += f"train=" f"{train_scores[scorer_name]:.3f}, "
+                    result_msg += f"train="f"{train_scores[scorer_name]:.3f}, "
                 result_msg += f"test={test_scores[scorer_name]:.3f})"
 
         # Right align the result_msg
