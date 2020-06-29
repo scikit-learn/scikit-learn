@@ -1216,7 +1216,7 @@ def test_check_sparse_pandas_sp_format(sp_format):
 
 
 def test_check_X_y_pandas_boolean_casting():
-    pd = pytest.importorskip('pandas')
+    pd = pytest.importorskip('pandas', minversion="1.0")
     df = pd.DataFrame({
         "y": pd.Series([False, True, False, True], dtype="boolean"),
         "x1": pd.Series([1, 2, 3, 4]),
@@ -1227,9 +1227,10 @@ def test_check_X_y_pandas_boolean_casting():
 
 
 def test_check_X_y_pandas_boolean_casting_na():
-    pd = pytest.importorskip('pandas')
+    pd = pytest.importorskip('pandas', minversion="1.0")
+    print(pd.__version__)
     df = pd.DataFrame({
-        "y": pd.Series([False, True, pd.NA, True], dtype="boolean"),
+        "y": pd.Series([False, True, np.nan, True], dtype="boolean"),
         "x1": pd.Series([1, 2, 3, 4]),
         "x2": pd.Series([5, 6, 7, 8])
     })
