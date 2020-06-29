@@ -13,11 +13,13 @@ from sklearn.utils._testing import ignore_warnings
 from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import TempMemmap
 from sklearn.utils.fixes import np_version, parse_version
+from sklearn.utils import check_random_state
 from sklearn.exceptions import ConvergenceWarning
 from sklearn import linear_model, datasets
 from sklearn.linear_model._least_angle import _lars_path_residues
 from sklearn.linear_model import LassoLarsIC, lars_path
 from sklearn.linear_model import Lars, LassoLars
+from sklearn.linear_model import LarsCV, LassoLarsCV
 
 # TODO: use another dataset that has multiple drops
 diabetes = datasets.load_diabetes()
@@ -25,6 +27,34 @@ X, y = diabetes.data, diabetes.target
 G = np.dot(X.T, X)
 Xy = np.dot(X.T, y)
 n_samples = y.size
+
+
+# FIXME: 'normalize' to be removed in 0.26
+@pytest.mark.parametrize('LeastAngleModel', [Lars,
+                                             LassoLars,
+                                             LarsCV,
+                                             LassoLarsCV,
+                                             LassoLarsIC])
+@pytest.mark.parametrize(
+    'normalize, n_warnings, warning',
+    [(True, 1, FutureWarning),
+     (False, 1, FutureWarning),
+     ("deprecate", 1, FutureWarning)]
+)
+def test_assure_warning_when_normalize(LeastAngleModel,
+                                       normalize, n_warnings, warning):
+    # check that we issue a FutureWarning when normalize was set
+    rng = check_random_state(0)
+    n_samples = 200
+    n_features = 2
+    X = rng.randn(n_samples, n_features)
+    X[X < 0.1] = 0.
+    y = rng.rand(n_samples)
+
+    model = LeastAngleModel(normalize=normalize)
+    with pytest.warns(warning) as record:
+        model.fit(X, y)
+    assert len(record) == n_warnings
 
 
 def test_simple():
