@@ -1650,9 +1650,9 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         return leaves
 
     # FIXME: to be removed in 0.26
+    # mypy error: Decorated property not supported
     @deprecated("Attribute n_classes_ was deprecated "  # type: ignore
-                "in version 0.24 and "
-                "will be removed in 0.26. Use 'classes_' instead")
+                "in version 0.24 and will be removed in 0.26.")
     @property
     def n_classes_(self):
         return 1
