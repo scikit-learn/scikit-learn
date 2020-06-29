@@ -1793,12 +1793,10 @@ def test_fit_and_score_verbosity(capsys, train_score, scorer, verbose,
 
 
 def test_score():
-    score_kwargs = {'error_score': 'raise'}
     error_message = "scoring must return a number, got None"
 
     def two_params_scorer(estimator, X_test):
         return None
-    fit_and_score_args = [None, None, None, two_params_scorer,
-                          score_kwargs['error_score']]
+    fit_and_score_args = [None, None, None, two_params_scorer]
     assert_raise_message(ValueError, error_message,
                          _score, *fit_and_score_args)

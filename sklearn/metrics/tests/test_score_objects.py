@@ -459,6 +459,7 @@ def test_supervised_cluster_scorers():
         assert_almost_equal(score1, score2)
 
 
+@ignore_warnings
 def test_raises_on_score_list():
     # Test that when a list of scores is returned, we raise proper errors.
     X, y = make_blobs(random_state=0)
@@ -466,7 +467,6 @@ def test_raises_on_score_list():
     clf = DecisionTreeClassifier()
     with pytest.raises(ValueError):
         cross_val_score(clf, X, y, scoring=f1_scorer_no_average)
-
     grid_search = GridSearchCV(clf, scoring=f1_scorer_no_average,
                                param_grid={'max_depth': [1, 2]})
     with pytest.raises(ValueError):

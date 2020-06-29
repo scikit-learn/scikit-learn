@@ -662,8 +662,7 @@ def _score(estimator, X_test, y_test, scorer, error_score=np.nan):
                 # e.g. unwrap memmapped scalars
                 scores = scores.item()
         if not isinstance(scores, numbers.Number):
-                raise ValueError(error_msg % (scores, type(scores),
-                                 multi_scorer))
+            raise ValueError(error_msg % (scores, type(scores), multi_scorer))
     return scores
 
 
