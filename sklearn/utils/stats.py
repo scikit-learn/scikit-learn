@@ -32,11 +32,10 @@ def _weighted_percentile(array, sample_weight, percentile=50,
         The interpolation method to use when the percentile lies between
         data points `i` and `j`:
 
-        * `"linear"`: `i + (j - i) * fraction`, where `fraction` is the
-          fractional part of the index surrounded by `i` and `j`;
-        * `"lower"`: i`;
-        * `"higher"`: `j`;
-        * `"nearest"`: `i` or `j`, whichever is nearest (default).
+        * "linear": linearly interpolate between `i` and `j` using `np.interp`.
+        * "lower": i`;
+        * "higher": `j`;
+        * "nearest": `i` or `j`, whichever is nearest (default).
 
         .. versionadded: 0.24
 
