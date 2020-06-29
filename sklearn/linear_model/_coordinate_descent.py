@@ -1827,6 +1827,9 @@ class MultiTaskElasticNet(Lasso):
     dual_gap_ : float
         The dual gaps at the end of the optimization.
 
+    eps_ : float
+        The tolerance scaled scaled by the variance of the target `y`.
+
     Examples
     --------
     >>> from sklearn import linear_model
@@ -2018,6 +2021,9 @@ class MultiTaskLasso(MultiTaskElasticNet):
 
     dual_gap_ : ndarray of shape (n_alphas,)
         The dual gaps at the end of the optimization for each alpha.
+
+    eps_ : float
+        The tolerance scaled scaled by the variance of the target `y`.
 
     Examples
     --------
