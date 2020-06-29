@@ -1977,7 +1977,7 @@ def classification_report(y_true, y_pred, *, labels=None, target_names=None,
         report_dict = {label[0]: label[1:] for label in rows}
         for label, scores in report_dict.items():
             report_dict[label] = dict(zip(headers,
-                                          [i.item() for i in scores]))
+                                          [float(i) for i in scores]))
     else:
         longest_last_line_heading = 'weighted avg'
         name_width = max(len(cn) for cn in target_names)
