@@ -1841,8 +1841,8 @@ class MiniBatchNMF(TransformerMixin, BaseEstimator):
 
         self.n_components_ = H.shape[0]
         self.components_ = H
-        self._components_numerator_ = A
-        self._components_denominator_ = B
+        self._components_numerator = A
+        self._components_denominator = B
         self.n_iter_ = n_iter_
 
         return W
@@ -1866,12 +1866,12 @@ class MiniBatchNMF(TransformerMixin, BaseEstimator):
 
     def partial_fit(self, X, y=None, **params):
         if hasattr(self, 'components_'):
-            W = np.maximum(1e-6, X.sum(axis=1).A)
-            # W = np.maximum(1e-6, np.dot(X, np.transpose(self.components_)))
+            # W = np.maximum(1e-6, X.sum(axis=1).A)
+            W = np.maximum(1e-6, np.dot(X, self._components_numerator))
             W /= W.sum(axis=1, keepdims=True)
             W, H, A, B, n_iter_ = non_negative_factorization_online(
                 X=X, W=W, H=self.components_,
-                A=self._components_numerator_, B=self._components_denominator_,
+                A=self._components_numerator, B=self._components_denominator,
                 n_components=self.n_components,
                 batch_size=self.batch_size, init='custom',
                 update_H=True, solver=self.solver, beta_loss=self.beta_loss,
@@ -1887,8 +1887,8 @@ class MiniBatchNMF(TransformerMixin, BaseEstimator):
 
             self.n_components_ = H.shape[0]
             self.components_ = H
-            self._components_numerator_ = A
-            self._components_denominator_ = B
+            self._components_numerator = A
+            self._components_denominator = B
             self.n_iter_ = n_iter_
 
         else:
