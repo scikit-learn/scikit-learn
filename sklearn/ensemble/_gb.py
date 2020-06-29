@@ -1650,8 +1650,8 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         return leaves
 
     # FIXME: to be removed in 0.26
-    @deprecated("Attribute n_classes_ was deprecated "
-                "in version 0.24 and "  # type: ignore
+    @deprecated("Attribute n_classes_ was deprecated "  # type: ignore
+                "in version 0.24 and "
                 "will be removed in 0.26. Use 'classes_' instead")
     @property
     def n_classes_(self):
