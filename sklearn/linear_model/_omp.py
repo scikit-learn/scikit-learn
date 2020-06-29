@@ -650,17 +650,32 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
         self : object
             returns an instance of self.
         """
-        if self.normalize != "deprecate":
-            warnings.warn("'normalize' was deprecated in version 0.24 and will"
-                          " be removed in 0.26.", FutureWarning)
+        if self.normalize == 'deprecate':
+            _normalize = True
         else:
-            self.normalize = True
+            _normalize = self.normalize
+
+        if not _normalize:
+            warnings.warn(
+                "'normalize' was deprecated in version 0.24 and will be"
+                " removed in 0.26.", FutureWarning
+            )
+        else:
+            warnings.warn(
+                "'normalize' was deprecated in version 0.24 and will be"
+                " removed in 0.26. If you wish to keep an equivalent"
+                " behaviour, use  Pipeline with a StandardScaler in a"
+                " preprocessing stage:"
+                "  model = make_pipeline( \n"
+                "    StandardScaler(), \n"
+                "    {type(self).__name__}())", FutureWarning
+            )
 
         X, y = self._validate_data(X, y, multi_output=True, y_numeric=True)
         n_features = X.shape[1]
 
         X, y, X_offset, y_offset, X_scale, Gram, Xy = \
-            _pre_fit(X, y, None, self.precompute, self.normalize,
+            _pre_fit(X, y, None, self.precompute, _normalize,
                      self.fit_intercept, copy=True)
 
         if y.ndim == 1:
@@ -904,11 +919,26 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
             returns an instance of self.
         """
 
-        if self.normalize != "deprecate":
-            warnings.warn("'normalize' was deprecated in version 0.24 and will"
-                          " be removed in 0.26.", FutureWarning)
+        if self.normalize == 'deprecate':
+            _normalize = True
         else:
-            self.normalize = True
+            _normalize = self.normalize
+
+        if not _normalize:
+            warnings.warn(
+                "'normalize' was deprecated in version 0.24 and will be"
+                " removed in 0.26.", FutureWarning
+            )
+        else:
+            warnings.warn(
+                "'normalize' was deprecated in version 0.24 and will be"
+                " removed in 0.26. If you wish to keep an equivalent"
+                " behaviour, use  Pipeline with a StandardScaler in a"
+                " preprocessing stage:"
+                "  model = make_pipeline( \n"
+                "    StandardScaler(), \n"
+                "    {type(self).__name__}())", FutureWarning
+            )
 
         X, y = self._validate_data(X, y, y_numeric=True, ensure_min_features=2,
                                    estimator=self)
@@ -920,7 +950,7 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
         cv_paths = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
             delayed(_omp_path_residues)(
                 X[train], y[train], X[test], y[test], self.copy,
-                self.fit_intercept, self.normalize, max_iter)
+                self.fit_intercept, _normalize, max_iter)
             for train, test in cv.split(X))
 
         min_early_stop = min(fold.shape[0] for fold in cv_paths)
@@ -930,7 +960,7 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
         self.n_nonzero_coefs_ = best_n_nonzero_coefs
         omp = OrthogonalMatchingPursuit(n_nonzero_coefs=best_n_nonzero_coefs,
                                         fit_intercept=self.fit_intercept,
-                                        normalize=self.normalize)
+                                        normalize=_normalize)
         omp.fit(X, y)
         self.coef_ = omp.coef_
         self.intercept_ = omp.intercept_
