@@ -35,6 +35,8 @@ coding for categorical (aka nominal, discrete) features. Categorical
 features are "attribute-value" pairs where the value is restricted
 to a list of discrete of possibilities without ordering (e.g. topic
 identifiers, types of objects, tags, names...).
+It accepts multiple string values for one categorical feature, like, e.g.,
+multiple categories for a movie or multiple labels for a github pull request.
 
 In the following, "city" is a categorical attribute while "temperature"
 is a traditional numerical feature::

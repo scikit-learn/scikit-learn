@@ -151,6 +151,10 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
         X : Mapping or iterable over Mappings
             Dict(s) or Mapping(s) from feature names (arbitrary Python
             objects) to feature values (strings or convertible to dtype).
+
+            .. versionchanged 0.24
+               Accepts multiple string values for one categorical feature.
+
         y : (ignored)
 
         Returns
@@ -288,6 +292,10 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
         X : Mapping or iterable over Mappings
             Dict(s) or Mapping(s) from feature names (arbitrary Python
             objects) to feature values (strings or convertible to dtype).
+
+            .. versionchanged 0.24
+               Accepts multiple string values for one categorical feature.
+
         y : (ignored)
 
         Returns
