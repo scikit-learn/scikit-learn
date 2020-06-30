@@ -13,6 +13,20 @@ def _squeeze_arr(arr, n_dim):
 def _nearest_rank(
     array, sorted_idx, percentile, cum_weights, n_rows, n_cols, n_dim,
 ):
+    """Compute weighted percentile using the nearest-rank approach.
+
+    Percentile can be computed using the nearest-rank:
+    https://en.wikipedia.org/wiki/Percentile
+
+    n = ceil(P / 100 * N)
+
+    where n is the index of the percentile value of the percentile P and N is
+    the number of samples.
+
+    This definition can be adapted with weights:
+
+    n_w = ceil(P / 100 * S_w) where S_w is the sum of the weights.
+    """
     adjusted_percentile = percentile * cum_weights[-1]
     percentile_idx = np.array([
         np.searchsorted(cum_weights[:, i], adjusted_percentile[i])
@@ -35,16 +49,27 @@ def _interpolation_closest_ranks(
     array, sorted_idx, sample_weight, sorted_weights, percentile, cum_weights,
     interpolation, n_rows, n_cols, n_dim,
 ):
-    # Percentile can be computed with 3 different alternatives:
-    # https://en.wikipedia.org/wiki/Percentile
-    # These 3 alternatives depend of the value of a parameter C. NumPy uses
-    # the variant where C=0 which allows to obtain a strictly monotonically
-    # increasing function which is defined as:
-    # P = (x - 1) / (N - 1); x in [1, N]
-    # Weighted percentile change this formula by taking into account the
-    # weights instead of the data frequency.
-    # P_w = (x - w) / (S_w - w), x in [1, N], w being the weight and S_w being
-    # the sum of the weights.
+    """Compute the weighted percentile by interpolating between the adjacent
+    ranks.
+    Percentile can be computed with 3 different alternatives when using the
+    interpolation between adjacent ranks:
+    https://en.wikipedia.org/wiki/Percentile
+
+    These 3 alternatives depend of the value of a parameter C. NumPy uses
+    the variant where C=0 which allows to obtain a strictly monotonically
+    increasing function which is defined as:
+
+    P = (x - 1) / (N - 1),
+
+    where x in [1, N]
+
+    Weighted percentile change this formula by taking into account the
+    weights instead of the data frequency.
+
+    P_w = (x - w) / (S_w - w),
+
+    where x in [1, N], w being the weight and S_w being the sum of the weights.
+    """
 
     adjusted_percentile = (cum_weights - sorted_weights)
     with np.errstate(invalid="ignore"):
@@ -116,9 +141,10 @@ def _interpolation_closest_ranks(
     return percentile_value
 
 
-def _weighted_percentile(array, sample_weight, percentile=50,
-                         interpolation=None):
-    """Compute weighted percentile
+def _weighted_percentile(
+    array, sample_weight, percentile=50, interpolation=None,
+):
+    """Compute weighted percentile.
 
     Computes lower weighted percentile. If `array` is a 2D array, the
     `percentile` is computed along the axis 0.
@@ -143,11 +169,11 @@ def _weighted_percentile(array, sample_weight, percentile=50,
         data points `i` and `j`:
 
         * None: no interpolation will be done and the "nearest-rank" method
-          will be used.
+          will be used (default).
         * "linear": linearly interpolate between `i` and `j` using `np.interp`.
         * "lower": i`;
         * "higher": `j`;
-        * "nearest": `i` or `j`, whichever is nearest (default).
+        * "nearest": `i` or `j`, whichever is nearest.
 
         .. versionadded: 0.24
 
