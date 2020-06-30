@@ -85,6 +85,9 @@ def test_assure_warning_when_normalize(CoordinateDescentModel,
     X[X < 0.1] = 0.
     y = rng.rand(n_samples)
 
+    if 'MultiTask' in CoordinateDescentModel.__name__:
+        y = np.stack((y, y), axis=1)
+
     model = CoordinateDescentModel(normalize=normalize)
     with pytest.warns(warning) as record:
         model.fit(X, y)

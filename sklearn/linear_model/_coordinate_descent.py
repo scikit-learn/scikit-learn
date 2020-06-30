@@ -751,12 +751,12 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         if self.normalize != "deprecate":
             if not self.normalize:
                 warnings.warn(
-                    "'CCCnormalize' was deprecated in version 0.24 and will be"
+                    "'normalize' was deprecated in version 0.24 and will be"
                     " removed in 0.26.", FutureWarning
                 )
             else:
                 warnings.warn(
-                    "'CCCnormalize' was deprecated in version 0.24 and will be"
+                    "'normalize' was deprecated in version 0.24 and will be"
                     " removed in 0.26. If you wish to keep an equivalent"
                     " behaviour, use  Pipeline with a StandardScaler in a"
                     " preprocessing stage:"
@@ -764,9 +764,9 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
                     "    StandardScaler(), \n"
                     "    {type(self).__name__}())", FutureWarning
                 )
-            self._normalize = self.normalize
+            _normalize = self.normalize
         else:
-            self._normalize = False
+            _normalize = False
 
         if self.alpha == 0:
             warnings.warn("With alpha=0, this algorithm does not converge "
@@ -822,7 +822,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         # ensures that the returned X and y are still F-contiguous.
         should_copy = self.copy_X and not X_copied
         X, y, X_offset, y_offset, X_scale, precompute, Xy = \
-            _pre_fit(X, y, None, self.precompute, self._normalize,
+            _pre_fit(X, y, None, self.precompute, _normalize,
                      self.fit_intercept, copy=should_copy,
                      check_input=check_input, sample_weight=sample_weight)
         # coordinate descent needs F-ordered arrays and _pre_fit might have
@@ -1930,16 +1930,15 @@ class MultiTaskElasticNet(Lasso):
         initial data in memory directly using that format.
         """
         # FIXME: 'normalize' to be removed in 0.26
-        # warning raised elsewhere
         if self.normalize != "deprecate":
             if not self.normalize:
                 warnings.warn(
-                    "'CCCnormalize' was deprecated in version 0.24 and will be"
+                    "'normalize' was deprecated in version 0.24 and will be"
                     " removed in 0.26.", FutureWarning
                 )
             else:
                 warnings.warn(
-                    "'CCCnormalize' was deprecated in version 0.24 and will be"
+                    "'normalize' was deprecated in version 0.24 and will be"
                     " removed in 0.26. If you wish to keep an equivalent"
                     " behaviour, use  Pipeline with a StandardScaler in a"
                     " preprocessing stage:"
