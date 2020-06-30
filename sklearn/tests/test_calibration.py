@@ -16,9 +16,10 @@ from sklearn.datasets import make_classification, make_blobs
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.svm import LinearSVC
+from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline
 from sklearn.impute import SimpleImputer
-from sklearn.metrics import brier_score_loss, log_loss
+from sklearn.metrics import brier_score_loss, log_loss, roc_auc_score
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.calibration import _sigmoid_calibration, _SigmoidCalibration
 from sklearn.calibration import calibration_curve
@@ -341,3 +342,28 @@ def test_calibration_accepts_ndarray(X):
     calibrated_clf = CalibratedClassifierCV(MockTensorClassifier())
     # we should be able to fit this classifier with no error
     calibrated_clf.fit(X, y)
+
+
+def test_isotonic_calibration_strict():
+    """
+    Test that enforcing strict monotonicity for isotonic calibration
+    preserves rank-based metrics to handle issue
+    https://github.com/scikit-learn/scikit-learn/issues/16321
+    """
+
+    n_samples = 100
+    X, y = make_classification(n_samples=2 * n_samples, n_features=6,
+                               random_state=42)
+    X_train, y_train = X[:n_samples], y[:n_samples]
+    X_test, y_test = X[n_samples:], y[n_samples:]
+    clf = LogisticRegression(C=1.)
+    clf.fit(X_train, y_train)
+    y_pred = clf.predict_proba(X_test)
+    roc_pred = roc_auc_score(y_test, y_pred[:, 1])
+
+    calibrated_clf_strict = CalibratedClassifierCV(clf, method='isotonic',
+                                                   cv='prefit', strict=True)
+    calibrated_clf_strict.fit(X_train, y_train)
+    y_pred_calib = calibrated_clf_strict.predict_proba(X_test)
+    roc_calib_strict = roc_auc_score(y_test, y_pred_calib[:, 1])
+    assert_almost_equal(roc_pred, roc_calib_strict)

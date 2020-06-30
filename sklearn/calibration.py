@@ -87,6 +87,11 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
         .. versionchanged:: 0.22
             ``cv`` default value if None changed from 3-fold to 5-fold.
 
+    strict : str, default=True
+        For the isotonic method, if set to True, this impose strict
+        monotonicity constraints in order to preserve rank-based metrics
+        after calibration.
+
     Attributes
     ----------
     classes_ : array, shape (n_classes)
@@ -152,10 +157,12 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
            A. Niculescu-Mizil & R. Caruana, ICML 2005
     """
     @_deprecate_positional_args
-    def __init__(self, base_estimator=None, *, method='sigmoid', cv=None):
+    def __init__(self, base_estimator=None, *, method='sigmoid',
+                 cv=None, strict=False):
         self.base_estimator = base_estimator
         self.method = method
         self.cv = cv
+        self.strict = strict
 
     def fit(self, X, y, sample_weight=None):
         """Fit the calibrated model
@@ -203,7 +210,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
 
         if self.cv == "prefit":
             calibrated_classifier = _CalibratedClassifier(
-                base_estimator, method=self.method)
+                base_estimator, method=self.method, strict=self.strict)
             calibrated_classifier.fit(X, y, sample_weight)
             self.calibrated_classifiers_.append(calibrated_classifier)
         else:
@@ -230,7 +237,8 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
                     this_estimator.fit(X[train], y[train])
 
                 calibrated_classifier = _CalibratedClassifier(
-                    this_estimator, method=self.method, classes=self.classes_)
+                    this_estimator, method=self.method, classes=self.classes_,
+                    strict=self.strict)
                 sw = None if sample_weight is None else sample_weight[test]
                 calibrated_classifier.fit(X[test], y[test], sample_weight=sw)
                 self.calibrated_classifiers_.append(calibrated_classifier)
@@ -319,6 +327,11 @@ class _CalibratedClassifier:
             if None, then classes is extracted from the given target values
             in fit().
 
+    strict : str, default=True
+        For the isotonic method, if set to True, this impose strict
+        monotonicity constraints in order to preserve rank-based metrics
+        after calibration.
+
     See also
     --------
     CalibratedClassifierCV
@@ -338,10 +351,12 @@ class _CalibratedClassifier:
            A. Niculescu-Mizil & R. Caruana, ICML 2005
     """
     @_deprecate_positional_args
-    def __init__(self, base_estimator, *, method='sigmoid', classes=None):
+    def __init__(self, base_estimator, *, method='sigmoid', classes=None,
+                 strict=False):
         self.base_estimator = base_estimator
         self.method = method
         self.classes = classes
+        self.strict = strict
 
     def _preproc(self, X):
         n_classes = len(self.classes_)
@@ -396,7 +411,8 @@ class _CalibratedClassifier:
 
         for k, this_df in zip(idx_pos_class, df.T):
             if self.method == 'isotonic':
-                calibrator = IsotonicRegression(out_of_bounds='clip')
+                calibrator = IsotonicRegression(out_of_bounds='clip',
+                                                strict=self.strict)
             elif self.method == 'sigmoid':
                 calibrator = _SigmoidCalibration()
             else:

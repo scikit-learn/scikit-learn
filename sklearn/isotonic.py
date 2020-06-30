@@ -160,6 +160,9 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         set to the value corresponding to the nearest train interval endpoint.
         When set to "raise" a `ValueError` is raised.
 
+    strict : str, default=False
+        Determines whether to make monotonicity constraints strict.
+
 
     Attributes
     ----------
@@ -217,11 +220,12 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
     """
     @_deprecate_positional_args
     def __init__(self, *, y_min=None, y_max=None, increasing=True,
-                 out_of_bounds='nan'):
+                 out_of_bounds='nan', strict=False):
         self.y_min = y_min
         self.y_max = y_max
         self.increasing = increasing
         self.out_of_bounds = out_of_bounds
+        self.strict = strict
 
     def _check_fit_data(self, X, y, sample_weight=None):
         if len(X.shape) != 1:
@@ -241,8 +245,13 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
             # single y, constant prediction
             self.f_ = lambda x: y.repeat(x.shape)
         else:
-            self.f_ = interpolate.interp1d(X, y, kind='linear',
-                                           bounds_error=bounds_error)
+            if self.strict:
+                self.f_ = interpolate.interp1d(X, y, kind='linear',
+                                               bounds_error=bounds_error,
+                                               fill_value='extrapolate')
+            else:
+                self.f_ = interpolate.interp1d(X, y, kind='linear',
+                                               bounds_error=bounds_error)
 
     def _build_y(self, X, y, sample_weight, trim_duplicates=True):
         """Build the y_ IsotonicRegression."""
@@ -272,6 +281,11 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
 
         # Handle the left and right bounds on X
         self.X_min_, self.X_max_ = np.min(X), np.max(X)
+
+        if self.strict:
+            keep_data = np.ones((len(y),), dtype=bool)
+            keep_data[1:] = np.not_equal(y[1:], y[:-1])
+            return X[keep_data], y[keep_data]
 
         if trim_duplicates:
             # Remove unnecessary points for faster prediction
