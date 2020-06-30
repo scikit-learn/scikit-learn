@@ -25,7 +25,7 @@ from ._base import SelectorMixin
 from ._base import _get_feature_importances
 
 
-def _rfe_single_fit(rfe, estimator, X, y, train, test, scorer, error_score):
+def _rfe_single_fit(rfe, estimator, X, y, train, test, scorer):
     """
     Return the score for a fit across one fold.
     """
@@ -34,7 +34,7 @@ def _rfe_single_fit(rfe, estimator, X, y, train, test, scorer, error_score):
     return rfe._fit(
         X_train, y_train, lambda estimator, features:
         _score(estimator, X_test[:, features], y_test,
-               scorer, error_score)).scores_
+               scorer, error_score='raise')).scores_
 
 
 class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
@@ -526,7 +526,7 @@ class RFECV(RFE):
         self.n_jobs = n_jobs
         self.min_features_to_select = min_features_to_select
 
-    def fit(self, X, y, groups=None, error_score=np.nan):
+    def fit(self, X, y, groups=None):
         """Fit the RFE model and automatically tune the number of selected
            features.
 
@@ -544,11 +544,6 @@ class RFECV(RFE):
             Group labels for the samples used while splitting the dataset into
             train/test set. Only used in conjunction with a "Group" :term:`cv`
             instance (e.g., :class:`~sklearn.model_selection.GroupKFold`).
-
-        error_score : 'raise' or numeric, default=np.nan
-            Value to assign to the score if an error occurs in scoring
-            fitting. If set to 'raise', the error is raised.
-            If a numeric value is given, UserWarning is raised.
 
             .. versionadded:: 0.20
         """
@@ -597,7 +592,7 @@ class RFECV(RFE):
             func = delayed(_rfe_single_fit)
 
         scores = parallel(
-            func(rfe, self.estimator, X, y, train, test, scorer, error_score)
+            func(rfe, self.estimator, X, y, train, test, scorer)
             for train, test in cv.split(X, y, groups))
 
         scores = np.sum(scores, axis=0)

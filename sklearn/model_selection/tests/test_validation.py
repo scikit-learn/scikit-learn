@@ -331,12 +331,10 @@ def test_cross_validate_invalid_scoring_param():
     multiclass_scorer = make_scorer(precision_recall_fscore_support)
 
     # Multiclass Scorers that return multiple values are not supported yet
-    score_kwargs = {'error_score': np.nan}
-
     # the warning message we're expecting to see
     warning_message = ("Scoring failed. The score on this train-test "
                        "partition for these parameters will be set to %f. "
-                       "Details: \n" % score_kwargs['error_score'])
+                       "Details: \n" % np.nan)
 
     with pytest.warns(UserWarning, match=warning_message):
         cross_validate(estimator, X, y, scoring=multiclass_scorer)
