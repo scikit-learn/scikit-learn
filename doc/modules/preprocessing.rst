@@ -640,10 +640,10 @@ encoding for `'cat'` is pulled toward the overall mean of `53` when compared to
     >>> y = np.array([0, 30, 60] + [60, 62] * 25)
     >>> enc = TargetRegressorEncoder().fit(X, y)
     >>> enc.transform([['cat'], ['dog']])
-    array([[46...],
-           [54...]])
+    array([[50...],
+           [60...]])
     >>> enc.encoding_mean_
-    53...
+    59...
 
 .. topic:: Examples:
 

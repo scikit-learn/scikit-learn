@@ -59,9 +59,7 @@ def _unique_python(values, *, return_inverse, return_counts):
         ret += (inverse, )
 
     if return_counts:
-        uniques_dict = Counter(values)
-        counts = np.array([uniques_dict[item] for item in uniques],
-                          dtype=int)
+        counts = _get_counts(values, uniques)
         ret += (counts, )
 
     if len(ret) == 1:
@@ -162,3 +160,25 @@ def _check_unknown(values, known_values, return_mask=False):
             return diff, valid_mask
         else:
             return diff
+
+
+def _get_counts(values, uniques):
+    """Get the count of each of the `uniques` in `values`. The counts will use
+    the order passed in by `uniques`.
+
+    For non-object dtypes, `uniques` is assumed to be sorted.
+    """
+    if values.dtype == object:
+        counter = Counter(values)
+        counts = np.array([counter[item] for item in uniques],
+                          dtype=int)
+        return counts
+
+    unique_values, counts = np.unique(values, return_counts=True)
+    uniques_in_values = np.isin(uniques, unique_values, assume_unique=True)
+    unique_valid_indices = np.searchsorted(unique_values,
+                                           uniques[uniques_in_values])
+
+    output = np.zeros_like(uniques)
+    output[uniques_in_values] = counts[unique_valid_indices]
+    return output
