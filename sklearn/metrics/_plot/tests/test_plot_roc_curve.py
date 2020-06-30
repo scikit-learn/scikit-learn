@@ -214,7 +214,7 @@ def test_plot_roc_curve_pos_label(pyplot, response_method):
         response_method=response_method
     )
 
-    roc_auc_limit = 0.9567901234567902
+    roc_auc_limit = 0.95679
 
     assert disp.roc_auc == pytest.approx(roc_auc_limit)
     assert np.trapz(disp.tpr, disp.fpr) == pytest.approx(roc_auc_limit)
