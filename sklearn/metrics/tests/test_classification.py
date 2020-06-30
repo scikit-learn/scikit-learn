@@ -155,7 +155,18 @@ def test_classification_report_dictionary_output():
 
 def test_classification_report_output_dict_empty_input():
     report = classification_report(y_true=[], y_pred=[], output_dict=True)
+    expected_report = {'accuracy': 0.0,
+                       'macro avg': {'f1-score': np.nan,
+                                     'precision': np.nan,
+                                     'recall': np.nan,
+                                     'support': 0.0},
+                       'weighted avg': {'f1-score': 0.0,
+                                        'precision': 0.0,
+                                        'recall': 0.0,
+                                        'support': 0.0}
+                      }
     assert isinstance(report, dict)
+    assert report == expected_report
 
 
 @pytest.mark.parametrize('zero_division', ["warn", 0, 1])
