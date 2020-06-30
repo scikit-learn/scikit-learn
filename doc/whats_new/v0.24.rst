@@ -147,7 +147,7 @@ Changelog
   ``normalize`` parameter did not take any effect if ``fit_intercept`` was set
   to False and therefore was deemed confusing.
   :class:`linear_model.LinearRegression`
-  :pr:`17743` by :user:`Maria Telenczuk <maikia>` and "user"`Guillaume Lemaitre
+  :pr:`17743` by :user:`Maria Telenczuk <maikia>` and :user:`Guillaume Lemaitre
   <glemaitre>` and :user:`Alexandre Gramfort <agramfort>`.
 
 :mod:`sklearn.metrics`
