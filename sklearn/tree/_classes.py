@@ -783,10 +783,10 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
     reduce memory consumption, the complexity and size of the trees should be
     controlled by setting those parameter values.
 
-    The :meth:`predict()` function operates using the :func:`numpy.argmax()`
-    function on the outputs of :meth:`predict_proba()`. This means that in case
-    of a tied, highest predicted probability, the classifier will predict the
-    tied class with the lowest index.
+    The :meth:`predict` method operates using the :func:`numpy.argmax`
+    function on the outputs of :meth:`predict_proba`. This means that in
+    case of a tied, highest predicted probability, the classifier will predict
+    the tied class with the lowest index.
 
     References
     ----------
