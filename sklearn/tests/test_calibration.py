@@ -400,7 +400,8 @@ def test_isotonic_calibration_strict():
     y_pred_calib = calibrated_clf_strict.predict_proba(X_test)
     roc_calib_strict = roc_auc_score(y_test, y_pred_calib[:, 1])
     assert_almost_equal(roc_pred, roc_calib_strict)
-=======
+
+
 @pytest.fixture
 def text_data():
     text_data = [
