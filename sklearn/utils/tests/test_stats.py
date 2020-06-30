@@ -17,7 +17,9 @@ def test_weighted_percentile(interpolation, expected_median):
     y[50] = 1
     sw = np.ones(102, dtype=np.float64)
     sw[-1] = 0.0
-    score = _weighted_percentile(y, sw, 50, interpolation=interpolation)
+    score = _weighted_percentile(
+        y, sw, percentile=50, interpolation=interpolation,
+    )
     assert score == pytest.approx(expected_median)
 
 
@@ -28,7 +30,9 @@ def test_weighted_percentile_constant_data(interpolation):
     y = np.zeros(102, dtype=np.float64)
     sw = np.ones(102, dtype=np.float64)
     sw[-1] = 0.0
-    score = _weighted_percentile(y, sw, 50, interpolation=interpolation)
+    score = _weighted_percentile(
+        y, sw, percentile=50, interpolation=interpolation
+    )
     assert score == 0
 
 
@@ -59,7 +63,7 @@ def test_weighted_median_integer_weights():
 
 
 @pytest.mark.parametrize(
-    "interpolation", ["linear", "lower", "higher", "nearest"]
+    "interpolation", [None, "linear", "lower", "higher", "nearest"]
 )
 def test_weighted_percentile_2d(interpolation):
     # Check for when array 2D and sample_weight 1D

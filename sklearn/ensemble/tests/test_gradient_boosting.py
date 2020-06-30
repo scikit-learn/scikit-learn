@@ -229,6 +229,7 @@ def check_regression_dataset(loss, subsample):
 
         y_pred = reg.predict(X_reg)
         mse = mean_squared_error(y_reg, y_pred)
+        print(mse)
         assert mse < 0.05
 
         if last_y_pred is not None:
