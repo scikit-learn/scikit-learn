@@ -2006,7 +2006,7 @@ def classification_report(y_true, y_pred, *, labels=None, target_names=None,
 
         if output_dict:
             report_dict[line_heading] = dict(
-                zip(headers, [i.item() for i in avg]))
+                zip(headers, [float(i) for i in avg]))
         else:
             if line_heading == 'accuracy':
                 row_fmt_accuracy = '{:>{width}s} ' + \
