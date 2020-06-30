@@ -248,9 +248,9 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
                 raise ValueError("{} received an invalid number "
                                  "of bins. Received {}, expected at least 2."
                                  .format(KBinsDiscretizer.__name__, orig_bins))
-            return np.full(n_features, orig_bins, dtype=np.int)
+            return np.full(n_features, orig_bins, dtype=int)
 
-        n_bins = check_array(orig_bins, dtype=np.int, copy=True,
+        n_bins = check_array(orig_bins, dtype=int, copy=True,
                              ensure_2d=False)
 
         if n_bins.ndim > 1 or n_bins.shape[0] != n_features:
