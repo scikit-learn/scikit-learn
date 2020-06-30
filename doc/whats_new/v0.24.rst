@@ -45,6 +45,14 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
+:mod:`sklearn.calibrator`
+.........................
+
+- |Enhancement| Allow :class:`calibrator.CalibratedClassifierCV` use with
+  prefit :class:`pipeline.Pipeline` where data is not `X` is not array-like,
+  sparse matrix or dataframe at the start. :pr:`17546` by
+  :user:`Lucy Liu <lucyleeow>`.
+
 :mod:`sklearn.datasets`
 .......................
 
