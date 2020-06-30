@@ -126,7 +126,7 @@ class PrecisionRecallDisplay:
         ax.set(xlabel=xlabel, ylabel=ylabel)
 
         if "label" in line_kwargs:
-            ax.legend(loc="llower left")
+            ax.legend(loc="lower left")
 
         self.ax_ = ax
         self.figure_ = ax.figure
