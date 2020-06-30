@@ -109,18 +109,6 @@ def test_iterable_not_string_error():
     assert str(error.value) == error_value
 
 
-def test_iterable_duplicate_string_error():
-    error_value = ("Iterable contains duplicate string "
-                   "value. String values should be unique.")
-    D2 = [{'foo': '1', 'bar': '2'},
-          {'foo': '3', 'baz': '1'},
-          {'foo': ['one', 'two', 'three', 'two']}]
-    v = DictVectorizer(sparse=False)
-    with pytest.raises(ValueError) as error:
-        v.fit(D2)
-    assert str(error.value) == error_value
-
-
 def test_mapping_error():
     error_value = ("Unsupported value type <class 'dict'> "
                    "for foo: {'one': 1, 'three': 3}.\n"

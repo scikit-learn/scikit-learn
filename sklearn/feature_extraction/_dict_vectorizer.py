@@ -37,14 +37,14 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
     features in the output, one signifying "f=ham", the other "f=spam".
 
     If a feature value is a sequence or set of strings, this transformer
-    will iterate over the values and will similarly encode each string value
-    as a binary feature. Strings in the iterable are expected to be unique,
-    otherwise an error is thrown.
+    will iterate over the values and will count the occurrences of each string
+    value.
 
     However, note that this transformer will only do a binary one-hot encoding
     when feature values are of type string. If categorical features are
-    represented as numeric values such as int, the DictVectorizer can be
-    followed by :class:`~sklearn.preprocessing.OneHotEncoder` to complete
+    represented as numeric values such as int or iterables of strings, the
+    DictVectorizer can be followed by
+    :class:`~sklearn.preprocessing.OneHotEncoder` to complete
     binary one-hot encoding.
 
     Features that do not occur in a sample (mapping) will have a zero value
@@ -122,9 +122,6 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
     def _add_iterable_element(self, f, v, feature_names, vocab, fitting=True,
                               transforming=False, indices=None, values=None):
         """Add feature names for iterable of strings"""
-        if len(set(v)) != len(v):
-            raise ValueError('Iterable contains duplicate string '
-                             'value. String values should be unique.')
         for vv in v:
             if isinstance(vv, str):
                 feature_name = "%s%s%s" % (f, self.separator, vv)
