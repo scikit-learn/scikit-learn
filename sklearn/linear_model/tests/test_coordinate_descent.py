@@ -252,7 +252,6 @@ def test_lasso_cv():
     max_iter = 150
     clf = LassoCV(n_alphas=10, eps=1e-3, max_iter=max_iter, cv=3).fit(X, y)
     assert_almost_equal(clf.alpha_, 0.056, 2)
-
     clf = LassoCV(n_alphas=10, eps=1e-3, max_iter=max_iter, precompute=True,
                   cv=3)
     clf.fit(X, y)
