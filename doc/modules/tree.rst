@@ -376,7 +376,7 @@ Tips on practical use
     matrix input compared to a dense matrix when features have zero values in
     most of the samples.
     
-  * In case that there are multiple tied classes with a joint highest 
+  * In case that there are multiple classes with the same and highest
     probability, the classifier will predict the class with the lowest index
     amongst those classes.
 
