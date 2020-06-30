@@ -45,7 +45,7 @@ def _check_classifier_response_method(estimator, response_method):
     return prediction_method
 
 
-def _get_target_scores(X, estimator, response_method, pos_label=None):
+def _get_response(X, estimator, response_method, pos_label=None):
     """Return response and positive label.
 
     Parameters

@@ -1,4 +1,4 @@
-from .base import _get_target_scores
+from .base import _get_response
 
 from .. import auc
 from .. import roc_curve
@@ -203,7 +203,7 @@ def plot_roc_curve(estimator, X, y, *, sample_weight=None,
     """
     check_matplotlib_support('plot_roc_curve')
 
-    y_pred, pos_label = _get_target_scores(
+    y_pred, pos_label = _get_response(
         X, estimator, response_method, pos_label=pos_label)
 
     fpr, tpr, _ = roc_curve(y, y_pred, pos_label=pos_label,
