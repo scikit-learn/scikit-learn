@@ -124,7 +124,7 @@ time)::
 The mean score and the standard deviation are hence given by::
 
   >>> print("%0.2f accuracy with a standard deviation of %0.2f" % (scores.mean(), scores.std()))
-  0.98 accuracy with a standard deviation of 0.03
+  0.98 accuracy with a standard deviation of 0.02
 
 By default, the score computed at each CV iteration is the ``score``
 method of the estimator. It is possible to change this by using the
