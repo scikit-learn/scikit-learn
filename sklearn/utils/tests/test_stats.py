@@ -115,6 +115,8 @@ def test_weighted_percentile_np_median():
 )
 @pytest.mark.parametrize("percentile", np.arange(0, 101, 2.5))
 def test_weighted_percentile_np_percentile(interpolation, percentile):
+    # check that the interpolation between adjacent ranks corresponds to the
+    # results obtained with NumPy with unit sample weights
     rng = np.random.RandomState(0)
     X = rng.randn(10)
     X.sort()
@@ -129,6 +131,7 @@ def test_weighted_percentile_np_percentile(interpolation, percentile):
 
 
 def test_weighted_percentile_wrong_interpolation():
+    # check that we raise a proper error with unknown interpolation option
     err_msg = "'interpolation' should be one of"
     with pytest.raises(ValueError, match=err_msg):
         X = np.random.randn(10)
@@ -162,6 +165,8 @@ def test_weighted_percentile_non_unit_weight(percentile):
 @pytest.mark.parametrize("percentile", np.arange(0, 101, 25))
 def test_weighted_percentile_single_weight(n_features, interpolation,
                                            percentile):
+    # check for the corner case that a single weight is non-null and that the
+    # value of this sample should be given
     rng = np.random.RandomState(42)
     X = rng.randn(10) if n_features is None else rng.randn(10, n_features)
     X.sort(axis=0)
@@ -177,6 +182,7 @@ def test_weighted_percentile_single_weight(n_features, interpolation,
 
 @pytest.mark.parametrize("n_features", [None, 2])
 def test_weighted_percentile_all_null_weight(n_features):
+    # check that we raise a proper error when all weights are null
     rng = np.random.RandomState(42)
     X = rng.randn(10) if n_features is None else rng.randn(10, n_features)
     sample_weight = np.zeros(X.shape)
@@ -188,6 +194,8 @@ def test_weighted_percentile_all_null_weight(n_features):
 
 @pytest.mark.parametrize("percentile", [0, 25, 50, 75, 100])
 def test_weighted_percentile_equivalence_weights_repeated_samples(percentile):
+    # When using interpolation="nearest", repeating samples and computing the
+    # percentile should be equivalent to computing the weighted sample weight
     interpolation = "nearest"
     X_repeated = np.array([1, 2, 2, 3, 3, 3, 4, 4])
     sample_weight_unit = np.ones(X_repeated.shape[0])
