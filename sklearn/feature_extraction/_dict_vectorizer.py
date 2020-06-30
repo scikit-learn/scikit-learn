@@ -168,7 +168,7 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
                 elif isinstance(v, Number) or (v is None):
                     feature_name = f
                 elif isinstance(v, Mapping):
-                    raise TypeError(f'Unsupported value Type {type(v)} '
+                    raise TypeError(f'Unsupported value type {type(v)} '
                                     f'for {f}: {v}.\n'
                                     'Mapping objects are not supported.')
                 elif isinstance(v, Iterable):
