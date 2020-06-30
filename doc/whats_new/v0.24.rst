@@ -139,6 +139,17 @@ Changelog
   :pr:`16289` by :user:`Masashi Kishimoto <kishimoto-banana>` and
   :user:`Olivier Grisel <ogrisel>`.
 
+:mod:`sklearn.linear_model`
+.......................
+
+- |API|: The parameter ``normalize`` is deprecated in 0.24 and will be removed
+  in 0.26. The use of pipeline with StandardScaler is recommended instead.
+  ``normalize`` parameter did not take any effect if ``fit_intercept`` was set
+  to False and therefore was deemed confusing.
+  :class:`linear_model.LinearRegression`
+  :pr:`17743` by :user:`Maria Telenczuk <maikia>` and "user"`Guillaume Lemaitre
+  <glemaitre>` and :user:`Alexandre Gramfort <agramfort>`.
+
 :mod:`sklearn.metrics`
 ......................
 
@@ -211,7 +222,7 @@ Changelog
 
 - |Enhancement| Avoid converting float32 input to float64 in
   :class:`neural_network.BernoulliRBM`.
-  :pr:`16352` by :user:`Arthur Imbert <Henley13>`.  
+  :pr:`16352` by :user:`Arthur Imbert <Henley13>`.
 
 :mod:`sklearn.preprocessing`
 ............................
