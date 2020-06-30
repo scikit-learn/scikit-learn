@@ -16,6 +16,9 @@ set -e
 # Fail fast
 build_tools/travis/travis_fastfail.sh
 
+# Imports get_dep
+source build_tools/shared.sh
+
 echo "List files from cached directories"
 echo "pip:"
 ls $HOME/.cache/pip
@@ -55,7 +58,7 @@ echo "Installing joblib master"
 pip install https://github.com/joblib/joblib/archive/master.zip
 echo "Installing pillow master"
 pip install https://github.com/python-pillow/Pillow/archive/master.zip
-pip install pytest==4.6.4 pytest-cov
+pip install $(get_dep pytest $PYTEST_VERSION) pytest-cov
 
 # Build scikit-learn in the install.sh script to collapse the verbose
 # build output in the travis output when it succeeds.
