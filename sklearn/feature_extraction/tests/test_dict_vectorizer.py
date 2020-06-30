@@ -122,7 +122,7 @@ def test_iterable_duplicate_string_error():
 
 
 def test_mapping_error():
-    error_value = ("Unsupported value Type <class 'dict'> "
+    error_value = ("Unsupported value type <class 'dict'> "
                    "for foo: {'one': 1, 'three': 3}.\n"
                    "Mapping objects are not supported.")
     D2 = [{'foo': '1', 'bar': '2'},
