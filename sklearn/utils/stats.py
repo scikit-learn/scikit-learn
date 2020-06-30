@@ -10,7 +10,9 @@ def _squeeze_arr(arr, n_dim):
     return arr[0] if n_dim == 1 else arr
 
 
-def _nearest_rank(array, sorted_idx, percentile, cum_weights):
+def _nearest_rank(
+    array, sorted_idx, percentile, cum_weights, n_rows, n_cols, n_dim,
+):
     adjusted_percentile = percentile * cum_weights[-1]
     percentile_idx = np.array([
         np.searchsorted(cum_weights[:, i], adjusted_percentile[i])
@@ -18,20 +20,20 @@ def _nearest_rank(array, sorted_idx, percentile, cum_weights):
     ])
     percentile_idx = np.array(percentile_idx)
     # In rare cases, percentile_idx equals to sorted_idx.shape[0]
-    max_idx = sorted_idx.shape[0] - 1
+    max_idx = n_rows - 1
     percentile_idx = np.apply_along_axis(
         lambda x: np.clip(x, 0, max_idx), axis=0, arr=percentile_idx
     )
 
-    col_index = np.arange(array.shape[1])
+    col_index = np.arange(n_cols)
     percentile_in_sorted = sorted_idx[percentile_idx, col_index]
     percentile_value = array[percentile_in_sorted, col_index]
-    return _squeeze_arr(percentile_value, array.ndim)
+    return _squeeze_arr(percentile_value, n_dim)
 
 
 def _interpolation_closest_ranks(
     array, sorted_idx, sample_weight, sorted_weights, percentile, cum_weights,
-    interpolation,
+    interpolation, n_rows, n_cols, n_dim,
 ):
     # Percentile can be computed with 3 different alternatives:
     # https://en.wikipedia.org/wiki/Percentile
@@ -43,8 +45,6 @@ def _interpolation_closest_ranks(
     # weights instead of the data frequency.
     # P_w = (x - w) / (S_w - w), x in [1, N], w being the weight and S_w being
     # the sum of the weights.
-    n_rows, n_cols = array.shape
-    n_dim = array.ndim
 
     adjusted_percentile = (cum_weights - sorted_weights)
     with np.errstate(invalid="ignore"):
@@ -161,8 +161,8 @@ def _weighted_percentile(array, sample_weight, percentile=50,
     if interpolation not in possible_interpolation:
         raise ValueError(
             f"'interpolation' should be one of "
-            f"{', '.join(possible_interpolation)}. "
-            f"Got '{str(interpolation)}' instead."
+            f"{', '.join([str(val) for val in possible_interpolation])}. "
+            f"Got '{interpolation}' instead."
         )
 
     if np.any(np.count_nonzero(sample_weight, axis=0) < 1):
@@ -170,9 +170,10 @@ def _weighted_percentile(array, sample_weight, percentile=50,
             "All weights cannot be null when computing a weighted percentile."
         )
 
-    if array.ndim == 0:
+    n_dim = array.ndim
+    if n_dim == 0:
         return array[()]
-    if array.ndim == 1:
+    elif n_dim == 1:
         array = array.reshape((-1, 1))
 
     if (array.shape != sample_weight.shape and
@@ -180,14 +181,17 @@ def _weighted_percentile(array, sample_weight, percentile=50,
         # when `sample_weight` is 1D, we repeat it for each column of `array`
         sample_weight = np.tile(sample_weight, (array.shape[1], 1)).T
 
+    n_rows, n_cols = array.shape
     sorted_idx = np.argsort(array, axis=0)
     sorted_weights = _take_along_axis(sample_weight, sorted_idx, axis=0)
-    percentile = np.array([percentile / 100] * array.shape[1])
+    percentile = np.array([percentile / 100] * n_cols)
     cum_weights = stable_cumsum(sorted_weights, axis=0)
 
     if interpolation is None:
-        return _nearest_rank(array, sorted_idx, percentile, cum_weights)
+        return _nearest_rank(
+            array, sorted_idx, percentile, cum_weights, n_rows, n_cols, n_dim,
+        )
     return _interpolation_closest_ranks(
         array, sorted_idx, sample_weight, sorted_weights, percentile,
-        cum_weights, interpolation,
+        cum_weights, interpolation, n_rows, n_cols, n_dim,
     )
