@@ -28,6 +28,7 @@ from sklearn.utils._testing import ignore_warnings
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import TempMemmap
 from sklearn.utils.fixes import parse_version
+from sklearn.utils import check_random_state
 
 from sklearn.linear_model import (
     ARDRegression,
@@ -56,6 +57,38 @@ from sklearn.linear_model import (
 
 from sklearn.linear_model._coordinate_descent import _set_order
 from sklearn.utils import check_array
+
+
+# FIXME: 'normalize' to be removed in 0.26
+@pytest.mark.parametrize('CoordinateDescentModel', [ElasticNet,
+                                                    Lasso,
+                                                    LassoCV,
+                                                    ElasticNetCV,
+                                                    MultiTaskElasticNet,
+                                                    MultiTaskLasso,
+                                                    MultiTaskElasticNetCV,
+                                                    MultiTaskLassoCV
+                                                    ])
+@pytest.mark.parametrize(
+    'normalize, n_warnings, warning',
+    [(True, 1, FutureWarning),
+     (False, 1, FutureWarning),
+     ("deprecate", 0, None)]
+)
+def test_assure_warning_when_normalize(CoordinateDescentModel,
+                                       normalize, n_warnings, warning):
+    # check that we issue a FutureWarning when normalize was set
+    rng = check_random_state(0)
+    n_samples = 200
+    n_features = 2
+    X = rng.randn(n_samples, n_features)
+    X[X < 0.1] = 0.
+    y = rng.rand(n_samples)
+
+    model = CoordinateDescentModel(normalize=normalize)
+    with pytest.warns(warning) as record:
+        model.fit(X, y)
+    assert len(record) == n_warnings
 
 
 @pytest.mark.parametrize('order', ['C', 'F'])

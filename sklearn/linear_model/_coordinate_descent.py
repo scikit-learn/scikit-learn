@@ -748,15 +748,16 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         To avoid memory re-allocation it is advised to allocate the
         initial data in memory directly using that format.
         """
+        #import pdb; pdb.set_trace()
         if self.normalize != "deprecate":
             if not self.normalize:
                 warnings.warn(
-                    "'normalize' was deprecated in version 0.24 and will be"
+                    "'CCCnormalize' was deprecated in version 0.24 and will be"
                     " removed in 0.26.", FutureWarning
                 )
             else:
                 warnings.warn(
-                    "'normalize' was deprecated in version 0.24 and will be"
+                    "'CCCnormalize' was deprecated in version 0.24 and will be"
                     " removed in 0.26. If you wish to keep an equivalent"
                     " behaviour, use  Pipeline with a StandardScaler in a"
                     " preprocessing stage:"
@@ -764,10 +765,9 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
                     "    StandardScaler(), \n"
                     "    {type(self).__name__}())", FutureWarning
                 )
-            _normalize = self.normalize
+            self._normalize = self.normalize
         else:
-            _normalize = False
-
+            self._normalize = False
 
         if self.alpha == 0:
             warnings.warn("With alpha=0, this algorithm does not converge "
@@ -823,7 +823,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         # ensures that the returned X and y are still F-contiguous.
         should_copy = self.copy_X and not X_copied
         X, y, X_offset, y_offset, X_scale, precompute, Xy = \
-            _pre_fit(X, y, None, self.precompute, _normalize,
+            _pre_fit(X, y, None, self.precompute, self._normalize,
                      self.fit_intercept, copy=should_copy,
                      check_input=check_input, sample_weight=sample_weight)
         # coordinate descent needs F-ordered arrays and _pre_fit might have
@@ -1113,7 +1113,7 @@ def _path_residuals(X, y, train, test, path, path_params, alphas=None,
                 array.setflags(write=True)
 
     fit_intercept = path_params['fit_intercept']
-    normalize = path_params['normalize']
+    _normalize = path_params['normalize']
 
     if y.ndim == 1:
         precompute = path_params['precompute']
@@ -1123,7 +1123,7 @@ def _path_residuals(X, y, train, test, path, path_params, alphas=None,
         precompute = False
 
     X_train, y_train, X_offset, y_offset, X_scale, precompute, Xy = \
-        _pre_fit(X_train, y_train, None, precompute, normalize, fit_intercept,
+        _pre_fit(X_train, y_train, None, precompute, _normalize, fit_intercept,
                  copy=False)
 
     path_params = path_params.copy()
@@ -1150,7 +1150,7 @@ def _path_residuals(X, y, train, test, path, path_params, alphas=None,
         y_offset = np.atleast_1d(y_offset)
         y_test = y_test[:, np.newaxis]
 
-    if normalize:
+    if _normalize:
         nonzeros = np.flatnonzero(X_scale)
         coefs[:, nonzeros] /= X_scale[nonzeros][:, np.newaxis]
 
@@ -1168,8 +1168,8 @@ class LinearModelCV(MultiOutputMixin, LinearModel, metaclass=ABCMeta):
 
     @abstractmethod
     def __init__(self, eps=1e-3, n_alphas=100, alphas=None, fit_intercept=True,
-                 normalize='deprecate', precompute='auto', max_iter=1000, tol=1e-4,
-                 copy_X=True, cv=None, verbose=False, n_jobs=None,
+                 normalize='deprecate', precompute='auto', max_iter=1000,
+                 tol=1e-4, copy_X=True, cv=None, verbose=False, n_jobs=None,
                  positive=False, random_state=None, selection='cyclic'):
         self.eps = eps
         self.n_alphas = n_alphas
@@ -1212,24 +1212,9 @@ class LinearModelCV(MultiOutputMixin, LinearModel, metaclass=ABCMeta):
         """
 
         if self.normalize != "deprecate":
-            if not self.normalize:
-                warnings.warn(
-                    "'normalize' was deprecated in version 0.24 and will be"
-                    " removed in 0.26.", FutureWarning
-                )
-            else:
-                warnings.warn(
-                    "'normalize' was deprecated in version 0.24 and will be"
-                    " removed in 0.26. If you wish to keep an equivalent"
-                    " behaviour, use  Pipeline with a StandardScaler in a"
-                    " preprocessing stage:"
-                    "  model = make_pipeline( \n"
-                    "    StandardScaler(), \n"
-                    "    {type(self).__name__}())", FutureWarning
-                )
-            self._normalize = self.normalize
+            _normalize = self.normalize
         else:
-            self._normalize = False
+            _normalize = False
 
         # This makes sure that there is no duplication in memory.
         # Dealing right with copy_X is important in the following:
@@ -1319,7 +1304,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, metaclass=ABCMeta):
             alphas = [_alpha_grid(X, y, l1_ratio=l1_ratio,
                                   fit_intercept=self.fit_intercept,
                                   eps=self.eps, n_alphas=self.n_alphas,
-                                  normalize=self._normalize,
+                                  normalize=_normalize,
                                   copy_X=self.copy_X)
                       for l1_ratio in l1_ratios]
         else:
@@ -1555,8 +1540,8 @@ class LassoCV(RegressorMixin, LinearModelCV):
     @_deprecate_positional_args
     def __init__(self, *, eps=1e-3, n_alphas=100, alphas=None,
                  fit_intercept=True,
-                 normalize=False, precompute='auto', max_iter=1000, tol=1e-4,
-                 copy_X=True, cv=None, verbose=False, n_jobs=None,
+                 normalize='deprecate', precompute='auto', max_iter=1000,
+                 tol=1e-4, copy_X=True, cv=None, verbose=False, n_jobs=None,
                  positive=False, random_state=None, selection='cyclic'):
         super().__init__(
             eps=eps, n_alphas=n_alphas, alphas=alphas,
@@ -1762,7 +1747,7 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
 
     @_deprecate_positional_args
     def __init__(self, *, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
-                 fit_intercept=True, normalize=False, precompute='auto',
+                 fit_intercept=True, normalize='deprecate', precompute='auto',
                  max_iter=1000, tol=1e-4, cv=None, copy_X=True,
                  verbose=0, n_jobs=None, positive=False, random_state=None,
                  selection='cyclic'):
@@ -1912,7 +1897,7 @@ class MultiTaskElasticNet(Lasso):
     """
     @_deprecate_positional_args
     def __init__(self, alpha=1.0, *, l1_ratio=0.5, fit_intercept=True,
-                 normalize=False, copy_X=True, max_iter=1000, tol=1e-4,
+                 normalize='deprecate', copy_X=True, max_iter=1000, tol=1e-4,
                  warm_start=False, random_state=None, selection='cyclic'):
         self.l1_ratio = l1_ratio
         self.alpha = alpha
@@ -1945,6 +1930,13 @@ class MultiTaskElasticNet(Lasso):
         To avoid memory re-allocation it is advised to allocate the
         initial data in memory directly using that format.
         """
+        # FIXME: 'normalize' to be removed in 0.26
+        # warning raised elsewhere
+        if self.normalize != "deprecate":
+            _normalize = self.normalize
+        else:
+            _normalize = False
+
         # Need to validate separately here.
         # We can't pass multi_ouput=True because that would allow y to be csr.
         check_X_params = dict(dtype=[np.float64, np.float32], order='F',
@@ -1969,7 +1961,7 @@ class MultiTaskElasticNet(Lasso):
                              % (n_samples, y.shape[0]))
 
         X, y, X_offset, y_offset, X_scale = _preprocess_data(
-            X, y, self.fit_intercept, self.normalize, copy=False)
+            X, y, self.fit_intercept, _normalize, copy=False)
 
         if not self.warm_start or not hasattr(self, "coef_"):
             self.coef_ = np.zeros((n_tasks, n_features), dtype=X.dtype.type,
@@ -2103,7 +2095,7 @@ class MultiTaskLasso(MultiTaskElasticNet):
     method should be directly passed as Fortran-contiguous numpy arrays.
     """
     @_deprecate_positional_args
-    def __init__(self, alpha=1.0, *, fit_intercept=True, normalize=False,
+    def __init__(self, alpha=1.0, *, fit_intercept=True, normalize='deprecate',
                  copy_X=True, max_iter=1000, tol=1e-4, warm_start=False,
                  random_state=None, selection='cyclic'):
         self.alpha = alpha
@@ -2288,7 +2280,7 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
 
     @_deprecate_positional_args
     def __init__(self, *, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
-                 fit_intercept=True, normalize=False,
+                 fit_intercept=True, normalize='deprecate',
                  max_iter=1000, tol=1e-4, cv=None, copy_X=True,
                  verbose=0, n_jobs=None, random_state=None,
                  selection='cyclic'):
@@ -2471,7 +2463,7 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
     @_deprecate_positional_args
     def __init__(self, *, eps=1e-3, n_alphas=100, alphas=None,
                  fit_intercept=True,
-                 normalize=False, max_iter=1000, tol=1e-4, copy_X=True,
+                 normalize='deprecate', max_iter=1000, tol=1e-4, copy_X=True,
                  cv=None, verbose=False, n_jobs=None, random_state=None,
                  selection='cyclic'):
         super().__init__(
