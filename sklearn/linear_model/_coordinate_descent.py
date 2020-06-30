@@ -748,7 +748,6 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         To avoid memory re-allocation it is advised to allocate the
         initial data in memory directly using that format.
         """
-        #import pdb; pdb.set_trace()
         if self.normalize != "deprecate":
             if not self.normalize:
                 warnings.warn(
@@ -1933,6 +1932,21 @@ class MultiTaskElasticNet(Lasso):
         # FIXME: 'normalize' to be removed in 0.26
         # warning raised elsewhere
         if self.normalize != "deprecate":
+            if not self.normalize:
+                warnings.warn(
+                    "'CCCnormalize' was deprecated in version 0.24 and will be"
+                    " removed in 0.26.", FutureWarning
+                )
+            else:
+                warnings.warn(
+                    "'CCCnormalize' was deprecated in version 0.24 and will be"
+                    " removed in 0.26. If you wish to keep an equivalent"
+                    " behaviour, use  Pipeline with a StandardScaler in a"
+                    " preprocessing stage:"
+                    "  model = make_pipeline( \n"
+                    "    StandardScaler(), \n"
+                    "    {type(self).__name__}())", FutureWarning
+                )
             _normalize = self.normalize
         else:
             _normalize = False
