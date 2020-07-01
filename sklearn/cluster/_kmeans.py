@@ -406,7 +406,7 @@ def _kmeans_single_elkan(X, sample_weight, n_clusters, max_iter=300,
                               x_squared_norms=x_squared_norms)
 
     if verbose:
-        print('Initialization complete')
+        logger.info('Initialization complete')
 
     n_samples = X.shape[0]
 
@@ -446,12 +446,12 @@ def _kmeans_single_elkan(X, sample_weight, n_clusters, max_iter=300,
 
         if verbose:
             inertia = _inertia(X, sample_weight, centers, labels)
-            print("Iteration {0}, inertia {1}" .format(i, inertia))
+            logger.info("Iteration {0}, inertia {1}" .format(i, inertia))
 
         center_shift_tot = (center_shift**2).sum()
         if center_shift_tot <= tol:
             if verbose:
-                print("Converged at iteration {0}: "
+                logger.info("Converged at iteration {0}: "
                       "center shift {1} within tolerance {2}"
                       .format(i, center_shift_tot, tol))
             break
@@ -553,7 +553,7 @@ def _kmeans_single_lloyd(X, sample_weight, n_clusters, max_iter=300,
                               x_squared_norms=x_squared_norms)
 
     if verbose:
-        print("Initialization complete")
+        logger.info("Initialization complete")
 
     centers_new = np.zeros_like(centers)
     labels = np.full(X.shape[0], -1, dtype=np.int32)
@@ -576,12 +576,12 @@ def _kmeans_single_lloyd(X, sample_weight, n_clusters, max_iter=300,
 
             if verbose:
                 inertia = _inertia(X, sample_weight, centers, labels)
-                print("Iteration {0}, inertia {1}" .format(i, inertia))
+                logger.info("Iteration {0}, inertia {1}" .format(i, inertia))
 
             center_shift_tot = (center_shift**2).sum()
             if center_shift_tot <= tol:
                 if verbose:
-                    print("Converged at iteration {0}: "
+                    logger.info("Converged at iteration {0}: "
                           "center shift {1} within tolerance {2}"
                           .format(i, center_shift_tot, tol))
                 break
@@ -1309,7 +1309,7 @@ def _mini_batch_step(X, sample_weight, x_squared_norms, centers, weight_sums,
             new_centers = random_state.choice(X.shape[0], replace=False,
                                               size=n_reassigns)
             if verbose:
-                print("[MiniBatchKMeans] Reassigning %i cluster centers."
+                logger.info("[MiniBatchKMeans] Reassigning %i cluster centers."
                       % n_reassigns)
 
             if sp.issparse(X) and not sp.issparse(centers):
@@ -1398,13 +1398,13 @@ def _mini_batch_convergence(model, iteration_idx, n_iter, tol,
             ' mean batch inertia: %f, ewa inertia: %f ' % (
                 iteration_idx + 1, n_iter, batch_inertia,
                 ewa_inertia))
-        print(progress_msg)
+        logger.info(progress_msg)
 
     # Early stopping based on absolute tolerance on squared change of
     # centers position (using EWA smoothing)
     if tol > 0.0 and ewa_diff <= tol:
         if verbose:
-            print('Converged (small centers change) at iteration %d/%d'
+            logger.info('Converged (small centers change) at iteration %d/%d'
                   % (iteration_idx + 1, n_iter))
         return True
 
@@ -1420,7 +1420,7 @@ def _mini_batch_convergence(model, iteration_idx, n_iter, tol,
     if (model.max_no_improvement is not None
             and no_improvement >= model.max_no_improvement):
         if verbose:
-            print('Converged (lack of improvement in inertia)'
+            logger.info('Converged (lack of improvement in inertia)'
                   ' at iteration %d/%d'
                   % (iteration_idx + 1, n_iter))
         return True
@@ -1668,7 +1668,7 @@ class MiniBatchKMeans(KMeans):
         best_inertia = None
         for init_idx in range(n_init):
             if self.verbose:
-                print("Init %d/%d with method: %s"
+                logger.info("Init %d/%d with method: %s"
                       % (init_idx + 1, n_init, self.init))
             weight_sums = np.zeros(self.n_clusters, dtype=sample_weight.dtype)
 
@@ -1696,7 +1696,7 @@ class MiniBatchKMeans(KMeans):
                                          x_squared_norms_valid,
                                          cluster_centers)
             if self.verbose:
-                print("Inertia for init %d/%d: %f"
+                logger.info("Inertia for init %d/%d: %f"
                       % (init_idx + 1, n_init, inertia))
             if best_inertia is None or inertia < best_inertia:
                 self.cluster_centers_ = cluster_centers
@@ -1768,7 +1768,7 @@ class MiniBatchKMeans(KMeans):
             Sum of squared distances of points to nearest cluster.
         """
         if self.verbose:
-            print('Computing label assignment and total inertia')
+            logger.info('Computing label assignment and total inertia')
         sample_weight = _check_normalize_sample_weight(sample_weight, X)
         x_squared_norms = row_norms(X, squared=True)
         slices = gen_batches(X.shape[0], self.batch_size)
