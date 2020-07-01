@@ -14,6 +14,7 @@ from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import assert_warns_message
 from sklearn.utils._testing import assert_raise_message
+from sklearn.utils.fixes import _astype_copy_false
 from sklearn.utils.validation import _num_samples
 from sklearn.base import clone
 from sklearn.exceptions import ConvergenceWarning
@@ -829,10 +830,10 @@ def test_max_iter_error():
 
 
 @pytest.mark.parametrize("data", [X, X_csr], ids=["dense", "sparse"])
-@pytest.mark.parametrize("estimator", [KMeans, MiniBatchKMeans])
-def test_float_precision(estimator, data):
+@pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
+def test_float_precision(Estimator, data):
     # Check that the results are the same for single and double precision.
-    km = estimator(n_init=1, random_state=0)
+    km = Estimator(n_init=1, random_state=0)
 
     inertia = {}
     Xt = {}
@@ -840,8 +841,7 @@ def test_float_precision(estimator, data):
     labels = {}
 
     for dtype in [np.float64, np.float32]:
-        # FIXME when scipy min version >= 1.0, add copy=False
-        X = data.astype(dtype)
+        X = data.astype(dtype, **_astype_copy_false(data))
         km.fit(X)
 
         inertia[dtype] = km.inertia_
@@ -853,7 +853,7 @@ def test_float_precision(estimator, data):
         assert km.cluster_centers_.dtype == dtype
 
         # same with partial_fit
-        if estimator is MiniBatchKMeans:
+        if Estimator is MiniBatchKMeans:
             km.partial_fit(X[0:3])
             assert km.cluster_centers_.dtype == dtype
 
