@@ -69,9 +69,8 @@ def test_linear_regression_singular(solver):
     assert reg.score(X, y) == 1
 
 
-@pytest.mark.parametrize("array_constr", [np.array, sparse.csr_matrix])
 @pytest.mark.parametrize("fit_intercept", [True, False])
-@pytest.mark.parametrize('solver', ['svd', 'cholesky'])
+@pytest.mark.parametrize("solver, array_constr", [('lsqr', np.array), ('lsqr', sparse.csr_matrix), ('cholesky', np.array)])
 def test_linear_regression_sample_weights(array_constr, fit_intercept, solver):
     rng = np.random.RandomState(0)
 
