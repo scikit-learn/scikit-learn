@@ -246,30 +246,6 @@ if you're using one of these, unless you want custom multiclass behavior:
     At present, no metric in :mod:`sklearn.metrics`
     supports the multioutput-multiclass classification task.
 
-Multilabel classification format
-================================
-
-In multilabel learning, the joint set of binary classification tasks is
-expressed with label binary indicator array: each sample is one row of a 2d
-array of shape (n_samples, n_classes) with binary values: the one, i.e. the non
-zero elements, corresponds to the subset of labels. An array such as
-``np.array([[1, 0, 0], [0, 1, 1], [0, 0, 0]])`` represents label 0 in the first
-sample, labels 1 and 2 in the second sample, and no labels in the third sample.
-
-Producing multilabel data as a list of sets of labels may be more intuitive.
-The :class:`MultiLabelBinarizer <sklearn.preprocessing.MultiLabelBinarizer>`
-transformer can be used to convert between a collection of collections of
-labels and the indicator format.
-
-  >>> from sklearn.preprocessing import MultiLabelBinarizer
-  >>> y = [[2, 3, 4], [2], [0, 1, 3], [0, 1, 2, 3, 4], [0, 1, 2]]
-  >>> MultiLabelBinarizer().fit_transform(y)
-  array([[0, 0, 1, 1, 1],
-         [0, 0, 1, 0, 0],
-         [1, 1, 0, 1, 0],
-         [1, 1, 1, 1, 1],
-         [1, 1, 1, 0, 0]])
-
 .. _ovr_classification:
 
 One-Vs-The-Rest
