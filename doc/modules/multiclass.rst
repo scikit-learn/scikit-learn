@@ -5,8 +5,6 @@
 Multiclass and multioutput algorithms
 =====================================
 
-.. currentmodule:: sklearn.multiclass
-
 This section of the user guide covers functionality related to multi-learning
 problems, including multiclass, multilabel, and multioutput classification
 and regression.
@@ -29,20 +27,20 @@ The table below provides a quick reference on the differences between problem
 types. More detailed explanations can be found in subsequent sections of this
 guide.
 
-+-----------------+-----------------------+-------------------------+------------------------------------------+
-|                 | Number of targets     | Target cardinality      | Valid                                    |
-|                 |                       |                         | :func:`~utils.multiclass.type_of_target` |
-+=================+=======================+=========================+==========================================+
-| Multiclass      |  1                    | >2                      | - 'multiclass'                           |
-| classification  |                       |                         |                                          |
-+-----------------+-----------------------+-------------------------+------------------------------------------+
-| Multioutput     | >1                    |  2 (0 or 1)             | - 'multilabel-indicator'                 |
-| (multilabel)    |                       |                         |                                          |
-| classification  |                       |                         |                                          |
-+-----------------+-----------------------+-------------------------+------------------------------------------+
-| Multioutput     | >1                    | Continuous              | - 'continuous-multioutput'               |
-| regression      |                       |                         |                                          |
-+-----------------+-----------------------+-------------------------+------------------------------------------+
++-----------------+-----------------------+-------------------------+--------------------------------------------------+
+|                 | Number of targets     | Target cardinality      | Valid                                            |
+|                 |                       |                         | :func:`~sklearn.utils.multiclass.type_of_target` |
++=================+=======================+=========================+==================================================+
+| Multiclass      |  1                    | >2                      | - 'multiclass'                                   |
+| classification  |                       |                         |                                                  |
++-----------------+-----------------------+-------------------------+--------------------------------------------------+
+| Multioutput     | >1                    |  2 (0 or 1)             | - 'multilabel-indicator'                         |
+| (multilabel)    |                       |                         |                                                  |
+| classification  |                       |                         |                                                  |
++-----------------+-----------------------+-------------------------+--------------------------------------------------+
+| Multioutput     | >1                    | Continuous              | - 'continuous-multioutput'                       |
+| regression      |                       |                         |                                                  |
++-----------------+-----------------------+-------------------------+--------------------------------------------------+
 
 Below is a summary of scikit-learn estimators that have multi-learning support
 built-in, grouped by strategy. You don't need the meta-estimators provided by
@@ -141,7 +139,7 @@ Target format
 -------------
 
 Valid :term:`multiclass` representations for
-:func:`~utils.multiclass.type_of_target` (`y`) are:
+:func:`~sklearn.utils.multiclass.type_of_target` (`y`) are:
 
   - 1d or column vector containing more than two discrete values. An
     example of a vector ``y`` for 3 samples:
@@ -171,12 +169,12 @@ One-Vs-The-Rest
 ---------------
 
 This strategy, also known as **one-vs-all**, is implemented in
-:class:`OneVsRestClassifier`.  The strategy consists in fitting one classifier
-per class. For each classifier, the class is fitted against all the other
-classes. In addition to its computational efficiency (only `n_classes`
-classifiers are needed), one advantage of this approach is its
-interpretability. Since each class is represented by one and only one classifier,
-it is possible to gain knowledge about the class by inspecting its
+:class:`~sklearn.multiclass.OneVsRestClassifier`.  The strategy consists in
+fitting one classifier per class. For each classifier, the class is fitted
+against all the other classes. In addition to its computational efficiency
+(only `n_classes` classifiers are needed), one advantage of this approach is
+its interpretability. Since each class is represented by one and only one
+classifier, it is possible to gain knowledge about the class by inspecting its
 corresponding classifier. This is the most commonly used strategy and is a fair
 default choice.
 
@@ -196,9 +194,9 @@ Below is an example of multiclass learning using OvR::
          2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2])
 
 
-:class:`OneVsRestClassifier` also supports multilabel classification.
-To use this feature, feed the classifier an indicator matrix, in which cell
-[i, j] indicates the presence of label j in sample i.
+:class:`~sklearn.multiclass.OneVsRestClassifier` also supports multilabel
+classification. To use this feature, feed the classifier an indicator matrix,
+in which cell [i, j] indicates the presence of label j in sample i.
 
 
 .. figure:: ../auto_examples/miscellaneous/images/sphx_glr_plot_multilabel_001.png
@@ -216,12 +214,12 @@ To use this feature, feed the classifier an indicator matrix, in which cell
 One-Vs-One
 ----------
 
-:class:`OneVsOneClassifier` constructs one classifier per pair of classes.
-At prediction time, the class which received the most votes is selected.
-In the event of a tie (among two classes with an equal number of votes), it
-selects the class with the highest aggregate classification confidence by
-summing over the pair-wise classification confidence levels computed by the
-underlying binary classifiers.
+:class:`~sklearn.multiclass.OneVsOneClassifier` constructs one classifier per
+pair of classes. At prediction time, the class which received the most votes
+is selected. In the event of a tie (among two classes with an equal number of
+votes), it selects the class with the highest aggregate classification
+confidence by summing over the pair-wise classification confidence levels
+computed by the underlying binary classifiers.
 
 Since it requires to fit ``n_classes * (n_classes - 1) / 2`` classifiers,
 this method is usually slower than one-vs-the-rest, due to its
@@ -274,9 +272,9 @@ At fitting time, one binary classifier per bit in the code book is fitted.
 At prediction time, the classifiers are used to project new points in the
 class space and the class closest to the points is chosen.
 
-In :class:`OutputCodeClassifier`, the ``code_size`` attribute allows the user to
-control the number of classifiers which will be used. It is a percentage of the
-total number of classes.
+In :class:`~sklearn.multiclass.OutputCodeClassifier`, the ``code_size``
+attribute allows the user to control the number of classifiers which will be
+used. It is a percentage of the total number of classes.
 
 A number between 0 and 1 will require fewer classifiers than
 one-vs-the-rest. In theory, ``log2(n_classes) / n_classes`` is sufficient to
@@ -334,7 +332,7 @@ sample that are not mutually exclusive. Formally, a binary output is assigned
 to each class, for every sample. Positive classes are indicated with 1 and
 negative classes with 0 or -1. It is thus comparable to running ``n_classes``
 binary classification tasks, for example with
-:class:`sklearn.multioutput.MultiOutputClassifier`. This approach treats
+:class:`~sklearn.multioutput.MultiOutputClassifier`. This approach treats
 each label independently whereas multilabel classifiers *may* treat the
 multiple classes simultaneously, accounting for correlated behavior among
 them.
@@ -371,8 +369,8 @@ Multioutput classification
 --------------------------
 
 Multioutput classification support can be added to any classifier with
-:class:`MultiOutputClassifier`. This strategy consists of fitting one
-classifier per target.  This allows multiple target variable
+:class:`~sklearn.multioutput.MultiOutputClassifier`. This strategy consists of
+fitting one classifier per target.  This allows multiple target variable
 classifications. The purpose of this class is to extend estimators
 to be able to estimate a series of target functions (f1,f2,f3...,fn)
 that are trained on a single X predictor matrix to predict a series
@@ -411,9 +409,9 @@ Below is an example of multioutput classification:
 Classifier Chain
 ----------------
 
-Classifier chains (see :class:`ClassifierChain`) are a way of combining a
-number of binary classifiers into a single multi-label model that is capable
-of exploiting correlations among targets.
+Classifier chains (see :class:`~sklearn.multioutput.ClassifierChain`) are a way
+of combining a number of binary classifiers into a single multi-label model
+that is capable of exploiting correlations among targets.
 
 For a multi-label classification problem with N classes, N binary
 classifiers are assigned an integer between 0 and N-1. These integers
@@ -511,12 +509,12 @@ Multioutput regression
 ----------------------
 
 Multioutput regression support can be added to any regressor with
-:class:`MultiOutputRegressor`.  This strategy consists of fitting one
-regressor per target. Since each target is represented by exactly one
-regressor it is possible to gain knowledge about the target by
+:class:`~sklearn.multioutput.MultiOutputRegressor`.  This strategy consists of
+fitting one regressor per target. Since each target is represented by exactly
+one regressor it is possible to gain knowledge about the target by
 inspecting its corresponding regressor. As
-:class:`MultiOutputRegressor` fits one regressor per target it can not
-take advantage of correlations between targets.
+:class:`~sklearn.multioutput.MultiOutputRegressor` fits one regressor per
+target it can not take advantage of correlations between targets.
 
 Below is an example of multioutput regression:
 
@@ -541,7 +539,7 @@ Below is an example of multioutput regression:
 Regressor Chain
 ---------------
 
-Regressor chains (see :class:`RegressorChain`) is analogous to
-ClassifierChain as a way of combining a number of regressions
-into a single multi-target model that is capable of exploiting
-correlations among targets.
+Regressor chains (see :class:`~sklearn.multioutput.RegressorChain`) is
+analogous to :class:`~sklearn.multioutput.ClassifierChain` as a way of
+combining a number of regressions into a single multi-target model that is
+capable of exploiting correlations among targets.
