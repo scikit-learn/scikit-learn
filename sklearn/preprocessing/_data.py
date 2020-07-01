@@ -74,7 +74,7 @@ def _handle_zeros_in_scale(scale, copy=True):
         if copy:
             # New array to avoid side-effects
             scale = scale.copy()
-        scale[scale == 0.0] = 1.0
+        scale[np.isclose(scale,0.0)] = 1.0
         return scale
 
 
