@@ -9,6 +9,7 @@
 
 import warnings
 from inspect import signature
+from contextlib import suppress
 
 from math import log
 import numpy as np
@@ -24,6 +25,7 @@ from .preprocessing import label_binarize, LabelBinarizer
 from .utils import check_array, indexable, column_or_1d
 from .utils.validation import check_is_fitted, check_consistent_length
 from .utils.validation import _check_sample_weight
+from .pipeline import Pipeline
 from .isotonic import IsotonicRegression
 from .svm import LinearSVC
 from .model_selection import check_cv
@@ -176,22 +178,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
         self : object
             Returns an instance of self.
         """
-        X, y = self._validate_data(X, y, accept_sparse=['csc', 'csr', 'coo'],
-                                   force_all_finite=False, allow_nd=True)
         X, y = indexable(X, y)
-        le = LabelBinarizer().fit(y)
-        self.classes_ = le.classes_
-
-        # Check that each cross-validation fold can have at least one
-        # example per class
-        n_folds = self.cv if isinstance(self.cv, int) \
-            else self.cv.n_folds if hasattr(self.cv, "n_folds") else None
-        if n_folds and \
-                np.any([np.sum(y == class_) < n_folds for class_ in
-                        self.classes_]):
-            raise ValueError("Requesting %d-fold cross-validation but provided"
-                             " less than %d examples for at least one class."
-                             % (n_folds, n_folds))
 
         self.calibrated_classifiers_ = []
         if self.base_estimator is None:
@@ -202,11 +189,41 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
             base_estimator = self.base_estimator
 
         if self.cv == "prefit":
+            # Set `n_features_in_` attribute
+            if isinstance(self.base_estimator, Pipeline):
+                check_is_fitted(self.base_estimator[-1])
+            else:
+                check_is_fitted(self.base_estimator)
+            with suppress(AttributeError):
+                self.n_features_in_ = base_estimator.n_features_in_
+            self.classes_ = self.base_estimator.classes_
+
             calibrated_classifier = _CalibratedClassifier(
                 base_estimator, method=self.method)
             calibrated_classifier.fit(X, y, sample_weight)
             self.calibrated_classifiers_.append(calibrated_classifier)
         else:
+            X, y = self._validate_data(
+                X, y, accept_sparse=['csc', 'csr', 'coo'],
+                force_all_finite=False, allow_nd=True
+            )
+            le = LabelBinarizer().fit(y)
+            self.classes_ = le.classes_
+
+            # Check that each cross-validation fold can have at least one
+            # example per class
+            if isinstance(self.cv, int):
+                n_folds = self.cv
+            elif hasattr(self.cv, "n_splits"):
+                n_folds = self.cv.n_splits
+            else:
+                n_folds = None
+            if n_folds and np.any([np.sum(y == class_) < n_folds
+                                   for class_ in self.classes_]):
+                raise ValueError(f"Requesting {n_folds}-fold cross-validation "
+                                 f"but provided less than {n_folds} examples "
+                                 "for at least one class.")
+
             cv = check_cv(self.cv, y, classifier=True)
             fit_parameters = signature(base_estimator.fit).parameters
             base_estimator_supports_sw = "sample_weight" in fit_parameters

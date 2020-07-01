@@ -45,6 +45,14 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
+:mod:`sklearn.calibrator`
+.........................
+
+- |Enhancement| Allow :class:`calibrator.CalibratedClassifierCV` use with
+  prefit :class:`pipeline.Pipeline` where data is not `X` is not array-like,
+  sparse matrix or dataframe at the start. :pr:`17546` by
+  :user:`Lucy Liu <lucyleeow>`.
+
 :mod:`sklearn.datasets`
 .......................
 
@@ -205,9 +213,9 @@ Changelog
 :mod:`sklearn.neural_network`
 .............................
 
-- |Efficiency| Neural net training is now a little faster.
-  :pr:`17603`, :pr:`17604`, :pr:`17606`, :pr:`17608`, :pr:`17609`, :pr:`17633`
-  by :user:`Alex Henrie <alexhenrie>`.
+- |Efficiency| Neural net training and prediction are now a little faster.
+  :pr:`17603`, :pr:`17604`, :pr:`17606`, :pr:`17608`, :pr:`17609`, :pr:`17633`,
+  :pr:`17661` by :user:`Alex Henrie <alexhenrie>`.
 
 - |Enhancement| Avoid converting float32 input to float64 in
   :class:`neural_network.BernoulliRBM`.
