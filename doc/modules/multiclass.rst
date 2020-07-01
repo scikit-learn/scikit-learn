@@ -326,9 +326,10 @@ Below is an example of multiclass learning using Output-Codes::
 Multioutput (multilabel) classification
 =======================================
 
-**Multilabel classification** is a classification task labelling each sample
-with ``x`` labels from ``n_classes`` possible classes, where ``x`` can be 0 to
-``n_classes`` inclusive. This can be thought of as predicting properties of a
+**Multioutput classification** (also known as **multilabel classification**)
+is a classification task labelling each sample with ``x`` labels from
+``n_classes`` possible classes, where ``x`` can be 0 to ``n_classes``
+inclusive. This can be thought of as predicting properties of a
 sample that are not mutually exclusive. Formally, a binary output is assigned
 to each class, for every sample. Positive classes are indicated with 1 and
 negative classes with 0 or -1. It is thus comparable to running ``n_classes``
