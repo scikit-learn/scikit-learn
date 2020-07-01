@@ -99,6 +99,14 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
         split, which has been fitted on training folds and
         calibrated on the testing fold.
 
+    n_features_in_ : int
+        The number of features in `X`. If `cv='prefit'`, number of features
+        in the data used to fit `base_estimator`.
+
+    label_encoder_ : LabelEncoder instance
+        `LabelEncoder` fitted on `y`. If `cv='prefit'`, `LabelEncoder`
+        fitted on `base_estimator.classes_`.
+
     Examples
     --------
     >>> from sklearn.datasets import make_classification
