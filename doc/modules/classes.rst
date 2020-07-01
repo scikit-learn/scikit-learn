@@ -433,14 +433,12 @@ Samples generator
    :toctree: generated/
    :template: class.rst
 
-   exceptions.ChangedBehaviorWarning
    exceptions.ConvergenceWarning
    exceptions.DataConversionWarning
    exceptions.DataDimensionalityWarning
    exceptions.EfficiencyWarning
    exceptions.FitFailedWarning
    exceptions.NotFittedError
-   exceptions.NonBLASDotWarning
    exceptions.UndefinedMetricWarning
 
 
@@ -900,7 +898,7 @@ Miscellaneous
     manifold.smacof
     manifold.spectral_embedding
     manifold.trustworthiness
-	
+
 
 .. _metrics_ref:
 
