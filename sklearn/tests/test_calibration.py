@@ -432,12 +432,3 @@ def test_calibration_attributes(clf, cv):
         classes = LabelBinarizer().fit(y).classes_
         assert_array_equal(calib_clf.classes_, classes)
         assert calib_clf.n_features_in_ == X.shape[1]
-
-
-def test_ll():
-    n_samples = 100
-    X, y = make_classification(n_samples=n_samples, n_features=6,
-                               n_classes=3, n_informative=3, random_state=42)
-    clf = CalibratedClassifierCV(RandomForestClassifier(), cv=2)
-    clf.fit(X,y)
-    clf.predict_proba(X)
