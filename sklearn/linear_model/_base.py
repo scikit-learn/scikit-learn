@@ -567,11 +567,12 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
 
         .. versionadded:: 0.24
 
-    solver : str, default="svd"
-        The solver to use. ``"svd"`` uses a Singular Value Decomposition-based
+    solver : str, default="lsqr"
+        The solver to use. ``"lsqr"`` uses a SVD-based least-squares
         approach, by calling ``scipy.linalg.lstsq``. ``"cholesky"`` uses the
-        Cholesky decomposition. If X is singular, then SVD will be used in
-        either situation.
+        Cholesky decomposition. If X is singular, then ``"cholesky"`` will
+        instead use an SVD-based solver. ``"cholesky"`` does not support `X`
+        matrices which are both singular and sparse.
 
     Attributes
     ----------
