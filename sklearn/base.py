@@ -19,6 +19,8 @@ from .utils.validation import check_X_y
 from .utils.validation import check_array
 from .utils._estimator_html_repr import estimator_html_repr
 from .utils.validation import _deprecate_positional_args
+from .utils._typing import add_types_to_docstring
+
 
 _DEFAULT_TAGS = {
     'non_deterministic': False,
@@ -154,6 +156,20 @@ class BaseEstimator:
     at the class level in their ``__init__`` as explicit keyword
     arguments (no ``*args`` or ``**kwargs``).
     """
+
+    def __init_subclass__(cls, inject_docstring=False, **kwargs):
+        if inject_docstring:
+            all_annotations = {}
+            if hasattr(cls, '__annotations__'):
+                all_annotations.update(cls.__annotations__)
+            if hasattr(cls.__init__, '__annotations__'):
+                all_annotations.update(cls.__init__.__annotations__)
+            params = inspect.signature(cls.__init__).parameters
+            defaults = {p: v.default for p, v in params.items()
+                        if v.default != inspect.Parameter.empty}
+            cls.__doc__ = add_types_to_docstring(cls.__doc__,
+                                                 all_annotations,
+                                                 defaults)
 
     @classmethod
     def _get_param_names(cls):

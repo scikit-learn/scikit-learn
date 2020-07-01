@@ -18,6 +18,12 @@ from scipy import optimize, sparse
 from scipy.special import expit, logsumexp
 from joblib import Parallel, delayed, effective_n_jobs
 
+from ..utils._typing import Literal
+from ..utils._typing import RandomState
+from ..utils._typing import Annotated
+from ..utils._typing import Shape
+from typing import Union
+from typing import Optional
 from ._base import LinearClassifierMixin, SparseCoefMixin, BaseEstimator
 from ._sag import sag_solver
 from ..preprocessing import LabelEncoder, LabelBinarizer
@@ -1009,7 +1015,7 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
 
 
 class LogisticRegression(BaseEstimator, LinearClassifierMixin,
-                         SparseCoefMixin):
+                         SparseCoefMixin, inject_docstring=True):
     """
     Logistic Regression (aka logit, MaxEnt) classifier.
 
@@ -1036,7 +1042,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
 
     Parameters
     ----------
-    penalty : {'l1', 'l2', 'elasticnet', 'none'}, default='l2'
+    penalty :
         Used to specify the norm used in the penalization. The 'newton-cg',
         'sag' and 'lbfgs' solvers support only l2 penalties. 'elasticnet' is
         only supported by the 'saga' solver. If 'none' (not supported by the
@@ -1045,24 +1051,24 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         .. versionadded:: 0.19
            l1 penalty with SAGA solver (allowing 'multinomial' + L1)
 
-    dual : bool, default=False
+    dual :
         Dual or primal formulation. Dual formulation is only implemented for
         l2 penalty with liblinear solver. Prefer dual=False when
         n_samples > n_features.
 
-    tol : float, default=1e-4
+    tol :
         Tolerance for stopping criteria.
 
-    C : float, default=1.0
+    C :
         Inverse of regularization strength; must be a positive float.
         Like in support vector machines, smaller values specify stronger
         regularization.
 
-    fit_intercept : bool, default=True
+    fit_intercept :
         Specifies if a constant (a.k.a. bias or intercept) should be
         added to the decision function.
 
-    intercept_scaling : float, default=1
+    intercept_scaling :
         Useful only when the solver 'liblinear' is used
         and self.fit_intercept is set to True. In this case, x becomes
         [x, self.intercept_scaling],
@@ -1075,7 +1081,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         To lessen the effect of regularization on synthetic feature weight
         (and therefore on the intercept) intercept_scaling has to be increased.
 
-    class_weight : dict or 'balanced', default=None
+    class_weight :
         Weights associated with classes in the form ``{class_label: weight}``.
         If not given, all classes are supposed to have weight one.
 
@@ -1089,12 +1095,11 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         .. versionadded:: 0.17
            *class_weight='balanced'*
 
-    random_state : int, RandomState instance, default=None
+    random_state :
         Used when ``solver`` == 'sag', 'saga' or 'liblinear' to shuffle the
         data. See :term:`Glossary <random_state>` for details.
 
-    solver : {'newton-cg', 'lbfgs', 'liblinear', 'sag', 'saga'}, \
-            default='lbfgs'
+    solver :
 
         Algorithm to use in the optimization problem.
 
@@ -1119,10 +1124,10 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         .. versionchanged:: 0.22
             The default solver changed from 'liblinear' to 'lbfgs' in 0.22.
 
-    max_iter : int, default=100
+    max_iter :
         Maximum number of iterations taken for the solvers to converge.
 
-    multi_class : {'auto', 'ovr', 'multinomial'}, default='auto'
+    multi_class :
         If the option chosen is 'ovr', then a binary problem is fit for each
         label. For 'multinomial' the loss minimised is the multinomial loss fit
         across the entire probability distribution, *even when the data is
@@ -1135,11 +1140,11 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         .. versionchanged:: 0.22
             Default changed from 'ovr' to 'auto' in 0.22.
 
-    verbose : int, default=0
+    verbose :
         For the liblinear and lbfgs solvers set verbose to any positive
         number for verbosity.
 
-    warm_start : bool, default=False
+    warm_start :
         When set to True, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
         Useless for liblinear solver. See :term:`the Glossary <warm_start>`.
@@ -1147,7 +1152,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         .. versionadded:: 0.17
            *warm_start* to support *lbfgs*, *newton-cg*, *sag*, *saga* solvers.
 
-    n_jobs : int, default=None
+    n_jobs :
         Number of CPU cores used when parallelizing over classes if
         multi_class='ovr'". This parameter is ignored when the ``solver`` is
         set to 'liblinear' regardless of whether 'multi_class' is specified or
@@ -1155,7 +1160,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         context. ``-1`` means using all processors.
         See :term:`Glossary <n_jobs>` for more details.
 
-    l1_ratio : float, default=None
+    l1_ratio :
         The Elastic-Net mixing parameter, with ``0 <= l1_ratio <= 1``. Only
         used if ``penalty='elasticnet'``. Setting ``l1_ratio=0`` is equivalent
         to using ``penalty='l2'``, while setting ``l1_ratio=1`` is equivalent
@@ -1165,17 +1170,17 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
     Attributes
     ----------
 
-    classes_ : ndarray of shape (n_classes, )
+    classes_ :
         A list of class labels known to the classifier.
 
-    coef_ : ndarray of shape (1, n_features) or (n_classes, n_features)
+    coef_ :
         Coefficient of the features in the decision function.
 
         `coef_` is of shape (1, n_features) when the given problem is binary.
         In particular, when `multi_class='multinomial'`, `coef_` corresponds
         to outcome 1 (True) and `-coef_` corresponds to outcome 0 (False).
 
-    intercept_ : ndarray of shape (1,) or (n_classes,)
+    intercept_ :
         Intercept (a.k.a. bias) added to the decision function.
 
         If `fit_intercept` is set to False, the intercept is set to zero.
@@ -1184,7 +1189,7 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         corresponds to outcome 1 (True) and `-intercept_` corresponds to
         outcome 0 (False).
 
-    n_iter_ : ndarray of shape (n_classes,) or (1, )
+    n_iter_ :
         Actual number of iterations for all classes. If binary or multinomial,
         it returns only 1 element. For liblinear solver, only the maximum
         number of iteration across all classes is given.
@@ -1249,12 +1254,33 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
     >>> clf.score(X, y)
     0.97...
     """
+    classes_: Annotated[np.ndarray, Shape(("n_classes",))]
+    coef_: Annotated[np.ndarray, Shape((1, "n_features"),
+                                       ("n_classes", "n_features"))]
+    intercept_: Annotated[np.ndarray, Shape((1,),
+                                            ("n_classes",))]
+    n_iter_: Annotated[np.ndarray, Shape(("n_classes",),
+                                         (1,))]
+
     @_deprecate_positional_args
-    def __init__(self, penalty='l2', *, dual=False, tol=1e-4, C=1.0,
-                 fit_intercept=True, intercept_scaling=1, class_weight=None,
-                 random_state=None, solver='lbfgs', max_iter=100,
-                 multi_class='auto', verbose=0, warm_start=False, n_jobs=None,
-                 l1_ratio=None):
+    def __init__(self,
+                 penalty: Literal['l1', 'l2', 'elasticnet', 'none'] = 'l2',
+                 *,
+                 dual: bool = False,
+                 tol: float = 1e-4,
+                 C: float = 1.0,
+                 fit_intercept: bool = True,
+                 intercept_scaling: float = 1,
+                 class_weight: Union[dict, Literal['balanced']] = None,
+                 random_state: RandomState = None,
+                 solver: Literal['newton-cg', 'lbfgs', 'liblinear', 'sag',
+                                 'saga'] = 'lbfgs',
+                 max_iter: int = 100,
+                 multi_class: Literal['auto', 'ovr', 'multinomial'] = 'auto',
+                 verbose: int = 0,
+                 warm_start: bool = False,
+                 n_jobs: Optional[int] = None,
+                 l1_ratio: float = None):
 
         self.penalty = penalty
         self.dual = dual
