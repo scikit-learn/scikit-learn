@@ -24,7 +24,7 @@ from .class_weight import compute_class_weight, compute_sample_weight
 from . import _joblib
 from ..exceptions import DataConversionWarning
 from .deprecation import deprecated
-from .fixes import np_version
+from .fixes import np_version, parse_version
 from ._estimator_html_repr import estimator_html_repr
 from .validation import (as_float_array,
                          assert_all_finite,
@@ -171,7 +171,7 @@ def axis0_safe_slice(X, mask, len_mask):
 
 def _array_indexing(array, key, key_dtype, axis):
     """Index an array or scipy.sparse consistently across NumPy version."""
-    if np_version < (1, 12) or issparse(array):
+    if np_version < parse_version('1.12') or issparse(array):
         # FIXME: Remove the check for NumPy when using >= 1.12
         # check if we have an boolean array-likes to make the proper indexing
         if key_dtype == 'bool':
@@ -413,43 +413,48 @@ def _get_column_indices(X, key):
                          "strings, or boolean mask is allowed")
 
 
-def resample(*arrays, **options):
-    """Resample arrays or sparse matrices in a consistent way
+def resample(*arrays,
+             replace=True,
+             n_samples=None,
+             random_state=None,
+             stratify=None):
+    """Resample arrays or sparse matrices in a consistent way.
 
     The default strategy implements one step of the bootstrapping
     procedure.
 
     Parameters
     ----------
-    *arrays : sequence of indexable data-structures
+    *arrays : sequence of array-like of shape (n_samples,) or \
+            (n_samples, n_outputs)
         Indexable data-structures can be arrays, lists, dataframes or scipy
         sparse matrices with consistent first dimension.
 
-    Other Parameters
-    ----------------
-    replace : boolean, True by default
+    replace : bool, default=True
         Implements resampling with replacement. If False, this will implement
         (sliced) random permutations.
 
-    n_samples : int, None by default
+    n_samples : int, default=None
         Number of samples to generate. If left to None this is
         automatically set to the first dimension of the arrays.
         If replace is False it should not be larger than the length of
         arrays.
 
-    random_state : int, RandomState instance or None, optional (default=None)
+    random_state : int or RandomState instance, default=None
         Determines random number generation for shuffling
         the data.
         Pass an int for reproducible results across multiple function calls.
         See :term:`Glossary <random_state>`.
 
-    stratify : array-like or None (default=None)
+    stratify : array-like of shape (n_samples,) or (n_samples, n_outputs), \
+            default=None
         If not None, data is split in a stratified fashion, using this as
         the class labels.
 
     Returns
     -------
-    resampled_arrays : sequence of indexable data-structures
+    resampled_arrays : sequence of array-like of shape (n_samples,) or \
+            (n_samples, n_outputs)
         Sequence of resampled copies of the collections. The original arrays
         are not impacted.
 
@@ -492,18 +497,12 @@ def resample(*arrays, **options):
       ...          random_state=0)
       [1, 1, 1, 0, 1]
 
-
     See also
     --------
     :func:`sklearn.utils.shuffle`
     """
-
-    random_state = check_random_state(options.pop('random_state', None))
-    replace = options.pop('replace', True)
-    max_n_samples = options.pop('n_samples', None)
-    stratify = options.pop('stratify', None)
-    if options:
-        raise ValueError("Unexpected kw arguments: %r" % options.keys())
+    max_n_samples = n_samples
+    random_state = check_random_state(random_state)
 
     if len(arrays) == 0:
         return None
@@ -556,7 +555,6 @@ def resample(*arrays, **options):
 
         indices = random_state.permutation(indices)
 
-
     # convert sparse matrices to CSR for row-based indexing
     arrays = [a.tocsr() if issparse(a) else a for a in arrays]
     resampled_arrays = [_safe_indexing(a, indices) for a in arrays]
@@ -567,7 +565,7 @@ def resample(*arrays, **options):
         return resampled_arrays
 
 
-def shuffle(*arrays, **options):
+def shuffle(*arrays, random_state=None, n_samples=None):
     """Shuffle arrays or sparse matrices in a consistent way
 
     This is a convenience alias to ``resample(*arrays, replace=False)`` to do
@@ -579,17 +577,16 @@ def shuffle(*arrays, **options):
         Indexable data-structures can be arrays, lists, dataframes or scipy
         sparse matrices with consistent first dimension.
 
-    Other Parameters
-    ----------------
-    random_state : int, RandomState instance or None, optional (default=None)
+    random_state : int or RandomState instance, default=None
         Determines random number generation for shuffling
         the data.
         Pass an int for reproducible results across multiple function calls.
         See :term:`Glossary <random_state>`.
 
-    n_samples : int, None by default
+    n_samples : int, default=None
         Number of samples to generate. If left to None this is
-        automatically set to the first dimension of the arrays.
+        automatically set to the first dimension of the arrays.  It should
+        not be larger than the length of arrays.
 
     Returns
     -------
@@ -633,8 +630,8 @@ def shuffle(*arrays, **options):
     --------
     :func:`sklearn.utils.resample`
     """
-    options['replace'] = False
-    return resample(*arrays, **options)
+    return resample(*arrays, replace=False, n_samples=n_samples,
+                    random_state=random_state)
 
 
 @_deprecate_positional_args
@@ -853,7 +850,7 @@ def indices_to_mask(indices, mask_length):
     if mask_length <= np.max(indices):
         raise ValueError("mask_length must be greater than max(indices)")
 
-    mask = np.zeros(mask_length, dtype=np.bool)
+    mask = np.zeros(mask_length, dtype=bool)
     mask[indices] = True
 
     return mask
@@ -956,7 +953,7 @@ def is_scalar_nan(x):
     """Tests if x is NaN
 
     This function is meant to overcome the issue that np.isnan does not allow
-    non-numerical types as input, and that np.nan is not np.float('nan').
+    non-numerical types as input, and that np.nan is not float('nan').
 
     Parameters
     ----------
@@ -1050,7 +1047,7 @@ def _approximate_mode(class_counts, n_draws, rng):
             need_to_add -= add_now
             if need_to_add == 0:
                 break
-    return floored.astype(np.int)
+    return floored.astype(int)
 
 
 def check_matplotlib_support(caller_name):

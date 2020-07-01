@@ -21,7 +21,7 @@ License: BSD 3 clause
 print(__doc__)
 
 
-##############################################################################
+# %%
 # Loading the data
 # ----------------
 #
@@ -33,7 +33,7 @@ diabetes = load_diabetes()
 X, y = diabetes.data, diabetes.target
 print(diabetes.DESCR)
 
-##############################################################################
+# %%
 # Feature importance from coefficients
 # ------------------------------------
 #
@@ -57,7 +57,7 @@ plt.bar(height=importance, x=feature_names)
 plt.title("Feature importances via coefficients")
 plt.show()
 
-##############################################################################
+# %%
 # Selecting features based on importance
 # --------------------------------------
 #
@@ -81,7 +81,7 @@ print("Features selected by SelectFromModel: "
       f"{feature_names[sfm.get_support()]}")
 print(f"Done in {toc - tic:.3f}s")
 
-##############################################################################
+# %%
 # Selecting features with Sequential Feature Selection
 # ----------------------------------------------------
 #
@@ -115,7 +115,7 @@ print("Features selected by backward sequential selection: "
       f"{feature_names[sfs_backward.get_support()]}")
 print(f"Done in {toc_bwd - tic_bwd:.3f}s")
 
-##############################################################################
+# %%
 # Discussion
 # ----------
 #

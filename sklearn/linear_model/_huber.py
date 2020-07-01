@@ -142,29 +142,29 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
 
     Parameters
     ----------
-    epsilon : float, greater than 1.0, default 1.35
+    epsilon : float, greater than 1.0, default=1.35
         The parameter epsilon controls the number of samples that should be
         classified as outliers. The smaller the epsilon, the more robust it is
         to outliers.
 
-    max_iter : int, default 100
+    max_iter : int, default=100
         Maximum number of iterations that
         ``scipy.optimize.minimize(method="L-BFGS-B")`` should run for.
 
-    alpha : float, default 0.0001
+    alpha : float, default=0.0001
         Regularization parameter.
 
-    warm_start : bool, default False
+    warm_start : bool, default=False
         This is useful if the stored attributes of a previously used model
         has to be reused. If set to False, then the coefficients will
         be rewritten for every call to fit.
         See :term:`the Glossary <warm_start>`.
 
-    fit_intercept : bool, default True
+    fit_intercept : bool, default=True
         Whether or not to fit the intercept. This can be set to False
         if the data is already centered around the origin.
 
-    tol : float, default 1e-5
+    tol : float, default=1e-05
         The iteration will stop when
         ``max{|proj g_i | i = 1, ..., n}`` <= ``tol``
         where pg_i is the i-th component of the projected gradient.
