@@ -791,7 +791,7 @@ Class APIs and Estimator Types
 
         Classifiers must store a :term:`classes_` attribute after fitting,
         and usually inherit from :class:`base.ClassifierMixin`, which sets
-        their estimator_type tag.
+        their `estimator_type` tag.
 
         A classifier can be distinguished from other estimators with
         :func:`~base.is_classifier`.
