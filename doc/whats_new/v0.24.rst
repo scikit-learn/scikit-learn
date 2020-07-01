@@ -221,7 +221,8 @@ Changelog
   :class:`neural_network.BernoulliRBM`.
   :pr:`16352` by :user:`Arthur Imbert <Henley13>`.
 
-- |Enhancement| Support 32-bit computations in `MLPClassifier` and `MLPRegressor`.
+- |Enhancement| Support 32-bit computations in :class:`neural_network.MLPClassifier`
+  and :class:`neural_network.MLPRegressor`.
   :pr:`17759` by :user:`Srimukh Sripada <d3b0unce>`.
 
 :mod:`sklearn.preprocessing`
