@@ -1255,9 +1255,9 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
     0.97...
     """
     classes_: Annotated[np.ndarray, Shape(("n_classes",))]  # noqa
-    coef_: Annotated[np.ndarray, Shape((1, "n_features"),
+    coef_: Annotated[np.ndarray, Shape((1, "n_features"),  # noqa
                                        ("n_classes", "n_features"))]  # noqa
-    intercept_: Annotated[np.ndarray, Shape((1,),
+    intercept_: Annotated[np.ndarray, Shape((1,),  # noqa
                                             ("n_classes",))]  # noqa
     n_iter_: Annotated[np.ndarray, Shape(("n_classes",), (1,))]  # noqa
 
