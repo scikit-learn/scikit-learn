@@ -3,12 +3,12 @@ import numpy as np
 
 from typing import Union
 try:
-    from typing import Literal
+    from typing import Literal  # noqa
 except ImportError:
     from typing_extensions import Literal  # noqa
 
 try:
-    from typing import Annotated  # python 3.9
+    from typing import Annotated  # noqa
 except ImportError:
     from typing_extensions import Annotated  # noqa
 
