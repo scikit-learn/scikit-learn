@@ -378,11 +378,9 @@ def test_calibration_accepts_ndarray(X):
 
 
 def test_isotonic_calibration_strict():
-    """
-    Test that enforcing strict monotonicity for isotonic calibration
-    preserves rank-based metrics to handle issue
-    https://github.com/scikit-learn/scikit-learn/issues/16321
-    """
+    # Test that enforcing strict monotonicity for isotonic calibration
+    # preserves rank-based metrics to handle issue
+    # https://github.com/scikit-learn/scikit-learn/issues/16321
 
     n_samples = 100
     X, y = make_classification(n_samples=2 * n_samples, n_features=6,

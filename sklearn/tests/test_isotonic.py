@@ -535,3 +535,15 @@ def test_isotonic_thresholds(increasing):
         assert all(np.diff(y_thresholds) >= 0)
     else:
         assert all(np.diff(y_thresholds) <= 0)
+
+
+def test_isotonic_strict():
+    # check on enforcing strict monotonicity
+    X = np.array([0.1, 0.3, 0.5, 0.7, 1.])
+    y = np.array([1, 0, 1, 0, 1])
+
+    ireg = IsotonicRegression(strict=True)
+    ireg.fit(X, y)
+    pred = ireg.predict([0.1, 0.2, 0.3])
+
+    assert all(np.diff(pred) != 0)
