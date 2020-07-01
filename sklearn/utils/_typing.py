@@ -2,15 +2,8 @@ import re
 import numpy as np
 
 from typing import Union
-try:
-    from typing import Literal  # noqa
-except ImportError:
-    from typing_extensions import Literal  # noqa
-
-try:
-    from typing import Annotated  # noqa
-except ImportError:
-    from typing_extensions import Annotated  # noqa
+from typing_extensions import Literal  # noqa
+from typing_extensions import Annotated  # noqa
 
 
 RandomState = Union[int, np.random.RandomState, None]
