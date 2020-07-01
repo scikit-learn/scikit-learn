@@ -21,6 +21,10 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.tree import DecisionTreeRegressor
 from sklearn import datasets
 
+from sklearn.cluster import KMeans
+from sklearn.mixture import BayesianGaussianMixture
+from sklearn.ensemble import IsolationForest
+
 from sklearn.base import TransformerMixin
 from sklearn.utils._mocking import MockDataFrame
 from sklearn import config_context
@@ -537,3 +541,16 @@ def test_repr_html_wraps():
     with config_context(display='diagram'):
         output = tree._repr_html_()
         assert "<style>" in output
+
+
+# TODO: Remove in version 0.26
+@pytest.mark.parametrize("Estimator", [DecisionTreeClassifier,
+                                       DecisionTreeRegressor,
+                                       KMeans,
+                                       BayesianGaussianMixture,
+                                       IsolationForest])
+def test_deprecated_estimator_type(Estimator):
+    # Assert that deprecated _estimator_type warns FutureWarning
+    est = Estimator()
+    with pytest.warns(FutureWarning):
+        hasattr(est, "_estimator_type")

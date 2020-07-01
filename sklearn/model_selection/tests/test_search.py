@@ -1885,3 +1885,12 @@ def test_scalar_fit_param_compat(SearchCV, param_search):
         'scalar_param': 42,
     }
     model.fit(X_train, y_train, **fit_params)
+
+
+# TODO: Remove in version 0.26
+@pytest.mark.parametrize("SearchCV", [GridSearchCV, RandomizedSearchCV])
+def test_deprecated_estimator_type(SearchCV):
+    # Assert that deprecated _estimator_type warns FutureWarning
+    search = SearchCV(DecisionTreeClassifier(), {'max_depth': [5, 10]})
+    with pytest.warns(FutureWarning):
+        hasattr(search, "_estimator_type")

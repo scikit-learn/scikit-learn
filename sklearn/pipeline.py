@@ -22,6 +22,7 @@ from .utils.metaestimators import if_delegate_has_method
 from .utils import Bunch, _print_elapsed_time
 from .utils.validation import check_memory
 from .utils.validation import _deprecate_positional_args
+from .utils.deprecation import deprecated
 
 from .utils.metaestimators import _BaseComposition
 
@@ -212,6 +213,8 @@ class Pipeline(_BaseComposition):
         return est
 
     @property
+    @deprecated("_estimator_type is deprecated in "
+                "0.24 and will be removed in 0.26")
     def _estimator_type(self):
         return self.steps[-1][1]._estimator_type
 
@@ -637,6 +640,12 @@ class Pipeline(_BaseComposition):
                             names=names,
                             name_details=name_details,
                             dash_wrapped=False)
+
+    def _more_tags(self):
+        estimator_tags = self.steps[-1][1]._get_tags()
+        return {
+            'estimator_type': estimator_tags['estimator_type']
+        }
 
 
 def _name_estimators(estimators):

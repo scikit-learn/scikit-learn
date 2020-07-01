@@ -19,6 +19,7 @@ from .utils.validation import check_X_y
 from .utils.validation import check_array
 from .utils._estimator_html_repr import estimator_html_repr
 from .utils.validation import _deprecate_positional_args
+from .utils.deprecation import deprecated
 
 _DEFAULT_TAGS = {
     'non_deterministic': False,
@@ -37,6 +38,7 @@ _DEFAULT_TAGS = {
     'binary_only': False,
     'requires_fit': True,
     'requires_y': False,
+    'estimator_type': None
     }
 
 
@@ -465,7 +467,12 @@ class BaseEstimator:
 class ClassifierMixin:
     """Mixin class for all classifiers in scikit-learn."""
 
-    _estimator_type = "classifier"
+    # mypy error: Decorated property not supported
+    @deprecated("_estimator_type is deprecated in "
+                "0.24 and will be removed in 0.26")
+    @property
+    def _estimator_type(self):
+        return "classifier"
 
     def score(self, X, y, sample_weight=None):
         """
@@ -495,12 +502,18 @@ class ClassifierMixin:
         return accuracy_score(y, self.predict(X), sample_weight=sample_weight)
 
     def _more_tags(self):
-        return {'requires_y': True}
+        return {'requires_y': True, 'estimator_type': 'classifier'}
 
 
 class RegressorMixin:
     """Mixin class for all regression estimators in scikit-learn."""
-    _estimator_type = "regressor"
+
+    # mypy error: Decorated property not supported
+    @deprecated("_estimator_type is deprecated in "
+                "0.24 and will be removed in 0.26")
+    @property
+    def _estimator_type(self):
+        return "regressor"
 
     def score(self, X, y, sample_weight=None):
         """Return the coefficient of determination R^2 of the prediction.
@@ -548,12 +561,18 @@ class RegressorMixin:
         return r2_score(y, y_pred, sample_weight=sample_weight)
 
     def _more_tags(self):
-        return {'requires_y': True}
+        return {'requires_y': True, 'estimator_type': 'regressor'}
 
 
 class ClusterMixin:
     """Mixin class for all cluster estimators in scikit-learn."""
-    _estimator_type = "clusterer"
+
+    # mypy error: Decorated property not supported
+    @deprecated("_estimator_type is deprecated in "
+                "0.24 and will be removed in 0.26")
+    @property
+    def _estimator_type(self):
+        return "clusterer"
 
     def fit_predict(self, X, y=None):
         """
@@ -692,7 +711,13 @@ class TransformerMixin:
 
 class DensityMixin:
     """Mixin class for all density estimators in scikit-learn."""
-    _estimator_type = "DensityEstimator"
+
+    # mypy error: Decorated property not supported
+    @deprecated("_estimator_type is deprecated in "
+                "0.24 and will be removed in 0.26")
+    @property
+    def _estimator_type(self):
+        return "DensityEstimator"
 
     def score(self, X, y=None):
         """Return the score of the model on the data X
@@ -710,10 +735,19 @@ class DensityMixin:
         """
         pass
 
+    def _more_tags(self):
+        return {'estimator_type': 'DensityEstimator'}
+
 
 class OutlierMixin:
     """Mixin class for all outlier detection estimators in scikit-learn."""
-    _estimator_type = "outlier_detector"
+
+    # mypy error: Decorated property not supported
+    @deprecated("_estimator_type is deprecated in "
+                "0.24 and will be removed in 0.26")
+    @property
+    def _estimator_type(self):
+        return "outlier_detector"
 
     def fit_predict(self, X, y=None):
         """Perform fit on X and returns labels for X.
@@ -735,6 +769,9 @@ class OutlierMixin:
         """
         # override for transductive outlier detectors like LocalOulierFactor
         return self.fit(X).predict(X)
+
+    def _more_tags(self):
+        return {'estimator_type': 'outlier_detector'}
 
 
 class MetaEstimatorMixin:
@@ -768,7 +805,7 @@ def is_classifier(estimator):
     out : bool
         True if estimator is a classifier and False otherwise.
     """
-    return getattr(estimator, "_estimator_type", None) == "classifier"
+    return estimator._get_tags()["estimator_type"] == "classifier"
 
 
 def is_regressor(estimator):
@@ -784,7 +821,7 @@ def is_regressor(estimator):
     out : bool
         True if estimator is a regressor and False otherwise.
     """
-    return getattr(estimator, "_estimator_type", None) == "regressor"
+    return estimator._get_tags()["estimator_type"] == "regressor"
 
 
 def is_outlier_detector(estimator):
@@ -800,4 +837,4 @@ def is_outlier_detector(estimator):
     out : bool
         True if estimator is an outlier detector and False otherwise.
     """
-    return getattr(estimator, "_estimator_type", None) == "outlier_detector"
+    return estimator._get_tags()["estimator_type"] == "outlier_detector"

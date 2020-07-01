@@ -419,6 +419,8 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         self.return_train_score = return_train_score
 
     @property
+    @deprecated("_estimator_type is deprecated in "
+                "0.24 and will be removed in 0.26")
     def _estimator_type(self):
         return self.estimator._estimator_type
 
@@ -866,6 +868,12 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                        splits=True)
 
         return results
+
+    def _more_tags(self):
+        estimator_tags = self.estimator._get_tags()
+        return {
+            'estimator_type': estimator_tags['estimator_type']
+        }
 
 
 class GridSearchCV(BaseSearchCV):

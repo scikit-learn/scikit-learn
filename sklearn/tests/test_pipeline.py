@@ -1220,3 +1220,11 @@ def test_feature_union_fit_params():
 
     t.fit(X, y, a=0)
     t.fit_transform(X, y, a=0)
+
+
+# TODO: Remove in version 0.26
+def test_deprecated_estimator_type():
+    # Assert that deprecated _estimator_type warns FutureWarning
+    pipeline = Pipeline([('est', LinearRegression())])
+    with pytest.warns(FutureWarning):
+        hasattr(pipeline, "_estimator_type")

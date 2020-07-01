@@ -57,7 +57,7 @@ class MockClassifier:
         return self
 
     def _get_tags(self):
-        return {}
+        return {'estimator_type': 'classifier'}
 
 
 def test_rfe_features_importance():
@@ -280,6 +280,7 @@ def test_rfecv_grid_scores_size():
         assert rfecv.n_features_ >= min_features_to_select
 
 
+@ignore_warnings(category=FutureWarning)
 def test_rfe_estimator_tags():
     rfe = RFE(SVC(kernel='linear'))
     assert rfe._estimator_type == "classifier"
@@ -491,3 +492,11 @@ def test_multioutput(ClsRFE):
     clf = RandomForestClassifier(n_estimators=5)
     rfe_test = ClsRFE(clf)
     rfe_test.fit(X, y)
+
+
+# TODO: Remove in version 0.26
+def test_deprecated_estimator_type():
+    # Assert that deprecated _estimator_type warns FutureWarning
+    rfe = RFE(SVC())
+    with pytest.warns(FutureWarning):
+        hasattr(rfe, "_estimator_type")
