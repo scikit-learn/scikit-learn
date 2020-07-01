@@ -757,13 +757,14 @@ def test_mlp_regressor_dtypes_casting():
 
 
 @pytest.mark.parametrize('dtype', [np.float32, np.float64])
-def test_mlp_param_dtypes(dtype):
+@pytest.mark.parametrize('Estimator', [MLPClassifier, MLPRegressor])
+def test_mlp_param_dtypes(dtype, Estimator):
     # Checks if input dtype is used for network parameters
     # and predictions
     X, y = X_digits.astype(dtype), y_digits
-    mlp = MLPRegressor(alpha=1e-5,
-                       hidden_layer_sizes=(5, 3),
-                       random_state=1, max_iter=50)
+    mlp = Estimator(alpha=1e-5,
+                    hidden_layer_sizes=(5, 3),
+                    random_state=1, max_iter=50)
     mlp.fit(X[:300], y[:300])
     pred = mlp.predict(X[300:])
 
@@ -773,4 +774,5 @@ def test_mlp_param_dtypes(dtype):
     assert all([coef.dtype == dtype
                 for coef in mlp.coefs_])
 
-    assert pred.dtype == dtype
+    if Estimator == MLPRegressor:
+        assert pred.dtype == dtype
