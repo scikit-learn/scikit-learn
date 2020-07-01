@@ -22,6 +22,7 @@ from .base import (BaseEstimator, ClassifierMixin, RegressorMixin, clone,
                    MetaEstimatorMixin)
 from .preprocessing import label_binarize, LabelEncoder
 from .utils import check_array, indexable, column_or_1d
+from .utils.multiclass import check_classification_targets
 from .utils.validation import check_is_fitted, check_consistent_length
 from .utils.validation import _check_sample_weight
 from .pipeline import Pipeline
@@ -177,6 +178,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
         self : object
             Returns an instance of self.
         """
+        check_classification_targets(y)
         X, y = indexable(X, y)
 
         self.calibrated_classifiers_ = []
