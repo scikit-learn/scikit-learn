@@ -172,6 +172,8 @@ def test_assure_warning_when_normalize(normalize, n_warnings, warning):
     with pytest.warns(warning) as record:
         model.fit(X, y)
     assert len(record) == n_warnings
+    if n_warnings:
+        assert "'normalize' was deprecated" in str(record[0].message)
 
 
 # FIXME: 'normalize' to be removed in 0.26
