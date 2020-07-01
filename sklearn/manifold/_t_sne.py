@@ -746,12 +746,12 @@ class TSNE(BaseEstimator):
                     distances = pairwise_distances(X, metric=self.metric,
                                                    n_jobs=self.n_jobs)
 
-            if self.metric != 'euclidean' and self.square_distance is True:
-                distances **= 2
-
             if np.any(distances < 0):
                 raise ValueError("All distances should be positive, the "
                                  "metric given is not correct")
+
+            if self.metric != 'euclidean' and self.square_distance is True:
+                distances **= 2
 
             # compute the joint probability distribution for the input space
             P = _joint_probabilities(distances, self.perplexity, self.verbose)

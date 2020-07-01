@@ -368,13 +368,14 @@ def test_sparse_precomputed_distance():
         assert_almost_equal(Xt_dense, Xt_sparse)
 
 
-def test_non_positive_computed_distances():
+@pytest.mark.parametrize('square_distance', [True, 'legacy'])
+def test_non_positive_computed_distances(square_distance):
     # Computed distance matrices must be positive.
     def metric(x, y):
         return -1
 
-    # For square_distance=True, no ValueError will be raised
-    tsne = TSNE(metric=metric, method='exact', square_distance='legacy')
+    # Negative computed distances should be caught regardless of squaring
+    tsne = TSNE(metric=metric, method='exact', square_distance=square_distance)
     X = np.array([[0.0, 0.0], [1.0, 1.0]])
     with pytest.raises(ValueError, match="All distances .*metric given.*"):
         tsne.fit_transform(X)
