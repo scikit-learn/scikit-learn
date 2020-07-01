@@ -283,7 +283,7 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         self.X_min_, self.X_max_ = np.min(X), np.max(X)
 
         if self.strict:
-            keep_data = np.ones((len(y),), dtype=bool)
+            keep_data = np.ones(len(y), dtype=bool)
             keep_data[1:] = np.not_equal(y[1:], y[:-1])
             return X[keep_data], y[keep_data]
 
