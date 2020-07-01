@@ -374,13 +374,11 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         if (self.metric != other.metric
                 or not _params_equal(_get_metric_params(self),
                                      _get_metric_params(other))):
-            raise ValueError("The metric parameters of the given tree (%s, %s)"
-                             " do not match the parameters of %s "
-                             "(%s, %s)." % (other.metric,
-                                            _get_metric_params(other),
-                                            self.metric,
-                                            _get_metric_params(self),
-                                            self.__class__.__name__))
+            raise ValueError(f"The metric parameters of the given tree ("
+                             f"{other.metric}, {_get_metric_params(other)})"
+                             f" do not match the parameters of {self.metric} "
+                             f"({_get_metric_params(self)}, "
+                             f"{self.__class__.__name__}).")
 
     def _fit(self, X):
         self._check_algorithm_metric()
