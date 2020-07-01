@@ -109,7 +109,7 @@ def test_calibration_default_estimator():
     calib_clf = CalibratedClassifierCV(cv=2)
     calib_clf.fit(X, y)
 
-    base_est = calib_clf.calibrated_classifiers_[0].base_estimator
+    base_est = calib_clf.calibrated_classifiers_[0].clf_fitted
     assert isinstance(base_est, LinearSVC)
 
 

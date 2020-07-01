@@ -154,12 +154,10 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
            A. Niculescu-Mizil & R. Caruana, ICML 2005
     """
     @_deprecate_positional_args
-    def __init__(self, base_estimator=None, *, method='sigmoid', cv=None,
-                 ensemble=False):
+    def __init__(self, base_estimator=None, *, method='sigmoid', cv=None):
         self.base_estimator = base_estimator
         self.method = method
         self.cv = cv
-        self.ensemble = ensemble
 
     def fit(self, X, y, sample_weight=None):
         """Fit the calibrated model
@@ -184,7 +182,6 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
         if self.method not in (supported_methods):
             raise ValueError(f"'method' should be one of: {supported_methods}."
                              f" Got {self.method}.")
-
         X, y = indexable(X, y)
 
         self.calibrated_classifiers_ = []
@@ -205,16 +202,19 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
             with suppress(AttributeError):
                 self.n_features_in_ = base_estimator.n_features_in_
             self.classes_ = self.base_estimator.classes_
+            self.label_encoder_ = LabelEncoder().fit(self.classes_)
 
             calibrated_classifier = _fit_calibrator(
-                base_estimator, self.method, sample_weight)
+                base_estimator, self.label_encoder_, self.method, X, y,
+                sample_weight
+            )
             self.calibrated_classifiers_.append(calibrated_classifier)
         else:
             X, y = self._validate_data(
                 X, y, accept_sparse=['csc', 'csr', 'coo'],
                 force_all_finite=False, allow_nd=True
             )
-            # Class attributes set using all `y`
+            # Set attributes using all `y`
             le = LabelEncoder().fit(y)
             self.classes_ = le.classes_
             self.label_encoder_ = le
@@ -257,8 +257,8 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
 
                 sw = None if sample_weight is None else sample_weight[test]
                 calibrated_classifier = _fit_calibrator(
-                    this_estimator, X[test], y[test], self.label_encoder_,
-                    self.method, sw
+                    this_estimator, self.label_encoder_, self.method,
+                    X[test], y[test], sw
                 )
                 self.calibrated_classifiers_.append(calibrated_classifier)
 
@@ -364,31 +364,30 @@ def _get_predictions(clf_fitted, X, label_encoder_):
     return df, idx_pos_class
 
 
-def _fit_calibrator(clf_fitted, X, y, label_encoder_, method,
+def _fit_calibrator(clf_fitted, label_encoder_, method, X, y,
                     sample_weight=None):
     """Fit calibrator(s) and return a `_CalibratedClassiferPipeline`
     instance.
 
     Output of the `decision_function` method of the `clf_fitted` is used for
-    calibration. If this method does not exist for `clf_fitted`,
-    `predict_proba` method used.
+    calibration. If this method does not exist, `predict_proba` method used.
 
     Parameters
     ----------
     clf_fitted : Estimator instance
         Fitted classifier.
 
-    X : array-like
-        Sample data used to calibrate predictions.
-
-    y : ndarray, shape (n_samples,)
-        The targets.
-
     label_encoder_ : LabelEncoder instance
         LabelEncoder instance fitted on all the targets.
 
     method : {'sigmoid', 'isotonic'}
         The method to use for calibration.
+
+    X : array-like
+        Sample data used to calibrate predictions.
+
+    y : ndarray, shape (n_samples,)
+        The targets.
 
     sample_weight : ndarray, shape (n_samples,), default=None
         Sample weights. If `None`, then samples are equally weighted.
@@ -407,12 +406,12 @@ def _fit_calibrator(clf_fitted, X, y, label_encoder_, method,
 
     calibrated_classifiers = []
     for idx, this_df in zip(idx_pos_class, df.T):
-        if self.method == 'isotonic':
+        if method == 'isotonic':
             calibrator = IsotonicRegression(out_of_bounds='clip')
-        elif self.method == 'sigmoid':
+        elif method == 'sigmoid':
             calibrator = _SigmoidCalibration()
 
-        calibrator.fit(this_df, Y[:, indx], sample_weight)
+        calibrator.fit(this_df, Y[:, idx], sample_weight)
         calibrated_classifiers.append(calibrator)
 
     pipeline = _CalibratedClassiferPipeline(
@@ -437,7 +436,7 @@ class _CalibratedClassiferPipeline:
     """
     def __init__(self, clf_fitted, calibrators_fitted, label_encoder_):
         self.clf_fitted = clf_fitted
-        self.calibrators_fitted = calibrator_fitted
+        self.calibrators_fitted = calibrators_fitted
         self.label_encoder_ = label_encoder_
 
     def predict_proba(self, X):
