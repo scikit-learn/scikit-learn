@@ -74,13 +74,13 @@ def load_svmlight_file(f, *, n_features=None, dtype=np.float64,
 
     Parameters
     ----------
-    f : {str, file-like, int}
+    f : str, file-like or int
         (Path to) a file to load. If a path ends in ".gz" or ".bz2", it will
         be uncompressed on the fly. If an integer is passed, it is assumed to
         be a file descriptor. A file-like or file descriptor will not be closed
         by this function. A file-like object must be opened in binary mode.
 
-    n_features : int or None
+    n_features : int, default=None
         The number of features to use. If None, it will be inferred. This
         argument is useful to load several files that are subsets of a
         bigger sliced dataset: each subset might not have examples of
@@ -89,15 +89,15 @@ def load_svmlight_file(f, *, n_features=None, dtype=np.float64,
         n_features is only required if ``offset`` or ``length`` are passed a
         non-default value.
 
-    dtype : numpy data type, default np.float64
+    dtype : numpy data type, default=np.float64
         Data type of dataset to be loaded. This will be the data type of the
         output numpy arrays ``X`` and ``y``.
 
-    multilabel : boolean, optional, default False
+    multilabel : bool, default=False
         Samples may have several labels each (see
         https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multilabel.html)
 
-    zero_based : boolean or "auto", optional, default "auto"
+    zero_based : bool or "auto", default="auto"
         Whether column indices in f are zero-based (True) or one-based
         (False). If column indices are one-based, they are transformed to
         zero-based to match Python/NumPy conventions.
@@ -109,15 +109,15 @@ def load_svmlight_file(f, *, n_features=None, dtype=np.float64,
         to ``zero_based=True`` to avoid having the heuristic check yield
         inconsistent results on different segments of the file.
 
-    query_id : boolean, default False
+    query_id : bool, default=False
         If True, will return the query_id array for each file.
 
-    offset : integer, optional, default 0
+    offset : int, default=0
         Ignore the offset first bytes by seeking forward, then
         discarding the following bytes up until the next new line
         character.
 
-    length : integer, optional, default -1
+    length : int, default=-1
         If strictly positive, stop reading any new line of data once the
         position in the file has reached the (offset + length) bytes threshold.
 
@@ -224,14 +224,14 @@ def load_svmlight_files(files, *, n_features=None, dtype=np.float64,
 
     Parameters
     ----------
-    files : iterable over {str, file-like, int}
+    files : array-like, dtype=str, file-like or int
         (Paths of) files to load. If a path ends in ".gz" or ".bz2", it will
         be uncompressed on the fly. If an integer is passed, it is assumed to
         be a file descriptor. File-likes and file descriptors will not be
         closed by this function. File-like objects must be opened in binary
         mode.
 
-    n_features : int or None
+    n_features : int, default=None
         The number of features to use. If None, it will be inferred from the
         maximum column index occurring in any of the files.
 
@@ -239,15 +239,15 @@ def load_svmlight_files(files, *, n_features=None, dtype=np.float64,
         in any of the input files, but setting it to a lower value will cause
         an exception to be raised.
 
-    dtype : numpy data type, default np.float64
+    dtype : numpy data type, default=np.float64
         Data type of dataset to be loaded. This will be the data type of the
         output numpy arrays ``X`` and ``y``.
 
-    multilabel : boolean, optional
+    multilabel : bool, default=False
         Samples may have several labels each (see
         https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multilabel.html)
 
-    zero_based : boolean or "auto", optional
+    zero_based : bool or "auto", default="auto"
         Whether column indices in f are zero-based (True) or one-based
         (False). If column indices are one-based, they are transformed to
         zero-based to match Python/NumPy conventions.
@@ -259,15 +259,15 @@ def load_svmlight_files(files, *, n_features=None, dtype=np.float64,
         to zero_based=True to avoid having the heuristic check yield
         inconsistent results on different segments of the file.
 
-    query_id : boolean, defaults to False
+    query_id : bool, default=False
         If True, will return the query_id array for each file.
 
-    offset : integer, optional, default 0
+    offset : int, default=0
         Ignore the offset first bytes by seeking forward, then
         discarding the following bytes up until the next new line
         character.
 
-    length : integer, optional, default -1
+    length : int, default=-1
         If strictly positive, stop reading any new line of data once the
         position in the file has reached the (offset + length) bytes threshold.
 

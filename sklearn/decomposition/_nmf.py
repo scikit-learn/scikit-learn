@@ -911,7 +911,8 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
             (generally faster, less accurate alternative to NNDSVDa
             for when sparsity is not desired)
 
-        - 'custom': use custom matrices W and H
+        - 'custom': use custom matrices W and H if `update_H=True`. If
+          `update_H=False`, then only custom matrix H is used.
 
         .. versionchanged:: 0.23
             The default value of `init` changed from 'random' to None in 0.23.
