@@ -7,34 +7,47 @@ Multiclass and multioutput algorithms
 
 .. currentmodule:: sklearn.multiclass
 
-The :mod:`sklearn.multiclass` module implements *meta-estimators* to solve
-``multiclass`` and ``multilabel`` classification problems
-by decomposing such problems into binary classification problems. ``multioutput``
-regression is also supported.
+This section of the user guide covers functionality related to multi-learning
+problems, including multiclass, multilabel, and multioutput classification
+and regression.
 
-**Summary**
+The modules in this section implement *meta-estimators*, which require a base
+estimator to be provided in their constructor. Meta-estimators extend the
+functionality of the base estimator to support multi-learning problems, which
+is accomplished by transforming the multi-learning problem into a set of
+simpler problems, then fitting one estimator per problem.
 
-+-----------------+-------------+-------------+------------------------------------------+
-|                 | Number of   | Target      | Valid                                    |
-|                 | targets     | cardinality | :func:`~utils.multiclass.type_of_target` |
-+=================+=============+=============+==========================================+
-| Multiclass      |  1          | >2          | - 'multiclass'                           |
-| classification  |             |             |                                          |
-+-----------------+-------------+-------------+------------------------------------------+
-| Multilabel      | >1          |  2 (0 or 1) | - 'multilabel-indicator'                 |
-| classification  |             |             |                                          |
-+-----------------+-------------+-------------+------------------------------------------+
-| Multioutput     | >1          | Continuous  | - 'continuous-multioutput'               |
-| regression      |             |             |                                          |
-+-----------------+-------------+-------------+------------------------------------------+
-| Multioutput-    | >1          | >2          | - 'multiclass-multioutput'               |
-| multiclass      |             |             |                                          |
-| classification  |             |             |                                          |
-+-----------------+-------------+-------------+------------------------------------------+
+This section covers two modules: :mod:`sklearn.multiclass` and
+:mod:`sklearn.multioutput`. The chart below demonstrates the problem types
+that each module is responsible for, and the corresponding meta-estimators
+that each module provides.
 
-Below is a summary of the classifiers supported by scikit-learn
-grouped by strategy; you don't need the meta-estimators in this class
-if you're using one of these, unless you want custom multiclass behavior:
+.. image:: ../images/multi_org_chart.png
+   :align: center
+
+The table below provides a quick reference on the differences between problem
+types. More detailed explanations can be found in subsequent sections of this
+guide.
+
++-----------------+-----------------------+-------------------------+------------------------------------------+
+|                 | Number of targets     | Target cardinality      | Valid                                    |
+|                 |                       |                         | :func:`~utils.multiclass.type_of_target` |
++=================+=======================+=========================+==========================================+
+| Multiclass      |  1                    | >2                      | - 'multiclass'                           |
+| classification  |                       |                         |                                          |
++-----------------+-----------------------+-------------------------+------------------------------------------+
+| Multioutput     | >1                    |  2 (0 or 1)             | - 'multilabel-indicator'                 |
+| (multilabel)    |                       |                         |                                          |
+| classification  |                       |                         |                                          |
++-----------------+-----------------------+-------------------------+------------------------------------------+
+| Multioutput     | >1                    | Continuous              | - 'continuous-multioutput'               |
+| regression      |                       |                         |                                          |
++-----------------+-----------------------+-------------------------+------------------------------------------+
+
+Below is a summary of scikit-learn estimators that have multi-learning support
+built-in, grouped by strategy. You don't need the meta-estimators provided by
+this section if you're using one of these estimators. However, meta-estimators
+can provide additional strategies beyond what is built-in:
 
 - **Inherently multiclass:**
 
