@@ -840,7 +840,8 @@ def test_float_precision(estimator, data):
     labels = {}
 
     for dtype in [np.float64, np.float32]:
-        X = data.astype(dtype, copy=False)
+        # FIXME when scipy min version >= 1.0, add copy=False
+        X = data.astype(dtype)
         km.fit(X)
 
         inertia[dtype] = km.inertia_
