@@ -150,7 +150,7 @@ Changelog
 :mod:`sklearn.linear_model`
 ...........................
 
-- |API|: The parameter ``normalize`` is deprecated in 0.24 and will be removed
+- |API|: The parameter ``normalize`` of :class:`linear_model.LinearRegression` is deprecated and will be removed
   in 0.26. The use of pipeline with StandardScaler is recommended instead.
   ``normalize`` parameter did not take any effect if ``fit_intercept`` was set
   to False and therefore was deemed confusing.
