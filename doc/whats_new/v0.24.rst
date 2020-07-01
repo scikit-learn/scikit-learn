@@ -45,6 +45,14 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
+:mod:`sklearn.calibrator`
+.........................
+
+- |Enhancement| Allow :class:`calibrator.CalibratedClassifierCV` use with
+  prefit :class:`pipeline.Pipeline` where data is not `X` is not array-like,
+  sparse matrix or dataframe at the start. :pr:`17546` by
+  :user:`Lucy Liu <lucyleeow>`.
+
 :mod:`sklearn.datasets`
 .......................
 
@@ -52,6 +60,10 @@ Changelog
   to be 'auto', which tries to convert returned data to pandas DataFrame
   unless data is sparse.
   :pr:`17396` by :user:`Jiaxiang <fujiaxiang>`.
+
+- |Feature| :func:`datasets.fetch_openml` now validates md5checksum of arff
+  files downloaded or cached to ensure data integrity.
+  :pr:`14800` by :user:`Shashank Singh <shashanksingh28>` and `Joel Nothman`_.
 
 - |Enhancement| :func:`datasets.fetch_covtype` now now supports the optional
   argument `as_frame`; when it is set to True, the returned Bunch object's
@@ -80,6 +92,11 @@ Changelog
   which allows monitoring of each stage.
   :pr:`16985` by :user:`Hao Chun Chang <haochunchang>`.
 
+- |Fix| Fixed bug in :class:`ensemble.MultinomialDeviance` where the
+  average of logloss was incorrectly calculated as sum of logloss.
+  :pr:`17694` by :user:`Markus Rempfler <rempfler>` and
+  :user:`Tsutomu Kusanagi <t-kusanagi2>`.
+
 :mod:`sklearn.feature_selection`
 ................................
 
@@ -88,6 +105,11 @@ Changelog
   :class:`feature_selection.SelectFromModel`, allowing the user to specify an
   attribute name/path or a `callable` for extracting feature importance from
   the estimator.  :pr:`15361` by :user:`Venkatachalam N <venkyyuvy>`
+
+- |Enhancement| Added the option for the number of n_features_to_select to be
+  given as a float representing the percentage of features to select.
+  :pr:`17090` by :user:`Lisa Schwetlick <lschwetlick>` and
+  :user:`Marija Vlajic Wheeler <marijavlajic>`.
 
 :mod:`sklearn.impute`
 .....................
@@ -141,6 +163,10 @@ Changelog
   :func:`metrics.plot_precision_recall_curve` in order to specify the positive
   class to be used when computing the precision and recall statistics.
   :pr:`17569` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Feature| :func:`metrics.plot_confusion_matrix` now supports making colorbar 
+  optional in the matplotlib plot by setting colorbar=False. :pr:`17192` by 
+  :user:`Avi Gupta <avigupta2612>`
 
 :mod:`sklearn.model_selection`
 ..............................
@@ -238,12 +264,6 @@ Changelog
   :meth:`tree.DecisionTreeClassifier.fit` and
   :meth:`tree.DecisionTreeRegressor.fit`, and has not effect.
   :pr:`17614` by :user:`Juan Carlos Alfaro Jiménez <alfaro96>`.
-
-:mod:`sklearn.datasets`
-.......................
-- |Feature| :func:`datasets.fetch_openml` now validates md5checksum of arff
-  files downloaded or cached to ensure data integrity.
-  :pr:`14800` by :user:`Shashank Singh <shashanksingh28>` and `Joel Nothman`_.
 
 Code and Documentation Contributors
 -----------------------------------

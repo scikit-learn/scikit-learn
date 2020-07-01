@@ -795,7 +795,6 @@ def test_k_means_function():
     centers = cluster_centers
     assert centers.shape == (n_clusters, n_features)
 
-    labels = labels
     assert np.unique(labels).shape[0] == n_clusters
 
     # check that the labels assignment are perfect (up to a permutation)
