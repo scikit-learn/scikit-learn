@@ -1,9 +1,9 @@
 
 .. _multiclass:
 
-====================================
-Multiclass and multilabel algorithms
-====================================
+=====================================
+Multiclass and multioutput algorithms
+=====================================
 
 .. currentmodule:: sklearn.multiclass
 
