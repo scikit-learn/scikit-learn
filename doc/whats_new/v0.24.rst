@@ -154,7 +154,6 @@ Changelog
   in 0.26. The use of pipeline with StandardScaler is recommended instead.
   ``normalize`` parameter did not take any effect if ``fit_intercept`` was set
   to False and therefore was deemed confusing.
-  :class:`linear_model.LinearRegression`
   :pr:`17743` by :user:`Maria Telenczuk <maikia>` and :user:`Guillaume Lemaitre
   <glemaitre>` and :user:`Alexandre Gramfort <agramfort>`.
 
