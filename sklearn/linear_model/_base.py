@@ -47,12 +47,12 @@ SPARSE_INTERCEPT_DECAY = 0.01
 
 
 def _deprecate_normalize(normalize, default):
-    if normalize == 'deprecate':
+    if normalize == 'deprecated':
         _normalize = default
     else:
         _normalize = normalize
 
-    if default or (normalize != 'deprecate' and normalize):
+    if default or (normalize != 'deprecated' and normalize):
         warnings.warn(
             "'normalize' was deprecated in version 0.24 and will be"
             " removed in 0.26. If you still wish to normalize use Pipeline "
@@ -61,7 +61,7 @@ def _deprecate_normalize(normalize, default):
             "  model = make_pipeline(StandardScaler(),"
             " {type(self).__name__}())", FutureWarning
         )
-    elif (normalize != 'deprecate' and not normalize):
+    elif (normalize != 'deprecated' and not normalize):
         warnings.warn(
             "'normalize' was deprecated in version 0.24 and will be"
             " removed in 0.26.", FutureWarning
