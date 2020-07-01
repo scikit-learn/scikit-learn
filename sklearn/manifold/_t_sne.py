@@ -600,7 +600,7 @@ class TSNE(BaseEstimator):
 
     square_distance : {True, 'legacy', 'warn'}, default='warn'
         Whether distance values are squared before t-SNE is run. ``'legacy'``
-        means that distances are squared only when ``metric='euclidean'``.
+        means that distances are squared only when ``metric="euclidean"``.
         The default value for this parameter will change to ``True`` in
         version 0.26.
 
@@ -734,7 +734,7 @@ class TSNE(BaseEstimator):
                 if self.verbose:
                     print("[t-SNE] Computing pairwise distances...")
 
-                if self.metric == 'euclidean':
+                if self.metric == "euclidean":
                     # Euclidean is squared here, rather than using **= 2,
                     # because euclidean_distances already calculates
                     # squared distances, and returns np.sqrt(dist) for
@@ -750,7 +750,7 @@ class TSNE(BaseEstimator):
                 raise ValueError("All distances should be positive, the "
                                  "metric given is not correct")
 
-            if self.metric != 'euclidean' and self.square_distance is True:
+            if self.metric != "euclidean" and self.square_distance is True:
                 distances **= 2
 
             # compute the joint probability distribution for the input space
@@ -793,7 +793,7 @@ class TSNE(BaseEstimator):
             # Free the memory used by the ball_tree
             del knn
 
-            if self.square_distance is True or self.metric == 'euclidean':
+            if self.square_distance is True or self.metric == "euclidean":
                 # knn return the euclidean distance but we need it squared
                 # to be consistent with the 'exact' method. Note that the
                 # the method was derived using the euclidean method as in the
