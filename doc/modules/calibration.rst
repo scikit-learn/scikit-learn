@@ -118,7 +118,9 @@ logistic model [3]_, i.e. :math:`p(y_i = 1 | f_i)` is modeled as
 :math:`A` and :math:`B` are real numbers to be determined when fitting the
 regressor via maximum likelihood. `'isotonic'` will instead fit a
 non-parametric isotonic regressor, which outputs a step-wise non-decreasing
-function (see :mod:`sklearn.isotonic`).
+function (see :mod:`sklearn.isotonic`). It is possible to enforce this
+function to be strictly increasing by enabling the `strict` parameter. This
+ensures that rank-based metrics are unaffected by the calibration.
 
 An already fitted classifier can be calibrated by setting `cv="prefit"`. In
 this case, the data is only used to fit the regressor. It is up to the user
