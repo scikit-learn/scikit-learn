@@ -246,8 +246,9 @@ def test_linear_regression_pd_sparse_dataframe_warning():
         df[str(col)] = arr
 
     msg = "pandas.DataFrame with sparse columns found."
+
+    reg = LinearRegression()
     with pytest.warns(UserWarning, match=msg):
-        reg = LinearRegression()
         reg.fit(df.iloc[:, 0:2], df.iloc[:, 3])
 
     # does not warn when the whole dataframe is sparse
@@ -255,7 +256,6 @@ def test_linear_regression_pd_sparse_dataframe_warning():
     assert hasattr(df, "sparse")
 
     with pytest.warns(None) as record:
-        reg = LinearRegression()
         reg.fit(df.iloc[:, 0:2], df.iloc[:, 3])
 
     assert not record
