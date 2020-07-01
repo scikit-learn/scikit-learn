@@ -115,6 +115,39 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
 
         return activations
 
+    def _forward_pass_fast(self, X):
+        """Predict using the trained model
+
+        This is the same as _forward_pass but does not record the activations
+        of all layers and only returns the last layer's activation.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            The input data.
+
+        Returns
+        -------
+        y_pred : ndarray of shape (n_samples,) or (n_samples, n_outputs)
+            The decision function of the samples for each class in the model.
+        """
+        X = check_array(X, accept_sparse=['csr', 'csc'])
+
+        # Initialize first layer
+        activation = X
+
+        # Forward propagate
+        hidden_activation = ACTIVATIONS[self.activation]
+        for i in range(self.n_layers_ - 1):
+            activation = safe_sparse_dot(activation, self.coefs_[i])
+            activation += self.intercepts_[i]
+            if i != self.n_layers_ - 2:
+                hidden_activation(activation)
+        output_activation = ACTIVATIONS[self.out_activation_]
+        output_activation(activation)
+
+        return activation
+
     def _compute_loss_grad(self, layer, n_samples, activations, deltas,
                            coef_grads, intercept_grads):
         """Compute the gradient of loss with respect to coefs and intercept for
@@ -657,42 +690,6 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
     def _partial_fit(self, X, y):
         return self._fit(X, y, incremental=True)
 
-    def _predict(self, X):
-        """Predict using the trained model
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            The input data.
-
-        Returns
-        -------
-        y_pred : ndarray of shape (n_samples,) or (n_samples, n_outputs)
-            The decision function of the samples for each class in the model.
-        """
-        X = check_array(X, accept_sparse=['csr', 'csc'])
-
-        # Make sure self.hidden_layer_sizes is a list
-        hidden_layer_sizes = self.hidden_layer_sizes
-        if not hasattr(hidden_layer_sizes, "__iter__"):
-            hidden_layer_sizes = [hidden_layer_sizes]
-        hidden_layer_sizes = list(hidden_layer_sizes)
-
-        layer_units = [X.shape[1]] + hidden_layer_sizes + \
-            [self.n_outputs_]
-
-        # Initialize layers
-        activations = [X]
-
-        for i in range(self.n_layers_ - 1):
-            activations.append(np.empty((X.shape[0],
-                                         layer_units[i + 1])))
-        # forward propagate
-        self._forward_pass(activations)
-        y_pred = activations[-1]
-
-        return y_pred
-
 
 class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
     """Multi-layer Perceptron classifier.
@@ -1002,7 +999,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
             The predicted classes.
         """
         check_is_fitted(self)
-        y_pred = self._predict(X)
+        y_pred = self._forward_pass_fast(X)
 
         if self.n_outputs_ == 1:
             y_pred = y_pred.ravel()
@@ -1103,7 +1100,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
             model, where classes are ordered as they are in `self.classes_`.
         """
         check_is_fitted(self)
-        y_pred = self._predict(X)
+        y_pred = self._forward_pass_fast(X)
 
         if self.n_outputs_ == 1:
             y_pred = y_pred.ravel()
@@ -1389,7 +1386,7 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
             The predicted values.
         """
         check_is_fitted(self)
-        y_pred = self._predict(X)
+        y_pred = self._forward_pass_fast(X)
         if y_pred.shape[1] == 1:
             return y_pred.ravel()
         return y_pred
