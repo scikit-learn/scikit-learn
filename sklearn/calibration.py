@@ -90,9 +90,8 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
             ``cv`` default value if None changed from 3-fold to 5-fold.
 
     strict : str, default=True
-        For the isotonic method, if set to True, this impose strict
-        monotonicity constraints in order to preserve rank-based metrics
-        after calibration.
+        For the isotonic method, if set to True, this imposes strict
+        monotonicity constraints. Ignored if `method='sigmoid'`.
 
     Attributes
     ----------
