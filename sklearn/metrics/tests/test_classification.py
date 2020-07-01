@@ -159,11 +159,11 @@ def test_classification_report_output_dict_empty_input():
                        'macro avg': {'f1-score': np.nan,
                                      'precision': np.nan,
                                      'recall': np.nan,
-                                     'support': 0.0},
+                                     'support': 0},
                        'weighted avg': {'f1-score': 0.0,
                                         'precision': 0.0,
                                         'recall': 0.0,
-                                        'support': 0.0}}
+                                        'support': 0}}
     assert isinstance(report, dict)
     # assert the 2 dicts are equal.
     assert(report.keys() == expected_report.keys())
