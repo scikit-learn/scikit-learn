@@ -163,10 +163,19 @@ def test_classification_report_output_dict_empty_input():
                        'weighted avg': {'f1-score': 0.0,
                                         'precision': 0.0,
                                         'recall': 0.0,
-                                        'support': 0.0}
-                      }
+                                        'support': 0.0}}
     assert isinstance(report, dict)
-    assert report == expected_report
+    # assert the 2 dicts are equal.
+    assert(report.keys() == expected_report.keys())
+    for key in expected_report:
+        if key == 'accuracy':
+            assert isinstance(report[key], float)
+            assert report[key] == expected_report[key]
+        else:
+            assert report[key].keys() == expected_report[key].keys()
+            for metric in expected_report[key]:
+                assert_almost_equal(expected_report[key][metric],
+                                    report[key][metric])
 
 
 @pytest.mark.parametrize('zero_division', ["warn", 0, 1])
