@@ -1254,13 +1254,12 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
     >>> clf.score(X, y)
     0.97...
     """
-    classes_: Annotated[np.ndarray, Shape(("n_classes",))]
+    classes_: Annotated[np.ndarray, Shape(("n_classes",))]  # noqa
     coef_: Annotated[np.ndarray, Shape((1, "n_features"),
-                                       ("n_classes", "n_features"))]
+                                       ("n_classes", "n_features"))]  # noqa
     intercept_: Annotated[np.ndarray, Shape((1,),
-                                            ("n_classes",))]
-    n_iter_: Annotated[np.ndarray, Shape(("n_classes",),
-                                         (1,))]
+                                            ("n_classes",))]  # noqa
+    n_iter_: Annotated[np.ndarray, Shape(("n_classes",), (1,))]  # noqa
 
     @_deprecate_positional_args
     def __init__(self,
