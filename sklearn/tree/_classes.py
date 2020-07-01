@@ -786,7 +786,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
     The :meth:`predict` method operates using the :func:`numpy.argmax`
     function on the outputs of :meth:`predict_proba`. This means that in
     case the highest predicted probabilities are tied, the classifier will
-    predict the tied class with the lowest index in `clf.classes_`.
+    predict the tied class with the lowest index in :term:`classes_`.
 
     References
     ----------
