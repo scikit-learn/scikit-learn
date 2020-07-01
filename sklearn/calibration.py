@@ -343,7 +343,7 @@ class _CalibratedClassifier:
             if None, then classes is extracted from the given target values
             in fit().
 
-    strict : str, default=True
+    strict : bool, default=False
         For the isotonic method, if set to True, this impose strict
         monotonicity constraints in order to preserve rank-based metrics
         after calibration.
