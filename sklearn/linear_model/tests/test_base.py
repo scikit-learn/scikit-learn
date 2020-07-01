@@ -67,6 +67,7 @@ def test_linear_regression_singular(solver):
     reg.fit(X, y)
     assert reg.score(X, y) == 1
 
+
 @pytest.mark.parametrize('solver', ['lsqr', 'cholesky'])
 def test_linear_regression_sample_weights(solver):
     # TODO: loop over sparse data as well
