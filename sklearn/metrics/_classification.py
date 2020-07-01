@@ -1483,7 +1483,9 @@ def precision_recall_fscore_support(y_true, y_pred, *, beta=1.0, labels=None,
     if average == 'weighted':
         weights = true_sum
         if weights.sum() == 0:
-            zero_division_value = 0.0 if zero_division in ["warn", 0] else 1.0
+            zero_division_value = np.float64(1.0)
+            if zero_division in ["warn", 0]:
+                zero_division_value = np.float64(0.0)
             # precision is zero_division if there are no positive predictions
             # recall is zero_division if there are no positive labels
             # fscore is zero_division if all labels AND predictions are
@@ -1494,9 +1496,9 @@ def precision_recall_fscore_support(y_true, y_pred, *, beta=1.0, labels=None,
                         zero_division_value,
                         None)
             else:
-                return (np.float64(0),
+                return (np.float64(0.0),
                         zero_division_value,
-                        np.float64(0),
+                        np.float64(0.0),
                         None)
 
     elif average == 'samples':
