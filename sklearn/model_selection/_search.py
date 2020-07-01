@@ -419,7 +419,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         self.return_train_score = return_train_score
 
     # mypy error: Decorated property not supported
-    @deprecated("_estimator_type is deprecated in "
+    @deprecated("_estimator_type is deprecated in "  # type: ignore
                 "0.24 and will be removed in 0.26")
     @property
     def _estimator_type(self):

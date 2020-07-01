@@ -468,7 +468,7 @@ class ClassifierMixin:
     """Mixin class for all classifiers in scikit-learn."""
 
     # mypy error: Decorated property not supported
-    @deprecated("_estimator_type is deprecated in "
+    @deprecated("_estimator_type is deprecated in "  # type: ignore
                 "0.24 and will be removed in 0.26")
     @property
     def _estimator_type(self):
@@ -509,7 +509,7 @@ class RegressorMixin:
     """Mixin class for all regression estimators in scikit-learn."""
 
     # mypy error: Decorated property not supported
-    @deprecated("_estimator_type is deprecated in "
+    @deprecated("_estimator_type is deprecated in "  # type: ignore
                 "0.24 and will be removed in 0.26")
     @property
     def _estimator_type(self):
@@ -568,7 +568,7 @@ class ClusterMixin:
     """Mixin class for all cluster estimators in scikit-learn."""
 
     # mypy error: Decorated property not supported
-    @deprecated("_estimator_type is deprecated in "
+    @deprecated("_estimator_type is deprecated in "  # type: ignore
                 "0.24 and will be removed in 0.26")
     @property
     def _estimator_type(self):
@@ -713,7 +713,7 @@ class DensityMixin:
     """Mixin class for all density estimators in scikit-learn."""
 
     # mypy error: Decorated property not supported
-    @deprecated("_estimator_type is deprecated in "
+    @deprecated("_estimator_type is deprecated in "  # type: ignore
                 "0.24 and will be removed in 0.26")
     @property
     def _estimator_type(self):
@@ -743,7 +743,7 @@ class OutlierMixin:
     """Mixin class for all outlier detection estimators in scikit-learn."""
 
     # mypy error: Decorated property not supported
-    @deprecated("_estimator_type is deprecated in "
+    @deprecated("_estimator_type is deprecated in "  # type: ignore
                 "0.24 and will be removed in 0.26")
     @property
     def _estimator_type(self):
