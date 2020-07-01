@@ -14,7 +14,7 @@ from sklearn.utils._testing import (assert_array_almost_equal,
                                     assert_raises, ignore_warnings)
 from sklearn.exceptions import NotFittedError
 from sklearn.datasets import make_classification, make_blobs
-from sklearn.preprocessing import LabelBinarizer
+from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import KFold
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
@@ -429,6 +429,6 @@ def test_calibration_attributes(clf, cv):
         assert_array_equal(calib_clf.classes_, clf.classes_)
         assert calib_clf.n_features_in_ == clf.n_features_in_
     else:
-        classes = LabelBinarizer().fit(y).classes_
+        classes = LabelEncoder().fit(y).classes_
         assert_array_equal(calib_clf.classes_, classes)
         assert calib_clf.n_features_in_ == X.shape[1]
