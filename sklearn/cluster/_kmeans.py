@@ -14,6 +14,7 @@
 import warnings
 
 import numpy as np
+import logging
 import scipy.sparse as sp
 from threadpoolctl import threadpool_limits
 
@@ -39,6 +40,7 @@ from ._k_means_elkan import init_bounds_sparse
 from ._k_means_elkan import elkan_iter_chunked_dense
 from ._k_means_elkan import elkan_iter_chunked_sparse
 
+logger = logging.getLogger(__name__)
 
 ###############################################################################
 # Initialization heuristic
