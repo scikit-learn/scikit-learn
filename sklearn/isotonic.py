@@ -160,7 +160,7 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         set to the value corresponding to the nearest train interval endpoint.
         When set to "raise" a `ValueError` is raised.
 
-    strict : str, default=False
+    strict : bool, default=False
         Determines whether to make monotonicity constraints strict.
 
 
