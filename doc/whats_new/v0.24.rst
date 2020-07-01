@@ -148,7 +148,7 @@ Changelog
   :user:`Olivier Grisel <ogrisel>`.
 
 :mod:`sklearn.linear_model`
-.......................
+...........................
 
 - |API|: The parameter ``normalize`` is deprecated in 0.24 and will be removed
   in 0.26. The use of pipeline with StandardScaler is recommended instead.
