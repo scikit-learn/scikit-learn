@@ -246,10 +246,16 @@ if you're using one of these, unless you want custom multiclass behavior:
     At present, no metric in :mod:`sklearn.metrics`
     supports the multioutput-multiclass classification task.
 
+Multiclass classification
+=========================
+
+Target format
+-------------
+
 .. _ovr_classification:
 
 One-Vs-The-Rest
-===============
+---------------
 
 This strategy, also known as **one-vs-all**, is implemented in
 :class:`OneVsRestClassifier`.  The strategy consists in fitting one classifier
@@ -260,9 +266,6 @@ interpretability. Since each class is represented by one and only one classifier
 it is possible to gain knowledge about the class by inspecting its
 corresponding classifier. This is the most commonly used strategy and is a fair
 default choice.
-
-Multiclass learning
--------------------
 
 Below is an example of multiclass learning using OvR::
 
@@ -279,8 +282,6 @@ Below is an example of multiclass learning using OvR::
          2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 1, 2, 2, 2, 2,
          2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2])
 
-Multilabel learning
--------------------
 
 :class:`OneVsRestClassifier` also supports multilabel classification.
 To use this feature, feed the classifier an indicator matrix, in which cell
@@ -300,7 +301,7 @@ To use this feature, feed the classifier an indicator matrix, in which cell
 .. _ovo_classification:
 
 One-Vs-One
-==========
+----------
 
 :class:`OneVsOneClassifier` constructs one classifier per pair of classes.
 At prediction time, the class which received the most votes is selected.
@@ -317,9 +318,6 @@ algorithms such as kernel algorithms which don't scale well with
 a small subset of the data whereas, with one-vs-the-rest, the complete
 dataset is used ``n_classes`` times. The decision function is the result
 of a monotonic transformation of the one-versus-one classification.
-
-Multiclass learning
--------------------
 
 Below is an example of multiclass learning using OvO::
 
@@ -345,7 +343,7 @@ Below is an example of multiclass learning using OvO::
 .. _ecoc:
 
 Error-Correcting Output-Codes
-=============================
+-----------------------------
 
 Output-code based strategies are fairly different from one-vs-the-rest and
 one-vs-one. With these strategies, each class is represented in a Euclidean
@@ -378,10 +376,6 @@ the mistakes made by other classifiers, hence the name "error-correcting".
 In practice, however, this may not happen as classifier mistakes will
 typically be correlated. The error-correcting output codes have a similar
 effect to bagging.
-
-
-Multiclass learning
--------------------
 
 Below is an example of multiclass learning using Output-Codes::
 
@@ -416,37 +410,14 @@ Below is an example of multiclass learning using Output-Codes::
       Hastie T., Tibshirani R., Friedman J., page 606 (second-edition)
       2008.
 
-Multioutput regression
-======================
+Multioutput (multilabel) classification
+=======================================
 
-Multioutput regression support can be added to any regressor with
-:class:`MultiOutputRegressor`.  This strategy consists of fitting one
-regressor per target. Since each target is represented by exactly one
-regressor it is possible to gain knowledge about the target by
-inspecting its corresponding regressor. As
-:class:`MultiOutputRegressor` fits one regressor per target it can not
-take advantage of correlations between targets.
-
-Below is an example of multioutput regression:
-
-  >>> from sklearn.datasets import make_regression
-  >>> from sklearn.multioutput import MultiOutputRegressor
-  >>> from sklearn.ensemble import GradientBoostingRegressor
-  >>> X, y = make_regression(n_samples=10, n_targets=3, random_state=1)
-  >>> MultiOutputRegressor(GradientBoostingRegressor(random_state=0)).fit(X, y).predict(X)
-  array([[-154.75474165, -147.03498585,  -50.03812219],
-         [   7.12165031,    5.12914884,  -81.46081961],
-         [-187.8948621 , -100.44373091,   13.88978285],
-         [-141.62745778,   95.02891072, -191.48204257],
-         [  97.03260883,  165.34867495,  139.52003279],
-         [ 123.92529176,   21.25719016,   -7.84253   ],
-         [-122.25193977,  -85.16443186, -107.12274212],
-         [ -30.170388  ,  -94.80956739,   12.16979946],
-         [ 140.72667194,  176.50941682,  -17.50447799],
-         [ 149.37967282,  -81.15699552,   -5.72850319]])
+Target format
+-------------
 
 Multioutput classification
-==========================
+--------------------------
 
 Multioutput classification support can be added to any classifier with
 :class:`MultiOutputClassifier`. This strategy consists of fitting one
@@ -487,7 +458,7 @@ Below is an example of multioutput classification:
 .. _classifierchain:
 
 Classifier Chain
-================
+----------------
 
 Classifier chains (see :class:`ClassifierChain`) are a way of combining a
 number of binary classifiers into a single multi-label model that is capable
@@ -515,10 +486,51 @@ averaged together.
     Jesse Read, Bernhard Pfahringer, Geoff Holmes, Eibe Frank,
         "Classifier Chains for Multi-label Classification", 2009.
 
+Multiclass-multioutput classification
+=====================================
+
+Target format
+-------------
+
+Multioutput regression
+======================
+
+Target format
+-------------
+
+Multioutput regression
+----------------------
+
+Multioutput regression support can be added to any regressor with
+:class:`MultiOutputRegressor`.  This strategy consists of fitting one
+regressor per target. Since each target is represented by exactly one
+regressor it is possible to gain knowledge about the target by
+inspecting its corresponding regressor. As
+:class:`MultiOutputRegressor` fits one regressor per target it can not
+take advantage of correlations between targets.
+
+Below is an example of multioutput regression:
+
+  >>> from sklearn.datasets import make_regression
+  >>> from sklearn.multioutput import MultiOutputRegressor
+  >>> from sklearn.ensemble import GradientBoostingRegressor
+  >>> X, y = make_regression(n_samples=10, n_targets=3, random_state=1)
+  >>> MultiOutputRegressor(GradientBoostingRegressor(random_state=0)).fit(X, y).predict(X)
+  array([[-154.75474165, -147.03498585,  -50.03812219],
+         [   7.12165031,    5.12914884,  -81.46081961],
+         [-187.8948621 , -100.44373091,   13.88978285],
+         [-141.62745778,   95.02891072, -191.48204257],
+         [  97.03260883,  165.34867495,  139.52003279],
+         [ 123.92529176,   21.25719016,   -7.84253   ],
+         [-122.25193977,  -85.16443186, -107.12274212],
+         [ -30.170388  ,  -94.80956739,   12.16979946],
+         [ 140.72667194,  176.50941682,  -17.50447799],
+         [ 149.37967282,  -81.15699552,   -5.72850319]])
+
 .. _regressorchain:
 
 Regressor Chain
-================
+---------------
 
 Regressor chains (see :class:`RegressorChain`) is analogous to
 ClassifierChain as a way of combining a number of regressions
