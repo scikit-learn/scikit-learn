@@ -899,6 +899,7 @@ def test_tsne_with_different_distance_metrics():
 @ignore_warnings(category=FutureWarning)
 def test_tsne_with_different_square_distances(method, square_distance, metric):
     """Make sure that TSNE works for different square_distance settings"""
+    # FIXME remove test when square_distance=True becomes the default in 0.26
     random_state = check_random_state(0)
     n_components_original = 3
     n_components_embedding = 2
