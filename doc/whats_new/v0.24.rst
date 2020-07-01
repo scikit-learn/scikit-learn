@@ -97,6 +97,13 @@ Changelog
   :pr:`17694` by :user:`Markus Rempfler <rempfler>` and
   :user:`Tsutomu Kusanagi <t-kusanagi2>`.
 
+:mod:`sklearn.exceptions`
+.........................
+
+- |API| :class:`exceptions.ChangedBehaviorWarning` and
+  :class:`exceptions.NonBLASDotWarning` are deprecated and will be removed in
+  v0.26, :pr:`17804` by `Adrin Jalali`_.
+
 :mod:`sklearn.feature_selection`
 ................................
 
@@ -164,8 +171,8 @@ Changelog
   class to be used when computing the precision and recall statistics.
   :pr:`17569` by :user:`Guillaume Lemaitre <glemaitre>`.
 
-- |Feature| :func:`metrics.plot_confusion_matrix` now supports making colorbar 
-  optional in the matplotlib plot by setting colorbar=False. :pr:`17192` by 
+- |Feature| :func:`metrics.plot_confusion_matrix` now supports making colorbar
+  optional in the matplotlib plot by setting colorbar=False. :pr:`17192` by
   :user:`Avi Gupta <avigupta2612>`
 
 :mod:`sklearn.model_selection`
@@ -219,7 +226,7 @@ Changelog
 
 - |Enhancement| Avoid converting float32 input to float64 in
   :class:`neural_network.BernoulliRBM`.
-  :pr:`16352` by :user:`Arthur Imbert <Henley13>`.  
+  :pr:`16352` by :user:`Arthur Imbert <Henley13>`.
 
 :mod:`sklearn.preprocessing`
 ............................
