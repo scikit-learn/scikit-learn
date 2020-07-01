@@ -499,7 +499,7 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
     array([16.])
     """
     @_deprecate_positional_args
-    def __init__(self, *, fit_intercept=True, normalize='deprecate',
+    def __init__(self, *, fit_intercept=True, normalize='deprecated',
                  copy_X=True, n_jobs=None):
         self.fit_intercept = fit_intercept
         self.normalize = normalize
