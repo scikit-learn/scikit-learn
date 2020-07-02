@@ -25,7 +25,8 @@ from sklearn.model_selection import train_test_split
 from sklearn.naive_bayes import GaussianNB
 from sklearn.svm import LinearSVC
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import precision_score, recall_score, f1_score
+from sklearn.metrics import (precision_score, recall_score, f1_score,
+                             brier_score_loss)
 from sklearn.calibration import CalibratedClassifierCV, plot_calibration_curve
 
 # %%
@@ -111,14 +112,15 @@ plt.show()
 # typical transposed-sigmoid curve. Calibration of the probabilities of
 # :class:`~sklearn.naive_bayes.GaussianNB` with isotonic regression can fix
 # this issue as can be seen from the nearly diagonal calibration curve. Sigmoid
-# calibration also improves the Brier score (smaller is better) slightly,
+# regression also improves calibration slightly,
 # albeit not as strongly as the non-parametric isotonic regression. This can be
 # attributed to the fact that we have plenty of calibration data such that the
 # greater flexibility of the non-parametric model can be exploited.
 #
-# Below we show the Brier score, precision, recall and F1 score (see
+# Below we show the Brier score , precision, recall and F1 score (see
 # :ref:`User Guide <precision_recall_f_measure_metrics>`). Notice that
-# although calibration improves the Brier score, it does not significantly
+# although calibration improves the Brier score (a metric composed of
+# calibration loss and refinement loss), it does not significantly
 # alter the prediction accuracy measures (precision, recall and F1 score).
 # This is because calibration should not significantly move at the location of
 # the decision threshold (at x = 0.5 on the graph). Calibration should
@@ -138,7 +140,7 @@ for i, (clf, name) in enumerate(clf_list):
     # Create DataFrame index
     index[i] = name
     # Store column data
-    brier.append(viz_objects[name].brier_value)
+    brier.append(brier_score_loss(y_test, y_pred))
     precision.append(precision_score(y_test, y_pred))
     recall.append(recall_score(y_test, y_pred))
     f1.append(f1_score(y_test, y_pred))
@@ -160,8 +162,20 @@ score_df
 #   calibration (see :ref:`User Guide <calibration>`)
 #
 
+
+class NaivelyCalibratedLinearSVC(LinearSVC):
+    """LinearSVC with `predict_proba` method that naively scales
+    `decision_function` output."""
+
+    def predict_proba(self, X):
+        """min-max scale output of `decision_function` to [0,1]."""
+        df = self.decision_function(X)
+        calibrated_df = (df - df.min()) / (df.max() - df.min())
+        return calibrated_df
+
+
 lr = LogisticRegression(C=1.)
-svc = LinearSVC(max_iter=10000)
+svc = NaivelyCalibratedLinearSVC(max_iter=10000)
 svc_isotonic = CalibratedClassifierCV(svc, cv=2, method='isotonic')
 svc_sigmoid = CalibratedClassifierCV(svc, cv=2, method='sigmoid')
 
@@ -228,7 +242,7 @@ for i, (clf, name) in enumerate(clf_list):
     # Create DataFrame index
     index[i] = name
     # Store column data
-    brier.append(viz_objects[name].brier_value)
+    brier.append(brier_score_loss(y_test, y_pred))
     precision.append(precision_score(y_test, y_pred))
     recall.append(recall_score(y_test, y_pred))
     f1.append(f1_score(y_test, y_pred))

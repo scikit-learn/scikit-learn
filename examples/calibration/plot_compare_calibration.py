@@ -80,15 +80,30 @@ y_test = y[train_samples:]
 #   sigmoid shape, indicating that the classifier could trust its "intuition"
 #   more and return probabilities closer to 0 or 1 typically.
 #
-# * :class:`~sklearn.svm.LinearSVC` shows an even more sigmoid curve than the
+# * we use naively calibrated (min-max scaled to [0,1])
+#   :term:`decision_function` scores to show the performance of
+#   :class:`~sklearn.svm.LinearSVC`. :class:`~sklearn.svm.LinearSVC` shows an
+#   even more sigmoid curve than the
 #   :class:`~sklearn.ensemble.RandomForestClassifier`, which is typical for
-#   maximum-margin methods [1]_, which focus on difficult to classify samples
+#   maximum-margin methods [1]_ as they focus on difficult to classify samples
 #   that are close to the decision boundary (the support vectors).
+
+
+class NaivelyCalibratedLinearSVC(LinearSVC):
+    """LinearSVC with `predict_proba` method that naively scales
+    `decision_function` output."""
+
+    def predict_proba(self, X):
+        """min-max scale output of `decision_function` to [0,1]."""
+        df = self.decision_function(X)
+        calibrated_df = (df - df.min()) / (df.max() - df.min())
+        return calibrated_df
+
 
 # Create classifiers
 lr = LogisticRegression()
 gnb = GaussianNB()
-svc = LinearSVC(C=1.0)
+svc = NaivelyCalibratedLinearSVC(C=1.0)
 rfc = RandomForestClassifier()
 
 clf_list = [(lr, 'Logistic'),
