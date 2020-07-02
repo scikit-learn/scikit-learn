@@ -22,7 +22,6 @@ from .preprocessing import LabelEncoder
 from .base import (BaseEstimator, ClassifierMixin, RegressorMixin, clone,
                    MetaEstimatorMixin, is_classifier)
 from .metrics._plot.base import _check_classifier_response_method
-from .metrics import brier_score_loss
 from .preprocessing import label_binarize, LabelBinarizer
 from .utils import (check_array, indexable, column_or_1d,
                     check_matplotlib_support)
@@ -712,9 +711,6 @@ class CalibrationDisplay:
     y_prob : ndarray of shape (n_samples,)
         Probability estimates for the positive class, for each sample.
 
-    brier_value : int or None
-        The Brier score value. If `None`, the Brier score is not shown.
-
     estimator_name : str, default=None
         Name of estimator. If `None`, then the estimator name is not shown.
 
@@ -729,12 +725,10 @@ class CalibrationDisplay:
     figure_ : matplotlib Figure
         Figure containing the curve.
     """
-    def __init__(self, prob_true, prob_pred, y_prob, *,
-                 brier_value=None, estimator_name=None):
+    def __init__(self, prob_true, prob_pred, y_prob, *, estimator_name=None):
         self.prob_true = prob_true
         self.prob_pred = prob_pred
         self.y_prob = y_prob
-        self.brier_value = brier_value
         self.estimator_name = estimator_name
 
     def plot(self, ax=None, *, name=None, ref_line=True, **kwargs):
@@ -773,12 +767,7 @@ class CalibrationDisplay:
         name = self.estimator_name if name is None else name
 
         line_kwargs = {}
-        if self.brier_value is not None and name is not None:
-            line_kwargs["label"] = \
-                f"{name} (Brier: {self.brier_value:0.3f})"
-        elif self.brier_value is not None:
-            line_kwargs["label"] = f"Brier: {self.brier_value:0.3f}"
-        elif name is not None:
+        if name is not None:
             line_kwargs["label"] = name
         line_kwargs.update(**kwargs)
 
@@ -802,8 +791,7 @@ class CalibrationDisplay:
 
 def plot_calibration_curve(estimator, X, y, *,
                            n_bins=5, strategy='uniform',
-                           name=None, brier_score=True, ref_line=True,
-                           ax=None, **kwargs):
+                           name=None, ref_line=True, ax=None, **kwargs):
     """Plot calibration curve for binary classifiers.
 
     The average predicted probability for each bin is plotted on the x-axis
@@ -842,9 +830,6 @@ def plot_calibration_curve(estimator, X, y, *,
 
     name : str, default=None
         Name for labeling curve. If `None`, the name of the estimator is used.
-
-    brier_score : bool, default=True
-        If `True`, include Brier score in legend.
 
     ref_line : bool, default=True
         If `True`, plots a reference line representing a perfectly calibrated
@@ -903,14 +888,10 @@ def plot_calibration_curve(estimator, X, y, *,
     prob_true, prob_pred = calibration_curve(
         y, y_prob, n_bins=n_bins, strategy=strategy
     )
-    if brier_score:
-        pos_label = estimator.classes_[1]
-        brier_value = brier_score_loss(y, y_prob, pos_label=pos_label)
-    else:
-        brier_value = None
+
     name = name if name is not None else estimator.__class__.__name__
     viz = CalibrationDisplay(
         prob_true=prob_true, prob_pred=prob_pred, y_prob=y_prob,
-        brier_value=brier_value, estimator_name=name
+        estimator_name=name
     )
     return viz.plot(ax=ax, name=name, ref_line=ref_line, **kwargs)
