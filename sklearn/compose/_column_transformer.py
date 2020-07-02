@@ -654,13 +654,21 @@ def _check_X(X):
 def _is_empty_column_selection(column):
     """
     Return True if the column selection is empty (empty list or all-False
-    boolean array).
-
+    boolean array or all-False list).
     """
+
+    # Coerce to a numpy array to make the below tests easier
+    column = np.array(column)
+
+    # Check 1: if column is a boolean array that is all False, return True
     if hasattr(column, 'dtype') and np.issubdtype(column.dtype, np.bool_):
         return not column.any()
-    elif hasattr(column, '__len__'):
-        return len(column) == 0
+
+    # Check 2: if column has no elements, return True
+    elif column.shape == (0,):
+        return True
+
+    # Otherwise, column has more than one element, and at least one element is not False
     else:
         return False
 
