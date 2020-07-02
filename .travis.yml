@@ -15,6 +15,7 @@ env:
     - TEST_DIR=/tmp/sklearn
     - OMP_NUM_THREADS=2
     - OPENBLAS_NUM_THREADS=2
+    - PYTEST_VERSION=latest
 
 matrix:
   include:
