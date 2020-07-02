@@ -162,6 +162,8 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
 
     strict : bool, default=False
         Determines whether to make monotonicity constraints strict.
+        When set to True, points outside the training domain will be
+        extrapolated, unless `out_of_bounds="clip"`.
 
 
     Attributes
