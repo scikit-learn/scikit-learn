@@ -27,20 +27,22 @@ The table below provides a quick reference on the differences between problem
 types. More detailed explanations can be found in subsequent sections of this
 guide.
 
-+-----------------+-----------------------+-------------------------+--------------------------------------------------+
-|                 | Number of targets     | Target cardinality      | Valid                                            |
-|                 |                       |                         | :func:`~sklearn.utils.multiclass.type_of_target` |
-+=================+=======================+=========================+==================================================+
-| Multiclass      |  1                    | >2                      | - 'multiclass'                                   |
-| classification  |                       |                         |                                                  |
-+-----------------+-----------------------+-------------------------+--------------------------------------------------+
-| Multioutput     | >1                    |  2 (0 or 1)             | - 'multilabel-indicator'                         |
-| (multilabel)    |                       |                         |                                                  |
-| classification  |                       |                         |                                                  |
-+-----------------+-----------------------+-------------------------+--------------------------------------------------+
-| Multioutput     | >1                    | Continuous              | - 'continuous-multioutput'                       |
-| regression      |                       |                         |                                                  |
-+-----------------+-----------------------+-------------------------+--------------------------------------------------+
++------------------------------+-----------------------+-------------------------+--------------------------------------------------+
+|                              | Number of targets     | Target cardinality      | Valid                                            |
+|                              |                       |                         | :func:`~sklearn.utils.multiclass.type_of_target` |
++==============================+=======================+=========================+==================================================+
+| Multiclass                   |  1                    | >2                      | - 'multiclass'                                   |
+| classification               |                       |                         |                                                  |
++------------------------------+-----------------------+-------------------------+--------------------------------------------------+
+| Multioutput (multilabel)     | >1                    |  2 (0 or 1)             | - 'multilabel-indicator'                         |
+| classification               |                       |                         |                                                  |
++------------------------------+-----------------------+-------------------------+--------------------------------------------------+
+| Multiclass-multioutput       | >1                    | >2                      | - 'multiclass-multioutput'                       |
+| classification               |                       |                         |                                                  |
++------------------------------+-----------------------+-------------------------+--------------------------------------------------+
+| Multioutput                  | >1                    | Continuous              | - 'continuous-multioutput'                       |
+| regression                   |                       |                         |                                                  |
++------------------------------+-----------------------+-------------------------+--------------------------------------------------+
 
 Below is a summary of scikit-learn estimators that have multi-learning support
 built-in, grouped by strategy. You don't need the meta-estimators provided by
@@ -438,7 +440,7 @@ averaged together.
 Multiclass-multioutput classification
 =====================================
 
-**Multioutput-multiclass classification**
+**Multiclass-multioutput classification**
 (also known as **multitask classification**) is a
 classification task which labels each sample with a set of **non-binary**
 properties. Both the number of properties and the number of
@@ -455,7 +457,7 @@ possible classes: "green", "red", "yellow" and "orange". Each sample is an
 image of a fruit, a label is output for both properties and each label is
 one of the possible classes of the corresponding property.
 
-Note that all classifiers handling multioutput-multiclass (also known as
+Note that all classifiers handling multiclass-multioutput (also known as
 multitask classification) tasks, support the multilabel classification task
 as a special case. Multitask classification is similar to the multioutput
 classification task with different model formulations. For more information,
@@ -463,7 +465,7 @@ see the relevant estimator documentation.
 
 .. warning::
     At present, no metric in :mod:`sklearn.metrics`
-    supports the multioutput-multiclass classification task.
+    supports the multiclass-multioutput classification task.
 
 Target format
 -------------
