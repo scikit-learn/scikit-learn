@@ -15,7 +15,7 @@ from sklearn.utils._testing import (assert_array_almost_equal,
                                     assert_array_equal,
                                     assert_raises, ignore_warnings)
 from sklearn.exceptions import NotFittedError
-from sklearn.datasets import make_classification, make_blobs
+from sklearn.datasets import make_classification, make_blobs, load_iris
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.model_selection import KFold
 from sklearn.naive_bayes import MultinomialNB
