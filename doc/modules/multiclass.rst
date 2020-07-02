@@ -165,10 +165,10 @@ Valid :term:`multiclass` representations for
 
 .. _ovr_classification:
 
-One-Vs-The-Rest
----------------
+OneVsRestClassifier
+-------------------
 
-This strategy, also known as **one-vs-all**, is implemented in
+The **one-vs-rest** strategy, also known as **one-vs-all**, is implemented in
 :class:`~sklearn.multiclass.OneVsRestClassifier`.  The strategy consists in
 fitting one classifier per class. For each classifier, the class is fitted
 against all the other classes. In addition to its computational efficiency
@@ -211,8 +211,8 @@ in which cell [i, j] indicates the presence of label j in sample i.
 
 .. _ovo_classification:
 
-One-Vs-One
-----------
+OneVsOneClassifier
+------------------
 
 :class:`~sklearn.multiclass.OneVsOneClassifier` constructs one classifier per
 pair of classes. At prediction time, the class which received the most votes
@@ -253,20 +253,20 @@ Below is an example of multiclass learning using OvO::
 
 .. _ecoc:
 
-Error-Correcting Output-Codes
------------------------------
+OutputCodeClassifier
+--------------------
 
-Output-code based strategies are fairly different from one-vs-the-rest and
-one-vs-one. With these strategies, each class is represented in a Euclidean
-space, where each dimension can only be 0 or 1. Another way to put it is
-that each class is represented by a binary code (an array of 0 and 1). The
-matrix which keeps track of the location/code of each class is called the
-code book. The code size is the dimensionality of the aforementioned space.
-Intuitively, each class should be represented by a code as unique as
-possible and a good code book should be designed to optimize classification
-accuracy. In this implementation, we simply use a randomly-generated code
-book as advocated in [3]_ although more elaborate methods may be added in the
-future.
+Error-Correcting Output Code-based strategies are fairly different from
+one-vs-the-rest and one-vs-one. With these strategies, each class is
+represented in a Euclidean space, where each dimension can only be 0 or 1.
+Another way to put it is that each class is represented by a binary code (an
+array of 0 and 1). The matrix which keeps track of the location/code of each
+class is called the code book. The code size is the dimensionality of the
+aforementioned space. Intuitively, each class should be represented by a code
+as unique as possible and a good code book should be designed to optimize
+classification accuracy. In this implementation, we simply use a
+randomly-generated code book as advocated in [3]_ although more elaborate
+methods may be added in the future.
 
 At fitting time, one binary classifier per bit in the code book is fitted.
 At prediction time, the classifiers are used to project new points in the
@@ -365,8 +365,8 @@ An example of the same ``y`` in sparse matrix form:
     (1, 2)	1
     (1, 3)	1
 
-Multioutput classification
---------------------------
+MultiOutputClassifier
+---------------------
 
 Multioutput classification support can be added to any classifier with
 :class:`~sklearn.multioutput.MultiOutputClassifier`. This strategy consists of
@@ -406,8 +406,8 @@ Below is an example of multioutput classification:
 
 .. _classifierchain:
 
-Classifier Chain
-----------------
+ClassifierChain
+---------------
 
 Classifier chains (see :class:`~sklearn.multioutput.ClassifierChain`) are a way
 of combining a number of binary classifiers into a single multi-label model
@@ -505,8 +505,8 @@ A valid representation of :term:`multioutput` `y` is a dense matrix of shape
    [ 40.5 109. ]
    [ 25.   30. ]]
 
-Multioutput regression
-----------------------
+MultiOutputRegressor
+--------------------
 
 Multioutput regression support can be added to any regressor with
 :class:`~sklearn.multioutput.MultiOutputRegressor`.  This strategy consists of
@@ -536,8 +536,8 @@ Below is an example of multioutput regression:
 
 .. _regressorchain:
 
-Regressor Chain
----------------
+RegressorChain
+--------------
 
 Regressor chains (see :class:`~sklearn.multioutput.RegressorChain`) is
 analogous to :class:`~sklearn.multioutput.ClassifierChain` as a way of
