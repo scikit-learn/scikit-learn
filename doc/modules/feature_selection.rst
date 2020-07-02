@@ -267,7 +267,7 @@ Sequential Feature Selection
 
 Sequential Feature Selection [sfs]_ (SFS) is available in the
 :class:`~sklearn.feature_selection.SequentialFeatureSelector` transformer.
-SFS can be either forward and backward:
+SFS can be either forward or backward:
 
 Forward-SFS is a greedy procedure that iteratively finds the best new feature
 to add to the set of selected features. Concretely, we initially start with
