@@ -1002,10 +1002,11 @@ def paired_distances(X, Y, *, metric="euclidean", **kwds):
     The haversine metric only accept array of shape (n_samples, 2)
 
     >>> from sklearn.metrics.pairwise import paired_distances
-    >>> X = [[0.182430, 1.292005], [1.062693, -0.010774]]
-    >>> Y = [[-0.970421, -1.451680], [1.504571, 1.205554]]
-    >>> paired_distances(X, Y, metric='haversine')
-    array([330.70908901, 143.80643402])
+    >>> X = [[-34.83333, -58.5166646], [-43.63284, -63.9876712]]
+    >>> Y = [[49.0083899664, 2.53844117956], [57.23313, 4.993234]]
+    >>> result = paired_distances(X, Y, metric='haversine')
+    >>> result * 6371000/1000  # multiply by Earth radius to get kilometers
+    array([11099.54035582, 12908.26749381])
 
     See also
     --------
