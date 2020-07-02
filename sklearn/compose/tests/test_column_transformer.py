@@ -304,7 +304,7 @@ def test_column_transformer_empty_columns(pandas, column):
 
 @pytest.mark.parametrize("use_pandas", [True, False], ids=["pandas", "numpy"])
 @pytest.mark.parametrize(
-    "column_selection",
+    "columns",
     [[], np.array([False]), [False]],
     ids=["list", "numpy_bool", "list_bool"],
 )
