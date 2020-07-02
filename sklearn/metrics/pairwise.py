@@ -443,17 +443,13 @@ def _nan_fill_row_norm(r, fill_value: float = 0.):
 
 
 def _nan_fill_dot(X, Y, fill_values: np.ndarray):
-    if X.shape[0] != Y.shape[0]:
-        raise ValueError('X and Y have incompatible shapes')
-
     if X.shape[1] != fill_values.shape[0]:
         raise ValueError('X and fill_values have incompatible shapes')
 
-    dim = X.shape[0]
-    p = np.zeros((dim, dim,))
-    for i in range(0, dim):
+    p = np.zeros((X.shape[0], Y.shape[0],))
+    for i in range(0, X.shape[0]):
         v1 = X[i, :]
-        for j in range(0, dim):
+        for j in range(0, Y.shape[0]):
             v2 = Y[j, :]
             s = 0.
             for k in range(0, fill_values.shape[0]):
@@ -489,7 +485,8 @@ def nan_filled_euclidean_distances(X, fill_values, Y=None, squared=False, missin
         # shortcut in the common case euclidean_distances(X, X)
         YY = XX.T
     else:
-        YY = row_norms(Y, squared=True)[np.newaxis, :]
+        YY = np.apply_along_axis(_nan_fill_row_norm, 1, Y)
+        YY = YY[np.newaxis, :]
 
     # if dtype is already float64, no need to chunk and upcast
     distances = - 2 * _nan_fill_dot(X, Y, fill_values)
@@ -509,15 +506,6 @@ def nan_filled_euclidean_distances(X, fill_values, Y=None, squared=False, missin
         # Ensure that distances between vectors and themselves are set to 0.0.
         # This may not be the case due to floating point rounding errors.
         np.fill_diagonal(distances, 0.0)
-
-    present_X = 1 - missing_X
-    present_Y = present_X if Y is X else ~missing_Y
-    present_count = np.dot(present_X, present_Y.T)
-    distances[present_count == 0] = np.nan
-    # avoid divide by zero
-    np.maximum(1, present_count, out=present_count)
-    distances /= present_count
-    distances *= X.shape[1]
 
     if not squared:
         np.sqrt(distances, out=distances)

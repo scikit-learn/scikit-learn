@@ -22,25 +22,25 @@ def test_choi_kernel_pca():
 
     # transform fit data
     choi_kpca = KernelPCA(4, kernel='choi', eigen_solver='auto', fit_inverse_transform=True)
-    # X_fit_transformed = choi_kpca.fit_transform(X_fit)
-    #
-    # rbf_kpca = KernelPCA(4, kernel='rbf', eigen_solver='auto', fit_inverse_transform=True)
-    # X_fit_transformed2 = rbf_kpca.fit_transform(X_fit)
-    # assert_array_almost_equal(np.abs(X_fit_transformed),
-    #                           np.abs(X_fit_transformed2))
-    #
-    # # non-regression test: previously, gamma would be 0 by default,
-    # # forcing all eigenvalues to 0 under the poly kernel
-    # assert X_fit_transformed.size != 0
-    #
-    # # transform new data
-    # X_pred_transformed = choi_kpca.transform(X_pred)
-    # assert (X_pred_transformed.shape[1] ==
-    #         X_fit_transformed.shape[1])
-    #
-    # # inverse transform
-    # X_pred2 = choi_kpca.inverse_transform(X_pred_transformed)
-    # assert X_pred2.shape == X_pred.shape
+    X_fit_transformed = choi_kpca.fit_transform(X_fit)
+
+    rbf_kpca = KernelPCA(4, kernel='rbf', eigen_solver='auto', fit_inverse_transform=True)
+    X_fit_transformed2 = rbf_kpca.fit_transform(X_fit)
+    assert_array_almost_equal(np.abs(X_fit_transformed),
+                              np.abs(X_fit_transformed2))
+
+    # non-regression test: previously, gamma would be 0 by default,
+    # forcing all eigenvalues to 0 under the poly kernel
+    assert X_fit_transformed.size != 0
+
+    # transform new data
+    X_pred_transformed = choi_kpca.transform(X_pred)
+    assert (X_pred_transformed.shape[1] ==
+            X_fit_transformed.shape[1])
+
+    # inverse transform
+    X_pred2 = choi_kpca.inverse_transform(X_pred_transformed)
+    assert X_pred2.shape == X_pred.shape
 
     X_fit[0, 0] = np.nan
     X_fit_transformed = choi_kpca.fit_transform(X_fit)
