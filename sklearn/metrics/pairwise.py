@@ -436,25 +436,72 @@ def nan_euclidean_distances(X, Y=None, *, squared=False,
     return distances
 
 
+def _nan_fill_row_norm(r, fill_value: float = 0.):
+    p = r * r
+    p = np.nan_to_num(p, nan=fill_value)
+    return np.sum(p)
+
+
+def _nan_fill_dot(X, Y, fill_values: np.ndarray):
+    if X.shape[0] != Y.shape[0]:
+        raise ValueError('X and Y have incompatible shapes')
+
+    if X.shape[1] != fill_values.shape[0]:
+        raise ValueError('X and fill_values have incompatible shapes')
+
+    dim = X.shape[0]
+    p = np.zeros((dim, dim,))
+    for i in range(0, dim):
+        v1 = X[i, :]
+        for j in range(0, dim):
+            v2 = Y[j, :]
+            s = 0.
+            for k in range(0, fill_values.shape[0]):
+                if np.isnan(v1[k]) and np.isnan(v2[k]):
+                    pass
+                elif np.isnan(v1[k]) or np.isnan(v2[k]):
+                    s += -fill_values[k]
+                else:
+                    s += v1[k] * v2[k]
+
+            p[i, j] = s
+
+    return p
+
+
 def nan_filled_euclidean_distances(X, fill_values, Y=None, squared=False, missing_values=np.nan, copy=True):
+    if X.dtype == np.float32 or (Y is not None and Y.dtype == np.float32):
+        raise NotImplementedError('X and Y must be np.float64 type')
+
     X, Y = check_pairwise_arrays(X, Y, accept_sparse=False, force_all_finite='allow-nan', copy=copy)
+
     # Get missing mask for X
     missing_X = _get_mask(X, missing_values)
 
     # Get missing mask for Y
     missing_Y = missing_X if Y is X else _get_mask(Y, missing_values)
 
-    # set missing values to zero
-    X[missing_X] = 0
-    Y[missing_Y] = 0
+    # calculate euclidean distances
+    XX = np.apply_along_axis(_nan_fill_row_norm, 1, X)
+    XX = XX[:, np.newaxis]
 
-    distances = euclidean_distances(X, Y, squared=True)
+    if X is Y and XX is not None:
+        # shortcut in the common case euclidean_distances(X, X)
+        YY = XX.T
+    else:
+        YY = row_norms(Y, squared=True)[np.newaxis, :]
 
-    # Adjust distances for missing values
-    XX = X * X
-    YY = Y * Y
-    distances -= np.dot(XX, missing_Y.T)
-    distances -= np.dot(missing_X, YY.T)
+    # if dtype is already float64, no need to chunk and upcast
+    distances = - 2 * _nan_fill_dot(X, Y, fill_values)
+    # distances = - 2 * np.dot(X, Y.T)
+    distances += XX
+    distances += YY
+    np.maximum(distances, 0, out=distances)
+
+    # Ensure that distances between vectors and themselves are set to 0.0.
+    # This may not be the case due to floating point rounding errors.
+    if X is Y:
+        np.fill_diagonal(distances, 0)
 
     np.clip(distances, 0, None, out=distances)
 
@@ -1181,9 +1228,10 @@ def choi_kernel(X: np.ndarray, Y: np.ndarray=None, nan_stdev_multiplier: float =
     if gamma is None:
         gamma = 1.0 / X.shape[1]
 
-    column_fills = np.nan_to_num(np.std(X, axis=0)) * nan_stdev_multiplier
+    col_fills = np.apply_along_axis(lambda col: np.std(col[~np.isnan(col)]), 0, X)
+    col_fills = np.nan_to_num(col_fills * nan_stdev_multiplier)
 
-    K = nan_filled_euclidean_distances(X, column_fills, Y=Y, squared=True)
+    K = nan_filled_euclidean_distances(X, col_fills, Y=Y, squared=True)
     K *= -gamma
     np.exp(K, K)  # exponentiate K in-place
     return K
