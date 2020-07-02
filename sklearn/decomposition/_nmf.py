@@ -813,7 +813,7 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
 
     n_samples = X.shape[0]
     max_iter_update_h_ = 1
-    max_iter_update_w_ = 1
+    max_iter_update_w_ = 5
 
     if batch_size is None:
         batch_size = n_samples
