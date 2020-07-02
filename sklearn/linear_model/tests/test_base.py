@@ -159,6 +159,7 @@ def test_linear_regression_sparse(random_state=0):
      (False, 1, FutureWarning),
      ("deprecated", 0, None)]
 )
+# FIXME remove test in 0.26
 def test_assure_warning_when_normalize(normalize, n_warnings, warning):
     # check that we issue a FutureWarning when normalize was set
     rng = check_random_state(0)
