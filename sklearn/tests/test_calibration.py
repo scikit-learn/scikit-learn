@@ -6,7 +6,7 @@ import numpy as np
 from scipy import sparse
 
 from sklearn.base import BaseEstimator
-from sklearn.model_selection import LeaveOneOut
+from sklearn.model_selection import LeaveOneOut, train_test_split
 
 from sklearn.utils._testing import (assert_array_almost_equal,
                                     assert_almost_equal,
@@ -385,8 +385,8 @@ def test_isotonic_calibration_strict():
     n_samples = 100
     X, y = make_classification(n_samples=2 * n_samples, n_features=6,
                                random_state=42)
-    X_train, y_train = X[:n_samples], y[:n_samples]
-    X_test, y_test = X[n_samples:], y[n_samples:]
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2,
+                                                        random_state=42)
     clf = LogisticRegression(C=1.)
     clf.fit(X_train, y_train)
     y_pred = clf.predict_proba(X_test)
