@@ -585,7 +585,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
                 result_msg += f" {scorer_name}: ("
                 if return_train_score:
                     scorer_scores = train_scores[scorer_name]
-                    result_msg += (f"train={scorer_scores:.3f}, ")
+                    result_msg += f"train={scorer_scores:.3f}, "
                 result_msg += f"test={test_scores[scorer_name]:.3f})"
         result_msg += f" total time={logger.short_format_time(total_time)}"
 
