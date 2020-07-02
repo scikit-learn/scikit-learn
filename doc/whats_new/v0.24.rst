@@ -45,6 +45,13 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
+:mod:`sklearn.compose`
+......................
+
+- |FIX| :class:`compose.ColumnTransformer` will skip transformers the
+  column selector is a list of bools that are False. :pr:`17616` by
+  `Thomas Fan`_.
+
 :mod:`sklearn.datasets`
 .......................
 
