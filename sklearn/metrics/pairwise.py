@@ -436,6 +436,48 @@ def nan_euclidean_distances(X, Y=None, *, squared=False,
     return distances
 
 
+def nan_filled_euclidean_distances(X, fill_values, Y=None, squared=False, missing_values=np.nan, copy=True):
+    X, Y = check_pairwise_arrays(X, Y, accept_sparse=False, force_all_finite='allow-nan', copy=copy)
+    # Get missing mask for X
+    missing_X = _get_mask(X, missing_values)
+
+    # Get missing mask for Y
+    missing_Y = missing_X if Y is X else _get_mask(Y, missing_values)
+
+    # set missing values to zero
+    X[missing_X] = 0
+    Y[missing_Y] = 0
+
+    distances = euclidean_distances(X, Y, squared=True)
+
+    # Adjust distances for missing values
+    XX = X * X
+    YY = Y * Y
+    distances -= np.dot(XX, missing_Y.T)
+    distances -= np.dot(missing_X, YY.T)
+
+    np.clip(distances, 0, None, out=distances)
+
+    if X is Y:
+        # Ensure that distances between vectors and themselves are set to 0.0.
+        # This may not be the case due to floating point rounding errors.
+        np.fill_diagonal(distances, 0.0)
+
+    present_X = 1 - missing_X
+    present_Y = present_X if Y is X else ~missing_Y
+    present_count = np.dot(present_X, present_Y.T)
+    distances[present_count == 0] = np.nan
+    # avoid divide by zero
+    np.maximum(1, present_count, out=present_count)
+    distances /= present_count
+    distances *= X.shape[1]
+
+    if not squared:
+        np.sqrt(distances, out=distances)
+
+    return distances
+
+
 def _euclidean_distances_upcast(X, XX=None, Y=None, YY=None, batch_size=None):
     """Euclidean distances between X and Y
 
@@ -1104,6 +1146,44 @@ def rbf_kernel(X, Y=None, gamma=None):
         gamma = 1.0 / X.shape[1]
 
     K = euclidean_distances(X, Y, squared=True)
+    K *= -gamma
+    np.exp(K, K)  # exponentiate K in-place
+    return K
+
+
+def choi_kernel(X: np.ndarray, Y: np.ndarray=None, nan_stdev_multiplier: float = 3., gamma=None):
+    """
+    First, compute the standard deviation of each column. Then, compute the distance between X and Y as follows:
+    - 2-norm distance if both x and y values are not nan
+    - `nan_stdev_multiplier` times the standard deviation of the column value if just one of the values is nan
+    - 0 if both x and y values are nan
+
+    The kernel is computed as follows:
+
+        K(x, y) = exp(-gamma * distance)
+
+    Parameters
+    ----------
+    X : array of shape (n_samples_X, n_features)
+
+    Y : array of shape (n_samples_Y, n_features), default=None
+
+    nan_stdev_multiplier: float
+
+    gamma : float, default=None
+        If None, defaults to 1.0 / n_features
+
+    Returns
+    -------
+    kernel_matrix : array of shape (n_samples_X, n_samples_Y)
+    """
+    X, Y = check_pairwise_arrays(X, Y, force_all_finite='allow-nan')
+    if gamma is None:
+        gamma = 1.0 / X.shape[1]
+
+    column_fills = np.nan_to_num(np.std(X, axis=0)) * nan_stdev_multiplier
+
+    K = nan_filled_euclidean_distances(X, column_fills, Y=Y, squared=True)
     K *= -gamma
     np.exp(K, K)  # exponentiate K in-place
     return K
@@ -1804,7 +1884,9 @@ PAIRWISE_KERNEL_FUNCTIONS = {
     'rbf': rbf_kernel,
     'laplacian': laplacian_kernel,
     'sigmoid': sigmoid_kernel,
-    'cosine': cosine_similarity, }
+    'cosine': cosine_similarity,
+    'choi': choi_kernel,
+}
 
 
 def kernel_metrics():
@@ -1844,6 +1926,7 @@ KERNEL_PARAMS = {
     "rbf": frozenset(["gamma"]),
     "laplacian": frozenset(["gamma"]),
     "sigmoid": frozenset(["gamma", "coef0"]),
+    "choi": frozenset(["nan_stdev_multiplier", "gamma"]),
 }
 
 

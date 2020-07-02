@@ -277,7 +277,12 @@ class KernelPCA(TransformerMixin, BaseEstimator):
         self : object
             Returns the instance itself.
         """
-        X = self._validate_data(X, accept_sparse='csr', copy=self.copy_X)
+        if self.kernel in ('choi',):
+            force_all_finite = 'allow-nan'
+        else:
+            force_all_finite = True
+
+        X = self._validate_data(X, accept_sparse='csr', copy=self.copy_X, force_all_finite=force_all_finite)
         self._centerer = KernelCenterer()
         K = self._get_kernel(X)
         self._fit_transform(K)
