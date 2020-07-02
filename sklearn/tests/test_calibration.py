@@ -383,23 +383,6 @@ def test_calibration_accepts_ndarray(X):
     calibrated_clf.fit(X, y)
 
 
-@pytest.mark.parametrize(
-    "brier_value, estimator_name, expected_label",
-    [(0.07, None, "Brier: 0.070"),
-     (None, "my_est", "my_est"),
-     (0.07, "my_est2", "my_est2 (Brier: 0.070)")]
-)
-def test_calibration_display_default_labels(pyplot, brier_value,
-                                            estimator_name, expected_label):
-    prob_true = np.array([0, 1, 1, 0])
-    prob_pred = np.array([0.2, 0.8, 0.8, 0.4])
-    y_prob = np.array([])
-
-    viz = CalibrationDisplay(prob_true, prob_pred, y_prob,
-                             brier_value=brier_value,
-                             estimator_name=estimator_name)
-    viz.plot()
-    assert viz.line_.get_label() == expected_label
 @pytest.fixture
 def text_data():
     text_data = [
@@ -469,6 +452,24 @@ def data_binary(data):
     return X[y < 2], y[y < 2]
 
 
+@pytest.mark.parametrize(
+    "estimator_name, expected_label",
+    [(None, "_line1"),
+     ("my_est", "my_est"),
+     ("my_est2", "my_est2")]
+)
+def test_calibration_display_default_labels(pyplot, estimator_name,
+                                            expected_label):
+    prob_true = np.array([0, 1, 1, 0])
+    prob_pred = np.array([0.2, 0.8, 0.8, 0.4])
+    y_prob = np.array([])
+
+    viz = CalibrationDisplay(prob_true, prob_pred, y_prob,
+                             estimator_name=estimator_name)
+    viz.plot()
+    assert viz.line_.get_label() == expected_label
+
+
 def test_plot_calibration_curve_error_non_binary(pyplot, data):
     X, y = data
     clf = DecisionTreeClassifier()
@@ -504,10 +505,9 @@ def test_plot_calibration_curve_not_fitted(pyplot, data_binary):
 
 @pytest.mark.parametrize("n_bins", [5, 10])
 @pytest.mark.parametrize("strategy", ["uniform", "quantile"])
-@pytest.mark.parametrize("brier_score", [True, False])
 @pytest.mark.parametrize("with_strings", [True, False])
 def test_plot_calibration_curve(pyplot, data_binary, n_bins, strategy,
-                                brier_score, with_strings):
+                                with_strings):
     X, y = data_binary
 
     pos_label = None
@@ -518,8 +518,7 @@ def test_plot_calibration_curve(pyplot, data_binary, n_bins, strategy,
     lr = LogisticRegression().fit(X, y)
 
     viz = plot_calibration_curve(
-        lr, X, y, n_bins=n_bins, strategy=strategy, brier_score=brier_score,
-        alpha=0.8
+        lr, X, y, n_bins=n_bins, strategy=strategy, alpha=0.8
     )
 
     y_prob = lr.predict_proba(X)[:, 1]
@@ -542,17 +541,7 @@ def test_plot_calibration_curve(pyplot, data_binary, n_bins, strategy,
 
     assert viz.ax_.get_xlabel() == "Mean predicted probability"
     assert viz.ax_.get_ylabel() == "Fraction of positives"
-
-    if brier_score:
-        brier_value = brier_score_loss(
-            y, y_prob, pos_label=pos_label
-        )
-        assert_allclose(brier_value, viz.brier_value)
-        expected_label = \
-            f"LogisticRegression (Brier: {viz.brier_value:.3f})"
-        assert viz.line_.get_label() == expected_label
-    else:
-        assert viz.line_.get_label() == "LogisticRegression"
+    assert viz.line_.get_label() == "LogisticRegression"
 
 
 @pytest.mark.parametrize(
