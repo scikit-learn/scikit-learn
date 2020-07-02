@@ -1875,7 +1875,7 @@ class MiniBatchNMF(TransformerMixin, BaseEstimator):
                 n_components=self.n_components,
                 batch_size=self.batch_size, init='custom',
                 update_H=True, solver=self.solver, beta_loss=self.beta_loss,
-                tol=self.tol, max_iter=1, alpha=self.alpha,
+                tol=0, max_iter=1, alpha=self.alpha,
                 l1_ratio=self.l1_ratio, regularization='both',
                 random_state=self.random_state, verbose=self.verbose,
                 shuffle=self.shuffle)
@@ -1922,3 +1922,21 @@ class MiniBatchNMF(TransformerMixin, BaseEstimator):
             shuffle=self.shuffle)
 
         return W
+
+    def inverse_transform(self, W):
+        """Transform data back to its original space.
+
+        Parameters
+        ----------
+        W : {array-like, sparse matrix}, shape (n_samples, n_components)
+            Transformed data matrix
+
+        Returns
+        -------
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            Data matrix of original shape
+
+        .. versionadded:: 0.18
+        """
+        check_is_fitted(self)
+        return np.dot(W, self.components_)
