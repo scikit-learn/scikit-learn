@@ -352,10 +352,8 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             params = (obj.metric_params.copy()
                       if obj.metric_params is not None
                       else {})
-            if 'p' not in params and hasattr(obj, 'p'):
+            if 'p' not in params and hasattr(obj, 'p') and obj.p is not None:
                 params['p'] = obj.p
-            if obj.metric not in ['wminkowski', 'minkowski']:
-                del params['p']
             return params
 
         def _params_equal(params1, params2):
