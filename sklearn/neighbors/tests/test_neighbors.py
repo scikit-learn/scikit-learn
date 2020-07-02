@@ -1616,7 +1616,7 @@ def test_pairwise_boolean_distance():
     assert_array_equal(nn1.kneighbors(X)[0], nn2.kneighbors(X)[0])
 
 
-def test_incompatible_metric_params():
+def test_incompatible_metric_names():
     # test if an error is raised if the given tree does not have compatible
     # metric parameters with the object itself. See #4194
     data = np.random.rand(10, 10)
@@ -1627,6 +1627,28 @@ def test_incompatible_metric_params():
                                                metric='jaccard')
     with pytest.raises(ValueError, match="The metric parameters of the "):
         neigh_minkowski.fit(neigh_jaccard.fit(data))
+
+
+@pytest.mark.parametrize('params', [{'p': 1},
+                                    {'list_': [1]},
+                                    {'dict_': {'a': 1}}])
+def test_incompatible_metric_params(params):
+    # test if an error is raised if the given tree does not have compatible
+    # metric parameters with the object itself. See #4194
+    def custom_metric(x, y, p=2, list_=[], dict_={}):
+        return np.sum(np.abs(x - y))
+
+    data = np.random.rand(10, 10)
+    n_neighbors = 2
+
+    neigh_custom1 = neighbors.NearestNeighbors(n_neighbors=n_neighbors,
+                                               metric=custom_metric)
+    neigh_custom2 = neighbors.NearestNeighbors(n_neighbors=n_neighbors,
+                                               metric=custom_metric,
+                                               metric_params=params)
+
+    with pytest.raises(ValueError, match="The metric parameters of the "):
+        neigh_custom1.fit(neigh_custom2.fit(data))
 
 
 def test_radius_neighbors_predict_proba():
