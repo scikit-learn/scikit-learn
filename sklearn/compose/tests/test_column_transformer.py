@@ -19,6 +19,7 @@ from sklearn.base import BaseEstimator
 from sklearn.compose import (
     ColumnTransformer, make_column_transformer, make_column_selector
 )
+from sklearn.impute import SimpleImputer
 from sklearn.exceptions import NotFittedError
 from sklearn.preprocessing import FunctionTransformer
 from sklearn.preprocessing import StandardScaler, Normalizer, OneHotEncoder
@@ -253,9 +254,12 @@ def test_column_transformer_dataframe():
     assert_array_equal(ct.transformers_[-1][2], [1])
 
 
-@pytest.mark.parametrize("pandas", [True, False], ids=['pandas', 'numpy'])
-@pytest.mark.parametrize("column", [[], np.array([False, False]), [False, False]],
-                         ids=['list', 'bool', 'list_of_bool'])
+@pytest.mark.parametrize("pandas", [True, False], ids=["pandas", "numpy"])
+@pytest.mark.parametrize(
+    "column",
+    [[], np.array([False, False]), [False, False]],
+    ids=["list", "bool", "list_of_bool"],
+)
 def test_column_transformer_empty_columns(pandas, column):
     # test case that ensures that the column transformer does also work when
     # a given transformer doesn't have any columns to work on
@@ -296,6 +300,32 @@ def test_column_transformer_empty_columns(pandas, column):
     assert_array_equal(ct.fit(X).transform(X), fixture)
     assert len(ct.transformers_) == 2  # including remainder
     assert isinstance(ct.transformers_[0][1], Trans)
+
+
+@pytest.mark.parametrize("use_pandas", [True, False], ids=["pandas", "numpy"])
+@pytest.mark.parametrize(
+    "column_selection",
+    [[], np.array([False]), [False]],
+    ids=["list", "numpy_bool", "list_bool"],
+)
+@pytest.mark.parametrize(
+    "estimator", [Trans(), SimpleImputer()], ids=["Trans", "SimpleImputer"]
+)
+def test_column_transformer_empty_columns(use_pandas, column_selection, estimator):
+    """
+    Test case for https://github.com/scikit-learn/scikit-learn/issues/17586
+    """
+
+    data = np.array([["a"], ["b"], ["c"]], dtype="object")
+
+    if use_pandas:
+        pd = pytest.importorskip("pandas")
+        data = pd.DataFrame(data)
+
+    ct = ColumnTransformer(transformers=[("noop", estimator, column_selection),])
+    data_trans = ct.fit_transform(data)
+
+    assert data_trans.shape == (3, 0)
 
 
 def test_column_transformer_sparse_array():
