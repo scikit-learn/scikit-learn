@@ -12,7 +12,7 @@ from sklearn.utils.validation import check_array
 from sklearn.utils._testing import (assert_raises, assert_array_equal,
                                     assert_array_almost_equal,
                                     assert_warns_message, assert_no_warnings)
-from sklearn.utils import shuffle
+from sklearn.utils import shuffle, check_random_state
 
 from scipy.special import expit
 
@@ -539,11 +539,14 @@ def test_isotonic_thresholds(increasing):
 
 def test_isotonic_strict():
     # check on enforcing strict monotonicity
-    X = np.array([0.1, 0.3, 0.5, 0.7, 1.])
-    y = np.array([1, 0, 1, 0, 1])
+    n = 100
+    x = np.arange(n)
+    rs = check_random_state(0)
+    y = rs.randint(-50, 50, size=(n,)) + 50. * np.log1p(np.arange(n))
 
     ireg = IsotonicRegression(strict=True)
-    ireg.fit(X, y)
-    pred = ireg.predict([0.1, 0.2, 0.3])
+    ireg.fit(x, y)
+    x_test = np.linspace(-10, 110, 1000)
+    pred = ireg.predict(x_test)
 
-    assert all(np.diff(pred) != 0)
+    assert all(np.diff(pred) > 0)
