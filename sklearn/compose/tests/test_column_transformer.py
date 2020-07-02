@@ -257,7 +257,7 @@ def test_column_transformer_dataframe():
 @pytest.mark.parametrize("column_selection", [[], np.array([False, False]),
                                               [False, False]],
                          ids=['list', 'bool', 'bool_int'])
-@pytest.mark.parametrize("callable_column", [False])
+@pytest.mark.parametrize("callable_column", [False, True])
 def test_column_transformer_empty_columns(pandas, column_selection,
                                           callable_column):
     # test case that ensures that the column transformer does also work when
