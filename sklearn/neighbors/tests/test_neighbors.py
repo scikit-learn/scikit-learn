@@ -1621,9 +1621,9 @@ def test_incompatible_metric_params():
     # metric parameters with the object itself. See #4194
     data = np.random.rand(10, 10)
     n_neighbors = 2
-    neigh_minkowski = neighbors.NearestNeighbors(n_neighbors,
+    neigh_minkowski = neighbors.NearestNeighbors(n_neighbors=n_neighbors,
                                                  metric='minkowski')
-    neigh_jaccard = neighbors.NearestNeighbors(n_neighbors,
+    neigh_jaccard = neighbors.NearestNeighbors(n_neighbors=n_neighbors,
                                                metric='jaccard')
     with pytest.raises(ValueError, match="The metric parameters of the "):
         neigh_minkowski.fit(neigh_jaccard.fit(data))
