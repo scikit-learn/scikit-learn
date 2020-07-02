@@ -254,8 +254,8 @@ def test_column_transformer_dataframe():
 
 
 @pytest.mark.parametrize("pandas", [True, False], ids=['pandas', 'numpy'])
-@pytest.mark.parametrize("column", [[], np.array([False, False])],
-                         ids=['list', 'bool'])
+@pytest.mark.parametrize("column", [[], np.array([False, False]), [False, False]],
+                         ids=['list', 'bool', 'list_of_bool'])
 def test_column_transformer_empty_columns(pandas, column):
     # test case that ensures that the column transformer does also work when
     # a given transformer doesn't have any columns to work on
