@@ -64,7 +64,7 @@ def _deprecate_normalize(normalize, default):
     elif (normalize != 'deprecated' and not normalize):
         warnings.warn(
             "'normalize' was deprecated in version 0.24 and will be"
-            " removed in 0.26. Don't set 'normalize' parameter and leave it to
+            " removed in 0.26. Don't set 'normalize' parameter and leave it to"
             " its default value", FutureWarning
         )
 
