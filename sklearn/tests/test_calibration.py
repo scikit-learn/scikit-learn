@@ -510,11 +510,6 @@ def test_plot_calibration_curve(pyplot, data_binary, n_bins, strategy,
                                 with_strings):
     X, y = data_binary
 
-    pos_label = None
-    if with_strings:
-        y = np.array(["c", "b"])[y]
-        pos_label = "c"
-
     lr = LogisticRegression().fit(X, y)
 
     viz = plot_calibration_curve(
