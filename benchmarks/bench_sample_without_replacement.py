@@ -139,7 +139,7 @@ if __name__ == "__main__":
     ###########################################################################
     time = {}
     n_samples = np.linspace(start=0, stop=opts.n_population,
-        num=opts.n_steps).astype(np.int)
+                            num=opts.n_steps).astype(int)
 
     ratio = n_samples / opts.n_population
 
