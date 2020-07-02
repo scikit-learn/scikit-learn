@@ -668,7 +668,8 @@ def _is_empty_column_selection(column):
     elif column.shape == (0,):
         return True
 
-    # Otherwise, column has more than one element, and at least one element is not False
+    # Otherwise, column has more than one element, and at least one element is
+    # not False
     else:
         return False
 

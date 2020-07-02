@@ -311,7 +311,7 @@ def test_column_transformer_empty_columns(pandas, column):
 @pytest.mark.parametrize(
     "estimator", [Trans(), SimpleImputer()], ids=["Trans", "SimpleImputer"]
 )
-def test_column_transformer_empty_columns(use_pandas, column_selection, estimator):
+def test_issue_17586(use_pandas, columns, estimator):
     """
     Test case for https://github.com/scikit-learn/scikit-learn/issues/17586
     """
@@ -322,7 +322,7 @@ def test_column_transformer_empty_columns(use_pandas, column_selection, estimato
         pd = pytest.importorskip("pandas")
         data = pd.DataFrame(data)
 
-    ct = ColumnTransformer(transformers=[("noop", estimator, column_selection),])
+    ct = ColumnTransformer(transformers=[("noop", estimator, columns), ])
     data_trans = ct.fit_transform(data)
 
     assert data_trans.shape == (3, 0)
