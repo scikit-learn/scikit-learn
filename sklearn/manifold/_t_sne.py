@@ -605,6 +605,8 @@ class TSNE(BaseEstimator):
         version 0.26.
 
         .. versionadded:: 0.24
+           Provide backward compatibility during deprecation of legacy
+           squaring behavior.
 
     Attributes
     ----------
