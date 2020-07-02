@@ -551,3 +551,8 @@ def test_isotonic_strict():
 
     assert all(np.diff(ireg.y_thresholds_))
     assert all(np.diff(pred) > 0)
+
+    # check ValueError is raised if strict monotonicity is impossible
+    ireg = IsotonicRegression(increasing=False, strict=True)
+    with pytest.raises(ValueError):
+        ireg.fit(x, y)

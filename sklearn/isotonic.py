@@ -162,7 +162,7 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
 
     strict : bool, default=False
         Determines whether to make monotonicity constraints strict.
-        When set to True, points outside the training domain will be
+        When set to `True`, points outside the training domain will be
         extrapolated, unless `out_of_bounds="clip"`.
 
 
@@ -287,7 +287,10 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         if self.strict:
             keep_data = np.ones(len(y), dtype=bool)
             keep_data[1:] = np.not_equal(y[1:], y[:-1])
-            return X[keep_data], y[keep_data]
+            if np.count_nonzero(keep_data) == 1:
+                raise ValueError("Strict monotonicity cannot be enforced.")
+            else:
+                return X[keep_data], y[keep_data]
 
         if trim_duplicates:
             # Remove unnecessary points for faster prediction
