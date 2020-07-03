@@ -505,6 +505,24 @@ def test_ordinal_encoder_inverse():
         enc.inverse_transform(X_tr)
 
 
+@pytest.mark.parametrize("X", [np.array([[1, np.nan]]).T,
+                               np.array([['a', np.nan]], dtype=object).T],
+                         ids=['numeric', 'object'])
+def test_ordinal_encoder_raise_missing(X):
+    ohe = OrdinalEncoder()
+
+    with pytest.raises(ValueError, match="Input contains NaN"):
+        ohe.fit(X)
+
+    with pytest.raises(ValueError, match="Input contains NaN"):
+        ohe.fit_transform(X)
+
+    ohe.fit(X[:1, :])
+
+    with pytest.raises(ValueError, match="Input contains NaN"):
+        ohe.transform(X)
+
+
 def test_ordinal_encoder_raise_categories_shape():
 
     X = np.array([['Low', 'Medium', 'High', 'Medium', 'Low']], dtype=object).T
@@ -747,7 +765,7 @@ def test_ohe_missing_value_object_auto(missing_value):
 
 
 def test_ohe_missing_value_object_different_order():
-    # categories are not in lexicon ordering
+    # categories are not in lexical ordering
     categories = [['b', None, 'a']]
     X = np.array([['a', 'b', 'b', None, 'c']], dtype=object).T
     ohe = OneHotEncoder(sparse=False, handle_unknown='ignore',

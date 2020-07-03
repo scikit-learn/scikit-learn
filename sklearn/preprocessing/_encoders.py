@@ -109,7 +109,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                         raise ValueError(msg)
             self.categories_.append(cats)
 
-    def _transform(self, X, handle_unknown='error', force_all_finite=False):
+    def _transform(self, X, handle_unknown='error', force_all_finite=True):
         X_list, n_samples, n_features = self._check_X(
             X, force_all_finite=force_all_finite)
 
@@ -363,10 +363,10 @@ class OneHotEncoder(_BaseEncoder):
             missing_drops = []
             drop_indices = []
             for col_idx, (val, cat_list) in enumerate(zip(self.drop,
-                                                    self.categories_)):
+                                                          self.categories_)):
                 if not is_scalar_nan(val):
                     drop_idx = np.where(cat_list == val)[0]
-                    if drop_idx.size:
+                    if drop_idx.size:  # found drop idx
                         drop_indices.append(drop_idx[0])
                     else:
                         missing_drops.append((col_idx, val))
@@ -377,7 +377,7 @@ class OneHotEncoder(_BaseEncoder):
                     if is_scalar_nan(cat):
                         drop_indices.append(cat_idx)
                         break
-                else:  # loop did not break
+                else:  # loop did not break thus drop is missing
                     missing_drops.append((col_idx, val))
 
             if any(missing_drops):
