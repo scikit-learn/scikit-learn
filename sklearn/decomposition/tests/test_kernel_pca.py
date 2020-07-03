@@ -1,6 +1,7 @@
 import numpy as np
 import scipy.sparse as sp
 import pytest
+from numpy.testing import assert_almost_equal
 
 from sklearn.utils._testing import (assert_array_almost_equal,
                                    assert_allclose)
@@ -11,8 +12,31 @@ from sklearn.datasets import make_blobs
 from sklearn.linear_model import Perceptron
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV
-from sklearn.metrics.pairwise import rbf_kernel
+from sklearn.metrics.pairwise import rbf_kernel, _nan_fill_dot
 from sklearn.utils.validation import _check_psd_eigenvalues
+
+
+def test_nan_fill_dot():
+    X = np.array([
+        [0.3, -0.2, 1.5],
+        [0.0, 0.2, 0.5],
+        [2.0, -0.7, np.nan],
+        [np.nan, np.nan, 0.5],
+    ])
+
+    Y = np.array([
+        [0.9, 0.4, -0.3],
+        [np.nan, np.nan, np.nan],
+    ])
+
+    fill_values = np.array([3.0, 4.0, 5.0])
+
+    p = _nan_fill_dot(X, Y, fill_values=fill_values)
+
+    assert p.shape == (4, 2,)
+    assert_almost_equal(p[0, 0], 0.3 * 0.9 - 0.2 * 0.4 - 1.5 * 0.3)
+    assert_almost_equal(p[2, 0], 2.0 * 0.9 - 0.7 * 0.4 + 5.0)
+    assert_almost_equal(p[2, 1], 3.0 + 4.0)
 
 
 def test_choi_kernel_pca():
@@ -21,7 +45,7 @@ def test_choi_kernel_pca():
     X_pred = rng.random_sample((2, 4))
 
     # transform fit data
-    choi_kpca = KernelPCA(4, kernel='choi', eigen_solver='auto', fit_inverse_transform=True)
+    choi_kpca = KernelPCA(4, kernel='choi', eigen_solver='auto', fit_inverse_transform=False)
     X_fit_transformed = choi_kpca.fit_transform(X_fit)
 
     rbf_kpca = KernelPCA(4, kernel='rbf', eigen_solver='auto', fit_inverse_transform=True)
@@ -38,12 +62,15 @@ def test_choi_kernel_pca():
     assert (X_pred_transformed.shape[1] ==
             X_fit_transformed.shape[1])
 
-    # inverse transform
-    X_pred2 = choi_kpca.inverse_transform(X_pred_transformed)
-    assert X_pred2.shape == X_pred.shape
-
     X_fit[0, 0] = np.nan
     X_fit_transformed = choi_kpca.fit_transform(X_fit)
+    assert not np.isnan(X_fit_transformed).any()
+    assert X_fit_transformed.shape == (5, 4,)
+
+    X_fit[1, :] = np.nan
+    X_fit_transformed = choi_kpca.fit_transform(X_fit)
+    assert not np.isnan(X_fit_transformed).any()
+    assert X_fit_transformed.shape == (5, 4,)
 
 
 def test_kernel_pca():

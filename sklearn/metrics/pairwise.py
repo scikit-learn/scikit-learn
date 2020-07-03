@@ -14,6 +14,7 @@ from functools import partial
 import warnings
 
 import numpy as np
+from numba import njit
 from scipy.spatial import distance
 from scipy.sparse import csr_matrix
 from scipy.sparse import issparse
@@ -442,6 +443,7 @@ def _nan_fill_row_norm(r, fill_value: float = 0.):
     return np.sum(p)
 
 
+@njit
 def _nan_fill_dot(X, Y, fill_values: np.ndarray):
     if X.shape[1] != fill_values.shape[0]:
         raise ValueError('X and fill_values have incompatible shapes')
@@ -456,7 +458,7 @@ def _nan_fill_dot(X, Y, fill_values: np.ndarray):
                 if np.isnan(v1[k]) and np.isnan(v2[k]):
                     pass
                 elif np.isnan(v1[k]) or np.isnan(v2[k]):
-                    s += -fill_values[k]
+                    s += fill_values[k]
                 else:
                     s += v1[k] * v2[k]
 
@@ -489,7 +491,7 @@ def nan_filled_euclidean_distances(X, fill_values, Y=None, squared=False, missin
         YY = YY[np.newaxis, :]
 
     # if dtype is already float64, no need to chunk and upcast
-    distances = - 2 * _nan_fill_dot(X, Y, fill_values)
+    distances = - 2 * _nan_fill_dot(X, Y, -fill_values)
     # distances = - 2 * np.dot(X, Y.T)
     distances += XX
     distances += YY
