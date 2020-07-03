@@ -186,7 +186,7 @@ Chi-squared kernel
 The chi-squared kernel is a very popular choice for training non-linear SVMs in
 computer vision applications.
 It can be computed using :func:`chi2_kernel` and then passed to an
-:class:`sklearn.svm.SVC` with ``kernel="precomputed"``::
+:class:`~sklearn.svm.SVC` with ``kernel="precomputed"``::
 
     >>> from sklearn.svm import SVC
     >>> from sklearn.metrics.pairwise import chi2_kernel
