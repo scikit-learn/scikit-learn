@@ -360,9 +360,6 @@ class OneHotEncoder(_BaseEncoder):
                        "of features ({}), got {}")
                 raise ValueError(msg.format(len(self.categories_),
                                             len(self.drop)))
-            missing_drops = [(i, val) for i, val in enumerate(self.drop)
-                             if val not in self.categories_[i]]
-
             missing_drops = []
             drop_indices = []
             for i, (val, cat_list) in enumerate(zip(self.drop,
@@ -376,12 +373,12 @@ class OneHotEncoder(_BaseEncoder):
                     continue
 
                 # val is nan, find nan in categories manually
-                for i, cat in enumerate(cat_list):
+                for j, cat in enumerate(cat_list):
                     if is_scalar_nan(cat):
-                        drop_indices.append(i)
+                        drop_indices.append(j)
                         break
                 else:  # loop did not break
-                    missing_drops.append((i, val))
+                    missing_drops.append((j, val))
 
             if any(missing_drops):
                 msg = ("The following categories were supposed to be "
