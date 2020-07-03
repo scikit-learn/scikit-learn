@@ -14,6 +14,7 @@ also presented.
 
 An isotonic regression is fitted as well as a strict isotonic regression
 that fits a strictly increasing approximation function.
+
 Plots on the right-hand side show the model prediction functions that
 results from the linear interpolation of thresholds points. The thresholds
 points are a subset of the training input observations and their matching

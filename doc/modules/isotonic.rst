@@ -22,7 +22,7 @@ The `increasing` parameter changes the constraint to
 correlation coefficient
 <https://en.wikipedia.org/wiki/Spearman%27s_rank_correlation_coefficient>`_.
 
-The `strict` parameter produces a strictly increasing fit (resp. strictly
+The `strict` parameter gives a strictly increasing fit (resp. strictly
 decreasing) when `increasing=True` (resp. `increasing=False`). 
 
 :class:`IsotonicRegression` produces a series of predictions
