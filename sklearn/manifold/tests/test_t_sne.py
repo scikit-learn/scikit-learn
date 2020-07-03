@@ -368,14 +368,13 @@ def test_sparse_precomputed_distance():
         assert_almost_equal(Xt_dense, Xt_sparse)
 
 
-@pytest.mark.parametrize('square_distance', [True, 'legacy'])
-def test_non_positive_computed_distances(square_distance):
+def test_non_positive_computed_distances():
     # Computed distance matrices must be positive.
     def metric(x, y):
         return -1
 
-    # Negative computed distances should be caught regardless of squaring
-    tsne = TSNE(metric=metric, method='exact', square_distance=square_distance)
+    # Negative computed distances should be caught even if result is squared
+    tsne = TSNE(metric=metric, method='exact', square_distance=True)
     X = np.array([[0.0, 0.0], [1.0, 1.0]])
     with pytest.raises(ValueError, match="All distances .*metric given.*"):
         tsne.fit_transform(X)
@@ -424,9 +423,9 @@ def test_method_not_available():
 
 
 def test_square_distance_not_available():
-    # square_distance must be True, 'legacy', or 'warn'.
+    # square_distance must be True or 'legacy'.
     tsne = TSNE(square_distance="not_available")
-    with pytest.raises(ValueError, match="'square_distance' must be True, "):
+    with pytest.raises(ValueError, match="'square_distance' must be True or "):
         tsne.fit_transform(np.array([[0.0], [1.0]]))
 
 
@@ -895,7 +894,7 @@ def test_tsne_with_different_distance_metrics():
 
 @pytest.mark.parametrize('method', ['exact', 'barnes_hut'])
 @pytest.mark.parametrize('metric', ['euclidean', 'manhattan'])
-@pytest.mark.parametrize('square_distance', [True, 'legacy', 'warn'])
+@pytest.mark.parametrize('square_distance', [True, 'legacy'])
 @ignore_warnings(category=FutureWarning)
 def test_tsne_with_different_square_distances(method, square_distance, metric):
     """Make sure that TSNE works for different square_distance settings"""
@@ -909,8 +908,7 @@ def test_tsne_with_different_square_distances(method, square_distance, metric):
                       random_state=random_state)
     X_precomputed = pairwise_distances(X, metric=metric)
 
-    # 'warn' should function identically to 'legacy' apart from a FutureWarning
-    if metric == 'euclidean' and square_distance in ['legacy', 'warn']:
+    if metric == 'euclidean' and square_distance == 'legacy':
         X_precomputed **= 2
 
     X_transformed_tsne = TSNE(
@@ -926,16 +924,16 @@ def test_tsne_with_different_square_distances(method, square_distance, metric):
 
 
 @pytest.mark.parametrize('metric', ['euclidean', 'manhattan'])
-@pytest.mark.parametrize('square_distance', [True, 'legacy', 'warn'])
+@pytest.mark.parametrize('square_distance', [True, 'legacy'])
 def test_tsne_square_distance_futurewarning(metric, square_distance):
     """Make sure that a FutureWarning is only raised when a non-Euclidean
-     metric is specified and square_metric is set to 'warn'."""
+     metric is specified and square_metric is not set to True."""
     random_state = check_random_state(0)
 
     X = random_state.randn(5, 2)
     tsne = TSNE(metric=metric, square_distance=square_distance)
 
-    if metric != 'euclidean' and square_distance == 'warn':
+    if metric != 'euclidean' and square_distance is not True:
         with pytest.warns(FutureWarning, match="'square_distance'.*"):
             tsne.fit_transform(X)
     else:

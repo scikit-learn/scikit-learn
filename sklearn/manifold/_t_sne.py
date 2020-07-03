@@ -601,8 +601,8 @@ class TSNE(BaseEstimator):
     square_distance : {True, 'legacy'}, default='legacy'
         Whether distance values are squared before t-SNE is run. ``'legacy'``
         means that distances are squared only when ``metric="euclidean"``.
-        The default value for this parameter will change to ``True`` in
-        version 0.26.
+        In version 0.26, ``'legacy'`` will be removed as a setting, and the
+        default value for this parameter will change to ``True``.
 
         .. versionadded:: 0.24
            Provide backward compatibility during deprecation of legacy
@@ -654,7 +654,7 @@ class TSNE(BaseEstimator):
                  n_iter_without_progress=300, min_grad_norm=1e-7,
                  metric="euclidean", init="random", verbose=0,
                  random_state=None, method='barnes_hut', angle=0.5,
-                 n_jobs=None, square_distance='warn'):
+                 n_jobs=None, square_distance='legacy'):
         self.n_components = n_components
         self.perplexity = perplexity
         self.early_exaggeration = early_exaggeration
@@ -678,16 +678,16 @@ class TSNE(BaseEstimator):
             raise ValueError("'method' must be 'barnes_hut' or 'exact'")
         if self.angle < 0.0 or self.angle > 1.0:
             raise ValueError("'angle' must be between 0.0 - 1.0")
-        if self.square_distance not in [True, 'legacy', 'warn']:
-            raise ValueError("'square_distance' must be True, 'legacy', or "
-                             "'warn'.")
-        if self.square_distance == 'warn' and self.metric != "euclidean":
+        if self.square_distance not in [True, 'legacy']:
+            raise ValueError("'square_distance' must be True or 'legacy'.")
+        if self.metric != "euclidean" and self.square_distance is not True:
             warnings.warn(("'square_distance' has been introduced in 0.24. "
-                           "It will be set to True starting from 0.26 which "
-                           "means that all distance metrics will be squared "
-                           "by default. Set 'square_distance' to either True "
-                           "or 'legacy' to silence this warning."),
-                          FutureWarning)
+                           "'legacy' is provided as a setting for backward "
+                           "compatibility purposes. However, 'legacy' will "
+                           "be removed in 0.26, at which point all distance "
+                           "metrics will be squared by default. Set "
+                           "'square_distance' to True to silence this "
+                           "warning."), FutureWarning)
         if self.method == 'barnes_hut':
             X = self._validate_data(X, accept_sparse=['csr'],
                                     ensure_min_samples=2,
