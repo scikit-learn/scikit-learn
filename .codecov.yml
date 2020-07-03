@@ -20,7 +20,7 @@ coverage:
     # Prevent coverage status to upload multiple times for parallel and long
     # running CI pipelines. This configuration is particularly useful on PRs
     # to avoid confusion. Note that this value is set to the number of Azure
-    # Pipeline jobs
+    # Pipeline jobs uploading coverage reports.
     after_n_builds: 6
 
 ignore:
