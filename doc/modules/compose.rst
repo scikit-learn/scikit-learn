@@ -416,8 +416,8 @@ preprocessing or a specific feature extraction method::
   ...      'user_rating': [4, 5, 4, 3]})
 
 For this data, we might want to encode the ``'city'`` column as a categorical
-variable using :class:`~preprocessing.OneHotEncoder` but apply a
-:class:`~feature_extraction.text.CountVectorizer` to the ``'title'`` column.
+variable using :class:`~sklearn.preprocessing.OneHotEncoder` but apply a
+:class:`~sklearn.feature_extraction.text.CountVectorizer` to the ``'title'`` column.
 As we might use multiple feature extraction methods on the same column, we give
 each transformer a unique name, say ``'city_category'`` and ``'title_bow'``.
 By default, the remaining rating columns are ignored (``remainder='drop'``)::
@@ -451,7 +451,7 @@ By default, the remaining rating columns are ignored (``remainder='drop'``)::
 In the above example, the
 :class:`~sklearn.feature_extraction.text.CountVectorizer` expects a 1D array as
 input and therefore the columns were specified as a string (``'title'``).
-However, :class:`~preprocessing.OneHotEncoder`
+However, :class:`~sklearn.preprocessing.OneHotEncoder`
 as most of other transformers expects 2D data, therefore in that case you need
 to specify the column as a list of strings (``['city']``).
 

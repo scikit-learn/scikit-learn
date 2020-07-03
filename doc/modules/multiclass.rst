@@ -257,8 +257,8 @@ zero elements, corresponds to the subset of labels. An array such as
 sample, labels 1 and 2 in the second sample, and no labels in the third sample.
 
 Producing multilabel data as a list of sets of labels may be more intuitive.
-The :class:`MultiLabelBinarizer` transformer can be used to convert between a
-collection of collections of labels and the indicator format.
+The :class:`~sklearn.preprocessing.MultiLabelBinarizer` transformer can be used
+to convert between a collection of collections of labels and the indicator format.
 
   >>> from sklearn.preprocessing import MultiLabelBinarizer
   >>> y = [[2, 3, 4], [2], [0, 1, 3], [0, 1, 2, 3, 4], [0, 1, 2]]

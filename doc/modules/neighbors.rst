@@ -339,7 +339,7 @@ a *KD-tree* in high dimensions, though the actual performance is highly
 dependent on the structure of the training data.
 In scikit-learn, ball-tree-based
 neighbors searches are specified using the keyword ``algorithm = 'ball_tree'``,
-and are computed using the class :class:`~sklearn.neighbors.BallTree`.
+and are computed using the class :class:`BallTree`.
 Alternatively, the user can work with the :class:`BallTree` class directly.
 
 .. topic:: References:
