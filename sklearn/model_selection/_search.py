@@ -664,7 +664,6 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         if 'score' in props:
             props['fit'].update(props['score'])
 
-        # props['fit'] = list(set(props['fit']))
         return props
 
     @_deprecate_positional_args
