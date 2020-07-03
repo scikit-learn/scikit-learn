@@ -41,7 +41,7 @@ size = 40  # image size
 roi_size = 15
 snr = 5.
 np.random.seed(0)
-mask = np.ones([size, size], dtype=np.bool)
+mask = np.ones([size, size], dtype=bool)
 
 coef = np.zeros((size, size))
 coef[0:roi_size, 0:roi_size] = -1.
