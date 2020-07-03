@@ -93,6 +93,8 @@ def test_column_transformer():
         (slice(0, 2), X_res_both),
         # boolean mask
         (np.array([True, False]), X_res_first),
+        ([True, True], X_res_both),
+        (np.array([True, True]), X_res_both),
     ]
 
     for selection, res in cases:
