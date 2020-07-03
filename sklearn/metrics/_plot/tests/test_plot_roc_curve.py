@@ -8,6 +8,7 @@ from sklearn.metrics import RocCurveDisplay
 from sklearn.datasets import load_iris
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_curve, auc
+from sklearn.base import BaseEstimator
 from sklearn.base import ClassifierMixin
 from sklearn.exceptions import NotFittedError
 from sklearn.pipeline import make_pipeline
@@ -56,7 +57,7 @@ def test_plot_roc_curve_error_no_response(pyplot, data_binary, response_method,
                                           msg):
     X, y = data_binary
 
-    class MyClassifier(ClassifierMixin):
+    class MyClassifier(BaseEstimator, ClassifierMixin):
         def fit(self, X, y):
             self.classes_ = [0, 1]
             return self
