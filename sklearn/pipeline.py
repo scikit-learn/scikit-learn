@@ -277,17 +277,21 @@ class Pipeline(_BaseComposition):
             return fit_params_steps
 
         required_props = self.get_metadata_request().fit
-        print("fit params steps:", list(fit_params.keys()))
+        # print("fit params steps:", list(fit_params.keys()))
         _validate_required_props(required_props, fit_params)
         for _, name, transformer in self._iter(filter_passthrough=True):
             if transformer is None:
                 continue
-            transformer_fit_props = transformer.get_metadata_request().fit
+            try:
+                transformer_fit_props = transformer.get_metadata_request().fit
+            except AttributeError:
+                transformer_fit_props = {}
+
             fit_params_steps[name] = _check_method_props(
                 transformer_fit_props, fit_params,
                 validate=False)
-        print("fit params steps in pipeline validation: ",
-              list(fit_params_steps.keys()))
+        # print("fit params steps in pipeline validation: ",
+        #       list(fit_params_steps.keys()))
         return fit_params_steps
 
     # Estimator interface

@@ -1212,8 +1212,8 @@ def _get_props_from_objs(objs):
         A union of the requested props by the given objects.
     """
     metadata_request = _empty_metadata_request()
-    print("------- _get_props_from_objs")
-    print("objects: ", objs)
+    # print("------- _get_props_from_objs")
+    # print("objects: ", objs)
     if isinstance(objs, dict):
         objs = objs.values()
     elif not isinstance(objs, (set, tuple, list)):
@@ -1221,16 +1221,16 @@ def _get_props_from_objs(objs):
     for obj in objs:
         try:
             obj_props = obj.get_metadata_request()
-            print("object: ", obj, "props: ", obj_props)
+            # print("object: ", obj, "props: ", obj_props)
             for method, m_props in obj_props.items():
                 if m_props:
                     metadata_request[method].update({x: x for x in m_props})
-            print("updated props request: ", metadata_request)
+            # print("updated props request: ", metadata_request)
         except AttributeError as e:
-            print(f"obj {obj} doesn't have get_metadata_request: {e}")
+            # print(f"obj {obj} doesn't have get_metadata_request: {e}")
             warnings.warn("{} doesn't implement "
                           "prop_request API".format(obj), UserWarning)
             pass
-    print("returning: ", metadata_request)
-    print('-----------/')
+    # print("returning: ", metadata_request)
+    # print('-----------/')
     return metadata_request

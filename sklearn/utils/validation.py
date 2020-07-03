@@ -1436,9 +1436,9 @@ def _check_method_props(required_props, props, validate=True):
         A mapping with keys as required props and values as provided ones,
         which can be used to be passed as ``**kwargs`` to the _method_.
     """
-    print('========== _check_method_props')
-    print("required props: ", required_props)
-    print("given props: ", list(props.keys()))
+    # print('========== _check_method_props')
+    # print("required props: ", required_props)
+    # print("given props: ", list(props.keys()))
     props = {} if props is None else props
     required_props = {} if required_props is None else required_props
     props = {key: value for key, value in props.items() if value is not None}
@@ -1446,6 +1446,6 @@ def _check_method_props(required_props, props, validate=True):
         _validate_required_props(required_props, props)
     res = {value: props[key] for key, value
            in required_props.items() if key in props}
-    print("returning: ", list(res.keys()))
-    print("=========/")
+    # print("returning: ", list(res.keys()))
+    # print("=========/")
     return res

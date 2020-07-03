@@ -1098,8 +1098,7 @@ def test_make_pipeline_memory():
 
 def test_pipeline_param_error():
     clf = make_pipeline(LogisticRegression())
-    with pytest.raises(ValueError, match="Pipeline.fit does not accept "
-                                         "the sample_weight parameter"):
+    with pytest.raises(ValueError, match="Requested properties are: "):
         clf.fit([[0], [0]], [0, 1], sample_weight=[1, 1])
 
 
