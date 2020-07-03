@@ -84,8 +84,7 @@ def clone(estimator, *, safe=True):
 
     new_object = klass(**new_object_params)
     try:
-        new_object.set_props_request(None).set_props_request(
-            estimator.get_props_request())
+        new_object.set_props_request(estimator.get_props_request())
     except AttributeError:
         pass
     except RuntimeError:
@@ -182,14 +181,15 @@ class _PropsRequest:
     def set_props_request(self, props):
         """Set required data properties.
 
+        Calling this method will clear the previous state of required metadata.
+
         Parameters
         ----------
         props : dict of list of strings, or dict of dict of {str: str}, or None
             The key to the top level dict is the method for which the prop is
-            used. Under each key, there is a dict list of required properties,
-            or a dict of mapping of the form
+            used. Under each key, there is a dict of list of required
+            properties, or a dict of mapping of the form
             ``{provided_prop: method_param}``.
-            ``None`` empties the required props.
 
         Returns
         -------
@@ -203,32 +203,19 @@ class _PropsRequest:
                 pass
             return self
 
+        self._props_request = Bunch(fit={}, predict={}, transform={}, score={},
+                                    split={}, fit_transform={})
+
         if not isinstance(props, dict):
             raise ValueError("`props` should be a dictionary")
 
-        for method, value in props.items():
-            if isinstance(value, str):
-                props[method] = [value]
-
-        if not hasattr(self, '_props_request'):
-            self._props_request = {}
-
-        for method, m_props in props.items():
-            if method not in self._props_request:
-                self._props_request[method] = []
-
-            if isinstance(m_props, dict):
-                if isinstance(self._props_request[method], list):
-                    self._props_request[method] = \
-                        {x: x for x in self._props_request[method]}
-                self._props_request[method].update(m_props)
-            elif isinstance(m_props, list):
-                if isinstance(self._props_request[method], dict):
-                    self._props_request[method].update({x: x for x in m_props})
-                else:
-                    self._props_request[method].extend(m_props)
-                    self._props_request[method] = \
-                        list(set(self._props_request[method]))
+        for method in self._props_request:
+            method_props = props.get(method, {})
+            if isinstance(method_props, str):
+                method_props = {method_props: method_props}
+            elif isinstance(method_props, list):
+                method_props = dict(zip(method_props, method_props))
+            self._props_request[method] = method_props
         return self
 
 
