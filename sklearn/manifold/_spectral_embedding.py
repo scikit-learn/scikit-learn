@@ -20,6 +20,7 @@ from ..utils.extmath import _deterministic_vector_sign_flip
 from ..utils.fixes import lobpcg
 from ..metrics.pairwise import rbf_kernel
 from ..neighbors import kneighbors_graph, NearestNeighbors
+from ..utils.validation import _deprecate_positional_args
 
 
 def _graph_connected_component(graph, node_id):
@@ -46,8 +47,8 @@ def _graph_connected_component(graph, node_id):
     if sparse.issparse(graph):
         # speed up row-wise access to boolean connection mask
         graph = graph.tocsr()
-    connected_nodes = np.zeros(n_node, dtype=np.bool)
-    nodes_to_explore = np.zeros(n_node, dtype=np.bool)
+    connected_nodes = np.zeros(n_node, dtype=bool)
+    nodes_to_explore = np.zeros(n_node, dtype=bool)
     nodes_to_explore[node_id] = True
     for _ in range(n_node):
         last_num_component = connected_nodes.sum()
@@ -132,7 +133,8 @@ def _set_diag(laplacian, value, norm_laplacian):
     return laplacian
 
 
-def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
+@_deprecate_positional_args
+def spectral_embedding(adjacency, *, n_components=8, eigen_solver=None,
                        random_state=None, eigen_tol=0.0,
                        norm_laplacian=True, drop_first=True):
     """Project the sample on the first eigenvectors of the graph Laplacian.
@@ -166,15 +168,14 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
     eigen_solver : {None, 'arpack', 'lobpcg', or 'amg'}, default None
         The eigenvalue decomposition strategy to use. AMG requires pyamg
         to be installed. It can be faster on very large, sparse problems,
-        but may also lead to instabilities.
+        but may also lead to instabilities. If None, then ``'arpack'`` is
+        used.
 
-    random_state : int, RandomState instance or None, optional, default: None
-        A pseudo random number generator used for the initialization of the
-        lobpcg eigenvectors decomposition.  If int, random_state is the seed
-        used by the random number generator; If RandomState instance,
-        random_state is the random number generator; If None, the random number
-        generator is the RandomState instance used by `np.random`. Used when
-        ``solver`` == 'amg'.
+    random_state : int, RandomState instance, default=None
+        Determines the random number generator used for the initialization of
+        the lobpcg eigenvectors decomposition when ``solver`` == 'amg'. Pass
+        an int for reproducible results across multiple function calls.
+        See :term: `Glossary <random_state>`.
 
     eigen_tol : float, optional, default=0.0
         Stopping criterion for eigendecomposition of the Laplacian matrix
@@ -301,7 +302,8 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
         # matrix to the solver and afterward set it back to the original.
         diag_shift = 1e-5 * sparse.eye(laplacian.shape[0])
         laplacian += diag_shift
-        ml = smoothed_aggregation_solver(check_array(laplacian, 'csr'))
+        ml = smoothed_aggregation_solver(check_array(laplacian,
+                                                     accept_sparse='csr'))
         laplacian -= diag_shift
 
         M = ml.aspreconditioner()
@@ -384,17 +386,16 @@ class SpectralEmbedding(BaseEstimator):
     gamma : float, optional, default : 1/n_features
         Kernel coefficient for rbf kernel.
 
-    random_state : int, RandomState instance or None, optional, default: None
-        A pseudo random number generator used for the initialization of the
-        lobpcg eigenvectors.  If int, random_state is the seed used by the
-        random number generator; If RandomState instance, random_state is the
-        random number generator; If None, the random number generator is the
-        RandomState instance used by `np.random`. Used when ``solver`` ==
-        'amg'.
+    random_state : int, RandomState instance, default=None
+        Determines the random number generator used for the initialization of
+        the lobpcg eigenvectors when ``solver`` == 'amg'.  Pass an int for
+        reproducible results across multiple function calls.
+        See :term: `Glossary <random_state>`.
 
     eigen_solver : {None, 'arpack', 'lobpcg', or 'amg'}
         The eigenvalue decomposition strategy to use. AMG requires pyamg
         to be installed. It can be faster on very large, sparse problems.
+        If None, then ``'arpack'`` is used.
 
     n_neighbors : int, default : max(n_samples/10 , 1)
         Number of nearest neighbors for nearest_neighbors graph building.
@@ -444,8 +445,8 @@ class SpectralEmbedding(BaseEstimator):
       Jianbo Shi, Jitendra Malik
       http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.160.2324
     """
-
-    def __init__(self, n_components=2, affinity="nearest_neighbors",
+    @_deprecate_positional_args
+    def __init__(self, n_components=2, *, affinity="nearest_neighbors",
                  gamma=None, random_state=None, eigen_solver=None,
                  n_neighbors=None, n_jobs=None):
         self.n_components = n_components
@@ -535,8 +536,8 @@ class SpectralEmbedding(BaseEstimator):
             Returns the instance itself.
         """
 
-        X = check_array(X, accept_sparse='csr', ensure_min_samples=2,
-                        estimator=self)
+        X = self._validate_data(X, accept_sparse='csr', ensure_min_samples=2,
+                                estimator=self)
 
         random_state = check_random_state(self.random_state)
         if isinstance(self.affinity, str):

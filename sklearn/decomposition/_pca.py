@@ -25,24 +25,25 @@ from ..utils import check_array
 from ..utils.extmath import fast_logdet, randomized_svd, svd_flip
 from ..utils.extmath import stable_cumsum
 from ..utils.validation import check_is_fitted
+from ..utils.validation import _deprecate_positional_args
 
 
-def _assess_dimension_(spectrum, rank, n_samples, n_features):
-    """Compute the likelihood of a rank ``rank`` dataset.
+def _assess_dimension(spectrum, rank, n_samples):
+    """Compute the log-likelihood of a rank ``rank`` dataset.
 
     The dataset is assumed to be embedded in gaussian noise of shape(n,
     dimf) having spectrum ``spectrum``.
 
     Parameters
     ----------
-    spectrum : array of shape (n)
+    spectrum : array of shape (n_features)
         Data spectrum.
     rank : int
-        Tested rank value.
+        Tested rank value. It should be strictly lower than n_features,
+        otherwise the method isn't specified (division by zero in equation
+        (31) from the paper).
     n_samples : int
         Number of samples.
-    n_features : int
-        Number of features.
 
     Returns
     -------
@@ -54,27 +55,34 @@ def _assess_dimension_(spectrum, rank, n_samples, n_features):
     This implements the method of `Thomas P. Minka:
     Automatic Choice of Dimensionality for PCA. NIPS 2000: 598-604`
     """
-    if rank > len(spectrum):
-        raise ValueError("The tested rank cannot exceed the rank of the"
-                         " dataset")
+
+    n_features = spectrum.shape[0]
+    if not 1 <= rank < n_features:
+        raise ValueError("the tested rank should be in [1, n_features - 1]")
+
+    eps = 1e-15
+
+    if spectrum[rank - 1] < eps:
+        # When the tested rank is associated with a small eigenvalue, there's
+        # no point in computing the log-likelihood: it's going to be very
+        # small and won't be the max anyway. Also, it can lead to numerical
+        # issues below when computing pa, in particular in log((spectrum[i] -
+        # spectrum[j]) because this will take the log of something very small.
+        return -np.inf
 
     pu = -rank * log(2.)
-    for i in range(rank):
-        pu += (gammaln((n_features - i) / 2.) -
-               log(np.pi) * (n_features - i) / 2.)
+    for i in range(1, rank + 1):
+        pu += (gammaln((n_features - i + 1) / 2.) -
+               log(np.pi) * (n_features - i + 1) / 2.)
 
     pl = np.sum(np.log(spectrum[:rank]))
     pl = -pl * n_samples / 2.
 
-    if rank == n_features:
-        pv = 0
-        v = 1
-    else:
-        v = np.sum(spectrum[rank:]) / (n_features - rank)
-        pv = -np.log(v) * n_samples * (n_features - rank) / 2.
+    v = max(eps, np.sum(spectrum[rank:]) / (n_features - rank))
+    pv = -np.log(v) * n_samples * (n_features - rank) / 2.
 
     m = n_features * rank - rank * (rank + 1.) / 2.
-    pp = log(2. * np.pi) * (m + rank + 1.) / 2.
+    pp = log(2. * np.pi) * (m + rank) / 2.
 
     pa = 0.
     spectrum_ = spectrum.copy()
@@ -89,15 +97,15 @@ def _assess_dimension_(spectrum, rank, n_samples, n_features):
     return ll
 
 
-def _infer_dimension_(spectrum, n_samples, n_features):
-    """Infers the dimension of a dataset of shape (n_samples, n_features)
+def _infer_dimension(spectrum, n_samples):
+    """Infers the dimension of a dataset with a given spectrum.
 
-    The dataset is described by its spectrum `spectrum`.
+    The returned value will be in [1, n_features - 1].
     """
-    n_spectrum = len(spectrum)
-    ll = np.empty(n_spectrum)
-    for rank in range(n_spectrum):
-        ll[rank] = _assess_dimension_(spectrum, rank, n_samples, n_features)
+    ll = np.empty_like(spectrum)
+    ll[0] = -np.inf  # we don't want to return n_components = 0
+    for rank in range(1, spectrum.shape[0]):
+        ll[rank] = _assess_dimension(spectrum, rank, n_samples)
     return ll.argmax()
 
 
@@ -189,11 +197,10 @@ class PCA(_BasePCA):
 
         .. versionadded:: 0.18.0
 
-    random_state : int, RandomState instance or None, optional (default None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`. Used when ``svd_solver`` == 'arpack' or 'randomized'.
+    random_state : int, RandomState instance, default=None
+        Used when the 'arpack' or 'randomized' solvers are used. Pass an int
+        for reproducible results across multiple function calls.
+        See :term:`Glossary <random_state>`.
 
         .. versionadded:: 0.18.0
 
@@ -312,8 +319,8 @@ class PCA(_BasePCA):
     >>> print(pca.singular_values_)
     [6.30061...]
     """
-
-    def __init__(self, n_components=None, copy=True, whiten=False,
+    @_deprecate_positional_args
+    def __init__(self, n_components=None, *, copy=True, whiten=False,
                  svd_solver='auto', tol=0.0, iterated_power='auto',
                  random_state=None):
         self.n_components = n_components
@@ -366,14 +373,14 @@ class PCA(_BasePCA):
         This method returns a Fortran-ordered array. To convert it to a
         C-ordered array, use 'np.ascontiguousarray'.
         """
-        U, S, V = self._fit(X)
+        U, S, Vt = self._fit(X)
         U = U[:, :self.n_components_]
 
         if self.whiten:
             # X_new = X * V / S * sqrt(n_samples) = U * sqrt(n_samples)
             U *= sqrt(X.shape[0] - 1)
         else:
-            # X_new = X * V = U * S * V^T * V = U * S
+            # X_new = X * V = U * S * Vt * V = U * S
             U *= S[:self.n_components_]
 
         return U
@@ -387,8 +394,8 @@ class PCA(_BasePCA):
             raise TypeError('PCA does not support sparse input. See '
                             'TruncatedSVD for a possible alternative.')
 
-        X = check_array(X, dtype=[np.float64, np.float32], ensure_2d=True,
-                        copy=self.copy)
+        X = self._validate_data(X, dtype=[np.float64, np.float32],
+                                ensure_2d=True, copy=self.copy)
 
         # Handle n_components==None
         if self.n_components is None:
@@ -444,11 +451,11 @@ class PCA(_BasePCA):
         self.mean_ = np.mean(X, axis=0)
         X -= self.mean_
 
-        U, S, V = linalg.svd(X, full_matrices=False)
+        U, S, Vt = linalg.svd(X, full_matrices=False)
         # flip eigenvectors' sign to enforce deterministic output
-        U, V = svd_flip(U, V)
+        U, Vt = svd_flip(U, Vt)
 
-        components_ = V
+        components_ = Vt
 
         # Get variance explained by singular values
         explained_variance_ = (S ** 2) / (n_samples - 1)
@@ -459,13 +466,16 @@ class PCA(_BasePCA):
         # Postprocess the number of components required
         if n_components == 'mle':
             n_components = \
-                _infer_dimension_(explained_variance_, n_samples, n_features)
+                _infer_dimension(explained_variance_, n_samples)
         elif 0 < n_components < 1.0:
             # number of components for which the cumulated explained
             # variance percentage is superior to the desired threshold
+            # side='right' ensures that number of features selected
+            # their variance is always greater than n_components float
+            # passed. More discussion in issue: #15669
             ratio_cumsum = stable_cumsum(explained_variance_ratio_)
-            n_components = np.searchsorted(ratio_cumsum, n_components) + 1
-
+            n_components = np.searchsorted(ratio_cumsum, n_components,
+                                           side='right') + 1
         # Compute noise covariance using Probabilistic PCA model
         # The sigma2 maximum likelihood (cf. eq. 12.46)
         if n_components < min(n_features, n_samples):
@@ -481,7 +491,7 @@ class PCA(_BasePCA):
             explained_variance_ratio_[:n_components]
         self.singular_values_ = singular_values_[:n_components]
 
-        return U, S, V
+        return U, S, Vt
 
     def _fit_truncated(self, X, n_components, svd_solver):
         """Fit the model by computing truncated SVD (by ARPACK or randomized)
@@ -520,22 +530,22 @@ class PCA(_BasePCA):
         if svd_solver == 'arpack':
             # random init solution, as ARPACK does it internally
             v0 = random_state.uniform(-1, 1, size=min(X.shape))
-            U, S, V = svds(X, k=n_components, tol=self.tol, v0=v0)
+            U, S, Vt = svds(X, k=n_components, tol=self.tol, v0=v0)
             # svds doesn't abide by scipy.linalg.svd/randomized_svd
             # conventions, so reverse its outputs.
             S = S[::-1]
             # flip eigenvectors' sign to enforce deterministic output
-            U, V = svd_flip(U[:, ::-1], V[::-1])
+            U, Vt = svd_flip(U[:, ::-1], Vt[::-1])
 
         elif svd_solver == 'randomized':
             # sign flipping is done inside
-            U, S, V = randomized_svd(X, n_components=n_components,
-                                     n_iter=self.iterated_power,
-                                     flip_sign=True,
-                                     random_state=random_state)
+            U, S, Vt = randomized_svd(X, n_components=n_components,
+                                      n_iter=self.iterated_power,
+                                      flip_sign=True,
+                                      random_state=random_state)
 
         self.n_samples_, self.n_features_ = n_samples, n_features
-        self.components_ = V
+        self.components_ = Vt
         self.n_components_ = n_components
 
         # Get variance explained by singular values
@@ -552,7 +562,7 @@ class PCA(_BasePCA):
         else:
             self.noise_variance_ = 0.
 
-        return U, S, V
+        return U, S, Vt
 
     def score_samples(self, X):
         """Return the log-likelihood of each sample.

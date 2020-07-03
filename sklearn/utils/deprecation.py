@@ -1,6 +1,5 @@
 import warnings
 import functools
-import sys
 
 
 __all__ = ["deprecated"]
@@ -109,12 +108,12 @@ class deprecated:
         if self.extra:
             newdoc = "%s: %s" % (newdoc, self.extra)
         if olddoc:
-            newdoc = "%s\n\n%s" % (newdoc, olddoc)
+            newdoc = "%s\n\n    %s" % (newdoc, olddoc)
         return newdoc
 
 
 def _is_deprecated(func):
-    """Helper to check if func is wraped by our deprecated decorator"""
+    """Helper to check if func is wrapped by our deprecated decorator"""
     closures = getattr(func, '__closure__', [])
     if closures is None:
         closures = []
@@ -122,23 +121,3 @@ def _is_deprecated(func):
                                               for c in closures
                      if isinstance(c.cell_contents, str)]))
     return is_deprecated
-
-
-def _raise_dep_warning_if_not_pytest(deprecated_path, correct_path):
-
-    # Raise a deprecation warning with standardized deprecation message.
-    # Useful because we are now deprecating # anything that isn't explicitly
-    # in an __init__ file.
-
-    # TODO: remove in 0.24 since this shouldn't be needed anymore.
-
-    message = (
-        "The {deprecated_path} module is  deprecated in version "
-        "0.22 and will be removed in version 0.24. "
-        "The corresponding classes / functions "
-        "should instead be imported from {correct_path}. "
-        "Anything that cannot be imported from {correct_path} is now "
-        "part of the private API."
-    ).format(deprecated_path=deprecated_path, correct_path=correct_path)
-
-    warnings.warn(message, FutureWarning)

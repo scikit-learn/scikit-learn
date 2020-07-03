@@ -37,6 +37,7 @@ from ..utils import column_or_1d
 from ..utils.multiclass import unique_labels
 from ..utils.multiclass import type_of_target
 from ..utils.validation import _num_samples
+from ..utils.validation import _deprecate_positional_args
 from ..utils.sparsefuncs import count_nonzero
 from ..exceptions import UndefinedMetricWarning
 
@@ -121,7 +122,8 @@ def _weighted_sum(sample_score, sample_weight, normalize=False):
         return sample_score.sum()
 
 
-def accuracy_score(y_true, y_pred, normalize=True, sample_weight=None):
+@_deprecate_positional_args
+def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
     """Accuracy classification score.
 
     In multilabel classification, this function computes subset accuracy:
@@ -138,7 +140,7 @@ def accuracy_score(y_true, y_pred, normalize=True, sample_weight=None):
     y_pred : 1d array-like, or label indicator array / sparse matrix
         Predicted labels, as returned by a classifier.
 
-    normalize : bool, optional (default=True)
+    normalize : bool, default=True
         If ``False``, return the number of correctly classified samples.
         Otherwise, return the fraction of correctly classified samples.
 
@@ -193,7 +195,8 @@ def accuracy_score(y_true, y_pred, normalize=True, sample_weight=None):
     return _weighted_sum(score, sample_weight, normalize)
 
 
-def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None,
+@_deprecate_positional_args
+def confusion_matrix(y_true, y_pred, *, labels=None, sample_weight=None,
                      normalize=None):
     """Compute confusion matrix to evaluate the accuracy of a classification.
 
@@ -224,6 +227,8 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None,
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
+        .. versionadded:: 0.18
+
     normalize : {'true', 'pred', 'all'}, default=None
         Normalizes confusion matrix over the true (rows), predicted (columns)
         conditions or all the population. If None, confusion matrix will not be
@@ -232,7 +237,14 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None,
     Returns
     -------
     C : ndarray of shape (n_classes, n_classes)
-        Confusion matrix.
+        Confusion matrix whose i-th row and j-th
+        column entry indicates the number of
+        samples with true label being i-th class
+        and prediced label being j-th class.
+
+    See Also
+    --------
+    plot_confusion_matrix : Plot Confusion Matrix
 
     References
     ----------
@@ -273,7 +285,12 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None,
         labels = unique_labels(y_true, y_pred)
     else:
         labels = np.asarray(labels)
-        if np.all([l not in y_true for l in labels]):
+        n_labels = labels.size
+        if n_labels == 0:
+            raise ValueError("'labels' should contains at least one label.")
+        elif y_true.size == 0:
+            return np.zeros((n_labels, n_labels), dtype=int)
+        elif np.all([l not in y_true for l in labels]):
             raise ValueError("At least one label specified must be in y_true")
 
     if sample_weight is None:
@@ -282,6 +299,10 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None,
         sample_weight = np.asarray(sample_weight)
 
     check_consistent_length(y_true, y_pred, sample_weight)
+
+    if normalize not in ['true', 'pred', 'all', None]:
+        raise ValueError("normalize must be one of {'true', 'pred', "
+                         "'all', None}")
 
     n_labels = labels.size
     label_to_ind = {y: x for x, y in enumerate(labels)}
@@ -318,7 +339,8 @@ def confusion_matrix(y_true, y_pred, labels=None, sample_weight=None,
     return cm
 
 
-def multilabel_confusion_matrix(y_true, y_pred, sample_weight=None,
+@_deprecate_positional_args
+def multilabel_confusion_matrix(y_true, y_pred, *, sample_weight=None,
                                 labels=None, samplewise=False):
     """Compute a confusion matrix for each class or sample
 
@@ -352,7 +374,7 @@ def multilabel_confusion_matrix(y_true, y_pred, sample_weight=None,
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights
 
-    labels : array-like
+    labels : array-like of shape (n_classes,), default=None
         A list of classes or column indices to select some (or to force
         inclusion of classes absent from the data)
 
@@ -521,7 +543,9 @@ def multilabel_confusion_matrix(y_true, y_pred, sample_weight=None,
     return np.array([tn, fp, fn, tp]).T.reshape(-1, 2, 2)
 
 
-def cohen_kappa_score(y1, y2, labels=None, weights=None, sample_weight=None):
+@_deprecate_positional_args
+def cohen_kappa_score(y1, y2, *, labels=None, weights=None,
+                      sample_weight=None):
     r"""Cohen's kappa: a statistic that measures inter-annotator agreement.
 
     This function computes Cohen's kappa [1]_, a score that expresses the level
@@ -548,12 +572,12 @@ def cohen_kappa_score(y1, y2, labels=None, weights=None, sample_weight=None):
         Labels assigned by the second annotator. The kappa statistic is
         symmetric, so swapping ``y1`` and ``y2`` doesn't change the value.
 
-    labels : array, shape = [n_classes], optional
+    labels : array-like of shape (n_classes,), default=None
         List of labels to index the matrix. This may be used to select a
         subset of labels. If None, all labels that appear at least once in
         ``y1`` or ``y2`` are used.
 
-    weights : str, optional
+    weights : {'linear', 'quadratic'}, default=None
         Weighting type to calculate the score. None means no weighted;
         "linear" means linear weighted; "quadratic" means quadratic weighted.
 
@@ -585,10 +609,10 @@ def cohen_kappa_score(y1, y2, labels=None, weights=None, sample_weight=None):
     expected = np.outer(sum0, sum1) / np.sum(sum0)
 
     if weights is None:
-        w_mat = np.ones([n_classes, n_classes], dtype=np.int)
+        w_mat = np.ones([n_classes, n_classes], dtype=int)
         w_mat.flat[:: n_classes + 1] = 0
     elif weights == "linear" or weights == "quadratic":
-        w_mat = np.zeros([n_classes, n_classes], dtype=np.int)
+        w_mat = np.zeros([n_classes, n_classes], dtype=int)
         w_mat += np.arange(n_classes)
         if weights == "linear":
             w_mat = np.abs(w_mat - w_mat.T)
@@ -601,81 +625,8 @@ def cohen_kappa_score(y1, y2, labels=None, weights=None, sample_weight=None):
     return 1 - k
 
 
-def jaccard_similarity_score(y_true, y_pred, normalize=True,
-                             sample_weight=None):
-    """Jaccard similarity coefficient score
-
-    .. deprecated:: 0.21
-        This is deprecated to be removed in 0.23, since its handling of
-        binary and multiclass inputs was broken. `jaccard_score` has an API
-        that is consistent with precision_score, f_score, etc.
-
-    Read more in the :ref:`User Guide <jaccard_similarity_score>`.
-
-    Parameters
-    ----------
-    y_true : 1d array-like, or label indicator array / sparse matrix
-        Ground truth (correct) labels.
-
-    y_pred : 1d array-like, or label indicator array / sparse matrix
-        Predicted labels, as returned by a classifier.
-
-    normalize : bool, optional (default=True)
-        If ``False``, return the sum of the Jaccard similarity coefficient
-        over the sample set. Otherwise, return the average of Jaccard
-        similarity coefficient.
-
-    sample_weight : array-like of shape (n_samples,), default=None
-        Sample weights.
-
-    Returns
-    -------
-    score : float
-        If ``normalize == True``, return the average Jaccard similarity
-        coefficient, else it returns the sum of the Jaccard similarity
-        coefficient over the sample set.
-
-        The best performance is 1 with ``normalize == True`` and the number
-        of samples with ``normalize == False``.
-
-    See also
-    --------
-    accuracy_score, hamming_loss, zero_one_loss
-
-    Notes
-    -----
-    In binary and multiclass classification, this function is equivalent
-    to the ``accuracy_score``. It differs in the multilabel classification
-    problem.
-
-    References
-    ----------
-    .. [1] `Wikipedia entry for the Jaccard index
-           <https://en.wikipedia.org/wiki/Jaccard_index>`_
-    """
-    warnings.warn('jaccard_similarity_score has been deprecated and replaced '
-                  'with jaccard_score. It will be removed in version 0.23. '
-                  'This implementation has surprising behavior for binary '
-                  'and multiclass classification tasks.',
-                  FutureWarning)
-
-    # Compute accuracy for each possible representation
-    y_type, y_true, y_pred = _check_targets(y_true, y_pred)
-    check_consistent_length(y_true, y_pred, sample_weight)
-    if y_type.startswith('multilabel'):
-        with np.errstate(divide='ignore', invalid='ignore'):
-            # oddly, we may get an "invalid" rather than a "divide" error here
-            pred_or_true = count_nonzero(y_true + y_pred, axis=1)
-            pred_and_true = count_nonzero(y_true.multiply(y_pred), axis=1)
-            score = pred_and_true / pred_or_true
-            score[pred_or_true == 0.0] = 1.0
-    else:
-        score = y_true == y_pred
-
-    return _weighted_sum(score, sample_weight, normalize)
-
-
-def jaccard_score(y_true, y_pred, labels=None, pos_label=1,
+@_deprecate_positional_args
+def jaccard_score(y_true, y_pred, *, labels=None, pos_label=1,
                   average='binary', sample_weight=None):
     """Jaccard similarity coefficient score
 
@@ -694,7 +645,7 @@ def jaccard_score(y_true, y_pred, labels=None, pos_label=1,
     y_pred : 1d array-like, or label indicator array / sparse matrix
         Predicted labels, as returned by a classifier.
 
-    labels : list, optional
+    labels : array-like of shape (n_classes,), default=None
         The set of labels to include when ``average != 'binary'``, and their
         order if ``average is None``. Labels present in the data can be
         excluded, for example to calculate a multiclass average ignoring a
@@ -703,14 +654,14 @@ def jaccard_score(y_true, y_pred, labels=None, pos_label=1,
         labels are column indices. By default, all labels in ``y_true`` and
         ``y_pred`` are used in sorted order.
 
-    pos_label : str or int, 1 by default
+    pos_label : str or int, default=1
         The class to report if ``average='binary'`` and the data is binary.
         If the data are multiclass or multilabel, this will be ignored;
         setting ``labels=[pos_label]`` and ``average != 'binary'`` will report
         scores for that label only.
 
-    average : string, [None, 'binary' (default), 'micro', 'macro', 'samples', \
-                       'weighted']
+    average : {None, 'micro', 'macro', 'samples', 'weighted', \
+            'binary'}, default='binary'
         If ``None``, the scores for each class are returned. Otherwise, this
         determines the type of averaging performed on the data:
 
@@ -814,7 +765,8 @@ def jaccard_score(y_true, y_pred, labels=None, pos_label=1,
     return np.average(jaccard, weights=weights)
 
 
-def matthews_corrcoef(y_true, y_pred, sample_weight=None):
+@_deprecate_positional_args
+def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
     """Compute the Matthews correlation coefficient (MCC)
 
     The Matthews correlation coefficient is used in machine learning as a
@@ -842,6 +794,8 @@ def matthews_corrcoef(y_true, y_pred, sample_weight=None):
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
+
+        .. versionadded:: 0.18
 
     Returns
     -------
@@ -901,7 +855,8 @@ def matthews_corrcoef(y_true, y_pred, sample_weight=None):
         return mcc
 
 
-def zero_one_loss(y_true, y_pred, normalize=True, sample_weight=None):
+@_deprecate_positional_args
+def zero_one_loss(y_true, y_pred, *, normalize=True, sample_weight=None):
     """Zero-one classification loss.
 
     If normalize is ``True``, return the fraction of misclassifications
@@ -918,7 +873,7 @@ def zero_one_loss(y_true, y_pred, normalize=True, sample_weight=None):
     y_pred : 1d array-like, or label indicator array / sparse matrix
         Predicted labels, as returned by a classifier.
 
-    normalize : bool, optional (default=True)
+    normalize : bool, default=True
         If ``False``, return the number of misclassifications.
         Otherwise, return the fraction of misclassifications.
 
@@ -971,7 +926,8 @@ def zero_one_loss(y_true, y_pred, normalize=True, sample_weight=None):
         return n_samples - score
 
 
-def f1_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
+@_deprecate_positional_args
+def f1_score(y_true, y_pred, *, labels=None, pos_label=1, average='binary',
              sample_weight=None, zero_division="warn"):
     """Compute the F1 score, also known as balanced F-score or F-measure
 
@@ -996,7 +952,7 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
     y_pred : 1d array-like, or label indicator array / sparse matrix
         Estimated targets as returned by a classifier.
 
-    labels : list, optional
+    labels : array-like, default=None
         The set of labels to include when ``average != 'binary'``, and their
         order if ``average is None``. Labels present in the data can be
         excluded, for example to calculate a multiclass average ignoring a
@@ -1008,14 +964,14 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
         .. versionchanged:: 0.17
            parameter *labels* improved for multiclass problem.
 
-    pos_label : str or int, 1 by default
+    pos_label : str or int, default=1
         The class to report if ``average='binary'`` and the data is binary.
         If the data are multiclass or multilabel, this will be ignored;
         setting ``labels=[pos_label]`` and ``average != 'binary'`` will report
         scores for that label only.
 
-    average : string, [None, 'binary' (default), 'micro', 'macro', 'samples', \
-                       'weighted']
+    average : {'micro', 'macro', 'samples','weighted', 'binary'} or None, \
+            default='binary'
         This parameter is required for multiclass/multilabel targets.
         If ``None``, the scores for each class are returned. Otherwise, this
         determines the type of averaging performed on the data:
@@ -1089,13 +1045,14 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
     and ``UndefinedMetricWarning`` will be raised. This behavior can be
     modified with ``zero_division``.
     """
-    return fbeta_score(y_true, y_pred, 1, labels=labels,
+    return fbeta_score(y_true, y_pred, beta=1, labels=labels,
                        pos_label=pos_label, average=average,
                        sample_weight=sample_weight,
                        zero_division=zero_division)
 
 
-def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
+@_deprecate_positional_args
+def fbeta_score(y_true, y_pred, *, beta, labels=None, pos_label=1,
                 average='binary', sample_weight=None, zero_division="warn"):
     """Compute the F-beta score
 
@@ -1120,7 +1077,7 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
     beta : float
         Determines the weight of recall in the combined score.
 
-    labels : list, optional
+    labels : array-like, default=None
         The set of labels to include when ``average != 'binary'``, and their
         order if ``average is None``. Labels present in the data can be
         excluded, for example to calculate a multiclass average ignoring a
@@ -1132,14 +1089,14 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
         .. versionchanged:: 0.17
            parameter *labels* improved for multiclass problem.
 
-    pos_label : str or int, 1 by default
+    pos_label : str or int, default=1
         The class to report if ``average='binary'`` and the data is binary.
         If the data are multiclass or multilabel, this will be ignored;
         setting ``labels=[pos_label]`` and ``average != 'binary'`` will report
         scores for that label only.
 
-    average : string, [None, 'binary' (default), 'micro', 'macro', 'samples', \
-                       'weighted']
+    average : {'micro', 'macro', 'samples', 'weighted', 'binary'} or None \
+            default='binary'
         This parameter is required for multiclass/multilabel targets.
         If ``None``, the scores for each class are returned. Otherwise, this
         determines the type of averaging performed on the data:
@@ -1318,7 +1275,8 @@ def _check_set_wise_labels(y_true, y_pred, average, labels, pos_label):
     return labels
 
 
-def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
+@_deprecate_positional_args
+def precision_recall_fscore_support(y_true, y_pred, *, beta=1.0, labels=None,
                                     pos_label=1, average=None,
                                     warn_for=('precision', 'recall',
                                               'f-score'),
@@ -1358,10 +1316,10 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     y_pred : 1d array-like, or label indicator array / sparse matrix
         Estimated targets as returned by a classifier.
 
-    beta : float, 1.0 by default
+    beta : float, default=1.0
         The strength of recall versus precision in the F-score.
 
-    labels : list, optional
+    labels : array-like, default=None
         The set of labels to include when ``average != 'binary'``, and their
         order if ``average is None``. Labels present in the data can be
         excluded, for example to calculate a multiclass average ignoring a
@@ -1370,14 +1328,14 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         labels are column indices. By default, all labels in ``y_true`` and
         ``y_pred`` are used in sorted order.
 
-    pos_label : str or int, 1 by default
+    pos_label : str or int, default=1
         The class to report if ``average='binary'`` and the data is binary.
         If the data are multiclass or multilabel, this will be ignored;
         setting ``labels=[pos_label]`` and ``average != 'binary'`` will report
         scores for that label only.
 
-    average : string, [None (default), 'binary', 'micro', 'macro', 'samples', \
-                       'weighted']
+    average : {'binary', 'micro', 'macro', 'samples','weighted'}, \
+            default=None
         If ``None``, the scores for each class are returned. Otherwise, this
         determines the type of averaging performed on the data:
 
@@ -1426,7 +1384,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     fbeta_score : float (if average is not None) or array of float, shape =\
         [n_unique_labels]
 
-    support : int (if average is not None) or array of int, shape =\
+    support : None (if average is not None) or array of int, shape =\
         [n_unique_labels]
         The number of occurrences of each label in ``y_true``.
 
@@ -1550,7 +1508,8 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     return precision, recall, f_score, true_sum
 
 
-def precision_score(y_true, y_pred, labels=None, pos_label=1,
+@_deprecate_positional_args
+def precision_score(y_true, y_pred, *, labels=None, pos_label=1,
                     average='binary', sample_weight=None,
                     zero_division="warn"):
     """Compute the precision
@@ -1572,7 +1531,7 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
     y_pred : 1d array-like, or label indicator array / sparse matrix
         Estimated targets as returned by a classifier.
 
-    labels : list, optional
+    labels : array-like, default=None
         The set of labels to include when ``average != 'binary'``, and their
         order if ``average is None``. Labels present in the data can be
         excluded, for example to calculate a multiclass average ignoring a
@@ -1584,14 +1543,14 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
         .. versionchanged:: 0.17
            parameter *labels* improved for multiclass problem.
 
-    pos_label : str or int, 1 by default
+    pos_label : str or int, default=1
         The class to report if ``average='binary'`` and the data is binary.
         If the data are multiclass or multilabel, this will be ignored;
         setting ``labels=[pos_label]`` and ``average != 'binary'`` will report
         scores for that label only.
 
-    average : string, [None, 'binary' (default), 'micro', 'macro', 'samples', \
-                       'weighted']
+    average : {'micro', 'macro', 'samples', 'weighted', 'binary'} \
+            default='binary'
         This parameter is required for multiclass/multilabel targets.
         If ``None``, the scores for each class are returned. Otherwise, this
         determines the type of averaging performed on the data:
@@ -1669,7 +1628,8 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
     return p
 
 
-def recall_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
+@_deprecate_positional_args
+def recall_score(y_true, y_pred, *, labels=None, pos_label=1, average='binary',
                  sample_weight=None, zero_division="warn"):
     """Compute the recall
 
@@ -1689,7 +1649,7 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
     y_pred : 1d array-like, or label indicator array / sparse matrix
         Estimated targets as returned by a classifier.
 
-    labels : list, optional
+    labels : array-like, default=None
         The set of labels to include when ``average != 'binary'``, and their
         order if ``average is None``. Labels present in the data can be
         excluded, for example to calculate a multiclass average ignoring a
@@ -1701,14 +1661,14 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
         .. versionchanged:: 0.17
            parameter *labels* improved for multiclass problem.
 
-    pos_label : str or int, 1 by default
+    pos_label : str or int, default=1
         The class to report if ``average='binary'`` and the data is binary.
         If the data are multiclass or multilabel, this will be ignored;
         setting ``labels=[pos_label]`` and ``average != 'binary'`` will report
         scores for that label only.
 
-    average : string, [None, 'binary' (default), 'micro', 'macro', 'samples', \
-                       'weighted']
+    average : {'micro', 'macro', 'samples', 'weighted', 'binary'} \
+            default='binary'
         This parameter is required for multiclass/multilabel targets.
         If ``None``, the scores for each class are returned. Otherwise, this
         determines the type of averaging performed on the data:
@@ -1786,7 +1746,8 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='binary',
     return r
 
 
-def balanced_accuracy_score(y_true, y_pred, sample_weight=None,
+@_deprecate_positional_args
+def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None,
                             adjusted=False):
     """Compute the balanced accuracy
 
@@ -1797,6 +1758,8 @@ def balanced_accuracy_score(y_true, y_pred, sample_weight=None,
     The best value is 1 and the worst value is 0 when ``adjusted=False``.
 
     Read more in the :ref:`User Guide <balanced_accuracy_score>`.
+
+    .. versionadded:: 0.20
 
     Parameters
     ----------
@@ -1863,10 +1826,11 @@ def balanced_accuracy_score(y_true, y_pred, sample_weight=None,
     return score
 
 
-def classification_report(y_true, y_pred, labels=None, target_names=None,
+@_deprecate_positional_args
+def classification_report(y_true, y_pred, *, labels=None, target_names=None,
                           sample_weight=None, digits=2, output_dict=False,
                           zero_division="warn"):
-    """Build a text report showing the main classification metrics
+    """Build a text report showing the main classification metrics.
 
     Read more in the :ref:`User Guide <classification_report>`.
 
@@ -1878,22 +1842,24 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
     y_pred : 1d array-like, or label indicator array / sparse matrix
         Estimated targets as returned by a classifier.
 
-    labels : array, shape = [n_labels]
+    labels : array-like of shape (n_labels,), default=None
         Optional list of label indices to include in the report.
 
-    target_names : list of strings
+    target_names : list of str of shape (n_labels,), default=None
         Optional display names matching the labels (same order).
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
-    digits : int
+    digits : int, default=2
         Number of digits for formatting output floating point values.
         When ``output_dict`` is ``True``, this will be ignored and the
         returned values will not be rounded.
 
-    output_dict : bool (default = False)
+    output_dict : bool, default=False
         If True, return output as dict
+
+        .. versionadded:: 0.20
 
     zero_division : "warn", 0 or 1, default="warn"
         Sets the value to return when there is a zero division. If set to
@@ -1916,10 +1882,10 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
 
         The reported averages include macro average (averaging the unweighted
         mean per label), weighted average (averaging the support-weighted mean
-        per label), sample average (only for multilabel classification) and
-        micro average (averaging the total true positives, false negatives and
-        false positives) it is only shown for multi-label or multi-class
-        with a subset of classes because it is accuracy otherwise.
+        per label), and sample average (only for multilabel classification).
+        Micro average (averaging the total true positives, false negatives and
+        false positives) is only shown for multi-label or multi-class
+        with a subset of classes, because it corresponds to accuracy otherwise.
         See also :func:`precision_recall_fscore_support` for more details
         on averages.
 
@@ -2034,7 +2000,8 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
         # compute averages with specified averaging method
         avg_p, avg_r, avg_f1, _ = precision_recall_fscore_support(
             y_true, y_pred, labels=labels,
-            average=average, sample_weight=sample_weight)
+            average=average, sample_weight=sample_weight,
+            zero_division=zero_division)
         avg = [avg_p, avg_r, avg_f1, np.sum(s)]
 
         if output_dict:
@@ -2060,7 +2027,8 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
         return report
 
 
-def hamming_loss(y_true, y_pred, labels=None, sample_weight=None):
+@_deprecate_positional_args
+def hamming_loss(y_true, y_pred, *, sample_weight=None):
     """Compute the average Hamming loss.
 
     The Hamming loss is the fraction of labels that are incorrectly predicted.
@@ -2074,17 +2042,6 @@ def hamming_loss(y_true, y_pred, labels=None, sample_weight=None):
 
     y_pred : 1d array-like, or label indicator array / sparse matrix
         Predicted labels, as returned by a classifier.
-
-    labels : array, shape = [n_labels], optional (default='deprecated')
-        Integer array of labels. If not provided, labels will be inferred
-        from y_true and y_pred.
-
-        .. versionadded:: 0.18
-        .. deprecated:: 0.21
-           This parameter ``labels`` is deprecated in version 0.21 and will
-           be removed in version 0.23. Hamming loss uses ``y_true.shape[1]``
-           for the number of labels when y_true is binary label indicators,
-           so it is unnecessary for the user to specify.
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
@@ -2145,12 +2102,6 @@ def hamming_loss(y_true, y_pred, labels=None, sample_weight=None):
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     check_consistent_length(y_true, y_pred, sample_weight)
 
-    if labels is not None:
-        warnings.warn("The labels parameter is unused. It was"
-                      " deprecated in version 0.21 and"
-                      " will be removed in version 0.23",
-                      FutureWarning)
-
     if sample_weight is None:
         weight_average = 1.
     else:
@@ -2168,14 +2119,16 @@ def hamming_loss(y_true, y_pred, labels=None, sample_weight=None):
         raise ValueError("{0} is not supported".format(y_type))
 
 
-def log_loss(y_true, y_pred, eps=1e-15, normalize=True, sample_weight=None,
+@_deprecate_positional_args
+def log_loss(y_true, y_pred, *, eps=1e-15, normalize=True, sample_weight=None,
              labels=None):
     """Log loss, aka logistic loss or cross-entropy loss.
 
     This is the loss function used in (multinomial) logistic regression
     and extensions of it such as neural networks, defined as the negative
-    log-likelihood of the true labels given a probabilistic classifier's
-    predictions. The log loss is only defined for two or more labels.
+    log-likelihood of a logistic model that returns ``y_pred`` probabilities
+    for its training data ``y_true``.
+    The log loss is only defined for two or more labels.
     For a single sample with true label yt in {0,1} and
     estimated probability yp that yt = 1, the log loss is
 
@@ -2196,21 +2149,22 @@ def log_loss(y_true, y_pred, eps=1e-15, normalize=True, sample_weight=None,
         ordered alphabetically, as done by
         :class:`preprocessing.LabelBinarizer`.
 
-    eps : float
+    eps : float, default=1e-15
         Log loss is undefined for p=0 or p=1, so probabilities are
         clipped to max(eps, min(1 - eps, p)).
 
-    normalize : bool, optional (default=True)
+    normalize : bool, default=True
         If true, return the mean loss per sample.
         Otherwise, return the sum of the per-sample losses.
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
-    labels : array-like, optional (default=None)
+    labels : array-like, default=None
         If not provided, labels will be inferred from y_true. If ``labels``
         is ``None`` and ``y_pred`` has shape (n_samples,) the labels are
         assumed to be binary and are inferred from ``y_true``.
+
         .. versionadded:: 0.18
 
     Returns
@@ -2292,7 +2246,8 @@ def log_loss(y_true, y_pred, eps=1e-15, normalize=True, sample_weight=None,
     return _weighted_sum(loss, sample_weight, normalize)
 
 
-def hinge_loss(y_true, pred_decision, labels=None, sample_weight=None):
+@_deprecate_positional_args
+def hinge_loss(y_true, pred_decision, *, labels=None, sample_weight=None):
     """Average hinge loss (non-regularized)
 
     In binary class case, assuming labels in y_true are encoded with +1 and -1,
@@ -2318,7 +2273,7 @@ def hinge_loss(y_true, pred_decision, labels=None, sample_weight=None):
     pred_decision : array, shape = [n_samples] or [n_samples, n_classes]
         Predicted decisions, as output by decision_function (floats).
 
-    labels : array, optional, default None
+    labels : array-like, default=None
         Contains all the labels for the problem. Used in multiclass hinge loss.
 
     sample_weight : array-like of shape (n_samples,), default=None
@@ -2369,7 +2324,7 @@ def hinge_loss(y_true, pred_decision, labels=None, sample_weight=None):
     LinearSVC()
     >>> pred_decision = est.decision_function([[-1], [2], [3]])
     >>> y_true = [0, 2, 3]
-    >>> hinge_loss(y_true, pred_decision, labels)
+    >>> hinge_loss(y_true, pred_decision, labels=labels)
     0.56...
     """
     check_consistent_length(y_true, pred_decision, sample_weight)
@@ -2413,8 +2368,10 @@ def hinge_loss(y_true, pred_decision, labels=None, sample_weight=None):
     return np.average(losses, weights=sample_weight)
 
 
-def brier_score_loss(y_true, y_prob, sample_weight=None, pos_label=None):
+@_deprecate_positional_args
+def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
     """Compute the Brier score.
+
     The smaller the Brier score, the better, hence the naming with "loss".
     Across all items in a set N predictions, the Brier score measures the
     mean squared difference between (1) the predicted probability assigned

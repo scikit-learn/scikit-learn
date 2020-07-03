@@ -6,7 +6,7 @@ t-SNE: The effect of various perplexity values on the shape
 An illustration of t-SNE on the two concentric circles and the S-curve
 datasets for different perplexity values.
 
-We observe a tendency towards clearer shapes as the preplexity value increases.
+We observe a tendency towards clearer shapes as the perplexity value increases.
 
 The size, the distance and the shape of clusters may vary upon initialization,
 perplexity values and does not always convey a meaning.

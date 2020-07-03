@@ -13,13 +13,14 @@ sparse matrices.
 from scipy import sparse
 
 from .graph_shortest_path import graph_shortest_path  # noqa
+from .validation import _deprecate_positional_args
 
 
 ###############################################################################
 # Path and connected component analysis.
 # Code adapted from networkx
-
-def single_source_shortest_path_length(graph, source, cutoff=None):
+@_deprecate_positional_args
+def single_source_shortest_path_length(graph, source, *, cutoff=None):
     """Return the shortest path length from source to all reachable nodes.
 
     Returns a dictionary of shortest path lengths keyed by target.
