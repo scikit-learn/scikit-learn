@@ -580,14 +580,13 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
         total_time = score_time + fit_time
         end_msg = f"[CV{progress_msg}] END "
         result_msg = params_msg + (";" if params_msg else "")
-        if verbose > 2:
-            if isinstance(test_scores, dict):
-                for scorer_name in sorted(test_scores):
-                    result_msg += f" {scorer_name}: ("
-                    if return_train_score:
-                        result_msg += (f"train="
-                                       f"{train_scores[scorer_name]:.3f}, ")
-                    result_msg += f"test={test_scores[scorer_name]:.3f})"
+        if verbose > 2 and isinstance(test_scores, dict):
+            for scorer_name in sorted(test_scores):
+                result_msg += f" {scorer_name}: ("
+                if return_train_score:
+                    scorer_scores = train_scores[scorer_name]
+                    result_msg += f"train={scorer_scores:.3f}, "
+                result_msg += f"test={test_scores[scorer_name]:.3f})"
         result_msg += f" total time={logger.short_format_time(total_time)}"
 
         # Right align the result_msg
@@ -1539,7 +1538,7 @@ def validation_curve(estimator, X, y, *, param_name, param_range, groups=None,
 def _aggregate_score_dicts(scores):
     """Aggregate the list of dict to dict of np ndarray
 
-    The aggregated output of _fit_and_score will be a list of dict
+    The aggregated output of _aggregate_score_dicts will be a list of dict
     of form [{'prec': 0.1, 'acc':1.0}, {'prec': 0.1, 'acc':1.0}, ...]
     Convert it to a dict of array {'prec': np.array([0.1 ...]), ...}
 
@@ -1559,5 +1558,9 @@ def _aggregate_score_dicts(scores):
     {'a': array([1, 2, 3, 10]),
      'b': array([10, 2, 3, 10])}
     """
-    return {key: np.asarray([score[key] for score in scores])
-            for key in scores[0]}
+    return {
+        key: np.asarray([score[key] for score in scores])
+        if isinstance(scores[0][key], numbers.Number)
+        else [score[key] for score in scores]
+        for key in scores[0]
+    }
