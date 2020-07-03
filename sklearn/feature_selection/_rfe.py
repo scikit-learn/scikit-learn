@@ -369,7 +369,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         return {'poor_score': True,
                 'allow_nan': estimator_tags.get('allow_nan', True),
                 'requires_y': True,
-                'estimator_type': estimator_tags['estimator_type']}
+                'estimator_type': estimator_tags.get('estimator_type', None)}
 
 
 class RFECV(RFE):
