@@ -159,20 +159,22 @@ class _PropsRequest:
 
         Returns
         -------
-        props : dict of list of strings, or dict of dict of {str: str}, or None
+        props : dict of dict of {str: str}
             The key to the top level dict is the method for which the prop is
-            used. Under each key, there is a dict list of required properties,
-            or a dict of mapping of the form
-            ``{provided_prop: method_param}``, or None.
+            used. Under each key, there is a dict of mapping of the form
+            ``{provided_prop: method_param}``.
         """
         res = _empty_metadata_request()
         try:
             props = self._metadata_request
-            for method, m_props in props.items():
-                if isinstance(m_props, dict):
-                    res[method] = m_props
-                else:
-                    res[method] = {x: x for x in m_props}
+
+            for method in props:
+                method_props = props.get(method, {})
+                if isinstance(method_props, str):
+                    method_props = {method_props: method_props}
+                elif isinstance(method_props, list):
+                    method_props = dict(zip(method_props, method_props))
+                res[method] = method_props
             return res
         except AttributeError:
             return res
@@ -184,10 +186,9 @@ class _PropsRequest:
 
         Parameters
         ----------
-        props : dict of list of strings, or dict of dict of {str: str}, or None
+        props : dict of dict of {str: str}, or None
             The key to the top level dict is the method for which the prop is
-            used. Under each key, there is a dict of list of required
-            properties, or a dict of mapping of the form
+            used. Under each key, there is a dict of mapping of the form
             ``{provided_prop: method_param}``.
 
         Returns

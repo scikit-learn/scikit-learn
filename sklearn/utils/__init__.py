@@ -1223,7 +1223,8 @@ def _get_props_from_objs(objs):
             obj_props = obj.get_metadata_request()
             print("object: ", obj, "props: ", obj_props)
             for method, m_props in obj_props.items():
-                metadata_request[method].update({x: x for x in m_props})
+                if m_props:
+                    metadata_request[method].update({x: x for x in m_props})
             print("updated props request: ", metadata_request)
         except AttributeError as e:
             print(f"obj {obj} doesn't have get_metadata_request: {e}")

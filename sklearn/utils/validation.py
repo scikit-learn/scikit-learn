@@ -1361,6 +1361,7 @@ def _check_fit_params(X, fit_params, indices=None):
         Validated parameters. We ensure that the values support indexing.
     """
     from . import _safe_indexing
+    fit_params = {} if fit_params is None else fit_params
     fit_params_validated = {}
     for param_key, param_value in fit_params.items():
         if (not _is_arraylike(param_value) or
@@ -1401,6 +1402,8 @@ def _validate_required_props(required_props, given_props):
     # print("=========$$$ _validate_required_props")
     # print(required_props)
     # print(list(given_props.keys()))
+    required_props = {} if required_props is None else required_props
+    given_props = {} if given_props is None else given_props
     if isinstance(required_props, dict):
         required_props = required_props.values()
     if set(required_props) != set(given_props.keys()):
@@ -1438,6 +1441,8 @@ def _check_method_props(required_props, props, validate=True):
     print('========== _check_method_props')
     print("required props: ", required_props)
     print("given props: ", list(props.keys()))
+    props = {} if props is None else props
+    required_props = {} if required_props is None else required_props
     props = {key: value for key, value in props.items() if value is not None}
     if validate:
         _validate_required_props(required_props, props)
