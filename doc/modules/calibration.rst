@@ -144,8 +144,8 @@ without calibration.
    :target: ../auto_examples/calibration/plot_calibration_curve.html
    :align: center
 
-One can see that Gaussian naive Bayes performs very badly but does so in an
-other way than linear SVC: While linear SVC exhibited a sigmoid calibration
+One can see that Gaussian naive Bayes performs very badly but does so in another
+way than linear SVC: While linear SVC exhibited a sigmoid calibration
 curve, Gaussian naive Bayes' calibration curve has a transposed-sigmoid shape.
 This is typical for an over-confident classifier. In this case, the classifier's
 overconfidence is caused by the redundant features which violate the naive Bayes
