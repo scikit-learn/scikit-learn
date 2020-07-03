@@ -378,7 +378,7 @@ class OneHotEncoder(_BaseEncoder):
                         drop_indices.append(j)
                         break
                 else:  # loop did not break
-                    missing_drops.append((j, val))
+                    missing_drops.append((i, val))
 
             if any(missing_drops):
                 msg = ("The following categories were supposed to be "
