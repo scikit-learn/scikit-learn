@@ -804,9 +804,7 @@ def is_classifier(estimator):
     out : bool
         True if estimator is a classifier and False otherwise.
     """
-    estimator_tags = estimator._get_tags()
-    return ("estimator_type" in estimator_tags and
-            estimator_tags["estimator_type"] == "classifier")
+    return estimator._get_tags().get("estimator_type", None) == "classifier"
 
 
 def is_regressor(estimator):
@@ -822,9 +820,7 @@ def is_regressor(estimator):
     out : bool
         True if estimator is a regressor and False otherwise.
     """
-    estimator_tags = estimator._get_tags()
-    return ("estimator_type" in estimator_tags and
-            estimator_tags["estimator_type"] == "regressor")
+    return estimator._get_tags().get("estimator_type", None) == "regressor"
 
 
 def is_outlier_detector(estimator):
@@ -841,5 +837,4 @@ def is_outlier_detector(estimator):
         True if estimator is an outlier detector and False otherwise.
     """
     estimator_tags = estimator._get_tags()
-    return ("estimator_type" in estimator_tags and
-            estimator_tags["estimator_type"] == "outlier_detector")
+    return estimator_tags.get("estimator_type", None) == "outlier_detector"
