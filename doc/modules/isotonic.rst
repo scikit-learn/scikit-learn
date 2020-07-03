@@ -22,6 +22,9 @@ The `increasing` parameter changes the constraint to
 correlation coefficient
 <https://en.wikipedia.org/wiki/Spearman%27s_rank_correlation_coefficient>`_.
 
+The `strict` parameter produces a strictly increasing fit (resp. strictly
+decreasing) when `increasing=True` (resp. `increasing=False`). 
+
 :class:`IsotonicRegression` produces a series of predictions
 :math:`\hat{y}_i` for the training data which are the closest to the targets
 :math:`y` in terms of mean squared error. These predictions are interpolated
@@ -31,3 +34,7 @@ thus form a function that is piecewise linear:
 .. figure:: ../auto_examples/miscellaneous/images/sphx_glr_plot_isotonic_regression_001.png
    :target: ../auto_examples/miscellaneous/plot_isotonic_regression.html
    :align: center
+
+.. topic:: Examples:
+
+ * :ref:`sphx_glr_auto_examples_miscellaneous_plot_isotonic_regression.py`
