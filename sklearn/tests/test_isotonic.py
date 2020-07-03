@@ -538,7 +538,7 @@ def test_isotonic_thresholds(increasing):
 
 
 def test_isotonic_strict():
-    # check on enforcing strict monotonicity
+    # check on enforcing strictly increasing regression
     n = 100
     x = np.arange(n)
     rs = check_random_state(0)
@@ -549,10 +549,21 @@ def test_isotonic_strict():
     x_test = np.linspace(-10, 110, 1000)
     pred = ireg.predict(x_test)
 
-    assert all(np.diff(ireg.y_thresholds_))
+    assert all(np.diff(ireg.y_thresholds_) > 0)
     assert all(np.diff(pred) > 0)
 
+    # enforcing strictly decreasing regression
+    y_rev = y[::-1]
+    ireg = IsotonicRegression(increasing=False, strict=True)
+    ireg.fit(x, y_rev)
+    pred = ireg.predict(x_test)
+
+    assert all(np.diff(ireg.y_thresholds_) < 0)
+    assert all(np.diff(pred) < 0)
+
     # check ValueError is raised if strict monotonicity is impossible
+    # fitting a strictly decreasing function on increasing data
+    # gives a constant function.
     ireg = IsotonicRegression(increasing=False, strict=True)
     with pytest.raises(ValueError):
         ireg.fit(x, y)
