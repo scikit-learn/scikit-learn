@@ -217,3 +217,11 @@ def test_weighted_percentile_equivalence_weights_repeated_samples(percentile):
 
     assert p_sklearn_weighted == pytest.approx(p_npy_repeated)
     assert p_sklearn_weighted == pytest.approx(p_sklearn_repeated)
+
+
+def test_xxx():
+    xxx = _weighted_percentile(
+        np.array([1, 2, 3, 4]), sample_weight=np.array([1, 1, 1, 5]),
+        percentile=50, interpolation="nearest"
+    )
+    assert False
