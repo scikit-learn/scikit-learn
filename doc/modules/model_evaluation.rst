@@ -1559,10 +1559,10 @@ The :func:`calibration_error` function computes the expected and maximum
 calibration errors as defined in [1]_ for binary classes.
 
 Given a set of bins over predicted probabilities, the calibration error
-measures the overall discrepancy per bin between
+measures the overall discrepancy across all bins between
 (1) the average predicted probabilities assigned to the positive class, and
-(2) the frequencies of the positive class in the actual outcome in the same
-bin.
+(2) the proportion of samples whose class is the positive class in the actual
+ outcome.
 
 The lower the calibration error is for a set of predictions, the
 better the predictions are calibrated.
