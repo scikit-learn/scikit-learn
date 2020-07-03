@@ -504,10 +504,10 @@ def test_classification_scorer_sample_weight():
         else:
             target = y_test
         try:
-            scorer.set_props_request({'score': 'sample_weight'})
+            scorer.set_metadata_request({'score': 'sample_weight'})
             weighted = scorer(estimator[name], X_test, target,
                               sample_weight=sample_weight)
-            scorer.set_props_request(None)
+            scorer.set_metadata_request(None)
             ignored = scorer(estimator[name], X_test[10:], target[10:])
             unweighted = scorer(estimator[name], X_test, target)
             assert weighted != unweighted, (

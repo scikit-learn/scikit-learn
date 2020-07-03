@@ -13,7 +13,7 @@ import re
 import numpy as np
 
 from . import __version__
-from .utils import _IS_32BIT, Bunch
+from .utils import _IS_32BIT, _empty_metadata_request
 from ._config import get_config
 from .utils.validation import check_X_y
 from .utils.validation import check_array
@@ -84,7 +84,7 @@ def clone(estimator, *, safe=True):
 
     new_object = klass(**new_object_params)
     try:
-        new_object.set_props_request(estimator.get_props_request())
+        new_object.set_metadata_request(estimator.get_metadata_request())
     except AttributeError:
         pass
     except RuntimeError:
@@ -154,7 +154,7 @@ def _pprint(params, offset=0, printer=repr):
 
 
 class _PropsRequest:
-    def get_props_request(self):
+    def get_metadata_request(self):
         """Get requested data properties.
 
         Returns
@@ -165,10 +165,9 @@ class _PropsRequest:
             or a dict of mapping of the form
             ``{provided_prop: method_param}``, or None.
         """
-        res = Bunch(fit={}, predict={}, transform={}, score={}, split={},
-                    fit_transform={})
+        res = _empty_metadata_request()
         try:
-            props = self._props_request
+            props = self._metadata_request
             for method, m_props in props.items():
                 if isinstance(m_props, dict):
                     res[method] = m_props
@@ -178,7 +177,7 @@ class _PropsRequest:
         except AttributeError:
             return res
 
-    def set_props_request(self, props):
+    def set_metadata_request(self, props):
         """Set required data properties.
 
         Calling this method will clear the previous state of required metadata.
@@ -198,24 +197,23 @@ class _PropsRequest:
         """
         if props is None:
             try:
-                del self._props_request
+                del self._metadata_request
             except AttributeError:
                 pass
             return self
 
-        self._props_request = Bunch(fit={}, predict={}, transform={}, score={},
-                                    split={}, fit_transform={})
+        self._metadata_request = _empty_metadata_request()
 
         if not isinstance(props, dict):
             raise ValueError("`props` should be a dictionary")
 
-        for method in self._props_request:
+        for method in self._metadata_request:
             method_props = props.get(method, {})
             if isinstance(method_props, str):
                 method_props = {method_props: method_props}
             elif isinstance(method_props, list):
                 method_props = dict(zip(method_props, method_props))
-            self._props_request[method] = method_props
+            self._metadata_request[method] = method_props
         return self
 
 

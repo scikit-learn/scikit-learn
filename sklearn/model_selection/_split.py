@@ -498,7 +498,7 @@ class GroupKFold(_BaseKFold):
         stratification of the dataset.
     """
 
-    _props_request = {'split': ['groups']}
+    _metadata_request = {'split': ['groups']}
 
     def __init__(self, n_splits=5):
         super().__init__(n_splits, shuffle=False, random_state=None)
@@ -931,7 +931,7 @@ class LeaveOneGroupOut(BaseCrossValidator):
 
     """
 
-    _props_request = {'split': ['groups']}
+    _metadata_request = {'split': ['groups']}
 
     def _iter_test_masks(self, X, y, groups):
         if groups is None:
@@ -1056,7 +1056,7 @@ class LeavePGroupsOut(BaseCrossValidator):
     GroupKFold: K-fold iterator variant with non-overlapping groups.
     """
 
-    _props_request = {'split': ['groups']}
+    _metadata_request = {'split': ['groups']}
 
     def __init__(self, n_groups):
         self.n_groups = n_groups
@@ -1573,7 +1573,7 @@ class GroupShuffleSplit(ShuffleSplit):
     TRAIN: [2 3 4 5 6 7] TEST: [0 1]
     TRAIN: [0 1 5 6 7] TEST: [2 3 4]
     '''
-    _props_request = {'split': ['groups']}
+    _metadata_request = {'split': ['groups']}
 
     @_deprecate_positional_args
     def __init__(self, n_splits=5, *, test_size=None, train_size=None,

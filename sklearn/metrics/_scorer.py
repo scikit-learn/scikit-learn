@@ -45,7 +45,6 @@ from ..utils.multiclass import type_of_target
 from ..base import is_regressor, _PropsRequest
 from ..utils.validation import _check_method_props
 from ..utils.validation import _deprecate_positional_args
-from ..base import is_regressor
 
 
 def _cached_call(cache, estimator, method, *args, **kwargs):
@@ -160,14 +159,9 @@ class _BaseScorer(_PropsRequest):
         score : float
             Score function applied to prediction of estimator on X.
         """
-        if self._deprecation_msg is not None:
-            warnings.warn(self._deprecation_msg,
-                          category=FutureWarning,
-                          stacklevel=2)
-
         if sample_weight is not None:
             kwargs.update({'sample_weight': sample_weight})
-        kwargs = _check_method_props(self.get_props_request().score, kwargs)
+        kwargs = _check_method_props(self.get_metadata_request().score, kwargs)
 
         return self._score(partial(_cached_call, None), estimator, X, y_true,
                            **kwargs)
@@ -612,7 +606,7 @@ def make_scorer(score_func, *, greater_is_better=True, needs_proba=False,
         cls = _ThresholdScorer
     else:
         cls = _PredictScorer
-    return cls(score_func, sign, kwargs).set_props_request(
+    return cls(score_func, sign, kwargs).set_metadata_request(
         {"score": request_props})
 
 

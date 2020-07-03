@@ -13,13 +13,13 @@ from sklearn.svm import SVC
 
 class MyEst(ClassifierMixin, BaseEstimator):
     def __init__(self, C=1.0):
-        self._props_request = {'fit': ['sample_weight', 'brand']}
+        self._metadata_request = {'fit': ['sample_weight', 'brand']}
         self.C = C
 
     def fit(self, X, y, **fit_params):
-        _validate_required_props(self.get_props_request().fit, fit_params)
+        _validate_required_props(self.get_metadata_request().fit, fit_params)
         assert set(fit_params.keys()) == \
-            set(self.get_props_request().fit.values())
+            set(self.get_metadata_request().fit.values())
         self.svc_ = SVC(C=self.C).fit(X, y)
         return self
 
@@ -32,10 +32,10 @@ class MyEst(ClassifierMixin, BaseEstimator):
 
 class MyTrs(TransformerMixin, BaseEstimator):
     def __init__(self):
-        self._props_request = {'fit': ['sample_weight']}
+        self._metadata_request = {'fit': ['sample_weight']}
 
     def fit(self, X, y=None, **fit_params):
-        req_props = self.get_props_request().fit
+        req_props = self.get_metadata_request().fit
         _validate_required_props(req_props, fit_params)
         self._estimator = SelectKBest().fit(X, y)
         assert set(fit_params.keys()) == set(req_props.values())
@@ -56,14 +56,11 @@ def test_pipeline():
     my_data = [5, 6]
     brand = ['my brand']
 
-    #clf = make_pipeline(MyTrs(), MyEst())
-    #print("=======")
-    #print(clf.get_props_request())
-    #print("=======")
-    #clf.fit(X, y, sample_weight=sw, brand=brand)
+    clf = make_pipeline(MyTrs(), MyEst())
+    clf.fit(X, y, sample_weight=sw, brand=brand)
 
-    trs = MyTrs().set_props_request(
-        None).set_props_request(
+    trs = MyTrs().set_metadata_request(
+        None).set_metadata_request(
         {'fit': {'my_sw': 'new_param'}})
     clf = make_pipeline(trs, MyEst())
     clf.fit(X, y, sample_weight=sw, brand=brand, my_sw=my_data)
@@ -77,5 +74,5 @@ def test_pipeline():
 
     print("@" * 150 + " GS")
     gs = GridSearchCV(clf, param_grid=param_grid, scoring=scorer)
-    print("GS props request: ", gs.get_props_request())
+    print("GS props request: ", gs.get_metadata_request())
     gs.fit(X, y, new_param=brand, sample_weight=sw, my_sw=sw, brand=brand)

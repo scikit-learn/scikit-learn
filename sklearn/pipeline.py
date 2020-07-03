@@ -235,25 +235,25 @@ class Pipeline(_BaseComposition):
                                                   len(self.steps),
                                                   name)
 
-    def get_props_request(self):
+    def get_metadata_request(self):
         """Get requested data properties.
 
         Returns
         -------
-        props_request: dict
+        metadata_request: dict
             A union of the requested props by pipeline steps.
         """
         _, estimators = zip(*self.steps)
         return _get_props_from_objs(estimators)
 
-    def set_props_request(self, props):
-        """Raises an error, props_request should be set at the step level.
+    def set_metadata_request(self, props):
+        """Raises an error, metadata_request should be set at the step level.
         """
         raise RuntimeError("Property requests should be set at the step "
                            "level and not at the pipeline level.")
 
     def _check_fit_params(self, **fit_params):
-        required_props = self.get_props_request().fit
+        required_props = self.get_metadata_request().fit
         print("fit params steps:", list(fit_params.keys()))
         _validate_required_props(required_props, fit_params)
 
@@ -274,7 +274,7 @@ class Pipeline(_BaseComposition):
         for _, name, transformer in self._iter(filter_passthrough=True):
             if transformer is None:
                 continue
-            transformer_fit_props = transformer.get_props_request().fit
+            transformer_fit_props = transformer.get_metadata_request().fit
             fit_params_steps[name] = _check_method_props(
                 transformer_fit_props, fit_params,
                 validate=False)

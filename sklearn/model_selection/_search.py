@@ -644,13 +644,13 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         """
         raise NotImplementedError("_run_search not implemented.")
 
-    def set_props_request(self, props):
-        """Raises an error, props_request should be set at the step level.
+    def set_metadata_request(self, props):
+        """Raises an error, metadata_request should be set at the step level.
         """
         raise RuntimeError("Property requests should be set at the step "
                            "level and not at the pipeline level.")
 
-    def get_props_request(self):
+    def get_metadata_request(self):
         scorers, _ = _check_multimetric_scoring(
             self.estimator, scoring=self.scoring)
         objs = [self.estimator, self.cv]
@@ -694,7 +694,8 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         if groups is not None:
             fit_params.update({'groups': groups})
         _fit_params = _check_method_props(
-            self.estimator.get_props_request().fit, fit_params, validate=False)
+            self.estimator.get_metadata_request().fit, fit_params,
+            validate=False)
         estimator = self.estimator
         cv = check_cv(self.cv, y, classifier=is_classifier(estimator))
 

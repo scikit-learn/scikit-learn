@@ -1187,6 +1187,15 @@ def all_estimators(type_filter=None):
     return sorted(set(estimators), key=itemgetter(0))
 
 
+def _empty_metadata_request():
+    return Bunch(fit={},
+                 predict={},
+                 transform={},
+                 score={},
+                 split={},
+                 fit_transform={})
+
+
 def _get_props_from_objs(objs):
     """Extracts the required props from a list of objects.
 
@@ -1199,11 +1208,10 @@ def _get_props_from_objs(objs):
 
     Returns
     -------
-    props_request: dict
+    metadata_request: dict
         A union of the requested props by the given objects.
     """
-    props_request = Bunch(fit={}, predict={}, transform={}, score={}, split={},
-                          fit_transform={})
+    metadata_request = _empty_metadata_request()
     print("------- _get_props_from_objs")
     print("objects: ", objs)
     if isinstance(objs, dict):
@@ -1212,16 +1220,16 @@ def _get_props_from_objs(objs):
         objs = [objs]
     for obj in objs:
         try:
-            obj_props = obj.get_props_request()
+            obj_props = obj.get_metadata_request()
             print("object: ", obj, "props: ", obj_props)
             for method, m_props in obj_props.items():
-                props_request[method].update({x: x for x in m_props})
-            print("updated props request: ", props_request)
+                metadata_request[method].update({x: x for x in m_props})
+            print("updated props request: ", metadata_request)
         except AttributeError as e:
-            print(f"obj {obj} doesn't have get_props_request: {e}")
+            print(f"obj {obj} doesn't have get_metadata_request: {e}")
             warnings.warn("{} doesn't implement "
                           "prop_request API".format(obj), UserWarning)
             pass
-    print("returning: ", props_request)
+    print("returning: ", metadata_request)
     print('-----------/')
-    return props_request
+    return metadata_request
