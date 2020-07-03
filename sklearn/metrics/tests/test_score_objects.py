@@ -546,8 +546,10 @@ def test_regression_scorer_sample_weight():
             # skip classification scorers
             continue
         try:
+            scorer.set_metadata_request({'score': 'sample_weight'})
             weighted = scorer(reg, X_test, y_test,
                               sample_weight=sample_weight)
+            scorer.set_metadata_request(None)
             ignored = scorer(reg, X_test[11:], y_test[11:])
             unweighted = scorer(reg, X_test, y_test)
             assert weighted != unweighted, (

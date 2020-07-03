@@ -1385,12 +1385,11 @@ def _validate_required_props(required_props, given_props):
 
     Parameters
     ----------
-    obj: estimator, scorer, or a CV splitter
-        If ``obj`` does not provide a ``_get_expected_method_props`` method,
-        the required props is assumed to be an empty set.
+    required_props: dict of {str: str}
+        required properties as ``{'given_property': 'method_property'}
 
-    given_props: dict
-        A ``dict`` with keys as required properties.
+    given_props: dict of {str: data}
+        A ``dict`` with keys as given properties.
 
     method: str
         The method for which the given props is validated.
@@ -1406,7 +1405,7 @@ def _validate_required_props(required_props, given_props):
     given_props = {} if given_props is None else given_props
     if isinstance(required_props, dict):
         required_props = required_props.values()
-    if set(required_props) != set(given_props.keys()):
+    if set(required_props) < set(given_props.keys()):
         raise ValueError("Requested properties are: {}, but {} "
                          "provided".format(list(required_props),
                                            list(given_props)))
@@ -1418,11 +1417,10 @@ def _check_method_props(required_props, props, validate=True):
 
     Parameters
     ----------
-    obj: estimator, scorer, or a CV splitter
-        If ``obj`` does not provide a ``_get_expected_method_props`` method,
-        the required props is assumed to be an empty set.
+    required_props: dict of {str: str}
+        required properties as ``{'given_property': 'method_property'}
 
-    props: dict
+    props: dict of {str: data}
         A dictionary with required props as keys and provided ones as values.
 
     method: str
@@ -1447,7 +1445,7 @@ def _check_method_props(required_props, props, validate=True):
     if validate:
         _validate_required_props(required_props, props)
     res = {value: props[key] for key, value
-           in required_props.items()}
+           in required_props.items() if key in props}
     print("returning: ", list(res.keys()))
     print("=========/")
     return res

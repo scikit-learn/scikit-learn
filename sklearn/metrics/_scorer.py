@@ -18,6 +18,7 @@ ground truth labeling (or ``None`` in the case of unsupervised models).
 #          Arnaud Joly <arnaud.v.joly@gmail.com>
 # License: Simplified BSD
 
+import copy
 from collections.abc import Iterable
 from functools import partial
 from collections import Counter
@@ -202,7 +203,7 @@ class _PredictScorer(_BaseScorer):
         """
 
         y_pred = method_caller(estimator, "predict", X)
-        scoring_kwargs = self._kwargs
+        scoring_kwargs = copy.deepcopy(self._kwargs)
         if sample_weight is not None:
             scoring_kwargs['sample_weight'] = sample_weight
         scoring_kwargs.update(kwargs)
@@ -249,7 +250,7 @@ class _ProbaScorer(_BaseScorer):
                                  ' but need classifier with two'
                                  ' classes for {} scoring'.format(
                                      y_pred.shape, self._score_func.__name__))
-        scoring_kwargs = self._kwargs
+        scoring_kwargs = copy.deepcopy(self._kwargs)
         if sample_weight is not None:
             scoring_kwargs['sample_weight'] = sample_weight
         scoring_kwargs.update(kwargs)
@@ -320,7 +321,7 @@ class _ThresholdScorer(_BaseScorer):
                 elif isinstance(y_pred, list):
                     y_pred = np.vstack([p[:, -1] for p in y_pred]).T
 
-        scoring_kwargs = self._kwargs
+        scoring_kwargs = copy.deepcopy(self._kwargs)
         if sample_weight is not None:
             scoring_kwargs['sample_weight'] = sample_weight
         scoring_kwargs.update(kwargs)
