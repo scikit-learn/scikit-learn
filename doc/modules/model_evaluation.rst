@@ -1562,7 +1562,7 @@ Given a set of bins over predicted probabilities, the calibration error
 measures the overall discrepancy across all bins between
 (1) the average predicted probabilities assigned to the positive class, and
 (2) the proportion of samples whose class is the positive class in the actual
- outcome.
+outcome.
 
 The lower the calibration error is for a set of predictions, the
 better the predictions are calibrated.
