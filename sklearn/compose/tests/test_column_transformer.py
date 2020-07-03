@@ -93,8 +93,9 @@ def test_column_transformer():
         (slice(0, 2), X_res_both),
         # boolean mask
         (np.array([True, False]), X_res_first),
-        ([True, True], X_res_both),
+        ([True, False], X_res_first),
         (np.array([True, True]), X_res_both),
+        ([True, True], X_res_both),
     ]
 
     for selection, res in cases:
@@ -168,6 +169,7 @@ def test_column_transformer_dataframe():
         # boolean mask
         (np.array([True, False]), X_res_first),
         (pd.Series([True, False], index=['first', 'second']), X_res_first),
+        ([True, False], X_res_first),
     ]
 
     for selection, res in cases:
