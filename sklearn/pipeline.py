@@ -9,6 +9,7 @@ estimator, as a chain of transforms and estimators.
 #         Lars Buitinck
 # License: BSD
 
+import warnings
 from collections import defaultdict
 from itertools import islice
 
@@ -253,24 +254,31 @@ class Pipeline(_BaseComposition):
                            "level and not at the pipeline level.")
 
     def _check_fit_params(self, **fit_params):
+        fit_params_steps = {name: {} for name, step in self.steps
+                            if step is not None}
+        # Remove old_behavior in 0.26
+        old_behavior = np.any(['__' in pname for pname in fit_params.keys()])
+        if old_behavior:
+            warnings.warn("It seems fit_params are using the deprecated "
+                          "way to route parameters using '__'. This behavior "
+                          "is deprecated in 0.24 and won't be accepted in "
+                          "0.26. Please use `set_request_metadata` to route "
+                          "parameters.", FutureWarning)
+            for pname, pval in fit_params.items():
+                if '__' not in pname:
+                    raise ValueError(
+                        "Pipeline.fit does not accept the {} parameter. "
+                        "You can pass parameters to specific steps of your "
+                        "pipeline using the stepname__parameter format, e.g. "
+                        "`Pipeline.fit(X, y, logisticregression__sample_weight"
+                        "=sample_weight)`.".format(pname))
+                step, param = pname.split('__', 1)
+                fit_params_steps[step][param] = pval
+            return fit_params_steps
+
         required_props = self.get_metadata_request().fit
         print("fit params steps:", list(fit_params.keys()))
         _validate_required_props(required_props, fit_params)
-
-        fit_params_steps = {name: {} for name, step in self.steps
-                            if step is not None}
-        """
-        for pname, pval in fit_params.items():
-            if '__' not in pname:
-                raise ValueError(
-                    "Pipeline.fit does not accept the {} parameter. "
-                    "You can pass parameters to specific steps of your "
-                    "pipeline using the stepname__parameter format, e.g. "
-                    "`Pipeline.fit(X, y, logisticregression__sample_weight"
-                    "=sample_weight)`.".format(pname))
-            step, param = pname.split('__', 1)
-            fit_params_steps[step][param] = pval
-        """
         for _, name, transformer in self._iter(filter_passthrough=True):
             if transformer is None:
                 continue

@@ -18,7 +18,7 @@ class MyEst(ClassifierMixin, BaseEstimator):
 
     def fit(self, X, y, **fit_params):
         _validate_required_props(self.get_metadata_request().fit, fit_params)
-        assert set(fit_params.keys()) == \
+        assert set(fit_params.keys()) <= \
             set(self.get_metadata_request().fit.values())
         self.svc_ = SVC(C=self.C).fit(X, y)
         return self
@@ -38,7 +38,7 @@ class MyTrs(TransformerMixin, BaseEstimator):
         req_props = self.get_metadata_request().fit
         _validate_required_props(req_props, fit_params)
         self._estimator = SelectKBest().fit(X, y)
-        assert set(fit_params.keys()) == set(req_props.values())
+        assert set(fit_params.keys()) <= set(req_props.values())
         return self
 
     def transform(self, X, y=None):
@@ -60,13 +60,13 @@ def test_pipeline():
     clf.fit(X, y, sample_weight=sw, brand=brand)
 
     trs = MyTrs().set_metadata_request(
-        None).set_metadata_request(
         {'fit': {'my_sw': 'new_param'}})
     clf = make_pipeline(trs, MyEst())
     clf.fit(X, y, sample_weight=sw, brand=brand, my_sw=my_data)
-
-    with pytest.raises(ValueError, match="Requested properties are"):
+    # If requested metadata is not given, no warning or error is raised
+    with pytest.warns(None) as record:
         clf.fit(X, y, brand=brand)
+    assert not record.list
 
     scorer = make_scorer(my_scorer, request_props="new_param")
 
