@@ -4,7 +4,7 @@ from numpy.testing import assert_allclose
 from scipy.optimize import newton
 from scipy.special import logit
 from sklearn.utils import assert_all_finite
-from sklearn.utils.fixes import sp_version
+from sklearn.utils.fixes import sp_version, parse_version
 import pytest
 
 from sklearn.ensemble._hist_gradient_boosting.loss import _LOSSES
@@ -60,7 +60,7 @@ def get_derivatives_helper(loss):
     ('poisson', 0., 2.),
     ('poisson', -22., 10.),
 ])
-@pytest.mark.skipif(sp_version == (1, 2, 0),
+@pytest.mark.skipif(sp_version == parse_version('1.2.0'),
                     reason='bug in scipy 1.2.0, see scipy issue #9608')
 @skip_if_32bit
 def test_derivatives(loss, x0, y_true):
