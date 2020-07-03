@@ -479,6 +479,12 @@ binary_only (default=False)
     whether estimator supports binary classification but lacks multi-class
     classification support.
 
+estimator_type (default=None)
+    string-valued identifier of an estimator as being a classifier, regressor,
+    etc. It is set by mixins such as :class:`~base.ClassifierMixin`, but needs
+    to be more explicitly adopted on a :term:`meta-estimator`. Its value should
+    usually be checked by way of a helper such as :func:`base.is_classifier`.
+
 multilabel (default=False)
     whether the estimator supports multilabel output
 
