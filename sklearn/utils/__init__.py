@@ -1206,7 +1206,9 @@ def _get_props_from_objs(objs):
                           fit_transform={})
     print("------- _get_props_from_objs")
     print("objects: ", objs)
-    if not isinstance(objs, (set, tuple, list)):
+    if isinstance(objs, dict):
+        objs = objs.values()
+    elif not isinstance(objs, (set, tuple, list)):
         objs = [objs]
     for obj in objs:
         try:

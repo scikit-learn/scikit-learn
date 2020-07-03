@@ -254,7 +254,7 @@ class Pipeline(_BaseComposition):
 
     def _check_fit_params(self, **fit_params):
         required_props = self.get_props_request().fit
-        print("fit params steps:", fit_params)
+        print("fit params steps:", list(fit_params.keys()))
         _validate_required_props(required_props, fit_params)
 
         fit_params_steps = {name: {} for name, step in self.steps
@@ -279,7 +279,7 @@ class Pipeline(_BaseComposition):
                 transformer_fit_props, fit_params,
                 validate=False)
         print("fit params steps in pipeline validation: ",
-              fit_params_steps)
+              list(fit_params_steps.keys()))
         return fit_params_steps
 
     # Estimator interface

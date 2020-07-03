@@ -178,7 +178,8 @@ class _BaseScorer(_PropsRequest):
 
 
 class _PredictScorer(_BaseScorer):
-    def _score(self, method_caller, estimator, X, y_true, sample_weight=None):
+    def _score(self, method_caller, estimator, X, y_true, sample_weight=None,
+               **kwargs):
         """Evaluate predicted target values for X relative to y_true.
 
         Parameters
@@ -207,17 +208,15 @@ class _PredictScorer(_BaseScorer):
         """
 
         y_pred = method_caller(estimator, "predict", X)
+        scoring_kwargs = self._kwargs
         if sample_weight is not None:
-            return self._sign * self._score_func(y_true, y_pred,
-                                                 sample_weight=sample_weight,
-                                                 **self._kwargs)
-        else:
-            return self._sign * self._score_func(y_true, y_pred,
-                                                 **self._kwargs)
+            scoring_kwargs['sample_weight'] = sample_weight
+        scoring_kwargs.update(kwargs)
+        return self._sign * self._score_func(y_true, y_pred, **scoring_kwargs)
 
 
 class _ProbaScorer(_BaseScorer):
-    def _score(self, method_caller, clf, X, y, sample_weight=None):
+    def _score(self, method_caller, clf, X, y, sample_weight=None, **kwargs):
         """Evaluate predicted probabilities for X relative to y_true.
 
         Parameters
@@ -256,19 +255,18 @@ class _ProbaScorer(_BaseScorer):
                                  ' but need classifier with two'
                                  ' classes for {} scoring'.format(
                                      y_pred.shape, self._score_func.__name__))
+        scoring_kwargs = self._kwargs
         if sample_weight is not None:
-            return self._sign * self._score_func(y, y_pred,
-                                                 sample_weight=sample_weight,
-                                                 **self._kwargs)
-        else:
-            return self._sign * self._score_func(y, y_pred, **self._kwargs)
+            scoring_kwargs['sample_weight'] = sample_weight
+        scoring_kwargs.update(kwargs)
+        return self._sign * self._score_func(y, y_pred, **scoring_kwargs)
 
     def _factory_args(self):
         return ", needs_proba=True"
 
 
 class _ThresholdScorer(_BaseScorer):
-    def _score(self, method_caller, clf, X, y, sample_weight=None):
+    def _score(self, method_caller, clf, X, y, sample_weight=None, **kwargs):
         """Evaluate decision function output for X relative to y_true.
 
         Parameters
@@ -328,12 +326,11 @@ class _ThresholdScorer(_BaseScorer):
                 elif isinstance(y_pred, list):
                     y_pred = np.vstack([p[:, -1] for p in y_pred]).T
 
+        scoring_kwargs = self._kwargs
         if sample_weight is not None:
-            return self._sign * self._score_func(y, y_pred,
-                                                 sample_weight=sample_weight,
-                                                 **self._kwargs)
-        else:
-            return self._sign * self._score_func(y, y_pred, **self._kwargs)
+            scoring_kwargs['sample_weight'] = sample_weight
+        scoring_kwargs.update(kwargs)
+        return self._sign * self._score_func(y, y_pred, **scoring_kwargs)
 
     def _factory_args(self):
         return ", needs_threshold=True"

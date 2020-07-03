@@ -6,7 +6,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.base import BaseEstimator, ClassifierMixin, TransformerMixin
 from sklearn.utils.validation import _validate_required_props
 from sklearn.datasets import make_classification
-from sklearn.metrics import get_scorer, make_scorer
+from sklearn.metrics import make_scorer, balanced_accuracy_score
 from sklearn.model_selection import GridSearchCV
 from sklearn.svm import SVC
 
@@ -46,8 +46,8 @@ class MyTrs(TransformerMixin, BaseEstimator):
 
 
 def my_scorer(y, y_pred, **kwargs):
-    assert kwargs.keys() == ["new_param"]
-    return get_scorer("balanced_accuracy")(y, y_pred)
+    assert set(kwargs.keys()) == set(["new_param"])
+    return balanced_accuracy_score(y, y_pred)
 
 
 def test_pipeline():

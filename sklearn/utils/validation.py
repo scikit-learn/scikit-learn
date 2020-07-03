@@ -1443,6 +1443,6 @@ def _check_method_props(required_props, props, validate=True):
         _validate_required_props(required_props, props)
     res = {value: props[key] for key, value
            in required_props.items()}
-    print("returning: ", res)
+    print("returning: ", list(res.keys()))
     print("=========/")
     return res
