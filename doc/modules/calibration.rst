@@ -11,7 +11,8 @@ When performing classification you often want not only to predict the class
 label, but also obtain a probability of the respective label. This probability
 gives you some kind of confidence on the prediction. Some models can give you
 poor estimates of the class probabilities and some even do not support
-probability prediction (e.g., :class:`~sklearn.linear_model.SGDClassifier`).
+probability prediction (e.g., some instances of
+:class:`~sklearn.linear_model.SGDClassifier`).
 The calibration module allows you to better calibrate
 the probabilities of a given model, or to add support for probability
 prediction.
@@ -88,7 +89,7 @@ Calibrating a classifier
 
 .. currentmodule:: sklearn.calibration
 
-Calibrating a classifier consists in fitting a regressor (called a
+Calibrating a classifier consists of fitting a regressor (called a
 *calibrator*) that maps the output of the classifier (as given by
 :term:`decision_function` or :term:`predict_proba`) to a calibrated probability
 in [0, 1]. Denoting the output of the classifier for a given sample by :math:`f_i`,
@@ -129,20 +130,19 @@ fit the regressor. It is up to the user
 make sure that the data used for fitting the classifier is disjoint from the
 data used for fitting the regressor.
 
-:class:`CalibratedClassifierCV` supports the use of two 'calibration'
-regressors: 'sigmoid' and 'isotonic'. Both these regressors only
-support 1-dimensional data (e.g., binary classification output) but are
-extended for multiclass classification if the `base_estimator` supports
-multiclass predictions. For multiclass predictions,
-:class:`CalibratedClassifierCV` calibrates for
-each class separately in a :ref:`ovr_classification` fashion [4]_. When
-predicting
-probabilities, the calibrated probabilities for each class
-are predicted separately. As those probabilities do not necessarily sum to
-one, a postprocessing is performed to normalize them.
+:func:`sklearn.metrics.brier_score_loss` may be used to assess how
+well a classifier is calibrated. However, this metric should be used with care
+because a lower Brier score does not always mean a better calibrated model.
+This is because the Brier score metric is a combination of calibration loss
+and refinement loss. Calibration loss is defined as the mean squared deviation
+from empirical probabilities derived from the slope of ROC segments.
+Refinement loss can be defined as the expected optimal loss as measured by the
+area under the optimal cost curve. As refinement loss can change
+independently from calibration loss, a lower Brier score does not necessarily
+mean a better calibrated model.
 
-The :func:`sklearn.metrics.brier_score_loss` may be used to evaluate how
-well a classifier is calibrated.
+:class:`CalibratedClassifierCV` supports the use of two 'calibration'
+regressors: 'sigmoid' and 'isotonic'.
 
 Sigmoid
 ^^^^^^^
@@ -160,8 +160,8 @@ maximum likelihood.
 The sigmoid method is biased in that it assumes the :ref:`calibration curve
 <calibration_curve>` of the un-calibrated model has a sigmoid shape and is
 symmetrical [1]_. It is thus most effective when the un-calibrated model is
-under-confident and has similar errors for both high and low
-output errors. The symmetry assumption is of concern in highly imbalanced
+under-confident and has similar calibration errors for both high and low
+outputs. The symmetry assumption is of concern in highly imbalanced
 classification as un-calibrated classifiers can have asymmetric calibration
 errors.
 
@@ -178,14 +178,28 @@ minimizes:
 subject to :math:`\hat{f}_i >= \hat{f}_j` whenever
 :math:`f_i >= f_j`. :math:`y_i` is the true
 label of sample :math:`i` and :math:`\hat{f}_i` is the output of the
-calibrated classifier for sample :math:`i`. This method
-is more general when compared to 'sigmoid' as the only restriction is that the
-mapping function is monotonically increasing. It is thus more powerful as it
-can correct any monotonic distortion of the un-calibrated model. However, it is
-more prone to overfitting, especially on small datasets [5]_.
+calibrated classifier for sample :math:`i` (i.e., the calibrated probability).
+This method is more general when compared to 'sigmoid' as the only restriction
+is that the mapping function is monotonically increasing. It is thus more
+powerful as it can correct any monotonic distortion of the un-calibrated model.
+However, it is more prone to overfitting, especially on small datasets [5]_.
 
 Overall, 'isotonic' will perform as well as or better than 'sigmoid' when
 there is enough data (greater than ~ 1000 samples) to avoid overfitting [1]_.
+
+Multiclass support
+^^^^^^^^^^^^^^^^^^
+
+Both isotonic and sigmoid regressors only
+support 1-dimensional data (e.g., binary classification output) but are
+extended for multiclass classification if the `base_estimator` supports
+multiclass predictions. For multiclass predictions,
+:class:`CalibratedClassifierCV` calibrates for
+each class separately in a :ref:`ovr_classification` fashion [4]_. When
+predicting
+probabilities, the calibrated probabilities for each class
+are predicted separately. As those probabilities do not necessarily sum to
+one, a postprocessing is performed to normalize them.
 
 .. topic:: Examples:
 
