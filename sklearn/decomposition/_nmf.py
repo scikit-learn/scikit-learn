@@ -1831,7 +1831,7 @@ class MiniBatchNMF(TransformerMixin, BaseEstimator):
             X=X, W=W, H=H, A=None, B=None, n_components=self.n_components,
             batch_size=self.batch_size, init=self.init,
             update_H=True, solver=self.solver, beta_loss=self.beta_loss,
-            tol=self.tol, max_iter=self.max_iter, alpha=self.alpha,
+            tol=0, max_iter=1, alpha=self.alpha,
             l1_ratio=self.l1_ratio, regularization='both',
             random_state=self.random_state, verbose=self.verbose,
             shuffle=self.shuffle)
