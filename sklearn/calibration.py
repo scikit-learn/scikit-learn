@@ -344,9 +344,9 @@ class _CalibratedClassifier:
             in fit().
 
     strict : bool, default=False
-        For the isotonic method, if set to True, this impose strict
-        monotonicity constraints in order to preserve rank-based metrics
-        after calibration.
+        For the isotonic method, if set to True, this imposes strict
+        monotonicity constraints. Ignored if `method='sigmoid'`.
+
 
     See also
     --------
