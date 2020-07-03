@@ -1552,19 +1552,19 @@ Here is a small example of usage of this function:::
     Monthly weather review 78.1 (1950)
 
 
-Calibration loss
-----------------
+Calibration error
+-----------------
 
 The :func:`calibration_error` function computes the expected and maximum
-calibration losses as defined in [1]_ for binary classes.
+calibration errors as defined in [1]_ for binary classes.
 
-Given a set of bins over predicted probabilities, the calibration loss
+Given a set of bins over predicted probabilities, the calibration error
 measures the overall discrepancy per bin between
 (1) the average predicted probabilities assigned to the positive class, and
 (2) the frequencies of the positive class in the actual outcome in the same
 bin.
 
-The lower the calibration loss is for a set of predictions, the
+The lower the calibration error is for a set of predictions, the
 better the predictions are calibrated.
 
 The aggregation method ``norm`` can be either:
@@ -1586,7 +1586,7 @@ weight of bin :math:`k` and
 denotes the absolute difference between the average frequency of positive class
 and the average predicted probability of positive class in bin :math:`k`.
 
-The calibration loss is appropriate for binary classification tasks.
+The calibration error is appropriate for binary classification tasks.
 Which label is considered to be the positive label is controlled via the
 parameter pos_label, which defaults to 1.
 

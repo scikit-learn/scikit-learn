@@ -10,7 +10,7 @@ classifiers provide well-calibrated probabilities, some being over-confident
 while others being under-confident. Thus, a separate calibration of predicted
 probabilities is often desirable as a postprocessing. This example illustrates
 two different methods for this calibration and evaluates the quality of the
-returned probabilities using a calibration loss defined as the average
+returned probabilities using a calibration error defined as the average
 absolute deviation between the calibration curve and the diagonal (perfectly
 calibrated classifier).
 
@@ -20,7 +20,7 @@ isotonic calibration. One can observe that only the non-parametric model is
 able to provide a probability calibration that returns probabilities close
 to the expected 0.5 for most of the samples belonging to the middle
 cluster with heterogeneous labels. This results in a significantly improved
-calibration loss.
+calibration error.
 """
 print(__doc__)
 
@@ -74,7 +74,7 @@ clf_sigmoid = CalibratedClassifierCV(clf, cv=2, method='sigmoid')
 clf_sigmoid.fit(X_train, y_train, sample_weight=sw_train)
 prob_pos_sigmoid = clf_sigmoid.predict_proba(X_test)[:, 1]
 
-print("Calibration losses: (the smaller the better)")
+print("Calibration errors: (the smaller the better)")
 
 clf_score = calibration_error(y_test, prob_pos_clf, sw_test)
 print("No calibration: %1.3f" % clf_score)

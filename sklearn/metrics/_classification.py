@@ -2382,7 +2382,7 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
     possible difference between a predicted probability (which must be
     between zero and one) and the actual outcome (which can take on values
     of only 0 and 1). The Brier loss is composed of refinement loss and
-    calibration loss.
+    calibration error.
     The Brier score is appropriate for binary and categorical outcomes that
     can be structured as true or false, but is inappropriate for ordinal
     variables which can take on three or more values (this is because the
@@ -2473,7 +2473,7 @@ def calibration_error(y_true, y_prob, sample_weight=None, norm='l2',
     assigned to the positive class, and (2) the frequencies
     of the positive class in the actual outcome.
 
-    The calibration loss is only appropriate for binary categorical outcomes.
+    The calibration error is only appropriate for binary categorical outcomes.
     Which label is considered to be the positive label is controlled via the
     parameter pos_label, which defaults to 1.
 
@@ -2515,7 +2515,7 @@ def calibration_error(y_true, y_prob, sample_weight=None, norm='l2',
     Returns
     -------
     score : float
-        calibration loss
+        calibration error
 
     Examples
     --------

@@ -14,6 +14,7 @@ can give poor estimates of the class probabilities and some even do not offer
 probabilistic predictions.
 
 The calibration module makes it possible to:
+
 - evaluate the calibration of fitted probabilistic classifiers;
 - calibrate probabilistic classifiers;
 - wrap non-probabilistic classifiers into calibrated probabilistic classifiers.
@@ -122,7 +123,7 @@ with 20 features. Of the 20 features, only 2 are informative and 10 are
 redundant. The figure shows the estimated probabilities obtained with
 logistic regression, a linear support-vector classifier (SVC), and linear SVC with
 both isotonic calibration and sigmoid calibration.
-The calibration loss is a metric which measures the mean absolute distance between the
+The calibration error is a metric which measures the mean absolute distance between the
 calibration curve and the diagonal (perfectly calibrated model), :func:`calibration_error`,
 reported in the legend (the smaller the better).
 
@@ -153,7 +154,7 @@ assumption of feature-independence.
 
 Calibration of the probabilities of Gaussian naive Bayes with isotonic
 regression can fix this issue as can be seen from the nearly diagonal
-calibration curve. Sigmoid calibration also improves the calibration loss slightly,
+calibration curve. Sigmoid calibration also improves the calibration error slightly,
 albeit not as strongly as the non-parametric isotonic calibration. This is an
 intrinsic limitation of sigmoid calibration, whose parametric form assumes a
 sigmoid rather than a transposed-sigmoid curve. The non-parametric isotonic

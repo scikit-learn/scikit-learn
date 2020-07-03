@@ -58,9 +58,9 @@ def test_calibration():
             # Note that this fit overwrites the fit on the entire training
             # set
             pc_clf.fit(this_X_train, y_train, sample_weight=sw_train)
-            prob_pos_pc_clf = pc_clf.predicttest_calibration.py_proba(this_X_test)[:, 1]
+            prob_pos_pc_clf = pc_clf.predict_proba(this_X_test)[:, 1]
 
-            # Check that calibration loss has improved after calibration
+            # Check that calibration error has improved after calibration
             assert (calibration_error(y_test, prob_pos_clf) >
                     calibration_error(y_test, prob_pos_pc_clf))
 

@@ -15,7 +15,7 @@ features. Of the 20 features, only 2 are informative and 10 are redundant. The
 first figure shows the estimated probabilities obtained with logistic
 regression, Gaussian naive Bayes, and Gaussian naive Bayes with both isotonic
 calibration and sigmoid calibration. The calibration performance is evaluated
-with a calibration loss, reported in the legend (the smaller the better). One
+with a calibration error, reported in the legend (the smaller the better). One
 can observe here that logistic regression is well calibrated while raw Gaussian
 naive Bayes performs very badly. This is because of the redundant features
 which violate the assumption of feature-independence and result in an overly
@@ -24,7 +24,7 @@ curve.
 
 Calibration of the probabilities of Gaussian naive Bayes with isotonic
 regression can fix this issue as can be seen from the nearly diagonal
-calibration curve. Sigmoid calibration also improves the calibration loss
+calibration curve. Sigmoid calibration also improves the calibration error
 slightly, albeit not as strongly as the non-parametric isotonic regression.
 This can be attributed to the fact that we have plenty of calibration data
 such that the greater flexibility of the non-parametric model can be exploited.
@@ -100,7 +100,7 @@ def plot_calibration_curve(est, name, fig_index):
 
         clf_score = calibration_error(y_test, prob_pos, pos_label=y.max())
         print("%s:" % name)
-        print("\tCalibration loss: %1.3f" % (clf_score))
+        print("\tCalibration error: %1.3f" % (clf_score))
         print("\tPrecision: %1.3f" % precision_score(y_test, y_pred))
         print("\tRecall: %1.3f" % recall_score(y_test, y_pred))
         print("\tF1: %1.3f\n" % f1_score(y_test, y_pred))
