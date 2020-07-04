@@ -311,9 +311,10 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
     """
 
     @_deprecate_positional_args
-    def __init__(self, feature_range=(0, 1), *, copy=True):
+    def __init__(self, feature_range=(0, 1), *, copy=True, clip=False):
         self.feature_range = feature_range
         self.copy = copy
+        self.clip = clip
 
     def _reset(self):
         """Reset internal data-dependent state of the scaler, if necessary.
@@ -427,6 +428,8 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
 
         X *= self.scale_
         X += self.min_
+        if self.clip is True:
+            X = np.clip(X, self.feature_range[0], self.feature_range[1])
         return X
 
     def inverse_transform(self, X):
