@@ -25,7 +25,6 @@ print(__doc__)
 import time
 
 import numpy as np
-from distutils.version import LooseVersion
 from scipy.ndimage.filters import gaussian_filter
 import matplotlib.pyplot as plt
 import skimage
@@ -34,9 +33,10 @@ from skimage.transform import rescale
 
 from sklearn.feature_extraction import image
 from sklearn.cluster import spectral_clustering
+from sklearn.utils.fixes import parse_version
 
 # these were introduced in skimage-0.14
-if LooseVersion(skimage.__version__) >= '0.14':
+if parse_version(skimage.__version__) >= parse_version('0.14'):
     rescale_params = {'anti_aliasing': False, 'multichannel': False}
 else:
     rescale_params = {}
@@ -66,7 +66,7 @@ graph.data = np.exp(-beta * graph.data / graph.data.std()) + eps
 # installed)
 N_REGIONS = 25
 
-#############################################################################
+# %%
 # Visualize the resulting regions
 
 for assign_labels in ('kmeans', 'discretize'):

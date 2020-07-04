@@ -81,7 +81,7 @@ class BayesianRidge(RegressorMixin, LinearModel):
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
         If you wish to standardize, please use
-        :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
+        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
     copy_X : bool, default=True
@@ -333,14 +333,15 @@ class BayesianRidge(RegressorMixin, LinearModel):
         """
 
         if n_samples > n_features:
-            coef_ = np.dot(Vh.T,
-                           Vh / (eigen_vals_ +
-                                 lambda_ / alpha_)[:, np.newaxis])
-            coef_ = np.dot(coef_, XT_y)
+            coef_ = np.linalg.multi_dot([Vh.T,
+                                         Vh / (eigen_vals_ + lambda_ /
+                                               alpha_)[:, np.newaxis],
+                                         XT_y])
         else:
-            coef_ = np.dot(X.T, np.dot(
-                U / (eigen_vals_ + lambda_ / alpha_)[None, :], U.T))
-            coef_ = np.dot(coef_, y)
+            coef_ = np.linalg.multi_dot([X.T,
+                                         U / (eigen_vals_ + lambda_ /
+                                              alpha_)[None, :],
+                                         U.T, y])
 
         rmse_ = np.sum((y - np.dot(X, coef_)) ** 2)
 
@@ -433,7 +434,7 @@ class ARDRegression(RegressorMixin, LinearModel):
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
         If you wish to standardize, please use
-        :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
+        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
     copy_X : bool, default=True
@@ -555,8 +556,8 @@ class ARDRegression(RegressorMixin, LinearModel):
         coef_old_ = None
 
         def update_coeff(X, y, coef_, alpha_, keep_lambda, sigma_):
-            coef_[keep_lambda] = alpha_ * np.dot(
-                sigma_, np.dot(X[:, keep_lambda].T, y))
+            coef_[keep_lambda] = alpha_ * np.linalg.multi_dot([
+                sigma_, X[:, keep_lambda].T, y])
             return coef_
 
         update_sigma = (self._update_sigma if n_samples >= n_features

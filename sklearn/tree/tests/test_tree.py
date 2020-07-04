@@ -1988,3 +1988,16 @@ def test_poisson_zero_nodes():
     reg = DecisionTreeRegressor(criterion="poisson", random_state=1)
     reg.fit(X, y)
     assert np.all(reg.predict(X) > 0)
+
+
+# TODO: Remove in v0.26
+@pytest.mark.parametrize("TreeEstimator", [DecisionTreeClassifier,
+                                           DecisionTreeRegressor])
+def test_X_idx_sorted_deprecated(TreeEstimator):
+    X_idx_sorted = np.argsort(X, axis=0)
+
+    tree = TreeEstimator()
+
+    with pytest.warns(FutureWarning,
+                      match="The parameter 'X_idx_sorted' is deprecated"):
+        tree.fit(X, y, X_idx_sorted=X_idx_sorted)

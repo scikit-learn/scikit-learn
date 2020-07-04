@@ -61,12 +61,13 @@ multioutput_regression_data = (make_regression(n_samples=50, n_targets=2,
 iris = load_iris()
 
 
+@pytest.mark.filterwarnings("ignore:A Bunch will be returned")
 @pytest.mark.parametrize('Estimator, method, data', [
-    (GradientBoostingClassifier, 'recursion', binary_classification_data),
-    (GradientBoostingClassifier, 'recursion', multiclass_classification_data),
+    (GradientBoostingClassifier, 'auto', binary_classification_data),
+    (GradientBoostingClassifier, 'auto', multiclass_classification_data),
     (GradientBoostingClassifier, 'brute', binary_classification_data),
     (GradientBoostingClassifier, 'brute', multiclass_classification_data),
-    (GradientBoostingRegressor, 'recursion', regression_data),
+    (GradientBoostingRegressor, 'auto', regression_data),
     (GradientBoostingRegressor, 'brute', regression_data),
     (DecisionTreeRegressor, 'brute', regression_data),
     (LinearRegression, 'brute', regression_data),
@@ -77,8 +78,9 @@ iris = load_iris()
     ])
 @pytest.mark.parametrize('grid_resolution', (5, 10))
 @pytest.mark.parametrize('features', ([1], [1, 2]))
+@pytest.mark.parametrize('kind', ('legacy', 'average', 'individual', 'both'))
 def test_output_shape(Estimator, method, data, grid_resolution,
-                      features):
+                      features, kind):
     # Check that partial_dependence has consistent output shape for different
     # kinds of estimators:
     # - classifiers with binary and multiclass settings
@@ -91,17 +93,31 @@ def test_output_shape(Estimator, method, data, grid_resolution,
     # the number of tasks / outputs in multi task settings. It's equal to 1 for
     # classical regression_data.
     (X, y), n_targets = data
+    n_instances = X.shape[0]
 
     est.fit(X, y)
-    pdp, axes = partial_dependence(est, X=X, features=features,
-                                   method=method,
-                                   grid_resolution=grid_resolution)
+    result = partial_dependence(
+        est, X=X, features=features, method=method, kind=kind,
+        grid_resolution=grid_resolution
+    )
+    # FIXME: to be removed in 0.24
+    pdp, axes = result if kind == 'legacy' else (result, result["values"])
 
-    expected_pdp_shape = (n_targets, *[grid_resolution
-                                       for _ in range(len(features))])
+    expected_pdp_shape = (n_targets,
+                          *[grid_resolution for _ in range(len(features))])
+    expected_ice_shape = (n_targets, n_instances,
+                          *[grid_resolution for _ in range(len(features))])
+    if kind == 'legacy':
+        assert pdp.shape == expected_pdp_shape
+    elif kind == 'average':
+        assert pdp.average.shape == expected_pdp_shape
+    elif kind == 'individual':
+        assert pdp.individual.shape == expected_ice_shape
+    else:  # 'both'
+        assert pdp.average.shape == expected_pdp_shape
+        assert pdp.individual.shape == expected_ice_shape
+
     expected_axes_shape = (len(features), grid_resolution)
-
-    assert pdp.shape == expected_pdp_shape
     assert axes is not None
     assert np.asarray(axes).shape == expected_axes_shape
 
@@ -196,8 +212,8 @@ def test_partial_dependence_helpers(est, method, target_feature):
                      [123]])
 
     if method == 'brute':
-        pdp = _partial_dependence_brute(est, grid, features, X,
-                                        response_method='auto')
+        pdp, predictions = _partial_dependence_brute(est, grid, features, X,
+                                                     response_method='auto')
     else:
         pdp = _partial_dependence_recursion(est, grid, features)
 
@@ -295,14 +311,16 @@ def test_recursion_decision_function(est, target_feature):
 
     est.fit(X, y)
 
-    preds_1, _ = partial_dependence(est, X, [target_feature],
-                                    response_method='decision_function',
-                                    method='recursion')
-    preds_2, _ = partial_dependence(est, X, [target_feature],
-                                    response_method='decision_function',
-                                    method='brute')
+    preds_1 = partial_dependence(
+        est, X, [target_feature], response_method='decision_function',
+        method='recursion', kind='average'
+    )
+    preds_2 = partial_dependence(
+        est, X, [target_feature], response_method='decision_function',
+        method='brute', kind='average'
+    )
 
-    assert_allclose(preds_1, preds_2, atol=1e-7)
+    assert_allclose(preds_1['average'], preds_2['average'], atol=1e-7)
 
 
 @pytest.mark.parametrize('est', (
@@ -329,11 +347,13 @@ def test_partial_dependence_easy_target(est, power):
 
     est.fit(X, y)
 
-    averaged_predictions, values = partial_dependence(
-        est, features=[target_variable], X=X, grid_resolution=1000)
+    pdp = partial_dependence(
+        est, features=[target_variable], X=X, grid_resolution=1000,
+        kind='average'
+    )
 
-    new_X = values[0].reshape(-1, 1)
-    new_y = averaged_predictions[0]
+    new_X = pdp["values"][0].reshape(-1, 1)
+    new_y = pdp['average'][0]
     # add polynomial features if needed
     new_X = PolynomialFeatures(degree=power).fit_transform(new_X)
 
@@ -374,6 +394,7 @@ class NoPredictProbaNoDecisionFunction(ClassifierMixin, BaseEstimator):
         return self
 
 
+@pytest.mark.filterwarnings("ignore:A Bunch will be returned")
 @pytest.mark.parametrize(
     "estimator, params, err_msg",
     [(KMeans(),
@@ -404,6 +425,12 @@ class NoPredictProbaNoDecisionFunction(ClassifierMixin, BaseEstimator):
      (LinearRegression(),
       {'features': [0], 'method': 'blahblah'},
       'blahblah is invalid. Accepted method names are brute, recursion, auto'),
+     (LinearRegression(),
+      {'features': [0], 'method': 'recursion', 'kind': 'individual'},
+      "The 'recursion' method only applies when 'kind' is set to 'average'"),
+     (LinearRegression(),
+      {'features': [0], 'method': 'recursion', 'kind': 'both'},
+      "The 'recursion' method only applies when 'kind' is set to 'average'"),
      (LinearRegression(),
       {'features': [0], 'method': 'recursion'},
       "Only the following estimators support the 'recursion' method:")]
@@ -470,7 +497,7 @@ def test_partial_dependence_X_list(estimator):
     # check that array-like objects are accepted
     X, y = make_classification(random_state=0)
     estimator.fit(X, y)
-    partial_dependence(estimator, list(X), [0])
+    partial_dependence(estimator, list(X), [0], kind='average')
 
 
 def test_warning_recursion_non_constant_init():
@@ -483,12 +510,12 @@ def test_warning_recursion_non_constant_init():
     with pytest.warns(
             UserWarning,
             match='Using recursion method with a non-constant init predictor'):
-        partial_dependence(gbc, X, [0], method='recursion')
+        partial_dependence(gbc, X, [0], method='recursion', kind='average')
 
     with pytest.warns(
             UserWarning,
             match='Using recursion method with a non-constant init predictor'):
-        partial_dependence(gbc, X, [0], method='recursion')
+        partial_dependence(gbc, X, [0], method='recursion', kind='average')
 
 
 def test_partial_dependence_sample_weight():
@@ -512,9 +539,9 @@ def test_partial_dependence_sample_weight():
     clf = GradientBoostingRegressor(n_estimators=10, random_state=1)
     clf.fit(X, y, sample_weight=sample_weight)
 
-    pdp, values = partial_dependence(clf, X, features=[1])
+    pdp = partial_dependence(clf, X, features=[1], kind='average')
 
-    assert np.corrcoef(pdp, values)[0, 1] > 0.99
+    assert np.corrcoef(pdp['average'], pdp["values"])[0, 1] > 0.99
 
 
 def test_hist_gbdt_sw_not_supported():
@@ -539,17 +566,18 @@ def test_partial_dependence_pipeline():
     pipe.fit(iris.data, iris.target)
 
     features = 0
-    pdp_pipe, values_pipe = partial_dependence(
-        pipe, iris.data, features=[features], grid_resolution=10
+    pdp_pipe = partial_dependence(
+        pipe, iris.data, features=[features], grid_resolution=10,
+        kind='average'
     )
-    pdp_clf, values_clf = partial_dependence(
+    pdp_clf = partial_dependence(
         clf, scaler.transform(iris.data), features=[features],
-        grid_resolution=10
+        grid_resolution=10, kind='average'
     )
-    assert_allclose(pdp_pipe, pdp_clf)
+    assert_allclose(pdp_pipe['average'], pdp_clf['average'])
     assert_allclose(
-        values_pipe[0],
-        values_clf[0] * scaler.scale_[features] + scaler.mean_[features]
+        pdp_pipe["values"][0],
+        pdp_clf["values"][0] * scaler.scale_[features] + scaler.mean_[features]
     )
 
 
@@ -583,8 +611,8 @@ def test_partial_dependence_dataframe(estimator, preprocessor, features):
 
     pipe = make_pipeline(preprocessor, estimator)
     pipe.fit(df, iris.target)
-    pdp_pipe, values_pipe = partial_dependence(
-        pipe, df, features=features, grid_resolution=10
+    pdp_pipe = partial_dependence(
+        pipe, df, features=features, grid_resolution=10, kind='average'
     )
 
     # the column transformer will reorder the column when transforming
@@ -598,19 +626,20 @@ def test_partial_dependence_dataframe(estimator, preprocessor, features):
         features_clf = [0, 2]
 
     clf = clone(estimator).fit(X_proc, iris.target)
-    pdp_clf, values_clf = partial_dependence(
-        clf, X_proc, features=features_clf, method='brute', grid_resolution=10
+    pdp_clf = partial_dependence(
+        clf, X_proc, features=features_clf, method='brute', grid_resolution=10,
+        kind='average'
     )
 
-    assert_allclose(pdp_pipe, pdp_clf)
+    assert_allclose(pdp_pipe['average'], pdp_clf['average'])
     if preprocessor is not None:
         scaler = preprocessor.named_transformers_['standardscaler']
         assert_allclose(
-            values_pipe[1],
-            values_clf[1] * scaler.scale_[1] + scaler.mean_[1]
+            pdp_pipe["values"][1],
+            pdp_clf["values"][1] * scaler.scale_[1] + scaler.mean_[1]
         )
     else:
-        assert_allclose(values_pipe[1], values_clf[1])
+        assert_allclose(pdp_pipe["values"][1], pdp_clf["values"][1])
 
 
 @pytest.mark.parametrize(
@@ -635,11 +664,11 @@ def test_partial_dependence_feature_type(features, expected_pd_shape):
         preprocessor, LogisticRegression(max_iter=1000, random_state=0)
     )
     pipe.fit(df, iris.target)
-    pdp_pipe, values_pipe = partial_dependence(
-        pipe, df, features=features, grid_resolution=10
+    pdp_pipe = partial_dependence(
+        pipe, df, features=features, grid_resolution=10, kind='average'
     )
-    assert pdp_pipe.shape == expected_pd_shape
-    assert len(values_pipe) == len(pdp_pipe.shape) - 1
+    assert pdp_pipe['average'].shape == expected_pd_shape
+    assert len(pdp_pipe["values"]) == len(pdp_pipe['average'].shape) - 1
 
 
 @pytest.mark.parametrize(
@@ -656,3 +685,35 @@ def test_partial_dependence_unfitted(estimator):
         partial_dependence(pipe, X, features=[0, 2], grid_resolution=10)
     with pytest.raises(NotFittedError, match="is not fitted yet"):
         partial_dependence(estimator, X, features=[0, 2], grid_resolution=10)
+
+
+@pytest.mark.parametrize('Estimator, data', [
+    (LinearRegression, multioutput_regression_data),
+    (LogisticRegression, binary_classification_data)])
+def test_kind_average_and_average_of_individual(Estimator, data):
+    est = Estimator()
+    (X, y), n_targets = data
+    est.fit(X, y)
+
+    pdp_avg = partial_dependence(
+            est, X=X, features=[1, 2], kind='average'
+    )
+    pdp_ind = partial_dependence(
+        est, X=X, features=[1, 2], kind='individual'
+    )
+    avg_ind = np.mean(pdp_ind['individual'], axis=1)
+    assert_allclose(avg_ind, pdp_avg['average'])
+
+
+def test_warning_for_kind_legacy():
+    est = LogisticRegression()
+    (X, y), n_targets = binary_classification_data
+    est.fit(X, y)
+
+    err_msg = ("A Bunch will be returned in place of 'predictions' from "
+               "version 0.26")
+    with pytest.warns(FutureWarning, match=err_msg):
+        partial_dependence(est, X=X, features=[1, 2])
+
+    with pytest.warns(FutureWarning, match=err_msg):
+        partial_dependence(est, X=X, features=[1, 2], kind='legacy')
