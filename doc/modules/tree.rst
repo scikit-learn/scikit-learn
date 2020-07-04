@@ -106,8 +106,13 @@ After being fitted, the model can then be used to predict the class of samples::
     >>> clf.predict([[2., 2.]])
     array([1])
 
-Alternatively, the probability of each class can be predicted, which is the
-fraction of training samples of the same class in a leaf::
+In case that there are multiple classes with the same and highest
+probability, the classifier will predict the class with the lowest index
+amongst those classes.
+
+As an alternative to outputting a specific class, the probability of each class
+can be predicted, which is the fraction of training samples of the class in a 
+leaf::
 
     >>> clf.predict_proba([[2., 2.]])
     array([[0., 1.]])
@@ -375,7 +380,6 @@ Tips on practical use
     predict. Training time can be orders of magnitude faster for a sparse
     matrix input compared to a dense matrix when features have zero values in
     most of the samples.
-
 
 
 .. _tree_algorithms:

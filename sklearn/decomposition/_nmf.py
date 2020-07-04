@@ -100,7 +100,7 @@ def _beta_divergence(X, W, H, beta, square_root=False):
         # Avoid the creation of the dense np.dot(W, H) if X is sparse.
         if sp.issparse(X):
             norm_X = np.dot(X.data, X.data)
-            norm_WH = trace_dot(np.dot(np.dot(W.T, W), H), H)
+            norm_WH = trace_dot(np.linalg.multi_dot([W.T, W, H]), H)
             cross_prod = trace_dot((X * H.T), W)
             res = (norm_X + norm_WH - 2. * cross_prod) / 2.
         else:
@@ -629,7 +629,7 @@ def _multiplicative_update_h(X, W, H, beta_loss, l1_reg_H, l2_reg_H, gamma):
     """update H in Multiplicative Update NMF"""
     if beta_loss == 2:
         numerator = safe_sparse_dot(W.T, X)
-        denominator = np.dot(np.dot(W.T, W), H)
+        denominator = np.linalg.multi_dot([W.T, W, H])
 
     else:
         # Numerator
