@@ -2532,9 +2532,10 @@ def test_minmax_scaler_clip():
     # test to add a new paramter 'clip' to MinMaxScaler
     X = iris.data
     x = np.random.randint(0, 50, (20, 4))
-    scaler = MinMaxScaler()
+    scaler = MinMaxScaler(clip=True)
     # default params, feature_range=(0,1)
     X_scaled = scaler.fit(X)
     x_transformed = X_scaled.transform(x)
+
     assert x_transformed.min() >= 0
     assert x_transformed.max() <= 1
