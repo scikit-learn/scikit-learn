@@ -150,6 +150,12 @@ Changelog
 :mod:`sklearn.metrics`
 ......................
 
+- |Feature| Added :func:`metrics.mean_absolute_percentage_error` metric and
+  the associated scorer for regression problems. :issue:`10708` fixed with the
+  PR :pr:`15007` by :user:`Ashutosh Hathidara <ashutosh1919>`. The scorer and
+  some practical test cases were taken from PR :pr:`10711` by
+  :user:`Mohamed Ali Jamaoui <mohamed-ali>`.
+
 - |Fix| Fixed a bug in :func:`metrics.mean_squared_error` where the
   average of multiple RMSE values was incorrectly calculated as the root of the
   average of multiple MSE values.
