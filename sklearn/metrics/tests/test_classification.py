@@ -2306,10 +2306,12 @@ def test_calibration_error_raises():
     assert_raises(ValueError, calibration_error, y_true, y_pred - 1.)
     assert_raises(ValueError, calibration_error, y_true, y_pred, pos_label=2)
     assert_raises(ValueError, calibration_error, y_true, y_pred, norm="foo")
-    assert_raises(ValueError, calibration_error, y_true, y_pred, strategy="foo")
+    assert_raises(ValueError, calibration_error, y_true, y_pred,
+                  strategy="foo")
 
     y_true[0] = 2
     assert_raises(ValueError, calibration_error, y_true, y_pred)
+
 
 def test_calibration_error_one_element_per_bin():
     ratio = 4
