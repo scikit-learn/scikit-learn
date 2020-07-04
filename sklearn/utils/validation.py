@@ -202,8 +202,8 @@ def _num_samples(x):
 
     try:
         return len(x)
-    except TypeError:
-        raise TypeError(message)
+    except TypeError as type_error:
+        raise TypeError(message) from type_error
 
 
 def check_memory(memory):
@@ -597,9 +597,9 @@ def check_array(array, accept_sparse=False, *, accept_large_sparse=True,
                     array = array.astype(dtype, casting="unsafe", copy=False)
                 else:
                     array = np.asarray(array, order=order, dtype=dtype)
-            except ComplexWarning:
+            except ComplexWarning as complex_warning:
                 raise ValueError("Complex data not supported\n"
-                                 "{}\n".format(array))
+                                 "{}\n".format(array)) from complex_warning
 
         # It is possible that the np.array(..) gave no warning. This happens
         # when no dtype conversion happened, for example dtype = None. The
