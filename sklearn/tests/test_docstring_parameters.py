@@ -16,8 +16,7 @@ from sklearn.utils import IS_PYPY
 from sklearn.utils._testing import check_docstring_parameters
 from sklearn.utils._testing import _get_func_name
 from sklearn.utils._testing import ignore_warnings
-from sklearn.utils._testing import all_estimators
-from sklearn.utils.estimator_checks import _safe_tags
+from sklearn.utils import all_estimators
 from sklearn.utils.estimator_checks import _enforce_estimator_tags_y
 from sklearn.utils.estimator_checks import _enforce_estimator_tags_x
 from sklearn.utils.deprecation import _is_deprecated
@@ -199,6 +198,10 @@ def test_fit_docstring_attributes(name, Estimator):
     if Estimator.__name__ == 'DummyClassifier':
         est.strategy = "stratified"
 
+    # TO BE REMOVED for v0.25 (avoid FutureWarning)
+    if Estimator.__name__ == 'AffinityPropagation':
+        est.random_state = 63
+
     X, y = make_classification(n_samples=20, n_features=3,
                                n_redundant=0, n_classes=2,
                                random_state=2)
@@ -206,9 +209,9 @@ def test_fit_docstring_attributes(name, Estimator):
     y = _enforce_estimator_tags_y(est, y)
     X = _enforce_estimator_tags_x(est, X)
 
-    if '1dlabels' in _safe_tags(est, 'X_types'):
+    if '1dlabels' in est._get_tags()['X_types']:
         est.fit(y)
-    elif '2dlabels' in _safe_tags(est, 'X_types'):
+    elif '2dlabels' in est._get_tags()['X_types']:
         est.fit(np.c_[y, y])
     else:
         est.fit(X, y)
@@ -226,25 +229,19 @@ def test_fit_docstring_attributes(name, Estimator):
             assert hasattr(est, attr.name)
 
     IGNORED = {'BayesianRidge', 'Birch', 'CCA', 'CategoricalNB', 'ElasticNet',
-               'ElasticNetCV', 'GaussianProcessClassifier',
-               'GradientBoostingRegressor', 'HistGradientBoostingClassifier',
-               'HistGradientBoostingRegressor', 'IsolationForest',
-               'KNeighborsClassifier', 'KNeighborsRegressor',
-               'KNeighborsTransformer', 'KernelCenterer', 'KernelDensity',
+               'ElasticNetCV',
+               'KernelCenterer',
                'LarsCV', 'Lasso', 'LassoLarsCV', 'LassoLarsIC',
-               'LatentDirichletAllocation', 'LocalOutlierFactor', 'MDS',
-               'MiniBatchKMeans', 'MLPClassifier', 'MLPRegressor',
                'MultiTaskElasticNet', 'MultiTaskElasticNetCV',
-               'MultiTaskLasso', 'MultiTaskLassoCV', 'NearestNeighbors',
-               'NuSVR', 'OAS', 'OneClassSVM', 'OrthogonalMatchingPursuit',
-               'PLSCanonical', 'PLSRegression', 'PLSSVD',
-               'PassiveAggressiveClassifier', 'Perceptron', 'RBFSampler',
-               'RadiusNeighborsClassifier', 'RadiusNeighborsRegressor',
-               'RadiusNeighborsTransformer', 'RandomTreesEmbedding', 'SVR',
-               'SkewedChi2Sampler'}
+               'MiniBatchKMeans',
+               'MultiTaskLasso', 'MultiTaskLassoCV',
+               'OrthogonalMatchingPursuit',
+               'PLSCanonical', 'PLSSVD',
+               'PassiveAggressiveClassifier'}
+
     if Estimator.__name__ in IGNORED:
         pytest.xfail(
-            reason="Classifier has too many undocumented attributes.")
+            reason="Estimator has too many undocumented attributes.")
 
     fit_attr = [k for k in est.__dict__.keys() if k.endswith('_')
                 and not k.startswith('_')]

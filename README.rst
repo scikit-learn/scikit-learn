@@ -23,10 +23,10 @@
 .. |DOI| image:: https://zenodo.org/badge/21369/scikit-learn/scikit-learn.svg
 .. _DOI: https://zenodo.org/badge/latestdoi/21369/scikit-learn/scikit-learn
 
-scikit-learn
-============
+.. image:: doc/logos/scikit-learn-logo.png
+  :target: https://scikit-learn.org/
 
-scikit-learn is a Python module for machine learning built on top of
+**scikit-learn** is a Python module for machine learning built on top of
 SciPy and is distributed under the 3-Clause BSD license.
 
 The project was started in 2007 by David Cournapeau as a Google Summer
@@ -37,7 +37,6 @@ for a list of core contributors.
 It is currently maintained by a team of volunteers.
 
 Website: https://scikit-learn.org
-
 
 Installation
 ------------
@@ -51,6 +50,9 @@ scikit-learn requires:
 - NumPy (>= 1.13.3)
 - SciPy (>= 0.19.1)
 - joblib (>= 0.11)
+- threadpoolctl (>= 2.0.0)
+
+=======
 
 **Scikit-learn 0.20 was the last version to support Python 2.7 and Python 3.4.**
 scikit-learn 0.23 and later require Python 3.6 or newer.
@@ -58,7 +60,7 @@ scikit-learn 0.23 and later require Python 3.6 or newer.
 Scikit-learn plotting capabilities (i.e., functions start with ``plot_``
 and classes end with "Display") require Matplotlib (>= 2.1.1). For running the
 examples Matplotlib >= 2.1.1 is required. A few examples require
-scikit-image >= 0.13, a few examples require pandas >= 0.18.0, some examples
+scikit-image >= 0.13, a few examples require pandas >= 0.25.0, some examples
 require seaborn >= 0.9.0.
 
 User installation
@@ -116,7 +118,7 @@ Testing
 ~~~~~~~
 
 After installation, you can launch the test suite from outside the
-source directory (you will need to have ``pytest`` >= 3.3.0 installed)::
+source directory (you will need to have ``pytest`` >= 5.0.1 installed)::
 
     pytest sklearn
 
@@ -133,7 +135,6 @@ Before opening a Pull Request, have a look at the
 full Contributing page to make sure your code complies
 with our guidelines: https://scikit-learn.org/stable/developers/index.html
 
-
 Project History
 ---------------
 
@@ -145,7 +146,6 @@ for a list of core contributors.
 The project is currently maintained by a team of volunteers.
 
 **Note**: `scikit-learn` was previously referred to as `scikits.learn`.
-
 
 Help and Support
 ----------------

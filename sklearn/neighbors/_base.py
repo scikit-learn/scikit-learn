@@ -7,7 +7,6 @@
 #
 # License: BSD 3 clause (C) INRIA, University of Amsterdam
 from functools import partial
-from distutils.version import LooseVersion
 
 import warnings
 from abc import ABCMeta, abstractmethod
@@ -23,11 +22,12 @@ from ._kd_tree import KDTree
 from ..base import BaseEstimator, MultiOutputMixin
 from ..metrics import pairwise_distances_chunked
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
-from ..utils import check_X_y, check_array, gen_even_slices
+from ..utils import check_array, gen_even_slices
 from ..utils import _to_object_array
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
 from ..utils.validation import check_non_negative
+from ..utils.fixes import parse_version
 from ..exceptions import DataConversionWarning, EfficiencyWarning
 
 VALID_METRICS = dict(ball_tree=BallTree.valid_metrics,
@@ -336,9 +336,10 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                              % (self.metric, alg_check))
 
         if self.metric_params is not None and 'p' in self.metric_params:
-            warnings.warn("Parameter p is found in metric_params. "
-                          "The corresponding parameter from __init__ "
-                          "is ignored.", SyntaxWarning, stacklevel=3)
+            if self.p is not None:
+                warnings.warn("Parameter p is found in metric_params. "
+                              "The corresponding parameter from __init__ "
+                              "is ignored.", SyntaxWarning, stacklevel=3)
             effective_p = self.metric_params['p']
         else:
             effective_p = self.p
@@ -433,11 +434,13 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         self.n_samples_fit_ = X.shape[0]
 
         if self._fit_method == 'auto':
-            # A tree approach is better for small number of neighbors,
-            # and KDTree is generally faster when available
-            if ((self.n_neighbors is None or
-                 self.n_neighbors < self._fit_X.shape[0] // 2) and
-                    self.metric != 'precomputed'):
+            # A tree approach is better for small number of neighbors or small
+            # number of features, with KDTree generally faster when available
+            if (self.metric == 'precomputed' or self._fit_X.shape[1] > 15 or
+                    (self.n_neighbors is not None and
+                     self.n_neighbors >= self._fit_X.shape[0] // 2)):
+                self._fit_method = 'brute'
+            else:
                 if self.effective_metric_ in VALID_METRICS['kd_tree']:
                     self._fit_method = 'kd_tree'
                 elif (callable(self.effective_metric_) or
@@ -445,8 +448,6 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                     self._fit_method = 'ball_tree'
                 else:
                     self._fit_method = 'brute'
-            else:
-                self._fit_method = 'brute'
 
         if self._fit_method == 'ball_tree':
             self._tree = BallTree(X, self.leaf_size,
@@ -649,7 +650,7 @@ class KNeighborsMixin:
                     "%s does not work with sparse matrices. Densify the data, "
                     "or set algorithm='brute'" % self._fit_method)
             old_joblib = (
-                    LooseVersion(joblib.__version__) < LooseVersion('0.12'))
+                    parse_version(joblib.__version__) < parse_version('0.12'))
             if old_joblib:
                 # Deal with change of API in joblib
                 check_pickle = False if old_joblib else None
@@ -956,7 +957,7 @@ class RadiusNeighborsMixin:
                     "or set algorithm='brute'" % self._fit_method)
 
             n_jobs = effective_n_jobs(self.n_jobs)
-            if LooseVersion(joblib.__version__) < LooseVersion('0.12'):
+            if parse_version(joblib.__version__) < parse_version('0.12'):
                 # Deal with change of API in joblib
                 delayed_query = delayed(_tree_query_radius_parallel_helper,
                                         check_pickle=False)
@@ -1104,9 +1105,13 @@ class SupervisedFloatMixin:
              or [n_samples, n_outputs]
         """
         if not isinstance(X, (KDTree, BallTree)):
-            X, y = check_X_y(X, y, "csr", multi_output=True)
+            X, y = self._validate_data(X, y, accept_sparse="csr",
+                                       multi_output=True)
         self._y = y
         return self._fit(X)
+
+    def _more_tags(self):
+        return {'requires_y': True}
 
 
 class SupervisedIntegerMixin:
@@ -1124,7 +1129,8 @@ class SupervisedIntegerMixin:
 
         """
         if not isinstance(X, (KDTree, BallTree)):
-            X, y = check_X_y(X, y, "csr", multi_output=True)
+            X, y = self._validate_data(X, y, accept_sparse="csr",
+                                       multi_output=True)
 
         if y.ndim == 1 or y.ndim == 2 and y.shape[1] == 1:
             if y.ndim != 1:
@@ -1140,7 +1146,7 @@ class SupervisedIntegerMixin:
 
         check_classification_targets(y)
         self.classes_ = []
-        self._y = np.empty(y.shape, dtype=np.int)
+        self._y = np.empty(y.shape, dtype=int)
         for k in range(self._y.shape[1]):
             classes, self._y[:, k] = np.unique(y[:, k], return_inverse=True)
             self.classes_.append(classes)
@@ -1150,6 +1156,9 @@ class SupervisedIntegerMixin:
             self._y = self._y.ravel()
 
         return self._fit(X)
+
+    def _more_tags(self):
+        return {'requires_y': True}
 
 
 class UnsupervisedMixin:

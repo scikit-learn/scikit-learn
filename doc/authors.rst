@@ -7,7 +7,7 @@
     </style>
     <div>
     <a href='https://github.com/jeremiedbb'><img src='https://avatars2.githubusercontent.com/u/34657725?v=4' class='avatar' /></a> <br />
-    <p>Jérémie Du Boisberranger</p>
+    <p>Jérémie du Boisberranger</p>
     </div>
     <div>
     <a href='https://github.com/jorisvandenbossche'><img src='https://avatars2.githubusercontent.com/u/1020496?v=4' class='avatar' /></a> <br />
@@ -19,7 +19,7 @@
     </div>
     <div>
     <a href='https://github.com/thomasjpfan'><img src='https://avatars2.githubusercontent.com/u/5402633?v=4' class='avatar' /></a> <br />
-    <p>Thomas J Fan</p>
+    <p>Thomas J. Fan</p>
     </div>
     <div>
     <a href='https://github.com/agramfort'><img src='https://avatars2.githubusercontent.com/u/161052?v=4' class='avatar' /></a> <br />

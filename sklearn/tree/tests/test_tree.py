@@ -25,6 +25,7 @@ from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import assert_warns_message
 from sklearn.utils._testing import create_memmap_backed_data
 from sklearn.utils._testing import ignore_warnings
+from sklearn.utils._testing import skip_if_32bit
 
 from sklearn.utils.validation import check_random_state
 
@@ -108,12 +109,12 @@ perm = rng.permutation(iris.target.size)
 iris.data = iris.data[perm]
 iris.target = iris.target[perm]
 
-# also load the boston dataset
+# also load the diabetes dataset
 # and randomly permute it
-boston = datasets.load_boston()
-perm = rng.permutation(boston.target.size)
-boston.data = boston.data[perm]
-boston.target = boston.target[perm]
+diabetes = datasets.load_diabetes()
+perm = rng.permutation(diabetes.target.size)
+diabetes.data = diabetes.data[perm]
+diabetes.target = diabetes.target[perm]
 
 digits = datasets.load_digits()
 perm = rng.permutation(digits.target.size)
@@ -134,7 +135,7 @@ X_sparse_mix = _sparse_random_matrix(20, 10, density=0.25,
 
 DATASETS = {
     "iris": {"X": iris.data, "y": iris.target},
-    "boston": {"X": boston.data, "y": boston.target},
+    "diabetes": {"X": diabetes.data, "y": diabetes.target},
     "digits": {"X": digits.data, "y": digits.target},
     "toy": {"X": X, "y": y},
     "clf_small": {"X": X_small, "y": y_small},
@@ -260,25 +261,38 @@ def test_iris():
             "".format(name, criterion, score))
 
 
-def test_boston():
-    # Check consistency on dataset boston house prices.
+@pytest.mark.parametrize("name, Tree", REG_TREES.items())
+@pytest.mark.parametrize("criterion", REG_CRITERIONS)
+def test_diabetes_overfit(name, Tree, criterion):
+    # check consistency of overfitted trees on the diabetes dataset
+    # since the trees will overfit, we expect an MSE of 0
+    reg = Tree(criterion=criterion, random_state=0)
+    reg.fit(diabetes.data, diabetes.target)
+    score = mean_squared_error(diabetes.target, reg.predict(diabetes.data))
+    assert score == pytest.approx(0), (
+        f"Failed with {name}, criterion = {criterion} and score = {score}"
+    )
 
-    for (name, Tree), criterion in product(REG_TREES.items(), REG_CRITERIONS):
-        reg = Tree(criterion=criterion, random_state=0)
-        reg.fit(boston.data, boston.target)
-        score = mean_squared_error(boston.target, reg.predict(boston.data))
-        assert score < 1, (
-            "Failed with {0}, criterion = {1} and score = {2}"
-            "".format(name, criterion, score))
 
-        # using fewer features reduces the learning ability of this tree,
-        # but reduces training time.
-        reg = Tree(criterion=criterion, max_features=6, random_state=0)
-        reg.fit(boston.data, boston.target)
-        score = mean_squared_error(boston.target, reg.predict(boston.data))
-        assert score < 2, (
-            "Failed with {0}, criterion = {1} and score = {2}"
-            "".format(name, criterion, score))
+@skip_if_32bit
+@pytest.mark.parametrize("name, Tree", REG_TREES.items())
+@pytest.mark.parametrize(
+    "criterion, max_depth",
+    [("mse", 15), ("mae", 20), ("friedman_mse", 15)]
+)
+def test_diabetes_underfit(name, Tree, criterion, max_depth):
+    # check consistency of trees when the depth and the number of features are
+    # limited
+
+    reg = Tree(
+        criterion=criterion, max_depth=max_depth,
+        max_features=6, random_state=0
+    )
+    reg.fit(diabetes.data, diabetes.target)
+    score = mean_squared_error(diabetes.target, reg.predict(diabetes.data))
+    assert score < 60 and score > 0, (
+        f"Failed with {name}, criterion = {criterion} and score = {score}"
+    )
 
 
 def test_probability():
@@ -420,8 +434,8 @@ def test_max_features():
     # Check max_features.
     for name, TreeRegressor in REG_TREES.items():
         reg = TreeRegressor(max_features="auto")
-        reg.fit(boston.data, boston.target)
-        assert reg.max_features_ == boston.data.shape[1]
+        reg.fit(diabetes.data, diabetes.target)
+        assert reg.max_features_ == diabetes.data.shape[1]
 
     for name, TreeClassifier in CLF_TREES.items():
         clf = TreeClassifier(max_features="auto")
@@ -902,7 +916,7 @@ def test_min_impurity_decrease():
         if "Classifier" in name:
             X, y = iris.data, iris.target
         else:
-            X, y = boston.data, boston.target
+            X, y = diabetes.data, diabetes.target
 
         est = TreeEstimator(random_state=0)
         est.fit(X, y)
@@ -1327,7 +1341,7 @@ def check_sparse_input(tree, dataset, max_depth=None):
     y = DATASETS[dataset]["y"]
 
     # Gain testing time
-    if dataset in ["digits", "boston"]:
+    if dataset in ["digits", "diabetes"]:
         n_samples = X.shape[0] // 5
         X = X[:n_samples]
         X_sparse = X_sparse[:n_samples]
@@ -1375,7 +1389,7 @@ def test_sparse_input(tree_type, dataset):
 
 @pytest.mark.parametrize("tree_type",
                          sorted(set(SPARSE_TREES).intersection(REG_TREES)))
-@pytest.mark.parametrize("dataset", ["boston", "reg_small"])
+@pytest.mark.parametrize("dataset", ["diabetes", "reg_small"])
 def test_sparse_input_reg_trees(tree_type, dataset):
     # Due to numerical instability of MSE and too strict test, we limit the
     # maximal depth
@@ -1607,19 +1621,6 @@ def test_public_apply_sparse_trees(name):
     check_public_apply_sparse(name)
 
 
-@pytest.mark.parametrize('Cls',
-                         (DecisionTreeRegressor, DecisionTreeClassifier))
-@pytest.mark.parametrize('presort', ['auto', True, False])
-def test_presort_deprecated(Cls, presort):
-    # TODO: remove in v0.24
-    X = np.zeros((10, 10))
-    y = np.r_[[0] * 5, [1] * 5]
-    tree = Cls(presort=presort)
-    with pytest.warns(FutureWarning,
-                      match="The parameter 'presort' is deprecated "):
-        tree.fit(X, y)
-
-
 def test_decision_path_hardcoded():
     X = iris.data
     y = iris.target
@@ -1817,7 +1818,7 @@ def test_empty_leaf_infinite_threshold():
 
 @pytest.mark.parametrize("criterion", CLF_CRITERIONS)
 @pytest.mark.parametrize(
-    "dataset", sorted(set(DATASETS.keys()) - {"reg_small", "boston"}))
+    "dataset", sorted(set(DATASETS.keys()) - {"reg_small", "diabetes"}))
 @pytest.mark.parametrize(
     "tree_cls", [DecisionTreeClassifier, ExtraTreeClassifier])
 def test_prune_tree_classifier_are_subtrees(criterion, dataset, tree_cls):
@@ -1931,23 +1932,6 @@ def test_prune_tree_raises_negative_ccp_alpha():
         clf._prune_tree()
 
 
-def test_classes_deprecated():
-    X = [[0, 0], [2, 2], [4, 6], [10, 11]]
-    y = [0.5, 2.5, 3.5, 5.5]
-    clf = DecisionTreeRegressor()
-    clf = clf.fit(X, y)
-
-    match = ("attribute is to be deprecated from version "
-             "0.22 and will be removed in 0.24.")
-
-    with pytest.warns(FutureWarning, match=match):
-        n = len(clf.classes_)
-        assert n == clf.n_outputs_
-
-    with pytest.warns(FutureWarning, match=match):
-        assert len(clf.n_classes_) == clf.n_outputs_
-
-
 def check_apply_path_readonly(name):
     X_readonly = create_memmap_backed_data(X_small.astype(tree._tree.DTYPE,
                                                           copy=False))
@@ -1964,3 +1948,16 @@ def check_apply_path_readonly(name):
 @pytest.mark.parametrize("name", ALL_TREES)
 def test_apply_path_readonly_all_trees(name):
     check_apply_path_readonly(name)
+
+
+# TODO: Remove in v0.26
+@pytest.mark.parametrize("TreeEstimator", [DecisionTreeClassifier,
+                                           DecisionTreeRegressor])
+def test_X_idx_sorted_deprecated(TreeEstimator):
+    X_idx_sorted = np.argsort(X, axis=0)
+
+    tree = TreeEstimator()
+
+    with pytest.warns(FutureWarning,
+                      match="The parameter 'X_idx_sorted' is deprecated"):
+        tree.fit(X, y, X_idx_sorted=X_idx_sorted)

@@ -21,14 +21,17 @@ from ._base import LinearModel
 from ..base import RegressorMixin, MultiOutputMixin
 # mypy error: Module 'sklearn.utils' has no attribute 'arrayfuncs'
 from ..utils import arrayfuncs, as_float_array  # type: ignore
+from ..utils import check_random_state
 from ..model_selection import check_cv
 from ..exceptions import ConvergenceWarning
+from ..utils.validation import _deprecate_positional_args
 
 SOLVE_TRIANGULAR_ARGS = {'check_finite': False}
 
 
-def lars_path(X, y, Xy=None, Gram=None, max_iter=500, alpha_min=0,
-              method='lar', copy_X=True, eps=np.finfo(np.float).eps,
+@_deprecate_positional_args
+def lars_path(X, y, Xy=None, *, Gram=None, max_iter=500, alpha_min=0,
+              method='lar', copy_X=True, eps=np.finfo(float).eps,
               copy_Gram=True, verbose=0, return_path=True,
               return_n_iter=False, positive=False):
     """Compute Least Angle Regression or Lasso path using LARS algorithm [1]
@@ -79,7 +82,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500, alpha_min=0,
     eps : float, optional
         The machine-precision regularization in the computation of the
         Cholesky diagonal factors. Increase this for very ill-conditioned
-        systems. By default, ``np.finfo(np.float).eps`` is used.
+        systems. By default, ``np.finfo(float).eps`` is used.
 
     copy_Gram : bool, default=True
         If ``False``, ``Gram`` is overwritten.
@@ -156,8 +159,9 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500, alpha_min=0,
         return_n_iter=return_n_iter, positive=positive)
 
 
-def lars_path_gram(Xy, Gram, n_samples, max_iter=500, alpha_min=0,
-                   method='lar', copy_X=True, eps=np.finfo(np.float).eps,
+@_deprecate_positional_args
+def lars_path_gram(Xy, Gram, *, n_samples, max_iter=500, alpha_min=0,
+                   method='lar', copy_X=True, eps=np.finfo(float).eps,
                    copy_Gram=True, verbose=0, return_path=True,
                    return_n_iter=False, positive=False):
     """lars_path in the sufficient stats mode [1]
@@ -199,7 +203,7 @@ def lars_path_gram(Xy, Gram, n_samples, max_iter=500, alpha_min=0,
     eps : float, optional
         The machine-precision regularization in the computation of the
         Cholesky diagonal factors. Increase this for very ill-conditioned
-        systems. By default, ``np.finfo(np.float).eps`` is used.
+        systems. By default, ``np.finfo(float).eps`` is used.
 
     copy_Gram : bool, default=True
         If ``False``, ``Gram`` is overwritten.
@@ -274,7 +278,7 @@ def lars_path_gram(Xy, Gram, n_samples, max_iter=500, alpha_min=0,
 
 def _lars_path_solver(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
                       alpha_min=0, method='lar', copy_X=True,
-                      eps=np.finfo(np.float).eps, copy_Gram=True, verbose=0,
+                      eps=np.finfo(float).eps, copy_Gram=True, verbose=0,
                       return_path=True, return_n_iter=False, positive=False):
     """Compute Least Angle Regression or Lasso path using LARS algorithm [1]
 
@@ -327,7 +331,7 @@ def _lars_path_solver(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
     eps : float, optional
         The machine-precision regularization in the computation of the
         Cholesky diagonal factors. Increase this for very ill-conditioned
-        systems. By default, ``np.finfo(np.float).eps`` is used
+        systems. By default, ``np.finfo(float).eps`` is used
 
     copy_Gram : bool, default=True
         If ``False``, ``Gram`` is overwritten.
@@ -772,7 +776,7 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
         If you wish to standardize, please use
-        :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
+        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
     precompute : bool, 'auto' or array-like , default='auto'
@@ -789,7 +793,7 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
         systems. Unlike the ``tol`` parameter in some iterative
         optimization-based algorithms, this parameter does not control
         the tolerance of the optimization.
-        By default, ``np.finfo(np.float).eps`` is used.
+        By default, ``np.finfo(float).eps`` is used.
 
     copy_X : bool, default=True
         If ``True``, X will be copied; else, it may be overwritten.
@@ -799,6 +803,16 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
         If you compute the solution for a large problem or many targets,
         setting ``fit_path`` to ``False`` will lead to a speedup, especially
         with a small alpha.
+
+    jitter : float, default=None
+        Upper bound on a uniform noise parameter to be added to the
+        `y` values, to satisfy the model's assumption of
+        one-at-a-time computations. Might help with stability.
+
+    random_state : int, RandomState instance or None (default)
+        Determines random number generation for jittering. Pass an int
+        for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`. Ignored if `jitter` is None.
 
     Attributes
     ----------
@@ -844,9 +858,11 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
     method = 'lar'
     positive = False
 
-    def __init__(self, fit_intercept=True, verbose=False, normalize=True,
+    @_deprecate_positional_args
+    def __init__(self, *, fit_intercept=True, verbose=False, normalize=True,
                  precompute='auto', n_nonzero_coefs=500,
-                 eps=np.finfo(np.float).eps, copy_X=True, fit_path=True):
+                 eps=np.finfo(float).eps, copy_X=True, fit_path=True,
+                 jitter=None, random_state=None):
         self.fit_intercept = fit_intercept
         self.verbose = verbose
         self.normalize = normalize
@@ -855,6 +871,8 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
         self.eps = eps
         self.copy_X = copy_X
         self.fit_path = fit_path
+        self.jitter = jitter
+        self.random_state = random_state
 
     @staticmethod
     def _get_gram(precompute, X, y):
@@ -954,6 +972,12 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
         else:
             max_iter = self.max_iter
 
+        if self.jitter is not None:
+            rng = check_random_state(self.random_state)
+
+            noise = rng.uniform(high=self.jitter, size=len(y))
+            y = y + noise
+
         self._fit(X, y, max_iter=max_iter, alpha=alpha, fit_path=self.fit_path,
                   Xy=Xy)
 
@@ -993,7 +1017,7 @@ class LassoLars(Lars):
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
         If you wish to standardize, please use
-        :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
+        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
     precompute : bool, 'auto' or array-like, default='auto'
@@ -1004,13 +1028,13 @@ class LassoLars(Lars):
     max_iter : int, default=500
         Maximum number of iterations to perform.
 
-    eps : float, optional
+    eps : float, default=np.finfo(float).eps
         The machine-precision regularization in the computation of the
         Cholesky diagonal factors. Increase this for very ill-conditioned
         systems. Unlike the ``tol`` parameter in some iterative
         optimization-based algorithms, this parameter does not control
         the tolerance of the optimization.
-        By default, ``np.finfo(np.float).eps`` is used.
+        By default, ``np.finfo(float).eps`` is used.
 
     copy_X : bool, default=True
         If True, X will be copied; else, it may be overwritten.
@@ -1030,6 +1054,16 @@ class LassoLars(Lars):
         0.].min()`` when fit_path=True) reached by the stepwise Lars-Lasso
         algorithm are typically in congruence with the solution of the
         coordinate descent Lasso estimator.
+
+    jitter : float, default=None
+        Upper bound on a uniform noise parameter to be added to the
+        `y` values, to satisfy the model's assumption of
+        one-at-a-time computations. Might help with stability.
+
+    random_state : int, RandomState instance, default=None
+        Determines random number generation for jittering. Pass an int
+        for reproducible output across multiple function calls.
+        See :term:`Glossary <random_state>`. Ignored if `jitter` is None.
 
     Attributes
     ----------
@@ -1080,10 +1114,11 @@ class LassoLars(Lars):
     """
     method = 'lasso'
 
-    def __init__(self, alpha=1.0, fit_intercept=True, verbose=False,
+    @_deprecate_positional_args
+    def __init__(self, alpha=1.0, *, fit_intercept=True, verbose=False,
                  normalize=True, precompute='auto', max_iter=500,
-                 eps=np.finfo(np.float).eps, copy_X=True, fit_path=True,
-                 positive=False):
+                 eps=np.finfo(float).eps, copy_X=True, fit_path=True,
+                 positive=False, jitter=None, random_state=None):
         self.alpha = alpha
         self.fit_intercept = fit_intercept
         self.max_iter = max_iter
@@ -1094,6 +1129,8 @@ class LassoLars(Lars):
         self.copy_X = copy_X
         self.eps = eps
         self.fit_path = fit_path
+        self.jitter = jitter
+        self.random_state = random_state
 
 
 ###############################################################################
@@ -1108,7 +1145,7 @@ def _check_copy_and_writeable(array, copy=False):
 def _lars_path_residues(X_train, y_train, X_test, y_test, Gram=None,
                         copy=True, method='lars', verbose=False,
                         fit_intercept=True, normalize=True, max_iter=500,
-                        eps=np.finfo(np.float).eps, positive=False):
+                        eps=np.finfo(float).eps, positive=False):
     """Compute the residues on left-out data for a full LARS path
 
     Parameters
@@ -1159,7 +1196,7 @@ def _lars_path_residues(X_train, y_train, X_test, y_test, Gram=None,
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
         If you wish to standardize, please use
-        :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
+        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
     max_iter : int, default=500
@@ -1171,7 +1208,7 @@ def _lars_path_residues(X_train, y_train, X_test, y_test, Gram=None,
         systems. Unlike the ``tol`` parameter in some iterative
         optimization-based algorithms, this parameter does not control
         the tolerance of the optimization.
-        By default, ``np.finfo(np.float).eps`` is used
+        By default, ``np.finfo(float).eps`` is used
 
 
     Returns
@@ -1245,7 +1282,7 @@ class LarsCV(Lars):
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
         If you wish to standardize, please use
-        :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
+        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
     precompute : bool, 'auto' or array-like , default='auto'
@@ -1283,7 +1320,7 @@ class LarsCV(Lars):
     eps : float, optional
         The machine-precision regularization in the computation of the
         Cholesky diagonal factors. Increase this for very ill-conditioned
-        systems. By default, ``np.finfo(np.float).eps`` is used.
+        systems. By default, ``np.finfo(float).eps`` is used.
 
     copy_X : bool, default=True
         If ``True``, X will be copied; else, it may be overwritten.
@@ -1335,9 +1372,10 @@ class LarsCV(Lars):
 
     method = 'lar'
 
-    def __init__(self, fit_intercept=True, verbose=False, max_iter=500,
+    @_deprecate_positional_args
+    def __init__(self, *, fit_intercept=True, verbose=False, max_iter=500,
                  normalize=True, precompute='auto', cv=None,
-                 max_n_alphas=1000, n_jobs=None, eps=np.finfo(np.float).eps,
+                 max_n_alphas=1000, n_jobs=None, eps=np.finfo(float).eps,
                  copy_X=True):
         self.max_iter = max_iter
         self.cv = cv
@@ -1462,7 +1500,7 @@ class LassoLarsCV(LarsCV):
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
         If you wish to standardize, please use
-        :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
+        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
     precompute : bool or 'auto' , default='auto'
@@ -1500,7 +1538,7 @@ class LassoLarsCV(LarsCV):
     eps : float, optional
         The machine-precision regularization in the computation of the
         Cholesky diagonal factors. Increase this for very ill-conditioned
-        systems. By default, ``np.finfo(np.float).eps`` is used.
+        systems. By default, ``np.finfo(float).eps`` is used.
 
     copy_X : bool, default=True
         If True, X will be copied; else, it may be overwritten.
@@ -1576,9 +1614,10 @@ class LassoLarsCV(LarsCV):
 
     method = 'lasso'
 
-    def __init__(self, fit_intercept=True, verbose=False, max_iter=500,
+    @_deprecate_positional_args
+    def __init__(self, *, fit_intercept=True, verbose=False, max_iter=500,
                  normalize=True, precompute='auto', cv=None,
-                 max_n_alphas=1000, n_jobs=None, eps=np.finfo(np.float).eps,
+                 max_n_alphas=1000, n_jobs=None, eps=np.finfo(float).eps,
                  copy_X=True, positive=False):
         self.fit_intercept = fit_intercept
         self.verbose = verbose
@@ -1628,7 +1667,7 @@ class LassoLarsIC(LassoLars):
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
         If you wish to standardize, please use
-        :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
+        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
     precompute : bool, 'auto' or array-like, default='auto'
@@ -1646,7 +1685,7 @@ class LassoLarsIC(LassoLars):
         systems. Unlike the ``tol`` parameter in some iterative
         optimization-based algorithms, this parameter does not control
         the tolerance of the optimization.
-        By default, ``np.finfo(np.float).eps`` is used
+        By default, ``np.finfo(float).eps`` is used
 
     copy_X : bool, default=True
         If True, X will be copied; else, it may be overwritten.
@@ -1709,9 +1748,10 @@ class LassoLarsIC(LassoLars):
     --------
     lars_path, LassoLars, LassoLarsCV
     """
-    def __init__(self, criterion='aic', fit_intercept=True, verbose=False,
+    @_deprecate_positional_args
+    def __init__(self, criterion='aic', *, fit_intercept=True, verbose=False,
                  normalize=True, precompute='auto', max_iter=500,
-                 eps=np.finfo(np.float).eps, copy_X=True, positive=False):
+                 eps=np.finfo(float).eps, copy_X=True, positive=False):
         self.criterion = criterion
         self.fit_intercept = fit_intercept
         self.positive = positive
@@ -1775,7 +1815,7 @@ class LassoLarsIC(LassoLars):
         mean_squared_error = np.mean(R ** 2, axis=0)
         sigma2 = np.var(y)
 
-        df = np.zeros(coef_path_.shape[1], dtype=np.int)  # Degrees of freedom
+        df = np.zeros(coef_path_.shape[1], dtype=int)  # Degrees of freedom
         for k, coef in enumerate(coef_path_.T):
             mask = np.abs(coef) > np.finfo(coef.dtype).eps
             if not np.any(mask):

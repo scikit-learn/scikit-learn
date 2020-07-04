@@ -431,7 +431,7 @@ Samples generator
 
 .. autosummary::
    :toctree: generated/
-   :template: class_without_init.rst
+   :template: class.rst
 
    exceptions.ChangedBehaviorWarning
    exceptions.ConvergenceWarning
@@ -900,7 +900,7 @@ Miscellaneous
     manifold.smacof
     manifold.spectral_embedding
     manifold.trustworthiness
-	
+
 
 .. _metrics_ref:
 
@@ -1347,6 +1347,9 @@ Model validation
    :no-members:
    :no-inherited-members:
 
+**User guide:** See the :ref:`combining_estimators` section for further
+details.
+
 .. currentmodule:: sklearn
 
 .. autosummary::
@@ -1567,6 +1570,7 @@ Plotting
    utils.deprecated
    utils.estimator_checks.check_estimator
    utils.estimator_checks.parametrize_with_checks
+   utils.estimator_html_repr
    utils.extmath.safe_sparse_dot
    utils.extmath.randomized_range_finder
    utils.extmath.randomized_svd
@@ -1617,12 +1621,5 @@ Utilities from joblib:
 Recently deprecated
 ===================
 
-To be removed in 0.24
+To be removed in 0.25
 ---------------------
-
-.. autosummary::
-   :toctree: generated/
-   :template: deprecated_function.rst
-
-   model_selection.fit_grid_point
-   utils.safe_indexing
