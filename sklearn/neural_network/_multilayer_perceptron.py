@@ -989,6 +989,8 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
                                  " `self.classes_` has %s. 'y' has %s." %
                                  (self.classes_, classes))
 
+        # This downcast to bool is to prevent upcasting when working with
+        # float32 data
         y = self._label_binarizer.transform(y).astype(np.bool)
         return X, y
 
