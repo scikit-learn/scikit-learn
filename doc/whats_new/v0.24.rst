@@ -164,8 +164,8 @@ Changelog
   class to be used when computing the precision and recall statistics.
   :pr:`17569` by :user:`Guillaume Lemaitre <glemaitre>`.
 
-- |Feature| :func:`metrics.plot_confusion_matrix` now supports making colorbar 
-  optional in the matplotlib plot by setting colorbar=False. :pr:`17192` by 
+- |Feature| :func:`metrics.plot_confusion_matrix` now supports making colorbar
+  optional in the matplotlib plot by setting colorbar=False. :pr:`17192` by
   :user:`Avi Gupta <avigupta2612>`
 
 :mod:`sklearn.model_selection`
@@ -219,7 +219,11 @@ Changelog
 
 - |Enhancement| Avoid converting float32 input to float64 in
   :class:`neural_network.BernoulliRBM`.
-  :pr:`16352` by :user:`Arthur Imbert <Henley13>`.  
+  :pr:`16352` by :user:`Arthur Imbert <Henley13>`.
+
+- |Enhancement| Support 32-bit computations in :class:`neural_network.MLPClassifier`
+  and :class:`neural_network.MLPRegressor`.
+  :pr:`17759` by :user:`Srimukh Sripada <d3b0unce>`.
 
 :mod:`sklearn.preprocessing`
 ............................
