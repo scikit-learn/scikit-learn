@@ -1821,7 +1821,7 @@ def test_scalar_fit_param(SearchCV, param_search):
     # unofficially sanctioned tolerance for scalar values in fit_params
     # non-regression test for:
     # https://github.com/scikit-learn/scikit-learn/issues/15805
-    class TestEstimator(BaseEstimator, ClassifierMixin):
+    class TestEstimator(ClassifierMixin, BaseEstimator):
         def __init__(self, a=None):
             self.a = a
 
