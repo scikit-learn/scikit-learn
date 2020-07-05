@@ -84,6 +84,10 @@ Changelog
   redundant with the `dictionary` attribute and constructor parameter.
   :pr:`17679` by :user:`Xavier Dupré <sdpython>`.
 
+- |Enhancement| :func:`decomposition.FactorAnalysis` now supports the optional
+  argument `rotation`, which can take the value `None`, `'varimax'` or `'quartimax'.`
+  :pr:`11064` by :user:`Jona Sassenhagen <jona-sassenhagen>`.
+
 :mod:`sklearn.ensemble`
 .......................
 
