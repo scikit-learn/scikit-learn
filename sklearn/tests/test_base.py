@@ -543,12 +543,12 @@ def test_repr_html_wraps():
         assert "<style>" in output
 
 
-@pytest.mark.parametrize("Estimator,estimator_type",
-                         [(DecisionTreeClassifier, "classifier"),
-                          (DecisionTreeRegressor, "regressor"),
-                          (KMeans, "clusterer"),
-                          (BayesianGaussianMixture, "DensityEstimator"),
-                          (IsolationForest, "outlier_detector")])
+@pytest.mark.parametrize(
+    "Estimator,estimator_type", [(DecisionTreeClassifier, "classifier"),
+                                 (DecisionTreeRegressor, "regressor"),
+                                 (KMeans, "clusterer"),
+                                 (BayesianGaussianMixture, "DensityEstimator"),
+                                 (IsolationForest, "outlier_detector")])
 def test_estimator_type_tag(Estimator, estimator_type):
     # Assert that estimator_type tag is properly set
     est = Estimator()
