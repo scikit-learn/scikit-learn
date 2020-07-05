@@ -30,7 +30,7 @@ from . import (r2_score, median_absolute_error, max_error, mean_absolute_error,
                f1_score, roc_auc_score, average_precision_score,
                precision_score, recall_score, log_loss,
                balanced_accuracy_score, explained_variance_score,
-               brier_score_loss, jaccard_score)
+               brier_score_loss, jaccard_score, mean_absolute_percentage_error)
 
 from .cluster import adjusted_rand_score
 from .cluster import homogeneity_score
@@ -614,6 +614,9 @@ neg_mean_squared_log_error_scorer = make_scorer(mean_squared_log_error,
                                                 greater_is_better=False)
 neg_mean_absolute_error_scorer = make_scorer(mean_absolute_error,
                                              greater_is_better=False)
+neg_mean_absolute_percentage_error_scorer = make_scorer(
+    mean_absolute_percentage_error, greater_is_better=False
+)
 neg_median_absolute_error_scorer = make_scorer(median_absolute_error,
                                                greater_is_better=False)
 neg_root_mean_squared_error_scorer = make_scorer(mean_squared_error,
@@ -674,6 +677,7 @@ SCORERS = dict(explained_variance=explained_variance_scorer,
                max_error=max_error_scorer,
                neg_median_absolute_error=neg_median_absolute_error_scorer,
                neg_mean_absolute_error=neg_mean_absolute_error_scorer,
+               neg_mean_absolute_percentage_error=neg_mean_absolute_percentage_error_scorer,  # noqa
                neg_mean_squared_error=neg_mean_squared_error_scorer,
                neg_mean_squared_log_error=neg_mean_squared_log_error_scorer,
                neg_root_mean_squared_error=neg_root_mean_squared_error_scorer,
