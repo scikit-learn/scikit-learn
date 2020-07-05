@@ -261,6 +261,20 @@ def test_linear_regression_positive_multiple_outcome(random_state=0):
     assert_allclose(np.vstack((y_pred, y_pred)).T, Y_pred)
 
 
+def test_linear_regression_positive_vs_nonpositive():
+    # Test nonnegative LinearRegression on a simple dataset.
+    # a simple dataset
+    X = [[1], [2]]
+    Y = [1, 2]
+
+    reg = LinearRegression(positive=True)
+    reg.fit(X, Y)
+    regn = LinearRegression(positive=False)
+    regn.fit(X, Y)
+
+    assert not np.array_equal(reg.coef_, regn.coef_)
+
+
 def test_linear_regression_pd_sparse_dataframe_warning():
     pd = pytest.importorskip('pandas')
     # restrict the pd versions < '0.24.0' as they have a bug in is_sparse func
