@@ -529,7 +529,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         Coefficient of the features in the decision function.
 
     intercept_ : float or ndarray of shape (n_targets,)
-        Independent term in decision function. Set to 0.0 if
+        Independent term in decision function. Set to zero if
         ``fit_intercept = False``.
 
     classes_ : numpy array of shape [n_classes]
