@@ -101,6 +101,13 @@ Changelog
   :pr:`17694` by :user:`Markus Rempfler <rempfler>` and
   :user:`Tsutomu Kusanagi <t-kusanagi2>`.
 
+:mod:`sklearn.exceptions`
+.........................
+
+- |API| :class:`exceptions.ChangedBehaviorWarning` and
+  :class:`exceptions.NonBLASDotWarning` are deprecated and will be removed in
+  v0.26, :pr:`17804` by `Adrin Jalali`_.
+
 :mod:`sklearn.feature_selection`
 ................................
 
