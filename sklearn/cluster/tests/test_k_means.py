@@ -14,6 +14,7 @@ from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import assert_warns_message
 from sklearn.utils._testing import assert_raise_message
+from sklearn.utils.fixes import _astype_copy_false
 from sklearn.utils.validation import _num_samples
 from sklearn.base import clone
 from sklearn.exceptions import ConvergenceWarning
@@ -828,45 +829,40 @@ def test_max_iter_error():
                          km.fit, X)
 
 
-@pytest.mark.parametrize('Estimator', [KMeans, MiniBatchKMeans])
-@pytest.mark.parametrize('is_sparse', [False, True])
-def test_float_precision(Estimator, is_sparse):
-
-    estimator = Estimator(n_init=1, random_state=30)
+@pytest.mark.parametrize("data", [X, X_csr], ids=["dense", "sparse"])
+@pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
+def test_float_precision(Estimator, data):
+    # Check that the results are the same for single and double precision.
+    km = Estimator(n_init=1, random_state=0)
 
     inertia = {}
-    X_new = {}
+    Xt = {}
     centers = {}
+    labels = {}
 
     for dtype in [np.float64, np.float32]:
-        if is_sparse:
-            X_test = sp.csr_matrix(X_csr, dtype=dtype)
-        else:
-            X_test = X.astype(dtype)
-        estimator.fit(X_test)
-        # dtype of cluster centers has to be the dtype of the input
-        # data
-        assert estimator.cluster_centers_.dtype == dtype
-        inertia[dtype] = estimator.inertia_
-        X_new[dtype] = estimator.transform(X_test)
-        centers[dtype] = estimator.cluster_centers_
-        # ensure the extracted row is a 2d array
-        assert estimator.predict(X_test[:1]) == estimator.labels_[0]
-        if hasattr(estimator, 'partial_fit'):
-            estimator.partial_fit(X_test[0:3])
-            # dtype of cluster centers has to stay the same after
-            # partial_fit
-            assert estimator.cluster_centers_.dtype == dtype
+        X = data.astype(dtype, **_astype_copy_false(data))
+        km.fit(X)
 
-    # compare arrays with low precision since the difference between
-    # 32 and 64 bit sometimes makes a difference up to the 4th decimal
-    # place
-    assert_array_almost_equal(inertia[np.float32], inertia[np.float64],
-                              decimal=4)
-    assert_array_almost_equal(X_new[np.float32], X_new[np.float64],
-                              decimal=4)
-    assert_array_almost_equal(centers[np.float32], centers[np.float64],
-                              decimal=4)
+        inertia[dtype] = km.inertia_
+        Xt[dtype] = km.transform(X)
+        centers[dtype] = km.cluster_centers_
+        labels[dtype] = km.labels_
+
+        # dtype of cluster centers has to be the dtype of the input data
+        assert km.cluster_centers_.dtype == dtype
+
+        # same with partial_fit
+        if Estimator is MiniBatchKMeans:
+            km.partial_fit(X[0:3])
+            assert km.cluster_centers_.dtype == dtype
+
+    # compare arrays with low precision since the difference between 32 and
+    # 64 bit comes from an accumulation of rounding errors.
+    assert_allclose(inertia[np.float32], inertia[np.float64], rtol=1e-5)
+    assert_allclose(Xt[np.float32], Xt[np.float64], rtol=1e-5)
+    assert_allclose(centers[np.float32], centers[np.float64], rtol=1e-5)
+    assert_array_equal(labels[np.float32], labels[np.float64])
 
 
 def test_k_means_init_centers():
