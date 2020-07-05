@@ -20,11 +20,12 @@ larger, or when the grid of parameter to search is large.
 #
 # License: BSD 3 clause
 from tempfile import TemporaryDirectory
+
 import matplotlib.pyplot as plt
 
-from sklearn.neighbors import KNeighborsTransformer, KNeighborsClassifier
-from sklearn.model_selection import GridSearchCV
 from sklearn.datasets import load_digits
+from sklearn.model_selection import GridSearchCV
+from sklearn.neighbors import KNeighborsTransformer, KNeighborsClassifier
 from sklearn.pipeline import Pipeline
 
 print(__doc__)

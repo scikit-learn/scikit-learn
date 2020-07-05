@@ -1,5 +1,8 @@
 """Testing utilities."""
 
+import atexit
+import functools
+import inspect
 # Copyright (c) 2011, 2012
 # Authors: Pietro Berkes,
 #          Andreas Muller
@@ -12,22 +15,18 @@
 # License: BSD 3 clause
 import os
 import os.path as op
-import inspect
-import warnings
+import shutil
 import sys
-import functools
 import tempfile
-from subprocess import check_output, STDOUT, CalledProcessError
-from subprocess import TimeoutExpired
-
-import scipy as sp
+import unittest
+import warnings
 from functools import wraps
 from inspect import signature
-
-import shutil
-import atexit
-import unittest
+from subprocess import TimeoutExpired
+from subprocess import check_output, STDOUT, CalledProcessError
 from unittest import TestCase
+
+import scipy as sp
 
 # WindowsError only exist on Windows
 try:
@@ -36,11 +35,7 @@ except NameError:
     WindowsError = None
 
 from numpy.testing import assert_allclose
-from numpy.testing import assert_almost_equal
-from numpy.testing import assert_approx_equal
 from numpy.testing import assert_array_equal
-from numpy.testing import assert_array_almost_equal
-from numpy.testing import assert_array_less
 import numpy as np
 import joblib
 

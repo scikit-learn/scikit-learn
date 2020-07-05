@@ -15,11 +15,12 @@ print(__doc__)
 # First, we load the wine dataset and convert it to a binary classification
 # problem. Then, we train a support vector classifier on a training dataset.
 import matplotlib.pyplot as plt
-from sklearn.svm import SVC
+
+from sklearn.datasets import load_wine
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import plot_roc_curve
-from sklearn.datasets import load_wine
 from sklearn.model_selection import train_test_split
+from sklearn.svm import SVC
 
 X, y = load_wine(return_X_y=True)
 y = y == 2

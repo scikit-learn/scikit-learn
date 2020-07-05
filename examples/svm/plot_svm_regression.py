@@ -8,9 +8,10 @@ Toy example of 1D regression using linear, polynomial and RBF kernels.
 """
 print(__doc__)
 
-import numpy as np
-from sklearn.svm import SVR
 import matplotlib.pyplot as plt
+import numpy as np
+
+from sklearn.svm import SVR
 
 # #############################################################################
 # Generate sample data

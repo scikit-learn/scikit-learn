@@ -5,18 +5,16 @@
 # License: BSD 3 clause
 
 import sys
-import numpy as np
 
+import numpy as np
+import pytest
 from scipy.optimize import approx_fprime
 
-import pytest
-
 from sklearn.gaussian_process import GaussianProcessRegressor
+from sklearn.gaussian_process.kernels import DotProduct
 from sklearn.gaussian_process.kernels \
     import RBF, ConstantKernel as C, WhiteKernel
-from sklearn.gaussian_process.kernels import DotProduct
 from sklearn.gaussian_process.tests._mini_sequence_kernel import MiniSeqKernel
-
 from sklearn.utils._testing \
     import (assert_array_less,
             assert_almost_equal, assert_raise_message,

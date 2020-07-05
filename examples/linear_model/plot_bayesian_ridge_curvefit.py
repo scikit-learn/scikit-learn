@@ -28,8 +28,8 @@ print(__doc__)
 
 # Author: Yoshihiro Uchida <nimbus1after2a1sun7shower@gmail.com>
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
 from sklearn.linear_model import BayesianRidge
 

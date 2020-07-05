@@ -10,35 +10,35 @@ parameters of an estimator.
 #         Raghav RV <rvraghav93@gmail.com>
 # License: BSD 3 clause
 
+import numbers
+import operator
+import time
+import warnings
 from abc import ABCMeta, abstractmethod
 from collections import defaultdict
 from collections.abc import Mapping, Sequence, Iterable
 from functools import partial, reduce
 from itertools import product
-import numbers
-import operator
-import time
-import warnings
 
 import numpy as np
+from joblib import Parallel, delayed
 from numpy.ma import MaskedArray
 from scipy.stats import rankdata
 
+from ._split import check_cv
+from ._validation import _aggregate_score_dicts
+from ._validation import _fit_and_score
 from ..base import BaseEstimator, is_classifier, clone
 from ..base import MetaEstimatorMixin
-from ._split import check_cv
-from ._validation import _fit_and_score
-from ._validation import _aggregate_score_dicts
 from ..exceptions import NotFittedError
-from joblib import Parallel, delayed
-from ..utils import check_random_state
-from ..utils.random import sample_without_replacement
-from ..utils.validation import indexable, check_is_fitted, _check_fit_params
-from ..utils.validation import _deprecate_positional_args
-from ..utils.metaestimators import if_delegate_has_method
-from ..metrics._scorer import _check_multimetric_scoring
 from ..metrics import check_scoring
+from ..metrics._scorer import _check_multimetric_scoring
+from ..utils import check_random_state
 from ..utils import deprecated
+from ..utils.metaestimators import if_delegate_has_method
+from ..utils.random import sample_without_replacement
+from ..utils.validation import _deprecate_positional_args
+from ..utils.validation import indexable, check_is_fitted, _check_fit_params
 
 __all__ = ['GridSearchCV', 'ParameterGrid', 'fit_grid_point',
            'ParameterSampler', 'RandomizedSearchCV']

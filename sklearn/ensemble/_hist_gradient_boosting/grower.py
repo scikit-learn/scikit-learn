@@ -6,19 +6,19 @@ the gradients and hessians of the training data.
 """
 # Author: Nicolas Hug
 
-from heapq import heappush, heappop
-import numpy as np
-from timeit import default_timer as time
 import numbers
+from heapq import heappush, heappop
+from timeit import default_timer as time
 
-from .splitting import Splitter
-from .histogram import HistogramBuilder
-from .predictor import TreePredictor
-from .utils import sum_parallel
+import numpy as np
+
+from .common import MonotonicConstraint
 from .common import PREDICTOR_RECORD_DTYPE
 from .common import Y_DTYPE
-from .common import MonotonicConstraint
-
+from .histogram import HistogramBuilder
+from .predictor import TreePredictor
+from .splitting import Splitter
+from .utils import sum_parallel
 
 EPS = np.finfo(Y_DTYPE).eps  # to avoid zero division errors
 

@@ -1,16 +1,15 @@
 import numpy as np
-from numpy.testing import assert_array_equal, assert_allclose
 import pytest
+from numpy.testing import assert_array_equal, assert_allclose
 
 from sklearn.ensemble._hist_gradient_boosting.binning import (
     _BinMapper,
     _find_binning_thresholds as _find_binning_thresholds_orig,
     _map_to_bins
 )
-from sklearn.ensemble._hist_gradient_boosting.common import X_DTYPE
-from sklearn.ensemble._hist_gradient_boosting.common import X_BINNED_DTYPE
 from sklearn.ensemble._hist_gradient_boosting.common import ALMOST_INF
-
+from sklearn.ensemble._hist_gradient_boosting.common import X_BINNED_DTYPE
+from sklearn.ensemble._hist_gradient_boosting.common import X_DTYPE
 
 DATA = np.random.RandomState(42).normal(
     loc=[0, 10], scale=[1, 0.01], size=(int(1e6), 2)

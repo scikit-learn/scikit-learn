@@ -20,10 +20,26 @@ from ._criterion cimport Criterion
 from libc.stdlib cimport free
 from libc.stdlib cimport qsort
 from libc.string cimport memcpy
-from libc.string cimport memset
 
 import numpy as np
 cimport numpy as np
+
+cimport
+numpy as np
+import numpy as np
+from libc.stdlib cimport
+
+free
+from libc.stdlib cimport
+
+qsort
+from libc.string cimport
+
+memcpy
+
+from ._criterion cimport
+
+Criterion
 np.import_array()
 
 from scipy.sparse import csc_matrix

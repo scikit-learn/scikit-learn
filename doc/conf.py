@@ -12,13 +12,14 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-import sys
 import os
-import warnings
 import re
-from packaging.version import parse
-from pathlib import Path
+import sys
+import warnings
 from io import StringIO
+from pathlib import Path
+
+from packaging.version import parse
 
 # If extensions (or modules to document with autodoc) are in another
 # directory, add these directories to sys.path here. If the directory

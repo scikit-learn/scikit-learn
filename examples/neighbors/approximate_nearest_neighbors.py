@@ -41,11 +41,11 @@ Sample output::
     TSNE with internal NearestNeighbors: 64.984 sec
 
 """
+import sys
 # Author: Tom Dupre la Tour
 #
 # License: BSD 3 clause
 import time
-import sys
 
 try:
     import annoy

@@ -17,6 +17,7 @@ multi-layer perceptron model on this dataset.
 
 """
 import time
+
 import matplotlib.pyplot as plt
 import numpy as np
 

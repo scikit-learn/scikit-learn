@@ -12,7 +12,6 @@ from matplotlib import pyplot as plt
 
 from sklearn import linear_model, datasets
 
-
 n_samples = 1000
 n_outliers = 50
 

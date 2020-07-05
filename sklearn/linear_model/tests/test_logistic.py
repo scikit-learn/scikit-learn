@@ -1,42 +1,41 @@
 import os
 import sys
+
 import numpy as np
+import pytest
 import scipy.sparse as sp
 from scipy import linalg, optimize, sparse
 
-import pytest
-
 from sklearn.base import clone
 from sklearn.datasets import load_iris, make_classification
-from sklearn.metrics import log_loss
-from sklearn.metrics import get_scorer
-from sklearn.model_selection import StratifiedKFold
-from sklearn.model_selection import GridSearchCV
-from sklearn.model_selection import train_test_split
-from sklearn.model_selection import cross_val_score
-from sklearn.preprocessing import LabelEncoder, StandardScaler
-from sklearn.utils import compute_class_weight, _IS_32BIT
-from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_raise_message
-from sklearn.utils._testing import assert_raises
-from sklearn.utils._testing import assert_warns
-from sklearn.utils._testing import ignore_warnings
-from sklearn.utils._testing import assert_warns_message
-from sklearn.utils import shuffle
-from sklearn.linear_model import SGDClassifier
-from sklearn.preprocessing import scale
-from sklearn.utils._testing import skip_if_no_parallel
-
 from sklearn.exceptions import ConvergenceWarning
+from sklearn.linear_model import SGDClassifier
 from sklearn.linear_model._logistic import (
     LogisticRegression,
     _logistic_regression_path, LogisticRegressionCV,
     _logistic_loss_and_grad, _logistic_grad_hess,
     _multinomial_grad_hess, _logistic_loss,
     _log_reg_scoring_path)
+from sklearn.metrics import get_scorer
+from sklearn.metrics import log_loss
+from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import StratifiedKFold
+from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.preprocessing import scale
+from sklearn.utils import compute_class_weight, _IS_32BIT
+from sklearn.utils import shuffle
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_raise_message
+from sklearn.utils._testing import assert_raises
+from sklearn.utils._testing import assert_warns
+from sklearn.utils._testing import assert_warns_message
+from sklearn.utils._testing import ignore_warnings
+from sklearn.utils._testing import skip_if_no_parallel
 
 X = [[-1, 0], [0, 1], [1, 1]]
 X_sp = sp.csr_matrix(X)

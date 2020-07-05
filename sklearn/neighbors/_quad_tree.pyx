@@ -13,11 +13,33 @@ from libc.string cimport memcpy
 from libc.stdio cimport printf
 from libc.stdint cimport SIZE_MAX
 
-from ..tree._utils cimport safe_realloc, sizet_ptr_to_ndarray
-from ..utils import check_array
+from ..tree._utils cimport safe_realloc
 
 import numpy as np
 cimport numpy as np
+
+cimport
+numpy as np
+import numpy as np
+from cpython cimport
+
+Py_INCREF, PyObject, PyTypeObject
+from libc.stdint cimport
+
+SIZE_MAX
+from libc.stdio cimport
+
+printf
+from libc.stdlib cimport
+
+malloc, free
+from libc.string cimport
+
+memcpy
+
+from ..tree._utils cimport
+
+safe_realloc
 np.import_array()
 
 cdef extern from "math.h":

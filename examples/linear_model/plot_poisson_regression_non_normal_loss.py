@@ -36,14 +36,15 @@ policyholders.
 
 """
 print(__doc__)
+import matplotlib.pyplot as plt
 # Authors: Christian Lorentzen <lorentzen.ch@gmail.com>
 #          Roman Yurchak <rth.yurchak@gmail.com>
 #          Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD 3 clause
 import numpy as np
-import matplotlib.pyplot as plt
 import pandas as pd
 
+from sklearn.datasets import fetch_openml
 
 ##############################################################################
 # The French Motor Third-Party Liability Claims dataset
@@ -51,8 +52,6 @@ import pandas as pd
 #
 # Let's load the motor claim dataset from OpenML:
 # https://www.openml.org/d/41214
-
-from sklearn.datasets import fetch_openml
 
 
 df = fetch_openml(data_id=41214, as_frame=True).frame

@@ -8,7 +8,6 @@ integers, and values float.
 from libcpp.map cimport map as cpp_map
 
 # Import the C-level symbols of numpy
-cimport numpy as np
 
 ctypedef np.float64_t DTYPE_t
 

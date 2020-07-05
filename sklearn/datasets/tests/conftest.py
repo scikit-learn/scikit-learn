@@ -2,7 +2,9 @@
 or if download is specifically requested by environment variable."""
 import builtins
 from os import environ
+
 import pytest
+
 from sklearn.datasets import fetch_20newsgroups
 from sklearn.datasets import fetch_20newsgroups_vectorized
 from sklearn.datasets import fetch_california_housing

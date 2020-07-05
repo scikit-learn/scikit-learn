@@ -14,10 +14,9 @@ from distutils.version import LooseVersion
 
 import numpy as np
 import scipy.sparse as sp
-import scipy
 import scipy.stats
-from scipy.sparse.linalg import lsqr as sparse_lsqr  # noqa
 from numpy.ma import MaskedArray as _MaskedArray  # TODO: remove in 0.25
+from scipy.sparse.linalg import lsqr as sparse_lsqr  # noqa
 
 from .deprecation import deprecated
 
@@ -33,12 +32,12 @@ sp_version = parse_version(scipy.__version__)
 
 
 if sp_version >= parse_version('1.4'):
-    from scipy.sparse.linalg import lobpcg
+    pass
 else:
     # Backport of lobpcg functionality from scipy 1.4.0, can be removed
     # once support for sp_version < parse_version('1.4') is dropped
     # mypy error: Name 'lobpcg' already defined (possibly by an import)
-    from ..externals._lobpcg import lobpcg  # type: ignore  # noqa
+    pass
 
 
 def _object_dtype_isnan(X):

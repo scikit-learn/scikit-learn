@@ -15,8 +15,8 @@ print(__doc__)
 # Modified for documentation by Jaques Grobler
 # License: BSD 3 clause
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
 from sklearn import datasets, cluster
 from sklearn.feature_extraction.image import grid_to_graph

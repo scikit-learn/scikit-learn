@@ -26,14 +26,14 @@ print(__doc__)
 
 from itertools import product
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
 from sklearn import datasets
-from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import VotingClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
-from sklearn.ensemble import VotingClassifier
+from sklearn.tree import DecisionTreeClassifier
 
 # Loading some example data
 iris = datasets.load_iris()

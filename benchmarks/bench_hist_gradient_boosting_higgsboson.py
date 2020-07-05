@@ -1,20 +1,20 @@
-from urllib.request import urlretrieve
+import argparse
 import os
 from gzip import GzipFile
 from time import time
-import argparse
+from urllib.request import urlretrieve
 
 import numpy as np
 import pandas as pd
 from joblib import Memory
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score, roc_auc_score
-# To use this experimental feature, we need to explicitly ask for it:
-from sklearn.experimental import enable_hist_gradient_boosting  # noqa
+
 from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.ensemble._hist_gradient_boosting.utils import (
     get_equivalent_estimator)
-
+# To use this experimental feature, we need to explicitly ask for it:
+from sklearn.experimental import enable_hist_gradient_boosting  # noqa
+from sklearn.metrics import accuracy_score, roc_auc_score
+from sklearn.model_selection import train_test_split
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--n-leaf-nodes', type=int, default=31)

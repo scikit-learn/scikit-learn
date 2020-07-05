@@ -12,9 +12,9 @@ machine-learning as a versatile tool for science and engineering.
 
 See http://scikit-learn.org for complete documentation.
 """
-import sys
 import logging
 import os
+import sys
 
 from ._config import get_config, set_config, config_context
 

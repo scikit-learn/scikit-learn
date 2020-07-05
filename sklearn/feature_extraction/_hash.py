@@ -6,9 +6,9 @@ import numbers
 import numpy as np
 import scipy.sparse as sp
 
+from ..base import BaseEstimator, TransformerMixin
 from ..utils import IS_PYPY
 from ..utils.validation import _deprecate_positional_args
-from ..base import BaseEstimator, TransformerMixin
 
 if not IS_PYPY:
     from ._hashing_fast import transform as _hashing_transform

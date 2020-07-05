@@ -8,23 +8,27 @@
 #
 # cython: boundscheck=False, wraparound=False, cdivision=True
 
-from libc.math cimport fabs
-cimport numpy as np
-import numpy as np
-import numpy.linalg as linalg
-
-cimport cython
-from cpython cimport bool
-from cython cimport floating
 import warnings
+
+import numpy as np
+from cython cimport
+
+floating
+from libc.math cimport
+
+fabs
+
 from ..exceptions import ConvergenceWarning
+from ..utils._cython_blas cimport
 
-from ..utils._cython_blas cimport (_axpy, _dot, _asum, _ger, _gemv, _nrm2,
-                                   _copy, _scal)
-from ..utils._cython_blas cimport RowMajor, ColMajor, Trans, NoTrans
+ColMajor, Trans, NoTrans
+from ..utils._cython_blas cimport
 
+(_axpy, _dot, _asum, _gemv, _nrm2,
+ _copy, _scal)
+from ..utils._random cimport
 
-from ..utils._random cimport our_rand_r
+our_rand_r
 
 ctypedef np.float64_t DOUBLE
 ctypedef np.uint32_t UINT32_t

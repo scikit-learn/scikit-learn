@@ -2,16 +2,16 @@
 
 The input data is mostly low rank but is a fat infinite tail.
 """
-from collections import defaultdict
 import gc
 import sys
+from collections import defaultdict
 from time import time
 
 import numpy as np
 
+from sklearn.datasets import make_regression
 from sklearn.linear_model import lars_path, lars_path_gram
 from sklearn.linear_model import lasso_path
-from sklearn.datasets import make_regression
 
 
 def compute_bench(samples_range, features_range):
@@ -81,7 +81,6 @@ def compute_bench(samples_range, features_range):
 
 
 if __name__ == '__main__':
-    from mpl_toolkits.mplot3d import axes3d  # register the 3d projection
     import matplotlib.pyplot as plt
 
     samples_range = np.linspace(10, 2000, 5).astype(int)

@@ -3,46 +3,39 @@ Testing for the tree module (sklearn.tree).
 """
 import copy
 import pickle
-from itertools import product
 import struct
+from itertools import product
 
-import pytest
 import numpy as np
+import pytest
+from scipy.sparse import coo_matrix
 from scipy.sparse import csc_matrix
 from scipy.sparse import csr_matrix
-from scipy.sparse import coo_matrix
 
-from sklearn.random_projection import _sparse_random_matrix
-
+from sklearn import datasets
+from sklearn import tree
+from sklearn.exceptions import NotFittedError
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import mean_squared_error
-
+from sklearn.random_projection import _sparse_random_matrix
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.tree import ExtraTreeClassifier
+from sklearn.tree import ExtraTreeRegressor
+from sklearn.tree._classes import CRITERIA_CLF
+from sklearn.tree._classes import CRITERIA_REG
+from sklearn.tree._tree import TREE_LEAF, TREE_UNDEFINED
+from sklearn.utils import compute_sample_weight
 from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import assert_warns_message
 from sklearn.utils._testing import create_memmap_backed_data
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils._testing import skip_if_32bit
-
 from sklearn.utils.validation import check_random_state
-
-from sklearn.exceptions import NotFittedError
-
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.tree import DecisionTreeRegressor
-from sklearn.tree import ExtraTreeClassifier
-from sklearn.tree import ExtraTreeRegressor
-
-from sklearn import tree
-from sklearn.tree._tree import TREE_LEAF, TREE_UNDEFINED
-from sklearn.tree._classes import CRITERIA_CLF
-from sklearn.tree._classes import CRITERIA_REG
-from sklearn import datasets
-
-from sklearn.utils import compute_sample_weight
 
 CLF_CRITERIONS = ("gini", "entropy")
 REG_CRITERIONS = ("mse", "mae", "friedman_mse")

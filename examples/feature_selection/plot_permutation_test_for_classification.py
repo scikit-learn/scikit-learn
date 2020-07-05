@@ -16,14 +16,13 @@ obtained in the first place.
 
 print(__doc__)
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
-from sklearn.svm import SVC
+from sklearn import datasets
 from sklearn.model_selection import StratifiedKFold
 from sklearn.model_selection import permutation_test_score
-from sklearn import datasets
-
+from sklearn.svm import SVC
 
 # #############################################################################
 # Loading a dataset

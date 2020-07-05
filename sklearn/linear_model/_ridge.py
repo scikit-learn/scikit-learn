@@ -9,8 +9,8 @@ Ridge regression
 # License: BSD 3 clause
 
 
-from abc import ABCMeta, abstractmethod
 import warnings
+from abc import ABCMeta, abstractmethod
 
 import numpy as np
 from scipy import linalg
@@ -20,19 +20,19 @@ from scipy.sparse import linalg as sp_linalg
 from ._base import LinearClassifierMixin, LinearModel, _rescale_data
 from ._sag import sag_solver
 from ..base import RegressorMixin, MultiOutputMixin, is_classifier
-from ..utils.extmath import safe_sparse_dot
-from ..utils.extmath import row_norms
+from ..exceptions import ConvergenceWarning
+from ..metrics import check_scoring
+from ..model_selection import GridSearchCV
+from ..preprocessing import LabelBinarizer
 from ..utils import check_array
 from ..utils import check_consistent_length
-from ..utils import compute_sample_weight
 from ..utils import column_or_1d
+from ..utils import compute_sample_weight
+from ..utils.extmath import row_norms
+from ..utils.extmath import safe_sparse_dot
+from ..utils.sparsefuncs import mean_variance_axis
 from ..utils.validation import _check_sample_weight
 from ..utils.validation import _deprecate_positional_args
-from ..preprocessing import LabelBinarizer
-from ..model_selection import GridSearchCV
-from ..metrics import check_scoring
-from ..exceptions import ConvergenceWarning
-from ..utils.sparsefuncs import mean_variance_axis
 
 
 def _solve_sparse_cg(X, y, alpha, max_iter=None, tol=1e-3, verbose=0,

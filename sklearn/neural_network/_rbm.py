@@ -18,8 +18,8 @@ from ..base import TransformerMixin
 from ..utils import check_array
 from ..utils import check_random_state
 from ..utils import gen_even_slices
-from ..utils.extmath import safe_sparse_dot
 from ..utils.extmath import log_logistic
+from ..utils.extmath import safe_sparse_dot
 from ..utils.validation import check_is_fitted, _deprecate_positional_args
 
 

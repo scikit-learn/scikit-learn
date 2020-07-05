@@ -8,16 +8,16 @@ import warnings
 from operator import itemgetter
 
 import numpy as np
-from scipy.linalg import cholesky, cho_solve, solve_triangular
 import scipy.optimize
+from scipy.linalg import cholesky, cho_solve, solve_triangular
 
+from .kernels import RBF, ConstantKernel as C
 from ..base import BaseEstimator, RegressorMixin, clone
 from ..base import MultiOutputMixin
-from .kernels import RBF, ConstantKernel as C
 from ..utils import check_random_state
-from ..utils.validation import check_array
 from ..utils.optimize import _check_optimize_result
 from ..utils.validation import _deprecate_positional_args
+from ..utils.validation import check_array
 
 
 class GaussianProcessRegressor(MultiOutputMixin,

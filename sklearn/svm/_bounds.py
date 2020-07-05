@@ -5,9 +5,9 @@
 import numpy as np
 
 from ..preprocessing import LabelBinarizer
-from ..utils.validation import check_consistent_length, check_array
-from ..utils.validation import _deprecate_positional_args
 from ..utils.extmath import safe_sparse_dot
+from ..utils.validation import _deprecate_positional_args
+from ..utils.validation import check_consistent_length, check_array
 
 
 @_deprecate_positional_args

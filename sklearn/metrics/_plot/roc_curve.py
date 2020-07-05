@@ -1,9 +1,8 @@
+from .base import _check_classifier_response_method
 from .. import auc
 from .. import roc_curve
-
-from .base import _check_classifier_response_method
-from ...utils import check_matplotlib_support
 from ...base import is_classifier
+from ...utils import check_matplotlib_support
 from ...utils.validation import _deprecate_positional_args
 
 

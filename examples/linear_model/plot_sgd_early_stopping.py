@@ -35,22 +35,22 @@ significantly reduce training time. Note that scores differ between the
 stopping criteria even from early iterations because some of the training data
 is held out with the validation stopping criterion.
 """
+import sys
 # Authors: Tom Dupre la Tour
 #
 # License: BSD 3 clause
 import time
-import sys
 
-import pandas as pd
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 
 from sklearn import linear_model
 from sklearn.datasets import fetch_openml
-from sklearn.model_selection import train_test_split
-from sklearn.utils._testing import ignore_warnings
 from sklearn.exceptions import ConvergenceWarning
+from sklearn.model_selection import train_test_split
 from sklearn.utils import shuffle
+from sklearn.utils._testing import ignore_warnings
 
 print(__doc__)
 

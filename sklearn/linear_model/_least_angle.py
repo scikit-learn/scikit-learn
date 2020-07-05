@@ -8,22 +8,22 @@ Generalized Linear Model for a complete discussion.
 #
 # License: BSD 3 clause
 
-from math import log
 import sys
 import warnings
+from math import log
 
 import numpy as np
+from joblib import Parallel, delayed
 from scipy import linalg, interpolate
 from scipy.linalg.lapack import get_lapack_funcs
-from joblib import Parallel, delayed
 
 from ._base import LinearModel
 from ..base import RegressorMixin, MultiOutputMixin
+from ..exceptions import ConvergenceWarning
+from ..model_selection import check_cv
 # mypy error: Module 'sklearn.utils' has no attribute 'arrayfuncs'
 from ..utils import arrayfuncs, as_float_array  # type: ignore
 from ..utils import check_random_state
-from ..model_selection import check_cv
-from ..exceptions import ConvergenceWarning
 from ..utils.validation import _deprecate_positional_args
 
 SOLVE_TRIANGULAR_ARGS = {'check_finite': False}

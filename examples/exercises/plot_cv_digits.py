@@ -12,8 +12,9 @@ print(__doc__)
 
 
 import numpy as np
-from sklearn.model_selection import cross_val_score
+
 from sklearn import datasets, svm
+from sklearn.model_selection import cross_val_score
 
 X, y = datasets.load_digits(return_X_y=True)
 

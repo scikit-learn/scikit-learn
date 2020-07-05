@@ -10,6 +10,10 @@
 import numpy as np
 cimport numpy as np
 
+cimport
+numpy as np
+import numpy as np
+
 ctypedef np.npy_float32 DTYPE_t          # Type of X
 ctypedef np.npy_intp SIZE_t              # Type for indices and counters
 ctypedef np.npy_int32 INT32_t            # Signed 32 bit integer

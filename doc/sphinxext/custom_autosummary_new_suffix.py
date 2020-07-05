@@ -19,9 +19,9 @@ to return a filename with a new suffix.
 ```
 """
 import os
-import sphinx
 from contextlib import contextmanager
 
+import sphinx
 from sphinx.ext.autosummary import get_rst_suffix
 from sphinx.ext.autosummary import process_generate_options
 

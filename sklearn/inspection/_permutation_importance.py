@@ -5,8 +5,8 @@ from joblib import delayed
 
 from ..metrics import check_scoring
 from ..utils import Bunch
-from ..utils import check_random_state
 from ..utils import check_array
+from ..utils import check_random_state
 from ..utils.validation import _deprecate_positional_args
 
 

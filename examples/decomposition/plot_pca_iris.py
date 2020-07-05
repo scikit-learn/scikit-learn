@@ -18,13 +18,12 @@ print(__doc__)
 # Code source: Gaël Varoquaux
 # License: BSD 3 clause
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 from mpl_toolkits.mplot3d import Axes3D
 
-
-from sklearn import decomposition
 from sklearn import datasets
+from sklearn import decomposition
 
 np.random.seed(5)
 

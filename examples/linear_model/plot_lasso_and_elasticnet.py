@@ -10,8 +10,8 @@ compared with the ground-truth.
 """
 print(__doc__)
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
 from sklearn.metrics import r2_score
 

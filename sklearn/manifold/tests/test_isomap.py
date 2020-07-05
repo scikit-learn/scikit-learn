@@ -1,15 +1,15 @@
 from itertools import product
+
 import numpy as np
-from numpy.testing import assert_almost_equal, assert_array_almost_equal
 import pytest
+from numpy.testing import assert_almost_equal, assert_array_almost_equal
+from scipy.sparse import rand as sparse_rand
 
 from sklearn import datasets
 from sklearn import manifold
 from sklearn import neighbors
 from sklearn import pipeline
 from sklearn import preprocessing
-
-from scipy.sparse import rand as sparse_rand
 
 eigen_solvers = ['auto', 'dense', 'arpack']
 path_methods = ['auto', 'FW', 'D']

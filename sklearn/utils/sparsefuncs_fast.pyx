@@ -9,13 +9,16 @@
 #!python
 # cython: boundscheck=False, wraparound=False, cdivision=True
 
-from libc.math cimport fabs, sqrt, pow
-cimport numpy as np
 import numpy as np
-import scipy.sparse as sp
-cimport cython
-from cython cimport floating
-from numpy.math cimport isnan
+from cython cimport
+
+floating
+from libc.math cimport
+
+fabs, sqrt
+from numpy.math cimport
+
+isnan
 
 np.import_array()
 

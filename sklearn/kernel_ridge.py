@@ -7,10 +7,10 @@
 import numpy as np
 
 from .base import BaseEstimator, RegressorMixin, MultiOutputMixin
-from .metrics.pairwise import pairwise_kernels
 from .linear_model._ridge import _solve_cholesky_kernel
-from .utils.validation import check_is_fitted, _check_sample_weight
+from .metrics.pairwise import pairwise_kernels
 from .utils.validation import _deprecate_positional_args
+from .utils.validation import check_is_fitted, _check_sample_weight
 
 
 class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):

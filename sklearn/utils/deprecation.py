@@ -1,6 +1,5 @@
-import warnings
 import functools
-
+import warnings
 
 __all__ = ["deprecated"]
 

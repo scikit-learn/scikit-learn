@@ -1,8 +1,8 @@
+import html
+import uuid
 from contextlib import closing
 from contextlib import suppress
 from io import StringIO
-import uuid
-import html
 
 from sklearn import config_context
 

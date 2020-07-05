@@ -14,23 +14,22 @@ Courtesy of Jock A. Blackard and Colorado State University.
 #         Peter Prettenhofer <peter.prettenhofer@gmail.com>
 # License: BSD 3 clause
 
-from gzip import GzipFile
 import logging
-from os.path import dirname, exists, join
+from gzip import GzipFile
 from os import remove, makedirs
+from os.path import dirname, exists, join
 
-import numpy as np
 import joblib
+import numpy as np
 
 from . import get_data_home
+from ._base import RemoteFileMetadata
 from ._base import _convert_data_dataframe
 from ._base import _fetch_remote
-from ._base import RemoteFileMetadata
-from ..utils import Bunch
 from ._base import _pkl_filepath
+from ..utils import Bunch
 from ..utils import check_random_state
 from ..utils.validation import _deprecate_positional_args
-
 
 # The original data can be found in:
 # https://archive.ics.uci.edu/ml/machine-learning-databases/covtype/covtype.data.gz

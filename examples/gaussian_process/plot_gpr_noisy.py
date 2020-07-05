@@ -22,13 +22,11 @@ print(__doc__)
 # License: BSD 3 clause
 
 import numpy as np
-
 from matplotlib import pyplot as plt
 from matplotlib.colors import LogNorm
 
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF, WhiteKernel
-
 
 rng = np.random.RandomState(0)
 X = rng.uniform(0, 5, 20)[:, np.newaxis]

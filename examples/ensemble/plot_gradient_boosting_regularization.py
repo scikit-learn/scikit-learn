@@ -25,12 +25,11 @@ print(__doc__)
 #
 # License: BSD 3 clause
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
-from sklearn import ensemble
 from sklearn import datasets
-
+from sklearn import ensemble
 
 X, y = datasets.make_hastie_10_2(n_samples=12000, random_state=1)
 X = X.astype(np.float32)

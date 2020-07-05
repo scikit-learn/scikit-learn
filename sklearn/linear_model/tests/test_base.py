@@ -3,26 +3,24 @@
 #
 # License: BSD 3 clause
 
-import pytest
-
 import numpy as np
-from scipy import sparse
+import pytest
 from scipy import linalg
+from scipy import sparse
 
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import assert_allclose
-from sklearn.utils.fixes import parse_version
-
+from sklearn.datasets import load_iris
+from sklearn.datasets import make_regression
+from sklearn.datasets import make_sparse_uncorrelated
 from sklearn.linear_model import LinearRegression
 from sklearn.linear_model._base import _preprocess_data
 from sklearn.linear_model._base import _rescale_data
 from sklearn.linear_model._base import make_dataset
 from sklearn.utils import check_random_state
-from sklearn.datasets import make_sparse_uncorrelated
-from sklearn.datasets import make_regression
-from sklearn.datasets import load_iris
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils.fixes import parse_version
 
 rng = np.random.RandomState(0)
 rtol = 1e-6

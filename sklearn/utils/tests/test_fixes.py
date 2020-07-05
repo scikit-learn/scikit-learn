@@ -10,11 +10,10 @@ import pytest
 import scipy.stats
 
 from sklearn.utils._testing import assert_array_equal
-
+from sklearn.utils.fixes import MaskedArray
 from sklearn.utils.fixes import _joblib_parallel_args
 from sklearn.utils.fixes import _object_dtype_isnan
 from sklearn.utils.fixes import loguniform
-from sklearn.utils.fixes import MaskedArray
 
 
 @pytest.mark.parametrize('joblib_version', ('0.11', '0.12.0'))

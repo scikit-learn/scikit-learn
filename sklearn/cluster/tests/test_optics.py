@@ -5,19 +5,17 @@
 import numpy as np
 import pytest
 
-from sklearn.datasets import make_blobs
+from sklearn.cluster import DBSCAN
 from sklearn.cluster import OPTICS
 from sklearn.cluster._optics import _extend_region, _extract_xi_labels
+from sklearn.cluster.tests.common import generate_clustered_data
+from sklearn.datasets import make_blobs
 from sklearn.metrics.cluster import contingency_matrix
 from sklearn.metrics.pairwise import pairwise_distances
-from sklearn.cluster import DBSCAN
 from sklearn.utils import shuffle
+from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_raise_message
-from sklearn.utils._testing import assert_allclose
-
-from sklearn.cluster.tests.common import generate_clustered_data
-
 
 rng = np.random.RandomState(0)
 n_points_per_cluster = 10

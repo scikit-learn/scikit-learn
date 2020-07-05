@@ -24,6 +24,25 @@ from libc.math cimport fabs
 
 import numpy as np
 cimport numpy as np
+
+cimport
+numpy as np
+import numpy as np
+from libc.math cimport
+
+fabs
+from libc.stdlib cimport
+
+calloc
+from libc.stdlib cimport
+
+free
+from libc.string cimport
+
+memcpy
+from libc.string cimport
+
+memset
 np.import_array()
 
 from ._utils cimport log

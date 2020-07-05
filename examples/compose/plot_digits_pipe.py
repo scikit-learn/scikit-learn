@@ -20,16 +20,15 @@ print(__doc__)
 # License: BSD 3 clause
 
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 
 from sklearn import datasets
 from sklearn.decomposition import PCA
 from sklearn.linear_model import LogisticRegression
-from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV
-
+from sklearn.pipeline import Pipeline
 
 # Define a pipeline to search for the best combination of PCA truncation
 # and classifier regularization.

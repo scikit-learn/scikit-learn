@@ -1,17 +1,15 @@
-import warnings
-import unittest
-import sys
-import os
 import atexit
+import os
+import sys
+import unittest
+import warnings
 
 import numpy as np
-
+import pytest
 from scipy import sparse
 
-import pytest
-
-from sklearn.utils.deprecation import deprecated
-from sklearn.utils.metaestimators import if_delegate_has_method
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils._testing import (
     assert_raises,
     assert_warns,
@@ -26,9 +24,8 @@ from sklearn.utils._testing import (
     create_memmap_backed_data,
     _delete_folder,
     _convert_container)
-
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+from sklearn.utils.deprecation import deprecated
+from sklearn.utils.metaestimators import if_delegate_has_method
 
 
 def test_set_random_state():

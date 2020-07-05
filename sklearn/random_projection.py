@@ -34,14 +34,12 @@ import numpy as np
 import scipy.sparse as sp
 
 from .base import BaseEstimator, TransformerMixin
-
+from .exceptions import DataDimensionalityWarning
 from .utils import check_random_state
 from .utils.extmath import safe_sparse_dot
 from .utils.random import sample_without_replacement
-from .utils.validation import check_array, check_is_fitted
 from .utils.validation import _deprecate_positional_args
-from .exceptions import DataDimensionalityWarning
-
+from .utils.validation import check_array, check_is_fitted
 
 __all__ = ["SparseRandomProjection",
            "GaussianRandomProjection",

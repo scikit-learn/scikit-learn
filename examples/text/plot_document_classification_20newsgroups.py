@@ -19,30 +19,30 @@ automatically downloaded, then cached.
 #         Lars Buitinck
 # License: BSD 3 clause
 import logging
-import numpy as np
-from optparse import OptionParser
 import sys
+from optparse import OptionParser
 from time import time
-import matplotlib.pyplot as plt
 
+import matplotlib.pyplot as plt
+import numpy as np
+
+from sklearn import metrics
 from sklearn.datasets import fetch_20newsgroups
-from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.feature_extraction.text import HashingVectorizer
+from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.feature_selection import SelectFromModel
 from sklearn.feature_selection import SelectKBest, chi2
-from sklearn.linear_model import RidgeClassifier
-from sklearn.pipeline import Pipeline
-from sklearn.svm import LinearSVC
-from sklearn.linear_model import SGDClassifier
-from sklearn.linear_model import Perceptron
 from sklearn.linear_model import PassiveAggressiveClassifier
+from sklearn.linear_model import Perceptron
+from sklearn.linear_model import RidgeClassifier
+from sklearn.linear_model import SGDClassifier
 from sklearn.naive_bayes import BernoulliNB, ComplementNB, MultinomialNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neighbors import NearestCentroid
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.pipeline import Pipeline
+from sklearn.svm import LinearSVC
 from sklearn.utils.extmath import density
-from sklearn import metrics
-
 
 # Display progress logs on stdout
 logging.basicConfig(level=logging.INFO,

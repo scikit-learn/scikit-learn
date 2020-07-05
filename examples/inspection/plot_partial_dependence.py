@@ -44,6 +44,7 @@ print(__doc__)
 # (here the average target, by default).
 
 import pandas as pd
+
 from sklearn.datasets import fetch_california_housing
 from sklearn.model_selection import train_test_split
 

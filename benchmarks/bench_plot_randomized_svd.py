@@ -64,25 +64,25 @@ References
 
 # Author: Giorgio Patrini
 
+import gc
+import os.path
+import pickle
+from collections import defaultdict
+from time import time
+
+import matplotlib.pyplot as plt
 import numpy as np
 import scipy as sp
-import matplotlib.pyplot as plt
 
-import gc
-import pickle
-from time import time
-from collections import defaultdict
-import os.path
-
-from sklearn.utils import gen_batches
-from sklearn.utils.validation import check_random_state
-from sklearn.utils.extmath import randomized_svd
-from sklearn.datasets import make_low_rank_matrix, make_sparse_uncorrelated
 from sklearn.datasets import (fetch_lfw_people,
                               fetch_openml,
                               fetch_20newsgroups_vectorized,
                               fetch_olivetti_faces,
                               fetch_rcv1)
+from sklearn.datasets import make_low_rank_matrix, make_sparse_uncorrelated
+from sklearn.utils import gen_batches
+from sklearn.utils.extmath import randomized_svd
+from sklearn.utils.validation import check_random_state
 
 try:
     import fbpca

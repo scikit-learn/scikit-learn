@@ -24,8 +24,8 @@ samples.
 """
 print(__doc__)
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 from scipy import stats
 
 from sklearn.linear_model import BayesianRidge, LinearRegression

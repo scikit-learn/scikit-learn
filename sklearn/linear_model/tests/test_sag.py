@@ -4,27 +4,27 @@
 # License: BSD 3 clause
 
 import math
-import pytest
+
 import numpy as np
+import pytest
 import scipy.sparse as sp
 from scipy.special import logsumexp
-
-from sklearn.linear_model._sag import get_auto_step_size
 from sklearn.linear_model._sag_fast import _multinomial_grad_loss_all_samples
+
+from sklearn.base import clone
+from sklearn.datasets import make_blobs, load_iris, make_classification
 from sklearn.linear_model import LogisticRegression, Ridge
 from sklearn.linear_model._base import make_dataset
 from sklearn.linear_model._logistic import _multinomial_loss_grad
-
-from sklearn.utils.extmath import row_norms
+from sklearn.linear_model._sag import get_auto_step_size
+from sklearn.preprocessing import LabelEncoder, LabelBinarizer
+from sklearn.utils import check_random_state
+from sklearn.utils import compute_class_weight
+from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_raise_message
-from sklearn.utils import compute_class_weight
-from sklearn.utils import check_random_state
-from sklearn.preprocessing import LabelEncoder, LabelBinarizer
-from sklearn.datasets import make_blobs, load_iris, make_classification
-from sklearn.base import clone
+from sklearn.utils.extmath import row_norms
 
 iris = load_iris()
 

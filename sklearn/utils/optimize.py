@@ -13,8 +13,9 @@ significant speedups.
 # Modifications by Gael Varoquaux, Mathieu Blondel and Tom Dupre la Tour
 # License: BSD
 
-import numpy as np
 import warnings
+
+import numpy as np
 from scipy.optimize.linesearch import line_search_wolfe2, line_search_wolfe1
 
 from ..exceptions import ConvergenceWarning

@@ -1,27 +1,14 @@
 
 from functools import partial
-from itertools import product
 from itertools import chain
 from itertools import permutations
+from itertools import product
 
 import numpy as np
+import pytest
 import scipy.sparse as sp
 
-import pytest
-
 from sklearn.datasets import make_multilabel_classification
-from sklearn.preprocessing import LabelBinarizer
-from sklearn.utils.multiclass import type_of_target
-from sklearn.utils.validation import _num_samples
-from sklearn.utils.validation import check_random_state
-from sklearn.utils import shuffle
-
-from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_array_less
-from sklearn.utils._testing import ignore_warnings
-
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import average_precision_score
 from sklearn.metrics import balanced_accuracy_score
@@ -29,6 +16,7 @@ from sklearn.metrics import brier_score_loss
 from sklearn.metrics import cohen_kappa_score
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import coverage_error
+from sklearn.metrics import dcg_score
 from sklearn.metrics import explained_variance_score
 from sklearn.metrics import f1_score
 from sklearn.metrics import fbeta_score
@@ -38,15 +26,16 @@ from sklearn.metrics import jaccard_score
 from sklearn.metrics import label_ranking_average_precision_score
 from sklearn.metrics import label_ranking_loss
 from sklearn.metrics import log_loss
-from sklearn.metrics import max_error
 from sklearn.metrics import matthews_corrcoef
+from sklearn.metrics import max_error
 from sklearn.metrics import mean_absolute_error
+from sklearn.metrics import mean_gamma_deviance
+from sklearn.metrics import mean_poisson_deviance
 from sklearn.metrics import mean_squared_error
 from sklearn.metrics import mean_tweedie_deviance
-from sklearn.metrics import mean_poisson_deviance
-from sklearn.metrics import mean_gamma_deviance
 from sklearn.metrics import median_absolute_error
 from sklearn.metrics import multilabel_confusion_matrix
+from sklearn.metrics import ndcg_score
 from sklearn.metrics import precision_recall_curve
 from sklearn.metrics import precision_score
 from sklearn.metrics import r2_score
@@ -54,11 +43,17 @@ from sklearn.metrics import recall_score
 from sklearn.metrics import roc_auc_score
 from sklearn.metrics import roc_curve
 from sklearn.metrics import zero_one_loss
-from sklearn.metrics import ndcg_score
-from sklearn.metrics import dcg_score
-
 from sklearn.metrics._base import _average_binary_score
-
+from sklearn.preprocessing import LabelBinarizer
+from sklearn.utils import shuffle
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_array_less
+from sklearn.utils._testing import ignore_warnings
+from sklearn.utils.multiclass import type_of_target
+from sklearn.utils.validation import _num_samples
+from sklearn.utils.validation import check_random_state
 
 # Note toward developers about metric testing
 # -------------------------------------------

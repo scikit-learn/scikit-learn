@@ -38,13 +38,14 @@ four correct classifications and fails on one.
 """
 print(__doc__)
 
-import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.gaussian_process.kernels import Kernel, Hyperparameter
-from sklearn.gaussian_process.kernels import GenericKernelMixin
-from sklearn.gaussian_process import GaussianProcessRegressor
-from sklearn.gaussian_process import GaussianProcessClassifier
+import numpy as np
+
 from sklearn.base import clone
+from sklearn.gaussian_process import GaussianProcessClassifier
+from sklearn.gaussian_process import GaussianProcessRegressor
+from sklearn.gaussian_process.kernels import GenericKernelMixin
+from sklearn.gaussian_process.kernels import Kernel, Hyperparameter
 
 
 class SequenceKernel(GenericKernelMixin, Kernel):

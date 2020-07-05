@@ -3,28 +3,27 @@ Testing Recursive feature elimination
 """
 
 from operator import attrgetter
-import pytest
+
 import numpy as np
+import pytest
 from numpy.testing import assert_array_almost_equal, assert_array_equal
 from scipy import sparse
 
-from sklearn.feature_selection import RFE, RFECV
-from sklearn.datasets import load_iris, make_friedman1
-from sklearn.metrics import zero_one_loss
-from sklearn.svm import SVC, SVR, LinearSVR
-from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import cross_val_score
-from sklearn.model_selection import GroupKFold
 from sklearn.compose import TransformedTargetRegressor
+from sklearn.datasets import load_iris, make_friedman1
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.feature_selection import RFE, RFECV
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import get_scorer
+from sklearn.metrics import make_scorer
+from sklearn.metrics import zero_one_loss
+from sklearn.model_selection import GroupKFold
+from sklearn.model_selection import cross_val_score
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
-
+from sklearn.svm import SVC, SVR, LinearSVR
 from sklearn.utils import check_random_state
 from sklearn.utils._testing import ignore_warnings
-
-from sklearn.metrics import make_scorer
-from sklearn.metrics import get_scorer
 
 
 class MockClassifier:

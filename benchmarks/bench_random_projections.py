@@ -6,11 +6,11 @@ Random projection benchmark
 Benchmarks for random projections.
 
 """
-import gc
-import sys
-import optparse
-from datetime import datetime
 import collections
+import gc
+import optparse
+import sys
+from datetime import datetime
 
 import numpy as np
 import scipy.sparse as sp

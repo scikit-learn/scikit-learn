@@ -11,12 +11,14 @@ This example visualizes the behavior of several common scikit-learn objects
 for comparison.
 """
 
+import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib.patches import Patch
+
 from sklearn.model_selection import (TimeSeriesSplit, KFold, ShuffleSplit,
                                      StratifiedKFold, GroupShuffleSplit,
                                      GroupKFold, StratifiedShuffleSplit)
-import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib.patches import Patch
+
 np.random.seed(1338)
 cmap_data = plt.cm.Paired
 cmap_cv = plt.cm.coolwarm

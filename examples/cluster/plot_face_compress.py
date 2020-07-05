@@ -18,12 +18,11 @@ print(__doc__)
 # Modified for documentation by Jaques Grobler
 # License: BSD 3 clause
 
+import matplotlib.pyplot as plt
 import numpy as np
 import scipy as sp
-import matplotlib.pyplot as plt
 
 from sklearn import cluster
-
 
 try:  # SciPy >= 0.16 have face in misc
     from scipy.misc import face

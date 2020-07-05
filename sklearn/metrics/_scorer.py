@@ -18,9 +18,9 @@ ground truth labeling (or ``None`` in the case of unsupervised models).
 #          Arnaud Joly <arnaud.v.joly@gmail.com>
 # License: Simplified BSD
 
+from collections import Counter
 from collections.abc import Iterable
 from functools import partial
-from collections import Counter
 
 import numpy as np
 
@@ -31,19 +31,17 @@ from . import (r2_score, median_absolute_error, max_error, mean_absolute_error,
                precision_score, recall_score, log_loss,
                balanced_accuracy_score, explained_variance_score,
                brier_score_loss, jaccard_score)
-
-from .cluster import adjusted_rand_score
-from .cluster import homogeneity_score
-from .cluster import completeness_score
-from .cluster import v_measure_score
-from .cluster import mutual_info_score
 from .cluster import adjusted_mutual_info_score
-from .cluster import normalized_mutual_info_score
+from .cluster import adjusted_rand_score
+from .cluster import completeness_score
 from .cluster import fowlkes_mallows_score
-
+from .cluster import homogeneity_score
+from .cluster import mutual_info_score
+from .cluster import normalized_mutual_info_score
+from .cluster import v_measure_score
+from ..base import is_regressor
 from ..utils.multiclass import type_of_target
 from ..utils.validation import _deprecate_positional_args
-from ..base import is_regressor
 
 
 def _cached_call(cache, estimator, method, *args, **kwargs):

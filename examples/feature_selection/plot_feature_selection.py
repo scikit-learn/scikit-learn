@@ -21,15 +21,15 @@ thus improve classification.
 """
 print(__doc__)
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
 from sklearn.datasets import load_iris
+from sklearn.feature_selection import SelectKBest, f_classif
 from sklearn.model_selection import train_test_split
+from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.svm import LinearSVC
-from sklearn.pipeline import make_pipeline
-from sklearn.feature_selection import SelectKBest, f_classif
 
 # #############################################################################
 # Import some data to play with

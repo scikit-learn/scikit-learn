@@ -8,8 +8,13 @@
 
 import numpy as np
 cimport numpy as np
-cimport cython
 from cython cimport floating
+cimport
+numpy as np
+import numpy as np
+from cython cimport
+
+floating
 
 np.import_array()
 

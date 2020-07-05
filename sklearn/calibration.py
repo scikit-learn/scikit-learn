@@ -9,25 +9,24 @@
 
 import warnings
 from inspect import signature
-
 from math import log
-import numpy as np
 
+import numpy as np
+from scipy.optimize import fmin_bfgs
 from scipy.special import expit
 from scipy.special import xlogy
-from scipy.optimize import fmin_bfgs
-from .preprocessing import LabelEncoder
 
 from .base import (BaseEstimator, ClassifierMixin, RegressorMixin, clone,
                    MetaEstimatorMixin)
-from .preprocessing import label_binarize, LabelBinarizer
-from .utils import check_array, indexable, column_or_1d
-from .utils.validation import check_is_fitted, check_consistent_length
-from .utils.validation import _check_sample_weight
 from .isotonic import IsotonicRegression
-from .svm import LinearSVC
 from .model_selection import check_cv
+from .preprocessing import LabelEncoder
+from .preprocessing import label_binarize, LabelBinarizer
+from .svm import LinearSVC
+from .utils import check_array, indexable, column_or_1d
+from .utils.validation import _check_sample_weight
 from .utils.validation import _deprecate_positional_args
+from .utils.validation import check_is_fitted, check_consistent_length
 
 
 class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,

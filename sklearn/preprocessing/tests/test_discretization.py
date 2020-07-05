@@ -1,8 +1,9 @@
 
-import pytest
-import numpy as np
-import scipy.sparse as sp
 import warnings
+
+import numpy as np
+import pytest
+import scipy.sparse as sp
 
 from sklearn.preprocessing import KBinsDiscretizer
 from sklearn.preprocessing import OneHotEncoder

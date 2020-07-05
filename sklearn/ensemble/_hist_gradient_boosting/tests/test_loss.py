@@ -1,16 +1,16 @@
 import numpy as np
-from numpy.testing import assert_almost_equal
+import pytest
 from numpy.testing import assert_allclose
+from numpy.testing import assert_almost_equal
 from scipy.optimize import newton
 from scipy.special import logit
-from sklearn.utils import assert_all_finite
-from sklearn.utils.fixes import sp_version, parse_version
-import pytest
 
-from sklearn.ensemble._hist_gradient_boosting.loss import _LOSSES
-from sklearn.ensemble._hist_gradient_boosting.common import Y_DTYPE
 from sklearn.ensemble._hist_gradient_boosting.common import G_H_DTYPE
+from sklearn.ensemble._hist_gradient_boosting.common import Y_DTYPE
+from sklearn.ensemble._hist_gradient_boosting.loss import _LOSSES
+from sklearn.utils import assert_all_finite
 from sklearn.utils._testing import skip_if_32bit
+from sklearn.utils.fixes import sp_version, parse_version
 
 
 def get_derivatives_helper(loss):

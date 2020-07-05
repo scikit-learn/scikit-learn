@@ -22,8 +22,8 @@ Chen et al., IEEE Trans. on Sign. Proc., Volume 58, Issue 10, October 2010.
 """
 print(__doc__)
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 from scipy.linalg import toeplitz, cholesky
 
 from sklearn.covariance import LedoitWolf, OAS

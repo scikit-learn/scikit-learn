@@ -17,9 +17,8 @@ print(__doc__)
 # License: BSD 3 clause
 
 import numpy as np
-
-from matplotlib import pyplot as plt
 from matplotlib import cm
+from matplotlib import pyplot as plt
 
 from sklearn.gaussian_process import GaussianProcessClassifier
 from sklearn.gaussian_process.kernels import DotProduct, ConstantKernel as C

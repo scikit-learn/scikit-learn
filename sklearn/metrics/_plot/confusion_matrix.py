@@ -3,9 +3,9 @@ from itertools import product
 import numpy as np
 
 from .. import confusion_matrix
+from ...base import is_classifier
 from ...utils import check_matplotlib_support
 from ...utils.validation import _deprecate_positional_args
-from ...base import is_classifier
 
 
 class ConfusionMatrixDisplay:

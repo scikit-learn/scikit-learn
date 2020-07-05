@@ -5,31 +5,30 @@
 #          Nicolas Hug
 # License: BSD 3 clause
 
-from collections.abc import Iterable
 import warnings
+from collections.abc import Iterable
 
 import numpy as np
 from scipy import sparse
 from scipy.stats.mstats import mquantiles
 
-from ..base import is_classifier, is_regressor
-from ..pipeline import Pipeline
-from ..utils.extmath import cartesian
-from ..utils import check_array
-from ..utils import check_matplotlib_support  # noqa
-from ..utils import _safe_indexing
-from ..utils import _determine_key_type
-from ..utils import _get_column_indices
-from ..utils.validation import check_is_fitted
-from ..utils import Bunch
-from ..utils.validation import _deprecate_positional_args
-from ..tree import DecisionTreeRegressor
-from ..ensemble import RandomForestRegressor
-from ..exceptions import NotFittedError
-from ..ensemble._gb import BaseGradientBoosting
 from sklearn.ensemble._hist_gradient_boosting.gradient_boosting import (
     BaseHistGradientBoosting)
-
+from ..base import is_classifier, is_regressor
+from ..ensemble import RandomForestRegressor
+from ..ensemble._gb import BaseGradientBoosting
+from ..exceptions import NotFittedError
+from ..pipeline import Pipeline
+from ..tree import DecisionTreeRegressor
+from ..utils import Bunch
+from ..utils import _determine_key_type
+from ..utils import _get_column_indices
+from ..utils import _safe_indexing
+from ..utils import check_array
+from ..utils import check_matplotlib_support  # noqa
+from ..utils.extmath import cartesian
+from ..utils.validation import _deprecate_positional_args
+from ..utils.validation import check_is_fitted
 
 __all__ = [
     'partial_dependence',

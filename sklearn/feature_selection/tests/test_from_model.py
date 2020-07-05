@@ -1,22 +1,21 @@
-import pytest
 import numpy as np
-
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import skip_if_32bit
+import pytest
 
 from sklearn import datasets
-from sklearn.linear_model import LogisticRegression, SGDClassifier, Lasso
-from sklearn.svm import LinearSVC
-from sklearn.feature_selection import SelectFromModel
-from sklearn.experimental import enable_hist_gradient_boosting  # noqa
+from sklearn.base import BaseEstimator
+from sklearn.decomposition import PCA
 from sklearn.ensemble import (RandomForestClassifier,
                               HistGradientBoostingClassifier)
+from sklearn.experimental import enable_hist_gradient_boosting  # noqa
+from sklearn.feature_selection import SelectFromModel
+from sklearn.linear_model import LogisticRegression, SGDClassifier, Lasso
 from sklearn.linear_model import PassiveAggressiveClassifier
-from sklearn.base import BaseEstimator
 from sklearn.pipeline import make_pipeline
-from sklearn.decomposition import PCA
+from sklearn.svm import LinearSVC
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import skip_if_32bit
 
 
 class NaNTag(BaseEstimator):

@@ -19,10 +19,11 @@ print(__doc__)
 # License: BSD 3 clause
 
 
-import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.svm import SVC
+import numpy as np
+
 from sklearn.datasets import make_blobs
+from sklearn.svm import SVC
 
 X, y = make_blobs(random_state=27)
 

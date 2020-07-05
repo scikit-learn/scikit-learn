@@ -5,15 +5,16 @@
 
 # License: BSD 3 clause
 
-import numpy as np
 import warnings
 
-from ..exceptions import ConvergenceWarning
+import numpy as np
+
 from ..base import BaseEstimator, ClusterMixin
-from ..utils import as_float_array, check_array, check_random_state
-from ..utils.validation import check_is_fitted, _deprecate_positional_args
+from ..exceptions import ConvergenceWarning
 from ..metrics import euclidean_distances
 from ..metrics import pairwise_distances_argmin
+from ..utils import as_float_array, check_array, check_random_state
+from ..utils.validation import check_is_fitted, _deprecate_positional_args
 
 
 def _equal_similarities_and_preferences(S, preference):

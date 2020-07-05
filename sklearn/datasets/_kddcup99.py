@@ -9,22 +9,21 @@ https://archive.ics.uci.edu/ml/machine-learning-databases/kddcup99-mld/kddcup.da
 """
 
 import errno
-from gzip import GzipFile
 import logging
 import os
+from gzip import GzipFile
 from os.path import dirname, exists, join
 
-import numpy as np
 import joblib
+import numpy as np
 
-from ._base import _fetch_remote
 from . import get_data_home
 from ._base import RemoteFileMetadata
+from ._base import _fetch_remote
 from ..utils import Bunch
 from ..utils import check_random_state
 from ..utils import shuffle as shuffle_method
 from ..utils.validation import _deprecate_positional_args
-
 
 # The original data can be found at:
 # https://archive.ics.uci.edu/ml/machine-learning-databases/kddcup99-mld/kddcup.data.gz

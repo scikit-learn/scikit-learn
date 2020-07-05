@@ -11,8 +11,9 @@ This exercise is used in the :ref:`using_kernels_tut` part of the
 print(__doc__)
 
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+
 from sklearn import datasets, svm
 
 iris = datasets.load_iris()

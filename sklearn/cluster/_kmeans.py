@@ -17,27 +17,27 @@ import numpy as np
 import scipy.sparse as sp
 from threadpoolctl import threadpool_limits
 
-from ..base import BaseEstimator, ClusterMixin, TransformerMixin
-from ..metrics.pairwise import euclidean_distances
-from ..utils.extmath import row_norms, stable_cumsum
-from ..utils.sparsefuncs_fast import assign_rows_csr
-from ..utils.sparsefuncs import mean_variance_axis
-from ..utils.validation import _num_samples, _deprecate_positional_args
-from ..utils import check_array
-from ..utils import gen_batches
-from ..utils import check_random_state
-from ..utils.validation import check_is_fitted, _check_sample_weight
-from ..utils._openmp_helpers import _openmp_effective_n_threads
-from ..exceptions import ConvergenceWarning
+from ._k_means_elkan import elkan_iter_chunked_dense
+from ._k_means_elkan import elkan_iter_chunked_sparse
+from ._k_means_elkan import init_bounds_dense
+from ._k_means_elkan import init_bounds_sparse
 from ._k_means_fast import _inertia_dense
 from ._k_means_fast import _inertia_sparse
 from ._k_means_fast import _mini_batch_update_csr
 from ._k_means_lloyd import lloyd_iter_chunked_dense
 from ._k_means_lloyd import lloyd_iter_chunked_sparse
-from ._k_means_elkan import init_bounds_dense
-from ._k_means_elkan import init_bounds_sparse
-from ._k_means_elkan import elkan_iter_chunked_dense
-from ._k_means_elkan import elkan_iter_chunked_sparse
+from ..base import BaseEstimator, ClusterMixin, TransformerMixin
+from ..exceptions import ConvergenceWarning
+from ..metrics.pairwise import euclidean_distances
+from ..utils import check_array
+from ..utils import check_random_state
+from ..utils import gen_batches
+from ..utils._openmp_helpers import _openmp_effective_n_threads
+from ..utils.extmath import row_norms, stable_cumsum
+from ..utils.sparsefuncs import mean_variance_axis
+from ..utils.sparsefuncs_fast import assign_rows_csr
+from ..utils.validation import _num_samples, _deprecate_positional_args
+from ..utils.validation import check_is_fitted, _check_sample_weight
 
 
 ###############################################################################

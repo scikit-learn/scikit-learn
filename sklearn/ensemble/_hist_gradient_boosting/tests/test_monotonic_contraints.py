@@ -1,18 +1,18 @@
 import numpy as np
 import pytest
 
-from sklearn.ensemble._hist_gradient_boosting.grower import TreeGrower
+from sklearn.ensemble import HistGradientBoostingClassifier
+from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.ensemble._hist_gradient_boosting.common import G_H_DTYPE
-from sklearn.ensemble._hist_gradient_boosting.common import X_BINNED_DTYPE
 from sklearn.ensemble._hist_gradient_boosting.common import MonotonicConstraint
+from sklearn.ensemble._hist_gradient_boosting.common import X_BINNED_DTYPE
+from sklearn.ensemble._hist_gradient_boosting.grower import TreeGrower
+from sklearn.ensemble._hist_gradient_boosting.histogram import HistogramBuilder
 from sklearn.ensemble._hist_gradient_boosting.splitting import (
     Splitter,
     compute_node_value
 )
-from sklearn.ensemble._hist_gradient_boosting.histogram import HistogramBuilder
 from sklearn.experimental import enable_hist_gradient_boosting  # noqa
-from sklearn.ensemble import HistGradientBoostingRegressor
-from sklearn.ensemble import HistGradientBoostingClassifier
 
 
 def is_increasing(a):

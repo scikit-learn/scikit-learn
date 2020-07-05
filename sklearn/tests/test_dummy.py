@@ -1,20 +1,18 @@
 
-import pytest
-
 import numpy as np
+import pytest
 import scipy.sparse as sp
 
 from sklearn.base import clone
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.dummy import DummyClassifier, DummyRegressor
+from sklearn.exceptions import NotFittedError
 from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_raises
 from sklearn.utils._testing import assert_warns_message
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils.stats import _weighted_percentile
-
-from sklearn.dummy import DummyClassifier, DummyRegressor
-from sklearn.exceptions import NotFittedError
 
 
 @ignore_warnings

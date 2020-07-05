@@ -3,41 +3,35 @@
 # Authors: Guillaume Lemaitre <g.lemaitre58@gmail.com>
 # License: BSD 3 clause
 
-import pytest
 import numpy as np
+import pytest
 import scipy.sparse as sparse
 
 from sklearn.base import BaseEstimator
 from sklearn.base import ClassifierMixin
 from sklearn.base import RegressorMixin
 from sklearn.base import clone
-
-from sklearn.exceptions import ConvergenceWarning
-
-from sklearn.datasets import load_iris
-from sklearn.datasets import load_diabetes
 from sklearn.datasets import load_breast_cancer
-
+from sklearn.datasets import load_diabetes
+from sklearn.datasets import load_iris
 from sklearn.dummy import DummyClassifier
 from sklearn.dummy import DummyRegressor
-from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import StackingClassifier
+from sklearn.ensemble import StackingRegressor
+from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import KFold
+from sklearn.model_selection import StratifiedKFold
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import scale
 from sklearn.svm import LinearSVC
 from sklearn.svm import LinearSVR
 from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.tree import DecisionTreeRegressor
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.preprocessing import scale
-
-from sklearn.ensemble import StackingClassifier
-from sklearn.ensemble import StackingRegressor
-
-from sklearn.model_selection import train_test_split
-from sklearn.model_selection import StratifiedKFold
-from sklearn.model_selection import KFold
-
 from sklearn.utils._mocking import CheckingClassifier
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_allclose_dense_sparse

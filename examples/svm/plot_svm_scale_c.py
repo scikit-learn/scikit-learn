@@ -84,14 +84,14 @@ print(__doc__)
 # License: BSD 3 clause
 
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
-from sklearn.svm import LinearSVC
-from sklearn.model_selection import ShuffleSplit
-from sklearn.model_selection import GridSearchCV
-from sklearn.utils import check_random_state
 from sklearn import datasets
+from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import ShuffleSplit
+from sklearn.svm import LinearSVC
+from sklearn.utils import check_random_state
 
 rnd = check_random_state(1)
 

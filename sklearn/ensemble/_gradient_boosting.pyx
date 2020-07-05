@@ -6,17 +6,24 @@
 #
 # License: BSD 3 clause
 
-cimport cython
-
 from libc.stdlib cimport free
 from libc.string cimport memset
 
 import numpy as np
 cimport numpy as np
+
+cimport
+numpy as np
+import numpy as np
+from libc.stdlib cimport
+
+free
+from libc.string cimport
+
+memset
 np.import_array()
 
 from scipy.sparse import issparse
-from scipy.sparse import csr_matrix
 
 from ..tree._tree cimport Node
 from ..tree._tree cimport Tree
@@ -31,10 +38,6 @@ ctypedef np.uint8_t uint8
 
 # no namespace lookup for numpy dtype and array creation
 from numpy import zeros as np_zeros
-from numpy import ones as np_ones
-from numpy import float32 as np_float32
-from numpy import float64 as np_float64
-
 
 # constant to mark tree leafs
 cdef SIZE_t TREE_LEAF = -1

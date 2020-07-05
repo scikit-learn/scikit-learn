@@ -7,20 +7,21 @@ Testing for Neighborhood Component Analysis module (sklearn.neighbors.nca)
 #          John Chiotellis <ioannis.chiotellis@in.tum.de>
 # License: BSD 3 clause
 
-import pytest
 import re
+
 import numpy as np
+import pytest
 from numpy.testing import assert_array_equal, assert_array_almost_equal
 from scipy.optimize import check_grad
+
 from sklearn import clone
+from sklearn.datasets import load_iris, make_classification, make_blobs
 from sklearn.exceptions import ConvergenceWarning
+from sklearn.metrics import pairwise_distances
+from sklearn.neighbors import NeighborhoodComponentsAnalysis
 from sklearn.utils import check_random_state
 from sklearn.utils._testing import (assert_raises,
-                                   assert_raise_message, assert_warns_message)
-from sklearn.datasets import load_iris, make_classification, make_blobs
-from sklearn.neighbors import NeighborhoodComponentsAnalysis
-from sklearn.metrics import pairwise_distances
-
+                                    assert_raise_message, assert_warns_message)
 
 rng = check_random_state(0)
 # load and shuffle iris dataset

@@ -14,12 +14,12 @@ print(__doc__)
 # License: BSD 3 clause
 
 from itertools import cycle
-import numpy as np
+
 import matplotlib.pyplot as plt
+import numpy as np
 
-from sklearn.linear_model import lasso_path, enet_path
 from sklearn import datasets
-
+from sklearn.linear_model import lasso_path, enet_path
 
 X, y = datasets.load_diabetes(return_X_y=True)
 

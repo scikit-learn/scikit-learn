@@ -14,6 +14,9 @@ import numpy as np
 from scipy import sparse
 from scipy.sparse.csgraph import connected_components
 
+# mypy error: Module 'sklearn.cluster' has no attribute '_hierarchical_fast'
+from . import _hierarchical_fast as _hierarchical  # type: ignore
+from ._feature_agglomeration import AgglomerationTransform
 from ..base import BaseEstimator, ClusterMixin
 from ..metrics.pairwise import paired_distances, pairwise_distances
 from ..neighbors import DistanceMetric
@@ -22,9 +25,7 @@ from ..utils import check_array
 from ..utils._fast_dict import IntFloatDict
 from ..utils.fixes import _astype_copy_false
 from ..utils.validation import _deprecate_positional_args, check_memory
-# mypy error: Module 'sklearn.cluster' has no attribute '_hierarchical_fast'
-from . import _hierarchical_fast as _hierarchical  # type: ignore
-from ._feature_agglomeration import AgglomerationTransform
+
 
 ###############################################################################
 # For non fully-connected graphs

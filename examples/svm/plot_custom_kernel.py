@@ -9,8 +9,9 @@ plot the decision surface and the support vectors.
 """
 print(__doc__)
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+
 from sklearn import svm, datasets
 
 # import some data to play with

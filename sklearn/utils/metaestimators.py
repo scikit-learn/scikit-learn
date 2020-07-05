@@ -1,16 +1,16 @@
 """Utilities for meta-estimators"""
+from abc import ABCMeta, abstractmethod
+from functools import update_wrapper
+from operator import attrgetter
 # Author: Joel Nothman
 #         Andreas Mueller
 # License: BSD
 from typing import List, Any
 
-from abc import ABCMeta, abstractmethod
-from operator import attrgetter
-from functools import update_wrapper
 import numpy as np
 
-from ..utils import _safe_indexing
 from ..base import BaseEstimator
+from ..utils import _safe_indexing
 
 __all__ = ['if_delegate_has_method']
 

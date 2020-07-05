@@ -3,6 +3,11 @@
 
 from cython cimport floating
 cimport numpy as np
+cimport
+numpy as np
+from cython cimport
+
+floating
 
 
 cdef floating _euclidean_dense_dense(floating*, floating*, int, bint) nogil

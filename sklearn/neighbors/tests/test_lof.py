@@ -5,24 +5,20 @@
 from math import sqrt
 
 import numpy as np
-from sklearn import neighbors
-
 import pytest
 from numpy.testing import assert_array_equal
 
 from sklearn import metrics
+from sklearn import neighbors
+from sklearn.datasets import load_iris
 from sklearn.metrics import roc_auc_score
-
 from sklearn.utils import check_random_state
 from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_warns_message
 from sklearn.utils._testing import assert_raises
 from sklearn.utils._testing import assert_raises_regex
+from sklearn.utils._testing import assert_warns_message
 from sklearn.utils.estimator_checks import check_estimator
 from sklearn.utils.estimator_checks import check_outlier_corruption
-
-from sklearn.datasets import load_iris
-
 
 # load the iris dataset
 # and randomly permute it

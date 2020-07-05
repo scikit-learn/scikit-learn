@@ -24,9 +24,10 @@ In practice, such informations are generally not available, and taking
 n_neighbors=20 appears to work well in general.
 """
 
-import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
+import numpy as np
+
 from sklearn.neighbors import LocalOutlierFactor
 
 print(__doc__)

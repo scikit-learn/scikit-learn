@@ -7,8 +7,8 @@ This example shows how quantile regression can be used
 to create prediction intervals.
 """
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
 from sklearn.ensemble import GradientBoostingRegressor
 

@@ -1,43 +1,42 @@
-import unittest
 import sys
-
-import numpy as np
-import scipy.sparse as sp
-import joblib
-
+import unittest
 from io import StringIO
 
+import joblib
+import numpy as np
+import scipy.sparse as sp
+
 from sklearn.base import BaseEstimator, ClassifierMixin
+from sklearn.cluster import MiniBatchKMeans
+from sklearn.decomposition import NMF
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.exceptions import SkipTestWarning
+from sklearn.linear_model import LinearRegression, SGDClassifier
+from sklearn.linear_model import MultiTaskElasticNet, LogisticRegression
+from sklearn.mixture import GaussianMixture
+from sklearn.neighbors import KNeighborsRegressor
+from sklearn.svm import SVC, NuSVC
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.utils import all_estimators
 from sklearn.utils import deprecated
 from sklearn.utils._testing import (assert_raises_regex,
                                     ignore_warnings,
                                     assert_warns, assert_raises,
                                     SkipTest)
-from sklearn.utils.estimator_checks import check_estimator, _NotAnArray
+from sklearn.utils.estimator_checks import _set_checking_parameters
 from sklearn.utils.estimator_checks \
     import check_class_weight_balanced_linear_classifier
-from sklearn.utils.estimator_checks import set_random_state
-from sklearn.utils.estimator_checks import _set_checking_parameters
+from sklearn.utils.estimator_checks import check_classifier_data_not_an_array
+from sklearn.utils.estimator_checks import check_estimator, _NotAnArray
 from sklearn.utils.estimator_checks import check_estimators_unfitted
 from sklearn.utils.estimator_checks import check_fit_score_takes_y
 from sklearn.utils.estimator_checks import check_no_attributes_set_in_init
-from sklearn.utils.estimator_checks import check_classifier_data_not_an_array
-from sklearn.utils.estimator_checks import check_regressor_data_not_an_array
-from sklearn.utils.validation import check_is_fitted
 from sklearn.utils.estimator_checks import check_outlier_corruption
+from sklearn.utils.estimator_checks import check_regressor_data_not_an_array
+from sklearn.utils.estimator_checks import set_random_state
 from sklearn.utils.fixes import np_version, parse_version
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.linear_model import LinearRegression, SGDClassifier
-from sklearn.mixture import GaussianMixture
-from sklearn.cluster import MiniBatchKMeans
-from sklearn.decomposition import NMF
-from sklearn.linear_model import MultiTaskElasticNet, LogisticRegression
-from sklearn.svm import SVC, NuSVC
-from sklearn.neighbors import KNeighborsRegressor
-from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils.validation import check_array
-from sklearn.utils import all_estimators
-from sklearn.exceptions import SkipTestWarning
+from sklearn.utils.validation import check_is_fitted
 
 
 class CorrectNotFittedError(ValueError):

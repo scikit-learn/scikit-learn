@@ -1,31 +1,30 @@
 """
 The :mod:`sklearn.utils` module includes various utilities.
 """
-import pkgutil
 import inspect
-from importlib import import_module
-from operator import itemgetter
-from collections.abc import Sequence
-from contextlib import contextmanager
-from itertools import compress
-from itertools import islice
 import numbers
+import pkgutil
 import platform
 import struct
 import timeit
+import warnings
+from collections.abc import Sequence
+from contextlib import contextmanager
+from importlib import import_module
+from itertools import compress
+from itertools import islice
+from operator import itemgetter
 from pathlib import Path
 
-import warnings
 import numpy as np
 from scipy.sparse import issparse
 
-from .murmurhash import murmurhash3_32
-from .class_weight import compute_class_weight, compute_sample_weight
 from . import _joblib
-from ..exceptions import DataConversionWarning
+from ._estimator_html_repr import estimator_html_repr
+from .class_weight import compute_class_weight, compute_sample_weight
 from .deprecation import deprecated
 from .fixes import np_version, parse_version
-from ._estimator_html_repr import estimator_html_repr
+from .murmurhash import murmurhash3_32
 from .validation import (as_float_array,
                          assert_all_finite,
                          check_random_state, column_or_1d, check_array,
@@ -33,7 +32,7 @@ from .validation import (as_float_array,
                          check_symmetric, check_scalar,
                          _deprecate_positional_args)
 from .. import get_config
-
+from ..exceptions import DataConversionWarning
 
 # Do not deprecate parallel_backend and register_parallel_backend as they are
 # needed to tune `scikit-learn` behavior and have different effect if called

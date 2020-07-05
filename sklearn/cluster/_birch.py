@@ -3,20 +3,21 @@
 #          Joel Nothman <joel.nothman@gmail.com>
 # License: BSD 3 clause
 
-import warnings
 import numbers
-import numpy as np
-from scipy import sparse
+import warnings
 from math import sqrt
 
+import numpy as np
+from scipy import sparse
+
+from . import AgglomerativeClustering
+from ..base import TransformerMixin, ClusterMixin, BaseEstimator
+from ..exceptions import ConvergenceWarning
 from ..metrics import pairwise_distances_argmin
 from ..metrics.pairwise import euclidean_distances
-from ..base import TransformerMixin, ClusterMixin, BaseEstimator
 from ..utils import check_array
 from ..utils.extmath import row_norms
 from ..utils.validation import check_is_fitted, _deprecate_positional_args
-from ..exceptions import ConvergenceWarning
-from . import AgglomerativeClustering
 
 
 def _iterate_sparse_X(X):

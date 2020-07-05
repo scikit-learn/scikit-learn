@@ -4,20 +4,20 @@ import numpy as np
 import pytest
 from scipy import linalg
 
+from sklearn import linear_model, datasets
 from sklearn.base import clone
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.linear_model import Lars, LassoLars
+from sklearn.linear_model import LassoLarsIC, lars_path
+from sklearn.linear_model._least_angle import _lars_path_residues
 from sklearn.model_selection import train_test_split
+from sklearn.utils._testing import TempMemmap
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_raises
-from sklearn.utils._testing import ignore_warnings
 from sklearn.utils._testing import assert_warns
-from sklearn.utils._testing import TempMemmap
+from sklearn.utils._testing import ignore_warnings
 from sklearn.utils.fixes import np_version, parse_version
-from sklearn.exceptions import ConvergenceWarning
-from sklearn import linear_model, datasets
-from sklearn.linear_model._least_angle import _lars_path_residues
-from sklearn.linear_model import LassoLarsIC, lars_path
-from sklearn.linear_model import Lars, LassoLars
 
 # TODO: use another dataset that has multiple drops
 diabetes = datasets.load_diabetes()

@@ -21,23 +21,21 @@ Statistics and Probability Letters, 33 (1997) 291-297.
 # Authors: Peter Prettenhofer
 # License: BSD 3 clause
 
-from os.path import dirname, exists, join
-from os import makedirs, remove
-import tarfile
-
-import numpy as np
 import logging
+import tarfile
+from os import makedirs, remove
+from os.path import dirname, exists, join
 
 import joblib
+import numpy as np
 
 from . import get_data_home
+from ._base import RemoteFileMetadata
 from ._base import _convert_data_dataframe
 from ._base import _fetch_remote
 from ._base import _pkl_filepath
-from ._base import RemoteFileMetadata
 from ..utils import Bunch
 from ..utils.validation import _deprecate_positional_args
-
 
 # The original data can be found at:
 # https://www.dcc.fc.up.pt/~ltorgo/Regression/cal_housing.tgz

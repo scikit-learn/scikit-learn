@@ -1,13 +1,11 @@
 import numpy as np
 
 from .base import _check_classifier_response_method
-
 from .. import average_precision_score
 from .. import precision_recall_curve
-
+from ...base import is_classifier
 from ...utils import check_matplotlib_support
 from ...utils.validation import _deprecate_positional_args
-from ...base import is_classifier
 
 
 class PrecisionRecallDisplay:

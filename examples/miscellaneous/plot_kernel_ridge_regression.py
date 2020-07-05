@@ -37,13 +37,13 @@ on the parameters epsilon and C of the SVR.
 
 import time
 
+import matplotlib.pyplot as plt
 import numpy as np
 
-from sklearn.svm import SVR
+from sklearn.kernel_ridge import KernelRidge
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import learning_curve
-from sklearn.kernel_ridge import KernelRidge
-import matplotlib.pyplot as plt
+from sklearn.svm import SVR
 
 rng = np.random.RandomState(0)
 

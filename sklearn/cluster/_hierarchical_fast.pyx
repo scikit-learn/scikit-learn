@@ -4,6 +4,12 @@ import numpy as np
 cimport numpy as np
 cimport cython
 
+cimport
+numpy as np
+cimport
+cython
+import numpy as np
+
 ctypedef np.float64_t DOUBLE
 ctypedef np.npy_intp INTP
 ctypedef np.int8_t INT8

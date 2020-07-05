@@ -7,34 +7,31 @@ General tests for all estimators in sklearn.
 # License: BSD 3 clause
 
 import os
-import warnings
-import sys
-import re
 import pkgutil
-from inspect import isgenerator
+import re
+import sys
+import warnings
 from functools import partial
+from inspect import isgenerator
 
 import pytest
 
-
-from sklearn.utils import all_estimators
-from sklearn.utils._testing import ignore_warnings
-from sklearn.exceptions import ConvergenceWarning
-from sklearn.utils.estimator_checks import check_estimator
-
 import sklearn
 from sklearn.base import BiclusterMixin
-
-from sklearn.linear_model._base import LinearClassifierMixin
+from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model._base import LinearClassifierMixin
 from sklearn.utils import IS_PYPY
+from sklearn.utils import all_estimators
 from sklearn.utils._testing import SkipTest
+from sklearn.utils._testing import ignore_warnings
 from sklearn.utils.estimator_checks import (
     _construct_instance,
     _set_checking_parameters,
     _set_check_estimator_ids,
     check_class_weight_balanced_linear_classifier,
     parametrize_with_checks)
+from sklearn.utils.estimator_checks import check_estimator
 
 
 def test_all_estimator_no_base_class():

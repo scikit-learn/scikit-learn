@@ -15,12 +15,12 @@ In that case, the model with 2 components and full covariance
 (which corresponds to the true generative model) is selected.
 """
 
-import numpy as np
 import itertools
 
-from scipy import linalg
-import matplotlib.pyplot as plt
 import matplotlib as mpl
+import matplotlib.pyplot as plt
+import numpy as np
+from scipy import linalg
 
 from sklearn import mixture
 

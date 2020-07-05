@@ -12,16 +12,16 @@ import warnings
 from itertools import combinations
 
 import numpy as np
-from scipy import linalg
-from scipy.special import binom
-from scipy.linalg.lapack import get_lapack_funcs
 from joblib import Parallel, delayed, effective_n_jobs
+from scipy import linalg
+from scipy.linalg.lapack import get_lapack_funcs
+from scipy.special import binom
 
 from ._base import LinearModel
 from ..base import RegressorMixin
+from ..exceptions import ConvergenceWarning
 from ..utils import check_random_state
 from ..utils.validation import _deprecate_positional_args
-from ..exceptions import ConvergenceWarning
 
 _EPSILON = np.finfo(np.double).eps
 

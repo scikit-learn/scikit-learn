@@ -3,15 +3,19 @@
 #
 # cython: boundscheck=False, cdivision=True
 
-import sys
 import array
-from cpython cimport array
-cimport cython
-from libc.stdlib cimport abs
-cimport numpy as np
-import numpy as np
 
-from ..utils.murmurhash cimport murmurhash3_bytes_s32
+import numpy as np
+from cpython cimport
+
+array
+from libc.stdlib cimport
+
+abs
+
+from ..utils.murmurhash cimport
+
+murmurhash3_bytes_s32
 
 np.import_array()
 

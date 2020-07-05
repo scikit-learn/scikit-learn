@@ -5,18 +5,37 @@
 
 # Author: Nicolas Hug
 
-cimport cython
 from cython.parallel import prange
 from libc.math cimport isnan
 import numpy as np
 cimport numpy as np
-from numpy.math cimport INFINITY
 
 from .common cimport X_DTYPE_C
 from .common cimport Y_DTYPE_C
 from .common import Y_DTYPE
 from .common cimport X_BINNED_DTYPE_C
 from .common cimport node_struct
+cimport
+numpy as np
+import numpy as np
+from cython.parallel import prange
+from libc.math cimport
+
+isnan
+
+from .common cimport
+
+X_BINNED_DTYPE_C
+from .common cimport
+
+X_DTYPE_C
+from .common import Y_DTYPE
+from .common cimport
+
+Y_DTYPE_C
+from .common cimport
+
+node_struct
 
 np.import_array()
 

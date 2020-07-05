@@ -41,29 +41,28 @@ Single and multi-output problems are both handled.
 
 
 import numbers
-from warnings import catch_warnings, simplefilter, warn
 import threading
-
 from abc import ABCMeta, abstractmethod
-import numpy as np
-from scipy.sparse import issparse
-from scipy.sparse import hstack as sparse_hstack
-from joblib import Parallel, delayed
+from warnings import catch_warnings, simplefilter, warn
 
+import numpy as np
+from joblib import Parallel, delayed
+from scipy.sparse import hstack as sparse_hstack
+from scipy.sparse import issparse
+
+from ._base import BaseEnsemble, _partition_estimators
 from ..base import ClassifierMixin, RegressorMixin, MultiOutputMixin
+from ..exceptions import DataConversionWarning
 from ..metrics import r2_score
 from ..preprocessing import OneHotEncoder
 from ..tree import (DecisionTreeClassifier, DecisionTreeRegressor,
                     ExtraTreeClassifier, ExtraTreeRegressor)
 from ..tree._tree import DTYPE, DOUBLE
 from ..utils import check_random_state, check_array, compute_sample_weight
-from ..exceptions import DataConversionWarning
-from ._base import BaseEnsemble, _partition_estimators
 from ..utils.fixes import _joblib_parallel_args
 from ..utils.multiclass import check_classification_targets
-from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils.validation import _deprecate_positional_args
-
+from ..utils.validation import check_is_fitted, _check_sample_weight
 
 __all__ = ["RandomForestClassifier",
            "RandomForestRegressor",

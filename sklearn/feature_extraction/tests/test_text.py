@@ -1,32 +1,31 @@
 # -*- coding: utf-8 -*-
-from collections.abc import Mapping
+import pickle
 import re
-
-import pytest
-from scipy import sparse
-
-from sklearn.feature_extraction.text import strip_tags
-from sklearn.feature_extraction.text import strip_accents_unicode
-from sklearn.feature_extraction.text import strip_accents_ascii
-
-from sklearn.feature_extraction.text import HashingVectorizer
-from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.feature_extraction.text import TfidfTransformer
-from sklearn.feature_extraction.text import TfidfVectorizer
-
-from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS
-
-from sklearn.model_selection import train_test_split
-from sklearn.model_selection import cross_val_score
-from sklearn.model_selection import GridSearchCV
-from sklearn.pipeline import Pipeline
-from sklearn.svm import LinearSVC
-
-from sklearn.base import clone
+from collections import defaultdict
+from collections.abc import Mapping
+from functools import partial
+from io import StringIO
 
 import numpy as np
+import pytest
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
+from scipy import sparse
+
+from sklearn.base import clone
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS
+from sklearn.feature_extraction.text import HashingVectorizer
+from sklearn.feature_extraction.text import TfidfTransformer
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.feature_extraction.text import strip_accents_ascii
+from sklearn.feature_extraction.text import strip_accents_unicode
+from sklearn.feature_extraction.text import strip_tags
+from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import train_test_split
+from sklearn.pipeline import Pipeline
+from sklearn.svm import LinearSVC
 from sklearn.utils import IS_PYPY
 from sklearn.utils._testing import (assert_almost_equal,
                                     assert_warns_message, assert_raise_message,
@@ -34,10 +33,6 @@ from sklearn.utils._testing import (assert_almost_equal,
                                     fails_if_pypy,
                                     assert_allclose_dense_sparse,
                                     skip_if_32bit)
-from collections import defaultdict
-from functools import partial
-import pickle
-from io import StringIO
 
 JUNK_FOOD_DOCS = (
     "the pizza pizza beer copyright",

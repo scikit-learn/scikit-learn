@@ -1,24 +1,22 @@
 
-import numpy as np
-from numpy.testing import assert_allclose
 from itertools import product
-import pytest
 
-from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_array_almost_equal
+import numpy as np
+import pytest
+from numpy.testing import assert_allclose
 
 from sklearn.metrics import explained_variance_score
+from sklearn.metrics import max_error
 from sklearn.metrics import mean_absolute_error
 from sklearn.metrics import mean_squared_error
 from sklearn.metrics import mean_squared_log_error
-from sklearn.metrics import median_absolute_error
-from sklearn.metrics import max_error
-from sklearn.metrics import r2_score
 from sklearn.metrics import mean_tweedie_deviance
-
+from sklearn.metrics import median_absolute_error
+from sklearn.metrics import r2_score
 from sklearn.metrics._regression import _check_reg_targets
-
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_array_equal
 from ...exceptions import UndefinedMetricWarning
 
 

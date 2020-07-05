@@ -7,8 +7,8 @@ import warnings
 
 import numpy as np
 import pytest
-from scipy.sparse import coo_matrix, csr_matrix
 import scipy.stats
+from scipy.sparse import coo_matrix, csr_matrix
 
 from sklearn.feature_selection import SelectKBest, chi2
 from sklearn.feature_selection._univariate_selection import _chisquare

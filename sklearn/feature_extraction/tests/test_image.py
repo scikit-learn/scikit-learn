@@ -3,10 +3,10 @@
 # License: BSD 3 clause
 
 import numpy as np
+import pytest
 import scipy as sp
 from scipy import ndimage
 from scipy.sparse.csgraph import connected_components
-import pytest
 
 from sklearn.feature_extraction.image import (
     img_to_graph, grid_to_graph, extract_patches_2d,

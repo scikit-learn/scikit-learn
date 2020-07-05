@@ -9,25 +9,23 @@
 #          Sylvain Marie
 # License: BSD 3 clause
 
-from functools import wraps
-import warnings
 import numbers
-
-import numpy as np
-import scipy.sparse as sp
+import warnings
+from contextlib import suppress
+from functools import wraps
 from inspect import signature, isclass, Parameter
 
+import joblib
+import numpy as np
+import scipy.sparse as sp
 # mypy error: Module 'numpy.core.numeric' has no attribute 'ComplexWarning'
 from numpy.core.numeric import ComplexWarning  # type: ignore
-import joblib
-
-from contextlib import suppress
 
 from .fixes import _object_dtype_isnan, parse_version
 from .. import get_config as _get_config
+from ..exceptions import DataConversionWarning
 from ..exceptions import NonBLASDotWarning, PositiveSpectrumWarning
 from ..exceptions import NotFittedError
-from ..exceptions import DataConversionWarning
 
 FLOAT_DTYPES = (np.float64, np.float32, np.float16)
 

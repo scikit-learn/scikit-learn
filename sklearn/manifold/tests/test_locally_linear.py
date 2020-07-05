@@ -1,14 +1,14 @@
 from itertools import product
 
 import numpy as np
+import pytest
 from numpy.testing import assert_almost_equal, assert_array_almost_equal
 from scipy import linalg
-import pytest
 
 from sklearn import neighbors, manifold
 from sklearn.manifold._locally_linear import barycenter_kneighbors_graph
-from sklearn.utils._testing import ignore_warnings
 from sklearn.utils._testing import assert_raise_message
+from sklearn.utils._testing import ignore_warnings
 
 eigen_solvers = ['dense', 'arpack']
 

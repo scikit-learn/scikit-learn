@@ -12,9 +12,9 @@ the original feature space.
 from sklearn import svm
 from sklearn.datasets import make_classification
 from sklearn.feature_selection import SelectKBest, f_classif
-from sklearn.pipeline import make_pipeline
-from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report
+from sklearn.model_selection import train_test_split
+from sklearn.pipeline import make_pipeline
 
 print(__doc__)
 

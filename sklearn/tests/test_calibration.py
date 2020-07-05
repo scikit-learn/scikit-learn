@@ -1,27 +1,26 @@
 # Authors: Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
 # License: BSD 3 clause
 
-import pytest
 import numpy as np
+import pytest
 from scipy import sparse
 
 from sklearn.base import BaseEstimator
-from sklearn.model_selection import LeaveOneOut
-
-from sklearn.utils._testing import (assert_array_almost_equal,
-                                   assert_almost_equal,
-                                   assert_array_equal,
-                                   assert_raises, ignore_warnings)
-from sklearn.datasets import make_classification, make_blobs
-from sklearn.naive_bayes import MultinomialNB
-from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
-from sklearn.svm import LinearSVC
-from sklearn.pipeline import Pipeline
-from sklearn.impute import SimpleImputer
-from sklearn.metrics import brier_score_loss, log_loss
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.calibration import _sigmoid_calibration, _SigmoidCalibration
 from sklearn.calibration import calibration_curve
+from sklearn.datasets import make_classification, make_blobs
+from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
+from sklearn.impute import SimpleImputer
+from sklearn.metrics import brier_score_loss, log_loss
+from sklearn.model_selection import LeaveOneOut
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.pipeline import Pipeline
+from sklearn.svm import LinearSVC
+from sklearn.utils._testing import (assert_array_almost_equal,
+                                    assert_almost_equal,
+                                    assert_array_equal,
+                                    assert_raises, ignore_warnings)
 
 
 def test_calibration():

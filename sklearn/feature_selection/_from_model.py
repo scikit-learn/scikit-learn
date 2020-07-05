@@ -1,17 +1,17 @@
 # Authors: Gilles Louppe, Mathieu Blondel, Maheshakya Wijewardena
 # License: BSD 3 clause
 
-import numpy as np
 import numbers
+
+import numpy as np
 
 from ._base import SelectorMixin
 from ._base import _get_feature_importances
 from ..base import BaseEstimator, clone, MetaEstimatorMixin
-from ..utils.validation import check_is_fitted
-
 from ..exceptions import NotFittedError
 from ..utils.metaestimators import if_delegate_has_method
 from ..utils.validation import _deprecate_positional_args
+from ..utils.validation import check_is_fitted
 
 
 def _calculate_threshold(estimator, importances, threshold):

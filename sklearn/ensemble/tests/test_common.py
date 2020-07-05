@@ -1,18 +1,15 @@
 import pytest
 
-from sklearn.base import clone
 from sklearn.base import ClassifierMixin
+from sklearn.base import clone
 from sklearn.base import is_classifier
-
 from sklearn.datasets import make_classification
 from sklearn.datasets import make_regression
-
-from sklearn.linear_model import LogisticRegression, LinearRegression
-from sklearn.svm import LinearSVC, LinearSVR, SVC, SVR
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
-
 from sklearn.ensemble import StackingClassifier, StackingRegressor
 from sklearn.ensemble import VotingClassifier, VotingRegressor
+from sklearn.linear_model import LogisticRegression, LinearRegression
+from sklearn.svm import LinearSVC, LinearSVR, SVC, SVR
 
 
 @pytest.mark.parametrize(

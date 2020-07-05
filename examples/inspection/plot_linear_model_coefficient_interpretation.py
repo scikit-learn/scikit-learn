@@ -30,11 +30,13 @@ wage as a function of various features such as experience, age, or education.
 
 print(__doc__)
 
-import numpy as np
-import scipy as sp
-import pandas as pd
 import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import scipy as sp
 import seaborn as sns
+
+from sklearn.datasets import fetch_openml
 
 # %%
 # The dataset: wages
@@ -43,8 +45,6 @@ import seaborn as sns
 # We fetch the data from `OpenML <http://openml.org/>`_.
 # Note that setting the parameter `as_frame` to True will retrieve the data
 # as a pandas dataframe.
-
-from sklearn.datasets import fetch_openml
 
 survey = fetch_openml(data_id=534, as_frame=True)
 

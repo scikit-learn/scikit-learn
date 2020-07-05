@@ -142,22 +142,28 @@
 #                                   BinaryTree tree2, ITYPE_t i_node2):
 #     """Compute the maximum distance between two nodes"""
 
-cimport cython
-cimport numpy as np
-from libc.math cimport fabs, sqrt, exp, cos, pow, log, lgamma
-from libc.math cimport fmin, fmax
-from libc.stdlib cimport calloc, malloc, free
-from libc.string cimport memcpy
-
 import numpy as np
-import warnings
-from ..utils import check_array
+from libc.math cimport
 
-from ._typedefs cimport DTYPE_t, ITYPE_t, DITYPE_t
+fmin, fmax
+from libc.math cimport
+
+sqrt, exp, cos, log, lgamma
+from libc.stdlib cimport
+
+calloc, malloc, free
+from libc.string cimport
+
+memcpy
+
+from ._dist_metrics cimport
+
+(DistanceMetric, euclidean_dist, euclidean_rdist)
 from ._typedefs import DTYPE, ITYPE
+from ._typedefs cimport
 
-from ._dist_metrics cimport (DistanceMetric, euclidean_dist, euclidean_rdist,
-                             euclidean_dist_to_rdist, euclidean_rdist_to_dist)
+DTYPE_t, ITYPE_t, DITYPE_t
+from ..utils import check_array
 
 cdef extern from "numpy/arrayobject.h":
     void PyArray_ENABLEFLAGS(np.ndarray arr, int flags)

@@ -19,9 +19,10 @@ error stabilizes.
        Learning Ed. 2", p592-593, Springer, 2009.
 
 """
+from collections import OrderedDict
+
 import matplotlib.pyplot as plt
 
-from collections import OrderedDict
 from sklearn.datasets import make_classification
 from sklearn.ensemble import RandomForestClassifier
 

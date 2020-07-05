@@ -11,15 +11,15 @@ from abc import ABC, abstractmethod
 import numpy as np
 from scipy.special import expit, logsumexp, xlogy
 
-from .common import Y_DTYPE
-from .common import G_H_DTYPE
-from ._loss import _update_gradients_least_squares
-from ._loss import _update_gradients_hessians_least_squares
-from ._loss import _update_gradients_least_absolute_deviation
-from ._loss import _update_gradients_hessians_least_absolute_deviation
 from ._loss import _update_gradients_hessians_binary_crossentropy
 from ._loss import _update_gradients_hessians_categorical_crossentropy
+from ._loss import _update_gradients_hessians_least_absolute_deviation
+from ._loss import _update_gradients_hessians_least_squares
 from ._loss import _update_gradients_hessians_poisson
+from ._loss import _update_gradients_least_absolute_deviation
+from ._loss import _update_gradients_least_squares
+from .common import G_H_DTYPE
+from .common import Y_DTYPE
 from ...utils.stats import _weighted_percentile
 
 

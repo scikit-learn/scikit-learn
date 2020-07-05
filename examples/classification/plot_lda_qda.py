@@ -11,11 +11,11 @@ class has its own standard deviation with QDA.
 """
 print(__doc__)
 
-from scipy import linalg
-import numpy as np
-import matplotlib.pyplot as plt
 import matplotlib as mpl
+import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib import colors
+from scipy import linalg
 
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis

@@ -19,12 +19,11 @@ The ``# noqa`` comment comment can be removed: it just tells linters like
 flake8 to ignore the import, which appears as unused.
 """
 
+from .. import ensemble
 from ..ensemble._hist_gradient_boosting.gradient_boosting import (
     HistGradientBoostingClassifier,
     HistGradientBoostingRegressor
 )
-
-from .. import ensemble
 
 # use settattr to avoid mypy errors when monkeypatching
 setattr(ensemble, "HistGradientBoostingClassifier",

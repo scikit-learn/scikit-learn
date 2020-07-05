@@ -9,22 +9,24 @@ Neighborhood Component Analysis
 
 from __future__ import print_function
 
-from warnings import warn
-import numpy as np
+import numbers
 import sys
 import time
-import numbers
+from warnings import warn
+
+import numpy as np
 from scipy.optimize import minimize
-from ..utils.extmath import softmax
-from ..metrics import pairwise_distances
+
 from ..base import BaseEstimator, TransformerMixin
-from ..preprocessing import LabelEncoder
 from ..decomposition import PCA
+from ..exceptions import ConvergenceWarning
+from ..metrics import pairwise_distances
+from ..preprocessing import LabelEncoder
+from ..utils.extmath import softmax
 from ..utils.multiclass import check_classification_targets
 from ..utils.random import check_random_state
-from ..utils.validation import check_is_fitted, check_array, check_scalar
 from ..utils.validation import _deprecate_positional_args
-from ..exceptions import ConvergenceWarning
+from ..utils.validation import check_is_fitted, check_array, check_scalar
 
 
 class NeighborhoodComponentsAnalysis(TransformerMixin, BaseEstimator):

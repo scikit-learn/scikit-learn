@@ -34,10 +34,11 @@ or with conda::
 # 'poisson' loss as well.
 
 import numpy as np
-from sklearn.model_selection import train_test_split
-from sklearn.linear_model import PoissonRegressor
-from sklearn.experimental import enable_hist_gradient_boosting  # noqa
+
 from sklearn.ensemble import HistGradientBoostingRegressor
+from sklearn.experimental import enable_hist_gradient_boosting  # noqa
+from sklearn.linear_model import PoissonRegressor
+from sklearn.model_selection import train_test_split
 
 n_samples, n_features = 1000, 20
 rng = np.random.RandomState(0)
@@ -122,7 +123,6 @@ print(completeness_score(kmeans.predict(X_test), y_test))
 # effect of the first feature, instead of fitting the noise.
 import numpy as np
 from matplotlib import pyplot as plt
-from sklearn.model_selection import train_test_split
 from sklearn.inspection import plot_partial_dependence
 from sklearn.experimental import enable_hist_gradient_boosting  # noqa
 from sklearn.ensemble import HistGradientBoostingRegressor

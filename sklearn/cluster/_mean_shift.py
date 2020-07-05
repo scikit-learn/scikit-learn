@@ -14,16 +14,17 @@ Seeding is performed using a binning technique for scalability.
 #          Gael Varoquaux <gael.varoquaux@normalesup.org>
 #          Martino Sorbaro <martino.sorbaro@ed.ac.uk>
 
-import numpy as np
 import warnings
+from collections import defaultdict
+
+import numpy as np
 from joblib import Parallel, delayed
 
-from collections import defaultdict
-from ..utils.validation import check_is_fitted, _deprecate_positional_args
-from ..utils import check_random_state, gen_batches, check_array
 from ..base import BaseEstimator, ClusterMixin
-from ..neighbors import NearestNeighbors
 from ..metrics.pairwise import pairwise_distances_argmin
+from ..neighbors import NearestNeighbors
+from ..utils import check_random_state, gen_batches, check_array
+from ..utils.validation import check_is_fitted, _deprecate_positional_args
 
 
 @_deprecate_positional_args

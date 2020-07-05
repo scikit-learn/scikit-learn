@@ -16,23 +16,21 @@ are supervised learning methods based on applying Bayes' theorem with strong
 #
 # License: BSD 3 clause
 import warnings
-
 from abc import ABCMeta, abstractmethod
-
 
 import numpy as np
 from scipy.special import logsumexp
 
 from .base import BaseEstimator, ClassifierMixin
-from .preprocessing import binarize
 from .preprocessing import LabelBinarizer
+from .preprocessing import binarize
 from .preprocessing import label_binarize
 from .utils import check_X_y, check_array
 from .utils.extmath import safe_sparse_dot
 from .utils.multiclass import _check_partial_fit_first_call
-from .utils.validation import check_is_fitted, check_non_negative, column_or_1d
 from .utils.validation import _check_sample_weight
 from .utils.validation import _deprecate_positional_args
+from .utils.validation import check_is_fitted, check_non_negative, column_or_1d
 
 __all__ = ['BernoulliNB', 'GaussianNB', 'MultinomialNB', 'ComplementNB',
            'CategoricalNB']

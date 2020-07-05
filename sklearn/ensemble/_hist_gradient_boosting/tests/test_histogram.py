@@ -1,9 +1,11 @@
 import numpy as np
 import pytest
-
 from numpy.testing import assert_allclose
 from numpy.testing import assert_array_equal
 
+from sklearn.ensemble._hist_gradient_boosting.common import G_H_DTYPE
+from sklearn.ensemble._hist_gradient_boosting.common import HISTOGRAM_DTYPE
+from sklearn.ensemble._hist_gradient_boosting.common import X_BINNED_DTYPE
 from sklearn.ensemble._hist_gradient_boosting.histogram import (
     _build_histogram_naive,
     _build_histogram,
@@ -12,9 +14,6 @@ from sklearn.ensemble._hist_gradient_boosting.histogram import (
     _build_histogram_root,
     _subtract_histograms
 )
-from sklearn.ensemble._hist_gradient_boosting.common import HISTOGRAM_DTYPE
-from sklearn.ensemble._hist_gradient_boosting.common import G_H_DTYPE
-from sklearn.ensemble._hist_gradient_boosting.common import X_BINNED_DTYPE
 
 
 @pytest.mark.parametrize(

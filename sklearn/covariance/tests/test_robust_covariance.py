@@ -8,13 +8,12 @@ import itertools
 
 import numpy as np
 
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_raise_message
-from sklearn.utils._testing import assert_warns_message
-
 from sklearn import datasets
 from sklearn.covariance import empirical_covariance, MinCovDet
 from sklearn.covariance import fast_mcd
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_raise_message
+from sklearn.utils._testing import assert_warns_message
 
 X = datasets.load_iris().data
 X_1d = X[:, 0]

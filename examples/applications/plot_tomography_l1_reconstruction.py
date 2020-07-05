@@ -40,12 +40,13 @@ print(__doc__)
 # Author: Emmanuelle Gouillart <emmanuelle.gouillart@nsup.org>
 # License: BSD 3 clause
 
+import matplotlib.pyplot as plt
 import numpy as np
-from scipy import sparse
 from scipy import ndimage
+from scipy import sparse
+
 from sklearn.linear_model import Lasso
 from sklearn.linear_model import Ridge
-import matplotlib.pyplot as plt
 
 
 def _weights(x, dx=1, orig=0):

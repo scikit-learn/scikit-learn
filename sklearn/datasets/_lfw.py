@@ -8,19 +8,18 @@ over the internet, all details are available on the official website:
 # Copyright (c) 2011 Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD 3 clause
 
+import logging
 from os import listdir, makedirs, remove
 from os.path import dirname, join, exists, isdir
 
-import logging
-
-import numpy as np
 import joblib
+import numpy as np
 from joblib import Memory
 
 from ._base import get_data_home, _fetch_remote, RemoteFileMetadata
 from ..utils import Bunch
-from ..utils.validation import _deprecate_positional_args
 from ..utils.fixes import parse_version
+from ..utils.validation import _deprecate_positional_args
 
 logger = logging.getLogger(__name__)
 

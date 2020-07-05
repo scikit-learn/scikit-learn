@@ -8,13 +8,14 @@
 # cython: boundscheck=False, wraparound=False
 
 import array
-from cpython cimport array
-cimport cython
-from libc.string cimport strchr
 
-cimport numpy as np
 import numpy as np
-import scipy.sparse as sp
+from cpython cimport
+
+array
+from libc.string cimport
+
+strchr
 
 np.import_array()
 

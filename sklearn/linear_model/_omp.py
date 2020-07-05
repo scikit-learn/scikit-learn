@@ -9,15 +9,15 @@ import warnings
 from math import sqrt
 
 import numpy as np
+from joblib import Parallel, delayed
 from scipy import linalg
 from scipy.linalg.lapack import get_lapack_funcs
-from joblib import Parallel, delayed
 
 from ._base import LinearModel, _pre_fit
 from ..base import RegressorMixin, MultiOutputMixin
+from ..model_selection import check_cv
 from ..utils import as_float_array, check_array
 from ..utils.validation import _deprecate_positional_args
-from ..model_selection import check_cv
 
 premature = """ Orthogonal matching pursuit ended prematurely due to linear
 dependence in the dictionary. The requested precision might not have been met.

@@ -18,10 +18,11 @@ print(__doc__)
 # Modified for documentation by Jaques Grobler
 # License: BSD 3 clause
 
-import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.linear_model import LogisticRegression
+import numpy as np
+
 from sklearn import datasets
+from sklearn.linear_model import LogisticRegression
 
 # import some data to play with
 iris = datasets.load_iris()

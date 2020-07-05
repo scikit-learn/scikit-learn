@@ -5,15 +5,28 @@
 
 # Author: Nicolas Hug
 
-cimport cython
 from cython.parallel import prange
 import numpy as np
 cimport numpy as np
 
-from libc.math cimport exp, log
+from libc.math cimport exp
 
 from .common cimport Y_DTYPE_C
 from .common cimport G_H_DTYPE_C
+cimport
+numpy as np
+import numpy as np
+from cython.parallel import prange
+from libc.math cimport
+
+exp
+
+from .common cimport
+
+G_H_DTYPE_C
+from .common cimport
+
+Y_DTYPE_C
 
 np.import_array()
 

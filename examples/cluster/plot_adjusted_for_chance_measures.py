@@ -25,10 +25,13 @@ print(__doc__)
 # Author: Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD 3 clause
 
-import numpy as np
-import matplotlib.pyplot as plt
 from time import time
+
+import matplotlib.pyplot as plt
+import numpy as np
+
 from sklearn import metrics
+
 
 def uniform_labelings_scores(score_func, n_samples, n_clusters_range,
                              fixed_n_classes=None, n_runs=5, seed=42):

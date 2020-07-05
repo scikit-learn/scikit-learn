@@ -15,10 +15,10 @@ from scipy.linalg import svd
 
 from .base import BaseEstimator
 from .base import TransformerMixin
+from .metrics.pairwise import pairwise_kernels, KERNEL_PARAMS
 from .utils import check_array, check_random_state, as_float_array
 from .utils.extmath import safe_sparse_dot
 from .utils.validation import check_is_fitted
-from .metrics.pairwise import pairwise_kernels, KERNEL_PARAMS
 from .utils.validation import check_non_negative, _deprecate_positional_args
 
 

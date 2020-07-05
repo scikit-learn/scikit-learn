@@ -1,15 +1,13 @@
 import numpy as np
+import pytest
 import scipy as sp
 
-import pytest
-
-from sklearn.utils._testing import assert_allclose
-
 from sklearn import datasets
-from sklearn.decomposition import PCA
 from sklearn.datasets import load_iris
+from sklearn.decomposition import PCA
 from sklearn.decomposition._pca import _assess_dimension
 from sklearn.decomposition._pca import _infer_dimension
+from sklearn.utils._testing import assert_allclose
 
 iris = datasets.load_iris()
 PCA_SOLVERS = ['full', 'arpack', 'randomized', 'auto']

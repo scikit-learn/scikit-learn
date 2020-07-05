@@ -1,28 +1,27 @@
 import numpy as np
 import pytest
 from numpy.testing import assert_allclose, assert_array_equal
-from sklearn.datasets import make_classification, make_regression
-from sklearn.datasets import make_low_rank_matrix
-from sklearn.preprocessing import KBinsDiscretizer, MinMaxScaler
-from sklearn.model_selection import train_test_split
+
 from sklearn.base import clone, BaseEstimator, TransformerMixin
 from sklearn.base import is_regressor
-from sklearn.pipeline import make_pipeline
-from sklearn.metrics import mean_poisson_deviance
+from sklearn.datasets import make_classification, make_regression
+from sklearn.datasets import make_low_rank_matrix
 from sklearn.dummy import DummyRegressor
+from sklearn.ensemble import HistGradientBoostingClassifier
+from sklearn.ensemble import HistGradientBoostingRegressor
+from sklearn.ensemble._hist_gradient_boosting.binning import _BinMapper
+from sklearn.ensemble._hist_gradient_boosting.grower import TreeGrower
+from sklearn.ensemble._hist_gradient_boosting.loss import BinaryCrossEntropy
+from sklearn.ensemble._hist_gradient_boosting.loss import LeastSquares
+from sklearn.ensemble._hist_gradient_boosting.loss import _LOSSES
 from sklearn.exceptions import NotFittedError
-
 # To use this experimental feature, we need to explicitly ask for it:
 from sklearn.experimental import enable_hist_gradient_boosting  # noqa
-from sklearn.ensemble import HistGradientBoostingRegressor
-from sklearn.ensemble import HistGradientBoostingClassifier
-from sklearn.ensemble._hist_gradient_boosting.loss import _LOSSES
-from sklearn.ensemble._hist_gradient_boosting.loss import LeastSquares
-from sklearn.ensemble._hist_gradient_boosting.loss import BinaryCrossEntropy
-from sklearn.ensemble._hist_gradient_boosting.grower import TreeGrower
-from sklearn.ensemble._hist_gradient_boosting.binning import _BinMapper
+from sklearn.metrics import mean_poisson_deviance
+from sklearn.model_selection import train_test_split
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import KBinsDiscretizer, MinMaxScaler
 from sklearn.utils import shuffle
-
 
 X_classification, y_classification = make_classification(random_state=0)
 X_regression, y_regression = make_regression(random_state=0)

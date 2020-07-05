@@ -4,10 +4,10 @@ from ._base import _fit_liblinear, BaseSVC, BaseLibSVM
 from ..base import BaseEstimator, RegressorMixin, OutlierMixin
 from ..linear_model._base import LinearClassifierMixin, SparseCoefMixin, \
     LinearModel
-from ..utils.validation import _num_samples
-from ..utils.validation import _deprecate_positional_args
-from ..utils.multiclass import check_classification_targets
 from ..utils.deprecation import deprecated
+from ..utils.multiclass import check_classification_targets
+from ..utils.validation import _deprecate_positional_args
+from ..utils.validation import _num_samples
 
 
 class LinearSVC(BaseEstimator, LinearClassifierMixin,

@@ -22,14 +22,14 @@ extends clustering by inducing a classifier from the cluster labels.
 #          Christos Aridas
 print(__doc__)
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+
 from sklearn.base import BaseEstimator, clone
 from sklearn.cluster import AgglomerativeClustering
 from sklearn.datasets import make_blobs
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.utils.metaestimators import if_delegate_has_method
-
 
 N_SAMPLES = 5000
 RANDOM_STATE = 42

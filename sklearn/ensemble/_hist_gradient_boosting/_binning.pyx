@@ -6,15 +6,20 @@
 
 # Author: Nicolas Hug
 
-cimport cython
-
 import numpy as np
-cimport numpy as np
-from numpy.math cimport INFINITY
 from cython.parallel import prange
 from libc.math cimport isnan
 
 from .common cimport X_DTYPE_C, X_BINNED_DTYPE_C
+import numpy as np
+from cython.parallel import prange
+from libc.math cimport
+
+isnan
+
+from .common cimport
+
+X_DTYPE_C, X_BINNED_DTYPE_C
 
 np.import_array()
 

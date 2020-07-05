@@ -27,9 +27,11 @@ the clusters form a nice parcellation of the swiss roll.
 print(__doc__)
 
 import time as time
-import numpy as np
+
 import matplotlib.pyplot as plt
 import mpl_toolkits.mplot3d.axes3d as p3
+import numpy as np
+
 from sklearn.cluster import AgglomerativeClustering
 from sklearn.datasets import make_swiss_roll
 

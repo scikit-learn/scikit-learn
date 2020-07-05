@@ -1,7 +1,7 @@
 import numpy as np
 
-from ..base import BaseEstimator, ClassifierMixin
 from .validation import _num_samples, check_array, check_is_fitted
+from ..base import BaseEstimator, ClassifierMixin
 
 
 class ArraySlicingWrapper:

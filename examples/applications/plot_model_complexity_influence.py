@@ -40,17 +40,17 @@ print(__doc__)
 # License: BSD 3 clause
 
 import time
-import numpy as np
+
 import matplotlib.pyplot as plt
+import numpy as np
 
 from sklearn import datasets
-from sklearn.utils import shuffle
-from sklearn.metrics import mean_squared_error
-from sklearn.svm import NuSVR
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.linear_model import SGDClassifier
 from sklearn.metrics import hamming_loss
-
+from sklearn.metrics import mean_squared_error
+from sklearn.svm import NuSVR
+from sklearn.utils import shuffle
 
 # Initialize random generator
 np.random.seed(0)

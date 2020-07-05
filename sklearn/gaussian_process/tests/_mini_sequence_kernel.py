@@ -1,8 +1,9 @@
-from sklearn.gaussian_process.kernels import Kernel, Hyperparameter
-from sklearn.gaussian_process.kernels import GenericKernelMixin
-from sklearn.gaussian_process.kernels import StationaryKernelMixin
 import numpy as np
+
 from sklearn.base import clone
+from sklearn.gaussian_process.kernels import GenericKernelMixin
+from sklearn.gaussian_process.kernels import Kernel, Hyperparameter
+from sklearn.gaussian_process.kernels import StationaryKernelMixin
 
 
 class MiniSeqKernel(GenericKernelMixin,

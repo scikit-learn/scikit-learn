@@ -22,9 +22,9 @@ from scipy import sparse as sp
 from scipy.special import comb
 
 from ._expected_mutual_info_fast import expected_mutual_information
-from ...utils.validation import check_array, check_consistent_length
-from ...utils.validation import _deprecate_positional_args
 from ...utils.fixes import _astype_copy_false
+from ...utils.validation import _deprecate_positional_args
+from ...utils.validation import check_array, check_consistent_length
 
 
 def _comb2(n):

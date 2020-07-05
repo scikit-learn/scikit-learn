@@ -22,18 +22,18 @@ the lower the better
 #          Christian Lorentzen <lorentzen.ch@googlemail.com>
 # License: BSD 3 clause
 
-import numpy as np
 import warnings
 
+import numpy as np
+
 from .._loss.glm_distribution import TweedieDistribution
+from ..exceptions import UndefinedMetricWarning
+from ..utils.stats import _weighted_percentile
+from ..utils.validation import _check_sample_weight
+from ..utils.validation import _deprecate_positional_args
 from ..utils.validation import (check_array, check_consistent_length,
                                 _num_samples)
 from ..utils.validation import column_or_1d
-from ..utils.validation import _deprecate_positional_args
-from ..utils.validation import _check_sample_weight
-from ..utils.stats import _weighted_percentile
-from ..exceptions import UndefinedMetricWarning
-
 
 __ALL__ = [
     "max_error",

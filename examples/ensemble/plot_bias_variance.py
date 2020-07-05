@@ -66,8 +66,8 @@ print(__doc__)
 # Author: Gilles Louppe <g.louppe@gmail.com>
 # License: BSD 3 clause
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
 from sklearn.ensemble import BaggingRegressor
 from sklearn.tree import DecisionTreeRegressor

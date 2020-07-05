@@ -17,12 +17,12 @@ print(__doc__)
 import logging
 from time import time
 
-from numpy.random import RandomState
 import matplotlib.pyplot as plt
+from numpy.random import RandomState
 
-from sklearn.datasets import fetch_olivetti_faces
-from sklearn.cluster import MiniBatchKMeans
 from sklearn import decomposition
+from sklearn.cluster import MiniBatchKMeans
+from sklearn.datasets import fetch_olivetti_faces
 
 # Display progress logs on stdout
 logging.basicConfig(level=logging.INFO,

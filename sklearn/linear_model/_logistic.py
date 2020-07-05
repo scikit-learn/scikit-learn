@@ -14,12 +14,14 @@ import numbers
 import warnings
 
 import numpy as np
+from joblib import Parallel, delayed, effective_n_jobs
 from scipy import optimize, sparse
 from scipy.special import expit, logsumexp
-from joblib import Parallel, delayed, effective_n_jobs
 
 from ._base import LinearClassifierMixin, SparseCoefMixin, BaseEstimator
 from ._sag import sag_solver
+from ..metrics import get_scorer
+from ..model_selection import check_cv
 from ..preprocessing import LabelEncoder, LabelBinarizer
 from ..svm._base import _fit_liblinear
 from ..utils import check_array, check_consistent_length, compute_class_weight
@@ -27,14 +29,11 @@ from ..utils import check_random_state
 from ..utils.extmath import (log_logistic, safe_sparse_dot, softmax,
                              squared_norm)
 from ..utils.extmath import row_norms
-from ..utils.optimize import _newton_cg, _check_optimize_result
-from ..utils.validation import check_is_fitted, _check_sample_weight
-from ..utils.validation import _deprecate_positional_args
-from ..utils.multiclass import check_classification_targets
 from ..utils.fixes import _joblib_parallel_args
-from ..model_selection import check_cv
-from ..metrics import get_scorer
-
+from ..utils.multiclass import check_classification_targets
+from ..utils.optimize import _newton_cg, _check_optimize_result
+from ..utils.validation import _deprecate_positional_args
+from ..utils.validation import check_is_fitted, _check_sample_weight
 
 _LOGISTIC_SOLVER_CONVERGENCE_MSG = (
     "Please also refer to the documentation for alternative solver options:\n"

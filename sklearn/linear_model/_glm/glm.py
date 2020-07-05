@@ -11,20 +11,20 @@ import numbers
 import numpy as np
 import scipy.optimize
 
+from .link import (
+    BaseLink,
+    IdentityLink,
+    LogLink,
+)
+from ..._loss.glm_distribution import (
+    ExponentialDispersionModel,
+    TweedieDistribution,
+    EDM_DISTRIBUTIONS
+)
 from ...base import BaseEstimator, RegressorMixin
 from ...utils import check_array, check_X_y
 from ...utils.optimize import _check_optimize_result
 from ...utils.validation import check_is_fitted, _check_sample_weight
-from ..._loss.glm_distribution import (
-        ExponentialDispersionModel,
-        TweedieDistribution,
-        EDM_DISTRIBUTIONS
-)
-from .link import (
-        BaseLink,
-        IdentityLink,
-        LogLink,
-)
 
 
 def _safe_lin_pred(X, coef):

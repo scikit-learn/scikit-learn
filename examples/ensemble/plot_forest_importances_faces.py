@@ -13,6 +13,7 @@ of the predictions can be parallelized within multiple jobs.
 print(__doc__)
 
 from time import time
+
 import matplotlib.pyplot as plt
 
 from sklearn.datasets import fetch_olivetti_faces

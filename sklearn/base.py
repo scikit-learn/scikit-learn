@@ -4,21 +4,21 @@
 # License: BSD 3 clause
 
 import copy
+import inspect
+import platform
+import re
 import warnings
 from collections import defaultdict
-import platform
-import inspect
-import re
 
 import numpy as np
 
 from . import __version__
 from ._config import get_config
 from .utils import _IS_32BIT
-from .utils.validation import check_X_y
-from .utils.validation import check_array
 from .utils._estimator_html_repr import estimator_html_repr
 from .utils.validation import _deprecate_positional_args
+from .utils.validation import check_X_y
+from .utils.validation import check_array
 
 _DEFAULT_TAGS = {
     'non_deterministic': False,

@@ -18,8 +18,8 @@ cardinality features (many unique values). See
 """
 print(__doc__)
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
 from sklearn.datasets import make_classification
 from sklearn.ensemble import ExtraTreesClassifier

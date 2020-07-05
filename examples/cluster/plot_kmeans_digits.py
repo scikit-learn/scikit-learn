@@ -28,8 +28,9 @@ silhouette   silhouette coefficient
 print(__doc__)
 
 from time import time
-import numpy as np
+
 import matplotlib.pyplot as plt
+import numpy as np
 
 from sklearn import metrics
 from sklearn.cluster import KMeans

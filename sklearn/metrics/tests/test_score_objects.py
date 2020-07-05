@@ -1,45 +1,43 @@
-import pickle
-import tempfile
-import shutil
-import os
 import numbers
-from unittest.mock import Mock
+import os
+import pickle
+import shutil
+import tempfile
 from functools import partial
+from unittest.mock import Mock
 
+import joblib
 import numpy as np
 import pytest
-import joblib
-
 from numpy.testing import assert_allclose
-from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import ignore_warnings
 
 from sklearn.base import BaseEstimator
-from sklearn.metrics import (f1_score, r2_score, roc_auc_score, fbeta_score,
-                             log_loss, precision_score, recall_score,
-                             jaccard_score)
-from sklearn.metrics import cluster as cluster_module
-from sklearn.metrics import check_scoring
-from sklearn.metrics._scorer import (_PredictScorer, _passthrough_scorer,
-                                     _MultimetricScorer,
-                                     _check_multimetric_scoring)
-from sklearn.metrics import accuracy_score
-from sklearn.metrics import make_scorer, get_scorer, SCORERS
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.svm import LinearSVC
-from sklearn.pipeline import make_pipeline
 from sklearn.cluster import KMeans
-from sklearn.linear_model import Ridge, LogisticRegression, Perceptron
-from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
+from sklearn.datasets import load_diabetes
 from sklearn.datasets import make_blobs
 from sklearn.datasets import make_classification, make_regression
 from sklearn.datasets import make_multilabel_classification
-from sklearn.datasets import load_diabetes
-from sklearn.model_selection import train_test_split, cross_val_score
+from sklearn.linear_model import Ridge, LogisticRegression, Perceptron
+from sklearn.metrics import accuracy_score
+from sklearn.metrics import check_scoring
+from sklearn.metrics import cluster as cluster_module
+from sklearn.metrics import (f1_score, r2_score, roc_auc_score, fbeta_score,
+                             log_loss, precision_score, recall_score,
+                             jaccard_score)
+from sklearn.metrics import make_scorer, get_scorer, SCORERS
+from sklearn.metrics._scorer import (_PredictScorer, _passthrough_scorer,
+                                     _MultimetricScorer,
+                                     _check_multimetric_scoring)
 from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.multiclass import OneVsRestClassifier
-
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.pipeline import make_pipeline
+from sklearn.svm import LinearSVC
+from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import ignore_warnings
 
 REGRESSION_SCORERS = ['explained_variance', 'r2',
                       'neg_mean_absolute_error', 'neg_mean_squared_error',

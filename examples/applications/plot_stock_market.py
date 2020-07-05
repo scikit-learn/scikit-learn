@@ -65,11 +65,10 @@ axis.
 
 import sys
 
-import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.collections import LineCollection
-
+import numpy as np
 import pandas as pd
+from matplotlib.collections import LineCollection
 
 from sklearn import cluster, covariance, manifold
 

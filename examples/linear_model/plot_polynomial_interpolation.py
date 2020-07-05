@@ -27,12 +27,12 @@ print(__doc__)
 #         Jake Vanderplas
 # License: BSD 3 clause
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
 from sklearn.linear_model import Ridge
-from sklearn.preprocessing import PolynomialFeatures
 from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import PolynomialFeatures
 
 
 def f(x):

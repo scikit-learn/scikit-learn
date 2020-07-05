@@ -1,11 +1,11 @@
 # Author: Guillaume Lemaitre <g.lemaitre58@gmail.com>
 # License: BSD 3 clause
 
-import pytest
 import numpy as np
+import pytest
 
-from sklearn.mixture import GaussianMixture
 from sklearn.mixture import BayesianGaussianMixture
+from sklearn.mixture import GaussianMixture
 
 
 @pytest.mark.parametrize(

@@ -3,11 +3,11 @@ Testing for the nearest centroid module.
 """
 
 import numpy as np
-from scipy import sparse as sp
 from numpy.testing import assert_array_equal
+from scipy import sparse as sp
 
-from sklearn.neighbors import NearestCentroid
 from sklearn import datasets
+from sklearn.neighbors import NearestCentroid
 from sklearn.utils._testing import assert_raises
 
 # toy sample
