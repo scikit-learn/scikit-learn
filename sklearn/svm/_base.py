@@ -1,27 +1,27 @@
-import numpy as np
-import scipy.sparse as sp
 import warnings
 from abc import ABCMeta, abstractmethod
 
+import numpy as np
+import scipy.sparse as sp
+
+from . import _liblinear as liblinear  # type: ignore
 # mypy error: error: Module 'sklearn.svm' has no attribute '_libsvm'
 # (and same for other imports)
 from . import _libsvm as libsvm  # type: ignore
-from .import _liblinear as liblinear  # type: ignore
 from . import _libsvm_sparse as libsvm_sparse  # type: ignore
 from ..base import BaseEstimator, ClassifierMixin
+from ..exceptions import ConvergenceWarning
+from ..exceptions import NotFittedError
 from ..preprocessing import LabelEncoder
-from ..utils.multiclass import _ovr_decision_function
 from ..utils import check_array, check_random_state
 from ..utils import column_or_1d
 from ..utils import compute_class_weight
 from ..utils.extmath import safe_sparse_dot
-from ..utils.validation import check_is_fitted, _check_large_sparse
-from ..utils.validation import _num_samples
-from ..utils.validation import _check_sample_weight, check_consistent_length
+from ..utils.multiclass import _ovr_decision_function
 from ..utils.multiclass import check_classification_targets
-from ..exceptions import ConvergenceWarning
-from ..exceptions import NotFittedError
-
+from ..utils.validation import _check_sample_weight, check_consistent_length
+from ..utils.validation import _num_samples
+from ..utils.validation import check_is_fitted, _check_large_sparse
 
 LIBSVM_IMPL = ['c_svc', 'nu_svc', 'one_class', 'epsilon_svr', 'nu_svr']
 

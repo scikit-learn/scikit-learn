@@ -65,18 +65,18 @@ __version__ = "2.2.0"
 __versionTime__ = "06 Mar 2017 02:06 UTC"
 __author__ = "Paul McGuire <ptmcg@users.sourceforge.net>"
 
-import string
-from weakref import ref as wkref
+import collections
 import copy
-import sys
-import warnings
+import pprint
 import re
 import sre_constants
-import collections
-import pprint
+import string
+import sys
 import traceback
 import types
+import warnings
 from datetime import datetime
+from weakref import ref as wkref
 
 try:
     from _thread import RLock

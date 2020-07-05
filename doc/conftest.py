@@ -1,16 +1,14 @@
 import os
+import warnings
 from os.path import exists
 from os.path import join
-import warnings
 
-import numpy as np
-
-from sklearn.utils import IS_PYPY
-from sklearn.utils._testing import SkipTest
-from sklearn.utils._testing import check_skip_network
 from sklearn.datasets import get_data_home
 from sklearn.datasets._base import _pkl_filepath
 from sklearn.datasets._twenty_newsgroups import CACHE_NAME
+from sklearn.utils import IS_PYPY
+from sklearn.utils._testing import SkipTest
+from sklearn.utils._testing import check_skip_network
 
 
 def setup_labeled_faces():

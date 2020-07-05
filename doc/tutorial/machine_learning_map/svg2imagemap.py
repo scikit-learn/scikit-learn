@@ -27,9 +27,9 @@ enter their ids here and all others will be ignored.
 import os
 import re
 import sys
-import xml.dom.minidom
 
 import parse_path
+import xml.dom.minidom
 
 if len(sys.argv) == 1:
     sys.exit("svn2imagemap.py FILENAME [x y [group1 group2 ... groupN]]")
