@@ -1,4 +1,4 @@
-from .base import _check_classifer_response_method
+from .base import _check_classifier_response_method
 
 from .. import average_precision_score
 from .. import precision_recall_curve
@@ -40,6 +40,24 @@ class PrecisionRecallDisplay:
 
     figure_ : matplotlib Figure
         Figure containing the curve.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_classification
+    >>> from sklearn.metrics import (precision_recall_curve,
+    ...                              PrecisionRecallDisplay)
+    >>> from sklearn.model_selection import train_test_split
+    >>> from sklearn.svm import SVC
+    >>> X, y = make_classification(random_state=0)
+    >>> X_train, X_test, y_train, y_test = train_test_split(X, y,
+    ...                                                     random_state=0)
+    >>> clf = SVC(random_state=0)
+    >>> clf.fit(X_train, y_train)
+    SVC(random_state=0)
+    >>> predictions = clf.predict(X_test)
+    >>> precision, recall, _ = precision_recall_curve(y_test, predictions)
+    >>> disp = PrecisionRecallDisplay(precision=precision, recall=recall)
+    >>> disp.plot() # doctest: +SKIP
     """
     def __init__(self, precision, recall, *,
                  average_precision=None, estimator_name=None):
@@ -148,6 +166,11 @@ def plot_precision_recall_curve(estimator, X, y, *,
     -------
     display : :class:`~sklearn.metrics.PrecisionRecallDisplay`
         Object that stores computed values.
+
+    See Also
+    --------
+    precision_recall_curve :
+        Compute precision-recall pairs for different probability thresholds
     """
     check_matplotlib_support("plot_precision_recall_curve")
 
@@ -156,7 +179,7 @@ def plot_precision_recall_curve(estimator, X, y, *,
     if not is_classifier(estimator):
         raise ValueError(classification_error)
 
-    prediction_method = _check_classifer_response_method(estimator,
+    prediction_method = _check_classifier_response_method(estimator,
                                                          response_method)
     y_pred = prediction_method(X)
 

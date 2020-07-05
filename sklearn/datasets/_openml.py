@@ -632,27 +632,27 @@ def fetch_openml(name=None, *, version='active', data_id=None, data_home=None,
 
     Parameters
     ----------
-    name : str or None
+    name : str, default=None
         String identifier of the dataset. Note that OpenML can have multiple
         datasets with the same name.
 
-    version : integer or 'active', default='active'
+    version : int or 'active', default='active'
         Version of the dataset. Can only be provided if also ``name`` is given.
         If 'active' the oldest version that's still active is used. Since
         there may be more than one active version of a dataset, and those
         versions may fundamentally be different from one another, setting an
         exact version is highly recommended.
 
-    data_id : int or None
+    data_id : int, default=None
         OpenML ID of the dataset. The most specific way of retrieving a
         dataset. If data_id is not given, name (and potential version) are
         used to obtain a dataset.
 
-    data_home : string or None, default None
+    data_home : str, default=None
         Specify another download and cache folder for the data sets. By default
         all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 
-    target_column : string, list or None, default 'default-target'
+    target_column : str, list or None, default='default-target'
         Specify the column name in the data to use as target. If
         'default-target', the standard target column a stored on the server
         is used. If ``None``, all columns are returned as data and the
@@ -660,20 +660,23 @@ def fetch_openml(name=None, *, version='active', data_id=None, data_home=None,
         are returned as multi-target (Note: not all scikit-learn classifiers
         can handle all types of multi-output combinations)
 
-    cache : boolean, default=True
+    cache : bool, default=True
         Whether to cache downloaded datasets using joblib.
 
-    return_X_y : boolean, default=False.
+    return_X_y : bool, default=False
         If True, returns ``(data, target)`` instead of a Bunch object. See
         below for more information about the `data` and `target` objects.
 
-    as_frame : boolean, default=False
+    as_frame : bool or 'auto', default=False
         If True, the data is a pandas DataFrame including columns with
         appropriate dtypes (numeric, string or categorical). The target is
         a pandas DataFrame or Series depending on the number of target_columns.
         The Bunch will contain a ``frame`` attribute with the target and the
         data. If ``return_X_y`` is True, then ``(data, target)`` will be pandas
         DataFrames or Series as describe above.
+        If as_frame is 'auto', the data and target will be converted to
+        DataFrame or Series as if as_frame is set to True, unless the dataset
+        is stored in sparse format.
 
     Returns
     -------
@@ -767,6 +770,9 @@ def fetch_openml(name=None, *, version='active', data_id=None, data_home=None,
     return_sparse = False
     if data_description['format'].lower() == 'sparse_arff':
         return_sparse = True
+
+    if as_frame == 'auto':
+        as_frame = not return_sparse
 
     if as_frame and return_sparse:
         raise ValueError('Cannot return dataframe with sparse data')

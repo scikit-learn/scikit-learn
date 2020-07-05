@@ -160,7 +160,9 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
         :term:`decision_function` or :term:`predict_proba`.
 
     n_jobs : int or None, optional (default=None)
-        The number of jobs to use for the computation.
+        The number of jobs to use for the computation: the `n_classes`
+        one-vs-rest problems are computed in parallel.
+
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
@@ -504,7 +506,9 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         :term:`decision_function` or :term:`predict_proba`.
 
     n_jobs : int or None, optional (default=None)
-        The number of jobs to use for the computation.
+        The number of jobs to use for the computation: the `n_classes * (
+        n_classes - 1) / 2` OVO problems are computed in parallel.
+
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
@@ -523,6 +527,20 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     pairwise_indices_ : list, length = ``len(estimators_)``, or ``None``
         Indices of samples used when training the estimators.
         ``None`` when ``estimator`` does not have ``_pairwise`` attribute.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn.model_selection import train_test_split
+    >>> from sklearn.multiclass import OneVsOneClassifier
+    >>> from sklearn.svm import LinearSVC
+    >>> X, y = load_iris(return_X_y=True)
+    >>> X_train, X_test, y_train, y_test = train_test_split(
+    ...     X, y, test_size=0.33, shuffle=True, random_state=0)
+    >>> clf = OneVsOneClassifier(
+    ...     LinearSVC(random_state=0)).fit(X_train, y_train)
+    >>> clf.predict(X_test[:10])
+    array([2, 1, 0, 2, 0, 2, 0, 1, 1, 1])
     """
     @_deprecate_positional_args
     def __init__(self, estimator, *, n_jobs=None):
@@ -711,13 +729,15 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         one-vs-the-rest. A number greater than 1 will require more classifiers
         than one-vs-the-rest.
 
-    random_state : int, RandomState instance or None, optional, default: None
+    random_state : int, RandomState instance or None, default=None
         The generator used to initialize the codebook.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
     n_jobs : int or None, optional (default=None)
-        The number of jobs to use for the computation.
+        The number of jobs to use for the computation: the multiclass problems
+        are computed in parallel.
+
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
@@ -788,7 +808,7 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         -------
         self
         """
-        X, y = self._validate_data(X, y)
+        X, y = self._validate_data(X, y, accept_sparse=True)
         if self.code_size <= 0:
             raise ValueError("code_size should be greater than 0, got {0}"
                              "".format(self.code_size))
@@ -836,7 +856,7 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
             Predicted multi-class targets.
         """
         check_is_fitted(self)
-        X = check_array(X)
+        X = check_array(X, accept_sparse=True)
         Y = np.array([_predict_binary(e, X) for e in self.estimators_]).T
         pred = euclidean_distances(Y, self.code_book_).argmin(axis=1)
         return self.classes_[pred]
