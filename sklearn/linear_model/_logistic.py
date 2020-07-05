@@ -1497,6 +1497,9 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         """
         return np.log(self.predict_proba(X))
 
+    def _more_tags(self):
+        return {'requires_y': True}
+
 
 class LogisticRegressionCV(LogisticRegression, BaseEstimator,
                            LinearClassifierMixin):

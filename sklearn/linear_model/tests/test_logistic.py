@@ -1827,3 +1827,11 @@ def test_scores_attribute_layout_elasticnet():
 
             avg_score_lr = cross_val_score(lr, X, y, cv=cv).mean()
             assert avg_scores_lrcv[i, j] == pytest.approx(avg_score_lr)
+
+
+@pytest.mark.parametrize("LogisticRegression", [LogisticRegression,
+                                                LogisticRegressionCV])
+def test_requires_y_tag_logistic_regression(LogisticRegression):
+    # Assert that the requires_y tag for
+    # LogisticRegression(CV) is properly set
+    assert LogisticRegression()._get_tags()["requires_y"]
