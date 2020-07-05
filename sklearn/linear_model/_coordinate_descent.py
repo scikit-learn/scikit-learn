@@ -2360,6 +2360,10 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
     n_iter_ : int
         number of iterations run by the coordinate descent solver to reach
         the specified tolerance for the optimal alpha.
+    
+    dual_gap_ : float or ndarray of shape (n_targets,)
+        The dual gap at the end of the optimization for the optimal alpha (``alpha_``).
+
 
     Examples
     --------
