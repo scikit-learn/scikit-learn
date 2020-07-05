@@ -1870,6 +1870,7 @@ class SVDD(OutlierMixin, BaseLibSVM):
 
     shrinking : bool, default=True
         Whether to use the shrinking heuristic.
+        See the :ref:`User Guide <shrinking_svm>`.
 
     cache_size : float, default=200
         Specify the size of the kernel cache (in MB).
@@ -1884,24 +1885,28 @@ class SVDD(OutlierMixin, BaseLibSVM):
 
     Attributes
     ----------
-    support_ : ndarray of shape (n_SV,)
-        Indices of support vectors.
-
-    support_vectors_ : ndarray of shape (n_SV, n_features)
-        Support vectors.
-
-    dual_coef_ : ndarray of shape (1, n_SV)
-        Coefficients of the support vectors in the decision function.
+    class_weight_ : ndarray of shape (n_classes,)
+        Multipliers of parameter C for each class.
+        Computed based on the ``class_weight`` parameter.
 
     coef_ : ndarray of shape (1, n_features)
         Weights assigned to the features (coefficients in the primal
         problem). This is only available in the case of a linear kernel.
 
         `coef_` is readonly property derived from `dual_coef_` and
-        `support_vectors_`
+        `support_vectors_`.
+
+    dual_coef_ : ndarray of shape (1, n_SV)
+        Coefficients of the support vectors in the decision function.
+
+    fit_status_ : int
+        0 if correctly fitted, 1 otherwise (will raise warning)
 
     intercept_ : ndarray of shape (1,)
         The constant in the decision function.
+
+    n_support_ : ndarray of shape (n_classes,), dtype=int32
+        Number of support vectors for each class.
 
     offset_ : float
         Offset used to define the decision function from the raw scores.
@@ -1909,8 +1914,14 @@ class SVDD(OutlierMixin, BaseLibSVM):
         The offset is the opposite of `intercept_` and is provided for
         consistency with other outlier detection algorithms.
 
-    fit_status_ : int
-        0 if correctly fitted, 1 otherwise (will raise warning)
+    shape_fit_ : tuple of int of shape (n_dimensions_of_X,)
+        Array dimensions of training vector ``X``.
+
+    support_ : ndarray of shape (n_SV,)
+        Indices of support vectors.
+
+    support_vectors_ : ndarray of shape (n_SV, n_features)
+        Support vectors.
 
     Examples
     --------
