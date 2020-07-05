@@ -84,6 +84,15 @@ Changelog
   redundant with the `dictionary` attribute and constructor parameter.
   :pr:`17679` by :user:`Xavier Dupré <sdpython>`.
 
+:mod:`sklearn.dummy`
+....................
+
+- |Enhancement| Add a parameter `interpolation` to
+  :class:`dummy.DummyRegressor` to choose the type of interpolation with the
+  strategy `median` and `quantile`. Beware that the interpolation will always
+  be `'linear'` with and without `sample_weight` in the future.
+  :pr:`17775` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.ensemble`
 .......................
 
@@ -274,6 +283,15 @@ Changelog
   :meth:`tree.DecisionTreeClassifier.fit` and
   :meth:`tree.DecisionTreeRegressor.fit`, and has not effect.
   :pr:`17614` by :user:`Juan Carlos Alfaro Jiménez <alfaro96>`.
+
+:mod:`sklearn.utils`
+....................
+
+- |Enhancement| :func:`sklearn.utils.stats._weighted_percentile` takes a new
+  parameter `interpolation` allowing to choose how to interpolate the
+  percentile value when it lies between two data points.
+  :pr:`17768` by :user:`Guillaume Lemaitre <glemaitre>` and
+  :user:`Michael Recachinas <mrecachinas>`.
 
 Code and Documentation Contributors
 -----------------------------------
