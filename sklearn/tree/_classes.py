@@ -1092,6 +1092,10 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
 
     Attributes
     ----------
+    classes_ : ndarray of shape (n_classes,) or list of ndarray
+        The classes labels (single output problem),
+        or a list of arrays of class labels (multi-output problem).
+
     feature_importances_ : ndarray of shape (n_features,)
         The feature importances.
         The higher, the more important the feature.
@@ -1105,6 +1109,11 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
 
     max_features_ : int
         The inferred value of max_features.
+
+    n_classes_ : int or list of int
+        The number of classes (for single output problems),
+        or a list containing the number of classes for each
+        output (for multi-output problems).
 
     n_features_ : int
         The number of features when ``fit`` is performed.
