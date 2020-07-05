@@ -494,6 +494,14 @@ def test_multioutput(ClsRFE):
     rfe_test.fit(X, y)
 
 
+@pytest.mark.parametrize("Estimator,estimator_type",
+                         [(SVC, "classifier"), (SVR, "regressor")])
+def test_rfe_estimator_type_tag(Estimator, estimator_type):
+    # Assert that estimator_type tag is properly set
+    rfe = RFE(Estimator())
+    assert rfe._get_tags()["estimator_type"] == estimator_type
+
+
 # TODO: Remove in version 0.26
 def test_deprecated_estimator_type():
     # Assert that deprecated _estimator_type warns FutureWarning

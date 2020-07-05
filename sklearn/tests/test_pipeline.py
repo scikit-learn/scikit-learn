@@ -36,6 +36,10 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.experimental import enable_hist_gradient_boosting  # noqa
 from sklearn.ensemble import HistGradientBoostingClassifier
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.mixture import BayesianGaussianMixture
+from sklearn.ensemble import IsolationForest
 
 iris = load_iris()
 
@@ -1220,6 +1224,18 @@ def test_feature_union_fit_params():
 
     t.fit(X, y, a=0)
     t.fit_transform(X, y, a=0)
+
+
+@pytest.mark.parametrize(
+    "Estimator,estimator_type", [(DecisionTreeClassifier, "classifier"),
+                                 (DecisionTreeRegressor, "regressor"),
+                                 (KMeans, "clusterer"),
+                                 (BayesianGaussianMixture, "DensityEstimator"),
+                                 (IsolationForest, "outlier_detector")])
+def test_estimator_type_tag(Estimator, estimator_type):
+    # Assert that estimator_type tag is properly set
+    pipeline = Pipeline([('est', Estimator())])
+    assert pipeline._get_tags()["estimator_type"] == estimator_type
 
 
 # TODO: Remove in version 0.26

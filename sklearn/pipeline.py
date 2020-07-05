@@ -643,7 +643,8 @@ class Pipeline(_BaseComposition):
                             dash_wrapped=False)
 
     def _more_tags(self):
-        return self.steps[-1][1]._more_tags()
+        print(self.steps[-1][1])
+        return self.steps[-1][1]._get_tags()
 
 
 def _name_estimators(estimators):

@@ -68,6 +68,8 @@ from sklearn.pipeline import Pipeline
 from sklearn.linear_model import Ridge, SGDClassifier, LinearRegression
 from sklearn.experimental import enable_hist_gradient_boosting  # noqa
 from sklearn.ensemble import HistGradientBoostingClassifier
+from sklearn.mixture import BayesianGaussianMixture
+from sklearn.ensemble import IsolationForest
 
 from sklearn.model_selection.tests.common import OneTimeSplitter
 
@@ -1885,6 +1887,21 @@ def test_scalar_fit_param_compat(SearchCV, param_search):
         'scalar_param': 42,
     }
     model.fit(X_train, y_train, **fit_params)
+
+
+@pytest.mark.parametrize(
+    "Estimator,params,estimator_type",
+    [(DecisionTreeClassifier, {"max_depth": [5, 10]}, "classifier"),
+     (DecisionTreeRegressor, {"max_depth": [5, 10]}, "regressor"),
+     (KMeans, {"n_clusters": [5, 10]}, "clusterer"),
+     (BayesianGaussianMixture, {"n_components": [5, 10]}, "DensityEstimator"),
+     (IsolationForest, {"max_depth": [5, 10]}, "outlier_detector")]
+)
+@pytest.mark.parametrize("SearchCV", [GridSearchCV, RandomizedSearchCV])
+def test_estimator_type_tag(SearchCV, Estimator, params, estimator_type):
+    # Assert that estimator_type tag is properly set
+    search = SearchCV(Estimator(), params)
+    assert search._get_tags()["estimator_type"] == estimator_type
 
 
 # TODO: Remove in version 0.26
