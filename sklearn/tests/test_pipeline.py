@@ -259,18 +259,19 @@ def test_pipeline_methods_anova():
 def test_pipeline_fit_params():
     # Test that the pipeline can take fit parameters
     pipe = Pipeline([('transf', Transf()), ('clf', FitParamT())])
-    pipe.fit(X=None, y=None, clf__should_succeed=True)
+    with pytest.warns(FutureWarning, match="It seems fit_params are"):
+        pipe.fit(X=None, y=None, clf__should_succeed=True)
     # classifier should return True
     assert pipe.predict(None)
     # and transformer params should not be changed
     assert pipe.named_steps['transf'].a is None
     assert pipe.named_steps['transf'].b is None
     # invalid parameters should raise an error message
-    assert_raise_message(
-        TypeError,
-        "fit() got an unexpected keyword argument 'bad'",
-        pipe.fit, None, None, clf__bad=True
-    )
+    with pytest.raises(
+            TypeError,
+            match=r"fit\(\) got an unexpected keyword argument 'bad'"):
+        with pytest.warns(FutureWarning, match="It seems fit_params are"):
+            pipe.fit(None, None, clf__bad=True)
 
 
 def test_pipeline_sample_weight_supported():
@@ -433,10 +434,11 @@ def test_fit_predict_with_intermediate_fit_params():
     # tests that Pipeline passes fit_params to intermediate steps
     # when fit_predict is invoked
     pipe = Pipeline([('transf', TransfFitParams()), ('clf', FitParamT())])
-    pipe.fit_predict(X=None,
-                     y=None,
-                     transf__should_get_this=True,
-                     clf__should_succeed=True)
+    with pytest.warns(FutureWarning, match="It seems fit_params are using "):
+        pipe.fit_predict(X=None,
+                         y=None,
+                         transf__should_get_this=True,
+                         clf__should_succeed=True)
     assert pipe.named_steps['transf'].fit_params['should_get_this']
     assert pipe.named_steps['clf'].successful
     assert 'should_succeed' not in pipe.named_steps['transf'].fit_params
