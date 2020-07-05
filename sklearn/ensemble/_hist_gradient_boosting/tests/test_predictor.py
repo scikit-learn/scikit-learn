@@ -1,14 +1,14 @@
 import numpy as np
-from sklearn.datasets import make_regression
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import r2_score
 import pytest
 
+from sklearn.datasets import make_regression
 from sklearn.ensemble._hist_gradient_boosting.binning import _BinMapper
-from sklearn.ensemble._hist_gradient_boosting.grower import TreeGrower
-from sklearn.ensemble._hist_gradient_boosting.predictor import TreePredictor
 from sklearn.ensemble._hist_gradient_boosting.common import (
     G_H_DTYPE, PREDICTOR_RECORD_DTYPE, ALMOST_INF)
+from sklearn.ensemble._hist_gradient_boosting.grower import TreeGrower
+from sklearn.ensemble._hist_gradient_boosting.predictor import TreePredictor
+from sklearn.metrics import r2_score
+from sklearn.model_selection import train_test_split
 
 
 @pytest.mark.parametrize('n_bins', [200, 256])

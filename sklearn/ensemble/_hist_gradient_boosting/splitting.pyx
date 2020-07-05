@@ -11,10 +11,15 @@
 """
 # Author: Nicolas Hug
 
-cimport cython
 from cython.parallel import prange
 import numpy as np
 cimport numpy as np
+
+cimport
+numpy as np
+import numpy as np
+from cython.parallel import prange
+
 IF SKLEARN_OPENMP_PARALLELISM_ENABLED:
     from openmp cimport omp_get_max_threads
 from libc.stdlib cimport malloc, free
@@ -24,7 +29,6 @@ from numpy.math cimport INFINITY
 from .common cimport X_BINNED_DTYPE_C
 from .common cimport Y_DTYPE_C
 from .common cimport hist_struct
-from .common import HISTOGRAM_DTYPE
 from .common cimport MonotonicConstraint
 
 np.import_array()

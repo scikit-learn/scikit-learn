@@ -14,11 +14,11 @@ from scipy.sparse.linalg import svds
 
 from ..base import BaseEstimator, RegressorMixin, TransformerMixin
 from ..base import MultiOutputMixin
+from ..exceptions import ConvergenceWarning
 from ..utils import check_array, check_consistent_length
 from ..utils.extmath import svd_flip
-from ..utils.validation import check_is_fitted, FLOAT_DTYPES
 from ..utils.validation import _deprecate_positional_args
-from ..exceptions import ConvergenceWarning
+from ..utils.validation import check_is_fitted, FLOAT_DTYPES
 
 __all__ = ['PLSCanonical', 'PLSRegression', 'PLSSVD']
 

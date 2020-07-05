@@ -10,14 +10,17 @@
 # License: BSD 3 clause
 
 
-import numpy as np
-import sys
 from time import time
 
-cimport cython
-from libc.math cimport exp, log, sqrt, pow, fabs
-cimport numpy as np
-from numpy.math cimport INFINITY
+cimport
+numpy as np
+import numpy as np
+from libc.math cimport
+
+exp, log, pow, fabs
+from numpy.math cimport
+
+INFINITY
 cdef extern from "_sgd_fast_helpers.h":
     bint skl_isfinite(double) nogil
 

@@ -7,31 +7,26 @@ from abc import ABCMeta, abstractmethod
 from copy import deepcopy
 
 import numpy as np
-from joblib import Parallel, delayed
 import scipy.sparse as sparse
+from joblib import Parallel, delayed
 
-from ..base import clone
-from ..base import ClassifierMixin, RegressorMixin, TransformerMixin
-from ..base import is_classifier, is_regressor
-from ..utils._estimator_html_repr import _VisualBlock
-
-from ._base import _fit_single_estimator
 from ._base import _BaseHeterogeneousEnsemble
-
+from ._base import _fit_single_estimator
+from ..base import ClassifierMixin, RegressorMixin, TransformerMixin
+from ..base import clone
+from ..base import is_classifier, is_regressor
 from ..linear_model import LogisticRegression
 from ..linear_model import RidgeCV
-
-from ..model_selection import cross_val_predict
 from ..model_selection import check_cv
-
+from ..model_selection import cross_val_predict
 from ..preprocessing import LabelEncoder
-
 from ..utils import Bunch
+from ..utils._estimator_html_repr import _VisualBlock
 from ..utils.metaestimators import if_delegate_has_method
 from ..utils.multiclass import check_classification_targets
+from ..utils.validation import _deprecate_positional_args
 from ..utils.validation import check_is_fitted
 from ..utils.validation import column_or_1d
-from ..utils.validation import _deprecate_positional_args
 
 
 class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble,

@@ -13,28 +13,27 @@ build feature vectors from text documents.
 """
 
 import array
-from collections import defaultdict
-from collections.abc import Mapping
-from functools import partial
 import numbers
-from operator import itemgetter
 import re
 import unicodedata
 import warnings
+from collections import defaultdict
+from collections.abc import Mapping
+from functools import partial
+from operator import itemgetter
 
 import numpy as np
 import scipy.sparse as sp
 
-from ..base import BaseEstimator, TransformerMixin
-from ..preprocessing import normalize
 from ._hash import FeatureHasher
 from ._stop_words import ENGLISH_STOP_WORDS
-from ..utils.validation import check_is_fitted, check_array, FLOAT_DTYPES
+from ..base import BaseEstimator, TransformerMixin
+from ..exceptions import NotFittedError
+from ..preprocessing import normalize
 from ..utils import _IS_32BIT
 from ..utils.fixes import _astype_copy_false
-from ..exceptions import NotFittedError
 from ..utils.validation import _deprecate_positional_args
-
+from ..utils.validation import check_is_fitted, check_array, FLOAT_DTYPES
 
 __all__ = ['HashingVectorizer',
            'CountVectorizer',

@@ -25,8 +25,8 @@ print(__doc__)
 from time import time
 
 import numpy as np
-from scipy import ndimage
 from matplotlib import pyplot as plt
+from scipy import ndimage
 
 from sklearn import manifold, datasets
 

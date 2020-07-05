@@ -16,16 +16,16 @@ training set.
 
 # License: BSD 3 clause
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib.colors import ListedColormap
+
 from sklearn import datasets
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
 from sklearn.neighbors import (KNeighborsClassifier,
                                NeighborhoodComponentsAnalysis)
 from sklearn.pipeline import Pipeline
-
+from sklearn.preprocessing import StandardScaler
 
 print(__doc__)
 

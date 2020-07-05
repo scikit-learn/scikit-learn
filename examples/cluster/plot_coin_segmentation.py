@@ -24,15 +24,15 @@ print(__doc__)
 
 import time
 
-import numpy as np
-from scipy.ndimage.filters import gaussian_filter
 import matplotlib.pyplot as plt
+import numpy as np
 import skimage
+from scipy.ndimage.filters import gaussian_filter
 from skimage.data import coins
 from skimage.transform import rescale
 
-from sklearn.feature_extraction import image
 from sklearn.cluster import spectral_clustering
+from sklearn.feature_extraction import image
 from sklearn.utils.fixes import parse_version
 
 # these were introduced in skimage-0.14

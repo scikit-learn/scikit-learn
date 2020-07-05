@@ -16,12 +16,12 @@ print(__doc__)
 
 import time
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
 from sklearn.cluster import MiniBatchKMeans, KMeans
-from sklearn.metrics.pairwise import pairwise_distances_argmin
 from sklearn.datasets import make_blobs
+from sklearn.metrics.pairwise import pairwise_distances_argmin
 
 # #############################################################################
 # Generate sample data

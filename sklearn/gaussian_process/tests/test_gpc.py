@@ -4,15 +4,12 @@
 # License: BSD 3 clause
 
 import numpy as np
-
-from scipy.optimize import approx_fprime
-
 import pytest
+from scipy.optimize import approx_fprime
 
 from sklearn.gaussian_process import GaussianProcessClassifier
 from sklearn.gaussian_process.kernels import RBF, ConstantKernel as C
 from sklearn.gaussian_process.tests._mini_sequence_kernel import MiniSeqKernel
-
 from sklearn.utils._testing import assert_almost_equal, assert_array_equal
 
 

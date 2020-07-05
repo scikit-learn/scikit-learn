@@ -26,12 +26,13 @@ samples in 1 dimension.  Though this example uses 1D distributions, kernel
 density estimation is easily and efficiently extensible to higher dimensions
 as well.
 """
+import matplotlib
+import matplotlib.pyplot as plt
 # Author: Jake Vanderplas <jakevdp@cs.washington.edu>
 #
 import numpy as np
-import matplotlib
-import matplotlib.pyplot as plt
 from scipy.stats import norm
+
 from sklearn.neighbors import KernelDensity
 from sklearn.utils.fixes import parse_version
 

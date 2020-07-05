@@ -11,14 +11,14 @@ This exercise is used in the :ref:`cv_estimators_tut` part of the
 
 print(__doc__)
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
 from sklearn import datasets
-from sklearn.linear_model import LassoCV
 from sklearn.linear_model import Lasso
-from sklearn.model_selection import KFold
+from sklearn.linear_model import LassoCV
 from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import KFold
 
 X, y = datasets.load_diabetes(return_X_y=True)
 X = X[:150]

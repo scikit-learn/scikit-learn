@@ -7,11 +7,14 @@
 
 from cython.parallel import prange
 
-from ...base import is_classifier
 from .binning import _BinMapper
-from .common cimport G_H_DTYPE_C
-from .common cimport Y_DTYPE_C
+from .common cimport
 
+G_H_DTYPE_C
+from .common cimport
+
+Y_DTYPE_C
+from ...base import is_classifier
 
 def get_equivalent_estimator(estimator, lib='lightgbm'):
     """Return an unfitted estimator from another lib with matching hyperparams.

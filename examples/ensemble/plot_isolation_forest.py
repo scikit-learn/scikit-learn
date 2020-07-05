@@ -24,8 +24,9 @@ for particular samples, they are highly likely to be anomalies.
 """
 print(__doc__)
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+
 from sklearn.ensemble import IsolationForest
 
 rng = np.random.RandomState(42)

@@ -29,11 +29,14 @@ the provided labels, contrary to other methods.
 # License: BSD 3 clause (C) INRIA 2011
 
 from time import time
-import numpy as np
+
 import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib import offsetbox
+
 from sklearn import (manifold, datasets, decomposition, ensemble,
                      discriminant_analysis, random_projection, neighbors)
+
 print(__doc__)
 
 digits = datasets.load_digits(n_class=6)

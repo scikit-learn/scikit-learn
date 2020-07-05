@@ -1,8 +1,8 @@
 # Author: Mathieu Blondel
 # License: BSD 3 clause
 
-from ..utils.validation import _deprecate_positional_args
 from ._stochastic_gradient import BaseSGDClassifier
+from ..utils.validation import _deprecate_positional_args
 
 
 class Perceptron(BaseSGDClassifier):

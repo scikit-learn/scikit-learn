@@ -21,15 +21,15 @@ Algorithm 21.1
 
 import warnings
 from math import sqrt, log
+
 import numpy as np
 from scipy import linalg
 
-
 from ..base import BaseEstimator, TransformerMixin
+from ..exceptions import ConvergenceWarning
 from ..utils import check_array, check_random_state
 from ..utils.extmath import fast_logdet, randomized_svd, squared_norm
 from ..utils.validation import check_is_fitted, _deprecate_positional_args
-from ..exceptions import ConvergenceWarning
 
 
 class FactorAnalysis(TransformerMixin, BaseEstimator):

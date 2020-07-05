@@ -2,13 +2,12 @@ import itertools
 import pickle
 
 import numpy as np
-from numpy.testing import assert_array_almost_equal
-
 import pytest
-
+from numpy.testing import assert_array_almost_equal
 from scipy.spatial.distance import cdist
-from sklearn.neighbors import DistanceMetric
+
 from sklearn.neighbors import BallTree
+from sklearn.neighbors import DistanceMetric
 from sklearn.utils import check_random_state
 from sklearn.utils._testing import assert_raises_regex
 from sklearn.utils.fixes import sp_version, parse_version

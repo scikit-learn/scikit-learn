@@ -20,8 +20,9 @@ weak: the point cloud is very spherical.
 """
 print(__doc__)
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+
 from sklearn.cross_decomposition import PLSCanonical, PLSRegression, CCA
 
 # #############################################################################

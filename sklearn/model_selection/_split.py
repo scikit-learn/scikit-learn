@@ -9,24 +9,24 @@ functions to split the data based on a preset strategy.
 #         Raghav RV <rvraghav93@gmail.com>
 # License: BSD 3 clause
 
-from collections.abc import Iterable
+import numbers
 import warnings
+from abc import ABCMeta, abstractmethod
+from collections.abc import Iterable
+from inspect import signature
 from itertools import chain, combinations
 from math import ceil, floor
-import numbers
-from abc import ABCMeta, abstractmethod
-from inspect import signature
 
 import numpy as np
 from scipy.special import comb
 
-from ..utils import indexable, check_random_state, _safe_indexing
+from ..base import _pprint
 from ..utils import _approximate_mode
+from ..utils import indexable, check_random_state, _safe_indexing
+from ..utils.multiclass import type_of_target
+from ..utils.validation import _deprecate_positional_args
 from ..utils.validation import _num_samples, column_or_1d
 from ..utils.validation import check_array
-from ..utils.validation import _deprecate_positional_args
-from ..utils.multiclass import type_of_target
-from ..base import _pprint
 
 __all__ = ['BaseCrossValidator',
            'KFold',

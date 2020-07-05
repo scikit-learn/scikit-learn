@@ -11,12 +11,12 @@ from scipy import sparse
 from scipy import stats
 
 from ..base import BaseEstimator, TransformerMixin
+from ..utils import is_scalar_nan
+from ..utils._mask import _get_mask
 from ..utils.sparsefuncs import _get_median
-from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
 from ..utils.validation import _deprecate_positional_args
-from ..utils._mask import _get_mask
-from ..utils import is_scalar_nan
+from ..utils.validation import check_is_fitted
 
 
 def _check_inputs_dtype(X, missing_values):

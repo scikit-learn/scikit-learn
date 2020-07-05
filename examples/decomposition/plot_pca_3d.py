@@ -18,13 +18,12 @@ print(__doc__)
 #          Kevin Hughes
 # License: BSD 3 clause
 
-from sklearn.decomposition import PCA
-
-from mpl_toolkits.mplot3d import Axes3D
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+from mpl_toolkits.mplot3d import Axes3D
 from scipy import stats
 
+from sklearn.decomposition import PCA
 
 # #############################################################################
 # Create the data

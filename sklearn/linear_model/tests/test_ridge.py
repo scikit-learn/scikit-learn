@@ -1,46 +1,41 @@
-import numpy as np
-import scipy.sparse as sp
-from scipy import linalg
 from itertools import product
 
+import numpy as np
 import pytest
-
-from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_raises
-from sklearn.utils._testing import assert_raise_message
-from sklearn.utils._testing import assert_raises_regex
-from sklearn.utils._testing import ignore_warnings
-from sklearn.utils._testing import assert_warns
-
-from sklearn.exceptions import ConvergenceWarning
+import scipy.sparse as sp
+from scipy import linalg
 
 from sklearn import datasets
-from sklearn.metrics import mean_squared_error
-from sklearn.metrics import make_scorer
-from sklearn.metrics import get_scorer
-
+from sklearn.datasets import make_classification
+from sklearn.datasets import make_multilabel_classification
+from sklearn.datasets import make_regression
+from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model import LinearRegression
-from sklearn.linear_model import ridge_regression
 from sklearn.linear_model import Ridge
-from sklearn.linear_model._ridge import _RidgeGCV
 from sklearn.linear_model import RidgeCV
 from sklearn.linear_model import RidgeClassifier
 from sklearn.linear_model import RidgeClassifierCV
+from sklearn.linear_model import ridge_regression
+from sklearn.linear_model._ridge import _RidgeGCV
+from sklearn.linear_model._ridge import _X_CenterStackOp
+from sklearn.linear_model._ridge import _check_gcv_mode
 from sklearn.linear_model._ridge import _solve_cholesky
 from sklearn.linear_model._ridge import _solve_cholesky_kernel
-from sklearn.linear_model._ridge import _check_gcv_mode
-from sklearn.linear_model._ridge import _X_CenterStackOp
-from sklearn.datasets import make_regression
-from sklearn.datasets import make_classification
-
+from sklearn.metrics import get_scorer
+from sklearn.metrics import make_scorer
+from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import KFold, GroupKFold, cross_val_predict
-
 from sklearn.utils import check_random_state
-from sklearn.datasets import make_multilabel_classification
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_raise_message
+from sklearn.utils._testing import assert_raises
+from sklearn.utils._testing import assert_raises_regex
+from sklearn.utils._testing import assert_warns
+from sklearn.utils._testing import ignore_warnings
 
 diabetes = datasets.load_diabetes()
 X_diabetes, y_diabetes = diabetes.data, diabetes.target

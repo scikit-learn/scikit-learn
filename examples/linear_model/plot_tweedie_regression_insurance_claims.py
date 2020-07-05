@@ -45,21 +45,20 @@ print(__doc__)
 # License: BSD 3 clause
 from functools import partial
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 
-from sklearn.datasets import fetch_openml
 from sklearn.compose import ColumnTransformer
+from sklearn.datasets import fetch_openml
 from sklearn.linear_model import PoissonRegressor, GammaRegressor
 from sklearn.linear_model import TweedieRegressor
+from sklearn.metrics import mean_absolute_error, mean_squared_error, auc
 from sklearn.metrics import mean_tweedie_deviance
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import FunctionTransformer, OneHotEncoder
 from sklearn.preprocessing import StandardScaler, KBinsDiscretizer
-
-from sklearn.metrics import mean_absolute_error, mean_squared_error, auc
 
 
 def load_mtpl2(n_samples=100000):

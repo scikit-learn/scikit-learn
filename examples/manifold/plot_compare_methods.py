@@ -28,8 +28,8 @@ from functools import partial
 from time import time
 
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.ticker import NullFormatter
+from mpl_toolkits.mplot3d import Axes3D
 
 from sklearn import manifold, datasets
 

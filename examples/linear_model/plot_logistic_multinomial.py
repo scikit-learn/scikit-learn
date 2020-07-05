@@ -11,8 +11,9 @@ print(__doc__)
 # Authors: Tom Dupre la Tour <tom.dupre-la-tour@m4x.org>
 # License: BSD 3 clause
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+
 from sklearn.datasets import make_blobs
 from sklearn.linear_model import LogisticRegression
 

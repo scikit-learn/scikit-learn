@@ -31,11 +31,20 @@ Authors
 """
 
 import  numpy as np
-cimport numpy as np
 from libc.stdlib cimport free
 from ..utils._cython_blas cimport _dot
 
 cimport
+
+cimport
+import numpy as np
+from libc.stdlib cimport
+
+free
+
+from ..utils._cython_blas cimport
+
+_dot
 numpy as np
 import numpy as np
 from libc.stdlib cimport

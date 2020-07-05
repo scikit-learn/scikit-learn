@@ -2,26 +2,25 @@
 Base IO code for all datasets
 """
 
+import csv
+import hashlib
 # Copyright (c) 2007 David Cournapeau <cournape@gmail.com>
 #               2010 Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #               2010 Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD 3 clause
 import os
-import csv
 import shutil
 from collections import namedtuple
 from os import environ, listdir, makedirs
 from os.path import dirname, exists, expanduser, isdir, join, splitext
-import hashlib
-
-from ..utils import Bunch
-from ..utils import check_random_state
-from ..utils import check_pandas_support
-from ..utils.validation import _deprecate_positional_args
+from urllib.request import urlretrieve
 
 import numpy as np
 
-from urllib.request import urlretrieve
+from ..utils import Bunch
+from ..utils import check_pandas_support
+from ..utils import check_random_state
+from ..utils.validation import _deprecate_positional_args
 
 RemoteFileMetadata = namedtuple('RemoteFileMetadata',
                                 ['filename', 'url', 'checksum'])

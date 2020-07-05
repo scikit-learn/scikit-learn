@@ -63,8 +63,8 @@ confident predictions until around 2015.
 
 
 import numpy as np
-
 from matplotlib import pyplot as plt
+
 from sklearn.datasets import fetch_openml
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels \

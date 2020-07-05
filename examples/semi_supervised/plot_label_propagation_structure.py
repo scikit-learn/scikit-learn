@@ -15,10 +15,11 @@ print(__doc__)
 #          Andreas Mueller <amueller@ais.uni-bonn.de>
 # License: BSD
 
-import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.semi_supervised import LabelSpreading
+import numpy as np
+
 from sklearn.datasets import make_circles
+from sklearn.semi_supervised import LabelSpreading
 
 # generate ring with inner box
 n_samples = 200

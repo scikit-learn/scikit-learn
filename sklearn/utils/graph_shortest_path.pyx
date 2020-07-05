@@ -12,11 +12,17 @@ the Floyd-Warshall algorithm, or Dykstra's algorithm with Fibonacci Heaps.
 import numpy as np
 cimport numpy as np
 
-from scipy.sparse import csr_matrix, isspmatrix, isspmatrix_csr
-
-cimport cython
+from scipy.sparse import csr_matrix, isspmatrix_csr
 
 from libc.stdlib cimport malloc, free
+
+cimport
+numpy as np
+import numpy as np
+from libc.stdlib cimport
+
+malloc, free
+from scipy.sparse import csr_matrix, isspmatrix_csr
 
 np.import_array()
 

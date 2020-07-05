@@ -1,30 +1,25 @@
-import pytest
+import itertools
+from functools import partial
 
 import numpy as np
-from functools import partial
-import itertools
+import pytest
 
 from sklearn.base import clone
-
-from sklearn.exceptions import ConvergenceWarning
-
-from sklearn.utils import check_array
-
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import ignore_warnings
-from sklearn.utils._testing import TempMemmap
-
 from sklearn.decomposition import DictionaryLearning
 from sklearn.decomposition import MiniBatchDictionaryLearning
 from sklearn.decomposition import SparseCoder
 from sklearn.decomposition import dict_learning
 from sklearn.decomposition import dict_learning_online
 from sklearn.decomposition import sparse_encode
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.utils import check_array
+from sklearn.utils._testing import TempMemmap
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import ignore_warnings
 from sklearn.utils.estimator_checks import check_transformer_data_not_an_array
 from sklearn.utils.estimator_checks import check_transformer_general
 from sklearn.utils.estimator_checks import check_transformers_unfitted
-
 
 rng_global = np.random.RandomState(0)
 n_samples, n_features = 10, 8

@@ -1,41 +1,38 @@
 """Testing for K-means"""
 import sys
+from io import StringIO
 
 import numpy as np
+import pytest
 from scipy import sparse as sp
 from threadpoolctl import threadpool_limits
 
-import pytest
-
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import assert_warns
-from sklearn.utils._testing import assert_warns_message
-from sklearn.utils._testing import assert_raise_message
-from sklearn.utils.fixes import _astype_copy_false
-from sklearn.utils.validation import _num_samples
 from sklearn.base import clone
-from sklearn.exceptions import ConvergenceWarning
-
-from sklearn.utils.extmath import row_norms
-from sklearn.metrics import pairwise_distances_argmin
-from sklearn.metrics.cluster import v_measure_score
 from sklearn.cluster import KMeans, k_means
 from sklearn.cluster import MiniBatchKMeans
-from sklearn.cluster._kmeans import _labels_inertia
-from sklearn.cluster._kmeans import _mini_batch_step
-from sklearn.cluster._k_means_fast import _relocate_empty_clusters_dense
-from sklearn.cluster._k_means_fast import _relocate_empty_clusters_sparse
 from sklearn.cluster._k_means_fast import _euclidean_dense_dense_wrapper
 from sklearn.cluster._k_means_fast import _euclidean_sparse_dense_wrapper
 from sklearn.cluster._k_means_fast import _inertia_dense
 from sklearn.cluster._k_means_fast import _inertia_sparse
+from sklearn.cluster._k_means_fast import _relocate_empty_clusters_dense
+from sklearn.cluster._k_means_fast import _relocate_empty_clusters_sparse
+from sklearn.cluster._kmeans import _labels_inertia
+from sklearn.cluster._kmeans import _mini_batch_step
 from sklearn.datasets import make_blobs
-from io import StringIO
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.metrics import pairwise_distances_argmin
 from sklearn.metrics.cluster import homogeneity_score
-
+from sklearn.metrics.cluster import v_measure_score
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_raise_message
+from sklearn.utils._testing import assert_warns
+from sklearn.utils._testing import assert_warns_message
+from sklearn.utils.extmath import row_norms
+from sklearn.utils.fixes import _astype_copy_false
+from sklearn.utils.validation import _num_samples
 
 # non centered, sparse centers to check the
 centers = np.array([

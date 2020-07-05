@@ -18,6 +18,22 @@ from libc.math cimport log as ln
 
 import numpy as np
 cimport numpy as np
+
+cimport
+numpy as np
+import numpy as np
+from libc.math cimport
+
+log as ln
+from libc.stdlib cimport
+
+free
+from libc.stdlib cimport
+
+malloc
+from libc.stdlib cimport
+
+realloc
 np.import_array()
 
 from ..utils._random cimport our_rand_r

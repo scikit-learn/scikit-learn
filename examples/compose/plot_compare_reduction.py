@@ -30,14 +30,15 @@ This section illustrates the use of a ``Pipeline`` with ``GridSearchCV``
 # Authors: Robert McGibbon, Joel Nothman, Guillaume Lemaitre
 
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+
 from sklearn.datasets import load_digits
+from sklearn.decomposition import PCA, NMF
+from sklearn.feature_selection import SelectKBest, chi2
 from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import Pipeline
 from sklearn.svm import LinearSVC
-from sklearn.decomposition import PCA, NMF
-from sklearn.feature_selection import SelectKBest, chi2
 
 print(__doc__)
 

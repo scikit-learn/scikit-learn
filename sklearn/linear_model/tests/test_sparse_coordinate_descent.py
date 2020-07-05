@@ -1,14 +1,12 @@
 import numpy as np
 import scipy.sparse as sp
 
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_almost_equal
-
-from sklearn.utils._testing import ignore_warnings
-from sklearn.utils._testing import assert_warns
 from sklearn.exceptions import ConvergenceWarning
-
 from sklearn.linear_model import Lasso, ElasticNet, LassoCV, ElasticNetCV
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_warns
+from sklearn.utils._testing import ignore_warnings
 
 
 def test_sparse_coef():

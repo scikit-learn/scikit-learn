@@ -10,8 +10,9 @@ are represented by the dashed lines.
 """
 print(__doc__)
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+
 from sklearn import datasets
 from sklearn.linear_model import SGDClassifier
 

@@ -12,13 +12,14 @@ License: BSD 3 clause
 """
 
 import warnings
+
 import numpy as np
 
-from ..utils import gen_batches, get_chunk_n_rows
-from ..utils.validation import _deprecate_positional_args
-from ..neighbors import NearestNeighbors
 from ..base import BaseEstimator, ClusterMixin
 from ..metrics import pairwise_distances
+from ..neighbors import NearestNeighbors
+from ..utils import gen_batches, get_chunk_n_rows
+from ..utils.validation import _deprecate_positional_args
 
 
 class OPTICS(ClusterMixin, BaseEstimator):

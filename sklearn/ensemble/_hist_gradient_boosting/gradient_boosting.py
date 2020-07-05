@@ -3,27 +3,27 @@
 
 from abc import ABC, abstractmethod
 from functools import partial
+from timeit import default_timer as time
 
 import numpy as np
-from timeit import default_timer as time
+
+from ._gradient_boosting import _update_raw_predictions
+from .binning import _BinMapper
+from .common import Y_DTYPE, X_DTYPE, X_BINNED_DTYPE
+from .grower import TreeGrower
+from .loss import BaseLoss
+from .loss import _LOSSES
 from ...base import (BaseEstimator, RegressorMixin, ClassifierMixin,
                      is_classifier)
+from ...metrics import check_scoring
+from ...model_selection import train_test_split
+from ...preprocessing import LabelEncoder
 from ...utils import check_random_state, check_array, resample
+from ...utils.multiclass import check_classification_targets
 from ...utils.validation import (check_is_fitted,
                                  check_consistent_length,
                                  _check_sample_weight,
                                  _deprecate_positional_args)
-from ...utils.multiclass import check_classification_targets
-from ...metrics import check_scoring
-from ...model_selection import train_test_split
-from ...preprocessing import LabelEncoder
-from ._gradient_boosting import _update_raw_predictions
-from .common import Y_DTYPE, X_DTYPE, X_BINNED_DTYPE
-
-from .binning import _BinMapper
-from .grower import TreeGrower
-from .loss import _LOSSES
-from .loss import BaseLoss
 
 
 class BaseHistGradientBoosting(BaseEstimator, ABC):

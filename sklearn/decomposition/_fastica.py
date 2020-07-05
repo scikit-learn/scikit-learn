@@ -16,11 +16,10 @@ from scipy import linalg
 
 from ..base import BaseEstimator, TransformerMixin
 from ..exceptions import ConvergenceWarning
-
 from ..utils import check_array, as_float_array, check_random_state
-from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
 from ..utils.validation import _deprecate_positional_args
+from ..utils.validation import check_is_fitted
 
 __all__ = ['fastica', 'FastICA']
 

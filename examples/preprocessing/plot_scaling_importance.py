@@ -41,14 +41,16 @@ clear difference in prediction accuracies is observed wherein the dataset
 which is scaled before PCA vastly outperforms the unscaled version.
 
 """
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
-from sklearn.decomposition import PCA
-from sklearn.naive_bayes import GaussianNB
-from sklearn import metrics
 import matplotlib.pyplot as plt
+
+from sklearn import metrics
 from sklearn.datasets import load_wine
+from sklearn.decomposition import PCA
+from sklearn.model_selection import train_test_split
+from sklearn.naive_bayes import GaussianNB
 from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
+
 print(__doc__)
 
 # Code source: Tyler Lanigan <tylerlanigan@gmail.com>

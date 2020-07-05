@@ -14,8 +14,8 @@ print(__doc__)
 # Author: Phil Roth <mr.phil.roth@gmail.com>
 # License: BSD 3 clause
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
 from sklearn.cluster import KMeans
 from sklearn.datasets import make_blobs

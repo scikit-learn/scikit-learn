@@ -19,17 +19,34 @@
 from cpython cimport Py_INCREF, PyObject, PyTypeObject
 
 from libc.stdlib cimport free
-from libc.math cimport fabs
 from libc.string cimport memcpy
 from libc.string cimport memset
 from libc.stdint cimport SIZE_MAX
 
 import numpy as np
 cimport numpy as np
+
+cimport
+numpy as np
+import numpy as np
+from cpython cimport
+
+Py_INCREF, PyObject, PyTypeObject
+from libc.stdint cimport
+
+SIZE_MAX
+from libc.stdlib cimport
+
+free
+from libc.string cimport
+
+memcpy
+from libc.string cimport
+
+memset
 np.import_array()
 
 from scipy.sparse import issparse
-from scipy.sparse import csc_matrix
 from scipy.sparse import csr_matrix
 
 from ._utils cimport Stack

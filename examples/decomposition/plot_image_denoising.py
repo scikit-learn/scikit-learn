@@ -43,7 +43,6 @@ from sklearn.decomposition import MiniBatchDictionaryLearning
 from sklearn.feature_extraction.image import extract_patches_2d
 from sklearn.feature_extraction.image import reconstruct_from_patches_2d
 
-
 try:  # SciPy >= 0.16 have face in misc
     from scipy.misc import face
     face = face(gray=True)

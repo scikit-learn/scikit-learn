@@ -1,27 +1,26 @@
 import pickle
-import pytest
 
-import numpy as np
-import scipy.sparse as sp
 import joblib
+import numpy as np
+import pytest
+import scipy.sparse as sp
 
-from sklearn.utils._testing import assert_array_equal
+from sklearn import linear_model, datasets, metrics
+from sklearn.base import clone, is_classifier
+from sklearn.exceptions import ConvergenceWarning
+from sklearn.linear_model import _sgd_fast as sgd_fast
+from sklearn.model_selection import RandomizedSearchCV
+from sklearn.model_selection import StratifiedShuffleSplit, ShuffleSplit
+from sklearn.preprocessing import LabelEncoder, scale, MinMaxScaler
+from sklearn.preprocessing import StandardScaler
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_raises
 from sklearn.utils._testing import assert_raises_regexp
 from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils.fixes import parse_version
-
-from sklearn import linear_model, datasets, metrics
-from sklearn.base import clone, is_classifier
-from sklearn.preprocessing import LabelEncoder, scale, MinMaxScaler
-from sklearn.preprocessing import StandardScaler
-from sklearn.exceptions import ConvergenceWarning
-from sklearn.model_selection import StratifiedShuffleSplit, ShuffleSplit
-from sklearn.linear_model import _sgd_fast as sgd_fast
-from sklearn.model_selection import RandomizedSearchCV
 
 
 def _update_kwargs(kwargs):

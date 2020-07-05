@@ -7,15 +7,17 @@ Testing for Theil-Sen module (sklearn.linear_model.theil_sen)
 import os
 import sys
 from contextlib import contextmanager
+
 import numpy as np
-from numpy.testing import assert_array_equal, assert_array_less
 from numpy.testing import assert_array_almost_equal, assert_warns
+from numpy.testing import assert_array_equal, assert_array_less
 from scipy.linalg import norm
 from scipy.optimize import fmin_bfgs
+
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model import LinearRegression, TheilSenRegressor
-from sklearn.linear_model._theil_sen import _spatial_median, _breakdown_point
 from sklearn.linear_model._theil_sen import _modified_weiszfeld_step
+from sklearn.linear_model._theil_sen import _spatial_median, _breakdown_point
 from sklearn.utils._testing import assert_almost_equal, assert_raises
 
 

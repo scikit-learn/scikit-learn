@@ -2,33 +2,17 @@
 #          Alexandre Gramfort <alexandre.gramfort@inria.fr>
 # License: BSD 3 clause
 
+from copy import deepcopy
+
+import joblib
 import numpy as np
 import pytest
 from scipy import interpolate, sparse
-from copy import deepcopy
-import joblib
 
 from sklearn.base import is_classifier
 from sklearn.datasets import load_diabetes
 from sklearn.datasets import make_regression
-from sklearn.model_selection import train_test_split
-from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import StandardScaler
-
 from sklearn.exceptions import ConvergenceWarning
-from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import assert_raises
-from sklearn.utils._testing import assert_raises_regex
-from sklearn.utils._testing import assert_raise_message
-from sklearn.utils._testing import assert_warns
-from sklearn.utils._testing import assert_warns_message
-from sklearn.utils._testing import ignore_warnings
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import TempMemmap
-from sklearn.utils.fixes import parse_version
-
 from sklearn.linear_model import (
     ARDRegression,
     BayesianRidge,
@@ -53,9 +37,23 @@ from sklearn.linear_model import (
     RidgeClassifier,
     RidgeCV,
 )
-
 from sklearn.linear_model._coordinate_descent import _set_order
+from sklearn.model_selection import train_test_split
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
 from sklearn.utils import check_array
+from sklearn.utils._testing import TempMemmap
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_raise_message
+from sklearn.utils._testing import assert_raises
+from sklearn.utils._testing import assert_raises_regex
+from sklearn.utils._testing import assert_warns
+from sklearn.utils._testing import assert_warns_message
+from sklearn.utils._testing import ignore_warnings
+from sklearn.utils.fixes import parse_version
 
 
 @pytest.mark.parametrize('order', ['C', 'F'])

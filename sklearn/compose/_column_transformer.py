@@ -3,29 +3,28 @@ The :mod:`sklearn.compose._column_transformer` module implements utilities
 to work with heterogeneous data and to apply different transformers to
 different columns.
 """
+import numbers
 # Author: Andreas Mueller
 #         Joris Van den Bossche
 # License: BSD
 import warnings
 from itertools import chain
 
-import numbers
 import numpy as np
-from scipy import sparse
 from joblib import Parallel, delayed
+from scipy import sparse
 
 from ..base import clone, TransformerMixin
-from ..utils._estimator_html_repr import _VisualBlock
 from ..pipeline import _fit_transform_one, _transform_one, _name_estimators
 from ..preprocessing import FunctionTransformer
 from ..utils import Bunch
-from ..utils import _safe_indexing
-from ..utils import _get_column_indices
 from ..utils import _determine_key_type
+from ..utils import _get_column_indices
+from ..utils import _safe_indexing
+from ..utils._estimator_html_repr import _VisualBlock
 from ..utils.metaestimators import _BaseComposition
-from ..utils.validation import check_array, check_is_fitted
 from ..utils.validation import _deprecate_positional_args
-
+from ..utils.validation import check_array, check_is_fitted
 
 __all__ = [
     'ColumnTransformer', 'make_column_transformer', 'make_column_selector'

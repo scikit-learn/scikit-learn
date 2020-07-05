@@ -18,11 +18,11 @@ print(__doc__)
 # Code source: Gael Varoquaux
 # License: BSD 3 clause
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+from scipy.special import expit
 
 from sklearn import linear_model
-from scipy.special import expit
 
 # General a toy dataset:s it's just a straight line with some Gaussian noise:
 xmin, xmax = -5, 5

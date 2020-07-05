@@ -24,13 +24,13 @@ example dataset.
 """
 print(__doc__)
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
-from sklearn.linear_model import LogisticRegression
-from sklearn.naive_bayes import GaussianNB
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import VotingClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.naive_bayes import GaussianNB
 
 clf1 = LogisticRegression(max_iter=1000, random_state=123)
 clf2 = RandomForestClassifier(n_estimators=100, random_state=123)

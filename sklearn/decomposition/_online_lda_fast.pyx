@@ -1,8 +1,6 @@
 #
 # cython: boundscheck=False, wraparound=False
 
-cimport cython
-cimport numpy as np
 import numpy as np
 
 np.import_array()

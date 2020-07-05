@@ -5,11 +5,17 @@ Author: fabian.pedregosa@inria.fr
 """
 
 import  numpy as np
-cimport numpy as np
 
 from ..utils._cython_blas cimport _dot, _axpy, _scal, _nrm2
 
 cimport
+
+cimport
+import numpy as np
+
+from ..utils._cython_blas cimport
+
+_dot, _axpy, _scal, _nrm2
 numpy as np
 import numpy as np
 

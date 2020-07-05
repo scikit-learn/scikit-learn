@@ -5,8 +5,8 @@
 # License: BSD 3 clause
 
 from abc import ABCMeta, abstractmethod
-from warnings import warn
 from operator import attrgetter
+from warnings import warn
 
 import numpy as np
 from scipy.sparse import issparse, csc_matrix

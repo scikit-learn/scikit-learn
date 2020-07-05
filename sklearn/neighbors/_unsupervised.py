@@ -1,6 +1,6 @@
 """Unsupervised nearest neighbors learner"""
-from ._base import NeighborsBase
 from ._base import KNeighborsMixin
+from ._base import NeighborsBase
 from ._base import RadiusNeighborsMixin
 from ._base import UnsupervisedMixin
 from ..utils.validation import _deprecate_positional_args

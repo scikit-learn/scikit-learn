@@ -1,30 +1,28 @@
 # Author: Gael Varoquaux
 # License: BSD 3 clause
 
+import pickle
+
 import numpy as np
-import scipy.sparse as sp
 import pytest
+import scipy.sparse as sp
 
 import sklearn
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_raises
-from sklearn.utils._testing import assert_no_warnings
-from sklearn.utils._testing import assert_warns_message
-from sklearn.utils._testing import ignore_warnings
-
+from sklearn import config_context
+from sklearn import datasets
 from sklearn.base import BaseEstimator, clone, is_classifier
-from sklearn.svm import SVC
-from sklearn.pipeline import Pipeline
+from sklearn.base import TransformerMixin
 from sklearn.model_selection import GridSearchCV
-
+from sklearn.pipeline import Pipeline
+from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.tree import DecisionTreeRegressor
-from sklearn import datasets
-
-from sklearn.base import TransformerMixin
 from sklearn.utils._mocking import MockDataFrame
-from sklearn import config_context
-import pickle
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_no_warnings
+from sklearn.utils._testing import assert_raises
+from sklearn.utils._testing import assert_warns_message
+from sklearn.utils._testing import ignore_warnings
 
 
 #############################################################################

@@ -10,15 +10,15 @@ that our model achieves best performance when we select around 10% of features.
 """
 print(__doc__)
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+
 from sklearn.datasets import load_iris
 from sklearn.feature_selection import SelectPercentile, chi2
 from sklearn.model_selection import cross_val_score
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC
-
 
 # #############################################################################
 # Import some data to play with

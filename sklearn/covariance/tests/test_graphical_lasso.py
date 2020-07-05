@@ -1,19 +1,18 @@
 """ Test the graphical_lasso module.
 """
 import sys
+from io import StringIO
 
 import numpy as np
 from scipy import linalg
 
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_array_less
-
+from sklearn import datasets
 from sklearn.covariance import (graphical_lasso, GraphicalLasso,
                                 GraphicalLassoCV, empirical_covariance)
 from sklearn.datasets import make_sparse_spd_matrix
-from io import StringIO
 from sklearn.utils import check_random_state
-from sklearn import datasets
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_array_less
 
 
 def test_graphical_lasso(random_state=0):

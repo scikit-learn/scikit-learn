@@ -15,8 +15,8 @@ non-Gaussian processes.
 """
 print(__doc__)
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 from scipy import signal
 
 from sklearn.decomposition import FastICA, PCA

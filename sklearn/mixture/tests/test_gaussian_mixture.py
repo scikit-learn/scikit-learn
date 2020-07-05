@@ -2,17 +2,18 @@
 #         Thierry Guillemot <thierry.guillemot.work@gmail.com>
 # License: BSD 3 clause
 
-import sys
 import copy
+import sys
 import warnings
-import pytest
+from io import StringIO
 
 import numpy as np
+import pytest
 from scipy import stats, linalg
 
 from sklearn.covariance import EmpiricalCovariance
 from sklearn.datasets import make_spd_matrix
-from io import StringIO
+from sklearn.exceptions import ConvergenceWarning, NotFittedError
 from sklearn.metrics.cluster import adjusted_rand_score
 from sklearn.mixture import GaussianMixture
 from sklearn.mixture._gaussian_mixture import (
@@ -22,9 +23,7 @@ from sklearn.mixture._gaussian_mixture import (
     _estimate_gaussian_covariances_spherical,
     _compute_precision_cholesky,
     _compute_log_det_cholesky,
-    )
-from sklearn.exceptions import ConvergenceWarning, NotFittedError
-from sklearn.utils.extmath import fast_logdet
+)
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_almost_equal
@@ -32,7 +31,7 @@ from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_raise_message
 from sklearn.utils._testing import assert_warns_message
 from sklearn.utils._testing import ignore_warnings
-
+from sklearn.utils.extmath import fast_logdet
 
 COVARIANCE_TYPE = ['full', 'tied', 'diag', 'spherical']
 

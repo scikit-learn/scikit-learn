@@ -25,6 +25,7 @@ which is well known to have this percolation instability. """
 # License: BSD 3 clause
 
 import time
+
 import matplotlib.pyplot as plt
 import numpy as np
 

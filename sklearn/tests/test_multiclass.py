@@ -1,37 +1,35 @@
-import numpy as np
-import scipy.sparse as sp
-import pytest
-
 from re import escape
 
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import assert_raises
-from sklearn.utils._testing import assert_warns
-from sklearn.utils._testing import assert_raise_message
-from sklearn.utils._testing import assert_raises_regexp
-from sklearn.utils._mocking import CheckingClassifier
-from sklearn.multiclass import OneVsRestClassifier
-from sklearn.multiclass import OneVsOneClassifier
-from sklearn.multiclass import OutputCodeClassifier
-from sklearn.utils.multiclass import (check_classification_targets,
-                                      type_of_target)
-from sklearn.utils import check_array
-from sklearn.utils import shuffle
+import numpy as np
+import pytest
+import scipy.sparse as sp
 
-from sklearn.metrics import precision_score
-from sklearn.metrics import recall_score
-
-from sklearn.svm import LinearSVC, SVC
-from sklearn.naive_bayes import MultinomialNB
+from sklearn import datasets
+from sklearn import svm
 from sklearn.linear_model import (LinearRegression, Lasso, ElasticNet, Ridge,
                                   Perceptron, LogisticRegression,
                                   SGDClassifier)
-from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
+from sklearn.metrics import precision_score
+from sklearn.metrics import recall_score
 from sklearn.model_selection import GridSearchCV, cross_val_score
+from sklearn.multiclass import OneVsOneClassifier
+from sklearn.multiclass import OneVsRestClassifier
+from sklearn.multiclass import OutputCodeClassifier
+from sklearn.naive_bayes import MultinomialNB
 from sklearn.pipeline import Pipeline
-from sklearn import svm
-from sklearn import datasets
+from sklearn.svm import LinearSVC, SVC
+from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
+from sklearn.utils import check_array
+from sklearn.utils import shuffle
+from sklearn.utils._mocking import CheckingClassifier
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_raise_message
+from sklearn.utils._testing import assert_raises
+from sklearn.utils._testing import assert_raises_regexp
+from sklearn.utils._testing import assert_warns
+from sklearn.utils.multiclass import (check_classification_targets,
+                                      type_of_target)
 
 iris = datasets.load_iris()
 rng = np.random.RandomState(0)

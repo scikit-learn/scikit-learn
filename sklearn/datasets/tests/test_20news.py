@@ -6,9 +6,9 @@ from functools import partial
 import numpy as np
 import scipy.sparse as sp
 
-from sklearn.utils._testing import assert_allclose_dense_sparse
 from sklearn.datasets.tests.test_common import check_return_X_y
 from sklearn.preprocessing import normalize
+from sklearn.utils._testing import assert_allclose_dense_sparse
 
 
 def test_20news(fetch_20newsgroups_fxt):

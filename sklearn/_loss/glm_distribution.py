@@ -5,13 +5,12 @@ Distribution functions used in GLM
 # Author: Christian Lorentzen <lorentzen.ch@googlemail.com>
 # License: BSD 3 clause
 
+import numbers
 from abc import ABCMeta, abstractmethod
 from collections import namedtuple
-import numbers
 
 import numpy as np
 from scipy.special import xlogy
-
 
 DistributionBoundary = namedtuple("DistributionBoundary",
                                   ("value", "inclusive"))

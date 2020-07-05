@@ -9,11 +9,11 @@ linear kernel.
 """
 print(__doc__)
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+
 from sklearn import svm
 from sklearn.datasets import make_blobs
-
 
 # we create 40 separable points
 X, y = make_blobs(n_samples=40, centers=2, random_state=6)

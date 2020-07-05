@@ -5,6 +5,11 @@
 
 import numpy as np
 cimport numpy as np
+
+cimport
+numpy as np
+import numpy as np
+
 ctypedef np.npy_uint32 UINT32_t
 
 cdef inline UINT32_t DEFAULT_SEED = 1

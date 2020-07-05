@@ -33,12 +33,13 @@ or with conda::
 # :class:`~metrics.plot_confusion_matrix`. Read more about this new API in the
 # :ref:`User Guide <visualizations>`.
 
+import matplotlib.pyplot as plt
+
+from sklearn.datasets import make_classification
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import plot_roc_curve
 from sklearn.model_selection import train_test_split
 from sklearn.svm import SVC
-from sklearn.metrics import plot_roc_curve
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.datasets import make_classification
-import matplotlib.pyplot as plt
 
 X, y = make_classification(random_state=0)
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)

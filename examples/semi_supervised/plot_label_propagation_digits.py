@@ -19,15 +19,13 @@ print(__doc__)
 # Authors: Clay Woolam <clay@woolam.org>
 # License: BSD
 
-import numpy as np
 import matplotlib.pyplot as plt
-
+import numpy as np
 from scipy import stats
 
 from sklearn import datasets
-from sklearn.semi_supervised import LabelSpreading
-
 from sklearn.metrics import confusion_matrix, classification_report
+from sklearn.semi_supervised import LabelSpreading
 
 digits = datasets.load_digits()
 rng = np.random.RandomState(2)

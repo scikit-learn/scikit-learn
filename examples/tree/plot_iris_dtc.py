@@ -16,8 +16,8 @@ We also show the tree structure of a model built on all of the features.
 """
 print(__doc__)
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
 from sklearn.datasets import load_iris
 from sklearn.tree import DecisionTreeClassifier, plot_tree

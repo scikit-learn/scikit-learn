@@ -6,8 +6,9 @@ Only 'percent10' mode is tested, as the full data
 is too big to use in unit-testing.
 """
 
-from sklearn.datasets.tests.test_common import check_return_X_y
 from functools import partial
+
+from sklearn.datasets.tests.test_common import check_return_X_y
 
 
 def test_percent10(fetch_kddcup99_fxt):

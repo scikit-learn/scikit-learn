@@ -2,6 +2,7 @@
 This module defines export functions for decision trees.
 """
 
+import warnings
 # Authors: Gilles Louppe <g.louppe@gmail.com>
 #          Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #          Brian Holt <bdholt1@gmail.com>
@@ -16,16 +17,13 @@ from numbers import Integral
 
 import numpy as np
 
-from ..utils.validation import check_is_fitted
-from ..utils.validation import _deprecate_positional_args
-from ..base import is_classifier
-
+from . import DecisionTreeClassifier
 from . import _criterion
 from . import _tree
 from ._reingold_tilford import buchheim, Tree
-from . import DecisionTreeClassifier
-
-import warnings
+from ..base import is_classifier
+from ..utils.validation import _deprecate_positional_args
+from ..utils.validation import check_is_fitted
 
 
 def _color_brew(n):

@@ -5,35 +5,33 @@
 # License: BSD 3 clause
 
 import numpy as np
-from scipy import sparse
+import pytest
 from scipy import linalg
+from scipy import sparse
 from scipy import stats
 from scipy.special import expit
 
-import pytest
-
-from sklearn.utils._testing import assert_almost_equal
+from sklearn.datasets import make_low_rank_matrix
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_allclose_dense_sparse
-from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import assert_warns_message
 from sklearn.utils._testing import skip_if_32bit
-
+from sklearn.utils.extmath import _deterministic_vector_sign_flip
+from sklearn.utils.extmath import _incremental_mean_and_var
+from sklearn.utils.extmath import cartesian
 from sklearn.utils.extmath import density
+from sklearn.utils.extmath import log_logistic
 from sklearn.utils.extmath import randomized_svd
 from sklearn.utils.extmath import row_norms
-from sklearn.utils.extmath import weighted_mode
-from sklearn.utils.extmath import cartesian
-from sklearn.utils.extmath import log_logistic
-from sklearn.utils.extmath import svd_flip
-from sklearn.utils.extmath import _incremental_mean_and_var
-from sklearn.utils.extmath import _deterministic_vector_sign_flip
+from sklearn.utils.extmath import safe_sparse_dot
 from sklearn.utils.extmath import softmax
 from sklearn.utils.extmath import stable_cumsum
-from sklearn.utils.extmath import safe_sparse_dot
-from sklearn.datasets import make_low_rank_matrix
+from sklearn.utils.extmath import svd_flip
+from sklearn.utils.extmath import weighted_mode
 
 
 def test_density():

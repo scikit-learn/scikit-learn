@@ -3,14 +3,20 @@ Small collection of auxiliary functions that operate on arrays
 
 """
 
-cimport numpy as np
-import  numpy as np
-cimport cython
-from cython cimport floating
-from libc.math cimport fabs
-from libc.float cimport DBL_MAX, FLT_MAX
+import numpy as np
+from cython cimport
 
-from ._cython_blas cimport _copy, _rotg, _rot
+floating
+from libc.float cimport
+
+DBL_MAX, FLT_MAX
+from libc.math cimport
+
+fabs
+
+from ._cython_blas cimport
+
+_copy, _rotg, _rot
 
 ctypedef np.float64_t DOUBLE
 

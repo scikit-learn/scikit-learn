@@ -18,6 +18,24 @@ import numpy as np
 # Import the C-level symbols of numpy
 cimport numpy as np
 
+cimport
+cython
+# Import the C-level symbols of numpy
+cimport
+numpy as np
+import numpy as np
+# C++
+from cython.operator cimport
+
+dereference as deref, preincrement as inc, \
+                                      predecrement as dec
+from libcpp.map cimport
+
+map as cpp_map
+from libcpp.utility cimport
+
+pair
+
 # Numpy must be initialized. When using numpy from C or Cython you must
 # _always_ do that, or you will have segfaults
 np.import_array()

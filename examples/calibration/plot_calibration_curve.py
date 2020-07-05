@@ -50,14 +50,13 @@ print(__doc__)
 import matplotlib.pyplot as plt
 
 from sklearn import datasets
-from sklearn.naive_bayes import GaussianNB
-from sklearn.svm import LinearSVC
+from sklearn.calibration import CalibratedClassifierCV, calibration_curve
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (brier_score_loss, precision_score, recall_score,
                              f1_score)
-from sklearn.calibration import CalibratedClassifierCV, calibration_curve
 from sklearn.model_selection import train_test_split
-
+from sklearn.naive_bayes import GaussianNB
+from sklearn.svm import LinearSVC
 
 # Create dataset of classification task with many redundant and few
 # informative features

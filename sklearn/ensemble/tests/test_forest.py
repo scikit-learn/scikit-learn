@@ -8,24 +8,34 @@ Testing for the forest module (sklearn.ensemble.forest).
 #          Arnaud Joly
 # License: BSD 3 clause
 
-import pickle
-import math
-from collections import defaultdict
 import itertools
+import math
+import pickle
+from collections import defaultdict
 from itertools import combinations
 from itertools import product
 from typing import Dict, Any
 
+import joblib
 import numpy as np
-from scipy.sparse import csr_matrix
-from scipy.sparse import csc_matrix
+import pytest
 from scipy.sparse import coo_matrix
+from scipy.sparse import csc_matrix
+from scipy.sparse import csr_matrix
 from scipy.special import comb
 
-import pytest
-
-import joblib
-
+from sklearn import datasets
+from sklearn.datasets import make_classification
+from sklearn.decomposition import TruncatedSVD
+from sklearn.ensemble import ExtraTreesClassifier
+from sklearn.ensemble import ExtraTreesRegressor
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import RandomTreesEmbedding
+from sklearn.exceptions import NotFittedError
+from sklearn.model_selection import GridSearchCV
+from sklearn.svm import LinearSVC
+from sklearn.tree._classes import SPARSE_SPLITTERS
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_array_equal
@@ -35,23 +45,7 @@ from sklearn.utils._testing import assert_warns_message
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils._testing import skip_if_no_parallel
 from sklearn.utils.fixes import parse_version
-
-from sklearn.exceptions import NotFittedError
-
-from sklearn import datasets
-from sklearn.decomposition import TruncatedSVD
-from sklearn.datasets import make_classification
-from sklearn.ensemble import ExtraTreesClassifier
-from sklearn.ensemble import ExtraTreesRegressor
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.ensemble import RandomTreesEmbedding
-from sklearn.model_selection import GridSearchCV
-from sklearn.svm import LinearSVC
 from sklearn.utils.validation import check_random_state
-
-from sklearn.tree._classes import SPARSE_SPLITTERS
-
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]

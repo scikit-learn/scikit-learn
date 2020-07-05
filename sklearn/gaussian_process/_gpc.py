@@ -7,20 +7,19 @@
 from operator import itemgetter
 
 import numpy as np
-from scipy.linalg import cholesky, cho_solve, solve
 import scipy.optimize
+from scipy.linalg import cholesky, cho_solve, solve
 from scipy.special import erf, expit
 
-from ..base import BaseEstimator, ClassifierMixin, clone
 from .kernels \
     import RBF, CompoundKernel, ConstantKernel as C
-from ..utils.validation import check_is_fitted, check_array
+from ..base import BaseEstimator, ClassifierMixin, clone
+from ..multiclass import OneVsRestClassifier, OneVsOneClassifier
+from ..preprocessing import LabelEncoder
 from ..utils import check_random_state
 from ..utils.optimize import _check_optimize_result
-from ..preprocessing import LabelEncoder
-from ..multiclass import OneVsRestClassifier, OneVsOneClassifier
 from ..utils.validation import _deprecate_positional_args
-
+from ..utils.validation import check_is_fitted, check_array
 
 # Values required for approximating the logistic sigmoid by
 # error functions. coefs are obtained via:

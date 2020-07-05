@@ -4,23 +4,23 @@ classification, regression and anomaly detection.
 """
 import typing
 
+from ._bagging import BaggingClassifier
+from ._bagging import BaggingRegressor
 from ._base import BaseEnsemble
+from ._forest import ExtraTreesClassifier
+from ._forest import ExtraTreesRegressor
 from ._forest import RandomForestClassifier
 from ._forest import RandomForestRegressor
 from ._forest import RandomTreesEmbedding
-from ._forest import ExtraTreesClassifier
-from ._forest import ExtraTreesRegressor
-from ._bagging import BaggingClassifier
-from ._bagging import BaggingRegressor
-from ._iforest import IsolationForest
-from ._weight_boosting import AdaBoostClassifier
-from ._weight_boosting import AdaBoostRegressor
 from ._gb import GradientBoostingClassifier
 from ._gb import GradientBoostingRegressor
-from ._voting import VotingClassifier
-from ._voting import VotingRegressor
+from ._iforest import IsolationForest
 from ._stacking import StackingClassifier
 from ._stacking import StackingRegressor
+from ._voting import VotingClassifier
+from ._voting import VotingRegressor
+from ._weight_boosting import AdaBoostClassifier
+from ._weight_boosting import AdaBoostRegressor
 
 if typing.TYPE_CHECKING:
     # Avoid errors in type checkers (e.g. mypy) for experimental estimators.

@@ -30,11 +30,11 @@ print(__doc__)
 #           Gael Varoquaux <gael.varoquaux@normalesup.org>
 # License: BSD 3 clause
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
-from sklearn.feature_extraction import image
 from sklearn.cluster import spectral_clustering
+from sklearn.feature_extraction import image
 
 l = 100
 x, y = np.indices((l, l))

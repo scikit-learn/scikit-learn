@@ -15,6 +15,20 @@ from cython.parallel cimport prange
 from libc.math cimport fabs
 
 from ..utils._openmp_helpers import _openmp_effective_n_threads
+cimport
+numpy as np
+import numpy as np
+from cython cimport
+
+floating
+from cython.parallel cimport
+
+prange
+from libc.math cimport
+
+fabs
+
+from ..utils._openmp_helpers import _openmp_effective_n_threads
 
 np.import_array()
 

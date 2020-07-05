@@ -1,28 +1,25 @@
 
 import pickle
 from io import BytesIO
+
 import numpy as np
-import scipy.sparse
 import pytest
+import scipy.sparse
 
 from sklearn.datasets import load_digits, load_iris
-
-from sklearn.model_selection import train_test_split
 from sklearn.model_selection import cross_val_score
-
-from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_raises
-from sklearn.utils._testing import assert_raise_message
-from sklearn.utils._testing import assert_warns
-from sklearn.utils._testing import assert_no_warnings
-from sklearn.utils._testing import ignore_warnings
-
+from sklearn.model_selection import train_test_split
+from sklearn.naive_bayes import CategoricalNB
 from sklearn.naive_bayes import GaussianNB, BernoulliNB
 from sklearn.naive_bayes import MultinomialNB, ComplementNB
-from sklearn.naive_bayes import CategoricalNB
-
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_no_warnings
+from sklearn.utils._testing import assert_raise_message
+from sklearn.utils._testing import assert_raises
+from sklearn.utils._testing import assert_warns
+from sklearn.utils._testing import ignore_warnings
 
 # Data is just 6 separable points in the plane
 X = np.array([[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]])

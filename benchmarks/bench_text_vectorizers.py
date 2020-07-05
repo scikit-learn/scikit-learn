@@ -8,8 +8,8 @@ To run this benchmark, you will need,
  * psutil (optional, but recommended)
 
 """
-import timeit
 import itertools
+import timeit
 
 import numpy as np
 import pandas as pd

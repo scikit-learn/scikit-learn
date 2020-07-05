@@ -3,8 +3,9 @@ import itertools
 import numpy as np
 import pytest
 from numpy.testing import assert_array_almost_equal
-from sklearn.neighbors._ball_tree import BallTree
+
 from sklearn.neighbors import DistanceMetric
+from sklearn.neighbors._ball_tree import BallTree
 from sklearn.utils import check_random_state
 
 rng = np.random.RandomState(10)

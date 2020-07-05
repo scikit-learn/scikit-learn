@@ -4,37 +4,35 @@
 # License: BSD 3 clause
 """Classification and regression using Stochastic Gradient Descent (SGD)."""
 
-import numpy as np
 import warnings
-
 from abc import ABCMeta, abstractmethod
 
+import numpy as np
 from joblib import Parallel, delayed
 
-from ..base import clone, is_classifier
 from ._base import LinearClassifierMixin, SparseCoefMixin
 from ._base import make_dataset
-from ..base import BaseEstimator, RegressorMixin
-from ..utils import check_array, check_random_state, check_X_y
-from ..utils.extmath import safe_sparse_dot
-from ..utils.multiclass import _check_partial_fit_first_call
-from ..utils.validation import check_is_fitted, _check_sample_weight
-from ..utils.validation import _deprecate_positional_args
-from ..exceptions import ConvergenceWarning
-from ..model_selection import StratifiedShuffleSplit, ShuffleSplit
-
-from ._sgd_fast import _plain_sgd
-from ..utils import compute_class_weight
+from ._sgd_fast import EpsilonInsensitive
 from ._sgd_fast import Hinge
-from ._sgd_fast import SquaredHinge
+from ._sgd_fast import Huber
 from ._sgd_fast import Log
 from ._sgd_fast import ModifiedHuber
-from ._sgd_fast import SquaredLoss
-from ._sgd_fast import Huber
-from ._sgd_fast import EpsilonInsensitive
 from ._sgd_fast import SquaredEpsilonInsensitive
-from ..utils.fixes import _joblib_parallel_args
+from ._sgd_fast import SquaredHinge
+from ._sgd_fast import SquaredLoss
+from ._sgd_fast import _plain_sgd
+from ..base import BaseEstimator, RegressorMixin
+from ..base import clone, is_classifier
+from ..exceptions import ConvergenceWarning
+from ..model_selection import StratifiedShuffleSplit, ShuffleSplit
+from ..utils import check_array, check_random_state, check_X_y
+from ..utils import compute_class_weight
 from ..utils import deprecated
+from ..utils.extmath import safe_sparse_dot
+from ..utils.fixes import _joblib_parallel_args
+from ..utils.multiclass import _check_partial_fit_first_call
+from ..utils.validation import _deprecate_positional_args
+from ..utils.validation import check_is_fitted, _check_sample_weight
 
 LEARNING_RATE_TYPES = {"constant": 1, "optimal": 2, "invscaling": 3,
                        "adaptive": 4, "pa1": 5, "pa2": 6}

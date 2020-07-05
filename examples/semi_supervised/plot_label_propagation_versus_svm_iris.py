@@ -15,8 +15,9 @@ print(__doc__)
 # Authors: Clay Woolam <clay@woolam.org>
 # License: BSD
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+
 from sklearn import datasets
 from sklearn import svm
 from sklearn.semi_supervised import LabelSpreading

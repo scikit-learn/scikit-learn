@@ -53,11 +53,12 @@ print(__doc__)
 # License: BSD 3 clause
 # Copyright: INRIA
 
+import matplotlib.pyplot as plt
 import numpy as np
 from scipy import linalg
-from sklearn.datasets import make_sparse_spd_matrix
+
 from sklearn.covariance import GraphicalLassoCV, ledoit_wolf
-import matplotlib.pyplot as plt
+from sklearn.datasets import make_sparse_spd_matrix
 
 # #############################################################################
 # Generate the data

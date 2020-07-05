@@ -1,5 +1,5 @@
-import sys
 import os
+import sys
 
 from sklearn._build_utils import cythonize_extensions
 

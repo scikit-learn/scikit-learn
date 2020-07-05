@@ -14,12 +14,22 @@
 
 import numpy as np
 cimport numpy as np
-cimport cython
 from cython cimport floating
 from libc.math cimport sqrt
 
 from ..utils.extmath import row_norms
 
+cimport
+numpy as np
+import numpy as np
+from cython cimport
+
+floating
+from libc.math cimport
+
+sqrt
+
+from ..utils.extmath import row_norms
 
 np.import_array()
 

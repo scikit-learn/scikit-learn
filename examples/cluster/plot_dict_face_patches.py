@@ -26,7 +26,6 @@ import time
 import matplotlib.pyplot as plt
 import numpy as np
 
-
 from sklearn import datasets
 from sklearn.cluster import MiniBatchKMeans
 from sklearn.feature_extraction.image import extract_patches_2d

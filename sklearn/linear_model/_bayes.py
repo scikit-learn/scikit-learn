@@ -6,13 +6,14 @@ Various bayesian regression
 # License: BSD 3 clause
 
 from math import log
+
 import numpy as np
 from scipy import linalg
+from scipy.linalg import pinvh
 
 from ._base import LinearModel, _rescale_data
 from ..base import RegressorMixin
 from ..utils.extmath import fast_logdet
-from scipy.linalg import pinvh
 from ..utils.validation import _check_sample_weight
 from ..utils.validation import _deprecate_positional_args
 

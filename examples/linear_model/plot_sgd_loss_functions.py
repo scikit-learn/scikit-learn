@@ -8,8 +8,8 @@ A plot that compares the various convex loss functions supported by
 """
 print(__doc__)
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
 
 def modified_huber_loss(y_true, y_pred):

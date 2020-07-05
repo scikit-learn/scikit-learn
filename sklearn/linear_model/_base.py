@@ -13,30 +13,30 @@ Generalized Linear Models.
 #         Giorgio Patrini <giorgio.patrini@anu.edu.au>
 # License: BSD 3 clause
 
-from abc import ABCMeta, abstractmethod
 import numbers
 import warnings
+from abc import ABCMeta, abstractmethod
 
 import numpy as np
 import scipy.sparse as sp
+from joblib import Parallel, delayed
 from scipy import linalg
 from scipy import sparse
 from scipy.special import expit
-from joblib import Parallel, delayed
 
 from ..base import (BaseEstimator, ClassifierMixin, RegressorMixin,
                     MultiOutputMixin)
+from ..preprocessing import normalize as f_normalize
 from ..utils import check_array
-from ..utils.validation import FLOAT_DTYPES
-from ..utils.validation import _deprecate_positional_args
 from ..utils import check_random_state
-from ..utils.extmath import safe_sparse_dot
-from ..utils.sparsefuncs import mean_variance_axis, inplace_column_scale
-from ..utils.fixes import sparse_lsqr
 from ..utils._seq_dataset import ArrayDataset32, CSRDataset32
 from ..utils._seq_dataset import ArrayDataset64, CSRDataset64
+from ..utils.extmath import safe_sparse_dot
+from ..utils.fixes import sparse_lsqr
+from ..utils.sparsefuncs import mean_variance_axis, inplace_column_scale
+from ..utils.validation import FLOAT_DTYPES
+from ..utils.validation import _deprecate_positional_args
 from ..utils.validation import check_is_fitted, _check_sample_weight
-from ..preprocessing import normalize as f_normalize
 
 # TODO: bayesian_ridge_regression and bayesian_regression_ard
 # should be squashed into its respective objects.

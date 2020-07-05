@@ -21,13 +21,13 @@ print(__doc__)
 
 from itertools import cycle
 from time import time
-import numpy as np
-import matplotlib.pyplot as plt
+
 import matplotlib.colors as colors
+import matplotlib.pyplot as plt
+import numpy as np
 
 from sklearn.cluster import Birch, MiniBatchKMeans
 from sklearn.datasets import make_blobs
-
 
 # Generate centers for the blobs so that it forms a 10 X 10 grid.
 xx = np.linspace(-22, 22, 10)

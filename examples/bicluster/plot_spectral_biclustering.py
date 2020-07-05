@@ -23,10 +23,9 @@ print(__doc__)
 import numpy as np
 from matplotlib import pyplot as plt
 
-from sklearn.datasets import make_checkerboard
 from sklearn.cluster import SpectralBiclustering
+from sklearn.datasets import make_checkerboard
 from sklearn.metrics import consensus_score
-
 
 n_clusters = (4, 3)
 data, rows, columns = make_checkerboard(

@@ -2,13 +2,16 @@
 """
 import gzip
 import json
-import numpy as np
 import os
 import re
-import scipy.sparse
-import sklearn
-import pytest
+from functools import partial
+from urllib.error import HTTPError
 
+import numpy as np
+import pytest
+import scipy.sparse
+
+import sklearn
 from sklearn import config_context
 from sklearn.datasets import fetch_openml
 from sklearn.datasets._openml import (_open_openml_url,
@@ -20,15 +23,12 @@ from sklearn.datasets._openml import (_open_openml_url,
                                       _get_local_path,
                                       _retry_with_clean_cache,
                                       _feature_to_dtype)
-from sklearn.utils._testing import (assert_warns_message,
-                                    assert_raise_message)
-from sklearn.utils import is_scalar_nan
-from sklearn.utils._testing import assert_allclose, assert_array_equal
-from urllib.error import HTTPError
 from sklearn.datasets.tests.test_common import check_return_X_y
 from sklearn.externals._arff import ArffContainerType
-from functools import partial
-
+from sklearn.utils import is_scalar_nan
+from sklearn.utils._testing import assert_allclose, assert_array_equal
+from sklearn.utils._testing import (assert_warns_message,
+                                    assert_raise_message)
 
 currdir = os.path.dirname(os.path.abspath(__file__))
 # if True, urlopen will be monkey patched to only use local files

@@ -17,8 +17,8 @@ function approaches that of the ridge.
 
 print(__doc__)
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
 from sklearn.datasets import make_regression
 from sklearn.linear_model import HuberRegressor, Ridge

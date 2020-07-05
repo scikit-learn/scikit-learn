@@ -1,7 +1,8 @@
 from itertools import product
 
-import pytest
+import joblib
 import numpy as np
+import pytest
 from scipy.sparse import (bsr_matrix, coo_matrix, csc_matrix, csr_matrix,
                           dok_matrix, lil_matrix, issparse)
 
@@ -19,15 +20,13 @@ from sklearn.neighbors._base import _is_sorted_by_data, _check_precomputed
 from sklearn.pipeline import make_pipeline
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_raise_message
 from sklearn.utils._testing import assert_raises
 from sklearn.utils._testing import assert_raises_regex
 from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import assert_warns_message
-from sklearn.utils._testing import assert_raise_message
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils.validation import check_random_state
-
-import joblib
 
 rng = np.random.RandomState(0)
 # load and shuffle iris dataset

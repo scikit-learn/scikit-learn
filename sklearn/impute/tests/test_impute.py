@@ -1,32 +1,29 @@
 from __future__ import division
 
-import pytest
+import io
 
 import numpy as np
+import pytest
 from scipy import sparse
 from scipy.stats import kstest
 
-import io
-
-from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import assert_allclose_dense_sparse
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_array_almost_equal
-
+from sklearn import tree
+from sklearn.datasets import load_diabetes
+from sklearn.dummy import DummyRegressor
+from sklearn.exceptions import ConvergenceWarning
 # make IterativeImputer available
 from sklearn.experimental import enable_iterative_imputer  # noqa
-
-from sklearn.datasets import load_diabetes
 from sklearn.impute import MissingIndicator
 from sklearn.impute import SimpleImputer, IterativeImputer
-from sklearn.dummy import DummyRegressor
 from sklearn.linear_model import BayesianRidge, ARDRegression, RidgeCV
+from sklearn.model_selection import GridSearchCV
 from sklearn.pipeline import Pipeline
 from sklearn.pipeline import make_union
-from sklearn.model_selection import GridSearchCV
-from sklearn import tree
 from sklearn.random_projection import _sparse_random_matrix
-from sklearn.exceptions import ConvergenceWarning
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import assert_allclose_dense_sparse
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_array_equal
 
 
 def _check_statistics(X, X_true,

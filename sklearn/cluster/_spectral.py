@@ -9,13 +9,13 @@ import warnings
 
 import numpy as np
 
+from ._kmeans import k_means
 from ..base import BaseEstimator, ClusterMixin
-from ..utils import check_random_state, as_float_array
-from ..utils.validation import _deprecate_positional_args
+from ..manifold import spectral_embedding
 from ..metrics.pairwise import pairwise_kernels
 from ..neighbors import kneighbors_graph, NearestNeighbors
-from ..manifold import spectral_embedding
-from ._kmeans import k_means
+from ..utils import check_random_state, as_float_array
+from ..utils.validation import _deprecate_positional_args
 
 
 @_deprecate_positional_args

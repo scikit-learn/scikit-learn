@@ -2,8 +2,8 @@
 #
 # License: BSD 3 clause
 import numpy as np
-from numpy.testing import assert_allclose
 import pytest
+from numpy.testing import assert_allclose
 from scipy.optimize import check_grad
 
 from sklearn.linear_model._glm.link import (
@@ -11,7 +11,6 @@ from sklearn.linear_model._glm.link import (
     LogLink,
     LogitLink,
 )
-
 
 LINK_FUNCTIONS = [IdentityLink, LogLink, LogitLink]
 

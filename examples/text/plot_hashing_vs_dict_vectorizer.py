@@ -15,11 +15,11 @@ A discrepancy between the number of terms reported for DictVectorizer and
 for FeatureHasher is to be expected due to hash collisions.
 """
 
+import re
+import sys
 # Author: Lars Buitinck
 # License: BSD 3 clause
 from collections import defaultdict
-import re
-import sys
 from time import time
 
 import numpy as np

@@ -26,22 +26,20 @@ The module structure is the following:
 from abc import ABCMeta, abstractmethod
 
 import numpy as np
-
 from scipy.special import xlogy
 
 from ._base import BaseEnsemble
 from ..base import ClassifierMixin, RegressorMixin, is_classifier, is_regressor
-
+from ..metrics import accuracy_score, r2_score
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
 from ..utils import check_array, check_random_state, _safe_indexing
 from ..utils.extmath import softmax
 from ..utils.extmath import stable_cumsum
-from ..metrics import accuracy_score, r2_score
-from ..utils.validation import check_is_fitted
 from ..utils.validation import _check_sample_weight
-from ..utils.validation import has_fit_parameter
-from ..utils.validation import _num_samples
 from ..utils.validation import _deprecate_positional_args
+from ..utils.validation import _num_samples
+from ..utils.validation import check_is_fitted
+from ..utils.validation import has_fit_parameter
 
 __all__ = [
     'AdaBoostClassifier',

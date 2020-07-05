@@ -1,4 +1,7 @@
 """Base and mixin classes for nearest neighbors"""
+import numbers
+import warnings
+from abc import ABCMeta, abstractmethod
 # Authors: Jake Vanderplas <vanderplas@astro.washington.edu>
 #          Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #          Alexandre Gramfort <alexandre.gramfort@inria.fr>
@@ -8,27 +11,23 @@
 # License: BSD 3 clause (C) INRIA, University of Amsterdam
 from functools import partial
 
-import warnings
-from abc import ABCMeta, abstractmethod
-import numbers
-
-import numpy as np
-from scipy.sparse import csr_matrix, issparse
 import joblib
+import numpy as np
 from joblib import Parallel, delayed, effective_n_jobs
+from scipy.sparse import csr_matrix, issparse
 
 from ._ball_tree import BallTree
 from ._kd_tree import KDTree
 from ..base import BaseEstimator, MultiOutputMixin
+from ..exceptions import DataConversionWarning, EfficiencyWarning
 from ..metrics import pairwise_distances_chunked
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
-from ..utils import check_array, gen_even_slices
 from ..utils import _to_object_array
+from ..utils import check_array, gen_even_slices
+from ..utils.fixes import parse_version
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
 from ..utils.validation import check_non_negative
-from ..utils.fixes import parse_version
-from ..exceptions import DataConversionWarning, EfficiencyWarning
 
 VALID_METRICS = dict(ball_tree=BallTree.valid_metrics,
                      kd_tree=KDTree.valid_metrics,

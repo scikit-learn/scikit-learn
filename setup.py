@@ -4,15 +4,17 @@
 #               2010 Fabian Pedregosa <fabian.pedregosa@inria.fr>
 # License: 3-clause BSD
 
-import sys
+import importlib
 import os
 import platform
 import shutil
+import sys
+import traceback
 from distutils.command.clean import clean as Clean
 from distutils.command.sdist import sdist
+
 from pkg_resources import parse_version
-import traceback
-import importlib
+
 try:
     import builtins
 except ImportError:
@@ -62,7 +64,6 @@ SETUPTOOLS_COMMANDS = {
     '--single-version-externally-managed',
 }
 if SETUPTOOLS_COMMANDS.intersection(sys.argv):
-    import setuptools
 
     extra_setuptools_args = dict(
         zip_safe=False,  # the package can run out of an .egg file

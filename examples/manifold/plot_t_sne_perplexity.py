@@ -28,12 +28,13 @@ those effects.
 
 print(__doc__)
 
-import numpy as np
-import matplotlib.pyplot as plt
-
-from matplotlib.ticker import NullFormatter
-from sklearn import manifold, datasets
 from time import time
+
+import matplotlib.pyplot as plt
+import numpy as np
+from matplotlib.ticker import NullFormatter
+
+from sklearn import manifold, datasets
 
 n_samples = 300
 n_components = 2

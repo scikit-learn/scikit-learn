@@ -10,12 +10,12 @@ from scipy.sparse import eye, csr_matrix
 from scipy.sparse.linalg import eigsh
 
 from ..base import BaseEstimator, TransformerMixin, _UnstableArchMixin
+from ..neighbors import NearestNeighbors
 from ..utils import check_random_state, check_array
 from ..utils.extmath import stable_cumsum
-from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
 from ..utils.validation import _deprecate_positional_args
-from ..neighbors import NearestNeighbors
+from ..utils.validation import check_is_fitted
 
 
 def barycenter_weights(X, Z, reg=1e-3):

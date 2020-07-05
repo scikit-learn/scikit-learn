@@ -16,9 +16,11 @@ the number of dimensions.
 
 In both cases, only 10% of the features are informative.
 """
-import numpy as np
 import gc
 from time import time
+
+import numpy as np
+
 from sklearn.datasets import make_regression
 
 alpha = 0.1

@@ -6,15 +6,14 @@ Kernel Density Estimation
 
 import numpy as np
 from scipy.special import gammainc
-from ..base import BaseEstimator
-from ..utils import check_array, check_random_state
-from ..utils.validation import _check_sample_weight, check_is_fitted
-from ..utils.validation import _deprecate_positional_args
 
-from ..utils.extmath import row_norms
 from ._ball_tree import BallTree, DTYPE
 from ._kd_tree import KDTree
-
+from ..base import BaseEstimator
+from ..utils import check_array, check_random_state
+from ..utils.extmath import row_norms
+from ..utils.validation import _check_sample_weight, check_is_fitted
+from ..utils.validation import _deprecate_positional_args
 
 VALID_KERNELS = ['gaussian', 'tophat', 'epanechnikov', 'exponential', 'linear',
                  'cosine']

@@ -29,15 +29,15 @@ print(__doc__)
 # Authors: Yann N. Dauphin, Vlad Niculae, Gabriel Synnaeve
 # License: BSD
 
-import numpy as np
 import matplotlib.pyplot as plt
-
+import numpy as np
 from scipy.ndimage import convolve
+
 from sklearn import linear_model, datasets, metrics
+from sklearn.base import clone
 from sklearn.model_selection import train_test_split
 from sklearn.neural_network import BernoulliRBM
 from sklearn.pipeline import Pipeline
-from sklearn.base import clone
 
 
 # #############################################################################

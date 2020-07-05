@@ -21,11 +21,11 @@ print(__doc__)
 #          Andreas Mueller <amueller@ais.uni-bonn.de>
 # License: BSD 3 clause
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
-from sklearn.linear_model import LogisticRegression
 from sklearn import datasets
+from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import StandardScaler
 
 X, y = datasets.load_digits(return_X_y=True)

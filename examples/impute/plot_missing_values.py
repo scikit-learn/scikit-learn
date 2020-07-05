@@ -48,7 +48,6 @@ import numpy as np
 from sklearn.datasets import fetch_california_housing
 from sklearn.datasets import load_diabetes
 
-
 rng = np.random.RandomState(42)
 
 X_diabetes, y_diabetes = load_diabetes(return_X_y=True)

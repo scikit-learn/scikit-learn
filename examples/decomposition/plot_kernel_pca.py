@@ -12,11 +12,11 @@ print(__doc__)
 #          Andreas Mueller
 # License: BSD 3 clause
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
-from sklearn.decomposition import PCA, KernelPCA
 from sklearn.datasets import make_circles
+from sklearn.decomposition import PCA, KernelPCA
 
 np.random.seed(0)
 

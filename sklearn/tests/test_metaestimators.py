@@ -5,14 +5,13 @@ import numpy as np
 
 from sklearn.base import BaseEstimator
 from sklearn.datasets import make_classification
-
-from sklearn.utils._testing import assert_raises
-from sklearn.utils.validation import check_is_fitted
-from sklearn.pipeline import Pipeline
-from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
-from sklearn.feature_selection import RFE, RFECV
 from sklearn.ensemble import BaggingClassifier
 from sklearn.exceptions import NotFittedError
+from sklearn.feature_selection import RFE, RFECV
+from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
+from sklearn.pipeline import Pipeline
+from sklearn.utils._testing import assert_raises
+from sklearn.utils.validation import check_is_fitted
 
 
 class DelegatorData:

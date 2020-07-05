@@ -7,14 +7,14 @@ import numpy as np
 from scipy import linalg
 from scipy.sparse.linalg import eigsh
 
+from ..base import BaseEstimator, TransformerMixin
+from ..exceptions import NotFittedError
+from ..metrics.pairwise import pairwise_kernels
+from ..preprocessing import KernelCenterer
 from ..utils import check_random_state
 from ..utils.extmath import svd_flip
-from ..utils.validation import check_is_fitted, _check_psd_eigenvalues
-from ..exceptions import NotFittedError
-from ..base import BaseEstimator, TransformerMixin
-from ..preprocessing import KernelCenterer
-from ..metrics.pairwise import pairwise_kernels
 from ..utils.validation import _deprecate_positional_args
+from ..utils.validation import check_is_fitted, _check_psd_eigenvalues
 
 
 class KernelPCA(TransformerMixin, BaseEstimator):

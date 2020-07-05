@@ -6,35 +6,32 @@ Testing for the bagging ensemble module (sklearn.ensemble.bagging).
 # License: BSD 3 clause
 from itertools import product
 
-import numpy as np
 import joblib
+import numpy as np
 import pytest
+from scipy.sparse import csc_matrix, csr_matrix
 
 from sklearn.base import BaseEstimator
-
-from sklearn.utils._testing import assert_array_equal
+from sklearn.datasets import load_diabetes, load_iris, make_hastie_10_2
+from sklearn.dummy import DummyClassifier, DummyRegressor
+from sklearn.ensemble import BaggingClassifier, BaggingRegressor
+from sklearn.feature_selection import SelectKBest
+from sklearn.linear_model import Perceptron, LogisticRegression
+from sklearn.model_selection import GridSearchCV, ParameterGrid
+from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KNeighborsClassifier, KNeighborsRegressor
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import FunctionTransformer, scale
+from sklearn.random_projection import SparseRandomProjection
+from sklearn.svm import SVC, SVR
+from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
+from sklearn.utils import check_random_state
 from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_raise_message
 from sklearn.utils._testing import assert_raises
 from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import assert_warns_message
-from sklearn.utils._testing import assert_raise_message
-
-from sklearn.dummy import DummyClassifier, DummyRegressor
-from sklearn.model_selection import GridSearchCV, ParameterGrid
-from sklearn.ensemble import BaggingClassifier, BaggingRegressor
-from sklearn.linear_model import Perceptron, LogisticRegression
-from sklearn.neighbors import KNeighborsClassifier, KNeighborsRegressor
-from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
-from sklearn.svm import SVC, SVR
-from sklearn.random_projection import SparseRandomProjection
-from sklearn.pipeline import make_pipeline
-from sklearn.feature_selection import SelectKBest
-from sklearn.model_selection import train_test_split
-from sklearn.datasets import load_diabetes, load_iris, make_hastie_10_2
-from sklearn.utils import check_random_state
-from sklearn.preprocessing import FunctionTransformer, scale
-
-from scipy.sparse import csc_matrix, csr_matrix
 
 rng = check_random_state(0)
 

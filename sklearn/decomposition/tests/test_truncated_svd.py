@@ -1,9 +1,8 @@
 """Test truncated SVD transformer."""
 
 import numpy as np
-import scipy.sparse as sp
-
 import pytest
+import scipy.sparse as sp
 
 from sklearn.decomposition import TruncatedSVD, PCA
 from sklearn.utils import check_random_state

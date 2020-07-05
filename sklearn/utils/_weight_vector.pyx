@@ -8,14 +8,17 @@
 #
 # License: BSD 3 clause
 
-cimport cython
-from libc.limits cimport INT_MAX
-from libc.math cimport sqrt
 import numpy as np
-cimport numpy as np
+from libc.limits cimport
 
-from ._cython_blas cimport _dot, _scal, _axpy
+INT_MAX
+from libc.math cimport
 
+sqrt
+
+from ._cython_blas cimport
+
+_dot, _scal, _axpy
 
 np.import_array()
 

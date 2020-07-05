@@ -10,12 +10,10 @@
 
 import numpy as np
 cimport numpy as np
-cimport cython
 from cython cimport floating
 from cython.parallel import prange, parallel
-from libc.math cimport sqrt
 from libc.stdlib cimport calloc, free
-from libc.string cimport memset, memcpy
+from libc.string cimport memset
 
 from ..utils.extmath import row_norms
 from ._k_means_fast cimport _relocate_empty_clusters_dense
@@ -24,6 +22,39 @@ from ._k_means_fast cimport _euclidean_dense_dense
 from ._k_means_fast cimport _euclidean_sparse_dense
 from ._k_means_fast cimport _average_centers
 from ._k_means_fast cimport _center_shift
+cimport
+numpy as np
+import numpy as np
+from cython cimport
+
+floating
+from cython.parallel import prange, parallel
+from libc.stdlib cimport
+
+calloc, free
+from libc.string cimport
+
+memset
+
+from ._k_means_fast cimport
+
+_average_centers
+from ._k_means_fast cimport
+
+_center_shift
+from ._k_means_fast cimport
+
+_euclidean_dense_dense
+from ._k_means_fast cimport
+
+_euclidean_sparse_dense
+from ._k_means_fast cimport
+
+_relocate_empty_clusters_dense
+from ._k_means_fast cimport
+
+_relocate_empty_clusters_sparse
+from ..utils.extmath import row_norms
 
 
 np.import_array()

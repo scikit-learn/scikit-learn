@@ -12,11 +12,31 @@
 import numpy as np
 cimport numpy as np
 from libc.stdio cimport printf
-from libc.math cimport sqrt, log
+from libc.math cimport  log
 from libc.stdlib cimport malloc, free
 from cython.parallel cimport prange, parallel
 
 from ..neighbors._quad_tree cimport _QuadTree
+
+cimport
+numpy as np
+import numpy as np
+from cython.parallel cimport
+
+prange, parallel
+from libc.math cimport
+
+log
+from libc.stdio cimport
+
+printf
+from libc.stdlib cimport
+
+malloc, free
+
+from ..neighbors._quad_tree cimport
+
+_QuadTree
 
 np.import_array()
 

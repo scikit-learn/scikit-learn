@@ -5,13 +5,21 @@
 
 # Author: Nicolas Hug
 
-cimport cython
 from cython.parallel import prange
 import numpy as np
 cimport numpy as np
 
 from .common import Y_DTYPE
 from .common cimport Y_DTYPE_C
+cimport
+numpy as np
+import numpy as np
+from cython.parallel import prange
+
+from .common import Y_DTYPE
+from .common cimport
+
+Y_DTYPE_C
 
 np.import_array()
 

@@ -31,11 +31,12 @@ print(__doc__)
 # License: BSD 3 clause
 
 from time import time
-import numpy as np
-import matplotlib.pyplot as plt
 
-from sklearn import linear_model
+import matplotlib.pyplot as plt
+import numpy as np
+
 from sklearn import datasets
+from sklearn import linear_model
 from sklearn.svm import l1_min_c
 
 iris = datasets.load_iris()

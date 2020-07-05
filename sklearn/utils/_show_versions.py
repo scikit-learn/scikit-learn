@@ -5,9 +5,9 @@ adapted from :func:`pandas.show_versions`
 """
 # License: BSD 3 clause
 
+import importlib
 import platform
 import sys
-import importlib
 
 from ._openmp_helpers import _openmp_parallelism_enabled
 

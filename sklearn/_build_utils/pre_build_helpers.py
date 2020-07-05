@@ -1,13 +1,13 @@
 """Helpers to check build environment before actual build of scikit-learn"""
 
-import os
-import sys
 import glob
+import os
+import subprocess
+import sys
 import tempfile
 import textwrap
-import subprocess
-
 from distutils.sysconfig import customize_compiler
+
 from numpy.distutils.ccompiler import new_compiler
 
 

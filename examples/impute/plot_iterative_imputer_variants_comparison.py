@@ -40,21 +40,21 @@ For this particular pattern of missing values we see that
 """
 print(__doc__)
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 
+from sklearn.datasets import fetch_california_housing
+from sklearn.ensemble import ExtraTreesRegressor
 # To use this experimental feature, we need to explicitly ask for it:
 from sklearn.experimental import enable_iterative_imputer  # noqa
-from sklearn.datasets import fetch_california_housing
-from sklearn.impute import SimpleImputer
 from sklearn.impute import IterativeImputer
+from sklearn.impute import SimpleImputer
 from sklearn.linear_model import BayesianRidge
-from sklearn.tree import DecisionTreeRegressor
-from sklearn.ensemble import ExtraTreesRegressor
+from sklearn.model_selection import cross_val_score
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.pipeline import make_pipeline
-from sklearn.model_selection import cross_val_score
+from sklearn.tree import DecisionTreeRegressor
 
 N_SPLITS = 5
 

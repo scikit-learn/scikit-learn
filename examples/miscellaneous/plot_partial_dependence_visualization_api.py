@@ -15,15 +15,15 @@ customize the plot with the visualization API.
 """  # noqa
 print(__doc__)
 
-import pandas as pd
 import matplotlib.pyplot as plt
-from sklearn.datasets import load_diabetes
-from sklearn.neural_network import MLPRegressor
-from sklearn.preprocessing import StandardScaler
-from sklearn.pipeline import make_pipeline
-from sklearn.tree import DecisionTreeRegressor
-from sklearn.inspection import plot_partial_dependence
+import pandas as pd
 
+from sklearn.datasets import load_diabetes
+from sklearn.inspection import plot_partial_dependence
+from sklearn.neural_network import MLPRegressor
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.tree import DecisionTreeRegressor
 
 # %%
 # Train models on the diabetes dataset

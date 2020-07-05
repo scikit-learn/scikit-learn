@@ -10,12 +10,12 @@ import functools
 
 import numpy as np
 
-from ...utils import check_random_state
-from ...utils import check_X_y
-from ...utils import _safe_indexing
-from ..pairwise import pairwise_distances_chunked
 from ..pairwise import pairwise_distances
+from ..pairwise import pairwise_distances_chunked
 from ...preprocessing import LabelEncoder
+from ...utils import _safe_indexing
+from ...utils import check_X_y
+from ...utils import check_random_state
 from ...utils.validation import _deprecate_positional_args
 
 

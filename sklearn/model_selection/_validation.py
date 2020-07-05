@@ -10,28 +10,27 @@ functions to validate the model.
 # License: BSD 3 clause
 
 
-import warnings
 import numbers
 import time
-from traceback import format_exc
+import warnings
 from contextlib import suppress
+from traceback import format_exc
 
 import numpy as np
 import scipy.sparse as sp
 from joblib import Parallel, delayed, logger
 
+from ._split import check_cv
 from ..base import is_classifier, clone
-from ..utils import indexable, check_random_state, _safe_indexing
-from ..utils.validation import _check_fit_params
-from ..utils.validation import _num_samples
-from ..utils.validation import _deprecate_positional_args
-from ..utils.metaestimators import _safe_split
+from ..exceptions import FitFailedWarning
 from ..metrics import check_scoring
 from ..metrics._scorer import _check_multimetric_scoring, _MultimetricScorer
-from ..exceptions import FitFailedWarning
-from ._split import check_cv
 from ..preprocessing import LabelEncoder
-
+from ..utils import indexable, check_random_state, _safe_indexing
+from ..utils.metaestimators import _safe_split
+from ..utils.validation import _check_fit_params
+from ..utils.validation import _deprecate_positional_args
+from ..utils.validation import _num_samples
 
 __all__ = ['cross_validate', 'cross_val_score', 'cross_val_predict',
            'permutation_test_score', 'learning_curve', 'validation_curve']

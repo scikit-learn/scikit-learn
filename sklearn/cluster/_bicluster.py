@@ -2,11 +2,10 @@
 # Authors : Kemal Eren
 # License: BSD 3 clause
 
-from abc import ABCMeta, abstractmethod
 import warnings
+from abc import ABCMeta, abstractmethod
 
 import numpy as np
-
 from scipy.linalg import norm
 from scipy.sparse import dia_matrix, issparse
 from scipy.sparse.linalg import eigsh, svds
@@ -14,12 +13,9 @@ from scipy.sparse.linalg import eigsh, svds
 from . import KMeans, MiniBatchKMeans
 from ..base import BaseEstimator, BiclusterMixin
 from ..utils import check_random_state
-
 from ..utils.extmath import (make_nonnegative, randomized_svd,
                              safe_sparse_dot)
-
 from ..utils.validation import assert_all_finite, _deprecate_positional_args
-
 
 __all__ = ['SpectralCoclustering',
            'SpectralBiclustering']

@@ -43,14 +43,13 @@ computationally costly.
 """
 print(__doc__)
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 from scipy import linalg
 
 from sklearn.covariance import LedoitWolf, OAS, ShrunkCovariance, \
     log_likelihood, empirical_covariance
 from sklearn.model_selection import GridSearchCV
-
 
 # #############################################################################
 # Generate sample data

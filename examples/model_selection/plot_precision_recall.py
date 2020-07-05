@@ -90,6 +90,8 @@ matrix as a binary prediction (micro-averaging).
              :func:`sklearn.metrics.precision_score`,
              :func:`sklearn.metrics.f1_score`
 """
+import numpy as np
+
 # %%
 # In binary classification settings
 # --------------------------------------------------------
@@ -100,7 +102,6 @@ matrix as a binary prediction (micro-averaging).
 # Try to differentiate the two first classes of the iris data
 from sklearn import svm, datasets
 from sklearn.model_selection import train_test_split
-import numpy as np
 
 iris = datasets.load_iris()
 X = iris.data
@@ -133,7 +134,6 @@ print('Average precision-recall score: {0:0.2f}'.format(
 # %%
 # Plot the Precision-Recall curve
 # ................................
-from sklearn.metrics import precision_recall_curve
 from sklearn.metrics import plot_precision_recall_curve
 import matplotlib.pyplot as plt
 

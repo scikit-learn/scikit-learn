@@ -25,14 +25,13 @@ print(__doc__)
 #
 # License: BSD 3 clause
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
 from sklearn import datasets
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.metrics import zero_one_loss
 from sklearn.ensemble import AdaBoostClassifier
-
+from sklearn.metrics import zero_one_loss
+from sklearn.tree import DecisionTreeClassifier
 
 n_estimators = 400
 # A learning rate of 1. may not be optimal for both SAMME and SAMME.R

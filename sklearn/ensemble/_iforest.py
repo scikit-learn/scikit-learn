@@ -3,10 +3,13 @@
 # License: BSD 3 clause
 
 import numbers
-import numpy as np
-from scipy.sparse import issparse
 from warnings import warn
 
+import numpy as np
+from scipy.sparse import issparse
+
+from ._bagging import BaseBagging
+from ..base import OutlierMixin
 from ..tree import ExtraTreeRegressor
 from ..utils import (
     check_random_state,
@@ -15,11 +18,8 @@ from ..utils import (
     get_chunk_n_rows,
 )
 from ..utils.fixes import _joblib_parallel_args
-from ..utils.validation import check_is_fitted, _num_samples
 from ..utils.validation import _deprecate_positional_args
-from ..base import OutlierMixin
-
-from ._bagging import BaseBagging
+from ..utils.validation import check_is_fitted, _num_samples
 
 __all__ = ["IsolationForest"]
 

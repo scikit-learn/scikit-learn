@@ -16,8 +16,8 @@ is performed in order to stay on the same order of magnitude.
 """
 print(__doc__)
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
 from sklearn.decomposition import SparseCoder
 from sklearn.utils.fixes import np_version, parse_version

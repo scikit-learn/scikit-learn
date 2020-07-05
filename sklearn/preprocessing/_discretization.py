@@ -7,15 +7,15 @@
 
 
 import numbers
-import numpy as np
 import warnings
 
-from . import OneHotEncoder
+import numpy as np
 
+from . import OneHotEncoder
 from ..base import BaseEstimator, TransformerMixin
+from ..utils.validation import _deprecate_positional_args
 from ..utils.validation import check_array
 from ..utils.validation import check_is_fitted
-from ..utils.validation import _deprecate_positional_args
 
 
 class KBinsDiscretizer(TransformerMixin, BaseEstimator):

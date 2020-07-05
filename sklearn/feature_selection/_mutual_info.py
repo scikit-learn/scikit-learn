@@ -10,9 +10,9 @@ from ..neighbors import NearestNeighbors
 from ..preprocessing import scale
 from ..utils import check_random_state
 from ..utils.fixes import _astype_copy_false
-from ..utils.validation import check_array, check_X_y
-from ..utils.validation import _deprecate_positional_args
 from ..utils.multiclass import check_classification_targets
+from ..utils.validation import _deprecate_positional_args
+from ..utils.validation import check_array, check_X_y
 
 
 def _compute_mi_cc(x, y, n_neighbors):

@@ -20,40 +20,36 @@ The module structure is the following:
 #          Arnaud Joly, Jacob Schreiber
 # License: BSD 3 clause
 
+import numbers
+import warnings
 from abc import ABCMeta
 from abc import abstractmethod
-import warnings
+from time import time
 
-from ._base import BaseEnsemble
-from ..base import ClassifierMixin
-from ..base import RegressorMixin
-from ..base import BaseEstimator
-from ..base import is_classifier
-
-from ._gradient_boosting import predict_stages
-from ._gradient_boosting import predict_stage
-from ._gradient_boosting import _random_sample_mask
-
-import numbers
 import numpy as np
-
 from scipy.sparse import csc_matrix
 from scipy.sparse import csr_matrix
 from scipy.sparse import issparse
 
-from time import time
+from . import _gb_losses
+from ._base import BaseEnsemble
+from ._gradient_boosting import _random_sample_mask
+from ._gradient_boosting import predict_stage
+from ._gradient_boosting import predict_stages
+from ..base import BaseEstimator
+from ..base import ClassifierMixin
+from ..base import RegressorMixin
+from ..base import is_classifier
+from ..exceptions import NotFittedError
 from ..model_selection import train_test_split
 from ..tree import DecisionTreeRegressor
 from ..tree._tree import DTYPE, DOUBLE
-from . import _gb_losses
-
-from ..utils import check_random_state
 from ..utils import check_array
+from ..utils import check_random_state
 from ..utils import column_or_1d
-from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils.multiclass import check_classification_targets
-from ..exceptions import NotFittedError
 from ..utils.validation import _deprecate_positional_args
+from ..utils.validation import check_is_fitted, _check_sample_weight
 
 
 class VerboseReporter:

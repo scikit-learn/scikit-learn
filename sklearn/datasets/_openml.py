@@ -1,31 +1,30 @@
 import gzip
+import hashlib
+import itertools
 import json
 import os
 import shutil
-import hashlib
-from os.path import join
-from warnings import warn
-from contextlib import closing
-from functools import wraps
-from typing import Callable, Optional, Dict, Tuple, List, Any, Union
-import itertools
-from collections.abc import Generator
 from collections import OrderedDict
+from collections.abc import Generator
+from contextlib import closing
 from functools import partial
-
+from functools import wraps
+from os.path import join
+from typing import Callable, Optional, Dict, Tuple, List, Any, Union
+from urllib.error import HTTPError
 from urllib.request import urlopen, Request
+from warnings import warn
 
 import numpy as np
 import scipy.sparse
 
+from . import get_data_home
 from ..externals import _arff
 from ..externals._arff import ArffSparseDataType, ArffContainerType
-from . import get_data_home
-from urllib.error import HTTPError
 from ..utils import Bunch
-from ..utils import get_chunk_n_rows
 from ..utils import _chunk_generator
 from ..utils import check_pandas_support  # noqa
+from ..utils import get_chunk_n_rows
 from ..utils.validation import _deprecate_positional_args
 
 __all__ = ['fetch_openml']

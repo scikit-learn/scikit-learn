@@ -32,8 +32,8 @@ print(__doc__)
 # Authors: Alexandre Gramfort, Gael Varoquaux
 # License: BSD 3 clause
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
 from sklearn.decomposition import PCA, FastICA
 

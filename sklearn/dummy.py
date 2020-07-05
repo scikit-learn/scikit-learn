@@ -4,20 +4,21 @@
 # License: BSD 3 clause
 
 import warnings
+
 import numpy as np
 import scipy.sparse as sp
 
 from .base import BaseEstimator, ClassifierMixin, RegressorMixin
 from .base import MultiOutputMixin
 from .utils import check_random_state
+from .utils.multiclass import class_distribution
+from .utils.random import _random_choice_csc
+from .utils.stats import _weighted_percentile
+from .utils.validation import _deprecate_positional_args
 from .utils.validation import _num_samples
 from .utils.validation import check_array
 from .utils.validation import check_consistent_length
 from .utils.validation import check_is_fitted, _check_sample_weight
-from .utils.random import _random_choice_csc
-from .utils.stats import _weighted_percentile
-from .utils.multiclass import class_distribution
-from .utils.validation import _deprecate_positional_args
 
 
 class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):

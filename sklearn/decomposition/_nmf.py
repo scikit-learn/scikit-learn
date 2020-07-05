@@ -7,19 +7,20 @@
 # License: BSD 3 clause
 
 import numbers
-import numpy as np
-import scipy.sparse as sp
 import time
 import warnings
 from math import sqrt
+
+import numpy as np
+import scipy.sparse as sp
 
 from ._cdnmf_fast import _update_cdnmf_fast
 from ..base import BaseEstimator, TransformerMixin
 from ..exceptions import ConvergenceWarning
 from ..utils import check_random_state, check_array
 from ..utils.extmath import randomized_svd, safe_sparse_dot, squared_norm
-from ..utils.validation import check_is_fitted, check_non_negative
 from ..utils.validation import _deprecate_positional_args
+from ..utils.validation import check_is_fitted, check_non_negative
 
 EPSILON = np.finfo(np.float32).eps
 

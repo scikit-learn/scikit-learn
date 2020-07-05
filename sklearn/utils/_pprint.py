@@ -63,13 +63,13 @@ BaseEstimator.__repr__ for pretty-printing estimators"""
 # - long sequences (lists, tuples, dict items) with more than N elements are
 #   shortened using ellipsis (', ...') at the end.
 
-from inspect import signature
 import pprint
 from collections import OrderedDict
+from inspect import signature
 
-from ..base import BaseEstimator
-from .._config import get_config
 from . import is_scalar_nan
+from .._config import get_config
+from ..base import BaseEstimator
 
 
 class KeyValTuple(tuple):

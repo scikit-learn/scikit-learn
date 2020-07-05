@@ -10,28 +10,27 @@
 # License: BSD 3 clause
 
 import itertools
-from functools import partial
 import warnings
+from functools import partial
 
 import numpy as np
-from scipy.spatial import distance
+from joblib import Parallel, delayed, effective_n_jobs
 from scipy.sparse import csr_matrix
 from scipy.sparse import issparse
-from joblib import Parallel, delayed, effective_n_jobs
-
-from ..utils.validation import _num_samples
-from ..utils.validation import check_non_negative
-from ..utils import check_array
-from ..utils import gen_even_slices
-from ..utils import gen_batches, get_chunk_n_rows
-from ..utils import is_scalar_nan
-from ..utils.extmath import row_norms, safe_sparse_dot
-from ..preprocessing import normalize
-from ..utils._mask import _get_mask
-from ..utils.validation import _deprecate_positional_args
+from scipy.spatial import distance
 
 from ._pairwise_fast import _chi2_kernel_fast, _sparse_manhattan
 from ..exceptions import DataConversionWarning
+from ..preprocessing import normalize
+from ..utils import check_array
+from ..utils import gen_batches, get_chunk_n_rows
+from ..utils import gen_even_slices
+from ..utils import is_scalar_nan
+from ..utils._mask import _get_mask
+from ..utils.extmath import row_norms, safe_sparse_dot
+from ..utils.validation import _deprecate_positional_args
+from ..utils.validation import _num_samples
+from ..utils.validation import check_non_negative
 
 
 # Utility Functions

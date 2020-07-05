@@ -1,9 +1,13 @@
 mport  numpy as np
-cimport numpy as np
-from scipy import sparse
 from ..utils._cython_blas cimport _dot
 
 cimport
+
+cimport
+
+from ..utils._cython_blas cimport
+
+_dot
 numpy as np
 import numpy as np
 from scipy import sparse

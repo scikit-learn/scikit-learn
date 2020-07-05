@@ -1,5 +1,6 @@
 import numpy as np
 import pytest
+from numpy.testing import assert_array_almost_equal
 
 from sklearn.metrics.cluster import adjusted_mutual_info_score
 from sklearn.metrics.cluster import adjusted_rand_score
@@ -14,12 +15,9 @@ from sklearn.metrics.cluster import mutual_info_score
 from sklearn.metrics.cluster import normalized_mutual_info_score
 from sklearn.metrics.cluster import v_measure_score
 from sklearn.metrics.cluster._supervised import _generalized_average
-
 from sklearn.utils import assert_all_finite
 from sklearn.utils._testing import (
-        assert_almost_equal, ignore_warnings)
-from numpy.testing import assert_array_almost_equal
-
+    assert_almost_equal, ignore_warnings)
 
 score_funcs = [
     adjusted_rand_score,

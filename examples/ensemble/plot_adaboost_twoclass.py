@@ -22,13 +22,12 @@ print(__doc__)
 #
 # License: BSD 3 clause
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
+from sklearn.datasets import make_gaussian_quantiles
 from sklearn.ensemble import AdaBoostClassifier
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.datasets import make_gaussian_quantiles
-
 
 # Construct dataset
 X1, y1 = make_gaussian_quantiles(cov=2.,

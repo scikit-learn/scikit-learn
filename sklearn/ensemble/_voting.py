@@ -16,23 +16,22 @@ This module contains:
 from abc import abstractmethod
 
 import numpy as np
-
 from joblib import Parallel, delayed
 
+from ._base import _BaseHeterogeneousEnsemble
+from ._base import _fit_single_estimator
 from ..base import ClassifierMixin
 from ..base import RegressorMixin
 from ..base import TransformerMixin
 from ..base import clone
-from ._base import _fit_single_estimator
-from ._base import _BaseHeterogeneousEnsemble
+from ..exceptions import NotFittedError
 from ..preprocessing import LabelEncoder
 from ..utils import Bunch
-from ..utils.validation import check_is_fitted
-from ..utils.multiclass import check_classification_targets
-from ..utils.validation import column_or_1d
-from ..utils.validation import _deprecate_positional_args
-from ..exceptions import NotFittedError
 from ..utils._estimator_html_repr import _VisualBlock
+from ..utils.multiclass import check_classification_targets
+from ..utils.validation import _deprecate_positional_args
+from ..utils.validation import check_is_fitted
+from ..utils.validation import column_or_1d
 
 
 class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):

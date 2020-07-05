@@ -5,16 +5,16 @@
 import numpy as np
 
 from ._base import _BaseImputer
-from ..utils.validation import FLOAT_DTYPES
 from ..metrics import pairwise_distances_chunked
 from ..metrics.pairwise import _NAN_METRICS
-from ..neighbors._base import _get_weights
 from ..neighbors._base import _check_weights
+from ..neighbors._base import _get_weights
 from ..utils import check_array
 from ..utils import is_scalar_nan
 from ..utils._mask import _get_mask
-from ..utils.validation import check_is_fitted
+from ..utils.validation import FLOAT_DTYPES
 from ..utils.validation import _deprecate_positional_args
+from ..utils.validation import check_is_fitted
 
 
 class KNNImputer(_BaseImputer):

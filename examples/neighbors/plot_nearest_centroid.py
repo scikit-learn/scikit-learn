@@ -8,9 +8,10 @@ It will plot the decision boundaries for each class.
 """
 print(__doc__)
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib.colors import ListedColormap
+
 from sklearn import datasets
 from sklearn.neighbors import NearestCentroid
 

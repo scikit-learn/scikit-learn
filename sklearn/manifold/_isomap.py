@@ -4,13 +4,14 @@
 # License: BSD 3 clause (C) 2011
 
 import numpy as np
+
 from ..base import BaseEstimator, TransformerMixin
-from ..neighbors import NearestNeighbors, kneighbors_graph
-from ..utils.validation import check_is_fitted
-from ..utils.validation import _deprecate_positional_args
-from ..utils.graph import graph_shortest_path
 from ..decomposition import KernelPCA
+from ..neighbors import NearestNeighbors, kneighbors_graph
 from ..preprocessing import KernelCenterer
+from ..utils.graph import graph_shortest_path
+from ..utils.validation import _deprecate_positional_args
+from ..utils.validation import check_is_fitted
 
 
 class Isomap(TransformerMixin, BaseEstimator):

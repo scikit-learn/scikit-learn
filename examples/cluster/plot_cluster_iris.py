@@ -23,14 +23,14 @@ print(__doc__)
 # Modified for documentation by Jaques Grobler
 # License: BSD 3 clause
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 # Though the following import is not directly being used, it is required
 # for 3D projection to work
 from mpl_toolkits.mplot3d import Axes3D
 
-from sklearn.cluster import KMeans
 from sklearn import datasets
+from sklearn.cluster import KMeans
 
 np.random.seed(5)
 

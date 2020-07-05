@@ -52,14 +52,13 @@ print(__doc__)
 
 import time
 
+import matplotlib.pyplot as plt
 import numpy as np
 
-import matplotlib.pyplot as plt
-
-from sklearn.kernel_ridge import KernelRidge
-from sklearn.model_selection import GridSearchCV
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import WhiteKernel, ExpSineSquared
+from sklearn.kernel_ridge import KernelRidge
+from sklearn.model_selection import GridSearchCV
 
 rng = np.random.RandomState(0)
 

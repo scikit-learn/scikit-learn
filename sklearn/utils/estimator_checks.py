@@ -1,58 +1,54 @@
-import types
-import warnings
-import sys
-import traceback
 import pickle
 import re
+import sys
+import traceback
+import types
+import warnings
 from copy import deepcopy
 from functools import partial, wraps
 from inspect import signature
 
+import joblib
 import numpy as np
 from scipy import sparse
 from scipy.stats import rankdata
-import joblib
 
 from . import IS_PYPY
-from .. import config_context
-from ._testing import assert_raises, _get_args
-from ._testing import assert_raises_regex
-from ._testing import assert_raise_message
-from ._testing import assert_array_equal
-from ._testing import assert_array_almost_equal
+from . import is_scalar_nan
+from . import shuffle
+from ._testing import SkipTest
 from ._testing import assert_allclose
 from ._testing import assert_allclose_dense_sparse
+from ._testing import assert_array_almost_equal
+from ._testing import assert_array_equal
+from ._testing import assert_raise_message
+from ._testing import assert_raises, _get_args
+from ._testing import assert_raises_regex
 from ._testing import assert_warns_message
-from ._testing import set_random_state
-from ._testing import SkipTest
-from ._testing import ignore_warnings
 from ._testing import create_memmap_backed_data
-from . import is_scalar_nan
-from ..discriminant_analysis import LinearDiscriminantAnalysis
-from ..linear_model import Ridge
-
+from ._testing import ignore_warnings
+from ._testing import set_random_state
+from .validation import has_fit_parameter, _num_samples
+from .. import config_context
 from ..base import (clone, ClusterMixin, is_classifier, is_regressor,
                     RegressorMixin, is_outlier_detector)
-
-from ..metrics import accuracy_score, adjusted_rand_score, f1_score
-from ..random_projection import BaseRandomProjection
-from ..feature_selection import SelectKBest
-from ..pipeline import make_pipeline
+from ..datasets import (load_iris, make_blobs,
+                        make_multilabel_classification, make_regression)
+from ..discriminant_analysis import LinearDiscriminantAnalysis
 from ..exceptions import DataConversionWarning
 from ..exceptions import NotFittedError
 from ..exceptions import SkipTestWarning
-from ..model_selection import train_test_split
-from ..model_selection import ShuffleSplit
-from ..model_selection._validation import _safe_split
+from ..feature_selection import SelectKBest
+from ..linear_model import Ridge
+from ..metrics import accuracy_score, adjusted_rand_score, f1_score
 from ..metrics.pairwise import (rbf_kernel, linear_kernel, pairwise_distances)
-
-from .import shuffle
-from .validation import has_fit_parameter, _num_samples
+from ..model_selection import ShuffleSplit
+from ..model_selection import train_test_split
+from ..model_selection._validation import _safe_split
+from ..pipeline import make_pipeline
 from ..preprocessing import StandardScaler
 from ..preprocessing import scale
-from ..datasets import (load_iris, make_blobs,
-                        make_multilabel_classification, make_regression)
-
+from ..random_projection import BaseRandomProjection
 
 REGRESSION_DATASET = None
 CROSS_DECOMPOSITION = ['PLSCanonical', 'PLSRegression', 'CCA', 'PLSSVD']

@@ -11,7 +11,7 @@ cimport numpy as np
 from cython cimport floating
 from cython.parallel import prange, parallel
 from libc.stdlib cimport malloc, calloc, free
-from libc.string cimport memset, memcpy
+from libc.string cimport memset
 from libc.float cimport DBL_MAX, FLT_MAX
 
 from ..utils.extmath import row_norms
@@ -20,6 +20,39 @@ from ..utils._cython_blas cimport RowMajor, Trans, NoTrans
 from ._k_means_fast cimport _relocate_empty_clusters_dense
 from ._k_means_fast cimport _relocate_empty_clusters_sparse
 from ._k_means_fast cimport _average_centers, _center_shift
+cimport
+numpy as np
+import numpy as np
+from cython cimport
+
+floating
+from cython.parallel import prange, parallel
+from libc.float cimport
+
+DBL_MAX, FLT_MAX
+from libc.stdlib cimport
+
+malloc, calloc, free
+from libc.string cimport
+
+memset
+
+from ._k_means_fast cimport
+
+_average_centers, _center_shift
+from ._k_means_fast cimport
+
+_relocate_empty_clusters_dense
+from ._k_means_fast cimport
+
+_relocate_empty_clusters_sparse
+from ..utils._cython_blas cimport
+
+RowMajor, Trans, NoTrans
+from ..utils._cython_blas cimport
+
+_gemm
+from ..utils.extmath import row_norms
 
 
 np.import_array()

@@ -9,12 +9,11 @@ Multi-class / multi-label utility function
 from collections.abc import Sequence
 from itertools import chain
 
-from scipy.sparse import issparse
-from scipy.sparse.base import spmatrix
-from scipy.sparse import dok_matrix
-from scipy.sparse import lil_matrix
-
 import numpy as np
+from scipy.sparse import dok_matrix
+from scipy.sparse import issparse
+from scipy.sparse import lil_matrix
+from scipy.sparse.base import spmatrix
 
 from .validation import check_array, _assert_all_finite
 

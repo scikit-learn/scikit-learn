@@ -8,10 +8,11 @@ This example shows how to use
 errors.
 
 """
-from sklearn import datasets
-from sklearn.model_selection import cross_val_predict
-from sklearn import linear_model
 import matplotlib.pyplot as plt
+
+from sklearn import datasets
+from sklearn import linear_model
+from sklearn.model_selection import cross_val_predict
 
 lr = linear_model.LinearRegression()
 X, y = datasets.load_diabetes(return_X_y=True)

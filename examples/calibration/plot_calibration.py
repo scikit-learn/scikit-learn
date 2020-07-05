@@ -29,16 +29,15 @@ print(__doc__)
 #         Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
 # License: BSD Style.
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 from matplotlib import cm
 
-from sklearn.datasets import make_blobs
-from sklearn.naive_bayes import GaussianNB
-from sklearn.metrics import brier_score_loss
 from sklearn.calibration import CalibratedClassifierCV
+from sklearn.datasets import make_blobs
+from sklearn.metrics import brier_score_loss
 from sklearn.model_selection import train_test_split
-
+from sklearn.naive_bayes import GaussianNB
 
 n_samples = 50000
 n_bins = 3  # use 3 bins for calibration_curve as we have 3 clusters here

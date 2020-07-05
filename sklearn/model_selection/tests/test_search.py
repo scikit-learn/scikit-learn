@@ -1,75 +1,69 @@
 """Test the search module"""
 
+import pickle
+import re
+import sys
 from collections.abc import Iterable, Sized
+from functools import partial
 from io import StringIO
 from itertools import chain, product
-from functools import partial
-import pickle
-import sys
 from types import GeneratorType
-import re
 
 import numpy as np
-import scipy.sparse as sp
 import pytest
-
-from sklearn.utils._testing import assert_raises
-from sklearn.utils._testing import assert_warns
-from sklearn.utils._testing import assert_warns_message
-from sklearn.utils._testing import assert_raise_message
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_array_almost_equal
-from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import ignore_warnings
-from sklearn.utils._mocking import CheckingClassifier, MockDataFrame
-
+import scipy.sparse as sp
 from scipy.stats import bernoulli, expon, uniform
 
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.base import clone
-from sklearn.exceptions import NotFittedError
-from sklearn.datasets import make_classification
-from sklearn.datasets import make_blobs
-from sklearn.datasets import make_multilabel_classification
-
-from sklearn.model_selection import fit_grid_point
-from sklearn.model_selection import train_test_split
-from sklearn.model_selection import KFold
-from sklearn.model_selection import StratifiedKFold
-from sklearn.model_selection import StratifiedShuffleSplit
-from sklearn.model_selection import LeaveOneGroupOut
-from sklearn.model_selection import LeavePGroupsOut
-from sklearn.model_selection import GroupKFold
-from sklearn.model_selection import GroupShuffleSplit
-from sklearn.model_selection import GridSearchCV
-from sklearn.model_selection import RandomizedSearchCV
-from sklearn.model_selection import ParameterGrid
-from sklearn.model_selection import ParameterSampler
-from sklearn.model_selection._search import BaseSearchCV
-
-from sklearn.model_selection._validation import FitFailedWarning
-
-from sklearn.svm import LinearSVC, SVC
-from sklearn.tree import DecisionTreeRegressor
-from sklearn.tree import DecisionTreeClassifier
 from sklearn.cluster import KMeans
-from sklearn.neighbors import KernelDensity
-from sklearn.neighbors import LocalOutlierFactor
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.metrics import f1_score
-from sklearn.metrics import recall_score
+from sklearn.datasets import make_blobs
+from sklearn.datasets import make_classification
+from sklearn.datasets import make_multilabel_classification
+from sklearn.ensemble import HistGradientBoostingClassifier
+from sklearn.exceptions import NotFittedError
+from sklearn.experimental import enable_hist_gradient_boosting  # noqa
+from sklearn.impute import SimpleImputer
+from sklearn.linear_model import Ridge, SGDClassifier, LinearRegression
 from sklearn.metrics import accuracy_score
+from sklearn.metrics import f1_score
 from sklearn.metrics import make_scorer
+from sklearn.metrics import recall_score
 from sklearn.metrics import roc_auc_score
 from sklearn.metrics.pairwise import euclidean_distances
-from sklearn.impute import SimpleImputer
-from sklearn.pipeline import Pipeline
-from sklearn.linear_model import Ridge, SGDClassifier, LinearRegression
-from sklearn.experimental import enable_hist_gradient_boosting  # noqa
-from sklearn.ensemble import HistGradientBoostingClassifier
-
+from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import GroupKFold
+from sklearn.model_selection import GroupShuffleSplit
+from sklearn.model_selection import KFold
+from sklearn.model_selection import LeaveOneGroupOut
+from sklearn.model_selection import LeavePGroupsOut
+from sklearn.model_selection import ParameterGrid
+from sklearn.model_selection import ParameterSampler
+from sklearn.model_selection import RandomizedSearchCV
+from sklearn.model_selection import StratifiedKFold
+from sklearn.model_selection import StratifiedShuffleSplit
+from sklearn.model_selection import fit_grid_point
+from sklearn.model_selection import train_test_split
+from sklearn.model_selection._search import BaseSearchCV
+from sklearn.model_selection._validation import FitFailedWarning
 from sklearn.model_selection.tests.common import OneTimeSplitter
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.neighbors import KernelDensity
+from sklearn.neighbors import LocalOutlierFactor
+from sklearn.pipeline import Pipeline
+from sklearn.svm import LinearSVC, SVC
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.utils._mocking import CheckingClassifier, MockDataFrame
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_raise_message
+from sklearn.utils._testing import assert_raises
+from sklearn.utils._testing import assert_warns
+from sklearn.utils._testing import assert_warns_message
+from sklearn.utils._testing import ignore_warnings
 
 
 # Neither of the following two estimators inherit from BaseEstimator,

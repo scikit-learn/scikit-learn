@@ -1,19 +1,18 @@
+import numpy as np
 import pytest
 from numpy.testing import assert_allclose
-import numpy as np
 
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.metrics import plot_roc_curve
-from sklearn.metrics import RocCurveDisplay
-from sklearn.datasets import load_iris
-from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import roc_curve, auc
 from sklearn.base import ClassifierMixin
+from sklearn.compose import make_column_transformer
+from sklearn.datasets import load_iris
 from sklearn.exceptions import NotFittedError
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import RocCurveDisplay
+from sklearn.metrics import plot_roc_curve
+from sklearn.metrics import roc_curve, auc
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
-from sklearn.compose import make_column_transformer
-
+from sklearn.tree import DecisionTreeClassifier
 
 # TODO: Remove when https://github.com/numpy/numpy/issues/14397 is resolved
 pytestmark = pytest.mark.filterwarnings(

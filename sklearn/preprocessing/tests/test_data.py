@@ -4,59 +4,54 @@
 #
 # License: BSD 3 clause
 
-import warnings
 import itertools
+import warnings
 
 import numpy as np
 import numpy.linalg as la
+import pytest
 from scipy import sparse, stats
 from scipy.sparse import random as sparse_random
 
-import pytest
-
+from sklearn import datasets
+from sklearn.base import clone
+from sklearn.exceptions import NotFittedError
+from sklearn.model_selection import cross_val_predict
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing._data import BOUNDS_THRESHOLD
+from sklearn.preprocessing._data import Binarizer
+from sklearn.preprocessing._data import KernelCenterer
+from sklearn.preprocessing._data import MaxAbsScaler
+from sklearn.preprocessing._data import MinMaxScaler
+from sklearn.preprocessing._data import Normalizer
+from sklearn.preprocessing._data import PolynomialFeatures
+from sklearn.preprocessing._data import PowerTransformer
+from sklearn.preprocessing._data import QuantileTransformer
+from sklearn.preprocessing._data import RobustScaler
+from sklearn.preprocessing._data import StandardScaler
+from sklearn.preprocessing._data import _handle_zeros_in_scale
+from sklearn.preprocessing._data import add_dummy_feature
+from sklearn.preprocessing._data import maxabs_scale
+from sklearn.preprocessing._data import minmax_scale
+from sklearn.preprocessing._data import normalize
+from sklearn.preprocessing._data import power_transform
+from sklearn.preprocessing._data import quantile_transform
+from sklearn.preprocessing._data import robust_scale
+from sklearn.preprocessing._data import scale
+from sklearn.svm import SVR
 from sklearn.utils import gen_batches
-
+from sklearn.utils import shuffle
+from sklearn.utils._testing import _convert_container
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import assert_allclose_dense_sparse
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_less
-from sklearn.utils._testing import assert_warns_message
 from sklearn.utils._testing import assert_no_warnings
-from sklearn.utils._testing import assert_allclose
-from sklearn.utils._testing import assert_allclose_dense_sparse
+from sklearn.utils._testing import assert_warns_message
 from sklearn.utils._testing import skip_if_32bit
-from sklearn.utils._testing import _convert_container
-
 from sklearn.utils.sparsefuncs import mean_variance_axis
-from sklearn.preprocessing._data import _handle_zeros_in_scale
-from sklearn.preprocessing._data import Binarizer
-from sklearn.preprocessing._data import KernelCenterer
-from sklearn.preprocessing._data import Normalizer
-from sklearn.preprocessing._data import normalize
-from sklearn.preprocessing._data import StandardScaler
-from sklearn.preprocessing._data import scale
-from sklearn.preprocessing._data import MinMaxScaler
-from sklearn.preprocessing._data import minmax_scale
-from sklearn.preprocessing._data import QuantileTransformer
-from sklearn.preprocessing._data import quantile_transform
-from sklearn.preprocessing._data import MaxAbsScaler
-from sklearn.preprocessing._data import maxabs_scale
-from sklearn.preprocessing._data import RobustScaler
-from sklearn.preprocessing._data import robust_scale
-from sklearn.preprocessing._data import add_dummy_feature
-from sklearn.preprocessing._data import PolynomialFeatures
-from sklearn.preprocessing._data import PowerTransformer
-from sklearn.preprocessing._data import power_transform
-from sklearn.preprocessing._data import BOUNDS_THRESHOLD
-from sklearn.exceptions import NotFittedError
-
-from sklearn.base import clone
-from sklearn.pipeline import Pipeline
-from sklearn.model_selection import cross_val_predict
-from sklearn.svm import SVR
-from sklearn.utils import shuffle
-
-from sklearn import datasets
 
 iris = datasets.load_iris()
 

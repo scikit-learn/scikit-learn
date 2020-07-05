@@ -34,28 +34,28 @@ case.
 # License: BSD 3 clause
 
 import array
-import numpy as np
-import warnings
-import scipy.sparse as sp
 import itertools
+import warnings
+
+import numpy as np
+import scipy.sparse as sp
+from joblib import Parallel, delayed
 
 from .base import BaseEstimator, ClassifierMixin, clone, is_classifier
-from .base import MultiOutputMixin
 from .base import MetaEstimatorMixin, is_regressor
-from .preprocessing import LabelBinarizer
+from .base import MultiOutputMixin
+from .exceptions import NotFittedError
 from .metrics.pairwise import euclidean_distances
+from .preprocessing import LabelBinarizer
 from .utils import check_random_state
-from .utils.validation import _num_samples
-from .utils.validation import check_is_fitted
-from .utils.validation import check_X_y, check_array
-from .utils.validation import _deprecate_positional_args
+from .utils.metaestimators import _safe_split, if_delegate_has_method
 from .utils.multiclass import (_check_partial_fit_first_call,
                                check_classification_targets,
                                _ovr_decision_function)
-from .utils.metaestimators import _safe_split, if_delegate_has_method
-from .exceptions import NotFittedError
-
-from joblib import Parallel, delayed
+from .utils.validation import _deprecate_positional_args
+from .utils.validation import _num_samples
+from .utils.validation import check_X_y, check_array
+from .utils.validation import check_is_fitted
 
 __all__ = [
     "OneVsRestClassifier",

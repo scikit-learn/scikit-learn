@@ -1,16 +1,15 @@
 import numpy as np
-from scipy.sparse import csr_matrix
 import pytest
+from scipy.sparse import csr_matrix
 
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_array_almost_equal, assert_raises
-
-from sklearn.metrics.pairwise import kernel_metrics
-from sklearn.kernel_approximation import RBFSampler
 from sklearn.kernel_approximation import AdditiveChi2Sampler
-from sklearn.kernel_approximation import SkewedChi2Sampler
 from sklearn.kernel_approximation import Nystroem
+from sklearn.kernel_approximation import RBFSampler
+from sklearn.kernel_approximation import SkewedChi2Sampler
+from sklearn.metrics.pairwise import kernel_metrics
 from sklearn.metrics.pairwise import polynomial_kernel, rbf_kernel, chi2_kernel
+from sklearn.utils._testing import assert_array_almost_equal, assert_raises
+from sklearn.utils._testing import assert_array_equal
 
 # generate data
 rng = np.random.RandomState(0)

@@ -12,9 +12,9 @@ from ._base import make_dataset
 from ._sag_fast import sag32, sag64
 from ..exceptions import ConvergenceWarning
 from ..utils import check_array
+from ..utils.extmath import row_norms
 from ..utils.validation import _check_sample_weight
 from ..utils.validation import _deprecate_positional_args
-from ..utils.extmath import row_norms
 
 
 def get_auto_step_size(max_squared_sum, alpha_scaled, loss, fit_intercept,
