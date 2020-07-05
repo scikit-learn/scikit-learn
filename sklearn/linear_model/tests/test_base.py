@@ -224,10 +224,10 @@ def test_linear_regression_positive():
     # Test nonnegative LinearRegression on a simple dataset.
     # a simple dataset
     X = [[1], [2]]
-    Y = [1, 2]
+    y = [1, 2]
 
     reg = LinearRegression(positive=True)
-    reg.fit(X, Y)
+    reg.fit(X, y)
 
     assert_array_almost_equal(reg.coef_, [1])
     assert_array_almost_equal(reg.intercept_, [0])
@@ -235,10 +235,10 @@ def test_linear_regression_positive():
 
     # test it also for degenerate input
     X = [[1]]
-    Y = [0]
+    y = [0]
 
     reg = LinearRegression(positive=True)
-    reg.fit(X, Y)
+    reg.fit(X, y)
     assert_allclose(reg.coef_, [0])
     assert_allclose(reg.intercept_, [0])
     assert_allclose(reg.predict(X), [0])
@@ -265,12 +265,12 @@ def test_linear_regression_positive_vs_nonpositive():
     # Test nonnegative LinearRegression on a simple dataset.
     # a simple dataset
     X = [[1], [2]]
-    Y = [1, 2]
+    y = [1, 2]
 
     reg = LinearRegression(positive=True)
-    reg.fit(X, Y)
+    reg.fit(X, y)
     regn = LinearRegression(positive=False)
-    regn.fit(X, Y)
+    regn.fit(X, y)
 
     assert not np.array_equal(reg.coef_, regn.coef_)
 
