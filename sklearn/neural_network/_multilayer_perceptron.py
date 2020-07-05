@@ -115,6 +115,39 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
 
         return activations
 
+    def _forward_pass_fast(self, X):
+        """Predict using the trained model
+
+        This is the same as _forward_pass but does not record the activations
+        of all layers and only returns the last layer's activation.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            The input data.
+
+        Returns
+        -------
+        y_pred : ndarray of shape (n_samples,) or (n_samples, n_outputs)
+            The decision function of the samples for each class in the model.
+        """
+        X = check_array(X, accept_sparse=['csr', 'csc'])
+
+        # Initialize first layer
+        activation = X
+
+        # Forward propagate
+        hidden_activation = ACTIVATIONS[self.activation]
+        for i in range(self.n_layers_ - 1):
+            activation = safe_sparse_dot(activation, self.coefs_[i])
+            activation += self.intercepts_[i]
+            if i != self.n_layers_ - 2:
+                hidden_activation(activation)
+        output_activation = ACTIVATIONS[self.out_activation_]
+        output_activation(activation)
+
+        return activation
+
     def _compute_loss_grad(self, layer, n_samples, activations, deltas,
                            coef_grads, intercept_grads):
         """Compute the gradient of loss with respect to coefs and intercept for
@@ -256,7 +289,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
 
         return loss, coef_grads, intercept_grads
 
-    def _initialize(self, y, layer_units):
+    def _initialize(self, y, layer_units, dtype):
         # set all attributes, allocate weights etc for first call
         # Initialize parameters
         self.n_iter_ = 0
@@ -282,7 +315,8 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
 
         for i in range(self.n_layers_ - 1):
             coef_init, intercept_init = self._init_coef(layer_units[i],
-                                                        layer_units[i + 1])
+                                                        layer_units[i + 1],
+                                                        dtype)
             self.coefs_.append(coef_init)
             self.intercepts_.append(intercept_init)
 
@@ -295,7 +329,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             else:
                 self.best_loss_ = np.inf
 
-    def _init_coef(self, fan_in, fan_out):
+    def _init_coef(self, fan_in, fan_out, dtype):
         # Use the initialization method recommended by
         # Glorot et al.
         factor = 6.
@@ -308,6 +342,8 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
                                                (fan_in, fan_out))
         intercept_init = self._random_state.uniform(-init_bound, init_bound,
                                                     fan_out)
+        coef_init = coef_init.astype(dtype, copy=False)
+        intercept_init = intercept_init.astype(dtype, copy=False)
         return coef_init, intercept_init
 
     def _fit(self, X, y, incremental=False):
@@ -324,6 +360,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
                              hidden_layer_sizes)
 
         X, y = self._validate_input(X, y, incremental)
+
         n_samples, n_features = X.shape
 
         # Ensure y is 2D
@@ -341,17 +378,19 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         if not hasattr(self, 'coefs_') or (not self.warm_start and not
                                            incremental):
             # First time training the model
-            self._initialize(y, layer_units)
+            self._initialize(y, layer_units, X.dtype)
 
         # Initialize lists
         activations = [X] + [None] * (len(layer_units) - 1)
         deltas = [None] * (len(activations) - 1)
 
-        coef_grads = [np.empty((n_fan_in_, n_fan_out_)) for n_fan_in_,
+        coef_grads = [np.empty((n_fan_in_, n_fan_out_), dtype=X.dtype)
+                      for n_fan_in_,
                       n_fan_out_ in zip(layer_units[:-1],
                                         layer_units[1:])]
 
-        intercept_grads = [np.empty(n_fan_out_) for n_fan_out_ in
+        intercept_grads = [np.empty(n_fan_out_, dtype=X.dtype)
+                           for n_fan_out_ in
                            layer_units[1:]]
 
         # Run the Stochastic optimization solver
@@ -657,42 +696,6 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
     def _partial_fit(self, X, y):
         return self._fit(X, y, incremental=True)
 
-    def _predict(self, X):
-        """Predict using the trained model
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            The input data.
-
-        Returns
-        -------
-        y_pred : ndarray of shape (n_samples,) or (n_samples, n_outputs)
-            The decision function of the samples for each class in the model.
-        """
-        X = check_array(X, accept_sparse=['csr', 'csc'])
-
-        # Make sure self.hidden_layer_sizes is a list
-        hidden_layer_sizes = self.hidden_layer_sizes
-        if not hasattr(hidden_layer_sizes, "__iter__"):
-            hidden_layer_sizes = [hidden_layer_sizes]
-        hidden_layer_sizes = list(hidden_layer_sizes)
-
-        layer_units = [X.shape[1]] + hidden_layer_sizes + \
-            [self.n_outputs_]
-
-        # Initialize layers
-        activations = [X]
-
-        for i in range(self.n_layers_ - 1):
-            activations.append(np.empty((X.shape[0],
-                                         layer_units[i + 1])))
-        # forward propagate
-        self._forward_pass(activations)
-        y_pred = activations[-1]
-
-        return y_pred
-
 
 class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
     """Multi-layer Perceptron classifier.
@@ -963,7 +966,8 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
 
     def _validate_input(self, X, y, incremental):
         X, y = self._validate_data(X, y, accept_sparse=['csr', 'csc'],
-                                   multi_output=True)
+                                   multi_output=True,
+                                   dtype=(np.float64, np.float32))
         if y.ndim == 2 and y.shape[1] == 1:
             y = column_or_1d(y, warn=True)
 
@@ -985,7 +989,9 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
                                  " `self.classes_` has %s. 'y' has %s." %
                                  (self.classes_, classes))
 
-        y = self._label_binarizer.transform(y)
+        # This downcast to bool is to prevent upcasting when working with
+        # float32 data
+        y = self._label_binarizer.transform(y).astype(np.bool)
         return X, y
 
     def predict(self, X):
@@ -1002,7 +1008,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
             The predicted classes.
         """
         check_is_fitted(self)
-        y_pred = self._predict(X)
+        y_pred = self._forward_pass_fast(X)
 
         if self.n_outputs_ == 1:
             y_pred = y_pred.ravel()
@@ -1103,7 +1109,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
             model, where classes are ordered as they are in `self.classes_`.
         """
         check_is_fitted(self)
-        y_pred = self._predict(X)
+        y_pred = self._forward_pass_fast(X)
 
         if self.n_outputs_ == 1:
             y_pred = y_pred.ravel()
@@ -1389,14 +1395,15 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
             The predicted values.
         """
         check_is_fitted(self)
-        y_pred = self._predict(X)
+        y_pred = self._forward_pass_fast(X)
         if y_pred.shape[1] == 1:
             return y_pred.ravel()
         return y_pred
 
     def _validate_input(self, X, y, incremental):
         X, y = self._validate_data(X, y, accept_sparse=['csr', 'csc'],
-                                   multi_output=True, y_numeric=True)
+                                   multi_output=True, y_numeric=True,
+                                   dtype=(np.float64, np.float32))
         if y.ndim == 2 and y.shape[1] == 1:
             y = column_or_1d(y, warn=True)
         return X, y

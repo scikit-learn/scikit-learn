@@ -398,8 +398,9 @@ def enet_path(X, y, *, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         (Only allowed when ``y.ndim == 1``).
 
     check_input : bool, default=True
-        Skip input validation checks, including the Gram matrix when provided
-        assuming there are handled by the caller when check_input=False.
+        If set to False, the input validation checks are skipped (including the
+        Gram matrix when provided). It is assumed that they are handled
+        by the caller.
 
     **params : kwargs
         Keyword arguments passed to the coordinate descent solver.
