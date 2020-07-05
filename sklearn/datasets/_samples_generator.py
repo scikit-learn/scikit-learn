@@ -650,9 +650,9 @@ def make_circles(n_samples=100, *, shuffle=True, noise=None, random_state=None,
     else:
         try:
             n_samples_out, n_samples_in = n_samples
-        except ValueError:
+        except ValueError as e:
             raise ValueError('`n_samples` can be either an int or '
-                             'a two-element tuple.')
+                             'a two-element tuple.') from e
 
     generator = check_random_state(random_state)
     # so as not to have the first point = last point, we set endpoint=False
@@ -715,9 +715,9 @@ def make_moons(n_samples=100, *, shuffle=True, noise=None, random_state=None):
     else:
         try:
             n_samples_out, n_samples_in = n_samples
-        except ValueError:
+        except ValueError as e:
             raise ValueError('`n_samples` can be either an int or '
-                             'a two-element tuple.')
+                             'a two-element tuple.') from e
 
     generator = check_random_state(random_state)
 
@@ -845,13 +845,14 @@ def make_blobs(n_samples=100, n_features=2, *, centers=None, cluster_std=1.0,
                                         size=(n_centers, n_features))
         try:
             assert len(centers) == n_centers
-        except TypeError:
+        except TypeError as e:
             raise ValueError("Parameter `centers` must be array-like. "
-                             "Got {!r} instead".format(centers))
-        except AssertionError:
-            raise ValueError("Length of `n_samples` not consistent"
-                             " with number of centers. Got n_samples = {} "
-                             "and centers = {}".format(n_samples, centers))
+                             "Got {!r} instead".format(centers)) from e
+        except AssertionError as e:
+            raise ValueError(
+                f"Length of `n_samples` not consistent with number of "
+                f"centers. Got n_samples = {n_samples} and centers = {centers}"
+            ) from e
         else:
             centers = check_array(centers)
             n_features = centers.shape[1]

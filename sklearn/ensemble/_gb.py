@@ -456,8 +456,9 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                            "weights.".format(self.init_.__class__.__name__))
                     try:
                         self.init_.fit(X, y, sample_weight=sample_weight)
-                    except TypeError:  # regular estimator without SW support
-                        raise ValueError(msg)
+                    except TypeError as e:
+                        # regular estimator without SW support
+                        raise ValueError(msg) from e
                     except ValueError as e:
                         if "pass parameters to specific steps of "\
                            "your pipeline using the "\
@@ -1219,9 +1220,9 @@ shape (n_estimators, ``loss_.K``)
             return self.loss_._raw_prediction_to_proba(raw_predictions)
         except NotFittedError:
             raise
-        except AttributeError:
+        except AttributeError as e:
             raise AttributeError('loss=%r does not support predict_proba' %
-                                 self.loss)
+                                 self.loss) from e
 
     def predict_log_proba(self, X):
         """Predict class log-probabilities for X.
@@ -1270,9 +1271,9 @@ shape (n_estimators, ``loss_.K``)
                 yield self.loss_._raw_prediction_to_proba(raw_predictions)
         except NotFittedError:
             raise
-        except AttributeError:
+        except AttributeError as e:
             raise AttributeError('loss=%r does not support predict_proba' %
-                                 self.loss)
+                                 self.loss) from e
 
 
 class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):

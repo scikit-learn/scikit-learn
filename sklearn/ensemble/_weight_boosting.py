@@ -255,11 +255,11 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
                     in zip(self.estimator_weights_, self.estimators_))
                     / norm)
 
-        except AttributeError:
+        except AttributeError as e:
             raise AttributeError(
                 "Unable to compute feature importances "
                 "since base_estimator does not have a "
-                "feature_importances_ attribute")
+                "feature_importances_ attribute") from e
 
 
 def _samme_proba(estimator, n_classes, X):
