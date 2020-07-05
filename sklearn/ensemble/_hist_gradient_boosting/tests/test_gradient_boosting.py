@@ -392,7 +392,7 @@ def test_missing_values_minmax_imputation():
     # The implementation of MIA as an imputation transformer was suggested by
     # "Remark 3" in https://arxiv.org/abs/1902.06931
 
-    class MinMaxImputer(BaseEstimator, TransformerMixin):
+    class MinMaxImputer(TransformerMixin, BaseEstimator):
 
         def fit(self, X, y=None):
             mm = MinMaxScaler().fit(X)
