@@ -498,5 +498,5 @@ def test_multioutput(ClsRFE):
 def test_deprecated_estimator_type():
     # Assert that deprecated _estimator_type warns FutureWarning
     rfe = RFE(SVC())
-    with pytest.warns(FutureWarning):
-        hasattr(rfe, "_estimator_type")
+    with pytest.warns(FutureWarning, match="estimator_type is deprecated"):
+        getattr(rfe, "_estimator_type")

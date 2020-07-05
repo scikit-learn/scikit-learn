@@ -791,7 +791,7 @@ Class APIs and Estimator Types
 
         Classifiers must store a :term:`classes_` attribute after fitting,
         and usually inherit from :class:`base.ClassifierMixin`, which sets
-        their `estimator_type` tag.
+        their :ref:`estimator_type <estimator_tags>` tag.
 
         A classifier can be distinguished from other estimators with
         :func:`~base.is_classifier`.
@@ -929,7 +929,7 @@ Class APIs and Estimator Types
         with :term:`continuous` output values.
 
         Regressors usually inherit from :class:`base.RegressorMixin`, which
-        sets their `estimator_type` tag.
+        sets their :ref:`estimator_type <estimator_tags>` tag.
 
         A regressor can be distinguished from other estimators with
         :func:`~base.is_regressor`.

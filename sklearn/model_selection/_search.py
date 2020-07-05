@@ -871,7 +871,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         return results
 
     def _more_tags(self):
-        return getattr(self.estimator, "_get_tags", dict)()
+        return self.estimator._more_tags()
 
 
 class GridSearchCV(BaseSearchCV):

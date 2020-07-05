@@ -37,7 +37,8 @@ _DEFAULT_TAGS = {
     'multioutput_only': False,
     'binary_only': False,
     'requires_fit': True,
-    'requires_y': False
+    'requires_y': False,
+    'estimator_type': None
     }
 
 
@@ -595,6 +596,9 @@ class ClusterMixin:
         self.fit(X)
         return self.labels_
 
+    def _more_tags(self):
+        return {'estimator_type': 'clusterer'}
+
 
 class BiclusterMixin:
     """Mixin class for all bicluster estimators in scikit-learn"""
@@ -804,8 +808,8 @@ def is_classifier(estimator):
     out : bool
         True if estimator is a classifier and False otherwise.
     """
-    estimator_tags = getattr(estimator, "_get_tags", dict)()
-    return estimator_tags.get("estimator_type", None) == "classifier"
+    estimator_tags = estimator._get_tags()
+    return estimator_tags["estimator_type"] == "classifier"
 
 
 def is_regressor(estimator):
@@ -821,8 +825,8 @@ def is_regressor(estimator):
     out : bool
         True if estimator is a regressor and False otherwise.
     """
-    estimator_tags = getattr(estimator, "_get_tags", dict)()
-    return estimator_tags.get("estimator_type", None) == "regressor"
+    estimator_tags = estimator._get_tags()
+    return estimator_tags["estimator_type"] == "regressor"
 
 
 def is_outlier_detector(estimator):
@@ -838,5 +842,5 @@ def is_outlier_detector(estimator):
     out : bool
         True if estimator is an outlier detector and False otherwise.
     """
-    estimator_tags = getattr(estimator, "_get_tags", dict)()
-    return estimator_tags.get("estimator_type", None) == "outlier_detector"
+    estimator_tags = estimator._get_tags()
+    return estimator_tags["estimator_type"] == "outlier_detector"

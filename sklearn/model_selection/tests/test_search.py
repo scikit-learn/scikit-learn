@@ -1892,5 +1892,5 @@ def test_scalar_fit_param_compat(SearchCV, param_search):
 def test_deprecated_estimator_type(SearchCV):
     # Assert that deprecated _estimator_type warns FutureWarning
     search = SearchCV(DecisionTreeClassifier(), {'max_depth': [5, 10]})
-    with pytest.warns(FutureWarning):
-        hasattr(search, "_estimator_type")
+    with pytest.warns(FutureWarning, match="estimator_type is deprecated"):
+        getattr(search, "_estimator_type")
