@@ -347,8 +347,8 @@ def _gradient_descent(objective, p0, it, n_iter,
     p = p0.copy().ravel()
     update = np.zeros_like(p)
     gains = np.ones_like(p)
-    error = np.finfo(np.float).max
-    best_error = np.finfo(np.float).max
+    error = np.finfo(float).max
+    best_error = np.finfo(float).max
     best_iter = i = it
 
     tic = time()

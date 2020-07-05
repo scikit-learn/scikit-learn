@@ -99,7 +99,8 @@ def cross_validate(estimator, X, y=None, *, groups=None, scoring=None, cv=None,
             ``cv`` default value if None changed from 3-fold to 5-fold.
 
     n_jobs : int, default=None
-        The number of CPUs to use to do the computation.
+        Number of jobs to run in parallel. Training the estimator and computing
+        the score are parallelized over the cross-validation splits.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
@@ -238,7 +239,7 @@ def cross_validate(estimator, X, y=None, *, groups=None, scoring=None, cv=None,
     # independent, and that it is pickle-able.
     parallel = Parallel(n_jobs=n_jobs, verbose=verbose,
                         pre_dispatch=pre_dispatch)
-    scores = parallel(
+    results = parallel(
         delayed(_fit_and_score)(
             clone(estimator), X, y, scorers, train, test, verbose, None,
             fit_params, return_train_score=return_train_score,
@@ -246,27 +247,26 @@ def cross_validate(estimator, X, y=None, *, groups=None, scoring=None, cv=None,
             error_score=error_score)
         for train, test in cv.split(X, y, groups))
 
-    zipped_scores = list(zip(*scores))
-    if return_train_score:
-        train_scores = zipped_scores.pop(0)
-        train_scores = _aggregate_score_dicts(train_scores)
+    results = _aggregate_score_dicts(results)
     if return_estimator:
-        fitted_estimators = zipped_scores.pop()
-    test_scores, fit_times, score_times = zipped_scores
-    test_scores = _aggregate_score_dicts(test_scores)
+        fitted_estimators = results["estimator"]
 
     ret = {}
-    ret['fit_time'] = np.array(fit_times)
-    ret['score_time'] = np.array(score_times)
+    ret['fit_time'] = results["fit_time"]
+    ret['score_time'] = results["score_time"]
 
     if return_estimator:
         ret['estimator'] = fitted_estimators
 
-    for name in scorers:
-        ret['test_%s' % name] = np.array(test_scores[name])
+    test_scores = _aggregate_score_dicts(results["test_scores"])
+    if return_train_score:
+        train_scores = _aggregate_score_dicts(results["train_scores"])
+
+    for name in test_scores:
+        ret['test_%s' % name] = test_scores[name]
         if return_train_score:
             key = 'train_%s' % name
-            ret[key] = np.array(train_scores[name])
+            ret[key] = train_scores[name]
 
     return ret
 
@@ -328,7 +328,8 @@ def cross_val_score(estimator, X, y=None, *, groups=None, scoring=None,
             ``cv`` default value if None changed from 3-fold to 5-fold.
 
     n_jobs : int, default=None
-        The number of CPUs to use to do the computation.
+        Number of jobs to run in parallel. Training the estimator and computing
+        the score are parallelized over the cross-validation splits.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
@@ -482,27 +483,22 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
 
     Returns
     -------
-    train_scores : dict of scorer name -> float
-        Score on training set (for all the scorers),
-        returned only if `return_train_score` is `True`.
-
-    test_scores : dict of scorer name -> float
-        Score on testing set (for all the scorers).
-
-    n_test_samples : int
-        Number of test samples.
-
-    fit_time : float
-        Time spent for fitting in seconds.
-
-    score_time : float
-        Time spent for scoring in seconds.
-
-    parameters : dict or None
-        The parameters that have been evaluated.
-
-    estimator : estimator object
-        The fitted estimator
+    result : dict with the following attributes
+        train_scores : dict of scorer name -> float
+            Score on training set (for all the scorers),
+            returned only if `return_train_score` is `True`.
+        test_scores : dict of scorer name -> float
+            Score on testing set (for all the scorers).
+        n_test_samples : int
+            Number of test samples.
+        fit_time : float
+            Time spent for fitting in seconds.
+        score_time : float
+            Time spent for scoring in seconds.
+        parameters : dict or None
+            The parameters that have been evaluated.
+        estimator : estimator object
+            The fitted estimator.
     """
     progress_msg = ""
     if verbose > 2:
@@ -527,7 +523,6 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     fit_params = fit_params if fit_params is not None else {}
     fit_params = _check_fit_params(X, fit_params, train)
 
-    train_scores = {}
     if parameters is not None:
         # clone after setting parameters in case any parameters
         # are estimators (like pipeline steps)
@@ -543,6 +538,7 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
     X_train, y_train = _safe_split(estimator, X, y, train)
     X_test, y_test = _safe_split(estimator, X, y, test, train)
 
+    result = {}
     try:
         if y_train is None:
             estimator.fit(X_train, **fit_params)
@@ -573,7 +569,6 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
             raise ValueError("error_score must be the string 'raise' or a"
                              " numeric value. (Hint: if using 'raise', please"
                              " make sure that it has been spelled correctly.)")
-
     else:
         fit_time = time.time() - start_time
         test_scores = _score(estimator, X_test, y_test, scorer)
@@ -585,14 +580,13 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
         total_time = score_time + fit_time
         end_msg = f"[CV{progress_msg}] END "
         result_msg = params_msg + (";" if params_msg else "")
-        if verbose > 2:
-            if isinstance(test_scores, dict):
-                for scorer_name in sorted(test_scores):
-                    result_msg += f" {scorer_name}: ("
-                    if return_train_score:
-                        result_msg += (f"train="
-                                       f"{train_scores[scorer_name]:.3f}, ")
-                    result_msg += f"test={test_scores[scorer_name]:.3f})"
+        if verbose > 2 and isinstance(test_scores, dict):
+            for scorer_name in sorted(test_scores):
+                result_msg += f" {scorer_name}: ("
+                if return_train_score:
+                    scorer_scores = train_scores[scorer_name]
+                    result_msg += f"train={scorer_scores:.3f}, "
+                result_msg += f"test={test_scores[scorer_name]:.3f})"
         result_msg += f" total time={logger.short_format_time(total_time)}"
 
         # Right align the result_msg
@@ -600,17 +594,19 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
         end_msg += result_msg
         print(end_msg)
 
-    ret = [train_scores, test_scores] if return_train_score else [test_scores]
-
+    result["test_scores"] = test_scores
+    if return_train_score:
+        result["train_scores"] = train_scores
     if return_n_test_samples:
-        ret.append(_num_samples(X_test))
+        result["n_test_samples"] = _num_samples(X_test)
     if return_times:
-        ret.extend([fit_time, score_time])
+        result["fit_time"] = fit_time
+        result["score_time"] = score_time
     if return_parameters:
-        ret.append(parameters)
+        result["parameters"] = parameters
     if return_estimator:
-        ret.append(estimator)
-    return ret
+        result["estimator"] = estimator
+    return result
 
 
 def _score(estimator, X_test, y_test, scorer):
@@ -703,7 +699,8 @@ def cross_val_predict(estimator, X, y=None, *, groups=None, cv=None,
             ``cv`` default value if None changed from 3-fold to 5-fold.
 
     n_jobs : int, default=None
-        The number of CPUs to use to do the computation.
+        Number of jobs to run in parallel. Training the estimator and
+        predicting are parallelized over the cross-validation splits.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
@@ -780,7 +777,7 @@ def cross_val_predict(estimator, X, y=None, *, groups=None, cv=None,
             le = LabelEncoder()
             y = le.fit_transform(y)
         elif y.ndim == 2:
-            y_enc = np.zeros_like(y, dtype=np.int)
+            y_enc = np.zeros_like(y, dtype=int)
             for i_label in range(y.shape[1]):
                 y_enc[:, i_label] = LabelEncoder().fit_transform(y[:, i_label])
             y = y_enc
@@ -1041,7 +1038,8 @@ def permutation_test_score(estimator, X, y, *, groups=None, cv=None,
         Number of times to permute ``y``.
 
     n_jobs : int, default=None
-        The number of CPUs to use to do the computation.
+        Number of jobs to run in parallel. Training the estimator and computing
+        the cross-validated score are parallelized over the permutations.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
@@ -1199,7 +1197,8 @@ def learning_curve(estimator, X, y, *, groups=None,
         used to speed up fitting for different training set sizes.
 
     n_jobs : int, default=None
-        Number of jobs to run in parallel.
+        Number of jobs to run in parallel. Training the estimator and computing
+        the score are parallelized over the different training and test sets.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
@@ -1291,23 +1290,27 @@ def learning_curve(estimator, X, y, *, groups=None,
         out = parallel(delayed(_incremental_fit_estimator)(
             clone(estimator), X, y, classes, train, test, train_sizes_abs,
             scorer, verbose, return_times) for train, test in cv_iter)
+        out = np.asarray(out).transpose((2, 1, 0))
     else:
         train_test_proportions = []
         for train, test in cv_iter:
             for n_train_samples in train_sizes_abs:
                 train_test_proportions.append((train[:n_train_samples], test))
 
-        out = parallel(delayed(_fit_and_score)(
+        results = parallel(delayed(_fit_and_score)(
             clone(estimator), X, y, scorer, train, test, verbose,
             parameters=None, fit_params=None, return_train_score=True,
             error_score=error_score, return_times=return_times)
             for train, test in train_test_proportions)
-        out = np.array(out)
-        n_cv_folds = out.shape[0] // n_unique_ticks
-        dim = 4 if return_times else 2
-        out = out.reshape(n_cv_folds, n_unique_ticks, dim)
+        results = _aggregate_score_dicts(results)
+        train_scores = results["train_scores"].reshape(-1, n_unique_ticks).T
+        test_scores = results["test_scores"].reshape(-1, n_unique_ticks).T
+        out = [train_scores, test_scores]
 
-    out = np.asarray(out).transpose((2, 1, 0))
+        if return_times:
+            fit_times = results["fit_time"].reshape(-1, n_unique_ticks).T
+            score_times = results["score_time"].reshape(-1, n_unique_ticks).T
+            out.extend([fit_times, score_times])
 
     ret = train_sizes_abs, out[0], out[1]
 
@@ -1353,7 +1356,7 @@ def _translate_train_sizes(train_sizes, n_max_training_samples):
                              % (n_min_required_samples,
                                 n_max_required_samples))
         train_sizes_abs = (train_sizes_abs * n_max_training_samples).astype(
-                             dtype=np.int, copy=False)
+                             dtype=int, copy=False)
         train_sizes_abs = np.clip(train_sizes_abs, 1,
                                   n_max_training_samples)
     else:
@@ -1474,7 +1477,9 @@ def validation_curve(estimator, X, y, *, param_name, param_range, groups=None,
         ``scorer(estimator, X, y)``.
 
     n_jobs : int, default=None
-        Number of jobs to run in parallel.
+        Number of jobs to run in parallel. Training the estimator and computing
+        the score are parallelized over the combinations of each parameter
+        value and each cross-validation split.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
@@ -1515,24 +1520,25 @@ def validation_curve(estimator, X, y, *, param_name, param_range, groups=None,
 
     parallel = Parallel(n_jobs=n_jobs, pre_dispatch=pre_dispatch,
                         verbose=verbose)
-    out = parallel(delayed(_fit_and_score)(
+    results = parallel(delayed(_fit_and_score)(
         clone(estimator), X, y, scorer, train, test, verbose,
         parameters={param_name: v}, fit_params=None, return_train_score=True,
         error_score=error_score)
         # NOTE do not change order of iteration to allow one time cv splitters
         for train, test in cv.split(X, y, groups) for v in param_range)
-    out = np.asarray(out)
     n_params = len(param_range)
-    n_cv_folds = out.shape[0] // n_params
-    out = out.reshape(n_cv_folds, n_params, 2).transpose((2, 1, 0))
 
-    return out[0], out[1]
+    results = _aggregate_score_dicts(results)
+    train_scores = results["train_scores"].reshape(-1, n_params).T
+    test_scores = results["test_scores"].reshape(-1, n_params).T
+
+    return train_scores, test_scores
 
 
 def _aggregate_score_dicts(scores):
     """Aggregate the list of dict to dict of np ndarray
 
-    The aggregated output of _fit_and_score will be a list of dict
+    The aggregated output of _aggregate_score_dicts will be a list of dict
     of form [{'prec': 0.1, 'acc':1.0}, {'prec': 0.1, 'acc':1.0}, ...]
     Convert it to a dict of array {'prec': np.array([0.1 ...]), ...}
 
@@ -1552,5 +1558,9 @@ def _aggregate_score_dicts(scores):
     {'a': array([1, 2, 3, 10]),
      'b': array([10, 2, 3, 10])}
     """
-    return {key: np.asarray([score[key] for score in scores])
-            for key in scores[0]}
+    return {
+        key: np.asarray([score[key] for score in scores])
+        if isinstance(scores[0][key], numbers.Number)
+        else [score[key] for score in scores]
+        for key in scores[0]
+    }
