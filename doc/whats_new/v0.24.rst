@@ -158,6 +158,9 @@ Changelog
   :pr:`16289` by :user:`Masashi Kishimoto <kishimoto-banana>` and
   :user:`Olivier Grisel <ogrisel>`.
 
+- |Enhancement| :class:`isotonic.IsotonicRegression` now accepts 2darray with 1 feature as
+  input array. :pr:`17379` by :user:`Jiaxiang <fujiaxiang>`.
+
 :mod:`sklearn.metrics`
 ......................
 
