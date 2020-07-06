@@ -90,7 +90,14 @@ Changelog
 - |Fix| Fixed a bug in :func:`metrics.mean_squared_error` where the
   average of multiple RMSE values was incorrectly calculated as the root of the
   average of multiple MSE values.
-  :pr:`17309` by :user:`Swier Heeres <swierh>`
+  :pr:`17309` by :user:`Swier Heeres <swierh>`.
+
+:mod:`sklearn.utils`
+....................
+
+- |Fix| Fix :func:`utils.estimator_checks.check_estimator` so that all test
+  cases support the `binary_only` estimator tag.
+  :pr:`17812` by :user:`Bruno Charron <brcharron>`.
 
 .. _changes_0_23_1:
 
