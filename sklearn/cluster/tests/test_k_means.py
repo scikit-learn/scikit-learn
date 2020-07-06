@@ -194,39 +194,6 @@ def test_elkan_results_sparse(distribution):
     assert_allclose(km_elkan.labels_, km_full.labels_)
 
 
-def test_labels_assignment_and_inertia():
-    # pure numpy implementation as easily auditable reference gold
-    # implementation
-    rng = np.random.RandomState(42)
-    noisy_centers = centers + rng.normal(size=centers.shape)
-    labels_gold = np.full(n_samples, -1, dtype=int)
-    mindist = np.empty(n_samples)
-    mindist.fill(np.infty)
-    for center_id in range(n_clusters):
-        dist = np.sum((X - noisy_centers[center_id]) ** 2, axis=1)
-        labels_gold[dist < mindist] = center_id
-        mindist = np.minimum(dist, mindist)
-    inertia_gold = mindist.sum()
-    assert (mindist >= 0.0).all()
-    assert (labels_gold != -1).all()
-
-    sample_weight = None
-
-    # perform label assignment using the dense array input
-    x_squared_norms = (X ** 2).sum(axis=1)
-    labels_array, inertia_array = _labels_inertia(
-        X, sample_weight, x_squared_norms, noisy_centers)
-    assert_array_almost_equal(inertia_array, inertia_gold)
-    assert_array_equal(labels_array, labels_gold)
-
-    # perform label assignment using the sparse CSR input
-    x_squared_norms_from_csr = row_norms(X_csr, squared=True)
-    labels_csr, inertia_csr = _labels_inertia(
-        X_csr, sample_weight, x_squared_norms_from_csr, noisy_centers)
-    assert_array_almost_equal(inertia_csr, inertia_gold)
-    assert_array_equal(labels_csr, labels_gold)
-
-
 def test_minibatch_update_consistency():
     # Check that dense and sparse minibatch update give the same results
     rng = np.random.RandomState(42)
