@@ -632,7 +632,10 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         to false, no intercept will be used in calculations
         (i.e. ``X`` and ``y`` are expected to be centered.
         ``coef_`` returns same value irrespective of y is centered.
-        But model predicts better with low mse when y is centered).
+        The model will underfit if ``fit_intercept=False`` and ``y``
+        is not centered.
+
+.
 
     normalize : bool, default=False
         This parameter is ignored when ``fit_intercept`` is set to False.
