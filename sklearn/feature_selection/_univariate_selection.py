@@ -297,9 +297,9 @@ def f_regression(X, y, *, center=True):
     else:
         X_norms = row_norms(X.T)
 
-    if np.any(X_norms == 0) or np.std(y) == 0:
+    if np.any(X_norms == 0) or np.ptp(y) == 0:
         # The Pearson correlation coefficient is undefined for random
-        # variables (regressors and target) with a standard deviation
+        # variables (attributes and target) with a standard deviation
         # of zero
         raise ValueError("The correlation is undefined for features "
                          "or target with identically constant values.")
