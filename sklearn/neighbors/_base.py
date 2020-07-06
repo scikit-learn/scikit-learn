@@ -1094,7 +1094,7 @@ class SupervisedFloatMixin:
 
         Parameters
         ----------
-        X : {array-like, sparse matrix, BallTree, KDTree}
+        X : {array-like, sparse matrix, BallTree, KDTree, NeighborsBase}
             Training data. If array or matrix, shape [n_samples, n_features],
             or [n_samples, n_samples] if metric='precomputed'.
 
@@ -1102,7 +1102,7 @@ class SupervisedFloatMixin:
             Target values, array of float values, shape = [n_samples]
              or [n_samples, n_outputs]
         """
-        if not isinstance(X, (KDTree, BallTree)):
+        if not isinstance(X, (KDTree, BallTree, NeighborsBase)):
             X, y = self._validate_data(X, y, accept_sparse="csr",
                                        multi_output=True)
         self._y = y
@@ -1118,7 +1118,7 @@ class SupervisedIntegerMixin:
 
         Parameters
         ----------
-        X : {array-like, sparse matrix, BallTree, KDTree}
+        X : {array-like, sparse matrix, BallTree, KDTree, NeighborsBase}
             Training data. If array or matrix, shape [n_samples, n_features],
             or [n_samples, n_samples] if metric='precomputed'.
 
@@ -1126,7 +1126,7 @@ class SupervisedIntegerMixin:
             Target values of shape = [n_samples] or [n_samples, n_outputs]
 
         """
-        if not isinstance(X, (KDTree, BallTree)):
+        if not isinstance(X, (KDTree, BallTree, NeighborsBase)):
             X, y = self._validate_data(X, y, accept_sparse="csr",
                                        multi_output=True)
 
@@ -1165,11 +1165,11 @@ class UnsupervisedMixin:
 
         Parameters
         ----------
-        X : {array-like, sparse matrix, BallTree, KDTree}
+        X : {array-like, sparse matrix, BallTree, KDTree, NeighborsBase}
             Training data. If array or matrix, shape [n_samples, n_features],
             or [n_samples, n_samples] if metric='precomputed'.
         """
-        if not isinstance(X, (KDTree, BallTree)):
+        if not isinstance(X, (KDTree, BallTree, NeighborsBase)):
             X = self._validate_data(X, accept_sparse='csr')
 
         return self._fit(X)
