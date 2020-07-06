@@ -459,7 +459,7 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
 
 
 @_deprecate_positional_args
-def minmax_scale(X, feature_range=(0, 1), *, axis=0, copy=True, clip=False):
+def minmax_scale(X, feature_range=(0, 1), *, axis=0, copy=True):
     """Transform features by scaling each feature to a given range.
 
     This estimator scales and translates each feature individually such
@@ -541,7 +541,7 @@ def minmax_scale(X, feature_range=(0, 1), *, axis=0, copy=True, clip=False):
     if original_ndim == 1:
         X = X.reshape(X.shape[0], 1)
 
-    s = MinMaxScaler(feature_range=feature_range, copy=copy, clip=False)
+    s = MinMaxScaler(feature_range=feature_range, copy=copy)
     if axis == 0:
         X = s.fit_transform(X)
     else:
