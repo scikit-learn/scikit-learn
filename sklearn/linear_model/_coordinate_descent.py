@@ -662,6 +662,10 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         number of iterations run by the coordinate descent solver to reach
         the specified tolerance.
 
+    dual_gap_ : float or ndarray of shape (n_targets,)
+        Given param alpha, the dual gaps at the end of the optimization,
+        same shape as each observation of y.
+
     Examples
     --------
     >>> from sklearn.linear_model import ElasticNet
@@ -1643,6 +1647,9 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
     alphas_ : ndarray of shape (n_alphas,) or (n_l1_ratio, n_alphas)
         The grid of alphas used for fitting, for each l1_ratio.
 
+    dual_gap_ : float
+        The dual gaps at the end of the optimization for the optimal alpha.
+
     n_iter_ : int
         number of iterations run by the coordinate descent solver to reach
         the specified tolerance for the optimal alpha.
@@ -1817,6 +1824,12 @@ class MultiTaskElasticNet(Lasso):
     n_iter_ : int
         number of iterations run by the coordinate descent solver to reach
         the specified tolerance.
+
+    dual_gap_ : float
+        The dual gaps at the end of the optimization.
+
+    eps_ : float
+        The tolerance scaled scaled by the variance of the target `y`.
 
     Examples
     --------
@@ -2007,6 +2020,12 @@ class MultiTaskLasso(MultiTaskElasticNet):
         number of iterations run by the coordinate descent solver to reach
         the specified tolerance.
 
+    dual_gap_ : ndarray of shape (n_alphas,)
+        The dual gaps at the end of the optimization for each alpha.
+
+    eps_ : float
+        The tolerance scaled scaled by the variance of the target `y`.
+
     Examples
     --------
     >>> from sklearn import linear_model
@@ -2184,6 +2203,9 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
         number of iterations run by the coordinate descent solver to reach
         the specified tolerance for the optimal alpha.
 
+    dual_gap_ : float
+        The dual gap at the end of the optimization for the optimal alpha.
+
     Examples
     --------
     >>> from sklearn import linear_model
@@ -2360,6 +2382,9 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
     n_iter_ : int
         number of iterations run by the coordinate descent solver to reach
         the specified tolerance for the optimal alpha.
+
+    dual_gap_ : float
+        The dual gap at the end of the optimization for the optimal alpha.
 
     Examples
     --------
