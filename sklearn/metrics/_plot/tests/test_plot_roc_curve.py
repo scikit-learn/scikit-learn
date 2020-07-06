@@ -57,7 +57,7 @@ def test_plot_roc_curve_error_no_response(pyplot, data_binary, response_method,
                                           msg):
     X, y = data_binary
 
-    class MyClassifier(BaseEstimator, ClassifierMixin):
+    class MyClassifier(ClassifierMixin, BaseEstimator):
         def fit(self, X, y):
             self.classes_ = [0, 1]
             return self

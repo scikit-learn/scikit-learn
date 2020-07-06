@@ -1891,11 +1891,11 @@ def test_scalar_fit_param_compat(SearchCV, param_search):
 
 @pytest.mark.parametrize(
     "Estimator,params,estimator_type",
-    [(DecisionTreeClassifier, {"max_depth": [5, 10]}, "classifier"),
-     (DecisionTreeRegressor, {"max_depth": [5, 10]}, "regressor"),
-     (KMeans, {"n_clusters": [5, 10]}, "clusterer"),
-     (BayesianGaussianMixture, {"n_components": [5, 10]}, "DensityEstimator"),
-     (IsolationForest, {"max_depth": [5, 10]}, "outlier_detector")]
+    [(DecisionTreeClassifier, {"max_depth": [2, 3]}, "classifier"),
+     (DecisionTreeRegressor, {"max_depth": [2, 3]}, "regressor"),
+     (KMeans, {"n_clusters": [2, 3]}, "clusterer"),
+     (BayesianGaussianMixture, {"n_components": [2, 3]}, "DensityEstimator"),
+     (IsolationForest, {"max_depth": [2, 3]}, "outlier_detector")]
 )
 @pytest.mark.parametrize("SearchCV", [GridSearchCV, RandomizedSearchCV])
 def test_estimator_type_tag(SearchCV, Estimator, params, estimator_type):
@@ -1908,6 +1908,6 @@ def test_estimator_type_tag(SearchCV, Estimator, params, estimator_type):
 @pytest.mark.parametrize("SearchCV", [GridSearchCV, RandomizedSearchCV])
 def test_deprecated_estimator_type(SearchCV):
     # Assert that deprecated _estimator_type warns FutureWarning
-    search = SearchCV(DecisionTreeClassifier(), {'max_depth': [5, 10]})
+    search = SearchCV(DecisionTreeClassifier(), {'max_depth': [2, 3]})
     with pytest.warns(FutureWarning, match="estimator_type is deprecated"):
         getattr(search, "_estimator_type")
