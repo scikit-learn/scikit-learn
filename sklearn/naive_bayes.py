@@ -27,12 +27,13 @@ from .base import BaseEstimator, ClassifierMixin
 from .preprocessing import binarize
 from .preprocessing import LabelBinarizer
 from .preprocessing import label_binarize
-from .utils import check_X_y, check_array
+from .utils import check_X_y, check_array, deprecated
 from .utils.extmath import safe_sparse_dot
 from .utils.multiclass import _check_partial_fit_first_call
 from .utils.validation import check_is_fitted, check_non_negative, column_or_1d
 from .utils.validation import _check_sample_weight
 from .utils.validation import _deprecate_positional_args
+
 
 __all__ = ['BernoulliNB', 'GaussianNB', 'MultinomialNB', 'ComplementNB',
            'CategoricalNB']
@@ -645,18 +646,21 @@ class _BaseDiscreteNB(_BaseNB):
         self.feature_count_ = np.zeros((n_effective_classes, n_features),
                                        dtype=np.float64)
 
-    # XXX The following is a stopgap measure; we need to set the dimensions
-    # of class_log_prior_ and feature_log_prob_ correctly.
-    def _get_coef(self):
+    # mypy error: Decorated property not supported
+    @deprecated("Attribute coef_ was deprecated in "  # type: ignore
+                "version 0.24 and will be removed in 0.26.")
+    @property
+    def coef_(self):
         return (self.feature_log_prob_[1:]
                 if len(self.classes_) == 2 else self.feature_log_prob_)
 
-    def _get_intercept(self):
+    # mypy error: Decorated property not supported
+    @deprecated("Attribute intercept_ was deprecated in "  # type: ignore
+                "version 0.24 and will be removed in 0.26.")
+    @property
+    def intercept_(self):
         return (self.class_log_prior_[1:]
                 if len(self.classes_) == 2 else self.class_log_prior_)
-
-    coef_ = property(_get_coef)
-    intercept_ = property(_get_intercept)
 
     def _more_tags(self):
         return {'poor_score': True}
@@ -700,8 +704,11 @@ class MultinomialNB(_BaseDiscreteNB):
         Class labels known to the classifier
 
     coef_ : ndarray of shape (n_classes, n_features)
-        Mirrors ``feature_log_prob_`` for interpreting MultinomialNB
+        Mirrors ``feature_log_prob_`` for interpreting `MultinomialNB`
         as a linear model.
+
+        .. deprecated:: 0.24
+            ``coef_`` is deprecated in 0.24 and will be removed in 0.26.
 
     feature_count_ : ndarray of shape (n_classes, n_features)
         Number of samples encountered for each (class, feature)
@@ -712,9 +719,12 @@ class MultinomialNB(_BaseDiscreteNB):
         Empirical log probability of features
         given a class, ``P(x_i|y)``.
 
-    intercept_ : ndarray of shape (n_classes, )
-        Mirrors ``class_log_prior_`` for interpreting MultinomialNB
+    intercept_ : ndarray of shape (n_classes,)
+        Mirrors ``class_log_prior_`` for interpreting `MultinomialNB`
         as a linear model.
+
+        .. deprecated:: 0.24
+            ``intercept_`` is deprecated in 0.24 and will be removed in 0.26.
 
     n_features_ : int
         Number of features of each sample.
@@ -815,6 +825,13 @@ class ComplementNB(_BaseDiscreteNB):
     classes_ : ndarray of shape (n_classes,)
         Class labels known to the classifier
 
+    coef_ : ndarray of shape (n_classes, n_features)
+        Mirrors ``feature_log_prob_`` for interpreting `ComplementNB`
+        as a linear model.
+
+        .. deprecated:: 0.24
+            ``coef_`` is deprecated in 0.24 and will be removed in 0.26.
+
     feature_all_ : ndarray of shape (n_features,)
         Number of samples encountered for each feature during fitting. This
         value is weighted by the sample weight when provided.
@@ -825,6 +842,13 @@ class ComplementNB(_BaseDiscreteNB):
 
     feature_log_prob_ : ndarray of shape (n_classes, n_features)
         Empirical weights for class complements.
+
+    intercept_ : ndarray of shape (n_classes,)
+        Mirrors ``class_log_prior_`` for interpreting `ComplementNB`
+        as a linear model.
+
+        .. deprecated:: 0.24
+            ``coef_`` is deprecated in 0.24 and will be removed in 0.26.
 
     n_features_ : int
         Number of features of each sample.
@@ -927,6 +951,10 @@ class BernoulliNB(_BaseDiscreteNB):
     classes_ : ndarray of shape (n_classes,)
         Class labels known to the classifier
 
+    coef_ : ndarray of shape (n_classes, n_features)
+        Mirrors ``feature_log_prob_`` for interpreting `BernoulliNB`
+        as a linear model.
+
     feature_count_ : ndarray of shape (n_classes, n_features)
         Number of samples encountered for each (class, feature)
         during fitting. This value is weighted by the sample weight when
@@ -934,6 +962,10 @@ class BernoulliNB(_BaseDiscreteNB):
 
     feature_log_prob_ : ndarray of shape (n_classes, n_features)
         Empirical log probability of features given a class, P(x_i|y).
+
+    intercept_ : ndarray of shape (n_classes,)
+        Mirrors ``class_log_prior_`` for interpreting `BernoulliNB`
+        as a linear model.
 
     n_features_ : int
         Number of features of each sample.

@@ -45,6 +45,14 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
+:mod:`sklearn.calibrator`
+.........................
+
+- |Enhancement| Allow :class:`calibrator.CalibratedClassifierCV` use with
+  prefit :class:`pipeline.Pipeline` where data is not `X` is not array-like,
+  sparse matrix or dataframe at the start. :pr:`17546` by
+  :user:`Lucy Liu <lucyleeow>`.
+
 :mod:`sklearn.datasets`
 .......................
 
@@ -52,6 +60,10 @@ Changelog
   to be 'auto', which tries to convert returned data to pandas DataFrame
   unless data is sparse.
   :pr:`17396` by :user:`Jiaxiang <fujiaxiang>`.
+
+- |Feature| :func:`datasets.fetch_openml` now validates md5checksum of arff
+  files downloaded or cached to ensure data integrity.
+  :pr:`14800` by :user:`Shashank Singh <shashanksingh28>` and `Joel Nothman`_.
 
 - |Enhancement| :func:`datasets.fetch_covtype` now now supports the optional
   argument `as_frame`; when it is set to True, the returned Bunch object's
@@ -64,7 +76,17 @@ Changelog
 - |Fix| Fixed a bug in
   :func:`decomposition.MiniBatchDictionaryLearning.partial_fit` which should
   update the dictionary by iterating only once over a mini-batch.
-  :pr:`17433` by :user:`Chiara Marmo <cmarmo>`
+  :pr:`17433` by :user:`Chiara Marmo <cmarmo>`.
+
+- |Fix| Fix :class:`decomposition.SparseCoder` such that it follows
+  scikit-learn API and support cloning. The attribute `components_` is
+  deprecated in 0.24 and will be removed in 0.26. This attribute was
+  redundant with the `dictionary` attribute and constructor parameter.
+  :pr:`17679` by :user:`Xavier Dupré <sdpython>`.
+
+- |Enhancement| :func:`decomposition.FactorAnalysis` now supports the optional
+  argument `rotation`, which can take the value `None`, `'varimax'` or `'quartimax'.`
+  :pr:`11064` by :user:`Jona Sassenhagen <jona-sassenhagen>`.
 
 :mod:`sklearn.ensemble`
 .......................
@@ -74,6 +96,18 @@ Changelog
   which allows monitoring of each stage.
   :pr:`16985` by :user:`Hao Chun Chang <haochunchang>`.
 
+- |Fix| Fixed bug in :class:`ensemble.MultinomialDeviance` where the
+  average of logloss was incorrectly calculated as sum of logloss.
+  :pr:`17694` by :user:`Markus Rempfler <rempfler>` and
+  :user:`Tsutomu Kusanagi <t-kusanagi2>`.
+
+:mod:`sklearn.exceptions`
+.........................
+
+- |API| :class:`exceptions.ChangedBehaviorWarning` and
+  :class:`exceptions.NonBLASDotWarning` are deprecated and will be removed in
+  v0.26, :pr:`17804` by `Adrin Jalali`_.
+
 :mod:`sklearn.feature_selection`
 ................................
 
@@ -82,6 +116,11 @@ Changelog
   :class:`feature_selection.SelectFromModel`, allowing the user to specify an
   attribute name/path or a `callable` for extracting feature importance from
   the estimator.  :pr:`15361` by :user:`Venkatachalam N <venkyyuvy>`
+
+- |Enhancement| Added the option for the number of n_features_to_select to be
+  given as a float representing the percentage of features to select.
+  :pr:`17090` by :user:`Lisa Schwetlick <lschwetlick>` and
+  :user:`Marija Vlajic Wheeler <marijavlajic>`.
 
 :mod:`sklearn.impute`
 .....................
@@ -96,6 +135,11 @@ Changelog
   when ``strategy='most_frequent'`` or ``strategy='constant'``.
   :pr:`17526` by :user:`Ayako YAGI <yagi-3>` and :user:`Juan Carlos Alfaro Jiménez <alfaro96>`.
 
+- |Feature| :class:`impute.SimpleImputer` now supports ``inverse_transform``
+  functionality to revert imputed data to original when instantiated
+  with `add_indicator=True`.
+  :pr:`17612` by :user:`Srimukh Sripada <d3b0unce>`
+
 :mod:`sklearn.inspection`
 .........................
 
@@ -108,11 +152,23 @@ Changelog
 :mod:`sklearn.isotonic`
 .......................
 
+- |Feature| Expose fitted attributes ``X_thresholds_`` and ``y_thresholds_``
+  that hold the de-duplicated interpolation thresholds of an
+  :class:`isotonic.IsotonicRegression` instance for model inspection purpose.
+  :pr:`16289` by :user:`Masashi Kishimoto <kishimoto-banana>` and
+  :user:`Olivier Grisel <ogrisel>`.
+
 - |Enhancement| :class:`isotonic.IsotonicRegression` now accepts 2darray with 1 feature as
   input array. :pr:`17379` by :user:`Jiaxiang <fujiaxiang>`.
 
 :mod:`sklearn.metrics`
 ......................
+
+- |Feature| Added :func:`metrics.mean_absolute_percentage_error` metric and
+  the associated scorer for regression problems. :issue:`10708` fixed with the
+  PR :pr:`15007` by :user:`Ashutosh Hathidara <ashutosh1919>`. The scorer and
+  some practical test cases were taken from PR :pr:`10711` by
+  :user:`Mohamed Ali Jamaoui <mohamed-ali>`.
 
 - |Fix| Fixed a bug in :func:`metrics.mean_squared_error` where the
   average of multiple RMSE values was incorrectly calculated as the root of the
@@ -127,6 +183,10 @@ Changelog
   :func:`metrics.plot_precision_recall_curve` in order to specify the positive
   class to be used when computing the precision and recall statistics.
   :pr:`17569` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Feature| :func:`metrics.plot_confusion_matrix` now supports making colorbar
+  optional in the matplotlib plot by setting colorbar=False. :pr:`17192` by
+  :user:`Avi Gupta <avigupta2612>`
 
 :mod:`sklearn.model_selection`
 ..............................
@@ -149,6 +209,15 @@ Changelog
   sparse input data in its `fit` and `predict` methods. The check for
   validity of the input is now delegated to the base estimator.
   :pr:`17233` by :user:`Zolisa Bleki <zoj613>`.
+
+:mod:`sklearn.naive_bayes`
+..........................
+
+- |API|: The attributes ``coef_`` and ``intercept_`` are now deprecated in
+  :class:`naive_bayes.MultinomialNB`, :class:`naive_bayes.ComplementNB`,
+  :class:`naive_bayes.BernoulliNB` and :class:`naive_bayes.CategoricalNB`,
+  and will be removed in v0.26. :pr:`17427` by :user:`Juan Carlos Alfaro
+  Jiménez <alfaro96>`.
 
 :mod:`sklearn.neighbors`
 ........................
@@ -173,13 +242,17 @@ Changelog
 :mod:`sklearn.neural_network`
 .............................
 
-- |Efficiency| Neural net training is now a little faster.
-  :pr:`17603`, :pr:`17604`, :pr:`17606`, :pr:`17608`, :pr:`17609`, :pr:`17633`
-  by :user:`Alex Henrie <alexhenrie>`.
+- |Efficiency| Neural net training and prediction are now a little faster.
+  :pr:`17603`, :pr:`17604`, :pr:`17606`, :pr:`17608`, :pr:`17609`, :pr:`17633`,
+  :pr:`17661` by :user:`Alex Henrie <alexhenrie>`.
 
 - |Enhancement| Avoid converting float32 input to float64 in
   :class:`neural_network.BernoulliRBM`.
-  :pr:`16352` by :user:`Arthur Imbert <Henley13>`.  
+  :pr:`16352` by :user:`Arthur Imbert <Henley13>`.
+
+- |Enhancement| Support 32-bit computations in :class:`neural_network.MLPClassifier`
+  and :class:`neural_network.MLPRegressor`.
+  :pr:`17759` by :user:`Srimukh Sripada <d3b0unce>`.
 
 :mod:`sklearn.preprocessing`
 ............................
@@ -215,7 +288,6 @@ Changelog
   :meth:`tree.DecisionTreeClassifier.fit` and
   :meth:`tree.DecisionTreeRegressor.fit`, and has not effect.
   :pr:`17614` by :user:`Juan Carlos Alfaro Jiménez <alfaro96>`.
-
 
 Code and Documentation Contributors
 -----------------------------------

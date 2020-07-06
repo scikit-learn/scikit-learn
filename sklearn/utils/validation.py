@@ -25,15 +25,11 @@ from contextlib import suppress
 
 from .fixes import _object_dtype_isnan, parse_version
 from .. import get_config as _get_config
-from ..exceptions import NonBLASDotWarning, PositiveSpectrumWarning
+from ..exceptions import PositiveSpectrumWarning
 from ..exceptions import NotFittedError
 from ..exceptions import DataConversionWarning
 
 FLOAT_DTYPES = (np.float64, np.float32, np.float16)
-
-# Silenced by default to reduce verbosity. Turn on at runtime for
-# performance profiling.
-warnings.simplefilter('ignore', NonBLASDotWarning)
 
 
 def _deprecate_positional_args(f):
@@ -202,8 +198,8 @@ def _num_samples(x):
 
     try:
         return len(x)
-    except TypeError:
-        raise TypeError(message)
+    except TypeError as type_error:
+        raise TypeError(message) from type_error
 
 
 def check_memory(memory):
@@ -515,7 +511,7 @@ def check_array(array, accept_sparse=False, *, accept_large_sparse=True,
         # pandas boolean dtype __array__ interface coerces bools to objects
         for i, dtype_iter in enumerate(dtypes_orig):
             if dtype_iter.kind == 'b':
-                dtypes_orig[i] = np.dtype(np.object)
+                dtypes_orig[i] = np.dtype(object)
             elif dtype_iter.name.startswith(("Int", "UInt")):
                 # name looks like an Integer Extension Array, now check for
                 # the dtype
@@ -597,9 +593,9 @@ def check_array(array, accept_sparse=False, *, accept_large_sparse=True,
                     array = array.astype(dtype, casting="unsafe", copy=False)
                 else:
                     array = np.asarray(array, order=order, dtype=dtype)
-            except ComplexWarning:
+            except ComplexWarning as complex_warning:
                 raise ValueError("Complex data not supported\n"
-                                 "{}\n".format(array))
+                                 "{}\n".format(array)) from complex_warning
 
         # It is possible that the np.array(..) gave no warning. This happens
         # when no dtype conversion happened, for example dtype = None. The

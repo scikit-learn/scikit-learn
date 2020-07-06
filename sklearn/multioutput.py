@@ -60,7 +60,8 @@ def _partial_fit_estimator(estimator, X, y, classes=None, sample_weight=None,
     return estimator
 
 
-class _MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
+class _MultiOutputEstimator(MetaEstimatorMixin,
+                            BaseEstimator,
                             metaclass=ABCMeta):
     @abstractmethod
     @_deprecate_positional_args
