@@ -221,7 +221,7 @@ class MultiOutputRegressor(RegressorMixin, _MultiOutputEstimator):
     estimator : estimator object
         An estimator object implementing :term:`fit` and :term:`predict`.
 
-    n_jobs : int, default=None
+    n_jobs : int or None, optional (default=None)
         The number of jobs to run in parallel for :meth:`fit`.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
@@ -293,7 +293,7 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
         An estimator object implementing :term:`fit`, :term:`score` and
         :term:`predict_proba`.
 
-    n_jobs : int, default=None
+    n_jobs : int or None, optional (default=None)
         The number of jobs to use for the computation.
         It does each target variable in y in parallel.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
@@ -575,7 +575,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
 
-    random_state : int, RandomState instance, default=None
+    random_state : int, RandomState instance or None, optional (default=None)
         If ``order='random'``, determines random number generation for the
         chain order.
         In addition, it controls the random seed given at each `base_estimator`
@@ -759,7 +759,7 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
 
-    random_state : int, RandomState instance, default=None
+    random_state : int, RandomState instance or None, optional (default=None)
         If ``order='random'``, determines random number generation for the
         chain order.
         In addition, it controls the random seed given at each `base_estimator`
