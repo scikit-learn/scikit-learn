@@ -279,11 +279,16 @@ def _check_fitted_model(km):
                          % km.n_clusters, km.fit, [[0., 1.]])
 
 
-@pytest.mark.parametrize('data', [X, X_csr], ids=['dense', 'sparse'])
-@pytest.mark.parametrize('init', ['random', 'k-means++', centers.copy()])
-def test_k_means_init(data, init):
-    km = KMeans(init=init, n_clusters=n_clusters, random_state=42, n_init=1)
-    km.fit(data)
+@pytest.mark.parametrize("data", [X, X_csr], ids=["dense", "sparse"])
+@pytest.mark.parametrize("init", ["random", "k-means++", centers,
+                                  lambda X, k, random_state: centers],
+                         ids=["random", "k-means++", "ndarray", "callable"])
+@pytest.mark.parametrize("estimator", [KMeans, MiniBatchKMeans])
+def test_all_init(estimator, data, init):
+    # Check KMeans and MiniBatchKMeans with all possible init.
+    n_init = 10 if type(init) is str else 1
+    km = estimator(init=init, n_clusters=n_clusters, random_state=42,
+                   n_init=n_init).fit(data)
     _check_fitted_model(km)
 
 
@@ -408,16 +413,6 @@ def test_minibatch_k_means_init_multiple_runs_with_explicit_centers():
     mb_k_means = MiniBatchKMeans(init=centers.copy(), n_clusters=n_clusters,
                                  random_state=42, n_init=10)
     assert_warns(RuntimeWarning, mb_k_means.fit, X)
-
-
-@pytest.mark.parametrize('data', [X, X_csr], ids=['dense', 'sparse'])
-@pytest.mark.parametrize('init', ["random", 'k-means++', centers.copy()])
-def test_minibatch_k_means_init(data, init):
-    n_init = 10 if type(init) is str else 1
-    mb_k_means = MiniBatchKMeans(init=init, n_clusters=n_clusters,
-                                 random_state=42, n_init=n_init)
-    mb_k_means.fit(data)
-    _check_fitted_model(mb_k_means)
 
 
 def test_minibatch_sensible_reassign_fit():
