@@ -63,7 +63,7 @@ def test_errors(pyplot):
 def test_error_bad_response(pyplot, response_method, msg):
     X, y = make_classification(n_classes=2, n_samples=50, random_state=0)
 
-    class MyClassifier(BaseEstimator, ClassifierMixin):
+    class MyClassifier(ClassifierMixin, BaseEstimator):
         def fit(self, X, y):
             self.fitted_ = True
             self.classes_ = [0, 1]

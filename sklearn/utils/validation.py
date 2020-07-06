@@ -25,15 +25,11 @@ from contextlib import suppress
 
 from .fixes import _object_dtype_isnan, parse_version
 from .. import get_config as _get_config
-from ..exceptions import NonBLASDotWarning, PositiveSpectrumWarning
+from ..exceptions import PositiveSpectrumWarning
 from ..exceptions import NotFittedError
 from ..exceptions import DataConversionWarning
 
 FLOAT_DTYPES = (np.float64, np.float32, np.float16)
-
-# Silenced by default to reduce verbosity. Turn on at runtime for
-# performance profiling.
-warnings.simplefilter('ignore', NonBLASDotWarning)
 
 
 def _deprecate_positional_args(f):

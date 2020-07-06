@@ -84,6 +84,10 @@ Changelog
   redundant with the `dictionary` attribute and constructor parameter.
   :pr:`17679` by :user:`Xavier Dupré <sdpython>`.
 
+- |Enhancement| :func:`decomposition.FactorAnalysis` now supports the optional
+  argument `rotation`, which can take the value `None`, `'varimax'` or `'quartimax'.`
+  :pr:`11064` by :user:`Jona Sassenhagen <jona-sassenhagen>`.
+
 :mod:`sklearn.ensemble`
 .......................
 
@@ -96,6 +100,13 @@ Changelog
   average of logloss was incorrectly calculated as sum of logloss.
   :pr:`17694` by :user:`Markus Rempfler <rempfler>` and
   :user:`Tsutomu Kusanagi <t-kusanagi2>`.
+
+:mod:`sklearn.exceptions`
+.........................
+
+- |API| :class:`exceptions.ChangedBehaviorWarning` and
+  :class:`exceptions.NonBLASDotWarning` are deprecated and will be removed in
+  v0.26, :pr:`17804` by `Adrin Jalali`_.
 
 :mod:`sklearn.feature_selection`
 ................................
@@ -147,6 +158,9 @@ Changelog
   :pr:`16289` by :user:`Masashi Kishimoto <kishimoto-banana>` and
   :user:`Olivier Grisel <ogrisel>`.
 
+- |Enhancement| :class:`isotonic.IsotonicRegression` now accepts 2darray with 1 feature as
+  input array. :pr:`17379` by :user:`Jiaxiang <fujiaxiang>`.
+
 :mod:`sklearn.metrics`
 ......................
 
@@ -195,6 +209,15 @@ Changelog
   sparse input data in its `fit` and `predict` methods. The check for
   validity of the input is now delegated to the base estimator.
   :pr:`17233` by :user:`Zolisa Bleki <zoj613>`.
+
+:mod:`sklearn.naive_bayes`
+..........................
+
+- |API|: The attributes ``coef_`` and ``intercept_`` are now deprecated in
+  :class:`naive_bayes.MultinomialNB`, :class:`naive_bayes.ComplementNB`,
+  :class:`naive_bayes.BernoulliNB` and :class:`naive_bayes.CategoricalNB`,
+  and will be removed in v0.26. :pr:`17427` by :user:`Juan Carlos Alfaro
+  Jiménez <alfaro96>`.
 
 :mod:`sklearn.neighbors`
 ........................
