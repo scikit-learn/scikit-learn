@@ -137,7 +137,7 @@ class _BaseScorer(_PropsRequest):
                    "" if self._sign > 0 else ", greater_is_better=False",
                    self._factory_args(), kwargs_string))
 
-    def __call__(self, estimator, X, y_true, sample_weight=None, **kwargs):
+    def __call__(self, estimator, X, y_true, **kwargs):
         """Evaluate predicted target values for X relative to y_true.
 
         Parameters
@@ -152,16 +152,14 @@ class _BaseScorer(_PropsRequest):
         y_true : array-like
             Gold standard target values for X.
 
-        sample_weight : array-like of shape (n_samples,), default=None
-            Sample weights.
+        **kwargs : dict
+            Other parameters passed to the scorer.
 
         Returns
         -------
         score : float
             Score function applied to prediction of estimator on X.
         """
-        if sample_weight is not None:
-            kwargs.update({'sample_weight': sample_weight})
         kwargs = _check_method_props(self.get_metadata_request().score, kwargs)
 
         return self._score(partial(_cached_call, None), estimator, X, y_true,
@@ -173,8 +171,7 @@ class _BaseScorer(_PropsRequest):
 
 
 class _PredictScorer(_BaseScorer):
-    def _score(self, method_caller, estimator, X, y_true, sample_weight=None,
-               **kwargs):
+    def _score(self, method_caller, estimator, X, y_true, **kwargs):
         """Evaluate predicted target values for X relative to y_true.
 
         Parameters
@@ -193,8 +190,8 @@ class _PredictScorer(_BaseScorer):
         y_true : array-like
             Gold standard target values for X.
 
-        sample_weight : array-like of shape (n_samples,), default=None
-            Sample weights.
+        **kwargs : dict
+            Other parameters passed to the scorer.
 
         Returns
         -------
@@ -204,14 +201,12 @@ class _PredictScorer(_BaseScorer):
 
         y_pred = method_caller(estimator, "predict", X)
         scoring_kwargs = copy.deepcopy(self._kwargs)
-        if sample_weight is not None:
-            scoring_kwargs['sample_weight'] = sample_weight
         scoring_kwargs.update(kwargs)
         return self._sign * self._score_func(y_true, y_pred, **scoring_kwargs)
 
 
 class _ProbaScorer(_BaseScorer):
-    def _score(self, method_caller, clf, X, y, sample_weight=None, **kwargs):
+    def _score(self, method_caller, clf, X, y, **kwargs):
         """Evaluate predicted probabilities for X relative to y_true.
 
         Parameters
@@ -231,8 +226,8 @@ class _ProbaScorer(_BaseScorer):
             Gold standard target values for X. These must be class labels,
             not probabilities.
 
-        sample_weight : array-like, optional (default=None)
-            Sample weights.
+        **kwargs : dict
+            Other parameters passed to the scorer.
 
         Returns
         -------
@@ -251,8 +246,6 @@ class _ProbaScorer(_BaseScorer):
                                  ' classes for {} scoring'.format(
                                      y_pred.shape, self._score_func.__name__))
         scoring_kwargs = copy.deepcopy(self._kwargs)
-        if sample_weight is not None:
-            scoring_kwargs['sample_weight'] = sample_weight
         scoring_kwargs.update(kwargs)
         return self._sign * self._score_func(y, y_pred, **scoring_kwargs)
 
@@ -261,7 +254,7 @@ class _ProbaScorer(_BaseScorer):
 
 
 class _ThresholdScorer(_BaseScorer):
-    def _score(self, method_caller, clf, X, y, sample_weight=None, **kwargs):
+    def _score(self, method_caller, clf, X, y, **kwargs):
         """Evaluate decision function output for X relative to y_true.
 
         Parameters
@@ -283,8 +276,8 @@ class _ThresholdScorer(_BaseScorer):
             Gold standard target values for X. These must be class labels,
             not decision function values.
 
-        sample_weight : array-like, optional (default=None)
-            Sample weights.
+        **kwargs : dict
+            Other parameters passed to the scorer.
 
         Returns
         -------
@@ -322,8 +315,6 @@ class _ThresholdScorer(_BaseScorer):
                     y_pred = np.vstack([p[:, -1] for p in y_pred]).T
 
         scoring_kwargs = copy.deepcopy(self._kwargs)
-        if sample_weight is not None:
-            scoring_kwargs['sample_weight'] = sample_weight
         scoring_kwargs.update(kwargs)
         return self._sign * self._score_func(y, y_pred, **scoring_kwargs)
 
