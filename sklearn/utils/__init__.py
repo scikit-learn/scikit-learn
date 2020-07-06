@@ -1226,7 +1226,7 @@ def _get_props_from_objs(objs):
                 if m_props:
                     metadata_request[method].update({x: x for x in m_props})
             # print("updated props request: ", metadata_request)
-        except AttributeError as e:
+        except AttributeError:
             # print(f"obj {obj} doesn't have get_metadata_request: {e}")
             warnings.warn("{} doesn't implement "
                           "prop_request API".format(obj), UserWarning)
