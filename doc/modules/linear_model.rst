@@ -63,15 +63,15 @@ example, when data are collected without an experimental design.
 
    * :ref:`sphx_glr_auto_examples_linear_model_plot_ols.py`
 
-.. _non_negative_least_square:
+.. _non_negative_least_squares:
 
 Non-Negative Least Squares
 --------------------------
 
-When the coefficients represent some physical or naturally non-negative
-quantities (e.g., frequency counts or prices of goods), it is possible
-to constrain all the coefficients to be non-negative.
-The :class:`LinearRegression` accepts a boolean ``positive``
+It is possible to constrain all the coefficients to be non-negative, which may
+be useful when they represent some physical or naturally non-negative
+quantities (e.g., frequency counts or prices of goods).
+:class:`LinearRegression` accepts a boolean ``positive``
 parameter: when set to `True` `Non Negative Least Squares
 <https://en.wikipedia.org/wiki/Non-negative_least_squares>`_ are then applied.
 

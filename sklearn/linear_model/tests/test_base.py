@@ -95,18 +95,16 @@ def test_linear_regression_sample_weights():
 
 
 def test_raises_value_error_if_positive_and_sparse():
-    error_value = ('A sparse matrix was passed, '
-                   'but dense data is required. Use X.toarray() to '
-                   'convert to a dense numpy array.')
+    error_msg = ('A sparse matrix was passed, '
+                 'but dense data is required.')
     # X, y must not be sparse if positive == True
     X = sparse.eye(10)
     y = np.ones(10)
 
     reg = LinearRegression(positive=True)
 
-    with pytest.raises(TypeError) as error:
+    with pytest.raises(TypeError, match=error_msg):
         reg.fit(X, y)
-    assert str(error.value) == error_value
 
 def test_raises_value_error_if_sample_weights_greater_than_1d():
     # Sample weights must be either scalar or 1D
@@ -222,7 +220,6 @@ def test_linear_regression_sparse_multiple_outcome(random_state=0):
 
 def test_linear_regression_positive():
     # Test nonnegative LinearRegression on a simple dataset.
-    # a simple dataset
     X = [[1], [2]]
     y = [1, 2]
 
@@ -262,17 +259,15 @@ def test_linear_regression_positive_multiple_outcome(random_state=0):
 
 
 def test_linear_regression_positive_vs_nonpositive():
-    # Test nonnegative LinearRegression on a simple dataset.
-    # a simple dataset
-    X = [[1], [2]]
-    y = [1, 2]
+    # Test differences LinearRegression.
+    X, y = make_sparse_uncorrelated(random_state=0)
 
     reg = LinearRegression(positive=True)
     reg.fit(X, y)
     regn = LinearRegression(positive=False)
     regn.fit(X, y)
 
-    assert not np.array_equal(reg.coef_, regn.coef_)
+    assert np.mean((reg.coef_ - regn.coef_)**2) > 1e-3
 
 
 def test_linear_regression_pd_sparse_dataframe_warning():
