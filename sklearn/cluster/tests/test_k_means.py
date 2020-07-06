@@ -387,15 +387,18 @@ def test_k_means_explicit_init_shape(Class):
         km.fit(X)
 
 
-def test_k_means_fortran_aligned_data():
-    # Check the KMeans will work well, even if X is a fortran-aligned data.
-    X = np.asfortranarray([[0, 0], [0, 1], [0, 1]])
-    centers = np.array([[0, 0], [0, 1]])
-    labels = np.array([0, 1, 1])
-    km = KMeans(n_init=1, init=centers, random_state=42, n_clusters=2)
-    km.fit(X)
-    assert_array_almost_equal(km.cluster_centers_, centers)
-    assert_array_equal(km.labels_, labels)
+@pytest.mark.parametrize("estimator", [KMeans, MiniBatchKMeans])
+def test_fortran_aligned_data(estimator):
+    # Check that KMeans works with fortran-aligned data.
+    X_fortran = np.asfortranarray(X)
+    centers_fortran = np.asfortranarray(centers)
+
+    km_c = estimator(n_clusters=n_clusters, init=centers, n_init=1,
+                     random_state=42).fit(X)
+    km_f = estimator(n_clusters=n_clusters, init=centers_fortran, n_init=1,
+                     random_state=42).fit(X_fortran)
+    assert_allclose(km_c.cluster_centers_, km_f.cluster_centers_)
+    assert_array_equal(km_c.labels_, km_f.labels_)
 
 
 @pytest.mark.parametrize('algo', ['full', 'elkan'])
