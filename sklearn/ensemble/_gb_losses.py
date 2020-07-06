@@ -145,13 +145,7 @@ class LossFunction(metaclass=ABCMeta):
 
 
 class RegressionLossFunction(LossFunction, metaclass=ABCMeta):
-    """Base class for regression loss functions.
-
-    Parameters
-    ----------
-    n_classes : int
-        Number of classes.
-    """
+    """Base class for regression loss functions."""
     def __init__(self):
         super().__init__(n_classes=1)
 
@@ -325,9 +319,6 @@ class HuberLossFunction(RegressionLossFunction):
 
     Parameters
     ----------
-    n_classes : int
-        Number of classes.
-
     alpha : float, default=0.9
         Percentile at which to extract score.
 
@@ -436,9 +427,6 @@ class QuantileLossFunction(RegressionLossFunction):
 
     Parameters
     ----------
-    n_classes : int
-        Number of classes.
-
     alpha : float, default=0.9
         The percentile.
     """
