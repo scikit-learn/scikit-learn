@@ -2529,13 +2529,14 @@ def test_standard_scaler_sparse_partial_fit_finite_variance(X_2):
 
 
 def test_minmax_scaler_clip():
-    # test to add a new paramter 'clip' to MinMaxScaler
+    # test paramter 'clip' in MinMaxScaler
     X = iris.data
-    x = np.random.randint(0, 50, (20, 4))
     scaler = MinMaxScaler(clip=True)
     # default params, feature_range=(0,1)
     X_scaled = scaler.fit(X)
-    x_transformed = X_scaled.transform(x)
+    X_min = np.min(X, axis=0)
+    X_max = np.max(X, axis=0)
 
-    assert x_transformed.min() >= 0
-    assert x_transformed.max() <= 1
+    X_test = [np.r_[X_min[:2], X_max[2:]]]
+    X_transformed = X_scaled.transform(X_test)
+    assert_allclose(X_transformed, [[0, 0, 1, 1]])
