@@ -622,10 +622,17 @@ of heteroscedastic noise:
     :align: center
     :scale: 75%
 
+Factor Analysis is often followed by a rotation of the factors (with the
+parameter `rotation`), usually to improve interpretability. For example,
+Varimax rotation maximizes the sum of the variances of the squared loadings,
+i.e., it tends to produce sparser factors, which are influenced by only a few
+features each (the "simple structure"). See e.g., the first example below.
 
 .. topic:: Examples:
 
+    * :ref:`sphx_glr_auto_examples_decomposition_plot_varimax_fa.py`
     * :ref:`sphx_glr_auto_examples_decomposition_plot_pca_vs_fa_model_selection.py`
+
 
 .. _ICA:
 
@@ -959,6 +966,9 @@ when data can be fetched sequentially.
       <http://www.columbia.edu/~jwp2128/Papers/HoffmanBleiWangPaisley2013.pdf>`_
       M. Hoffman, D. Blei, C. Wang, J. Paisley, 2013
 
+    * `"The varimax criterion for analytic rotation in factor analysis"
+      <https://link.springer.com/article/10.1007%2FBF02289233>`_
+      H. F. Kaiser, 1958
 
 See also :ref:`nca_dim_reduction` for dimensionality reduction with
 Neighborhood Components Analysis.
