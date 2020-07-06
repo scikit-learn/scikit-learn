@@ -398,8 +398,6 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         if self.effective_metric_ == 'precomputed':
             X = _check_precomputed(X)
             self.n_features_in_ = X.shape[1]
-        else:
-            X = self._validate_data(X, accept_sparse='csr')
 
         n_samples = X.shape[0]
         if n_samples == 0:
@@ -1171,4 +1169,7 @@ class UnsupervisedMixin:
             Training data. If array or matrix, shape [n_samples, n_features],
             or [n_samples, n_samples] if metric='precomputed'.
         """
+        if not isinstance(X, (KDTree, BallTree)):
+            X = self._validate_data(X, accept_sparse='csr')
+
         return self._fit(X)
