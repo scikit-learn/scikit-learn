@@ -57,6 +57,92 @@ def _check_fitted_model(km):
     assert km.inertia_ > 0.0
 
 
+@pytest.mark.parametrize("array_constr", [np.array, sp.csr_matrix],
+                         ids=["dense", "sparse"])
+@pytest.mark.parametrize("algo", ["full", "elkan"])
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_kmeans_results(array_constr, algo, dtype):
+    # Checks that KMeans works as intended on toy dataset by comparing with
+    # expected results computed by hand.
+    X = array_constr([[0, 0], [0.5, 0], [0.5, 1], [1, 1]], dtype=dtype)
+    sample_weight = [3, 1, 1, 3]
+    init_centers = np.array([[0, 0], [1, 1]], dtype=dtype)
+
+    expected_labels = [0, 0, 1, 1]
+    expected_inertia = 0.375
+    expected_centers = np.array([[0.125, 0], [0.875, 1]], dtype=dtype)
+    expected_n_iter = 2
+
+    kmeans = KMeans(n_clusters=2, n_init=1, init=init_centers, algorithm=algo)
+    kmeans.fit(X, sample_weight=sample_weight)
+
+    assert_array_equal(kmeans.labels_, expected_labels)
+    assert_allclose(kmeans.inertia_, expected_inertia)
+    assert_allclose(kmeans.cluster_centers_, expected_centers)
+    assert kmeans.n_iter_ == expected_n_iter
+
+
+@pytest.mark.parametrize("array_constr", [np.array, sp.csr_matrix],
+                         ids=["dense", "sparse"])
+def test_relocate_empty_clusters(array_constr):
+    # test for the _relocate_empty_clusters_(dense/sparse) helpers
+
+    # Synthetic dataset with 3 obvious clusters of different sizes
+    X = np.array(
+        [-10., -9.5, -9, -8.5, -8, -1, 1, 9, 9.5, 10]).reshape(-1, 1)
+    X = array_constr(X)
+    sample_weight = np.ones(10)
+
+    # centers all initialized to the first point of X
+    centers_old = np.array([-10., -10, -10]).reshape(-1, 1)
+
+    # With this initialization, all points will be assigned to the first center
+    # At this point a center in centers_new is the weighted sum of the points
+    # it contains if it's not empty, otherwise it is the same as before.
+    centers_new = np.array([-16.5, -10, -10]).reshape(-1, 1)
+    weight_in_clusters = np.array([10., 0, 0])
+    labels = np.zeros(10, dtype=np.int32)
+
+    if array_constr is np.array:
+        _relocate_empty_clusters_dense(X, sample_weight, centers_old,
+                                       centers_new, weight_in_clusters, labels)
+    else:
+        _relocate_empty_clusters_sparse(X.data, X.indices, X.indptr,
+                                        sample_weight, centers_old,
+                                        centers_new, weight_in_clusters,
+                                        labels)
+
+    # The relocation scheme will take the 2 points farthest from the center and
+    # assign them to the 2 empty clusters, i.e. points at 10 and at 9.9. The
+    # first center will be updated to contain the other 8 points.
+    assert_array_equal(weight_in_clusters, [8, 1, 1])
+    assert_allclose(centers_new, [[-36], [10], [9.5]])
+
+
+@pytest.mark.parametrize("array_constr", [np.array, sp.csr_matrix],
+                         ids=["dense", "sparse"])
+@pytest.mark.parametrize("algo", ["full", "elkan"])
+def test_kmeans_relocated_clusters(array_constr, algo):
+    # check that empty clusters are relocated as expected
+    X = array_constr([[0, 0], [0.5, 0], [0.5, 1], [1, 1]])
+
+    # second center too far from others points will be empty at first iter
+    init_centers = np.array([[0.5, 0.5], [3, 3]])
+
+    expected_labels = [0, 0, 1, 1]
+    expected_inertia = 0.25
+    expected_centers = [[0.25, 0], [0.75, 1]]
+    expected_n_iter = 3
+
+    kmeans = KMeans(n_clusters=2, n_init=1, init=init_centers, algorithm=algo)
+    kmeans.fit(X)
+
+    assert_array_equal(kmeans.labels_, expected_labels)
+    assert_allclose(kmeans.inertia_, expected_inertia)
+    assert_allclose(kmeans.cluster_centers_, expected_centers)
+    assert kmeans.n_iter_ == expected_n_iter
+
+
 @pytest.mark.parametrize("data", [X, X_csr], ids=["dense", "sparse"])
 @pytest.mark.parametrize("init", ["random", "k-means++", centers,
                                   lambda X, k, random_state: centers],
@@ -373,31 +459,6 @@ def test_verbose(estimator):
 @pytest.mark.parametrize("array_constr", [np.array, sp.csr_matrix],
                          ids=["dense", "sparse"])
 @pytest.mark.parametrize("algo", ["full", "elkan"])
-@pytest.mark.parametrize("dtype", [np.float32, np.float64])
-def test_kmeans_results(array_constr, algo, dtype):
-    # Checks that KMeans works as intended on toy dataset by comparing with
-    # expected results computed by hand.
-    X = array_constr([[0, 0], [0.5, 0], [0.5, 1], [1, 1]], dtype=dtype)
-    sample_weight = [3, 1, 1, 3]
-    init_centers = np.array([[0, 0], [1, 1]], dtype=dtype)
-
-    expected_labels = [0, 0, 1, 1]
-    expected_inertia = 0.375
-    expected_centers = np.array([[0.125, 0], [0.875, 1]], dtype=dtype)
-    expected_n_iter = 2
-
-    kmeans = KMeans(n_clusters=2, n_init=1, init=init_centers, algorithm=algo)
-    kmeans.fit(X, sample_weight=sample_weight)
-
-    assert_array_equal(kmeans.labels_, expected_labels)
-    assert_allclose(kmeans.inertia_, expected_inertia)
-    assert_allclose(kmeans.cluster_centers_, expected_centers)
-    assert kmeans.n_iter_ == expected_n_iter
-
-
-@pytest.mark.parametrize("array_constr", [np.array, sp.csr_matrix],
-                         ids=["dense", "sparse"])
-@pytest.mark.parametrize("algo", ["full", "elkan"])
 def test_k_means_1_iteration(array_constr, algo):
     # check the results after a single iteration (E-step M-step E-step) by
     # comparing against a pure python implementation.
@@ -499,30 +560,6 @@ def test_kmeans_elkan_iter_attribute():
 
 @pytest.mark.parametrize("array_constr", [np.array, sp.csr_matrix],
                          ids=["dense", "sparse"])
-@pytest.mark.parametrize("algo", ["full", "elkan"])
-def test_kmeans_relocated_clusters(array_constr, algo):
-    # check that empty clusters are relocated as expected
-    X = array_constr([[0, 0], [0.5, 0], [0.5, 1], [1, 1]])
-
-    # second center too far from others points will be empty at first iter
-    init_centers = np.array([[0.5, 0.5], [3, 3]])
-
-    expected_labels = [0, 0, 1, 1]
-    expected_inertia = 0.25
-    expected_centers = [[0.25, 0], [0.75, 1]]
-    expected_n_iter = 3
-
-    kmeans = KMeans(n_clusters=2, n_init=1, init=init_centers, algorithm=algo)
-    kmeans.fit(X)
-
-    assert_array_equal(kmeans.labels_, expected_labels)
-    assert_allclose(kmeans.inertia_, expected_inertia)
-    assert_allclose(kmeans.cluster_centers_, expected_centers)
-    assert kmeans.n_iter_ == expected_n_iter
-
-
-@pytest.mark.parametrize("array_constr", [np.array, sp.csr_matrix],
-                         ids=["dense", "sparse"])
 def test_kmeans_empty_cluster_relocated(array_constr):
     # check that empty clusters are correctly relocated when using sample
     # weights (#13486)
@@ -535,43 +572,6 @@ def test_kmeans_empty_cluster_relocated(array_constr):
 
     assert len(set(km.labels_)) == 2
     assert_allclose(km.cluster_centers_, [[-1], [1]])
-
-
-@pytest.mark.parametrize("representation", ["dense", "sparse"])
-def test_relocate_empty_clusters(representation):
-    # test for the _relocate_empty_clusters_(dense/sparse) helpers
-
-    # Synthetic dataset with 3 obvious clusters of different sizes
-    X = np.array(
-        [-10., -9.5, -9, -8.5, -8, -1, 1, 9, 9.5, 10]).reshape(-1, 1)
-    if representation == "sparse":
-        X = sp.csr_matrix(X)
-    sample_weight = np.ones(10)
-
-    # centers all initialized to the first point of X
-    centers_old = np.array([-10., -10, -10]).reshape(-1, 1)
-
-    # With this initialization, all points will be assigned to the first center
-    # At this point a center in centers_new is the weighted sum of the points
-    # it contains if it's not empty, otherwise it is the same as before.
-    centers_new = np.array([-16.5, -10, -10]).reshape(-1, 1)
-    weight_in_clusters = np.array([10., 0, 0])
-    labels = np.zeros(10, dtype=np.int32)
-
-    if representation == "dense":
-        _relocate_empty_clusters_dense(X, sample_weight, centers_old,
-                                       centers_new, weight_in_clusters, labels)
-    else:
-        _relocate_empty_clusters_sparse(X.data, X.indices, X.indptr,
-                                        sample_weight, centers_old,
-                                        centers_new, weight_in_clusters,
-                                        labels)
-
-    # The relocation scheme will take the 2 points farthest from the center and
-    # assign them to the 2 empty clusters, i.e. points at 10 and at 9.9. The
-    # first center will be updated to contain the other 8 points.
-    assert_array_equal(weight_in_clusters, [8, 1, 1])
-    assert_allclose(centers_new, [[-36], [10], [9.5]])
 
 
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
