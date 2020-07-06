@@ -259,8 +259,8 @@ class KNeighborsClassifier(KNeighborsMixin,
 
 
 class RadiusNeighborsClassifier(RadiusNeighborsMixin,
-                                ClassifierMixin,
                                 SupervisedIntegerMixin,
+                                ClassifierMixin,
                                 NeighborsBase):
     """Classifier implementing a vote among neighbors within a given radius
 
