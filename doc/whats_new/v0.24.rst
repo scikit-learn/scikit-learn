@@ -188,6 +188,11 @@ Changelog
   optional in the matplotlib plot by setting colorbar=False. :pr:`17192` by
   :user:`Avi Gupta <avigupta2612>`
 
+- |Enhancement| Add `pos_label` parameter in
+  :func:`metrics.plot_roc_curve` in order to specify the positive
+  class to be used when computing the roc auc statistics.
+  :pr:`17651` by :user:`Clara Matos <claramatos>`.
+
 :mod:`sklearn.model_selection`
 ..............................
 
