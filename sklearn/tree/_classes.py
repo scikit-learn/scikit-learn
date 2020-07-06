@@ -164,7 +164,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                     raise ValueError("No support for np.int64 index based "
                                      "sparse matrices")
 
-            if self.criterion in ["poisson", _criterion.Poisson]:
+            if self.criterion == "poisson":
                 if np.any(y < 0):
                     raise ValueError("Some value(s) of y are negative which is"
                                      " not allowed for Poisson regression.")

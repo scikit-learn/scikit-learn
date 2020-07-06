@@ -1395,7 +1395,7 @@ cdef class Poisson(RegressionCriterion):
             y_mean_right = self.sum_right[k] / self.weighted_n_right
             if (y_mean_left <= 0) or (y_mean_right <= 0):
                 # Poisson loss does not allow non-positive predictions. We
-                # therefore forbid splits that have child nodes withs
+                # therefore forbid splits that have child nodes with
                 # sum(y_i) <= 0.
                 return -INFINITY
             else:

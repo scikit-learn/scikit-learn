@@ -444,8 +444,8 @@ feature :math:`j` and threshold :math:`t_m`, partition the data into
     Q_{right}(\theta) = Q \setminus Q_{left}(\theta)
 
 The quality of a candidate split of node :math:`m` is then computed using an
-impurity function :math:`H()` (decision tree slang for a loss function), the
-choice of which depends on the task being solved (classification or regression)
+impurity function or loss function :math:`H()`, the choice of which depends on
+the task being solved (classification or regression)
 
 .. math::
 
