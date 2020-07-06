@@ -119,7 +119,7 @@ time)::
   >>> clf = svm.SVC(kernel='linear', C=1, random_state=42)
   >>> scores = cross_val_score(clf, X, y, cv=5)
   >>> scores
-  array([0.96666667, 1.        , 0.96666667, 0.96666667, 1.        ])
+  array([0.96..., 1. , 0.96..., 0.96..., 1. ])
 
 The mean score and the standard deviation are hence given by::
 
