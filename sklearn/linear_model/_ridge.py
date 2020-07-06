@@ -630,10 +630,10 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
     fit_intercept : bool, default=True
         Whether to fit the intercept for this model. If set
         to false, no intercept will be used in calculations
-        (i.e. ``X`` and ``y`` are expected to be centered.
+        (i.e. ``X`` and ``y`` are expected to be centered)
         ``coef_`` returns same value irrespective of y is centered.
-        The model will underfit if ``fit_intercept=False`` and ``y``
-        is not centered.
+        The model will underfit if ``fit_intercept=False``
+        and ``y`` is not centered.
 
 .
 
