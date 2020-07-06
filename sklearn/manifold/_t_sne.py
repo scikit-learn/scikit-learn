@@ -688,9 +688,8 @@ class TSNE(BaseEstimator):
                            "'legacy' is provided as a setting for backward "
                            "compatibility purposes. However, 'legacy' will "
                            "be removed in 0.26, at which point all distance "
-                           "metrics will be squared by default. Set "
-                           "'square_distance' to True to silence this "
-                           "warning."), FutureWarning)
+                           "metrics will be squared by default."),
+                          FutureWarning)
         if self.method == 'barnes_hut':
             X = self._validate_data(X, accept_sparse=['csr'],
                                     ensure_min_samples=2,
