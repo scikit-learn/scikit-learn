@@ -168,7 +168,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
     @abstractmethod
     def _validate_y(self, y, sample_weight=None):
-        pass
+        """Called by fit to validate y"""
 
     def _fit_stage(self, i, X, y, raw_predictions, sample_weight, sample_mask,
                    random_state, X_csc=None, X_csr=None):
