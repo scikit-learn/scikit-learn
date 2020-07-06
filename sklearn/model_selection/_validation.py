@@ -730,8 +730,9 @@ def cross_val_predict(estimator, X, y=None, *, groups=None, cv=None,
 
     method : str, default='predict'
         Invokes the passed method name of the passed estimator. For
-        method='predict_proba', the columns correspond to the classes
-        in sorted order.
+        methods {'decision_function', 'predict_proba', 'predict_log_proba'},
+        the columns correspond to the classes in order as sorted by
+        :class:`~sklearn.preprocessing.LabelEncoder.`.
 
     Returns
     -------
