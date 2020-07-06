@@ -63,8 +63,6 @@ example, when data are collected without an experimental design.
 
    * :ref:`sphx_glr_auto_examples_linear_model_plot_ols.py`
 
-.. _non_negative_least_squares:
-
 Non-Negative Least Squares
 --------------------------
 
