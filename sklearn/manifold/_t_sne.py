@@ -601,12 +601,15 @@ class TSNE(BaseEstimator):
     square_distance : {True, 'legacy'}, default='legacy'
         Whether distance values are squared before t-SNE is run. ``'legacy'``
         means that distances are squared only when ``metric="euclidean"``.
-        In version 0.26, ``'legacy'`` will be removed as a setting, and the
-        default value for this parameter will change to ``True``.
+        ``True`` means that distances are squared for all metrics.
 
         .. versionadded:: 0.24
-           Provide backward compatibility during deprecation of legacy
-           squaring behavior.
+           Added to provide backward compatibility during deprecation of
+           legacy squaring behavior.
+        .. deprecated:: 0.24
+           Legacy squaring behavior was deprecated in 0.24. The ``'legacy'``
+           value will be removed in 0.26, at which point the default value will
+           change to ``True``.
 
     Attributes
     ----------
