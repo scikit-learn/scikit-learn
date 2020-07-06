@@ -23,8 +23,10 @@ from ..utils import check_array
 from ..utils.validation import _deprecate_positional_args
 
 
-class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
-                           SupervisedIntegerMixin, ClassifierMixin):
+class KNeighborsClassifier(KNeighborsMixin,
+                           SupervisedIntegerMixin,
+                           ClassifierMixin,
+                           NeighborsBase):
     """Classifier implementing the k-nearest neighbors vote.
 
     Read more in the :ref:`User Guide <classification>`.
@@ -256,8 +258,10 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         return probabilities
 
 
-class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
-                                SupervisedIntegerMixin, ClassifierMixin):
+class RadiusNeighborsClassifier(RadiusNeighborsMixin,
+                                ClassifierMixin,
+                                SupervisedIntegerMixin,
+                                NeighborsBase):
     """Classifier implementing a vote among neighbors within a given radius
 
     Read more in the :ref:`User Guide <classification>`.

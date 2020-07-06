@@ -21,9 +21,10 @@ from ..utils import check_array
 from ..utils.validation import _deprecate_positional_args
 
 
-class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
+class KNeighborsRegressor(KNeighborsMixin,
                           SupervisedFloatMixin,
-                          RegressorMixin):
+                          RegressorMixin,
+                          NeighborsBase):
     """Regression based on k-nearest neighbors.
 
     The target is predicted by local interpolation of the targets
@@ -200,9 +201,10 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
         return y_pred
 
 
-class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
+class RadiusNeighborsRegressor(RadiusNeighborsMixin,
                                SupervisedFloatMixin,
-                               RegressorMixin):
+                               RegressorMixin,
+                               NeighborsBase):
     """Regression based on neighbors within a fixed radius.
 
     The target is predicted by local interpolation of the targets
