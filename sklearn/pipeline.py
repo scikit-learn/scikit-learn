@@ -643,10 +643,9 @@ class Pipeline(_BaseComposition):
                             dash_wrapped=False)
 
     def _more_tags(self):
-        more_tags = {}
-        for _, estimator in self.steps:
-            more_tags.update(estimator._more_tags())
-        return more_tags
+        return {
+            'estimator_type': self.steps[-1][1]._get_tags()['estimator_type']
+        }
 
 
 def _name_estimators(estimators):

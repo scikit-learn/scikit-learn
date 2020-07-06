@@ -544,11 +544,12 @@ def test_repr_html_wraps():
 
 
 @pytest.mark.parametrize(
-    "Estimator,estimator_type", [(DecisionTreeClassifier, "classifier"),
-                                 (DecisionTreeRegressor, "regressor"),
-                                 (KMeans, "clusterer"),
-                                 (BayesianGaussianMixture, "DensityEstimator"),
-                                 (IsolationForest, "outlier_detector")])
+    "Estimator, estimator_type",
+    [(DecisionTreeClassifier, "classifier"),
+     (DecisionTreeRegressor, "regressor"),
+     (KMeans, "clusterer"),
+     (BayesianGaussianMixture, "density_estimator"),
+     (IsolationForest, "outlier_detector")])
 def test_estimator_type_tag(Estimator, estimator_type):
     # Assert that estimator_type tag is properly set
     est = Estimator()
@@ -557,11 +558,12 @@ def test_estimator_type_tag(Estimator, estimator_type):
 
 # TODO: Remove in version 0.26
 @pytest.mark.parametrize(
-    "Estimator", [DecisionTreeClassifier,
-                  DecisionTreeRegressor,
-                  KMeans,
-                  BayesianGaussianMixture,
-                  IsolationForest])
+    "Estimator",
+    [DecisionTreeClassifier,
+     DecisionTreeRegressor,
+     KMeans,
+     BayesianGaussianMixture,
+     IsolationForest])
 def test_deprecated_estimator_type(Estimator):
     # Assert that deprecated _estimator_type warns FutureWarning
     est = Estimator()

@@ -1890,17 +1890,17 @@ def test_scalar_fit_param_compat(SearchCV, param_search):
 
 
 @pytest.mark.parametrize(
-    "Estimator,params,estimator_type",
-    [(DecisionTreeClassifier, {"max_depth": [2, 3]}, "classifier"),
-     (DecisionTreeRegressor, {"max_depth": [2, 3]}, "regressor"),
-     (KMeans, {"n_clusters": [2, 3]}, "clusterer"),
-     (BayesianGaussianMixture, {"n_components": [2, 3]}, "DensityEstimator"),
-     (IsolationForest, {"max_depth": [2, 3]}, "outlier_detector")]
+    "Estimator, estimator_type",
+    [(DecisionTreeClassifier, "classifier"),
+     (DecisionTreeRegressor, "regressor"),
+     (KMeans, "clusterer"),
+     (BayesianGaussianMixture, "density_estimator"),
+     (IsolationForest, "outlier_detector")]
 )
 @pytest.mark.parametrize("SearchCV", [GridSearchCV, RandomizedSearchCV])
-def test_estimator_type_tag(SearchCV, Estimator, params, estimator_type):
+def test_estimator_type_tag(SearchCV, Estimator, estimator_type):
     # Assert that estimator_type tag is properly set
-    search = SearchCV(Estimator(), params)
+    search = SearchCV(Estimator(), {})
     assert search._get_tags()["estimator_type"] == estimator_type
 
 

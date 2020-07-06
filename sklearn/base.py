@@ -720,7 +720,7 @@ class DensityMixin:
                 "0.24 and will be removed in 0.26")
     @property
     def _estimator_type(self):
-        return "DensityEstimator"
+        return "density_estimator"
 
     def score(self, X, y=None):
         """Return the score of the model on the data X
@@ -739,7 +739,7 @@ class DensityMixin:
         pass
 
     def _more_tags(self):
-        return {'estimator_type': 'DensityEstimator'}
+        return {'estimator_type': 'density_estimator'}
 
 
 class OutlierMixin:

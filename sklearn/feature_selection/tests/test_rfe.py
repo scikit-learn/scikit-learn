@@ -280,7 +280,8 @@ def test_rfecv_grid_scores_size():
         assert rfecv.n_features_ >= min_features_to_select
 
 
-@ignore_warnings(category=FutureWarning)
+# TODO: Remove decorator in version 0.26
+# with the estimator_type attribute
 def test_rfe_estimator_tags():
     rfe = RFE(SVC(kernel='linear'))
     assert rfe._estimator_type == "classifier"
@@ -494,8 +495,10 @@ def test_multioutput(ClsRFE):
     rfe_test.fit(X, y)
 
 
-@pytest.mark.parametrize("Estimator,estimator_type",
-                         [(SVC, "classifier"), (SVR, "regressor")])
+@pytest.mark.parametrize(
+    "Estimator, estimator_type",
+    [(SVC, "classifier"),
+     (SVR, "regressor")])
 def test_rfe_estimator_type_tag(Estimator, estimator_type):
     # Assert that estimator_type tag is properly set
     rfe = RFE(Estimator())
