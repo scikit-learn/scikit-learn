@@ -15,7 +15,6 @@ from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import assert_warns_message
 from sklearn.utils._testing import assert_raise_message
 from sklearn.utils.fixes import _astype_copy_false
-from sklearn.utils.validation import _num_samples
 from sklearn.base import clone
 from sklearn.exceptions import ConvergenceWarning
 
@@ -50,18 +49,19 @@ X, true_labels = make_blobs(n_samples=n_samples, centers=centers,
 X_csr = sp.csr_matrix(X)
 
 
-@pytest.mark.parametrize("representation", ["dense", "sparse"])
+@pytest.mark.parametrize("array_constr", [np.array, sp.csr_matrix],
+                         ids=["dense", "sparse"])
 @pytest.mark.parametrize("algo", ["full", "elkan"])
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
-def test_kmeans_results(representation, algo, dtype):
-    # cheks that kmeans works as intended
-    array_constr = {'dense': np.array, 'sparse': sp.csr_matrix}[representation]
+def test_kmeans_results(array_constr, algo, dtype):
+    # Checks that KMeans works as intended on toy dataset by comparing with
+    # expected results computed by hand.
     X = array_constr([[0, 0], [0.5, 0], [0.5, 1], [1, 1]], dtype=dtype)
-    sample_weight = [3, 1, 1, 3]  # will be rescaled to [1.5, 0.5, 0.5, 1.5]
+    sample_weight = [3, 1, 1, 3]
     init_centers = np.array([[0, 0], [1, 1]], dtype=dtype)
 
     expected_labels = [0, 0, 1, 1]
-    expected_inertia = 0.1875
+    expected_inertia = 0.375
     expected_centers = np.array([[0.125, 0], [0.875, 1]], dtype=dtype)
     expected_n_iter = 2
 
@@ -69,8 +69,8 @@ def test_kmeans_results(representation, algo, dtype):
     kmeans.fit(X, sample_weight=sample_weight)
 
     assert_array_equal(kmeans.labels_, expected_labels)
-    assert_almost_equal(kmeans.inertia_, expected_inertia)
-    assert_array_almost_equal(kmeans.cluster_centers_, expected_centers)
+    assert_allclose(kmeans.inertia_, expected_inertia)
+    assert_allclose(kmeans.cluster_centers_, expected_centers)
     assert kmeans.n_iter_ == expected_n_iter
 
 
@@ -991,15 +991,6 @@ def test_sample_weight_length():
     msg = r'sample_weight.shape == \(2,\), expected \(100,\)'
     with pytest.raises(ValueError, match=msg):
         km.fit(X, sample_weight=np.ones(2))
-
-
-def test_check_normalize_sample_weight():
-    from sklearn.cluster._kmeans import _check_normalize_sample_weight
-    sample_weight = None
-    checked_sample_weight = _check_normalize_sample_weight(sample_weight, X)
-    assert _num_samples(X) == _num_samples(checked_sample_weight)
-    assert_almost_equal(checked_sample_weight.sum(), _num_samples(X))
-    assert X.dtype == checked_sample_weight.dtype
 
 
 def test_iter_attribute():
