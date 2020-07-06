@@ -84,6 +84,30 @@ def test_kmeans_results(array_constr, algo, dtype):
 
 @pytest.mark.parametrize("array_constr", [np.array, sp.csr_matrix],
                          ids=["dense", "sparse"])
+@pytest.mark.parametrize("algo", ["full", "elkan"])
+def test_kmeans_relocated_clusters(array_constr, algo):
+    # check that empty clusters are relocated as expected
+    X = array_constr([[0, 0], [0.5, 0], [0.5, 1], [1, 1]])
+
+    # second center too far from others points will be empty at first iter
+    init_centers = np.array([[0.5, 0.5], [3, 3]])
+
+    expected_labels = [0, 0, 1, 1]
+    expected_inertia = 0.25
+    expected_centers = [[0.25, 0], [0.75, 1]]
+    expected_n_iter = 3
+
+    kmeans = KMeans(n_clusters=2, n_init=1, init=init_centers, algorithm=algo)
+    kmeans.fit(X)
+
+    assert_array_equal(kmeans.labels_, expected_labels)
+    assert_allclose(kmeans.inertia_, expected_inertia)
+    assert_allclose(kmeans.cluster_centers_, expected_centers)
+    assert kmeans.n_iter_ == expected_n_iter
+
+
+@pytest.mark.parametrize("array_constr", [np.array, sp.csr_matrix],
+                         ids=["dense", "sparse"])
 def test_relocate_empty_clusters(array_constr):
     # test for the _relocate_empty_clusters_(dense/sparse) helpers
 
@@ -117,30 +141,6 @@ def test_relocate_empty_clusters(array_constr):
     # first center will be updated to contain the other 8 points.
     assert_array_equal(weight_in_clusters, [8, 1, 1])
     assert_allclose(centers_new, [[-36], [10], [9.5]])
-
-
-@pytest.mark.parametrize("array_constr", [np.array, sp.csr_matrix],
-                         ids=["dense", "sparse"])
-@pytest.mark.parametrize("algo", ["full", "elkan"])
-def test_kmeans_relocated_clusters(array_constr, algo):
-    # check that empty clusters are relocated as expected
-    X = array_constr([[0, 0], [0.5, 0], [0.5, 1], [1, 1]])
-
-    # second center too far from others points will be empty at first iter
-    init_centers = np.array([[0.5, 0.5], [3, 3]])
-
-    expected_labels = [0, 0, 1, 1]
-    expected_inertia = 0.25
-    expected_centers = [[0.25, 0], [0.75, 1]]
-    expected_n_iter = 3
-
-    kmeans = KMeans(n_clusters=2, n_init=1, init=init_centers, algorithm=algo)
-    kmeans.fit(X)
-
-    assert_array_equal(kmeans.labels_, expected_labels)
-    assert_allclose(kmeans.inertia_, expected_inertia)
-    assert_allclose(kmeans.cluster_centers_, expected_centers)
-    assert kmeans.n_iter_ == expected_n_iter
 
 
 @pytest.mark.parametrize("data", [X, X_csr], ids=["dense", "sparse"])
