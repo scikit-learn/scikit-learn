@@ -1141,7 +1141,7 @@ def check_methods_sample_order_invariance(name, estimator_orig):
     if hasattr(estimator, "n_components"):
         estimator.n_components = 1
     if hasattr(estimator, "n_clusters"):
-        estimator.n_clusters = 1
+        estimator.n_clusters = 2
 
     set_random_state(estimator, 1)
     estimator.fit(X, y)
