@@ -527,10 +527,11 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
     coef_ : ndarray of shape (1, n_features) or (n_classes, n_features)
         Coefficient of the features in the decision function. Set only when
-        `estimator` defines `coef_` else it will give an error.
+        ``estimator`` defines ``coef_``.
 
     intercept_ : ndarray of shape (1, 1) or (n_classes, 1)
-        Set only when `estimator` defines `intercept_`
+        If ``y`` is binary, the shape is ``(1, 1)`` else ``(n_classes, 1)``
+        Set only when ``estimator`` defines ``intercept_``
 
     classes_ : numpy array of shape [n_classes]
         Array containing labels.
