@@ -158,6 +158,9 @@ Changelog
   :pr:`16289` by :user:`Masashi Kishimoto <kishimoto-banana>` and
   :user:`Olivier Grisel <ogrisel>`.
 
+- |Enhancement| :class:`isotonic.IsotonicRegression` now accepts 2darray with 1 feature as
+  input array. :pr:`17379` by :user:`Jiaxiang <fujiaxiang>`.
+
 :mod:`sklearn.metrics`
 ......................
 
@@ -184,6 +187,11 @@ Changelog
 - |Feature| :func:`metrics.plot_confusion_matrix` now supports making colorbar
   optional in the matplotlib plot by setting colorbar=False. :pr:`17192` by
   :user:`Avi Gupta <avigupta2612>`
+
+- |Enhancement| Add `pos_label` parameter in
+  :func:`metrics.plot_roc_curve` in order to specify the positive
+  class to be used when computing the roc auc statistics.
+  :pr:`17651` by :user:`Clara Matos <claramatos>`.
 
 :mod:`sklearn.model_selection`
 ..............................
