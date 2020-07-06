@@ -143,6 +143,50 @@ def test_relocate_empty_clusters(array_constr):
     assert_allclose(centers_new, [[-36], [10], [9.5]])
 
 
+@pytest.mark.parametrize("distribution", ["normal", "blobs"])
+@pytest.mark.parametrize("array_constr", [np.array, sp.csr_matrix],
+                         ids=["dense", "sparse"])
+@pytest.mark.parametrize("tol", [1e-2, 1e-4, 1e-8])
+def test_kmeans_elkan_results(distribution, array_constr, tol):
+    # Check that results are identical between lloyd and elkan algorithms
+    rnd = np.random.RandomState(0)
+    if distribution == "normal":
+        X = rnd.normal(size=(5000, 10))
+    else:
+        X, _ = make_blobs(random_state=rnd)
+    X[X < 0] = 0
+    X = array_constr(X)
+
+    km_full = KMeans(algorithm="full", n_clusters=5,
+                     random_state=0, n_init=1, tol=tol)
+    km_elkan = KMeans(algorithm="elkan", n_clusters=5,
+                      random_state=0, n_init=1, tol=tol)
+
+    km_full.fit(X)
+    km_elkan.fit(X)
+    assert_allclose(km_elkan.cluster_centers_, km_full.cluster_centers_)
+    assert_array_equal(km_elkan.labels_, km_full.labels_)
+    assert km_elkan.n_iter_ == km_full.n_iter_
+    assert km_elkan.inertia_ == pytest.approx(km_full.inertia_, rel=1e-6)
+
+
+@pytest.mark.parametrize("algorithm", ["full", "elkan"])
+def test_kmeans_convergence(algorithm):
+    # Check that KMeans stops when convergence is reached when tol=0. (#16075)
+    # We can only ensure that if the number of threads is not to large,
+    # otherwise the roundings errors coming from the unpredictability of
+    # the order in which chunks are processed make the convergence criterion
+    # to never be exactly 0.
+    rnd = np.random.RandomState(0)
+    X = rnd.normal(size=(5000, 10))
+
+    with threadpool_limits(limits=1, user_api="openmp"):
+        km = KMeans(algorithm=algorithm, n_clusters=5, random_state=0,
+                    n_init=1, tol=0, max_iter=300).fit(X)
+
+    assert km.n_iter_ < 300
+
+
 @pytest.mark.parametrize("data", [X, X_csr], ids=["dense", "sparse"])
 @pytest.mark.parametrize("init", ["random", "k-means++", centers,
                                   lambda X, k, random_state: centers],
@@ -483,50 +527,6 @@ def test_k_means_1_iteration(array_constr, algo):
 
     assert_array_equal(py_labels, cy_labels)
     assert_allclose(py_centers, cy_centers)
-
-
-@pytest.mark.parametrize("distribution", ["normal", "blobs"])
-@pytest.mark.parametrize("array_constr", [np.array, sp.csr_matrix],
-                         ids=["dense", "sparse"])
-@pytest.mark.parametrize("tol", [1e-2, 1e-4, 1e-8])
-def test_kmeans_elkan_results(distribution, array_constr, tol):
-    # Check that results are identical between lloyd and elkan algorithms
-    rnd = np.random.RandomState(0)
-    if distribution == "normal":
-        X = rnd.normal(size=(5000, 10))
-    else:
-        X, _ = make_blobs(random_state=rnd)
-    X[X < 0] = 0
-    X = array_constr(X)
-
-    km_full = KMeans(algorithm="full", n_clusters=5,
-                     random_state=0, n_init=1, tol=tol)
-    km_elkan = KMeans(algorithm="elkan", n_clusters=5,
-                      random_state=0, n_init=1, tol=tol)
-
-    km_full.fit(X)
-    km_elkan.fit(X)
-    assert_allclose(km_elkan.cluster_centers_, km_full.cluster_centers_)
-    assert_array_equal(km_elkan.labels_, km_full.labels_)
-    assert km_elkan.n_iter_ == km_full.n_iter_
-    assert km_elkan.inertia_ == pytest.approx(km_full.inertia_, rel=1e-6)
-
-
-@pytest.mark.parametrize("algorithm", ["full", "elkan"])
-def test_kmeans_convergence(algorithm):
-    # Check that KMeans stops when convergence is reached when tol=0. (#16075)
-    # We can only ensure that if the number of threads is not to large,
-    # otherwise the roundings errors coming from the unpredictability of
-    # the order in which chunks are processed make the convergence criterion
-    # to never be exactly 0.
-    rnd = np.random.RandomState(0)
-    X = rnd.normal(size=(5000, 10))
-
-    with threadpool_limits(limits=1, user_api="openmp"):
-        km = KMeans(algorithm=algorithm, n_clusters=5, random_state=0,
-                    n_init=1, tol=0, max_iter=300).fit(X)
-
-    assert km.n_iter_ < 300
 
 
 def test_kmeans_copyx():
