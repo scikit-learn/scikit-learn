@@ -1014,8 +1014,9 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
     return coefs, Cs, np.array(scores), n_iter
 
 
-class LogisticRegression(BaseEstimator, LinearClassifierMixin,
-                         SparseCoefMixin, inject_docstring=True):
+class LogisticRegression(LinearClassifierMixin,
+                         SparseCoefMixin,
+                         BaseEstimator, inject_docstring=True):
     """
     Logistic Regression (aka logit, MaxEnt) classifier.
 
@@ -1523,8 +1524,9 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         return np.log(self.predict_proba(X))
 
 
-class LogisticRegressionCV(LogisticRegression, BaseEstimator,
-                           LinearClassifierMixin):
+class LogisticRegressionCV(LogisticRegression,
+                           LinearClassifierMixin,
+                           BaseEstimator):
     """Logistic Regression CV (aka logit, MaxEnt) classifier.
 
     See glossary entry for :term:`cross-validation estimator`.
