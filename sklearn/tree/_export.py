@@ -108,7 +108,7 @@ def plot_tree(decision_tree, *, max_depth=None, feature_names=None,
 
     feature_names : list of strings, default=None
         Names of each of the features.
-        If None generic names will be used ("feature_0", "feature_1", ...).
+        If None generic names will be used ("X[0]", "X[1]", ...).
 
     class_names : list of strings or bool, default=None
         Names of each of the target classes in ascending numerical order.
