@@ -56,7 +56,7 @@ def _interpolation_closest_ranks(
     https://en.wikipedia.org/wiki/Percentile
 
     These 3 alternatives depend of the value of a parameter C. NumPy uses
-    the variant where C=0 which allows to obtain a strictly monotonically
+    the variant where C=1 which allows to obtain a strictly monotonically
     increasing function which is defined as:
 
     P = (x - 1) / (N - 1),
@@ -66,9 +66,10 @@ def _interpolation_closest_ranks(
     Weighted percentile change this formula by taking into account the
     weights instead of the data frequency.
 
-    P_w = (x - w) / (S_w - w),
+    P_w_i = (x - w_i) / (S_w - w_i),
 
-    where x in [1, N], w being the weight and S_w being the sum of the weights.
+    where x in [1, N], w_i being the weight of sample i and S_w being the sum
+    of the weights.
     """
 
     adjusted_percentile = (cum_weights - sorted_weights)
@@ -161,7 +162,7 @@ def _weighted_percentile(
         Weights for each value in `array`. Must be same shape as `array` or
         of shape `(array.shape[0],)`.
 
-    percentile: int or float, default=50
+    percentile: float, default=50
         Percentile to compute. Must be value between 0 and 100.
 
     interpolation : {"linear", "lower", "higher", "nearest"}, default=None
