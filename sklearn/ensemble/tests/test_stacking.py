@@ -262,7 +262,7 @@ def test_stacking_classifier_drop_binary_prob():
     assert X_meta.shape[1] == 2
 
 
-class NoWeightRegressor(BaseEstimator, RegressorMixin):
+class NoWeightRegressor(RegressorMixin, BaseEstimator):
     def fit(self, X, y):
         self.reg = DummyRegressor()
         return self.reg.fit(X, y)
@@ -271,7 +271,7 @@ class NoWeightRegressor(BaseEstimator, RegressorMixin):
         return np.ones(X.shape[0])
 
 
-class NoWeightClassifier(BaseEstimator, ClassifierMixin):
+class NoWeightClassifier(ClassifierMixin, BaseEstimator):
     def fit(self, X, y):
         self.clf = DummyClassifier(strategy='stratified')
         return self.clf.fit(X, y)
