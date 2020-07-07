@@ -311,12 +311,12 @@ def f_regression(X, y, *, center=True):
 
     degrees_of_freedom = y.size - (2 if center else 1)
 
-    # the degrees of freedom must be at least one for the F-test
+    # The degrees of freedom must be at least one for the F-test
     if degrees_of_freedom < 1:
         raise ValueError("The sample size must be greater than two if "
                          f"'center=True'. Got n_samples={n_samples}.")
 
-    # convert to F-score and then to p-value
+    # Convert to F-score and then to p-value
     with np.errstate(divide="ignore"):
         F = corr ** 2 / (1 - corr ** 2) * degrees_of_freedom
         pv = stats.f.sf(F, 1, degrees_of_freedom)
