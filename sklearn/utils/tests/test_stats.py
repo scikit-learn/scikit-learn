@@ -24,7 +24,7 @@ def test_weighted_percentile(interpolation, expected_median):
 
 
 @pytest.mark.parametrize(
-    "interpolation", ["linear", "lower", "higher", "nearest"]
+    "interpolation", ["linear", "lower", "higher", "nearest", "weighted"]
 )
 def test_weighted_percentile_constant_data(interpolation):
     y = np.zeros(102, dtype=np.float64)
@@ -63,7 +63,7 @@ def test_weighted_median_integer_weights():
 
 
 @pytest.mark.parametrize(
-    "interpolation", [None, "linear", "lower", "higher", "nearest"]
+    "interpolation", [None, "linear", "lower", "higher", "nearest", "weighted"]
 )
 def test_weighted_percentile_2d(interpolation):
     # Check for when array 2D and sample_weight 1D
@@ -158,7 +158,7 @@ def test_weighted_percentile_non_unit_weight(percentile):
 
 @pytest.mark.parametrize("n_features", [None, 2])
 @pytest.mark.parametrize(
-    "interpolation", ["linear", "higher", "lower", "nearest"]
+    "interpolation", ["linear", "higher", "lower", "nearest", "weighted"]
 )
 @pytest.mark.parametrize("percentile", np.arange(0, 101, 25))
 def test_weighted_percentile_single_weight(n_features, interpolation,

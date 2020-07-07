@@ -51,6 +51,7 @@ def _interpolation_closest_ranks(
 ):
     """Compute the weighted percentile by interpolating between the adjacent
     ranks.
+
     Percentile can be computed with 3 different alternatives when using the
     interpolation between adjacent ranks:
     https://en.wikipedia.org/wiki/Percentile
@@ -71,36 +72,129 @@ def _interpolation_closest_ranks(
     where x in [1, N], w_i being the weight of sample i and S_w being the sum
     of the weights.
     """
+    def _fill_nan(array, value):
+        nan_mask = np.isnan(array)
+        array[nan_mask] = value
+        return array
 
     adjusted_percentile = (cum_weights - sorted_weights)
     with np.errstate(invalid="ignore"):
         adjusted_percentile /= cum_weights[-1] - sorted_weights
-        nan_mask = np.isnan(adjusted_percentile)
-        adjusted_percentile[nan_mask] = 1
+        adjusted_percentile = _fill_nan(adjusted_percentile, 1)
 
-    if interpolation in ("lower", "higher", "nearest"):
-        percentile_idx = np.array([
-            np.searchsorted(adjusted_percentile[:, col], percentile[col],
-                            side="left")
-            for col in range(n_cols)
+    percentile_higher_idx = np.array([
+        np.searchsorted(
+            adjusted_percentile[:, col], percentile[col], side="left",
+        )
+        for col in range(n_cols)
+    ])
+
+    if interpolation != "higher":
+        # other interpolations which requires the lower percentile indice
+        percentile_lower_idx = np.array([
+            idx - 1 if val < 1 else idx
+            for idx, val in zip(percentile_higher_idx, percentile)
         ])
 
-        if interpolation == "lower" and np.all(percentile < 1):
-            # P = 100 is a corner case for "lower"
-            percentile_idx -= 1
-        elif interpolation == "nearest" and np.all(percentile < 1):
-            for col in range(n_cols):
-                error_higher = abs(
-                    adjusted_percentile[percentile_idx[col], col] -
-                    percentile[col]
-                )
-                error_lower = abs(
-                    adjusted_percentile[percentile_idx[col] - 1, col] -
-                    percentile[col]
-                )
-                if error_higher >= error_lower:
-                    percentile_idx[col] -= 1
+        if interpolation == "nearest":
 
+            def _compute_abs_error(p_measured, p_desired, idx, col):
+                return abs(p_measured[idx[col], col] - p_desired[col])
+
+            error_higher = np.array([
+                _compute_abs_error(
+                    p_measured=adjusted_percentile,
+                    p_desired=percentile,
+                    idx=percentile_higher_idx,
+                    col=col,
+                )
+                for col in range(n_cols)
+            ])
+            error_lower = np.array([
+                _compute_abs_error(
+                    p_measured=adjusted_percentile,
+                    p_desired=percentile,
+                    idx=percentile_lower_idx,
+                    col=col,
+                )
+                for col in range(n_cols)
+            ])
+
+            percentile_idx = np.where(
+                error_higher >= error_lower,
+                percentile_lower_idx,
+                percentile_higher_idx
+            )
+        elif interpolation == "lower":
+            percentile_idx = percentile_lower_idx
+    else:
+        percentile_idx = percentile_higher_idx
+
+    if interpolation in ("weighted", "linear"):
+        percentile_value_lower = array[
+            sorted_idx[percentile_lower_idx, np.arange(n_cols)],
+            np.arange(n_cols)
+        ]
+        percentile_value_higher = array[
+            sorted_idx[percentile_higher_idx, np.arange(n_cols)],
+            np.arange(n_cols)
+        ]
+
+        if interpolation == "weighted":
+            weight_higher = sorted_weights[
+                percentile_higher_idx, np.arange(n_cols)
+            ]
+            weight_lower = sorted_weights[
+                percentile_lower_idx, np.arange(n_cols)
+            ]
+            weight_normalizer = weight_higher + weight_lower
+            with np.errstate(invalid="ignore"):
+                weight_higher = weight_higher / weight_normalizer
+                weight_higher = _fill_nan(weight_higher, 0)
+                weight_lower = weight_lower / weight_normalizer
+                weight_lower = _fill_nan(weight_lower, 0)
+
+        else:
+            # linear interpolation does not use weights
+            weight_lower = np.zeros(shape=(n_cols,))
+            weight_higher = np.zeros(shape=(n_cols,))
+
+        def _weighted_interpolation(
+            x, x_low, x_high, y_low, y_high, w_low, w_high,
+        ):
+            """Weighted interpolation between 2 values.
+
+            If the weights are null, then it is equivalent to a linear
+            interpolation.
+            """
+            with np.errstate(invalid="ignore"):
+                percentile_value = (
+                    y_low + ((1 - w_low) * (x - x_low)) * (
+                        (y_high - y_low) / (
+                            (1 - w_high) * (x_high - x) +
+                            (1 - w_low) * (x - x_low)
+                        )
+                    )
+                )
+            if np.isnan(percentile_value):
+                # case that percentile is 100
+                return y_high
+            return percentile_value
+
+        percentile_value = np.array([
+            _weighted_interpolation(
+                x=percentile[col],
+                x_low=adjusted_percentile[percentile_lower_idx[col], col],
+                x_high=adjusted_percentile[percentile_higher_idx[col], col],
+                y_low=percentile_value_lower[col],
+                y_high=percentile_value_higher[col],
+                w_low=weight_lower[col],
+                w_high=weight_higher[col],
+            )
+            for col in range(n_cols)
+        ])
+    else:
+        # no need to interpolate
         percentile_idx = np.apply_along_axis(
             lambda x: np.clip(x, 0, n_rows - 1), axis=0,
             arr=percentile_idx
@@ -110,19 +204,8 @@ def _interpolation_closest_ranks(
             sorted_idx[percentile_idx, np.arange(n_cols)],
             np.arange(n_cols)
         ]
-        percentile_value = _squeeze_arr(percentile_value, n_dim)
 
-    else:  # interpolation == "linear"
-        percentile_value = np.array([
-            np.interp(
-                x=percentile[col],
-                xp=adjusted_percentile[:, col],
-                fp=array[sorted_idx[:, col], col],
-            )
-            for col in range(n_cols)
-        ])
-
-        percentile_value = _squeeze_arr(percentile_value, n_dim)
+    percentile_value = _squeeze_arr(percentile_value, n_dim)
 
     single_sample_weight = np.count_nonzero(sample_weight, axis=0)
     if np.any(single_sample_weight == 1):
@@ -171,7 +254,9 @@ def _weighted_percentile(
 
         * None: no interpolation will be done and the "nearest-rank" method
           will be used (default).
-        * "linear": linearly interpolate between `i` and `j` using `np.interp`.
+        * "linear": linearly interpolate between `i` and `j`;
+        * "weighted": interpolate between `i` and `j` taking into account the
+          weights assigned to `i` and `j`.
         * "lower": i`;
         * "higher": `j`;
         * "nearest": `i` or `j`, whichever is nearest.
@@ -184,7 +269,9 @@ def _weighted_percentile(
             ndarray of shape (m,)
         Weighted percentile.
     """
-    possible_interpolation = ("linear", "lower", "higher", "nearest", None)
+    possible_interpolation = (
+        "linear", "lower", "higher", "nearest", "weighted", None
+    )
     if interpolation not in possible_interpolation:
         raise ValueError(
             f"'interpolation' should be one of "
