@@ -28,7 +28,7 @@ from .utils.validation import _check_sample_weight
 from .pipeline import Pipeline
 from .isotonic import IsotonicRegression
 from .svm import LinearSVC
-from .model_selection import check_cv
+from .model_selection import check_cv, cross_val_predict
 from .utils.validation import _deprecate_positional_args
 
 
@@ -162,10 +162,12 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
            A. Niculescu-Mizil & R. Caruana, ICML 2005
     """
     @_deprecate_positional_args
-    def __init__(self, base_estimator=None, *, method='sigmoid', cv=None):
+    def __init__(self, base_estimator=None, *, method='sigmoid', cv=None,
+                 ensemble=False):
         self.base_estimator = base_estimator
         self.method = method
         self.cv = cv
+        self.ensemble=ensemble
 
     def fit(self, X, y, sample_weight=None):
         """Fit the calibrated model
@@ -189,7 +191,6 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
         check_classification_targets(y)
         X, y = indexable(X, y)
 
-        self.calibrated_classifiers_ = []
         if self.base_estimator is None:
             # we want all classifiers that don't expose a random_state
             # to be deterministic (and we don't want to expose this one).
@@ -197,6 +198,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
         else:
             base_estimator = self.base_estimator
 
+        self.calibrated_classifiers_ = []
         if self.cv == "prefit":
             # `classes_` and `n_features_in_` should be consistent with that
             # of base_estimator
@@ -250,23 +252,51 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
                     warnings.warn("Since %s does not support sample_weights, "
                                   "sample weights will only be used for the "
                                   "calibration itself." % estimator_name)
+            if self.ensemble:
+                for train, test in cv.split(X, y):
+                    this_estimator = clone(base_estimator)
 
-            for train, test in cv.split(X, y):
-                this_estimator = clone(base_estimator)
+                    if (sample_weight is not None
+                            and base_estimator_supports_sw):
+                        this_estimator.fit(X[train], y[train],
+                                           sample_weight=sample_weight[train])
+                    else:
+                        this_estimator.fit(X[train], y[train])
 
-                if sample_weight is not None and base_estimator_supports_sw:
-                    this_estimator.fit(X[train], y[train],
-                                       sample_weight=sample_weight[train])
+                    sw = None if sample_weight is None else sample_weight[test]
+                    calibrated_classifier = _fit_calibrator(
+                        this_estimator, self.label_encoder_, self.method,
+                        X[test], y[test], sw
+                    )
+                    self.calibrated_classifiers_.append(calibrated_classifier)
+            else:
+                if hasattr(base_estimator, "decision_function"):
+                    base_estimator_method = "decision_function"
+                elif hasattr(base_estimator, "predict_proba"):
+                    base_estimator_method = "predict_proba"
                 else:
-                    this_estimator.fit(X[train], y[train])
+                    raise RuntimeError("'base_estimator' as no "
+                                       "'decision_function' or 'predict_proba'"
+                                       " method.")
+                df = cross_val_predict(base_estimator, X, y, cv=cv,
+                                       method=base_estimator_method)
+                if base_estimator_method == "decision_function":
+                    if df.ndim == 1:
+                        df = df[:, np.newaxis]
+                else:
+                    if len(self.label_encoder_.classes_) == 2:
+                        df = df[:, 1:]
 
-                sw = None if sample_weight is None else sample_weight[test]
+                this_estimator = clone(base_estimator)
+                if sample_weight is not None and base_estimator_supports_sw:
+                    this_estimator.fit(X, y, sample_weight=sample_weight)
+                else:
+                    this_estimator.fit(X, y)
                 calibrated_classifier = _fit_calibrator(
-                    this_estimator, self.label_encoder_, self.method,
-                    X[test], y[test], sw
+                    this_estimator, self.label_encoder_, self.method, df, y,
+                    sample_weight
                 )
                 self.calibrated_classifiers_.append(calibrated_classifier)
-
         return self
 
     def predict_proba(self, X):
@@ -327,9 +357,10 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
 
 
 def _get_predictions(clf_fitted, X, label_encoder_):
-    """Returns predictions for `X` and index of classes present in `X`.
+    """Returns predictions for `X` and the index of classes present in
+    `clf_fitted`.
 
-    For predicitons, `decision_function` method of the `clf_fitted` is used.
+    For predictions, `decision_function` method of the `clf_fitted` is used.
     If this does not exist, `predict_proba` method used.
 
     Parameters
@@ -369,7 +400,7 @@ def _get_predictions(clf_fitted, X, label_encoder_):
     return df, pos_class_indices
 
 
-def _fit_calibrator(clf_fitted, label_encoder_, method, X, y,
+def _fit_calibrator(clf_fitted, label_encoder_, method, y, X=None, df=None,
                     sample_weight=None):
     """Fit calibrator(s) and return a `_CalibratedClassiferPipeline`
     instance.
@@ -388,11 +419,16 @@ def _fit_calibrator(clf_fitted, label_encoder_, method, X, y,
     method : {'sigmoid', 'isotonic'}
         The method to use for calibration.
 
-    X : array-like
-        Sample data used to calibrate predictions.
-
     y : ndarray, shape (n_samples,)
         The targets.
+
+    X : array-like, shape (n_samples, n_features), default=None
+        Sample data used to calibrate predictions. If None, use df instead.
+
+    df :  array-like, shape (n_samples, n_classes), default=None
+        Predictions, output from `base_estimator`, used to calibrate
+        predictions. If None, use X instead.
+        If binary (i.e., `label_encoder_.classes_` = 2), shape (n_samples, 1)
 
     sample_weight : ndarray, shape (n_samples,), default=None
         Sample weights. If `None`, then samples are equally weighted.
@@ -402,7 +438,10 @@ def _fit_calibrator(clf_fitted, label_encoder_, method, X, y,
     pipeline : _CalibratedClassiferPipeline instance
     """
     Y = label_binarize(y, classes=label_encoder_.classes_)
-    df, pos_class_indices = _get_predictions(clf_fitted, X, label_encoder_)
+    if X:
+        df, pos_class_indices = _get_predictions(clf_fitted, X, label_encoder_)
+    elif df:
+        pos_class_indices = label_encoder_.transform(clf_fitted.classes_)
 
     calibrated_classifiers = []
     for class_idx, this_df in zip(pos_class_indices, df.T):
