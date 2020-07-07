@@ -560,34 +560,46 @@ class PLSRegression(_PLS):
 
     Attributes
     ----------
-    x_weights_ : array, [p, n_components]
+    x_weights_ : ndarray of shape (p, n_components)
         X block weights vectors.
 
-    y_weights_ : array, [q, n_components]
+    y_weights_ : ndarray of shape (q, n_components)
         Y block weights vectors.
 
-    x_loadings_ : array, [p, n_components]
+    x_loadings_ : ndarray of shape (p, n_components)
         X block loadings vectors.
 
-    y_loadings_ : array, [q, n_components]
+    y_loadings_ : ndarray of shape (q, n_components)
         Y block loadings vectors.
 
-    x_scores_ : array, [n_samples, n_components]
+    x_scores_ : ndarray of shape (n_samples, n_components)
         X scores.
 
-    y_scores_ : array, [n_samples, n_components]
+    y_scores_ : ndarray of shape (n_samples, n_components)
         Y scores.
 
-    x_rotations_ : array, [p, n_components]
+    x_rotations_ : ndarray of shape (p, n_components)
         X block to latents rotations.
 
-    y_rotations_ : array, [q, n_components]
+    y_rotations_ : ndarray of shape (q, n_components)
         Y block to latents rotations.
 
-    coef_ : array, [p, q]
+    x_mean_ : ndarray of shape (p,)
+        X mean for each predictor.
+
+    y_mean_ : ndarray of shape (q,)
+        Y mean for each response variable.
+
+    x_std_ : ndarray of shape (p,)
+        X standard deviation for each predictor.
+
+    y_std_ : ndarray of shape (q,)
+        Y standard deviation for each response variable.
+
+    coef_ : ndarray of shape (p, q)
         The coefficients of the linear model: ``Y = X coef_ + Err``
 
-    n_iter_ : array-like
+    n_iter_ : ndarray of shape (n_components,)
         Number of iterations of the NIPALS inner loop for each
         component.
 

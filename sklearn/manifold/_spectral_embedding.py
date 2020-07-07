@@ -47,8 +47,8 @@ def _graph_connected_component(graph, node_id):
     if sparse.issparse(graph):
         # speed up row-wise access to boolean connection mask
         graph = graph.tocsr()
-    connected_nodes = np.zeros(n_node, dtype=np.bool)
-    nodes_to_explore = np.zeros(n_node, dtype=np.bool)
+    connected_nodes = np.zeros(n_node, dtype=bool)
+    nodes_to_explore = np.zeros(n_node, dtype=bool)
     nodes_to_explore[node_id] = True
     for _ in range(n_node):
         last_num_component = connected_nodes.sum()

@@ -13,7 +13,6 @@ import numpy as np
 import scipy.sparse as sp
 import pytest
 
-from sklearn.utils.fixes import sp_version
 from sklearn.utils._testing import assert_raises
 from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import assert_warns_message
@@ -820,11 +819,10 @@ def test_param_sampler():
                                n_iter=3, random_state=0)
     assert [x for x in sampler] == [x for x in sampler]
 
-    if sp_version >= (0, 16):
-        param_distributions = {"C": uniform(0, 1)}
-        sampler = ParameterSampler(param_distributions=param_distributions,
-                                   n_iter=10, random_state=0)
-        assert [x for x in sampler] == [x for x in sampler]
+    param_distributions = {"C": uniform(0, 1)}
+    sampler = ParameterSampler(param_distributions=param_distributions,
+                               n_iter=10, random_state=0)
+    assert [x for x in sampler] == [x for x in sampler]
 
 
 def check_cv_results_array_types(search, param_keys, score_keys):
@@ -958,7 +956,7 @@ def test_search_default_iid(SearchCV, specialized_params):
                       cluster_std=0.1, shuffle=False, n_samples=80)
     # split dataset into two folds that are not iid
     # first one contains data of all 4 blobs, second only from two.
-    mask = np.ones(X.shape[0], dtype=np.bool)
+    mask = np.ones(X.shape[0], dtype=bool)
     mask[np.where(y == 1)[0][::2]] = 0
     mask[np.where(y == 2)[0][::2]] = 0
     # this leads to perfect classification on one fold and a score of 1/3 on
@@ -1823,7 +1821,7 @@ def test_scalar_fit_param(SearchCV, param_search):
     # unofficially sanctioned tolerance for scalar values in fit_params
     # non-regression test for:
     # https://github.com/scikit-learn/scikit-learn/issues/15805
-    class TestEstimator(BaseEstimator, ClassifierMixin):
+    class TestEstimator(ClassifierMixin, BaseEstimator):
         def __init__(self, a=None):
             self.a = a
 
