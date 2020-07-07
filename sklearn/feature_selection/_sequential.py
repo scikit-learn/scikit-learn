@@ -149,39 +149,46 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
 
         cloned_estimator = clone(self.estimator)
 
-        # the current mask corresponds to the set of features:
-        # - that we have already *selected* if we do forward selection
-        # - that we have already *excluded* if we do backward selection
-        current_mask = np.zeros(shape=X.shape[1], dtype=bool)
+        if self.forward:
+            current_mask = np.zeros(shape=X.shape[1], dtype=bool)
+            _get_best_new_feature = self._get_best_new_feature_forward
+        else:
+            current_mask = np.ones(shape=X.shape[1], dtype=bool)
+            _get_best_new_feature = self._get_best_new_feature_backward
+
         n_iterations = (self.n_features_to_select_ if self.forward
                         else X.shape[1] - self.n_features_to_select_)
-        for _ in range(n_iterations):
-            new_feature_idx = self._get_best_new_feature(cloned_estimator, X,
-                                                         y, current_mask)
-            current_mask[new_feature_idx] = True
 
-        if not self.forward:
-            current_mask = ~current_mask
+        for _ in range(n_iterations):
+            best_new_feature = _get_best_new_feature(cloned_estimator, X, y,
+                                                     current_mask)
+            if self.forward:
+                current_mask[best_new_feature] = True
+            else:
+                current_mask[best_new_feature] = False
+
         self.support_ = current_mask
 
         return self
 
-    def _get_best_new_feature(self, estimator, X, y, current_mask):
-        # Return the best new feature to add to the current_mask, i.e. return
-        # the best new feature to add (resp. remove) when doing forward
-        # selection (resp. backward selection)
+    def _get_best_new_feature_forward(self, estimator, X, y, current_mask):
         candidate_feature_indices = np.flatnonzero(~current_mask)
         scores = {}
         for feature_idx in candidate_feature_indices:
             candidate_mask = current_mask.copy()
             candidate_mask[feature_idx] = True
-            if not self.forward:
-                # For backward selection, we transform candidate_mask into its
-                # complement, i.e. we change its semantic from "features to
-                # remove" to "features to keep" because _safe_indexing only
-                # understands the latter
-                # TODO: maybe remove when _safe_indexing supports "complement"
-                candidate_mask = ~candidate_mask
+            X_new = _safe_indexing(X, candidate_mask, axis=1)
+            scores[feature_idx] = cross_val_score(
+                estimator, X_new, y, cv=self.cv, scoring=self.scoring,
+                n_jobs=self.n_jobs).mean()
+        return max(scores, key=lambda feature_idx: scores[feature_idx])
+
+    def _get_best_new_feature_backward(self, estimator, X, y, current_mask):
+        candidate_feature_indices = np.flatnonzero(current_mask)
+        scores = {}
+        for feature_idx in candidate_feature_indices:
+            candidate_mask = current_mask.copy()
+            candidate_mask[feature_idx] = False
             X_new = _safe_indexing(X, candidate_mask, axis=1)
             scores[feature_idx] = cross_val_score(
                 estimator, X_new, y, cv=self.cv, scoring=self.scoring,
