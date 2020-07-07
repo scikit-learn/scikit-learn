@@ -90,23 +90,6 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
     >>> v.transform({'foo': 4, 'unseen_feature': 3})
     array([[0., 0., 4.]])
 
-    Example with multiple values for one categorical values:
-
-    >>> D2 = [{'label': ['cluster', 'linear_model'], 'version': '3'},
-    ...       {'label': ['cluster', 'gaussian_process'], 'version': '1'},
-    ...       {'label': ['neighbors', 'cluster']}]
-    >>> X = v.fit_transform(D2)
-    >>> X
-    array([[1., 0., 1., 0., 0., 1.],
-           [1., 1., 0., 0., 1., 0.],
-           [1., 0., 0., 1., 0., 0.]])
-    >>> v.get_feature_names() == ['label=cluster', 'label=gaussian_process',
-    ...                           'label=linear_model', 'label=neighbors',
-    ...                           'version=1', 'version=3']
-    True
-    >>> v.transform({'label': 'neighbors', 'unseen_feature': '3'})
-    array([[0., 0., 0., 1., 0., 0.]])
-
     See also
     --------
     FeatureHasher : performs vectorization using only a hash function.
