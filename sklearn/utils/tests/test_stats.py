@@ -99,7 +99,6 @@ def test_weighted_percentile_np_median():
     # unweighted NumPy implementation with unit weights for the median
     rng = np.random.RandomState(42)
     X = rng.randn(10)
-    X.sort()
     sample_weight = np.ones(X.shape)
 
     np_median = np.median(X)
@@ -119,7 +118,6 @@ def test_weighted_percentile_np_percentile(interpolation, percentile):
     # results obtained with NumPy with unit sample weights
     rng = np.random.RandomState(0)
     X = rng.randn(10)
-    X.sort()
     sample_weight = np.ones(X.shape)
 
     np_percentile = np.percentile(X, percentile, interpolation=interpolation)
