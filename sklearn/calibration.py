@@ -185,7 +185,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
         self.base_estimator = base_estimator
         self.method = method
         self.cv = cv
-        self.ensemble=ensemble
+        self.ensemble = ensemble
 
     def fit(self, X, y, sample_weight=None):
         """Fit the calibrated model
@@ -265,7 +265,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
                 else:
                     n_folds = None
                 if n_folds and np.any([np.sum(y == class_) < n_folds
-                                    for class_ in self.classes_]):
+                                       for class_ in self.classes_]):
                     raise ValueError(f"Requesting {n_folds}-fold "
                                      "cross-validation but provided less than "
                                      f"{n_folds} examples for at least one "
