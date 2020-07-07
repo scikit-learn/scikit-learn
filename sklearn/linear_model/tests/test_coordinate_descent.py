@@ -7,7 +7,6 @@ import pytest
 from scipy import interpolate, sparse
 from copy import deepcopy
 import joblib
-import re
 
 from sklearn.base import is_classifier
 from sklearn.datasets import load_diabetes
@@ -66,9 +65,9 @@ def test_l1_ratio_param(l1_ratio):
     X = np.array([[-1.], [0.], [1.]])
     Y = [-1, 0, 1]       # just a straight line
 
-    msg = "l1_ratio must be between 0 and 1;"f" got (l1_ratio={l1_ratio})"
+    msg = "l1_ratio must be between 0 and 1; "f"got l1_ratio={l1_ratio}"
     clf = ElasticNet(alpha=0.1, l1_ratio=l1_ratio)
-    with pytest.raises(ValueError, match=re.escape(msg)):
+    with pytest.raises(ValueError, match=msg):
         clf.fit(X, Y)
 
 

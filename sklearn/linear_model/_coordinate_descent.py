@@ -757,8 +757,8 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
 
         if (not isinstance(self.l1_ratio, numbers.Number) or
                 self.l1_ratio < 0 or self.l1_ratio > 1):
-            raise ValueError("l1_ratio must be between 0 and 1;"
-                             f" got (l1_ratio={self.l1_ratio})")
+            raise ValueError("l1_ratio must be between 0 and 1; "
+                             f"got l1_ratio={self.l1_ratio}")
 
         # Remember if X is copied
         X_copied = False
