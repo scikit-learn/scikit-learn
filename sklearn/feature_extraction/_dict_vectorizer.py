@@ -119,8 +119,9 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
         self.sparse = sparse
         self.sort = sort
 
-    def _add_iterable_element(self, f, v, feature_names, vocab, fitting=True,
-                              transforming=False, indices=None, values=None):
+    def _add_iterable_element(self, f, v, feature_names, vocab, *,
+                              fitting=True, transforming=False,
+                              indices=None, values=None):
         """Add feature names for iterable of strings"""
         for vv in v:
             if isinstance(vv, str):
@@ -235,8 +236,9 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
                 elif isinstance(v, Iterable):
                     feature_name = None
                     self._add_iterable_element(f, v, feature_names, vocab,
-                                               fitting, transforming,
-                                               indices, values)
+                                               fitting=fitting,
+                                               transforming=transforming,
+                                               indices=indices, values=values)
 
                 if feature_name is not None:
                     if fitting and feature_name not in vocab:
