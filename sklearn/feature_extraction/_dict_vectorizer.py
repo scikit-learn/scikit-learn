@@ -92,18 +92,20 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
 
     Example with multiple values for one categorical values:
 
-    >>> D2 = [{'foo': '1', 'bar': '2'}, {'foo': '3', 'baz': '1'},
-    ...       {'foo': ['one', 'three']}]
+    >>> D2 = [{'label': ['cluster', 'linear_model'], 'version': '3'},
+    ...       {'label': ['cluster', 'gaussian_process'], 'version': '1'},
+    ...       {'label': ['neighbors', 'cluster']}]
     >>> X = v.fit_transform(D2)
     >>> X
-    array([[1., 0., 1., 0., 0., 0.],
-           [0., 1., 0., 1., 0., 0.],
-           [0., 0., 0., 0., 1., 1.]])
-    >>> v.get_feature_names() == ['bar=2', 'baz=1', 'foo=1', 'foo=3',
-    ...                           'foo=one', 'foo=three']
+    array([[1., 0., 1., 0., 0., 1.],
+           [1., 1., 0., 0., 1., 0.],
+           [1., 0., 0., 1., 0., 0.]])
+    >>> v.get_feature_names() == ['label=cluster', 'label=gaussian_process',
+    ...                           'label=linear_model', 'label=neighbors',
+    ...                           'version=1', 'version=3']
     True
-    >>> v.transform({'foo': '1', 'unseen_feature': [3]})
-    array([[0., 0., 1., 0., 0., 0.]])
+    >>> v.transform({'label': 'neighbors', 'unseen_feature': '3'})
+    array([[0., 0., 0., 1., 0., 0.]])
 
     See also
     --------
