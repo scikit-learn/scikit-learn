@@ -73,7 +73,8 @@ and its year of release.
     ...                             'category=family', 'category=thriller',
     ...                             'year']
     True
-    >>> vec.transform({'category': 'thriller', 'unseen_feature': '3'})
+    >>> vec.transform({'category': 'thriller',
+    ...                'unseen_feature': '3'}).toarray()
     array([[0., 0., 0., 1., 0.]])
 
 :class:`DictVectorizer` is also a useful representation transformation
