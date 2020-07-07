@@ -215,3 +215,38 @@ def test_weighted_percentile_equivalence_weights_repeated_samples(percentile):
 
     assert p_sklearn_weighted == pytest.approx(p_npy_repeated)
     assert p_sklearn_weighted == pytest.approx(p_sklearn_repeated)
+
+
+@pytest.mark.parametrize("percentile", [0, 25, 50, 75, 100])
+def test_weighted_percentile_equivalence_linear_weighted(percentile):
+    # check that we have an equivalence between the linear and weighted
+    # interpolation when we apply unit weights
+    rng = np.random.RandomState(42)
+    X = rng.randn(20, 4)
+    sample_weight = np.ones(shape=(X.shape[0],))
+
+    p_linear = _weighted_percentile(
+        X, sample_weight, percentile=percentile, interpolation="linear",
+    )
+    p_weighted = _weighted_percentile(
+        X, sample_weight, percentile=percentile, interpolation="weighted",
+    )
+
+    assert_allclose(p_linear, p_weighted)
+
+
+def test_weighted_percentile_weighted_interpolation():
+    # check that the weighted interpolation will favor the closes rank with the
+    # highest weight
+    X = np.array([1, 2, 3, 4])
+    sample_weight = np.array([1, 1, 1, 5])
+
+    p_linear = _weighted_percentile(
+        X, sample_weight, percentile=50, interpolation="linear",
+    )
+    p_weighted = _weighted_percentile(
+        X, sample_weight, percentile=50, interpolation="weighted"
+    )
+
+    assert p_linear < p_weighted
+    assert p_linear < X[-1]
