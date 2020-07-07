@@ -78,10 +78,10 @@ def test_one_of_k():
 
 def test_iterable_value():
     D_names = ['ham', 'spam', 'version=1', 'version=2', 'version=3']
-    X_data = [[2.0, 0.0, 1.0, 1.0, 0.0],
+    X_data = [[2.0, 0.0, 2.0, 1.0, 0.0],
               [0.0, 0.3, 0.0, 1.0, 0.0],
               [0.0, -1.0, 0.0, 0.0, 1.0]]
-    D_in = [{"version": ["1", "2"], "ham": 2},
+    D_in = [{"version": ["1", "2", "1"], "ham": 2},
             {"version": "2", "spam": .3},
             {"version=3": True, "spam": -1}]
     v = DictVectorizer()
@@ -90,7 +90,7 @@ def test_iterable_value():
     assert_array_equal(X, X_data)
 
     D_out = v.inverse_transform(X)
-    assert D_out[0] == {"version=1": 1, "version=2": 1, "ham": 2}
+    assert D_out[0] == {"version=1": 2, "version=2": 1, "ham": 2}
 
     names = v.get_feature_names()
 
