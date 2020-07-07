@@ -729,15 +729,18 @@ def cross_val_predict(estimator, X, y=None, *, groups=None, cv=None,
               as in '2*n_jobs'
 
     method : str, default='predict'
-        Invokes the passed method name of the passed estimator. For
-        methods {'decision_function', 'predict_proba', 'predict_log_proba'},
-        the columns correspond to the classes in order as sorted by
-        :class:`~sklearn.preprocessing.LabelEncoder`.
+        The method to be invoked by `estimator`.
 
     Returns
     -------
     predictions : ndarray
-        This is the result of calling ``method``
+        This is the result of calling ``method``. Shape:
+
+            - When `method` is predict: (n_samples, 1)
+            - When `method` is one of {'predict_proba', 'predict_log_proba',
+              'decision_function'}: (n_samples, n_classes).
+            - If `estimator` is :term:`multioutput`, a third dimension
+              'n_outputs' is added to the end of each shape above.
 
     See also
     --------
