@@ -89,6 +89,24 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
         .. versionchanged:: 0.22
             ``cv`` default value if None changed from 3-fold to 5-fold.
 
+    ensemble : bool, default=True
+        Determines how the calibrator is fit, if `cv` is not `'prefit'`.
+
+        If `True`, the `base_estimator` is fit and calibrated on each
+        `cv` fold. The final estimator is an ensemble that outputs the
+        average predicted probabilities of all fitted classifier and calibrator
+        pairs.
+
+        If `False`, `cv` is used to compute unbiased predictions, which
+        are concatenated and used to train the calibrator (sigmoid or isotonic
+        model). The `base_estimator` trained on all the data is used at
+        prediction time.
+        Note this method is implemented when `probabilities=True` for
+        :mod:`sklearn.svm` estimators.
+
+        .. versionadded:: 0.24
+
+
     Attributes
     ----------
     classes_ : array, shape (n_classes)
@@ -163,7 +181,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
     """
     @_deprecate_positional_args
     def __init__(self, base_estimator=None, *, method='sigmoid', cv=None,
-                 ensemble=False):
+                 ensemble=True):
         self.base_estimator = base_estimator
         self.method = method
         self.cv = cv
@@ -212,8 +230,8 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
             self.label_encoder_ = LabelEncoder().fit(self.classes_)
 
             calibrated_classifier = _fit_calibrator(
-                base_estimator, self.label_encoder_, self.method, X, y,
-                sample_weight
+                base_estimator, self.label_encoder_, self.method, y=y, X=X,
+                sample_weight=sample_weight
             )
             self.calibrated_classifiers_.append(calibrated_classifier)
         else:
@@ -226,21 +244,6 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
             self.classes_ = le.classes_
             self.label_encoder_ = le
 
-            # Check that each cross-validation fold can have at least one
-            # example per class
-            if isinstance(self.cv, int):
-                n_folds = self.cv
-            elif hasattr(self.cv, "n_splits"):
-                n_folds = self.cv.n_splits
-            else:
-                n_folds = None
-            if n_folds and np.any([np.sum(y == class_) < n_folds
-                                   for class_ in self.classes_]):
-                raise ValueError(f"Requesting {n_folds}-fold cross-validation "
-                                 f"but provided less than {n_folds} examples "
-                                 "for at least one class.")
-
-            cv = check_cv(self.cv, y, classifier=True)
             fit_parameters = signature(base_estimator.fit).parameters
             base_estimator_supports_sw = "sample_weight" in fit_parameters
 
@@ -253,6 +256,22 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
                                   "sample weights will only be used for the "
                                   "calibration itself." % estimator_name)
             if self.ensemble:
+                # Check that each cross-validation fold can have at least one
+                # example per class
+                if isinstance(self.cv, int):
+                    n_folds = self.cv
+                elif hasattr(self.cv, "n_splits"):
+                    n_folds = self.cv.n_splits
+                else:
+                    n_folds = None
+                if n_folds and np.any([np.sum(y == class_) < n_folds
+                                    for class_ in self.classes_]):
+                    raise ValueError(f"Requesting {n_folds}-fold "
+                                     "cross-validation but provided less than "
+                                     f"{n_folds} examples for at least one "
+                                     "class.")
+                cv = check_cv(self.cv, y, classifier=True)
+
                 for train, test in cv.split(X, y):
                     this_estimator = clone(base_estimator)
 
@@ -266,7 +285,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
                     sw = None if sample_weight is None else sample_weight[test]
                     calibrated_classifier = _fit_calibrator(
                         this_estimator, self.label_encoder_, self.method,
-                        X[test], y[test], sw
+                        y=y[test], X=X[test], sample_weight=sw
                     )
                     self.calibrated_classifiers_.append(calibrated_classifier)
             else:
@@ -293,8 +312,8 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
                 else:
                     this_estimator.fit(X, y)
                 calibrated_classifier = _fit_calibrator(
-                    this_estimator, self.label_encoder_, self.method, df, y,
-                    sample_weight
+                    this_estimator, self.label_encoder_, self.method, y=y,
+                    df=df, sample_weight=sample_weight
                 )
                 self.calibrated_classifiers_.append(calibrated_classifier)
         return self
@@ -438,9 +457,9 @@ def _fit_calibrator(clf_fitted, label_encoder_, method, y, X=None, df=None,
     pipeline : _CalibratedClassiferPipeline instance
     """
     Y = label_binarize(y, classes=label_encoder_.classes_)
-    if X:
+    if X is not None:
         df, pos_class_indices = _get_predictions(clf_fitted, X, label_encoder_)
-    elif df:
+    elif df is not None:
         pos_class_indices = label_encoder_.transform(clf_fitted.classes_)
 
     calibrated_classifiers = []
