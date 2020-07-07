@@ -90,7 +90,7 @@ bounded distortion introduced by the random projection::
 
 Gaussian random projection
 ==========================
-The :class:`~GaussianRandomProjection` reduces the
+The :class:`GaussianRandomProjection` reduces the
 dimensionality by projecting the original input space on a randomly generated
 matrix where components are drawn from the following distribution
 :math:`N(0, \frac{1}{n_{components}})`.
