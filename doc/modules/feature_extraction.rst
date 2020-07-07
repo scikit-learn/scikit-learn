@@ -67,8 +67,8 @@ and its year of release.
     ...                {'year': 1974}]
     >>> vec.fit_transform(movie_entry).toarray()
     array([[0.000e+00, 1.000e+00, 0.000e+00, 1.000e+00, 2.003e+03],
-    ...    [1.000e+00, 0.000e+00, 1.000e+00, 0.000e+00, 2.011e+03],
-    ...    [0.000e+00, 0.000e+00, 0.000e+00, 0.000e+00, 1.974e+03]])
+           [1.000e+00, 0.000e+00, 1.000e+00, 0.000e+00, 2.011e+03],
+           [0.000e+00, 0.000e+00, 0.000e+00, 0.000e+00, 1.974e+03]])
     >>> vec.get_feature_names() == ['category=animation', 'category=drama',
     ...                             'category=family', 'category=thriller',
     ...                             'year']
