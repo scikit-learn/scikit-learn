@@ -1196,6 +1196,54 @@ def _empty_metadata_request():
                  fit_transform={})
 
 
+# not used
+def _standardize_metadata_request(request):
+    res = _empty_metadata_request()
+    for method in res.keys():
+        m_props = request.get(method, {})
+        if isinstance(m_props, str):
+            m_props = {m_props}
+        if isinstance(m_props, (set, list)):
+            m_props = {x: {x} for x in m_props}
+        for param, dest in m_props.items():
+            if isinstance(dest, str):
+                dest = {dest}
+                m_props[param] = dest
+            if not isinstance(dest, set):
+                raise ValueError(f"Cannot standardize {request}")
+
+        res[method] = m_props
+    return res
+
+
+# not used
+def _merge_metadata_requests(original, update):
+    """Merges the `original` metadata requests with `update`'s contents.
+
+    Parameters
+    ----------
+    original: dict of dict of {str: str}
+        A set of metadata requests.
+
+    update: dict of dict of {str: str}
+        Another set of metadata requests to be merged with the contents of
+        `original`.
+
+    Returns
+    -------
+    metadata_requests: dict of dict of {str: str}
+        Merged metadata requests
+    """
+    res = _standardize_metadata_request(original)
+    update = _standardize_metadata_request(update)
+    for method, m_props in update.items():
+        for param, dest in m_props.items():
+            if param not in res[method]:
+                res[method][param] = set()
+            res[method][param] = res[method][param].union(dest)
+    return res
+
+
 def _get_props_from_objs(objs):
     """Extracts the required props from a list of objects.
 

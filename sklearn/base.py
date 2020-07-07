@@ -153,7 +153,11 @@ def _pprint(params, offset=0, printer=repr):
     return lines
 
 
-class _PropsRequest:
+class _FitConsumesSampleWeightsMixin:
+    _metadata_request_fit_sample_weight = {'fit': ['sample_weight']}
+
+
+class _MetadataRequest:
     def get_metadata_request(self):
         """Get requested data properties.
 
@@ -175,10 +179,13 @@ class _PropsRequest:
                 elif isinstance(method_props, list):
                     method_props = dict(zip(method_props, method_props))
                 res[method] = method_props
-            return res
         except AttributeError:
-            return res
+            pass
 
+        return res
+
+
+class _MetadataConsumer:
     def set_metadata_request(self, props):
         """Set required data properties.
 
@@ -218,7 +225,7 @@ class _PropsRequest:
         return self
 
 
-class BaseEstimator(_PropsRequest):
+class BaseEstimator(_MetadataRequest):
     """Base class for all estimators in scikit-learn
 
     Notes
@@ -535,7 +542,7 @@ class BaseEstimator(_PropsRequest):
         return output
 
 
-class ClassifierMixin:
+class ClassifierMixin(_MetadataConsumer):
     """Mixin class for all classifiers in scikit-learn."""
 
     _estimator_type = "classifier"
@@ -571,7 +578,7 @@ class ClassifierMixin:
         return {'requires_y': True}
 
 
-class RegressorMixin:
+class RegressorMixin(_MetadataConsumer):
     """Mixin class for all regression estimators in scikit-learn."""
     _estimator_type = "regressor"
 
@@ -726,7 +733,7 @@ class BiclusterMixin:
         return data[row_ind[:, np.newaxis], col_ind]
 
 
-class TransformerMixin:
+class TransformerMixin(_MetadataConsumer):
     """Mixin class for all transformers in scikit-learn."""
 
     def fit_transform(self, X, y=None, **fit_params):

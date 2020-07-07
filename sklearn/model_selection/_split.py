@@ -26,7 +26,7 @@ from ..utils.validation import _num_samples, column_or_1d
 from ..utils.validation import check_array
 from ..utils.validation import _deprecate_positional_args
 from ..utils.multiclass import type_of_target
-from ..base import _pprint, _PropsRequest
+from ..base import _pprint, _MetadataRequest
 
 __all__ = ['BaseCrossValidator',
            'KFold',
@@ -46,7 +46,7 @@ __all__ = ['BaseCrossValidator',
            'check_cv']
 
 
-class BaseCrossValidator(_PropsRequest, metaclass=ABCMeta):
+class BaseCrossValidator(_MetadataRequest, metaclass=ABCMeta):
     """Base class for all cross-validators
 
     Implementations must define `_iter_test_masks` or `_iter_test_indices`.
