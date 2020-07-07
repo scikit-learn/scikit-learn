@@ -508,6 +508,8 @@ def test_fetch_openml_as_frame_auto(monkeypatch):
     "ignore:ChangedBehaviorWarning is deprecated:FutureWarning"
 )
 def test_fetch_openml_default_as_frame_warning(monkeypatch):
+    pytest.importorskip('pandas')
+
     data_id = 61  # iris dataset version 1
     _monkey_patch_webbased_functions(monkeypatch, data_id, True)
 
@@ -1062,7 +1064,7 @@ def test_fetch_openml_notarget(monkeypatch, gzip_response):
 
     _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
     data = fetch_openml(data_id=data_id, target_column=target_column,
-                        cache=False)
+                        cache=False, as_frame=False)
     assert data.data.shape == (expected_observations, expected_features)
     assert data.target is None
 
@@ -1074,7 +1076,7 @@ def test_fetch_openml_inactive(monkeypatch, gzip_response):
     _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
     glas2 = assert_warns_message(
         UserWarning, "Version 1 of dataset glass2 is inactive,", fetch_openml,
-        data_id=data_id, cache=False)
+        data_id=data_id, cache=False, as_frame=False)
     # fetch inactive dataset by name and version
     assert glas2.data.shape == (163, 9)
     glas2_by_version = assert_warns_message(
@@ -1115,20 +1117,20 @@ def test_warn_ignore_attribute(monkeypatch, gzip_response):
     assert_warns_message(UserWarning, expected_row_id_msg.format('MouseID'),
                          fetch_openml, data_id=data_id,
                          target_column='MouseID',
-                         cache=False)
+                         cache=False, as_frame=False)
     assert_warns_message(UserWarning, expected_ignore_msg.format('Genotype'),
                          fetch_openml, data_id=data_id,
                          target_column='Genotype',
-                         cache=False)
+                         cache=False, as_frame=False)
     # multi column test
     assert_warns_message(UserWarning, expected_row_id_msg.format('MouseID'),
                          fetch_openml, data_id=data_id,
                          target_column=['MouseID', 'class'],
-                         cache=False)
+                         cache=False, as_frame=False)
     assert_warns_message(UserWarning, expected_ignore_msg.format('Genotype'),
                          fetch_openml, data_id=data_id,
                          target_column=['Genotype', 'class'],
-                         cache=False)
+                         cache=False, as_frame=False)
 
 
 @pytest.mark.parametrize('gzip_response', [True, False])
@@ -1151,7 +1153,7 @@ def test_dataset_with_openml_error(monkeypatch, gzip_response):
         UserWarning,
         "OpenML registered a problem with the dataset. It might be unusable. "
         "Error:",
-        fetch_openml, data_id=data_id, cache=False
+        fetch_openml, data_id=data_id, cache=False, as_frame=False
     )
 
 
@@ -1163,7 +1165,7 @@ def test_dataset_with_openml_warning(monkeypatch, gzip_response):
         UserWarning,
         "OpenML raised a warning on the dataset. It might be unusable. "
         "Warning:",
-        fetch_openml, data_id=data_id, cache=False
+        fetch_openml, data_id=data_id, cache=False, as_frame=False
     )
 
 
@@ -1212,7 +1214,8 @@ def test_fetch_openml_with_ignored_feature(monkeypatch, gzip_response):
     data_id = 62
     _monkey_patch_webbased_functions(monkeypatch, data_id, gzip_response)
 
-    dataset = sklearn.datasets.fetch_openml(data_id=data_id, cache=False)
+    dataset = sklearn.datasets.fetch_openml(data_id=data_id, cache=False,
+                                            as_frame=False)
     assert dataset is not None
     # The dataset has 17 features, including 1 ignored (animal),
     # so we assert that we don't have the ignored feature in the final Bunch
