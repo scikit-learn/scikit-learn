@@ -14,6 +14,7 @@ from functools import partial
 import warnings
 
 import numpy as np
+from numba import njit
 from scipy.spatial import distance
 from scipy.sparse import csr_matrix
 from scipy.sparse import issparse
@@ -429,6 +430,75 @@ def nan_euclidean_distances(X, Y=None, *, squared=False,
     np.maximum(1, present_count, out=present_count)
     distances /= present_count
     distances *= X.shape[1]
+
+    if not squared:
+        np.sqrt(distances, out=distances)
+
+    return distances
+
+
+def _nan_fill_row_norm(r, fill_value: float = 0.):
+    p = r * r
+    p = np.nan_to_num(p, nan=fill_value)
+    return np.sum(p)
+
+
+@njit
+def _nan_fill_dot(X, Y, fill_values: np.ndarray):
+    if X.shape[1] != fill_values.shape[0]:
+        raise ValueError('X and fill_values have incompatible shapes')
+
+    p = np.zeros((X.shape[0], Y.shape[0],))
+    for i in range(0, X.shape[0]):
+        v1 = X[i, :]
+        for j in range(0, Y.shape[0]):
+            v2 = Y[j, :]
+            s = 0.
+            for k in range(0, fill_values.shape[0]):
+                if np.isnan(v1[k]) and np.isnan(v2[k]):
+                    pass
+                elif np.isnan(v1[k]) or np.isnan(v2[k]):
+                    s += fill_values[k]
+                else:
+                    s += v1[k] * v2[k]
+
+            p[i, j] = s
+
+    return p
+
+
+def nan_filled_euclidean_distances(X, fill_values, Y=None, squared=False, copy=True):
+    X, Y = check_pairwise_arrays(X, Y, accept_sparse=False, force_all_finite='allow-nan', copy=copy)
+
+    # calculate euclidean distances
+    XX = np.apply_along_axis(_nan_fill_row_norm, 1, X)
+    XX = XX[:, np.newaxis]
+
+    if X is Y and XX is not None:
+        # shortcut in the common case euclidean_distances(X, X)
+        YY = XX.T
+    else:
+        YY = np.apply_along_axis(_nan_fill_row_norm, 1, Y)
+        YY = YY[np.newaxis, :]
+
+    # if dtype is already float64, no need to chunk and upcast
+    distances = - 2 * _nan_fill_dot(X, Y, -fill_values)
+    # distances = - 2 * np.dot(X, Y.T)
+    distances += XX
+    distances += YY
+    np.maximum(distances, 0, out=distances)
+
+    # Ensure that distances between vectors and themselves are set to 0.0.
+    # This may not be the case due to floating point rounding errors.
+    if X is Y:
+        np.fill_diagonal(distances, 0)
+
+    np.clip(distances, 0, None, out=distances)
+
+    if X is Y:
+        # Ensure that distances between vectors and themselves are set to 0.0.
+        # This may not be the case due to floating point rounding errors.
+        np.fill_diagonal(distances, 0.0)
 
     if not squared:
         np.sqrt(distances, out=distances)
@@ -1104,6 +1174,45 @@ def rbf_kernel(X, Y=None, gamma=None):
         gamma = 1.0 / X.shape[1]
 
     K = euclidean_distances(X, Y, squared=True)
+    K *= -gamma
+    np.exp(K, K)  # exponentiate K in-place
+    return K
+
+
+def choi_kernel(X: np.ndarray, Y: np.ndarray=None, nan_stdev_multiplier: float = 3., gamma=None):
+    """
+    First, compute the standard deviation of each column. Then, compute the distance between X and Y as follows:
+    - 2-norm distance if both x and y values are not nan
+    - `nan_stdev_multiplier` times the standard deviation of the column value if just one of the values is nan
+    - 0 if both x and y values are nan
+
+    The kernel is computed as follows:
+
+        K(x, y) = exp(-gamma * distance)
+
+    Parameters
+    ----------
+    X : array of shape (n_samples_X, n_features)
+
+    Y : array of shape (n_samples_Y, n_features), default=None
+
+    nan_stdev_multiplier: float
+
+    gamma : float, default=None
+        If None, defaults to 1.0 / n_features
+
+    Returns
+    -------
+    kernel_matrix : array of shape (n_samples_X, n_samples_Y)
+    """
+    X, Y = check_pairwise_arrays(X, Y, force_all_finite='allow-nan')
+    if gamma is None:
+        gamma = 1.0 / X.shape[1]
+
+    col_fills = np.apply_along_axis(lambda col: np.std(col[~np.isnan(col)]), 0, X)
+    col_fills = np.nan_to_num(col_fills * nan_stdev_multiplier)
+
+    K = nan_filled_euclidean_distances(X, col_fills, Y=Y, squared=True)
     K *= -gamma
     np.exp(K, K)  # exponentiate K in-place
     return K
@@ -1804,7 +1913,9 @@ PAIRWISE_KERNEL_FUNCTIONS = {
     'rbf': rbf_kernel,
     'laplacian': laplacian_kernel,
     'sigmoid': sigmoid_kernel,
-    'cosine': cosine_similarity, }
+    'cosine': cosine_similarity,
+    'choi': choi_kernel,
+}
 
 
 def kernel_metrics():
@@ -1844,6 +1955,7 @@ KERNEL_PARAMS = {
     "rbf": frozenset(["gamma"]),
     "laplacian": frozenset(["gamma"]),
     "sigmoid": frozenset(["gamma", "coef0"]),
+    "choi": frozenset(["nan_stdev_multiplier", "gamma"]),
 }
 
 
