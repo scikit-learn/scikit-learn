@@ -467,17 +467,8 @@ def _nan_fill_dot(X, Y, fill_values: np.ndarray):
     return p
 
 
-def nan_filled_euclidean_distances(X, fill_values, Y=None, squared=False, missing_values=np.nan, copy=True):
-    if X.dtype == np.float32 or (Y is not None and Y.dtype == np.float32):
-        raise NotImplementedError('X and Y must be np.float64 type')
-
+def nan_filled_euclidean_distances(X, fill_values, Y=None, squared=False, copy=True):
     X, Y = check_pairwise_arrays(X, Y, accept_sparse=False, force_all_finite='allow-nan', copy=copy)
-
-    # Get missing mask for X
-    missing_X = _get_mask(X, missing_values)
-
-    # Get missing mask for Y
-    missing_Y = missing_X if Y is X else _get_mask(Y, missing_values)
 
     # calculate euclidean distances
     XX = np.apply_along_axis(_nan_fill_row_norm, 1, X)
