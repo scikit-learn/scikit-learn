@@ -243,6 +243,10 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
         Set to False to perform inplace row normalization and avoid a
         copy (if the input is already a numpy array).
 
+    clip: bool, default=False
+        Set to True to clip transformed values of held-out data to
+        provided feature range(default=(0,1))
+
     Attributes
     ----------
     min_ : ndarray of shape (n_features,)
