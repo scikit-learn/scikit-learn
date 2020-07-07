@@ -1081,7 +1081,7 @@ def test_fetch_openml_inactive(monkeypatch, gzip_response):
     assert glas2.data.shape == (163, 9)
     glas2_by_version = assert_warns_message(
         UserWarning, "Version 1 of dataset glass2 is inactive,", fetch_openml,
-        data_id=None, name="glass2", version=1, cache=False)
+        data_id=None, name="glass2", version=1, cache=False, as_frame=False)
     assert int(glas2_by_version.details['id']) == data_id
 
 
