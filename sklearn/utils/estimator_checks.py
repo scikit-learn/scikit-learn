@@ -701,15 +701,12 @@ def check_estimator_sparse_data(name, estimator_orig):
     X[X < .8] = 0
     X = _pairwise_estimator_convert_X(X, estimator_orig)
     X_csr = sparse.csr_matrix(X)
-    tags = estimator_orig._get_tags()
-    if tags['binary_only']:
-        y = (2 * rng.rand(40)).astype(int)
-    else:
-        y = (4 * rng.rand(40)).astype(int)
+    y = (4 * rng.rand(40)).astype(int)
     # catch deprecation warnings
     with ignore_warnings(category=FutureWarning):
         estimator = clone(estimator_orig)
     y = _enforce_estimator_tags_y(estimator, y)
+    tags = estimator_orig._get_tags()
     for matrix_format, X in _generate_sparse_matrix(X_csr):
         # catch deprecation warnings
         with ignore_warnings(category=FutureWarning):
@@ -807,10 +804,7 @@ def check_sample_weights_list(name, estimator_orig):
         n_samples = 30
         X = _pairwise_estimator_convert_X(rnd.uniform(size=(n_samples, 3)),
                                           estimator_orig)
-        if estimator._get_tags()['binary_only']:
-            y = np.arange(n_samples) % 2
-        else:
-            y = np.arange(n_samples) % 3
+        y = np.arange(n_samples) % 3
         y = _enforce_estimator_tags_y(estimator, y)
         sample_weight = [3] * n_samples
         # Test that estimators don't raise any exception
@@ -901,10 +895,7 @@ def check_dtype_object(name, estimator_orig):
     X = _pairwise_estimator_convert_X(rng.rand(40, 10), estimator_orig)
     X = X.astype(object)
     tags = estimator_orig._get_tags()
-    if tags['binary_only']:
-        y = (X[:, 0] * 2).astype(int)
-    else:
-        y = (X[:, 0] * 4).astype(int)
+    y = (X[:, 0] * 4).astype(int)
     estimator = clone(estimator_orig)
     y = _enforce_estimator_tags_y(estimator, y)
 
@@ -998,8 +989,6 @@ def check_dont_overwrite_parameters(name, estimator_orig):
     X = 3 * rnd.uniform(size=(20, 3))
     X = _pairwise_estimator_convert_X(X, estimator_orig)
     y = X[:, 0].astype(int)
-    if estimator._get_tags()['binary_only']:
-        y[y == 2] = 1
     y = _enforce_estimator_tags_y(estimator, y)
 
     if hasattr(estimator, "n_components"):
@@ -1050,8 +1039,6 @@ def check_fit2d_predict1d(name, estimator_orig):
     X = _pairwise_estimator_convert_X(X, estimator_orig)
     y = X[:, 0].astype(int)
     tags = estimator_orig._get_tags()
-    if tags['binary_only']:
-        y[y == 2] = 1
     estimator = clone(estimator_orig)
     y = _enforce_estimator_tags_y(estimator, y)
 
@@ -1100,8 +1087,6 @@ def check_methods_subset_invariance(name, estimator_orig):
     X = 3 * rnd.uniform(size=(20, 3))
     X = _pairwise_estimator_convert_X(X, estimator_orig)
     y = X[:, 0].astype(int)
-    if estimator_orig._get_tags()['binary_only']:
-        y[y == 2] = 1
     estimator = clone(estimator_orig)
     y = _enforce_estimator_tags_y(estimator, y)
 
@@ -1373,10 +1358,7 @@ def check_fit_score_takes_y(name, estimator_orig):
     n_samples = 30
     X = rnd.uniform(size=(n_samples, 3))
     X = _pairwise_estimator_convert_X(X, estimator_orig)
-    if estimator_orig._get_tags()['binary_only']:
-        y = np.arange(n_samples) % 2
-    else:
-        y = np.arange(n_samples) % 3
+    y = np.arange(n_samples) % 3
     estimator = clone(estimator_orig)
     y = _enforce_estimator_tags_y(estimator, y)
     set_random_state(estimator)
@@ -1406,8 +1388,6 @@ def check_estimators_dtypes(name, estimator_orig):
     X_train_int_64 = X_train_32.astype(np.int64)
     X_train_int_32 = X_train_32.astype(np.int32)
     y = X_train_int_64[:, 0]
-    if estimator_orig._get_tags()['binary_only']:
-        y[y == 2] = 1
     y = _enforce_estimator_tags_y(estimator_orig, y)
 
     methods = ["predict", "transform", "decision_function", "predict_proba"]
@@ -1581,6 +1561,7 @@ def check_estimators_partial_fit_n_features(name, estimator_orig):
     estimator = clone(estimator_orig)
     X, y = make_blobs(n_samples=50, random_state=1)
     X -= X.min()
+    y = _enforce_estimator_tags_y(estimator_orig, y)
 
     try:
         if is_classifier(estimator):
@@ -2047,11 +2028,7 @@ def check_classifiers_multilabel_representation_invariance(name,
 def check_estimators_fit_returns_self(name, estimator_orig,
                                       readonly_memmap=False):
     """Check if self is returned when calling fit"""
-    if estimator_orig._get_tags()['binary_only']:
-        n_centers = 2
-    else:
-        n_centers = 3
-    X, y = make_blobs(random_state=0, n_samples=21, centers=n_centers)
+    X, y = make_blobs(random_state=0, n_samples=21)
     # some want non-negative input
     X -= X.min()
     X = _pairwise_estimator_convert_X(X, estimator_orig)
@@ -2093,10 +2070,7 @@ def check_supervised_y_2d(name, estimator_orig):
     X = _pairwise_estimator_convert_X(
         rnd.uniform(size=(n_samples, 3)), estimator_orig
     )
-    if tags['binary_only']:
-        y = np.arange(n_samples) % 2
-    else:
-        y = np.arange(n_samples) % 3
+    y = np.arange(n_samples) % 3
     y = _enforce_estimator_tags_y(estimator_orig, y)
     estimator = clone(estimator_orig)
     set_random_state(estimator)
@@ -2414,11 +2388,7 @@ def check_class_weight_balanced_linear_classifier(name, Classifier):
 
 @ignore_warnings(category=FutureWarning)
 def check_estimators_overwrite_params(name, estimator_orig):
-    if estimator_orig._get_tags()['binary_only']:
-        n_centers = 2
-    else:
-        n_centers = 3
-    X, y = make_blobs(random_state=0, n_samples=21, centers=n_centers)
+    X, y = make_blobs(random_state=0, n_samples=21)
     # some want non-negative input
     X -= X.min()
     X = _pairwise_estimator_convert_X(X, estimator_orig, kernel=rbf_kernel)
@@ -2489,7 +2459,8 @@ def check_no_attributes_set_in_init(name, estimator_orig):
 def check_sparsify_coefficients(name, estimator_orig):
     X = np.array([[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1],
                   [-1, -2], [2, 2], [-2, -2]])
-    y = [1, 1, 1, 2, 2, 2, 3, 3, 3]
+    y = np.array([1, 1, 1, 2, 2, 2, 3, 3, 3])
+    y = _enforce_estimator_tags_y(estimator_orig, y)
     est = clone(estimator_orig)
 
     est.fit(X, y)
@@ -2513,7 +2484,7 @@ def check_classifier_data_not_an_array(name, estimator_orig):
     X = np.array([[3, 0], [0, 1], [0, 2], [1, 1], [1, 2], [2, 1],
                   [0, 3], [1, 0], [2, 0], [4, 4], [2, 3], [3, 2]])
     X = _pairwise_estimator_convert_X(X, estimator_orig)
-    y = [1, 1, 1, 2, 2, 2, 1, 1, 1, 2, 2, 2]
+    y = np.array([1, 1, 1, 2, 2, 2, 1, 1, 1, 2, 2, 2])
     y = _enforce_estimator_tags_y(estimator_orig, y)
     for obj_type in ["NotAnArray", "PandasDataframe"]:
         check_estimators_data_not_an_array(name, estimator_orig, X, y,
@@ -2649,6 +2620,9 @@ def _enforce_estimator_tags_y(estimator, y):
         # Create strictly positive y. The minimal increment above 0 is 1, as
         # y could be of integer dtype.
         y += 1 + abs(y.min())
+    # Estimators with a `binary_only` tag only accept up to two unique y values
+    if estimator._get_tags()["binary_only"] and y.size > 0:
+        y = np.where(y == y.flat[0], y, y.flat[0] + 1)
     # Estimators in mono_output_task_error raise ValueError if y is of 1-D
     # Convert into a 2-D y for those estimators.
     if estimator._get_tags()["multioutput_only"]:
