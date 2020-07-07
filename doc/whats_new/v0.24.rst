@@ -294,6 +294,13 @@ Changelog
   :meth:`tree.DecisionTreeRegressor.fit`, and has not effect.
   :pr:`17614` by :user:`Juan Carlos Alfaro Jiménez <alfaro96>`.
 
+:mod:`sklearn.utils`
+.........................
+
+- |Fix| Fix :func:`utils.estimator_checks.check_estimator` so that all test
+  cases support the `binary_only` estimator tag.
+  :pr:`17812` by :user:`Bruno Charron <brcharron>`.
+
 Code and Documentation Contributors
 -----------------------------------
 
