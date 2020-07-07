@@ -18,6 +18,7 @@ from urllib.request import urlopen, Request
 import numpy as np
 import scipy.sparse
 
+from ..exceptions import ChangedBehaviorWarning
 from ..externals import _arff
 from ..externals._arff import ArffSparseDataType, ArffContainerType
 from . import get_data_home
@@ -696,7 +697,7 @@ def fetch_openml(
     target_column: Optional[Union[str, List]] = 'default-target',
     cache: bool = True,
     return_X_y: bool = False,
-    as_frame='warn'
+    as_frame='auto'
 ):
     """Fetch dataset from openml by name or dataset id.
 
@@ -752,7 +753,7 @@ def fetch_openml(
         If True, returns ``(data, target)`` instead of a Bunch object. See
         below for more information about the `data` and `target` objects.
 
-    as_frame : bool or 'auto', default=False
+    as_frame : bool or 'auto', default='auto'
         If True, the data is a pandas DataFrame including columns with
         appropriate dtypes (numeric, string or categorical). The target is
         a pandas DataFrame or Series depending on the number of target_columns.
@@ -765,9 +766,8 @@ def fetch_openml(
         is stored in sparse format.
 
         .. versionchanged:: 0.24
-           The default value of `as_frame` will change from `False` to `'auto'`
-           in 0.25. Starting from 0.24, a warning will be raised if `as_frame`
-           is not explicitly set.
+           The default value of `as_frame` changed from `False` to `'auto'`
+           in 0.24.
 
     Returns
     -------
@@ -812,12 +812,6 @@ def fetch_openml(
         in 'target' are represented as NaN's (numerical target) or None
         (categorical target)
     """
-    if as_frame == 'warn':
-        warn("The default value of as_frame will change from False "
-             "to 'auto' in 0.25. Specify the value of as_frame explicitly "
-             "to silence this warning.", FutureWarning)
-        as_frame = False
-
     data_home = get_data_home(data_home=data_home)
     data_home = join(data_home, 'openml')
     if cache is False:
@@ -870,6 +864,11 @@ def fetch_openml(
 
     if as_frame == 'auto':
         as_frame = not return_sparse
+
+        if as_frame:
+            warn("fetch_openml now returns data in pandas format "
+                 "(DataFrame or Series) when source data is not "
+                 "sparse", ChangedBehaviorWarning)
 
     if as_frame and return_sparse:
         raise ValueError('Cannot return dataframe with sparse data')
