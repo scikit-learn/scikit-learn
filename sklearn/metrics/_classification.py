@@ -627,7 +627,7 @@ def cohen_kappa_score(y1, y2, *, labels=None, weights=None,
 
 @_deprecate_positional_args
 def jaccard_score(y_true, y_pred, *, labels=None, pos_label=1,
-                  average='binary', sample_weight=None):
+                  average='binary', sample_weight=None, zero_division="warn"):
     """Jaccard similarity coefficient score
 
     The Jaccard index [1], or Jaccard similarity coefficient, defined as
@@ -750,7 +750,7 @@ def jaccard_score(y_true, y_pred, *, labels=None, pos_label=1,
         denominator = np.array([denominator.sum()])
 
     jaccard = _prf_divide(numerator, denominator, 'jaccard',
-                          'true or predicted', average, ('jaccard',))
+                          'true or predicted', average, ('jaccard',), zero_division=zero_division)
     if average is None:
         return jaccard
     if average == 'weighted':
