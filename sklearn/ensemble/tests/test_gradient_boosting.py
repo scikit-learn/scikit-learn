@@ -84,38 +84,54 @@ def test_classification_toy(loss):
 
 
 @pytest.mark.parametrize(
-    "params",
-    [{"n_estimators": 0}, {"n_estimators": -1},
-     {"learning_rate": 0}, {"learning_rate": -1.0},
-     {"loss": "foobar"},
-     {"min_samples_split": 0.0}, {"min_samples_split": -1.0},
-     {"min_samples_split": 1.1},
-     {"min_samples_leaf": 0}, {"min_samples_leaf": -1.0},
-     {"min_weight_fraction_leaf": -1.0}, {"min_weight_fraction_leaf": 0.6},
-     {"subsample": 0.0}, {"subsample": 1.1}, {"subsample": -0.1},
-     {"max_depth": -0.1}, {"max_depth": 0},
-     {"init": {}}]
+    "params, err_msg",
+    [#({"loss": "huber", "alpha": 1.2}, r"alpha must be in \(0.0, 1.0\)"),
+     #({"loss": "quantile", "alpha": 1.2}, r"alpha must be in \(0.0, 1.0\)"),
+     ({"n_estimators": 0}, "n_estimators must be greater than 0"),
+     ({"n_estimators": -1}, "n_estimators must be greater than 0"),
+     ({"learning_rate": 0}, "learning_rate must be greater than 0"),
+     ({"learning_rate": -1.0}, "learning_rate must be greater than 0"),
+     ({"loss": "foobar"}, "Loss 'foobar' not supported"),
+     ({"min_samples_split": 0.0}, "min_samples_split must be an integer"),
+     ({"min_samples_split": -1.0}, "min_samples_split must be an integer"),
+     ({"min_samples_split": 1.1}, "min_samples_split must be an integer"),
+     ({"min_samples_leaf": 0}, "min_samples_leaf must be at least 1 or"),
+     ({"min_samples_leaf": -1.0}, "min_samples_leaf must be at least 1 or"),
+     ({"min_weight_fraction_leaf": -1.0}, "min_weight_fraction_leaf must in"),
+     ({"min_weight_fraction_leaf": 0.6}, "min_weight_fraction_leaf must in"),
+     ({"subsample": 0.0}, r"subsample must be in \(0,1\]"),
+     ({"subsample": 1.1}, r"subsample must be in \(0,1\]"),
+     ({"subsample": -0.1}, r"subsample must be in \(0,1\]"),
+     ({"max_depth": -0.1}, "max_depth must be greater than zero"),
+     ({"max_depth": 0}, "max_depth must be greater than zero"),
+     ({"init": {}}, "The init parameter must be an estimator or 'zero'"),
+     ({"max_features": "invalid"}, "Invalid value for max_features:"),
+     ({"max_features": 0}, r"max_features must be in \(0, n_features\]"),
+     ({"max_features": 100}, r"max_features must be in \(0, n_features\]"),
+     ({"max_features": -0.1}, r"max_features must be in \(0, n_features\]"),
+     ({"n_iter_no_change": "invalid"}, "n_iter_no_change should either be")]
 )
-def test_classifier_parameter_checks(params):
-    # Check input parameter validation for GradientBoostingClassifier
-    with pytest.raises(ValueError):
-        GradientBoostingClassifier(**params).fit(X, y)
+@pytest.mark.parametrize(
+    "GradientBoosting, X, y",
+    [(GradientBoostingRegressor, X_reg, y_reg),
+     (GradientBoostingClassifier, iris.data, iris.target)]
+)
+def test_gbdt_parameter_checks(GradientBoosting, X, y, params, err_msg):
+    # Check input parameter validation for GradientBoosting
+    with pytest.raises(ValueError, match=err_msg):
+        GradientBoosting(**params).fit(X, y)
 
 
 @pytest.mark.parametrize(
     "params, err_msg",
     [({"loss": "huber", "alpha": 1.2}, r"alpha must be in \(0.0, 1.0\)"),
-     ({"loss": "quantile", "alpha": 1.2}, r"alpha must be in \(0.0, 1.0\)"),
-     ({"max_features": "invalid"}, "Invalid value for max_features:"),
-     ({"max_features": 0}, r"max_features must be in \(0, n_features\]"),
-     ({"max_features": len(X[0]) + 1}, "max_features must be in"),
-     ({"max_features": -0.1}, r"max_features must be in \(0, n_features\]"),
-     ({"n_iter_no_change": "invalid"}, "n_iter_no_change should either be")]
+     ({"loss": "quantile", "alpha": 1.2}, r"alpha must be in \(0.0, 1.0\)")]
 )
-def test_regressor_parameter_checks(params, err_msg):
-    # Check input parameter validation for GradientBoostingRegressor
+def test_gbdt_loss_alpha_error(params, err_msg):
+    # check that an error is raised when alpha is not proper for quantile and
+    # huber loss
     with pytest.raises(ValueError, match=err_msg):
-        GradientBoostingRegressor(**params).fit(X, y)
+        GradientBoostingRegressor(**params).fit(X_reg, y_reg)
 
 
 @pytest.mark.parametrize(
@@ -253,20 +269,18 @@ def test_regression_synthetic():
     assert mse < 0.015
 
 
-def test_feature_importances():
+@pytest.mark.parametrize(
+    "GradientBoosting, X, y",
+    [(GradientBoostingRegressor, X_reg, y_reg),
+     (GradientBoostingClassifier, iris.data, iris.target)]
+)
+def test_feature_importances(GradientBoosting, X, y):
     # smoke test to check that the gradient boosting expose an attribute
     # feature_importances_
-    X = np.array(X_reg, dtype=np.float32)
-    y = np.array(y_reg, dtype=np.float32)
-
-    clf = GradientBoostingRegressor(
-        n_estimators=100, max_depth=5, min_samples_split=2, random_state=1
-    )
-    with pytest.raises(ValueError):
-        clf.feature_importances_
-
-    clf.fit(X, y)
-    assert hasattr(clf, 'feature_importances_')
+    gbdt = GradientBoosting()
+    assert not hasattr(gbdt, "feature_importances_")
+    gbdt.fit(X, y)
+    assert hasattr(gbdt, 'feature_importances_')
 
 
 def test_probability_log():
