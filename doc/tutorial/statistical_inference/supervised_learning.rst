@@ -38,10 +38,10 @@ Nearest neighbor and the curse of dimensionality
 
 .. topic:: Classifying irises:
 
-    .. image:: /auto_examples/datasets/images/sphx_glr_plot_iris_dataset_001.png
-        :target: ../../auto_examples/datasets/plot_iris_dataset.html
-        :align: right
-	:scale: 65
+    .. raw :: html
+
+       <div class="sk-doc-div">
+         <div class="sk-doc-div-box">
 
     The iris dataset is a classification task consisting in identifying 3
     different types of irises (Setosa, Versicolour, and Virginica) from
@@ -52,6 +52,22 @@ Nearest neighbor and the curse of dimensionality
         >>> iris_X, iris_y = datasets.load_iris(return_X_y=True)
         >>> np.unique(iris_y)
         array([0, 1, 2])
+
+    .. raw :: html
+
+         </div>
+         <div class="sk-doc-div-box">
+
+    .. image:: /auto_examples/datasets/images/sphx_glr_plot_iris_dataset_001.png
+        :target: ../../auto_examples/datasets/plot_iris_dataset.html
+        :align: center
+	:scale: 50
+
+    .. raw :: html
+
+         </div>
+       </div>
+
 
 k-Nearest neighbors classifier
 -------------------------------
@@ -155,10 +171,10 @@ in its simplest form, fits a linear model to the data set by adjusting
 a set of parameters in order to make the sum of the squared residuals
 of the model as small as possible.
 
-.. image:: /auto_examples/linear_model/images/sphx_glr_plot_ols_001.png
-   :target: ../../auto_examples/linear_model/plot_ols.html
-   :scale: 40
-   :align: right
+.. raw :: html
+
+   <div class="sk-doc-div">
+     <div class="sk-doc-div-box">
 
 Linear models: :math:`y = X\beta + \epsilon`
 
@@ -166,6 +182,21 @@ Linear models: :math:`y = X\beta + \epsilon`
  * :math:`y`: target variable
  * :math:`\beta`: Coefficients
  * :math:`\epsilon`: Observation noise
+
+.. raw :: html
+
+     </div>
+     <div class="sk-doc-div-box">
+
+.. image:: /auto_examples/linear_model/images/sphx_glr_plot_ols_001.png
+   :target: ../../auto_examples/linear_model/plot_ols.html
+   :scale: 50
+   :align: center
+
+.. raw :: html
+
+     </div>
+   </div>
 
 ::
 
@@ -197,10 +228,10 @@ Shrinkage
 If there are few data points per dimension, noise in the observations
 induces high variance:
 
-.. image:: /auto_examples/linear_model/images/sphx_glr_plot_ols_ridge_variance_001.png
-   :target: ../../auto_examples/linear_model/plot_ols_ridge_variance.html
-   :scale: 70
-   :align: right
+.. raw :: html
+
+   <div class="sk-doc-div">
+     <div class="sk-doc-div-box">
 
 ::
 
@@ -219,6 +250,18 @@ induces high variance:
     ...     plt.plot(test, regr.predict(test)) # doctest: +SKIP
     ...     plt.scatter(this_X, y, s=3)  # doctest: +SKIP
 
+.. raw :: html
+
+     </div>
+     <div class="sk-doc-div-box">
+
+.. image:: /auto_examples/linear_model/images/sphx_glr_plot_ols_ridge_variance_001.png
+   :target: ../../auto_examples/linear_model/plot_ols_ridge_variance.html
+
+.. raw :: html
+
+     </div>
+    </div>
 
 
 A solution in high-dimensional statistical learning is to *shrink* the
@@ -226,10 +269,11 @@ regression coefficients to zero: any two randomly chosen set of
 observations are likely to be uncorrelated. This is called :class:`Ridge`
 regression:
 
-.. image:: /auto_examples/linear_model/images/sphx_glr_plot_ols_ridge_variance_002.png
-   :target: ../../auto_examples/linear_model/plot_ols_ridge_variance.html
-   :scale: 70
-   :align: right
+.. raw :: html
+
+   <div class="sk-doc-div">
+     <div class="sk-doc-div-box">
+
 
 ::
 
@@ -243,6 +287,20 @@ regression:
     ...     regr.fit(this_X, y)
     ...     plt.plot(test, regr.predict(test)) # doctest: +SKIP
     ...     plt.scatter(this_X, y, s=3) # doctest: +SKIP
+
+.. raw :: html
+
+     </div>
+     <div class="sk-doc-div-box">
+
+.. image:: /auto_examples/linear_model/images/sphx_glr_plot_ols_ridge_variance_002.png
+   :target: ../../auto_examples/linear_model/plot_ols_ridge_variance.html
+
+.. raw :: html
+
+     </div>
+   </div>
+
 
 This is an example of **bias/variance tradeoff**: the larger the ridge
 ``alpha`` parameter, the higher the bias and the lower the variance.
@@ -346,16 +404,31 @@ application of Occam's razor: *prefer simpler models*.
 Classification
 ---------------
 
-.. image:: /auto_examples/linear_model/images/sphx_glr_plot_logistic_001.png
-   :target: ../../auto_examples/linear_model/plot_logistic.html
-   :scale: 65
-   :align: right
+.. raw :: html
+
+   <div class="sk-doc-div">
+     <div class="sk-doc-div-box">
 
 For classification, as in the labeling
 `iris <https://en.wikipedia.org/wiki/Iris_flower_data_set>`_ task, linear
 regression is not the right approach as it will give too much weight to
 data far from the decision frontier. A linear approach is to fit a sigmoid
 function or **logistic** function:
+
+.. raw :: html
+
+     </div>
+     <div class="sk-doc-div-box">
+
+.. image:: /auto_examples/linear_model/images/sphx_glr_plot_logistic_001.png
+   :target: ../../auto_examples/linear_model/plot_logistic.html
+   :scale: 70
+   :align: center
+
+.. raw :: html
+
+     </div>
+   </div>
 
 .. math::
 
@@ -373,6 +446,7 @@ This is known as :class:`LogisticRegression`.
 .. image:: /auto_examples/linear_model/images/sphx_glr_plot_iris_logistic_001.png
    :target: ../../auto_examples/linear_model/plot_iris_logistic.html
    :scale: 83
+   :align: center
 
 .. topic:: Multiclass classification
 
@@ -420,19 +494,31 @@ the separating line (less regularization).
 
 .. |svm_margin_unreg| image:: /auto_examples/svm/images/sphx_glr_plot_svm_margin_001.png
    :target: ../../auto_examples/svm/plot_svm_margin.html
-   :scale: 70
 
 .. |svm_margin_reg| image:: /auto_examples/svm/images/sphx_glr_plot_svm_margin_002.png
    :target: ../../auto_examples/svm/plot_svm_margin.html
-   :scale: 70
 
-.. rst-class:: centered
+.. raw :: html
 
-    ============================= ==============================
-     **Unregularized SVM**         **Regularized SVM (default)**
-    ============================= ==============================
-    |svm_margin_unreg|  	  |svm_margin_reg|
-    ============================= ==============================
+   <div class="sk-doc-div">
+     <div class="sk-doc-div-box">
+      <h4>Unregularized SVM</h4>
+
+|svm_margin_unreg|
+
+.. raw :: html
+
+     </div>
+     <div class="sk-doc-div-box">
+      <h4>Regularized SVM (default)</h4>
+
+|svm_margin_reg|
+
+.. raw :: html
+
+     </div>
+    </div>
+
 
 .. topic:: Example:
 
@@ -459,7 +545,7 @@ classification --:class:`SVC` (Support Vector Classification).
 .. _using_kernels_tut:
 
 Using kernels
---------------
+-------------
 
 Classes are not always linearly separable in feature space. The solution is to
 build a decision function that is not linear but may be polynomial instead.
@@ -468,72 +554,58 @@ creating a decision energy by positioning *kernels* on observations:
 
 .. |svm_kernel_linear| image:: /auto_examples/svm/images/sphx_glr_plot_svm_kernels_001.png
    :target: ../../auto_examples/svm/plot_svm_kernels.html
-   :scale: 65
 
 .. |svm_kernel_poly| image:: /auto_examples/svm/images/sphx_glr_plot_svm_kernels_002.png
    :target: ../../auto_examples/svm/plot_svm_kernels.html
-   :scale: 65
-
-.. rst-class:: centered
-
-  .. list-table::
-
-     *
-
-       - **Linear kernel**
-
-       - **Polynomial kernel**
-
-
-
-     *
-
-       - |svm_kernel_linear|
-
-       - |svm_kernel_poly|
-
-
-
-     *
-
-       - ::
-
-            >>> svc = svm.SVC(kernel='linear')
-
-       - ::
-
-            >>> svc = svm.SVC(kernel='poly',
-            ...               degree=3)
-            >>> # degree: polynomial degree
-
-
 
 .. |svm_kernel_rbf| image:: /auto_examples/svm/images/sphx_glr_plot_svm_kernels_003.png
    :target: ../../auto_examples/svm/plot_svm_kernels.html
-   :scale: 65
 
-.. rst-class:: centered
+.. raw :: html
 
-  .. list-table::
+   <div class="sk-doc-div">
+     <div class="sk-doc-div-box">
+      <h4>Linear kernel</h4>
 
-     *
+|svm_kernel_linear|
 
-       - **RBF kernel (Radial Basis Function)**
+::
 
-
-     *
-
-       - |svm_kernel_rbf|
-
-     *
-
-       - ::
-
-            >>> svc = svm.SVC(kernel='rbf')
-            >>> # gamma: inverse of size of
-            >>> # radial kernel
+    >>> svc = svm.SVC(kernel='linear')
 
 
+.. raw :: html
+
+     </div>
+     <div class="sk-doc-div-box">
+      <h4>Polynomial kernel</h4>
+
+|svm_kernel_poly|
+
+::
+
+    >>> svc = svm.SVC(kernel='poly',
+    ...               degree=3)
+    >>> # degree: polynomial degree
+
+.. raw :: html
+
+     </div>
+     <div class="sk-doc-div-box">
+      <h4>RBF kernel (Radial Basis Function)</h4>
+
+|svm_kernel_rbf|
+
+::
+
+    >>> svc = svm.SVC(kernel='rbf')
+    >>> # gamma: inverse of size of
+    >>> # radial kernel
+
+.. raw :: html
+
+     </div>
+    </div>
 
 .. topic:: **Interactive example**
 
@@ -543,7 +615,7 @@ creating a decision energy by positioning *kernels* on observations:
 
 .. image:: /auto_examples/datasets/images/sphx_glr_plot_iris_dataset_001.png
     :target: ../../auto_examples/datasets/plot_iris_dataset.html
-    :align: right
+    :align: center
     :scale: 70
 
 .. topic:: **Exercise**
