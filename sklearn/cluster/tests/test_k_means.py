@@ -283,11 +283,11 @@ def _check_fitted_model(km):
 @pytest.mark.parametrize("init", ["random", "k-means++", centers,
                                   lambda X, k, random_state: centers],
                          ids=["random", "k-means++", "ndarray", "callable"])
-@pytest.mark.parametrize("estimator", [KMeans, MiniBatchKMeans])
-def test_all_init(estimator, data, init):
+@pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
+def test_all_init(Estimator, data, init):
     # Check KMeans and MiniBatchKMeans with all possible init.
     n_init = 10 if type(init) is str else 1
-    km = estimator(init=init, n_clusters=n_clusters, random_state=42,
+    km = Estimator(init=init, n_clusters=n_clusters, random_state=42,
                    n_init=n_init).fit(data)
     _check_fitted_model(km)
 
@@ -335,15 +335,15 @@ def test_k_means_explicit_init_shape(Class):
         km.fit(X)
 
 
-@pytest.mark.parametrize("estimator", [KMeans, MiniBatchKMeans])
-def test_fortran_aligned_data(estimator):
+@pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
+def test_fortran_aligned_data(Estimator):
     # Check that KMeans works with fortran-aligned data.
     X_fortran = np.asfortranarray(X)
     centers_fortran = np.asfortranarray(centers)
 
-    km_c = estimator(n_clusters=n_clusters, init=centers, n_init=1,
+    km_c = Estimator(n_clusters=n_clusters, init=centers, n_init=1,
                      random_state=42).fit(X)
-    km_f = estimator(n_clusters=n_clusters, init=centers_fortran, n_init=1,
+    km_f = Estimator(n_clusters=n_clusters, init=centers_fortran, n_init=1,
                      random_state=42).fit(X_fortran)
     assert_allclose(km_c.cluster_centers_, km_f.cluster_centers_)
     assert_array_equal(km_c.labels_, km_f.labels_)
@@ -391,10 +391,10 @@ def test_k_means_fit_predict(algo, dtype, constructor, seed, max_iter, tol):
     assert v_measure_score(labels_1, labels_2) == 1
 
 
-@pytest.mark.parametrize("estimator", [KMeans, MiniBatchKMeans])
-def test_verbose(estimator):
+@pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
+def test_verbose(Estimator):
     # Check verbose mode of KMeans and MiniBatchKMeans for better coverage.
-    km = estimator(n_clusters=n_clusters, random_state=42, verbose=1)
+    km = Estimator(n_clusters=n_clusters, random_state=42, verbose=1)
     old_stdout = sys.stdout
     sys.stdout = StringIO()
     try:
