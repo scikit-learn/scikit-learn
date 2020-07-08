@@ -245,7 +245,7 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
 
     clip: bool, default=False
         Set to True to clip transformed values of held-out data to
-        provided feature range(default=(0,1))
+        provided feature range.
 
     Attributes
     ----------
