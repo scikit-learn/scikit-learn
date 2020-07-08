@@ -1383,6 +1383,24 @@ def test_average_binary_jaccard_score(recwarn):
     assert not list(recwarn)
 
 
+def test_zero_devision_jaccard_score():
+    y_true = np.array([[1, 0, 1], [0, 0, 0]])
+    y_pred = np.array([[0, 0, 0], [0, 0, 0]])
+    msg = ('Jaccard is ill-defined and being set to 0.0 in '
+           'samples with no true or predicted labels.'
+           ' Use `zero_division` parameter to control this behavior.')
+    assert assert_warns_message(UndefinedMetricWarning, msg,
+                                jaccard_score,
+                                y_true,
+                                y_pred,
+                                average='samples',
+                                zero_division='warn') == 0.0
+    assert jaccard_score(y_true, y_pred,
+                         average='samples', zero_division=0) == 0.0
+    assert jaccard_score(y_true, y_pred,
+                         average='samples', zero_division=1) == 0.5
+
+
 @ignore_warnings
 def test_precision_recall_f1_score_multilabel_1():
     # Test precision_recall_f1_score on a crafted multilabel example
