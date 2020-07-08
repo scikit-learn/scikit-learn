@@ -1,22 +1,23 @@
-import re
-import numpy as np
+import inspect
 
 from typing import Union
+from typing import Any
+from typing import TypeVar
 from typing_extensions import Literal  # noqa
 from typing_extensions import Annotated  # noqa
 
+import numpy as np
+
 
 RandomState = Union[int, np.random.RandomState, None]
+ArrayLike = TypeVar('ArrayLike')
 
 
 class Shape:
     def __init__(self, *shapes):
-        self.shapes = []
-        for shape in shapes:
-            if not isinstance(shape, (tuple, list)):
-                self.shapes.append((shape, ))
-            else:
-                self.shapes.append(shape)
+        if any(not isinstance(s, tuple) for s in shapes):
+            raise ValueError("All shapes must be tuple")
+        self.shapes = shapes
 
     def _join_one(self, shape):
         if len(shape) == 1:
@@ -29,85 +30,77 @@ class Shape:
         return f"of shape {output}"
 
 
+def get_annotation_class_name(annotation) -> str:
+    if annotation is None:
+        return 'None'
+    elif annotation is Any:
+        return 'Any'
+    elif hasattr(annotation, '__metadata__'):
+        return 'Annotated'
+
+    if getattr(annotation, '__qualname__', None):
+        return annotation.__qualname__
+    elif getattr(annotation, '_name', None):
+        #  generic for >= 3.7
+        return annotation._name
+
+    origin = getattr(annotation, '__origin__', None)
+    if origin:
+        return get_annotation_class_name(annotation.__origin__)
+
+    if inspect.isclass(annotation):
+        annotation = annotation.__class__
+    return annotation.__qualname__.lstrip('_')
+
+
 def format_annotation(annotation):
     """Convert annotation to docstring"""
-    if annotation is None or annotation is type(None):  # noqa
+    class_name = get_annotation_class_name(annotation)
+
+    if class_name == 'BaseEstimator':
+        return 'estimator instance'
+    elif class_name == 'ArrayLike':
+        return 'array-like'
+    elif class_name == 'NoneType':
         return 'None'
+    elif class_name == 'RandomState':
+        return 'RandomState instance'
+    elif class_name == 'Annotated':
+        inner_annotation = format_annotation(annotation.__origin__)
+        args = ', '.join(repr(t) for t in annotation.__metadata__)
+        return f'{inner_annotation} {args}'
+    elif class_name == 'Union':
+        values = [format_annotation(t) for t in annotation.__args__]
+        if len(values) == 2:
+            return ' or '.join(values)
+        # greater than 2
+        first = ', '.join(values[:-1])
+        return f'{first} or {values[-1]}'
+    elif class_name == 'Literal':
+        values = ', '.join(repr(t) for t in annotation.__args__)
+        return f'{{{values}}}'
+    elif class_name in ('list', 'List'):
+        values = ', '.join(format_annotation(t)
+                           for t in annotation.__args__)
+        return f'list of {values}'
 
-    if annotation in [int, bool, float, str, dict, np.ndarray]:
-        return annotation.__qualname__
-
-    if hasattr(annotation, '__name__'):
-        name = annotation.__name__
-        if name == 'BaseEstimator':
-            return 'estimator instance'
-        elif name == 'RandomState':
-            return 'int, RandomState instance, or None'
-        elif name == 'ArrayLike':
-            return 'array-like'
-
-    if hasattr(annotation, '__origin__'):
-        origin = annotation.__origin__
-        if hasattr(annotation, '__metadata__'):  # Annotated
-            metadata = ', '.join(str(t) for t in annotation.__metadata__)
-            type_info = format_annotation(origin)
-            return f'{type_info} {metadata}'
-
-        if getattr(origin, '__qualname__', None):
-            name = origin.__qualname__
-        elif getattr(origin, '_name', None):
-            # Required for Union on Python 3.7+
-            name = origin._name
-        else:
-            # Required for Union on Python < 3.7
-            name = origin.__class__.__qualname__.lstrip('_')
-
-        if name == 'Union':
-            values = [format_annotation(t) for t in annotation.__args__]
-            if len(values) == 2:
-                return ' or '.join(values)
-            # greater than 2
-            first = ', '.join(values[:-1])
-            return f'{first}, or {values[-1]}'
-
-        elif name == "Literal":
-            values = ', '.join(format_annotation(t)
-                               for t in annotation.__args__)
-            return f'{{{values}}}'
-        elif name == 'list':
-            values = ', '.join(format_annotation(t)
-                               for t in annotation.__args__)
-            return f'list of {values}'
-
-    return repr(annotation)
+    return class_name
 
 
-def add_types_to_docstring(docstring, annotations, defaults):
+def get_annotations(instance):
+    if not hasattr(instance, '__annotations__'):
+        raise ValueError(f"{instance} does not have annotations")
 
-    indent_regex = r"^( +)Parameters\s*\n +[-=]{10}"
-    indent_match = re.search(indent_regex, docstring, flags=re.MULTILINE)
-    if not indent_match:
-        return docstring
-    n_indent = len(indent_match.group(1))
+    annotations = instance.__annotations__
+    # get defaults
+    params = inspect.signature(instance).parameters
+    defaults = {p: v.default for p, v in params.items()
+                if v.default != inspect.Parameter.empty}
 
-    indent = " " * n_indent
-    param_regex = re.compile(f"{indent}(\\w+) :")
-    lines = docstring.split('\n')
-
-    for lineno, line in enumerate(lines):
-        found_param = param_regex.match(line)
-        if not found_param:
-            continue
-        name = found_param.group(1)
-
-        if name not in annotations:
-            continue
-
-        annotation = annotations[name]
-        type_str = format_annotation(annotation)
-        new_line = f"{indent}{name} : {type_str}"
+    output = {}
+    for name, annotation in annotations.items():
+        anno = format_annotation(annotation)
         if name in defaults:
-            new_line += f", (default={defaults[name]})"
-        lines[lineno] = new_line
-
-    return "\n".join(lines)
+            anno += f", default={repr(defaults[name])}"
+        output[name] = anno
+    return output

@@ -29,6 +29,7 @@ from sklearn.linear_model._base import LinearClassifierMixin
 from sklearn.linear_model import LogisticRegression
 from sklearn.utils import IS_PYPY
 from sklearn.utils._testing import SkipTest
+from sklearn.utils._typing import get_annotations
 from sklearn.utils.estimator_checks import (
     _construct_instance,
     _set_checking_parameters,
@@ -204,3 +205,99 @@ def test_class_support_removed():
 
     with pytest.raises(TypeError, match=msg):
         parametrize_with_checks([LogisticRegression])
+
+
+
+TYPING_IGNORED = {
+    'ARDRegression', 'AdaBoostClassifier', 'AdaBoostRegressor',
+    'AdditiveChi2Sampler', 'AffinityPropagation',
+    'AgglomerativeClustering', 'BaggingClassifier', 'BaggingRegressor',
+    'BayesianGaussianMixture', 'BayesianRidge', 'BernoulliNB',
+    'BernoulliRBM', 'Binarizer', 'Birch', 'CCA', 'CalibratedClassifierCV',
+    'CategoricalNB', 'ClassifierChain', 'ColumnTransformer',
+    'ComplementNB', 'CountVectorizer', 'DBSCAN', 'DecisionTreeClassifier',
+    'DecisionTreeRegressor', 'DictVectorizer', 'DictionaryLearning',
+    'DummyClassifier', 'DummyRegressor', 'ElasticNet', 'ElasticNetCV',
+    'EllipticEnvelope', 'EmpiricalCovariance', 'ExtraTreeClassifier',
+    'ExtraTreeRegressor', 'ExtraTreesClassifier', 'ExtraTreesRegressor',
+    'FactorAnalysis', 'FastICA', 'FeatureAgglomeration', 'FeatureHasher',
+    'FeatureUnion', 'FunctionTransformer', 'GammaRegressor',
+    'GaussianMixture', 'GaussianNB', 'GaussianProcessClassifier',
+    'GaussianProcessRegressor', 'GaussianRandomProjection',
+    'GenericUnivariateSelect', 'GradientBoostingClassifier',
+    'GradientBoostingRegressor', 'GraphicalLasso', 'GraphicalLassoCV',
+    'GridSearchCV', 'HashingVectorizer', 'HistGradientBoostingClassifier',
+    'HistGradientBoostingRegressor', 'HuberRegressor', 'IncrementalPCA',
+    'IsolationForest', 'Isomap', 'IsotonicRegression', 'IterativeImputer',
+    'KBinsDiscretizer', 'KMeans', 'KNNImputer', 'KNeighborsClassifier',
+    'KNeighborsRegressor', 'KNeighborsTransformer', 'KernelCenterer',
+    'KernelDensity', 'KernelPCA', 'KernelRidge', 'LabelBinarizer',
+    'LabelEncoder', 'LabelPropagation', 'LabelSpreading', 'Lars', 'LarsCV',
+    'Lasso', 'LassoCV', 'LassoLars', 'LassoLarsCV', 'LassoLarsIC',
+    'LatentDirichletAllocation', 'LedoitWolf',
+    'LinearDiscriminantAnalysis', 'LinearRegression', 'LinearSVC',
+    'LinearSVR', 'LocalOutlierFactor', 'LocallyLinearEmbedding',
+    'LogisticRegressionCV', 'MDS', 'MLPClassifier',
+    'MLPRegressor', 'MaxAbsScaler', 'MeanShift', 'MinCovDet',
+    'MinMaxScaler', 'MiniBatchDictionaryLearning', 'MiniBatchKMeans',
+    'MiniBatchSparsePCA', 'MissingIndicator', 'MultiLabelBinarizer',
+    'MultiOutputClassifier', 'MultiOutputRegressor', 'MultiTaskElasticNet',
+    'MultiTaskElasticNetCV', 'MultiTaskLasso', 'MultiTaskLassoCV',
+    'MultinomialNB', 'NMF', 'NearestCentroid', 'NearestNeighbors',
+    'NeighborhoodComponentsAnalysis', 'Normalizer', 'NuSVC', 'NuSVR',
+    'Nystroem', 'OAS', 'OPTICS', 'OneClassSVM', 'OneHotEncoder',
+    'OneVsOneClassifier', 'OneVsRestClassifier', 'OrdinalEncoder',
+    'OrthogonalMatchingPursuit', 'OrthogonalMatchingPursuitCV',
+    'OutputCodeClassifier', 'PCA', 'PLSCanonical', 'PLSRegression',
+    'PLSSVD', 'PassiveAggressiveClassifier', 'PassiveAggressiveRegressor',
+    'PatchExtractor', 'Perceptron', 'Pipeline', 'PoissonRegressor',
+    'PolynomialFeatures', 'PowerTransformer',
+    'QuadraticDiscriminantAnalysis', 'QuantileTransformer',
+    'RANSACRegressor', 'RBFSampler', 'RFE', 'RFECV',
+    'RadiusNeighborsClassifier', 'RadiusNeighborsRegressor',
+    'RadiusNeighborsTransformer', 'RandomForestClassifier',
+    'RandomForestRegressor', 'RandomTreesEmbedding', 'RandomizedSearchCV',
+    'RegressorChain', 'Ridge', 'RidgeCV', 'RidgeClassifier',
+    'RidgeClassifierCV', 'RobustScaler', 'SGDClassifier', 'SGDRegressor',
+    'SVC', 'SVR', 'SelectFdr', 'SelectFpr', 'SelectFromModel', 'SelectFwe',
+    'SelectKBest', 'SelectPercentile', 'ShrunkCovariance', 'SimpleImputer',
+    'SkewedChi2Sampler', 'SparseCoder', 'SparsePCA',
+    'SparseRandomProjection', 'SpectralBiclustering', 'SpectralClustering',
+    'SpectralCoclustering', 'SpectralEmbedding', 'StackingClassifier',
+    'StackingRegressor', 'StandardScaler', 'TSNE', 'TfidfTransformer',
+    'TfidfVectorizer', 'TheilSenRegressor', 'TransformedTargetRegressor',
+    'TruncatedSVD', 'TweedieRegressor', 'VarianceThreshold',
+    'VotingClassifier', 'VotingRegressor'
+}
+
+
+@pytest.mark.parametrize(
+    'name, Estimator', [
+        pytest.param(
+            name, Estimator, marks=pytest.mark.skipif(
+                name in TYPING_IGNORED,
+                reason="Estimator does not have annotations"))
+        for name, Estimator in all_estimators()])
+def test_estimators_typestring(name, Estimator):
+    # Check that docstring's type is formated correctly
+    docscrape = pytest.importorskip('numpydoc.docscrape')
+
+    doc = docscrape.ClassDoc(Estimator)
+    parameters = doc['Parameters']
+    parameter_annnotations = get_annotations(Estimator.__init__)
+
+    for parameter in parameters:
+        name, type_str = parameter.name, parameter.type
+        # whitespaces are collapsed to one whitespace
+        type_str = ' '.join(parameter.type.split())
+        assert parameter_annnotations[parameter.name] == type_str, (
+            f"{name} has incorrectly formated docstring")
+
+    attributes = doc['Attributes']
+    attribute_annotations = get_annotations(Estimator)
+    for attribute in attributes:
+        name, type_str = attribute.name, attribute.type
+        # whitespaces are collapsed to one whitespace
+        type_str = ' '.join(attribute.type.split())
+        assert attribute_annotations[name] == type_str, (
+            f"{name} has incorrectly formated docstring")
