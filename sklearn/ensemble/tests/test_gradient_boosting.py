@@ -83,11 +83,6 @@ def test_classification_toy(loss):
     assert leaves.shape == (6, 10, 1)
 
 
-def _check_parameter_error(Estimator, params, TypeError, err_msg=None):
-    with pytest.raises(TypeError, match=err_msg):
-        Estimator(**params).fit(X, y)
-
-
 @pytest.mark.parametrize(
     "params",
     [{"n_estimators": 0}, {"n_estimators": -1},
@@ -103,7 +98,8 @@ def _check_parameter_error(Estimator, params, TypeError, err_msg=None):
 )
 def test_classifier_parameter_checks(params):
     # Check input parameter validation for GradientBoostingClassifier
-    _check_parameter_error(GradientBoostingClassifier, params, ValueError)
+    with pytest.raises(ValueError):
+        GradientBoostingClassifier(**params).fit(X, y)
 
 
 @pytest.mark.parametrize(
@@ -118,9 +114,8 @@ def test_classifier_parameter_checks(params):
 )
 def test_regressor_parameter_checks(params, err_msg):
     # Check input parameter validation for GradientBoostingRegressor
-    _check_parameter_error(
-        GradientBoostingRegressor, params, ValueError, err_msg,
-    )
+    with pytest.raises(ValueError, match=err_msg):
+        GradientBoostingRegressor(**params).fit(X, y)
 
 
 @pytest.mark.parametrize(
