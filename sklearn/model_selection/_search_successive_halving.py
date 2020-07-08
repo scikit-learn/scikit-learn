@@ -35,7 +35,7 @@ class BaseSuccessiveHalving(BaseSearchCV):
     Almost optimal exploration in multi-armed bandits, ICML 13
     Zohar Karnin, Tomer Koren, Oren Somekh
     """
-    def __init__(self, estimator, scoring=None,
+    def __init__(self, estimator, *, scoring=None,
                  n_jobs=None, refit=True, cv=5, verbose=0,
                  pre_dispatch='2*n_jobs', random_state=None,
                  error_score=np.nan, return_train_score=True,
@@ -568,7 +568,7 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
     """
     _required_parameters = ["estimator", "param_grid"]
 
-    def __init__(self, estimator, param_grid, scoring=None,
+    def __init__(self, estimator, param_grid, *, scoring=None,
                  n_jobs=None, refit=True, verbose=0, cv=5,
                  pre_dispatch='2*n_jobs', random_state=None,
                  error_score=np.nan, return_train_score=True,
@@ -862,7 +862,7 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
     """
     _required_parameters = ["estimator", "param_distributions"]
 
-    def __init__(self, estimator, param_distributions,
+    def __init__(self, estimator, param_distributions, *,
                  n_candidates='auto', scoring=None, n_jobs=None, refit=True,
                  verbose=0, cv=5, pre_dispatch='2*n_jobs',
                  random_state=None, error_score=np.nan,
