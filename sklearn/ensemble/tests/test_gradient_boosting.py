@@ -164,8 +164,6 @@ def test_classification_synthetic(loss):
     assert error_rate < 0.08
 
 
-
-@pytest.mark.network
 @pytest.mark.parametrize('loss', ('ls', 'lad', 'huber'))
 @pytest.mark.parametrize('subsample', (1.0, 0.5))
 def test_regression_dataset(loss, subsample):
