@@ -973,9 +973,9 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         n_samples, n_features = X.shape
         expected_n_features = self.cluster_centers_.shape[1]
         if not n_features == expected_n_features:
-            raise ValueError("Incorrect number of features. "
-                             "Got %d features, expected %d" % (
-                                 n_features, expected_n_features))
+            raise ValueError(
+                f"Incorrect number of features. Got {n_features} features, "
+                f"expected {expected_n_features}.")
 
         return X
 
@@ -1689,7 +1689,7 @@ class MiniBatchKMeans(KMeans):
         for init_idx in range(self._n_init):
             if self.verbose:
                 print("Init %d/%d with method: %s"
-                      % (init_idx + 1, self._n_init, self.init))
+                      % (init_idx + 1, self._n_init, init))
             weight_sums = np.zeros(self.n_clusters, dtype=sample_weight.dtype)
 
             # TODO: once the `k_means` function works with sparse input we
@@ -1698,7 +1698,7 @@ class MiniBatchKMeans(KMeans):
             # Initialize the centers using only a fraction of the data as we
             # expect n_samples to be very large when using MiniBatchKMeans
             cluster_centers = _init_centroids(
-                X, self.n_clusters, self.init,
+                X, self.n_clusters, init,
                 random_state=random_state,
                 x_squared_norms=x_squared_norms,
                 init_size=self._init_size)
@@ -1841,7 +1841,7 @@ class MiniBatchKMeans(KMeans):
 
             # initialize the cluster centers
             self.cluster_centers_ = _init_centroids(
-                X, self.n_clusters, self.init,
+                X, self.n_clusters, init,
                 random_state=self.random_state_,
                 x_squared_norms=x_squared_norms, init_size=self.init_size)
 
