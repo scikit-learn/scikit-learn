@@ -20,7 +20,8 @@ from . import empirical_covariance, EmpiricalCovariance, log_likelihood
 from ..exceptions import ConvergenceWarning
 from ..utils.validation import check_random_state
 from ..utils.validation import _deprecate_positional_args
-from ..linear_model import _cd_fast as cd_fast
+# mypy error: Module 'sklearn.linear_model' has no attribute '_cd_fast'
+from ..linear_model import _cd_fast as cd_fast  # type: ignore
 from ..linear_model import lars_path_gram
 from ..model_selection import check_cv, cross_val_score
 
@@ -74,14 +75,17 @@ def alpha_max(emp_cov):
 
 
 # The g-lasso algorithm
-
-def graphical_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
+@_deprecate_positional_args
+def graphical_lasso(emp_cov, alpha, *, cov_init=None, mode='cd', tol=1e-4,
                     enet_tol=1e-4, max_iter=100, verbose=False,
                     return_costs=False, eps=np.finfo(np.float64).eps,
                     return_n_iter=False):
     """l1-penalized covariance estimator
 
     Read more in the :ref:`User Guide <sparse_inverse_covariance>`.
+
+    .. versionchanged:: v0.20
+        graph_lasso has been renamed to graphical_lasso
 
     Parameters
     ----------
@@ -94,7 +98,8 @@ def graphical_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
         Range is (0, inf].
 
     cov_init : array of shape (n_features, n_features), default=None
-        The initial guess for the covariance.
+        The initial guess for the covariance. If None, then the empirical
+        covariance is used.
 
     mode : {'cd', 'lars'}, default='cd'
         The Lasso solver to use: coordinate descent or LARS. Use LARS for
@@ -281,6 +286,9 @@ class GraphicalLasso(EmpiricalCovariance):
     """Sparse inverse covariance estimation with an l1-penalized estimator.
 
     Read more in the :ref:`User Guide <sparse_inverse_covariance>`.
+
+    .. versionchanged:: v0.20
+        GraphLasso has been renamed to GraphicalLasso
 
     Parameters
     ----------
@@ -508,6 +516,9 @@ class GraphicalLassoCV(GraphicalLasso):
 
     Read more in the :ref:`User Guide <sparse_inverse_covariance>`.
 
+    .. versionchanged:: v0.20
+        GraphLassoCV has been renamed to GraphicalLassoCV
+
     Parameters
     ----------
     alphas : int or array-like of shape (n_alphas,), dtype=float, default=4
@@ -561,6 +572,9 @@ class GraphicalLassoCV(GraphicalLasso):
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
+
+        .. versionchanged:: v0.20
+           `n_jobs` default changed from 1 to None
 
     verbose : bool, default=False
         If verbose is True, the objective function and duality gap are

@@ -16,6 +16,7 @@ from joblib import Parallel, delayed
 from ._base import LinearModel, _pre_fit
 from ..base import RegressorMixin, MultiOutputMixin
 from ..utils import as_float_array, check_array
+from ..utils.validation import _deprecate_positional_args
 from ..model_selection import check_cv
 
 premature = """ Orthogonal matching pursuit ended prematurely due to linear
@@ -262,7 +263,8 @@ def _gram_omp(Gram, Xy, n_nonzero_coefs, tol_0=None, tol=None,
         return gamma, indices[:n_active], n_active
 
 
-def orthogonal_mp(X, y, n_nonzero_coefs=None, tol=None, precompute=False,
+@_deprecate_positional_args
+def orthogonal_mp(X, y, *, n_nonzero_coefs=None, tol=None, precompute=False,
                   copy_X=True, return_path=False,
                   return_n_iter=False):
     r"""Orthogonal Matching Pursuit (OMP)
@@ -287,27 +289,27 @@ def orthogonal_mp(X, y, n_nonzero_coefs=None, tol=None, precompute=False,
     y : array, shape (n_samples,) or (n_samples, n_targets)
         Input targets
 
-    n_nonzero_coefs : int
+    n_nonzero_coefs : int, default=None
         Desired number of non-zero entries in the solution. If None (by
         default) this value is set to 10% of n_features.
 
-    tol : float
+    tol : float, default=None
         Maximum norm of the residual. If not None, overrides n_nonzero_coefs.
 
-    precompute : {True, False, 'auto'},
+    precompute : {True, False, 'auto'}, default=False
         Whether to perform precomputations. Improves performance when n_targets
         or n_samples is very large.
 
-    copy_X : bool, optional
+    copy_X : bool, default=True
         Whether the design matrix X must be copied by the algorithm. A false
         value is only helpful if X is already Fortran-ordered, otherwise a
         copy is made anyway.
 
-    return_path : bool, optional. Default: False
+    return_path : bool, default=False
         Whether to return every value of the nonzero coefficients along the
         forward path. Useful for cross-validation.
 
-    return_n_iter : bool, optional default False
+    return_n_iter : bool, default=False
         Whether or not to return the number of iterations.
 
     Returns
@@ -371,7 +373,8 @@ def orthogonal_mp(X, y, n_nonzero_coefs=None, tol=None, precompute=False,
             norms_squared = np.sum((y ** 2), axis=0)
         else:
             norms_squared = None
-        return orthogonal_mp_gram(G, Xy, n_nonzero_coefs, tol, norms_squared,
+        return orthogonal_mp_gram(G, Xy, n_nonzero_coefs=n_nonzero_coefs,
+                                  tol=tol, norms_squared=norms_squared,
                                   copy_Gram=copy_X, copy_Xy=False,
                                   return_path=return_path)
 
@@ -404,7 +407,8 @@ def orthogonal_mp(X, y, n_nonzero_coefs=None, tol=None, precompute=False,
         return np.squeeze(coef)
 
 
-def orthogonal_mp_gram(Gram, Xy, n_nonzero_coefs=None, tol=None,
+@_deprecate_positional_args
+def orthogonal_mp_gram(Gram, Xy, *, n_nonzero_coefs=None, tol=None,
                        norms_squared=None, copy_Gram=True,
                        copy_Xy=True, return_path=False,
                        return_n_iter=False):
@@ -423,30 +427,30 @@ def orthogonal_mp_gram(Gram, Xy, n_nonzero_coefs=None, tol=None,
     Xy : array, shape (n_features,) or (n_features, n_targets)
         Input targets multiplied by X: X.T * y
 
-    n_nonzero_coefs : int
+    n_nonzero_coefs : int, default=None
         Desired number of non-zero entries in the solution. If None (by
         default) this value is set to 10% of n_features.
 
-    tol : float
+    tol : float, default=None
         Maximum norm of the residual. If not None, overrides n_nonzero_coefs.
 
-    norms_squared : array-like, shape (n_targets,)
+    norms_squared : array-like, shape (n_targets,), default=None
         Squared L2 norms of the lines of y. Required if tol is not None.
 
-    copy_Gram : bool, optional
+    copy_Gram : bool, default=True
         Whether the gram matrix must be copied by the algorithm. A false
         value is only helpful if it is already Fortran-ordered, otherwise a
         copy is made anyway.
 
-    copy_Xy : bool, optional
+    copy_Xy : bool, default=True
         Whether the covariance vector Xy must be copied by the algorithm.
         If False, it may be overwritten.
 
-    return_path : bool, optional. Default: False
+    return_path : bool, default=False
         Whether to return every value of the nonzero coefficients along the
         forward path. Useful for cross-validation.
 
-    return_n_iter : bool, optional default False
+    return_n_iter : bool, default=False
         Whether or not to return the number of iterations.
 
     Returns
@@ -546,27 +550,27 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
 
     Parameters
     ----------
-    n_nonzero_coefs : int, optional
+    n_nonzero_coefs : int, default=None
         Desired number of non-zero entries in the solution. If None (by
         default) this value is set to 10% of n_features.
 
-    tol : float, optional
+    tol : float, default=None
         Maximum norm of the residual. If not None, overrides n_nonzero_coefs.
 
-    fit_intercept : boolean, optional
+    fit_intercept : boolean, default=True
         whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (i.e. data is expected to be centered).
 
-    normalize : boolean, optional, default True
+    normalize : boolean, default=True
         This parameter is ignored when ``fit_intercept`` is set to False.
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
         If you wish to standardize, please use
-        :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
+        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
-    precompute : {True, False, 'auto'}, default 'auto'
+    precompute : {True, False, 'auto'}, default='auto'
         Whether to use a precomputed Gram and Xy matrix to speed up
         calculations. Improves performance when :term:`n_targets` or
         :term:`n_samples` is very large. Note that if you already have such
@@ -616,7 +620,8 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
     decomposition.sparse_encode
     OrthogonalMatchingPursuitCV
     """
-    def __init__(self, n_nonzero_coefs=None, tol=None, fit_intercept=True,
+    @_deprecate_positional_args
+    def __init__(self, *, n_nonzero_coefs=None, tol=None, fit_intercept=True,
                  normalize=True, precompute='auto'):
         self.n_nonzero_coefs = n_nonzero_coefs
         self.tol = tol
@@ -660,7 +665,7 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
 
         if Gram is False:
             coef_, self.n_iter_ = orthogonal_mp(
-                X, y, self.n_nonzero_coefs_, self.tol,
+                X, y, n_nonzero_coefs=self.n_nonzero_coefs_, tol=self.tol,
                 precompute=False, copy_X=True,
                 return_n_iter=True)
         else:
@@ -708,7 +713,7 @@ def _omp_path_residues(X_train, y_train, X_test, y_test, copy=True,
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
         If you wish to standardize, please use
-        :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
+        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
     max_iter : integer, optional
@@ -777,7 +782,7 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
         If you wish to standardize, please use
-        :class:`sklearn.preprocessing.StandardScaler` before calling ``fit``
+        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
     max_iter : integer, optional
@@ -853,7 +858,8 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
     decomposition.sparse_encode
 
     """
-    def __init__(self, copy=True, fit_intercept=True, normalize=True,
+    @_deprecate_positional_args
+    def __init__(self, *, copy=True, fit_intercept=True, normalize=True,
                  max_iter=None, cv=None, n_jobs=None, verbose=False):
         self.copy = copy
         self.fit_intercept = fit_intercept

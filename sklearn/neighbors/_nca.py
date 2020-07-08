@@ -23,6 +23,7 @@ from ..decomposition import PCA
 from ..utils.multiclass import check_classification_targets
 from ..utils.random import check_random_state
 from ..utils.validation import check_is_fitted, check_array, check_scalar
+from ..utils.validation import _deprecate_positional_args
 from ..exceptions import ConvergenceWarning
 
 
@@ -161,7 +162,8 @@ class NeighborhoodComponentsAnalysis(TransformerMixin, BaseEstimator):
 
     """
 
-    def __init__(self, n_components=None, init='auto', warm_start=False,
+    @_deprecate_positional_args
+    def __init__(self, n_components=None, *, init='auto', warm_start=False,
                  max_iter=50, tol=1e-5, callback=None, verbose=0,
                  random_state=None):
         self.n_components = n_components
@@ -306,7 +308,7 @@ class NeighborhoodComponentsAnalysis(TransformerMixin, BaseEstimator):
         # Check the preferred dimensionality of the projected space
         if self.n_components is not None:
             check_scalar(
-                self.n_components, 'n_components', numbers.Integral, 1)
+                self.n_components, 'n_components', numbers.Integral, min_val=1)
 
             if self.n_components > X.shape[1]:
                 raise ValueError('The preferred dimensionality of the '
@@ -325,9 +327,9 @@ class NeighborhoodComponentsAnalysis(TransformerMixin, BaseEstimator):
                                  .format(X.shape[1],
                                          self.components_.shape[1]))
 
-        check_scalar(self.max_iter, 'max_iter', numbers.Integral, 1)
-        check_scalar(self.tol, 'tol', numbers.Real, 0.)
-        check_scalar(self.verbose, 'verbose', numbers.Integral, 0)
+        check_scalar(self.max_iter, 'max_iter', numbers.Integral, min_val=1)
+        check_scalar(self.tol, 'tol', numbers.Real, min_val=0.)
+        check_scalar(self.verbose, 'verbose', numbers.Integral, min_val=0)
 
         if self.callback is not None:
             if not callable(self.callback):
@@ -520,3 +522,6 @@ class NeighborhoodComponentsAnalysis(TransformerMixin, BaseEstimator):
             sys.stdout.flush()
 
         return sign * loss, sign * gradient.ravel()
+
+    def _more_tags(self):
+        return {'requires_y': True}

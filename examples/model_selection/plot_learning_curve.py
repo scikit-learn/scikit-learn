@@ -57,6 +57,7 @@ def plot_learning_curve(estimator, title, X, y, axes=None, ylim=None, cv=None,
     cv : int, cross-validation generator or an iterable, optional
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
+
           - None, to use the default 5-fold cross-validation,
           - integer, to specify the number of folds.
           - :term:`CV splitter`,

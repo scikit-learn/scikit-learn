@@ -4,8 +4,11 @@
 
 import numpy as np
 
+from .validation import _deprecate_positional_args
 
-def compute_class_weight(class_weight, classes, y):
+
+@_deprecate_positional_args
+def compute_class_weight(class_weight, *, classes, y):
     """Estimate class weights for unbalanced datasets.
 
     Parameters
@@ -69,7 +72,8 @@ def compute_class_weight(class_weight, classes, y):
     return weight
 
 
-def compute_sample_weight(class_weight, y, indices=None):
+@_deprecate_positional_args
+def compute_sample_weight(class_weight, y, *, indices=None):
     """Estimate sample weights by class for unbalanced datasets.
 
     Parameters
@@ -150,8 +154,8 @@ def compute_sample_weight(class_weight, y, indices=None):
             classes_subsample = np.unique(y_subsample)
 
             weight_k = np.take(compute_class_weight(class_weight_k,
-                                                    classes_subsample,
-                                                    y_subsample),
+                                                    classes=classes_subsample,
+                                                    y=y_subsample),
                                np.searchsorted(classes_subsample,
                                                classes_full),
                                mode='clip')
@@ -159,8 +163,8 @@ def compute_sample_weight(class_weight, y, indices=None):
             classes_missing = set(classes_full) - set(classes_subsample)
         else:
             weight_k = compute_class_weight(class_weight_k,
-                                            classes_full,
-                                            y_full)
+                                            classes=classes_full,
+                                            y=y_full)
 
         weight_k = weight_k[np.searchsorted(classes_full, y_full)]
 

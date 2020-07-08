@@ -889,4 +889,4 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
                 self.max_resources_ // self.min_resources_)
         return ParameterSampler(self.param_distributions,
                                 n_candidates_first_iter,
-                                self.random_state)
+                                random_state=self.random_state)

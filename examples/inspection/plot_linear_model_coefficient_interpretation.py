@@ -3,9 +3,9 @@
 Common pitfalls in interpretation of coefficients of linear models
 ==================================================================
 
-Linear models describe situations in which the target value is expected to be
+In linear models, the target value is modeled as
 a linear combination of the features (see the :ref:`linear_model` User Guide
-section for a description of a set of linear model methods available in
+section for a description of a set of linear models available in
 scikit-learn).
 Coefficients in multiple linear models represent the relationship between the
 given feature, :math:`X_i` and the target, :math:`y`, assuming that all the
@@ -36,7 +36,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-#############################################################################
+# %%
 # The dataset: wages
 # ------------------
 #
@@ -48,26 +48,27 @@ from sklearn.datasets import fetch_openml
 
 survey = fetch_openml(data_id=534, as_frame=True)
 
-##############################################################################
+# %%
 # Then, we identify features `X` and targets `y`: the column WAGE is our
 # target variable (i.e., the variable which we want to predict).
 #
 X = survey.data[survey.feature_names]
 X.describe(include="all")
 
-##############################################################################
-# Notice that the dataset contains categorical and numerical variables.
-# This will give us directions on how to preprocess the data thereafter.
+# %%
+# Note that the dataset contains categorical and numerical variables.
+# We will need to take this into account when preprocessing the dataset
+# thereafter.
 
 X.head()
 
-##############################################################################
+# %%
 # Our target for prediction: the wage.
 # Wages are described as floating-point number in dollars per hour.
 y = survey.target.values.ravel()
 survey.target.head()
 
-###############################################################################
+# %%
 # We split the sample into a train and a test dataset.
 # Only the train dataset will be used in the following exploratory analysis.
 # This is a way to emulate a real situation where predictions are performed on
@@ -80,7 +81,7 @@ X_train, X_test, y_train, y_test = train_test_split(
     X, y, random_state=42
 )
 
-##############################################################################
+# %%
 # First, let's get some insights by looking at the variable distributions and
 # at the pairwise relationships between them. Only numerical
 # variables will be used. In the following plot, each dot represents a sample.
@@ -91,27 +92,30 @@ train_dataset = X_train.copy()
 train_dataset.insert(0, "WAGE", y_train)
 _ = sns.pairplot(train_dataset, kind='reg', diag_kind='kde')
 
-##############################################################################
-# Looking closely at the WAGE distribution it could be noticed that it has a
-# long tail and we could take its logarithm
-# to simplify our problem and approximate a normal distribution.
+# %%
+# Looking closely at the WAGE distribution reveals that it has a
+# long tail. For this reason, we should take its logarithm
+# to turn it approximately into a normal distribution (linear models such
+# as ridge or lasso work best for a normal distribution of error).
+#
 # The WAGE is increasing when EDUCATION is increasing.
-# It should be noted that the dependence between WAGE and EDUCATION
-# represented here is a marginal dependence, i.e., it describe the behavior
-# of a specific variable without fixing the others.
-# Also, the EXPERIENCE and AGE are linearly correlated.
+# Note that the dependence between WAGE and EDUCATION
+# represented here is a marginal dependence, i.e., it describes the behavior
+# of a specific variable without keeping the others fixed.
+#
+# Also, the EXPERIENCE and AGE are strongly linearly correlated.
 #
 # .. _the-pipeline:
 #
 # The machine-learning pipeline
 # -----------------------------
 #
-# To design our machine-learning pipeline, we manually
+# To design our machine-learning pipeline, we first manually
 # check the type of data that we are dealing with:
 
 survey.data.info()
 
-#############################################################################
+# %%
 # As seen previously, the dataset contains columns with different data types
 # and we need to apply a specific preprocessing for each data types.
 # In particular categorical variables cannot be included in linear model if not
@@ -136,8 +140,8 @@ preprocessor = make_column_transformer(
     remainder='passthrough'
 )
 
-##############################################################################
-# To describe the dataset as a linear model we choose to use a ridge regressor
+# %%
+# To describe the dataset as a linear model we use a ridge regressor
 # with a very small regularization and to model the logarithm of the WAGE.
 
 
@@ -154,7 +158,7 @@ model = make_pipeline(
     )
 )
 
-##############################################################################
+# %%
 # Processing the dataset
 # ----------------------
 #
@@ -162,7 +166,7 @@ model = make_pipeline(
 
 _ = model.fit(X_train, y_train)
 
-##############################################################################
+# %%
 # Then we check the performance of the computed model plotting its predictions
 # on the test set and computing,
 # for example, the median absolute error of the model.
@@ -186,15 +190,15 @@ plt.xlabel('Truths')
 plt.xlim([0, 27])
 _ = plt.ylim([0, 27])
 
-##############################################################################
+# %%
 # The model learnt is far from being a good model making accurate predictions:
 # this is obvious when looking at the plot above, where good predictions
 # should lie on the red line.
+#
 # In the following section, we will interpret the coefficients of the model.
-# While we do so, we should keep in mind that any conclusion we way draw will
-# be about
-# the model that we build, rather than about the true (real-world) generative
-# process of the data.
+# While we do so, we should keep in mind that any conclusion we draw is
+# about the model that we build, rather than about the true (real-world)
+# generative process of the data.
 #
 # Interpreting coefficients: scale matters
 # ---------------------------------------------
@@ -215,10 +219,10 @@ coefs = pd.DataFrame(
 
 coefs
 
-##############################################################################
+# %%
 # The AGE coefficient is expressed in "dollars/hour per living years" while the
 # EDUCATION one is expressed in "dollars/hour per years of education". This
-# representation of the coefficients has the advantage of making clear the
+# representation of the coefficients has the benefit of making clear the
 # practical predictions of the model: an increase of :math:`1` year in AGE
 # means a decrease of :math:`0.030867` dollars/hour, while an increase of
 # :math:`1` year in EDUCATION means an increase of :math:`0.054699`
@@ -227,22 +231,25 @@ coefs
 # are expressed in dollars/hour. Then, we cannot compare the magnitude of
 # different coefficients since the features have different natural scales, and
 # hence value ranges, because of their different unit of measure. This is more
-# evident if we plot the coefficients.
+# visible if we plot the coefficients.
 
 coefs.plot(kind='barh', figsize=(9, 7))
 plt.title('Ridge model, small regularization')
 plt.axvline(x=0, color='.5')
 plt.subplots_adjust(left=.3)
 
-###############################################################################
+# %%
 # Indeed, from the plot above the most important factor in determining WAGE
 # appears to be the
-# variable UNION, even if it is plausible that variables like EXPERIENCE
-# should have more impact.
-# Looking at the coefficient plot to extrapolate feature importance could be
+# variable UNION, even if our intuition might tell us that variables
+# like EXPERIENCE should have more impact.
+#
+# Looking at the coefficient plot to gauge feature importance can be
 # misleading as some of them vary on a small scale, while others, like AGE,
 # varies a lot more, several decades.
-# This is evident if we compare feature standard deviations.
+#
+# This is visible if we compare the standard deviations of different
+# features.
 
 X_train_preprocessed = pd.DataFrame(
     model.named_steps['columntransformer'].transform(X_train),
@@ -253,7 +260,7 @@ X_train_preprocessed.std(axis=0).plot(kind='barh', figsize=(9, 7))
 plt.title('Features std. dev.')
 plt.subplots_adjust(left=.3)
 
-###############################################################################
+# %%
 # Multiplying the coefficients by the standard deviation of the related
 # feature would reduce all the coefficients to the same unit of measure.
 # As we will see :ref:`after<scaling_num>` this is equivalent to normalize
@@ -275,7 +282,7 @@ plt.title('Ridge model, small regularization')
 plt.axvline(x=0, color='.5')
 plt.subplots_adjust(left=.3)
 
-###############################################################################
+# %%
 # Now that the coefficients have been scaled, we can safely compare them.
 #
 # .. warning::
@@ -296,8 +303,11 @@ plt.subplots_adjust(left=.3)
 # Checking the variability of the coefficients
 # --------------------------------------------
 #
-# We can check the coefficient variability through cross-validation.
-# If coefficients vary in a significant way changing the input dataset
+# We can check the coefficient variability through cross-validation:
+# it is a form of data perturbation (related to
+# `resampling <https://en.wikipedia.org/wiki/Resampling_(statistics)>`_).
+#
+# If coefficients vary significantly when changing the input dataset
 # their robustness is not guaranteed, and they should probably be interpreted
 # with caution.
 
@@ -322,7 +332,7 @@ plt.xlabel('Coefficient importance')
 plt.title('Coefficient importance and its variability')
 plt.subplots_adjust(left=.3)
 
-###############################################################################
+# %%
 # The problem of correlated variables
 # -----------------------------------
 #
@@ -330,6 +340,7 @@ plt.subplots_adjust(left=.3)
 # might be due to the collinearity between the 2 features: as AGE and
 # EXPERIENCE vary together in the data, their effect is difficult to tease
 # apart.
+#
 # To verify this interpretation we plot the variability of the AGE and
 # EXPERIENCE coefficient.
 #
@@ -344,7 +355,7 @@ plt.scatter(coefs["AGE"], coefs["EXPERIENCE"])
 _ = plt.title('Co-variations of coefficients for AGE and EXPERIENCE '
               'across folds')
 
-###############################################################################
+# %%
 # Two regions are populated: when the EXPERIENCE coefficient is
 # positive the AGE one is negative and viceversa.
 #
@@ -372,7 +383,7 @@ plt.title('Coefficient importance and its variability')
 plt.xlabel('Coefficient importance')
 plt.subplots_adjust(left=.3)
 
-###############################################################################
+# %%
 # The estimation of the EXPERIENCE coefficient is now less variable and
 # remain important for all models trained during cross-validation.
 #
@@ -396,7 +407,7 @@ preprocessor = make_column_transformer(
     remainder='passthrough'
 )
 
-###############################################################################
+# %%
 # The model will stay unchanged.
 
 model = make_pipeline(
@@ -410,7 +421,7 @@ model = make_pipeline(
 
 _ = model.fit(X_train, y_train)
 
-##############################################################################
+# %%
 # Again, we check the performance of the computed
 # model using, for example, the median absolute error of the model and the R
 # squared coefficient.
@@ -433,7 +444,7 @@ plt.xlabel('Truths')
 plt.xlim([0, 27])
 _ = plt.ylim([0, 27])
 
-##############################################################################
+# %%
 # For the coefficient analysis, scaling is not needed this time.
 
 coefs = pd.DataFrame(
@@ -445,8 +456,8 @@ plt.title('Ridge model, small regularization, normalized variables')
 plt.axvline(x=0, color='.5')
 plt.subplots_adjust(left=.3)
 
-##############################################################################
-# We cross validate the coefficients.
+# %%
+# We now inspect the coefficients across several cross-validation folds.
 
 cv_model = cross_validate(
     model, X, y, cv=RepeatedKFold(n_splits=5, n_repeats=5),
@@ -464,7 +475,7 @@ plt.axvline(x=0, color='.5')
 plt.title('Coefficient variability')
 plt.subplots_adjust(left=.3)
 
-##############################################################################
+# %%
 # The result is quite similar to the non-normalized case.
 #
 # Linear models with regularization
@@ -472,11 +483,12 @@ plt.subplots_adjust(left=.3)
 #
 # In machine-learning practice, Ridge Regression is more often used with
 # non-negligible regularization.
+#
 # Above, we limited this regularization to a very little amount.
 # Regularization improves the conditioning of the problem and reduces the
 # variance of the estimates. RidgeCV applies cross validation in order to
 # determine which value of the regularization parameter (`alpha`) is best
-# suited for the model estimation.
+# suited for prediction.
 
 from sklearn.linear_model import RidgeCV
 
@@ -491,12 +503,12 @@ model = make_pipeline(
 
 _ = model.fit(X_train, y_train)
 
-##############################################################################
-# First we verify which value of :math:`\alpha` has been selected.
+# %%
+# First we check which value of :math:`\alpha` has been selected.
 
 model[-1].regressor_.alpha_
 
-##############################################################################
+# %%
 # Then we check the quality of the predictions.
 
 y_pred = model.predict(X_train)
@@ -518,7 +530,7 @@ plt.xlabel('Truths')
 plt.xlim([0, 27])
 _ = plt.ylim([0, 27])
 
-##############################################################################
+# %%
 # The ability to reproduce the data of the regularized model is similar to
 # the one of the non-regularized model.
 
@@ -531,17 +543,20 @@ plt.title('Ridge model, regularization, normalized variables')
 plt.axvline(x=0, color='.5')
 plt.subplots_adjust(left=.3)
 
-##############################################################################
+# %%
 # The coefficients are significantly different.
-# AGE and EXPERIENCE coefficients are both positive but they have less
+# AGE and EXPERIENCE coefficients are both positive but they now have less
 # influence on the prediction.
-# The regularization manages to lower the influence of correlated
+#
+# The regularization reduces the influence of correlated
 # variables on the model because the weight is shared between the two
-# predictive variables, so neither alone would be very strongly weighted.
-# On the other hand, those weights are more robust with respect to
-# cross validation (see the :ref:`ridge_regression` User Guide section),
-# as is shown in the plot below to be compared with the
-# :ref:`previous one<covariation>`.
+# predictive variables, so neither alone would have strong weights.
+#
+# On the other hand, the weights obtained with regularization are more
+# stable  (see the :ref:`ridge_regression` User Guide section). This
+# increased stability is visible from the plot, obtained from data
+# perturbations, in a cross validation. This plot can  be compared with
+# the :ref:`previous one<covariation>`.
 
 cv_model = cross_validate(
     model, X, y, cv=RepeatedKFold(n_splits=5, n_repeats=5),
@@ -563,7 +578,7 @@ plt.scatter(coefs["AGE"], coefs["EXPERIENCE"])
 _ = plt.title('Co-variations of coefficients for AGE and EXPERIENCE '
               'across folds')
 
-##############################################################################
+# %%
 # Linear models with sparse coefficients
 # --------------------------------------
 #
@@ -589,12 +604,12 @@ model = make_pipeline(
 
 _ = model.fit(X_train, y_train)
 
-##############################################################################
+# %%
 # First we verify which value of :math:`\alpha` has been selected.
 
 model[-1].regressor_.alpha_
 
-##############################################################################
+# %%
 # Then we check the quality of the predictions.
 
 y_pred = model.predict(X_train)
@@ -616,7 +631,7 @@ plt.xlabel('Truths')
 plt.xlim([0, 27])
 _ = plt.ylim([0, 27])
 
-##############################################################################
+# %%
 # For our dataset, again the model is not very predictive.
 
 coefs = pd.DataFrame(
@@ -628,18 +643,29 @@ plt.title('Lasso model, regularization, normalized variables')
 plt.axvline(x=0, color='.5')
 plt.subplots_adjust(left=.3)
 
-#############################################################################
+# %%
 # A Lasso model identifies the correlation between
 # AGE and EXPERIENCE and suppresses one of them for the sake of the prediction.
+#
+# It is important to keep in mind that the coefficients that have been
+# dropped may still be related to the outcome by themselves: the model
+# chose to suppress them because they bring little or no additional
+# information on top of the other features. Additionnaly, this selection
+# is unstable for correlated features, and should be interpreted with
+# caution.
 #
 # Lessons learned
 # ---------------
 #
-# * Feature importance could be extrapolated from the coefficients only after
-#   having scaled them to the same unit of measure.
-# * Coefficients in multiple linear models represent conditional dependencies
-#   between a given feature and the target.
-# * Correlated features induce variability in the coefficients of linear
-#   models.
+# * Coefficients must be scaled to the same unit of measure to retrieve
+#   feature importance. Scaling them with the standard-deviation of the
+#   feature is a useful proxy.
+# * Coefficients in multivariate linear models represent the dependency
+#   between a given feature and the target, **conditional** on the other
+#   features.
+# * Correlated features induce instabilities in the coefficients of linear
+#   models and their effects cannot be well teased apart.
 # * Different linear models respond differently to feature correlation and
 #   coefficients could significantly vary from one another.
+# * Inspecting coefficients across the folds of a cross-validation loop
+#   gives an idea of their stability.

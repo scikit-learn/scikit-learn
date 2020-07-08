@@ -246,7 +246,7 @@ amount of time (e.g., on large datasets).
 
  * :ref:`sphx_glr_auto_examples_ensemble_plot_forest_iris.py`
  * :ref:`sphx_glr_auto_examples_ensemble_plot_forest_importances_faces.py`
- * :ref:`sphx_glr_auto_examples_plot_multioutput_face_completion.py`
+ * :ref:`sphx_glr_auto_examples_miscellaneous_plot_multioutput_face_completion.py`
 
 .. topic:: References
 
@@ -555,8 +555,8 @@ for regression which can be specified via the argument
     5.00...
 
 The figure below shows the results of applying :class:`GradientBoostingRegressor`
-with least squares loss and 500 base learners to the Boston house price dataset
-(:func:`sklearn.datasets.load_boston`).
+with least squares loss and 500 base learners to the diabetes dataset
+(:func:`sklearn.datasets.load_diabetes`).
 The plot on the left shows the train and test error at each iteration.
 The train error at each iteration is stored in the
 :attr:`~GradientBoostingRegressor.train_score_` attribute
@@ -564,8 +564,6 @@ of the gradient boosting model. The test error at each iterations can be obtaine
 via the :meth:`~GradientBoostingRegressor.staged_predict` method which returns a
 generator that yields the predictions at each stage. Plots like these can be used
 to determine the optimal number of trees (i.e. ``n_estimators``) by early stopping.
-The plot on the right shows the impurity-based feature importances which can be
-obtained via the ``feature_importances_`` property.
 
 .. figure:: ../auto_examples/ensemble/images/sphx_glr_plot_gradient_boosting_regression_001.png
    :target: ../auto_examples/ensemble/plot_gradient_boosting_regression.html
@@ -897,7 +895,7 @@ based on permutation of the features.
 Histogram-Based Gradient Boosting
 =================================
 
-Scikit-learn 0.21 introduces two new experimental implementations of
+Scikit-learn 0.21 introduced two new experimental implementations of
 gradient boosting trees, namely :class:`HistGradientBoostingClassifier`
 and :class:`HistGradientBoostingRegressor`, inspired by
 `LightGBM <https://github.com/Microsoft/LightGBM>`__ (See [LightGBM]_).
@@ -952,8 +950,9 @@ controls the number of iterations of the boosting process::
   >>> clf.score(X_test, y_test)
   0.8965
 
-Available losses for regression are 'least_squares' and
-'least_absolute_deviation', which is less sensitive to outliers. For
+Available losses for regression are 'least_squares',
+'least_absolute_deviation', which is less sensitive to outliers, and
+'poisson', which is well suited to model counts and frequencies. For
 classification, 'binary_crossentropy' is used for binary classification and
 'categorical_crossentropy' is used for multiclass classification. By default
 the loss is 'auto' and will select the appropriate loss depending on
@@ -1017,6 +1016,8 @@ If no missing values were encountered for a given feature during training,
 then samples with missing values are mapped to whichever child has the most
 samples.
 
+.. _sw_hgbdt:
+
 Sample weight support
 ---------------------
 
@@ -1049,6 +1050,51 @@ Implementation detail: taking sample weights into account amounts to
 multiplying the gradients (and the hessians) by the sample weights. Note that
 the binning stage (specifically the quantiles computation) does not take the
 weights into account.
+
+.. _monotonic_cst_gbdt:
+
+Monotonic Constraints
+---------------------
+
+Depending on the problem at hand, you may have prior knowledge indicating
+that a given feature should in general have a positive (or negative) effect
+on the target value. For example, all else being equal, a higher credit
+score should increase the probability of getting approved for a loan.
+Monotonic constraints allow you to incorporate such prior knowledge into the
+model.
+
+A positive monotonic constraint is a constraint of the form:
+
+:math:`x_1 \leq x_1' \implies F(x_1, x_2) \leq F(x_1', x_2)`,
+where :math:`F` is the predictor with two features.
+
+Similarly, a negative monotonic constraint is of the form:
+
+:math:`x_1 \leq x_1' \implies F(x_1, x_2) \geq F(x_1', x_2)`.
+
+Note that monotonic constraints only constraint the output "all else being
+equal". Indeed, the following relation **is not enforced** by a positive
+constraint: :math:`x_1 \leq x_1' \implies F(x_1, x_2) \leq F(x_1', x_2')`.
+
+You can specify a monotonic constraint on each feature using the
+`monotonic_cst` parameter. For each feature, a value of 0 indicates no
+constraint, while -1 and 1 indicate a negative and positive constraint,
+respectively::
+
+  >>> from sklearn.experimental import enable_hist_gradient_boosting  # noqa
+  >>> from sklearn.ensemble import HistGradientBoostingRegressor
+
+  ... # positive, negative, and no constraint on the 3 features
+  >>> gbdt = HistGradientBoostingRegressor(monotonic_cst=[1, -1, 0])
+
+In a binary classification context, imposing a monotonic constraint means
+that the feature is supposed to have a positive / negative effect on the
+probability to belong to the positive class. Monotonic constraints are not
+supported for multiclass context.
+
+.. topic:: Examples:
+
+  * :ref:`sphx_glr_auto_examples_ensemble_plot_monotonic_constraints.py`
 
 Low-level parallelism
 ---------------------
@@ -1300,18 +1346,18 @@ Usage
 
 The following example shows how to fit the VotingRegressor::
 
-   >>> from sklearn.datasets import load_boston
+   >>> from sklearn.datasets import load_diabetes
    >>> from sklearn.ensemble import GradientBoostingRegressor
    >>> from sklearn.ensemble import RandomForestRegressor
    >>> from sklearn.linear_model import LinearRegression
    >>> from sklearn.ensemble import VotingRegressor
 
    >>> # Loading some example data
-   >>> X, y = load_boston(return_X_y=True)
+   >>> X, y = load_diabetes(return_X_y=True)
 
    >>> # Training classifiers
-   >>> reg1 = GradientBoostingRegressor(random_state=1, n_estimators=10)
-   >>> reg2 = RandomForestRegressor(random_state=1, n_estimators=10)
+   >>> reg1 = GradientBoostingRegressor(random_state=1)
+   >>> reg2 = RandomForestRegressor(random_state=1)
    >>> reg3 = LinearRegression()
    >>> ereg = VotingRegressor(estimators=[('gb', reg1), ('rf', reg2), ('lr', reg3)])
    >>> ereg = ereg.fit(X, y)
@@ -1344,10 +1390,11 @@ are stacked together in parallel on the input data. It should be given as a
 list of names and estimators::
 
   >>> from sklearn.linear_model import RidgeCV, LassoCV
-  >>> from sklearn.svm import SVR
+  >>> from sklearn.neighbors import KNeighborsRegressor
   >>> estimators = [('ridge', RidgeCV()),
   ...               ('lasso', LassoCV(random_state=42)),
-  ...               ('svr', SVR(C=1, gamma=1e-6))]
+  ...               ('knr', KNeighborsRegressor(n_neighbors=20,
+  ...                                           metric='euclidean'))]
 
 The `final_estimator` will use the predictions of the `estimators` as input. It
 needs to be a classifier or a regressor when using :class:`StackingClassifier`
@@ -1355,15 +1402,18 @@ or :class:`StackingRegressor`, respectively::
 
   >>> from sklearn.ensemble import GradientBoostingRegressor
   >>> from sklearn.ensemble import StackingRegressor
+  >>> final_estimator = GradientBoostingRegressor(
+  ...     n_estimators=25, subsample=0.5, min_samples_leaf=25, max_features=1,
+  ...     random_state=42)
   >>> reg = StackingRegressor(
   ...     estimators=estimators,
-  ...     final_estimator=GradientBoostingRegressor(random_state=42))
+  ...     final_estimator=final_estimator)
 
 To train the `estimators` and `final_estimator`, the `fit` method needs
 to be called on the training data::
 
-  >>> from sklearn.datasets import load_boston
-  >>> X, y = load_boston(return_X_y=True)
+  >>> from sklearn.datasets import load_diabetes
+  >>> X, y = load_diabetes(return_X_y=True)
   >>> from sklearn.model_selection import train_test_split
   >>> X_train, X_test, y_train, y_test = train_test_split(X, y,
   ...                                                     random_state=42)
@@ -1389,21 +1439,21 @@ any other regressor or classifier, exposing a `predict`, `predict_proba`, and
    >>> y_pred = reg.predict(X_test)
    >>> from sklearn.metrics import r2_score
    >>> print('R2 score: {:.2f}'.format(r2_score(y_test, y_pred)))
-   R2 score: 0.81
+   R2 score: 0.53
 
-Note that it is also possible to get the output of the stacked outputs of the
+Note that it is also possible to get the output of the stacked
 `estimators` using the `transform` method::
 
   >>> reg.transform(X_test[:5])
-  array([[28.78..., 28.43...  , 22.62...],
-         [35.96..., 32.58..., 23.68...],
-         [14.97..., 14.05..., 16.45...],
-         [25.19..., 25.54..., 22.92...],
-         [18.93..., 19.26..., 17.03... ]])
+  array([[142..., 138..., 146...],
+         [179..., 182..., 151...],
+         [139..., 132..., 158...],
+         [286..., 292..., 225...],
+         [126..., 124..., 164...]])
 
-In practise, a stacking predictor predict as good as the best predictor of the
-base layer and even sometimes outputperform it by combining the different
-strength of the these predictors. However, training a stacking predictor is
+In practice, a stacking predictor predicts as good as the best predictor of the
+base layer and even sometimes outperforms it by combining the different
+strengths of the these predictors. However, training a stacking predictor is
 computationally expensive.
 
 .. note::
@@ -1416,22 +1466,27 @@ computationally expensive.
    Multiple stacking layers can be achieved by assigning `final_estimator` to
    a :class:`StackingClassifier` or :class:`StackingRegressor`::
 
+    >>> final_layer_rfr = RandomForestRegressor(
+    ...     n_estimators=10, max_features=1, max_leaf_nodes=5,random_state=42)
+    >>> final_layer_gbr = GradientBoostingRegressor(
+    ...     n_estimators=10, max_features=1, max_leaf_nodes=5,random_state=42)
     >>> final_layer = StackingRegressor(
-    ...     estimators=[('rf', RandomForestRegressor(random_state=42)),
-    ...                 ('gbrt', GradientBoostingRegressor(random_state=42))],
+    ...     estimators=[('rf', final_layer_rfr),
+    ...                 ('gbrt', final_layer_gbr)],
     ...     final_estimator=RidgeCV()
     ...     )
     >>> multi_layer_regressor = StackingRegressor(
     ...     estimators=[('ridge', RidgeCV()),
     ...                 ('lasso', LassoCV(random_state=42)),
-    ...                 ('svr', SVR(C=1, gamma=1e-6, kernel='rbf'))],
+    ...                 ('knr', KNeighborsRegressor(n_neighbors=20,
+    ...                                             metric='euclidean'))],
     ...     final_estimator=final_layer
     ... )
     >>> multi_layer_regressor.fit(X_train, y_train)
     StackingRegressor(...)
     >>> print('R2 score: {:.2f}'
     ...       .format(multi_layer_regressor.score(X_test, y_test)))
-    R2 score: 0.83
+    R2 score: 0.53
 
 .. topic:: References
 

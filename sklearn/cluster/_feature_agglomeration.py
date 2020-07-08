@@ -33,7 +33,7 @@ class AgglomerationTransform(TransformerMixin):
 
         Returns
         -------
-        Y : array, shape = [n_samples, n_clusters] or [n_clusters]
+        Y : ndarray of shape (n_samples, n_clusters) or (n_clusters,)
             The pooled values for each feature cluster.
         """
         check_is_fitted(self)
@@ -67,7 +67,7 @@ class AgglomerationTransform(TransformerMixin):
 
         Returns
         -------
-        X : array, shape=[n_samples, n_features] or [n_features]
+        X : ndarray of shape (n_samples, n_features) or (n_features,)
             A vector of size n_samples with the values of Xred assigned to
             each of the cluster of samples.
         """
