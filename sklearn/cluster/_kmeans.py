@@ -924,6 +924,65 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         self.n_jobs = n_jobs
         self.algorithm = algorithm
 
+    def _check_params(self, X):
+        if self.precompute_distances != 'deprecated':
+            warnings.warn("'precompute_distances' was deprecated in version "
+                          "0.23 and will be removed in 0.25. It has no "
+                          "effect", FutureWarning)
+
+        if self.n_jobs != 'deprecated':
+            warnings.warn("'n_jobs' was deprecated in version 0.23 and will be"
+                          " removed in 0.25.", FutureWarning)
+            self._n_threads = self.n_jobs
+        else:
+            self._n_threads = None
+        self._n_threads = _openmp_effective_n_threads(self._n_threads)
+
+        if self.n_init <= 0:
+            raise ValueError(
+                f"n_init should be > 0, got {self.n_init} instead.")
+        self._n_init = self.n_init
+
+        if self.max_iter <= 0:
+            raise ValueError(
+                f"max_iter should be > 0, got {self.max_iter} instead.")
+
+        if X.shape[0] < self.n_clusters:
+            raise ValueError(f"n_samples={X.shape[0]} should be >= "
+                             f"n_clusters={self.n_clusters}.")
+
+        if self.tol < 0:
+            raise ValueError(f"tol should be >= 0, got {self.tol} instead.")
+        self._tol = _tolerance(X, self.tol)
+
+        if self.algorithm not in ("auto", "full", "elkan"):
+            raise ValueError(f"Algorithm must be 'auto', 'full' or 'elkan', "
+                             f"got {self.algorithm} instead.")
+
+        self._algorithm = self.algorithm
+        if self._algorithm == "elkan" and self.n_clusters == 1:
+            warnings.warn("algorithm='elkan' doesn't make sense for a single "
+                          "cluster. Using 'full' instead.", RuntimeWarning)
+            self._algorithm = "full"
+        if self._algorithm == "auto":
+            self._algorithm = "full" if self.n_clusters == 1 else "elkan"
+
+        if not (hasattr(self.init, '__array__') or callable(self.init)
+                or (isinstance(self.init, str)
+                    and self.init in ["k-means++", "random"])):
+            raise ValueError(
+                f"init should be either 'k-means++', 'random', a ndarray or a "
+                f"callable, got '{self.init}' instead.")
+
+        if hasattr(self.init, '__array__'):
+            self._validate_center_shape(X, self.init)
+            if self._n_init != 1:
+                warnings.warn(
+                    f"Explicit initial center position passed: performing only"
+                    f" one init in {self.__class__.__name__} instead of "
+                    f"n_init={self._n_init}.", RuntimeWarning, stacklevel=2)
+                self._n_init = 1
+
     def _check_test_data(self, X):
         X = check_array(X, accept_sparse='csr', dtype=[np.float64, np.float32],
                         order='C', accept_large_sparse=False)
@@ -962,55 +1021,19 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         self
             Fitted estimator.
         """
-        random_state = check_random_state(self.random_state)
-
-        if self.precompute_distances != 'deprecated':
-            warnings.warn("'precompute_distances' was deprecated in version "
-                          "0.23 and will be removed in 0.25. It has no "
-                          "effect", FutureWarning)
-
-        if self.n_jobs != 'deprecated':
-            warnings.warn("'n_jobs' was deprecated in version 0.23 and will be"
-                          " removed in 0.25.", FutureWarning)
-            self._n_threads = self.n_jobs
-        else:
-            self._n_threads = None
-        self._n_threads = _openmp_effective_n_threads(self._n_threads)
-
-        n_init = self.n_init
-        if n_init <= 0:
-            raise ValueError("Invalid number of initializations."
-                             " n_init=%d must be bigger than zero." % n_init)
-
-        if self.max_iter <= 0:
-            raise ValueError(
-                'Number of iterations should be a positive number,'
-                ' got %d instead' % self.max_iter
-            )
-
         X = self._validate_data(X, accept_sparse='csr',
                                 dtype=[np.float64, np.float32],
                                 order='C', copy=self.copy_x,
                                 accept_large_sparse=False)
-        # verify that the number of samples given is larger than k
-        if _num_samples(X) < self.n_clusters:
-            raise ValueError("n_samples=%d should be >= n_clusters=%d" % (
-                _num_samples(X), self.n_clusters))
 
-        tol = _tolerance(X, self.tol)
+        random_state = check_random_state(self.random_state)
 
         # Validate init array
         init = self.init
         if hasattr(init, '__array__'):
-            init = check_array(init, dtype=X.dtype.type, copy=True, order='C')
-            _validate_center_shape(X, self.n_clusters, init)
+            init = check_array(init, dtype=X.dtype, copy=True, order='C')
 
-            if n_init != 1:
-                warnings.warn(
-                    'Explicit initial center position passed: '
-                    'performing only one init in k-means instead of n_init=%d'
-                    % n_init, RuntimeWarning, stacklevel=2)
-                n_init = 1
+        self._check_params(X)
 
         # subtract of mean of x for more accurate distance computations
         if not sp.issparse(X):
@@ -1024,33 +1047,21 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         # precompute squared norms of data points
         x_squared_norms = row_norms(X, squared=True)
 
+        if self._algorithm == "full":
+            kmeans_single = _kmeans_single_lloyd
+        else:
+            kmeans_single = _kmeans_single_elkan
+
         best_labels, best_inertia, best_centers = None, None, None
 
-        algorithm = self.algorithm
-        if algorithm == "elkan" and self.n_clusters == 1:
-            warnings.warn("algorithm='elkan' doesn't make sense for a single "
-                          "cluster. Using 'full' instead.", RuntimeWarning)
-            algorithm = "full"
-
-        if algorithm == "auto":
-            algorithm = "full" if self.n_clusters == 1 else "elkan"
-
-        if algorithm == "full":
-            kmeans_single = _kmeans_single_lloyd
-        elif algorithm == "elkan":
-            kmeans_single = _kmeans_single_elkan
-        else:
-            raise ValueError("Algorithm must be 'auto', 'full' or 'elkan', got"
-                             " {}".format(str(algorithm)))
-
         # seeds for the initializations of the kmeans runs.
-        seeds = random_state.randint(np.iinfo(np.int32).max, size=n_init)
+        seeds = random_state.randint(np.iinfo(np.int32).max, size=self._n_init)
 
         for seed in seeds:
             # run a k-means once
             labels, inertia, centers, n_iter_ = kmeans_single(
                 X, sample_weight, self.n_clusters, max_iter=self.max_iter,
-                init=init, verbose=self.verbose, tol=tol,
+                init=init, verbose=self.verbose, tol=self._tol,
                 x_squared_norms=x_squared_norms, random_state=seed,
                 n_threads=self._n_threads)
             # determine if these results are the best so far
