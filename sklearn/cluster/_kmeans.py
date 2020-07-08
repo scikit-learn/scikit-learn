@@ -22,7 +22,7 @@ from ..metrics.pairwise import euclidean_distances
 from ..utils.extmath import row_norms, stable_cumsum
 from ..utils.sparsefuncs_fast import assign_rows_csr
 from ..utils.sparsefuncs import mean_variance_axis
-from ..utils.validation import _num_samples, _deprecate_positional_args
+from ..utils.validation import _deprecate_positional_args
 from ..utils import check_array
 from ..utils import gen_batches
 from ..utils import check_random_state
@@ -1678,7 +1678,8 @@ class MiniBatchKMeans(KMeans):
         n_batches = int(np.ceil(float(n_samples) / self.batch_size))
         n_iter = int(self.max_iter * n_batches)
 
-        validation_indices = random_state.randint(0, n_samples, self._init_size)
+        validation_indices = random_state.randint(0, n_samples,
+                                                  self._init_size)
         X_valid = X[validation_indices]
         sample_weight_valid = sample_weight[validation_indices]
         x_squared_norms_valid = x_squared_norms[validation_indices]
