@@ -135,7 +135,8 @@ def average_precision_score(y_true, y_score, *, average="macro", pos_label=1,
         class, confidence values, or non-thresholded measure of decisions
         (as returned by "decision_function" on some classifiers).
 
-    average : string, [None, 'micro', 'macro' (default), 'samples', 'weighted']
+    average : {'micro', 'samples', 'weighted', 'macro'} or None, \
+            default='macro'
         If ``None``, the scores for each class are returned. Otherwise,
         this determines the type of averaging performed on the data:
 
@@ -153,7 +154,7 @@ def average_precision_score(y_true, y_score, *, average="macro", pos_label=1,
 
         Will be ignored when ``y_true`` is binary.
 
-    pos_label : int or str (default=1)
+    pos_label : int or str, default=1
         The label of the positive class. Only applied to binary ``y_true``.
         For multilabel-indicator ``y_true``, ``pos_label`` is fixed to 1.
 
@@ -357,6 +358,8 @@ def roc_auc_score(y_true, y_score, *, average="macro", sample_weight=None,
 
     roc_curve : Compute Receiver operating characteristic (ROC) curve
 
+    plot_roc_curve : Plot Receiver operating characteristic (ROC) curve
+
     Examples
     --------
     >>> import numpy as np
@@ -411,7 +414,7 @@ def _multiclass_roc_auc_score(y_true, y_score, labels,
         Target scores corresponding to probability estimates of a sample
         belonging to a particular class
 
-    labels : array, shape = [n_classes] or None, optional (default=None)
+    labels : array-like of shape (n_classes,), default=None
         List of labels to index ``y_score`` used for multiclass. If ``None``,
         the lexical order of ``y_true`` is used to index ``y_score``.
 
@@ -424,7 +427,7 @@ def _multiclass_roc_auc_score(y_true, y_score, labels,
             Calculate metrics for the multiclass case using the one-vs-one
             approach.
 
-    average : 'macro' or 'weighted', optional (default='macro')
+    average : {'macro', 'weighted'}, default='macro'
         Determines the type of averaging performed on the pairwise binary
         metric scores
         ``'macro'``:
@@ -656,6 +659,9 @@ def precision_recall_curve(y_true, probas_pred, *, pos_label=None,
 
     roc_curve : Compute Receiver operating characteristic (ROC) curve
 
+    plot_precision_recall_curve :
+        Plot Precision Recall Curve for binary classifiers
+
     Examples
     --------
     >>> import numpy as np
@@ -742,6 +748,8 @@ def roc_curve(y_true, y_score, *, pos_label=None, sample_weight=None,
     See also
     --------
     roc_auc_score : Compute the area under the ROC curve
+
+    plot_roc_curve : Plot Receiver operating characteristic (ROC) curve
 
     Notes
     -----
@@ -1075,15 +1083,15 @@ def _dcg_sample_scores(y_true, y_score, k=None,
         or non-thresholded measure of decisions (as returned by
         "decision_function" on some classifiers).
 
-    k : int, optional (default=None)
+    k : int, default=None
         Only consider the highest k scores in the ranking. If None, use all
         outputs.
 
-    log_base : float, optional (default=2)
+    log_base : float, default=2
         Base of the logarithm used for the discount. A low value means a
         sharper discount (top results are more important).
 
-    ignore_ties : bool, optional (default=False)
+    ignore_ties : bool, default=False
         Assume that there are no ties in y_score (which is likely to be the
         case if y_score is continuous) for efficiency gains.
 
@@ -1199,18 +1207,18 @@ def dcg_score(y_true, y_score, *, k=None,
         or non-thresholded measure of decisions (as returned by
         "decision_function" on some classifiers).
 
-    k : int, optional (default=None)
+    k : int, default=None
         Only consider the highest k scores in the ranking. If None, use all
         outputs.
 
-    log_base : float, optional (default=2)
+    log_base : float, default=2
         Base of the logarithm used for the discount. A low value means a
         sharper discount (top results are more important).
 
-    sample_weight : ndarray, shape (n_samples,), optional (default=None)
+    sample_weight : ndarray of shape (n_samples,), default=None
         Sample weights. If None, all samples are given the same weight.
 
-    ignore_ties : bool, optional (default=False)
+    ignore_ties : bool, default=False
         Assume that there are no ties in y_score (which is likely to be the
         case if y_score is continuous) for efficiency gains.
 
@@ -1303,11 +1311,11 @@ def _ndcg_sample_scores(y_true, y_score, k=None, ignore_ties=False):
         or non-thresholded measure of decisions (as returned by
         "decision_function" on some classifiers).
 
-    k : int, optional (default=None)
+    k : int, default=None
         Only consider the highest k scores in the ranking. If None, use all
         outputs.
 
-    ignore_ties : bool, optional (default=False)
+    ignore_ties : bool, default=False
         Assume that there are no ties in y_score (which is likely to be the
         case if y_score is continuous) for efficiency gains.
 
@@ -1356,14 +1364,14 @@ def ndcg_score(y_true, y_score, *, k=None, sample_weight=None,
         or non-thresholded measure of decisions (as returned by
         "decision_function" on some classifiers).
 
-    k : int, optional (default=None)
+    k : int, default=None
         Only consider the highest k scores in the ranking. If None, use all
         outputs.
 
-    sample_weight : ndarray, shape (n_samples,), optional (default=None)
+    sample_weight : ndarray of shape (n_samples,),default=None
         Sample weights. If None, all samples are given the same weight.
 
-    ignore_ties : bool, optional (default=False)
+    ignore_ties : bool, default=False
         Assume that there are no ties in y_score (which is likely to be the
         case if y_score is continuous) for efficiency gains.
 

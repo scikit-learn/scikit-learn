@@ -306,7 +306,7 @@ class LinearClassifierMixin(ClassifierMixin):
         """
         scores = self.decision_function(X)
         if len(scores.shape) == 1:
-            indices = (scores > 0).astype(np.int)
+            indices = (scores > 0).astype(int)
         else:
             indices = scores.argmax(axis=1)
         return self.classes_[indices]
@@ -406,8 +406,8 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
         If you wish to standardize, please use
-        :class:`sklearn.preprocessing.StandardScaler` before calling ``fit`` on
-        an estimator with ``normalize=False``.
+        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
+        on an estimator with ``normalize=False``.
 
     copy_X : bool, default=True
         If True, X will be copied; else, it may be overwritten.

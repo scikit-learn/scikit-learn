@@ -67,7 +67,7 @@ def test_linkage_misc():
 def test_structured_linkage_tree():
     # Check that we obtain the correct solution for structured linkage trees.
     rng = np.random.RandomState(0)
-    mask = np.ones([10, 10], dtype=np.bool)
+    mask = np.ones([10, 10], dtype=bool)
     # Avoiding a mask with only 'True' entries
     mask[4:7, 4:7] = 0
     X = rng.randn(50, 100)
@@ -112,7 +112,7 @@ def test_unstructured_linkage_tree():
 def test_height_linkage_tree():
     # Check that the height of the results of linkage tree is sorted.
     rng = np.random.RandomState(0)
-    mask = np.ones([10, 10], dtype=np.bool)
+    mask = np.ones([10, 10], dtype=bool)
     X = rng.randn(50, 100)
     connectivity = grid_to_graph(*mask.shape)
     for linkage_func in _TREE_BUILDERS.values():
@@ -147,7 +147,7 @@ def test_agglomerative_clustering():
     # Check that we obtain the correct number of clusters with
     # agglomerative clustering.
     rng = np.random.RandomState(0)
-    mask = np.ones([10, 10], dtype=np.bool)
+    mask = np.ones([10, 10], dtype=bool)
     n_samples = 100
     X = rng.randn(n_samples, 50)
     connectivity = grid_to_graph(*mask.shape)
@@ -236,7 +236,7 @@ def test_agglomerative_clustering():
 def test_ward_agglomeration():
     # Check that we obtain the correct solution in a simplistic case
     rng = np.random.RandomState(0)
-    mask = np.ones([10, 10], dtype=np.bool)
+    mask = np.ones([10, 10], dtype=bool)
     X = rng.randn(50, 100)
     connectivity = grid_to_graph(*mask.shape)
     agglo = FeatureAgglomeration(n_clusters=5, connectivity=connectivity)
@@ -298,7 +298,7 @@ def test_sparse_scikit_vs_scipy():
 
             out = hierarchy.linkage(X, method=linkage)
 
-            children_ = out[:, :2].astype(np.int, copy=False)
+            children_ = out[:, :2].astype(int, copy=False)
             children, _, n_leaves, _ = _TREE_BUILDERS[linkage](
                 X, connectivity=connectivity)
 
@@ -328,7 +328,7 @@ def test_vector_scikit_single_vs_scipy_single(seed):
     X -= X.mean(axis=1)[:, np.newaxis]
 
     out = hierarchy.linkage(X, method='single')
-    children_scipy = out[:, :2].astype(np.int)
+    children_scipy = out[:, :2].astype(int)
 
     children, _, n_leaves, _ = _TREE_BUILDERS['single'](X)
 
@@ -647,7 +647,7 @@ def test_agglomerative_clustering_with_distance_threshold(linkage):
     # Check that we obtain the correct number of clusters with
     # agglomerative clustering with distance_threshold.
     rng = np.random.RandomState(0)
-    mask = np.ones([10, 10], dtype=np.bool)
+    mask = np.ones([10, 10], dtype=bool)
     n_samples = 100
     X = rng.randn(n_samples, 50)
     connectivity = grid_to_graph(*mask.shape)

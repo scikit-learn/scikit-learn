@@ -971,7 +971,7 @@ def test_scaler_int():
     assert_array_almost_equal(X_scaled.std(axis=0), [0., 1., 1., 1., 1.])
 
     X_csr_scaled_mean, X_csr_scaled_std = mean_variance_axis(
-        X_csr_scaled.astype(np.float), 0)
+        X_csr_scaled.astype(float), 0)
     assert_array_almost_equal(X_csr_scaled_mean, X_scaled.mean(axis=0))
     assert_array_almost_equal(X_csr_scaled_std, X_scaled.std(axis=0))
 

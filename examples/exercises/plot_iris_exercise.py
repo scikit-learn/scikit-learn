@@ -27,7 +27,7 @@ n_sample = len(X)
 np.random.seed(0)
 order = np.random.permutation(n_sample)
 X = X[order]
-y = y[order].astype(np.float)
+y = y[order].astype(float)
 
 X_train = X[:int(.9 * n_sample)]
 y_train = y[:int(.9 * n_sample)]

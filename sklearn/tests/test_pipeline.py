@@ -1,7 +1,6 @@
 """
 Test the pipeline module.
 """
-from distutils.version import LooseVersion
 from tempfile import mkdtemp
 import shutil
 import time
@@ -20,6 +19,7 @@ from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_no_warnings
+from sklearn.utils.fixes import parse_version
 
 from sklearn.base import clone, BaseEstimator, TransformerMixin
 from sklearn.pipeline import Pipeline, FeatureUnion, make_pipeline, make_union
@@ -1020,7 +1020,7 @@ def test_pipeline_memory():
     y = iris.target
     cachedir = mkdtemp()
     try:
-        if LooseVersion(joblib.__version__) < LooseVersion('0.12'):
+        if parse_version(joblib.__version__) < parse_version('0.12'):
             # Deal with change of API in joblib
             memory = joblib.Memory(cachedir=cachedir, verbose=10)
         else:
@@ -1082,7 +1082,7 @@ def test_pipeline_memory():
 
 def test_make_pipeline_memory():
     cachedir = mkdtemp()
-    if LooseVersion(joblib.__version__) < LooseVersion('0.12'):
+    if parse_version(joblib.__version__) < parse_version('0.12'):
         # Deal with change of API in joblib
         memory = joblib.Memory(cachedir=cachedir, verbose=10)
     else:

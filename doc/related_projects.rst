@@ -41,6 +41,11 @@ enhance the functionality of scikit-learn's estimators.
   operators to design a machine learning pipeline, including data and feature
   preprocessors as well as the estimators. Works as a drop-in replacement for a
   scikit-learn estimator.
+  
+- `Featuretools <https://github.com/FeatureLabs/featuretools>`_
+  A framework to perform automated feature engineering. It can be used for 
+  transforming temporal and relational datasets into feature matrices for 
+  machine learning.
 
 **Experimentation frameworks**
 

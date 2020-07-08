@@ -504,7 +504,7 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1,
             if sparse_output:
                 return sp.csr_matrix((n_samples, 1), dtype=int)
             else:
-                Y = np.zeros((len(y), 1), dtype=np.int)
+                Y = np.zeros((len(y), 1), dtype=int)
                 Y += neg_label
                 return Y
         elif len(classes) >= 3:
@@ -629,12 +629,12 @@ def _inverse_binarize_thresholding(y, output_type, classes, threshold):
         if threshold > 0:
             if y.format not in ('csr', 'csc'):
                 y = y.tocsr()
-            y.data = np.array(y.data > threshold, dtype=np.int)
+            y.data = np.array(y.data > threshold, dtype=int)
             y.eliminate_zeros()
         else:
-            y = np.array(y.toarray() > threshold, dtype=np.int)
+            y = np.array(y.toarray() > threshold, dtype=int)
     else:
-        y = np.array(y > threshold, dtype=np.int)
+        y = np.array(y > threshold, dtype=int)
 
     # Inverse transform data
     if output_type == "binary":
@@ -665,18 +665,19 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
 
     Parameters
     ----------
-    classes : array-like of shape [n_classes] (optional)
+    classes : array-like of shape (n_classes,), default=None
         Indicates an ordering for the class labels.
         All entries should be unique (cannot contain duplicate classes).
 
-    sparse_output : boolean (default: False),
+    sparse_output : bool, default=False
         Set to true if output binary array is desired in CSR sparse format
 
     Attributes
     ----------
-    classes_ : array of labels
-        A copy of the `classes` parameter where provided,
-        or otherwise, the sorted set of classes found when fitting.
+    classes_ : ndarray of shape (n_classes,)
+        A copy of the `classes` parameter when provided.
+        Otherwise it corresponds to the sorted set of classes found
+        when fitting.
 
     Examples
     --------
@@ -745,7 +746,7 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
                              "them to MultiLabelBinarizer.")
         else:
             classes = self.classes
-        dtype = np.int if all(isinstance(c, int) for c in classes) else object
+        dtype = int if all(isinstance(c, int) for c in classes) else object
         self.classes_ = np.empty(len(classes), dtype=dtype)
         self.classes_[:] = classes
         return self
@@ -780,7 +781,7 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
         tmp = sorted(class_mapping, key=class_mapping.get)
 
         # (make safe for tuples)
-        dtype = np.int if all(isinstance(c, int) for c in tmp) else object
+        dtype = int if all(isinstance(c, int) for c in tmp) else object
         class_mapping = np.empty(len(tmp), dtype=dtype)
         class_mapping[:] = tmp
         self.classes_, inverse = np.unique(class_mapping, return_inverse=True)
