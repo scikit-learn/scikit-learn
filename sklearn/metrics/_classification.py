@@ -685,6 +685,11 @@ def jaccard_score(y_true, y_pred, *, labels=None, pos_label=1,
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
+    zero_division : "warn", 0 or 1, default="warn"
+        Sets the value to return when there is a zero division, i.e. when all
+        predictions and labels are negative. If set to "warn", this acts as 0,
+        but warnings are also raised.
+
     Returns
     -------
     score : float (if average is not None) or array of floats, shape =\
@@ -750,7 +755,8 @@ def jaccard_score(y_true, y_pred, *, labels=None, pos_label=1,
         denominator = np.array([denominator.sum()])
 
     jaccard = _prf_divide(numerator, denominator, 'jaccard',
-                          'true or predicted', average, ('jaccard',), zero_division=zero_division)
+                          'true or predicted', average, ('jaccard',),
+                          zero_division=zero_division)
     if average is None:
         return jaccard
     if average == 'weighted':
