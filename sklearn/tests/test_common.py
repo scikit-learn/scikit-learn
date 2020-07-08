@@ -207,7 +207,6 @@ def test_class_support_removed():
         parametrize_with_checks([LogisticRegression])
 
 
-
 TYPING_IGNORED = {
     'ARDRegression', 'AdaBoostClassifier', 'AdaBoostRegressor',
     'AdditiveChi2Sampler', 'AffinityPropagation',
