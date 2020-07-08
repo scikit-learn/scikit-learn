@@ -949,12 +949,12 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
                              f"got {self.algorithm} instead.")
 
         self._algorithm = self.algorithm
+        if self._algorithm == "auto":
+            self._algorithm = "full" if self.n_clusters == 1 else "elkan"
         if self._algorithm == "elkan" and self.n_clusters == 1:
             warnings.warn("algorithm='elkan' doesn't make sense for a single "
                           "cluster. Using 'full' instead.", RuntimeWarning)
             self._algorithm = "full"
-        if self._algorithm == "auto":
-            self._algorithm = "full" if self.n_clusters == 1 else "elkan"
 
         # init
         if not (hasattr(self.init, '__array__') or callable(self.init)
@@ -1619,6 +1619,7 @@ class MiniBatchKMeans(KMeans):
                 RuntimeWarning, stacklevel=2)
             self._init_size = 3 * self.n_clusters
         self._init_size = min(self._init_size, X.shape[0])
+        # FIXME: init_size_ will be deprecated and this line will be removed
         self.init_size_ = self._init_size
 
         # reassignment_ratio
