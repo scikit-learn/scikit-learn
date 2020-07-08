@@ -91,6 +91,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
 
     ensemble : bool, default=True
         Determines how the calibrator is fit, if `cv` is not `'prefit'`.
+        Ignored if `cv='prefit'`.
 
         If `True`, the `base_estimator` is fit and calibrated on each
         `cv` fold. The final estimator is an ensemble that outputs the
@@ -106,7 +107,6 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
 
         .. versionadded:: 0.24
 
-
     Attributes
     ----------
     classes_ : array, shape (n_classes)
@@ -120,10 +120,6 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
     n_features_in_ : int
         The number of features in `X`. If `cv='prefit'`, number of features
         in the data used to fit `base_estimator`.
-
-    label_encoder_ : LabelEncoder instance
-        `LabelEncoder` fitted on `y`. If `cv='prefit'`, `LabelEncoder`
-        fitted on `base_estimator.classes_`.
 
     Examples
     --------
@@ -227,11 +223,11 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
             with suppress(AttributeError):
                 self.n_features_in_ = base_estimator.n_features_in_
             self.classes_ = self.base_estimator.classes_
-            self.label_encoder_ = LabelEncoder().fit(self.classes_)
+            label_encoder_ = LabelEncoder().fit(self.classes_)
 
             calibrated_classifier = _fit_calibrator(
-                base_estimator, self.label_encoder_, self.method, y=y, X=X,
-                sample_weight=sample_weight
+                base_estimator, label_encoder_, self.method, X, y,
+                sample_weight
             )
             self.calibrated_classifiers_.append(calibrated_classifier)
         else:
@@ -242,7 +238,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
             # Set attributes using all `y`
             le = LabelEncoder().fit(y)
             self.classes_ = le.classes_
-            self.label_encoder_ = le
+            label_encoder_ = le
 
             fit_parameters = signature(base_estimator.fit).parameters
             base_estimator_supports_sw = "sample_weight" in fit_parameters
@@ -297,14 +293,14 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
                     raise RuntimeError("'base_estimator' as no "
                                        "'decision_function' or 'predict_proba'"
                                        " method.")
-                df = cross_val_predict(base_estimator, X, y, cv=cv,
+                preds = cross_val_predict(base_estimator, X, y, cv=cv,
                                        method=base_estimator_method)
                 if base_estimator_method == "decision_function":
-                    if df.ndim == 1:
-                        df = df[:, np.newaxis]
+                    if preds.ndim == 1:
+                        preds = preds[:, np.newaxis]
                 else:
                     if len(self.label_encoder_.classes_) == 2:
-                        df = df[:, 1:]
+                        preds = preds[:, 1]
 
                 this_estimator = clone(base_estimator)
                 if sample_weight is not None and base_estimator_supports_sw:
@@ -312,8 +308,8 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
                 else:
                     this_estimator.fit(X, y)
                 calibrated_classifier = _fit_calibrator(
-                    this_estimator, self.label_encoder_, self.method, y=y,
-                    df=df, sample_weight=sample_weight
+                    this_estimator, label_encoder_, self.method,
+                    X[test], y[test], sw
                 )
                 self.calibrated_classifiers_.append(calibrated_classifier)
         return self
@@ -395,7 +391,7 @@ def _get_predictions(clf_fitted, X, label_encoder_):
 
     Returns
     -------
-    df : array-like, shape (X.shape[0], len(clf_fitted.classes_))
+    preds : array-like, shape (X.shape[0], len(clf_fitted.classes_))
         The predictions. Note array is of shape (X.shape[0], 1) when there are
         2 classes.
 
@@ -403,29 +399,34 @@ def _get_predictions(clf_fitted, X, label_encoder_):
         Indices of the classes present in `X`.
     """
     if hasattr(clf_fitted, "decision_function"):
-        df = clf_fitted.decision_function(X)
-        if df.ndim == 1:
-            df = df[:, np.newaxis]
+        preds = clf_fitted.decision_function(X)
+        if preds.ndim == 1:
+            preds = preds[:, np.newaxis]
     elif hasattr(clf_fitted, "predict_proba"):
-        df = clf_fitted.predict_proba(X)
+        preds = clf_fitted.predict_proba(X)
         if len(label_encoder_.classes_) == 2:
-            df = df[:, 1:]
+            preds = preds[:, 1]
     else:
         raise RuntimeError("'base_estimator' has no 'decision_function' or "
                            "'predict_proba' method.")
 
     pos_class_indices = label_encoder_.transform(clf_fitted.classes_)
 
-    return df, pos_class_indices
+    return preds, pos_class_indices
 
 
-def _fit_calibrator(clf_fitted, label_encoder_, method, y, X=None, df=None,
+def _fit_calibrator(clf_fitted, label_encoder_, method, y, X=None, preds=None,
                     sample_weight=None):
     """Fit calibrator(s) and return a `_CalibratedClassiferPipeline`
     instance.
 
-    Output of the `decision_function` method of the `clf_fitted` is used for
-    calibration. If this method does not exist, `predict_proba` method is used.
+    If `X` is not None, it is used to obtain predictions, used for calibration.
+    The `decision_function` method of `clf_fitted` is used if present. If not,
+    `predict_proba` method is used. If `preds` is not None, it is used for
+    calibration. Only one of `X` or `preds` should be not None.
+
+    `n_classes` calibrators are fitted. However, if `n_classes` equals 2,
+    one calibrator is fit.
 
     Parameters
     ----------
@@ -442,15 +443,15 @@ def _fit_calibrator(clf_fitted, label_encoder_, method, y, X=None, df=None,
         The targets.
 
     X : array-like, shape (n_samples, n_features), default=None
-        Sample data used to calibrate predictions. If None, use df instead.
+        Sample data used to calibrate predictions. If None, use `preds` instead.
 
-    df :  array-like, shape (n_samples, n_classes), default=None
-        Predictions, output from `base_estimator`, used to calibrate
-        predictions. If None, use X instead.
+    preds :  array-like, shape (n_samples, n_classes), default=None
+        The predictions, output from `base_estimator`, used to calibrate
+        predictions. If None, use `X` instead.
         If binary (i.e., `label_encoder_.classes_` = 2), shape (n_samples, 1)
 
     sample_weight : ndarray, shape (n_samples,), default=None
-        Sample weights. If `None`, then samples are equally weighted.
+        Sample weights. If None, then samples are equally weighted.
 
     Returns
     -------
@@ -458,12 +459,14 @@ def _fit_calibrator(clf_fitted, label_encoder_, method, y, X=None, df=None,
     """
     Y = label_binarize(y, classes=label_encoder_.classes_)
     if X is not None:
-        df, pos_class_indices = _get_predictions(clf_fitted, X, label_encoder_)
-    elif df is not None:
+        preds, pos_class_indices = _get_predictions(clf_fitted, X, label_encoder_)
+    elif preds is not None:
         pos_class_indices = label_encoder_.transform(clf_fitted.classes_)
+    else:
+        raise ValueError("One of `X` or `preds` should be not None.")
 
     calibrated_classifiers = []
-    for class_idx, this_df in zip(pos_class_indices, df.T):
+    for class_idx, this_pred in zip(pos_class_indices, preds.T):
         if method == 'isotonic':
             calibrator = IsotonicRegression(out_of_bounds='clip')
         elif method == 'sigmoid':
@@ -471,7 +474,7 @@ def _fit_calibrator(clf_fitted, label_encoder_, method, y, X=None, df=None,
         else:
             raise ValueError("'method' should be one of: 'sigmoid' or "
                              f"'isotonic'. Got {method}.")
-        calibrator.fit(this_df, Y[:, class_idx], sample_weight)
+        calibrator.fit(this_pred, Y[:, class_idx], sample_weight)
         calibrated_classifiers.append(calibrator)
 
     pipeline = _CalibratedClassiferPipeline(
@@ -516,18 +519,18 @@ class _CalibratedClassiferPipeline:
             The predicted probabilities. Can be exact zeros.
         """
         n_classes = len(self.label_encoder_.classes_)
-        df, pos_class_indices = _get_predictions(
+        preds, pos_class_indices = _get_predictions(
             self.clf_fitted, X, self.label_encoder_
         )
 
         proba = np.zeros((X.shape[0], n_classes))
-        for class_idx, this_df, calibrator in \
-                zip(pos_class_indices, df.T, self.calibrators_fitted):
+        for class_idx, this_pred, calibrator in \
+                zip(pos_class_indices, preds.T, self.calibrators_fitted):
             if n_classes == 2:
-                # When binary, proba of clf_fitted.classes_[1]
-                # output but `pos_class_indices` = 0
+                # When binary, `preds` consists only of predictions for
+                # clf_fitted.classes_[1] but `pos_class_indices` = 0
                 class_idx += 1
-            proba[:, class_idx] = calibrator.predict(this_df)
+            proba[:, class_idx] = calibrator.predict(this_pred)
 
         # Normalize the probabilities
         if n_classes == 2:
@@ -544,12 +547,12 @@ class _CalibratedClassiferPipeline:
         return proba
 
 
-def _sigmoid_calibration(df, y, sample_weight=None):
+def _sigmoid_calibration(pred, y, sample_weight=None):
     """Probability Calibration with sigmoid method (Platt 2000)
 
     Parameters
     ----------
-    df : ndarray, shape (n_samples,)
+    pred : ndarray, shape (n_samples,)
         The decision function or predict proba for the samples.
 
     y : ndarray, shape (n_samples,)
@@ -570,10 +573,10 @@ def _sigmoid_calibration(df, y, sample_weight=None):
     ----------
     Platt, "Probabilistic Outputs for Support Vector Machines"
     """
-    df = column_or_1d(df)
+    pred = column_or_1d(pred)
     y = column_or_1d(y)
 
-    F = df  # F follows Platt's notations
+    F = pred  # F follows Platt's notations
 
     # Bayesian priors (see Platt end of section 2.2)
     prior0 = float(np.sum(y <= 0))
