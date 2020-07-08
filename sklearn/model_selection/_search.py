@@ -29,7 +29,8 @@ from ..base import MetaEstimatorMixin
 from ._split import check_cv
 from ._validation import _fit_and_score
 from ._validation import _aggregate_score_dicts
-from ._validation import _handle_error_score
+from ._validation import _insert_error_scores
+from ._validation import _normalize_score_results
 from ..exceptions import NotFittedError
 from joblib import Parallel, delayed
 from ..utils import check_random_state
@@ -700,19 +701,14 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
         refit_metric = "score"
 
-        # If scoring is callable, then error scores must be handled after
-        # scoring is called.
         if callable(self.scoring):
             scorers = self.scoring
-            should_handle_error_scores = True
         elif self.scoring is None or isinstance(self.scoring, str):
             scorers = check_scoring(self.estimator, self.scoring)
-            should_handle_error_scores = False
         else:
             scorers = _check_multimetric_scoring(self.estimator, self.scoring)
             self._check_refit_for_multimetric(scorers)
             refit_metric = self.refit
-            should_handle_error_scores = False
 
         X, y, groups = indexable(X, y, groups)
         fit_params = _check_fit_params(X, fit_params)
@@ -773,8 +769,11 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                                      .format(n_splits,
                                              len(out) // n_candidates))
 
-                if should_handle_error_scores:
-                    _handle_error_score(out, self.error_score)
+                # For callabe self.scoring, the return type is only know after
+                # calling. If the return type is a dictionary, the error scores
+                # can now be inserted with the correct key.
+                if callable(self.scoring):
+                    _insert_error_scores(out, self.error_score)
                 all_candidate_params.extend(candidate_params)
                 all_out.extend(out)
 
@@ -785,14 +784,14 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
             self._run_search(evaluate_candidates)
 
-            # multimetric is determined here based on test_scores. This is
-            # to support callable self.scoring
-            sample_score = all_out[0]['test_scores']
-            self.multimetric_ = isinstance(sample_score, dict)
+            # multimetric is determined here because in the case of a callable
+            # self.scoring the return type is only known after calling
+            first_test_score = all_out[0]['test_scores']
+            self.multimetric_ = isinstance(first_test_score, dict)
 
-            # scorer is callable, check refit_metric now
+            # check refit_metric now for a callabe scorer that is multimetric
             if callable(self.scoring) and self.multimetric_:
-                self._check_refit_for_multimetric(sample_score)
+                self._check_refit_for_multimetric(first_test_score)
                 refit_metric = self.refit
 
         # For multi-metric evaluation, store the best_index_, best_params_ and
@@ -886,18 +885,9 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         # Store a list of param dicts at the key 'params'
         results['params'] = candidate_params
 
-        test_scores = out["test_scores"]
-        if isinstance(test_scores[0], dict):
-            test_scores_dict = _aggregate_score_dicts(test_scores)
-        else:
-            test_scores_dict = {"score": test_scores}
-
+        test_scores_dict = _normalize_score_results(out["test_scores"])
         if self.return_train_score:
-            train_scores = out["train_scores"]
-            if isinstance(test_scores[0], dict):
-                train_scores_dict = _aggregate_score_dicts(train_scores)
-            else:
-                train_scores_dict = {"score": train_scores}
+            train_scores_dict = _normalize_score_results(out["train_scores"])
 
         for scorer_name in test_scores_dict:
             # Computed the (weighted) mean and std for test scores alone

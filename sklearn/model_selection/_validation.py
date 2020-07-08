@@ -234,17 +234,12 @@ def cross_validate(estimator, X, y=None, *, groups=None, scoring=None, cv=None,
 
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
 
-    # If scoring is callable, then error scores must be handled after
-    # scoring is called.
     if callable(scoring):
         scorers = scoring
-        should_handle_error_scores = True
     elif scoring is None or isinstance(scoring, str):
         scorers = check_scoring(estimator, scoring)
-        should_handle_error_scores = False
     else:
         scorers = _check_multimetric_scoring(estimator, scoring)
-        should_handle_error_scores = False
 
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
@@ -258,8 +253,12 @@ def cross_validate(estimator, X, y=None, *, groups=None, scoring=None, cv=None,
             error_score=error_score)
         for train, test in cv.split(X, y, groups))
 
-    if should_handle_error_scores:
-        _handle_error_score(results, error_score)
+    # For callabe scoring, the return type is only know after calling. If the
+    # return type is a dictionary, the error scores can now be inserted with
+    # the correct key.
+    if callable(scoring):
+        _insert_error_scores(results, error_score)
+
     results = _aggregate_score_dicts(results)
 
     if return_estimator:
@@ -272,18 +271,9 @@ def cross_validate(estimator, X, y=None, *, groups=None, scoring=None, cv=None,
     if return_estimator:
         ret['estimator'] = fitted_estimators
 
-    test_scores = results["test_scores"]
-    if isinstance(test_scores[0], dict):
-        test_scores_dict = _aggregate_score_dicts(test_scores)
-    else:
-        test_scores_dict = {"score": test_scores}
-
+    test_scores_dict = _normalize_score_results(results["test_scores"])
     if return_train_score:
-        train_scores = results["train_scores"]
-        if isinstance(test_scores[0], dict):
-            train_scores_dict = _aggregate_score_dicts(train_scores)
-        else:
-            train_scores_dict = {"score": train_scores}
+        train_scores_dict = _normalize_score_results(results["train_scores"])
 
     for name in test_scores_dict:
         ret['test_%s' % name] = test_scores_dict[name]
@@ -294,8 +284,11 @@ def cross_validate(estimator, X, y=None, *, groups=None, scoring=None, cv=None,
     return ret
 
 
-def _handle_error_score(results, error_score):
-    """Handle error in results by replacing them with `error_score`."""
+def _insert_error_scores(results, error_score):
+    """Insert error in results by replacing them with `error_score`.
+
+    This only applies to dictionaries scores because `_fit_and_score` will
+    handle the single metric case."""
     successful_score = None
     failed_indices = []
     for i, result in enumerate(results):
@@ -313,6 +306,15 @@ def _handle_error_score(results, error_score):
             results[i]["test_scores"] = formatted_error.copy()
             if "train_scores" in results[i]:
                 results[i]["train_scores"] = formatted_error.copy()
+
+
+def _normalize_score_results(scores, scaler_score_key='score'):
+    """Creates a scoring dictionary based on the type of `scores`"""
+    if isinstance(scores[0], dict):
+        # multimetric scoring
+        return _aggregate_score_dicts(scores)
+    # scaler
+    return {scaler_score_key: scores}
 
 
 @_deprecate_positional_args
