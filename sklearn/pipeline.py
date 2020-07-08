@@ -946,8 +946,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         Xs, transformers = zip(*results)
         self._update_transformer_list(transformers)
 
-        X_t = self._concat(Xs)
-        return X_t
+        return self._hstack(Xs)
 
     def _log_message(self, name, idx, total):
         if not self.verbose:
@@ -989,10 +988,9 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
             # All transformers are None
             return np.zeros((X.shape[0], 0))
 
-        X_t = self._concat(Xs)
-        return X_t
+        return self._hstack(Xs)
 
-    def _concat(self, Xs):
+    def _hstack(self, Xs):
         if any(sparse.issparse(f) for f in Xs):
             Xs = sparse.hstack(Xs).tocsr()
         else:
