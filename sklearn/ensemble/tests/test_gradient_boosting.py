@@ -85,9 +85,7 @@ def test_classification_toy(loss):
 
 @pytest.mark.parametrize(
     "params, err_msg",
-    [#({"loss": "huber", "alpha": 1.2}, r"alpha must be in \(0.0, 1.0\)"),
-     #({"loss": "quantile", "alpha": 1.2}, r"alpha must be in \(0.0, 1.0\)"),
-     ({"n_estimators": 0}, "n_estimators must be greater than 0"),
+    [({"n_estimators": 0}, "n_estimators must be greater than 0"),
      ({"n_estimators": -1}, "n_estimators must be greater than 0"),
      ({"learning_rate": 0}, "learning_rate must be greater than 0"),
      ({"learning_rate": -1.0}, "learning_rate must be greater than 0"),
