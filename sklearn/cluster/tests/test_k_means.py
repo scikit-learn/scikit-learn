@@ -1021,7 +1021,6 @@ def test_sample_weight_unchanged():
     ({"n_init": 0}, r"n_init should be > 0"),
     ({"max_iter": 0}, r"max_iter should be > 0"),
     ({"n_clusters": n_samples + 1}, r"n_samples.* should be >= n_clusters"),
-    ({"tol": -1}, r"tol should be >= 0"),
     ({"init": X[:2]},
      r"The shape of the initial centers .* does not match "
      r"the number of clusters"),

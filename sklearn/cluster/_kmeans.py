@@ -909,11 +909,13 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         self.algorithm = algorithm
 
     def _check_params(self, X):
+        # precompute_distances
         if self.precompute_distances != 'deprecated':
             warnings.warn("'precompute_distances' was deprecated in version "
                           "0.23 and will be removed in 0.25. It has no "
                           "effect", FutureWarning)
 
+        # n_jobs
         if self.n_jobs != 'deprecated':
             warnings.warn("'n_jobs' was deprecated in version 0.23 and will be"
                           " removed in 0.25.", FutureWarning)
@@ -922,23 +924,26 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
             self._n_threads = None
         self._n_threads = _openmp_effective_n_threads(self._n_threads)
 
+        # n_init
         if self.n_init <= 0:
             raise ValueError(
                 f"n_init should be > 0, got {self.n_init} instead.")
         self._n_init = self.n_init
 
+        # max_iter
         if self.max_iter <= 0:
             raise ValueError(
                 f"max_iter should be > 0, got {self.max_iter} instead.")
 
+        # n_clusters
         if X.shape[0] < self.n_clusters:
             raise ValueError(f"n_samples={X.shape[0]} should be >= "
                              f"n_clusters={self.n_clusters}.")
 
-        if self.tol < 0:
-            raise ValueError(f"tol should be >= 0, got {self.tol} instead.")
+        # tol
         self._tol = _tolerance(X, self.tol)
 
+        # algorithm
         if self.algorithm not in ("auto", "full", "elkan"):
             raise ValueError(f"Algorithm must be 'auto', 'full' or 'elkan', "
                              f"got {self.algorithm} instead.")
@@ -951,6 +956,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         if self._algorithm == "auto":
             self._algorithm = "full" if self.n_clusters == 1 else "elkan"
 
+        # init
         if not (hasattr(self.init, '__array__') or callable(self.init)
                 or (isinstance(self.init, str)
                     and self.init in ["k-means++", "random"])):
@@ -1587,15 +1593,18 @@ class MiniBatchKMeans(KMeans):
     def _check_params(self, X):
         super()._check_params(X)
 
+        # max_no_improvement
         if self.max_no_improvement is not None and self.max_no_improvement < 0:
             raise ValueError(
                 f"max_no_improvement should be >= 0, got "
                 f"{self.max_no_improvement} instead.")
 
+        # batch_size
         if self.batch_size <= 0:
             raise ValueError(
                 f"batch_size should be > 0, got {self.batch_size} instead.")
 
+        # init_size
         if self.init_size is not None and self.init_size <= 0:
             raise ValueError(
                 f"init_size should be > 0, got {self.init_size} instead.")
@@ -1614,6 +1623,7 @@ class MiniBatchKMeans(KMeans):
         self._init_size = min(self._init_size, X.shape[0])
         self.init_size_ = self._init_size
 
+        # reassignment_ratio
         if self.reassignment_ratio < 0:
             raise ValueError(
                 f"reassignment_ratio should be >= 0, got "
