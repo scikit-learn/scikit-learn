@@ -1016,7 +1016,7 @@ def test_sample_weight_unchanged():
     assert_array_equal(sample_weight, np.array([0.5, 0.2, 0.3]))
 
 
-@pytest.mark.parametrize("estimator", [KMeans, MiniBatchKMeans])
+@pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
 @pytest.mark.parametrize("param, match", [
     ({"n_init": 0}, r"n_init should be > 0"),
     ({"max_iter": 0}, r"max_iter should be > 0"),
@@ -1038,11 +1038,11 @@ def test_sample_weight_unchanged():
      r"init should be either 'k-means\+\+', 'random', "
      r"a ndarray or a callable")]
 )
-def test_wrong_params(estimator, param, match):
+def test_wrong_params(Estimator, param, match):
     # Check that error are raised with clear error message when wrong values
     # are passed for the parameters
     with pytest.raises(ValueError, match=match):
-        estimator(**param).fit(X)
+        Estimator(**param).fit(X)
 
 
 @pytest.mark.parametrize("param, match", [
