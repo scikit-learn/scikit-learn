@@ -1827,8 +1827,12 @@ class MiniBatchKMeans(KMeans):
         -------
         self
         """
-        X = check_array(X, accept_sparse='csr', dtype=[np.float64, np.float32],
-                        order='C', accept_large_sparse=False)
+        is_first_call_to_partial_fit = not hasattr(self, 'cluster_centers_')
+
+        X = self._validate_data(X, accept_sparse='csr',
+                                dtype=[np.float64, np.float32],
+                                order='C', accept_large_sparse=False,
+                                reset=is_first_call_to_partial_fit)
 
         if X.shape[0] == 0:
             return self
@@ -1840,7 +1844,7 @@ class MiniBatchKMeans(KMeans):
 
         x_squared_norms = row_norms(X, squared=True)
 
-        if not hasattr(self, 'cluster_centers_'):
+        if is_first_call_to_partial_fit:
             # this is the first call partial_fit on this object
             self._check_params(X)
 
@@ -1866,13 +1870,6 @@ class MiniBatchKMeans(KMeans):
             random_reassign = self.random_state_.randint(
                 10 * (1 + self.counts_.min())) == 0
             distances = np.zeros(X.shape[0], dtype=X.dtype)
-
-            # Raise error if partial_fit called on data with different number
-            # of features.
-            if X.shape[1] != self.cluster_centers_.shape[1]:
-                raise ValueError(
-                    "Number of features %d does not match previous "
-                    "data %d." % (X.shape[1], self.cluster_centers_.shape[1]))
 
         _mini_batch_step(X, sample_weight, x_squared_norms,
                          self.cluster_centers_, self.counts_,
