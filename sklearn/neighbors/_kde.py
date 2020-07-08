@@ -72,6 +72,11 @@ class KernelDensity(BaseEstimator):
         metric.  For more information, see the documentation of
         :class:`BallTree` or :class:`KDTree`.
 
+    Attributes
+    ----------
+    tree_ : ``BinaryTree`` instance
+        The tree algorithm for fast generalized N-point problems.
+
     See Also
     --------
     sklearn.neighbors.KDTree : K-dimensional tree for fast generalized N-point

@@ -226,28 +226,21 @@ def test_fit_docstring_attributes(name, Estimator):
         # provided, this checks if the word "only" is present in the attribute
         # description, and if not the attribute is required to be present.
         if 'only ' not in desc:
-            assert hasattr(est, attr.name)
+            # Ignore "FutureWarning" of deprecated attributes
+            with ignore_warnings(category=FutureWarning):
+                assert hasattr(est, attr.name)
 
-    IGNORED = {'BayesianRidge', 'Birch', 'CCA', 'CategoricalNB', 'ElasticNet',
-               'ElasticNetCV', 'GaussianProcessClassifier',
-               'GradientBoostingRegressor', 'HistGradientBoostingClassifier',
-               'HistGradientBoostingRegressor', 'IsolationForest',
-               'KNeighborsClassifier', 'KNeighborsRegressor',
-               'KNeighborsTransformer', 'KernelCenterer', 'KernelDensity',
+    IGNORED = {'BayesianRidge', 'Birch', 'CCA', 'CategoricalNB',
+               'KernelCenterer',
                'LarsCV', 'Lasso', 'LassoLarsCV', 'LassoLarsIC',
-               'LatentDirichletAllocation', 'LocalOutlierFactor', 'MDS',
-               'MiniBatchKMeans', 'MLPClassifier', 'MLPRegressor',
-               'MultiTaskElasticNet', 'MultiTaskElasticNetCV',
-               'MultiTaskLasso', 'MultiTaskLassoCV', 'NearestNeighbors',
-               'NuSVR', 'OneClassSVM', 'OrthogonalMatchingPursuit',
-               'PLSCanonical', 'PLSRegression', 'PLSSVD',
-               'PassiveAggressiveClassifier', 'Perceptron', 'RBFSampler',
-               'RadiusNeighborsClassifier', 'RadiusNeighborsRegressor',
-               'RadiusNeighborsTransformer', 'RandomTreesEmbedding', 'SVR',
-               'SkewedChi2Sampler'}
+               'MiniBatchKMeans',
+               'OrthogonalMatchingPursuit',
+               'PLSCanonical', 'PLSSVD',
+               'PassiveAggressiveClassifier'}
+
     if Estimator.__name__ in IGNORED:
         pytest.xfail(
-            reason="Classifier has too many undocumented attributes.")
+            reason="Estimator has too many undocumented attributes.")
 
     fit_attr = [k for k in est.__dict__.keys() if k.endswith('_')
                 and not k.startswith('_')]

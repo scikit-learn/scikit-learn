@@ -289,7 +289,7 @@ def confusion_matrix(y_true, y_pred, *, labels=None, sample_weight=None,
         if n_labels == 0:
             raise ValueError("'labels' should contains at least one label.")
         elif y_true.size == 0:
-            return np.zeros((n_labels, n_labels), dtype=np.int)
+            return np.zeros((n_labels, n_labels), dtype=int)
         elif np.all([l not in y_true for l in labels]):
             raise ValueError("At least one label specified must be in y_true")
 
@@ -609,10 +609,10 @@ def cohen_kappa_score(y1, y2, *, labels=None, weights=None,
     expected = np.outer(sum0, sum1) / np.sum(sum0)
 
     if weights is None:
-        w_mat = np.ones([n_classes, n_classes], dtype=np.int)
+        w_mat = np.ones([n_classes, n_classes], dtype=int)
         w_mat.flat[:: n_classes + 1] = 0
     elif weights == "linear" or weights == "quadratic":
-        w_mat = np.zeros([n_classes, n_classes], dtype=np.int)
+        w_mat = np.zeros([n_classes, n_classes], dtype=int)
         w_mat += np.arange(n_classes)
         if weights == "linear":
             w_mat = np.abs(w_mat - w_mat.T)

@@ -443,9 +443,9 @@ class SelectPercentile(_BaseFilter):
 
         # Cater for NaNs
         if self.percentile == 100:
-            return np.ones(len(self.scores_), dtype=np.bool)
+            return np.ones(len(self.scores_), dtype=bool)
         elif self.percentile == 0:
-            return np.zeros(len(self.scores_), dtype=np.bool)
+            return np.zeros(len(self.scores_), dtype=bool)
 
         scores = _clean_nans(self.scores_)
         threshold = np.percentile(scores, 100 - self.percentile)

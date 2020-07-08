@@ -1,19 +1,22 @@
 import pytest
-from numpy.testing import assert_allclose
 import numpy as np
+from numpy.testing import assert_allclose
 
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import plot_roc_curve
 from sklearn.metrics import RocCurveDisplay
+from sklearn.metrics import roc_curve
+from sklearn.metrics import auc
 from sklearn.datasets import load_iris
+from sklearn.datasets import load_breast_cancer
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import roc_curve, auc
+from sklearn.model_selection import train_test_split
 from sklearn.base import ClassifierMixin
 from sklearn.exceptions import NotFittedError
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
+from sklearn.utils import shuffle
 from sklearn.compose import make_column_transformer
-
 
 # TODO: Remove when https://github.com/numpy/numpy/issues/14397 is resolved
 pytestmark = pytest.mark.filterwarnings(
@@ -117,8 +120,15 @@ def test_plot_roc_curve(pyplot, response_method, data_binary,
 
     expected_label = "LogisticRegression (AUC = {:0.2f})".format(viz.roc_auc)
     assert viz.line_.get_label() == expected_label
-    assert viz.ax_.get_ylabel() == "True Positive Rate"
-    assert viz.ax_.get_xlabel() == "False Positive Rate"
+
+    expected_pos_label = 1 if pos_label is None else pos_label
+    expected_ylabel = f"True Positive Rate (Positive label: " \
+                      f"{expected_pos_label})"
+    expected_xlabel = f"False Positive Rate (Positive label: " \
+                      f"{expected_pos_label})"
+
+    assert viz.ax_.get_ylabel() == expected_ylabel
+    assert viz.ax_.get_xlabel() == expected_xlabel
 
 
 @pytest.mark.parametrize(
@@ -168,3 +178,51 @@ def test_default_labels(pyplot, roc_auc, estimator_name,
     disp = RocCurveDisplay(fpr=fpr, tpr=tpr, roc_auc=roc_auc,
                            estimator_name=estimator_name).plot()
     assert disp.line_.get_label() == expected_label
+
+
+@pytest.mark.parametrize(
+    "response_method", ["predict_proba", "decision_function"]
+)
+def test_plot_roc_curve_pos_label(pyplot, response_method):
+    # check that we can provide the positive label and display the proper
+    # statistics
+    X, y = load_breast_cancer(return_X_y=True)
+    # create an highly imbalanced
+    idx_positive = np.flatnonzero(y == 1)
+    idx_negative = np.flatnonzero(y == 0)
+    idx_selected = np.hstack([idx_negative, idx_positive[:25]])
+    X, y = X[idx_selected], y[idx_selected]
+    X, y = shuffle(X, y, random_state=42)
+    # only use 2 features to make the problem even harder
+    X = X[:, :2]
+    y = np.array(
+        ["cancer" if c == 1 else "not cancer" for c in y], dtype=object
+    )
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, stratify=y, random_state=0,
+    )
+
+    classifier = LogisticRegression()
+    classifier.fit(X_train, y_train)
+
+    # sanity check to be sure the positive class is classes_[0] and that we
+    # are betrayed by the class imbalance
+    assert classifier.classes_.tolist() == ["cancer", "not cancer"]
+
+    disp = plot_roc_curve(
+        classifier, X_test, y_test, pos_label="cancer",
+        response_method=response_method
+    )
+
+    roc_auc_limit = 0.95679
+
+    assert disp.roc_auc == pytest.approx(roc_auc_limit)
+    assert np.trapz(disp.tpr, disp.fpr) == pytest.approx(roc_auc_limit)
+
+    disp = plot_roc_curve(
+        classifier, X_test, y_test,
+        response_method=response_method,
+    )
+
+    assert disp.roc_auc == pytest.approx(roc_auc_limit)
+    assert np.trapz(disp.tpr, disp.fpr) == pytest.approx(roc_auc_limit)

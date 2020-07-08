@@ -344,7 +344,7 @@ def davies_bouldin_score(X, labels):
     check_number_of_labels(n_labels, n_samples)
 
     intra_dists = np.zeros(n_labels)
-    centroids = np.zeros((n_labels, len(X[0])), dtype=np.float)
+    centroids = np.zeros((n_labels, len(X[0])), dtype=float)
     for k in range(n_labels):
         cluster_k = _safe_indexing(X, labels == k)
         centroid = cluster_k.mean(axis=0)

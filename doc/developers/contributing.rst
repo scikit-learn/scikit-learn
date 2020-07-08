@@ -263,7 +263,7 @@ modifying code and submitting a PR:
 10. Develop the feature on your feature branch on your computer, using Git to
     do the version control. When you're done editing, add changed files using
     ``git add`` and then ``git commit``::
- 
+
         $ git add modified_files
         $ git commit
 
@@ -486,6 +486,8 @@ message, the following actions are taken.
     [doc build]            Docs built including example gallery plots
     ====================== ===================
 
+.. _stalled_pull_request:
+
 Stalled pull requests
 ^^^^^^^^^^^^^^^^^^^^^
 
@@ -519,6 +521,35 @@ A good etiquette to take over is:
   comment on the stalled PR that you are taking over and to link from the
   new PR to the old one. The new PR should be created by pulling from the
   old one.
+
+Stalled and Unclaimed Issues
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Generally speaking, issues which are up for grabs will have a
+`"help wanted" <https://github.com/scikit-learn/scikit-learn/labels/help%20wanted>`__ .
+tag. However, not all issues which need contributors will have this tag,
+as the "help wanted" tag is not always up-to-date with the state
+of the issue. Contributors can find issues which are still up for grabs
+using the following guidelines:
+
+* First, to **determine if an issue is claimed**:
+
+  * Check for linked pull requests
+  * Check the conversation to see if anyone has said that they're working on
+    creating a pull request
+
+* If a contributor comments on an issue to say they are working on it,
+  a pull request is expected within 2 weeks (new contributor) or 4 weeks
+  (contributor or core dev), unless an larger time frame is explicitly given.
+  Beyond that time, another contributor can take the issue and make a
+  pull request for it. We encourage contributors to comment directly on the
+  stalled or unclaimed issue to let community members know that they will be
+  working on it.
+
+* If the issue is linked to a :ref:`stalled pull request <stalled_pull_request>`,
+  we recommend that contributors follow the procedure
+  described in the :ref:`stalled_pull_request`
+  section rather than working directly on the issue.
 
 .. _new_contributors:
 
@@ -674,7 +705,7 @@ Finally, follow the formatting rules below to make it consistently good:
         literal (either `hello` or `goodbye`), a bool, or an int. The default
         value is True.
 
-    array_parameter : {array-like, sparse matrix, dataframe} of shape (n_samples, n_features) or (n_samples,)
+    array_parameter : {array-like, sparse matrix} of shape (n_samples, n_features) or (n_samples,)
         This parameter accepts data in either of the mentioned forms, with one
         of the mentioned shapes. The default value is
         `np.ones(shape=(n_samples,))`.
@@ -695,12 +726,14 @@ In general have the following in mind:
     4. 1D or 2D data can be a subset of
        ``{array-like, ndarray, sparse matrix, dataframe}``. Note that ``array-like``
        can also be a ``list``, while ``ndarray`` is explicitly only a ``numpy.ndarray``.
-    5. When specifying the data type of a list, use ``of`` as a delimiter:
+    5. Specify ``dataframe`` when "frame-like" features are being used, such
+       as the column names.
+    6. When specifying the data type of a list, use ``of`` as a delimiter:
        ``list of int``.
-    6. When specifying the dtype of an ndarray, use e.g. ``dtype=np.int32``
+    7. When specifying the dtype of an ndarray, use e.g. ``dtype=np.int32``
        after defining the shape:
        ``ndarray of shape (n_samples,), dtype=np.int32``.
-    7. When the default is ``None``, ``None`` only needs to be specified at the
+    8. When the default is ``None``, ``None`` only needs to be specified at the
        end with ``default=None``. Be sure to include in the docstring, what it
        means for the parameter or attribute to be ``None``.
 

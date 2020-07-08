@@ -9,6 +9,7 @@ import pytest
 
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_allclose
+from sklearn.utils.fixes import _astype_copy_false
 from sklearn.base import clone
 from sklearn.exceptions import ConvergenceWarning
 
@@ -248,11 +249,11 @@ def test_minibatch_update_consistency():
 @pytest.mark.parametrize("init", ["random", "k-means++", centers,
                                   lambda X, k, random_state: centers],
                          ids=["random", "k-means++", "ndarray", "callable"])
-@pytest.mark.parametrize("estimator", [KMeans, MiniBatchKMeans])
-def test_all_init(estimator, data, init):
+@pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
+def test_all_init(Estimator, data, init):
     # Check KMeans and MiniBatchKMeans with all possible init.
     n_init = 10 if type(init) is str else 1
-    km = estimator(init=init, n_clusters=n_clusters, random_state=42,
+    km = Estimator(init=init, n_clusters=n_clusters, random_state=42,
                    n_init=n_init).fit(data)
     _check_fitted_model(km)
 
@@ -369,10 +370,10 @@ def test_centers_not_mutated(estimator, dtype):
 
 
 @pytest.mark.parametrize("data", [X, X_csr], ids=["dense", "sparse"])
-@pytest.mark.parametrize("estimator", [KMeans, MiniBatchKMeans])
-def test_float_precision(estimator, data):
+@pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
+def test_float_precision(Estimator, data):
     # Check that the results are the same for single and double precision.
-    km = estimator(n_init=1, random_state=0)
+    km = Estimator(n_init=1, random_state=0)
 
     inertia = {}
     Xt = {}
@@ -380,7 +381,7 @@ def test_float_precision(estimator, data):
     labels = {}
 
     for dtype in [np.float64, np.float32]:
-        X = data.astype(dtype)
+        X = data.astype(dtype, **_astype_copy_false(data))
         km.fit(X)
 
         inertia[dtype] = km.inertia_
@@ -392,13 +393,12 @@ def test_float_precision(estimator, data):
         assert km.cluster_centers_.dtype == dtype
 
         # same with partial_fit
-        if estimator is MiniBatchKMeans:
+        if Estimator is MiniBatchKMeans:
             km.partial_fit(X[0:3])
             assert km.cluster_centers_.dtype == dtype
 
-    # compare arrays with low precision since the difference between
-    # 32 and 64 bit sometimes makes a difference up to the 4th decimal
-    # place
+    # compare arrays with low precision since the difference between 32 and
+    # 64 bit comes from an accumulation of rounding errors.
     assert_allclose(inertia[np.float32], inertia[np.float64], rtol=1e-5)
     assert_allclose(Xt[np.float32], Xt[np.float64], rtol=1e-5)
     assert_allclose(centers[np.float32], centers[np.float64], rtol=1e-5)

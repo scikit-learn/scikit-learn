@@ -28,31 +28,14 @@ cdef extern from "numpy/arrayobject.h":
                                 int nd, np.npy_intp* dims,
                                 np.npy_intp* strides,
                                 void* data, int flags, object obj)
+    int PyArray_SetBaseObject(np.ndarray arr, PyObject* obj)
 
-
-# Repeat struct definition for numpy
-CELL_DTYPE = np.dtype({
-    'names': ['parent', 'children', 'cell_id', 'point_index', 'is_leaf',
-              'max_width', 'depth', 'cumulative_size', 'center', 'barycenter',
-              'min_bounds', 'max_bounds'],
-    'formats': [np.intp, (np.intp, 8), np.intp, np.intp, np.int32, np.float32,
-                np.intp, np.intp, (np.float32, 3), (np.float32, 3),
-                (np.float32, 3), (np.float32, 3)],
-    'offsets': [
-        <Py_ssize_t> &(<Cell*> NULL).parent,
-        <Py_ssize_t> &(<Cell*> NULL).children,
-        <Py_ssize_t> &(<Cell*> NULL).cell_id,
-        <Py_ssize_t> &(<Cell*> NULL).point_index,
-        <Py_ssize_t> &(<Cell*> NULL).is_leaf,
-        <Py_ssize_t> &(<Cell*> NULL).squared_max_width,
-        <Py_ssize_t> &(<Cell*> NULL).depth,
-        <Py_ssize_t> &(<Cell*> NULL).cumulative_size,
-        <Py_ssize_t> &(<Cell*> NULL).center,
-        <Py_ssize_t> &(<Cell*> NULL).barycenter,
-        <Py_ssize_t> &(<Cell*> NULL).min_bounds,
-        <Py_ssize_t> &(<Cell*> NULL).max_bounds,
-    ]
-})
+# Build the corresponding numpy dtype for Cell.
+# This works by casting `dummy` to an array of Cell of length 1, which numpy
+# can construct a `dtype`-object for. See https://stackoverflow.com/q/62448946
+# for a more detailed explanation.
+cdef Cell dummy;
+CELL_DTYPE = np.asarray(<Cell[:1]>(&dummy)).dtype
 
 assert CELL_DTYPE.itemsize == sizeof(Cell)
 
@@ -573,7 +556,8 @@ cdef class _QuadTree:
                                    strides, <void*> self.cells,
                                    np.NPY_DEFAULT, None)
         Py_INCREF(self)
-        arr.base = <PyObject*> self
+        if PyArray_SetBaseObject(arr, <PyObject*> self) < 0:
+            raise ValueError("Can't intialize array!")
         return arr
 
     cdef int _resize(self, SIZE_t capacity) nogil except -1:
