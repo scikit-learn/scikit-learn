@@ -964,14 +964,12 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
                 f"init should be either 'k-means++', 'random', a ndarray or a "
                 f"callable, got '{self.init}' instead.")
 
-        if hasattr(self.init, '__array__'):
-            _validate_center_shape(X, self.n_clusters, self.init)
-            if self._n_init != 1:
-                warnings.warn(
-                    f"Explicit initial center position passed: performing only"
-                    f" one init in {self.__class__.__name__} instead of "
-                    f"n_init={self._n_init}.", RuntimeWarning, stacklevel=2)
-                self._n_init = 1
+        if hasattr(self.init, '__array__') and self._n_init != 1:
+            warnings.warn(
+                f"Explicit initial center position passed: performing only"
+                f" one init in {self.__class__.__name__} instead of "
+                f"n_init={self._n_init}.", RuntimeWarning, stacklevel=2)
+            self._n_init = 1
 
     def _check_test_data(self, X):
         X = check_array(X, accept_sparse='csr', dtype=[np.float64, np.float32],
@@ -1016,14 +1014,14 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
                                 order='C', copy=self.copy_x,
                                 accept_large_sparse=False)
 
+        self._check_params(X)
         random_state = check_random_state(self.random_state)
 
         # Validate init array
         init = self.init
         if hasattr(init, '__array__'):
             init = check_array(init, dtype=X.dtype, copy=True, order='C')
-
-        self._check_params(X)
+            _validate_center_shape(X, self.n_clusters, init)
 
         # subtract of mean of x for more accurate distance computations
         if not sp.issparse(X):
@@ -1656,19 +1654,17 @@ class MiniBatchKMeans(KMeans):
                                 dtype=[np.float64, np.float32],
                                 order='C', accept_large_sparse=False)
 
-        n_samples, n_features = X.shape
-
-        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
-
+        self._check_params(X)
         random_state = check_random_state(self.random_state)
+        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
         # Validate init array
         init = self.init
         if hasattr(init, '__array__'):
             init = check_array(init, dtype=X.dtype, copy=True, order='C')
+            _validate_center_shape(X, self.n_clusters, init)
 
-        self._check_params(X)
-
+        n_samples, n_features = X.shape
         x_squared_norms = row_norms(X, squared=True)
 
         if self.tol > 0.0:
@@ -1837,21 +1833,21 @@ class MiniBatchKMeans(KMeans):
         if X.shape[0] == 0:
             return self
 
-        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
-
         self.random_state_ = getattr(self, "random_state_",
                                      check_random_state(self.random_state))
+        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
         x_squared_norms = row_norms(X, squared=True)
 
         if is_first_call_to_partial_fit:
-            # this is the first call partial_fit on this object
+            # this is the first call to partial_fit on this object
             self._check_params(X)
 
             # Validate init array
             init = self.init
             if hasattr(init, '__array__'):
                 init = check_array(init, dtype=X.dtype, copy=True, order='C')
+                _validate_center_shape(X, self.n_clusters, init)
 
             # initialize the cluster centers
             self.cluster_centers_ = _init_centroids(
