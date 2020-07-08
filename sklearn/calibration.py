@@ -443,7 +443,8 @@ def _fit_calibrator(clf_fitted, label_encoder_, method, y, X=None, preds=None,
         The targets.
 
     X : array-like, shape (n_samples, n_features), default=None
-        Sample data used to calibrate predictions. If None, use `preds` instead.
+        Sample data used to calibrate predictions. If None, use `preds`
+        instead.
 
     preds :  array-like, shape (n_samples, n_classes), default=None
         The predictions, output from `base_estimator`, used to calibrate
@@ -459,7 +460,8 @@ def _fit_calibrator(clf_fitted, label_encoder_, method, y, X=None, preds=None,
     """
     Y = label_binarize(y, classes=label_encoder_.classes_)
     if X is not None:
-        preds, pos_class_indices = _get_predictions(clf_fitted, X, label_encoder_)
+        preds, pos_class_indices = _get_predictions(clf_fitted, X,
+                                                    label_encoder_)
     elif preds is not None:
         pos_class_indices = label_encoder_.transform(clf_fitted.classes_)
     else:
