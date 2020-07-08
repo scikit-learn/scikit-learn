@@ -1108,3 +1108,16 @@ def test_sample_weight_unchanged():
 
     # internally, sample_weight is rescale to sum up to n_samples = 3
     assert_array_equal(sample_weight, np.array([0.5, 0.2, 0.3]))
+
+
+@pytest.mark.parametrize("attr", ["counts_", "init_size_"])
+def test_minibatch_kmeans_deprecated_attributes(attr):
+    # check that we raise a deprecation warning when accessing `init_size_`
+    # FIXME: remove in 0.26
+    depr_msg = (f"The attribute '{attr}' is deprecated in 0.24 and will be "
+                f"removed in 0.26.")
+    km = MiniBatchKMeans(n_clusters=2, n_init=1, init='random', random_state=0)
+    km.fit(X)
+
+    with pytest.warns(FutureWarning, match=depr_msg):
+        getattr(km, attr)

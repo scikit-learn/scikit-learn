@@ -26,6 +26,7 @@ from ..utils.validation import _num_samples, _deprecate_positional_args
 from ..utils import check_array
 from ..utils import gen_batches
 from ..utils import check_random_state
+from ..utils import deprecated
 from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils._openmp_helpers import _openmp_effective_n_threads
 from ..exceptions import ConvergenceWarning
@@ -1517,6 +1518,12 @@ class MiniBatchKMeans(KMeans):
         defined as the sum of square distances of samples to their nearest
         neighbor.
 
+    counts_ : ndarray of shape (n_clusters,)
+        Weigth sum of each cluster.
+
+    init_size_ : int
+        The effective number of samples used for the initialization.
+
     See Also
     --------
     KMeans
@@ -1573,6 +1580,18 @@ class MiniBatchKMeans(KMeans):
         self.compute_labels = compute_labels
         self.init_size = init_size
         self.reassignment_ratio = reassignment_ratio
+
+    @deprecated("The attribute 'counts_' is deprecated in 0.24 and will be "
+                "removed in 0.26.")
+    @property
+    def counts_(self):
+        return self._counts
+
+    @deprecated("The attribute 'init_size_' is deprecated in 0.24 and will be "
+                "removed in 0.26.")
+    @property
+    def init_size_(self):
+        return self._init_size
 
     def fit(self, X, y=None, sample_weight=None):
         """Compute the centroids on X by chunking it into mini-batches.
@@ -1642,9 +1661,10 @@ class MiniBatchKMeans(KMeans):
             init_size = 3 * self.batch_size
         if init_size > n_samples:
             init_size = n_samples
-        self.init_size_ = init_size
+        self._init_size = init_size
 
-        validation_indices = random_state.randint(0, n_samples, init_size)
+        validation_indices = random_state.randint(0, n_samples,
+                                                  self._init_size)
         X_valid = X[validation_indices]
         sample_weight_valid = sample_weight[validation_indices]
         x_squared_norms_valid = x_squared_norms[validation_indices]
@@ -1666,7 +1686,7 @@ class MiniBatchKMeans(KMeans):
                 X, self.n_clusters, self.init,
                 random_state=random_state,
                 x_squared_norms=x_squared_norms,
-                init_size=init_size)
+                init_size=self._init_size)
 
             # Compute the label assignment on the init dataset
             _mini_batch_step(
@@ -1685,7 +1705,7 @@ class MiniBatchKMeans(KMeans):
                       % (init_idx + 1, n_init, inertia))
             if best_inertia is None or inertia < best_inertia:
                 self.cluster_centers_ = cluster_centers
-                self.counts_ = weight_sums
+                self._counts = weight_sums
                 best_inertia = inertia
 
         # Empty context to be used inplace by the convergence check routine
@@ -1702,7 +1722,7 @@ class MiniBatchKMeans(KMeans):
             batch_inertia, centers_squared_diff = _mini_batch_step(
                 X[minibatch_indices], sample_weight[minibatch_indices],
                 x_squared_norms[minibatch_indices],
-                self.cluster_centers_, self.counts_,
+                self.cluster_centers_, self._counts,
                 old_center_buffer, tol > 0.0, distances=distances,
                 # Here we randomly choose whether to perform
                 # random reassignment: the choice is done as a function
@@ -1710,7 +1730,7 @@ class MiniBatchKMeans(KMeans):
                 # counts, in order to force this reassignment to happen
                 # every once in a while
                 random_reassign=((iteration_idx + 1)
-                                 % (10 + int(self.counts_.min())) == 0),
+                                 % (10 + int(self._counts.min())) == 0),
                 random_state=random_state,
                 reassignment_ratio=self.reassignment_ratio,
                 verbose=self.verbose)
@@ -1795,18 +1815,18 @@ class MiniBatchKMeans(KMeans):
         sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
         x_squared_norms = row_norms(X, squared=True)
-        self.random_state_ = getattr(self, "random_state_",
+        self._random_state = getattr(self, "_random_state",
                                      check_random_state(self.random_state))
-        if (not hasattr(self, 'counts_')
+        if (not hasattr(self, '_counts')
                 or not hasattr(self, 'cluster_centers_')):
             # this is the first call partial_fit on this object:
             # initialize the cluster centers
             self.cluster_centers_ = _init_centroids(
                 X, self.n_clusters, self.init,
-                random_state=self.random_state_,
+                random_state=self._random_state,
                 x_squared_norms=x_squared_norms, init_size=self.init_size)
 
-            self.counts_ = np.zeros(self.n_clusters,
+            self._counts = np.zeros(self.n_clusters,
                                     dtype=sample_weight.dtype)
             random_reassign = False
             distances = None
@@ -1814,8 +1834,8 @@ class MiniBatchKMeans(KMeans):
             # The lower the minimum count is, the more we do random
             # reassignment, however, we don't want to do random
             # reassignment too often, to allow for building up counts
-            random_reassign = self.random_state_.randint(
-                10 * (1 + self.counts_.min())) == 0
+            random_reassign = self._random_state.randint(
+                10 * (1 + self._counts.min())) == 0
             distances = np.zeros(X.shape[0], dtype=X.dtype)
 
             # Raise error if partial_fit called on data with different number
@@ -1826,10 +1846,10 @@ class MiniBatchKMeans(KMeans):
                     "data %d." % (X.shape[1], self.cluster_centers_.shape[1]))
 
         _mini_batch_step(X, sample_weight, x_squared_norms,
-                         self.cluster_centers_, self.counts_,
+                         self.cluster_centers_, self._counts,
                          np.zeros(0, dtype=X.dtype), 0,
                          random_reassign=random_reassign, distances=distances,
-                         random_state=self.random_state_,
+                         random_state=self._random_state,
                          reassignment_ratio=self.reassignment_ratio,
                          verbose=self.verbose)
 
