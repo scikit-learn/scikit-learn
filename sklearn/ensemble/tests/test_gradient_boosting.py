@@ -243,7 +243,6 @@ def check_regression_dataset(loss, subsample):
         last_y_pred = y_pred
 
 
-@pytest.mark.network
 @pytest.mark.parametrize('loss', ('ls', 'lad', 'huber'))
 @pytest.mark.parametrize('subsample', (1.0, 0.5))
 def test_regression_dataset(loss, subsample):

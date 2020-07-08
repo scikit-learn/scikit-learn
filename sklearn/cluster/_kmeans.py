@@ -166,21 +166,6 @@ def _tolerance(X, tol):
     return np.mean(variances) * tol
 
 
-def _check_normalize_sample_weight(sample_weight, X):
-    """Set sample_weight if None, and check for correct dtype"""
-
-    sample_weight_was_none = sample_weight is None
-
-    sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
-    if not sample_weight_was_none:
-        # normalize the weights to sum up to n_samples
-        # an array of 1 (i.e. samples_weight is None) is already normalized
-        n_samples = len(sample_weight)
-        scale = n_samples / sample_weight.sum()
-        sample_weight = sample_weight * scale
-    return sample_weight
-
-
 @_deprecate_positional_args
 def k_means(X, n_clusters, *, sample_weight=None, init='k-means++',
             precompute_distances='deprecated', n_init=10, max_iter=300,
@@ -398,7 +383,7 @@ def _kmeans_single_elkan(X, sample_weight, n_clusters, max_iter=300,
         Number of iterations run.
     """
     random_state = check_random_state(random_state)
-    sample_weight = _check_normalize_sample_weight(sample_weight, X)
+    sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
     # init
     centers = _init_centroids(X, n_clusters, init, random_state=random_state,
@@ -545,7 +530,7 @@ def _kmeans_single_lloyd(X, sample_weight, n_clusters, max_iter=300,
         Number of iterations run.
     """
     random_state = check_random_state(random_state)
-    sample_weight = _check_normalize_sample_weight(sample_weight, X)
+    sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
     # init
     centers = _init_centroids(X, n_clusters, init, random_state=random_state,
@@ -638,7 +623,7 @@ def _labels_inertia(X, sample_weight, x_squared_norms, centers,
 
     n_threads = _openmp_effective_n_threads(n_threads)
 
-    sample_weight = _check_normalize_sample_weight(sample_weight, X)
+    sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
     labels = np.full(n_samples, -1, dtype=np.int32)
     weight_in_clusters = np.zeros(n_clusters, dtype=centers.dtype)
     center_shift = np.zeros_like(weight_in_clusters)
@@ -1663,7 +1648,7 @@ class MiniBatchKMeans(KMeans):
 
         n_samples, n_features = X.shape
 
-        sample_weight = _check_normalize_sample_weight(sample_weight, X)
+        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
         random_state = check_random_state(self.random_state)
 
@@ -1803,7 +1788,7 @@ class MiniBatchKMeans(KMeans):
         """
         if self.verbose:
             print('Computing label assignment and total inertia')
-        sample_weight = _check_normalize_sample_weight(sample_weight, X)
+        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
         x_squared_norms = row_norms(X, squared=True)
         slices = gen_batches(X.shape[0], self.batch_size)
         results = [_labels_inertia(X[s], sample_weight[s], x_squared_norms[s],
@@ -1837,7 +1822,7 @@ class MiniBatchKMeans(KMeans):
         if X.shape[0] == 0:
             return self
 
-        sample_weight = _check_normalize_sample_weight(sample_weight, X)
+        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
         self.random_state_ = getattr(self, "random_state_",
                                      check_random_state(self.random_state))
