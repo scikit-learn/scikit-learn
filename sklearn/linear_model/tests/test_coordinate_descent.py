@@ -59,7 +59,7 @@ from sklearn.utils import check_array
 
 
 @pytest.mark.parametrize('l1_ratio', (-1, 2, None, 10, 'something_wrong'))
-def test_l1_ratio_param(l1_ratio):
+def test_l1_ratio_param_invalid(l1_ratio):
     # Check that correct error is raised when l1_ratio in ElasticNet
     # is outside the correct range
     X = np.array([[-1.], [0.], [1.]])
