@@ -7,6 +7,22 @@
 Version 0.23.2
 ==============
 
+Changed models
+--------------
+
+The following estimators and functions, when fit with the same data and
+parameters, may produce different models from the previous version. This often
+occurs due to changes in the modelling logic (bug fixes or enhancements), or in
+random sampling procedures.
+
+- |Fix| ``inertia_`` attribute of :class:`cluster.KMeans` and
+  :class:`cluster.MiniBatchKMeans`.
+
+Details are listed in the changelog below.
+
+(While we are trying to better inform users by providing this information, we
+cannot assure that this list is complete.)
+
 Changelog
 ---------
 
@@ -15,6 +31,11 @@ Changelog
 
 - |Fix| Fixed a bug in :class:`cluster.KMeans` where rounding errors could
   prevent convergence to be declared when `tol=0`. :pr:`17959` by
+  :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+- |Fix| Fixed a bug in :class:`cluster.KMeans` and
+  :class:`cluster.MiniBatchKMeans` where the reported inertia was incorrectly
+  weighted by the sample weights. :pr:`17848` by
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 :mod:`sklearn.ensemble`
