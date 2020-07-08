@@ -288,7 +288,7 @@ def test_probability_log():
     assert_array_equal(y_pred, true_result)
 
 
-def test_single_class_with_smaple_weight():
+def test_single_class_with_sample_weight():
     sample_weight = [0, 0, 0, 1, 1, 1]
     clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
     msg = (
