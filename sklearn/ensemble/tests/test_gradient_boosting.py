@@ -208,7 +208,7 @@ def test_iris(subsample, sample_weight):
         sample_weight = np.ones(len(iris.target))
     # Check consistency on dataset iris.
     clf = GradientBoostingClassifier(n_estimators=100,
-                                     loss='deviance',
+                                     loss="deviance",
                                      random_state=1,
                                      subsample=subsample)
     clf.fit(iris.data, iris.target, sample_weight=sample_weight)
