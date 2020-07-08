@@ -259,6 +259,192 @@ def test_all_init(Estimator, data, init):
 
 
 @pytest.mark.parametrize("estimator", [KMeans, MiniBatchKMeans])
+def test_fortran_aligned_data(estimator):
+    # Check that KMeans works with fortran-aligned data.
+    X_fortran = np.asfortranarray(X)
+    centers_fortran = np.asfortranarray(centers)
+
+    km_c = estimator(n_clusters=n_clusters, init=centers, n_init=1,
+                     random_state=42).fit(X)
+    km_f = estimator(n_clusters=n_clusters, init=centers_fortran, n_init=1,
+                     random_state=42).fit(X_fortran)
+    assert_allclose(km_c.cluster_centers_, km_f.cluster_centers_)
+    assert_array_equal(km_c.labels_, km_f.labels_)
+
+
+@pytest.mark.parametrize("estimator", [KMeans, MiniBatchKMeans])
+def test_verbose(estimator):
+    # Check verbose mode of KMeans and MiniBatchKMeans for better coverage.
+    km = estimator(n_clusters=n_clusters, random_state=42, verbose=1)
+    old_stdout = sys.stdout
+    sys.stdout = StringIO()
+    try:
+        km.fit(X)
+    finally:
+        sys.stdout = old_stdout
+
+
+def test_minibatch_sensible_reassign():
+    # check that identical initial clusters are reassigned
+    # also a regression test for when there are more desired reassignments than
+    # samples.
+    zeroed_X, true_labels = make_blobs(n_samples=100, centers=5,
+                                       random_state=42)
+    zeroed_X[::2, :] = 0
+
+    km = MiniBatchKMeans(n_clusters=20, batch_size=10, random_state=42,
+                         init="random").fit(zeroed_X)
+    # there should not be too many exact zero cluster centers
+    assert km.cluster_centers_.any(axis=1).sum() > 10
+
+    # do the same with batch-size > X.shape[0] (regression test)
+    km = MiniBatchKMeans(n_clusters=20, batch_size=200, random_state=42,
+                         init="random").fit(zeroed_X)
+    # there should not be too many exact zero cluster centers
+    assert km.cluster_centers_.any(axis=1).sum() > 10
+
+    # do the same with partial_fit API
+    km = MiniBatchKMeans(n_clusters=20, random_state=42, init="random")
+    for i in range(100):
+        km.partial_fit(zeroed_X)
+    # there should not be too many exact zero cluster centers
+    assert km.cluster_centers_.any(axis=1).sum() > 10
+
+
+@pytest.mark.parametrize("data", [X, X_csr], ids=["dense", "sparse"])
+def test_minibatch_reassign(data):
+    # Check the reassignment part of the minibatch step with very high or very
+    # low reassignment ratio.
+    perfect_centers = np.empty((n_clusters, n_features))
+    for i in range(n_clusters):
+        perfect_centers[i] = X[true_labels == i].mean(axis=0)
+
+    x_squared_norms = row_norms(data, squared=True)
+    sample_weight = np.ones(n_samples)
+    centers_new = np.empty_like(perfect_centers)
+
+    # Give a perfect initialization, but a large reassignment_ratio, as a
+    # result many centers should be reassigned and the model should no longer
+    # be good
+    score_before = - _labels_inertia(data, sample_weight, x_squared_norms,
+                                     perfect_centers, 1)[1]
+
+    _mini_batch_step(data, x_squared_norms, sample_weight, perfect_centers,
+                     centers_new, np.zeros(n_clusters),
+                     np.random.RandomState(0), random_reassign=True,
+                     reassignment_ratio=1)
+
+    score_after = - _labels_inertia(data, sample_weight, x_squared_norms,
+                                    centers_new, 1)[1]
+
+    assert score_before > score_after
+
+    # Give a perfect initialization, with a small reassignment_ratio,
+    # no center should be reassigned.
+    _mini_batch_step(data, x_squared_norms, sample_weight, perfect_centers,
+                     centers_new, np.zeros(n_clusters),
+                     np.random.RandomState(0), random_reassign=True,
+                     reassignment_ratio=1e-15)
+
+    assert_allclose(centers_new, perfect_centers)
+
+
+def test_minibatch_with_many_reassignments():
+    # Test for the case that the number of clusters to reassign is bigger
+    # than the batch_size. Run the test with 100 clusters and a batch_size of
+    # 10 because it turned out that these values ensure that the number of
+    # clusters to reassign is always bigger than the batch_size.
+    MiniBatchKMeans(n_clusters=100,
+                    batch_size=10,
+                    init_size=n_samples,
+                    random_state=42,
+                    verbose=True).fit(X)
+
+
+def test_minibatch_kmeans_init_size():
+    # Check the internal _init_size attribute of MiniBatchKMeans
+
+    # default init size should be 3 * batch_size
+    km = MiniBatchKMeans(n_clusters=10, batch_size=5, n_init=1).fit(X)
+    assert km._init_size == 15
+
+    # if 3 * batch size < n_clusters, it should then be 3 * n_clusters
+    km = MiniBatchKMeans(n_clusters=10, batch_size=1, n_init=1).fit(X)
+    assert km._init_size == 30
+
+    # it should not be larger than n_samples
+    km = MiniBatchKMeans(n_clusters=10, batch_size=5, n_init=1,
+                         init_size=n_samples + 1).fit(X)
+    assert km._init_size == n_samples
+
+
+def test_kmeans_copyx():
+    # Check that copy_x=False returns nearly equal X after de-centering.
+    my_X = X.copy()
+    km = KMeans(copy_x=False, n_clusters=n_clusters, random_state=42)
+    km.fit(my_X)
+    _check_fitted_model(km)
+
+    # check that my_X is de-centered
+    assert_allclose(my_X, X)
+
+
+@pytest.mark.parametrize("estimator", [KMeans, MiniBatchKMeans])
+def test_score_max_iter(estimator):
+    # Check that fitting KMeans or MiniBatchKMeans with more iterations gives
+    # better score
+    X = np.random.RandomState(0).randn(100, 10)
+
+    km1 = estimator(n_init=1, random_state=42, max_iter=1)
+    s1 = km1.fit(X).score(X)
+    km2 = estimator(n_init=1, random_state=42, max_iter=10)
+    s2 = km2.fit(X).score(X)
+    assert s2 > s1
+
+
+@pytest.mark.parametrize("array_constr", [np.array, sp.csr_matrix],
+                         ids=["dense", "sparse"])
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+@pytest.mark.parametrize("init", ["random", "k-means++", "ndarray"])
+@pytest.mark.parametrize("estimator", [KMeans, MiniBatchKMeans])
+def test_predict(estimator, init, dtype, array_constr):
+    # Check the predict method and the equivalence between fit.predict and
+    # fit_predict.
+    if sys.platform == "darwin":
+        pytest.xfail(
+            "Known failures on MacOS, See "
+            "https://github.com/scikit-learn/scikit-learn/issues/12644")
+
+    X, _ = make_blobs(n_samples=500, n_features=10, centers=10, random_state=0)
+
+    n_init = 1 if init == "ndarray" else 10
+    init = X[:10] if init == "ndarray" else init
+    X = array_constr(X)
+
+    km = estimator(n_clusters=10, init=init, n_init=n_init,
+                   random_state=0).fit(X)
+    labels = km.labels_
+
+    # Due to randomness in the order in which chunks of data are processed when
+    # using more than one thread, there might be different rounding errors for
+    # the computation of the inertia for each init between 2 runs. This might
+    # result in a different ranking of the inits, hence a different labeling,
+    # which should still correspond to the same clustering
+
+    # re-predict labels for training set using predict
+    pred = km.predict(X)
+    assert_allclose(v_measure_score(pred, labels), 1)
+
+    # re-predict labels for training set using fit_predict
+    pred = km.fit_predict(X)
+    assert_allclose(v_measure_score(pred, labels), 1)
+
+    # predict centroid labels
+    pred = km.predict(km.cluster_centers_)
+    assert_allclose(v_measure_score(pred, np.arange(10)), 1)
+
+
+@pytest.mark.parametrize("estimator", [KMeans, MiniBatchKMeans])
 def test_result_equal_in_diff_n_threads(estimator):
     # Check that KMeans/MiniBatchKMeans give the same results in parallel mode
     # than in sequential mode.
@@ -340,20 +526,6 @@ def test_dense_sparse(estimator):
     assert_allclose(km_dense.cluster_centers_, km_sparse.cluster_centers_)
 
 
-@pytest.mark.parametrize("estimator", [KMeans, MiniBatchKMeans])
-def test_fortran_aligned_data(estimator):
-    # Check that KMeans works with fortran-aligned data.
-    X_fortran = np.asfortranarray(X)
-    centers_fortran = np.asfortranarray(centers)
-
-    km_c = estimator(n_clusters=n_clusters, init=centers, n_init=1,
-                     random_state=42).fit(X)
-    km_f = estimator(n_clusters=n_clusters, init=centers_fortran, n_init=1,
-                     random_state=42).fit(X_fortran)
-    assert_allclose(km_c.cluster_centers_, km_f.cluster_centers_)
-    assert_array_equal(km_c.labels_, km_f.labels_)
-
-
 @pytest.mark.parametrize("dtype", [np.int32, np.int64, np.float32, np.float64])
 @pytest.mark.parametrize("estimator", [KMeans, MiniBatchKMeans])
 def test_centers_not_mutated(estimator, dtype):
@@ -405,19 +577,6 @@ def test_float_precision(Estimator, data):
     assert_array_equal(labels[np.float32], labels[np.float64])
 
 
-@pytest.mark.parametrize("estimator", [KMeans, MiniBatchKMeans])
-def test_score_max_iter(estimator):
-    # Check that fitting KMeans or MiniBatchKMeans with more iterations gives
-    # better score
-    X = np.random.RandomState(0).randn(100, 10)
-
-    km1 = estimator(n_init=1, random_state=42, max_iter=1)
-    s1 = km1.fit(X).score(X)
-    km2 = estimator(n_init=1, random_state=42, max_iter=10)
-    s2 = km2.fit(X).score(X)
-    assert s2 > s1
-
-
 @pytest.mark.parametrize("array_constr", [np.array, sp.csr_matrix],
                          ids=["dense", "sparse"])
 @pytest.mark.parametrize("dtype", [np.int32, np.int64])
@@ -447,48 +606,6 @@ def test_integer_input(estimator, array_constr, dtype, init):
     if estimator is MiniBatchKMeans:
         km = clone(km).partial_fit(X)
         assert km.cluster_centers_.dtype == np.float64
-
-
-@pytest.mark.parametrize("array_constr", [np.array, sp.csr_matrix],
-                         ids=["dense", "sparse"])
-@pytest.mark.parametrize("dtype", [np.float32, np.float64])
-@pytest.mark.parametrize("init", ["random", "k-means++", "ndarray"])
-@pytest.mark.parametrize("estimator", [KMeans, MiniBatchKMeans])
-def test_predict(estimator, init, dtype, array_constr):
-    # Check the predict method and the equivalence between fit.predict and
-    # fit_predict.
-    if sys.platform == "darwin":
-        pytest.xfail(
-            "Known failures on MacOS, See "
-            "https://github.com/scikit-learn/scikit-learn/issues/12644")
-
-    X, _ = make_blobs(n_samples=500, n_features=10, centers=10, random_state=0)
-
-    n_init = 1 if init == "ndarray" else 10
-    init = X[:10] if init == "ndarray" else init
-    X = array_constr(X)
-
-    km = estimator(n_clusters=10, init=init, n_init=n_init,
-                   random_state=0).fit(X)
-    labels = km.labels_
-
-    # Due to randomness in the order in which chunks of data are processed when
-    # using more than one thread, there might be different rounding errors for
-    # the computation of the inertia for each init between 2 runs. This might
-    # result in a different ranking of the inits, hence a different labeling,
-    # which should still correspond to the same clustering
-
-    # re-predict labels for training set using predict
-    pred = km.predict(X)
-    assert_allclose(v_measure_score(pred, labels), 1)
-
-    # re-predict labels for training set using fit_predict
-    pred = km.fit_predict(X)
-    assert_allclose(v_measure_score(pred, labels), 1)
-
-    # predict centroid labels
-    pred = km.predict(km.cluster_centers_)
-    assert_allclose(v_measure_score(pred, np.arange(10)), 1)
 
 
 @pytest.mark.parametrize("init", ["random", "k-means++", centers],
@@ -545,18 +662,6 @@ def test_sample_weight_unchanged(estimator):
     assert_array_equal(sample_weight, np.array([0.5, 0.2, 0.3]))
 
 
-@pytest.mark.parametrize("estimator", [KMeans, MiniBatchKMeans])
-def test_verbose(estimator):
-    # Check verbose mode of KMeans and MiniBatchKMeans for better coverage.
-    km = estimator(n_clusters=n_clusters, random_state=42, verbose=1)
-    old_stdout = sys.stdout
-    sys.stdout = StringIO()
-    try:
-        km.fit(X)
-    finally:
-        sys.stdout = old_stdout
-
-
 @pytest.mark.parametrize("array_constr", [np.array, sp.csr_matrix],
                          ids=["dense", "sparse"])
 @pytest.mark.parametrize("algo", ["full", "elkan"])
@@ -584,17 +689,6 @@ def test_k_means_1_iteration(array_constr, algo):
 
     assert_array_equal(py_labels, cy_labels)
     assert_allclose(py_centers, cy_centers)
-
-
-def test_kmeans_copyx():
-    # Check that copy_x=False returns nearly equal X after de-centering.
-    my_X = X.copy()
-    km = KMeans(copy_x=False, n_clusters=n_clusters, random_state=42)
-    km.fit(my_X)
-    _check_fitted_model(km)
-
-    # check that my_X is de-centered
-    assert_allclose(my_X, X)
 
 
 @pytest.mark.parametrize("data", [X, X_csr], ids=["dense", "sparse"])
@@ -690,100 +784,6 @@ def test_k_means_function():
     # check that the labels assignment are perfect (up to a permutation)
     assert_allclose(v_measure_score(true_labels, labels), 1.0)
     assert inertia > 0.0
-
-
-def test_minibatch_kmeans_init_size():
-    # Check the internal _init_size attribute of MiniBatchKMeans
-
-    # default init size should be 3 * batch_size
-    km = MiniBatchKMeans(n_clusters=10, batch_size=5, n_init=1).fit(X)
-    assert km._init_size == 15
-
-    # if 3 * batch size < n_clusters, it should then be 3 * n_clusters
-    km = MiniBatchKMeans(n_clusters=10, batch_size=1, n_init=1).fit(X)
-    assert km._init_size == 30
-
-    # it should not be larger than n_samples
-    km = MiniBatchKMeans(n_clusters=10, batch_size=5, n_init=1,
-                         init_size=n_samples + 1).fit(X)
-    assert km._init_size == n_samples
-
-
-def test_minibatch_sensible_reassign():
-    # check that identical initial clusters are reassigned
-    # also a regression test for when there are more desired reassignments than
-    # samples.
-    zeroed_X, true_labels = make_blobs(n_samples=100, centers=5,
-                                       random_state=42)
-    zeroed_X[::2, :] = 0
-
-    km = MiniBatchKMeans(n_clusters=20, batch_size=10, random_state=42,
-                         init="random").fit(zeroed_X)
-    # there should not be too many exact zero cluster centers
-    assert km.cluster_centers_.any(axis=1).sum() > 10
-
-    # do the same with batch-size > X.shape[0] (regression test)
-    km = MiniBatchKMeans(n_clusters=20, batch_size=200, random_state=42,
-                         init="random").fit(zeroed_X)
-    # there should not be too many exact zero cluster centers
-    assert km.cluster_centers_.any(axis=1).sum() > 10
-
-    # do the same with partial_fit API
-    km = MiniBatchKMeans(n_clusters=20, random_state=42, init="random")
-    for i in range(100):
-        km.partial_fit(zeroed_X)
-    # there should not be too many exact zero cluster centers
-    assert km.cluster_centers_.any(axis=1).sum() > 10
-
-
-@pytest.mark.parametrize("data", [X, X_csr], ids=["dense", "sparse"])
-def test_minibatch_reassign(data):
-    # Check the reassignment part of the minibatch step with very high or very
-    # low reassignment ratio.
-    perfect_centers = np.empty((n_clusters, n_features))
-    for i in range(n_clusters):
-        perfect_centers[i] = X[true_labels == i].mean(axis=0)
-
-    x_squared_norms = row_norms(data, squared=True)
-    sample_weight = np.ones(n_samples)
-    centers_new = np.empty_like(perfect_centers)
-
-    # Give a perfect initialization, but a large reassignment_ratio, as a
-    # result many centers should be reassigned and the model should no longer
-    # be good
-    score_before = - _labels_inertia(data, sample_weight, x_squared_norms,
-                                     perfect_centers, 1)[1]
-
-    _mini_batch_step(data, x_squared_norms, sample_weight, perfect_centers,
-                     centers_new, np.zeros(n_clusters),
-                     np.random.RandomState(0), random_reassign=True,
-                     reassignment_ratio=1)
-
-    score_after = - _labels_inertia(data, sample_weight, x_squared_norms,
-                                    centers_new, 1)[1]
-
-    assert score_before > score_after
-
-    # Give a perfect initialization, with a small reassignment_ratio,
-    # no center should be reassigned.
-    _mini_batch_step(data, x_squared_norms, sample_weight, perfect_centers,
-                     centers_new, np.zeros(n_clusters),
-                     np.random.RandomState(0), random_reassign=True,
-                     reassignment_ratio=1e-15)
-
-    assert_allclose(centers_new, perfect_centers)
-
-
-def test_minibatch_with_many_reassignments():
-    # Test for the case that the number of clusters to reassign is bigger
-    # than the batch_size. Run the test with 100 clusters and a batch_size of
-    # 10 because it turned out that these values ensure that the number of
-    # clusters to reassign is always bigger than the batch_size.
-    MiniBatchKMeans(n_clusters=100,
-                    batch_size=10,
-                    init_size=n_samples,
-                    random_state=42,
-                    verbose=True).fit(X)
 
 
 @pytest.mark.parametrize("estimator", [KMeans, MiniBatchKMeans])
