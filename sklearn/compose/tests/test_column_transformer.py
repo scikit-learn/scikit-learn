@@ -563,7 +563,8 @@ def test_make_column_transformer_kwargs():
     # invalid keyword parameters should raise an error message
     assert_raise_message(
         TypeError,
-        'Unknown keyword arguments: "transformer_weights"',
+        "make_column_transformer() got an unexpected "
+        "keyword argument 'transformer_weights'",
         make_column_transformer, (scaler, 'first'), (norm, ['second']),
         transformer_weights={'pca': 10, 'Transf': 1}
     )
@@ -1271,25 +1272,25 @@ def test_n_features_in():
 @pytest.mark.parametrize('cols, pattern, include, exclude', [
     (['col_int', 'col_float'], None, np.number, None),
     (['col_int', 'col_float'], None, None, object),
-    (['col_int', 'col_float'], None, [np.int, np.float], None),
-    (['col_str'], None, [np.object], None),
-    (['col_str'], None, np.object, None),
+    (['col_int', 'col_float'], None, [int, float], None),
+    (['col_str'], None, [object], None),
+    (['col_str'], None, object, None),
     (['col_float'], None, float, None),
     (['col_float'], 'at$', [np.number], None),
-    (['col_int'], None, [np.int], None),
+    (['col_int'], None, [int], None),
     (['col_int'], '^col_int', [np.number], None),
     (['col_float', 'col_str'], 'float|str', None, None),
-    (['col_str'], '^col_s', None, [np.int]),
-    ([], 'str$', np.float, None),
-    (['col_int', 'col_float', 'col_str'], None, [np.number, np.object], None),
+    (['col_str'], '^col_s', None, [int]),
+    ([], 'str$', float, None),
+    (['col_int', 'col_float', 'col_str'], None, [np.number, object], None),
 ])
 def test_make_column_selector_with_select_dtypes(cols, pattern, include,
                                                  exclude):
     pd = pytest.importorskip('pandas')
 
     X_df = pd.DataFrame({
-        'col_int': np.array([0, 1, 2], dtype=np.int),
-        'col_float': np.array([0.0, 1.0, 2.0], dtype=np.float),
+        'col_int': np.array([0, 1, 2], dtype=int),
+        'col_float': np.array([0.0, 1.0, 2.0], dtype=float),
         'col_str': ["one", "two", "three"],
     }, columns=['col_int', 'col_float', 'col_str'])
 
@@ -1303,8 +1304,8 @@ def test_column_transformer_with_make_column_selector():
     # Functional test for column transformer + column selector
     pd = pytest.importorskip('pandas')
     X_df = pd.DataFrame({
-        'col_int': np.array([0, 1, 2], dtype=np.int),
-        'col_float': np.array([0.0, 1.0, 2.0], dtype=np.float),
+        'col_int': np.array([0, 1, 2], dtype=int),
+        'col_float': np.array([0.0, 1.0, 2.0], dtype=float),
         'col_cat': ["one", "two", "one"],
         'col_str': ["low", "middle", "high"]
     }, columns=['col_int', 'col_float', 'col_cat', 'col_str'])
@@ -1339,8 +1340,8 @@ def test_make_column_selector_pickle():
     pd = pytest.importorskip('pandas')
 
     X_df = pd.DataFrame({
-        'col_int': np.array([0, 1, 2], dtype=np.int),
-        'col_float': np.array([0.0, 1.0, 2.0], dtype=np.float),
+        'col_int': np.array([0, 1, 2], dtype=int),
+        'col_float': np.array([0.0, 1.0, 2.0], dtype=float),
         'col_str': ["one", "two", "three"],
     }, columns=['col_int', 'col_float', 'col_str'])
 
@@ -1351,7 +1352,7 @@ def test_make_column_selector_pickle():
 
 
 @pytest.mark.parametrize(
-    'empty_col', [[], np.array([], dtype=np.int), lambda x: []],
+    'empty_col', [[], np.array([], dtype=int), lambda x: []],
     ids=['list', 'array', 'callable']
 )
 def test_feature_names_empty_columns(empty_col):

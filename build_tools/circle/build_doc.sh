@@ -163,13 +163,20 @@ if [[ "$CIRCLE_JOB" == "doc-min-dependencies" ]]; then
     conda config --set restore_free_channel true
 fi
 
+# imports get_dep
+source build_tools/shared.sh
+
 # packaging won't be needed once setuptools starts shipping packaging>=17.0
-conda create -n $CONDA_ENV_NAME --yes --quiet python="${PYTHON_VERSION:-*}" \
-  numpy="${NUMPY_VERSION:-*}" scipy="${SCIPY_VERSION:-*}" \
-  cython="${CYTHON_VERSION:-*}" pytest coverage \
-  matplotlib="${MATPLOTLIB_VERSION:-*}" sphinx=2.1.2 pillow \
-  scikit-image="${SCIKIT_IMAGE_VERSION:-*}" pandas="${PANDAS_VERSION:-*}" \
-  joblib memory_profiler packaging seaborn
+conda create -n $CONDA_ENV_NAME --yes --quiet \
+    python="${PYTHON_VERSION:-*}" \
+    "$(get_dep numpy $NUMPY_VERSION)" \
+    "$(get_dep scipy $SCIPY_VERSION)" \
+    "$(get_dep cython $CYTHON_VERSION)" \
+    "$(get_dep matplotlib $MATPLOTLIB_VERSION)" \
+    "$(get_dep sphinx $SPHINX_VERSION)" \
+    "$(get_dep scikit-image $SCIKIT_IMAGE_VERSION)" \
+    "$(get_dep pandas $PANDAS_VERSION)" \
+    joblib memory_profiler packaging seaborn pillow pytest coverage
 
 source activate testenv
 pip install sphinx-gallery
@@ -250,4 +257,3 @@ then
         exit 1
     fi
 fi
-

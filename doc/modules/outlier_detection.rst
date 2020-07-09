@@ -98,23 +98,27 @@ Outlier Factor (LOF) does not show a decision boundary in black as it
 has no predict method to be applied on new data when it is used for outlier
 detection.
 
-.. figure:: ../auto_examples/images/sphx_glr_plot_anomaly_comparison_001.png
-   :target: ../auto_examples/plot_anomaly_comparison.html
+.. figure:: ../auto_examples/miscellaneous/images/sphx_glr_plot_anomaly_comparison_001.png
+   :target: ../auto_examples/miscellaneous/plot_anomaly_comparison.html
    :align: center
    :scale: 50
 
 :class:`ensemble.IsolationForest` and :class:`neighbors.LocalOutlierFactor`
 perform reasonably well on the data sets considered here.
 The :class:`svm.OneClassSVM` is known to be sensitive to outliers and thus
-does not perform very well for outlier detection. Finally,
+does not perform very well for outlier detection. That being said, outlier
+detection in high-dimension, or without any assumptions on the distribution
+of the inlying data is very challenging. :class:`svm.OneClassSVM` may still
+be used with outlier detection but requires fine-tuning of its hyperparameter
+`nu` to handle outliers and prevent overfitting. Finally,
 :class:`covariance.EllipticEnvelope` assumes the data is Gaussian and learns
 an ellipse. For more details on the different estimators refer to the example
-:ref:`sphx_glr_auto_examples_plot_anomaly_comparison.py` and the sections
-hereunder.
+:ref:`sphx_glr_auto_examples_miscellaneous_plot_anomaly_comparison.py` and the
+sections hereunder.
 
 .. topic:: Examples:
 
-  * See :ref:`sphx_glr_auto_examples_plot_anomaly_comparison.py`
+  * See :ref:`sphx_glr_auto_examples_miscellaneous_plot_anomaly_comparison.py`
     for a comparison of the :class:`svm.OneClassSVM`, the
     :class:`ensemble.IsolationForest`, the
     :class:`neighbors.LocalOutlierFactor` and
@@ -146,15 +150,15 @@ and implemented in the :ref:`svm` module in the
 kernel and a scalar parameter to define a frontier.  The RBF kernel is
 usually chosen although there exists no exact formula or algorithm to
 set its bandwidth parameter. This is the default in the scikit-learn
-implementation. The :math:`\nu` parameter, also known as the margin of
+implementation. The `nu` parameter, also known as the margin of
 the One-Class SVM, corresponds to the probability of finding a new,
 but regular, observation outside the frontier.
 
 .. topic:: References:
 
     * `Estimating the support of a high-dimensional distribution
-      <https://dl.acm.org/citation.cfm?id=1119749>`_ Schölkopf,
-      Bernhard, et al. Neural computation 13.7 (2001): 1443-1471.
+      <http://www.recognition.mccme.ru/pub/papers/SVM/sch99estimating.pdf>`_
+      Schölkopf, Bernhard, et al. Neural computation 13.7 (2001): 1443-1471.
 
 .. topic:: Examples:
 
@@ -270,8 +274,8 @@ allows you to add more trees to an already fitted model::
    * See :ref:`sphx_glr_auto_examples_ensemble_plot_isolation_forest.py` for
      an illustration of the use of IsolationForest.
 
-   * See :ref:`sphx_glr_auto_examples_plot_anomaly_comparison.py` for a
-     comparison of :class:`ensemble.IsolationForest` with
+   * See :ref:`sphx_glr_auto_examples_miscellaneous_plot_anomaly_comparison.py`
+     for a comparison of :class:`ensemble.IsolationForest` with
      :class:`neighbors.LocalOutlierFactor`,
      :class:`svm.OneClassSVM` (tuned to perform like an outlier detection
      method) and a covariance-based outlier detection with
@@ -339,8 +343,8 @@ This strategy is illustrated below.
    * See :ref:`sphx_glr_auto_examples_neighbors_plot_lof_outlier_detection.py`
      for an illustration of the use of :class:`neighbors.LocalOutlierFactor`.
 
-   * See :ref:`sphx_glr_auto_examples_plot_anomaly_comparison.py` for a
-     comparison with other anomaly detection methods.
+   * See :ref:`sphx_glr_auto_examples_miscellaneous_plot_anomaly_comparison.py`
+     for a comparison with other anomaly detection methods.
 
 .. topic:: References:
 
@@ -378,4 +382,3 @@ Novelty detection with Local Outlier Factor is illustrated below.
      :target: ../auto_examples/neighbors/sphx_glr_plot_lof_novelty_detection.html
      :align: center
      :scale: 75%
-

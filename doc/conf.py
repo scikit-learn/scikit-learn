@@ -17,6 +17,8 @@ import os
 import warnings
 import re
 from packaging.version import parse
+from pathlib import Path
+from io import StringIO
 
 # If extensions (or modules to document with autodoc) are in another
 # directory, add these directories to sys.path here. If the directory
@@ -79,7 +81,7 @@ master_doc = 'contents'
 
 # General information about the project.
 project = 'scikit-learn'
-copyright = '2007 - 2019, scikit-learn developers (BSD License)'
+copyright = '2007 - 2020, scikit-learn developers (BSD License)'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -208,6 +210,23 @@ htmlhelp_basename = 'scikit-learndoc'
 # If true, the reST sources are included in the HTML build as _sources/name.
 html_copy_source = True
 
+# Adds variables into templates
+html_context = {}
+# finds latest release highlights and places it into HTML context for
+# index.html
+release_highlights_dir = Path("..") / "examples" / "release_highlights"
+# Finds the highlight with the latest version number
+latest_highlights = sorted(release_highlights_dir.glob(
+                           "plot_release_highlights_*.py"))[-1]
+latest_highlights = latest_highlights.with_suffix('').name
+html_context["release_highlights"] = \
+    f"auto_examples/release_highlights/{latest_highlights}"
+
+# get version from higlight name assuming highlights have the form
+# plot_release_highlights_0_22_0
+highlight_version = ".".join(latest_highlights.split("_")[-3:-1])
+html_context["release_highlights_version"] = highlight_version
+
 # -- Options for LaTeX output ------------------------------------------------
 latex_elements = {
     # The paper size ('letterpaper' or 'a4paper').
@@ -281,6 +300,11 @@ class SubSectionTitleOrder:
 
     def __call__(self, directory):
         src_path = os.path.normpath(os.path.join(self.src_dir, directory))
+
+        # Forces Release Highlights to the top
+        if os.path.basename(src_path) == "release_highlights":
+            return "0"
+
         readme = os.path.join(src_path, "README.txt")
 
         try:
@@ -314,6 +338,7 @@ sphinx_gallery_conf = {
     },
     # avoid generating too many cross links
     'inspect_global_variables': False,
+    'remove_config_comments': True,
 }
 
 
@@ -365,6 +390,49 @@ def filter_search_index(app, exception):
         f.write(searchindex_text)
 
 
+def generate_min_dependency_table(app):
+    """Generate min dependency table for docs."""
+    from sklearn._build_utils.min_dependencies import dependent_packages
+
+    # get length of header
+    package_header_len = max(len(package)
+                             for package in dependent_packages) + 4
+    version_header_len = len('Minimum Version') + 4
+    tags_header_len = max(len(tags)
+                          for _, tags in dependent_packages.values()) + 4
+
+    output = StringIO()
+    output.write(' '.join(['=' * package_header_len,
+                           '=' * version_header_len,
+                           '=' * tags_header_len]))
+    output.write('\n')
+    dependency_title = "Dependency"
+    version_title = "Minimum Version"
+    tags_title = "Purpose"
+
+    output.write(f'{dependency_title:<{package_header_len}} '
+                 f'{version_title:<{version_header_len}} '
+                 f'{tags_title}\n')
+
+    output.write(' '.join(['=' * package_header_len,
+                           '=' * version_header_len,
+                           '=' * tags_header_len]))
+    output.write('\n')
+
+    for package, (version, tags) in dependent_packages.items():
+        output.write(f'{package:<{package_header_len}} '
+                     f'{version:<{version_header_len}} '
+                     f'{tags}\n')
+
+    output.write(' '.join(['=' * package_header_len,
+                           '=' * version_header_len,
+                           '=' * tags_header_len]))
+    output.write('\n')
+    output = output.getvalue()
+
+    with (Path('.') / 'min_dependency.rst').open('w') as f:
+        f.write(output)
+
 # Config for sphinx_issues
 
 # we use the issues path for PRs since the issues URL will forward
@@ -372,6 +440,7 @@ issues_github_path = 'scikit-learn/scikit-learn'
 
 
 def setup(app):
+    app.connect('builder-inited', generate_min_dependency_table)
     # to hide/show the prompt in code examples:
     app.connect('build-finished', make_carousel_thumbs)
     app.connect('build-finished', filter_search_index)
@@ -386,6 +455,3 @@ linkcode_resolve = make_linkcode_resolve('sklearn',
 warnings.filterwarnings("ignore", category=UserWarning,
                         message='Matplotlib is currently using agg, which is a'
                                 ' non-GUI backend, so cannot show the figure.')
-
-# Reduces the output of estimators
-sklearn.set_config(print_changed_only=True)
