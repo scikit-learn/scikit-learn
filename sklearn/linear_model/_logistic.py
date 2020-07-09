@@ -428,7 +428,8 @@ def _multinomial_grad_hess(w, X, Y, alpha, sample_weight):
 
 
 def _check_solver(solver, penalty, dual):
-    all_solvers = ['liblinear', 'newton-cg', 'lbfgs', 'sag', 'saga']
+    all_solvers = ['liblinear', 'newton-cg', 'lbfgs', 'sag', 'saga',
+                   'trust-ncg', 'trust-krylov']
     if solver not in all_solvers:
         raise ValueError("Logistic Regression supports only solvers in %s, got"
                          " %s." % (all_solvers, solver))
@@ -728,19 +729,19 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     if multi_class == 'multinomial':
         # scipy.optimize.minimize and newton-cg accepts only
         # ravelled parameters.
-        if solver in ['lbfgs', 'newton-cg']:
+        if solver in ['lbfgs', 'trust-ncg', 'trust-krylov', 'newton-cg']:
             w0 = w0.ravel()
         target = Y_multi
-        if solver == 'lbfgs':
+        if solver in ['lbfgs', 'trust-ncg', 'trust-krylov']:
             def func(x, *args): return _multinomial_loss_grad(x, *args)[0:2]
         elif solver == 'newton-cg':
             def func(x, *args): return _multinomial_loss(x, *args)[0]
             def grad(x, *args): return _multinomial_loss_grad(x, *args)[1]
-            hess = _multinomial_grad_hess
+        hess = _multinomial_grad_hess
         warm_start_sag = {'coef': w0.T}
     else:
         target = y_bin
-        if solver == 'lbfgs':
+        if solver in ['lbfgs', 'trust-ncg', 'trust-krylov']:
             func = _logistic_loss_and_grad
         elif solver == 'newton-cg':
             func = _logistic_loss
@@ -751,14 +752,24 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     coefs = list()
     n_iter = np.zeros(len(Cs), dtype=np.int32)
     for i, C in enumerate(Cs):
-        if solver == 'lbfgs':
+        if solver in ['lbfgs', 'trust-ncg', 'trust-krylov']:
             iprint = [-1, 50, 1, 100, 101][
                 np.searchsorted(np.array([0, 1, 2, 3]), verbose)]
-            opt_res = optimize.minimize(
-                func, w0, method="L-BFGS-B", jac=True,
-                args=(X, target, 1. / C, sample_weight),
-                options={"iprint": iprint, "gtol": tol, "maxiter": max_iter}
-            )
+            if solver == 'lbfgs' or multi_class != "multinomial":
+                opt_res = optimize.minimize(
+                    func, w0, method="L-BFGS-B", jac=True,
+                    args=(X, target, 1. / C, sample_weight),
+                    options={"iprint": iprint, "gtol": tol,
+                             "maxiter": max_iter}
+                )
+            elif solver in ['trust-ncg', 'trust-krylov']:
+                def hessp(*inputs):
+                    (g, hp) = hess(*inputs[1:])
+                    return(hp(*inputs[:1]))
+                opt_res = optimize.minimize(
+                    func, w0, method=solver, jac=True, hessp=hessp,
+                    args=(X, target, 1. / C, sample_weight)
+                )
             n_iter_i = _check_optimize_result(
                 solver, opt_res, max_iter,
                 extra_warning_msg=_LOGISTIC_SOLVER_CONVERGENCE_MSG)

@@ -211,7 +211,8 @@ def _check_optimize_result(solver, result, max_iter=None,
     Parameters
     ----------
     solver: str
-       solver name. Currently only `lbfgs` is supported.
+       solver name. Currently only `lbfgs`, `trust-ncg`, and
+       `trust-krylov` are supported.
     result: OptimizeResult
        result of the scipy.optimize.minimize function
     max_iter: {int, None}
@@ -223,7 +224,8 @@ def _check_optimize_result(solver, result, max_iter=None,
        number of iterations
     """
     # handle both scipy and scikit-learn solver names
-    if solver == "lbfgs":
+    if solver in ["lbfgs", "trust-ncg", "trust-krylov"]:
+        print(result)
         if result.status != 0:
             warning_msg = (
                 "{} failed to converge (status={}):\n{}.\n\n"
@@ -231,7 +233,7 @@ def _check_optimize_result(solver, result, max_iter=None,
                 "or scale the data as shown in:\n"
                 "    https://scikit-learn.org/stable/modules/"
                 "preprocessing.html"
-            ).format(solver, result.status, result.message.decode("latin1"))
+            ).format(solver, result.status, result.message)
             if extra_warning_msg is not None:
                 warning_msg += "\n" + extra_warning_msg
             warnings.warn(warning_msg, ConvergenceWarning, stacklevel=2)

@@ -206,7 +206,8 @@ def test_check_solver_option(LR):
     X, y = iris.data, iris.target
 
     msg = ("Logistic Regression supports only solvers in ['liblinear', "
-           "'newton-cg', 'lbfgs', 'sag', 'saga'], got wrong_name.")
+           "'newton-cg', 'lbfgs', 'sag', 'saga', 'trust-ncg', "
+           "'trust-krylov'], got wrong_name.")
     lr = LR(solver="wrong_name", multi_class="ovr")
     assert_raise_message(ValueError, msg, lr.fit, X, y)
 
@@ -1694,7 +1695,7 @@ def test_logistic_regression_path_coefs_multinomial():
                                                Cs=3, tol=1e-3)],
                          ids=lambda x: x.__class__.__name__)
 @pytest.mark.parametrize('solver', ['liblinear', 'lbfgs', 'newton-cg', 'sag',
-                                    'saga'])
+                                    'saga', 'trust-ncg', 'trust-krylov'])
 def test_logistic_regression_multi_class_auto(est, solver):
     # check multi_class='auto' => multi_class='ovr' iff binary y or liblinear
 
@@ -1720,10 +1721,11 @@ def test_logistic_regression_multi_class_auto(est, solver):
     else:
         est_multi_multi = fit(X, y_multi, multi_class='multinomial',
                               solver=solver)
-        if sys.platform == 'darwin' and solver == 'lbfgs':
-            pytest.xfail('Issue #11924: LogisticRegressionCV(solver="lbfgs", '
-                         'multi_class="multinomial") is nondeterministic on '
-                         'MacOS.')
+        if sys.platform == 'darwin' and solver in ['lbfgs', 'trust-ncg',
+                                                   'trust-krylov']:
+            pytest.xfail('Issue #11924: LogisticRegressionCV('
+                         f'solver="{solver}", multi_class="multinomial") '
+                         'is nondeterministic on MacOS.')
         assert_allclose(est_auto_multi.coef_, est_multi_multi.coef_)
         assert_allclose(est_auto_multi.predict_proba(X2),
                         est_multi_multi.predict_proba(X2))
