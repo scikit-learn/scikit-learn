@@ -448,7 +448,7 @@ def _check_multimetric_scoring(estimator, scoring):
     err_msg_generic = (
         f"scoring is invalid (got {scoring!r}). Refer to the "
         "scoring glossary for details: "
-        "https://scikit-learn.org/stable/glossary.html#term-scoring ")
+        "https://scikit-learn.org/stable/glossary.html#term-scoring")
 
     if isinstance(scoring, (list, tuple, set)):
         err_msg = ("The list/tuple elements must be unique "
@@ -462,34 +462,30 @@ def _check_multimetric_scoring(estimator, scoring):
             raise ValueError(err_msg)
 
         if len(keys) != len(scoring):
-            raise ValueError(err_msg + "Duplicate elements were found in"
-                             " the given list. %r" % repr(scoring))
+            raise ValueError(f"{err_msg} Duplicate elements were found in"
+                             f" the given list. {scoring!r}")
         elif len(keys) > 0:
             if not all(isinstance(k, str) for k in keys):
                 if any(callable(k) for k in keys):
-                    raise ValueError(err_msg +
-                                     "One or more of the elements were "
-                                     "callables. Use a dict of score name "
-                                     "mapped to the scorer callable. "
-                                     "Got %r" % repr(scoring))
+                    raise ValueError(f"{err_msg} One or more of the elements "
+                                     "were callables. Use a dict of score "
+                                     "name mapped to the scorer callable. "
+                                     f"Got {scoring!r}")
                 else:
-                    raise ValueError(err_msg +
-                                     "Non-string types were found in "
-                                     "the given list. Got %r"
-                                     % repr(scoring))
+                    raise ValueError(f"{err_msg} Non-string types were found "
+                                     f"in the given list. Got {scoring!r}")
             scorers = {scorer: check_scoring(estimator, scoring=scorer)
                        for scorer in scoring}
         else:
-            raise ValueError(err_msg +
-                             "Empty list was given. %r" % repr(scoring))
+            raise ValueError(f"{err_msg} Empty list was given. {scoring!r}")
 
     elif isinstance(scoring, dict):
         keys = set(scoring)
         if not all(isinstance(k, str) for k in keys):
             raise ValueError("Non-string types were found in the keys of "
-                             "the given dict. scoring=%r" % repr(scoring))
+                             f"the given dict. scoring={scoring!r}")
         if len(keys) == 0:
-            raise ValueError("An empty dict was passed. %r" % repr(scoring))
+            raise ValueError(f"An empty dict was passed. {scoring!r}")
         scorers = {key: check_scoring(estimator, scoring=scorer)
                    for key, scorer in scoring.items()}
     else:
