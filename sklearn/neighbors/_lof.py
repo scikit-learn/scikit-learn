@@ -272,7 +272,7 @@ class LocalOutlierFactor(KNeighborsMixin, UnsupervisedMixin,
         if not isinstance(X, (KDTree, BallTree, LocalOutlierFactor)):
             X = self._validate_data(X, accept_sparse='csr')
 
-        super()._fit(X)
+        self._fit(X)
 
         n_samples = self.n_samples_fit_
         if self.n_neighbors > n_samples:

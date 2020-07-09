@@ -184,8 +184,7 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
             X, y = self._validate_data(X, y, accept_sparse="csr",
                                        multi_output=True)
 
-        super()._validate_set_y(y)
-
+        self._validate_set_y(y)
         return self._fit(X)
 
     def predict(self, X):
@@ -452,9 +451,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
             X, y = self._validate_data(X, y, accept_sparse="csr",
                                        multi_output=True)
 
-        super()._validate_set_y(y)
-
-        self._fit(X)
+        self._validate_set_y(y)
 
         classes_ = self.classes_
         _y = self._y
@@ -499,7 +496,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
                                     "y.".format(label, classes))
 
         self.outlier_label_ = outlier_label_
-        return self
+        return self._fit(X)
 
     def predict(self, X):
         """Predict the class labels for the provided data.
