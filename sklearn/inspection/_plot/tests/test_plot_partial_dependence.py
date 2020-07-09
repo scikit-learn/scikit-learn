@@ -33,6 +33,7 @@ def clf_diabetes(diabetes):
     return clf
 
 
+@pytest.mark.filterwarnings("ignore:A Bunch will be returned")
 @pytest.mark.parametrize("grid_resolution", [10, 20])
 def test_plot_partial_dependence(grid_resolution, pyplot, clf_diabetes,
                                  diabetes):
@@ -86,13 +87,13 @@ def test_plot_partial_dependence(grid_resolution, pyplot, clf_diabetes,
 
         line = disp.lines_[pos]
 
-        avg_preds, values = disp.pd_results[i]
-        assert avg_preds.shape == (1, grid_resolution)
+        avg_preds = disp.pd_results[i]
+        assert avg_preds.average.shape == (1, grid_resolution)
         target_idx = disp.target_idx
 
         line_data = line.get_data()
-        assert_allclose(line_data[0], values[0])
-        assert_allclose(line_data[1], avg_preds[target_idx].ravel())
+        assert_allclose(line_data[0], avg_preds["values"][0])
+        assert_allclose(line_data[1], avg_preds.average[target_idx].ravel())
 
     # two feature position
     ax = disp.axes_[0, 2]
@@ -104,6 +105,31 @@ def test_plot_partial_dependence(grid_resolution, pyplot, clf_diabetes,
     assert ax.get_ylabel() == diabetes.feature_names[2]
 
 
+@pytest.mark.filterwarnings("ignore:A Bunch will be returned")
+@pytest.mark.parametrize("kind, subsample, shape", [
+    ('average', None, (1, 3)),
+    ('individual', None, (1, 3, 442)),
+    ('both', None, (1, 3, 443)),
+    ('individual', 50, (1, 3, 50)),
+    ('both', 50, (1, 3, 51)),
+    ('individual', 0.5, (1, 3, 221)),
+    ('both', 0.5, (1, 3, 222))
+])
+def test_plot_partial_dependence_kind(pyplot, kind, subsample, shape,
+                                      clf_diabetes, diabetes):
+    disp = plot_partial_dependence(clf_diabetes, diabetes.data, [0, 1, 2],
+                                   kind=kind, subsample=subsample)
+
+    assert disp.axes_.shape == (1, 3)
+    assert disp.lines_.shape == shape
+    assert disp.contours_.shape == (1, 3)
+
+    assert disp.contours_[0, 0] is None
+    assert disp.contours_[0, 1] is None
+    assert disp.contours_[0, 2] is None
+
+
+@pytest.mark.filterwarnings("ignore:A Bunch will be returned")
 @pytest.mark.parametrize(
     "input_type, feature_names_type",
     [('dataframe', None),
@@ -159,13 +185,13 @@ def test_plot_partial_dependence_str_features(pyplot, clf_diabetes, diabetes,
     assert ax.get_ylabel() == "Partial dependence"
 
     line = disp.lines_[1, 0]
-    avg_preds, values = disp.pd_results[1]
+    avg_preds = disp.pd_results[1]
     target_idx = disp.target_idx
     assert line.get_alpha() == 0.8
 
     line_data = line.get_data()
-    assert_allclose(line_data[0], values[0])
-    assert_allclose(line_data[1], avg_preds[target_idx].ravel())
+    assert_allclose(line_data[0], avg_preds["values"][0])
+    assert_allclose(line_data[1], avg_preds.average[target_idx].ravel())
 
     # contour
     ax = disp.axes_[0, 0]
@@ -176,6 +202,7 @@ def test_plot_partial_dependence_str_features(pyplot, clf_diabetes, diabetes,
     assert ax.get_ylabel() == "bmi"
 
 
+@pytest.mark.filterwarnings("ignore:A Bunch will be returned")
 def test_plot_partial_dependence_custom_axes(pyplot, clf_diabetes, diabetes):
     grid_resolution = 25
     fig, (ax1, ax2) = pyplot.subplots(1, 2)
@@ -195,12 +222,12 @@ def test_plot_partial_dependence_custom_axes(pyplot, clf_diabetes, diabetes):
     assert ax.get_ylabel() == "Partial dependence"
 
     line = disp.lines_[0]
-    avg_preds, values = disp.pd_results[0]
+    avg_preds = disp.pd_results[0]
     target_idx = disp.target_idx
 
     line_data = line.get_data()
-    assert_allclose(line_data[0], values[0])
-    assert_allclose(line_data[1], avg_preds[target_idx].ravel())
+    assert_allclose(line_data[0], avg_preds["values"][0])
+    assert_allclose(line_data[1], avg_preds.average[target_idx].ravel())
 
     # contour
     ax = disp.axes_[1]
@@ -211,34 +238,39 @@ def test_plot_partial_dependence_custom_axes(pyplot, clf_diabetes, diabetes):
     assert ax.get_ylabel() == "bmi"
 
 
+@pytest.mark.filterwarnings("ignore:A Bunch will be returned")
+@pytest.mark.parametrize("kind, lines", [
+    ('average', 1), ('individual', 442), ('both', 443)
+])
 def test_plot_partial_dependence_passing_numpy_axes(pyplot, clf_diabetes,
-                                                    diabetes):
+                                                    diabetes, kind, lines):
     grid_resolution = 25
     feature_names = diabetes.feature_names
     disp1 = plot_partial_dependence(clf_diabetes, diabetes.data,
-                                    ['age', 'bmi'],
+                                    ['age', 'bmi'], kind=kind,
                                     grid_resolution=grid_resolution,
                                     feature_names=feature_names)
     assert disp1.axes_.shape == (1, 2)
     assert disp1.axes_[0, 0].get_ylabel() == "Partial dependence"
     assert disp1.axes_[0, 1].get_ylabel() == ""
-    assert len(disp1.axes_[0, 0].get_lines()) == 1
-    assert len(disp1.axes_[0, 1].get_lines()) == 1
+    assert len(disp1.axes_[0, 0].get_lines()) == lines
+    assert len(disp1.axes_[0, 1].get_lines()) == lines
 
     lr = LinearRegression()
     lr.fit(diabetes.data, diabetes.target)
 
     disp2 = plot_partial_dependence(lr, diabetes.data,
-                                    ['age', 'bmi'],
+                                    ['age', 'bmi'], kind=kind,
                                     grid_resolution=grid_resolution,
                                     feature_names=feature_names,
                                     ax=disp1.axes_)
 
     assert np.all(disp1.axes_ == disp2.axes_)
-    assert len(disp2.axes_[0, 0].get_lines()) == 2
-    assert len(disp2.axes_[0, 1].get_lines()) == 2
+    assert len(disp2.axes_[0, 0].get_lines()) == 2 * lines
+    assert len(disp2.axes_[0, 1].get_lines()) == 2 * lines
 
 
+@pytest.mark.filterwarnings("ignore:A Bunch will be returned")
 @pytest.mark.parametrize("nrows, ncols", [(2, 2), (3, 1)])
 def test_plot_partial_dependence_incorrent_num_axes(pyplot, clf_diabetes,
                                                     diabetes, nrows, ncols):
@@ -266,6 +298,7 @@ def test_plot_partial_dependence_incorrent_num_axes(pyplot, clf_diabetes,
             disp.plot(ax=ax_format)
 
 
+@pytest.mark.filterwarnings("ignore:A Bunch will be returned")
 def test_plot_partial_dependence_with_same_axes(pyplot, clf_diabetes,
                                                 diabetes):
     # The first call to plot_partial_dependence will create two new axes to
@@ -295,6 +328,7 @@ def test_plot_partial_dependence_with_same_axes(pyplot, clf_diabetes,
                                 feature_names=diabetes.feature_names, ax=ax)
 
 
+@pytest.mark.filterwarnings("ignore:A Bunch will be returned")
 def test_plot_partial_dependence_feature_name_reuse(pyplot, clf_diabetes,
                                                     diabetes):
     # second call to plot does not change the feature names from the first
@@ -313,6 +347,7 @@ def test_plot_partial_dependence_feature_name_reuse(pyplot, clf_diabetes,
         assert ax.get_xlabel() == feature_names[i]
 
 
+@pytest.mark.filterwarnings("ignore:A Bunch will be returned")
 def test_plot_partial_dependence_multiclass(pyplot):
     grid_resolution = 25
     clf_int = GradientBoostingClassifier(n_estimators=10, random_state=1)
@@ -350,10 +385,8 @@ def test_plot_partial_dependence_multiclass(pyplot):
 
     for int_result, symbol_result in zip(disp_target_0.pd_results,
                                          disp_symbol.pd_results):
-        avg_preds_int, values_int = int_result
-        avg_preds_symbol, values_symbol = symbol_result
-        assert_allclose(avg_preds_int, avg_preds_symbol)
-        assert_allclose(values_int, values_symbol)
+        assert_allclose(int_result.average, symbol_result.average)
+        assert_allclose(int_result["values"], symbol_result["values"])
 
     # check that the pd plots are different for another target
     disp_target_1 = plot_partial_dependence(clf_int, iris.data, [0, 1],
@@ -368,6 +401,7 @@ multioutput_regression_data = make_regression(n_samples=50, n_targets=2,
                                               random_state=0)
 
 
+@pytest.mark.filterwarnings("ignore:A Bunch will be returned")
 @pytest.mark.parametrize("target", [0, 1])
 def test_plot_partial_dependence_multioutput(pyplot, target):
     # Test partial dependence plot function on multi-output input.
@@ -392,6 +426,7 @@ def test_plot_partial_dependence_multioutput(pyplot, target):
         assert ax.get_xlabel() == "{}".format(i)
 
 
+@pytest.mark.filterwarnings("ignore:A Bunch will be returned")
 def test_plot_partial_dependence_dataframe(pyplot, clf_diabetes, diabetes):
     pd = pytest.importorskip('pandas')
     df = pd.DataFrame(diabetes.data, columns=diabetes.feature_names)
@@ -407,6 +442,7 @@ def test_plot_partial_dependence_dataframe(pyplot, clf_diabetes, diabetes):
 dummy_classification_data = make_classification(random_state=0)
 
 
+@pytest.mark.filterwarnings("ignore:A Bunch will be returned")
 @pytest.mark.parametrize(
     "data, params, err_msg",
     [(multioutput_regression_data, {"target": None, 'features': [0]},
@@ -432,7 +468,15 @@ dummy_classification_data = make_classification(random_state=0)
       'All entries of features must be less than '),
      (dummy_classification_data,
       {'features': [0, 1, 2], 'feature_names': ['a', 'b', 'a']},
-      'feature_names should not contain duplicates')]
+      'feature_names should not contain duplicates'),
+     (dummy_classification_data, {'features': [(1, 2)], 'kind': 'individual'},
+      'It is not possible to display individual effects for more than one'),
+     (dummy_classification_data, {'features': [(1, 2)], 'kind': 'both'},
+      'It is not possible to display individual effects for more than one'),
+     (dummy_classification_data, {'features': [1], 'subsample': -1},
+      'When an integer, subsample=-1 should be positive.'),
+     (dummy_classification_data, {'features': [1], 'subsample': 1.2},
+      r'When a floating-point, subsample=1.2 should be in the \(0, 1\) range')]
 )
 def test_plot_partial_dependence_error(pyplot, data, params, err_msg):
     X, y = data
@@ -442,6 +486,7 @@ def test_plot_partial_dependence_error(pyplot, data, params, err_msg):
         plot_partial_dependence(estimator, X, **params)
 
 
+@pytest.mark.filterwarnings("ignore:A Bunch will be returned")
 @pytest.mark.parametrize("params, err_msg", [
     ({'target': 4, 'features': [0]},
      'target not in est.classes_, got 4'),

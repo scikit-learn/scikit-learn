@@ -25,7 +25,7 @@ from sklearn.tree import DecisionTreeRegressor
 from sklearn.inspection import plot_partial_dependence
 
 
-##############################################################################
+# %%
 # Train models on the diabetes dataset
 # ================================================
 #
@@ -43,7 +43,7 @@ mlp = make_pipeline(StandardScaler(),
 tree.fit(X, y)
 mlp.fit(X, y)
 
-##############################################################################
+# %%
 # Plotting partial dependence for two features
 # ============================================
 #
@@ -56,7 +56,7 @@ fig, ax = plt.subplots(figsize=(12, 6))
 ax.set_title("Decision Tree")
 tree_disp = plot_partial_dependence(tree, X, ["age", "bmi"], ax=ax)
 
-##############################################################################
+# %%
 # The partial depdendence curves can be plotted for the multi-layer perceptron.
 # In this case, `line_kw` is passed to
 # :func:`~sklearn.inspection.plot_partial_dependence` to change the color of
@@ -66,7 +66,7 @@ ax.set_title("Multi-layer Perceptron")
 mlp_disp = plot_partial_dependence(mlp, X, ["age", "bmi"], ax=ax,
                                    line_kw={"c": "red"})
 
-##############################################################################
+# %%
 # Plotting partial dependence of the two models together
 # ======================================================
 #
@@ -91,7 +91,7 @@ ax1.set_title("Decision Tree")
 mlp_disp.plot(ax=ax2, line_kw={"c": "red"})
 ax2.set_title("Multi-layer Perceptron")
 
-##############################################################################
+# %%
 # Another way to compare the curves is to plot them on top of each other. Here,
 # we create a figure with one row and two columns. The axes are passed into the
 # :func:`~sklearn.inspection.PartialDependenceDisplay.plot` function as a list,
@@ -106,7 +106,7 @@ mlp_disp.plot(ax=[ax1, ax2], line_kw={"label": "Multi-layer Perceptron",
 ax1.legend()
 ax2.legend()
 
-##############################################################################
+# %%
 # `tree_disp.axes_` is a numpy array container the axes used to draw the
 # partial dependence plots. This can be passed to `mlp_disp` to have the same
 # affect of drawing the plots on top of each other. Furthermore, the
@@ -122,7 +122,7 @@ tree_disp.axes_[0, 0].legend()
 tree_disp.axes_[0, 1].legend()
 plt.show()
 
-##############################################################################
+# %%
 # Plotting partial dependence for one feature
 # ===========================================
 #

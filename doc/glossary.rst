@@ -504,8 +504,9 @@ General Concepts
         representation of missing values in float arrays.  If the array has
         integer dtype, NaN cannot be represented. For this reason, we support
         specifying another ``missing_values`` value when :term:`imputation` or
-        learning can be performed in integer space.  :term:`Unlabeled data`
-        is a special case of missing values in the :term:`target`.
+        learning can be performed in integer space.
+        :term:`Unlabeled data <unlabeled data>` is a special case of missing
+        values in the :term:`target`.
 
     ``n_features``
         The number of :term:`features`.
@@ -980,7 +981,7 @@ such as:
         Cross-validation estimators are named `EstimatorCV` and tend to be
         roughly equivalent to `GridSearchCV(Estimator(), ...)`. The
         advantage of using a cross-validation estimator over the canonical
-        :term:`Estimator` class along with :ref:`grid search <grid_search>` is
+        :term:`estimator` class along with :ref:`grid search <grid_search>` is
         that they can take advantage of warm-starting by reusing precomputed
         results in the previous steps of the cross-validation process. This
         generally leads to speed improvements. An exception is the
@@ -1206,8 +1207,8 @@ Methods
         return the same value, wherein training data needs to be handled
         differently (due to model blending in stacked ensembles, for instance;
         such cases should be clearly documented).
-        :term:`Transductive` transformers may also provide ``fit_transform``
-        but not :term:`transform`.
+        :term:`Transductive <transductive>` transformers may also provide
+        ``fit_transform`` but not :term:`transform`.
 
         One reason to implement ``fit_transform`` is that performing ``fit``
         and ``transform`` separately would be less efficient than together.
@@ -1295,9 +1296,10 @@ Methods
 
         classifier
             An array of shape ``(n_samples,)`` ``(n_samples, n_outputs)``.
-            :term:`Multilabel` data may be represented as a sparse matrix if
-            a sparse matrix was used in fitting. Each element should be one
-            of the values in the classifier's :term:`classes_` attribute.
+            :term:`Multilabel <multilabel>` data may be represented as a sparse
+            matrix if a sparse matrix was used in fitting. Each element should
+            be one of the values in the classifier's :term:`classes_`
+            attribute.
 
         clusterer
             An array of shape ``(n_samples,)`` where each value is from 0 to
