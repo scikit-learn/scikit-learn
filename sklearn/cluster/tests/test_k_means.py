@@ -477,21 +477,6 @@ def test_dense_sparse(estimator):
     assert_allclose(km_dense.cluster_centers_, km_sparse.cluster_centers_)
 
 
-@pytest.mark.parametrize("dtype", [np.int32, np.int64, np.float32, np.float64])
-@pytest.mark.parametrize("estimator", [KMeans, MiniBatchKMeans])
-def test_centers_not_mutated(estimator, dtype):
-    # Check that KMeans and MiniBatchKMeans won't mutate the user provided
-    # init centers silently even if input data and init centers have the same
-    # type.
-    X_new_type = X.astype(dtype, copy=True)
-    centers_new_type = centers.astype(dtype, copy=True)
-
-    km = estimator(init=centers_new_type, n_clusters=n_clusters, n_init=1)
-    km.fit(X_new_type)
-
-    assert not np.may_share_memory(km.cluster_centers_, centers)
-
-
 @pytest.mark.parametrize("data", [X, X_csr], ids=["dense", "sparse"])
 @pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
 def test_float_precision(Estimator, data):
@@ -526,6 +511,21 @@ def test_float_precision(Estimator, data):
     assert_allclose(Xt[np.float32], Xt[np.float64], rtol=1e-5)
     assert_allclose(centers[np.float32], centers[np.float64], rtol=1e-5)
     assert_array_equal(labels[np.float32], labels[np.float64])
+
+
+@pytest.mark.parametrize("dtype", [np.int32, np.int64, np.float32, np.float64])
+@pytest.mark.parametrize("estimator", [KMeans, MiniBatchKMeans])
+def test_centers_not_mutated(estimator, dtype):
+    # Check that KMeans and MiniBatchKMeans won't mutate the user provided
+    # init centers silently even if input data and init centers have the same
+    # type.
+    X_new_type = X.astype(dtype, copy=True)
+    centers_new_type = centers.astype(dtype, copy=True)
+
+    km = estimator(init=centers_new_type, n_clusters=n_clusters, n_init=1)
+    km.fit(X_new_type)
+
+    assert not np.may_share_memory(km.cluster_centers_, centers)
 
 
 def test_weighted_vs_repeated():
