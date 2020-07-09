@@ -258,15 +258,27 @@ def test_all_init(Estimator, data, init):
     _check_fitted_model(km)
 
 
-@pytest.mark.parametrize("estimator", [KMeans, MiniBatchKMeans])
-def test_fortran_aligned_data(estimator):
+@pytest.mark.parametrize("init", ["random", "k-means++", centers,
+                                  lambda X, k, random_state: centers],
+                         ids=["random", "k-means++", "ndarray", "callable"])
+def test_minibatch_kmeans_partial_fit_init(init):
+    # Check MiniBatchKMeans init with partial_fit
+    km = MiniBatchKMeans(init=init, n_clusters=n_clusters, random_state=0)
+    for i in range(100):
+        # "random" init requires many batches to recover the true labels.
+        km.partial_fit(X)
+    _check_fitted_model(km)
+
+
+@pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
+def test_fortran_aligned_data(Estimator):
     # Check that KMeans works with fortran-aligned data.
     X_fortran = np.asfortranarray(X)
     centers_fortran = np.asfortranarray(centers)
 
-    km_c = estimator(n_clusters=n_clusters, init=centers, n_init=1,
+    km_c = Estimator(n_clusters=n_clusters, init=centers, n_init=1,
                      random_state=42).fit(X)
-    km_f = estimator(n_clusters=n_clusters, init=centers_fortran, n_init=1,
+    km_f = Estimator(n_clusters=n_clusters, init=centers_fortran, n_init=1,
                      random_state=42).fit(X_fortran)
     assert_allclose(km_c.cluster_centers_, km_f.cluster_centers_)
     assert_array_equal(km_c.labels_, km_f.labels_)
@@ -349,19 +361,7 @@ def test_minibatch_reassign(data):
     assert_allclose(centers_new, perfect_centers)
 
 
-def test_minibatch_with_many_reassignments():
-    # Test for the case that the number of clusters to reassign is bigger
-    # than the batch_size. Run the test with 100 clusters and a batch_size of
-    # 10 because it turned out that these values ensure that the number of
-    # clusters to reassign is always bigger than the batch_size.
-    MiniBatchKMeans(n_clusters=100,
-                    batch_size=10,
-                    init_size=n_samples,
-                    random_state=42,
-                    verbose=True).fit(X)
-
-
-def test_minibatch_kmeans_init_size():
+def test_minibatch_kmeans_default_init_size():
     # Check the internal _init_size attribute of MiniBatchKMeans
 
     # default init size should be 3 * batch_size
@@ -376,6 +376,18 @@ def test_minibatch_kmeans_init_size():
     km = MiniBatchKMeans(n_clusters=10, batch_size=5, n_init=1,
                          init_size=n_samples + 1).fit(X)
     assert km._init_size == n_samples
+
+
+def test_minibatch_with_many_reassignments():
+    # Test for the case that the number of clusters to reassign is bigger
+    # than the batch_size. Run the test with 100 clusters and a batch_size of
+    # 10 because it turned out that these values ensure that the number of
+    # clusters to reassign is always bigger than the batch_size.
+    MiniBatchKMeans(n_clusters=100,
+                    batch_size=10,
+                    init_size=n_samples,
+                    random_state=42,
+                    verbose=True).fit(X)
 
 
 def test_kmeans_copyx():
@@ -792,28 +804,27 @@ def test_k_means_function():
     ({"n_init": 0}, r"n_init should be > 0"),
     ({"max_iter": 0}, r"max_iter should be > 0"),
     ({"n_clusters": n_samples + 1}, r"n_samples.* should be >= n_clusters"),
-    ({"tol": -1}, r"tol should be >= 0"),
     ({"init": X[:2]},
-     r"The shape of the initial centers .* does not match"
-     r" the number of clusters"),
+     r"The shape of the initial centers .* does not match "
+     r"the number of clusters"),
     ({"init": lambda X_, k, random_state: X_[:2]},
-     r"The shape of the initial centers .* does not match"
-     r" the number of clusters"),
+     r"The shape of the initial centers .* does not match "
+     r"the number of clusters"),
     ({"init": X[:8, :2]},
-     r"The shape of the initial centers .* does not match"
-     r" the number of features of the data"),
+     r"The shape of the initial centers .* does not match "
+     r"the number of features of the data"),
     ({"init": lambda X_, k, random_state: X_[:8, :2]},
-     r"The shape of the initial centers .* does not match"
-     r" the number of features of the data"),
+     r"The shape of the initial centers .* does not match "
+     r"the number of features of the data"),
     ({"init": "wrong"},
      r"init should be either 'k-means\+\+', 'random', "
      r"a ndarray or a callable")]
 )
-def test_wrong_params(estimator, param, match):
+def test_wrong_params(Estimator, param, match):
     # Check that error are raised with clear error message when wrong values
     # are passed for the parameters
     with pytest.raises(ValueError, match=match):
-        estimator(**param).fit(X)
+        Estimator(**param).fit(X)
 
 
 @pytest.mark.parametrize("param, match", [
