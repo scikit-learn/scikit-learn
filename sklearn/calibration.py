@@ -307,7 +307,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
                 else:
                     this_estimator.fit(X, y)
                 calibrated_classifier = _fit_calibrator(
-                    this_estimator, preds, y, label_encoder_,self.method,
+                    this_estimator, preds, y, label_encoder_, self.method,
                     sample_weight
                 )
                 self.calibrated_classifiers_.append(calibrated_classifier)
