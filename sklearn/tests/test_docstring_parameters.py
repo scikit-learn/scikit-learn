@@ -230,13 +230,10 @@ def test_fit_docstring_attributes(name, Estimator):
             with ignore_warnings(category=FutureWarning):
                 assert hasattr(est, attr.name)
 
-    IGNORED = {'BayesianRidge', 'Birch', 'CCA', 'CategoricalNB', 'ElasticNet',
-               'ElasticNetCV',
+    IGNORED = {'BayesianRidge', 'Birch', 'CCA', 'CategoricalNB',
                'KernelCenterer',
                'LarsCV', 'Lasso', 'LassoLarsCV', 'LassoLarsIC',
-               'MultiTaskElasticNet', 'MultiTaskElasticNetCV',
                'MiniBatchKMeans',
-               'MultiTaskLasso', 'MultiTaskLassoCV',
                'OrthogonalMatchingPursuit',
                'PLSCanonical', 'PLSSVD',
                'PassiveAggressiveClassifier'}
