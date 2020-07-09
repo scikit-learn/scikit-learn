@@ -13,6 +13,7 @@ import scipy.sparse as sparse
 from ..base import clone
 from ..base import ClassifierMixin, RegressorMixin, TransformerMixin
 from ..base import is_classifier, is_regressor
+from ..exceptions import NotFittedError
 from ..utils._estimator_html_repr import _VisualBlock
 
 from ._base import _fit_single_estimator
@@ -146,7 +147,6 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble,
             delayed(_fit_single_estimator)(clone(est), X, y, sample_weight)
             for est in all_estimators if est != 'drop'
         )
-        self.n_features_in_ = self.estimators_[0].n_features_in_
 
         self.named_estimators_ = Bunch()
         est_fitted_idx = 0
@@ -196,6 +196,17 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble,
                               sample_weight=sample_weight)
 
         return self
+
+    @property
+    def n_features_in_(self):
+        """Number of features seen during :term:`fit`."""
+        try:
+            check_is_fitted(self)
+        except NotFittedError as nfe:
+            raise AttributeError(
+                f"{self.__class__.__name__} object has no attribute "
+                f"n_features_in_") from nfe
+        return self.estimators_[0].n_features_in_
 
     def _transform(self, X):
         """Concatenate and return the predictions of the estimators."""
