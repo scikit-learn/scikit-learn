@@ -302,7 +302,8 @@ def confusion_matrix(y_true, y_pred, *, labels=None, sample_weight=None,
     if not isinstance(cluster_classes, bool):
         raise ValueError('cluster_classes should be a Boolean')
     elif cluster_classes is True and y_type != 'multiclass':
-        raise ValueError('cluster_classes can only be done when there are more than 2 classes')
+        raise ValueError('cluster_classes can only be done when there are more '
+                         'than 2 classes')
 
     if sample_weight is None:
         sample_weight = np.ones(y_true.shape[0], dtype=np.int64)
