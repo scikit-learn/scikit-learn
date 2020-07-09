@@ -938,7 +938,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         init = self.init
         if hasattr(init, '__array__'):
             init = check_array(init, dtype=X.dtype, copy=True, order='C')
-            self._validate_center_shape(X, self.n_clusters, init)
+            self._validate_center_shape(X, init)
 
         # subtract of mean of x for more accurate distance computations
         if not sp.issparse(X):
@@ -1707,7 +1707,7 @@ class MiniBatchKMeans(KMeans):
                                 order='C', accept_large_sparse=False,
                                 reset=is_first_call_to_partial_fit)
 
-        self.random_state_ = getattr(self, "random_state_",
+        self._random_state = getattr(self, "_random_state",
                                      check_random_state(self.random_state))
         sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 

@@ -799,7 +799,7 @@ def test_k_means_function():
     assert inertia > 0.0
 
 
-@pytest.mark.parametrize("estimator", [KMeans, MiniBatchKMeans])
+@pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
 @pytest.mark.parametrize("param, match", [
     ({"n_init": 0}, r"n_init should be > 0"),
     ({"max_iter": 0}, r"max_iter should be > 0"),
