@@ -225,7 +225,6 @@ def _check_optimize_result(solver, result, max_iter=None,
     """
     # handle both scipy and scikit-learn solver names
     if solver in ["lbfgs", "trust-ncg", "trust-krylov"]:
-        print(result)
         if result.status != 0:
             warning_msg = (
                 "{} failed to converge (status={}):\n{}.\n\n"
