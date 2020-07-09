@@ -465,7 +465,7 @@ def test_minibatch_reassign():
             # Turn on verbosity to smoke test the display code
             _mini_batch_step(this_X, sample_weight, (X ** 2).sum(axis=1),
                              mb_k_means.cluster_centers_,
-                             mb_k_means.counts_,
+                             mb_k_means._counts,
                              np.zeros(X.shape[1], np.double),
                              False, distances=np.zeros(X.shape[0]),
                              random_reassign=True, random_state=42,
@@ -485,7 +485,7 @@ def test_minibatch_reassign():
         # Turn on verbosity to smoke test the display code
         _mini_batch_step(this_X, sample_weight, (X ** 2).sum(axis=1),
                          mb_k_means.cluster_centers_,
-                         mb_k_means.counts_,
+                         mb_k_means._counts,
                          np.zeros(X.shape[1], np.double),
                          False, distances=np.zeros(X.shape[0]),
                          random_reassign=True, random_state=42,
@@ -543,7 +543,7 @@ def test_minibatch_default_init_size():
     mb_k_means = MiniBatchKMeans(init=centers.copy(), n_clusters=n_clusters,
                                  batch_size=10, random_state=42,
                                  n_init=1).fit(X)
-    assert mb_k_means.init_size_ == 3 * mb_k_means.batch_size
+    assert mb_k_means._init_size == 3 * mb_k_means.batch_size
     _check_fitted_model(mb_k_means)
 
 
@@ -558,7 +558,7 @@ def test_minibatch_set_init_size():
                                  init_size=666, random_state=42,
                                  n_init=1).fit(X)
     assert mb_k_means.init_size == 666
-    assert mb_k_means.init_size_ == n_samples
+    assert mb_k_means._init_size == n_samples
     _check_fitted_model(mb_k_means)
 
 
