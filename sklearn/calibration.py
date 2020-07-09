@@ -32,8 +32,9 @@ from .model_selection import check_cv
 from .utils.validation import _deprecate_positional_args
 
 
-class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
-                             MetaEstimatorMixin):
+class CalibratedClassifierCV(ClassifierMixin,
+                             MetaEstimatorMixin,
+                             BaseEstimator):
     """Probability calibration with isotonic regression or logistic regression.
 
     This class uses cross-validation to both estimate the parameters of a

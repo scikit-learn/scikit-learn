@@ -248,15 +248,13 @@ def cross_validate(estimator, X, y=None, *, groups=None, scoring=None, cv=None,
         for train, test in cv.split(X, y, groups))
 
     results = _aggregate_score_dicts(results)
-    if return_estimator:
-        fitted_estimators = results["estimator"]
 
     ret = {}
     ret['fit_time'] = results["fit_time"]
     ret['score_time'] = results["score_time"]
 
     if return_estimator:
-        ret['estimator'] = fitted_estimators
+        ret['estimator'] = results["estimator"]
 
     test_scores = _aggregate_score_dicts(results["test_scores"])
     if return_train_score:

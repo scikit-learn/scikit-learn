@@ -22,8 +22,8 @@ parameters, may produce different models from the previous version. This often
 occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
-- items
-- items
+- |Fix| ``inertia_`` attribute of :class:`cluster.KMeans` and
+  :class:`cluster.MiniBatchKMeans`.
 
 Details are listed in the changelog below.
 
@@ -53,12 +53,28 @@ Changelog
   sparse matrix or dataframe at the start. :pr:`17546` by
   :user:`Lucy Liu <lucyleeow>`.
 
+:mod:`sklearn.cluster`
+.........................
+
+- |Fix| Fixed a bug in :class:`cluster.KMeans` and
+  :class:`cluster.MiniBatchKMeans` where the reported inertia was incorrectly
+  weighted by the sample weights. :pr:`17848` by
+  :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
 :mod:`sklearn.compose`
 ......................
 
 - |FIX| :class:`compose.ColumnTransformer` will skip transformers the
   column selector is a list of bools that are False. :pr:`17616` by
   `Thomas Fan`_.
+
+:mod:`sklearn.covariance`
+.........................
+
+- |API| Deprecates `cv_alphas_` in favor of `cv_results['alphas']` and
+  `grid_scores_` in favor of split scores in `cv_results_` in
+  :class:`covariance.GraphicalLassoCV`. `cv_alphas_` and `grid_scores_` will be
+  removed in version 0.26. :pr:`16392` by `Thomas Fan`_.
 
 :mod:`sklearn.datasets`
 .......................
@@ -91,6 +107,10 @@ Changelog
   redundant with the `dictionary` attribute and constructor parameter.
   :pr:`17679` by :user:`Xavier Dupré <sdpython>`.
 
+- |Enhancement| :func:`decomposition.FactorAnalysis` now supports the optional
+  argument `rotation`, which can take the value `None`, `'varimax'` or `'quartimax'.`
+  :pr:`11064` by :user:`Jona Sassenhagen <jona-sassenhagen>`.
+
 :mod:`sklearn.ensemble`
 .......................
 
@@ -103,6 +123,13 @@ Changelog
   average of logloss was incorrectly calculated as sum of logloss.
   :pr:`17694` by :user:`Markus Rempfler <rempfler>` and
   :user:`Tsutomu Kusanagi <t-kusanagi2>`.
+
+:mod:`sklearn.exceptions`
+.........................
+
+- |API| :class:`exceptions.ChangedBehaviorWarning` and
+  :class:`exceptions.NonBLASDotWarning` are deprecated and will be removed in
+  v0.26, :pr:`17804` by `Adrin Jalali`_.
 
 :mod:`sklearn.feature_selection`
 ................................
@@ -154,6 +181,9 @@ Changelog
   :pr:`16289` by :user:`Masashi Kishimoto <kishimoto-banana>` and
   :user:`Olivier Grisel <ogrisel>`.
 
+- |Enhancement| :class:`isotonic.IsotonicRegression` now accepts 2darray with 1 feature as
+  input array. :pr:`17379` by :user:`Jiaxiang <fujiaxiang>`.
+
 :mod:`sklearn.metrics`
 ......................
 
@@ -181,6 +211,11 @@ Changelog
   optional in the matplotlib plot by setting colorbar=False. :pr:`17192` by
   :user:`Avi Gupta <avigupta2612>`
 
+- |Enhancement| Add `pos_label` parameter in
+  :func:`metrics.plot_roc_curve` in order to specify the positive
+  class to be used when computing the roc auc statistics.
+  :pr:`17651` by :user:`Clara Matos <claramatos>`.
+
 :mod:`sklearn.model_selection`
 ..............................
 
@@ -202,6 +237,15 @@ Changelog
   sparse input data in its `fit` and `predict` methods. The check for
   validity of the input is now delegated to the base estimator.
   :pr:`17233` by :user:`Zolisa Bleki <zoj613>`.
+
+:mod:`sklearn.naive_bayes`
+..........................
+
+- |API|: The attributes ``coef_`` and ``intercept_`` are now deprecated in
+  :class:`naive_bayes.MultinomialNB`, :class:`naive_bayes.ComplementNB`,
+  :class:`naive_bayes.BernoulliNB` and :class:`naive_bayes.CategoricalNB`,
+  and will be removed in v0.26. :pr:`17427` by :user:`Juan Carlos Alfaro
+  Jiménez <alfaro96>`.
 
 :mod:`sklearn.neighbors`
 ........................
@@ -272,6 +316,13 @@ Changelog
   :meth:`tree.DecisionTreeClassifier.fit` and
   :meth:`tree.DecisionTreeRegressor.fit`, and has not effect.
   :pr:`17614` by :user:`Juan Carlos Alfaro Jiménez <alfaro96>`.
+
+:mod:`sklearn.utils`
+.........................
+
+- |Fix| Fix :func:`utils.estimator_checks.check_estimator` so that all test
+  cases support the `binary_only` estimator tag.
+  :pr:`17812` by :user:`Bruno Charron <brcharron>`.
 
 Code and Documentation Contributors
 -----------------------------------
