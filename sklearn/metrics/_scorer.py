@@ -445,12 +445,10 @@ def _check_multimetric_scoring(estimator, scoring):
     scorers_dict : dict
         A dict mapping each scorer name to its validated scorer.
     """
-    err_msg_generic = ("scoring should either be a single string or "
-                       "callable or a "
-                       "list/tuple of strings or a dict of scorer name "
-                       "mapped to the callable for multiple metric "
-                       "evaluation. Got %s of type %s"
-                       % (repr(scoring), type(scoring)))
+    err_msg_generic = (
+        f"scoring is invalid (got {scoring!r}). Refer to the "
+        "scoring glossary for details: "
+        "https://scikit-learn.org/stable/glossary.html#term-scoring ")
 
     if isinstance(scoring, (list, tuple, set)):
         err_msg = ("The list/tuple elements must be unique "

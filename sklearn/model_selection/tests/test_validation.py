@@ -318,8 +318,8 @@ def test_cross_validate_invalid_scoring_param():
                         cross_validate, estimator, X, y,
                         scoring=[[make_scorer(precision_score)]])
 
-    error_message_regexp = (".*should either be.*string or callable.*"
-                            ".*.*dict.*for multi.*")
+    error_message_regexp = (".*scoring is invalid.*Refer to the scoring "
+                            "glossary for details:.*")
 
     # Empty dict should raise invalid scoring error
     assert_raises_regex(ValueError, "An empty dict",
