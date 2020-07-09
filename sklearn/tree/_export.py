@@ -108,9 +108,9 @@ def plot_tree(decision_tree, *, max_depth=None, feature_names=None,
 
     feature_names : list of strings, default=None
         Names of each of the features.
-        If None generic names will be used ("X[0]", "X[1]", ...).
+        If None, generic names will be used ("X[0]", "X[1]", ...).
 
-    class_names : list of strings or bool, default=None
+    class_names : list of str or bool, default=None
         Names of each of the target classes in ascending numerical order.
         Only relevant for classification and not supported for multi-output.
         If ``True``, shows a symbolic representation of the class name.
@@ -687,7 +687,7 @@ def export_graphviz(decision_tree, out_file=None, *, max_depth=None,
     decision_tree : decision tree classifier
         The decision tree to be exported to GraphViz.
 
-    out_file : file object or string, default=None
+    out_file : object or str, default=None
         Handle or name of the output file. If ``None``, the result is
         returned as a string.
 
@@ -698,11 +698,11 @@ def export_graphviz(decision_tree, out_file=None, *, max_depth=None,
         The maximum depth of the representation. If None, the tree is fully
         generated.
 
-    feature_names : list of strings, default=None
+    feature_names : list of str, default=None
         Names of each of the features.
         If None generic names will be used ("feature_0", "feature_1", ...).
 
-    class_names : list of strings or bool, default=None
+    class_names : list of str or bool, default=None
         Names of each of the target classes in ascending numerical order.
         Only relevant for classification and not supported for multi-output.
         If ``True``, shows a symbolic representation of the class name.
@@ -829,7 +829,7 @@ def export_text(decision_tree, *, feature_names=None, max_depth=10,
         It can be an instance of
         DecisionTreeClassifier or DecisionTreeRegressor.
 
-    feature_names : list, default=None
+    feature_names : list of str, default=None
         A list of length n_features containing the feature names.
         If None generic names will be used ("feature_0", "feature_1", ...).
 
