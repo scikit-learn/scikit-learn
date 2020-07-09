@@ -299,6 +299,11 @@ def confusion_matrix(y_true, y_pred, *, labels=None, sample_weight=None,
         elif np.all([l not in y_true for l in labels]):
             raise ValueError("At least one label specified must be in y_true")
 
+    if not isinstance(cluster_classes, bool):
+        raise ValueError('cluster_classes should be a Boolean')
+    elif cluster_classes is True and y_type != 'multiclass':
+        raise ValueError('cluster_classes can only be done when there are more than 2 classes')
+
     if sample_weight is None:
         sample_weight = np.ones(y_true.shape[0], dtype=np.int64)
     else:
@@ -342,12 +347,13 @@ def confusion_matrix(y_true, y_pred, *, labels=None, sample_weight=None,
             cm = cm / cm.sum()
         cm = np.nan_to_num(cm)
 
-    if not isinstance(cluster_classes, bool):
-        raise ValueError('cluster_classes should be a Boolean')
-
     if cluster_classes and y_type == 'multiclass':
         # Sorting the normalized confusion matrix gives better results
-        cm_norm = confusion_matrix(y_true, y_pred, normalize='true')
+        if normalize is None:
+            cm_norm = cm / cm.sum(axis=1, keepdims=True)
+        else:
+            cm_norm = cm
+
         dists = pdist(cm_norm)
         links = linkage(dists, optimal_ordering=True)
         idx = leaves_list(links)
