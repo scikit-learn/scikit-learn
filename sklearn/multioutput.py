@@ -568,9 +568,9 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
     cv : int, cross-validation generator or an iterable, default=None
         Determines whether to use cross validated predictions or true
         labels for the results of previous estimators in the chain.
-        Possible inputs for cv are:
+        If None, the true labels are used when fitting. Otherwise
+        possible inputs for cv are:
 
-        - None, to use true labels when fitting,
         - integer, to specify the number of folds in a (Stratified)KFold,
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
@@ -752,9 +752,9 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
     cv : int, cross-validation generator or an iterable, default=None
         Determines whether to use cross validated predictions or true
         labels for the results of previous estimators in the chain.
-        Possible inputs for cv are:
+        If None, the true labels are used when fitting. Otherwise
+        possible inputs for cv are:
 
-        - None, to use true labels when fitting,
         - integer, to specify the number of folds in a (Stratified)KFold,
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
