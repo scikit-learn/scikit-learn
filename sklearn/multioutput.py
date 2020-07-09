@@ -81,7 +81,7 @@ class _MultiOutputEstimator(BaseEstimator, MetaEstimatorMixin,
         y : {array-like, sparse matrix} of shape (n_samples, n_outputs)
             Multi-output targets.
 
-        classes : list of numpy arrays of shape (n_outputs)
+        classes : list of ndarray of shape (n_outputs,)
             Each array is unique classes for one output in str/int
             Can be obtained by via
             ``[np.unique(y[:, i]) for i in range(y.shape[1])]``, where y is the
