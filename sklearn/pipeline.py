@@ -13,6 +13,7 @@ from collections import defaultdict
 from itertools import islice
 
 import numpy as np
+import warnings
 from scipy import sparse
 from joblib import Parallel, delayed
 
@@ -823,6 +824,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         self.transformer_weights = transformer_weights
         self.verbose = verbose
         self._validate_transformers()
+        self._validate_transformer_weights()
 
     def get_params(self, deep=True):
         """Get parameters for this estimator.
@@ -867,6 +869,17 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
                 raise TypeError("All estimators should implement fit and "
                                 "transform. '%s' (type %s) doesn't" %
                                 (t, type(t)))
+
+    def _validate_transformer_weights(self):
+        if self.transformer_weights:
+            transformer_names = set(name for name, _ in self.transformer_list)
+            for name in self.transformer_weights:
+                if name not in transformer_names:
+                    warnings.warn(
+                        "Attempting to weight transformer {0}, but it is not "
+                        "present in transformer_list.".format(name),
+                        UserWarning
+                    )
 
     def _iter(self):
         """
