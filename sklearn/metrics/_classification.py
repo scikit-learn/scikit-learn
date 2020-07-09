@@ -27,6 +27,8 @@ import numpy as np
 
 from scipy.sparse import coo_matrix
 from scipy.sparse import csr_matrix
+from scipy.spatial.distance import pdist
+from scipy.cluster.hierarchy import leaves_list, linkage
 
 from ..preprocessing import LabelBinarizer
 from ..preprocessing import LabelEncoder
@@ -197,7 +199,7 @@ def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
 
 @_deprecate_positional_args
 def confusion_matrix(y_true, y_pred, *, labels=None, sample_weight=None,
-                     normalize=None):
+                     normalize=None, cluster_classes=False):
     """Compute confusion matrix to evaluate the accuracy of a classification.
 
     By definition a confusion matrix :math:`C` is such that :math:`C_{i, j}`
@@ -233,6 +235,10 @@ def confusion_matrix(y_true, y_pred, *, labels=None, sample_weight=None,
         Normalizes confusion matrix over the true (rows), predicted (columns)
         conditions or all the population. If None, confusion matrix will not be
         normalized.
+
+    cluster_classes : bool, default=False
+        Sort the classes in order for the similar the classes to end up next to
+        each other.
 
     Returns
     -------
@@ -335,6 +341,21 @@ def confusion_matrix(y_true, y_pred, *, labels=None, sample_weight=None,
         elif normalize == 'all':
             cm = cm / cm.sum()
         cm = np.nan_to_num(cm)
+
+    if not isinstance(cluster_classes, bool):
+        raise ValueError('cluster_classes should be a Boolean')
+
+    if cluster_classes and y_type == 'multiclass':
+        # Sorting the normalized confusion matrix gives better results
+        cm_norm = confusion_matrix(y_true, y_pred, normalize='true')
+        dists = pdist(cm_norm)
+        links = linkage(dists, optimal_ordering=True)
+        idx = leaves_list(links)
+        cm = cm[idx, :]
+        cm = cm[:, idx]
+        labels = [labels[i] for i in idx]
+
+        return cm, labels
 
     return cm
 
