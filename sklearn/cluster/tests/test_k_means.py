@@ -464,55 +464,6 @@ def _sort_centers(centers):
     return np.sort(centers, axis=0)
 
 
-def test_weighted_vs_repeated():
-    # Check that a sample weight of N should yield the same result as an N-fold
-    # repetition of the sample. Valid only if init is precomputed, otherwise
-    # rng produces different results. Not valid for MinibatchKMeans due to rng
-    # to extract minibatches.
-    sample_weight = np.random.RandomState(0).randint(1, 5, size=n_samples)
-    X_repeat = np.repeat(X, sample_weight, axis=0)
-
-    km = KMeans(init=centers, n_init=1, n_clusters=n_clusters, random_state=0)
-
-    km_weighted = clone(km).fit(X, sample_weight=sample_weight)
-    repeated_labels = np.repeat(km_weighted.labels_, sample_weight)
-    km_repeated = clone(km).fit(X_repeat)
-
-    assert_array_equal(km_repeated.labels_, repeated_labels)
-    assert_allclose(km_weighted.inertia_, km_repeated.inertia_)
-    assert_allclose(_sort_centers(km_weighted.cluster_centers_),
-                    _sort_centers(km_repeated.cluster_centers_))
-
-
-@pytest.mark.parametrize("estimator", [KMeans, MiniBatchKMeans])
-def test_unit_weights_vs_no_weights(estimator):
-    # Check that not passing sample weights should be equivalent to passing
-    # sample weights all equal to one.
-    sample_weight = np.ones(n_samples)
-
-    km = estimator(n_clusters=n_clusters, random_state=42, n_init=1)
-    km_none = clone(km).fit(X, sample_weight=None)
-    km_ones = clone(km).fit(X, sample_weight=sample_weight)
-
-    assert_array_equal(km_none.labels_, km_ones.labels_)
-    assert_allclose(km_none.cluster_centers_, km_ones.cluster_centers_)
-
-
-@pytest.mark.parametrize("data", [X, X_csr], ids=["dense", "sparse"])
-@pytest.mark.parametrize("estimator", [KMeans, MiniBatchKMeans])
-def test_scaled_weights(estimator, data):
-    # Check that scaling all sample weights by a common factor
-    # shouldn't change the result
-    sample_weight = np.random.uniform(n_samples)
-
-    km = estimator(n_clusters=n_clusters, random_state=42, n_init=1)
-    km_orig = clone(km).fit(data, sample_weight=sample_weight)
-    km_scaled = clone(km).fit(data, sample_weight=0.5 * sample_weight)
-
-    assert_array_equal(km_orig.labels_, km_scaled.labels_)
-    assert_allclose(km_orig.cluster_centers_, km_scaled.cluster_centers_)
-
-
 @pytest.mark.parametrize("estimator", [KMeans, MiniBatchKMeans])
 def test_dense_sparse(estimator):
     # Check that the results are the same for dense and sparse input.
@@ -575,6 +526,56 @@ def test_float_precision(Estimator, data):
     assert_allclose(Xt[np.float32], Xt[np.float64], rtol=1e-5)
     assert_allclose(centers[np.float32], centers[np.float64], rtol=1e-5)
     assert_array_equal(labels[np.float32], labels[np.float64])
+
+
+def test_weighted_vs_repeated():
+    # Check that a sample weight of N should yield the same result as an N-fold
+    # repetition of the sample. Valid only if init is precomputed, otherwise
+    # rng produces different results. Not valid for MinibatchKMeans due to rng
+    # to extract minibatches.
+    sample_weight = np.random.RandomState(0).randint(1, 5, size=n_samples)
+    X_repeat = np.repeat(X, sample_weight, axis=0)
+
+    km = KMeans(init=centers, n_init=1, n_clusters=n_clusters, random_state=0)
+
+    km_weighted = clone(km).fit(X, sample_weight=sample_weight)
+    repeated_labels = np.repeat(km_weighted.labels_, sample_weight)
+    km_repeated = clone(km).fit(X_repeat)
+
+    assert_array_equal(km_repeated.labels_, repeated_labels)
+    assert_allclose(km_weighted.inertia_, km_repeated.inertia_)
+    assert_allclose(_sort_centers(km_weighted.cluster_centers_),
+                    _sort_centers(km_repeated.cluster_centers_))
+
+
+@pytest.mark.parametrize("data", [X, X_csr], ids=["dense", "sparse"])
+@pytest.mark.parametrize("estimator", [KMeans, MiniBatchKMeans])
+def test_unit_weights_vs_no_weights(estimator, data):
+    # Check that not passing sample weights should be equivalent to passing
+    # sample weights all equal to one.
+    sample_weight = np.ones(n_samples)
+
+    km = estimator(n_clusters=n_clusters, random_state=42, n_init=1)
+    km_none = clone(km).fit(data, sample_weight=None)
+    km_ones = clone(km).fit(data, sample_weight=sample_weight)
+
+    assert_array_equal(km_none.labels_, km_ones.labels_)
+    assert_allclose(km_none.cluster_centers_, km_ones.cluster_centers_)
+
+
+@pytest.mark.parametrize("data", [X, X_csr], ids=["dense", "sparse"])
+@pytest.mark.parametrize("estimator", [KMeans, MiniBatchKMeans])
+def test_scaled_weights(estimator, data):
+    # Check that scaling all sample weights by a common factor
+    # shouldn't change the result
+    sample_weight = np.random.uniform(n_samples)
+
+    km = estimator(n_clusters=n_clusters, random_state=42, n_init=1)
+    km_orig = clone(km).fit(data, sample_weight=sample_weight)
+    km_scaled = clone(km).fit(data, sample_weight=0.5 * sample_weight)
+
+    assert_array_equal(km_orig.labels_, km_scaled.labels_)
+    assert_allclose(km_orig.cluster_centers_, km_scaled.cluster_centers_)
 
 
 @pytest.mark.parametrize("array_constr", [np.array, sp.csr_matrix],
