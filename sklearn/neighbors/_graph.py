@@ -6,7 +6,6 @@
 # License: BSD 3 clause (C) INRIA, University of Amsterdam
 from ._base import KNeighborsMixin, RadiusNeighborsMixin
 from ._base import NeighborsBase
-from ._base import UnsupervisedMixin
 from ._ball_tree import BallTree
 from ._kd_tree import KDTree
 from ._unsupervised import NearestNeighbors
@@ -197,8 +196,7 @@ def radius_neighbors_graph(X, radius, *, mode='connectivity',
     return X.radius_neighbors_graph(query, radius, mode)
 
 
-class KNeighborsTransformer(KNeighborsMixin, UnsupervisedMixin,
-                            TransformerMixin, NeighborsBase):
+class KNeighborsTransformer(KNeighborsMixin, TransformerMixin, NeighborsBase):
     """Transform X into a (weighted) graph of k nearest neighbors
 
     The transformed data is a sparse graph as returned by kneighbors_graph.
@@ -376,8 +374,9 @@ class KNeighborsTransformer(KNeighborsMixin, UnsupervisedMixin,
         return self.fit(X).transform(X)
 
 
-class RadiusNeighborsTransformer(RadiusNeighborsMixin, UnsupervisedMixin,
-                                 TransformerMixin, NeighborsBase):
+class RadiusNeighborsTransformer(RadiusNeighborsMixin,
+                                 TransformerMixin,
+                                 NeighborsBase):
     """Transform X into a (weighted) graph of neighbors nearer than a radius
 
     The transformed data is a sparse graph as returned by

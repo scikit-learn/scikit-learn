@@ -2,14 +2,12 @@
 from ._base import NeighborsBase
 from ._base import KNeighborsMixin
 from ._base import RadiusNeighborsMixin
-from ._base import UnsupervisedMixin
 from ._ball_tree import BallTree
 from ._kd_tree import KDTree
 from ..utils.validation import _deprecate_positional_args
 
 
-class NearestNeighbors(KNeighborsMixin, RadiusNeighborsMixin,
-                       UnsupervisedMixin, NeighborsBase):
+class NearestNeighbors(KNeighborsMixin, RadiusNeighborsMixin, NeighborsBase):
     """Unsupervised learner for implementing neighbor searches.
 
     Read more in the :ref:`User Guide <unsupervised_neighbors>`.

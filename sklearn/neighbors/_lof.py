@@ -7,7 +7,6 @@ import warnings
 
 from ._base import NeighborsBase
 from ._base import KNeighborsMixin
-from ._base import UnsupervisedMixin
 from ..base import OutlierMixin
 from ._ball_tree import BallTree
 from ._kd_tree import KDTree
@@ -19,8 +18,7 @@ from ..utils import check_array
 __all__ = ["LocalOutlierFactor"]
 
 
-class LocalOutlierFactor(KNeighborsMixin, UnsupervisedMixin,
-                         OutlierMixin, NeighborsBase):
+class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
     """Unsupervised Outlier Detection using Local Outlier Factor (LOF)
 
     The anomaly score of each sample is called Local Outlier Factor.

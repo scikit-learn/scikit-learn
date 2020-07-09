@@ -1122,7 +1122,3 @@ class SupervisedIntegerMixin:
 
     def _more_tags(self):
         return {'requires_y': True}
-
-
-class UnsupervisedMixin:
-    pass
