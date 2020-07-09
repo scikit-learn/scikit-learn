@@ -73,7 +73,7 @@ the easiest way to install scikit-learn is using ``pip``   ::
 
 or ``conda``::
 
-    conda install scikit-learn
+    conda install -c conda-forge scikit-learn
 
 The documentation includes more detailed `installation instructions <https://scikit-learn.org/stable/install.html>`_.
 
