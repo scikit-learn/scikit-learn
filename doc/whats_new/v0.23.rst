@@ -2,6 +2,34 @@
 
 .. currentmodule:: sklearn
 
+.. _changes_0_23_1:
+
+Version 0.23.1
+==============
+
+**May 18 2020**
+
+Changelog
+---------
+
+:mod:`sklearn.cluster`
+......................
+
+- |Efficiency| :class:`cluster.KMeans` efficiency has been improved for very
+  small datasets. In particular it cannot spawn idle threads any more.
+  :pr:`17210` and :pr:`17235` by :user:`Jeremie du Boisberranger <jeremiedbb>`.
+
+- |Fix| Fixed a bug in :class:`cluster.KMeans` where the sample weights
+  provided by the user were modified in place. :pr:`17204` by
+  :user:`Jeremie du Boisberranger <jeremiedbb>`.
+
+Miscellaneous
+.............
+
+- |Fix| Fixed a bug in the `repr` of third-party estimators that use a
+  `**kwargs` parameter in their constructor, when `changed_only` is True
+  which is now the default. :pr:`17205` by `Nicolas Hug`_.
+
 .. _changes_0_23:
 
 Version 0.23.0
@@ -15,8 +43,6 @@ refer to
 
 
 .. include:: changelog_legend.inc
-
-Put the changes in their relevant module.
 
 Enforcing keyword-only arguments
 --------------------------------
@@ -143,7 +169,7 @@ Changelog
   deprecated. It has no effect. :pr:`11950` by
   :user:`Jeremie du Boisberranger <jeremiedbb>`.
 
-- |API| The ``random_state`` parameter has been added to 
+- |API| The ``random_state`` parameter has been added to
   :class:`cluster.AffinityPropagation`. :pr:`16801` by :user:`rcwoolston`
   and :user:`Chiara Marmo <cmarmo>`.
 
@@ -336,7 +362,7 @@ Changelog
   for each feature. :pr:`16403` by :user:`Narendra Mukherjee <narendramukherjee>`.
 
 - |Enhancement| :class:`impute.SimpleImputer`, :class:`impute.KNNImputer`, and
-  :class:`impute.SimpleImputer` accepts pandas' nullable integer dtype with
+  :class:`impute.IterativeImputer` accepts pandas' nullable integer dtype with
   missing values. :pr:`16508` by `Thomas Fan`_.
 
 :mod:`sklearn.inspection`
@@ -439,7 +465,7 @@ Changelog
   an error when `y_true` and `y_pred` were length zero and `labels` was
   not `None`. In addition, we raise an error when an empty list is given to
   the `labels` parameter.
-  :pr:`16442` by `Kyle Parsons <parsons-kyle-89>`.
+  :pr:`16442` by :user:`Kyle Parsons <parsons-kyle-89>`.
 
 - |API| Changed the formatting of values in
   :meth:`metrics.ConfusionMatrixDisplay.plot` and
@@ -463,7 +489,7 @@ Changelog
   :pr:`15622` by :user:`Gregory Morse <GregoryMorse>`.
 
 - |Fix| :func:`model_selection.cross_val_predict` supports
-  `method="predict_proba"` when `y=None`.:pr:`15918` by
+  `method="predict_proba"` when `y=None`. :pr:`15918` by
   :user:`Luca Kubin <lkubin>`.
 
 - |Fix| :func:`model_selection.fit_grid_point` is deprecated in 0.23 and will
@@ -624,6 +650,12 @@ Changelog
   and support for classes will be removed in 0.24. Pass instances instead.
   :pr:`17032` by `Nicolas Hug`_.
 
+- |API| The private utility `_safe_tags` in `utils.estimator_checks` was
+  removed, hence all tags should be obtained through `estimator._get_tags()`.
+  Note that Mixins like `RegressorMixin` must come *before* base classes
+  in the MRO for `_get_tags()` to work properly.
+  :pr:`16950` by `Nicolas Hug`_.
+
 - |FIX| :func:`utils.all_estimators` now only returns public estimators.
   :pr:`15380` by `Thomas Fan`_.
 
@@ -662,7 +694,7 @@ Code and Documentation Contributors
 -----------------------------------
 
 Thanks to everyone who has contributed to the maintenance and improvement of the
-project since version 0.20, including:
+project since version 0.22, including:
 
 Abbie Popa, Adrin Jalali, Aleksandra Kocot, Alexandre Batisse, Alexandre
 Gramfort, Alex Henrie, Alex Itkes, Alex Liang, alexshacked, Alonso Silva

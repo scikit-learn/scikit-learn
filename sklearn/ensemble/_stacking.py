@@ -268,7 +268,8 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
 
     final_estimator : estimator, default=None
         A classifier which will be used to combine the base estimators.
-        The default classifier is a `LogisticRegression`.
+        The default classifier is a
+        :class:`~sklearn.linear_model.LogisticRegression`.
 
     cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy used in
@@ -281,8 +282,9 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         * An iterable yielding train, test splits.
 
         For integer/None inputs, if the estimator is a classifier and y is
-        either binary or multiclass, `StratifiedKFold` is used. In all other
-        cases, `KFold` is used.
+        either binary or multiclass,
+        :class:`~sklearn.model_selection.StratifiedKFold` is used.
+        In all other cases, :class:`~sklearn.model_selection.KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
@@ -540,7 +542,7 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
 
     final_estimator : estimator, default=None
         A regressor which will be used to combine the base estimators.
-        The default regressor is a `RidgeCV`.
+        The default regressor is a :class:`~sklearn.linear_model.RidgeCV`.
 
     cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy used in
@@ -553,8 +555,9 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
         * An iterable yielding train, test splits.
 
         For integer/None inputs, if the estimator is a classifier and y is
-        either binary or multiclass, `StratifiedKFold` is used. In all other
-        cases, `KFold` is used.
+        either binary or multiclass,
+        :class:`~sklearn.model_selection.StratifiedKFold` is used.
+        In all other cases, :class:`~sklearn.model_selection.KFold` is used.
 
         Refer :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.

@@ -159,28 +159,32 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
         with two algo. (a) the inner loop of the original NIPALS algo. or (b) a
         SVD on residuals cross-covariance matrices.
 
-    n_components : int, number of components to keep. (default 2).
+    n_components : int, default=2
+        Number of components to keep.
 
-    scale : boolean, scale data? (default True)
+    scale : boolean, default=True
+        scale data
 
-    deflation_mode : str, "canonical" or "regression". See notes.
+    deflation_mode : str, default='regression'
+        "canonical" or "regression". See notes.
 
-    mode : "A" classical PLS and "B" CCA. See notes.
+    mode : { "A", "B" }, default="A"
+        classical PLS and "B" CCA. See notes.
 
     norm_y_weights : boolean, normalize Y weights to one? (default False)
 
-    algorithm : string, "nipals" or "svd"
+    algorithm : string, "nipals" or "svd", default='nipals'
         The algorithm used to estimate the weights. It will be called
         n_components times, i.e. once for each iteration of the outer loop.
 
-    max_iter : int (default 500)
+    max_iter : int, default=500
         The maximum number of iterations
         of the NIPALS inner loop (used only if algorithm="nipals")
 
-    tol : non-negative real, default 1e-06
+    tol : non-negative real, default=1e-06
         The tolerance used in the iterative algorithm.
 
-    copy : boolean, default True
+    copy : boolean, default=True
         Whether the deflation should be done on a copy. Let the default
         value to True unless you don't care about side effects.
 
@@ -418,11 +422,11 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
             Training vectors, where n_samples is the number of samples and
             n_features is the number of predictors.
 
-        Y : array-like of shape (n_samples, n_targets)
+        Y : array-like of shape (n_samples, n_targets), default=None
             Target vectors, where n_samples is the number of samples and
             n_targets is the number of response variables.
 
-        copy : boolean, default True
+        copy : boolean, default=True
             Whether to copy X and Y, or perform in-place normalization.
 
         Returns
@@ -483,7 +487,7 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
             Training vectors, where n_samples is the number of samples and
             n_features is the number of predictors.
 
-        copy : boolean, default True
+        copy : boolean, default=True
             Whether to copy X and Y, or perform in-place normalization.
 
         Notes
@@ -508,7 +512,7 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
             Training vectors, where n_samples is the number of samples and
             n_features is the number of predictors.
 
-        y : array-like of shape (n_samples, n_targets)
+        y : array-like of shape (n_samples, n_targets), default=None
             Target vectors, where n_samples is the number of samples and
             n_targets is the number of response variables.
 
@@ -537,53 +541,65 @@ class PLSRegression(_PLS):
 
     Parameters
     ----------
-    n_components : int, (default 2)
+    n_components : int, default=2
         Number of components to keep.
 
-    scale : boolean, (default True)
+    scale : boolean, default=True
         whether to scale the data
 
-    max_iter : an integer, (default 500)
+    max_iter : int, default=500
         the maximum number of iterations of the NIPALS inner loop (used
         only if algorithm="nipals")
 
-    tol : non-negative real
+    tol : non-negative real, default=1e-06
         Tolerance used in the iterative algorithm default 1e-06.
 
-    copy : boolean, default True
+    copy : boolean, default=True
         Whether the deflation should be done on a copy. Let the default
         value to True unless you don't care about side effect
 
     Attributes
     ----------
-    x_weights_ : array, [p, n_components]
+    x_weights_ : ndarray of shape (p, n_components)
         X block weights vectors.
 
-    y_weights_ : array, [q, n_components]
+    y_weights_ : ndarray of shape (q, n_components)
         Y block weights vectors.
 
-    x_loadings_ : array, [p, n_components]
+    x_loadings_ : ndarray of shape (p, n_components)
         X block loadings vectors.
 
-    y_loadings_ : array, [q, n_components]
+    y_loadings_ : ndarray of shape (q, n_components)
         Y block loadings vectors.
 
-    x_scores_ : array, [n_samples, n_components]
+    x_scores_ : ndarray of shape (n_samples, n_components)
         X scores.
 
-    y_scores_ : array, [n_samples, n_components]
+    y_scores_ : ndarray of shape (n_samples, n_components)
         Y scores.
 
-    x_rotations_ : array, [p, n_components]
+    x_rotations_ : ndarray of shape (p, n_components)
         X block to latents rotations.
 
-    y_rotations_ : array, [q, n_components]
+    y_rotations_ : ndarray of shape (q, n_components)
         Y block to latents rotations.
 
-    coef_ : array, [p, q]
+    x_mean_ : ndarray of shape (p,)
+        X mean for each predictor.
+
+    y_mean_ : ndarray of shape (q,)
+        Y mean for each response variable.
+
+    x_std_ : ndarray of shape (p,)
+        X standard deviation for each predictor.
+
+    y_std_ : ndarray of shape (q,)
+        Y standard deviation for each response variable.
+
+    coef_ : ndarray of shape (p, q)
         The coefficients of the linear model: ``Y = X coef_ + Err``
 
-    n_iter_ : array-like
+    n_iter_ : ndarray of shape (n_components,)
         Number of iterations of the NIPALS inner loop for each
         component.
 
@@ -677,24 +693,24 @@ class PLSCanonical(_PLS):
 
     Parameters
     ----------
-    n_components : int, (default 2).
+    n_components : int, default=2
         Number of components to keep
 
-    scale : boolean, (default True)
+    scale : boolean, default=True
         Option to scale data
 
-    algorithm : string, "nipals" or "svd"
+    algorithm : string, "nipals" or "svd", default='nipals'
         The algorithm used to estimate the weights. It will be called
         n_components times, i.e. once for each iteration of the outer loop.
 
-    max_iter : an integer, (default 500)
+    max_iter : int, default=500
         the maximum number of iterations of the NIPALS inner loop (used
         only if algorithm="nipals")
 
-    tol : non-negative real, default 1e-06
+    tol : non-negative real, default=1e-06
         the tolerance used in the iterative algorithm
 
-    copy : boolean, default True
+    copy : boolean, default=True
         Whether the deflation should be done on a copy. Let the default
         value to True unless you don't care about side effect
 
@@ -824,13 +840,13 @@ class PLSSVD(TransformerMixin, BaseEstimator):
 
     Parameters
     ----------
-    n_components : int, default 2
+    n_components : int, default=2
         Number of components to keep.
 
-    scale : boolean, default True
+    scale : boolean, default=True
         Whether to scale X and Y.
 
-    copy : boolean, default True
+    copy : boolean, default=True
         Whether to copy X and Y, or perform in-place computations.
 
     Attributes
@@ -936,7 +952,7 @@ class PLSSVD(TransformerMixin, BaseEstimator):
             Training vectors, where n_samples is the number of samples and
             n_features is the number of predictors.
 
-        Y : array-like of shape (n_samples, n_targets)
+        Y : array-like of shape (n_samples, n_targets), default=None
             Target vectors, where n_samples is the number of samples and
             n_targets is the number of response variables.
         """
@@ -962,7 +978,7 @@ class PLSSVD(TransformerMixin, BaseEstimator):
             Training vectors, where n_samples is the number of samples and
             n_features is the number of predictors.
 
-        y : array-like of shape (n_samples, n_targets)
+        y : array-like of shape (n_samples, n_targets), default=None
             Target vectors, where n_samples is the number of samples and
             n_targets is the number of response variables.
 

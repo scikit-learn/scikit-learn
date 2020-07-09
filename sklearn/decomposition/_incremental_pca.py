@@ -195,7 +195,6 @@ class IncrementalPCA(_BasePCA):
         self.singular_values_ = None
         self.explained_variance_ = None
         self.explained_variance_ratio_ = None
-        self.singular_values_ = None
         self.noise_variance_ = None
 
         X = self._validate_data(X, accept_sparse=['csr', 'csc', 'lil'],

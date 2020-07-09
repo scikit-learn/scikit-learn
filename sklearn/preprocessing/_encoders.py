@@ -10,7 +10,7 @@ from ..utils import check_array
 from ..utils.validation import check_is_fitted
 from ..utils.validation import _deprecate_positional_args
 
-from ._label import _encode, _encode_check_unknown
+from ..utils._encode import _encode, _check_unknown, _unique
 
 
 __all__ = [
@@ -43,7 +43,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
             X_temp = check_array(X, dtype=None)
             if (not hasattr(X, 'dtype')
                     and np.issubdtype(X_temp.dtype, np.str_)):
-                X = check_array(X, dtype=np.object)
+                X = check_array(X, dtype=object)
             else:
                 X = X_temp
             needs_validation = False
@@ -83,7 +83,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         for i in range(n_features):
             Xi = X_list[i]
             if self.categories == 'auto':
-                cats = _encode(Xi)
+                cats = _unique(Xi)
             else:
                 cats = np.array(self.categories[i], dtype=Xi.dtype)
                 if Xi.dtype != object:
@@ -91,7 +91,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                         raise ValueError("Unsorted categories are not "
                                          "supported for numerical categories")
                 if handle_unknown == 'error':
-                    diff = _encode_check_unknown(Xi, cats)
+                    diff = _check_unknown(Xi, cats)
                     if diff:
                         msg = ("Found unknown categories {0} in column {1}"
                                " during fit".format(diff, i))
@@ -101,8 +101,8 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
     def _transform(self, X, handle_unknown='error'):
         X_list, n_samples, n_features = self._check_X(X)
 
-        X_int = np.zeros((n_samples, n_features), dtype=np.int)
-        X_mask = np.ones((n_samples, n_features), dtype=np.bool)
+        X_int = np.zeros((n_samples, n_features), dtype=int)
+        X_mask = np.ones((n_samples, n_features), dtype=bool)
 
         if n_features != len(self.categories_):
             raise ValueError(
@@ -114,7 +114,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
 
         for i in range(n_features):
             Xi = X_list[i]
-            diff, valid_mask = _encode_check_unknown(Xi, self.categories_[i],
+            diff, valid_mask = _check_unknown(Xi, self.categories_[i],
                                                      return_mask=True)
 
             if not np.all(valid_mask):
@@ -136,11 +136,10 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                         Xi = Xi.copy()
 
                     Xi[~valid_mask] = self.categories_[i][0]
-            # We use check_unknown=False, since _encode_check_unknown was
+            # We use check_unknown=False, since _check_unknown was
             # already called above.
-            _, encoded = _encode(Xi, self.categories_[i], encode=True,
-                                 check_unknown=False)
-            X_int[:, i] = encoded
+            X_int[:, i] = _encode(Xi, uniques=self.categories_[i],
+                                  check_unknown=False)
 
         return X_int, X_mask
 
@@ -211,7 +210,7 @@ class OneHotEncoder(_BaseEncoder):
     sparse : bool, default=True
         Will return sparse matrix if set True else will return an array.
 
-    dtype : number type, default=np.float
+    dtype : number type, default=float
         Desired dtype of output.
 
     handle_unknown : {'error', 'ignore'}, default='error'
@@ -323,10 +322,10 @@ class OneHotEncoder(_BaseEncoder):
             return None
         elif isinstance(self.drop, str):
             if self.drop == 'first':
-                return np.zeros(len(self.categories_), dtype=np.object)
+                return np.zeros(len(self.categories_), dtype=object)
             elif self.drop == 'if_binary':
                 return np.array([0 if len(cats) == 2 else None
-                                for cats in self.categories_], dtype=np.object)
+                                for cats in self.categories_], dtype=object)
             else:
                 msg = (
                     "Wrong input for parameter `drop`. Expected "
@@ -362,7 +361,7 @@ class OneHotEncoder(_BaseEncoder):
             return np.array([np.where(cat_list == val)[0][0]
                              for (val, cat_list) in
                              zip(self.drop, self.categories_)],
-                            dtype=np.object)
+                            dtype=object)
 
     def fit(self, X, y=None):
         """
@@ -375,7 +374,7 @@ class OneHotEncoder(_BaseEncoder):
 
         y : None
             Ignored. This parameter exists only for compatibility with
-            :class:`sklearn.pipeline.Pipeline`.
+            :class:`~sklearn.pipeline.Pipeline`.
 
         Returns
         -------
@@ -399,7 +398,7 @@ class OneHotEncoder(_BaseEncoder):
 
         y : None
             Ignored. This parameter exists only for compatibility with
-            :class:`sklearn.pipeline.Pipeline`.
+            :class:`~sklearn.pipeline.Pipeline`.
 
         Returns
         -------
@@ -456,7 +455,7 @@ class OneHotEncoder(_BaseEncoder):
         feature_indices = np.cumsum([0] + n_values)
         indices = (X_int + feature_indices[:-1]).ravel()[mask]
 
-        indptr = np.empty(n_samples + 1, dtype=np.int)
+        indptr = np.empty(n_samples + 1, dtype=int)
         indptr[0] = 0
         np.sum(X_mask, axis=1, out=indptr[1:])
         np.cumsum(indptr[1:], out=indptr[1:])
@@ -673,7 +672,7 @@ class OrdinalEncoder(_BaseEncoder):
 
         y : None
             Ignored. This parameter exists only for compatibility with
-            :class:`sklearn.pipeline.Pipeline`.
+            :class:`~sklearn.pipeline.Pipeline`.
 
         Returns
         -------

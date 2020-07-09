@@ -18,7 +18,6 @@ import warnings
 from scipy.optimize.linesearch import line_search_wolfe2, line_search_wolfe1
 
 from ..exceptions import ConvergenceWarning
-from . import deprecated
 
 
 class _LineSearchError(RuntimeError):
@@ -110,14 +109,6 @@ def _cg(fhess_p, fgrad, maxiter, tol):
         dri0 = dri1          # update np.dot(ri,ri) for next time.
 
     return xsupi
-
-
-@deprecated("newton_cg is deprecated in version "
-            "0.22 and will be removed in version 0.24.")
-def newton_cg(grad_hess, func, grad, x0, args=(), tol=1e-4,
-              maxiter=100, maxinner=200, line_search=True, warn=True):
-    return _newton_cg(grad_hess, func, grad, x0, args, tol, maxiter,
-                      maxinner, line_search, warn)
 
 
 def _newton_cg(grad_hess, func, grad, x0, args=(), tol=1e-4,

@@ -9,7 +9,7 @@ model the geographic distribution of two south american
 mammals given past observations and 14 environmental
 variables. Since we have only positive examples (there are
 no unsuccessful observations), we cast this problem as a
-density estimation problem and use the :class:`sklearn.svm.OneClassSVM`
+density estimation problem and use the :class:`~sklearn.svm.OneClassSVM`
 as our modeling tool. The dataset is provided by Phillips et. al. (2006).
 If available, the example uses
 `basemap <https://matplotlib.org/basemap/>`_
