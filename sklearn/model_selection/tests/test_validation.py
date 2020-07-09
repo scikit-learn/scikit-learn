@@ -42,7 +42,7 @@ from sklearn.model_selection._validation import _fit_and_score
 from sklearn.model_selection._validation import _score
 
 from sklearn.datasets import make_regression
-from sklearn.datasets import load_boston
+from sklearn.datasets import load_diabetes
 from sklearn.datasets import load_iris
 from sklearn.datasets import load_digits
 from sklearn.metrics import explained_variance_score
@@ -214,6 +214,9 @@ class MockClassifier:
             T = T.reshape(len(T), -1)
         return T[:, 0]
 
+    def predict_proba(self, T):
+        return T
+
     def score(self, X=None, Y=None):
         return 1. / (1 + np.abs(self.a))
 
@@ -353,6 +356,23 @@ def test_cross_validate_invalid_scoring_param():
                         cross_validate, SVC(), X, y, scoring="mse")
 
 
+def test_cross_validate_nested_estimator():
+    # Non-regression test to ensure that nested
+    # estimators are properly returned in a list
+    # https://github.com/scikit-learn/scikit-learn/pull/17745
+    (X, y) = load_iris(return_X_y=True)
+    pipeline = Pipeline([
+        ("imputer", SimpleImputer()),
+        ("classifier", MockClassifier()),
+    ])
+
+    results = cross_validate(pipeline, X, y, return_estimator=True)
+    estimators = results["estimator"]
+
+    assert isinstance(estimators, list)
+    assert all(isinstance(estimator, Pipeline) for estimator in estimators)
+
+
 def test_cross_validate():
     # Compute train and test mse/r2 scores
     cv = KFold()
@@ -367,8 +387,8 @@ def test_cross_validate():
 
     for X, y, est in ((X_reg, y_reg, reg), (X_clf, y_clf, clf)):
         # It's okay to evaluate regression metrics on classification too
-        mse_scorer = check_scoring(est, 'neg_mean_squared_error')
-        r2_scorer = check_scoring(est, 'r2')
+        mse_scorer = check_scoring(est, scoring='neg_mean_squared_error')
+        r2_scorer = check_scoring(est, scoring='r2')
         train_mse_scores = []
         test_mse_scores = []
         train_r2_scores = []
@@ -536,8 +556,8 @@ def test_cross_val_score_mask():
     kfold = KFold(5)
     cv_masks = []
     for train, test in kfold.split(X, y):
-        mask_train = np.zeros(len(y), dtype=np.bool)
-        mask_test = np.zeros(len(y), dtype=np.bool)
+        mask_train = np.zeros(len(y), dtype=bool)
+        mask_test = np.zeros(len(y), dtype=bool)
         mask_train[train] = 1
         mask_test[test] = 1
         cv_masks.append((train, test))
@@ -765,7 +785,7 @@ def test_cross_val_score_multilabel():
 
 
 def test_cross_val_predict():
-    X, y = load_boston(return_X_y=True)
+    X, y = load_diabetes(return_X_y=True)
     cv = KFold()
 
     est = Ridge()
@@ -972,6 +992,19 @@ def test_cross_val_predict_unbalanced():
                               decimal=12)
 
 
+def test_cross_val_predict_y_none():
+    # ensure that cross_val_predict works when y is None
+    mock_classifier = MockClassifier()
+    rng = np.random.RandomState(42)
+    X = rng.rand(100, 10)
+    y_hat = cross_val_predict(mock_classifier, X, y=None, cv=5,
+                              method='predict')
+    assert_allclose(X[:, 0], y_hat)
+    y_hat_proba = cross_val_predict(mock_classifier, X, y=None, cv=5,
+                                    method='predict_proba')
+    assert_allclose(X, y_hat_proba)
+
+
 def test_cross_val_score_sparse_fit_params():
     iris = load_iris()
     X, y = iris.data, iris.target
@@ -1098,8 +1131,6 @@ def test_learning_curve_incremental_learning_unsupervised():
                               np.linspace(0.1, 1.0, 10))
 
 
-# 0.23. warning about tol not having its correct default value.
-@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_learning_curve_batch_and_incremental_learning_are_equal():
     X, y = make_classification(n_samples=30, n_features=1, n_informative=1,
                                n_redundant=0, n_classes=2,
@@ -1167,8 +1198,6 @@ def test_learning_curve_with_boolean_indices():
                               np.linspace(0.1, 1.0, 10))
 
 
-# 0.23. warning about tol not having its correct default value.
-@pytest.mark.filterwarnings('ignore:max_iter and tol parameters have been')
 def test_learning_curve_with_shuffle():
     # Following test case was designed this way to verify the code
     # changes made in pull request: #7506.
@@ -1239,7 +1268,8 @@ def test_validation_curve_cv_splits_consistency():
     X, y = make_classification(n_samples=100, random_state=0)
 
     scores1 = validation_curve(SVC(kernel='linear', random_state=0), X, y,
-                               'C', [0.1, 0.1, 0.2, 0.2],
+                               param_name='C',
+                               param_range=[0.1, 0.1, 0.2, 0.2],
                                cv=OneTimeSplitter(n_splits=n_splits,
                                                   n_samples=n_samples))
     # The OneTimeSplitter is a non-re-entrant cv splitter. Unless, the
@@ -1250,7 +1280,8 @@ def test_validation_curve_cv_splits_consistency():
                                          2))
 
     scores2 = validation_curve(SVC(kernel='linear', random_state=0), X, y,
-                               'C', [0.1, 0.1, 0.2, 0.2],
+                               param_name='C',
+                               param_range=[0.1, 0.1, 0.2, 0.2],
                                cv=KFold(n_splits=n_splits, shuffle=True))
 
     # For scores2, compare the 1st and 2nd parameter's scores
@@ -1260,7 +1291,8 @@ def test_validation_curve_cv_splits_consistency():
                                          2))
 
     scores3 = validation_curve(SVC(kernel='linear', random_state=0), X, y,
-                               'C', [0.1, 0.1, 0.2, 0.2],
+                               param_name='C',
+                               param_range=[0.1, 0.1, 0.2, 0.2],
                                cv=KFold(n_splits=n_splits))
 
     # OneTimeSplitter is basically unshuffled KFold(n_splits=5). Sanity check.
@@ -1411,7 +1443,6 @@ def test_cross_val_predict_with_method():
             LogisticRegression(solver="liblinear"))
 
 
-@pytest.mark.filterwarnings('ignore: max_iter and tol parameters')
 def test_cross_val_predict_method_checking():
     # Regression test for issue #9639. Tests that cross_val_predict does not
     # check estimator methods (e.g. predict_proba) before fitting
@@ -1637,8 +1668,14 @@ def test_fit_and_score_failing():
                        "partition for these parameters will be set to %f. "
                        "Details: \n%s" % (fit_and_score_kwargs['error_score'],
                                           error_message))
-    # check if the same warning is triggered
-    assert_warns_message(FitFailedWarning, warning_message, _fit_and_score,
+
+    def test_warn_trace(msg):
+        assert 'Traceback (most recent call last):\n' in msg
+        split = msg.splitlines()  # note: handles more than '\n'
+        mtb = split[0] + '\n' + split[-1]
+        return warning_message in mtb
+    # check traceback is included
+    assert_warns_message(FitFailedWarning, test_warn_trace, _fit_and_score,
                          *fit_and_score_args, **fit_and_score_kwargs)
 
     fit_and_score_kwargs = {'error_score': 'raise'}
@@ -1662,9 +1699,9 @@ def test_fit_and_score_failing():
                          failing_clf, X, y, cv=3, error_score='unvalid-string')
 
     assert_raise_message(ValueError, error_message, validation_curve,
-                         failing_clf, X, y, 'parameter',
-                         [FailingClassifier.FAILING_PARAMETER], cv=3,
-                         error_score='unvalid-string')
+                         failing_clf, X, y, param_name='parameter',
+                         param_range=[FailingClassifier.FAILING_PARAMETER],
+                         cv=3, error_score='unvalid-string')
 
     assert failing_clf.score() == 0.  # FailingClassifier coverage
 
@@ -1680,33 +1717,46 @@ def test_fit_and_score_working():
                             'return_parameters': True}
     result = _fit_and_score(*fit_and_score_args,
                             **fit_and_score_kwargs)
-    assert result[-1] == fit_and_score_kwargs['parameters']
+    assert result['parameters'] == fit_and_score_kwargs['parameters']
 
 
 def three_params_scorer(i, j, k):
     return 3.4213
 
 
-@pytest.mark.parametrize("return_train_score, scorer, expected", [
-    (False, three_params_scorer,
-     "[CV] .................................... , score=3.421, total=   0.0s"),
-    (True, three_params_scorer,
-     "[CV] ................ , score=(train=3.421, test=3.421), total=   0.0s"),
-    (True, {'sc1': three_params_scorer, 'sc2': three_params_scorer},
-     "[CV]  , sc1=(train=3.421, test=3.421)"
-     ", sc2=(train=3.421, test=3.421), total=   0.0s")
-])
-def test_fit_and_score_verbosity(capsys, return_train_score, scorer, expected):
+@pytest.mark.parametrize(
+    "train_score, scorer, verbose, split_prg, cdt_prg, expected", [
+     (False, three_params_scorer, 2, (1, 3), (0, 1),
+      "[CV] END ...................................................."
+      " total time=   0.0s"),
+     (True, {'sc1': three_params_scorer, 'sc2': three_params_scorer}, 3,
+      (1, 3), (0, 1),
+      "[CV 2/3] END  sc1: (train=3.421, test=3.421) sc2: "
+      "(train=3.421, test=3.421) total time=   0.0s"),
+     (False, {'sc1': three_params_scorer, 'sc2': three_params_scorer}, 10,
+      (1, 3), (0, 1),
+      "[CV 2/3; 1/1] END ....... sc1: (test=3.421) sc2: (test=3.421)"
+      " total time=   0.0s")
+    ])
+def test_fit_and_score_verbosity(capsys, train_score, scorer, verbose,
+                                 split_prg, cdt_prg, expected):
     X, y = make_classification(n_samples=30, random_state=0)
     clf = SVC(kernel="linear", random_state=0)
     train, test = next(ShuffleSplit().split(X))
 
     # test print without train score
-    fit_and_score_args = [clf, X, y, scorer, train, test, 10, None, None]
-    fit_and_score_kwargs = {'return_train_score': return_train_score}
+    fit_and_score_args = [clf, X, y, scorer, train, test, verbose, None, None]
+    fit_and_score_kwargs = {'return_train_score': train_score,
+                            'split_progress': split_prg,
+                            'candidate_progress': cdt_prg}
     _fit_and_score(*fit_and_score_args, **fit_and_score_kwargs)
     out, _ = capsys.readouterr()
-    assert out.split('\n')[1] == expected
+    print(out)
+    outlines = out.split('\n')
+    if len(outlines) > 2:
+        assert outlines[1] == expected
+    else:
+        assert outlines[0] == expected
 
 
 def test_score():

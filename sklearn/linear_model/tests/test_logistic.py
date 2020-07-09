@@ -33,7 +33,6 @@ from sklearn.utils._testing import skip_if_no_parallel
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model._logistic import (
     LogisticRegression,
-    logistic_regression_path,
     _logistic_regression_path, LogisticRegressionCV,
     _logistic_loss_and_grad, _logistic_grad_hess,
     _multinomial_grad_hess, _logistic_loss,
@@ -884,7 +883,7 @@ def test_logistic_regression_sample_weights():
 def _compute_class_weight_dictionary(y):
     # helper for returning a dictionary instead of an array
     classes = np.unique(y)
-    class_weight = compute_class_weight("balanced", classes, y)
+    class_weight = compute_class_weight("balanced", classes=classes, y=y)
     class_weight_dict = dict(zip(classes, class_weight))
     return class_weight_dict
 
@@ -1723,8 +1722,8 @@ def test_logistic_regression_multi_class_auto(est, solver):
                               solver=solver)
         if sys.platform == 'darwin' and solver == 'lbfgs':
             pytest.xfail('Issue #11924: LogisticRegressionCV(solver="lbfgs", '
-                         'multi_class="multinomial") is nondterministic on '
-                         'MacOS.')  # pragma: no cover
+                         'multi_class="multinomial") is nondeterministic on '
+                         'MacOS.')
         assert_allclose(est_auto_multi.coef_, est_multi_multi.coef_)
         assert_allclose(est_auto_multi.predict_proba(X2),
                         est_multi_multi.predict_proba(X2))
@@ -1736,13 +1735,6 @@ def test_logistic_regression_multi_class_auto(est, solver):
         assert not np.allclose(est_auto_bin.coef_,
                                fit(X, y_multi, multi_class='multinomial',
                                    solver=solver).coef_)
-
-
-def test_logistic_regression_path_deprecation():
-
-    assert_warns_message(FutureWarning,
-                         "logistic_regression_path was deprecated",
-                         logistic_regression_path, X, Y1)
 
 
 @pytest.mark.parametrize('solver', ('lbfgs', 'newton-cg', 'sag', 'saga'))

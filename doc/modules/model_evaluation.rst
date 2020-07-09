@@ -54,51 +54,52 @@ the model and the data, like :func:`metrics.mean_squared_error`, are
 available as neg_mean_squared_error which return the negated value
 of the metric.
 
-==============================    =============================================     ==================================
-Scoring                           Function                                          Comment
-==============================    =============================================     ==================================
+====================================   ==============================================     ==================================
+Scoring                                Function                                           Comment
+====================================   ==============================================     ==================================
 **Classification**
-'accuracy'                        :func:`metrics.accuracy_score`
-'balanced_accuracy'               :func:`metrics.balanced_accuracy_score`
-'average_precision'               :func:`metrics.average_precision_score`
-'neg_brier_score'                 :func:`metrics.brier_score_loss`
-'f1'                              :func:`metrics.f1_score`                          for binary targets
-'f1_micro'                        :func:`metrics.f1_score`                          micro-averaged
-'f1_macro'                        :func:`metrics.f1_score`                          macro-averaged
-'f1_weighted'                     :func:`metrics.f1_score`                          weighted average
-'f1_samples'                      :func:`metrics.f1_score`                          by multilabel sample
-'neg_log_loss'                    :func:`metrics.log_loss`                          requires ``predict_proba`` support
-'precision' etc.                  :func:`metrics.precision_score`                   suffixes apply as with 'f1'
-'recall' etc.                     :func:`metrics.recall_score`                      suffixes apply as with 'f1'
-'jaccard' etc.                    :func:`metrics.jaccard_score`                     suffixes apply as with 'f1'
-'roc_auc'                         :func:`metrics.roc_auc_score`
-'roc_auc_ovr'                     :func:`metrics.roc_auc_score`
-'roc_auc_ovo'                     :func:`metrics.roc_auc_score`
-'roc_auc_ovr_weighted'            :func:`metrics.roc_auc_score`
-'roc_auc_ovo_weighted'            :func:`metrics.roc_auc_score`
+'accuracy'                             :func:`metrics.accuracy_score`
+'balanced_accuracy'                    :func:`metrics.balanced_accuracy_score`
+'average_precision'                    :func:`metrics.average_precision_score`
+'neg_brier_score'                      :func:`metrics.brier_score_loss`
+'f1'                                   :func:`metrics.f1_score`                           for binary targets
+'f1_micro'                             :func:`metrics.f1_score`                           micro-averaged
+'f1_macro'                             :func:`metrics.f1_score`                           macro-averaged
+'f1_weighted'                          :func:`metrics.f1_score`                           weighted average
+'f1_samples'                           :func:`metrics.f1_score`                           by multilabel sample
+'neg_log_loss'                         :func:`metrics.log_loss`                           requires ``predict_proba`` support
+'precision' etc.                       :func:`metrics.precision_score`                    suffixes apply as with 'f1'
+'recall' etc.                          :func:`metrics.recall_score`                       suffixes apply as with 'f1'
+'jaccard' etc.                         :func:`metrics.jaccard_score`                      suffixes apply as with 'f1'
+'roc_auc'                              :func:`metrics.roc_auc_score`
+'roc_auc_ovr'                          :func:`metrics.roc_auc_score`
+'roc_auc_ovo'                          :func:`metrics.roc_auc_score`
+'roc_auc_ovr_weighted'                 :func:`metrics.roc_auc_score`
+'roc_auc_ovo_weighted'                 :func:`metrics.roc_auc_score`
 
 **Clustering**
-'adjusted_mutual_info_score'      :func:`metrics.adjusted_mutual_info_score`
-'adjusted_rand_score'             :func:`metrics.adjusted_rand_score`
-'completeness_score'              :func:`metrics.completeness_score`
-'fowlkes_mallows_score'           :func:`metrics.fowlkes_mallows_score`
-'homogeneity_score'               :func:`metrics.homogeneity_score`
-'mutual_info_score'               :func:`metrics.mutual_info_score`
-'normalized_mutual_info_score'    :func:`metrics.normalized_mutual_info_score`
-'v_measure_score'                 :func:`metrics.v_measure_score`
+'adjusted_mutual_info_score'           :func:`metrics.adjusted_mutual_info_score`
+'adjusted_rand_score'                  :func:`metrics.adjusted_rand_score`
+'completeness_score'                   :func:`metrics.completeness_score`
+'fowlkes_mallows_score'                :func:`metrics.fowlkes_mallows_score`
+'homogeneity_score'                    :func:`metrics.homogeneity_score`
+'mutual_info_score'                    :func:`metrics.mutual_info_score`
+'normalized_mutual_info_score'         :func:`metrics.normalized_mutual_info_score`
+'v_measure_score'                      :func:`metrics.v_measure_score`
 
 **Regression**
-'explained_variance'              :func:`metrics.explained_variance_score`
-'max_error'                       :func:`metrics.max_error`
-'neg_mean_absolute_error'         :func:`metrics.mean_absolute_error`
-'neg_mean_squared_error'          :func:`metrics.mean_squared_error`
-'neg_root_mean_squared_error'     :func:`metrics.mean_squared_error`
-'neg_mean_squared_log_error'      :func:`metrics.mean_squared_log_error`
-'neg_median_absolute_error'       :func:`metrics.median_absolute_error`
-'r2'                              :func:`metrics.r2_score`
-'neg_mean_poisson_deviance'       :func:`metrics.mean_poisson_deviance`
-'neg_mean_gamma_deviance'         :func:`metrics.mean_gamma_deviance`
-==============================    =============================================     ==================================
+'explained_variance'                   :func:`metrics.explained_variance_score`
+'max_error'                            :func:`metrics.max_error`
+'neg_mean_absolute_error'              :func:`metrics.mean_absolute_error`
+'neg_mean_squared_error'               :func:`metrics.mean_squared_error`
+'neg_root_mean_squared_error'          :func:`metrics.mean_squared_error`
+'neg_mean_squared_log_error'           :func:`metrics.mean_squared_log_error`
+'neg_median_absolute_error'            :func:`metrics.median_absolute_error`
+'r2'                                   :func:`metrics.r2_score`
+'neg_mean_poisson_deviance'            :func:`metrics.mean_poisson_deviance`
+'neg_mean_gamma_deviance'              :func:`metrics.mean_gamma_deviance`
+'neg_mean_absolute_percentage_error'   :func:`metrics.mean_absolute_percentage_error`
+====================================   ==============================================     ==================================
 
 
 Usage examples:
@@ -278,7 +279,7 @@ permitted and will require a wrapper to return a single metric::
     >>> def tp(y_true, y_pred): return confusion_matrix(y_true, y_pred)[1, 1]
     >>> scoring = {'tp': make_scorer(tp), 'tn': make_scorer(tn),
     ...            'fp': make_scorer(fp), 'fn': make_scorer(fn)}
-    >>> cv_results = cross_validate(svm.fit(X, y), X, y, cv=5, scoring=scoring)
+    >>> cv_results = cross_validate(svm, X, y, cv=5, scoring=scoring)
     >>> # Getting the test set true positive scores
     >>> print(cv_results['test_tp'])
     [10  9  8  7  8]
@@ -459,7 +460,11 @@ In the binary case, balanced accuracy is equal to the arithmetic mean of
 (true positive rate) and `specificity
 <https://en.wikipedia.org/wiki/Sensitivity_and_specificity>`_ (true negative
 rate), or the area under the ROC curve with binary predictions rather than
-scores.
+scores:
+
+.. math::
+
+   \texttt{balanced-accuracy} = \frac{1}{2}\left( \frac{TP}{TP + FN} + \frac{TN}{TN + FP}\right )
 
 If the classifier performs equally well on either class, this term reduces to
 the conventional accuracy (i.e., the number of correct predictions divided by
@@ -555,11 +560,10 @@ Confusion matrix
 ----------------
 
 The :func:`confusion_matrix` function evaluates
-classification accuracy by computing the confusion matrix
-with each row corresponding to the true class
-<https://en.wikipedia.org/wiki/Confusion_matrix>`_.
-(Wikipedia and other references may use different convention for axes.)
-
+classification accuracy by computing the `confusion matrix
+<https://en.wikipedia.org/wiki/Confusion_matrix>`_ with each row corresponding
+to the true class (Wikipedia and other references may use different convention
+for axes).
 
 By definition, entry :math:`i, j` in a confusion matrix is
 the number of observations actually in group :math:`i`, but
@@ -1348,8 +1352,8 @@ the one-vs-rest algorithm computes the average of the ROC AUC scores for each
 class against all other classes. In both cases, the predicted labels are
 provided in an array with values from 0 to ``n_classes``, and the scores
 correspond to the probability estimates that a sample belongs to a particular
-class. The OvO and OvR algorithms supports weighting uniformly
-(``average='macro'``) and weighting by the prevalence (``average='weighted'``).
+class. The OvO and OvR algorithms support weighting uniformly
+(``average='macro'``) and by prevalence (``average='weighted'``).
 
 **One-vs-one Algorithm**: Computes the average AUC of all possible pairwise
 combinations of classes. [HT2001]_ defines a multiclass AUC metric weighted
@@ -1380,10 +1384,10 @@ the keyword argument ``multiclass`` to ``'ovo'`` and ``average`` to
 ``'weighted'``. The ``'weighted'`` option returns a prevalence-weighted average
 as described in [FC2009]_.
 
-**One-vs-rest Algorithm**: Computes the AUC of each class against the rest.
-The algorithm is functionally the same as the multilabel case. To enable this
-algorithm set the keyword argument ``multiclass`` to ``'ovr'``. Similar to
-OvO, OvR supports two types of averaging: ``'macro'`` [F2006]_ and
+**One-vs-rest Algorithm**: Computes the AUC of each class against the rest
+[PD2000]_. The algorithm is functionally the same as the multilabel case. To
+enable this algorithm set the keyword argument ``multiclass`` to ``'ovr'``.
+Like OvO, OvR supports two types of averaging: ``'macro'`` [F2006]_ and
 ``'weighted'`` [F2001]_.
 
 In applications where a high false positive rate is not tolerable the parameter
@@ -1421,6 +1425,10 @@ to the given limit.
        `An Experimental Comparison of Performance Measures for Classification.
        <https://www.math.ucdavis.edu/~saito/data/roc/ferri-class-perf-metrics.pdf>`_
        Pattern Recognition Letters. 30. 27-38.
+
+    .. [PD2000] Provost, F., Domingos, P. (2000). Well-trained PETs: Improving
+       probability estimation trees (Section 6.2), CeDER Working Paper #IS-00-04,
+       Stern School of Business, New York University.
 
     .. [F2006] Fawcett, T., 2006. `An introduction to ROC analysis.
        <http://www.sciencedirect.com/science/article/pii/S016786550500303X>`_
@@ -1692,10 +1700,11 @@ Normalized Discounted Cumulative Gain
 -------------------------------------
 
 Discounted Cumulative Gain (DCG) and Normalized Discounted Cumulative Gain
-(NDCG) are ranking metrics; they compare a predicted order to ground-truth
-scores, such as the relevance of answers to a query.
+(NDCG) are ranking metrics implemented in :func:`~sklearn.metrics.dcg_score`
+and :func:`~sklearn.metrics.ndcg_score` ; they compare a predicted order to
+ground-truth scores, such as the relevance of answers to a query.
 
-from the Wikipedia page for Discounted Cumulative Gain:
+From the Wikipedia page for Discounted Cumulative Gain:
 
 "Discounted cumulative gain (DCG) is a measure of ranking quality. In
 information retrieval, it is often used to measure effectiveness of web search
@@ -1731,8 +1740,8 @@ and the NDCG score is the DCG score divided by the DCG score obtained for
 
 .. topic:: References:
 
-  * Wikipedia entry for Discounted Cumulative Gain:
-    https://en.wikipedia.org/wiki/Discounted_cumulative_gain
+  * `Wikipedia entry for Discounted Cumulative Gain
+    <https://en.wikipedia.org/wiki/Discounted_cumulative_gain>`_
 
   * Jarvelin, K., & Kekalainen, J. (2002).
     Cumulated gain-based evaluation of IR techniques. ACM Transactions on
@@ -1954,6 +1963,42 @@ function::
   >>> y_pred = [[0.5, 2], [1, 2.5], [8, 8]]
   >>> mean_squared_log_error(y_true, y_pred)
   0.044...
+
+.. _mean_absolute_percentage_error:
+
+Mean absolute percentage error
+------------------------------
+The :func:`mean_absolute_percentage_error` (MAPE), also known as mean absolute
+percentage deviation (MAPD), is an evaluation metric for regression problems.
+The idea of this metric is to be sensitive to relative errors. It is for example
+not changed by a global scaling of the target variable.
+
+If :math:`\hat{y}_i` is the predicted value of the :math:`i`-th sample
+and :math:`y_i` is the corresponding true value, then the mean absolute percentage
+error (MAPE) estimated over :math:`n_{\text{samples}}` is defined as
+
+.. math::
+
+  \text{MAPE}(y, \hat{y}) = \frac{1}{n_{\text{samples}}} \sum_{i=0}^{n_{\text{samples}}-1} \frac{{}\left| y_i - \hat{y}_i \right|}{max(\epsilon, \left| y_i \right|)}
+
+where :math:`\epsilon` is an arbitrary small yet strictly positive number to
+avoid undefined results when y is zero.
+
+The :func:`mean_absolute_percentage_error` function supports multioutput.
+
+Here is a small example of usage of the :func:`mean_absolute_percentage_error`
+function::
+
+  >>> from sklearn.metrics import mean_absolute_percentage_error
+  >>> y_true = [1, 10, 1e6]
+  >>> y_pred = [0.9, 15, 1.2e6]
+  >>> mean_absolute_percentage_error(y_true, y_pred)
+  0.2666...
+
+In above example, if we had used `mean_absolute_error`, it would have ignored
+the small magnitude values and only reflected the error in prediction of highest
+magnitude value. But that problem is resolved in case of MAPE because it calculates
+relative percentage error with respect to actual output.
 
 .. _median_absolute_error:
 

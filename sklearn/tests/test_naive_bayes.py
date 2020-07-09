@@ -17,11 +17,11 @@ from sklearn.utils._testing import assert_raises
 from sklearn.utils._testing import assert_raise_message
 from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import assert_no_warnings
+from sklearn.utils._testing import ignore_warnings
 
 from sklearn.naive_bayes import GaussianNB, BernoulliNB
 from sklearn.naive_bayes import MultinomialNB, ComplementNB
 from sklearn.naive_bayes import CategoricalNB
-from sklearn.naive_bayes import BaseNB, BaseDiscreteNB
 
 
 # Data is just 6 separable points in the plane
@@ -31,7 +31,7 @@ y = np.array([1, 1, 1, 2, 2, 2])
 # A bit more random tests
 rng = np.random.RandomState(0)
 X1 = rng.normal(size=(10, 3))
-y1 = (rng.normal(size=(10)) > 0).astype(np.int)
+y1 = (rng.normal(size=(10)) > 0).astype(int)
 
 # Data is 6 random integer points in a 100 dimensional space classified to
 # three classes.
@@ -122,7 +122,7 @@ def test_gnb_priors_sum_isclose():
     priors = np.array([0.08, 0.14, 0.03, 0.16, 0.11, 0.16, 0.07, 0.14,
                        0.11, 0.0])
     Y = np.array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
-    clf = GaussianNB(priors)
+    clf = GaussianNB(priors=priors)
     # smoke test for issue #9633
     clf.fit(X, Y)
 
@@ -192,6 +192,17 @@ def test_gnb_naive_bayes_scale_invariance():
               for f in [1E-10, 1, 1E10]]
     assert_array_equal(labels[0], labels[1])
     assert_array_equal(labels[1], labels[2])
+
+
+# TODO: Remove in version 0.26
+@pytest.mark.parametrize("cls", [MultinomialNB, ComplementNB, BernoulliNB,
+                                 CategoricalNB])
+def test_discretenb_deprecated_coef_intercept(cls):
+    est = cls().fit(X2, y2)
+
+    for att in ["coef_", "intercept_"]:
+        with pytest.warns(FutureWarning):
+            hasattr(est, att)
 
 
 @pytest.mark.parametrize("cls", [MultinomialNB, BernoulliNB, CategoricalNB])
@@ -308,6 +319,8 @@ def test_discretenb_input_check_partial_fit(cls):
     assert_raises(ValueError, clf.predict, X2[:, :-1])
 
 
+# TODO: Remove in version 0.26
+@ignore_warnings(category=FutureWarning)
 def test_discretenb_predict_proba():
     # Test discrete NB classes' probability scores
 
@@ -410,6 +423,8 @@ def test_discretenb_sample_weight_multiclass(cls):
     assert_array_equal(clf.predict(X), [0, 1, 1, 2])
 
 
+# TODO: Remove in version 0.26
+@ignore_warnings(category=FutureWarning)
 @pytest.mark.parametrize('cls', [BernoulliNB, MultinomialNB])
 def test_discretenb_coef_intercept_shape(cls):
     # coef_ and intercept_ should have shapes as in other linear models.
@@ -502,6 +517,8 @@ def test_mnb_prior_unobserved_targets():
     assert clf.predict([[1, 1]]) == 2
 
 
+# TODO: Remove in version 0.26
+@ignore_warnings(category=FutureWarning)
 def test_mnb_sample_weight():
     clf = MultinomialNB()
     clf.fit([[1, 2], [1, 2], [1, 0]],
@@ -663,9 +680,14 @@ def test_categoricalnb():
     # Check error is raised for X with negative entries
     X = np.array([[0, -1]])
     y = np.array([1])
-    error_msg = "X must not contain negative values."
+    error_msg = "Negative values in data passed to CategoricalNB (input X)"
     assert_raise_message(ValueError, error_msg, clf.predict, X)
     assert_raise_message(ValueError, error_msg, clf.fit, X, y)
+
+    # Check error is raised for incorrect X
+    X = np.array([[1, 4, 1], [2, 5, 6]])
+    msg = "Expected input with 2 features, got 3 instead"
+    assert_raise_message(ValueError, msg, clf.predict, X)
 
     # Test alpha
     X3_test = np.array([[2, 5]])
@@ -821,19 +843,3 @@ def test_check_accuracy_on_digits():
 
     scores = cross_val_score(GaussianNB(), X_3v8, y_3v8, cv=10)
     assert scores.mean() > 0.86
-
-
-# TODO: remove in 0.24
-def test_deprecations():
-
-    class A(BaseNB, GaussianNB):
-        pass
-
-    class B(BaseDiscreteNB, CategoricalNB):
-        pass
-
-    with pytest.warns(FutureWarning, match="is deprecated in version 0.22"):
-        A()
-
-    with pytest.warns(FutureWarning, match="is deprecated in version 0.22"):
-        B()
