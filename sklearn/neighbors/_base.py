@@ -1089,47 +1089,14 @@ class RadiusNeighborsMixin:
 
 
 class SupervisedFloatMixin:
-    def fit(self, X, y):
-        """Fit the model using X as training data and y as target values
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix, BallTree, KDTree, NeighborsBase}
-            Training data. If array or matrix, shape [n_samples, n_features],
-            or [n_samples, n_samples] if metric='precomputed'.
-
-        y : {array-like, sparse matrix}
-            Target values, array of float values, shape = [n_samples]
-             or [n_samples, n_outputs]
-        """
-        if not isinstance(X, (KDTree, BallTree, NeighborsBase)):
-            X, y = self._validate_data(X, y, accept_sparse="csr",
-                                       multi_output=True)
-        self._y = y
-        return self._fit(X)
 
     def _more_tags(self):
         return {'requires_y': True}
 
 
 class SupervisedIntegerMixin:
-    def fit(self, X, y):
-        """Fit the model using X as training data and y as target values
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix, BallTree, KDTree, NeighborsBase}
-            Training data. If array or matrix, shape [n_samples, n_features],
-            or [n_samples, n_samples] if metric='precomputed'.
-
-        y : {array-like, sparse matrix}
-            Target values of shape = [n_samples] or [n_samples, n_outputs]
-
-        """
-        if not isinstance(X, (KDTree, BallTree, NeighborsBase)):
-            X, y = self._validate_data(X, y, accept_sparse="csr",
-                                       multi_output=True)
-
+    def _validate_set_y(self, y):
+        """Validate the target values."""
         if y.ndim == 1 or y.ndim == 2 and y.shape[1] == 1:
             if y.ndim != 1:
                 warnings.warn("A column-vector y was passed when a 1d array "
@@ -1153,23 +1120,9 @@ class SupervisedIntegerMixin:
             self.classes_ = self.classes_[0]
             self._y = self._y.ravel()
 
-        return self._fit(X)
-
     def _more_tags(self):
         return {'requires_y': True}
 
 
 class UnsupervisedMixin:
-    def fit(self, X, y=None):
-        """Fit the model using X as training data
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix, BallTree, KDTree, NeighborsBase}
-            Training data. If array or matrix, shape [n_samples, n_features],
-            or [n_samples, n_samples] if metric='precomputed'.
-        """
-        if not isinstance(X, (KDTree, BallTree, NeighborsBase)):
-            X = self._validate_data(X, accept_sparse='csr')
-
-        return self._fit(X)
+    pass

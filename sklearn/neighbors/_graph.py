@@ -7,6 +7,8 @@
 from ._base import KNeighborsMixin, RadiusNeighborsMixin
 from ._base import NeighborsBase
 from ._base import UnsupervisedMixin
+from ._ball_tree import BallTree
+from ._kd_tree import KDTree
 from ._unsupervised import NearestNeighbors
 from ..base import TransformerMixin
 from ..utils.validation import check_is_fitted, _deprecate_positional_args
@@ -310,6 +312,25 @@ class KNeighborsTransformer(KNeighborsMixin, UnsupervisedMixin,
             metric_params=metric_params, n_jobs=n_jobs)
         self.mode = mode
 
+    def fit(self, X, y=None):
+        """Fit the k-nearest neighbors transformer using `X` as training data.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features) or \
+                (n_samples, n_samples) if metric='precomputed'
+            Training data.
+
+        Returns
+        -------
+        self : KNeighborsTransformer
+            The fitted k-nearest neighbors transformer.
+        """
+        if not isinstance(X, (KDTree, BallTree, KNeighborsTransformer)):
+            X = self._validate_data(X, accept_sparse='csr')
+
+        return self._fit(X)
+
     def transform(self, X):
         """Computes the (weighted) graph of Neighbors for points in X
 
@@ -467,6 +488,25 @@ class RadiusNeighborsTransformer(RadiusNeighborsMixin, UnsupervisedMixin,
             leaf_size=leaf_size, metric=metric, p=p,
             metric_params=metric_params, n_jobs=n_jobs)
         self.mode = mode
+
+    def fit(self, X, y=None):
+        """Fit the radius neighbors transformer using `X` as training data.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features) or \
+                (n_samples, n_samples) if metric='precomputed'
+            Training data.
+
+        Returns
+        -------
+        self : RadiusNeighborsTransformer
+            The fitted radius neighbors transformer.
+        """
+        if not isinstance(X, (KDTree, BallTree, RadiusNeighborsTransformer)):
+            X = self._validate_data(X, accept_sparse='csr')
+
+        return self._fit(X)
 
     def transform(self, X):
         """Computes the (weighted) graph of Neighbors for points in X

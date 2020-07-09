@@ -17,6 +17,8 @@ import numpy as np
 from ._base import _get_weights, _check_weights, NeighborsBase, KNeighborsMixin
 from ._base import RadiusNeighborsMixin, SupervisedFloatMixin
 from ..base import RegressorMixin
+from ._ball_tree import BallTree
+from ._kd_tree import KDTree
 from ..utils import check_array
 from ..utils.validation import _deprecate_positional_args
 
@@ -159,6 +161,31 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
     def _pairwise(self):
         # For cross-validation routines to split data correctly
         return self.metric == 'precomputed'
+
+    def fit(self, X, y):
+        """Fit the k-nearest neighbors regressor using `X` as training data
+        and `y` as target values.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features) or \
+                (n_samples, n_samples) if metric='precomputed'
+            Training data.
+
+        y : {array-like, sparse matrix} of shape (n_samples,) or \
+                (n_samples, n_outputs)
+            Target values.
+
+        Returns
+        -------
+        self : KNeighborsRegressor
+            The fitted k-nearest neighbors regressor.
+        """
+        if not isinstance(X, (KDTree, BallTree, KNeighborsRegressor)):
+            X, y = self._validate_data(X, y, accept_sparse="csr",
+                                       multi_output=True)
+        self._y = y
+        return self._fit(X)
 
     def predict(self, X):
         """Predict the target for the provided data
@@ -327,6 +354,31 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
               p=p, metric=metric, metric_params=metric_params,
               n_jobs=n_jobs, **kwargs)
         self.weights = _check_weights(weights)
+
+    def fit(self, X, y):
+        """Fit the radius neighbors regressor using `X` as training data and
+        `y` as target values.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features) or \
+                (n_samples, n_samples) if metric='precomputed'
+            Training data.
+
+        y : {array-like, sparse matrix} of shape (n_samples,) or \
+                (n_samples, n_outputs)
+            Target values.
+
+        Returns
+        -------
+        self : RadiusNeighborsRegressor
+            The fitted radius neighbors regressor.
+        """
+        if not isinstance(X, (KDTree, BallTree, RadiusNeighborsRegressor)):
+            X, y = self._validate_data(X, y, accept_sparse="csr",
+                                       multi_output=True)
+        self._y = y
+        return self._fit(X)
 
     def predict(self, X):
         """Predict the target for the provided data

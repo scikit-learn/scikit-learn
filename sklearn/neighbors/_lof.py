@@ -9,6 +9,8 @@ from ._base import NeighborsBase
 from ._base import KNeighborsMixin
 from ._base import UnsupervisedMixin
 from ..base import OutlierMixin
+from ._ball_tree import BallTree
+from ._kd_tree import KDTree
 
 from ..utils.validation import check_is_fitted
 from ..utils.validation import _deprecate_positional_args
@@ -246,28 +248,31 @@ class LocalOutlierFactor(KNeighborsMixin, UnsupervisedMixin,
         return self.fit(X)._predict()
 
     def fit(self, X, y=None):
-        """Fit the model using X as training data.
+        """Fit the local outlier factor detector using `X` as training data.
 
         Parameters
         ----------
-        X : BallTree, KDTree or {array-like, sparse matrix} of shape \
-                (n_samples, n_features) or (n_samples, n_samples)
-            Training data. If array or matrix, the shape is (n_samples,
-            n_features), or (n_samples, n_samples) if metric='precomputed'.
+        X : {array-like, sparse matrix} of shape (n_samples, n_features) or \
+                (n_samples, n_samples) if metric='precomputed'
+            Training data.
 
         y : Ignored
             Not used, present for API consistency by convention.
 
         Returns
         -------
-        self : object
+        self : LocalOutlierFactor
+            The fitted local outlier factor detector.
         """
         if self.contamination != 'auto':
             if not(0. < self.contamination <= .5):
                 raise ValueError("contamination must be in (0, 0.5], "
                                  "got: %f" % self.contamination)
 
-        super().fit(X)
+        if not isinstance(X, (KDTree, BallTree, LocalOutlierFactor)):
+            X = self._validate_data(X, accept_sparse='csr')
+
+        super()._fit(X)
 
         n_samples = self.n_samples_fit_
         if self.n_neighbors > n_samples:

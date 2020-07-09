@@ -18,6 +18,8 @@ from ._base import \
     _check_weights, _get_weights, \
     NeighborsBase, KNeighborsMixin,\
     RadiusNeighborsMixin, SupervisedIntegerMixin
+from ._ball_tree import BallTree
+from ._kd_tree import KDTree
 from ..base import ClassifierMixin
 from ..utils import check_array
 from ..utils.validation import _deprecate_positional_args
@@ -158,6 +160,33 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
             metric_params=metric_params,
             n_jobs=n_jobs, **kwargs)
         self.weights = _check_weights(weights)
+
+    def fit(self, X, y):
+        """Fit the k-nearest neighbors classifier using `X` as training data
+        and `y` as target values.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features) or \
+                (n_samples, n_samples) if metric='precomputed'
+            Training data.
+
+        y : {array-like, sparse matrix} of shape (n_samples,) or \
+                (n_samples, n_outputs)
+            Target values.
+
+        Returns
+        -------
+        self : KNeighborsClassifier
+            The fitted k-nearest neighbors classifier.
+        """
+        if not isinstance(X, (KDTree, BallTree, KNeighborsClassifier)):
+            X, y = self._validate_data(X, y, accept_sparse="csr",
+                                       multi_output=True)
+
+        super()._validate_set_y(y)
+
+        return self._fit(X)
 
     def predict(self, X):
         """Predict the class labels for the provided data.
@@ -401,22 +430,31 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         self.outlier_label = outlier_label
 
     def fit(self, X, y):
-        """Fit the model using X as training data and y as target values
+        """Fit the radius neighbors classifier using `X` as training data and
+        `y` as target values.
 
         Parameters
         ----------
-        X : BallTree, KDTree or {array-like, sparse matrix} of shape \
-                (n_samples, n_features) or (n_samples, n_samples)
-            Training data. If array or matrix, the shape is (n_samples,
-            n_features), or (n_samples, n_samples) if metric='precomputed'.
+        X : {array-like, sparse matrix} of shape (n_samples, n_features) or \
+                (n_samples, n_samples) if metric='precomputed'
+            Training data.
 
         y : {array-like, sparse matrix} of shape (n_samples,) or \
-                (n_samples, n_output)
+                (n_samples, n_outputs)
             Target values.
 
+        Returns
+        -------
+        self : RadiusNeighborsClassifier
+            The fitted radius neighbors classifier.
         """
+        if not isinstance(X, (KDTree, BallTree, RadiusNeighborsClassifier)):
+            X, y = self._validate_data(X, y, accept_sparse="csr",
+                                       multi_output=True)
 
-        SupervisedIntegerMixin.fit(self, X, y)
+        super()._validate_set_y(y)
+
+        self._fit(X)
 
         classes_ = self.classes_
         _y = self._y
