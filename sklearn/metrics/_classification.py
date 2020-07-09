@@ -1885,7 +1885,8 @@ def classification_report(y_true, y_pred, *, labels=None, target_names=None,
         per label), and sample average (only for multilabel classification).
         Micro average (averaging the total true positives, false negatives and
         false positives) is only shown for multi-label or multi-class
-        with a subset of classes, because it corresponds to accuracy otherwise.
+        with a subset of classes, because it corresponds to accuracy
+        otherwise and would be the same for all metrics.
         See also :func:`precision_recall_fscore_support` for more details
         on averages.
 
@@ -1932,12 +1933,12 @@ def classification_report(y_true, y_pred, *, labels=None, target_names=None,
 
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
 
-    labels_given = True
     if labels is None:
         labels = unique_labels(y_true, y_pred)
         labels_given = False
     else:
         labels = np.asarray(labels)
+        labels_given = True
 
     # labelled micro average
     micro_is_accuracy = ((y_type == 'multiclass' or y_type == 'binary') and
