@@ -4,21 +4,20 @@ Testing for the bagging ensemble module (sklearn.ensemble.bagging).
 
 # Author: Gilles Louppe
 # License: BSD 3 clause
+from itertools import product
 
-import pytest
 import numpy as np
+import joblib
+import pytest
 
 from sklearn.base import BaseEstimator
 
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_greater
-from sklearn.utils.testing import assert_less
-from sklearn.utils.testing import assert_warns
-from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import assert_raise_message
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_raises
+from sklearn.utils._testing import assert_warns
+from sklearn.utils._testing import assert_warns_message
+from sklearn.utils._testing import assert_raise_message
 
 from sklearn.dummy import DummyClassifier, DummyRegressor
 from sklearn.model_selection import GridSearchCV, ParameterGrid
@@ -31,10 +30,9 @@ from sklearn.random_projection import SparseRandomProjection
 from sklearn.pipeline import make_pipeline
 from sklearn.feature_selection import SelectKBest
 from sklearn.model_selection import train_test_split
-from sklearn.datasets import load_boston, load_iris, make_hastie_10_2
+from sklearn.datasets import load_diabetes, load_iris, make_hastie_10_2
 from sklearn.utils import check_random_state
-from sklearn.utils import _joblib
-from sklearn.preprocessing import FunctionTransformer
+from sklearn.preprocessing import FunctionTransformer, scale
 
 from scipy.sparse import csc_matrix, csr_matrix
 
@@ -47,12 +45,12 @@ perm = rng.permutation(iris.target.size)
 iris.data = iris.data[perm]
 iris.target = iris.target[perm]
 
-# also load the boston dataset
+# also load the diabetes dataset
 # and randomly permute it
-boston = load_boston()
-perm = rng.permutation(boston.target.size)
-boston.data = boston.data[perm]
-boston.target = boston.target[perm]
+diabetes = load_diabetes()
+perm = rng.permutation(diabetes.target.size)
+diabetes.data = diabetes.data[perm]
+diabetes.target = diabetes.target[perm]
 
 
 def test_classification():
@@ -68,17 +66,42 @@ def test_classification():
 
     for base_estimator in [None,
                            DummyClassifier(),
-                           Perceptron(tol=1e-3),
+                           Perceptron(),
                            DecisionTreeClassifier(),
                            KNeighborsClassifier(),
-                           SVC(gamma="scale")]:
+                           SVC()]:
         for params in grid:
             BaggingClassifier(base_estimator=base_estimator,
                               random_state=rng,
                               **params).fit(X_train, y_train).predict(X_test)
 
 
-def test_sparse_classification():
+@pytest.mark.parametrize(
+    'sparse_format, params, method',
+    product(
+        [csc_matrix, csr_matrix],
+        [{
+            "max_samples": 0.5,
+            "max_features": 2,
+            "bootstrap": True,
+            "bootstrap_features": True
+        }, {
+            "max_samples": 1.0,
+            "max_features": 4,
+            "bootstrap": True,
+            "bootstrap_features": True
+        }, {
+            "max_features": 2,
+            "bootstrap": False,
+            "bootstrap_features": True
+        }, {
+            "max_samples": 0.5,
+            "bootstrap": True,
+            "bootstrap_features": False
+        }],
+        ['predict', 'predict_proba',
+         'predict_log_proba', 'decision_function']))
+def test_sparse_classification(sparse_format, params, method):
     # Check classification for various parameter settings on sparse input.
 
     class CustomSVC(SVC):
@@ -90,61 +113,42 @@ def test_sparse_classification():
             return self
 
     rng = check_random_state(0)
-    X_train, X_test, y_train, y_test = train_test_split(iris.data,
+    X_train, X_test, y_train, y_test = train_test_split(scale(iris.data),
                                                         iris.target,
                                                         random_state=rng)
-    parameter_sets = [
-        {"max_samples": 0.5,
-         "max_features": 2,
-         "bootstrap": True,
-         "bootstrap_features": True},
-        {"max_samples": 1.0,
-         "max_features": 4,
-         "bootstrap": True,
-         "bootstrap_features": True},
-        {"max_features": 2,
-         "bootstrap": False,
-         "bootstrap_features": True},
-        {"max_samples": 0.5,
-         "bootstrap": True,
-         "bootstrap_features": False},
-    ]
 
-    for sparse_format in [csc_matrix, csr_matrix]:
-        X_train_sparse = sparse_format(X_train)
-        X_test_sparse = sparse_format(X_test)
-        for params in parameter_sets:
-            for f in ['predict', 'predict_proba', 'predict_log_proba', 'decision_function']:
-                # Trained on sparse format
-                sparse_classifier = BaggingClassifier(
-                    base_estimator=CustomSVC(gamma='scale',
-                                             decision_function_shape='ovr'),
-                    random_state=1,
-                    **params
-                ).fit(X_train_sparse, y_train)
-                sparse_results = getattr(sparse_classifier, f)(X_test_sparse)
+    X_train_sparse = sparse_format(X_train)
+    X_test_sparse = sparse_format(X_test)
+    # Trained on sparse format
+    sparse_classifier = BaggingClassifier(
+        base_estimator=CustomSVC(kernel="linear",
+                                 decision_function_shape='ovr'),
+        random_state=1,
+        **params
+    ).fit(X_train_sparse, y_train)
+    sparse_results = getattr(sparse_classifier, method)(X_test_sparse)
 
-                # Trained on dense format
-                dense_classifier = BaggingClassifier(
-                    base_estimator=CustomSVC(gamma='scale',
-                                             decision_function_shape='ovr'),
-                    random_state=1,
-                    **params
-                ).fit(X_train, y_train)
-                dense_results = getattr(dense_classifier, f)(X_test)
-                assert_array_almost_equal(sparse_results, dense_results)
+    # Trained on dense format
+    dense_classifier = BaggingClassifier(
+        base_estimator=CustomSVC(kernel="linear",
+                                 decision_function_shape='ovr'),
+        random_state=1,
+        **params
+    ).fit(X_train, y_train)
+    dense_results = getattr(dense_classifier, method)(X_test)
+    assert_array_almost_equal(sparse_results, dense_results)
 
-            sparse_type = type(X_train_sparse)
-            types = [i.data_type_ for i in sparse_classifier.estimators_]
+    sparse_type = type(X_train_sparse)
+    types = [i.data_type_ for i in sparse_classifier.estimators_]
 
-            assert all([t == sparse_type for t in types])
+    assert all([t == sparse_type for t in types])
 
 
 def test_regression():
     # Check regression for various parameter settings.
     rng = check_random_state(0)
-    X_train, X_test, y_train, y_test = train_test_split(boston.data[:50],
-                                                        boston.target[:50],
+    X_train, X_test, y_train, y_test = train_test_split(diabetes.data[:50],
+                                                        diabetes.target[:50],
                                                         random_state=rng)
     grid = ParameterGrid({"max_samples": [0.5, 1.0],
                           "max_features": [0.5, 1.0],
@@ -155,7 +159,7 @@ def test_regression():
                            DummyRegressor(),
                            DecisionTreeRegressor(),
                            KNeighborsRegressor(),
-                           SVR(gamma='scale')]:
+                           SVR()]:
         for params in grid:
             BaggingRegressor(base_estimator=base_estimator,
                              random_state=rng,
@@ -165,8 +169,8 @@ def test_regression():
 def test_sparse_regression():
     # Check regression for various parameter settings on sparse input.
     rng = check_random_state(0)
-    X_train, X_test, y_train, y_test = train_test_split(boston.data[:50],
-                                                        boston.target[:50],
+    X_train, X_test, y_train, y_test = train_test_split(diabetes.data[:50],
+                                                        diabetes.target[:50],
                                                         random_state=rng)
 
     class CustomSVR(SVR):
@@ -201,7 +205,7 @@ def test_sparse_regression():
 
             # Trained on sparse format
             sparse_classifier = BaggingRegressor(
-                base_estimator=CustomSVR(gamma='scale'),
+                base_estimator=CustomSVR(),
                 random_state=1,
                 **params
             ).fit(X_train_sparse, y_train)
@@ -209,7 +213,7 @@ def test_sparse_regression():
 
             # Trained on dense format
             dense_results = BaggingRegressor(
-                base_estimator=CustomSVR(gamma='scale'),
+                base_estimator=CustomSVR(),
                 random_state=1,
                 **params
             ).fit(X_train, y_train).predict(X_test)
@@ -226,14 +230,14 @@ class DummySizeEstimator(BaseEstimator):
 
     def fit(self, X, y):
         self.training_size_ = X.shape[0]
-        self.training_hash_ = _joblib.hash(X)
+        self.training_hash_ = joblib.hash(X)
 
 
 def test_bootstrap_samples():
     # Test that bootstrapping samples generate non-perfect base estimators.
     rng = check_random_state(0)
-    X_train, X_test, y_train, y_test = train_test_split(boston.data,
-                                                        boston.target,
+    X_train, X_test, y_train, y_test = train_test_split(diabetes.data,
+                                                        diabetes.target,
                                                         random_state=rng)
 
     base_estimator = DecisionTreeRegressor().fit(X_train, y_train)
@@ -244,7 +248,7 @@ def test_bootstrap_samples():
                                 bootstrap=False,
                                 random_state=rng).fit(X_train, y_train)
 
-    assert_equal(base_estimator.score(X_train, y_train),
+    assert (base_estimator.score(X_train, y_train) ==
                  ensemble.score(X_train, y_train))
 
     # with bootstrap, trees are no longer perfect on the training set
@@ -253,7 +257,7 @@ def test_bootstrap_samples():
                                 bootstrap=True,
                                 random_state=rng).fit(X_train, y_train)
 
-    assert_greater(base_estimator.score(X_train, y_train),
+    assert (base_estimator.score(X_train, y_train) >
                    ensemble.score(X_train, y_train))
 
     # check that each sampling correspond to a complete bootstrap resample.
@@ -271,8 +275,8 @@ def test_bootstrap_samples():
 def test_bootstrap_features():
     # Test that bootstrapping features may generate duplicate features.
     rng = check_random_state(0)
-    X_train, X_test, y_train, y_test = train_test_split(boston.data,
-                                                        boston.target,
+    X_train, X_test, y_train, y_test = train_test_split(diabetes.data,
+                                                        diabetes.target,
                                                         random_state=rng)
 
     ensemble = BaggingRegressor(base_estimator=DecisionTreeRegressor(),
@@ -281,7 +285,7 @@ def test_bootstrap_features():
                                 random_state=rng).fit(X_train, y_train)
 
     for features in ensemble.estimators_features_:
-        assert_equal(boston.data.shape[1], np.unique(features).shape[0])
+        assert diabetes.data.shape[1] == np.unique(features).shape[0]
 
     ensemble = BaggingRegressor(base_estimator=DecisionTreeRegressor(),
                                 max_features=1.0,
@@ -289,11 +293,9 @@ def test_bootstrap_features():
                                 random_state=rng).fit(X_train, y_train)
 
     for features in ensemble.estimators_features_:
-        assert_greater(boston.data.shape[1], np.unique(features).shape[0])
+        assert diabetes.data.shape[1] > np.unique(features).shape[0]
 
 
-@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_probability():
     # Predict probabilities.
     rng = check_random_state(0)
@@ -334,7 +336,7 @@ def test_oob_score_classification():
                                                         iris.target,
                                                         random_state=rng)
 
-    for base_estimator in [DecisionTreeClassifier(), SVC(gamma="scale")]:
+    for base_estimator in [DecisionTreeClassifier(), SVC()]:
         clf = BaggingClassifier(base_estimator=base_estimator,
                                 n_estimators=100,
                                 bootstrap=True,
@@ -343,7 +345,7 @@ def test_oob_score_classification():
 
         test_score = clf.score(X_test, y_test)
 
-        assert_less(abs(test_score - clf.oob_score_), 0.1)
+        assert abs(test_score - clf.oob_score_) < 0.1
 
         # Test with few estimators
         assert_warns(UserWarning,
@@ -360,8 +362,8 @@ def test_oob_score_regression():
     # Check that oob prediction is a good estimation of the generalization
     # error.
     rng = check_random_state(0)
-    X_train, X_test, y_train, y_test = train_test_split(boston.data,
-                                                        boston.target,
+    X_train, X_test, y_train, y_test = train_test_split(diabetes.data,
+                                                        diabetes.target,
                                                         random_state=rng)
 
     clf = BaggingRegressor(base_estimator=DecisionTreeRegressor(),
@@ -372,7 +374,7 @@ def test_oob_score_regression():
 
     test_score = clf.score(X_test, y_test)
 
-    assert_less(abs(test_score - clf.oob_score_), 0.1)
+    assert abs(test_score - clf.oob_score_) < 0.1
 
     # Test with few estimators
     assert_warns(UserWarning,
@@ -388,8 +390,8 @@ def test_oob_score_regression():
 def test_single_estimator():
     # Check singleton ensembles.
     rng = check_random_state(0)
-    X_train, X_test, y_train, y_test = train_test_split(boston.data,
-                                                        boston.target,
+    X_train, X_test, y_train, y_test = train_test_split(diabetes.data,
+                                                        diabetes.target,
                                                         random_state=rng)
 
     clf1 = BaggingRegressor(base_estimator=KNeighborsRegressor(),
@@ -464,8 +466,7 @@ def test_parallel_classification():
     assert_array_almost_equal(y1, y3)
 
     # decision_function
-    ensemble = BaggingClassifier(SVC(gamma='scale',
-                                     decision_function_shape='ovr'),
+    ensemble = BaggingClassifier(SVC(decision_function_shape='ovr'),
                                  n_jobs=3,
                                  random_state=0).fit(X_train, y_train)
 
@@ -482,8 +483,7 @@ def test_parallel_classification():
                          "".format(X_test.shape[1], X_err.shape[1]),
                          ensemble.decision_function, X_err)
 
-    ensemble = BaggingClassifier(SVC(gamma='scale',
-                                     decision_function_shape='ovr'),
+    ensemble = BaggingClassifier(SVC(decision_function_shape='ovr'),
                                  n_jobs=1,
                                  random_state=0).fit(X_train, y_train)
 
@@ -495,8 +495,8 @@ def test_parallel_regression():
     # Check parallel regression.
     rng = check_random_state(0)
 
-    X_train, X_test, y_train, y_test = train_test_split(boston.data,
-                                                        boston.target,
+    X_train, X_test, y_train, y_test = train_test_split(diabetes.data,
+                                                        diabetes.target,
                                                         random_state=rng)
 
     ensemble = BaggingRegressor(DecisionTreeRegressor(),
@@ -517,8 +517,6 @@ def test_parallel_regression():
     assert_array_almost_equal(y1, y3)
 
 
-@pytest.mark.filterwarnings('ignore: The default of the `iid`')  # 0.22
-@pytest.mark.filterwarnings('ignore: You should specify a value')  # 0.22
 def test_gridsearch():
     # Check that bagging ensembles can be grid-searched.
     # Transform iris into a binary classification task
@@ -529,7 +527,7 @@ def test_gridsearch():
     parameters = {'n_estimators': (1, 2),
                   'base_estimator__C': (1, 2)}
 
-    GridSearchCV(BaggingClassifier(SVC(gamma="scale")),
+    GridSearchCV(BaggingClassifier(SVC()),
                  parameters,
                  scoring="roc_auc").fit(X, y)
 
@@ -555,15 +553,15 @@ def test_base_estimator():
 
     assert isinstance(ensemble.base_estimator_, DecisionTreeClassifier)
 
-    ensemble = BaggingClassifier(Perceptron(tol=1e-3),
+    ensemble = BaggingClassifier(Perceptron(),
                                  n_jobs=3,
                                  random_state=0).fit(X_train, y_train)
 
     assert isinstance(ensemble.base_estimator_, Perceptron)
 
     # Regression
-    X_train, X_test, y_train, y_test = train_test_split(boston.data,
-                                                        boston.target,
+    X_train, X_test, y_train, y_test = train_test_split(diabetes.data,
+                                                        diabetes.target,
                                                         random_state=rng)
 
     ensemble = BaggingRegressor(None,
@@ -578,7 +576,7 @@ def test_base_estimator():
 
     assert isinstance(ensemble.base_estimator_, DecisionTreeRegressor)
 
-    ensemble = BaggingRegressor(SVR(gamma='scale'),
+    ensemble = BaggingRegressor(SVR(),
                                 n_jobs=3,
                                 random_state=0).fit(X_train, y_train)
     assert isinstance(ensemble.base_estimator_, SVR)
@@ -625,13 +623,13 @@ def test_warm_start(random_state=42):
         else:
             clf_ws.set_params(n_estimators=n_estimators)
         clf_ws.fit(X, y)
-        assert_equal(len(clf_ws), n_estimators)
+        assert len(clf_ws) == n_estimators
 
     clf_no_ws = BaggingClassifier(n_estimators=10, random_state=random_state,
                                   warm_start=False)
     clf_no_ws.fit(X, y)
 
-    assert_equal(set([tree.random_state for tree in clf_ws]),
+    assert (set([tree.random_state for tree in clf_ws]) ==
                  set([tree.random_state for tree in clf_no_ws]))
 
 
@@ -709,11 +707,9 @@ def test_oob_score_consistency():
     bagging = BaggingClassifier(KNeighborsClassifier(), max_samples=0.5,
                                 max_features=0.5, oob_score=True,
                                 random_state=1)
-    assert_equal(bagging.fit(X, y).oob_score_, bagging.fit(X, y).oob_score_)
+    assert bagging.fit(X, y).oob_score_ == bagging.fit(X, y).oob_score_
 
 
-@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_estimators_samples():
     # Check that format of estimators_samples_ is correct and that results
     # generated at fit time can be identically reproduced at a later time
@@ -730,9 +726,9 @@ def test_estimators_samples():
     estimators = bagging.estimators_
 
     # Test for correct formatting
-    assert_equal(len(estimators_samples), len(estimators))
-    assert_equal(len(estimators_samples[0]), len(X) // 2)
-    assert_equal(estimators_samples[0].dtype.kind, 'i')
+    assert len(estimators_samples) == len(estimators)
+    assert len(estimators_samples[0]) == len(X) // 2
+    assert estimators_samples[0].dtype.kind == 'i'
 
     # Re-fit single estimator to test for consistent sampling
     estimator_index = 0
@@ -750,8 +746,6 @@ def test_estimators_samples():
     assert_array_almost_equal(orig_coefs, new_coefs)
 
 
-@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_estimators_samples_deterministic():
     # This test is a regression test to check that with a random step
     # (e.g. SparseRandomProjection) and a given random state, the results
@@ -789,7 +783,7 @@ def test_max_samples_consistency():
                                 max_samples=max_samples,
                                 max_features=0.5, random_state=1)
     bagging.fit(X, y)
-    assert_equal(bagging._max_samples, max_samples)
+    assert bagging._max_samples == max_samples
 
 
 def test_set_oob_score_label_encoding():
@@ -806,11 +800,11 @@ def test_set_oob_score_label_encoding():
                            random_state=random_state).fit(X, Y2).oob_score_
     x3 = BaggingClassifier(oob_score=True,
                            random_state=random_state).fit(X, Y3).oob_score_
-    assert_equal([x1, x2], [x3, x3])
+    assert [x1, x2] == [x3, x3]
 
 
 def replace(X):
-    X = X.copy().astype('float')
+    X = X.astype('float', copy=True)
     X[~np.isfinite(X)] = 0
     return X
 
@@ -837,13 +831,12 @@ def test_bagging_regressor_with_missing_inputs():
     for y in y_values:
         regressor = DecisionTreeRegressor()
         pipeline = make_pipeline(
-            FunctionTransformer(replace, validate=False),
-            regressor
+            FunctionTransformer(replace), regressor
         )
         pipeline.fit(X, y).predict(X)
         bagging_regressor = BaggingRegressor(pipeline)
         y_hat = bagging_regressor.fit(X, y).predict(X)
-        assert_equal(y.shape, y_hat.shape)
+        assert y.shape == y_hat.shape
 
         # Verify that exceptions can be raised by wrapper regressor
         regressor = DecisionTreeRegressor()
@@ -865,14 +858,13 @@ def test_bagging_classifier_with_missing_inputs():
     y = np.array([3, 6, 6, 6, 6])
     classifier = DecisionTreeClassifier()
     pipeline = make_pipeline(
-        FunctionTransformer(replace, validate=False),
-        classifier
+        FunctionTransformer(replace), classifier
     )
     pipeline.fit(X, y).predict(X)
     bagging_classifier = BaggingClassifier(pipeline)
     bagging_classifier.fit(X, y)
     y_hat = bagging_classifier.predict(X)
-    assert_equal(y.shape, y_hat.shape)
+    assert y.shape == y_hat.shape
     bagging_classifier.predict_log_proba(X)
     bagging_classifier.predict_proba(X)
 
@@ -884,8 +876,6 @@ def test_bagging_classifier_with_missing_inputs():
     assert_raises(ValueError, bagging_classifier.fit, X, y)
 
 
-@pytest.mark.filterwarnings('ignore: Default solver will be changed')  # 0.22
-@pytest.mark.filterwarnings('ignore: Default multi_class will')  # 0.22
 def test_bagging_small_max_features():
     # Check that Bagging estimator can accept low fractional max_features
 
@@ -895,3 +885,25 @@ def test_bagging_small_max_features():
     bagging = BaggingClassifier(LogisticRegression(),
                                 max_features=0.3, random_state=1)
     bagging.fit(X, y)
+
+
+def test_bagging_get_estimators_indices():
+    # Check that Bagging estimator can generate sample indices properly
+    # Non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/16436
+
+    rng = np.random.RandomState(0)
+    X = rng.randn(13, 4)
+    y = np.arange(13)
+
+    class MyEstimator(DecisionTreeRegressor):
+        """An estimator which stores y indices information at fit."""
+        def fit(self, X, y):
+            self._sample_indices = y
+
+    clf = BaggingRegressor(base_estimator=MyEstimator(),
+                           n_estimators=1, random_state=0)
+    clf.fit(X, y)
+
+    assert_array_equal(clf.estimators_[0]._sample_indices,
+                       clf.estimators_samples_[0])

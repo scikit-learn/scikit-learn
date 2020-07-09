@@ -60,13 +60,8 @@ a linear algorithm, for example a linear SVM::
     >>> rbf_feature = RBFSampler(gamma=1, random_state=1)
     >>> X_features = rbf_feature.fit_transform(X)
     >>> clf = SGDClassifier(max_iter=5)
-    >>> clf.fit(X_features, y)   # doctest: +NORMALIZE_WHITESPACE
-    SGDClassifier(alpha=0.0001, average=False, class_weight=None,
-           early_stopping=False, epsilon=0.1, eta0=0.0, fit_intercept=True,
-           l1_ratio=0.15, learning_rate='optimal', loss='hinge', max_iter=5,
-           n_iter=None, n_iter_no_change=5, n_jobs=None, penalty='l2',
-           power_t=0.5, random_state=None, shuffle=True, tol=None,
-           validation_fraction=0.1, verbose=0, warm_start=False)
+    >>> clf.fit(X_features, y)
+    SGDClassifier(max_iter=5)
     >>> clf.score(X_features, y)
     1.0
 
@@ -89,8 +84,8 @@ For a given value of ``n_components`` :class:`RBFSampler` is often less accurate
 as :class:`Nystroem`. :class:`RBFSampler` is cheaper to compute, though, making
 use of larger feature spaces more efficient.
 
-.. figure:: ../auto_examples/images/sphx_glr_plot_kernel_approximation_002.png
-    :target: ../auto_examples/plot_kernel_approximation.html
+.. figure:: ../auto_examples/miscellaneous/images/sphx_glr_plot_kernel_approximation_002.png
+    :target: ../auto_examples/miscellaneous/plot_kernel_approximation.html
     :scale: 50%
     :align: center
 
@@ -98,7 +93,7 @@ use of larger feature spaces more efficient.
 
 .. topic:: Examples:
 
-    * :ref:`sphx_glr_auto_examples_plot_kernel_approximation.py`
+    * :ref:`sphx_glr_auto_examples_miscellaneous_plot_kernel_approximation.py`
 
 .. _additive_chi_kernel_approx:
 

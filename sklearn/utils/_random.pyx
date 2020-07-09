@@ -11,17 +11,17 @@ This module complements missing features of ``numpy.random``.
 
 The module contains:
     * Several algorithms to sample integers without replacement.
-
+    * Fast rand_r alternative based on xor shifts
 """
-from __future__ import division
-
 cimport cython
 
 import numpy as np
 cimport numpy as np
 np.import_array()
 
-from sklearn.utils import check_random_state
+from . import check_random_state
+
+cdef UINT32_t DEFAULT_SEED = 1
 
 
 cpdef _sample_without_replacement_check_input(np.int_t n_population,
@@ -83,8 +83,7 @@ cpdef _sample_without_replacement_with_tracking_selection(
 
     cdef np.int_t i
     cdef np.int_t j
-    cdef np.ndarray[np.int_t, ndim=1] out = np.empty((n_samples, ),
-                                                     dtype=np.int)
+    cdef np.ndarray[np.int_t, ndim=1] out = np.empty((n_samples, ), dtype=int)
 
     rng = check_random_state(random_state)
     rng_randint = rng.randint
@@ -139,11 +138,10 @@ cpdef _sample_without_replacement_with_pool(np.int_t n_population,
 
     cdef np.int_t i
     cdef np.int_t j
-    cdef np.ndarray[np.int_t, ndim=1] out = np.empty((n_samples, ),
-                                                     dtype=np.int)
+    cdef np.ndarray[np.int_t, ndim=1] out = np.empty((n_samples, ), dtype=int)
 
     cdef np.ndarray[np.int_t, ndim=1] pool = np.empty((n_population, ),
-                                                      dtype=np.int)
+                                                      dtype=int)
 
     rng = check_random_state(random_state)
     rng_randint = rng.randint
@@ -202,8 +200,7 @@ cpdef _sample_without_replacement_with_reservoir_sampling(
 
     cdef np.int_t i
     cdef np.int_t j
-    cdef np.ndarray[np.int_t, ndim=1] out = np.empty((n_samples, ),
-                                                     dtype=np.int)
+    cdef np.ndarray[np.int_t, ndim=1] out = np.empty((n_samples, ), dtype=int)
 
     rng = check_random_state(random_state)
     rng_randint = rng.randint
@@ -310,3 +307,9 @@ cpdef sample_without_replacement(np.int_t n_population,
     else:
         raise ValueError('Expected a method name in %s, got %s. '
                          % (all_methods, method))
+
+
+def _our_rand_r_py(seed):
+    """Python utils to test the our_rand_r function"""
+    cdef UINT32_t my_seed = seed
+    return our_rand_r(&my_seed)

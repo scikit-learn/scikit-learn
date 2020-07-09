@@ -2,9 +2,6 @@
 Benchmarks for sampling without replacement of integer.
 
 """
-from __future__ import division
-from __future__ import print_function
-
 import gc
 import sys
 import optparse
@@ -133,16 +130,16 @@ if __name__ == "__main__":
 
     ###########################################################################
     # Remove unspecified algorithm
-    sampling_algorithm = dict((key, value)
-                              for key, value in sampling_algorithm.items()
-                              if key in selected_algorithm)
+    sampling_algorithm = {key: value
+                          for key, value in sampling_algorithm.items()
+                          if key in selected_algorithm}
 
     ###########################################################################
     # Perform benchmark
     ###########################################################################
     time = {}
     n_samples = np.linspace(start=0, stop=opts.n_population,
-        num=opts.n_steps).astype(np.int)
+                            num=opts.n_steps).astype(int)
 
     ratio = n_samples / opts.n_population
 

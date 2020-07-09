@@ -1,12 +1,12 @@
 from sklearn.utils.metaestimators import if_delegate_has_method
 
 
-class Prefix(object):
+class Prefix:
     def func(self):
         pass
 
 
-class MockMetaEstimator(object):
+class MockMetaEstimator:
     """This is a mock meta estimator"""
     a_prefix = Prefix()
 
@@ -25,7 +25,7 @@ def test_delegated_docstring():
            in str(MockMetaEstimator().func.__doc__)
 
 
-class MetaEst(object):
+class MetaEst:
     """A mock meta estimator"""
     def __init__(self, sub_est, better_sub_est=None):
         self.sub_est = sub_est
@@ -52,14 +52,14 @@ class MetaEstTestList(MetaEst):
         pass
 
 
-class HasPredict(object):
+class HasPredict:
     """A mock sub-estimator with predict method"""
 
     def predict(self):
         pass
 
 
-class HasNoPredict(object):
+class HasNoPredict:
     """A mock sub-estimator with no predict method"""
     pass
 
