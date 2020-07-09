@@ -288,7 +288,7 @@ def test_all_init(Estimator, data, init):
     # Check KMeans and MiniBatchKMeans with all possible init.
     n_init = 10 if type(init) is str else 1
     km = Estimator(init=init, n_clusters=n_clusters, random_state=42,
-                   n_init=n_init)
+                   n_init=n_init).fit(data)
     _check_fitted_model(km)
 
 
