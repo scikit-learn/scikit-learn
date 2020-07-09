@@ -225,8 +225,12 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
             self.classes_ = self.base_estimator.classes_
             label_encoder_ = LabelEncoder().fit(self.classes_)
 
+            preds = _get_predictions(
+                base_estimator, X, label_encoder_
+            )
+
             calibrated_classifier = _fit_calibrator(
-                base_estimator, label_encoder_, self.method, X, y,
+                base_estimator, preds, y, label_encoder_, self.method,
                 sample_weight
             )
             self.calibrated_classifiers_.append(calibrated_classifier)
@@ -236,9 +240,8 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
                 force_all_finite=False, allow_nd=True
             )
             # Set attributes using all `y`
-            le = LabelEncoder().fit(y)
-            self.classes_ = le.classes_
-            label_encoder_ = le
+            label_encoder_ = LabelEncoder().fit(y)
+            self.classes_ = label_encoder_.classes_
 
             fit_parameters = signature(base_estimator.fit).parameters
             base_estimator_supports_sw = "sample_weight" in fit_parameters
@@ -278,38 +281,34 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
                     else:
                         this_estimator.fit(X[train], y[train])
 
+                    preds = _get_predictions(
+                        this_estimator, X[test], label_encoder_
+                    )
+
                     sw = None if sample_weight is None else sample_weight[test]
                     calibrated_classifier = _fit_calibrator(
-                        this_estimator, self.label_encoder_, self.method,
-                        y=y[test], X=X[test], sample_weight=sw
+                        this_estimator, preds, y[test], label_encoder_,
+                        self.method, sample_weight=sw
                     )
                     self.calibrated_classifiers_.append(calibrated_classifier)
             else:
-                if hasattr(base_estimator, "decision_function"):
-                    base_estimator_method = "decision_function"
-                elif hasattr(base_estimator, "predict_proba"):
-                    base_estimator_method = "predict_proba"
-                else:
-                    raise RuntimeError("'base_estimator' as no "
-                                       "'decision_function' or 'predict_proba'"
-                                       " method.")
+                pred_method = get_prediction_method(
+                    base_estimator, return_string=True
+                )
                 preds = cross_val_predict(base_estimator, X, y, cv=cv,
-                                          method=base_estimator_method)
-                if base_estimator_method == "decision_function":
-                    if preds.ndim == 1:
-                        preds = preds[:, np.newaxis]
-                else:
-                    if len(self.label_encoder_.classes_) == 2:
-                        preds = preds[:, 1]
+                                          method=pred_method)
+                preds = _reshape_preds(
+                    preds, pred_method, len(label_encoder_.classes_)
+                )
 
                 this_estimator = clone(base_estimator)
                 if sample_weight is not None and base_estimator_supports_sw:
-                    this_estimator.fit(X, y, sample_weight=sample_weight)
+                    this_estimator.fit(X, y, sample_weight)
                 else:
                     this_estimator.fit(X, y)
                 calibrated_classifier = _fit_calibrator(
-                    this_estimator, label_encoder_, self.method,
-                    X[test], y[test], sw
+                    this_estimator, preds, y, label_encoder_,self.method,
+                    sample_weight
                 )
                 self.calibrated_classifiers_.append(calibrated_classifier)
         return self
@@ -371,20 +370,83 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
         }
 
 
-def _get_predictions(clf_fitted, X, label_encoder_):
-    """Returns predictions for `X` and the index of classes present in
-    `clf_fitted`.
+def get_prediction_method(clf_fitted, return_string=False):
+    """Return prediction method or their corresponding name as string.
 
-    For predictions, `decision_function` method of the `clf_fitted` is used.
-    If this does not exist, `predict_proba` method used.
+    `decision_function` method of `clf_fitted` returned, if it
+    exists, otherwise `predict_proba` method returned.
 
     Parameters
     ----------
     clf_fitted : Estimator instance
-        Fitted classifier instance.
+        Classifier to obtain the prediction method from.
+
+    return_string : bool, default=False
+        Whether to return the method name as string instead of the prediction
+        method.
+
+    Returns
+    -------
+    prediction_method : callable or str
+        If `return_string=True`, name of the prediction method as string.
+        If `return_string=False`, the prediction method.
+    """
+    if hasattr(clf_fitted, "decision_function"):
+        method_name = "decision_function"
+        method = getattr(clf_fitted, "decision_function")
+    elif hasattr(clf_fitted, "predict_proba"):
+        method_name = "predict_proba"
+        method = getattr(clf_fitted, "predict_proba")
+    else:
+        raise RuntimeError("'base_estimator' has no 'decision_function' or "
+                           "'predict_proba' method.")
+    if return_string:
+        return method_name
+    else:
+        return method
+
+
+def _reshape_preds(preds, method, n_classes):
+    """Reshape predictions when classification binary.
+
+    Parameters
+    ----------
+    preds : array-like
+        Predictions.
+
+    method : {'decision_function', 'predict_proba'}
+        Method used to obtain the predictions.
+
+    n_classes : int
+        Number of classes.
+
+    Returns
+    -------
+    preds : array-like, shape (n_samples, 1)
+        Reshaped predictions
+    """
+    if method == 'decision_function':
+        if preds.ndim == 1:
+            preds = preds[:, np.newaxis]
+    elif method == 'predict_proba':
+        if n_classes == 2:
+            preds = preds[:, 1:]
+    else:
+        raise RuntimeError("'method' needs to be one of 'decision_function' "
+                           "or 'predict_proba'.")
+    return preds
+
+
+def _get_predictions(clf_fitted, X, label_encoder_):
+    """Returns predictions for `X` and the index of classes present.
+
+    Parameters
+    ----------
+    clf_fitted : Estimator instance
+        Fitted classifier.
 
     X : array-like
-        Sample data used for the predictions.
+        Data used to obtain predictions.
 
     label_encoder_ : LabelEncoder instance
         LabelEncoder instance fitted on all the targets.
@@ -392,64 +454,42 @@ def _get_predictions(clf_fitted, X, label_encoder_):
     Returns
     -------
     preds : array-like, shape (X.shape[0], len(clf_fitted.classes_))
-        The predictions. Note array is of shape (X.shape[0], 1) when there are
-        2 classes.
-
-    pos_class_indices : array-like, shape (n_classes,)
-        Indices of the classes present in `X`.
+        The predictions. Note if there are 2 classes, array is of shape
+        (X.shape[0], 1).
     """
-    if hasattr(clf_fitted, "decision_function"):
-        preds = clf_fitted.decision_function(X)
-        if preds.ndim == 1:
-            preds = preds[:, np.newaxis]
-    elif hasattr(clf_fitted, "predict_proba"):
-        preds = clf_fitted.predict_proba(X)
-        if len(label_encoder_.classes_) == 2:
-            preds = preds[:, 1]
-    else:
-        raise RuntimeError("'base_estimator' has no 'decision_function' or "
-                           "'predict_proba' method.")
+    pred_method = get_prediction_method(clf_fitted)
+    preds = pred_method(X)
+    n_classes = len(clf_fitted.classes_)
+    preds = _reshape_preds(preds, pred_method.__name__, n_classes)
 
-    pos_class_indices = label_encoder_.transform(clf_fitted.classes_)
-
-    return preds, pos_class_indices
+    return preds
 
 
-def _fit_calibrator(clf_fitted, label_encoder_, method, y, X=None, preds=None,
+def _fit_calibrator(clf_fitted, preds, y, label_encoder_, method,
                     sample_weight=None):
     """Fit calibrator(s) and return a `_CalibratedClassiferPipeline`
     instance.
 
-    If `X` is not None, it is used to obtain predictions, used for calibration.
-    The `decision_function` method of `clf_fitted` is used if present. If not,
-    `predict_proba` method is used. If `preds` is not None, it is used for
-    calibration. Only one of `X` or `preds` should be not None.
-
-    `n_classes` calibrators are fitted. However, if `n_classes` equals 2,
-    one calibrator is fit.
+    `n_classes` (i.e. `len(clf_fitted.classes_)`) calibrators are fitted.
+    However, if `n_classes` equals 2, one calibrator is fit.
 
     Parameters
     ----------
     clf_fitted : Estimator instance
         Fitted classifier.
 
+    preds :  array-like, shape (n_samples, n_classes)
+        Predictions for calibrating the predictions.
+        If binary, shape (n_samples, 1).
+
+    y : ndarray, shape (n_samples,)
+        The targets.
+
     label_encoder_ : LabelEncoder instance
         LabelEncoder instance fitted on all the targets.
 
     method : {'sigmoid', 'isotonic'}
         The method to use for calibration.
-
-    y : ndarray, shape (n_samples,)
-        The targets.
-
-    X : array-like, shape (n_samples, n_features), default=None
-        Sample data used to calibrate predictions. If None, use `preds`
-        instead.
-
-    preds :  array-like, shape (n_samples, n_classes), default=None
-        The predictions, output from `base_estimator`, used to calibrate
-        predictions. If None, use `X` instead.
-        If binary (i.e., `label_encoder_.classes_` = 2), shape (n_samples, 1)
 
     sample_weight : ndarray, shape (n_samples,), default=None
         Sample weights. If None, then samples are equally weighted.
@@ -459,14 +499,7 @@ def _fit_calibrator(clf_fitted, label_encoder_, method, y, X=None, preds=None,
     pipeline : _CalibratedClassiferPipeline instance
     """
     Y = label_binarize(y, classes=label_encoder_.classes_)
-    if X is not None:
-        preds, pos_class_indices = _get_predictions(clf_fitted, X,
-                                                    label_encoder_)
-    elif preds is not None:
-        pos_class_indices = label_encoder_.transform(clf_fitted.classes_)
-    else:
-        raise ValueError("One of `X` or `preds` should be not None.")
-
+    pos_class_indices = label_encoder_.transform(clf_fitted.classes_)
     calibrated_classifiers = []
     for class_idx, this_pred in zip(pos_class_indices, preds.T):
         if method == 'isotonic':
@@ -520,11 +553,12 @@ class _CalibratedClassiferPipeline:
         proba : array, shape (n_samples, n_classes)
             The predicted probabilities. Can be exact zeros.
         """
-        n_classes = len(self.label_encoder_.classes_)
-        preds, pos_class_indices = _get_predictions(
-            self.clf_fitted, X, self.label_encoder_
+        preds = _get_predictions(self.clf_fitted, X, self.label_encoder_)
+        pos_class_indices = self.label_encoder_.transform(
+            self.clf_fitted.classes_
         )
 
+        n_classes = len(self.label_encoder_.classes_)
         proba = np.zeros((X.shape[0], n_classes))
         for class_idx, this_pred, calibrator in \
                 zip(pos_class_indices, preds.T, self.calibrators_fitted):
