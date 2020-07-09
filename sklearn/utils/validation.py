@@ -43,11 +43,11 @@ def _deprecate_positional_args(f):
     f : function
         function to check arguments on
     """
-    parameters = signature(f).parameters
+    sig = signature(f)
     kwonly_args = []
     all_args = []
 
-    for name, param in parameters.items():
+    for name, param in sig.parameters.items():
         if param.kind == Parameter.POSITIONAL_OR_KEYWORD:
             all_args.append(name)
         elif param.kind == Parameter.KEYWORD_ONLY:
