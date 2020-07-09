@@ -289,19 +289,19 @@ def _insert_error_scores(results, error_score):
 
     This only applies to dictionaries scores because `_fit_and_score` will
     handle the single metric case."""
-    successful_score = None
+    score_names = None
     failed_indices = []
     for i, result in enumerate(results):
         if result["fit_failed"]:
             failed_indices.append(i)
-        elif successful_score is None:
-            successful_score = result["test_scores"]
+        elif score_names is None:
+            score_names = result["test_scores"].keys()
 
-    if successful_score is None:
+    if score_names is None:
         raise NotFittedError("All estimators failed to fit")
 
-    if isinstance(successful_score, dict):
-        formatted_error = {name: error_score for name in successful_score}
+    if isinstance(score_names, dict):
+        formatted_error = {name: error_score for name in score_names}
         for i in failed_indices:
             results[i]["test_scores"] = formatted_error.copy()
             if "train_scores" in results[i]:
