@@ -314,7 +314,7 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
     amount of resources and iteratively selects the best candidates, using
     more and more resources.
 
-    Read more in the :ref:`User guide<successive_halving_user_guide>`.
+    Read more in the :ref:`User guide <successive_halving_user_guide>`.
 
     Parameters
     ----------
@@ -400,8 +400,8 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
         yield the best generalization performance.
 
     max_resources : int, default='auto'
-        The maximum number of resources that any candidate is allowed to use
-        for a given iteration. By default, this is set ``n_samples`` when
+        The maximum amount of resource that any candidate is allowed to use
+        for a given iteration. By default, this is set to ``n_samples`` when
         ``resource='n_samples'`` (default), else an error is raised.
 
     min_resources : int, default='auto'
@@ -416,7 +416,7 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
           problem
         - ``n_classes * n_splits * 2`` when ``resource='n_samples'`` for a
           regression problem
-        - ``1`` when ``resource!='n_samples'``
+        - ``1`` when ``resource != 'n_samples'``
 
         Note that the amount of resources used at each iteration is always a
         multiple of ``min_resources``.
@@ -450,7 +450,7 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
         than ``max_resources`` that is a multiple of both ``min_resources``
         and ``ratio``. When False, the last iteration may not exhaust the
         total number of resources, since the first iteration will rely on the
-        value passed as the `min_resource` parameter. In general,
+        value passed as the `min_resources` parameter. In general,
         `force_exhaust_resources=True` leads to a more accurate estimator,
         but is slightly more time consuming.
 
