@@ -284,10 +284,10 @@ def test_fortran_aligned_data(Estimator):
     assert_array_equal(km_c.labels_, km_f.labels_)
 
 
-@pytest.mark.parametrize("estimator", [KMeans, MiniBatchKMeans])
-def test_verbose(estimator):
+@pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
+def test_verbose(Estimator):
     # Check verbose mode of KMeans and MiniBatchKMeans for better coverage.
-    km = estimator(n_clusters=n_clusters, random_state=42, verbose=1)
+    km = Estimator(n_clusters=n_clusters, random_state=42, verbose=1)
     old_stdout = sys.stdout
     sys.stdout = StringIO()
     try:
@@ -401,15 +401,15 @@ def test_kmeans_copyx():
     assert_allclose(my_X, X)
 
 
-@pytest.mark.parametrize("estimator", [KMeans, MiniBatchKMeans])
-def test_score_max_iter(estimator):
+@pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
+def test_score_max_iter(Estimator):
     # Check that fitting KMeans or MiniBatchKMeans with more iterations gives
     # better score
     X = np.random.RandomState(0).randn(100, 10)
 
-    km1 = estimator(n_init=1, random_state=42, max_iter=1)
+    km1 = Estimator(n_init=1, random_state=42, max_iter=1)
     s1 = km1.fit(X).score(X)
-    km2 = estimator(n_init=1, random_state=42, max_iter=10)
+    km2 = Estimator(n_init=1, random_state=42, max_iter=10)
     s2 = km2.fit(X).score(X)
     assert s2 > s1
 
@@ -418,8 +418,8 @@ def test_score_max_iter(estimator):
                          ids=["dense", "sparse"])
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
 @pytest.mark.parametrize("init", ["random", "k-means++", "ndarray"])
-@pytest.mark.parametrize("estimator", [KMeans, MiniBatchKMeans])
-def test_predict(estimator, init, dtype, array_constr):
+@pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
+def test_predict(Estimator, init, dtype, array_constr):
     # Check the predict method and the equivalence between fit.predict and
     # fit_predict.
     if sys.platform == "darwin":
@@ -433,7 +433,7 @@ def test_predict(estimator, init, dtype, array_constr):
     init = X[:10] if init == "ndarray" else init
     X = array_constr(X)
 
-    km = estimator(n_clusters=10, init=init, n_init=n_init,
+    km = Estimator(n_clusters=10, init=init, n_init=n_init,
                    random_state=0).fit(X)
     labels = km.labels_
 
@@ -456,18 +456,18 @@ def test_predict(estimator, init, dtype, array_constr):
     assert_allclose(v_measure_score(pred, np.arange(10)), 1)
 
 
-@pytest.mark.parametrize("estimator", [KMeans, MiniBatchKMeans])
-def test_result_equal_in_diff_n_threads(estimator):
+@pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
+def test_result_equal_in_diff_n_threads(Estimator):
     # Check that KMeans/MiniBatchKMeans give the same results in parallel mode
     # than in sequential mode.
     rnd = np.random.RandomState(0)
     X = rnd.normal(size=(50, 10))
 
     with threadpool_limits(limits=1, user_api="openmp"):
-        result_1 = estimator(
+        result_1 = Estimator(
             n_clusters=n_clusters, random_state=0).fit(X).labels_
     with threadpool_limits(limits=2, user_api="openmp"):
-        result_2 = estimator(
+        result_2 = Estimator(
             n_clusters=n_clusters, random_state=0).fit(X).labels_
     assert_array_equal(result_1, result_2)
 
@@ -476,13 +476,13 @@ def _sort_centers(centers):
     return np.sort(centers, axis=0)
 
 
-@pytest.mark.parametrize("estimator", [KMeans, MiniBatchKMeans])
-def test_dense_sparse(estimator):
+@pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
+def test_dense_sparse(Estimator):
     # Check that the results are the same for dense and sparse input.
     sample_weight = np.random.RandomState(0).random_sample((n_samples,))
-    km_dense = estimator(n_clusters=n_clusters, random_state=0, n_init=1)
+    km_dense = Estimator(n_clusters=n_clusters, random_state=0, n_init=1)
     km_dense.fit(X, sample_weight=sample_weight)
-    km_sparse = estimator(n_clusters=n_clusters, random_state=0, n_init=1)
+    km_sparse = Estimator(n_clusters=n_clusters, random_state=0, n_init=1)
     km_sparse.fit(X_csr, sample_weight=sample_weight)
 
     assert_array_equal(km_dense.labels_, km_sparse.labels_)
@@ -526,15 +526,15 @@ def test_float_precision(Estimator, data):
 
 
 @pytest.mark.parametrize("dtype", [np.int32, np.int64, np.float32, np.float64])
-@pytest.mark.parametrize("estimator", [KMeans, MiniBatchKMeans])
-def test_centers_not_mutated(estimator, dtype):
+@pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
+def test_centers_not_mutated(Estimator, dtype):
     # Check that KMeans and MiniBatchKMeans won't mutate the user provided
     # init centers silently even if input data and init centers have the same
     # type.
     X_new_type = X.astype(dtype, copy=True)
     centers_new_type = centers.astype(dtype, copy=True)
 
-    km = estimator(init=centers_new_type, n_clusters=n_clusters, n_init=1)
+    km = Estimator(init=centers_new_type, n_clusters=n_clusters, n_init=1)
     km.fit(X_new_type)
 
     assert not np.may_share_memory(km.cluster_centers_, centers)
@@ -561,13 +561,13 @@ def test_weighted_vs_repeated():
 
 
 @pytest.mark.parametrize("data", [X, X_csr], ids=["dense", "sparse"])
-@pytest.mark.parametrize("estimator", [KMeans, MiniBatchKMeans])
-def test_unit_weights_vs_no_weights(estimator, data):
+@pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
+def test_unit_weights_vs_no_weights(Estimator, data):
     # Check that not passing sample weights should be equivalent to passing
     # sample weights all equal to one.
     sample_weight = np.ones(n_samples)
 
-    km = estimator(n_clusters=n_clusters, random_state=42, n_init=1)
+    km = Estimator(n_clusters=n_clusters, random_state=42, n_init=1)
     km_none = clone(km).fit(data, sample_weight=None)
     km_ones = clone(km).fit(data, sample_weight=sample_weight)
 
@@ -576,13 +576,13 @@ def test_unit_weights_vs_no_weights(estimator, data):
 
 
 @pytest.mark.parametrize("data", [X, X_csr], ids=["dense", "sparse"])
-@pytest.mark.parametrize("estimator", [KMeans, MiniBatchKMeans])
-def test_scaled_weights(estimator, data):
+@pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
+def test_scaled_weights(Estimator, data):
     # Check that scaling all sample weights by a common factor
     # shouldn't change the result
     sample_weight = np.random.uniform(n_samples)
 
-    km = estimator(n_clusters=n_clusters, random_state=42, n_init=1)
+    km = Estimator(n_clusters=n_clusters, random_state=42, n_init=1)
     km_orig = clone(km).fit(data, sample_weight=sample_weight)
     km_scaled = clone(km).fit(data, sample_weight=0.5 * sample_weight)
 
@@ -594,8 +594,8 @@ def test_scaled_weights(estimator, data):
                          ids=["dense", "sparse"])
 @pytest.mark.parametrize("dtype", [np.int32, np.int64])
 @pytest.mark.parametrize("init", ["k-means++", "ndarray"])
-@pytest.mark.parametrize("estimator", [KMeans, MiniBatchKMeans])
-def test_integer_input(estimator, array_constr, dtype, init):
+@pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
+def test_integer_input(Estimator, array_constr, dtype, init):
     # Check that KMeans and MiniBatchKMeans work with integer input.
     X_dense = np.array([[0, 0], [10, 10], [12, 9], [-1, 1], [2, 0], [8, 10]])
     X = array_constr(X_dense, dtype=dtype)
@@ -603,8 +603,8 @@ def test_integer_input(estimator, array_constr, dtype, init):
     n_init = 1 if init == "ndarray" else 10
     init = X_dense[:2] if init == "ndarray" else init
 
-    km = estimator(n_clusters=2, init=init, n_init=n_init, random_state=0)
-    if estimator is MiniBatchKMeans:
+    km = Estimator(n_clusters=2, init=init, n_init=n_init, random_state=0)
+    if Estimator is MiniBatchKMeans:
         km.set_params(batch_size=2)
 
     km.fit(X)
@@ -616,19 +616,19 @@ def test_integer_input(estimator, array_constr, dtype, init):
     assert_allclose(v_measure_score(km.labels_, expected_labels), 1)
 
     # Same with partial_fit (#14314)
-    if estimator is MiniBatchKMeans:
+    if Estimator is MiniBatchKMeans:
         km = clone(km).partial_fit(X)
         assert km.cluster_centers_.dtype == np.float64
 
 
 @pytest.mark.parametrize("init", ["random", "k-means++", centers],
                          ids=["random", "k-means++", "ndarray"])
-@pytest.mark.parametrize("estimator", [KMeans, MiniBatchKMeans])
-def test_predict_dense_sparse(estimator, init):
+@pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
+def test_predict_dense_sparse(Estimator, init):
     # check that models trained on sparse input also works for dense input at
     # predict time and vice versa.
     n_init = 10 if type(init) is str else 1
-    km = estimator(n_clusters=n_clusters, init=init, n_init=n_init,
+    km = Estimator(n_clusters=n_clusters, init=init, n_init=n_init,
                    random_state=0)
 
     km.fit(X_csr)
@@ -638,10 +638,10 @@ def test_predict_dense_sparse(estimator, init):
     assert_array_equal(km.predict(X_csr), km.labels_)
 
 
-@pytest.mark.parametrize("estimator", [KMeans, MiniBatchKMeans])
-def test_transform(estimator):
+@pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
+def test_transform(Estimator):
     # Check the transform method
-    km = estimator(n_clusters=n_clusters).fit(X)
+    km = Estimator(n_clusters=n_clusters).fit(X)
 
     # Transorfming cluster_centers_ should return the pairwise distances
     # between centers
@@ -656,20 +656,20 @@ def test_transform(estimator):
     assert_allclose(Xt, pairwise_distances(X, km.cluster_centers_))
 
 
-@pytest.mark.parametrize("estimator", [KMeans, MiniBatchKMeans])
-def test_fit_transform(estimator):
+@pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
+def test_fit_transform(Estimator):
     # Check equivalence between fit.transform and fit_transform
-    X1 = estimator(random_state=0, n_init=1).fit(X).transform(X)
-    X2 = estimator(random_state=0, n_init=1).fit_transform(X)
+    X1 = Estimator(random_state=0, n_init=1).fit(X).transform(X)
+    X2 = Estimator(random_state=0, n_init=1).fit_transform(X)
     assert_allclose(X1, X2)
 
 
-@pytest.mark.parametrize("estimator", [KMeans, MiniBatchKMeans])
-def test_sample_weight_unchanged(estimator):
+@pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
+def test_sample_weight_unchanged(Estimator):
     # Check that sample_weight is not modified in place by KMeans (#17204)
     X = np.array([[1], [2], [4]])
     sample_weight = np.array([0.5, 0.2, 0.3])
-    estimator(n_clusters=2, random_state=0).fit(X, sample_weight=sample_weight)
+    Estimator(n_clusters=2, random_state=0).fit(X, sample_weight=sample_weight)
 
     # internally, sample_weight is rescale to sum up to n_samples = 3
     assert_array_equal(sample_weight, np.array([0.5, 0.2, 0.3]))
@@ -850,13 +850,13 @@ def test_minibatch_kmeans_wrong_params(param, match):
         MiniBatchKMeans(**param).fit(X)
 
 
-@pytest.mark.parametrize("estimator", [KMeans, MiniBatchKMeans])
-def test_warnings(estimator):
+@pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
+def test_warnings(Estimator):
     # Check warning messages common to KMeans and MiniBatchKMeans
     with pytest.warns(RuntimeWarning,
                       match="Explicit initial center position passed: "
                             "performing only one init"):
-        estimator(init=centers, n_clusters=n_clusters).fit(X)
+        Estimator(init=centers, n_clusters=n_clusters).fit(X)
 
 
 def test_kmeans_warnings():
