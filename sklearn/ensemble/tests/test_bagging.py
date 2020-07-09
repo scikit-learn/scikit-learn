@@ -4,9 +4,11 @@ Testing for the bagging ensemble module (sklearn.ensemble.bagging).
 
 # Author: Gilles Louppe
 # License: BSD 3 clause
+from itertools import product
 
 import numpy as np
 import joblib
+import pytest
 
 from sklearn.base import BaseEstimator
 
@@ -16,7 +18,6 @@ from sklearn.utils._testing import assert_raises
 from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import assert_warns_message
 from sklearn.utils._testing import assert_raise_message
-from sklearn.utils._testing import ignore_warnings
 
 from sklearn.dummy import DummyClassifier, DummyRegressor
 from sklearn.model_selection import GridSearchCV, ParameterGrid
@@ -31,7 +32,7 @@ from sklearn.feature_selection import SelectKBest
 from sklearn.model_selection import train_test_split
 from sklearn.datasets import load_diabetes, load_iris, make_hastie_10_2
 from sklearn.utils import check_random_state
-from sklearn.preprocessing import FunctionTransformer
+from sklearn.preprocessing import FunctionTransformer, scale
 
 from scipy.sparse import csc_matrix, csr_matrix
 
@@ -52,8 +53,6 @@ diabetes.data = diabetes.data[perm]
 diabetes.target = diabetes.target[perm]
 
 
-# TODO: Remove in 0.24 when DummyClassifier's `strategy` default updates
-@ignore_warnings(category=FutureWarning)
 def test_classification():
     # Check classification for various parameter settings.
     rng = check_random_state(0)
@@ -77,7 +76,32 @@ def test_classification():
                               **params).fit(X_train, y_train).predict(X_test)
 
 
-def test_sparse_classification():
+@pytest.mark.parametrize(
+    'sparse_format, params, method',
+    product(
+        [csc_matrix, csr_matrix],
+        [{
+            "max_samples": 0.5,
+            "max_features": 2,
+            "bootstrap": True,
+            "bootstrap_features": True
+        }, {
+            "max_samples": 1.0,
+            "max_features": 4,
+            "bootstrap": True,
+            "bootstrap_features": True
+        }, {
+            "max_features": 2,
+            "bootstrap": False,
+            "bootstrap_features": True
+        }, {
+            "max_samples": 0.5,
+            "bootstrap": True,
+            "bootstrap_features": False
+        }],
+        ['predict', 'predict_proba',
+         'predict_log_proba', 'decision_function']))
+def test_sparse_classification(sparse_format, params, method):
     # Check classification for various parameter settings on sparse input.
 
     class CustomSVC(SVC):
@@ -89,52 +113,35 @@ def test_sparse_classification():
             return self
 
     rng = check_random_state(0)
-    X_train, X_test, y_train, y_test = train_test_split(iris.data,
+    X_train, X_test, y_train, y_test = train_test_split(scale(iris.data),
                                                         iris.target,
                                                         random_state=rng)
-    parameter_sets = [
-        {"max_samples": 0.5,
-         "max_features": 2,
-         "bootstrap": True,
-         "bootstrap_features": True},
-        {"max_samples": 1.0,
-         "max_features": 4,
-         "bootstrap": True,
-         "bootstrap_features": True},
-        {"max_features": 2,
-         "bootstrap": False,
-         "bootstrap_features": True},
-        {"max_samples": 0.5,
-         "bootstrap": True,
-         "bootstrap_features": False},
-    ]
 
-    for sparse_format in [csc_matrix, csr_matrix]:
-        X_train_sparse = sparse_format(X_train)
-        X_test_sparse = sparse_format(X_test)
-        for params in parameter_sets:
-            for f in ['predict', 'predict_proba', 'predict_log_proba', 'decision_function']:
-                # Trained on sparse format
-                sparse_classifier = BaggingClassifier(
-                    base_estimator=CustomSVC(decision_function_shape='ovr'),
-                    random_state=1,
-                    **params
-                ).fit(X_train_sparse, y_train)
-                sparse_results = getattr(sparse_classifier, f)(X_test_sparse)
+    X_train_sparse = sparse_format(X_train)
+    X_test_sparse = sparse_format(X_test)
+    # Trained on sparse format
+    sparse_classifier = BaggingClassifier(
+        base_estimator=CustomSVC(kernel="linear",
+                                 decision_function_shape='ovr'),
+        random_state=1,
+        **params
+    ).fit(X_train_sparse, y_train)
+    sparse_results = getattr(sparse_classifier, method)(X_test_sparse)
 
-                # Trained on dense format
-                dense_classifier = BaggingClassifier(
-                    base_estimator=CustomSVC(decision_function_shape='ovr'),
-                    random_state=1,
-                    **params
-                ).fit(X_train, y_train)
-                dense_results = getattr(dense_classifier, f)(X_test)
-                assert_array_almost_equal(sparse_results, dense_results)
+    # Trained on dense format
+    dense_classifier = BaggingClassifier(
+        base_estimator=CustomSVC(kernel="linear",
+                                 decision_function_shape='ovr'),
+        random_state=1,
+        **params
+    ).fit(X_train, y_train)
+    dense_results = getattr(dense_classifier, method)(X_test)
+    assert_array_almost_equal(sparse_results, dense_results)
 
-            sparse_type = type(X_train_sparse)
-            types = [i.data_type_ for i in sparse_classifier.estimators_]
+    sparse_type = type(X_train_sparse)
+    types = [i.data_type_ for i in sparse_classifier.estimators_]
 
-            assert all([t == sparse_type for t in types])
+    assert all([t == sparse_type for t in types])
 
 
 def test_regression():

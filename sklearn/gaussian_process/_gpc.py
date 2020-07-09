@@ -548,13 +548,18 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
         estimates.
 
     n_jobs : int, default=None
-        The number of jobs to use for the computation.
+        The number of jobs to use for the computation: the specified
+        multiclass problems are computed in parallel.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
     Attributes
     ----------
+    base_estimator_ : ``Estimator`` instance
+        The estimator instance that defines the likelihood function
+        using the observed data.
+
     kernel_ : kernel instance
         The kernel used for prediction. In case of binary classification,
         the structure of the kernel is the same as the one passed as parameter

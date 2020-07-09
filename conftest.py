@@ -7,20 +7,18 @@
 
 import platform
 import sys
-from distutils.version import LooseVersion
 import os
 
 import pytest
 from _pytest.doctest import DoctestItem
 
-from sklearn import set_config
 from sklearn.utils import _IS_32BIT
 from sklearn.externals import _pilutil
-from sklearn._build_utils.deprecated_modules import _DEPRECATED_MODULES
+from sklearn._build_utils.min_dependencies import PYTEST_MIN_VERSION
+from sklearn.utils.fixes import np_version, parse_version
 
-PYTEST_MIN_VERSION = '3.3.0'
 
-if LooseVersion(pytest.__version__) < PYTEST_MIN_VERSION:
+if parse_version(pytest.__version__) < parse_version(PYTEST_MIN_VERSION):
     raise ImportError('Your version of pytest is too old, you should have '
                       'at least pytest >= {} installed.'
                       .format(PYTEST_MIN_VERSION))
@@ -54,8 +52,7 @@ def pytest_collection_modifyitems(config, items):
     # run doctests only for numpy >= 1.14.
     skip_doctests = False
     try:
-        import numpy as np
-        if LooseVersion(np.__version__) < LooseVersion('1.14'):
+        if np_version < parse_version('1.14'):
             reason = 'doctests are only run for numpy >= 1.14'
             skip_doctests = True
         elif _IS_32BIT:
@@ -97,10 +94,3 @@ def pytest_configure(config):
 def pytest_unconfigure(config):
     import sys
     del sys._is_pytest_session
-
-
-# TODO: Remove when modules are deprecated in 0.24
-# Configures pytest to ignore deprecated modules.
-collect_ignore_glob = [
-    os.path.join(*deprecated_path.split(".")) + ".py"
-    for _, deprecated_path, _, _ in _DEPRECATED_MODULES]

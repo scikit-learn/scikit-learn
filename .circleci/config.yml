@@ -10,16 +10,13 @@ jobs:
       - MINICONDA_PATH: ~/miniconda
       - CONDA_ENV_NAME: testenv
       - PYTHON_VERSION: 3.6
-      - NUMPY_VERSION: 1.13.3
-      - SCIPY_VERSION: 0.19.1
-      - MATPLOTLIB_VERSION: 2.1.1
-      # on conda, this is the latest for python 3.5
-      # The following places need to be in sync with regard to Cython version:
-      # - .circleci config file
-      # - sklearn/_build_utils/__init__.py
-      # - advanced installation guide
-      - CYTHON_VERSION: 0.28.5
-      - SCIKIT_IMAGE_VERSION: 0.13
+      - NUMPY_VERSION: 'min'
+      - SCIPY_VERSION: 'min'
+      - MATPLOTLIB_VERSION: 'min'
+      - CYTHON_VERSION: 'min'
+      - SCIKIT_IMAGE_VERSION: 'min'
+      - SPHINX_VERSION: 'min'
+      - PANDAS_VERSION: 'min'
     steps:
       - checkout
       - run: ./build_tools/circle/checkout_merge_commit.sh
@@ -55,6 +52,13 @@ jobs:
       - MINICONDA_PATH: ~/miniconda
       - CONDA_ENV_NAME: testenv
       - PYTHON_VERSION: 3
+      - NUMPY_VERSION: 'latest'
+      - SCIPY_VERSION: 'latest'
+      - MATPLOTLIB_VERSION: 'latest'
+      - CYTHON_VERSION: 'latest'
+      - SCIKIT_IMAGE_VERSION: 'latest'
+      - SPHINX_VERSION: 'min'
+      - PANDAS_VERSION: 'latest'
     steps:
       - checkout
       - run: ./build_tools/circle/checkout_merge_commit.sh

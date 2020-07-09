@@ -4,7 +4,7 @@ Parameter estimation using grid search with cross-validation
 ============================================================
 
 This examples shows how a classifier is optimized by cross-validation,
-which is done using the :class:`sklearn.model_selection.GridSearchCV` object
+which is done using the :class:`~sklearn.model_selection.GridSearchCV` object
 on a development set that comprises only half of the available labeled data.
 
 The performance of the selected hyper-parameters and trained model is

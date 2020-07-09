@@ -14,7 +14,7 @@ repos:
         # the code is not fully PEP8 compatible
         args: [--select=F401]
 -   repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v0.730
+    rev: v0.780
     hooks:
      -  id: mypy
         args:

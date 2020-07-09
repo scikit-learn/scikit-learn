@@ -90,7 +90,7 @@ class BaseCrossValidator(metaclass=ABCMeta):
         By default, delegates to _iter_test_indices(X, y, groups)
         """
         for test_index in self._iter_test_indices(X, y, groups):
-            test_mask = np.zeros(_num_samples(X), dtype=np.bool)
+            test_mask = np.zeros(_num_samples(X), dtype=bool)
             test_mask[test_index] = True
             yield test_mask
 
@@ -289,12 +289,10 @@ class _BaseKFold(BaseCrossValidator, metaclass=ABCMeta):
                             " got {0}".format(shuffle))
 
         if not shuffle and random_state is not None:  # None is the default
-            # TODO 0.24: raise a ValueError instead of a warning
-            warnings.warn(
+            raise ValueError(
                 'Setting a random_state has no effect since shuffle is '
-                'False. This will raise an error in 0.24. You should leave '
+                'False. You should leave '
                 'random_state to its default (None), or set shuffle=True.',
-                FutureWarning
             )
 
         self.n_splits = n_splits
@@ -440,7 +438,7 @@ class KFold(_BaseKFold):
             check_random_state(self.random_state).shuffle(indices)
 
         n_splits = self.n_splits
-        fold_sizes = np.full(n_splits, n_samples // n_splits, dtype=np.int)
+        fold_sizes = np.full(n_splits, n_samples // n_splits, dtype=int)
         fold_sizes[:n_samples % n_splits] += 1
         current = 0
         for fold_size in fold_sizes:
@@ -1069,7 +1067,7 @@ class LeavePGroupsOut(BaseCrossValidator):
                 "present" % (self.n_groups, unique_groups, self.n_groups + 1))
         combi = combinations(range(len(unique_groups)), self.n_groups)
         for indices in combi:
-            test_index = np.zeros(_num_samples(X), dtype=np.bool)
+            test_index = np.zeros(_num_samples(X), dtype=bool)
             for l in unique_groups[np.array(indices)]:
                 test_index[groups == l] = True
             yield test_index
@@ -1902,7 +1900,7 @@ class PredefinedSplit(BaseCrossValidator):
     """
 
     def __init__(self, test_fold):
-        self.test_fold = np.array(test_fold, dtype=np.int)
+        self.test_fold = np.array(test_fold, dtype=int)
         self.test_fold = column_or_1d(self.test_fold)
         self.unique_folds = np.unique(self.test_fold)
         self.unique_folds = self.unique_folds[self.unique_folds != -1]
@@ -1939,7 +1937,7 @@ class PredefinedSplit(BaseCrossValidator):
         """Generates boolean masks corresponding to test sets."""
         for f in self.unique_folds:
             test_index = np.where(self.test_fold == f)[0]
-            test_mask = np.zeros(len(self.test_fold), dtype=np.bool)
+            test_mask = np.zeros(len(self.test_fold), dtype=bool)
             test_mask[test_index] = True
             yield test_mask
 
@@ -2072,7 +2070,12 @@ def check_cv(cv=5, y=None, *, classifier=False):
     return cv  # New style cv objects are passed without any modification
 
 
-def train_test_split(*arrays, **options):
+def train_test_split(*arrays,
+                     test_size=None,
+                     train_size=None,
+                     random_state=None,
+                     shuffle=True,
+                     stratify=None):
     """Split arrays or matrices into random train and test subsets
 
     Quick utility that wraps input validation and
@@ -2161,14 +2164,6 @@ def train_test_split(*arrays, **options):
     n_arrays = len(arrays)
     if n_arrays == 0:
         raise ValueError("At least one array required as input")
-    test_size = options.pop('test_size', None)
-    train_size = options.pop('train_size', None)
-    random_state = options.pop('random_state', None)
-    stratify = options.pop('stratify', None)
-    shuffle = options.pop('shuffle', True)
-
-    if options:
-        raise TypeError("Invalid parameters passed: %s" % str(options))
 
     arrays = indexable(*arrays)
 

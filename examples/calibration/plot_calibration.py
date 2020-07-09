@@ -65,23 +65,25 @@ prob_pos_clf = clf.predict_proba(X_test)[:, 1]
 
 # Gaussian Naive-Bayes with isotonic calibration
 clf_isotonic = CalibratedClassifierCV(clf, cv=2, method='isotonic')
-clf_isotonic.fit(X_train, y_train, sw_train)
+clf_isotonic.fit(X_train, y_train, sample_weight=sw_train)
 prob_pos_isotonic = clf_isotonic.predict_proba(X_test)[:, 1]
 
 # Gaussian Naive-Bayes with sigmoid calibration
 clf_sigmoid = CalibratedClassifierCV(clf, cv=2, method='sigmoid')
-clf_sigmoid.fit(X_train, y_train, sw_train)
+clf_sigmoid.fit(X_train, y_train, sample_weight=sw_train)
 prob_pos_sigmoid = clf_sigmoid.predict_proba(X_test)[:, 1]
 
 print("Brier scores: (the smaller the better)")
 
-clf_score = brier_score_loss(y_test, prob_pos_clf, sw_test)
+clf_score = brier_score_loss(y_test, prob_pos_clf, sample_weight=sw_test)
 print("No calibration: %1.3f" % clf_score)
 
-clf_isotonic_score = brier_score_loss(y_test, prob_pos_isotonic, sw_test)
+clf_isotonic_score = brier_score_loss(y_test, prob_pos_isotonic,
+                                      sample_weight=sw_test)
 print("With isotonic calibration: %1.3f" % clf_isotonic_score)
 
-clf_sigmoid_score = brier_score_loss(y_test, prob_pos_sigmoid, sw_test)
+clf_sigmoid_score = brier_score_loss(y_test, prob_pos_sigmoid,
+                                     sample_weight=sw_test)
 print("With sigmoid calibration: %1.3f" % clf_sigmoid_score)
 
 # #############################################################################

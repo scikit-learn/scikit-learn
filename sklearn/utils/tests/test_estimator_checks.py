@@ -25,18 +25,18 @@ from sklearn.utils.estimator_checks import check_classifier_data_not_an_array
 from sklearn.utils.estimator_checks import check_regressor_data_not_an_array
 from sklearn.utils.validation import check_is_fitted
 from sklearn.utils.estimator_checks import check_outlier_corruption
-from sklearn.utils.fixes import _parse_version
+from sklearn.utils.fixes import np_version, parse_version
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LinearRegression, SGDClassifier
 from sklearn.mixture import GaussianMixture
 from sklearn.cluster import MiniBatchKMeans
 from sklearn.decomposition import NMF
 from sklearn.linear_model import MultiTaskElasticNet, LogisticRegression
-from sklearn.svm import SVC
+from sklearn.svm import SVC, NuSVC
 from sklearn.neighbors import KNeighborsRegressor
-from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils.validation import check_array
 from sklearn.utils import all_estimators
+from sklearn.exceptions import SkipTestWarning
 
 
 class CorrectNotFittedError(ValueError):
@@ -209,7 +209,8 @@ class BadBalancedWeightsClassifier(BaseBadClassifier):
 
         label_encoder = LabelEncoder().fit(y)
         classes = label_encoder.classes_
-        class_weight = compute_class_weight(self.class_weight, classes, y)
+        class_weight = compute_class_weight(self.class_weight, classes=classes,
+                                            y=y)
 
         # Intentionally modify the balanced class_weight
         # to simulate a bug and raise an exception
@@ -305,11 +306,19 @@ class EstimatorInconsistentForPandas(BaseEstimator):
         return np.array([self.value_] * X.shape[0])
 
 
-class UntaggedBinaryClassifier(DecisionTreeClassifier):
+class UntaggedBinaryClassifier(SGDClassifier):
     # Toy classifier that only supports binary classification, will fail tests.
-    def fit(self, X, y, sample_weight=None):
-        super().fit(X, y, sample_weight)
-        if np.all(self.n_classes_ > 2):
+    def fit(self, X, y, coef_init=None, intercept_init=None,
+            sample_weight=None):
+        super().fit(X, y, coef_init, intercept_init, sample_weight)
+        if len(self.classes_) > 2:
+            raise ValueError('Only 2 classes are supported')
+        return self
+
+    def partial_fit(self, X, y, classes=None, sample_weight=None):
+        super().partial_fit(X=X, y=y, classes=classes,
+                            sample_weight=sample_weight)
+        if len(self.classes_) > 2:
             raise ValueError('Only 2 classes are supported')
         return self
 
@@ -332,9 +341,16 @@ class RequiresPositiveYRegressor(LinearRegression):
         return {"requires_positive_y": True}
 
 
+class PoorScoreLogisticRegression(LogisticRegression):
+    def decision_function(self, X):
+        return super().decision_function(X) + 1
+
+    def _more_tags(self):
+        return {"poor_score": True}
+
+
 def test_not_an_array_array_function():
-    np_version = _parse_version(np.__version__)
-    if np_version < (1, 17):
+    if np_version < parse_version('1.17'):
         raise SkipTest("array_function protocol not supported in numpy <1.17")
     not_array = _NotAnArray(np.ones(10))
     msg = "Don't want to call array_function sum!"
@@ -460,6 +476,9 @@ def test_check_estimator():
     msg = 'negative y values not supported!'
     assert_raises_regex(ValueError, msg, check_estimator,
                         RequiresPositiveYRegressor())
+
+    # Does not raise error on classifier with poor_score tag
+    check_estimator(PoorScoreLogisticRegression())
 
 
 def test_check_outlier_corruption():
@@ -609,3 +628,9 @@ if __name__ == '__main__':
     # This module is run as a script to check that we have no dependency on
     # pytest for estimator checks.
     run_tests_without_pytest()
+
+
+def test_xfail_ignored_in_check_estimator():
+    # Make sure checks marked as xfail are just ignored and not run by
+    # check_estimator(), but still raise a warning.
+    assert_warns(SkipTestWarning, check_estimator, NuSVC())

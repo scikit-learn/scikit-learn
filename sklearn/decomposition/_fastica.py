@@ -46,7 +46,7 @@ def _gs_decorrelation(w, W, j):
     Assumes that W is orthogonal
     w changed in place
     """
-    w -= np.dot(np.dot(w, W[:j].T), W[:j])
+    w -= np.linalg.multi_dot([w, W[:j].T, W[:j]])
     return w
 
 
@@ -57,7 +57,7 @@ def _sym_decorrelation(W):
     s, u = linalg.eigh(np.dot(W, W.T))
     # u (resp. s) contains the eigenvectors (resp. square roots of
     # the eigenvalues) of W * W.T
-    return np.dot(np.dot(u * (1. / np.sqrt(s)), u.T), W)
+    return np.linalg.multi_dot([u * (1. / np.sqrt(s)), u.T, W])
 
 
 def _ica_def(X, tol, g, fun_args, max_iter, w_init):
@@ -147,7 +147,8 @@ def _cube(x, fun_args):
     return x ** 3, (3 * x ** 2).mean(axis=-1)
 
 
-def fastica(X, n_components=None, algorithm="parallel", whiten=True,
+@_deprecate_positional_args
+def fastica(X, n_components=None, *, algorithm="parallel", whiten=True,
             fun="logcosh", fun_args=None, max_iter=200, tol=1e-04, w_init=None,
             random_state=None, return_X_mean=False, compute_sources=True,
             return_n_iter=False):
@@ -518,7 +519,7 @@ class FastICA(TransformerMixin, BaseEstimator):
 
         if compute_sources:
             if self.whiten:
-                S = np.dot(np.dot(W, K), X).T
+                S = np.linalg.multi_dot([W, K, X]).T
             else:
                 S = np.dot(W, X).T
         else:

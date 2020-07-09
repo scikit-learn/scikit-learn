@@ -13,7 +13,6 @@ from sklearn.feature_extraction.text import HashingVectorizer
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.feature_extraction.text import VectorizerMixin
 
 from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS
 
@@ -520,18 +519,6 @@ def test_tfidf_vectorizer_setters():
     assert tv._tfidf.smooth_idf
     tv.sublinear_tf = True
     assert tv._tfidf.sublinear_tf
-
-
-# FIXME Remove copy parameter support in 0.24
-def test_tfidf_vectorizer_deprecationwarning():
-    msg = ("'copy' param is unused and has been deprecated since "
-           "version 0.22. Backward compatibility for 'copy' will "
-           "be removed in 0.24.")
-    with pytest.warns(FutureWarning, match=msg):
-        tv = TfidfVectorizer()
-        train_data = JUNK_FOOD_DOCS
-        tv.fit(train_data)
-        tv.transform(train_data, copy=True)
 
 
 @fails_if_pypy
@@ -1352,14 +1339,3 @@ def test_n_features_in(Vectorizer, X):
     assert not hasattr(vectorizer, 'n_features_in_')
     vectorizer.fit(X)
     assert not hasattr(vectorizer, 'n_features_in_')
-
-
-# TODO: Remove in 0.24
-def test_vectorizermixin_is_deprecated():
-    class MyVectorizer(VectorizerMixin):
-        pass
-
-    msg = ("VectorizerMixin is deprecated in version 0.22 and will be removed "
-           "in version 0.24.")
-    with pytest.warns(FutureWarning, match=msg):
-        MyVectorizer()
