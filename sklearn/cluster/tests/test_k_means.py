@@ -288,7 +288,19 @@ def test_all_init(Estimator, data, init):
     # Check KMeans and MiniBatchKMeans with all possible init.
     n_init = 10 if type(init) is str else 1
     km = Estimator(init=init, n_clusters=n_clusters, random_state=42,
-                   n_init=n_init).fit(data)
+                   n_init=n_init)
+    _check_fitted_model(km)
+
+
+@pytest.mark.parametrize("init", ["random", "k-means++", centers,
+                                  lambda X, k, random_state: centers],
+                         ids=["random", "k-means++", "ndarray", "callable"])
+def test_minibatch_kmeans_partial_fit_init(init):
+    # Check MiniBatchKMeans init with partial_fit
+    km = MiniBatchKMeans(init=init, n_clusters=n_clusters, random_state=0)
+    for i in range(100):
+        # "random" init requires many batches to recover the true labels.
+        km.partial_fit(X)
     _check_fitted_model(km)
 
 
@@ -489,12 +501,21 @@ def test_mini_batch_k_means_random_init_partial_fit():
     assert v_measure_score(true_labels, labels) == 1.0
 
 
-def test_minibatch_default_init_size():
-    mb_k_means = MiniBatchKMeans(init=centers.copy(), n_clusters=n_clusters,
-                                 batch_size=10, random_state=42,
-                                 n_init=1).fit(X)
-    assert mb_k_means.init_size_ == 3 * mb_k_means.batch_size
-    _check_fitted_model(mb_k_means)
+def test_minibatch_kmeans_default_init_size():
+    # Check the internal _init_size attribute of MiniBatchKMeans
+
+    # default init size should be 3 * batch_size
+    km = MiniBatchKMeans(n_clusters=10, batch_size=5, n_init=1).fit(X)
+    assert km._init_size == 15
+
+    # if 3 * batch size < n_clusters, it should then be 3 * n_clusters
+    km = MiniBatchKMeans(n_clusters=10, batch_size=1, n_init=1).fit(X)
+    assert km._init_size == 30
+
+    # it should not be larger than n_samples
+    km = MiniBatchKMeans(n_clusters=10, batch_size=5, n_init=1,
+                         init_size=n_samples + 1).fit(X)
+    assert km._init_size == n_samples
 
 
 def test_minibatch_tol():

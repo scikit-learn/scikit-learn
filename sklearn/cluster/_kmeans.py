@@ -1831,9 +1831,6 @@ class MiniBatchKMeans(KMeans):
                                 order='C', accept_large_sparse=False,
                                 reset=is_first_call_to_partial_fit)
 
-        if X.shape[0] == 0:
-            return self
-
         self.random_state_ = getattr(self, "random_state_",
                                      check_random_state(self.random_state))
         sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
