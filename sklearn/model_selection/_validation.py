@@ -728,7 +728,8 @@ def cross_val_predict(estimator, X, y=None, *, groups=None, cv=None,
             - A str, giving an expression as a function of n_jobs,
               as in '2*n_jobs'
 
-    method : str, default='predict'
+    method : {'predict', 'predict_proba', 'predict_log_proba', \
+        'decision_function'}, default='predict'
         The method to be invoked by `estimator`.
 
     Returns
@@ -736,9 +737,11 @@ def cross_val_predict(estimator, X, y=None, *, groups=None, cv=None,
     predictions : ndarray
         This is the result of calling ``method``. Shape:
 
-            - When `method` is predict: (n_samples, 1)
+            - When `method` is 'predict' and in special case when `method` is
+              'decision_function' and `n_classes` is 2: (n_samples,)
             - When `method` is one of {'predict_proba', 'predict_log_proba',
-              'decision_function'}: (n_samples, n_classes).
+              'decision_function'} (unless special case above):
+              (n_samples, n_classes).
             - If `estimator` is :term:`multioutput`, a third dimension
               'n_outputs' is added to the end of each shape above.
 
