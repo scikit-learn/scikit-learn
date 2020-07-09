@@ -10,6 +10,7 @@
 import warnings
 from inspect import signature
 from contextlib import suppress
+from functools import partial
 
 from math import log
 import numpy as np
@@ -225,9 +226,8 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
             self.classes_ = self.base_estimator.classes_
             label_encoder_ = LabelEncoder().fit(self.classes_)
 
-            preds = _get_predictions(
-                base_estimator, X, label_encoder_
-            )
+            pred_method = get_prediction_method(base_estimator)
+            preds = _get_predictions(pred_method, X, label_encoder_)
 
             calibrated_classifier = _fit_calibrator(
                 base_estimator, preds, y, label_encoder_, self.method,
@@ -281,8 +281,9 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
                     else:
                         this_estimator.fit(X[train], y[train])
 
+                    pred_method = get_prediction_method(this_estimator)
                     preds = _get_predictions(
-                        this_estimator, X[test], label_encoder_
+                        pred_method, X[test], label_encoder_
                     )
 
                     sw = None if sample_weight is None else sample_weight[test]
@@ -292,13 +293,12 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
                     )
                     self.calibrated_classifiers_.append(calibrated_classifier)
             else:
-                pred_method = get_prediction_method(
-                    base_estimator, return_string=True
-                )
-                preds = cross_val_predict(base_estimator, X, y, cv=cv,
-                                          method=pred_method)
-                preds = _reshape_preds(
-                    preds, pred_method, len(label_encoder_.classes_)
+                pred_method = partial(cross_val_predict(
+                    base_estimator, X, y, cv=cv,
+                    method=get_prediction_method(base_estimator,
+                                                 return_string=True)))
+                preds = _get_predictions(
+                    pred_method, X, label_encoder_
                 )
 
                 this_estimator = clone(base_estimator)
@@ -437,13 +437,13 @@ def _reshape_preds(preds, method, n_classes):
     return preds
 
 
-def _get_predictions(clf_fitted, X, label_encoder_):
+def _get_predictions(pred_method, X, label_encoder_):
     """Returns predictions for `X` and the index of classes present.
 
     Parameters
     ----------
-    clf_fitted : Estimator instance
-        Fitted classifier.
+    pred_method : callable
+        Prediction method.
 
     X : array-like
         Data used to obtain predictions.
@@ -457,11 +457,9 @@ def _get_predictions(clf_fitted, X, label_encoder_):
         The predictions. Note if there are 2 classes, array is of shape
         (X.shape[0], 1).
     """
-    pred_method = get_prediction_method(clf_fitted)
     preds = pred_method(X)
-    n_classes = len(clf_fitted.classes_)
+    n_classes = len(label_encoder_.classes_)
     preds = _reshape_preds(preds, pred_method.__name__, n_classes)
-
     return preds
 
 
@@ -553,7 +551,8 @@ class _CalibratedClassiferPipeline:
         proba : array, shape (n_samples, n_classes)
             The predicted probabilities. Can be exact zeros.
         """
-        preds = _get_predictions(self.clf_fitted, X, self.label_encoder_)
+        pred_method = get_prediction_method(self.clf_fitted)
+        preds = _get_predictions(pred_method, X, self.label_encoder_)
         pos_class_indices = self.label_encoder_.transform(
             self.clf_fitted.classes_
         )
