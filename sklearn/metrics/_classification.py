@@ -1858,7 +1858,7 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
         Micro average (averaging the total true positives, false negatives and
         false positives) is only shown for multi-label or multi-class
         with a subset of classes, because it corresponds to accuracy
-        otherwise and would be constant for all metrics.
+        otherwise and would be the same for all metrics.
         See also :func:`precision_recall_fscore_support` for more details
         on averages.
 
