@@ -91,8 +91,8 @@ Classification
 classification on a dataset.
 
 As with other classifiers, :class:`DecisionTreeClassifier` takes as input two arrays:
-an array X, sparse or dense, of shape ``(n_samples, n_features)``  holding the
-training samples, and an array Y of integer values, shape ``(n_samples)``,
+an array X, sparse or dense, of shape ``(n_samples, n_features)`` holding the
+training samples, and an array Y of integer values, shape ``(n_samples,)``,
 holding the class labels for the training samples::
 
     >>> from sklearn import tree
