@@ -179,7 +179,8 @@ Searching optimal parameters with successive halving
 Scikit-learn also provides the :class:`HalvingGridSearchCV` and
 :class:`HalvingRandomSearchCV` estimators that can be used to
 search a parameter space using successive halving [1]_ [2]_. Successive
-halving is an iterative selection process where all candidates (the
+halving (SH) is a sort of tournament between candidate parameter combinations.
+SH is an iterative selection process where all candidates (the
 parameter combinations) are evaluated with a small amount of resources at
 the first iteration. Only some of these candidates are selected for the next
 iteration, which will be allocated more resources. What defines a resource is

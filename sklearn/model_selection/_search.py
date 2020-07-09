@@ -813,11 +813,11 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         return self
 
     def _format_results(self, candidate_params, scorers, n_splits, out,
-                        more_results={}):
+                        more_results=None):
         n_candidates = len(candidate_params)
         out = _aggregate_score_dicts(out)
 
-        results = dict(more_results)
+        results = dict(more_results or {})
 
         def _store(key_name, array, weights=None, splits=False, rank=False):
             """A small helper to store the scores/times to the cv_results_"""

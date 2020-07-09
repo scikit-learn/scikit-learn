@@ -426,12 +426,13 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
         the resource is the number of samples. It can also be set to any
         parameter of the base estimator that accepts positive integer
         values, e.g. 'n_iterations' or 'n_estimators' for a gradient
-        boosting estimator. In this case ``max_resources`` cannot be 'auto'.
+        boosting estimator. In this case ``max_resources`` cannot be 'auto'
+        and must be set explicitly.
 
     ratio : int or float, default=3
         The 'halving' parameter, which determines the proportion of candidates
-        that are selected for the next iteration. For example, ``ratio=3``
-        means that only one third of the candidates are selected.
+        that are selected for each subsequent iteration. For example,
+        ``ratio=3`` means that only one third of the candidates are selected.
 
     aggressive_elimination : bool, default=False
         This is only relevant in cases where there isn't enough resources to
@@ -439,7 +440,8 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
         the search process will 'replay' the first iteration for as long as
         needed until the number of candidates is small enough. This is
         ``False`` by default, which means that the last iteration may evaluate
-        more than ``ratio`` candidates.
+        more than ``ratio`` candidates. See :ref:aggressive_elimination` for
+        more details.
 
     force_exhaust_resources : bool, default=True
         When True, ``min_resources`` (which must be 'auto') is set to a
@@ -496,7 +498,6 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
         analysing the results of a search.
         Please refer to the :ref:`User guide<successive_halving_cv_results>`
         for details.
-
 
     best_estimator_ : estimator or dict
         Estimator that was chosen by the search, i.e. estimator
@@ -718,12 +719,13 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
         the resource is the number of samples. It can also be set to any
         parameter of the base estimator that accepts positive integer
         values, e.g. 'n_iterations' or 'n_estimators' for a gradient
-        boosting estimator. In this case ``max_resources`` cannot be 'auto'.
+        boosting estimator. In this case ``max_resources`` cannot be 'auto'
+        and must be set explicitly.
 
     ratio : int or float, default=3
         The 'halving' parameter, which determines the proportion of candidates
-        that are selected for the next iteration. For example, ``ratio=3``
-        means that only one third of the candidates are selected.
+        that are selected for each subsequent iteration. For example,
+        ``ratio=3`` means that only one third of the candidates are selected.
 
     aggressive_elimination : bool, default=False
         This is only relevant in cases where there isn't enough resources to
@@ -731,7 +733,8 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
         the search process will 'replay' the first iteration for as long as
         needed until the number of candidates is small enough. This is
         ``False`` by default, which means that the last iteration may evaluate
-        more than ``ratio`` candidates.
+        more than ``ratio`` candidates. See :ref:aggressive_elimination` for
+        more details.
 
     force_exhaust_resources : bool, default=True
         When True, ``min_resources`` (which must be 'auto') is set to a
