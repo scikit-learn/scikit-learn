@@ -294,7 +294,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
                                        "'decision_function' or 'predict_proba'"
                                        " method.")
                 preds = cross_val_predict(base_estimator, X, y, cv=cv,
-                                       method=base_estimator_method)
+                                          method=base_estimator_method)
                 if base_estimator_method == "decision_function":
                     if preds.ndim == 1:
                         preds = preds[:, np.newaxis]
