@@ -165,6 +165,9 @@ Changelog
   ``kind`` parameter.
   :pr:`16619` by :user:`Madhura Jayratne <madhuracj>`.
 
+- |Feature| Adds :func:`inspection.plot_decision_boundary` for plotting
+  decision boundaries. :pr:`16061` by `Thomas Fan`.
+
 :mod:`sklearn.isotonic`
 .......................
 
