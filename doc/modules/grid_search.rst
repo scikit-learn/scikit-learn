@@ -400,6 +400,8 @@ candidate parameter, and is slightly more time-intensive.
 Since ``force_exhaust_resources`` chooses an appropriate ``min_resources`` to
 start with, ``min_resources`` must be set to 'auto' (which is the default).
 
+.. _aggressive_elimination:
+
 Aggressive elimination of candidates
 ------------------------------------
 
