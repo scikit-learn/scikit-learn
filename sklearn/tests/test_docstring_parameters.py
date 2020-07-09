@@ -181,7 +181,7 @@ def test_fit_docstring_attributes(name, Estimator):
                'DictVectorizer', 'FeatureUnion', 'GaussianRandomProjection',
                'GridSearchCV', 'MultiOutputClassifier', 'MultiOutputRegressor',
                'NoSampleWeightWrapper', 'OneVsOneClassifier',
-               'OneVsRestClassifier', 'OutputCodeClassifier', 'Pipeline',
+               'OutputCodeClassifier', 'Pipeline',
                'RFE', 'RFECV', 'RandomizedSearchCV', 'RegressorChain',
                'SelectFromModel', 'SparseCoder', 'SparseRandomProjection',
                'SpectralBiclustering', 'StackingClassifier',
