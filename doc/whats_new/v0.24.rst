@@ -61,6 +61,14 @@ Changelog
   weighted by the sample weights. :pr:`17848` by
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+:mod:`sklearn.covariance`
+.........................
+
+- |API| Deprecates `cv_alphas_` in favor of `cv_results['alphas']` and
+  `grid_scores_` in favor of split scores in `cv_results_` in
+  :class:`covariance.GraphicalLassoCV`. `cv_alphas_` and `grid_scores_` will be
+  removed in version 0.26. :pr:`16392` by `Thomas Fan`_.
+
 :mod:`sklearn.datasets`
 .......................
 
