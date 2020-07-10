@@ -41,7 +41,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.mixture import GaussianMixture
 from sklearn.utils.extmath import row_norms
-from sklearn.datasets.samples_generator import make_blobs
+from sklearn.datasets._samples_generator import make_blobs
 from timeit import default_timer as timer
 
 print(__doc__)
