@@ -32,8 +32,7 @@ import zipfile as zp
 from bs4 import BeautifulSoup
 
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.decomposition.nmf_original import NMFOriginal
-from sklearn.decomposition import NMF
+from sklearn.decomposition import NMF, MiniBatchNMF
 
 n_samples = range(10000, 20000, 2000)
 n_features = range(2000, 10000, 2000)
@@ -46,7 +45,7 @@ n_components = range(10, 70, 20)
 
 print("Loading dataset...")
 t0 = time()
-with zp.ZipFile("/home/parietal/cmarmo/bench/blogs.zip") as myzip:
+with zp.ZipFile("/home/cmarmo/software/test/blogs.zip") as myzip:
     info = myzip.infolist()
     data = []
     for zipfile in info:
@@ -98,7 +97,7 @@ for bj in range(len(n_components)):
                   "with tf-idf features, n_samples=%d and n_features=%d..."
                   % (n_samples[i], n_features[j]))
             t0 = time()
-            nmf = NMFOriginal(n_components=n_components[bj], random_state=1,
+            nmf = NMF(n_components=n_components[bj], random_state=1,
                               beta_loss='kullback-leibler', solver='mu',
                               max_iter=1000, alpha=.1, l1_ratio=.5).fit(tfidf)
             timesKL[i] = time() - t0
@@ -111,7 +110,7 @@ for bj in range(len(n_components)):
                   "tf-idf features, n_samples=%d and n_features=%d..."
                   % (n_samples[i], n_features[j]))
             t0 = time()
-            minibatch_nmf = NMF(n_components=n_components[bj],
+            minibatch_nmf = MiniBatchNMF(n_components=n_components[bj],
                                 batch_size=batch_size,
                                 random_state=1, beta_loss='kullback-leibler',
                                 solver='mu', max_iter=1000, alpha=.1,
