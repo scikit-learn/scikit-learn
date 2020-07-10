@@ -146,6 +146,8 @@ def test_f_regression_constant_values_gets_raised():
                              "or target with identically constant values."):
         f_regression(X, y)
 
+
+def test_f_regression_degrees_freedom_gets_raised():
     # Test whether f_regression gets raised when the degrees
     # of freedom employed for the F-test is less than one
 
@@ -155,6 +157,19 @@ def test_f_regression_constant_values_gets_raised():
                        match="The sample size must be greater than two "
                              "if 'center=True'. Got n_samples=2."):
         f_regression(X, y)
+
+
+def test_f_regression_corr_not_gets_raised():
+    # Test that f_regression does not raise a
+    # RuntimeWarning for a correlation of one
+
+    X = np.array([[0, 1], [1, 0]])
+    y = np.array([0, 1])
+
+    try:
+        f_regression(X, y, center=False)
+    except RuntimeWarning as ex:
+        raise pytest.fail("{0}".format(ex))
 
 
 def test_f_classif_multi_class():
