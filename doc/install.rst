@@ -79,7 +79,7 @@ Then run:
         ><span class="sk-expandable" data-packager="pip" data-os="linux" data-venv="no">pip3 install -U scikit-learn</span
         ><span class="sk-expandable" data-packager="conda" data-venv="">conda create -n sklearn-env</span
         ><span class="sk-expandable" data-packager="conda" data-venv="">conda activate sklearn-env</span
-        ><span class="sk-expandable" data-packager="conda">conda install scikit-learn </span
+        ><span class="sk-expandable" data-packager="conda">conda install -c conda-forge scikit-learn </span
        ></code></pre></div>
 
 In order to check your installation you can use
