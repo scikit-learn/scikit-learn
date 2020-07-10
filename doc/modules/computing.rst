@@ -292,7 +292,7 @@ interesting, but for many applications we would better not increase
 prediction latency too much. We will now review this idea for different
 families of supervised models.
 
-For :mod:`~linear_model` (e.g. Lasso, ElasticNet,
+For :mod:`sklearn.linear_model` (e.g. Lasso, ElasticNet,
 SGDClassifier/Regressor, Ridge & RidgeClassifier,
 PassiveAggressiveClassifier/Regressor, LinearSVC, LogisticRegression...) the
 decision function that is applied at prediction time is the same (a dot product)
@@ -315,7 +315,7 @@ non-zero coefficients.
 
 .. centered:: |en_model_complexity|
 
-For the :mod:`~svm` family of algorithms with a non-linear kernel,
+For the :mod:`sklearn.svm` family of algorithms with a non-linear kernel,
 the latency is tied to the number of support vectors (the fewer the faster).
 Latency and throughput should (asymptotically) grow linearly with the number
 of support vectors in a SVC or SVR model. The kernel will also influence the
@@ -330,7 +330,7 @@ support vectors.
 
 .. centered:: |nusvr_model_complexity|
 
-For :mod:`~ensemble` of trees (e.g. RandomForest, GBT,
+For :mod:`sklearn.ensemble` of trees (e.g. RandomForest, GBT,
 ExtraTrees etc) the number of trees and their depth play the most
 important role. Latency and throughput should scale linearly with the number
 of trees. In this case we used directly the ``n_estimators`` parameter of
