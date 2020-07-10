@@ -1857,7 +1857,7 @@ class MiniBatchKMeans(KMeans):
                                 order='C', accept_large_sparse=False,
                                 reset=is_first_call_to_partial_fit)
 
-        self.random_state_ = getattr(self, "random_state_",
+        self._random_state = getattr(self, "_random_state",
                                      check_random_state(self.random_state))
         sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
@@ -1876,7 +1876,7 @@ class MiniBatchKMeans(KMeans):
             # initialize the cluster centers
             self.cluster_centers_ = _init_centroids(
                 X, self.n_clusters, init,
-                random_state=self.random_state_,
+                random_state=self._random_state,
                 x_squared_norms=x_squared_norms, init_size=self.init_size)
 
             self._counts = np.zeros(self.n_clusters,
