@@ -432,7 +432,7 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
 
         X *= self.scale_
         X += self.min_
-        if self.clip is True:
+        if self.clip:
             np.clip(X, self.feature_range[0], self.feature_range[1], out=X)
         return X
 
