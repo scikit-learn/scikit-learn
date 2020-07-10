@@ -1215,6 +1215,7 @@ div.sk-doc-div-box {
 div.sk-doc-div {
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
 }
 
 div.sk-doc-div-box {
