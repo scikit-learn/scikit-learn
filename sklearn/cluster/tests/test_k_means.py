@@ -11,8 +11,6 @@ from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import assert_warns
-from sklearn.utils._testing import assert_raise_message
 from sklearn.utils.fixes import _astype_copy_false
 from sklearn.base import clone
 from sklearn.exceptions import ConvergenceWarning
@@ -259,10 +257,6 @@ def _check_fitted_model(km):
     assert v_measure_score(true_labels, labels) == 1.0
     assert km.inertia_ > 0.0
 
-    # check error on dataset being too small
-    assert_raise_message(ValueError, "n_samples=1 should be >= n_clusters=%d"
-                         % km.n_clusters, km.fit, [[0., 1.]])
-
 
 @pytest.mark.parametrize("data", [X, X_csr], ids=["dense", "sparse"])
 @pytest.mark.parametrize("init", ["random", "k-means++", centers,
@@ -357,17 +351,21 @@ def test_verbose(Estimator):
         sys.stdout = old_stdout
 
 
-def test_minibatch_init_with_large_k():
-    mb_k_means = MiniBatchKMeans(init='k-means++', init_size=10, n_clusters=20)
-    # Check that a warning is raised, as the number clusters is larger
-    # than the init_size
-    assert_warns(RuntimeWarning, mb_k_means.fit, X)
+def test_minibatch_kmeans_warning_init_size():
+    # Check that a warning is raised when init_size is smaller than n_clusters
+    with pytest.warns(RuntimeWarning,
+                      match=r"init_size.* should be larger than n_clusters"):
+        MiniBatchKMeans(init_size=10, n_clusters=20).fit(X)
 
 
-def test_minibatch_k_means_init_multiple_runs_with_explicit_centers():
-    mb_k_means = MiniBatchKMeans(init=centers.copy(), n_clusters=n_clusters,
-                                 random_state=42, n_init=10)
-    assert_warns(RuntimeWarning, mb_k_means.fit, X)
+@pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
+def test_warning_n_init_precomputed_centers(Estimator):
+    # Check that a warning is raised when n_init > 1 and an array is passed for
+    # the init parameter.
+    with pytest.warns(RuntimeWarning,
+                      match="Explicit initial center position passed: "
+                            "performing only one init"):
+        Estimator(init=centers, n_clusters=n_clusters, n_init=10).fit(X)
 
 
 def test_minibatch_sensible_reassign():
@@ -660,27 +658,15 @@ def test_n_init():
 
 def test_k_means_function():
     # test calling the k_means function directly
-    # catch output
-    old_stdout = sys.stdout
-    sys.stdout = StringIO()
-    try:
-        cluster_centers, labels, inertia = k_means(X, n_clusters=n_clusters,
-                                                   sample_weight=None,
-                                                   verbose=True)
-    finally:
-        sys.stdout = old_stdout
-    centers = cluster_centers
-    assert centers.shape == (n_clusters, n_features)
+    cluster_centers, labels, inertia = k_means(X, n_clusters=n_clusters,
+                                               sample_weight=None)
 
+    assert cluster_centers.shape == (n_clusters, n_features)
     assert np.unique(labels).shape[0] == n_clusters
 
     # check that the labels assignment are perfect (up to a permutation)
-    assert v_measure_score(true_labels, labels) == 1.0
+    assert_allclose(v_measure_score(true_labels, labels), 1.0)
     assert inertia > 0.0
-
-    # check warning when centers are passed
-    assert_warns(RuntimeWarning, k_means, X, n_clusters=n_clusters,
-                 sample_weight=None, init=centers)
 
 
 def test_x_squared_norms_init_centroids():
