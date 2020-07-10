@@ -19,6 +19,7 @@ from sklearn.utils._testing import ignore_warnings
 from sklearn.utils import all_estimators
 from sklearn.utils.estimator_checks import _enforce_estimator_tags_y
 from sklearn.utils.estimator_checks import _enforce_estimator_tags_x
+from sklearn.utils.estimator_checks import _construct_instance
 from sklearn.utils.deprecation import _is_deprecated
 from sklearn.externals._pep562 import Pep562
 from sklearn.datasets import make_classification
@@ -181,7 +182,7 @@ def test_fit_docstring_attributes(name, Estimator):
                'DictVectorizer', 'FeatureUnion', 'GaussianRandomProjection',
                'GridSearchCV', 'MultiOutputClassifier', 'MultiOutputRegressor',
                'NoSampleWeightWrapper', 'OneVsOneClassifier',
-               'OneVsRestClassifier', 'OutputCodeClassifier', 'Pipeline',
+               'OutputCodeClassifier', 'Pipeline',
                'RFE', 'RFECV', 'RandomizedSearchCV', 'RegressorChain',
                'SelectFromModel', 'SparseCoder', 'SparseRandomProjection',
                'SpectralBiclustering', 'StackingClassifier',
@@ -190,7 +191,7 @@ def test_fit_docstring_attributes(name, Estimator):
     if Estimator.__name__ in IGNORED or Estimator.__name__.startswith('_'):
         pytest.skip("Estimator cannot be fit easily to test fit attributes")
 
-    est = Estimator()
+    est = _construct_instance(Estimator)
 
     if Estimator.__name__ == 'SelectKBest':
         est.k = 2
