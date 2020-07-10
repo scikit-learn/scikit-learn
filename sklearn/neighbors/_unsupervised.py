@@ -139,7 +139,7 @@ class NearestNeighbors(KNeighborsMixin, RadiusNeighborsMixin, NeighborsBase):
         self : NearestNeighbors
             The fitted nearest neighbors estimator.
         """
-        if not isinstance(X, (KDTree, BallTree, NearestNeighbors)):
+        if not isinstance(X, (KDTree, BallTree, NeighborsBase)):
             X = self._validate_data(X, accept_sparse='csr')
 
         return self._fit(X)

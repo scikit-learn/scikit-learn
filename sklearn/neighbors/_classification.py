@@ -180,7 +180,7 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         self : KNeighborsClassifier
             The fitted k-nearest neighbors classifier.
         """
-        if not isinstance(X, (KDTree, BallTree, KNeighborsClassifier)):
+        if not isinstance(X, (KDTree, BallTree, NeighborsBase)):
             X, y = self._validate_data(X, y, accept_sparse="csr",
                                        multi_output=True)
 
@@ -447,7 +447,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         self : RadiusNeighborsClassifier
             The fitted radius neighbors classifier.
         """
-        if not isinstance(X, (KDTree, BallTree, RadiusNeighborsClassifier)):
+        if not isinstance(X, (KDTree, BallTree, NeighborsBase)):
             X, y = self._validate_data(X, y, accept_sparse="csr",
                                        multi_output=True)
 

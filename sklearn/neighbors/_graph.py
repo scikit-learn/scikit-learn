@@ -324,7 +324,7 @@ class KNeighborsTransformer(KNeighborsMixin, TransformerMixin, NeighborsBase):
         self : KNeighborsTransformer
             The fitted k-nearest neighbors transformer.
         """
-        if not isinstance(X, (KDTree, BallTree, KNeighborsTransformer)):
+        if not isinstance(X, (KDTree, BallTree, NeighborsBase)):
             X = self._validate_data(X, accept_sparse='csr')
 
         return self._fit(X)
@@ -502,7 +502,7 @@ class RadiusNeighborsTransformer(RadiusNeighborsMixin,
         self : RadiusNeighborsTransformer
             The fitted radius neighbors transformer.
         """
-        if not isinstance(X, (KDTree, BallTree, RadiusNeighborsTransformer)):
+        if not isinstance(X, (KDTree, BallTree, NeighborsBase)):
             X = self._validate_data(X, accept_sparse='csr')
 
         return self._fit(X)

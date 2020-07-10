@@ -267,7 +267,7 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
                 raise ValueError("contamination must be in (0, 0.5], "
                                  "got: %f" % self.contamination)
 
-        if not isinstance(X, (KDTree, BallTree, LocalOutlierFactor)):
+        if not isinstance(X, (KDTree, BallTree, NeighborsBase)):
             X = self._validate_data(X, accept_sparse='csr')
 
         self._fit(X)

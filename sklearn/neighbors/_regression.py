@@ -181,7 +181,7 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
         self : KNeighborsRegressor
             The fitted k-nearest neighbors regressor.
         """
-        if not isinstance(X, (KDTree, BallTree, KNeighborsRegressor)):
+        if not isinstance(X, (KDTree, BallTree, NeighborsBase)):
             X, y = self._validate_data(X, y, accept_sparse="csr",
                                        multi_output=True)
         self._y = y
@@ -374,7 +374,7 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
         self : RadiusNeighborsRegressor
             The fitted radius neighbors regressor.
         """
-        if not isinstance(X, (KDTree, BallTree, RadiusNeighborsRegressor)):
+        if not isinstance(X, (KDTree, BallTree, NeighborsBase)):
             X, y = self._validate_data(X, y, accept_sparse="csr",
                                        multi_output=True)
         self._y = y
