@@ -12,7 +12,7 @@ import numpy as np
 from scipy.special import logsumexp
 
 from .. import cluster
-from ..cluster.k_means_ import _k_init
+from ..cluster._kmeans import _k_init
 from ..base import BaseEstimator
 from ..base import DensityMixin
 from ..exceptions import ConvergenceWarning

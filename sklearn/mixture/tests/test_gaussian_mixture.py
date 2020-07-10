@@ -1050,7 +1050,7 @@ def test_init_param():
     gmm = GaussianMixture(n_components=n_components, random_state=rng,
                           init_params='kmeans')
     gmm.fit(X)
-    default_means = gmm.means_
+    default_means = np.sort(gmm.means_.flatten())
 
     INIT_TYPE = ['random', 'rand_data', 'k-means++', 'kmeans']
 
@@ -1058,7 +1058,8 @@ def test_init_param():
         gmm = GaussianMixture(n_components=n_components, random_state=rng,
                               init_params=init, tol=1e-06, max_iter=1000)
         gmm.fit(X)
-        assert_almost_equal(default_means, gmm.means_, decimal=1)
+        assert_almost_equal(default_means, np.sort(gmm.means_.flatten()),
+                            decimal=1)
 
     # Check that all initialisations provide unique starting means
 
