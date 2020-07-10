@@ -373,6 +373,7 @@ def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
     results = _fit_and_score(estimator, X, y, scorer, train,
                              test, verbose, parameters,
                              fit_params=fit_params,
+                             score_params=None,
                              return_n_test_samples=True,
                              error_score=error_score)
     return results["test_scores"], parameters, results["n_test_samples"]

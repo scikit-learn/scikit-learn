@@ -50,6 +50,7 @@ from sklearn.model_selection._search import BaseSearchCV
 
 from sklearn.model_selection._validation import FitFailedWarning
 
+from sklearn.base import _MetadataRequest
 from sklearn.svm import LinearSVC, SVC
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.tree import DecisionTreeClassifier
@@ -74,7 +75,7 @@ from sklearn.model_selection.tests.common import OneTimeSplitter
 
 # Neither of the following two estimators inherit from BaseEstimator,
 # to test hyperparameter search on user-defined classifiers.
-class MockClassifier:
+class MockClassifier(_MetadataRequest):
     """Dummy classifier to test the parameter search algorithms"""
 
     def __init__(self, foo_param=0):
@@ -1822,6 +1823,8 @@ def test_scalar_fit_param(SearchCV, param_search):
     # non-regression test for:
     # https://github.com/scikit-learn/scikit-learn/issues/15805
     class TestEstimator(ClassifierMixin, BaseEstimator):
+        _metadata_request = {'fit': ['r']}
+
         def __init__(self, a=None):
             self.a = a
 
@@ -1854,6 +1857,8 @@ def test_scalar_fit_param_compat(SearchCV, param_search):
     )
 
     class _FitParamClassifier(SGDClassifier):
+        _metadata_request = {'fit': ['sample_weight', 'tuple_of_arrays',
+                                     'scalar_param', 'callable_param']}
 
         def fit(self, X, y, sample_weight=None, tuple_of_arrays=None,
                 scalar_param=None, callable_param=None):

@@ -624,6 +624,8 @@ def _score(estimator, X_test, y_test, scorer, score_params):
     Will return a dict of floats if `scorer` is a dict, otherwise a single
     float is returned.
     """
+    if score_params is None:
+        score_params = {}
     if isinstance(scorer, dict):
         # will cache method calls if needed. scorer() returns a dict
         scorer = _MultimetricScorer(**scorer)
@@ -1411,8 +1413,11 @@ def _incremental_fit_estimator(estimator, X, y, classes, train, test,
 
         start_score = time.time()
 
-        test_scores.append(_score(estimator, X_test, y_test, scorer))
-        train_scores.append(_score(estimator, X_train, y_train, scorer))
+        # TODO: support score_params here
+        test_scores.append(_score(estimator, X_test, y_test, scorer,
+                                  score_params=None))
+        train_scores.append(_score(estimator, X_train, y_train, scorer,
+                                   score_params=None))
 
         score_time = time.time() - start_score
         score_times.append(score_time)

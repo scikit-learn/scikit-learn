@@ -118,6 +118,7 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
         self.methods_to_check = methods_to_check
         self.foo_param = foo_param
         self.expected_fit_params = expected_fit_params
+        self.set_metadata_request({'fit': expected_fit_params})
 
     def _check_X_y(self, X, y=None, should_be_fitted=True):
         """Validate X and y and make extra check.
@@ -175,6 +176,11 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
         self
         """
         assert _num_samples(X) == _num_samples(y)
+
+        # Note: this will break things if the user calls set_metadata_request
+        # and set unusual values and not reflect that in expected_fit_params.
+        self.set_metadata_request({'fit': self.expected_fit_params})
+
         if self.methods_to_check == "all" or "fit" in self.methods_to_check:
             X, y = self._check_X_y(X, y, should_be_fitted=False)
         self.n_features_in_ = np.shape(X)[1]

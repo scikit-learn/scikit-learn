@@ -1655,7 +1655,7 @@ def test_fit_and_score_failing():
     X = np.arange(1, 10)
     y = np.ones(9)
     fit_and_score_args = [failing_clf, X, None, dict(), None, None, 0,
-                          None, None]
+                          None, None, None]
     # passing error score to trigger the warning message
     fit_and_score_kwargs = {'error_score': 0}
     # check if the warning message type is as expected
@@ -1714,6 +1714,7 @@ def test_fit_and_score_working():
     fit_and_score_args = [clf, X, y, dict(), train, test, 0]
     fit_and_score_kwargs = {'parameters': {'max_iter': 100, 'tol': 0.1},
                             'fit_params': None,
+                            'score_params': None,
                             'return_parameters': True}
     result = _fit_and_score(*fit_and_score_args,
                             **fit_and_score_kwargs)
@@ -1745,7 +1746,8 @@ def test_fit_and_score_verbosity(capsys, train_score, scorer, verbose,
     train, test = next(ShuffleSplit().split(X))
 
     # test print without train score
-    fit_and_score_args = [clf, X, y, scorer, train, test, verbose, None, None]
+    fit_and_score_args = [clf, X, y, scorer, train, test, verbose, None, None,
+                          None]
     fit_and_score_kwargs = {'return_train_score': train_score,
                             'split_progress': split_prg,
                             'candidate_progress': cdt_prg}
@@ -1764,6 +1766,6 @@ def test_score():
 
     def two_params_scorer(estimator, X_test):
         return None
-    fit_and_score_args = [None, None, None, two_params_scorer]
+    fit_and_score_args = [None, None, None, two_params_scorer, None]
     assert_raise_message(ValueError, error_message,
                          _score, *fit_and_score_args)
