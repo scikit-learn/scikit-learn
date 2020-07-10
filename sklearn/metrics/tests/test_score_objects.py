@@ -736,32 +736,6 @@ def test_multiclass_roc_no_proba_scorer_errors(scorer_name):
         scorer(lr, X, y)
 
 
-@pytest.mark.parametrize(
-    "Estimator, X, y",
-    [(LogisticRegression, *make_classification(n_classes=2)),
-     (LogisticRegression, *make_classification(
-         n_classes=3, n_clusters_per_class=1
-     )),
-     (LogisticRegression, *make_multilabel_classification()),
-     (Ridge, *make_regression(n_targets=1)),
-     (Ridge, *make_regression(n_targets=2))],
-    ids=[
-        "binary-classification",
-        "multiclass-classification",
-        "multilabel-classification",
-        "regression",
-        "multioutput-regression",
-    ]
-)
-def _generate_scorer(Estimator, X, y):
-    # smoke test to check that we can compute the score on the expected
-    # dataset
-    scorers = get_applicable_scorers(y)
-    estimator = Estimator().fit(X, y)
-    for scorer_name in scorers:
-        yield estimator, X, y, scorers[scorer_name]
-
-
 def _parametrize_scorers_from_target(estimator_data_ids):
     check_scorers, check_scorers_ids = zip(*[
         ((Estimator, X, np.abs(y) - np.min(y), scorer),
@@ -775,6 +749,9 @@ def _parametrize_scorers_from_target(estimator_data_ids):
     )
 
 
+@pytest.mark.filterwarnings(
+    "ignore::sklearn.exceptions.UndefinedMetricWarning"
+)
 @_parametrize_scorers_from_target(
     [("binary", LogisticRegression, *make_classification(n_classes=2)),
      ("multiclass", LogisticRegression,
