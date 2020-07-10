@@ -1085,3 +1085,12 @@ def test_init_param():
                 assert np.any(np.not_equal(
                     default_means_init[i_mean],
                     default_means_init[j_mean]))
+
+    # Check that max_iter=0 returns initialisation as expected
+    # Pick arbitrary initial means and check equal to max_iter=0
+    means_init = [[20, 30], [30, 25]]
+    gmm = GaussianMixture(n_components=n_components, random_state=rng,
+                          means_init=means_init, tol=1e-06, max_iter=0)
+    gmm.fit(X)
+
+    assert_array_equal(gmm.means_, means_init)
