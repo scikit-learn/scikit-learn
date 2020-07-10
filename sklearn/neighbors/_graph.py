@@ -275,6 +275,22 @@ class KNeighborsTransformer(KNeighborsMixin, UnsupervisedMixin,
         The number of parallel jobs to run for neighbors search.
         If ``-1``, then the number of jobs is set to the number of CPU cores.
 
+    Attributes
+    ----------
+    effective_metric_ : str or callable
+        The distance metric used. It will be same as the `metric` parameter
+        or a synonym of it, e.g. 'euclidean' if the `metric` parameter set to
+        'minkowski' and `p` parameter set to 2.
+
+    effective_metric_params_ : dict
+        Additional keyword arguments for the metric function. For most metrics
+        will be same with `metric_params` parameter, but may also contain the
+        `p` parameter value if the `effective_metric_` attribute is set to
+        'minkowski'.
+
+    n_samples_fit_ : int
+        Number of samples in the fitted data.
+
     Examples
     --------
     >>> from sklearn.manifold import Isomap
@@ -416,6 +432,22 @@ class RadiusNeighborsTransformer(RadiusNeighborsMixin, UnsupervisedMixin,
     n_jobs : int, default=1
         The number of parallel jobs to run for neighbors search.
         If ``-1``, then the number of jobs is set to the number of CPU cores.
+
+    Attributes
+    ----------
+    effective_metric_ : str or callable
+        The distance metric used. It will be same as the `metric` parameter
+        or a synonym of it, e.g. 'euclidean' if the `metric` parameter set to
+        'minkowski' and `p` parameter set to 2.
+
+    effective_metric_params_ : dict
+        Additional keyword arguments for the metric function. For most metrics
+        will be same with `metric_params` parameter, but may also contain the
+        `p` parameter value if the `effective_metric_` attribute is set to
+        'minkowski'.
+
+    n_samples_fit_ : int
+        Number of samples in the fitted data.
 
     Examples
     --------

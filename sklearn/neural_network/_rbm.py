@@ -131,7 +131,7 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
         """
         check_is_fitted(self)
 
-        X = check_array(X, accept_sparse='csr', dtype=np.float64)
+        X = check_array(X, accept_sparse='csr', dtype=(np.float64, np.float32))
         return self._mean_hiddens(X)
 
     def _mean_hiddens(self, v):
@@ -344,16 +344,20 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
         self : BernoulliRBM
             The fitted model.
         """
-        X = self._validate_data(X, accept_sparse='csr', dtype=np.float64)
+        X = self._validate_data(
+            X, accept_sparse='csr', dtype=(np.float64, np.float32)
+        )
         n_samples = X.shape[0]
         rng = check_random_state(self.random_state)
 
         self.components_ = np.asarray(
             rng.normal(0, 0.01, (self.n_components, X.shape[1])),
-            order='F')
-        self.intercept_hidden_ = np.zeros(self.n_components, )
-        self.intercept_visible_ = np.zeros(X.shape[1], )
-        self.h_samples_ = np.zeros((self.batch_size, self.n_components))
+            order='F',
+            dtype=X.dtype)
+        self.intercept_hidden_ = np.zeros(self.n_components, dtype=X.dtype)
+        self.intercept_visible_ = np.zeros(X.shape[1], dtype=X.dtype)
+        self.h_samples_ = np.zeros((self.batch_size, self.n_components),
+                                   dtype=X.dtype)
 
         n_batches = int(np.ceil(float(n_samples) / self.batch_size))
         batch_slices = list(gen_even_slices(n_batches * self.batch_size,

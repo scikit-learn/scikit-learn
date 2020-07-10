@@ -14,19 +14,19 @@ class CCA(_UnstableArchMixin, _PLS):
 
     Parameters
     ----------
-    n_components : int, (default 2).
+    n_components : int, default=2
         number of components to keep.
 
-    scale : boolean, (default True)
+    scale : boolean, default=True
         whether to scale the data?
 
-    max_iter : an integer, (default 500)
+    max_iter : an integer, default=500
         the maximum number of iterations of the NIPALS inner loop
 
-    tol : non-negative real, default 1e-06.
+    tol : non-negative real, default=1e-06.
         the tolerance used in the iterative algorithm
 
-    copy : boolean
+    copy : boolean, default=True
         Whether the deflation be done on a copy. Let the default value
         to True unless you don't care about side effects
 
