@@ -729,13 +729,13 @@ def cross_val_predict(estimator, X, y=None, *, groups=None, cv=None,
               as in '2*n_jobs'
 
     method : {'predict', 'predict_proba', 'predict_log_proba', \
-        'decision_function'}, default='predict'
+              'decision_function'}, default='predict'
         The method to be invoked by `estimator`.
 
     Returns
     -------
     predictions : ndarray
-        This is the result of calling ``method``. Shape:
+        This is the result of calling `method`. Shape:
 
             - When `method` is 'predict' and in special case when `method` is
               'decision_function' and `n_classes` is 2: (n_samples,)
