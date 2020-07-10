@@ -31,7 +31,8 @@ from ._validation import _fit_and_score
 from ._validation import _aggregate_score_dicts
 from ..exceptions import NotFittedError
 from joblib import Parallel, delayed
-from ..utils import check_random_state, _get_props_from_objs
+from ..utils import (check_random_state, _get_props_from_objs,
+                     _empty_metadata_request, _merge_metadata_requests)
 from ..utils.random import sample_without_replacement
 from ..utils.validation import (indexable, check_is_fitted, _check_fit_params,
                                 _check_method_props)
@@ -644,25 +645,20 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         """
         raise NotImplementedError("_run_search not implemented.")
 
-    def set_metadata_request(self, props):
-        """Raises an error, metadata_request should be set at the step level.
-        """
-        raise RuntimeError("Property requests should be set at the step "
-                           "level and not at the pipeline level.")
-
     def get_metadata_request(self):
         scorers, _ = _check_multimetric_scoring(
             self.estimator, scoring=self.scoring)
         objs = [self.estimator, self.cv]
         objs.extend(scorers.values())
         props = _get_props_from_objs(objs)
-        print("GS props from objs:", props)
-        if 'fit' not in props:
-            props['fit'] = {}
-        if 'split' in props:
-            props['fit'].update(props['split'])
-        if 'score' in props:
-            props['fit'].update(props['score'])
+        # merge split into fit, since it's needed when fit is called
+        tmp_props = _empty_metadata_request()
+        tmp_props.fit = props.split
+        props = _merge_metadata_requests(props, tmp_props)
+        # merge score into fit, since it's needed when fit is called
+        tmp_props = _empty_metadata_request()
+        tmp_props.fit = props.score
+        props = _merge_metadata_requests(props, tmp_props)
 
         return props
 

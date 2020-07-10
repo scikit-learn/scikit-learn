@@ -31,9 +31,11 @@ def _rfe_single_fit(rfe, estimator, X, y, train, test, scorer):
     """
     X_train, y_train = _safe_split(estimator, X, y, train)
     X_test, y_test = _safe_split(estimator, X, y, test, train)
+    # TODO: support passing scorer params here
     return rfe._fit(
         X_train, y_train, lambda estimator, features:
-        _score(estimator, X_test[:, features], y_test, scorer)).scores_
+        _score(estimator, X_test[:, features],
+               y_test, scorer, scorer_params=None)).scores_
 
 
 class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):

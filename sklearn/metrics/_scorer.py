@@ -247,6 +247,10 @@ class _ProbaScorer(_BaseScorer):
                                      y_pred.shape, self._score_func.__name__))
         scoring_kwargs = copy.deepcopy(self._kwargs)
         scoring_kwargs.update(kwargs)
+        # this is for backward compatibility to avoid passing sample_weight
+        # to the scorer if it's None
+        if scoring_kwargs.get('sample_weight', -1) is None:
+            del scoring_kwargs['sample_weight']
         return self._sign * self._score_func(y, y_pred, **scoring_kwargs)
 
     def _factory_args(self):
