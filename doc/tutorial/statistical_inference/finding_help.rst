@@ -27,6 +27,6 @@ Q&A communities with Machine Learning practitioners
 
 .. _`multiple subdomains for Machine Learning questions`: https://meta.stackexchange.com/q/130524
 
--- _'An excellent free online course for Machine Learning taught by Professor Andrew Ng of Stanford': https://www.coursera.org/learn/machine-learning
+- `An excellent free online course for Machine Learning taught by Professor Andrew Ng of Stanford <https://www.coursera.org/learn/machine-learning>`_
 
--- _'Another excellent free online course that takes a more general approach to Artificial Intelligence': https://www.udacity.com/course/intro-to-artificial-intelligence--cs271
+- `Another excellent free online course that takes a more general approach to Artificial Intelligence <https://www.udacity.com/course/intro-to-artificial-intelligence--cs271>`_
