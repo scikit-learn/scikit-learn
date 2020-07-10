@@ -111,6 +111,11 @@ Changelog
   :pr:`17090` by :user:`Lisa Schwetlick <lschwetlick>` and
   :user:`Marija Vlajic Wheeler <marijavlajic>`.
 
+- |Fix| Fixed bug in :func:`feature_selection.f_regression` that caused
+  `RuntimeWarning` for features or tag with identically constant columns
+  and degrees of freedom less than one. :pr:`17819` by :user:`Juan Carlos
+  Alfaro Jiménez <alfaro96>`..
+
 :mod:`sklearn.impute`
 .....................
 
