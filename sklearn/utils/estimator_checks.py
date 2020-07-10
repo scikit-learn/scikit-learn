@@ -2253,7 +2253,6 @@ def check_classifiers_classes(name, classifier_orig, strict_mode=True):
 
 @ignore_warnings(category=FutureWarning)
 def check_regressors_int(name, regressor_orig, strict_mode=True):
-    X, _ = _boston_subset()
     X, _ = _regression_dataset()
     X = _pairwise_estimator_convert_X(X[:50], regressor_orig)
     rnd = np.random.RandomState(0)
