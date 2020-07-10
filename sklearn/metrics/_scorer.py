@@ -18,9 +18,12 @@ ground truth labeling (or ``None`` in the case of unsupervised models).
 #          Arnaud Joly <arnaud.v.joly@gmail.com>
 # License: Simplified BSD
 
-from collections.abc import Iterable
-from functools import partial
 from collections import Counter
+from collections import namedtuple
+from collections.abc import Iterable
+from copy import deepcopy
+from inspect import signature
+from functools import partial
 
 import numpy as np
 
@@ -686,3 +689,135 @@ for name, metric in [('precision', precision_score),
         qualified_name = '{0}_{1}'.format(name, average)
         SCORERS[qualified_name] = make_scorer(metric, pos_label=None,
                                               average=average)
+
+ScorerProperty = namedtuple(
+    "ScorerProperty", ["scorer", "target_type_supported"],
+)
+
+SCORERS_PROPERTY = dict(
+    explained_variance=ScorerProperty(
+        scorer=explained_variance_scorer,
+        target_type_supported=("continuous", "continuous-multioutput"),
+    ),
+    r2=ScorerProperty(
+        scorer=r2_scorer,
+        target_type_supported=("continuous", "continuous-multioutput"),
+    ),
+    max_error=ScorerProperty(
+        scorer=max_error_scorer,
+        target_type_supported=("continuous",),
+    ),
+    neg_median_absolute_error=ScorerProperty(
+        scorer=neg_median_absolute_error_scorer,
+        target_type_supported=("continuous", "continuous-multioutput"),
+    ),
+    neg_mean_absolute_error=ScorerProperty(
+        scorer=neg_mean_absolute_error_scorer,
+        target_type_supported=("continuous", "continuous-multioutput"),
+    ),
+    neg_mean_absolute_percentage_error=ScorerProperty(
+        scorer=neg_mean_absolute_percentage_error_scorer,
+        target_type_supported=("continuous", "continuous-multioutput"),
+    ),
+    neg_mean_squared_error=ScorerProperty(
+        scorer=neg_mean_squared_error_scorer,
+        target_type_supported=("continuous", "continuous-multioutput"),
+    ),
+    neg_mean_squared_log_error=ScorerProperty(
+        scorer=neg_mean_squared_log_error_scorer,
+        target_type_supported=("continuous", "continuous-multioutput"),
+    ),
+    neg_root_mean_squared_error=ScorerProperty(
+        scorer=neg_root_mean_squared_error_scorer,
+        target_type_supported=("continuous", "continuous-multioutput"),
+    ),
+    neg_mean_poisson_deviance=ScorerProperty(
+        scorer=neg_mean_poisson_deviance_scorer,
+        target_type_supported=("continuous",),
+    ),
+    neg_mean_gamma_deviance=ScorerProperty(
+        scorer=neg_mean_gamma_deviance_scorer,
+        target_type_supported=("continuous",),
+    ),
+    accuracy=ScorerProperty(
+        scorer=accuracy_scorer,
+        target_type_supported=("binary", "multiclass", "multilabel-indicator"),
+    ),
+    roc_auc=ScorerProperty(
+        scorer=roc_auc_scorer,
+        target_type_supported=("binary", "multiclass", "multilabel-indicator"),
+    ),
+    balanced_accuracy=ScorerProperty(
+        scorer=balanced_accuracy_scorer,
+        target_type_supported=("binary", "multiclass"),
+    ),
+    precision=ScorerProperty(
+        scorer=make_scorer(precision_score),
+        target_type_supported=("binary", "multilabel-indicator"),
+    ),
+    recall=ScorerProperty(
+        scorer=make_scorer(recall_score),
+        target_type_supported=("binary", "multilabel-indicator"),
+    ),
+    f1=ScorerProperty(
+        scorer=make_scorer(f1_score),
+        target_type_supported=("binary", "multilabel-indicator"),
+    ),
+    jaccard=ScorerProperty(
+        scorer=make_scorer(jaccard_score),
+        target_type_supported=("binary", "multilabel-indicator"),
+    ),
+    average_precision=ScorerProperty(
+        scorer=average_precision_scorer,
+        target_type_supported=("binary", "multilabel-indicator"),
+    ),
+    neg_log_loss=ScorerProperty(
+        scorer=neg_log_loss_scorer,
+        target_type_supported=("binary", "multiclass", "multilabel-indicator"),
+    ),
+    neg_brier_score=ScorerProperty(
+        scorer=neg_brier_score_scorer,
+        target_type_supported=("binary", "multiclass"),
+    ),
+)
+
+
+def get_applicable_scorers(y, **scorers_params):
+    """Utility providing scorers to be used on `y`.
+
+    This utility creates a dictionary containing the scorers which can be used
+    on `y`. The dictionary returned can be used directly in a
+    :class:`~sklearn.model_selection.GridSearchCV`.
+
+    Additional parameters taken by the different metrics can be passed as
+    keyword argument.
+
+    Parameters
+    ----------
+    y : array-like
+        The target used to infer the metrics which can be used.
+
+    **scorers_params
+        Additional parameters to be passed to the scorers when present in their
+        signature.
+
+    Returns
+    -------
+    scorers : dict
+        A dictionary containing the scorer name as key and a scorer callable as
+        value.
+    """
+    target_type = type_of_target(y)
+
+    scorers = {}
+    for scorer_name, scorer_property in SCORERS_PROPERTY.items():
+        if target_type in scorer_property.target_type_supported:
+            scorers[scorer_name] = deepcopy(scorer_property.scorer)
+            scorer_sig = signature(scorers[scorer_name]._score_func)
+            for param_name, param_value in scorers_params.items():
+                if param_name in scorer_sig.parameters:
+                    scorers[scorer_name]._kwargs[param_name] = param_value
+
+    if not scorers:
+        raise ValueError("No compatible scorer with the target 'y' was found.")
+    return scorers

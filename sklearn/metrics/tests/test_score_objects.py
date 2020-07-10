@@ -25,7 +25,12 @@ from sklearn.metrics._scorer import (_PredictScorer, _passthrough_scorer,
                                      _MultimetricScorer,
                                      _check_multimetric_scoring)
 from sklearn.metrics import accuracy_score
-from sklearn.metrics import make_scorer, get_scorer, SCORERS
+from sklearn.metrics import (
+    get_applicable_scorers,
+    get_scorer,
+    make_scorer,
+    SCORERS
+)
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import LinearSVC
 from sklearn.pipeline import make_pipeline
@@ -729,3 +734,54 @@ def test_multiclass_roc_no_proba_scorer_errors(scorer_name):
     msg = "'Perceptron' object has no attribute 'predict_proba'"
     with pytest.raises(AttributeError, match=msg):
         scorer(lr, X, y)
+
+
+@pytest.mark.parametrize(
+    "Estimator, X, y",
+    [(LogisticRegression, *make_classification(n_classes=2)),
+     (LogisticRegression, *make_classification(
+         n_classes=3, n_clusters_per_class=1
+     )),
+     (LogisticRegression, *make_multilabel_classification()),
+     (Ridge, *make_regression(n_targets=1)),
+     (Ridge, *make_regression(n_targets=2))],
+    ids=[
+        "binary-classification",
+        "multiclass-classification",
+        "multilabel-classification",
+        "regression",
+        "multioutput-regression",
+    ]
+)
+def _generate_scorer(Estimator, X, y):
+    # smoke test to check that we can compute the score on the expected
+    # dataset
+    scorers = get_applicable_scorers(y)
+    estimator = Estimator().fit(X, y)
+    for scorer_name in scorers:
+        yield estimator, X, y, scorers[scorer_name]
+
+
+def _parametrize_scorers_from_target(estimator_data_ids):
+    check_scorers, check_scorers_ids = zip(*[
+        ((Estimator, X, y, scorer), f"{scorer_name}-{problem_id}")
+        for problem_id, Estimator, X, y in estimator_data_ids
+        for scorer_name, scorer in get_applicable_scorers(y).items()
+    ])
+
+    return pytest.mark.parametrize(
+        "Estimator, X, y, scorer", check_scorers, ids=check_scorers_ids,
+    )
+
+
+@_parametrize_scorers_from_target(
+    [("binary", LogisticRegression, *make_classification(n_classes=2)),
+     ("multiclass", LogisticRegression,
+      *make_classification(n_classes=3, n_clusters_per_class=1)),
+     ("multilabel", LogisticRegression, *make_multilabel_classification()),
+     ("continuous", Ridge, *make_regression(n_targets=1)),
+    ("continuous-multioutput", Ridge, *make_regression(n_targets=2))]
+)
+def test_get_applicable_scorers_smoke_test(Estimator, X, y, scorer):
+    estimator = Estimator().fit(X, y)
+    scorer(estimator, X, y)
