@@ -25,6 +25,7 @@ from sklearn.metrics._scorer import (_PredictScorer, _passthrough_scorer,
                                      _MultimetricScorer,
                                      _check_multimetric_scoring)
 from sklearn.metrics import accuracy_score
+from sklearn.metrics import average_precision_score
 from sklearn.metrics import (
     get_applicable_scorers,
     get_scorer,
@@ -40,6 +41,7 @@ from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.datasets import make_blobs
 from sklearn.datasets import make_classification, make_regression
 from sklearn.datasets import make_multilabel_classification
+from sklearn.datasets import load_breast_cancer
 from sklearn.datasets import load_diabetes
 from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.model_selection import GridSearchCV
@@ -761,5 +763,61 @@ def _parametrize_scorers_from_target(estimator_data_ids):
      ("continuous-multioutput", Ridge, *make_regression(n_targets=2))]
 )
 def test_get_applicable_scorers_smoke_test(Estimator, X, y, scorer):
+    # smoke test to check that we can use the score on the registered problem
     estimator = Estimator().fit(X, y)
     scorer(estimator, X, y)
+
+
+@pytest.mark.filterwarnings(
+    "ignore::sklearn.exceptions.UndefinedMetricWarning"
+)
+@pytest.mark.parametrize(
+    "Estimator, X, y",
+    [(LogisticRegression, *make_classification(n_classes=2)),
+     (LogisticRegression,
+      *make_classification(n_classes=3, n_clusters_per_class=1)),
+     (DecisionTreeClassifier, *make_multilabel_classification()),
+     (Ridge, *make_regression(n_targets=1)),
+     (Ridge, *make_regression(n_targets=2))]
+)
+def test_get_applicable_scorers_with_grid_search_smoke_test(Estimator, X, y):
+    # smoke test to check that scorers can be used directly inside a
+    # grid-search
+    if issubclass(Estimator, LogisticRegression):
+        param_grid = {"C": [0.1, 1]}
+    elif issubclass(Estimator, DecisionTreeClassifier):
+        param_grid = {"max_depth": [3, 5]}
+    elif issubclass(Estimator, Ridge):
+        y = np.abs(y) - np.min(y)
+        param_grid = {"alpha": [1, 10]}
+
+    scorers = get_applicable_scorers(y)
+    estimator = GridSearchCV(
+        Estimator(), param_grid=param_grid, scoring=scorers, n_jobs=-1,
+        refit=list(scorers.keys())[0],
+    )
+    estimator.fit(X, y)
+
+
+def test_get_applicable_scorers_passing_scoring_params():
+    # check that we can pass scoring parameters when getting the score
+    breast_cancer = load_breast_cancer()
+    X = breast_cancer.data
+    y = breast_cancer.target_names[breast_cancer.target].astype("object")
+
+    scorers = get_applicable_scorers(y, pos_label="malignant")
+    average_precision_scorer = scorers["average_precision"]
+    assert "pos_label" in average_precision_scorer._kwargs
+    assert average_precision_scorer._kwargs["pos_label"] == "malignant"
+
+    estimator = GridSearchCV(
+        DecisionTreeClassifier(), param_grid={"max_depth": [3, 5]},
+        scoring=average_precision_scorer,
+    )
+    estimator.fit(X, y)
+
+    # check that if we don't provide any pos_label, the grid-search will raise
+    # an error
+    with pytest.raises(ValueError, match="pos_label=1 is invalid"):
+        estimator.set_params(scoring=make_scorer(average_precision_score))
+        estimator.fit(X, y)
