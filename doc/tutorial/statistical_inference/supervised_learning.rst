@@ -257,6 +257,7 @@ induces high variance:
 
 .. image:: /auto_examples/linear_model/images/sphx_glr_plot_ols_ridge_variance_001.png
    :target: ../../auto_examples/linear_model/plot_ols_ridge_variance.html
+   :align: center
 
 .. raw :: html
 
@@ -295,6 +296,7 @@ regression:
 
 .. image:: /auto_examples/linear_model/images/sphx_glr_plot_ols_ridge_variance_002.png
    :target: ../../auto_examples/linear_model/plot_ols_ridge_variance.html
+   :align: center
 
 .. raw :: html
 

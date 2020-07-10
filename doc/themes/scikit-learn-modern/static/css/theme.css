@@ -1198,7 +1198,7 @@ div.sk-page-content img.map {
 
 /* sponsors and testimonials */
 
-div.sk-sponsor-div, div.sk-testimonial-div, div.sk-doc-div {
+div.sk-sponsor-div, div.sk-testimonial-div {
   display: flex;
   flex-wrap: wrap;
   -webkit-flex-align: center;
@@ -1212,6 +1212,16 @@ div.sk-doc-div-box {
   width: 100%;
 }
 
+div.sk-doc-div {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+div.sk-doc-div-box {
+  padding: 0.30rem;
+  overflow: auto;
+}
+
 @media screen and (min-width: 500px) {
   div.sk-sponsor-div-box, div.sk-testimonial-div-box {
     width: 50%;
@@ -1222,11 +1232,6 @@ div.sk-doc-div-box {
   div.sk-doc-div-box {
     width: 50%;
   }
-}
-
-div.sk-doc-div-box {
-  padding: 0.30rem;
-  overflow: auto;
 }
 
 table.sk-sponsor-table tr, table.sk-sponsor-table tr:nth-child(odd) {
