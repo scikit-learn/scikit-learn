@@ -179,24 +179,37 @@ scoring method.
 
 .. currentmodule:: sklearn.svm
 
-.. topic:: **Exercise**
+.. topic:: Exercise
    :class: green
 
-   .. image:: /auto_examples/exercises/images/sphx_glr_plot_cv_digits_001.png
-        :target: ../../auto_examples/exercises/plot_cv_digits.html
-        :align: right
-        :scale: 90
+    .. raw :: html
+
+       <div class="sk-doc-div">
+         <div class="sk-doc-div-box">
 
    On the digits dataset, plot the cross-validation score of a :class:`SVC`
    estimator with an linear kernel as a function of parameter ``C`` (use a
    logarithmic grid of points, from 1 to 10).
 
-   .. literalinclude:: ../../auto_examples/exercises/plot_cv_digits.py
-       :lines: 13-23
+        .. literalinclude:: ../../auto_examples/exercises/plot_cv_digits.py
+            :lines: 13-23
 
-   **Solution:** :ref:`sphx_glr_auto_examples_exercises_plot_cv_digits.py`
+    .. raw :: html
 
+         </div>
+           <div class="sk-doc-div-box">
 
+    .. image:: /auto_examples/exercises/images/sphx_glr_plot_cv_digits_001.png
+        :target: ../../auto_examples/exercises/plot_cv_digits.html
+        :align: center
+        :scale: 90
+
+    .. raw :: html
+
+         </div>
+       </div>
+
+    **Solution:** :ref:`sphx_glr_auto_examples_exercises_plot_cv_digits.py`
 
 Grid-search and cross-validated estimators
 ============================================
