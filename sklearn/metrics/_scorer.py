@@ -799,6 +799,7 @@ for name, metric in [('precision', precision_score),
             target_type_supported=("multilabel-indicator"),
         )
 
+
 def get_applicable_scorers(y, **scorers_params):
     """Utility providing scorers to be used on `y`.
 
