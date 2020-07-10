@@ -427,9 +427,15 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
     def __init__(self, base_estimator, *, order=None, cv=None,
                  random_state=None):
         self.base_estimator = base_estimator
-        self.order = np.array(order)
-        if len(self.order.shape) != 1:
-            raise ValueError(f"order is {order}, must be 1-dimensional")
+
+        if order == 'random' or order is None:
+            self.order = order
+        else:
+            self.order = np.array(order)
+            if len(self.order.shape) != 1:
+                raise ValueError(f'order is {order}, must be 1-dimensional, '
+                                 '"random", or None.')
+
         self.cv = cv
         self.random_state = random_state
 
