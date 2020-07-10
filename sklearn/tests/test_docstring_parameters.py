@@ -233,7 +233,7 @@ def test_fit_docstring_attributes(name, Estimator):
             assert hasattr(est, attr.name)
 
     IGNORED = {'BayesianRidge', 'Birch', 'CCA',
-               'LarsCV', 'Lasso', 'LassoLarsCV', 'LassoLarsIC',
+               'LarsCV', 'Lasso', 'LassoLarsIC',
                'OrthogonalMatchingPursuit',
                'PLSCanonical', 'PLSSVD'}
 
