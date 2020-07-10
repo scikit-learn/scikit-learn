@@ -235,7 +235,6 @@ def test_fit_docstring_attributes(name, Estimator):
     IGNORED = {'BayesianRidge', 'Birch', 'CCA', 'CategoricalNB',
                'KernelCenterer',
                'LarsCV', 'Lasso', 'LassoLarsCV', 'LassoLarsIC',
-               'MiniBatchKMeans',
                'OrthogonalMatchingPursuit',
                'PLSCanonical', 'PLSSVD',
                'PassiveAggressiveClassifier'}

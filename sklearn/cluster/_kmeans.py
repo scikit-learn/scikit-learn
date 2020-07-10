@@ -1532,6 +1532,9 @@ class MiniBatchKMeans(KMeans):
         defined as the sum of square distances of samples to their nearest
         neighbor.
 
+    n_iter_ : int
+        Number of batches processed.
+
     counts_ : ndarray of shape (n_clusters,)
         Weigth sum of each cluster.
 
