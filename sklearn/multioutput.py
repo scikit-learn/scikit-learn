@@ -305,7 +305,7 @@ class MultiOutputClassifier(ClassifierMixin, _MultiOutputEstimator):
 
     Attributes
     ----------
-    classes_ : array of shape (n_classes,)
+    classes_ : ndarray of shape (n_classes,)
         Class labels.
 
     estimators_ : list of ``n_output`` estimators
