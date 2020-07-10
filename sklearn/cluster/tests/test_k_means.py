@@ -292,47 +292,16 @@ def test_all_init(Estimator, data, init):
     _check_fitted_model(km)
 
 
-def test_k_means_n_init():
-    rnd = np.random.RandomState(0)
-    X = rnd.normal(size=(40, 2))
-
-    # two regression tests on bad n_init argument
-    # previous bug: n_init <= 0 threw non-informative TypeError (#3858)
-    with pytest.raises(ValueError, match="n_init"):
-        KMeans(n_init=0).fit(X)
-    with pytest.raises(ValueError, match="n_init"):
-        KMeans(n_init=-1).fit(X)
-
-
-@pytest.mark.parametrize('Class', [KMeans, MiniBatchKMeans])
-def test_k_means_explicit_init_shape(Class):
-    # test for sensible errors when giving explicit init
-    # with wrong number of features or clusters
-    rnd = np.random.RandomState(0)
-    X = rnd.normal(size=(40, 3))
-
-    # mismatch of number of features
-    km = Class(n_init=1, init=X[:, :2], n_clusters=len(X))
-    msg = "does not match the number of features of the data"
-    with pytest.raises(ValueError, match=msg):
-        km.fit(X)
-    # for callable init
-    km = Class(n_init=1,
-               init=lambda X_, k, random_state: X_[:, :2],
-               n_clusters=len(X))
-    with pytest.raises(ValueError, match=msg):
-        km.fit(X)
-    # mismatch of number of clusters
-    msg = "does not match the number of clusters"
-    km = Class(n_init=1, init=X[:2, :], n_clusters=3)
-    with pytest.raises(ValueError, match=msg):
-        km.fit(X)
-    # for callable init
-    km = Class(n_init=1,
-               init=lambda X_, k, random_state: X_[:2, :],
-               n_clusters=3)
-    with pytest.raises(ValueError, match=msg):
-        km.fit(X)
+@pytest.mark.parametrize("init", ["random", "k-means++", centers,
+                                  lambda X, k, random_state: centers],
+                         ids=["random", "k-means++", "ndarray", "callable"])
+def test_minibatch_kmeans_partial_fit_init(init):
+    # Check MiniBatchKMeans init with partial_fit
+    km = MiniBatchKMeans(init=init, n_clusters=n_clusters, random_state=0)
+    for i in range(100):
+        # "random" init requires many batches to recover the true labels.
+        km.partial_fit(X)
+    _check_fitted_model(km)
 
 
 @pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
@@ -515,13 +484,6 @@ def test_sparse_mb_k_means_callable_init():
     def test_init(X, k, random_state):
         return centers
 
-    # Small test to check that giving the wrong number of centers
-    # raises a meaningful error
-    msg = "does not match the number of clusters"
-    with pytest.raises(ValueError, match=msg):
-        MiniBatchKMeans(init=test_init, random_state=42).fit(X_csr)
-
-    # Now check that the fit actually works
     mb_k_means = MiniBatchKMeans(n_clusters=3, init=test_init,
                                  random_state=42).fit(X_csr)
     _check_fitted_model(mb_k_means)
@@ -539,12 +501,21 @@ def test_mini_batch_k_means_random_init_partial_fit():
     assert v_measure_score(true_labels, labels) == 1.0
 
 
-def test_minibatch_default_init_size():
-    mb_k_means = MiniBatchKMeans(init=centers.copy(), n_clusters=n_clusters,
-                                 batch_size=10, random_state=42,
-                                 n_init=1).fit(X)
-    assert mb_k_means.init_size_ == 3 * mb_k_means.batch_size
-    _check_fitted_model(mb_k_means)
+def test_minibatch_kmeans_default_init_size():
+    # Check the internal _init_size attribute of MiniBatchKMeans
+
+    # default init size should be 3 * batch_size
+    km = MiniBatchKMeans(n_clusters=10, batch_size=5, n_init=1).fit(X)
+    assert km._init_size == 15
+
+    # if 3 * batch size < n_clusters, it should then be 3 * n_clusters
+    km = MiniBatchKMeans(n_clusters=10, batch_size=1, n_init=1).fit(X)
+    assert km._init_size == 30
+
+    # it should not be larger than n_samples
+    km = MiniBatchKMeans(n_clusters=10, batch_size=5, n_init=1,
+                         init_size=n_samples + 1).fit(X)
+    assert km._init_size == n_samples
 
 
 def test_minibatch_tol():
@@ -560,13 +531,6 @@ def test_minibatch_set_init_size():
     assert mb_k_means.init_size == 666
     assert mb_k_means.init_size_ == n_samples
     _check_fitted_model(mb_k_means)
-
-
-@pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
-def test_k_means_invalid_init(Estimator):
-    km = Estimator(init="invalid", n_init=1, n_clusters=n_clusters)
-    with pytest.raises(ValueError):
-        km.fit(X)
 
 
 def test_k_means_copyx():
@@ -748,10 +712,6 @@ def test_k_means_function():
     assert_warns(RuntimeWarning, k_means, X, n_clusters=n_clusters,
                  sample_weight=None, init=centers)
 
-    # to many clusters desired
-    with pytest.raises(ValueError):
-        k_means(X, n_clusters=X.shape[0] + 1, sample_weight=None)
-
 
 def test_x_squared_norms_init_centroids():
     # Test that x_squared_norms can be None in _init_centroids
@@ -763,12 +723,6 @@ def test_x_squared_norms_init_centroids():
     assert_array_almost_equal(
         precompute,
         _init_centroids(X, 3, "k-means++", random_state=0))
-
-
-def test_max_iter_error():
-    km = KMeans(max_iter=-1)
-    assert_raise_message(ValueError, 'Number of iterations should be',
-                         km.fit, X)
 
 
 @pytest.mark.parametrize("data", [X, X_csr], ids=["dense", "sparse"])
@@ -831,24 +785,6 @@ def test_k_means_init_fitted_centers(data):
     new_centers = KMeans(n_clusters=3, init=centers,
                          n_init=1).fit(X).cluster_centers_
     assert_array_almost_equal(centers, new_centers)
-
-
-def test_sparse_validate_centers():
-    from sklearn.datasets import load_iris
-
-    iris = load_iris()
-    X = iris.data
-
-    # Get a local optimum
-    centers = KMeans(n_clusters=4).fit(X).cluster_centers_
-
-    # Test that a ValueError is raised for validate_center_shape
-    classifier = KMeans(n_clusters=3, init=centers, n_init=1)
-
-    msg = r"The shape of the initial centers \(\(4L?, 4L?\)\) " \
-          "does not match the number of clusters 3"
-    with pytest.raises(ValueError, match=msg):
-        classifier.fit(X)
 
 
 def test_less_centers_than_unique_points():
@@ -924,15 +860,6 @@ def test_scaled_weights():
         assert_almost_equal(v_measure_score(est_1.labels_, est_2.labels_), 1.0)
         assert_almost_equal(_sort_centers(est_1.cluster_centers_),
                             _sort_centers(est_2.cluster_centers_))
-
-
-def test_sample_weight_length():
-    # check that an error is raised when passing sample weights
-    # with an incompatible shape
-    km = KMeans(n_clusters=n_clusters, random_state=42)
-    msg = r'sample_weight.shape == \(2,\), expected \(100,\)'
-    with pytest.raises(ValueError, match=msg):
-        km.fit(X, sample_weight=np.ones(2))
 
 
 def test_iter_attribute():
@@ -1108,3 +1035,54 @@ def test_sample_weight_unchanged():
 
     # internally, sample_weight is rescale to sum up to n_samples = 3
     assert_array_equal(sample_weight, np.array([0.5, 0.2, 0.3]))
+
+
+@pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
+@pytest.mark.parametrize("param, match", [
+    ({"n_init": 0}, r"n_init should be > 0"),
+    ({"max_iter": 0}, r"max_iter should be > 0"),
+    ({"n_clusters": n_samples + 1}, r"n_samples.* should be >= n_clusters"),
+    ({"init": X[:2]},
+     r"The shape of the initial centers .* does not match "
+     r"the number of clusters"),
+    ({"init": lambda X_, k, random_state: X_[:2]},
+     r"The shape of the initial centers .* does not match "
+     r"the number of clusters"),
+    ({"init": X[:8, :2]},
+     r"The shape of the initial centers .* does not match "
+     r"the number of features of the data"),
+    ({"init": lambda X_, k, random_state: X_[:8, :2]},
+     r"The shape of the initial centers .* does not match "
+     r"the number of features of the data"),
+    ({"init": "wrong"},
+     r"init should be either 'k-means\+\+', 'random', "
+     r"a ndarray or a callable")]
+)
+def test_wrong_params(Estimator, param, match):
+    # Check that error are raised with clear error message when wrong values
+    # are passed for the parameters
+    with pytest.raises(ValueError, match=match):
+        Estimator(**param).fit(X)
+
+
+@pytest.mark.parametrize("param, match", [
+    ({"algorithm": "wrong"}, r"Algorithm must be 'auto', 'full' or 'elkan'")]
+)
+def test_kmeans_wrong_params(param, match):
+    # Check that error are raised with clear error message when wrong values
+    # are passed for the KMeans specific parameters
+    with pytest.raises(ValueError, match=match):
+        KMeans(**param).fit(X)
+
+
+@pytest.mark.parametrize("param, match", [
+    ({"max_no_improvement": -1}, r"max_no_improvement should be >= 0"),
+    ({"batch_size": -1}, r"batch_size should be > 0"),
+    ({"init_size": -1}, r"init_size should be > 0"),
+    ({"reassignment_ratio": -1}, r"reassignment_ratio should be >= 0")]
+)
+def test_minibatch_kmeans_wrong_params(param, match):
+    # Check that error are raised with clear error message when wrong values
+    # are passed for the MiniBatchKMeans specific parameters
+    with pytest.raises(ValueError, match=match):
+        MiniBatchKMeans(**param).fit(X)
