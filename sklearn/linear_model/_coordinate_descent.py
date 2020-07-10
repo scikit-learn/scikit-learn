@@ -1836,6 +1836,10 @@ class MultiTaskElasticNet(Lasso):
     eps_ : float
         The tolerance scaled scaled by the variance of the target `y`.
 
+    sparse_coef_ : sparse matrix of shape (n_features, 1) or \
+            (n_targets, n_features)
+        ``sparse_coef_`` is a readonly property derived from ``coef_``
+
     Examples
     --------
     >>> from sklearn import linear_model
@@ -2030,6 +2034,10 @@ class MultiTaskLasso(MultiTaskElasticNet):
 
     eps_ : float
         The tolerance scaled scaled by the variance of the target `y`.
+
+    sparse_coef_ : sparse matrix of shape (n_features, 1) or \
+            (n_targets, n_features)
+        ``sparse_coef_`` is a readonly property derived from ``coef_``
 
     Examples
     --------
