@@ -755,6 +755,11 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
             raise ValueError('precompute should be one of True, False or'
                              ' array-like. Got %r' % self.precompute)
 
+        if (not isinstance(self.l1_ratio, numbers.Number) or
+                self.l1_ratio < 0 or self.l1_ratio > 1):
+            raise ValueError("l1_ratio must be between 0 and 1; "
+                             f"got l1_ratio={self.l1_ratio}")
+
         # Remember if X is copied
         X_copied = False
         # We expect X and y to be float64 or float32 Fortran ordered arrays
