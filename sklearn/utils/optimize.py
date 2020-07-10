@@ -224,7 +224,7 @@ def _check_optimize_result(solver, result, max_iter=None,
 
     Returns
     -------
-    n_iter: int
+    n_iter : int
        Number of iterations.
     """
     # handle both scipy and scikit-learn solver names
