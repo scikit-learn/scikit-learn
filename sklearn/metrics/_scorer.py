@@ -745,23 +745,27 @@ SCORERS_PROPERTY = dict(
     ),
     roc_auc=ScorerProperty(
         scorer=roc_auc_scorer,
-        target_type_supported=("binary", "multiclass", "multilabel-indicator"),
+        target_type_supported=("binary", "multilabel-indicator"),
+    ),
+    roc_auc_ovr=ScorerProperty(
+        scorer=roc_auc_ovr_scorer,
+        target_type_supported=("multiclass"),
+    ),
+    roc_auc_ovo=ScorerProperty(
+        scorer=roc_auc_ovo_scorer,
+        target_type_supported=("multiclass"),
+    ),
+    roc_auc_ovr_weighted=ScorerProperty(
+        scorer=roc_auc_ovr_weighted_scorer,
+        target_type_supported=("multiclass"),
+    ),
+    roc_auc_ovo_weighted=ScorerProperty(
+        scorer=roc_auc_ovo_weighted_scorer,
+        target_type_supported=("multiclass"),
     ),
     balanced_accuracy=ScorerProperty(
         scorer=balanced_accuracy_scorer,
         target_type_supported=("binary", "multiclass"),
-    ),
-    precision=ScorerProperty(
-        scorer=make_scorer(precision_score),
-        target_type_supported=("binary", "multilabel-indicator"),
-    ),
-    recall=ScorerProperty(
-        scorer=make_scorer(recall_score),
-        target_type_supported=("binary", "multilabel-indicator"),
-    ),
-    f1=ScorerProperty(
-        scorer=make_scorer(f1_score),
-        target_type_supported=("binary", "multilabel-indicator"),
     ),
     jaccard=ScorerProperty(
         scorer=make_scorer(jaccard_score),
@@ -773,14 +777,27 @@ SCORERS_PROPERTY = dict(
     ),
     neg_log_loss=ScorerProperty(
         scorer=neg_log_loss_scorer,
-        target_type_supported=("binary", "multiclass", "multilabel-indicator"),
+        target_type_supported=("binary", "multiclass"),
     ),
     neg_brier_score=ScorerProperty(
         scorer=neg_brier_score_scorer,
-        target_type_supported=("binary", "multiclass"),
+        target_type_supported=("binary"),
     ),
 )
 
+for name, metric in [('precision', precision_score),
+                     ('recall', recall_score), ('f1', f1_score),
+                     ('jaccard', jaccard_score)]:
+    SCORERS_PROPERTY[name] = ScorerProperty(
+        scorer=make_scorer(metric, average='binary'),
+        target_type_supported=("binary",),
+    )
+    for average in ['macro', 'micro', 'samples', 'weighted']:
+        qualified_name = f'{name}_{average}'
+        SCORERS_PROPERTY[qualified_name] = ScorerProperty(
+            scorer=make_scorer(metric, pos_label=None, average=average),
+            target_type_supported=("multilabel-indicator"),
+        )
 
 def get_applicable_scorers(y, **scorers_params):
     """Utility providing scorers to be used on `y`.

@@ -764,7 +764,8 @@ def _generate_scorer(Estimator, X, y):
 
 def _parametrize_scorers_from_target(estimator_data_ids):
     check_scorers, check_scorers_ids = zip(*[
-        ((Estimator, X, y, scorer), f"{scorer_name}-{problem_id}")
+        ((Estimator, X, np.abs(y) - np.min(y), scorer),
+         f"{scorer_name}-{problem_id}")
         for problem_id, Estimator, X, y in estimator_data_ids
         for scorer_name, scorer in get_applicable_scorers(y).items()
     ])
@@ -778,9 +779,9 @@ def _parametrize_scorers_from_target(estimator_data_ids):
     [("binary", LogisticRegression, *make_classification(n_classes=2)),
      ("multiclass", LogisticRegression,
       *make_classification(n_classes=3, n_clusters_per_class=1)),
-     ("multilabel", LogisticRegression, *make_multilabel_classification()),
+     ("multilabel", DecisionTreeClassifier, *make_multilabel_classification()),
      ("continuous", Ridge, *make_regression(n_targets=1)),
-    ("continuous-multioutput", Ridge, *make_regression(n_targets=2))]
+     ("continuous-multioutput", Ridge, *make_regression(n_targets=2))]
 )
 def test_get_applicable_scorers_smoke_test(Estimator, X, y, scorer):
     estimator = Estimator().fit(X, y)
