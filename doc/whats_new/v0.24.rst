@@ -54,7 +54,12 @@ Changelog
   :user:`Lucy Liu <lucyleeow>`.
 
 :mod:`sklearn.cluster`
-.........................
+.......................
+
+- |Fix| Fixed a bug in :class:`cluster.MeanShift` with `bin_seeding=True`. When
+  the estimated bandwidth is 0, the behavior is equivalent to
+  `bin_seeding=False`.
+  :pr:`17742` by :user:`Jeremie du Boisberranger <jeremiedbb>`.
 
 - |Fix| Fixed a bug in :class:`cluster.KMeans` and
   :class:`cluster.MiniBatchKMeans` where the reported inertia was incorrectly
