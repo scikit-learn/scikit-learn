@@ -1379,7 +1379,7 @@ def _check_fit_params(X, fit_params, indices=None):
 
 
 def _validate_required_props(required_props, given_props):
-    """Checks if all the required props are given.
+    """Checks if all the given props are requested.
 
     Parameters
     ----------
@@ -1396,9 +1396,6 @@ def _validate_required_props(required_props, given_props):
     -------
     None
     """
-    # print("=========$$$ _validate_required_props")
-    # print(required_props)
-    # print(list(given_props.keys()))
     required_props = {} if required_props is None else required_props
     given_props = {} if given_props is None else given_props
     if isinstance(required_props, dict):
@@ -1407,7 +1404,6 @@ def _validate_required_props(required_props, given_props):
         raise ValueError("Requested properties are: {}, but {} "
                          "provided".format(list(required_props),
                                            list(given_props)))
-    # print("=========$$$/")
 
 
 def _check_method_props(required_props, props, validate=True):
@@ -1416,17 +1412,19 @@ def _check_method_props(required_props, props, validate=True):
     Parameters
     ----------
     required_props: dict of {str: str}
-        required properties as ``{'given_property': 'method_property'}
+        required properties as ``{'given_property': 'method_property'}.
+        This can be ``self.get_metadata_request().fit`` for instance.
 
     props: dict of {str: data}
         A dictionary with required props as keys and provided ones as values.
+        This can be the ``kwargs`` passed to ``fit`` as ``**kwargs`` for
+        example.
 
     method: str
         The method for which this mapping is done.
 
     validate: bool, default=True
-        If ``True``, it'll make sure all required props are provided and
-        nothing more.
+        If ``True``, it'll make sure all provided props are requested.
 
     Returns
     -------
@@ -1434,9 +1432,6 @@ def _check_method_props(required_props, props, validate=True):
         A mapping with keys as required props and values as provided ones,
         which can be used to be passed as ``**kwargs`` to the _method_.
     """
-    # print('========== _check_method_props')
-    # print("required props: ", required_props)
-    # print("given props: ", list(props.keys()))
     props = {} if props is None else props
     required_props = {} if required_props is None else required_props
     props = {key: value for key, value in props.items() if value is not None}
@@ -1444,6 +1439,4 @@ def _check_method_props(required_props, props, validate=True):
         _validate_required_props(required_props, props)
     res = {value: props[key] for key, value
            in required_props.items() if key in props}
-    # print("returning: ", list(res.keys()))
-    # print("=========/")
     return res

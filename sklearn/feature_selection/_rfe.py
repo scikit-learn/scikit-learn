@@ -14,6 +14,7 @@ from ..utils.metaestimators import if_delegate_has_method
 from ..utils.metaestimators import _safe_split
 from ..utils.validation import check_is_fitted
 from ..utils.validation import _deprecate_positional_args
+from ..utils.validation import _check_method_props
 from ..base import BaseEstimator
 from ..base import MetaEstimatorMixin
 from ..base import clone
@@ -25,17 +26,16 @@ from ._base import SelectorMixin
 from ._base import _get_feature_importances
 
 
-def _rfe_single_fit(rfe, estimator, X, y, train, test, scorer):
+def _rfe_single_fit(rfe, estimator, X, y, train, test, scorer, score_params):
     """
     Return the score for a fit across one fold.
     """
     X_train, y_train = _safe_split(estimator, X, y, train)
     X_test, y_test = _safe_split(estimator, X, y, test, train)
-    # TODO: support passing scorer params here
     return rfe._fit(
         X_train, y_train, lambda estimator, features:
         _score(estimator, X_test[:, features],
-               y_test, scorer, scorer_params=None)).scores_
+               y_test, scorer, score_params=score_params)).scores_
 
 
 class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
@@ -527,7 +527,7 @@ class RFECV(RFE):
         self.n_jobs = n_jobs
         self.min_features_to_select = min_features_to_select
 
-    def fit(self, X, y, groups=None):
+    def fit(self, X, y, groups=None, **kwargs):
         """Fit the RFE model and automatically tune the number of selected
            features.
 
@@ -547,6 +547,9 @@ class RFECV(RFE):
             instance (e.g., :class:`~sklearn.model_selection.GroupKFold`).
 
             .. versionadded:: 0.20
+
+        **kwargs: dict
+            Extra parameteres passed to the underlying scorer.
         """
         tags = self._get_tags()
         X, y = self._validate_data(
@@ -555,6 +558,8 @@ class RFECV(RFE):
             multi_output=True
         )
 
+        score_params = _check_method_props(self.get_metadata_request().score,
+                                           kwargs, validate=True)
         # Initialization
         cv = check_cv(self.cv, y, classifier=is_classifier(self.estimator))
         scorer = check_scoring(self.estimator, scoring=self.scoring)
@@ -593,7 +598,8 @@ class RFECV(RFE):
             func = delayed(_rfe_single_fit)
 
         scores = parallel(
-            func(rfe, self.estimator, X, y, train, test, scorer)
+            func(rfe, self.estimator, X, y, train, test, scorer,
+                 score_params=score_params)
             for train, test in cv.split(X, y, groups))
 
         scores = np.sum(scores, axis=0)

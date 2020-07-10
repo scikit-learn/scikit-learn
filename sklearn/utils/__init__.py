@@ -1196,7 +1196,6 @@ def _empty_metadata_request():
                  fit_transform={})
 
 
-# not used
 def _standardize_metadata_request(request):
     res = _empty_metadata_request()
     for method in res.keys():
@@ -1216,7 +1215,6 @@ def _standardize_metadata_request(request):
     return res
 
 
-# not used
 def _merge_metadata_requests(original, update):
     """Merges the `original` metadata requests with `update`'s contents.
 

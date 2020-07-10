@@ -696,11 +696,9 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
         scorers, self.multimetric_ = _check_multimetric_scoring(
             self.estimator, scoring=self.scoring)
-        print(f"getting score params in GS.fit, scorers: {scorers}")
         _score_params = _check_method_props(
             _get_props_from_objs(scorers).score, fit_params,
             validate=False)
-        print("score params in GS fit:", _score_params)
 
         if self.multimetric_:
             if self.refit is not False and (
