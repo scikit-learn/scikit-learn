@@ -150,7 +150,7 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
         y : array-like of shape (n_samples,) or (n_samples, n_targets)
             Target values
 
-        sample_weight : float or array-like of shape [n_samples]. default=None
+        sample_weight : float or array-like of shape (n_samples). default=None
             Individual weights for each sample, ignored if None is passed.
 
         Returns
