@@ -42,7 +42,7 @@ Triage Team
 -----------
 
 The following people are active contributors who also help with
-:ref:`triaging issues <developers/bug_triaging>`, PRs, and general
+:ref:`triaging issues <bug_triaging>`, PRs, and general
 maintenance:
 
 .. include:: triage_team.rst
