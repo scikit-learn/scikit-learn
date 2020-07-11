@@ -1582,6 +1582,9 @@ class LassoLarsCV(LarsCV):
     n_iter_ : array-like or int
         the number of iterations run by Lars with the optimal alpha.
 
+    active_ : list of int
+        Indices of active variables at the end of the path.
+
     Examples
     --------
     >>> from sklearn.linear_model import LassoLarsCV
