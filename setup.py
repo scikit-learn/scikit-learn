@@ -9,13 +9,14 @@ import os
 import platform
 import shutil
 from distutils.command.clean import clean as Clean
+from distutils.command.sdist import sdist
 from pkg_resources import parse_version
 import traceback
 import importlib
 try:
     import builtins
 except ImportError:
-    # Python 2 compat: just to be able to declare that Python >=3.5 is needed.
+    # Python 2 compat: just to be able to declare that Python >=3.6 is needed.
     import __builtin__ as builtins
 
 # This is a bit (!) hackish: we are setting a global variable so that the
@@ -45,17 +46,10 @@ PROJECT_URLS = {
 # We can actually import a restricted version of sklearn that
 # does not need the compiled code
 import sklearn
+import sklearn._build_utils.min_dependencies as min_deps  # noqa
+
 
 VERSION = sklearn.__version__
-
-if platform.python_implementation() == 'PyPy':
-    SCIPY_MIN_VERSION = '1.1.0'
-    NUMPY_MIN_VERSION = '1.14.0'
-else:
-    SCIPY_MIN_VERSION = '0.17.0'
-    NUMPY_MIN_VERSION = '1.11.0'
-
-JOBLIB_MIN_VERSION = '0.11'
 
 # Optional setuptools features
 # We need to import setuptools early, if we want setuptools features,
@@ -74,10 +68,8 @@ if SETUPTOOLS_COMMANDS.intersection(sys.argv):
         zip_safe=False,  # the package can run out of an .egg file
         include_package_data=True,
         extras_require={
-            'alldeps': (
-                'numpy >= {}'.format(NUMPY_MIN_VERSION),
-                'scipy >= {}'.format(SCIPY_MIN_VERSION),
-            ),
+            key: min_deps.tag_to_packages[key] for
+            key in ['examples', 'docs', 'tests', 'benchmark']
         },
     )
 else:
@@ -114,7 +106,7 @@ class CleanCommand(Clean):
                     shutil.rmtree(os.path.join(dirpath, dirname))
 
 
-cmdclass = {'clean': CleanCommand}
+cmdclass = {'clean': CleanCommand, 'sdist': sdist}
 
 # custom build_ext command to set OpenMP compile flags depending on os and
 # compiler
@@ -139,7 +131,7 @@ try:
 
 except ImportError:
     # Numpy should not be a dependency just to be able to introspect
-    # that python 3.5 is required.
+    # that python 3.6 is required.
     pass
 
 
@@ -244,7 +236,6 @@ def setup_package():
                                  'Operating System :: Unix',
                                  'Operating System :: MacOS',
                                  'Programming Language :: Python :: 3',
-                                 'Programming Language :: Python :: 3.5',
                                  'Programming Language :: Python :: 3.6',
                                  'Programming Language :: Python :: 3.7',
                                  'Programming Language :: Python :: 3.8',
@@ -254,12 +245,8 @@ def setup_package():
                                   'Implementation :: PyPy')
                                  ],
                     cmdclass=cmdclass,
-                    python_requires=">=3.5",
-                    install_requires=[
-                        'numpy>={}'.format(NUMPY_MIN_VERSION),
-                        'scipy>={}'.format(SCIPY_MIN_VERSION),
-                        'joblib>={}'.format(JOBLIB_MIN_VERSION)
-                    ],
+                    python_requires=">=3.6",
+                    install_requires=min_deps.tag_to_packages['install'],
                     package_data={'': ['*.pxd']},
                     **extra_setuptools_args)
 
@@ -275,23 +262,21 @@ def setup_package():
         # They are required to succeed without Numpy for example when
         # pip is used to install Scikit-learn when Numpy is not yet present in
         # the system.
-        try:
-            from setuptools import setup
-        except ImportError:
-            from distutils.core import setup
+        from setuptools import setup
 
         metadata['version'] = VERSION
     else:
-        if sys.version_info < (3, 5):
+        if sys.version_info < (3, 6):
             raise RuntimeError(
-                "Scikit-learn requires Python 3.5 or later. The current"
+                "Scikit-learn requires Python 3.6 or later. The current"
                 " Python version is %s installed in %s."
                 % (platform.python_version(), sys.executable))
 
-        check_package_status('numpy', NUMPY_MIN_VERSION)
+        check_package_status('numpy', min_deps.NUMPY_MIN_VERSION)
 
-        check_package_status('scipy', SCIPY_MIN_VERSION)
+        check_package_status('scipy', min_deps.SCIPY_MIN_VERSION)
 
+        import setuptools  # noqa
         from numpy.distutils.core import setup
 
         metadata['configuration'] = configuration

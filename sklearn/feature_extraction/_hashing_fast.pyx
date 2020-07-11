@@ -12,7 +12,6 @@ cimport numpy as np
 import numpy as np
 
 from ..utils.murmurhash cimport murmurhash3_bytes_s32
-from ..utils.fixes import sp_version
 
 np.import_array()
 
@@ -88,13 +87,7 @@ def transform(raw_X, Py_ssize_t n_features, dtype,
     indices_a = np.frombuffer(indices, dtype=np.int32)
     indptr_a = np.frombuffer(indptr, dtype=indices_np_dtype)
 
-    if indptr[-1] > 2147483648:  # = 2**31
-        if sp_version < (0, 14):
-            raise ValueError(('sparse CSR array has {} non-zero '
-                              'elements and requires 64 bit indexing, '
-                              ' which is unsupported with scipy {}. '
-                              'Please upgrade to scipy >=0.14')
-                             .format(indptr[-1], '.'.join(sp_version)))
+    if indptr[-1] > np.iinfo(np.int32).max:  # = 2**31 - 1
         # both indices and indptr have the same dtype in CSR arrays
         indices_a = indices_a.astype(np.int64, copy=False)
     else:

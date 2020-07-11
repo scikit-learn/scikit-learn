@@ -20,6 +20,12 @@ except ImportError:
 "
 python -c "import multiprocessing as mp; print('%d CPUs' % mp.cpu_count())"
 
+if [[ "$BUILD_WITH_ICC" == "true" ]]; then
+    # the tools in the oneAPI toolkits are configured via environment variables
+    # which are also required at runtime.
+    source /opt/intel/inteloneapi/setvars.sh
+fi
+
 run_tests() {
     TEST_CMD="pytest --showlocals --durations=20 --pyargs"
 
@@ -30,10 +36,9 @@ run_tests() {
     cp setup.cfg $TEST_DIR
     cd $TEST_DIR
 
-    # Skip tests that require large downloads over the network to save bandwidth
-    # usage as travis workers are stateless and therefore traditional local
-    # disk caching does not work.
-    export SKLEARN_SKIP_NETWORK_TESTS=1
+    # Tests that require large downloads over the networks are skipped in CI.
+    # Here we make sure, that they are still run on a regular basis.
+    export SKLEARN_SKIP_NETWORK_TESTS=0
 
     if [[ "$COVERAGE" == "true" ]]; then
         TEST_CMD="$TEST_CMD --cov sklearn"

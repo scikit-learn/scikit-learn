@@ -17,6 +17,7 @@ from sklearn.ensemble import GradientBoostingRegressor, RandomForestClassifier
 from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import Lasso
 from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import OrthogonalMatchingPursuit
 from sklearn.linear_model import Ridge
 from sklearn.linear_model import SGDClassifier
 from sklearn.linear_model import SGDRegressor
@@ -25,11 +26,11 @@ from sklearn.multiclass import OneVsRestClassifier
 from sklearn.multioutput import ClassifierChain, RegressorChain
 from sklearn.multioutput import MultiOutputClassifier
 from sklearn.multioutput import MultiOutputRegressor
-from sklearn.multioutput import MultiOutputEstimator
 from sklearn.svm import LinearSVC
 from sklearn.base import ClassifierMixin
 from sklearn.utils import shuffle
 from sklearn.model_selection import GridSearchCV
+from sklearn.dummy import DummyRegressor, DummyClassifier
 
 
 def test_multi_target_regression():
@@ -102,7 +103,7 @@ def test_multi_target_sample_weights_api():
     y = [[3.141, 2.718], [2.718, 3.141]]
     w = [0.8, 0.6]
 
-    rgr = MultiOutputRegressor(Lasso())
+    rgr = MultiOutputRegressor(OrthogonalMatchingPursuit())
     assert_raises_regex(ValueError, "does not support sample weights",
                         rgr.fit, X, y, w)
 
@@ -554,10 +555,49 @@ def test_multi_output_classes_(estimator):
         assert_array_equal(estimator_classes, expected_classes)
 
 
-# TODO: remove in 0.24
-def test_deprecation():
-    class A(MultiOutputEstimator, MultiOutputRegressor):
-        pass
+class DummyRegressorWithFitParams(DummyRegressor):
+    def fit(self, X, y, sample_weight=None, **fit_params):
+        self._fit_params = fit_params
+        return super().fit(X, y, sample_weight)
 
-    with pytest.warns(FutureWarning, match="is deprecated in version 0.22"):
-        A(SGDRegressor(random_state=0, max_iter=5))
+
+class DummyClassifierWithFitParams(DummyClassifier):
+    def fit(self, X, y, sample_weight=None, **fit_params):
+        self._fit_params = fit_params
+        return super().fit(X, y, sample_weight)
+
+
+@pytest.mark.parametrize(
+    "estimator, dataset",
+    [(MultiOutputClassifier(DummyClassifierWithFitParams(strategy="prior")),
+      datasets.make_multilabel_classification()),
+     (MultiOutputRegressor(DummyRegressorWithFitParams()),
+      datasets.make_regression(n_targets=3))])
+def test_multioutput_estimator_with_fit_params(estimator, dataset):
+    X, y = dataset
+    some_param = np.zeros_like(X)
+    estimator.fit(X, y, some_param=some_param)
+    for dummy_estimator in estimator.estimators_:
+        assert 'some_param' in dummy_estimator._fit_params
+
+
+def test_regressor_chain_w_fit_params():
+    # Make sure fit_params are properly propagated to the sub-estimators
+    rng = np.random.RandomState(0)
+    X, y = datasets.make_regression(n_targets=3)
+    weight = rng.rand(y.shape[0])
+
+    class MySGD(SGDRegressor):
+
+        def fit(self, X, y, **fit_params):
+            self.sample_weight_ = fit_params['sample_weight']
+            super().fit(X, y, **fit_params)
+
+    model = RegressorChain(MySGD())
+
+    # Fitting with params
+    fit_param = {'sample_weight': weight}
+    model.fit(X, y, **fit_param)
+
+    for est in model.estimators_:
+        assert est.sample_weight_ is weight

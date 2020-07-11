@@ -554,7 +554,7 @@ def test_multiclass_ovr_roc_auc_toydata(y_true, labels):
         result_unweighted)
 
     # Tests the weighted, one-vs-rest multiclass ROC AUC algorithm
-    # on the same input (Provost & Domingos, 2001)
+    # on the same input (Provost & Domingos, 2000)
     result_weighted = out_0 * 0.25 + out_1 * 0.25 + out_2 * 0.5
     assert_almost_equal(
         roc_auc_score(
@@ -737,8 +737,9 @@ def _test_precision_recall_curve(y_true, probas_pred):
     assert_array_almost_equal(precision_recall_auc, 0.859, 3)
     assert_array_almost_equal(precision_recall_auc,
                               average_precision_score(y_true, probas_pred))
+    # `_average_precision` is not very precise in case of 0.5 ties: be tolerant
     assert_almost_equal(_average_precision(y_true, probas_pred),
-                        precision_recall_auc, decimal=3)
+                        precision_recall_auc, decimal=2)
     assert p.size == r.size
     assert p.size == thresholds.size + 1
     # Smoke test in the case of proba having only one value
@@ -1167,7 +1168,7 @@ def test_lrap_sample_weighting_zero_labels():
     # For these test samples, the APs are 0.5, 0.75, and 1.0 (default for zero
     # labels).
     y_true = np.array([[1, 0, 0, 0], [1, 0, 0, 1], [0, 0, 0, 0]],
-                      dtype=np.bool)
+                      dtype=bool)
     y_score = np.array([[0.3, 0.4, 0.2, 0.1], [0.1, 0.2, 0.3, 0.4],
                         [0.4, 0.3, 0.2, 0.1]])
     samplewise_lraps = np.array([0.5, 0.75, 1.0])

@@ -42,9 +42,9 @@ from ._samples_generator import make_sparse_spd_matrix
 from ._samples_generator import make_gaussian_quantiles
 from ._samples_generator import make_biclusters
 from ._samples_generator import make_checkerboard
-from ._svmlight_format import load_svmlight_file
-from ._svmlight_format import load_svmlight_files
-from ._svmlight_format import dump_svmlight_file
+from ._svmlight_format_io import load_svmlight_file
+from ._svmlight_format_io import load_svmlight_files
+from ._svmlight_format_io import dump_svmlight_file
 from ._olivetti_faces import fetch_olivetti_faces
 from ._species_distributions import fetch_species_distributions
 from ._california_housing import fetch_california_housing

@@ -69,6 +69,7 @@ newly transformed sample matrix ``X``::
   >>> from sklearn.preprocessing import StandardScaler
   >>> X = [[0, 15],
   ...      [1, -10]]
+  >>> # scale data according to computed scaling values
   >>> StandardScaler().fit(X).transform(X)
   array([[-1.,  1.],
          [ 1., -1.]])
@@ -205,7 +206,7 @@ the best set of parameters. Read more in the :ref:`User Guide
     training and testing data. Indeed, since you pre-processed the data
     using the whole dataset, some information about the test sets are
     available to the train sets. This will lead to over-estimating the
-    generalization power of the estimator (you can read more in this `kaggle
+    generalization power of the estimator (you can read more in this `Kaggle
     post <https://www.kaggle.com/alexisbcook/data-leakage>`_).
 
     Using a pipeline for cross-validation and searching will largely keep
