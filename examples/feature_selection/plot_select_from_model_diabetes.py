@@ -31,7 +31,7 @@ from sklearn.datasets import load_diabetes
 from sklearn.feature_selection import SelectFromModel
 from sklearn.linear_model import LassoCV
 
-##############################################################################
+# %%
 # Load the data
 # ---------------------------------------------------------
 #
@@ -47,7 +47,7 @@ y = diabetes.target
 feature_names = diabetes.feature_names
 print(feature_names)
 
-##############################################################################
+# %%
 # Find importance of the features
 # ---------------------------------------------------------
 #
@@ -59,7 +59,7 @@ clf = LassoCV().fit(X, y)
 importance = np.abs(clf.coef_)
 print(importance)
 
-##############################################################################
+# %%
 # Select from the model features with the higest score
 # ---------------------------------------------------------
 #
@@ -82,7 +82,7 @@ X_transform = sfm.transform(X)
 
 n_features = sfm.transform(X).shape[1]
 
-##############################################################################
+# %%
 # Plot the two most important features
 # ---------------------------------------------------------
 #

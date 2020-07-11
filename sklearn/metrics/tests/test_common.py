@@ -41,6 +41,7 @@ from sklearn.metrics import log_loss
 from sklearn.metrics import max_error
 from sklearn.metrics import matthews_corrcoef
 from sklearn.metrics import mean_absolute_error
+from sklearn.metrics import mean_absolute_percentage_error
 from sklearn.metrics import mean_squared_error
 from sklearn.metrics import mean_tweedie_deviance
 from sklearn.metrics import mean_poisson_deviance
@@ -98,6 +99,7 @@ REGRESSION_METRICS = {
     "mean_absolute_error": mean_absolute_error,
     "mean_squared_error": mean_squared_error,
     "median_absolute_error": median_absolute_error,
+    "mean_absolute_percentage_error": mean_absolute_percentage_error,
     "explained_variance_score": explained_variance_score,
     "r2_score": partial(r2_score, multioutput='variance_weighted'),
     "mean_normal_deviance": partial(mean_tweedie_deviance, power=0),
@@ -425,7 +427,7 @@ MULTILABELS_METRICS = {
 # Regression metrics with "multioutput-continuous" format support
 MULTIOUTPUT_METRICS = {
     "mean_absolute_error", "median_absolute_error", "mean_squared_error",
-    "r2_score", "explained_variance_score"
+    "r2_score", "explained_variance_score", "mean_absolute_percentage_error"
 }
 
 # Symmetric with respect to their input arguments y_true and y_pred
@@ -472,7 +474,7 @@ NOT_SYMMETRIC_METRICS = {
     "macro_f0.5_score", "macro_f2_score", "macro_precision_score",
     "macro_recall_score", "log_loss", "hinge_loss",
     "mean_gamma_deviance", "mean_poisson_deviance",
-    "mean_compound_poisson_deviance"
+    "mean_compound_poisson_deviance", "mean_absolute_percentage_error"
 }
 
 
@@ -1371,7 +1373,15 @@ def test_thresholded_multilabel_multioutput_permutations_invariance(name):
         y_true_perm = y_true[:, perm]
 
         current_score = metric(y_true_perm, y_score_perm)
-        assert_almost_equal(score, current_score)
+        if metric == mean_absolute_percentage_error:
+            assert np.isfinite(current_score)
+            assert current_score > 1e6
+            # Here we are not comparing the values in case of MAPE because
+            # whenever y_true value is exactly zero, the MAPE value doesn't
+            # signify anything. Thus, in this case we are just expecting
+            # very large finite value.
+        else:
+            assert_almost_equal(score, current_score)
 
 
 @pytest.mark.parametrize(

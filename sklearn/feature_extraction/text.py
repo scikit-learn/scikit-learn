@@ -847,7 +847,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         Convert all characters to lowercase before tokenizing.
 
     preprocessor : callable, default=None
-        Override the preprocessing (string transformation) stage while
+        Override the preprocessing (strip_accents and lowercase) stage while
         preserving the tokenizing and n-grams generation steps.
         Only applies if ``analyzer is not callable``.
 

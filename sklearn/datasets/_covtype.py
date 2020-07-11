@@ -23,6 +23,7 @@ import numpy as np
 import joblib
 
 from . import get_data_home
+from ._base import _convert_data_dataframe
 from ._base import _fetch_remote
 from ._base import RemoteFileMetadata
 from ..utils import Bunch
@@ -41,10 +42,27 @@ ARCHIVE = RemoteFileMetadata(
 
 logger = logging.getLogger(__name__)
 
+# Column names reference:
+# https://archive.ics.uci.edu/ml/machine-learning-databases/covtype/covtype.info
+FEATURE_NAMES = ["Elevation",
+                 "Aspect",
+                 "Slope",
+                 "Horizontal_Distance_To_Hydrology",
+                 "Vertical_Distance_To_Hydrology",
+                 "Horizontal_Distance_To_Roadways",
+                 "Hillshade_9am",
+                 "Hillshade_Noon",
+                 "Hillshade_3pm",
+                 "Horizontal_Distance_To_Fire_Points"]
+FEATURE_NAMES += [f"Wilderness_Area_{i}" for i in range(4)]
+FEATURE_NAMES += [f"Soil_Type_{i}" for i in range(40)]
+TARGET_NAMES = ["Cover_Type"]
+
 
 @_deprecate_positional_args
 def fetch_covtype(*, data_home=None, download_if_missing=True,
-                  random_state=None, shuffle=False, return_X_y=False):
+                  random_state=None, shuffle=False, return_X_y=False,
+                  as_frame=False):
     """Load the covertype dataset (classification).
 
     Download it if necessary.
@@ -60,15 +78,15 @@ def fetch_covtype(*, data_home=None, download_if_missing=True,
 
     Parameters
     ----------
-    data_home : string, optional
+    data_home : str, default=None
         Specify another download and cache folder for the datasets. By default
         all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 
-    download_if_missing : boolean, default=True
+    download_if_missing : bool, default=True
         If False, raise a IOError if the data is not locally available
         instead of trying to download the data from the source site.
 
-    random_state : int, RandomState instance, default=None
+    random_state : int or RandomState instance, default=None
         Determines random number generation for dataset shuffling. Pass an int
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
@@ -76,11 +94,20 @@ def fetch_covtype(*, data_home=None, download_if_missing=True,
     shuffle : bool, default=False
         Whether to shuffle dataset.
 
-    return_X_y : boolean, default=False.
+    return_X_y : bool, default=False
         If True, returns ``(data.data, data.target)`` instead of a Bunch
         object.
 
         .. versionadded:: 0.20
+
+    as_frame : bool, default=False
+        If True, the data is a pandas DataFrame including columns with
+        appropriate dtypes (numeric). The target is a pandas DataFrame or
+        Series depending on the number of target columns. If `return_X_y` is
+        True, then (`data`, `target`) will be pandas DataFrames or Series as
+        described below.
+
+        .. versionadded:: 0.24
 
     Returns
     -------
@@ -93,12 +120,19 @@ def fetch_covtype(*, data_home=None, download_if_missing=True,
             Each value corresponds to one of
             the 7 forest covertypes with values
             ranging between 1 to 7.
+        frame : dataframe of shape (581012, 53)
+            Only present when `as_frame=True`. Contains `data` and `target`.
         DESCR : str
             Description of the forest covertype dataset.
+        feature_names : list
+            The names of the dataset columns
+        target_names: list
+            The names of the target columns
 
     (data, target) : tuple if ``return_X_y`` is True
 
         .. versionadded:: 0.20
+
     """
 
     data_home = get_data_home(data_home=data_home)
@@ -142,7 +176,19 @@ def fetch_covtype(*, data_home=None, download_if_missing=True,
     with open(join(module_path, 'descr', 'covtype.rst')) as rst_file:
         fdescr = rst_file.read()
 
+    frame = None
+    if as_frame:
+        frame, X, y = _convert_data_dataframe(caller_name="fetch_covtype",
+                                              data=X,
+                                              target=y,
+                                              feature_names=FEATURE_NAMES,
+                                              target_names=TARGET_NAMES)
     if return_X_y:
         return X, y
 
-    return Bunch(data=X, target=y, DESCR=fdescr)
+    return Bunch(data=X,
+                 target=y,
+                 frame=frame,
+                 target_names=TARGET_NAMES,
+                 feature_names=FEATURE_NAMES,
+                 DESCR=fdescr)
