@@ -38,7 +38,7 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
     Parameters
     ----------
-    alpha : float or array-like of shape (n_targets,)
+    alpha : float or array-like of shape (n_targets,), default=1.0
         Regularization strength; must be a positive float. Regularization
         improves the conditioning of the problem and reduces the variance of
         the estimates. Larger values specify stronger regularization.
@@ -75,7 +75,7 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
         Zero coefficient for polynomial and sigmoid kernels.
         Ignored by other kernels.
 
-    kernel_params : mapping of string to any, optional
+    kernel_params : mapping of string to any, default=None
         Additional parameters (keyword arguments) for kernel function passed
         as callable object.
 
@@ -150,7 +150,7 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
         y : array-like of shape (n_samples,) or (n_samples, n_targets)
             Target values
 
-        sample_weight : float or array-like of shape [n_samples]
+        sample_weight : float or array-like of shape (n_samples,), default=None
             Individual weights for each sample, ignored if None is passed.
 
         Returns
