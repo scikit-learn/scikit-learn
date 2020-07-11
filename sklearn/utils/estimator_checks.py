@@ -898,7 +898,8 @@ def check_sample_weights_shape(name, estimator_orig, strict_mode=True):
 
 
 @ignore_warnings(category=FutureWarning)
-def check_sample_weights_invariance(name, estimator_orig, kind="ones", strict_mode=True):
+def check_sample_weights_invariance(name, estimator_orig, kind="ones",
+                                    strict_mode=True):
     # For kind="ones" check that the estimators yield same results for
     # unit weights and no weights
     # For kind="zeros" check that setting sample_weight to 0 is equivalent
@@ -1493,7 +1494,7 @@ def check_estimators_nan_inf(name, estimator_orig, strict_mode=True):
     # Checks that Estimator X's do not contain NaN or inf.
     rnd = np.random.RandomState(0)
     X_train_finite = _pairwise_estimator_convert_X(rnd.uniform(size=(10, 3)),
-                                                  estimator_orig)
+                                                   estimator_orig)
     X_train_nan = rnd.uniform(size=(10, 3))
     X_train_nan[0, 0] = np.nan
     X_train_inf = rnd.uniform(size=(10, 3))
