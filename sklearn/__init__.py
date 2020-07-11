@@ -99,9 +99,7 @@ else:
 
 
 def setup_module(module):
-    """Fixture for the tests to assure globally controllable seeding of RNGs"""  
-    
-
+    """Fixture for the tests to assure globally controllable seeding of RNGs"""
     # Check if a random seed exists in the environment, if not create one.
     _random_seed = os.environ.get('SKLEARN_SEED', None)
     if _random_seed is None:
