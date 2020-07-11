@@ -1616,6 +1616,12 @@ class MiniBatchKMeans(KMeans):
     def init_size_(self):
         return self._init_size
 
+    @deprecated("The attribute 'random_state_' is deprecated "  # type: ignore
+                "in 0.24 and will be removed in 0.26.")
+    @property
+    def random_state_(self):
+        return getattr(self, "_random_state", None)
+
     def _check_params(self, X):
         super()._check_params(X)
 
