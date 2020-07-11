@@ -927,7 +927,7 @@ def test_tsne_different_square_distances(method, metric, square_distances):
 @pytest.mark.parametrize('square_distances', [True, 'legacy'])
 def test_tsne_square_distances_futurewarning(metric, square_distances):
     # Make sure that a FutureWarning is only raised when a non-Euclidean
-    # metric is specified and square_metric is not set to True.
+    # metric is specified and square_distances is not set to True.
     random_state = check_random_state(0)
 
     X = random_state.randn(5, 2)
