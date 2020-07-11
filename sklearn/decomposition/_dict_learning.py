@@ -228,7 +228,7 @@ def sparse_encode(X, dictionary, *, gram=None, cov=None,
         threshold: squashes to zero all coefficients less than alpha from
         the projection dictionary * X'
 
-    n_nonzero_coefs : int, default=0.1 * n_features
+    n_nonzero_coefs : int, default=int(n_features / 10)
         Number of nonzero coefficients to target in each column of the
         solution. This is only used by `algorithm='lars'` and `algorithm='omp'`
         and is overridden by `alpha` in the `omp` case.
