@@ -743,10 +743,10 @@ class TSNE(BaseEstimator):
                     # because euclidean_distances already calculates
                     # squared distances, and returns np.sqrt(dist) for
                     # squared=False.
+                    # Also, Euclidean is slower for n_jobs>1, so don't set here
                     distances = pairwise_distances(X, metric=self.metric,
                                                    squared=True)
                 else:
-                    # Euclidean has separate call as it's slower for n_jobs>1
                     distances = pairwise_distances(X, metric=self.metric,
                                                    n_jobs=self.n_jobs)
 
