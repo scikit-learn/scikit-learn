@@ -66,11 +66,11 @@ def fetch_kddcup99(*, subset=None, data_home=None, shuffle=False,
 
     Parameters
     ----------
-    subset : None, 'SA', 'SF', 'http', 'smtp'
+    subset : {'SA', 'SF', 'http', 'smtp'}, default=None
         To return the corresponding classical subsets of kddcup 99.
         If None, return the entire kddcup 99 dataset.
 
-    data_home : string, optional
+    data_home : str, default=None
         Specify another download and cache folder for the datasets. By default
         all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
         .. versionadded:: 0.19
@@ -78,7 +78,7 @@ def fetch_kddcup99(*, subset=None, data_home=None, shuffle=False,
     shuffle : bool, default=False
         Whether to shuffle dataset.
 
-    random_state : int, RandomState instance, default=None
+    random_state : int or RandomState instance, default=None
         Determines random number generation for dataset shuffling and for
         selection of abnormal samples if `subset='SA'`. Pass an int for
         reproducible output across multiple function calls.
@@ -91,7 +91,7 @@ def fetch_kddcup99(*, subset=None, data_home=None, shuffle=False,
         If False, raise a IOError if the data is not locally available
         instead of trying to download the data from the source site.
 
-    return_X_y : boolean, default=False.
+    return_X_y : bool, default=False
         If True, returns ``(data, target)`` instead of a Bunch object. See
         below for more information about the `data` and `target` object.
 
@@ -184,11 +184,11 @@ def _fetch_brute_kddcup99(data_home=None,
 
     Parameters
     ----------
-    data_home : string, optional
+    data_home : str, default=None
         Specify another download and cache folder for the datasets. By default
         all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 
-    download_if_missing : boolean, default=True
+    download_if_missing : bool, default=True
         If False, raise a IOError if the data is not locally available
         instead of trying to download the data from the source site.
 

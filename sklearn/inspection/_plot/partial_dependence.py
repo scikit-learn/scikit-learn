@@ -1,6 +1,7 @@
 import numbers
 from itertools import chain
 from itertools import count
+from math import ceil
 
 import numpy as np
 from scipy import sparse
@@ -20,9 +21,14 @@ def plot_partial_dependence(estimator, X, features, *, feature_names=None,
                             target=None, response_method='auto', n_cols=3,
                             grid_resolution=100, percentiles=(0.05, 0.95),
                             method='auto', n_jobs=None, verbose=0,
-                            line_kw=None, contour_kw=None, ax=None):
-    """Partial dependence plots.
+                            line_kw=None, contour_kw=None, ax=None,
+                            kind='average', subsample=1000):
+    """Partial dependence (PD) and individual conditional expectation (ICE)
+    plots.
 
+    Partial dependence plots, individual conditional expectation plots or an
+    overlay of both of them can be plotted by setting the ``kind``
+    parameter.
     The ``len(features)`` plots are arranged in a grid with ``n_cols``
     columns. Two-way partial dependence plots are plotted as contour plots. The
     deciles of the feature values will be shown with tick marks on the x-axes
@@ -40,23 +46,26 @@ def plot_partial_dependence(estimator, X, features, *, feature_names=None,
           >>> from sklearn.inspection import plot_partial_dependence
           >>> from sklearn.datasets import make_friedman1
           >>> from sklearn.linear_model import LinearRegression
+          >>> from sklearn.ensemble import RandomForestRegressor
           >>> X, y = make_friedman1()
-          >>> est = LinearRegression().fit(X, y)
-          >>> disp1 = plot_partial_dependence(est, X)  # doctest: +SKIP
-          >>> disp2 = plot_partial_dependence(est, X,
+          >>> est1 = LinearRegression().fit(X, y)
+          >>> est2 = RandomForestRegressor().fit(X, y)
+          >>> disp1 = plot_partial_dependence(est1, X,
+          ...                                 [1, 2])  # doctest: +SKIP
+          >>> disp2 = plot_partial_dependence(est2, X, [1, 2],
           ...                                 ax=disp1.axes_)  # doctest: +SKIP
 
     .. warning::
 
         For :class:`~sklearn.ensemble.GradientBoostingClassifier` and
         :class:`~sklearn.ensemble.GradientBoostingRegressor`, the
-        'recursion' method (used by default) will not account for the `init`
+        `'recursion'` method (used by default) will not account for the `init`
         predictor of the boosting process. In practice, this will produce
-        the same values as 'brute' up to a constant offset in the target
+        the same values as `'brute'` up to a constant offset in the target
         response, provided that `init` is a constant estimator (which is the
         default). However, if `init` is not a constant estimator, the
-        partial dependence values are incorrect for 'recursion' because the
-        offset will be sample-dependent. It is preferable to use the 'brute'
+        partial dependence values are incorrect for `'recursion'` because the
+        offset will be sample-dependent. It is preferable to use the `'brute'`
         method. Note that this only applies to
         :class:`~sklearn.ensemble.GradientBoostingClassifier` and
         :class:`~sklearn.ensemble.GradientBoostingRegressor`, not to
@@ -74,18 +83,18 @@ def plot_partial_dependence(estimator, X, features, *, feature_names=None,
         ``X`` is used to generate a grid of values for the target
         ``features`` (where the partial dependence will be evaluated), and
         also to generate values for the complement features when the
-        `method` is 'brute'.
+        `method` is `'brute'`.
 
     features : list of {int, str, pair of int, pair of str}
         The target features for which to create the PDPs.
-        If features[i] is an int or a string, a one-way PDP is created; if
-        features[i] is a tuple, a two-way PDP is created. Each tuple must be
-        of size 2.
+        If `features[i]` is an integer or a string, a one-way PDP is created;
+        if `features[i]` is a tuple, a two-way PDP is created (only supported
+        with `kind='average'`). Each tuple must be of size 2.
         if any entry is a string, then it must be in ``feature_names``.
 
     feature_names : array-like of shape (n_features,), dtype=str, default=None
-        Name of each feature; feature_names[i] holds the name of the feature
-        with index i.
+        Name of each feature; `feature_names[i]` holds the name of the feature
+        with index `i`.
         By default, the name of the feature corresponds to their numerical
         index for NumPy array and their column name for pandas dataframe.
 
@@ -99,13 +108,13 @@ def plot_partial_dependence(estimator, X, features, *, feature_names=None,
         Ignored in binary classification or classical regression settings.
 
     response_method : {'auto', 'predict_proba', 'decision_function'}, \
-        default='auto'
+            default='auto'
         Specifies whether to use :term:`predict_proba` or
         :term:`decision_function` as the target response. For regressors
         this parameter is ignored and the response is always the output of
         :term:`predict`. By default, :term:`predict_proba` is tried first
         and we revert to :term:`decision_function` if it doesn't exist. If
-        ``method`` is 'recursion', the response is always the output of
+        ``method`` is `'recursion'`, the response is always the output of
         :term:`decision_function`.
 
     n_cols : int, default=3
@@ -120,10 +129,11 @@ def plot_partial_dependence(estimator, X, features, *, feature_names=None,
         The lower and upper percentile used to create the extreme values
         for the PDP axes. Must be in [0, 1].
 
-    method :{'auto', 'recursion', 'brute'}, default='auto'
+    method : str, default='auto'
         The method used to calculate the averaged predictions:
 
-        - 'recursion' is only supported for some tree-based estimators (namely
+        - `'recursion'` is only supported for some tree-based estimators
+          (namely
           :class:`~sklearn.ensemble.GradientBoostingClassifier`,
           :class:`~sklearn.ensemble.GradientBoostingRegressor`,
           :class:`~sklearn.ensemble.HistGradientBoostingClassifier`,
@@ -133,16 +143,18 @@ def plot_partial_dependence(estimator, X, features, *, feature_names=None,
           but is more efficient in terms of speed.
           With this method, the target response of a
           classifier is always the decision function, not the predicted
-          probabilities.
+          probabilities. Since the `'recursion'` method implicitely computes
+          the average of the ICEs by design, it is not compatible with ICE and
+          thus `kind` must be `'average'`.
 
-        - 'brute' is supported for any estimator, but is more
+        - `'brute'` is supported for any estimator, but is more
           computationally intensive.
 
-        - 'auto': the 'recursion' is used for estimators that support it,
-          and 'brute' is used otherwise.
+        - `'auto'`: the `'recursion'` is used for estimators that support it,
+          and `'brute'` is used otherwise.
 
         Please see :ref:`this note <pdp_method_differences>` for
-        differences between the 'brute' and 'recursion' method.
+        differences between the `'brute'` and `'recursion'` method.
 
     n_jobs : int, default=None
         The number of CPUs to use to compute the partial dependences.
@@ -153,25 +165,49 @@ def plot_partial_dependence(estimator, X, features, *, feature_names=None,
     verbose : int, default=0
         Verbose output during PD computations.
 
-    line_kw : dict, optional
+    line_kw : dict, default=None
         Dict with keywords passed to the ``matplotlib.pyplot.plot`` call.
         For one-way partial dependence plots.
 
-    contour_kw : dict, optional
+    contour_kw : dict, default=None
         Dict with keywords passed to the ``matplotlib.pyplot.contourf`` call.
         For two-way partial dependence plots.
 
     ax : Matplotlib axes or array-like of Matplotlib axes, default=None
         - If a single axis is passed in, it is treated as a bounding axes
-            and a grid of partial dependence plots will be drawn within
-            these bounds. The `n_cols` parameter controls the number of
-            columns in the grid.
+          and a grid of partial dependence plots will be drawn within
+          these bounds. The `n_cols` parameter controls the number of
+          columns in the grid.
         - If an array-like of axes are passed in, the partial dependence
-            plots will be drawn directly into these axes.
+          plots will be drawn directly into these axes.
         - If `None`, a figure and a bounding axes is created and treated
-            as the single axes case.
+          as the single axes case.
 
         .. versionadded:: 0.22
+
+    kind : {'average', 'individual', 'both'}, default='average'
+        Whether to plot the partial dependence averaged across all the samples
+        in the dataset or one line per sample or both.
+
+        - ``kind='average'`` results in the traditional PD plot;
+        - ``kind='individual'`` results in the ICE plot.
+
+       Note that the fast ``method='recursion'`` option is only available for
+       ``kind='average'``. Plotting individual dependencies requires using the
+       slower ``method='brute'`` option.
+
+        .. versionadded:: 0.24
+
+    subsample : float, int or None, default=1000
+        Sampling for ICE curves when `kind` is 'individual' or 'both'.
+        If `float`, should be between 0.0 and 1.0 and represent the proportion
+        of the dataset to be used to plot ICE curves. If `int`, represents the
+        absolute number samples to use.
+
+        Note that the full dataset is still used to calculate averaged partial
+        dependence when `kind='both'`.
+
+        .. versionadded:: 0.24
 
     Returns
     -------
@@ -212,7 +248,7 @@ def plot_partial_dependence(estimator, X, features, *, feature_names=None,
     # Use check_array only on lists and other non-array-likes / sparse. Do not
     # convert DataFrame into a NumPy array.
     if not(hasattr(X, '__array__') or sparse.issparse(X)):
-        X = check_array(X, force_all_finite='allow-nan', dtype=np.object)
+        X = check_array(X, force_all_finite='allow-nan', dtype=object)
     n_features = X.shape[1]
 
     # convert feature_names to list
@@ -250,7 +286,10 @@ def plot_partial_dependence(estimator, X, features, *, feature_names=None,
         if not 1 <= np.size(fxs) <= 2:
             raise ValueError('Each entry in features must be either an int, '
                              'a string, or an iterable of size at most 2.')
-
+        if kind != 'average' and np.size(fxs) > 1:
+            raise ValueError(
+                f"It is not possible to display individual effects for more "
+                f"than one feature at a time. Got: features={features}.")
         tmp_features.append(fxs)
 
     features = tmp_features
@@ -268,13 +307,26 @@ def plot_partial_dependence(estimator, X, features, *, feature_names=None,
                              'len(feature_names) = {0}, got {1}.'
                              .format(len(feature_names), i))
 
-    # compute averaged predictions
+    if isinstance(subsample, numbers.Integral):
+        if subsample <= 0:
+            raise ValueError(
+                f"When an integer, subsample={subsample} should be positive."
+            )
+    elif isinstance(subsample, numbers.Real):
+        if subsample <= 0 or subsample >= 1:
+            raise ValueError(
+                f"When a floating-point, subsample={subsample} should be in "
+                f"the (0, 1) range."
+            )
+
+    # compute predictions and/or averaged predictions
     pd_results = Parallel(n_jobs=n_jobs, verbose=verbose)(
         delayed(partial_dependence)(estimator, X, fxs,
                                     response_method=response_method,
                                     method=method,
                                     grid_resolution=grid_resolution,
-                                    percentiles=percentiles)
+                                    percentiles=percentiles,
+                                    kind=kind)
         for fxs in features)
 
     # For multioutput regression, we can only check the validity of target
@@ -282,21 +334,25 @@ def plot_partial_dependence(estimator, X, features, *, feature_names=None,
     # Also note: as multiclass-multioutput classifiers are not supported,
     # multiclass and multioutput scenario are mutually exclusive. So there is
     # no risk of overwriting target_idx here.
-    avg_preds, _ = pd_results[0]  # checking the first result is enough
-    if is_regressor(estimator) and avg_preds.shape[0] > 1:
+    pd_result = pd_results[0]  # checking the first result is enough
+    n_tasks = (pd_result.average.shape[0] if kind == 'average'
+               else pd_result.individual.shape[0])
+    if is_regressor(estimator) and n_tasks > 1:
         if target is None:
             raise ValueError(
                 'target must be specified for multi-output regressors')
-        if not 0 <= target <= avg_preds.shape[0]:
+        if not 0 <= target <= n_tasks:
             raise ValueError(
                 'target must be in [0, n_tasks], got {}.'.format(target))
         target_idx = target
 
     # get global min and max average predictions of PD grouped by plot type
     pdp_lim = {}
-    for avg_preds, values in pd_results:
-        min_pd = avg_preds[target_idx].min()
-        max_pd = avg_preds[target_idx].max()
+    for pdp in pd_results:
+        values = pdp["values"]
+        preds = (pdp.average if kind == 'average' else pdp.individual)
+        min_pd = preds[target_idx].min()
+        max_pd = preds[target_idx].max()
         n_fx = len(values)
         old_min_pd, old_max_pd = pdp_lim.get(n_fx, (min_pd, max_pd))
         min_pd = min(min_pd, old_min_pd)
@@ -314,13 +370,18 @@ def plot_partial_dependence(estimator, X, features, *, feature_names=None,
                                        feature_names=feature_names,
                                        target_idx=target_idx,
                                        pdp_lim=pdp_lim,
-                                       deciles=deciles)
+                                       deciles=deciles,
+                                       kind=kind,
+                                       subsample=subsample)
     return display.plot(ax=ax, n_cols=n_cols, line_kw=line_kw,
                         contour_kw=contour_kw)
 
 
 class PartialDependenceDisplay:
-    """Partial Dependence Plot (PDP) visualization.
+    """Partial Dependence Plot (PDP)
+
+    This can also display individual partial dependencies which are often
+    referred to as: Individual Condition Expectation (ICE).
 
     It is recommended to use
     :func:`~sklearn.inspection.plot_partial_dependence` to create a
@@ -335,9 +396,9 @@ class PartialDependenceDisplay:
 
     Parameters
     ----------
-    pd_results : list of (ndarray, ndarray)
+    pd_results : list of Bunch
         Results of :func:`~sklearn.inspection.partial_dependence` for
-        ``features``. Each tuple corresponds to a (averaged_predictions, grid).
+        ``features``.
 
     features : list of (int,) or list of (int, int)
         Indices of features for a given plot. A tuple of one integer will plot
@@ -365,6 +426,30 @@ class PartialDependenceDisplay:
 
     deciles : dict
         Deciles for feature indices in ``features``.
+
+    kind : {'average', 'individual', 'both'}, default='average'
+        Whether to plot the partial dependence averaged across all the samples
+        in the dataset or one line per sample or both.
+
+        - ``kind='average'`` results in the traditional PD plot;
+        - ``kind='individual'`` results in the ICE plot.
+
+       Note that the fast ``method='recursion'`` option is only available for
+       ``kind='average'``. Plotting individual dependencies requires using the
+       slower ``method='brute'`` option.
+
+        .. versionadded:: 0.24
+
+    subsample : float, int or None, default=1000
+        Sampling for ICE curves when `kind` is 'individual' or 'both'.
+        If float, should be between 0.0 and 1.0 and represent the proportion
+        of the dataset to be used to plot ICE curves. If int, represents the
+        maximum absolute number of samples to use.
+
+        Note that the full dataset is still used to calculate partial
+        dependence when `kind='both'`.
+
+        .. versionadded:: 0.24
 
     Attributes
     ----------
@@ -414,13 +499,24 @@ class PartialDependenceDisplay:
     """
     @_deprecate_positional_args
     def __init__(self, pd_results, *, features, feature_names, target_idx,
-                 pdp_lim, deciles):
+                 pdp_lim, deciles, kind='average', subsample=1000):
         self.pd_results = pd_results
         self.features = features
         self.feature_names = feature_names
         self.target_idx = target_idx
         self.pdp_lim = pdp_lim
         self.deciles = deciles
+        self.kind = kind
+        self.subsample = subsample
+
+    def _get_sample_count(self, n_samples):
+        if isinstance(self.subsample, numbers.Integral):
+            if self.subsample < n_samples:
+                return self.subsample
+            return n_samples
+        elif isinstance(self.subsample, numbers.Real):
+            return ceil(n_samples * self.subsample)
+        return n_samples
 
     def plot(self, ax=None, n_cols=3, line_kw=None, contour_kw=None):
         """Plot partial dependence plots.
@@ -472,7 +568,22 @@ class PartialDependenceDisplay:
         default_contour_kws = {"alpha": 0.75}
         contour_kw = {**default_contour_kws, **contour_kw}
 
+        default_line_kws = {'color': 'C0'}
+        line_kw = {**default_line_kws, **line_kw}
+        individual_line_kw = line_kw.copy()
+
+        if self.kind == 'individual' or self.kind == 'both':
+            individual_line_kw['alpha'] = 0.3
+            individual_line_kw['linewidth'] = 0.5
+
         n_features = len(self.features)
+        n_sampled = 1
+        if self.kind == 'individual':
+            n_instances = len(self.pd_results[0].individual[0])
+            n_sampled = self._get_sample_count(n_instances)
+        elif self.kind == 'both':
+            n_instances = len(self.pd_results[0].individual[0])
+            n_sampled = self._get_sample_count(n_instances) + 1
 
         if isinstance(ax, plt.Axes):
             # If ax was set off, it has most likely been set to off
@@ -489,7 +600,13 @@ class PartialDependenceDisplay:
             n_cols = min(n_cols, n_features)
             n_rows = int(np.ceil(n_features / float(n_cols)))
 
-            self.axes_ = np.empty((n_rows, n_cols), dtype=np.object)
+            self.axes_ = np.empty((n_rows, n_cols), dtype=object)
+            if self.kind == 'average':
+                self.lines_ = np.empty((n_rows, n_cols), dtype=object)
+            else:
+                self.lines_ = np.empty((n_rows, n_cols, n_sampled),
+                                       dtype=object)
+            self.contours_ = np.empty((n_rows, n_cols), dtype=object)
 
             axes_ravel = self.axes_.ravel()
 
@@ -512,29 +629,64 @@ class PartialDependenceDisplay:
             self.bounding_ax_ = None
             self.figure_ = ax.ravel()[0].figure
             self.axes_ = ax
+            if self.kind == 'average':
+                self.lines_ = np.empty_like(ax, dtype=object)
+            else:
+                self.lines_ = np.empty(ax.shape + (n_sampled,),
+                                       dtype=object)
+            self.contours_ = np.empty_like(ax, dtype=object)
 
         # create contour levels for two-way plots
         if 2 in self.pdp_lim:
             Z_level = np.linspace(*self.pdp_lim[2], num=8)
 
-        self.lines_ = np.empty_like(self.axes_, dtype=np.object)
-        self.contours_ = np.empty_like(self.axes_, dtype=np.object)
-        self.deciles_vlines_ = np.empty_like(self.axes_, dtype=np.object)
-        self.deciles_hlines_ = np.empty_like(self.axes_, dtype=np.object)
+        self.deciles_vlines_ = np.empty_like(self.axes_, dtype=object)
+        self.deciles_hlines_ = np.empty_like(self.axes_, dtype=object)
+
         # Create 1d views of these 2d arrays for easy indexing
         lines_ravel = self.lines_.ravel(order='C')
         contours_ravel = self.contours_.ravel(order='C')
         vlines_ravel = self.deciles_vlines_.ravel(order='C')
         hlines_ravel = self.deciles_hlines_.ravel(order='C')
 
-        for i, axi, fx, (avg_preds, values) in zip(count(),
-                                                   self.axes_.ravel(),
-                                                   self.features,
-                                                   self.pd_results):
+        for i, axi, fx, pd_result in zip(count(), self.axes_.ravel(),
+                                         self.features, self.pd_results):
+
+            avg_preds = None
+            preds = None
+            values = pd_result["values"]
+            if self.kind == 'individual':
+                preds = pd_result.individual
+            elif self.kind == 'average':
+                avg_preds = pd_result.average
+            else:  # kind='both'
+                avg_preds = pd_result.average
+                preds = pd_result.individual
+
             if len(values) == 1:
-                lines_ravel[i] = axi.plot(values[0],
-                                          avg_preds[self.target_idx].ravel(),
-                                          **line_kw)[0]
+                if self.kind == 'individual' or self.kind == 'both':
+                    n_samples = self._get_sample_count(
+                        len(preds[self.target_idx])
+                    )
+                    ice_lines = preds[self.target_idx]
+                    sampled = ice_lines[np.random.choice(
+                        ice_lines.shape[0], n_samples, replace=False
+                    ), :]
+                    for j, ins in enumerate(sampled):
+                        lines_ravel[i * j + j] = axi.plot(
+                            values[0], ins.ravel(), **individual_line_kw
+                        )[0]
+                if self.kind == 'average':
+                    lines_ravel[i] = axi.plot(
+                        values[0], avg_preds[self.target_idx].ravel(),
+                        **line_kw
+                    )[0]
+                elif self.kind == 'both':
+                    lines_ravel[i] = axi.plot(
+                        values[0], avg_preds[self.target_idx].ravel(),
+                        label='average', **line_kw
+                    )[0]
+                    axi.legend()
             else:
                 # contour plot
                 XX, YY = np.meshgrid(values[0], values[1])

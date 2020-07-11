@@ -2,6 +2,21 @@
 
 .. currentmodule:: sklearn
 
+.. _changes_0_23_2:
+
+Version 0.23.2
+==============
+
+Changelog
+---------
+
+:mod:`sklearn.ensemble`
+.......................
+
+- |Fix| Fixes :class:`ensemble.StackingClassifier` and
+  :class:`ensemble.StackingRegressor` compatibility with estimators that
+  do not define `n_features_in_`. :pr:`17357` by `Thomas Fan`_.
+
 .. _changes_0_23_1:
 
 Version 0.23.1
@@ -169,7 +184,7 @@ Changelog
   deprecated. It has no effect. :pr:`11950` by
   :user:`Jeremie du Boisberranger <jeremiedbb>`.
 
-- |API| The ``random_state`` parameter has been added to 
+- |API| The ``random_state`` parameter has been added to
   :class:`cluster.AffinityPropagation`. :pr:`16801` by :user:`rcwoolston`
   and :user:`Chiara Marmo <cmarmo>`.
 
@@ -362,7 +377,7 @@ Changelog
   for each feature. :pr:`16403` by :user:`Narendra Mukherjee <narendramukherjee>`.
 
 - |Enhancement| :class:`impute.SimpleImputer`, :class:`impute.KNNImputer`, and
-  :class:`impute.SimpleImputer` accepts pandas' nullable integer dtype with
+  :class:`impute.IterativeImputer` accepts pandas' nullable integer dtype with
   missing values. :pr:`16508` by `Thomas Fan`_.
 
 :mod:`sklearn.inspection`
@@ -465,7 +480,7 @@ Changelog
   an error when `y_true` and `y_pred` were length zero and `labels` was
   not `None`. In addition, we raise an error when an empty list is given to
   the `labels` parameter.
-  :pr:`16442` by `Kyle Parsons <parsons-kyle-89>`.
+  :pr:`16442` by :user:`Kyle Parsons <parsons-kyle-89>`.
 
 - |API| Changed the formatting of values in
   :meth:`metrics.ConfusionMatrixDisplay.plot` and

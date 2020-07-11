@@ -374,7 +374,9 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         callable object. Ignored by other kernels.
 
     n_jobs : int, default=None
-        The number of parallel jobs to run.
+        The number of parallel jobs to run when `affinity='nearest_neighbors'`
+        or `affinity='precomputed_nearest_neighbors'`. The neighbors search
+        will be done in parallel.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
