@@ -425,7 +425,7 @@ def test_method_not_available():
 def test_square_distances_not_available():
     # square_distances must be True or 'legacy'.
     tsne = TSNE(square_distances="not_available")
-    with pytest.raises(ValueError, match="'square_distances' must be True or "):
+    with pytest.raises(ValueError, match="'square_distances' must be True or"):
         tsne.fit_transform(np.array([[0.0], [1.0]]))
 
 
@@ -896,7 +896,7 @@ def test_tsne_with_different_distance_metrics():
 @pytest.mark.parametrize('metric', ['euclidean', 'manhattan'])
 @pytest.mark.parametrize('square_distances', [True, 'legacy'])
 @ignore_warnings(category=FutureWarning)
-def test_tsne_with_different_square_distancess(method, square_distances, metric):
+def test_tsne_different_square_distances(method, metric, square_distances):
     # Make sure that TSNE works for different square_distances settings
     # FIXME remove test when square_distances=True becomes the default in 0.26
     random_state = check_random_state(0)
