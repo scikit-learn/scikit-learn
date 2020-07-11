@@ -138,7 +138,7 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
     def _pairwise(self):
         return self.kernel == "precomputed"
 
-    def fit(self, X, y=None, sample_weight=None):
+    def fit(self, X, y, sample_weight=None):
         """Fit Kernel Ridge regression model
 
         Parameters
