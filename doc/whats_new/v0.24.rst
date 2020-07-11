@@ -164,7 +164,7 @@ Changelog
 :mod:`sklearn.manifold`
 .......................
 
-- |Enhancement| Add `square_distance` parameter to :class:`manifold.TSNE`,
+- |Enhancement| Add `square_distances` parameter to :class:`manifold.TSNE`,
   which provides backward compatibility during deprecation of legacy squaring
   behavior. :pr:`17662` by :user:`Joshua Newton <joshuacwnewton>`.
 
