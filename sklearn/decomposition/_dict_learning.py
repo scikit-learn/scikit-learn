@@ -233,7 +233,7 @@ def sparse_encode(X, dictionary, *, gram=None, cov=None,
         solution. This is only used by `algorithm='lars'` and `algorithm='omp'`
         and is overridden by `alpha` in the `omp` case.
 
-    alpha : float, default=1.
+    alpha : float, default=1
         If `algorithm='lasso_lars'` or `algorithm='lasso_cd'`, `alpha` is the
         penalty applied to the L1 norm.
         If `algorithm='threshold'`, `alpha` is the absolute value of the
