@@ -11,16 +11,28 @@ Pipelining
 We have seen that some estimators can transform data and that some estimators
 can predict variables. We can also create combined estimators:
 
-.. image:: ../../auto_examples/compose/images/sphx_glr_plot_digits_pipe_001.png
-   :target: ../../auto_examples/compose/plot_digits_pipe.html
-   :scale: 65
-   :align: right
+.. raw :: html
+
+   <div class="sk-doc-div">
+    <div class="sk-doc-div-box">
 
 .. literalinclude:: ../../auto_examples/compose/plot_digits_pipe.py
     :lines: 23-63
 
+.. raw :: html
 
+    </div>
+      <div class="sk-doc-div-box">
 
+.. image:: ../../auto_examples/compose/images/sphx_glr_plot_digits_pipe_001.png
+   :target: ../../auto_examples/compose/plot_digits_pipe.html
+   :scale: 65
+   :align: center
+
+.. raw :: html
+
+     </div>
+   </div>
 
 Face recognition with eigenfaces
 =================================

@@ -179,17 +179,16 @@ scoring method.
 
 .. currentmodule:: sklearn.svm
 
-.. topic:: Exercise
-   :class: green
+.. topic:: **Exercise**
 
     .. raw :: html
 
        <div class="sk-doc-div">
          <div class="sk-doc-div-box">
 
-   On the digits dataset, plot the cross-validation score of a :class:`SVC`
-   estimator with an linear kernel as a function of parameter ``C`` (use a
-   logarithmic grid of points, from 1 to 10).
+    On the digits dataset, plot the cross-validation score of a :class:`SVC`
+    estimator with an linear kernel as a function of parameter ``C`` (use a
+    logarithmic grid of points, from 1 to 10).
 
         .. literalinclude:: ../../auto_examples/exercises/plot_cv_digits.py
             :lines: 13-23
@@ -286,7 +285,6 @@ These estimators are called similarly to their counterparts, with 'CV'
 appended to their name.
 
 .. topic:: **Exercise**
-   :class: green
 
    On the diabetes dataset, find the optimal regularization parameter
    alpha.
