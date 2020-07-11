@@ -284,6 +284,8 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
             Either 0 or 1 depending of `foo_param` (i.e. `foo_param > 1 =>
             score=1` otherwise `score=0`).
         """
+        if self.methods_to_check == "all" or "score" in self.methods_to_check:
+            self._check_X_y(X, Y)
         if self.foo_param > 1:
             score = 1.
         else:
