@@ -31,7 +31,7 @@ Triage team
 ------------
 
 The triage team is composed of community members who have permission on
-github to edit, label and close issues. :ref:`Their work <bug_triage>` is
+github to edit, label and close issues. :ref:`Their work <bug_triaging>` is
 crucial to improve the communication in the project and limit the crowing
 of the issue tracker.
 

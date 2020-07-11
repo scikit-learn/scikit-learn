@@ -1,4 +1,4 @@
-.. _bug_triage:
+.. _bug_triaging:
 
 Bug triaging and issue curation
 ================================

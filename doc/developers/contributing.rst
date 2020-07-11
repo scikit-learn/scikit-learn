@@ -56,7 +56,7 @@ send an email to the mailing list or preferably submit a GitHub pull request.
 Full documentation can be found under the doc/ directory.
 
 But there are many other ways to help. In particular helping to
-:ref:`improve, triage, and investigate issues <bug_triage>` and
+:ref:`improve, triage, and investigate issues <bug_triaging>` and
 :ref:`reviewing other developers' pull requests <code_review>` are very
 valuable contributions that decrease the burden on the project
 maintainers.
@@ -174,7 +174,7 @@ feedback:
   for more details.
 
 If you want to help curate issues, read :ref:`the following
-<bug_triage>`.
+<bug_triaging>`.
 
 Contributing code
 =================
