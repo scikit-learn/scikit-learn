@@ -672,6 +672,7 @@ class TSNE(BaseEstimator):
         self.method = method
         self.angle = angle
         self.n_jobs = n_jobs
+        # TODO Revisit deprecation of square_distances for 0.26-0.28 (#12401)
         self.square_distances = square_distances
 
     def _fit(self, X, skip_num_points=0):
