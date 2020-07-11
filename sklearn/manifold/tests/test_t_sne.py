@@ -897,7 +897,7 @@ def test_tsne_with_different_distance_metrics():
 @pytest.mark.parametrize('square_distance', [True, 'legacy'])
 @ignore_warnings(category=FutureWarning)
 def test_tsne_with_different_square_distances(method, square_distance, metric):
-    """Make sure that TSNE works for different square_distance settings"""
+    # Make sure that TSNE works for different square_distance settings
     # FIXME remove test when square_distance=True becomes the default in 0.26
     random_state = check_random_state(0)
     n_components_original = 3
@@ -926,8 +926,8 @@ def test_tsne_with_different_square_distances(method, square_distance, metric):
 @pytest.mark.parametrize('metric', ['euclidean', 'manhattan'])
 @pytest.mark.parametrize('square_distance', [True, 'legacy'])
 def test_tsne_square_distance_futurewarning(metric, square_distance):
-    """Make sure that a FutureWarning is only raised when a non-Euclidean
-     metric is specified and square_metric is not set to True."""
+    # Make sure that a FutureWarning is only raised when a non-Euclidean
+    # metric is specified and square_metric is not set to True.
     random_state = check_random_state(0)
 
     X = random_state.randn(5, 2)
