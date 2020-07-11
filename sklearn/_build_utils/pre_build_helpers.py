@@ -5,6 +5,7 @@ import sys
 import glob
 import tempfile
 import textwrap
+import setuptools  # noqa
 import subprocess
 
 from distutils.dist import Distribution
