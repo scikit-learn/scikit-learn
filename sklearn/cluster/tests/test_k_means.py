@@ -933,7 +933,7 @@ def test_n_jobs_deprecated(n_jobs):
         kmeans.fit(X)
 
 
-@pytest.mark.parametrize("attr", ["counts_", "init_size_"])
+@pytest.mark.parametrize("attr", ["counts_", "init_size_", "random_state_"])
 def test_minibatch_kmeans_deprecated_attributes(attr):
     # check that we raise a deprecation warning when accessing `init_size_`
     # FIXME: remove in 0.26
