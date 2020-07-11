@@ -166,7 +166,9 @@ Changelog
 
 - |Enhancement| Add `square_distances` parameter to :class:`manifold.TSNE`,
   which provides backward compatibility during deprecation of legacy squaring
-  behavior. :pr:`17662` by :user:`Joshua Newton <joshuacwnewton>`.
+  behavior. Distances will be squared by default in 0.26, and this parameter
+  will be removed in 0.28. :pr:`17662` by
+  :user:`Joshua Newton <joshuacwnewton>`.
 
 :mod:`sklearn.metrics`
 ......................
