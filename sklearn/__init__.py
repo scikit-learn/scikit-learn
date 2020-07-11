@@ -15,6 +15,9 @@ See http://scikit-learn.org for complete documentation.
 import sys
 import logging
 import os
+import random
+
+import numpy as np
 
 from ._config import get_config, set_config, config_context
 
@@ -96,10 +99,8 @@ else:
 
 
 def setup_module(module):
-    """Fixture for the tests to assure globally controllable seeding of RNGs"""
-    import os
-    import numpy as np
-    import random
+    """Fixture for the tests to assure globally controllable seeding of RNGs"""  
+    
 
     # Check if a random seed exists in the environment, if not create one.
     _random_seed = os.environ.get('SKLEARN_SEED', None)
