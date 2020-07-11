@@ -598,7 +598,7 @@ class TSNE(BaseEstimator):
 
         .. versionadded:: 0.22
 
-    square_distance : {True, 'legacy'}, default='legacy'
+    square_distances : {True, 'legacy'}, default='legacy'
         Whether TSNE should square the distance values. ``'legacy'`` means
         that distance values are squared only when ``metric="euclidean"``.
         ``True`` means that distance values are squared for all metrics.
@@ -657,7 +657,7 @@ class TSNE(BaseEstimator):
                  n_iter_without_progress=300, min_grad_norm=1e-7,
                  metric="euclidean", init="random", verbose=0,
                  random_state=None, method='barnes_hut', angle=0.5,
-                 n_jobs=None, square_distance='legacy'):
+                 n_jobs=None, square_distances='legacy'):
         self.n_components = n_components
         self.perplexity = perplexity
         self.early_exaggeration = early_exaggeration
@@ -672,7 +672,7 @@ class TSNE(BaseEstimator):
         self.method = method
         self.angle = angle
         self.n_jobs = n_jobs
-        self.square_distance = square_distance
+        self.square_distances = square_distances
 
     def _fit(self, X, skip_num_points=0):
         """Private function to fit the model using X as training data."""
@@ -681,10 +681,10 @@ class TSNE(BaseEstimator):
             raise ValueError("'method' must be 'barnes_hut' or 'exact'")
         if self.angle < 0.0 or self.angle > 1.0:
             raise ValueError("'angle' must be between 0.0 - 1.0")
-        if self.square_distance not in [True, 'legacy']:
-            raise ValueError("'square_distance' must be True or 'legacy'.")
-        if self.metric != "euclidean" and self.square_distance is not True:
-            warnings.warn(("'square_distance' has been introduced in 0.24. "
+        if self.square_distances not in [True, 'legacy']:
+            raise ValueError("'square_distances' must be True or 'legacy'.")
+        if self.metric != "euclidean" and self.square_distances is not True:
+            warnings.warn(("'square_distances' has been introduced in 0.24. "
                            "'legacy' is provided as a setting for backward "
                            "compatibility purposes. However, 'legacy' will "
                            "be removed in 0.26, at which point all distance "
@@ -754,7 +754,7 @@ class TSNE(BaseEstimator):
                 raise ValueError("All distances should be positive, the "
                                  "metric given is not correct")
 
-            if self.metric != "euclidean" and self.square_distance is True:
+            if self.metric != "euclidean" and self.square_distances is True:
                 distances **= 2
 
             # compute the joint probability distribution for the input space
@@ -797,7 +797,7 @@ class TSNE(BaseEstimator):
             # Free the memory used by the ball_tree
             del knn
 
-            if self.square_distance is True or self.metric == "euclidean":
+            if self.square_distances is True or self.metric == "euclidean":
                 # knn return the euclidean distance but we need it squared
                 # to be consistent with the 'exact' method. Note that the
                 # the method was derived using the euclidean method as in the
