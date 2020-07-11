@@ -54,11 +54,11 @@ def _make_edges_3d(n_x, n_y, n_z=1):
 def _compute_gradient_3d(edges, img):
     _, n_y, n_z = img.shape
     gradient = np.abs(img[edges[0] // (n_y * n_z),
-                      (edges[0] % (n_y * n_z)) // n_z,
-                      (edges[0] % (n_y * n_z)) % n_z] -
+                          (edges[0] % (n_y * n_z)) // n_z,
+                          (edges[0] % (n_y * n_z)) % n_z] -
                       img[edges[1] // (n_y * n_z),
-                      (edges[1] % (n_y * n_z)) // n_z,
-                      (edges[1] % (n_y * n_z)) % n_z])
+                          (edges[1] % (n_y * n_z)) // n_z,
+                          (edges[1] % (n_y * n_z)) % n_z])
     return gradient
 
 
@@ -121,8 +121,8 @@ def _to_graph(n_x, n_y, n_z, mask=None, img=None,
     i_idx = np.hstack((edges[0], edges[1]))
     j_idx = np.hstack((edges[1], edges[0]))
     graph = sparse.coo_matrix((np.hstack((weights, weights, diag)),
-                              (np.hstack((i_idx, diag_idx)),
-                               np.hstack((j_idx, diag_idx)))),
+                               (np.hstack((i_idx, diag_idx)),
+                                np.hstack((j_idx, diag_idx)))),
                               (n_voxels, n_voxels),
                               dtype=dtype)
     if return_as is np.ndarray:
@@ -455,7 +455,7 @@ class PatchExtractor(BaseEstimator):
 
     Parameters
     ----------
-    patch_size : tuple of int (patch_height, patch_width)
+    patch_size : tuple of int (patch_height, patch_width), default=None
         The dimensions of one patch.
 
     max_patches : int or float, default=None
