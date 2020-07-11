@@ -14,18 +14,16 @@ import warnings
 
 import numpy as np
 
-from ._base import _get_weights, _check_weights, NeighborsBase, KNeighborsMixin
-from ._base import RadiusNeighborsMixin, SupervisedFloatMixin
+from ._base import _get_weights, _check_weights
+from ._base import NeighborsBase, KNeighborsMixin, RadiusNeighborsMixin
 from ..base import RegressorMixin
-from ._ball_tree import BallTree
-from ._kd_tree import KDTree
 from ..utils import check_array
 from ..utils.validation import _deprecate_positional_args
 
 
-class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
-                          SupervisedFloatMixin,
-                          RegressorMixin):
+class KNeighborsRegressor(KNeighborsMixin,
+                          RegressorMixin,
+                          NeighborsBase):
     """Regression based on k-nearest neighbors.
 
     The target is predicted by local interpolation of the targets
@@ -181,11 +179,7 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
         self : KNeighborsRegressor
             The fitted k-nearest neighbors regressor.
         """
-        if not isinstance(X, (KDTree, BallTree, NeighborsBase)):
-            X, y = self._validate_data(X, y, accept_sparse="csr",
-                                       multi_output=True)
-        self._y = y
-        return self._fit(X)
+        return self._fit(X, y)
 
     def predict(self, X):
         """Predict the target for the provided data
@@ -227,9 +221,9 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
         return y_pred
 
 
-class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
-                               SupervisedFloatMixin,
-                               RegressorMixin):
+class RadiusNeighborsRegressor(RadiusNeighborsMixin,
+                               RegressorMixin,
+                               NeighborsBase):
     """Regression based on neighbors within a fixed radius.
 
     The target is predicted by local interpolation of the targets
@@ -374,11 +368,7 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
         self : RadiusNeighborsRegressor
             The fitted radius neighbors regressor.
         """
-        if not isinstance(X, (KDTree, BallTree, NeighborsBase)):
-            X, y = self._validate_data(X, y, accept_sparse="csr",
-                                       multi_output=True)
-        self._y = y
-        return self._fit(X)
+        return self._fit(X, y)
 
     def predict(self, X):
         """Predict the target for the provided data

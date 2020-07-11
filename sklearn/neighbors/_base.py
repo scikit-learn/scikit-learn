@@ -20,6 +20,7 @@ from joblib import Parallel, delayed, effective_n_jobs
 from ._ball_tree import BallTree
 from ._kd_tree import KDTree
 from ..base import BaseEstimator, MultiOutputMixin
+from ..base import is_classifier
 from ..metrics import pairwise_distances_chunked
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
 from ..utils import check_array, gen_even_slices
@@ -347,7 +348,45 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         if self.metric in ['wminkowski', 'minkowski'] and effective_p < 1:
             raise ValueError("p must be greater than one for minkowski metric")
 
-    def _fit(self, X):
+    def _fit(self, X, y=None):
+        if self._get_tags()["requires_y"]:
+            if not isinstance(X, (KDTree, BallTree, NeighborsBase)):
+                X, y = self._validate_data(X, y, accept_sparse="csr",
+                                           multi_output=True)
+
+            if is_classifier(self):
+                # Classification targets require a specific format
+                if y.ndim == 1 or y.ndim == 2 and y.shape[1] == 1:
+                    if y.ndim != 1:
+                        warnings.warn("A column-vector y was passed when a "
+                                      "1d array was expected. Please change "
+                                      "the shape of y to (n_samples,), for "
+                                      "example using ravel().",
+                                      DataConversionWarning, stacklevel=2)
+
+                    self.outputs_2d_ = False
+                    y = y.reshape((-1, 1))
+                else:
+                    self.outputs_2d_ = True
+
+                check_classification_targets(y)
+                self.classes_ = []
+                self._y = np.empty(y.shape, dtype=int)
+                for k in range(self._y.shape[1]):
+                    classes, self._y[:, k] = np.unique(
+                        y[:, k], return_inverse=True)
+                    self.classes_.append(classes)
+
+                if not self.outputs_2d_:
+                    self.classes_ = self.classes_[0]
+                    self._y = self._y.ravel()
+            else:
+                self._y = y
+
+        else:
+            if not isinstance(X, (KDTree, BallTree, NeighborsBase)):
+                X = self._validate_data(X, accept_sparse='csr')
+
         self._check_algorithm_metric()
         if self.metric_params is None:
             self.effective_metric_params_ = {}
@@ -1086,39 +1125,3 @@ class RadiusNeighborsMixin:
 
         return csr_matrix((A_data, A_ind, A_indptr),
                           shape=(n_queries, n_samples_fit))
-
-
-class SupervisedFloatMixin:
-
-    def _more_tags(self):
-        return {'requires_y': True}
-
-
-class SupervisedIntegerMixin:
-    def _validate_set_y(self, y):
-        """Validate the target values."""
-        if y.ndim == 1 or y.ndim == 2 and y.shape[1] == 1:
-            if y.ndim != 1:
-                warnings.warn("A column-vector y was passed when a 1d array "
-                              "was expected. Please change the shape of y to "
-                              "(n_samples, ), for example using ravel().",
-                              DataConversionWarning, stacklevel=2)
-
-            self.outputs_2d_ = False
-            y = y.reshape((-1, 1))
-        else:
-            self.outputs_2d_ = True
-
-        check_classification_targets(y)
-        self.classes_ = []
-        self._y = np.empty(y.shape, dtype=int)
-        for k in range(self._y.shape[1]):
-            classes, self._y[:, k] = np.unique(y[:, k], return_inverse=True)
-            self.classes_.append(classes)
-
-        if not self.outputs_2d_:
-            self.classes_ = self.classes_[0]
-            self._y = self._y.ravel()
-
-    def _more_tags(self):
-        return {'requires_y': True}

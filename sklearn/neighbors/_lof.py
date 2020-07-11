@@ -8,8 +8,6 @@ import warnings
 from ._base import NeighborsBase
 from ._base import KNeighborsMixin
 from ..base import OutlierMixin
-from ._ball_tree import BallTree
-from ._kd_tree import KDTree
 
 from ..utils.validation import check_is_fitted
 from ..utils.validation import _deprecate_positional_args
@@ -18,7 +16,9 @@ from ..utils import check_array
 __all__ = ["LocalOutlierFactor"]
 
 
-class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
+class LocalOutlierFactor(KNeighborsMixin,
+                         OutlierMixin,
+                         NeighborsBase):
     """Unsupervised Outlier Detection using Local Outlier Factor (LOF)
 
     The anomaly score of each sample is called Local Outlier Factor.
@@ -262,15 +262,12 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
         self : LocalOutlierFactor
             The fitted local outlier factor detector.
         """
+        self._fit(X)
+
         if self.contamination != 'auto':
             if not(0. < self.contamination <= .5):
                 raise ValueError("contamination must be in (0, 0.5], "
                                  "got: %f" % self.contamination)
-
-        if not isinstance(X, (KDTree, BallTree, NeighborsBase)):
-            X = self._validate_data(X, accept_sparse='csr')
-
-        self._fit(X)
 
         n_samples = self.n_samples_fit_
         if self.n_neighbors > n_samples:

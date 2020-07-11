@@ -14,19 +14,16 @@ from ..utils.extmath import weighted_mode
 from ..utils.validation import _is_arraylike, _num_samples
 
 import warnings
-from ._base import \
-    _check_weights, _get_weights, \
-    NeighborsBase, KNeighborsMixin,\
-    RadiusNeighborsMixin, SupervisedIntegerMixin
-from ._ball_tree import BallTree
-from ._kd_tree import KDTree
+from ._base import _check_weights, _get_weights
+from ._base import NeighborsBase, KNeighborsMixin, RadiusNeighborsMixin
 from ..base import ClassifierMixin
 from ..utils import check_array
 from ..utils.validation import _deprecate_positional_args
 
 
-class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
-                           SupervisedIntegerMixin, ClassifierMixin):
+class KNeighborsClassifier(KNeighborsMixin,
+                           ClassifierMixin,
+                           NeighborsBase):
     """Classifier implementing the k-nearest neighbors vote.
 
     Read more in the :ref:`User Guide <classification>`.
@@ -180,12 +177,7 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         self : KNeighborsClassifier
             The fitted k-nearest neighbors classifier.
         """
-        if not isinstance(X, (KDTree, BallTree, NeighborsBase)):
-            X, y = self._validate_data(X, y, accept_sparse="csr",
-                                       multi_output=True)
-
-        self._validate_set_y(y)
-        return self._fit(X)
+        return self._fit(X, y)
 
     def predict(self, X):
         """Predict the class labels for the provided data.
@@ -284,8 +276,9 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         return probabilities
 
 
-class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
-                                SupervisedIntegerMixin, ClassifierMixin):
+class RadiusNeighborsClassifier(RadiusNeighborsMixin,
+                                ClassifierMixin,
+                                NeighborsBase):
     """Classifier implementing a vote among neighbors within a given radius
 
     Read more in the :ref:`User Guide <classification>`.
@@ -447,11 +440,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         self : RadiusNeighborsClassifier
             The fitted radius neighbors classifier.
         """
-        if not isinstance(X, (KDTree, BallTree, NeighborsBase)):
-            X, y = self._validate_data(X, y, accept_sparse="csr",
-                                       multi_output=True)
-
-        self._validate_set_y(y)
+        self._fit(X, y)
 
         classes_ = self.classes_
         _y = self._y
@@ -496,7 +485,8 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
                                     "y.".format(label, classes))
 
         self.outlier_label_ = outlier_label_
-        return self._fit(X)
+
+        return self
 
     def predict(self, X):
         """Predict the class labels for the provided data.

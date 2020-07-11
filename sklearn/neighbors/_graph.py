@@ -6,8 +6,6 @@
 # License: BSD 3 clause (C) INRIA, University of Amsterdam
 from ._base import KNeighborsMixin, RadiusNeighborsMixin
 from ._base import NeighborsBase
-from ._ball_tree import BallTree
-from ._kd_tree import KDTree
 from ._unsupervised import NearestNeighbors
 from ..base import TransformerMixin
 from ..utils.validation import check_is_fitted, _deprecate_positional_args
@@ -196,7 +194,9 @@ def radius_neighbors_graph(X, radius, *, mode='connectivity',
     return X.radius_neighbors_graph(query, radius, mode)
 
 
-class KNeighborsTransformer(KNeighborsMixin, TransformerMixin, NeighborsBase):
+class KNeighborsTransformer(KNeighborsMixin,
+                            TransformerMixin,
+                            NeighborsBase):
     """Transform X into a (weighted) graph of k nearest neighbors
 
     The transformed data is a sparse graph as returned by kneighbors_graph.
@@ -324,9 +324,6 @@ class KNeighborsTransformer(KNeighborsMixin, TransformerMixin, NeighborsBase):
         self : KNeighborsTransformer
             The fitted k-nearest neighbors transformer.
         """
-        if not isinstance(X, (KDTree, BallTree, NeighborsBase)):
-            X = self._validate_data(X, accept_sparse='csr')
-
         return self._fit(X)
 
     def transform(self, X):
@@ -502,9 +499,6 @@ class RadiusNeighborsTransformer(RadiusNeighborsMixin,
         self : RadiusNeighborsTransformer
             The fitted radius neighbors transformer.
         """
-        if not isinstance(X, (KDTree, BallTree, NeighborsBase)):
-            X = self._validate_data(X, accept_sparse='csr')
-
         return self._fit(X)
 
     def transform(self, X):
