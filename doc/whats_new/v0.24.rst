@@ -22,8 +22,8 @@ parameters, may produce different models from the previous version. This often
 occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
-- items
-- items
+- |Fix| ``inertia_`` attribute of :class:`cluster.KMeans` and
+  :class:`cluster.MiniBatchKMeans`.
 
 Details are listed in the changelog below.
 
@@ -52,6 +52,27 @@ Changelog
   prefit :class:`pipeline.Pipeline` where data is not `X` is not array-like,
   sparse matrix or dataframe at the start. :pr:`17546` by
   :user:`Lucy Liu <lucyleeow>`.
+
+:mod:`sklearn.cluster`
+.......................
+
+- |Fix| Fixed a bug in :class:`cluster.MeanShift` with `bin_seeding=True`. When
+  the estimated bandwidth is 0, the behavior is equivalent to
+  `bin_seeding=False`.
+  :pr:`17742` by :user:`Jeremie du Boisberranger <jeremiedbb>`.
+
+- |Fix| Fixed a bug in :class:`cluster.KMeans` and
+  :class:`cluster.MiniBatchKMeans` where the reported inertia was incorrectly
+  weighted by the sample weights. :pr:`17848` by
+  :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+:mod:`sklearn.covariance`
+.........................
+
+- |API| Deprecates `cv_alphas_` in favor of `cv_results['alphas']` and
+  `grid_scores_` in favor of split scores in `cv_results_` in
+  :class:`covariance.GraphicalLassoCV`. `cv_alphas_` and `grid_scores_` will be
+  removed in version 0.26. :pr:`16392` by `Thomas Fan`_.
 
 :mod:`sklearn.datasets`
 .......................
@@ -163,6 +184,9 @@ Changelog
   :pr:`16289` by :user:`Masashi Kishimoto <kishimoto-banana>` and
   :user:`Olivier Grisel <ogrisel>`.
 
+- |Enhancement| :class:`isotonic.IsotonicRegression` now accepts 2darray with 1 feature as
+  input array. :pr:`17379` by :user:`Jiaxiang <fujiaxiang>`.
+
 :mod:`sklearn.metrics`
 ......................
 
@@ -189,6 +213,11 @@ Changelog
 - |Feature| :func:`metrics.plot_confusion_matrix` now supports making colorbar
   optional in the matplotlib plot by setting colorbar=False. :pr:`17192` by
   :user:`Avi Gupta <avigupta2612>`
+
+- |Enhancement| Add `pos_label` parameter in
+  :func:`metrics.plot_roc_curve` in order to specify the positive
+  class to be used when computing the roc auc statistics.
+  :pr:`17651` by :user:`Clara Matos <claramatos>`.
 
 :mod:`sklearn.model_selection`
 ..............................
@@ -272,6 +301,10 @@ Changelog
   :class:`preprocessing.KBinsDiscretizer`.
   :pr:`16335` by :user:`Arthur Imbert <Henley13>`.
 
+- |Enhancement| Add ``clip`` parameter to :class:`preprocessing.MinMaxScaler`,
+  which clips the transformed values of test data to ``feature_range``.
+  :pr:`17833` by :user:`Yashika Sharma <yashika51>`.
+
 :mod:`sklearn.svm`
 ..................
 
@@ -290,6 +323,13 @@ Changelog
   :meth:`tree.DecisionTreeClassifier.fit` and
   :meth:`tree.DecisionTreeRegressor.fit`, and has not effect.
   :pr:`17614` by :user:`Juan Carlos Alfaro Jiménez <alfaro96>`.
+
+:mod:`sklearn.utils`
+.........................
+
+- |Fix| Fix :func:`utils.estimator_checks.check_estimator` so that all test
+  cases support the `binary_only` estimator tag.
+  :pr:`17812` by :user:`Bruno Charron <brcharron>`.
 
 Code and Documentation Contributors
 -----------------------------------
