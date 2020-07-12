@@ -149,6 +149,7 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
             else:
                 X = checked_X
         if y is not None and self.check_y is not None:
+            params = {} if self.check_y_params is None else self.check_y_params
             checked_y = self.check_y(y, **params)
             if isinstance(checked_y, (bool, np.bool_)):
                 assert checked_y
