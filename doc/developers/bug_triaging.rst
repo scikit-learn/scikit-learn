@@ -28,7 +28,10 @@ The following actions are typically useful:
   - making sure that the title and description are explicit about the
     problem to be solved
 
-  - linking to related issues or discussions while briefly describing how they are related 
+  - linking to related issues or discussions while briefly describing how
+    they are related, for instance "See also #xyz for a similar attempt
+    at this" or "See also #xyz where the same thing happened in
+    SomeEstimator" provides context and helps the discussion.
 
 .. topic:: Fruitful discussions
 
