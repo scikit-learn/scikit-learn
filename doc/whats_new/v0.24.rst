@@ -182,6 +182,15 @@ Changelog
 - |Enhancement| :class:`isotonic.IsotonicRegression` now accepts 2darray with 1 feature as
   input array. :pr:`17379` by :user:`Jiaxiang <fujiaxiang>`.
 
+:mod:`sklearn.manifold`
+.......................
+
+- |Enhancement| Add `square_distances` parameter to :class:`manifold.TSNE`,
+  which provides backward compatibility during deprecation of legacy squaring
+  behavior. Distances will be squared by default in 0.26, and this parameter
+  will be removed in 0.28. :pr:`17662` by
+  :user:`Joshua Newton <joshuacwnewton>`.
+
 :mod:`sklearn.metrics`
 ......................
 
