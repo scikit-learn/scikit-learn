@@ -434,7 +434,7 @@ def test_minibatch_reassign():
             # Turn on verbosity to smoke test the display code
             _mini_batch_step(this_X, sample_weight, (X ** 2).sum(axis=1),
                              mb_k_means.cluster_centers_,
-                             mb_k_means.counts_,
+                             mb_k_means._counts,
                              np.zeros(X.shape[1], np.double),
                              False, distances=np.zeros(X.shape[0]),
                              random_reassign=True, random_state=42,
@@ -454,7 +454,7 @@ def test_minibatch_reassign():
         # Turn on verbosity to smoke test the display code
         _mini_batch_step(this_X, sample_weight, (X ** 2).sum(axis=1),
                          mb_k_means.cluster_centers_,
-                         mb_k_means.counts_,
+                         mb_k_means._counts,
                          np.zeros(X.shape[1], np.double),
                          False, distances=np.zeros(X.shape[0]),
                          random_reassign=True, random_state=42,
@@ -529,7 +529,7 @@ def test_minibatch_set_init_size():
                                  init_size=666, random_state=42,
                                  n_init=1).fit(X)
     assert mb_k_means.init_size == 666
-    assert mb_k_means.init_size_ == n_samples
+    assert mb_k_means._init_size == n_samples
     _check_fitted_model(mb_k_means)
 
 
@@ -931,6 +931,19 @@ def test_n_jobs_deprecated(n_jobs):
 
     with pytest.warns(FutureWarning, match=depr_msg):
         kmeans.fit(X)
+
+
+@pytest.mark.parametrize("attr", ["counts_", "init_size_", "random_state_"])
+def test_minibatch_kmeans_deprecated_attributes(attr):
+    # check that we raise a deprecation warning when accessing `init_size_`
+    # FIXME: remove in 0.26
+    depr_msg = (f"The attribute '{attr}' is deprecated in 0.24 and will be "
+                f"removed in 0.26.")
+    km = MiniBatchKMeans(n_clusters=2, n_init=1, init='random', random_state=0)
+    km.fit(X)
+
+    with pytest.warns(FutureWarning, match=depr_msg):
+        getattr(km, attr)
 
 
 def test_warning_elkan_1_cluster():
