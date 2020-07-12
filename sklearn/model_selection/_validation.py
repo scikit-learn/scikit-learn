@@ -282,10 +282,11 @@ def cross_validate(estimator, X, y=None, *, groups=None, scoring=None, cv=None,
 
 
 def _insert_error_scores(results, error_score):
-    """Insert error in results by replacing them with `error_score`.
+    """Insert error in `results` by replacing them inplace with `error_score`.
 
     This only applies to multimetric scores because `_fit_and_score` will
-    handle the single metric case."""
+    handle the single metric case.
+    """
     successful_score = None
     failed_indices = []
     for i, result in enumerate(results):

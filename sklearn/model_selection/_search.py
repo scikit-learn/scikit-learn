@@ -655,21 +655,21 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         """
         raise NotImplementedError("_run_search not implemented.")
 
-    def _check_refit_for_multimetric(self, scores_dict):
-        """Check score contains the string in refit"""
-        multimetric_refit_msg = ("For multi-metric scoring, the parameter "
-                                 "refit must be set to a scorer key or a "
-                                 "callable to refit an estimator with the "
-                                 "best parameter setting on the whole "
-                                 "data and make the best_* attributes "
-                                 "available for that metric. If this is "
-                                 "not needed, refit should be set to "
-                                 "False explicitly. %r was passed."
-                                 % self.refit)
-        if self.refit is not False and (
-                not isinstance(self.refit, str) or
-                # This will work for both dict / list (tuple)
-                self.refit not in scores_dict) and not callable(self.refit):
+    def _check_refit_for_multimetric(self, scores):
+        """Check `refit` is compatible with `scores` is valid"""
+        multimetric_refit_msg = (
+            "For multi-metric scoring, the parameter refit must be set to a "
+            "scorer key or a callable to refit an estimator with the best "
+            "parameter setting on the whole data and make the best_* "
+            "attributes available for that metric. If this is not needed, "
+            f"refit should be set to False explicitly. {self.refit!r} was "
+            "passed.")
+
+        valid_refit_dict = (isinstance(self.refit, str) and
+                            self.refit in scores)
+
+        if (self.refit is not False and not valid_refit_dict
+                and not callable(self.refit)):
             raise ValueError(multimetric_refit_msg)
 
     @_deprecate_positional_args
@@ -769,9 +769,10 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                                      .format(n_splits,
                                              len(out) // n_candidates))
 
-                # For callabe self.scoring, the return type is only know after
+                # For callable self.scoring, the return type is only know after
                 # calling. If the return type is a dictionary, the error scores
-                # can now be inserted with the correct key.
+                # can now be inserted with the correct key. The type checking
+                # of out will be done in `_insert_error_scores`.
                 if callable(self.scoring):
                     _insert_error_scores(out, self.error_score)
                 all_candidate_params.extend(candidate_params)

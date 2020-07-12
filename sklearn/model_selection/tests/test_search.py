@@ -1750,6 +1750,8 @@ def test_random_search_bad_cv():
 
 
 def test_callable_multimetric_confusion_matrix():
+    # Test callable with many metrics inserts the correct names and metrics
+    # into the search cv object
     def custom_scorer(clf, X, y):
         y_pred = clf.predict(X)
         cm = confusion_matrix(y, y_pred)
@@ -1773,6 +1775,7 @@ def test_callable_multimetric_confusion_matrix():
 
 
 def test_callable_multimetric_same_as_list_of_strings():
+    # Test callable multimetric is the same as a list of strings
     def custom_scorer(est, X, y):
         y_pred = est.predict(X)
         return {'recall': recall_score(y, y_pred),
@@ -1795,6 +1798,7 @@ def test_callable_multimetric_same_as_list_of_strings():
 
 
 def test_callable_single_metric_same_as_single_string():
+    # Tests callable scorer is the same as scoring with a single string
     def custom_scorer(est, X, y):
         y_pred = est.predict(X)
         return recall_score(y, y_pred)
@@ -1806,16 +1810,23 @@ def test_callable_single_metric_same_as_single_string():
                                    scoring=custom_scorer, refit=True)
     search_str = GridSearchCV(est, {'C': [0.1, 1]},
                               scoring='recall', refit='recall')
-
+    search_list_str = GridSearchCV(est, {'C': [0.1, 1]},
+                                   scoring=['recall'], refit='recall')
     search_callable.fit(X, y)
     search_str.fit(X, y)
+    search_list_str.fit(X, y)
 
     assert search_callable.best_score_ == pytest.approx(search_str.best_score_)
     assert search_callable.best_index_ == search_str.best_index_
     assert search_callable.score(X, y) == pytest.approx(search_str.score(X, y))
 
+    assert search_list_str.best_score_ == pytest.approx(search_str.best_score_)
+    assert search_list_str.best_index_ == search_str.best_index_
+    assert search_list_str.score(X, y) == pytest.approx(search_str.score(X, y))
+
 
 def test_callable_multimetric_error_on_invalid_key():
+    # Raises when the callable scorer does not return a dict with `refit` key.
     def bad_scorer(est, X, y):
         return {'bad_name': 1}
 
@@ -1831,6 +1842,8 @@ def test_callable_multimetric_error_on_invalid_key():
 
 
 def test_callable_multimetric_error_failing_clf():
+    # Warns when there is an estimator the fails to fit with a float
+    # error_score
     def custom_scorer(est, X, y):
         return {'acc': 1}
 
@@ -1847,6 +1860,7 @@ def test_callable_multimetric_error_failing_clf():
 
 
 def test_callable_multimetric_clf_all_fails():
+    # Warns and raises when all estimator fails to fit.
     def custom_scorer(est, X, y):
         return {'acc': 1}
     X, y = make_classification(n_samples=20, n_features=10, random_state=0)
