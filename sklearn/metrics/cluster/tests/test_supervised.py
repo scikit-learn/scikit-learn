@@ -351,8 +351,9 @@ def test_mutual_info_score_positive_constant_label(labels_true, labels_pred):
 
 
 def test_check_clustering_error():
+    # Test warning message for continuous values
     noise = np.random.rand(500)
     wavelength = np.linspace(0.01, 1, 500) * 1e-6
 
-    with pytest.raises(Warning):
+    with pytest(UserWarning):
         normalized_mutual_info_score(wavelength, noise)

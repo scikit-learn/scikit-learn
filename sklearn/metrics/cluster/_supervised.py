@@ -15,6 +15,7 @@ better.
 # License: BSD 3 clause
 
 
+import warnings
 from math import log
 
 import numpy as np
@@ -863,9 +864,9 @@ def normalized_mutual_info_score(labels_true, labels_pred, *,
     type_pred = type_of_target(labels_pred)
 
     if type_pred or type_pred == 'continous':
-        raise Warning('Classification metrics expects discrete values received {} '
-                      'for label, and {} for target'.format(type_label, type_label))
-
+        warnings.warn(UserWarning('Expects discrete values received {} '
+                                  'for label, and {} for target'
+                                  .format(type_label, type_label)))
 
     # Special limit cases: no clustering since the data is not split.
     # This is a perfect match hence return 1.0.
