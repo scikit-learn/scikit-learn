@@ -137,5 +137,7 @@ The following workflow [*]_ is a good way to approach issue triaging:
    If the issue is clearly defined and the fix seems relatively
    straightforward, label the issue as “Good first issue”.
 
+   An additional useful step can be to tag the corresponding module e.g.
+   `sklearn.linear_models` when relevant.
 
 .. [*] Adapted from the pandas project https://dev.pandas.io/docs/development/maintaining.html
