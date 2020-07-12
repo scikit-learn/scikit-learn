@@ -92,6 +92,7 @@ clf
 # effect anymore. For more details on how to control the number of threads,
 # please refer to our :ref:`parallelism` notes.
 import scipy
+import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.cluster import KMeans
 from sklearn.datasets import make_blobs
@@ -119,6 +120,7 @@ print(completeness_score(kmeans.predict(X_test), y_test))
 # generally positively correlated with the first feature, with some noise.
 # Applying monotoinc constraints allows the prediction to capture the global
 # effect of the first feature, instead of fitting the noise.
+import numpy as np
 from matplotlib import pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.inspection import plot_partial_dependence
@@ -138,7 +140,7 @@ disp = plot_partial_dependence(
     gbdt_no_cst, X, features=[0], feature_names=['feature 0'],
     line_kw={'linewidth': 4, 'label': 'unconstrained'})
 plot_partial_dependence(gbdt_cst, X, features=[0],
-                        line_kw={'linewidth': 4, 'label': 'constrained'}, ax=disp.axes_)
+    line_kw={'linewidth': 4, 'label': 'constrained'}, ax=disp.axes_)
 disp.axes_[0, 0].plot(X[:, 0], y, 'o', alpha=.5, zorder=-1, label='samples')
 disp.axes_[0, 0].set_ylim(-3, 3)
 disp.axes_[0, 0].set_xlim(-1, 1)
@@ -153,6 +155,7 @@ plt.show()
 
 from sklearn.model_selection import train_test_split
 from sklearn.datasets import make_regression
+import numpy as np
 from sklearn.linear_model import Lasso
 
 n_samples, n_features = 1000, 20
