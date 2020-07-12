@@ -54,7 +54,7 @@ Changelog
   :user:`Lucy Liu <lucyleeow>`.
 
 :mod:`sklearn.cluster`
-.......................
+......................
 
 - |Fix| Fixed a bug in :class:`cluster.MeanShift` with `bin_seeding=True`. When
   the estimated bandwidth is 0, the behavior is equivalent to
@@ -64,6 +64,10 @@ Changelog
 - |Fix| Fixed a bug in :class:`cluster.KMeans` and
   :class:`cluster.MiniBatchKMeans` where the reported inertia was incorrectly
   weighted by the sample weights. :pr:`17848` by
+  :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+- |API| :class:`cluster.MiniBatchKMeans` attributes, `counts_` and
+  `init_size_`, are deprecated and will be removed in 0.26. :pr:`17864` by
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 :mod:`sklearn.covariance`
