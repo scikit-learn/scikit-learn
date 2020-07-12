@@ -208,15 +208,15 @@ def check_scoring_validator_for_single_metric_usecases(scoring_validator):
 
 @pytest.mark.parametrize(
     "scoring",
-(
+    (
         ('accuracy', ), ['precision'],
         {'acc': 'accuracy', 'precision': 'precision'},
         ('accuracy', 'precision'),
         ['precision', 'accuracy'],
         {'accuracy': make_scorer(accuracy_score),
          'precision': make_scorer(precision_score)}
-), ids=["single_tuple", "single_list", "dict_str",
-        "multi_tuple", "multi_list", "dict_callable"])
+    ), ids=["single_tuple", "single_list", "dict_str",
+            "multi_tuple", "multi_list", "dict_callable"])
 def test_check_scoring_and_check_multimetric_scoring(scoring):
     check_scoring_validator_for_single_metric_usecases(check_scoring)
     # To make sure the check_scoring is correctly applied to the constituent
