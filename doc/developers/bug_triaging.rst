@@ -28,7 +28,7 @@ The following actions are typically useful:
   - making sure that the title and description are explicit about the
     problem to be solved
 
-  - linking to related issues or discussions
+  - linking to related issues or discussions while briefly describing how they are related 
 
 .. topic:: Fruitful discussions
 
@@ -139,4 +139,3 @@ The following workflow [*]_ is a good way to approach issue triaging:
 
 
 .. [*] Adapted from the pandas project https://dev.pandas.io/docs/development/maintaining.html
-
