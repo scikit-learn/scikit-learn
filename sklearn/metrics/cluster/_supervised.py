@@ -25,6 +25,8 @@ from ._expected_mutual_info_fast import expected_mutual_information
 from ...utils.validation import check_array, check_consistent_length
 from ...utils.validation import _deprecate_positional_args
 from ...utils.fixes import _astype_copy_false
+from ...utils.multiclass import type_of_target
+import warnings
 
 
 def _comb2(n):
@@ -50,6 +52,13 @@ def check_clusterings(labels_true, labels_pred):
     labels_pred = check_array(
         labels_pred, ensure_2d=False, ensure_min_samples=0, dtype=None,
     )
+
+    type_label = type_of_target(labels_true)
+    type_pred = type_of_target(labels_pred)
+
+    if type_pred or type_pred == 'continous':
+        warnings.warn('Classification metrics expects discrete values received {} for label, '
+                      'and {} for target'.format(type_label, type_label))
 
     # input checks
     if labels_true.ndim != 1:
