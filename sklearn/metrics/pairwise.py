@@ -1446,7 +1446,7 @@ def _precompute_metric_params(X, Y, metric=None, **kwds):
     """
     if metric == "seuclidean" and 'V' not in kwds:
         if X is Y:
-            V = np.var(X, axis=0, ddof=1, dtype=np.double)
+            V = np.var(X, axis=0, ddof=1, dtype=np.float64)
         else:
             warnings.warn("from version 0.25, pairwise_distances for "
                           "metric='seuclidean' will require V to be "
