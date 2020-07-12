@@ -54,51 +54,52 @@ the model and the data, like :func:`metrics.mean_squared_error`, are
 available as neg_mean_squared_error which return the negated value
 of the metric.
 
-==============================    =============================================     ==================================
-Scoring                           Function                                          Comment
-==============================    =============================================     ==================================
+====================================   ==============================================     ==================================
+Scoring                                Function                                           Comment
+====================================   ==============================================     ==================================
 **Classification**
-'accuracy'                        :func:`metrics.accuracy_score`
-'balanced_accuracy'               :func:`metrics.balanced_accuracy_score`
-'average_precision'               :func:`metrics.average_precision_score`
-'neg_brier_score'                 :func:`metrics.brier_score_loss`
-'f1'                              :func:`metrics.f1_score`                          for binary targets
-'f1_micro'                        :func:`metrics.f1_score`                          micro-averaged
-'f1_macro'                        :func:`metrics.f1_score`                          macro-averaged
-'f1_weighted'                     :func:`metrics.f1_score`                          weighted average
-'f1_samples'                      :func:`metrics.f1_score`                          by multilabel sample
-'neg_log_loss'                    :func:`metrics.log_loss`                          requires ``predict_proba`` support
-'precision' etc.                  :func:`metrics.precision_score`                   suffixes apply as with 'f1'
-'recall' etc.                     :func:`metrics.recall_score`                      suffixes apply as with 'f1'
-'jaccard' etc.                    :func:`metrics.jaccard_score`                     suffixes apply as with 'f1'
-'roc_auc'                         :func:`metrics.roc_auc_score`
-'roc_auc_ovr'                     :func:`metrics.roc_auc_score`
-'roc_auc_ovo'                     :func:`metrics.roc_auc_score`
-'roc_auc_ovr_weighted'            :func:`metrics.roc_auc_score`
-'roc_auc_ovo_weighted'            :func:`metrics.roc_auc_score`
+'accuracy'                             :func:`metrics.accuracy_score`
+'balanced_accuracy'                    :func:`metrics.balanced_accuracy_score`
+'average_precision'                    :func:`metrics.average_precision_score`
+'neg_brier_score'                      :func:`metrics.brier_score_loss`
+'f1'                                   :func:`metrics.f1_score`                           for binary targets
+'f1_micro'                             :func:`metrics.f1_score`                           micro-averaged
+'f1_macro'                             :func:`metrics.f1_score`                           macro-averaged
+'f1_weighted'                          :func:`metrics.f1_score`                           weighted average
+'f1_samples'                           :func:`metrics.f1_score`                           by multilabel sample
+'neg_log_loss'                         :func:`metrics.log_loss`                           requires ``predict_proba`` support
+'precision' etc.                       :func:`metrics.precision_score`                    suffixes apply as with 'f1'
+'recall' etc.                          :func:`metrics.recall_score`                       suffixes apply as with 'f1'
+'jaccard' etc.                         :func:`metrics.jaccard_score`                      suffixes apply as with 'f1'
+'roc_auc'                              :func:`metrics.roc_auc_score`
+'roc_auc_ovr'                          :func:`metrics.roc_auc_score`
+'roc_auc_ovo'                          :func:`metrics.roc_auc_score`
+'roc_auc_ovr_weighted'                 :func:`metrics.roc_auc_score`
+'roc_auc_ovo_weighted'                 :func:`metrics.roc_auc_score`
 
 **Clustering**
-'adjusted_mutual_info_score'      :func:`metrics.adjusted_mutual_info_score`
-'adjusted_rand_score'             :func:`metrics.adjusted_rand_score`
-'completeness_score'              :func:`metrics.completeness_score`
-'fowlkes_mallows_score'           :func:`metrics.fowlkes_mallows_score`
-'homogeneity_score'               :func:`metrics.homogeneity_score`
-'mutual_info_score'               :func:`metrics.mutual_info_score`
-'normalized_mutual_info_score'    :func:`metrics.normalized_mutual_info_score`
-'v_measure_score'                 :func:`metrics.v_measure_score`
+'adjusted_mutual_info_score'           :func:`metrics.adjusted_mutual_info_score`
+'adjusted_rand_score'                  :func:`metrics.adjusted_rand_score`
+'completeness_score'                   :func:`metrics.completeness_score`
+'fowlkes_mallows_score'                :func:`metrics.fowlkes_mallows_score`
+'homogeneity_score'                    :func:`metrics.homogeneity_score`
+'mutual_info_score'                    :func:`metrics.mutual_info_score`
+'normalized_mutual_info_score'         :func:`metrics.normalized_mutual_info_score`
+'v_measure_score'                      :func:`metrics.v_measure_score`
 
 **Regression**
-'explained_variance'              :func:`metrics.explained_variance_score`
-'max_error'                       :func:`metrics.max_error`
-'neg_mean_absolute_error'         :func:`metrics.mean_absolute_error`
-'neg_mean_squared_error'          :func:`metrics.mean_squared_error`
-'neg_root_mean_squared_error'     :func:`metrics.mean_squared_error`
-'neg_mean_squared_log_error'      :func:`metrics.mean_squared_log_error`
-'neg_median_absolute_error'       :func:`metrics.median_absolute_error`
-'r2'                              :func:`metrics.r2_score`
-'neg_mean_poisson_deviance'       :func:`metrics.mean_poisson_deviance`
-'neg_mean_gamma_deviance'         :func:`metrics.mean_gamma_deviance`
-==============================    =============================================     ==================================
+'explained_variance'                   :func:`metrics.explained_variance_score`
+'max_error'                            :func:`metrics.max_error`
+'neg_mean_absolute_error'              :func:`metrics.mean_absolute_error`
+'neg_mean_squared_error'               :func:`metrics.mean_squared_error`
+'neg_root_mean_squared_error'          :func:`metrics.mean_squared_error`
+'neg_mean_squared_log_error'           :func:`metrics.mean_squared_log_error`
+'neg_median_absolute_error'            :func:`metrics.median_absolute_error`
+'r2'                                   :func:`metrics.r2_score`
+'neg_mean_poisson_deviance'            :func:`metrics.mean_poisson_deviance`
+'neg_mean_gamma_deviance'              :func:`metrics.mean_gamma_deviance`
+'neg_mean_absolute_percentage_error'   :func:`metrics.mean_absolute_percentage_error`
+====================================   ==============================================     ==================================
 
 
 Usage examples:
@@ -278,7 +279,7 @@ permitted and will require a wrapper to return a single metric::
     >>> def tp(y_true, y_pred): return confusion_matrix(y_true, y_pred)[1, 1]
     >>> scoring = {'tp': make_scorer(tp), 'tn': make_scorer(tn),
     ...            'fp': make_scorer(fp), 'fn': make_scorer(fn)}
-    >>> cv_results = cross_validate(svm.fit(X, y), X, y, cv=5, scoring=scoring)
+    >>> cv_results = cross_validate(svm, X, y, cv=5, scoring=scoring)
     >>> # Getting the test set true positive scores
     >>> print(cv_results['test_tp'])
     [10  9  8  7  8]
@@ -1699,8 +1700,9 @@ Normalized Discounted Cumulative Gain
 -------------------------------------
 
 Discounted Cumulative Gain (DCG) and Normalized Discounted Cumulative Gain
-(NDCG) are ranking metrics; they compare a predicted order to ground-truth
-scores, such as the relevance of answers to a query.
+(NDCG) are ranking metrics implemented in :func:`~sklearn.metrics.dcg_score`
+and :func:`~sklearn.metrics.ndcg_score` ; they compare a predicted order to
+ground-truth scores, such as the relevance of answers to a query.
 
 From the Wikipedia page for Discounted Cumulative Gain:
 
@@ -1961,6 +1963,42 @@ function::
   >>> y_pred = [[0.5, 2], [1, 2.5], [8, 8]]
   >>> mean_squared_log_error(y_true, y_pred)
   0.044...
+
+.. _mean_absolute_percentage_error:
+
+Mean absolute percentage error
+------------------------------
+The :func:`mean_absolute_percentage_error` (MAPE), also known as mean absolute
+percentage deviation (MAPD), is an evaluation metric for regression problems.
+The idea of this metric is to be sensitive to relative errors. It is for example
+not changed by a global scaling of the target variable.
+
+If :math:`\hat{y}_i` is the predicted value of the :math:`i`-th sample
+and :math:`y_i` is the corresponding true value, then the mean absolute percentage
+error (MAPE) estimated over :math:`n_{\text{samples}}` is defined as
+
+.. math::
+
+  \text{MAPE}(y, \hat{y}) = \frac{1}{n_{\text{samples}}} \sum_{i=0}^{n_{\text{samples}}-1} \frac{{}\left| y_i - \hat{y}_i \right|}{max(\epsilon, \left| y_i \right|)}
+
+where :math:`\epsilon` is an arbitrary small yet strictly positive number to
+avoid undefined results when y is zero.
+
+The :func:`mean_absolute_percentage_error` function supports multioutput.
+
+Here is a small example of usage of the :func:`mean_absolute_percentage_error`
+function::
+
+  >>> from sklearn.metrics import mean_absolute_percentage_error
+  >>> y_true = [1, 10, 1e6]
+  >>> y_pred = [0.9, 15, 1.2e6]
+  >>> mean_absolute_percentage_error(y_true, y_pred)
+  0.2666...
+
+In above example, if we had used `mean_absolute_error`, it would have ignored
+the small magnitude values and only reflected the error in prediction of highest
+magnitude value. But that problem is resolved in case of MAPE because it calculates
+relative percentage error with respect to actual output.
 
 .. _median_absolute_error:
 

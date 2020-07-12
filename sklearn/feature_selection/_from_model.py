@@ -73,7 +73,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         or a non-fitted estimator. The estimator must have either a
         ``feature_importances_`` or ``coef_`` attribute after fitting.
 
-    threshold : string, float, optional default None
+    threshold : string or float, default=None
         The threshold value to use for feature selection. Features whose
         importance is greater or equal are kept while the others are
         discarded. If "median" (resp. "mean"), then the ``threshold`` value is
@@ -83,7 +83,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         or implicitly (e.g, Lasso), the threshold used is 1e-5.
         Otherwise, "mean" is used by default.
 
-    prefit : bool, default False
+    prefit : bool, default=False
         Whether a prefit model is expected to be passed into the constructor
         directly or not. If True, ``transform`` must be called directly
         and SelectFromModel cannot be used with ``cross_val_score``,
@@ -91,27 +91,27 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         Otherwise train the model using ``fit`` and then ``transform`` to do
         feature selection.
 
-    norm_order : non-zero int, inf, -inf, default 1
+    norm_order : non-zero int, inf, -inf, default=1
         Order of the norm used to filter the vectors of coefficients below
         ``threshold`` in the case where the ``coef_`` attribute of the
         estimator is of dimension 2.
 
-    max_features : int or None, optional
+    max_features : int, default=None
         The maximum number of features to select.
         To only select based on ``max_features``, set ``threshold=-np.inf``.
 
         .. versionadded:: 0.20
 
-    importance_getter : str or callable, optional (default='auto')
+    importance_getter : str or callable, default='auto'
         If 'auto', uses the feature importance either through a ``coef_``
         attribute or ``feature_importances_`` attribute of estimator.
 
         Also accepts a string that specifies an attribute name/path
         for extracting feature importance (implemented with `attrgetter`).
         For example, give `regressor_.coef_` in case of
-        :class:`sklearn.compose.TransformedTargetRegressor`  or
+        :class:`~sklearn.compose.TransformedTargetRegressor`  or
         `named_steps.clf.feature_importances_` in case of
-        :class:`sklearn.pipeline.Pipeline` with its last step named `clf`.
+        :class:`~sklearn.pipeline.Pipeline` with its last step named `clf`.
 
         If `callable`, overrides the default feature importance getter.
         The callable is passed with the fitted estimator and it should
@@ -198,7 +198,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         X : array-like of shape (n_samples, n_features)
             The training input samples.
 
-        y : array-like, shape (n_samples,)
+        y : array-like of shape (n_samples,), default=None
             The target values (integers that correspond to classes in
             classification, real numbers in regression).
 
@@ -242,7 +242,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         X : array-like of shape (n_samples, n_features)
             The training input samples.
 
-        y : array-like, shape (n_samples,)
+        y : array-like of shape (n_samples,), default=None
             The target values (integers that correspond to classes in
             classification, real numbers in regression).
 

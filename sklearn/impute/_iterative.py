@@ -87,7 +87,7 @@ class IterativeImputer(_BaseImputer):
 
     initial_strategy : str, default='mean'
         Which strategy to use to initialize the missing values. Same as the
-        ``strategy`` parameter in :class:`sklearn.impute.SimpleImputer`
+        ``strategy`` parameter in :class:`~sklearn.impute.SimpleImputer`
         Valid values: {"mean", "median", "most_frequent", or "constant"}.
 
     imputation_order : str, default='ascending'
@@ -143,7 +143,7 @@ class IterativeImputer(_BaseImputer):
 
     Attributes
     ----------
-    initial_imputer_ : object of type :class:`sklearn.impute.SimpleImputer`
+    initial_imputer_ : object of type :class:`~sklearn.impute.SimpleImputer`
         Imputer used to initialize the missing values.
 
     imputation_sequence_ : list of tuples
@@ -161,7 +161,7 @@ class IterativeImputer(_BaseImputer):
     n_features_with_missing_ : int
         Number of features with missing values.
 
-    indicator_ : :class:`sklearn.impute.MissingIndicator`
+    indicator_ : :class:`~sklearn.impute.MissingIndicator`
         Indicator used to add binary indicators for missing values.
         ``None`` if add_indicator is False.
 
