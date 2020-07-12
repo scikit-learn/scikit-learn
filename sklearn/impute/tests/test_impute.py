@@ -1094,7 +1094,11 @@ def test_iterative_imputer_set_estimator_random_state(
 
         def fit(self, X, y):
             if self.expect_in_fit == "RandomState":
-                assert isinstance(self.random_state, np.random.RandomState)
+                rng_state_est = self.random_state.get_state()
+                rng_state_imp = rs_imputer.get_state()
+                assert rng_state_est[0] == rng_state_imp[0]
+                assert_array_equal(rng_state_est[1], rng_state_imp[1])
+                assert_array_equal(rng_state_est[2:], rng_state_imp[2:])
             else:
                 assert self.random_state == self.expect_in_fit
 
