@@ -92,7 +92,7 @@ The following workflow [*]_ is a good way to approach issue triaging:
    we want it to be a welcoming, pleasant experience.
 
 2. Is this a usage question? If so close it with a polite message
-   (:ref:`here is an example <save_replies>`).
+   (:ref:`here is an example <saved_replies>`).
 
 3. Is the necessary information provided?
 
