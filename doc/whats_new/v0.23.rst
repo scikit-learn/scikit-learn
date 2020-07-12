@@ -544,7 +544,6 @@ Changelog
 - |Enhancement| :class:`inspection.PartialDependenceDisplay` now exposes the
   deciles lines as attributes so they can be hidden or customized. :pr:`15785`
   by `Nicolas Hug`_
->>>>>>> 3017ea8c30e82931895f4ec46c4a5a9d00ed67c2
 
 :mod:`sklearn.preprocessing`
 ............................
