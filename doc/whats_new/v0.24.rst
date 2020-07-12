@@ -22,8 +22,8 @@ parameters, may produce different models from the previous version. This often
 occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
-- items
-- items
+- |Fix| ``inertia_`` attribute of :class:`cluster.KMeans` and
+  :class:`cluster.MiniBatchKMeans`.
 
 Details are listed in the changelog below.
 
@@ -52,6 +52,31 @@ Changelog
   prefit :class:`pipeline.Pipeline` where data is not `X` is not array-like,
   sparse matrix or dataframe at the start. :pr:`17546` by
   :user:`Lucy Liu <lucyleeow>`.
+
+:mod:`sklearn.cluster`
+......................
+
+- |Fix| Fixed a bug in :class:`cluster.MeanShift` with `bin_seeding=True`. When
+  the estimated bandwidth is 0, the behavior is equivalent to
+  `bin_seeding=False`.
+  :pr:`17742` by :user:`Jeremie du Boisberranger <jeremiedbb>`.
+
+- |Fix| Fixed a bug in :class:`cluster.KMeans` and
+  :class:`cluster.MiniBatchKMeans` where the reported inertia was incorrectly
+  weighted by the sample weights. :pr:`17848` by
+  :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+- |API| :class:`cluster.MiniBatchKMeans` attributes, `counts_` and
+  `init_size_`, are deprecated and will be removed in 0.26. :pr:`17864` by
+  :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+:mod:`sklearn.covariance`
+.........................
+
+- |API| Deprecates `cv_alphas_` in favor of `cv_results['alphas']` and
+  `grid_scores_` in favor of split scores in `cv_results_` in
+  :class:`covariance.GraphicalLassoCV`. `cv_alphas_` and `grid_scores_` will be
+  removed in version 0.26. :pr:`16392` by `Thomas Fan`_.
 
 :mod:`sklearn.datasets`
 .......................
@@ -84,6 +109,10 @@ Changelog
   redundant with the `dictionary` attribute and constructor parameter.
   :pr:`17679` by :user:`Xavier Dupré <sdpython>`.
 
+- |Enhancement| :func:`decomposition.FactorAnalysis` now supports the optional
+  argument `rotation`, which can take the value `None`, `'varimax'` or `'quartimax'.`
+  :pr:`11064` by :user:`Jona Sassenhagen <jona-sassenhagen>`.
+
 :mod:`sklearn.ensemble`
 .......................
 
@@ -96,6 +125,13 @@ Changelog
   average of logloss was incorrectly calculated as sum of logloss.
   :pr:`17694` by :user:`Markus Rempfler <rempfler>` and
   :user:`Tsutomu Kusanagi <t-kusanagi2>`.
+
+:mod:`sklearn.exceptions`
+.........................
+
+- |API| :class:`exceptions.ChangedBehaviorWarning` and
+  :class:`exceptions.NonBLASDotWarning` are deprecated and will be removed in
+  v0.26, :pr:`17804` by `Adrin Jalali`_.
 
 :mod:`sklearn.feature_selection`
 ................................
@@ -147,8 +183,26 @@ Changelog
   :pr:`16289` by :user:`Masashi Kishimoto <kishimoto-banana>` and
   :user:`Olivier Grisel <ogrisel>`.
 
+- |Enhancement| :class:`isotonic.IsotonicRegression` now accepts 2darray with 1 feature as
+  input array. :pr:`17379` by :user:`Jiaxiang <fujiaxiang>`.
+
+:mod:`sklearn.manifold`
+.......................
+
+- |Enhancement| Add `square_distances` parameter to :class:`manifold.TSNE`,
+  which provides backward compatibility during deprecation of legacy squaring
+  behavior. Distances will be squared by default in 0.26, and this parameter
+  will be removed in 0.28. :pr:`17662` by
+  :user:`Joshua Newton <joshuacwnewton>`.
+
 :mod:`sklearn.metrics`
 ......................
+
+- |Feature| Added :func:`metrics.mean_absolute_percentage_error` metric and
+  the associated scorer for regression problems. :issue:`10708` fixed with the
+  PR :pr:`15007` by :user:`Ashutosh Hathidara <ashutosh1919>`. The scorer and
+  some practical test cases were taken from PR :pr:`10711` by
+  :user:`Mohamed Ali Jamaoui <mohamed-ali>`.
 
 - |Fix| Fixed a bug in :func:`metrics.mean_squared_error` where the
   average of multiple RMSE values was incorrectly calculated as the root of the
@@ -164,9 +218,14 @@ Changelog
   class to be used when computing the precision and recall statistics.
   :pr:`17569` by :user:`Guillaume Lemaitre <glemaitre>`.
 
-- |Feature| :func:`metrics.plot_confusion_matrix` now supports making colorbar 
-  optional in the matplotlib plot by setting colorbar=False. :pr:`17192` by 
+- |Feature| :func:`metrics.plot_confusion_matrix` now supports making colorbar
+  optional in the matplotlib plot by setting colorbar=False. :pr:`17192` by
   :user:`Avi Gupta <avigupta2612>`
+
+- |Enhancement| Add `pos_label` parameter in
+  :func:`metrics.plot_roc_curve` in order to specify the positive
+  class to be used when computing the roc auc statistics.
+  :pr:`17651` by :user:`Clara Matos <claramatos>`.
 
 :mod:`sklearn.model_selection`
 ..............................
@@ -189,6 +248,15 @@ Changelog
   sparse input data in its `fit` and `predict` methods. The check for
   validity of the input is now delegated to the base estimator.
   :pr:`17233` by :user:`Zolisa Bleki <zoj613>`.
+
+:mod:`sklearn.naive_bayes`
+..........................
+
+- |API|: The attributes ``coef_`` and ``intercept_`` are now deprecated in
+  :class:`naive_bayes.MultinomialNB`, :class:`naive_bayes.ComplementNB`,
+  :class:`naive_bayes.BernoulliNB` and :class:`naive_bayes.CategoricalNB`,
+  and will be removed in v0.26. :pr:`17427` by :user:`Juan Carlos Alfaro
+  Jiménez <alfaro96>`.
 
 :mod:`sklearn.neighbors`
 ........................
@@ -219,7 +287,11 @@ Changelog
 
 - |Enhancement| Avoid converting float32 input to float64 in
   :class:`neural_network.BernoulliRBM`.
-  :pr:`16352` by :user:`Arthur Imbert <Henley13>`.  
+  :pr:`16352` by :user:`Arthur Imbert <Henley13>`.
+
+- |Enhancement| Support 32-bit computations in :class:`neural_network.MLPClassifier`
+  and :class:`neural_network.MLPRegressor`.
+  :pr:`17759` by :user:`Srimukh Sripada <d3b0unce>`.
 
 :mod:`sklearn.preprocessing`
 ............................
@@ -236,6 +308,10 @@ Changelog
 - |Enhancement| Add `dtype` parameter to
   :class:`preprocessing.KBinsDiscretizer`.
   :pr:`16335` by :user:`Arthur Imbert <Henley13>`.
+
+- |Enhancement| Add ``clip`` parameter to :class:`preprocessing.MinMaxScaler`,
+  which clips the transformed values of test data to ``feature_range``.
+  :pr:`17833` by :user:`Yashika Sharma <yashika51>`.
 
 :mod:`sklearn.svm`
 ..................
@@ -255,6 +331,13 @@ Changelog
   :meth:`tree.DecisionTreeClassifier.fit` and
   :meth:`tree.DecisionTreeRegressor.fit`, and has not effect.
   :pr:`17614` by :user:`Juan Carlos Alfaro Jiménez <alfaro96>`.
+
+:mod:`sklearn.utils`
+.........................
+
+- |Fix| Fix :func:`utils.estimator_checks.check_estimator` so that all test
+  cases support the `binary_only` estimator tag.
+  :pr:`17812` by :user:`Bruno Charron <brcharron>`.
 
 Code and Documentation Contributors
 -----------------------------------
