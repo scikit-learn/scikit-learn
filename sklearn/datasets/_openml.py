@@ -18,7 +18,6 @@ from urllib.request import urlopen, Request
 import numpy as np
 import scipy.sparse
 
-from ..exceptions import ChangedBehaviorWarning
 from ..externals import _arff
 from ..externals._arff import ArffSparseDataType, ArffContainerType
 from . import get_data_home
