@@ -714,7 +714,8 @@ def fetch_openml(
     .. note:: EXPERIMENTAL
 
         The API is experimental (particularly the return value structure),
-        and might have small backward-incompatible changes in future releases.
+        and might have small backward-incompatible changes without notice
+        or warning in future releases.
 
     Parameters
     ----------
@@ -864,11 +865,6 @@ def fetch_openml(
 
     if as_frame == 'auto':
         as_frame = not return_sparse
-
-        if as_frame:
-            warn("fetch_openml now returns data in pandas format "
-                 "(DataFrame or Series) when source data is not "
-                 "sparse", ChangedBehaviorWarning)
 
     if as_frame and return_sparse:
         raise ValueError('Cannot return dataframe with sparse data')

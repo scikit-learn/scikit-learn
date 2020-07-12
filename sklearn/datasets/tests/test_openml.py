@@ -20,7 +20,6 @@ from sklearn.datasets._openml import (_open_openml_url,
                                       _get_local_path,
                                       _retry_with_clean_cache,
                                       _feature_to_dtype)
-from sklearn.exceptions import ChangedBehaviorWarning
 from sklearn.utils._testing import (assert_warns_message,
                                     assert_raise_message)
 from sklearn.utils import is_scalar_nan
@@ -502,20 +501,6 @@ def test_fetch_openml_as_frame_auto(monkeypatch):
     _monkey_patch_webbased_functions(monkeypatch, data_id, True)
     data = fetch_openml(data_id=data_id, as_frame='auto')
     assert isinstance(data.data, scipy.sparse.csr_matrix)
-
-
-@pytest.mark.filterwarnings(
-    "ignore:ChangedBehaviorWarning is deprecated:FutureWarning"
-)
-def test_fetch_openml_default_as_frame_warning(monkeypatch):
-    pytest.importorskip('pandas')
-
-    data_id = 61  # iris dataset version 1
-    _monkey_patch_webbased_functions(monkeypatch, data_id, True)
-
-    msg = "fetch_openml now returns data in pandas format"
-    with pytest.warns(ChangedBehaviorWarning, match=msg):
-        fetch_openml(data_id=data_id)
 
 
 def test_convert_arff_data_dataframe_warning_low_memory_pandas(monkeypatch):
