@@ -66,6 +66,25 @@ python --version
 python -c "import numpy; print('numpy %s' % numpy.__version__)"
 python -c "import scipy; print('scipy %s' % scipy.__version__)"
 
+if [[ "$BUILD_WITH_ICC" == "true" ]]; then
+    wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
+    sudo apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
+    rm GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
+    sudo add-apt-repository "deb https://apt.repos.intel.com/oneapi all main"
+    sudo apt-get update
+    sudo apt-get install intel-oneapi-icc
+    source /opt/intel/inteloneapi/setvars.sh
+
+    # The build_clib command is implicitly used to build libsvm-skl. To compile
+    # with a different compiler we also need to specify the compiler for this
+    # command.
+    python setup.py build_ext --compiler=intelem -i -j 3 build_clib --compiler=intelem
+else
+    # Use setup.py instead of `pip install -e .` to be able to pass the -j flag
+    # to speed-up the building multicore CI machines.
+    python setup.py build_ext --inplace -j 3
+fi
+
 python setup.py develop
 
 ccache --show-stats
