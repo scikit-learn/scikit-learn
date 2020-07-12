@@ -228,6 +228,14 @@ Changelog
   :func:`inspection.permutation_importance`. :pr:`16906` by
   :user:`Roei Kahny <RoeiKa>`.
 
+:mod:`sklearn.impute`
+...............................
+
+- |Enhancement| :class:`impute.IterativeImputer` Will set the estimator's
+  `random_state` to the same `random_state` that was passed to the imputer
+  instead of a `RandomState`, allowing to use it with more external classes.
+  :pr:`15636` by :user:`David Cortes <david-cortes>`.
+
 :mod:`sklearn.isotonic`
 .......................
 
