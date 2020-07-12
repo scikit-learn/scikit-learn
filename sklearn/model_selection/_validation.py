@@ -737,8 +737,8 @@ def cross_val_predict(estimator, X, y=None, *, groups=None, cv=None,
     predictions : ndarray
         This is the result of calling `method`. Shape:
 
-            - When `method` is 'predict' and in special case when `method` is
-              'decision_function' and `n_classes` is 2: (n_samples,)
+            - When `method` is 'predict' and in special case where `method` is
+              'decision_function' and the target is binary: (n_samples,)
             - When `method` is one of {'predict_proba', 'predict_log_proba',
               'decision_function'} (unless special case above):
               (n_samples, n_classes).
