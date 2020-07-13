@@ -19,7 +19,6 @@ from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_no_warnings
-from sklearn.utils._testing import assert_warns_message
 from sklearn.utils.fixes import parse_version
 
 from sklearn.base import clone, BaseEstimator, TransformerMixin
@@ -1226,9 +1225,8 @@ def test_feature_union_fit_params():
 def test_feature_union_warns_unknown_transformer_weight():
     transformer_list = [('transf', Transf())]
     # Transformer weights dictionary with incorrect name
-    transformer_weights = {'transformer': 1}
-    assert_warns_message(UserWarning,
-                         'Attempting to weight transformer',
-                         FeatureUnion,
-                         transformer_list,
-                         transformer_weights=transformer_weights)
+    weights = {'transformer': 1}
+    expected_msg = ('Attempting to weight transformer "transformer", '
+                    'but it is not present in transformer_list.')
+    with pytest.warns(UserWarning, match=expected_msg):
+        FeatureUnion(transformer_list, transformer_weights=weights)
