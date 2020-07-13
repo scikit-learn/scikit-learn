@@ -876,8 +876,8 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
             for name in self.transformer_weights:
                 if name not in transformer_names:
                     warnings.warn(
-                        'Attempting to weight transformer "{0}", but it is not '
-                        'present in transformer_list.'.format(name),
+                        'Attempting to weight transformer "{0}", but it is '
+                        'not present in transformer_list.'.format(name),
                         UserWarning
                     )
 
