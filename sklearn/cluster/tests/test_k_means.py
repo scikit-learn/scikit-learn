@@ -361,7 +361,19 @@ def test_minibatch_reassign(data):
     assert_allclose(centers_new, perfect_centers)
 
 
-def test_minibatch_kmeans_default_init_size():
+def test_minibatch_with_many_reassignments():
+    # Test for the case that the number of clusters to reassign is bigger
+    # than the batch_size. Run the test with 100 clusters and a batch_size of
+    # 10 because it turned out that these values ensure that the number of
+    # clusters to reassign is always bigger than the batch_size.
+    MiniBatchKMeans(n_clusters=100,
+                    batch_size=10,
+                    init_size=n_samples,
+                    random_state=42,
+                    verbose=True).fit(X)
+
+
+def test_minibatch_kmeans_init_size():
     # Check the internal _init_size attribute of MiniBatchKMeans
 
     # default init size should be 3 * batch_size
@@ -376,18 +388,6 @@ def test_minibatch_kmeans_default_init_size():
     km = MiniBatchKMeans(n_clusters=10, batch_size=5, n_init=1,
                          init_size=n_samples + 1).fit(X)
     assert km._init_size == n_samples
-
-
-def test_minibatch_with_many_reassignments():
-    # Test for the case that the number of clusters to reassign is bigger
-    # than the batch_size. Run the test with 100 clusters and a batch_size of
-    # 10 because it turned out that these values ensure that the number of
-    # clusters to reassign is always bigger than the batch_size.
-    MiniBatchKMeans(n_clusters=100,
-                    batch_size=10,
-                    init_size=n_samples,
-                    random_state=42,
-                    verbose=True).fit(X)
 
 
 def test_kmeans_copyx():
@@ -656,6 +656,27 @@ def test_transform(Estimator):
     assert_allclose(Xt, pairwise_distances(X, km.cluster_centers_))
 
 
+@pytest.mark.parametrize("attr", ["counts_", "init_size_", "random_state_"])
+def test_minibatch_kmeans_deprecated_attributes(attr):
+    # check that we raise a deprecation warning when accessing `init_size_`
+    # FIXME: remove in 0.26
+    depr_msg = (f"The attribute '{attr}' is deprecated in 0.24 and will be "
+                f"removed in 0.26.")
+    km = MiniBatchKMeans(n_clusters=2, n_init=1, init='random', random_state=0)
+    km.fit(X)
+
+    with pytest.warns(FutureWarning, match=depr_msg):
+        getattr(km, attr)
+
+
+def test_warning_elkan_1_cluster():
+    # Check warning messages specific to KMeans
+    with pytest.warns(RuntimeWarning,
+                      match="algorithm='elkan' doesn't make sense for a single"
+                            " cluster"):
+        KMeans(n_clusters=1, algorithm="elkan").fit(X)
+
+
 @pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
 def test_fit_transform(Estimator):
     # Check equivalence between fit.transform and fit_transform
@@ -857,14 +878,6 @@ def test_warnings(Estimator):
                       match="Explicit initial center position passed: "
                             "performing only one init"):
         Estimator(init=centers, n_clusters=n_clusters).fit(X)
-
-
-def test_kmeans_warnings():
-    # Check warning messages specific to KMeans
-    with pytest.warns(RuntimeWarning,
-                      match="algorithm='elkan' doesn't make sense for a single"
-                            " cluster"):
-        KMeans(n_clusters=1, algorithm="elkan").fit(X)
 
 
 def test_kmeans_warns_less_centers_than_unique_points():

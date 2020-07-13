@@ -26,6 +26,7 @@ from ..utils.validation import _deprecate_positional_args
 from ..utils import check_array
 from ..utils import gen_batches
 from ..utils import check_random_state
+from ..utils import deprecated
 from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils._openmp_helpers import _openmp_effective_n_threads
 from ..exceptions import ConvergenceWarning
@@ -1348,6 +1349,21 @@ class MiniBatchKMeans(KMeans):
     n_iter_ : int
         Number of iterations run.
 
+    n_iter_ : int
+        Number of batches processed.
+
+    counts_ : ndarray of shape (n_clusters,)
+        Weigth sum of each cluster.
+
+        .. deprecated:: 0.24
+           This attribute is deprecated in 0.24 and will be removed in 0.26.
+
+    init_size_ : int
+        The effective number of samples used for the initialization.
+
+        .. deprecated:: 0.24
+           This attribute is deprecated in 0.24 and will be removed in 0.26.
+
     See Also
     --------
     KMeans
@@ -1404,6 +1420,24 @@ class MiniBatchKMeans(KMeans):
         self.compute_labels = compute_labels
         self.init_size = init_size
         self.reassignment_ratio = reassignment_ratio
+
+    @deprecated("The attribute 'counts_' is deprecated in 0.24"  # type: ignore
+                " and will be removed in 0.26.")
+    @property
+    def counts_(self):
+        return self._counts
+
+    @deprecated("The attribute 'init_size_' is deprecated in "  # type: ignore
+                "0.24 and will be removed in 0.26.")
+    @property
+    def init_size_(self):
+        return self._init_size
+
+    @deprecated("The attribute 'random_state_' is deprecated "  # type: ignore
+                "in 0.24 and will be removed in 0.26.")
+    @property
+    def random_state_(self):
+        return getattr(self, "_random_state", None)
 
     def _check_params(self, X):
         super()._check_params(X)
