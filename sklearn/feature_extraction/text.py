@@ -847,7 +847,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         Convert all characters to lowercase before tokenizing.
 
     preprocessor : callable, default=None
-        Override the preprocessing (string transformation) stage while
+        Override the preprocessing (strip_accents and lowercase) stage while
         preserving the tokenizing and n-grams generation steps.
         Only applies if ``analyzer is not callable``.
 
@@ -869,7 +869,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         in the range [0.7, 1.0) to automatically detect and filter stop
         words based on intra corpus document frequency of terms.
 
-    token_pattern : string
+    token_pattern : string, default=r"(?u)/b/w/w+/b"
         Regular expression denoting what constitutes a "token", only used
         if ``analyzer == 'word'``. The default regexp select tokens of 2
         or more alphanumeric characters (punctuation is completely ignored

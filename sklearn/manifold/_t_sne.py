@@ -8,6 +8,7 @@
 # * Fast Optimization for t-SNE:
 #   https://cseweb.ucsd.edu/~lvdmaaten/workshops/nips2010/papers/vandermaaten.pdf
 
+import warnings
 from time import time
 import numpy as np
 from scipy import linalg
@@ -293,39 +294,39 @@ def _gradient_descent(objective, p0, it, n_iter,
     n_iter : int
         Maximum number of gradient descent iterations.
 
-    n_iter_check : int
+    n_iter_check : int, default=1
         Number of iterations before evaluating the global error. If the error
         is sufficiently low, we abort the optimization.
 
-    n_iter_without_progress : int, optional (default: 300)
+    n_iter_without_progress : int, default=300
         Maximum number of iterations without progress before we abort the
         optimization.
 
-    momentum : float, within (0.0, 1.0), optional (default: 0.8)
+    momentum : float, within (0.0, 1.0), default=0.8
         The momentum generates a weight for previous gradients that decays
         exponentially.
 
-    learning_rate : float, optional (default: 200.0)
+    learning_rate : float, default=200.0
         The learning rate for t-SNE is usually in the range [10.0, 1000.0]. If
         the learning rate is too high, the data may look like a 'ball' with any
         point approximately equidistant from its nearest neighbours. If the
         learning rate is too low, most points may look compressed in a dense
         cloud with few outliers.
 
-    min_gain : float, optional (default: 0.01)
+    min_gain : float, default=0.01
         Minimum individual gain for each parameter.
 
-    min_grad_norm : float, optional (default: 1e-7)
+    min_grad_norm : float, default=1e-7
         If the gradient norm is below this threshold, the optimization will
         be aborted.
 
-    verbose : int, optional (default: 0)
+    verbose : int, default=0
         Verbosity level.
 
-    args : sequence
+    args : sequence, default=None
         Arguments to pass to objective function.
 
-    kwargs : dict
+    kwargs : dict, default=None
         Keyword arguments to pass to objective function.
 
     Returns
@@ -347,8 +348,8 @@ def _gradient_descent(objective, p0, it, n_iter,
     p = p0.copy().ravel()
     update = np.zeros_like(p)
     gains = np.ones_like(p)
-    error = np.finfo(np.float).max
-    best_error = np.finfo(np.float).max
+    error = np.finfo(float).max
+    best_error = np.finfo(float).max
     best_iter = i = it
 
     tic = time()
@@ -430,10 +431,10 @@ def trustworthiness(X, X_embedded, *, n_neighbors=5, metric='euclidean'):
     X_embedded : array, shape (n_samples, n_components)
         Embedding of the training data in low-dimensional space.
 
-    n_neighbors : int, optional (default: 5)
+    n_neighbors : int, default=5
         Number of neighbors k that will be considered.
 
-    metric : string, or callable, optional, default 'euclidean'
+    metric : string, or callable, default='euclidean'
         Which metric to use for computing pairwise distances between samples
         from the original input space. If metric is 'precomputed', X must be a
         matrix of pairwise distances or squared distances. Otherwise, see the
@@ -495,17 +496,17 @@ class TSNE(BaseEstimator):
 
     Parameters
     ----------
-    n_components : int, optional (default: 2)
+    n_components : int, default=2
         Dimension of the embedded space.
 
-    perplexity : float, optional (default: 30)
+    perplexity : float, default=30
         The perplexity is related to the number of nearest neighbors that
         is used in other manifold learning algorithms. Larger datasets
         usually require a larger perplexity. Consider selecting a value
         between 5 and 50. Different values can result in significanlty
         different results.
 
-    early_exaggeration : float, optional (default: 12.0)
+    early_exaggeration : float, default=12.0
         Controls how tight natural clusters in the original space are in
         the embedded space and how much space will be between them. For
         larger values, the space between natural clusters will be larger
@@ -514,7 +515,7 @@ class TSNE(BaseEstimator):
         optimization, the early exaggeration factor or the learning rate
         might be too high.
 
-    learning_rate : float, optional (default: 200.0)
+    learning_rate : float, default=200.0
         The learning rate for t-SNE is usually in the range [10.0, 1000.0]. If
         the learning rate is too high, the data may look like a 'ball' with any
         point approximately equidistant from its nearest neighbours. If the
@@ -522,11 +523,11 @@ class TSNE(BaseEstimator):
         cloud with few outliers. If the cost function gets stuck in a bad local
         minimum increasing the learning rate may help.
 
-    n_iter : int, optional (default: 1000)
+    n_iter : int, default=1000
         Maximum number of iterations for the optimization. Should be at
         least 250.
 
-    n_iter_without_progress : int, optional (default: 300)
+    n_iter_without_progress : int, default=300
         Maximum number of iterations without progress before we abort the
         optimization, used after 250 initial iterations with early
         exaggeration. Note that progress is only checked every 50 iterations so
@@ -535,11 +536,11 @@ class TSNE(BaseEstimator):
         .. versionadded:: 0.17
            parameter *n_iter_without_progress* to control stopping criteria.
 
-    min_grad_norm : float, optional (default: 1e-7)
+    min_grad_norm : float, default=1e-7
         If the gradient norm is below this threshold, the optimization will
         be stopped.
 
-    metric : string or callable, optional
+    metric : string or callable, default='euclidean'
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string, it must be one of the options
         allowed by scipy.spatial.distance.pdist for its metric parameter, or
@@ -551,13 +552,13 @@ class TSNE(BaseEstimator):
         the distance between them. The default is "euclidean" which is
         interpreted as squared euclidean distance.
 
-    init : string or numpy array, optional (default: "random")
+    init : string or numpy array, default="random"
         Initialization of embedding. Possible options are 'random', 'pca',
         and a numpy array of shape (n_samples, n_components).
         PCA initialization cannot be used with precomputed distances and is
         usually more globally stable than random initialization.
 
-    verbose : int, optional (default: 0)
+    verbose : int, default=0
         Verbosity level.
 
     random_state : int, RandomState instance, default=None
@@ -566,7 +567,7 @@ class TSNE(BaseEstimator):
         initializations might result in different local minima of the cost
         function. See :term: `Glossary <random_state>`.
 
-    method : string (default: 'barnes_hut')
+    method : string, default='barnes_hut'
         By default the gradient calculation algorithm uses Barnes-Hut
         approximation running in O(NlogN) time. method='exact'
         will run on the slower, but exact, algorithm in O(N^2) time. The
@@ -577,7 +578,7 @@ class TSNE(BaseEstimator):
         .. versionadded:: 0.17
            Approximate optimization *method* via the Barnes-Hut.
 
-    angle : float (default: 0.5)
+    angle : float, default=0.5
         Only used if method='barnes_hut'
         This is the trade-off between speed and accuracy for Barnes-Hut T-SNE.
         'angle' is the angular size (referred to as theta in [3]) of a distant
@@ -587,7 +588,7 @@ class TSNE(BaseEstimator):
         in the range of 0.2 - 0.8. Angle less than 0.2 has quickly increasing
         computation time and angle greater 0.8 has quickly increasing error.
 
-    n_jobs : int or None, optional (default=None)
+    n_jobs : int or None, default=None
         The number of parallel jobs to run for neighbors search. This parameter
         has no impact when ``metric="precomputed"`` or
         (``metric="euclidean"`` and ``method="exact"``).
@@ -596,6 +597,19 @@ class TSNE(BaseEstimator):
         for more details.
 
         .. versionadded:: 0.22
+
+    square_distances : {True, 'legacy'}, default='legacy'
+        Whether TSNE should square the distance values. ``'legacy'`` means
+        that distance values are squared only when ``metric="euclidean"``.
+        ``True`` means that distance values are squared for all metrics.
+
+        .. versionadded:: 0.24
+           Added to provide backward compatibility during deprecation of
+           legacy squaring behavior.
+        .. deprecated:: 0.24
+           Legacy squaring behavior was deprecated in 0.24. The ``'legacy'``
+           value will be removed in 0.26, at which point the default value will
+           change to ``True``.
 
     Attributes
     ----------
@@ -643,7 +657,7 @@ class TSNE(BaseEstimator):
                  n_iter_without_progress=300, min_grad_norm=1e-7,
                  metric="euclidean", init="random", verbose=0,
                  random_state=None, method='barnes_hut', angle=0.5,
-                 n_jobs=None):
+                 n_jobs=None, square_distances='legacy'):
         self.n_components = n_components
         self.perplexity = perplexity
         self.early_exaggeration = early_exaggeration
@@ -658,6 +672,8 @@ class TSNE(BaseEstimator):
         self.method = method
         self.angle = angle
         self.n_jobs = n_jobs
+        # TODO Revisit deprecation of square_distances for 0.26-0.28 (#12401)
+        self.square_distances = square_distances
 
     def _fit(self, X, skip_num_points=0):
         """Private function to fit the model using X as training data."""
@@ -666,6 +682,17 @@ class TSNE(BaseEstimator):
             raise ValueError("'method' must be 'barnes_hut' or 'exact'")
         if self.angle < 0.0 or self.angle > 1.0:
             raise ValueError("'angle' must be between 0.0 - 1.0")
+        if self.square_distances not in [True, 'legacy']:
+            raise ValueError("'square_distances' must be True or 'legacy'.")
+        if self.metric != "euclidean" and self.square_distances is not True:
+            warnings.warn(("'square_distances' has been introduced in 0.24"
+                           "to help phase out legacy squaring behavior. The "
+                           "'legacy' setting will be removed in 0.26, and the "
+                           "default setting will be changed to True. In 0.28, "
+                           "'square_distances' will be removed altogether,"
+                           "and distances will be squared by default. Set "
+                           "'square_distances'=True to silence this warning."),
+                          FutureWarning)
         if self.method == 'barnes_hut':
             X = self._validate_data(X, accept_sparse=['csr'],
                                     ensure_min_samples=2,
@@ -715,15 +742,23 @@ class TSNE(BaseEstimator):
                     print("[t-SNE] Computing pairwise distances...")
 
                 if self.metric == "euclidean":
+                    # Euclidean is squared here, rather than using **= 2,
+                    # because euclidean_distances already calculates
+                    # squared distances, and returns np.sqrt(dist) for
+                    # squared=False.
+                    # Also, Euclidean is slower for n_jobs>1, so don't set here
                     distances = pairwise_distances(X, metric=self.metric,
                                                    squared=True)
                 else:
                     distances = pairwise_distances(X, metric=self.metric,
                                                    n_jobs=self.n_jobs)
 
-                if np.any(distances < 0):
-                    raise ValueError("All distances should be positive, the "
-                                     "metric given is not correct")
+            if np.any(distances < 0):
+                raise ValueError("All distances should be positive, the "
+                                 "metric given is not correct")
+
+            if self.metric != "euclidean" and self.square_distances is True:
+                distances **= 2
 
             # compute the joint probability distribution for the input space
             P = _joint_probabilities(distances, self.perplexity, self.verbose)
@@ -765,7 +800,7 @@ class TSNE(BaseEstimator):
             # Free the memory used by the ball_tree
             del knn
 
-            if self.metric == "euclidean":
+            if self.square_distances is True or self.metric == "euclidean":
                 # knn return the euclidean distance but we need it squared
                 # to be consistent with the 'exact' method. Note that the
                 # the method was derived using the euclidean method as in the
