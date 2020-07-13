@@ -407,12 +407,6 @@ def _lars_path_solver(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
     else:
         Cov = Xy.copy()
 
-    if X is not None and copy_X:
-        # force copy. setting the array to be fortran-ordered
-        # speeds up the calculation of the (partial) Gram matrix
-        # and allows to easily swap columns
-        X = X.copy('F')
-
     if Gram is None or Gram is False:
         Gram = None
         if X is None:
@@ -432,6 +426,13 @@ def _lars_path_solver(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
         if Gram.shape != (n_features, n_features):
             raise ValueError('The shapes of the inputs Gram and Xy'
                              ' do not match.')
+
+    if copy_X and X is not None and Gram is None:
+        # force copy. setting the array to be fortran-ordered
+        # speeds up the calculation of the (partial) Gram matrix
+        # and allows to easily swap columns
+        X = X.copy('F')
+
     max_features = min(max_iter, n_features)
 
     if return_path:
