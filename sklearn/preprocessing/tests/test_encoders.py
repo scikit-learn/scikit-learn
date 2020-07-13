@@ -554,7 +554,7 @@ def test_ordinal_encoder_raise_missing(X):
 
 
 def test_ordinal_encoder_handle_unknowns():
-    enc = OrdinalEncoder(handle_unknown='use_encoded_value')
+    enc = OrdinalEncoder(handle_unknown='use_encoded_value', unknown_value=-2)
     X_fit = np.array([['a', 'x'], ['b', 'y'], ['c', 'z']], dtype=object)
     X_trans = np.array([['c', 'xy'], ['bla', 'y'], ['a', 'x']], dtype=object)
     enc.fit(X_fit)
@@ -566,6 +566,33 @@ def test_ordinal_encoder_handle_unknowns():
     X_trans_inv = enc.inverse_transform(X_trans_enc)
     inv_exp = np.array([['c', None], [None, 'y'], ['a', 'x']], dtype=object)
     assert_array_equal(X_trans_inv, inv_exp)
+
+
+def test_ordinal_encoder_handle_unknowns_raise_fit():
+    X = np.array([['a', 'x'], ['b', 'y']], dtype=object)
+
+    enc = OrdinalEncoder(handle_unknown='use_encoded_value')
+    msg = ("Please set unknown_value to an integer value.")
+    with pytest.raises(TypeError, match=msg):
+        enc.fit(X)
+
+    enc = OrdinalEncoder(handle_unknown='use_encoded_value',
+                         unknown_value='bla')
+    msg = (f"The used value for unknown_value bla is not an integer.")
+    with pytest.raises(TypeError, match=msg):
+        enc.fit(X)
+
+
+def test_ordinal_encoder_handle_unknowns_raise_transform():
+    enc = OrdinalEncoder(handle_unknown='use_encoded_value', unknown_value=1)
+    X_fit = np.array([['a', 'x'], ['b', 'y'], ['c', 'z']], dtype=object)
+    X_trans = np.array([['c', 'xy'], ['bla', 'y'], ['a', 'x']], dtype=object)
+    enc.fit(X_fit)
+
+    msg = ("The used value for unknown_value 1 is one of the values already "
+           "used for encoding the seen categories.")
+    with pytest.raises(ValueError, match=msg):
+        X_trans_enc = enc.transform(X_trans)
 
 
 def test_ordinal_encoder_raise_categories_shape():
