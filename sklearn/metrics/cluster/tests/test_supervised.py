@@ -355,5 +355,5 @@ def test_check_clustering_error():
     noise = np.random.rand(500)
     wavelength = np.linspace(0.01, 1, 500) * 1e-6
 
-    with pytest(UserWarning):
+    with pytest.warns(UserWarning):
         normalized_mutual_info_score(wavelength, noise)
