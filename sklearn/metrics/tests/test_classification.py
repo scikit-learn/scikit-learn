@@ -1389,12 +1389,11 @@ def test_zero_devision_jaccard_score():
     msg = ('Jaccard is ill-defined and being set to 0.0 in '
            'samples with no true or predicted labels.'
            ' Use `zero_division` parameter to control this behavior.')
-    assert assert_warns_message(UndefinedMetricWarning, msg,
-                                jaccard_score,
-                                y_true,
-                                y_pred,
-                                average='samples',
-                                zero_division='warn') == 0.0
+    with pytest.warns(UndefinedMetricWarning, match=msg):
+        score = jaccard_score(y_true, y_pred,
+                              average='samples',
+                              zero_division='warn')
+    assert score == pytest.approx(score)
     assert jaccard_score(y_true, y_pred,
                          average='samples', zero_division=0) == 0.0
     assert jaccard_score(y_true, y_pred,
