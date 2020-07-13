@@ -727,9 +727,9 @@ class OrdinalEncoder(_BaseEncoder):
             for i in range(len(self.categories_)):
                 if 0 <= self.unknown_value < len(self.categories_[i]):
                     raise ValueError(f"The used value for unknown_value "
-                                    f"{self.unknown_value} is one of the "
-                                    f"values already used for encoding the "
-                                    f"seen categories.")
+                                     f"{self.unknown_value} is one of the "
+                                     f"values already used for encoding the "
+                                     f"seen categories.")
                 X_int[~X_mask[:, i], i] = self.unknown_value
         return X_int.astype(self.dtype, copy=False)
 

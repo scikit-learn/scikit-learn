@@ -578,7 +578,7 @@ def test_ordinal_encoder_handle_unknowns_raise_fit():
 
     enc = OrdinalEncoder(handle_unknown='use_encoded_value',
                          unknown_value='bla')
-    msg = (f"The used value for unknown_value bla is not an integer.")
+    msg = ("The used value for unknown_value bla is not an integer.")
     with pytest.raises(TypeError, match=msg):
         enc.fit(X)
 
@@ -592,7 +592,7 @@ def test_ordinal_encoder_handle_unknowns_raise_transform():
     msg = ("The used value for unknown_value 1 is one of the values already "
            "used for encoding the seen categories.")
     with pytest.raises(ValueError, match=msg):
-        X_trans_enc = enc.transform(X_trans)
+        enc.transform(X_trans)
 
 
 def test_ordinal_encoder_raise_categories_shape():
