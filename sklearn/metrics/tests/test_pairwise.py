@@ -1,5 +1,4 @@
 from types import GeneratorType
-from sys import platform
 
 import numpy as np
 from numpy import linalg
