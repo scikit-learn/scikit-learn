@@ -14,7 +14,7 @@ from functools import partial
 import warnings
 
 import numpy as np
-from numba import njit
+from numba import njit, prange
 from scipy.spatial import distance
 from scipy.sparse import csr_matrix
 from scipy.sparse import issparse
@@ -444,25 +444,29 @@ def _nan_fill_row_norm(r, fill_value: float = 0.):
 
 
 @njit
+def _nan_fill_dot_inner(v1, v2, fill_values):
+    s = 0.
+    for k in range(fill_values.shape[0]):
+        if np.isnan(v1[k]) and np.isnan(v2[k]):
+            pass
+        elif np.isnan(v1[k]) or np.isnan(v2[k]):
+            s += fill_values[k]
+        else:
+            s += v1[k] * v2[k]
+    return s
+
+
+@njit(parallel=True)
 def _nan_fill_dot(X, Y, fill_values: np.ndarray):
     if X.shape[1] != fill_values.shape[0]:
         raise ValueError('X and fill_values have incompatible shapes')
 
     p = np.zeros((X.shape[0], Y.shape[0],))
-    for i in range(0, X.shape[0]):
+    for i in prange(X.shape[0]):
         v1 = X[i, :]
-        for j in range(0, Y.shape[0]):
+        for j in range(Y.shape[0]):
             v2 = Y[j, :]
-            s = 0.
-            for k in range(0, fill_values.shape[0]):
-                if np.isnan(v1[k]) and np.isnan(v2[k]):
-                    pass
-                elif np.isnan(v1[k]) or np.isnan(v2[k]):
-                    s += fill_values[k]
-                else:
-                    s += v1[k] * v2[k]
-
-            p[i, j] = s
+            p[i, j] = _nan_fill_dot_inner(v1, v2, fill_values)
 
     return p
 
