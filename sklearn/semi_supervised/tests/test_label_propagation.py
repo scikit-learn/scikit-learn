@@ -1,13 +1,15 @@
 """ test the label propagation module """
 
 import numpy as np
+import pytest
 
-from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_warns
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_no_warnings
-from sklearn.semi_supervised import label_propagation
+from scipy.sparse import issparse
+from sklearn.utils._testing import assert_warns
+from sklearn.utils._testing import assert_no_warnings
+from sklearn.semi_supervised import _label_propagation as label_propagation
 from sklearn.metrics.pairwise import rbf_kernel
+from sklearn.model_selection import train_test_split
+from sklearn.neighbors import NearestNeighbors
 from sklearn.datasets import make_classification
 from sklearn.exceptions import ConvergenceWarning
 from numpy.testing import assert_array_almost_equal
@@ -32,7 +34,7 @@ def test_fit_transduction():
     labels = [0, 1, -1]
     for estimator, parameters in ESTIMATORS:
         clf = estimator(**parameters).fit(samples, labels)
-        assert_equal(clf.transduction_[2], 1)
+        assert clf.transduction_[2] == 1
 
 
 def test_distribution():
@@ -64,19 +66,6 @@ def test_predict_proba():
         clf = estimator(**parameters).fit(samples, labels)
         assert_array_almost_equal(clf.predict_proba([[1., 1.]]),
                                   np.array([[0.5, 0.5]]))
-
-
-def test_alpha_deprecation():
-    X, y = make_classification(n_samples=100)
-    y[::3] = -1
-
-    lp_default = label_propagation.LabelPropagation(kernel='rbf', gamma=0.1)
-    lp_default_y = lp_default.fit(X, y).transduction_
-
-    lp_0 = label_propagation.LabelPropagation(alpha=0, kernel='rbf', gamma=0.1)
-    lp_0_y = assert_warns(DeprecationWarning, lp_0.fit, X, y).transduction_
-
-    assert_array_equal(lp_default_y, lp_0_y)
 
 
 def test_label_spreading_closed_form():
@@ -113,8 +102,10 @@ def test_label_propagation_closed_form():
     clf.fit(X, y)
     # adopting notation from Zhu et al 2002
     T_bar = clf._build_graph()
-    Tuu = T_bar[np.meshgrid(unlabelled_idx, unlabelled_idx, indexing='ij')]
-    Tul = T_bar[np.meshgrid(unlabelled_idx, labelled_idx, indexing='ij')]
+    Tuu = T_bar[tuple(np.meshgrid(unlabelled_idx, unlabelled_idx,
+                      indexing='ij'))]
+    Tul = T_bar[tuple(np.meshgrid(unlabelled_idx, labelled_idx,
+                                  indexing='ij'))]
     Y = Y[:, :-1]
     Y_l = Y[labelled_idx, :]
     Y_u = np.dot(np.dot(np.linalg.inv(np.eye(Tuu.shape[0]) - Tuu), Tul), Y_l)
@@ -131,10 +122,8 @@ def test_valid_alpha():
     X, y = make_classification(n_classes=n_classes, n_samples=200,
                                random_state=0)
     for alpha in [-0.1, 0, 1, 1.1, None]:
-        assert_raises(ValueError,
-                      lambda **kwargs:
-                      label_propagation.LabelSpreading(**kwargs).fit(X, y),
-                      alpha=alpha)
+        with pytest.raises(ValueError):
+            label_propagation.LabelSpreading(alpha=alpha).fit(X, y)
 
 
 def test_convergence_speed():
@@ -155,14 +144,62 @@ def test_convergence_warning():
     y = np.array([0, 1, -1])
     mdl = label_propagation.LabelSpreading(kernel='rbf', max_iter=1)
     assert_warns(ConvergenceWarning, mdl.fit, X, y)
-    assert_equal(mdl.n_iter_, mdl.max_iter)
+    assert mdl.n_iter_ == mdl.max_iter
 
     mdl = label_propagation.LabelPropagation(kernel='rbf', max_iter=1)
     assert_warns(ConvergenceWarning, mdl.fit, X, y)
-    assert_equal(mdl.n_iter_, mdl.max_iter)
+    assert mdl.n_iter_ == mdl.max_iter
 
     mdl = label_propagation.LabelSpreading(kernel='rbf', max_iter=500)
     assert_no_warnings(mdl.fit, X, y)
 
     mdl = label_propagation.LabelPropagation(kernel='rbf', max_iter=500)
     assert_no_warnings(mdl.fit, X, y)
+
+
+def test_label_propagation_non_zero_normalizer():
+    # check that we don't divide by zero in case of null normalizer
+    # non-regression test for
+    # https://github.com/scikit-learn/scikit-learn/pull/15946
+    X = np.array([[100., 100.], [100., 100.], [0., 0.], [0., 0.]])
+    y = np.array([0, 1, -1, -1])
+    mdl = label_propagation.LabelSpreading(kernel='knn',
+                                           max_iter=100,
+                                           n_neighbors=1)
+    assert_no_warnings(mdl.fit, X, y)
+
+
+def test_predict_sparse_callable_kernel():
+    # This is a non-regression test for #15866
+
+    # Custom sparse kernel (top-K RBF)
+    def topk_rbf(X, Y=None, n_neighbors=10, gamma=1e-5):
+        nn = NearestNeighbors(n_neighbors=10, metric='euclidean', n_jobs=-1)
+        nn.fit(X)
+        W = -1 * nn.kneighbors_graph(Y, mode='distance').power(2) * gamma
+        np.exp(W.data, out=W.data)
+        assert issparse(W)
+        return W.T
+
+    n_classes = 4
+    n_samples = 500
+    n_test = 10
+    X, y = make_classification(n_classes=n_classes,
+                               n_samples=n_samples,
+                               n_features=20,
+                               n_informative=20,
+                               n_redundant=0,
+                               n_repeated=0,
+                               random_state=0)
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y,
+                                                        test_size=n_test,
+                                                        random_state=0)
+
+    model = label_propagation.LabelSpreading(kernel=topk_rbf)
+    model.fit(X_train, y_train)
+    assert model.score(X_test, y_test) >= 0.9
+
+    model = label_propagation.LabelPropagation(kernel=topk_rbf)
+    model.fit(X_train, y_train)
+    assert model.score(X_test, y_test) >= 0.9

@@ -1,24 +1,31 @@
 import numpy as np
 import scipy.sparse as sp
-import numbers
 
 from scipy import linalg
 from sklearn.decomposition import NMF, non_negative_factorization
-from sklearn.decomposition import nmf   # For testing internals
+from sklearn.decomposition import _nmf as nmf  # For testing internals
 from scipy.sparse import csc_matrix
 
-from sklearn.utils.testing import assert_true
-from sklearn.utils.testing import assert_false
-from sklearn.utils.testing import assert_raise_message, assert_no_warnings
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_less
-from sklearn.utils.testing import assert_greater
-from sklearn.utils.testing import ignore_warnings
+import pytest
+
+from sklearn.utils._testing import assert_raise_message
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import ignore_warnings
 from sklearn.utils.extmath import squared_norm
 from sklearn.base import clone
 from sklearn.exceptions import ConvergenceWarning
+
+
+@pytest.mark.parametrize('solver', ['cd', 'mu'])
+def test_convergence_warning(solver):
+    convergence_warning = ("Maximum number of iterations 1 reached. "
+                           "Increase it to improve convergence.")
+    A = np.ones((2, 2))
+    with pytest.warns(ConvergenceWarning, match=convergence_warning):
+        NMF(solver=solver, max_iter=1).fit(A)
 
 
 def test_initialize_nn_output():
@@ -27,7 +34,7 @@ def test_initialize_nn_output():
     data = np.abs(rng.randn(10, 10))
     for init in ('random', 'nndsvd', 'nndsvda', 'nndsvdar'):
         W, H = nmf._initialize_nmf(data, 10, init=init, random_state=0)
-        assert_false((W < 0).any() or (H < 0).any())
+        assert not ((W < 0).any() or (H < 0).any())
 
 
 def test_parameter_checking():
@@ -52,6 +59,14 @@ def test_parameter_checking():
     clf = NMF(2, tol=0.1).fit(A)
     assert_raise_message(ValueError, msg, clf.transform, -A)
 
+    for init in ['nndsvd', 'nndsvda', 'nndsvdar']:
+        msg = ("init = '{}' can only be used when "
+               "n_components <= min(n_samples, n_features)"
+               .format(init))
+        assert_raise_message(ValueError, msg, NMF(3, init=init).fit, A)
+        assert_raise_message(ValueError, msg, nmf._initialize_nmf, A,
+                             3, init)
+
 
 def test_initialize_close():
     # Test NNDSVD error
@@ -62,7 +77,7 @@ def test_initialize_close():
     W, H = nmf._initialize_nmf(A, 10, init='nndsvd')
     error = linalg.norm(np.dot(W, H) - A)
     sdev = linalg.norm(A - A.mean())
-    assert_true(error <= sdev)
+    assert error <= sdev
 
 
 def test_initialize_variants():
@@ -84,37 +99,37 @@ def test_initialize_variants():
 @ignore_warnings(category=UserWarning)
 def test_nmf_fit_nn_output():
     # Test that the decomposition does not contain negative values
-    A = np.c_[5 * np.ones(5) - np.arange(1, 6),
-              5 * np.ones(5) + np.arange(1, 6)]
+    A = np.c_[5. - np.arange(1, 6),
+              5. + np.arange(1, 6)]
     for solver in ('cd', 'mu'):
         for init in (None, 'nndsvd', 'nndsvda', 'nndsvdar', 'random'):
             model = NMF(n_components=2, solver=solver, init=init,
                         random_state=0)
             transf = model.fit_transform(A)
-            assert_false((model.components_ < 0).any() or
-                         (transf < 0).any())
+            assert not((model.components_ < 0).any() or
+                       (transf < 0).any())
 
 
-def test_nmf_fit_close():
+@pytest.mark.parametrize('solver', ('cd', 'mu'))
+def test_nmf_fit_close(solver):
     rng = np.random.mtrand.RandomState(42)
     # Test that the fit is not too far away
-    for solver in ('cd', 'mu'):
-        pnmf = NMF(5, solver=solver, init='nndsvdar', random_state=0,
-                   max_iter=600)
-        X = np.abs(rng.randn(6, 5))
-        assert_less(pnmf.fit(X).reconstruction_err_, 0.1)
+    pnmf = NMF(5, solver=solver, init='nndsvdar', random_state=0,
+               max_iter=600)
+    X = np.abs(rng.randn(6, 5))
+    assert pnmf.fit(X).reconstruction_err_ < 0.1
 
 
-def test_nmf_transform():
+@pytest.mark.parametrize('solver', ('cd', 'mu'))
+def test_nmf_transform(solver):
     # Test that NMF.transform returns close values
     rng = np.random.mtrand.RandomState(42)
     A = np.abs(rng.randn(6, 5))
-    for solver in ['cd', 'mu']:
-        m = NMF(solver=solver, n_components=3, init='random',
-                random_state=0, tol=1e-5)
-        ft = m.fit_transform(A)
-        t = m.transform(A)
-        assert_array_almost_equal(ft, t, decimal=2)
+    m = NMF(solver=solver, n_components=3, init='random',
+            random_state=0, tol=1e-5)
+    ft = m.fit_transform(A)
+    t = m.transform(A)
+    assert_array_almost_equal(ft, t, decimal=2)
 
 
 def test_nmf_transform_custom_init():
@@ -132,16 +147,16 @@ def test_nmf_transform_custom_init():
     m.transform(A)
 
 
-def test_nmf_inverse_transform():
+@pytest.mark.parametrize('solver', ('cd', 'mu'))
+def test_nmf_inverse_transform(solver):
     # Test that NMF.inverse_transform returns close values
     random_state = np.random.RandomState(0)
     A = np.abs(random_state.randn(6, 4))
-    for solver in ('cd', 'mu'):
-        m = NMF(solver=solver, n_components=4, init='random', random_state=0,
-                max_iter=1000)
-        ft = m.fit_transform(A)
-        A_new = m.inverse_transform(ft)
-        assert_array_almost_equal(A, A_new, decimal=2)
+    m = NMF(solver=solver, n_components=4, init='random', random_state=0,
+            max_iter=1000)
+    ft = m.fit_transform(A)
+    A_new = m.inverse_transform(ft)
+    assert_array_almost_equal(A, A_new, decimal=2)
 
 
 def test_n_components_greater_n_features():
@@ -196,39 +211,42 @@ def test_non_negative_factorization_consistency():
     A = np.abs(rng.randn(10, 10))
     A[:, 2 * np.arange(5)] = 0
 
-    for solver in ('cd', 'mu'):
-        W_nmf, H, _ = non_negative_factorization(
-            A, solver=solver, random_state=1, tol=1e-2)
-        W_nmf_2, _, _ = non_negative_factorization(
-            A, H=H, update_H=False, solver=solver, random_state=1, tol=1e-2)
+    for init in ['random', 'nndsvd']:
+        for solver in ('cd', 'mu'):
+            W_nmf, H, _ = non_negative_factorization(
+                A, init=init, solver=solver, random_state=1, tol=1e-2)
+            W_nmf_2, _, _ = non_negative_factorization(
+                A, H=H, update_H=False, init=init, solver=solver,
+                random_state=1, tol=1e-2)
 
-        model_class = NMF(solver=solver, random_state=1, tol=1e-2)
-        W_cls = model_class.fit_transform(A)
-        W_cls_2 = model_class.transform(A)
-        assert_array_almost_equal(W_nmf, W_cls, decimal=10)
-        assert_array_almost_equal(W_nmf_2, W_cls_2, decimal=10)
+            model_class = NMF(init=init, solver=solver, random_state=1,
+                              tol=1e-2)
+            W_cls = model_class.fit_transform(A)
+            W_cls_2 = model_class.transform(A)
+
+            assert_array_almost_equal(W_nmf, W_cls, decimal=10)
+            assert_array_almost_equal(W_nmf_2, W_cls_2, decimal=10)
 
 
 def test_non_negative_factorization_checking():
     A = np.ones((2, 2))
     # Test parameters checking is public function
     nnmf = non_negative_factorization
-    assert_no_warnings(nnmf, A, A, A, np.int64(1))
     msg = ("Number of components must be a positive integer; "
            "got (n_components=1.5)")
-    assert_raise_message(ValueError, msg, nnmf, A, A, A, 1.5)
+    assert_raise_message(ValueError, msg, nnmf, A, A, A, 1.5, init='random')
     msg = ("Number of components must be a positive integer; "
            "got (n_components='2')")
-    assert_raise_message(ValueError, msg, nnmf, A, A, A, '2')
+    assert_raise_message(ValueError, msg, nnmf, A, A, A, '2', init='random')
     msg = "Negative values in data passed to NMF (input H)"
-    assert_raise_message(ValueError, msg, nnmf, A, A, -A, 2, 'custom')
+    assert_raise_message(ValueError, msg, nnmf, A, A, -A, 2, init='custom')
     msg = "Negative values in data passed to NMF (input W)"
-    assert_raise_message(ValueError, msg, nnmf, A, -A, A, 2, 'custom')
+    assert_raise_message(ValueError, msg, nnmf, A, -A, A, 2, init='custom')
     msg = "Array passed to NMF (input H) is full of zeros"
-    assert_raise_message(ValueError, msg, nnmf, A, A, 0 * A, 2, 'custom')
+    assert_raise_message(ValueError, msg, nnmf, A, A, 0 * A, 2, init='custom')
     msg = "Invalid regularization parameter: got 'spam' instead of one of"
-    assert_raise_message(ValueError, msg, nnmf, A, A, 0 * A, 2, 'custom', True,
-                         'cd', 2., 1e-4, 200, 0., 0., 'spam')
+    assert_raise_message(ValueError, msg, nnmf, A, A, 0 * A, 2, init='custom',
+                         regularization='spam')
 
 
 def _beta_divergence_dense(X, W, H, beta):
@@ -236,11 +254,6 @@ def _beta_divergence_dense(X, W, H, beta):
 
     Used as a reference for testing nmf._beta_divergence.
     """
-    if isinstance(X, numbers.Number):
-        W = np.array([[W]])
-        H = np.array([[H]])
-        X = np.array([[X]])
-
     WH = np.dot(W, H)
 
     if beta == 2:
@@ -276,7 +289,7 @@ def test_beta_divergence():
     # initialization
     rng = np.random.mtrand.RandomState(42)
     X = rng.randn(n_samples, n_features)
-    X[X < 0] = 0.
+    np.clip(X, 0, None, out=X)
     X_csr = sp.csr_matrix(X)
     W, H = nmf._initialize_nmf(X, n_components, init='random', random_state=42)
 
@@ -296,7 +309,7 @@ def test_special_sparse_dot():
     n_components = 3
     rng = np.random.mtrand.RandomState(42)
     X = rng.randn(n_samples, n_features)
-    X[X < 0] = 0.
+    np.clip(X, 0, None, out=X)
     X_csr = sp.csr_matrix(X)
 
     W = np.abs(rng.randn(n_samples, n_components))
@@ -375,15 +388,15 @@ def test_nmf_negative_beta_loss():
 
     rng = np.random.mtrand.RandomState(42)
     X = rng.randn(n_samples, n_features)
-    X[X < 0] = 0
+    np.clip(X, 0, None, out=X)
     X_csr = sp.csr_matrix(X)
 
     def _assert_nmf_no_nan(X, beta_loss):
         W, H, _ = non_negative_factorization(
-            X, n_components=n_components, solver='mu', beta_loss=beta_loss,
-            random_state=0, max_iter=1000)
-        assert_false(np.any(np.isnan(W)))
-        assert_false(np.any(np.isnan(H)))
+            X, init='random', n_components=n_components, solver='mu',
+            beta_loss=beta_loss, random_state=0, max_iter=1000)
+        assert not np.any(np.isnan(W))
+        assert not np.any(np.isnan(H))
 
     msg = "When beta_loss <= 0 and X contains zeros, the solver may diverge."
     for beta_loss in (-0.6, 0.):
@@ -422,8 +435,8 @@ def test_nmf_regularization():
         H_regul_n_zeros = H_regul[H_regul == 0].size
         H_model_n_zeros = H_model[H_model == 0].size
 
-        assert_greater(W_regul_n_zeros, W_model_n_zeros)
-        assert_greater(H_regul_n_zeros, H_model_n_zeros)
+        assert W_regul_n_zeros > W_model_n_zeros
+        assert H_regul_n_zeros > H_model_n_zeros
 
     # L2 regularization should decrease the mean of the coefficients
     l1_ratio = 0.
@@ -439,8 +452,8 @@ def test_nmf_regularization():
         H_regul = regul.components_
         H_model = model.components_
 
-        assert_greater(W_model.mean(), W_regul.mean())
-        assert_greater(H_model.mean(), H_regul.mean())
+        assert W_model.mean() > W_regul.mean()
+        assert H_model.mean() > H_regul.mean()
 
 
 @ignore_warnings(category=ConvergenceWarning)
@@ -477,5 +490,65 @@ def test_nmf_decreasing():
 
                 loss = nmf._beta_divergence(X, W, H, beta_loss)
                 if previous_loss is not None:
-                    assert_greater(previous_loss, loss)
+                    assert previous_loss > loss
                 previous_loss = loss
+
+
+def test_nmf_underflow():
+    # Regression test for an underflow issue in _beta_divergence
+    rng = np.random.RandomState(0)
+    n_samples, n_features, n_components = 10, 2, 2
+    X = np.abs(rng.randn(n_samples, n_features)) * 10
+    W = np.abs(rng.randn(n_samples, n_components)) * 10
+    H = np.abs(rng.randn(n_components, n_features))
+
+    X[0, 0] = 0
+    ref = nmf._beta_divergence(X, W, H, beta=1.0)
+    X[0, 0] = 1e-323
+    res = nmf._beta_divergence(X, W, H, beta=1.0)
+    assert_almost_equal(res, ref)
+
+
+@pytest.mark.parametrize("dtype_in, dtype_out", [
+    (np.float32, np.float32),
+    (np.float64, np.float64),
+    (np.int32, np.float64),
+    (np.int64, np.float64)])
+@pytest.mark.parametrize("solver", ["cd", "mu"])
+def test_nmf_dtype_match(dtype_in, dtype_out, solver):
+    # Check that NMF preserves dtype (float32 and float64)
+    X = np.random.RandomState(0).randn(20, 15).astype(dtype_in, copy=False)
+    np.abs(X, out=X)
+    nmf = NMF(solver=solver)
+
+    assert nmf.fit(X).transform(X).dtype == dtype_out
+    assert nmf.fit_transform(X).dtype == dtype_out
+    assert nmf.components_.dtype == dtype_out
+
+
+@pytest.mark.parametrize("solver", ["cd", "mu"])
+def test_nmf_float32_float64_consistency(solver):
+    # Check that the result of NMF is the same between float32 and float64
+    X = np.random.RandomState(0).randn(50, 7)
+    np.abs(X, out=X)
+    nmf32 = NMF(solver=solver, random_state=0)
+    W32 = nmf32.fit_transform(X.astype(np.float32))
+    nmf64 = NMF(solver=solver, random_state=0)
+    W64 = nmf64.fit_transform(X)
+
+    assert_allclose(W32, W64, rtol=1e-6, atol=1e-5)
+
+
+def test_nmf_custom_init_dtype_error():
+    # Check that an error is raise if custom H and/or W don't have the same
+    # dtype as X.
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((20, 15))
+    H = rng.random_sample((15, 15)).astype(np.float32)
+    W = rng.random_sample((20, 15))
+
+    with pytest.raises(TypeError, match="should have the same dtype as X"):
+        NMF(init='custom').fit(X, H=H, W=W)
+
+    with pytest.raises(TypeError, match="should have the same dtype as X"):
+        non_negative_factorization(X, H=H, update_H=False)

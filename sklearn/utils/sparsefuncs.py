@@ -5,8 +5,8 @@
 # License: BSD 3 clause
 import scipy.sparse as sp
 import numpy as np
+from .validation import _deprecate_positional_args
 
-from .fixes import sparse_min_max
 from .sparsefuncs_fast import (
     csr_mean_variance_axis0 as _csr_mean_var_axis0,
     csc_mean_variance_axis0 as _csc_mean_var_axis0,
@@ -99,12 +99,13 @@ def mean_variance_axis(X, axis):
         _raise_typeerror(X)
 
 
-def incr_mean_variance_axis(X, axis, last_mean, last_var, last_n):
+@_deprecate_positional_args
+def incr_mean_variance_axis(X, *, axis, last_mean, last_var, last_n):
     """Compute incremental mean and variance along an axix on a CSR or
     CSC matrix.
 
     last_mean, last_var are the statistics computed at the last step by this
-    function. Both must be initilized to 0-arrays of the proper size, i.e.
+    function. Both must be initialized to 0-arrays of the proper size, i.e.
     the number of features in X. last_n is the number of samples encountered
     until now.
 
@@ -122,7 +123,7 @@ def incr_mean_variance_axis(X, axis, last_mean, last_var, last_n):
     last_var : float array with shape (n_features,)
         Array of feature-wise var to update with the new data X.
 
-    last_n : int
+    last_n : int with shape (n_features,)
         Number of samples seen so far, excluded X.
 
     Returns
@@ -134,8 +135,12 @@ def incr_mean_variance_axis(X, axis, last_mean, last_var, last_n):
     variances : float array with shape (n_features,)
         Updated feature-wise variances.
 
-    n : int
+    n : int with shape (n_features,)
         Updated number of seen samples.
+
+    Notes
+    -----
+    NaNs are ignored in the algorithm.
 
     """
     _raise_error_wrong_axis(axis)
@@ -336,8 +341,72 @@ def inplace_swap_column(X, m, n):
         _raise_typeerror(X)
 
 
-def min_max_axis(X, axis):
-    """Compute minimum and maximum along an axis on a CSR or CSC matrix
+def _minor_reduce(X, ufunc):
+    major_index = np.flatnonzero(np.diff(X.indptr))
+
+    # reduceat tries casts X.indptr to intp, which errors
+    # if it is int64 on a 32 bit system.
+    # Reinitializing prevents this where possible, see #13737
+    X = type(X)((X.data, X.indices, X.indptr), shape=X.shape)
+    value = ufunc.reduceat(X.data, X.indptr[major_index])
+    return major_index, value
+
+
+def _min_or_max_axis(X, axis, min_or_max):
+    N = X.shape[axis]
+    if N == 0:
+        raise ValueError("zero-size array to reduction operation")
+    M = X.shape[1 - axis]
+    mat = X.tocsc() if axis == 0 else X.tocsr()
+    mat.sum_duplicates()
+    major_index, value = _minor_reduce(mat, min_or_max)
+    not_full = np.diff(mat.indptr)[major_index] < N
+    value[not_full] = min_or_max(value[not_full], 0)
+    mask = value != 0
+    major_index = np.compress(mask, major_index)
+    value = np.compress(mask, value)
+
+    if axis == 0:
+        res = sp.coo_matrix((value, (np.zeros(len(value)), major_index)),
+                            dtype=X.dtype, shape=(1, M))
+    else:
+        res = sp.coo_matrix((value, (major_index, np.zeros(len(value)))),
+                            dtype=X.dtype, shape=(M, 1))
+    return res.A.ravel()
+
+
+def _sparse_min_or_max(X, axis, min_or_max):
+    if axis is None:
+        if 0 in X.shape:
+            raise ValueError("zero-size array to reduction operation")
+        zero = X.dtype.type(0)
+        if X.nnz == 0:
+            return zero
+        m = min_or_max.reduce(X.data.ravel())
+        if X.nnz != np.product(X.shape):
+            m = min_or_max(zero, m)
+        return m
+    if axis < 0:
+        axis += 2
+    if (axis == 0) or (axis == 1):
+        return _min_or_max_axis(X, axis, min_or_max)
+    else:
+        raise ValueError("invalid axis, use 0 for rows, or 1 for columns")
+
+
+def _sparse_min_max(X, axis):
+        return (_sparse_min_or_max(X, axis, np.minimum),
+                _sparse_min_or_max(X, axis, np.maximum))
+
+
+def _sparse_nan_min_max(X, axis):
+    return(_sparse_min_or_max(X, axis, np.fmin),
+           _sparse_min_or_max(X, axis, np.fmax))
+
+
+def min_max_axis(X, axis, ignore_nan=False):
+    """Compute minimum and maximum along an axis on a CSR or CSC matrix and
+    optionally ignore NaN values.
 
     Parameters
     ----------
@@ -346,6 +415,11 @@ def min_max_axis(X, axis):
 
     axis : int (either 0 or 1)
         Axis along which the axis should be computed.
+
+    ignore_nan : bool, default is False
+        Ignore or passing through NaN values.
+
+        .. versionadded:: 0.20
 
     Returns
     -------
@@ -357,7 +431,10 @@ def min_max_axis(X, axis):
         Feature-wise maxima
     """
     if isinstance(X, sp.csr_matrix) or isinstance(X, sp.csc_matrix):
-        return sparse_min_max(X, axis=axis)
+        if ignore_nan:
+            return _sparse_nan_min_max(X, axis=axis)
+        else:
+            return _sparse_min_max(X, axis=axis)
     else:
         _raise_typeerror(X)
 
@@ -369,13 +446,13 @@ def count_nonzero(X, axis=None, sample_weight=None):
 
     Parameters
     ----------
-    X : CSR sparse matrix, shape = (n_samples, n_labels)
+    X : CSR sparse matrix of shape (n_samples, n_labels)
         Input data.
 
     axis : None, 0 or 1
         The axis on which the data is aggregated.
 
-    sample_weight : array, shape = (n_samples,), optional
+    sample_weight : array-like of shape (n_samples,), default=None
         Weight for each row of X.
     """
     if axis == -1:
@@ -397,7 +474,8 @@ def count_nonzero(X, axis=None, sample_weight=None):
     elif axis == 1:
         out = np.diff(X.indptr)
         if sample_weight is None:
-            return out
+            # astype here is for consistency with axis=0 dtype
+            return out.astype('intp')
         return out * sample_weight
     elif axis == 0:
         if sample_weight is None:

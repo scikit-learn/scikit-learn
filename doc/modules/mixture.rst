@@ -218,7 +218,7 @@ fit only one component.
 
 On the following figure we are fitting a dataset not well-depicted by a
 Gaussian mixture. Adjusting the ``weight_concentration_prior``, parameter of the
-class:`BayesianGaussianMixture` controls the number of components used to fit
+:class:`BayesianGaussianMixture` controls the number of components used to fit
 this data. We also present on the last two plots a random sampling generated
 from the two resulting mixtures.
 
@@ -310,7 +310,7 @@ step we break off a portion of the remaining stick. Each time, we associate the
 length of the piece of the stick to the proportion of points that falls into a
 group of the mixture. At the end, to represent the infinite mixture, we
 associate the last remaining piece of the stick to the proportion of points
-that don't fall into all the other groups. The length of each piece is random
+that don't fall into all the other groups. The length of each piece is a random
 variable with probability proportional to the concentration parameter. Smaller
 value of the concentration will divide the unit-length into larger pieces of
 the stick (defining more concentrated distribution). Larger concentration

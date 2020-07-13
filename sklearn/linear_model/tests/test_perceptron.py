@@ -1,9 +1,8 @@
 import numpy as np
 import scipy.sparse as sp
 
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_greater
-from sklearn.utils.testing import assert_raises
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_raises
 
 from sklearn.utils import check_random_state
 from sklearn.datasets import load_iris
@@ -19,7 +18,7 @@ X_csr = sp.csr_matrix(X)
 X_csr.sort_indices()
 
 
-class MyPerceptron(object):
+class MyPerceptron:
 
     def __init__(self, n_iter=1):
         self.n_iter = n_iter
@@ -48,7 +47,7 @@ def test_perceptron_accuracy():
         clf = Perceptron(max_iter=100, tol=None, shuffle=False)
         clf.fit(data, y)
         score = clf.score(data, y)
-        assert_greater(score, 0.7)
+        assert score > 0.7
 
 
 def test_perceptron_correctness():

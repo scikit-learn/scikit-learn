@@ -26,8 +26,8 @@ y = iris.target
 h = .02  # step size in the mesh
 
 # Create color maps
-cmap_light = ListedColormap(['#FFAAAA', '#AAFFAA', '#AAAAFF'])
-cmap_bold = ListedColormap(['#FF0000', '#00FF00', '#0000FF'])
+cmap_light = ListedColormap(['orange', 'cyan', 'cornflowerblue'])
+cmap_bold = ListedColormap(['darkorange', 'c', 'darkblue'])
 
 for shrinkage in [None, .2]:
     # we create an instance of Neighbours Classifier and fit the data.
@@ -50,7 +50,7 @@ for shrinkage in [None, .2]:
 
     # Plot also the training points
     plt.scatter(X[:, 0], X[:, 1], c=y, cmap=cmap_bold,
-                edgecolor='b', s=20)
+                edgecolor='k', s=20)
     plt.title("3-Class classification (shrink_threshold=%r)"
               % shrinkage)
     plt.axis('tight')

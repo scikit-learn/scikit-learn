@@ -1,33 +1,33 @@
-from __future__ import division
+
+import functools
+from typing import List, Any
 
 import numpy as np
 import scipy.sparse as sp
+import pytest
 
 from sklearn.metrics import euclidean_distances
 
 from sklearn.random_projection import johnson_lindenstrauss_min_dim
-from sklearn.random_projection import gaussian_random_matrix
-from sklearn.random_projection import sparse_random_matrix
+from sklearn.random_projection import _gaussian_random_matrix
+from sklearn.random_projection import _sparse_random_matrix
 from sklearn.random_projection import SparseRandomProjection
 from sklearn.random_projection import GaussianRandomProjection
 
-from sklearn.utils.testing import assert_less
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_raise_message
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_in
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_warns
+from sklearn.utils._testing import assert_raises
+from sklearn.utils._testing import assert_raise_message
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_warns
 from sklearn.exceptions import DataDimensionalityWarning
 
-all_sparse_random_matrix = [sparse_random_matrix]
-all_dense_random_matrix = [gaussian_random_matrix]
-all_random_matrix = set(all_sparse_random_matrix + all_dense_random_matrix)
+all_sparse_random_matrix: List[Any] = [_sparse_random_matrix]
+all_dense_random_matrix: List[Any] = [_gaussian_random_matrix]
+all_random_matrix = all_sparse_random_matrix + all_dense_random_matrix
 
-all_SparseRandomProjection = [SparseRandomProjection]
-all_DenseRandomProjection = [GaussianRandomProjection]
+all_SparseRandomProjection: List[Any] = [SparseRandomProjection]
+all_DenseRandomProjection: List[Any] = [GaussianRandomProjection]
 all_RandomProjection = set(all_SparseRandomProjection +
                            all_DenseRandomProjection)
 
@@ -60,21 +60,21 @@ data, data_csr = make_sparse_random_data(n_samples, n_features, n_nonzeros)
 # test on JL lemma
 ###############################################################################
 def test_invalid_jl_domain():
-    assert_raises(ValueError, johnson_lindenstrauss_min_dim, 100, 1.1)
-    assert_raises(ValueError, johnson_lindenstrauss_min_dim, 100, 0.0)
-    assert_raises(ValueError, johnson_lindenstrauss_min_dim, 100, -0.1)
-    assert_raises(ValueError, johnson_lindenstrauss_min_dim, 0, 0.5)
+    assert_raises(ValueError, johnson_lindenstrauss_min_dim, 100, eps=1.1)
+    assert_raises(ValueError, johnson_lindenstrauss_min_dim, 100, eps=0.0)
+    assert_raises(ValueError, johnson_lindenstrauss_min_dim, 100, eps=-0.1)
+    assert_raises(ValueError, johnson_lindenstrauss_min_dim, 0, eps=0.5)
 
 
 def test_input_size_jl_min_dim():
     assert_raises(ValueError, johnson_lindenstrauss_min_dim,
-                  3 * [100], 2 * [0.9])
+                  3 * [100], eps=2 * [0.9])
 
     assert_raises(ValueError, johnson_lindenstrauss_min_dim, 3 * [100],
-                  2 * [0.9])
+                  eps=2 * [0.9])
 
     johnson_lindenstrauss_min_dim(np.random.randint(1, 10, size=(10, 10)),
-                                  0.5 * np.ones((10, 10)))
+                                  eps=np.full((10, 10), 0.5))
 
 
 ###############################################################################
@@ -89,10 +89,10 @@ def check_input_size_random_matrix(random_matrix):
 
 
 def check_size_generated(random_matrix):
-    assert_equal(random_matrix(1, 5).shape, (1, 5))
-    assert_equal(random_matrix(5, 1).shape, (5, 1))
-    assert_equal(random_matrix(5, 5).shape, (5, 5))
-    assert_equal(random_matrix(1, 1).shape, (1, 1))
+    assert random_matrix(1, 5).shape == (1, 5)
+    assert random_matrix(5, 1).shape == (5, 1)
+    assert random_matrix(5, 5).shape == (5, 5)
+    assert random_matrix(1, 1).shape == (1, 1)
 
 
 def check_zero_mean_and_unit_norm(random_matrix):
@@ -113,21 +113,21 @@ def check_input_with_sparse_random_matrix(random_matrix):
                       random_matrix, n_components, n_features, density=density)
 
 
-def test_basic_property_of_random_matrix():
+@pytest.mark.parametrize("random_matrix", all_random_matrix)
+def test_basic_property_of_random_matrix(random_matrix):
     # Check basic properties of random matrix generation
-    for random_matrix in all_random_matrix:
-        yield check_input_size_random_matrix, random_matrix
-        yield check_size_generated, random_matrix
-        yield check_zero_mean_and_unit_norm, random_matrix
+    check_input_size_random_matrix(random_matrix)
+    check_size_generated(random_matrix)
+    check_zero_mean_and_unit_norm(random_matrix)
 
-    for random_matrix in all_sparse_random_matrix:
-        yield check_input_with_sparse_random_matrix, random_matrix
 
-        random_matrix_dense = \
-            lambda n_components, n_features, random_state: random_matrix(
-                n_components, n_features, random_state=random_state,
-                density=1.0)
-        yield check_zero_mean_and_unit_norm, random_matrix_dense
+@pytest.mark.parametrize("random_matrix", all_sparse_random_matrix)
+def test_basic_property_of_sparse_random_matrix(random_matrix):
+    check_input_with_sparse_random_matrix(random_matrix)
+
+    random_matrix_dense = functools.partial(random_matrix, density=1.0)
+
+    check_zero_mean_and_unit_norm(random_matrix_dense)
 
 
 def test_gaussian_random_matrix():
@@ -138,7 +138,7 @@ def test_gaussian_random_matrix():
     #
     n_components = 100
     n_features = 1000
-    A = gaussian_random_matrix(n_components, n_features, random_state=0)
+    A = _gaussian_random_matrix(n_components, n_features, random_state=0)
 
     assert_array_almost_equal(0.0, np.mean(A), 2)
     assert_array_almost_equal(np.var(A, ddof=1), 1 / n_components, 1)
@@ -152,7 +152,7 @@ def test_sparse_random_matrix():
     for density in [0.3, 1.]:
         s = 1 / density
 
-        A = sparse_random_matrix(n_components,
+        A = _sparse_random_matrix(n_components,
                                  n_features,
                                  density=density,
                                  random_state=0)
@@ -160,14 +160,14 @@ def test_sparse_random_matrix():
 
         # Check possible values
         values = np.unique(A)
-        assert_in(np.sqrt(s) / np.sqrt(n_components), values)
-        assert_in(- np.sqrt(s) / np.sqrt(n_components), values)
+        assert np.sqrt(s) / np.sqrt(n_components) in values
+        assert - np.sqrt(s) / np.sqrt(n_components) in values
 
         if density == 1.0:
-            assert_equal(np.size(values), 2)
+            assert np.size(values) == 2
         else:
-            assert_in(0., values)
-            assert_equal(np.size(values), 3)
+            assert 0. in values
+            assert np.size(values) == 3
 
         # Check that the random matrix follow the proper distribution.
         # Let's say that each element of a_{ij} of A is taken from
@@ -261,8 +261,8 @@ def test_random_projection_embedding_quality():
         # check that the automatically tuned values for the density respect the
         # contract for eps: pairwise distances are preserved according to the
         # Johnson-Lindenstrauss lemma
-        assert_less(distances_ratio.max(), 1 + eps)
-        assert_less(1 - eps, distances_ratio.min())
+        assert distances_ratio.max() < 1 + eps
+        assert 1 - eps < distances_ratio.min()
 
 
 def test_SparseRandomProjection_output_representation():
@@ -296,17 +296,17 @@ def test_correct_RandomProjection_dimensions_embedding():
 
         # the number of components is adjusted from the shape of the training
         # set
-        assert_equal(rp.n_components, 'auto')
-        assert_equal(rp.n_components_, 110)
+        assert rp.n_components == 'auto'
+        assert rp.n_components_ == 110
 
         if RandomProjection in all_SparseRandomProjection:
-            assert_equal(rp.density, 'auto')
+            assert rp.density == 'auto'
             assert_almost_equal(rp.density_, 0.03, 2)
 
-        assert_equal(rp.components_.shape, (110, n_features))
+        assert rp.components_.shape == (110, n_features)
 
         projected_1 = rp.transform(data)
-        assert_equal(projected_1.shape, (n_samples, 110))
+        assert projected_1.shape == (n_samples, 110)
 
         # once the RP is 'fitted' the projection is always the same
         projected_2 = rp.transform(data)
@@ -326,10 +326,10 @@ def test_correct_RandomProjection_dimensions_embedding():
             rp = RandomProjection(n_components=100, density=0.001,
                                   random_state=0)
             projected = rp.fit_transform(data)
-            assert_equal(projected.shape, (n_samples, 100))
-            assert_equal(rp.components_.shape, (100, n_features))
-            assert_less(rp.components_.nnz, 115)  # close to 1% density
-            assert_less(85, rp.components_.nnz)  # close to 1% density
+            assert projected.shape == (n_samples, 100)
+            assert rp.components_.shape == (100, n_features)
+            assert rp.components_.nnz < 115  # close to 1% density
+            assert 85 < rp.components_.nnz  # close to 1% density
 
 
 def test_warning_n_components_greater_than_n_features():

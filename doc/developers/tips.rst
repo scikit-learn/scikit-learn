@@ -14,28 +14,17 @@ such as `TamperMonkey`_ or `GreaseMonkey`_; to set up userscripts you must have
 one of these extensions installed, enabled and running.  We provide userscripts
 as GitHub gists; to install them, click on the "Raw" button on the gist page.
 
-.. _TamperMonkey: https://tampermonkey.net
-.. _GreaseMonkey: http://www.greasespot.net
-
-Viewing the rendered HTML documentation for a pull request
-----------------------------------------------------------
-
-We use CircleCI to build the HTML documentation for every pull request. To
-access that documentation, we provide a redirect as described in the
-:ref:`documentation section of the contributor guide
-<contribute_documentation>`. Instead of typing the address by hand, we provide a
-`userscript <https://gist.github.com/lesteve/470170f288884ec052bcf4bc4ffe958a>`_
-that adds a button to every PR. After installing the userscript, navigate to any
-GitHub PR; a new button labeled "See CircleCI doc for this PR" should appear in
-the top-right area.
+.. _TamperMonkey: https://tampermonkey.net/
+.. _GreaseMonkey: https://www.greasespot.net/
 
 Folding and unfolding outdated diffs on pull requests
 -----------------------------------------------------
 
 GitHub hides discussions on PRs when the corresponding lines of code have been
 changed in the mean while. This `userscript
-<https://gist.github.com/lesteve/b4ef29bccd42b354a834>`_ provides a button to
-unfold all such hidden discussions at once, so you can catch up.
+<https://raw.githubusercontent.com/lesteve/userscripts/master/github-expand-all.user.js>`__
+provides a shortcut (Control-Alt-P at the time of writing but look at the code
+to be sure) to unfold all such hidden discussions at once, so you can catch up.
 
 Checking out pull requests as remote-tracking branches
 ------------------------------------------------------
@@ -57,11 +46,28 @@ integration, consider `this browser extension
 <https://github.com/codecov/browser-extension>`_. The coverage of each line
 will be displayed as a color background behind the line number.
 
+
+.. _pytest_tips:
+
 Useful pytest aliases and flags
 -------------------------------
 
-We recommend using pytest to run unit tests. When a unit tests fail, the
-following tricks can make debugging easier:
+The full test suite takes fairly long to run. For faster iterations,
+it is possibly to select a subset of tests using pytest selectors.
+In particular, one can run a `single test based on its node ID
+<https://docs.pytest.org/en/latest/example/markers.html#selecting-tests-based-on-their-node-id>`_::
+
+  pytest -v sklearn/linear_model/tests/test_logistic.py::test_sparsify
+
+or use the `-k pytest parameter
+<https://docs.pytest.org/en/latest/example/markers.html#using-k-expr-to-select-tests-based-on-their-name>`_
+to select tests based on their name. For instance,::
+
+  pytest sklearn/tests/test_common.py -v -k LogisticRegression
+
+will run all :term:`common tests` for the ``LogisticRegression`` estimator.
+
+When a unit test fails, the following tricks can make debugging easier:
 
   1. The command line argument ``pytest -l`` instructs pytest to print the local
      variables when a failure occurs.
@@ -71,6 +77,143 @@ following tricks can make debugging easier:
      shell alias to::
 
          pytest --pdbcls=IPython.terminal.debugger:TerminalPdb --capture no
+
+Other `pytest` options that may become useful include:
+
+  - ``-x`` which exits on the first failed test
+  - ``--lf`` to rerun the tests that failed on the previous run
+  - ``--ff`` to rerun all previous tests, running the ones that failed first
+  - ``-s`` so that pytest does not capture the output of ``print()``
+    statements
+  - ``--tb=short`` or ``--tb=line`` to control the length of the logs
+  - ``--runxfail`` also run tests marked as a known failure (XFAIL) and report
+    errors.
+
+Since our continuous integration tests will error if
+``FutureWarning`` isn't properly caught,
+it is also recommended to run ``pytest`` along with the
+``-Werror::FutureWarning`` flag.
+
+.. _saved_replies:
+
+Standard replies for reviewing
+------------------------------
+
+It may be helpful to store some of these in GitHub's `saved
+replies <https://github.com/settings/replies/>`_ for reviewing:
+
+.. highlight:: none
+
+..
+    Note that putting this content on a single line in a literal is the easiest way to make it copyable and wrapped on screen.
+
+Issue: Usage questions
+    ::
+
+        You're asking a usage question. The issue tracker is mainly for bugs and new features. For usage questions, it is recommended to try [Stack Overflow](https://stackoverflow.com/questions/tagged/scikit-learn) or [the Mailing List](https://mail.python.org/mailman/listinfo/scikit-learn).
+
+Issue: You're welcome to update the docs
+    ::
+
+        Please feel free to offer a pull request updating the documentation if you feel it could be improved.
+
+Issue: Self-contained example for bug
+    ::
+
+        Please provide [self-contained example code](https://stackoverflow.com/help/mcve), including imports and data (if possible), so that other contributors can just run it and reproduce your issue. Ideally your example code should be minimal.
+
+Issue: Software versions
+    ::
+
+        To help diagnose your issue, please paste the output of:
+        ```py
+        import sklearn; sklearn.show_versions()
+        ```
+        Thanks.
+
+Issue: Code blocks
+    ::
+
+        Readability can be greatly improved if you [format](https://help.github.com/articles/creating-and-highlighting-code-blocks/) your code snippets and complete error messages appropriately. For example:
+
+            ```python
+            print(something)
+            ```
+        generates:
+        ```python
+        print(something)
+        ```
+        And:
+
+            ```pytb
+            Traceback (most recent call last):
+              File "<stdin>", line 1, in <module>
+            ImportError: No module named 'hello'
+            ```
+        generates:
+        ```pytb
+        Traceback (most recent call last):
+          File "<stdin>", line 1, in <module>
+        ImportError: No module named 'hello'
+        ```
+        You can edit your issue descriptions and comments at any time to improve readability. This helps maintainers a lot. Thanks!
+
+Issue/Comment: Linking to code
+    ::
+
+        Friendly advice: for clarity's sake, you can link to code like [this](https://help.github.com/articles/creating-a-permanent-link-to-a-code-snippet/).
+
+Issue/Comment: Linking to comments
+    ::
+
+        Please use links to comments, which make it a lot easier to see what you are referring to, rather than just linking to the issue. See [this](https://stackoverflow.com/questions/25163598/how-do-i-reference-a-specific-issue-comment-on-github) for more details.
+
+PR-NEW: Better description and title
+    ::
+
+        Thanks for the pull request! Please make the title of the PR more descriptive. The title will become the commit message when this is merged. You should state what issue (or PR) it fixes/resolves in the description using the syntax described [here](http://scikit-learn.org/dev/developers/contributing.html#contributing-pull-requests).
+
+PR-NEW: Fix #
+    ::
+
+        Please use "Fix #issueNumber" in your PR description (and you can do it more than once). This way the associated issue gets closed automatically when the PR is merged. For more details, look at [this](https://github.com/blog/1506-closing-issues-via-pull-requests).
+
+PR-NEW or Issue: Maintenance cost
+    ::
+
+        Every feature we include has a [maintenance cost](http://scikit-learn.org/dev/faq.html#why-are-you-so-selective-on-what-algorithms-you-include-in-scikit-learn). Our maintainers are mostly volunteers. For a new feature to be included, we need evidence that it is often useful and, ideally, [well-established](http://scikit-learn.org/dev/faq.html#what-are-the-inclusion-criteria-for-new-algorithms) in the literature or in practice. That doesn't stop you implementing it for yourself and publishing it in a separate repository, or even [scikit-learn-contrib](https://scikit-learn-contrib.github.io).
+
+PR-WIP: What's needed before merge?
+    ::
+
+        Please clarify (perhaps as a TODO list in the PR description) what work you believe still needs to be done before it can be reviewed for merge. When it is ready, please prefix the PR title with `[MRG]`.
+
+PR-WIP: Regression test needed
+    ::
+
+        Please add a [non-regression test](https://en.wikipedia.org/wiki/Non-regression_testing) that would fail at master but pass in this PR.
+
+PR-WIP: PEP8
+    ::
+
+        You have some [PEP8](https://www.python.org/dev/peps/pep-0008/) violations, whose details you can see in the Circle CI `lint` job. It might be worth configuring your code editor to check for such errors on the fly, so you can catch them before committing.
+
+PR-MRG: Patience
+    ::
+
+        Before merging, we generally require two core developers to agree that your pull request is desirable and ready. [Please be patient](http://scikit-learn.org/dev/faq.html#why-is-my-pull-request-not-getting-any-attention), as we mostly rely on volunteered time from busy core developers. (You are also welcome to help us out with [reviewing other PRs](http://scikit-learn.org/dev/developers/contributing.html#code-review-guidelines).)
+
+PR-MRG: Add to what's new
+    ::
+
+        Please add an entry to the change log at `doc/whats_new/v*.rst`. Like the other entries there, please reference this pull request with `:pr:` and credit yourself (and other contributors if applicable) with `:user:`.
+
+PR: Don't change unrelated
+    ::
+
+        Please do not change unrelated lines. It makes your contribution harder to review and may introduce merge conflicts to other pull requests.
+
+.. highlight:: default
 
 Debugging memory errors in Cython with valgrind
 ===============================================
@@ -105,8 +248,8 @@ code. Follow these steps:
        $> valgrind -v --suppressions=valgrind-python.supp python my_test_script.py
 
 .. _valgrind: http://valgrind.org
-.. _`README.valgrind`: http://svn.python.org/projects/python/trunk/Misc/README.valgrind
-.. _`valgrind-python.supp`: http://svn.python.org/projects/python/trunk/Misc/valgrind-python.supp
+.. _`README.valgrind`: https://github.com/python/cpython/blob/master/Misc/README.valgrind
+.. _`valgrind-python.supp`: https://github.com/python/cpython/blob/master/Misc/valgrind-python.supp
 
 
 The result will be a list of all the memory-related errors, which reference

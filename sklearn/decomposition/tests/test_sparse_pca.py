@@ -2,21 +2,16 @@
 # License: BSD 3 clause
 
 import sys
+import pytest
 
 import numpy as np
 
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import SkipTest
-from sklearn.utils.testing import assert_true
-from sklearn.utils.testing import assert_false
-from sklearn.utils.testing import assert_warns_message
-from sklearn.utils.testing import if_safe_multiprocessing_with_blas
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import if_safe_multiprocessing_with_blas
 
-from sklearn.decomposition import SparsePCA, MiniBatchSparsePCA
+from sklearn.decomposition import SparsePCA, MiniBatchSparsePCA, PCA
 from sklearn.utils import check_random_state
-
 
 def generate_toy_data(n_components, n_samples, image_size, random_state=None):
     n_features = image_size[0] * image_size[1]
@@ -48,13 +43,13 @@ def test_correct_shapes():
     X = rng.randn(12, 10)
     spca = SparsePCA(n_components=8, random_state=rng)
     U = spca.fit_transform(X)
-    assert_equal(spca.components_.shape, (8, 10))
-    assert_equal(U.shape, (12, 8))
+    assert spca.components_.shape == (8, 10)
+    assert U.shape == (12, 8)
     # test overcomplete decomposition
     spca = SparsePCA(n_components=13, random_state=rng)
     U = spca.fit_transform(X)
-    assert_equal(spca.components_.shape, (13, 10))
-    assert_equal(U.shape, (12, 13))
+    assert spca.components_.shape == (13, 10)
+    assert U.shape == (12, 13)
 
 
 def test_fit_transform():
@@ -71,13 +66,6 @@ def test_fit_transform():
     spca_lasso.fit(Y)
     assert_array_almost_equal(spca_lasso.components_, spca_lars.components_)
 
-    # Test that deprecated ridge_alpha parameter throws warning
-    warning_msg = "The ridge_alpha parameter on transform()"
-    assert_warns_message(DeprecationWarning, warning_msg, spca_lars.transform,
-                         Y, ridge_alpha=0.01)
-    assert_warns_message(DeprecationWarning, warning_msg, spca_lars.transform,
-                         Y, ridge_alpha=None)
-
 
 @if_safe_multiprocessing_with_blas
 def test_fit_transform_parallel():
@@ -92,7 +80,7 @@ def test_fit_transform_parallel():
     spca = SparsePCA(n_components=3, n_jobs=2, method='lars', alpha=alpha,
                      random_state=0).fit(Y)
     U2 = spca.transform(Y)
-    assert_true(not np.all(spca_lars.components_ == 0))
+    assert not np.all(spca_lars.components_ == 0)
     assert_array_almost_equal(U1, U2)
 
 
@@ -103,14 +91,13 @@ def test_transform_nan():
     Y, _, _ = generate_toy_data(3, 10, (8, 8), random_state=rng)  # wide array
     Y[:, 0] = 0
     estimator = SparsePCA(n_components=8)
-    assert_false(np.any(np.isnan(estimator.fit_transform(Y))))
+    assert not np.any(np.isnan(estimator.fit_transform(Y)))
 
 
 def test_fit_transform_tall():
     rng = np.random.RandomState(0)
     Y, _, _ = generate_toy_data(3, 65, (8, 8), random_state=rng)  # tall array
-    spca_lars = SparsePCA(n_components=3, method='lars',
-                          random_state=rng)
+    spca_lars = SparsePCA(n_components=3, method='lars', random_state=rng)
     U1 = spca_lars.fit_transform(Y)
     spca_lasso = SparsePCA(n_components=3, method='cd', random_state=rng)
     U2 = spca_lasso.fit(Y).transform(Y)
@@ -124,7 +111,8 @@ def test_initialization():
     model = SparsePCA(n_components=3, U_init=U_init, V_init=V_init, max_iter=0,
                       random_state=rng)
     model.fit(rng.randn(5, 4))
-    assert_array_equal(model.components_, V_init)
+    assert_allclose(model.components_,
+                    V_init / np.linalg.norm(V_init, axis=1)[:, None])
 
 
 def test_mini_batch_correct_shapes():
@@ -132,17 +120,18 @@ def test_mini_batch_correct_shapes():
     X = rng.randn(12, 10)
     pca = MiniBatchSparsePCA(n_components=8, random_state=rng)
     U = pca.fit_transform(X)
-    assert_equal(pca.components_.shape, (8, 10))
-    assert_equal(U.shape, (12, 8))
+    assert pca.components_.shape == (8, 10)
+    assert U.shape == (12, 8)
     # test overcomplete decomposition
     pca = MiniBatchSparsePCA(n_components=13, random_state=rng)
     U = pca.fit_transform(X)
-    assert_equal(pca.components_.shape, (13, 10))
-    assert_equal(U.shape, (12, 13))
+    assert pca.components_.shape == (13, 10)
+    assert U.shape == (12, 13)
 
 
+# XXX: test always skipped
+@pytest.mark.skipif(True, reason="skipping mini_batch_fit_transform.")
 def test_mini_batch_fit_transform():
-    raise SkipTest("skipping mini_batch_fit_transform.")
     alpha = 1
     rng = np.random.RandomState(0)
     Y, _, _ = generate_toy_data(3, 10, (8, 8), random_state=rng)  # wide array
@@ -151,20 +140,65 @@ def test_mini_batch_fit_transform():
     U1 = spca_lars.transform(Y)
     # Test multiple CPUs
     if sys.platform == 'win32':  # fake parallelism for win32
-        import sklearn.externals.joblib.parallel as joblib_par
-        _mp = joblib_par.multiprocessing
-        joblib_par.multiprocessing = None
+        import joblib
+        _mp = joblib.parallel.multiprocessing
+        joblib.parallel.multiprocessing = None
         try:
-            U2 = MiniBatchSparsePCA(n_components=3, n_jobs=2, alpha=alpha,
-                                    random_state=0).fit(Y).transform(Y)
+            spca = MiniBatchSparsePCA(n_components=3, n_jobs=2, alpha=alpha,
+                                      random_state=0)
+            U2 = spca.fit(Y).transform(Y)
         finally:
-            joblib_par.multiprocessing = _mp
+            joblib.parallel.multiprocessing = _mp
     else:  # we can efficiently use parallelism
-        U2 = MiniBatchSparsePCA(n_components=3, n_jobs=2, alpha=alpha,
-                                random_state=0).fit(Y).transform(Y)
-    assert_true(not np.all(spca_lars.components_ == 0))
+        spca = MiniBatchSparsePCA(n_components=3, n_jobs=2, alpha=alpha,
+                                  random_state=0)
+        U2 = spca.fit(Y).transform(Y)
+    assert not np.all(spca_lars.components_ == 0)
     assert_array_almost_equal(U1, U2)
     # Test that CD gives similar results
     spca_lasso = MiniBatchSparsePCA(n_components=3, method='cd', alpha=alpha,
                                     random_state=0).fit(Y)
     assert_array_almost_equal(spca_lasso.components_, spca_lars.components_)
+
+
+def test_scaling_fit_transform():
+    alpha = 1
+    rng = np.random.RandomState(0)
+    Y, _, _ = generate_toy_data(3, 1000, (8, 8), random_state=rng)
+    spca_lars = SparsePCA(n_components=3, method='lars', alpha=alpha,
+                          random_state=rng)
+    results_train = spca_lars.fit_transform(Y)
+    results_test = spca_lars.transform(Y[:10])
+    assert_allclose(results_train[0], results_test[0])
+
+
+def test_pca_vs_spca():
+    rng = np.random.RandomState(0)
+    Y, _, _ = generate_toy_data(3, 1000, (8, 8), random_state=rng)
+    Z, _, _ = generate_toy_data(3, 10, (8, 8), random_state=rng)
+    spca = SparsePCA(alpha=0, ridge_alpha=0, n_components=2)
+    pca = PCA(n_components=2)
+    pca.fit(Y)
+    spca.fit(Y)
+    results_test_pca = pca.transform(Z)
+    results_test_spca = spca.transform(Z)
+    assert_allclose(np.abs(spca.components_.dot(pca.components_.T)),
+                    np.eye(2), atol=1e-5)
+    results_test_pca *= np.sign(results_test_pca[0, :])
+    results_test_spca *= np.sign(results_test_spca[0, :])
+    assert_allclose(results_test_pca, results_test_spca)
+
+
+@pytest.mark.parametrize("SPCA", [SparsePCA, MiniBatchSparsePCA])
+@pytest.mark.parametrize("n_components", [None, 3])
+def test_spca_n_components_(SPCA, n_components):
+    rng = np.random.RandomState(0)
+    n_samples, n_features = 12, 10
+    X = rng.randn(n_samples, n_features)
+
+    model = SPCA(n_components=n_components).fit(X)
+
+    if n_components is not None:
+        assert model.n_components_ == n_components
+    else:
+        assert model.n_components_ == n_features

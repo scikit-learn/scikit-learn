@@ -4,7 +4,6 @@ MNIST dataset T-SNE benchmark
 =============================
 
 """
-from __future__ import division, print_function
 
 # License: BSD 3 clause
 
@@ -14,15 +13,15 @@ from time import time
 import numpy as np
 import json
 import argparse
+from joblib import Memory
 
-from sklearn.externals.joblib import Memory
-from sklearn.datasets import fetch_mldata
+from sklearn.datasets import fetch_openml
 from sklearn.manifold import TSNE
 from sklearn.neighbors import NearestNeighbors
 from sklearn.decomposition import PCA
 from sklearn.utils import check_array
 from sklearn.utils import shuffle as _shuffle
-
+from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 
 LOG_DIR = "mnist_tsne_output"
 if not os.path.exists(LOG_DIR):
@@ -37,7 +36,7 @@ memory = Memory(os.path.join(LOG_DIR, 'mnist_tsne_benchmark_data'),
 def load_data(dtype=np.float32, order='C', shuffle=True, seed=0):
     """Load the data, then cache and memmap the train/test split"""
     print("Loading dataset...")
-    data = fetch_mldata('MNIST original')
+    data = fetch_openml('mnist_784')
 
     X = check_array(data['data'], dtype=dtype, order=order)
     y = data["target"]
@@ -87,6 +86,7 @@ if __name__ == "__main__":
                              "preprocessing.")
     args = parser.parse_args()
 
+    print("Used number of threads: {}".format(_openmp_effective_n_threads()))
     X, y = load_data(order=args.order)
 
     if args.pca_components > 0:
@@ -142,7 +142,7 @@ $ cd ..
         data_size.append(70000)
 
     results = []
-    basename, _ = os.path.splitext(__file__)
+    basename = os.path.basename(os.path.splitext(__file__)[0])
     log_filename = os.path.join(LOG_DIR, basename + '.json')
     for n in data_size:
         X_train = X[:n]

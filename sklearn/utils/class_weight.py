@@ -3,10 +3,12 @@
 # License: BSD 3 clause
 
 import numpy as np
-from ..externals import six
+
+from .validation import _deprecate_positional_args
 
 
-def compute_class_weight(class_weight, classes, y):
+@_deprecate_positional_args
+def compute_class_weight(class_weight, *, classes, y):
     """Estimate class weights for unbalanced datasets.
 
     Parameters
@@ -70,7 +72,8 @@ def compute_class_weight(class_weight, classes, y):
     return weight
 
 
-def compute_sample_weight(class_weight, y, indices=None):
+@_deprecate_positional_args
+def compute_sample_weight(class_weight, y, *, indices=None):
     """Estimate sample weights by class for unbalanced datasets.
 
     Parameters
@@ -93,7 +96,7 @@ def compute_sample_weight(class_weight, y, indices=None):
 
         For multi-output, the weights of each column of y will be multiplied.
 
-    y : array-like, shape = [n_samples] or [n_samples, n_outputs]
+    y : array-like of shape (n_samples,) or (n_samples, n_outputs)
         Array of original class labels per sample.
 
     indices : array-like, shape (n_subsample,), or None
@@ -114,12 +117,12 @@ def compute_sample_weight(class_weight, y, indices=None):
         y = np.reshape(y, (-1, 1))
     n_outputs = y.shape[1]
 
-    if isinstance(class_weight, six.string_types):
+    if isinstance(class_weight, str):
         if class_weight not in ['balanced']:
             raise ValueError('The only valid preset for class_weight is '
                              '"balanced". Given "%s".' % class_weight)
     elif (indices is not None and
-          not isinstance(class_weight, six.string_types)):
+          not isinstance(class_weight, str)):
         raise ValueError('The only valid class_weight for subsampling is '
                          '"balanced". Given "%s".' % class_weight)
     elif n_outputs > 1:
@@ -150,18 +153,18 @@ def compute_sample_weight(class_weight, y, indices=None):
             y_subsample = y[indices, k]
             classes_subsample = np.unique(y_subsample)
 
-            weight_k = np.choose(np.searchsorted(classes_subsample,
-                                                 classes_full),
-                                 compute_class_weight(class_weight_k,
-                                                      classes_subsample,
-                                                      y_subsample),
-                                 mode='clip')
+            weight_k = np.take(compute_class_weight(class_weight_k,
+                                                    classes=classes_subsample,
+                                                    y=y_subsample),
+                               np.searchsorted(classes_subsample,
+                                               classes_full),
+                               mode='clip')
 
             classes_missing = set(classes_full) - set(classes_subsample)
         else:
             weight_k = compute_class_weight(class_weight_k,
-                                            classes_full,
-                                            y_full)
+                                            classes=classes_full,
+                                            y=y_full)
 
         weight_k = weight_k[np.searchsorted(classes_full, y_full)]
 

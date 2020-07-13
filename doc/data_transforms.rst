@@ -24,10 +24,12 @@ transformations of the target space (e.g. categorical labels) for use in
 scikit-learn.
 
 .. toctree::
+    :maxdepth: 2
 
-    modules/pipeline
+    modules/compose
     modules/feature_extraction
     modules/preprocessing
+    modules/impute
     modules/unsupervised_reduction
     modules/random_projection
     modules/kernel_approximation

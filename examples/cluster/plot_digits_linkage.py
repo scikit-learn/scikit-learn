@@ -12,8 +12,10 @@ not to find good clusters for the digits. This is why the example works on a
 
 What this example shows us is the behavior "rich getting richer" of
 agglomerative clustering that tends to create uneven cluster sizes.
-This behavior is especially pronounced for the average linkage strategy,
-that ends up with a couple of singleton clusters.
+This behavior is pronounced for the average linkage strategy,
+that ends up with a couple of singleton clusters, while in the case
+of single linkage we get a single central cluster with all other clusters
+being drawn from noise points around the fringes.
 """
 
 # Authors: Gael Varoquaux
@@ -28,9 +30,7 @@ from matplotlib import pyplot as plt
 
 from sklearn import manifold, datasets
 
-digits = datasets.load_digits(n_class=10)
-X = digits.data
-y = digits.target
+X, y = datasets.load_digits(return_X_y=True)
 n_samples, n_features = X.shape
 
 np.random.seed(0)
@@ -54,14 +54,14 @@ X, y = nudge_images(X, y)
 
 #----------------------------------------------------------------------
 # Visualize the clustering
-def plot_clustering(X_red, X, labels, title=None):
+def plot_clustering(X_red, labels, title=None):
     x_min, x_max = np.min(X_red, axis=0), np.max(X_red, axis=0)
     X_red = (X_red - x_min) / (x_max - x_min)
 
     plt.figure(figsize=(6, 4))
     for i in range(X_red.shape[0]):
         plt.text(X_red[i, 0], X_red[i, 1], str(y[i]),
-                 color=plt.cm.spectral(labels[i] / 10.),
+                 color=plt.cm.nipy_spectral(labels[i] / 10.),
                  fontdict={'weight': 'bold', 'size': 9})
 
     plt.xticks([])
@@ -69,7 +69,7 @@ def plot_clustering(X_red, X, labels, title=None):
     if title is not None:
         plt.title(title, size=17)
     plt.axis('off')
-    plt.tight_layout()
+    plt.tight_layout(rect=[0, 0.03, 1, 0.95])
 
 #----------------------------------------------------------------------
 # 2D embedding of the digits dataset
@@ -79,13 +79,13 @@ print("Done.")
 
 from sklearn.cluster import AgglomerativeClustering
 
-for linkage in ('ward', 'average', 'complete'):
+for linkage in ('ward', 'average', 'complete', 'single'):
     clustering = AgglomerativeClustering(linkage=linkage, n_clusters=10)
     t0 = time()
     clustering.fit(X_red)
-    print("%s : %.2fs" % (linkage, time() - t0))
+    print("%s :\t%.2fs" % (linkage, time() - t0))
 
-    plot_clustering(X_red, X, clustering.labels_, "%s linkage" % linkage)
+    plot_clustering(X_red, clustering.labels_, "%s linkage" % linkage)
 
 
 plt.show()

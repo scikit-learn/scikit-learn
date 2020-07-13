@@ -1,12 +1,12 @@
 """
 =============================================================================
- t-SNE: The effect of various perplexity values on the shape
+t-SNE: The effect of various perplexity values on the shape
 =============================================================================
 
 An illustration of t-SNE on the two concentric circles and the S-curve
 datasets for different perplexity values.
 
-We observe a tendency towards clearer shapes as the preplexity value increases.
+We observe a tendency towards clearer shapes as the perplexity value increases.
 
 The size, the distance and the shape of clusters may vary upon initialization,
 perplexity values and does not always convey a meaning.
@@ -18,7 +18,7 @@ visually diverge from S-curve topology on the S-curve dataset even for
 larger perplexity values.
 
 For further details, "How to Use t-SNE Effectively"
-http://distill.pub/2016/misread-tsne/ provides a good discussion of the
+https://distill.pub/2016/misread-tsne/ provides a good discussion of the
 effects of various parameters, as well as interactive plots to explore
 those effects.
 """
@@ -69,10 +69,10 @@ for i, perplexity in enumerate(perplexities):
     ax.axis('tight')
 
 # Another example using s-curve
-X, color = datasets.samples_generator.make_s_curve(n_samples, random_state=0)
+X, color = datasets.make_s_curve(n_samples, random_state=0)
 
 ax = subplots[1][0]
-ax.scatter(X[:, 0], X[:, 2], c=color, cmap=plt.cm.viridis)
+ax.scatter(X[:, 0], X[:, 2], c=color)
 ax.xaxis.set_major_formatter(NullFormatter())
 ax.yaxis.set_major_formatter(NullFormatter())
 
@@ -87,7 +87,7 @@ for i, perplexity in enumerate(perplexities):
     print("S-curve, perplexity=%d in %.2g sec" % (perplexity, t1 - t0))
 
     ax.set_title("Perplexity=%d" % perplexity)
-    ax.scatter(Y[:, 0], Y[:, 1], c=color, cmap=plt.cm.viridis)
+    ax.scatter(Y[:, 0], Y[:, 1], c=color)
     ax.xaxis.set_major_formatter(NullFormatter())
     ax.yaxis.set_major_formatter(NullFormatter())
     ax.axis('tight')
@@ -102,7 +102,7 @@ X = np.hstack([
 ])
 color = xx.ravel()
 ax = subplots[2][0]
-ax.scatter(X[:, 0], X[:, 1], c=color, cmap=plt.cm.viridis)
+ax.scatter(X[:, 0], X[:, 1], c=color)
 ax.xaxis.set_major_formatter(NullFormatter())
 ax.yaxis.set_major_formatter(NullFormatter())
 
@@ -117,7 +117,7 @@ for i, perplexity in enumerate(perplexities):
     print("uniform grid, perplexity=%d in %.2g sec" % (perplexity, t1 - t0))
 
     ax.set_title("Perplexity=%d" % perplexity)
-    ax.scatter(Y[:, 0], Y[:, 1], c=color, cmap=plt.cm.viridis)
+    ax.scatter(Y[:, 0], Y[:, 1], c=color)
     ax.xaxis.set_major_formatter(NullFormatter())
     ax.yaxis.set_major_formatter(NullFormatter())
     ax.axis('tight')

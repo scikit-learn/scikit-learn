@@ -9,46 +9,64 @@ Dataset loading utilities
 The ``sklearn.datasets`` package embeds some small toy datasets
 as introduced in the :ref:`Getting Started <loading_example_dataset>` section.
 
+This package also features helpers to fetch larger datasets commonly
+used by the machine learning community to benchmark algorithms on data
+that comes from the 'real world'.
+
 To evaluate the impact of the scale of the dataset (``n_samples`` and
 ``n_features``) while controlling the statistical properties of the data
 (typically the correlation and informativeness of the features), it is
 also possible to generate synthetic data.
 
-This package also features helpers to fetch larger datasets commonly
-used by the machine learning community to benchmark algorithm on data
-that comes from the 'real world'.
-
 General dataset API
 ===================
 
-There are three distinct kinds of dataset interfaces for different types
-of datasets.
-The simplest one is the interface for sample images, which is described
-below in the :ref:`sample_images` section.
+There are three main kinds of dataset interfaces that can be used to get
+datasets depending on the desired type of dataset.
 
-The dataset generation functions and the svmlight loader share a simplistic
-interface, returning a tuple ``(X, y)`` consisting of a ``n_samples`` *
+**The dataset loaders.** They can be used to load small standard datasets,
+described in the :ref:`toy_datasets` section.
+
+**The dataset fetchers.** They can be used to download and load larger datasets,
+described in the :ref:`real_world_datasets` section.
+
+Both loaders and fetchers functions return a :class:`~sklearn.utils.Bunch`
+object holding at least two items:
+an array of shape ``n_samples`` * ``n_features`` with
+key ``data`` (except for 20newsgroups) and a numpy array of
+length ``n_samples``, containing the target values, with key ``target``.
+
+The Bunch object is a dictionary that exposes its keys are attributes.
+For more information about Bunch object, see :class:`~sklearn.utils.Bunch`:
+
+It's also possible for almost all of these function to constrain the output
+to be a tuple containing only the data and the target, by setting the
+``return_X_y`` parameter to ``True``.
+
+The datasets also contain a full description in their ``DESCR`` attribute and
+some contain ``feature_names`` and ``target_names``. See the dataset
+descriptions below for details.
+
+**The dataset generation functions.** They can be used to generate controlled
+synthetic datasets, described in the :ref:`sample_generators` section.
+
+These functions return a tuple ``(X, y)`` consisting of a ``n_samples`` *
 ``n_features`` numpy array ``X`` and an array of length ``n_samples``
 containing the targets ``y``.
 
-The toy datasets as well as the 'real world' datasets and the datasets
-fetched from mldata.org have more sophisticated structure.
-These functions return a dictionary-like object holding at least two items:
-an array of shape ``n_samples`` * ``n_features`` with key ``data``
-(except for 20newsgroups)
-and a numpy array of length ``n_samples``, containing the target values,
-with key ``target``.
+In addition, there are also miscellaneous tools to load datasets of other
+formats or from other locations, described in the :ref:`loading_other_datasets`
+section.
 
-The datasets also contain a description in ``DESCR`` and some contain
-``feature_names`` and ``target_names``.
-See the dataset descriptions below for details.
-
+.. _toy_datasets:
 
 Toy datasets
 ============
 
-scikit-learn comes with a few small standard datasets that do not
-require to download any file from some external website.
+scikit-learn comes with a few small standard datasets that do not require to
+download any file from some external website.
+
+They can be loaded using the following functions:
 
 .. autosummary::
 
@@ -64,49 +82,66 @@ require to download any file from some external website.
    load_breast_cancer
 
 These datasets are useful to quickly illustrate the behavior of the
-various algorithms implemented in the scikit. They are however often too
+various algorithms implemented in scikit-learn. They are however often too
 small to be representative of real world machine learning tasks.
 
-.. _sample_images:
+.. include:: ../../sklearn/datasets/descr/boston_house_prices.rst
 
-Sample images
-=============
+.. include:: ../../sklearn/datasets/descr/iris.rst
 
-The scikit also embed a couple of sample JPEG images published under Creative
-Commons license by their authors. Those image can be useful to test algorithms
-and pipeline on 2D data.
+.. include:: ../../sklearn/datasets/descr/diabetes.rst
+
+.. include:: ../../sklearn/datasets/descr/digits.rst
+
+.. include:: ../../sklearn/datasets/descr/linnerud.rst
+
+.. include:: ../../sklearn/datasets/descr/wine_data.rst
+
+.. include:: ../../sklearn/datasets/descr/breast_cancer.rst
+
+.. _real_world_datasets:
+
+Real world datasets
+===================
+
+scikit-learn provides tools to load larger datasets, downloading them if
+necessary.
+
+They can be loaded using the following functions:
 
 .. autosummary::
 
    :toctree: ../modules/generated/
    :template: function.rst
 
-   load_sample_images
-   load_sample_image
+   fetch_olivetti_faces
+   fetch_20newsgroups
+   fetch_20newsgroups_vectorized
+   fetch_lfw_people
+   fetch_lfw_pairs
+   fetch_covtype
+   fetch_rcv1
+   fetch_kddcup99
+   fetch_california_housing
 
-.. image:: ../auto_examples/cluster/images/sphx_glr_plot_color_quantization_001.png
-   :target: ../auto_examples/cluster/plot_color_quantization.html
-   :scale: 30
-   :align: right
+.. include:: ../../sklearn/datasets/descr/olivetti_faces.rst
 
+.. include:: ../../sklearn/datasets/descr/twenty_newsgroups.rst
 
-.. warning::
+.. include:: ../../sklearn/datasets/descr/lfw.rst
 
-  The default coding of images is based on the ``uint8`` dtype to
-  spare memory.  Often machine learning algorithms work best if the
-  input is converted to a floating point representation first.  Also,
-  if you plan to use ``matplotlib.pyplpt.imshow`` don't forget to scale to the range
-  0 - 1 as done in the following example.
+.. include:: ../../sklearn/datasets/descr/covtype.rst
 
-.. topic:: Examples:
+.. include:: ../../sklearn/datasets/descr/rcv1.rst
 
-    * :ref:`sphx_glr_auto_examples_cluster_plot_color_quantization.py`
+.. include:: ../../sklearn/datasets/descr/kddcup99.rst
 
+.. include:: ../../sklearn/datasets/descr/california_housing.rst
 
 .. _sample_generators:
 
-Sample generators
-=================
+Generated datasets
+==================
 
 In addition, scikit-learn includes various random sample generators that
 can be used to build artificial datasets of controlled size and complexity.
@@ -140,8 +175,9 @@ near-equal-size classes separated by concentric hyperspheres.
 :func:`make_circles` and :func:`make_moons` generate 2d binary classification
 datasets that are challenging to certain algorithms (e.g. centroid-based
 clustering or linear classification), including optional Gaussian noise.
-They are useful for visualisation. produces Gaussian
-data with a spherical decision boundary for binary classification.
+They are useful for visualisation. :func:`make_circles` produces Gaussian data
+with a spherical decision boundary for binary classification, while
+:func:`make_moons` produces two interleaving half circles.
 
 Multilabel
 ~~~~~~~~~~
@@ -219,10 +255,50 @@ Generators for decomposition
    make_sparse_spd_matrix
 
 
+.. _loading_other_datasets:
+
+Loading other datasets
+======================
+
+.. _sample_images:
+
+Sample images
+-------------
+
+Scikit-learn also embed a couple of sample JPEG images published under Creative
+Commons license by their authors. Those images can be useful to test algorithms
+and pipeline on 2D data.
+
+.. autosummary::
+
+   :toctree: ../modules/generated/
+   :template: function.rst
+
+   load_sample_images
+   load_sample_image
+
+.. image:: ../auto_examples/cluster/images/sphx_glr_plot_color_quantization_001.png
+   :target: ../auto_examples/cluster/plot_color_quantization.html
+   :scale: 30
+   :align: right
+
+
+.. warning::
+
+  The default coding of images is based on the ``uint8`` dtype to
+  spare memory.  Often machine learning algorithms work best if the
+  input is converted to a floating point representation first.  Also,
+  if you plan to use ``matplotlib.pyplpt.imshow`` don't forget to scale to the range
+  0 - 1 as done in the following example.
+
+.. topic:: Examples:
+
+    * :ref:`sphx_glr_auto_examples_cluster_plot_color_quantization.py`
+
 .. _libsvm_loader:
 
 Datasets in svmlight / libsvm format
-====================================
+------------------------------------
 
 scikit-learn includes utility functions for loading
 datasets in the svmlight / libsvm format. In this format, each line
@@ -256,25 +332,173 @@ features::
 
  _`Faster API-compatible implementation`: https://github.com/mblondel/svmlight-loader
 
+..
+    For doctests:
+
+    >>> import numpy as np
+    >>> import os
+
+.. _openml:
+
+Downloading datasets from the openml.org repository
+---------------------------------------------------
+
+`openml.org <https://openml.org>`_ is a public repository for machine learning
+data and experiments, that allows everybody to upload open datasets.
+
+The ``sklearn.datasets`` package is able to download datasets
+from the repository using the function
+:func:`sklearn.datasets.fetch_openml`.
+
+For example, to download a dataset of gene expressions in mice brains::
+
+  >>> from sklearn.datasets import fetch_openml
+  >>> mice = fetch_openml(name='miceprotein', version=4)
+
+To fully specify a dataset, you need to provide a name and a version, though
+the version is optional, see :ref:`openml_versions` below.
+The dataset contains a total of 1080 examples belonging to 8 different
+classes::
+
+  >>> mice.data.shape
+  (1080, 77)
+  >>> mice.target.shape
+  (1080,)
+  >>> np.unique(mice.target)
+  array(['c-CS-m', 'c-CS-s', 'c-SC-m', 'c-SC-s', 't-CS-m', 't-CS-s', 't-SC-m', 't-SC-s'], dtype=object)
+
+You can get more information on the dataset by looking at the ``DESCR``
+and ``details`` attributes::
+
+  >>> print(mice.DESCR) # doctest: +SKIP
+  **Author**: Clara Higuera, Katheleen J. Gardiner, Krzysztof J. Cios
+  **Source**: [UCI](https://archive.ics.uci.edu/ml/datasets/Mice+Protein+Expression) - 2015
+  **Please cite**: Higuera C, Gardiner KJ, Cios KJ (2015) Self-Organizing
+  Feature Maps Identify Proteins Critical to Learning in a Mouse Model of Down
+  Syndrome. PLoS ONE 10(6): e0129126...
+
+  >>> mice.details # doctest: +SKIP
+  {'id': '40966', 'name': 'MiceProtein', 'version': '4', 'format': 'ARFF',
+  'upload_date': '2017-11-08T16:00:15', 'licence': 'Public',
+  'url': 'https://www.openml.org/data/v1/download/17928620/MiceProtein.arff',
+  'file_id': '17928620', 'default_target_attribute': 'class',
+  'row_id_attribute': 'MouseID',
+  'ignore_attribute': ['Genotype', 'Treatment', 'Behavior'],
+  'tag': ['OpenML-CC18', 'study_135', 'study_98', 'study_99'],
+  'visibility': 'public', 'status': 'active',
+  'md5_checksum': '3c479a6885bfa0438971388283a1ce32'}
+
+
+The ``DESCR`` contains a free-text description of the data, while ``details``
+contains a dictionary of meta-data stored by openml, like the dataset id.
+For more details, see the `OpenML documentation
+<https://docs.openml.org/#data>`_ The ``data_id`` of the mice protein dataset
+is 40966, and you can use this (or the name) to get more information on the
+dataset on the openml website::
+
+  >>> mice.url
+  'https://www.openml.org/d/40966'
+
+The ``data_id`` also uniquely identifies a dataset from OpenML::
+
+  >>> mice = fetch_openml(data_id=40966)
+  >>> mice.details # doctest: +SKIP
+  {'id': '4550', 'name': 'MiceProtein', 'version': '1', 'format': 'ARFF',
+  'creator': ...,
+  'upload_date': '2016-02-17T14:32:49', 'licence': 'Public', 'url':
+  'https://www.openml.org/data/v1/download/1804243/MiceProtein.ARFF', 'file_id':
+  '1804243', 'default_target_attribute': 'class', 'citation': 'Higuera C,
+  Gardiner KJ, Cios KJ (2015) Self-Organizing Feature Maps Identify Proteins
+  Critical to Learning in a Mouse Model of Down Syndrome. PLoS ONE 10(6):
+  e0129126. [Web Link] journal.pone.0129126', 'tag': ['OpenML100', 'study_14',
+  'study_34'], 'visibility': 'public', 'status': 'active', 'md5_checksum':
+  '3c479a6885bfa0438971388283a1ce32'}
+
+.. _openml_versions:
+
+Dataset Versions
+~~~~~~~~~~~~~~~~
+
+A dataset is uniquely specified by its ``data_id``, but not necessarily by its
+name. Several different "versions" of a dataset with the same name can exist
+which can contain entirely different datasets.
+If a particular version of a dataset has been found to contain significant
+issues, it might be deactivated. Using a name to specify a dataset will yield
+the earliest version of a dataset that is still active. That means that
+``fetch_openml(name="miceprotein")`` can yield different results at different
+times if earlier versions become inactive.
+You can see that the dataset with ``data_id`` 40966 that we fetched above is
+the version 1 of the "miceprotein" dataset::
+
+  >>> mice.details['version']  #doctest: +SKIP
+  '1'
+
+In fact, this dataset only has one version. The iris dataset on the other hand
+has multiple versions::
+
+  >>> iris = fetch_openml(name="iris")
+  >>> iris.details['version']  #doctest: +SKIP
+  '1'
+  >>> iris.details['id']  #doctest: +SKIP
+  '61'
+
+  >>> iris_61 = fetch_openml(data_id=61)
+  >>> iris_61.details['version']
+  '1'
+  >>> iris_61.details['id']
+  '61'
+
+  >>> iris_969 = fetch_openml(data_id=969)
+  >>> iris_969.details['version']
+  '3'
+  >>> iris_969.details['id']
+  '969'
+
+Specifying the dataset by the name "iris" yields the lowest version, version 1,
+with the ``data_id`` 61. To make sure you always get this exact dataset, it is
+safest to specify it by the dataset ``data_id``. The other dataset, with
+``data_id`` 969, is version 3 (version 2 has become inactive), and contains a
+binarized version of the data::
+
+  >>> np.unique(iris_969.target)
+  array(['N', 'P'], dtype=object)
+
+You can also specify both the name and the version, which also uniquely
+identifies the dataset::
+
+  >>> iris_version_3 = fetch_openml(name="iris", version=3)
+  >>> iris_version_3.details['version']
+  '3'
+  >>> iris_version_3.details['id']
+  '969'
+
+
+.. topic:: References:
+
+ * Vanschoren, van Rijn, Bischl and Torgo
+   `"OpenML: networked science in machine learning"
+   <https://arxiv.org/pdf/1407.7722.pdf>`_,
+   ACM SIGKDD Explorations Newsletter, 15(2), 49-60, 2014.
+
 .. _external_datasets:
 
 Loading from external datasets
-==============================
+------------------------------
 
 scikit-learn works on any numeric data stored as numpy arrays or scipy sparse
 matrices. Other types that are convertible to numeric arrays such as pandas
 DataFrame are also acceptable.
- 
-Here are some recommended ways to load standard columnar data into a 
-format usable by scikit-learn: 
 
-* `pandas.io <https://pandas.pydata.org/pandas-docs/stable/io.html>`_ 
+Here are some recommended ways to load standard columnar data into a
+format usable by scikit-learn:
+
+* `pandas.io <https://pandas.pydata.org/pandas-docs/stable/io.html>`_
   provides tools to read data from common formats including CSV, Excel, JSON
   and SQL. DataFrames may also be constructed from lists of tuples or dicts.
   Pandas handles heterogeneous data smoothly and provides tools for
   manipulation and conversion into a numeric array suitable for scikit-learn.
-* `scipy.io <https://docs.scipy.org/doc/scipy/reference/io.html>`_ 
-  specializes in binary formats often used in scientific computing 
+* `scipy.io <https://docs.scipy.org/doc/scipy/reference/io.html>`_
+  specializes in binary formats often used in scientific computing
   context such as .mat and .arff
 * `numpy/routines.io <https://docs.scipy.org/doc/numpy/reference/routines.io.html>`_
   for standard loading of columnar data into numpy arrays
@@ -287,77 +511,19 @@ format usable by scikit-learn:
 For some miscellaneous data such as images, videos, and audio, you may wish to
 refer to:
 
-* `skimage.io <http://scikit-image.org/docs/dev/api/skimage.io.html>`_ or
-  `Imageio <https://imageio.readthedocs.io/en/latest/userapi.html>`_ 
-  for loading images and videos to numpy arrays
-* `scipy.misc.imread <https://docs.scipy.org/doc/scipy/reference/generated/scipy.
-  misc.imread.html#scipy.misc.imread>`_ (requires the `Pillow
-  <https://pypi.python.org/pypi/Pillow>`_ package) to load pixel intensities
-  data from various image file formats
-* `scipy.io.wavfile.read 
-  <https://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.io.wavfile.read.html>`_ 
+* `skimage.io <https://scikit-image.org/docs/dev/api/skimage.io.html>`_ or
+  `Imageio <https://imageio.readthedocs.io/en/latest/userapi.html>`_
+  for loading images and videos into numpy arrays
+* `scipy.io.wavfile.read
+  <https://docs.scipy.org/doc/scipy-0.14.0/reference/generated/scipy.io.wavfile.read.html>`_
   for reading WAV files into a numpy array
 
-Categorical (or nominal) features stored as strings (common in pandas DataFrames) 
-will need converting to integers, and integer categorical variables may be best 
-exploited when encoded as one-hot variables 
-(:class:`sklearn.preprocessing.OneHotEncoder`) or similar. 
+Categorical (or nominal) features stored as strings (common in pandas DataFrames)
+will need converting to numerical features using :class:`~sklearn.preprocessing.OneHotEncoder`
+or :class:`~sklearn.preprocessing.OrdinalEncoder` or similar.
 See :ref:`preprocessing`.
 
-Note: if you manage your own numerical data it is recommended to use an 
+Note: if you manage your own numerical data it is recommended to use an
 optimized file format such as HDF5 to reduce data load times. Various libraries
-such as H5Py, PyTables and pandas provides a Python interface for reading and 
+such as H5Py, PyTables and pandas provides a Python interface for reading and
 writing data in that format.
-
-.. make sure everything is in a toc tree
-
-.. toctree::
-    :maxdepth: 2
-    :hidden:
-
-    olivetti_faces
-    twenty_newsgroups
-    mldata
-    labeled_faces
-    covtype
-    rcv1
-    kddcup99
-
-
-.. include:: olivetti_faces.rst
-
-.. include:: twenty_newsgroups.rst
-
-.. include:: mldata.rst
-
-.. include:: labeled_faces.rst
-
-.. include:: covtype.rst
-
-.. include:: rcv1.rst
-
-.. include:: kddcup99.rst
-
-.. _boston_house_prices:
-
-.. include:: ../../sklearn/datasets/descr/boston_house_prices.rst
-
-.. _breast_cancer:
-
-.. include:: ../../sklearn/datasets/descr/breast_cancer.rst
-
-.. _diabetes:
-
-.. include:: ../../sklearn/datasets/descr/diabetes.rst
-
-.. _digits:
-
-.. include:: ../../sklearn/datasets/descr/digits.rst
-
-.. _iris:
-
-.. include:: ../../sklearn/datasets/descr/iris.rst
-
-.. _linnerud:
-
-.. include:: ../../sklearn/datasets/descr/linnerud.rst

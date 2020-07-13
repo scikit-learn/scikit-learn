@@ -45,13 +45,13 @@ sample_weight_constant = np.ones(len(X))
 sample_weight_last_ten[15:] *= 5
 sample_weight_last_ten[9] *= 15
 
-# for reference, first fit without class weights
+# for reference, first fit without sample weights
 
 # fit the model
-clf_weights = svm.SVC()
+clf_weights = svm.SVC(gamma=1)
 clf_weights.fit(X, y, sample_weight=sample_weight_last_ten)
 
-clf_no_weights = svm.SVC()
+clf_no_weights = svm.SVC(gamma=1)
 clf_no_weights.fit(X, y)
 
 fig, axes = plt.subplots(1, 2, figsize=(14, 6))

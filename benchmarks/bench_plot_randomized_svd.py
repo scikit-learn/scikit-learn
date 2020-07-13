@@ -31,7 +31,7 @@ The benchmarks follow.
     goal: study whether the rank of the matrix and the number of components
     extracted by randomized SVD affect "the optimal" number of power iterations
 
-(c) plot: time vs norm, varing datasets
+(c) plot: time vs norm, varying datasets
     data: many datasets
     goal: compare default configurations
 
@@ -52,7 +52,7 @@ References
 ----------
 (1) Finding structure with randomness: Stochastic algorithms for constructing
     approximate matrix decompositions
-    Halko, et al., 2009 http://arxiv.org/abs/arXiv:0909.4061
+    Halko, et al., 2009 https://arxiv.org/abs/0909.4061
 
 (2) A randomized algorithm for the decomposition of matrices
     Per-Gunnar Martinsson, Vladimir Rokhlin and Mark Tygert
@@ -77,10 +77,9 @@ import os.path
 from sklearn.utils import gen_batches
 from sklearn.utils.validation import check_random_state
 from sklearn.utils.extmath import randomized_svd
-from sklearn.datasets.samples_generator import (make_low_rank_matrix,
-                                                make_sparse_uncorrelated)
+from sklearn.datasets import make_low_rank_matrix, make_sparse_uncorrelated
 from sklearn.datasets import (fetch_lfw_people,
-                              fetch_mldata,
+                              fetch_openml,
                               fetch_20newsgroups_vectorized,
                               fetch_olivetti_faces,
                               fetch_rcv1)
@@ -103,16 +102,16 @@ enable_spectral_norm = False
 
 # Determine when to switch to batch computation for matrix norms,
 # in case the reconstructed (dense) matrix is too large
-MAX_MEMORY = np.int(2e9)
+MAX_MEMORY = int(2e9)
 
-# The following datasets can be dowloaded manually from:
-# CIFAR 10: http://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz
+# The following datasets can be downloaded manually from:
+# CIFAR 10: https://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz
 # SVHN: http://ufldl.stanford.edu/housenumbers/train_32x32.mat
 CIFAR_FOLDER = "./cifar-10-batches-py/"
 SVHN_FOLDER = "./SVHN/"
 
 datasets = ['low rank matrix', 'lfw_people', 'olivetti_faces', '20newsgroups',
-            'MNIST original', 'CIFAR', 'a1a', 'SVHN', 'uncorrelated matrix']
+            'mnist_784', 'CIFAR', 'a3a', 'SVHN', 'uncorrelated matrix']
 
 big_sparse_datasets = ['big sparse matrix', 'rcv1']
 
@@ -155,17 +154,17 @@ def get_data(dataset_name):
         del X1
         del X2
     elif dataset_name == 'low rank matrix':
-        X = make_low_rank_matrix(n_samples=500, n_features=np.int(1e4),
+        X = make_low_rank_matrix(n_samples=500, n_features=int(1e4),
                                  effective_rank=100, tail_strength=.5,
                                  random_state=random_state)
     elif dataset_name == 'uncorrelated matrix':
         X, _ = make_sparse_uncorrelated(n_samples=500, n_features=10000,
                                         random_state=random_state)
     elif dataset_name == 'big sparse matrix':
-        sparsity = np.int(1e6)
-        size = np.int(1e6)
-        small_size = np.int(1e4)
-        data = np.random.normal(0, 1, np.int(sparsity/10))
+        sparsity = int(1e6)
+        size = int(1e6)
+        small_size = int(1e4)
+        data = np.random.normal(0, 1, int(sparsity/10))
         data = np.repeat(data, 10)
         row = np.random.uniform(0, small_size, sparsity)
         col = np.random.uniform(0, small_size, sparsity)
@@ -174,7 +173,7 @@ def get_data(dataset_name):
         del row
         del col
     else:
-        X = fetch_mldata(dataset_name).data
+        X = fetch_openml(dataset_name).data
     return X
 
 
@@ -357,7 +356,7 @@ def bench_b(power_list):
             X_spectral_norm = norm_diff(X, norm=2, msg=False)
         X_fro_norm = norm_diff(X, norm='fro', msg=False)
 
-        for n_comp in [np.int(rank/2), rank, rank*2]:
+        for n_comp in [int(rank/2), rank, rank*2]:
             label = "rank=%d, n_comp=%d" % (rank, n_comp)
             print(label)
             for pi in power_list:

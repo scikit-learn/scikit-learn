@@ -4,6 +4,23 @@
 
 .. _changes_0_19:
 
+Version 0.19.2
+==============
+
+**July, 2018**
+
+This release is exclusively in order to support Python 3.7.
+
+Related changes
+---------------
+
+- ``n_iter_`` may vary from previous releases in
+  :class:`linear_model.LogisticRegression` with ``solver='lbfgs'`` and
+  :class:`linear_model.HuberRegressor`.  For Scipy <= 1.0.0, the optimizer could
+  perform more than the requested maximum number of iterations. Now both
+  estimators will report at most ``max_iter`` iterations even if more were
+  performed. :issue:`10723` by `Joel Nothman`_.
+
 Version 0.19.1
 ==============
 
@@ -47,10 +64,6 @@ Bug fixes
 
 - Avoid integer overflows in :func:`metrics.matthews_corrcoef`.
   :issue:`9693` by :user:`Sam Steingold <sam-s>`.
-
-- Fix ValueError in :class:`preprocessing.LabelEncoder` when using
-  ``inverse_transform`` on unseen labels. :issue:`9816` by :user:`Charlie Newey
-  <newey01c>`.
 
 - Fixed a bug in the objective function for :class:`manifold.TSNE` (both exact
   and with the Barnes-Hut approximation) when ``n_components >= 3``.
@@ -196,6 +209,9 @@ random sampling procedures.
 - :class:`semi_supervised.LabelSpreading` (bug fix)
 - :class:`semi_supervised.LabelPropagation` (bug fix)
 - tree based models where ``min_weight_fraction_leaf`` is used (enhancement)
+- :class:`model_selection.StratifiedKFold` with ``shuffle=True``
+  (this change, due to :issue:`7823` was not mentioned in the release notes at
+  the time)
 
 Details are listed in the changelog below.
 
@@ -211,7 +227,7 @@ New features
 Classifiers and regressors
 
 - Added :class:`multioutput.ClassifierChain` for multi-label
-  classification. By `Adam Kleczewski <adamklec>`_.
+  classification. By :user:`Adam Kleczewski <adamklec>`.
 
 - Added solver ``'saga'`` that implements the improved version of Stochastic
   Average Gradient, in :class:`linear_model.LogisticRegression` and
@@ -353,7 +369,7 @@ Other predictors
 - ``algorithm='auto`` in :mod:`neighbors` estimators now chooses the most
   appropriate algorithm for all input types and metrics. :issue:`9145` by
   :user:`Herilalaina Rakotoarison <herilalaina>` and :user:`Reddy Chinthala
-  <preddy5Pradyumna>`.
+  <preddy5>`.
 
 Decomposition, manifold learning and clustering
 
@@ -740,7 +756,7 @@ Metrics
 - :func:`metrics.average_precision_score` no longer linearly
   interpolates between operating points, and instead weighs precisions
   by the change in recall since the last operating point, as per the
-  `Wikipedia entry <http://en.wikipedia.org/wiki/Average_precision>`_.
+  `Wikipedia entry <https://en.wikipedia.org/wiki/Average_precision>`_.
   (`#7356 <https://github.com/scikit-learn/scikit-learn/pull/7356>`_). By
   :user:`Nick Dingwall <ndingwall>` and `Gael Varoquaux`_.
 
@@ -795,7 +811,7 @@ Miscellaneous
   Python 2. :issue:`9284` by :user:`Sebastin Santy <SebastinSanty>`.
 
 - Several minor issues were fixed with thanks to the alerts of
-  [lgtm.com](http://lgtm.com). :issue:`9278` by :user:`Jean Helie <jhelie>`,
+  [lgtm.com](https://lgtm.com/). :issue:`9278` by :user:`Jean Helie <jhelie>`,
   among others.
 
 API changes summary
@@ -808,8 +824,8 @@ Trees and ensembles
 - All tree based estimators now accept a ``min_impurity_decrease``
   parameter in lieu of the ``min_impurity_split``, which is now deprecated.
   The ``min_impurity_decrease`` helps stop splitting the nodes in which
-  the weighted impurity decrease from splitting is no longer alteast
-  ``min_impurity_decrease``.  :issue:`8449` by `Raghav RV`_.
+  the weighted impurity decrease from splitting is no longer at least
+  ``min_impurity_decrease``. :issue:`8449` by `Raghav RV`_.
 
 Linear, kernelized and related models
 

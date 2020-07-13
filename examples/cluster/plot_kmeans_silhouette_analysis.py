@@ -29,9 +29,6 @@ cluster. However when the ``n_clusters`` is equal to 4, all the plots are more
 or less of similar thickness and hence are of similar sizes as can be also
 verified from the labelled scatter plot on the right.
 """
-
-from __future__ import print_function
-
 from sklearn.datasets import make_blobs
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_samples, silhouette_score
@@ -95,7 +92,7 @@ for n_clusters in range_n_clusters:
         size_cluster_i = ith_cluster_silhouette_values.shape[0]
         y_upper = y_lower + size_cluster_i
 
-        color = cm.spectral(float(i) / n_clusters)
+        color = cm.nipy_spectral(float(i) / n_clusters)
         ax1.fill_betweenx(np.arange(y_lower, y_upper),
                           0, ith_cluster_silhouette_values,
                           facecolor=color, edgecolor=color, alpha=0.7)
@@ -117,7 +114,7 @@ for n_clusters in range_n_clusters:
     ax1.set_xticks([-0.1, 0, 0.2, 0.4, 0.6, 0.8, 1])
 
     # 2nd Plot showing the actual clusters formed
-    colors = cm.spectral(cluster_labels.astype(float) / n_clusters)
+    colors = cm.nipy_spectral(cluster_labels.astype(float) / n_clusters)
     ax2.scatter(X[:, 0], X[:, 1], marker='.', s=30, lw=0, alpha=0.7,
                 c=colors, edgecolor='k')
 
@@ -139,4 +136,4 @@ for n_clusters in range_n_clusters:
                   "with n_clusters = %d" % n_clusters),
                  fontsize=14, fontweight='bold')
 
-    plt.show()
+plt.show()
