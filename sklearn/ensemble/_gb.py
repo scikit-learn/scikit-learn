@@ -1581,7 +1581,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
             validation_fraction=validation_fraction,
             n_iter_no_change=n_iter_no_change, tol=tol, ccp_alpha=ccp_alpha)
 
-    def _validate_y(self, y):
+    def _validate_y(self, y, sample_weight=None):
         if y.dtype.kind == 'O':
             y = y.astype(DOUBLE)
         return y
