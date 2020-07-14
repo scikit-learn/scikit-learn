@@ -60,42 +60,49 @@ algorithms. The simplest clustering algorithm is :ref:`k_means`.
     is sensitive to initialization, and can fall into local minima,
     although scikit-learn employs several tricks to mitigate this issue.
 
-    .. list-table::
-        :class: centered
+    .. raw :: html
 
-        *
+       <div class="sk-doc-div">
+        <div class="sk-doc-div-box">
 
-            - |k_means_iris_bad_init|
+          <h4>Bad initialization</h4>
 
-            - |k_means_iris_8|
+    |k_means_iris_bad_init|
 
-            - |cluster_iris_truth|
+    .. raw :: html
 
-        *
+       </div>
+        <div class="sk-doc-div-box">
+         <h4>8 clusters</h4>
 
-            - **Bad initialization**
+    |k_means_iris_8|
 
-            - **8 clusters**
+    .. raw :: html
 
-            - **Ground truth**
+       </div>
+        <div class="sk-doc-div-box">
+         <h4>Ground truth</h4>
+
+    |cluster_iris_truth|
+
+    .. raw :: html
+
+        </div>
+       </div>
 
     **Don't over-interpret clustering results**
 
 .. |face| image:: /auto_examples/cluster/images/sphx_glr_plot_face_compress_001.png
    :target: ../../auto_examples/cluster/plot_face_compress.html
-   :scale: 60
 
 .. |face_regular| image:: /auto_examples/cluster/images/sphx_glr_plot_face_compress_002.png
    :target: ../../auto_examples/cluster/plot_face_compress.html
-   :scale: 60
 
 .. |face_compressed| image:: /auto_examples/cluster/images/sphx_glr_plot_face_compress_003.png
    :target: ../../auto_examples/cluster/plot_face_compress.html
-   :scale: 60
 
 .. |face_histogram| image:: /auto_examples/cluster/images/sphx_glr_plot_face_compress_004.png
    :target: ../../auto_examples/cluster/plot_face_compress.html
-   :scale: 60
 
 .. topic:: **Application example: vector quantization**
 
@@ -120,28 +127,43 @@ algorithms. The simplest clustering algorithm is :ref:`k_means`.
     	>>> face_compressed = np.choose(labels, values)
     	>>> face_compressed.shape = face.shape
 
-    .. list-table::
-      :class: centered
+    .. raw :: html
 
-      *
-        - |face|
+       <div class="sk-doc-div">
+        <div class="sk-doc-div-box">
 
-        - |face_compressed|
+          <h4>Raw image</h4>
 
-        - |face_regular|
+    |face|
 
-        - |face_histogram|
+    .. raw :: html
 
-      *
+       </div>
+        <div class="sk-doc-div-box">
+         <h4>K-means quantization</h4>
 
-        - Raw image
+    |face_compressed|
 
-        - K-means quantization
+    .. raw :: html
 
-        - Equal bins
+       </div>
+        <div class="sk-doc-div-box">
+         <h4>Equal bins</h4>
 
-        - Image histogram
+    |face_regular|
 
+    .. raw :: html
+
+       </div>
+        <div class="sk-doc-div-box">
+         <h4>Image histogram</h4>
+
+    |face_histogram|
+
+    .. raw :: html
+
+        </div>
+       </div>
 
 Hierarchical agglomerative clustering: Ward
 ---------------------------------------------
