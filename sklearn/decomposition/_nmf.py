@@ -1163,7 +1163,7 @@ class NMF(TransformerMixin, BaseEstimator):
     max_iter : integer, default: 200
         Maximum number of iterations before timing out.
 
-    regularization : 'both' | 'components' | 'transformation' | None
+    regularization : {'both', 'components', 'transformation', None}, default=None
         Select whether the regularization affects the components (H), the
         transformation (W), both or none of them. Defaults to 'both'.
 
