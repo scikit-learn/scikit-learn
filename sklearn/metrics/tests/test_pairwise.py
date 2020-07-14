@@ -1332,7 +1332,6 @@ def test_numeric_pairwise_distances_datatypes(metric, dtype, y_is_x):
         elif metric == 'mahalanobis' and not y_is_x:
             params = {'VI': np.linalg.inv(np.cov(np.vstack([X, Y]).T)).T}
 
-
     dist = pairwise_distances(X, Y, metric=metric, **params)
 
     # the default rtol=1e-7 is too close to the float32 precision
