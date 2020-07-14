@@ -681,7 +681,7 @@ def test_euclidean_distances(dtype, x_array_constr, y_array_constr):
     distances = euclidean_distances(X, Y)
 
     # the default rtol=1e-7 is too close to the float32 precision
-    # and fails due too rounding errors.
+    # and fails due to rounding errors.
     assert_allclose(distances, expected, rtol=1e-6)
     assert distances.dtype == dtype
 
@@ -702,7 +702,7 @@ def test_euclidean_distances_sym(dtype, x_array_constr):
     distances = euclidean_distances(X)
 
     # the default rtol=1e-7 is too close to the float32 precision
-    # and fails due too rounding errors.
+    # and fails due to rounding errors.
     assert_allclose(distances, expected, rtol=1e-6)
     assert distances.dtype == dtype
 
@@ -729,7 +729,7 @@ def test_euclidean_distances_upcast(batch_size, x_array_constr,
     distances = np.sqrt(np.maximum(distances, 0))
 
     # the default rtol=1e-7 is too close to the float32 precision
-    # and fails due too rounding errors.
+    # and fails due to rounding errors.
     assert_allclose(distances, expected, rtol=1e-6)
 
 
@@ -749,7 +749,7 @@ def test_euclidean_distances_upcast_sym(batch_size, x_array_constr):
     distances = np.sqrt(np.maximum(distances, 0))
 
     # the default rtol=1e-7 is too close to the float32 precision
-    # and fails due too rounding errors.
+    # and fails due to rounding errors.
     assert_allclose(distances, expected, rtol=1e-6)
 
 
