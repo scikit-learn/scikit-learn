@@ -443,7 +443,7 @@ def _nan_fill_row_norm(r, fill_value: float = 0.):
     return np.sum(p)
 
 
-@njit
+@njit(parallel=True)
 def _nan_fill_dot_inner(v1, v2, fill_values):
     s = 0.
     for k in prange(fill_values.shape[0]):
