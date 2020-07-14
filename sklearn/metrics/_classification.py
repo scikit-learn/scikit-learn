@@ -2481,23 +2481,23 @@ def calibration_error(y_true, y_prob, sample_weight=None, norm='l2',
 
     Parameters
     ----------
-    y_true : array, shape (n_samples,)
+    y_true : array-like of shape (n_samples,)
         True targets of a binary classification task.
 
-    y_prob : array, shape (n_samples,)
+    y_prob : array-like of (n_samples,)
         Probabilities of the positive class.
 
-    sample_weight : array-like, shape (n_samples,), optional
+    sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
-    norm : 'l1' | 'l2' | 'max'
+    norm : {'l1', 'l2', 'max'}, default='l2'
         Norm method. The l1-norm is the Expected Calibration Error (ECE),
         and the max-norm corresponds to Maximum Calibration Error (MCE).
 
-    n_bins : int, optional (default=10)
+    n_bins : int, default=10
        The number of bins to compute error on.
 
-    strategy : {'uniform', 'quantile'} (default='uniform')
+    strategy : {'uniform', 'quantile'}, default='uniform'
         Strategy used to define the widths of the bins.
 
         uniform
@@ -2505,11 +2505,11 @@ def calibration_error(y_true, y_prob, sample_weight=None, norm='l2',
         quantile
             All bins have the same number of points.
 
-    pos_label : int or str, optional (default=None)
+    pos_label : int or str, default=None
         Label of the positive class. If None, the maximum label is used as
         positive class
 
-    reduce_bias : bool, optional (default=True)
+    reduce_bias : bool, default=True
         Add debiasing term as in Verified Uncertainty Calibration, A. Kumar
 
     Returns
