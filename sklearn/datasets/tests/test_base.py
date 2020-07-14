@@ -2,7 +2,6 @@ import os
 import shutil
 import tempfile
 import warnings
-import numpy
 from pickle import loads
 from pickle import dumps
 from functools import partial

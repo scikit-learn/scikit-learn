@@ -368,13 +368,12 @@ def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
     # NOTE we are not using the return value as the scorer by itself should be
     # validated before. We use check_scoring only to reject multimetric scorer
     check_scoring(estimator, scorer)
-    scores, n_samples_test = _fit_and_score(estimator, X, y,
-                                            scorer, train,
-                                            test, verbose, parameters,
-                                            fit_params=fit_params,
-                                            return_n_test_samples=True,
-                                            error_score=error_score)
-    return scores, parameters, n_samples_test
+    results = _fit_and_score(estimator, X, y, scorer, train,
+                             test, verbose, parameters,
+                             fit_params=fit_params,
+                             return_n_test_samples=True,
+                             error_score=error_score)
+    return results["test_scores"], parameters, results["n_test_samples"]
 
 
 def _check_param_grid(param_grid):
@@ -805,20 +804,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
     def _format_results(self, candidate_params, scorers, n_splits, out):
         n_candidates = len(candidate_params)
-
-        # if one choose to see train score, "out" will contain train score info
-        if self.return_train_score:
-            (train_score_dicts, test_score_dicts, test_sample_counts, fit_time,
-             score_time) = zip(*out)
-        else:
-            (test_score_dicts, test_sample_counts, fit_time,
-             score_time) = zip(*out)
-
-        # test_score_dicts and train_score dicts are lists of dictionaries and
-        # we make them into dict of lists
-        test_scores = _aggregate_score_dicts(test_score_dicts)
-        if self.return_train_score:
-            train_scores = _aggregate_score_dicts(train_score_dicts)
+        out = _aggregate_score_dicts(out)
 
         results = {}
 
@@ -846,8 +832,8 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                 results["rank_%s" % key_name] = np.asarray(
                     rankdata(-array_means, method='min'), dtype=np.int32)
 
-        _store('fit_time', fit_time)
-        _store('score_time', score_time)
+        _store('fit_time', out["fit_time"])
+        _store('score_time', out["score_time"])
         # Use one MaskedArray and mask all the places where the param is not
         # applicable for that candidate. Use defaultdict as each candidate may
         # not contain all the params
@@ -866,11 +852,11 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         # Store a list of param dicts at the key 'params'
         results['params'] = candidate_params
 
-        # NOTE test_sample counts (weights) remain the same for all candidates
-        test_sample_counts = np.array(test_sample_counts[:n_splits],
-                                      dtype=int)
+        test_scores = _aggregate_score_dicts(out["test_scores"])
+        if self.return_train_score:
+            train_scores = _aggregate_score_dicts(out["train_scores"])
 
-        for scorer_name in scorers.keys():
+        for scorer_name in test_scores:
             # Computed the (weighted) mean and std for test scores alone
             _store('test_%s' % scorer_name, test_scores[scorer_name],
                    splits=True, rank=True,

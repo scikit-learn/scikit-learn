@@ -356,6 +356,23 @@ def test_cross_validate_invalid_scoring_param():
                         cross_validate, SVC(), X, y, scoring="mse")
 
 
+def test_cross_validate_nested_estimator():
+    # Non-regression test to ensure that nested
+    # estimators are properly returned in a list
+    # https://github.com/scikit-learn/scikit-learn/pull/17745
+    (X, y) = load_iris(return_X_y=True)
+    pipeline = Pipeline([
+        ("imputer", SimpleImputer()),
+        ("classifier", MockClassifier()),
+    ])
+
+    results = cross_validate(pipeline, X, y, return_estimator=True)
+    estimators = results["estimator"]
+
+    assert isinstance(estimators, list)
+    assert all(isinstance(estimator, Pipeline) for estimator in estimators)
+
+
 def test_cross_validate():
     # Compute train and test mse/r2 scores
     cv = KFold()
@@ -1700,7 +1717,7 @@ def test_fit_and_score_working():
                             'return_parameters': True}
     result = _fit_and_score(*fit_and_score_args,
                             **fit_and_score_kwargs)
-    assert result[-1] == fit_and_score_kwargs['parameters']
+    assert result['parameters'] == fit_and_score_kwargs['parameters']
 
 
 def three_params_scorer(i, j, k):
