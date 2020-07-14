@@ -94,7 +94,7 @@ jobs:
     needs: [build_wheels, build_sdist]
 
     # The wheels should not be uploaded on PRs
-    if: ${{ github.event_name != "pull_request" }}
+    if: ${{ github.event_name != 'pull_request' }}
     steps:
       - name: Download artifacts
         uses: actions/download-artifact@v2
