@@ -1318,14 +1318,20 @@ def test_numeric_pairwise_distances_datatypes(metric, dtype, y_is_x):
 
     X = rng.random_sample((5, 4)).astype(dtype)
 
+    params = {}
     if y_is_x:
         Y = X
         expected_dist = squareform(pdist(X, metric=metric))
     else:
         Y = rng.random_sample((5, 4)).astype(dtype)
         expected_dist = cdist(X, Y, metric=metric)
+        # precompute parameters for seuclidean & mahalanobis when x is not y
+        if metric == 'seuclidean':
+            params = {'V': np.var(np.vstack([X, Y]), axis=0, ddof=1, dtype=np.float64)}
+        elif metric == 'mahalanobis':
+            params = {'VI': np.linalg.inv(np.cov(np.vstack([X, Y]).T)).T}
 
-    dist = pairwise_distances(X, Y, metric=metric)
+    dist = pairwise_distances(X, Y, metric=metric, **params)
 
     # the default rtol=1e-7 is too close to the float32 precision
     # and fails due to rounding errors
