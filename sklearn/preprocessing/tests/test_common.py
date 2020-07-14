@@ -24,8 +24,8 @@ from sklearn.preprocessing import PowerTransformer
 from sklearn.preprocessing import QuantileTransformer
 from sklearn.preprocessing import RobustScaler
 
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_allclose
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_allclose
 
 iris = load_iris()
 
@@ -126,3 +126,33 @@ def test_missing_value_handling(est, func, support_sparse, strictly_positive):
                 Xt_inv_sp = est_sparse.inverse_transform(Xt_sp)
             assert len(records) == 0
             assert_allclose(Xt_inv_sp.A, Xt_inv_dense)
+
+
+@pytest.mark.parametrize(
+    "est, func",
+    [(MaxAbsScaler(), maxabs_scale),
+     (MinMaxScaler(), minmax_scale),
+     (StandardScaler(), scale),
+     (StandardScaler(with_mean=False), scale),
+     (PowerTransformer('yeo-johnson'), power_transform),
+     (PowerTransformer('box-cox'), power_transform,),
+     (QuantileTransformer(n_quantiles=3), quantile_transform),
+     (RobustScaler(), robust_scale),
+     (RobustScaler(with_centering=False), robust_scale)]
+)
+def test_missing_value_pandas_na_support(est, func):
+    # Test pandas IntegerArray with pd.NA
+    pd = pytest.importorskip('pandas', minversion="1.0")
+
+    X = np.array([[1, 2, 3, np.nan, np.nan, 4, 5, 1],
+                  [np.nan, np.nan, 8, 4, 6, np.nan, np.nan, 8],
+                  [1, 2, 3, 4, 5, 6, 7, 8]]).T
+
+    # Creates dataframe with IntegerArrays with pd.NA
+    X_df = pd.DataFrame(X, dtype="Int16", columns=['a', 'b', 'c'])
+    X_df['c'] = X_df['c'].astype('int')
+
+    X_trans = est.fit_transform(X)
+    X_df_trans = est.fit_transform(X_df)
+
+    assert_allclose(X_trans, X_df_trans)

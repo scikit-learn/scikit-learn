@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 
 from sklearn.metrics.cluster import adjusted_mutual_info_score
 from sklearn.metrics.cluster import adjusted_rand_score
@@ -12,13 +13,11 @@ from sklearn.metrics.cluster import homogeneity_score
 from sklearn.metrics.cluster import mutual_info_score
 from sklearn.metrics.cluster import normalized_mutual_info_score
 from sklearn.metrics.cluster import v_measure_score
-from sklearn.metrics.cluster.supervised import _generalized_average
+from sklearn.metrics.cluster._supervised import _generalized_average
 
 from sklearn.utils import assert_all_finite
-from sklearn.utils.testing import (
-        assert_equal, assert_almost_equal, assert_raise_message,
-        assert_warns_message, ignore_warnings
-)
+from sklearn.utils._testing import (
+        assert_almost_equal, ignore_warnings)
 from numpy.testing import assert_array_almost_equal
 
 
@@ -32,32 +31,21 @@ score_funcs = [
 ]
 
 
-def test_future_warning():
-    score_funcs_with_changing_means = [
-        normalized_mutual_info_score,
-        adjusted_mutual_info_score,
-    ]
-    warning_msg = "The behavior of "
-    args = [0, 0, 0], [0, 0, 0]
-    for score_func in score_funcs_with_changing_means:
-        assert_warns_message(FutureWarning, warning_msg, score_func, *args)
-
-
 @ignore_warnings(category=FutureWarning)
 def test_error_messages_on_wrong_input():
     for score_func in score_funcs:
-        expected = ('labels_true and labels_pred must have same size,'
-                    ' got 2 and 3')
-        assert_raise_message(ValueError, expected, score_func,
-                             [0, 1], [1, 1, 1])
+        expected = (r'Found input variables with inconsistent numbers '
+                    r'of samples: \[2, 3\]')
+        with pytest.raises(ValueError, match=expected):
+            score_func([0, 1], [1, 1, 1])
 
-        expected = "labels_true must be 1D: shape is (2"
-        assert_raise_message(ValueError, expected, score_func,
-                             [[0, 1], [1, 0]], [1, 1, 1])
+        expected = r"labels_true must be 1D: shape is \(2"
+        with pytest.raises(ValueError, match=expected):
+            score_func([[0, 1], [1, 0]], [1, 1, 1])
 
-        expected = "labels_pred must be 1D: shape is (2"
-        assert_raise_message(ValueError, expected, score_func,
-                             [0, 1, 0], [[1, 1], [0, 0]])
+        expected = r"labels_pred must be 1D: shape is \(2"
+        with pytest.raises(ValueError, match=expected):
+            score_func([0, 1, 0], [[1, 1], [0, 0]])
 
 
 def test_generalized_average():
@@ -73,13 +61,13 @@ def test_generalized_average():
 @ignore_warnings(category=FutureWarning)
 def test_perfect_matches():
     for score_func in score_funcs:
-        assert_equal(score_func([], []), 1.0)
-        assert_equal(score_func([0], [1]), 1.0)
-        assert_equal(score_func([0, 0, 0], [0, 0, 0]), 1.0)
-        assert_equal(score_func([0, 1, 0], [42, 7, 42]), 1.0)
-        assert_equal(score_func([0., 1., 0.], [42., 7., 42.]), 1.0)
-        assert_equal(score_func([0., 1., 2.], [42., 7., 2.]), 1.0)
-        assert_equal(score_func([0, 1, 2], [42, 7, 2]), 1.0)
+        assert score_func([], []) == 1.0
+        assert score_func([0], [1]) == 1.0
+        assert score_func([0, 0, 0], [0, 0, 0]) == 1.0
+        assert score_func([0, 1, 0], [42, 7, 42]) == 1.0
+        assert score_func([0., 1., 0.], [42., 7., 42.]) == 1.0
+        assert score_func([0., 1., 2.], [42., 7., 2.]) == 1.0
+        assert score_func([0, 1, 2], [42, 7, 2]) == 1.0
     score_funcs_with_changing_means = [
         normalized_mutual_info_score,
         adjusted_mutual_info_score,
@@ -201,7 +189,6 @@ def test_adjustment_for_chance():
     assert_array_almost_equal(max_abs_scores, [0.02, 0.03, 0.03, 0.02], 2)
 
 
-@ignore_warnings(category=FutureWarning)
 def test_adjusted_mutual_info_score():
     # Compute the Adjusted Mutual Information and test against known values
     labels_a = np.array([1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3])
@@ -223,15 +210,14 @@ def test_adjusted_mutual_info_score():
     assert_almost_equal(emi, 0.15042, 5)
     # Adjusted mutual information
     ami = adjusted_mutual_info_score(labels_a, labels_b)
-    assert_almost_equal(ami, 0.27502, 5)
+    assert_almost_equal(ami, 0.27821, 5)
     ami = adjusted_mutual_info_score([1, 1, 2, 2], [2, 2, 3, 3])
-    assert_equal(ami, 1.0)
+    assert ami == 1.0
     # Test with a very large array
     a110 = np.array([list(labels_a) * 110]).flatten()
     b110 = np.array([list(labels_b) * 110]).flatten()
     ami = adjusted_mutual_info_score(a110, b110)
-    # This is not accurate to more than 2 places
-    assert_almost_equal(ami, 0.37, 2)
+    assert_almost_equal(ami, 0.38, 2)
 
 
 def test_expected_mutual_info_overflow():
@@ -276,22 +262,20 @@ def test_contingency_matrix_sparse():
     C = contingency_matrix(labels_a, labels_b)
     C_sparse = contingency_matrix(labels_a, labels_b, sparse=True).toarray()
     assert_array_almost_equal(C, C_sparse)
-    C_sparse = assert_raise_message(ValueError,
-                                    "Cannot set 'eps' when sparse=True",
-                                    contingency_matrix, labels_a, labels_b,
-                                    eps=1e-10, sparse=True)
+    with pytest.raises(ValueError, match="Cannot set 'eps' when sparse=True"):
+        contingency_matrix(labels_a, labels_b, eps=1e-10, sparse=True)
 
 
 @ignore_warnings(category=FutureWarning)
 def test_exactly_zero_info_score():
     # Check numerical stability when information is exactly zero
-    for i in np.logspace(1, 4, 4).astype(np.int):
-        labels_a, labels_b = (np.ones(i, dtype=np.int),
-                              np.arange(i, dtype=np.int))
-        assert_equal(normalized_mutual_info_score(labels_a, labels_b), 0.0)
-        assert_equal(v_measure_score(labels_a, labels_b), 0.0)
-        assert_equal(adjusted_mutual_info_score(labels_a, labels_b), 0.0)
-        assert_equal(normalized_mutual_info_score(labels_a, labels_b), 0.0)
+    for i in np.logspace(1, 4, 4).astype(int):
+        labels_a, labels_b = (np.ones(i, dtype=int),
+                              np.arange(i, dtype=int))
+        assert normalized_mutual_info_score(labels_a, labels_b) == 0.0
+        assert v_measure_score(labels_a, labels_b) == 0.0
+        assert adjusted_mutual_info_score(labels_a, labels_b) == 0.0
+        assert normalized_mutual_info_score(labels_a, labels_b) == 0.0
         for method in ["min", "geometric", "arithmetic", "max"]:
             assert adjusted_mutual_info_score(labels_a, labels_b,
                                               method) == 0.0
@@ -301,7 +285,7 @@ def test_exactly_zero_info_score():
 
 def test_v_measure_and_mutual_information(seed=36):
     # Check relation between v_measure, entropy and mutual information
-    for i in np.logspace(1, 4, 4).astype(np.int):
+    for i in np.logspace(1, 4, 4).astype(int):
         random_state = np.random.RandomState(seed)
         labels_a, labels_b = (random_state.randint(0, 10, i),
                               random_state.randint(0, 10, i))
@@ -353,3 +337,14 @@ def test_fowlkes_mallows_score_properties():
     # symmetric and permutation(both together)
     score_both = fowlkes_mallows_score(labels_b, (labels_a + 2) % 3)
     assert_almost_equal(score_both, expected)
+
+
+@pytest.mark.parametrize('labels_true, labels_pred', [
+    (['a'] * 6, [1, 1, 0, 0, 1, 1]),
+    ([1] * 6, [1, 1, 0, 0, 1, 1]),
+    ([1, 1, 0, 0, 1, 1], ['a'] * 6),
+    ([1, 1, 0, 0, 1, 1], [1] * 6),
+])
+def test_mutual_info_score_positive_constant_label(labels_true, labels_pred):
+    # non-regression test for #16355
+    assert mutual_info_score(labels_true, labels_pred) >= 0

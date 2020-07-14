@@ -2,9 +2,9 @@
 
 set -e
 
-if [[ "$DISTRIB" == "conda" ]]; then
+if [[ "$DISTRIB" =~ ^conda.* ]]; then
     source activate $VIRTUALENV
-elif [[ "$DISTRIB" == "ubuntu" ]]; then
+elif [[ "$DISTRIB" == "ubuntu" ]] || [[ "$DISTRIB" == "ubuntu-32" ]]; then
     source $VIRTUALENV/bin/activate
 fi
 
@@ -29,7 +29,12 @@ if [[ "$COVERAGE" == "true" ]]; then
 fi
 
 if [[ -n "$CHECK_WARNINGS" ]]; then
-    TEST_CMD="$TEST_CMD -Werror::DeprecationWarning -Werror::FutureWarning"
+    # numpy's 1.19.0's tostring() deprecation is ignored until scipy and joblib removes its usage
+    TEST_CMD="$TEST_CMD -Werror::DeprecationWarning -Werror::FutureWarning -Wignore:tostring:DeprecationWarning"
+fi
+
+if [[ "$PYTEST_XDIST_VERSION" != "none" ]]; then
+    TEST_CMD="$TEST_CMD -n2"
 fi
 
 mkdir -p $TEST_DIR

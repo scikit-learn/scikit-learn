@@ -1,5 +1,4 @@
 """Common tests for metaestimators"""
-import pytest
 import functools
 
 import numpy as np
@@ -7,7 +6,7 @@ import numpy as np
 from sklearn.base import BaseEstimator
 from sklearn.datasets import make_classification
 
-from sklearn.utils.testing import assert_raises
+from sklearn.utils._testing import assert_raises
 from sklearn.utils.validation import check_is_fitted
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
@@ -46,7 +45,6 @@ DELEGATING_METAESTIMATORS = [
 ]
 
 
-@pytest.mark.filterwarnings('ignore: The default value of cv')  # 0.22
 def test_metaestimator_delegation():
     # Ensures specified metaestimators have methods iff subestimator does
     def hides(method):
@@ -67,7 +65,7 @@ def test_metaestimator_delegation():
             return True
 
         def _check_fit(self):
-            check_is_fitted(self, 'coef_')
+            check_is_fitted(self)
 
         @hides
         def inverse_transform(self, X, *args, **kwargs):

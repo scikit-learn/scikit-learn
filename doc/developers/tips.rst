@@ -17,21 +17,6 @@ as GitHub gists; to install them, click on the "Raw" button on the gist page.
 .. _TamperMonkey: https://tampermonkey.net/
 .. _GreaseMonkey: https://www.greasespot.net/
 
-
-.. _viewing_rendered_html_documentation:
-
-Viewing the rendered HTML documentation for a pull request
-----------------------------------------------------------
-
-We use CircleCI to build the HTML documentation for every pull request. To
-access that documentation, instructions are provided in the :ref:`documentation
-section of the contributor guide <contribute_documentation>`. To save you a few
-clicks, we provide a `userscript
-<https://raw.githubusercontent.com/lesteve/userscripts/master/add-button-for-pr-circleci-doc.user.js>`__
-that adds a button to every PR. After installing the userscript, navigate to
-any GitHub PR; a new button labeled "See CircleCI doc for this PR" should
-appear in the top-right area.
-
 Folding and unfolding outdated diffs on pull requests
 -----------------------------------------------------
 
@@ -101,11 +86,13 @@ Other `pytest` options that may become useful include:
   - ``-s`` so that pytest does not capture the output of ``print()``
     statements
   - ``--tb=short`` or ``--tb=line`` to control the length of the logs
+  - ``--runxfail`` also run tests marked as a known failure (XFAIL) and report
+    errors.
 
-Since our continuous integration tests will error if ``DeprecationWarning``
-or ``FutureWarning`` aren't properly caught, it is also recommended to run
-``pytest`` along with the ``-Werror::DeprecationWarning`` and
-``-Werror::FutureWarning`` flags.
+Since our continuous integration tests will error if
+``FutureWarning`` isn't properly caught,
+it is also recommended to run ``pytest`` along with the
+``-Werror::FutureWarning`` flag.
 
 .. _saved_replies:
 
@@ -181,10 +168,10 @@ Issue/Comment: Linking to comments
 
         Please use links to comments, which make it a lot easier to see what you are referring to, rather than just linking to the issue. See [this](https://stackoverflow.com/questions/25163598/how-do-i-reference-a-specific-issue-comment-on-github) for more details.
 
-PR-NEW: Better description
+PR-NEW: Better description and title
     ::
 
-        Thanks for the pull request! Please make the title of the PR descriptive so that we can easily recall the issue it is resolving. You should state what issue (or PR) it fixes/resolves in the description (see [here](http://scikit-learn.org/dev/developers/contributing.html#contributing-pull-requests)).
+        Thanks for the pull request! Please make the title of the PR more descriptive. The title will become the commit message when this is merged. You should state what issue (or PR) it fixes/resolves in the description using the syntax described [here](http://scikit-learn.org/dev/developers/contributing.html#contributing-pull-requests).
 
 PR-NEW: Fix #
     ::
@@ -261,8 +248,8 @@ code. Follow these steps:
        $> valgrind -v --suppressions=valgrind-python.supp python my_test_script.py
 
 .. _valgrind: http://valgrind.org
-.. _`README.valgrind`: https://svn.python.org/projects/python/trunk/Misc/README.valgrind
-.. _`valgrind-python.supp`: https://svn.python.org/projects/python/trunk/Misc/valgrind-python.supp
+.. _`README.valgrind`: https://github.com/python/cpython/blob/master/Misc/README.valgrind
+.. _`valgrind-python.supp`: https://github.com/python/cpython/blob/master/Misc/valgrind-python.supp
 
 
 The result will be a list of all the memory-related errors, which reference
