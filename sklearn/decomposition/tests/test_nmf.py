@@ -101,19 +101,20 @@ def test_initialize_variants():
 
 # ignore UserWarning raised when both solver='mu' and init='nndsvd'
 @ignore_warnings(category=UserWarning)
-def test_nmf_fit_nn_output():
+@pytest.mark.parametrize('solver', ('cd', 'mu'))
+@pytest.mark.parametrize('init',
+                         (None, 'nndsvd', 'nndsvda', 'nndsvdar', 'random'))
+@pytest.mark.parametrize('regularization',
+                         (None, 'both', 'components', 'transformation'))
+def test_nmf_fit_nn_output(solver, init, regularization):
     # Test that the decomposition does not contain negative values
     A = np.c_[5. - np.arange(1, 6),
               5. + np.arange(1, 6)]
-    for solver in ('cd', 'mu'):
-        for init in (None, 'nndsvd', 'nndsvda', 'nndsvdar', 'random'):
-            for regularization in (None, 'both',
-                                   'components', 'transformation'):
-                model = NMF(n_components=2, solver=solver, init=init,
-                            regularization=regularization, random_state=0)
-                transf = model.fit_transform(A)
-                assert not((model.components_ < 0).any() or
-                           (transf < 0).any())
+    model = NMF(n_components=2, solver=solver, init=init,
+                regularization=regularization, random_state=0)
+    transf = model.fit_transform(A)
+    assert not((model.components_ < 0).any() or
+               (transf < 0).any())
 
 
 @pytest.mark.parametrize('solver', ('cd', 'mu'))
@@ -218,32 +219,32 @@ def test_nmf_sparse_transform():
         assert_array_almost_equal(A_fit_tr, A_tr, decimal=1)
 
 
-def test_non_negative_factorization_consistency():
+@pytest.mark.parametrize('init', ['random', 'nndsvd'])
+@pytest.mark.parametrize('solver', ('cd', 'mu'))
+@pytest.mark.parametrize('regularization',
+                         (None, 'both', 'components', 'transformation'))
+def test_non_negative_factorization_consistency(init, solver, regularization):
     # Test that the function is called in the same way, either directly
     # or through the NMF class
     rng = np.random.mtrand.RandomState(42)
     A = np.abs(rng.randn(10, 10))
     A[:, 2 * np.arange(5)] = 0
 
-    for init in ['random', 'nndsvd']:
-        for solver in ('cd', 'mu'):
-            for regularization in (None, 'both',
-                                   'components', 'transformation'):
-                W_nmf, H, _ = non_negative_factorization(
-                    A, init=init, solver=solver,
-                    regularization=regularization, random_state=1, tol=1e-2)
-                W_nmf_2, _, _ = non_negative_factorization(
-                    A, H=H, update_H=False, init=init, solver=solver,
-                    regularization=regularization, random_state=1, tol=1e-2)
+    W_nmf, H, _ = non_negative_factorization(
+        A, init=init, solver=solver,
+        regularization=regularization, random_state=1, tol=1e-2)
+    W_nmf_2, _, _ = non_negative_factorization(
+        A, H=H, update_H=False, init=init, solver=solver,
+        regularization=regularization, random_state=1, tol=1e-2)
 
-                model_class = NMF(init=init, solver=solver,
-                                  regularization=regularization,
-                                  random_state=1, tol=1e-2)
-                W_cls = model_class.fit_transform(A)
-                W_cls_2 = model_class.transform(A)
+    model_class = NMF(init=init, solver=solver,
+                      regularization=regularization,
+                      random_state=1, tol=1e-2)
+    W_cls = model_class.fit_transform(A)
+    W_cls_2 = model_class.transform(A)
 
-            assert_array_almost_equal(W_nmf, W_cls, decimal=10)
-            assert_array_almost_equal(W_nmf_2, W_cls_2, decimal=10)
+    assert_array_almost_equal(W_nmf, W_cls, decimal=10)
+    assert_array_almost_equal(W_nmf_2, W_cls_2, decimal=10)
 
 
 def test_non_negative_factorization_checking():
