@@ -1,0 +1,76 @@
+# Workflow to build and test wheels
+name: Wheel builder
+
+on:
+  schedule:
+    # Nightly build at 3:42 A.M.
+    - cron: "42 3 */1 * *"
+  push:
+    tags:
+      # Stable release build
+      - [0-9]+.[0-9]+.[0.9]+
+  pull_request:
+    branches:
+      - master
+      - [0-9]+.[0-9]+.X
+
+jobs:
+  build_wheels:
+    name: Build wheels on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+
+    steps:
+      - name: Checkout scikit-learn
+        uses: actions/checkout@v2
+
+      - name: Setup Python
+        uses: actions/setup-python@v2
+    
+      - name: Install cibuildwheel
+        run: |
+          python -m pip install cibuildwheel==1.5.2
+
+      - name: Build wheels
+        env:
+          # Build the wheels for Python 3.6 and newer
+          CIBW_SKIP: pp* *p27* *p35*
+          CIBW_TEST_REQUIRES: pytest
+        run: |
+          python -m cibuildwheel --output-dir wheelhouse
+
+  build_sdist:
+    name: Source distribution
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout scikit-learn
+        uses: actions/checkout@v2
+
+      - name: Setup Python
+        uses: actions/setup-python@v2
+
+      # The setup file requires these dependencies to be installed
+      - name: Install dependencies
+        run: |
+          python -m pip install numpy scipy cython
+
+      - name: Build source distribution
+        run: |
+          python setup.py sdist
+
+      - name: Check source distribution
+        run: |
+          python -m pip install twine
+          twine check dist/*
+
+      - name: Install source distribution
+        run: |
+          python -m pip install dist/*.tar.gz 
+
+      - name: Run tests
+        run: |
+          python -m pip install pytest
+          pytest -l --pyargs sklearn
