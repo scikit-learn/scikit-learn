@@ -1587,7 +1587,7 @@ and the average predicted probability of positive class in bin :math:`k`.
 
 The calibration error is appropriate for binary classification tasks.
 Which label is considered to be the positive label is controlled via the
-parameter pos_label, which defaults to 1.
+parameter pos_label, which defaults to ``None``.
 
 Here is a small example of usage of this function:::
 
