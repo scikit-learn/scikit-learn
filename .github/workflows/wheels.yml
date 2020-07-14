@@ -8,7 +8,7 @@ on:
   push:
     tags:
       # Stable release build
-      - "[0-9]+.[0-9]+.[0.9]+"
+      - "[0-9]+.[0-9]+.[0-9]+"
   pull_request:
     branches:
       - master
