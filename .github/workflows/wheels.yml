@@ -37,7 +37,7 @@ jobs:
         env:
           # Build the wheels for Python 3.6 and newer
           CIBW_SKIP: pp* *p27* *p35*
-          CIBW_TEST_REQUIRES: pytest pandas
+          CIBW_TEST_REQUIRES: pytest
           CIBW_TEST_COMMAND: pytest --pyargs sklearn
         run: |
           python -m cibuildwheel --output-dir wheelhouse
@@ -76,11 +76,12 @@ jobs:
 
       - name: Install source distribution
         run: |
-          pip install dist/*.tar.gz
+          python -m pip install dist/*.tar.gz
+          python setup.py install
 
       - name: Run tests
         run: |
-          python -m pip install pytest pandas
+          python -m pip install pytest
           pytest --pyargs sklearn
 
       - name: Store source distribution
