@@ -20,7 +20,7 @@ Changelog
 :mod:`sklearn.pipeline`
 .......................
 
-- |Fix| :class:`pipeline.FeatureUnion` raises a deprecating warning when
+- |Fix| :class:`pipeline.FeatureUnion` raises a deprecation warning when
   `None` is included in `transformer_list`. :pr:`17360` by `Thomas Fan`_.
 
 .. _changes_0_23_1:
