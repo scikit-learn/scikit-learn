@@ -2507,10 +2507,11 @@ def calibration_error(y_true, y_prob, sample_weight=None, norm='l2',
 
     pos_label : int or str, default=None
         Label of the positive class. If None, the maximum label is used as
-        positive class
+        positive class.
 
     reduce_bias : bool, default=True
-        Add debiasing term as in Verified Uncertainty Calibration, A. Kumar
+        Add debiasing term as in Verified Uncertainty Calibration, A. Kumar.
+        Only effective for the l2-norm.
 
     Returns
     -------
