@@ -186,12 +186,6 @@ Changelog
 - |Enhancement| :class:`isotonic.IsotonicRegression` now accepts 2darray with 1 feature as
   input array. :pr:`17379` by :user:`Jiaxiang <fujiaxiang>`.
 
-:mod:`sklearn.linear_model`
-...........................
-
-- |Fix| :func:`linear_model.lars_path` does not overwrite `X` when
-  `X_copy=True` and `Gram='auto'`. :pr:`17914` by `Thomas Fan`_.
-
 :mod:`sklearn.manifold`
 .......................
 
