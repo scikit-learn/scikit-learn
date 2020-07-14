@@ -20,7 +20,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [windows-latest, ubuntu-latest, macos-latest]
+        # os: [windows-latest, ubuntu-latest, macos-latest]
+        os: [ubuntu-latest, macos-latest]
 
     steps:
       - name: Checkout scikit-learn
@@ -95,7 +96,7 @@ jobs:
     needs: [build_wheels, build_sdist]
 
     # The artifacts should not be uploaded on PRs
-    if: ${{ github.event_name != 'pull_request' }}
+    # if: ${{ github.event_name != 'pull_request' }}
     steps:
       - name: Download artifacts
         uses: actions/download-artifact@v2
@@ -110,10 +111,10 @@ jobs:
         uses: actions/setup-python@v2
 
       - name: Upload artifacts
-        env:
+        # env:
           # Secret variables need to mapped to environment variables explicitly
-          SCIKIT_LEARN_NIGHTLY_UPLOAD_TOKEN: ${{ secrets.SCIKIT_LEARN_NIGHTLY_UPLOAD_TOKEN }}
-          SCIKIT_LEARN_STAGING_UPLOAD_TOKEN: ${{ secrets.SCIKIT_LEARN_STAGING_UPLOAD_TOKEN }}
+          # SCIKIT_LEARN_NIGHTLY_UPLOAD_TOKEN: ${{ secrets.SCIKIT_LEARN_NIGHTLY_UPLOAD_TOKEN }}
+          # SCIKIT_LEARN_STAGING_UPLOAD_TOKEN: ${{ secrets.SCIKIT_LEARN_STAGING_UPLOAD_TOKEN }}
         # Force a replacement if the remote file already exists
         run: |
           if [ "$GITHUB_EVENT_NAME" == "schedule" ]; then
@@ -124,4 +125,3 @@ jobs:
             ANACONDA_TOKEN="$SCIKIT_LEARN_STAGING_UPLOAD_TOKEN"
           fi
           conda install -q -y anaconda-client
-          anaconda -t $ANACONDA_TOKEN upload --force -u $ANACONDA_ORG dist/*
