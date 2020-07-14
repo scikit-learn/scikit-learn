@@ -1273,8 +1273,8 @@ def test_n_features_in():
     (['col_int', 'col_float'], None, np.number, None),
     (['col_int', 'col_float'], None, None, object),
     (['col_int', 'col_float'], None, [int, float], None),
-    (['col_str'], None, [np.object], None),
-    (['col_str'], None, np.object, None),
+    (['col_str'], None, [object], None),
+    (['col_str'], None, object, None),
     (['col_float'], None, float, None),
     (['col_float'], 'at$', [np.number], None),
     (['col_int'], None, [int], None),
@@ -1282,7 +1282,7 @@ def test_n_features_in():
     (['col_float', 'col_str'], 'float|str', None, None),
     (['col_str'], '^col_s', None, [int]),
     ([], 'str$', float, None),
-    (['col_int', 'col_float', 'col_str'], None, [np.number, np.object], None),
+    (['col_int', 'col_float', 'col_str'], None, [np.number, object], None),
 ])
 def test_make_column_selector_with_select_dtypes(cols, pattern, include,
                                                  exclude):

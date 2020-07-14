@@ -43,7 +43,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
             X_temp = check_array(X, dtype=None)
             if (not hasattr(X, 'dtype')
                     and np.issubdtype(X_temp.dtype, np.str_)):
-                X = check_array(X, dtype=np.object)
+                X = check_array(X, dtype=object)
             else:
                 X = X_temp
             needs_validation = False
@@ -322,10 +322,10 @@ class OneHotEncoder(_BaseEncoder):
             return None
         elif isinstance(self.drop, str):
             if self.drop == 'first':
-                return np.zeros(len(self.categories_), dtype=np.object)
+                return np.zeros(len(self.categories_), dtype=object)
             elif self.drop == 'if_binary':
                 return np.array([0 if len(cats) == 2 else None
-                                for cats in self.categories_], dtype=np.object)
+                                for cats in self.categories_], dtype=object)
             else:
                 msg = (
                     "Wrong input for parameter `drop`. Expected "
@@ -361,7 +361,7 @@ class OneHotEncoder(_BaseEncoder):
             return np.array([np.where(cat_list == val)[0][0]
                              for (val, cat_list) in
                              zip(self.drop, self.categories_)],
-                            dtype=np.object)
+                            dtype=object)
 
     def fit(self, X, y=None):
         """

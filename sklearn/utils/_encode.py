@@ -66,7 +66,7 @@ def _encode(values, *, uniques, check_unknown=True):
     uniques : ndarray
         The unique values in `values`. If the dtype is not object, then
         `uniques` needs to be sorted.
-    check_unknown : bool, default True
+    check_unknown : bool, default=True
         If True, check for values in `values` that are not in `unique`
         and raise an error. This is ignored for object dtype, and treated as
         True in this case. This parameter is useful for
@@ -106,7 +106,7 @@ def _check_unknown(values, known_values, return_mask=False):
         Values to check for unknowns.
     known_values : array
         Known values. Must be unique.
-    return_mask : bool, default False
+    return_mask : bool, default=False
         If True, return a mask of the same shape as `values` indicating
         the valid values.
 

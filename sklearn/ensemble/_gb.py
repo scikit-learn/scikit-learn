@@ -306,7 +306,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             self.init_ = self.loss_.init_estimator()
 
         self.estimators_ = np.empty((self.n_estimators, self.loss_.K),
-                                    dtype=np.object)
+                                    dtype=object)
         self.train_score_ = np.zeros((self.n_estimators,), dtype=np.float64)
         # do oob?
         if self.subsample < 1.0:
@@ -316,7 +316,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
     def _clear_state(self):
         """Clear the state of the gradient boosting model. """
         if hasattr(self, 'estimators_'):
-            self.estimators_ = np.empty((0, 0), dtype=np.object)
+            self.estimators_ = np.empty((0, 0), dtype=object)
         if hasattr(self, 'train_score_'):
             del self.train_score_
         if hasattr(self, 'oob_improvement_'):
