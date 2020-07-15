@@ -347,6 +347,38 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         if self.metric in ['wminkowski', 'minkowski'] and effective_p < 1:
             raise ValueError("p must be greater than one for minkowski metric")
 
+    def _check_metrics(self, other):
+        def _get_metric_params(obj):
+            params = (obj.metric_params.copy()
+                      if obj.metric_params is not None
+                      else {})
+            if 'p' not in params and hasattr(obj, 'p') and obj.p is not None:
+                params['p'] = obj.p
+            return params
+
+        def _params_equal(params1, params2):
+            if params1.keys() != params2.keys():
+                return False
+            for key, value1 in params1.items():
+                value2 = params2[key]
+                if np.isscalar(value1) and value1 != value2:
+                    return False
+                elif (isinstance(value1, dict) and
+                        not _params_equal(value1, value2)):
+                    return False
+                elif np.any(np.asarray(value1) != np.asarray(value2)):
+                    return False
+            return True
+
+        if (self.metric != other.metric
+                or not _params_equal(_get_metric_params(self),
+                                     _get_metric_params(other))):
+            raise ValueError(f"The metric parameters of the given tree ("
+                             f"{other.metric}, {_get_metric_params(other)})"
+                             f" do not match the parameters of {self.metric} "
+                             f"({_get_metric_params(self)}, "
+                             f"{self.__class__.__name__}).")
+
     def _fit(self, X):
         self._check_algorithm_metric()
         if self.metric_params is None:
@@ -375,6 +407,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 self.effective_metric_params_['p'] = p
 
         if isinstance(X, NeighborsBase):
+            self._check_metrics(X)
             self._fit_X = X._fit_X
             self._tree = X._tree
             self._fit_method = X._fit_method
@@ -382,6 +415,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             return self
 
         elif isinstance(X, BallTree):
+            self._check_metrics(X)
             self._fit_X = X.data
             self._tree = X
             self._fit_method = 'ball_tree'
@@ -389,6 +423,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             return self
 
         elif isinstance(X, KDTree):
+            self._check_metrics(X)
             self._fit_X = X.data
             self._tree = X
             self._fit_method = 'kd_tree'
