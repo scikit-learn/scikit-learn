@@ -643,6 +643,7 @@ roc_auc_scorer = make_scorer(roc_auc_score, greater_is_better=True,
                              needs_threshold=True)
 average_precision_scorer = make_scorer(average_precision_score,
                                        needs_threshold=True)
+roc_auc_multiclass_scorer = make_scorer(roc_auc_score, needs_proba=True)
 roc_auc_ovo_scorer = make_scorer(roc_auc_score, needs_proba=True,
                                  multi_class='ovo')
 roc_auc_ovo_weighted_scorer = make_scorer(roc_auc_score, needs_proba=True,
@@ -777,11 +778,14 @@ CLASSIFICATION_SCORERS_PROPERTY = dict(
     ),
     roc_auc=ScorerProperty(
         scorer=roc_auc_scorer,
+        target_type_supported=("binary",)
+    ),
+    roc_auc_multiclass=ScorerProperty(
+        scorer=roc_auc_multiclass_scorer,
         target_type_supported={
-            "binary": None,
             "multiclass": {
                 "multi_class": ("ovr", "ovo"),
-                "average": ("macro", "weighted", None)
+                "average": ("macro", "weighted")
             },
             "multilabel-indicator": {
                 "average": ("micro", "macro", "samples", "weighted", None)
@@ -797,12 +801,12 @@ CLASSIFICATION_SCORERS_PROPERTY = dict(
         target_type_supported={
             "binary": {
                 "average": (
-                    "binary", "micro", "macro", "samples", "weighted", None
+                    "binary", "micro", "macro", "weighted", None
                 ),
                 "requires_pos_label": True,
             },
             "multiclass": {
-                "average": ("micro", "macro", "samples", "weighted", None),
+                "average": ("micro", "macro", "weighted", None),
             },
             "multilabel-indicator": {
                 "average": ("micro", "macro", "samples", "weighted", None),
@@ -920,8 +924,11 @@ class get_classification_scorers(_BaseApplicableScorers):
         target_type = super().__call__(y)
         scorers = {}
         for name, props in CLASSIFICATION_SCORERS_PROPERTY.items():
-            if (target_type in props.target_type_supported and
-                isinstance(props.target_type_supported, dict) and
+            if target_type not in props.target_type_supported:
+                # early skipping since the metric does not support this target
+                # type
+                continue
+            if (isinstance(props.target_type_supported, dict) and
                     props.target_type_supported[target_type] is not None):
                 # When the properties are stored as a dictionary, we need to
                 # create qualified metrics
