@@ -60,7 +60,7 @@ else:
                     'tex-chtml.js')
 
 rst_prolog = r"""
-.. include:: /_prolog.rst
+.. include:: /includes/prolog.rst
 """
 
 autodoc_default_options = {
