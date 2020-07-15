@@ -1,7 +1,7 @@
 """Helpers for OpenMP support during the build."""
 
 # This code is adapted for a large part from the astropy openmp helpers, which
-# can be found at: https://github.com/astropy/astropy-helpers/blob/master/astropy_helpers/openmp_helpers.py  # noqa
+# can be found at: https://github.com/astropy/extension-helpers/blob/master/extension_helpers/_openmp_helpers.py  # noqa
 
 
 import os
@@ -25,8 +25,8 @@ def get_openmp_flag(compiler):
         return ['/Qopenmp']
     elif sys.platform == "win32":
         return ['/openmp']
-    elif sys.platform == "darwin" and ('icc' in compiler or 'icl' in compiler):
-        return ['-openmp']
+    elif sys.platform in ("darwin", "linux") and "icc" in compiler:
+        return ['-qopenmp']
     elif sys.platform == "darwin" and 'openmp' in os.getenv('CPPFLAGS', ''):
         # -fopenmp can't be passed as compile flag when using Apple-clang.
         # OpenMP support has to be enabled during preprocessing.
