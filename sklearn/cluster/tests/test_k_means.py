@@ -713,18 +713,6 @@ def test_k_means_function():
                  sample_weight=None, init=centers)
 
 
-def test_x_squared_norms_init_centroids():
-    # Test that x_squared_norms can be None in _init_centroids
-    from sklearn.cluster._kmeans import _init_centroids
-
-    X_norms = np.sum(X**2, axis=1)
-    precompute = _init_centroids(
-        X, 3, "k-means++", random_state=0, x_squared_norms=X_norms)
-    assert_array_almost_equal(
-        precompute,
-        _init_centroids(X, 3, "k-means++", random_state=0))
-
-
 @pytest.mark.parametrize("data", [X, X_csr], ids=["dense", "sparse"])
 @pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
 def test_float_precision(Estimator, data):
