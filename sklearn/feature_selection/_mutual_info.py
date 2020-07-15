@@ -60,12 +60,12 @@ def _compute_mi_cc(x, y, n_neighbors):
 
     # KDTree is explicitly fit to allow for the querying of number of
     # neighbors within a specified radius
-    nn = KDTree(x, metric='chebyshev')
-    nx = nn.query_radius(x, radius, count_only=True, return_distance=False)
+    kd = KDTree(x, metric='chebyshev')
+    nx = kd.query_radius(x, radius, count_only=True, return_distance=False)
     nx = np.array(nx) - 1.0
 
-    nn = KDTree(y, metric='chebyshev')
-    ny = nn.query_radius(y, radius, count_only=True, return_distance=False)
+    kd = KDTree(y, metric='chebyshev')
+    ny = kd.query_radius(y, radius, count_only=True, return_distance=False)
     ny = np.array(ny) - 1.0
 
     mi = (digamma(n_samples) + digamma(n_neighbors) -
@@ -133,8 +133,8 @@ def _compute_mi_cd(c, d, n_neighbors):
     c = c[mask]
     radius = radius[mask]
 
-    nn = KDTree(c)
-    m_all = nn.query_radius(c, radius, count_only=True, return_distance=False)
+    kd = KDTree(c)
+    m_all = kd.query_radius(c, radius, count_only=True, return_distance=False)
     m_all = np.array(m_all) - 1.0
 
     mi = (digamma(n_samples) + np.mean(digamma(k_all)) -
