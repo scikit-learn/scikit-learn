@@ -241,7 +241,7 @@ It is recommended to use a dedicated `conda environment`_ to build
 scikit-learn from source::
 
     conda create -n sklearn-dev python numpy scipy cython joblib pytest \
-        "conda-forge::compilers>=1.0.4" conda-forge::llvm-openmp
+        "conda-forge::compilers>=1.0.4,!=1.1.0" conda-forge::llvm-openmp
     conda activate sklearn-dev
     make clean
     pip install --verbose --no-build-isolation --editable .
