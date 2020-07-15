@@ -2526,3 +2526,19 @@ def test_standard_scaler_sparse_partial_fit_finite_variance(X_2):
     scaler = StandardScaler(with_mean=False)
     scaler.fit(X_1).partial_fit(X_2)
     assert np.isfinite(scaler.var_[0])
+
+
+@pytest.mark.parametrize(
+    "feature_range", [(0, 1), (-10, 10)]
+)
+def test_minmax_scaler_clip(feature_range):
+    # test behaviour of the paramter 'clip' in MinMaxScaler
+    X = iris.data
+    scaler = MinMaxScaler(feature_range=feature_range, clip=True).fit(X)
+    X_min, X_max = np.min(X, axis=0), np.max(X, axis=0)
+    X_test = [np.r_[X_min[:2] - 10, X_max[2:] + 10]]
+    X_transformed = scaler.transform(X_test)
+    assert_allclose(
+        X_transformed,
+        [[feature_range[0], feature_range[0],
+          feature_range[1], feature_range[1]]])

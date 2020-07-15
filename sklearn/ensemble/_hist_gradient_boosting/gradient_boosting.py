@@ -806,34 +806,34 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
     Parameters
     ----------
     loss : {'least_squares', 'least_absolute_deviation', 'poisson'}, \
-            optional (default='least_squares')
+            default='least_squares'
         The loss function to use in the boosting process. Note that the
         "least squares" and "poisson" losses actually implement
         "half least squares loss" and "half poisson deviance" to simplify the
         computation of the gradient. Furthermore, "poisson" loss internally
         uses a log-link and requires ``y >= 0``
-    learning_rate : float, optional (default=0.1)
+    learning_rate : float, default=0.1
         The learning rate, also known as *shrinkage*. This is used as a
         multiplicative factor for the leaves values. Use ``1`` for no
         shrinkage.
-    max_iter : int, optional (default=100)
+    max_iter : int, default=100
         The maximum number of iterations of the boosting process, i.e. the
         maximum number of trees.
-    max_leaf_nodes : int or None, optional (default=31)
+    max_leaf_nodes : int or None, default=31
         The maximum number of leaves for each tree. Must be strictly greater
         than 1. If None, there is no maximum limit.
-    max_depth : int or None, optional (default=None)
+    max_depth : int or None, default=None
         The maximum depth of each tree. The depth of a tree is the number of
         edges to go from the root to the deepest leaf.
         Depth isn't constrained by default.
-    min_samples_leaf : int, optional (default=20)
+    min_samples_leaf : int, default=20
         The minimum number of samples per leaf. For small datasets with less
         than a few hundred samples, it is recommended to lower this value
         since only very shallow trees would be built.
-    l2_regularization : float, optional (default=0)
+    l2_regularization : float, default=0
         The L2 regularization parameter. Use ``0`` for no regularization
         (default).
-    max_bins : int, optional (default=255)
+    max_bins : int, default=255
         The maximum number of bins to use for non-missing values. Before
         training, each feature of the input array `X` is binned into
         integer-valued bins, which allows for a much faster training stage.
@@ -845,40 +845,40 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         and 0 respectively correspond to a positive constraint, negative
         constraint and no constraint. Read more in the :ref:`User Guide
         <monotonic_cst_gbdt>`.
-    warm_start : bool, optional (default=False)
+    warm_start : bool, default=False
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble. For results to be valid, the
         estimator should be re-trained on the same data only.
         See :term:`the Glossary <warm_start>`.
-    early_stopping : 'auto' or bool (default='auto')
+    early_stopping : 'auto' or bool, default='auto'
         If 'auto', early stopping is enabled if the sample size is larger than
         10000. If True, early stopping is enabled, otherwise early stopping is
         disabled.
-    scoring : str or callable or None, optional (default='loss')
+    scoring : str or callable or None, default='loss'
         Scoring parameter to use for early stopping. It can be a single
         string (see :ref:`scoring_parameter`) or a callable (see
         :ref:`scoring`). If None, the estimator's default scorer is used. If
         ``scoring='loss'``, early stopping is checked w.r.t the loss value.
         Only used if early stopping is performed.
-    validation_fraction : int or float or None, optional (default=0.1)
+    validation_fraction : int or float or None, default=0.1
         Proportion (or absolute size) of training data to set aside as
         validation data for early stopping. If None, early stopping is done on
         the training data. Only used if early stopping is performed.
-    n_iter_no_change : int, optional (default=10)
+    n_iter_no_change : int, default=10
         Used to determine when to "early stop". The fitting process is
         stopped when none of the last ``n_iter_no_change`` scores are better
         than the ``n_iter_no_change - 1`` -th-to-last one, up to some
         tolerance. Only used if early stopping is performed.
-    tol : float or None, optional (default=1e-7)
+    tol : float or None, default=1e-7
         The absolute tolerance to use when comparing scores during early
         stopping. The higher the tolerance, the more likely we are to early
         stop: higher tolerance means that it will be harder for subsequent
         iterations to be considered an improvement upon the reference score.
-    verbose: int, optional (default=0)
+    verbose: int, default=0
         The verbosity level. If not zero, print some information about the
         fitting process.
     random_state : int, np.random.RandomStateInstance or None, \
-        optional (default=None)
+        default=None
         Pseudo-random number generator to control the subsampling in the
         binning process, and the train/validation data split if early stopping
         is enabled.
@@ -1030,34 +1030,34 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
     Parameters
     ----------
     loss : {'auto', 'binary_crossentropy', 'categorical_crossentropy'}, \
-            optional (default='auto')
+            default='auto'
         The loss function to use in the boosting process. 'binary_crossentropy'
         (also known as logistic loss) is used for binary classification and
         generalizes to 'categorical_crossentropy' for multiclass
         classification. 'auto' will automatically choose either loss depending
         on the nature of the problem.
-    learning_rate : float, optional (default=0.1)
+    learning_rate : float, default=0.1
         The learning rate, also known as *shrinkage*. This is used as a
         multiplicative factor for the leaves values. Use ``1`` for no
         shrinkage.
-    max_iter : int, optional (default=100)
+    max_iter : int, default=100
         The maximum number of iterations of the boosting process, i.e. the
         maximum number of trees for binary classification. For multiclass
         classification, `n_classes` trees per iteration are built.
-    max_leaf_nodes : int or None, optional (default=31)
+    max_leaf_nodes : int or None, default=31
         The maximum number of leaves for each tree. Must be strictly greater
         than 1. If None, there is no maximum limit.
-    max_depth : int or None, optional (default=None)
+    max_depth : int or None, default=None
         The maximum depth of each tree. The depth of a tree is the number of
         edges to go from the root to the deepest leaf.
         Depth isn't constrained by default.
-    min_samples_leaf : int, optional (default=20)
+    min_samples_leaf : int, default=20
         The minimum number of samples per leaf. For small datasets with less
         than a few hundred samples, it is recommended to lower this value
         since only very shallow trees would be built.
-    l2_regularization : float, optional (default=0)
+    l2_regularization : float, default=0
         The L2 regularization parameter. Use 0 for no regularization.
-    max_bins : int, optional (default=255)
+    max_bins : int, default=255
         The maximum number of bins to use for non-missing values. Before
         training, each feature of the input array `X` is binned into
         integer-valued bins, which allows for a much faster training stage.
@@ -1069,40 +1069,40 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
         and 0 respectively correspond to a positive constraint, negative
         constraint and no constraint. Read more in the :ref:`User Guide
         <monotonic_cst_gbdt>`.
-    warm_start : bool, optional (default=False)
+    warm_start : bool, default=False
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble. For results to be valid, the
         estimator should be re-trained on the same data only.
         See :term:`the Glossary <warm_start>`.
-    early_stopping : 'auto' or bool (default='auto')
+    early_stopping : 'auto' or bool, default='auto'
         If 'auto', early stopping is enabled if the sample size is larger than
         10000. If True, early stopping is enabled, otherwise early stopping is
         disabled.
-    scoring : str or callable or None, optional (default='loss')
+    scoring : str or callable or None, default='loss'
         Scoring parameter to use for early stopping. It can be a single
         string (see :ref:`scoring_parameter`) or a callable (see
         :ref:`scoring`). If None, the estimator's default scorer
         is used. If ``scoring='loss'``, early stopping is checked
         w.r.t the loss value. Only used if early stopping is performed.
-    validation_fraction : int or float or None, optional (default=0.1)
+    validation_fraction : int or float or None, default=0.1
         Proportion (or absolute size) of training data to set aside as
         validation data for early stopping. If None, early stopping is done on
         the training data. Only used if early stopping is performed.
-    n_iter_no_change : int, optional (default=10)
+    n_iter_no_change : int, default=10
         Used to determine when to "early stop". The fitting process is
         stopped when none of the last ``n_iter_no_change`` scores are better
         than the ``n_iter_no_change - 1`` -th-to-last one, up to some
         tolerance. Only used if early stopping is performed.
-    tol : float or None, optional (default=1e-7)
+    tol : float or None, default=1e-7
         The absolute tolerance to use when comparing scores. The higher the
         tolerance, the more likely we are to early stop: higher tolerance
         means that it will be harder for subsequent iterations to be
         considered an improvement upon the reference score.
-    verbose: int, optional (default=0)
+    verbose: int, default=0
         The verbosity level. If not zero, print some information about the
         fitting process.
     random_state : int, np.random.RandomStateInstance or None, \
-        optional (default=None)
+        default=None
         Pseudo-random number generator to control the subsampling in the
         binning process, and the train/validation data split if early stopping
         is enabled.

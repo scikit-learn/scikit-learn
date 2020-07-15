@@ -94,7 +94,8 @@ def _generate_func_supporting_param(param, dataset_type=("load", "fetch")):
                 condition=name.startswith("fetch") and _has_network(),
                 reason="Skip because fetcher requires internet network",
             )]
-            marks.append(markers_fetch.get(name, pytest.mark.basic))
+            if name in markers_fetch:
+                marks.append(markers_fetch[name])
 
             yield pytest.param(name, obj, marks=marks)
 

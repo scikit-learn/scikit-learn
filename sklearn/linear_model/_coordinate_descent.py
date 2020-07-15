@@ -977,6 +977,10 @@ class Lasso(ElasticNet):
     coef_ : ndarray of shape (n_features,) or (n_targets, n_features)
         parameter vector (w in the cost function formula)
 
+    dual_gap_ : float or ndarray of shape (n_targets,)
+        Given param alpha, the dual gaps at the end of the optimization,
+        same shape as each observation of y.
+
     sparse_coef_ : sparse matrix of shape (n_features, 1) or \
             (n_targets, n_features)
         ``sparse_coef_`` is a readonly property derived from ``coef_``
