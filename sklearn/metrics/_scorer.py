@@ -718,7 +718,7 @@ for name, metric in [('precision', precision_score),
 
 
 ScorerProperty = namedtuple(
-    "ScorerProperty", ["scorer", "target_type_supported",],
+    "ScorerProperty", ["scorer", "target_type_supported"],
 )
 
 REGRESSION_SCORERS_PROPERTY = dict(
@@ -923,10 +923,14 @@ class get_classification_scorers(_BaseApplicableScorers):
             if (target_type in props.target_type_supported and
                 isinstance(props.target_type_supported, dict) and
                     props.target_type_supported[target_type] is not None):
-                # we need to create all possible qualified metrics
+                # When the properties are stored as a dictionary, we need to
+                # create qualified metrics
                 params_to_define = deepcopy(
                     props.target_type_supported[target_type]
                 )
+                # pos_label is a specific parameters for which we will return
+                # all possible combination if the user does not provide it in
+                # score_params
                 requires_pos_label = params_to_define.pop(
                     "requires_pos_label", False
                 )
@@ -943,15 +947,16 @@ class get_classification_scorers(_BaseApplicableScorers):
                         scorers[qualified_name]._kwargs[param_name] = \
                             param_value
             else:
+                # otherwise we have a simple metric
                 qualified_name = name
                 scorers[qualified_name] = deepcopy(props.scorer)
 
-                # set the function parameters
-                scorer_sig = signature(scorers[qualified_name]._score_func)
-                for param_name, param_value in self.scorers_params.items():
-                    if param_name in scorer_sig.parameters:
-                        scorers[qualified_name]._kwargs[param_name] = \
-                            param_value
+            # once the metric created, we need to set the potential parameters
+            # passed in score_params when it applies
+            scorer_sig = signature(scorers[qualified_name]._score_func)
+            for param_name, param_value in self.scorers_params.items():
+                if param_name in scorer_sig.parameters:
+                    scorers[qualified_name]._kwargs[param_name] = param_value
 
         if not scorers:
             raise ValueError(
