@@ -1166,7 +1166,7 @@ class NMF(TransformerMixin, BaseEstimator):
     regularization : {'both', 'components', 'transformation', None}
         Select whether the regularization affects the components (H), the
         transformation (W), both or none of them.
-        Defaults to 'both'.
+        Default: None.
 
         .. versionadded:: 0.24
 
@@ -1243,7 +1243,7 @@ class NMF(TransformerMixin, BaseEstimator):
     @_deprecate_positional_args
     def __init__(self, n_components=None, *, init=None, solver='cd',
                  beta_loss='frobenius', tol=1e-4, max_iter=200,
-                 regularization='both', random_state=None, alpha=0.,
+                 regularization=None, random_state=None, alpha=0.,
                  l1_ratio=0., verbose=0, shuffle=False):
         self.n_components = n_components
         self.init = init
