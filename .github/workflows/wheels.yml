@@ -59,8 +59,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v2
 
-      # The setup file and the tests require the
-      # following dependencies to be installed
+      # The setup file and the tests need these dependencies to be installed
       - name: Install dependencies
         run: |
           python -m pip install numpy scipy cython
@@ -103,7 +102,7 @@ jobs:
 
       - name: Upload artifacts
         env:
-          # Secret variables need to mapped to environment variables explicitly
+          # Secret variables need to be mapped to environment variables explicitly
           SCIKIT_LEARN_NIGHTLY_UPLOAD_TOKEN: ${{ secrets.SCIKIT_LEARN_NIGHTLY_UPLOAD_TOKEN }}
           SCIKIT_LEARN_STAGING_UPLOAD_TOKEN: ${{ secrets.SCIKIT_LEARN_STAGING_UPLOAD_TOKEN }}
         # Force a replacement if the remote file already exists
@@ -117,3 +116,4 @@ jobs:
           fi
           conda install -q -y anaconda-client
           anaconda -t $ANACONDA_TOKEN upload --force -u $ANACONDA_ORG dist/*
+          echo "Index: https://pypi.anaconda.org/$ANACONDA_ORG/simple"
