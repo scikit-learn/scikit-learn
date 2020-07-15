@@ -442,7 +442,7 @@ def generate_min_dependency_substitutions(app):
 
     for package, (version, _) in dependent_packages.items():
         package = package.capitalize()
-        output.write(f'|{package}MinVersion| replace:: {version}')
+        output.write(f'.. |{package}MinVersion| replace:: {version}')
         output.write('\n')
 
     output = output.getvalue()
