@@ -54,12 +54,29 @@ Changelog
   :user:`Lucy Liu <lucyleeow>`.
 
 :mod:`sklearn.cluster`
-.........................
+......................
+
+- |Fix| Fixed a bug in :class:`cluster.MeanShift` with `bin_seeding=True`. When
+  the estimated bandwidth is 0, the behavior is equivalent to
+  `bin_seeding=False`.
+  :pr:`17742` by :user:`Jeremie du Boisberranger <jeremiedbb>`.
 
 - |Fix| Fixed a bug in :class:`cluster.KMeans` and
   :class:`cluster.MiniBatchKMeans` where the reported inertia was incorrectly
   weighted by the sample weights. :pr:`17848` by
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+- |API| :class:`cluster.MiniBatchKMeans` attributes, `counts_` and
+  `init_size_`, are deprecated and will be removed in 0.26. :pr:`17864` by
+  :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+:mod:`sklearn.covariance`
+.........................
+
+- |API| Deprecates `cv_alphas_` in favor of `cv_results['alphas']` and
+  `grid_scores_` in favor of split scores in `cv_results_` in
+  :class:`covariance.GraphicalLassoCV`. `cv_alphas_` and `grid_scores_` will be
+  removed in version 0.26. :pr:`16392` by `Thomas Fan`_.
 
 :mod:`sklearn.datasets`
 .......................
@@ -168,6 +185,15 @@ Changelog
 
 - |Enhancement| :class:`isotonic.IsotonicRegression` now accepts 2darray with 1 feature as
   input array. :pr:`17379` by :user:`Jiaxiang <fujiaxiang>`.
+
+:mod:`sklearn.manifold`
+.......................
+
+- |Enhancement| Add `square_distances` parameter to :class:`manifold.TSNE`,
+  which provides backward compatibility during deprecation of legacy squaring
+  behavior. Distances will be squared by default in 0.26, and this parameter
+  will be removed in 0.28. :pr:`17662` by
+  :user:`Joshua Newton <joshuacwnewton>`.
 
 :mod:`sklearn.metrics`
 ......................
@@ -282,6 +308,10 @@ Changelog
 - |Enhancement| Add `dtype` parameter to
   :class:`preprocessing.KBinsDiscretizer`.
   :pr:`16335` by :user:`Arthur Imbert <Henley13>`.
+
+- |Enhancement| Add ``clip`` parameter to :class:`preprocessing.MinMaxScaler`,
+  which clips the transformed values of test data to ``feature_range``.
+  :pr:`17833` by :user:`Yashika Sharma <yashika51>`.
 
 :mod:`sklearn.svm`
 ..................
