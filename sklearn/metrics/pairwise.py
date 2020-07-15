@@ -10,7 +10,6 @@
 # License: BSD 3 clause
 
 import itertools
-import sys
 import warnings
 from functools import partial
 
@@ -443,10 +442,10 @@ def _nan_fill_row_norm(r, fill_value: float = 0.):
     return np.sum(p)
 
 
-@njit(parallel=True)
+@njit
 def _nan_fill_dot_inner(v1, v2, fill_values):
     s = 0.
-    for k in prange(fill_values.shape[0]):
+    for k in range(fill_values.shape[0]):
         if np.isnan(v1[k]) and np.isnan(v2[k]):
             pass
         elif np.isnan(v1[k]) or np.isnan(v2[k]):
@@ -456,35 +455,17 @@ def _nan_fill_dot_inner(v1, v2, fill_values):
     return s
 
 
+@njit(parallel=True)
 def _nan_fill_dot(X, Y, fill_values: np.ndarray):
     if X.shape[1] != fill_values.shape[0]:
         raise ValueError('X and fill_values have incompatible shapes')
 
-    try:
-        import cupy as cp
-        nan_fill_dot_inner_kernel = cp.ReductionKernel(
-            'float32 x, float32 y, float32 v',
-            'float32 s',
-            '(isnan(x) && isnan(y)) ? 0 : (isnan(x) || isnan(y)) ? v : x * y',
-            'a + b',
-            's = a',
-            '0',
-            name='nan_fill_dot_inner_kernel'
-        )
-
-        X = cp.asarray(X, dtype='float32')
-        Y = cp.asarray(Y, dtype='float32')
-        fill_values = cp.asarray(fill_values, dtype='float32')
-        inner_func = lambda x, y, z: nan_fill_dot_inner_kernel(x, y, z).get()
-    except ModuleNotFoundError:
-        inner_func = _nan_fill_dot_inner
-
     p = np.zeros((X.shape[0], Y.shape[0],), dtype=np.float32)
-    for i in range(X.shape[0]):
+    for i in prange(X.shape[0]):
         v1 = X[i, :]
         for j in range(Y.shape[0]):
             v2 = Y[j, :]
-            p[i, j] = inner_func(v1, v2, fill_values)
+            p[i, j] = _nan_fill_dot_inner(v1, v2, fill_values)
 
     return p
 
