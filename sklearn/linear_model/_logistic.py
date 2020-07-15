@@ -1043,6 +1043,8 @@ class LogisticRegression(LinearClassifierMixin,
         only supported by the 'saga' solver. If 'none' (not supported by the
         liblinear solver), no regularization is applied.
 
+        |ControlParameter|
+
         .. versionadded:: 0.19
            l1 penalty with SAGA solver (allowing 'multinomial' + L1)
 
@@ -1051,17 +1053,25 @@ class LogisticRegression(LinearClassifierMixin,
         l2 penalty with liblinear solver. Prefer dual=False when
         n_samples > n_features.
 
+        |TuningParameter|
+
     tol : float, default=1e-4
         Tolerance for stopping criteria.
+
+        |TuningParameter|
 
     C : float, default=1.0
         Inverse of regularization strength; must be a positive float.
         Like in support vector machines, smaller values specify stronger
         regularization.
 
+        |TuningParameter|
+
     fit_intercept : bool, default=True
         Specifies if a constant (a.k.a. bias or intercept) should be
         added to the decision function.
+
+        |ControlParameter|
 
     intercept_scaling : float, default=1
         Useful only when the solver 'liblinear' is used
@@ -1076,6 +1086,8 @@ class LogisticRegression(LinearClassifierMixin,
         To lessen the effect of regularization on synthetic feature weight
         (and therefore on the intercept) intercept_scaling has to be increased.
 
+        |TuningParameter|
+
     class_weight : dict or 'balanced', default=None
         Weights associated with classes in the form ``{class_label: weight}``.
         If not given, all classes are supposed to have weight one.
@@ -1087,12 +1099,16 @@ class LogisticRegression(LinearClassifierMixin,
         Note that these weights will be multiplied with sample_weight (passed
         through the fit method) if sample_weight is specified.
 
+        |ControlParameter|
+
         .. versionadded:: 0.17
            *class_weight='balanced'*
 
     random_state : int, RandomState instance, default=None
         Used when ``solver`` == 'sag', 'saga' or 'liblinear' to shuffle the
         data. See :term:`Glossary <random_state>` for details.
+
+        |ControlParameter|
 
     solver : {'newton-cg', 'lbfgs', 'liblinear', 'sag', 'saga'}, \
             default='lbfgs'
@@ -1113,6 +1129,8 @@ class LogisticRegression(LinearClassifierMixin,
         features with approximately the same scale. You can
         preprocess the data with a scaler from sklearn.preprocessing.
 
+        |TuningParameter|
+
         .. versionadded:: 0.17
            Stochastic Average Gradient descent solver.
         .. versionadded:: 0.19
@@ -1123,6 +1141,8 @@ class LogisticRegression(LinearClassifierMixin,
     max_iter : int, default=100
         Maximum number of iterations taken for the solvers to converge.
 
+        |TuningParameter|
+
     multi_class : {'auto', 'ovr', 'multinomial'}, default='auto'
         If the option chosen is 'ovr', then a binary problem is fit for each
         label. For 'multinomial' the loss minimised is the multinomial loss fit
@@ -1130,6 +1150,8 @@ class LogisticRegression(LinearClassifierMixin,
         binary*. 'multinomial' is unavailable when solver='liblinear'.
         'auto' selects 'ovr' if the data is binary, or if solver='liblinear',
         and otherwise selects 'multinomial'.
+
+        |ControlParameter|
 
         .. versionadded:: 0.18
            Stochastic Average Gradient descent solver for 'multinomial' case.
@@ -1140,10 +1162,14 @@ class LogisticRegression(LinearClassifierMixin,
         For the liblinear and lbfgs solvers set verbose to any positive
         number for verbosity.
 
+        |ResourcesParameter|
+
     warm_start : bool, default=False
         When set to True, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
         Useless for liblinear solver. See :term:`the Glossary <warm_start>`.
+
+        |ResourcesParameter|
 
         .. versionadded:: 0.17
            *warm_start* to support *lbfgs*, *newton-cg*, *sag*, *saga* solvers.
@@ -1156,12 +1182,16 @@ class LogisticRegression(LinearClassifierMixin,
         context. ``-1`` means using all processors.
         See :term:`Glossary <n_jobs>` for more details.
 
+        |ResourcesParameter|
+
     l1_ratio : float, default=None
         The Elastic-Net mixing parameter, with ``0 <= l1_ratio <= 1``. Only
         used if ``penalty='elasticnet'``. Setting ``l1_ratio=0`` is equivalent
         to using ``penalty='l2'``, while setting ``l1_ratio=1`` is equivalent
         to using ``penalty='l1'``. For ``0 < l1_ratio <1``, the penalty is a
         combination of L1 and L2.
+
+        |TuningParameter|
 
     Attributes
     ----------

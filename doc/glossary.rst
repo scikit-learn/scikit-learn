@@ -198,6 +198,11 @@ General Concepts
         exceptional behaviours on the estimator using semantic :term:`estimator
         tags`.
 
+    control parameter
+        A :term:`parameter` that configures the logic of an estimator or
+        function, and should ordinarily be determined by the task rather
+        than be subject to :term:`tuning <tuning parameter>`.
+
     deprecation
         We use deprecation to slowly violate our :term:`backwards
         compatibility` assurances, usually to to:
@@ -601,6 +606,9 @@ General Concepts
         called.
 
         Common parameters are listed :ref:`below <glossary_parameters>`.
+        Parameters in API Reference may be labelled as being one of:
+        :term:`control parameter`, :term:`tuning parameter` and
+        :term:`resources parameter`.
 
     pairwise metric
     pairwise metrics
@@ -652,6 +660,10 @@ General Concepts
         an image of arbitrary size, a time series of arbitrary length, a set of
         vectors, etc. The purpose of a :term:`vectorizer` is to produce
         rectangular forms of such data.
+
+    resources parameter
+        A :term:`parameter` that does not affect the result of modelling, but
+        may help with resource utilization or tracking.
 
     sample
     samples
@@ -764,6 +776,12 @@ General Concepts
         model to unseen data.  Examples include :class:`manifold.TSNE`,
         :class:`cluster.AgglomerativeClustering` and
         :class:`neighbors.LocalOutlierFactor`.
+
+    tuning parameter
+        A :term:`parameter` that may need to be tuned (such as with :ref:`model
+        selection tools <grid_search>`) for the estimator to produce its best
+        model, but which does not affect the class or logic of the model as
+        a :term:`control parameter` might.
 
     unlabeled
     unlabeled data

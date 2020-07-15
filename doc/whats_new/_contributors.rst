@@ -6,12 +6,6 @@
     hyperlink all contributors' names, and ``:user:`` should now be preferred.
     It also defines other ReST substitutions.
 
-.. role:: raw-html(raw)
-   :format: html
-
-.. role:: raw-latex(raw)
-   :format: latex
-
 .. |MajorFeature| replace:: :raw-html:`<span class="badge badge-success">Major Feature</span>` :raw-latex:`{\small\sc [Major Feature]}`
 .. |Feature| replace:: :raw-html:`<span class="badge badge-success">Feature</span>` :raw-latex:`{\small\sc [Feature]}`
 .. |Efficiency| replace:: :raw-html:`<span class="badge badge-info">Efficiency</span>` :raw-latex:`{\small\sc [Efficiency]}`
