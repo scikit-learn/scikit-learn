@@ -159,8 +159,7 @@ class KNeighborsClassifier(KNeighborsMixin,
         self.weights = _check_weights(weights)
 
     def fit(self, X, y):
-        """Fit the k-nearest neighbors classifier using `X` as training data
-        and `y` as target values.
+        """Fit the k-nearest neighbors classifier from the training dataset.
 
         Parameters
         ----------
@@ -422,8 +421,7 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin,
         self.outlier_label = outlier_label
 
     def fit(self, X, y):
-        """Fit the radius neighbors classifier using `X` as training data and
-        `y` as target values.
+        """Fit the radius neighbors classifier from the training dataset.
 
         Parameters
         ----------

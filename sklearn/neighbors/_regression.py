@@ -161,8 +161,7 @@ class KNeighborsRegressor(KNeighborsMixin,
         return self.metric == 'precomputed'
 
     def fit(self, X, y):
-        """Fit the k-nearest neighbors regressor using `X` as training data
-        and `y` as target values.
+        """Fit the k-nearest neighbors regressor from the training dataset.
 
         Parameters
         ----------
@@ -350,8 +349,7 @@ class RadiusNeighborsRegressor(RadiusNeighborsMixin,
         self.weights = _check_weights(weights)
 
     def fit(self, X, y):
-        """Fit the radius neighbors regressor using `X` as training data and
-        `y` as target values.
+        """Fit the radius neighbors regressor from the training dataset.
 
         Parameters
         ----------

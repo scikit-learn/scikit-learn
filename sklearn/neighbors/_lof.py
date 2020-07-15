@@ -246,7 +246,7 @@ class LocalOutlierFactor(KNeighborsMixin,
         return self.fit(X)._predict()
 
     def fit(self, X, y=None):
-        """Fit the local outlier factor detector using `X` as training data.
+        """Fit the local outlier factor detector from the training dataset.
 
         Parameters
         ----------

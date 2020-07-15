@@ -123,7 +123,7 @@ class NearestNeighbors(KNeighborsMixin,
               metric_params=metric_params, n_jobs=n_jobs)
 
     def fit(self, X, y=None):
-        """Fit the nearest neighbors estimator using `X` as training data.
+        """Fit the nearest neighbors estimator from the training dataset.
 
         Parameters
         ----------

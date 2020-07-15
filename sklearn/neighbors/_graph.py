@@ -311,7 +311,7 @@ class KNeighborsTransformer(KNeighborsMixin,
         self.mode = mode
 
     def fit(self, X, y=None):
-        """Fit the k-nearest neighbors transformer using `X` as training data.
+        """Fit the k-nearest neighbors transformer from the training dataset.
 
         Parameters
         ----------
@@ -486,7 +486,7 @@ class RadiusNeighborsTransformer(RadiusNeighborsMixin,
         self.mode = mode
 
     def fit(self, X, y=None):
-        """Fit the radius neighbors transformer using `X` as training data.
+        """Fit the radius neighbors transformer from the training dataset.
 
         Parameters
         ----------
