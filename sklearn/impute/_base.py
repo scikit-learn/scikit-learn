@@ -507,13 +507,13 @@ class SimpleImputer(_BaseImputer):
         n_features_missing = len(self.indicator_.features_)
         non_empty_feature_count = X.shape[1] - n_features_missing
         array_imputed = X[:, :non_empty_feature_count].copy()
-        missing_mask = X[:, non_empty_feature_count:].astype(np.bool)
+        missing_mask = X[:, non_empty_feature_count:].astype(bool)
 
         n_features_original = len(self.statistics_)
         shape_original = (X.shape[0], n_features_original)
         X_original = np.zeros(shape_original)
         X_original[:, self.indicator_.features_] = missing_mask
-        full_mask = X_original.astype(np.bool)
+        full_mask = X_original.astype(bool)
 
         imputed_idx, original_idx = 0, 0
         while imputed_idx < len(array_imputed.T):

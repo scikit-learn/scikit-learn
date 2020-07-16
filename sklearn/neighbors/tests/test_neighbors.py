@@ -95,19 +95,24 @@ def test_unsupervised_kneighbors(n_samples=20, n_features=5,
             assert_array_almost_equal(results[i][1], results[i + 1][1])
 
 
-def test_unsupervised_inputs():
-    # test the types of valid input into NearestNeighbors
-    X = rng.random_sample((10, 3))
+@pytest.mark.parametrize("NearestNeighbors", [neighbors.KNeighborsClassifier,
+                                              neighbors.KNeighborsRegressor,
+                                              neighbors.NearestNeighbors])
+def test_unsupervised_inputs(NearestNeighbors):
+    # Test unsupervised inputs for neighbors estimators
 
+    X = rng.random_sample((10, 3))
+    y = rng.randint(3, size=10)
     nbrs_fid = neighbors.NearestNeighbors(n_neighbors=1)
     nbrs_fid.fit(X)
 
     dist1, ind1 = nbrs_fid.kneighbors(X)
 
-    nbrs = neighbors.NearestNeighbors(n_neighbors=1)
+    nbrs = NearestNeighbors(n_neighbors=1)
 
-    for input in (nbrs_fid, neighbors.BallTree(X), neighbors.KDTree(X)):
-        nbrs.fit(input)
+    for data in (nbrs_fid, neighbors.BallTree(X), neighbors.KDTree(X)):
+        nbrs.fit(data, y)
+
         dist2, ind2 = nbrs.kneighbors(X)
 
         assert_array_almost_equal(dist1, dist2)

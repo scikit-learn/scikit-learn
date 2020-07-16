@@ -51,9 +51,7 @@ pip install --upgrade pip setuptools
 echo "Installing numpy and scipy master wheels"
 dev_anaconda_url=https://pypi.anaconda.org/scipy-wheels-nightly/simple
 pip install --pre --upgrade --timeout=60 --extra-index $dev_anaconda_url numpy scipy pandas
-# Cython nightly build should be still fetched from the Rackspace container
-dev_rackspace_url=https://7933911d6844c6c53a7d-47bd50c35cd79bd838daf386af554a83.ssl.cf2.rackcdn.com
-pip install --pre --upgrade --timeout=60 -f $dev_rackspace_url cython
+pip install --pre cython
 echo "Installing joblib master"
 pip install https://github.com/joblib/joblib/archive/master.zip
 echo "Installing pillow master"
@@ -65,6 +63,25 @@ pip install $(get_dep pytest $PYTEST_VERSION) pytest-cov
 python --version
 python -c "import numpy; print('numpy %s' % numpy.__version__)"
 python -c "import scipy; print('scipy %s' % scipy.__version__)"
+
+if [[ "$BUILD_WITH_ICC" == "true" ]]; then
+    wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
+    sudo apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
+    rm GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
+    sudo add-apt-repository "deb https://apt.repos.intel.com/oneapi all main"
+    sudo apt-get update
+    sudo apt-get install intel-oneapi-icc
+    source /opt/intel/inteloneapi/setvars.sh
+
+    # The build_clib command is implicitly used to build libsvm-skl. To compile
+    # with a different compiler we also need to specify the compiler for this
+    # command.
+    python setup.py build_ext --compiler=intelem -i -j 3 build_clib --compiler=intelem
+else
+    # Use setup.py instead of `pip install -e .` to be able to pass the -j flag
+    # to speed-up the building multicore CI machines.
+    python setup.py build_ext --inplace -j 3
+fi
 
 python setup.py develop
 
