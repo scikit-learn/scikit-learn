@@ -17,6 +17,12 @@ Changelog
   :class:`ensemble.StackingRegressor` compatibility with estimators that
   do not define `n_features_in_`. :pr:`17357` by `Thomas Fan`_.
 
+:mod:`sklearn.linear_model`
+...........................
+
+- |Fix| :func:`linear_model.lars_path` does not overwrite `X` when
+  `X_copy=True` and `Gram='auto'`. :pr:`17914` by `Thomas Fan`_.
+
 .. _changes_0_23_1:
 
 Version 0.23.1

@@ -176,6 +176,15 @@ class OneVsRestClassifier(MultiOutputMixin, ClassifierMixin,
     estimators_ : list of `n_classes` estimators
         Estimators used for predictions.
 
+    coef_ : ndarray of shape (1, n_features) or (n_classes, n_features)
+        Coefficient of the features in the decision function. This attribute
+        exists only if the ``estimators_`` defines ``coef_``.
+
+    intercept_ : ndarray of shape (1, 1) or (n_classes, 1)
+        If ``y`` is binary, the shape is ``(1, 1)`` else ``(n_classes, 1)``
+        This attribute exists only if the ``estimators_`` defines
+        ``intercept_``.
+
     classes_ : array, shape = [`n_classes`]
         Class labels.
 
