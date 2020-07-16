@@ -1741,7 +1741,7 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         below). This flag is only compatible with ``cv=None`` (i.e. using
         Generalized Cross-Validation).
 
-    alpha_per_target : boolean, default=False
+    alpha_per_target : bool, default=False
         Flag indicating whether to optimize the alpha value (picked from the
         `alphas` parameter list) for each target separately. When set to
         `True`, after fitting, the `alpha_` attribute will contain a value for
