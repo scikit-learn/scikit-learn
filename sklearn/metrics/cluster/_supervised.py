@@ -44,7 +44,7 @@ def check_clusterings(labels_true, labels_pred):
     labels_pred : array-like of shape (n_samples,)
         The predicted labels.
     """
-    if (type_of_target(labels_true) == "continous" or type_of_target(labels_pred)=="continous"):
+    if (type_of_target(labels_true) == "continuous" or type_of_target(labels_pred)=="continuous"):
         raise ValueError('Classification metrics expects discrete values received %r for label, and %r for target' % (labels_pred.dtype.type, labels_true.dtype.type))
 
     labels_true = check_array(
