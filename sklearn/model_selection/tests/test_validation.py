@@ -226,9 +226,9 @@ class MockClassifier(ClassifierMixin, BaseEstimator):
 # check_consistent_length
 X = np.ones((15, 2))
 X_sparse = coo_matrix(X)
+# The number of samples per class should to be greater or equal than
+# the number of splits for stratified cross-validation routines
 y = np.array([0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4])
-# The number of samples per class needs to be > n_splits,
-# for StratifiedKFold(n_splits=3)
 y2 = np.array([1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3])
 P_sparse = coo_matrix(np.eye(5))
 

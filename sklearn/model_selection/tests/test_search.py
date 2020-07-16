@@ -112,6 +112,8 @@ class LinearSVCNoScore(LinearSVC):
 
 
 X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1], [-1, 1], [-2, 1]])
+# The number of samples per class should to be greater or equal than
+# the number of splits for stratified cross-validation routines
 y = np.array([1, 1, 1, 2, 2, 2])
 
 
