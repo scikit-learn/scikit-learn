@@ -651,9 +651,9 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
     coef_ : ndarray of shape (n_features,) or (n_targets, n_features)
         parameter vector (w in the cost function formula)
 
-    sparse_coef_ : sparse matrix of shape (n_features, 1) or \
-            (n_targets, n_features)
-        ``sparse_coef_`` is a readonly property derived from ``coef_``
+    sparse_coef_ : sparse matrix of shape (n_features,) or \
+            (n_tasks, n_features)
+        sparse representation of the `coef_`.
 
     intercept_ : float or ndarray of shape (n_targets,)
         independent term in decision function.
@@ -1836,9 +1836,9 @@ class MultiTaskElasticNet(Lasso):
     eps_ : float
         The tolerance scaled scaled by the variance of the target `y`.
 
-    sparse_coef_ : sparse matrix of shape (n_features, 1) or \
-            (n_targets, n_features)
-        ``sparse_coef_`` is a readonly property derived from ``coef_``
+    sparse_coef_ : sparse matrix of shape (n_features,) or \
+            (n_tasks, n_features)
+        sparse representation of the `coef_`.
 
     Examples
     --------
@@ -2035,9 +2035,9 @@ class MultiTaskLasso(MultiTaskElasticNet):
     eps_ : float
         The tolerance scaled scaled by the variance of the target `y`.
 
-    sparse_coef_ : sparse matrix of shape (n_features, 1) or \
-            (n_targets, n_features)
-        ``sparse_coef_`` is a readonly property derived from ``coef_``
+    sparse_coef_ : sparse matrix of shape (n_features,) or \
+            (n_tasks, n_features)
+        sparse representation of the `coef_`.
 
     Examples
     --------
