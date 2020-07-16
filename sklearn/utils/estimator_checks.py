@@ -2591,12 +2591,20 @@ def check_parameters_default_constructible(name, Estimator):
             assert init_param.default != init_param.empty, (
                 "parameter %s for %s has no default value"
                 % (init_param.name, type(estimator).__name__))
-            if type(init_param.default) is type:
-                assert init_param.default in [np.float64, np.int64]
-            else:
-                assert (type(init_param.default) in
-                        [str, int, float, bool, tuple, type(None),
-                         np.float64, types.FunctionType, joblib.Memory])
+            allowed_types = {
+                str,
+                int,
+                float,
+                bool,
+                tuple,
+                type(None),
+                type,
+                types.FunctionType,
+                joblib.Memory,
+            }
+            # Any numpy numeric such as np.int32.
+            allowed_types.update(np.core.numerictypes.allTypes.values())
+            assert type(init_param.default) in allowed_types
             if init_param.name not in params.keys():
                 # deprecated parameter, not in get_params
                 assert init_param.default is None
