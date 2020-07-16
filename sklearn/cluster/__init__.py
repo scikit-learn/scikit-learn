@@ -9,7 +9,7 @@ from ._mean_shift import (mean_shift, MeanShift,
 from ._affinity_propagation import affinity_propagation, AffinityPropagation
 from ._agglomerative import (ward_tree, AgglomerativeClustering,
                              linkage_tree, FeatureAgglomeration)
-from ._kmeans import k_means, KMeans, MiniBatchKMeans
+from ._kmeans import k_means, KMeans, MiniBatchKMeans, kmeans_plusplus
 from ._dbscan import dbscan, DBSCAN
 from ._optics import (OPTICS, cluster_optics_dbscan, compute_optics_graph,
                       cluster_optics_xi)
@@ -34,6 +34,7 @@ __all__ = ['AffinityPropagation',
            'estimate_bandwidth',
            'get_bin_seeds',
            'k_means',
+           'kmeans_plusplus',
            'linkage_tree',
            'mean_shift',
            'spectral_clustering',

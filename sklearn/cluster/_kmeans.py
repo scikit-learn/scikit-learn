@@ -70,6 +70,15 @@ def _k_init(X, n_clusters, x_squared_norms, random_state, n_local_trials=None):
         Set to None to make the number of trials depend logarithmically
         on the number of seeds (2+log(k)); this is the default.
 
+    Returns
+    -------
+    centers : array, shape (n_clusters, n_features)
+        The inital centers for k-means.
+
+    indices : list, length (n_clusters)
+        The index location of the chosen centers in the data array X. For a
+        given index and center, X[index] = center.
+
     Notes
     -----
     Selects initial cluster centers for k-mean clustering in a smart way
@@ -93,12 +102,14 @@ def _k_init(X, n_clusters, x_squared_norms, random_state, n_local_trials=None):
         # that it helped.
         n_local_trials = 2 + int(np.log(n_clusters))
 
-    # Pick first center randomly
+    # Pick first center randomly and track index of point
     center_id = random_state.randint(n_samples)
+    indices = np.empty(n_clusters)
     if sp.issparse(X):
         centers[0] = X[center_id].toarray()
     else:
         centers[0] = X[center_id]
+    indices[0] = center_id
 
     # Initialize list of closest distances and calculate current potential
     closest_dist_sq = euclidean_distances(
@@ -137,8 +148,10 @@ def _k_init(X, n_clusters, x_squared_norms, random_state, n_local_trials=None):
             centers[c] = X[best_candidate].toarray()
         else:
             centers[c] = X[best_candidate]
+        indices[c] = best_candidate
 
-    return centers
+    indices = [int(x) for x in indices.tolist()]
+    return centers, indices
 
 
 ###############################################################################
@@ -703,8 +716,8 @@ def _init_centroids(X, n_clusters=8, init="k-means++", random_state=None,
             .format(n_samples, n_clusters))
 
     if isinstance(init, str) and init == 'k-means++':
-        centers = _k_init(X, n_clusters, random_state=random_state,
-                          x_squared_norms=x_squared_norms)
+        centers, _ = _k_init(X, n_clusters, random_state=random_state,
+                             x_squared_norms=x_squared_norms)
     elif isinstance(init, str) and init == 'random':
         seeds = random_state.permutation(n_samples)[:n_clusters]
         centers = X[seeds]
@@ -1944,3 +1957,37 @@ class MiniBatchKMeans(KMeans):
                 'zero sample_weight is not equivalent to removing samples',
             }
         }
+
+
+def kmeans_plusplus(X, n_clusters, x_squared_norms=None,
+                    random_state=None, n_local_trials=None):
+    """Add some documentation here
+
+    """
+
+    # Check parameters
+    if x_squared_norms is None:
+        x_squared_norms = row_norms(X, squared=True)
+    elif len(x_squared_norms) != X.shape[0]:
+        warnings.warn(
+            "x_squared_norms should be of length n_samples. "
+            "computing default norms"
+                     )
+        x_squared_norms = row_norms(X, squared=True)
+
+    random_state = check_random_state(random_state)
+
+    # Check data
+    check_array(X, accept_sparse='csr',
+                dtype=[np.float64, np.float32], order='C')
+
+    # Call private k-means++
+    centers, indices = _k_init(X, n_clusters, x_squared_norms,
+                               random_state, n_local_trials)
+
+    if sp.issparse(centers):
+        centers = centers.toarray()
+
+    _validate_center_shape(X, n_clusters, centers)
+
+    return centers, indices
