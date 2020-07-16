@@ -187,7 +187,7 @@ Changelog
   input array. :pr:`17379` by :user:`Jiaxiang <fujiaxiang>`.
 
 :mod:`sklearn.linear_model`
-.......................
+..........................
 
 - |Enhancement| :class:`linear_model.RidgeCV` now supports finding an optimal
   regularization value `alpha` for each target separately by setting
