@@ -997,7 +997,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
 
         # This downcast to bool is to prevent upcasting when working with
         # float32 data
-        y = self._label_binarizer.transform(y).astype(np.bool)
+        y = self._label_binarizer.transform(y).astype(bool)
         return X, y
 
     def predict(self, X):

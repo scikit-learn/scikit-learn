@@ -477,7 +477,6 @@ def lorenz_curve(y_true, y_pred, exposure):
 
     # order samples by increasing predicted risk:
     ranking = np.argsort(y_pred)
-    ranked_exposure = exposure[ranking]
     ranked_frequencies = y_true[ranking]
     ranked_exposure = exposure[ranking]
     cumulated_claims = np.cumsum(ranked_frequencies * ranked_exposure)

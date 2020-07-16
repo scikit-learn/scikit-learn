@@ -411,12 +411,6 @@ def _lars_path_solver(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
         Gram = None
         if X is None:
             raise ValueError('X and Gram cannot both be unspecified.')
-        if copy_X:
-            # force copy. setting the array to be fortran-ordered
-            # speeds up the calculation of the (partial) Gram matrix
-            # and allows to easily swap columns
-            X = X.copy('F')
-
     elif isinstance(Gram, str) and Gram == 'auto' or Gram is True:
         if Gram is True or X.shape[0] > X.shape[1]:
             Gram = np.dot(X.T, X)
@@ -432,6 +426,13 @@ def _lars_path_solver(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
         if Gram.shape != (n_features, n_features):
             raise ValueError('The shapes of the inputs Gram and Xy'
                              ' do not match.')
+
+    if copy_X and X is not None and Gram is None:
+        # force copy. setting the array to be fortran-ordered
+        # speeds up the calculation of the (partial) Gram matrix
+        # and allows to easily swap columns
+        X = X.copy('F')
+
     max_features = min(max_iter, n_features)
 
     if return_path:
@@ -1581,6 +1582,9 @@ class LassoLarsCV(LarsCV):
 
     n_iter_ : array-like or int
         the number of iterations run by Lars with the optimal alpha.
+
+    active_ : list of int
+        Indices of active variables at the end of the path.
 
     Examples
     --------
