@@ -787,9 +787,11 @@ CLASSIFICATION_SCORERS_PROPERTY = dict(
                 "multi_class": ("ovr", "ovo"),
                 "average": ("macro", "weighted")
             },
-            "multilabel-indicator": {
-                "average": ("micro", "macro", "samples", "weighted", None)
-            },
+            # FIXME: it seems that we don't support which is not clear from the
+            # documentation
+            # "multilabel-indicator": {
+            #     "average": ("micro", "macro", "samples", "weighted", None)
+            # },
         },
     ),
     balanced_accuracy=ScorerProperty(
