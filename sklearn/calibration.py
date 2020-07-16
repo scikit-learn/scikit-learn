@@ -35,7 +35,7 @@ from .utils.validation import _deprecate_positional_args
 
 def _fit_calibrated_classifer(estimator, X, y, train, test, supports_sw,
                           method, classes, sample_weight=None):
-    """Calibrate estimator for a given dataset split.
+    """Fit calibrated classifier for a given dataset split.
 
     Returns
     -------
