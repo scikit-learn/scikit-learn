@@ -1212,7 +1212,7 @@ def choi_kernel(X: np.ndarray, Y: np.ndarray=None, nan_stdev_multiplier: float =
     if gamma is None:
         gamma = 1.0 / X.shape[1]
 
-    col_fills = np.apply_along_axis(lambda col: np.std(col[~np.isnan(col)]), 0, Y)
+    col_fills = np.apply_along_axis(lambda col: np.var(col[~np.isnan(col)]), 0, Y)
     col_fills = np.nan_to_num(col_fills * nan_stdev_multiplier)
 
     K = nan_filled_euclidean_distances(X, col_fills, Y=Y, squared=True)
