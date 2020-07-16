@@ -1446,8 +1446,8 @@ def _precompute_metric_params(X, Y, metric=None, **kwds):
     """Precompute data-derived metric parameters if not provided
     """
     if metric == "seuclidean" and 'V' not in kwds:
-        # There is a bug in scipy < 1.5 that will cause a crash if 
-        # X.dtype != np.double (float64). See issue #15730
+        # There is a bug in scipy < 1.5 that will cause a crash if
+        # X.dtype != np.double (float64). See PR #15730
         dtype = np.float64 if sp_version < parse_version('1.5') else None
         if X is Y:
             V = np.var(X, axis=0, ddof=1, dtype=dtype)
