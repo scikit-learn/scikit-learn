@@ -34,7 +34,7 @@ from .utils.validation import _deprecate_positional_args
 
 
 def _fit_calibrated_classifer(estimator, X, y, train, test, supports_sw,
-                          method, classes, sample_weight=None):
+                              method, classes, sample_weight=None):
     """Fit calibrated classifier for a given dataset split.
 
     Returns
@@ -304,14 +304,14 @@ class CalibratedClassifierCV(ClassifierMixin,
 
             self.calibrated_classifiers_ = parallel(delayed(
                 _fit_calibrated_classifer)(clone(base_estimator),
-                                       X, y,
-                                       train=train, test=test,
-                                       method=self.method,
-                                       classes=self.classes_,
-                                       supports_sw=supports_sw,
-                                       sample_weight=sample_weight)
-                           for train, test
-                           in cv.split(X, y))
+                                           X, y,
+                                           train=train, test=test,
+                                           method=self.method,
+                                           classes=self.classes_,
+                                           supports_sw=supports_sw,
+                                           sample_weight=sample_weight)
+                                                    for train, test
+                                                    in cv.split(X, y))
 
         return self
 
