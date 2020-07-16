@@ -38,7 +38,10 @@ if [[ "$DISTRIB" == "conda" ]]; then
     if [[ "$UNAMESTR" == "Darwin" ]]; then
         if [[ "$SKLEARN_TEST_NO_OPENMP" != "true" ]]; then
             # on macOS, install an OpenMP-enabled clang/llvm from conda-forge.
-            TO_INSTALL="$TO_INSTALL conda-forge::compilers>=1.0.4 \
+            # TODO: Remove !=1.1.0 when the following is fixed:
+            # sklearn/svm/_libsvm.cpython-38-darwin.so,
+            # 2): Symbol not found: _svm_check_parameter error
+            TO_INSTALL="$TO_INSTALL conda-forge::compilers>=1.0.4,!=1.1.0 \
                         conda-forge::llvm-openmp"
         fi
     fi
@@ -87,9 +90,7 @@ elif [[ "$DISTRIB" == "conda-pip-scipy-dev" ]]; then
     echo "Installing numpy and scipy master wheels"
     dev_anaconda_url=https://pypi.anaconda.org/scipy-wheels-nightly/simple
     pip install --pre --upgrade --timeout=60 --extra-index $dev_anaconda_url numpy scipy pandas
-    # Cython nightly build should be still fetched from the Rackspace container
-    dev_rackspace_url=https://7933911d6844c6c53a7d-47bd50c35cd79bd838daf386af554a83.ssl.cf2.rackcdn.com
-    pip install --pre --upgrade --timeout=60 -f $dev_rackspace_url cython
+    pip install --pre cython
     echo "Installing joblib master"
     pip install https://github.com/joblib/joblib/archive/master.zip
     echo "Installing pillow master"
