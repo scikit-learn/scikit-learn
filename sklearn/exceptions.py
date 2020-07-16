@@ -153,3 +153,13 @@ class PositiveSpectrumWarning(UserWarning):
 
     .. versionadded:: 0.22
     """
+
+
+class TooManyComponentsWarning(UserWarning):
+    """Warning raised when the n_components >= n_features for randomized TruncatedSVD
+
+    This warning is raised by TruncatedSVD when algorithm == "randomized" and
+    n_components >= n_features.  In this case, n_components is reset to be n_features - 1.
+
+    .. versionadded:: 0.23
+    """
