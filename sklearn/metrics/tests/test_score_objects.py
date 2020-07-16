@@ -25,7 +25,6 @@ from sklearn.metrics._scorer import (_PredictScorer, _passthrough_scorer,
                                      _MultimetricScorer,
                                      _check_multimetric_scoring)
 from sklearn.metrics import accuracy_score
-from sklearn.metrics import make_scorer, get_scorer, SCORERS
 from sklearn.metrics import (
     get_classification_scorers,
     get_regression_scorers,
@@ -42,7 +41,6 @@ from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.datasets import make_blobs
 from sklearn.datasets import make_classification, make_regression
 from sklearn.datasets import make_multilabel_classification
-from sklearn.datasets import load_breast_cancer
 from sklearn.datasets import load_diabetes
 from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.model_selection import GridSearchCV
