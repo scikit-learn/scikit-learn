@@ -1559,7 +1559,7 @@ class _RidgeGCV(LinearModel):
                     best_coef[:, to_update] = c[:, to_update]
                     best_score[to_update] = alpha_score[to_update]
                     best_alpha[to_update] = alpha
-                else:
+                elif alpha_score > best_score:
                     best_coef, best_score, best_alpha = c, alpha_score, alpha
 
         self.alpha_ = best_alpha
