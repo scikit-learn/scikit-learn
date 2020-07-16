@@ -25,7 +25,13 @@ from sklearn.metrics._scorer import (_PredictScorer, _passthrough_scorer,
                                      _MultimetricScorer,
                                      _check_multimetric_scoring)
 from sklearn.metrics import accuracy_score
-from sklearn.metrics import make_scorer, get_scorer, SCORERS
+from sklearn.metrics import average_precision_score
+from sklearn.metrics import (
+    get_applicable_scorers,
+    get_scorer,
+    make_scorer,
+    SCORERS
+)
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import LinearSVC
 from sklearn.pipeline import make_pipeline
@@ -35,6 +41,7 @@ from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.datasets import make_blobs
 from sklearn.datasets import make_classification, make_regression
 from sklearn.datasets import make_multilabel_classification
+from sklearn.datasets import load_breast_cancer
 from sklearn.datasets import load_diabetes
 from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.model_selection import GridSearchCV
@@ -206,30 +213,10 @@ def check_scoring_validator_for_single_metric_usecases(scoring_validator):
         assert scorer is None
 
 
-def check_multimetric_scoring_single_metric_wrapper(*args, **kwargs):
-    # This wraps the _check_multimetric_scoring to take in
-    # single metric scoring parameter so we can run the tests
-    # that we will run for check_scoring, for check_multimetric_scoring
-    # too for single-metric usecases
-
-    scorers, is_multi = _check_multimetric_scoring(*args, **kwargs)
-    # For all single metric use cases, it should register as not multimetric
-    assert not is_multi
-    if args[0] is not None:
-        assert scorers is not None
-        names, scorers = zip(*scorers.items())
-        assert len(scorers) == 1
-        assert names[0] == 'score'
-        scorers = scorers[0]
-    return scorers
-
-
 def test_check_scoring_and_check_multimetric_scoring():
     check_scoring_validator_for_single_metric_usecases(check_scoring)
     # To make sure the check_scoring is correctly applied to the constituent
     # scorers
-    check_scoring_validator_for_single_metric_usecases(
-        check_multimetric_scoring_single_metric_wrapper)
 
     # For multiple metric use cases
     # Make sure it works for the valid cases
@@ -241,8 +228,7 @@ def test_check_scoring_and_check_multimetric_scoring():
         estimator = LinearSVC(random_state=0)
         estimator.fit([[1], [2], [3]], [1, 1, 0])
 
-        scorers, is_multi = _check_multimetric_scoring(estimator, scoring)
-        assert is_multi
+        scorers = _check_multimetric_scoring(estimator, scoring)
         assert isinstance(scorers, dict)
         assert sorted(scorers.keys()) == sorted(list(scoring))
         assert all([isinstance(scorer, _PredictScorer)
@@ -622,7 +608,7 @@ def test_multimetric_scorer_calls_method_once(scorers, expected_predict_count,
     mock_est.predict_proba = predict_proba_func
     mock_est.decision_function = decision_function_func
 
-    scorer_dict, _ = _check_multimetric_scoring(LogisticRegression(), scorers)
+    scorer_dict = _check_multimetric_scoring(LogisticRegression(), scorers)
     multi_scorer = _MultimetricScorer(**scorer_dict)
     results = multi_scorer(mock_est, X, y)
 
@@ -649,7 +635,7 @@ def test_multimetric_scorer_calls_method_once_classifier_no_decision():
     clf.fit(X, y)
 
     scorers = ['roc_auc', 'neg_log_loss']
-    scorer_dict, _ = _check_multimetric_scoring(clf, scorers)
+    scorer_dict = _check_multimetric_scoring(clf, scorers)
     scorer = _MultimetricScorer(**scorer_dict)
     scorer(clf, X, y)
 
@@ -672,7 +658,7 @@ def test_multimetric_scorer_calls_method_once_regressor_threshold():
     clf.fit(X, y)
 
     scorers = {'neg_mse': 'neg_mean_squared_error', 'r2': 'roc_auc'}
-    scorer_dict, _ = _check_multimetric_scoring(clf, scorers)
+    scorer_dict = _check_multimetric_scoring(clf, scorers)
     scorer = _MultimetricScorer(**scorer_dict)
     scorer(clf, X, y)
 
@@ -690,7 +676,7 @@ def test_multimetric_scorer_sanity_check():
     clf = DecisionTreeClassifier()
     clf.fit(X, y)
 
-    scorer_dict, _ = _check_multimetric_scoring(clf, scorers)
+    scorer_dict = _check_multimetric_scoring(clf, scorers)
     multi_scorer = _MultimetricScorer(**scorer_dict)
 
     result = multi_scorer(clf, X, y)
@@ -750,3 +736,88 @@ def test_multiclass_roc_no_proba_scorer_errors(scorer_name):
     msg = "'Perceptron' object has no attribute 'predict_proba'"
     with pytest.raises(AttributeError, match=msg):
         scorer(lr, X, y)
+
+
+def _parametrize_scorers_from_target(estimator_data_ids):
+    check_scorers, check_scorers_ids = zip(*[
+        ((Estimator, X, np.abs(y) - np.min(y), scorer),
+         f"{scorer_name}-{problem_id}")
+        for problem_id, Estimator, X, y in estimator_data_ids
+        for scorer_name, scorer in get_applicable_scorers(y).items()
+    ])
+
+    return pytest.mark.parametrize(
+        "Estimator, X, y, scorer", check_scorers, ids=check_scorers_ids,
+    )
+
+
+@pytest.mark.filterwarnings(
+    "ignore::sklearn.exceptions.UndefinedMetricWarning"
+)
+@_parametrize_scorers_from_target(
+    [("binary", LogisticRegression, *make_classification(n_classes=2)),
+     ("multiclass", LogisticRegression,
+      *make_classification(n_classes=3, n_clusters_per_class=1)),
+     ("multilabel", DecisionTreeClassifier, *make_multilabel_classification()),
+     ("continuous", Ridge, *make_regression(n_targets=1)),
+     ("continuous-multioutput", Ridge, *make_regression(n_targets=2))]
+)
+def test_get_applicable_scorers_smoke_test(Estimator, X, y, scorer):
+    # smoke test to check that we can use the score on the registered problem
+    estimator = Estimator().fit(X, y)
+    scorer(estimator, X, y)
+
+
+@pytest.mark.filterwarnings(
+    "ignore::sklearn.exceptions.UndefinedMetricWarning"
+)
+@pytest.mark.parametrize(
+    "Estimator, X, y",
+    [(LogisticRegression, *make_classification(n_classes=2)),
+     (LogisticRegression,
+      *make_classification(n_classes=3, n_clusters_per_class=1)),
+     (DecisionTreeClassifier, *make_multilabel_classification()),
+     (Ridge, *make_regression(n_targets=1)),
+     (Ridge, *make_regression(n_targets=2))]
+)
+def test_get_applicable_scorers_with_grid_search_smoke_test(Estimator, X, y):
+    # smoke test to check that scorers can be used directly inside a
+    # grid-search
+    if issubclass(Estimator, LogisticRegression):
+        param_grid = {"C": [0.1, 1]}
+    elif issubclass(Estimator, DecisionTreeClassifier):
+        param_grid = {"max_depth": [3, 5]}
+    elif issubclass(Estimator, Ridge):
+        y = np.abs(y) - np.min(y)
+        param_grid = {"alpha": [1, 10]}
+
+    scorers = get_applicable_scorers(y)
+    estimator = GridSearchCV(
+        Estimator(), param_grid=param_grid, scoring=scorers, n_jobs=-1,
+        refit=list(scorers.keys())[0],
+    )
+    estimator.fit(X, y)
+
+
+def test_get_applicable_scorers_passing_scoring_params():
+    # check that we can pass scoring parameters when getting the score
+    breast_cancer = load_breast_cancer()
+    X = breast_cancer.data
+    y = breast_cancer.target_names[breast_cancer.target].astype("object")
+
+    scorers = get_applicable_scorers(y, pos_label="malignant")
+    average_precision_scorer = scorers["average_precision"]
+    assert "pos_label" in average_precision_scorer._kwargs
+    assert average_precision_scorer._kwargs["pos_label"] == "malignant"
+
+    estimator = GridSearchCV(
+        DecisionTreeClassifier(), param_grid={"max_depth": [3, 5]},
+        scoring=average_precision_scorer,
+    )
+    estimator.fit(X, y)
+
+    # check that if we don't provide any pos_label, the grid-search will raise
+    # an error
+    with pytest.raises(ValueError, match="pos_label=1 is invalid"):
+        estimator.set_params(scoring=make_scorer(average_precision_score))
+        estimator.fit(X, y)

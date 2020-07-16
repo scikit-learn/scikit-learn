@@ -74,6 +74,7 @@ from ._regression import mean_gamma_deviance
 from ._scorer import check_scoring
 from ._scorer import make_scorer
 from ._scorer import SCORERS
+from ._scorer import get_applicable_scorers
 from ._scorer import get_scorer
 
 from ._plot.roc_curve import plot_roc_curve
@@ -109,6 +110,7 @@ __all__ = [
     'f1_score',
     'fbeta_score',
     'fowlkes_mallows_score',
+    'get_applicable_scorers',
     'get_scorer',
     'hamming_loss',
     'hinge_loss',
