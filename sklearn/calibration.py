@@ -303,7 +303,7 @@ class CalibratedClassifierCV(ClassifierMixin,
                                 pre_dispatch=self.pre_dispatch)
 
             self.calibrated_classifiers_ = parallel(delayed(
-                _calibrate_classifier)(clone(base_estimator),
+                _fit_calibrated_classifer)(clone(base_estimator),
                                        X, y,
                                        train=train, test=test,
                                        method=self.method,
