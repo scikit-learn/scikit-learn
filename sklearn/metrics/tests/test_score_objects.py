@@ -38,10 +38,12 @@ from sklearn.pipeline import make_pipeline
 from sklearn.cluster import KMeans
 from sklearn.linear_model import Ridge, LogisticRegression, Perceptron
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
-from sklearn.datasets import make_blobs
-from sklearn.datasets import make_classification, make_regression
-from sklearn.datasets import make_multilabel_classification
+from sklearn.datasets import load_breast_cancer
 from sklearn.datasets import load_diabetes
+from sklearn.datasets import make_blobs
+from sklearn.datasets import make_classification
+from sklearn.datasets import make_multilabel_classification
+from sklearn.datasets import make_regression
 from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.model_selection import GridSearchCV
 from sklearn.multiclass import OneVsRestClassifier
@@ -786,7 +788,33 @@ def _parametrize_scorers_from_target(estimator_data_ids):
      ("continuous-multioutput", get_regression_scorers, Ridge,
       *make_regression(n_targets=2))]
 )
-def test_get_applicable_scorers_smoke_test(Estimator, X, y, scorer):
+def test_get_scorers_smoke_test(Estimator, X, y, scorer):
     # smoke test to check that we can use the score on the registered problem
     estimator = Estimator().fit(X, y)
     scorer(estimator, X, y)
+
+
+def test_get_applicable_scorers_passing_scoring_params():
+    # check that we can pass scoring parameters when getting the score
+    breast_cancer = load_breast_cancer()
+    X = breast_cancer.data
+    y = breast_cancer.target_names[breast_cancer.target].astype("object")
+
+    scorers = get_classification_scorers(
+        y, average="macro", pos_label="malignant"
+    )
+    average_precision_scorer = scorers["average_precision"]
+    assert "pos_label" in average_precision_scorer._kwargs
+    assert average_precision_scorer._kwargs["pos_label"] == "malignant"
+
+    estimator = GridSearchCV(
+        DecisionTreeClassifier(), param_grid={"max_depth": [3, 5]},
+        scoring=average_precision_scorer,
+    )
+    estimator.fit(X, y)
+
+    # check that if we don't provide any pos_label, the grid-search will raise
+    # an error
+    with pytest.raises(ValueError, match="pos_label=1 is invalid"):
+        estimator.set_params(scoring=make_scorer(average_precision_score))
+        estimator.fit(X, y)
