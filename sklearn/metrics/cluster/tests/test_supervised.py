@@ -355,5 +355,4 @@ def test_check_clusterings_error():
 
     with pytest.warns(UserWarning):
         normalized_mutual_info_score(wavelength, noise)
-
-test_check_clusterings_error()        
+    
