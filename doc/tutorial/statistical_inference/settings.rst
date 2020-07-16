@@ -31,11 +31,6 @@ needs to be preprocessed in order to be used by scikit-learn.
 
 .. topic:: An example of reshaping data would be the digits dataset
 
-    .. image:: /auto_examples/datasets/images/sphx_glr_plot_digits_last_image_001.png
-        :target: ../../auto_examples/datasets/plot_digits_last_image.html
-        :align: right
-        :scale: 60
-
     The digits dataset is made of 1797 8x8 images of hand-written
     digits ::
 
@@ -45,7 +40,12 @@ needs to be preprocessed in order to be used by scikit-learn.
         >>> import matplotlib.pyplot as plt #doctest: +SKIP
         >>> plt.imshow(digits.images[-1], cmap=plt.cm.gray_r) #doctest: +SKIP
         <matplotlib.image.AxesImage object at ...>
-
+    
+    .. image:: /auto_examples/datasets/images/sphx_glr_plot_digits_last_image_001.png
+        :target: ../../auto_examples/datasets/plot_digits_last_image.html
+        :align: left
+        :scale: 60
+    
     To use this dataset with scikit-learn, we transform each 8x8 image into a
     feature vector of length 64 ::
 

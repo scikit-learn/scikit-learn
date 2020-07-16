@@ -46,7 +46,7 @@ def _gs_decorrelation(w, W, j):
     Assumes that W is orthogonal
     w changed in place
     """
-    w -= np.dot(np.dot(w, W[:j].T), W[:j])
+    w -= np.linalg.multi_dot([w, W[:j].T, W[:j]])
     return w
 
 
@@ -57,7 +57,7 @@ def _sym_decorrelation(W):
     s, u = linalg.eigh(np.dot(W, W.T))
     # u (resp. s) contains the eigenvectors (resp. square roots of
     # the eigenvalues) of W * W.T
-    return np.dot(np.dot(u * (1. / np.sqrt(s)), u.T), W)
+    return np.linalg.multi_dot([u * (1. / np.sqrt(s)), u.T, W])
 
 
 def _ica_def(X, tol, g, fun_args, max_iter, w_init):
@@ -324,10 +324,10 @@ class FastICA(TransformerMixin, BaseEstimator):
         or 'cube'.
         You can also provide your own function. It should return a tuple
         containing the value of the function, and of its derivative, in the
-        point. Example:
+        point. Example::
 
-        def my_g(x):
-            return x ** 3, (3 * x ** 2).mean(axis=-1)
+            def my_g(x):
+                return x ** 3, (3 * x ** 2).mean(axis=-1)
 
     fun_args : dictionary, optional
         Arguments to send to the functional form.
@@ -519,7 +519,7 @@ class FastICA(TransformerMixin, BaseEstimator):
 
         if compute_sources:
             if self.whiten:
-                S = np.dot(np.dot(W, K), X).T
+                S = np.linalg.multi_dot([W, K, X]).T
             else:
                 S = np.dot(W, X).T
         else:
