@@ -132,6 +132,25 @@ When predicting probabilities, the calibrated probabilities for each class
 are predicted separately. As those probabilities do not necessarily sum to
 one, a postprocessing is performed to normalize them.
 
+In problems where it is desired to give more importance to certain classes
+or certain individual samples,the parameters ``class_weight`` and
+``sample_weight`` can be used.
+
+:class:`CalibratedClassifierCV` can handle such unbalanced dataset with the
+``class_weight`` parameter implemented in the ``fit`` method.
+It's a dictionary of the form ``{class_label : value}``, where value is
+a floating point number > 0 that sets the parameter ``C`` of class
+``class_label`` to ``C * value``. You can alternatively set
+``class_weight='balanced'`` which will automatically compute the class
+values so that the chosen `'isotonic'` or `'sigmoid'` calibration
+method is fitted on a balanced dataset.
+
+:class:`CalibratedClassifierCV` implements also weights for
+individual samples in the `fit` method through the ``sample_weight`` parameter.
+Similar to ``class_weight``, this sets the parameter ``C`` for the i-th
+example to ``C * sample_weight[i]``, which will encourage the classifier to
+get these samples right.
+
 The :func:`sklearn.metrics.brier_score_loss` may be used to evaluate how
 well a classifier is calibrated.
 

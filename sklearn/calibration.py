@@ -197,8 +197,7 @@ class CalibratedClassifierCV(ClassifierMixin,
         if self.base_estimator is None:
             # we want all classifiers that don't expose a random_state
             # to be deterministic (and we don't want to expose this one).
-            base_estimator = LinearSVC(random_state=0,
-                                       class_weight=self.class_weight)
+            base_estimator = LinearSVC(random_state=0)
         else:
             base_estimator = self.base_estimator
 
