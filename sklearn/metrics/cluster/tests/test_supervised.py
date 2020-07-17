@@ -349,6 +349,7 @@ def test_mutual_info_score_positive_constant_label(labels_true, labels_pred):
     # non-regression test for #16355
     assert mutual_info_score(labels_true, labels_pred) >= 0
 
+
 def test_check_clusterings():
     noise = np.random.rand(500)
     wavelength = np.linspace(0.01, 1, 500) * 1e-6
