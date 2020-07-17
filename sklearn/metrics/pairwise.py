@@ -436,10 +436,10 @@ def nan_euclidean_distances(X, Y=None, *, squared=False,
     return distances
 
 
-def _nan_fill_row_norm(r, fill_value: float = 0.):
-    p = r * r
-    p = np.nan_to_num(p, nan=fill_value)
-    return np.sum(p)
+@njit
+def _nan_fill_row_norm(r):
+    p = np.multiply(r, r)
+    return np.nansum(p)
 
 
 @njit
