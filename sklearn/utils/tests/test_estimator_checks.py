@@ -34,7 +34,6 @@ from sklearn.decomposition import NMF
 from sklearn.linear_model import MultiTaskElasticNet, LogisticRegression
 from sklearn.svm import SVC, NuSVC
 from sklearn.neighbors import KNeighborsRegressor
-from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils.validation import check_array
 from sklearn.utils import all_estimators
 from sklearn.exceptions import SkipTestWarning
@@ -307,11 +306,19 @@ class EstimatorInconsistentForPandas(BaseEstimator):
         return np.array([self.value_] * X.shape[0])
 
 
-class UntaggedBinaryClassifier(DecisionTreeClassifier):
+class UntaggedBinaryClassifier(SGDClassifier):
     # Toy classifier that only supports binary classification, will fail tests.
-    def fit(self, X, y, sample_weight=None):
-        super().fit(X, y, sample_weight)
-        if np.all(self.n_classes_ > 2):
+    def fit(self, X, y, coef_init=None, intercept_init=None,
+            sample_weight=None):
+        super().fit(X, y, coef_init, intercept_init, sample_weight)
+        if len(self.classes_) > 2:
+            raise ValueError('Only 2 classes are supported')
+        return self
+
+    def partial_fit(self, X, y, classes=None, sample_weight=None):
+        super().partial_fit(X=X, y=y, classes=classes,
+                            sample_weight=sample_weight)
+        if len(self.classes_) > 2:
             raise ValueError('Only 2 classes are supported')
         return self
 

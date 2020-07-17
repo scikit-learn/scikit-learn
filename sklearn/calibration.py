@@ -32,8 +32,9 @@ from .model_selection import check_cv
 from .utils.validation import _deprecate_positional_args
 
 
-class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
-                             MetaEstimatorMixin):
+class CalibratedClassifierCV(ClassifierMixin,
+                             MetaEstimatorMixin,
+                             BaseEstimator):
     """Probability calibration with isotonic regression or logistic regression.
 
     This class uses cross-validation to both estimate the parameters of a
@@ -54,9 +55,10 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
 
     Parameters
     ----------
-    base_estimator : instance BaseEstimator
+    base_estimator : estimator instance, default=None
         The classifier whose output need to be calibrated to provide more
-        accurate `predict_proba` outputs.
+        accurate `predict_proba` outputs. The default classifier is
+        a :class:`~sklearn.svm.LinearSVC`.
 
     method : {'sigmoid', 'isotonic'}, default='sigmoid'
         The method to use for calibration. Can be 'sigmoid' which
