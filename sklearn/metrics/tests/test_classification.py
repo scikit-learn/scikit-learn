@@ -2105,6 +2105,29 @@ def test_hinge_loss_multiclass_with_missing_labels():
                  dummy_hinge_loss)
 
 
+def test_hinge_loss_multiclass_missing_labels_only_two_unq_in_y_true():
+    pred_decision = np.array([
+        [+0.36, -0.17, -0.58],
+        [-0.15, -0.58, -0.48],
+        [-1.45, -0.58, -0.38],
+        [-0.55, -0.78, -0.42],
+        [-1.45, -0.58, -0.38]
+    ])
+    y_true = np.array([0, 2, 2, 0, 2])
+    labels = np.array([0, 1, 2])
+    dummy_losses = np.array([
+        1 - pred_decision[0][0] + pred_decision[0][1],
+        1 - pred_decision[1][2] + pred_decision[1][0],
+        1 - pred_decision[2][2] + pred_decision[2][1],
+        1 - pred_decision[3][0] + pred_decision[3][2],
+        1 - pred_decision[4][2] + pred_decision[4][1]
+    ])
+    np.clip(dummy_losses, 0, None, out=dummy_losses)
+    dummy_hinge_loss = np.mean(dummy_losses)
+    assert (hinge_loss(y_true, pred_decision, labels=labels) ==
+                 dummy_hinge_loss)
+
+
 def test_hinge_loss_multiclass_invariance_lists():
     # Currently, invariance of string and integer labels cannot be tested
     # in common invariance tests because invariance tests for multiclass
