@@ -18,9 +18,10 @@ ground truth labeling (or ``None`` in the case of unsupervised models).
 #          Arnaud Joly <arnaud.v.joly@gmail.com>
 # License: Simplified BSD
 
-from collections.abc import Iterable
-from functools import partial
 from collections import Counter
+from collections.abc import Iterable
+from copy import deepcopy
+from functools import partial
 
 import numpy as np
 
@@ -364,7 +365,7 @@ def get_scorer(scoring):
     """
     if isinstance(scoring, str):
         try:
-            scorer = SCORERS[scoring]
+            scorer = deepcopy(SCORERS[scoring])
         except KeyError:
             raise ValueError('%r is not a valid scoring value. '
                              'Use sorted(sklearn.metrics.SCORERS.keys()) '
