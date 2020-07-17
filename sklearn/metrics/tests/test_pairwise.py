@@ -1329,7 +1329,7 @@ def test_numeric_pairwise_distances_datatypes(metric, dtype, y_is_x):
         if metric == 'seuclidean':
             params = {'V': np.var(np.vstack([X, Y]),
                                   axis=0, ddof=1, dtype=np.float64)}
-        elif metric == 'mahalanobis' and not y_is_x:
+        elif metric == 'mahalanobis':
             params = {'VI': np.linalg.inv(np.cov(np.vstack([X, Y]).T)).T}
 
     dist = pairwise_distances(X, Y, metric=metric, **params)
