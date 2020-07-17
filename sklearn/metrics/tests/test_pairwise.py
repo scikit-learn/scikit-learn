@@ -1326,7 +1326,7 @@ def test_numeric_pairwise_distances_datatypes(metric, dtype, y_is_x):
         Y = rng.random_sample((5, 4)).astype(dtype)
         expected_dist = cdist(X, Y, metric=metric)
         # precompute parameters for seuclidean & mahalanobis when x is not y
-        if metric == 'seuclidean' and not y_is_x:
+        if metric == 'seuclidean':
             params = {'V': np.var(np.vstack([X, Y]),
                                   axis=0, ddof=1, dtype=np.float64)}
         elif metric == 'mahalanobis' and not y_is_x:
