@@ -127,47 +127,54 @@ def test_f_regression_center():
     assert_almost_equal(F2[0], 0.232558139)  # value from statsmodels OLS
 
 
-def test_f_regression_constant_values_gets_raised():
-    # Test whether f_regression gets raised when the standard
-    # deviation of the random variables (features or target)
-    # is zero
+def test_f_regression_not_gets_raised():
+    # Test that f_regression does not raise a warning for constant features
+    # and target. Moreover, zero should for the correlation coefficient and
+    # zero for the p-value in those cases
 
-    X = np.array([[0, 1], [0, 1]])
-    y = np.array([0, 1])
-    with pytest.raises(ValueError,
-                       match="The correlation is undefined for features "
-                             "or target with identically constant values."):
-        f_regression(X, y)
+    X = np.array([[2, 1], [2, 0], [2, 10], [2, 4]])
+    y = np.array([0, 1, 1, 0])
 
-    X = np.array([[0, 1], [1, 0]])
-    y = np.array([0, 0])
-    with pytest.raises(ValueError,
-                       match="The correlation is undefined for features "
-                             "or target with identically constant values."):
-        f_regression(X, y)
-
-
-def test_f_regression_degrees_freedom_gets_raised():
-    # Test whether f_regression gets raised when the degrees
-    # of freedom employed for the F-test is less than one
-
-    X = np.array([[0, 1], [1, 0]])
-    y = np.array([0, 1])
-    with pytest.raises(ValueError,
-                       match="The sample size must be greater than two "
-                             "if 'center=True'. Got n_samples=2."):
-        f_regression(X, y)
-
-
-def test_f_regression_corr_not_gets_raised():
-    # Test that f_regression does not raise a
-    # RuntimeWarning for a correlation of one
-
-    X = np.array([[0, 1], [1, 0]])
-    y = np.array([0, 1])
+    F_expected = np.array([0.0, 0.2293578])
+    pv_expected = np.array([1.0, 0.67924985])
 
     try:
-        f_regression(X, y, center=False)
+        F_true, pv_true = f_regression(X, y)
+
+        np.testing.assert_array_almost_equal(F_expected, F_true)
+        np.testing.assert_array_almost_equal(pv_expected, pv_true)
+    except RuntimeWarning as ex:
+        raise pytest.fail("{0}".format(ex))
+
+    X = np.array([[5, 1], [3, 0], [2, 10], [8, 4]])
+    y = np.array([0, 0, 0, 0])
+
+    F_expected = np.array([0.0, 0.0])
+    pv_expected = np.array([1.0, 1.0])
+
+    try:
+        F_true, pv_true = f_regression(X, y)
+
+        np.testing.assert_array_almost_equal(F_expected, F_true)
+        np.testing.assert_array_almost_equal(pv_expected, pv_true)
+    except RuntimeWarning as ex:
+        raise pytest.fail("{0}".format(ex))
+
+    # Test that f_regression does not raise a warning for a correlation
+    # of one. Moreover, infinity should be returned for the correlation
+    # coefficient and one for the p-value
+
+    X = np.array([[0, 1], [1, 0], [2, 10], [3, 4]])
+    y = np.array([0, 1, 2, 3])
+
+    F_expected = np.array([np.inf, 0.845433])
+    pv_expected = np.array([0.0, 0.454913])
+
+    try:
+        F_true, pv_true = f_regression(X, y)
+
+        np.testing.assert_array_almost_equal(F_expected, F_true)
+        np.testing.assert_array_almost_equal(pv_expected, pv_true)
     except RuntimeWarning as ex:
         raise pytest.fail("{0}".format(ex))
 
