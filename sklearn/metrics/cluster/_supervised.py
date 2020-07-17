@@ -27,6 +27,7 @@ from ...utils.validation import _deprecate_positional_args
 from ...utils.fixes import _astype_copy_false
 from ...utils.multiclass import type_of_target
 
+
 def _comb2(n):
     # the exact version is faster for k == 2: use it by default globally in
     # this module instead of the float approximate variant
@@ -44,8 +45,11 @@ def check_clusterings(labels_true, labels_pred):
     labels_pred : array-like of shape (n_samples,)
         The predicted labels.
     """
-    if (type_of_target(labels_true) == "continuous" or type_of_target(labels_pred)=="continuous"):
-        raise ValueError('Classification metrics expects discrete values received %r for label, and %r for target' % (labels_pred.dtype.type, labels_true.dtype.type))
+    if (type_of_target(labels_true) == "continuous" or
+            type_of_target(labels_pred) == "continuous"):
+        raise ValueError('Classification metrics expects discrete \
+            values received %r for label, and %r \
+            for target' % (labels_pred.dtype.type, labels_true.dtype.type))
 
     labels_true = check_array(
         labels_true, ensure_2d=False, ensure_min_samples=0, dtype=None,
