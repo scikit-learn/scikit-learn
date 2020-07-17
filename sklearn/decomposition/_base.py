@@ -60,8 +60,12 @@ class _BasePCA(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
         # handle corner cases first
         if self.n_components_ == 0:
             return np.eye(n_features) / self.noise_variance_
-        if self.n_components_ == min(self.n_samples_, n_features):
-            return linalg.inv(self.get_covariance())
+        if hasattr(self, 'n_samples_'):
+            if self.n_components_ == min(self.n_samples_, n_features):
+                return linalg.inv(self.get_covariance())
+        else:
+            if self.n_components == n_features:
+                return linalg.inv(self.get_covariance())
 
         # Get precision using matrix inversion lemma
         components_ = self.components_
