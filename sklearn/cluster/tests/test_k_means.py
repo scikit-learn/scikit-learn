@@ -19,8 +19,8 @@ from sklearn.metrics import pairwise_distances_argmin
 from sklearn.metrics.cluster import v_measure_score
 from sklearn.cluster import KMeans, k_means
 from sklearn.cluster import MiniBatchKMeans
-from sklearn.cluster._kmeans import _mini_batch_step
 from sklearn.cluster._kmeans import _labels_inertia
+from sklearn.cluster._kmeans import _mini_batch_step
 from sklearn.cluster._k_means_common import _relocate_empty_clusters_dense
 from sklearn.cluster._k_means_common import _relocate_empty_clusters_sparse
 from sklearn.cluster._k_means_common import _euclidean_dense_dense_wrapper
@@ -70,8 +70,8 @@ def test_kmeans_results(array_constr, algo, dtype):
 
 
 @pytest.mark.parametrize("array_constr", [np.array, sp.csr_matrix],
-                         ids=["dense", "sparse"])
-@pytest.mark.parametrize("algo", ["full", "elkan"])
+                         ids=['dense', 'sparse'])
+@pytest.mark.parametrize("algo", ['full', 'elkan'])
 def test_kmeans_relocated_clusters(array_constr, algo):
     # check that empty clusters are relocated as expected
     X = array_constr([[0, 0], [0.5, 0], [0.5, 1], [1, 1]])
@@ -560,6 +560,17 @@ def test_fit_transform(Estimator):
     assert_allclose(X1, X2)
 
 
+def test_n_init():
+    # Check that increasing the number of init increases the quality
+    previous_inertia = np.inf
+    for n_init in [1, 5, 10]:
+        # set max_iter=1 to avoid finding the global minimum and get the same
+        # inertia each time
+        km = KMeans(n_clusters=n_clusters, init="random", n_init=n_init,
+                    random_state=0, max_iter=1).fit(X)
+        assert km.inertia_ <= previous_inertia
+
+
 def test_k_means_function():
     # test calling the k_means function directly
     cluster_centers, labels, inertia = k_means(X, n_clusters=n_clusters,
@@ -752,7 +763,7 @@ def test_precompute_distance_deprecated(precompute_distances):
     depr_msg = ("'precompute_distances' was deprecated in version 0.23 and "
                 "will be removed in 0.25.")
     X, _ = make_blobs(n_samples=10, n_features=2, centers=2, random_state=0)
-    kmeans = KMeans(n_clusters=2, n_init=1, init="random", random_state=0,
+    kmeans = KMeans(n_clusters=2, n_init=1, init='random', random_state=0,
                     precompute_distances=precompute_distances)
 
     with pytest.warns(FutureWarning, match=depr_msg):
@@ -765,7 +776,7 @@ def test_n_jobs_deprecated(n_jobs):
     depr_msg = ("'n_jobs' was deprecated in version 0.23 and will be removed "
                 "in 0.25.")
     X, _ = make_blobs(n_samples=10, n_features=2, centers=2, random_state=0)
-    kmeans = KMeans(n_clusters=2, n_init=1, init="random", random_state=0,
+    kmeans = KMeans(n_clusters=2, n_init=1, init='random', random_state=0,
                     n_jobs=n_jobs)
 
     with pytest.warns(FutureWarning, match=depr_msg):
@@ -877,7 +888,6 @@ def test_sample_weight_unchanged(Estimator):
     sample_weight = np.array([0.5, 0.2, 0.3])
     Estimator(n_clusters=2, random_state=0).fit(X, sample_weight=sample_weight)
 
-    # internally, sample_weight is rescale to sum up to n_samples = 3
     assert_array_equal(sample_weight, np.array([0.5, 0.2, 0.3]))
 
 
