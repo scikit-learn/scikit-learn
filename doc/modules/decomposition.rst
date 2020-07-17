@@ -752,7 +752,7 @@ and the regularized objective function is:
     + \frac{\alpha(1-\rho)}{2} ||W||_{\mathrm{Fro}} ^ 2
     + \frac{\alpha(1-\rho)}{2} ||H||_{\mathrm{Fro}} ^ 2
 
-:class:`NMF` regularizes both W and H. The :attr:`regularization`
+:class:`NMF` regularizes both W and H by default. The :attr:`regularization`
 parameter allows for finer control, with which only W, only H,
 or both can be regularized.
 
