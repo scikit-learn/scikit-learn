@@ -150,13 +150,6 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         self.importance_getter = importance_getter
         self.verbose = verbose
 
-    # mypy error: Decorated property not supported
-    @deprecated("_estimator_type is deprecated in "  # type: ignore
-                "0.24 and will be removed in 0.26")
-    @property
-    def _estimator_type(self):
-        return self.estimator._estimator_type
-
     @property
     def classes_(self):
         return self.estimator_.classes_

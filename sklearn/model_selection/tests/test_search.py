@@ -2035,12 +2035,3 @@ def test_estimator_type_tag(SearchCV, Estimator, estimator_type):
     # Assert that estimator_type tag is properly set
     search = SearchCV(Estimator(), {})
     assert search._get_tags()["estimator_type"] == estimator_type
-
-
-# TODO: Remove in version 0.26
-@pytest.mark.parametrize("SearchCV", [GridSearchCV, RandomizedSearchCV])
-def test_deprecated_estimator_type(SearchCV):
-    # Assert that deprecated _estimator_type warns FutureWarning
-    search = SearchCV(DecisionTreeClassifier(), {'max_depth': [2, 3]})
-    with pytest.warns(FutureWarning, match="estimator_type is deprecated"):
-        getattr(search, "_estimator_type")

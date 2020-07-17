@@ -554,18 +554,3 @@ def test_estimator_type_tag(Estimator, estimator_type):
     # Assert that estimator_type tag is properly set
     est = Estimator()
     assert est._get_tags()["estimator_type"] == estimator_type
-
-
-# TODO: Remove in version 0.26
-@pytest.mark.parametrize(
-    "Estimator",
-    [DecisionTreeClassifier,
-     DecisionTreeRegressor,
-     KMeans,
-     BayesianGaussianMixture,
-     IsolationForest])
-def test_deprecated_estimator_type(Estimator):
-    # Assert that deprecated _estimator_type warns FutureWarning
-    est = Estimator()
-    with pytest.warns(FutureWarning, match="estimator_type is deprecated"):
-        getattr(est, "_estimator_type")

@@ -1236,11 +1236,3 @@ def test_estimator_type_tag(Estimator, estimator_type):
     # Assert that estimator_type tag is properly set
     pipeline = Pipeline([('est', Estimator())])
     assert pipeline._get_tags()["estimator_type"] == estimator_type
-
-
-# TODO: Remove in version 0.26
-def test_deprecated_estimator_type():
-    # Assert that deprecated _estimator_type warns FutureWarning
-    pipeline = Pipeline([('est', LinearRegression())])
-    with pytest.warns(FutureWarning):
-        hasattr(pipeline, "_estimator_type")

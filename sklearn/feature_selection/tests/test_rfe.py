@@ -280,11 +280,8 @@ def test_rfecv_grid_scores_size():
         assert rfecv.n_features_ >= min_features_to_select
 
 
-# TODO: Remove decorator in version 0.26
-# with the estimator_type attribute
 def test_rfe_estimator_tags():
     rfe = RFE(SVC(kernel='linear'))
-    assert rfe._estimator_type == "classifier"
     # make sure that cross-validation is stratified
     iris = load_iris()
     score = cross_val_score(rfe, iris.data, iris.target)
@@ -503,11 +500,3 @@ def test_rfe_estimator_type_tag(Estimator, estimator_type):
     # Assert that estimator_type tag is properly set
     rfe = RFE(Estimator())
     assert rfe._get_tags()["estimator_type"] == estimator_type
-
-
-# TODO: Remove in version 0.26
-def test_deprecated_estimator_type():
-    # Assert that deprecated _estimator_type warns FutureWarning
-    rfe = RFE(SVC())
-    with pytest.warns(FutureWarning, match="estimator_type is deprecated"):
-        getattr(rfe, "_estimator_type")
