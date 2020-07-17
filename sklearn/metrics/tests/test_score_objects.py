@@ -3,6 +3,7 @@ import tempfile
 import shutil
 import os
 import numbers
+from copy import deepcopy
 from unittest.mock import Mock
 from functools import partial
 
@@ -11,6 +12,7 @@ import pytest
 import joblib
 
 from numpy.testing import assert_allclose
+from sklearn.utils import shuffle
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import ignore_warnings
@@ -32,10 +34,12 @@ from sklearn.pipeline import make_pipeline
 from sklearn.cluster import KMeans
 from sklearn.linear_model import Ridge, LogisticRegression, Perceptron
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
-from sklearn.datasets import make_blobs
-from sklearn.datasets import make_classification, make_regression
-from sklearn.datasets import make_multilabel_classification
 from sklearn.datasets import load_diabetes
+from sklearn.datasets import load_breast_cancer
+from sklearn.datasets import make_blobs
+from sklearn.datasets import make_classification
+from sklearn.datasets import make_multilabel_classification
+from sklearn.datasets import make_regression
 from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.model_selection import GridSearchCV
 from sklearn.multiclass import OneVsRestClassifier
@@ -747,3 +751,67 @@ def test_multiclass_roc_no_proba_scorer_errors(scorer_name):
     msg = "'Perceptron' object has no attribute 'predict_proba'"
     with pytest.raises(AttributeError, match=msg):
         scorer(lr, X, y)
+
+
+@pytest.mark.parametrize(
+    "scoring, is_symmetric",
+    [
+        ("roc_auc", True),
+        ("jaccard", False),
+        ("f1", False),
+        ("average_precision", False),
+        ("precision", False),
+        ("recall", False),
+        ("neg_brier_score", True),
+    ],
+)
+def test_scorer_pos_label_grid_search(scoring, is_symmetric):
+    # check the behaviour for the scorer which requires a `pos_label` with
+    # binary target
+    X, y = load_breast_cancer(return_X_y=True)
+    # create an highly imbalanced
+    idx_positive = np.flatnonzero(y == 1)
+    idx_negative = np.flatnonzero(y == 0)
+    idx_selected = np.hstack([idx_negative, idx_positive[:25]])
+    X, y = X[idx_selected], y[idx_selected]
+    X, y = shuffle(X, y, random_state=42)
+    # only use 2 features to make the problem even harder
+    X = X[:, :2]
+    y = np.array(
+        ["cancer" if c == 1 else "not cancer" for c in y], dtype=object
+    )
+
+    param_grid = {"max_depth": [1, 2, 3, 4, 5]}
+    classifier = GridSearchCV(
+        DecisionTreeClassifier(), param_grid=param_grid, scoring=scoring,
+    )
+
+    if is_symmetric:
+        # we will expand to compute for several scorer with different pos_label
+        # which should all give the same results
+        scorer = get_scorer(scoring)
+        scorer_pos_label, scorer_neg_label = deepcopy(scorer), deepcopy(scorer)
+
+        scorer_pos_label._kwargs["pos_label"] = "cancer"
+        scorer_neg_label._kwargs["pos_label"] = "not cancer"
+        multi_scoring = {
+            "scorer_str": scorer,
+            "scorer_pos": scorer_pos_label,
+            "scorer_neg": scorer_neg_label,
+        }
+
+        classifier.set_params(
+            scoring=multi_scoring, refit="scorer_str",
+        )
+        classifier.fit(X, y)
+        assert_allclose(
+            classifier.cv_results_["mean_test_scorer_str"],
+            classifier.cv_results_["mean_test_scorer_pos"]
+        )
+        assert_allclose(
+            classifier.cv_results_["mean_test_scorer_str"],
+            classifier.cv_results_["mean_test_scorer_neg"]
+        )
+    else:
+        with pytest.raises(ValueError):
+            classifier.fit(X, y)
