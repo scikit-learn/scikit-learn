@@ -358,11 +358,11 @@ def test_permutation_importance_sample_weight():
     # variable is a linear combination of the two features, such that
     # in half of the samples the impact of feature 1 is twice the impact of
     # feature 2, and vice versa on the other half of the samples.
-    np.random.seed(1)
+    rng = np.random.RandomState(1)
     n_samples = 1000
     n_features = 2
-    n_half_samples = int(n_samples / 2)
-    x = np.random.normal(0.0, 0.001, (n_samples, n_features))
+    n_half_samples = n_samples // 2
+    x = rng.normal(0.0, 0.001, (n_samples, n_features))
     y = np.zeros(n_samples)
     y[:n_half_samples] = 2 * x[:n_half_samples, 0] + x[:n_half_samples, 1]
     y[n_half_samples:] = x[n_half_samples:, 0] + 2 * x[n_half_samples:, 1]
@@ -378,7 +378,7 @@ def test_permutation_importance_sample_weight():
                                 scoring='neg_mean_absolute_error',
                                 n_repeats=1000)
     x1_x2_imp_ratio_w_none = pi.importances_mean[0] / pi.importances_mean[1]
-    assert np.round(x1_x2_imp_ratio_w_none, 2) == 1.00
+    assert x1_x2_imp_ratio_w_none == pytest.approx(1)
 
     # When passing a vector of ones as the sample_weight, results should be
     # the same as in the case that sample_weight=None.
@@ -387,7 +387,7 @@ def test_permutation_importance_sample_weight():
                                 scoring='neg_mean_absolute_error',
                                 n_repeats=1000, sample_weight=w)
     x1_x2_imp_ratio_w_ones = pi.importances_mean[0] / pi.importances_mean[1]
-    assert x1_x2_imp_ratio_w_ones == x1_x2_imp_ratio_w_none
+    assert x1_x2_imp_ratio_w_ones == pytest.approx(x1_x2_imp_ratio_w_none)
 
     # When the ratio between the weights of the first half of the samples and
     # the second half of the samples approaches to infinity, the ratio of
@@ -401,4 +401,4 @@ def test_permutation_importance_sample_weight():
                                 n_repeats=1000,
                                 sample_weight=w)
     x1_x2_imp_ratio_w = pi.importances_mean[0] / pi.importances_mean[1]
-    assert np.round(x1_x2_imp_ratio_w / x1_x2_imp_ratio_w_none, 2) == 2.00
+    assert x1_x2_imp_ratio_w / x1_x2_imp_ratio_w_none == pytest.approx(2)
