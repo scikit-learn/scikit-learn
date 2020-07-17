@@ -622,11 +622,11 @@ class OrdinalEncoder(_BaseEncoder):
     dtype : number type, default np.float64
         Desired dtype of output.
 
-    handle_unknown : 'error' or 'use_encoded_value', default='error'
+    handle_unknown : {'error', 'use_encoded_value}', default='error'
         When set to 'error' an error will be raised in case an unknown
         categorical feature is present during transform. When set to
         'use_encoded_value', the encoded value of unknown categories will be
-        set to the value given for the parameter unknown_value. In
+        set to the value given for the parameter `unknown_value`. In
         :meth:inverse_transform, an unknown category will be denoted as None.
 
     unknown_value : int, default=None
@@ -695,14 +695,19 @@ class OrdinalEncoder(_BaseEncoder):
         self
         """
         if self.handle_unknown == 'use_encoded_value':
-            if self.unknown_value is None:
-                raise TypeError("Please set unknown_value to an integer "
-                                "value.")
             if not isinstance(self.unknown_value, numbers.Integral):
-                raise TypeError(f"The used value for unknown_value "
-                                f"{self.unknown_value} is not an integer.")
+                raise TypeError(f"Set unknown_value to an integer, got "
+                                f"{self.unknown_value}.")
 
         self._fit(X)
+
+        if self.handle_unknown == 'use_encoded_value':
+            for i in range(len(self.categories_)):
+                if 0 <= self.unknown_value < len(self.categories_[i]):
+                    raise ValueError(f"The used value for unknown_value "
+                                     f"{self.unknown_value} is one of the "
+                                     f"values already used for encoding the "
+                                     f"seen categories.")
 
         return self
 
@@ -725,11 +730,6 @@ class OrdinalEncoder(_BaseEncoder):
         # create separate category for unknown values
         if self.handle_unknown == 'use_encoded_value':
             for i in range(len(self.categories_)):
-                if 0 <= self.unknown_value < len(self.categories_[i]):
-                    raise ValueError(f"The used value for unknown_value "
-                                     f"{self.unknown_value} is one of the "
-                                     f"values already used for encoding the "
-                                     f"seen categories.")
                 X_int[~X_mask[:, i], i] = self.unknown_value
         return X_int.astype(self.dtype, copy=False)
 
@@ -766,11 +766,12 @@ class OrdinalEncoder(_BaseEncoder):
         for i in range(n_features):
             labels = X[:, i].astype('int64', copy=False)
             # set unknown values to None
+            unknown_labels = labels == self.unknown_value
             if self.handle_unknown == 'use_encoded_value':
                 X_tr[:, i] = np.where(
-                    labels == self.unknown_value, None,
+                    unknown_labels, None,
                     self.categories_[i][np.where(
-                        labels == self.unknown_value, 0, labels)])
+                        unknown_labels, 0, labels)])
             else:
                 X_tr[:, i] = self.categories_[i][labels]
 
