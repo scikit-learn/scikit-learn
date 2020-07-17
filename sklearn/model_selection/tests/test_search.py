@@ -72,7 +72,9 @@ from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.model_selection.tests.common import OneTimeSplitter
 
 
-class MockClassifier(ClassifierMixin, BaseEstimator):
+# Neither of the following two estimators inherit from BaseEstimator,
+# to test hyperparameter search on user-defined classifiers.
+class MockClassifier:
     """Dummy classifier to test the parameter search algorithms"""
 
     def __init__(self, foo_param=0):
@@ -103,6 +105,13 @@ class MockClassifier(ClassifierMixin, BaseEstimator):
             score = 0.
         return score
 
+    def get_params(self, deep=False):
+        return {'foo_param': self.foo_param}
+
+    def set_params(self, **params):
+        self.foo_param = params['foo_param']
+        return self
+
 
 class LinearSVCNoScore(LinearSVC):
     """An LinearSVC classifier that has no score method."""
@@ -111,10 +120,8 @@ class LinearSVCNoScore(LinearSVC):
         raise AttributeError
 
 
-X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1], [-1, 1], [-2, 1]])
-# The number of samples per class should to be greater or equal than
-# the number of splits for stratified cross-validation routines
-y = np.array([1, 1, 1, 2, 2, 2])
+X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
+y = np.array([1, 1, 2, 2])
 
 
 def assert_grid_iter_equals_getitem(grid):
