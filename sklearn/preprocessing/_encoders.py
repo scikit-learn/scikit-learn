@@ -766,12 +766,11 @@ class OrdinalEncoder(_BaseEncoder):
         for i in range(n_features):
             labels = X[:, i].astype('int64', copy=False)
             # set unknown values to None
-            unknown_labels = labels == self.unknown_value
             if self.handle_unknown == 'use_encoded_value':
-                X_tr[:, i] = np.where(
-                    unknown_labels, None,
-                    self.categories_[i][np.where(
-                        unknown_labels, 0, labels)])
+                unknown_labels = labels == self.unknown_value
+                X_tr[:, i] = self.categories_[i][np.where(
+                    unknown_labels, 0, labels)]
+                X_tr[unknown_labels, i] = None
             else:
                 X_tr[:, i] = self.categories_[i][labels]
 
