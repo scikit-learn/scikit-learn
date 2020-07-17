@@ -7,6 +7,7 @@ from ..metrics import check_scoring
 from ..utils import Bunch
 from ..utils import check_random_state
 from ..utils import check_array
+from ..utils.validation import _deprecate_positional_args
 
 
 def _calculate_permutation_scores(estimator, X, y, sample_weight, col_idx,
@@ -37,7 +38,7 @@ def _calculate_permutation_scores(estimator, X, y, sample_weight, col_idx,
     return scores
 
 
-def permutation_importance(estimator, X, y, scoring=None, n_repeats=5,
+def permutation_importance(estimator, X, y, *, scoring=None, n_repeats=5,
                            n_jobs=None, random_state=None, sample_weight=None):
     """Permutation importance for feature evaluation [BRE]_.
 
@@ -73,7 +74,8 @@ def permutation_importance(estimator, X, y, scoring=None, n_repeats=5,
         Number of times to permute a feature.
 
     n_jobs : int or None, default=None
-        The number of jobs to use for the computation.
+        Number of jobs to run in parallel. The computation is done by computing
+        permutation score for each columns and parallelized over the columns.
         `None` means 1 unless in a :obj:`joblib.parallel_backend` context.
         `-1` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.

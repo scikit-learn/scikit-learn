@@ -14,6 +14,7 @@ from sklearn.utils._testing import assert_array_equal
 from sklearn.utils.fixes import _joblib_parallel_args
 from sklearn.utils.fixes import _object_dtype_isnan
 from sklearn.utils.fixes import loguniform
+from sklearn.utils.fixes import MaskedArray
 
 
 @pytest.mark.parametrize('joblib_version', ('0.11', '0.12.0'))
@@ -83,3 +84,8 @@ def test_loguniform(low, high, base):
         loguniform(base ** low, base ** high).rvs(random_state=0)
         == loguniform(base ** low, base ** high).rvs(random_state=0)
     )
+
+
+def test_masked_array_deprecated():  # TODO: remove in 0.25
+    with pytest.warns(FutureWarning, match='is deprecated'):
+        MaskedArray()

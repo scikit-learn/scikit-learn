@@ -48,7 +48,8 @@ def log_likelihood(emp_cov, precision):
     return log_likelihood_
 
 
-def empirical_covariance(X, assume_centered=False):
+@_deprecate_positional_args
+def empirical_covariance(X, *, assume_centered=False):
     """Computes the Maximum likelihood covariance estimator
 
 
@@ -79,6 +80,7 @@ def empirical_covariance(X, assume_centered=False):
            [0.25, 0.25, 0.25]])
     """
     X = np.asarray(X)
+
     if X.ndim == 1:
         X = np.reshape(X, (1, -1))
 

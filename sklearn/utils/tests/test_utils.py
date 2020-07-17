@@ -116,8 +116,6 @@ def test_resample():
     with pytest.raises(ValueError):
         resample([0, 1], [0, 1], replace=False, n_samples=3)
 
-    with pytest.raises(ValueError):
-        resample([0, 1], [0, 1], meaning_of_life=42)
     # Issue:6581, n_samples can be more when replace is True (default).
     assert len(resample([1, 2], n_samples=5)) == 5
 
@@ -657,9 +655,9 @@ def test_print_elapsed_time(message, expected, capsys, monkeypatch):
 
 @pytest.mark.parametrize("value, result", [(float("nan"), True),
                                            (np.nan, True),
-                                           (np.float("nan"), True),
-                                           (np.float32("nan"), True),
-                                           (np.float64("nan"), True),
+                                           (float(np.nan), True),
+                                           (np.float32(np.nan), True),
+                                           (np.float64(np.nan), True),
                                            (0, False),
                                            (0., False),
                                            (None, False),
