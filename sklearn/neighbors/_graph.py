@@ -6,7 +6,6 @@
 # License: BSD 3 clause (C) INRIA, University of Amsterdam
 from ._base import KNeighborsMixin, RadiusNeighborsMixin
 from ._base import NeighborsBase
-from ._base import UnsupervisedMixin
 from ._unsupervised import NearestNeighbors
 from ..base import TransformerMixin
 from ..utils.validation import check_is_fitted, _deprecate_positional_args
@@ -195,8 +194,9 @@ def radius_neighbors_graph(X, radius, *, mode='connectivity',
     return X.radius_neighbors_graph(query, radius, mode)
 
 
-class KNeighborsTransformer(KNeighborsMixin, UnsupervisedMixin,
-                            TransformerMixin, NeighborsBase):
+class KNeighborsTransformer(KNeighborsMixin,
+                            TransformerMixin,
+                            NeighborsBase):
     """Transform X into a (weighted) graph of k nearest neighbors
 
     The transformed data is a sparse graph as returned by kneighbors_graph.
@@ -310,6 +310,22 @@ class KNeighborsTransformer(KNeighborsMixin, UnsupervisedMixin,
             metric_params=metric_params, n_jobs=n_jobs)
         self.mode = mode
 
+    def fit(self, X, y=None):
+        """Fit the k-nearest neighbors transformer from the training dataset.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features) or \
+                (n_samples, n_samples) if metric='precomputed'
+            Training data.
+
+        Returns
+        -------
+        self : KNeighborsTransformer
+            The fitted k-nearest neighbors transformer.
+        """
+        return self._fit(X)
+
     def transform(self, X):
         """Computes the (weighted) graph of Neighbors for points in X
 
@@ -355,8 +371,9 @@ class KNeighborsTransformer(KNeighborsMixin, UnsupervisedMixin,
         return self.fit(X).transform(X)
 
 
-class RadiusNeighborsTransformer(RadiusNeighborsMixin, UnsupervisedMixin,
-                                 TransformerMixin, NeighborsBase):
+class RadiusNeighborsTransformer(RadiusNeighborsMixin,
+                                 TransformerMixin,
+                                 NeighborsBase):
     """Transform X into a (weighted) graph of neighbors nearer than a radius
 
     The transformed data is a sparse graph as returned by
@@ -467,6 +484,22 @@ class RadiusNeighborsTransformer(RadiusNeighborsMixin, UnsupervisedMixin,
             leaf_size=leaf_size, metric=metric, p=p,
             metric_params=metric_params, n_jobs=n_jobs)
         self.mode = mode
+
+    def fit(self, X, y=None):
+        """Fit the radius neighbors transformer from the training dataset.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features) or \
+                (n_samples, n_samples) if metric='precomputed'
+            Training data.
+
+        Returns
+        -------
+        self : RadiusNeighborsTransformer
+            The fitted radius neighbors transformer.
+        """
+        return self._fit(X)
 
     def transform(self, X):
         """Computes the (weighted) graph of Neighbors for points in X
