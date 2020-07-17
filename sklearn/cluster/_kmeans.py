@@ -72,10 +72,10 @@ def _k_init(X, n_clusters, x_squared_norms, random_state, n_local_trials=None):
 
     Returns
     -------
-    centers : array, shape (n_clusters, n_features)
+    centers : ndarray of shape (n_clusters, n_features)
         The inital centers for k-means.
 
-    indices : list, length (n_clusters)
+    indices : ndarray of shape (n_clusters)
         The index location of the chosen centers in the data array X. For a
         given index and center, X[index] = center.
 
@@ -104,7 +104,7 @@ def _k_init(X, n_clusters, x_squared_norms, random_state, n_local_trials=None):
 
     # Pick first center randomly and track index of point
     center_id = random_state.randint(n_samples)
-    indices = np.empty(n_clusters)
+    indices = np.empty(n_clusters, dtype=int)
     if sp.issparse(X):
         centers[0] = X[center_id].toarray()
     else:
@@ -150,7 +150,6 @@ def _k_init(X, n_clusters, x_squared_norms, random_state, n_local_trials=None):
             centers[c] = X[best_candidate]
         indices[c] = best_candidate
 
-    indices = [int(x) for x in indices.tolist()]
     return centers, indices
 
 
@@ -1959,7 +1958,7 @@ class MiniBatchKMeans(KMeans):
         }
 
 
-def kmeans_plusplus(X, n_clusters, x_squared_norms=None,
+def kmeans_plusplus(X, n_clusters, *, x_squared_norms=None,
                     random_state=None, n_local_trials=None):
     """Add some documentation here
 
@@ -1968,26 +1967,30 @@ def kmeans_plusplus(X, n_clusters, x_squared_norms=None,
     # Check parameters
     if x_squared_norms is None:
         x_squared_norms = row_norms(X, squared=True)
-    elif len(x_squared_norms) != X.shape[0]:
-        warnings.warn(
-            "x_squared_norms should be of length n_samples. "
-            "computing default norms"
-                     )
-        x_squared_norms = row_norms(X, squared=True)
+    elif x_squared_norms.shape[0] != X.shape[0]:
+        raise ValueError(
+            f"The length of x_squared_norms {x_squared_norms.shape[0]} should "
+            f"be equal to the length of n_samples {X.shape[0]}.")
+
+    if n_local_trials is not None:
+        pass
+    elif n_local_trials < 1:
+        raise ValueError(
+            f"n_local_trials is set to {n_local_trials} but should be an "
+            f"integer value greater than zero.")
 
     random_state = check_random_state(random_state)
 
     # Check data
-    check_array(X, accept_sparse='csr',
+    check_array(X, accept_sparse=True,
                 dtype=[np.float64, np.float32], order='C')
+
+    if X.shape[0] < n_clusters:
+        raise ValueError(f"n_cluster is set to {n_clusters} but it needs to be "
+                         f"greater than or equal to sample size ({X.shape[0]})")
 
     # Call private k-means++
     centers, indices = _k_init(X, n_clusters, x_squared_norms,
                                random_state, n_local_trials)
-
-    if sp.issparse(centers):
-        centers = centers.toarray()
-
-    _validate_center_shape(X, n_clusters, centers)
 
     return centers, indices
