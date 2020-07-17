@@ -37,6 +37,7 @@ def _calculate_permutation_scores(estimator, X, y, sample_weight, col_idx,
 
     return scores
 
+
 @_deprecate_positional_args
 def permutation_importance(estimator, X, y, *, scoring=None, n_repeats=5,
                            n_jobs=None, random_state=None, sample_weight=None):

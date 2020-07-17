@@ -378,7 +378,7 @@ def test_permutation_importance_sample_weight():
                                 scoring='neg_mean_absolute_error',
                                 n_repeats=1000)
     x1_x2_imp_ratio_w_none = pi.importances_mean[0] / pi.importances_mean[1]
-    assert x1_x2_imp_ratio_w_none == pytest.approx(1)
+    assert x1_x2_imp_ratio_w_none == pytest.approx(1, 0.01)
 
     # When passing a vector of ones as the sample_weight, results should be
     # the same as in the case that sample_weight=None.
@@ -387,7 +387,8 @@ def test_permutation_importance_sample_weight():
                                 scoring='neg_mean_absolute_error',
                                 n_repeats=1000, sample_weight=w)
     x1_x2_imp_ratio_w_ones = pi.importances_mean[0] / pi.importances_mean[1]
-    assert x1_x2_imp_ratio_w_ones == pytest.approx(x1_x2_imp_ratio_w_none)
+    assert x1_x2_imp_ratio_w_ones == pytest.approx(
+        x1_x2_imp_ratio_w_none, 0.01)
 
     # When the ratio between the weights of the first half of the samples and
     # the second half of the samples approaches to infinity, the ratio of
@@ -401,4 +402,4 @@ def test_permutation_importance_sample_weight():
                                 n_repeats=1000,
                                 sample_weight=w)
     x1_x2_imp_ratio_w = pi.importances_mean[0] / pi.importances_mean[1]
-    assert x1_x2_imp_ratio_w / x1_x2_imp_ratio_w_none == pytest.approx(2)
+    assert x1_x2_imp_ratio_w / x1_x2_imp_ratio_w_none == pytest.approx(2, 0.01)
