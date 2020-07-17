@@ -996,8 +996,8 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         return _LOSSES[self.loss](sample_weight=sample_weight)
 
 
-class HistGradientBoostingClassifier(BaseHistGradientBoosting,
-                                     ClassifierMixin):
+class HistGradientBoostingClassifier(ClassifierMixin,
+                                     BaseHistGradientBoosting):
     """Histogram-based Gradient Boosting Classification Tree.
 
     This estimator is much faster than
