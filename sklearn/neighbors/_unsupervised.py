@@ -2,12 +2,12 @@
 from ._base import NeighborsBase
 from ._base import KNeighborsMixin
 from ._base import RadiusNeighborsMixin
-from ._base import UnsupervisedMixin
 from ..utils.validation import _deprecate_positional_args
 
 
-class NearestNeighbors(KNeighborsMixin, RadiusNeighborsMixin,
-                       UnsupervisedMixin, NeighborsBase):
+class NearestNeighbors(KNeighborsMixin,
+                       RadiusNeighborsMixin,
+                       NeighborsBase):
     """Unsupervised learner for implementing neighbor searches.
 
     Read more in the :ref:`User Guide <unsupervised_neighbors>`.
@@ -121,3 +121,22 @@ class NearestNeighbors(KNeighborsMixin, RadiusNeighborsMixin,
               algorithm=algorithm,
               leaf_size=leaf_size, metric=metric, p=p,
               metric_params=metric_params, n_jobs=n_jobs)
+
+    def fit(self, X, y=None):
+        """Fit the nearest neighbors estimator from the training dataset.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features) or \
+                (n_samples, n_samples) if metric='precomputed'
+            Training data.
+
+        y : Ignored
+            Not used, present for API consistency by convention.
+
+        Returns
+        -------
+        self : NearestNeighbors
+            The fitted nearest neighbors estimator.
+        """
+        return self._fit(X)
