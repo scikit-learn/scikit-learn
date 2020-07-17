@@ -296,6 +296,23 @@ def test_verbose(Estimator):
         sys.stdout = old_stdout
 
 
+def test_minibatch_kmeans_warning_init_size():
+    # Check that a warning is raised when init_size is smaller than n_clusters
+    with pytest.warns(RuntimeWarning,
+                      match=r"init_size.* should be larger than n_clusters"):
+        MiniBatchKMeans(init_size=10, n_clusters=20).fit(X)
+
+
+@pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
+def test_warning_n_init_precomputed_centers(Estimator):
+    # Check that a warning is raised when n_init > 1 and an array is passed for
+    # the init parameter.
+    with pytest.warns(RuntimeWarning,
+                      match="Explicit initial center position passed: "
+                            "performing only one init"):
+        Estimator(init=centers, n_clusters=n_clusters, n_init=10).fit(X)
+
+
 def test_minibatch_sensible_reassign():
     # check that identical initial clusters are reassigned
     # also a regression test for when there are more desired reassignments than
@@ -456,22 +473,6 @@ def test_predict(Estimator, init, dtype, array_constr):
     assert_allclose(v_measure_score(pred, np.arange(10)), 1)
 
 
-@pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
-def test_result_equal_in_diff_n_threads(Estimator):
-    # Check that KMeans/MiniBatchKMeans give the same results in parallel mode
-    # than in sequential mode.
-    rnd = np.random.RandomState(0)
-    X = rnd.normal(size=(50, 10))
-
-    with threadpool_limits(limits=1, user_api="openmp"):
-        result_1 = Estimator(
-            n_clusters=n_clusters, random_state=0).fit(X).labels_
-    with threadpool_limits(limits=2, user_api="openmp"):
-        result_2 = Estimator(
-            n_clusters=n_clusters, random_state=0).fit(X).labels_
-    assert_array_equal(result_1, result_2)
-
-
 def _sort_centers(centers):
     return np.sort(centers, axis=0)
 
@@ -487,6 +488,19 @@ def test_dense_sparse(Estimator):
 
     assert_array_equal(km_dense.labels_, km_sparse.labels_)
     assert_allclose(km_dense.cluster_centers_, km_sparse.cluster_centers_)
+
+
+def test_k_means_function():
+    # test calling the k_means function directly
+    cluster_centers, labels, inertia = k_means(X, n_clusters=n_clusters,
+                                               sample_weight=None)
+
+    assert cluster_centers.shape == (n_clusters, n_features)
+    assert np.unique(labels).shape[0] == n_clusters
+
+    # check that the labels assignment are perfect (up to a permutation)
+    assert_allclose(v_measure_score(true_labels, labels), 1.0)
+    assert inertia > 0.0
 
 
 @pytest.mark.parametrize("data", [X, X_csr], ids=["dense", "sparse"])
@@ -531,13 +545,31 @@ def test_centers_not_mutated(Estimator, dtype):
     # Check that KMeans and MiniBatchKMeans won't mutate the user provided
     # init centers silently even if input data and init centers have the same
     # type.
-    X_new_type = X.astype(dtype, copy=True)
-    centers_new_type = centers.astype(dtype, copy=True)
+    X_new_type = X.astype(dtype, copy=False)
+    centers_new_type = centers.astype(dtype, copy=False)
 
     km = Estimator(init=centers_new_type, n_clusters=n_clusters, n_init=1)
     km.fit(X_new_type)
 
-    assert not np.may_share_memory(km.cluster_centers_, centers)
+    assert not np.may_share_memory(km.cluster_centers_, centers_new_type)
+
+
+def test_kmeans_warns_less_centers_than_unique_points():
+    # Check KMeans when the number of found clusters is smaller than expected
+    X = np.asarray([[0, 0],
+                    [0, 1],
+                    [1, 0],
+                    [1, 0]])  # last point is duplicated
+    km = KMeans(n_clusters=4)
+
+    # KMeans should warn that fewer labels than cluster centers have been used
+    msg = (r"Number of distinct clusters \(3\) found smaller than "
+           r"n_clusters \(4\). Possibly due to duplicate points in X.")
+    with pytest.warns(ConvergenceWarning, match=msg):
+        km.fit(X)
+        # only three distinct points, so only three clusters
+        # can have points assigned to them
+        assert set(km.labels_) == set(range(3))
 
 
 def test_weighted_vs_repeated():
@@ -807,19 +839,6 @@ def test_inertia(dtype):
     assert_allclose(inertia_sparse, expected, rtol=1e-6)
 
 
-def test_k_means_function():
-    # test calling the k_means function directly
-    cluster_centers, labels, inertia = k_means(X, n_clusters=n_clusters,
-                                               sample_weight=None)
-
-    assert cluster_centers.shape == (n_clusters, n_features)
-    assert np.unique(labels).shape[0] == n_clusters
-
-    # check that the labels assignment are perfect (up to a permutation)
-    assert_allclose(v_measure_score(true_labels, labels), 1.0)
-    assert inertia > 0.0
-
-
 @pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
 @pytest.mark.parametrize("param, match", [
     ({"n_init": 0}, r"n_init should be > 0"),
@@ -872,37 +891,19 @@ def test_minibatch_kmeans_wrong_params(param, match):
 
 
 @pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
-def test_warnings(Estimator):
-    # Check warning messages common to KMeans and MiniBatchKMeans
-    with pytest.warns(RuntimeWarning,
-                      match="Explicit initial center position passed: "
-                            "performing only one init"):
-        Estimator(init=centers, n_clusters=n_clusters).fit(X)
+def test_result_equal_in_diff_n_threads(Estimator):
+    # Check that KMeans/MiniBatchKMeans give the same results in parallel mode
+    # than in sequential mode.
+    rnd = np.random.RandomState(0)
+    X = rnd.normal(size=(50, 10))
 
-
-def test_kmeans_warns_less_centers_than_unique_points():
-    # Check KMeans when the number of found clusters is smaller than expected
-    X = np.asarray([[0, 0],
-                    [0, 1],
-                    [1, 0],
-                    [1, 0]])  # last point is duplicated
-    km = KMeans(n_clusters=4)
-
-    # KMeans should warn that fewer labels than cluster centers have been used
-    msg = (r"Number of distinct clusters \(3\) found smaller than "
-           r"n_clusters \(4\). Possibly due to duplicate points in X.")
-    with pytest.warns(ConvergenceWarning, match=msg):
-        km.fit(X)
-        # only three distinct points, so only three clusters
-        # can have points assigned to them
-        assert set(km.labels_) == set(range(3))
-
-
-def test_minibatch_kmeans_warnings():
-    # Check warning messages specific to MiniBatchKMeans
-    with pytest.warns(RuntimeWarning,
-                      match=r"init_size.* should be larger than n_clusters"):
-        MiniBatchKMeans(init_size=10, n_clusters=20).fit(X)
+    with threadpool_limits(limits=1, user_api="openmp"):
+        result_1 = Estimator(
+            n_clusters=n_clusters, random_state=0).fit(X).labels_
+    with threadpool_limits(limits=2, user_api="openmp"):
+        result_2 = Estimator(
+            n_clusters=n_clusters, random_state=0).fit(X).labels_
+    assert_array_equal(result_1, result_2)
 
 
 @pytest.mark.parametrize("precompute_distances", ["auto", False, True])

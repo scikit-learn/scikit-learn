@@ -178,7 +178,8 @@ def k_means(X, n_clusters, *, sample_weight=None, init='k-means++',
         The weights for each observation in X. If None, all observations
         are assigned equal weight
 
-    init : {'k-means++', 'random', ndarray, callable}, default='k-means++'
+    init : {'k-means++', 'random'}, callable or array-like of shape \
+            (n_clusters, n_features), default='k-means++'
         Method for initialization:
 
         'k-means++' : selects initial cluster centers for k-mean
@@ -188,7 +189,7 @@ def k_means(X, n_clusters, *, sample_weight=None, init='k-means++',
         'random': choose `n_clusters` observations (rows) at random from data
         for the initial centroids.
 
-        If an ndarray is passed, it should be of shape (n_clusters, n_features)
+        If an array is passed, it should be of shape (n_clusters, n_features)
         and gives the initial centers.
 
         If a callable is passed, it should take arguments X, n_clusters and a
@@ -434,7 +435,7 @@ def _kmeans_single_lloyd(X, sample_weight, centers_init, max_iter=300,
     verbose : bool, default=False
         Verbosity mode
 
-    x_squared_norms : ndarray of shape(n_samples,), default=None
+    x_squared_norms : ndarray of shape (n_samples,), default=None
         Precomputed x_squared_norms.
 
     tol : float, default=1e-4
@@ -544,7 +545,7 @@ def _labels_inertia(X, sample_weight, x_squared_norms, centers,
     Returns
     -------
     labels : ndarray of shape (n_samples,)
-        The resulting assignment
+        The resulting assignment.
 
     inertia : float
         Sum of squared distances of samples to their closest cluster center
@@ -586,7 +587,8 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         The number of clusters to form as well as the number of
         centroids to generate.
 
-    init : {'k-means++', 'random', ndarray, callable}, default='k-means++'
+    init : {'k-means++', 'random'}, callable or array-like of shape \
+            (n_clusters, n_features), default='k-means++'
         Method for initialization:
 
         'k-means++' : selects initial cluster centers for k-mean
@@ -596,7 +598,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         'random': choose `n_clusters` observations (rows) at random from data
         for the initial centroids.
 
-        If an ndarray is passed, it should be of shape (n_clusters, n_features)
+        If an array is passed, it should be of shape (n_clusters, n_features)
         and gives the initial centers.
 
         If a callable is passed, it should take arguments X, n_clusters and a
@@ -856,7 +858,8 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
             Squared euclidean norm of each data point. Pass it if you have it
             at hands already to avoid it being recomputed here.
 
-        init : {'k-means++', 'random', ndarray, callable}
+        init : {'k-means++', 'random'}, callable or ndarray of shape \
+                (n_clusters, n_features)
             Method for initialization.
 
         random_state : RandomState instance
@@ -869,7 +872,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
 
         Returns
         -------
-        centers : ndarray of shape(n_clusters, n_features)
+        centers : ndarray of shape (n_clusters, n_features)
         """
         n_samples = X.shape[0]
         n_clusters = self.n_clusters
@@ -1257,7 +1260,8 @@ class MiniBatchKMeans(KMeans):
         The number of clusters to form as well as the number of
         centroids to generate.
 
-    init : {'k-means++', 'random', ndarray, callable}, default='k-means++'
+    init : {'k-means++', 'random'}, callable or array-like of shape \
+            (n_clusters, n_features), default='k-means++'
         Method for initialization:
 
         'k-means++' : selects initial cluster centers for k-mean
@@ -1267,7 +1271,7 @@ class MiniBatchKMeans(KMeans):
         'random': choose `n_clusters` observations (rows) at random from data
         for the initial centroids.
 
-        If an ndarray is passed, it should be of shape (n_clusters, n_features)
+        If an array is passed, it should be of shape (n_clusters, n_features)
         and gives the initial centers.
 
         If a callable is passed, it should take arguments X, n_clusters and a
@@ -1756,6 +1760,7 @@ class MiniBatchKMeans(KMeans):
             init = self.init
             if hasattr(init, '__array__'):
                 init = check_array(init, dtype=X.dtype, copy=True, order='C')
+                self._validate_center_shape(X, init)
 
             # initialize the cluster centers
             self.cluster_centers_ = self._init_centroids(
