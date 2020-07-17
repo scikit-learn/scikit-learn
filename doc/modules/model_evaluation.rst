@@ -249,7 +249,7 @@ Using multiple metric evaluation
 Scikit-learn also permits evaluation of multiple metrics in ``GridSearchCV``,
 ``RandomizedSearchCV`` and ``cross_validate``.
 
-There are two ways to specify multiple scoring metrics for the ``scoring``
+There are three ways to specify multiple scoring metrics for the ``scoring``
 parameter:
 
 - As an iterable of string metrics::
@@ -261,25 +261,23 @@ parameter:
       >>> scoring = {'accuracy': make_scorer(accuracy_score),
       ...            'prec': 'precision'}
 
-Note that the dict values can either be scorer functions or one of the
-predefined metric strings.
+  Note that the dict values can either be scorer functions or one of the
+  predefined metric strings.
 
-Currently only those scorer functions that return a single score can be passed
-inside the dict. Scorer functions that return multiple values are not
-permitted and will require a wrapper to return a single metric::
+- As a callable that returns a dictionary of scores::
 
     >>> from sklearn.model_selection import cross_validate
     >>> from sklearn.metrics import confusion_matrix
     >>> # A sample toy binary classification dataset
     >>> X, y = datasets.make_classification(n_classes=2, random_state=0)
     >>> svm = LinearSVC(random_state=0)
-    >>> def tn(y_true, y_pred): return confusion_matrix(y_true, y_pred)[0, 0]
-    >>> def fp(y_true, y_pred): return confusion_matrix(y_true, y_pred)[0, 1]
-    >>> def fn(y_true, y_pred): return confusion_matrix(y_true, y_pred)[1, 0]
-    >>> def tp(y_true, y_pred): return confusion_matrix(y_true, y_pred)[1, 1]
-    >>> scoring = {'tp': make_scorer(tp), 'tn': make_scorer(tn),
-    ...            'fp': make_scorer(fp), 'fn': make_scorer(fn)}
-    >>> cv_results = cross_validate(svm, X, y, cv=5, scoring=scoring)
+    >>> def confusion_matrix_scorer(clf, X, y):
+    ...      y_pred = clf.predict(X)
+    ...      cm = confusion_matrix(y, y_pred)
+    ...      return {'tn': cm[0, 0], 'fp': cm[0, 1],
+    ...              'fn': cm[1, 0], 'tp': cm[1, 1]}
+    >>> cv_results = cross_validate(svm, X, y, cv=5,
+    ...                             scoring=confusion_matrix_scorer)
     >>> # Getting the test set true positive scores
     >>> print(cv_results['test_tp'])
     [10  9  8  7  8]
