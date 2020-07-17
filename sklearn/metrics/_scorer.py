@@ -364,14 +364,14 @@ def get_scorer(scoring):
     """
     if isinstance(scoring, str):
         try:
-            scorer = deepcopy(SCORERS[scoring])
+            scorer = SCORERS[scoring]
         except KeyError:
             raise ValueError('%r is not a valid scoring value. '
                              'Use sorted(sklearn.metrics.SCORERS.keys()) '
                              'to get valid options.' % scoring)
     else:
-        scorer = deepcopy(scoring)
-    return scorer
+        scorer = scoring
+    return deepcopy(scorer)
 
 
 def _passthrough_scorer(estimator, *args, **kwargs):
