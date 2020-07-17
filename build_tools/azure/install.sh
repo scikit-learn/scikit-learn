@@ -18,7 +18,7 @@ if [[ "$DISTRIB" == "conda" ]]; then
 
     TO_INSTALL="python=$PYTHON_VERSION pip blas[build=$BLAS]"
 
-    TO_INSTALL="$TO_INSTALL $(get_dep nump $NUMPY_VERSION)"
+    TO_INSTALL="$TO_INSTALL $(get_dep numpy $NUMPY_VERSION)"
     TO_INSTALL="$TO_INSTALL $(get_dep scipy $SCIPY_VERSION)"
     TO_INSTALL="$TO_INSTALL $(get_dep cython $CYTHON_VERSION)"
     TO_INSTALL="$TO_INSTALL $(get_dep joblib $JOBLIB_VERSION)"
