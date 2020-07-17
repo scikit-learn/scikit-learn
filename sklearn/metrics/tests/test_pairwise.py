@@ -1312,7 +1312,7 @@ def test_numeric_pairwise_distances_datatypes(metric, dtype, y_is_x):
     #
     # This test is necessary because pairwise_distances used to throw an
     # error when using metric='seuclidean' and the input data was not
-    # of type np.double (#15730)
+    # of type np.float64 (#15730)
 
     rng = np.random.RandomState(0)
 
