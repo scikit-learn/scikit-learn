@@ -223,15 +223,18 @@ class MockClassifier:
     def get_params(self, deep=False):
         return {'a': self.a, 'allow_nd': self.allow_nd}
 
+    def _get_tags(self):
+        return {'estimator_type': 'classifier'}
+
 
 # XXX: use 2D array, since 1D X is being detected as a single sample in
 # check_consistent_length
-X = np.ones((10, 2))
+X = np.ones((15, 2))
 X_sparse = coo_matrix(X)
-y = np.array([0, 0, 1, 1, 2, 2, 3, 3, 4, 4])
-# The number of samples per class needs to be > n_splits,
-# for StratifiedKFold(n_splits=3)
-y2 = np.array([1, 1, 1, 2, 2, 2, 3, 3, 3, 3])
+y = np.array([0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3, 4, 4, 4])
+# The number of samples per class need to be greater than or equal
+# to the number of splits for stratified cross-validation routines
+y2 = np.array([1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3])
 P_sparse = coo_matrix(np.eye(5))
 
 
@@ -620,7 +623,7 @@ def test_cross_val_score_fit_params():
                   'dummy_str': DUMMY_STR,
                   'dummy_obj': DUMMY_OBJ,
                   'callback': assert_fit_params}
-    cross_val_score(clf, X, y, fit_params=fit_params)
+    cross_val_score(clf, X, y2, fit_params=fit_params)
 
 
 def test_cross_val_score_score_func():
