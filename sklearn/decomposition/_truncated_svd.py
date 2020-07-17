@@ -176,9 +176,9 @@ class TruncatedSVD(TransformerMixin, BaseEstimator):
             k = self.n_components
             n_features = X.shape[1]
             if k >= n_features:
-                warnings.warn("n_components must be < n_features;"
-                              " resetting %d n_components to %d n_components" % (k, n_features),
-                              UserWarning)
+                msg = "n_components must be < n_features;"
+                msg += " resetting %d n_components to %d n_components"
+                warnings.warn(msg % (k, n_features), UserWarning)
                 k = n_features - 1
             U, Sigma, VT = randomized_svd(X, self.n_components,
                                           n_iter=self.n_iter,
