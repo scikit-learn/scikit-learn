@@ -227,6 +227,10 @@ Changelog
   class to be used when computing the roc auc statistics.
   :pr:`17651` by :user:`Clara Matos <claramatos>`.
 
+- |Fix| Fixed a bug where :func:`metrics.pairwise_distances` would raise an error if
+  ``metric='seuclidean'`` and ``X`` is not type ``np.float64``.
+  :pr:`15730` by :user:`Forrest Koch <ForrestCKoch>`.
+
 :mod:`sklearn.model_selection`
 ..............................
 
