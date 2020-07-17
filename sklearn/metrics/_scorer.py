@@ -303,13 +303,6 @@ class _ThresholdScorer(_BaseScorer):
             y_pred = method_caller(clf, "predict", X)
         else:
             try:
-                if (
-                    y_type == "binary"
-                    and self._score_func.__name__ == "roc_auc_score"
-                    and "pos_label" not in self._kwargs
-                ):
-                    self._kwargs["pos_label"] = clf.classes_[1]
-
                 y_pred = method_caller(clf, "decision_function", X)
 
                 # For multi-output multi-class estimator
@@ -321,6 +314,12 @@ class _ThresholdScorer(_BaseScorer):
 
                 if y_type == "binary":
                     if y_pred.shape[1] == 2:
+                        if (
+                            self._score_func.__name__ == "roc_auc_score"
+                            and "pos_label" not in self._kwargs
+                        ):
+                            self._kwargs["pos_label"] = clf.classes_[1]
+
                         if "pos_label" in self._kwargs:
                             col_idx = np.flatnonzero(
                                 clf.classes_ == self._kwargs["pos_label"]
@@ -371,7 +370,7 @@ def get_scorer(scoring):
                              'Use sorted(sklearn.metrics.SCORERS.keys()) '
                              'to get valid options.' % scoring)
     else:
-        scorer = scoring
+        scorer = deepcopy(scoring)
     return scorer
 
 
