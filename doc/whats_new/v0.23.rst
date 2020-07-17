@@ -59,6 +59,13 @@ Changelog
 - |Fix| :func:`linear_model.lars_path` does not overwrite `X` when
   `X_copy=True` and `Gram='auto'`. :pr:`17914` by `Thomas Fan`_.
 
+:mod:`sklearn.manifold`
+.......................
+
+- |Fix| Fixed a bug where :func:`metrics.pairwise_distances` would raise an
+   error if ``metric='seuclidean'`` and ``X`` is not type ``np.float64``.
+  :pr:`15730` by :user:`Forrest Koch <ForrestCKoch>`.
+
 .. _changes_0_23_1:
 
 Version 0.23.1
