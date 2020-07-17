@@ -548,7 +548,7 @@ def _labels_inertia(X, sample_weight, x_squared_norms, centers,
         The resulting assignment.
 
     inertia : float
-        Sum of squared distances of samples to their closest cluster center
+        Sum of squared distances of samples to their closest cluster center.
     """
     n_samples = X.shape[0]
     n_clusters = centers.shape[0]
@@ -950,7 +950,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
             # The copy was already done above
             X -= X_mean
 
-            if hasattr(self.init, '__array__'):
+            if hasattr(init, '__array__'):
                 init -= X_mean
 
         # precompute squared norms of data points
