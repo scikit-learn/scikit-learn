@@ -766,8 +766,9 @@ def test_multiclass_roc_no_proba_scorer_errors(scorer_name):
     ],
 )
 def test_scorer_pos_label_grid_search(scoring, is_symmetric):
-    # check the behaviour for the scorer which requires a `pos_label` with
-    # binary target
+    # Check the behaviour for the scorer which requires a `pos_label` with
+    # binary target. Non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/pull/17572
     X, y = load_breast_cancer(return_X_y=True)
     # create an highly imbalanced
     idx_positive = np.flatnonzero(y == 1)
