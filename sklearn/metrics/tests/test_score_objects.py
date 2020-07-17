@@ -782,9 +782,12 @@ def test_scorer_pos_label_grid_search(scoring, is_symmetric):
         ["cancer" if c == 1 else "not cancer" for c in y], dtype=object
     )
 
-    param_grid = {"max_depth": [1, 2, 3, 4, 5]}
+    param_grid = {"max_depth": [1, 3, 5]}
     classifier = GridSearchCV(
-        DecisionTreeClassifier(), param_grid=param_grid, scoring=scoring,
+        DecisionTreeClassifier(random_state=0),
+        param_grid=param_grid,
+        scoring=scoring,
+        cv=2,
     )
 
     if is_symmetric:
@@ -815,4 +818,28 @@ def test_scorer_pos_label_grid_search(scoring, is_symmetric):
         )
     else:
         with pytest.raises(ValueError):
+            # it should raise an error by default
             classifier.fit(X, y)
+        # passing pos_label should solve the issue and should be equivalent to
+        # encode the label with 0, 1
+
+        # we should control our cv indices since y will be different leading
+        # to different cv split
+        indices = np.arange(y.shape[0])
+        cv = [
+            (indices[: indices.size // 2], indices[indices.size // 2 :]),
+            (indices[indices.size // 2 :], indices[: indices.size // 2]),
+        ]
+        classifier.set_params(cv=cv)
+
+        y_encoded = y == "cancer"
+        classifier.fit(X, y_encoded)
+        mean_test_score_y_encoded = classifier.cv_results_["mean_test_score"]
+
+        scorer = get_scorer(scoring)
+        scorer._kwargs["pos_label"] = "cancer"
+        classifier.set_params(scoring=scorer)
+        classifier.fit(X, y)
+        mean_test_score_pos_label = classifier.cv_results_["mean_test_score"]
+
+        assert_allclose(mean_test_score_pos_label, mean_test_score_y_encoded)
