@@ -1227,11 +1227,12 @@ def test_feature_union_fit_params():
 
 
 @pytest.mark.parametrize(
-    "Estimator,estimator_type", [(DecisionTreeClassifier, "classifier"),
-                                 (DecisionTreeRegressor, "regressor"),
-                                 (KMeans, "clusterer"),
-                                 (BayesianGaussianMixture, "DensityEstimator"),
-                                 (IsolationForest, "outlier_detector")])
+    "Estimator,estimator_type",
+    [(DecisionTreeClassifier, "classifier"),
+     (DecisionTreeRegressor, "regressor"),
+     (KMeans, "clusterer"),
+     (BayesianGaussianMixture, "density_estimator"),
+     (IsolationForest, "outlier_detector")])
 def test_estimator_type_tag(Estimator, estimator_type):
     # Assert that estimator_type tag is properly set
     pipeline = Pipeline([('est', Estimator())])
