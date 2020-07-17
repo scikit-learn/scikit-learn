@@ -248,7 +248,7 @@ def plot_partial_dependence(estimator, X, features, *, feature_names=None,
     # Use check_array only on lists and other non-array-likes / sparse. Do not
     # convert DataFrame into a NumPy array.
     if not(hasattr(X, '__array__') or sparse.issparse(X)):
-        X = check_array(X, force_all_finite='allow-nan', dtype=np.object)
+        X = check_array(X, force_all_finite='allow-nan', dtype=object)
     n_features = X.shape[1]
 
     # convert feature_names to list
@@ -600,13 +600,13 @@ class PartialDependenceDisplay:
             n_cols = min(n_cols, n_features)
             n_rows = int(np.ceil(n_features / float(n_cols)))
 
-            self.axes_ = np.empty((n_rows, n_cols), dtype=np.object)
+            self.axes_ = np.empty((n_rows, n_cols), dtype=object)
             if self.kind == 'average':
-                self.lines_ = np.empty((n_rows, n_cols), dtype=np.object)
+                self.lines_ = np.empty((n_rows, n_cols), dtype=object)
             else:
                 self.lines_ = np.empty((n_rows, n_cols, n_sampled),
-                                       dtype=np.object)
-            self.contours_ = np.empty((n_rows, n_cols), dtype=np.object)
+                                       dtype=object)
+            self.contours_ = np.empty((n_rows, n_cols), dtype=object)
 
             axes_ravel = self.axes_.ravel()
 
@@ -630,18 +630,18 @@ class PartialDependenceDisplay:
             self.figure_ = ax.ravel()[0].figure
             self.axes_ = ax
             if self.kind == 'average':
-                self.lines_ = np.empty_like(ax, dtype=np.object)
+                self.lines_ = np.empty_like(ax, dtype=object)
             else:
                 self.lines_ = np.empty(ax.shape + (n_sampled,),
-                                       dtype=np.object)
-            self.contours_ = np.empty_like(ax, dtype=np.object)
+                                       dtype=object)
+            self.contours_ = np.empty_like(ax, dtype=object)
 
         # create contour levels for two-way plots
         if 2 in self.pdp_lim:
             Z_level = np.linspace(*self.pdp_lim[2], num=8)
 
-        self.deciles_vlines_ = np.empty_like(self.axes_, dtype=np.object)
-        self.deciles_hlines_ = np.empty_like(self.axes_, dtype=np.object)
+        self.deciles_vlines_ = np.empty_like(self.axes_, dtype=object)
+        self.deciles_hlines_ = np.empty_like(self.axes_, dtype=object)
 
         # Create 1d views of these 2d arrays for easy indexing
         lines_ravel = self.lines_.ravel(order='C')

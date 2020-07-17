@@ -9,6 +9,7 @@ import os
 import platform
 import shutil
 from distutils.command.clean import clean as Clean
+from distutils.command.sdist import sdist
 from pkg_resources import parse_version
 import traceback
 import importlib
@@ -45,18 +46,10 @@ PROJECT_URLS = {
 # We can actually import a restricted version of sklearn that
 # does not need the compiled code
 import sklearn
+import sklearn._build_utils.min_dependencies as min_deps  # noqa
+
 
 VERSION = sklearn.__version__
-
-if platform.python_implementation() == 'PyPy':
-    SCIPY_MIN_VERSION = '1.1.0'
-    NUMPY_MIN_VERSION = '1.14.0'
-else:
-    SCIPY_MIN_VERSION = '0.19.1'
-    NUMPY_MIN_VERSION = '1.13.3'
-
-JOBLIB_MIN_VERSION = '0.11'
-THREADPOOLCTL_MIN_VERSION = '2.0.0'
 
 # Optional setuptools features
 # We need to import setuptools early, if we want setuptools features,
@@ -75,27 +68,8 @@ if SETUPTOOLS_COMMANDS.intersection(sys.argv):
         zip_safe=False,  # the package can run out of an .egg file
         include_package_data=True,
         extras_require={
-            'examples': (
-                'matplotlib>=2.1.1',
-                'scikit-image>=0.13',
-                'pandas>=0.18.0',
-                'seaborn>=0.9.0',
-            ),
-            'benchmark': (
-                'memory_profiler>=0.57.0'
-            ),
-            'tests': (
-                'pytest>=3.3.0',
-                'pytest-cov>=2.9.0',
-                'flake8>=3.8.2',
-                'mypy>=0.770',
-            ),
-            'docs': (
-                'sphinx>=2.1.2',
-                'sphinx-gallery>=0.7.0',
-                'numpydoc>=0.9.2'
-                'Pillow>=7.1.2',
-            ),
+            key: min_deps.tag_to_packages[key] for
+            key in ['examples', 'docs', 'tests', 'benchmark']
         },
     )
 else:
@@ -132,7 +106,7 @@ class CleanCommand(Clean):
                     shutil.rmtree(os.path.join(dirpath, dirname))
 
 
-cmdclass = {'clean': CleanCommand}
+cmdclass = {'clean': CleanCommand, 'sdist': sdist}
 
 # custom build_ext command to set OpenMP compile flags depending on os and
 # compiler
@@ -272,12 +246,7 @@ def setup_package():
                                  ],
                     cmdclass=cmdclass,
                     python_requires=">=3.6",
-                    install_requires=[
-                        'numpy>={}'.format(NUMPY_MIN_VERSION),
-                        'scipy>={}'.format(SCIPY_MIN_VERSION),
-                        'joblib>={}'.format(JOBLIB_MIN_VERSION),
-                        'threadpoolctl>={}'.format(THREADPOOLCTL_MIN_VERSION)
-                    ],
+                    install_requires=min_deps.tag_to_packages['install'],
                     package_data={'': ['*.pxd']},
                     **extra_setuptools_args)
 
@@ -293,10 +262,7 @@ def setup_package():
         # They are required to succeed without Numpy for example when
         # pip is used to install Scikit-learn when Numpy is not yet present in
         # the system.
-        try:
-            from setuptools import setup
-        except ImportError:
-            from distutils.core import setup
+        from setuptools import setup
 
         metadata['version'] = VERSION
     else:
@@ -306,10 +272,11 @@ def setup_package():
                 " Python version is %s installed in %s."
                 % (platform.python_version(), sys.executable))
 
-        check_package_status('numpy', NUMPY_MIN_VERSION)
+        check_package_status('numpy', min_deps.NUMPY_MIN_VERSION)
 
-        check_package_status('scipy', SCIPY_MIN_VERSION)
+        check_package_status('scipy', min_deps.SCIPY_MIN_VERSION)
 
+        import setuptools  # noqa
         from numpy.distutils.core import setup
 
         metadata['configuration'] = configuration

@@ -166,10 +166,10 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         self.tol = tol
 
     def _fit_stage(self, i, X, y, raw_predictions, sample_weight, sample_mask,
-                   random_state, X_idx_sorted, X_csc=None, X_csr=None):
+                   random_state, X_csc=None, X_csr=None):
         """Fit another stage of ``n_classes_`` trees to the boosting model. """
 
-        assert sample_mask.dtype == np.bool
+        assert sample_mask.dtype == bool
         loss = self.loss_
         original_y = y
 
@@ -207,7 +207,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
             X = X_csr if X_csr is not None else X
             tree.fit(X, residual, sample_weight=sample_weight,
-                     check_input=False, X_idx_sorted=X_idx_sorted)
+                     check_input=False)
 
             # update tree leaves
             loss.update_terminal_regions(
@@ -306,7 +306,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             self.init_ = self.loss_.init_estimator()
 
         self.estimators_ = np.empty((self.n_estimators, self.loss_.K),
-                                    dtype=np.object)
+                                    dtype=object)
         self.train_score_ = np.zeros((self.n_estimators,), dtype=np.float64)
         # do oob?
         if self.subsample < 1.0:
@@ -316,7 +316,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
     def _clear_state(self):
         """Clear the state of the gradient boosting model. """
         if hasattr(self, 'estimators_'):
-            self.estimators_ = np.empty((0, 0), dtype=np.object)
+            self.estimators_ = np.empty((0, 0), dtype=object)
         if hasattr(self, 'train_score_'):
             del self.train_score_
         if hasattr(self, 'oob_improvement_'):
@@ -482,12 +482,10 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             raw_predictions = self._raw_predict(X)
             self._resize_state()
 
-        X_idx_sorted = None
-
         # fit the boosting stages
         n_stages = self._fit_stages(
             X, y, raw_predictions, sample_weight, self._rng, X_val, y_val,
-            sample_weight_val, begin_at_stage, monitor, X_idx_sorted)
+            sample_weight_val, begin_at_stage, monitor)
 
         # change shape of arrays after fit (early-stopping or additional ests)
         if n_stages != self.estimators_.shape[0]:
@@ -501,7 +499,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
     def _fit_stages(self, X, y, raw_predictions, sample_weight, random_state,
                     X_val, y_val, sample_weight_val,
-                    begin_at_stage=0, monitor=None, X_idx_sorted=None):
+                    begin_at_stage=0, monitor=None):
         """Iteratively fits the stages.
 
         For each stage it computes the progress (OOB, train score)
@@ -511,7 +509,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         """
         n_samples = X.shape[0]
         do_oob = self.subsample < 1.0
-        sample_mask = np.ones((n_samples, ), dtype=np.bool)
+        sample_mask = np.ones((n_samples, ), dtype=bool)
         n_inbag = max(1, int(self.subsample * n_samples))
         loss_ = self.loss_
 
@@ -544,7 +542,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             # fit next stage of trees
             raw_predictions = self._fit_stage(
                 i, X, y, raw_predictions, sample_weight, sample_mask,
-                random_state, X_idx_sorted, X_csc, X_csr)
+                random_state, X_csc, X_csr)
 
             # track deviance (= loss)
             if do_oob:
@@ -1495,6 +1493,14 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
 
     estimators_ : ndarray of DecisionTreeRegressor of shape (n_estimators, 1)
         The collection of fitted sub-estimators.
+
+    n_classes_ : int
+        The number of classes, set to 1 in regression tasks.
+
+    n_estimators_ : int
+        The number of estimators as selected by early stopping (if
+        ``n_iter_no_change`` is specified). Otherwise it is set to
+        ``n_estimators``.
 
     n_features_ : int
         The number of data features.

@@ -242,6 +242,10 @@ def confusion_matrix(y_true, y_pred, *, labels=None, sample_weight=None,
         samples with true label being i-th class
         and prediced label being j-th class.
 
+    See Also
+    --------
+    plot_confusion_matrix : Plot Confusion Matrix
+
     References
     ----------
     .. [1] `Wikipedia entry for the Confusion matrix
@@ -285,7 +289,7 @@ def confusion_matrix(y_true, y_pred, *, labels=None, sample_weight=None,
         if n_labels == 0:
             raise ValueError("'labels' should contains at least one label.")
         elif y_true.size == 0:
-            return np.zeros((n_labels, n_labels), dtype=np.int)
+            return np.zeros((n_labels, n_labels), dtype=int)
         elif np.all([l not in y_true for l in labels]):
             raise ValueError("At least one label specified must be in y_true")
 
@@ -605,10 +609,10 @@ def cohen_kappa_score(y1, y2, *, labels=None, weights=None,
     expected = np.outer(sum0, sum1) / np.sum(sum0)
 
     if weights is None:
-        w_mat = np.ones([n_classes, n_classes], dtype=np.int)
+        w_mat = np.ones([n_classes, n_classes], dtype=int)
         w_mat.flat[:: n_classes + 1] = 0
     elif weights == "linear" or weights == "quadratic":
-        w_mat = np.zeros([n_classes, n_classes], dtype=np.int)
+        w_mat = np.zeros([n_classes, n_classes], dtype=int)
         w_mat += np.arange(n_classes)
         if weights == "linear":
             w_mat = np.abs(w_mat - w_mat.T)
@@ -1881,7 +1885,8 @@ def classification_report(y_true, y_pred, *, labels=None, target_names=None,
         per label), and sample average (only for multilabel classification).
         Micro average (averaging the total true positives, false negatives and
         false positives) is only shown for multi-label or multi-class
-        with a subset of classes, because it corresponds to accuracy otherwise.
+        with a subset of classes, because it corresponds to accuracy
+        otherwise and would be the same for all metrics.
         See also :func:`precision_recall_fscore_support` for more details
         on averages.
 
@@ -1928,12 +1933,12 @@ def classification_report(y_true, y_pred, *, labels=None, target_names=None,
 
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
 
-    labels_given = True
     if labels is None:
         labels = unique_labels(y_true, y_pred)
         labels_given = False
     else:
         labels = np.asarray(labels)
+        labels_given = True
 
     # labelled micro average
     micro_is_accuracy = ((y_type == 'multiclass' or y_type == 'binary') and

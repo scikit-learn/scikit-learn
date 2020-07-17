@@ -177,7 +177,7 @@ def test_discretize(n_samples):
     for n_class in range(2, 10):
         # random class labels
         y_true = random_state.randint(0, n_class + 1, n_samples)
-        y_true = np.array(y_true, np.float)
+        y_true = np.array(y_true, float)
         # noise class assignment matrix
         y_indicator = sparse.coo_matrix((np.ones(n_samples),
                                          (np.arange(n_samples),

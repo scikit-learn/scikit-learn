@@ -46,7 +46,7 @@ def test_f_oneway_ints():
     fint, pint = f_oneway(X, y)
 
     # test that is gives the same result as with float
-    f, p = f_oneway(X.astype(np.float), y)
+    f, p = f_oneway(X.astype(float), y)
     assert_array_almost_equal(f, fint, decimal=4)
     assert_array_almost_equal(p, pint, decimal=4)
 
@@ -102,10 +102,10 @@ def test_f_regression_input_dtype():
     # for any numeric data_type
     rng = np.random.RandomState(0)
     X = rng.rand(10, 20)
-    y = np.arange(10).astype(np.int)
+    y = np.arange(10).astype(int)
 
     F1, pv1 = f_regression(X, y)
-    F2, pv2 = f_regression(X, y.astype(np.float))
+    F2, pv2 = f_regression(X, y.astype(float))
     assert_array_almost_equal(F1, F2, 5)
     assert_array_almost_equal(pv1, pv2, 5)
 
@@ -367,7 +367,7 @@ def test_select_heuristics_regression():
             f_regression, mode=mode, param=0.01).fit(X, y).transform(X)
         assert_array_equal(X_r, X_r2)
         support = univariate_filter.get_support()
-        assert_array_equal(support[:5], np.ones((5, ), dtype=np.bool))
+        assert_array_equal(support[:5], np.ones((5, ), dtype=bool))
         assert np.sum(support[5:] == 1) < 3
 
 
@@ -462,7 +462,7 @@ def test_select_fwe_regression():
     support = univariate_filter.get_support()
     gtruth = np.zeros(20)
     gtruth[:5] = 1
-    assert_array_equal(support[:5], np.ones((5, ), dtype=np.bool))
+    assert_array_equal(support[:5], np.ones((5, ), dtype=bool))
     assert np.sum(support[5:] == 1) < 2
 
 

@@ -15,15 +15,23 @@ env:
     - TEST_DIR=/tmp/sklearn
     - OMP_NUM_THREADS=2
     - OPENBLAS_NUM_THREADS=2
+    - PYTEST_VERSION=latest
 
 matrix:
   include:
     # Linux environment to test scikit-learn against numpy and scipy master
     # installed from their CI wheels in a virtualenv with the Python
     # interpreter provided by travis.
-    -  python: 3.7
-       env: CHECK_WARNINGS="true"
-       if: type = cron OR commit_message =~ /\[scipy-dev\]/
+    - python: 3.7
+      env: CHECK_WARNINGS="true"
+      if: type = cron OR commit_message =~ /\[scipy-dev\]/
+    
+    # As above but build scikit-learn with Intel C compiler (ICC).
+    - python: 3.7
+      env:
+        - CHECK_WARNING="true"
+        - BUILD_WITH_ICC="true"
+      if: type = cron OR commit_message =~ /\[icc-build\]/
 
 install: source build_tools/travis/install.sh
 script:

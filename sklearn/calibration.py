@@ -9,6 +9,7 @@
 
 import warnings
 from inspect import signature
+from contextlib import suppress
 
 from math import log
 import numpy as np
@@ -25,14 +26,16 @@ from .utils import check_array, indexable, column_or_1d, compute_class_weight
 from .utils._encode import _unique
 from .utils.validation import check_is_fitted, check_consistent_length
 from .utils.validation import _check_sample_weight
+from .pipeline import Pipeline
 from .isotonic import IsotonicRegression
 from .svm import LinearSVC
 from .model_selection import check_cv
 from .utils.validation import _deprecate_positional_args
 
 
-class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
-                             MetaEstimatorMixin):
+class CalibratedClassifierCV(ClassifierMixin,
+                             MetaEstimatorMixin,
+                             BaseEstimator):
     """Probability calibration with isotonic regression or logistic regression.
 
     This class uses cross-validation to both estimate the parameters of a
@@ -53,9 +56,10 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
 
     Parameters
     ----------
-    base_estimator : instance BaseEstimator
+    base_estimator : estimator instance, default=None
         The classifier whose output need to be calibrated to provide more
-        accurate `predict_proba` outputs.
+        accurate `predict_proba` outputs. The default classifier is
+        a :class:`~sklearn.svm.LinearSVC`.
 
     method : {'sigmoid', 'isotonic'}, default='sigmoid'
         The method to use for calibration. Can be 'sigmoid' which
@@ -75,8 +79,8 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
         - An iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, if ``y`` is binary or multiclass,
-        :class:`sklearn.model_selection.StratifiedKFold` is used. If ``y`` is
-        neither binary nor multiclass, :class:`sklearn.model_selection.KFold`
+        :class:`~sklearn.model_selection.StratifiedKFold` is used. If ``y`` is
+        neither binary nor multiclass, :class:`~sklearn.model_selection.KFold`
         is used.
 
         Refer to the :ref:`User Guide <cross_validation>` for the various
@@ -187,22 +191,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
         self : object
             Returns an instance of self.
         """
-        X, y = self._validate_data(X, y, accept_sparse=['csc', 'csr', 'coo'],
-                                   force_all_finite=False, allow_nd=True)
         X, y = indexable(X, y)
-        le = LabelBinarizer().fit(y)
-        self.classes_ = le.classes_
-
-        # Check that each cross-validation fold can have at least one
-        # example per class
-        n_folds = self.cv if isinstance(self.cv, int) \
-            else self.cv.n_folds if hasattr(self.cv, "n_folds") else None
-        if n_folds and \
-                np.any([np.sum(y == class_) < n_folds for class_ in
-                        self.classes_]):
-            raise ValueError("Requesting %d-fold cross-validation but provided"
-                             " less than %d examples for at least one class."
-                             % (n_folds, n_folds))
 
         self.calibrated_classifiers_ = []
         if self.base_estimator is None:
@@ -214,12 +203,42 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
             base_estimator = self.base_estimator
 
         if self.cv == "prefit":
+            # Set `n_features_in_` attribute
+            if isinstance(self.base_estimator, Pipeline):
+                check_is_fitted(self.base_estimator[-1])
+            else:
+                check_is_fitted(self.base_estimator)
+            with suppress(AttributeError):
+                self.n_features_in_ = base_estimator.n_features_in_
+            self.classes_ = self.base_estimator.classes_
+
             calibrated_classifier = _CalibratedClassifier(
                 base_estimator, method=self.method,
                 class_weight=self.class_weight)
             calibrated_classifier.fit(X, y, sample_weight)
             self.calibrated_classifiers_.append(calibrated_classifier)
         else:
+            X, y = self._validate_data(
+                X, y, accept_sparse=['csc', 'csr', 'coo'],
+                force_all_finite=False, allow_nd=True
+            )
+            le = LabelBinarizer().fit(y)
+            self.classes_ = le.classes_
+
+            # Check that each cross-validation fold can have at least one
+            # example per class
+            if isinstance(self.cv, int):
+                n_folds = self.cv
+            elif hasattr(self.cv, "n_splits"):
+                n_folds = self.cv.n_splits
+            else:
+                n_folds = None
+            if n_folds and np.any([np.sum(y == class_) < n_folds
+                                   for class_ in self.classes_]):
+                raise ValueError(f"Requesting {n_folds}-fold cross-validation "
+                                 f"but provided less than {n_folds} examples "
+                                 "for at least one class.")
+
             cv = check_cv(self.cv, y, classifier=True)
             fit_parameters = signature(base_estimator.fit).parameters
             base_estimator_supports_sw = "sample_weight" in fit_parameters
@@ -654,6 +673,18 @@ def calibration_curve(y_true, y_prob, *, normalize=False, n_bins=5,
     Probabilities With Supervised Learning, in Proceedings of the 22nd
     International Conference on Machine Learning (ICML).
     See section 4 (Qualitative Analysis of Predictions).
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.calibration import calibration_curve
+    >>> y_true = np.array([0, 0, 0, 0, 1, 1, 1, 1, 1])
+    >>> y_pred = np.array([0.1, 0.2, 0.3, 0.4, 0.65, 0.7, 0.8, 0.9,  1.])
+    >>> prob_true, prob_pred = calibration_curve(y_true, y_pred, n_bins=3)
+    >>> prob_true
+    array([0. , 0.5, 1. ])
+    >>> prob_pred
+    array([0.2  , 0.525, 0.85 ])
     """
     y_true = column_or_1d(y_true)
     y_prob = column_or_1d(y_prob)
