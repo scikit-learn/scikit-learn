@@ -793,7 +793,7 @@ def test_scorer_pos_label_grid_search(scoring, is_symmetric):
     if is_symmetric:
         # we will expand to compute for several scorer with different pos_label
         # which should all give the same results
-        scorer = get_scorer(scoring)
+        scorer = deepcopy(get_scorer(scoring))
         scorer_pos_label, scorer_neg_label = deepcopy(scorer), deepcopy(scorer)
 
         scorer_pos_label._kwargs["pos_label"] = "cancer"
@@ -828,8 +828,8 @@ def test_scorer_pos_label_grid_search(scoring, is_symmetric):
     # to different cv split
     indices = np.arange(y.shape[0])
     cv = [
-        (indices[: indices.size // 2], indices[indices.size // 2 :]),
-        (indices[indices.size // 2 :], indices[: indices.size // 2]),
+        (indices[:indices.size // 2], indices[indices.size // 2:]),
+        (indices[indices.size // 2:], indices[:indices.size // 2]),
     ]
     classifier.set_params(cv=cv, scoring=scoring, refit=True)
 
@@ -837,7 +837,7 @@ def test_scorer_pos_label_grid_search(scoring, is_symmetric):
     classifier.fit(X, y_encoded)
     mean_test_score_y_encoded = classifier.cv_results_["mean_test_score"]
 
-    scorer = get_scorer(scoring)
+    scorer = deepcopy(get_scorer(scoring))
     scorer._kwargs["pos_label"] = "cancer"
     classifier.set_params(scoring=scorer)
     classifier.fit(X, y)
