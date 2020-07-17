@@ -1391,14 +1391,14 @@ cdef class Poisson(RegressionCriterion):
         cdef double y_mean_right = 0.
 
         for k in range(self.n_outputs):
-            y_mean_left = self.sum_left[k] / self.weighted_n_left
-            y_mean_right = self.sum_right[k] / self.weighted_n_right
-            if (y_mean_left <= 0) or (y_mean_right <= 0):
+            if (self.sum_left[k] <= 0) or (self.sum_right[k] <= 0):
                 # Poisson loss does not allow non-positive predictions. We
                 # therefore forbid splits that have child nodes with
                 # sum(y_i) <= 0.
                 return -INFINITY
             else:
+                y_mean_left = self.sum_left[k] / self.weighted_n_left
+                y_mean_right = self.sum_right[k] / self.weighted_n_right
                 proxy_impurity_left += y_mean_left * log(y_mean_left)
                 proxy_impurity_right += y_mean_right * log(y_mean_right)
 
