@@ -820,26 +820,27 @@ def test_scorer_pos_label_grid_search(scoring, is_symmetric):
         with pytest.raises(ValueError):
             # it should raise an error by default
             classifier.fit(X, y)
-        # passing pos_label should solve the issue and should be equivalent to
-        # encode the label with 0, 1
 
-        # we should control our cv indices since y will be different leading
-        # to different cv split
-        indices = np.arange(y.shape[0])
-        cv = [
-            (indices[: indices.size // 2], indices[indices.size // 2 :]),
-            (indices[indices.size // 2 :], indices[: indices.size // 2]),
-        ]
-        classifier.set_params(cv=cv)
+    # passing pos_label should always solve the issue and should be equivalent
+    # to encode the label with {0, 1}.
 
-        y_encoded = y == "cancer"
-        classifier.fit(X, y_encoded)
-        mean_test_score_y_encoded = classifier.cv_results_["mean_test_score"]
+    # we should control our cv indices since y will be different leading
+    # to different cv split
+    indices = np.arange(y.shape[0])
+    cv = [
+        (indices[: indices.size // 2], indices[indices.size // 2 :]),
+        (indices[indices.size // 2 :], indices[: indices.size // 2]),
+    ]
+    classifier.set_params(cv=cv, scoring=scoring, refit=True)
 
-        scorer = get_scorer(scoring)
-        scorer._kwargs["pos_label"] = "cancer"
-        classifier.set_params(scoring=scorer)
-        classifier.fit(X, y)
-        mean_test_score_pos_label = classifier.cv_results_["mean_test_score"]
+    y_encoded = (y == "cancer").astype(int)
+    classifier.fit(X, y_encoded)
+    mean_test_score_y_encoded = classifier.cv_results_["mean_test_score"]
 
-        assert_allclose(mean_test_score_pos_label, mean_test_score_y_encoded)
+    scorer = get_scorer(scoring)
+    scorer._kwargs["pos_label"] = "cancer"
+    classifier.set_params(scoring=scorer)
+    classifier.fit(X, y)
+    mean_test_score_pos_label = classifier.cv_results_["mean_test_score"]
+
+    assert_allclose(mean_test_score_pos_label, mean_test_score_y_encoded)
