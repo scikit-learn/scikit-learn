@@ -149,7 +149,7 @@ Changelog
 
 - |Fix| Fixed bug in :func:`feature_selection.f_regression` for convinience
   in cross validation routines to avoid `RuntimeWarning` for a correlation
-  of one or features or target with identically constant columns.
+  of one, or features or target with identically constant columns.
   :pr:`17819` by :user:`Juan Carlos Alfaro Jiménez <alfaro96>`.
 
 :mod:`sklearn.gaussian_process`
