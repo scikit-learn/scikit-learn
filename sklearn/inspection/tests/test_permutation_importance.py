@@ -376,7 +376,7 @@ def test_permutation_importance_sample_weight():
     # mean absolutes error as the loss function).
     pi = permutation_importance(lr, x, y, random_state=1,
                                 scoring='neg_mean_absolute_error',
-                                n_repeats=1000)
+                                n_repeats=200)
     x1_x2_imp_ratio_w_none = pi.importances_mean[0] / pi.importances_mean[1]
     assert x1_x2_imp_ratio_w_none == pytest.approx(1, 0.01)
 
@@ -385,7 +385,7 @@ def test_permutation_importance_sample_weight():
     w = np.ones(n_samples)
     pi = permutation_importance(lr, x, y, random_state=1,
                                 scoring='neg_mean_absolute_error',
-                                n_repeats=1000, sample_weight=w)
+                                n_repeats=200, sample_weight=w)
     x1_x2_imp_ratio_w_ones = pi.importances_mean[0] / pi.importances_mean[1]
     assert x1_x2_imp_ratio_w_ones == pytest.approx(
         x1_x2_imp_ratio_w_none, 0.01)
@@ -399,7 +399,7 @@ def test_permutation_importance_sample_weight():
     lr.fit(x, y, w)
     pi = permutation_importance(lr, x, y, random_state=1,
                                 scoring='neg_mean_absolute_error',
-                                n_repeats=1000,
+                                n_repeats=200,
                                 sample_weight=w)
     x1_x2_imp_ratio_w = pi.importances_mean[0] / pi.importances_mean[1]
     assert x1_x2_imp_ratio_w / x1_x2_imp_ratio_w_none == pytest.approx(2, 0.01)

@@ -88,7 +88,7 @@ def permutation_importance(estimator, X, y, *, scoring=None, n_repeats=5,
         See :term: `Glossary <random_state>`.
 
     sample_weight : array-like of shape (n_samples,), default=None
-        Sample weights.
+        Sample weights used in scoring.
 
     Returns
     -------
