@@ -486,11 +486,11 @@ estimator_type (default=None)
     usually be checked by way of a helper such as :func:`base.is_classifier`.
     The available estimator types are:
 
-    - classifier (e.g. :class:`tree.DecisionTreeClassifier`)
-    - regressor (e.g. :class:`tree.DecisionTreeRegressor`)
-    - clusterer (e.g. :class:`cluster.KMeans`)
-    - density_estimator (e.g. :class:`mixture.BayesianGaussianMixture`)
-    - outlier_detector (e.g. :class:`ensemble.IsolationForest`)
+    - classifier (e.g. :class:`~tree.DecisionTreeClassifier`)
+    - regressor (e.g. :class:`~tree.DecisionTreeRegressor`)
+    - clusterer (e.g. :class:`~cluster.KMeans`)
+    - density_estimator (e.g. :class:`~mixture.BayesianGaussianMixture`)
+    - outlier_detector (e.g. :class:`~ensemble.IsolationForest`)
 
 multilabel (default=False)
     whether the estimator supports multilabel output
