@@ -214,7 +214,7 @@ Changelog
 
 - |Feature| Added :func:`metrics.detection_error_tradeoff_curve` to compute
   Detection Error Tradeoff curve classification metric.
-  :issue:`10591` by :user:`Jeremy Karnowski <jkarnows>` and
+  :pr:`10591` by :user:`Jeremy Karnowski <jkarnows>` and
   :user:`Daniel Mohns <dmohns>`.
 
 - |Feature| Added :func:`metrics.mean_absolute_percentage_error` metric and
