@@ -24,8 +24,8 @@ def _find_binning_threshold(col_data, max_bins):
 
     Parameters
     ----------
-    data : array-like, shape (n_samples, n_features)
-        The data to bin.
+    col_data : array-like, shape (n_features,)
+        The numerical feature to bin.
     max_bins: int
         The maximum number of bins to use for non-missing values. If for a
         given feature the number of unique values is less than ``max_bins``,
@@ -67,13 +67,13 @@ def _find_binning_threshold(col_data, max_bins):
 def _find_bin_categories(col_data, max_bins):
     """Extract feature-wise categories from categorical data
 
-    Missing values and negative values are ignored. They will be considered
-    missing when ``_encode_categories`` is called.
+    Missing values and negative values (considered missing) are ignored. They
+    will be handled at transform time in the CategoryMapper object.
 
     Parameters
     ----------
-    data : ndarray of shape (n_samples, n_features)
-        The data to bin.
+    col_data : array-like, shape (n_features,)
+        The categorical feature to bin.
     max_bins: int
         The maximum number of bins to be used for categories.
 
@@ -81,7 +81,8 @@ def _find_bin_categories(col_data, max_bins):
     ------
     bin: ndarray
         Map from bin index to categorical value. The size of each array is
-        equal to minimum of `max_bins` and categories' cardinality.
+        equal to minimum of `max_bins` and the categories' cardinality,
+        ignoring missing and negative values.
     """
     categories, counts = np.unique(col_data, return_counts=True)
 
@@ -145,13 +146,19 @@ class _BinMapper(TransformerMixin, BaseEstimator):
     Attributes
     ----------
     bin_thresholds_ : list of arrays
-        For each feature, gives the real-valued bin threhsolds. There are
-        ``max_bins - 1`` thresholds, where ``max_bins = n_bins - 1`` is the
-        number of bins used for non-missing values.
-        If ``bin_thresholds_`` corresponds to a categorical feature, then
-        ``bin_thresholds_[categorical_index]`` gives a map from bin index
-        to the categorical value. The size of each array is equal to minimum
-        of ``max_bins`` and categories' cardinality.
+        TODO: do we really need this for categorical features?
+        For each feature, each array indicates how to map a feature into a
+        binned feature. The semantic and size depends on the nature of the
+        feature: 
+
+        - for real-valued features, the array corresponds to the real-valued
+          bin threhsolds (the upper bound of each bin). There are ``max_bins
+          - 1`` thresholds, where ``max_bins = n_bins - 1`` is the number of
+          bins used for non-missing values.
+        - for categorical features, the array is a map from a binned category
+          value to the raw category value. The size of the array is equal to
+          ``min(max_bins, category_cardinality)`` where we ignore negative
+          categories and missing values in the cardinality.
     n_bins_non_missing_ : array of uint32
         For each feature, gives the number of bins actually used for
         non-missing values. For features with a lot of unique values, this is

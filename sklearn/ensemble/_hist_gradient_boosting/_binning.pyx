@@ -27,6 +27,7 @@ def _map_to_bins(const X_DTYPE_C [:, :] data,
                  const unsigned char[::1] is_categorical,
                  X_BINNED_DTYPE_C [::1, :] binned):
     """Bin numerical values to discrete integer-coded levels.
+    TODO docstring needs update
 
     Parameters
     ----------
