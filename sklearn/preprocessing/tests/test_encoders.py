@@ -568,11 +568,12 @@ def test_ordinal_encoder_handle_unknowns_string():
     assert_array_equal(X_trans_inv, inv_exp)
 
 
-def test_ordinal_encoder_handle_unknowns_numeric():
+@pytest.mark.parametrize('dtype', [float, int])
+def test_ordinal_encoder_handle_unknowns_numeric(dtype):
     enc = OrdinalEncoder(handle_unknown='use_encoded_value',
                          unknown_value=-999)
-    X_fit = np.array([[1, 7], [2, 8], [3, 9]], dtype=object)
-    X_trans = np.array([[3, 12], [23, 8], [1, 7]], dtype=object)
+    X_fit = np.array([[1, 7], [2, 8], [3, 9]], dtype=dtype)
+    X_trans = np.array([[3, 12], [23, 8], [1, 7]], dtype=dtype)
     enc.fit(X_fit)
 
     X_trans_enc = enc.transform(X_trans)

@@ -770,6 +770,7 @@ class OrdinalEncoder(_BaseEncoder):
                 unknown_labels = labels == self.unknown_value
                 X_tr[:, i] = self.categories_[i][np.where(
                     unknown_labels, 0, labels)]
+                X_tr = X_tr.astype(object, copy=False)
                 X_tr[unknown_labels, i] = None
             else:
                 X_tr[:, i] = self.categories_[i][labels]
