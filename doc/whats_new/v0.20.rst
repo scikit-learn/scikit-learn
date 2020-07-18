@@ -852,20 +852,8 @@ Support for Python 3.3 has been officially dropped.
   :user:`Guillaume Lemaitre <glemaitre>`.
 
 
-<<<<<<< HEAD
 :mod:`sklearn.feature_selection`
 ................................
-=======
-- Added the :func:`metrics.balanced_accuracy_score` metric and a corresponding
-  ``'balanced_accuracy'`` scorer for binary classification.
-  :issue:`8066` by :user:`xyguo` and :user:`Aman Dalmia <dalmia>`.
-- Added :class:`multioutput.RegressorChain` for multi-target
-  regression. :issue:`9257` by :user:`Kumar Ashutosh <thechargedneutron>`.
-- Added :func:`metrics.detection_error_tradeoff_curve` to compute
-  Detection Error Tradeoff curve classification metric.
-  :issue:`10591` by :user:`Jeremy Karnowski <jkarnows>` and
-  :user:`Daniel Mohns <dmohns>`.
->>>>>>> Add DET curve contributors
 
 - |Feature| Added select K best features functionality to
   :class:`feature_selection.SelectFromModel`.

@@ -306,7 +306,6 @@ Some of these are restricted to the binary classification case:
 
    precision_recall_curve
    roc_curve
-   balanced_accuracy_score
    detection_error_tradeoff_curve
 
 
