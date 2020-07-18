@@ -1,6 +1,8 @@
 
 .. _advanced-installation:
 
+.. include:: ../min_dependency_substitutions.rst
+
 ==================================================
 Installing the development version of scikit-learn
 ==================================================
@@ -87,10 +89,10 @@ Scikit-learn requires the following dependencies both at build time and at
 runtime:
 
 - Python (>= 3.6),
-- NumPy (>= 1.13.3),
-- SciPy (>= 0.19),
-- Joblib (>= 0.11),
-- threadpoolctl (>= 2.0.0).
+- NumPy (>= |NumpyMinVersion|),
+- SciPy (>= |ScipyMinVersion|),
+- Joblib (>= |JoblibMinVersion|),
+- threadpoolctl (>= |ThreadpoolctlMinVersion|).
 
 Those dependencies are **automatically installed by pip** if they were missing
 when building scikit-learn from source.
@@ -111,7 +113,7 @@ Building Scikit-learn also requires:
     # - sklearn/_build_utils/__init__.py
     # - advanced installation guide
 
-- Cython >= 0.28.5
+- Cython >= |CythonMinVersion|
 - A C/C++ compiler and a matching OpenMP_ runtime library. See the
   :ref:`platform system specific instructions
   <platform_specific_instructions>` for more details.
@@ -135,9 +137,7 @@ Test dependencies
 
 Running tests requires:
 
-.. |PytestMinVersion| replace:: 4.6.2
-
-- pytest >=\ |PytestMinVersion|
+- pytest >= |PytestMinVersion|
 
 Some tests also require `pandas <https://pandas.pydata.org>`_.
 

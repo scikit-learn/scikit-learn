@@ -1583,10 +1583,10 @@ functions or non-estimator constructors.
         in the User Guide.
 
         Where multiple metrics can be evaluated, ``scoring`` may be given
-        either as a list of unique strings or a dictionary with names as keys
-        and callables as values. Note that this does *not* specify which score
-        function is to be maximized, and another parameter such as ``refit``
-        maybe used for this purpose.
+        either as a list of unique strings, a dictionary with names as keys and
+        callables as values or a callable that returns a dictionary. Note that
+        this does *not* specify which score function is to be maximized, and
+        another parameter such as ``refit`` maybe used for this purpose.
 
 
         The ``scoring`` parameter is validated and interpreted using
