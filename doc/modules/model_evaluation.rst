@@ -1512,7 +1512,7 @@ better suited.
      Wikipedia, The Free Encyclopedia. September 4, 2017, 23:33 UTC.
      Available at: https://en.wikipedia.org/w/index.php?title=Detection_error_tradeoff&oldid=798982054.
      Accessed February 19, 2018.
-  .. [Martin1997] A. Martin, G. Doddington, T. Kamm, M. Ordowski, and M. Przybocki,
+  .. A. Martin, G. Doddington, T. Kamm, M. Ordowski, and M. Przybocki,
      `The DET Curve in Assessment of Detection Task Performance
      <http://www.dtic.mil/docs/citations/ADA530509>`_,
      NIST 1997.
