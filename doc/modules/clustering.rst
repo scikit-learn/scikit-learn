@@ -1060,8 +1060,8 @@ the **similarity** of the two assignments, ignoring permutations:
   >>> metrics.rand_score(labels_true, labels_pred)
   0.66...
 
-One can permute 0 and 1 in the predicted labels, rename 2 to 3, and get
-the same score::
+As with all clustering metrics one can permute 0 and 1 in the predicted
+labels, rename 2 to 3, and get the same score::
 
   >>> labels_pred = [1, 1, 0, 0, 3, 3]
   >>> metrics.rand_score(labels_true, labels_pred)
@@ -1092,11 +1092,9 @@ but not necessarily close to zero (see also Adjusted Rand index)::
 Advantages
 ~~~~~~~~~~
 
-- **Interpretable**: Taking a clustering and all possible element
-  pairs and labeling the pairs as ``same`` or ``different`` based on
-  their clusterings, the Rand index is identical to the accuracy of
-  the pair assignment using ``labels_pred`` comparing to the pair
-  assignment using the ground truth given by ``labels_true``.
+- **Interpretable**: The score is proportional to the number of sample
+  pairs whose labels are the same in both labels_pred and labels_true,
+  or are different in both.
 
 - **Bounded range [0, 1]**: Lower values indicate different
   labelings, similar clusterings have a high Rand index, 1.0 is the

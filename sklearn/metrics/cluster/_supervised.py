@@ -154,30 +154,7 @@ def pair_confusion_matrix(labels_true, labels_pred):
     pairs that are assigned in the same or different clusters in the
     predicted and true clusterings.
 
-    The 2x2 pair confusion matrix::
-
-        D00 D01
-        D10 D11
-
-    has the following entries
-
-    D00
-      number of pairs with both clusterings having the samples
-      not clustered together
-
-    D10
-      number of pairs with the true label clusterings having the
-      samples clustered together but the other clustering not
-      having the samples clustered together
-
-    D01
-      number of pairs with the true label clusterings not having
-      the samples clustered together but the other clustering
-      having the samples clustered together
-
-    D11
-      number of pairs with both clusterings having the samples
-      clustered together
+    Read more in the :ref:`User Guide <pair_confusion_matrix>`.
 
     Parameters
     ----------
@@ -189,7 +166,7 @@ def pair_confusion_matrix(labels_true, labels_pred):
 
     Returns
     -------
-    nested array [[D00, D01], [D10, D11]]
+    array, shape(2, 2)
 
     Examples
     --------
@@ -197,10 +174,6 @@ def pair_confusion_matrix(labels_true, labels_pred):
     diagonal regardless of actual label values:
 
       >>> from sklearn.metrics.cluster import pair_confusion_matrix
-      >>> pair_confusion_matrix([0, 0, 1, 1], [0, 0, 1, 1])
-      array([[8, 0],
-             [0, 4]]...
-
       >>> pair_confusion_matrix([0, 0, 1, 1], [1, 1, 0, 0])
       array([[8, 0],
              [0, 4]]...
@@ -213,19 +186,7 @@ def pair_confusion_matrix(labels_true, labels_pred):
       array([[8, 2],
              [0, 2]]...
 
-    The matrix is not symmetric:
-
-      >>> pair_confusion_matrix([0, 0, 1, 1], [0, 0, 1, 2])
-      array([[8, 0],
-             [2, 2]]...
-
-    If classes members are completely split across different clusters, the
-    assignment is totally incomplete, hence the matrix has all zero
-    diagonal entries:
-
-      >>> pair_confusion_matrix([0, 0, 0, 0], [0, 1, 2, 3])
-      array([[ 0,  0],
-             [12,  0]]...
+    Note that the matrix is not symmetric.
 
     References
     ----------
@@ -265,15 +226,9 @@ def rand_score(labels_true, labels_pred):
 
     The raw RI score is:
 
-        RI = (D00 + D11) / (number of pairs)
+        RI = (number of agreeing pairs) / (number of pairs)
 
-    where D00 = number of pairs with both clusterings having the samples
-    not clustered together, and D11 = number of pairs with both clusterings
-    having the samples clustered together.
-
-    RI is a symmetric measure::
-
-        rand_score(a, b) == rand_score(b, a)
+    Read more in the :ref:`User Guide <rand_score>`.
 
     Parameters
     ----------
@@ -294,8 +249,6 @@ def rand_score(labels_true, labels_pred):
     Perfectly matching labelings have a score of 1 even
 
       >>> from sklearn.metrics.cluster import rand_score
-      >>> rand_score([0, 0, 1, 1], [0, 0, 1, 1])
-      1.0
       >>> rand_score([0, 0, 1, 1], [1, 1, 0, 0])
       1.0
 
@@ -304,18 +257,6 @@ def rand_score(labels_true, labels_pred):
 
       >>> rand_score([0, 0, 1, 2], [0, 0, 1, 1])
       0.83...
-
-    RI is symmetric, so labelings that have pure clusters with members
-    coming from the same classes but unnecessary splits are penalized::
-
-      >>> rand_score([0, 0, 1, 1], [0, 0, 1, 2])
-      0.83...
-
-    If classes members are completely split across different clusters, the
-    assignment is totally incomplete, hence the RI is minimized:
-
-      >>> rand_score([0, 0, 0, 0], [0, 1, 2, 3])
-      0.0
 
     References
     ----------
