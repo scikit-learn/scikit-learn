@@ -196,7 +196,7 @@ def pair_confusion_matrix(labels_true, labels_pred):
 
     See also
     --------
-    adjusted_pair_confusion_matrix: Adjusted Rand Score
+    adjusted_rand_score: Adjusted Rand Score
     adjusted_mutual_info_score: Adjusted Mutual Information
 
     """
