@@ -284,7 +284,7 @@ def rand_score(labels_true, labels_pred):
     if m_diag == m_sum or m_sum == 0:
         return 1.0
 
-    return m_diag / m_sum
+    return float(m_diag) / m_sum
 
 
 def adjusted_rand_score(labels_true, labels_pred):
