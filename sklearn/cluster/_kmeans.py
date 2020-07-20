@@ -45,7 +45,8 @@ from ._k_means_elkan import elkan_iter_chunked_sparse
 # Initialization heuristic
 
 
-def _k_init(X, n_clusters, x_squared_norms, random_state, n_local_trials=None):
+def _kmeans_plusplus(X, n_clusters, x_squared_norms,
+                     random_state, n_local_trials=None):
     """Init n_clusters seeds according to k-means++
 
     Parameters
@@ -85,15 +86,13 @@ def _k_init(X, n_clusters, x_squared_norms, random_state, n_local_trials=None):
     to speed up convergence. see: Arthur, D. and Vassilvitskii, S.
     "k-means++: the advantages of careful seeding". ACM-SIAM symposium
     on Discrete algorithms. 2007
-
-    Version ported from http://www.stanford.edu/~darthur/kMeansppTest.zip,
-    which is the implementation used in the aforementioned paper.
     """
     n_samples, n_features = X.shape
 
     centers = np.empty((n_clusters, n_features), dtype=X.dtype)
 
-    assert x_squared_norms is not None, 'x_squared_norms None in _k_init'
+    assert x_squared_norms is not None, \
+           'x_squared_norms None in _kmeans_plusplus'
 
     # Set the number of local seeding trials if none is given
     if n_local_trials is None:
@@ -715,8 +714,9 @@ def _init_centroids(X, n_clusters=8, init="k-means++", random_state=None,
             .format(n_samples, n_clusters))
 
     if isinstance(init, str) and init == 'k-means++':
-        centers, _ = _k_init(X, n_clusters, random_state=random_state,
-                             x_squared_norms=x_squared_norms)
+        centers, _ = _kmeans_plusplus(X, n_clusters,
+                                      random_state=random_state,
+                                      x_squared_norms=x_squared_norms)
     elif isinstance(init, str) and init == 'random':
         seeds = random_state.permutation(n_samples)[:n_clusters]
         centers = X[seeds]
@@ -1960,9 +1960,55 @@ class MiniBatchKMeans(KMeans):
 
 def kmeans_plusplus(X, n_clusters, *, x_squared_norms=None,
                     random_state=None, n_local_trials=None):
-    """Add some documentation here
+    """Init n_clusters seeds according to k-means++
 
+    Parameters
+    ----------
+    X : {ndarray, sparse matrix} of shape (n_samples, n_features)
+        The data to pick seeds for. To avoid memory copy, the input data
+        should be double precision (dtype=np.float64).
+
+    n_clusters : int
+        The number of centroids to initialize
+
+    x_squared_norms : ndarray of shape (n_samples,)
+        Squared Euclidean norm of each data point.
+
+    random_state : int, RandomState instance, default=None
+        Determines random number generation for centroid initialization. Use
+        an int to make the randomness deterministic.
+        See :term:`Glossary <random_state>`.
+
+    n_local_trials : int, default=None
+        The number of seeding trials for each center (except the first),
+        of which the one reducing inertia the most is greedily chosen.
+        Set to None to make the number of trials depend logarithmically
+        on the number of seeds (2+log(k)); this is the default.
+
+    Returns
+    -------
+    centers : ndarray of shape (n_clusters, n_features)
+        The inital centers for k-means.
+
+    indices : ndarray of shape (n_clusters)
+        The index location of the chosen centers in the data array X. For a
+        given index and center, X[index] = center.
+
+    Notes
+    -----
+    Selects initial cluster centers for k-mean clustering in a smart way
+    to speed up convergence. see: Arthur, D. and Vassilvitskii, S.
+    "k-means++: the advantages of careful seeding". ACM-SIAM symposium
+    on Discrete algorithms. 2007
     """
+
+    # Check data
+    check_array(X, accept_sparse=True,
+                dtype=[np.float64, np.float32], order='C')
+
+    if X.shape[0] < n_clusters:
+        raise ValueError(f"n_samples={X.shape[0]} should be >= "
+                         f"n_clusters={n_clusters}.")
 
     # Check parameters
     if x_squared_norms is None:
@@ -1979,16 +2025,8 @@ def kmeans_plusplus(X, n_clusters, *, x_squared_norms=None,
 
     random_state = check_random_state(random_state)
 
-    # Check data
-    check_array(X, accept_sparse=True,
-                dtype=[np.float64, np.float32], order='C')
-
-    if X.shape[0] < n_clusters:
-        raise ValueError(f"n_samples={X.shape[0]} should be >= "
-                         f"n_clusters={n_clusters}.")
-
     # Call private k-means++
-    centers, indices = _k_init(X, n_clusters, x_squared_norms,
-                               random_state, n_local_trials)
+    centers, indices = _kmeans_plusplus(X, n_clusters, x_squared_norms,
+                                        random_state, n_local_trials)
 
     return centers, indices
