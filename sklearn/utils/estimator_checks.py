@@ -1392,13 +1392,19 @@ def check_estimators_dtypes(name, estimator_orig):
 
     methods = ["predict", "transform", "decision_function", "predict_proba"]
 
-    for X_train in [X_train_32, X_train_64, X_train_int_64, X_train_int_32]:
+    names = ['X_train_32', 'X_train_64', 'X_train_int_64', 'X_train_int_32']
+    for name, X_train in zip(names, [X_train_32, X_train_64, X_train_int_64,
+                               X_train_int_32]):
+        print(name)
         estimator = clone(estimator_orig)
         set_random_state(estimator, 1)
+        print('fitting')
         estimator.fit(X_train, y)
 
         for method in methods:
+            print(method)
             if hasattr(estimator, method):
+                print('hasattr')
                 getattr(estimator, method)(X_train)
 
 
