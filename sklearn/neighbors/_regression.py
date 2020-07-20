@@ -14,16 +14,16 @@ import warnings
 
 import numpy as np
 
-from ._base import _get_weights, _check_weights, NeighborsBase, KNeighborsMixin
-from ._base import RadiusNeighborsMixin, SupervisedFloatMixin
+from ._base import _get_weights, _check_weights
+from ._base import NeighborsBase, KNeighborsMixin, RadiusNeighborsMixin
 from ..base import RegressorMixin
 from ..utils import check_array
 from ..utils.validation import _deprecate_positional_args
 
 
-class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
-                          SupervisedFloatMixin,
-                          RegressorMixin):
+class KNeighborsRegressor(KNeighborsMixin,
+                          RegressorMixin,
+                          NeighborsBase):
     """Regression based on k-nearest neighbors.
 
     The target is predicted by local interpolation of the targets
@@ -160,6 +160,26 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
         # For cross-validation routines to split data correctly
         return self.metric == 'precomputed'
 
+    def fit(self, X, y):
+        """Fit the k-nearest neighbors regressor from the training dataset.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features) or \
+                (n_samples, n_samples) if metric='precomputed'
+            Training data.
+
+        y : {array-like, sparse matrix} of shape (n_samples,) or \
+                (n_samples, n_outputs)
+            Target values.
+
+        Returns
+        -------
+        self : KNeighborsRegressor
+            The fitted k-nearest neighbors regressor.
+        """
+        return self._fit(X, y)
+
     def predict(self, X):
         """Predict the target for the provided data
 
@@ -200,9 +220,9 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
         return y_pred
 
 
-class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
-                               SupervisedFloatMixin,
-                               RegressorMixin):
+class RadiusNeighborsRegressor(RadiusNeighborsMixin,
+                               RegressorMixin,
+                               NeighborsBase):
     """Regression based on neighbors within a fixed radius.
 
     The target is predicted by local interpolation of the targets
@@ -327,6 +347,26 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
               p=p, metric=metric, metric_params=metric_params,
               n_jobs=n_jobs, **kwargs)
         self.weights = _check_weights(weights)
+
+    def fit(self, X, y):
+        """Fit the radius neighbors regressor from the training dataset.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features) or \
+                (n_samples, n_samples) if metric='precomputed'
+            Training data.
+
+        y : {array-like, sparse matrix} of shape (n_samples,) or \
+                (n_samples, n_outputs)
+            Target values.
+
+        Returns
+        -------
+        self : RadiusNeighborsRegressor
+            The fitted radius neighbors regressor.
+        """
+        return self._fit(X, y)
 
     def predict(self, X):
         """Predict the target for the provided data
