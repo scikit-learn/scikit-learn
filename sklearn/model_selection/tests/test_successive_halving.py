@@ -64,7 +64,8 @@ def test_aggressive_elimination(
     sh = klass(base_estimator, parameters,
                aggressive_elimination=aggressive_elimination,
                max_resources=max_resources, ratio=3,
-               force_exhaust_resources=False)
+               force_exhaust_resources=False,
+               verbose=True)  # just for test coverage
 
     if klass is HalvingRandomSearchCV:
         sh.set_params(n_candidates=2 * 30)  # same number as with the grid

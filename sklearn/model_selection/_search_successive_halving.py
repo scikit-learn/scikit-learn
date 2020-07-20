@@ -72,9 +72,9 @@ class BaseSuccessiveHalving(BaseSearchCV):
         if (self.resource != 'n_samples'
                 and self.resource not in self.estimator.get_params()):
             raise ValueError(
-                'Cannot use resource={} which is not supported '
-                'by estimator {}'.format(self.resource,
-                                         self.estimator.__class__.__name__))
+                f'Cannot use resource={self.resource} which is not supported '
+                f'by estimator {self.estimator.__class__.__name__}'
+            )
 
         if (isinstance(self.max_resources, str) and
                 self.max_resources != 'auto'):
@@ -133,8 +133,8 @@ class BaseSuccessiveHalving(BaseSearchCV):
 
         if self.min_resources_ > self.max_resources_:
             raise ValueError(
-                'min_resources_={} is greater than max_resources_={}.'
-                .format(self.min_resources_, self.max_resources_)
+                f'min_resources_={self.min_resources_} is greater '
+                f'than max_resources_={self.max_resources_}.'
             )
 
     def fit(self, X, y=None, groups=None, **fit_params):
@@ -180,8 +180,9 @@ class BaseSuccessiveHalving(BaseSearchCV):
                 self.resource in candidate for candidate in candidate_params):
             # Can only check this now since we need the candidates list
             raise ValueError(
-                "Cannot use parameter {} as the resource since it is part of "
-                "the searched parameters.".format(self.resource))
+                f"Cannot use parameter {self.resource} as the resource since "
+                "it is part of the searched parameters."
+            )
 
         # n_required_iterations is the number of iterations needed so that the
         # last iterations evaluates less than `ratio` candidates.
@@ -214,16 +215,14 @@ class BaseSuccessiveHalving(BaseSearchCV):
             n_iterations = min(n_possible_iterations, n_required_iterations)
 
         if self.verbose:
-            print('n_iterations: {}'.format(n_iterations))
-            print('n_required_iterations: {}'.format(n_required_iterations))
-            print('n_possible_iterations: {}'.format(n_possible_iterations))
-            print('min_resources_: {}'.format(self.min_resources_))
-            print('max_resources_: {}'.format(self.max_resources_))
-            print('aggressive_elimination: {}'.format(
-                self.aggressive_elimination))
-            print('force_exhaust_resources: {}'.format(
-                self.force_exhaust_resources))
-            print('ratio: {}'.format(self.ratio))
+            print(f'n_iterations: {n_iterations}')
+            print(f'n_required_iterations: {n_required_iterations}')
+            print(f'n_possible_iterations: {n_possible_iterations}')
+            print(f'min_resources_: {self.min_resources_}')
+            print(f'max_resources_: {self.max_resources_}')
+            print(f'aggressive_elimination: {self.aggressive_elimination}')
+            print(f'force_exhaust_resources: {self.force_exhaust_resources}')
+            print(f'ratio: {self.ratio}')
 
         # list of resource_iter for each iteration, used in tests
         self._r_i_list = []
@@ -252,9 +251,9 @@ class BaseSuccessiveHalving(BaseSearchCV):
 
             if self.verbose:
                 print('-' * 10)
-                print('iter_i: {}'.format(iter_i))
-                print('n_candidates: {}'.format(n_candidates))
-                print('resource_iter: {}'.format(resource_iter))
+                print(f'iter_i: {iter_i}')
+                print(f'n_candidates: {n_candidates}')
+                print(f'resource_iter: {resource_iter}')
 
             if self.resource == 'n_samples':
                 # Subsample X and y as well as fit_params
@@ -617,7 +616,7 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
         method for sampling (such as those from scipy.stats.distributions).
         If a list is given, it is sampled uniformly.
 
-    n_candidates: int, default='auto'
+    n_candidates : int, default='auto'
         The number of candidate parameters to sample, at the first
         iteration. By default this will sample enough candidates so that the
         last iteration uses as many resources as possible. Note that
