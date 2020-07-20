@@ -358,6 +358,7 @@ def _kmeans_single_elkan(X, sample_weight, centers_init, max_iter=300,
     centers_new = np.zeros_like(centers)
     weight_in_clusters = np.zeros(n_clusters, dtype=X.dtype)
     labels = np.full(n_samples, -1, dtype=np.int32)
+    labels_old = labels.copy()
     center_half_distances = euclidean_distances(centers) / 2
     distance_next_center = np.partition(np.asarray(center_half_distances),
                                         kth=1, axis=0)[1]
@@ -394,15 +395,23 @@ def _kmeans_single_elkan(X, sample_weight, centers_init, max_iter=300,
             print(f"Iteration {i}, inertia {inertia}")
 
         centers, centers_new = centers_new, centers
+        labels_old, labels = labels, labels_old
 
-        center_shift_tot = (center_shift**2).sum()
-        if center_shift_tot <= tol:
-            if verbose:
-                print(f"Converged at iteration {i}: center shift "
-                      f"{center_shift_tot} within tolerance {tol}.")
-            break
+        if tol == 0:
+            # When tol = 0 we check that labels did not change because
+            # center_shift might not be exactly 0 due to rounding errors.
+            converged = np.array_equal(labels, labels_old)
+        else:
+            center_shift_tot = (center_shift**2).sum()
+            if center_shift_tot <= tol:
+                if verbose:
+                    print(f"Converged at iteration {i}: center shift "
+                          f"{center_shift_tot} within tolerance {tol}.")
+                converged = True
+                break
+            converged = False
 
-    if center_shift_tot > 0:
+    if not converged:
         # rerun E-step so that predicted labels match cluster centers
         elkan_iter(X, sample_weight, centers, centers, weight_in_clusters,
                    center_half_distances, distance_next_center,
