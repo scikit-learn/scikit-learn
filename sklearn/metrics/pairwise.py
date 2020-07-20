@@ -436,10 +436,12 @@ def nan_euclidean_distances(X, Y=None, *, squared=False,
     return distances
 
 
-@njit
-def _nan_fill_row_norm(r):
-    p = np.multiply(r, r)
-    return np.nansum(p)
+@njit(parallel=True)
+def _nan_fill_row_norm(X):
+    ret = np.zeros(X.shape[0])
+    for i in prange(X.shape[0]):
+        ret[i] = np.nansum(np.multiply(X[i], X[i]))
+    return ret
 
 
 @njit
@@ -474,14 +476,14 @@ def nan_filled_euclidean_distances(X, fill_values, Y=None, squared=False, copy=T
     X, Y = check_pairwise_arrays(X, Y, accept_sparse=False, force_all_finite='allow-nan', copy=copy)
 
     # calculate euclidean distances
-    XX = np.apply_along_axis(_nan_fill_row_norm, 1, X)
+    XX = _nan_fill_row_norm(X)
     XX = XX[:, np.newaxis]
 
     if X is Y and XX is not None:
         # shortcut in the common case euclidean_distances(X, X)
         YY = XX.T
     else:
-        YY = np.apply_along_axis(_nan_fill_row_norm, 1, Y)
+        YY = _nan_fill_row_norm(Y)
         YY = YY[np.newaxis, :]
 
     # if dtype is already float64, no need to chunk and upcast

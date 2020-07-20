@@ -12,7 +12,7 @@ from sklearn.datasets import make_blobs
 from sklearn.linear_model import Perceptron
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV
-from sklearn.metrics.pairwise import rbf_kernel, _nan_fill_dot
+from sklearn.metrics.pairwise import rbf_kernel, _nan_fill_dot, _nan_fill_row_norm
 from sklearn.utils.validation import _check_psd_eigenvalues
 
 
@@ -37,6 +37,21 @@ def test_nan_fill_dot():
     assert_almost_equal(p[0, 0], 0.3 * 0.9 - 0.2 * 0.4 - 1.5 * 0.3)
     assert_almost_equal(p[2, 0], 2.0 * 0.9 - 0.7 * 0.4 + 5.0)
     assert_almost_equal(p[2, 1], 3.0 + 4.0)
+
+
+def test_nan_fill_row_norm():
+    X = np.array([
+        [0.3, -0.2, 1.5],
+        [0.0, 0.2, 0.5],
+        [2.0, -0.7, np.nan],
+        [np.nan, np.nan, 0.5],
+    ])
+
+    results = _nan_fill_row_norm(X)
+    assert results.shape == (4, )
+    assert_almost_equal(results[0], 0.3 * 0.3 + 0.2 * 0.2 + 1.5 * 1.5)
+    assert_almost_equal(results[2], 2.0 * 2.0 + 0.7 * 0.7)
+
 
 
 def test_choi_kernel_pca():
