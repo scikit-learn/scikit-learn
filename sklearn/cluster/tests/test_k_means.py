@@ -136,7 +136,7 @@ def test_relocate_empty_clusters(array_constr):
 @pytest.mark.parametrize("distribution", ["normal", "blobs"])
 @pytest.mark.parametrize("array_constr", [np.array, sp.csr_matrix],
                          ids=["dense", "sparse"])
-@pytest.mark.parametrize("tol", [1e-2, 1e-4, 1e-8])
+@pytest.mark.parametrize("tol", [1e-2, 1e-4, 1e-8, 0])
 def test_kmeans_elkan_results(distribution, array_constr, tol):
     # Check that results are identical between lloyd and elkan algorithms
     rnd = np.random.RandomState(0)
@@ -163,16 +163,11 @@ def test_kmeans_elkan_results(distribution, array_constr, tol):
 @pytest.mark.parametrize("algorithm", ["full", "elkan"])
 def test_kmeans_convergence(algorithm):
     # Check that KMeans stops when convergence is reached when tol=0. (#16075)
-    # We can only ensure that if the number of threads is not to large,
-    # otherwise the roundings errors coming from the unpredictability of
-    # the order in which chunks are processed make the convergence criterion
-    # to never be exactly 0.
     rnd = np.random.RandomState(0)
     X = rnd.normal(size=(5000, 10))
 
-    with threadpool_limits(limits=1, user_api="openmp"):
-        km = KMeans(algorithm=algorithm, n_clusters=5, random_state=0,
-                    n_init=1, tol=0, max_iter=300).fit(X)
+    km = KMeans(algorithm=algorithm, n_clusters=5, random_state=0,
+                n_init=1, tol=0, max_iter=300).fit(X)
 
     assert km.n_iter_ < 300
 
