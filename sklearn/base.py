@@ -9,6 +9,7 @@ from collections import defaultdict
 import platform
 import inspect
 import re
+import inspect
 
 import numpy as np
 
@@ -79,8 +80,11 @@ def clone(estimator, *, safe=True):
 
     klass = estimator.__class__
     new_object_params = estimator.get_params(deep=False)
+    estimator_init_params = inspect.getfullargspec(estimator.__init__)[0]
+
     for name, param in new_object_params.items():
-        new_object_params[name] = clone(param, safe=False)
+        if name in estimator_init_params:
+            new_object_params[name] = clone(param, safe=False)
     new_object = klass(**new_object_params)
     params_set = new_object.get_params(deep=False)
 
