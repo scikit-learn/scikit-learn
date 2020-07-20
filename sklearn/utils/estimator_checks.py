@@ -1390,6 +1390,8 @@ def check_estimators_dtypes(name, estimator_orig):
     y = X_train_int_64[:, 0]
     y = _enforce_estimator_tags_y(estimator_orig, y)
 
+    print(name)
+
     methods = ["predict", "transform", "decision_function", "predict_proba"]
 
     names = ['X_train_32', 'X_train_64', 'X_train_int_64', 'X_train_int_32']
@@ -1406,6 +1408,7 @@ def check_estimators_dtypes(name, estimator_orig):
             if hasattr(estimator, method):
                 print('hasattr')
                 getattr(estimator, method)(X_train)
+    print()
 
 
 @ignore_warnings(category=FutureWarning)

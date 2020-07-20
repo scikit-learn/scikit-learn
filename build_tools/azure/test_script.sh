@@ -42,5 +42,5 @@ cp setup.cfg $TEST_DIR
 cd $TEST_DIR
 
 set -x
-$TEST_CMD --pyargs sklearn -k check_estimators_dtype
+$TEST_CMD --pyargs sklearn -k check_estimators_dtype -s
 set +x
