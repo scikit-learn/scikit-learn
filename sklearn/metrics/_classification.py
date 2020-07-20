@@ -237,8 +237,9 @@ def confusion_matrix(y_true, y_pred, *, labels=None, sample_weight=None,
         normalized.
 
     cluster_classes : bool, default=False
-        Sort the classes in order for the similar the classes to end up next to
-        each other.
+        Sort the classes in order for the most confused classes to end up next to
+        each other. If True, it will also return the confusion matrix as well as
+        the newly ordered labels. This is mostly useful when there are many classes.
 
     Returns
     -------
@@ -281,6 +282,26 @@ def confusion_matrix(y_true, y_pred, *, labels=None, sample_weight=None,
     >>> tn, fp, fn, tp = confusion_matrix([0, 1, 0, 1], [1, 1, 1, 0]).ravel()
     >>> (tn, fp, fn, tp)
     (0, 2, 1, 1)
+
+    >>> y_true = ["lion"]*200
+    >>> y_pred = ["lion"]*120 + ["leopard"]*50 + ["cat"]*20 + ["wolf"]*6 + ["dog"]*4
+    >>> y_true += ["leopard"]*200
+    >>> y_pred += ["leopard"]*140 + ["lion"]*25 + ["cat"]*25 + ["wolf"]*3 + ["dog"]*7
+    >>> y_true += ["cat"]*200
+    >>> y_pred += ["cat"]*135 + ["lion"]*25 + ["leopard"]*30 + ["wolf"]*8 + ["dog"]*2
+    >>> y_true += ["wolf"]*200
+    >>> y_pred += ["wolf"]*130 + ["dog"]*50 + ["lion"]*6 + ["leopard"]*7 + ["cat"]*7
+    >>> y_true += ["dog"]*200
+    >>> y_pred += ["dog"]*130 + ["wolf"]*40 + ["lion"]*15 + ["leopard"]*10 + ["cat"]*5
+    >>> confusion_matrix(y_true, y_pred, cluster_classes=True)
+    (array([[130,  50,   7,   6,   7],
+            [ 40, 130,  10,  15,   5],
+            [  3,   7, 140,  25,  25],s
+            [  6,   4,  50, 120,  20],
+            [  8,   2,  30,  25, 135]]),
+    ['wolf', 'dog', 'leopard', 'lion', 'cat'])
+
+
 
     """
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
