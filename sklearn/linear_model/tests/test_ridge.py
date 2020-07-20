@@ -725,7 +725,19 @@ def test_ridge_cv_individual_penalties():
     assert_array_almost_equal(Ridge(alpha=ridge_cv.alpha_).fit(X, y).coef_,
                               ridge_cv.coef_)
 
-    # Now try with a custom scoring function
+    # Test shape of alpha_ and cv_values_
+    ridge_cv = RidgeCV(alphas=alphas, alpha_per_target=True,
+                       store_cv_values=True).fit(X, y)
+    assert len(ridge_cv.alpha_) == n_targets
+    assert ridge_cv.cv_values_.shape == (n_samples, len(alphas), n_targets)
+
+    # Test edge case of there being only one alpha value
+    ridge_cv = RidgeCV(alphas=1, alpha_per_target=True,
+                       store_cv_values=True).fit(X, y)
+    assert ridge_cv.alpha_.shape == (n_targets,)
+    assert ridge_cv.cv_values_.shape == (n_samples, n_targets, 1)
+
+    # Try with a custom scoring function
     ridge_cv = RidgeCV(alphas=alphas, alpha_per_target=True,
                        scoring='r2').fit(X, y)
     assert_array_equal(optimal_alphas, ridge_cv.alpha_)
@@ -741,6 +753,8 @@ def test_ridge_cv_individual_penalties():
     ridge_cv = RidgeCV(alphas=alphas, cv=6, alpha_per_target=True)
     with pytest.raises(ValueError, match=msg):
         ridge_cv.fit(X, y)
+
+
 
 
 def _test_ridge_diabetes(filter_):

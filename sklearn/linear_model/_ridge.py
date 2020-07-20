@@ -1131,11 +1131,6 @@ class _RidgeGCV(LinearModel):
         self.is_clf = is_clf
         self.alpha_per_target = alpha_per_target
 
-        # alpha_per_target cannot be used in classifier mode. All subclasses
-        # of _RidgeGCV that are classifiers keep alpha_per_target at its
-        # default value: False, so the condition below should never happen.
-        assert not (is_clf and alpha_per_target)
-
     @staticmethod
     def _decomp_diag(v_prime, Q):
         # compute diagonal of the matrix: dot(Q, dot(diag(v_prime), Q^T))
@@ -1462,6 +1457,11 @@ class _RidgeGCV(LinearModel):
                                    dtype=[np.float64],
                                    multi_output=True, y_numeric=True)
 
+        # alpha_per_target cannot be used in classifier mode. All subclasses
+        # of _RidgeGCV that are classifiers keep alpha_per_target at its
+        # default value: False, so the condition below should never happen.
+        assert not (self.is_clf and self.alpha_per_target)
+
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X,
                                                  dtype=X.dtype)
@@ -1502,14 +1502,15 @@ class _RidgeGCV(LinearModel):
         error = scorer is None
 
         n_y = 1 if len(y.shape) == 1 else y.shape[1]
+        n_alphas = 1 if np.ndim(self.alphas) == 0 else len(self.alphas)
 
         if self.store_cv_values:
             self.cv_values_ = np.empty(
-                (n_samples * n_y, len(self.alphas)), dtype=X.dtype)
+                (n_samples * n_y, n_alphas), dtype=X.dtype)
 
         best_coef, best_score, best_alpha = None, None, None
 
-        for i, alpha in enumerate(self.alphas):
+        for i, alpha in enumerate(np.atleast_1d(self.alphas)):
             G_inverse_diag, c = solve(
                 float(alpha), y, sqrt_sw, X_mean, *decomposition)
             if error:
@@ -1572,9 +1573,9 @@ class _RidgeGCV(LinearModel):
 
         if self.store_cv_values:
             if len(y.shape) == 1:
-                cv_values_shape = n_samples, len(self.alphas)
+                cv_values_shape = n_samples, n_alphas
             else:
-                cv_values_shape = n_samples, n_y, len(self.alphas)
+                cv_values_shape = n_samples, n_y, n_alphas
             self.cv_values_ = self.cv_values_.reshape(cv_values_shape)
 
         return self
@@ -1746,16 +1747,16 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         `alphas` parameter list) for each target separately. When set to
         `True`, after fitting, the `alpha_` attribute will contain a value for
         each target. When set to `False`, a single alpha is used for all
-        targets. This flag has no effect when there is only one target.
+        targets.
 
     Attributes
     ----------
     cv_values_ : ndarray of shape (n_samples, n_alphas) or \
         shape (n_samples, n_targets, n_alphas), optional
-        Cross-validation values for each alpha (only available if \
-        ``store_cv_values=True`` and ``cv=None``). After ``fit()`` has been \
-        called, this attribute will contain the mean squared errors \
-        (by default) or the values of the ``{loss,score}_func`` function \
+        Cross-validation values for each alpha (only available if
+        ``store_cv_values=True`` and ``cv=None``). After ``fit()`` has been
+        called, this attribute will contain the mean squared errors
+        (by default) or the values of the ``{loss,score}_func`` function
         (if provided in the constructor).
 
     coef_ : ndarray of shape (n_features) or (n_targets, n_features)
@@ -1765,8 +1766,9 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         Independent term in decision function. Set to 0.0 if
         ``fit_intercept = False``.
 
-    alpha_ : float
-        Estimated regularization parameter.
+    alpha_ : float or ndarray of shape (n_targets,)
+        Estimated regularization parameter, or, if ``alpha_per_target=True``,
+        the estimated regularization parameter for each target.
 
     best_score_ : float
         Score of base estimator with best alpha.
