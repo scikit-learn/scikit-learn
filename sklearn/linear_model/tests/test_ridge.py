@@ -755,8 +755,6 @@ def test_ridge_cv_individual_penalties():
         ridge_cv.fit(X, y)
 
 
-
-
 def _test_ridge_diabetes(filter_):
     ridge = Ridge(fit_intercept=False)
     ridge.fit(filter_(X_diabetes), y_diabetes)
