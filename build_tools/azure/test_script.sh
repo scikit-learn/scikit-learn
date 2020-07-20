@@ -21,12 +21,26 @@ except ImportError:
 python -c "import multiprocessing as mp; print('%d CPUs' % mp.cpu_count())"
 pip list
 
-TEST_CMD="python -m pytest"
+TEST_CMD="python -m pytest --showlocals --durations=20 --junitxml=$JUNITXML"
+
+if [[ "$COVERAGE" == "true" ]]; then
+    export COVERAGE_PROCESS_START="$BUILD_SOURCESDIRECTORY/.coveragerc"
+    TEST_CMD="$TEST_CMD --cov-config=$COVERAGE_PROCESS_START --cov sklearn"
+fi
+
+if [[ -n "$CHECK_WARNINGS" ]]; then
+    # numpy's 1.19.0's tostring() deprecation is ignored until scipy and joblib removes its usage
+    TEST_CMD="$TEST_CMD -Werror::DeprecationWarning -Werror::FutureWarning -Wignore:tostring:DeprecationWarning"
+fi
+
+if [[ "$PYTEST_XDIST_VERSION" != "none" ]]; then
+    TEST_CMD="$TEST_CMD -n2"
+fi
 
 mkdir -p $TEST_DIR
 cp setup.cfg $TEST_DIR
 cd $TEST_DIR
 
 set -x
-$TEST_CMD --pyargs sklearn.tests.test_common -k Seq -s
+$TEST_CMD --pyargs sklearn -k check_estimators_dtype
 set +x
