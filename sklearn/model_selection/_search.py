@@ -621,13 +621,26 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         collected evaluation results. This makes it possible to implement
         Bayesian optimization or more generally sequential model-based
         optimization by deriving from the BaseSearchCV abstract base class.
+        For example, Succesive Halving is implemented by calling
+        `evaluate_candidates` multiples times (once per iteration of the SH
+        process), each time passing a different set of candidates with `X`
+        and `y` of increasing sizes.
 
         Parameters
         ----------
         evaluate_candidates : callable
-            This callback accepts a list of candidates, where each candidate is
-            a dict of parameter settings. It returns a dict of all results so
-            far, formatted like ``cv_results_``.
+            This callback accepts:
+                - a list of candidates, where each candidate is a dict of
+                  parameter settings.
+                - the samples `X`
+                - the targets `y`
+                - an optional `more_results` dict. Each key will be added to
+                  the `cv_results_` attribute. Values should be lists of
+                  length `n_candidates`
+                - a **fit_params keyword
+
+            It returns a dict of all results so far, formatted like
+            ``cv_results_``.
 
         Examples
         --------
