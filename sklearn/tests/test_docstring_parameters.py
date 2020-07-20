@@ -232,13 +232,10 @@ def test_fit_docstring_attributes(name, Estimator):
         with ignore_warnings(category=FutureWarning):
             assert hasattr(est, attr.name)
 
-    IGNORED = {'BayesianRidge', 'Birch', 'CCA', 'CategoricalNB',
-               'KernelCenterer',
+    IGNORED = {'BayesianRidge', 'Birch', 'CCA',
                'LarsCV', 'Lasso', 'LassoLarsIC',
-               'MiniBatchKMeans',
                'OrthogonalMatchingPursuit',
-               'PLSCanonical', 'PLSSVD',
-               'PassiveAggressiveClassifier'}
+               'PLSCanonical', 'PLSSVD'}
 
     if Estimator.__name__ in IGNORED:
         pytest.xfail(
