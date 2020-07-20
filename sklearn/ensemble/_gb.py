@@ -1655,4 +1655,11 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
                 "in version 0.24 and will be removed in 0.26.")
     @property
     def n_classes_(self):
+        try:
+            check_is_fitted(self)
+        except NotFittedError as nfe:
+            raise AttributeError(
+                "{} object has no n_classes_ attribute."
+                .format(self.__class__.__name__)
+            ) from nfe
         return 1
