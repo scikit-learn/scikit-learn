@@ -1972,9 +1972,7 @@ def kmeans_plusplus(X, n_clusters, *, x_squared_norms=None,
             f"The length of x_squared_norms {x_squared_norms.shape[0]} should "
             f"be equal to the length of n_samples {X.shape[0]}.")
 
-    if n_local_trials is not None:
-        pass
-    elif n_local_trials < 1:
+    if n_local_trials is not None and n_local_trials < 1:
         raise ValueError(
             f"n_local_trials is set to {n_local_trials} but should be an "
             f"integer value greater than zero.")
