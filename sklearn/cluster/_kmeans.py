@@ -358,7 +358,6 @@ def _kmeans_single_elkan(X, sample_weight, centers_init, max_iter=300,
     centers_new = np.zeros_like(centers)
     weight_in_clusters = np.zeros(n_clusters, dtype=X.dtype)
     labels = np.full(n_samples, -1, dtype=np.int32)
-    labels_old = labels.copy()
     center_half_distances = euclidean_distances(centers) / 2
     distance_next_center = np.partition(np.asarray(center_half_distances),
                                         kth=1, axis=0)[1]
@@ -377,6 +376,7 @@ def _kmeans_single_elkan(X, sample_weight, centers_init, max_iter=300,
 
     init_bounds(X, centers, center_half_distances,
                 labels, upper_bounds, lower_bounds)
+    labels_old = labels.copy()
 
     for i in range(max_iter):
         elkan_iter(X, sample_weight, centers, centers_new,
@@ -395,23 +395,25 @@ def _kmeans_single_elkan(X, sample_weight, centers_init, max_iter=300,
             print(f"Iteration {i}, inertia {inertia}")
 
         centers, centers_new = centers_new, centers
-        labels_old, labels = labels, labels_old
 
         if tol == 0:
             # When tol = 0 we check that labels did not change because
             # center_shift might not be exactly 0 due to rounding errors.
-            converged = np.array_equal(labels, labels_old)
+            if np.array_equal(labels, labels_old):
+                strict_convergence = True
+                break
+            labels_old = labels.copy()
         else:
             center_shift_tot = (center_shift**2).sum()
             if center_shift_tot <= tol:
                 if verbose:
                     print(f"Converged at iteration {i}: center shift "
                           f"{center_shift_tot} within tolerance {tol}.")
-                converged = True
+                strict_convergence = center_shift_tot == 0
                 break
-            converged = False
+        strict_convergence = False
 
-    if not converged:
+    if not strict_convergence:
         # rerun E-step so that predicted labels match cluster centers
         elkan_iter(X, sample_weight, centers, centers, weight_in_clusters,
                    center_half_distances, distance_next_center,
@@ -482,6 +484,7 @@ def _kmeans_single_lloyd(X, sample_weight, centers_init, max_iter=300,
     centers = centers_init
     centers_new = np.zeros_like(centers)
     labels = np.full(X.shape[0], -1, dtype=np.int32)
+    labels_old = labels.copy()
     weight_in_clusters = np.zeros(n_clusters, dtype=X.dtype)
     center_shift = np.zeros(n_clusters, dtype=X.dtype)
 
@@ -504,16 +507,25 @@ def _kmeans_single_lloyd(X, sample_weight, centers_init, max_iter=300,
                 print(f"Iteration {i}, inertia {inertia}.")
 
             centers, centers_new = centers_new, centers
+            labels_old, labels = labels, labels_old
 
-            center_shift_tot = (center_shift**2).sum()
-            if center_shift_tot <= tol:
-                if verbose:
-                    print("Converged at iteration {0}: "
-                          "center shift {1} within tolerance {2}"
-                          .format(i, center_shift_tot, tol))
-                break
+            if tol == 0:
+                # When tol = 0 we check that labels did not change because
+                # center_shift might not be exactly 0 due to rounding errors.
+                if np.array_equal(labels, labels_old):
+                    strict_convergence = True
+                    break
+            else:
+                center_shift_tot = (center_shift**2).sum()
+                if center_shift_tot <= tol:
+                    if verbose:
+                        print(f"Converged at iteration {i}: center shift "
+                              f"{center_shift_tot} within tolerance {tol}.")
+                    strict_convergence = center_shift_tot == 0
+                    break
+            strict_convergence = False
 
-        if center_shift_tot > 0:
+        if not strict_convergence:
             # rerun E-step so that predicted labels match cluster centers
             lloyd_iter(X, sample_weight, x_squared_norms, centers, centers,
                        weight_in_clusters, labels, center_shift, n_threads,
