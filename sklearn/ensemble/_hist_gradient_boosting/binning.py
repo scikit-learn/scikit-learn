@@ -149,7 +149,7 @@ class _BinMapper(TransformerMixin, BaseEstimator):
         TODO: do we really need this for categorical features?
         For each feature, each array indicates how to map a feature into a
         binned feature. The semantic and size depends on the nature of the
-        feature: 
+        feature:
 
         - for real-valued features, the array corresponds to the real-valued
           bin threhsolds (the upper bound of each bin). There are ``max_bins
