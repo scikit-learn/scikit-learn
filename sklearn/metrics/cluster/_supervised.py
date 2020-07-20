@@ -54,6 +54,13 @@ def check_clusterings(labels_true, labels_pred):
         labels_pred, ensure_2d=False, ensure_min_samples=0, dtype=None,
     )
 
+    type_label = type_of_target(labels_true)
+    type_pred = type_of_target(labels_pred)
+
+    if type_pred or type_pred == 'continous':
+        warnings.warn(UserWarning('Expects discrete values received {} '
+                                  'for label, and {} for target'
+                                  .format(type_label, type_label)))
     # input checks
     if labels_true.ndim != 1:
         raise ValueError(
@@ -859,14 +866,6 @@ def normalized_mutual_info_score(labels_true, labels_pred, *,
     labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
     classes = np.unique(labels_true)
     clusters = np.unique(labels_pred)
-
-    type_label = type_of_target(labels_true)
-    type_pred = type_of_target(labels_pred)
-
-    if type_pred or type_pred == 'continous':
-        warnings.warn(UserWarning('Expects discrete values received {} '
-                                  'for label, and {} for target'
-                                  .format(type_label, type_label)))
 
     # Special limit cases: no clustering since the data is not split.
     # This is a perfect match hence return 1.0.
