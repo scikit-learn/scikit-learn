@@ -28,5 +28,5 @@ cp setup.cfg $TEST_DIR
 cd $TEST_DIR
 
 set -x
-$TEST_CMD sklearn/tests/test_common.py -k Seq -s
+$TEST_CMD --pyargs sklearn.tests.test_common -k Seq -s
 set +x
