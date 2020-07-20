@@ -1984,8 +1984,8 @@ def kmeans_plusplus(X, n_clusters, *, x_squared_norms=None,
                 dtype=[np.float64, np.float32], order='C')
 
     if X.shape[0] < n_clusters:
-        raise ValueError(f"n_cluster is set to {n_clusters} but it needs to be "
-                         f"greater than or equal to sample size ({X.shape[0]})")
+        raise ValueError(f"n_samples={X.shape[0]} should be >= "
+                         f"n_clusters={n_clusters}.")
 
     # Call private k-means++
     centers, indices = _k_init(X, n_clusters, x_squared_norms,
