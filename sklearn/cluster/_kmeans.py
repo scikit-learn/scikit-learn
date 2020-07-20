@@ -226,8 +226,8 @@ def k_means(X, n_clusters, *, sample_weight=None, init='k-means++',
         Relative tolerance with regards to Frobenius norm of the difference
         in the cluster centers of two consecutive iterations to declare
         convergence.
-        It's not advised to set `tol=0` since convergence might never be
-        declared due to rounding errors. Use a very small number instead.
+        If set to 0, convergence will be declared when the labels are the
+        same between two consecutive iterations.
 
     random_state : int, RandomState instance, default=None
         Determines random number generation for centroid initialization. Use
@@ -638,8 +638,8 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         Relative tolerance with regards to Frobenius norm of the difference
         in the cluster centers of two consecutive iterations to declare
         convergence.
-        It's not advised to set `tol=0` since convergence might never be
-        declared due to rounding errors. Use a very small number instead.
+        If set to 0, convergence will be declared when the labels are the
+        same between two consecutive iterations.
 
     precompute_distances : {'auto', True, False}, default='auto'
         Precompute distances (faster but takes more memory).
