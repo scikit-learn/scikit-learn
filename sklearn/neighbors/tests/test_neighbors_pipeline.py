@@ -127,9 +127,11 @@ def test_tsne():
             KNeighborsTransformer(n_neighbors=n_neighbors, mode='distance',
                                   metric=metric),
             TSNE(metric='precomputed', perplexity=perplexity,
-                 method="barnes_hut", random_state=42, n_iter=n_iter))
+                 method="barnes_hut", random_state=42, n_iter=n_iter,
+                 square_distances=True))
         est_compact = TSNE(metric=metric, perplexity=perplexity, n_iter=n_iter,
-                           method="barnes_hut", random_state=42)
+                           method="barnes_hut", random_state=42,
+                           square_distances=True)
 
         Xt_chain = est_chain.fit_transform(X)
         Xt_compact = est_compact.fit_transform(X)

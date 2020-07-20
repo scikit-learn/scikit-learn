@@ -5,15 +5,15 @@ regression.
 
 The module structure is the following:
 
-- The ``BaseWeightBoosting`` base class implements a common ``fit`` method
+- The `BaseWeightBoosting` base class implements a common ``fit`` method
   for all the estimators in the module. Regression and classification
   only differ from each other in the loss function that is optimized.
 
-- ``AdaBoostClassifier`` implements adaptive boosting (AdaBoost-SAMME) for
-  classification problems.
+- :class:`~sklearn.ensemble.AdaBoostClassifier` implements adaptive boosting
+  (AdaBoost-SAMME) for classification problems.
 
-- ``AdaBoostRegressor`` implements adaptive boosting (AdaBoost.R2) for
-  regression problems.
+- :class:`~sklearn.ensemble.AdaBoostRegressor` implements adaptive boosting
+  (AdaBoost.R2) for regression problems.
 """
 
 # Authors: Noel Dawe <noel@dawe.me>
@@ -303,7 +303,8 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         The base estimator from which the boosted ensemble is built.
         Support for sample weighting is required, as well as proper
         ``classes_`` and ``n_classes_`` attributes. If ``None``, then
-        the base estimator is ``DecisionTreeClassifier(max_depth=1)``.
+        the base estimator is :class:`~sklearn.tree.DecisionTreeClassifier`
+        initialized with `max_depth=1`.
 
     n_estimators : int, default=50
         The maximum number of estimators at which boosting is terminated.
@@ -888,7 +889,8 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
     base_estimator : object, default=None
         The base estimator from which the boosted ensemble is built.
         If ``None``, then the base estimator is
-        ``DecisionTreeRegressor(max_depth=3)``.
+        :class:`~sklearn.tree.DecisionTreeRegressor` initialized with
+        `max_depth=3`.
 
     n_estimators : int, default=50
         The maximum number of estimators at which boosting is terminated.

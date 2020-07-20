@@ -5,8 +5,6 @@
 
 import pytest
 
-from distutils.version import LooseVersion
-
 import numpy as np
 from scipy import sparse
 from scipy import linalg
@@ -15,6 +13,7 @@ from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_allclose
+from sklearn.utils.fixes import parse_version
 
 from sklearn.linear_model import LinearRegression
 from sklearn.linear_model._base import _preprocess_data
@@ -210,7 +209,7 @@ def test_linear_regression_sparse_multiple_outcome(random_state=0):
 def test_linear_regression_pd_sparse_dataframe_warning():
     pd = pytest.importorskip('pandas')
     # restrict the pd versions < '0.24.0' as they have a bug in is_sparse func
-    if LooseVersion(pd.__version__) < '0.24.0':
+    if parse_version(pd.__version__) < parse_version('0.24.0'):
         pytest.skip("pandas 0.24+ required.")
 
     # Warning is raised only when some of the columns is sparse

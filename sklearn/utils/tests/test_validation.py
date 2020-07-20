@@ -66,7 +66,7 @@ def test_as_float_array():
     assert as_float_array(X, copy=False) is not X
     assert X2.dtype == np.float64
     # Test int dtypes <= 32bit
-    tested_dtypes = [np.bool,
+    tested_dtypes = [bool,
                      np.int8, np.int16, np.int32,
                      np.uint8, np.uint16, np.uint32]
     for dtype in tested_dtypes:
@@ -162,7 +162,7 @@ def test_ordering():
     [np.asarray, sp.csr_matrix]
 )
 def test_check_array_force_all_finite_valid(value, force_all_finite, retype):
-    X = retype(np.arange(4).reshape(2, 2).astype(np.float))
+    X = retype(np.arange(4).reshape(2, 2).astype(float))
     X[0, 0] = value
     X_checked = check_array(X, force_all_finite=force_all_finite,
                             accept_sparse=True)
@@ -183,7 +183,7 @@ def test_check_array_force_all_finite_valid(value, force_all_finite, retype):
 )
 def test_check_array_force_all_finiteinvalid(value, force_all_finite,
                                              match_msg, retype):
-    X = retype(np.arange(4).reshape(2, 2).astype(np.float))
+    X = retype(np.arange(4).reshape(2, 2).astype(float))
     X[0, 0] = value
     with pytest.raises(ValueError, match=match_msg):
         check_array(X, force_all_finite=force_all_finite,
@@ -211,7 +211,7 @@ def test_check_array_force_all_finite_object():
       "Input contains NaN, infinity or a value too large for.*int"),
      (np.array([[1, np.inf]]),
       "Input contains NaN, infinity or a value too large for.*int"),
-     (np.array([[1, np.nan]], dtype=np.object),
+     (np.array([[1, np.nan]], dtype=object),
       "cannot convert float NaN to integer")]
 )
 @pytest.mark.parametrize("force_all_finite", [True, False])
@@ -220,7 +220,7 @@ def test_check_array_force_all_finite_object_unsafe_casting(
     # casting a float array containing NaN or inf to int dtype should
     # raise an error irrespective of the force_all_finite parameter.
     with pytest.raises(ValueError, match=err_msg):
-        check_array(X, dtype=np.int, force_all_finite=force_all_finite)
+        check_array(X, dtype=int, force_all_finite=force_all_finite)
 
 
 @ignore_warnings
@@ -254,10 +254,10 @@ def test_check_array():
     # dtype and order enforcement.
     X_C = np.arange(4).reshape(2, 2).copy("C")
     X_F = X_C.copy("F")
-    X_int = X_C.astype(np.int)
-    X_float = X_C.astype(np.float)
+    X_int = X_C.astype(int)
+    X_float = X_C.astype(float)
     Xs = [X_C, X_F, X_int, X_float]
-    dtypes = [np.int32, np.int, np.float, np.float32, None, np.bool, object]
+    dtypes = [np.int32, int, float, np.float32, None, bool, object]
     orders = ['C', 'F', None]
     copys = [True, False]
 
@@ -286,8 +286,8 @@ def test_check_array():
     X_csc = sp.csc_matrix(X_C)
     X_coo = X_csc.tocoo()
     X_dok = X_csc.todok()
-    X_int = X_csc.astype(np.int)
-    X_float = X_csc.astype(np.float)
+    X_int = X_csc.astype(int)
+    X_float = X_csc.astype(float)
 
     Xs = [X_csc, X_coo, X_dok, X_int, X_float]
     accept_sparses = [['csr', 'coo'], ['coo', 'dok']]
@@ -383,7 +383,7 @@ def test_check_array_pandas_na_support(pd_dtype, dtype, expected_dtype):
 def test_check_array_pandas_dtype_object_conversion():
     # test that data-frame like objects with dtype object
     # get converted
-    X = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=np.object)
+    X = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=object)
     X_df = MockDataFrame(X)
     assert check_array(X_df).dtype.kind == "f"
     assert check_array(X_df, ensure_2d=False).dtype.kind == "f"
@@ -846,7 +846,7 @@ def test_check_dataframe_mixed_float_dtypes():
     expected_array = np.array(
         [[1.0, 0.0, 1.0],
          [2.0, 0.1, 0.0],
-         [3.0, 2.1, 1.0]], dtype=np.float)
+         [3.0, 2.1, 1.0]], dtype=float)
     assert_allclose_dense_sparse(array, expected_array)
 
 
@@ -1075,7 +1075,7 @@ def test_check_sample_weight():
     assert sample_weight.dtype == np.float32
 
     # int dtype will be converted to float64 instead
-    X = np.ones((5, 2), dtype=np.int)
+    X = np.ones((5, 2), dtype=int)
     sample_weight = _check_sample_weight(None, X, dtype=X.dtype)
     assert sample_weight.dtype == np.float64
 

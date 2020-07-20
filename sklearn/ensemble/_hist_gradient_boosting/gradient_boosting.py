@@ -189,23 +189,23 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                                             dtype='u8')
 
         self._validate_parameters()
-        n_samples, self.n_features_ = X.shape  # used for validation in predict
-        self._check_categories(self.n_features_, X_orig)
+        n_samples, self._n_features = X.shape  # used for validation in predict
+        self._check_categories(self._n_features, X_orig)
 
         # we need this stateful variable to tell raw_predict() that it was
         # called from fit() (this current method), and that the data it has
         # received is pre-binned.
         # predicting is faster on pre-binned data, so we want early stopping
-        # predictions to be made on pre-binned data. Unfortunately the scorer_
+        # predictions to be made on pre-binned data. Unfortunately the _scorer
         # can only call predict() or predict_proba(), not raw_predict(), and
         # there's no way to tell the scorer that it needs to predict binned
         # data.
         self._in_fit = True
 
         if isinstance(self.loss, str):
-            self.loss_ = self._get_loss(sample_weight=sample_weight)
+            self._loss = self._get_loss(sample_weight=sample_weight)
         elif isinstance(self.loss, BaseLoss):
-            self.loss_ = self.loss
+            self._loss = self.loss
 
         if self.early_stopping == 'auto':
             self.do_early_stopping_ = n_samples > 10000
@@ -216,7 +216,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         self._use_validation_data = self.validation_fraction is not None
         if self.do_early_stopping_ and self._use_validation_data:
             # stratify for classification
-            stratify = y if hasattr(self.loss_, 'predict_proba') else None
+            stratify = y if hasattr(self._loss, 'predict_proba') else None
 
             # Save the state of the RNG for the training and validation split.
             # This is needed in order to have the same split when using
@@ -249,7 +249,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         # actual total number of bins. Everywhere in the code, the
         # convention is that n_bins == max_bins + 1
         n_bins = self.max_bins + 1  # + 1 for missing values
-        self.bin_mapper_ = _BinMapper(
+        self._bin_mapper = _BinMapper(
             n_bins=n_bins,
             is_categorical=self.is_categorical_,
             random_state=self._random_seed)
@@ -259,12 +259,17 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         else:
             X_binned_val = None
 
+        # Uses binned data to check for missing values
+        has_missing_values = (
+            X_binned_train == self._bin_mapper.missing_values_bin_idx_).any(
+                axis=0).astype(np.uint8)
+
         if self.verbose:
             print("Fitting gradient boosted rounds:")
 
         # Uses binned data to check for missing values
         has_missing_values = (
-            X_binned_train == self.bin_mapper_.missing_values_bin_idx_).any(
+            X_binned_train == self._bin_mapper.missing_values_bin_idx_).any(
                 axis=0).astype(np.uint8)
 
         n_samples = X_binned_train.shape[0]
@@ -279,7 +284,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             # shape (n_trees_per_iteration, n_samples) where
             # n_trees_per_iterations is n_classes in multiclass classification,
             # else 1.
-            self._baseline_prediction = self.loss_.get_baseline_prediction(
+            self._baseline_prediction = self._loss.get_baseline_prediction(
                 y_train, sample_weight_train, self.n_trees_per_iteration_
             )
             raw_predictions = np.zeros(
@@ -293,7 +298,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             self._predictors = predictors = []
 
             # Initialize structures and attributes related to early stopping
-            self.scorer_ = None  # set if scoring != loss
+            self._scorer = None  # set if scoring != loss
             raw_predictions_val = None  # set if scoring == loss and use val
             self.train_score_ = []
             self.validation_score_ = []
@@ -326,11 +331,11 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                                                     raw_predictions_val, y_val,
                                                     sample_weight_val)
                 else:
-                    self.scorer_ = check_scoring(self, self.scoring)
-                    # scorer_ is a callable with signature (est, X, y) and
+                    self._scorer = check_scoring(self, self.scoring)
+                    # _scorer is a callable with signature (est, X, y) and
                     # calls est.predict() or est.predict_proba() depending on
                     # its nature.
-                    # Unfortunately, each call to scorer_() will compute
+                    # Unfortunately, each call to _scorer() will compute
                     # the predictions of all the trees. So we use a subset of
                     # the training set to compute train scores.
 
@@ -385,7 +390,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         # initialize gradients and hessians (empty arrays).
         # shape = (n_trees_per_iteration, n_samples).
-        gradients, hessians = self.loss_.init_gradients_and_hessians(
+        gradients, hessians = self._loss.init_gradients_and_hessians(
             n_samples=n_samples,
             prediction_dim=self.n_trees_per_iteration_,
             sample_weight=sample_weight_train
@@ -399,7 +404,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                       end='', flush=True)
 
             # Update gradients and hessians, inplace
-            self.loss_.update_gradients_and_hessians(gradients, hessians,
+            self._loss.update_gradients_and_hessians(gradients, hessians,
                                                      y_train, raw_predictions,
                                                      sample_weight_train)
 
@@ -411,7 +416,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 grower = TreeGrower(
                     X_binned_train, gradients[k, :], hessians[k, :],
                     n_bins=n_bins,
-                    n_bins_non_missing=self.bin_mapper_.n_bins_non_missing_,
+                    n_bins_non_missing=self._bin_mapper.n_bins_non_missing_,
                     has_missing_values=has_missing_values,
                     is_categorical=self.is_categorical_,
                     monotonic_cst=self.monotonic_cst,
@@ -426,14 +431,14 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 acc_find_split_time += grower.total_find_split_time
                 acc_compute_hist_time += grower.total_compute_hist_time
 
-                if self.loss_.need_update_leaves_values:
-                    self.loss_.update_leaves_values(grower, y_train,
+                if self._loss.need_update_leaves_values:
+                    self._loss.update_leaves_values(grower, y_train,
                                                     raw_predictions[k, :],
                                                     sample_weight_train)
 
                 predictor = grower.make_predictor(
-                    bin_thresholds=self.bin_mapper_.bin_thresholds_,
-                    is_categorical=self.bin_mapper_.is_categorical_,
+                    bin_thresholds=self._bin_mapper.bin_thresholds_,
+                    is_categorical=self._bin_mapper.is_categorical_,
                 )
                 predictors[-1].append(predictor)
 
@@ -453,7 +458,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                             raw_predictions_val[k, :] += (
                                 pred.predict_binned(
                                     X_binned_val,
-                                    self.bin_mapper_.missing_values_bin_idx_
+                                    self._bin_mapper.missing_values_bin_idx_
                                 )
                             )
 
@@ -550,11 +555,11 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         if sample_weight_small_train is None:
             self.train_score_.append(
-                self.scorer_(self, X_binned_small_train, y_small_train)
+                self._scorer(self, X_binned_small_train, y_small_train)
             )
         else:
             self.train_score_.append(
-                self.scorer_(self, X_binned_small_train, y_small_train,
+                self._scorer(self, X_binned_small_train, y_small_train,
                              sample_weight=sample_weight_small_train)
             )
 
@@ -563,11 +568,11 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 y_val = self.classes_[y_val.astype(int)]
             if sample_weight_val is None:
                 self.validation_score_.append(
-                    self.scorer_(self, X_binned_val, y_val)
+                    self._scorer(self, X_binned_val, y_val)
                 )
             else:
                 self.validation_score_.append(
-                    self.scorer_(self, X_binned_val, y_val,
+                    self._scorer(self, X_binned_val, y_val,
                                  sample_weight=sample_weight_val)
                 )
             return self._should_stop(self.validation_score_)
@@ -587,12 +592,12 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         """
 
         self.train_score_.append(
-            -self.loss_(y_train, raw_predictions, sample_weight_train)
+            -self._loss(y_train, raw_predictions, sample_weight_train)
         )
 
         if self._use_validation_data:
             self.validation_score_.append(
-                -self.loss_(y_val, raw_predictions_val, sample_weight_val)
+                -self._loss(y_val, raw_predictions_val, sample_weight_val)
             )
             return self._should_stop(self.validation_score_)
         else:
@@ -621,7 +626,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
     def _bin_data(self, X, is_training_data, categorical_only=False):
         """Bin data X.
 
-        If is_training_data, then set the bin_mapper_ attribute.
+        If is_training_data, then set the _bin_mapper attribute.
         Else, the binned data is converted to a C-contiguous array.
         """
 
@@ -631,10 +636,10 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 X.nbytes / 1e9, description), end="", flush=True)
         tic = time()
         if is_training_data:
-            X_binned = self.bin_mapper_.fit_transform(X)  # F-aligned array
+            X_binned = self._bin_mapper.fit_transform(X)  # F-aligned array
         else:
             # F-aligned array
-            X_binned = self.bin_mapper_.transform(X)
+            X_binned = self._bin_mapper.transform(X)
             # We convert the array to C-contiguous since predicting is faster
             # with this layout (training is faster on F-arrays though)
             X_binned = np.ascontiguousarray(X_binned)
@@ -705,10 +710,10 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             X, dtype=[X_DTYPE, X_BINNED_DTYPE], force_all_finite=False,
             use_pd_categorical_encoding=use_pd_categorical_encoding)
         check_is_fitted(self)
-        if X.shape[1] != self.n_features_:
+        if X.shape[1] != self._n_features:
             raise ValueError(
                 'X has {} features but this estimator was trained with '
-                '{} features.'.format(X.shape[1], self.n_features_)
+                '{} features.'.format(X.shape[1], self._n_features)
             )
         is_binned = getattr(self, '_in_fit', False)
         n_samples = X.shape[0]
@@ -730,7 +735,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 if is_binned:
                     predict = partial(
                         predictor.predict_binned,
-                        missing_values_bin_idx=self.bin_mapper_.missing_values_bin_idx_  # noqa
+                        missing_values_bin_idx=self._bin_mapper.missing_values_bin_idx_  # noqa
                     )
                 else:
                     predict = predictor.predict
@@ -756,10 +761,10 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         """
         X = check_array(X, dtype=X_DTYPE, force_all_finite=False)
         check_is_fitted(self)
-        if X.shape[1] != self.n_features_:
+        if X.shape[1] != self._n_features:
             raise ValueError(
                 'X has {} features but this estimator was trained with '
-                '{} features.'.format(X.shape[1], self.n_features_)
+                '{} features.'.format(X.shape[1], self._n_features)
             )
         n_samples = X.shape[0]
         raw_predictions = np.zeros(
@@ -867,34 +872,34 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
     Parameters
     ----------
     loss : {'least_squares', 'least_absolute_deviation', 'poisson'}, \
-            optional (default='least_squares')
+            default='least_squares'
         The loss function to use in the boosting process. Note that the
         "least squares" and "poisson" losses actually implement
         "half least squares loss" and "half poisson deviance" to simplify the
         computation of the gradient. Furthermore, "poisson" loss internally
         uses a log-link and requires ``y >= 0``
-    learning_rate : float, optional (default=0.1)
+    learning_rate : float, default=0.1
         The learning rate, also known as *shrinkage*. This is used as a
         multiplicative factor for the leaves values. Use ``1`` for no
         shrinkage.
-    max_iter : int, optional (default=100)
+    max_iter : int, default=100
         The maximum number of iterations of the boosting process, i.e. the
         maximum number of trees.
-    max_leaf_nodes : int or None, optional (default=31)
+    max_leaf_nodes : int or None, default=31
         The maximum number of leaves for each tree. Must be strictly greater
         than 1. If None, there is no maximum limit.
-    max_depth : int or None, optional (default=None)
+    max_depth : int or None, default=None
         The maximum depth of each tree. The depth of a tree is the number of
         edges to go from the root to the deepest leaf.
         Depth isn't constrained by default.
-    min_samples_leaf : int, optional (default=20)
+    min_samples_leaf : int, default=20
         The minimum number of samples per leaf. For small datasets with less
         than a few hundred samples, it is recommended to lower this value
         since only very shallow trees would be built.
-    l2_regularization : float, optional (default=0)
+    l2_regularization : float, default=0
         The L2 regularization parameter. Use ``0`` for no regularization
         (default).
-    max_bins : int, optional (default=255)
+    max_bins : int, default=255
         The maximum number of bins to use for non-missing values. Before
         training, each feature of the input array `X` is binned into
         integer-valued bins, which allows for a much faster training stage.
@@ -924,40 +929,40 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         ``max_bins`` categories based on cardinality are kept. Categories
         encoded as negative number will be considered missing. Read more in
         the :ref:`User Guide <categorical_support_gbdt>`.
-    warm_start : bool, optional (default=False)
+    warm_start : bool, default=False
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble. For results to be valid, the
         estimator should be re-trained on the same data only.
         See :term:`the Glossary <warm_start>`.
-    early_stopping : 'auto' or bool (default='auto')
+    early_stopping : 'auto' or bool, default='auto'
         If 'auto', early stopping is enabled if the sample size is larger than
         10000. If True, early stopping is enabled, otherwise early stopping is
         disabled.
-    scoring : str or callable or None, optional (default='loss')
+    scoring : str or callable or None, default='loss'
         Scoring parameter to use for early stopping. It can be a single
         string (see :ref:`scoring_parameter`) or a callable (see
         :ref:`scoring`). If None, the estimator's default scorer is used. If
         ``scoring='loss'``, early stopping is checked w.r.t the loss value.
         Only used if early stopping is performed.
-    validation_fraction : int or float or None, optional (default=0.1)
+    validation_fraction : int or float or None, default=0.1
         Proportion (or absolute size) of training data to set aside as
         validation data for early stopping. If None, early stopping is done on
         the training data. Only used if early stopping is performed.
-    n_iter_no_change : int, optional (default=10)
+    n_iter_no_change : int, default=10
         Used to determine when to "early stop". The fitting process is
         stopped when none of the last ``n_iter_no_change`` scores are better
         than the ``n_iter_no_change - 1`` -th-to-last one, up to some
         tolerance. Only used if early stopping is performed.
-    tol : float or None, optional (default=1e-7)
+    tol : float or None, default=1e-7
         The absolute tolerance to use when comparing scores during early
         stopping. The higher the tolerance, the more likely we are to early
         stop: higher tolerance means that it will be harder for subsequent
         iterations to be considered an improvement upon the reference score.
-    verbose: int, optional (default=0)
+    verbose: int, default=0
         The verbosity level. If not zero, print some information about the
         fitting process.
     random_state : int, np.random.RandomStateInstance or None, \
-        optional (default=None)
+        default=None
         Pseudo-random number generator to control the subsampling in the
         binning process, and the train/validation data split if early stopping
         is enabled.
@@ -966,6 +971,8 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
 
     Attributes
     ----------
+    do_early_stopping_ : bool
+        Indicates whether early stopping is used during training.
     n_iter_ : int
         The number of iterations as selected by early stopping, depending on
         the `early_stopping` parameter. Otherwise it corresponds to max_iter.
@@ -1040,7 +1047,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         check_is_fitted(self)
         # Return inverse link of raw predictions after converting
         # shape (n_samples, 1) to (n_samples,)
-        return self.loss_.inverse_link_function(self._raw_predict(X).ravel())
+        return self._loss.inverse_link_function(self._raw_predict(X).ravel())
 
     def staged_predict(self, X):
         """Predict regression target for each iteration
@@ -1059,7 +1066,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
             The predicted values of the input samples, for each iteration.
         """
         for raw_predictions in self._staged_raw_predict(X):
-            yield self.loss_.inverse_link_function(raw_predictions.ravel())
+            yield self._loss.inverse_link_function(raw_predictions.ravel())
 
     def _encode_y(self, y):
         # Just convert y to the expected dtype
@@ -1076,8 +1083,8 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         return _LOSSES[self.loss](sample_weight=sample_weight)
 
 
-class HistGradientBoostingClassifier(BaseHistGradientBoosting,
-                                     ClassifierMixin):
+class HistGradientBoostingClassifier(ClassifierMixin,
+                                     BaseHistGradientBoosting):
     """Histogram-based Gradient Boosting Classification Tree.
 
     This estimator is much faster than
@@ -1113,34 +1120,34 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
     Parameters
     ----------
     loss : {'auto', 'binary_crossentropy', 'categorical_crossentropy'}, \
-            optional (default='auto')
+            default='auto'
         The loss function to use in the boosting process. 'binary_crossentropy'
         (also known as logistic loss) is used for binary classification and
         generalizes to 'categorical_crossentropy' for multiclass
         classification. 'auto' will automatically choose either loss depending
         on the nature of the problem.
-    learning_rate : float, optional (default=0.1)
+    learning_rate : float, default=0.1
         The learning rate, also known as *shrinkage*. This is used as a
         multiplicative factor for the leaves values. Use ``1`` for no
         shrinkage.
-    max_iter : int, optional (default=100)
+    max_iter : int, default=100
         The maximum number of iterations of the boosting process, i.e. the
         maximum number of trees for binary classification. For multiclass
         classification, `n_classes` trees per iteration are built.
-    max_leaf_nodes : int or None, optional (default=31)
+    max_leaf_nodes : int or None, default=31
         The maximum number of leaves for each tree. Must be strictly greater
         than 1. If None, there is no maximum limit.
-    max_depth : int or None, optional (default=None)
+    max_depth : int or None, default=None
         The maximum depth of each tree. The depth of a tree is the number of
         edges to go from the root to the deepest leaf.
         Depth isn't constrained by default.
-    min_samples_leaf : int, optional (default=20)
+    min_samples_leaf : int, default=20
         The minimum number of samples per leaf. For small datasets with less
         than a few hundred samples, it is recommended to lower this value
         since only very shallow trees would be built.
-    l2_regularization : float, optional (default=0)
+    l2_regularization : float, default=0
         The L2 regularization parameter. Use 0 for no regularization.
-    max_bins : int, optional (default=255)
+    max_bins : int, default=255
         The maximum number of bins to use for non-missing values. Before
         training, each feature of the input array `X` is binned into
         integer-valued bins, which allows for a much faster training stage.
@@ -1170,40 +1177,40 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
         ``max_bins`` categories based on cardinality are kept. Categories
         encoded as negative number will be considered missing. Read more in
         the :ref:`User Guide <categorical_support_gbdt>`.
-    warm_start : bool, optional (default=False)
+    warm_start : bool, default=False
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble. For results to be valid, the
         estimator should be re-trained on the same data only.
         See :term:`the Glossary <warm_start>`.
-    early_stopping : 'auto' or bool (default='auto')
+    early_stopping : 'auto' or bool, default='auto'
         If 'auto', early stopping is enabled if the sample size is larger than
         10000. If True, early stopping is enabled, otherwise early stopping is
         disabled.
-    scoring : str or callable or None, optional (default='loss')
+    scoring : str or callable or None, default='loss'
         Scoring parameter to use for early stopping. It can be a single
         string (see :ref:`scoring_parameter`) or a callable (see
         :ref:`scoring`). If None, the estimator's default scorer
         is used. If ``scoring='loss'``, early stopping is checked
         w.r.t the loss value. Only used if early stopping is performed.
-    validation_fraction : int or float or None, optional (default=0.1)
+    validation_fraction : int or float or None, default=0.1
         Proportion (or absolute size) of training data to set aside as
         validation data for early stopping. If None, early stopping is done on
         the training data. Only used if early stopping is performed.
-    n_iter_no_change : int, optional (default=10)
+    n_iter_no_change : int, default=10
         Used to determine when to "early stop". The fitting process is
         stopped when none of the last ``n_iter_no_change`` scores are better
         than the ``n_iter_no_change - 1`` -th-to-last one, up to some
         tolerance. Only used if early stopping is performed.
-    tol : float or None, optional (default=1e-7)
+    tol : float or None, default=1e-7
         The absolute tolerance to use when comparing scores. The higher the
         tolerance, the more likely we are to early stop: higher tolerance
         means that it will be harder for subsequent iterations to be
         considered an improvement upon the reference score.
-    verbose: int, optional (default=0)
+    verbose: int, default=0
         The verbosity level. If not zero, print some information about the
         fitting process.
     random_state : int, np.random.RandomStateInstance or None, \
-        optional (default=None)
+        default=None
         Pseudo-random number generator to control the subsampling in the
         binning process, and the train/validation data split if early stopping
         is enabled.
@@ -1214,6 +1221,8 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
     ----------
     classes_ : array, shape = (n_classes,)
         Class labels.
+    do_early_stopping_ : bool
+        Indicates whether early stopping is used during training.
     n_iter_ : int
         The number of iterations as selected by early stopping, depending on
         the `early_stopping` parameter. Otherwise it corresponds to max_iter.
@@ -1323,7 +1332,7 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
             The class probabilities of the input samples.
         """
         raw_predictions = self._raw_predict(X)
-        return self.loss_.predict_proba(raw_predictions)
+        return self._loss.predict_proba(raw_predictions)
 
     def staged_predict_proba(self, X):
         """Predict class probabilities at each iteration.
@@ -1343,7 +1352,7 @@ class HistGradientBoostingClassifier(BaseHistGradientBoosting,
             for each iteration.
         """
         for raw_predictions in self._staged_raw_predict(X):
-            yield self.loss_.predict_proba(raw_predictions)
+            yield self._loss.predict_proba(raw_predictions)
 
     def decision_function(self, X):
         """Compute the decision function of ``X``.
