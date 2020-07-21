@@ -2014,20 +2014,19 @@ Pair Confusion Matrix
 
 The pair confusion matrix
 (:func:`sklearn.metrics.cluster.pair_confusion_matrix`) is a 2x2
-
-similarity matrix :math:`C` between two clusterings computed by considering
-all pairs of samples and counting pairs that are assigned in the same or
-different clusters in the true and predicted clusterings.
-
-The 2x2 pair confusion matrix is:
+similarity matrix
 
 .. math::
-   \begin{matrix} 
+   C = \left[\begin{matrix} 
    C_{00} & C_{01} \\
-   C_{10} & C_{11} \\
-   \end{matrix}
+   C_{10} & C_{11}
+   \end{matrix}\right]
 
-with the following entries:
+between two clusterings computed by considering all pairs of samples and
+counting pairs that are assigned in the same or different clusters in the true
+and predicted clusterings.
+
+It has the following entries:
 
 :math:`C_{00}`
   number of pairs with both clusterings having the samples
