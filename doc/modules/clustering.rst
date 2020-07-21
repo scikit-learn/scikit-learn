@@ -2017,7 +2017,7 @@ The pair confusion matrix
 similarity matrix
 
 .. math::
-   C = \left[\begin{matrix} 
+   C = \left[\begin{matrix}
    C_{00} & C_{01} \\
    C_{10} & C_{11}
    \end{matrix}\right]
