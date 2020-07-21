@@ -144,12 +144,12 @@ Valid :term:`multiclass` representations for
 :func:`~sklearn.utils.multiclass.type_of_target` (`y`) are:
 
   - 1d or column vector containing more than two discrete values. An
-    example of a vector ``y`` for 3 samples:
+    example of a vector ``y`` for 4 samples:
 
       >>> import numpy as np
-      >>> y = np.array(['apple', 'pear', 'apple'])
+      >>> y = np.array(['apple', 'pear', 'apple', 'orange'])
       >>> print(y)
-      ['apple' 'pear' 'apple']
+      ['apple' 'pear' 'apple' 'orange']
 
   - sparse :term:`binary` matrix of shape ``(n_samples, n_classes)`` with a
     single element per row, where each column represents one class. An
