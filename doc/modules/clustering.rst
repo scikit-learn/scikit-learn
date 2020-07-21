@@ -1268,6 +1268,10 @@ random labelings by defining the adjusted Rand index as follows:
    <https://link.springer.com/article/10.1007%2FBF01908075>`_
    L. Hubert and P. Arabie, Journal of Classification 1985
 
+ * `Properties of the Hubert-Arabie adjusted Rand index
+   <https://psycnet.apa.org/record/2004-17801-007>`_
+   D. Steinley, Psychological Methods 2004
+
  * `Wikipedia entry for the adjusted Rand index
    <https://en.wikipedia.org/wiki/Rand_index#Adjusted_Rand_index>`_
 

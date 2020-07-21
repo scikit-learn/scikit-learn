@@ -365,6 +365,9 @@ def adjusted_rand_score(labels_true, labels_pred):
       Journal of Classification 1985
       https://link.springer.com/article/10.1007%2FBF01908075
 
+    .. [Steinley2004] D. Steinley, Properties of the Hubert-Arabie
+      adjusted Rand index, Psychological Methods 2004
+
     .. [wk] https://en.wikipedia.org/wiki/Rand_index#Adjusted_Rand_index
 
     See also
@@ -372,28 +375,14 @@ def adjusted_rand_score(labels_true, labels_pred):
     adjusted_mutual_info_score: Adjusted Mutual Information
 
     """
-    labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
-    n_samples = labels_true.shape[0]
-    n_classes = np.unique(labels_true).shape[0]
-    n_clusters = np.unique(labels_pred).shape[0]
+    (tn, fp), (fn, tp) = pair_confusion_matrix(labels_true, labels_pred)
 
-    # Special limit cases: no clustering since the data is not split;
-    # or trivial clustering where each document is assigned a unique cluster.
-    # These are perfect matches hence return 1.0.
-    if (n_classes == n_clusters == 1 or
-            n_classes == n_clusters == 0 or
-            n_classes == n_clusters == n_samples):
+    # Special cases: empty data or full agreement
+    if fn == 0 and fp == 0:
         return 1.0
 
-    # Compute the ARI using the contingency data
-    contingency = contingency_matrix(labels_true, labels_pred, sparse=True)
-    sum_comb_c = sum(_comb2(n_c) for n_c in np.ravel(contingency.sum(axis=1)))
-    sum_comb_k = sum(_comb2(n_k) for n_k in np.ravel(contingency.sum(axis=0)))
-    sum_comb = sum(_comb2(n_ij) for n_ij in contingency.data)
-
-    prod_comb = (sum_comb_c * sum_comb_k) / _comb2(n_samples)
-    mean_comb = (sum_comb_k + sum_comb_c) / 2.
-    return (sum_comb - prod_comb) / (mean_comb - prod_comb)
+    return 2. * (tp * tn - fn * fp) / ((tp + fn) * (fn + tn) +
+                                       (tp + fp) * (fp + tn))
 
 
 @_deprecate_positional_args
