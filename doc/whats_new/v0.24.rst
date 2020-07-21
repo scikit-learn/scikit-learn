@@ -249,7 +249,8 @@ Changelog
   internal defined scikit-learn metrics. To keep backward-compatibility with
   custom scorer, a parameter `copy` was added and is `False` by default. Thus,
   for custom scorer, one can choose whether or not to make a copy of their
-  scorer.
+  scorer. It has an impact on the :func:`metrics.check_scoring` function as
+  well.
   :pr:`17962` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.model_selection`
