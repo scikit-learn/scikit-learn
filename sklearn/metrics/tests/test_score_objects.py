@@ -747,3 +747,28 @@ def test_multiclass_roc_no_proba_scorer_errors(scorer_name):
     msg = "'Perceptron' object has no attribute 'predict_proba'"
     with pytest.raises(AttributeError, match=msg):
         scorer(lr, X, y)
+
+
+@pytest.mark.parametrize("copy", [True, False])
+def test_get_scorer_copy_sklearn_scorers(copy):
+    # Part of non-regression tests for:
+    # https://github.com/scikit-learn/scikit-learn/issues/17942
+    # check that with internal scikit-learn scorers, we should make sure that
+    # we make a copy and that a change should not have any impact on the scorer
+
+    accuracy_scorer = get_scorer("accuracy")
+    assert accuracy_scorer is not SCORERS["accuracy"]
+
+
+def test_get_scorer_copy_custom_scorers():
+    # Part of non-regression tests for:
+    # https://github.com/scikit-learn/scikit-learn/issues/17942
+    # check that with custom scorer, one can choose to make a copy or not of
+    # the object
+    accuracy_scorer = make_scorer(accuracy_score)
+
+    accuracy_scorer_with_copy = get_scorer(accuracy_scorer, copy=True)
+    accuracy_scorer_no_copy = get_scorer(accuracy_scorer, copy=False)
+
+    assert accuracy_scorer is accuracy_scorer_no_copy
+    assert accuracy_scorer is not accuracy_scorer_with_copy

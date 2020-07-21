@@ -18,9 +18,10 @@ ground truth labeling (or ``None`` in the case of unsupervised models).
 #          Arnaud Joly <arnaud.v.joly@gmail.com>
 # License: Simplified BSD
 
-from collections.abc import Iterable
-from functools import partial
 from collections import Counter
+from collections.abc import Iterable
+from copy import deepcopy
+from functools import partial
 
 import numpy as np
 
@@ -328,15 +329,21 @@ class _ThresholdScorer(_BaseScorer):
         return ", needs_threshold=True"
 
 
-def get_scorer(scoring):
-    """Get a scorer from string.
+def get_scorer(scoring, copy=False):
+    """Get a scorer from string or a callable
 
     Read more in the :ref:`User Guide <scoring_parameter>`.
 
     Parameters
     ----------
-    scoring : str | callable
-        scoring method as string. If callable it is returned as is.
+    scoring : str or callable
+        Scoring method as string. If callable, a copy will be returned if
+        `copy=True`.
+
+    copy : bool, default=False
+        Whether or not to return a copy of the scorer when a callable is given.
+
+        .. versionadded:: 0.24
 
     Returns
     -------
@@ -345,13 +352,16 @@ def get_scorer(scoring):
     """
     if isinstance(scoring, str):
         try:
-            scorer = SCORERS[scoring]
+            # make a deepcopy avoiding any change of the scorer object stored
+            # in SCORERS
+            scorer = deepcopy(SCORERS[scoring])
         except KeyError:
-            raise ValueError('%r is not a valid scoring value. '
-                             'Use sorted(sklearn.metrics.SCORERS.keys()) '
-                             'to get valid options.' % scoring)
+            raise ValueError(
+                f"{scoring} is not a valid scoring value. Use "
+                f"sorted(sklearn.metrics.SCORERS.keys()) to get valid options."
+            )
     else:
-        scorer = scoring
+        scorer = deepcopy(scoring) if copy else scoring
     return scorer
 
 
