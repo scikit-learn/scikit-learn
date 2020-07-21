@@ -330,7 +330,7 @@ class _ThresholdScorer(_BaseScorer):
 
 
 def get_scorer(scoring, copy=False):
-    """Get a scorer from string or a callable
+    """Get a scorer from string or a callable.
 
     Read more in the :ref:`User Guide <scoring_parameter>`.
 
