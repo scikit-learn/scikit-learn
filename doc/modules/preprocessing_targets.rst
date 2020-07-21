@@ -30,6 +30,9 @@ matrix from a list of multi-class labels::
     array([[1, 0, 0, 0],
            [0, 0, 0, 1]])
 
+For more information about multiclass classification, refer to
+:ref:`multiclass`.
+
 Multilabel classification
 -------------------------
 
@@ -53,6 +56,9 @@ labels and the indicator format::
            [1, 1, 0, 1, 0],
            [1, 1, 1, 1, 1],
            [1, 1, 1, 0, 0]])
+
+For more information about multilabel classification, refer to
+:ref:`multiclass`.
 
 Label encoding
 ==============

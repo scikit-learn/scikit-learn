@@ -173,6 +173,9 @@ Valid :term:`multiclass` representations for
           (2, 0)	1
           (3, 1)	1
 
+For more information about :class:`~sklearn.preprocessing.LabelBinarizer`,
+refer to :ref:`preprocessing_targets`.
+
 .. _ovr_classification:
 
 OneVsRestClassifier
@@ -365,6 +368,10 @@ samples:
   [[1 0 0 1]
    [0 0 1 1]
    [0 0 0 0]]
+
+Dense binary matrices can also be created using
+:class:`~sklearn.preprocessing.MultiLabelBinarizer`. For more information,
+refer to :ref:`preprocessing_targets`.
 
 An example of the same ``y`` in sparse matrix form:
 
