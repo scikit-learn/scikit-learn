@@ -157,7 +157,7 @@ def _tolerance(X, tol):
 
 @_deprecate_positional_args
 def k_means(X, n_clusters, *, sample_weight=None, init='k-means++',
-            precompute_distances='deprecated', n_init=10, max_iter=300,
+            precompute_distances='deprecated', n_init=1, max_iter=300,
             verbose=False, tol=1e-4, random_state=None, copy_x=True,
             n_jobs='deprecated', algorithm="auto", return_n_iter=False):
     """K-means clustering algorithm.
@@ -211,7 +211,7 @@ def k_means(X, n_clusters, *, sample_weight=None, init='k-means++',
             'precompute_distances' was deprecated in version 0.23 and will be
             removed in 0.25. It has no effect.
 
-    n_init : int, default=10
+    n_init : int, default=1
         Number of time the k-means algorithm will be run with different
         centroid seeds. The final results will be the best output of
         n_init consecutive runs in terms of inertia.
@@ -604,7 +604,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         If a callable is passed, it should take arguments X, n_clusters and a
         random state and return an initialization.
 
-    n_init : int, default=10
+    n_init : int, default=1
         Number of time the k-means algorithm will be run with different
         centroid seeds. The final results will be the best output of
         n_init consecutive runs in terms of inertia.
@@ -741,7 +741,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
            [ 1.,  2.]])
     """
     @_deprecate_positional_args
-    def __init__(self, n_clusters=8, *, init='k-means++', n_init=10,
+    def __init__(self, n_clusters=8, *, init='k-means++', n_init=1,
                  max_iter=300, tol=1e-4, precompute_distances='deprecated',
                  verbose=0, random_state=None, copy_x=True,
                  n_jobs='deprecated', algorithm='auto'):
@@ -1519,7 +1519,7 @@ class MiniBatchKMeans(KMeans):
     def __init__(self, n_clusters=8, *, init='k-means++', max_iter=100,
                  batch_size=100, verbose=0, compute_labels=True,
                  random_state=None, tol=0.0, max_no_improvement=10,
-                 init_size=None, n_init=3, reassignment_ratio=0.01):
+                 init_size=None, n_init=1, reassignment_ratio=0.01):
 
         super().__init__(
             n_clusters=n_clusters, init=init, max_iter=max_iter,
