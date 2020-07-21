@@ -178,13 +178,15 @@ def test_fit_docstring_attributes(name, Estimator):
     doc = docscrape.ClassDoc(Estimator)
     attributes = doc['Attributes']
 
-    IGNORED = {'ClassifierChain', 'ColumnTransformer', 'CountVectorizer',
-               'DictVectorizer', 'FeatureUnion', 'GaussianRandomProjection',
-               'GridSearchCV', 'MultiOutputClassifier', 'MultiOutputRegressor',
+    IGNORED = {'CCA', 'ClassifierChain', 'ColumnTransformer',
+               'CountVectorizer', 'DictVectorizer', 'FeatureUnion',
+               'GaussianRandomProjection', 'GridSearchCV',
+               'MultiOutputClassifier', 'MultiOutputRegressor',
                'NoSampleWeightWrapper', 'OneVsOneClassifier',
-               'OutputCodeClassifier', 'Pipeline',
-               'RFE', 'RFECV', 'RandomizedSearchCV', 'RegressorChain',
-               'SelectFromModel', 'SparseCoder', 'SparseRandomProjection',
+               'OutputCodeClassifier', 'Pipeline', 'PLSCanonical',
+               'PLSRegression', 'PLSSVD', 'RFE', 'RFECV',
+               'RandomizedSearchCV', 'RegressorChain', 'SelectFromModel',
+               'SparseCoder', 'SparseRandomProjection',
                'SpectralBiclustering', 'StackingClassifier',
                'StackingRegressor', 'TfidfVectorizer', 'VotingClassifier',
                'VotingRegressor'}
