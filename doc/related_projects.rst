@@ -41,6 +41,11 @@ enhance the functionality of scikit-learn's estimators.
   operators to design a machine learning pipeline, including data and feature
   preprocessors as well as the estimators. Works as a drop-in replacement for a
   scikit-learn estimator.
+  
+- `Featuretools <https://github.com/FeatureLabs/featuretools>`_
+  A framework to perform automated feature engineering. It can be used for 
+  transforming temporal and relational datasets into feature matrices for 
+  machine learning.
 
 **Experimentation frameworks**
 
@@ -93,6 +98,10 @@ enhance the functionality of scikit-learn's estimators.
 - `sklearn-porter <https://github.com/nok/sklearn-porter>`_
   Transpile trained scikit-learn models to C, Java, Javascript and others.
 
+- `treelite <https://treelite.readthedocs.io>`_
+  Compiles tree-based ensemble models into C code for minimizing prediction
+  latency.
+
 
 Other estimators and tasks
 --------------------------
@@ -141,6 +150,9 @@ and tasks.
 
 - `mlxtend <https://github.com/rasbt/mlxtend>`_ Includes a number of additional
   estimators as well as model visualization utilities.
+
+- `scikit-lego <https://github.com/koaning/scikit-lego>`_ A number of scikit-learn compatible 
+  custom transformers, models and metrics, focusing on solving practical industry tasks.
 
 **Other regression and classification**
 

@@ -223,7 +223,7 @@ def test_affinity_propagation_convergence_warning_dense_sparse(centers):
     """Non-regression, see #13334"""
     rng = np.random.RandomState(42)
     X = rng.rand(40, 10)
-    y = (4 * rng.rand(40)).astype(np.int)
+    y = (4 * rng.rand(40)).astype(int)
     ap = AffinityPropagation(random_state=46)
     ap.fit(X, y)
     ap.cluster_centers_ = centers

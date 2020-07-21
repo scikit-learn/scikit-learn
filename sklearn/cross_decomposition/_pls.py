@@ -305,10 +305,10 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
         X : array-like of shape (n_samples, n_features)
             Samples to transform
 
-        Y : array-like of shape (n_samples, n_targets)
+        Y : array-like of shape (n_samples, n_targets), default=None
             Target vectors
 
-        copy : boolean, default True
+        copy : boolean, default=True
             Whether to copy X and Y, or perform in-place normalization.
 
         Returns
@@ -368,7 +368,7 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
         X : array-like of shape (n_samples, n_features)
             Samples
 
-        copy : boolean, default True
+        copy : boolean, default=True
             Whether to copy X and Y, or perform in-place normalization.
 
         Notes
@@ -393,7 +393,7 @@ class _PLS(TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator,
             Training vectors, where n_samples is the number of samples and
             n_features is the number of predictors.
 
-        y : array-like of shape (n_samples, n_targets)
+        y : array-like of shape (n_samples, n_targets), default=None
             Target vectors, where n_samples is the number of samples and
             n_targets is the number of response variables.
 
@@ -914,7 +914,8 @@ class PLSSVD(TransformerMixin, BaseEstimator):
         X : array-like of shape (n_samples, n_features)
             Samples to be transformed
 
-        Y : array-like of shape (n_samples,) or (n_samples, n_targets)
+        Y : array-like of shape (n_samples,) or (n_samples, n_targets), \
+                default=None
             Targets
 
         Returns
@@ -944,7 +945,8 @@ class PLSSVD(TransformerMixin, BaseEstimator):
         X : array-like of shape (n_samples, n_features)
             Training samples
 
-        y : array-like of shape (n_samples,) or (n_samples, n_targets)
+        y : array-like of shape (n_samples,) or (n_samples, n_targets), \
+                default=None
             Targets
 
         Returns

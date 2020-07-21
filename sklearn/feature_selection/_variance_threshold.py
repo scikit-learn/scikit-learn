@@ -18,7 +18,7 @@ class VarianceThreshold(SelectorMixin, BaseEstimator):
 
     Parameters
     ----------
-    threshold : float, optional
+    threshold : float, default=0
         Features with a training-set variance lower than this threshold will
         be removed. The default is to keep all features with non-zero variance,
         i.e. remove the features that have the same value in all samples.
@@ -56,7 +56,7 @@ class VarianceThreshold(SelectorMixin, BaseEstimator):
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
             Sample vectors from which to compute variances.
 
-        y : any
+        y : any, default=None
             Ignored. This parameter exists only for compatibility with
             sklearn.pipeline.Pipeline.
 
