@@ -34,7 +34,7 @@ guide.
 | Multiclass                   |  1                    | >2                      | - 'multiclass'                                   |
 | classification               |                       |                         |                                                  |
 +------------------------------+-----------------------+-------------------------+--------------------------------------------------+
-| Multioutput (multilabel)     | >1                    |  2 (0 or 1)             | - 'multilabel-indicator'                         |
+| Multilabel                   | >1                    |  2 (0 or 1)             | - 'multilabel-indicator'                         |
 | classification               |                       |                         |                                                  |
 +------------------------------+-----------------------+-------------------------+--------------------------------------------------+
 | Multiclass-multioutput       | >1                    | >2                      | - 'multiclass-multioutput'                       |
@@ -334,13 +334,13 @@ Below is an example of multiclass learning using Output-Codes::
       Hastie T., Tibshirani R., Friedman J., page 606 (second-edition)
       2008.
 
-Multioutput (multilabel) classification
-=======================================
+Multilabel classification
+=========================
 
-**Multioutput classification** (also known as **multilabel classification**)
-is a classification task labelling each sample with ``x`` labels from
-``n_classes`` possible classes, where ``x`` can be 0 to ``n_classes``
-inclusive. This can be thought of as predicting properties of a
+**Multilabel classification** (closely related to **multioutput**
+**classification**) is a classification task labelling each sample with ``x``
+labels from ``n_classes`` possible classes, where ``x`` can be 0 to
+``n_classes`` inclusive. This can be thought of as predicting properties of a
 sample that are not mutually exclusive. Formally, a binary output is assigned
 to each class, for every sample. Positive classes are indicated with 1 and
 negative classes with 0 or -1. It is thus comparable to running ``n_classes``
@@ -385,7 +385,7 @@ An example of the same ``y`` in sparse matrix form:
 MultiOutputClassifier
 ---------------------
 
-Multioutput classification support can be added to any classifier with
+Multilabel classification support can be added to any classifier with
 :class:`~sklearn.multioutput.MultiOutputClassifier`. This strategy consists of
 fitting one classifier per target.  This allows multiple target variable
 classifications. The purpose of this class is to extend estimators
@@ -393,7 +393,7 @@ to be able to estimate a series of target functions (f1,f2,f3...,fn)
 that are trained on a single X predictor matrix to predict a series
 of responses (y1,y2,y3...,yn).
 
-Below is an example of multioutput classification:
+Below is an example of multilabel classification:
 
     >>> from sklearn.datasets import make_classification
     >>> from sklearn.multioutput import MultiOutputClassifier
