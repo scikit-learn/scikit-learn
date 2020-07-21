@@ -20,18 +20,11 @@ from math import log
 
 import numpy as np
 from scipy import sparse as sp
-from scipy.special import comb
 
 from ._expected_mutual_info_fast import expected_mutual_information
 from ...utils.validation import check_array, check_consistent_length
 from ...utils.validation import _deprecate_positional_args
 from ...utils.fixes import _astype_copy_false
-
-
-def _comb2(n):
-    # the exact version is faster for k == 2: use it by default globally in
-    # this module instead of the float approximate variant
-    return comb(n, 2, exact=1)
 
 
 def check_clusterings(labels_true, labels_pred):
@@ -212,13 +205,13 @@ def pair_confusion_matrix(labels_true, labels_pred):
     # Computation using the contingency data
     contingency = contingency_matrix(labels_true, labels_pred, sparse=True,
                                      dtype=np.int64)
-    sum_comb = sum(_comb2(n_ij) for n_ij in contingency.data)
-    sum_comb_c = sum(_comb2(n_c) for n_c in np.ravel(contingency.sum(axis=1)))
-    sum_comb_k = sum(_comb2(n_k) for n_k in np.ravel(contingency.sum(axis=0)))
-    C11 = 2 * sum_comb
-    C01 = 2 * (sum_comb_k - sum_comb)
-    C10 = 2 * (sum_comb_c - sum_comb)
-    C00 = n_samples * n_samples - n_samples - C01 - C10 - C11
+    n_c = np.ravel(contingency.sum(axis=1))
+    n_k = np.ravel(contingency.sum(axis=0))
+    Sum_Squares = sum(n_ij*n_ij for n_ij in contingency.data)
+    C11 = Sum_Squares - n_samples
+    C01 = sum(contingency.dot(n_k)) - Sum_Squares
+    C10 = sum(contingency.transpose().dot(n_c)) - Sum_Squares
+    C00 = n_samples * n_samples - C01 - C10 - Sum_Squares
     return np.array([[C00, C01], [C10, C11]])
 
 
