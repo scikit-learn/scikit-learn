@@ -1555,7 +1555,7 @@ class LogisticRegressionCV(LogisticRegression,
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``. For a list of scoring functions
         that can be used, look at :mod:`sklearn.metrics`. The
-        default scoring option used is 'accuracy'.
+        default scoring option used is :func:`~sklearn.metrics.accuracy_score`.
 
     solver : {'newton-cg', 'lbfgs', 'liblinear', 'sag', 'saga'}, \
             default='lbfgs'
@@ -1873,7 +1873,8 @@ class LogisticRegressionCV(LogisticRegression,
                 class_weight, classes=np.arange(len(self.classes_)), y=y)
             class_weight = dict(enumerate(class_weight))
 
-        self._scorer = get_scorer(self.scoring, copy=True)
+        scoring = "accuracy" if self.scoring is None else scoring
+        self._scorer = get_scorer(scoring, copy=True)
 
         path_func = delayed(_log_reg_scoring_path)
 
