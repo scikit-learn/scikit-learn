@@ -357,7 +357,7 @@ def get_scorer(scoring, copy=False):
             scorer = deepcopy(SCORERS[scoring])
         except KeyError:
             raise ValueError(
-                f"{scoring} is not a valid scoring value. Use "
+                f"'{scoring}' is not a valid scoring value. Use "
                 f"sorted(sklearn.metrics.SCORERS.keys()) to get valid options."
             )
     else:
