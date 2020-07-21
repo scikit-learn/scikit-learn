@@ -21,7 +21,7 @@ from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils.extmath import row_norms
 from sklearn.metrics import pairwise_distances_argmin
 from sklearn.metrics.cluster import v_measure_score
-from sklearn.cluster import KMeans, k_means
+from sklearn.cluster import KMeans, k_means, kmeans_plusplus
 from sklearn.cluster import MiniBatchKMeans
 from sklearn.cluster._kmeans import _labels_inertia
 from sklearn.cluster._kmeans import _mini_batch_step
@@ -1099,3 +1099,37 @@ def test_minibatch_kmeans_wrong_params(param, match):
     # are passed for the MiniBatchKMeans specific parameters
     with pytest.raises(ValueError, match=match):
         MiniBatchKMeans(**param).fit(X)
+
+
+@pytest.mark.parametrize("param, match", [
+    ({"n_local_trials": 0},
+     r"n_local_trials is set to 0 but should be an "
+     r"integer value greater than zero"),
+    ({"x_squared_norms": X[:2]},
+     r"The length of x_squared_norms {} should "
+     r"be equal to the length of n_samples {}.".format(X[:2].shape[0],
+                                                       X.shape[0]))]
+)
+def test_kmeans_plusplus_wrong_params(param, match):
+    with pytest.raises(ValueError, match=match):
+        kmeans_plusplus(X, n_clusters, **param)
+
+
+@pytest.mark.parametrize("input_data", [X, X_csr])
+def test_kmeans_plusplus_output(input_data):
+    # Check for the correct number of seeds and all positive values
+    centers, indices = kmeans_plusplus(input_data, n_clusters)
+
+    # Check there are the correct number of indices and that all indices are
+    # positive and within the number of samples
+    assert indices.shape[0] is n_clusters
+    assert (indices >= 0).all()
+    assert np.amax(indices) <= X.shape[0]
+
+    # Check for the correct number of seeds and that they are bound by the data.
+    assert centers.shape[0] is n_clusters
+    assert np.amax(centers) <= np.amax(X)
+    assert np.amin(centers) >= np.amin(X)
+
+    # Check that indices correspond to reported centers
+    assert_array_equal(np.sort(X[indices]), np.sort(centers))
