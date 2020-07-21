@@ -151,19 +151,27 @@ Valid :term:`multiclass` representations for
       >>> print(y)
       ['apple' 'pear' 'apple' 'orange']
 
-  - sparse :term:`binary` matrix of shape ``(n_samples, n_classes)`` with a
-    single element per row, where each column represents one class. An
-    example of a sparse :term:`binary` matrix ``y`` for 3 samples, where
-    the columns, in order, are orange, apple and pear:
+  - Dense or sparse :term:`binary` matrix of shape ``(n_samples, n_classes)``
+    with a single sample per row, where each column represents one class. An
+    example of both a dense and sparse :term:`binary` matrix ``y`` for 4
+    samples, where the columns, in order, are apple, orange, and pear:
 
+      >>> import numpy as np
+      >>> from sklearn.preprocessing import LabelBinarizer
+      >>> y = np.array(['apple', 'pear', 'apple', 'orange'])
+      >>> y_dense = LabelBinarizer().fit_transform(y)
+      >>> print(y_dense)
+        [[1 0 0]
+         [0 0 1]
+         [1 0 0]
+         [0 1 0]]
       >>> from scipy import sparse
-      >>> row_ind = np.array([0, 1, 2])
-      >>> col_ind = np.array([1, 2, 1])
-      >>> y_sparse = sparse.csr_matrix((np.ones(3), (row_ind, col_ind)))
+      >>> y_sparse = sparse.csr_matrix(y_dense)
       >>> print(y_sparse)
-        (0, 1)	1.0
-        (1, 2)	1.0
-        (2, 1)	1.0
+          (0, 0)	1
+          (1, 2)	1
+          (2, 0)	1
+          (3, 1)	1
 
 .. _ovr_classification:
 
