@@ -192,8 +192,6 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             X_train, y_train, sample_weight_train = X, y, sample_weight
             X_val = y_val = sample_weight_val = None
 
-        has_missing_values = np.isnan(X_train).any(axis=0).astype(np.uint8)
-
         # Bin the data
         # For ease of use of the API, the user-facing GBDT classes accept the
         # parameter max_bins, which doesn't take into account the bin for
@@ -210,6 +208,11 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             X_binned_val = self._bin_data(X_val, is_training_data=False)
         else:
             X_binned_val = None
+
+        # Uses binned data to check for missing values
+        has_missing_values = (
+            X_binned_train == self._bin_mapper.missing_values_bin_idx_).any(
+                axis=0).astype(np.uint8)
 
         if self.verbose:
             print("Fitting gradient boosted rounds:")
@@ -993,8 +996,8 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         return _LOSSES[self.loss](sample_weight=sample_weight)
 
 
-class HistGradientBoostingClassifier(BaseHistGradientBoosting,
-                                     ClassifierMixin):
+class HistGradientBoostingClassifier(ClassifierMixin,
+                                     BaseHistGradientBoosting):
     """Histogram-based Gradient Boosting Classification Tree.
 
     This estimator is much faster than

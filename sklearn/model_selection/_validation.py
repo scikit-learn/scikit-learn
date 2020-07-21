@@ -28,7 +28,7 @@ from ..utils.validation import _deprecate_positional_args
 from ..utils.metaestimators import _safe_split
 from ..metrics import check_scoring
 from ..metrics._scorer import _check_multimetric_scoring, _MultimetricScorer
-from ..exceptions import FitFailedWarning
+from ..exceptions import FitFailedWarning, NotFittedError
 from ._split import check_cv
 from ..preprocessing import LabelEncoder
 
@@ -233,7 +233,13 @@ def cross_validate(estimator, X, y=None, *, groups=None, scoring=None, cv=None,
     X, y, groups = indexable(X, y, groups)
 
     cv = check_cv(cv, y, classifier=is_classifier(estimator))
-    scorers, _ = _check_multimetric_scoring(estimator, scoring=scoring)
+
+    if callable(scoring):
+        scorers = scoring
+    elif scoring is None or isinstance(scoring, str):
+        scorers = check_scoring(estimator, scoring)
+    else:
+        scorers = _check_multimetric_scoring(estimator, scoring)
 
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
@@ -247,6 +253,12 @@ def cross_validate(estimator, X, y=None, *, groups=None, scoring=None, cv=None,
             error_score=error_score)
         for train, test in cv.split(X, y, groups))
 
+    # For callabe scoring, the return type is only know after calling. If the
+    # return type is a dictionary, the error scores can now be inserted with
+    # the correct key.
+    if callable(scoring):
+        _insert_error_scores(results, error_score)
+
     results = _aggregate_score_dicts(results)
 
     ret = {}
@@ -256,17 +268,51 @@ def cross_validate(estimator, X, y=None, *, groups=None, scoring=None, cv=None,
     if return_estimator:
         ret['estimator'] = results["estimator"]
 
-    test_scores = _aggregate_score_dicts(results["test_scores"])
+    test_scores_dict = _normalize_score_results(results["test_scores"])
     if return_train_score:
-        train_scores = _aggregate_score_dicts(results["train_scores"])
+        train_scores_dict = _normalize_score_results(results["train_scores"])
 
-    for name in test_scores:
-        ret['test_%s' % name] = test_scores[name]
+    for name in test_scores_dict:
+        ret['test_%s' % name] = test_scores_dict[name]
         if return_train_score:
             key = 'train_%s' % name
-            ret[key] = train_scores[name]
+            ret[key] = train_scores_dict[name]
 
     return ret
+
+
+def _insert_error_scores(results, error_score):
+    """Insert error in `results` by replacing them inplace with `error_score`.
+
+    This only applies to multimetric scores because `_fit_and_score` will
+    handle the single metric case.
+    """
+    successful_score = None
+    failed_indices = []
+    for i, result in enumerate(results):
+        if result["fit_failed"]:
+            failed_indices.append(i)
+        elif successful_score is None:
+            successful_score = result["test_scores"]
+
+    if successful_score is None:
+        raise NotFittedError("All estimators failed to fit")
+
+    if isinstance(successful_score, dict):
+        formatted_error = {name: error_score for name in successful_score}
+        for i in failed_indices:
+            results[i]["test_scores"] = formatted_error.copy()
+            if "train_scores" in results[i]:
+                results[i]["train_scores"] = formatted_error.copy()
+
+
+def _normalize_score_results(scores, scaler_score_key='score'):
+    """Creates a scoring dictionary based on the type of `scores`"""
+    if isinstance(scores[0], dict):
+        # multimetric scoring
+        return _aggregate_score_dicts(scores)
+    # scaler
+    return {scaler_score_key: scores}
 
 
 @_deprecate_positional_args
@@ -497,6 +543,8 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
             The parameters that have been evaluated.
         estimator : estimator object
             The fitted estimator.
+        fit_failed : bool
+            The estimator failed to fit.
     """
     progress_msg = ""
     if verbose > 2:
@@ -567,7 +615,10 @@ def _fit_and_score(estimator, X, y, scorer, train, test, verbose,
             raise ValueError("error_score must be the string 'raise' or a"
                              " numeric value. (Hint: if using 'raise', please"
                              " make sure that it has been spelled correctly.)")
+        result["fit_failed"] = True
     else:
+        result["fit_failed"] = False
+
         fit_time = time.time() - start_time
         test_scores = _score(estimator, X_test, y_test, scorer)
         score_time = time.time() - start_time - fit_time
