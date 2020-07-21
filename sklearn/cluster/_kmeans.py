@@ -894,7 +894,7 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
             n_samples = X.shape[0]
 
         if isinstance(init, str) and init == 'k-means++':
-            centers = _k_init(X, n_clusters, random_state=random_state,
+            centers = _kmeans_plusplus(X, n_clusters, random_state=random_state,
                               x_squared_norms=x_squared_norms)
         elif isinstance(init, str) and init == 'random':
             seeds = random_state.permutation(n_samples)[:n_clusters]
