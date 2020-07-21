@@ -87,6 +87,8 @@ def _beta_divergence(X, W, H, beta, square_root=False):
         res : float
             Beta divergence of X and np.dot(X, H)
     """
+
+    print(H)
     beta = _beta_loss_to_float(beta)
 
     # The method can be called with scalars
@@ -711,23 +713,25 @@ def _multiplicative_update_h(X, W, H, A, B,
 
     numerator /= denominator
     delta_H = numerator
+    # gamma is in ]0, 1]
+    if gamma != 1:
+        delta_H **= gamma
+
+    H = H_old * delta_H
 
     if A is not None and B is not None:
-        # r = .1
-        # rho = r ** (1 / n_iter)
+        #r = .1
+        #rho = r ** (1 / 2000)
         rho = .99
         A *= rho
         B *= rho
         A += numerator * H
         B += denominator
         H = np.divide(A, B)
-        delta_H = np.divide(H, H_old)
+        #delta_H = np.divide(H, H_old)
 
-    # gamma is in ]0, 1]
-    if gamma != 1:
-        delta_H **= gamma
 
-    return delta_H, A, B
+    return H, A, B
 
 
 def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
@@ -856,12 +860,12 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
             # update H
             if update_H:
                 for j in range(max_iter_update_h_):
-                    delta_H, A, B = _multiplicative_update_h(X[slice],
+                    H, A, B = _multiplicative_update_h(X[slice],
                                                              W[slice], H, A, B,
                                                              beta_loss,
                                                              l1_reg_H,
                                                              l2_reg_H, gamma)
-                    H *= delta_H
+                    #H *= delta_H
 
                 # These values will be recomputed since H changed
                 H_sum, HHt, XHt = None, None, None
