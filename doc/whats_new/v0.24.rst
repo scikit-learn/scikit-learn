@@ -250,7 +250,7 @@ Changelog
   custom scorer, a parameter `copy` was added and is `False` by default. Thus,
   for custom scorer, one can choose whether or not to make a copy of their
   scorer.
-  :pr:`xxx` by :user:`Guillaume Lemaitre <glemaitre>`.
+  :pr:`17962` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.model_selection`
 ..............................
