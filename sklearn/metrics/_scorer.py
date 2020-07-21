@@ -400,7 +400,7 @@ def check_scoring(estimator, scoring=None, *, allow_none=False):
         raise TypeError("estimator should be an estimator implementing "
                         "'fit' method, %r was passed" % estimator)
     if isinstance(scoring, str):
-        return get_scorer(scoring)
+        return get_scorer(scoring, copy=True)
     elif callable(scoring):
         # Heuristic to ensure user has not passed a metric
         module = getattr(scoring, '__module__', None)

@@ -847,8 +847,7 @@ def _log_reg_scoring_path(X, y, train, test, scoring, pos_class=None, Cs=10,
         A string (see model evaluation documentation) or
         a scorer callable object / function with signature
         ``scorer(estimator, X, y)``. For a list of scoring functions
-        that can be used, look at :mod:`sklearn.metrics`. The
-        default scoring option used is :func:`~sklearn.metrics.accuracy_score`.
+        that can be used, look at :mod:`sklearn.metrics`.
 
     pos_class : int, default=None
         The class with respect to which we perform a one-vs-all fit.
@@ -1695,9 +1694,6 @@ class LogisticRegressionCV(LogisticRegression,
         ``(n_folds, n_cs, n_l1_ratios_, n_features)`` or
         ``(n_folds, n_cs, n_l1_ratios_, n_features + 1)``.
 
-    scoring_ : callable
-        The actual scorer object(s) used for computing the scores.
-
     scores_ : dict
         dict with classes as the keys, and the values as the
         grid of scores obtained during cross-validating each fold, after doing
@@ -1877,7 +1873,7 @@ class LogisticRegressionCV(LogisticRegression,
                 class_weight, classes=np.arange(len(self.classes_)), y=y)
             class_weight = dict(enumerate(class_weight))
 
-        self.scoring_ = get_scorer(self.scoring, copy=True)
+        self._scorer = get_scorer(self.scoring, copy=True)
 
         path_func = delayed(_log_reg_scoring_path)
 
@@ -1894,7 +1890,7 @@ class LogisticRegressionCV(LogisticRegression,
                       fit_intercept=self.fit_intercept, penalty=self.penalty,
                       dual=self.dual, solver=solver, tol=self.tol,
                       max_iter=self.max_iter, verbose=self.verbose,
-                      class_weight=class_weight, scoring=self.scoring_,
+                      class_weight=class_weight, scoring=self._scorer,
                       multi_class=multi_class,
                       intercept_scaling=self.intercept_scaling,
                       random_state=self.random_state,
@@ -2086,7 +2082,7 @@ class LogisticRegressionCV(LogisticRegression,
             Score of self.predict(X) wrt. y.
 
         """
-        return self.scoring_(self, X, y, sample_weight=sample_weight)
+        return self._scorer(self, X, y, sample_weight=sample_weight)
 
     def _more_tags(self):
         return {
