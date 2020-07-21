@@ -6,11 +6,11 @@ Multiclass and multioutput algorithms
 =====================================
 
 This section of the user guide covers functionality related to multi-learning
-problems, including multiclass, multilabel, and multioutput classification
-and regression.
+problems, including :term:`multiclass`, :term:`multilabel`, and
+:term:`multioutput` classification and regression.
 
-The modules in this section implement *meta-estimators*, which require a base
-estimator to be provided in their constructor. Meta-estimators extend the
+The modules in this section implement :term:`meta-estimators`, which require a
+base estimator to be provided in their constructor. Meta-estimators extend the
 functionality of the base estimator to support multi-learning problems, which
 is accomplished by transforming the multi-learning problem into a set of
 simpler problems, then fitting one estimator per problem.
