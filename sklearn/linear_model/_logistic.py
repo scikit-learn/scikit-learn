@@ -819,8 +819,8 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
 
 
 # helper function for LogisticCV
-def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
-                          scoring=None, fit_intercept=False,
+def _log_reg_scoring_path(X, y, train, test, scoring, pos_class=None, Cs=10,
+                          fit_intercept=False,
                           max_iter=100, tol=1e-4, class_weight=None,
                           verbose=0, solver='lbfgs', penalty='l2',
                           dual=False, intercept_scaling=1.,
@@ -843,6 +843,13 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
     test : list of indices
         The indices of the test set.
 
+    scoring : callable
+        A string (see model evaluation documentation) or
+        a scorer callable object / function with signature
+        ``scorer(estimator, X, y)``. For a list of scoring functions
+        that can be used, look at :mod:`sklearn.metrics`. The
+        default scoring option used is :func:`~sklearn.metrics.accuracy_score`.
+
     pos_class : int, default=None
         The class with respect to which we perform a one-vs-all fit.
         If None, then it is assumed that the given problem is binary.
@@ -852,13 +859,6 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
         regularization strength. If Cs is as an int, then a grid of Cs
         values are chosen in a logarithmic scale between 1e-4 and 1e4.
         If not provided, then a fixed set of values for Cs are used.
-
-    scoring : callable, default=None
-        A string (see model evaluation documentation) or
-        a scorer callable object / function with signature
-        ``scorer(estimator, X, y)``. For a list of scoring functions
-        that can be used, look at :mod:`sklearn.metrics`. The
-        default scoring option used is accuracy_score.
 
     fit_intercept : bool, default=False
         If False, then the bias term is set to zero. Else the last
@@ -989,7 +989,6 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
 
     scores = list()
 
-    scoring = get_scorer(scoring)
     for w in coefs:
         if multi_class == 'ovr':
             w = w[np.newaxis, :]
@@ -1696,6 +1695,9 @@ class LogisticRegressionCV(LogisticRegression,
         ``(n_folds, n_cs, n_l1_ratios_, n_features)`` or
         ``(n_folds, n_cs, n_l1_ratios_, n_features + 1)``.
 
+    scoring_ : callable
+        The actual scorer object(s) used for computing the scores.
+
     scores_ : dict
         dict with classes as the keys, and the values as the
         grid of scores obtained during cross-validating each fold, after doing
@@ -1875,6 +1877,8 @@ class LogisticRegressionCV(LogisticRegression,
                 class_weight, classes=np.arange(len(self.classes_)), y=y)
             class_weight = dict(enumerate(class_weight))
 
+        self.scoring_ = get_scorer(self.scoring, copy=True)
+
         path_func = delayed(_log_reg_scoring_path)
 
         # The SAG solver releases the GIL so it's more efficient to use
@@ -1890,7 +1894,7 @@ class LogisticRegressionCV(LogisticRegression,
                       fit_intercept=self.fit_intercept, penalty=self.penalty,
                       dual=self.dual, solver=solver, tol=self.tol,
                       max_iter=self.max_iter, verbose=self.verbose,
-                      class_weight=class_weight, scoring=self.scoring,
+                      class_weight=class_weight, scoring=self.scoring_,
                       multi_class=multi_class,
                       intercept_scaling=self.intercept_scaling,
                       random_state=self.random_state,
@@ -2082,10 +2086,7 @@ class LogisticRegressionCV(LogisticRegression,
             Score of self.predict(X) wrt. y.
 
         """
-        scoring = self.scoring or 'accuracy'
-        scoring = get_scorer(scoring)
-
-        return scoring(self, X, y, sample_weight=sample_weight)
+        return self.scoring_(self, X, y, sample_weight=sample_weight)
 
     def _more_tags(self):
         return {

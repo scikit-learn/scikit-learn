@@ -118,18 +118,21 @@ def test_logistic_cv_mock_scorer():
     lr = LogisticRegressionCV(Cs=Cs, scoring=mock_scorer, cv=cv)
     lr.fit(X, Y1)
 
+    # make sure that we did a copy of the scorer
+    assert lr.scoring_ is not mock_scorer
+
     # Cs[2] has the highest score (0.8) from MockScorer
     assert lr.C_[0] == Cs[2]
 
     # scorer called 8 times (cv*len(Cs))
-    assert mock_scorer.calls == cv * len(Cs)
+    assert lr.scoring_.calls == cv * len(Cs)
 
     # reset mock_scorer
-    mock_scorer.calls = 0
+    lr.scoring_.calls = 0
     custom_score = lr.score(X, lr.predict(X))
 
     assert custom_score == mock_scorer.scores[0]
-    assert mock_scorer.calls == 1
+    assert lr.scoring_.calls == 1
 
 
 def test_logistic_cv_score_does_not_warn_by_default():
