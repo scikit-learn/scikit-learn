@@ -149,10 +149,15 @@ def contingency_matrix(labels_true, labels_pred, *, eps=None, sparse=False,
 def pair_confusion_matrix(labels_true, labels_pred):
     """Pair confusion matrix arising from two clusterings.
 
-    The pair confusion matrix computes a 2x2 similarity matrix between
-    two clusterings by considering all pairs of samples and counting
-    pairs that are assigned in the same or different clusters in the
-    predicted and true clusterings.
+    The pair confusion matrix :math:`C` computes a 2x2 similarity matrix
+    between two clusterings by considering all pairs of samples and counting
+    pairs that are assigned in the same or different clusters in the true
+    and predicted clusterings.
+
+    Considering a pair of samples that is clustered together a positive pair,
+    then as in binary classification the count of true negatives is
+    :math:`C_{00}`, false negatives is :math:`C_{10}`, true positives is
+    :math:`C_{11}` and false positives is :math:`C_{01}`.
 
     Read more in the :ref:`User Guide <pair_confusion_matrix>`.
 
@@ -166,7 +171,7 @@ def pair_confusion_matrix(labels_true, labels_pred):
 
     Returns
     -------
-    array, shape(2, 2)
+    C : array, shape(2, 2)
 
     Examples
     --------
@@ -196,6 +201,7 @@ def pair_confusion_matrix(labels_true, labels_pred):
 
     See also
     --------
+    rand_score: Rand Score
     adjusted_rand_score: Adjusted Rand Score
     adjusted_mutual_info_score: Adjusted Mutual Information
 
@@ -209,11 +215,11 @@ def pair_confusion_matrix(labels_true, labels_pred):
     sum_comb = sum(_comb2(n_ij) for n_ij in contingency.data)
     sum_comb_c = sum(_comb2(n_c) for n_c in np.ravel(contingency.sum(axis=1)))
     sum_comb_k = sum(_comb2(n_k) for n_k in np.ravel(contingency.sum(axis=0)))
-    D11 = 2 * sum_comb
-    D01 = 2 * (sum_comb_k - sum_comb)
-    D10 = 2 * (sum_comb_c - sum_comb)
-    D00 = n_samples * n_samples - n_samples - D01 - D10 - D11
-    return np.array([[D00, D01], [D10, D11]])
+    C11 = 2 * sum_comb
+    C01 = 2 * (sum_comb_k - sum_comb)
+    C10 = 2 * (sum_comb_c - sum_comb)
+    C00 = n_samples * n_samples - n_samples - C01 - C10 - C11
+    return np.array([[C00, C01], [C10, C11]])
 
 
 def rand_score(labels_true, labels_pred):
