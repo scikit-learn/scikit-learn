@@ -496,12 +496,6 @@ def test_minibatch_kmeans_init_size():
     assert km._init_size == n_samples
 
 
-def test_minibatch_tol():
-    mb_k_means = MiniBatchKMeans(n_clusters=n_clusters, batch_size=10,
-                                 random_state=42, tol=.01).fit(X)
-    _check_fitted_model(mb_k_means)
-
-
 def test_kmeans_copyx():
     # Check that copy_x=False returns nearly equal X after de-centering.
     my_X = X.copy()
