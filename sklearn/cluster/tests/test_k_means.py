@@ -623,20 +623,13 @@ def test_predict_equal_labels(algo):
 
 def test_n_init():
     # Check that increasing the number of init increases the quality
-    n_runs = 5
-    n_init_range = [1, 5, 10]
-    inertia = np.zeros((len(n_init_range), n_runs))
-    for i, n_init in enumerate(n_init_range):
-        for j in range(n_runs):
-            km = KMeans(n_clusters=n_clusters, init="random", n_init=n_init,
-                        random_state=j).fit(X)
-            inertia[i, j] = km.inertia_
-
-    inertia = inertia.mean(axis=1)
-    failure_msg = ("Inertia %r should be decreasing"
-                   " when n_init is increasing.") % list(inertia)
-    for i in range(len(n_init_range) - 1):
-        assert inertia[i] >= inertia[i + 1], failure_msg
+    previous_inertia = np.inf
+    for n_init in [1, 5, 10]:
+        # set max_iter=1 to avoid finding the global minimum and get the same
+        # inertia each time
+        km = KMeans(n_clusters=n_clusters, init="random", n_init=n_init,
+                    random_state=0, max_iter=1).fit(X)
+        assert km.inertia_ <= previous_inertia
 
 
 def test_k_means_function():
