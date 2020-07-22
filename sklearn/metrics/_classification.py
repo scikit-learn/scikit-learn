@@ -249,6 +249,9 @@ def confusion_matrix(y_true, y_pred, *, labels=None, sample_weight=None,
         samples with true label being i-th class
         and prediced label being j-th class.
 
+    l : list
+        If cluster_classes == True, return a list of the labels in their new order.
+
     See Also
     --------
     plot_confusion_matrix : Plot Confusion Matrix
@@ -296,10 +299,9 @@ def confusion_matrix(y_true, y_pred, *, labels=None, sample_weight=None,
     >>> confusion_matrix(y_true, y_pred, cluster_classes=True)
     (array([[130,  50,   7,   6,   7],
             [ 40, 130,  10,  15,   5],
-            [  3,   7, 140,  25,  25],s
+            [  3,   7, 140,  25,  25],
             [  6,   4,  50, 120,  20],
-            [  8,   2,  30,  25, 135]]),
-    ['wolf', 'dog', 'leopard', 'lion', 'cat'])
+            [  8,   2,  30,  25, 135]]), ['wolf', 'dog', 'leopard', 'lion', 'cat'])
 
 
 
