@@ -784,10 +784,12 @@ def test_kmeans_elkan_iter_attribute():
     assert km.n_iter_ == 1
 
 
-def test_k_means_empty_cluster_relocated():
+@pytest.mark.parametrize("array_constr", [np.array, sp.csr_matrix],
+                         ids=["dense", "sparse"])
+def test_kmeans_empty_cluster_relocated(array_constr):
     # check that empty clusters are correctly relocated when using sample
     # weights (#13486)
-    X = np.array([[-1], [1]])
+    X = array_constr([[-1], [1]])
     sample_weight = [1.9, 0.1]
     init = np.array([[-1], [10]])
 
