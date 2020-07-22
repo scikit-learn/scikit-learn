@@ -378,6 +378,8 @@ def _kmeans_single_elkan(X, sample_weight, centers_init, max_iter=300,
     init_bounds(X, centers, center_half_distances,
                 labels, upper_bounds, lower_bounds)
 
+    strict_convergence = False
+
     for i in range(max_iter):
         elkan_iter(X, sample_weight, centers, centers_new,
                    weight_in_clusters, center_half_distances,
@@ -396,22 +398,23 @@ def _kmeans_single_elkan(X, sample_weight, centers_init, max_iter=300,
 
         centers, centers_new = centers_new, centers
 
-        if tol == 0:
-            # When tol = 0 we check that labels did not change because
+        if np.array_equal(labels, labels_old):
+            # First check the labels for strict convergence because
             # center_shift might not be exactly 0 due to rounding errors.
-            if np.array_equal(labels, labels_old):
-                strict_convergence = True
-                break
-            labels_old = labels.copy()
+            if verbose:
+                print(f"Converged at iteration {i}: strict convergence.")
+            strict_convergence = True
+            break
         else:
+            # No strict convergence, check for tol based convergence.
             center_shift_tot = (center_shift**2).sum()
             if center_shift_tot <= tol:
                 if verbose:
                     print(f"Converged at iteration {i}: center shift "
                           f"{center_shift_tot} within tolerance {tol}.")
-                strict_convergence = center_shift_tot == 0
                 break
-        strict_convergence = False
+
+        labels_old[:] = labels
 
     if not strict_convergence:
         # rerun E-step so that predicted labels match cluster centers
@@ -495,6 +498,8 @@ def _kmeans_single_lloyd(X, sample_weight, centers_init, max_iter=300,
         lloyd_iter = lloyd_iter_chunked_dense
         _inertia = _inertia_dense
 
+    strict_convergence = False
+
     # Threadpoolctl context to limit the number of threads in second level of
     # nested parallelism (i.e. BLAS) to avoid oversubsciption.
     with threadpool_limits(limits=1, user_api="blas"):
@@ -508,22 +513,23 @@ def _kmeans_single_lloyd(X, sample_weight, centers_init, max_iter=300,
 
             centers, centers_new = centers_new, centers
 
-            if tol == 0:
-                # When tol = 0 we check that labels did not change because
+            if np.array_equal(labels, labels_old):
+                # First check the labels for strict convergence because
                 # center_shift might not be exactly 0 due to rounding errors.
-                if np.array_equal(labels, labels_old):
-                    strict_convergence = True
-                    break
-                labels_old = labels.copy()
+                if verbose:
+                    print(f"Converged at iteration {i}: strict convergence.")
+                strict_convergence = True
+                break
             else:
+                # No strict convergence, check for tol based convergence.
                 center_shift_tot = (center_shift**2).sum()
                 if center_shift_tot <= tol:
                     if verbose:
                         print(f"Converged at iteration {i}: center shift "
                               f"{center_shift_tot} within tolerance {tol}.")
-                    strict_convergence = center_shift_tot == 0
                     break
-            strict_convergence = False
+
+            labels_old[:] = labels
 
         if not strict_convergence:
             # rerun E-step so that predicted labels match cluster centers
