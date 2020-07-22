@@ -697,14 +697,14 @@ def test_centers_not_mutated(Estimator, dtype):
 
 
 @pytest.mark.parametrize("data", [X, X_csr], ids=["dense", "sparse"])
-def test_k_means_init_fitted_centers(data):
-    # Get a local optimum
-    centers = KMeans(n_clusters=3).fit(X).cluster_centers_
+def test_kmeans_init_fitted_centers(data):
+    # Check that starting fitting from a local optimum shouldn't change the
+    # solution
+    km1 = KMeans(n_clusters=n_clusters).fit(data)
+    km2 = KMeans(n_clusters=n_clusters, init=km1.cluster_centers_,
+                 n_init=1).fit(data)
 
-    # Fit starting from a local optimum shouldn't change the solution
-    new_centers = KMeans(n_clusters=3, init=centers,
-                         n_init=1).fit(X).cluster_centers_
-    assert_array_almost_equal(centers, new_centers)
+    assert_allclose(km1.cluster_centers_, km2.cluster_centers_)
 
 
 def test_kmeans_warns_less_centers_than_unique_points():
