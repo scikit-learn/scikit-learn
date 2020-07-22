@@ -1026,9 +1026,8 @@ def test_minibatch_kmeans_wrong_params(param, match):
      r"n_local_trials is set to 0 but should be an "
      r"integer value greater than zero"),
     ({"x_squared_norms": X[:2]},
-     r"The length of x_squared_norms {} should "
-     r"be equal to the length of n_samples {}.".format(X[:2].shape[0],
-                                                       X.shape[0]))]
+     r"The length of x_squared_norms .* should "
+     r"be equal to the length of n_samples")]
 )
 def test_kmeans_plusplus_wrong_params(param, match):
     with pytest.raises(ValueError, match=match):
