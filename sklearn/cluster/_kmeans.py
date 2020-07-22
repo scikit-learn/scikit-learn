@@ -1902,7 +1902,7 @@ def kmeans_plusplus(X, n_clusters, *, x_squared_norms=None,
     x_squared_norms : array-like of shape (n_samples,)
         Squared Euclidean norm of each data point.
 
-    random_state : int, RandomState instance, default=None
+    random_state : int or RandomState instance, default=None
         Determines random number generation for centroid initialization. Use
         an int to make the randomness deterministic.
         See :term:`Glossary <random_state>`.
