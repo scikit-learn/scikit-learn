@@ -1903,8 +1903,8 @@ def kmeans_plusplus(X, n_clusters, *, x_squared_norms=None,
         Squared Euclidean norm of each data point.
 
     random_state : int or RandomState instance, default=None
-        Determines random number generation for centroid initialization. Use
-        an int to make the randomness deterministic.
+        Determines random number generation for centroid initialization. Pass an int
+        for reproducible output across multiple function calls..
         See :term:`Glossary <random_state>`.
 
     n_local_trials : int, default=None
