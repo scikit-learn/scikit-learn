@@ -157,13 +157,19 @@ is the output of the un-calibrated classifier for sample :math:`i`. :math:`A`
 and :math:`B` are real numbers to be determined when fitting the regressor via
 maximum likelihood.
 
-The sigmoid method is biased in that it assumes the :ref:`calibration curve
-<calibration_curve>` of the un-calibrated model has a sigmoid shape and is
-symmetrical [1]_. It is thus most effective when the un-calibrated model is
+The sigmoid method assumes the :ref:`calibration curve <calibration_curve>`
+can be corrected by applying a sigmoid function to the raw predictions. This
+assumption has been empirically justified in the case of :ref:`svm` with
+common kernel functions on various benchmark datasets in section 2.1 of Platt
+1999 [3]_ but does not necessarily hold in general. Additionally, the
+logistic model works best if the calibration error is symmetrical, meaning
+the classifier output for each binary class is normally distributed with
+the same variance [6]_. This is can be a problem for highly imbalanced
+classification problems, where outputs do not have equal variance.
+
+In general this method is most effective when the un-calibrated model is
 under-confident and has similar calibration errors for both high and low
-outputs. The symmetry assumption is of concern in highly imbalanced
-classification as un-calibrated classifiers can have asymmetric calibration
-errors.
+outputs.
 
 Isotonic
 ^^^^^^^^
@@ -232,4 +238,9 @@ one, a postprocessing is performed to normalize them.
     .. [5] `Predicting accurate probabilities with a ranking loss.
            <https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4180410/>`_
            Menon AK, Jiang XJ, Vembu S, Elkan C, Ohno-Machado L.
-           Proc Int Conf Mach Learn. 2012;2012:703-710.
+           Proc Int Conf Mach Learn. 2012;2012:703-710
+
+    .. [6] `Beyond sigmoids: How to obtain well-calibrated probabilities from
+           binary classifiers with beta calibration
+           <https://projecteuclid.org/euclid.ejs/1513306867>`_
+           Kull, M., Silva Filho, T. M., & Flach, P. (2017).
