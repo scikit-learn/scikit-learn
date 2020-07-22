@@ -144,8 +144,8 @@ def pair_confusion_matrix(labels_true, labels_pred):
 
     The pair confusion matrix :math:`C` computes a 2x2 similarity matrix
     between two clusterings by considering all pairs of samples and counting
-    pairs that are assigned in the same or different clusters in the true
-    and predicted clusterings.
+    pairs that are assigned into the same or into different clusters under
+    the true and predicted clusterings.
 
     Considering a pair of samples that is clustered together a positive pair,
     then as in binary classification the count of true negatives is
@@ -159,7 +159,7 @@ def pair_confusion_matrix(labels_true, labels_pred):
     labels_true : int array, shape = [n_samples]
         Ground truth class labels to be used as a reference
 
-    labels_pred : array, shape = [n_samples]
+    labels_pred : int array, shape = [n_samples]
         Cluster labels to evaluate
 
     Returns
@@ -239,7 +239,7 @@ def rand_score(labels_true, labels_pred):
 
     Returns
     -------
-    ri : float
+    RI : float
        Similarity score between 0.0 and 1.0, inclusive, 1.0 stands for
        perfect match
 
@@ -320,7 +320,7 @@ def adjusted_rand_score(labels_true, labels_pred):
 
     Returns
     -------
-    ari : float
+    ARI : float
        Similarity score between -1.0 and 1.0. Random labelings have an ARI
        close to 0.0. 1.0 stands for perfect match.
 
