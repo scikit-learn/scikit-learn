@@ -2121,7 +2121,7 @@ def hamming_loss(y_true, y_pred, *, sample_weight=None):
 
 
 @_deprecate_positional_args
-def log_loss(y_true, y_pred, *, eps=1e-15, normalize=True, sample_weight=None,
+def log_loss(y_true, y_pred, *, eps=1e-3, normalize=True, sample_weight=None,
              labels=None):
     """Log loss, aka logistic loss or cross-entropy loss.
 
