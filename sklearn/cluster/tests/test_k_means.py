@@ -1041,7 +1041,7 @@ def test_kmeans_plusplus_output(input_data):
 
     # Check there are the correct number of indices and that all indices are
     # positive and within the number of samples
-    assert indices.shape[0] is n_clusters
+    assert indices.shape[0] == n_clusters
     assert (indices >= 0).all()
     assert np.amax(indices) <= X.shape[0]
 
