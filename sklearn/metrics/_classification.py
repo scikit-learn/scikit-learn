@@ -237,9 +237,10 @@ def confusion_matrix(y_true, y_pred, *, labels=None, sample_weight=None,
         normalized.
 
     cluster_classes : bool, default=False
-        Sort the classes in order for the most confused classes to end up next to
-        each other. If True, it will also return the confusion matrix as well as
-        the newly ordered labels. This is mostly useful when there are many classes.
+        Sort the classes in order for the most confused classes to end up next
+        to each other. If True, it will also return the confusion matrix as
+        well as the newly ordered labels. This is mostly useful when there are
+        many classes.
 
     Returns
     -------
@@ -249,8 +250,9 @@ def confusion_matrix(y_true, y_pred, *, labels=None, sample_weight=None,
         samples with true label being i-th class
         and prediced label being j-th class.
 
-    l : list
-        If cluster_classes == True, return a list of the labels in their new order.
+    labels : list
+        If cluster_classes == True, return a list of the labels in their new
+        order.
 
     See Also
     --------
@@ -287,24 +289,27 @@ def confusion_matrix(y_true, y_pred, *, labels=None, sample_weight=None,
     (0, 2, 1, 1)
 
     >>> y_true = ["lion"]*200
-    >>> y_pred = ["lion"]*120 + ["leopard"]*50 + ["cat"]*20 + ["wolf"]*6 + ["dog"]*4
+    >>> y_pred = ["lion"]*120 + ["leopard"]*50 + ["cat"]*20 + ["wolf"]*6 +
+    ... ["dog"]*4
     >>> y_true += ["leopard"]*200
-    >>> y_pred += ["leopard"]*140 + ["lion"]*25 + ["cat"]*25 + ["wolf"]*3 + ["dog"]*7
+    >>> y_pred += ["leopard"]*140 + ["lion"]*25 + ["cat"]*25 + ["wolf"]*3 +
+    ... ["dog"]*7
     >>> y_true += ["cat"]*200
-    >>> y_pred += ["cat"]*135 + ["lion"]*25 + ["leopard"]*30 + ["wolf"]*8 + ["dog"]*2
+    >>> y_pred += ["cat"]*135 + ["lion"]*25 + ["leopard"]*30 + ["wolf"]*8 +
+    ... ["dog"]*2
     >>> y_true += ["wolf"]*200
-    >>> y_pred += ["wolf"]*130 + ["dog"]*50 + ["lion"]*6 + ["leopard"]*7 + ["cat"]*7
+    >>> y_pred += ["wolf"]*130 + ["dog"]*50 + ["lion"]*6 + ["leopard"]*7 +
+    ... ["cat"]*7
     >>> y_true += ["dog"]*200
-    >>> y_pred += ["dog"]*130 + ["wolf"]*40 + ["lion"]*15 + ["leopard"]*10 + ["cat"]*5
+    >>> y_pred += ["dog"]*130 + ["wolf"]*40 + ["lion"]*15 + ["leopard"]*10 +
+    ... ["cat"]*5
     >>> confusion_matrix(y_true, y_pred, cluster_classes=True)
     (array([[130,  50,   7,   6,   7],
             [ 40, 130,  10,  15,   5],
             [  3,   7, 140,  25,  25],
             [  6,   4,  50, 120,  20],
-            [  8,   2,  30,  25, 135]]), ['wolf', 'dog', 'leopard', 'lion', 'cat'])
-
-
-
+            [  8,   2,  30,  25, 135]]),
+            ['wolf', 'dog', 'leopard', 'lion', 'cat'])
     """
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     if y_type not in ("binary", "multiclass"):

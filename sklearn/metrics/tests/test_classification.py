@@ -569,45 +569,23 @@ def test_confusion_matrix_normalize_single_class():
 def test_confusion_matrix_cluster_classes():
     # Test the cluster classes functionality of confusion matrix
     y_true = ["lion"]*200
-    y_pred = ["lion"]*120 + ["leopard"]*50 + ["cat"]*20 + ["wolf"]*6 + ["dog"]*4
-    y_true += ["leopard"]*200
-    y_pred += ["leopard"]*140 + ["lion"]*25 + ["cat"]*25 + ["wolf"]*3 + ["dog"]*7
+    y_pred = ["lion"]*120 + ["jag"]*50 + ["cat"]*20 + ["wolf"]*6 + ["dog"]*4
+    y_true += ["jag"]*200
+    y_pred += ["jag"]*140 + ["lion"]*25 + ["cat"]*25 + ["wolf"]*3 + ["dog"]*7
     y_true += ["cat"]*200
-    y_pred += ["cat"]*135 + ["lion"]*25 + ["leopard"]*30 + ["wolf"]*8 + ["dog"]*2
+    y_pred += ["cat"]*135 + ["lion"]*25 + ["jag"]*30 + ["wolf"]*8 + ["dog"]*2
     y_true += ["wolf"]*200
-    y_pred += ["wolf"]*130 + ["dog"]*50 + ["lion"]*6 + ["leopard"]*7 + ["cat"]*7
+    y_pred += ["wolf"]*130 + ["dog"]*50 + ["lion"]*6 + ["jag"]*7 + ["cat"]*7
     y_true += ["dog"]*200
-    y_pred += ["dog"]*130 + ["wolf"]*40 + ["lion"]*15 + ["leopard"]*10 + ["cat"]*5
+    y_pred += ["dog"]*130 + ["wolf"]*40 + ["lion"]*15 + ["jag"]*10 + ["cat"]*5
 
     cm, labels = confusion_matrix(y_true, y_pred, cluster_classes=True)
-    assert_array_equal(cm, [[130,  50,   7,   6,   7],
-                            [ 40, 130,  10,  15,   5],
-                            [  3,   7, 140,  25,  25],
-                            [  6,   4,  50, 120,  20],
-                            [  8,   2,  30,  25, 135]])
-    assert labels == ['wolf', 'dog', 'leopard', 'lion', 'cat']
-
-
-def test_confusion_matrix_cluster_classes():
-    # Test the cluster classes functionality of confusion matrix
-    y_true = ["lion"]*200
-    y_pred = ["lion"]*120 + ["leopard"]*50 + ["cat"]*20 + ["wolf"]*6 + ["dog"]*4
-    y_true += ["leopard"]*200
-    y_pred += ["leopard"]*140 + ["lion"]*25 + ["cat"]*25 + ["wolf"]*3 + ["dog"]*7
-    y_true += ["cat"]*200
-    y_pred += ["cat"]*135 + ["lion"]*25 + ["leopard"]*30 + ["wolf"]*8 + ["dog"]*2
-    y_true += ["wolf"]*200
-    y_pred += ["wolf"]*130 + ["dog"]*50 + ["lion"]*6 + ["leopard"]*7 + ["cat"]*7
-    y_true += ["dog"]*200
-    y_pred += ["dog"]*130 + ["wolf"]*40 + ["lion"]*15 + ["leopard"]*10 + ["cat"]*5
-
-    cm, labels = confusion_matrix(y_true, y_pred, cluster_classes=True)
-    assert_array_equal(cm, [[130,  50,   7,   6,   7],
-                            [ 40, 130,  10,  15,   5],
-                            [  3,   7, 140,  25,  25],
-                            [  6,   4,  50, 120,  20],
-                            [  8,   2,  30,  25, 135]])
-    assert labels == ['wolf', 'dog', 'leopard', 'lion', 'cat']
+    assert_array_equal(cm, [[130, 50, 7, 6, 7],
+                            [40, 130, 10, 15, 5],
+                            [3, 7, 140, 25, 25],
+                            [6, 4, 50, 120, 20],
+                            [8, 2, 30, 25, 135]])
+    assert labels == ['wolf', 'dog', 'jag', 'lion', 'cat']
 
 
 def test_cohen_kappa():
