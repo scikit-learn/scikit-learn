@@ -296,48 +296,6 @@ def test_fortran_aligned_data(Estimator):
     assert_array_equal(km_c.labels_, km_f.labels_)
 
 
-@pytest.mark.parametrize('algo', ['full', 'elkan'])
-@pytest.mark.parametrize('dtype', [np.float32, np.float64])
-@pytest.mark.parametrize('constructor', [np.asarray, sp.csr_matrix])
-@pytest.mark.parametrize('seed, max_iter, tol', [
-    (0, 2, 1e-7),    # strict non-convergence
-    (1, 2, 1e-1),    # loose non-convergence
-    (3, 300, 1e-7),  # strict convergence
-    (4, 300, 1e-1),  # loose convergence
-])
-def test_k_means_fit_predict(algo, dtype, constructor, seed, max_iter, tol):
-    # check that fit.predict gives same result as fit_predict
-    # There's a very small chance of failure with elkan on unstructured dataset
-    # because predict method uses fast euclidean distances computation which
-    # may cause small numerical instabilities.
-    # NB: This test is largely redundant with respect to test_predict and
-    #     test_predict_equal_labels.  This test has the added effect of
-    #     testing idempotence of the fittng procesdure which appears to
-    #     be where it fails on some MacOS setups.
-    if sys.platform == "darwin":
-        pytest.xfail(
-            "Known failures on MacOS, See "
-            "https://github.com/scikit-learn/scikit-learn/issues/12644")
-
-    rng = np.random.RandomState(seed)
-
-    X = make_blobs(n_samples=1000, n_features=10, centers=10,
-                   random_state=rng)[0].astype(dtype, copy=False)
-    X = constructor(X)
-
-    kmeans = KMeans(algorithm=algo, n_clusters=10, random_state=seed,
-                    tol=tol, max_iter=max_iter)
-
-    labels_1 = kmeans.fit(X).predict(X)
-    labels_2 = kmeans.fit_predict(X)
-
-    # Due to randomness in the order in which chunks of data are processed when
-    # using more than one thread, the absolute values of the labels can be
-    # different between the 2 strategies but they should correspond to the same
-    # clustering.
-    assert v_measure_score(labels_1, labels_2) == 1
-
-
 @pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
 def test_verbose(Estimator):
     # Check verbose mode of KMeans and MiniBatchKMeans for better coverage.
@@ -519,24 +477,73 @@ def test_score_max_iter(Estimator):
     assert s2 > s1
 
 
-@pytest.mark.parametrize('Estimator', [KMeans, MiniBatchKMeans])
-@pytest.mark.parametrize('data', [X, X_csr], ids=['dense', 'sparse'])
-@pytest.mark.parametrize('init', ['random', 'k-means++', centers.copy()])
-def test_predict(Estimator, data, init):
-    n_init = 10 if type(init) is str else 1
-    k_means = Estimator(n_clusters=n_clusters, init=init,
-                        n_init=n_init, random_state=0).fit(data)
+@pytest.mark.parametrize("array_constr", [np.array, sp.csr_matrix],
+                         ids=["dense", "sparse"])
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+@pytest.mark.parametrize("init", ["random", "k-means++"])
+@pytest.mark.parametrize("Estimator, algorithm", [
+    (KMeans, "full"),
+    (KMeans, "elkan"),
+    (MiniBatchKMeans, None)
+])
+def test_predict(Estimator, algorithm, init, dtype, array_constr):
+    # Check the predict method and the equivalence between fit.predict and
+    # fit_predict.
 
-    # sanity check: re-predict labeling for training set samples
-    assert_array_equal(k_means.predict(data), k_means.labels_)
+    # There's a very small chance of failure with elkan on unstructured dataset
+    # because predict method uses fast euclidean distances computation which
+    # may cause small numerical instabilities.
+    if sys.platform == "darwin":
+        pytest.xfail(
+            "Known failures on MacOS, See "
+            "https://github.com/scikit-learn/scikit-learn/issues/12644")
 
-    # sanity check: predict centroid labels
-    pred = k_means.predict(k_means.cluster_centers_)
-    assert_array_equal(pred, np.arange(n_clusters))
+    X, _ = make_blobs(n_samples=500, n_features=10, centers=10, random_state=0)
+    X = array_constr(X)
+
+    # With n_init = 1
+    km = Estimator(n_clusters=10, init=init, n_init=1, random_state=0)
+    if Estimator is KMeans:
+        km.set_params(algorithm=algorithm)
+    km.fit(X)
+    labels = km.labels_
+
+    # re-predict labels for training set using predict
+    pred = km.predict(X)
+    assert_array_equal(pred, labels)
 
     # re-predict labels for training set using fit_predict
-    pred = k_means.fit_predict(data)
-    assert_array_equal(pred, k_means.labels_)
+    pred = km.fit_predict(X)
+    assert_array_equal(pred, labels)
+
+    # predict centroid labels
+    pred = km.predict(km.cluster_centers_)
+    assert_array_equal(pred, np.arange(10))
+
+    # With n_init > 1
+    # Due to randomness in the order in which chunks of data are processed when
+    # using more than one thread, there might be different rounding errors for
+    # the computation of the inertia between 2 runs. This might result in a
+    # different ranking of 2 inits, hence a different labeling, even if they
+    # give the same clustering. We only check the labels up to a permutation.
+
+    km = Estimator(n_clusters=10, init=init, n_init=10, random_state=0)
+    if Estimator is KMeans:
+        km.set_params(algorithm=algorithm)
+    km.fit(X)
+    labels = km.labels_
+
+    # re-predict labels for training set using predict
+    pred = km.predict(X)
+    assert_allclose(v_measure_score(pred, labels), 1)
+
+    # re-predict labels for training set using fit_predict
+    pred = km.fit_predict(X)
+    assert_allclose(v_measure_score(pred, labels), 1)
+
+    # predict centroid labels
+    pred = km.predict(km.cluster_centers_)
+    assert_allclose(v_measure_score(pred, np.arange(10)), 1)
 
 
 @pytest.mark.parametrize("init", ["random", "k-means++", centers],
@@ -611,14 +618,6 @@ def test_fit_transform(Estimator):
     X1 = Estimator(random_state=0, n_init=1).fit(X).transform(X)
     X2 = Estimator(random_state=0, n_init=1).fit_transform(X)
     assert_allclose(X1, X2)
-
-
-@pytest.mark.parametrize('algo', ['full', 'elkan'])
-def test_predict_equal_labels(algo):
-    km = KMeans(random_state=13, n_init=1, max_iter=1,
-                algorithm=algo)
-    km.fit(X)
-    assert_array_equal(km.predict(X), km.labels_)
 
 
 def test_n_init():
