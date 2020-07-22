@@ -31,7 +31,6 @@ from sklearn.cluster._k_means_fast import _inertia_dense
 from sklearn.cluster._k_means_fast import _inertia_sparse
 from sklearn.datasets import make_blobs
 from io import StringIO
-from sklearn.metrics.cluster import homogeneity_score
 
 
 # non centered, sparse centers to check the
@@ -620,13 +619,6 @@ def test_predict_equal_labels(algo):
                 algorithm=algo)
     km.fit(X)
     assert_array_equal(km.predict(X), km.labels_)
-
-
-def test_full_vs_elkan():
-    km1 = KMeans(algorithm='full', random_state=13).fit(X)
-    km2 = KMeans(algorithm='elkan', random_state=13).fit(X)
-
-    assert homogeneity_score(km1.predict(X), km2.predict(X)) == 1.0
 
 
 def test_n_init():
