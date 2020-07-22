@@ -479,7 +479,7 @@ def test_mini_batch_k_means_random_init_partial_fit():
     assert v_measure_score(true_labels, labels) == 1.0
 
 
-def test_minibatch_kmeans_default_init_size():
+def test_minibatch_kmeans_init_size():
     # Check the internal _init_size attribute of MiniBatchKMeans
 
     # default init size should be 3 * batch_size
@@ -499,15 +499,6 @@ def test_minibatch_kmeans_default_init_size():
 def test_minibatch_tol():
     mb_k_means = MiniBatchKMeans(n_clusters=n_clusters, batch_size=10,
                                  random_state=42, tol=.01).fit(X)
-    _check_fitted_model(mb_k_means)
-
-
-def test_minibatch_set_init_size():
-    mb_k_means = MiniBatchKMeans(init=centers.copy(), n_clusters=n_clusters,
-                                 init_size=666, random_state=42,
-                                 n_init=1).fit(X)
-    assert mb_k_means.init_size == 666
-    assert mb_k_means._init_size == n_samples
     _check_fitted_model(mb_k_means)
 
 
