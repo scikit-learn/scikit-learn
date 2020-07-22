@@ -414,28 +414,6 @@ def test_minibatch_with_many_reassignments():
                     random_state=42).fit(X)
 
 
-def test_sparse_mb_k_means_callable_init():
-
-    def test_init(X, k, random_state):
-        return centers
-
-    mb_k_means = MiniBatchKMeans(n_clusters=3, init=test_init,
-                                 random_state=42).fit(X_csr)
-    _check_fitted_model(mb_k_means)
-
-
-def test_mini_batch_k_means_random_init_partial_fit():
-    km = MiniBatchKMeans(n_clusters=n_clusters, init="random", random_state=42)
-
-    # use the partial_fit API for online learning
-    for X_minibatch in np.array_split(X, 10):
-        km.partial_fit(X_minibatch)
-
-    # compute the labeling on the complete dataset
-    labels = km.predict(X)
-    assert v_measure_score(true_labels, labels) == 1.0
-
-
 def test_minibatch_kmeans_init_size():
     # Check the internal _init_size attribute of MiniBatchKMeans
 
