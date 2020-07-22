@@ -47,13 +47,13 @@ from ._k_means_elkan import elkan_iter_chunked_sparse
 
 def _kmeans_plusplus(X, n_clusters, x_squared_norms,
                      random_state, n_local_trials=None):
-    """Init n_clusters seeds according to k-means++
+    """Computational component for initialization of n_clusters by
+    k-means++. Prior validation of data is assumed.
 
     Parameters
     ----------
     X : {ndarray, sparse matrix} of shape (n_samples, n_features)
-        The data to pick seeds for. To avoid memory copy, the input data
-        should be double precision (dtype=np.float64).
+        The data to pick seeds for.
 
     n_clusters : int
         The number of seeds to choose
@@ -79,20 +79,10 @@ def _kmeans_plusplus(X, n_clusters, x_squared_norms,
     indices : ndarray of shape (n_clusters,)
         The index location of the chosen centers in the data array X. For a
         given index and center, X[index] = center.
-
-    Notes
-    -----
-    Selects initial cluster centers for k-mean clustering in a smart way
-    to speed up convergence. see: Arthur, D. and Vassilvitskii, S.
-    "k-means++: the advantages of careful seeding". ACM-SIAM symposium
-    on Discrete algorithms. 2007
     """
     n_samples, n_features = X.shape
 
     centers = np.empty((n_clusters, n_features), dtype=X.dtype)
-
-    assert x_squared_norms is not None, \
-           'x_squared_norms None in _kmeans_plusplus'
 
     # Set the number of local seeding trials if none is given
     if n_local_trials is None:
@@ -1893,8 +1883,7 @@ def kmeans_plusplus(X, n_clusters, *, x_squared_norms=None,
     Parameters
     ----------
     X : {array-like, sparse matrix} of shape (n_samples, n_features)
-        The data to pick seeds for. To avoid memory copy, the input data
-        should be double precision (dtype=np.float64).
+        The data to pick seeds for.
 
     n_clusters : int
         The number of centroids to initialize
@@ -1903,8 +1892,8 @@ def kmeans_plusplus(X, n_clusters, *, x_squared_norms=None,
         Squared Euclidean norm of each data point.
 
     random_state : int or RandomState instance, default=None
-        Determines random number generation for centroid initialization. Pass an int
-        for reproducible output across multiple function calls..
+        Determines random number generation for centroid initialization. Pass
+        an int for reproducible output across multiple function calls..
         See :term:`Glossary <random_state>`.
 
     n_local_trials : int, default=None
@@ -1931,8 +1920,8 @@ def kmeans_plusplus(X, n_clusters, *, x_squared_norms=None,
     """
 
     # Check data
-    check_array(X, accept_sparse=True,
-                dtype=[np.float64, np.float32], order='C')
+    check_array(X, accept_sparse='csr',
+                dtype=[np.float64, np.float32])
 
     if X.shape[0] < n_clusters:
         raise ValueError(f"n_samples={X.shape[0]} should be >= "
@@ -1941,7 +1930,10 @@ def kmeans_plusplus(X, n_clusters, *, x_squared_norms=None,
     # Check parameters
     if x_squared_norms is None:
         x_squared_norms = row_norms(X, squared=True)
-    elif x_squared_norms.shape[0] != X.shape[0]:
+    else:
+        x_squared_norms = check_array(x_squared_norms, dtype=X.dtype)
+
+    if x_squared_norms.shape[0] != X.shape[0]:
         raise ValueError(
             f"The length of x_squared_norms {x_squared_norms.shape[0]} should "
             f"be equal to the length of n_samples {X.shape[0]}.")

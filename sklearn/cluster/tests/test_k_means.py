@@ -32,6 +32,7 @@ from sklearn.cluster._k_means_fast import _inertia_sparse
 from sklearn.datasets import make_blobs
 from io import StringIO
 from sklearn.metrics.cluster import homogeneity_score
+from sklearn.utils import check_array
 
 
 # non centered, sparse centers to check the
@@ -1034,21 +1035,34 @@ def test_kmeans_plusplus_wrong_params(param, match):
         kmeans_plusplus(X, n_clusters, **param)
 
 
-@pytest.mark.parametrize("input_data", [X, X_csr])
-def test_kmeans_plusplus_output(input_data):
+@pytest.mark.parametrize("data", [X, X_csr])
+def test_kmeans_plusplus_output(data):
     # Check for the correct number of seeds and all positive values
-    centers, indices = kmeans_plusplus(input_data, n_clusters)
+    centers, indices = kmeans_plusplus(data, n_clusters)
 
     # Check there are the correct number of indices and that all indices are
     # positive and within the number of samples
     assert indices.shape[0] == n_clusters
     assert (indices >= 0).all()
-    assert np.amax(indices) <= X.shape[0]
+    assert (indices <= X.shape[0]).all()
 
     # Check for the correct number of seeds and that they are bound by the data
     assert centers.shape[0] == n_clusters
-    assert np.amax(centers) <= np.amax(X)
-    assert np.amin(centers) >= np.amin(X)
+    assert (centers.max(axis=0) <= X.max(axis=0)).all()
+    assert (centers.min(axis=0) >= X.min(axis=0)).all()
 
     # Check that indices correspond to reported centers
-    assert_array_equal(np.sort(X[indices]), np.sort(centers))
+    assert_allclose(X[indices], centers)
+
+
+@pytest.mark.parametrize("param", ["F", "C"])
+def test_kmeans_plusplus_dataorder(param):
+    # Check that memory layout doe not effect result
+    centers, _ = kmeans_plusplus(X, n_clusters, random_state=0)
+
+    X_order = check_array(X, accept_sparse='csr',
+                          dtype=[np.float64, np.float32],
+                          order=param)
+    centers_order, _ = kmeans_plusplus(X_order, n_clusters, random_state=0)
+
+    assert_allclose(centers, centers_order)
