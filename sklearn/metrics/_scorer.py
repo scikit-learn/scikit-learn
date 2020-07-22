@@ -329,7 +329,7 @@ class _ThresholdScorer(_BaseScorer):
         return ", needs_threshold=True"
 
 
-def get_scorer(scoring, copy=False):
+def get_scorer(scoring):
     """Get a scorer from string or a callable.
 
     Read more in the :ref:`User Guide <scoring_parameter>`.
@@ -337,13 +337,8 @@ def get_scorer(scoring, copy=False):
     Parameters
     ----------
     scoring : str or callable
-        Scoring method as string. If callable, a copy will be returned if
-        `copy=True`.
-
-    copy : bool, default=False
-        Whether or not to return a copy of the scorer when a callable is given.
-
-        .. versionadded:: 0.24
+        Scoring method as string. If callable is given, a copy will be
+        returned.
 
     Returns
     -------
@@ -352,17 +347,15 @@ def get_scorer(scoring, copy=False):
     """
     if isinstance(scoring, str):
         try:
-            # make a deepcopy avoiding any change of the scorer object stored
-            # in SCORERS
-            scorer = deepcopy(SCORERS[scoring])
+            scorer = SCORERS[scoring]
         except KeyError:
             raise ValueError(
                 f"'{scoring}' is not a valid scoring value. Use "
                 f"sorted(sklearn.metrics.SCORERS.keys()) to get valid options."
             )
     else:
-        scorer = deepcopy(scoring) if copy else scoring
-    return scorer
+        scorer = scoring
+    return deepcopy(scorer)
 
 
 def _passthrough_scorer(estimator, *args, **kwargs):
@@ -400,7 +393,7 @@ def check_scoring(estimator, scoring=None, *, allow_none=False):
         raise TypeError("estimator should be an estimator implementing "
                         "'fit' method, %r was passed" % estimator)
     if isinstance(scoring, str):
-        return get_scorer(scoring, copy=True)
+        return get_scorer(scoring)
     elif callable(scoring):
         # Heuristic to ensure user has not passed a metric
         module = getattr(scoring, '__module__', None)

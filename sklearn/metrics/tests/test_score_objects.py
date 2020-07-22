@@ -749,13 +749,12 @@ def test_multiclass_roc_no_proba_scorer_errors(scorer_name):
         scorer(lr, X, y)
 
 
-@pytest.mark.parametrize("copy", [True, False])
-def test_get_scorer_copy_sklearn_scorers(copy):
+def test_get_scorer_copy_sklearn_scorers():
     # Part of non-regression tests for:
     # https://github.com/scikit-learn/scikit-learn/issues/17942
     # check that with internal scikit-learn scorers, we should make sure that
-    # we make a copy and that a change should not have any impact on the scorer
-
+    # we make a deep copy and that a change should not have any impact on the
+    # scorer
     accuracy_scorer = get_scorer("accuracy")
     assert accuracy_scorer is not SCORERS["accuracy"]
 
@@ -763,12 +762,14 @@ def test_get_scorer_copy_sklearn_scorers(copy):
 def test_get_scorer_copy_custom_scorers():
     # Part of non-regression tests for:
     # https://github.com/scikit-learn/scikit-learn/issues/17942
-    # check that with custom scorer, one can choose to make a copy or not of
-    # the object
+    # check that we return a deep copy of a custom scorer
     accuracy_scorer = make_scorer(accuracy_score)
-
-    accuracy_scorer_with_copy = get_scorer(accuracy_scorer, copy=True)
-    accuracy_scorer_no_copy = get_scorer(accuracy_scorer, copy=False)
-
-    assert accuracy_scorer is accuracy_scorer_no_copy
+    # add a mutable list to check that we do a deep copy and not only a copy
+    accuracy_scorer._kwargs["mutable_list"] = [1, 2, 3, 4]
+    accuracy_scorer_with_copy = get_scorer(accuracy_scorer)
     assert accuracy_scorer is not accuracy_scorer_with_copy
+
+    assert (
+        accuracy_scorer_with_copy._kwargs["mutable_list"]
+        is not accuracy_scorer._kwargs["mutable_list"]
+    )
