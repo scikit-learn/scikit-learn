@@ -1892,7 +1892,7 @@ def kmeans_plusplus(X, n_clusters, *, x_squared_norms=None,
 
     Parameters
     ----------
-    X : {ndarray, sparse matrix} of shape (n_samples, n_features)
+    X : {array-like, sparse matrix} of shape (n_samples, n_features)
         The data to pick seeds for. To avoid memory copy, the input data
         should be double precision (dtype=np.float64).
 
