@@ -1,4 +1,5 @@
 """Testing for K-means"""
+import re
 import sys
 
 import numpy as np
@@ -336,16 +337,35 @@ def test_k_means_fit_predict(algo, dtype, constructor, seed, max_iter, tol):
     assert v_measure_score(labels_1, labels_2) == 1
 
 
-@pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
-def test_verbose(Estimator):
+def test_minibatch_kmeans_verbose():
     # Check verbose mode of KMeans and MiniBatchKMeans for better coverage.
-    km = Estimator(n_clusters=n_clusters, random_state=42, verbose=1)
+    km = MiniBatchKMeans(n_clusters=n_clusters, random_state=42, verbose=1)
     old_stdout = sys.stdout
     sys.stdout = StringIO()
     try:
         km.fit(X)
     finally:
         sys.stdout = old_stdout
+
+
+@pytest.mark.parametrize("algorithm", ["full", "elkan"])
+@pytest.mark.parametrize("tol", [1e-2, 0])
+def test_kmeans_verbose(algorithm, tol, capsys):
+    # Check verbose mode of KMeans for better coverage.
+    X = np.random.RandomState(0).normal(size=(5000, 10))
+
+    KMeans(algorithm=algorithm, n_clusters=n_clusters, random_state=42,
+           init="random", n_init=1, tol=tol, verbose=1).fit(X)
+
+    captured = capsys.readouterr()
+
+    assert re.search(r"Initialization complete", captured.out)
+    assert re.search(r"Iteration [0-9]+, inertia", captured.out)
+
+    if tol == 0:
+        assert re.search(r"strict convergence", captured.out)
+    else:
+        assert re.search(r"center shift .* within tolerance", captured.out)
 
 
 def test_minibatch_kmeans_warning_init_size():

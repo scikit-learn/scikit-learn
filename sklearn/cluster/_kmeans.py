@@ -226,8 +226,6 @@ def k_means(X, n_clusters, *, sample_weight=None, init='k-means++',
         Relative tolerance with regards to Frobenius norm of the difference
         in the cluster centers of two consecutive iterations to declare
         convergence.
-        If set to 0, convergence will be declared when the labels are the
-        same between two consecutive iterations.
 
     random_state : int, RandomState instance, default=None
         Determines random number generation for centroid initialization. Use
@@ -399,8 +397,7 @@ def _kmeans_single_elkan(X, sample_weight, centers_init, max_iter=300,
         centers, centers_new = centers_new, centers
 
         if np.array_equal(labels, labels_old):
-            # First check the labels for strict convergence because
-            # center_shift might not be exactly 0 due to rounding errors.
+            # First check the labels for strict convergence.
             if verbose:
                 print(f"Converged at iteration {i}: strict convergence.")
             strict_convergence = True
@@ -514,8 +511,7 @@ def _kmeans_single_lloyd(X, sample_weight, centers_init, max_iter=300,
             centers, centers_new = centers_new, centers
 
             if np.array_equal(labels, labels_old):
-                # First check the labels for strict convergence because
-                # center_shift might not be exactly 0 due to rounding errors.
+                # First check the labels for strict convergence.
                 if verbose:
                     print(f"Converged at iteration {i}: strict convergence.")
                 strict_convergence = True
@@ -644,8 +640,6 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         Relative tolerance with regards to Frobenius norm of the difference
         in the cluster centers of two consecutive iterations to declare
         convergence.
-        If set to 0, convergence will be declared when the labels are the
-        same between two consecutive iterations.
 
     precompute_distances : {'auto', True, False}, default='auto'
         Precompute distances (faster but takes more memory).
