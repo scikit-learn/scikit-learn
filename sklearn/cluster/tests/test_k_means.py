@@ -894,6 +894,8 @@ def test_k_means_1_iteration(array_constr, algo):
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
 @pytest.mark.parametrize("squared", [True, False])
 def test_euclidean_distance(dtype, squared):
+    # Check that the _euclidean_(dense/sparse)_dense helpers produce correct
+    # results
     rng = np.random.RandomState(0)
     a_sparse = sp.random(1, 100, density=0.5, format="csr", random_state=rng,
                          dtype=dtype)
