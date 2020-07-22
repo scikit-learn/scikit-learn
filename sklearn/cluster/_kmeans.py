@@ -1911,7 +1911,7 @@ def kmeans_plusplus(X, n_clusters, *, x_squared_norms=None,
         The number of seeding trials for each center (except the first),
         of which the one reducing inertia the most is greedily chosen.
         Set to None to make the number of trials depend logarithmically
-        on the number of seeds (2+log(k)); this is the default.
+        on the number of seeds (2+log(k)).
 
     Returns
     -------
