@@ -777,12 +777,11 @@ def test_scaled_weights():
                             _sort_centers(est_2.cluster_centers_))
 
 
-def test_iter_attribute():
+def test_kmeans_elkan_iter_attribute():
     # Regression test on bad n_iter_ value. Previous bug n_iter_ was one off
     # it's right value (#11340).
-    estimator = KMeans(algorithm="elkan", max_iter=1)
-    estimator.fit(np.random.rand(10, 10))
-    assert estimator.n_iter_ == 1
+    km = KMeans(algorithm="elkan", max_iter=1).fit(X)
+    assert km.n_iter_ == 1
 
 
 def test_k_means_empty_cluster_relocated():
