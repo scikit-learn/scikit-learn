@@ -9,6 +9,7 @@ import numpy as np
 from scipy import sparse
 from scipy import linalg
 
+import sklearn
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_almost_equal
@@ -16,6 +17,7 @@ from sklearn.utils._testing import assert_allclose
 from sklearn.utils.fixes import parse_version
 
 from sklearn.linear_model import LinearRegression
+from sklearn.linear_model._base import _deprecate_normalize
 from sklearn.linear_model._base import _preprocess_data
 from sklearn.linear_model._base import _rescale_data
 from sklearn.linear_model._base import make_dataset
@@ -135,6 +137,59 @@ def test_fit_intercept():
             lr3_without_intercept.coef_.shape)
     assert (lr2_without_intercept.coef_.ndim ==
             lr3_without_intercept.coef_.ndim)
+
+
+@pytest.fixture(scope='function')
+# FIXME remove fixture in 0.28
+def set_correct_version():
+    present_version = sklearn.__version__
+    yield set_correct_version  # provide the fixture value
+    sklearn.__version__ = present_version
+
+
+@pytest.mark.parametrize('normalize', [True, False, 'deprecated'])
+@pytest.mark.parametrize('default', [True, False])
+@pytest.mark.parametrize('version', ['0.24', '0.26'])
+# FIXME remove test in 0.28
+def test_deprecate_normalize(set_correct_version, normalize, default, version):
+
+    if version == '0.26' and default:
+        output = normalize
+        expected = AssertionError
+        warning_msg = 'should now be set to False'
+    elif normalize == 'deprecated':
+        output = default
+        expected = None
+        warning_msg = ''
+    elif (version == '0.24' and default) or \
+         (not default and version == '0.26'):
+        output = normalize
+        expected = FutureWarning
+        warning_msg = '0.28'
+    elif not default and version == '0.24':
+        output = normalize
+        expected = FutureWarning
+        warning_msg = '0.24'
+
+    sklearn.__version__ = version
+
+    if expected == AssertionError:
+        with pytest.raises(AssertionError) as record:
+            normalize = _deprecate_normalize(normalize, default)
+        assert warning_msg in str(record.value)
+        assert normalize == output
+    else:
+        with pytest.warns(expected) as record:
+            normalize = _deprecate_normalize(normalize, default)
+        assert normalize == output
+
+        if expected is None:
+            n_warnings = 0
+        else:
+            n_warnings = 1
+        assert len(record) == n_warnings
+        if n_warnings:
+            assert warning_msg in str(record[0].message)
 
 
 def test_linear_regression_sparse(random_state=0):
