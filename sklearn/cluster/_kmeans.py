@@ -1899,7 +1899,7 @@ def kmeans_plusplus(X, n_clusters, *, x_squared_norms=None,
     n_clusters : int
         The number of centroids to initialize
 
-    x_squared_norms : ndarray of shape (n_samples,)
+    x_squared_norms : array-like of shape (n_samples,)
         Squared Euclidean norm of each data point.
 
     random_state : int, RandomState instance, default=None
