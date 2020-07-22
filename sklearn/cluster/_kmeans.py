@@ -76,7 +76,7 @@ def _kmeans_plusplus(X, n_clusters, x_squared_norms,
     centers : ndarray of shape (n_clusters, n_features)
         The inital centers for k-means.
 
-    indices : ndarray of shape (n_clusters)
+    indices : ndarray of shape (n_clusters,)
         The index location of the chosen centers in the data array X. For a
         given index and center, X[index] = center.
 
