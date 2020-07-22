@@ -1046,7 +1046,7 @@ def test_kmeans_plusplus_output(input_data):
     assert np.amax(indices) <= X.shape[0]
 
     # Check for the correct number of seeds and that they are bound by the data
-    assert centers.shape[0] is n_clusters
+    assert centers.shape[0] == n_clusters
     assert np.amax(centers) <= np.amax(X)
     assert np.amin(centers) >= np.amin(X)
 
