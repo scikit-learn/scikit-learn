@@ -724,7 +724,7 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
                 y = y.reshape(-1, 1)
                 ravel = True
             n_samples_, n_targets = y.shape
-            alpha = np.asarray(0, dtype=X.dtype).ravel()
+            alpha = np.array([0], dtype=X.dtype)
 
             if n_targets > 1:
                 alpha = np.repeat(alpha, n_targets)
