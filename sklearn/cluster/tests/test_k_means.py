@@ -936,11 +936,12 @@ def test_inertia(dtype):
     assert_allclose(inertia_sparse, expected, rtol=1e-6)
 
 
-def test_sample_weight_unchanged():
+@pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
+def test_sample_weight_unchanged(Estimator):
     # Check that sample_weight is not modified in place by KMeans (#17204)
     X = np.array([[1], [2], [4]])
     sample_weight = np.array([0.5, 0.2, 0.3])
-    KMeans(n_clusters=2, random_state=0).fit(X, sample_weight=sample_weight)
+    Estimator(n_clusters=2, random_state=0).fit(X, sample_weight=sample_weight)
 
     assert_array_equal(sample_weight, np.array([0.5, 0.2, 0.3]))
 
