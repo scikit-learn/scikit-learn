@@ -338,7 +338,7 @@ def test_k_means_fit_predict(algo, dtype, constructor, seed, max_iter, tol):
 
 
 def test_minibatch_kmeans_verbose():
-    # Check verbose mode of KMeans and MiniBatchKMeans for better coverage.
+    # Check verbose mode of MiniBatchKMeans for better coverage.
     km = MiniBatchKMeans(n_clusters=n_clusters, random_state=42, verbose=1)
     old_stdout = sys.stdout
     sys.stdout = StringIO()
