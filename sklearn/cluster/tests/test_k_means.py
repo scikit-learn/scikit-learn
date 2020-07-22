@@ -855,14 +855,11 @@ def test_minibatch_kmeans_deprecated_attributes(attr):
 
 
 def test_warning_elkan_1_cluster():
-    X, _ = make_blobs(n_samples=10, n_features=2, centers=1, random_state=0)
-    kmeans = KMeans(n_clusters=1, n_init=1, init='random', random_state=0,
-                    algorithm='elkan')
-
+    # Check warning messages specific to KMeans
     with pytest.warns(RuntimeWarning,
                       match="algorithm='elkan' doesn't make sense for a single"
                             " cluster"):
-        kmeans.fit(X)
+        KMeans(n_clusters=1, algorithm="elkan").fit(X)
 
 
 @pytest.mark.parametrize("array_constr",
