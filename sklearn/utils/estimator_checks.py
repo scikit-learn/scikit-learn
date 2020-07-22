@@ -1390,13 +1390,9 @@ def check_estimators_dtypes(name, estimator_orig):
     y = X_train_int_64[:, 0]
     y = _enforce_estimator_tags_y(estimator_orig, y)
 
-    print(name)
-
     methods = ["predict", "transform", "decision_function", "predict_proba"]
 
-    names = ['X_train_32', 'X_train_64', 'X_train_int_64', 'X_train_int_32']
-    for name, X_train in zip(names, [X_train_32, X_train_64, X_train_int_64,
-                                     X_train_int_32]):
+    for X_train in [X_train_32, X_train_64, X_train_int_64, X_train_int_32]:
         estimator = clone(estimator_orig)
         set_random_state(estimator, 1)
         estimator.fit(X_train, y)
