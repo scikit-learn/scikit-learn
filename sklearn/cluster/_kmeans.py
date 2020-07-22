@@ -32,8 +32,8 @@ from ..utils._openmp_helpers import _openmp_effective_n_threads
 from ..exceptions import ConvergenceWarning
 from ._k_means_common import _inertia_dense
 from ._k_means_common import _inertia_sparse
-from ._k_means_minibatch import _minibatch_update_sparse
 from ._k_means_minibatch import _minibatch_update_dense
+from ._k_means_minibatch import _minibatch_update_sparse
 from ._k_means_lloyd import lloyd_iter_chunked_dense
 from ._k_means_lloyd import lloyd_iter_chunked_sparse
 from ._k_means_elkan import init_bounds_dense
@@ -45,8 +45,7 @@ from ._k_means_elkan import elkan_iter_chunked_sparse
 ###############################################################################
 # Initialization heuristic
 
-def _kmeans_plusplus(X, n_clusters, x_squared_norms, random_state,
-                     n_local_trials=None):
+def _k_init(X, n_clusters, x_squared_norms, random_state, n_local_trials=None):
     """Init n_clusters seeds according to k-means++
 
     Parameters
@@ -884,9 +883,8 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
             n_samples = X.shape[0]
 
         if isinstance(init, str) and init == 'k-means++':
-            centers = _kmeans_plusplus(X, n_clusters,
-                                       random_state=random_state,
-                                       x_squared_norms=x_squared_norms)
+            centers = _k_init(X, n_clusters, random_state=random_state,
+                              x_squared_norms=x_squared_norms)
         elif isinstance(init, str) and init == 'random':
             seeds = random_state.permutation(n_samples)[:n_clusters]
             centers = X[seeds]
@@ -1349,9 +1347,6 @@ class MiniBatchKMeans(KMeans):
         partition (if compute_labels is set to True). The inertia is
         defined as the sum of square distances of samples to their cluster
         center, weighted by the sample weights if provided.
-
-    n_iter_ : int
-        Number of iterations run.
 
     n_iter_ : int
         Number of batches processed.
