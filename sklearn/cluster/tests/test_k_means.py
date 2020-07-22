@@ -862,10 +862,9 @@ def test_warning_elkan_1_cluster():
         KMeans(n_clusters=1, algorithm="elkan").fit(X)
 
 
-@pytest.mark.parametrize("array_constr",
-                         [np.array, sp.csr_matrix],
-                         ids=['dense', 'sparse'])
-@pytest.mark.parametrize("algo", ['full', 'elkan'])
+@pytest.mark.parametrize("array_constr", [np.array, sp.csr_matrix],
+                         ids=["dense", "sparse"])
+@pytest.mark.parametrize("algo", ["full", "elkan"])
 def test_k_means_1_iteration(array_constr, algo):
     # check the results after a single iteration (E-step M-step E-step) by
     # comparing against a pure python implementation.
