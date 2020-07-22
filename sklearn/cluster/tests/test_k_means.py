@@ -690,7 +690,7 @@ def test_centers_not_mutated(Estimator, dtype):
     X_new_type = X.astype(dtype, copy=False)
     centers_new_type = centers.astype(dtype, copy=False)
 
-    km = Estimator(init=centers, n_clusters=n_clusters, n_init=1)
+    km = Estimator(init=centers_new_type, n_clusters=n_clusters, n_init=1)
     km.fit(X_new_type)
 
     assert not np.may_share_memory(km.cluster_centers_, centers_new_type)
