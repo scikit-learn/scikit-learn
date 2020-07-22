@@ -22,6 +22,7 @@ import scipy.sparse as sp
 from scipy import linalg
 from scipy import sparse
 from scipy.special import expit
+import sklearn
 from joblib import Parallel, delayed
 
 from ..base import (BaseEstimator, ClassifierMixin, RegressorMixin,
@@ -32,7 +33,7 @@ from ..utils.validation import _deprecate_positional_args
 from ..utils import check_random_state
 from ..utils.extmath import safe_sparse_dot
 from ..utils.sparsefuncs import mean_variance_axis, inplace_column_scale
-from ..utils.fixes import sparse_lsqr
+from ..utils.fixes import sparse_lsqr, parse_version
 from ..utils._seq_dataset import ArrayDataset32, CSRDataset32
 from ..utils._seq_dataset import ArrayDataset64, CSRDataset64
 from ..utils.validation import check_is_fitted, _check_sample_weight
@@ -52,7 +53,22 @@ def _deprecate_normalize(normalize, default):
     else:
         _normalize = normalize
 
-    if default or (normalize != 'deprecated' and normalize):
+    if default:
+        assert parse_version(sklearn.__version__) < parse_version('0.26'), (
+               "default of 'normalize' should now be set to False"
+               )
+
+    if default and parse_version(sklearn.__version__) < parse_version('0.26'):
+        warnings.warn(
+            " default of 'normalize' will be set to False and it will be"
+            " deprecated in version 0.26. It will be removed in version 0.28"
+            " If you wish to normalize use Pipeline "
+            " with a StandardScaler in a"
+            " preprocessing stage:"
+            "  model = make_pipeline(StandardScaler(),"
+            " {type(self).__name__}())", FutureWarning
+        )
+    elif normalize != 'deprecated' and normalize:
         warnings.warn(
             "'normalize' was deprecated in version 0.24 and will be"
             " removed in 0.26. If you still wish to normalize use Pipeline "
@@ -61,7 +77,7 @@ def _deprecate_normalize(normalize, default):
             "  model = make_pipeline(StandardScaler(),"
             " {type(self).__name__}())", FutureWarning
         )
-    elif (normalize != 'deprecated' and not normalize):
+    elif normalize != 'deprecated' and not normalize:
         warnings.warn(
             "'normalize' was deprecated in version 0.24 and will be"
             " removed in 0.26. Don't set 'normalize' parameter and leave it to"
