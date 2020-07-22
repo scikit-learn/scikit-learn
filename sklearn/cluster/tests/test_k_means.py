@@ -540,15 +540,21 @@ def test_predict(Estimator, data, init):
     assert_array_equal(pred, k_means.labels_)
 
 
-@pytest.mark.parametrize('init', ['random', 'k-means++', centers.copy()])
-def test_predict_minibatch_dense_sparse(init):
+@pytest.mark.parametrize("init", ["random", "k-means++", centers],
+                         ids=["random", "k-means++", "ndarray"])
+@pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
+def test_predict_dense_sparse(Estimator, init):
     # check that models trained on sparse input also works for dense input at
-    # predict time
+    # predict time and vice versa.
     n_init = 10 if type(init) is str else 1
-    mb_k_means = MiniBatchKMeans(n_clusters=n_clusters, init=init,
-                                 n_init=n_init, random_state=0).fit(X_csr)
+    km = Estimator(n_clusters=n_clusters, init=init, n_init=n_init,
+                   random_state=0)
 
-    assert_array_equal(mb_k_means.predict(X), mb_k_means.labels_)
+    km.fit(X_csr)
+    assert_array_equal(km.predict(X), km.labels_)
+
+    km.fit(X)
+    assert_array_equal(km.predict(X_csr), km.labels_)
 
 
 @pytest.mark.parametrize("array_constr", [np.array, sp.csr_matrix],
