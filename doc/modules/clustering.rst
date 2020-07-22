@@ -2023,8 +2023,8 @@ similarity matrix
    \end{matrix}\right]
 
 between two clusterings computed by considering all pairs of samples and
-counting pairs that are assigned in the same or different clusters in the true
-and predicted clusterings.
+counting pairs that are assigned into the same or into different clusters
+under the true and predicted clusterings.
 
 It has the following entries:
 
@@ -2033,12 +2033,12 @@ It has the following entries:
   not clustered together
 
 :math:`C_{10}`
-  number of pairs with the true label clusterings having the
+  number of pairs with the true label clustering having the
   samples clustered together but the other clustering not
   having the samples clustered together
 
 :math:`C_{01}`
-  number of pairs with the true label clusterings not having
+  number of pairs with the true label clustering not having
   the samples clustered together but the other clustering
   having the samples clustered together
 
