@@ -250,11 +250,7 @@ def type_of_target(y):
     if is_multilabel(y):
         return 'multilabel-indicator'
 
-    try:
-        y = np.asarray(y)
-    except ValueError:
-        # Known to fail in numpy 1.3 for array of arrays
-        return 'unknown'
+    y = np.asarray(y)
 
     # The old sequence of sequences format
     try:
