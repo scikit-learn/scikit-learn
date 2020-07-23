@@ -28,7 +28,7 @@ import numpy as np
 from scipy.sparse import coo_matrix
 from scipy.sparse import csr_matrix
 from scipy.spatial.distance import pdist
-from scipy.cluster.hierarchy import leaves_list, linkage, optimal_leaf_ordering
+from scipy.cluster.hierarchy import leaves_list, linkage
 
 from ..preprocessing import LabelBinarizer
 from ..preprocessing import LabelEncoder
@@ -290,19 +290,19 @@ def confusion_matrix(y_true, y_pred, *, labels=None, sample_weight=None,
 
     >>> y_true = ["lion"]*200
     >>> y_pred = ["lion"]*120 + ["jag"]*50 + ["cat"]*20 + ["wolf"]*6 +\
-    ... ["dog"]*4
+ ["dog"]*4
     >>> y_true += ["jag"]*200
     >>> y_pred += ["jag"]*140 + ["lion"]*25 + ["cat"]*25 + ["wolf"]*3 +\
-    ... ["dog"]*7
+ ["dog"]*7
     >>> y_true += ["cat"]*200
     >>> y_pred += ["cat"]*135 + ["lion"]*25 + ["jag"]*30 + ["wolf"]*8 +\
-    ... ["dog"]*2
+ ["dog"]*2
     >>> y_true += ["wolf"]*200
     >>> y_pred += ["wolf"]*130 + ["dog"]*50 + ["lion"]*6 + ["jag"]*7 +\
-    ... ["cat"]*7
+ ["cat"]*7
     >>> y_true += ["dog"]*200
     >>> y_pred += ["dog"]*130 + ["wolf"]*40 + ["lion"]*15 + ["jag"]*10 +\
-    ... ["cat"]*5
+ ["cat"]*5
     >>> confusion_matrix(y_true, y_pred, cluster_classes=True)
     (array([[130,  50,   7,   6,   7],
             [ 40, 130,  10,  15,   5],
@@ -382,7 +382,7 @@ def confusion_matrix(y_true, y_pred, *, labels=None, sample_weight=None,
             cm_norm = cm
 
         dists = pdist(cm_norm)
-        links = optimal_leaf_ordering(linkage(dists), dists)
+        links = linkage(dists, optimal_ordering=True)
         idx = leaves_list(links)
         cm = cm[idx, :]
         cm = cm[:, idx]
