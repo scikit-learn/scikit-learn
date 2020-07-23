@@ -1308,11 +1308,12 @@ def test_gbr_degenerate_feature_importances():
                        np.zeros(10, dtype=np.float64))
 
 
+# TODO: Remove in 0.26 when `n_classes_` is deprecated
 def test_gbr_deprecated_attr():
     # check that accessing n_classes_ in GradientBoostingRegressor raises
     X = np.zeros((10, 10))
     y = np.ones((10,))
     gbr = GradientBoostingRegressor().fit(X, y)
-    msg = "Attribute {} was deprecated"
-    with pytest.warns(FutureWarning, match=msg.format('n_classes_')):
-        getattr(gbr, 'n_classes_')
+    msg = "Attribute n_classes_ was deprecated"
+    with pytest.warns(FutureWarning, match=msg):
+        gbr.n_classes_
