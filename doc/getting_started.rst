@@ -78,6 +78,8 @@ Sometimes, you want to apply different transformations to different features:
 the :ref:`ColumnTransformer<column_transformer>` is designed for these
 use-cases.
 
+.. _pipelines:
+
 Pipelines: chaining pre-processors and estimators
 --------------------------------------------------
 
@@ -212,6 +214,34 @@ the best set of parameters. Read more in the :ref:`User Guide
     Using a pipeline for cross-validation and searching will largely keep
     you from this common pitfall.
 
+Model persistence
+-----------------
+
+Once the model has been trained, it could be appropriate to store it in a
+persistent way in order to reuse it for future predictions.
+The first natural pick for python libraries is to binary serialize the Python
+object structure using
+`pickle <https://docs.python.org/3/library/pickle.html>`_.
+For example the pipeline seen in the :ref:`pipeline section <pipelines>` can be
+recalled in the following way: 
+
+  >>> import pickle
+  >>> X, y = load_iris(return_X_y=True)
+  >>> s = pickle.dumps(pipe)
+  >>> pipe2 = pickle.loads(s)
+  >>> pipe2.predict(X[0:1])
+  array([0])
+
+However pickle should not completely ensure interoperability between
+different architectures.
+For production and quality control needs exporting the model in `Predictive
+Model Markup Language (PMML)
+<http://dmg.org/pmml/v4-4-1/GeneralStructure.html>`_ or `Open Neural Network
+Exchange <https://onnx.ai/>`_
+would be a better approach.
+
+The :ref:`model persistence <model_persistence>` section of the User Guide
+gives more details about pros and cons of each of these representations.
 
 Next steps
 ----------
