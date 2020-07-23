@@ -7,9 +7,7 @@
 cimport numpy as np
 from cython cimport floating
 from cython.parallel cimport parallel, prange
-from libc.math cimport sqrt
 from libc.stdlib cimport malloc, free
-from libc.string cimport memcpy
 
 
 np.import_array()
@@ -53,22 +51,23 @@ def _minibatch_update_dense(
     cdef:
         int n_samples = X.shape[0]
         int n_clusters = centers_old.shape[0]
-        int i
+        int cluster_idx
 
         int *indices
 
     with nogil, parallel(num_threads=n_threads):
         indices = <int*> malloc(n_samples * sizeof(int))
 
-        for i in prange(n_clusters, schedule="static"):
-            update_center_dense(i, &X[0, 0], sample_weight, centers_old,
-                                centers_new, weight_sums, labels, indices)
+        for cluster_idx in prange(n_clusters, schedule="static"):
+            update_center_dense(cluster_idx, &X[0, 0], sample_weight,
+                                centers_old, centers_new, weight_sums, labels,
+                                indices)
 
         free(indices)
 
 
 cdef void update_center_dense(
-        int i,
+        int cluster_idx,
         floating *X,                   # IN
         floating[::1] sample_weight,   # IN
         floating[:, ::1] centers_old,  # IN
@@ -89,36 +88,34 @@ cdef void update_center_dense(
     # indices = np.where(labels == i)[0]
     k = 0
     for j in range(n_samples):
-        if labels[j] == i:
+        if labels[j] == cluster_idx:
             indices[k] = j
+            wsum += sample_weight[j]
             k += 1
     n_indices = k
 
-    for j in range(n_indices):
-        idx = indices[j]
-        wsum += sample_weight[idx]
-
     if wsum > 0:
-        # Remove previous count scaling
+        # Undo the previous count-based scaling for this cluster center
         for k in range(n_features):
-            centers_new[i, k] = centers_old[i, k] * weight_sums[i]
+            centers_new[cluster_idx, k] = centers_old[cluster_idx, k] * weight_sums[cluster_idx]
 
         # Update cluster with new point members
         for j in range(n_indices):
             idx = indices[j]
             for k in range(n_features):
-                centers_new[i, k] += X[idx * n_features + k] * sample_weight[idx]
+                centers_new[cluster_idx, k] += X[idx * n_features + k] * sample_weight[idx]
 
         # Update the count statistics for this center
-        weight_sums[i] += wsum
+        weight_sums[cluster_idx] += wsum
 
         # Rescale to compute mean of all points (old and new)
-        alpha = 1 / weight_sums[i]
+        alpha = 1 / weight_sums[cluster_idx]
         for k in range(n_features):
-            centers_new[i, k] *= alpha
+            centers_new[cluster_idx, k] *= alpha
     else:
+        # No sample was assigned to this cluster in this batch of data
         for k in range(n_features):
-            centers_new[i, k] = centers_old[i, k]
+            centers_new[cluster_idx, k] = centers_old[cluster_idx, k]
 
 
 def _minibatch_update_sparse(
@@ -203,15 +200,12 @@ cdef void update_center_sparse(
     for j in range(n_samples):
         if labels[j] == i:
             indices[k] = j
+            wsum += sample_weight[j]
             k += 1
     n_indices = k
 
-    for j in range(n_indices):
-        idx = indices[j]
-        wsum += sample_weight[idx]
-
     if wsum > 0:
-        # Remove previous count scaling
+        # Undo the previous count-based scaling for this cluster center:
         for k in range(n_features):
             centers_new[i, k] = centers_old[i, k] * weight_sums[i]
 
@@ -229,5 +223,6 @@ cdef void update_center_sparse(
         for k in range(n_features):
             centers_new[i, k] *= alpha
     else:
+        # No sample was assigned to this cluster in this batch of data
         for k in range(n_features):
             centers_new[i, k] = centers_old[i, k]
