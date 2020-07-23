@@ -568,6 +568,20 @@ def check_array(array, accept_sparse=False, *, accept_large_sparse=True,
     if hasattr(array, 'sparse') and array.ndim > 1:
         # DataFrame.sparse only supports `to_coo`
         array = array.sparse.to_coo()
+        if array.dtype == np.dtype('object'):
+            def is_sparse_df_with_mixed_types(df):
+                dtps = set([dt.subtype.name for dt in df.dtypes])
+                return len(dtps) > 1
+
+            mixed = is_sparse_df_with_mixed_types(array_orig)
+            mxg = "A coo_matrix with dtype 'np.object' is created "\
+                  "when \nDataFrame has sparse extention arrays of"\
+                  " mixed numeric types."\
+                if mixed else ""
+            raise ValueError(
+                "Pandas DataFrame with sparse extention arrays generated "
+                "a sparse coo_matrix with dtype 'np.object'\n which "
+                "scipy cannot convert to a CSR or a CSC. {}".format(mxg))
 
     if sp.issparse(array):
         _ensure_no_complex_data(array)
