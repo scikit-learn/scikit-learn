@@ -208,23 +208,27 @@ are predicted separately. As those probabilities do not necessarily sum to
 one, a postprocessing is performed to normalize them.
 
 In problems where it is desired to give more importance to certain classes
-or certain individual samples,the parameters ``class_weight`` and
+or certain individual samples, the parameters ``class_weight`` and
 ``sample_weight`` can be used.
 
 :class:`CalibratedClassifierCV` can handle such unbalanced dataset with the
-``class_weight`` parameter implemented in the ``fit`` method.
+``class_weight`` parameter.
 It's a dictionary of the form ``{class_label : value}``, where value is
 a floating point number > 0 that sets the parameter ``C`` of class
 ``class_label`` to ``C * value``. You can alternatively set
-``class_weight='balanced'`` which will automatically compute the class
-values so that the chosen `'isotonic'` or `'sigmoid'` calibration
-method is fitted on a balanced dataset.
+``class_weight='balanced'`` which will automatically adjust
+weights inversely proportional to class frequencies in the input data.
 
-:class:`CalibratedClassifierCV` implements also weights for
-individual samples in the `fit` method through the ``sample_weight`` parameter.
-Similar to ``class_weight``, this sets the parameter ``C`` for the i-th
-example to ``C * sample_weight[i]``, which will encourage the classifier to
-get these samples right.
+Please note that setting ``class_weight`` parameter in
+:class:`CalibratedClassifierCV`, will only affect the training of the
+chosen regressor (`'isotonic'` or `'sigmoid'`).
+For instance, if ``class_weight='balanced'`` is passed to
+:class:`CalibratedClassifierCV`, only the data used to fit the calibrator
+will be balanced. If the user also want the data used to fit the classifier
+to be balanced, one would need to set ``class_weight='balanced'`` within
+the `base_estimator` passed to :class:`CalibratedClassifierCV`.
+Alternatively, if `cv="prefit"` is set, the data is not split and all
+of it is used to fit the regressor in a balanced manner.
 
 The :func:`sklearn.metrics.brier_score_loss` may be used to evaluate how
 well a classifier is calibrated.

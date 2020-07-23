@@ -94,11 +94,24 @@ class CalibratedClassifierCV(ClassifierMixin,
 
     class_weight : dict or 'balanced', default=None
         Weights associated with classes in the form ``{class_label: weight}``.
-        If not given, all classes are supposed to have weight one.
+        If not given, all classes are supposed to have weight one. For
+        multi-output problems, a list of dicts can be provided in the same
+        order as the columns of y.
+
+        Note that for multioutput (including multilabel) weights should be
+        defined for each class of every column in its own dict. For example,
+        for four-class multilabel classification weights should be
+        [{0: 1, 1: 1}, {0: 1, 1: 5}, {0: 1, 1: 1}, {0: 1, 1: 1}] instead of
+        [{1:1}, {2:5}, {3:1}, {4:1}].
 
         The "balanced" mode uses the values of y to automatically adjust
         weights inversely proportional to class frequencies in the input data
         as ``n_samples / (n_classes * np.bincount(y))``.
+
+        For multi-output, the weights of each column of y will be multiplied.
+
+        Note that these weights will be multiplied with sample_weight (passed
+        through the fit method) if sample_weight is specified.
 
     Attributes
     ----------
@@ -434,6 +447,7 @@ class _CalibratedClassifier:
             self.label_encoder_.fit(self.classes)
 
         self.classes_ = self.label_encoder_.classes_
+        X = np.array(X) if isinstance(X, list) else X
         sample_weight = _check_sample_weight(sample_weight, X,
                                              dtype=X.dtype)
         self.class_weight_ = compute_class_weight(self.class_weight,
