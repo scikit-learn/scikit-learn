@@ -147,6 +147,20 @@ Changelog
   :pr:`17090` by :user:`Lisa Schwetlick <lschwetlick>` and
   :user:`Marija Vlajic Wheeler <marijavlajic>`.
 
+- |Efficiency| Reduce memory footprint in :func:`feature_selection.mutual_info_classif`
+  and :func:`feature_selection.mutual_info_regression` by calling
+  :class:`neighbors.KDTree` for counting nearest neighbors.
+  :pr:`17878` by :user:`Noel Rogers <noelano>`
+
+:mod:`sklearn.gaussian_process`
+...............................
+
+- |Enhancement| A new method
+  :class:`gaussian_process.Kernel._check_bounds_params` is called after
+  fitting a Gaussian Process and raises a ``ConvergenceWarning`` if the bounds
+  of the hyperparameters are too tight.
+  :issue:`12638` by :user:`Sylvain Lannuzel <SylvainLan>`
+
 :mod:`sklearn.impute`
 .....................
 
@@ -227,6 +241,10 @@ Changelog
   class to be used when computing the roc auc statistics.
   :pr:`17651` by :user:`Clara Matos <claramatos>`.
 
+- |Fix| Fixed a bug where :func:`metrics.pairwise_distances` would raise an error if
+  ``metric='seuclidean'`` and ``X`` is not type ``np.float64``.
+  :pr:`15730` by :user:`Forrest Koch <ForrestCKoch>`.
+
 :mod:`sklearn.model_selection`
 ..............................
 
@@ -283,7 +301,7 @@ Changelog
 
 - |Efficiency| Neural net training and prediction are now a little faster.
   :pr:`17603`, :pr:`17604`, :pr:`17606`, :pr:`17608`, :pr:`17609`, :pr:`17633`,
-  :pr:`17661` by :user:`Alex Henrie <alexhenrie>`.
+  :pr:`17661`, :pr:`17932` by :user:`Alex Henrie <alexhenrie>`.
 
 - |Enhancement| Avoid converting float32 input to float64 in
   :class:`neural_network.BernoulliRBM`.
