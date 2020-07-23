@@ -395,6 +395,8 @@ class Kernel(metaclass=ABCMeta):
                                 np.atleast_2d(self.theta).T)
         idx = 0
         for hyp in self.hyperparameters:
+            if hyp.fixed:
+                continue
             for dim in range(hyp.n_elements):
                 if list_close[idx, 0]:
                     warnings.warn("The optimal value found for "
