@@ -24,7 +24,6 @@ from ..utils.sparsefuncs_fast import assign_rows_csr
 from ..utils.sparsefuncs import mean_variance_axis
 from ..utils.validation import _deprecate_positional_args
 from ..utils import check_array
-from ..utils import gen_batches
 from ..utils import check_random_state
 from ..utils import deprecated
 from ..utils.validation import check_is_fitted, _check_sample_weight
@@ -1476,45 +1475,6 @@ class MiniBatchKMeans(KMeans):
                 f"reassignment_ratio should be >= 0, got "
                 f"{self.reassignment_ratio} instead.")
 
-    def _labels_inertia_minibatch(self, X, sample_weight, x_squared_norms,
-                                  centers):
-        """Compute labels and inertia using mini batches.
-
-        This is slightly slower than doing everything at once but preventes
-        memory errors / segfaults.
-
-        Parameters
-        ----------
-        X : ndarray of shape (n_samples, n_features)
-            Input data.
-
-        sample_weight : ndarray of shape (n_samples,)
-            The weights for each observation in X.
-
-        x_squared_norms : ndarray of shape (n_samples,)
-            Precomputed squared euclidean norm of each data point, to speed up
-            computations.
-
-        centers : ndarray of shape (n_clusters, n_features)
-            The cluster centers.
-
-        Returns
-        -------
-        labels : ndarray of shape (n_samples,)
-            Cluster labels for each point.
-
-        inertia : float
-            Sum of squared distances of points to nearest cluster.
-        """
-        if self.verbose:
-            print('Computing label assignment and total inertia')
-        slices = gen_batches(X.shape[0], self.batch_size)
-        results = [_labels_inertia(X[s], sample_weight[s], x_squared_norms[s],
-                                   centers, n_threads=self._n_threads)
-                   for s in slices]
-        labels, inertia = zip(*results)
-        return np.hstack(labels), np.sum(inertia)
-
     def _mini_batch_convergence(self, iteration_idx, n_iter, n_samples,
                                 centers_squared_diff, batch_inertia):
         """Helper function to encapsulate the early stopping logic"""
@@ -1708,8 +1668,9 @@ class MiniBatchKMeans(KMeans):
         self.n_iter_ = i + 1
 
         if self.compute_labels:
-            self.labels_, self.inertia_ = self._labels_inertia_minibatch(
-                X, sample_weight, x_squared_norms, self.cluster_centers_)
+            self.labels_, self.inertia_ = _labels_inertia(
+                X, sample_weight, x_squared_norms, self.cluster_centers_,
+                n_threads=self._n_threads)
 
         return self
 
@@ -1819,8 +1780,9 @@ class MiniBatchKMeans(KMeans):
         x_squared_norms = row_norms(X, squared=True)
         sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
-        return self._labels_inertia_minibatch(
-            X, sample_weight, x_squared_norms, self.cluster_centers_)[0]
+        return _labels_inertia(
+            X, sample_weight, x_squared_norms, self.cluster_centers_,
+            n_threads=self._n_threads)[0]
 
     def _more_tags(self):
         return {
