@@ -14,6 +14,7 @@ from sklearn.metrics.cluster import mutual_info_score
 from sklearn.metrics.cluster import normalized_mutual_info_score
 from sklearn.metrics.cluster import v_measure_score
 from sklearn.metrics.cluster._supervised import _generalized_average
+from sklearn.metrics.cluster._supervised import check_clusterings
 
 from sklearn.utils import assert_all_finite
 from sklearn.utils._testing import (
@@ -352,8 +353,10 @@ def test_mutual_info_score_positive_constant_label(labels_true, labels_pred):
 
 def test_check_clustering_error():
     # Test warning message for continuous values
-    noise = np.random.rand(500)
+    rng = np.random.RandomState(42)
+    noise = rng.rand(500)
     wavelength = np.linspace(0.01, 1, 500) * 1e-6
-
-    with pytest.warns(UserWarning):
-        normalized_mutual_info_score(wavelength, noise)
+    msg = 'Expects discrete values but received continuous values for' \
+          ' label, and continuous values for target'
+    with pytest.warns(UserWarning, match=msg):
+        check_clusterings(wavelength, noise)

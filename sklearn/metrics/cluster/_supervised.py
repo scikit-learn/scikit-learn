@@ -57,10 +57,11 @@ def check_clusterings(labels_true, labels_pred):
     type_label = type_of_target(labels_true)
     type_pred = type_of_target(labels_pred)
 
-    if type_pred or type_pred == 'continous':
-        warnings.warn(UserWarning('Expects discrete values received {} '
-                                  'for label, and {} for target'
-                                  .format(type_label, type_label)))
+    if 'continuous' in (type_pred, type_label):
+        msg = f'Expects discrete values but received {type_label} ' \
+              f'values for label, and {type_pred} values for target'
+        warnings.warn(msg, UserWarning)
+
     # input checks
     if labels_true.ndim != 1:
         raise ValueError(
