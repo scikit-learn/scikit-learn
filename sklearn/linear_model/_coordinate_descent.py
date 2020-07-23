@@ -1173,8 +1173,8 @@ class LinearModelCV(MultiOutputMixin, LinearModel, metaclass=ABCMeta):
         """Model to be fitted after the best alpha has been determined."""
 
     @abstractmethod
-    def _is_multitask(self):
-        """Bool indicating if class is meant for multidimensional target."""
+    def _accepts_sparse(self):
+        """Bool indicating if class supports sparse inputs."""
 
     def fit(self, X, y):
         """Fit linear model with coordinate descent
@@ -1240,18 +1240,8 @@ class LinearModelCV(MultiOutputMixin, LinearModel, metaclass=ABCMeta):
         if y.shape[0] == 0:
             raise ValueError("y has 0 samples: %r" % y)
 
-        if not self._is_multitask():
-            if y.ndim > 1 and y.shape[1] > 1:
-                raise ValueError("For multi-task outputs, use "
-                                 "MultiTask%s" % self.__class__.__name__)
-            y = column_or_1d(y, warn=True)
-        else:
-            if sparse.isspmatrix(X):
-                raise TypeError("X should be dense but a sparse matrix was"
-                                "passed")
-            elif y.ndim == 1:
-                raise ValueError("For mono-task outputs, use "
-                                 "%sCV" % self.__class__.__name__[9:])
+        if not self._accepts_sparse() and sparse.isspmatrix(X):
+            raise TypeError("X should be dense but a sparse matrix was passed")
 
         model = self._get_estimator()
 
@@ -1523,8 +1513,8 @@ class LassoCV(RegressorMixin, LinearModelCV):
     def _get_estimator(self):
         return Lasso()
 
-    def _is_multitask(self):
-        return False
+    def _accepts_sparse(self):
+        return True
 
     def _more_tags(self):
         return {'multioutput': False}
@@ -1740,8 +1730,8 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
     def _get_estimator(self):
         return ElasticNet()
 
-    def _is_multitask(self):
-        return False
+    def _accepts_sparse(self):
+        return True
 
     def _more_tags(self):
         return {'multioutput': False}
@@ -2275,8 +2265,8 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
     def _get_estimator(self):
         return MultiTaskElasticNet()
 
-    def _is_multitask(self):
-        return True
+    def _accepts_sparse(self):
+        return False
 
     def _more_tags(self):
         return {'multioutput_only': True}
@@ -2448,8 +2438,8 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
     def _get_estimator(self):
         return MultiTaskLasso()
 
-    def _is_multitask(self):
-        return True
+    def _accepts_sparse(self):
+        return False
 
     def _more_tags(self):
         return {'multioutput_only': True}
