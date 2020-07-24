@@ -152,36 +152,52 @@ def set_correct_version():
 @pytest.mark.parametrize('version', ['0.24', '0.26'])
 # FIXME remove test in 0.28
 def test_deprecate_normalize(set_correct_version, normalize, default, version):
-
-    if version == '0.26' and default:
+    if not default:
+        if normalize == 'deprecated':
+            # no warning
+            output = default
+            expected = None
+            warning_msg = []
+        else:
+            output = normalize
+            expected = FutureWarning
+            warning_msg = ['0.26']
+            if not normalize:
+                warning_msg.append('default value')
+            else:
+                warning_msg.append('StandardScaler()')
+            if version == '0.24':
+                warning_msg.append('0.24')
+            elif version == '0.26':
+                warning_msg.append('0.28')
+    elif default and version == '0.24':
+        if normalize == 'deprecated':
+            # warning to pass False and use StandardScaler
+            output = default
+            expected = FutureWarning
+            warning_msg = ['False', '0.26', 'StandardScaler()']
+        else:
+            # no warning
+            output = normalize
+            expected = None
+            warning_msg = []
+    elif default and version == '0.26':
+        # assertion error. From v0.26 there should be no normalize set to True
         output = normalize
         expected = AssertionError
         warning_msg = 'should now be set to False'
-    elif normalize == 'deprecated':
-        output = default
-        expected = None
-        warning_msg = ''
-    elif (version == '0.24' and default) or \
-         (not default and version == '0.26'):
-        output = normalize
-        expected = FutureWarning
-        warning_msg = '0.28'
-    elif not default and version == '0.24':
-        output = normalize
-        expected = FutureWarning
-        warning_msg = '0.24'
 
     sklearn.__version__ = version
 
     if expected == AssertionError:
         with pytest.raises(AssertionError) as record:
-            normalize = _deprecate_normalize(normalize, default)
-        assert warning_msg in str(record.value)
-        assert normalize == output
+            _normalize = _deprecate_normalize(normalize, default)
+        assert all(warning in str(record.value) for warning
+                   in warning_msg)
     else:
         with pytest.warns(expected) as record:
-            normalize = _deprecate_normalize(normalize, default)
-        assert normalize == output
+            _normalize = _deprecate_normalize(normalize, default)
+        assert _normalize == output
 
         if expected is None:
             n_warnings = 0
@@ -189,7 +205,8 @@ def test_deprecate_normalize(set_correct_version, normalize, default, version):
             n_warnings = 1
         assert len(record) == n_warnings
         if n_warnings:
-            assert warning_msg in str(record[0].message)
+            assert all([warning in str(record[0].message) for
+                        warning in warning_msg])
 
 
 def test_linear_regression_sparse(random_state=0):

@@ -58,19 +58,17 @@ def _deprecate_normalize(normalize, default):
         assert parse_version(sklearn.__version__) < parse_version('0.26'), (
                "default of 'normalize' should now be set to False"
                )
-
-    if normalize != 'deprecated' and default and \
+    if default and normalize == 'deprecated' and \
        parse_version(sklearn.__version__) < parse_version('0.26'):
         warnings.warn(
-            " default of 'normalize' will be set to False and it will be"
-            " deprecated in version 0.26. It will be removed in version 0.28"
-            " If you wish to normalize use Pipeline"
-            " with a StandardScaler in a"
+            " default of 'normalize' will be set to False in version 0.26 and"
+            " deprecated afterwards."
+            " Pass normalize=False and use Pipeline with a StandardScaler in a"
             " preprocessing stage:"
             "  model = make_pipeline(StandardScaler(),"
             " {type(self).__name__}())", FutureWarning
         )
-    elif normalize != 'deprecated' and normalize:
+    elif normalize != 'deprecated' and normalize and not default:
         if parse_version(sklearn.__version__) < parse_version('0.26'):
             depr = '0.24'
             remove = '0.26'
@@ -84,7 +82,7 @@ def _deprecate_normalize(normalize, default):
             "  model = make_pipeline(StandardScaler(),"
             " {type(self).__name__}())", FutureWarning
         )
-    elif normalize != 'deprecated' and not normalize:
+    elif normalize != 'deprecated' and not normalize and not default:
         if parse_version(sklearn.__version__) < parse_version('0.26'):
             depr = '0.24'
             remove = '0.26'
