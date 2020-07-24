@@ -81,41 +81,41 @@ cdef void update_center_dense(
         int n_features = centers_old.shape[1]
         floating alpha, tmp
         int n_indices
-        int j, k, idx
+        int k, sample_idx, feature_idx
 
         floating wsum = 0
 
     # indices = np.where(labels == i)[0]
     k = 0
-    for j in range(n_samples):
-        if labels[j] == cluster_idx:
-            indices[k] = j
-            wsum += sample_weight[j]
+    for sample_idx in range(n_samples):
+        if labels[sample_idx] == cluster_idx:
+            indices[k] = sample_idx
+            wsum += sample_weight[sample_idx]
             k += 1
     n_indices = k
 
     if wsum > 0:
         # Undo the previous count-based scaling for this cluster center
-        for k in range(n_features):
-            centers_new[cluster_idx, k] = centers_old[cluster_idx, k] * weight_sums[cluster_idx]
+        for feature_idx in range(n_features):
+            centers_new[cluster_idx, feature_idx] = centers_old[cluster_idx, feature_idx] * weight_sums[cluster_idx]
 
         # Update cluster with new point members
-        for j in range(n_indices):
-            idx = indices[j]
-            for k in range(n_features):
-                centers_new[cluster_idx, k] += X[idx * n_features + k] * sample_weight[idx]
+        for k in range(n_indices):
+            sample_idx = indices[k]
+            for feature_idx in range(n_features):
+                centers_new[cluster_idx, feature_idx] += X[sample_idx * n_features + feature_idx] * sample_weight[sample_idx]
 
         # Update the count statistics for this center
         weight_sums[cluster_idx] += wsum
 
         # Rescale to compute mean of all points (old and new)
         alpha = 1 / weight_sums[cluster_idx]
-        for k in range(n_features):
-            centers_new[cluster_idx, k] *= alpha
+        for feature_idx in range(n_features):
+            centers_new[cluster_idx, feature_idx] *= alpha
     else:
         # No sample was assigned to this cluster in this batch of data
-        for k in range(n_features):
-            centers_new[cluster_idx, k] = centers_old[cluster_idx, k]
+        for feature_idx in range(n_features):
+            centers_new[cluster_idx, feature_idx] = centers_old[cluster_idx, feature_idx]
 
 
 def _minibatch_update_sparse(
