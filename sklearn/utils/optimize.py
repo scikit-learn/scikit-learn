@@ -211,8 +211,8 @@ def _check_optimize_result(solver, result, max_iter=None,
     Parameters
     ----------
     solver : str
-       Solver name. Currently only `lbfgs`, `trust-ncg`, and
-       `trust-krylov` are supported.
+       Solver name. Currently only `lbfgs` and `trust-ncg`
+       are supported.
 
     result : OptimizeResult
        Result of the scipy.optimize.minimize function.
@@ -229,7 +229,7 @@ def _check_optimize_result(solver, result, max_iter=None,
        Number of iterations.
     """
     # handle both scipy and scikit-learn solver names
-    if solver in ["lbfgs", "trust-ncg", "trust-krylov"]:
+    if solver in ["lbfgs", "trust-ncg"]:
         if result.status != 0:
             warning_msg = (
                 "{} failed to converge (status={}):\n{}.\n\n"

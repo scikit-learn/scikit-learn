@@ -429,7 +429,7 @@ def _multinomial_grad_hess(w, X, Y, alpha, sample_weight):
 
 def _check_solver(solver, penalty, dual):
     all_solvers = ['liblinear', 'newton-cg', 'lbfgs', 'sag', 'saga',
-                   'trust-ncg', 'trust-krylov']
+                   'trust-ncg']
     if solver not in all_solvers:
         raise ValueError("Logistic Regression supports only solvers in %s, got"
                          " %s." % (all_solvers, solver))
@@ -729,10 +729,10 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     if multi_class == 'multinomial':
         # scipy.optimize.minimize and newton-cg accepts only
         # ravelled parameters.
-        if solver in ['lbfgs', 'trust-ncg', 'trust-krylov', 'newton-cg']:
+        if solver in ['lbfgs', 'trust-ncg', 'newton-cg']:
             w0 = w0.ravel()
         target = Y_multi
-        if solver in ['lbfgs', 'trust-ncg', 'trust-krylov']:
+        if solver in ['lbfgs', 'trust-ncg']:
             def func(x, *args): return _multinomial_loss_grad(x, *args)[0:2]
         elif solver == 'newton-cg':
             def func(x, *args): return _multinomial_loss(x, *args)[0]
@@ -741,7 +741,7 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         warm_start_sag = {'coef': w0.T}
     else:
         target = y_bin
-        if solver in ['lbfgs', 'trust-ncg', 'trust-krylov']:
+        if solver in ['lbfgs', 'trust-ncg']:
             func = _logistic_loss_and_grad
         elif solver == 'newton-cg':
             func = _logistic_loss
@@ -752,7 +752,7 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
     coefs = list()
     n_iter = np.zeros(len(Cs), dtype=np.int32)
     for i, C in enumerate(Cs):
-        if solver in ['lbfgs', 'trust-ncg', 'trust-krylov']:
+        if solver in ['lbfgs', 'trust-ncg']:
             iprint = [-1, 50, 1, 100, 101][
                 np.searchsorted(np.array([0, 1, 2, 3]), verbose)]
             if solver == 'lbfgs' or multi_class != "multinomial":
@@ -762,7 +762,7 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
                     options={"iprint": iprint, "gtol": tol,
                              "maxiter": max_iter}
                 )
-            elif solver in ['trust-ncg', 'trust-krylov']:
+            elif solver == 'trust-ncg':
                 def hessp(*inputs):
                     (g, hp) = hess(*inputs[1:])
                     return(hp(*inputs[:1]))
