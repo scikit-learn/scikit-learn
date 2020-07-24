@@ -1648,7 +1648,8 @@ class MiniBatchKMeans(KMeans):
                 # the choice is done as a function of the iteration index, and
                 # the minimum number of counts, in order to force this
                 # reassignment to happen every once in a while.
-                random_reassign = (i + 1) % (10 + int(self._counts.min())) == 0
+                random_reassign = random_state.randint(
+                    10 * (1 + self._counts.min())) == 0
 
                 # Perform the actual update step on the minibatch data
                 batch_inertia = _mini_batch_step(
