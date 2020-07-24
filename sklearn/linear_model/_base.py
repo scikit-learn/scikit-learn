@@ -69,16 +69,16 @@ def _deprecate_normalize(normalize, default):
         )
     elif normalize != 'deprecated' and normalize and not default:
         warnings.warn(
-            f"'normalize' was deprecated in version 0.24 and will be"
-            f" removed in 0.26. If you still wish to normalize use"
+            "'normalize' was deprecated in version 0.24 and will be"
+            " removed in 0.26. If you still wish to normalize use"
             " Pipeline with a StandardScaler in a preprocessing stage:"
             "  model = make_pipeline(StandardScaler(),"
             " {type(self).__name__}())", FutureWarning
         )
     elif normalize != 'deprecated' and not normalize and not default:
         warnings.warn(
-            f"'normalize' was deprecated in version 0.24 and will be"
-            f" removed in 0.26. Don't set 'normalize' parameter"
+            "'normalize' was deprecated in version 0.24 and will be"
+            " removed in 0.26. Don't set 'normalize' parameter"
             " and leave it to its default value", FutureWarning
         )
 
