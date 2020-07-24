@@ -692,10 +692,9 @@ cdef class MahalanobisDistance(DistanceMetric):
 
     cdef inline DTYPE_t rdist(self, DTYPE_t* x1, DTYPE_t* x2,
                               ITYPE_t size) nogil except -1:
-        #cdef DTYPE_t tmp, d = 0
-        #cdef np.intp_t i, j
+        cdef DTYPE_t tmp, d = 0
+        cdef np.intp_t i, j
 
-        """
         # compute (x1 - x2).T * VI * (x1 - x2)
         for i in range(size):
             self.vec_ptr[i] = x1[i] - x2[i]
@@ -706,27 +705,6 @@ cdef class MahalanobisDistance(DistanceMetric):
                 tmp += self.mat_ptr[i * size + j] * self.vec_ptr[j]
             d += tmp * self.vec_ptr[i]
         return d
-        """
-        # calculate xT.VI.x + yT.VI.y - xT.VI.y - yT.VI.y
-        cdef DTYPE_t di = 0
-        cdef np.intp_t i
-        cdef [???] np.intp_t xtvi, xtvix, vix, yi, ytvi, ytviy, ytvix, xtviy
-
-        x = x1
-        y = x2
-
-        xtvi = np.dot(x.T,VI)
-        xtvix = np.einsum('ij,ji->i',xtvi,x)
-        vix = np.dot(VI,x)
-        for i in range(0,SIZE):
-            yi =  y[:,i]
-            ytvi = np.dot(yi.T,vi)
-            ytviy = np.dot(ytvi,yi)
-            ytvix = np.dot(yi.T,vix)
-            xtviy = np.dot(xtvi,yi)
-            di = xtvix + ytviy - ytvix - xtviy
-        return di
-
 
     cdef inline DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2,
                              ITYPE_t size) nogil except -1:
