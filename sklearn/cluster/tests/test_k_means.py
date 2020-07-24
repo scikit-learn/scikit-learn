@@ -161,18 +161,17 @@ def test_kmeans_elkan_results(distribution, array_constr, tol):
     assert km_elkan.inertia_ == pytest.approx(km_full.inertia_, rel=1e-6)
 
 
-def test_kmeans_convergence():
+@pytest.mark.parametrize("algorithm", ["full", "elkan"])
+def test_kmeans_convergence(algorithm):
     # Check that KMeans stops when convergence is reached when tol=0. (#16075)
     rnd = np.random.RandomState(0)
     X = rnd.normal(size=(5000, 10))
     max_iter = 300
 
-    km_full = KMeans(algorithm="full", n_clusters=5, random_state=0,
-                     n_init=1, tol=0, max_iter=max_iter).fit(X)
-    km_elkan = KMeans(algorithm="elkan", n_clusters=5, random_state=0,
-                      n_init=1, tol=0, max_iter=max_iter).fit(X)
+    km = KMeans(algorithm=algorithm, n_clusters=5, random_state=0,
+                n_init=1, tol=0, max_iter=max_iter).fit(X)
 
-    assert km_full.n_iter_ == km_elkan.n_iter_ < max_iter
+    assert km.n_iter_ < max_iter
 
 
 def test_minibatch_update_consistency():
