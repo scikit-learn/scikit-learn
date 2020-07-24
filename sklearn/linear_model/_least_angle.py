@@ -823,7 +823,7 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
         ``n_alphas`` is either ``n_nonzero_coefs`` or ``n_features``, \
         whichever is smaller.
 
-    active_ : list, length = n_alphas | list of n_targets such lists
+    active_ : list of length n_alphas or list of n_targets such lists
         Indices of active variables at the end of the path.
 
     coef_path_ : array-like of shape (n_features, n_alphas + 1) \
@@ -1075,7 +1075,7 @@ class LassoLars(Lars):
         nodes in the path with correlation greater than ``alpha``, whichever \
         is smaller.
 
-    active_ : list, length = n_alphas | list of n_targets such lists
+    active_ : list of length n_alphas or list of n_targets such lists
         Indices of active variables at the end of the path.
 
     coef_path_ : array-like of shape (n_features, n_alphas + 1) or list
@@ -1328,6 +1328,9 @@ class LarsCV(Lars):
 
     Attributes
     ----------
+    active_ : list of length n_alphas or list of n_targets such lists
+        Indices of active variables at the end of the path.
+
     coef_ : array-like of shape (n_features,)
         parameter vector (w in the formulation formula)
 
