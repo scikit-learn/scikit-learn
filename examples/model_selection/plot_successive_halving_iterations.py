@@ -62,10 +62,12 @@ mean_scores = results.pivot(index='iter', columns='params_str',
 ax = mean_scores.plot(legend=False, alpha=.6)
 
 r_i_list = results.groupby('iter')['resource_iter'].unique()
-labels = ['{}\nn_samples={}\nn_candidates={}'
-          .format(i, r_i_list[i][0], rsh.n_candidates_[i])
-          for i in range(rsh.n_iterations_)]
-ax.set_xticklabels(labels)
+labels = [
+    f'iter={i}\nn_samples={r_i_list[i][0]}\n'
+    f'n_candidates={rsh.n_candidates_[i]}'
+    for i in range(rsh.n_iterations_)
+]
+ax.set_xticklabels(labels, rotation=45, multialignment ='left')
 ax.set_title('Scores of candidates over iterations')
 ax.set_ylabel('mean test score', fontsize=15)
 ax.set_xlabel('iterations', fontsize=15)
