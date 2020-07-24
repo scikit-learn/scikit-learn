@@ -32,7 +32,6 @@ from sklearn.cluster._k_means_fast import _inertia_sparse
 from sklearn.datasets import make_blobs
 from io import StringIO
 from sklearn.metrics.cluster import homogeneity_score
-from sklearn.utils import check_array
 
 
 # non centered, sparse centers to check the
@@ -1055,14 +1054,12 @@ def test_kmeans_plusplus_output(data):
     assert_allclose(X[indices], centers)
 
 
-@pytest.mark.parametrize("param", ["F", "C"])
-def test_kmeans_plusplus_dataorder(param):
+def test_kmeans_plusplus_dataorder():
     # Check that memory layout doe not effect result
-    centers, _ = kmeans_plusplus(X, n_clusters, random_state=0)
+    centers_c, _ = kmeans_plusplus(X, n_clusters, random_state=0)
 
-    X_order = check_array(X, accept_sparse='csr',
-                          dtype=[np.float64, np.float32],
-                          order=param)
-    centers_order, _ = kmeans_plusplus(X_order, n_clusters, random_state=0)
+    X_fortran = np.asfortranarray(X)
 
-    assert_allclose(centers, centers_order)
+    centers_fortran, _ = kmeans_plusplus(X_fortran, n_clusters, random_state=0)
+
+    assert_allclose(centers_c, centers_fortran)

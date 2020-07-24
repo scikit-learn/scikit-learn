@@ -1893,7 +1893,7 @@ def kmeans_plusplus(X, n_clusters, *, x_squared_norms=None,
 
     random_state : int or RandomState instance, default=None
         Determines random number generation for centroid initialization. Pass
-        an int for reproducible output across multiple function calls..
+        an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
     n_local_trials : int, default=None
@@ -1931,7 +1931,7 @@ def kmeans_plusplus(X, n_clusters, *, x_squared_norms=None,
     if x_squared_norms is None:
         x_squared_norms = row_norms(X, squared=True)
     else:
-        x_squared_norms = check_array(x_squared_norms, dtype=X.dtype)
+        x_squared_norms = check_array(x_squared_norms)
 
     if x_squared_norms.shape[0] != X.shape[0]:
         raise ValueError(
