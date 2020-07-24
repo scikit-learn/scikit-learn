@@ -149,8 +149,8 @@ def set_correct_version():
 
 @pytest.mark.parametrize('normalize', [True, False, 'deprecated'])
 @pytest.mark.parametrize('default', [True, False])
-@pytest.mark.parametrize('version', ['0.24', '0.26'])
-# FIXME remove test in 0.28
+@pytest.mark.parametrize('version', ['0.24', '0.25'])
+# FIXME update test in 0.26 for new versions
 def test_deprecate_normalize(set_correct_version, normalize, default, version):
     if not default:
         if normalize == 'deprecated':
@@ -166,11 +166,9 @@ def test_deprecate_normalize(set_correct_version, normalize, default, version):
                 warning_msg.append('default value')
             else:
                 warning_msg.append('StandardScaler()')
-            if version == '0.24':
+            if version == '0.24' or version == '0.25':
                 warning_msg.append('0.24')
-            elif version == '0.26':
-                warning_msg.append('0.28')
-    elif default and version == '0.24':
+    elif default and (version == '0.24' or version == '0.25'):
         if normalize == 'deprecated':
             # warning to pass False and use StandardScaler
             output = default
@@ -181,11 +179,6 @@ def test_deprecate_normalize(set_correct_version, normalize, default, version):
             output = normalize
             expected = None
             warning_msg = []
-    elif default and version == '0.26':
-        # assertion error. From v0.26 there should be no normalize set to True
-        output = normalize
-        expected = AssertionError
-        warning_msg = 'should now be set to False'
 
     sklearn.__version__ = version
 

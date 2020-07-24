@@ -47,17 +47,16 @@ SPARSE_INTERCEPT_DECAY = 0.01
 # intercept oscillation.
 
 
-# FIXME remove function in 0.28
+# FIXME in 0.26: variable 'normalize' should be removed from linear models
+# where now normalize=False. default value of 'normalize' should be changed to
+# False in linear models where now normalize=True and should be deprecated
+# change this function accordingly
 def _deprecate_normalize(normalize, default):
     if normalize == 'deprecated':
         _normalize = default
     else:
         _normalize = normalize
 
-    if default:
-        assert parse_version(sklearn.__version__) < parse_version('0.26'), (
-               "default of 'normalize' should now be set to False"
-               )
     if default and normalize == 'deprecated' and \
        parse_version(sklearn.__version__) < parse_version('0.26'):
         warnings.warn(
@@ -69,29 +68,17 @@ def _deprecate_normalize(normalize, default):
             " {type(self).__name__}())", FutureWarning
         )
     elif normalize != 'deprecated' and normalize and not default:
-        if parse_version(sklearn.__version__) < parse_version('0.26'):
-            depr = '0.24'
-            remove = '0.26'
-        else:
-            depr = '0.26'
-            remove = '0.28'
         warnings.warn(
-            f"'normalize' was deprecated in version {depr} and will be"
-            f" removed in {remove}. If you still wish to normalize use"
+            f"'normalize' was deprecated in version 0.24 and will be"
+            f" removed in 0.26. If you still wish to normalize use"
             " Pipeline with a StandardScaler in a preprocessing stage:"
             "  model = make_pipeline(StandardScaler(),"
             " {type(self).__name__}())", FutureWarning
         )
     elif normalize != 'deprecated' and not normalize and not default:
-        if parse_version(sklearn.__version__) < parse_version('0.26'):
-            depr = '0.24'
-            remove = '0.26'
-        else:
-            depr = '0.26'
-            remove = '0.28'
         warnings.warn(
-            f"'normalize' was deprecated in version {depr} and will be"
-            f" removed in {remove}. Don't set 'normalize' parameter"
+            f"'normalize' was deprecated in version 0.24 and will be"
+            f" removed in 0.26. Don't set 'normalize' parameter"
             " and leave it to its default value", FutureWarning
         )
 
