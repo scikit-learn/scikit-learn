@@ -573,6 +573,16 @@ def _labels_inertia(X, sample_weight, x_squared_norms, centers,
     return labels, inertia
 
 
+def _labels_inertia_threadpool_limit(X, sample_weight, x_squared_norms,
+                                     centers, n_threads=None):
+    """Same as _labels_inertia but in a threadpool_limits context."""
+    with threadpool_limits(limits=1, user_api="blas"):
+        labels, inertia = _labels_inertia(X, sample_weight, x_squared_norms,
+                                          centers, n_threads)
+
+    return labels, inertia
+
+
 class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
     """K-Means clustering.
 
@@ -1102,8 +1112,9 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         x_squared_norms = row_norms(X, squared=True)
         sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
-        return _labels_inertia(X, sample_weight, x_squared_norms,
-                               self.cluster_centers_, self._n_threads)[0]
+        return _labels_inertia_threadpool_limit(
+            X, sample_weight, x_squared_norms, self.cluster_centers_,
+            self._n_threads)[0]
 
     def score(self, X, y=None, sample_weight=None):
         """Opposite of the value of X on the K-means objective.
@@ -1131,8 +1142,9 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         x_squared_norms = row_norms(X, squared=True)
         sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
-        return -_labels_inertia(X, sample_weight, x_squared_norms,
-                                self.cluster_centers_, self._n_threads)[1]
+        return -_labels_inertia_threadpool_limit(
+            X, sample_weight, x_squared_norms, self.cluster_centers_,
+            self._n_threads)[1]
 
     def _more_tags(self):
         return {
@@ -1600,7 +1612,7 @@ class MiniBatchKMeans(KMeans):
                 random_state=random_state, init_size=self._init_size)
 
             # Compute inertia on a validation set.
-            _, inertia = _labels_inertia(
+            _, inertia = _labels_inertia_threadpool_limit(
                 X_valid, sample_weight_valid, x_squared_norms_valid,
                 cluster_centers, n_threads=self._n_threads)
 
@@ -1625,50 +1637,52 @@ class MiniBatchKMeans(KMeans):
         n_batches = int(np.ceil(float(n_samples) / self.batch_size))
         n_iter = int(self.max_iter * n_batches)
 
-        # Perform the iterative optimization until convergence
-        for i in range(n_iter):
-            # Sample a minibatch from the full dataset
-            minibatch_indices = random_state.randint(0, n_samples,
-                                                     self.batch_size)
+        with threadpool_limits(limits=1, user_api="blas"):
+            # Perform the iterative optimization until convergence
+            for i in range(n_iter):
+                # Sample a minibatch from the full dataset
+                minibatch_indices = random_state.randint(0, n_samples,
+                                                         self.batch_size)
 
-            # Randomly choose whether to perform random reassignment:
-            # the choice is done as a function of the iteration index, and the
-            # minimum number of counts, in order to force this reassignment to
-            # happen every once in a while.
-            random_reassign = (i + 1) % (10 + int(self._counts.min())) == 0
+                # Randomly choose whether to perform random reassignment:
+                # the choice is done as a function of the iteration index, and
+                # the minimum number of counts, in order to force this
+                # reassignment to happen every once in a while.
+                random_reassign = (i + 1) % (10 + int(self._counts.min())) == 0
 
-            # Perform the actual update step on the minibatch data
-            batch_inertia = _mini_batch_step(
-                X=X[minibatch_indices],
-                x_squared_norms=x_squared_norms[minibatch_indices],
-                sample_weight=sample_weight[minibatch_indices],
-                centers=centers,
-                centers_new=centers_new,
-                weight_sums=self._counts,
-                random_state=random_state,
-                random_reassign=random_reassign,
-                reassignment_ratio=self.reassignment_ratio,
-                verbose=self.verbose,
-                n_threads=self._n_threads)
+                # Perform the actual update step on the minibatch data
+                batch_inertia = _mini_batch_step(
+                    X=X[minibatch_indices],
+                    x_squared_norms=x_squared_norms[minibatch_indices],
+                    sample_weight=sample_weight[minibatch_indices],
+                    centers=centers,
+                    centers_new=centers_new,
+                    weight_sums=self._counts,
+                    random_state=random_state,
+                    random_reassign=random_reassign,
+                    reassignment_ratio=self.reassignment_ratio,
+                    verbose=self.verbose,
+                    n_threads=self._n_threads)
 
-            if self._tol > 0.0:
-                centers_squared_diff = np.sum((centers_new - centers)**2)
-            else:
-                centers_squared_diff = 0
+                if self._tol > 0.0:
+                    centers_squared_diff = np.sum((centers_new - centers)**2)
+                else:
+                    centers_squared_diff = 0
 
-            centers, centers_new = centers_new, centers
+                centers, centers_new = centers_new, centers
 
-            # Monitor convergence and do early stopping if necessary
-            if self._mini_batch_convergence(
-                    i, n_iter, n_samples, centers_squared_diff, batch_inertia):
-                break
+                # Monitor convergence and do early stopping if necessary
+                if self._mini_batch_convergence(
+                        i, n_iter, n_samples, centers_squared_diff,
+                        batch_inertia):
+                    break
 
         self.cluster_centers_ = centers
 
         self.n_iter_ = i + 1
 
         if self.compute_labels:
-            self.labels_, self.inertia_ = _labels_inertia(
+            self.labels_, self.inertia_ = _labels_inertia_threadpool_limit(
                 X, sample_weight, x_squared_norms, self.cluster_centers_,
                 n_threads=self._n_threads)
 
@@ -1734,20 +1748,21 @@ class MiniBatchKMeans(KMeans):
             random_reassign = self._random_state.randint(
                 10 * (1 + self._counts.min())) == 0
 
-        _mini_batch_step(X,
-                         x_squared_norms=x_squared_norms,
-                         sample_weight=sample_weight,
-                         centers=self.cluster_centers_,
-                         centers_new=self.cluster_centers_,
-                         weight_sums=self._counts,
-                         random_state=self._random_state,
-                         random_reassign=random_reassign,
-                         reassignment_ratio=self.reassignment_ratio,
-                         verbose=self.verbose,
-                         n_threads=self._n_threads)
+        with threadpool_limits(limits=1, user_api="blas"):
+            _mini_batch_step(X,
+                             x_squared_norms=x_squared_norms,
+                             sample_weight=sample_weight,
+                             centers=self.cluster_centers_,
+                             centers_new=self.cluster_centers_,
+                             weight_sums=self._counts,
+                             random_state=self._random_state,
+                             random_reassign=random_reassign,
+                             reassignment_ratio=self.reassignment_ratio,
+                             verbose=self.verbose,
+                             n_threads=self._n_threads)
 
         if self.compute_labels:
-            self.labels_, self.inertia_ = _labels_inertia(
+            self.labels_, self.inertia_ = _labels_inertia_threadpool_limit(
                 X, sample_weight, x_squared_norms, self.cluster_centers_,
                 n_threads=self._n_threads)
 
@@ -1780,9 +1795,11 @@ class MiniBatchKMeans(KMeans):
         x_squared_norms = row_norms(X, squared=True)
         sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
-        return _labels_inertia(
+        labels, _ = _labels_inertia_threadpool_limit(
             X, sample_weight, x_squared_norms, self.cluster_centers_,
-            n_threads=self._n_threads)[0]
+            n_threads=self._n_threads)
+
+        return labels
 
     def _more_tags(self):
         return {
