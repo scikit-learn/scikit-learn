@@ -206,69 +206,66 @@ def check_scoring_validator_for_single_metric_usecases(scoring_validator):
         assert scorer is None
 
 
-def check_multimetric_scoring_single_metric_wrapper(*args, **kwargs):
-    # This wraps the _check_multimetric_scoring to take in
-    # single metric scoring parameter so we can run the tests
-    # that we will run for check_scoring, for check_multimetric_scoring
-    # too for single-metric usecases
-
-    scorers, is_multi = _check_multimetric_scoring(*args, **kwargs)
-    # For all single metric use cases, it should register as not multimetric
-    assert not is_multi
-    if args[0] is not None:
-        assert scorers is not None
-        names, scorers = zip(*scorers.items())
-        assert len(scorers) == 1
-        assert names[0] == 'score'
-        scorers = scorers[0]
-    return scorers
-
-
-def test_check_scoring_and_check_multimetric_scoring():
+@pytest.mark.parametrize(
+    "scoring",
+    (
+        ('accuracy', ), ['precision'],
+        {'acc': 'accuracy', 'precision': 'precision'},
+        ('accuracy', 'precision'),
+        ['precision', 'accuracy'],
+        {'accuracy': make_scorer(accuracy_score),
+         'precision': make_scorer(precision_score)}
+    ), ids=["single_tuple", "single_list", "dict_str",
+            "multi_tuple", "multi_list", "dict_callable"])
+def test_check_scoring_and_check_multimetric_scoring(scoring):
     check_scoring_validator_for_single_metric_usecases(check_scoring)
     # To make sure the check_scoring is correctly applied to the constituent
     # scorers
-    check_scoring_validator_for_single_metric_usecases(
-        check_multimetric_scoring_single_metric_wrapper)
 
-    # For multiple metric use cases
-    # Make sure it works for the valid cases
-    for scoring in (('accuracy',), ['precision'],
-                    {'acc': 'accuracy', 'precision': 'precision'},
-                    ('accuracy', 'precision'), ['precision', 'accuracy'],
-                    {'accuracy': make_scorer(accuracy_score),
-                     'precision': make_scorer(precision_score)}):
-        estimator = LinearSVC(random_state=0)
-        estimator.fit([[1], [2], [3]], [1, 1, 0])
+    estimator = LinearSVC(random_state=0)
+    estimator.fit([[1], [2], [3]], [1, 1, 0])
 
-        scorers, is_multi = _check_multimetric_scoring(estimator, scoring)
-        assert is_multi
-        assert isinstance(scorers, dict)
-        assert sorted(scorers.keys()) == sorted(list(scoring))
-        assert all([isinstance(scorer, _PredictScorer)
-                    for scorer in list(scorers.values())])
+    scorers = _check_multimetric_scoring(estimator, scoring)
+    assert isinstance(scorers, dict)
+    assert sorted(scorers.keys()) == sorted(list(scoring))
+    assert all([isinstance(scorer, _PredictScorer)
+                for scorer in list(scorers.values())])
 
-        if 'acc' in scoring:
-            assert_almost_equal(scorers['acc'](
-                estimator, [[1], [2], [3]], [1, 0, 0]), 2. / 3.)
-        if 'accuracy' in scoring:
-            assert_almost_equal(scorers['accuracy'](
-                estimator, [[1], [2], [3]], [1, 0, 0]), 2. / 3.)
-        if 'precision' in scoring:
-            assert_almost_equal(scorers['precision'](
-                estimator, [[1], [2], [3]], [1, 0, 0]), 0.5)
+    if 'acc' in scoring:
+        assert_almost_equal(scorers['acc'](
+            estimator, [[1], [2], [3]], [1, 0, 0]), 2. / 3.)
+    if 'accuracy' in scoring:
+        assert_almost_equal(scorers['accuracy'](
+            estimator, [[1], [2], [3]], [1, 0, 0]), 2. / 3.)
+    if 'precision' in scoring:
+        assert_almost_equal(scorers['precision'](
+            estimator, [[1], [2], [3]], [1, 0, 0]), 0.5)
 
+
+@pytest.mark.parametrize("scoring", [
+    ((make_scorer(precision_score), make_scorer(accuracy_score)),
+     "One or more of the elements were callables"),
+    ([5], "Non-string types were found"),
+    ((make_scorer(precision_score), ),
+     "One of mor eof the elements were callables"),
+    ((), "Empty list was given"),
+    (('f1', 'f1'), "Duplicate elements were found"),
+    ({4: 'accuracy'}, "Non-string types were found in the keys"),
+    ({}, "An empty dict was passed"),
+], ids=[
+    "tuple of callables", "list of int",
+    "tuple of one callable", "empty tuple",
+    "non-unique str", "non-string key dict",
+    "empty dict"])
+def test_check_scoring_and_check_multimetric_scoring_errors(scoring):
+    # Make sure it raises errors when scoring parameter is not valid.
+    # More weird corner cases are tested at test_validation.py
     estimator = EstimatorWithFitAndPredict()
     estimator.fit([[1]], [1])
 
-    # Make sure it raises errors when scoring parameter is not valid.
-    # More weird corner cases are tested at test_validation.py
     error_message_regexp = ".*must be unique strings.*"
-    for scoring in ((make_scorer(precision_score),  # Tuple of callables
-                     make_scorer(accuracy_score)), [5],
-                    (make_scorer(precision_score),), (), ('f1', 'f1')):
-        with pytest.raises(ValueError, match=error_message_regexp):
-            _check_multimetric_scoring(estimator, scoring=scoring)
+    with pytest.raises(ValueError, match=error_message_regexp):
+        _check_multimetric_scoring(estimator, scoring=scoring)
 
 
 def test_check_scoring_gridsearchcv():
@@ -622,7 +619,7 @@ def test_multimetric_scorer_calls_method_once(scorers, expected_predict_count,
     mock_est.predict_proba = predict_proba_func
     mock_est.decision_function = decision_function_func
 
-    scorer_dict, _ = _check_multimetric_scoring(LogisticRegression(), scorers)
+    scorer_dict = _check_multimetric_scoring(LogisticRegression(), scorers)
     multi_scorer = _MultimetricScorer(**scorer_dict)
     results = multi_scorer(mock_est, X, y)
 
@@ -649,7 +646,7 @@ def test_multimetric_scorer_calls_method_once_classifier_no_decision():
     clf.fit(X, y)
 
     scorers = ['roc_auc', 'neg_log_loss']
-    scorer_dict, _ = _check_multimetric_scoring(clf, scorers)
+    scorer_dict = _check_multimetric_scoring(clf, scorers)
     scorer = _MultimetricScorer(**scorer_dict)
     scorer(clf, X, y)
 
@@ -672,7 +669,7 @@ def test_multimetric_scorer_calls_method_once_regressor_threshold():
     clf.fit(X, y)
 
     scorers = {'neg_mse': 'neg_mean_squared_error', 'r2': 'roc_auc'}
-    scorer_dict, _ = _check_multimetric_scoring(clf, scorers)
+    scorer_dict = _check_multimetric_scoring(clf, scorers)
     scorer = _MultimetricScorer(**scorer_dict)
     scorer(clf, X, y)
 
@@ -690,7 +687,7 @@ def test_multimetric_scorer_sanity_check():
     clf = DecisionTreeClassifier()
     clf.fit(X, y)
 
-    scorer_dict, _ = _check_multimetric_scoring(clf, scorers)
+    scorer_dict = _check_multimetric_scoring(clf, scorers)
     multi_scorer = _MultimetricScorer(**scorer_dict)
 
     result = multi_scorer(clf, X, y)

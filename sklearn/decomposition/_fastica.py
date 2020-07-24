@@ -324,10 +324,10 @@ class FastICA(TransformerMixin, BaseEstimator):
         or 'cube'.
         You can also provide your own function. It should return a tuple
         containing the value of the function, and of its derivative, in the
-        point. Example:
+        point. Example::
 
-        def my_g(x):
-            return x ** 3, (3 * x ** 2).mean(axis=-1)
+            def my_g(x):
+                return x ** 3, (3 * x ** 2).mean(axis=-1)
 
     fun_args : dictionary, optional
         Arguments to send to the functional form.
