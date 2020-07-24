@@ -1,10 +1,10 @@
 """
-Successive Halving Iterations
+Successive halving Iterations
 =============================
 
 This example illustrates how a successive halving search (
 :class:`~sklearn.model_selection.HalvingGridSearchCV` and
-:class:`~sklearn.model_selection.HalvingRandomSearchCV`) selectively chooses
+:class:`~sklearn.model_selection.HalvingRandomSearchCV`) iteratively chooses
 the best parameter combination out of multiple candidates.
 
 At the first iteration, a small amount of resources is used. The resource here

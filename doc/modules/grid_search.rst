@@ -173,13 +173,13 @@ variable that is log-uniformly distributed between ``1e0`` and ``1e3``::
 
 .. _successive_halving_user_guide:
 
-Searching optimal parameters with successive halving
-====================================================
+Searching for optimal parameters with successive halving
+========================================================
 
 Scikit-learn also provides the :class:`HalvingGridSearchCV` and
 :class:`HalvingRandomSearchCV` estimators that can be used to
 search a parameter space using successive halving [1]_ [2]_. Successive
-halving (SH) is a sort of tournament between candidate parameter combinations.
+halving (SH) is like a tournament among candidate parameter combinations.
 SH is an iterative selection process where all candidates (the
 parameter combinations) are evaluated with a small amount of resources at
 the first iteration. Only some of these candidates are selected for the next
@@ -187,18 +187,19 @@ iteration, which will be allocated more resources. What defines a resource is
 typically the number of samples to train on, but it can also be an arbitrary
 numeric parameter such as `n_estimators` in a random forest.
 
-As illustrated in the figure below, only a small subset of candidates 'survive'
-until the last iteration. These are the candidates that have consistently been
-part of the best candidates across all iterations. Each iteration is allocated
-an increasing amount of resources, here the number of samples.
+As illustrated in the figure below, only a small subset of candidates
+'survive' until the last iteration. These are the candidates that have
+consistently ranked among the best candidates across all iterations. Each
+iteration is allocated an increasing amount of resources per candidate, here
+the number of samples.
 
 .. figure:: ../auto_examples/model_selection/images/sphx_glr_plot_successive_halving_iterations_001.png
    :target: ../auto_examples/model_selection/plot_successive_halving_iterations.html
    :align: center
 
 The ``ratio`` parameter controls the rate at which the resources grow, and
-the rate at which the number of candidate decreases (more details in
-:ref:`amount_of_resource_and_number_of_candidates`)
+the rate at which the number of candidates decreases. More details in
+:ref:`amount_of_resource_and_number_of_candidates`.
 
 .. topic:: Examples:
 
@@ -217,7 +218,7 @@ in :class:`HalvingRandomSearchCV`, and is determined from the ``param_grid``
 parameter of :class:`HalvingGridSearchCV`.
 
 Consider a case where the resource is the number of samples, and where we
-have 1000 samples. In theroy, with ``min_resources=10`` and ``ratio=2``, we
+have 1000 samples. In theory, with ``min_resources=10`` and ``ratio=2``, we
 are able to run **at most** 7 iterations with the following number of
 samples: ``[10, 20, 40, 80, 160, 320, 640]``.
 
@@ -267,8 +268,12 @@ greater than 1)::
     resource_iter = ratio**i * min_resources,
 
 where ``min_resources`` is the amount of resources used at the first
-iteration, and ``ratio (> 1)`` defines the proportions of candidates that
+iteration. ``ratio (> 1)`` also defines the proportions of candidates that
 will be selected for the next iteration::
+
+    n_candidates_iter = n_candidates // (ratio ** i)
+
+or equivalently::
 
     n_candidates_at_i+1 = n_candidates_at_i // ratio
 
@@ -477,7 +482,7 @@ The ``cv_results_`` attribute contains useful information for analysing the
 results of a search. It can be converted to a pandas dataframe with ``df =
 pd.DataFrame(est.cv_results_)``. The ``cv_results_`` attribute of
 :class:`HalvingGridSearchCV` and :class:`HalvingRandomSearchCV` is similar
-to that of :class:`GridSearchCV` and :class:`RandomizedSearchCV`>, with
+to that of :class:`GridSearchCV` and :class:`RandomizedSearchCV`, with
 additional information related to the successive halving process.
 
 Here is an example with some of the columns of a (truncated) dataframe:

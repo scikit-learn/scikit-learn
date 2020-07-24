@@ -104,7 +104,7 @@ def make_heatmap(ax, gs, show_iter=False, make_cbar=False):
 
 
 # Plot heatmaps and colorbar
-fig, axes = plt.subplots(ncols=2)
+fig, axes = plt.subplots(ncols=2, sharey=True)
 ax1, ax2 = axes
 
 make_heatmap(ax1, gsh, show_iter=True)

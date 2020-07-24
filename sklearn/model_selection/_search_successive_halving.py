@@ -435,12 +435,12 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
 
     aggressive_elimination : bool, default=False
         This is only relevant in cases where there isn't enough resources to
-        eliminate enough candidates at the last iteration. If ``True``, then
-        the search process will 'replay' the first iteration for as long as
-        needed until the number of candidates is small enough. This is
-        ``False`` by default, which means that the last iteration may evaluate
-        more than ``ratio`` candidates. See :ref:aggressive_elimination` for
-        more details.
+        reduce the candidates to at most `ratio` in the last iteration. If
+        ``True``, then the search process will 'replay' the first iteration
+        for as long as needed until the number of candidates is small enough.
+        This is ``False`` by default, which means that the last iteration may
+        evaluate more than ``ratio`` candidates. See
+        :ref:`aggressive_elimination` for more details.
 
     force_exhaust_resources : bool, default=True
         When True, ``min_resources`` (which must be 'auto') is set to a
@@ -728,12 +728,12 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
 
     aggressive_elimination : bool, default=False
         This is only relevant in cases where there isn't enough resources to
-        eliminate enough candidates at the last iteration. If ``True``, then
-        the search process will 'replay' the first iteration for as long as
-        needed until the number of candidates is small enough. This is
-        ``False`` by default, which means that the last iteration may evaluate
-        more than ``ratio`` candidates. See :ref:aggressive_elimination` for
-        more details.
+        reduce the candidates to at most `ratio` in the last iteration. If
+        ``True``, then the search process will 'replay' the first iteration
+        for as long as needed until the number of candidates is small enough.
+        This is ``False`` by default, which means that the last iteration may
+        evaluate more than ``ratio`` candidates. See
+        :ref:`aggressive_elimination` for more details.
 
     force_exhaust_resources : bool, default=True
         When True, ``min_resources`` (which must be 'auto') is set to a
@@ -742,7 +742,7 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
         than ``max_resources`` that is a multiple of both ``min_resources``
         and ``ratio``. When False, the last iteration may not exhaust the
         total number of resources, since the first iteration will rely on the
-        value passed as the `min_resource` parameter. In general,
+        value passed as the `min_resources` parameter. In general,
         `force_exhaust_resources=True` leads to a more accurate estimator,
         but is slightly more time consuming.
 
