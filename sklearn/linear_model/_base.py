@@ -22,9 +22,9 @@ import scipy.sparse as sp
 from scipy import linalg
 from scipy import sparse
 from scipy.special import expit
-import sklearn
 from joblib import Parallel, delayed
 
+from .. import __version__
 from ..base import (BaseEstimator, ClassifierMixin, RegressorMixin,
                     MultiOutputMixin)
 from ..utils import check_array
@@ -58,7 +58,7 @@ def _deprecate_normalize(normalize, default):
         _normalize = normalize
 
     if default and normalize == 'deprecated' and \
-       parse_version(sklearn.__version__) < parse_version('0.26'):
+       parse_version(__version__) < parse_version('0.26'):
         warnings.warn(
             " default of 'normalize' will be set to False in version 0.26 and"
             " deprecated in version 0.28."
