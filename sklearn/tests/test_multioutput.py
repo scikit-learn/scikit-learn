@@ -12,7 +12,8 @@ from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn import datasets
 from sklearn.base import clone
-from sklearn.datasets import make_classification, make_multilabel_classification
+from sklearn.datasets import make_classification
+from sklearn.datasets import make_multilabel_classification
 from sklearn.ensemble import GradientBoostingRegressor, RandomForestClassifier
 from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import Lasso
@@ -32,7 +33,7 @@ from sklearn.utils import shuffle
 from sklearn.model_selection import GridSearchCV
 from sklearn.dummy import DummyRegressor, DummyClassifier
 from sklearn.model_selection import train_test_split
-from sklearn.experimental import enable_hist_gradient_boosting
+from sklearn.experimental import enable_hist_gradient_boosting  # noqa
 from sklearn.ensemble import HistGradientBoostingClassifier
 
 
@@ -305,7 +306,7 @@ def test_multiclass_multioutput_estimator():
         multi_class_svc_ = clone(multi_class_svc)  # create a clone
         multi_class_svc_.fit(X, y[:, i])
         assert (list(multi_class_svc_.predict(X)) ==
-                     list(predictions[:, i]))
+                list(predictions[:, i]))
 
 
 def test_multiclass_multioutput_estimator_predict_proba():
@@ -466,7 +467,7 @@ def test_classifier_chain_vs_independent_models():
     Y_pred_chain = chain.predict(X_test)
 
     assert (jaccard_score(Y_test, Y_pred_chain, average='samples') >
-                   jaccard_score(Y_test, Y_pred_ovr, average='samples'))
+            jaccard_score(Y_test, Y_pred_ovr, average='samples'))
 
 
 def test_base_chain_fit_and_predict():
@@ -479,7 +480,7 @@ def test_base_chain_fit_and_predict():
         Y_pred = chain.predict(X)
         assert Y_pred.shape == Y.shape
         assert ([c.coef_.size for c in chain.estimators_] ==
-                     list(range(X.shape[1], X.shape[1] + Y.shape[1])))
+                list(range(X.shape[1], X.shape[1] + Y.shape[1])))
 
     Y_prob = chains[1].predict_proba(X)
     Y_binary = (Y_prob >= .5)
