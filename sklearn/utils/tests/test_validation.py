@@ -1226,17 +1226,17 @@ def make_type_tables():
 
     dall.reindex(columns=['dtype', 'np_name', 'np_type'])
 
-    num_types = (lambda x: x[(x.dtype_name.str.startswith('bool')) |\
-                 (x.dtype_name.str.startswith('float')) |\
-                 (x.dtype_name.str.startswith('int')) |\
-                 (x.dtype_name.str.startswith('uint'))\
+    num_types = (lambda x: x[(x.dtype_name.str.startswith('bool')) |
+                 (x.dtype_name.str.startswith('float')) |
+                 (x.dtype_name.str.startswith('int')) |
+                 (x.dtype_name.str.startswith('uint'))
                  ])(dall).copy()
     num_types.sort_values(by='dtype_name', inplace=True)
     num_types.index = list(range(num_types.shape[0]))
 
-    obj_types = (lambda x: x[(x.dtype_name.str.startswith('bytes')) |\
-                 (x.dtype_name.str.startswith('object')) |\
-                 (x.dtype_name.str.startswith('str'))\
+    obj_types = (lambda x: x[(x.dtype_name.str.startswith('bytes')) |
+                 (x.dtype_name.str.startswith('object')) |
+                 (x.dtype_name.str.startswith('str'))
                  ])(dall).copy()
     obj_types.sort_values(by='dtype_name', inplace=True)
     obj_types.index = list(range(obj_types.shape[0]))
@@ -1285,10 +1285,8 @@ def make_types_df_validator(target):
 
 
 @pytest.mark.parametrize('dt_name',
-                         ['bool', 'float', 'int', 'uint']
-)
-@pytest.mark.parametrize('types_tbl', [num_types]
-)
+                         ['bool', 'float', 'int', 'uint'])
+@pytest.mark.parametrize('types_tbl', [num_types])
 def test_check__pandas_sparse_invalid_coo_matrix_numerics(dt_name, types_tbl):
     df = types_tbl[types_tbl.dtype_name.str.startswith(dt_name)]
     if len(df.index) <= 1:
@@ -1312,10 +1310,8 @@ def test_check__pandas_sparse_invalid_coo_matrix_numerics(dt_name, types_tbl):
 
 
 @pytest.mark.parametrize('dt_name',
-                         ['bytes', 'object', 'str']
-)
-@pytest.mark.parametrize('types_tbl', [obj_types]
-)
+                         ['bytes', 'object', 'str'])
+@pytest.mark.parametrize('types_tbl', [obj_types])
 def test_check__pandas_sparse_invalid_coo_matrix_objects(dt_name,
                                                          types_tbl):
     df = types_tbl[types_tbl.dtype_name.str.startswith(dt_name)]
