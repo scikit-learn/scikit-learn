@@ -72,7 +72,8 @@ Changelog
 
 - |Fix| :class:`cluster.AgglomerativeClustering` has now an attribute
   `distances_` if `compute_distances` is set to `True`, allowing to make
-  visualization easier. :pr:`17984` by :user:`Michael Riedmann <mriedmann>`,
+  dendrogram visualization easier. :pr:`17984` by :user:`Michael Riedmann
+  <mriedmann>`,
   :user:`Emilie Delattre <EmilieDel>`, and
   :user:`Francesco Casalegno <FrancescoCasalegno>`.
 
