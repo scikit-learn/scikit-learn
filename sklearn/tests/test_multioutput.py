@@ -12,7 +12,7 @@ from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn import datasets
 from sklearn.base import clone
-from sklearn.datasets import make_classification
+from sklearn.datasets import make_classification, make_multilabel_classification
 from sklearn.ensemble import GradientBoostingRegressor, RandomForestClassifier
 from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import Lasso
@@ -31,6 +31,9 @@ from sklearn.base import ClassifierMixin
 from sklearn.utils import shuffle
 from sklearn.model_selection import GridSearchCV
 from sklearn.dummy import DummyRegressor, DummyClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.experimental import enable_hist_gradient_boosting
+from sklearn.ensemble import HistGradientBoostingClassifier
 
 
 def test_multi_target_regression():
@@ -601,3 +604,19 @@ def test_regressor_chain_w_fit_params():
 
     for est in model.estimators_:
         assert est.sample_weight_ is weight
+
+
+def test_leniency_for_missing_data():
+    rng = np.random.RandomState(42)
+    X, y = make_multilabel_classification(random_state=rng)
+    mask = np.random.choice([1, 0], X.shape, p=[.1, .9]).astype(bool)
+    X[mask] = np.nan
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y,
+                                                        random_state=rng)
+
+    hgbc = HistGradientBoostingClassifier(max_iter=3)
+    clf = MultiOutputClassifier(estimator=hgbc)
+    clf.fit(X_train, y_train)
+
+    assert clf.score(X_test, y_test) > 0.8
