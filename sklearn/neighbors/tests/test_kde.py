@@ -74,7 +74,7 @@ def test_kernel_density_sampling(n_samples=100, n_features=3):
 
     for kernel in ['gaussian', 'tophat']:
         # draw a tophat sample
-        kde = KernelDensity(bandwidth, kernel=kernel).fit(X)
+        kde = KernelDensity(bandwidth=bandwidth, kernel=kernel).fit(X)
         samp = kde.sample(100)
         assert X.shape == samp.shape
 
@@ -91,7 +91,7 @@ def test_kernel_density_sampling(n_samples=100, n_features=3):
 
     # check unsupported kernels
     for kernel in ['epanechnikov', 'exponential', 'linear', 'cosine']:
-        kde = KernelDensity(bandwidth, kernel=kernel).fit(X)
+        kde = KernelDensity(bandwidth=bandwidth, kernel=kernel).fit(X)
         assert_raises(NotImplementedError, kde.sample, 100)
 
     # non-regression test: used to return a scalar

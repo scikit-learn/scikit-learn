@@ -11,6 +11,7 @@ import scipy.sparse as sp
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array, tosequence
+from ..utils.validation import _deprecate_positional_args
 
 
 def _tosequence(X):
@@ -37,7 +38,7 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
     However, note that this transformer will only do a binary one-hot encoding
     when feature values are of type string. If categorical features are
     represented as numeric values such as int, the DictVectorizer can be
-    followed by :class:`sklearn.preprocessing.OneHotEncoder` to complete
+    followed by :class:`~sklearn.preprocessing.OneHotEncoder` to complete
     binary one-hot encoding.
 
     Features that do not occur in a sample (mapping) will have a zero value
@@ -89,8 +90,8 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
     sklearn.preprocessing.OrdinalEncoder : handles nominal/categorical
       features encoded as columns of arbitrary data types.
     """
-
-    def __init__(self, dtype=np.float64, separator="=", sparse=True,
+    @_deprecate_positional_args
+    def __init__(self, *, dtype=np.float64, separator="=", sparse=True,
                  sort=True):
         self.dtype = dtype
         self.separator = separator

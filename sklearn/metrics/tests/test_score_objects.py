@@ -33,7 +33,7 @@ from sklearn.cluster import KMeans
 from sklearn.linear_model import Ridge, LogisticRegression, Perceptron
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.datasets import make_blobs
-from sklearn.datasets import make_classification
+from sklearn.datasets import make_classification, make_regression
 from sklearn.datasets import make_multilabel_classification
 from sklearn.datasets import load_diabetes
 from sklearn.model_selection import train_test_split, cross_val_score
@@ -43,10 +43,12 @@ from sklearn.multiclass import OneVsRestClassifier
 
 REGRESSION_SCORERS = ['explained_variance', 'r2',
                       'neg_mean_absolute_error', 'neg_mean_squared_error',
+                      'neg_mean_absolute_percentage_error',
                       'neg_mean_squared_log_error',
                       'neg_median_absolute_error',
                       'neg_root_mean_squared_error',
                       'mean_absolute_error',
+                      'mean_absolute_percentage_error',
                       'mean_squared_error', 'median_absolute_error',
                       'max_error', 'neg_mean_poisson_deviance',
                       'neg_mean_gamma_deviance']
@@ -89,7 +91,7 @@ def _make_estimators(X_train, y_train, y_ml_train):
     # Make estimators that make sense to test various scoring methods
     sensible_regr = DecisionTreeRegressor(random_state=0)
     # some of the regressions scorers require strictly positive input.
-    sensible_regr.fit(X_train, y_train + 1)
+    sensible_regr.fit(X_train, _require_positive_y(y_train))
     sensible_clf = DecisionTreeClassifier(random_state=0)
     sensible_clf.fit(X_train, y_train)
     sensible_ml_clf = DecisionTreeClassifier(random_state=0)
@@ -190,11 +192,11 @@ def check_scoring_validator_for_single_metric_usecases(scoring_validator):
     with pytest.raises(TypeError, match=pattern):
         scoring_validator(estimator)
 
-    scorer = scoring_validator(estimator, "accuracy")
+    scorer = scoring_validator(estimator, scoring="accuracy")
     assert_almost_equal(scorer(estimator, [[1]], [1]), 1.0)
 
     estimator = EstimatorWithFit()
-    scorer = scoring_validator(estimator, "accuracy")
+    scorer = scoring_validator(estimator, scoring="accuracy")
     assert isinstance(scorer, _PredictScorer)
 
     # Test the allow_none parameter for check_scoring alone
@@ -204,69 +206,66 @@ def check_scoring_validator_for_single_metric_usecases(scoring_validator):
         assert scorer is None
 
 
-def check_multimetric_scoring_single_metric_wrapper(*args, **kwargs):
-    # This wraps the _check_multimetric_scoring to take in
-    # single metric scoring parameter so we can run the tests
-    # that we will run for check_scoring, for check_multimetric_scoring
-    # too for single-metric usecases
-
-    scorers, is_multi = _check_multimetric_scoring(*args, **kwargs)
-    # For all single metric use cases, it should register as not multimetric
-    assert not is_multi
-    if args[0] is not None:
-        assert scorers is not None
-        names, scorers = zip(*scorers.items())
-        assert len(scorers) == 1
-        assert names[0] == 'score'
-        scorers = scorers[0]
-    return scorers
-
-
-def test_check_scoring_and_check_multimetric_scoring():
+@pytest.mark.parametrize(
+    "scoring",
+    (
+        ('accuracy', ), ['precision'],
+        {'acc': 'accuracy', 'precision': 'precision'},
+        ('accuracy', 'precision'),
+        ['precision', 'accuracy'],
+        {'accuracy': make_scorer(accuracy_score),
+         'precision': make_scorer(precision_score)}
+    ), ids=["single_tuple", "single_list", "dict_str",
+            "multi_tuple", "multi_list", "dict_callable"])
+def test_check_scoring_and_check_multimetric_scoring(scoring):
     check_scoring_validator_for_single_metric_usecases(check_scoring)
     # To make sure the check_scoring is correctly applied to the constituent
     # scorers
-    check_scoring_validator_for_single_metric_usecases(
-        check_multimetric_scoring_single_metric_wrapper)
 
-    # For multiple metric use cases
-    # Make sure it works for the valid cases
-    for scoring in (('accuracy',), ['precision'],
-                    {'acc': 'accuracy', 'precision': 'precision'},
-                    ('accuracy', 'precision'), ['precision', 'accuracy'],
-                    {'accuracy': make_scorer(accuracy_score),
-                     'precision': make_scorer(precision_score)}):
-        estimator = LinearSVC(random_state=0)
-        estimator.fit([[1], [2], [3]], [1, 1, 0])
+    estimator = LinearSVC(random_state=0)
+    estimator.fit([[1], [2], [3]], [1, 1, 0])
 
-        scorers, is_multi = _check_multimetric_scoring(estimator, scoring)
-        assert is_multi
-        assert isinstance(scorers, dict)
-        assert sorted(scorers.keys()) == sorted(list(scoring))
-        assert all([isinstance(scorer, _PredictScorer)
-                    for scorer in list(scorers.values())])
+    scorers = _check_multimetric_scoring(estimator, scoring)
+    assert isinstance(scorers, dict)
+    assert sorted(scorers.keys()) == sorted(list(scoring))
+    assert all([isinstance(scorer, _PredictScorer)
+                for scorer in list(scorers.values())])
 
-        if 'acc' in scoring:
-            assert_almost_equal(scorers['acc'](
-                estimator, [[1], [2], [3]], [1, 0, 0]), 2. / 3.)
-        if 'accuracy' in scoring:
-            assert_almost_equal(scorers['accuracy'](
-                estimator, [[1], [2], [3]], [1, 0, 0]), 2. / 3.)
-        if 'precision' in scoring:
-            assert_almost_equal(scorers['precision'](
-                estimator, [[1], [2], [3]], [1, 0, 0]), 0.5)
+    if 'acc' in scoring:
+        assert_almost_equal(scorers['acc'](
+            estimator, [[1], [2], [3]], [1, 0, 0]), 2. / 3.)
+    if 'accuracy' in scoring:
+        assert_almost_equal(scorers['accuracy'](
+            estimator, [[1], [2], [3]], [1, 0, 0]), 2. / 3.)
+    if 'precision' in scoring:
+        assert_almost_equal(scorers['precision'](
+            estimator, [[1], [2], [3]], [1, 0, 0]), 0.5)
 
+
+@pytest.mark.parametrize("scoring", [
+    ((make_scorer(precision_score), make_scorer(accuracy_score)),
+     "One or more of the elements were callables"),
+    ([5], "Non-string types were found"),
+    ((make_scorer(precision_score), ),
+     "One of mor eof the elements were callables"),
+    ((), "Empty list was given"),
+    (('f1', 'f1'), "Duplicate elements were found"),
+    ({4: 'accuracy'}, "Non-string types were found in the keys"),
+    ({}, "An empty dict was passed"),
+], ids=[
+    "tuple of callables", "list of int",
+    "tuple of one callable", "empty tuple",
+    "non-unique str", "non-string key dict",
+    "empty dict"])
+def test_check_scoring_and_check_multimetric_scoring_errors(scoring):
+    # Make sure it raises errors when scoring parameter is not valid.
+    # More weird corner cases are tested at test_validation.py
     estimator = EstimatorWithFitAndPredict()
     estimator.fit([[1]], [1])
 
-    # Make sure it raises errors when scoring parameter is not valid.
-    # More weird corner cases are tested at test_validation.py
     error_message_regexp = ".*must be unique strings.*"
-    for scoring in ((make_scorer(precision_score),  # Tuple of callables
-                     make_scorer(accuracy_score)), [5],
-                    (make_scorer(precision_score),), (), ('f1', 'f1')):
-        with pytest.raises(ValueError, match=error_message_regexp):
-            _check_multimetric_scoring(estimator, scoring=scoring)
+    with pytest.raises(ValueError, match=error_message_regexp):
+        _check_multimetric_scoring(estimator, scoring=scoring)
 
 
 def test_check_scoring_gridsearchcv():
@@ -274,11 +273,11 @@ def test_check_scoring_gridsearchcv():
     # slightly redundant non-regression test.
 
     grid = GridSearchCV(LinearSVC(), param_grid={'C': [.1, 1]}, cv=3)
-    scorer = check_scoring(grid, "f1")
+    scorer = check_scoring(grid, scoring="f1")
     assert isinstance(scorer, _PredictScorer)
 
     pipe = make_pipeline(LinearSVC())
-    scorer = check_scoring(pipe, "f1")
+    scorer = check_scoring(pipe, scoring="f1")
     assert isinstance(scorer, _PredictScorer)
 
     # check that cross_val_score definitely calls the scorer
@@ -474,8 +473,9 @@ def test_raises_on_score_list():
 
 
 @ignore_warnings
-def test_scorer_sample_weight():
-    # Test that scorers support sample_weight or raise sensible errors
+def test_classification_scorer_sample_weight():
+    # Test that classification scorers support sample_weight or raise sensible
+    # errors
 
     # Unlike the metrics invariance test, in the scorer case it's harder
     # to ensure that, on the classifier output, weighted and unweighted
@@ -493,31 +493,70 @@ def test_scorer_sample_weight():
     estimator = _make_estimators(X_train, y_train, y_ml_train)
 
     for name, scorer in SCORERS.items():
+        if name in REGRESSION_SCORERS:
+            # skip the regression scores
+            continue
         if name in MULTILABEL_ONLY_SCORERS:
             target = y_ml_test
         else:
             target = y_test
-        if name in REQUIRE_POSITIVE_Y_SCORERS:
-            target = _require_positive_y(target)
         try:
             weighted = scorer(estimator[name], X_test, target,
                               sample_weight=sample_weight)
             ignored = scorer(estimator[name], X_test[10:], target[10:])
             unweighted = scorer(estimator[name], X_test, target)
             assert weighted != unweighted, (
-                "scorer {0} behaves identically when "
-                "called with sample weights: {1} vs "
-                "{2}".format(name, weighted, unweighted))
+                f"scorer {name} behaves identically when called with "
+                f"sample weights: {weighted} vs {unweighted}")
             assert_almost_equal(weighted, ignored,
-                                err_msg="scorer {0} behaves differently when "
-                                "ignoring samples and setting sample_weight to"
-                                " 0: {1} vs {2}".format(name, weighted,
-                                                        ignored))
+                                err_msg=f"scorer {name} behaves differently "
+                                f"when ignoring samples and setting "
+                                f"sample_weight to 0: {weighted} vs {ignored}")
 
         except TypeError as e:
             assert "sample_weight" in str(e), (
-                "scorer {0} raises unhelpful exception when called "
-                "with sample weights: {1}".format(name, str(e)))
+                   f"scorer {name} raises unhelpful exception when called "
+                   f"with sample weights: {str(e)}")
+
+
+@ignore_warnings
+def test_regression_scorer_sample_weight():
+    # Test that regression scorers support sample_weight or raise sensible
+    # errors
+
+    # Odd number of test samples req for neg_median_absolute_error
+    X, y = make_regression(n_samples=101, n_features=20, random_state=0)
+    y = _require_positive_y(y)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+
+    sample_weight = np.ones_like(y_test)
+    # Odd number req for neg_median_absolute_error
+    sample_weight[:11] = 0
+
+    reg = DecisionTreeRegressor(random_state=0)
+    reg.fit(X_train, y_train)
+
+    for name, scorer in SCORERS.items():
+        if name not in REGRESSION_SCORERS:
+            # skip classification scorers
+            continue
+        try:
+            weighted = scorer(reg, X_test, y_test,
+                              sample_weight=sample_weight)
+            ignored = scorer(reg, X_test[11:], y_test[11:])
+            unweighted = scorer(reg, X_test, y_test)
+            assert weighted != unweighted, (
+                f"scorer {name} behaves identically when called with "
+                f"sample weights: {weighted} vs {unweighted}")
+            assert_almost_equal(weighted, ignored,
+                                err_msg=f"scorer {name} behaves differently "
+                                f"when ignoring samples and setting "
+                                f"sample_weight to 0: {weighted} vs {ignored}")
+
+        except TypeError as e:
+            assert "sample_weight" in str(e), (
+                   f"scorer {name} raises unhelpful exception when called "
+                   f"with sample weights: {str(e)}")
 
 
 @pytest.mark.parametrize('name', SCORERS)
@@ -544,24 +583,13 @@ def test_scorer_memmap_input(name):
 
 def test_scoring_is_not_metric():
     with pytest.raises(ValueError, match='make_scorer'):
-        check_scoring(LogisticRegression(), f1_score)
+        check_scoring(LogisticRegression(), scoring=f1_score)
     with pytest.raises(ValueError, match='make_scorer'):
-        check_scoring(LogisticRegression(), roc_auc_score)
+        check_scoring(LogisticRegression(), scoring=roc_auc_score)
     with pytest.raises(ValueError, match='make_scorer'):
-        check_scoring(Ridge(), r2_score)
+        check_scoring(Ridge(), scoring=r2_score)
     with pytest.raises(ValueError, match='make_scorer'):
-        check_scoring(KMeans(), cluster_module.adjusted_rand_score)
-
-
-def test_deprecated_scorer():
-    X, y = make_blobs(random_state=0, centers=2)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
-    clf = DecisionTreeClassifier()
-    clf.fit(X_train, y_train)
-
-    deprecated_scorer = get_scorer('brier_score_loss')
-    with pytest.warns(FutureWarning):
-        deprecated_scorer(clf, X_test, y_test)
+        check_scoring(KMeans(), scoring=cluster_module.adjusted_rand_score)
 
 
 @pytest.mark.parametrize(
@@ -591,7 +619,7 @@ def test_multimetric_scorer_calls_method_once(scorers, expected_predict_count,
     mock_est.predict_proba = predict_proba_func
     mock_est.decision_function = decision_function_func
 
-    scorer_dict, _ = _check_multimetric_scoring(LogisticRegression(), scorers)
+    scorer_dict = _check_multimetric_scoring(LogisticRegression(), scorers)
     multi_scorer = _MultimetricScorer(**scorer_dict)
     results = multi_scorer(mock_est, X, y)
 
@@ -618,7 +646,7 @@ def test_multimetric_scorer_calls_method_once_classifier_no_decision():
     clf.fit(X, y)
 
     scorers = ['roc_auc', 'neg_log_loss']
-    scorer_dict, _ = _check_multimetric_scoring(clf, scorers)
+    scorer_dict = _check_multimetric_scoring(clf, scorers)
     scorer = _MultimetricScorer(**scorer_dict)
     scorer(clf, X, y)
 
@@ -641,7 +669,7 @@ def test_multimetric_scorer_calls_method_once_regressor_threshold():
     clf.fit(X, y)
 
     scorers = {'neg_mse': 'neg_mean_squared_error', 'r2': 'roc_auc'}
-    scorer_dict, _ = _check_multimetric_scoring(clf, scorers)
+    scorer_dict = _check_multimetric_scoring(clf, scorers)
     scorer = _MultimetricScorer(**scorer_dict)
     scorer(clf, X, y)
 
@@ -659,7 +687,7 @@ def test_multimetric_scorer_sanity_check():
     clf = DecisionTreeClassifier()
     clf.fit(X, y)
 
-    scorer_dict, _ = _check_multimetric_scoring(clf, scorers)
+    scorer_dict = _check_multimetric_scoring(clf, scorers)
     multi_scorer = _MultimetricScorer(**scorer_dict)
 
     result = multi_scorer(clf, X, y)

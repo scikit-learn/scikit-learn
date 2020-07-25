@@ -531,11 +531,7 @@ def test_ridge_gcv_sample_weights(
     kfold = RidgeCV(
         alphas=alphas, cv=splits, scoring='neg_mean_squared_error',
         fit_intercept=fit_intercept)
-    # ignore warning from GridSearchCV: FutureWarning: The default
-    # of the `iid` parameter will change from True to False in version 0.22
-    # and will be removed in 0.24
-    with ignore_warnings(category=FutureWarning):
-        kfold.fit(X_tiled, y_tiled)
+    kfold.fit(X_tiled, y_tiled)
 
     ridge_reg = Ridge(alpha=kfold.alpha_, fit_intercept=fit_intercept)
     splits = cv.split(X_tiled, y_tiled, groups=indices)

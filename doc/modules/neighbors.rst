@@ -230,12 +230,12 @@ which will be used to compute the weights.
    :scale: 75
 
 The use of multi-output nearest neighbors for regression is demonstrated in
-:ref:`sphx_glr_auto_examples_plot_multioutput_face_completion.py`. In this example, the inputs
+:ref:`sphx_glr_auto_examples_miscellaneous_plot_multioutput_face_completion.py`. In this example, the inputs
 X are the pixels of the upper half of faces and the outputs Y are the pixels of
 the lower half of those faces.
 
-.. figure:: ../auto_examples/images/sphx_glr_plot_multioutput_face_completion_001.png
-   :target: ../auto_examples/plot_multioutput_face_completion.html
+.. figure:: ../auto_examples/miscellaneous/images/sphx_glr_plot_multioutput_face_completion_001.png
+   :target: ../auto_examples/miscellaneous/plot_multioutput_face_completion.html
    :scale: 75
    :align: center
 
@@ -245,7 +245,7 @@ the lower half of those faces.
   * :ref:`sphx_glr_auto_examples_neighbors_plot_regression.py`: an example of regression
     using nearest neighbors.
 
-  * :ref:`sphx_glr_auto_examples_plot_multioutput_face_completion.py`: an example of
+  * :ref:`sphx_glr_auto_examples_miscellaneous_plot_multioutput_face_completion.py`: an example of
     multi-output regression using nearest neighbors.
 
 
@@ -415,14 +415,25 @@ depends on a number of factors:
   a significant fraction of the total cost.  If very few query points
   will be required, brute force is better than a tree-based method.
 
-Currently, ``algorithm = 'auto'`` selects ``'brute'`` if :math:`k >= N/2`,
-the input data is sparse, or ``effective_metric_`` isn't in
-the ``VALID_METRICS`` list for either ``'kd_tree'`` or ``'ball_tree'``.
-Otherwise, it selects the first out of ``'kd_tree'`` and ``'ball_tree'``
-that has ``effective_metric_`` in its ``VALID_METRICS`` list.
-This choice is based on the assumption that the number of query points is at
-least the same order as the number of training points, and that ``leaf_size``
-is close to its default value of ``30``.
+Currently, ``algorithm = 'auto'`` selects ``'brute'`` if any of the following
+conditions are verified:
+
+* input data is sparse
+* ``metric = 'precomputed'``
+* :math:`D > 15`
+* :math:`k >= N/2`
+* ``effective_metric_`` isn't in the ``VALID_METRICS`` list for either
+  ``'kd_tree'`` or ``'ball_tree'``
+
+Otherwise, it selects the first out of ``'kd_tree'`` and ``'ball_tree'`` that
+has ``effective_metric_`` in its ``VALID_METRICS`` list. This heuristic is
+based on the following assumptions:
+
+* the number of query points is at least the same order as the number of
+  training points
+* ``leaf_size`` is close to its default value of ``30``
+* when :math:`D > 15`, the intrinsic dimensionality of the data is generally
+  to high for tree-based methods
 
 Effect of ``leaf_size``
 -----------------------
