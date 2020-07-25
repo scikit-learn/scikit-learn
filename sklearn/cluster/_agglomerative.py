@@ -750,7 +750,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
     compute_distances : bool, default=False
         Computes distances even if no distance_threshold is used. This can be
         used to make dendrogram visualization, but has impact on efficiency due
-        to the additional computational effort and used memory.
+        to the additional computational cost and used memory.
 
         .. versionadded:: 0.24
 
