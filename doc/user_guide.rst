@@ -26,5 +26,5 @@ User Guide
    inspection.rst
    visualizations.rst
    data_transforms.rst
-   Dataset loading utilities <datasets/index.rst>
-   modules/computing.rst
+   datasets.rst
+   computing.rst
