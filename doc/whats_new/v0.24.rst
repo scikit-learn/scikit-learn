@@ -114,7 +114,7 @@ Changelog
   :pr:`11064` by :user:`Jona Sassenhagen <jona-sassenhagen>`.
 
 - |Fix| :func:`decomposition.IncrementalPCA` prevents overflow error
-  in partial_fit for large batch_size and n_samples values.`
+  in partial_fit for large batch_size and n_samples values, on Windows OS.`
   :pr:`17985` by :user:`Alan Butler <aldee153> and Amanda Dsouza <amy12xx>`.
 
 :mod:`sklearn.ensemble`
