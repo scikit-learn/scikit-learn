@@ -1378,10 +1378,12 @@ def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
     return ret
 
 
-def _pairwise_callable(X, Y, metric, force_all_finite=True, **kwds):
+def _pairwise_callable(X, Y, metric, force_all_finite=True,
+                       is_numeric=True, **kwds):
     """Handle the callable case for pairwise_{distances,kernels}
     """
-    X, Y = check_pairwise_arrays(X, Y, force_all_finite=force_all_finite)
+    if is_numeric:
+        X, Y = check_pairwise_arrays(X, Y, force_all_finite=force_all_finite)
 
     if X is Y:
         # Only calculate metric for upper triangle
@@ -1634,7 +1636,8 @@ def pairwise_distances_chunked(X, Y=None, *, reduce_func=None,
 
 @_deprecate_positional_args
 def pairwise_distances(X, Y=None, metric="euclidean", *, n_jobs=None,
-                       force_all_finite=True, **kwds):
+                       force_all_finite=True,
+                       numeric_input=True, **kwds):
     """ Compute the distance matrix from a vector array X and optional Y.
 
     This method takes either a vector array or a distance matrix, and returns
@@ -1716,6 +1719,10 @@ def pairwise_distances(X, Y=None, metric="euclidean", *, n_jobs=None,
         .. versionchanged:: 0.23
            Accepts `pd.NA` and converts it into `np.nan`
 
+    numeric_input: bool, default=True
+        If True, input values (X, Y) are assumed to be numeric values.
+        when set to False, this can be used for string input values as well.
+
     **kwds : optional keyword parameters
         Any further parameters are passed directly to the distance function.
         If using a scipy.spatial.distance metric, the parameters are still
@@ -1755,6 +1762,7 @@ def pairwise_distances(X, Y=None, metric="euclidean", *, n_jobs=None,
         func = PAIRWISE_DISTANCE_FUNCTIONS[metric]
     elif callable(metric):
         func = partial(_pairwise_callable, metric=metric,
+                       is_numeric=numeric_input,
                        force_all_finite=force_all_finite, **kwds)
     else:
         if issparse(X) or issparse(Y):

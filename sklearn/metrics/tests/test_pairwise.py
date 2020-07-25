@@ -1338,3 +1338,17 @@ def test_numeric_pairwise_distances_datatypes(metric, dtype, y_is_x):
     # and fails due to rounding errors
     rtol = 1e-5 if dtype is np.float32 else 1e-7
     assert_allclose(dist, expected_dist, rtol=rtol)
+
+
+def test_pairwise_dist_custom_scoring_for_string():
+    X = ['This is my first sentences',
+         'my second dummy sentence',
+         'This is my third one']
+
+    def dummy_string_similarity(x, y):
+        return np.abs(len(x)-len(y))
+
+    dist = pairwise_distances(X,
+                              metric=dummy_string_similarity,
+                              numeric_input=False)
+    assert dist.max() == 6.0
