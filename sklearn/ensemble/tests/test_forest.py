@@ -11,7 +11,6 @@ Testing for the forest module (sklearn.ensemble.forest).
 import pickle
 import math
 from collections import defaultdict
-from distutils.version import LooseVersion
 import itertools
 from itertools import combinations
 from itertools import product
@@ -35,6 +34,7 @@ from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import assert_warns_message
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils._testing import skip_if_no_parallel
+from sklearn.utils.fixes import parse_version
 
 from sklearn.exceptions import NotFittedError
 
@@ -72,12 +72,9 @@ perm = rng.permutation(iris.target.size)
 iris.data = iris.data[perm]
 iris.target = iris.target[perm]
 
-# also load the boston dataset
-# and randomly permute it
-boston = datasets.load_boston()
-perm = rng.permutation(boston.target.size)
-boston.data = boston.data[perm]
-boston.target = boston.target[perm]
+# Make regression dataset
+X_reg, y_reg = datasets.make_regression(n_samples=500, n_features=10,
+                                        random_state=1)
 
 # also make a hastie_10_2 dataset
 hastie_X, hastie_y = datasets.make_hastie_10_2(n_samples=20, random_state=1)
@@ -159,29 +156,29 @@ def test_iris(name, criterion):
     check_iris_criterion(name, criterion)
 
 
-def check_boston_criterion(name, criterion):
-    # Check consistency on dataset boston house prices.
+def check_regression_criterion(name, criterion):
+    # Check consistency on regression dataset.
     ForestRegressor = FOREST_REGRESSORS[name]
 
     reg = ForestRegressor(n_estimators=5, criterion=criterion,
                           random_state=1)
-    reg.fit(boston.data, boston.target)
-    score = reg.score(boston.data, boston.target)
-    assert score > 0.94, ("Failed with max_features=None, criterion %s "
+    reg.fit(X_reg, y_reg)
+    score = reg.score(X_reg, y_reg)
+    assert score > 0.93, ("Failed with max_features=None, criterion %s "
                           "and score = %f" % (criterion, score))
 
     reg = ForestRegressor(n_estimators=5, criterion=criterion,
                           max_features=6, random_state=1)
-    reg.fit(boston.data, boston.target)
-    score = reg.score(boston.data, boston.target)
-    assert score > 0.95, ("Failed with max_features=6, criterion %s "
+    reg.fit(X_reg, y_reg)
+    score = reg.score(X_reg, y_reg)
+    assert score > 0.92, ("Failed with max_features=6, criterion %s "
                           "and score = %f" % (criterion, score))
 
 
 @pytest.mark.parametrize('name', FOREST_REGRESSORS)
 @pytest.mark.parametrize('criterion', ("mse", "mae", "friedman_mse"))
-def test_boston(name, criterion):
-    check_boston_criterion(name, criterion)
+def test_regression(name, criterion):
+    check_regression_criterion(name, criterion)
 
 
 def check_regressor_attributes(name):
@@ -308,7 +305,7 @@ def test_importances_asymptotic():
             for B in combinations(features, k):
                 # For all values B=b
                 for b in product(*[values[B[j]] for j in range(k)]):
-                    mask_b = np.ones(n_samples, dtype=np.bool)
+                    mask_b = np.ones(n_samples, dtype=bool)
 
                     for j in range(k):
                         mask_b &= X[:, B[j]] == b[j]
@@ -342,7 +339,7 @@ def test_importances_asymptotic():
                      [1, 1, 1, 1, 0, 1, 1, 9],
                      [1, 1, 1, 0, 1, 1, 1, 0]])
 
-    X, y = np.array(data[:, :7], dtype=np.bool), data[:, 7]
+    X, y = np.array(data[:, :7], dtype=bool), data[:, 7]
     n_features = X.shape[1]
 
     # Compute true importances
@@ -384,12 +381,9 @@ def check_oob_score(name, X, y, n_estimators=20):
     n_samples = X.shape[0]
     est.fit(X[:n_samples // 2, :], y[:n_samples // 2])
     test_score = est.score(X[n_samples // 2:, :], y[n_samples // 2:])
+    oob_score = est.oob_score_
 
-    if name in FOREST_CLASSIFIERS:
-        assert abs(test_score - est.oob_score_) < 0.1
-    else:
-        assert test_score > est.oob_score_
-        assert est.oob_score_ > .8
+    assert abs(test_score - oob_score) < 0.1 and oob_score > 0.7
 
     # Check warning if not enough estimators
     with np.errstate(divide="ignore", invalid="ignore"):
@@ -411,10 +405,10 @@ def test_oob_score_classifiers(name):
 
 @pytest.mark.parametrize('name', FOREST_REGRESSORS)
 def test_oob_score_regressors(name):
-    check_oob_score(name, boston.data, boston.target, 50)
+    check_oob_score(name, X_reg, y_reg, 50)
 
     # csc matrix
-    check_oob_score(name, csc_matrix(boston.data), boston.target, 50)
+    check_oob_score(name, csc_matrix(X_reg), y_reg, 50)
 
 
 def check_oob_score_raise_error(name):
@@ -475,11 +469,13 @@ def check_parallel(name, X, y):
 @pytest.mark.parametrize('name', FOREST_CLASSIFIERS_REGRESSORS)
 def test_parallel(name):
     if name in FOREST_CLASSIFIERS:
-        ds = iris
+        X = iris.data
+        y = iris.target
     elif name in FOREST_REGRESSORS:
-        ds = boston
+        X = X_reg
+        y = y_reg
 
-    check_parallel(name, ds.data, ds.target)
+    check_parallel(name, X, y)
 
 
 def check_pickle(name, X, y):
@@ -500,11 +496,13 @@ def check_pickle(name, X, y):
 @pytest.mark.parametrize('name', FOREST_CLASSIFIERS_REGRESSORS)
 def test_pickle(name):
     if name in FOREST_CLASSIFIERS:
-        ds = iris
+        X = iris.data
+        y = iris.target
     elif name in FOREST_REGRESSORS:
-        ds = boston
+        X = X_reg
+        y = y_reg
 
-    check_pickle(name, ds.data[::2], ds.target[::2])
+    check_pickle(name, X[::2], y[::2])
 
 
 def check_multioutput(name):
@@ -845,6 +843,7 @@ def check_min_weight_fraction_leaf(name):
             total_weight * est.min_weight_fraction_leaf), (
                 "Failed with {0} min_weight_fraction_leaf={1}".format(
                     name, est.min_weight_fraction_leaf))
+
 
 @pytest.mark.parametrize('name', FOREST_ESTIMATORS)
 def test_min_weight_fraction_leaf(name):
@@ -1274,7 +1273,7 @@ class MyBackend(DEFAULT_JOBLIB_BACKEND):  # type: ignore
 joblib.register_parallel_backend('testing', MyBackend)
 
 
-@pytest.mark.skipif(joblib.__version__ < LooseVersion('0.12'),
+@pytest.mark.skipif(parse_version(joblib.__version__) < parse_version('0.12'),
                     reason='tests not yet supported in joblib <0.12')
 @skip_if_no_parallel
 def test_backend_respected():

@@ -10,8 +10,7 @@ import pytest
 
 from sklearn.feature_extraction.image import (
     img_to_graph, grid_to_graph, extract_patches_2d,
-    reconstruct_from_patches_2d, PatchExtractor, _extract_patches,
-    extract_patches)
+    reconstruct_from_patches_2d, PatchExtractor, _extract_patches)
 from sklearn.utils._testing import ignore_warnings
 
 
@@ -33,7 +32,7 @@ def test_grid_to_graph():
     roi_size = 1
     # Generating two convex parts with one vertex
     # Thus, edges will be empty in _to_graph
-    mask = np.zeros((size, size), dtype=np.bool)
+    mask = np.zeros((size, size), dtype=bool)
     mask[0:roi_size, 0:roi_size] = True
     mask[-roi_size:, -roi_size:] = True
     mask = mask.reshape(size ** 2)
@@ -47,10 +46,10 @@ def test_grid_to_graph():
 
     # Checking dtype of the graph
     mask = np.ones((size, size))
-    A = grid_to_graph(n_x=size, n_y=size, n_z=size, mask=mask, dtype=np.bool)
-    assert A.dtype == np.bool
-    A = grid_to_graph(n_x=size, n_y=size, n_z=size, mask=mask, dtype=np.int)
-    assert A.dtype == np.int
+    A = grid_to_graph(n_x=size, n_y=size, n_z=size, mask=mask, dtype=bool)
+    assert A.dtype == bool
+    A = grid_to_graph(n_x=size, n_y=size, n_z=size, mask=mask, dtype=int)
+    assert A.dtype == int
     A = grid_to_graph(n_x=size, n_y=size, n_z=size, mask=mask,
                       dtype=np.float64)
     assert A.dtype == np.float64
@@ -334,11 +333,3 @@ def test_width_patch():
         extract_patches_2d(x, (4, 1))
     with pytest.raises(ValueError):
         extract_patches_2d(x, (1, 4))
-
-
-# TODO: Remove in 0.24
-def test_extract_patches_deprecated():
-    msg = ("The function feature_extraction.image.extract_patches has been "
-           "deprecated in 0.22 and will be removed in 0.24.")
-    with pytest.warns(FutureWarning, match=msg):
-        extract_patches(downsampled_face)

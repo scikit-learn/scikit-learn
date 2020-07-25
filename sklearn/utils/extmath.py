@@ -21,7 +21,6 @@ from ._logistic_sigmoid import _log_logistic_sigmoid
 from .sparsefuncs_fast import csr_row_norms
 from .validation import check_array
 from .validation import _deprecate_positional_args
-from .deprecation import deprecated
 
 
 def squared_norm(x):
@@ -31,7 +30,7 @@ def squared_norm(x):
 
     Parameters
     ----------
-    x : array_like
+    x : array-like
 
     Returns
     -------
@@ -57,14 +56,14 @@ def row_norms(X, squared=False):
 
     Parameters
     ----------
-    X : array_like
+    X : array-like
         The input array
     squared : bool, optional (default = False)
         If True, return squared norms.
 
     Returns
     -------
-    array_like
+    array-like
         The row-wise (squared) Euclidean norm of X.
     """
     if sparse.issparse(X):
@@ -87,7 +86,7 @@ def fast_logdet(A):
 
     Parameters
     ----------
-    A : array_like
+    A : array-like
         The matrix
     """
     sign, ld = np.linalg.slogdet(A)
@@ -101,7 +100,7 @@ def density(w, **kwargs):
 
     Parameters
     ----------
-    w : array_like
+    w : array-like
         The sparse vector
 
     Returns
@@ -386,9 +385,9 @@ def weighted_mode(a, w, *, axis=0):
 
     Parameters
     ----------
-    a : array_like
+    a : array-like
         n-dimensional array of which to find mode(s).
-    w : array_like
+    w : array-like
         n-dimensional array of weights for each value
     axis : int, optional
         Axis along which to operate. Default is 0, i.e. the first axis.
@@ -623,47 +622,19 @@ def softmax(X, copy=True):
     return X
 
 
-@deprecated("safe_min is deprecated in version 0.22 and will be removed "
-            "in version 0.24.")
-def safe_min(X):
-    """Returns the minimum value of a dense or a CSR/CSC matrix.
-
-    Adapated from https://stackoverflow.com/q/13426580
-
-    .. deprecated:: 0.22.0
-
-    Parameters
-    ----------
-    X : array_like
-        The input array or sparse matrix
-
-    Returns
-    -------
-    Float
-        The min value of X
-    """
-    if sparse.issparse(X):
-        if len(X.data) == 0:
-            return 0
-        m = X.data.min()
-        return m if X.getnnz() == X.size else min(m, 0)
-    else:
-        return X.min()
-
-
 def make_nonnegative(X, min_value=0):
     """Ensure `X.min()` >= `min_value`.
 
     Parameters
     ----------
-    X : array_like
+    X : array-like
         The matrix to make non-negative
     min_value : float
         The threshold value
 
     Returns
     -------
-    array_like
+    array-like
         The thresholded array
 
     Raises
