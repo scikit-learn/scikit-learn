@@ -1258,7 +1258,7 @@ def make_types_df_validator(target):
             return tf
         except TypeError:
             # not all np.types are supported by DataFrame. But we
-            #  don't look for this here. We search for cases when
+            #  dont look for this here. We search for cases when
             #  after the DataFrame is created, it generates an
             # invalid coo_matrix
             return None
