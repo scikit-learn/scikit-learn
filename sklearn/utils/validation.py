@@ -577,7 +577,9 @@ def check_array(array, accept_sparse=False, *, accept_large_sparse=True,
             mxg = "A coo_matrix with dtype 'np.object' is created "\
                   "when \nDataFrame has sparse extention arrays of"\
                   " mixed numeric types."\
-                if mixed else ""
+                if mixed else \
+                "SparseArrays of dtype: bytes, str or object lead"\
+                "to the generation of a coo_matrix of dtype object"
             raise ValueError(
                 "Pandas DataFrame with sparse extention arrays generated "
                 "a sparse coo_matrix with dtype 'np.object'\n which "

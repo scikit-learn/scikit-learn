@@ -136,12 +136,52 @@ def test_check__pandas_sparse_invalid_coo_matrix_numeric(dt_name, all):
 
 
 @pytest.mark.parametrize('dt_name',
-    ['bytes', 'str', 'object']
+                         ['bytes', 'object', 'str']
 )
 @pytest.mark.parametrize('all', [obj_types]
 )
-def test_check__pandas_sparse_invalid_matrix_coo_objects(dt_name, all):
+def test_check__pandas_sparse_invalid_coo_matrix_objects(dt_name, all):
     df = all[all.dtype_name.str.startswith(dt_name)]
+    if len(df.index) <= 1:
+        return
+
+    def tester_df(ntype1, ntype2):
+        pd = pytest.importorskip("pandas")
+        try:
+            tf = pd.DataFrame({'col1': pd.arrays.SparseArray([0, 1, 0],
+                                                             dtype=ntype1),
+                               'col2': pd.arrays.SparseArray([1, 0, 1],
+                                                             dtype=ntype2)})
+            return tf
+        except TypeError:
+            # not all np.types are supported by DataFrame. But we
+            #  don't look for this here. We search for cases when
+            #  after the DataFrame is created, it generates an
+            # invalid coo_matrix
+            return None
+
+    def do_test(first, second):
+        tdf = tester_df(first['np_name'], second['np_name'])
+        if tdf is None:
+            return
+
+        with pytest.raises(ValueError,
+                           match="generation of a coo_matrix "
+                                 "of dtype object"):
+            check_array(tdf, **{'accept_sparse': ['csr', 'csc'],
+                                'ensure_min_features': 2})
+
+    for i in df.index[:-1]:
+        do_test(df.loc[i], df.loc[i + 1])
+
+    if df.index[-1] < all.index[-1]:
+        first = df.loc[df.index[-1]]
+        next = all.loc[df.index[-1] + 1]
+        do_test(first, next)
+    else:
+        first = all.loc[all.index[0]]
+        last = df.loc[df.index[-1]]
+        do_test(first, last)
 
 
 def test_as_float_array():
