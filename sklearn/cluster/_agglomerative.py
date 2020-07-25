@@ -888,8 +888,9 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
 
         distance_threshold = self.distance_threshold
 
-        return_distance = (distance_threshold is not None) \
-            or self.compute_distances
+        return_distance = (
+            (distance_threshold is not None) or self.compute_distances
+        )
 
         out = memory.cache(tree_builder)(X, connectivity=connectivity,
                                          n_clusters=n_clusters,
