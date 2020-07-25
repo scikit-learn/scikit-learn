@@ -387,6 +387,8 @@ def test_incremental_pca_partial_fit_float_division():
 
 
 def test_incremental_pca_fit_overflow_error():
+    # Test for overflow error on Windows OS
+    # (non-regression test for issue #17693)
     rng = np.random.RandomState(0)
     A = rng.rand(500000, 2)
 
