@@ -747,10 +747,12 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
 
         .. versionadded:: 0.21
 
-    return_distance : bool, default=False
+    compute_distances : bool, default=False
         Computes distances even if no distance_threshold is used. This can be
-        used to make visualization easier but has impact on efficiency due to
-        the addictional computational afford and used memory.
+        used to make dendrogram visualization, but has impact on efficiency due
+        to the additional computational effort and used memory.
+
+        .. versionadded:: 0.24
 
     Attributes
     ----------
@@ -801,7 +803,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
                  memory=None,
                  connectivity=None, compute_full_tree='auto',
                  linkage='ward', distance_threshold=None,
-                 return_distance=False):
+                 compute_distances=False):
         self.n_clusters = n_clusters
         self.distance_threshold = distance_threshold
         self.memory = memory
@@ -809,7 +811,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         self.compute_full_tree = compute_full_tree
         self.linkage = linkage
         self.affinity = affinity
-        self.return_distance = return_distance
+        self.compute_distances = compute_distances
 
     def fit(self, X, y=None):
         """Fit the hierarchical clustering from features, or distance matrix.
@@ -887,7 +889,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         distance_threshold = self.distance_threshold
 
         return_distance = (distance_threshold is not None) \
-            or self.return_distance
+            or self.compute_distances
 
         out = memory.cache(tree_builder)(X, connectivity=connectivity,
                                          n_clusters=n_clusters,
@@ -901,7 +903,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         if return_distance:
             self.distances_ = out[-1]
 
-        if self.n_clusters is None:
+        if self.n_clusters is None:  # distance_threshold was passed
             self.n_clusters_ = np.count_nonzero(
                 self.distances_ >= distance_threshold) + 1
         else:
