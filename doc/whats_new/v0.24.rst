@@ -115,7 +115,7 @@ Changelog
 
 - |Fix| :func:`decomposition.IncrementalPCA.partial_fit` handles overflow error
   in mean correction.`
-  :pr:`17713` by :user:`Alan Butler <aldee153> and Amanda Dsouza <amy12xx>`.
+  :pr:`17985` by :user:`Alan Butler <aldee153> and Amanda Dsouza <amy12xx>`.
 
 :mod:`sklearn.ensemble`
 .......................
