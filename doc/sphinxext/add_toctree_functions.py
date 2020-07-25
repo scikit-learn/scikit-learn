@@ -42,7 +42,7 @@ def add_toctree_functions(app, pagename, templatename, context, doctree):
     """
     from sphinx.environment.adapters.toctree import TocTree
 
-    def get_nav_object(maxdepth=None, collapse=True, **kwargs):
+    def get_nav_object(maxdepth=None, collapse=True, numbered=False, **kwargs):
         """Return a list of nav links that can be accessed from Jinja.
 
         Parameters
@@ -75,7 +75,8 @@ def add_toctree_functions(app, pagename, templatename, context, doctree):
                      if isinstance(item, docutils.nodes.list_item)]
 
         # Now convert our docutils nodes into dicts that Jinja can use
-        nav = [docutils_node_to_jinja(child, only_pages=True)
+        nav = [docutils_node_to_jinja(child, only_pages=True,
+                                      numbered=numbered)
                for child in toc_items]
 
         return nav
@@ -83,7 +84,7 @@ def add_toctree_functions(app, pagename, templatename, context, doctree):
     context["get_nav_object"] = get_nav_object
 
 
-def docutils_node_to_jinja(list_item, only_pages=False):
+def docutils_node_to_jinja(list_item, only_pages=False, numbered=False):
     """Convert a docutils node to a structure that can be read by Jinja.
 
     Parameters
@@ -113,6 +114,11 @@ def docutils_node_to_jinja(list_item, only_pages=False):
     url = reference.attributes["refuri"]
     active = "current" in list_item.attributes["classes"]
 
+    secnumber = reference.attributes.get("secnumber", None)
+    if numbered and secnumber is not None:
+        secnumber = ".".join(str(n) for n in secnumber)
+        title = f"{secnumber}. {title}"
+
     # If we've got an anchor link, skip it if we wish
     if only_pages and '#' in url:
         return None
@@ -131,7 +137,8 @@ def docutils_node_to_jinja(list_item, only_pages=False):
         # The `.children` of the bullet_list has the nodes of the sub-pages.
         subpage_list = list_item.children[1].children
         for sub_page in subpage_list:
-            child_nav = docutils_node_to_jinja(sub_page, only_pages=only_pages)
+            child_nav = docutils_node_to_jinja(sub_page, only_pages=only_pages,
+                                               numbered=numbered)
             if child_nav is not None:
                 nav["children"].append(child_nav)
     return nav

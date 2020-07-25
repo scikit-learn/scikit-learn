@@ -88,7 +88,7 @@
         </div>
             {%- if meta and meta['parenttoc']|tobool %}
             <div class="sk-sidebar-toc">
-            {% set nav = get_nav_object(maxdepth=5, collapse=True) %}
+            {% set nav = get_nav_object(maxdepth=3, collapse=True, numbered=True) %}
               <ul>
               {% for main_nav_item in nav %}
               {% if main_nav_item.active %}
