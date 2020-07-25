@@ -33,7 +33,7 @@ if [[ -n "$CHECK_WARNINGS" ]]; then
     TEST_CMD="$TEST_CMD -Werror::DeprecationWarning -Werror::FutureWarning -Wignore:tostring:DeprecationWarning"
 fi
 
-if [[ "$PYTEST_XDIST" == "true" ]]; then
+if [[ "$PYTEST_XDIST_VERSION" != "none" ]]; then
     TEST_CMD="$TEST_CMD -n2"
 fi
 

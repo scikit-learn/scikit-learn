@@ -27,7 +27,7 @@ RemoteFileMetadata = namedtuple('RemoteFileMetadata',
                                 ['filename', 'url', 'checksum'])
 
 
-def get_data_home(data_home=None):
+def get_data_home(data_home=None) -> str:
     """Return the path of the scikit-learn data dir.
 
     This folder is used by some large dataset loaders to avoid downloading the

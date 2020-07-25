@@ -29,6 +29,8 @@ from ..base import MetaEstimatorMixin
 from ._split import check_cv
 from ._validation import _fit_and_score
 from ._validation import _aggregate_score_dicts
+from ._validation import _insert_error_scores
+from ._validation import _normalize_score_results
 from ..exceptions import NotFittedError
 from joblib import Parallel, delayed
 from ..utils import check_random_state
@@ -368,13 +370,12 @@ def fit_grid_point(X, y, estimator, parameters, train, test, scorer,
     # NOTE we are not using the return value as the scorer by itself should be
     # validated before. We use check_scoring only to reject multimetric scorer
     check_scoring(estimator, scorer)
-    scores, n_samples_test = _fit_and_score(estimator, X, y,
-                                            scorer, train,
-                                            test, verbose, parameters,
-                                            fit_params=fit_params,
-                                            return_n_test_samples=True,
-                                            error_score=error_score)
-    return scores, parameters, n_samples_test
+    results = _fit_and_score(estimator, X, y, scorer, train,
+                             test, verbose, parameters,
+                             fit_params=fit_params,
+                             return_n_test_samples=True,
+                             error_score=error_score)
+    return results["test_scores"], parameters, results["n_test_samples"]
 
 
 def _check_param_grid(param_grid):
@@ -454,8 +455,18 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             raise ValueError("No score function explicitly defined, "
                              "and the estimator doesn't provide one %s"
                              % self.best_estimator_)
-        score = self.scorer_[self.refit] if self.multimetric_ else self.scorer_
-        return score(self.best_estimator_, X, y)
+        if isinstance(self.scorer_, dict):
+            if self.multimetric_:
+                scorer = self.scorer_[self.refit]
+            else:
+                scorer = self.scorer_
+            return scorer(self.best_estimator_, X, y)
+
+        # callable
+        score = self.scorer_(self.best_estimator_, X, y)
+        if self.multimetric_:
+            score = score[self.refit]
+        return score
 
     @if_delegate_has_method(delegate=('best_estimator_', 'estimator'))
     def score_samples(self, X):
@@ -644,6 +655,23 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         """
         raise NotImplementedError("_run_search not implemented.")
 
+    def _check_refit_for_multimetric(self, scores):
+        """Check `refit` is compatible with `scores` is valid"""
+        multimetric_refit_msg = (
+            "For multi-metric scoring, the parameter refit must be set to a "
+            "scorer key or a callable to refit an estimator with the best "
+            "parameter setting on the whole data and make the best_* "
+            "attributes available for that metric. If this is not needed, "
+            f"refit should be set to False explicitly. {self.refit!r} was "
+            "passed.")
+
+        valid_refit_dict = (isinstance(self.refit, str) and
+                            self.refit in scores)
+
+        if (self.refit is not False and not valid_refit_dict
+                and not callable(self.refit)):
+            raise ValueError(multimetric_refit_msg)
+
     @_deprecate_positional_args
     def fit(self, X, y=None, *, groups=None, **fit_params):
         """Run fit with all sets of parameters.
@@ -671,27 +699,16 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         estimator = self.estimator
         cv = check_cv(self.cv, y, classifier=is_classifier(estimator))
 
-        scorers, self.multimetric_ = _check_multimetric_scoring(
-            self.estimator, scoring=self.scoring)
+        refit_metric = "score"
 
-        if self.multimetric_:
-            if self.refit is not False and (
-                    not isinstance(self.refit, str) or
-                    # This will work for both dict / list (tuple)
-                    self.refit not in scorers) and not callable(self.refit):
-                raise ValueError("For multi-metric scoring, the parameter "
-                                 "refit must be set to a scorer key or a "
-                                 "callable to refit an estimator with the "
-                                 "best parameter setting on the whole "
-                                 "data and make the best_* attributes "
-                                 "available for that metric. If this is "
-                                 "not needed, refit should be set to "
-                                 "False explicitly. %r was passed."
-                                 % self.refit)
-            else:
-                refit_metric = self.refit
+        if callable(self.scoring):
+            scorers = self.scoring
+        elif self.scoring is None or isinstance(self.scoring, str):
+            scorers = check_scoring(self.estimator, self.scoring)
         else:
-            refit_metric = 'score'
+            scorers = _check_multimetric_scoring(self.estimator, self.scoring)
+            self._check_refit_for_multimetric(scorers)
+            refit_metric = self.refit
 
         X, y, groups = indexable(X, y, groups)
         fit_params = _check_fit_params(X, fit_params)
@@ -752,15 +769,31 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                                      .format(n_splits,
                                              len(out) // n_candidates))
 
+                # For callable self.scoring, the return type is only know after
+                # calling. If the return type is a dictionary, the error scores
+                # can now be inserted with the correct key. The type checking
+                # of out will be done in `_insert_error_scores`.
+                if callable(self.scoring):
+                    _insert_error_scores(out, self.error_score)
                 all_candidate_params.extend(candidate_params)
                 all_out.extend(out)
 
                 nonlocal results
                 results = self._format_results(
-                    all_candidate_params, scorers, n_splits, all_out)
+                    all_candidate_params, n_splits, all_out)
                 return results
 
             self._run_search(evaluate_candidates)
+
+            # multimetric is determined here because in the case of a callable
+            # self.scoring the return type is only known after calling
+            first_test_score = all_out[0]['test_scores']
+            self.multimetric_ = isinstance(first_test_score, dict)
+
+            # check refit_metric now for a callabe scorer that is multimetric
+            if callable(self.scoring) and self.multimetric_:
+                self._check_refit_for_multimetric(first_test_score)
+                refit_metric = self.refit
 
         # For multi-metric evaluation, store the best_index_, best_params_ and
         # best_score_ iff refit is one of the scorer names
@@ -796,29 +829,16 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             self.refit_time_ = refit_end_time - refit_start_time
 
         # Store the only scorer not as a dict for single metric evaluation
-        self.scorer_ = scorers if self.multimetric_ else scorers['score']
+        self.scorer_ = scorers
 
         self.cv_results_ = results
         self.n_splits_ = n_splits
 
         return self
 
-    def _format_results(self, candidate_params, scorers, n_splits, out):
+    def _format_results(self, candidate_params, n_splits, out):
         n_candidates = len(candidate_params)
-
-        # if one choose to see train score, "out" will contain train score info
-        if self.return_train_score:
-            (train_score_dicts, test_score_dicts, test_sample_counts, fit_time,
-             score_time) = zip(*out)
-        else:
-            (test_score_dicts, test_sample_counts, fit_time,
-             score_time) = zip(*out)
-
-        # test_score_dicts and train_score dicts are lists of dictionaries and
-        # we make them into dict of lists
-        test_scores = _aggregate_score_dicts(test_score_dicts)
-        if self.return_train_score:
-            train_scores = _aggregate_score_dicts(train_score_dicts)
+        out = _aggregate_score_dicts(out)
 
         results = {}
 
@@ -846,8 +866,8 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                 results["rank_%s" % key_name] = np.asarray(
                     rankdata(-array_means, method='min'), dtype=np.int32)
 
-        _store('fit_time', fit_time)
-        _store('score_time', score_time)
+        _store('fit_time', out["fit_time"])
+        _store('score_time', out["score_time"])
         # Use one MaskedArray and mask all the places where the param is not
         # applicable for that candidate. Use defaultdict as each candidate may
         # not contain all the params
@@ -866,17 +886,18 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         # Store a list of param dicts at the key 'params'
         results['params'] = candidate_params
 
-        # NOTE test_sample counts (weights) remain the same for all candidates
-        test_sample_counts = np.array(test_sample_counts[:n_splits],
-                                      dtype=int)
+        test_scores_dict = _normalize_score_results(out["test_scores"])
+        if self.return_train_score:
+            train_scores_dict = _normalize_score_results(out["train_scores"])
 
-        for scorer_name in scorers.keys():
+        for scorer_name in test_scores_dict:
             # Computed the (weighted) mean and std for test scores alone
-            _store('test_%s' % scorer_name, test_scores[scorer_name],
+            _store('test_%s' % scorer_name, test_scores_dict[scorer_name],
                    splits=True, rank=True,
                    weights=None)
             if self.return_train_score:
-                _store('train_%s' % scorer_name, train_scores[scorer_name],
+                _store('train_%s' % scorer_name,
+                       train_scores_dict[scorer_name],
                        splits=True)
 
         return results

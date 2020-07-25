@@ -43,7 +43,7 @@ class IncrementalPCA(_BasePCA):
     Parameters
     ----------
     n_components : int or None, (default=None)
-        Number of components to keep. If ``n_components `` is ``None``,
+        Number of components to keep. If ``n_components`` is ``None``,
         then ``n_components`` is set to ``min(n_samples, n_features)``.
 
     whiten : bool, optional
