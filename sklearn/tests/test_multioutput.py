@@ -609,14 +609,13 @@ def test_regressor_chain_w_fit_params():
 def test_leniency_for_missing_data():
     rng = np.random.RandomState(42)
     X, y = make_multilabel_classification(random_state=rng)
-    mask = np.random.choice([1, 0], X.shape, p=[.1, .9]).astype(bool)
+    mask = rng.choice([1, 0], X.shape, p=[.01, .99]).astype(bool)
     X[mask] = np.nan
 
     X_train, X_test, y_train, y_test = train_test_split(X, y,
                                                         random_state=rng)
 
-    hgbc = HistGradientBoostingClassifier(max_iter=3)
+    hgbc = HistGradientBoostingClassifier(random_state=rng)
     clf = MultiOutputClassifier(estimator=hgbc)
     clf.fit(X_train, y_train)
-
-    assert clf.score(X_test, y_test) > 0.8
+    assert jaccard_score(y_test, clf.predict(X_test), average='samples') > .4
