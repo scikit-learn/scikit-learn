@@ -53,6 +53,97 @@ from sklearn.exceptions import NotFittedError, PositiveSpectrumWarning
 from sklearn.utils._testing import TempMemmap
 
 
+def make_type_tables():
+    pd = pytest.importorskip("pandas")
+
+    ntp = np.core.numerictypes.allTypes
+    inpt = [{'np_name': it[0], 'np_type': it[1]} for it in ntp.items()]
+    dall = pd.DataFrame(inpt)
+    dall['dtype'] = dall['np_type'].map(np.dtype)
+    dall['dtype_name'] = dall['dtype'].map(lambda x: x.name)
+
+    dall.reindex(columns=['dtype', 'np_name', 'np_type'])
+
+    num_types = (lambda x: x[(x.dtype_name.str.startswith('bool')) |\
+                 (x.dtype_name.str.startswith('float')) |\
+                 (x.dtype_name.str.startswith('int')) |\
+                 (x.dtype_name.str.startswith('uint'))\
+                 ])(dall)
+    num_types.sort_values(by='dtype_name', inplace=True)
+    num_types.index = list(range(num_types.shape[0]))
+
+    obj_types = (lambda x: x[(x.dtype_name.str.startswith('bytes')) |\
+                 (x.dtype_name.str.startswith('object')) |\
+                 (x.dtype_name.str.startswith('str'))\
+                 ])(dall)
+    obj_types.sort_values(by='dtype_name', inplace=True)
+    obj_types.index = list(range(obj_types.shape[0]))
+
+    return num_types, obj_types
+num_types, obj_types = make_type_tables()
+
+
+@pytest.mark.parametrize('dt_name',
+    ['bool', 'float', 'int', 'uint']
+)
+@pytest.mark.parametrize('all', [num_types]
+)
+def test_check__pandas_sparse_invalid_coo_matrix_numeric(dt_name, all):
+    df = all[all.dtype_name.str.startswith(dt_name)]
+    if len(df.index) <= 1:
+        return
+
+    def tester_df(ntype1, ntype2):
+        pd = pytest.importorskip("pandas")
+        try:
+            tf = pd.DataFrame({'col1': pd.arrays.SparseArray([0, 1, 0],
+                              dtype=ntype1),
+                               'col2': pd.arrays.SparseArray([1, 0, 1],
+                              dtype=ntype2)})
+            return tf
+        except TypeError:
+            # not all np.types are supported by DataFrame. But we
+            #  don't look for this here. We search for cases when
+            #  after the DataFrame is created, it generates an
+            # invalid coo_matrix
+            return None
+
+    def do_test(first, second):
+        tdf = tester_df(first['np_name'], second['np_name'])
+        if tdf is None:
+            return
+        if first['dtype_name'] == second['dtype_name']:
+            check_array(tdf, **{'accept_sparse': ['csr', 'csc'],
+                                'ensure_min_features': 2})
+        else:
+            with pytest.raises(ValueError,
+                               match="DataFrame has sparse extention "
+                                     "arrays of mixed numeric types"):
+                check_array(tdf, **{'accept_sparse': ['csr', 'csc'],
+                                    'ensure_min_features': 2})
+
+    for i in df.index[:-1]:
+        do_test(df.loc[i], df.loc[i+1])
+
+    if df.index[-1] < all.index[-1]:
+        first = df.loc[df.index[-1]]
+        next = all.loc[df.index[-1] + 1]
+        do_test(first, next)
+    else:
+        first = all.loc[all.index[0]]
+        last = df.loc[df.index[-1]]
+        do_test(first, last)
+
+
+@pytest.mark.parametrize('dt_name',
+    ['bytes', 'str', 'object']
+)
+@pytest.mark.parametrize('all', [obj_types]
+)
+def test_check__pandas_sparse_invalid_matrix_coo_objects(dt_name, all):
+    df = all[all.dtype_name.str.startswith(dt_name)]
+
+
 def test_as_float_array():
     # Test function for as_float_array
     X = np.ones((3, 10), dtype=np.int32)
