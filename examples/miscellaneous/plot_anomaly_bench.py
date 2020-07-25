@@ -71,7 +71,7 @@ for dataset_idx, dataset_name in enumerate(datasets):
         y = dataset.target
         idx = np.random.choice(
             X.shape[0], int(X.shape[0]*0.1), replace=False)
-        X = X[idx, :]   # reduce the sample size
+        X = X[idx, :]
         y = y[idx]
 
         # normal data are those with attribute 2
