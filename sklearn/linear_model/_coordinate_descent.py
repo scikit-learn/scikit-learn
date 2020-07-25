@@ -23,6 +23,7 @@ from ..model_selection import check_cv
 from ..utils.extmath import safe_sparse_dot
 from ..utils.fixes import _astype_copy_false, _joblib_parallel_args
 from ..utils.validation import check_is_fitted, _check_sample_weight
+from ..utils.validation import column_or_1d
 from ..utils.validation import _deprecate_positional_args
 
 # mypy error: Module 'sklearn.linear_model' has no attribute '_cd_fast'
@@ -1238,6 +1239,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, metaclass=ABCMeta):
 
         if y.shape[0] == 0:
             raise ValueError("y has 0 samples: %r" % y)
+        y = column_or_1d(y, warn=True)
 
         if not self._accepts_sparse() and sparse.isspmatrix(X):
             raise TypeError("X should be dense but a sparse matrix was passed")
