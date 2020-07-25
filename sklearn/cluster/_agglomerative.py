@@ -1012,6 +1012,13 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
 
         .. versionadded:: 0.21
 
+    compute_distances : bool, default=False
+        Computes distances even if no distance_threshold is used. This can be
+        used to make dendrogram visualization, but has impact on efficiency due
+        to the additional computational cost and used memory.
+
+        .. versionadded:: 0.24
+
     Attributes
     ----------
     n_clusters_ : int
@@ -1062,11 +1069,12 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
                  memory=None,
                  connectivity=None, compute_full_tree='auto',
                  linkage='ward', pooling_func=np.mean,
-                 distance_threshold=None):
+                 distance_threshold=None, compute_distances=False):
         super().__init__(
             n_clusters=n_clusters, memory=memory, connectivity=connectivity,
             compute_full_tree=compute_full_tree, linkage=linkage,
-            affinity=affinity, distance_threshold=distance_threshold)
+            affinity=affinity, distance_threshold=distance_threshold,
+            compute_distances=compute_distances)
         self.pooling_func = pooling_func
 
     def fit(self, X, y=None, **params):
