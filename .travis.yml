@@ -35,7 +35,7 @@ matrix:
 
     - python: 3.7
       os: linux
-      arch: aarch64
+      arch: arm64
 
 install: source build_tools/travis/install.sh
 script:
