@@ -39,14 +39,14 @@ run_tests() {
 
 
     if [[ "$TRAVIS_CPU_ARCH" == "arm64" ]]; then
-	# use pytest-xdist for faster tests
+        # use pytest-xdist for faster tests
         TEST_CMD="$TEST_CMD -n $CI_CPU_COUNT"
     else
         # Tests that require large downloads over the networks are skipped in CI.
         # Here we make sure, that they are still run on a regular basis.
-	#
-	# Note that using pytest-xdist is currently not compatible
-	# with fetching datasets in tests due to datasets cache corruptions issues.
+        #
+        # Note that using pytest-xdist is currently not compatible
+        # with fetching datasets in tests due to datasets cache corruptions issues.
         export SKLEARN_SKIP_NETWORK_TESTS=0
     fi
 
