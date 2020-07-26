@@ -62,7 +62,7 @@ X_train, X_test, y_train, y_test = train_test_split(
 # prepare plots
 
 # first prepare the ROC curve
-ax_roc = plt.subplot(1, 2, 1)
+ax_roc = plt.subplot(1, 2, 1, label='roc_curve')
 ax_roc.set_title('Receiver Operating Characteristic (ROC) curves')
 ax_roc.set_xlabel('False Positive Rate')
 ax_roc.set_ylabel('True Positive Rate')
@@ -75,7 +75,7 @@ ax_roc.xaxis.set_major_formatter(
     FuncFormatter(lambda y, _: '{:.0%}'.format(y)))
 
 # second prepare the DET curve
-ax_det = plt.subplot(1, 2, 2)
+ax_det = plt.subplot(1, 2, 2, label='det_curve')
 ax_det.set_title('Detection Error Tradeoff (DET) curves')
 ax_det.set_xlabel('False Positive Rate')
 ax_det.set_ylabel('False Negative Rate')
@@ -114,7 +114,6 @@ for name, clf in zip(names, classifiers):
     )
 
 # finally add legend
-ax_det = plt.subplot(1, 2, 2)
 plt.legend(names, loc="upper right")
 
 plt.tight_layout()
