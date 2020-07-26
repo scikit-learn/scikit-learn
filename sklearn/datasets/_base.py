@@ -12,6 +12,7 @@ import shutil
 from collections import namedtuple
 from os import environ, listdir, makedirs
 from os.path import dirname, exists, expanduser, isdir, join, splitext
+from tempfile import mkdtemp
 import hashlib
 
 from ..utils import Bunch
@@ -1176,13 +1177,15 @@ def _fetch_remote(remote, dirname=None):
         Full path of the created file.
     """
 
-    file_path = (remote.filename if dirname is None
-                 else join(dirname, remote.filename))
-    urlretrieve(remote.url, file_path)
-    checksum = _sha256(file_path)
+    tmp_path = join(mkdtemp(), remote.filename)
+    urlretrieve(remote.url, tmp_path)
+    checksum = _sha256(tmp_path)
     if remote.checksum != checksum:
         raise IOError("{} has an SHA256 checksum ({}) "
                       "differing from expected ({}), "
-                      "file may be corrupted.".format(file_path, checksum,
+                      "file may be corrupted.".format(tmp_path, checksum,
                                                       remote.checksum))
+    file_path = (remote.filename if dirname is None
+                 else join(dirname, remote.filename))
+    shutil.move(tmp_path, file_path)
     return file_path
