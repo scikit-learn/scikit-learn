@@ -70,9 +70,20 @@ Changelog
   `init_size_`, are deprecated and will be removed in 0.26. :pr:`17864` by
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+- |Fix| :class:`cluster.AgglomerativeClustering` has a new parameter
+  `compute_distances`. When set to `True`, distances between clusters are
+  computed and stored in the `distances_` attribute even when the parameter
+  `distance_threshold` is not used. This new parameter is useful to produce
+  dendrogram visualizations, but introduces a computational and memory
+  overhead. :pr:`17984` by :user:`Michael Riedmann <mriedmann>`,
+  :user:`Emilie Delattre <EmilieDel>`, and
+  :user:`Francesco Casalegno <FrancescoCasalegno>`.
+
 - |Fix| Fixed a bug in :class:`cluster.AffinityPropagation`, that
   gives incorrect clusters when the array dtype is float32.
-  :pr:`17995` by :user:`Thomaz Santana  <Wikilicious>` and :user:`Amanda Dsouza <amy12xx>`.
+  :pr:`17995` by :user:`Thomaz Santana  <Wikilicious>` and
+  :user:`Amanda Dsouza <amy12xx>`.
+
 
 :mod:`sklearn.covariance`
 .........................
