@@ -905,10 +905,10 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         if return_distance:
             self.distances_ = out[-1]
 
-        if self.distance_threshold is not None:  # distance_threshold was passed
+        if self.distance_threshold is not None:  # distance_threshold is used
             self.n_clusters_ = np.count_nonzero(
                 self.distances_ >= distance_threshold) + 1
-        else:  # n_clusters was passed
+        else:  # n_clusters is used
             self.n_clusters_ = self.n_clusters
 
         # Cut the tree
