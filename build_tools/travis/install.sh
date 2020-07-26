@@ -67,7 +67,7 @@ if [[ "$TRAVIS_CPU_ARCH" == "amd64" ]]; then
     echo "Installing pillow master"
     pip install https://github.com/python-pillow/Pillow/archive/master.zip
 else
-    conda install -y scipy numpy pandas
+    conda install -y scipy numpy pandas cython
     pip install joblib threadpoolctl
 fi
 
