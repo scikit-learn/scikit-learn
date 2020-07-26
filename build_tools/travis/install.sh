@@ -36,8 +36,12 @@ ccache --max-size 100M --show-stats
 deactivate || :
 
 # Install miniconda
-fname=Miniconda3-latest-Linux-x86_64.sh
-wget https://repo.continuum.io/miniconda/$fname -O miniconda.sh
+if [[ "$TRAVIS_CPU_ARCH" == "arm64" ]]; then
+    wget https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-aarch64.sh -O miniconda.sh
+else
+    fname=Miniconda3-latest-Linux-x86_64.sh
+    wget https://repo.continuum.io/miniconda/$fname -O miniconda.sh
+fi
 MINICONDA_PATH=$HOME/miniconda
 chmod +x miniconda.sh && ./miniconda.sh -b -p $MINICONDA_PATH
 export PATH=$MINICONDA_PATH/bin:$PATH
@@ -45,17 +49,24 @@ conda update --yes conda
 
 # Create environment and install dependencies
 conda create -n testenv --yes python=3.7
+
 source activate testenv
 
-pip install --upgrade pip setuptools
-echo "Installing numpy and scipy master wheels"
-dev_anaconda_url=https://pypi.anaconda.org/scipy-wheels-nightly/simple
-pip install --pre --upgrade --timeout=60 --extra-index $dev_anaconda_url numpy scipy pandas
-pip install --pre cython
-echo "Installing joblib master"
-pip install https://github.com/joblib/joblib/archive/master.zip
-echo "Installing pillow master"
-pip install https://github.com/python-pillow/Pillow/archive/master.zip
+if [[ "$TRAVIS_CPU_ARCH" == "amd64" ]]; then
+    pip install --upgrade pip setuptools
+    echo "Installing numpy and scipy master wheels"
+    dev_anaconda_url=https://pypi.anaconda.org/scipy-wheels-nightly/simple
+    pip install --pre --upgrade --timeout=60 --extra-index $dev_anaconda_url numpy scipy pandas
+    pip install --pre cython
+    echo "Installing joblib master"
+    pip install https://github.com/joblib/joblib/archive/master.zip
+    echo "Installing pillow master"
+    pip install https://github.com/python-pillow/Pillow/archive/master.zip
+else
+    conda install scipy numpy pandas
+    pip install joblib threadpoolctl
+fi
+
 pip install $(get_dep pytest $PYTEST_VERSION) pytest-cov
 
 # Build scikit-learn in the install.sh script to collapse the verbose
