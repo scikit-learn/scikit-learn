@@ -748,7 +748,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         .. versionadded:: 0.21
 
     compute_distances : bool, default=False
-        Computes distances between clusters even if no `distance_threshold` is
+        Computes distances between clusters even if `distance_threshold` is not
         used. This can be used to make dendrogram visualization, but introduces
         a computational and memory overhead.
 
@@ -1015,7 +1015,7 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         .. versionadded:: 0.21
 
     compute_distances : bool, default=False
-        Computes distances between clusters even if no `distance_threshold` is
+        Computes distances between clusters even if `distance_threshold` is not
         used. This can be used to make dendrogram visualization, but introduces
         a computational and memory overhead.
 
