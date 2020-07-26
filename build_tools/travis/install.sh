@@ -14,7 +14,10 @@
 set -e
 
 # Fail fast
-build_tools/travis/travis_fastfail.sh
+echo "CPU Arch: ${TRAVIS_CPU_ARCH}"
+if [[ "$TRAVIS_CPU_ARCH" == "amd64" ]]; then
+    build_tools/travis/travis_fastfail.sh
+fi
 
 # Imports get_dep
 source build_tools/shared.sh
@@ -35,7 +38,6 @@ ccache --max-size 100M --show-stats
 # If Travvis has language=generic, deactivate does not exist. `|| :` will pass.
 deactivate || :
 
-echo "CPU Arch: ${TRAVIS_CPU_ARCH}"
 
 # Install miniconda
 if [[ "$TRAVIS_CPU_ARCH" == "arm64" ]]; then
