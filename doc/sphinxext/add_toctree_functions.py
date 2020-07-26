@@ -52,6 +52,8 @@ def add_toctree_functions(app, pagename, templatename, context, doctree):
         collapse: bool
             Whether to only include sub-pages of the currently-active page,
             instead of sub-pages of all top-level pages of the site.
+        numbered: bool
+            Whether to add section number to title
         kwargs: key/val pairs
             Passed to the `TocTree.get_toctree_for` Sphinx method
         """
@@ -95,6 +97,8 @@ def docutils_node_to_jinja(list_item, only_pages=False, numbered=False):
     only_pages : bool
         Only include items for full pages in the output dictionary. Exclude
         anchor links (TOC items with a URL that starts with #)
+    numbered: bool
+        Whether to add section number to title
 
     Returns
     -------
