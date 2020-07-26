@@ -1512,16 +1512,18 @@ better suited.
      Wikipedia, The Free Encyclopedia. September 4, 2017, 23:33 UTC.
      Available at: https://en.wikipedia.org/w/index.php?title=Detection_error_tradeoff&oldid=798982054.
      Accessed February 19, 2018.
-  .. A. Martin, G. Doddington, T. Kamm, M. Ordowski, and M. Przybocki,
-     `The DET Curve in Assessment of Detection Task Performance
-     <http://www.dtic.mil/docs/citations/ADA530509>`_,
-     NIST 1997.
+
   .. [Navratil2007] J. Navractil and D. Klusacek,
      "`On Linear DETs,
      <http://www.research.ibm.com/CBG/papers/icassp07_navratil.pdf>`_"
      2007 IEEE International Conference on Acoustics,
      Speech and Signal Processing - ICASSP '07, Honolulu,
      HI, 2007, pp. IV-229-IV-232.
+
+  A. Martin, G. Doddington, T. Kamm, M. Ordowski, and M. Przybocki,
+  `The DET Curve in Assessment of Detection Task Performance
+  <http://www.dtic.mil/docs/citations/ADA530509>`_,
+  NIST 1997.
 
 .. _zero_one_loss:
 
