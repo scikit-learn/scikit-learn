@@ -18,17 +18,17 @@ from ..utils.validation import _deprecate_positional_args
 from ..neighbors import NearestNeighbors
 
 
-def barycenter_weights(X, Z, reg=1e-3):
-    """Compute barycenter weights of X from Y along the first axis
+def barycenter_weights(X, indices, reg=1e-3):
+    """Compute barycenter weights of X from indices along the first axis
 
-    We estimate the weights to assign to each point in Y[i] to recover
+    We estimate the weights to assign to each point in [i] to recover
     the point X[i]. The barycenter weights sum to 1.
 
     Parameters
     ----------
     X : array-like, shape (n_samples, n_dim)
 
-    Z : array-like, shape (n_samples, n_neighbors, n_dim)
+    indices : array-like, shape (n_samples, n_neighbors)
 
     reg : float, default=1e-3
         amount of regularization to add for the problem to be
@@ -43,23 +43,24 @@ def barycenter_weights(X, Z, reg=1e-3):
     See developers note for more information.
     """
     X = check_array(X, dtype=FLOAT_DTYPES)
-    Z = check_array(Z, dtype=FLOAT_DTYPES, allow_nd=True)
+    indices = check_array(indices, dtype=int)
 
-    n_samples, n_neighbors = X.shape[0], Z.shape[1]
+    n_samples, n_neighbors = X.shape[0], indices.shape[1]
     B = np.empty((n_samples, n_neighbors), dtype=X.dtype)
     v = np.ones(n_neighbors, dtype=X.dtype)
 
     # this might raise a LinalgError if G is singular and has trace
     # zero
-    for i, A in enumerate(Z.transpose(0, 2, 1)):
-        C = A.T - X[i]  # broadcasting
+    for i, ind in enumerate(indices):
+        A = X[ind]
+        C = A - X[i]  # broadcasting
         G = np.dot(C, C.T)
         trace = np.trace(G)
         if trace > 0:
             R = reg * trace
         else:
             R = reg
-        G.flat[::Z.shape[1] + 1] += R
+        G.flat[::n_neighbors + 1] += R
         w = solve(G, v, sym_pos=True)
         B[i, :] = w / np.sum(w)
     return B
@@ -102,7 +103,7 @@ def barycenter_kneighbors_graph(X, n_neighbors, reg=1e-3, n_jobs=None):
     X = knn._fit_X
     n_samples = knn.n_samples_fit_
     ind = knn.kneighbors(X, return_distance=False)[:, 1:]
-    data = barycenter_weights(X, X[ind], reg=reg)
+    data = barycenter_weights(X, ind, reg=reg)
     indptr = np.arange(0, n_samples * n_neighbors + 1, n_neighbors)
     return csr_matrix((data.ravel(), ind.ravel(), indptr),
                       shape=(n_samples, n_samples))
@@ -723,8 +724,7 @@ class LocallyLinearEmbedding(TransformerMixin,
         X = check_array(X)
         ind = self.nbrs_.kneighbors(X, n_neighbors=self.n_neighbors,
                                     return_distance=False)
-        weights = barycenter_weights(X, self.nbrs_._fit_X[ind],
-                                     reg=self.reg)
+        weights = barycenter_weights(X, ind, reg=self.reg)
         X_new = np.empty((X.shape[0], self.n_components))
         for i in range(X.shape[0]):
             X_new[i] = np.dot(self.embedding_[ind[i]].T, weights[i])
