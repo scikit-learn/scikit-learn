@@ -15,9 +15,12 @@ set -e
 
 # Fail fast
 echo "CPU Arch: ${TRAVIS_CPU_ARCH}"
-if [[ "$TRAVIS_CPU_ARCH" == "amd64" ]]; then
-    build_tools/travis/travis_fastfail.sh
-fi
+
+# jq is used in travis_fastfail.sh, it's already pre-installed in non aarch64
+# environments
+sudo apt-get install jq
+
+build_tools/travis/travis_fastfail.sh
 
 # Imports get_dep
 source build_tools/shared.sh
