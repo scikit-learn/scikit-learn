@@ -3,19 +3,44 @@
 Detection error tradeoff (DET) curve
 =======================================
 
-In this example we compare receiver operating characteristic (ROC) and
-detection error tradeoff (DET) curves to demonstrate how DET curves can help
-to asses the performance of different classification algorithms.
+In this example, we compare receiver operating characteristic (ROC) and
+detection error tradeoff (DET) curves for different classification algorithms
+for the same classification task.
 
 DET curves are commonly plotted in normal deviate scale.
 To achieve this we transform the errors rates as returned by the
 ``detection_error_tradeoff_curve`` function and the axis scale using
 ``scipy.stats.norm``.
 
+The point of this example is to demonstrate two properties of DET curves,
+namely:
+
+1. It might be easier to visually assess the overall performance of different
+   classification algorithms using DET curves over ROC curves.
+   Due to the linear scale used for plotting ROC curves, different classifiers
+   usually only differ in the top left corner of the graph and appear similar
+   for a large part of the plot. On the other hand, because DET curves represent
+   straight lines in normal deviate scale. As such, they tend to be
+   distinguishable as a whole and the area of interest spans a large part of the
+   plot.
+2. DET curves give the user direct feedback of the detection error tradeoff to
+   aid in operating point analysis.
+   The user can deduct directly from the DET-curve plot at which rate
+   false-negative error rate will improve when willing to accept an increase in
+   false-positive error rate (or vice-versa).
+
+The plots in this example compare ROC curves on the left side to corresponding
+DET curves on the right.
+There is no particular reason why these classifiers have been chosen for the
+example plot over other classifiers available in scikit-learn.
+
 .. note::
 
     - See :func:`sklearn.metrics.roc_curve` for further information about ROC
       curves.
+
+    - See :func:`sklearn.metrics.detection_error_tradeoff_curve` for further
+      information about DET curves.
 
     - This example is loosely based on
       :ref:`sphx_glr_auto_examples_classification_plot_classifier_comparison.py`
