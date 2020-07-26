@@ -51,10 +51,10 @@ enhance the functionality of scikit-learn's estimators.
   cross-validated parameter search using any of these strategies.
 
 - `Neuraxle <https://github.com/Neuraxio/Neuraxle>`_
-  A Python Framework for Hyperparameter Tuning and Clean Machine Learning. Let
-  your pipeline steps have hyperparameter spaces. Enable data checkpoints to
-  cut duplicate calculations. Serialize your models for production. Go from
-  research to production environment and deploy easily.
+  A library for building neat pipelines, providing the right abstractions to both
+  ease research, development, and deployment of your machine learning applications.
+  Compatible with deep learning frameworks, you can stream minibatches, use data
+  checkpoints, build funky pipelines, and serialize models with custom per-step savers.
 
 **Experimentation frameworks**
 
