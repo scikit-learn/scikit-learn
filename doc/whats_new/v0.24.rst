@@ -113,6 +113,10 @@ Changelog
   argument `rotation`, which can take the value `None`, `'varimax'` or `'quartimax'.`
   :pr:`11064` by :user:`Jona Sassenhagen <jona-sassenhagen>`.
 
+- |Fix| Avoid overflows on Windows in :func:`decomposition.IncrementalPCA.partial_fit`
+  for large ``batch_size`` and ``n_samples`` values.`
+  :pr:`17985` by :user:`Alan Butler <aldee153> and Amanda Dsouza <amy12xx>`.
+
 :mod:`sklearn.ensemble`
 .......................
 
