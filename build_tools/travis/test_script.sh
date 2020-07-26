@@ -27,7 +27,7 @@ if [[ "$BUILD_WITH_ICC" == "true" ]]; then
 fi
 
 run_tests() {
-    TEST_CMD="pytest --showlocals --durations=20 --pyargs"
+    TEST_CMD="pytest --showlocals --durations=20 -n $CI_CPU_COUNT --pyargs"
 
     # Get into a temp directory to run test from the installed scikit-learn and
     # check if we do not leave artifacts

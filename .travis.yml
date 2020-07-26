@@ -23,7 +23,9 @@ matrix:
     # installed from their CI wheels in a virtualenv with the Python
     # interpreter provided by travis.
     - python: 3.7
-      env: CHECK_WARNINGS="true"
+      env:
+        - CHECK_WARNINGS="true"
+        - CI_CPU_COUNT="3"
       if: type = cron OR commit_message =~ /\[scipy-dev\]/
 
     # As above but build scikit-learn with Intel C compiler (ICC).
@@ -31,9 +33,12 @@ matrix:
       env:
         - CHECK_WARNING="true"
         - BUILD_WITH_ICC="true"
+        - CI_CPU_COUNT="3"
       if: type = cron OR commit_message =~ /\[icc-build\]/
 
     - python: 3.7
+      env:
+        - CI_CPU_COUNT="16"
       os: linux
       arch: arm64
 
