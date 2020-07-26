@@ -870,15 +870,17 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
                                 (t, type(t)))
 
     def _validate_transformer_weights(self):
-        if self.transformer_weights:
-            transformer_names = set(name for name, _ in self.transformer_list)
-            for name in self.transformer_weights:
-                if name not in transformer_names:
-                    warnings.warn(
-                        'Attempting to weight transformer "{0}", but it is '
-                        'not present in transformer_list.'.format(name),
-                        UserWarning
-                    )
+        if not self.transformer_weights:
+            return
+
+        transformer_names = set(name for name, _ in self.transformer_list)
+        for name in self.transformer_weights:
+            if name not in transformer_names:
+                warnings.warn(
+                    'Attempting to weight transformer "{0}", but it is '
+                    'not present in transformer_list.'.format(name),
+                    UserWarning
+                )
 
     def _iter(self):
         """
