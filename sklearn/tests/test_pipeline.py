@@ -1223,10 +1223,15 @@ def test_feature_union_fit_params():
 
 
 def test_feature_union_warns_unknown_transformer_weight():
+
+    X = [[1, 2], [3, 4], [5, 6]]
+    y = [0, 1, 2]
+
     transformer_list = [('transf', Transf())]
     # Transformer weights dictionary with incorrect name
     weights = {'transformer': 1}
     expected_msg = ('Attempting to weight transformer "transformer", '
                     'but it is not present in transformer_list.')
+    fu = FeatureUnion(transformer_list, transformer_weights=weights)
     with pytest.warns(UserWarning, match=expected_msg):
-        FeatureUnion(transformer_list, transformer_weights=weights)
+        fu.fit(X, y)
