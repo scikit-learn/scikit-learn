@@ -1720,8 +1720,9 @@ def pairwise_distances(X, Y=None, metric="euclidean", *, n_jobs=None,
            Accepts `pd.NA` and converts it into `np.nan`
 
     numeric_input: bool, default=True
-        If True, input values (X, Y) are assumed to be numeric values.
-        when set to False, this can be used for string input values as well.
+        If True, input values (X, Y) are expected to be numeric values.
+        when set to False, the `metric` can be callable, which can evaluate
+        custom metric on string inputs.
 
     **kwds : optional keyword parameters
         Any further parameters are passed directly to the distance function.
@@ -1749,6 +1750,10 @@ def pairwise_distances(X, Y=None, metric="euclidean", *, n_jobs=None,
         raise ValueError("Unknown metric %s. "
                          "Valid metrics are %s, or 'precomputed', or a "
                          "callable" % (metric, _VALID_METRICS))
+
+    if not (numeric_input or callable(metric)):
+        raise ValueError("`numeric_input` has to be True when `metric`"
+                         "is not callable")
 
     if metric == "precomputed":
         X, _ = check_pairwise_arrays(X, Y, precomputed=True,
