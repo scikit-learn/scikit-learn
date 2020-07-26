@@ -30,7 +30,6 @@ def test_barycenter_kneighbors_graph():
     assert_array_almost_equal(np.sum(A.toarray(), 1), np.ones(3))
     pred = np.dot(A.toarray(), X)
     assert linalg.norm(pred - X) / X.shape[0] < 1
-    
 
 
 # ----------------------------------------------------------------------
