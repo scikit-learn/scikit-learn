@@ -79,6 +79,12 @@ Changelog
   :user:`Emilie Delattre <EmilieDel>`, and
   :user:`Francesco Casalegno <FrancescoCasalegno>`.
 
+- |Fix| Fixed a bug in :class:`cluster.AffinityPropagation`, that
+  gives incorrect clusters when the array dtype is float32.
+  :pr:`17995` by :user:`Thomaz Santana  <Wikilicious>` and
+  :user:`Amanda Dsouza <amy12xx>`.
+
+
 :mod:`sklearn.covariance`
 .........................
 
@@ -121,6 +127,10 @@ Changelog
 - |Enhancement| :func:`decomposition.FactorAnalysis` now supports the optional
   argument `rotation`, which can take the value `None`, `'varimax'` or `'quartimax'.`
   :pr:`11064` by :user:`Jona Sassenhagen <jona-sassenhagen>`.
+
+- |Fix| Avoid overflows on Windows in :func:`decomposition.IncrementalPCA.partial_fit`
+  for large ``batch_size`` and ``n_samples`` values.`
+  :pr:`17985` by :user:`Alan Butler <aldee153> and Amanda Dsouza <amy12xx>`.
 
 :mod:`sklearn.ensemble`
 .......................
