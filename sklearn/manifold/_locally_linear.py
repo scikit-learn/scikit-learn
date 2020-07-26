@@ -50,7 +50,7 @@ def barycenter_weights(X, Y, indices, reg=1e-3):
 
     n_samples, n_neighbors = indices.shape
     assert X.shape[0] == n_samples
-    
+
     B = np.empty((n_samples, n_neighbors), dtype=X.dtype)
     v = np.ones(n_neighbors, dtype=X.dtype)
 
@@ -69,7 +69,6 @@ def barycenter_weights(X, Y, indices, reg=1e-3):
         w = solve(G, v, sym_pos=True)
         B[i, :] = w / np.sum(w)
     return B
-
 
 def barycenter_kneighbors_graph(X, n_neighbors, reg=1e-3, n_jobs=None):
     """Computes the barycenter weighted graph of k-Neighbors for points in X
