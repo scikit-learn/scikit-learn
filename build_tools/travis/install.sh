@@ -35,6 +35,8 @@ ccache --max-size 100M --show-stats
 # If Travvis has language=generic, deactivate does not exist. `|| :` will pass.
 deactivate || :
 
+echo "CPU Arch: ${TRAVIS_CPU_ARCH}"
+
 # Install miniconda
 if [[ "$TRAVIS_CPU_ARCH" == "arm64" ]]; then
     wget https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-aarch64.sh -O miniconda.sh
