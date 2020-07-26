@@ -52,6 +52,9 @@ from sklearn.exceptions import NotFittedError, PositiveSpectrumWarning
 
 from sklearn.utils._testing import TempMemmap
 
+import warnings
+warnings.simplefilter('always')
+
 
 def test_as_float_array():
     # Test function for as_float_array
@@ -1224,7 +1227,19 @@ def make_type_tables():
     dall = dall[(dall['np_name'] != 'generic') &
                 (dall['np_name'] != 'void0') &
                 (dall['np_name'] != 'void') &
-                (dall['np_name'] != 'flexible')]
+                (dall['np_name'] != 'flexible') &
+                (dall['np_name'] != 'integer') &
+                (dall['np_name'] != 'signedinteger') &
+                (dall['np_name'] != 'unsignedinteger') &
+                (dall['np_type'] != np.complexfloating) &
+                (dall['np_type'] != np.complex128) &
+                (dall['np_type'] != np.complex256) &
+                (dall['np_type'] != np.complex64) &
+                (dall['np_name'] != 'character') &
+                (dall['np_name'] != 'inexact') &
+                (dall['np_name'] != 'floating') &
+                (dall['np_name'] != 'number')]
+
     dall['dtype'] = dall['np_type'].map(np.dtype)
     dall['dtype_name'] = dall['dtype'].map(lambda x: x.name)
 
