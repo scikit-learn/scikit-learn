@@ -11,14 +11,12 @@ from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import assert_warns
-from sklearn.utils._testing import assert_warns_message
-from sklearn.utils._testing import assert_raise_message
 from sklearn.utils.fixes import _astype_copy_false
 from sklearn.base import clone
 from sklearn.exceptions import ConvergenceWarning
 
 from sklearn.utils.extmath import row_norms
+from sklearn.metrics import pairwise_distances
 from sklearn.metrics import pairwise_distances_argmin
 from sklearn.metrics.cluster import v_measure_score
 from sklearn.cluster import KMeans, k_means
@@ -74,11 +72,10 @@ def test_kmeans_results(array_constr, algo, dtype):
     assert kmeans.n_iter_ == expected_n_iter
 
 
-@pytest.mark.parametrize("array_constr",
-                         [np.array, sp.csr_matrix],
+@pytest.mark.parametrize("array_constr", [np.array, sp.csr_matrix],
                          ids=['dense', 'sparse'])
 @pytest.mark.parametrize("algo", ['full', 'elkan'])
-def test_relocated_clusters(array_constr, algo):
+def test_kmeans_relocated_clusters(array_constr, algo):
     # check that empty clusters are relocated as expected
     X = array_constr([[0, 0], [0.5, 0], [0.5, 1], [1, 1]])
 
@@ -94,21 +91,21 @@ def test_relocated_clusters(array_constr, algo):
     kmeans.fit(X)
 
     assert_array_equal(kmeans.labels_, expected_labels)
-    assert_almost_equal(kmeans.inertia_, expected_inertia)
-    assert_array_almost_equal(kmeans.cluster_centers_, expected_centers)
+    assert_allclose(kmeans.inertia_, expected_inertia)
+    assert_allclose(kmeans.cluster_centers_, expected_centers)
     assert kmeans.n_iter_ == expected_n_iter
 
 
-@pytest.mark.parametrize("representation", ["dense", "sparse"])
-def test_relocate_empty_clusters(representation):
+@pytest.mark.parametrize("array_constr", [np.array, sp.csr_matrix],
+                         ids=["dense", "sparse"])
+def test_relocate_empty_clusters(array_constr):
     # test for the _relocate_empty_clusters_(dense/sparse) helpers
 
     # Synthetic dataset with 3 obvious clusters of different sizes
     X = np.array(
         [-10., -9.5, -9, -8.5, -8, -1, 1, 9, 9.5, 10]).reshape(-1, 1)
-    if representation == "sparse":
-        X = sp.csr_matrix(X)
-    sample_weight = np.full(shape=10, fill_value=1.)
+    X = array_constr(X)
+    sample_weight = np.ones(10)
 
     # centers all initialized to the first point of X
     centers_old = np.array([-10., -10, -10]).reshape(-1, 1)
@@ -120,7 +117,7 @@ def test_relocate_empty_clusters(representation):
     weight_in_clusters = np.array([10., 0, 0])
     labels = np.zeros(10, dtype=np.int32)
 
-    if representation == "dense":
+    if array_constr is np.array:
         _relocate_empty_clusters_dense(X, sample_weight, centers_old,
                                        centers_new, weight_in_clusters, labels)
     else:
@@ -136,62 +133,48 @@ def test_relocate_empty_clusters(representation):
     assert_allclose(centers_new, [[-36], [10], [9.5]])
 
 
-@pytest.mark.parametrize('distribution', ['normal', 'blobs'])
-@pytest.mark.parametrize('tol', [1e-2, 1e-4, 1e-8])
-def test_elkan_results(distribution, tol):
-    # check that results are identical between lloyd and elkan algorithms
+@pytest.mark.parametrize("distribution", ["normal", "blobs"])
+@pytest.mark.parametrize("array_constr", [np.array, sp.csr_matrix],
+                         ids=["dense", "sparse"])
+@pytest.mark.parametrize("tol", [1e-2, 1e-4, 1e-8])
+def test_kmeans_elkan_results(distribution, array_constr, tol):
+    # Check that results are identical between lloyd and elkan algorithms
     rnd = np.random.RandomState(0)
-    if distribution == 'normal':
+    if distribution == "normal":
         X = rnd.normal(size=(5000, 10))
     else:
         X, _ = make_blobs(random_state=rnd)
+    X[X < 0] = 0
+    X = array_constr(X)
 
-    km_full = KMeans(algorithm='full', n_clusters=5,
+    km_full = KMeans(algorithm="full", n_clusters=5,
                      random_state=0, n_init=1, tol=tol)
-    km_elkan = KMeans(algorithm='elkan', n_clusters=5,
+    km_elkan = KMeans(algorithm="elkan", n_clusters=5,
                       random_state=0, n_init=1, tol=tol)
 
     km_full.fit(X)
     km_elkan.fit(X)
     assert_allclose(km_elkan.cluster_centers_, km_full.cluster_centers_)
     assert_array_equal(km_elkan.labels_, km_full.labels_)
-
     assert km_elkan.n_iter_ == km_full.n_iter_
     assert km_elkan.inertia_ == pytest.approx(km_full.inertia_, rel=1e-6)
 
 
-@pytest.mark.parametrize('algorithm', ['full', 'elkan'])
+@pytest.mark.parametrize("algorithm", ["full", "elkan"])
 def test_kmeans_convergence(algorithm):
     # Check that KMeans stops when convergence is reached when tol=0. (#16075)
+    # We can only ensure that if the number of threads is not to large,
+    # otherwise the roundings errors coming from the unpredictability of
+    # the order in which chunks are processed make the convergence criterion
+    # to never be exactly 0.
     rnd = np.random.RandomState(0)
     X = rnd.normal(size=(5000, 10))
 
-    km = KMeans(algorithm=algorithm, n_clusters=5, random_state=0, n_init=1,
-                tol=0, max_iter=300).fit(X)
+    with threadpool_limits(limits=1, user_api="openmp"):
+        km = KMeans(algorithm=algorithm, n_clusters=5, random_state=0,
+                    n_init=1, tol=0, max_iter=300).fit(X)
 
     assert km.n_iter_ < 300
-
-
-@pytest.mark.parametrize('distribution', ['normal', 'blobs'])
-def test_elkan_results_sparse(distribution):
-    # check that results are identical between lloyd and elkan algorithms
-    # with sparse input
-    rnd = np.random.RandomState(0)
-    if distribution == 'normal':
-        X = sp.random(100, 100, density=0.1, format='csr', random_state=rnd)
-        X.data = rnd.randn(len(X.data))
-    else:
-        X, _ = make_blobs(n_samples=100, n_features=100, random_state=rnd)
-        X = sp.csr_matrix(X)
-
-    km_full = KMeans(algorithm='full', n_clusters=5, random_state=0, n_init=1)
-    km_elkan = KMeans(algorithm='elkan', n_clusters=5,
-                      random_state=0, n_init=1)
-
-    km_full.fit(X)
-    km_elkan.fit(X)
-    assert_allclose(km_elkan.cluster_centers_, km_full.cluster_centers_)
-    assert_allclose(km_elkan.labels_, km_full.labels_)
 
 
 def test_minibatch_update_consistency():
@@ -273,10 +256,6 @@ def _check_fitted_model(km):
     # check that the labels assignment are perfect (up to a permutation)
     assert v_measure_score(true_labels, labels) == 1.0
     assert km.inertia_ > 0.0
-
-    # check error on dataset being too small
-    assert_raise_message(ValueError, "n_samples=1 should be >= n_clusters=%d"
-                         % km.n_clusters, km.fit, [[0., 1.]])
 
 
 @pytest.mark.parametrize("data", [X, X_csr], ids=["dense", "sparse"])
@@ -372,49 +351,48 @@ def test_verbose(Estimator):
         sys.stdout = old_stdout
 
 
-def test_minibatch_init_with_large_k():
-    mb_k_means = MiniBatchKMeans(init='k-means++', init_size=10, n_clusters=20)
-    # Check that a warning is raised, as the number clusters is larger
-    # than the init_size
-    assert_warns(RuntimeWarning, mb_k_means.fit, X)
+def test_minibatch_kmeans_warning_init_size():
+    # Check that a warning is raised when init_size is smaller than n_clusters
+    with pytest.warns(RuntimeWarning,
+                      match=r"init_size.* should be larger than n_clusters"):
+        MiniBatchKMeans(init_size=10, n_clusters=20).fit(X)
 
 
-def test_minibatch_k_means_init_multiple_runs_with_explicit_centers():
-    mb_k_means = MiniBatchKMeans(init=centers.copy(), n_clusters=n_clusters,
-                                 random_state=42, n_init=10)
-    assert_warns(RuntimeWarning, mb_k_means.fit, X)
+@pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
+def test_warning_n_init_precomputed_centers(Estimator):
+    # Check that a warning is raised when n_init > 1 and an array is passed for
+    # the init parameter.
+    with pytest.warns(RuntimeWarning,
+                      match="Explicit initial center position passed: "
+                            "performing only one init"):
+        Estimator(init=centers, n_clusters=n_clusters, n_init=10).fit(X)
 
 
-def test_minibatch_sensible_reassign_fit():
-    # check if identical initial clusters are reassigned
+def test_minibatch_sensible_reassign():
+    # check that identical initial clusters are reassigned
     # also a regression test for when there are more desired reassignments than
     # samples.
     zeroed_X, true_labels = make_blobs(n_samples=100, centers=5,
-                                       cluster_std=1., random_state=42)
+                                       random_state=42)
     zeroed_X[::2, :] = 0
-    mb_k_means = MiniBatchKMeans(n_clusters=20, batch_size=10, random_state=42,
-                                 init="random")
-    mb_k_means.fit(zeroed_X)
+
+    km = MiniBatchKMeans(n_clusters=20, batch_size=10, random_state=42,
+                         init="random").fit(zeroed_X)
     # there should not be too many exact zero cluster centers
-    assert mb_k_means.cluster_centers_.any(axis=1).sum() > 10
+    assert km.cluster_centers_.any(axis=1).sum() > 10
 
     # do the same with batch-size > X.shape[0] (regression test)
-    mb_k_means = MiniBatchKMeans(n_clusters=20, batch_size=201,
-                                 random_state=42, init="random")
-    mb_k_means.fit(zeroed_X)
+    km = MiniBatchKMeans(n_clusters=20, batch_size=200, random_state=42,
+                         init="random").fit(zeroed_X)
     # there should not be too many exact zero cluster centers
-    assert mb_k_means.cluster_centers_.any(axis=1).sum() > 10
+    assert km.cluster_centers_.any(axis=1).sum() > 10
 
-
-def test_minibatch_sensible_reassign_partial_fit():
-    zeroed_X, true_labels = make_blobs(n_samples=n_samples, centers=5,
-                                       cluster_std=1., random_state=42)
-    zeroed_X[::2, :] = 0
-    mb_k_means = MiniBatchKMeans(n_clusters=20, random_state=42, init="random")
+    # do the same with partial_fit API
+    km = MiniBatchKMeans(n_clusters=20, random_state=42, init="random")
     for i in range(100):
-        mb_k_means.partial_fit(zeroed_X)
+        km.partial_fit(zeroed_X)
     # there should not be too many exact zero cluster centers
-    assert mb_k_means.cluster_centers_.any(axis=1).sum() > 10
+    assert km.cluster_centers_.any(axis=1).sum() > 10
 
 
 def test_minibatch_reassign():
@@ -533,45 +511,26 @@ def test_minibatch_set_init_size():
     _check_fitted_model(mb_k_means)
 
 
-def test_k_means_copyx():
-    # Check if copy_x=False returns nearly equal X after de-centering.
+def test_kmeans_copyx():
+    # Check that copy_x=False returns nearly equal X after de-centering.
     my_X = X.copy()
     km = KMeans(copy_x=False, n_clusters=n_clusters, random_state=42)
     km.fit(my_X)
     _check_fitted_model(km)
 
-    # check if my_X is centered
-    assert_array_almost_equal(my_X, X)
+    # check that my_X is de-centered
+    assert_allclose(my_X, X)
 
 
-def test_k_means_non_collapsed():
-    # Check k_means with a bad initialization does not yield a singleton
-    # Starting with bad centers that are quickly ignored should not
-    # result in a repositioning of the centers to the center of mass that
-    # would lead to collapsed centers which in turns make the clustering
-    # dependent of the numerical unstabilities.
-    my_X = np.array([[1.1, 1.1], [0.9, 1.1], [1.1, 0.9], [0.9, 1.1]])
-    array_init = np.array([[1.0, 1.0], [5.0, 5.0], [-5.0, -5.0]])
-    km = KMeans(init=array_init, n_clusters=3, random_state=42, n_init=1)
-    km.fit(my_X)
+@pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
+def test_score_max_iter(Estimator):
+    # Check that fitting KMeans or MiniBatchKMeans with more iterations gives
+    # better score
+    X = np.random.RandomState(0).randn(100, 10)
 
-    # centers must not been collapsed
-    assert len(np.unique(km.labels_)) == 3
-
-    centers = km.cluster_centers_
-    assert np.linalg.norm(centers[0] - centers[1]) >= 0.1
-    assert np.linalg.norm(centers[0] - centers[2]) >= 0.1
-    assert np.linalg.norm(centers[1] - centers[2]) >= 0.1
-
-
-@pytest.mark.parametrize('algo', ['full', 'elkan'])
-def test_score(algo):
-    # Check that fitting k-means with multiple inits gives better score
-    km1 = KMeans(n_clusters=n_clusters, max_iter=1, random_state=42, n_init=1,
-                 algorithm=algo)
+    km1 = Estimator(n_init=1, random_state=42, max_iter=1)
     s1 = km1.fit(X).score(X)
-    km2 = KMeans(n_clusters=n_clusters, max_iter=10, random_state=42, n_init=1,
-                 algorithm=algo)
+    km2 = Estimator(n_init=1, random_state=42, max_iter=10)
     s2 = km2.fit(X).score(X)
     assert s2 > s1
 
@@ -607,52 +566,61 @@ def test_predict_minibatch_dense_sparse(init):
     assert_array_equal(mb_k_means.predict(X), mb_k_means.labels_)
 
 
-def test_int_input():
-    X_list = [[0, 0], [10, 10], [12, 9], [-1, 1], [2, 0], [8, 10]]
-    for dtype in [np.int32, np.int64]:
-        X_int = np.array(X_list, dtype=dtype)
-        X_int_csr = sp.csr_matrix(X_int)
-        init_int = X_int[:2]
+@pytest.mark.parametrize("array_constr", [np.array, sp.csr_matrix],
+                         ids=["dense", "sparse"])
+@pytest.mark.parametrize("dtype", [np.int32, np.int64])
+@pytest.mark.parametrize("init", ["k-means++", "ndarray"])
+@pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
+def test_integer_input(Estimator, array_constr, dtype, init):
+    # Check that KMeans and MiniBatchKMeans work with integer input.
+    X_dense = np.array([[0, 0], [10, 10], [12, 9], [-1, 1], [2, 0], [8, 10]])
+    X = array_constr(X_dense, dtype=dtype)
 
-        fitted_models = [
-            KMeans(n_clusters=2).fit(X_int),
-            KMeans(n_clusters=2, init=init_int, n_init=1).fit(X_int),
-            # mini batch kmeans is very unstable on such a small dataset hence
-            # we use many inits
-            MiniBatchKMeans(n_clusters=2, n_init=10, batch_size=2).fit(X_int),
-            MiniBatchKMeans(n_clusters=2, n_init=10, batch_size=2).fit(
-                    X_int_csr),
-            MiniBatchKMeans(n_clusters=2, batch_size=2,
-                            init=init_int, n_init=1).fit(X_int),
-            MiniBatchKMeans(n_clusters=2, batch_size=2,
-                            init=init_int, n_init=1).fit(X_int_csr),
-        ]
+    n_init = 1 if init == "ndarray" else 10
+    init = X_dense[:2] if init == "ndarray" else init
 
-        for km in fitted_models:
-            assert km.cluster_centers_.dtype == np.float64
+    km = Estimator(n_clusters=2, init=init, n_init=n_init, random_state=0)
+    if Estimator is MiniBatchKMeans:
+        km.set_params(batch_size=2)
 
-        expected_labels = [0, 1, 1, 0, 0, 1]
-        scores = np.array([v_measure_score(expected_labels, km.labels_)
-                           for km in fitted_models])
-        assert_array_almost_equal(scores, np.ones(scores.shape[0]))
-
-
-def test_transform():
-    km = KMeans(n_clusters=n_clusters)
     km.fit(X)
-    X_new = km.transform(km.cluster_centers_)
 
-    for c in range(n_clusters):
-        assert X_new[c, c] == 0
-        for c2 in range(n_clusters):
-            if c != c2:
-                assert X_new[c, c2] > 0
+    # Internally integer input should be converted to float64
+    assert km.cluster_centers_.dtype == np.float64
+
+    expected_labels = [0, 1, 1, 0, 0, 1]
+    assert_allclose(v_measure_score(km.labels_, expected_labels), 1)
+
+    # Same with partial_fit (#14314)
+    if Estimator is MiniBatchKMeans:
+        km = clone(km).partial_fit(X)
+        assert km.cluster_centers_.dtype == np.float64
 
 
-def test_fit_transform():
-    X1 = KMeans(n_clusters=3, random_state=51).fit(X).transform(X)
-    X2 = KMeans(n_clusters=3, random_state=51).fit_transform(X)
-    assert_array_almost_equal(X1, X2)
+@pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
+def test_transform(Estimator):
+    # Check the transform method
+    km = Estimator(n_clusters=n_clusters).fit(X)
+
+    # Transorfming cluster_centers_ should return the pairwise distances
+    # between centers
+    Xt = km.transform(km.cluster_centers_)
+    assert_allclose(Xt, pairwise_distances(km.cluster_centers_))
+    # In particular, diagonal must be 0
+    assert_array_equal(Xt.diagonal(), np.zeros(n_clusters))
+
+    # Transorfming X should return the pairwise distances between X and the
+    # centers
+    Xt = km.transform(X)
+    assert_allclose(Xt, pairwise_distances(X, km.cluster_centers_))
+
+
+@pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
+def test_fit_transform(Estimator):
+    # Check equivalence between fit.transform and fit_transform
+    X1 = Estimator(random_state=0, n_init=1).fit(X).transform(X)
+    X2 = Estimator(random_state=0, n_init=1).fit_transform(X)
+    assert_allclose(X1, X2)
 
 
 @pytest.mark.parametrize('algo', ['full', 'elkan'])
@@ -690,39 +658,15 @@ def test_n_init():
 
 def test_k_means_function():
     # test calling the k_means function directly
-    # catch output
-    old_stdout = sys.stdout
-    sys.stdout = StringIO()
-    try:
-        cluster_centers, labels, inertia = k_means(X, n_clusters=n_clusters,
-                                                   sample_weight=None,
-                                                   verbose=True)
-    finally:
-        sys.stdout = old_stdout
-    centers = cluster_centers
-    assert centers.shape == (n_clusters, n_features)
+    cluster_centers, labels, inertia = k_means(X, n_clusters=n_clusters,
+                                               sample_weight=None)
 
+    assert cluster_centers.shape == (n_clusters, n_features)
     assert np.unique(labels).shape[0] == n_clusters
 
     # check that the labels assignment are perfect (up to a permutation)
-    assert v_measure_score(true_labels, labels) == 1.0
+    assert_allclose(v_measure_score(true_labels, labels), 1.0)
     assert inertia > 0.0
-
-    # check warning when centers are passed
-    assert_warns(RuntimeWarning, k_means, X, n_clusters=n_clusters,
-                 sample_weight=None, init=centers)
-
-
-def test_x_squared_norms_init_centroids():
-    # Test that x_squared_norms can be None in _init_centroids
-    from sklearn.cluster._kmeans import _init_centroids
-
-    X_norms = np.sum(X**2, axis=1)
-    precompute = _init_centroids(
-        X, 3, "k-means++", random_state=0, x_squared_norms=X_norms)
-    assert_array_almost_equal(
-        precompute,
-        _init_centroids(X, 3, "k-means++", random_state=0))
 
 
 @pytest.mark.parametrize("data", [X, X_csr], ids=["dense", "sparse"])
@@ -761,19 +705,19 @@ def test_float_precision(Estimator, data):
     assert_array_equal(labels[np.float32], labels[np.float64])
 
 
-def test_k_means_init_centers():
-    # This test is used to check KMeans won't mutate the user provided input
-    # array silently even if input data and init centers have the same type
-    X_small = np.array([[1.1, 1.1], [-7.5, -7.5], [-1.1, -1.1], [7.5, 7.5]])
-    init_centers = np.array([[0.0, 0.0], [5.0, 5.0], [-5.0, -5.0]])
-    for dtype in [np.int32, np.int64, np.float32, np.float64]:
-        X_test = dtype(X_small)
-        init_centers_test = dtype(init_centers)
-        assert_array_equal(init_centers, init_centers_test)
-        km = KMeans(init=init_centers_test, n_clusters=3, n_init=1)
-        km.fit(X_test)
-        assert np.may_share_memory(km.cluster_centers_,
-                                   init_centers) is False
+@pytest.mark.parametrize("dtype", [np.int32, np.int64, np.float32, np.float64])
+@pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
+def test_centers_not_mutated(Estimator, dtype):
+    # Check that KMeans and MiniBatchKMeans won't mutate the user provided
+    # init centers silently even if input data and init centers have the same
+    # type.
+    X_new_type = X.astype(dtype, copy=False)
+    centers_new_type = centers.astype(dtype, copy=False)
+
+    km = Estimator(init=centers, n_clusters=n_clusters, n_init=1)
+    km.fit(X_new_type)
+
+    assert not np.may_share_memory(km.cluster_centers_, centers_new_type)
 
 
 @pytest.mark.parametrize("data", [X, X_csr], ids=["dense", "sparse"])
@@ -787,24 +731,22 @@ def test_k_means_init_fitted_centers(data):
     assert_array_almost_equal(centers, new_centers)
 
 
-def test_less_centers_than_unique_points():
+def test_kmeans_warns_less_centers_than_unique_points():
+    # Check KMeans when the number of found clusters is smaller than expected
     X = np.asarray([[0, 0],
                     [0, 1],
                     [1, 0],
                     [1, 0]])  # last point is duplicated
+    km = KMeans(n_clusters=4)
 
-    km = KMeans(n_clusters=4).fit(X)
-
-    # only three distinct points, so only three clusters
-    # can have points assigned to them
-    assert set(km.labels_) == set(range(3))
-
-    # k_means should warn that fewer labels than cluster
-    # centers have been used
-    msg = ("Number of distinct clusters (3) found smaller than "
-           "n_clusters (4). Possibly due to duplicate points in X.")
-    assert_warns_message(ConvergenceWarning, msg, k_means, X,
-                         sample_weight=None, n_clusters=4)
+    # KMeans should warn that fewer labels than cluster centers have been used
+    msg = (r"Number of distinct clusters \(3\) found smaller than "
+           r"n_clusters \(4\). Possibly due to duplicate points in X.")
+    with pytest.warns(ConvergenceWarning, match=msg):
+        km.fit(X)
+        # only three distinct points, so only three clusters
+        # can have points assigned to them
+        assert set(km.labels_) == set(range(3))
 
 
 def _sort_centers(centers):
@@ -812,41 +754,38 @@ def _sort_centers(centers):
 
 
 def test_weighted_vs_repeated():
-    # a sample weight of N should yield the same result as an N-fold
-    # repetition of the sample
-    rng = np.random.RandomState(0)
-    sample_weight = rng.randint(1, 5, size=n_samples)
+    # Check that a sample weight of N should yield the same result as an N-fold
+    # repetition of the sample. Valid only if init is precomputed, otherwise
+    # rng produces different results. Not valid for MinibatchKMeans due to rng
+    # to extract minibatches.
+    sample_weight = np.random.RandomState(0).randint(1, 5, size=n_samples)
     X_repeat = np.repeat(X, sample_weight, axis=0)
-    estimators = [KMeans(init="k-means++", n_clusters=n_clusters,
-                         random_state=42),
-                  KMeans(init="random", n_clusters=n_clusters,
-                         random_state=42),
-                  KMeans(init=centers.copy(), n_clusters=n_clusters,
-                         random_state=42, n_init=1),
-                  MiniBatchKMeans(n_clusters=n_clusters, batch_size=10,
-                                  random_state=42)]
-    for estimator in estimators:
-        est_weighted = clone(estimator).fit(X, sample_weight=sample_weight)
-        est_repeated = clone(estimator).fit(X_repeat)
-        repeated_labels = np.repeat(est_weighted.labels_, sample_weight)
-        assert_almost_equal(v_measure_score(est_repeated.labels_,
-                                            repeated_labels), 1.0)
-        if not isinstance(estimator, MiniBatchKMeans):
-            assert_almost_equal(_sort_centers(est_weighted.cluster_centers_),
-                                _sort_centers(est_repeated.cluster_centers_))
+
+    km = KMeans(init=centers, n_init=1, n_clusters=n_clusters, random_state=0)
+
+    km_weighted = clone(km).fit(X, sample_weight=sample_weight)
+    repeated_labels = np.repeat(km_weighted.labels_, sample_weight)
+    km_repeated = clone(km).fit(X_repeat)
+
+    assert_array_equal(km_repeated.labels_, repeated_labels)
+    assert_allclose(km_weighted.inertia_, km_repeated.inertia_)
+    assert_allclose(_sort_centers(km_weighted.cluster_centers_),
+                    _sort_centers(km_repeated.cluster_centers_))
 
 
-def test_unit_weights_vs_no_weights():
-    # not passing any sample weights should be equivalent
-    # to all weights equal to one
+@pytest.mark.parametrize("data", [X, X_csr], ids=["dense", "sparse"])
+@pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
+def test_unit_weights_vs_no_weights(Estimator, data):
+    # Check that not passing sample weights should be equivalent to passing
+    # sample weights all equal to one.
     sample_weight = np.ones(n_samples)
-    for estimator in [KMeans(n_clusters=n_clusters, random_state=42),
-                      MiniBatchKMeans(n_clusters=n_clusters, random_state=42)]:
-        est_1 = clone(estimator).fit(X)
-        est_2 = clone(estimator).fit(X, sample_weight=sample_weight)
-        assert_almost_equal(v_measure_score(est_1.labels_, est_2.labels_), 1.0)
-        assert_almost_equal(_sort_centers(est_1.cluster_centers_),
-                            _sort_centers(est_2.cluster_centers_))
+
+    km = Estimator(n_clusters=n_clusters, random_state=42, n_init=1)
+    km_none = clone(km).fit(data, sample_weight=None)
+    km_ones = clone(km).fit(data, sample_weight=sample_weight)
+
+    assert_array_equal(km_none.labels_, km_ones.labels_)
+    assert_allclose(km_none.cluster_centers_, km_ones.cluster_centers_)
 
 
 def test_scaled_weights():
@@ -882,14 +821,6 @@ def test_k_means_empty_cluster_relocated():
 
     assert len(set(km.labels_)) == 2
     assert_allclose(km.cluster_centers_, [[-1], [1]])
-
-
-def test_minibatch_kmeans_partial_fit_int_data():
-    # Issue GH #14314
-    X = np.array([[-1], [1]], dtype=int)
-    km = MiniBatchKMeans(n_clusters=2)
-    km.partial_fit(X)
-    assert km.cluster_centers_.dtype.kind == "f"
 
 
 def test_result_of_kmeans_equal_in_diff_n_threads():
@@ -954,16 +885,6 @@ def test_warning_elkan_1_cluster():
     with pytest.warns(RuntimeWarning,
                       match="algorithm='elkan' doesn't make sense for a single"
                             " cluster"):
-        kmeans.fit(X)
-
-
-def test_error_wrong_algorithm():
-    X, _ = make_blobs(n_samples=10, n_features=2, centers=2, random_state=0)
-    kmeans = KMeans(n_clusters=2, n_init=1, init='random', random_state=0,
-                    algorithm='wrong')
-
-    with pytest.raises(ValueError,
-                       match="Algorithm must be 'auto', 'full' or 'elkan'"):
         kmeans.fit(X)
 
 
@@ -1046,7 +967,6 @@ def test_sample_weight_unchanged():
     sample_weight = np.array([0.5, 0.2, 0.3])
     KMeans(n_clusters=2, random_state=0).fit(X, sample_weight=sample_weight)
 
-    # internally, sample_weight is rescale to sum up to n_samples = 3
     assert_array_equal(sample_weight, np.array([0.5, 0.2, 0.3]))
 
 
