@@ -128,7 +128,7 @@ def as_float_array(X, *, copy=True, force_all_finite=True):
     ----------
     X : {array-like, sparse matrix}
 
-    copy : bool, optional
+    copy : bool, default=True
         If True, a copy of X will be created. If False, a copy may still be
         returned if X's dtype is not a floating point type.
 
@@ -1317,10 +1317,10 @@ def _allclose_dense_sparse(x, y, rtol=1e-7, atol=1e-9):
     y : array-like or sparse matrix
         Second array to compare.
 
-    rtol : float, optional
+    rtol : float, default=1e-7
         relative tolerance; see numpy.allclose
 
-    atol : float, optional
+    atol : float, default=1e-9
         absolute tolerance; see numpy.allclose. Note that the default here is
         more tolerant than the default for numpy.testing.assert_allclose, where
         atol=0.
