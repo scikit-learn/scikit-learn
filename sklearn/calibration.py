@@ -119,8 +119,8 @@ class CalibratedClassifierCV(ClassifierMixin,
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors.
 
-        Base estimator clones are fitted in parallel across cross-validation iterations.
-        Therefore parallelism happens only when cv != "prefit".
+        Base estimator clones are fitted in parallel across cross-validation
+        iterations. Therefore parallelism happens only when cv != "prefit".
 
         See :term:`Glossary <n_jobs>` for more details.
 
