@@ -824,7 +824,6 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         self.transformer_weights = transformer_weights
         self.verbose = verbose
         self._validate_transformers()
-        self._validate_transformer_weights()
 
     def get_params(self, deep=True):
         """Get parameters for this estimator.
@@ -925,6 +924,8 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         self : FeatureUnion
             This estimator
         """
+        self._validate_transformer_weights()
+
         transformers = self._parallel_func(X, y, fit_params, _fit_one)
         if not transformers:
             # All transformers are None
