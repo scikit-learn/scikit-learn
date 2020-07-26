@@ -1233,13 +1233,10 @@ def make_type_tables():
                 (dall['np_type'] != np.complex256) &
                 (dall['np_type'] != np.complex64)]
 
-
-
     dall['dtype'] = dall['np_type'].map(np.dtype)
     dall['dtype_name'] = dall['dtype'].map(lambda x: x.name)
 
     dall.reindex(columns=['dtype', 'np_name', 'np_type'])
-
     num_types = (lambda x: x[(x.dtype_name.str.startswith('bool')) |
                  (x.dtype_name.str.startswith('float')) |
                  (x.dtype_name.str.startswith('int')) |
