@@ -246,7 +246,7 @@ class SimpleImputer(_BaseImputer):
             force_all_finite = "allow-nan"
 
         try:
-            X = self._validate_data(X, reset=in_fit,
+            X = self._validate_data(X, in_fit=in_fit,
                                     accept_sparse='csc', dtype=dtype,
                                     force_all_finite=force_all_finite,
                                     copy=self.copy)
@@ -663,7 +663,7 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
             force_all_finite = True
         else:
             force_all_finite = "allow-nan"
-        X = self._validate_data(X, reset=in_fit,
+        X = self._validate_data(X, in_fit=in_fit,
                                 accept_sparse=('csc', 'csr'), dtype=None,
                                 force_all_finite=force_all_finite)
         _check_inputs_dtype(X, self.missing_values)

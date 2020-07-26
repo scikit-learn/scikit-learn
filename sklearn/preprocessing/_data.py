@@ -389,7 +389,7 @@ class MinMaxScaler(TransformerMixin, BaseEstimator):
                             "Consider using MaxAbsScaler instead.")
 
         first_pass = not hasattr(self, 'n_samples_seen_')
-        X = self._validate_data(X, reset=first_pass,
+        X = self._validate_data(X, in_fit=first_pass,
                                 estimator=self, dtype=FLOAT_DTYPES,
                                 force_all_finite="allow-nan")
 
@@ -841,7 +841,7 @@ class StandardScaler(TransformerMixin, BaseEstimator):
         check_is_fitted(self)
 
         copy = copy if copy is not None else self.copy
-        X = self._validate_data(X, reset=False,
+        X = self._validate_data(X, in_fit=False,
                                 accept_sparse='csr', copy=copy,
                                 estimator=self, dtype=FLOAT_DTYPES,
                                 force_all_finite='allow-nan')
@@ -1026,7 +1026,7 @@ class MaxAbsScaler(TransformerMixin, BaseEstimator):
             Fitted scaler.
         """
         first_pass = not hasattr(self, 'n_samples_seen_')
-        X = self._validate_data(X, reset=first_pass,
+        X = self._validate_data(X, in_fit=first_pass,
                                 accept_sparse=('csr', 'csc'), estimator=self,
                                 dtype=FLOAT_DTYPES,
                                 force_all_finite='allow-nan')
@@ -2651,11 +2651,11 @@ class QuantileTransformer(TransformerMixin, BaseEstimator):
         # string, which is not the same one raised by check_n_features. So we
         # don't check n_features_in_ here for now (it's done with adhoc code in
         # the estimator anyway).
-        # TODO: set reset=in_fit when addressing reset in
+        # TODO: set in_fit=in_fit when addressing reset in
         # predict/transform/etc.
         reset = True
 
-        X = self._validate_data(X, reset=reset,
+        X = self._validate_data(X, in_fit=reset,
                                 accept_sparse='csc', copy=copy,
                                 dtype=FLOAT_DTYPES,
                                 force_all_finite='allow-nan')

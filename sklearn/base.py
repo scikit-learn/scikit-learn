@@ -347,21 +347,21 @@ class BaseEstimator:
                 collected_tags.update(more_tags)
         return collected_tags
 
-    def _check_n_features(self, X, reset):
+    def _check_n_features(self, X, in_fit):
         """Set the `n_features_in_` attribute, or check against it.
 
         Parameters
         ----------
         X : {ndarray, sparse matrix} of shape (n_samples, n_features)
             The input samples.
-        reset : bool
+        in_fit : bool
             If True, the `n_features_in_` attribute is set to `X.shape[1]`.
             Else, the attribute must already exist and the function checks
             that it is equal to `X.shape[1]`.
         """
         n_features = X.shape[1]
 
-        if reset:
+        if in_fit:
             self.n_features_in_ = n_features
         else:
             if not hasattr(self, 'n_features_in_'):
@@ -376,7 +376,7 @@ class BaseEstimator:
                                        self.n_features_in_)
                 )
 
-    def _validate_data(self, X, y=None, reset=True,
+    def _validate_data(self, X, y=None, in_fit=True,
                        validate_separately=False, **check_params):
         """Validate input data and set or check the `n_features_in_` attribute.
 
@@ -388,10 +388,10 @@ class BaseEstimator:
         y : array-like of shape (n_samples,), default=None
             The targets. If None, `check_array` is called on `X` and
             `check_X_y` is called otherwise.
-        reset : bool, default=True
-            Whether to reset the `n_features_in_` attribute.
+        in_fit : bool, default=True
+            Whether to fit `n_features_in_` attribute.
             If False, the input will be checked for consistency with data
-            provided when reset was last True.
+            provided when in_fit was last True.
         validate_separately : False or tuple of dicts, default=False
             Only used if y is not None.
             If False, call validate_X_y(). Else, it must be a tuple of kwargs
@@ -408,7 +408,7 @@ class BaseEstimator:
         """
 
         if y is None:
-            if self._get_tags()['requires_y']:
+            if in_fit and self._get_tags()['requires_y']:
                 raise ValueError(
                     f"This {self.__class__.__name__} estimator "
                     f"requires y to be passed, but the target y is None."
@@ -429,7 +429,7 @@ class BaseEstimator:
             out = X, y
 
         if check_params.get('ensure_2d', True):
-            self._check_n_features(X, reset=reset)
+            self._check_n_features(X, in_fit=in_fit)
 
         return out
 

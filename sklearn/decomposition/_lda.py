@@ -487,7 +487,7 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
         X :  array-like or sparse matrix
 
         """
-        X = self._validate_data(X, reset=reset_n_features,
+        X = self._validate_data(X, in_fit=reset_n_features,
                                 accept_sparse='csr')
         check_non_negative(X, whom)
         return X
@@ -514,7 +514,7 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
         # string, which is not the same one raised by check_n_features. So we
         # don't check n_features_in_ here for now (it's done with adhoc code in
         # the estimator anyway).
-        # TODO: set reset=first_time when addressing reset in
+        # TODO: set in_fit=first_time when addressing reset in
         # predict/transform/etc.
         reset_n_features = True
         X = self._check_non_neg_array(X, reset_n_features,

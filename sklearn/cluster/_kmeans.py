@@ -1788,7 +1788,7 @@ class MiniBatchKMeans(KMeans):
         X = self._validate_data(X, accept_sparse='csr',
                                 dtype=[np.float64, np.float32],
                                 order='C', accept_large_sparse=False,
-                                reset=is_first_call_to_partial_fit)
+                                in_fit=is_first_call_to_partial_fit)
 
         self._random_state = getattr(self, "_random_state",
                                      check_random_state(self.random_state))
