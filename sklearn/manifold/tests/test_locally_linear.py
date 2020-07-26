@@ -31,13 +31,6 @@ def test_barycenter_kneighbors_graph():
     pred = np.dot(A.toarray(), X)
     assert linalg.norm(pred - X) / X.shape[0] < 1
     
-    # X = np.random.rand(12000, 12000)
-    
-    # # check that it won't fail for large inputs
-    # # and large amount of neighbors
-    # with pytest.raises(MemoryError):
-    #     A = barycenter_kneighbors_graph(X, 500)
-    
 
 
 # ----------------------------------------------------------------------

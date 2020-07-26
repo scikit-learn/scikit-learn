@@ -21,7 +21,7 @@ from ..neighbors import NearestNeighbors
 def barycenter_weights(X, indices, reg=1e-3):
     """Compute barycenter weights of X from indices along the first axis
 
-    We estimate the weights to assign to each point in [i] to recover
+    We estimate the weights to assign to each point in X[indices][i] to recover
     the point X[i]. The barycenter weights sum to 1.
 
     Parameters
