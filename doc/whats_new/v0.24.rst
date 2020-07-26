@@ -70,6 +70,10 @@ Changelog
   `init_size_`, are deprecated and will be removed in 0.26. :pr:`17864` by
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+- |Fix| Fixed a bug in :class:`cluster.AffinityPropagation`, that
+  gives incorrect clusters when the array dtype is float32.
+  :pr:`17995` by :user:`Thomaz Santana  <Wikilicious>` and :user:`Amanda Dsouza <amy12xx>`.
+
 :mod:`sklearn.covariance`
 .........................
 
