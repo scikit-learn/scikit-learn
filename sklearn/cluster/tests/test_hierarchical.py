@@ -167,8 +167,9 @@ def test_agglomerative_clustering_distances(n_clusters,
     clustering.fit(X)
     if compute_distances or (distance_threshold is not None):
         assert hasattr(clustering, 'distances_')
-        n_nodes = clustering.children_.shape[0]
-        assert clustering.distances_.shape == (n_nodes, )
+        n_children = clustering.children_.shape[0]
+        n_nodes = n_children + 1
+        assert clustering.distances_.shape == (n_nodes-1, )
     else:
         assert not hasattr(clustering, 'distances_')
 

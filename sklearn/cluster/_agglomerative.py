@@ -748,9 +748,9 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         .. versionadded:: 0.21
 
     compute_distances : bool, default=False
-        Computes distances even if no distance_threshold is used. This can be
-        used to make dendrogram visualization, but has impact on efficiency due
-        to the additional computational cost and used memory.
+        Computes distances between clusters even if no `distance_threshold` is
+        used. This can be used to make dendrogram visualization, but introduces
+        a computational and memory overhead.
 
         .. versionadded:: 0.24
 
@@ -783,7 +783,8 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
 
     distances_ : array-like of shape (n_nodes-1,)
         Distances between nodes in the corresponding place in `children_`.
-        Only computed if distance_threshold is not None.
+        Only computed if `distance_threshold` is used or `compute_distances`
+        is set to `True`.
 
     Examples
     --------
@@ -904,10 +905,10 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         if return_distance:
             self.distances_ = out[-1]
 
-        if self.n_clusters is None:  # distance_threshold was passed
+        if self.distance_threshold is not None:  # distance_threshold was passed
             self.n_clusters_ = np.count_nonzero(
                 self.distances_ >= distance_threshold) + 1
-        else:
+        else:  # n_clusters was passed
             self.n_clusters_ = self.n_clusters
 
         # Cut the tree
@@ -1014,9 +1015,9 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
         .. versionadded:: 0.21
 
     compute_distances : bool, default=False
-        Computes distances even if no distance_threshold is used. This can be
-        used to make dendrogram visualization, but has impact on efficiency due
-        to the additional computational cost and used memory.
+        Computes distances between clusters even if no `distance_threshold` is
+        used. This can be used to make dendrogram visualization, but introduces
+        a computational and memory overhead.
 
         .. versionadded:: 0.24
 
@@ -1049,7 +1050,8 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
 
     distances_ : array-like of shape (n_nodes-1,)
         Distances between nodes in the corresponding place in `children_`.
-        Only computed if distance_threshold is not None.
+        Only computed if `distance_threshold` is used or `compute_distances`
+        is set to `True`.
 
     Examples
     --------
