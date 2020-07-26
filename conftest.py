@@ -39,7 +39,7 @@ def pytest_collection_modifyitems(config, items):
                                    'text.HashingVectorizer')):
                 item.add_marker(skip_marker)
             elif (item.name.endswith('GradientBoostingClassifier')
-                  and platform.machine() == 'ARM'):
+                  and platform.machine() == 'ARM64'):
                 marker = pytest.mark.xfail(
                    reason=(
                        'know failure. See '
