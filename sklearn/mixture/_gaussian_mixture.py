@@ -493,7 +493,8 @@ class GaussianMixture(BaseMixture):
     precisions_init : array-like, default=None
         The user-provided initial precisions (inverse of the covariance
         matrices).
-        If it is None, precisions are initialized using the 'init_params' method.
+        If it is None, precisions are initialized using the 'init_params'
+        method.
         The shape depends on 'covariance_type'::
 
             (n_components,)                        if 'spherical',
