@@ -43,6 +43,11 @@ Changelog
   `bin_seeding=False`.
   :pr:`17742` by :user:`Jeremie du Boisberranger <jeremiedbb>`.
 
+- |Fix| Fixed a bug in :class:`cluster.AffinityPropagation`, that
+  gives incorrect clusters when the array dtype is float32.
+  :pr:`17995` by :user:`Thomaz Santana  <Wikilicious>` and
+  :user:`Amanda Dsouza <amy12xx>`.
+
 :mod:`sklearn.decomposition`
 ............................
 
@@ -58,8 +63,9 @@ Changelog
 
 - |Fix| Avoid overflows on Windows in
   :func:`decomposition.IncrementalPCA.partial_fit` for large ``batch_size`` and
-  ``n_samples`` values.`
-  :pr:`17985` by :user:`Alan Butler <aldee153> and Amanda Dsouza <amy12xx>`.
+  ``n_samples`` values.
+  :pr:`17985` by :user:`Alan Butler <aldee153>` and
+  :user:`Amanda Dsouza <amy12xx>`.
 
 :mod:`sklearn.ensemble`
 .......................
