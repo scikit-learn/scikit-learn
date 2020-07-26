@@ -1221,6 +1221,10 @@ def make_type_tables():
     ntp = np.core.numerictypes.allTypes
     inpt = [{'np_name': it[0], 'np_type': it[1]} for it in ntp.items()]
     dall = pd.DataFrame(inpt)
+    dall = dall[(dall['np_name'] != 'generic') &
+                (dall['np_name'] != 'void0') &
+                (dall['np_name'] != 'void') &
+                (dall['np_name'] != 'flexible')]
     dall['dtype'] = dall['np_type'].map(np.dtype)
     dall['dtype_name'] = dall['dtype'].map(lambda x: x.name)
 
