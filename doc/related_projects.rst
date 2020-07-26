@@ -51,10 +51,11 @@ enhance the functionality of scikit-learn's estimators.
   cross-validated parameter search using any of these strategies.
 
 - `Neuraxle <https://github.com/Neuraxio/Neuraxle>`_
-  A library for building neat pipelines, providing the right abstractions to both
-  ease research, development, and deployment of your machine learning applications.
-  Compatible with deep learning frameworks, you can stream minibatches, use data
-  checkpoints, build funky pipelines, and serialize models with custom per-step savers.
+  A library for building neat pipelines, providing the right abstractions to
+  both ease research, development, and deployment of machine learning
+  applications. Compatible with deep learning frameworks and scikit-learn API,
+  it can stream minibatches, use data checkpoints, build funky pipelines, and
+  serialize models with custom per-step savers.
 
 **Experimentation frameworks**
 
