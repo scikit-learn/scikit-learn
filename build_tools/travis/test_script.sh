@@ -18,7 +18,7 @@ try:
 except ImportError:
     pass
 "
-python -c "import multiprocessing as mp; print('%d CPUs' % mp.cpu_count())"
+python -c "import joblib; print(joblib.cpu_count(), 'CPUs')"
 
 if [[ "$BUILD_WITH_ICC" == "true" ]]; then
     # the tools in the oneAPI toolkits are configured via environment variables

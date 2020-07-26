@@ -78,7 +78,6 @@ pip install $(get_dep pytest $PYTEST_VERSION) pytest-cov pytest-xdist
 python --version
 python -c "import numpy; print('numpy %s' % numpy.__version__)"
 python -c "import scipy; print('scipy %s' % scipy.__version__)"
-python -c "import joblib; print('cpu_count: ', joblib.cpu_count())"
 
 if [[ "$BUILD_WITH_ICC" == "true" ]]; then
     wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS-2023.PUB
