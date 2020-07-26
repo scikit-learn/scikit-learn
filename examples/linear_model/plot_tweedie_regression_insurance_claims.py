@@ -217,6 +217,7 @@ log_scale_transformer = make_pipeline(
     StandardScaler()
 )
 
+# TODO
 column_trans = ColumnTransformer(
     [
         ("binned_numeric", KBinsDiscretizer(n_bins=10),

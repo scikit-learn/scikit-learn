@@ -128,17 +128,15 @@ survey.data.info()
 # - as a first approach (we will see after how the normalisation of numerical
 #   values will affect our discussion), keep numerical values as they are.
 
-from sklearn.compose import make_column_transformer
+from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OneHotEncoder
 
 categorical_columns = ['RACE', 'OCCUPATION', 'SECTOR',
                        'MARR', 'UNION', 'SEX', 'SOUTH']
 numerical_columns = ['EDUCATION', 'EXPERIENCE', 'AGE']
 
-preprocessor = make_column_transformer(
-    (OneHotEncoder(drop='if_binary'), categorical_columns),
-    remainder='passthrough'
-)
+preprocessor = (ColumnTransformer(remainder='passthrough')
+                .append(OneHotEncoder(drop='if_binary'), categorical_columns))
 
 # %%
 # To describe the dataset as a linear model we use a ridge regressor
@@ -401,11 +399,9 @@ plt.subplots_adjust(left=.3)
 
 from sklearn.preprocessing import StandardScaler
 
-preprocessor = make_column_transformer(
-    (OneHotEncoder(drop='if_binary'), categorical_columns),
-    (StandardScaler(), numerical_columns),
-    remainder='passthrough'
-)
+preprocessor = (ColumnTransformer(remainder='passthrough')
+                .append(OneHotEncoder(drop='if_binary'), categorical_columns)
+                .append(StandardScaler(), numerical_columns))
 
 # %%
 # The model will stay unchanged.

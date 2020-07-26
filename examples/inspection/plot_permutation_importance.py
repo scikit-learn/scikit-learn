@@ -71,9 +71,9 @@ numerical_pipe = Pipeline([
     ('imputer', SimpleImputer(strategy='mean'))
 ])
 
-preprocessing = ColumnTransformer(
-    [('cat', categorical_pipe, categorical_columns),
-     ('num', numerical_pipe, numerical_columns)])
+preprocessing = (ColumnTransformer()
+                 .append(categorical_pipe, categorical_columns, name='cat')
+                 .append(numerical_pipe, numerical_columns, name='num'))
 
 rf = Pipeline([
     ('preprocess', preprocessing),

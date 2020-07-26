@@ -104,6 +104,7 @@ log_scale_transformer = make_pipeline(
     StandardScaler()
 )
 
+# TODO
 linear_model_preprocessor = ColumnTransformer(
     [
         ("passthrough_numeric", "passthrough",

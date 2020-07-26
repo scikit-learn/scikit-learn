@@ -86,7 +86,7 @@ X, y = load_ames_housing()
 # not need preprocessing
 
 
-from sklearn.compose import make_column_transformer
+from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import OneHotEncoder
@@ -124,16 +124,14 @@ num_proc_lin = make_pipeline(
 )
 
 # transformation to use for non-linear estimators
-processor_nlin = make_column_transformer(
-    (cat_proc_nlin, cat_cols),
-    (num_proc_nlin, num_cols),
-    remainder='passthrough')
+processor_nlin = (ColumnTransformer(remainder='passthrough')
+                  .append(cat_proc_nlin, cat_cols)
+                  .append(num_proc_nlin, num_cols))
 
 # transformation to use for linear estimators
-processor_lin = make_column_transformer(
-    (cat_proc_lin, cat_cols),
-    (num_proc_lin, num_cols),
-    remainder='passthrough')
+processor_lin = (ColumnTransformer(remainder='passthrough')
+                 .append(cat_proc_lin, cat_cols)
+                 .append(num_proc_lin, num_cols))
 
 
 # %%

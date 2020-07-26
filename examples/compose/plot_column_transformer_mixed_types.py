@@ -76,10 +76,10 @@ categorical_transformer = Pipeline(steps=[
     ('imputer', SimpleImputer(strategy='constant', fill_value='missing')),
     ('onehot', OneHotEncoder(handle_unknown='ignore'))])
 
-preprocessor = ColumnTransformer(
-    transformers=[
-        ('num', numeric_transformer, numeric_features),
-        ('cat', categorical_transformer, categorical_features)])
+preprocessor = (ColumnTransformer()
+                .append(numeric_transformer, numeric_features, name='num')
+                .append(categorical_transformer, categorical_features,
+                        name='cat'))
 
 # Append classifier to preprocessing pipeline.
 # Now we have a full prediction pipeline.
@@ -136,10 +136,13 @@ X_train.info()
 
 from sklearn.compose import make_column_selector as selector
 
-preprocessor = ColumnTransformer(transformers=[
-    ('num', numeric_transformer, selector(dtype_exclude="category")),
-    ('cat', categorical_transformer, selector(dtype_include="category"))
-])
+preprocessor = (ColumnTransformer()
+                .append(numeric_transformer,
+                        selector(dtype_exclude="category"),
+                        name='num')
+                .append(categorical_transformer,
+                        selector(dtype_include="category"),
+                        name='cat'))
 clf = Pipeline(steps=[('preprocessor', preprocessor),
                       ('classifier', LogisticRegression())])
 

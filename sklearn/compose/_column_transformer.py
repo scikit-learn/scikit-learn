@@ -56,25 +56,9 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         List of (name, transformer, columns) tuples specifying the
         transformer objects to be applied to subsets of the data.
 
-        name : str
-            Like in Pipeline and FeatureUnion, this allows the transformer and
-            its parameters to be set using ``set_params`` and searched in grid
-            search.
-        transformer : {'drop', 'passthrough'} or estimator
-            Estimator must support :term:`fit` and :term:`transform`.
-            Special-cased strings 'drop' and 'passthrough' are accepted as
-            well, to indicate to drop the columns or to pass them through
-            untransformed, respectively.
-        columns :  str, array-like of str, int, array-like of int, \
-                array-like of bool, slice or callable
-            Indexes the data on its second axis. Integers are interpreted as
-            positional columns, while strings can reference DataFrame columns
-            by name.  A scalar string or int should be used where
-            ``transformer`` expects X to be a 1d array-like (vector),
-            otherwise a 2d array will be passed to the transformer.
-            A callable is passed the input data `X` and can return any of the
-            above. To select multiple columns by name or dtype, you can use
-            :obj:`make_column_selector`.
+        See :meth:`append` for a description of each of these.
+        Using :meth:`append` rather than specifying these directly results in
+        more literate code and is preferable.
 
     remainder : {'drop', 'passthrough'} or estimator, default='drop'
         By default, only the specified columns in `transformers` are
@@ -175,7 +159,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
     @_deprecate_positional_args
     def __init__(self,
-                 transformers, *,
+                 transformers=None, *,
                  remainder='drop',
                  sparse_threshold=0.3,
                  n_jobs=None,
@@ -203,6 +187,67 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         self.transformers = [
             (name, trans, col) for ((name, trans), (_, _, col))
             in zip(value, self.transformers)]
+
+    def append(self, transformer, columns, *, name=None, weight=None):
+        """Stack a transformation of the specified columns onto current steps
+
+        Parameters
+        ----------
+        transformer : {'drop', 'passthrough'} or estimator
+            Estimator must support :term:`fit` and :term:`transform`.
+            Special-cased strings 'drop' and 'passthrough' are accepted as
+            well, to indicate to drop the columns or to pass them through
+            untransformed, respectively.
+        columns :  str, array-like of str, int, array-like of int, \
+                array-like of bool, slice or callable
+            Indexes the data on its second axis. Integers are interpreted as
+            positional columns, while strings can reference DataFrame columns
+            by name.  A scalar string or int should be used where
+            ``transformer`` expects X to be a 1d array-like (vector),
+            otherwise a 2d array will be passed to the transformer.
+            A callable is passed the input data `X` and can return any of the
+            above. To select multiple columns by name or dtype, you can use
+            :obj:`make_column_selector`.
+        name : str, optional
+            Like in Pipeline and FeatureUnion, this allows the transformer and
+            its parameters to be set using ``set_params`` and searched in grid
+            search. By default, the transformer's class is lowercased, and a
+            numeric suffix is appended if that name is already in use.
+        weight : float, default=1
+            Multiplies the output of this transformation.
+
+        Returns
+        -------
+        self
+            For method chaining.
+
+        Notes
+        -----
+        Changes only apply when fit is called.
+
+        """
+        transformers = [] if self.transformers is None else self.transformers
+        other_names = {tup[0] for tup in transformers}
+        if name is None:
+            if isinstance(transformer, str):
+                base_name = transformer
+            else:
+                base_name = type(transformer).__name__.lower()
+
+            # ensure the name is distinct
+            name = base_name
+            i = 1
+            while name in other_names:
+                i += 1
+                name = f"{base_name}-{i}"
+
+        elif name in other_names:
+            raise ValueError("Transformer names must be unique")
+        self.transformers = transformers + [(name, transformer, columns)]
+        if weight is not None:
+            self.transformer_weights = self.transformer_weights or {}
+            self.transformer_weights[name] = weight
+        return self
 
     def get_params(self, deep=True):
         """Get parameters for this estimator.
