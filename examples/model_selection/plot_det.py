@@ -19,10 +19,10 @@ namely:
    classification algorithms using DET curves over ROC curves.
    Due to the linear scale used for plotting ROC curves, different classifiers
    usually only differ in the top left corner of the graph and appear similar
-   for a large part of the plot. On the other hand, because DET curves represent
-   straight lines in normal deviate scale. As such, they tend to be
-   distinguishable as a whole and the area of interest spans a large part of the
-   plot.
+   for a large part of the plot. On the other hand, because DET curves
+   represent straight lines in normal deviate scale. As such, they tend to be
+   distinguishable as a whole and the area of interest spans a large part of
+   the plot.
 2. DET curves give the user direct feedback of the detection error tradeoff to
    aid in operating point analysis.
    The user can deduct directly from the DET-curve plot at which rate
