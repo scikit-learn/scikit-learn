@@ -72,7 +72,7 @@ Changelog
 
 - |Fix| Fixed a bug in :class:`cluster.AffinityPropagation`, that
   gives incorrect clusters when the array dtype is float32.
-  :pr:`17995` by :user:`Thomaz Santana  <Wikilicious> and Amanda Dsouza <amy12xx>`.
+  :pr:`17995` by :user:`Thomaz Santana  <Wikilicious>` and :user:`Amanda Dsouza <amy12xx>`.
 
 :mod:`sklearn.covariance`
 .........................
