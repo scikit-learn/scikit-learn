@@ -1223,7 +1223,8 @@ def test_feature_union_fit_params():
 
 
 def test_feature_union_warns_unknown_transformer_weight():
-
+    # Warn user when transformer_weights containers a key not present in
+    # transformer_list
     X = [[1, 2], [3, 4], [5, 6]]
     y = [0, 1, 2]
 
