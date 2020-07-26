@@ -70,7 +70,7 @@ Changelog
   `init_size_`, are deprecated and will be removed in 0.26. :pr:`17864` by
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
-- |Fix| :class:`cluster.AgglomerativeClustering.__init__()` has a new parameter
+- |Fix| :class:`cluster.AgglomerativeClustering` has a new parameter
   `compute_distances`. When set to `True`, distances between clusters are
   computed and stored in the `distances_` attribute even when the parameter
   `distance_threshold` is not used. This new parameter is useful to produce
