@@ -232,13 +232,14 @@ def test_affinity_propagation_convergence_warning_dense_sparse(centers):
                            np.zeros(X.shape[0], dtype=int))
     assert len(record) == 0
 
+
 def test_affinity_propagation_float32():
     # Test to fix incorrect clusters due to dtype change
     # (non-regression test for issue #10832)
-    X = np.array([[1,0,0,0],
-                 [0,1,1,0],
-                 [0,1,1,0],
-                 [0,0,0,1]], dtype='float32')
+    X = np.array([[1, 0, 0, 0],
+                  [0, 1, 1, 0],
+                  [0, 1, 1, 0],
+                  [0, 0, 0, 1]], dtype='float32')
     afp = AffinityPropagation(preference=1, affinity='precomputed',
                               random_state=0).fit(X)
     expected = np.array([0, 1, 1, 2])
