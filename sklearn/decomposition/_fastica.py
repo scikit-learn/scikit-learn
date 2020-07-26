@@ -20,6 +20,7 @@ from ..exceptions import ConvergenceWarning
 from ..utils import check_array, as_float_array, check_random_state
 from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
+from ..utils.validation import _deprecate_positional_args
 
 __all__ = ['fastica', 'FastICA']
 
@@ -45,7 +46,7 @@ def _gs_decorrelation(w, W, j):
     Assumes that W is orthogonal
     w changed in place
     """
-    w -= np.dot(np.dot(w, W[:j].T), W[:j])
+    w -= np.linalg.multi_dot([w, W[:j].T, W[:j]])
     return w
 
 
@@ -56,7 +57,7 @@ def _sym_decorrelation(W):
     s, u = linalg.eigh(np.dot(W, W.T))
     # u (resp. s) contains the eigenvectors (resp. square roots of
     # the eigenvalues) of W * W.T
-    return np.dot(np.dot(u * (1. / np.sqrt(s)), u.T), W)
+    return np.linalg.multi_dot([u * (1. / np.sqrt(s)), u.T, W])
 
 
 def _ica_def(X, tol, g, fun_args, max_iter, w_init):
@@ -146,7 +147,8 @@ def _cube(x, fun_args):
     return x ** 3, (3 * x ** 2).mean(axis=-1)
 
 
-def fastica(X, n_components=None, algorithm="parallel", whiten=True,
+@_deprecate_positional_args
+def fastica(X, n_components=None, *, algorithm="parallel", whiten=True,
             fun="logcosh", fun_args=None, max_iter=200, tol=1e-04, w_init=None,
             random_state=None, return_X_mean=False, compute_sources=True,
             return_n_iter=False):
@@ -322,10 +324,10 @@ class FastICA(TransformerMixin, BaseEstimator):
         or 'cube'.
         You can also provide your own function. It should return a tuple
         containing the value of the function, and of its derivative, in the
-        point. Example:
+        point. Example::
 
-        def my_g(x):
-            return x ** 3, (3 * x ** 2).mean(axis=-1)
+            def my_g(x):
+                return x ** 3, (3 * x ** 2).mean(axis=-1)
 
     fun_args : dictionary, optional
         Arguments to send to the functional form.
@@ -390,7 +392,8 @@ class FastICA(TransformerMixin, BaseEstimator):
     pp. 411-430*
 
     """
-    def __init__(self, n_components=None, algorithm='parallel', whiten=True,
+    @_deprecate_positional_args
+    def __init__(self, n_components=None, *, algorithm='parallel', whiten=True,
                  fun='logcosh', fun_args=None, max_iter=200, tol=1e-4,
                  w_init=None, random_state=None):
         super().__init__()
@@ -424,13 +427,11 @@ class FastICA(TransformerMixin, BaseEstimator):
         -------
             X_new : array-like, shape (n_samples, n_components)
         """
+
+        X = self._validate_data(X, copy=self.whiten, dtype=FLOAT_DTYPES,
+                                ensure_min_samples=2).T
         fun_args = {} if self.fun_args is None else self.fun_args
         random_state = check_random_state(self.random_state)
-
-        # make interface compatible with other decompositions
-        # a copy is required only for non whitened data
-        X = check_array(X, copy=self.whiten, dtype=FLOAT_DTYPES,
-                        ensure_min_samples=2).T
 
         alpha = fun_args.get('alpha', 1.0)
         if not 1 <= alpha <= 2:
@@ -518,7 +519,7 @@ class FastICA(TransformerMixin, BaseEstimator):
 
         if compute_sources:
             if self.whiten:
-                S = np.dot(np.dot(W, K), X).T
+                S = np.linalg.multi_dot([W, K, X]).T
             else:
                 S = np.dot(W, X).T
         else:

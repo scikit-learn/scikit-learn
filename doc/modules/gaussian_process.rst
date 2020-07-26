@@ -365,7 +365,8 @@ translations in the input space, while non-stationary kernels
 depend also on the specific values of the datapoints. Stationary kernels can further
 be subdivided into isotropic and anisotropic kernels, where isotropic kernels are
 also invariant to rotations in the input space. For more details, we refer to
-Chapter 4 of [RW2006]_.
+Chapter 4 of [RW2006]_. For guidance on how to best combine different kernels,
+we refer to [Duv2014]_.
 
 Gaussian Process Kernel API
 ---------------------------
@@ -470,13 +471,16 @@ It is defined as:
 Kernel operators
 ----------------
 Kernel operators take one or two base kernels and combine them into a new
-kernel. The :class:`Sum` kernel takes two kernels :math:`k1` and :math:`k2`
-and combines them via :math:`k_{sum}(X, Y) = k1(X, Y) + k2(X, Y)`.
-The  :class:`Product` kernel takes two kernels :math:`k1` and :math:`k2`
-and combines them via :math:`k_{product}(X, Y) = k1(X, Y) * k2(X, Y)`.
+kernel. The :class:`Sum` kernel takes two kernels :math:`k_1` and :math:`k_2`
+and combines them via :math:`k_{sum}(X, Y) = k_1(X, Y) + k_2(X, Y)`.
+The  :class:`Product` kernel takes two kernels :math:`k_1` and :math:`k_2`
+and combines them via :math:`k_{product}(X, Y) = k_1(X, Y) * k_2(X, Y)`.
 The :class:`Exponentiation` kernel takes one base kernel and a scalar parameter
-:math:`exponent` and combines them via
-:math:`k_{exp}(X, Y) = k(X, Y)^\text{exponent}`.
+:math:`p` and combines them via
+:math:`k_{exp}(X, Y) = k(X, Y)^p`.
+Note that magic methods ``__add__``, ``__mul___`` and ``__pow__`` are
+overridden on the Kernel objects, so one can use e.g. ``RBF() + RBF()`` as
+a shortcut for ``Sum(RBF(), RBF())``.
 
 Radial-basis function (RBF) kernel
 ----------------------------------
@@ -487,8 +491,9 @@ number of dimensions as the inputs :math:`x` (anisotropic variant of the kernel)
 The kernel is given by:
 
 .. math::
-   k(x_i, x_j) = \text{exp}\left(-\frac{1}{2} d(x_i / l, x_j / l)^2\right)
+   k(x_i, x_j) = \text{exp}\left(- \frac{d(x_i, x_j)^2}{2l^2} \right)
 
+where :math:`d(\cdot, \cdot)` is the Euclidean distance.
 This kernel is infinitely differentiable, which implies that GPs with this
 kernel as covariance function have mean square derivatives of all orders, and are thus
 very smooth. The prior and posterior of a GP resulting from an RBF kernel are shown in
@@ -507,24 +512,25 @@ the smoothness of the resulting function. It is parameterized by a length-scale 
 
 .. math::
 
-    k(x_i, x_j) = \sigma^2\frac{1}{\Gamma(\nu)2^{\nu-1}}\Bigg(\gamma\sqrt{2\nu} d(x_i / l, x_j / l)\Bigg)^\nu K_\nu\Bigg(\gamma\sqrt{2\nu} d(x_i / l, x_j / l)\Bigg),
+    k(x_i, x_j) = \frac{1}{\Gamma(\nu)2^{\nu-1}}\Bigg(\frac{\sqrt{2\nu}}{l} d(x_i , x_j )\Bigg)^\nu K_\nu\Bigg(\frac{\sqrt{2\nu}}{l} d(x_i , x_j )\Bigg),
 
+where :math:`d(\cdot,\cdot)` is the Euclidean distance, :math:`K_\nu(\cdot)` is a modified Bessel function and :math:`\Gamma(\cdot)` is the gamma function.
 As :math:`\nu\rightarrow\infty`, the Matérn kernel converges to the RBF kernel.
 When :math:`\nu = 1/2`, the Matérn kernel becomes identical to the absolute
 exponential kernel, i.e.,
 
 .. math::
-    k(x_i, x_j) = \sigma^2 \exp \Bigg(-\gamma d(x_i / l, x_j / l) \Bigg) \quad \quad \nu= \tfrac{1}{2}
+    k(x_i, x_j) = \exp \Bigg(- \frac{1}{l} d(x_i , x_j ) \Bigg) \quad \quad \nu= \tfrac{1}{2}
 
 In particular, :math:`\nu = 3/2`:
 
 .. math::
-    k(x_i, x_j) = \sigma^2 \Bigg(1 + \gamma \sqrt{3} d(x_i / l, x_j / l)\Bigg) \exp \Bigg(-\gamma \sqrt{3}d(x_i / l, x_j / l) \Bigg) \quad \quad \nu= \tfrac{3}{2}
+    k(x_i, x_j) =  \Bigg(1 + \frac{\sqrt{3}}{l} d(x_i , x_j )\Bigg) \exp \Bigg(-\frac{\sqrt{3}}{l} d(x_i , x_j ) \Bigg) \quad \quad \nu= \tfrac{3}{2}
 
 and :math:`\nu = 5/2`:
 
 .. math::
-    k(x_i, x_j) = \sigma^2 \Bigg(1 + \gamma \sqrt{5}d(x_i / l, x_j / l) +\frac{5}{3} \gamma^2d(x_i / l, x_j / l)^2 \Bigg) \exp \Bigg(-\gamma \sqrt{5}d(x_i / l, x_j / l) \Bigg) \quad \quad \nu= \tfrac{5}{2}
+    k(x_i, x_j) = \Bigg(1 + \frac{\sqrt{5}}{l} d(x_i , x_j ) +\frac{5}{3l} d(x_i , x_j )^2 \Bigg) \exp \Bigg(-\frac{\sqrt{5}}{l} d(x_i , x_j ) \Bigg) \quad \quad \nu= \tfrac{5}{2}
 
 are popular choices for learning functions that are not infinitely
 differentiable (as assumed by the RBF kernel) but at least once (:math:`\nu =
@@ -570,7 +576,7 @@ It is parameterized by a length-scale parameter :math:`l>0` and a periodicity pa
 The kernel is given by:
 
 .. math::
-   k(x_i, x_j) = \text{exp}\left(-2 \left(\text{sin}(\pi / p * d(x_i, x_j)) / l\right)^2\right)
+   k(x_i, x_j) = \text{exp}\left(- \frac{ 2\sin^2(\pi d(x_i, x_j) / p) }{ l^ 2} \right)
 
 The prior and posterior of a GP resulting from an ExpSineSquared kernel are shown in
 the following figure:
@@ -603,5 +609,7 @@ References
 ----------
 
 .. [RW2006] Carl Eduard Rasmussen and Christopher K.I. Williams, "Gaussian Processes for Machine Learning", MIT Press 2006, Link to an official complete PDF version of the book `here <http://www.gaussianprocess.org/gpml/chapters/RW.pdf>`_ .
+
+.. [Duv2014] David Duvenaud, "The Kernel Cookbook: Advice on Covariance functions", 2014, `Link <https://www.cs.toronto.edu/~duvenaud/cookbook/>`_ .
 
 .. currentmodule:: sklearn.gaussian_process

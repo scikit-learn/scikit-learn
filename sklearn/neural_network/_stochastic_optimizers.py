@@ -106,6 +106,10 @@ class SGDOptimizer(BaseOptimizer):
     nesterov : bool, default=True
         Whether to use nesterov's momentum or not. Use nesterov's if True
 
+    power_t : float, default=0.5
+        Power of time step 't' in inverse scaling. See `lr_schedule` for
+        more details.
+
     Attributes
     ----------
     learning_rate : float
@@ -192,7 +196,7 @@ class AdamOptimizer(BaseOptimizer):
         The concatenated list containing coefs_ and intercepts_ in MLP model.
         Used for initializing velocities and updating params
 
-    learning_rate_init : float, default=0.1
+    learning_rate_init : float, default=0.001
         The initial learning rate used. It controls the step-size in updating
         the weights
 

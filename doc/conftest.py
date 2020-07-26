@@ -58,6 +58,11 @@ def setup_impute():
 
 
 def setup_unsupervised_learning():
+    try:
+        import skimage  # noqa
+    except ImportError:
+        raise SkipTest("Skipping unsupervised_learning.rst, scikit-image "
+                       "not installed")
     # ignore deprecation warnings from scipy.misc.face
     warnings.filterwarnings('ignore', 'The binary mode of fromstring',
                             DeprecationWarning)
