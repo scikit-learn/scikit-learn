@@ -16,7 +16,7 @@ set -e
 # Fail fast
 echo "CPU Arch: ${TRAVIS_CPU_ARCH}"
 
-# jq is used in travis_fastfail.sh, it's already pre-installed in non aarch64
+# jq is used in travis_fastfail.sh, it's already pre-installed in non arm64
 # environments
 sudo apt-get install jq
 
