@@ -1221,21 +1221,19 @@ def make_type_tables():
     ntp = np.core.numerictypes.allTypes
     inpt = [{'np_name': it[0], 'np_type': it[1]} for it in ntp.items()]
     dall = pd.DataFrame(inpt)
-    dall = dall[(dall['np_name'] != 'generic') &
-                (dall['np_name'] != 'void0') &
-                (dall['np_name'] != 'void') &
-                (dall['np_name'] != 'flexible') &
-                (dall['np_name'] != 'integer') &
-                (dall['np_name'] != 'signedinteger') &
-                (dall['np_name'] != 'unsignedinteger') &
-                (dall['np_type'] != np.complexfloating) &
+
+    dall.index = dall['np_name']
+    dall.sort_index(inplace=True)
+    dall.drop(['generic', 'void0', 'void', 'flexible', 'integer',
+               'signedinteger', 'unsignedinteger', 'character',
+               'inexact', 'floating', 'number'], inplace=True)
+
+    dall = dall[(dall['np_type'] != np.complexfloating) &
                 (dall['np_type'] != np.complex128) &
                 (dall['np_type'] != np.complex256) &
-                (dall['np_type'] != np.complex64) &
-                (dall['np_name'] != 'character') &
-                (dall['np_name'] != 'inexact') &
-                (dall['np_name'] != 'floating') &
-                (dall['np_name'] != 'number')]
+                (dall['np_type'] != np.complex64)]
+
+
 
     dall['dtype'] = dall['np_type'].map(np.dtype)
     dall['dtype_name'] = dall['dtype'].map(lambda x: x.name)
