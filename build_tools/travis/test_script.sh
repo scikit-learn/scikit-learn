@@ -27,7 +27,7 @@ if [[ "$BUILD_WITH_ICC" == "true" ]]; then
 fi
 
 run_tests() {
-    TEST_CMD="pytest --showlocals --durations=20 -n $CI_CPU_COUNT --pyargs"
+    TEST_CMD="pytest --showlocals --durations=20 --pyargs"
 
     # Get into a temp directory to run test from the installed scikit-learn and
     # check if we do not leave artifacts
@@ -37,9 +37,18 @@ run_tests() {
     cp conftest.py $TEST_DIR
     cd $TEST_DIR
 
-    # Tests that require large downloads over the networks are skipped in CI.
-    # Here we make sure, that they are still run on a regular basis.
-    export SKLEARN_SKIP_NETWORK_TESTS=0
+
+    if [[ "$TRAVIS_CPU_ARCH" == "arm64" ]]; then
+	# use pytest-xdist for faster tests
+        TEST_CMD="$TEST_CMD -n $CI_CPU_COUNT"
+    else
+        # Tests that require large downloads over the networks are skipped in CI.
+        # Here we make sure, that they are still run on a regular basis.
+	#
+	# Note that using pytest-xdist is currently not compatible
+	# with fetching datasets in tests due to datasets cache corruptions issues.
+        export SKLEARN_SKIP_NETWORK_TESTS=0
+    fi
 
     if [[ "$COVERAGE" == "true" ]]; then
         TEST_CMD="$TEST_CMD --cov sklearn"
@@ -50,11 +59,6 @@ run_tests() {
     fi
 
     set -x  # print executed commands to the terminal
-
-    # pre-fetch some datasets before running tests, as the dataset cache can get corrupted
-    # if it is created simultaneously in different processes when using pytest-xdist.
-    python -c "from sklearn.datasets import fetch_20newsgroups; fetch_20newsgroups()"
-    python -c "from sklearn.datasets import fetch_kddcup99; fetch_kddcup99()"
 
     $TEST_CMD sklearn
 }
