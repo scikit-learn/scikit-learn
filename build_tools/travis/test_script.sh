@@ -32,8 +32,9 @@ run_tests() {
     # Get into a temp directory to run test from the installed scikit-learn and
     # check if we do not leave artifacts
     mkdir -p $TEST_DIR
-    # We need the setup.cfg for the pytest settings
+    # We need the setup.cfg and conftest.py for the pytest settings
     cp setup.cfg $TEST_DIR
+    cp conftest.py $TEST_DIR
     cd $TEST_DIR
 
     # Tests that require large downloads over the networks are skipped in CI.
@@ -53,6 +54,7 @@ run_tests() {
     # pre-fetch some datasets before running tests, as the dataset cache can get corrupted
     # if it is created simultaneously in different processes when using pytest-xdist.
     python -c "from sklearn.datasets import fetch_20newsgroups; fetch_20newsgroups()"
+    python -c "from sklearn.datasets import fetch_kddcup99; fetch_kddcup99()"
 
     $TEST_CMD sklearn
 }
