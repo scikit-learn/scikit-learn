@@ -153,26 +153,26 @@ def test_sample_weight():
         assert diff > 0.1
 
 
-def test_parallel_execution():
+@pytest.mark.parametrize("method", ['sigmoid', 'isotonic'])
+def test_parallel_execution(method):
     """Test parallel calibration"""
     X, y = make_classification(random_state=42)
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
 
-    for method in ['sigmoid', 'isotonic']:
-        base_estimator = LinearSVC(random_state=42)
+    base_estimator = LinearSVC(random_state=42)
 
-        cal_clf_parallel = CalibratedClassifierCV(base_estimator,
-                                                  method=method, n_jobs=2)
-        cal_clf_parallel.fit(X_train, y_train)
-        probs_parallel = cal_clf_parallel.predict_proba(X_test)
+    cal_clf_parallel = CalibratedClassifierCV(base_estimator,
+                                              method=method, n_jobs=2)
+    cal_clf_parallel.fit(X_train, y_train)
+    probs_parallel = cal_clf_parallel.predict_proba(X_test)
 
-        cal_clf_sequential = CalibratedClassifierCV(base_estimator,
-                                                    method=method,
-                                                    n_jobs=1)
-        cal_clf_sequential.fit(X_train, y_train)
-        probs_sequential = cal_clf_sequential.predict_proba(X_test)
+    cal_clf_sequential = CalibratedClassifierCV(base_estimator,
+                                                method=method,
+                                                n_jobs=1)
+    cal_clf_sequential.fit(X_train, y_train)
+    probs_sequential = cal_clf_sequential.predict_proba(X_test)
 
-        assert_allclose(probs_parallel, probs_sequential)
+    assert_allclose(probs_parallel, probs_sequential)
 
 
 def test_calibration_multiclass():
