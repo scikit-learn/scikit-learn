@@ -52,9 +52,6 @@ from sklearn.exceptions import NotFittedError, PositiveSpectrumWarning
 
 from sklearn.utils._testing import TempMemmap
 
-import warnings
-warnings.simplefilter('always')
-
 
 def test_as_float_array():
     # Test function for as_float_array
