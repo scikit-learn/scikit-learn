@@ -50,6 +50,10 @@ run_tests() {
 
     set -x  # print executed commands to the terminal
 
+    # pre-fetch some datasets before running tests, as the dataset cache can get corrupted
+    # if it is created simultaneously in different processes when using pytest-xdist.
+    python -c "from sklearn.datasets import fetch_20newsgroups; fetch_20newsgroups()"
+
     $TEST_CMD sklearn
 }
 

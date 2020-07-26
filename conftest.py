@@ -38,6 +38,15 @@ def pytest_collection_modifyitems(config, items):
             if item.name.endswith(('_hash.FeatureHasher',
                                    'text.HashingVectorizer')):
                 item.add_marker(skip_marker)
+            elif (item.name.endswith('GradientBoostingClassifier')
+                  and platform.machine() == 'ARM'):
+                marker = pytest.mark.xfail(
+                   reason=(
+                       'know failure. See '
+                       'https://github.com/scikit-learn/scikit-learn/issues/17797'  # noqa
+                   )
+                )
+                item.add_marker(marker)
 
     # Skip tests which require internet if the flag is provided
     if config.getoption("--skip-network"):
