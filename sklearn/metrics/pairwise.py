@@ -133,21 +133,24 @@ def check_pairwise_arrays(X, Y, *, precomputed=False, dtype=None,
     """
     X, Y, dtype_float = _return_float_dtype(X, Y)
 
+    ensure_2d = True
     estimator = 'check_pairwise_arrays'
     if dtype is None:
         dtype = dtype_float
+    elif dtype == str:
+        ensure_2d = False
 
     if Y is X or Y is None:
         X = Y = check_array(X, accept_sparse=accept_sparse, dtype=dtype,
                             copy=copy, force_all_finite=force_all_finite,
-                            estimator=estimator)
+                            estimator=estimator, ensure_2d=ensure_2d)
     else:
         X = check_array(X, accept_sparse=accept_sparse, dtype=dtype,
                         copy=copy, force_all_finite=force_all_finite,
-                        estimator=estimator)
+                        estimator=estimator, ensure_2d=ensure_2d)
         Y = check_array(Y, accept_sparse=accept_sparse, dtype=dtype,
                         copy=copy, force_all_finite=force_all_finite,
-                        estimator=estimator)
+                        estimator=estimator, ensure_2d=ensure_2d)
 
     if precomputed:
         if X.shape[1] != Y.shape[0]:
@@ -155,7 +158,7 @@ def check_pairwise_arrays(X, Y, *, precomputed=False, dtype=None,
                              "(n_queries, n_indexed). Got (%d, %d) "
                              "for %d indexed." %
                              (X.shape[0], X.shape[1], Y.shape[0]))
-    elif X.shape[1] != Y.shape[1]:
+    elif X.ndim > 1 and X.shape[1] != Y.shape[1]:
         raise ValueError("Incompatible dimension for X and Y matrices: "
                          "X.shape[1] == %d while Y.shape[1] == %d" % (
                              X.shape[1], Y.shape[1]))
@@ -1379,11 +1382,11 @@ def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
 
 
 def _pairwise_callable(X, Y, metric, force_all_finite=True,
-                       is_numeric=True, **kwds):
+                       dtype=None, **kwds):
     """Handle the callable case for pairwise_{distances,kernels}
     """
-    if is_numeric:
-        X, Y = check_pairwise_arrays(X, Y, force_all_finite=force_all_finite)
+    X, Y = check_pairwise_arrays(X, Y, force_all_finite=force_all_finite,
+                                 dtype=dtype)
 
     if X is Y:
         # Only calculate metric for upper triangle
@@ -1637,7 +1640,7 @@ def pairwise_distances_chunked(X, Y=None, *, reduce_func=None,
 @_deprecate_positional_args
 def pairwise_distances(X, Y=None, metric="euclidean", *, n_jobs=None,
                        force_all_finite=True,
-                       numeric_input=True, **kwds):
+                       dtype=None, **kwds):
     """ Compute the distance matrix from a vector array X and optional Y.
 
     This method takes either a vector array or a distance matrix, and returns
@@ -1719,10 +1722,11 @@ def pairwise_distances(X, Y=None, metric="euclidean", *, n_jobs=None,
         .. versionchanged:: 0.23
            Accepts `pd.NA` and converts it into `np.nan`
 
-    numeric_input: bool, default=True
-        If True, input values (X, Y) are expected to be numeric values.
-        when set to False, the `metric` can be callable, which can evaluate
-        custom metric on string inputs.
+    dtype : str, type, list of types, default=None
+        Data type required for X and Y. If None, the dtype will be an
+        appropriate float type selected by _return_float_dtype.
+
+        .. versionadded:: 0.24
 
     **kwds : optional keyword parameters
         Any further parameters are passed directly to the distance function.
@@ -1751,9 +1755,9 @@ def pairwise_distances(X, Y=None, metric="euclidean", *, n_jobs=None,
                          "Valid metrics are %s, or 'precomputed', or a "
                          "callable" % (metric, _VALID_METRICS))
 
-    if not (numeric_input or callable(metric)):
-        raise ValueError("`numeric_input` has to be True when `metric`"
-                         "is not callable")
+    if not (dtype is None or callable(metric)):
+        raise ValueError("`dtype` has to be `None` when `metric` "
+                         "param is not callable")
 
     if metric == "precomputed":
         X, _ = check_pairwise_arrays(X, Y, precomputed=True,
@@ -1767,7 +1771,7 @@ def pairwise_distances(X, Y=None, metric="euclidean", *, n_jobs=None,
         func = PAIRWISE_DISTANCE_FUNCTIONS[metric]
     elif callable(metric):
         func = partial(_pairwise_callable, metric=metric,
-                       is_numeric=numeric_input,
+                       dtype=dtype,
                        force_all_finite=force_all_finite, **kwds)
     else:
         if issparse(X) or issparse(Y):
