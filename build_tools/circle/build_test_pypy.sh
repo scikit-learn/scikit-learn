@@ -21,7 +21,7 @@ which python
 pip install -U pip
 
 # pins versions to install wheel from https://antocuni.github.io/pypy-wheels/manylinux2010
-pip install --extra-index-url https://antocuni.github.io/pypy-wheels/manylinux2010 numpy==1.18.0 scipy==1.3.2
+pip install --extra-index-url https://antocuni.github.io/pypy-wheels/manylinux2010 numpy==1.19.1 scipy==1.5.2
 
 # Install Cython directly
 pip install https://antocuni.github.io/pypy-wheels/ubuntu/Cython/Cython-0.29.14-py3-none-any.whl
