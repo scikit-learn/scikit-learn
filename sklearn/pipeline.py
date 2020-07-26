@@ -924,8 +924,6 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         self : FeatureUnion
             This estimator
         """
-        self._validate_transformer_weights()
-
         transformers = self._parallel_func(X, y, fit_params, _fit_one)
         if not transformers:
             # All transformers are None
@@ -971,6 +969,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         """Runs func in parallel on X and y"""
         self.transformer_list = list(self.transformer_list)
         self._validate_transformers()
+        self._validate_transformer_weights()
         transformers = list(self._iter())
 
         return Parallel(n_jobs=self.n_jobs)(delayed(func)(
