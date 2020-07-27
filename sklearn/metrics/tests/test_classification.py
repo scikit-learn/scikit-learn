@@ -166,7 +166,7 @@ def test_classification_report_output_dict_empty_input():
                                         'support': 0}}
     assert isinstance(report, dict)
     # assert the 2 dicts are equal.
-    assert(report.keys() == expected_report.keys())
+    assert report.keys() == expected_report.keys()
     for key in expected_report:
         if key == 'accuracy':
             assert isinstance(report[key], float)
