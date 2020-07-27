@@ -148,7 +148,8 @@ __author_email__ = ('renato.ppontes@gmail.com, '
                     'joel.nothman@gmail.com')
 __version__ = '2.4.0'
 
-from typing import Optional, List, Dict, Any, Iterator, Union, Tuple, TYPE_CHECKING
+from typing import TYPE_CHECKING
+from typing import Optional, List, Dict, Any, Iterator, Union, Tuple
 
 import re
 import sys
