@@ -371,7 +371,7 @@ class BaseEstimator:
                 )
             if n_features != self.n_features_in_:
                 raise ValueError(
-                    'X has {} features, but this {} is expecting {} features '
+                    'X has {} features, but {} is expecting {} features '
                     'as input.'.format(n_features, self.__class__.__name__,
                                        self.n_features_in_)
                 )
