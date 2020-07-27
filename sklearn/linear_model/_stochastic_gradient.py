@@ -15,7 +15,7 @@ from ..base import clone, is_classifier
 from ._base import LinearClassifierMixin, SparseCoefMixin
 from ._base import make_dataset
 from ..base import BaseEstimator, RegressorMixin
-from ..utils import check_array, check_random_state, check_X_y
+from ..utils import check_array, check_random_state
 from ..utils.extmath import safe_sparse_dot
 from ..utils.multiclass import _check_partial_fit_first_call
 from ..utils.validation import check_is_fitted, _check_sample_weight
