@@ -27,12 +27,15 @@ from sklearn.base import BiclusterMixin
 
 from sklearn.linear_model._base import LinearClassifierMixin
 from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import LinearRegression
 from sklearn.utils import IS_PYPY
 from sklearn.utils._testing import SkipTest
 from sklearn.utils.estimator_checks import (
     _construct_instance,
     _set_checking_parameters,
     _set_check_estimator_ids,
+    check_dataframe_column_names_consistency,
+    check_dataarray_column_name_consistency,
     check_class_weight_balanced_linear_classifier,
     parametrize_with_checks)
 
@@ -204,3 +207,19 @@ def test_class_support_removed():
 
     with pytest.raises(TypeError, match=msg):
         parametrize_with_checks([LogisticRegression])
+
+
+@pytest.mark.parametrize('estimator', [LogisticRegression(),
+                                       LinearRegression()],
+                         ids=_set_check_estimator_ids)
+def test_pandas_column_name_consistency(estimator):
+    name = estimator.__class__.__name__
+    check_dataframe_column_names_consistency(name, estimator)
+
+
+@pytest.mark.parametrize('estimator', [LogisticRegression(),
+                                       LinearRegression()],
+                         ids=_set_check_estimator_ids)
+def test_xarray_column_name_consistency(estimator):
+    name = estimator.__class__.__name__
+    check_dataarray_column_name_consistency(name, estimator)

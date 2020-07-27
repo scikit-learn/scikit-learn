@@ -16,6 +16,8 @@ from sklearn.base import BaseEstimator, clone, is_classifier
 from sklearn.svm import SVC
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV
+from sklearn.linear_model import LinearRegression
+from sklearn.datasets import make_regression
 
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.tree import DecisionTreeRegressor
@@ -537,3 +539,26 @@ def test_repr_html_wraps():
     with config_context(display='diagram'):
         output = tree._repr_html_()
         assert "<style>" in output
+
+
+def test_check_feature_names():
+    # check cases when feature names are not avaliable
+    pd = pytest.importorskip("pandas")
+    X, y = make_regression(random_state=42)
+    est = LinearRegression()
+    est.fit(X, y)
+
+    assert est.feature_names_in_ is None
+    with pytest.warns(None) as record:
+        est.predict(X)
+    assert not record
+
+    # does not check names
+    names = [f"col_{i}" for i in range(X.shape[1])]
+    df = pd.DataFrame(X, columns=names)
+    est.fit(df, y)
+
+    assert_array_equal(est.feature_names_in_, names)
+    with pytest.warns(None) as record:
+        est.predict(X)
+    assert not record

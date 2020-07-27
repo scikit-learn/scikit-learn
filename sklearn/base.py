@@ -19,6 +19,7 @@ from .utils.validation import check_X_y
 from .utils.validation import check_array
 from .utils._estimator_html_repr import estimator_html_repr
 from .utils.validation import _deprecate_positional_args
+from .utils._extarray import _get_feature_names
 
 _DEFAULT_TAGS = {
     'non_deterministic': False,
@@ -376,6 +377,44 @@ class BaseEstimator:
                                        self.n_features_in_)
                 )
 
+    def _check_feature_names(self, X, reset=True):
+        """Validate feature names and set or check the `feature_names_in_`
+        attribute.
+
+        Parameters
+        ----------
+        X : {dataframe-like} of shape (n_samples, n_features)
+            The input samples.
+        reset : bool, default=True
+            Whether to reset the `feature_names_in_` attribute.
+            If False, the Input will be checked for consistency with data
+            provided when reset was last True.
+        """
+
+        if reset:
+            self.feature_names_in_ = _get_feature_names(X)
+            return
+
+        fitted_feature_names = getattr(self, "feature_names_in_", None)
+        if fitted_feature_names is None:
+            # no feature names to check
+            return
+
+        feature_names_in = _get_feature_names(X)
+        if feature_names_in is None:
+            # X does not have feature names but estimator was fitted with
+            # data with feature names
+            return
+
+        # valid the `feature_names_in_` attribute
+        if (len(fitted_feature_names) != len(feature_names_in) or
+                np.any(fitted_feature_names != feature_names_in)):
+            warnings.warn("The column names should match those that were "
+                          "passed during fit(), in the same order. Got "
+                          f"({feature_names_in}) expected "
+                          f"({fitted_feature_names}). Starting version 0.26, "
+                          "an error will be raised", FutureWarning)
+
     def _validate_data(self, X, y=None, reset=True,
                        validate_separately=False, **check_params):
         """Validate input data and set or check the `n_features_in_` attribute.
@@ -406,9 +445,10 @@ class BaseEstimator:
         out : {ndarray, sparse matrix} or tuple of these
             The validated input. A tuple is returned if `y` is not None.
         """
+        self._check_feature_names(X, reset=reset)
 
         if y is None:
-            if self._get_tags()['requires_y']:
+            if reset and self._get_tags()['requires_y']:
                 raise ValueError(
                     f"This {self.__class__.__name__} estimator "
                     f"requires y to be passed, but the target y is None."

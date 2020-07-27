@@ -2988,3 +2988,78 @@ def check_requires_y_none(name, estimator_orig):
     except ValueError as ve:
         if not any(msg in str(ve) for msg in expected_err_msgs):
             warnings.warn(warning_msg, FutureWarning)
+
+
+def check_dataframe_column_names_consistency(name, estimator_orig):
+    try:
+        import pandas as pd
+    except ImportError:
+        raise SkipTest("pandas is not installed: not checking "
+                       "column name consistency for pandas")
+
+    def _construct_dataframe(X, columns):
+        return pd.DataFrame(X, columns=columns)
+    _check_column_name_consistency(name, estimator_orig, _construct_dataframe)
+
+
+def check_dataarray_column_name_consistency(name, estimator_orig):
+    try:
+        import xarray as xr
+    except ImportError:
+        raise SkipTest("xarray is not installed: not checking "
+                       "column name consistency for xarray")
+
+    def _construct_xarray(X, columns):
+        return xr.DataArray(X, dims=('index', 'columns'),
+                            coords={'columns': columns})
+    _check_column_name_consistency(name, estimator_orig, _construct_xarray)
+
+
+def _check_column_name_consistency(name, estimator_orig, construct_X):
+    estimator = clone(estimator_orig)
+
+    tags = estimator._get_tags()
+    if "2darray" not in tags["X_types"]:
+        warnings.warn("Can't test estimator {} which requires input "
+                      " of type {}".format(name, tags["X_types"]),
+                      SkipTestWarning)
+        return
+
+    set_random_state(estimator)
+    if 'warm_start' in estimator.get_params():
+        estimator.set_params(warm_start=False)
+
+    X_orig, _ = make_regression(random_state=0, n_features=10)
+    X_orig = _enforce_estimator_tags_x(estimator, X_orig)
+    X_orig = _pairwise_estimator_convert_X(X_orig, estimator)
+
+    n_samples, n_features = X_orig.shape
+    names = np.array([f"col_{i}" for i in range(n_features)])
+    X = construct_X(X_orig, names)
+
+    rng = np.random.RandomState(0)
+    if is_regressor(estimator):
+        y = rng.normal(size=n_samples)
+    else:
+        y = rng.randint(low=0, high=2, size=n_samples)
+    y = _enforce_estimator_tags_y(estimator, y)
+
+    estimator.fit(X, y)
+    if not hasattr(estimator, 'feature_names_in_'):
+        return
+
+    assert_array_equal(estimator.feature_names_in_, names)
+    bad_names = names[::-1]
+    X_bad = construct_X(X, bad_names)
+
+    expected_msg = ("The column names should match those that were passed "
+                    f"during fit(), in the same order. Got ({bad_names}) "
+                    f"expected ({names}). Starting version 0.26, an error "
+                    "will be raised")
+    for method in ("predict", "transform", "decision_function",
+                   "predict_proba"):
+        func = getattr(estimator, method, None)
+        if func is None:
+            continue
+        # TODO In 0.26, this will be an error.
+        assert_warns_message(FutureWarning, expected_msg, func, X_bad)

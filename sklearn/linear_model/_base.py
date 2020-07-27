@@ -214,8 +214,8 @@ class LinearModel(BaseEstimator, metaclass=ABCMeta):
 
     def _decision_function(self, X):
         check_is_fitted(self)
-
-        X = check_array(X, accept_sparse=['csr', 'csc', 'coo'])
+        X = self._validate_data(X, accept_sparse=['csr', 'csc', 'coo'],
+                                reset=False)
         return safe_sparse_dot(X, self.coef_.T,
                                dense_output=True) + self.intercept_
 
@@ -279,7 +279,7 @@ class LinearClassifierMixin(ClassifierMixin):
         """
         check_is_fitted(self)
 
-        X = check_array(X, accept_sparse='csr')
+        X = self._validate_data(X, accept_sparse='csr', reset=False)
 
         n_features = self.coef_.shape[1]
         if X.shape[1] != n_features:
