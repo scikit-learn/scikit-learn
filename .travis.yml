@@ -38,7 +38,7 @@ matrix:
 
     - python: 3.7
       env:
-        - CI_CPU_COUNT="16"
+        - CI_CPU_COUNT="8"
       os: linux
       arch: arm64
 
