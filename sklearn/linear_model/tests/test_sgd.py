@@ -22,6 +22,7 @@ from sklearn.exceptions import ConvergenceWarning
 from sklearn.model_selection import StratifiedShuffleSplit, ShuffleSplit
 from sklearn.linear_model import _sgd_fast as sgd_fast
 from sklearn.model_selection import RandomizedSearchCV
+from sklearn.datasets import make_classification
 
 
 def _update_kwargs(kwargs):
@@ -1619,3 +1620,15 @@ def test_SGDClassifier_fit_for_all_backends(backend):
     with joblib.parallel_backend(backend=backend):
         clf_parallel.fit(X, y)
     assert_array_almost_equal(clf_sequential.coef_, clf_parallel.coef_)
+
+
+@pytest.mark.parametrize("loss", ['log', 'modified_huber'])
+def test_no_nan_in_predict_proba(loss):
+    # Tests that probabilities are not nan.
+    # non-regression test for #17978
+    X, y = make_classification(n_samples=1000,  n_features=100,
+                               n_informative=100, n_redundant=0,
+                               n_classes=10,  random_state=42)
+    sgd = SGDClassifier(loss=loss).fit(X, y)
+    y_proba = sgd.predict_proba(X)
+    assert not np.isnan(y_proba).any()

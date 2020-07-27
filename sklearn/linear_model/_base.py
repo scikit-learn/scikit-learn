@@ -320,6 +320,7 @@ class LinearClassifierMixin(ClassifierMixin):
         """
         prob = self.decision_function(X)
         expit(prob, out=prob)
+        np.clip(prob, np.finfo(prob.dtype).eps, None, out=prob)
         if prob.ndim == 1:
             return np.vstack([1 - prob, prob]).T
         else:
