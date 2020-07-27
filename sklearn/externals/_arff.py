@@ -148,7 +148,7 @@ __author_email__ = ('renato.ppontes@gmail.com, '
                     'joel.nothman@gmail.com')
 __version__ = '2.4.0'
 
-import typing
+from typing import TYPE_CHECKING
 from typing import Optional, List, Dict, Any, Iterator, Union, Tuple
 
 import re
@@ -176,7 +176,7 @@ ArffDenseDataType = Iterator[List]
 ArffSparseDataType = Tuple[List, ...]
 
 
-if typing.TYPE_CHECKING:
+if TYPE_CHECKING:
     # typing_extensions is available when mypy is installed
     from typing_extensions import TypedDict
 
