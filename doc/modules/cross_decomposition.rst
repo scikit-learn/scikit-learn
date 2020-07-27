@@ -7,7 +7,7 @@ Cross decomposition
 .. currentmodule:: sklearn.cross_decomposition
 
 The cross decomposition module contains **supervised** estimators for
-dimensionality regression and regression, belonging to the "Partial Least
+dimensionality reduction and regression, belonging to the "Partial Least
 Squares" family.
 
 .. figure:: ../auto_examples/cross_decomposition/images/sphx_glr_plot_compare_cross_decomposition_001.png
