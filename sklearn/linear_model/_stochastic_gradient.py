@@ -64,6 +64,7 @@ class _ValidationScoreCallback:
         est = self.estimator
         est.coef_ = coef.reshape(1, -1)
         est.intercept_ = np.atleast_1d(intercept)
+        est.n_features_in_ = coef.size
         return est.score(self.X_val, self.y_val, self.sample_weight_val)
 
 
@@ -487,12 +488,12 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
                      loss, learning_rate, max_iter,
                      classes, sample_weight,
                      coef_init, intercept_init):
-        X, y = check_X_y(X, y, accept_sparse='csr', dtype=np.float64,
-                         order="C", accept_large_sparse=False)
+        first_call = _check_partial_fit_first_call(self, classes)
+        X, y = self._validate_data(
+            X, y, accept_sparse='csr', dtype=np.float64,
+            order="C", accept_large_sparse=False, reset=first_call)
 
         n_samples, n_features = X.shape
-
-        _check_partial_fit_first_call(self, classes)
 
         n_classes = self.classes_.shape[0]
 
