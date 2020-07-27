@@ -63,7 +63,7 @@ elif [[ "$DISTRIB" == "conda-pip-latest" ]]; then
     make_conda "python=$PYTHON_VERSION"
     python -m pip install -U pip
 
-    python -m pip install pandas matplotlib pyamg scikit-image
+    python -m pip install pandas matplotlib pyamg scikit-image xarray
     # do not install dependencies for lightgbm since it requires scikit-learn
     python -m pip install lightgbm --no-deps
 elif [[ "$DISTRIB" == "conda-pip-scipy-dev" ]]; then
