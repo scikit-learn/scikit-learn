@@ -59,7 +59,7 @@ run_tests() {
 
     set -x  # print executed commands to the terminal
 
-    $TEST_CMD sklearn/tree/tests
+    # $TEST_CMD sklearn
 }
 
 run_tests
