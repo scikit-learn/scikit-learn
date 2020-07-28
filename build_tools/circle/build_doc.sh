@@ -153,6 +153,7 @@ chmod +x miniconda.sh && ./miniconda.sh -b -p $MINICONDA_PATH
 export PATH="/usr/lib/ccache:$MINICONDA_PATH/bin:$PATH"
 
 ls $HOME/miniconda/bin
+echo $PATH
 
 conda
 
