@@ -1623,7 +1623,7 @@ def test_SGDClassifier_fit_for_all_backends(backend):
 
 
 @pytest.mark.parametrize("loss", ['log', 'modified_huber'])
-def testpredict_proba_are_infinite(loss):
+def testpredict_proba_are_finite(loss):
     # Tests that probabilities are finite.
     # non-regression test for #17978
     X, y = make_classification(n_samples=1000,  n_features=100,
