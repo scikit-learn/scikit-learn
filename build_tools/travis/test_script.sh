@@ -39,7 +39,8 @@ run_tests() {
 
     if [[ "$TRAVIS_CPU_ARCH" == "arm64" ]]; then
         # use pytest-xdist for faster tests
-        TEST_CMD="$TEST_CMD -n $CI_CPU_COUNT"
+        # TEST_CMD="$TEST_CMD -n $CI_CPU_COUNT"
+        echo "disabled pytest-xdist"
     else
         # Tests that require large downloads over the networks are skipped in CI.
         # Here we make sure, that they are still run on a regular basis.
@@ -59,7 +60,7 @@ run_tests() {
 
     set -x  # print executed commands to the terminal
 
-    # $TEST_CMD sklearn
+    $TEST_CMD nothing  # collects nothing and freeze on pytest exiting
 }
 
 run_tests
