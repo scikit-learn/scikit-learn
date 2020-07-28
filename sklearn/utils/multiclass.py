@@ -27,7 +27,9 @@ def _unique_multiclass(y):
 
 
 def _unique_indicator(y):
-    return np.arange(check_array(y, ['csr', 'csc', 'coo']).shape[1])
+    return np.arange(
+        check_array(y, accept_sparse=['csr', 'csc', 'coo']).shape[1]
+    )
 
 
 _FN_UNIQUE_LABELS = {
@@ -83,7 +85,8 @@ def unique_labels(*ys):
 
     # Check consistency for the indicator format
     if (label_type == "multilabel-indicator" and
-            len(set(check_array(y, ['csr', 'csc', 'coo']).shape[1]
+            len(set(check_array(y,
+                                accept_sparse=['csr', 'csc', 'coo']).shape[1]
                     for y in ys)) > 1):
         raise ValueError("Multi-label binary indicator input with "
                          "different numbers of labels")
@@ -247,11 +250,7 @@ def type_of_target(y):
     if is_multilabel(y):
         return 'multilabel-indicator'
 
-    try:
-        y = np.asarray(y)
-    except ValueError:
-        # Known to fail in numpy 1.3 for array of arrays
-        return 'unknown'
+    y = np.asarray(y)
 
     # The old sequence of sequences format
     try:

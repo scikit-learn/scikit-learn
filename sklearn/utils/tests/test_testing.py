@@ -14,16 +14,8 @@ from sklearn.utils.deprecation import deprecated
 from sklearn.utils.metaestimators import if_delegate_has_method
 from sklearn.utils._testing import (
     assert_raises,
-    assert_less,
-    assert_greater,
-    assert_less_equal,
-    assert_greater_equal,
     assert_warns,
     assert_no_warnings,
-    assert_equal,
-    assert_not_equal,
-    assert_in,
-    assert_not_in,
     set_random_state,
     assert_raise_message,
     ignore_warnings,
@@ -37,40 +29,6 @@ from sklearn.utils._testing import (
 
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
-
-
-@pytest.mark.filterwarnings("ignore",
-                            category=FutureWarning)  # 0.24
-def test_assert_less():
-    assert 0 < 1
-    with pytest.raises(AssertionError):
-        assert_less(1, 0)
-
-
-@pytest.mark.filterwarnings("ignore",
-                            category=FutureWarning)  # 0.24
-def test_assert_greater():
-    assert 1 > 0
-    with pytest.raises(AssertionError):
-        assert_greater(0, 1)
-
-
-@pytest.mark.filterwarnings("ignore",
-                            category=FutureWarning)  # 0.24
-def test_assert_less_equal():
-    assert 0 <= 1
-    assert 1 <= 1
-    with pytest.raises(AssertionError):
-        assert_less_equal(1, 0)
-
-
-@pytest.mark.filterwarnings("ignore",
-                            category=FutureWarning)  # 0.24
-def test_assert_greater_equal():
-    assert 1 >= 0
-    assert 1 >= 1
-    with pytest.raises(AssertionError):
-        assert_greater_equal(0, 1)
 
 
 def test_set_random_state():
@@ -660,23 +618,6 @@ def test_create_memmap_backed_data(monkeypatch):
     for input_array, data in zip(input_list, mmap_data_list):
         check_memmap(input_array, data)
     assert registration_counter.nb_calls == 4
-
-
-# 0.24
-@pytest.mark.parametrize('callable, args', [
-    (assert_equal, (0, 0)),
-    (assert_not_equal, (0, 1)),
-    (assert_greater, (1, 0)),
-    (assert_greater_equal, (1, 0)),
-    (assert_less, (0, 1)),
-    (assert_less_equal, (0, 1)),
-    (assert_in, (0, [0])),
-    (assert_not_in, (0, [1]))])
-def test_deprecated_helpers(callable, args):
-    msg = ('is deprecated in version 0.22 and will be removed in version '
-           '0.24. Please use "assert" instead')
-    with pytest.warns(FutureWarning, match=msg):
-        callable(*args)
 
 
 @pytest.mark.parametrize(

@@ -311,15 +311,15 @@ To use this feature, feed the classifier an indicator matrix, in which cell
 [i, j] indicates the presence of label j in sample i.
 
 
-.. figure:: ../auto_examples/images/sphx_glr_plot_multilabel_001.png
-    :target: ../auto_examples/plot_multilabel.html
+.. figure:: ../auto_examples/miscellaneous/images/sphx_glr_plot_multilabel_001.png
+    :target: ../auto_examples/miscellaneous/plot_multilabel.html
     :align: center
     :scale: 75%
 
 
 .. topic:: Examples:
 
-    * :ref:`sphx_glr_auto_examples_plot_multilabel.py`
+    * :ref:`sphx_glr_auto_examples_miscellaneous_plot_multilabel.py`
 
 .. _ovo_classification:
 

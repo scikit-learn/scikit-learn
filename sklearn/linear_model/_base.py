@@ -54,10 +54,10 @@ def make_dataset(X, y, sample_weight, random_state=None):
 
     Parameters
     ----------
-    X : array_like, shape (n_samples, n_features)
+    X : array-like, shape (n_samples, n_features)
         Training data
 
-    y : array_like, shape (n_samples, )
+    y : array-like, shape (n_samples, )
         Target values.
 
     sample_weight : numpy array of shape (n_samples,)
@@ -225,7 +225,7 @@ class LinearModel(BaseEstimator, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : array_like or sparse matrix, shape (n_samples, n_features)
+        X : array-like or sparse matrix, shape (n_samples, n_features)
             Samples.
 
         Returns
@@ -267,7 +267,7 @@ class LinearClassifierMixin(ClassifierMixin):
 
         Parameters
         ----------
-        X : array_like or sparse matrix, shape (n_samples, n_features)
+        X : array-like or sparse matrix, shape (n_samples, n_features)
             Samples.
 
         Returns
@@ -296,7 +296,7 @@ class LinearClassifierMixin(ClassifierMixin):
 
         Parameters
         ----------
-        X : array_like or sparse matrix, shape (n_samples, n_features)
+        X : array-like or sparse matrix, shape (n_samples, n_features)
             Samples.
 
         Returns
@@ -306,7 +306,7 @@ class LinearClassifierMixin(ClassifierMixin):
         """
         scores = self.decision_function(X)
         if len(scores.shape) == 1:
-            indices = (scores > 0).astype(np.int)
+            indices = (scores > 0).astype(int)
         else:
             indices = scores.argmax(axis=1)
         return self.classes_[indices]
@@ -406,8 +406,8 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
         If you wish to standardize, please use
-        :class:`sklearn.preprocessing.StandardScaler` before calling ``fit`` on
-        an estimator with ``normalize=False``.
+        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
+        on an estimator with ``normalize=False``.
 
     copy_X : bool, default=True
         If True, X will be copied; else, it may be overwritten.

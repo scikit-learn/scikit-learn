@@ -7,17 +7,18 @@ import warnings
 
 from ._base import NeighborsBase
 from ._base import KNeighborsMixin
-from ._base import UnsupervisedMixin
 from ..base import OutlierMixin
 
 from ..utils.validation import check_is_fitted
+from ..utils.validation import _deprecate_positional_args
 from ..utils import check_array
 
 __all__ = ["LocalOutlierFactor"]
 
 
-class LocalOutlierFactor(KNeighborsMixin, UnsupervisedMixin,
-                         OutlierMixin, NeighborsBase):
+class LocalOutlierFactor(KNeighborsMixin,
+                         OutlierMixin,
+                         NeighborsBase):
     """Unsupervised Outlier Detection using Local Outlier Factor (LOF)
 
     The anomaly score of each sample is called Local Outlier Factor.
@@ -116,6 +117,8 @@ class LocalOutlierFactor(KNeighborsMixin, UnsupervisedMixin,
         that you should only use predict, decision_function and score_samples
         on new unseen data and not on the training set.
 
+        .. versionadded:: 0.20
+
     n_jobs : int, default=None
         The number of parallel jobs to run for neighbors search.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
@@ -147,6 +150,17 @@ class LocalOutlierFactor(KNeighborsMixin, UnsupervisedMixin,
         case, the offset is defined in such a way we obtain the expected
         number of outliers in training.
 
+        .. versionadded:: 0.20
+
+    effective_metric_ : str
+        The effective metric used for the distance computation.
+
+    effective_metric_params_ : dict
+        The effective additional keyword arguments for the metric function.
+
+    n_samples_fit_ : int
+        It is the number of samples in the fitted data.
+
     Examples
     --------
     >>> import numpy as np
@@ -163,7 +177,8 @@ class LocalOutlierFactor(KNeighborsMixin, UnsupervisedMixin,
     .. [1] Breunig, M. M., Kriegel, H. P., Ng, R. T., & Sander, J. (2000, May).
            LOF: identifying density-based local outliers. In ACM sigmod record.
     """
-    def __init__(self, n_neighbors=20, algorithm='auto', leaf_size=30,
+    @_deprecate_positional_args
+    def __init__(self, n_neighbors=20, *, algorithm='auto', leaf_size=30,
                  metric='minkowski', p=2, metric_params=None,
                  contamination="auto", novelty=False, n_jobs=None):
         super().__init__(
@@ -231,28 +246,28 @@ class LocalOutlierFactor(KNeighborsMixin, UnsupervisedMixin,
         return self.fit(X)._predict()
 
     def fit(self, X, y=None):
-        """Fit the model using X as training data.
+        """Fit the local outlier factor detector from the training dataset.
 
         Parameters
         ----------
-        X : BallTree, KDTree or {array-like, sparse matrix} of shape \
-                (n_samples, n_features) or (n_samples, n_samples)
-            Training data. If array or matrix, the shape is (n_samples,
-            n_features), or (n_samples, n_samples) if metric='precomputed'.
+        X : {array-like, sparse matrix} of shape (n_samples, n_features) or \
+                (n_samples, n_samples) if metric='precomputed'
+            Training data.
 
         y : Ignored
             Not used, present for API consistency by convention.
 
         Returns
         -------
-        self : object
+        self : LocalOutlierFactor
+            The fitted local outlier factor detector.
         """
+        self._fit(X)
+
         if self.contamination != 'auto':
             if not(0. < self.contamination <= .5):
                 raise ValueError("contamination must be in (0, 0.5], "
                                  "got: %f" % self.contamination)
-
-        super().fit(X)
 
         n_samples = self.n_samples_fit_
         if self.n_neighbors > n_samples:

@@ -244,6 +244,8 @@ CLASS_DOC = \
 
 {BinaryTree} for fast generalized N-point problems
 
+Read more in the :ref:`User Guide <unsupervised_neighbors>`.
+
 Parameters
 ----------
 X : array-like of shape (n_samples, n_features)
@@ -1067,6 +1069,7 @@ cdef class BinaryTree:
             raise ValueError('metric {metric} is not valid for '
                              '{BinaryTree}'.format(metric=metric,
                                                    **DOC_DICT))
+        self.dist_metric._validate_data(data)
 
         # determine number of levels in the tree, and from this
         # the number of nodes in the tree.  This results in leaf nodes

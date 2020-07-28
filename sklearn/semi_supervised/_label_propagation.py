@@ -131,7 +131,7 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
                 return rbf_kernel(X, y, gamma=self.gamma)
         elif self.kernel == "knn":
             if self.nn_fit is None:
-                self.nn_fit = NearestNeighbors(self.n_neighbors,
+                self.nn_fit = NearestNeighbors(n_neighbors=self.n_neighbors,
                                                n_jobs=self.n_jobs).fit(X)
             if y is None:
                 return self.nn_fit.kneighbors_graph(self.nn_fit._fit_X,

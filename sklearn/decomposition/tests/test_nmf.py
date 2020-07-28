@@ -166,7 +166,8 @@ def test_n_components_greater_n_features():
     NMF(n_components=15, random_state=0, tol=1e-2).fit(A)
 
 
-def test_nmf_sparse_input():
+@pytest.mark.parametrize('solver', ['cd', 'mu'])
+def test_nmf_sparse_input(solver):
     # Test that sparse matrices are accepted as input
     from scipy.sparse import csc_matrix
 
@@ -175,10 +176,9 @@ def test_nmf_sparse_input():
     A[:, 2 * np.arange(5)] = 0
     A_sparse = csc_matrix(A)
 
-    for solver in ('cd', 'mu'):
-        est1 = NMF(solver=solver, n_components=5, init='random',
-                   random_state=0, tol=1e-2)
-        est2 = clone(est1)
+    est1 = NMF(solver=solver, n_components=5, init='random',
+               random_state=0, tol=1e-2)
+    est2 = clone(est1)
 
     W1 = est1.fit_transform(A)
     W2 = est2.fit_transform(A_sparse)
@@ -234,19 +234,19 @@ def test_non_negative_factorization_checking():
     nnmf = non_negative_factorization
     msg = ("Number of components must be a positive integer; "
            "got (n_components=1.5)")
-    assert_raise_message(ValueError, msg, nnmf, A, A, A, 1.5, 'random')
+    assert_raise_message(ValueError, msg, nnmf, A, A, A, 1.5, init='random')
     msg = ("Number of components must be a positive integer; "
            "got (n_components='2')")
-    assert_raise_message(ValueError, msg, nnmf, A, A, A, '2', 'random')
+    assert_raise_message(ValueError, msg, nnmf, A, A, A, '2', init='random')
     msg = "Negative values in data passed to NMF (input H)"
-    assert_raise_message(ValueError, msg, nnmf, A, A, -A, 2, 'custom')
+    assert_raise_message(ValueError, msg, nnmf, A, A, -A, 2, init='custom')
     msg = "Negative values in data passed to NMF (input W)"
-    assert_raise_message(ValueError, msg, nnmf, A, -A, A, 2, 'custom')
+    assert_raise_message(ValueError, msg, nnmf, A, -A, A, 2, init='custom')
     msg = "Array passed to NMF (input H) is full of zeros"
-    assert_raise_message(ValueError, msg, nnmf, A, A, 0 * A, 2, 'custom')
+    assert_raise_message(ValueError, msg, nnmf, A, A, 0 * A, 2, init='custom')
     msg = "Invalid regularization parameter: got 'spam' instead of one of"
-    assert_raise_message(ValueError, msg, nnmf, A, A, 0 * A, 2, 'custom', True,
-                         'cd', 2., 1e-4, 200, 0., 0., 'spam')
+    assert_raise_message(ValueError, msg, nnmf, A, A, 0 * A, 2, init='custom',
+                         regularization='spam')
 
 
 def _beta_divergence_dense(X, W, H, beta):

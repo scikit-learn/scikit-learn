@@ -430,6 +430,23 @@ class PoissonRegressor(GeneralizedLinearRegressor):
 
     n_iter_ : int
         Actual number of iterations used in the solver.
+
+    Examples
+    ----------
+    >>> from sklearn import linear_model
+    >>> clf = linear_model.PoissonRegressor()
+    >>> X = [[1, 2], [2, 3], [3, 4], [4, 3]]
+    >>> y = [12, 17, 22, 21]
+    >>> clf.fit(X, y)
+    PoissonRegressor()
+    >>> clf.score(X, y)
+    0.990...
+    >>> clf.coef_
+    array([0.121..., 0.158...])
+    >>> clf.intercept_
+    2.088...
+    >>> clf.predict([[1, 1], [3, 4]])
+    array([10.676..., 21.875...])
     """
     def __init__(self, *, alpha=1.0, fit_intercept=True, max_iter=100,
                  tol=1e-4, warm_start=False, verbose=0):
@@ -493,6 +510,23 @@ class GammaRegressor(GeneralizedLinearRegressor):
 
     n_iter_ : int
         Actual number of iterations used in the solver.
+
+    Examples
+    --------
+    >>> from sklearn import linear_model
+    >>> clf = linear_model.GammaRegressor()
+    >>> X = [[1, 2], [2, 3], [3, 4], [4, 3]]
+    >>> y = [19, 26, 33, 30]
+    >>> clf.fit(X, y)
+    GammaRegressor()
+    >>> clf.score(X, y)
+    0.773...
+    >>> clf.coef_
+    array([0.072..., 0.066...])
+    >>> clf.intercept_
+    2.896...
+    >>> clf.predict([[1, 0], [2, 8]])
+    array([19.483..., 35.795...])
     """
     def __init__(self, *, alpha=1.0, fit_intercept=True, max_iter=100,
                  tol=1e-4, warm_start=False, verbose=0):
@@ -587,6 +621,23 @@ class TweedieRegressor(GeneralizedLinearRegressor):
 
     n_iter_ : int
         Actual number of iterations used in the solver.
+
+    Examples
+    ----------
+    >>> from sklearn import linear_model
+    >>> clf = linear_model.TweedieRegressor()
+    >>> X = [[1, 2], [2, 3], [3, 4], [4, 3]]
+    >>> y = [2, 3.5, 5, 5.5]
+    >>> clf.fit(X, y)
+    TweedieRegressor()
+    >>> clf.score(X, y)
+    0.839...
+    >>> clf.coef_
+    array([0.599..., 0.299...])
+    >>> clf.intercept_
+    1.600...
+    >>> clf.predict([[1, 1], [3, 4]])
+    array([2.500..., 4.599...])
     """
     def __init__(self, *, power=0.0, alpha=1.0, fit_intercept=True,
                  link='auto', max_iter=100, tol=1e-4,

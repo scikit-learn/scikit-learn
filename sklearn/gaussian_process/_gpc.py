@@ -231,6 +231,8 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
             # likelihood
             lml_values = list(map(itemgetter(1), optima))
             self.kernel_.theta = optima[np.argmin(lml_values)][0]
+            self.kernel_._check_bounds_params()
+
             self.log_marginal_likelihood_value_ = -np.min(lml_values)
         else:
             self.log_marginal_likelihood_value_ = \
@@ -548,13 +550,18 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
         estimates.
 
     n_jobs : int, default=None
-        The number of jobs to use for the computation.
+        The number of jobs to use for the computation: the specified
+        multiclass problems are computed in parallel.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
     Attributes
     ----------
+    base_estimator_ : ``Estimator`` instance
+        The estimator instance that defines the likelihood function
+        using the observed data.
+
     kernel_ : kernel instance
         The kernel used for prediction. In case of binary classification,
         the structure of the kernel is the same as the one passed as parameter
