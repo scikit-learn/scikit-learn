@@ -327,7 +327,6 @@ class CalibratedClassifierCV(ClassifierMixin,
                                      "class.")
                 cv = check_cv(self.cv, y, classifier=True)
 
-
                 parallel = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
                                     pre_dispatch=self.pre_dispatch)
 
@@ -429,10 +428,10 @@ def _get_pred_fit_calibrator(estimator, X, y, train, test, supports_sw,
     y : array-like, shape (n_samples,)
         Targets.
 
-    train : ndarray, shape (n_indicies,)
+    train : ndarray, shape (n_train_indicies,)
         Indices of the training subset.
 
-    test : ndarray, shape (n_indicies,)
+    test : ndarray, shape (n_test_indicies,)
         Indices of the testing subset.
 
     supports_sw : bool
