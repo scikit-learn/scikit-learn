@@ -1419,7 +1419,7 @@ class MiniBatchKMeans(KMeans):
     def __init__(self, n_clusters=8, *, init='k-means++', max_iter=100,
                  batch_size=100, verbose=0, compute_labels=True,
                  random_state=None, tol=0.0, max_no_improvement=10,
-                 init_size=None, n_init=3, reassignment_ratio=0.01):
+                 init_size=None, n_init=3, reassignment_ratio=0.01, mode=0):
 
         super().__init__(
             n_clusters=n_clusters, init=init, max_iter=max_iter,
@@ -1430,6 +1430,7 @@ class MiniBatchKMeans(KMeans):
         self.compute_labels = compute_labels
         self.init_size = init_size
         self.reassignment_ratio = reassignment_ratio
+        self.mode = mode
 
     @deprecated("The attribute 'counts_' is deprecated in 0.24"  # type: ignore
                 " and will be removed in 0.26.")
@@ -1648,8 +1649,15 @@ class MiniBatchKMeans(KMeans):
                 # the choice is done as a function of the iteration index, and
                 # the minimum number of counts, in order to force this
                 # reassignment to happen every once in a while.
-                random_reassign = random_state.randint(
-                    10 * (1 + self._counts.min())) == 0
+
+                if self.mode == 0:
+                    random_reassign = random_state.randint(
+                        10 * (1 + self._counts.min())) == 0
+                elif self.mode == 1:
+                    random_reassign = (i + 1) % (10 + int(self._counts.min())) == 0
+                elif self.mode == 2:
+                    random_reassign = ((i >= 10) *
+                                       random_state.choice([0, 1], p=[0.1, 0.9]))
 
                 # Perform the actual update step on the minibatch data
                 batch_inertia = _mini_batch_step(
@@ -1671,6 +1679,11 @@ class MiniBatchKMeans(KMeans):
                     centers_squared_diff = 0
 
                 centers, centers_new = centers_new, centers
+
+                _, inertiaa = _labels_inertia_threadpool_limit(
+                    X, sample_weight, x_squared_norms, centers,
+                    n_threads=self._n_threads)
+                print(f"{inertiaa},")
 
                 # Monitor convergence and do early stopping if necessary
                 if self._mini_batch_convergence(

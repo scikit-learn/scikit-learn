@@ -708,12 +708,13 @@ def test_unit_weights_vs_no_weights(Estimator, data):
 def test_scaled_weights(Estimator, data):
     # Check that scaling all sample weights by a common factor
     # shouldn't change the result
-    sample_weight = np.random.uniform(n_samples)
+    data = np.random.random_sample((100000, 10))
+    sample_weight = np.random.RandomState(0).uniform(n_samples)
 
-    km = Estimator(n_clusters=n_clusters, random_state=42, n_init=1)
+    km = Estimator(n_clusters=n_clusters, random_state=42, n_init=1, max_no_improvement=None, init='random')
     km_orig = clone(km).fit(data, sample_weight=sample_weight)
     km_scaled = clone(km).fit(data, sample_weight=0.5 * sample_weight)
-
+    assert False
     assert_array_equal(km_orig.labels_, km_scaled.labels_)
     assert_allclose(km_orig.cluster_centers_, km_scaled.cluster_centers_)
 
