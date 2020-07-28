@@ -84,6 +84,9 @@ from ._plot.precision_recall_curve import PrecisionRecallDisplay
 from ._plot.confusion_matrix import plot_confusion_matrix
 from ._plot.confusion_matrix import ConfusionMatrixDisplay
 
+from ._plot.regression_error import plot_prediction_error
+from ._plot.regression_error import PredictionErrorDisplay
+
 
 __all__ = [
     'accuracy_score',
@@ -141,8 +144,10 @@ __all__ = [
     'pairwise_kernels',
     'plot_confusion_matrix',
     'plot_precision_recall_curve',
+    'plot_prediction_error',
     'plot_roc_curve',
     'PrecisionRecallDisplay',
+    'PredictionErrorDisplay',
     'precision_recall_curve',
     'precision_recall_fscore_support',
     'precision_score',
