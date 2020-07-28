@@ -10,6 +10,13 @@ Version 0.23.2
 Changelog
 ---------
 
+:mod:`sklearn.cluster`
+......................
+
+- |Fix| Fixed a bug in :class:`cluster.KMeans` where rounding errors could
+  prevent convergence to be declared when `tol=0`. :pr:`17959` by
+  :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
 :mod:`sklearn.ensemble`
 .......................
 

@@ -1,4 +1,5 @@
 """Testing for K-means"""
+import re
 import sys
 
 import numpy as np
@@ -135,10 +136,12 @@ def test_relocate_empty_clusters(representation):
     assert_allclose(centers_new, [[-36], [10], [9.5]])
 
 
-@pytest.mark.parametrize('distribution', ['normal', 'blobs'])
-@pytest.mark.parametrize('tol', [1e-2, 1e-4, 1e-8])
-def test_elkan_results(distribution, tol):
-    # check that results are identical between lloyd and elkan algorithms
+@pytest.mark.parametrize("distribution", ["normal", "blobs"])
+@pytest.mark.parametrize("array_constr", [np.array, sp.csr_matrix],
+                         ids=["dense", "sparse"])
+@pytest.mark.parametrize("tol", [1e-2, 1e-8, 1e-100, 0])
+def test_kmeans_elkan_results(distribution, array_constr, tol):
+    # Check that results are identical between lloyd and elkan algorithms
     rnd = np.random.RandomState(0)
     if distribution == 'normal':
         X = rnd.normal(size=(5000, 10))
@@ -164,11 +167,12 @@ def test_kmeans_convergence(algorithm):
     # Check that KMeans stops when convergence is reached when tol=0. (#16075)
     rnd = np.random.RandomState(0)
     X = rnd.normal(size=(5000, 10))
+    max_iter = 300
 
-    km = KMeans(algorithm=algorithm, n_clusters=5, random_state=0, n_init=1,
-                tol=0, max_iter=300).fit(X)
+    km = KMeans(algorithm=algorithm, n_clusters=5, random_state=0,
+                n_init=1, tol=0, max_iter=max_iter).fit(X)
 
-    assert km.n_iter_ < 300
+    assert km.n_iter_ < max_iter
 
 
 @pytest.mark.parametrize('distribution', ['normal', 'blobs'])
@@ -439,9 +443,9 @@ def test_k_means_fit_predict(algo, dtype, constructor, seed, max_iter, tol):
     assert v_measure_score(labels_1, labels_2) == 1
 
 
-def test_mb_kmeans_verbose():
-    mb_k_means = MiniBatchKMeans(init="k-means++", n_clusters=n_clusters,
-                                 random_state=42, verbose=1)
+def test_minibatch_kmeans_verbose():
+    # Check verbose mode of MiniBatchKMeans for better coverage.
+    km = MiniBatchKMeans(n_clusters=n_clusters, random_state=42, verbose=1)
     old_stdout = sys.stdout
     sys.stdout = StringIO()
     try:
@@ -450,11 +454,31 @@ def test_mb_kmeans_verbose():
         sys.stdout = old_stdout
 
 
-def test_minibatch_init_with_large_k():
-    mb_k_means = MiniBatchKMeans(init='k-means++', init_size=10, n_clusters=20)
-    # Check that a warning is raised, as the number clusters is larger
-    # than the init_size
-    assert_warns(RuntimeWarning, mb_k_means.fit, X)
+@pytest.mark.parametrize("algorithm", ["full", "elkan"])
+@pytest.mark.parametrize("tol", [1e-2, 0])
+def test_kmeans_verbose(algorithm, tol, capsys):
+    # Check verbose mode of KMeans for better coverage.
+    X = np.random.RandomState(0).normal(size=(5000, 10))
+
+    KMeans(algorithm=algorithm, n_clusters=n_clusters, random_state=42,
+           init="random", n_init=1, tol=tol, verbose=1).fit(X)
+
+    captured = capsys.readouterr()
+
+    assert re.search(r"Initialization complete", captured.out)
+    assert re.search(r"Iteration [0-9]+, inertia", captured.out)
+
+    if tol == 0:
+        assert re.search(r"strict convergence", captured.out)
+    else:
+        assert re.search(r"center shift .* within tolerance", captured.out)
+
+
+def test_minibatch_kmeans_warning_init_size():
+    # Check that a warning is raised when init_size is smaller than n_clusters
+    with pytest.warns(RuntimeWarning,
+                      match=r"init_size.* should be larger than n_clusters"):
+        MiniBatchKMeans(init_size=10, n_clusters=20).fit(X)
 
 
 def test_minibatch_k_means_init_multiple_runs_with_explicit_centers():
