@@ -147,9 +147,9 @@ Changelog
   average of multiple MSE values.
   :pr:`17309` by :user:`Swier Heeres <swierh>`
   
-- |Fix| Fixed a bug #16998 in 
+- |Fix| Fixed a bug in 
   :func:`metrics.classification_report` which was raising AttributeError
-  when called with `output_dict=True` for 0 length values.
+  when called with `output_dict=True` for 0-length values.
   :pr:`17777` by :user:`Shubhanshu Mishra <napsternxg>`
 
 - |Enhancement| Add `sample_weight` parameter to
