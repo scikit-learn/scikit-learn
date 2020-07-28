@@ -27,7 +27,8 @@ if [[ "$BUILD_WITH_ICC" == "true" ]]; then
 fi
 
 run_tests() {
-    TEST_CMD="pytest --showlocals --durations=20 --pyargs"
+    # TEST_CMD="pytest --showlocals --durations=20 --pyargs"
+    TEST_CMD="pytest --pyargs"
 
     # Get into a temp directory to run test from the installed scikit-learn and
     # check if we do not leave artifacts
@@ -60,7 +61,11 @@ run_tests() {
 
     set -x  # print executed commands to the terminal
 
+    echo "About to run $TEST_CMD nothing"
     $TEST_CMD nothing  # collects nothing and freeze on pytest exiting
+    echo "after pytest"
 }
 
+echo "before run_tests function"
 run_tests
+echo "after run_tests function"
