@@ -70,6 +70,10 @@ Changelog
   `init_size_`, are deprecated and will be removed in 0.26. :pr:`17864` by
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+- |Fix| Fixed a bug in :class:`cluster.KMeans` where rounding errors could
+  prevent convergence to be declared when `tol=0`. :pr:`17959` by
+  :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
 :mod:`sklearn.covariance`
 .........................
 
