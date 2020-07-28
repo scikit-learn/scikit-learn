@@ -769,9 +769,9 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
                              "maxiter": max_iter}
                 )
             elif solver == 'trust-ncg':
-                def hessp(*inputs):
-                    (g, hp) = hess(*inputs[1:])
-                    return(hp(*inputs[:1]))
+                def hessp(*args):
+                    (g, hp) = hess(*args[1:])
+                    return(hp(*args[:1]))
                 opt_res = optimize.minimize(
                     func, w0, method=solver, jac=True, hessp=hessp,
                     args=(X, target, 1. / C, sample_weight)
