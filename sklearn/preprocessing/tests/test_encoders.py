@@ -787,7 +787,7 @@ def test_ohe_missing_value_object_different_order():
 ])
 def test_ohe_missing_value_mixed_sanity(categories):
     # sanity check for mixed data with missing values
-    X = np.array([['a', 'b', None], [0, np.nan, 2]], dtype=object).T
+    X = np.array([['a', 0], ['b', np.nan], [None, 2]], dtype=object)
     expected_X_trans = np.array([
         [1, 0, 0, 1, 0, 0],
         [0, 1, 0, 0, 0, 1],
