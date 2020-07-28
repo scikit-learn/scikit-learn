@@ -7,7 +7,6 @@
 
 import platform
 import sys
-import os
 
 import pytest
 from _pytest.doctest import DoctestItem

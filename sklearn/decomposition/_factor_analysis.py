@@ -89,6 +89,15 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
         Number of iterations for the power method. 3 by default. Only used
         if ``svd_method`` equals 'randomized'
 
+    rotation : None | 'varimax' | 'quartimax'
+        If not None, apply the indicated rotation. Currently, varimax and
+        quartimax are implemented. See
+        `"The varimax criterion for analytic rotation in factor analysis"
+        <https://link.springer.com/article/10.1007%2FBF02289233>`_
+        H. F. Kaiser, 1958
+
+        .. versionadded:: 0.24
+
     random_state : int, RandomState instance, default=0
         Only used when ``svd_method`` equals 'randomized'. Pass an int for
         reproducible results across multiple function calls.
@@ -142,7 +151,7 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
     def __init__(self, n_components=None, *, tol=1e-2, copy=True,
                  max_iter=1000,
                  noise_variance_init=None, svd_method='randomized',
-                 iterated_power=3, random_state=0):
+                 iterated_power=3, rotation=None, random_state=0):
         self.n_components = n_components
         self.copy = copy
         self.tol = tol
@@ -155,6 +164,7 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
         self.noise_variance_init = noise_variance_init
         self.iterated_power = iterated_power
         self.random_state = random_state
+        self.rotation = rotation
 
     def fit(self, X, y=None):
         """Fit the FactorAnalysis model to X using SVD based approach
@@ -176,6 +186,7 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
         n_components = self.n_components
         if n_components is None:
             n_components = n_features
+
         self.mean_ = np.mean(X, axis=0)
         X -= self.mean_
 
@@ -243,6 +254,8 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
                           ConvergenceWarning)
 
         self.components_ = W
+        if self.rotation is not None:
+            self.components_ = self._rotate(W)
         self.noise_variance_ = psi
         self.loglike_ = loglike
         self.n_iter_ = i + 1
@@ -362,3 +375,38 @@ class FactorAnalysis(TransformerMixin, BaseEstimator):
             Average log-likelihood of the samples under the current model
         """
         return np.mean(self.score_samples(X))
+
+    def _rotate(self, components, n_components=None, tol=1e-6):
+        "Rotate the factor analysis solution."
+        # note that tol is not exposed
+        implemented = ("varimax", "quartimax")
+        method = self.rotation
+        if method in implemented:
+            return _ortho_rotation(components.T, method=method,
+                                   tol=tol)[:self.n_components]
+        else:
+            raise ValueError("'method' must be in %s, not %s"
+                             % (implemented, method))
+
+
+def _ortho_rotation(components, method='varimax', tol=1e-6, max_iter=100):
+    """Return rotated components."""
+    nrow, ncol = components.shape
+    rotation_matrix = np.eye(ncol)
+    var = 0
+
+    for _ in range(max_iter):
+        comp_rot = np.dot(components, rotation_matrix)
+        if method == "varimax":
+            tmp = comp_rot * np.transpose((comp_rot ** 2).sum(axis=0) / nrow)
+        elif method == "quartimax":
+            tmp = 0
+        u, s, v = np.linalg.svd(
+            np.dot(components.T, comp_rot ** 3 - tmp))
+        rotation_matrix = np.dot(u, v)
+        var_new = np.sum(s)
+        if var != 0 and var_new < var * (1 + tol):
+            break
+        var = var_new
+
+    return np.dot(components, rotation_matrix).T
