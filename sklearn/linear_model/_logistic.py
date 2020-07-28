@@ -732,20 +732,26 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         if solver in ['lbfgs', 'trust-ncg', 'newton-cg']:
             w0 = w0.ravel()
         target = Y_multi
-        if solver in ['lbfgs', 'trust-ncg']:
+        if solver == 'lbfgs':
             def func(x, *args): return _multinomial_loss_grad(x, *args)[0:2]
         elif solver == 'newton-cg':
             def func(x, *args): return _multinomial_loss(x, *args)[0]
             def grad(x, *args): return _multinomial_loss_grad(x, *args)[1]
-        hess = _multinomial_grad_hess
+            hess = _multinomial_grad_hess
+        elif solver == 'trust-ncg':
+            def func(x, *args): return _multinomial_loss_grad(x, *args)[0:2]
+            hess = _multinomial_grad_hess
         warm_start_sag = {'coef': w0.T}
     else:
         target = y_bin
-        if solver in ['lbfgs', 'trust-ncg']:
+        if solver == 'lbfgs':
             func = _logistic_loss_and_grad
         elif solver == 'newton-cg':
             func = _logistic_loss
             def grad(x, *args): return _logistic_loss_and_grad(x, *args)[1]
+            hess = _logistic_grad_hess
+        elif solver == 'trust-ncg':
+            func = _logistic_loss_and_grad
             hess = _logistic_grad_hess
         warm_start_sag = {'coef': np.expand_dims(w0, axis=1)}
 
@@ -755,7 +761,7 @@ def _logistic_regression_path(X, y, pos_class=None, Cs=10, fit_intercept=True,
         if solver in ['lbfgs', 'trust-ncg']:
             iprint = [-1, 50, 1, 100, 101][
                 np.searchsorted(np.array([0, 1, 2, 3]), verbose)]
-            if solver == 'lbfgs' or multi_class != "multinomial":
+            if solver == 'lbfgs':
                 opt_res = optimize.minimize(
                     func, w0, method="L-BFGS-B", jac=True,
                     args=(X, target, 1. / C, sample_weight),
