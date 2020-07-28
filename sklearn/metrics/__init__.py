@@ -84,8 +84,8 @@ from ._plot.precision_recall_curve import PrecisionRecallDisplay
 from ._plot.confusion_matrix import plot_confusion_matrix
 from ._plot.confusion_matrix import ConfusionMatrixDisplay
 
-from ._plot.regression_error import plot_prediction_error
-from ._plot.regression_error import PredictionErrorDisplay
+from ._plot.regression import plot_prediction_error
+from ._plot.regression import PredictionErrorDisplay
 
 
 __all__ = [
