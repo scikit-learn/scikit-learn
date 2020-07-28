@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 """All minimum dependencies for scikit-learn."""
 import platform
 import argparse
