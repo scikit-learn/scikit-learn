@@ -14,6 +14,7 @@ from functools import partial
 
 from math import log
 import numpy as np
+from joblib import delayed, Parallel
 
 from scipy.special import expit
 from scipy.special import xlogy
@@ -33,8 +34,9 @@ from .model_selection import check_cv, cross_val_predict
 from .utils.validation import _deprecate_positional_args
 
 
-class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
-                             MetaEstimatorMixin):
+class CalibratedClassifierCV(ClassifierMixin,
+                             MetaEstimatorMixin,
+                             BaseEstimator):
     """Probability calibration with isotonic regression or logistic regression.
 
     This class uses cross-validation to both estimate the parameters of a
@@ -61,9 +63,10 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
 
     Parameters
     ----------
-    base_estimator : instance BaseEstimator
+    base_estimator : estimator instance, default=None
         The classifier whose output need to be calibrated to provide more
-        accurate `predict_proba` outputs.
+        accurate `predict_proba` outputs. The default classifier is
+        a :class:`~sklearn.svm.LinearSVC`.
 
     method : {'sigmoid', 'isotonic'}, default='sigmoid'
         The method to use for calibration. Can be 'sigmoid' which
@@ -96,6 +99,42 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
         .. versionchanged:: 0.22
             ``cv`` default value if None changed from 3-fold to 5-fold.
 
+    n_jobs : int, default=None
+        Number of jobs to run in parallel.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors.
+
+        Base estimator clones are fitted in parallel across cross-validation
+        iterations. Therefore parallelism happens only when `cv` != "prefit".
+
+        See :term:`Glossary <n_jobs>` for more details.
+
+        .. versionadded:: 0.24
+
+    pre_dispatch : int, or str, default=n_jobs
+        Controls the number of jobs that get dispatched during parallel
+        execution. Reducing this number can be useful to avoid an
+        explosion of memory consumption when more jobs get dispatched
+        than CPUs can process. This parameter can be:
+
+            - None, in which case all the jobs are immediately
+              created and spawned. Use this for lightweight and
+              fast-running jobs, to avoid delays due to on-demand
+              spawning of the jobs
+
+            - An int, giving the exact number of total jobs that are
+              spawned
+
+            - A str, giving an expression as a function of n_jobs,
+              as in '2*n_jobs'
+
+        .. versionadded:: 0.24
+
+    verbose : integer
+        Controls the verbosity: the higher, the more messages.
+
+        .. versionadded:: 0.24
+
     ensemble : bool, default=True
         Determines how the calibrator is fitted when `cv` is not `'prefit'`.
         Ignored if `cv='prefit'`.
@@ -112,8 +151,6 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
         is the `base_estimator` trained on all the data.
         Note this method is implemented when `probabilities=True` for
         :mod:`sklearn.svm` estimators.
-
-        .. versionadded:: 0.24
 
     Attributes
     ----------
@@ -191,11 +228,15 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
            A. Niculescu-Mizil & R. Caruana, ICML 2005
     """
     @_deprecate_positional_args
-    def __init__(self, base_estimator=None, *, method='sigmoid', cv=None,
-                 ensemble=True):
+    def __init__(self, base_estimator=None, *, method='sigmoid',
+                 cv=None, n_jobs=None, pre_dispatch='2*n_jobs',
+                 verbose=0, ensemble=True):
         self.base_estimator = base_estimator
         self.method = method
         self.cv = cv
+        self.n_jobs = n_jobs
+        self.verbose = verbose
+        self.pre_dispatch = pre_dispatch
         self.ensemble = ensemble
 
     def fit(self, X, y, sample_weight=None):
@@ -259,12 +300,12 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
             n_classes = len(self.classes_)
 
             fit_parameters = signature(base_estimator.fit).parameters
-            base_estimator_supports_sw = "sample_weight" in fit_parameters
+            supports_sw = "sample_weight" in fit_parameters
 
             if sample_weight is not None:
                 sample_weight = _check_sample_weight(sample_weight, X)
 
-                if not base_estimator_supports_sw:
+                if not supports_sw:
                     estimator_name = type(base_estimator).__name__
                     warnings.warn("Since %s does not support sample_weights, "
                                   "sample weights will only be used for the "
@@ -286,25 +327,17 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
                                      "class.")
                 cv = check_cv(self.cv, y, classifier=True)
 
-                for train, test in cv.split(X, y):
-                    this_estimator = clone(base_estimator)
 
-                    if (sample_weight is not None
-                            and base_estimator_supports_sw):
-                        this_estimator.fit(X[train], y[train],
-                                           sample_weight=sample_weight[train])
-                    else:
-                        this_estimator.fit(X[train], y[train])
+                parallel = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
+                                    pre_dispatch=self.pre_dispatch)
 
-                    pred_method = _get_prediction_method(this_estimator)
-                    preds = _get_predictions(pred_method, X[test], n_classes)
+                self.calibrated_classifiers_ = parallel(
+                    delayed(_get_pred_fit_calibrator)(
+                        clone(base_estimator), X, y, train=train, test=test,
+                        method=self.method, classes=self.classes_,
+                        supports_sw=supports_sw, sample_weight=sample_weight)
+                    for train, test in cv.split(X, y))
 
-                    sw = None if sample_weight is None else sample_weight[test]
-                    calibrated_classifier = _fit_calibrator(
-                        this_estimator, preds, y[test], self.classes_,
-                        self.method, sample_weight=sw
-                    )
-                    self.calibrated_classifiers_.append(calibrated_classifier)
             else:
                 this_estimator = clone(base_estimator)
                 method = _get_prediction_method(this_estimator)
@@ -312,7 +345,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
                     this_estimator, X, y, cv=cv, method=method.__name__))
                 preds = _get_predictions(pred_method, X, n_classes)
 
-                if sample_weight is not None and base_estimator_supports_sw:
+                if sample_weight is not None and supports_sw:
                     this_estimator.fit(X, y, sample_weight)
                 else:
                     this_estimator.fit(X, y)
@@ -321,6 +354,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
                     sample_weight
                 )
                 self.calibrated_classifiers_.append(calibrated_classifier)
+
         return self
 
     def predict_proba(self, X):
@@ -378,6 +412,60 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
                 'zero sample_weight is not equivalent to removing samples',
             }
         }
+
+
+def _get_pred_fit_calibrator(estimator, X, y, train, test, supports_sw,
+                             method, classes, sample_weight=None):
+    """Get predictions and fit calibrator for a given dataset split.
+
+    Parameters
+    ----------
+    estimator : Estimator instance
+        Cloned base estimator.
+
+    X : array-like, shape (n_samples, n_features)
+        Sample data.
+
+    y : array-like, shape (n_samples,)
+        Targets.
+
+    train : ndarray, shape (n_indicies,)
+        Indices of the training subset.
+
+    test : ndarray, shape (n_indicies,)
+        Indices of the testing subset.
+
+    supports_sw : bool
+        Whether or not the `estimator` supports sample weights.
+
+    method : {'sigmoid', 'isotonic'}
+        Method to use for calibration.
+
+    classes : ndarray, shape (n_classes,)
+        The target classes.
+
+    sample_weight : array-like, default=None
+        Sample weights for `X`.
+
+    Returns
+    -------
+    calibrated_classifier : _CalibratedClassiferPipeline instance
+    """
+    if sample_weight is not None and supports_sw:
+        estimator.fit(X[train], y[train],
+                      sample_weight=sample_weight[train])
+    else:
+        estimator.fit(X[train], y[train])
+
+    n_classes = len(classes)
+    pred_method = _get_prediction_method(estimator)
+    preds = _get_predictions(pred_method, X[test], n_classes)
+
+    sw = None if sample_weight is None else sample_weight[test]
+    calibrated_classifier = _fit_calibrator(
+        estimator, preds, y[test], classes, method, sample_weight=sw
+    )
+    return calibrated_classifier
 
 
 def _get_prediction_method(clf):

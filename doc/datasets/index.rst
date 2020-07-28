@@ -265,9 +265,9 @@ Loading other datasets
 Sample images
 -------------
 
-Scikit-learn also embed a couple of sample JPEG images published under Creative
+Scikit-learn also embeds a couple of sample JPEG images published under Creative
 Commons license by their authors. Those images can be useful to test algorithms
-and pipeline on 2D data.
+and pipelines on 2D data.
 
 .. autosummary::
 
@@ -286,9 +286,9 @@ and pipeline on 2D data.
 .. warning::
 
   The default coding of images is based on the ``uint8`` dtype to
-  spare memory.  Often machine learning algorithms work best if the
-  input is converted to a floating point representation first.  Also,
-  if you plan to use ``matplotlib.pyplpt.imshow`` don't forget to scale to the range
+  spare memory. Often machine learning algorithms work best if the
+  input is converted to a floating point representation first. Also,
+  if you plan to use ``matplotlib.pyplpt.imshow``, don't forget to scale to the range
   0 - 1 as done in the following example.
 
 .. topic:: Examples:
@@ -428,7 +428,7 @@ the earliest version of a dataset that is still active. That means that
 ``fetch_openml(name="miceprotein")`` can yield different results at different
 times if earlier versions become inactive.
 You can see that the dataset with ``data_id`` 40966 that we fetched above is
-the version 1 of the "miceprotein" dataset::
+the first version of the "miceprotein" dataset::
 
   >>> mice.details['version']  #doctest: +SKIP
   '1'
