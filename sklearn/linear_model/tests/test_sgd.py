@@ -1623,12 +1623,12 @@ def test_SGDClassifier_fit_for_all_backends(backend):
 
 
 @pytest.mark.parametrize("loss", ['log', 'modified_huber'])
-def test_no_nan_in_predict_proba(loss):
-    # Tests that probabilities are not nan.
+def testpredict_proba_are_infinite(loss):
+    # Tests that probabilities are finite.
     # non-regression test for #17978
     X, y = make_classification(n_samples=1000,  n_features=100,
                                n_informative=100, n_redundant=0,
                                n_classes=10,  random_state=42)
     sgd = SGDClassifier(loss=loss).fit(X, y)
     y_proba = sgd.predict_proba(X)
-    assert not np.isnan(y_proba).any()
+    assert np.isfinite(y_proba).all()
