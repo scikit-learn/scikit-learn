@@ -91,6 +91,9 @@ Changelog
   :pr:`17995` by :user:`Thomaz Santana  <Wikilicious>` and
   :user:`Amanda Dsouza <amy12xx>`.
 
+- |Fix| Fixed a bug in :class:`cluster.KMeans` where rounding errors could
+  prevent convergence to be declared when `tol=0`. :pr:`17959` by
+  :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 :mod:`sklearn.covariance`
 .........................

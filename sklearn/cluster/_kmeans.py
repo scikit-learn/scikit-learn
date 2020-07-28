@@ -226,8 +226,6 @@ def k_means(X, n_clusters, *, sample_weight=None, init='k-means++',
         Relative tolerance with regards to Frobenius norm of the difference
         in the cluster centers of two consecutive iterations to declare
         convergence.
-        It's not advised to set `tol=0` since convergence might never be
-        declared due to rounding errors. Use a very small number instead.
 
     random_state : int, RandomState instance, default=None
         Determines random number generation for centroid initialization. Use
@@ -358,6 +356,7 @@ def _kmeans_single_elkan(X, sample_weight, centers_init, max_iter=300,
     centers_new = np.zeros_like(centers)
     weight_in_clusters = np.zeros(n_clusters, dtype=X.dtype)
     labels = np.full(n_samples, -1, dtype=np.int32)
+    labels_old = labels.copy()
     center_half_distances = euclidean_distances(centers) / 2
     distance_next_center = np.partition(np.asarray(center_half_distances),
                                         kth=1, axis=0)[1]
@@ -377,6 +376,8 @@ def _kmeans_single_elkan(X, sample_weight, centers_init, max_iter=300,
     init_bounds(X, centers, center_half_distances,
                 labels, upper_bounds, lower_bounds)
 
+    strict_convergence = False
+
     for i in range(max_iter):
         elkan_iter(X, sample_weight, centers, centers_new,
                    weight_in_clusters, center_half_distances,
@@ -395,14 +396,24 @@ def _kmeans_single_elkan(X, sample_weight, centers_init, max_iter=300,
 
         centers, centers_new = centers_new, centers
 
-        center_shift_tot = (center_shift**2).sum()
-        if center_shift_tot <= tol:
+        if np.array_equal(labels, labels_old):
+            # First check the labels for strict convergence.
             if verbose:
-                print(f"Converged at iteration {i}: center shift "
-                      f"{center_shift_tot} within tolerance {tol}.")
+                print(f"Converged at iteration {i}: strict convergence.")
+            strict_convergence = True
             break
+        else:
+            # No strict convergence, check for tol based convergence.
+            center_shift_tot = (center_shift**2).sum()
+            if center_shift_tot <= tol:
+                if verbose:
+                    print(f"Converged at iteration {i}: center shift "
+                          f"{center_shift_tot} within tolerance {tol}.")
+                break
 
-    if center_shift_tot > 0:
+        labels_old[:] = labels
+
+    if not strict_convergence:
         # rerun E-step so that predicted labels match cluster centers
         elkan_iter(X, sample_weight, centers, centers, weight_in_clusters,
                    center_half_distances, distance_next_center,
@@ -473,6 +484,7 @@ def _kmeans_single_lloyd(X, sample_weight, centers_init, max_iter=300,
     centers = centers_init
     centers_new = np.zeros_like(centers)
     labels = np.full(X.shape[0], -1, dtype=np.int32)
+    labels_old = labels.copy()
     weight_in_clusters = np.zeros(n_clusters, dtype=X.dtype)
     center_shift = np.zeros(n_clusters, dtype=X.dtype)
 
@@ -482,6 +494,8 @@ def _kmeans_single_lloyd(X, sample_weight, centers_init, max_iter=300,
     else:
         lloyd_iter = lloyd_iter_chunked_dense
         _inertia = _inertia_dense
+
+    strict_convergence = False
 
     # Threadpoolctl context to limit the number of threads in second level of
     # nested parallelism (i.e. BLAS) to avoid oversubsciption.
@@ -496,15 +510,24 @@ def _kmeans_single_lloyd(X, sample_weight, centers_init, max_iter=300,
 
             centers, centers_new = centers_new, centers
 
-            center_shift_tot = (center_shift**2).sum()
-            if center_shift_tot <= tol:
+            if np.array_equal(labels, labels_old):
+                # First check the labels for strict convergence.
                 if verbose:
-                    print("Converged at iteration {0}: "
-                          "center shift {1} within tolerance {2}"
-                          .format(i, center_shift_tot, tol))
+                    print(f"Converged at iteration {i}: strict convergence.")
+                strict_convergence = True
                 break
+            else:
+                # No strict convergence, check for tol based convergence.
+                center_shift_tot = (center_shift**2).sum()
+                if center_shift_tot <= tol:
+                    if verbose:
+                        print(f"Converged at iteration {i}: center shift "
+                              f"{center_shift_tot} within tolerance {tol}.")
+                    break
 
-        if center_shift_tot > 0:
+            labels_old[:] = labels
+
+        if not strict_convergence:
             # rerun E-step so that predicted labels match cluster centers
             lloyd_iter(X, sample_weight, x_squared_norms, centers, centers,
                        weight_in_clusters, labels, center_shift, n_threads,
@@ -617,8 +640,6 @@ class KMeans(TransformerMixin, ClusterMixin, BaseEstimator):
         Relative tolerance with regards to Frobenius norm of the difference
         in the cluster centers of two consecutive iterations to declare
         convergence.
-        It's not advised to set `tol=0` since convergence might never be
-        declared due to rounding errors. Use a very small number instead.
 
     precompute_distances : {'auto', True, False}, default='auto'
         Precompute distances (faster but takes more memory).
