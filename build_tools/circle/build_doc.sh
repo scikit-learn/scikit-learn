@@ -165,6 +165,7 @@ fi
 
 # imports get_dep
 source build_tools/shared.sh
+which conda
 
 # packaging won't be needed once setuptools starts shipping packaging>=17.0
 conda create -n $CONDA_ENV_NAME --yes --quiet \
