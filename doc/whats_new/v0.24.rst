@@ -230,7 +230,7 @@ Changelog
 ...........................
 
 - |Fix| Fixes a bug in :meth:`linear_model.SGDClassifier.predict_proba` where
-  it would output `inf` values when the decision function returns large
+  it would output `nan` values when the decision function returns large
   negative values. :pr:`18015` by `Thomas Fan`_.
 
 :mod:`sklearn.manifold`
