@@ -183,7 +183,9 @@ def test_baseline_least_absolute_deviation():
     # Make sure baseline prediction is the median of all targets
     assert np.allclose(loss.inverse_link_function(baseline_prediction),
                        baseline_prediction)
-    assert baseline_prediction == pytest.approx(np.median(y_train))
+    assert baseline_prediction == pytest.approx(
+        np.percentile(y_train, 50, interpolation="nearest")
+    )
 
 
 def test_baseline_poisson():

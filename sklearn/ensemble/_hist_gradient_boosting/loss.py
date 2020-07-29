@@ -224,9 +224,11 @@ class LeastAbsoluteDeviation(BaseLoss):
 
     def get_baseline_prediction(self, y_train, sample_weight, prediction_dim):
         if sample_weight is None:
-            return np.median(y_train)
+            return np.percentile(y_train, 50, interpolation="nearest")
         else:
-            return _weighted_percentile(y_train, sample_weight, 50)
+            return _weighted_percentile(
+                y_train, sample_weight, 50, interpolation="nearest",
+            )
 
     @staticmethod
     def inverse_link_function(raw_predictions):
@@ -258,13 +260,16 @@ class LeastAbsoluteDeviation(BaseLoss):
         for leaf in grower.finalized_leaves:
             indices = leaf.sample_indices
             if sample_weight is None:
-                median_res = np.median(y_true[indices]
-                                       - raw_predictions[indices])
+                median_res = np.percentile(
+                    y_true[indices] - raw_predictions[indices], 50,
+                    interpolation="nearest",
+                )
             else:
-                median_res = _weighted_percentile(y_true[indices]
-                                                  - raw_predictions[indices],
-                                                  sample_weight=sample_weight,
-                                                  percentile=50)
+                median_res = _weighted_percentile(
+                    y_true[indices] - raw_predictions[indices],
+                    sample_weight=sample_weight, percentile=50,
+                    interpolation="nearest",
+                )
             leaf.value = grower.shrinkage * median_res
             # Note that the regularization is ignored here
 

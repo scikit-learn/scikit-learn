@@ -490,11 +490,17 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
         elif self.strategy == "median":
             if sample_weight is None:
-                self.constant_ = np.median(y, axis=0)
+                self.constant_ = np.percentile(
+                    y, 50, interpolation="nearest", axis=0
+                )
             else:
-                self.constant_ = [_weighted_percentile(y[:, k], sample_weight,
-                                                       percentile=50.)
-                                  for k in range(self.n_outputs_)]
+                self.constant_ = [
+                    _weighted_percentile(
+                        y[:, k], sample_weight, percentile=50.,
+                        interpolation="nearest",
+                    )
+                    for k in range(self.n_outputs_)
+                ]
 
         elif self.strategy == "quantile":
             if self.quantile is None or not np.isscalar(self.quantile):
@@ -503,11 +509,17 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
             percentile = self.quantile * 100.0
             if sample_weight is None:
-                self.constant_ = np.percentile(y, axis=0, q=percentile)
+                self.constant_ = np.percentile(
+                    y, q=percentile, interpolation="nearest", axis=0
+                )
             else:
-                self.constant_ = [_weighted_percentile(y[:, k], sample_weight,
-                                                       percentile=percentile)
-                                  for k in range(self.n_outputs_)]
+                self.constant_ = [
+                    _weighted_percentile(
+                        y[:, k], sample_weight, percentile=percentile,
+                        interpolation="nearest",
+                    )
+                    for k in range(self.n_outputs_)
+                ]
 
         elif self.strategy == "constant":
             if self.constant is None:

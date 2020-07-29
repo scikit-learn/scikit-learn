@@ -1,11 +1,15 @@
 import numpy as np
 from numpy.testing import assert_allclose
-from pytest import approx
+import pytest
 
 from sklearn.utils.stats import _weighted_percentile
 
 
-def test_weighted_percentile():
+@pytest.mark.parametrize(
+    "interpolation, expected_median",
+    [("lower", 0), ("linear", 1), ("higher", 1)]
+)
+def test_weighted_percentile(interpolation, expected_median):
     y = np.empty(102, dtype=np.float64)
     y[:50] = 0
     y[-51:] = 2
@@ -13,26 +17,19 @@ def test_weighted_percentile():
     y[50] = 1
     sw = np.ones(102, dtype=np.float64)
     sw[-1] = 0.0
-    score = _weighted_percentile(y, sw, 50)
-    assert approx(score) == 1
+    score = _weighted_percentile(y, sw, 50, interpolation=interpolation)
+    assert score == pytest.approx(expected_median)
 
 
-def test_weighted_percentile_equal():
-    y = np.empty(102, dtype=np.float64)
-    y.fill(0.0)
+@pytest.mark.parametrize(
+    "interpolation", ["linear", "lower", "higher", "nearest"]
+)
+def test_weighted_percentile_constant_data(interpolation):
+    y = np.zeros(102, dtype=np.float64)
     sw = np.ones(102, dtype=np.float64)
     sw[-1] = 0.0
-    score = _weighted_percentile(y, sw, 50)
+    score = _weighted_percentile(y, sw, 50, interpolation=interpolation)
     assert score == 0
-
-
-def test_weighted_percentile_zero_weight():
-    y = np.empty(102, dtype=np.float64)
-    y.fill(1.0)
-    sw = np.ones(102, dtype=np.float64)
-    sw.fill(0.0)
-    score = _weighted_percentile(y, sw, 50)
-    assert approx(score) == 1.0
 
 
 def test_weighted_median_equal_weights():
@@ -44,7 +41,7 @@ def test_weighted_median_equal_weights():
 
     median = np.median(x)
     w_median = _weighted_percentile(x, weights)
-    assert median == approx(w_median)
+    assert median == pytest.approx(w_median)
 
 
 def test_weighted_median_integer_weights():
@@ -58,10 +55,13 @@ def test_weighted_median_integer_weights():
     median = np.median(x_manual)
     w_median = _weighted_percentile(x, weights)
 
-    assert median == approx(w_median)
+    assert median == pytest.approx(w_median)
 
 
-def test_weighted_percentile_2d():
+@pytest.mark.parametrize(
+    "interpolation", ["linear", "lower", "higher", "nearest"]
+)
+def test_weighted_percentile_2d(interpolation):
     # Check for when array 2D and sample_weight 1D
     rng = np.random.RandomState(0)
     x1 = rng.randint(10, size=10)
@@ -70,20 +70,136 @@ def test_weighted_percentile_2d():
     x2 = rng.randint(20, size=10)
     x_2d = np.vstack((x1, x2)).T
 
-    w_median = _weighted_percentile(x_2d, w1)
+    w_median = _weighted_percentile(x_2d, w1, interpolation=interpolation)
     p_axis_0 = [
-        _weighted_percentile(x_2d[:, i], w1)
+        _weighted_percentile(x_2d[:, i], w1, interpolation=interpolation)
         for i in range(x_2d.shape[1])
     ]
     assert_allclose(w_median, p_axis_0)
 
-    # Check when array and sample_weight boht 2D
+    # Check when array and sample_weight both 2D
     w2 = rng.choice(5, size=10)
     w_2d = np.vstack((w1, w2)).T
 
-    w_median = _weighted_percentile(x_2d, w_2d)
+    w_median = _weighted_percentile(x_2d, w_2d, interpolation=interpolation)
     p_axis_0 = [
-        _weighted_percentile(x_2d[:, i], w_2d[:, i])
+        _weighted_percentile(x_2d[:, i], w_2d[:, i],
+                             interpolation=interpolation)
         for i in range(x_2d.shape[1])
     ]
     assert_allclose(w_median, p_axis_0)
+
+
+def test_weighted_percentile_np_median():
+    # check that our weighted percentile lead to the same results than
+    # unweighted NumPy implementation with unit weights for the median
+    rng = np.random.RandomState(42)
+    X = rng.randn(10)
+    X.sort()
+    sample_weight = np.ones(X.shape)
+
+    np_median = np.median(X)
+    sklearn_median = _weighted_percentile(
+        X, sample_weight, percentile=50.0, interpolation="linear"
+    )
+
+    assert sklearn_median == pytest.approx(np_median)
+
+
+@pytest.mark.parametrize(
+    "interpolation", ["linear", "lower", "higher", "nearest"]
+)
+@pytest.mark.parametrize("percentile", np.arange(0, 101, 2.5))
+def test_weighted_percentile_np_percentile(interpolation, percentile):
+    rng = np.random.RandomState(0)
+    X = rng.randn(10)
+    X.sort()
+    sample_weight = np.ones(X.shape)
+
+    np_percentile = np.percentile(X, percentile, interpolation=interpolation)
+    sklearn_percentile = _weighted_percentile(
+        X, sample_weight, percentile=percentile, interpolation=interpolation,
+    )
+
+    assert sklearn_percentile == pytest.approx(np_percentile)
+
+
+def test_weighted_percentile_wrong_interpolation():
+    err_msg = "'interpolation' should be one of"
+    with pytest.raises(ValueError, match=err_msg):
+        X = np.random.randn(10)
+        sample_weight = np.ones(X.shape)
+        _weighted_percentile(X, sample_weight, 50, interpolation="xxxx")
+
+
+@pytest.mark.parametrize("percentile", np.arange(2.5, 100, 2.5))
+def test_weighted_percentile_non_unit_weight(percentile):
+    # check the cumulative sum of the weight on the left and right side of the
+    # percentile
+    rng = np.random.RandomState(42)
+    X = rng.randn(1000)
+    X.sort()
+    sample_weight = rng.uniform(1, 30, X.shape)
+    sample_weight = sample_weight / sample_weight.sum()
+    sample_weight *= 100
+
+    percentile_value = _weighted_percentile(X, sample_weight, percentile)
+    X_percentile_idx = np.searchsorted(X, percentile_value)
+    assert sample_weight[:X_percentile_idx - 1].sum() < percentile
+    assert sample_weight[:X_percentile_idx + 1].sum() > percentile
+
+
+@pytest.mark.parametrize("n_features", [None, 2])
+@pytest.mark.parametrize(
+    "interpolation", ["linear", "higher", "lower", "nearest"]
+)
+@pytest.mark.parametrize("percentile", np.arange(0, 101, 25))
+def test_weighted_percentile_single_weight(n_features, interpolation,
+                                           percentile):
+    rng = np.random.RandomState(42)
+    X = rng.randn(10) if n_features is None else rng.randn(10, n_features)
+    X.sort(axis=0)
+    sample_weight = np.zeros(X.shape)
+    pos_weight_idx = 4
+    sample_weight[pos_weight_idx] = 1
+
+    percentile_value = _weighted_percentile(
+        X, sample_weight, percentile=percentile, interpolation=interpolation
+    )
+    assert percentile_value == pytest.approx(X[pos_weight_idx])
+
+
+@pytest.mark.parametrize("n_features", [None, 2])
+def test_weighted_percentile_all_null_weight(n_features):
+    rng = np.random.RandomState(42)
+    X = rng.randn(10) if n_features is None else rng.randn(10, n_features)
+    sample_weight = np.zeros(X.shape)
+
+    err_msg = "All weights cannot be null when computing a weighted percentile"
+    with pytest.raises(ValueError, match=err_msg):
+        _weighted_percentile(X, sample_weight, 50)
+
+
+@pytest.mark.parametrize("percentile", [0, 25, 50, 75, 100])
+def test_weighted_percentile_equivalence_weights_repeated_samples(percentile):
+    interpolation = "nearest"
+    X_repeated = np.array([1, 2, 2, 3, 3, 3, 4, 4])
+    sample_weight_unit = np.ones(X_repeated.shape[0])
+    p_npy_repeated = np.percentile(
+        X_repeated, percentile, interpolation=interpolation
+    )
+    p_sklearn_repeated = _weighted_percentile(
+        X_repeated, sample_weight_unit, percentile,
+        interpolation=interpolation,
+    )
+
+    assert p_sklearn_repeated == pytest.approx(p_npy_repeated)
+
+    X = np.array([1, 2, 3, 4])
+    sample_weight = np.array([1, 2, 3, 2])
+    p_sklearn_weighted = _weighted_percentile(
+        X, sample_weight, percentile, interpolation=interpolation,
+    )
+
+    assert p_sklearn_weighted == pytest.approx(p_npy_repeated)
+    assert p_sklearn_weighted == pytest.approx(p_sklearn_repeated)
