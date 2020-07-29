@@ -7,7 +7,6 @@ jobs:
     environment:
       - OMP_NUM_THREADS: 2
       - MKL_NUM_THREADS: 2
-      - MINICONDA_PATH: ~/miniconda
       - CONDA_ENV_NAME: testenv
       - PYTHON_VERSION: 3.6
       - NUMPY_VERSION: 'min'
@@ -49,7 +48,6 @@ jobs:
     environment:
       - OMP_NUM_THREADS: 2
       - MKL_NUM_THREADS: 2
-      - MINICONDA_PATH: ~/miniconda
       - CONDA_ENV_NAME: testenv
       - PYTHON_VERSION: 3
       - NUMPY_VERSION: 'latest'
