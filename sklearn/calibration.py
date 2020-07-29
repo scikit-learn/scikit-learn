@@ -341,11 +341,11 @@ class CalibratedClassifierCV(ClassifierMixin,
                 this_estimator = clone(base_estimator)
                 method_name = _get_prediction_method(this_estimator).__name__
                 pred_method = partial(
-                    cross_val_predict, estimator=this_estimator, X=X, y=y,
-                    cv=cv, method=method_name
+                    cross_val_predict, this_estimator, X, y,
+                    cv, method=method_name
                 )
                 preds = _get_predictions(
-                    pred_method, method_name, X, n_classes
+                    pred_method, method_name, X=None, n_classes=n_classes
                 )
 
                 if sample_weight is not None and supports_sw:
@@ -511,8 +511,9 @@ def _get_predictions(pred_method, method_name, X, n_classes):
     method_name : {'decision_function', 'predict_proba'}
         The name of the method of the `pred_method` as str.
 
-    X : array-like
-        Data used to obtain predictions.
+    X : array-like or None
+        Data used to obtain predictions. If `None`, just call `pred_method`
+        to obtain predictions.
 
     n_classes : int
         Number of classes present.
@@ -523,7 +524,10 @@ def _get_predictions(pred_method, method_name, X, n_classes):
         The predictions. Note if there are 2 classes, array is of shape
         (X.shape[0], 1).
     """
-    preds = pred_method(X)
+    if X is None:
+        preds = pred_method()
+    else:
+        preds = pred_method(X)
 
     if method_name == 'decision_function':
         if preds.ndim == 1:
