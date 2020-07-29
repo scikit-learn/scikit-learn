@@ -396,9 +396,9 @@ complies with the following rules before marking a PR as ``[MRG]``. The
    the keywords (e.g., ``See also #1234``).
 
 9. PRs should often substantiate the change, through benchmarks of
-   performance and efficiency or through examples of usage. Examples also
-   illustrate the features and intricacies of the library to users. Have a
-   look at other examples in the `examples/
+   performance and efficiency (see :ref:`_monitoring_performances`) or through
+   examples of usage. Examples also illustrate the features and intricacies of
+   the library to users. Have a look at other examples in the `examples/
    <https://github.com/scikit-learn/scikit-learn/tree/master/examples>`_
    directory for reference. Examples should demonstrate why the new
    functionality is useful in practice and, if possible, compare it to other
@@ -442,8 +442,7 @@ You can check for common programming errors with the following tools:
   - on properties with decorators
 
 Bonus points for contributions that include a performance analysis with
-a benchmark script and profiling output (please report on the mailing
-list or on the GitHub issue).
+a benchmark script and profiling output (see :ref:`_monitoring_performances`).
 
 Also check out the :ref:`performance-howto` guide for more details on
 profiling and Cython optimizations.
@@ -810,12 +809,13 @@ To test code coverage, you need to install the `coverage
 
 3. Loop.
 
+.. _monitoring_performances:
+
 Monitoring performance
 ======================
 
 *This section is heavily inspired from the* `pandas documentation 
 <https://pandas.pydata.org/docs/development/contributing.html#running-the-performance-test-suite>`_.
-
 
 When proposing changes to the existing code base, it's important to make sure
 that they don't introduce performance regressions. Scikit-learn uses
@@ -842,15 +842,20 @@ scikit-learn. Make sure it is up to date::
 
 In the benchmark suite, the benchmarks are organized following the same
 structure as scikit-learn. For example, you can compare the performance of a
-specific estimator between master and the branch you are working on::
+specific estimator between upstream/master and the branch you are working on::
 
   asv continuous -b LogisticRegression upstream/master HEAD
+
+The command uses conda by default for creating the benchmark environments. If
+you want to use virtualenv instead, use the `-E` flag::
+
+  asv continuous -E virtualenv -b LogisticRegression upstream/master HEAD
 
 You can also specify a whole module to benchmark::
 
   asv continuous -b linear_model upstream/master HEAD
 
-You can replace `HEAD` by any branch. By default it will only report the
+You can replace `HEAD` by any local branch. By default it will only report the
 benchmarks that have change by at least 10%. You can control this ratio with
 the `-f` flag.
 
@@ -859,11 +864,7 @@ To run the full benchmark suite, simply remove the `-b` flag ::
   asv continuous upstream/master HEAD
 
 However this can take up to two hours. The `-b` flag also accepts a regular
-expression for a more complex subset of benchmarks to run. The command uses
-conda by default for creating the benchmark environments. If you want to use 
-virtualenv instead, use the `-E` flag::
-
-  asv continuous -E virtualenv upstream/master HEAD
+expression for a more complex subset of benchmarks to run.
 
 To run the benchmarks without comparing to another branch, use the `run`
 command::
@@ -875,9 +876,10 @@ installed in your current Python environment::
 
   asv run --python=same
 
-It's particulary useful when you installed scikit-learn in editable mode. By
-default the results are not saved when using an existing installation. To save
-the results you must specify a commit hash::
+It's particulary useful when you installed scikit-learn in editable mode to
+avoid creating a new environment each time you run the benchmarks. By default
+the results are not saved when using an existing installation. To save the
+results you must specify a commit hash::
 
   asv run --python=same --set-commit-hash=<commit hash>
 
@@ -889,6 +891,9 @@ the list of all saved benchmarks::
 and to see the report of a specific run::
 
   asv show <commit hash>
+
+When running benchmarks for a pull request you're working on please report the
+results on github.
 
 The benchmark suite supports additional configurable options which can be set
 in the `benchmarks/config.json` configuration file. For example, the benchmarks
