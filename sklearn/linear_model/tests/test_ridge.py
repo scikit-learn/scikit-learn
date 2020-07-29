@@ -728,14 +728,23 @@ def test_ridge_cv_individual_penalties():
     # Test shape of alpha_ and cv_values_
     ridge_cv = RidgeCV(alphas=alphas, alpha_per_target=True,
                        store_cv_values=True).fit(X, y)
-    assert len(ridge_cv.alpha_) == n_targets
+    assert ridge_cv.alpha_.shape == (n_targets,)
+    assert ridge_cv.best_score_.shape == (n_targets,)
     assert ridge_cv.cv_values_.shape == (n_samples, len(alphas), n_targets)
 
     # Test edge case of there being only one alpha value
     ridge_cv = RidgeCV(alphas=1, alpha_per_target=True,
                        store_cv_values=True).fit(X, y)
     assert ridge_cv.alpha_.shape == (n_targets,)
+    assert ridge_cv.best_score_.shape == (n_targets,)
     assert ridge_cv.cv_values_.shape == (n_samples, n_targets, 1)
+
+    # Test edge case of there being only one target
+    ridge_cv = RidgeCV(alphas=alphas, alpha_per_target=True,
+                       store_cv_values=True).fit(X, y[:, 0])
+    assert np.isscalar(ridge_cv.alpha_)
+    assert np.isscalar(ridge_cv.best_score_)
+    assert ridge_cv.cv_values_.shape == (n_samples, len(alphas))
 
     # Try with a custom scoring function
     ridge_cv = RidgeCV(alphas=alphas, alpha_per_target=True,

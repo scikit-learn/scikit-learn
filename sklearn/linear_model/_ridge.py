@@ -1547,15 +1547,17 @@ class _RidgeGCV(LinearModel):
             # Keep track of the best model
             if best_score is None:
                 # initialize
-                best_coef = c
-                best_score = alpha_score
-                if self.alpha_per_target:
+                if self.alpha_per_target and n_y > 1:
+                    best_coef = c
+                    best_score = np.atleast_1d(alpha_score)
                     best_alpha = np.full(n_y, alpha)
                 else:
+                    best_coef = c
+                    best_score = alpha_score
                     best_alpha = alpha
             else:
                 # update
-                if self.alpha_per_target:
+                if self.alpha_per_target and n_y > 1:
                     to_update = alpha_score > best_score
                     best_coef[:, to_update] = c[:, to_update]
                     best_score[to_update] = alpha_score[to_update]
@@ -1744,10 +1746,10 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
 
     alpha_per_target : bool, default=False
         Flag indicating whether to optimize the alpha value (picked from the
-        `alphas` parameter list) for each target separately. When set to
-        `True`, after fitting, the `alpha_` attribute will contain a value for
-        each target. When set to `False`, a single alpha is used for all
-        targets.
+        `alphas` parameter list) for each target separately (for multi-output
+        settings: multiple prediction targets). When set to `True`, after
+        fitting, the `alpha_` attribute will contain a value for each target.
+        When set to `False`, a single alpha is used for all targets.
 
     Attributes
     ----------
@@ -1770,8 +1772,9 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         Estimated regularization parameter, or, if ``alpha_per_target=True``,
         the estimated regularization parameter for each target.
 
-    best_score_ : float
-        Score of base estimator with best alpha.
+    best_score_ : float or ndarray of shape (n_targets,)
+        Score of base estimator with best alpha, or, if
+        ``alpha_per_target=True``, a score for each target.
 
     Examples
     --------
