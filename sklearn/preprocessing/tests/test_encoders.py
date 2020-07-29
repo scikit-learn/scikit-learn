@@ -696,3 +696,67 @@ def test_encoders_does_not_support_none_values(Encoder):
     with pytest.raises(TypeError, match="Encoders require their input to be "
                                         "uniformly strings or numbers."):
         Encoder().fit(values)
+
+
+@pytest.mark.parametrize('col, categories', [
+    ('int_col', [3, 1, 2]),
+    ('str_col', ['d', 'z', 'u']),
+    ('float_col', [1.0, 3.1, 2.3]),
+])
+def test_multiple_pandas_category_no_order(col, categories):
+    # Make sure warning is raised when pandas category ordering isn't
+    # consistent with the encoder's
+    pd = pytest.importorskip('pandas')
+
+    msg = (r"'auto' categories is used, but the Categorical dtype provided "
+           r"for column, {}, is not consistent with the automatic "
+           r"lexicographic ordering, lexicon order: {}, dtype order: {}. "
+           r"Consider passing a custom list of categories to the categories "
+           r"parameter.")
+
+    df = pd.DataFrame({'int_col': [1, 2, 3, 1, 1],
+                       'str_col': ['z', 'd', 'z', 'd', 'u'],
+                       'float_col':  [1, 2.3, 3.1, 1, 1]},
+                      columns=['int_col', 'str_col', 'float_col'])
+
+    cat_dtype = pd.api.types.CategoricalDtype(categories=categories,
+                                              ordered=True)
+    categories = cat_dtype.categories
+    custom_msg = msg.format(col,
+                            np.unique(df[col]),
+                            list(categories))
+    with pytest.warns(UserWarning) as record:
+        df_copy = df.assign(**{col: df[col].astype(cat_dtype)})
+        OrdinalEncoder().fit(df_copy)
+    assert str(record[0].message) == custom_msg
+
+
+@pytest.mark.parametrize('series, warns', [
+    ([0, 0, 0, 0], False),  # encoding: [0]
+    ([1, 0, 1, 1], True),  # encoding: [0, 1]
+    ([2, 1, 1, 1], False),  # encoding: [1, 2]
+    ([0, 2, 0, 0], False),  # encoding: [0, 2]
+    ([0, 2, 3, 0], True),  # encoding: [0, 2, 3]
+    ([1, 2, 3, 1], True),  # encoding: [1, 2, 3]
+    ([0, 0, 0, 3], False),  # encoding: [0, 3]
+])
+@pytest.mark.parametrize("as_strings", [True, False])
+def test_pandas_category_in_ordinalencoders_with_unknown(
+        series, warns, as_strings):
+    # The pandas series contains elements that are not seen during fit. `fit`
+    # will warn when the catgorical encoding is not subsequence of
+    # the pandas encoding.
+    pd = pytest.importorskip('pandas')
+    categories = [1, 0, 3, 2]
+    if as_strings:
+        str_categories = np.array(['cat', 'dog', 'horse', 'zebra'])
+        categories = str_categories[categories]
+        series = str_categories[series]
+
+    cat_series = pd.Categorical(series, categories=categories)
+    df = pd.DataFrame({'col': cat_series})
+
+    # does not warn
+    with pytest.warns(None) as record:
+        OrdinalEncoder().fit(df)
+    assert record if warns else not record

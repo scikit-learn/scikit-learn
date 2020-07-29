@@ -4,6 +4,7 @@
 
 import numpy as np
 from scipy import sparse
+import warnings
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
@@ -17,6 +18,41 @@ __all__ = [
     'OneHotEncoder',
     'OrdinalEncoder'
 ]
+
+
+def _is_subsequence(seq, super_seq):
+    """Return True when `seq` is a subsequence of `super_seq`.
+
+    Examples
+    --------
+
+    >>> _is_subsequence([1], [2, 1, 4, 3])
+    True
+    >>> _is_subsequence([1, 2], [2, 1, 4, 3])
+    False
+    >>> _is_subsequence([2, 3], [2, 1, 4, 3])
+    True
+    >>> _is_subsequence([1, 3], [2, 1, 4, 3])
+    True
+    >>> _is_subsequence([1, 3, 4], [2, 1, 4, 3])
+    False
+    >>> _is_subsequence(['cat', 'dog', 'zebra'],
+    ...                 ['cat', 'dog', 'horse', 'zebra'])
+    True
+
+    """
+    if len(seq) > len(super_seq):
+        return False
+
+    j = 0
+    for i, elm in enumerate(seq):
+        while j < len(super_seq):
+            j += 1
+            if elm == super_seq[j-1]:
+                break
+        else:  # no break
+            return False
+    return True
 
 
 class _BaseEncoder(TransformerMixin, BaseEstimator):
@@ -661,6 +697,32 @@ class OrdinalEncoder(_BaseEncoder):
         self.categories = categories
         self.dtype = dtype
 
+    def _check_pandas_categories(self, X):
+        """Checks categories is lexicographic consistent with categories
+        in fitted X.
+        """
+        if not hasattr(X, 'dtypes'):
+            return
+        dtypes = X.dtypes  # only exists for dataframes
+        for idx, (column_name, dtype) in enumerate(dtypes.iteritems()):
+            if dtype.name != 'category':
+                continue
+            # dtype.name == 'category
+            dtype_categories = list(dtype.categories)
+            fitted_categories = self.categories_[idx]
+
+            if _is_subsequence(fitted_categories, dtype_categories):
+                continue
+
+            # not a subsequence
+            msg = ("'auto' categories is used, but the Categorical dtype "
+                   "provided for column, {}, is not consistent with the "
+                   "automatic lexicographic ordering, lexicon order: {}, "
+                   "dtype order: {}. Consider passing a custom list of "
+                   "categories to the categories parameter.".format(
+                    column_name, fitted_categories, dtype_categories))
+            warnings.warn(msg, UserWarning)
+
     def fit(self, X, y=None):
         """
         Fit the OrdinalEncoder to X.
@@ -679,7 +741,7 @@ class OrdinalEncoder(_BaseEncoder):
         self
         """
         self._fit(X)
-
+        self._check_pandas_categories(X)
         return self
 
     def transform(self, X):

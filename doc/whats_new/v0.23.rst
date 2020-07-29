@@ -568,6 +568,12 @@ Changelog
   each feature with two categories. :pr:`16245`
   by :user:`Rushabh Vasani <rushabh-v>`.
 
+- |Enhancement| :class:`preprocessing.OrdinalEncoder` with `categories='auto'`
+  now warns when fitted with a pandas categorical feature if the encoding
+  provided by the pandas categorical dtype is not a subsequence of the
+  attribute `categories_[i]` where `i` corresponding feature index.
+  :pr:`15050` by `Thomas Fan`_.
+
 - |Enhancement| :class:`preprocessing.OneHotEncoder`'s `drop_idx_` ndarray
   can now contain `None`, where `drop_idx_[i] = None` means that no category
   is dropped for index `i`. :pr:`16585` by :user:`Chiara Marmo <cmarmo>`.
