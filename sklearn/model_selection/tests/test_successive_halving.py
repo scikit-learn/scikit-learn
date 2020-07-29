@@ -278,15 +278,20 @@ def test_input_errors(Est, params, expected_error_message):
         sh.fit(X, y)
 
 
-def test_n_candidates_min_resources_exhaust():
-    # Make sure n_candidates and min_resources cannot be both exhaust
+@pytest.mark.parametrize('params, expected_error_message', [
+    ({'n_candidates': 'exhaust', 'min_resources': 'exhaust'},
+     "cannot be both set to 'exhaust'"),
+     ({'n_candidates': 'bad'}, "either 'exhaust' or a positive integer"),
+     ({'n_candidates': 0}, "either 'exhaust' or a positive integer"),
+])
+def test_input_errors_randomized(params, expected_error_message):
+    # tests specific to HalvingRandomSearchCV
 
     base_estimator = FastClassifier()
     param_grid = {'a': [1]}
     X, y = make_classification(100)
 
-    sh = HalvingRandomSearchCV(base_estimator, param_grid,
-                               n_candidates='exhaust', min_resources='exhaust')
+    sh = HalvingRandomSearchCV(base_estimator, param_grid, **params)
 
-    with pytest.raises(ValueError, match="cannot be both set to 'exhaust'"):
+    with pytest.raises(ValueError, match=expected_error_message):
         sh.fit(X, y)

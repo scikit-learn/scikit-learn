@@ -95,15 +95,22 @@ class BaseSuccessiveHalving(BaseSearchCV):
                 "no greater than max_resources."
             )
 
-        if (isinstance(self, HalvingRandomSearchCV) and
-                self.min_resources == self.n_candidates == 'exhaust'):
-            # for n_candidates=exhaust to work, we need to know what
-            # min_resources is. Similarly min_resources=exhaust needs to know
-            # the actual number of candidates.
-            raise ValueError(
-                "n_candidates and min_resources cannot be both set to "
-                "'exhaust'."
-            )
+        if isinstance(self, HalvingRandomSearchCV):
+            if self.min_resources == self.n_candidates == 'exhaust':
+                # for n_candidates=exhaust to work, we need to know what
+                # min_resources is. Similarly min_resources=exhaust needs to
+                # know the actual number of candidates.
+                raise ValueError(
+                    "n_candidates and min_resources cannot be both set to "
+                    "'exhaust'."
+                )
+            if self.n_candidates != 'exhaust' and (
+                    not isinstance(self.n_candidates, Integral) or
+                    self.n_candidates<= 0):
+                raise ValueError(
+                    "n_candidates must be either 'exhaust' "
+                    "or a positive integer"
+                )
 
         self.min_resources_ = self.min_resources
         if self.min_resources_ in ('smallest', 'exhaust'):

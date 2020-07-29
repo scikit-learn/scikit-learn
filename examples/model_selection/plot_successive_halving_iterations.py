@@ -41,7 +41,7 @@ rsh = HalvingRandomSearchCV(
     param_distributions=param_dist,
     resource='n_samples',
     max_resources='auto',  # max_resources=n_samples
-    n_candidates='auto',  # choose n_cdts so that last iter exhausts resources
+    n_candidates='exhaust',
     cv=5,
     ratio=2,
     random_state=rng)
