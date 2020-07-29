@@ -580,12 +580,10 @@ def test_confusion_matrix_cluster_classes():
     y_pred += ["dog"]*130 + ["wolf"]*40 + ["lion"]*15 + ["jag"]*10 + ["cat"]*5
 
     cm, labels = confusion_matrix(y_true, y_pred, cluster_classes=True)
-    assert_array_equal(cm, [[130, 50, 7, 6, 7],
-                            [40, 130, 10, 15, 5],
-                            [3, 7, 140, 25, 25],
-                            [6, 4, 50, 120, 20],
-                            [8, 2, 30, 25, 135]])
-    assert labels == ['wolf', 'dog', 'jag', 'lion', 'cat']
+
+    # The doglike animals should occur together either at the end or start
+    idx_doglikes = np.sort([labels.index('dog'), labels.index('wolf')])
+    assert idx_doglikes.tolist() in ([0, 1], [3, 4])
 
 
 def test_cohen_kappa():

@@ -382,7 +382,11 @@ def confusion_matrix(y_true, y_pred, *, labels=None, sample_weight=None,
             cm_norm = cm
 
         dists = pdist(cm_norm)
-        links = linkage(dists, optimal_ordering=True)
+        # In case we are dealing with an older scipy version
+        try:
+            links = linkage(dists, optimal_ordering=True)
+        except TypeError:
+            links = linkage(dists)
         idx = leaves_list(links)
         cm = cm[idx, :]
         cm = cm[:, idx]
