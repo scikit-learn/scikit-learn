@@ -251,6 +251,11 @@ Changelog
   average of multiple RMSE values was incorrectly calculated as the root of the
   average of multiple MSE values.
   :pr:`17309` by :user:`Swier Heeres <swierh>`
+  
+- |Fix| Fixed a bug in 
+  :func:`metrics.classification_report` which was raising AttributeError
+  when called with `output_dict=True` for 0-length values.
+  :pr:`17777` by :user:`Shubhanshu Mishra <napsternxg>`
 
 - |Enhancement| Add `sample_weight` parameter to
   :func:`metrics.median_absolute_error`. :pr:`17225` by
