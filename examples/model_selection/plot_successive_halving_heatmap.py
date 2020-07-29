@@ -6,17 +6,6 @@ This example compares the parameter search performed by
 :class:`~sklearn.model_selection.HalvingGridSearchCV` and
 :class:`~sklearn.model_selection.GridSearchCV`.
 
-The heatmap shows the mean test score of the parameter combinations for an
-SVC instance. The
-:class:`~sklearn.model_selection.HalvingGridSearchCV`
-also shows the iteration at which the combinations where last used. The
-combinations marked as ``0`` were only evaluated at the first iteration, while
-the ones with ``5`` are the parameter combinations that are considered the
-best ones.
-
-We can see that the :class:`~sklearn.model_selection.HalvingGridSearchCV`
-class is able to find parameter combinations that are just as accurate as
-:class:`~sklearn.model_selection.GridSearchCV`, in much less time.
 """
 from time import time
 
@@ -32,6 +21,12 @@ from sklearn.model_selection import HalvingGridSearchCV
 
 print(__doc__)
 
+# %%
+# We first define the parameter space for an :class:`~sklearn.svm.SVC`
+# estimator, and compute the time required to train a
+# :class:`~sklearn.model_selection.HalvingGridSearchCV` instance, as well as a
+# :class:`~sklearn.model_selection.GridSearchCV` instance.
+
 rng = np.random.RandomState(0)
 X, y = datasets.make_classification(n_samples=1000, random_state=rng)
 
@@ -41,7 +36,6 @@ param_grid = {'gamma': gammas, 'C': Cs}
 
 clf = SVC(random_state=rng)
 
-# run HalvingGridSearchCV
 tic = time()
 gsh = HalvingGridSearchCV(
     estimator=clf,
@@ -55,7 +49,6 @@ gsh = HalvingGridSearchCV(
 gsh.fit(X, y)
 gsh_time = time() - tic
 
-# run GridSearchCV
 tic = time()
 gs = GridSearchCV(
     estimator=clf,
@@ -63,6 +56,9 @@ gs = GridSearchCV(
     cv=5)
 gs.fit(X, y)
 gs_time = time() - tic
+
+# %%
+# We now plot heatmaps for both search estimators.
 
 
 def make_heatmap(ax, gs, show_iter=False, make_cbar=False):
@@ -103,7 +99,6 @@ def make_heatmap(ax, gs, show_iter=False, make_cbar=False):
                            fontsize=15)
 
 
-# Plot heatmaps and colorbar
 fig, axes = plt.subplots(ncols=2, sharey=True)
 ax1, ax2 = axes
 
@@ -115,3 +110,15 @@ ax1.set_title('Successive Halving (time = {:.3f}s)'.format(gsh_time),
 ax2.set_title('GridSearch (time = {:.3f}s)'.format(gs_time), fontsize=15)
 
 plt.show()
+
+# %%
+# The heatmaps show the mean test score of the parameter combinations for an
+# :class:`~sklearn.svm.SVC` instance. The
+# :class:`~sklearn.model_selection.HalvingGridSearchCV` also shows the
+# iteration at which the combinations where last used. The combinations marked
+# as ``0`` were only evaluated at the first iteration, while the ones with
+# ``5`` are the parameter combinations that are considered the best ones.
+#
+# We can see that the :class:`~sklearn.model_selection.HalvingGridSearchCV`
+# class is able to find parameter combinations that are just as accurate as
+# :class:`~sklearn.model_selection.GridSearchCV`, in much less time.

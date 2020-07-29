@@ -210,7 +210,6 @@ is small but each evaluation on a large number of resources is expensive.
 More control is available through tuning the ``min_resources`` parameter.
 Each parameter and their interactions are described in more details below.
 
-
 .. topic:: Examples:
 
     * :ref:`sphx_glr_auto_examples_model_selection_plot_successive_halving_heatmap.py`
