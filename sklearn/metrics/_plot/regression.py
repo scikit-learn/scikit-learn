@@ -2,8 +2,11 @@ import numbers
 
 import numpy as np
 
+from .. import check_scoring
+from .._scorer import _check_multimetric_scoring
 from ...utils import check_matplotlib_support
 from ...utils import check_random_state
+from ...utils import _safe_indexing
 
 
 class PredictionErrorDisplay:
@@ -21,6 +24,10 @@ class PredictionErrorDisplay:
 
     y_pred : ndarray of shape (n_samples,)
         Prediction values.
+
+    scores : dict, default=None
+        Dictionary where the key is the name of the metric displayed and the
+        value is the metric value.
 
     subsample : float, int or None, default=1000
         Sampling the samples to be shown on the scatter plot. If `float`, it
@@ -72,12 +79,14 @@ class PredictionErrorDisplay:
         *,
         y_true,
         y_pred,
+        scores=None,
         subsample=1000,
         with_residuals=False,
         random_state=None,
     ):
         self.y_true = y_true
         self.y_pred = y_pred
+        self.scores = scores
         self.subsample = subsample
         self.with_residuals = with_residuals
         self.random_state = random_state
@@ -143,7 +152,8 @@ class PredictionErrorDisplay:
             indices = random_state.choice(
                 np.arange(len(self.y_true)), size=subsample
             )
-            y_true, y_pred = self.y_true[indices], self.y_pred[indices]
+            y_true = _safe_indexing(self.y_true, indices)
+            y_pred = _safe_indexing(self.y_pred, indices)
         else:
             y_true, y_pred = self.y_true, self.y_pred
 
@@ -193,12 +203,17 @@ class PredictionErrorDisplay:
         ax.set_xticks(np.linspace(min_value, max_value, num=5))
         ax.set_yticks(np.linspace(min_value, max_value, num=5))
 
-        legend_obj = [self.line_]
-        legend_name = ["Perfect fit"]
-        if self.with_residuals:
-            legend_obj.append(self.residual_lines_[0])
-            legend_name.append("Residuals")
-        ax.legend(legend_obj, legend_name)
+        if self.scores is not None:
+            extra = plt.Rectangle(
+                (0, 0), 0, 0, fc="w", fill=False, edgecolor="none", linewidth=0
+            )
+            scoring_legend = "\n".join(
+                [
+                    f"{name} = {value}"
+                    for name, value in self.scores.items()
+                ],
+            )
+            ax.legend([extra], [scoring_legend])
 
         self.ax_ = ax
         self.figure_ = ax.figure
@@ -211,6 +226,7 @@ def plot_prediction_error(
     X,
     y,
     *,
+    scoring=None,
     subsample=None,
     with_residuals=False,
     ax=None,
@@ -235,6 +251,21 @@ def plot_prediction_error(
 
     y : array-like of shape (n_samples,)
         Target values.
+
+    scoring : str, callable, list/tuple, or dict, default=None
+        A single str (see :ref:`scoring_parameter`) or a callable
+        (see :ref:`scoring`) to evaluate the predictions on the test set.
+
+        For evaluating multiple metrics, either give a list of (unique) strings
+        or a dict with names as keys and callables as values.
+
+        NOTE that when using custom scorers, each scorer should return a single
+        value. Metric functions returning a list/array of values can be wrapped
+        into multiple scorers that return one value each.
+
+        See :ref:`multimetric_grid_search` for an example.
+
+        If None, the estimator's score method is used.
 
     subsample : float, int or None, default=1000
         Sampling the samples to be shown on the scatter plot. If `float`, it
@@ -267,11 +298,31 @@ def plot_prediction_error(
     """
     check_matplotlib_support("plot_prediction_error")
 
+    if callable(scoring):
+        score_name = (
+            scoring.__name__
+            if hasattr(scoring, "__name__")
+            else scoring.__class__.__name__
+        )
+        scorers = {score_name: scoring}
+    elif scoring is None or isinstance(scoring, str):
+        score_name = "r2" if scoring is None else scoring
+        scorers = {score_name: check_scoring(estimator, score_name)}
+    else:
+        scorers = _check_multimetric_scoring(estimator, scoring)
+
     y_pred = estimator.predict(X)
+
+    # To avoid circular import
+    from ...model_selection._validation import _score
+
+    scores = _score(estimator, X, y, scorers)
+    scores = {key.replace("_", " "): value for key, value in scores.items()}
 
     viz = PredictionErrorDisplay(
         y_true=y,
         y_pred=y_pred,
+        scores=scores,
         subsample=subsample,
         with_residuals=with_residuals,
     )
