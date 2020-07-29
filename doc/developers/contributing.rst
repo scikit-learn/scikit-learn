@@ -396,7 +396,7 @@ complies with the following rules before marking a PR as ``[MRG]``. The
    the keywords (e.g., ``See also #1234``).
 
 9. PRs should often substantiate the change, through benchmarks of
-   performance and efficiency (see :ref:`_monitoring_performances`) or through
+   performance and efficiency (see :ref:`monitoring_performances`) or through
    examples of usage. Examples also illustrate the features and intricacies of
    the library to users. Have a look at other examples in the `examples/
    <https://github.com/scikit-learn/scikit-learn/tree/master/examples>`_
@@ -442,7 +442,7 @@ You can check for common programming errors with the following tools:
   - on properties with decorators
 
 Bonus points for contributions that include a performance analysis with
-a benchmark script and profiling output (see :ref:`_monitoring_performances`).
+a benchmark script and profiling output (see :ref:`monitoring_performances`).
 
 Also check out the :ref:`performance-howto` guide for more details on
 profiling and Cython optimizations.
