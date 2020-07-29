@@ -62,7 +62,8 @@ run_tests() {
     set -x  # print executed commands to the terminal
 
     echo "About to run $TEST_CMD nothing"
-    $TEST_CMD nothing  # collects nothing and freeze on pytest exiting
+    # $TEST_CMD nothing  # collects nothing and freeze on pytest exiting
+    pytest --version
     echo "after pytest"
 }
 
