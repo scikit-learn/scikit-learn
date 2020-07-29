@@ -221,7 +221,11 @@ for ax, (name, est) in zip(axs, estimators + [('Stacking Regressor',
         scores=scores,
         subsample=None,
     )
-    display.plot(ax=ax)
+    display.plot(
+        ax=ax,
+        scatter_kwargs={"alpha": 0.2, "color": "tab:blue"},
+        line_kwargs={"color": "tab:red"},
+    )
     ax.set_title(f"{name}\nEvaluation in {elapsed_time:.2f} seconds")
 
 plt.suptitle('Single predictors versus stacked predictors')
