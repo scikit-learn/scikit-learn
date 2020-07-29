@@ -325,10 +325,8 @@ We can note that:
 - each ``resource_iter`` is a multiple of both ``ratio`` and
   ``min_resources`` (which is confirmed by its definition above).
 
-The amount of resources that is used at each iteration can be found using
-the `cv_results_` attribute after converting it to a dataframe:
-`results.groupby('iter')['resource_iter'].unique()`, as done e.g. in
-:ref:`sphx_glr_auto_examples_model_selection_plot_successive_halving_iterations.py`
+The amount of resources that is used at each iteration can be found in the
+`n_resources_` attribute.
 
 Choosing a resource
 -------------------
@@ -377,13 +375,8 @@ resources, some of them might be wasted (i.e. not used)::
     >>> X, y = make_classification(n_samples=1000)
     >>> sh = HalvingGridSearchCV(base_estimator, param_grid, cv=5,
     ...                          ratio=2, min_resources=20).fit(X, y)
-    >>> results = pd.DataFrame(sh.cv_results_)
-    >>> results.groupby('iter')['resource_iter'].unique()
-    iter
-    0    [20]
-    1    [40]
-    2    [80]
-    Name: resource_iter, dtype: object
+    >>> sh.n_resources_
+    [20, 40, 80]
 
 The search process will only use 80 resources at most, while our maximum
 amount of available resources is ``n_samples=1000``. Here, we have
@@ -396,13 +389,8 @@ the `max_resources` limit::
 
     >>> sh = HalvingGridSearchCV(base_estimator, param_grid, cv=5,
     ...                          ratio=2, min_resources='exhaust').fit(X, y)
-    >>> results = pd.DataFrame.from_dict(sh.cv_results_)
-    >>> results.groupby('iter')['resource_iter'].unique()
-    iter
-    0     [250]
-    1     [500]
-    2    [1000]
-    Name: resource_iter, dtype: object
+    >>> sh.n_resources_
+    [250, 500, 1000]
 
 `min_resources` was here automatically set to 250, which results in the last
 iteration using all the resources. The exact value that is used depends on
@@ -446,17 +434,10 @@ more than ``ratio`` candidates::
     >>> sh = HalvingGridSearchCV(base_estimator, param_grid, cv=5,
     ...                          ratio=2, max_resources=40,
     ...                          aggressive_elimination=False).fit(X, y)
-    >>> results = pd.DataFrame.from_dict(sh.cv_results_)
-    >>> results.groupby('iter').resource_iter.unique()
-    iter
-    0    [20]
-    1    [40]
-    Name: resource_iter, dtype: object
-    >>> results.groupby('iter').resource_iter.count()  # number of candidates used at each iteration
-    iter
-    0    6
-    1    3
-    Name: resource_iter, dtype: int64
+    >>> sh.n_resources_
+    [20, 40]
+    >>> sh.n_candidates_
+    [6, 3]
 
 Since we cannot use more than ``max_resources=40`` resources, the process
 has to stop at the second iteration which evaluates more than ``ratio=2``
@@ -472,19 +453,10 @@ necessary using ``min_resources`` resources::
     ...                            max_resources=40,
     ...                            aggressive_elimination=True,
     ...                            ).fit(X, y)
-    >>> results = pd.DataFrame.from_dict(sh.cv_results_)
-    >>> results.groupby('iter').resource_iter.unique()
-    iter
-    0    [20]
-    1    [20]
-    2    [40]
-    Name: resource_iter, dtype: object
-    >>> results.groupby('iter').resource_iter.count()  # number of candidates used at each iteration
-    iter
-    0    6
-    1    3
-    2    2
-    Name: resource_iter, dtype: int64
+    >>> sh.n_resources_
+    [20, 20,  40]
+    >>> sh.n_candidates_
+    [6, 3, 2]
 
 Notice that we end with 2 candidates at the last iteration since we have
 eliminated enough candidates during the first iterations, using ``resource_iter =

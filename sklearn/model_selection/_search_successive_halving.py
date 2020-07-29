@@ -106,7 +106,7 @@ class BaseSuccessiveHalving(BaseSearchCV):
                 )
             if self.n_candidates != 'exhaust' and (
                     not isinstance(self.n_candidates, Integral) or
-                    self.n_candidates<= 0):
+                    self.n_candidates <= 0):
                 raise ValueError(
                     "n_candidates must be either 'exhaust' "
                     "or a positive integer"
@@ -227,8 +227,7 @@ class BaseSuccessiveHalving(BaseSearchCV):
             print(f'aggressive_elimination: {self.aggressive_elimination}')
             print(f'ratio: {self.ratio}')
 
-        # list of resource_iter for each iteration, used in tests
-        self._r_i_list = []
+        self.n_resources_ = []
         self.n_candidates_ = []
 
         for iter_i in range(n_iterations):
@@ -247,7 +246,7 @@ class BaseSuccessiveHalving(BaseSearchCV):
             resource_iter = int(self.ratio**power * self.min_resources_)
             # guard, probably not needed
             resource_iter = min(resource_iter, self.max_resources_)
-            self._r_i_list.append(resource_iter)
+            self.n_resources_.append(resource_iter)
 
             n_candidates = len(candidate_params)
             self.n_candidates_.append(n_candidates)
@@ -455,6 +454,9 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
     n_candidates_ : list of int
         The number of candidate parameters that were evaluated at each
         iteration.
+
+    n_resources_ : list of int
+        The amount of resources used at each iteration.
 
     n_remaining_candidates_ : int
         The number of candidate parameters that are left after the last
@@ -740,6 +742,9 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
     n_candidates_ : list of int
         The number of candidate parameters that were evaluated at each
         iteration.
+
+    n_resources_ : list of int
+        The amount of resources used at each iteration.
 
     n_remaining_candidates_ : int
         The number of candidate parameters that are left after the last

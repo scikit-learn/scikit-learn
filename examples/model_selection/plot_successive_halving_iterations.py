@@ -58,9 +58,8 @@ mean_scores = results.pivot(index='iter', columns='params_str',
                             values='mean_test_score')
 ax = mean_scores.plot(legend=False, alpha=.6)
 
-r_i_list = results.groupby('iter')['resource_iter'].unique()
 labels = [
-    f'iter={i}\nn_samples={r_i_list[i][0]}\n'
+    f'iter={i}\nn_samples={rsh.n_resources_[i]}\n'
     f'n_candidates={rsh.n_candidates_[i]}'
     for i in range(rsh.n_iterations_)
 ]

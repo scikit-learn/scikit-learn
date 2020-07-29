@@ -33,7 +33,7 @@ class FastClassifier(DummyClassifier):
      'expected_n_required_iterations,'
      'expected_n_possible_iterations,'
      'expected_n_remaining_candidates,'
-     'expected_r_i_list,'), [
+     'expected_n_resources,'), [
          # notice how it loops at the beginning
          (True, 'limited', 4, 4, 3, 1, [20, 20, 60, 180]),
          # no aggressive elimination: we end up with less iterations and more
@@ -49,7 +49,7 @@ class FastClassifier(DummyClassifier):
 def test_aggressive_elimination(
         Est, aggressive_elimination, max_resources, expected_n_iterations,
         expected_n_required_iterations, expected_n_possible_iterations,
-        expected_n_remaining_candidates, expected_r_i_list):
+        expected_n_remaining_candidates, expected_n_resources):
     # Test the aggressive_elimination parameter.
 
     n_samples = 1000
@@ -76,7 +76,7 @@ def test_aggressive_elimination(
     assert sh.n_iterations_ == expected_n_iterations
     assert sh.n_required_iterations_ == expected_n_required_iterations
     assert sh.n_possible_iterations_ == expected_n_possible_iterations
-    assert sh._r_i_list == expected_r_i_list
+    assert sh.n_resources_ == expected_n_resources
     assert sh.n_remaining_candidates_ == expected_n_remaining_candidates
 
 
@@ -86,7 +86,7 @@ def test_aggressive_elimination(
      'max_resources,'
      'expected_n_iterations,'
      'expected_n_possible_iterations,'
-     'expected_r_i_list,'), [
+     'expected_n_resources,'), [
          # with enough resources
          ('smallest', 'auto', 2, 4, [20, 60]),
          # with enough resources but min_resources set manually
@@ -108,7 +108,7 @@ def test_aggressive_elimination(
 def test_min_max_resources(
         Est, min_resources, max_resources, expected_n_iterations,
         expected_n_possible_iterations,
-        expected_r_i_list):
+        expected_n_resources):
     # Test the min_resources and max_resources parameters, and how they affect
     # the number of resources used at each iteration
     n_samples = 1000
@@ -127,10 +127,10 @@ def test_min_max_resources(
     assert sh.n_iterations_ == expected_n_iterations
     assert sh.n_required_iterations_ == expected_n_required_iterations
     assert sh.n_possible_iterations_ == expected_n_possible_iterations
-    assert sh._r_i_list == expected_r_i_list
+    assert sh.n_resources_ == expected_n_resources
     if min_resources == 'exhaust':
         assert (sh.n_possible_iterations_ == sh.n_iterations_ ==
-                len(sh._r_i_list))
+                len(sh.n_resources_))
 
 
 @pytest.mark.parametrize('Est', (HalvingRandomSearchCV, HalvingGridSearchCV))
@@ -147,8 +147,7 @@ def test_min_max_resources(
         (4, 1, 1),  # max_resources == min_resources, only one iteration is
                     # possible
     ])
-def test_n_iterations(Est, max_resources, n_iterations,
-                      n_possible_iterations):
+def test_n_iterations(Est, max_resources, n_iterations, n_possible_iterations):
     # test the number of actual iterations that were run depending on
     # max_resources
 
@@ -179,7 +178,7 @@ def test_resource_parameter(Est):
     sh = Est(base_estimator, parameters, cv=2, resource='c',
              max_resources=10, ratio=3)
     sh.fit(X, y)
-    assert set(sh._r_i_list) == set([1, 3, 9])
+    assert set(sh.n_resources_) == set([1, 3, 9])
     for r_i, params, param_c in zip(sh.cv_results_['resource_iter'],
                                     sh.cv_results_['params'],
                                     sh.cv_results_['param_c']):
@@ -227,7 +226,7 @@ def test_random_search(max_resources, n_candidates, expected_n_candidates_):
     if n_candidates == 'exhaust':
         # Make sure 'exhaust' makes the last iteration use as much resources as
         # we can
-        assert sh._r_i_list[-1] == max_resources
+        assert sh.n_resources_[-1] == max_resources
 
 
 @pytest.mark.parametrize('Est', (HalvingRandomSearchCV, HalvingGridSearchCV))
@@ -281,8 +280,8 @@ def test_input_errors(Est, params, expected_error_message):
 @pytest.mark.parametrize('params, expected_error_message', [
     ({'n_candidates': 'exhaust', 'min_resources': 'exhaust'},
      "cannot be both set to 'exhaust'"),
-     ({'n_candidates': 'bad'}, "either 'exhaust' or a positive integer"),
-     ({'n_candidates': 0}, "either 'exhaust' or a positive integer"),
+    ({'n_candidates': 'bad'}, "either 'exhaust' or a positive integer"),
+    ({'n_candidates': 0}, "either 'exhaust' or a positive integer"),
 ])
 def test_input_errors_randomized(params, expected_error_message):
     # tests specific to HalvingRandomSearchCV
