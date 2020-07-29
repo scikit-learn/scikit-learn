@@ -105,9 +105,9 @@ ax1, ax2 = axes
 make_heatmap(ax1, gsh, show_iter=True)
 make_heatmap(ax2, gs, make_cbar=True)
 
-ax1.set_title('Successive Halving (time = {:.3f}s)'.format(gsh_time),
+ax1.set_title('Successive Halving\ntime = {:.3f}s'.format(gsh_time),
               fontsize=15)
-ax2.set_title('GridSearch (time = {:.3f}s)'.format(gs_time), fontsize=15)
+ax2.set_title('GridSearch\ntime = {:.3f}s'.format(gs_time), fontsize=15)
 
 plt.show()
 

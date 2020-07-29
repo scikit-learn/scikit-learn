@@ -25,7 +25,7 @@ class FastClassifier(DummyClassifier):
         return params
 
 
-@pytest.mark.parametrize('klass', (HalvingGridSearchCV, HalvingRandomSearchCV))
+@pytest.mark.parametrize('Est', (HalvingGridSearchCV, HalvingRandomSearchCV))
 @pytest.mark.parametrize(
     ('aggressive_elimination,'
      'max_resources,'
@@ -46,7 +46,7 @@ class FastClassifier(DummyClassifier):
      ]
 )
 def test_aggressive_elimination(
-        klass, aggressive_elimination, max_resources, expected_n_iterations,
+        Est, aggressive_elimination, max_resources, expected_n_iterations,
         expected_n_required_iterations, expected_n_possible_iterations,
         expected_n_remaining_candidates, expected_r_i_list):
     # Test the aggressive_elimination parameter.
@@ -61,13 +61,13 @@ def test_aggressive_elimination(
     else:
         max_resources = n_samples
 
-    sh = klass(base_estimator, parameters,
+    sh = Est(base_estimator, parameters,
                aggressive_elimination=aggressive_elimination,
                max_resources=max_resources, ratio=3,
                force_exhaust_resources=False,
                verbose=True)  # just for test coverage
 
-    if klass is HalvingRandomSearchCV:
+    if Est is HalvingRandomSearchCV:
         sh.set_params(n_candidates=2 * 30)  # same number as with the grid
 
     sh.fit(X, y)
@@ -79,7 +79,7 @@ def test_aggressive_elimination(
     assert sh.n_remaining_candidates_ == expected_n_remaining_candidates
 
 
-@pytest.mark.parametrize('klass', (HalvingGridSearchCV, HalvingRandomSearchCV))
+@pytest.mark.parametrize('Est', (HalvingGridSearchCV, HalvingRandomSearchCV))
 @pytest.mark.parametrize(
     ('min_resources,'
      'max_resources,'
@@ -96,7 +96,7 @@ def test_aggressive_elimination(
      ]
 )
 def test_force_exhaust_resources_false(
-        klass, min_resources, max_resources, expected_n_iterations,
+        Est, min_resources, max_resources, expected_n_iterations,
         expected_n_required_iterations, expected_n_possible_iterations,
         expected_r_i_list):
     # Test the force_exhaust_resources parameter when it's false or ignored.
@@ -107,10 +107,10 @@ def test_force_exhaust_resources_false(
     parameters = {'a': [1, 2], 'b': [1, 2, 3]}
     base_estimator = FastClassifier()
 
-    sh = klass(base_estimator, parameters, force_exhaust_resources=False,
+    sh = Est(base_estimator, parameters, force_exhaust_resources=False,
                ratio=3, min_resources=min_resources,
                max_resources=max_resources)
-    if klass is HalvingRandomSearchCV:
+    if Est is HalvingRandomSearchCV:
         sh.set_params(n_candidates=6)  # same number as with the grid
 
     sh.fit(X, y)
@@ -120,7 +120,7 @@ def test_force_exhaust_resources_false(
     assert sh._r_i_list == expected_r_i_list
 
 
-@pytest.mark.parametrize('klass', (HalvingRandomSearchCV, HalvingGridSearchCV))
+@pytest.mark.parametrize('Est', (HalvingRandomSearchCV, HalvingGridSearchCV))
 @pytest.mark.parametrize('max_resources, r_i_list', [
     ('auto', [333, 999]),
     (1000, [333, 999]),
@@ -132,7 +132,7 @@ def test_force_exhaust_resources_false(
     (50, [20]),
     (20, [20]),
 ])
-def test_force_exhaust_resources_true(klass, max_resources, r_i_list):
+def test_force_exhaust_resources_true(Est, max_resources, r_i_list):
     # Test the force_exhaust_resources parameter when it's true
     # in this case we need to change min_resources so that the last iteration
     # uses as much resources as possible
@@ -142,9 +142,9 @@ def test_force_exhaust_resources_true(klass, max_resources, r_i_list):
     parameters = {'a': [1, 2], 'b': [1, 2, 3]}
     base_estimator = FastClassifier()
 
-    sh = klass(base_estimator, parameters, force_exhaust_resources=True,
+    sh = Est(base_estimator, parameters, force_exhaust_resources=True,
                ratio=3, max_resources=max_resources)
-    if klass is HalvingRandomSearchCV:
+    if Est is HalvingRandomSearchCV:
         sh.set_params(n_candidates=6)  # same as for HalvingGridSearchCV
     sh.fit(X, y)
 
@@ -152,7 +152,7 @@ def test_force_exhaust_resources_true(klass, max_resources, r_i_list):
     assert sh._r_i_list == r_i_list
 
 
-@pytest.mark.parametrize('klass', (HalvingRandomSearchCV, HalvingGridSearchCV))
+@pytest.mark.parametrize('Est', (HalvingRandomSearchCV, HalvingGridSearchCV))
 @pytest.mark.parametrize(
     'max_resources, n_iterations, n_possible_iterations', [
         ('auto', 5, 9),  # all resources are used
@@ -166,7 +166,7 @@ def test_force_exhaust_resources_true(klass, max_resources, r_i_list):
         (4, 1, 1),  # max_resources == min_resources, only one iteration is
                     # possible
     ])
-def test_n_iterations(klass, max_resources, n_iterations,
+def test_n_iterations(Est, max_resources, n_iterations,
                       n_possible_iterations):
     # test the number of actual iterations that were run depending on
     # max_resources
@@ -177,10 +177,10 @@ def test_n_iterations(klass, max_resources, n_iterations,
     base_estimator = FastClassifier()
     ratio = 2
 
-    sh = klass(base_estimator, parameters, cv=2, ratio=ratio,
+    sh = Est(base_estimator, parameters, cv=2, ratio=ratio,
                max_resources=max_resources, min_resources=4,
                force_exhaust_resources=False)
-    if klass is HalvingRandomSearchCV:
+    if Est is HalvingRandomSearchCV:
         sh.set_params(n_candidates=20)  # same as for HalvingGridSearchCV
     sh.fit(X, y)
     assert sh.n_required_iterations_ == 5
@@ -188,15 +188,15 @@ def test_n_iterations(klass, max_resources, n_iterations,
     assert sh.n_possible_iterations_ == n_possible_iterations
 
 
-@pytest.mark.parametrize('klass', (HalvingRandomSearchCV, HalvingGridSearchCV))
-def test_resource_parameter(klass):
+@pytest.mark.parametrize('Est', (HalvingRandomSearchCV, HalvingGridSearchCV))
+def test_resource_parameter(Est):
     # Test the resource parameter
 
     n_samples = 1000
     X, y = make_classification(n_samples=n_samples, random_state=0)
     parameters = {'a': [1, 2], 'b': list(range(10))}
     base_estimator = FastClassifier()
-    sh = klass(base_estimator, parameters, cv=2, resource='c',
+    sh = Est(base_estimator, parameters, cv=2, resource='c',
                max_resources=10, ratio=3)
     sh.fit(X, y)
     assert set(sh._r_i_list) == set([1, 3, 9])
@@ -251,11 +251,11 @@ def test_random_search(max_resources, n_candidates, expected_n_candidates_):
         assert sh._r_i_list[-1] == max_resources
 
 
-@pytest.mark.parametrize('klass', (HalvingRandomSearchCV, HalvingGridSearchCV))
-def test_groups_not_supported(klass):
+@pytest.mark.parametrize('Est', (HalvingRandomSearchCV, HalvingGridSearchCV))
+def test_groups_not_supported(Est):
     base_estimator = FastClassifier()
     param_grid = {'a': [1]}
-    sh = klass(base_estimator, param_grid)
+    sh = Est(base_estimator, param_grid)
     X, y = make_classification(n_samples=10)
     groups = [0] * 10
 
@@ -263,7 +263,7 @@ def test_groups_not_supported(klass):
         sh.fit(X, y, groups)
 
 
-@pytest.mark.parametrize('klass', (HalvingGridSearchCV, HalvingRandomSearchCV))
+@pytest.mark.parametrize('Est', (HalvingGridSearchCV, HalvingRandomSearchCV))
 @pytest.mark.parametrize('params, expected_error_message', [
     ({'scoring': {'accuracy', 'accuracy'}},
      'Multimetric scoring is not supported'),
@@ -291,12 +291,12 @@ def test_groups_not_supported(klass):
       'force_exhaust_resources': False},
      "min_resources_=15 is greater than max_resources_=14"),
 ])
-def test_input_errors(klass, params, expected_error_message):
+def test_input_errors(Est, params, expected_error_message):
     base_estimator = FastClassifier()
     param_grid = {'a': [1]}
     X, y = make_classification(100)
 
-    sh = klass(base_estimator, param_grid, **params)
+    sh = Est(base_estimator, param_grid, **params)
 
     with pytest.raises(ValueError, match=expected_error_message):
         sh.fit(X, y)
