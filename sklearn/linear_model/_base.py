@@ -319,13 +319,15 @@ class LinearClassifierMixin(ClassifierMixin):
         multiclass is handled by normalizing that over all classes.
         """
         prob = self.decision_function(X)
+        # exp-normalize trick to handle large numbers
+        prob -= prob.max(axis=1, keepdims=True)
         expit(prob, out=prob)
+
         if prob.ndim == 1:
             return np.vstack([1 - prob, prob]).T
         else:
             # OvR normalization, like LibLinear's predict_probability
             # clip the bottom for rows with all zeros
-            np.clip(prob, np.finfo(prob.dtype).eps, None, out=prob)
             prob /= prob.sum(axis=1).reshape((prob.shape[0], -1))
             return prob
 
