@@ -123,6 +123,10 @@ sections hereunder.
     :class:`ensemble.IsolationForest`, the
     :class:`neighbors.LocalOutlierFactor` and
     :class:`covariance.EllipticEnvelope`.
+    
+  * See :ref:`sphx_glr_auto_examples_miscellaneous_plot_anomaly_bench.py` for
+    an example showing how to evaluate outlier detection estimators
+    using ROC curves.
 
 Novelty Detection
 =================
