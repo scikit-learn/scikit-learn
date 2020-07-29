@@ -67,7 +67,7 @@ labels = [
     f'n_candidates={rsh.n_candidates_[i]}'
     for i in range(rsh.n_iterations_)
 ]
-ax.set_xticklabels(labels, rotation=45, multialignment ='left')
+ax.set_xticklabels(labels, rotation=45, multialignment='left')
 ax.set_title('Scores of candidates over iterations')
 ax.set_ylabel('mean test score', fontsize=15)
 ax.set_xlabel('iterations', fontsize=15)

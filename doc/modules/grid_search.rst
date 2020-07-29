@@ -198,8 +198,18 @@ the number of samples.
    :align: center
 
 The ``ratio`` parameter controls the rate at which the resources grow, and
-the rate at which the number of candidates decreases. More details in
-:ref:`amount_of_resource_and_number_of_candidates`.
+the rate at which the number of candidates decreases. In each iteration, the
+number of resources per candidate is multiplied by ``ratio`` and the number
+of candidates is divided by the same ratio. Along with ``resource`` and
+``max_resources``, ``ratio`` is the most important parameter to control the
+search in our implementation. ``ratio`` effectively controls the number of
+iterations in :class:`HalvingGridSearchCV` and the number of candidates (if
+'auto') and iterations in :class:`HalvingRandomSearchCV`.
+``aggressive_elimination=True`` can also be used if the number of resources
+is small but each evaluation on a large number of resources is expensive.
+More control is available through tuning the ``min_resources`` parameter.
+Each parameter and their interactions are described in more details below.
+
 
 .. topic:: Examples:
 
