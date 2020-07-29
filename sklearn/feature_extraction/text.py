@@ -1206,13 +1206,14 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
             if max_doc_count < min_doc_count:
                 raise ValueError(
                     "max_df corresponds to < documents than min_df")
+            if max_features is not None:
+                X = self._sort_features(X, vocabulary)
             X, self.stop_words_ = self._limit_features(X, vocabulary,
                                                        max_doc_count,
                                                        min_doc_count,
                                                        max_features)
-
-            X = self._sort_features(X, vocabulary)
-
+            if max_features is None:
+                X = self._sort_features(X, vocabulary)
             self.vocabulary_ = vocabulary
 
         return X
