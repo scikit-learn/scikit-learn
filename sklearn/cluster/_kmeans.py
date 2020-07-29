@@ -1638,6 +1638,8 @@ class MiniBatchKMeans(KMeans):
         n_batches = int(np.ceil(float(n_samples) / self.batch_size))
         n_iter = int(self.max_iter * n_batches)
 
+        n_samples_seen_since_last_reassign = 0
+
         with threadpool_limits(limits=1, user_api="blas"):
             # Perform the iterative optimization until convergence
             for i in range(n_iter):
@@ -1649,7 +1651,7 @@ class MiniBatchKMeans(KMeans):
                 # the choice is done as a function of the iteration index, and
                 # the minimum number of counts, in order to force this
                 # reassignment to happen every once in a while.
-
+                
                 if self.mode == 0:
                     random_reassign = random_state.randint(
                         10 * (1 + self._counts.min())) == 0
@@ -1657,7 +1659,16 @@ class MiniBatchKMeans(KMeans):
                     random_reassign = (i + 1) % (10 + int(self._counts.min())) == 0
                 elif self.mode == 2:
                     random_reassign = ((i >= 10) *
-                                       random_state.choice([0, 1], p=[0.1, 0.9]))
+                                       random_state.choice([0, 1], p=[0.9, 0.1]))
+                elif self.mode == 3:
+                    random_reassign = (i >= 10) * True
+                elif self.mode == 4:
+                    random_reassign = True
+                elif isinstance(self.mode, tuple):
+                    n_samples_seen_since_last_reassign += self.batch_size
+                    random_reassign = n_samples_seen_since_last_reassign >= (self.mode[0] * self.n_clusters)
+                    if random_reassign:
+                        n_samples_seen_since_last_reassign = 0
 
                 # Perform the actual update step on the minibatch data
                 batch_inertia = _mini_batch_step(
