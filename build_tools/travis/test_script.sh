@@ -61,10 +61,12 @@ run_tests() {
 
     set -x  # print executed commands to the terminal
 
-    echo "About to run $TEST_CMD nothing"
-    # $TEST_CMD nothing  # collects nothing and freeze on pytest exiting
+
     pip uninstall -y pytest-xdist pytest-forked pytest-cov
+    echo "About to run pytest --version"
     pytest --version
+    echo "About to run $TEST_CMD nothing"
+    $TEST_CMD nothing  # collects nothing and freeze on pytest exiting
     echo "after pytest"
 }
 
