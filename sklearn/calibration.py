@@ -341,8 +341,8 @@ class CalibratedClassifierCV(ClassifierMixin,
                 this_estimator = clone(base_estimator)
                 method_name = _get_prediction_method(this_estimator).__name__
                 pred_method = partial(
-                    cross_val_predict, this_estimator, X, y, cv=cv,
-                    method=method_name
+                    cross_val_predict, estimator=this_estimator, X=X, y=y,
+                    cv=cv, method=method_name
                 )
                 preds = _get_predictions(
                     pred_method, method_name, X, n_classes
