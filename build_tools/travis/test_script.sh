@@ -63,6 +63,7 @@ run_tests() {
 
     echo "About to run $TEST_CMD nothing"
     # $TEST_CMD nothing  # collects nothing and freeze on pytest exiting
+    pip uninstall -y pytest-xdist pytest-forked pytest-cov
     pytest --version
     echo "after pytest"
 }
