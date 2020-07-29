@@ -135,7 +135,7 @@ def incr_mean_variance_axis(X, *, axis, last_mean, last_var, last_n):
     variances : float array of shape (n_features,)
         Updated feature-wise variances.
 
-    n : int with shape (n_features,)
+    n : ndarray of int of shape (n_features,)
         Updated number of seen samples.
 
     Notes
