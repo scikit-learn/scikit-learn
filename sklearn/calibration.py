@@ -282,7 +282,9 @@ class CalibratedClassifierCV(ClassifierMixin,
 
             pred_method = _get_prediction_method(base_estimator)
             n_classes = len(self.classes_)
-            preds = _get_predictions(pred_method, X, n_classes)
+            preds = _get_predictions(
+                pred_method, pred_method.__name__, X, n_classes
+            )
 
             calibrated_classifier = _fit_calibrator(
                 base_estimator, preds, y, self.classes_, self.method,
@@ -294,39 +296,38 @@ class CalibratedClassifierCV(ClassifierMixin,
                 X, y, accept_sparse=['csc', 'csr', 'coo'],
                 force_all_finite=False, allow_nd=True
             )
-            # Set attributes using all `y`
+            # Set `classes_` using all `y`
             label_encoder_ = LabelEncoder().fit(y)
             self.classes_ = label_encoder_.classes_
             n_classes = len(self.classes_)
 
+            # sample_weight checks
             fit_parameters = signature(base_estimator.fit).parameters
             supports_sw = "sample_weight" in fit_parameters
-
             if sample_weight is not None:
                 sample_weight = _check_sample_weight(sample_weight, X)
-
                 if not supports_sw:
                     estimator_name = type(base_estimator).__name__
                     warnings.warn("Since %s does not support sample_weights, "
                                   "sample weights will only be used for the "
                                   "calibration itself." % estimator_name)
-            if self.ensemble:
-                # Check that each cross-validation fold can have at least one
-                # example per class
-                if isinstance(self.cv, int):
-                    n_folds = self.cv
-                elif hasattr(self.cv, "n_splits"):
-                    n_folds = self.cv.n_splits
-                else:
-                    n_folds = None
-                if n_folds and np.any([np.sum(y == class_) < n_folds
-                                       for class_ in self.classes_]):
-                    raise ValueError(f"Requesting {n_folds}-fold "
-                                     "cross-validation but provided less than "
-                                     f"{n_folds} examples for at least one "
-                                     "class.")
-                cv = check_cv(self.cv, y, classifier=True)
 
+            # Check that each cross-validation fold can have at least one
+            # example per class
+            if isinstance(self.cv, int):
+                n_folds = self.cv
+            elif hasattr(self.cv, "n_splits"):
+                n_folds = self.cv.n_splits
+            else:
+                n_folds = None
+            if n_folds and np.any([np.sum(y == class_) < n_folds
+                                    for class_ in self.classes_]):
+                raise ValueError(f"Requesting {n_folds}-fold "
+                                 "cross-validation but provided less than "
+                                 f"{n_folds} examples for at least one class.")
+            cv = check_cv(self.cv, y, classifier=True)
+
+            if self.ensemble:
                 parallel = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
                                     pre_dispatch=self.pre_dispatch)
 
@@ -336,13 +337,16 @@ class CalibratedClassifierCV(ClassifierMixin,
                         method=self.method, classes=self.classes_,
                         supports_sw=supports_sw, sample_weight=sample_weight)
                     for train, test in cv.split(X, y))
-
             else:
                 this_estimator = clone(base_estimator)
-                method = _get_prediction_method(this_estimator)
-                pred_method = partial(cross_val_predict(
-                    this_estimator, X, y, cv=cv, method=method.__name__))
-                preds = _get_predictions(pred_method, X, n_classes)
+                method_name = _get_prediction_method(this_estimator).__name__
+                pred_method = partial(
+                    cross_val_predict, this_estimator, X, y, cv=cv,
+                    method=method_name
+                )
+                preds = _get_predictions(
+                    pred_method, method_name, X, n_classes
+                )
 
                 if sample_weight is not None and supports_sw:
                     this_estimator.fit(X, y, sample_weight)
@@ -458,7 +462,9 @@ def _get_pred_fit_calibrator(estimator, X, y, train, test, supports_sw,
 
     n_classes = len(classes)
     pred_method = _get_prediction_method(estimator)
-    preds = _get_predictions(pred_method, X[test], n_classes)
+    preds = _get_predictions(
+        pred_method, pred_method.__name__, X[test], n_classes
+    )
 
     sw = None if sample_weight is None else sample_weight[test]
     calibrated_classifier = _fit_calibrator(
@@ -493,13 +499,17 @@ def _get_prediction_method(clf):
     return method
 
 
-def _get_predictions(pred_method, X, n_classes):
-    """Returns predictions for `X`.
+def _get_predictions(pred_method, method_name, X, n_classes):
+    """Returns predictions for `X` and reshapes binary outputs to shape
+    (n_samples, 1).
 
     Parameters
     ----------
     pred_method : callable
         Prediction method.
+
+    method_name : {'decision_function', 'predict_proba'}
+        The name of the method of the `pred_method` as str.
 
     X : array-like
         Data used to obtain predictions.
@@ -514,17 +524,16 @@ def _get_predictions(pred_method, X, n_classes):
         (X.shape[0], 1).
     """
     preds = pred_method(X)
-    method = pred_method.__name__
 
-    if method == 'decision_function':
+    if method_name == 'decision_function':
         if preds.ndim == 1:
             preds = preds[:, np.newaxis]
-    elif method == 'predict_proba':
+    elif method_name == 'predict_proba':
         if n_classes == 2:
             preds = preds[:, 1:]
     else:
-        raise RuntimeError("'method' needs to be one of 'decision_function' "
-                           "or 'predict_proba'.")
+        raise RuntimeError("'method_name' needs to be one of "
+                           "'decision_function' or 'predict_proba'.")
     return preds
 
 
@@ -619,7 +628,9 @@ class _CalibratedClassiferPipeline:
         """
         pred_method = _get_prediction_method(self.clf)
         n_classes = len(self.classes)
-        preds = _get_predictions(pred_method, X, n_classes)
+        preds = _get_predictions(
+            pred_method, pred_method.__name__, X, n_classes
+        )
         label_encoder = LabelEncoder().fit(self.classes)
         pos_class_indices = label_encoder.transform(self.clf.classes_)
 
