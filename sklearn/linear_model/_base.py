@@ -326,7 +326,7 @@ class LinearClassifierMixin(ClassifierMixin):
         else:
             # OvR normalization, like LibLinear's predict_probability
             # clip the bottom for rows with all zeros
-            np.clip(prob, np.finfo(prob.dtype), None, out=prob)
+            np.clip(prob, np.finfo(prob.dtype).eps, None, out=prob)
             prob /= prob.sum(axis=1).reshape((prob.shape[0], -1))
             return prob
 
