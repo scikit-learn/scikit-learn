@@ -27,6 +27,8 @@ from sklearn.multiclass import OneVsRestClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.base import BaseEstimator, ClassifierMixin, clone
 from sklearn.dummy import DummyRegressor
+from sklearn.experimental import enable_hist_gradient_boosting  # noqa
+from sklearn.ensemble import HistGradientBoostingClassifier
 
 
 # Load datasets
@@ -548,3 +550,17 @@ def test_voting_verbose(estimator, capsys):
 
     estimator.fit(X, y)
     assert re.match(pattern, capsys.readouterr()[0])
+
+
+def test_leniency_for_missing_data():
+    rng = np.random.RandomState(42)
+    X_train, X_test, y_train, y_test = train_test_split(X, y,
+                                                        random_state=rng)
+
+    mask = np.random.choice([1, 0], X_train.shape, p=[.1, .9]).astype(bool)
+    X_train[mask] = np.nan
+    hgbc = HistGradientBoostingClassifier(max_iter=3)
+    clf = VotingClassifier(estimators=[('hgbc_1', hgbc), ('hgbc_2', hgbc)])
+    clf.fit(X_train, y_train)
+
+    assert clf.score(X_test, y_test) > 0.8
