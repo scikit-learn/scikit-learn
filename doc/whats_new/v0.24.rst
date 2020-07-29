@@ -91,6 +91,9 @@ Changelog
   :pr:`17995` by :user:`Thomaz Santana  <Wikilicious>` and
   :user:`Amanda Dsouza <amy12xx>`.
 
+- |Fix| Fixed a bug in :class:`cluster.KMeans` where rounding errors could
+  prevent convergence to be declared when `tol=0`. :pr:`17959` by
+  :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 :mod:`sklearn.covariance`
 .........................
@@ -248,6 +251,11 @@ Changelog
   average of multiple RMSE values was incorrectly calculated as the root of the
   average of multiple MSE values.
   :pr:`17309` by :user:`Swier Heeres <swierh>`
+  
+- |Fix| Fixed a bug in 
+  :func:`metrics.classification_report` which was raising AttributeError
+  when called with `output_dict=True` for 0-length values.
+  :pr:`17777` by :user:`Shubhanshu Mishra <napsternxg>`
 
 - |Enhancement| Add `sample_weight` parameter to
   :func:`metrics.median_absolute_error`. :pr:`17225` by
