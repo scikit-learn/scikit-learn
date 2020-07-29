@@ -13,7 +13,6 @@ from sklearn.utils._testing import assert_array_almost_equal
 from sklearn import datasets
 from sklearn.base import clone
 from sklearn.datasets import make_classification
-from sklearn.datasets import make_multilabel_classification
 from sklearn.ensemble import GradientBoostingRegressor, RandomForestClassifier
 from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import Lasso
@@ -34,7 +33,8 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.dummy import DummyRegressor, DummyClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.experimental import enable_hist_gradient_boosting  # noqa
-from sklearn.ensemble import HistGradientBoostingClassifier
+from sklearn.ensemble import HistGradientBoostingClassifier,\
+    HistGradientBoostingRegressor
 
 
 def test_multi_target_regression():
@@ -607,9 +607,9 @@ def test_regressor_chain_w_fit_params():
         assert est.sample_weight_ is weight
 
 
-def test_leniency_for_missing_data():
+def test_leniency_for_missing_data_classification():
     rng = np.random.RandomState(42)
-    X, y = make_multilabel_classification(random_state=rng)
+    X, y = datasets.make_multilabel_classification(random_state=rng)
     mask = rng.choice([1, 0], X.shape, p=[.01, .99]).astype(bool)
     X[mask] = np.nan
 
@@ -620,3 +620,25 @@ def test_leniency_for_missing_data():
     clf = MultiOutputClassifier(estimator=hgbc)
     clf.fit(X_train, y_train)
     assert jaccard_score(y_test, clf.predict(X_test), average='samples') > .4
+
+
+def test_leniency_for_missing_data_regression():
+    rng = np.random.RandomState(42)
+    X, y = datasets.make_regression(n_targets=3)
+    mask = rng.choice([1, 0], X.shape, p=[.01, .99]).astype(bool)
+    X[mask] = np.nan
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y,
+                                                        random_state=rng)
+
+    references = np.zeros_like(y_test)
+    rgr = HistGradientBoostingRegressor(random_state=rng)
+    for n in range(3):
+        rgr.fit(X_train, y_train[:, n])
+        references[:, n] = rgr.predict(X_test)
+
+    multi_output_rgr = MultiOutputRegressor(rgr)
+    multi_output_rgr.fit(X_train, y_train)
+    y_pred = multi_output_rgr.predict(X_test)
+
+    assert_almost_equal(references, y_pred)
