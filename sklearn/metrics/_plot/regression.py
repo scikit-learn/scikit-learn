@@ -317,7 +317,9 @@ def plot_prediction_error(
     from ...model_selection._validation import _score
 
     scores = _score(estimator, X, y, scorers)
-    scores = {key.replace("_", " "): value for key, value in scores.items()}
+    scores = {
+        key.replace("_", " "): f"{value:.3f}" for key, value in scores.items()
+    }
 
     viz = PredictionErrorDisplay(
         y_true=y,
