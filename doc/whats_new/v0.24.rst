@@ -279,6 +279,11 @@ Changelog
   ``metric='seuclidean'`` and ``X`` is not type ``np.float64``.
   :pr:`15730` by :user:`Forrest Koch <ForrestCKoch>`.
 
+- |Feature| :func:`metrics.plot_prediction_error` and
+  :class:`metrics.PredictionErrorDisplay` are added to plot the predicted and
+  actual values to assess the performance of a regressor.
+  :pr:`18020` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.model_selection`
 ..............................
 
