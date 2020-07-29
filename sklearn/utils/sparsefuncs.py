@@ -70,7 +70,7 @@ def mean_variance_axis(X, axis):
     X : CSR or CSC sparse matrix of shape (n_samples, n_features)
         Input data.
 
-    axis : int (either 0 or 1)
+    axis : {0, 1}
         Axis along which the axis should be computed.
 
     Returns
@@ -114,7 +114,7 @@ def incr_mean_variance_axis(X, *, axis, last_mean, last_var, last_n):
     X : CSR or CSC sparse matrix of shape (n_samples, n_features)
         Input data.
 
-    axis : int (either 0 or 1)
+    axis : {0, 1}
         Axis along which the axis should be computed.
 
     last_mean : ndarray of float of shape (n_features,)
@@ -413,7 +413,7 @@ def min_max_axis(X, axis, ignore_nan=False):
     X : CSR or CSC sparse matrix of shape (n_samples, n_features)
         Input data.
 
-    axis : int (either 0 or 1)
+    axis : {0, 1}
         Axis along which the axis should be computed.
 
     ignore_nan : bool, default=False
@@ -449,7 +449,7 @@ def count_nonzero(X, axis=None, sample_weight=None):
     X : CSR sparse matrix of shape (n_samples, n_labels)
         Input data.
 
-    axis : 0 or 1, default=None
+    axis : {0, 1}, default=None
         The axis on which the data is aggregated.
 
     sample_weight : array-like of shape (n_samples,), default=None
