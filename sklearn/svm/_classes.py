@@ -10,8 +10,9 @@ from ..utils.multiclass import check_classification_targets
 from ..utils.deprecation import deprecated
 
 
-class LinearSVC(BaseEstimator, LinearClassifierMixin,
-                SparseCoefMixin):
+class LinearSVC(LinearClassifierMixin,
+                SparseCoefMixin,
+                BaseEstimator):
     """Linear Support Vector Classification.
 
     Similar to SVC with parameter kernel='linear', but implemented in terms of

@@ -648,7 +648,7 @@ def _check_X(X):
     """Use check_array only on lists and other non-array-likes / sparse"""
     if hasattr(X, '__array__') or sparse.issparse(X):
         return X
-    return check_array(X, force_all_finite='allow-nan', dtype=np.object)
+    return check_array(X, force_all_finite='allow-nan', dtype=object)
 
 
 def _is_empty_column_selection(column):

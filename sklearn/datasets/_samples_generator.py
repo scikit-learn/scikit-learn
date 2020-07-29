@@ -195,7 +195,7 @@ def make_classification(n_samples=100, n_features=20, *, n_informative=2,
 
     # Initialize X and y
     X = np.zeros((n_samples, n_features))
-    y = np.zeros(n_samples, dtype=np.int)
+    y = np.zeros(n_samples, dtype=int)
 
     # Build the polytope whose vertices become cluster centroids
     centroids = _generate_hypercube(n_clusters, n_informative,

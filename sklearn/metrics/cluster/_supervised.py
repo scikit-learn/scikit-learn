@@ -124,7 +124,7 @@ def contingency_matrix(labels_true, labels_pred, *, eps=None, sparse=False):
     contingency = sp.coo_matrix((np.ones(class_idx.shape[0]),
                                  (class_idx, cluster_idx)),
                                 shape=(n_classes, n_clusters),
-                                dtype=np.int)
+                                dtype=int)
     if sparse:
         contingency = contingency.tocsr()
         contingency.sum_duplicates()

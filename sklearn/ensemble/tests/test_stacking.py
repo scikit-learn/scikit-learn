@@ -17,6 +17,8 @@ from sklearn.exceptions import ConvergenceWarning
 from sklearn.datasets import load_iris
 from sklearn.datasets import load_diabetes
 from sklearn.datasets import load_breast_cancer
+from sklearn.datasets import make_regression
+from sklearn.datasets import make_classification
 
 from sklearn.dummy import DummyClassifier
 from sklearn.dummy import DummyRegressor
@@ -262,7 +264,7 @@ def test_stacking_classifier_drop_binary_prob():
     assert X_meta.shape[1] == 2
 
 
-class NoWeightRegressor(BaseEstimator, RegressorMixin):
+class NoWeightRegressor(RegressorMixin, BaseEstimator):
     def fit(self, X, y):
         self.reg = DummyRegressor()
         return self.reg.fit(X, y)
@@ -271,7 +273,7 @@ class NoWeightRegressor(BaseEstimator, RegressorMixin):
         return np.ones(X.shape[0])
 
 
-class NoWeightClassifier(BaseEstimator, ClassifierMixin):
+class NoWeightClassifier(ClassifierMixin, BaseEstimator):
     def fit(self, X, y):
         self.clf = DummyClassifier(strategy='stratified')
         return self.clf.fit(X, y)
@@ -491,3 +493,32 @@ def test_stacking_cv_influence(stacker, X, y):
     with pytest.raises(AssertionError, match='Not equal'):
         assert_allclose(stacker_cv_3.final_estimator_.coef_,
                         stacker_cv_5.final_estimator_.coef_)
+
+
+@pytest.mark.parametrize("make_dataset, Stacking, Estimator", [
+    (make_classification, StackingClassifier, LogisticRegression),
+    (make_regression, StackingRegressor, LinearRegression)
+])
+def test_stacking_without_n_features_in(make_dataset, Stacking, Estimator):
+    # Stacking supports estimators without `n_features_in_`. Regression test
+    # for #17353
+
+    class MyEstimator(Estimator):
+        """Estimator without n_features_in_"""
+        def fit(self, X, y):
+            super().fit(X, y)
+            del self.n_features_in_
+
+    X, y = make_dataset(random_state=0, n_samples=100)
+    stacker = Stacking(estimators=[('lr', MyEstimator())])
+
+    msg = f"{Stacking.__name__} object has no attribute n_features_in_"
+    with pytest.raises(AttributeError, match=msg):
+        stacker.n_features_in_
+
+    # Does not raise
+    stacker.fit(X, y)
+
+    msg = "'MyEstimator' object has no attribute 'n_features_in_'"
+    with pytest.raises(AttributeError, match=msg):
+        stacker.n_features_in_

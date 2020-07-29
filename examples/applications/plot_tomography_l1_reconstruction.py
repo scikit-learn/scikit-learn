@@ -104,7 +104,7 @@ def generate_synthetic_data():
     mask_outer = (x - l / 2.) ** 2 + (y - l / 2.) ** 2 < (l / 2.) ** 2
     mask = np.zeros((l, l))
     points = l * rs.rand(2, n_pts)
-    mask[(points[0]).astype(np.int), (points[1]).astype(np.int)] = 1
+    mask[(points[0]).astype(int), (points[1]).astype(int)] = 1
     mask = ndimage.gaussian_filter(mask, sigma=l / n_pts)
     res = np.logical_and(mask > mask.mean(), mask_outer)
     return np.logical_xor(res, ndimage.binary_erosion(res))

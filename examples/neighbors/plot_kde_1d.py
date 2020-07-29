@@ -31,12 +31,12 @@ as well.
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
-from distutils.version import LooseVersion
 from scipy.stats import norm
 from sklearn.neighbors import KernelDensity
+from sklearn.utils.fixes import parse_version
 
 # `normed` is being deprecated in favor of `density` in histograms
-if LooseVersion(matplotlib.__version__) >= '2.1':
+if parse_version(matplotlib.__version__) >= parse_version('2.1'):
     density_param = {'density': True}
 else:
     density_param = {'normed': True}
