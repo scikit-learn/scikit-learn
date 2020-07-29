@@ -201,14 +201,14 @@ The ``ratio`` parameter controls the rate at which the resources grow, and
 the rate at which the number of candidates decreases. In each iteration, the
 number of resources per candidate is multiplied by ``ratio`` and the number
 of candidates is divided by the same ratio. Along with ``resource`` and
-``max_resources``, ``ratio`` is the most important parameter to control the
+``min_resources``, ``ratio`` is the most important parameter to control the
 search in our implementation. ``ratio`` effectively controls the number of
 iterations in :class:`HalvingGridSearchCV` and the number of candidates (if
 'auto') and iterations in :class:`HalvingRandomSearchCV`.
-``aggressive_elimination=True`` can also be used if the number of resources
-is small but each evaluation on a large number of resources is expensive.
-More control is available through tuning the ``min_resources`` parameter.
-Each parameter and their interactions are described in more details below.
+``aggressive_elimination=True`` can also be used if the number of available
+resources is small. More control is available through tuning the
+``min_resources`` parameter. Each parameter and their interactions are
+described in more details below.
 
 .. topic:: Examples:
 
@@ -277,7 +277,7 @@ greater than 1)::
     resource_iter = ratio**i * min_resources,
 
 where ``min_resources`` is the amount of resources used at the first
-iteration. ``ratio (> 1)`` also defines the proportions of candidates that
+iteration. ``ratio`` also defines the proportions of candidates that
 will be selected for the next iteration::
 
     n_candidates_iter = n_candidates // (ratio ** i)
@@ -321,7 +321,7 @@ We can note that:
   is not necessary to run an additional iteration, since it would only
   evaluate one candidate (namely the best one, which we have already
   identified). For this reason, **in general, we want the last iteration to
-  run at most `ratio` candidates**.
+  run at most ``ratio`` candidates**.
 - each ``resource_iter`` is a multiple of both ``ratio`` and
   ``min_resources`` (which is confirmed by its definition above).
 
@@ -376,8 +376,7 @@ resources, some of them might be wasted (i.e. not used)::
     >>> base_estimator = SVC(gamma='scale')
     >>> X, y = make_classification(n_samples=1000)
     >>> sh = HalvingGridSearchCV(base_estimator, param_grid, cv=5,
-    ...                          ratio=2, min_resources=20,
-    ...                          force_exhaust_resources=False).fit(X, y)
+    ...                          ratio=2, min_resources=20).fit(X, y)
     >>> results = pd.DataFrame(sh.cv_results_)
     >>> results.groupby('iter')['resource_iter'].unique()
     iter
@@ -390,15 +389,13 @@ The search process will only use 80 resources at most, while our maximum
 amount of available resources is ``n_samples=1000``. Here, we have
 ``min_resources = r_0 = 20``.
 
-By default, the `force_exhaust_resources` parameter is True and the
-`min_resources` parameter is 'auto'. This means that `min_resources` is
-automatically set such that the last iteration can use as many resources as
-possible, within the `max_resources` limit::
+For :class:`HalvingGridSearchCV`, by default, the `min_resources` parameter
+is set to 'exhaust'. This means that `min_resources` is automatically set
+such that the last iteration can use as many resources as possible, within
+the `max_resources` limit::
 
     >>> sh = HalvingGridSearchCV(base_estimator, param_grid, cv=5,
-    ...                          ratio=2, min_resources='auto',
-    ...                          force_exhaust_resources=True
-    ...                          ).fit(X, y)
+    ...                          ratio=2, min_resources='exhaust').fit(X, y)
     >>> results = pd.DataFrame.from_dict(sh.cv_results_)
     >>> results.groupby('iter')['resource_iter'].unique()
     iter
@@ -408,11 +405,22 @@ possible, within the `max_resources` limit::
     Name: resource_iter, dtype: object
 
 `min_resources` was here automatically set to 250, which results in the last
-iteration using all the resources. In general, this leads to a better final
-candidate parameter, and is slightly more time-intensive.
+iteration using all the resources. The exact value that is used depends on
+the number of candidate parameter, on `max_resources` and on `ratio`.
 
-Since ``force_exhaust_resources`` chooses an appropriate ``min_resources`` to
-start with, ``min_resources`` must be set to 'auto' (which is the default).
+For :class:`HalvingRandomSearchCV`, exhausting the resources can be done in 2
+ways:
+
+- by setting `min_resources='exhaust'`, just like for
+  :class:`HalvingGridSearchCV`;
+- by setting `n_candidates='exhaust'`.
+
+Both options are mutally exclusive: using `min_resources='exhaust'` requires
+knowing the number of candidates, and symmetrically `n_candidates='exhaust'`
+requires knowing `min_resources`.
+
+In general, exhausting the total number of resources leads to a better final
+candidate parameter, and is slightly more time-intensive.
 
 .. _aggressive_elimination:
 

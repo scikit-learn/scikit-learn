@@ -35,14 +35,15 @@ class FastClassifier(DummyClassifier):
      'expected_n_remaining_candidates,'
      'expected_r_i_list,'), [
          # notice how it loops at the beginning
-         (True, 'small', 4, 4, 3, 1, [20, 20, 60, 180]),
+         (True, 'limited', 4, 4, 3, 1, [20, 20, 60, 180]),
          # no aggressive elimination: we end up with less iterations and more
          # candidates at the end
-         (False, 'small', 3, 4, 3, 3, [20, 60, 180]),
+         (False, 'limited', 3, 4, 3, 3, [20, 60, 180]),
          # When the amount of resource isn't limited, aggressive_elimination
-         # doesn't matter.
-         (True, 'high', 4, 4, 4, 1, [20, 60, 180, 540]),
-         (False, 'high', 4, 4, 4, 1, [20, 60, 180, 540]),
+         # has no effect. Here the default min_resources='exhaust' will take
+         # over.
+         (True, 'unlimited', 4, 4, 4, 1, [37, 111, 333, 999]),
+         (False, 'unlimited', 4, 4, 4, 1, [37, 111, 333, 999]),
      ]
 )
 def test_aggressive_elimination(
@@ -56,19 +57,19 @@ def test_aggressive_elimination(
     parameters = {'a': ('l1', 'l2'), 'b': list(range(30))}
     base_estimator = FastClassifier()
 
-    if max_resources == 'small':
+    if max_resources == 'limited':
         max_resources = 180
     else:
         max_resources = n_samples
 
     sh = Est(base_estimator, parameters,
-               aggressive_elimination=aggressive_elimination,
-               max_resources=max_resources, ratio=3,
-               force_exhaust_resources=False,
-               verbose=True)  # just for test coverage
+             aggressive_elimination=aggressive_elimination,
+             max_resources=max_resources, ratio=3,
+             verbose=True)  # just for test coverage
 
     if Est is HalvingRandomSearchCV:
-        sh.set_params(n_candidates=2 * 30)  # same number as with the grid
+        # same number of candidates as with the grid
+        sh.set_params(n_candidates=2 * 30, min_resources='exhaust')
 
     sh.fit(X, y)
 
@@ -84,72 +85,52 @@ def test_aggressive_elimination(
     ('min_resources,'
      'max_resources,'
      'expected_n_iterations,'
-     'expected_n_required_iterations,'
      'expected_n_possible_iterations,'
      'expected_r_i_list,'), [
          # with enough resources
-         ('auto', 'auto', 2, 2, 4, [20, 60]),
-         # with enough resources but min_resources!='auto': ignored
-         (50, 'auto', 2, 2, 3, [50, 150]),
-         # without enough resources (resources are exhausted anyway)
-         ('auto', 30, 1, 2, 1, [20]),
+         ('smallest', 'auto', 2, 4, [20, 60]),
+         # with enough resources but min_resources set manually
+         (50, 'auto', 2, 3, [50, 150]),
+         # without enough resources, only one iteration can be done
+         ('smallest', 30, 1, 1, [20]),
+         # with exhaust: use as much resources as possible at the last iter
+         ('exhaust', 'auto', 2, 2, [333, 999]),
+         ('exhaust', 1000, 2, 2, [333, 999]),
+         ('exhaust', 999, 2, 2, [333, 999]),
+         ('exhaust', 600, 2, 2, [200, 600]),
+         ('exhaust', 599, 2, 2, [199, 597]),
+         ('exhaust', 300, 2, 2, [100, 300]),
+         ('exhaust', 60, 2, 2, [20, 60]),
+         ('exhaust', 50, 1, 1, [20]),
+         ('exhaust', 20, 1, 1, [20]),
      ]
 )
-def test_force_exhaust_resources_false(
+def test_min_max_resources(
         Est, min_resources, max_resources, expected_n_iterations,
-        expected_n_required_iterations, expected_n_possible_iterations,
+        expected_n_possible_iterations,
         expected_r_i_list):
-    # Test the force_exhaust_resources parameter when it's false or ignored.
-    # We start at the beginning no matter what since we do not overwrite
-    # min_resources_
+    # Test the min_resources and max_resources parameters, and how they affect
+    # the number of resources used at each iteration
     n_samples = 1000
     X, y = make_classification(n_samples=n_samples, random_state=0)
     parameters = {'a': [1, 2], 'b': [1, 2, 3]}
     base_estimator = FastClassifier()
 
-    sh = Est(base_estimator, parameters, force_exhaust_resources=False,
-               ratio=3, min_resources=min_resources,
-               max_resources=max_resources)
+    sh = Est(base_estimator, parameters, ratio=3, min_resources=min_resources,
+             max_resources=max_resources)
     if Est is HalvingRandomSearchCV:
         sh.set_params(n_candidates=6)  # same number as with the grid
 
     sh.fit(X, y)
+
+    expected_n_required_iterations = 2  # given 6 combinations and ratio = 3
     assert sh.n_iterations_ == expected_n_iterations
     assert sh.n_required_iterations_ == expected_n_required_iterations
     assert sh.n_possible_iterations_ == expected_n_possible_iterations
     assert sh._r_i_list == expected_r_i_list
-
-
-@pytest.mark.parametrize('Est', (HalvingRandomSearchCV, HalvingGridSearchCV))
-@pytest.mark.parametrize('max_resources, r_i_list', [
-    ('auto', [333, 999]),
-    (1000, [333, 999]),
-    (999, [333, 999]),
-    (600, [200, 600]),
-    (599, [199, 597]),
-    (300, [100, 300]),
-    (60, [20, 60]),
-    (50, [20]),
-    (20, [20]),
-])
-def test_force_exhaust_resources_true(Est, max_resources, r_i_list):
-    # Test the force_exhaust_resources parameter when it's true
-    # in this case we need to change min_resources so that the last iteration
-    # uses as much resources as possible
-
-    n_samples = 1000
-    X, y = make_classification(n_samples=n_samples, random_state=0)
-    parameters = {'a': [1, 2], 'b': [1, 2, 3]}
-    base_estimator = FastClassifier()
-
-    sh = Est(base_estimator, parameters, force_exhaust_resources=True,
-               ratio=3, max_resources=max_resources)
-    if Est is HalvingRandomSearchCV:
-        sh.set_params(n_candidates=6)  # same as for HalvingGridSearchCV
-    sh.fit(X, y)
-
-    assert sh.n_possible_iterations_ == sh.n_iterations_ == len(sh._r_i_list)
-    assert sh._r_i_list == r_i_list
+    if min_resources == 'exhaust':
+        assert (sh.n_possible_iterations_ == sh.n_iterations_ ==
+                len(sh._r_i_list))
 
 
 @pytest.mark.parametrize('Est', (HalvingRandomSearchCV, HalvingGridSearchCV))
@@ -178,8 +159,7 @@ def test_n_iterations(Est, max_resources, n_iterations,
     ratio = 2
 
     sh = Est(base_estimator, parameters, cv=2, ratio=ratio,
-               max_resources=max_resources, min_resources=4,
-               force_exhaust_resources=False)
+             max_resources=max_resources, min_resources=4)
     if Est is HalvingRandomSearchCV:
         sh.set_params(n_candidates=20)  # same as for HalvingGridSearchCV
     sh.fit(X, y)
@@ -197,7 +177,7 @@ def test_resource_parameter(Est):
     parameters = {'a': [1, 2], 'b': list(range(10))}
     base_estimator = FastClassifier()
     sh = Est(base_estimator, parameters, cv=2, resource='c',
-               max_resources=10, ratio=3)
+             max_resources=10, ratio=3)
     sh.fit(X, y)
     assert set(sh._r_i_list) == set([1, 3, 9])
     for r_i, params, param_c in zip(sh.cv_results_['resource_iter'],
@@ -224,8 +204,8 @@ def test_resource_parameter(Est):
 
 @pytest.mark.parametrize(
     'max_resources, n_candidates, expected_n_candidates_', [
-        (512, 'auto', 128),  # generate exactly as much as needed
-        (32, 'auto', 8),
+        (512, 'exhaust', 128),  # generate exactly as much as needed
+        (32, 'exhaust', 8),
         (32, 8, 8),
         (32, 7, 7),  # ask for less than what we could
         (32, 9, 9),  # ask for more than 'reasonable'
@@ -241,12 +221,11 @@ def test_random_search(max_resources, n_candidates, expected_n_candidates_):
     sh = HalvingRandomSearchCV(base_estimator, parameters,
                                n_candidates=n_candidates, cv=2,
                                max_resources=max_resources, ratio=2,
-                               min_resources=4,
-                               force_exhaust_resources=False)
+                               min_resources=4)
     sh.fit(X, y)
     assert sh.n_candidates_[0] == expected_n_candidates_
-    if n_candidates == 'auto':
-        # Make sure 'auto' makes the last iteration use as much resources as
+    if n_candidates == 'exhaust':
+        # Make sure 'exhaust' makes the last iteration use as much resources as
         # we can
         assert sh._r_i_list[-1] == max_resources
 
@@ -277,18 +256,15 @@ def test_groups_not_supported(Est):
      'max_resources must be either'),
     ({'max_resources': -10},
      'max_resources must be either'),
-    ({'min_resources': 'not_auto'},
+    ({'min_resources': 'bad str'},
      'min_resources must be either'),
     ({'min_resources': 0.5},
      'min_resources must be either'),
     ({'min_resources': -10},
      'min_resources must be either'),
-    ({'force_exhaust_resources': True, 'min_resources': 5},
-     'min_resources must be set to auto if '),
     ({'max_resources': 'auto', 'resource': 'b'},
      "max_resources can only be 'auto' if resource='n_samples'"),
-    ({'min_resources': 15, 'max_resources': 14,
-      'force_exhaust_resources': False},
+    ({'min_resources': 15, 'max_resources': 14},
      "min_resources_=15 is greater than max_resources_=14"),
 ])
 def test_input_errors(Est, params, expected_error_message):
@@ -299,4 +275,18 @@ def test_input_errors(Est, params, expected_error_message):
     sh = Est(base_estimator, param_grid, **params)
 
     with pytest.raises(ValueError, match=expected_error_message):
+        sh.fit(X, y)
+
+
+def test_n_candidates_min_resources_exhaust():
+    # Make sure n_candidates and min_resources cannot be both exhaust
+
+    base_estimator = FastClassifier()
+    param_grid = {'a': [1]}
+    X, y = make_classification(100)
+
+    sh = HalvingRandomSearchCV(base_estimator, param_grid,
+                               n_candidates='exhaust', min_resources='exhaust')
+
+    with pytest.raises(ValueError, match="cannot be both set to 'exhaust'"):
         sh.fit(X, y)

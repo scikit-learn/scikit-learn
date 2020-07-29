@@ -42,7 +42,6 @@ gsh = HalvingGridSearchCV(
     param_grid=param_grid,
     resource='n_samples',
     max_resources='auto',  # max_resources=n_samples
-    force_exhaust_resources=True,
     cv=5,
     ratio=2,
     random_state=rng)

@@ -39,9 +39,8 @@ class BaseSuccessiveHalving(BaseSearchCV):
                  n_jobs=None, refit=True, cv=5, verbose=0,
                  pre_dispatch='2*n_jobs', random_state=None,
                  error_score=np.nan, return_train_score=True,
-                 max_resources='auto', min_resources='auto',
-                 resource='n_samples', ratio=3, aggressive_elimination=False,
-                 force_exhaust_resources=False):
+                 max_resources='auto', min_resources='exhaust',
+                 resource='n_samples', ratio=3, aggressive_elimination=False):
 
         refit = _refit_callable if refit else False
         super().__init__(estimator, scoring=scoring,
@@ -56,7 +55,6 @@ class BaseSuccessiveHalving(BaseSearchCV):
         self.ratio = ratio
         self.min_resources = min_resources
         self.aggressive_elimination = aggressive_elimination
-        self.force_exhaust_resources = force_exhaust_resources
 
     def _check_input_parameters(self, X, y, groups):
 
@@ -88,28 +86,27 @@ class BaseSuccessiveHalving(BaseSearchCV):
                 "max_resources must be either 'auto' or a positive integer"
             )
 
-        if (isinstance(self.min_resources, str) and
-                self.min_resources != 'auto'):
-            raise ValueError(
-                "min_resources must be either 'auto' or a positive integer "
-                "no greater than max_resources."
-            )
-        if self.min_resources != 'auto' and (
+        if self.min_resources not in ('smallest', 'exhaust') and (
                 not isinstance(self.min_resources, Integral) or
                 self.min_resources <= 0):
             raise ValueError(
-                "min_resources must be either 'auto' or a positive integer "
+                "min_resources must be either 'smallest', 'exhaust', "
+                "or a positive integer "
                 "no greater than max_resources."
             )
 
-        if self.force_exhaust_resources and self.min_resources != 'auto':
+        if (isinstance(self, HalvingRandomSearchCV) and
+                self.min_resources == self.n_candidates == 'exhaust'):
+            # for n_candidates=exhaust to work, we need to know what
+            # min_resources is. Similarly min_resources=exhaust needs to know
+            # the actual number of candidates.
             raise ValueError(
-                'min_resources must be set to auto if force_exhaust_resources'
-                ' is True.'
+                "n_candidates and min_resources cannot be both set to "
+                "'exhaust'."
             )
 
         self.min_resources_ = self.min_resources
-        if self.min_resources_ == 'auto':
+        if self.min_resources_ in ('smallest', 'exhaust'):
             if self.resource == 'n_samples':
                 cv = check_cv(self.cv, y,
                               classifier=is_classifier(self.estimator))
@@ -123,6 +120,8 @@ class BaseSuccessiveHalving(BaseSearchCV):
                     self.min_resources_ *= n_classes
             else:
                 self.min_resources_ = 1
+            # if 'exhaust', min_resources_ might be set to a higher value later
+            # in _run_search
 
         self.max_resources_ = self.max_resources
         if self.max_resources_ == 'auto':
@@ -189,12 +188,10 @@ class BaseSuccessiveHalving(BaseSearchCV):
         n_required_iterations = 1 + floor(log(len(candidate_params),
                                               self.ratio))
 
-        if self.force_exhaust_resources:
+        if self.min_resources == 'exhaust':
             # To exhaust the resources, we want to start with the biggest
             # min_resources possible so that the last (required) iteration
             # uses as many resources as possible
-            # We only force exhausting the resources if min_resources wasn't
-            # specified by the user.
             last_iteration = n_required_iterations - 1
             self.min_resources_ = max(
                 self.min_resources_,
@@ -221,7 +218,6 @@ class BaseSuccessiveHalving(BaseSearchCV):
             print(f'min_resources_: {self.min_resources_}')
             print(f'max_resources_: {self.max_resources_}')
             print(f'aggressive_elimination: {self.aggressive_elimination}')
-            print(f'force_exhaust_resources: {self.force_exhaust_resources}')
             print(f'ratio: {self.ratio}')
 
         # list of resource_iter for each iteration, used in tests
@@ -403,19 +399,24 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
         for a given iteration. By default, this is set to ``n_samples`` when
         ``resource='n_samples'`` (default), else an error is raised.
 
-    min_resources : int, default='auto'
-        The minimum amount of resource that any candidate is allowed to use for
-        a given iteration. Equivalently, this defines the amount of resources
-        that are allocated for each candidate at the first iteration. By
-        default, this is set to the highest possible value
-        satisfying the constraint `force_exhaust_resources=True` (which is
-        the default). Otherwise this is set to:
+    min_resources : {'exhaust', 'smallest'} or int, default='exhaust'
+        The minimum amount of resource that any candidate is allowed to use
+        for a given iteration. Equivalently, this defines the amount of
+        resources `r0` that are allocated for each candidate at the first
+        iteration.
 
-        - ``n_splits * 2`` when ``resource='n_samples'`` for a regression
-          problem
-        - ``n_classes * n_splits * 2`` when ``resource='n_samples'`` for a
-          regression problem
-        - ``1`` when ``resource != 'n_samples'``
+        - 'smallest' is a heuristic that sets `r0` to a small value:
+            - ``n_splits * 2`` when ``resource='n_samples'`` for a regression
+               problem
+            - ``n_classes * n_splits * 2`` when ``resource='n_samples'`` for a
+               regression problem
+            - ``1`` when ``resource != 'n_samples'``
+        - 'exhaust' will set `r0` such that the **last** iteration uses as
+          much resources as possible. Namely, the last iteration will use the
+          highest value smaller than ``max_resources`` that is a multiple of
+          both ``min_resources`` and ``ratio``. In general, using 'exhaust'
+          leads to a more accurate estimator, but is slightly more time
+          consuming.
 
         Note that the amount of resources used at each iteration is always a
         multiple of ``min_resources``.
@@ -441,17 +442,6 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
         This is ``False`` by default, which means that the last iteration may
         evaluate more than ``ratio`` candidates. See
         :ref:`aggressive_elimination` for more details.
-
-    force_exhaust_resources : bool, default=True
-        When True, ``min_resources`` (which must be 'auto') is set to a
-        specific value such that the last iteration uses as much resources as
-        possible. Namely, the last iteration uses the highest value smaller
-        than ``max_resources`` that is a multiple of both ``min_resources``
-        and ``ratio``. When False, the last iteration may not exhaust the
-        total number of resources, since the first iteration will rely on the
-        value passed as the `min_resources` parameter. In general,
-        `force_exhaust_resources=True` leads to a more accurate estimator,
-        but is slightly more time consuming.
 
     Attributes
     ----------
@@ -543,7 +533,6 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
     ...               "min_samples_split": [5, 10]}
     >>> search = HalvingGridSearchCV(clf, param_grid, resource='n_estimators',
     ...                              max_resources=10,
-    ...                              force_exhaust_resources=True,
     ...                              random_state=0).fit(X, y)
     >>> search.best_params_  # doctest: +SKIP
     {'max_depth': None, 'min_samples_split': 10, 'n_estimators': 9}
@@ -572,9 +561,8 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
                  n_jobs=None, refit=True, verbose=0, cv=5,
                  pre_dispatch='2*n_jobs', random_state=None,
                  error_score=np.nan, return_train_score=True,
-                 max_resources='auto', min_resources='auto',
-                 resource='n_samples', ratio=3, aggressive_elimination=False,
-                 force_exhaust_resources=True):
+                 max_resources='auto', min_resources='exhaust',
+                 resource='n_samples', ratio=3, aggressive_elimination=False):
         super().__init__(estimator, scoring=scoring,
                          n_jobs=n_jobs, refit=refit, verbose=verbose, cv=cv,
                          pre_dispatch=pre_dispatch,
@@ -582,8 +570,7 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
                          return_train_score=return_train_score,
                          max_resources=max_resources, resource=resource,
                          ratio=ratio, min_resources=min_resources,
-                         aggressive_elimination=aggressive_elimination,
-                         force_exhaust_resources=force_exhaust_resources)
+                         aggressive_elimination=aggressive_elimination)
         self.param_grid = param_grid
         _check_param_grid(self.param_grid)
 
@@ -616,11 +603,12 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
         method for sampling (such as those from scipy.stats.distributions).
         If a list is given, it is sampled uniformly.
 
-    n_candidates : int, default='auto'
+    n_candidates : int, default='exhaust'
         The number of candidate parameters to sample, at the first
-        iteration. By default this will sample enough candidates so that the
-        last iteration uses as many resources as possible. Note that
-        ``force_exhaust_resources`` has no effect in this case.
+        iteration. Using 'exhaust' will sample enough candidates so that the
+        last iteration uses as many resources as possible, based on
+        `min_resources`, `max_resources` and `ratio`. In this case,
+        `min_resources` cannot be 'exhaust'.
 
     scoring : string, callable, or None, default=None
         A single string (see :ref:`scoring_parameter`) or a callable
@@ -696,19 +684,24 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
         for a given iteration. By default, this is set ``n_samples`` when
         ``resource='n_samples'`` (default), else an error is raised.
 
-    min_resources : int, default='auto'
-        The minimum amount of resource that any candidate is allowed to use for
-        a given iteration. Equivalently, this defines the amount of resources
-        that are allocated for each candidate at the first iteration. By
-        default, this is set to the highest possible value
-        satisfying the constraint `force_exhaust_resources=True` (which is
-        the default). Otherwise this is set to:
+    min_resources : {'exhaust', 'smallest'} or int, default='smallest'
+        The minimum amount of resource that any candidate is allowed to use
+        for a given iteration. Equivalently, this defines the amount of
+        resources `r0` that are allocated for each candidate at the first
+        iteration.
 
-        - ``n_splits * 2`` when ``resource='n_samples'`` for a regression
-          problem
-        - ``n_classes * n_splits * 2`` when ``resource='n_samples'`` for a
-          regression problem
-        - ``1`` when ``resource!='n_samples'``
+        - 'smallest' is a heuristic that sets `r0` to a small value:
+            - ``n_splits * 2`` when ``resource='n_samples'`` for a regression
+               problem
+            - ``n_classes * n_splits * 2`` when ``resource='n_samples'`` for a
+               regression problem
+            - ``1`` when ``resource != 'n_samples'``
+        - 'exhaust' will set `r0` such that the **last** iteration uses as
+          much resources as possible. Namely, the last iteration will use the
+          highest value smaller than ``max_resources`` that is a multiple of
+          both ``min_resources`` and ``ratio``. In general, using 'exhaust'
+          leads to a more accurate estimator, but is slightly more time
+          consuming. 'exhaust' isn't available when `n_candidates='exhaust'`.
 
         Note that the amount of resources used at each iteration is always a
         multiple of ``min_resources``.
@@ -734,17 +727,6 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
         This is ``False`` by default, which means that the last iteration may
         evaluate more than ``ratio`` candidates. See
         :ref:`aggressive_elimination` for more details.
-
-    force_exhaust_resources : bool, default=True
-        When True, ``min_resources`` (which must be 'auto') is set to a
-        specific value such that the last iteration uses as much resources as
-        possible. Namely, the last iteration uses the highest value smaller
-        than ``max_resources`` that is a multiple of both ``min_resources``
-        and ``ratio``. When False, the last iteration may not exhaust the
-        total number of resources, since the first iteration will rely on the
-        value passed as the `min_resources` parameter. In general,
-        `force_exhaust_resources=True` leads to a more accurate estimator,
-        but is slightly more time consuming.
 
     Attributes
     ----------
@@ -839,7 +821,6 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
     >>> search = HalvingRandomSearchCV(clf, param_distributions,
     ...                                resource='n_estimators',
     ...                                max_resources=10,
-    ...                                force_exhaust_resources=True,
     ...                                random_state=0).fit(X, y)
     >>> search.best_params_  # doctest: +SKIP
     {'max_depth': None, 'min_samples_split': 10, 'n_estimators': 9}
@@ -865,26 +846,25 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
     _required_parameters = ["estimator", "param_distributions"]
 
     def __init__(self, estimator, param_distributions, *,
-                 n_candidates='auto', scoring=None, n_jobs=None, refit=True,
-                 verbose=0, cv=5, pre_dispatch='2*n_jobs',
+                 n_candidates='exhaust', scoring=None, n_jobs=None,
+                 refit=True, verbose=0, cv=5, pre_dispatch='2*n_jobs',
                  random_state=None, error_score=np.nan,
                  return_train_score=True, max_resources='auto',
-                 min_resources='auto', resource='n_samples', ratio=3,
-                 aggressive_elimination=False, force_exhaust_resources=True):
+                 min_resources='smallest', resource='n_samples', ratio=3,
+                 aggressive_elimination=False):
         super().__init__(estimator, scoring=scoring,
                          n_jobs=n_jobs, refit=refit, verbose=verbose, cv=cv,
                          random_state=random_state, error_score=error_score,
                          return_train_score=return_train_score,
                          max_resources=max_resources, resource=resource,
                          ratio=ratio, min_resources=min_resources,
-                         aggressive_elimination=aggressive_elimination,
-                         force_exhaust_resources=force_exhaust_resources)
+                         aggressive_elimination=aggressive_elimination)
         self.param_distributions = param_distributions
         self.n_candidates = n_candidates
 
     def _generate_candidate_params(self):
         n_candidates_first_iter = self.n_candidates
-        if n_candidates_first_iter == 'auto':
+        if n_candidates_first_iter == 'exhaust':
             # This will generate enough candidate so that the last iteration
             # uses as much resources as possible
             n_candidates_first_iter = (
