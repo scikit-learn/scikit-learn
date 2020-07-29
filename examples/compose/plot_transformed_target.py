@@ -110,7 +110,7 @@ f.tight_layout(rect=[0.05, 0.05, 0.95, 0.95])
 
 # %%
 from sklearn.datasets import fetch_openml
-from sklearn.preprocessing import QuantileTransformer, quantile_transform
+from sklearn.preprocessing import quantile_transform
 
 ames = fetch_openml(name="house_prices", as_frame=True)
 # Keep only numeric columns
