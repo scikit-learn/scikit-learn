@@ -40,6 +40,8 @@ def pytest_collection_modifyitems(config, items):
         # Known failure on with GradientBoostingClassifier on ARM64
         elif (item.name.endswith('GradientBoostingClassifier')
                 and platform.machine() == 'ARM64'):
+
+            print(f"DEBUG: marking {item} as XFAIL")
             marker = pytest.mark.xfail(
                 reason=(
                     'know failure. See '

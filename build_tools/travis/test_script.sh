@@ -19,6 +19,7 @@ except ImportError:
     pass
 "
 python -c "import joblib; print(joblib.cpu_count(), 'CPUs')"
+python -c "import platform; print(platform.machine())"
 
 if [[ "$BUILD_WITH_ICC" == "true" ]]; then
     # the tools in the oneAPI toolkits are configured via environment variables
@@ -27,7 +28,7 @@ if [[ "$BUILD_WITH_ICC" == "true" ]]; then
 fi
 
 run_tests() {
-    TEST_CMD="pytest --showlocals --durations=20 --pyargs"
+    TEST_CMD="pytest -s --showlocals --durations=20 --pyargs"
 
     # Get into a temp directory to run test from the installed scikit-learn and
     # check if we do not leave artifacts
