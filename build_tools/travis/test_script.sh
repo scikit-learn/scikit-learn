@@ -60,17 +60,15 @@ run_tests() {
         TEST_CMD="$TEST_CMD -Werror::DeprecationWarning -Werror::FutureWarning"
     fi
 
-    set -x  # print executed commands to the terminal
-
-
     pip uninstall -y pytest-xdist pytest-forked pytest-cov
     echo "About to run pytest --version"
     pytest --version
     echo "About to run pytest with faulthandler"
-    pytest -s -v test_hanging.py || exit 1
-    echo "after pytest"
+    pytest -s -v test_hanging.py || return 1
+    return 0
 }
 
 echo "before run_tests function"
 run_tests
+exit $?
 echo "after run_tests function"
