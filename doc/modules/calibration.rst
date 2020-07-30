@@ -96,8 +96,8 @@ in [0, 1]. Denoting the output of the classifier for a given sample by :math:`f_
 the calibrator tries to predict :math:`p(y_i = 1 | f_i)`.
 
 The samples that are used to fit the calibrator should not be the same
-samples used to fit the classifier, as this would
-introduce bias. The classifier performance on its training data would be
+samples used to fit the classifier, as this would introduce bias.
+This is because performance of the classifier on its training data would be
 better than for novel data. Using the classifier output from training data
 to fit the calibrator would thus result in a biased calibrator that maps to
 probabilities closer to 0 and 1 than it should.
@@ -107,22 +107,30 @@ Usage
 
 The :class:`CalibratedClassifierCV` class is used to calibrate a classifier.
 
-:class:`CalibratedClassifierCV` uses a cross-validation approach to fit both
-the classifier and the regressor. The data is split into k
-`(train_set, test_set)` couples (as determined by `cv`). The classifier
-(`base_estimator`) is trained on the train set, and its predictions on the
-test set are used to fit a regressor. This ensures that the data used to fit
-the classifier is always disjoint from the data used to fit the calibrator.
-After fitting, we end up with k
-`(classifier, regressor)` couples where each regressor maps the output of
+:class:`CalibratedClassifierCV` uses a cross-validation approach to ensure
+unbiased data is always used to fit the calibrator. The data is split into k
+`(train_set, test_set)` couples (as determined by `cv`). When `ensemble=True`
+(default), the classifier (`base_estimator`) is trained on the train set, and
+its predictions on the test set are used to fit the calibrator (either a
+sigmoid or isotonic regressor). After fitting, we end up with an ensemble of
+k `(classifier, calibrator)` couples where each calibrator maps the output of
 its corresponding classifier into [0, 1]. Each couple is exposed in the
 `calibrated_classifiers_` attribute, where each entry is a calibrated
 classifier with a :term:`predict_proba` method that outputs calibrated
 probabilities. The output of :term:`predict_proba` for the main
 :class:`CalibratedClassifierCV` instance corresponds to the average of the
-predicted probabilities of the `k` estimators in the
-`calibrated_classifiers_` list. The output of :term:`predict` is the class
-that has the highest probability.
+predicted probabilities of the `k` estimators in the `calibrated_classifiers_`
+list. The output of :term:`predict` is the class that has the highest
+probability.
+
+When `ensemble=False`, cross-validation is used to obtain 'unbiased'
+predictions for all the data, by concatenating the testing subset predictions.
+These unbiased predictions are used to train the calibrator. The attribute
+`calibrated_classifiers_` consists of only one `(classifier, calibrator)`
+couple where the classifier is the `base_estimator` trained on all the data.
+In this case the output of :term:`predict_proba` for
+:class:`CalibratedClassifierCV` is the predicted probabilities obtained
+from the single `(classifier, calibrator)` couple.
 
 Alternatively an already fitted classifier can be calibrated by setting
 `cv="prefit"`. In this case, the data is not split and all of it is used to

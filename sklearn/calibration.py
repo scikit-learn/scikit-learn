@@ -46,10 +46,9 @@ class CalibratedClassifierCV(ClassifierMixin,
     using the testing subset. For prediction, predicted probabilities are
     averaged across these individual calibrated classifiers. When
     `ensemble=False`, cross-validation is used to obtain unbiased predictions,
-    from the testing subset. These are concatenated together and used for
-    calibration. For prediction, the base estimator, trained using all the
-    data, is used. This is the method implemented when `probabilities=True` for
-    :mod:`sklearn.svm` estimators.
+    from the testing subset, which are used for calibration. For prediction,
+    the base estimator, trained using all the data, is used. This is the method
+    implemented when `probabilities=True` for :mod:`sklearn.svm` estimators.
 
     Already fitted classifiers can be calibrated via the parameter
     `cv="prefit"`. In this case, no cross-validation is used and all provided
