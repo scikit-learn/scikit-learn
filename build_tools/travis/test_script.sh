@@ -6,8 +6,6 @@
 
 # License: 3-clause BSD
 
-set -e
-
 python --version
 python -c "import numpy; print('numpy %s' % numpy.__version__)"
 python -c "import scipy; print('scipy %s' % scipy.__version__)"
@@ -70,4 +68,5 @@ run_tests() {
 
 echo "before run_tests function"
 run_tests
+exit $?
 echo "after run_tests function"
