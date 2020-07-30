@@ -44,9 +44,9 @@ matrix:
 
 install: source build_tools/travis/install.sh
 script:
-  - bash build_tools/travis/test_script.sh
-  - bash build_tools/travis/test_docs.sh
-  - bash build_tools/travis/test_pytest_soft_dependency.sh
+  - bash build_tools/travis/test_script.sh || travis_terminate 1
+  - bash build_tools/travis/test_docs.sh || travis_terminate 1
+  - bash build_tools/travis/test_pytest_soft_dependency.sh || travis_terminate 1
 after_success: source build_tools/travis/after_success.sh
 notifications:
   webhooks:
