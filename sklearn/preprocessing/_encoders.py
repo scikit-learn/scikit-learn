@@ -763,16 +763,24 @@ class OrdinalEncoder(_BaseEncoder):
         dt = np.find_common_type([cat.dtype for cat in self.categories_], [])
         X_tr = np.empty((n_samples, n_features), dtype=dt)
 
+        found_unknown = {}
+
         for i in range(n_features):
             labels = X[:, i].astype('int64', copy=False)
-            # set unknown values to None
             if self.handle_unknown == 'use_encoded_value':
                 unknown_labels = labels == self.unknown_value
                 X_tr[:, i] = self.categories_[i][np.where(
                     unknown_labels, 0, labels)]
-                X_tr = X_tr.astype(object, copy=False)
-                X_tr[unknown_labels, i] = None
+                found_unknown[i] = unknown_labels
             else:
                 X_tr[:, i] = self.categories_[i][labels]
+
+        # insert None values for unknown values
+        if found_unknown:
+            if X_tr.dtype != object:
+                X_tr = X_tr.astype(object, copy=False)
+
+            for idx, mask in found_unknown.items():
+                X_tr[mask, idx] = None
 
         return X_tr
