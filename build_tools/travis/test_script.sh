@@ -62,11 +62,9 @@ run_tests() {
     echo "About to run pytest --version"
     pytest --version
     echo "About to run pytest with faulthandler"
-    pytest -s -v test_hanging.py || return 1
-    return 0
+    pytest -s -v test_hanging.py || travis_terminate 1
 }
 
 echo "before run_tests function"
 run_tests
-travis_terminate $?
 echo "after run_tests function"
