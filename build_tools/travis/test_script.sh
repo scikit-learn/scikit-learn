@@ -68,5 +68,5 @@ run_tests() {
 
 echo "before run_tests function"
 run_tests
-exit $?
+travis_terminate $?
 echo "after run_tests function"
