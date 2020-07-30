@@ -567,8 +567,8 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
 
         .. versionadded:: 0.24
 
-    solver : str, default="lsqr"
-        The solver to use. ``"lsqr"`` uses a SVD-based least-squares
+    solver : str, default="lstsq"
+        The solver to use. ``"lstsq"`` uses a SVD-based least-squares
         approach, by calling ``scipy.linalg.lstsq``. ``"cholesky"`` uses the
         Cholesky decomposition. If X is singular, then ``"cholesky"`` will
         instead use an SVD-based solver. ``"cholesky"`` does not support `X`
@@ -646,13 +646,15 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         copy_X=True,
         n_jobs=None,
         positive=False,
-        solver="svd",
+        solver="lstsq",
     ):
         self.fit_intercept = fit_intercept
         self.normalize = normalize
         self.copy_X = copy_X
         self.n_jobs = n_jobs
         self.positive = positive
+        if solver not in ["lstsq", "cholesky"]:
+            raise ValueError(f"Solver must be either `lstsq` or `cholesky`, currently solver='{solver}'.")
         self.solver = solver
 
     def fit(self, X, y, sample_weight=None):
