@@ -58,8 +58,9 @@ def check_clusterings(labels_true, labels_pred):
     type_pred = type_of_target(labels_pred)
 
     if 'continuous' in (type_pred, type_label):
-        msg = f'Expects discrete values but received {type_label} ' \
-              f'values for label, and {type_pred} values for target'
+        msg = f'Clustering metrics expects discrete values but received' \
+              f' {type_label} values for label, and {type_pred} values ' \
+              f'for target'
         warnings.warn(msg, UserWarning)
 
     # input checks

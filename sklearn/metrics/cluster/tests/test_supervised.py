@@ -356,7 +356,9 @@ def test_check_clustering_error():
     rng = np.random.RandomState(42)
     noise = rng.rand(500)
     wavelength = np.linspace(0.01, 1, 500) * 1e-6
-    msg = 'Expects discrete values but received continuous values for' \
-          ' label, and continuous values for target'
+    msg = 'Clustering metrics expects discrete values but received ' \
+          'continuous values for label, and continuous values for ' \
+          'target'
+
     with pytest.warns(UserWarning, match=msg):
         check_clusterings(wavelength, noise)
