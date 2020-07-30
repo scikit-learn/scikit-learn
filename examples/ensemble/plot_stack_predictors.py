@@ -215,12 +215,7 @@ for ax, (name, est) in zip(axs, estimators + [('Stacking Regressor',
         for key, value in scorers.items()
     }
 
-    display = PredictionErrorDisplay(
-        y_true=y,
-        y_pred=y_pred,
-        scores=scores,
-        subsample=None,
-    )
+    display = PredictionErrorDisplay(y_true=y, y_pred=y_pred, scores=scores)
     display.plot(
         ax=ax,
         scatter_kwargs={"alpha": 0.2, "color": "tab:blue"},
