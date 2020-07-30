@@ -77,7 +77,7 @@ print("Fraction of exposure with zero claims = {0:.1%}"
       .format(df.loc[df["ClaimNb"] == 0, "Exposure"].sum() /
               df["Exposure"].sum()))
 
-fig, (ax0, ax1, ax2) = plt.subplots(ncols=3, figsize=(16, 4))
+_, (ax0, ax1, ax2) = plt.subplots(ncols=3, figsize=(16, 4))
 ax0.set_title("Number of claims")
 _ = df["ClaimNb"].hist(bins=30, log=True, ax=ax0)
 ax1.set_title("Exposure in years")
