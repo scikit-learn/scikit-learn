@@ -41,6 +41,7 @@ matrix:
         - CI_CPU_COUNT="8"
       os: linux
       arch: arm64
+      if: type = cron OR commit_message =~ /\[arm64\]/
 
 install: source build_tools/travis/install.sh
 script:
