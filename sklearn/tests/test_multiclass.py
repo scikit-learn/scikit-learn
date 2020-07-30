@@ -29,10 +29,11 @@ from sklearn.linear_model import (LinearRegression, Lasso, ElasticNet, Ridge,
                                   SGDClassifier)
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.model_selection import GridSearchCV, cross_val_score
-from sklearn.pipeline import Pipeline
+from sklearn.pipeline import Pipeline, make_pipeline
 from sklearn import svm
 from sklearn import datasets
-
+from sklearn.model_selection import train_test_split
+from sklearn.impute import SimpleImputer
 iris = datasets.load_iris()
 rng = np.random.RandomState(0)
 perm = rng.permutation(iris.target.size)
@@ -776,3 +777,21 @@ def test_pairwise_cross_val_score():
         score_precomputed = cross_val_score(ovr_true, linear_kernel, y)
         score_linear = cross_val_score(ovr_false, X, y)
         assert_array_equal(score_precomputed, score_linear)
+
+
+def test_support_missing_values():
+    rng = np.random.RandomState(42)
+    X_train, X_test, y_train, y_test = train_test_split(iris.data,
+                                                        iris.target,
+                                                        random_state=rng)
+
+    mask = np.random.choice([1, 0], X_train.shape, p=[.1, .9]).astype(bool)
+    X_train[mask] = np.nan
+    lr = make_pipeline(
+            SimpleImputer(), LinearRegression())
+
+    for MultiClassClassifier in [OneVsRestClassifier, OneVsOneClassifier]:
+        clf = MultiClassClassifier(lr)
+        clf.fit(X_train, y_train)
+
+        assert clf.score(X_test, y_test) > 0.8
