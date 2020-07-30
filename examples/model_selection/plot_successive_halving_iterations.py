@@ -67,6 +67,7 @@ ax.set_xticklabels(labels, rotation=45, multialignment='left')
 ax.set_title('Scores of candidates over iterations')
 ax.set_ylabel('mean test score', fontsize=15)
 ax.set_xlabel('iterations', fontsize=15)
+plt.tight_layout()
 plt.show()
 
 # %%

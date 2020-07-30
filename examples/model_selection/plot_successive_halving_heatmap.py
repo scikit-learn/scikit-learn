@@ -60,13 +60,21 @@ gs_time = time() - tic
 # We now plot heatmaps for both search estimators.
 
 
-def make_heatmap(ax, gs, show_iter=False, make_cbar=False):
+def make_heatmap(ax, gs, is_sh=False, make_cbar=False):
     """Helper to make a heatmap."""
     results = pd.DataFrame.from_dict(gs.cv_results_)
     results['params_str'] = results.params.apply(str)
-    # Take max but there's only one value anyway
-    scores = results.groupby(['param_gamma', 'param_C']).mean_test_score.max()
-    scores_matrix = scores.values.reshape(len(gammas), len(Cs))
+    if is_sh:
+        # SH dataframe: get mean_test_score values for the highest iter
+        scores_matrix = (
+            results.sort_values('iter').groupby(['param_gamma', 'param_C'])
+            .last()['mean_test_score'].unstack()
+        )
+    else:
+        scores_matrix = (
+            results.set_index(['param_gamma', 'param_C'])['mean_test_score']
+            .unstack()
+        )
 
     im = ax.imshow(scores_matrix)
 
@@ -82,9 +90,9 @@ def make_heatmap(ax, gs, show_iter=False, make_cbar=False):
     plt.setp(ax.get_xticklabels(), rotation=45, ha="right",
              rotation_mode="anchor")
 
-    if show_iter:
-        iterations = results.groupby(['param_gamma', 'param_C']).iter.max()
-        iterations_matrix = iterations.values.reshape(len(gammas), len(Cs))
+    if is_sh:
+        iterations = results.groupby(['param_gamma', 'param_C'])['iter'].max()
+        iterations_matrix = iterations.unstack().values
         for i in range(len(gammas)):
             for j in range(len(Cs)):
                 ax.text(j, i, iterations_matrix[i, j],
@@ -101,7 +109,7 @@ def make_heatmap(ax, gs, show_iter=False, make_cbar=False):
 fig, axes = plt.subplots(ncols=2, sharey=True)
 ax1, ax2 = axes
 
-make_heatmap(ax1, gsh, show_iter=True)
+make_heatmap(ax1, gsh, is_sh=True)
 make_heatmap(ax2, gs, make_cbar=True)
 
 ax1.set_title('Successive Halving\ntime = {:.3f}s'.format(gsh_time),
