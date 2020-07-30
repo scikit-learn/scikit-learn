@@ -199,7 +199,7 @@ class PredictionErrorDisplay:
 
         xlabel, ylabel = "Actual values", "Predicted values"
         ax.set(xlabel=xlabel, ylabel=ylabel)
-        ax.axis("square")
+        ax.set_aspect('equal', adjustable='datalim')
         ax.set_xticks(np.linspace(min_value, max_value, num=5))
         ax.set_yticks(np.linspace(min_value, max_value, num=5))
 
