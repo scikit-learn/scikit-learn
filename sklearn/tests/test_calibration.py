@@ -29,14 +29,6 @@ from sklearn.calibration import _sigmoid_calibration, _SigmoidCalibration
 from sklearn.calibration import calibration_curve
 
 
-def test_ll():
-    X, y = make_classification(n_samples=10, n_features=6,
-                            random_state=42)
-    pc_clf = CalibratedClassifierCV(
-        cv=2, ensemble=False
-    )
-    pc_clf.fit(X,y)
-
 @pytest.mark.parametrize('ensemble', [True, False])
 def test_calibration(ensemble):
     """Test calibration objects with isotonic and sigmoid"""
