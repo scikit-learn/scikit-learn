@@ -67,7 +67,7 @@ run_tests() {
     echo "About to run pytest --version"
     pytest --version
     echo "About to run pytest with faulthandler"
-    pytest -s -v test_hanging.py || echo exit 1
+    pytest -s -v test_hanging.py || exit 1
     echo "after pytest"
 }
 
