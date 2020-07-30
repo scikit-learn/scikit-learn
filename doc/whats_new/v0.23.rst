@@ -17,6 +17,14 @@ Changelog
   :class:`ensemble.StackingRegressor` compatibility with estimators that
   do not define `n_features_in_`. :pr:`17357` by `Thomas Fan`_.
 
+:mod:`sklearn.feature_extraction`
+.................................
+
+- |Fix| Fixes bug in :class:`feature_extraction.text.CountVectorizer` where
+  sample order invariance was broken when `max_features` was set and features
+  had the same count. :pr:`18016` by `Thomas Fan`_, `Roman Yurchak`_, and
+  `Joel Nothman`_.
+
 :mod:`sklearn.linear_model`
 ...........................
 
