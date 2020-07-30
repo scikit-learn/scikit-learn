@@ -282,7 +282,7 @@ class CalibratedClassifierCV(ClassifierMixin,
 
             pred_method = _get_prediction_method(base_estimator)
             n_classes = len(self.classes_)
-            preds = _get_predictions(pred_method,X, n_classes)
+            preds = _get_predictions(pred_method, X, n_classes)
 
             calibrated_classifier = _fit_calibrator(
                 base_estimator, preds, y, self.classes_, self.method,
@@ -334,7 +334,8 @@ class CalibratedClassifierCV(ClassifierMixin,
                         clone(base_estimator), X, y, train=train, test=test,
                         method=self.method, classes=self.classes_,
                         supports_sw=supports_sw, sample_weight=sample_weight)
-                    for train, test in cv.split(X, y))
+                    for train, test in cv.split(X, y)
+                )
             else:
                 this_estimator = clone(base_estimator)
                 method_name = _get_prediction_method(this_estimator).__name__
@@ -342,7 +343,7 @@ class CalibratedClassifierCV(ClassifierMixin,
                     cross_val_predict, estimator=this_estimator, X=X, y=y,
                     cv=cv, method=method_name
                 )
-                preds = _get_predictions(pred_method, X, n_classes)
+                preds =  (pred_method, X, n_classes)
 
                 if sample_weight is not None and supports_sw:
                     this_estimator.fit(X, y, sample_weight)
@@ -419,7 +420,7 @@ def _get_pred_fit_calibrator(estimator, X, y, train, test, supports_sw,
 
     Parameters
     ----------
-    estimator : Estimator instance
+    estimator : estimator instance
         Cloned base estimator.
 
     X : array-like, shape (n_samples, n_features)
@@ -541,7 +542,7 @@ def _fit_calibrator(clf, preds, y, classes, method, sample_weight=None):
 
     Parameters
     ----------
-    clf : Estimator instance
+    clf : estimator instance
         Fitted classifier.
 
     preds :  array-like, shape (n_samples, n_classes) or (n_samples, 1) when \
@@ -567,6 +568,7 @@ def _fit_calibrator(clf, preds, y, classes, method, sample_weight=None):
     Y = label_binarize(y, classes=classes)
     label_encoder = LabelEncoder().fit(classes)
     pos_class_indices = label_encoder.transform(clf.classes_)
+    print(f'pos class indix fit calb {pos_class_indices}')
     calibrators = []
     for class_idx, this_pred in zip(pos_class_indices, preds.T):
         if method == 'isotonic':
@@ -588,10 +590,10 @@ class _CalibratedClassiferPipeline:
 
     Parameters
     ----------
-    clf : Estimator instance
+    clf : estimator instance
         Fitted classifier.
 
-    calibrators : List of fitted estimator instances
+    calibrators : list of fitted estimator instances
         List of fitted calibrators (either 'IsotonicRegression' or
         '_SigmoidCalibration'). The number of calibrators equals the number of
         classes. However, if there are 2 classes, the list contains only one

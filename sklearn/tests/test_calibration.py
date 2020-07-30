@@ -16,10 +16,11 @@ from sklearn.utils._testing import (assert_array_almost_equal,
 from sklearn.exceptions import NotFittedError
 from sklearn.datasets import make_classification, make_blobs
 from sklearn.preprocessing import LabelEncoder
-from sklearn.model_selection import KFold
+from sklearn.model_selection import KFold, cross_val_predict
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.svm import LinearSVC
+from sklearn.isotonic import IsotonicRegression
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.pipeline import Pipeline
 from sklearn.impute import SimpleImputer
@@ -295,6 +296,34 @@ def test_calibration_prefit():
 
                 assert (brier_score_loss(y_test, prob_pos_clf) >
                         brier_score_loss(y_test, prob_pos_pc_clf))
+
+
+@pytest.mark.parametrize('method', ['sigmoid', 'isotonic'])
+def test_calibration_ensemble(method):
+    """Test that `ensemble=False` is the same as using predictions from
+    `cross_val_predict` to train calibrator."""
+    X, y = make_classification(n_samples=100, n_features=6, random_state=7)
+    clf = LinearSVC(random_state=7)
+
+    cal_clf = CalibratedClassifierCV(clf, method=method, cv=3)
+    cal_clf.fit(X, y)
+    cal_probas = cal_clf.predict_proba(X[:10, :])
+    # print(f'calib proba\n{cal_probas}')
+
+    unbiased_preds = cross_val_predict(
+        clf, X, y, cv=3, method='decision_function'
+    )
+    if method == 'isotonic':
+        calibrator = IsotonicRegression(out_of_bounds='clip')
+    else:
+        calibrator = _SigmoidCalibration()
+    # print(f'unbiased pred shape {unbiased_preds.shape}')
+    calibrator.fit(unbiased_preds, y[:, 1])
+    # Fit `clf` using all data
+    clf.fit(X, y)
+    clf_probas = clf.decision_function(X[:10, :])
+    manual_probas = calibrator.predict(clf_probas[:, 0])
+    # print(f'man proba\n{manual_probas}')
 
 
 def test_sigmoid_calibration():
