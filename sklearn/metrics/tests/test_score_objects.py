@@ -762,14 +762,14 @@ def test_get_scorer_copy_sklearn_scorers():
 def test_get_scorer_copy_custom_scorers():
     # Part of non-regression tests for:
     # https://github.com/scikit-learn/scikit-learn/issues/17942
-    # check that we return a deep copy of a custom scorer
+    # check that we don't return a deep copy for the custom scorer
     accuracy_scorer = make_scorer(accuracy_score)
-    # add a mutable list to check that we do a deep copy and not only a copy
+
     accuracy_scorer._kwargs["mutable_list"] = [1, 2, 3, 4]
     accuracy_scorer_with_copy = get_scorer(accuracy_scorer)
-    assert accuracy_scorer is not accuracy_scorer_with_copy
+    assert accuracy_scorer is accuracy_scorer_with_copy
 
     assert (
         accuracy_scorer_with_copy._kwargs["mutable_list"]
-        is not accuracy_scorer._kwargs["mutable_list"]
+        is accuracy_scorer._kwargs["mutable_list"]
     )

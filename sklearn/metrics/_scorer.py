@@ -337,8 +337,7 @@ def get_scorer(scoring):
     Parameters
     ----------
     scoring : str or callable
-        Scoring method as string. If callable is given, a copy will be
-        returned.
+        Scoring method as string. If callable it is returned as is.
 
     Returns
     -------
@@ -347,7 +346,7 @@ def get_scorer(scoring):
     """
     if isinstance(scoring, str):
         try:
-            scorer = SCORERS[scoring]
+            scorer = deepcopy(SCORERS[scoring])
         except KeyError:
             raise ValueError(
                 f"'{scoring}' is not a valid scoring value. Use "
@@ -355,7 +354,7 @@ def get_scorer(scoring):
             )
     else:
         scorer = scoring
-    return deepcopy(scorer)
+    return scorer
 
 
 def _passthrough_scorer(estimator, *args, **kwargs):
