@@ -8,6 +8,7 @@ from sklearn.linear_model import Ridge
 from sklearn.metrics import r2_score
 
 from sklearn.metrics import plot_prediction_error
+from sklearn.metrics import PredictionErrorDisplay
 
 X, y = load_diabetes(return_X_y=True)
 
@@ -78,6 +79,82 @@ def test_plot_prediction_error_scoring(pyplot, regressor_fitted):
         assert metric_name in legend_text
 
 
-def test_plot_prediction_error_subsample(pyplot, regressor_fitted):
+@pytest.mark.parametrize(
+    "subsample, expected_size",
+    [(5, 5), (0.1, int(X.shape[0] * 0.1)), (None, X.shape[0])],
+)
+def test_plot_prediction_error_subsample(
+    pyplot, regressor_fitted, subsample, expected_size
+):
     # check the behaviour of subsample
-    disp = plot_prediction_error(regressor_fitted, X, y, subsample=5)
+    disp = plot_prediction_error(regressor_fitted, X, y, subsample=subsample)
+    assert len(disp.scatter_.get_offsets()) == expected_size
+
+
+def test_plot_prediction_error_residuals(pyplot, regressor_fitted):
+    # check that `with_residuals` is showing the residuals lines
+    disp = plot_prediction_error(regressor_fitted, X, y, with_residuals=False)
+    assert disp.residual_lines_ is None
+    pyplot.close("all")
+
+    subsample = 10
+    disp = plot_prediction_error(
+        regressor_fitted, X, y, with_residuals=True, subsample=subsample,
+    )
+    assert len(disp.residual_lines_) == subsample
+
+
+def test_plot_prediction_error_ax(pyplot, regressor_fitted):
+    # check that we can pass an axis
+    _, ax = pyplot.subplots()
+    disp = plot_prediction_error(regressor_fitted, X, y, ax=ax)
+    assert disp.ax_ is ax
+
+
+def test_prediction_error_custom_artist(pyplot, regressor_fitted):
+    # check that we can tune the style of the lines
+    disp = plot_prediction_error(
+        regressor_fitted,
+        X,
+        y,
+        with_residuals=True,
+        scatter_kwargs={"color": "red"},
+        line_kwargs={"color": "black"},
+        residuals_kwargs={"color": "blue"},
+    )
+    assert disp.line_.get_color() == "black"
+    assert_allclose(disp.scatter_.get_edgecolor(), [[1.0, 0.0, 0.0, 0.8]])
+    assert disp.residual_lines_[0].get_color() == "blue"
+
+    # create a display with the default values
+    disp = plot_prediction_error(regressor_fitted, X, y, with_residuals=True)
+    pyplot.close("all")
+
+    disp.plot(
+        scatter_kwargs={"color": "red"},
+        line_kwargs={"color": "black"},
+        residuals_kwargs={"color": "blue"},
+    )
+    assert disp.line_.get_color() == "black"
+    assert_allclose(disp.scatter_.get_edgecolor(), [[1.0, 0.0, 0.0, 0.8]])
+    assert disp.residual_lines_[0].get_color() == "blue"
+
+
+def test_prediction_error_display_legend(pyplot, regressor_fitted):
+    # check that we can avoid passing any score
+    y_pred = regressor_fitted.predict(X)
+    disp = PredictionErrorDisplay(y_true=y, y_pred=y_pred)
+    disp.plot()
+
+    assert disp.ax_.get_legend() is None
+
+    # check that we can pass an abritrary dictionary to scores
+    pyplot.close("all")
+    scores = {"R2": "1 +/- 0"}
+    disp = PredictionErrorDisplay(y_true=y, y_pred=y_pred, scores=scores)
+    disp.plot()
+
+    assert (
+        disp.ax_.get_legend().get_texts()[0].get_text()
+        == f"R2 = {scores['R2']}"
+    )

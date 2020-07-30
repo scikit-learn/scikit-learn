@@ -36,12 +36,12 @@ class PredictionErrorDisplay:
         scatter plot. If `None`, no subsampling will be applied. by default,
         a 1000 samples or less will be displayed.
 
-    with_residuals : bool, default=False
-        Whether or not to display the residuals on the plot for each sample.
-
     random_state : int or RandomState, default=None
         Controls the randomness when `subsample` is not `None`.
         See :term:`Glossary <random_state>` for details.
+
+    with_residuals : bool, default=False
+        Whether or not to display the residuals on the plot for each sample.
 
     Attributes
     ----------
@@ -81,15 +81,15 @@ class PredictionErrorDisplay:
         y_pred,
         scores=None,
         subsample=1000,
-        with_residuals=False,
         random_state=None,
+        with_residuals=False,
     ):
         self.y_true = y_true
         self.y_pred = y_pred
         self.scores = scores
         self.subsample = subsample
-        self.with_residuals = with_residuals
         self.random_state = random_state
+        self.with_residuals = with_residuals
 
     def plot(
         self,
@@ -228,6 +228,7 @@ def plot_prediction_error(
     *,
     scoring=None,
     subsample=None,
+    random_state=None,
     with_residuals=False,
     ax=None,
     scatter_kwargs=None,
@@ -274,11 +275,28 @@ def plot_prediction_error(
         scatter plot. If `None`, no subsampling will be applied. by default,
         a 1000 samples or less will be displayed.
 
+    random_state : int or RandomState, default=None
+        Controls the randomness when `subsample` is not `None`.
+        See :term:`Glossary <random_state>` for details.
+
     with_residuals : bool, default=False
         Whether or not to display the residuals on the plot for each sample.
 
     ax : matplotlib axes, default=None
         Axes object to plot on. If `None`, a new figure and axes is created.
+
+    scatter_kwargs : dict, default=None
+        Dictionary with keywords passed to the `matplotlib.pyplot.scatter`
+        call.
+
+    line_kwargs : dict, default=None
+        Dictionary with keyword passed to the `matplotlib.pyplot.plot`
+        call to draw the diagonal line.
+
+    residuals_kwargs : dict, default=None
+        Dictionary with keyword passed to the `matplotlib.pyplot.plot`
+        call to draw the residual lines. Only taken into account when
+        `with_residuals=True`.
 
     Returns
     -------
@@ -326,6 +344,7 @@ def plot_prediction_error(
         y_pred=y_pred,
         scores=scores,
         subsample=subsample,
+        random_state=random_state,
         with_residuals=with_residuals,
     )
 
