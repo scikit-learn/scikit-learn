@@ -800,7 +800,8 @@ class CalibrationDisplay:
     def plot(self, ax=None, *, name=None, ref_line=True, **kwargs):
         """Plot visualization.
 
-        Extra keyword arguments will be passed to matplotlib's `plot`.
+        Extra keyword arguments will be passed to
+        :func:`matplotlib.pyplot.plot`.
 
         Parameters
         ----------
@@ -872,10 +873,7 @@ def plot_calibration_curve(estimator, X, y, *,
     estimator : estimator instance
         Fitted classifier or a fitted :class:`~sklearn.pipeline.Pipeline` in
         which the last estimator is a classifier. The classifier must
-        have a :term:`predict_proba` method; set `probability=True` for
-        :mod:`~sklearn.svm` estimators (see:
-        :ref:`User Guide <scores_probabilities>`) or use
-        :class:`~sklearn.calibration.CalibratedClassifierCV`.
+        have a :term:`predict_proba` method.
 
     X : {array-like, sparse matrix} of shape (n_samples, n_features)
         Input values.
