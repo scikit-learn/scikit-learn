@@ -55,6 +55,13 @@ def test_linear_regression(solver):
     assert_array_almost_equal(reg.predict(X), [0])
 
 
+@pytest.mark.parametrize('solver', ['lsqr', 'wrong_string'])
+def test_linear_regression_value_error(solver):
+    err_msg = "Solver must be"
+    with pytest.raises(ValueError, match=err_msg):
+        LinearRegression(solver=solver)
+
+
 @pytest.mark.parametrize('solver', ['lstsq', 'cholesky'])
 def test_linear_regression_singular(solver):
     X, y = make_regression(effective_rank=100)
