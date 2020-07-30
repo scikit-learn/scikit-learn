@@ -31,7 +31,12 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import RandomForestRegressor
+from sklearn.experimental import enable_hist_gradient_boosting  # noqa
+from sklearn.ensemble import HistGradientBoostingClassifier,\
+    HistGradientBoostingRegressor
+from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import scale
+from sklearn.pipeline import make_pipeline
 
 from sklearn.ensemble import StackingClassifier
 from sklearn.ensemble import StackingRegressor
@@ -522,3 +527,37 @@ def test_stacking_without_n_features_in(make_dataset, Stacking, Estimator):
     msg = "'MyEstimator' object has no attribute 'n_features_in_'"
     with pytest.raises(AttributeError, match=msg):
         stacker.n_features_in_
+
+
+def test_clf_support_missing_values():
+    rng = np.random.RandomState(42)
+    X_train, X_test, y_train, y_test = train_test_split(X_iris, y_iris,
+                                                        random_state=rng)
+
+    mask = np.random.choice([1, 0], X_train.shape, p=[.1, .9]).astype(bool)
+    X_train[mask] = np.nan
+    hgbc = HistGradientBoostingClassifier(max_iter=3, random_state=rng)
+    dt = make_pipeline(
+        SimpleImputer(), DecisionTreeClassifier())
+
+    clf = StackingClassifier(estimators=[('hgbc', hgbc), ('dt', dt)])
+    clf.fit(X_train, y_train)
+
+    assert clf.score(X_test, y_test) > 0.8
+
+
+def test_reg_support_missing_values():
+    rng = np.random.RandomState(42)
+    X_train, X_test, y_train, y_test = train_test_split(X_diabetes,
+                                                        y_diabetes,
+                                                        random_state=rng)
+
+    mask = np.random.choice([1, 0], X_train.shape, p=[.1, .9]).astype(bool)
+    X_train[mask] = np.nan
+    hgbr = HistGradientBoostingRegressor(random_state=rng)
+    dt = make_pipeline(
+        SimpleImputer(), DecisionTreeRegressor())
+
+    reg = StackingRegressor(estimators=[('hgbc', hgbr), ('dt', dt)])
+    reg.fit(X_train, y_train)
+    assert reg.score(X_test, y_test) > 0.45
