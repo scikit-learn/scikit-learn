@@ -442,7 +442,7 @@ Finally, you can build scikit-learn. For example on Linux x86_64::
 .. _arm64_dev_env:
 
 Building and testing for the ARM64 platform
--------------------------------------------
+===========================================
 
 ARM-based machines are a popular target for mobile, edge or other low-energy
 deployments (including in the cloud, for instance on Scaleway or AWS Graviton).
@@ -460,7 +460,7 @@ source code::
     wget https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-Linux-aarch64.sh
     git clone https://github.com/scikit-learn/scikit-learn.git
 
-User docker to install QEMU user mode and run an ARM64v8 container with access
+Use docker to install QEMU user mode and run an ARM64v8 container with access
 to your shared folder under the `/io` mount point::
 
     docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
