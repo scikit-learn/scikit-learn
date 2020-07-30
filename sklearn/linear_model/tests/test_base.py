@@ -56,7 +56,7 @@ def test_linear_regression(solver):
 @pytest.mark.parametrize('solver', ['lsqr', 'wrong_string'])
 def test_linear_regression_value_error(solver):
     with pytest.raises(ValueError) as err:
-        reg = LinearRegression(solver=solver)
+        LinearRegression(solver=solver)
     assert "Solver must be" in str(err.value)
 
 
