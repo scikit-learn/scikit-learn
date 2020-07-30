@@ -32,11 +32,9 @@ run_tests() {
     # Get into a temp directory to run test from the installed scikit-learn and
     # check if we do not leave artifacts
     mkdir -p $TEST_DIR
-    # We need the setup.cfg and conftest.py for the pytest settings
+    # We need the setup.cfg for the pytest settings
     cp setup.cfg $TEST_DIR
-    cp conftest.py $TEST_DIR
     cd $TEST_DIR
-
 
     if [[ "$TRAVIS_CPU_ARCH" == "arm64" ]]; then
         # use pytest-xdist for faster tests
