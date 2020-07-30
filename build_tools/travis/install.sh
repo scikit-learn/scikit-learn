@@ -98,12 +98,10 @@ if [[ "$BUILD_WITH_ICC" == "true" ]]; then
 else
     # Use setup.py instead of `pip install -e .` to be able to pass the -j flag
     # to speed-up the building multicore CI machines.
-    # python setup.py build_ext --inplace -j "${CI_CPU_COUNT}"
-    echo "disabled sklearn build"
+    python setup.py build_ext --inplace -j "${CI_CPU_COUNT}"
 fi
 
-# python setup.py develop
-echo "disabled sklearn install"
+python setup.py develop
 
 ccache --show-stats
 # Useful for debugging how ccache is used
