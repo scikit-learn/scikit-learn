@@ -309,7 +309,7 @@ def confusion_matrix(y_true, y_pred, *, labels=None, sample_weight=None,
             [  3,   7, 140,  25,  25],
             [  6,   4,  50, 120,  20],
             [  8,   2,  30,  25, 135]]),
-     ['wolf', 'dog', 'leopard', 'lion', 'cat'])
+     ['wolf', 'dog', 'jag', 'lion', 'cat'])
     """
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     if y_type not in ("binary", "multiclass"):
