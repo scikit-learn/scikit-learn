@@ -70,5 +70,4 @@ run_tests() {
 
 echo "before run_tests function"
 run_tests
-exit $?
 echo "after run_tests function"
