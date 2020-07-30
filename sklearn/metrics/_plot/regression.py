@@ -29,17 +29,6 @@ class PredictionErrorDisplay:
         Dictionary where the key is the name of the metric displayed and the
         value is the metric value.
 
-    subsample : float, int or None, default=1000
-        Sampling the samples to be shown on the scatter plot. If `float`, it
-        should be between 0 and 1 and represents the proportion of the original
-        dataset. If `int`, it represents the number of samples display on the
-        scatter plot. If `None`, no subsampling will be applied. by default,
-        a 1000 samples or less will be displayed.
-
-    random_state : int or RandomState, default=None
-        Controls the randomness when `subsample` is not `None`.
-        See :term:`Glossary <random_state>` for details.
-
     with_residuals : bool, default=False
         Whether or not to display the residuals on the plot for each sample.
 
@@ -80,15 +69,11 @@ class PredictionErrorDisplay:
         y_true,
         y_pred,
         scores=None,
-        subsample=1000,
-        random_state=None,
         with_residuals=False,
     ):
         self.y_true = y_true
         self.y_pred = y_pred
         self.scores = scores
-        self.subsample = subsample
-        self.random_state = random_state
         self.with_residuals = with_residuals
 
     def plot(
@@ -131,32 +116,6 @@ class PredictionErrorDisplay:
 
         import matplotlib.pyplot as plt
 
-        random_state = check_random_state(self.random_state)
-
-        subsample = self.subsample
-        if isinstance(subsample, numbers.Integral):
-            if subsample <= 0:
-                raise ValueError(
-                    f"When an integer, subsample={subsample} should be "
-                    f"positive."
-                )
-        elif isinstance(subsample, numbers.Real):
-            if subsample <= 0 or subsample >= 1:
-                raise ValueError(
-                    f"When a floating-point, subsample={subsample} should"
-                    f" be in the (0, 1) range."
-                )
-            subsample = int(len(self.y_true) * subsample)
-
-        if subsample is not None and subsample < len(self.y_true):
-            indices = random_state.choice(
-                np.arange(len(self.y_true)), size=subsample
-            )
-            y_true = _safe_indexing(self.y_true, indices)
-            y_pred = _safe_indexing(self.y_pred, indices)
-        else:
-            y_true, y_pred = self.y_true, self.y_pred
-
         if scatter_kwargs is None:
             scatter_kwargs = {}
         if line_kwargs is None:
@@ -181,7 +140,7 @@ class PredictionErrorDisplay:
 
         if self.with_residuals:
             self.residual_lines_ = []
-            for actual, predicted in zip(y_true, y_pred):
+            for actual, predicted in zip(self.y_true, self.y_pred):
                 residual_line = ax.plot(
                     [actual, actual], [actual, predicted], **residuals_kwargs,
                 )
@@ -189,13 +148,13 @@ class PredictionErrorDisplay:
         else:
             self.residual_lines_ = None
 
-        max_value = max(np.max(y_true), np.max(y_pred))
-        min_value = min(np.min(y_true), np.min(y_pred))
+        max_value = max(np.max(self.y_true), np.max(self.y_pred))
+        min_value = min(np.min(self.y_true), np.min(self.y_pred))
         self.line_ = ax.plot(
             [min_value, max_value], [min_value, max_value], **line_kwargs
         )[0]
 
-        self.scatter_ = ax.scatter(y_true, y_pred, **scatter_kwargs)
+        self.scatter_ = ax.scatter(self.y_true, self.y_pred, **scatter_kwargs)
 
         xlabel, ylabel = "Actual values", "Predicted values"
         ax.set(xlabel=xlabel, ylabel=ylabel)
@@ -339,12 +298,33 @@ def plot_prediction_error(
         key.replace("_", " "): f"{value:.3f}" for key, value in scores.items()
     }
 
+    random_state = check_random_state(random_state)
+
+    if isinstance(subsample, numbers.Integral):
+        if subsample <= 0:
+            raise ValueError(
+                f"When an integer, subsample={subsample} should be "
+                f"positive."
+            )
+    elif isinstance(subsample, numbers.Real):
+        if subsample <= 0 or subsample >= 1:
+            raise ValueError(
+                f"When a floating-point, subsample={subsample} should"
+                f" be in the (0, 1) range."
+            )
+        subsample = int(len(y) * subsample)
+
+    if subsample is not None and subsample < len(y):
+        indices = random_state.choice(np.arange(len(y)), size=subsample)
+        y_true = _safe_indexing(y, indices)
+        y_pred = _safe_indexing(y_pred, indices)
+    else:
+        y_true, y_pred = y, y_pred
+
     viz = PredictionErrorDisplay(
-        y_true=y,
+        y_true=y_true,
         y_pred=y_pred,
         scores=scores,
-        subsample=subsample,
-        random_state=random_state,
         with_residuals=with_residuals,
     )
 
