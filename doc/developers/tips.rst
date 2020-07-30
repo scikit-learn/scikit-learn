@@ -294,7 +294,7 @@ to your shared folder under the `/io` mount point::
     docker run -v`pwd`:/io --rm -it arm64v8/ubuntu /bin/bash
 
 In the container, install miniforge3 for the ARM64 (a.k.a. aarch64)
-architecture:
+architecture::
 
     bash Miniforge3-Linux-aarch64.sh
     # Choose to install miniforge3 under: `/io/miniforge3`
