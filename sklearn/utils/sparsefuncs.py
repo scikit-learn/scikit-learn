@@ -491,7 +491,8 @@ def count_nonzero(X, axis=None, sample_weight=None):
 def _get_median(data, n_zeros):
     """Compute the median of data with n_zeros additional zeros.
 
-    This function is used to support sparse matrices; it modifies data in-place.
+    This function is used to support sparse matrices; it modifies data
+    in-place.
     """
     n_elems = len(data) + n_zeros
     if not n_elems:
