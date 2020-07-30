@@ -790,8 +790,8 @@ def cross_val_predict(estimator, X, y=None, *, groups=None, cv=None,
               'decision_function' and the target is binary: (n_samples,)
             - When `method` is one of {'predict_proba', 'predict_log_proba',
               'decision_function'} (unless special case above):
-              (n_samples, n_classes).
-            - If `estimator` is :term:`multioutput`, a third dimension
+              (n_samples, n_classes)
+            - If `estimator` is :term:`multioutput`, an extra dimension
               'n_outputs' is added to the end of each shape above.
 
     See also
