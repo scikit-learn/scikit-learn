@@ -46,9 +46,10 @@ class CalibratedClassifierCV(ClassifierMixin,
     using the testing subset. For prediction, predicted probabilities are
     averaged across these individual calibrated classifiers. When
     `ensemble=False`, cross-validation is used to obtain unbiased predictions,
-    from the testing subset, which are used for calibration. For prediction,
-    the base estimator, trained using all the data, is used. This is the method
-    implemented when `probabilities=True` for :mod:`sklearn.svm` estimators.
+    via :func:`~sklearn.model_selection.cross_val_predict`, which are then
+    used for calibration. For prediction, the base estimator, trained using all
+    the data, is used. This is the method implemented when `probabilities=True`
+    for :mod:`sklearn.svm` estimators.
 
     Already fitted classifiers can be calibrated via the parameter
     `cv="prefit"`. In this case, no cross-validation is used and all provided
@@ -75,7 +76,7 @@ class CalibratedClassifierCV(ClassifierMixin,
         ``(<<1000)`` since it tends to overfit.
 
     cv : integer, cross-validation generator, iterable or "prefit", \
-         default=None
+            default=None
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 
@@ -144,10 +145,10 @@ class CalibratedClassifierCV(ClassifierMixin,
         `n_cv` is the number of cross-validation folds. The output is the
         average predicted probabilities of all pairs.
 
-        If `False`, `cv` is used to compute unbiased predictions (with the
-        test fold), which are concatenated and used to train the calibrator
-        (sigmoid or isotonic model). At prediction time, the classifier used
-        is the `base_estimator` trained on all the data.
+        If `False`, `cv` is used to compute unbiased predictions, via
+        :func:`~sklearn.model_selection.cross_val_predict`, which are then
+        used for calibration. At prediction time, the classifier used is the
+        `base_estimator` trained on all the data.
         Note this method is implemented when `probabilities=True` for
         :mod:`sklearn.svm` estimators.
 
@@ -340,7 +341,8 @@ class CalibratedClassifierCV(ClassifierMixin,
                 method_name = _get_prediction_method(this_estimator).__name__
                 pred_method = partial(
                     cross_val_predict, estimator=this_estimator, X=X, y=y,
-                    cv=cv, method=method_name
+                    cv=cv, method=method_name, n_jobs=self.n_jobs,
+                    verbose=self.verbose, pre_dispatch=self.pre_dispatch
                 )
                 preds = _get_predictions(pred_method, X, n_classes)
 
@@ -415,7 +417,7 @@ class CalibratedClassifierCV(ClassifierMixin,
 
 def _get_pred_fit_calibrator(estimator, X, y, train, test, supports_sw,
                              method, classes, sample_weight=None):
-    """Get predictions and fit calibrator for a given dataset split.
+    """Compute predictions and fit a calibrator for a given dataset split.
 
     Parameters
     ----------
@@ -494,7 +496,7 @@ def _get_prediction_method(clf):
 
 
 def _get_predictions(pred_method, X, n_classes):
-    """Returns predictions for `X` and reshapes binary outputs to shape
+    """Return predictions for `X` and reshape binary outputs to shape
     (n_samples, 1).
 
     Parameters
@@ -516,19 +518,19 @@ def _get_predictions(pred_method, X, n_classes):
     """
     preds = pred_method(X=X)
     if hasattr(pred_method, '__name__'):
-        method = pred_method.__name__
+        method_name = pred_method.__name__
     else:
-        method = signature(pred_method).parameters['method'].default
+        method_name = signature(pred_method).parameters['method'].default
 
-    if method == 'decision_function':
+    if method_name == 'decision_function':
         if preds.ndim == 1:
             preds = preds[:, np.newaxis]
-    elif method == 'predict_proba':
+    elif method_name == 'predict_proba':
         if n_classes == 2:
             preds = preds[:, 1:]
-    else:
-        raise RuntimeError("'pred_method' needs to be one of "
-                           "'decision_function' or 'predict_proba'.")
+    else:  # pragma: no cover
+        # this branch should be unreachable.
+        raise ValueError
     return preds
 
 
@@ -579,7 +581,9 @@ def _fit_calibrator(clf, preds, y, classes, method, sample_weight=None):
         calibrator.fit(this_pred, Y[:, class_idx], sample_weight)
         calibrators.append(calibrator)
 
-    pipeline = _CalibratedClassiferPipeline(clf, calibrators, classes)
+    pipeline = _CalibratedClassiferPipeline(
+        clf, calibrators, method=method, classes
+    )
     return pipeline
 
 
@@ -600,9 +604,11 @@ class _CalibratedClassiferPipeline:
     classes : ndarray, shape (n_classes,)
         All the prediction classes.
     """
-    def __init__(self, clf, calibrators, classes):
-        self.clf = clf
+    def __init__(self, base_estimator, calibrators, *, method='sigmoid',
+                 classes):
+        self.base_estimator = base_estimator
         self.calibrators = calibrators
+        self.method = method
         self.classes = classes
 
     def predict_proba(self, X):

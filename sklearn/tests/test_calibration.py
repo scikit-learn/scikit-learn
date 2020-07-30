@@ -118,7 +118,7 @@ def test_calibration_default_estimator():
     calib_clf = CalibratedClassifierCV(cv=2)
     calib_clf.fit(X, y)
 
-    base_est = calib_clf.calibrated_classifiers_[0].clf
+    base_est = calib_clf.calibrated_classifiers_[0].base_estimator
     assert isinstance(base_est, LinearSVC)
 
 
@@ -195,8 +195,8 @@ def test_parallel_execution(method, ensemble):
 @pytest.mark.parametrize('method', ['sigmoid', 'isotonic'])
 @pytest.mark.parametrize('ensemble', [True, False])
 def test_calibration_multiclass(method, ensemble):
-    """Test calibration for multiclass with classifier that implements
-    only decision function."""
+    # Test calibration for multiclass with classifier that implements
+    # only decision function."""
     clf = LinearSVC(random_state=7)
     X, y_idx = make_blobs(n_samples=100, n_features=2, random_state=42,
                           centers=3, cluster_std=3.0)
@@ -300,14 +300,14 @@ def test_calibration_prefit():
 
 @pytest.mark.parametrize('method', ['sigmoid', 'isotonic'])
 def test_calibration_ensemble_false(method):
-    """Test that `ensemble=False` is the same as using predictions from
-    `cross_val_predict` to train calibrator."""
+    # Test that `ensemble=False` is the same as using predictions from
+    # `cross_val_predict` to train calibrator.
     X, y = make_classification(n_samples=100, n_features=6, random_state=7)
     clf = LinearSVC(random_state=7)
 
     cal_clf = CalibratedClassifierCV(clf, method=method, cv=3, ensemble=False)
     cal_clf.fit(X, y)
-    cal_probas = cal_clf.predict_proba(X[:10, :])
+    cal_probas = cal_clf.predict_proba(X)
 
     # Get probas manually
     unbiased_preds = cross_val_predict(
@@ -320,7 +320,7 @@ def test_calibration_ensemble_false(method):
     calibrator.fit(unbiased_preds, y)
     # Use `clf` fit on all data
     clf.fit(X, y)
-    clf_df = clf.decision_function(X[:10, :])
+    clf_df = clf.decision_function(X)
     manual_probas = calibrator.predict(clf_df)
     assert_allclose(cal_probas[:, 1], manual_probas)
 
@@ -436,7 +436,7 @@ def test_calibration_less_classes(ensemble):
             assert np.all(np.hstack([proba[:, :i],
                                      proba[:, i + 1:]]))
         else:
-            # Check `proba` all 1/n_classes
+            # Check `proba` are all 1/n_classes
             assert np.allclose(proba, 1 / proba.shape[0])
 
 

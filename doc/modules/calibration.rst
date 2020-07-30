@@ -124,8 +124,9 @@ list. The output of :term:`predict` is the class that has the highest
 probability.
 
 When `ensemble=False`, cross-validation is used to obtain 'unbiased'
-predictions for all the data, by concatenating the testing subset predictions.
-These unbiased predictions are used to train the calibrator. The attribute
+predictions for all the data, via
+:func:`~sklearn.model_selection.cross_val_predict`.
+These unbiased predictions are then used to train the calibrator. The attribute
 `calibrated_classifiers_` consists of only one `(classifier, calibrator)`
 couple where the classifier is the `base_estimator` trained on all the data.
 In this case the output of :term:`predict_proba` for
