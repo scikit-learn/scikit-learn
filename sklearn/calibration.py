@@ -282,9 +282,7 @@ class CalibratedClassifierCV(ClassifierMixin,
 
             pred_method = _get_prediction_method(base_estimator)
             n_classes = len(self.classes_)
-            preds = _get_predictions(
-                pred_method, pred_method.__name__, X, n_classes
-            )
+            preds = _get_predictions(pred_method,X, n_classes)
 
             calibrated_classifier = _fit_calibrator(
                 base_estimator, preds, y, self.classes_, self.method,
@@ -344,9 +342,7 @@ class CalibratedClassifierCV(ClassifierMixin,
                     cross_val_predict, estimator=this_estimator, X=X, y=y,
                     cv=cv, method=method_name
                 )
-                preds = _get_predictions(
-                    pred_method, method_name, X, n_classes=n_classes
-                )
+                preds = _get_predictions(pred_method, X, n_classes)
 
                 if sample_weight is not None and supports_sw:
                     this_estimator.fit(X, y, sample_weight)
@@ -462,9 +458,7 @@ def _get_pred_fit_calibrator(estimator, X, y, train, test, supports_sw,
 
     n_classes = len(classes)
     pred_method = _get_prediction_method(estimator)
-    preds = _get_predictions(
-        pred_method, pred_method.__name__, X[test], n_classes
-    )
+    preds = _get_predictions(pred_method, X[test], n_classes)
 
     sw = None if sample_weight is None else sample_weight[test]
     calibrated_classifier = _fit_calibrator(
@@ -489,17 +483,17 @@ def _get_prediction_method(clf):
     prediction_method : callable
         The prediction method.
     """
-    if hasattr(clf, "decision_function"):
-        method = getattr(clf, "decision_function")
-    elif hasattr(clf, "predict_proba"):
-        method = getattr(clf, "predict_proba")
+    if hasattr(clf, 'decision_function'):
+        method = getattr(clf, 'decision_function')
+    elif hasattr(clf, 'predict_proba'):
+        method = getattr(clf, 'predict_proba')
     else:
         raise RuntimeError("'base_estimator' has no 'decision_function' or "
                            "'predict_proba' method.")
     return method
 
 
-def _get_predictions(pred_method, method_name, X, n_classes):
+def _get_predictions(pred_method, X, n_classes):
     """Returns predictions for `X` and reshapes binary outputs to shape
     (n_samples, 1).
 
@@ -507,9 +501,6 @@ def _get_predictions(pred_method, method_name, X, n_classes):
     ----------
     pred_method : callable
         Prediction method.
-
-    method_name : {'decision_function', 'predict_proba'}
-        The name of the method of the `pred_method` as str.
 
     X : array-like or None
         Data used to obtain predictions.
@@ -524,15 +515,19 @@ def _get_predictions(pred_method, method_name, X, n_classes):
         (X.shape[0], 1).
     """
     preds = pred_method(X=X)
+    if hasattr(pred_method, '__name__'):
+        method = pred_method.__name__
+    else:
+        method = signature(pred_method).parameters['method'].default
 
-    if method_name == 'decision_function':
+    if method == 'decision_function':
         if preds.ndim == 1:
             preds = preds[:, np.newaxis]
-    elif method_name == 'predict_proba':
+    elif method == 'predict_proba':
         if n_classes == 2:
             preds = preds[:, 1:]
     else:
-        raise RuntimeError("'method_name' needs to be one of "
+        raise RuntimeError("'pred_method' needs to be one of "
                            "'decision_function' or 'predict_proba'.")
     return preds
 
@@ -626,11 +621,10 @@ class _CalibratedClassiferPipeline:
         proba : array, shape (n_samples, n_classes)
             The predicted probabilities. Can be exact zeros.
         """
-        pred_method = _get_prediction_method(self.clf)
         n_classes = len(self.classes)
-        preds = _get_predictions(
-            pred_method, pred_method.__name__, X, n_classes
-        )
+        pred_method = _get_prediction_method(self.clf)
+        preds = _get_predictions(pred_method, X, n_classes)
+
         label_encoder = LabelEncoder().fit(self.classes)
         pos_class_indices = label_encoder.transform(self.clf.classes_)
 
