@@ -582,7 +582,7 @@ def _fit_calibrator(clf, preds, y, classes, method, sample_weight=None):
         calibrators.append(calibrator)
 
     pipeline = _CalibratedClassiferPipeline(
-        clf, calibrators, method=method, classes
+        clf, calibrators, method=method, classes=classes
     )
     return pipeline
 
@@ -628,11 +628,13 @@ class _CalibratedClassiferPipeline:
             The predicted probabilities. Can be exact zeros.
         """
         n_classes = len(self.classes)
-        pred_method = _get_prediction_method(self.clf)
+        pred_method = _get_prediction_method(self.base_estimator)
         preds = _get_predictions(pred_method, X, n_classes)
 
         label_encoder = LabelEncoder().fit(self.classes)
-        pos_class_indices = label_encoder.transform(self.clf.classes_)
+        pos_class_indices = label_encoder.transform(
+            self.base_estimator.classes_
+        )
 
         proba = np.zeros((X.shape[0], n_classes))
         for class_idx, this_pred, calibrator in \

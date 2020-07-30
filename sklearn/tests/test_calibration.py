@@ -30,12 +30,20 @@ from sklearn.calibration import _sigmoid_calibration, _SigmoidCalibration
 from sklearn.calibration import calibration_curve
 
 
+@pytest.fixture(scope="module")
+def data():
+    X, y = make_classification(
+        n_samples=200, n_features=6, random_state=42
+    )
+    return X, y
+
+
+@pytest.mark.parametrize('method', ['sigmoid', 'isotonic'])
 @pytest.mark.parametrize('ensemble', [True, False])
-def test_calibration(ensemble):
-    """Test calibration objects with isotonic and sigmoid"""
+def test_calibration(data, method, ensemble):
+    # Test calibration objects with isotonic and sigmoid
     n_samples = 100
-    X, y = make_classification(n_samples=2 * n_samples, n_features=6,
-                               random_state=42)
+    X, y = data
     sample_weight = np.random.RandomState(seed=42).uniform(size=y.size)
 
     X -= X.min()  # MultinomialNB only allows positive X
@@ -56,65 +64,71 @@ def test_calibration(ensemble):
     for this_X_train, this_X_test in [(X_train, X_test),
                                       (sparse.csr_matrix(X_train),
                                        sparse.csr_matrix(X_test))]:
-        for method in ['isotonic', 'sigmoid']:
-            pc_clf = CalibratedClassifierCV(
-                clf, method=method, cv=2, ensemble=ensemble
-            )
-            # Note that this fit overwrites the fit on the entire training
-            # set
-            pc_clf.fit(this_X_train, y_train, sample_weight=sw_train)
-            prob_pos_pc_clf = pc_clf.predict_proba(this_X_test)[:, 1]
 
-            # Check that brier score has improved after calibration
+        pc_clf = CalibratedClassifierCV(
+            clf, method=method, cv=2, ensemble=ensemble
+        )
+        # Note that this fit overwrites the fit on the entire training
+        # set
+        pc_clf.fit(this_X_train, y_train, sample_weight=sw_train)
+        prob_pos_pc_clf = pc_clf.predict_proba(this_X_test)[:, 1]
+
+        # Check that brier score has improved after calibration
+        assert (brier_score_loss(y_test, prob_pos_clf) >
+                brier_score_loss(y_test, prob_pos_pc_clf))
+
+        # Check invariance against relabeling [0, 1] -> [1, 2]
+        pc_clf.fit(this_X_train, y_train + 1, sample_weight=sw_train)
+        prob_pos_pc_clf_relabeled = pc_clf.predict_proba(this_X_test)[:, 1]
+        assert_array_almost_equal(prob_pos_pc_clf,
+                                    prob_pos_pc_clf_relabeled)
+
+        # Check invariance against relabeling [0, 1] -> [-1, 1]
+        pc_clf.fit(this_X_train, 2 * y_train - 1, sample_weight=sw_train)
+        prob_pos_pc_clf_relabeled = pc_clf.predict_proba(this_X_test)[:, 1]
+        assert_array_almost_equal(prob_pos_pc_clf,
+                                    prob_pos_pc_clf_relabeled)
+
+        # Check invariance against relabeling [0, 1] -> [1, 0]
+        pc_clf.fit(this_X_train, (y_train + 1) % 2,
+                    sample_weight=sw_train)
+        prob_pos_pc_clf_relabeled = \
+            pc_clf.predict_proba(this_X_test)[:, 1]
+        if method == "sigmoid":
+            assert_array_almost_equal(prob_pos_pc_clf,
+                                        1 - prob_pos_pc_clf_relabeled)
+        else:
+            # Isotonic calibration is not invariant against relabeling
+            # but should improve in both cases
             assert (brier_score_loss(y_test, prob_pos_clf) >
-                    brier_score_loss(y_test, prob_pos_pc_clf))
+                    brier_score_loss((y_test + 1) % 2,
+                                        prob_pos_pc_clf_relabeled))
 
-            # Check invariance against relabeling [0, 1] -> [1, 2]
-            pc_clf.fit(this_X_train, y_train + 1, sample_weight=sw_train)
-            prob_pos_pc_clf_relabeled = pc_clf.predict_proba(this_X_test)[:, 1]
-            assert_array_almost_equal(prob_pos_pc_clf,
-                                      prob_pos_pc_clf_relabeled)
 
-            # Check invariance against relabeling [0, 1] -> [-1, 1]
-            pc_clf.fit(this_X_train, 2 * y_train - 1, sample_weight=sw_train)
-            prob_pos_pc_clf_relabeled = pc_clf.predict_proba(this_X_test)[:, 1]
-            assert_array_almost_equal(prob_pos_pc_clf,
-                                      prob_pos_pc_clf_relabeled)
-
-            # Check invariance against relabeling [0, 1] -> [1, 0]
-            pc_clf.fit(this_X_train, (y_train + 1) % 2,
-                       sample_weight=sw_train)
-            prob_pos_pc_clf_relabeled = \
-                pc_clf.predict_proba(this_X_test)[:, 1]
-            if method == "sigmoid":
-                assert_array_almost_equal(prob_pos_pc_clf,
-                                          1 - prob_pos_pc_clf_relabeled)
-            else:
-                # Isotonic calibration is not invariant against relabeling
-                # but should improve in both cases
-                assert (brier_score_loss(y_test, prob_pos_clf) >
-                        brier_score_loss((y_test + 1) % 2,
-                                         prob_pos_pc_clf_relabeled))
-
-        # Check failure cases:
-        # only "isotonic" and "sigmoid" should be accepted as methods
+@pytest.mark.parametrize('ensemble', [True, False])
+def test_calibration_bad_method(data, ensemble):
+        # Check only "isotonic" and "sigmoid" are accepted as methods
+        X, y = data
+        clf = LinearSVC()
         clf_invalid_method = CalibratedClassifierCV(
             clf, method="foo", ensemble=ensemble
         )
-        assert_raises(ValueError, clf_invalid_method.fit, X_train, y_train)
+        assert_raises(ValueError, clf_invalid_method.fit, X, y)
 
-        # base-estimators should provide either decision_function or
+
+@pytest.mark.parametrize('ensemble', [True, False])
+def test_calibration_regressor(data, ensemble):
+        # `base-estimator` should provide either decision_function or
         # predict_proba (most regressors, for instance, should fail)
+        X, y = data
         clf_base_regressor = \
-            CalibratedClassifierCV(
-                RandomForestRegressor(), method="sigmoid", ensemble=ensemble
-            )
-        assert_raises(RuntimeError, clf_base_regressor.fit, X_train, y_train)
+            CalibratedClassifierCV(RandomForestRegressor(), ensemble=ensemble)
+        assert_raises(RuntimeError, clf_base_regressor.fit, X, y)
 
 
-def test_calibration_default_estimator():
+def test_calibration_default_estimator(data):
     # Check base_estimator default is LinearSVC
-    X, y = make_classification(n_samples=100, n_features=6, random_state=42)
+    X, y = data
     calib_clf = CalibratedClassifierCV(cv=2)
     calib_clf.fit(X, y)
 
@@ -123,9 +137,9 @@ def test_calibration_default_estimator():
 
 
 @pytest.mark.parametrize('ensemble', [True, False])
-def test_calibration_cv_splitter(ensemble):
+def test_calibration_cv_splitter(data, ensemble):
     # Check when `cv` is a CV splitter
-    X, y = make_classification(n_samples=100, n_features=6, random_state=42)
+    X, y = data
 
     splits = 5
     kfold = KFold(n_splits=splits)
@@ -142,10 +156,9 @@ def test_calibration_cv_splitter(ensemble):
 
 @pytest.mark.parametrize('method', ['sigmoid', 'isotonic'])
 @pytest.mark.parametrize('ensemble', [True, False])
-def test_sample_weight(method, ensemble):
+def test_sample_weight(data, method, ensemble):
     n_samples = 100
-    X, y = make_classification(n_samples=2 * n_samples, n_features=6,
-                               random_state=42)
+    X, y = data
 
     sample_weight = np.random.RandomState(seed=42).uniform(size=len(y))
     X_train, y_train, sw_train = \
@@ -170,9 +183,9 @@ def test_sample_weight(method, ensemble):
 
 @pytest.mark.parametrize('method', ['sigmoid', 'isotonic'])
 @pytest.mark.parametrize('ensemble', [True, False])
-def test_parallel_execution(method, ensemble):
+def test_parallel_execution(data, method, ensemble):
     """Test parallel calibration"""
-    X, y = make_classification(random_state=42)
+    X, y = data
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
 
     base_estimator = LinearSVC(random_state=42)
@@ -299,10 +312,10 @@ def test_calibration_prefit():
 
 
 @pytest.mark.parametrize('method', ['sigmoid', 'isotonic'])
-def test_calibration_ensemble_false(method):
+def test_calibration_ensemble_false(data, method):
     # Test that `ensemble=False` is the same as using predictions from
     # `cross_val_predict` to train calibrator.
-    X, y = make_classification(n_samples=100, n_features=6, random_state=7)
+    X, y = data
     clf = LinearSVC(random_state=7)
 
     cal_clf = CalibratedClassifierCV(clf, method=method, cv=3, ensemble=False)
