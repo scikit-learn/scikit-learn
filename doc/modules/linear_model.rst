@@ -98,11 +98,8 @@ Cholesky Complexity
 The Cholesky solution is computed using the Cholesky factorization of
 X. If X is a matrix of shape `(n_samples, n_features)` this  method has
 a cost of
-The least squares solution is computed using the singular value
-decomposition of X. If X is a matrix of shape `(n_samples, n_features)`
-this method has a cost of
 :math:`O(n_{\text{samples}} n_{\text{features}}^2)` to form
-:math:`X^{\intercal}X` and :math:`O(n_{\text{features}}^3) to run the
+:math:`X^{\intercal}X` and :math:`O(n_{\text{features}}^3)` to run the
 solver.
 
 .. _ridge_regression:
