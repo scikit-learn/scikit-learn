@@ -41,7 +41,6 @@ from .utils.random import sample_without_replacement
 from .utils.validation import check_array, check_is_fitted
 from .utils.validation import _deprecate_positional_args
 from .exceptions import DataDimensionalityWarning
-from .utils import deprecated
 
 
 __all__ = ["SparseRandomProjection",
@@ -49,7 +48,8 @@ __all__ = ["SparseRandomProjection",
            "johnson_lindenstrauss_min_dim"]
 
 
-def johnson_lindenstrauss_min_dim(n_samples, eps=0.1):
+@_deprecate_positional_args
+def johnson_lindenstrauss_min_dim(n_samples, *, eps=0.1):
     """Find a 'safe' number of components to randomly project to
 
     The distortion introduced by a random projection `p` only changes the
@@ -82,10 +82,11 @@ def johnson_lindenstrauss_min_dim(n_samples, eps=0.1):
         Number of samples. If an array is given, it will compute
         a safe number of components array-wise.
 
-    eps : float or numpy array of float in ]0,1[, optional (default=0.1)
-        Maximum distortion rate as defined by the Johnson-Lindenstrauss lemma.
-        If an array is given, it will compute a safe number of components
-        array-wise.
+    eps : float or ndarray of shape (n_components,), dtype=float, \
+            default=0.1
+        Maximum distortion rate in the range (0,1 ) as defined by the
+        Johnson-Lindenstrauss lemma. If an array is given, it will compute a
+        safe number of components array-wise.
 
     Returns
     -------
@@ -128,7 +129,7 @@ def johnson_lindenstrauss_min_dim(n_samples, eps=0.1):
             % n_samples)
 
     denominator = (eps ** 2 / 2) - (eps ** 3 / 3)
-    return (4 * np.log(n_samples) / denominator).astype(np.int)
+    return (4 * np.log(n_samples) / denominator).astype(int)
 
 
 def _check_density(density, n_features):
@@ -152,13 +153,6 @@ def _check_input_size(n_components, n_features):
                          n_features)
 
 
-# TODO: remove in 0.24
-@deprecated("gaussian_random_matrix is deprecated in "
-            "0.22 and will be removed in version 0.24.")
-def gaussian_random_matrix(n_components, n_features, random_state=None):
-    return _gaussian_random_matrix(n_components, n_features, random_state)
-
-
 def _gaussian_random_matrix(n_components, n_features, random_state=None):
     """Generate a dense Gaussian random matrix.
 
@@ -176,7 +170,7 @@ def _gaussian_random_matrix(n_components, n_features, random_state=None):
     n_features : int,
         Dimensionality of the original source space.
 
-    random_state : int, RandomState instance or None, optional (default=None)
+    random_state : int or RandomState instance, default=None
         Controls the pseudo random number generator used to generate the matrix
         at fit time.
         Pass an int for reproducible output across multiple function calls.
@@ -197,15 +191,6 @@ def _gaussian_random_matrix(n_components, n_features, random_state=None):
                             scale=1.0 / np.sqrt(n_components),
                             size=(n_components, n_features))
     return components
-
-
-# TODO: remove in 0.24
-@deprecated("gaussian_random_matrix is deprecated in "
-            "0.22 and will be removed in version 0.24.")
-def sparse_random_matrix(n_components, n_features, density='auto',
-                         random_state=None):
-    return _sparse_random_matrix(n_components, n_features, density,
-                                 random_state)
 
 
 def _sparse_random_matrix(n_components, n_features, density='auto',
@@ -233,8 +218,9 @@ def _sparse_random_matrix(n_components, n_features, density='auto',
     n_features : int,
         Dimensionality of the original source space.
 
-    density : float in range ]0, 1] or 'auto', optional (default='auto')
-        Ratio of non-zero component in the random projection matrix.
+    density : float or 'auto', default='auto'
+        Ratio of non-zero component in the random projection matrix in the
+        range `(0, 1]`
 
         If density = 'auto', the value is set to the minimum density
         as recommended by Ping Li et al.: 1 / sqrt(n_features).
@@ -242,7 +228,7 @@ def _sparse_random_matrix(n_components, n_features, density='auto',
         Use density = 1 / 3.0 if you want to reproduce the results from
         Achlioptas, 2001.
 
-    random_state : int, RandomState instance or None, optional (default=None)
+    random_state : int or RandomState instance, default=None
         Controls the pseudo random number generator used to generate the matrix
         at fit time.
         Pass an int for reproducible output across multiple function calls.
@@ -440,7 +426,7 @@ class GaussianRandomProjection(BaseRandomProjection):
 
     Parameters
     ----------
-    n_components : int or 'auto', optional (default = 'auto')
+    n_components : int or 'auto', default='auto'
         Dimensionality of the target projection space.
 
         n_components can be automatically adjusted according to the
@@ -452,15 +438,15 @@ class GaussianRandomProjection(BaseRandomProjection):
         very conservative estimated of the required number of components
         as it makes no assumption on the structure of the dataset.
 
-    eps : strictly positive float, optional (default=0.1)
+    eps : float, default=0.1
         Parameter to control the quality of the embedding according to
-        the Johnson-Lindenstrauss lemma when n_components is set to
-        'auto'.
+        the Johnson-Lindenstrauss lemma when `n_components` is set to
+        'auto'. The value should be strictly positive.
 
         Smaller values lead to better embedding and higher number of
         dimensions (n_components) in the target projection space.
 
-    random_state : int, RandomState instance or None, optional (default=None)
+    random_state : int or RandomState instance, default=None
         Controls the pseudo random number generator used to generate the
         projection matrix at fit time.
         Pass an int for reproducible output across multiple function calls.
@@ -542,7 +528,7 @@ class SparseRandomProjection(BaseRandomProjection):
 
     Parameters
     ----------
-    n_components : int or 'auto', optional (default = 'auto')
+    n_components : int or 'auto', default='auto'
         Dimensionality of the target projection space.
 
         n_components can be automatically adjusted according to the
@@ -554,8 +540,9 @@ class SparseRandomProjection(BaseRandomProjection):
         very conservative estimated of the required number of components
         as it makes no assumption on the structure of the dataset.
 
-    density : float in range ]0, 1], optional (default='auto')
-        Ratio of non-zero component in the random projection matrix.
+    density : float or 'auto', default='auto'
+        Ratio in the range (0, 1] of non-zero component in the random
+        projection matrix.
 
         If density = 'auto', the value is set to the minimum density
         as recommended by Ping Li et al.: 1 / sqrt(n_features).
@@ -563,15 +550,15 @@ class SparseRandomProjection(BaseRandomProjection):
         Use density = 1 / 3.0 if you want to reproduce the results from
         Achlioptas, 2001.
 
-    eps : strictly positive float, optional, (default=0.1)
+    eps : float, default=0.1
         Parameter to control the quality of the embedding according to
         the Johnson-Lindenstrauss lemma when n_components is set to
-        'auto'.
+        'auto'. This value should be strictly positive.
 
         Smaller values lead to better embedding and higher number of
         dimensions (n_components) in the target projection space.
 
-    dense_output : boolean, optional (default=False)
+    dense_output : bool, default=False
         If True, ensure that the output of the random projection is a
         dense numpy array even if the input and random projection matrix
         are both sparse. In practice, if the number of components is
@@ -582,7 +569,7 @@ class SparseRandomProjection(BaseRandomProjection):
         If False, the projected data uses a sparse representation if
         the input is sparse.
 
-    random_state : int, RandomState instance or None, optional (default=None)
+    random_state : int or RandomState instance, default=None
         Controls the pseudo random number generator used to generate the
         projection matrix at fit time.
         Pass an int for reproducible output across multiple function calls.

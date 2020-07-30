@@ -30,14 +30,14 @@ described in the :ref:`toy_datasets` section.
 **The dataset fetchers.** They can be used to download and load larger datasets,
 described in the :ref:`real_world_datasets` section.
 
-Both loaders and fetchers functions return a :class:`sklearn.utils.Bunch`
+Both loaders and fetchers functions return a :class:`~sklearn.utils.Bunch`
 object holding at least two items:
 an array of shape ``n_samples`` * ``n_features`` with
 key ``data`` (except for 20newsgroups) and a numpy array of
 length ``n_samples``, containing the target values, with key ``target``.
 
 The Bunch object is a dictionary that exposes its keys are attributes.
-For more information about Bunch object, see :class:`sklearn.utils.Bunch`:
+For more information about Bunch object, see :class:`~sklearn.utils.Bunch`:
 
 It's also possible for almost all of these function to constrain the output
 to be a tuple containing only the data and the target, by setting the
@@ -265,9 +265,9 @@ Loading other datasets
 Sample images
 -------------
 
-Scikit-learn also embed a couple of sample JPEG images published under Creative
+Scikit-learn also embeds a couple of sample JPEG images published under Creative
 Commons license by their authors. Those images can be useful to test algorithms
-and pipeline on 2D data.
+and pipelines on 2D data.
 
 .. autosummary::
 
@@ -286,9 +286,9 @@ and pipeline on 2D data.
 .. warning::
 
   The default coding of images is based on the ``uint8`` dtype to
-  spare memory.  Often machine learning algorithms work best if the
-  input is converted to a floating point representation first.  Also,
-  if you plan to use ``matplotlib.pyplpt.imshow`` don't forget to scale to the range
+  spare memory. Often machine learning algorithms work best if the
+  input is converted to a floating point representation first. Also,
+  if you plan to use ``matplotlib.pyplpt.imshow``, don't forget to scale to the range
   0 - 1 as done in the following example.
 
 .. topic:: Examples:
@@ -428,7 +428,7 @@ the earliest version of a dataset that is still active. That means that
 ``fetch_openml(name="miceprotein")`` can yield different results at different
 times if earlier versions become inactive.
 You can see that the dataset with ``data_id`` 40966 that we fetched above is
-the version 1 of the "miceprotein" dataset::
+the first version of the "miceprotein" dataset::
 
   >>> mice.details['version']  #doctest: +SKIP
   '1'
@@ -519,8 +519,8 @@ refer to:
   for reading WAV files into a numpy array
 
 Categorical (or nominal) features stored as strings (common in pandas DataFrames)
-will need converting to numerical features using :class:`sklearn.preprocessing.OneHotEncoder`
-or :class:`sklearn.preprocessing.OrdinalEncoder` or similar.
+will need converting to numerical features using :class:`~sklearn.preprocessing.OneHotEncoder`
+or :class:`~sklearn.preprocessing.OrdinalEncoder` or similar.
 See :ref:`preprocessing`.
 
 Note: if you manage your own numerical data it is recommended to use an

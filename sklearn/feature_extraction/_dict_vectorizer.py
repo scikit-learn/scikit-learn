@@ -38,7 +38,7 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
     However, note that this transformer will only do a binary one-hot encoding
     when feature values are of type string. If categorical features are
     represented as numeric values such as int, the DictVectorizer can be
-    followed by :class:`sklearn.preprocessing.OneHotEncoder` to complete
+    followed by :class:`~sklearn.preprocessing.OneHotEncoder` to complete
     binary one-hot encoding.
 
     Features that do not occur in a sample (mapping) will have a zero value

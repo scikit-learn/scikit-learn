@@ -43,7 +43,7 @@ class IncrementalPCA(_BasePCA):
     Parameters
     ----------
     n_components : int or None, (default=None)
-        Number of components to keep. If ``n_components `` is ``None``,
+        Number of components to keep. If ``n_components`` is ``None``,
         then ``n_components`` is set to ``min(n_samples, n_features)``.
 
     whiten : bool, optional
@@ -195,7 +195,6 @@ class IncrementalPCA(_BasePCA):
         self.singular_values_ = None
         self.explained_variance_ = None
         self.explained_variance_ratio_ = None
-        self.singular_values_ = None
         self.noise_variance_ = None
 
         X = self._validate_data(X, accept_sparse=['csr', 'csc', 'lil'],
@@ -290,18 +289,18 @@ class IncrementalPCA(_BasePCA):
             X -= col_batch_mean
             # Build matrix of combined previous basis and new data
             mean_correction = \
-                np.sqrt((self.n_samples_seen_ * n_samples) /
-                        n_total_samples) * (self.mean_ - col_batch_mean)
+                np.sqrt((self.n_samples_seen_ / n_total_samples) *
+                        n_samples) * (self.mean_ - col_batch_mean)
             X = np.vstack((self.singular_values_.reshape((-1, 1)) *
                            self.components_, X, mean_correction))
 
-        U, S, V = linalg.svd(X, full_matrices=False)
-        U, V = svd_flip(U, V, u_based_decision=False)
+        U, S, Vt = linalg.svd(X, full_matrices=False)
+        U, Vt = svd_flip(U, Vt, u_based_decision=False)
         explained_variance = S ** 2 / (n_total_samples - 1)
         explained_variance_ratio = S ** 2 / np.sum(col_var * n_total_samples)
 
         self.n_samples_seen_ = n_total_samples
-        self.components_ = V[:self.n_components_]
+        self.components_ = Vt[:self.n_components_]
         self.singular_values_ = S[:self.n_components_]
         self.mean_ = col_mean
         self.var_ = col_var

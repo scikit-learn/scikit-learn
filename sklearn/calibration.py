@@ -9,9 +9,11 @@
 
 import warnings
 from inspect import signature
+from contextlib import suppress
 
 from math import log
 import numpy as np
+from joblib import delayed, Parallel
 
 from scipy.special import expit
 from scipy.special import xlogy
@@ -24,15 +26,51 @@ from .preprocessing import label_binarize, LabelBinarizer
 from .utils import check_array, indexable, column_or_1d
 from .utils.validation import check_is_fitted, check_consistent_length
 from .utils.validation import _check_sample_weight
+from .pipeline import Pipeline
 from .isotonic import IsotonicRegression
 from .svm import LinearSVC
 from .model_selection import check_cv
 from .utils.validation import _deprecate_positional_args
 
 
-class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
-                             MetaEstimatorMixin):
+def _fit_calibrated_classifer(estimator, X, y, train, test, supports_sw,
+                              method, classes, sample_weight=None):
+    """Fit calibrated classifier for a given dataset split.
+
+    Returns
+    -------
+    calibrated_classifier : estimator object
+        The calibrated estimator
+    """
+    if sample_weight is not None and supports_sw:
+        estimator.fit(X[train], y[train],
+                      sample_weight=sample_weight[train])
+    else:
+        estimator.fit(X[train], y[train])
+
+    calibrated_classifier = _CalibratedClassifier(estimator,
+                                                  method=method,
+                                                  classes=classes)
+    sw = None if sample_weight is None else sample_weight[test]
+    calibrated_classifier.fit(X[test], y[test], sample_weight=sw)
+    return calibrated_classifier
+
+
+class CalibratedClassifierCV(ClassifierMixin,
+                             MetaEstimatorMixin,
+                             BaseEstimator):
     """Probability calibration with isotonic regression or logistic regression.
+
+    This class uses cross-validation to both estimate the parameters of a
+    classifier and subsequently calibrate a classifier. For each cv split it
+    fits a copy of the base estimator to the training folds, and calibrates it
+    using the testing fold. For prediction, predicted probabilities are
+    averaged across these individual calibrated classifiers.
+
+    Already fitted classifiers can be calibrated via the parameter cv="prefit".
+    In this case, no cross-validation is used and all provided data is used
+    for calibration. The user has to take care manually that data for model
+    fitting and calibration are disjoint.
 
     The calibration is based on the :term:`decision_function` method of the
     `base_estimator` if it exists, else on :term:`predict_proba`.
@@ -41,18 +79,20 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
 
     Parameters
     ----------
-    base_estimator : instance BaseEstimator
+    base_estimator : estimator instance, default=None
         The classifier whose output need to be calibrated to provide more
-        accurate `predict_proba` outputs.
+        accurate `predict_proba` outputs. The default classifier is
+        a :class:`~sklearn.svm.LinearSVC`.
 
-    method : 'sigmoid' or 'isotonic'
+    method : {'sigmoid', 'isotonic'}, default='sigmoid'
         The method to use for calibration. Can be 'sigmoid' which
         corresponds to Platt's method (i.e. a logistic regression model) or
         'isotonic' which is a non-parametric approach. It is not advised to
         use isotonic calibration with too few calibration samples
         ``(<<1000)`` since it tends to overfit.
 
-    cv : integer, cross-validation generator, iterable or "prefit", optional
+    cv : integer, cross-validation generator, iterable or "prefit", \
+            default=None
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
 
@@ -62,11 +102,11 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
         - An iterable yielding (train, test) splits as arrays of indices.
 
         For integer/None inputs, if ``y`` is binary or multiclass,
-        :class:`sklearn.model_selection.StratifiedKFold` is used. If ``y`` is
-        neither binary nor multiclass, :class:`sklearn.model_selection.KFold`
+        :class:`~sklearn.model_selection.StratifiedKFold` is used. If ``y`` is
+        neither binary nor multiclass, :class:`~sklearn.model_selection.KFold`
         is used.
 
-        Refer :ref:`User Guide <cross_validation>` for the various
+        Refer to the :ref:`User Guide <cross_validation>` for the various
         cross-validation strategies that can be used here.
 
         If "prefit" is passed, it is assumed that `base_estimator` has been
@@ -75,15 +115,91 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
         .. versionchanged:: 0.22
             ``cv`` default value if None changed from 3-fold to 5-fold.
 
+    n_jobs : int, default=None
+        Number of jobs to run in parallel.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors.
+
+        Base estimator clones are fitted in parallel across cross-validation
+        iterations. Therefore parallelism happens only when cv != "prefit".
+
+        See :term:`Glossary <n_jobs>` for more details.
+
+        .. versionadded:: 0.24
+
+    pre_dispatch : int, or str, default=n_jobs
+        Controls the number of jobs that get dispatched during parallel
+        execution. Reducing this number can be useful to avoid an
+        explosion of memory consumption when more jobs get dispatched
+        than CPUs can process. This parameter can be:
+
+            - None, in which case all the jobs are immediately
+              created and spawned. Use this for lightweight and
+              fast-running jobs, to avoid delays due to on-demand
+              spawning of the jobs
+
+            - An int, giving the exact number of total jobs that are
+              spawned
+
+            - A str, giving an expression as a function of n_jobs,
+              as in '2*n_jobs'
+
+        .. versionadded:: 0.24
+
+    verbose : integer
+        Controls the verbosity: the higher, the more messages.
+
+        .. versionadded:: 0.24
+
     Attributes
     ----------
     classes_ : array, shape (n_classes)
         The class labels.
 
     calibrated_classifiers_ : list (len() equal to cv or 1 if cv == "prefit")
-        The list of calibrated classifiers, one for each cross-validation fold,
-        which has been fitted on all but the validation fold and calibrated
-        on the validation fold.
+        The list of calibrated classifiers, one for each cross-validation
+        split, which has been fitted on training folds and
+        calibrated on the testing fold.
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_classification
+    >>> from sklearn.naive_bayes import GaussianNB
+    >>> from sklearn.calibration import CalibratedClassifierCV
+    >>> X, y = make_classification(n_samples=100, n_features=2,
+    ...                            n_redundant=0, random_state=42)
+    >>> base_clf = GaussianNB()
+    >>> calibrated_clf = CalibratedClassifierCV(base_estimator=base_clf, cv=3)
+    >>> calibrated_clf.fit(X, y)
+    CalibratedClassifierCV(base_estimator=GaussianNB(), cv=3)
+    >>> len(calibrated_clf.calibrated_classifiers_)
+    3
+    >>> calibrated_clf.predict_proba(X)[:5, :]
+    array([[0.110..., 0.889...],
+           [0.072..., 0.927...],
+           [0.928..., 0.071...],
+           [0.928..., 0.071...],
+           [0.071..., 0.928...]])
+
+    >>> from sklearn.model_selection import train_test_split
+    >>> X, y = make_classification(n_samples=100, n_features=2,
+    ...                            n_redundant=0, random_state=42)
+    >>> X_train, X_calib, y_train, y_calib = train_test_split(
+    ...        X, y, random_state=42
+    ... )
+    >>> base_clf = GaussianNB()
+    >>> base_clf.fit(X_train, y_train)
+    GaussianNB()
+    >>> calibrated_clf = CalibratedClassifierCV(
+    ...     base_estimator=base_clf,
+    ...     cv="prefit"
+    ... )
+    >>> calibrated_clf.fit(X_calib, y_calib)
+    CalibratedClassifierCV(base_estimator=GaussianNB(), cv='prefit')
+    >>> len(calibrated_clf.calibrated_classifiers_)
+    1
+    >>> calibrated_clf.predict_proba([[-0.5, 0.5]])
+    array([[0.936..., 0.063...]])
 
     References
     ----------
@@ -100,10 +216,15 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
            A. Niculescu-Mizil & R. Caruana, ICML 2005
     """
     @_deprecate_positional_args
-    def __init__(self, base_estimator=None, *, method='sigmoid', cv=None):
+    def __init__(self, base_estimator=None, *, method='sigmoid',
+                 cv=None, n_jobs=None, pre_dispatch='2*n_jobs',
+                 verbose=0):
         self.base_estimator = base_estimator
         self.method = method
         self.cv = cv
+        self.n_jobs = n_jobs
+        self.verbose = verbose
+        self.pre_dispatch = pre_dispatch
 
     def fit(self, X, y, sample_weight=None):
         """Fit the calibrated model
@@ -124,22 +245,7 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
         self : object
             Returns an instance of self.
         """
-        X, y = self._validate_data(X, y, accept_sparse=['csc', 'csr', 'coo'],
-                                   force_all_finite=False, allow_nd=True)
         X, y = indexable(X, y)
-        le = LabelBinarizer().fit(y)
-        self.classes_ = le.classes_
-
-        # Check that each cross-validation fold can have at least one
-        # example per class
-        n_folds = self.cv if isinstance(self.cv, int) \
-            else self.cv.n_folds if hasattr(self.cv, "n_folds") else None
-        if n_folds and \
-                np.any([np.sum(y == class_) < n_folds for class_ in
-                        self.classes_]):
-            raise ValueError("Requesting %d-fold cross-validation but provided"
-                             " less than %d examples for at least one class."
-                             % (n_folds, n_folds))
 
         self.calibrated_classifiers_ = []
         if self.base_estimator is None:
@@ -150,38 +256,67 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
             base_estimator = self.base_estimator
 
         if self.cv == "prefit":
+            # Set `n_features_in_` attribute
+            if isinstance(self.base_estimator, Pipeline):
+                check_is_fitted(self.base_estimator[-1])
+            else:
+                check_is_fitted(self.base_estimator)
+            with suppress(AttributeError):
+                self.n_features_in_ = base_estimator.n_features_in_
+            self.classes_ = self.base_estimator.classes_
+
             calibrated_classifier = _CalibratedClassifier(
                 base_estimator, method=self.method)
             calibrated_classifier.fit(X, y, sample_weight)
             self.calibrated_classifiers_.append(calibrated_classifier)
         else:
+            X, y = self._validate_data(
+                X, y, accept_sparse=['csc', 'csr', 'coo'],
+                force_all_finite=False, allow_nd=True
+            )
+            le = LabelBinarizer().fit(y)
+            self.classes_ = le.classes_
+
+            # Check that each cross-validation fold can have at least one
+            # example per class
+            if isinstance(self.cv, int):
+                n_folds = self.cv
+            elif hasattr(self.cv, "n_splits"):
+                n_folds = self.cv.n_splits
+            else:
+                n_folds = None
+            if n_folds and np.any([np.sum(y == class_) < n_folds
+                                   for class_ in self.classes_]):
+                raise ValueError(f"Requesting {n_folds}-fold cross-validation "
+                                 f"but provided less than {n_folds} examples "
+                                 "for at least one class.")
+
             cv = check_cv(self.cv, y, classifier=True)
             fit_parameters = signature(base_estimator.fit).parameters
-            base_estimator_supports_sw = "sample_weight" in fit_parameters
+            supports_sw = "sample_weight" in fit_parameters
 
             if sample_weight is not None:
                 sample_weight = _check_sample_weight(sample_weight, X)
 
-                if not base_estimator_supports_sw:
+                if not supports_sw:
                     estimator_name = type(base_estimator).__name__
                     warnings.warn("Since %s does not support sample_weights, "
                                   "sample weights will only be used for the "
                                   "calibration itself." % estimator_name)
 
-            for train, test in cv.split(X, y):
-                this_estimator = clone(base_estimator)
+            parallel = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
+                                pre_dispatch=self.pre_dispatch)
 
-                if sample_weight is not None and base_estimator_supports_sw:
-                    this_estimator.fit(X[train], y[train],
-                                       sample_weight=sample_weight[train])
-                else:
-                    this_estimator.fit(X[train], y[train])
-
-                calibrated_classifier = _CalibratedClassifier(
-                    this_estimator, method=self.method, classes=self.classes_)
-                sw = None if sample_weight is None else sample_weight[test]
-                calibrated_classifier.fit(X[test], y[test], sample_weight=sw)
-                self.calibrated_classifiers_.append(calibrated_classifier)
+            self.calibrated_classifiers_ = parallel(delayed(
+                _fit_calibrated_classifer)(clone(base_estimator),
+                                           X, y,
+                                           train=train, test=test,
+                                           method=self.method,
+                                           classes=self.classes_,
+                                           supports_sw=supports_sw,
+                                           sample_weight=sample_weight)
+                                                    for train, test
+                                                    in cv.split(X, y))
 
         return self
 
@@ -232,6 +367,14 @@ class CalibratedClassifierCV(BaseEstimator, ClassifierMixin,
         """
         check_is_fitted(self)
         return self.classes_[np.argmax(self.predict_proba(X), axis=1)]
+
+    def _more_tags(self):
+        return {
+            '_xfail_checks': {
+                'check_sample_weights_invariance(kind=zeros)':
+                'zero sample_weight is not equivalent to removing samples',
+            }
+        }
 
 
 class _CalibratedClassifier:
@@ -506,7 +649,8 @@ class _SigmoidCalibration(RegressorMixin, BaseEstimator):
         return expit(-(self.a_ * T + self.b_))
 
 
-def calibration_curve(y_true, y_prob, normalize=False, n_bins=5,
+@_deprecate_positional_args
+def calibration_curve(y_true, y_prob, *, normalize=False, n_bins=5,
                       strategy='uniform'):
     """Compute true and predicted probabilities for a calibration curve.
 
@@ -559,6 +703,18 @@ def calibration_curve(y_true, y_prob, normalize=False, n_bins=5,
     Probabilities With Supervised Learning, in Proceedings of the 22nd
     International Conference on Machine Learning (ICML).
     See section 4 (Qualitative Analysis of Predictions).
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.calibration import calibration_curve
+    >>> y_true = np.array([0, 0, 0, 0, 1, 1, 1, 1, 1])
+    >>> y_pred = np.array([0.1, 0.2, 0.3, 0.4, 0.65, 0.7, 0.8, 0.9,  1.])
+    >>> prob_true, prob_pred = calibration_curve(y_true, y_pred, n_bins=3)
+    >>> prob_true
+    array([0. , 0.5, 1. ])
+    >>> prob_pred
+    array([0.2  , 0.525, 0.85 ])
     """
     y_true = column_or_1d(y_true)
     y_prob = column_or_1d(y_prob)

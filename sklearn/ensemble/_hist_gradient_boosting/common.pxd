@@ -2,6 +2,8 @@
 import numpy as np
 cimport numpy as np
 
+np.import_array()
+
 
 ctypedef np.npy_float64 X_DTYPE_C
 ctypedef np.npy_uint8 X_BINNED_DTYPE_C

@@ -22,7 +22,10 @@ See :ref:`new_contributors` to get started.
     We are a community based on openness and friendly, didactic,
     discussions.
 
-    We aspire to treat everybody equally, and value their contributions.
+    We aspire to treat everybody equally, and value their contributions.  We
+    are particularly seeking people from underrepresented backgrounds in Open
+    Source Software and scikit-learn in particular to participate and
+    contribute their expertise and experience.
 
     Decisions are made based on technical merit and consensus.
 
@@ -260,7 +263,7 @@ modifying code and submitting a PR:
 10. Develop the feature on your feature branch on your computer, using Git to
     do the version control. When you're done editing, add changed files using
     ``git add`` and then ``git commit``::
- 
+
         $ git add modified_files
         $ git commit
 
@@ -393,9 +396,9 @@ complies with the following rules before marking a PR as ``[MRG]``. The
    the keywords (e.g., ``See also #1234``).
 
 9. PRs should often substantiate the change, through benchmarks of
-   performance and efficiency or through examples of usage. Examples also
-   illustrate the features and intricacies of the library to users. Have a
-   look at other examples in the `examples/
+   performance and efficiency (see :ref:`monitoring_performances`) or through
+   examples of usage. Examples also illustrate the features and intricacies of
+   the library to users. Have a look at other examples in the `examples/
    <https://github.com/scikit-learn/scikit-learn/tree/master/examples>`_
    directory for reference. Examples should demonstrate why the new
    functionality is useful in practice and, if possible, compare it to other
@@ -431,13 +434,15 @@ You can check for common programming errors with the following tools:
 
     mypy --ignore-missing-import sklearn
 
-  must not produce new errors in your pull request. Using `# type: ignore` annotation can be a workaround for a few cases that are not supported by mypy, in particular,
-   - when importing C or Cython modules
-   - on properties with decorators
+  must not produce new errors in your pull request. Using `# type: ignore`
+  annotation can be a workaround for a few cases that are not supported by
+  mypy, in particular,
+
+  - when importing C or Cython modules
+  - on properties with decorators
 
 Bonus points for contributions that include a performance analysis with
-a benchmark script and profiling output (please report on the mailing
-list or on the GitHub issue).
+a benchmark script and profiling output (see :ref:`monitoring_performances`).
 
 Also check out the :ref:`performance-howto` guide for more details on
 profiling and Cython optimizations.
@@ -480,6 +485,8 @@ message, the following actions are taken.
     [doc build]            Docs built including example gallery plots
     ====================== ===================
 
+.. _stalled_pull_request:
+
 Stalled pull requests
 ^^^^^^^^^^^^^^^^^^^^^
 
@@ -513,6 +520,35 @@ A good etiquette to take over is:
   comment on the stalled PR that you are taking over and to link from the
   new PR to the old one. The new PR should be created by pulling from the
   old one.
+
+Stalled and Unclaimed Issues
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Generally speaking, issues which are up for grabs will have a
+`"help wanted" <https://github.com/scikit-learn/scikit-learn/labels/help%20wanted>`__ .
+tag. However, not all issues which need contributors will have this tag,
+as the "help wanted" tag is not always up-to-date with the state
+of the issue. Contributors can find issues which are still up for grabs
+using the following guidelines:
+
+* First, to **determine if an issue is claimed**:
+
+  * Check for linked pull requests
+  * Check the conversation to see if anyone has said that they're working on
+    creating a pull request
+
+* If a contributor comments on an issue to say they are working on it,
+  a pull request is expected within 2 weeks (new contributor) or 4 weeks
+  (contributor or core dev), unless an larger time frame is explicitly given.
+  Beyond that time, another contributor can take the issue and make a
+  pull request for it. We encourage contributors to comment directly on the
+  stalled or unclaimed issue to let community members know that they will be
+  working on it.
+
+* If the issue is linked to a :ref:`stalled pull request <stalled_pull_request>`,
+  we recommend that contributors follow the procedure
+  described in the :ref:`stalled_pull_request`
+  section rather than working directly on the issue.
 
 .. _new_contributors:
 
@@ -668,7 +704,7 @@ Finally, follow the formatting rules below to make it consistently good:
         literal (either `hello` or `goodbye`), a bool, or an int. The default
         value is True.
 
-    array_parameter : {array-like, sparse matrix, dataframe} of shape (n_samples, n_features) or (n_samples,)
+    array_parameter : {array-like, sparse matrix} of shape (n_samples, n_features) or (n_samples,)
         This parameter accepts data in either of the mentioned forms, with one
         of the mentioned shapes. The default value is
         `np.ones(shape=(n_samples,))`.
@@ -689,12 +725,14 @@ In general have the following in mind:
     4. 1D or 2D data can be a subset of
        ``{array-like, ndarray, sparse matrix, dataframe}``. Note that ``array-like``
        can also be a ``list``, while ``ndarray`` is explicitly only a ``numpy.ndarray``.
-    5. When specifying the data type of a list, use ``of`` as a delimiter:
+    5. Specify ``dataframe`` when "frame-like" features are being used, such
+       as the column names.
+    6. When specifying the data type of a list, use ``of`` as a delimiter:
        ``list of int``.
-    6. When specifying the dtype of an ndarray, use e.g. ``dtype=np.int32``
+    7. When specifying the dtype of an ndarray, use e.g. ``dtype=np.int32``
        after defining the shape:
        ``ndarray of shape (n_samples,), dtype=np.int32``.
-    7. When the default is ``None``, ``None`` only needs to be specified at the
+    8. When the default is ``None``, ``None`` only needs to be specified at the
        end with ``default=None``. Be sure to include in the docstring, what it
        means for the parameter or attribute to be ``None``.
 
@@ -770,6 +808,99 @@ To test code coverage, you need to install the `coverage
     write or adapt a test specifically for these lines.
 
 3. Loop.
+
+.. _monitoring_performances:
+
+Monitoring performance
+======================
+
+*This section is heavily inspired from the* `pandas documentation 
+<https://pandas.pydata.org/docs/development/contributing.html#running-the-performance-test-suite>`_.
+
+When proposing changes to the existing code base, it's important to make sure
+that they don't introduce performance regressions. Scikit-learn uses
+`asv benchmarks <https://github.com/airspeed-velocity/asv>`_ to monitor the
+performance of a selection of common estimators and functions. The benchmark
+suite can be found in the `scikit-learn/asv_benchmarks` directory.
+
+To use all features of asv, you will need either `conda` or `virtualenv`. For
+more details please check the `asv installation webpage
+<https://asv.readthedocs.io/en/latest/installing.html>`_.
+
+First of all you need to install the development version of asv::
+
+  pip install git+https://github.com/airspeed-velocity/asv
+
+and change your directory to `asv_benchmarks/`::
+
+  cd asv_benchmarks/
+
+The benchmark suite is configured to run against your local clone of
+scikit-learn. Make sure it is up to date::
+
+  git fetch upstream
+
+In the benchmark suite, the benchmarks are organized following the same
+structure as scikit-learn. For example, you can compare the performance of a
+specific estimator between upstream/master and the branch you are working on::
+
+  asv continuous -b LogisticRegression upstream/master HEAD
+
+The command uses conda by default for creating the benchmark environments. If
+you want to use virtualenv instead, use the `-E` flag::
+
+  asv continuous -E virtualenv -b LogisticRegression upstream/master HEAD
+
+You can also specify a whole module to benchmark::
+
+  asv continuous -b linear_model upstream/master HEAD
+
+You can replace `HEAD` by any local branch. By default it will only report the
+benchmarks that have change by at least 10%. You can control this ratio with
+the `-f` flag.
+
+To run the full benchmark suite, simply remove the `-b` flag ::
+
+  asv continuous upstream/master HEAD
+
+However this can take up to two hours. The `-b` flag also accepts a regular
+expression for a more complex subset of benchmarks to run.
+
+To run the benchmarks without comparing to another branch, use the `run`
+command::
+
+  asv run -b linear_model HEAD^!
+
+You can also run the benchmark suite using the version of scikit-learn already
+installed in your current Python environment::
+
+  asv run --python=same
+
+It's particulary useful when you installed scikit-learn in editable mode to
+avoid creating a new environment each time you run the benchmarks. By default
+the results are not saved when using an existing installation. To save the
+results you must specify a commit hash::
+
+  asv run --python=same --set-commit-hash=<commit hash>
+
+Benchmarks are saved and organized by machine, environment and commit. To see
+the list of all saved benchmarks::
+
+  asv show
+
+and to see the report of a specific run::
+
+  asv show <commit hash>
+
+When running benchmarks for a pull request you're working on please report the
+results on github.
+
+The benchmark suite supports additional configurable options which can be set
+in the `benchmarks/config.json` configuration file. For example, the benchmarks
+can run for a provided list of values for the `n_jobs` parameter.
+
+More information on how to write a benchmark and how to use asv can be found in
+the `asv documentation <https://asv.readthedocs.io/en/latest/index.html>`_.
 
 Issue Tracker Tags
 ==================

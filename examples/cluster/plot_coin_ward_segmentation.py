@@ -17,7 +17,6 @@ print(__doc__)
 import time as time
 
 import numpy as np
-from distutils.version import LooseVersion
 from scipy.ndimage.filters import gaussian_filter
 
 import matplotlib.pyplot as plt
@@ -28,9 +27,10 @@ from skimage.transform import rescale
 
 from sklearn.feature_extraction.image import grid_to_graph
 from sklearn.cluster import AgglomerativeClustering
+from sklearn.utils.fixes import parse_version
 
 # these were introduced in skimage-0.14
-if LooseVersion(skimage.__version__) >= '0.14':
+if parse_version(skimage.__version__) >= parse_version('0.14'):
     rescale_params = {'anti_aliasing': False, 'multichannel': False}
 else:
     rescale_params = {}
