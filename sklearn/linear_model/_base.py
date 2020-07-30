@@ -420,8 +420,8 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    solver : str, default="lsqr"
-        The solver to use. ``"lsqr"`` uses a SVD-based least-squares
+    solver : str, default="lstsq"
+        The solver to use. ``"lstsq"`` uses a SVD-based least-squares
         approach, by calling ``scipy.linalg.lstsq``. ``"cholesky"`` uses the
         Cholesky decomposition. If X is singular, then ``"cholesky"`` will
         instead use an SVD-based solver. ``"cholesky"`` does not support `X`
@@ -480,11 +480,13 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
     """
     @_deprecate_positional_args
     def __init__(self, *, fit_intercept=True, normalize=False, copy_X=True,
-                 n_jobs=None, solver="svd"):
+                 n_jobs=None, solver="lstsq"):
         self.fit_intercept = fit_intercept
         self.normalize = normalize
         self.copy_X = copy_X
         self.n_jobs = n_jobs
+        if solver not in ["lstsq", "cholesky"]:
+            raise ValueError("Solver must be either `lstsq` or `cholesky`")
         self.solver = solver
 
     def fit(self, X, y, sample_weight=None):
