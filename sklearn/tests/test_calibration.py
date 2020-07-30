@@ -197,7 +197,7 @@ def test_parallel_execution(method, ensemble):
 def test_calibration_multiclass(method, ensemble):
     """Test calibration for multiclass with classifier that implements
     only decision function."""
-    clf = LinearSVC()
+    clf = LinearSVC(random_state=7)
     X, y_idx = make_blobs(n_samples=100, n_features=2, random_state=42,
                           centers=3, cluster_std=3.0)
 
@@ -402,7 +402,7 @@ def test_calibration_prob_sum(ensemble):
     num_classes = 2
     X, y = make_classification(n_samples=10, n_features=5,
                                n_classes=num_classes)
-    clf = LinearSVC(C=1.0)
+    clf = LinearSVC(C=1.0, random_state=7)
     clf_prob = CalibratedClassifierCV(
         clf, method="sigmoid", cv=LeaveOneOut(), ensemble=ensemble
     )
@@ -420,7 +420,7 @@ def test_calibration_less_classes(ensemble):
     # class label
     X = np.random.randn(10, 5)
     y = np.arange(10)
-    clf = LinearSVC(C=1.0)
+    clf = LinearSVC(C=1.0, random_state=7)
     cal_clf = CalibratedClassifierCV(
         clf, method="sigmoid", cv=LeaveOneOut(), ensemble=ensemble
     )
