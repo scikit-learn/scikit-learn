@@ -522,7 +522,7 @@ class DenseGeneratorData(object):
 
             new_data = []
             for value in inst:
-                if value is None or value == u'' or value != value:
+                if value is None or value == u'':
                     s = '?'
                 else:
                     s = encode_string(unicode(value))
@@ -597,7 +597,7 @@ class COOData(object):
                     (current_row, col + 1, num_attributes)
                 )
 
-            if v is None or v == u'' or v != v:
+            if v is None or v == u'':
                 s = '?'
             else:
                 s = encode_string(unicode(v))
@@ -638,7 +638,7 @@ class LODGeneratorData(object):
 
             for col in sorted(row):
                 v = row[col]
-                if v is None or v == u'' or v != v:
+                if v is None or v == u'':
                     s = '?'
                 else:
                     s = encode_string(unicode(v))
