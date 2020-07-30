@@ -343,7 +343,7 @@ class CalibratedClassifierCV(ClassifierMixin,
                     cross_val_predict, estimator=this_estimator, X=X, y=y,
                     cv=cv, method=method_name
                 )
-                preds =  (pred_method, X, n_classes)
+                preds = _get_predictions(pred_method, X, n_classes)
 
                 if sample_weight is not None and supports_sw:
                     this_estimator.fit(X, y, sample_weight)
@@ -545,8 +545,8 @@ def _fit_calibrator(clf, preds, y, classes, method, sample_weight=None):
     clf : estimator instance
         Fitted classifier.
 
-    preds :  array-like, shape (n_samples, n_classes) or (n_samples, 1) when \
-             binary.
+    preds : array-like, shape (n_samples, n_classes) or (n_samples, 1) when \
+            binary.
         Predictions for calibrating the predictions.
 
     y : array-like, shape (n_samples,)
@@ -568,7 +568,6 @@ def _fit_calibrator(clf, preds, y, classes, method, sample_weight=None):
     Y = label_binarize(y, classes=classes)
     label_encoder = LabelEncoder().fit(classes)
     pos_class_indices = label_encoder.transform(clf.classes_)
-    print(f'pos class indix fit calb {pos_class_indices}')
     calibrators = []
     for class_idx, this_pred in zip(pos_class_indices, preds.T):
         if method == 'isotonic':

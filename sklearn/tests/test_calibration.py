@@ -299,17 +299,17 @@ def test_calibration_prefit():
 
 
 @pytest.mark.parametrize('method', ['sigmoid', 'isotonic'])
-def test_calibration_ensemble(method):
+def test_calibration_ensemble_false(method):
     """Test that `ensemble=False` is the same as using predictions from
     `cross_val_predict` to train calibrator."""
     X, y = make_classification(n_samples=100, n_features=6, random_state=7)
     clf = LinearSVC(random_state=7)
 
-    cal_clf = CalibratedClassifierCV(clf, method=method, cv=3)
+    cal_clf = CalibratedClassifierCV(clf, method=method, cv=3, ensemble=False)
     cal_clf.fit(X, y)
     cal_probas = cal_clf.predict_proba(X[:10, :])
-    # print(f'calib proba\n{cal_probas}')
 
+    # Get probas manually
     unbiased_preds = cross_val_predict(
         clf, X, y, cv=3, method='decision_function'
     )
@@ -317,13 +317,12 @@ def test_calibration_ensemble(method):
         calibrator = IsotonicRegression(out_of_bounds='clip')
     else:
         calibrator = _SigmoidCalibration()
-    # print(f'unbiased pred shape {unbiased_preds.shape}')
-    calibrator.fit(unbiased_preds, y[:, 1])
-    # Fit `clf` using all data
+    calibrator.fit(unbiased_preds, y)
+    # Use `clf` fit on all data
     clf.fit(X, y)
-    clf_probas = clf.decision_function(X[:10, :])
-    manual_probas = calibrator.predict(clf_probas[:, 0])
-    # print(f'man proba\n{manual_probas}')
+    clf_df = clf.decision_function(X[:10, :])
+    manual_probas = calibrator.predict(clf_df)
+    assert_allclose(cal_probas[:, 1], manual_probas)
 
 
 def test_sigmoid_calibration():
