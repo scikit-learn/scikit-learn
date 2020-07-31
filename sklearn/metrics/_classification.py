@@ -2138,10 +2138,13 @@ def log_loss(y_true, y_pred, *, eps=1e-15, normalize=True, sample_weight=None,
     log-likelihood of a logistic model that returns ``y_pred`` probabilities
     for its training data ``y_true``.
     The log loss is only defined for two or more labels.
-    For a single sample with true label yt in {0,1} and
-    estimated probability yp that yt = 1, the log loss is
+    For a single sample with true label :math:`y \in \{0,1\}` and
+    and a probability estimate :math:`p = \operatorname{Pr}(y = 1)`, the log
+    loss is:
 
-        -log P(yt|yp) = -(yt log(yp) + (1 - yt) log(1 - yp))
+    .. math::
+
+        L_{\log}(y, p) = -(y \log (p) + (1 - y) \log (1 - p))
 
     Read more in the :ref:`User Guide <log_loss>`.
 
