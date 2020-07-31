@@ -173,9 +173,9 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         elif hasattr(self, 'estimator_'):
             estimator = self.estimator_
         else:
-            raise ValueError('Either fit the model before transform or set'
-                             ' "prefit=True" while passing the fitted'
-                             ' estimator to the constructor.')
+            raise NotFittedError('Either fit the model before transform or set'
+                                 ' "prefit=True" while passing the fitted'
+                                 ' estimator to the constructor.')
         scores = _get_feature_importances(
             estimator=estimator, getter=self.importance_getter,
             transform_func='norm', norm_order=self.norm_order)
