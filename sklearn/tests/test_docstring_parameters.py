@@ -180,10 +180,10 @@ def test_fit_docstring_attributes(name, Estimator):
 
     IGNORED = {'ClassifierChain', 'ColumnTransformer', 'CountVectorizer',
                'DictVectorizer', 'FeatureUnion', 'GaussianRandomProjection',
-               'GridSearchCV', 'MultiOutputClassifier', 'MultiOutputRegressor',
+               'MultiOutputClassifier', 'MultiOutputRegressor',
                'NoSampleWeightWrapper', 'OneVsOneClassifier',
                'OutputCodeClassifier', 'Pipeline',
-               'RFE', 'RFECV', 'RandomizedSearchCV', 'RegressorChain',
+               'RFE', 'RFECV', 'RegressorChain',
                'SelectFromModel', 'SparseCoder', 'SparseRandomProjection',
                'SpectralBiclustering', 'StackingClassifier',
                'StackingRegressor', 'TfidfVectorizer', 'VotingClassifier',
@@ -192,6 +192,9 @@ def test_fit_docstring_attributes(name, Estimator):
         pytest.skip("Estimator cannot be fit easily to test fit attributes")
 
     est = _construct_instance(Estimator)
+
+    if Estimator.__name__.endswith("SearchCV"):
+        est = est[0]
 
     if Estimator.__name__ == 'SelectKBest':
         est.k = 2

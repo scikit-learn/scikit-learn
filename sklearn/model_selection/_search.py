@@ -1177,6 +1177,9 @@ class GridSearchCV(BaseSearchCV):
 
         .. versionadded:: 0.20
 
+    multimetric_ : bool
+        Whether or not the scorers passed compute several metrics.
+
     Notes
     -----
     The parameters selected are those that maximize the score of the left out
@@ -1222,6 +1225,12 @@ class GridSearchCV(BaseSearchCV):
     def _run_search(self, evaluate_candidates):
         """Search all candidates in param_grid"""
         evaluate_candidates(ParameterGrid(self.param_grid))
+
+    def _more_tags(self):
+        return {
+            "_xfail_checks": {"check_supervised_y_2d":
+                              "DataConversionWarning not caught"}
+        }
 
 
 class RandomizedSearchCV(BaseSearchCV):
@@ -1495,6 +1504,9 @@ class RandomizedSearchCV(BaseSearchCV):
 
         .. versionadded:: 0.20
 
+    multimetric_ : bool
+        Whether or not the scorers passed compute several metrics.
+
     Notes
     -----
     The parameters selected are those that maximize the score of the held-out
@@ -1556,3 +1568,9 @@ class RandomizedSearchCV(BaseSearchCV):
         evaluate_candidates(ParameterSampler(
             self.param_distributions, self.n_iter,
             random_state=self.random_state))
+
+    def _more_tags(self):
+        return {
+            "_xfail_checks": {"check_supervised_y_2d":
+                              "DataConversionWarning not caught"}
+        }

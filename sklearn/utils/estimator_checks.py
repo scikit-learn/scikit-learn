@@ -28,7 +28,9 @@ from ._testing import SkipTest
 from ._testing import ignore_warnings
 from ._testing import create_memmap_backed_data
 from . import is_scalar_nan
+
 from ..discriminant_analysis import LinearDiscriminantAnalysis
+from ..linear_model import LogisticRegression
 from ..linear_model import Ridge
 
 from ..base import (clone, ClusterMixin, is_classifier, is_regressor,
@@ -335,10 +337,26 @@ def _construct_instance(Estimator):
                 estimator = Estimator(Ridge())
             else:
                 estimator = Estimator(LinearDiscriminantAnalysis())
+        elif any(
+            [
+                req_param.startswith("param_")
+                for req_param in required_parameters
+            ]
+        ):
+            # dealing with SearchCV objects (i.e. GridSearchCV and
+            # RandomizedSearchCV)
+            estimator = (
+                Estimator(Ridge(), {"alpha": [0.1, 1]}),
+                Estimator(LogisticRegression(), {"C": [0.1, 1]})
+            )
         else:
-            raise SkipTest("Can't instantiate estimator {} which requires "
-                           "parameters {}".format(Estimator.__name__,
-                                                  required_parameters))
+            msg = (
+                f"Can't instantiate estimator {Estimator.__name__} "
+                f"parameters {required_parameters}"
+            )
+            # raise additional warning to be shown by pytest
+            warnings.warn(msg, SkipTestWarning)
+            raise SkipTest(msg)
     else:
         estimator = Estimator()
     return estimator
@@ -594,6 +612,9 @@ def _set_checking_parameters(estimator):
 
     if name == 'OneHotEncoder':
         estimator.set_params(handle_unknown='ignore')
+
+    if "error_score" in params:
+        estimator.set_params(error_score="raise")
 
 
 class _NotAnArray:
@@ -1416,12 +1437,16 @@ def check_estimators_empty_data_messages(name, estimator_orig):
                        "check_array in train.".format(name)):
         e.fit(X_zero_samples, [])
 
-    X_zero_features = np.empty(0).reshape(3, 0)
+    X_zero_features = np.empty(0).reshape(12, 0)
     # the following y should be accepted by both classifiers and regressors
     # and ignored by unsupervised models
-    y = _enforce_estimator_tags_y(e, np.array([1, 0, 1]))
-    msg = (r"0 feature\(s\) \(shape=\(3, 0\)\) while a minimum of \d* "
-           "is required.")
+    y = _enforce_estimator_tags_y(
+        e, np.array([1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0])
+    )
+    msg = (
+        r"0 feature\(s\) \(shape=\(\d*, 0\)\) while a minimum of \d* "
+        "is required."
+    )
     assert_raises_regex(ValueError, msg, e.fit, X_zero_features, y)
 
 
@@ -2544,14 +2569,8 @@ def check_estimators_data_not_an_array(name, estimator_orig, X, y, obj_type):
     assert_allclose(pred1, pred2, atol=1e-2, err_msg=name)
 
 
-def check_parameters_default_constructible(name, Estimator):
-    # test default-constructibility
-    # get rid of deprecation warnings
-
-    Estimator = Estimator.__class__
-
+def _check_parameters_default_constructible_estimator(estimator):
     with ignore_warnings(category=FutureWarning):
-        estimator = _construct_instance(Estimator)
         # test cloning
         clone(estimator)
         # test __repr__
@@ -2611,6 +2630,21 @@ def check_parameters_default_constructible(name, Estimator):
                     assert param_value is init_param.default, init_param.name
                 else:
                     assert param_value == init_param.default, init_param.name
+
+
+def check_parameters_default_constructible(name, Estimator):
+    # test default-constructibility
+    # get rid of deprecation warnings
+
+    Estimator = Estimator.__class__
+
+    with ignore_warnings(category=FutureWarning):
+        estimator = _construct_instance(Estimator)
+        if isinstance(estimator, tuple):
+            for e in estimator:
+                _check_parameters_default_constructible_estimator(e)
+        else:
+            _check_parameters_default_constructible_estimator(estimator)
 
 
 def _enforce_estimator_tags_y(estimator, y):

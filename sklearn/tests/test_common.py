@@ -72,7 +72,11 @@ def _tested_estimators():
         except SkipTest:
             continue
 
-        yield estimator
+        if isinstance(estimator, tuple):
+            for e in estimator:
+                yield e
+        else:
+            yield estimator
 
 
 @parametrize_with_checks(list(_tested_estimators()))
