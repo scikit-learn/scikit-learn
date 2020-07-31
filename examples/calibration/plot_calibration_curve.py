@@ -26,7 +26,7 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.svm import LinearSVC
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (precision_score, recall_score, f1_score,
-                             brier_score_loss)
+                             brier_score_loss, log_loss)
 from sklearn.calibration import CalibratedClassifierCV, plot_calibration_curve
 
 # %%
@@ -117,18 +117,21 @@ plt.show()
 # attributed to the fact that we have plenty of calibration data such that the
 # greater flexibility of the non-parametric model can be exploited.
 #
-# Below we show the Brier score , precision, recall and F1 score (see
+# Below we show the Brier score, log loss, precision, recall and F1 score (see
 # :ref:`User Guide <precision_recall_f_measure_metrics>`). Notice that
 # although calibration improves the Brier score (a metric composed of
-# calibration loss and refinement loss), it does not significantly
-# alter the prediction accuracy measures (precision, recall and F1 score).
-# This is because calibration should not significantly move at the location of
-# the decision threshold (at x = 0.5 on the graph). Calibration should
-# however, make the predicted probabilities more accurate and thus more useful
-# for making allocation decisions under uncertainty.
+# calibration loss and refinement loss) and :ref:`log_loss`, it does not
+# significantly alter the prediction accuracy measures (precision, recall and
+# F1 score).
+# This is because calibration should not significantly change prediction
+# probabilities at the location of the decision threshold (at x = 0.5 on the
+# graph). Calibration should however, make the predicted probabilities more
+# accurate and thus more useful for making allocation decisions under
+# uncertainty.
 
-index = {}
+index = []
 brier = []
+logloss = []
 precision = []
 recall = []
 f1 = []
@@ -138,16 +141,17 @@ for i, (clf, name) in enumerate(clf_list):
     y_pred = clf.predict(X_test)
 
     # Create DataFrame index
-    index[i] = name
+    index.append(name)
     # Store column data
     brier.append(brier_score_loss(y_test, y_pred))
+    logloss.append(log_loss(y_test, y_pred))
     precision.append(precision_score(y_test, y_pred))
     recall.append(recall_score(y_test, y_pred))
     f1.append(f1_score(y_test, y_pred))
 
 score_df = pd.DataFrame(
-    data={'Brier score': brier, 'Precision': precision, 'Recall': recall,
-          'F1': f1},
+    data={'Brier score': brier, 'Log loss': logloss, 'Precision': precision,
+          'Recall': recall, 'F1': f1},
     index=index,
 )
 score_df
@@ -229,8 +233,9 @@ plt.show()
 #
 # As before, we show the Brier score, precision, recall and F1 score below.
 
-index = {}
+index = []
 brier = []
+logloss = []
 precision = []
 recall = []
 f1 = []
@@ -240,16 +245,17 @@ for i, (clf, name) in enumerate(clf_list):
     y_pred = clf.predict(X_test)
 
     # Create DataFrame index
-    index[i] = name
+    index.append(name)
     # Store column data
     brier.append(brier_score_loss(y_test, y_pred))
+    logloss.append(log_loss(y_test, y_pred))
     precision.append(precision_score(y_test, y_pred))
     recall.append(recall_score(y_test, y_pred))
     f1.append(f1_score(y_test, y_pred))
 
 score_df = pd.DataFrame(
-    data={'Brier score': brier, 'Precision': precision, 'Recall': recall,
-          'F1': f1},
+    data={'Brier score': brier, 'Log loss': logloss, 'Precision': precision,
+          'Recall': recall, 'F1': f1},
     index=index,
 )
 score_df
