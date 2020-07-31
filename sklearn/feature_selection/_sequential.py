@@ -7,7 +7,6 @@ import numpy as np
 from ._base import SelectorMixin
 from ..base import BaseEstimator, MetaEstimatorMixin, clone
 from ..utils.validation import check_is_fitted
-from ..utils import _safe_indexing
 from ..model_selection import cross_val_score
 
 
@@ -176,13 +175,8 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
             candidate_mask = current_mask.copy()
             candidate_mask[feature_idx] = True
             if not self.forward:
-                # For backward selection, we transform candidate_mask into its
-                # complement, i.e. we change its semantic from "features to
-                # remove" to "features to keep" because _safe_indexing only
-                # understands the latter
-                # TODO: maybe remove when _safe_indexing supports "complement"
                 candidate_mask = ~candidate_mask
-            X_new = _safe_indexing(X, candidate_mask, axis=1)
+            X_new = X[:, candidate_mask]
             scores[feature_idx] = cross_val_score(
                 estimator, X_new, y, cv=self.cv, scoring=self.scoring,
                 n_jobs=self.n_jobs).mean()
