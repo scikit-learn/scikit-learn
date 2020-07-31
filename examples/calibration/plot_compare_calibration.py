@@ -133,7 +133,6 @@ for i, (clf, name) in enumerate(clf_list):
 
 ax1.grid()
 ax1.set_title('Calibration plots')
-ax1.set(xlabel="")
 
 # Add histogram
 grid_positions = [(2, 0), (2, 1), (3, 0), (3, 1)]
