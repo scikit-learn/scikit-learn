@@ -32,7 +32,6 @@ from sklearn.model_selection import GridSearchCV, cross_val_score
 from sklearn.pipeline import Pipeline, make_pipeline
 from sklearn import svm
 from sklearn import datasets
-from sklearn.model_selection import train_test_split
 from sklearn.impute import SimpleImputer
 iris = datasets.load_iris()
 rng = np.random.RandomState(0)
@@ -784,7 +783,7 @@ def test_support_missing_values():
     X, y = iris.data, iris.target
     mask = rng.choice([1, 0], X.shape, p=[.1, .9]).astype(bool)
     X[mask] = np.nan
-    lr = make_pipeline(SimpleImputer(), 
+    lr = make_pipeline(SimpleImputer(),
                        LogisticRegression(random_state=rng))
 
     for MultiClassClassifier in [OneVsRestClassifier, OneVsOneClassifier]:
