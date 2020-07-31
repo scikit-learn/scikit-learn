@@ -7,9 +7,7 @@ from numpy.testing import assert_allclose
 from scipy import sparse
 
 from sklearn.base import BaseEstimator
-from sklearn.base import ClassifierMixin
 from sklearn.model_selection import LeaveOneOut, train_test_split
-
 from sklearn.utils._testing import (assert_array_almost_equal,
                                     assert_almost_equal,
                                     assert_array_equal,
@@ -25,7 +23,6 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.svm import LinearSVC
 from sklearn.pipeline import Pipeline, make_pipeline
 from sklearn.preprocessing import StandardScaler
-from sklearn.compose import make_column_transformer
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.impute import SimpleImputer
 from sklearn.metrics import brier_score_loss, log_loss
