@@ -52,8 +52,8 @@ def inplace_csr_row_scale(X, scale):
 
     Parameters
     ----------
-    X : CSR sparse matrix of shape (n_samples, n_features)
-        Matrix to be scaled.
+    X : sparse matrix of shape (n_samples, n_features)
+        Matrix to be scaled. It should of the format CSR.
 
     scale : ndarray of float of shape (n_samples,)
         Array of precomputed sample-wise values to use for scaling.
@@ -67,8 +67,8 @@ def mean_variance_axis(X, axis):
 
     Parameters
     ----------
-    X : CSR or CSC sparse matrix of shape (n_samples, n_features)
-        Input data.
+    X : sparse matrix of shape (n_samples, n_features)
+        Input data. It can of format CSR or CSC
 
     axis : {0, 1}
         Axis along which the axis should be computed.
@@ -171,8 +171,9 @@ def inplace_column_scale(X, scale):
 
     Parameters
     ----------
-    X : CSC or CSR sparse matrix of shape (n_samples, n_features)
-        Matrix to normalize using the variance of the features.
+    X : sparse matrix of shape (n_samples, n_features)
+        Matrix to normalize using the variance of the features. It should be
+        of CSC or CSR format.
 
     scale : ndarray of shape (n_features,), dtype=float
         Array of precomputed feature-wise values to use for scaling.
@@ -193,8 +194,8 @@ def inplace_row_scale(X, scale):
 
     Parameters
     ----------
-    X : CSR or CSC sparse matrix of shape (n_samples, n_features)
-        Matrix to be scaled.
+    X : sparse matrix of shape (n_samples, n_features)
+        Matrix to be scaled. It should be of CSR or CSC format
 
     scale : ndarray of shape (n_features,), dtype=float
         Array of precomputed sample-wise values to use for scaling.
@@ -213,8 +214,9 @@ def inplace_swap_row_csc(X, m, n):
 
     Parameters
     ----------
-    X : CSC sparse matrix of shape (n_samples, n_features)
-        Matrix whose two rows are to be swapped.
+    X : sparse matrix of shape (n_samples, n_features)
+        Matrix whose two rows are to be swapped. It should be of
+        CSC format.
 
     m : int
         Index of the row of X to be swapped.
@@ -242,8 +244,9 @@ def inplace_swap_row_csr(X, m, n):
 
     Parameters
     ----------
-    X : CSR sparse matrix of shape (n_samples, n_features)
-        Matrix whose two rows are to be swapped.
+    X : sparse matrix of shape (n_samples, n_features)
+        Matrix whose two rows are to be swapped. It should be of
+        CSR format.
 
     m : int
         Index of the row of X to be swapped.
@@ -297,8 +300,9 @@ def inplace_swap_row(X, m, n):
 
     Parameters
     ----------
-    X : CSR or CSC sparse matrix of shape (n_samples, n_features)
-        Matrix whose two rows are to be swapped.
+    X : sparse matrix of shape (n_samples, n_features)
+        Matrix whose two rows are to be swapped. It should be of CSR or
+        CSC format.
 
     m : int
         Index of the row of X to be swapped.
@@ -320,8 +324,9 @@ def inplace_swap_column(X, m, n):
 
     Parameters
     ----------
-    X : CSR or CSC sparse matrix of shape (n_samples, n_features)
-        Matrix whose two columns are to be swapped.
+    X : sparse matrix of shape (n_samples, n_features)
+        Matrix whose two columns are to be swapped. It should be of
+        CSR or CSC format.
 
     m : int
         Index of the column of X to be swapped.
@@ -410,8 +415,8 @@ def min_max_axis(X, axis, ignore_nan=False):
 
     Parameters
     ----------
-    X : CSR or CSC sparse matrix of shape (n_samples, n_features)
-        Input data.
+    X : sparse matrix of shape (n_samples, n_features)
+        Input data. It should be of CSR or CSC format.
 
     axis : {0, 1}
         Axis along which the axis should be computed.
@@ -523,8 +528,8 @@ def csc_median_axis_0(X):
 
     Parameters
     ----------
-    X : CSC sparse matrix of shape (n_samples, n_features)
-        Input data.
+    X : sparse matrix of shape (n_samples, n_features)
+        Input data. It should be of CSC format.
 
     Returns
     -------
