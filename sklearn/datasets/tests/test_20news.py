@@ -9,7 +9,7 @@ import scipy.sparse as sp
 from sklearn.utils._testing import assert_allclose_dense_sparse
 from sklearn.datasets.tests.test_common import check_return_X_y
 from sklearn.preprocessing import normalize
-
+from sklearn.datasets._twenty_newsgroups import strip_newsgroup_header
 
 def test_20news(fetch_20newsgroups_fxt):
     data = fetch_20newsgroups_fxt(subset='all', shuffle=False)
@@ -88,3 +88,10 @@ def test_20news_normalization(fetch_20newsgroups_vectorized_fxt):
 
     assert_allclose_dense_sparse(X_norm, normalize(X))
     assert np.allclose(np.linalg.norm(X_norm.todense(), axis=1), 1)
+
+
+def test_strip_newsgroup_header():
+    body = "body by 2 spaces"
+    sample_text = f"header separated from\n\n{body}"
+    result = strip_newsgroup_header(sample_text)
+    assert body == result
