@@ -97,7 +97,8 @@ would be a better approach than using `pickle`.
 
 PMML is an extension of the `XML
 <https://fr.wikipedia.org/wiki/Extensible_Markup_Language>`_ document standard
-defined to represent data mining and models. Being human and machine readable,
+defined to represent data models together with the data used to generate them.
+Being human and machine readable,
 PMML is a good option for model validation on different platforms and
 long term archiving. On the other hand, as XML in general, its verbosity does
 not help in production when performance is critical.
