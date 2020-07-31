@@ -170,7 +170,7 @@ score_df.round(3)
 
 class NaivelyCalibratedLinearSVC(LinearSVC):
     """LinearSVC with `predict_proba` method that naively scales
-    `decision_function` output."""
+    `decision_function` output for binary classification."""
 
     def fit(self, X, y):
         super().fit(X, y)
@@ -179,10 +179,24 @@ class NaivelyCalibratedLinearSVC(LinearSVC):
         self.df_max_ = df.max()
 
     def predict_proba(self, X):
-        """Min-max scale output of `decision_function` to [0,1]."""
+        """Min-max scale output of `decision_function` to [0,1].
+
+        Parameters
+        ----------
+        X : ndarray of shape (n_samples, n_features)
+            The data.
+
+        Returns
+        -------
+        proba : ndarray of shape (n_samples, 2)
+            Predicted probabilities of the 2 classes.
+        """
         df = self.decision_function(X)
         calibrated_df = (df - self.df_min_) / (self.df_max_ - self.df_min_)
-        return np.clip(calibrated_df, 0, 1)
+        proba_class1 = np.clip(calibrated_df, 0, 1)
+        proba_class0 = 1 - proba_class1
+        proba = np.c_[proba_class0, proba_class1]
+        return proba
 
 
 lr = LogisticRegression(C=1.)
@@ -254,8 +268,8 @@ for i, (clf, name) in enumerate(clf_list):
     # Create DataFrame index
     index.append(name)
     # Store column data
-    brier.append(brier_score_loss(y_test, y_proba))
-    logloss.append(log_loss(y_test, y_proba))
+    brier.append(brier_score_loss(y_test, y_proba[:, 1]))
+    logloss.append(log_loss(y_test, y_proba[:, 1]))
     precision.append(precision_score(y_test, y_pred))
     recall.append(recall_score(y_test, y_pred))
     f1.append(f1_score(y_test, y_pred))
