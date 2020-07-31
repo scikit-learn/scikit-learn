@@ -14,7 +14,7 @@ import pytest
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels \
     import RBF, ConstantKernel as C, WhiteKernel
-from sklearn.gaussian_process.kernels import DotProduct
+from sklearn.gaussian_process.kernels import DotProduct, ExpSineSquared
 from sklearn.gaussian_process.tests._mini_sequence_kernel import MiniSeqKernel
 from sklearn.exceptions import ConvergenceWarning
 
@@ -525,3 +525,14 @@ def test_warning_bounds():
                                          "specified lower bound 10.0. "
                                          "Decreasing the bound and calling "
                                          "fit again may find a better value.")
+
+
+def test_bound_check_fixed_hyperparameter():
+    # Regression test for issue #17943
+    # Check that having a hyperparameter with fixed bounds doesn't cause an
+    # error
+    k1 = 50.0**2 * RBF(length_scale=50.0)  # long term smooth rising trend
+    k2 = ExpSineSquared(length_scale=1.0, periodicity=1.0,
+                        periodicity_bounds="fixed")  # seasonal component
+    kernel = k1 + k2
+    GaussianProcessRegressor(kernel=kernel).fit(X, y)

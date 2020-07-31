@@ -45,6 +45,13 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
+:mod:`sklearn.calibration`
+..........................
+
+- |Efficiency| :class:`calibration.CalibratedClassifierCV.fit` now supports
+  parallelization via `joblib.Parallel` using argument `n_jobs`.
+  :pr:`17107` by :user:`Julien Jerphanion <jjerphan>`.
+
 :mod:`sklearn.calibrator`
 .........................
 
@@ -68,6 +75,24 @@ Changelog
 
 - |API| :class:`cluster.MiniBatchKMeans` attributes, `counts_` and
   `init_size_`, are deprecated and will be removed in 0.26. :pr:`17864` by
+  :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+- |Fix| :class:`cluster.AgglomerativeClustering` has a new parameter
+  `compute_distances`. When set to `True`, distances between clusters are
+  computed and stored in the `distances_` attribute even when the parameter
+  `distance_threshold` is not used. This new parameter is useful to produce
+  dendrogram visualizations, but introduces a computational and memory
+  overhead. :pr:`17984` by :user:`Michael Riedmann <mriedmann>`,
+  :user:`Emilie Delattre <EmilieDel>`, and
+  :user:`Francesco Casalegno <FrancescoCasalegno>`.
+
+- |Fix| Fixed a bug in :class:`cluster.AffinityPropagation`, that
+  gives incorrect clusters when the array dtype is float32.
+  :pr:`17995` by :user:`Thomaz Santana  <Wikilicious>` and
+  :user:`Amanda Dsouza <amy12xx>`.
+
+- |Fix| Fixed a bug in :class:`cluster.KMeans` where rounding errors could
+  prevent convergence to be declared when `tol=0`. :pr:`17959` by
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 :mod:`sklearn.covariance`
@@ -113,6 +138,10 @@ Changelog
   argument `rotation`, which can take the value `None`, `'varimax'` or `'quartimax'.`
   :pr:`11064` by :user:`Jona Sassenhagen <jona-sassenhagen>`.
 
+- |Fix| Avoid overflows on Windows in :func:`decomposition.IncrementalPCA.partial_fit`
+  for large ``batch_size`` and ``n_samples`` values.`
+  :pr:`17985` by :user:`Alan Butler <aldee153> and Amanda Dsouza <amy12xx>`.
+
 :mod:`sklearn.ensemble`
 .......................
 
@@ -146,6 +175,11 @@ Changelog
   given as a float representing the percentage of features to select.
   :pr:`17090` by :user:`Lisa Schwetlick <lschwetlick>` and
   :user:`Marija Vlajic Wheeler <marijavlajic>`.
+
+- |Efficiency| Reduce memory footprint in :func:`feature_selection.mutual_info_classif`
+  and :func:`feature_selection.mutual_info_regression` by calling
+  :class:`neighbors.KDTree` for counting nearest neighbors.
+  :pr:`17878` by :user:`Noel Rogers <noelano>`
 
 :mod:`sklearn.gaussian_process`
 ...............................
@@ -217,6 +251,11 @@ Changelog
   average of multiple RMSE values was incorrectly calculated as the root of the
   average of multiple MSE values.
   :pr:`17309` by :user:`Swier Heeres <swierh>`
+  
+- |Fix| Fixed a bug in 
+  :func:`metrics.classification_report` which was raising AttributeError
+  when called with `output_dict=True` for 0-length values.
+  :pr:`17777` by :user:`Shubhanshu Mishra <napsternxg>`
 
 - |Enhancement| Add `sample_weight` parameter to
   :func:`metrics.median_absolute_error`. :pr:`17225` by

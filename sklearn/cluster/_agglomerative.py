@@ -747,6 +747,13 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
 
         .. versionadded:: 0.21
 
+    compute_distances : bool, default=False
+        Computes distances between clusters even if `distance_threshold` is not
+        used. This can be used to make dendrogram visualization, but introduces
+        a computational and memory overhead.
+
+        .. versionadded:: 0.24
+
     Attributes
     ----------
     n_clusters_ : int
@@ -776,7 +783,8 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
 
     distances_ : array-like of shape (n_nodes-1,)
         Distances between nodes in the corresponding place in `children_`.
-        Only computed if distance_threshold is not None.
+        Only computed if `distance_threshold` is used or `compute_distances`
+        is set to `True`.
 
     Examples
     --------
@@ -795,7 +803,8 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
     def __init__(self, n_clusters=2, *, affinity="euclidean",
                  memory=None,
                  connectivity=None, compute_full_tree='auto',
-                 linkage='ward', distance_threshold=None):
+                 linkage='ward', distance_threshold=None,
+                 compute_distances=False):
         self.n_clusters = n_clusters
         self.distance_threshold = distance_threshold
         self.memory = memory
@@ -803,6 +812,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         self.compute_full_tree = compute_full_tree
         self.linkage = linkage
         self.affinity = affinity
+        self.compute_distances = compute_distances
 
     def fit(self, X, y=None):
         """Fit the hierarchical clustering from features, or distance matrix.
@@ -879,7 +889,10 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
 
         distance_threshold = self.distance_threshold
 
-        return_distance = distance_threshold is not None
+        return_distance = (
+            (distance_threshold is not None) or self.compute_distances
+        )
+
         out = memory.cache(tree_builder)(X, connectivity=connectivity,
                                          n_clusters=n_clusters,
                                          return_distance=return_distance,
@@ -891,9 +904,11 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
 
         if return_distance:
             self.distances_ = out[-1]
+
+        if self.distance_threshold is not None:  # distance_threshold is used
             self.n_clusters_ = np.count_nonzero(
                 self.distances_ >= distance_threshold) + 1
-        else:
+        else:  # n_clusters is used
             self.n_clusters_ = self.n_clusters
 
         # Cut the tree
@@ -999,6 +1014,13 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
 
         .. versionadded:: 0.21
 
+    compute_distances : bool, default=False
+        Computes distances between clusters even if `distance_threshold` is not
+        used. This can be used to make dendrogram visualization, but introduces
+        a computational and memory overhead.
+
+        .. versionadded:: 0.24
+
     Attributes
     ----------
     n_clusters_ : int
@@ -1028,7 +1050,8 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
 
     distances_ : array-like of shape (n_nodes-1,)
         Distances between nodes in the corresponding place in `children_`.
-        Only computed if distance_threshold is not None.
+        Only computed if `distance_threshold` is used or `compute_distances`
+        is set to `True`.
 
     Examples
     --------
@@ -1049,11 +1072,12 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
                  memory=None,
                  connectivity=None, compute_full_tree='auto',
                  linkage='ward', pooling_func=np.mean,
-                 distance_threshold=None):
+                 distance_threshold=None, compute_distances=False):
         super().__init__(
             n_clusters=n_clusters, memory=memory, connectivity=connectivity,
             compute_full_tree=compute_full_tree, linkage=linkage,
-            affinity=affinity, distance_threshold=distance_threshold)
+            affinity=affinity, distance_threshold=distance_threshold,
+            compute_distances=compute_distances)
         self.pooling_func = pooling_func
 
     def fit(self, X, y=None, **params):
