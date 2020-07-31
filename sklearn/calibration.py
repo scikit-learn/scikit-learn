@@ -695,10 +695,10 @@ def _sigmoid_calibration(predictions, y, sample_weight=None):
     ----------
     Platt, "Probabilistic Outputs for Support Vector Machines"
     """
-    pred = column_or_1d(pred)
+    predictions = column_or_1d(predictions)
     y = column_or_1d(y)
 
-    F = pred  # F follows Platt's notations
+    F = predictions  # F follows Platt's notations
 
     # Bayesian priors (see Platt end of section 2.2)
     prior0 = float(np.sum(y <= 0))
