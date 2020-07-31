@@ -1551,6 +1551,18 @@ class MiniBatchKMeans(KMeans):
         self._no_improvement = no_improvement
         return False
 
+    def _random_reassign(self):
+        """Check if a random reassignment needs to be done.
+
+        Do random reassignments each time 10 * n_clusters samples have been
+        processed.
+        """
+        self._n_since_last_reassign += self.batch_size
+        if self._n_since_last_reassign >= (10 * self.n_clusters):
+            self._n_since_last_reassign = 0
+            return True
+        return False
+
     def fit(self, X, y=None, sample_weight=None):
         """Compute the centroids on X by chunking it into mini-batches.
 
@@ -1638,7 +1650,7 @@ class MiniBatchKMeans(KMeans):
         n_batches = int(np.ceil(float(n_samples) / self.batch_size))
         n_iter = int(self.max_iter * n_batches)
 
-        n_samples_seen_since_last_reassign = 0
+        self._n_since_last_reassign = 0
 
         with threadpool_limits(limits=1, user_api="blas"):
             # Perform the iterative optimization until convergence
@@ -1646,29 +1658,6 @@ class MiniBatchKMeans(KMeans):
                 # Sample a minibatch from the full dataset
                 minibatch_indices = random_state.randint(0, n_samples,
                                                          self.batch_size)
-
-                # Randomly choose whether to perform random reassignment:
-                # the choice is done as a function of the iteration index, and
-                # the minimum number of counts, in order to force this
-                # reassignment to happen every once in a while.
-                
-                if self.mode == 0:
-                    random_reassign = random_state.randint(
-                        10 * (1 + self._counts.min())) == 0
-                elif self.mode == 1:
-                    random_reassign = (i + 1) % (10 + int(self._counts.min())) == 0
-                elif self.mode == 2:
-                    random_reassign = ((i >= 10) *
-                                       random_state.choice([0, 1], p=[0.9, 0.1]))
-                elif self.mode == 3:
-                    random_reassign = (i >= 10) * True
-                elif self.mode == 4:
-                    random_reassign = True
-                elif isinstance(self.mode, tuple):
-                    n_samples_seen_since_last_reassign += self.batch_size
-                    random_reassign = n_samples_seen_since_last_reassign >= (self.mode[0] * self.n_clusters)
-                    if random_reassign:
-                        n_samples_seen_since_last_reassign = 0
 
                 # Perform the actual update step on the minibatch data
                 batch_inertia = _mini_batch_step(
@@ -1679,7 +1668,7 @@ class MiniBatchKMeans(KMeans):
                     centers_new=centers_new,
                     weight_sums=self._counts,
                     random_state=random_state,
-                    random_reassign=random_reassign,
+                    random_reassign=self._random_reassign(),
                     reassignment_ratio=self.reassignment_ratio,
                     verbose=self.verbose,
                     n_threads=self._n_threads)
@@ -1690,11 +1679,6 @@ class MiniBatchKMeans(KMeans):
                     centers_squared_diff = 0
 
                 centers, centers_new = centers_new, centers
-
-                _, inertiaa = _labels_inertia_threadpool_limit(
-                    X, sample_weight, x_squared_norms, centers,
-                    n_threads=self._n_threads)
-                print(f"{inertiaa},")
 
                 # Monitor convergence and do early stopping if necessary
                 if self._mini_batch_convergence(
@@ -1765,13 +1749,7 @@ class MiniBatchKMeans(KMeans):
             # Initialize counts
             self._counts = np.zeros(self.n_clusters, dtype=X.dtype)
 
-            random_reassign = False
-        else:
-            # The lower the minimum count is, the more we do random
-            # reassignment, however, we don't want to do random
-            # reassignment too often, to allow for building up counts
-            random_reassign = self._random_state.randint(
-                10 * (1 + self._counts.min())) == 0
+            self._n_since_last_reassign = 0
 
         with threadpool_limits(limits=1, user_api="blas"):
             _mini_batch_step(X,
@@ -1781,7 +1759,7 @@ class MiniBatchKMeans(KMeans):
                              centers_new=self.cluster_centers_,
                              weight_sums=self._counts,
                              random_state=self._random_state,
-                             random_reassign=random_reassign,
+                             random_reassign=self._random_reassign(),
                              reassignment_ratio=self.reassignment_ratio,
                              verbose=self.verbose,
                              n_threads=self._n_threads)
