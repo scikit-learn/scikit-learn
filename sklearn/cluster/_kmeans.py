@@ -1577,9 +1577,12 @@ class MiniBatchKMeans(KMeans):
 
         Do random reassignments each time 10 * n_clusters samples have been
         processed.
+
+        If there are empty clusters we always want to reassign.
         """
         self._n_since_last_reassign += self.batch_size
-        if self._n_since_last_reassign >= (10 * self.n_clusters):
+        if ((self._counts == 0).any() or
+                self._n_since_last_reassign >= (10 * self.n_clusters)):
             self._n_since_last_reassign = 0
             return True
         return False
