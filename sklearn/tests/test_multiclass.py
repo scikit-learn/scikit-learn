@@ -781,16 +781,12 @@ def test_pairwise_cross_val_score():
 
 def test_support_missing_values():
     rng = np.random.RandomState(42)
-    X_train, X_test, y_train, y_test = train_test_split(iris.data,
-                                                        iris.target,
-                                                        random_state=rng)
-
-    mask = np.random.choice([1, 0], X_train.shape, p=[.1, .9]).astype(bool)
-    X_train[mask] = np.nan
-    lr = make_pipeline(
-            SimpleImputer(), LogisticRegression())
+    X, y = iris.data, iris.target
+    mask = rng.choice([1, 0], X.shape, p=[.1, .9]).astype(bool)
+    X[mask] = np.nan
+    lr = make_pipeline(SimpleImputer(), 
+                       LogisticRegression(random_state=rng))
 
     for MultiClassClassifier in [OneVsRestClassifier, OneVsOneClassifier]:
-        clf = MultiClassClassifier(lr)
-        clf.fit(X_train, y_train)
-        assert clf.score(X_test, y_test) > 0.4
+        clf = MultiClassClassifier(lr).fit(X, y)
+        clf.score(X, y)
