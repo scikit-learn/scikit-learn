@@ -87,7 +87,7 @@ def test_iterable_value():
     v = DictVectorizer()
     X = v.fit_transform(D_in)
     X = X.toarray()
-    assert_array_equal(X, X_data)
+    assert_array_equal(X, X_expected)
 
     D_out = v.inverse_transform(X)
     assert D_out[0] == {"version=1": 2, "version=2": 1, "ham": 2}
