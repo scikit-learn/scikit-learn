@@ -138,13 +138,14 @@ f1 = []
 
 for i, (clf, name) in enumerate(clf_list):
     clf.fit(X_train, y_train)
+    y_proba = clf.predict_proba(X_test)
     y_pred = clf.predict(X_test)
 
     # Create DataFrame index
     index.append(name)
     # Store column data
-    brier.append(brier_score_loss(y_test, y_pred))
-    logloss.append(log_loss(y_test, y_pred))
+    brier.append(brier_score_loss(y_test, y_proba[:, 1]))
+    logloss.append(log_loss(y_test, y_proba[:, 1]))
     precision.append(precision_score(y_test, y_pred))
     recall.append(recall_score(y_test, y_pred))
     f1.append(f1_score(y_test, y_pred))
@@ -247,13 +248,14 @@ f1 = []
 
 for i, (clf, name) in enumerate(clf_list):
     clf.fit(X_train, y_train)
+    y_proba = clf.predict_proba(X_test)
     y_pred = clf.predict(X_test)
 
     # Create DataFrame index
     index.append(name)
     # Store column data
-    brier.append(brier_score_loss(y_test, y_pred))
-    logloss.append(log_loss(y_test, y_pred))
+    brier.append(brier_score_loss(y_test, y_proba[:, 1]))
+    logloss.append(log_loss(y_test, y_proba[:, 1]))
     precision.append(precision_score(y_test, y_pred))
     recall.append(recall_score(y_test, y_pred))
     f1.append(f1_score(y_test, y_pred))
