@@ -19,6 +19,7 @@ calibrate an uncalibrated classifier.
 import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
 import pandas as pd
+import numpy as np
 
 from sklearn.datasets import make_classification
 from sklearn.model_selection import train_test_split

@@ -17,6 +17,7 @@ to 0.8, approximately 80% actually belong to the positive class.
 
 import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
+import numpy as np
 
 from sklearn.datasets import make_classification
 from sklearn.naive_bayes import GaussianNB
