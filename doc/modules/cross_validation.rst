@@ -116,16 +116,15 @@ a model and computing the score 5 consecutive times (with different splits each
 time)::
 
   >>> from sklearn.model_selection import cross_val_score
-  >>> clf = svm.SVC(kernel='linear', C=1)
+  >>> clf = svm.SVC(kernel='linear', C=1, random_state=42)
   >>> scores = cross_val_score(clf, X, y, cv=5)
   >>> scores
-  array([0.96..., 1.  ..., 0.96..., 0.96..., 1.        ])
+  array([0.96..., 1. , 0.96..., 0.96..., 1. ])
 
-The mean score and the 95\% confidence interval of the score estimate are hence
-given by::
+The mean score and the standard deviation are hence given by::
 
-  >>> print("Accuracy: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std() * 2))
-  Accuracy: 0.98 (+/- 0.03)
+  >>> print("%0.2f accuracy with a standard deviation of %0.2f" % (scores.mean(), scores.std()))
+  0.98 accuracy with a standard deviation of 0.02
 
 By default, the score computed at each CV iteration is the ``score``
 method of the estimator. It is possible to change this by using the
@@ -241,7 +240,7 @@ predefined scorer names::
 
 Or as a dict mapping scorer name to a predefined or custom scoring function::
 
-    >>> from sklearn.metrics.scorer import make_scorer
+    >>> from sklearn.metrics import make_scorer
     >>> scoring = {'prec_macro': 'precision_macro',
     ...            'rec_macro': make_scorer(recall_score, average='macro')}
     >>> scores = cross_validate(clf, X, y, scoring=scoring,
@@ -323,11 +322,11 @@ The following cross-validators can be used in such cases.
 
 While i.i.d. data is a common assumption in machine learning theory, it rarely
 holds in practice. If one knows that the samples have been generated using a
-time-dependent process, it's safer to
-use a :ref:`time-series aware cross-validation scheme <timeseries_cv>`
-Similarly if we know that the generative process has a group structure
-(samples from collected from different subjects, experiments, measurement
-devices) it safer to use :ref:`group-wise cross-validation <group_cv>`.
+time-dependent process, it is safer to
+use a :ref:`time-series aware cross-validation scheme <timeseries_cv>`.
+Similarly, if we know that the generative process has a group structure
+(samples collected from different subjects, experiments, measurement
+devices), it is safer to use :ref:`group-wise cross-validation <group_cv>`.
 
 
 K-fold
@@ -534,19 +533,30 @@ Stratified k-fold
 folds: each set contains approximately the same percentage of samples of each
 target class as the complete set.
 
-Example of stratified 3-fold cross-validation on a dataset with 10 samples from
-two slightly unbalanced classes::
+Here is an example of stratified 3-fold cross-validation on a dataset with 50 samples from
+two unbalanced classes.  We show the number of samples in each class and compare with
+:class:`KFold`.
 
-  >>> from sklearn.model_selection import StratifiedKFold
-
-  >>> X = np.ones(10)
-  >>> y = [0, 0, 0, 0, 1, 1, 1, 1, 1, 1]
+  >>> from sklearn.model_selection import StratifiedKFold, KFold
+  >>> import numpy as np
+  >>> X, y = np.ones((50, 1)), np.hstack(([0] * 45, [1] * 5))
   >>> skf = StratifiedKFold(n_splits=3)
   >>> for train, test in skf.split(X, y):
-  ...     print("%s %s" % (train, test))
-  [2 3 6 7 8 9] [0 1 4 5]
-  [0 1 3 4 5 8 9] [2 6 7]
-  [0 1 2 4 5 6 7] [3 8 9]
+  ...     print('train -  {}   |   test -  {}'.format(
+  ...         np.bincount(y[train]), np.bincount(y[test])))
+  train -  [30  3]   |   test -  [15  2]
+  train -  [30  3]   |   test -  [15  2]
+  train -  [30  4]   |   test -  [15  1]
+  >>> kf = KFold(n_splits=3)
+  >>> for train, test in kf.split(X, y):
+  ...     print('train -  {}   |   test -  {}'.format(
+  ...         np.bincount(y[train]), np.bincount(y[test])))
+  train -  [28  5]   |   test -  [17]
+  train -  [28  5]   |   test -  [17]
+  train -  [34]   |   test -  [11  5]
+
+We can see that :class:`StratifiedKFold` preserves the class ratios
+(approximately 1 / 10) in both train and test dataset.
 
 Here is a visualization of the cross-validation behavior.
 
@@ -771,7 +781,7 @@ Example of 3-split time series cross-validation on a dataset with 6 samples::
   >>> y = np.array([1, 2, 3, 4, 5, 6])
   >>> tscv = TimeSeriesSplit(n_splits=3)
   >>> print(tscv)
-  TimeSeriesSplit(max_train_size=None, n_splits=3)
+  TimeSeriesSplit(gap=0, max_train_size=None, n_splits=3, test_size=None)
   >>> for train, test in tscv.split(X):
   ...     print("%s %s" % (train, test))
   [0 1 2] [3]

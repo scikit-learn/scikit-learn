@@ -6,7 +6,7 @@ import numpy as np
 from sklearn.base import BaseEstimator
 from sklearn.datasets import make_classification
 
-from sklearn.utils.testing import assert_raises
+from sklearn.utils._testing import assert_raises
 from sklearn.utils.validation import check_is_fitted
 from sklearn.utils.estimator_checks import parametrize_with_checks
 from sklearn.pipeline import Pipeline, make_pipeline, make_union, FeatureUnion

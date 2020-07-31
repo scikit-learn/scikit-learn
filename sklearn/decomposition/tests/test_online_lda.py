@@ -8,13 +8,13 @@ from scipy.special import psi
 import pytest
 
 from sklearn.decomposition import LatentDirichletAllocation
-from sklearn.decomposition._online_lda import (_dirichlet_expectation_1d,
-                                               _dirichlet_expectation_2d)
+from sklearn.decomposition._lda import (_dirichlet_expectation_1d,
+                                        _dirichlet_expectation_2d)
 
-from sklearn.utils.testing import assert_allclose
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import if_safe_multiprocessing_with_blas
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import if_safe_multiprocessing_with_blas
 
 from sklearn.exceptions import NotFittedError
 from io import StringIO
@@ -24,7 +24,7 @@ def _build_sparse_mtx():
     # Create 3 topics and each topic has 3 distinct words.
     # (Each word only belongs to a single topic.)
     n_components = 3
-    block = np.full((3, 3), n_components, dtype=np.int)
+    block = np.full((3, 3), n_components, dtype=int)
     blocks = [block] * n_components
     X = block_diag(*blocks)
     X = csr_matrix(X)
@@ -184,7 +184,8 @@ def test_lda_no_component_error():
     X = rng.randint(4, size=(20, 10))
     lda = LatentDirichletAllocation()
     regex = ("This LatentDirichletAllocation instance is not fitted yet. "
-             "Call 'fit' with appropriate arguments before using this method.")
+             "Call 'fit' with appropriate arguments before using this "
+             "estimator.")
     with pytest.raises(NotFittedError, match=regex):
         lda.perplexity(X)
 

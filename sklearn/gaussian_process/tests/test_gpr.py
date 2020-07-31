@@ -1,8 +1,10 @@
 """Testing for Gaussian process regression """
 
 # Author: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
+# Modified by: Pete Green <p.l.green@liverpool.ac.uk>
 # License: BSD 3 clause
 
+import sys
 import numpy as np
 
 from scipy.optimize import approx_fprime
@@ -12,12 +14,15 @@ import pytest
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels \
     import RBF, ConstantKernel as C, WhiteKernel
-from sklearn.gaussian_process.kernels import DotProduct
+from sklearn.gaussian_process.kernels import DotProduct, ExpSineSquared
+from sklearn.gaussian_process.tests._mini_sequence_kernel import MiniSeqKernel
+from sklearn.exceptions import ConvergenceWarning
 
-from sklearn.utils.testing \
+from sklearn.utils._testing \
     import (assert_array_less,
             assert_almost_equal, assert_raise_message,
-            assert_array_almost_equal, assert_array_equal)
+            assert_array_almost_equal, assert_array_equal,
+            assert_allclose, assert_warns_message)
 
 
 def f(x):
@@ -45,6 +50,9 @@ non_fixed_kernels = [kernel for kernel in kernels
 
 @pytest.mark.parametrize('kernel', kernels)
 def test_gpr_interpolation(kernel):
+    if sys.maxsize <= 2 ** 32 and sys.version_info[:2] == (3, 6):
+        pytest.xfail("This test may fail on 32bit Py3.6")
+
     # Test the interpolating property for different kernels.
     gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
     y_pred, y_cov = gpr.predict(X, return_cov=True)
@@ -53,12 +61,29 @@ def test_gpr_interpolation(kernel):
     assert_almost_equal(np.diag(y_cov), 0.)
 
 
+def test_gpr_interpolation_structured():
+    # Test the interpolating property for different kernels.
+    kernel = MiniSeqKernel(baseline_similarity_bounds='fixed')
+    X = ['A', 'B', 'C']
+    y = np.array([1, 2, 3])
+    gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
+    y_pred, y_cov = gpr.predict(X, return_cov=True)
+
+    assert_almost_equal(kernel(X, eval_gradient=True)[1].ravel(),
+                        (1 - np.eye(len(X))).ravel())
+    assert_almost_equal(y_pred, y)
+    assert_almost_equal(np.diag(y_cov), 0.)
+
+
 @pytest.mark.parametrize('kernel', non_fixed_kernels)
 def test_lml_improving(kernel):
+    if sys.maxsize <= 2 ** 32 and sys.version_info[:2] == (3, 6):
+        pytest.xfail("This test may fail on 32bit Py3.6")
+
     # Test that hyperparameter-tuning improves log-marginal likelihood.
     gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
     assert (gpr.log_marginal_likelihood(gpr.kernel_.theta) >
-                   gpr.log_marginal_likelihood(kernel.theta))
+            gpr.log_marginal_likelihood(kernel.theta))
 
 
 @pytest.mark.parametrize('kernel', kernels)
@@ -66,7 +91,7 @@ def test_lml_precomputed(kernel):
     # Test that lml of optimized kernel is stored correctly.
     gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
     assert (gpr.log_marginal_likelihood(gpr.kernel_.theta) ==
-                 gpr.log_marginal_likelihood())
+            gpr.log_marginal_likelihood())
 
 
 @pytest.mark.parametrize('kernel', kernels)
@@ -160,6 +185,9 @@ def test_no_optimizer():
 
 @pytest.mark.parametrize('kernel', kernels)
 def test_predict_cov_vs_std(kernel):
+    if sys.maxsize <= 2 ** 32 and sys.version_info[:2] == (3, 6):
+        pytest.xfail("This test may fail on 32bit Py3.6")
+
     # Test that predicted std.-dev. is consistent with cov's diagonal.
     gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
     y_mean, y_cov = gpr.predict(X2, return_cov=True)
@@ -179,7 +207,7 @@ def test_anisotropic_kernel():
     kernel = RBF([1.0, 1.0])
     gpr = GaussianProcessRegressor(kernel=kernel).fit(X, y)
     assert (np.exp(gpr.kernel_.theta[1]) >
-                   np.exp(gpr.kernel_.theta[0]) * 5)
+            np.exp(gpr.kernel_.theta[0]) * 5)
 
 
 def test_random_starts():
@@ -207,31 +235,101 @@ def test_random_starts():
 
 @pytest.mark.parametrize('kernel', kernels)
 def test_y_normalization(kernel):
-    # Test normalization of the target values in GP
+    """
+    Test normalization of the target values in GP
 
-    # Fitting non-normalizing GP on normalized y and fitting normalizing GP
-    # on unnormalized y should yield identical results
-    y_mean = y.mean(0)
-    y_norm = y - y_mean
+    Fitting non-normalizing GP on normalized y and fitting normalizing GP
+    on unnormalized y should yield identical results. Note that, here,
+    'normalized y' refers to y that has been made zero mean and unit
+    variance.
+
+    """
+
+    y_mean = np.mean(y)
+    y_std = np.std(y)
+    y_norm = (y - y_mean) / y_std
 
     # Fit non-normalizing GP on normalized y
     gpr = GaussianProcessRegressor(kernel=kernel)
     gpr.fit(X, y_norm)
+
     # Fit normalizing GP on unnormalized y
     gpr_norm = GaussianProcessRegressor(kernel=kernel, normalize_y=True)
     gpr_norm.fit(X, y)
 
     # Compare predicted mean, std-devs and covariances
     y_pred, y_pred_std = gpr.predict(X2, return_std=True)
-    y_pred = y_mean + y_pred
+    y_pred = y_pred * y_std + y_mean
+    y_pred_std = y_pred_std * y_std
     y_pred_norm, y_pred_std_norm = gpr_norm.predict(X2, return_std=True)
 
     assert_almost_equal(y_pred, y_pred_norm)
     assert_almost_equal(y_pred_std, y_pred_std_norm)
 
     _, y_cov = gpr.predict(X2, return_cov=True)
+    y_cov = y_cov * y_std**2
     _, y_cov_norm = gpr_norm.predict(X2, return_cov=True)
+
     assert_almost_equal(y_cov, y_cov_norm)
+
+
+def test_large_variance_y():
+    """
+    Here we test that, when noramlize_y=True, our GP can produce a
+    sensible fit to training data whose variance is significantly
+    larger than unity. This test was made in response to issue #15612.
+
+    GP predictions are verified against predictions that were made
+    using GPy which, here, is treated as the 'gold standard'. Note that we
+    only investigate the RBF kernel here, as that is what was used in the
+    GPy implementation.
+
+    The following code can be used to recreate the GPy data:
+
+    --------------------------------------------------------------------------
+    import GPy
+
+    kernel_gpy = GPy.kern.RBF(input_dim=1, lengthscale=1.)
+    gpy = GPy.models.GPRegression(X, np.vstack(y_large), kernel_gpy)
+    gpy.optimize()
+    y_pred_gpy, y_var_gpy = gpy.predict(X2)
+    y_pred_std_gpy = np.sqrt(y_var_gpy)
+    --------------------------------------------------------------------------
+    """
+
+    # Here we utilise a larger variance version of the training data
+    y_large = 10 * y
+
+    # Standard GP with normalize_y=True
+    RBF_params = {'length_scale': 1.0}
+    kernel = RBF(**RBF_params)
+    gpr = GaussianProcessRegressor(kernel=kernel, normalize_y=True)
+    gpr.fit(X, y_large)
+    y_pred, y_pred_std = gpr.predict(X2, return_std=True)
+
+    # 'Gold standard' mean predictions from GPy
+    y_pred_gpy = np.array([15.16918303,
+                           -27.98707845,
+                           -39.31636019,
+                           14.52605515,
+                           69.18503589])
+
+    # 'Gold standard' std predictions from GPy
+    y_pred_std_gpy = np.array([7.78860962,
+                               3.83179178,
+                               0.63149951,
+                               0.52745188,
+                               0.86170042])
+
+    # Based on numerical experiments, it's reasonable to expect our
+    # GP's mean predictions to get within 7% of predictions of those
+    # made by GPy.
+    assert_allclose(y_pred, y_pred_gpy, rtol=0.07, atol=0)
+
+    # Based on numerical experiments, it's reasonable to expect our
+    # GP's std predictions to get within 15% of predictions of those
+    # made by GPy.
+    assert_allclose(y_pred_std, y_pred_std_gpy, rtol=0.15, atol=0)
 
 
 def test_y_multioutput():
@@ -297,7 +395,7 @@ def test_custom_optimizer(kernel):
     gpr.fit(X, y)
     # Checks that optimizer improved marginal likelihood
     assert (gpr.log_marginal_likelihood(gpr.kernel_.theta) >
-                   gpr.log_marginal_likelihood(gpr.kernel.theta))
+            gpr.log_marginal_likelihood(gpr.kernel.theta))
 
 
 def test_gpr_correct_error_message():
@@ -370,3 +468,71 @@ def test_K_inv_reset(kernel):
     gpr2.predict(X2, return_std=True)
     # the value of K_inv should be independent of the first fit
     assert_array_equal(gpr._K_inv, gpr2._K_inv)
+
+
+def test_warning_bounds():
+    kernel = RBF(length_scale_bounds=[1e-5, 1e-3])
+    gpr = GaussianProcessRegressor(kernel=kernel)
+    assert_warns_message(ConvergenceWarning, "The optimal value found for "
+                                             "dimension 0 of parameter "
+                                             "length_scale is close to "
+                                             "the specified upper bound "
+                                             "0.001. Increasing the bound "
+                                             "and calling fit again may "
+                                             "find a better value.",
+                         gpr.fit, X, y)
+
+    kernel_sum = (WhiteKernel(noise_level_bounds=[1e-5, 1e-3]) +
+                  RBF(length_scale_bounds=[1e3, 1e5]))
+    gpr_sum = GaussianProcessRegressor(kernel=kernel_sum)
+    with pytest.warns(None) as record:
+        gpr_sum.fit(X, y)
+
+    assert len(record) == 2
+    assert record[0].message.args[0] == ("The optimal value found for "
+                                         "dimension 0 of parameter "
+                                         "k1__noise_level is close to the "
+                                         "specified upper bound 0.001. "
+                                         "Increasing the bound and calling "
+                                         "fit again may find a better value.")
+
+    assert record[1].message.args[0] == ("The optimal value found for "
+                                         "dimension 0 of parameter "
+                                         "k2__length_scale is close to the "
+                                         "specified lower bound 1000.0. "
+                                         "Decreasing the bound and calling "
+                                         "fit again may find a better value.")
+
+    X_tile = np.tile(X, 2)
+    kernel_dims = RBF(length_scale=[1., 2.],
+                      length_scale_bounds=[1e1, 1e2])
+    gpr_dims = GaussianProcessRegressor(kernel=kernel_dims)
+
+    with pytest.warns(None) as record:
+        gpr_dims.fit(X_tile, y)
+
+    assert len(record) == 2
+    assert record[0].message.args[0] == ("The optimal value found for "
+                                         "dimension 0 of parameter "
+                                         "length_scale is close to the "
+                                         "specified lower bound 10.0. "
+                                         "Decreasing the bound and calling "
+                                         "fit again may find a better value.")
+
+    assert record[1].message.args[0] == ("The optimal value found for "
+                                         "dimension 1 of parameter "
+                                         "length_scale is close to the "
+                                         "specified lower bound 10.0. "
+                                         "Decreasing the bound and calling "
+                                         "fit again may find a better value.")
+
+
+def test_bound_check_fixed_hyperparameter():
+    # Regression test for issue #17943
+    # Check that having a hyperparameter with fixed bounds doesn't cause an
+    # error
+    k1 = 50.0**2 * RBF(length_scale=50.0)  # long term smooth rising trend
+    k2 = ExpSineSquared(length_scale=1.0, periodicity=1.0,
+                        periodicity_bounds="fixed")  # seasonal component
+    kernel = k1 + k2
+    GaussianProcessRegressor(kernel=kernel).fit(X, y)

@@ -14,7 +14,7 @@ increase the number of nodes pruned. Here we only show the effect of
 ``ccp_alpha`` on regularizing the trees and how to choose a ``ccp_alpha``
 based on validation scores.
 
-See also `ref`:_minimal_cost_complexity_pruning` for details on pruning.
+See also :ref:`minimal_cost_complexity_pruning` for details on pruning.
 """
 
 print(__doc__)
@@ -23,7 +23,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.datasets import load_breast_cancer
 from sklearn.tree import DecisionTreeClassifier
 
-###############################################################################
+# %%
 # Total impurity of leaves vs effective alphas of pruned tree
 # ---------------------------------------------------------------
 # Minimal cost complexity pruning recursively finds the node with the "weakest
@@ -41,7 +41,7 @@ clf = DecisionTreeClassifier(random_state=0)
 path = clf.cost_complexity_pruning_path(X_train, y_train)
 ccp_alphas, impurities = path.ccp_alphas, path.impurities
 
-###############################################################################
+# %%
 # In the following plot, the maximum effective alpha value is removed, because
 # it is the trivial tree with only one node.
 fig, ax = plt.subplots()
@@ -50,7 +50,7 @@ ax.set_xlabel("effective alpha")
 ax.set_ylabel("total impurity of leaves")
 ax.set_title("Total Impurity vs effective alpha for training set")
 
-###############################################################################
+# %%
 # Next, we train a decision tree using the effective alphas. The last value
 # in ``ccp_alphas`` is the alpha value that prunes the whole tree,
 # leaving the tree, ``clfs[-1]``, with one node.
@@ -62,7 +62,7 @@ for ccp_alpha in ccp_alphas:
 print("Number of nodes in the last tree is: {} with ccp_alpha: {}".format(
       clfs[-1].tree_.node_count, ccp_alphas[-1]))
 
-###############################################################################
+# %%
 # For the remainder of this example, we remove the last element in
 # ``clfs`` and ``ccp_alphas``, because it is the trivial tree with only one
 # node. Here we show that the number of nodes and tree depth decreases as alpha
@@ -83,7 +83,7 @@ ax[1].set_ylabel("depth of tree")
 ax[1].set_title("Depth vs alpha")
 fig.tight_layout()
 
-###############################################################################
+# %%
 # Accuracy vs alpha for training and testing sets
 # ----------------------------------------------------
 # When ``ccp_alpha`` is set to zero and keeping the other default parameters

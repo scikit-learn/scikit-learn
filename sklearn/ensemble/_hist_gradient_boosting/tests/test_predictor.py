@@ -1,5 +1,5 @@
 import numpy as np
-from sklearn.datasets import load_boston
+from sklearn.datasets import make_regression
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import r2_score
 import pytest
@@ -12,8 +12,9 @@ from sklearn.ensemble._hist_gradient_boosting.common import (
 
 
 @pytest.mark.parametrize('n_bins', [200, 256])
-def test_boston_dataset(n_bins):
-    X, y = load_boston(return_X_y=True)
+def test_regression_dataset(n_bins):
+    X, y = make_regression(n_samples=500, n_features=10, n_informative=5,
+                           random_state=42)
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, random_state=42)
 
@@ -24,8 +25,8 @@ def test_boston_dataset(n_bins):
     gradients = -y_train.astype(G_H_DTYPE)
     hessians = np.ones(1, dtype=G_H_DTYPE)
 
-    min_samples_leaf = 8
-    max_leaf_nodes = 31
+    min_samples_leaf = 10
+    max_leaf_nodes = 30
     grower = TreeGrower(X_train_binned, gradients, hessians,
                         min_samples_leaf=min_samples_leaf,
                         max_leaf_nodes=max_leaf_nodes, n_bins=n_bins,
@@ -34,8 +35,8 @@ def test_boston_dataset(n_bins):
 
     predictor = grower.make_predictor(bin_thresholds=mapper.bin_thresholds_)
 
-    assert r2_score(y_train, predictor.predict(X_train)) > 0.85
-    assert r2_score(y_test, predictor.predict(X_test)) > 0.70
+    assert r2_score(y_train, predictor.predict(X_train)) > 0.82
+    assert r2_score(y_test, predictor.predict(X_test)) > 0.67
 
 
 @pytest.mark.parametrize('threshold, expected_predictions', [

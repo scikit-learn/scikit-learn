@@ -2,9 +2,9 @@
 
 .. _model_evaluation:
 
-========================================================
-Model evaluation: quantifying the quality of predictions
-========================================================
+===========================================================
+Metrics and scoring: quantifying the quality of predictions
+===========================================================
 
 There are 3 different APIs for evaluating the quality of a model's
 predictions:
@@ -54,51 +54,52 @@ the model and the data, like :func:`metrics.mean_squared_error`, are
 available as neg_mean_squared_error which return the negated value
 of the metric.
 
-==============================    =============================================     ==================================
-Scoring                           Function                                          Comment
-==============================    =============================================     ==================================
+====================================   ==============================================     ==================================
+Scoring                                Function                                           Comment
+====================================   ==============================================     ==================================
 **Classification**
-'accuracy'                        :func:`metrics.accuracy_score`
-'balanced_accuracy'               :func:`metrics.balanced_accuracy_score`
-'average_precision'               :func:`metrics.average_precision_score`
-'neg_brier_score'                 :func:`metrics.brier_score_loss`
-'f1'                              :func:`metrics.f1_score`                          for binary targets
-'f1_micro'                        :func:`metrics.f1_score`                          micro-averaged
-'f1_macro'                        :func:`metrics.f1_score`                          macro-averaged
-'f1_weighted'                     :func:`metrics.f1_score`                          weighted average
-'f1_samples'                      :func:`metrics.f1_score`                          by multilabel sample
-'neg_log_loss'                    :func:`metrics.log_loss`                          requires ``predict_proba`` support
-'precision' etc.                  :func:`metrics.precision_score`                   suffixes apply as with 'f1'
-'recall' etc.                     :func:`metrics.recall_score`                      suffixes apply as with 'f1'
-'jaccard' etc.                    :func:`metrics.jaccard_score`                     suffixes apply as with 'f1'
-'roc_auc'                         :func:`metrics.roc_auc_score`
-'roc_auc_ovr'                     :func:`metrics.roc_auc_score`
-'roc_auc_ovo'                     :func:`metrics.roc_auc_score`
-'roc_auc_ovr_weighted'            :func:`metrics.roc_auc_score`
-'roc_auc_ovo_weighted'            :func:`metrics.roc_auc_score`
+'accuracy'                             :func:`metrics.accuracy_score`
+'balanced_accuracy'                    :func:`metrics.balanced_accuracy_score`
+'average_precision'                    :func:`metrics.average_precision_score`
+'neg_brier_score'                      :func:`metrics.brier_score_loss`
+'f1'                                   :func:`metrics.f1_score`                           for binary targets
+'f1_micro'                             :func:`metrics.f1_score`                           micro-averaged
+'f1_macro'                             :func:`metrics.f1_score`                           macro-averaged
+'f1_weighted'                          :func:`metrics.f1_score`                           weighted average
+'f1_samples'                           :func:`metrics.f1_score`                           by multilabel sample
+'neg_log_loss'                         :func:`metrics.log_loss`                           requires ``predict_proba`` support
+'precision' etc.                       :func:`metrics.precision_score`                    suffixes apply as with 'f1'
+'recall' etc.                          :func:`metrics.recall_score`                       suffixes apply as with 'f1'
+'jaccard' etc.                         :func:`metrics.jaccard_score`                      suffixes apply as with 'f1'
+'roc_auc'                              :func:`metrics.roc_auc_score`
+'roc_auc_ovr'                          :func:`metrics.roc_auc_score`
+'roc_auc_ovo'                          :func:`metrics.roc_auc_score`
+'roc_auc_ovr_weighted'                 :func:`metrics.roc_auc_score`
+'roc_auc_ovo_weighted'                 :func:`metrics.roc_auc_score`
 
 **Clustering**
-'adjusted_mutual_info_score'      :func:`metrics.adjusted_mutual_info_score`
-'adjusted_rand_score'             :func:`metrics.adjusted_rand_score`
-'completeness_score'              :func:`metrics.completeness_score`
-'fowlkes_mallows_score'           :func:`metrics.fowlkes_mallows_score`
-'homogeneity_score'               :func:`metrics.homogeneity_score`
-'mutual_info_score'               :func:`metrics.mutual_info_score`
-'normalized_mutual_info_score'    :func:`metrics.normalized_mutual_info_score`
-'v_measure_score'                 :func:`metrics.v_measure_score`
+'adjusted_mutual_info_score'           :func:`metrics.adjusted_mutual_info_score`
+'adjusted_rand_score'                  :func:`metrics.adjusted_rand_score`
+'completeness_score'                   :func:`metrics.completeness_score`
+'fowlkes_mallows_score'                :func:`metrics.fowlkes_mallows_score`
+'homogeneity_score'                    :func:`metrics.homogeneity_score`
+'mutual_info_score'                    :func:`metrics.mutual_info_score`
+'normalized_mutual_info_score'         :func:`metrics.normalized_mutual_info_score`
+'v_measure_score'                      :func:`metrics.v_measure_score`
 
 **Regression**
-'explained_variance'              :func:`metrics.explained_variance_score`
-'max_error'                       :func:`metrics.max_error`
-'neg_mean_absolute_error'         :func:`metrics.mean_absolute_error`
-'neg_mean_squared_error'          :func:`metrics.mean_squared_error`
-'neg_root_mean_squared_error'     :func:`metrics.mean_squared_error`
-'neg_mean_squared_log_error'      :func:`metrics.mean_squared_log_error`
-'neg_median_absolute_error'       :func:`metrics.median_absolute_error`
-'r2'                              :func:`metrics.r2_score`
-'neg_mean_poisson_deviance'       :func:`metrics.mean_poisson_deviance`
-'neg_mean_gamma_deviance'         :func:`metrics.mean_gamma_deviance`
-==============================    =============================================     ==================================
+'explained_variance'                   :func:`metrics.explained_variance_score`
+'max_error'                            :func:`metrics.max_error`
+'neg_mean_absolute_error'              :func:`metrics.mean_absolute_error`
+'neg_mean_squared_error'               :func:`metrics.mean_squared_error`
+'neg_root_mean_squared_error'          :func:`metrics.mean_squared_error`
+'neg_mean_squared_log_error'           :func:`metrics.mean_squared_log_error`
+'neg_median_absolute_error'            :func:`metrics.median_absolute_error`
+'r2'                                   :func:`metrics.r2_score`
+'neg_mean_poisson_deviance'            :func:`metrics.mean_poisson_deviance`
+'neg_mean_gamma_deviance'              :func:`metrics.mean_gamma_deviance`
+'neg_mean_absolute_percentage_error'   :func:`metrics.mean_absolute_percentage_error`
+====================================   ==============================================     ==================================
 
 
 Usage examples:
@@ -248,7 +249,7 @@ Using multiple metric evaluation
 Scikit-learn also permits evaluation of multiple metrics in ``GridSearchCV``,
 ``RandomizedSearchCV`` and ``cross_validate``.
 
-There are two ways to specify multiple scoring metrics for the ``scoring``
+There are three ways to specify multiple scoring metrics for the ``scoring``
 parameter:
 
 - As an iterable of string metrics::
@@ -260,25 +261,23 @@ parameter:
       >>> scoring = {'accuracy': make_scorer(accuracy_score),
       ...            'prec': 'precision'}
 
-Note that the dict values can either be scorer functions or one of the
-predefined metric strings.
+  Note that the dict values can either be scorer functions or one of the
+  predefined metric strings.
 
-Currently only those scorer functions that return a single score can be passed
-inside the dict. Scorer functions that return multiple values are not
-permitted and will require a wrapper to return a single metric::
+- As a callable that returns a dictionary of scores::
 
     >>> from sklearn.model_selection import cross_validate
     >>> from sklearn.metrics import confusion_matrix
     >>> # A sample toy binary classification dataset
     >>> X, y = datasets.make_classification(n_classes=2, random_state=0)
     >>> svm = LinearSVC(random_state=0)
-    >>> def tn(y_true, y_pred): return confusion_matrix(y_true, y_pred)[0, 0]
-    >>> def fp(y_true, y_pred): return confusion_matrix(y_true, y_pred)[0, 1]
-    >>> def fn(y_true, y_pred): return confusion_matrix(y_true, y_pred)[1, 0]
-    >>> def tp(y_true, y_pred): return confusion_matrix(y_true, y_pred)[1, 1]
-    >>> scoring = {'tp': make_scorer(tp), 'tn': make_scorer(tn),
-    ...            'fp': make_scorer(fp), 'fn': make_scorer(fn)}
-    >>> cv_results = cross_validate(svm.fit(X, y), X, y, cv=5, scoring=scoring)
+    >>> def confusion_matrix_scorer(clf, X, y):
+    ...      y_pred = clf.predict(X)
+    ...      cm = confusion_matrix(y, y_pred)
+    ...      return {'tn': cm[0, 0], 'fp': cm[0, 1],
+    ...              'fn': cm[1, 0], 'tp': cm[1, 1]}
+    >>> cv_results = cross_validate(svm, X, y, cv=5,
+    ...                             scoring=confusion_matrix_scorer)
     >>> # Getting the test set true positive scores
     >>> print(cv_results['test_tp'])
     [10  9  8  7  8]
@@ -307,7 +306,6 @@ Some of these are restricted to the binary classification case:
 
    precision_recall_curve
    roc_curve
-   balanced_accuracy_score
 
 
 Others also work in the multiclass case:
@@ -315,6 +313,7 @@ Others also work in the multiclass case:
 .. autosummary::
    :template: function.rst
 
+   balanced_accuracy_score
    cohen_kappa_score
    confusion_matrix
    hinge_loss
@@ -459,7 +458,11 @@ In the binary case, balanced accuracy is equal to the arithmetic mean of
 (true positive rate) and `specificity
 <https://en.wikipedia.org/wiki/Sensitivity_and_specificity>`_ (true negative
 rate), or the area under the ROC curve with binary predictions rather than
-scores.
+scores:
+
+.. math::
+
+   \texttt{balanced-accuracy} = \frac{1}{2}\left( \frac{TP}{TP + FN} + \frac{TN}{TN + FP}\right )
 
 If the classifier performs equally well on either class, this term reduces to
 the conventional accuracy (i.e., the number of correct predictions divided by
@@ -555,11 +558,10 @@ Confusion matrix
 ----------------
 
 The :func:`confusion_matrix` function evaluates
-classification accuracy by computing the confusion matrix
-with each row corresponding to the true class
-<https://en.wikipedia.org/wiki/Confusion_matrix>`_.
-(Wikipedia and other references may use different convention for axes.)
-
+classification accuracy by computing the `confusion matrix
+<https://en.wikipedia.org/wiki/Confusion_matrix>`_ with each row corresponding
+to the true class (Wikipedia and other references may use different convention
+for axes).
 
 By definition, entry :math:`i, j` in a confusion matrix is
 the number of observations actually in group :math:`i`, but
@@ -573,13 +575,26 @@ predicted to be in group :math:`j`. Here is an example::
          [0, 0, 1],
          [1, 0, 2]])
 
-Here is a visual representation of such a confusion matrix (this figure comes
-from the :ref:`sphx_glr_auto_examples_model_selection_plot_confusion_matrix.py` example):
+:func:`plot_confusion_matrix` can be used to visually represent a confusion
+matrix as shown in the
+:ref:`sphx_glr_auto_examples_model_selection_plot_confusion_matrix.py`
+example, which creates the following figure:
 
 .. image:: ../auto_examples/model_selection/images/sphx_glr_plot_confusion_matrix_001.png
    :target: ../auto_examples/model_selection/plot_confusion_matrix.html
    :scale: 75
    :align: center
+
+The parameter ``normalize`` allows to report ratios instead of counts. The
+confusion matrix can be normalized in 3 different ways: ``'pred'``, ``'true'``,
+and ``'all'`` which will divide the counts by the sum of each columns, rows, or
+the entire matrix, respectively.
+
+  >>> y_true = [0, 0, 0, 1, 1, 1, 1, 1]
+  >>> y_pred = [0, 1, 0, 1, 0, 1, 0, 1]
+  >>> confusion_matrix(y_true, y_pred, normalize='all')
+  array([[0.25 , 0.125],
+         [0.25 , 0.375]])
 
 For binary problems, we can get counts of true negatives, false positives,
 false negatives and true positives as follows::
@@ -744,8 +759,14 @@ score:
 
 Note that the :func:`precision_recall_curve` function is restricted to the
 binary case. The :func:`average_precision_score` function works only in
-binary classification and multilabel indicator format.
+binary classification and multilabel indicator format. The
+:func:`plot_precision_recall_curve` function plots the precision recall as
+follows.
 
+.. image:: ../auto_examples/model_selection/images/sphx_glr_plot_precision_recall_001.png
+        :target: ../auto_examples/model_selection/plot_precision_recall.html#plot-the-precision-recall-curve
+        :scale: 75
+        :align: center
 
 .. topic:: Examples:
 
@@ -1329,8 +1350,8 @@ the one-vs-rest algorithm computes the average of the ROC AUC scores for each
 class against all other classes. In both cases, the predicted labels are
 provided in an array with values from 0 to ``n_classes``, and the scores
 correspond to the probability estimates that a sample belongs to a particular
-class. The OvO and OvR algorithms supports weighting uniformly 
-(``average='macro'``) and weighting by the prevalence (``average='weighted'``).
+class. The OvO and OvR algorithms support weighting uniformly
+(``average='macro'``) and by prevalence (``average='weighted'``).
 
 **One-vs-one Algorithm**: Computes the average AUC of all possible pairwise
 combinations of classes. [HT2001]_ defines a multiclass AUC metric weighted
@@ -1358,13 +1379,13 @@ prevalence:
 
 where :math:`c` is the number of classes. This algorithm is used by setting
 the keyword argument ``multiclass`` to ``'ovo'`` and ``average`` to
-``'weighted'``. The ``'weighted'`` option returns a prevalence-weighted average 
+``'weighted'``. The ``'weighted'`` option returns a prevalence-weighted average
 as described in [FC2009]_.
 
-**One-vs-rest Algorithm**: Computes the AUC of each class against the rest.
-The algorithm is functionally the same as the multilabel case. To enable this
-algorithm set the keyword argument ``multiclass`` to ``'ovr'``. Similar to
-OvO, OvR supports two types of averaging: ``'macro'`` [F2006]_ and
+**One-vs-rest Algorithm**: Computes the AUC of each class against the rest
+[PD2000]_. The algorithm is functionally the same as the multilabel case. To
+enable this algorithm set the keyword argument ``multiclass`` to ``'ovr'``.
+Like OvO, OvR supports two types of averaging: ``'macro'`` [F2006]_ and
 ``'weighted'`` [F2001]_.
 
 In applications where a high false positive rate is not tolerable the parameter
@@ -1398,16 +1419,20 @@ to the given limit.
        <http://link.springer.com/article/10.1023/A:1010920819831>`_
        Machine learning, 45(2), pp.171-186.
 
-    .. [FC2009] Ferri, Cèsar & Hernandez-Orallo, Jose & Modroiu, R. (2009). 
-       `An Experimental Comparison of Performance Measures for Classification. 
+    .. [FC2009] Ferri, Cèsar & Hernandez-Orallo, Jose & Modroiu, R. (2009).
+       `An Experimental Comparison of Performance Measures for Classification.
        <https://www.math.ucdavis.edu/~saito/data/roc/ferri-class-perf-metrics.pdf>`_
-       Pattern Recognition Letters. 30. 27-38. 
+       Pattern Recognition Letters. 30. 27-38.
+
+    .. [PD2000] Provost, F., Domingos, P. (2000). Well-trained PETs: Improving
+       probability estimation trees (Section 6.2), CeDER Working Paper #IS-00-04,
+       Stern School of Business, New York University.
 
     .. [F2006] Fawcett, T., 2006. `An introduction to ROC analysis.
        <http://www.sciencedirect.com/science/article/pii/S016786550500303X>`_
        Pattern Recognition Letters, 27(8), pp. 861-874.
 
-    .. [F2001] Fawcett, T., 2001. `Using rule sets to maximize 
+    .. [F2001] Fawcett, T., 2001. `Using rule sets to maximize
        ROC performance <http://ieeexplore.ieee.org/document/989510/>`_
        In Data Mining, 2001.
        Proceedings IEEE International Conference, pp. 131-138.
@@ -1673,10 +1698,11 @@ Normalized Discounted Cumulative Gain
 -------------------------------------
 
 Discounted Cumulative Gain (DCG) and Normalized Discounted Cumulative Gain
-(NDCG) are ranking metrics; they compare a predicted order to ground-truth
-scores, such as the relevance of answers to a query.
+(NDCG) are ranking metrics implemented in :func:`~sklearn.metrics.dcg_score`
+and :func:`~sklearn.metrics.ndcg_score` ; they compare a predicted order to
+ground-truth scores, such as the relevance of answers to a query.
 
-from the Wikipedia page for Discounted Cumulative Gain:
+From the Wikipedia page for Discounted Cumulative Gain:
 
 "Discounted cumulative gain (DCG) is a measure of ranking quality. In
 information retrieval, it is often used to measure effectiveness of web search
@@ -1701,7 +1727,7 @@ relevant), NDCG can be used.
 
 For one sample, given the vector of continuous ground-truth values for each
 target :math:`y \in \mathbb{R}^{M}`, where :math:`M` is the number of outputs, and
-the prediction :math:`\hat{y}`, which induces the ranking funtion :math:`f`, the
+the prediction :math:`\hat{y}`, which induces the ranking function :math:`f`, the
 DCG score is
 
 .. math::
@@ -1712,8 +1738,8 @@ and the NDCG score is the DCG score divided by the DCG score obtained for
 
 .. topic:: References:
 
-  * Wikipedia entry for Discounted Cumulative Gain:
-    https://en.wikipedia.org/wiki/Discounted_cumulative_gain
+  * `Wikipedia entry for Discounted Cumulative Gain
+    <https://en.wikipedia.org/wiki/Discounted_cumulative_gain>`_
 
   * Jarvelin, K., & Kekalainen, J. (2002).
     Cumulated gain-based evaluation of IR techniques. ACM Transactions on
@@ -1935,6 +1961,42 @@ function::
   >>> y_pred = [[0.5, 2], [1, 2.5], [8, 8]]
   >>> mean_squared_log_error(y_true, y_pred)
   0.044...
+
+.. _mean_absolute_percentage_error:
+
+Mean absolute percentage error
+------------------------------
+The :func:`mean_absolute_percentage_error` (MAPE), also known as mean absolute
+percentage deviation (MAPD), is an evaluation metric for regression problems.
+The idea of this metric is to be sensitive to relative errors. It is for example
+not changed by a global scaling of the target variable.
+
+If :math:`\hat{y}_i` is the predicted value of the :math:`i`-th sample
+and :math:`y_i` is the corresponding true value, then the mean absolute percentage
+error (MAPE) estimated over :math:`n_{\text{samples}}` is defined as
+
+.. math::
+
+  \text{MAPE}(y, \hat{y}) = \frac{1}{n_{\text{samples}}} \sum_{i=0}^{n_{\text{samples}}-1} \frac{{}\left| y_i - \hat{y}_i \right|}{max(\epsilon, \left| y_i \right|)}
+
+where :math:`\epsilon` is an arbitrary small yet strictly positive number to
+avoid undefined results when y is zero.
+
+The :func:`mean_absolute_percentage_error` function supports multioutput.
+
+Here is a small example of usage of the :func:`mean_absolute_percentage_error`
+function::
+
+  >>> from sklearn.metrics import mean_absolute_percentage_error
+  >>> y_true = [1, 10, 1e6]
+  >>> y_pred = [0.9, 15, 1.2e6]
+  >>> mean_absolute_percentage_error(y_true, y_pred)
+  0.2666...
+
+In above example, if we had used `mean_absolute_error`, it would have ignored
+the small magnitude values and only reflected the error in prediction of highest
+magnitude value. But that problem is resolved in case of MAPE because it calculates
+relative percentage error with respect to actual output.
 
 .. _median_absolute_error:
 

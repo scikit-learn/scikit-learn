@@ -10,8 +10,8 @@ import pytest
 
 from sklearn.feature_extraction.image import (
     img_to_graph, grid_to_graph, extract_patches_2d,
-    reconstruct_from_patches_2d, PatchExtractor, extract_patches)
-from sklearn.utils.testing import ignore_warnings
+    reconstruct_from_patches_2d, PatchExtractor, _extract_patches)
+from sklearn.utils._testing import ignore_warnings
 
 
 def test_img_to_graph():
@@ -32,7 +32,7 @@ def test_grid_to_graph():
     roi_size = 1
     # Generating two convex parts with one vertex
     # Thus, edges will be empty in _to_graph
-    mask = np.zeros((size, size), dtype=np.bool)
+    mask = np.zeros((size, size), dtype=bool)
     mask[0:roi_size, 0:roi_size] = True
     mask[-roi_size:, -roi_size:] = True
     mask = mask.reshape(size ** 2)
@@ -46,10 +46,10 @@ def test_grid_to_graph():
 
     # Checking dtype of the graph
     mask = np.ones((size, size))
-    A = grid_to_graph(n_x=size, n_y=size, n_z=size, mask=mask, dtype=np.bool)
-    assert A.dtype == np.bool
-    A = grid_to_graph(n_x=size, n_y=size, n_z=size, mask=mask, dtype=np.int)
-    assert A.dtype == np.int
+    A = grid_to_graph(n_x=size, n_y=size, n_z=size, mask=mask, dtype=bool)
+    assert A.dtype == bool
+    A = grid_to_graph(n_x=size, n_y=size, n_z=size, mask=mask, dtype=int)
+    assert A.dtype == int
     A = grid_to_graph(n_x=size, n_y=size, n_z=size, mask=mask,
                       dtype=np.float64)
     assert A.dtype == np.float64
@@ -67,7 +67,7 @@ def test_connect_regions():
     face = face[::4, ::4]
     for thr in (50, 150):
         mask = face > thr
-        graph = img_to_graph(face, mask)
+        graph = img_to_graph(face, mask=mask)
         assert ndimage.label(mask)[1] == connected_components(graph)[0]
 
 
@@ -303,8 +303,8 @@ def test_extract_patches_strided():
          last_patch) in zip(image_shapes, patch_sizes, patch_steps,
                             expected_views, last_patches):
         image = np.arange(np.prod(image_shape)).reshape(image_shape)
-        patches = extract_patches(image, patch_shape=patch_size,
-                                  extraction_step=patch_step)
+        patches = _extract_patches(image, patch_shape=patch_size,
+                                   extraction_step=patch_step)
 
         ndim = len(image_shape)
 
@@ -321,7 +321,7 @@ def test_extract_patches_square():
     i_h, i_w = face.shape
     p = 8
     expected_n_patches = ((i_h - p + 1), (i_w - p + 1))
-    patches = extract_patches(face, patch_shape=p)
+    patches = _extract_patches(face, patch_shape=p)
     assert patches.shape == (expected_n_patches[0],
                              expected_n_patches[1], p, p)
 

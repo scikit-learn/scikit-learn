@@ -74,7 +74,7 @@ multiple interfaces):
 Estimators
 ----------
 
-The API has one predominant object: the estimator. A estimator is an
+The API has one predominant object: the estimator. An estimator is an
 object that fits a model based on some training data and is capable of
 inferring some properties on new data. It can be, for instance, a
 classifier or a regressor. All estimators implement the fit method::
@@ -220,11 +220,22 @@ an integer called ``n_iter``.
 Pairwise Attributes
 ^^^^^^^^^^^^^^^^^^^
 
-An estimator that accept ``X`` of shape ``(n_samples, n_samples)`` and defines
+An estimator that accepts ``X`` of shape ``(n_samples, n_samples)`` and defines
 a :term:`_pairwise` property equal to ``True`` allows for cross-validation of
 the dataset, e.g. when ``X`` is a precomputed kernel matrix. Specifically,
 the :term:`_pairwise` property is used by ``utils.metaestimators._safe_split``
 to slice rows and columns.
+
+Universal attributes
+^^^^^^^^^^^^^^^^^^^^
+
+Estimators that expect tabular input should set a `n_features_in_`
+attribute at `fit` time to indicate the number of features that the estimator
+expects for subsequent calls to `predict` or `transform`.
+See
+`SLEP010
+<https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep010/proposal.html>`_
+for details.
 
 .. _rolling_your_own_estimator:
 
@@ -235,39 +246,19 @@ whether it is just for you or for contributing it to scikit-learn, there are
 several internals of scikit-learn that you should be aware of in addition to
 the scikit-learn API outlined above. You can check whether your estimator
 adheres to the scikit-learn interface and standards by running
-:func:`utils.estimator_checks.check_estimator` on the class::
+:func:`~sklearn.utils.estimator_checks.check_estimator` on an instance. The
+:func:`~sklearn.utils.estimator_checks.parametrize_with_checks` pytest
+decorator can also be used (see its docstring for details and possible
+interactions with `pytest`)::
 
   >>> from sklearn.utils.estimator_checks import check_estimator
   >>> from sklearn.svm import LinearSVC
-  >>> check_estimator(LinearSVC)  # passes
+  >>> check_estimator(LinearSVC())  # passes
 
 The main motivation to make a class compatible to the scikit-learn estimator
 interface might be that you want to use it together with model evaluation and
 selection tools such as :class:`model_selection.GridSearchCV` and
 :class:`pipeline.Pipeline`.
-
-Setting `generate_only=True` returns a generator that yields (estimator, check)
-tuples where the check can be called independently from each other, i.e.
-`check(estimator)`. This allows all checks to be run independently and report
-the checks that are failing. scikit-learn provides a pytest specific decorator, 
-:func:`~sklearn.utils.parametrize_with_checks`, making it easier to test
-multiple estimators::
-
-  from sklearn.utils.estimator_checks import parametrize_with_checks
-  from sklearn.linear_model import LogisticRegression
-  from sklearn.tree import DecisionTreeRegressor
-
-  @parametrize_with_checks([LogisticRegression, DecisionTreeRegressor])
-  def test_sklearn_compatible_estimator(estimator, check):
-      check(estimator)
-
-This decorator sets the `id` keyword in `pytest.mark.parameterize` exposing
-the name of the underlying estimator and check in the test name. This allows
-`pytest -k` to be used to specify which tests to run.
-
-.. code-block: bash
-   
-   pytest test_check_estimators.py -k check_estimators_fit_returns_self
 
 Before detailing the required interface below, we describe two ways to achieve
 the correct interface more easily.
@@ -453,7 +444,7 @@ this can be achieved with::
         return self.classes_[np.argmax(D, axis=1)]
 
 In linear models, coefficients are stored in an array called ``coef_``, and the
-independent term is stored in ``intercept_``.  ``sklearn.linear_model.base``
+independent term is stored in ``intercept_``.  ``sklearn.linear_model._base``
 contains a few base classes and mixins that implement common linear model
 patterns.
 
@@ -468,50 +459,44 @@ Estimator Tags
 
     The estimator tags are experimental and the API is subject to change.
 
-Scikit-learn introduced estimator tags in version 0.21.  These are annotations
+Scikit-learn introduced estimator tags in version 0.21. These are annotations
 of estimators that allow programmatic inspection of their capabilities, such as
-sparse matrix support, supported output types and supported methods.  The
-estimator tags are a dictionary returned by the method ``_get_tags()``.  These
-tags are used by the common tests and the :func:`sklearn.utils.estimator_checks.check_estimator` function to
-decide what tests to run and what input data is appropriate. Tags can depend on
-estimator parameters or even system architecture and can in general only be
-determined at runtime.
-
-The default value of all tags except for ``X_types`` and ``requires_fit`` is
-``False``. These are defined in the ``BaseEstimator`` class.
+sparse matrix support, supported output types and supported methods. The
+estimator tags are a dictionary returned by the method ``_get_tags()``. These
+tags are used by the common tests and the
+:func:`sklearn.utils.estimator_checks.check_estimator` function to decide what
+tests to run and what input data is appropriate. Tags can depend on estimator
+parameters or even system architecture and can in general only be determined at
+runtime. The default values for the estimator tags are defined in the
+``BaseEstimator`` class.
 
 The current set of estimator tags are:
 
-non_deterministic
-    whether the estimator is not deterministic given a fixed ``random_state``
-
-requires_positive_X
-    whether the estimator requires positive X.
-
-requires_positive_y
-    whether the estimator requires a positive y (only applicable for regression).
-
-no_validation
-    whether the estimator skips input-validation. This is only meant for stateless and dummy transformers!
-
-multioutput - unused for now
-    whether a regressor supports multi-target outputs or a classifier supports multi-class multi-output.
-
-multilabel
-    whether the estimator supports multilabel output
-
-stateless
-    whether the estimator needs access to data for fitting. Even though
-    an estimator is stateless, it might still need a call to ``fit`` for initialization.
-
-requires_fit
-    whether the estimator requires to be fitted before calling one of
-    `transform`, `predict`, `predict_proba`, or `decision_function`.
-
-allow_nan
+allow_nan (default=False)
     whether the estimator supports data with missing values encoded as np.NaN
 
-poor_score
+binary_only (default=False)
+    whether estimator supports binary classification but lacks multi-class
+    classification support.
+
+multilabel (default=False)
+    whether the estimator supports multilabel output
+
+multioutput (default=False)
+    whether a regressor supports multi-target outputs or a classifier supports
+    multi-class multi-output.
+
+multioutput_only (default=False)
+    whether estimator supports only multi-output classification or regression.
+
+no_validation (default=False)
+    whether the estimator skips input-validation. This is only meant for
+    stateless and dummy transformers!
+
+non_deterministic (default=False)
+    whether the estimator is not deterministic given a fixed ``random_state``
+
+poor_score (default=False)
     whether the estimator fails to provide a "reasonable" test-set score, which
     currently for regression is an R2 of 0.5 on a subset of the boston housing
     dataset, and for classification an accuracy of 0.83 on
@@ -519,24 +504,52 @@ poor_score
     are based on current estimators in sklearn and might be replaced by
     something more systematic.
 
-multioutput_only
-    whether estimator supports only multi-output classification or regression.
+requires_fit (default=True)
+    whether the estimator requires to be fitted before calling one of
+    `transform`, `predict`, `predict_proba`, or `decision_function`.
 
-binary_only
-    whether estimator supports binary classification but lacks multi-class
-    classification support.
+requires_positive_X (default=False)
+    whether the estimator requires positive X.
 
-_skip_test
-    whether to skip common tests entirely. Don't use this unless you have a *very good* reason.
+requires_y (default=False)
+    whether the estimator requires y to be passed to `fit`, `fit_predict` or
+    `fit_transform` methods. The tag is True for estimators inheriting from
+    `~sklearn.base.RegressorMixin` and `~sklearn.base.ClassifierMixin`.
 
-X_types
-    Supported input types for X as list of strings. Tests are currently only run if '2darray' is contained
-    in the list, signifying that the estimator takes continuous 2d numpy arrays as input. The default
-    value is ['2darray']. Other possible types are ``'string'``, ``'sparse'``,
-    ``'categorical'``, ``dict``, ``'1dlabels'`` and ``'2dlabels'``.
-    The goal is that in the future the supported input type will determine the
-    data used during testing, in particular for ``'string'``, ``'sparse'`` and
-    ``'categorical'`` data.  For now, the test for sparse data do not make use
+requires_positive_y (default=False)
+    whether the estimator requires a positive y (only applicable for regression).
+
+_skip_test (default=False)
+    whether to skip common tests entirely. Don't use this unless you have a
+    *very good* reason.
+
+_xfail_checks (default=False)
+    dictionary ``{check_name: reason}`` of common checks that will be marked
+    as `XFAIL` for pytest, when using
+    :func:`~sklearn.utils.estimator_checks.parametrize_with_checks`. These
+    checks will be simply ignored and not run by
+    :func:`~sklearn.utils.estimator_checks.check_estimator`, but a
+    `SkipTestWarning` will be raised.
+    Don't use this unless there is a *very good* reason for your estimator
+    not to pass the check.
+    Also note that the usage of this tag is highly subject to change because
+    we are trying to make it more flexible: be prepared for breaking changes
+    in the future.
+
+stateless (default=False)
+    whether the estimator needs access to data for fitting. Even though an
+    estimator is stateless, it might still need a call to ``fit`` for
+    initialization.
+
+X_types (default=['2darray'])
+    Supported input types for X as list of strings. Tests are currently only
+    run if '2darray' is contained in the list, signifying that the estimator
+    takes continuous 2d numpy arrays as input. The default value is
+    ['2darray']. Other possible types are ``'string'``, ``'sparse'``,
+    ``'categorical'``, ``dict``, ``'1dlabels'`` and ``'2dlabels'``. The goal is
+    that in the future the supported input type will determine the data used
+    during testing, in particular for ``'string'``, ``'sparse'`` and
+    ``'categorical'`` data. For now, the test for sparse data do not make use
     of the ``'sparse'`` tag.
 
 
@@ -601,7 +614,7 @@ In addition, we add the following guidelines:
   find bugs in scikit-learn.
 
 * Use the `numpy docstring standard
-  <https://numpy.readthedocs.io/en/latest/format.html>`_ in all your docstrings.
+  <https://numpydoc.readthedocs.io/en/latest/format.html#numpydoc-docstring-guide>`_ in all your docstrings.
 
 
 A good example of code that we like can be found `here
@@ -683,6 +696,7 @@ The following example should make this clear::
 
         def __init__(self, n_components=100, random_state=None):
             self.random_state = random_state
+            self.n_components = n_components
 
         # the arguments are ignored anyway, so we make them optional
         def fit(self, X=None, y=None):
@@ -690,7 +704,7 @@ The following example should make this clear::
 
         def transform(self, X):
             n_samples = X.shape[0]
-            return self.random_state_.randn(n_samples, n_components)
+            return self.random_state_.randn(n_samples, self.n_components)
 
 The reason for this setup is reproducibility:
 when an estimator is ``fit`` twice to the same data,

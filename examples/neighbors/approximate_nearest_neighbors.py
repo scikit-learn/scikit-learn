@@ -18,29 +18,28 @@ training point as its own neighbor in the count of `n_neighbors`, and for
 compatibility reasons, one extra neighbor is computed when
 `mode == 'distance'`. Please note that we do the same in the proposed wrappers.
 
-Sample output:
+Sample output::
 
-```
-Benchmarking on MNIST_2000:
----------------------------
-AnnoyTransformer:                    0.583 sec
-NMSlibTransformer:                   0.321 sec
-KNeighborsTransformer:               1.225 sec
-TSNE with AnnoyTransformer:          4.903 sec
-TSNE with NMSlibTransformer:         5.009 sec
-TSNE with KNeighborsTransformer:     6.210 sec
-TSNE with internal NearestNeighbors: 6.365 sec
+    Benchmarking on MNIST_2000:
+    ---------------------------
+    AnnoyTransformer:                    0.583 sec
+    NMSlibTransformer:                   0.321 sec
+    KNeighborsTransformer:               1.225 sec
+    TSNE with AnnoyTransformer:          4.903 sec
+    TSNE with NMSlibTransformer:         5.009 sec
+    TSNE with KNeighborsTransformer:     6.210 sec
+    TSNE with internal NearestNeighbors: 6.365 sec
 
-Benchmarking on MNIST_10000:
-----------------------------
-AnnoyTransformer:                    4.457 sec
-NMSlibTransformer:                   2.080 sec
-KNeighborsTransformer:               30.680 sec
-TSNE with AnnoyTransformer:          30.225 sec
-TSNE with NMSlibTransformer:         43.295 sec
-TSNE with KNeighborsTransformer:     64.845 sec
-TSNE with internal NearestNeighbors: 64.984 sec
-```
+    Benchmarking on MNIST_10000:
+    ----------------------------
+    AnnoyTransformer:                    4.457 sec
+    NMSlibTransformer:                   2.080 sec
+    KNeighborsTransformer:               30.680 sec
+    TSNE with AnnoyTransformer:          30.225 sec
+    TSNE with NMSlibTransformer:         43.295 sec
+    TSNE with KNeighborsTransformer:     64.845 sec
+    TSNE with internal NearestNeighbors: 64.984 sec
+
 """
 # Author: Tom Dupre la Tour
 #
@@ -67,7 +66,7 @@ from scipy.sparse import csr_matrix
 
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.neighbors import KNeighborsTransformer
-from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.datasets import fetch_openml
 from sklearn.pipeline import make_pipeline
 from sklearn.manifold import TSNE
@@ -163,7 +162,7 @@ class AnnoyTransformer(TransformerMixin, BaseEstimator):
         n_neighbors = self.n_neighbors + 1
 
         indices = np.empty((n_samples_transform, n_neighbors),
-                           dtype=np.int)
+                           dtype=int)
         distances = np.empty((n_samples_transform, n_neighbors))
 
         if X is None:
@@ -210,9 +209,9 @@ def test_transformers():
 
 def load_mnist(n_samples):
     """Load MNIST, shuffle the data, and return only n_samples."""
-    mnist = fetch_openml(data_id=41063)
-    X, y = shuffle(mnist.data, mnist.target, random_state=42)
-    return X[:n_samples], y[:n_samples]
+    mnist = fetch_openml("mnist_784")
+    X, y = shuffle(mnist.data, mnist.target, random_state=2)
+    return X[:n_samples] / 255, y[:n_samples]
 
 
 def run_benchmark():
@@ -279,8 +278,8 @@ def run_benchmark():
             # plot TSNE embedding which should be very similar across methods
             if 'TSNE' in transformer_name:
                 axes[i_ax].set_title(transformer_name + '\non ' + dataset_name)
-                axes[i_ax].scatter(Xt[:, 0], Xt[:, 1], c=y, alpha=0.2,
-                                   cmap=plt.cm.viridis)
+                axes[i_ax].scatter(Xt[:, 0], Xt[:, 1], c=y.astype(np.int32),
+                                   alpha=0.2, cmap=plt.cm.viridis)
                 axes[i_ax].xaxis.set_major_formatter(NullFormatter())
                 axes[i_ax].yaxis.set_major_formatter(NullFormatter())
                 axes[i_ax].axis('tight')

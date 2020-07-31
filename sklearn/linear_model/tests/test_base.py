@@ -9,18 +9,19 @@ import numpy as np
 from scipy import sparse
 from scipy import linalg
 
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_allclose
+from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_array_equal
+from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils.fixes import parse_version
 
-from sklearn.linear_model.base import LinearRegression
-from sklearn.linear_model.base import _preprocess_data
-from sklearn.linear_model.base import _rescale_data
-from sklearn.linear_model.base import make_dataset
+from sklearn.linear_model import LinearRegression
+from sklearn.linear_model._base import _preprocess_data
+from sklearn.linear_model._base import _rescale_data
+from sklearn.linear_model._base import make_dataset
 from sklearn.utils import check_random_state
-from sklearn.datasets.samples_generator import make_sparse_uncorrelated
-from sklearn.datasets.samples_generator import make_regression
+from sklearn.datasets import make_sparse_uncorrelated
+from sklearn.datasets import make_regression
 from sklearn.datasets import load_iris
 
 rng = np.random.RandomState(0)
@@ -129,11 +130,11 @@ def test_fit_intercept():
     lr3_with_intercept = LinearRegression().fit(X3, y)
 
     assert (lr2_with_intercept.coef_.shape ==
-                 lr2_without_intercept.coef_.shape)
+            lr2_without_intercept.coef_.shape)
     assert (lr3_with_intercept.coef_.shape ==
-                 lr3_without_intercept.coef_.shape)
+            lr3_without_intercept.coef_.shape)
     assert (lr2_without_intercept.coef_.ndim ==
-                 lr3_without_intercept.coef_.ndim)
+            lr3_without_intercept.coef_.ndim)
 
 
 def test_linear_regression_sparse(random_state=0):
@@ -203,6 +204,36 @@ def test_linear_regression_sparse_multiple_outcome(random_state=0):
     ols.fit(X, y.ravel())
     y_pred = ols.predict(X)
     assert_array_almost_equal(np.vstack((y_pred, y_pred)).T, Y_pred, decimal=3)
+
+
+def test_linear_regression_pd_sparse_dataframe_warning():
+    pd = pytest.importorskip('pandas')
+    # restrict the pd versions < '0.24.0' as they have a bug in is_sparse func
+    if parse_version(pd.__version__) < parse_version('0.24.0'):
+        pytest.skip("pandas 0.24+ required.")
+
+    # Warning is raised only when some of the columns is sparse
+    df = pd.DataFrame({'0': np.random.randn(10)})
+    for col in range(1, 4):
+        arr = np.random.randn(10)
+        arr[:8] = 0
+        # all columns but the first column is sparse
+        if col != 0:
+            arr = pd.arrays.SparseArray(arr, fill_value=0)
+        df[str(col)] = arr
+
+    msg = "pandas.DataFrame with sparse columns found."
+    with pytest.warns(UserWarning, match=msg):
+        reg = LinearRegression()
+        reg.fit(df.iloc[:, 0:2], df.iloc[:, 3])
+
+    # does not warn when the whole dataframe is sparse
+    df['0'] = pd.arrays.SparseArray(df['0'], fill_value=0)
+    assert hasattr(df, "sparse")
+
+    with pytest.warns(None) as record:
+        reg.fit(df.iloc[:, 0:2], df.iloc[:, 3])
+    assert not record
 
 
 def test_preprocess_data():
@@ -433,16 +464,23 @@ def test_dtype_preprocess_data():
             assert_array_almost_equal(X_norm_32, X_norm_64)
 
 
-def test_rescale_data():
+@pytest.mark.parametrize('n_targets', [None, 2])
+def test_rescale_data_dense(n_targets):
     n_samples = 200
     n_features = 2
 
     sample_weight = 1.0 + rng.rand(n_samples)
     X = rng.rand(n_samples, n_features)
-    y = rng.rand(n_samples)
+    if n_targets is None:
+        y = rng.rand(n_samples)
+    else:
+        y = rng.rand(n_samples, n_targets)
     rescaled_X, rescaled_y = _rescale_data(X, y, sample_weight)
     rescaled_X2 = X * np.sqrt(sample_weight)[:, np.newaxis]
-    rescaled_y2 = y * np.sqrt(sample_weight)
+    if n_targets is None:
+        rescaled_y2 = y * np.sqrt(sample_weight)
+    else:
+        rescaled_y2 = y * np.sqrt(sample_weight)[:, np.newaxis]
     assert_array_almost_equal(rescaled_X, rescaled_X2)
     assert_array_almost_equal(rescaled_y, rescaled_y2)
 
