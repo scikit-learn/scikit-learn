@@ -275,3 +275,6 @@ class _BaseHeterogeneousEnsemble(MetaEstimatorMixin, _BaseComposition,
             of the classifiers as well.
         """
         return super()._get_params('estimators', deep=deep)
+
+    def _more_tags(self):
+        return {"allow_nan": True}

@@ -50,6 +50,7 @@ from .import shuffle
 from .validation import has_fit_parameter, _num_samples
 from ..preprocessing import StandardScaler
 from ..preprocessing import scale
+from ..impute import SimpleImputer
 from ..datasets import (load_iris, make_blobs,
                         make_multilabel_classification, make_regression)
 
@@ -138,6 +139,9 @@ def _yield_classifier_checks(classifier):
     # test if predict_proba is a monotonic transformation of decision_function
     yield check_decision_proba_consistency
 
+    if tags["allow_nan"]:
+        yield check_support_missing_values
+
 
 @ignore_warnings(category=FutureWarning)
 def check_supervised_y_no_nan(name, estimator_orig):
@@ -186,6 +190,9 @@ def _yield_regressor_checks(regressor):
     if tags["requires_fit"]:
         yield check_estimators_unfitted
     yield check_non_transformer_estimators_n_iter
+
+    if tags["allow_nan"]:
+        yield check_support_missing_values
 
 
 def _yield_transformer_checks(transformer):
@@ -335,6 +342,40 @@ def _construct_instance(Estimator):
                 estimator = Estimator(Ridge())
             else:
                 estimator = Estimator(LinearDiscriminantAnalysis())
+        if "estimators" in required_parameters:
+            # ensemble methods (Voting, Stacking)
+            # add a SimpleImputer because they should be lenient towards
+            # missing values
+            if issubclass(Estimator, RegressorMixin):
+                estimator = Estimator(
+                    estimators=[
+                        (
+                            "est1",
+                            make_pipeline(SimpleImputer(), Ridge(alpha=0.1)),
+                        ),
+                        (
+                            "est2",
+                            make_pipeline(SimpleImputer(), Ridge(alpha=1.0)),
+                        ),
+                    ]
+                )
+            else:
+                estimator = Estimator(
+                    estimators=[
+                        (
+                            "est1",
+                            make_pipeline(
+                                SimpleImputer(), LinearDiscriminantAnalysis()
+                            ),
+                        ),
+                        (
+                            "est2",
+                            make_pipeline(
+                                SimpleImputer(), LinearDiscriminantAnalysis()
+                            ),
+                        ),
+                    ]
+                )
         else:
             raise SkipTest("Can't instantiate estimator {} which requires "
                            "parameters {}".format(Estimator.__name__,
@@ -2988,3 +3029,26 @@ def check_requires_y_none(name, estimator_orig):
     except ValueError as ve:
         if not any(msg in str(ve) for msg in expected_err_msgs):
             warnings.warn(warning_msg, FutureWarning)
+
+
+def check_support_missing_values(name, estimator_orig):
+    estimator = clone(estimator_orig)
+    set_random_state(estimator)
+
+    rng = np.random.RandomState(0)
+
+    n_samples = 100
+    X = rng.normal(loc=100, size=(n_samples, 2))
+    X = _pairwise_estimator_convert_X(X, estimator)
+    if is_regressor(estimator_orig):
+        y = rng.normal(size=n_samples)
+    else:
+        y = rng.randint(low=0, high=2, size=n_samples)
+    y = _enforce_estimator_tags_y(estimator, y)
+
+    # add some missing values
+    for col in range(X.shape[1]):
+        row = rng.choice(np.arange(X.shape[0]), size=10)
+        X[row, col] = np.nan
+
+    estimator.fit(X, y).score(X, y)
