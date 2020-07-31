@@ -998,10 +998,7 @@ def _log_reg_scoring_path(X, y, train, test, scoring, pos_class=None, Cs=10,
             log_reg.coef_ = w
             log_reg.intercept_ = 0.
 
-        if scoring is None:
-            scores.append(log_reg.score(X_test, y_test))
-        else:
-            scores.append(scoring(log_reg, X_test, y_test))
+        scores.append(scoring(log_reg, X_test, y_test))
 
     return coefs, Cs, np.array(scores), n_iter
 
