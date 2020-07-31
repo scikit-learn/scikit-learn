@@ -481,7 +481,7 @@ def test_predict(Estimator, algorithm, init, dtype, array_constr):
 
     # With n_init = 1
     km = Estimator(n_clusters=10, init=init, n_init=1, random_state=0)
-    if Estimator is KMeans:
+    if algorithm is not None:
         km.set_params(algorithm=algorithm)
     km.fit(X)
     labels = km.labels_
@@ -506,7 +506,7 @@ def test_predict(Estimator, algorithm, init, dtype, array_constr):
     # give the same clustering. We only check the labels up to a permutation.
 
     km = Estimator(n_clusters=10, init=init, n_init=10, random_state=0)
-    if Estimator is KMeans:
+    if algorithm is not None:
         km.set_params(algorithm=algorithm)
     km.fit(X)
     labels = km.labels_
