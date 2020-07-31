@@ -86,7 +86,7 @@ print(f"Done in {toc - tic:.3f}s")
 # ----------------------------------------------------
 #
 # Another way of selecting features is to use
-:class:`~sklearn.feature_selection.SequentialFeatureSelector`
+# :class:`~sklearn.feature_selection.SequentialFeatureSelector`
 # (SFS). SFS is a greedy procedure where, at each iteration, we choose the best
 # new feature to add to our selected features based a cross-validation score.
 # That is, we start with 0 features and choose the best single feature with the
