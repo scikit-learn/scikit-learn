@@ -5,7 +5,6 @@ from numpy.testing import assert_array_equal
 from sklearn.utils._encode import _unique
 from sklearn.utils._encode import _encode
 from sklearn.utils._encode import _check_unknown
-from sklearn.utils._encode import _is_float_nan
 
 
 @pytest.mark.parametrize(
@@ -203,12 +202,3 @@ def test_unique_error_on_float_nan():
            r"not float\('nan'\)")
     with pytest.raises(ValueError, match=msg):
         _unique(values)
-
-
-@pytest.mark.parametrize('value, expected', [
-    (float('nan'), True),
-    (np.nan, False),
-    (None, False)
-])
-def test_is_float_nan(value, expected):
-    assert _is_float_nan(value) == expected
