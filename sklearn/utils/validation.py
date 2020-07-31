@@ -149,7 +149,7 @@ def as_float_array(X, *, copy=True, force_all_finite=True):
 
     Returns
     -------
-    XT : {array, sparse matrix}
+    XT : {ndarray, sparse matrix}
         An array of type float.
     """
     if isinstance(X, np.matrix) or (not isinstance(X, np.ndarray)
@@ -263,7 +263,7 @@ def _make_indexable(iterable):
 
     Parameters
     ----------
-    iterable : {list, dataframe, array, sparse} or None
+    iterable : {list, dataframe, ndarray, sparse} or None
         Object to be converted to an indexable iterable.
     """
     if sp.issparse(iterable):
@@ -284,7 +284,7 @@ def indexable(*iterables):
 
     Parameters
     ----------
-    *iterables : {lists, dataframes, arrays, sparse matrices}
+    *iterables : {lists, dataframes, ndarrays, sparse matrices}
         List of objects to ensure sliceability.
     """
     result = [_make_indexable(X) for X in iterables]
@@ -300,7 +300,7 @@ def _ensure_sparse_format(spmatrix, accept_sparse, dtype, copy,
 
     Parameters
     ----------
-    spmatrix : scipy sparse matrix
+    spmatrix : sparse matrix
         Input to validate and convert.
 
     accept_sparse : str, bool or list/tuple of str
@@ -334,7 +334,7 @@ def _ensure_sparse_format(spmatrix, accept_sparse, dtype, copy,
 
     Returns
     -------
-    spmatrix_converted : scipy sparse matrix.
+    spmatrix_converted : sparse matrix.
         Matrix that is ensured to have an allowed type.
     """
     if dtype is None:
@@ -967,7 +967,7 @@ def check_is_fitted(estimator, attributes=None, *, msg=None, all_or_any=all):
 
     Parameters
     ----------
-    estimator : estimator instance.
+    estimator : estimator instance
         estimator instance for which the check is performed.
 
     attributes : str, list or tuple of str, default=None
