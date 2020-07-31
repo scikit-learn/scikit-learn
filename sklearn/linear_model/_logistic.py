@@ -1008,8 +1008,9 @@ def _log_reg_scoring_path(X, y, train, test, pos_class=None, Cs=10,
     return coefs, Cs, np.array(scores), n_iter
 
 
-class LogisticRegression(BaseEstimator, LinearClassifierMixin,
-                         SparseCoefMixin):
+class LogisticRegression(LinearClassifierMixin,
+                         SparseCoefMixin,
+                         BaseEstimator):
     """
     Logistic Regression (aka logit, MaxEnt) classifier.
 
@@ -1498,8 +1499,9 @@ class LogisticRegression(BaseEstimator, LinearClassifierMixin,
         return np.log(self.predict_proba(X))
 
 
-class LogisticRegressionCV(LogisticRegression, BaseEstimator,
-                           LinearClassifierMixin):
+class LogisticRegressionCV(LogisticRegression,
+                           LinearClassifierMixin,
+                           BaseEstimator):
     """Logistic Regression CV (aka logit, MaxEnt) classifier.
 
     See glossary entry for :term:`cross-validation estimator`.
@@ -2084,3 +2086,11 @@ class LogisticRegressionCV(LogisticRegression, BaseEstimator,
         scoring = get_scorer(scoring)
 
         return scoring(self, X, y, sample_weight=sample_weight)
+
+    def _more_tags(self):
+        return {
+            '_xfail_checks': {
+                'check_sample_weights_invariance(kind=zeros)':
+                'zero sample_weight is not equivalent to removing samples',
+            }
+        }

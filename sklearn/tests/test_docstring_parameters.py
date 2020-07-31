@@ -19,6 +19,7 @@ from sklearn.utils._testing import ignore_warnings
 from sklearn.utils import all_estimators
 from sklearn.utils.estimator_checks import _enforce_estimator_tags_y
 from sklearn.utils.estimator_checks import _enforce_estimator_tags_x
+from sklearn.utils.estimator_checks import _construct_instance
 from sklearn.utils.deprecation import _is_deprecated
 from sklearn.externals._pep562 import Pep562
 from sklearn.datasets import make_classification
@@ -181,7 +182,7 @@ def test_fit_docstring_attributes(name, Estimator):
                'DictVectorizer', 'FeatureUnion', 'GaussianRandomProjection',
                'GridSearchCV', 'MultiOutputClassifier', 'MultiOutputRegressor',
                'NoSampleWeightWrapper', 'OneVsOneClassifier',
-               'OneVsRestClassifier', 'OutputCodeClassifier', 'Pipeline',
+               'OutputCodeClassifier', 'Pipeline',
                'RFE', 'RFECV', 'RandomizedSearchCV', 'RegressorChain',
                'SelectFromModel', 'SparseCoder', 'SparseRandomProjection',
                'SpectralBiclustering', 'StackingClassifier',
@@ -190,7 +191,7 @@ def test_fit_docstring_attributes(name, Estimator):
     if Estimator.__name__ in IGNORED or Estimator.__name__.startswith('_'):
         pytest.skip("Estimator cannot be fit easily to test fit attributes")
 
-    est = Estimator()
+    est = _construct_instance(Estimator)
 
     if Estimator.__name__ == 'SelectKBest':
         est.k = 2
@@ -225,29 +226,20 @@ def test_fit_docstring_attributes(name, Estimator):
         # As certain attributes are present "only" if a certain parameter is
         # provided, this checks if the word "only" is present in the attribute
         # description, and if not the attribute is required to be present.
-        if 'only ' not in desc:
+        if 'only ' in desc:
+            continue
+        # ignore deprecation warnings
+        with ignore_warnings(category=FutureWarning):
             assert hasattr(est, attr.name)
 
-    IGNORED = {'BayesianRidge', 'Birch', 'CCA', 'CategoricalNB', 'ElasticNet',
-               'ElasticNetCV', 'GaussianProcessClassifier',
-               'GradientBoostingRegressor', 'HistGradientBoostingClassifier',
-               'HistGradientBoostingRegressor', 'IsolationForest',
-               'KNeighborsClassifier', 'KNeighborsRegressor',
-               'KNeighborsTransformer', 'KernelCenterer', 'KernelDensity',
-               'LarsCV', 'Lasso', 'LassoLarsCV', 'LassoLarsIC',
-               'LatentDirichletAllocation', 'LocalOutlierFactor', 'MDS',
-               'MiniBatchKMeans', 'MLPClassifier', 'MLPRegressor',
-               'MultiTaskElasticNet', 'MultiTaskElasticNetCV',
-               'MultiTaskLasso', 'MultiTaskLassoCV', 'NearestNeighbors',
-               'NuSVR', 'OneClassSVM', 'OrthogonalMatchingPursuit',
-               'PLSCanonical', 'PLSRegression', 'PLSSVD',
-               'PassiveAggressiveClassifier', 'Perceptron', 'RBFSampler',
-               'RadiusNeighborsClassifier', 'RadiusNeighborsRegressor',
-               'RadiusNeighborsTransformer', 'RandomTreesEmbedding', 'SVR',
-               'SkewedChi2Sampler'}
+    IGNORED = {'BayesianRidge', 'Birch', 'CCA',
+               'LarsCV', 'Lasso', 'LassoLarsIC',
+               'OrthogonalMatchingPursuit',
+               'PLSCanonical', 'PLSSVD'}
+
     if Estimator.__name__ in IGNORED:
         pytest.xfail(
-            reason="Classifier has too many undocumented attributes.")
+            reason="Estimator has too many undocumented attributes.")
 
     fit_attr = [k for k in est.__dict__.keys() if k.endswith('_')
                 and not k.startswith('_')]
