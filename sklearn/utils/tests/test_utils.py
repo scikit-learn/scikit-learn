@@ -693,3 +693,11 @@ def test_to_object_array(sequence):
     assert isinstance(out, np.ndarray)
     assert out.dtype.kind == 'O'
     assert out.ndim == 1
+
+
+def test_safe_indexing_ints():
+    rnd = np.random.RandomState(0)
+    X_train_32 = 3 * rnd.uniform(size=(20, 5)).astype(np.float32)
+    X_train_int_32 = X_train_32.astype(np.int32)
+    mask = np.ones(5, dtype=bool)
+    _safe_indexing(X_train_int_32, mask, axis=1)
