@@ -78,9 +78,9 @@ def test_one_of_k():
 
 def test_iterable_value():
     D_names = ['ham', 'spam', 'version=1', 'version=2', 'version=3']
-    X_data = [[2.0, 0.0, 2.0, 1.0, 0.0],
-              [0.0, 0.3, 0.0, 1.0, 0.0],
-              [0.0, -1.0, 0.0, 0.0, 1.0]]
+    X_expected = [[2.0, 0.0, 2.0, 1.0, 0.0],
+                  [0.0, 0.3, 0.0, 1.0, 0.0],
+                  [0.0, -1.0, 0.0, 0.0, 1.0]]
     D_in = [{"version": ["1", "2", "1"], "ham": 2},
             {"version": "2", "spam": .3},
             {"version=3": True, "spam": -1}]

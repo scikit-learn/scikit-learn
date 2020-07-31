@@ -73,7 +73,7 @@ and its year of release.
     ...                             'category=family', 'category=thriller',
     ...                             'year']
     True
-    >>> vec.transform({'category': 'thriller',
+    >>> vec.transform({'category': ['thriller'],
     ...                'unseen_feature': '3'}).toarray()
     array([[0., 0., 0., 1., 0.]])
 
