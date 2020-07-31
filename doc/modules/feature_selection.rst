@@ -293,11 +293,11 @@ SFS differs from :class:`~sklearn.feature_selection.RFE` and
 require the underlying model to expose a `coef_` or `feature_importances_`
 attribute. It may however be slower considering that more models need to be
 evaluated, compared to the other approaches. For example in backward
-selection, the iteration going from m features to m - 1 features using k-fold
-cross-validation requires fitting m * k models, while
+selection, the iteration going from `m` features to `m - 1` features using k-fold
+cross-validation requires fitting `m * k` models, while
 :class:`~sklearn.feature_selection.RFE` would require only a single fit, and
 :class:`~sklearn.feature_selection.SelectFromModel` always just does a single
-fit and requires no iterations
+fit and requires no iterations.
 
 .. topic:: Examples
 

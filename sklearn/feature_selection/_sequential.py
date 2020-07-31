@@ -26,14 +26,14 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
     Parameters
     ----------
     estimator : estimator instance
-        An unfitted estimator
+        An unfitted estimator.
 
     n_features_to_select : int, default=None
         The number of features to select. If None, half of the features
         are selected.
 
     forward : bool, default=True
-        Whether to perform forward selection or backward selection
+        Whether to perform forward selection or backward selection.
 
     scoring : str, callable, list/tuple or dict, default=None
         A single str (see :ref:`scoring_parameter`) or a callable
@@ -75,7 +75,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
         The number of features that were selected. It corresponds to
         `n_features_to_select` unless the parameter was None.
 
-    support_ : ndarray of bool of shape (n_features,)
+    support_ : ndarray of shape (n_features,), dtype=bool
         The mask of selected features.
 
     Examples
@@ -94,7 +94,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
     >>> sfs.transform(X).shape
     (150, 3)
 
-    See also
+    See Also
     --------
     RFE : Recursive feature elimination based on importance weights.
     RFECV : Recursive feature elimination based on importance weights, with
