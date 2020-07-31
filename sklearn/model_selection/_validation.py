@@ -1039,9 +1039,19 @@ def _check_is_permutation(indices, n_samples):
 def permutation_test_score(estimator, X, y, *, groups=None, cv=None,
                            n_permutations=100, n_jobs=None, random_state=0,
                            verbose=0, scoring=None):
-    """Evaluate the significance of a cross-validated score with permutations
+    """Evaluates the significance of a cross-validated score using permutations
 
-    Read more in the :ref:`User Guide <cross_validation>`.
+    Permutes targets to generate 'randomized data' and compute the empirical
+    p-value against the null hypothesis that features and targets are
+    independent.
+
+    The p-value represents the fraction of randomized data sets where the
+    estimator performed as well or better than in the original data. A small
+    p-value suggests that there is a real dependency between features and
+    targets which has been used by the estimator to give good predictions.
+    A large p-value may be due to lack of real dependency between features
+    and targets or the estimator was not able to use the dependency to
+    give good predictions.
 
     Parameters
     ----------
@@ -1129,10 +1139,10 @@ def permutation_test_score(estimator, X, y, *, groups=None, cv=None,
     -----
     This function implements Test 1 in:
 
-        Ojala and Garriga. Permutation Tests for Studying Classifier
-        Performance.  The Journal of Machine Learning Research (2010)
-        vol. 11
-        `[pdf] <http://www.jmlr.org/papers/volume11/ojala10a/ojala10a.pdf>`_.
+        Ojala and Garriga. `Permutation Tests for Studying Classifier
+        Performance
+        <http://www.jmlr.org/papers/volume11/ojala10a/ojala10a.pdf>`_. The
+        Journal of Machine Learning Research (2010) vol. 11
 
     """
     X, y, groups = indexable(X, y, groups)
