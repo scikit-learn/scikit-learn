@@ -118,9 +118,6 @@ def test_logistic_cv_mock_scorer():
     lr = LogisticRegressionCV(Cs=Cs, scoring=mock_scorer, cv=cv)
     lr.fit(X, Y1)
 
-    # make sure that we did a copy of the scorer
-    assert lr._scorer is not mock_scorer
-
     # Cs[2] has the highest score (0.8) from MockScorer
     assert lr.C_[0] == Cs[2]
 

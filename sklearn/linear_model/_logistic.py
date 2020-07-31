@@ -1871,7 +1871,7 @@ class LogisticRegressionCV(LogisticRegression,
             class_weight = dict(enumerate(class_weight))
 
         scoring = "accuracy" if self.scoring is None else self.scoring
-        self._scorer = get_scorer(scoring, copy=True)
+        self._scorer = get_scorer(scoring)
 
         path_func = delayed(_log_reg_scoring_path)
 
