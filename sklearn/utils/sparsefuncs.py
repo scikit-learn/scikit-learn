@@ -37,7 +37,7 @@ def inplace_csr_column_scale(X, scale):
     X : CSR sparse matrix of shape (n_samples, n_features)
         Matrix to normalize using the variance of the features.
 
-    scale : ndarray of float of shape (n_features,)
+    scale : ndarray of shape (n_features,), dtype=float
         Array of precomputed feature-wise values to use for scaling.
     """
     assert scale.shape[0] == X.shape[1]
@@ -76,10 +76,10 @@ def mean_variance_axis(X, axis):
     Returns
     -------
 
-    means : ndarray of float of shape (n_features,)
+    means : ndarray of shape (n_features,), dtype=float
         Feature-wise means.
 
-    variances : ndarray of float of shape (n_features,)
+    variances : ndarray of shape (n_features,), dtype=float
         Feature-wise variances.
 
     """
@@ -117,25 +117,25 @@ def incr_mean_variance_axis(X, *, axis, last_mean, last_var, last_n):
     axis : {0, 1}
         Axis along which the axis should be computed.
 
-    last_mean : ndarray of float of shape (n_features,)
+    last_mean : ndarray of shape (n_features,), dtype=float
         Array of feature-wise means to update with the new data X.
 
-    last_var : ndarray of float of shape (n_features,)
+    last_var : ndarray of shape (n_features,), dtype=float
         Array of feature-wise var to update with the new data X.
 
-    last_n : ndarray of int of shape (n_features,)
+    last_n : ndarray of shape (n_features,), dtype=int
         Number of samples seen so far, excluded X.
 
     Returns
     -------
 
-    means : float array of shape (n_features,)
+    means : ndarray of shape (n_features,), dtype=float
         Updated feature-wise means.
 
-    variances : float array of shape (n_features,)
+    variances : ndarray of shape (n_features,), dtype=float
         Updated feature-wise variances.
 
-    n : ndarray of int of shape (n_features,)
+    n : ndarray of shape (n_features,), dtype=int
         Updated number of seen samples.
 
     Notes
@@ -174,7 +174,7 @@ def inplace_column_scale(X, scale):
     X : CSC or CSR sparse matrix of shape (n_samples, n_features)
         Matrix to normalize using the variance of the features.
 
-    scale : ndarray of float of shape (n_features,)
+    scale : ndarray of shape (n_features,), dtype=float
         Array of precomputed feature-wise values to use for scaling.
     """
     if isinstance(X, sp.csc_matrix):
@@ -196,7 +196,7 @@ def inplace_row_scale(X, scale):
     X : CSR or CSC sparse matrix of shape (n_samples, n_features)
         Matrix to be scaled.
 
-    scale : ndarray of float of shape (n_features,)
+    scale : ndarray of shape (n_features,), dtype=float
         Array of precomputed sample-wise values to use for scaling.
     """
     if isinstance(X, sp.csc_matrix):
@@ -424,10 +424,10 @@ def min_max_axis(X, axis, ignore_nan=False):
     Returns
     -------
 
-    mins : ndarray of float of shape (n_features,)
+    mins : ndarray of shape (n_features,), dtype=float
         Feature-wise minima.
 
-    maxs : ndarray of float of shape (n_features,)
+    maxs : ndarray of shape (n_features,), dtype=float
         Feature-wise maxima.
     """
     if isinstance(X, sp.csr_matrix) or isinstance(X, sp.csc_matrix):
