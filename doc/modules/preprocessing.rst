@@ -591,7 +591,7 @@ categories "male"/"female", while the remaining 6 columns is the encoding of
 the 2 features with respectively 3 categories each.
 
 :class:`OneHotEncoder` supports categorical features with missing values by
-considering the missing values a category::
+considering the missing values as an additonal category::
 
     >>> X = [['male', 'Safari'],
     ...      ['female', None],

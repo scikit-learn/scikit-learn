@@ -869,8 +869,7 @@ def test_ohe_missing_value_support_pandas_categorical():
 
 
 def test_ohe_missing_values_both_missing_values():
-    # test both types of missing of missing values are treated as its own
-    # category
+    # test both types of missing values are treated as its own category
     X = np.array([['a', 'b', None, 'a', np.nan]], dtype=object).T
     ohe = OneHotEncoder(sparse=False, handle_unknown='ignore').fit(X)
 
