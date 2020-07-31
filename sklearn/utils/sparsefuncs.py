@@ -34,8 +34,9 @@ def inplace_csr_column_scale(X, scale):
 
     Parameters
     ----------
-    X : CSR sparse matrix of shape (n_samples, n_features)
+    X : sparse matrix of shape (n_samples, n_features)
         Matrix to normalize using the variance of the features.
+        It should be of CSR format.
 
     scale : ndarray of shape (n_features,), dtype=float
         Array of precomputed feature-wise values to use for scaling.
@@ -53,7 +54,7 @@ def inplace_csr_row_scale(X, scale):
     Parameters
     ----------
     X : sparse matrix of shape (n_samples, n_features)
-        Matrix to be scaled. It should of the format CSR.
+        Matrix to be scaled. It should be of CSR format.
 
     scale : ndarray of float of shape (n_samples,)
         Array of precomputed sample-wise values to use for scaling.
@@ -68,7 +69,7 @@ def mean_variance_axis(X, axis):
     Parameters
     ----------
     X : sparse matrix of shape (n_samples, n_features)
-        Input data. It can of format CSR or CSC
+        Input data. It can be of CSR or CSC format.
 
     axis : {0, 1}
         Axis along which the axis should be computed.
@@ -451,8 +452,8 @@ def count_nonzero(X, axis=None, sample_weight=None):
 
     Parameters
     ----------
-    X : CSR sparse matrix of shape (n_samples, n_labels)
-        Input data.
+    X : sparse matrix of shape (n_samples, n_labels)
+        Input data. It should be of CSR format.
 
     axis : {0, 1}, default=None
         The axis on which the data is aggregated.
