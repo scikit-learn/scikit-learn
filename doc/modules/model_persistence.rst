@@ -93,14 +93,14 @@ For production and quality control needs, exporting the model in `Predictive
 Model Markup Language (PMML)
 <http://dmg.org/pmml/v4-4-1/GeneralStructure.html>`_ or `Open Neural Network
 Exchange <https://onnx.ai/>`_ format
-would be a better approach.
+would be a better approach than using `pickle`.
 
 PMML is an extension of the `XML
 <https://fr.wikipedia.org/wiki/Extensible_Markup_Language>`_ document standard
-defined to represent data mining and models. Beeing human and machine readable,
+defined to represent data mining and models. Being human and machine readable,
 PMML is a good option for model validation on different platforms and
 long term archiving. On the other hand, as XML in general, its verbosity does
-not help in production when performances are the issue.
+not help in production when performance is critical.
 
 ONNX has been developed to improve the usability of the interoperable
 representation of data models. It aims to facilitate the conversion of the data
