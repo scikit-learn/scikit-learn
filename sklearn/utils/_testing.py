@@ -58,7 +58,7 @@ __all__ = ["assert_raises",
 
 _dummy = TestCase('__init__')
 assert_raises = _dummy.assertRaises
-SkipTest = unittest.SkipTest
+SkipTest = unittest.case.SkipTest
 assert_dict_equal = _dummy.assertDictEqual
 
 assert_raises_regex = _dummy.assertRaisesRegex
