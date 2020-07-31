@@ -788,7 +788,7 @@ def test_support_missing_values():
     mask = np.random.choice([1, 0], X_train.shape, p=[.1, .9]).astype(bool)
     X_train[mask] = np.nan
     lr = make_pipeline(
-            SimpleImputer(), LinearRegression())
+            SimpleImputer(), LogisticRegression())
 
     for MultiClassClassifier in [OneVsRestClassifier, OneVsOneClassifier]:
         clf = MultiClassClassifier(lr)
