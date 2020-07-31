@@ -75,7 +75,7 @@ class CalibratedClassifierCV(ClassifierMixin,
         use isotonic calibration with too few calibration samples
         ``(<<1000)`` since it tends to overfit.
 
-    cv : integer, cross-validation generator, iterable or "prefit", \
+    cv : int, cross-validation generator, iterable or "prefit", \
             default=None
         Determines the cross-validation splitting strategy.
         Possible inputs for cv are:
@@ -111,7 +111,7 @@ class CalibratedClassifierCV(ClassifierMixin,
 
         .. versionadded:: 0.24
 
-    pre_dispatch : int, or str, default=n_jobs
+    pre_dispatch : int or str, default='2*n_jobs'
         Controls the number of jobs that get dispatched during parallel
         execution. Reducing this number can be useful to avoid an
         explosion of memory consumption when more jobs get dispatched
@@ -130,7 +130,7 @@ class CalibratedClassifierCV(ClassifierMixin,
 
         .. versionadded:: 0.24
 
-    verbose : integer
+    verbose : int, default=0
         Controls the verbosity: the higher, the more messages.
 
         .. versionadded:: 0.24
@@ -154,7 +154,7 @@ class CalibratedClassifierCV(ClassifierMixin,
 
     Attributes
     ----------
-    classes_ : array, shape (n_classes)
+    classes_ : ndarray of shape (n_classes,)
         The class labels.
 
     calibrated_classifiers_ : list (len() equal to cv or 1 if `cv="prefit"` \
@@ -244,10 +244,10 @@ class CalibratedClassifierCV(ClassifierMixin,
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             Training data.
 
-        y : array-like, shape (n_samples,)
+        y : array-like of shape (n_samples,)
             Target values.
 
         sample_weight : array-like of shape (n_samples,), default=None
@@ -366,12 +366,12 @@ class CalibratedClassifierCV(ClassifierMixin,
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             The samples.
 
         Returns
         -------
-        C : array, shape (n_samples, n_classes)
+        C : ndarray of shape (n_samples, n_classes)
             The predicted probas.
         """
         check_is_fitted(self)
@@ -395,12 +395,12 @@ class CalibratedClassifierCV(ClassifierMixin,
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             The samples.
 
         Returns
         -------
-        C : array, shape (n_samples,)
+        C : ndarray of shape (n_samples,)
             The predicted class.
         """
         check_is_fitted(self)
@@ -596,7 +596,7 @@ class _CalibratedClassifier:
 
     Parameters
     ----------
-    clf : estimator instance
+    base_estimator : estimator instance
         Fitted classifier.
 
     calibrators : list of fitted estimator instances
@@ -605,15 +605,20 @@ class _CalibratedClassifier:
         classes. However, if there are 2 classes, the list contains only one
         fitted calibrator.
 
-    classes : ndarray, shape (n_classes,)
+    classes : array-like of shape (n_classes,)
         All the prediction classes.
+
+    method : {'sigmoid', 'isotonic'}, default='sigmoid'
+        The method to use for calibration. Can be 'sigmoid' which
+        corresponds to Platt's method or 'isotonic' which is a
+        non-parametric approach based on isotonic regression.
     """
-    def __init__(self, base_estimator, calibrators, *, method='sigmoid',
-                 classes):
+    def __init__(self, base_estimator, calibrators, *, classes,
+                 method='sigmoid'):
         self.base_estimator = base_estimator
         self.calibrators = calibrators
-        self.method = method
         self.classes = classes
+        self.method = method
 
     def predict_proba(self, X):
         """Calculate calibrated probabilities.
@@ -623,7 +628,7 @@ class _CalibratedClassifier:
 
         Parameters
         ----------
-        X : ndarray, shape (n_samples, n_features)
+        X : ndarray of shape (n_samples, n_features)
             The sample data.
 
         Returns
@@ -664,15 +669,15 @@ class _CalibratedClassifier:
         return proba
 
 
-def _sigmoid_calibration(pred, y, sample_weight=None):
+def _sigmoid_calibration(predictions, y, sample_weight=None):
     """Probability Calibration with sigmoid method (Platt 2000)
 
     Parameters
     ----------
-    pred : ndarray, shape (n_samples,)
+    predictions : ndarray of shape (n_samples,)
         The decision function or predict proba for the samples.
 
-    y : ndarray, shape (n_samples,)
+    y : ndarray of shape (n_samples,)
         The targets.
 
     sample_weight : array-like of shape (n_samples,), default=None
@@ -743,10 +748,10 @@ class _SigmoidCalibration(RegressorMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples,)
+        X : array-like of shape (n_samples,)
             Training data.
 
-        y : array-like, shape (n_samples,)
+        y : array-like of shape (n_samples,)
             Training target.
 
         sample_weight : array-like of shape (n_samples,), default=None
@@ -769,12 +774,12 @@ class _SigmoidCalibration(RegressorMixin, BaseEstimator):
 
         Parameters
         ----------
-        T : array-like, shape (n_samples,)
+        T : array-like of shape (n_samples,)
             Data to predict from.
 
         Returns
         -------
-        T_ : array, shape (n_samples,)
+        T_ : ndarray of shape (n_samples,)
             The predicted data.
         """
         T = column_or_1d(T)

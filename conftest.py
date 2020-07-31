@@ -29,15 +29,25 @@ def pytest_addoption(parser):
 
 
 def pytest_collection_modifyitems(config, items):
+    for item in items:
+        # FeatureHasher is not compatible with PyPy
+        if (item.name.endswith(('_hash.FeatureHasher',
+                                'text.HashingVectorizer'))
+                and platform.python_implementation() == 'PyPy'):
+            marker = pytest.mark.skip(
+                reason='FeatureHasher is not compatible with PyPy')
+            item.add_marker(marker)
+        # Known failure on with GradientBoostingClassifier on ARM64
+        elif (item.name.endswith('GradientBoostingClassifier')
+                and platform.machine() == 'aarch64'):
 
-    # FeatureHasher is not compatible with PyPy
-    if platform.python_implementation() == 'PyPy':
-        skip_marker = pytest.mark.skip(
-            reason='FeatureHasher is not compatible with PyPy')
-        for item in items:
-            if item.name.endswith(('_hash.FeatureHasher',
-                                   'text.HashingVectorizer')):
-                item.add_marker(skip_marker)
+            marker = pytest.mark.xfail(
+                reason=(
+                    'know failure. See '
+                    'https://github.com/scikit-learn/scikit-learn/issues/17797'  # noqa
+                )
+            )
+            item.add_marker(marker)
 
     # Skip tests which require internet if the flag is provided
     if config.getoption("--skip-network"):
