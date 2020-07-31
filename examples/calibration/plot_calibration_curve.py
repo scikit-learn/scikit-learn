@@ -254,8 +254,8 @@ for i, (clf, name) in enumerate(clf_list):
     # Create DataFrame index
     index.append(name)
     # Store column data
-    brier.append(brier_score_loss(y_test, y_proba[:, 1]))
-    logloss.append(log_loss(y_test, y_proba[:, 1]))
+    brier.append(brier_score_loss(y_test, y_proba))
+    logloss.append(log_loss(y_test, y_proba))
     precision.append(precision_score(y_test, y_pred))
     recall.append(recall_score(y_test, y_pred))
     f1.append(f1_score(y_test, y_pred))
