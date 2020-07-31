@@ -226,6 +226,8 @@ def spectral_clustering(affinity, *, n_clusters=8, n_components=None,
     verbose : bool, default=False
         Verbosity mode.
 
+        .. versionadded:: 0.24
+
     Returns
     -------
     labels : array of integers, shape: n_samples
@@ -389,6 +391,8 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
 
     verbose : bool, default=False
         Verbosity mode.
+
+        .. versionadded:: 0.24
 
     Attributes
     ----------
