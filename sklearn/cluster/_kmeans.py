@@ -1431,8 +1431,8 @@ class MiniBatchKMeans(KMeans):
     ...                          batch_size=6,
     ...                          max_iter=10).fit(X)
     >>> kmeans.cluster_centers_
-    array([[2.32394366, 1.16901408],
-           [3.4       , 4.36      ]])
+    array([[2.3..., 1.1...],
+           [3.4..., 4.3...]])
     >>> kmeans.predict([[0, 0], [4, 4]])
     array([0, 1], dtype=int32)
     """
