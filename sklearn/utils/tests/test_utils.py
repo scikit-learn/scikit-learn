@@ -700,4 +700,5 @@ def test_safe_indexing_ints():
     X_train_32 = 3 * rnd.uniform(size=(20, 5)).astype(np.float32)
     X_train_int_32 = X_train_32.astype(np.int32)
     mask = np.ones(5, dtype=bool)
+    mask[2] = False
     _safe_indexing(X_train_int_32, mask, axis=1)

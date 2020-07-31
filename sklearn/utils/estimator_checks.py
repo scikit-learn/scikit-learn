@@ -28,7 +28,8 @@ from ._testing import SkipTest
 from ._testing import ignore_warnings
 from ._testing import create_memmap_backed_data
 from . import is_scalar_nan
-from ..discriminant_analysis import LinearDiscriminantAnalysis
+# from ..discriminant_analysis import LinearDiscriminantAnalysis
+from ..linear_model import LogisticRegression
 from ..linear_model import Ridge
 
 from ..base import (clone, ClusterMixin, is_classifier, is_regressor,
@@ -334,7 +335,8 @@ def _construct_instance(Estimator):
             if issubclass(Estimator, RegressorMixin):
                 estimator = Estimator(Ridge())
             else:
-                estimator = Estimator(LinearDiscriminantAnalysis())
+                # estimator = Estimator(LinearDiscriminantAnalysis())
+                estimator = Estimator(LogisticRegression())
         else:
             raise SkipTest("Can't instantiate estimator {} which requires "
                            "parameters {}".format(Estimator.__name__,
