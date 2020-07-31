@@ -1671,10 +1671,11 @@ class MiniBatchKMeans(KMeans):
         self._ewa_inertia_min = None
         self._no_improvement = 0
 
+        # Initialize number of samples seen since last reassignment
+        self._n_since_last_reassign = 0
+
         n_batches = int(np.ceil(float(n_samples) / self.batch_size))
         n_iter = int(self.max_iter * n_batches)
-
-        self._n_since_last_reassign = 0
 
         with threadpool_limits(limits=1, user_api="blas"):
             # Perform the iterative optimization until convergence
@@ -1773,6 +1774,7 @@ class MiniBatchKMeans(KMeans):
             # Initialize counts
             self._counts = np.zeros(self.n_clusters, dtype=X.dtype)
 
+            # Initialize number of samples seen since last reassignment
             self._n_since_last_reassign = 0
 
         with threadpool_limits(limits=1, user_api="blas"):
