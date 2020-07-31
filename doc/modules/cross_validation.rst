@@ -856,3 +856,10 @@ Cross validation and model selection
 Cross validation iterators can also be used to directly perform model
 selection using Grid Search for the optimal hyperparameters of the
 model. This is the topic of the next section: :ref:`grid_search`.
+
+.. _permutation_test_score:
+
+Permutation test score
+======================
+
+
