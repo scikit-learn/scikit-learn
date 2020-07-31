@@ -31,10 +31,8 @@ from sklearn.base import ClassifierMixin
 from sklearn.utils import shuffle
 from sklearn.model_selection import GridSearchCV
 from sklearn.dummy import DummyRegressor, DummyClassifier
-from sklearn.model_selection import train_test_split
-from sklearn.experimental import enable_hist_gradient_boosting  # noqa
-from sklearn.ensemble import HistGradientBoostingClassifier,\
-    HistGradientBoostingRegressor
+from sklearn.pipeline import make_pipeline
+from sklearn.impute import SimpleImputer
 
 
 def test_multi_target_regression():
@@ -607,38 +605,18 @@ def test_regressor_chain_w_fit_params():
         assert est.sample_weight_ is weight
 
 
-def test_leniency_for_missing_data_classification():
+@pytest.mark.parametrize(
+    "wrapper, est",
+    [(MultiOutputClassifier, LogisticRegression),
+     (MultiOutputRegressor, Ridge)]
+)
+def test_support_missing_values(wrapper, est):
+    # introduce some missing values in X
     rng = np.random.RandomState(42)
-    X, y = datasets.make_multilabel_classification(random_state=rng)
+    X, y = rng.random((50, 2)), rng.binomial(1, 0.5, (50, 3))
     mask = rng.choice([1, 0], X.shape, p=[.01, .99]).astype(bool)
     X[mask] = np.nan
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y,
-                                                        random_state=rng)
-
-    hgbc = HistGradientBoostingClassifier(random_state=rng)
-    clf = MultiOutputClassifier(estimator=hgbc)
-    clf.fit(X_train, y_train)
-    assert jaccard_score(y_test, clf.predict(X_test), average='samples') > .4
-
-
-def test_leniency_for_missing_data_regression():
-    rng = np.random.RandomState(42)
-    X, y = datasets.make_regression(n_targets=3)
-    mask = rng.choice([1, 0], X.shape, p=[.01, .99]).astype(bool)
-    X[mask] = np.nan
-
-    X_train, X_test, y_train, y_test = train_test_split(X, y,
-                                                        random_state=rng)
-
-    references = np.zeros_like(y_test)
-    rgr = HistGradientBoostingRegressor(random_state=rng)
-    for n in range(3):
-        rgr.fit(X_train, y_train[:, n])
-        references[:, n] = rgr.predict(X_test)
-
-    multi_output_rgr = MultiOutputRegressor(rgr)
-    multi_output_rgr.fit(X_train, y_train)
-    y_pred = multi_output_rgr.predict(X_test)
-
-    assert_almost_equal(references, y_pred)
+    pipe = make_pipeline(SimpleImputer(), est())
+    meta_est = wrapper(pipe)
+    meta_est.fit(X, y).score(X, y)

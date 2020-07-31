@@ -27,9 +27,6 @@ from sklearn.multiclass import OneVsRestClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.base import BaseEstimator, ClassifierMixin, clone
 from sklearn.dummy import DummyRegressor
-from sklearn.experimental import enable_hist_gradient_boosting  # noqa
-from sklearn.ensemble import HistGradientBoostingClassifier,\
-    HistGradientBoostingRegressor
 from sklearn.impute import SimpleImputer
 from sklearn.pipeline import make_pipeline
 
@@ -554,35 +551,18 @@ def test_voting_verbose(estimator, capsys):
     assert re.match(pattern, capsys.readouterr()[0])
 
 
-def test_classifier_for_missing_data():
-    rng = np.random.RandomState(42)
-    X_train, X_test, y_train, y_test = train_test_split(X, y,
-                                                        random_state=rng)
-
-    mask = np.random.choice([1, 0], X_train.shape, p=[.1, .9]).astype(bool)
-    X_train[mask] = np.nan
-    hgbc = HistGradientBoostingClassifier(max_iter=3)
-    lr = make_pipeline(
-            SimpleImputer(), LogisticRegression())
-    clf = VotingClassifier(estimators=[('hgbc', hgbc), ('lr', lr)])
-    clf.fit(X_train, y_train)
-
-    assert clf.score(X_test, y_test) > 0.8
-
-
-def test_regressor_for_missing_data():
-    rng = np.random.RandomState(42)
-    X_train, X_test, y_train, y_test = train_test_split(X, y,
-                                                        random_state=rng)
-
-    mask = np.random.choice([1, 0], X_train.shape, p=[.1, .9]).astype(bool)
-    X_train[mask] = np.nan
-
-    hgbr = HistGradientBoostingRegressor(max_iter=3, random_state=rng)
-    lr = make_pipeline(
-            SimpleImputer(), LinearRegression())
-
-    clf = VotingRegressor(estimators=[('hgbr', hgbr), ('lr', lr)])
-    clf.fit(X_train, y_train)
-
-    assert clf.score(X_test, y_test) > 0.8
+@pytest.mark.parametrize(
+    "voting_meta_model, est, X, y",
+    [(VotingClassifier, LogisticRegression,
+      X, y),
+     (VotingRegressor, LinearRegression,
+      X_r, y_r)]
+)
+def test_voting_support_missing_values(voting_meta_model, est, X, y):
+    # introduce some missing values in X
+    X = X.copy()
+    mask = np.random.choice([1, 0], X.shape, p=[.1, .9]).astype(bool)
+    X[mask] = np.nan
+    pipe = make_pipeline(SimpleImputer(), est())
+    meta_est = voting_meta_model(estimators=[('pipe1', pipe), ('pipe2', pipe)])
+    meta_est.fit(X, y).score(X, y)
