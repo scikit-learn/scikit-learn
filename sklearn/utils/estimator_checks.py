@@ -1397,9 +1397,9 @@ def check_estimators_dtypes(name, estimator_orig):
         set_random_state(estimator, 1)
         estimator.fit(X_train, y)
 
-        for method in methods:
-            if hasattr(estimator, method):
-                getattr(estimator, method)(X_train)
+        # for method in methods:
+        #     if hasattr(estimator, method):
+        #         getattr(estimator, method)(X_train)
 
 
 @ignore_warnings(category=FutureWarning)
