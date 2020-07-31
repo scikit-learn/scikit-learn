@@ -605,6 +605,10 @@ considering the missing values as an additonal category::
            [1., 0., 0., 0., 0., 1.],
            [0., 0., 1., 1., 0., 0.]])
 
+.. note::
+
+    :class:`OneHotEncoder` only supports missing values encoded as `np.nan`
+    or `None`.
 
 See :ref:`dict_feature_extraction` for categorical features that are
 represented as a dict, not as scalars.
