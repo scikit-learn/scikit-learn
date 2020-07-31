@@ -250,6 +250,7 @@ def test_n_components():
                                            random_state=0).fit(X).labels_
     assert not np.array_equal(labels, labels_diff_ncomp)
 
+
 @pytest.mark.parametrize('assign_labels', ('kmeans', 'discretize'))
 def test_verbose(assign_labels, capsys):
     # Check verbose mode of KMeans for better coverage.
