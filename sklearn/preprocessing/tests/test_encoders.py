@@ -657,7 +657,10 @@ def test_one_hot_encoder_drop_manual(missing_value):
      "Wrong input for parameter `drop`"),
      ([['abc', 2, 55], ['def', 1, 55], ['def', 3, 59]],
       {'drop': ['ghi', 3, 59]},
-     "The following categories were supposed")]
+     "The following categories were supposed"),
+     (np.array([['abc', 2], ['def', float('nan')]], dtype=object),
+     {'categories': [['abc', 'def'], [2, float('nan')]]},
+      r'Encoders supports missing values encoded as')]
 )
 def test_one_hot_encoder_invalid_params(X_fit, params, err_msg):
     enc = OneHotEncoder(**params)

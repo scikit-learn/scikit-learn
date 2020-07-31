@@ -608,7 +608,7 @@ considering the missing values as an additonal category::
 .. note::
 
     :class:`OneHotEncoder` only supports missing values encoded as `np.nan`
-    or `None`.
+    or `None` and does not currently support `float('nan')`.
 
 See :ref:`dict_feature_extraction` for categorical features that are
 represented as a dict, not as scalars.

@@ -199,6 +199,6 @@ def test_unique_error_on_float_nan():
     values = np.array([np.nan, None, float('nan'), 'a'], dtype=object)
 
     msg = (r"Encoders supports missing values encoded as np\.nan or None and "
-           r"not float\('nan'\)")
+           r"does not support not float\('nan'\)")
     with pytest.raises(ValueError, match=msg):
         _unique(values)

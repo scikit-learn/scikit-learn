@@ -11,7 +11,8 @@ from ..utils import is_scalar_nan
 from ..utils.validation import check_is_fitted
 from ..utils.validation import _deprecate_positional_args
 
-from ..utils._encode import _encode, _check_unknown, _unique
+from ..utils._encode import (_encode, _check_unknown, _unique,
+                             _check_missing_values)
 
 
 __all__ = [
@@ -100,6 +101,9 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                         (np.isnan(sorted_cats[-1]) and
                          not np.isnan(sorted_cats[-1]))):
                         raise ValueError(error_msg)
+                else:  # object dtype
+                    _check_missing_values(cats)
+
                 if handle_unknown == 'error':
                     diff = _check_unknown(Xi, cats)
                     if diff:

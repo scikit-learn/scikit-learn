@@ -48,21 +48,28 @@ def _unique(values, *, return_inverse=False):
     return uniques
 
 
+def _check_missing_values(items):
+    # Return missing values in items and errors for float('nan')
+    missing_values = [value for value in items
+                      if value is None or is_scalar_nan(value)]
+
+    if any(v not in (None, np.nan) for v in missing_values):
+        raise ValueError("Encoders supports missing values encoded as "
+                         "np.nan or None and does not support float('nan')")
+
+    # ensures that None is the first value in missing_values
+    if None in missing_values and missing_values[0] is not None:
+        missing_values[0], missing_values[1] = \
+            missing_values[1], missing_values[0]
+
+    return missing_values
+
+
 def _unique_python(values, *, return_inverse):
     # Only used in `_uniques`, see docstring there for details
     try:
         uniques_set = set(values)
-        missing_values = [value for value in uniques_set
-                          if value is None or is_scalar_nan(value)]
-
-        if any(v not in (None, np.nan) for v in missing_values):
-            raise ValueError("Encoders supports missing values encoded as "
-                             "np.nan or None and not float('nan')")
-
-        # ensures that None is the first value in missing_values
-        if None in missing_values and missing_values[0] is not None:
-            missing_values[0], missing_values[1] = \
-                missing_values[1], missing_values[0]
+        missing_values = _check_missing_values(uniques_set)
 
         uniques_set -= set(missing_values)
         uniques = sorted(uniques_set)
