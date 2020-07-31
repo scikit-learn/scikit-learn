@@ -282,10 +282,10 @@ class CalibratedClassifierCV(ClassifierMixin,
 
             pred_method = _get_prediction_method(base_estimator)
             n_classes = len(self.classes_)
-            preds = _get_predictions(pred_method, X, n_classes)
+            predictions = _compute_predictions(pred_method, X, n_classes)
 
             calibrated_classifier = _fit_calibrator(
-                base_estimator, preds, y, self.classes_, self.method,
+                base_estimator, predictions, y, self.classes_, self.method,
                 sample_weight
             )
             self.calibrated_classifiers_.append(calibrated_classifier)
@@ -330,7 +330,7 @@ class CalibratedClassifierCV(ClassifierMixin,
                                     pre_dispatch=self.pre_dispatch)
 
                 self.calibrated_classifiers_ = parallel(
-                    delayed(_get_pred_fit_calibrator)(
+                    delayed(_fit_classifier_calibrator_pair)(
                         clone(base_estimator), X, y, train=train, test=test,
                         method=self.method, classes=self.classes_,
                         supports_sw=supports_sw, sample_weight=sample_weight)
@@ -344,14 +344,14 @@ class CalibratedClassifierCV(ClassifierMixin,
                     cv=cv, method=method_name, n_jobs=self.n_jobs,
                     verbose=self.verbose, pre_dispatch=self.pre_dispatch
                 )
-                preds = _get_predictions(pred_method, X, n_classes)
+                predictions = _compute_predictions(pred_method, X, n_classes)
 
                 if sample_weight is not None and supports_sw:
                     this_estimator.fit(X, y, sample_weight)
                 else:
                     this_estimator.fit(X, y)
                 calibrated_classifier = _fit_calibrator(
-                    this_estimator, preds, y, self.classes_, self.method,
+                    this_estimator, predictions, y, self.classes_, self.method,
                     sample_weight
                 )
                 self.calibrated_classifiers_.append(calibrated_classifier)
@@ -415,9 +415,13 @@ class CalibratedClassifierCV(ClassifierMixin,
         }
 
 
-def _get_pred_fit_calibrator(estimator, X, y, train, test, supports_sw,
-                             method, classes, sample_weight=None):
-    """Compute predictions and fit a calibrator for a given dataset split.
+def _fit_classifier_calibrator_pair(estimator, X, y, train, test, supports_sw,
+                                    method, classes, sample_weight=None):
+    """Fit a classifier/calibration pair on a given train/test split.
+
+    Fit the classifier on the train set, compute its predictions on the test
+    set and use the predictions as input to fit the calibrator along with the
+    test labels.
 
     Parameters
     ----------
@@ -450,7 +454,7 @@ def _get_pred_fit_calibrator(estimator, X, y, train, test, supports_sw,
 
     Returns
     -------
-    calibrated_classifier : _CalibratedClassiferPipeline instance
+    calibrated_classifier : _CalibratedClassifier instance
     """
     if sample_weight is not None and supports_sw:
         estimator.fit(X[train], y[train],
@@ -460,11 +464,11 @@ def _get_pred_fit_calibrator(estimator, X, y, train, test, supports_sw,
 
     n_classes = len(classes)
     pred_method = _get_prediction_method(estimator)
-    preds = _get_predictions(pred_method, X[test], n_classes)
+    predictions = _compute_predictions(pred_method, X[test], n_classes)
 
     sw = None if sample_weight is None else sample_weight[test]
     calibrated_classifier = _fit_calibrator(
-        estimator, preds, y[test], classes, method, sample_weight=sw
+        estimator, predictions, y[test], classes, method, sample_weight=sw
     )
     return calibrated_classifier
 
@@ -495,7 +499,7 @@ def _get_prediction_method(clf):
     return method
 
 
-def _get_predictions(pred_method, X, n_classes):
+def _compute_predictions(pred_method, X, n_classes):
     """Return predictions for `X` and reshape binary outputs to shape
     (n_samples, 1).
 
@@ -512,30 +516,30 @@ def _get_predictions(pred_method, X, n_classes):
 
     Returns
     -------
-    preds : array-like, shape (X.shape[0], len(clf.classes_))
+    predictions : array-like, shape (X.shape[0], len(clf.classes_))
         The predictions. Note if there are 2 classes, array is of shape
         (X.shape[0], 1).
     """
-    preds = pred_method(X=X)
+    predictions = pred_method(X=X)
     if hasattr(pred_method, '__name__'):
         method_name = pred_method.__name__
     else:
         method_name = signature(pred_method).parameters['method'].default
 
     if method_name == 'decision_function':
-        if preds.ndim == 1:
-            preds = preds[:, np.newaxis]
+        if predictions.ndim == 1:
+            predictions = predictions[:, np.newaxis]
     elif method_name == 'predict_proba':
         if n_classes == 2:
-            preds = preds[:, 1:]
+            predictions = predictions[:, 1:]
     else:  # pragma: no cover
         # this branch should be unreachable.
-        raise ValueError
-    return preds
+        raise ValueError(f"Invalid prediction method: {method_name}")
+    return predictions
 
 
-def _fit_calibrator(clf, preds, y, classes, method, sample_weight=None):
-    """Fit calibrator(s) and return a `_CalibratedClassiferPipeline`
+def _fit_calibrator(clf, predictions, y, classes, method, sample_weight=None):
+    """Fit calibrator(s) and return a `_CalibratedClassifier`
     instance.
 
     `n_classes` (i.e. `len(clf.classes_)`) calibrators are fitted.
@@ -546,9 +550,9 @@ def _fit_calibrator(clf, preds, y, classes, method, sample_weight=None):
     clf : estimator instance
         Fitted classifier.
 
-    preds : array-like, shape (n_samples, n_classes) or (n_samples, 1) when \
-            binary.
-        Predictions for calibrating the predictions.
+    predictions : array-like, shape (n_samples, n_classes) or (n_samples, 1) \
+                    when binary.
+        Raw predictions returned by the un-calibrated base classifier.
 
     y : array-like, shape (n_samples,)
         The targets.
@@ -564,13 +568,13 @@ def _fit_calibrator(clf, preds, y, classes, method, sample_weight=None):
 
     Returns
     -------
-    pipeline : _CalibratedClassiferPipeline instance
+    pipeline : _CalibratedClassifier instance
     """
     Y = label_binarize(y, classes=classes)
     label_encoder = LabelEncoder().fit(classes)
     pos_class_indices = label_encoder.transform(clf.classes_)
     calibrators = []
-    for class_idx, this_pred in zip(pos_class_indices, preds.T):
+    for class_idx, this_pred in zip(pos_class_indices, predictions.T):
         if method == 'isotonic':
             calibrator = IsotonicRegression(out_of_bounds='clip')
         elif method == 'sigmoid':
@@ -581,13 +585,13 @@ def _fit_calibrator(clf, preds, y, classes, method, sample_weight=None):
         calibrator.fit(this_pred, Y[:, class_idx], sample_weight)
         calibrators.append(calibrator)
 
-    pipeline = _CalibratedClassiferPipeline(
+    pipeline = _CalibratedClassifier(
         clf, calibrators, method=method, classes=classes
     )
     return pipeline
 
 
-class _CalibratedClassiferPipeline:
+class _CalibratedClassifier:
     """Pipeline-like chaining a fitted classifier and its fitted calibrators.
 
     Parameters
@@ -629,7 +633,7 @@ class _CalibratedClassiferPipeline:
         """
         n_classes = len(self.classes)
         pred_method = _get_prediction_method(self.base_estimator)
-        preds = _get_predictions(pred_method, X, n_classes)
+        predictions = _compute_predictions(pred_method, X, n_classes)
 
         label_encoder = LabelEncoder().fit(self.classes)
         pos_class_indices = label_encoder.transform(
@@ -638,9 +642,9 @@ class _CalibratedClassiferPipeline:
 
         proba = np.zeros((X.shape[0], n_classes))
         for class_idx, this_pred, calibrator in \
-                zip(pos_class_indices, preds.T, self.calibrators):
+                zip(pos_class_indices, predictions.T, self.calibrators):
             if n_classes == 2:
-                # When binary, `preds` consists only of predictions for
+                # When binary, `predictions` consists only of predictions for
                 # clf.classes_[1] but `pos_class_indices` = 0
                 class_idx += 1
             proba[:, class_idx] = calibrator.predict(this_pred)

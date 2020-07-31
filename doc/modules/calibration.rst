@@ -110,12 +110,13 @@ The :class:`CalibratedClassifierCV` class is used to calibrate a classifier.
 :class:`CalibratedClassifierCV` uses a cross-validation approach to ensure
 unbiased data is always used to fit the calibrator. The data is split into k
 `(train_set, test_set)` couples (as determined by `cv`). When `ensemble=True`
-(default), the classifier (`base_estimator`) is trained on the train set, and
-its predictions on the test set are used to fit the calibrator (either a
-sigmoid or isotonic regressor). After fitting, we end up with an ensemble of
-k `(classifier, calibrator)` couples where each calibrator maps the output of
-its corresponding classifier into [0, 1]. Each couple is exposed in the
-`calibrated_classifiers_` attribute, where each entry is a calibrated
+(default), the following procedure is repeated independently for each
+cross-validation split: a clone of `base_estimator` is first trained on the
+train subset. Then its predictions on the test subset are used to fit a
+calibrator (either a sigmoid or isotonic regressor). This results in an
+ensemble of k `(classifier, calibrator)` couples where each calibrator maps
+the output of its corresponding classifier into [0, 1]. Each couple is exposed
+in the `calibrated_classifiers_` attribute, where each entry is a calibrated
 classifier with a :term:`predict_proba` method that outputs calibrated
 probabilities. The output of :term:`predict_proba` for the main
 :class:`CalibratedClassifierCV` instance corresponds to the average of the

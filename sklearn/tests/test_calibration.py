@@ -439,11 +439,11 @@ def test_calibration_less_classes(ensemble):
             enumerate(cal_clf.calibrated_classifiers_):
         proba = calibrated_classifier.predict_proba(X)
         if ensemble:
-            # Check 'missing' class has proba=0
+            # Check that the unobserved class has proba=0
             assert_array_equal(proba[:, i], np.zeros(len(y)))
-            # Check for all other classes proba!=0
-            assert np.all(np.hstack([proba[:, :i],
-                                     proba[:, i + 1:]]))
+            # Check for all other classes proba>0
+            assert np.all(proba[:, :i] > 0)
+            assert np.all(proba[:, i + 1:] > 0)
         else:
             # Check `proba` are all 1/n_classes
             assert np.allclose(proba, 1 / proba.shape[0])
