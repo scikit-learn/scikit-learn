@@ -5,6 +5,7 @@ from numpy.testing import assert_array_equal
 from sklearn.utils._encode import _unique
 from sklearn.utils._encode import _encode
 from sklearn.utils._encode import _check_unknown
+from sklearn.utils._encode import _is_float_nan
 
 
 @pytest.mark.parametrize(
@@ -193,3 +194,21 @@ def test_check_unknown_with_both_missing_values():
     assert np.isnan(diff[1])
     assert_array_equal(valid_mask,
                        [False, True, True, True, False, False, False])
+
+
+def test_unique_error_on_float_nan():
+    values = np.array([np.nan, None, float('nan'), 'a'], dtype=object)
+
+    msg = (r"Encoders supports missing values encoded as np\.nan or None and "
+           r"not float\('nan'\)")
+    with pytest.raises(ValueError, match=msg):
+        _unique(values)
+
+
+@pytest.mark.parametrize('value, expected', [
+    (float('nan'), True),
+    (np.nan, False),
+    (None, False)
+])
+def test_is_float_nan(value, expected):
+    assert _is_float_nan(value) == expected

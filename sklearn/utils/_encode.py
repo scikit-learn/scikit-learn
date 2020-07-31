@@ -48,16 +48,30 @@ def _unique(values, *, return_inverse=False):
     return uniques
 
 
+def _is_float_nan(value):
+    """Return True is value is float('nan')"""
+    return is_scalar_nan(value) and value not in [None, np.nan]
+
+
 def _unique_python(values, *, return_inverse):
     # Only used in `_uniques`, see docstring there for details
     try:
         uniques_set = set(values)
-        missing_values_in_set = [value for value in (None, np.nan)
-                                 if value in uniques_set]
+        missing_values = [value for value in uniques_set
+                          if value is None or is_scalar_nan(value)]
 
-        uniques_set -= set(missing_values_in_set)
+        if any(_is_float_nan(v) for v in missing_values):
+            raise ValueError("Encoders supports missing values encoded as "
+                             "np.nan or None and not float('nan')")
+
+        # ensures that None is the first value in missing_values
+        if None in missing_values and missing_values[0] is not None:
+            missing_values[0], missing_values[1] = \
+                missing_values[1], missing_values[0]
+
+        uniques_set -= set(missing_values)
         uniques = sorted(uniques_set)
-        uniques.extend(missing_values_in_set)
+        uniques.extend(missing_values)
         uniques = np.array(uniques, dtype=values.dtype)
     except TypeError:
         types = sorted(t.__qualname__
