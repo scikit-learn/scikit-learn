@@ -8,6 +8,7 @@
 # * Fast Optimization for t-SNE:
 #   https://cseweb.ucsd.edu/~lvdmaaten/workshops/nips2010/papers/vandermaaten.pdf
 
+import warnings
 from time import time
 import numpy as np
 from scipy import linalg
@@ -347,8 +348,8 @@ def _gradient_descent(objective, p0, it, n_iter,
     p = p0.copy().ravel()
     update = np.zeros_like(p)
     gains = np.ones_like(p)
-    error = np.finfo(np.float).max
-    best_error = np.finfo(np.float).max
+    error = np.finfo(float).max
+    best_error = np.finfo(float).max
     best_iter = i = it
 
     tic = time()
@@ -597,6 +598,19 @@ class TSNE(BaseEstimator):
 
         .. versionadded:: 0.22
 
+    square_distances : {True, 'legacy'}, default='legacy'
+        Whether TSNE should square the distance values. ``'legacy'`` means
+        that distance values are squared only when ``metric="euclidean"``.
+        ``True`` means that distance values are squared for all metrics.
+
+        .. versionadded:: 0.24
+           Added to provide backward compatibility during deprecation of
+           legacy squaring behavior.
+        .. deprecated:: 0.24
+           Legacy squaring behavior was deprecated in 0.24. The ``'legacy'``
+           value will be removed in 0.26, at which point the default value will
+           change to ``True``.
+
     Attributes
     ----------
     embedding_ : array-like, shape (n_samples, n_components)
@@ -643,7 +657,7 @@ class TSNE(BaseEstimator):
                  n_iter_without_progress=300, min_grad_norm=1e-7,
                  metric="euclidean", init="random", verbose=0,
                  random_state=None, method='barnes_hut', angle=0.5,
-                 n_jobs=None):
+                 n_jobs=None, square_distances='legacy'):
         self.n_components = n_components
         self.perplexity = perplexity
         self.early_exaggeration = early_exaggeration
@@ -658,6 +672,8 @@ class TSNE(BaseEstimator):
         self.method = method
         self.angle = angle
         self.n_jobs = n_jobs
+        # TODO Revisit deprecation of square_distances for 0.26-0.28 (#12401)
+        self.square_distances = square_distances
 
     def _fit(self, X, skip_num_points=0):
         """Private function to fit the model using X as training data."""
@@ -666,6 +682,17 @@ class TSNE(BaseEstimator):
             raise ValueError("'method' must be 'barnes_hut' or 'exact'")
         if self.angle < 0.0 or self.angle > 1.0:
             raise ValueError("'angle' must be between 0.0 - 1.0")
+        if self.square_distances not in [True, 'legacy']:
+            raise ValueError("'square_distances' must be True or 'legacy'.")
+        if self.metric != "euclidean" and self.square_distances is not True:
+            warnings.warn(("'square_distances' has been introduced in 0.24"
+                           "to help phase out legacy squaring behavior. The "
+                           "'legacy' setting will be removed in 0.26, and the "
+                           "default setting will be changed to True. In 0.28, "
+                           "'square_distances' will be removed altogether,"
+                           "and distances will be squared by default. Set "
+                           "'square_distances'=True to silence this warning."),
+                          FutureWarning)
         if self.method == 'barnes_hut':
             X = self._validate_data(X, accept_sparse=['csr'],
                                     ensure_min_samples=2,
@@ -715,15 +742,23 @@ class TSNE(BaseEstimator):
                     print("[t-SNE] Computing pairwise distances...")
 
                 if self.metric == "euclidean":
+                    # Euclidean is squared here, rather than using **= 2,
+                    # because euclidean_distances already calculates
+                    # squared distances, and returns np.sqrt(dist) for
+                    # squared=False.
+                    # Also, Euclidean is slower for n_jobs>1, so don't set here
                     distances = pairwise_distances(X, metric=self.metric,
                                                    squared=True)
                 else:
                     distances = pairwise_distances(X, metric=self.metric,
                                                    n_jobs=self.n_jobs)
 
-                if np.any(distances < 0):
-                    raise ValueError("All distances should be positive, the "
-                                     "metric given is not correct")
+            if np.any(distances < 0):
+                raise ValueError("All distances should be positive, the "
+                                 "metric given is not correct")
+
+            if self.metric != "euclidean" and self.square_distances is True:
+                distances **= 2
 
             # compute the joint probability distribution for the input space
             P = _joint_probabilities(distances, self.perplexity, self.verbose)
@@ -765,7 +800,7 @@ class TSNE(BaseEstimator):
             # Free the memory used by the ball_tree
             del knn
 
-            if self.metric == "euclidean":
+            if self.square_distances is True or self.metric == "euclidean":
                 # knn return the euclidean distance but we need it squared
                 # to be consistent with the 'exact' method. Note that the
                 # the method was derived using the euclidean method as in the

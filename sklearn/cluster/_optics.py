@@ -244,7 +244,7 @@ class OPTICS(ClusterMixin, BaseEstimator):
         self : instance of OPTICS
             The instance.
         """
-        X = self._validate_data(X, dtype=np.float)
+        X = self._validate_data(X, dtype=float)
 
         if self.cluster_method not in ['dbscan', 'xi']:
             raise ValueError("cluster_method should be one of"
@@ -664,10 +664,10 @@ def _extend_region(steep_point, xward_point, start, min_samples):
 
     Parameters
     ----------
-    steep_point : ndarray of shape (n_samples,), dtype=np.bool
+    steep_point : ndarray of shape (n_samples,), dtype=bool
         True if the point is steep downward (upward).
 
-    xward_point : ndarray of shape (n_samples,), dtype=np.bool
+    xward_point : ndarray of shape (n_samples,), dtype=bool
         True if the point is an upward (respectively downward) point.
 
     start : int

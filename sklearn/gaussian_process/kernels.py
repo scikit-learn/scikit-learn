@@ -32,6 +32,9 @@ from ..metrics.pairwise import pairwise_kernels
 from ..base import clone
 from ..utils.validation import _num_samples
 
+import warnings
+from sklearn.exceptions import ConvergenceWarning
+
 
 def _check_length_scale(X, length_scale):
     length_scale = np.squeeze(length_scale).astype(float)
@@ -79,7 +82,29 @@ class Hyperparameter(namedtuple('Hyperparameter',
         changed during hyperparameter tuning. If None is passed, the "fixed" is
         derived based on the given bounds.
 
+    Examples
+    --------
+    >>> from sklearn.gaussian_process.kernels import ConstantKernel
+    >>> from sklearn.datasets import make_friedman2
+    >>> from sklearn.gaussian_process import GaussianProcessRegressor
+    >>> from sklearn.gaussian_process.kernels import Hyperparameter
+    >>> X, y = make_friedman2(n_samples=50, noise=0, random_state=0)
+    >>> kernel = ConstantKernel(constant_value=1.0,
+    ...    constant_value_bounds=(0.0, 10.0))
+
+    We can access each hyperparameter:
+
+    >>> for hyperparameter in kernel.hyperparameters:
+    ...    print(hyperparameter)
+    Hyperparameter(name='constant_value', value_type='numeric',
+    bounds=array([[ 0., 10.]]), n_elements=1, fixed=False)
+
+    >>> params = kernel.get_params()
+    >>> for key in sorted(params): print(f"{key} : {params[key]}")
+    constant_value : 1.0
+    constant_value_bounds : (0.0, 10.0)
     """
+
     # A raw namedtuple is very memory efficient as it packs the attributes
     # in a struct to get rid of the __dict__ of attributes in particular it
     # does not copy the string for the keys on each instance.
@@ -364,6 +389,35 @@ class Kernel(metaclass=ABCMeta):
         compatibility."""
         return True
 
+    def _check_bounds_params(self):
+        """Called after fitting to warn if bounds may have been too tight."""
+        list_close = np.isclose(self.bounds,
+                                np.atleast_2d(self.theta).T)
+        idx = 0
+        for hyp in self.hyperparameters:
+            if hyp.fixed:
+                continue
+            for dim in range(hyp.n_elements):
+                if list_close[idx, 0]:
+                    warnings.warn("The optimal value found for "
+                                  "dimension %s of parameter %s is "
+                                  "close to the specified lower "
+                                  "bound %s. Decreasing the bound and"
+                                  " calling fit again may find a "
+                                  "better value." %
+                                  (dim, hyp.name, hyp.bounds[dim][0]),
+                                  ConvergenceWarning)
+                elif list_close[idx, 1]:
+                    warnings.warn("The optimal value found for "
+                                  "dimension %s of parameter %s is "
+                                  "close to the specified upper "
+                                  "bound %s. Increasing the bound and"
+                                  " calling fit again may find a "
+                                  "better value." %
+                                  (dim, hyp.name, hyp.bounds[dim][1]),
+                                  ConvergenceWarning)
+                idx += 1
+
 
 class NormalizedKernelMixin:
     """Mixin for kernels which are normalized: k(X, X)=1.
@@ -424,6 +478,21 @@ class CompoundKernel(Kernel):
     ----------
     kernels : list of Kernels
         The other kernels
+
+    Examples
+    --------
+    >>> from sklearn.gaussian_process.kernels import WhiteKernel
+    >>> from sklearn.gaussian_process.kernels import RBF
+    >>> from sklearn.gaussian_process.kernels import CompoundKernel
+    >>> kernel = CompoundKernel(
+    ...     [WhiteKernel(noise_level=3.0), RBF(length_scale=2.0)])
+    >>> print(kernel.bounds)
+    [[-11.51292546  11.51292546]
+     [-11.51292546  11.51292546]]
+    >>> print(kernel.n_dims)
+    2
+    >>> print(kernel.theta)
+    [1.09861229 0.69314718]
     """
 
     def __init__(self, kernels):
@@ -910,6 +979,7 @@ class Exponentiation(Kernel):
     >>> gpr.predict(X[:1,:], return_std=True)
     (array([635.5...]), array([0.559...]))
     """
+
     def __init__(self, kernel, exponent):
         self.kernel = kernel
         self.exponent = exponent
@@ -1106,6 +1176,7 @@ class ConstantKernel(StationaryKernelMixin, GenericKernelMixin,
     >>> gpr.predict(X[:1,:], return_std=True)
     (array([606.1...]), array([0.24...]))
     """
+
     def __init__(self, constant_value=1.0, constant_value_bounds=(1e-5, 1e5)):
         self.constant_value = constant_value
         self.constant_value_bounds = constant_value_bounds
@@ -1994,7 +2065,6 @@ class DotProduct(Kernel):
     >>> gpr.predict(X[:2,:], return_std=True)
     (array([653.0..., 592.1...]), array([316.6..., 316.6...]))
     """
-
     def __init__(self, sigma_0=1.0, sigma_0_bounds=(1e-5, 1e5)):
         self.sigma_0 = sigma_0
         self.sigma_0_bounds = sigma_0_bounds
@@ -2146,7 +2216,6 @@ class PairwiseKernel(Kernel):
     array([[0.8880..., 0.05663..., 0.05532...],
            [0.8676..., 0.07073..., 0.06165...]])
     """
-
     def __init__(self, gamma=1.0, gamma_bounds=(1e-5, 1e5), metric="linear",
                  pairwise_kernels_kwargs=None):
         self.gamma = gamma
