@@ -88,7 +88,6 @@ for i, (clf, name) in enumerate(clf_list):
 
 ax1.grid()
 ax1.set_title('Calibration plots (Naive Bayes)')
-ax1.set(xlabel="")
 
 # Add histogram
 grid_positions = [(2, 0), (2, 1), (3, 0), (3, 1)]
@@ -154,7 +153,7 @@ score_df = pd.DataFrame(
           'Recall': recall, 'F1': f1},
     index=index,
 )
-score_df
+score_df.round(3)
 
 # %%
 # Next, we will compare:
@@ -171,11 +170,17 @@ class NaivelyCalibratedLinearSVC(LinearSVC):
     """LinearSVC with `predict_proba` method that naively scales
     `decision_function` output."""
 
-    def predict_proba(self, X):
-        """min-max scale output of `decision_function` to [0,1]."""
+    def fit(self, X, y):
+        super().fit(X, y)
         df = self.decision_function(X)
-        calibrated_df = (df - df.min()) / (df.max() - df.min())
-        return calibrated_df
+        self.df_min_ = df.min()
+        self.df_max_ = df.max()
+
+    def predict_proba(self, X):
+        """Min-max scale output of `decision_function` to [0,1]."""
+        df = self.decision_function(X)
+        calibrated_df = (df - self.df_min_) / (self.df_max_ - self.df_min_)
+        return np.clip(calibrated_df, 0, 1)
 
 
 lr = LogisticRegression(C=1.)
@@ -202,7 +207,6 @@ for i, (clf, name) in enumerate(clf_list):
 
 ax1.grid()
 ax1.set_title('Calibration plots (SVC)')
-ax1.set(xlabel="")
 
 # Add histogram
 grid_positions = [(2, 0), (2, 1), (3, 0), (3, 1)]
@@ -258,7 +262,7 @@ score_df = pd.DataFrame(
           'Recall': recall, 'F1': f1},
     index=index,
 )
-score_df
+score_df.round(3)
 
 # %%
 # Summary

@@ -504,13 +504,7 @@ def test_plot_calibration_curve_error_non_binary(pyplot, data):
 
 def test_plot_calibration_curve_no_predict_proba(pyplot, data_binary):
     X, y = data_binary
-
-    class MyClassifier(ClassifierMixin):
-        def fit(self, X, y):
-            self.classes_ = [0, 1]
-            return self
-
-    clf = MyClassifier().fit(X, y)
+    clf = LinearSVC().fit(X, y)
 
     msg = "Response method 'predict_proba' not defined in"
     with pytest.raises(ValueError, match=msg):
@@ -527,9 +521,9 @@ def test_plot_calibration_curve_not_fitted(pyplot, data_binary):
 
 @pytest.mark.parametrize("n_bins", [5, 10])
 @pytest.mark.parametrize("strategy", ["uniform", "quantile"])
-@pytest.mark.parametrize("with_strings", [True, False])
-def test_plot_calibration_curve(pyplot, data_binary, n_bins, strategy,
-                                with_strings):
+def test_plot_calibration_curve(pyplot, data_binary, n_bins, strategy):
+    # Ensure `plot_calibration_curve` and `calibration_curve` compute the same
+    # results. Also checks attributes of the CalibrationDisplay object.
     X, y = data_binary
 
     lr = LogisticRegression().fit(X, y)
@@ -561,21 +555,20 @@ def test_plot_calibration_curve(pyplot, data_binary, n_bins, strategy,
     assert viz.line_.get_label() == "LogisticRegression"
 
 
-@pytest.mark.parametrize(
-    "clf", [make_pipeline(StandardScaler(), LogisticRegression()),
-            make_pipeline(make_column_transformer((StandardScaler(), [0, 1])),
-                          LogisticRegression())])
-def test_plot_calibration_curve_pipeline(pyplot, data_binary, clf):
+def test_plot_calibration_curve_pipeline(pyplot, data_binary):
+    # Ensure pipelines are supported by plot_calibration_curve
     X, y = data_binary
+    clf = make_pipeline(StandardScaler(), LogisticRegression())
     clf.fit(X, y)
     viz = plot_calibration_curve(clf, X, y)
     assert clf.__class__.__name__ in viz.line_.get_label()
     assert viz.estimator_name == clf.__class__.__name__
 
 
-def test_plot_roc_curve_estimator_name_multiple_calls(pyplot, data_binary):
-    # non-regression test checking that the `name` used when calling
-    # `plot_calibration_curve` is used as well when calling `viz.plot()`
+def test_plot_calibration_curve_estimator_name_multiple_calls(pyplot,
+                                                              data_binary):
+    # Check that the `name` used when calling `plot_calibration_curve` is
+    # used when multiple `viz.plot()` calls are made.
     X, y = data_binary
     clf_name = "my hand-crafted name"
     clf = LogisticRegression().fit(X, y)
@@ -583,11 +576,11 @@ def test_plot_roc_curve_estimator_name_multiple_calls(pyplot, data_binary):
     assert viz.estimator_name == clf_name
     pyplot.close("all")
     viz.plot()
-    assert clf_name in viz.line_.get_label()
+    assert clf_name == viz.line_.get_label()
     pyplot.close("all")
     clf_name = "another_name"
     viz.plot(name=clf_name)
-    assert clf_name in viz.line_.get_label()
+    assert clf_name == viz.line_.get_label()
 
 
 def test_plot_calibration_curve_ref_line(pyplot, data_binary):

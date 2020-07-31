@@ -93,11 +93,17 @@ class NaivelyCalibratedLinearSVC(LinearSVC):
     """LinearSVC with `predict_proba` method that naively scales
     `decision_function` output."""
 
-    def predict_proba(self, X):
-        """min-max scale output of `decision_function` to [0,1]."""
+    def fit(self, X, y):
+        super().fit(X, y)
         df = self.decision_function(X)
-        calibrated_df = (df - df.min()) / (df.max() - df.min())
-        return calibrated_df
+        self.df_min_ = df.min()
+        self.df_max_ = df.max()
+
+    def predict_proba(self, X):
+        """Min-max scale output of `decision_function` to [0,1]."""
+        df = self.decision_function(X)
+        calibrated_df = (df - self.df_min_) / (self.df_max_ - self.df_min_)
+        return np.clip(calibrated_df, 0, 1)
 
 
 # Create classifiers

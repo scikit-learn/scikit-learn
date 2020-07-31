@@ -928,7 +928,7 @@ def plot_calibration_curve(estimator, X, y, *,
     binary_error = "Only binary classification is supported."
 
     if not is_classifier(estimator):
-        raise ValueError("The estimator parameter should be a fitted binary "
+        raise ValueError("The 'estimator' parameter should be a fitted binary "
                          "classifier")
 
     try:
@@ -939,10 +939,11 @@ def plot_calibration_curve(estimator, X, y, *,
         raise ValueError("Response method 'predict_proba' not defined in "
                          f"{estimator.__class__.__name__}")
 
-    y_prob = prediction_method(X)
-
     if not len(estimator.classes_) == 2:
         raise ValueError(binary_error)
+
+    y_prob = prediction_method(X)
+
     if y_prob.ndim != 1:
         if y_prob.shape[1] != 2:
             raise ValueError(binary_error)
