@@ -502,3 +502,16 @@ def test_plot_partial_dependence_multiclass_error(pyplot, params, err_msg):
 
     with pytest.raises(ValueError, match=err_msg):
         plot_partial_dependence(clf, iris.data, **params)
+
+
+def test_plot_partial_dependence_does_not_override_ylabel(pyplot, clf_diabetes,
+                                                          diabetes):
+    # Non-regression test to be sure to not override the ylabel if it has been
+    # See https://github.com/scikit-learn/scikit-learn/issues/15772
+    _, axes = pyplot.subplots(1, 2)
+    axes[0].set_ylabel("Hello world")
+    plot_partial_dependence(clf_diabetes, diabetes.data,
+                            [0, 1], ax=axes)
+
+    assert axes[0].get_ylabel() == "Hello world"
+    assert axes[1].get_ylabel() == "Partial dependence"

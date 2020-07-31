@@ -1,4 +1,5 @@
 """Testing for K-means"""
+import re
 import sys
 
 import numpy as np
@@ -135,7 +136,7 @@ def test_relocate_empty_clusters(array_constr):
 @pytest.mark.parametrize("distribution", ["normal", "blobs"])
 @pytest.mark.parametrize("array_constr", [np.array, sp.csr_matrix],
                          ids=["dense", "sparse"])
-@pytest.mark.parametrize("tol", [1e-2, 1e-4, 1e-8])
+@pytest.mark.parametrize("tol", [1e-2, 1e-8, 1e-100, 0])
 def test_kmeans_elkan_results(distribution, array_constr, tol):
     # Check that results are identical between lloyd and elkan algorithms
     rnd = np.random.RandomState(0)
@@ -162,18 +163,14 @@ def test_kmeans_elkan_results(distribution, array_constr, tol):
 @pytest.mark.parametrize("algorithm", ["full", "elkan"])
 def test_kmeans_convergence(algorithm):
     # Check that KMeans stops when convergence is reached when tol=0. (#16075)
-    # We can only ensure that if the number of threads is not to large,
-    # otherwise the roundings errors coming from the unpredictability of
-    # the order in which chunks are processed make the convergence criterion
-    # to never be exactly 0.
     rnd = np.random.RandomState(0)
     X = rnd.normal(size=(5000, 10))
+    max_iter = 300
 
-    with threadpool_limits(limits=1, user_api="openmp"):
-        km = KMeans(algorithm=algorithm, n_clusters=5, random_state=0,
-                    n_init=1, tol=0, max_iter=300).fit(X)
+    km = KMeans(algorithm=algorithm, n_clusters=5, random_state=0,
+                n_init=1, tol=0, max_iter=max_iter).fit(X)
 
-    assert km.n_iter_ < 300
+    assert km.n_iter_ < max_iter
 
 
 def test_minibatch_update_consistency():
@@ -296,16 +293,77 @@ def test_fortran_aligned_data(Estimator):
     assert_array_equal(km_c.labels_, km_f.labels_)
 
 
-@pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
-def test_verbose(Estimator):
-    # Check verbose mode of KMeans and MiniBatchKMeans for better coverage.
-    km = Estimator(n_clusters=n_clusters, random_state=42, verbose=1)
+@pytest.mark.parametrize('algo', ['full', 'elkan'])
+@pytest.mark.parametrize('dtype', [np.float32, np.float64])
+@pytest.mark.parametrize('constructor', [np.asarray, sp.csr_matrix])
+@pytest.mark.parametrize('seed, max_iter, tol', [
+    (0, 2, 1e-7),    # strict non-convergence
+    (1, 2, 1e-1),    # loose non-convergence
+    (3, 300, 1e-7),  # strict convergence
+    (4, 300, 1e-1),  # loose convergence
+])
+def test_k_means_fit_predict(algo, dtype, constructor, seed, max_iter, tol):
+    # check that fit.predict gives same result as fit_predict
+    # There's a very small chance of failure with elkan on unstructured dataset
+    # because predict method uses fast euclidean distances computation which
+    # may cause small numerical instabilities.
+    # NB: This test is largely redundant with respect to test_predict and
+    #     test_predict_equal_labels.  This test has the added effect of
+    #     testing idempotence of the fittng procesdure which appears to
+    #     be where it fails on some MacOS setups.
+    if sys.platform == "darwin":
+        pytest.xfail(
+            "Known failures on MacOS, See "
+            "https://github.com/scikit-learn/scikit-learn/issues/12644")
+
+    rng = np.random.RandomState(seed)
+
+    X = make_blobs(n_samples=1000, n_features=10, centers=10,
+                   random_state=rng)[0].astype(dtype, copy=False)
+    X = constructor(X)
+
+    kmeans = KMeans(algorithm=algo, n_clusters=10, random_state=seed,
+                    tol=tol, max_iter=max_iter)
+
+    labels_1 = kmeans.fit(X).predict(X)
+    labels_2 = kmeans.fit_predict(X)
+
+    # Due to randomness in the order in which chunks of data are processed when
+    # using more than one thread, the absolute values of the labels can be
+    # different between the 2 strategies but they should correspond to the same
+    # clustering.
+    assert v_measure_score(labels_1, labels_2) == pytest.approx(1, abs=1e-15)
+
+
+def test_minibatch_kmeans_verbose():
+    # Check verbose mode of MiniBatchKMeans for better coverage.
+    km = MiniBatchKMeans(n_clusters=n_clusters, random_state=42, verbose=1)
     old_stdout = sys.stdout
     sys.stdout = StringIO()
     try:
         km.fit(X)
     finally:
         sys.stdout = old_stdout
+
+
+@pytest.mark.parametrize("algorithm", ["full", "elkan"])
+@pytest.mark.parametrize("tol", [1e-2, 0])
+def test_kmeans_verbose(algorithm, tol, capsys):
+    # Check verbose mode of KMeans for better coverage.
+    X = np.random.RandomState(0).normal(size=(5000, 10))
+
+    KMeans(algorithm=algorithm, n_clusters=n_clusters, random_state=42,
+           init="random", n_init=1, tol=tol, verbose=1).fit(X)
+
+    captured = capsys.readouterr()
+
+    assert re.search(r"Initialization complete", captured.out)
+    assert re.search(r"Iteration [0-9]+, inertia", captured.out)
+
+    if tol == 0:
+        assert re.search(r"strict convergence", captured.out)
+    else:
+        assert re.search(r"center shift .* within tolerance", captured.out)
 
 
 def test_minibatch_kmeans_warning_init_size():
