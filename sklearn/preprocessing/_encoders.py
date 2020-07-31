@@ -94,13 +94,11 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                     error_msg = ("Unsorted categories are not "
                                  "supported for numerical categories")
                     # if there are nans, nan should be the last element
-                    if np.isnan(sorted_cats[-1]):
-                        if not (np.isnan(cats[-1]) or
-                                np.all(sorted_cats[:-1] == cats[:-1])):
-                            raise ValueError(error_msg)
-                    else:
-                        if not np.all(sorted_cats == cats):
-                            raise ValueError(error_msg)
+                    stop_idx = -1 if np.isnan(sorted_cats[-1]) else None
+                    if (np.any(sorted_cats[:stop_idx] != cats[:stop_idx]) or
+                        (np.isnan(sorted_cats[-1]) and
+                         not np.isnan(sorted_cats[-1]))):
+                        raise ValueError(error_msg)
                 if handle_unknown == 'error':
                     diff = _check_unknown(Xi, cats)
                     if diff:

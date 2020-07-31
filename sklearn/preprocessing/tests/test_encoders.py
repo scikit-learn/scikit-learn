@@ -379,6 +379,12 @@ def test_one_hot_encoder_unsorted_categories():
     with pytest.raises(ValueError, match=msg):
         enc.fit_transform(X)
 
+    # np.nan must be the last category in categories[0] to be considered sorted
+    X = np.array([[1, 2, np.nan]]).T
+    enc = OneHotEncoder(categories=[[1, np.nan, 2]])
+    with pytest.raises(ValueError, match=msg):
+        enc.fit_transform(X)
+
 
 def test_one_hot_encoder_specified_categories_mixed_columns():
     # multiple columns
