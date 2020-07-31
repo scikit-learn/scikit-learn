@@ -45,7 +45,8 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                                  force_all_finite=force_all_finite)
             if (not hasattr(X, 'dtype')
                     and np.issubdtype(X_temp.dtype, np.str_)):
-                X = check_array(X, dtype=object)
+                X = check_array(X, dtype=object,
+                                force_all_finite=force_all_finite)
             else:
                 X = X_temp
             needs_validation = False

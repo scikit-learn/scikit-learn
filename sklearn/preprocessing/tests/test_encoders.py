@@ -201,8 +201,12 @@ def check_categorical_onehot(X):
 @pytest.mark.parametrize("X", [
     [['def', 1, 55], ['abc', 2, 55]],
     np.array([[10, 1, 55], [5, 2, 55]]),
-    np.array([['b', 'A', 'cat'], ['a', 'B', 'cat']], dtype=object)
-    ], ids=['mixed', 'numeric', 'object'])
+    np.array([['b', 'A', 'cat'], ['a', 'B', 'cat']], dtype=object),
+    np.array([['b', 1, 'cat'], ['a', np.nan, 'cat']], dtype=object),
+    np.array([[None, 1, 'cat'], ['a', 2, 'cat']], dtype=object),
+    np.array([[None, 1, None], ['a', np.nan, None]], dtype=object),
+    ], ids=['mixed', 'numeric', 'object', 'mixed-nan', 'mixed-None',
+            'mixed-None-nan'])
 def test_one_hot_encoder(X):
     Xtr = check_categorical_onehot(np.array(X)[:, [0]])
     assert_allclose(Xtr, [[0, 1], [1, 0]])
@@ -339,7 +343,11 @@ def test_one_hot_encoder_categories(X, cat_exp, cat_dtype):
     (np.array([['a', 'b']], dtype=object).T,
      np.array([['a', 'd']], dtype=object).T,
      [np.array(['a', 'b', 'c'])], np.object_),
-    ], ids=['object', 'numeric', 'object-string-cat'])
+    (np.array([[None, 'a']], dtype=object).T,
+     np.array([[None, 'b']], dtype=object).T,
+     [[None, 'a', 'z']], object),
+    ], ids=['object', 'numeric', 'object-string-cat',
+            'object-string-none-cat'])
 def test_one_hot_encoder_specified_categories(X, X2, cats, cat_dtype):
     enc = OneHotEncoder(categories=cats)
     exp = np.array([[1., 0., 0.],
@@ -768,57 +776,6 @@ def test_ohe_missing_value_object_auto(missing_value):
 
     names = ohe.get_feature_names()
     assert_array_equal(names, ['x0_a', 'x0_b', f'x0_{missing_value}'])
-
-
-def test_ohe_missing_value_object_different_order():
-    # categories are not in lexical ordering
-    categories = [['b', None, 'a']]
-    X = np.array([['a', 'b', 'b', None, 'c']], dtype=object).T
-    ohe = OneHotEncoder(sparse=False, handle_unknown='ignore',
-                        categories=categories).fit(X)
-
-    X_test = np.array([['a', 'b', None, 'c']], dtype=object).T
-    X_trans = ohe.fit_transform(X_test)
-    expected_X_trans = np.array([
-        [0, 0, 1],
-        [1, 0, 0],
-        [0, 1, 0],
-        [0, 0, 0]
-    ])
-    assert_allclose(expected_X_trans, X_trans)
-
-
-@pytest.mark.parametrize("categories", [
-    'auto', [['a', 'b', None], [0, 2, np.nan]]
-])
-def test_ohe_missing_value_mixed_sanity(categories):
-    # sanity check for mixed data with missing values
-    X = np.array([['a', 0], ['b', np.nan], [None, 2]], dtype=object)
-    expected_X_trans = np.array([
-        [1, 0, 0, 1, 0, 0],
-        [0, 1, 0, 0, 0, 1],
-        [0, 0, 1, 0, 1, 0],
-    ])
-    ohe = OneHotEncoder(sparse=False, handle_unknown='ignore',
-                        categories=categories)
-    X_trans = ohe.fit_transform(X)
-    assert_allclose(expected_X_trans, X_trans)
-
-    X_test = np.array([
-        ['b', np.nan],
-        [None, 0],
-        ['c', 2],
-        ['a', 4]
-    ], dtype=object)
-    X_trans = ohe.transform(X_test)
-    expected_X_test = np.array([
-        [0, 1, 0, 0, 0, 1],
-        [0, 0, 1, 1, 0, 0],
-        [0, 0, 0, 0, 1, 0],
-        [1, 0, 0, 0, 0, 0],
-    ])
-
-    assert_allclose(expected_X_test, X_trans)
 
 
 @pytest.mark.parametrize("categories", [
