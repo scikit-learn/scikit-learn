@@ -234,10 +234,10 @@ recalled in the following way:
 
 However pickle should not completely ensure interoperability between
 different architectures.
-For production and quality control needs exporting the model in `Predictive
+For production and quality control needs, exporting the model in `Predictive
 Model Markup Language (PMML)
 <http://dmg.org/pmml/v4-4-1/GeneralStructure.html>`_ or `Open Neural Network
-Exchange <https://onnx.ai/>`_
+Exchange <https://onnx.ai/>`_ format
 would be a better approach.
 
 The :ref:`model persistence <model_persistence>` section of the User Guide
