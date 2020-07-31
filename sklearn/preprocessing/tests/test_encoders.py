@@ -321,9 +321,9 @@ def test_X_is_not_1D_pandas(method):
      [['A', 'B'], ['cat']], np.object_),
     (np.array([['A', 'cat'], ['B', 'cat']]),
      [['A', 'B'], ['cat']], np.str_),
-    (np.array([[1, 2], [np.nan, 2]]), [[1, np.nan], [2]], float),
+    (np.array([[1, 2], [np.nan, 2]]), [[1, np.nan], [2]], np.integer),
     (np.array([['A', np.nan], [None, np.nan]], dtype=object),
-     [['A', None], [np.nan]], object),
+     [['A', None], [np.nan]], np.object_),
     ], ids=['mixed', 'numeric', 'object', 'string', 'missing-float',
             'missing-object'])
 def test_one_hot_encoder_categories(X, cat_exp, cat_dtype):
