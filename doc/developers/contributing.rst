@@ -427,9 +427,9 @@ You can check for common programming errors with the following tools:
   see also :ref:`testing_coverage`
 
 * A moderate use of type annotations is encouraged but is not mandatory. See
-  [mypy quickstart](https://mypy.readthedocs.io/en/latest/getting_started.html)
-  for an introduction, as well as [pandas contributing documentation](
-  https://pandas.pydata.org/pandas-docs/stable/development/contributing.html#type-hints)
+  `mypy quickstart <https://mypy.readthedocs.io/en/latest/getting_started.html>`_
+  for an introduction, as well as `pandas contributing documentation
+  <https://pandas.pydata.org/pandas-docs/stable/development/contributing.html#type-hints>`_
   for style guidelines. Whether you add type annotation or not::
 
     mypy --ignore-missing-import sklearn
