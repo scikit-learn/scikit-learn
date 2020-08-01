@@ -556,5 +556,38 @@ def test_lda_int32_1_class_cv():
     cross_val_score(clf, X, y, cv=5)
 
 
+def test_lda_int32_multiclass_cv_1f():
+    rng = np.random.RandomState(0)
+
+    X = 3 * rng.uniform(size=(20, 1)).astype(np.float32)
+    X = X.astype(np.int32)
+    y = rng.randint(0, 10, size=20).astype(np.int64)
+
+    clf = LinearDiscriminantAnalysis()
+    cross_val_score(clf, X, y, cv=5)
+
+
+def test_lda_int32_binary_cv_1f():
+    rng = np.random.RandomState(0)
+
+    X = 3 * rng.uniform(size=(20, 1)).astype(np.float32)
+    X = X.astype(np.int32)
+    y = rng.randint(0, 2, size=20).astype(np.int64)
+
+    clf = LinearDiscriminantAnalysis()
+    cross_val_score(clf, X, y, cv=5)
+
+
+def test_lda_int32_1_class_cv_1f():
+    rng = np.random.RandomState(0)
+
+    X = 3 * rng.uniform(size=(20, 1)).astype(np.float32)
+    X = X.astype(np.int32)
+    y = np.ones(20).astype(np.int64)
+
+    clf = LinearDiscriminantAnalysis()
+    cross_val_score(clf, X, y, cv=5)
+
+
 # def test_must_fail():
 #     raise ValueError("pad thai vs drunken noods")
