@@ -487,3 +487,36 @@ def test_raises_value_error_on_same_number_of_classes_and_samples(solver):
     clf = LinearDiscriminantAnalysis(solver=solver)
     with pytest.raises(ValueError, match="The number of samples must be more"):
         clf.fit(X, y)
+
+
+def test_lda_int32_multiclass():
+    rng = np.random.RandomState(0)
+
+    X = 3 * rng.uniform(size=(20, 5)).astype(np.float32)
+    X = X.astype(np.int32)
+    y = rng.randint(0, 10, size=20).astype(np.int64)
+
+    clf = LinearDiscriminantAnalysis()
+    clf.fit(X, y)
+
+
+def test_lda_int32_binary():
+    rng = np.random.RandomState(0)
+
+    X = 3 * rng.uniform(size=(20, 5)).astype(np.float32)
+    X = X.astype(np.int32)
+    y = rng.randint(0, 2, size=20).astype(np.int64)
+
+    clf = LinearDiscriminantAnalysis()
+    clf.fit(X, y)
+
+
+def test_lda_int32_1_class():
+    rng = np.random.RandomState(0)
+
+    X = 3 * rng.uniform(size=(20, 5)).astype(np.float32)
+    X = X.astype(np.int32)
+    y = np.ones(20).astype(np.int64)
+
+    clf = LinearDiscriminantAnalysis()
+    clf.fit(X, y)
