@@ -526,7 +526,7 @@ Stalled and Unclaimed Issues
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Generally speaking, issues which are up for grabs will have a
-`"help wanted" <https://github.com/scikit-learn/scikit-learn/labels/help%20wanted>`__ .
+`"help wanted" <https://github.com/scikit-learn/scikit-learn/labels/help%20wanted>`_.
 tag. However, not all issues which need contributors will have this tag,
 as the "help wanted" tag is not always up-to-date with the state
 of the issue. Contributors can find issues which are still up for grabs
@@ -586,7 +586,7 @@ underestimate how easy an issue is to solve!
     we use the help wanted tag to mark Pull Requests which have been abandoned
     by their original contributor and are available for someone to pick up where the original
     contributor left off. The list of issues with the help wanted tag can be found
-    `here <https://github.com/scikit-learn/scikit-learn/labels/help%20wanted>`__ .
+    `here <https://github.com/scikit-learn/scikit-learn/labels/help%20wanted>`_.
 
     Note that not all issues which need contributors will have this tag.
 
