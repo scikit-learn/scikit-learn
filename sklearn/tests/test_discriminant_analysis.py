@@ -15,6 +15,7 @@ from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import ignore_warnings
 
 from sklearn.datasets import make_blobs
+from sklearn.model_selection import cross_val_score
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.discriminant_analysis import QuadraticDiscriminantAnalysis
 from sklearn.discriminant_analysis import _cov
@@ -520,6 +521,39 @@ def test_lda_int32_1_class():
 
     clf = LinearDiscriminantAnalysis()
     clf.fit(X, y)
+
+
+def test_lda_int32_multiclass_cv():
+    rng = np.random.RandomState(0)
+
+    X = 3 * rng.uniform(size=(20, 5)).astype(np.float32)
+    X = X.astype(np.int32)
+    y = rng.randint(0, 10, size=20).astype(np.int64)
+
+    clf = LinearDiscriminantAnalysis()
+    cross_val_score(clf, X, y, cv=5)
+
+
+def test_lda_int32_binary_cv():
+    rng = np.random.RandomState(0)
+
+    X = 3 * rng.uniform(size=(20, 5)).astype(np.float32)
+    X = X.astype(np.int32)
+    y = rng.randint(0, 2, size=20).astype(np.int64)
+
+    clf = LinearDiscriminantAnalysis()
+    cross_val_score(clf, X, y, cv=5)
+
+
+def test_lda_int32_1_class_cv():
+    rng = np.random.RandomState(0)
+
+    X = 3 * rng.uniform(size=(20, 5)).astype(np.float32)
+    X = X.astype(np.int32)
+    y = np.ones(20).astype(np.int64)
+
+    clf = LinearDiscriminantAnalysis()
+    cross_val_score(clf, X, y, cv=5)
 
 
 # def test_must_fail():
