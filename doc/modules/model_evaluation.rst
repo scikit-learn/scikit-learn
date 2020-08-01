@@ -1462,6 +1462,7 @@ DET curves are commonly plotted in normal deviate scale by transformation with
 function).
 The resulting performance curves explicitly visualize the tradeoff of error
 types for given classification algorithms.
+See [Martin1997]_ for examples and further motivation.
 
 This figure compares the ROC and DET curves of two example classifiers on the
 same classification task:
@@ -1513,17 +1514,17 @@ better suited.
      Available at: https://en.wikipedia.org/w/index.php?title=Detection_error_tradeoff&oldid=798982054.
      Accessed February 19, 2018.
 
+  .. [Martin1997] A. Martin, G. Doddington, T. Kamm, M. Ordowski, and M. Przybocki,
+     `The DET Curve in Assessment of Detection Task Performance
+     <http://www.dtic.mil/docs/citations/ADA530509>`_,
+     NIST 1997.
+
   .. [Navratil2007] J. Navractil and D. Klusacek,
      "`On Linear DETs,
      <http://www.research.ibm.com/CBG/papers/icassp07_navratil.pdf>`_"
      2007 IEEE International Conference on Acoustics,
      Speech and Signal Processing - ICASSP '07, Honolulu,
      HI, 2007, pp. IV-229-IV-232.
-
-  A. Martin, G. Doddington, T. Kamm, M. Ordowski, and M. Przybocki,
-  `The DET Curve in Assessment of Detection Task Performance
-  <http://www.dtic.mil/docs/citations/ADA530509>`_,
-  NIST 1997.
 
 .. _zero_one_loss:
 
