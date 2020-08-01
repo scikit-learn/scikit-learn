@@ -520,3 +520,7 @@ def test_lda_int32_1_class():
 
     clf = LinearDiscriminantAnalysis()
     clf.fit(X, y)
+
+
+def test_must_fail():
+    raise ValueError("pad thai vs drunken noods")
