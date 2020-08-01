@@ -896,7 +896,7 @@ p-values even if there is only weak structure in the data
 
 .. topic:: Examples
 
-    * :ref:`sphx_glr_auto_examples_model_selection_plot_permutation_test_for_classification.py`
+    * :ref:`sphx_glr_auto_examples_feature_selection_plot_permutation_test_for_classification.py`
 
 .. topic:: References:
 
