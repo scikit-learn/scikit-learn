@@ -53,8 +53,13 @@ from .import shuffle
 from .validation import has_fit_parameter, _num_samples
 from ..preprocessing import StandardScaler
 from ..preprocessing import scale
-from ..datasets import (load_iris, make_blobs,
-                        make_multilabel_classification, make_regression)
+from ..datasets import (
+    load_iris,
+    make_blobs,
+    make_classification,
+    make_multilabel_classification,
+    make_regression,
+)
 
 
 REGRESSION_DATASET = None
@@ -193,16 +198,19 @@ def _yield_regressor_checks(regressor):
 
 
 def _yield_transformer_checks(transformer):
+    tags = transformer._get_tags()
     # All transformers should either deal with sparse data or raise an
     # exception with type TypeError and an intelligible error message
-    if not transformer._get_tags()["no_validation"]:
+    if not tags["no_validation"]:
         yield check_transformer_data_not_an_array
     # these don't actually fit the data, so don't raise errors
     yield check_transformer_general
     # it's not possible to preserve dtypes in transform with clustering
     # same for MissingIndicator
-    if (not isinstance(transformer, (ClusterMixin, MissingIndicator)) and
-            _safe_tags(transformer, "preserves_dtype")):
+    if (
+        not isinstance(transformer, (ClusterMixin, MissingIndicator))
+        and tags["preserves_dtype"]
+    ):
         yield check_estimators_preserve_dtypes
     yield partial(check_transformer_general, readonly_memmap=True)
     if not transformer._get_tags()["stateless"]:
@@ -1424,16 +1432,21 @@ def check_estimators_preserve_dtypes(name, estimator_orig):
         X, y = make_regression(n_samples=50, n_features=5)
     else:
         X, y = make_classification(n_samples=50, n_features=5)
+
+    tags_base_estimator = base_estimator._get_tags()
+    tags_estimator_orig = estimator_orig._get_tags()
+
     # SkewedChi2Sampler requires values values larger than -skewedness
-    if (_safe_tags(base_estimator, "requires_positive_X") or
-       isinstance(base_estimator, SkewedChi2Sampler)):
+    if tags_base_estimator["requires_positive_X"] or isinstance(
+        base_estimator, SkewedChi2Sampler
+    ):
         X = np.absolute(X)
     y = _enforce_estimator_tags_y(base_estimator, y)
     X = _pairwise_estimator_convert_X(X, estimator_orig)
     X = X.astype(np.float32)
 
     Xts = []
-    in_out_types = _safe_tags(estimator_orig, 'preserves_dtype')
+    in_out_types = tags_estimator_orig["preserve_dtype"]
     for dtype in in_out_types:
         X_cast = X.astype(dtype)
         estimator = clone(estimator_orig)
