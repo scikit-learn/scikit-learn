@@ -1,6 +1,7 @@
 """
 Sequential feature selection
 """
+import numbers
 
 import numpy as np
 
@@ -28,9 +29,11 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
     estimator : estimator instance
         An unfitted estimator.
 
-    n_features_to_select : int, default=None
-        The number of features to select. If None, half of the features
-        are selected.
+    n_features_to_select : int or float, default=None
+        The number of features to select. If `None`, half of the features are
+        selected. If integer, the parameter is the absolute number of features
+        to select. If float between 0 and 1, it is the fraction of features to
+        select.
 
     forward : bool, default=True
         Whether to perform forward selection or backward selection.
@@ -72,11 +75,18 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
     Attributes
     ----------
     n_features_to_select_ : int
-        The number of features that were selected. It corresponds to
-        `n_features_to_select` unless the parameter was None.
+        The number of features that were selected.
 
     support_ : ndarray of shape (n_features,), dtype=bool
         The mask of selected features.
+
+    See Also
+    --------
+    RFE : Recursive feature elimination based on importance weights.
+    RFECV : Recursive feature elimination based on importance weights, with
+        automatic selection of the number of features.
+    SelectFromModel : Feature selection based on thresholds of importance
+        weights.
 
     Examples
     --------
@@ -93,14 +103,6 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
     array([ True, False,  True,  True])
     >>> sfs.transform(X).shape
     (150, 3)
-
-    See Also
-    --------
-    RFE : Recursive feature elimination based on importance weights.
-    RFECV : Recursive feature elimination based on importance weights, with
-        automatic selection of the number of features.
-    SelectFromModel : Feature selection based on thresholds of importance
-        weights.
     """
     def __init__(self, estimator, *, n_features_to_select=None, forward=True,
                  scoring=None, cv=5, n_jobs=None):
@@ -134,26 +136,36 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
             force_all_finite=not tags.get('allow_nan', True),
             multi_output=True
         )
+        n_features = X.shape[1]
 
+        error_msg = ("n_features_to_select must be either None, an "
+                     "integer in [1, n_features - 1] "
+                     "representing the absolute "
+                     "number of features, or a float in (0, 1] "
+                     "representing a percentage of features to "
+                     f"select. Got {self.n_features_to_select}")
         if self.n_features_to_select is None:
-            self.n_features_to_select_ = X.shape[1] // 2
-        else:
+            self.n_features_to_select_ = n_features // 2
+        elif isinstance(self.n_features_to_select, numbers.Integral):
+            if not 0 < self.n_features_to_select < n_features:
+                raise ValueError(error_msg)
             self.n_features_to_select_ = self.n_features_to_select
-
-        if not 1 <= self.n_features_to_select_ < X.shape[1]:
-            raise ValueError(
-                "n_features_to_select must be in [1, n_features - 1] = "
-                f"[1, {X.shape[1] - 1}]. Got {self.n_features_to_select_}."
-            )
+        elif isinstance(self.n_features_to_select, numbers.Real):
+            if not 0 < self.n_features_to_select <= 1:
+                raise ValueError(error_msg)
+            self.n_features_to_select_ = int(n_features *
+                                             self.n_features_to_select)
+        else:
+            raise ValueError(error_msg)
 
         cloned_estimator = clone(self.estimator)
 
         # the current mask corresponds to the set of features:
         # - that we have already *selected* if we do forward selection
         # - that we have already *excluded* if we do backward selection
-        current_mask = np.zeros(shape=X.shape[1], dtype=bool)
+        current_mask = np.zeros(shape=n_features, dtype=bool)
         n_iterations = (self.n_features_to_select_ if self.forward
-                        else X.shape[1] - self.n_features_to_select_)
+                        else n_features - self.n_features_to_select_)
         for _ in range(n_iterations):
             new_feature_idx = self._get_best_new_feature(cloned_estimator, X,
                                                          y, current_mask)

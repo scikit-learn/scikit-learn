@@ -10,12 +10,12 @@ from sklearn.experimental import enable_hist_gradient_boosting  # noqa
 from sklearn.ensemble import HistGradientBoostingRegressor
 
 
-@pytest.mark.parametrize('n_features_to_select', (0, 5))
+@pytest.mark.parametrize('n_features_to_select', (0, 5, 0., -1, 1.1))
 def test_bad_n_features_to_select(n_features_to_select):
     X, y = make_regression(n_features=5)
     sfs = SequentialFeatureSelector(LinearRegression(),
                                     n_features_to_select=n_features_to_select)
-    with pytest.raises(ValueError, match="must be in"):
+    with pytest.raises(ValueError, match="must be either None"):
         sfs.fit(X, y)
 
 
