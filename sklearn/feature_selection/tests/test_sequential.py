@@ -45,6 +45,23 @@ def test_n_features_to_select(direction, n_features_to_select):
     assert sfs.transform(X).shape[1] == n_features_to_select
 
 
+@pytest.mark.parametrize('direction', ('forward', 'backward'))
+@pytest.mark.parametrize('n_features_to_select, expected', (
+    (.1, 1),
+    (1., 10),
+    (.5, 5),
+    (None, 5),  # just to make sure .5 is equivalent to passing None
+))
+def test_n_features_to_select_float(direction, n_features_to_select, expected):
+    # Test passing a float as n_features_to_select
+    X, y = make_regression(n_features=10)
+    sfs = SequentialFeatureSelector(LinearRegression(),
+                                    n_features_to_select=n_features_to_select,
+                                    direction=direction, cv=2)
+    sfs.fit(X, y)
+    assert sfs.n_features_to_select_ == expected
+
+
 @pytest.mark.parametrize('seed', range(10))
 @pytest.mark.parametrize('direction', ('forward', 'backward'))
 @pytest.mark.parametrize('n_features_to_select, expected_selected_features', [
