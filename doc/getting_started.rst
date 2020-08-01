@@ -102,7 +102,7 @@ the test data::
   >>> # create a pipeline object
   >>> pipe = make_pipeline(
   ...     StandardScaler(),
-  ...     LogisticRegression(random_state=0)
+  ...     LogisticRegression()
   ... )
   ...
   >>> # load the iris dataset and split it into train and test sets
