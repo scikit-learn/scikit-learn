@@ -162,6 +162,13 @@ Changelog
   :class:`exceptions.NonBLASDotWarning` are deprecated and will be removed in
   v0.26, :pr:`17804` by `Adrin Jalali`_.
 
+:mod:`sklearn.feature_extraction`
+.................................
+
+- |Enhancement| :class:`feature_extraction.DictVectorizer` accepts multiple
+  values for one categorical feature. :pr:`17367` by :user:`Peng Yu <yupbank>`
+  and :user:`Chiara Marmo <cmarmo>`
+
 :mod:`sklearn.feature_selection`
 ................................
 

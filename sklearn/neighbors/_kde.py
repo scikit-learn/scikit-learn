@@ -31,19 +31,17 @@ class KernelDensity(BaseEstimator):
 
     Parameters
     ----------
-    bandwidth : float
+    bandwidth : float, default=1.0
         The bandwidth of the kernel.
 
-    algorithm : str
-        The tree algorithm to use.  Valid options are
-        ['kd_tree'|'ball_tree'|'auto'].  Default is 'auto'.
+    algorithm : {'kd_tree', 'ball_tree', 'auto'}, default='auto'
+        The tree algorithm to use.
 
-    kernel : str
-        The kernel to use.  Valid kernels are
-        ['gaussian'|'tophat'|'epanechnikov'|'exponential'|'linear'|'cosine']
-        Default is 'gaussian'.
+    kernel : {'gaussian', 'tophat', 'epanechnikov', 'exponential', 'linear', \
+                 'cosine'}, default='gaussian'
+        The kernel to use.
 
-    metric : str
+    metric : str, default='euclidian'
         The distance metric to use.  Note that not all metrics are
         valid with all algorithms.  Refer to the documentation of
         :class:`BallTree` and :class:`KDTree` for a description of
@@ -51,23 +49,23 @@ class KernelDensity(BaseEstimator):
         output is correct only for the Euclidean distance metric. Default
         is 'euclidean'.
 
-    atol : float
+    atol : float, default=0
         The desired absolute tolerance of the result.  A larger tolerance will
-        generally lead to faster execution. Default is 0.
+        generally lead to faster execution.
 
-    rtol : float
+    rtol : float, default=0
         The desired relative tolerance of the result.  A larger tolerance will
-        generally lead to faster execution.  Default is 1E-8.
+        generally lead to faster execution.
 
-    breadth_first : bool
+    breadth_first : bool, default=True
         If true (default), use a breadth-first approach to the problem.
         Otherwise use a depth-first approach.
 
-    leaf_size : int
+    leaf_size : int, default=40
         Specify the leaf size of the underlying tree.  See :class:`BallTree`
-        or :class:`KDTree` for details.  Default is 40.
+        or :class:`KDTree` for details.
 
-    metric_params : dict
+    metric_params : dict, default=None
         Additional parameters to be passed to the tree for use with the
         metric.  For more information, see the documentation of
         :class:`BallTree` or :class:`KDTree`.
@@ -144,13 +142,15 @@ class KernelDensity(BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             List of n_features-dimensional data points.  Each row
             corresponds to a single data point.
+
         y : None
             Ignored. This parameter exists only for compatibility with
             :class:`~sklearn.pipeline.Pipeline`.
-        sample_weight : array-like, shape (n_samples,), optional
+
+        sample_weight : array-like of shape (n_samples,), default=None
             List of sample weights attached to the data X.
 
             .. versionadded:: 0.20
@@ -182,13 +182,13 @@ class KernelDensity(BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             An array of points to query.  Last dimension should match dimension
             of training data (n_features).
 
         Returns
         -------
-        density : ndarray, shape (n_samples,)
+        density : ndarray of shape (n_samples,)
             The array of log(density) evaluations. These are normalized to be
             probability densities, so values will be low for high-dimensional
             data.
@@ -214,9 +214,10 @@ class KernelDensity(BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             List of n_features-dimensional data points.  Each row
             corresponds to a single data point.
+
         y : None
             Ignored. This parameter exists only for compatibility with
             :class:`~sklearn.pipeline.Pipeline`.
@@ -237,10 +238,10 @@ class KernelDensity(BaseEstimator):
 
         Parameters
         ----------
-        n_samples : int, optional
-            Number of samples to generate. Defaults to 1.
+        n_samples : int, default=1
+            Number of samples to generate.
 
-        random_state : int, RandomState instance, default=None
+        random_state : int or RandomState instance, default=None
             Determines random number generation used to generate
             random samples. Pass an int for reproducible results
             across multiple function calls.
@@ -248,7 +249,7 @@ class KernelDensity(BaseEstimator):
 
         Returns
         -------
-        X : array-like, shape (n_samples, n_features)
+        X : array-like of shape (n_samples, n_features)
             List of samples.
         """
         check_is_fitted(self)
