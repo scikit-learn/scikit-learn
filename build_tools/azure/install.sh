@@ -11,14 +11,6 @@ make_conda() {
     source activate $VIRTUALENV
 }
 
-version_ge() {
-    # The two version numbers are separated with a new line is piped to sort
-    # -rV. The -V activates for version number sorting and -r sorts in
-    # descending order. If the first argument is the top element of the sort, it
-    # is greater than or equal to the second argument.
-    test "$(printf "${1}\n${2}" | sort -rV | head -n 1)" == "$1"
-}
-
 # imports get_dep
 source build_tools/shared.sh
 
@@ -45,16 +37,6 @@ if [[ "$DISTRIB" == "conda" ]]; then
                         conda-forge::llvm-openmp"
         fi
     fi
-
-    # Old packages coming from the 'free' conda channel have been removed but
-    # we are using them for testing Python 3.5. See
-    # https://www.anaconda.com/why-we-removed-the-free-channel-in-conda-4-7/
-    # for more details. restore_free_channel is defined starting from conda 4.7
-    conda_version=$(conda -V | awk '{print $2}')
-    if version_ge "$conda_version" "4.7.0" && [[ "$PYTHON_VERSION" == "3.5" ]]; then
-        conda config --set restore_free_channel true
-    fi
-
 	make_conda $TO_INSTALL
 
 elif [[ "$DISTRIB" == "ubuntu" ]]; then
