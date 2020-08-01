@@ -76,8 +76,6 @@ X, y = make_classification(
     n_samples=N_SAMPLES, n_features=2, n_redundant=0, n_informative=2,
     random_state=1, n_clusters_per_class=1)
 
-figure = plt.figure(figsize=(10, 5))
-
 # preprocess dataset, split into training and test part
 X = StandardScaler().fit_transform(X)
 
@@ -85,9 +83,9 @@ X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=.4, random_state=0)
 
 # prepare plots
+fig, [ax_roc, ax_det] = plt.subplots(1, 2, figsize=(10, 5))
 
 # first prepare the ROC curve
-ax_roc = plt.subplot(1, 2, 1, label='roc_curve')
 ax_roc.set_title('Receiver Operating Characteristic (ROC) curves')
 ax_roc.set_xlabel('False Positive Rate')
 ax_roc.set_ylabel('True Positive Rate')
@@ -100,21 +98,21 @@ ax_roc.xaxis.set_major_formatter(
     FuncFormatter(lambda y, _: '{:.0%}'.format(y)))
 
 # second prepare the DET curve
-ax_det = plt.subplot(1, 2, 2, label='det_curve')
 ax_det.set_title('Detection Error Tradeoff (DET) curves')
 ax_det.set_xlabel('False Positive Rate')
 ax_det.set_ylabel('False Negative Rate')
 ax_det.set_xlim(-3, 3)
 ax_det.set_ylim(-3, 3)
 ax_det.grid(linestyle='--')
-# customized ticks to represent normal deviate scale
+
+# customized ticks for DET curve plot to represent normal deviate scale
 ticks = [0.001, 0.01, 0.05, 0.20, 0.5, 0.80, 0.95, 0.99, 0.999]
 tick_locs = norm.ppf(ticks)
 tick_lbls = [
     '{:.0%}'.format(s) if (100*s).is_integer() else '{:.1%}'.format(s)
     for s in ticks
 ]
-
+plt.sca(ax_det)
 plt.xticks(tick_locs, tick_lbls)
 plt.yticks(tick_locs, tick_lbls)
 
@@ -138,8 +136,10 @@ for name, clf in zip(names, classifiers):
         norm.ppf(det_fnr)
     )
 
-# finally add legend
+# add a single legend
+plt.sca(ax_det)
 plt.legend(names, loc="upper right")
 
+# plot
 plt.tight_layout()
 plt.show()
