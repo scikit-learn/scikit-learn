@@ -42,5 +42,5 @@ cp setup.cfg $TEST_DIR
 cd $TEST_DIR
 
 set -x
-$TEST_CMD --pyargs sklearn -k Sequential -k LinearDisc -v
+$TEST_CMD --pyargs sklearn -k Sequential -k lda_int32 -v -s
 set +x
