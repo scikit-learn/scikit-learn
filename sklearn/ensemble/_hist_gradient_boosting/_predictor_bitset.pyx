@@ -42,16 +42,16 @@ cdef class PredictorBitSet:
 
         cdef:
             int i
-            X_DTYPE_C category
+            X_DTYPE_C raw_cat
             unsigned int i1
             unsigned int i2
 
-        for i in range(is_categorical.shape[0]):
-            if is_categorical[i] == 0:
+        for f_idx in range(is_categorical.shape[0]):
+            if not is_categorical[f_idx]:
                 continue
-            for category in bin_thresholds[i]:
-                insert_vec_bitset(self.feature_idx_raw_cats[i],
-                                  <int>(category))
+            for raw_cat in bin_thresholds[f_idx]:
+                insert_vec_bitset(self.feature_idx_raw_cats[f_idx],
+                                  <int>(raw_cat))
 
     def insert_categories_bitset(self, unsigned int node_idx,
                                  X_DTYPE_C[:] category_bins,
@@ -67,15 +67,14 @@ cdef class PredictorBitSet:
             unsigned int i1, i2
 
         self.node_to_binned_bitset[node_idx].resize(cat_bitset.shape[0])
-        for k in range(cat_bitset.shape[0]):
+        for k, val in enumerate(cat_bitset):
             offset = BITSET_SIZE * k
-            val = cat_bitset[k]
             self.node_to_binned_bitset[node_idx][k] = val
             while val and offset < cardinality:
-                if val % 2:
+                if val & 1:
                     insert_vec_bitset(self.node_to_raw_bitset[node_idx],
                                       <int>(category_bins[offset]))
-                val = val // 2
+                val >>= 1
                 offset += 1
 
     cdef unsigned char is_known_category(self, unsigned int feature_idx,
