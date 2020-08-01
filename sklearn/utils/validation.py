@@ -40,8 +40,8 @@ def _deprecate_positional_args(f):
 
     Parameters
     ----------
-    f : function
-        function to check arguments on.
+    f : callable
+        Function to check arguments on.
     """
     sig = signature(f)
     kwonly_args = []
@@ -263,7 +263,7 @@ def _make_indexable(iterable):
 
     Parameters
     ----------
-    iterable : {list, dataframe, ndarray, sparse} or None
+    iterable : {list, dataframe, ndarray, sparse matrix} or None
         Object to be converted to an indexable iterable.
     """
     if sp.issparse(iterable):
@@ -1321,7 +1321,7 @@ def _allclose_dense_sparse(x, y, rtol=1e-7, atol=1e-9):
         Second array to compare.
 
     rtol : float, default=1e-7
-        relative tolerance; see numpy.allclose.
+        Relative tolerance; see numpy.allclose.
 
     atol : float, default=1e-9
         absolute tolerance; see numpy.allclose. Note that the default here is
