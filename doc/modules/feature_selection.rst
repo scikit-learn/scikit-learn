@@ -280,7 +280,7 @@ features is reached, as determined by the `n_features_to_select` parameter.
 Backward-SFS follows the same idea but works in the opposite direction:
 instead of starting with no feature and greedily adding features, we start
 with *all* the features and greedily *remove* features from the set. The
-`forward` parameter controls whether forward or backward SFS is used.
+`direction` parameter controls whether forward or backward SFS is used.
 
 In general, forward and backward selection do not yield equivalent results.
 Also, one may be much faster than the other depending on the requested number

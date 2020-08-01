@@ -3,6 +3,8 @@ import scipy
 import numpy as np
 from numpy.testing import assert_array_equal
 
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import make_pipeline
 from sklearn.feature_selection import SequentialFeatureSelector
 from sklearn.datasets import make_regression
 from sklearn.linear_model import LinearRegression
@@ -93,3 +95,23 @@ def test_nan_support():
     with pytest.raises(ValueError, match='Input contains NaN'):
         # LinearRegression does not support nans
         SequentialFeatureSelector(LinearRegression(), cv=2).fit(X, y)
+
+
+def test_pipeline_support():
+    # Make sure that pipelines can be passed into SFS and that SFS can be
+    # passed into a pipeline
+
+    n_samples, n_features = 50, 3
+    X, y = make_regression(n_samples, n_features, random_state=0)
+
+    # pipeline in SFS
+    pipe = make_pipeline(StandardScaler(), LinearRegression())
+    sfs = SequentialFeatureSelector(pipe, cv=2)
+    sfs.fit(X, y)
+    sfs.transform(X)
+
+    # SFS in pipeline
+    sfs = SequentialFeatureSelector(LinearRegression(), cv=2)
+    pipe = make_pipeline(StandardScaler(), sfs)
+    pipe.fit(X, y)
+    pipe.transform(X)

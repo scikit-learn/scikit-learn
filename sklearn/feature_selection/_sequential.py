@@ -161,7 +161,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
         if self.direction not in ('forward', 'backward'):
             raise ValueError(
                 "direction must be either 'forward' or 'backward'. "
-                f"got {self.direction}."
+                f"Got {self.direction}."
             )
 
         cloned_estimator = clone(self.estimator)

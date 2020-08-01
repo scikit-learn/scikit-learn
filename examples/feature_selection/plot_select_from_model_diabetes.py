@@ -101,12 +101,12 @@ from sklearn.feature_selection import SequentialFeatureSelector
 
 tic_fwd = time()
 sfs_forward = SequentialFeatureSelector(lasso, n_features_to_select=2,
-                                        forward=True).fit(X, y)
+                                        direction='forward').fit(X, y)
 toc_fwd = time()
 
 tic_bwd = time()
 sfs_backward = SequentialFeatureSelector(lasso, n_features_to_select=2,
-                                         forward=False).fit(X, y)
+                                         direction='backward').fit(X, y)
 toc_bwd = time()
 
 print("Features selected by forward sequential selection: "
