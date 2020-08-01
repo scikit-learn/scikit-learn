@@ -36,7 +36,7 @@ from ..base import (
     ClusterMixin,
     is_classifier,
     is_regressor,
-    is_outlier_detector
+    is_outlier_detector,
     RegressorMixin,
     MetaEstimatorMixin,
 )
