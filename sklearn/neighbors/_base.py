@@ -7,7 +7,6 @@
 #
 # License: BSD 3 clause (C) INRIA, University of Amsterdam
 from functools import partial
-from distutils.version import LooseVersion
 
 import warnings
 from abc import ABCMeta, abstractmethod
@@ -21,6 +20,7 @@ from joblib import Parallel, delayed, effective_n_jobs
 from ._ball_tree import BallTree
 from ._kd_tree import KDTree
 from ..base import BaseEstimator, MultiOutputMixin
+from ..base import is_classifier
 from ..metrics import pairwise_distances_chunked
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
 from ..utils import check_array, gen_even_slices
@@ -28,6 +28,7 @@ from ..utils import _to_object_array
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
 from ..utils.validation import check_non_negative
+from ..utils.fixes import parse_version
 from ..exceptions import DataConversionWarning, EfficiencyWarning
 
 VALID_METRICS = dict(ball_tree=BallTree.valid_metrics,
@@ -347,7 +348,45 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         if self.metric in ['wminkowski', 'minkowski'] and effective_p < 1:
             raise ValueError("p must be greater than one for minkowski metric")
 
-    def _fit(self, X):
+    def _fit(self, X, y=None):
+        if self._get_tags()["requires_y"]:
+            if not isinstance(X, (KDTree, BallTree, NeighborsBase)):
+                X, y = self._validate_data(X, y, accept_sparse="csr",
+                                           multi_output=True)
+
+            if is_classifier(self):
+                # Classification targets require a specific format
+                if y.ndim == 1 or y.ndim == 2 and y.shape[1] == 1:
+                    if y.ndim != 1:
+                        warnings.warn("A column-vector y was passed when a "
+                                      "1d array was expected. Please change "
+                                      "the shape of y to (n_samples,), for "
+                                      "example using ravel().",
+                                      DataConversionWarning, stacklevel=2)
+
+                    self.outputs_2d_ = False
+                    y = y.reshape((-1, 1))
+                else:
+                    self.outputs_2d_ = True
+
+                check_classification_targets(y)
+                self.classes_ = []
+                self._y = np.empty(y.shape, dtype=int)
+                for k in range(self._y.shape[1]):
+                    classes, self._y[:, k] = np.unique(
+                        y[:, k], return_inverse=True)
+                    self.classes_.append(classes)
+
+                if not self.outputs_2d_:
+                    self.classes_ = self.classes_[0]
+                    self._y = self._y.ravel()
+            else:
+                self._y = y
+
+        else:
+            if not isinstance(X, (KDTree, BallTree, NeighborsBase)):
+                X = self._validate_data(X, accept_sparse='csr')
+
         self._check_algorithm_metric()
         if self.metric_params is None:
             self.effective_metric_params_ = {}
@@ -398,8 +437,6 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         if self.effective_metric_ == 'precomputed':
             X = _check_precomputed(X)
             self.n_features_in_ = X.shape[1]
-        else:
-            X = self._validate_data(X, accept_sparse='csr')
 
         n_samples = X.shape[0]
         if n_samples == 0:
@@ -650,7 +687,7 @@ class KNeighborsMixin:
                     "%s does not work with sparse matrices. Densify the data, "
                     "or set algorithm='brute'" % self._fit_method)
             old_joblib = (
-                    LooseVersion(joblib.__version__) < LooseVersion('0.12'))
+                    parse_version(joblib.__version__) < parse_version('0.12'))
             if old_joblib:
                 # Deal with change of API in joblib
                 check_pickle = False if old_joblib else None
@@ -957,7 +994,7 @@ class RadiusNeighborsMixin:
                     "or set algorithm='brute'" % self._fit_method)
 
             n_jobs = effective_n_jobs(self.n_jobs)
-            if LooseVersion(joblib.__version__) < LooseVersion('0.12'):
+            if parse_version(joblib.__version__) < parse_version('0.12'):
                 # Deal with change of API in joblib
                 delayed_query = delayed(_tree_query_radius_parallel_helper,
                                         check_pickle=False)
@@ -1088,87 +1125,3 @@ class RadiusNeighborsMixin:
 
         return csr_matrix((A_data, A_ind, A_indptr),
                           shape=(n_queries, n_samples_fit))
-
-
-class SupervisedFloatMixin:
-    def fit(self, X, y):
-        """Fit the model using X as training data and y as target values
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix, BallTree, KDTree}
-            Training data. If array or matrix, shape [n_samples, n_features],
-            or [n_samples, n_samples] if metric='precomputed'.
-
-        y : {array-like, sparse matrix}
-            Target values, array of float values, shape = [n_samples]
-             or [n_samples, n_outputs]
-        """
-        if not isinstance(X, (KDTree, BallTree)):
-            X, y = self._validate_data(X, y, accept_sparse="csr",
-                                       multi_output=True)
-        self._y = y
-        return self._fit(X)
-
-    def _more_tags(self):
-        return {'requires_y': True}
-
-
-class SupervisedIntegerMixin:
-    def fit(self, X, y):
-        """Fit the model using X as training data and y as target values
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix, BallTree, KDTree}
-            Training data. If array or matrix, shape [n_samples, n_features],
-            or [n_samples, n_samples] if metric='precomputed'.
-
-        y : {array-like, sparse matrix}
-            Target values of shape = [n_samples] or [n_samples, n_outputs]
-
-        """
-        if not isinstance(X, (KDTree, BallTree)):
-            X, y = self._validate_data(X, y, accept_sparse="csr",
-                                       multi_output=True)
-
-        if y.ndim == 1 or y.ndim == 2 and y.shape[1] == 1:
-            if y.ndim != 1:
-                warnings.warn("A column-vector y was passed when a 1d array "
-                              "was expected. Please change the shape of y to "
-                              "(n_samples, ), for example using ravel().",
-                              DataConversionWarning, stacklevel=2)
-
-            self.outputs_2d_ = False
-            y = y.reshape((-1, 1))
-        else:
-            self.outputs_2d_ = True
-
-        check_classification_targets(y)
-        self.classes_ = []
-        self._y = np.empty(y.shape, dtype=np.int)
-        for k in range(self._y.shape[1]):
-            classes, self._y[:, k] = np.unique(y[:, k], return_inverse=True)
-            self.classes_.append(classes)
-
-        if not self.outputs_2d_:
-            self.classes_ = self.classes_[0]
-            self._y = self._y.ravel()
-
-        return self._fit(X)
-
-    def _more_tags(self):
-        return {'requires_y': True}
-
-
-class UnsupervisedMixin:
-    def fit(self, X, y=None):
-        """Fit the model using X as training data
-
-        Parameters
-        ----------
-        X : {array-like, sparse matrix, BallTree, KDTree}
-            Training data. If array or matrix, shape [n_samples, n_features],
-            or [n_samples, n_samples] if metric='precomputed'.
-        """
-        return self._fit(X)

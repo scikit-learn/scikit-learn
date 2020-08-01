@@ -32,7 +32,7 @@ def test_grid_to_graph():
     roi_size = 1
     # Generating two convex parts with one vertex
     # Thus, edges will be empty in _to_graph
-    mask = np.zeros((size, size), dtype=np.bool)
+    mask = np.zeros((size, size), dtype=bool)
     mask[0:roi_size, 0:roi_size] = True
     mask[-roi_size:, -roi_size:] = True
     mask = mask.reshape(size ** 2)
@@ -46,10 +46,10 @@ def test_grid_to_graph():
 
     # Checking dtype of the graph
     mask = np.ones((size, size))
-    A = grid_to_graph(n_x=size, n_y=size, n_z=size, mask=mask, dtype=np.bool)
-    assert A.dtype == np.bool
-    A = grid_to_graph(n_x=size, n_y=size, n_z=size, mask=mask, dtype=np.int)
-    assert A.dtype == np.int
+    A = grid_to_graph(n_x=size, n_y=size, n_z=size, mask=mask, dtype=bool)
+    assert A.dtype == bool
+    A = grid_to_graph(n_x=size, n_y=size, n_z=size, mask=mask, dtype=int)
+    assert A.dtype == int
     A = grid_to_graph(n_x=size, n_y=size, n_z=size, mask=mask,
                       dtype=np.float64)
     assert A.dtype == np.float64

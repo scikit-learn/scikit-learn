@@ -29,6 +29,7 @@ from ..utils.extmath import row_norms, safe_sparse_dot
 from ..preprocessing import normalize
 from ..utils._mask import _get_mask
 from ..utils.validation import _deprecate_positional_args
+from ..utils.fixes import sp_version, parse_version
 
 from ._pairwise_fast import _chi2_kernel_fast, _sparse_manhattan
 from ..exceptions import DataConversionWarning
@@ -54,7 +55,7 @@ def _return_float_dtype(X, Y):
     if X.dtype == Y_dtype == np.float32:
         dtype = np.float32
     else:
-        dtype = np.float
+        dtype = float
 
     return X, Y, dtype
 
@@ -214,8 +215,9 @@ def euclidean_distances(X, Y=None, *, Y_norm_squared=None, squared=False,
     Second, if one argument varies but the other remains unchanged, then
     `dot(x, x)` and/or `dot(y, y)` can be pre-computed.
 
-    However, this is not the most precise way of doing this computation, and
-    the distance matrix returned by this function may not be exactly
+    However, this is not the most precise way of doing this computation,
+    because this equation potentially suffers from "catastrophic cancellation".
+    Also, the distance matrix returned by this function may not be exactly
     symmetric as required by, e.g., ``scipy.spatial.distance`` functions.
 
     Read more in the :ref:`User Guide <metrics>`.
@@ -1444,13 +1446,16 @@ def _precompute_metric_params(X, Y, metric=None, **kwds):
     """Precompute data-derived metric parameters if not provided
     """
     if metric == "seuclidean" and 'V' not in kwds:
+        # There is a bug in scipy < 1.5 that will cause a crash if
+        # X.dtype != np.double (float64). See PR #15730
+        dtype = np.float64 if sp_version < parse_version('1.5') else None
         if X is Y:
-            V = np.var(X, axis=0, ddof=1)
+            V = np.var(X, axis=0, ddof=1, dtype=dtype)
         else:
             warnings.warn("from version 0.25, pairwise_distances for "
                           "metric='seuclidean' will require V to be "
                           "specified if Y is passed.", FutureWarning)
-            V = np.var(np.vstack([X, Y]), axis=0, ddof=1)
+            V = np.var(np.vstack([X, Y]), axis=0, ddof=1, dtype=dtype)
         return {'V': V}
     if metric == "mahalanobis" and 'VI' not in kwds:
         if X is Y:

@@ -25,7 +25,7 @@ from ..utils.validation import _deprecate_positional_args
 from ._online_lda_fast import (mean_change, _dirichlet_expectation_1d,
                                _dirichlet_expectation_2d)
 
-EPS = np.finfo(np.float).eps
+EPS = np.finfo(float).eps
 
 
 def _update_doc_distribution(X, exp_topic_word_distr, doc_topic_prior,
@@ -144,7 +144,7 @@ class LatentDirichletAllocation(TransformerMixin, BaseEstimator):
         Number of topics.
 
         .. versionchanged:: 0.19
-            ``n_topics `` was renamed to ``n_components``
+            ``n_topics`` was renamed to ``n_components``
 
     doc_topic_prior : float, optional (default=None)
         Prior of document topic distribution `theta`. If the value is None,

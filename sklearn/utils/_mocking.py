@@ -10,6 +10,7 @@ class ArraySlicingWrapper:
     ----------
     array
     """
+
     def __init__(self, array):
         self.array = array
 
@@ -24,6 +25,7 @@ class MockDataFrame:
     array
     """
     # have shape and length but don't support indexing.
+
     def __init__(self, array):
         self.array = array
         self.values = array
@@ -108,6 +110,7 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
     >>> clf.fit(X, y)
     CheckingClassifier(...)
     """
+
     def __init__(self, *, check_y=None, check_y_params=None,
                  check_X=None, check_X_params=None, methods_to_check="all",
                  foo_param=0, expected_fit_params=None):
@@ -147,7 +150,7 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
                 X = checked_X
         if y is not None and self.check_y is not None:
             params = {} if self.check_y_params is None else self.check_y_params
-            checked_y = self.check_y(y)
+            checked_y = self.check_y(y, **params)
             if isinstance(checked_y, (bool, np.bool_)):
                 assert checked_y
             else:
@@ -212,7 +215,7 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
         if (self.methods_to_check == "all" or
                 "predict" in self.methods_to_check):
             X, y = self._check_X_y(X)
-        return self.classes_[np.zeros(_num_samples(X), dtype=np.int)]
+        return self.classes_[np.zeros(_num_samples(X), dtype=int)]
 
     def predict_proba(self, X):
         """Predict probabilities for each class.
@@ -283,7 +286,7 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
             score=1` otherwise `score=0`).
         """
         if self.methods_to_check == "all" or "score" in self.methods_to_check:
-            X, Y = self._check_X_y(X, Y)
+            self._check_X_y(X, Y)
         if self.foo_param > 1:
             score = 1.
         else:
@@ -302,6 +305,7 @@ class NoSampleWeightWrapper(BaseEstimator):
     est : estimator, default=None
         The estimator to wrap.
     """
+
     def __init__(self, est=None):
         self.est = est
 

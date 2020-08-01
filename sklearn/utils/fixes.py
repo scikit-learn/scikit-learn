@@ -21,27 +21,22 @@ from numpy.ma import MaskedArray as _MaskedArray  # TODO: remove in 0.25
 
 from .deprecation import deprecated
 
-
-def _parse_version(version_string):
-    version = []
-    for x in version_string.split('.'):
-        try:
-            version.append(int(x))
-        except ValueError:
-            # x may be of the form dev-1ea1592
-            version.append(x)
-    return tuple(version)
+try:
+    from pkg_resources import parse_version  # type: ignore
+except ImportError:
+    # setuptools not installed
+    parse_version = LooseVersion  # type: ignore
 
 
-np_version = _parse_version(np.__version__)
-sp_version = _parse_version(scipy.__version__)
+np_version = parse_version(np.__version__)
+sp_version = parse_version(scipy.__version__)
 
 
-if sp_version >= (1, 4):
+if sp_version >= parse_version('1.4'):
     from scipy.sparse.linalg import lobpcg
 else:
     # Backport of lobpcg functionality from scipy 1.4.0, can be removed
-    # once support for sp_version < (1, 4) is dropped
+    # once support for sp_version < parse_version('1.4') is dropped
     # mypy error: Name 'lobpcg' already defined (possibly by an import)
     from ..externals._lobpcg import lobpcg  # type: ignore  # noqa
 
@@ -56,7 +51,7 @@ def _astype_copy_false(X):
     {ndarray, csr_matrix, csc_matrix}.astype when possible,
     otherwise don't specify
     """
-    if sp_version >= (1, 1) or not sp.issparse(X):
+    if sp_version >= parse_version('1.1') or not sp.issparse(X):
         return {'copy': False}
     else:
         return {}
@@ -85,7 +80,7 @@ def _joblib_parallel_args(**kwargs):
     """
     import joblib
 
-    if joblib.__version__ >= LooseVersion('0.12'):
+    if parse_version(joblib.__version__) >= parse_version('0.12'):
         return kwargs
 
     extra_args = set(kwargs.keys()).difference({'prefer', 'require'})
@@ -170,7 +165,7 @@ class MaskedArray(_MaskedArray):
 def _take_along_axis(arr, indices, axis):
     """Implements a simplified version of np.take_along_axis if numpy
     version < 1.15"""
-    if np_version > (1, 14):
+    if np_version > parse_version('1.14'):
         return np.take_along_axis(arr=arr, indices=indices, axis=axis)
     else:
         if axis is None:
