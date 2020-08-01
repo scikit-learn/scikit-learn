@@ -1384,7 +1384,7 @@ def check_fit_score_takes_y(name, estimator_orig):
 @ignore_warnings
 def check_estimators_dtypes(name, estimator_orig):
     rnd = np.random.RandomState(0)
-    X_train_32 = 3 * rnd.uniform(size=(20, 5)).astype(np.float32)
+    X_train_32 = 3 * rnd.uniform(size=(200, 10)).astype(np.float32)
     X_train_32 = _pairwise_estimator_convert_X(X_train_32, estimator_orig)
     X_train_64 = X_train_32.astype(np.float64)
     X_train_int_64 = X_train_32.astype(np.int64)
