@@ -35,7 +35,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
         to select. If float between 0 and 1, it is the fraction of features to
         select.
 
-    forward : bool, default=True
+    direction: {'forward', 'backward'}, default='forward'
         Whether to perform forward selection or backward selection.
 
     scoring : str, callable, list/tuple or dict, default=None
@@ -104,12 +104,12 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
     >>> sfs.transform(X).shape
     (150, 3)
     """
-    def __init__(self, estimator, *, n_features_to_select=None, forward=True,
-                 scoring=None, cv=5, n_jobs=None):
+    def __init__(self, estimator, *, n_features_to_select=None,
+                 direction='forward', scoring=None, cv=5, n_jobs=None):
 
         self.estimator = estimator
         self.n_features_to_select = n_features_to_select
-        self.forward = forward
+        self.direction = direction
         self.scoring = scoring
         self.cv = cv
         self.n_jobs = n_jobs
@@ -158,20 +158,28 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
         else:
             raise ValueError(error_msg)
 
+        if self.direction not in ('forward', 'backward'):
+            raise ValueError(
+                "direction must be either 'forward' or 'backward'. "
+                f"got {self.direction}."
+            )
+
         cloned_estimator = clone(self.estimator)
 
         # the current mask corresponds to the set of features:
         # - that we have already *selected* if we do forward selection
         # - that we have already *excluded* if we do backward selection
         current_mask = np.zeros(shape=n_features, dtype=bool)
-        n_iterations = (self.n_features_to_select_ if self.forward
-                        else n_features - self.n_features_to_select_)
+        n_iterations = (
+            self.n_features_to_select_ if self.direction == 'forward'
+            else n_features - self.n_features_to_select_
+        )
         for _ in range(n_iterations):
             new_feature_idx = self._get_best_new_feature(cloned_estimator, X,
                                                          y, current_mask)
             current_mask[new_feature_idx] = True
 
-        if not self.forward:
+        if self.direction == 'backward':
             current_mask = ~current_mask
         self.support_ = current_mask
 
@@ -186,7 +194,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
         for feature_idx in candidate_feature_indices:
             candidate_mask = current_mask.copy()
             candidate_mask[feature_idx] = True
-            if not self.forward:
+            if self.direction == 'backward':
                 candidate_mask = ~candidate_mask
             X_new = X[:, candidate_mask]
             scores[feature_idx] = cross_val_score(
