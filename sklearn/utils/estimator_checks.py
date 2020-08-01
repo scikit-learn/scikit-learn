@@ -31,9 +31,15 @@ from . import is_scalar_nan
 from ..discriminant_analysis import LinearDiscriminantAnalysis
 from ..linear_model import Ridge
 
-from ..base import (clone, ClusterMixin, is_classifier, is_regressor,
-                    RegressorMixin, is_outlier_detector,
-                    MetaEstimatorMixin)
+from ..base import (
+    clone,
+    ClusterMixin,
+    is_classifier,
+    is_regressor,
+    is_outlier_detector
+    RegressorMixin,
+    MetaEstimatorMixin,
+)
 from ..impute import MissingIndicator
 from ..kernel_approximation import SkewedChi2Sampler
 
@@ -61,10 +67,8 @@ from ..datasets import (
     make_regression,
 )
 
-
 REGRESSION_DATASET = None
 CROSS_DECOMPOSITION = ['PLSCanonical', 'PLSRegression', 'CCA', 'PLSSVD']
-
 
 
 def _yield_checks(estimator):
