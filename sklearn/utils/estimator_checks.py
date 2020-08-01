@@ -1466,18 +1466,22 @@ def check_estimators_preserve_dtypes(name, estimator_orig):
         # FIXME: should we check that the dtype of some attributes are the
         # same than dtype and check that the value of attributes
         # between 32bit and 64bit are close
-        assert X_trans.dtype == dtype, \
-            ('Estimator transform dtype: {} - orginal/expected dtype: {}'
-             .format(X_trans.dtype, dtype.__name__))
+        assert X_trans.dtype == dtype, (
+            f'Estimator transform dtype: {X_trans.dtype} - '
+            f'original/expected dtype: {dtype.__name__}'
+        )
         Xts.append(X_trans)
 
     # We assume the transformer is on float64 input correct and
     # compare all other inputs against them.
     for i in range(1, len(Xts)):
-        assert_allclose(Xts[i], Xts[0], rtol=1e-4,
-                        err_msg='dtype_in: {} dtype_ground_truth: {}\n'
-                        .format(in_out_types[i].__name__,
-                        in_out_types[0].__name__))
+        assert_allclose(
+            Xts[i],
+            Xts[0],
+            rtol=1e-4,
+            err_msg=(f'dtype_in: {in_out_types[i].__name__} '
+                     f'dtype_ground_truth: {in_out_types[0].__name__)}\n')
+        )
 
 
 @ignore_warnings(category=FutureWarning)
