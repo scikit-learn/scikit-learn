@@ -550,7 +550,7 @@ def check_estimator(Estimator, generate_only=False, strict_mode=True):
             yield estimator, partial(check, name, strict_mode=strict_mode)
 
     if generate_only:
-        return checks_generator
+        return checks_generator()
 
     for estimator, check in checks_generator():
         try:
