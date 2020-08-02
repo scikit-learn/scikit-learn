@@ -333,7 +333,7 @@ def test_k_means_fit_predict(algo, dtype, constructor, seed, max_iter, tol):
     # using more than one thread, the absolute values of the labels can be
     # different between the 2 strategies but they should correspond to the same
     # clustering.
-    assert v_measure_score(labels_1, labels_2) == 1
+    assert v_measure_score(labels_1, labels_2) == pytest.approx(1, abs=1e-15)
 
 
 def test_minibatch_kmeans_verbose():
