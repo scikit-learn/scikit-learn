@@ -38,7 +38,7 @@ def test_simple():
         sys.stdout = StringIO()
 
         _, _, coef_path_ = linear_model.lars_path(
-            X, y, method='lar', verbose=10)
+            X, y, method='lars', verbose=10)
 
         sys.stdout = old_stdout
 
@@ -61,7 +61,7 @@ def test_simple_precomputed():
     # The same, with precomputed Gram matrix
 
     _, _, coef_path_ = linear_model.lars_path(
-        X, y, Gram=G, method='lar')
+        X, y, Gram=G, method='lars')
 
     for i, coef_ in enumerate(coef_path_.T):
         res = y - np.dot(X, coef_)
@@ -82,7 +82,7 @@ def _assert_same_lars_path_result(output1, output2):
         assert_allclose(o1, o2)
 
 
-@pytest.mark.parametrize('method', ['lar', 'lasso'])
+@pytest.mark.parametrize('method', ['lars', 'lasso'])
 @pytest.mark.parametrize('return_path', [True, False])
 def test_lars_path_gram_equivalent(method, return_path):
     _assert_same_lars_path_result(
@@ -105,7 +105,7 @@ def test_all_precomputed():
     # Test that lars_path with precomputed Gram and Xy gives the right answer
     G = np.dot(X.T, X)
     Xy = np.dot(X.T, y)
-    for method in 'lar', 'lasso':
+    for method in 'lars', 'lasso':
         output = linear_model.lars_path(X, y, method=method)
         output_pre = linear_model.lars_path(X, y, Gram=G, Xy=Xy,
                                             method=method)
@@ -164,9 +164,9 @@ def test_collinearity():
 def test_no_path():
     # Test that the ``return_path=False`` option returns the correct output
     alphas_, _, coef_path_ = linear_model.lars_path(
-        X, y, method='lar')
+        X, y, method='lars')
     alpha_, _, coef = linear_model.lars_path(
-        X, y, method='lar', return_path=False)
+        X, y, method='lars', return_path=False)
 
     assert_array_almost_equal(coef, coef_path_[:, -1])
     assert alpha_ == alphas_[-1]
@@ -175,9 +175,9 @@ def test_no_path():
 def test_no_path_precomputed():
     # Test that the ``return_path=False`` option with Gram remains correct
     alphas_, _, coef_path_ = linear_model.lars_path(
-        X, y, method='lar', Gram=G)
+        X, y, method='lars', Gram=G)
     alpha_, _, coef = linear_model.lars_path(
-        X, y, method='lar', Gram=G, return_path=False)
+        X, y, method='lars', Gram=G, return_path=False)
 
     assert_array_almost_equal(coef, coef_path_[:, -1])
     assert alpha_ == alphas_[-1]
@@ -508,12 +508,12 @@ def test_lars_path_positive_constraint():
 
     # ensure that we get negative coefficients when positive=False
     # and all positive when positive=True
-    # for method 'lar' (default) and lasso
+    # for method 'lars' (default) and lasso
 
-    err_msg = "Positive constraint not supported for 'lar' coding method."
+    err_msg = "Positive constraint not supported for 'lars' coding method."
     with pytest.raises(ValueError, match=err_msg):
         linear_model.lars_path(diabetes['data'], diabetes['target'],
-                               method='lar', positive=True)
+                               method='lars', positive=True)
 
     method = 'lasso'
     _, _, coefs = \

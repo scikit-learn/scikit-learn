@@ -31,7 +31,7 @@ SOLVE_TRIANGULAR_ARGS = {'check_finite': False}
 
 @_deprecate_positional_args
 def lars_path(X, y, Xy=None, *, Gram=None, max_iter=500, alpha_min=0,
-              method='lar', copy_X=True, eps=np.finfo(float).eps,
+              method='lars', copy_X=True, eps=np.finfo(float).eps,
               copy_Gram=True, verbose=0, return_path=True,
               return_n_iter=False, positive=False):
     """Compute Least Angle Regression or Lasso path using LARS algorithm [1]
@@ -72,17 +72,19 @@ def lars_path(X, y, Xy=None, *, Gram=None, max_iter=500, alpha_min=0,
         Minimum correlation along the path. It corresponds to the
         regularization parameter alpha parameter in the Lasso.
 
-    method : {'lar', 'lasso'}, default='lar'
-        Specifies the returned model. Select ``'lar'`` for Least Angle
+    method : {'lars', 'lasso'}, default='lars'
+        Specifies the returned model. Select ``'lars'`` for Least Angle
         Regression, ``'lasso'`` for the Lasso.
 
     copy_X : bool, default=True
         If ``False``, ``X`` is overwritten.
 
-    eps : float, optional
+    eps : float, default=np.finfo(float).eps
         The machine-precision regularization in the computation of the
         Cholesky diagonal factors. Increase this for very ill-conditioned
-        systems. By default, ``np.finfo(float).eps`` is used.
+        systems. Unlike the ``tol`` parameter in some iterative
+        optimization-based algorithms, this parameter does not control
+        the tolerance of the optimization.
 
     copy_Gram : bool, default=True
         If ``False``, ``Gram`` is overwritten.
@@ -161,7 +163,7 @@ def lars_path(X, y, Xy=None, *, Gram=None, max_iter=500, alpha_min=0,
 
 @_deprecate_positional_args
 def lars_path_gram(Xy, Gram, *, n_samples, max_iter=500, alpha_min=0,
-                   method='lar', copy_X=True, eps=np.finfo(float).eps,
+                   method='lars', copy_X=True, eps=np.finfo(float).eps,
                    copy_Gram=True, verbose=0, return_path=True,
                    return_n_iter=False, positive=False):
     """lars_path in the sufficient stats mode [1]
@@ -193,17 +195,19 @@ def lars_path_gram(Xy, Gram, *, n_samples, max_iter=500, alpha_min=0,
         Minimum correlation along the path. It corresponds to the
         regularization parameter alpha parameter in the Lasso.
 
-    method : {'lar', 'lasso'}, default='lar'
-        Specifies the returned model. Select ``'lar'`` for Least Angle
+    method : {'lars', 'lasso'}, default='lars'
+        Specifies the returned model. Select ``'lars'`` for Least Angle
         Regression, ``'lasso'`` for the Lasso.
 
     copy_X : bool, default=True
         If ``False``, ``X`` is overwritten.
 
-    eps : float, optional
+    eps : float, default=np.finfo(float).eps
         The machine-precision regularization in the computation of the
         Cholesky diagonal factors. Increase this for very ill-conditioned
-        systems. By default, ``np.finfo(float).eps`` is used.
+        systems. Unlike the ``tol`` parameter in some iterative
+        optimization-based algorithms, this parameter does not control
+        the tolerance of the optimization.
 
     copy_Gram : bool, default=True
         If ``False``, ``Gram`` is overwritten.
@@ -277,7 +281,7 @@ def lars_path_gram(Xy, Gram, *, n_samples, max_iter=500, alpha_min=0,
 
 
 def _lars_path_solver(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
-                      alpha_min=0, method='lar', copy_X=True,
+                      alpha_min=0, method='lars', copy_X=True,
                       eps=np.finfo(float).eps, copy_Gram=True, verbose=0,
                       return_path=True, return_n_iter=False, positive=False):
     """Compute Least Angle Regression or Lasso path using LARS algorithm [1]
@@ -321,17 +325,19 @@ def _lars_path_solver(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
         Minimum correlation along the path. It corresponds to the
         regularization parameter alpha parameter in the Lasso.
 
-    method : {'lar', 'lasso'}, default='lar'
-        Specifies the returned model. Select ``'lar'`` for Least Angle
+    method : {'lars', 'lasso'}, default='lars'
+        Specifies the returned model. Select ``'lars'`` for Least Angle
         Regression, ``'lasso'`` for the Lasso.
 
     copy_X : bool, default=True
         If ``False``, ``X`` is overwritten.
 
-    eps : float, optional
+    eps : float, default=np.finfo(float).eps
         The machine-precision regularization in the computation of the
         Cholesky diagonal factors. Increase this for very ill-conditioned
-        systems. By default, ``np.finfo(float).eps`` is used
+        systems. Unlike the ``tol`` parameter in some iterative
+        optimization-based algorithms, this parameter does not control
+        the tolerance of the optimization.
 
     copy_Gram : bool, default=True
         If ``False``, ``Gram`` is overwritten.
@@ -394,9 +400,9 @@ def _lars_path_solver(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
            <https://en.wikipedia.org/wiki/Lasso_(statistics)>`_
 
     """
-    if method == 'lar' and positive:
+    if method == 'lars' and positive:
         raise ValueError(
-                "Positive constraint not supported for 'lar' "
+                "Positive constraint not supported for 'lars' "
                 "coding method."
             )
 
@@ -659,7 +665,7 @@ def _lars_path_solver(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
             # some coefficients have changed sign
             idx = np.where(z == z_pos)[0][::-1]
 
-            # update the sign, important for LAR
+            # update the sign, important for LARS
             sign_active[idx] = -sign_active[idx]
 
             if method == 'lasso':
@@ -758,7 +764,7 @@ def _lars_path_solver(X, y, Xy=None, Gram=None, n_samples=None, max_iter=500,
 # Estimator classes
 
 class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
-    """Least Angle Regression model a.k.a. LAR
+    """Least Angle Regression model a.k.a. LARS
 
     Read more in the :ref:`User Guide <least_angle_regression>`.
 
@@ -770,7 +776,7 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
         (i.e. data is expected to be centered).
 
     verbose : bool or int, default=False
-        Sets the verbosity amount
+        Sets the verbosity amount.
 
     normalize : bool, default=True
         This parameter is ignored when ``fit_intercept`` is set to False.
@@ -788,13 +794,12 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
     n_nonzero_coefs : int, default=500
         Target number of non-zero coefficients. Use ``np.inf`` for no limit.
 
-    eps : float, optional
+    eps : float, default=np.finfo(float).eps
         The machine-precision regularization in the computation of the
         Cholesky diagonal factors. Increase this for very ill-conditioned
         systems. Unlike the ``tol`` parameter in some iterative
         optimization-based algorithms, this parameter does not control
         the tolerance of the optimization.
-        By default, ``np.finfo(float).eps`` is used.
 
     copy_X : bool, default=True
         If ``True``, X will be copied; else, it may be overwritten.
@@ -810,7 +815,7 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
         `y` values, to satisfy the model's assumption of
         one-at-a-time computations. Might help with stability.
 
-    random_state : int, RandomState instance or None (default)
+    random_state : int, RandomState instance or None, default=None
         Determines random number generation for jittering. Pass an int
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`. Ignored if `jitter` is None.
@@ -856,7 +861,7 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
     sklearn.decomposition.sparse_encode
 
     """
-    method = 'lar'
+    method = 'lars'
     positive = False
 
     @_deprecate_positional_args
@@ -1011,7 +1016,7 @@ class LassoLars(Lars):
         (i.e. data is expected to be centered).
 
     verbose : bool or int, default=False
-        Sets the verbosity amount
+        Sets the verbosity amount.
 
     normalize : bool, default=True
         This parameter is ignored when ``fit_intercept`` is set to False.
@@ -1035,7 +1040,6 @@ class LassoLars(Lars):
         systems. Unlike the ``tol`` parameter in some iterative
         optimization-based algorithms, this parameter does not control
         the tolerance of the optimization.
-        By default, ``np.finfo(float).eps`` is used.
 
     copy_X : bool, default=True
         If True, X will be copied; else, it may be overwritten.
@@ -1173,8 +1177,8 @@ def _lars_path_residues(X_train, y_train, X_test, y_test, Gram=None,
         Whether X_train, X_test, y_train and y_test should be copied;
         if False, they may be overwritten.
 
-    method : {'lar' , 'lasso'}, default='lar'
-        Specifies the returned model. Select ``'lar'`` for Least Angle
+    method : {'lars' , 'lasso'}, default='lars'
+        Specifies the returned model. Select ``'lars'`` for Least Angle
         Regression, ``'lasso'`` for the Lasso.
 
     verbose : bool or int, default=False
@@ -1203,14 +1207,12 @@ def _lars_path_residues(X_train, y_train, X_test, y_test, Gram=None,
     max_iter : int, default=500
         Maximum number of iterations to perform.
 
-    eps : float, optional
+    eps : float, default=np.finfo(float).eps
         The machine-precision regularization in the computation of the
         Cholesky diagonal factors. Increase this for very ill-conditioned
         systems. Unlike the ``tol`` parameter in some iterative
         optimization-based algorithms, this parameter does not control
         the tolerance of the optimization.
-        By default, ``np.finfo(float).eps`` is used
-
 
     Returns
     --------
@@ -1273,7 +1275,7 @@ class LarsCV(Lars):
         (i.e. data is expected to be centered).
 
     verbose : bool or int, default=False
-        Sets the verbosity amount
+        Sets the verbosity amount.
 
     max_iter : int, default=500
         Maximum number of iterations to perform.
@@ -1318,10 +1320,12 @@ class LarsCV(Lars):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    eps : float, optional
+    eps : float, default=np.finfo(float).eps
         The machine-precision regularization in the computation of the
         Cholesky diagonal factors. Increase this for very ill-conditioned
-        systems. By default, ``np.finfo(float).eps`` is used.
+        systems. Unlike the ``tol`` parameter in some iterative
+        optimization-based algorithms, this parameter does not control
+        the tolerance of the optimization.
 
     copy_X : bool, default=True
         If ``True``, X will be copied; else, it may be overwritten.
@@ -1374,7 +1378,7 @@ class LarsCV(Lars):
     lars_path, LassoLars, LassoLarsCV
     """
 
-    method = 'lar'
+    method = 'lars'
 
     @_deprecate_positional_args
     def __init__(self, *, fit_intercept=True, verbose=False, max_iter=500,
@@ -1494,7 +1498,7 @@ class LassoLarsCV(LarsCV):
         (i.e. data is expected to be centered).
 
     verbose : bool or int, default=False
-        Sets the verbosity amount
+        Sets the verbosity amount.
 
     max_iter : int, default=500
         Maximum number of iterations to perform.
@@ -1539,10 +1543,12 @@ class LassoLarsCV(LarsCV):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    eps : float, optional
+    eps : float, default=np.finfo(float).eps
         The machine-precision regularization in the computation of the
         Cholesky diagonal factors. Increase this for very ill-conditioned
-        systems. By default, ``np.finfo(float).eps`` is used.
+        systems. Unlike the ``tol`` parameter in some iterative
+        optimization-based algorithms, this parameter does not control
+        the tolerance of the optimization.
 
     copy_X : bool, default=True
         If True, X will be copied; else, it may be overwritten.
@@ -1667,7 +1673,7 @@ class LassoLarsIC(LassoLars):
         (i.e. data is expected to be centered).
 
     verbose : bool or int, default=False
-        Sets the verbosity amount
+        Sets the verbosity amount.
 
     normalize : bool, default=True
         This parameter is ignored when ``fit_intercept`` is set to False.
@@ -1686,13 +1692,12 @@ class LassoLarsIC(LassoLars):
         Maximum number of iterations to perform. Can be used for
         early stopping.
 
-    eps : float, optional
+    eps : float, default=np.finfo(float).eps
         The machine-precision regularization in the computation of the
         Cholesky diagonal factors. Increase this for very ill-conditioned
         systems. Unlike the ``tol`` parameter in some iterative
         optimization-based algorithms, this parameter does not control
         the tolerance of the optimization.
-        By default, ``np.finfo(float).eps`` is used
 
     copy_X : bool, default=True
         If True, X will be copied; else, it may be overwritten.
