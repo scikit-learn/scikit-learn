@@ -627,11 +627,11 @@ class OrdinalEncoder(_BaseEncoder):
         categorical feature is present during transform. When set to
         'use_encoded_value', the encoded value of unknown categories will be
         set to the value given for the parameter `unknown_value`. In
-        :meth:inverse_transform, an unknown category will be denoted as None.
+        :meth:`inverse_transform`, an unknown category will be denoted as None.
 
     unknown_value : int, default=None
         When the parameter handle_unknown is set to 'use_encoded_value', this
-        parameter is mandatory and will set the encoded value of unknown
+        parameter is required and will set the encoded value of unknown
         categories.
 
     Attributes
@@ -696,7 +696,7 @@ class OrdinalEncoder(_BaseEncoder):
         """
         if self.handle_unknown == 'use_encoded_value':
             if not isinstance(self.unknown_value, numbers.Integral):
-                raise TypeError(f"Set unknown_value to an integer, got "
+                raise TypeError(f"unknown_value should be an integer, got "
                                 f"{self.unknown_value}.")
 
         self._fit(X)

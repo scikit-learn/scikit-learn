@@ -589,13 +589,13 @@ def test_ordinal_encoder_handle_unknowns_raise():
     X = np.array([['a', 'x'], ['b', 'y']], dtype=object)
 
     enc = OrdinalEncoder(handle_unknown='use_encoded_value')
-    msg = ("Set unknown_value to an integer, got None.")
+    msg = ("unknown_value should be an integer, got None.")
     with pytest.raises(TypeError, match=msg):
         enc.fit(X)
 
     enc = OrdinalEncoder(handle_unknown='use_encoded_value',
                          unknown_value='bla')
-    msg = ("Set unknown_value to an integer, got bla.")
+    msg = ("unknown_value should be an integer, got bla.")
     with pytest.raises(TypeError, match=msg):
         enc.fit(X)
 
