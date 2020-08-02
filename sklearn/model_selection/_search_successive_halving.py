@@ -22,10 +22,9 @@ def _refit_callable(results):
     # would return the best candidate out of all iterations.
 
     last_iter = np.max(results['iter'])
-    sorted_indices = np.argsort(results['mean_test_score'])[::-1]
-    best_index = next(i for i in sorted_indices
-                      if results['iter'][i] == last_iter)
-    return best_index
+    last_iter_indices = np.flatnonzero(results['iter'] == last_iter)
+    best_idx = np.argmax(results['mean_test_score'][last_iter_indices])
+    return last_iter_indices[best_idx]
 
 
 class BaseSuccessiveHalving(BaseSearchCV):
@@ -528,6 +527,24 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
 
         This is present only if ``refit`` is not False.
 
+    See Also
+    --------
+    :class:`HalvingRandomSearchCV`:
+        Random search over a set of parameters using successive halving.
+
+    Notes
+    -----
+    The parameters selected are those that maximize the score of the held-out
+    data, according to the scoring parameter.
+
+    If `n_jobs` was set to a value higher than one, the data is copied for each
+    parameter setting(and not `n_jobs` times). This is done for efficiency
+    reasons if individual jobs take very little time, but may raise errors if
+    the dataset is large and not enough memory is available.  A workaround in
+    this case is to set `pre_dispatch`. Then, the memory is copied only
+    `pre_dispatch` many times. A reasonable value for `pre_dispatch` is `2 *
+    n_jobs`.
+
     Examples
     --------
 
@@ -545,24 +562,6 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
     ...                              random_state=0).fit(X, y)
     >>> search.best_params_  # doctest: +SKIP
     {'max_depth': None, 'min_samples_split': 10, 'n_estimators': 9}
-
-    Notes
-    -----
-    The parameters selected are those that maximize the score of the held-out
-    data, according to the scoring parameter.
-
-    If `n_jobs` was set to a value higher than one, the data is copied for each
-    parameter setting(and not `n_jobs` times). This is done for efficiency
-    reasons if individual jobs take very little time, but may raise errors if
-    the dataset is large and not enough memory is available.  A workaround in
-    this case is to set `pre_dispatch`. Then, the memory is copied only
-    `pre_dispatch` many times. A reasonable value for `pre_dispatch` is `2 *
-    n_jobs`.
-
-    See Also
-    --------
-    :class:`HalvingRandomSearchCV`:
-        Random search over a set of parameters using successive halving.
     """
     _required_parameters = ["estimator", "param_grid"]
 
@@ -816,6 +815,24 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
 
         This is present only if ``refit`` is not False.
 
+    See Also
+    --------
+    :class:`HalvingGridSearchCV`:
+        Search over a grid of parameters using successive halving.
+
+    Notes
+    -----
+    The parameters selected are those that maximize the score of the held-out
+    data, according to the scoring parameter.
+
+    If `n_jobs` was set to a value higher than one, the data is copied for each
+    parameter setting(and not `n_jobs` times). This is done for efficiency
+    reasons if individual jobs take very little time, but may raise errors if
+    the dataset is large and not enough memory is available.  A workaround in
+    this case is to set `pre_dispatch`. Then, the memory is copied only
+    `pre_dispatch` many times. A reasonable value for `pre_dispatch` is `2 *
+    n_jobs`.
+
     Examples
     --------
 
@@ -836,24 +853,6 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
     ...                                random_state=0).fit(X, y)
     >>> search.best_params_  # doctest: +SKIP
     {'max_depth': None, 'min_samples_split': 10, 'n_estimators': 9}
-
-    Notes
-    -----
-    The parameters selected are those that maximize the score of the held-out
-    data, according to the scoring parameter.
-
-    If `n_jobs` was set to a value higher than one, the data is copied for each
-    parameter setting(and not `n_jobs` times). This is done for efficiency
-    reasons if individual jobs take very little time, but may raise errors if
-    the dataset is large and not enough memory is available.  A workaround in
-    this case is to set `pre_dispatch`. Then, the memory is copied only
-    `pre_dispatch` many times. A reasonable value for `pre_dispatch` is `2 *
-    n_jobs`.
-
-    See Also
-    --------
-    :class:`HalvingGridSearchCV`:
-        Search over a grid of parameters using successive halving.
     """
     _required_parameters = ["estimator", "param_distributions"]
 
