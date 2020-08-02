@@ -1350,14 +1350,14 @@ def test_pairwise_dist_custom_scoring_for_string():
 
     dist = pairwise_distances(X,
                               metric=dummy_string_similarity,
-                              dtype=str)
+                              dtype=str, ensure_2d=False)
     assert dist.max() == 6.0
 
 
 def test_numeric_input_wo_callable_metric():
     X = np.random.rand(5)
 
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match='`dtype` has to be `None` '):
         pairwise_distances(X,
                            metric='euclidean',
                            dtype=str)
