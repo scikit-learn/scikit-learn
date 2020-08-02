@@ -387,7 +387,7 @@ def _should_be_skipped_or_marked(estimator, check, strict_mode):
     # Return whether a check should be skipped (when using check_estimator())
     # or marked as XFAIL (when using @parametrize_with_checks()), along with a
     # reason.
-    # A check should be skipped or marked if:
+    # A check should be skipped or marked if either:
     # - the check is in the _xfail_checks tag of the estimator
     # - the check is fully strict and strict mode is off
     # Checks that are only partially strict will not be skipped since we want
@@ -544,16 +544,15 @@ def check_estimator(Estimator, generate_only=False, strict_mode=True):
     estimator = Estimator
     name = type(estimator).__name__
 
-    checks_generator = (
-        (estimator, partial(_maybe_skip(estimator, check, strict_mode),
-                            name, strict_mode=strict_mode))
-        for check in _yield_all_checks(estimator)
-    )
+    def checks_generator():
+        for check in _yield_all_checks(estimator):
+            check = _maybe_skip(estimator, check, strict_mode)
+            yield estimator, partial(check, name, strict_mode=strict_mode)
 
     if generate_only:
         return checks_generator
 
-    for estimator, check in checks_generator:
+    for estimator, check in checks_generator():
         try:
             check(estimator)
         except SkipTest as exception:
