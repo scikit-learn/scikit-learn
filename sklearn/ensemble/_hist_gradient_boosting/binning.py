@@ -36,7 +36,7 @@ def _find_binning_thresholds(data, max_bins, subsample, random_state):
         If ``n_samples > subsample``, then ``sub_samples`` samples will be
         randomly chosen to compute the quantiles. If ``None``, the whole data
         is used.
-        
+
     random_state: int, RandomState instance or None
         Pseudo-random number generator to control the random sub-sampling.
         Pass an int for reproducible output across multiple
