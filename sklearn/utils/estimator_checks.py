@@ -463,18 +463,14 @@ def parametrize_with_checks(estimators, strict_mode=True):
                "Please pass an instance instead.")
         raise TypeError(msg)
 
-    names = (type(estimator).__name__ for estimator in estimators)
+    def checks_generator():
+        for estimator in estimators:
+            name = type(estimator).__name__
+            for check in _yield_all_checks(estimator):
+                check = partial(check, name, strict_mode=strict_mode)
+                yield _maybe_mark_xfail(estimator, check, strict_mode, pytest)
 
-    checks_generator = (
-        (estimator, partial(check, name, strict_mode=strict_mode))
-        for name, estimator in zip(names, estimators)
-        for check in _yield_all_checks(estimator))
-
-    checks_with_marks = (
-        _maybe_mark_xfail(estimator, check, strict_mode, pytest)
-        for estimator, check in checks_generator)
-
-    return pytest.mark.parametrize("estimator, check", checks_with_marks,
+    return pytest.mark.parametrize("estimator, check", checks_generator(),
                                    ids=_get_check_estimator_ids)
 
 
