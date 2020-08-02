@@ -112,7 +112,7 @@ the test data::
   >>> # fit the whole pipeline
   >>> pipe.fit(X_train, y_train)
   Pipeline(steps=[('standardscaler', StandardScaler()),
-                  ('logisticregression', LogisticRegression(random_state=0))])
+                  ('logisticregression', LogisticRegression())])
   >>> # we can now use it like any other estimator
   >>> accuracy_score(pipe.predict(X_test), y_test)
   0.97...
