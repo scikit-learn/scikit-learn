@@ -827,6 +827,42 @@ def roc_curve(y_true, y_score, *, pos_label=None, sample_weight=None,
 
 
 @_deprecate_positional_args
+def mcc_f1_curve(y_true, y_score, *, pos_label=None, sample_weight=None):
+    """foapispfjaoisd
+    """
+    fps, tps, thresholds = _binary_clf_curve(
+        y_true, y_score, pos_label=pos_label, sample_weight=sample_weight)
+
+    fns = tps[-1] - tps
+    tns = fps[-1] - fps
+
+    # Build an N-dimensional confusion matrix,
+    # where the last dimension = N, the number of points in the curve.
+    Cs = np.array([[tns, fps],
+                   [fns, tps]])
+
+    # Calculate MCC
+    t_sum = Cs.sum(axis=1, dtype=np.float64)
+    p_sum = Cs.sum(axis=0, dtype=np.float64)
+    n_correct = np.trace(Cs, dtype=np.float64)
+    n_samples = p_sum.sum(axis=0)
+    cov_ytyp = n_correct * n_samples - (t_sum * p_sum).sum(axis=0)
+    cov_ypyp = n_samples ** 2 - (p_sum * p_sum).sum(axis=0)
+    cov_ytyt = n_samples ** 2 - (t_sum * t_sum).sum(axis=0)
+    mccs = cov_ytyp / np.sqrt(cov_ytyt * cov_ypyp)
+    np.nan_to_num(mccs, copy=False, nan=0.)
+
+    # Unit-normalize MCC values
+    mccs = (mccs + 1) / 2
+
+    # Calculate F1-Score
+    f1s = 2*tps / (2*tps + fps + fns)
+    np.nan_to_num(f1s, copy=False, nan=np.nan)
+
+    return mccs, f1s, thresholds
+
+
+@_deprecate_positional_args
 def label_ranking_average_precision_score(y_true, y_score, *,
                                           sample_weight=None):
     """Compute ranking-based average precision.

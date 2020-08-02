@@ -14,6 +14,7 @@ from ._ranking import ndcg_score
 from ._ranking import precision_recall_curve
 from ._ranking import roc_auc_score
 from ._ranking import roc_curve
+from ._ranking import mcc_f1_curve
 
 from ._classification import accuracy_score
 from ._classification import balanced_accuracy_score
