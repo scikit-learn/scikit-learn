@@ -128,7 +128,6 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
         -------
         self : object
         """
-        print('a')
 
         tags = self._get_tags()
         X, y = self._validate_data(
@@ -138,7 +137,6 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
             multi_output=True
         )
         n_features = X.shape[1]
-        print('b')
 
         error_msg = ("n_features_to_select must be either None, an "
                      "integer in [1, n_features - 1] "
@@ -167,7 +165,6 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
             )
 
         cloned_estimator = clone(self.estimator)
-        print('c')
 
         # the current mask corresponds to the set of features:
         # - that we have already *selected* if we do forward selection
@@ -178,16 +175,13 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
             else n_features - self.n_features_to_select_
         )
         for _ in range(n_iterations):
-            print('d')
             new_feature_idx = self._get_best_new_feature(cloned_estimator, X,
                                                          y, current_mask)
             current_mask[new_feature_idx] = True
-            print('g')
 
         if self.direction == 'backward':
             current_mask = ~current_mask
         self.support_ = current_mask
-        print('h')
 
         return self
 
@@ -203,11 +197,9 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin,
             if self.direction == 'backward':
                 candidate_mask = ~candidate_mask
             X_new = X[:, candidate_mask]
-            print('e')
             scores[feature_idx] = cross_val_score(
                 estimator, X_new, y, cv=self.cv, scoring=self.scoring,
                 n_jobs=self.n_jobs).mean()
-            print('f')
         return max(scores, key=lambda feature_idx: scores[feature_idx])
 
     def _get_support_mask(self):
