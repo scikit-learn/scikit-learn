@@ -103,6 +103,12 @@ Changelog
   average of multiple MSE values.
   :pr:`17309` by :user:`Swier Heeres <swierh>`.
 
+:mod:`sklearn.pipeline`
+.......................
+
+- |Fix| :class:`pipeline.FeatureUnion` raises a deprecation warning when
+  `None` is included in `transformer_list`. :pr:`17360` by `Thomas Fan`_.
+
 :mod:`sklearn.utils`
 ....................
 
