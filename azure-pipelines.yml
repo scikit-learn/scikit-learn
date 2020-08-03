@@ -68,7 +68,7 @@ jobs:
   parameters:
     name: Linux32
     vmImage: ubuntu-18.04
-    dependsOn: [linting]
+    # dependsOn: [linting]
     condition: and(ne(variables['Build.Reason'], 'Schedule'), succeeded('linting'))
     matrix:
       py36_ubuntu_atlas_32bit:
