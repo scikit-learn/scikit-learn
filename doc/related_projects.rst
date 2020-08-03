@@ -225,7 +225,7 @@ and tasks.
   <https://github.com/scikit-learn-contrib/imbalanced-learn>`_ Various
   methods to under- and over-sample datasets.
 
- - `Feature-engine <https://github.com/solegalli/feature_engine>`_ A library
+- `Feature-engine <https://github.com/solegalli/feature_engine>`_ A library
   of sklearn compatible transformers for missing data imputation, categorical
   encoding, variable transformation, discretization, outlier handling and more.
   Feature-engine allows the application of preprocessing steps to selected groups
