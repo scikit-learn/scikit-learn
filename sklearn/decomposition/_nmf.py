@@ -88,7 +88,6 @@ def _beta_divergence(X, W, H, beta, square_root=False):
             Beta divergence of X and np.dot(X, H)
     """
 
-    print(H)
     beta = _beta_loss_to_float(beta)
 
     # The method can be called with scalars
@@ -725,11 +724,9 @@ def _multiplicative_update_h(X, W, H, A, B,
         rho = .99
         A *= rho
         B *= rho
-        A += numerator * H
+        A += numerator * H_old
         B += denominator
         H = np.divide(A, B)
-        #delta_H = np.divide(H, H_old)
-
 
     return H, A, B
 
@@ -817,7 +814,7 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
 
     n_samples = X.shape[0]
     max_iter_update_h_ = 1
-    max_iter_update_w_ = 5
+    max_iter_update_w_ = 1
 
     if batch_size is None:
         batch_size = n_samples
@@ -852,7 +849,6 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
                     X[slice], W[slice], H, beta_loss, l1_reg_W, l2_reg_W,
                     gamma, H_sum, HHt, XHt, update_H)
                 W[slice] *= delta_W
-
             # necessary for stability with beta_loss < 1
             if beta_loss < 1:
                 W[slice][W[slice] < np.finfo(np.float64).eps] = 0.
@@ -874,7 +870,9 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
                 if beta_loss <= 1:
                     H[H < np.finfo(np.float64).eps] = 0.
 
-        # test convergence criterion every 1 iterations
+        n_iter += i
+ 
+        # test convergence criterion every 10 iterations
         if tol > 0 and n_iter % 10 == 0:
             error = _beta_divergence(X, W, H, beta_loss,
                                      square_root=True)
@@ -883,7 +881,8 @@ def _fit_multiplicative_update(X, W, H, A, B, beta_loss='frobenius',
                 print("Epoch %02d reached after %.3f seconds, error: %f" %
                       (n_iter, iter_time - start_time, error))
 
-            if (previous_error - error) / error_at_init < tol:
+            if abs(previous_error - error) / error_at_init < tol:
+                print((previous_error - error) / error_at_init)
                 break
             previous_error = error
 
@@ -1835,7 +1834,7 @@ class MiniBatchNMF(TransformerMixin, BaseEstimator):
             X=X, W=W, H=H, A=None, B=None, n_components=self.n_components,
             batch_size=self.batch_size, init=self.init,
             update_H=True, solver=self.solver, beta_loss=self.beta_loss,
-            tol=0, max_iter=1, alpha=self.alpha,
+            tol=self.tol, max_iter=self.max_iter, alpha=self.alpha,
             l1_ratio=self.l1_ratio, regularization='both',
             random_state=self.random_state, verbose=self.verbose,
             shuffle=self.shuffle)
