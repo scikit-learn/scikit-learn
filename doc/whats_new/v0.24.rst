@@ -22,8 +22,8 @@ parameters, may produce different models from the previous version. This often
 occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
-- |Fix| ``inertia_`` attribute of :class:`cluster.KMeans` and
-  :class:`cluster.MiniBatchKMeans`.
+- item
+- item
 
 Details are listed in the changelog below.
 
@@ -45,6 +45,13 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
+:mod:`sklearn.calibration`
+..........................
+
+- |Efficiency| :class:`calibration.CalibratedClassifierCV.fit` now supports
+  parallelization via `joblib.Parallel` using argument `n_jobs`.
+  :pr:`17107` by :user:`Julien Jerphanion <jjerphan>`.
+
 :mod:`sklearn.calibrator`
 .........................
 
@@ -56,15 +63,14 @@ Changelog
 :mod:`sklearn.cluster`
 ......................
 
-- |Fix| Fixed a bug in :class:`cluster.MeanShift` with `bin_seeding=True`. When
-  the estimated bandwidth is 0, the behavior is equivalent to
-  `bin_seeding=False`.
-  :pr:`17742` by :user:`Jeremie du Boisberranger <jeremiedbb>`.
-
-- |Fix| Fixed a bug in :class:`cluster.KMeans` and
-  :class:`cluster.MiniBatchKMeans` where the reported inertia was incorrectly
-  weighted by the sample weights. :pr:`17848` by
-  :user:`Jérémie du Boisberranger <jeremiedbb>`.
+- |Enhancement| :class:`cluster.AgglomerativeClustering` has a new parameter
+  `compute_distances`. When set to `True`, distances between clusters are
+  computed and stored in the `distances_` attribute even when the parameter
+  `distance_threshold` is not used. This new parameter is useful to produce
+  dendrogram visualizations, but introduces a computational and memory
+  overhead. :pr:`17984` by :user:`Michael Riedmann <mriedmann>`,
+  :user:`Emilie Delattre <EmilieDel>`, and
+  :user:`Francesco Casalegno <FrancescoCasalegno>`.
 
 - |API| :class:`cluster.MiniBatchKMeans` attributes, `counts_` and
   `init_size_`, are deprecated and will be removed in 0.26. :pr:`17864` by
@@ -98,11 +104,6 @@ Changelog
 :mod:`sklearn.decomposition`
 ............................
 
-- |Fix| Fixed a bug in
-  :func:`decomposition.MiniBatchDictionaryLearning.partial_fit` which should
-  update the dictionary by iterating only once over a mini-batch.
-  :pr:`17433` by :user:`Chiara Marmo <cmarmo>`.
-
 - |Fix| Fix :class:`decomposition.SparseCoder` such that it follows
   scikit-learn API and support cloning. The attribute `components_` is
   deprecated in 0.24 and will be removed in 0.26. This attribute was
@@ -121,17 +122,19 @@ Changelog
   which allows monitoring of each stage.
   :pr:`16985` by :user:`Hao Chun Chang <haochunchang>`.
 
-- |Fix| Fixed bug in :class:`ensemble.MultinomialDeviance` where the
-  average of logloss was incorrectly calculated as sum of logloss.
-  :pr:`17694` by :user:`Markus Rempfler <rempfler>` and
-  :user:`Tsutomu Kusanagi <t-kusanagi2>`.
-
 :mod:`sklearn.exceptions`
 .........................
 
 - |API| :class:`exceptions.ChangedBehaviorWarning` and
   :class:`exceptions.NonBLASDotWarning` are deprecated and will be removed in
   v0.26, :pr:`17804` by `Adrin Jalali`_.
+
+:mod:`sklearn.feature_extraction`
+.................................
+
+- |Enhancement| :class:`feature_extraction.DictVectorizer` accepts multiple
+  values for one categorical feature. :pr:`17367` by :user:`Peng Yu <yupbank>`
+  and :user:`Chiara Marmo <cmarmo>`
 
 :mod:`sklearn.feature_selection`
 ................................
@@ -212,24 +215,23 @@ Changelog
 :mod:`sklearn.metrics`
 ......................
 
+- |Feature| Add :func:`metrics.cluster.pair_confusion_matrix` implementing
+  the confusion matrix arising from pairs of elements from two clusterings.
+  :pr:`17412` by :user:`Uwe F Mayer <ufmayer>`.
+
 - |Feature| Added :func:`metrics.mean_absolute_percentage_error` metric and
   the associated scorer for regression problems. :issue:`10708` fixed with the
   PR :pr:`15007` by :user:`Ashutosh Hathidara <ashutosh1919>`. The scorer and
   some practical test cases were taken from PR :pr:`10711` by
   :user:`Mohamed Ali Jamaoui <mohamed-ali>`.
 
-- |Feature| Add :func:`metrics.cluster.pair_confusion_matrix` implementing
-  the confusion matrix arising from pairs of elements from two clusterings.
-  :pr:`17412` by :user:`Uwe F Mayer <ufmayer>`.
+- |Feature| :func:`metrics.plot_confusion_matrix` now supports making colorbar
+  optional in the matplotlib plot by setting colorbar=False. :pr:`17192` by
+  :user:`Avi Gupta <avigupta2612>`
 
 - |Feature| Add :func:`metrics.rand_score` implementing the (unadjusted)
   Rand index.
   :pr:`17412` by :user:`Uwe F Mayer <ufmayer>`.
-
-- |Fix| Fixed a bug in :func:`metrics.mean_squared_error` where the
-  average of multiple RMSE values was incorrectly calculated as the root of the
-  average of multiple MSE values.
-  :pr:`17309` by :user:`Swier Heeres <swierh>`
 
 - |Enhancement| Add `sample_weight` parameter to
   :func:`metrics.median_absolute_error`. :pr:`17225` by
@@ -240,18 +242,15 @@ Changelog
   class to be used when computing the precision and recall statistics.
   :pr:`17569` by :user:`Guillaume Lemaitre <glemaitre>`.
 
-- |Feature| :func:`metrics.plot_confusion_matrix` now supports making colorbar
-  optional in the matplotlib plot by setting colorbar=False. :pr:`17192` by
-  :user:`Avi Gupta <avigupta2612>`
-
 - |Enhancement| Add `pos_label` parameter in
   :func:`metrics.plot_roc_curve` in order to specify the positive
   class to be used when computing the roc auc statistics.
   :pr:`17651` by :user:`Clara Matos <claramatos>`.
 
-- |Fix| Fixed a bug where :func:`metrics.pairwise_distances` would raise an error if
-  ``metric='seuclidean'`` and ``X`` is not type ``np.float64``.
-  :pr:`15730` by :user:`Forrest Koch <ForrestCKoch>`.
+- |Fix| Fixed a bug in
+  :func:`metrics.classification_report` which was raising AttributeError
+  when called with `output_dict=True` for 0-length values.
+  :pr:`17777` by :user:`Shubhanshu Mishra <napsternxg>`
 
 :mod:`sklearn.model_selection`
 ..............................
@@ -357,13 +356,6 @@ Changelog
   :meth:`tree.DecisionTreeClassifier.fit` and
   :meth:`tree.DecisionTreeRegressor.fit`, and has not effect.
   :pr:`17614` by :user:`Juan Carlos Alfaro Jiménez <alfaro96>`.
-
-:mod:`sklearn.utils`
-.........................
-
-- |Fix| Fix :func:`utils.estimator_checks.check_estimator` so that all test
-  cases support the `binary_only` estimator tag.
-  :pr:`17812` by :user:`Bruno Charron <brcharron>`.
 
 Code and Documentation Contributors
 -----------------------------------
