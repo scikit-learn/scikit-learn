@@ -20,8 +20,6 @@ from joblib import Parallel, delayed, effective_n_jobs
 
 from ..utils._typing import Literal
 from ..utils._typing import RandomState
-from ..utils._typing import Annotated
-from ..utils._typing import Shape
 from typing import Union
 from typing import Optional
 from ._base import LinearClassifierMixin, SparseCoefMixin, BaseEstimator
@@ -1256,12 +1254,6 @@ class LogisticRegression(LinearClassifierMixin,
     >>> clf.score(X, y)
     0.97...
     """
-    classes_: Annotated[np.ndarray, Shape(("n_classes",))]
-    coef_: Annotated[np.ndarray, Shape((1, "n_features"),
-                                       ("n_classes", "n_features"))]
-    intercept_: Annotated[np.ndarray, Shape((1,), ("n_classes",))]
-    n_iter_: Annotated[np.ndarray, Shape(("n_classes",), (1,))]
-
     @_deprecate_positional_args
     def __init__(self,
                  penalty: Literal['l1', 'l2', 'elasticnet', 'none'] = 'l2',

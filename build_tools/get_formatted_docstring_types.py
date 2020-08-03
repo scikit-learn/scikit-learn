@@ -18,24 +18,14 @@ object_input = args.object
 object_split = object_input.split(".")
 
 module = "sklearn." + ".".join(object_split[:-1])
-instance_str = object_split[-1]
-instance = getattr(import_module(module), instance_str)
-
+obj_str = object_split[-1]
+obj = getattr(import_module(module), obj_str)
 
 print("Parameters")
 print("----------")
-if inspect.isclass(instance):
-    formatted_annotations = get_annotations(instance.__init__)
-else:
-    formatted_annotations = get_annotations(instance)
+if inspect.isclass(obj):
+    formatted_annotations = get_annotations(obj.__init__)
+else:  # function
+    formatted_annotations = get_annotations(obj)
 for name, annotation in formatted_annotations.items():
     print(f"{name} : {annotation}")
-
-
-if inspect.isclass(instance):
-    print()
-    print("Attributes")
-    print("----------")
-    formatted_annotations = get_annotations(instance)
-    for name, annotation in formatted_annotations.items():
-        print(f"{name} : {annotation}")
