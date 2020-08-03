@@ -56,11 +56,6 @@ Changelog
   update the dictionary by iterating only once over a mini-batch.
   :pr:`17433` by :user:`Chiara Marmo <cmarmo>`.
 
-- |Fix| Fixed bug in :class:`ensemble.MultinomialDeviance` where the
-  average of logloss was incorrectly calculated as sum of logloss.
-  :pr:`17694` by :user:`Markus Rempfler <rempfler>` and
-  :user:`Tsutomu Kusanagi <t-kusanagi2>`.
-
 - |Fix| Avoid overflows on Windows in
   :func:`decomposition.IncrementalPCA.partial_fit` for large ``batch_size`` and
   ``n_samples`` values.
@@ -70,21 +65,15 @@ Changelog
 :mod:`sklearn.ensemble`
 .......................
 
+- |Fix| Fixed bug in :class:`ensemble.MultinomialDeviance` where the
+  average of logloss was incorrectly calculated as sum of logloss.
+  :pr:`17694` by :user:`Markus Rempfler <rempfler>` and
+  :user:`Tsutomu Kusanagi <t-kusanagi2>`.
+
 - |Fix| Fixes :class:`ensemble.StackingClassifier` and
   :class:`ensemble.StackingRegressor` compatibility with estimators that
   do not define `n_features_in_`. :pr:`17357` by `Thomas Fan`_.
-
-:mod:`sklearn.feature_extraction`
-.................................
-
-- |Fix| Fixes bug in :class:`feature_extraction.text.CountVectorizer` where
-  sample order invariance was broken when `max_features` was set and features
-  had the same count. :pr:`18016` by `Thomas Fan`_, `Roman Yurchak`_, and
-  `Joel Nothman`_.
-
-:mod:`sklearn.linear_model`
-...........................
-
+@@ -31,6 +88,28 @@ Changelog
 - |Fix| :func:`linear_model.lars_path` does not overwrite `X` when
   `X_copy=True` and `Gram='auto'`. :pr:`17914` by `Thomas Fan`_.
 
