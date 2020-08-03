@@ -450,7 +450,7 @@ def test_minibatch_kmeans_verbose():
     old_stdout = sys.stdout
     sys.stdout = StringIO()
     try:
-        mb_k_means.fit(X)
+        km.fit(X)
     finally:
         sys.stdout = old_stdout
 
