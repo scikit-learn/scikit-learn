@@ -1295,4 +1295,3 @@ def test_check__pandas_sparse_invalid_coo_matrix_numerics(dt_name, types_tbl):
         first = types_tbl.loc[types_tbl.index[0]]
         second = df.loc[df.index[-1]]
         do_test(first, second)
-
