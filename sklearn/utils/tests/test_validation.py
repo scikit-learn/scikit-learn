@@ -1269,13 +1269,29 @@ def test_check__pandas_sparse_invalid_coo_matrix_numerics(dt_name, types_tbl):
             # invalid coo_matrix
             return None
 
+    def new_pandas_version():
+        pd = pytest.importorskip("pandas")
+        modv = getattr(pd, '_version')
+        dct = modv.get_versions()
+        ver = dct['version']
+        vnums = [int(n) for n in ver.split('.')]
+        is_new = vnums[0] > 1 or (vnums[0] == 1 and vnums[1] > 0)
+        return is_new
+
     def do_test(one, two):
         tdf = tester_df(one['np_name'], two['np_name'])
         if tdf is None:
             # deal with codecov
             assert True
-
-        check_array(tdf, **{'accept_sparse': ['csr', 'csc'],
+        elif (one['dtype_name'] == two['dtype_name']
+              or new_pandas_version()):
+            check_array(tdf, **{'accept_sparse': ['csr', 'csc'],
+                        'ensure_min_features': 2})
+        else:
+            with pytest.raises(ValueError,
+                               match="DataFrame has sparse extention "
+                                     "arrays of mixed numeric types"):
+                check_array(tdf, **{'accept_sparse': ['csr', 'csc'],
                             'ensure_min_features': 2})
 
     for i in df.index[:-1]:
