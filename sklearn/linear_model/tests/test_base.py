@@ -270,6 +270,22 @@ def test_linear_regression_positive_vs_nonpositive():
     assert np.mean((reg.coef_ - regn.coef_)**2) > 1e-3
 
 
+def test_linear_regression_positive_vs_nonpositive_when_positive():
+    # Test LinearRegression fitted coefficients
+    # when the problem is positive.
+    n_samples = 200
+    n_features = 4
+    X = rng.rand(n_samples, n_features)
+    y = X[:, 0] + 2 * X[:, 1] + 3 * X[:, 2] + 1.5 * X[:, 3]
+
+    reg = LinearRegression(positive=True)
+    reg.fit(X, y)
+    regn = LinearRegression(positive=False)
+    regn.fit(X, y)
+
+    assert np.mean((reg.coef_ - regn.coef_)**2) < 1e-6
+
+
 def test_linear_regression_pd_sparse_dataframe_warning():
     pd = pytest.importorskip('pandas')
     # restrict the pd versions < '0.24.0' as they have a bug in is_sparse func
