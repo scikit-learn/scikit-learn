@@ -32,11 +32,13 @@ def _find_binning_thresholds(data, max_bins, subsample, random_state):
         instead of the quantiles.
     subsample : int or None
         If ``n_samples > subsample``, then ``sub_samples`` samples will be
-        randomly choosen to compute the quantiles. If ``None``, the whole data
+        randomly chosen to compute the quantiles. If ``None``, the whole data
         is used.
-    random_state: int or numpy.random.RandomState or None
+    random_state: int, RandomState instance or None
         Pseudo-random number generator to control the random sub-sampling.
-        See :term:`random_state`.
+        Pass an int for reproducible output across multiple
+        function calls.
+        See :term: `Glossary <random_state>`.
 
     Return
     ------
@@ -47,7 +49,7 @@ def _find_binning_thresholds(data, max_bins, subsample, random_state):
     """
     rng = check_random_state(random_state)
     if subsample is not None and data.shape[0] > subsample:
-        subset = rng.choice(np.arange(data.shape[0]), subsample, replace=False)
+        subset = rng.choice(data.shape[0], subsample, replace=False)
         data = data.take(subset, axis=0)
 
     binning_thresholds = []
@@ -107,12 +109,13 @@ class _BinMapper(TransformerMixin, BaseEstimator):
         instead of the quantiles.
     subsample : int or None, optional (default=2e5)
         If ``n_samples > subsample``, then ``sub_samples`` samples will be
-        randomly choosen to compute the quantiles. If ``None``, the whole data
+        randomly chosen to compute the quantiles. If ``None``, the whole data
         is used.
-    random_state: int or numpy.random.RandomState or None, \
-        optional (default=None)
+    random_state: int, RandomState instance or None
         Pseudo-random number generator to control the random sub-sampling.
-        See :term:`random_state`.
+        Pass an int for reproducible output across multiple
+        function calls.
+        See :term: `Glossary <random_state>`.
 
     Attributes
     ----------
@@ -126,7 +129,7 @@ class _BinMapper(TransformerMixin, BaseEstimator):
         equal to ``n_bins - 1``.
     missing_values_bin_idx_ : uint8
         The index of the bin where missing values are mapped. This is a
-        constant accross all features. This corresponds to the last bin, and
+        constant across all features. This corresponds to the last bin, and
         it is always equal to ``n_bins - 1``. Note that if ``n_bins_missing_``
         is less than ``n_bins - 1`` for a given feature, then there are
         empty (and unused) bins.

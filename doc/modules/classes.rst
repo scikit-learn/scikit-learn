@@ -33,6 +33,7 @@ Base classes
    base.DensityMixin
    base.RegressorMixin
    base.TransformerMixin
+   feature_selection.SelectorMixin
 
 Functions
 ---------
@@ -152,6 +153,7 @@ details.
    :template: function.rst
 
    compose.make_column_transformer
+   compose.make_column_selector
 
 .. _covariance_ref:
 
@@ -429,16 +431,14 @@ Samples generator
 
 .. autosummary::
    :toctree: generated/
-   :template: class_without_init.rst
+   :template: class.rst
 
-   exceptions.ChangedBehaviorWarning
    exceptions.ConvergenceWarning
    exceptions.DataConversionWarning
    exceptions.DataDimensionalityWarning
    exceptions.EfficiencyWarning
    exceptions.FitFailedWarning
    exceptions.NotFittedError
-   exceptions.NonBLASDotWarning
    exceptions.UndefinedMetricWarning
 
 
@@ -835,6 +835,21 @@ Any estimator using the Huber loss would also be robust to outliers, e.g.
    linear_model.RANSACRegressor
    linear_model.TheilSenRegressor
 
+Generalized linear models (GLM) for regression
+----------------------------------------------
+
+These models allow for response variables to have error distributions other
+than a normal distribution:
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   linear_model.PoissonRegressor
+   linear_model.TweedieRegressor
+   linear_model.GammaRegressor
+
+
 Miscellaneous
 -------------
 
@@ -883,7 +898,7 @@ Miscellaneous
     manifold.smacof
     manifold.spectral_embedding
     manifold.trustworthiness
-	
+
 
 .. _metrics_ref:
 
@@ -964,6 +979,7 @@ details.
    metrics.mean_squared_error
    metrics.mean_squared_log_error
    metrics.median_absolute_error
+   metrics.mean_absolute_percentage_error
    metrics.r2_score
    metrics.mean_poisson_deviance
    metrics.mean_gamma_deviance
@@ -1081,12 +1097,16 @@ See the :ref:`visualizations` section of the user guide for further details.
    :toctree: generated/
    :template: function.rst
 
+   metrics.plot_confusion_matrix
+   metrics.plot_precision_recall_curve
    metrics.plot_roc_curve
 
 .. autosummary::
    :toctree: generated/
    :template: class.rst
 
+   metrics.ConfusionMatrixDisplay
+   metrics.PrecisionRecallDisplay
    metrics.RocCurveDisplay
 
 
@@ -1172,12 +1192,6 @@ Hyper-parameter optimizers
    model_selection.ParameterSampler
    model_selection.RandomizedSearchCV
 
-
-.. autosummary::
-   :toctree: generated/
-   :template: function.rst
-
-   model_selection.fit_grid_point
 
 Model validation
 ----------------
@@ -1330,6 +1344,9 @@ Model validation
 .. automodule:: sklearn.pipeline
    :no-members:
    :no-inherited-members:
+
+**User guide:** See the :ref:`combining_estimators` section for further
+details.
 
 .. currentmodule:: sklearn
 
@@ -1540,6 +1557,7 @@ Plotting
    utils.arrayfuncs.min_pos
    utils.as_float_array
    utils.assert_all_finite
+   utils.Bunch
    utils.check_X_y
    utils.check_array
    utils.check_scalar
@@ -1550,6 +1568,7 @@ Plotting
    utils.deprecated
    utils.estimator_checks.check_estimator
    utils.estimator_checks.parametrize_with_checks
+   utils.estimator_html_repr
    utils.extmath.safe_sparse_dot
    utils.extmath.randomized_range_finder
    utils.extmath.randomized_svd
@@ -1600,30 +1619,5 @@ Utilities from joblib:
 Recently deprecated
 ===================
 
-To be removed in 0.23
+To be removed in 0.25
 ---------------------
-
-.. autosummary::
-   :toctree: generated/
-   :template: deprecated_class.rst
-
-   utils.Memory
-   utils.Parallel
-
-.. autosummary::
-   :toctree: generated/
-   :template: deprecated_function.rst
-
-   utils.cpu_count
-   utils.delayed
-   metrics.calinski_harabaz_score
-   metrics.jaccard_similarity_score
-   linear_model.logistic_regression_path
-   utils.safe_indexing
-
-.. autosummary::
-   :toctree: generated/
-   :template: function.rst
-
-   ensemble.partial_dependence.partial_dependence
-   ensemble.partial_dependence.plot_partial_dependence

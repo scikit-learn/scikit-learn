@@ -205,22 +205,16 @@ computing cluster centers and values of inertia. For example, assigning a
 weight of 2 to a sample is equivalent to adding a duplicate of that sample
 to the dataset :math:`X`.
 
-A parameter can be given to allow K-means to be run in parallel, called
-``n_jobs``. Giving this parameter a positive value uses that many processors
-(default: 1). A value of -1 uses all available processors, with -2 using one
-less, and so on. Parallelization generally speeds up computation at the cost of
-memory (in this case, multiple copies of centroids need to be stored, one for
-each job).
-
-.. warning::
-
-    The parallel version of K-Means is broken on OS X when `numpy` uses the
-    `Accelerate` Framework. This is expected behavior: `Accelerate` can be called
-    after a fork but you need to execv the subprocess with the Python binary
-    (which multiprocessing does not do under posix).
-
 K-means can be used for vector quantization. This is achieved using the
 transform method of a trained model of :class:`KMeans`.
+
+Low-level parallelism
+---------------------
+
+:class:`KMeans` benefits from OpenMP based parallelism through Cython. Small
+chunks of data (256 samples) are processed in parallel, which in addition
+yields a low memory footprint. For more details on how to control the number of
+threads, please refer to our :ref:`parallelism` notes.
 
 .. topic:: Examples:
 
@@ -775,7 +769,7 @@ core sample, and is at least ``eps`` in distance from any core sample, is
 considered an outlier by the algorithm.
 
 While the parameter ``min_samples`` primarily controls how tolerant the
-algorithm is towards noise (on noisy and large data sets it may be desiable
+algorithm is towards noise (on noisy and large data sets it may be desirable
 to increase this parameter), the parameter ``eps`` is *crucial to choose
 appropriately* for the data set and distance function and usually cannot be
 left at the default value. It controls the local neighborhood of the points.
@@ -1687,6 +1681,7 @@ Drawbacks
 Calinski-Harabasz Index
 -----------------------
 
+
 If the ground truth labels are not known, the Calinski-Harabasz index
 (:func:`sklearn.metrics.calinski_harabasz_score`) - also known as the Variance 
 Ratio Criterion - can be used to evaluate the model, where a higher 
@@ -1814,7 +1809,7 @@ this index, similarity is defined as a measure :math:`R_{ij}` that trades off:
   the centroid of that cluster -- also know as cluster diameter.
 - :math:`d_{ij}`, the distance between cluster centroids :math:`i` and :math:`j`.
 
-A simple choice to construct :math:`R_ij` so that it is nonnegative and
+A simple choice to construct :math:`R_{ij}` so that it is nonnegative and
 symmetric is:
 
 .. math::

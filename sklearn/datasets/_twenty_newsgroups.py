@@ -45,6 +45,7 @@ from ._base import RemoteFileMetadata
 from ..feature_extraction.text import CountVectorizer
 from .. import preprocessing
 from ..utils import check_random_state, Bunch
+from ..utils.validation import _deprecate_positional_args
 
 logger = logging.getLogger(__name__)
 
@@ -146,7 +147,8 @@ def strip_newsgroup_footer(text):
         return text
 
 
-def fetch_20newsgroups(data_home=None, subset='train', categories=None,
+@_deprecate_positional_args
+def fetch_20newsgroups(*, data_home=None, subset='train', categories=None,
                        shuffle=True, random_state=42,
                        remove=(),
                        download_if_missing=True, return_X_y=False):
@@ -166,30 +168,30 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
 
     Parameters
     ----------
-    data_home : optional, default: None
+    data_home : str, default=None
         Specify a download and cache folder for the datasets. If None,
         all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 
-    subset : 'train' or 'test', 'all', optional
+    subset : {'train', 'test', 'all'}, default='train'
         Select the dataset to load: 'train' for the training set, 'test'
         for the test set, 'all' for both, with shuffled ordering.
 
-    categories : None or collection of string or unicode
+    categories : array-like, dtype=str or unicode, default=None
         If None (default), load all the categories.
         If not None, list of category names to load (other categories
         ignored).
 
-    shuffle : bool, optional
+    shuffle : bool, default=True
         Whether or not to shuffle the data: might be important for models that
         make the assumption that the samples are independent and identically
         distributed (i.i.d.), such as stochastic gradient descent.
 
-    random_state : int, RandomState instance or None (default)
+    random_state : int or RandomState instance, default=None
         Determines random number generation for dataset shuffling. Pass an int
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
-    remove : tuple
+    remove : tuple, default=()
         May contain any subset of ('headers', 'footers', 'quotes'). Each of
         these are kinds of text that will be detected and removed from the
         newsgroup posts, preventing classifiers from overfitting on
@@ -202,11 +204,11 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
         'headers' follows an exact standard; the other filters are not always
         correct.
 
-    download_if_missing : optional, True by default
+    download_if_missing : bool, default=True
         If False, raise an IOError if the data is not locally available
         instead of trying to download the data from the source site.
 
-    return_X_y : bool, default=False.
+    return_X_y : bool, default=False
         If True, returns `(data.data, data.target)` instead of a Bunch
         object.
 
@@ -214,13 +216,19 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
 
     Returns
     -------
-    bunch : Bunch object with the following attribute:
-        - data: list, length [n_samples]
-        - target: array, shape [n_samples]
-        - filenames: list, length [n_samples]
-        - DESCR: a description of the dataset.
-        - target_names: a list of categories of the returned data,
-          length [n_classes]. This depends on the `categories` parameter.
+    bunch : :class:`~sklearn.utils.Bunch`
+        Dictionary-like object, with the following attributes.
+
+        data : list, length [n_samples]
+            The data list to learn.
+        target: array, shape [n_samples]
+            The target labels.
+        filenames: list, length [n_samples]
+            The path to the location of the data.
+        DESCR: str
+            The full description of the dataset.
+        target_names: list, length [n_classes]
+            The names of target classes.
 
     (data, target) : tuple if `return_X_y=True`
         .. versionadded:: 0.22
@@ -316,7 +324,8 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
     return data
 
 
-def fetch_20newsgroups_vectorized(subset="train", remove=(), data_home=None,
+@_deprecate_positional_args
+def fetch_20newsgroups_vectorized(*, subset="train", remove=(), data_home=None,
                                   download_if_missing=True, return_X_y=False,
                                   normalize=True):
     """Load the 20 newsgroups dataset and vectorize it into token counts \
@@ -326,13 +335,13 @@ def fetch_20newsgroups_vectorized(subset="train", remove=(), data_home=None,
 
     This is a convenience function; the transformation is done using the
     default settings for
-    :class:`sklearn.feature_extraction.text.CountVectorizer`. For more
+    :class:`~sklearn.feature_extraction.text.CountVectorizer`. For more
     advanced usage (stopword filtering, n-gram extraction, etc.), combine
     fetch_20newsgroups with a custom
-    :class:`sklearn.feature_extraction.text.CountVectorizer`,
-    :class:`sklearn.feature_extraction.text.HashingVectorizer`,
-    :class:`sklearn.feature_extraction.text.TfidfTransformer` or
-    :class:`sklearn.feature_extraction.text.TfidfVectorizer`.
+    :class:`~sklearn.feature_extraction.text.CountVectorizer`,
+    :class:`~sklearn.feature_extraction.text.HashingVectorizer`,
+    :class:`~sklearn.feature_extraction.text.TfidfTransformer` or
+    :class:`~sklearn.feature_extraction.text.TfidfVectorizer`.
 
     The resulting counts are normalized using
     :func:`sklearn.preprocessing.normalize` unless normalize is set to False.
@@ -348,11 +357,11 @@ def fetch_20newsgroups_vectorized(subset="train", remove=(), data_home=None,
 
     Parameters
     ----------
-    subset : 'train' or 'test', 'all', optional
+    subset : {'train', 'test', 'all'}, default='train'
         Select the dataset to load: 'train' for the training set, 'test'
         for the test set, 'all' for both, with shuffled ordering.
 
-    remove : tuple
+    remove : tuple, default=()
         May contain any subset of ('headers', 'footers', 'quotes'). Each of
         these are kinds of text that will be detected and removed from the
         newsgroup posts, preventing classifiers from overfitting on
@@ -362,11 +371,11 @@ def fetch_20newsgroups_vectorized(subset="train", remove=(), data_home=None,
         ends of posts that look like signatures, and 'quotes' removes lines
         that appear to be quoting another post.
 
-    data_home : optional, default: None
+    data_home : str, default=None
         Specify an download and cache folder for the datasets. If None,
         all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 
-    download_if_missing : optional, True by default
+    download_if_missing : bool, default=True
         If False, raise an IOError if the data is not locally available
         instead of trying to download the data from the source site.
 
@@ -384,12 +393,17 @@ def fetch_20newsgroups_vectorized(subset="train", remove=(), data_home=None,
 
     Returns
     -------
-    bunch : Bunch object with the following attribute:
-        - bunch.data: sparse matrix, shape [n_samples, n_features]
-        - bunch.target: array, shape [n_samples]
-        - bunch.target_names: a list of categories of the returned data,
-          length [n_classes].
-        - bunch.DESCR: a description of the dataset.
+    bunch : :class:`~sklearn.utils.Bunch`
+        Dictionary-like object, with the following attributes.
+
+        data: sparse matrix, shape [n_samples, n_features]
+            The data matrix to learn.
+        target: array, shape [n_samples]
+            The target labels.
+        target_names: list, length [n_classes]
+            The names of target classes.
+        DESCR: str
+            The full description of the dataset.
 
     (data, target) : tuple if ``return_X_y`` is True
 

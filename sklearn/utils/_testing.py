@@ -13,7 +13,6 @@
 import os
 import os.path as op
 import inspect
-import pkgutil
 import warnings
 import sys
 import functools
@@ -23,7 +22,6 @@ from subprocess import TimeoutExpired
 
 import scipy as sp
 from functools import wraps
-from operator import itemgetter
 from inspect import signature
 
 import shutil
@@ -47,53 +45,27 @@ import numpy as np
 import joblib
 
 import sklearn
-from sklearn.base import (BaseEstimator, ClassifierMixin, ClusterMixin,
-                          RegressorMixin, TransformerMixin)
-from sklearn.utils import deprecated, IS_PYPY, _IS_32BIT
+from sklearn.utils import IS_PYPY, _IS_32BIT
 
 
-__all__ = ["assert_equal", "assert_not_equal", "assert_raises",
-           "assert_raises_regexp", "assert_true",
-           "assert_false", "assert_almost_equal", "assert_array_equal",
+__all__ = ["assert_raises",
+           "assert_raises_regexp",
+           "assert_array_equal",
+           "assert_almost_equal",
            "assert_array_almost_equal", "assert_array_less",
-           "assert_less", "assert_less_equal",
-           "assert_greater", "assert_greater_equal",
            "assert_approx_equal", "assert_allclose",
-           "assert_run_python_script", "SkipTest", "all_estimators"]
+           "assert_run_python_script", "SkipTest"]
 
 _dummy = TestCase('__init__')
-deprecation_message = (
-    'This helper is deprecated in version 0.22 and will be removed in version '
-    '0.24. Please use "assert" instead'
-)
-assert_equal = deprecated(deprecation_message)(_dummy.assertEqual)
-assert_not_equal = deprecated(deprecation_message)(_dummy.assertNotEqual)
 assert_raises = _dummy.assertRaises
 SkipTest = unittest.case.SkipTest
 assert_dict_equal = _dummy.assertDictEqual
-assert_in = deprecated(deprecation_message)(_dummy.assertIn)
-assert_not_in = deprecated(deprecation_message)(_dummy.assertNotIn)
-assert_less = deprecated(deprecation_message)(_dummy.assertLess)
-assert_greater = deprecated(deprecation_message)(_dummy.assertGreater)
-assert_less_equal = deprecated(deprecation_message)(_dummy.assertLessEqual)
-assert_greater_equal = deprecated(deprecation_message)(
-    _dummy.assertGreaterEqual)
 
 assert_raises_regex = _dummy.assertRaisesRegex
 # assert_raises_regexp is deprecated in Python 3.4 in favor of
 # assert_raises_regex but lets keep the backward compat in scikit-learn with
 # the old name for now
 assert_raises_regexp = assert_raises_regex
-
-deprecation_message = "'assert_true' is deprecated in version 0.21 " \
-                      "and will be removed in version 0.23. " \
-                      "Please use 'assert' instead."
-assert_true = deprecated(deprecation_message)(_dummy.assertTrue)
-
-deprecation_message = "'assert_false' is deprecated in version 0.21 " \
-                      "and will be removed in version 0.23. " \
-                      "Please use 'assert' instead."
-assert_false = deprecated(deprecation_message)(_dummy.assertFalse)
 
 
 def assert_warns(warning_class, func, *args, **kw):
@@ -193,7 +165,7 @@ def assert_warns_message(warning_class, message, func, *args, **kw):
             if callable(message):  # add support for certain tests
                 check_in_message = message
             else:
-                check_in_message = lambda msg: message in msg
+                def check_in_message(msg): return message in msg
 
             if check_in_message(msg):
                 message_found = True
@@ -276,8 +248,8 @@ def ignore_warnings(obj=None, category=Warning):
     ...     warnings.warn('buhuhuhu')
 
     >>> def nasty_warn():
-    ...    warnings.warn('buhuhuhu')
-    ...    print(42)
+    ...     warnings.warn('buhuhuhu')
+    ...     print(42)
 
     >>> ignore_warnings(nasty_warn)()
     42
@@ -437,127 +409,6 @@ def assert_allclose_dense_sparse(x, y, rtol=1e-07, atol=1e-9, err_msg=''):
                          " not a sparse matrix and an array.")
 
 
-# TODO: Remove in 0.24. This class is now in utils.__init__.
-def all_estimators(include_meta_estimators=None,
-                   include_other=None, type_filter=None,
-                   include_dont_test=None):
-    """Get a list of all estimators from sklearn.
-
-    This function crawls the module and gets all classes that inherit
-    from BaseEstimator. Classes that are defined in test-modules are not
-    included.
-    By default meta_estimators such as GridSearchCV are also not included.
-
-    Parameters
-    ----------
-    include_meta_estimators : boolean, default=False
-        Deprecated, ignored.
-
-        .. deprecated:: 0.21
-           ``include_meta_estimators`` has been deprecated and has no effect in
-           0.21 and will be removed in 0.23.
-
-    include_other : boolean, default=False
-        Deprecated, ignored.
-
-        .. deprecated:: 0.21
-           ``include_other`` has been deprecated and has not effect in 0.21 and
-           will be removed in 0.23.
-
-    type_filter : string, list of string,  or None, default=None
-        Which kind of estimators should be returned. If None, no filter is
-        applied and all estimators are returned.  Possible values are
-        'classifier', 'regressor', 'cluster' and 'transformer' to get
-        estimators only of these specific types, or a list of these to
-        get the estimators that fit at least one of the types.
-
-    include_dont_test : boolean, default=False
-        Deprecated, ignored.
-
-        .. deprecated:: 0.21
-           ``include_dont_test`` has been deprecated and has no effect in 0.21
-           and will be removed in 0.23.
-
-    Returns
-    -------
-    estimators : list of tuples
-        List of (name, class), where ``name`` is the class name as string
-        and ``class`` is the actuall type of the class.
-    """
-    def is_abstract(c):
-        if not(hasattr(c, '__abstractmethods__')):
-            return False
-        if not len(c.__abstractmethods__):
-            return False
-        return True
-
-    if include_other is not None:
-        warnings.warn("include_other was deprecated in version 0.21,"
-                      " has no effect and will be removed in 0.23",
-                      FutureWarning)
-
-    if include_dont_test is not None:
-        warnings.warn("include_dont_test was deprecated in version 0.21,"
-                      " has no effect and will be removed in 0.23",
-                      FutureWarning)
-
-    if include_meta_estimators is not None:
-        warnings.warn("include_meta_estimators was deprecated in version 0.21,"
-                      " has no effect and will be removed in 0.23",
-                      FutureWarning)
-
-    all_classes = []
-    # get parent folder
-    path = sklearn.__path__
-    for importer, modname, ispkg in pkgutil.walk_packages(
-            path=path, prefix='sklearn.', onerror=lambda x: None):
-        if ".tests." in modname or "externals" in modname:
-            continue
-        if IS_PYPY and ('_svmlight_format' in modname or
-                        'feature_extraction._hashing_fast' in modname):
-            continue
-        # Ignore deprecation warnings triggered at import time.
-        with ignore_warnings(category=FutureWarning):
-            module = __import__(modname, fromlist="dummy")
-        classes = inspect.getmembers(module, inspect.isclass)
-        all_classes.extend(classes)
-
-    all_classes = set(all_classes)
-
-    estimators = [c for c in all_classes
-                  if (issubclass(c[1], BaseEstimator) and
-                      c[0] != 'BaseEstimator')]
-    # get rid of abstract base classes
-    estimators = [c for c in estimators if not is_abstract(c[1])]
-
-    if type_filter is not None:
-        if not isinstance(type_filter, list):
-            type_filter = [type_filter]
-        else:
-            type_filter = list(type_filter)  # copy
-        filtered_estimators = []
-        filters = {'classifier': ClassifierMixin,
-                   'regressor': RegressorMixin,
-                   'transformer': TransformerMixin,
-                   'cluster': ClusterMixin}
-        for name, mixin in filters.items():
-            if name in type_filter:
-                type_filter.remove(name)
-                filtered_estimators.extend([est for est in estimators
-                                            if issubclass(est[1], mixin)])
-        estimators = filtered_estimators
-        if type_filter:
-            raise ValueError("Parameter type_filter must be 'classifier', "
-                             "'regressor', 'transformer', 'cluster' or "
-                             "None, got"
-                             " %s." % repr(type_filter))
-
-    # drop duplicates, sort for reproducibility
-    # itemgetter is used to ensure the sort does not extend to the 2nd item of
-    # the tuple
-    return sorted(set(estimators), key=itemgetter(0))
-
-
 def set_random_state(estimator, random_state=0):
     """Set random state of an estimator if it has the `random_state` param.
 
@@ -566,10 +417,9 @@ def set_random_state(estimator, random_state=0):
     estimator : object
         The estimator
     random_state : int, RandomState instance or None, optional, default=0
-        Pseudo random number generator state.  If int, random_state is the seed
-        used by the random number generator; If RandomState instance,
-        random_state is the random number generator; If None, the random number
-        generator is the RandomState instance used by `np.random`.
+        Pseudo random number generator state.
+        Pass an int for reproducible results across multiple function calls.
+        See :term:`Glossary <random_state>`.
     """
     if "random_state" in estimator.get_params():
         estimator.set_params(random_state=random_state)
@@ -611,21 +461,6 @@ try:
             reason="Possible multi-process bug with some BLAS")
 except ImportError:
     pass
-
-
-def clean_warning_registry():
-    """Clean Python warning registry for easier testing of warning messages.
-
-    When changing warning filters this function is not necessary with
-    Python3.5+, as __warningregistry__ will be re-set internally.
-    See https://bugs.python.org/issue4180 and
-    https://bugs.python.org/issue21724 for more details.
-
-    """
-    for mod in sys.modules.values():
-        registry = getattr(mod, "__warningregistry__", None)
-        if registry is not None:
-            registry.clear()
 
 
 def check_skip_network():
@@ -912,3 +747,25 @@ def assert_run_python_script(source_code, timeout=60):
                                % e.output.decode('utf-8'))
     finally:
         os.unlink(source_file)
+
+
+def _convert_container(container, constructor_name, columns_name=None):
+    if constructor_name == 'list':
+        return list(container)
+    elif constructor_name == 'tuple':
+        return tuple(container)
+    elif constructor_name == 'array':
+        return np.asarray(container)
+    elif constructor_name == 'sparse':
+        return sp.sparse.csr_matrix(container)
+    elif constructor_name == 'dataframe':
+        pd = pytest.importorskip('pandas')
+        return pd.DataFrame(container, columns=columns_name)
+    elif constructor_name == 'series':
+        pd = pytest.importorskip('pandas')
+        return pd.Series(container)
+    elif constructor_name == 'index':
+        pd = pytest.importorskip('pandas')
+        return pd.Index(container)
+    elif constructor_name == 'slice':
+        return slice(container[0], container[1])

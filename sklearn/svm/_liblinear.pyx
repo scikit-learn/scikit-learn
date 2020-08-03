@@ -9,6 +9,8 @@ cimport numpy as np
 
 from ..utils._cython_blas cimport _dot, _axpy, _scal, _nrm2
 
+include "_liblinear.pxi"
+
 np.import_array()
 
 
