@@ -449,6 +449,7 @@ def _kmeans_single_elkan(X, sample_weight, n_clusters, max_iter=300,
                           f"{center_shift_tot} within tolerance {tol}.")
                 break
 
+        centers, centers_new = centers_new, centers
         labels_old[:] = labels
 
     if not strict_convergence:
@@ -589,6 +590,7 @@ def _kmeans_single_lloyd(X, sample_weight, n_clusters, max_iter=300,
                               f"{center_shift_tot} within tolerance {tol}.")
                     break
 
+            centers, centers_new = centers_new, centers
             labels_old[:] = labels
 
         if not strict_convergence:
