@@ -15,7 +15,6 @@ from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_warns
 from sklearn.utils._testing import assert_warns_message
 from sklearn.utils._testing import assert_raise_message
-from sklearn.utils.fixes import _astype_copy_false
 from sklearn.base import clone
 from sklearn.exceptions import ConvergenceWarning
 
