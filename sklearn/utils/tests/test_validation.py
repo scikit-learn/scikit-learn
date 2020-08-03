@@ -1215,7 +1215,7 @@ def test_check_sparse_pandas_sp_format(sp_format):
     assert_allclose_dense_sparse(sp_mat, result)
 
 
-def make_type_tables():
+def make_types_table():
     pd = pytest.importorskip("pandas")
 
     ntp = np.core.numerictypes.allTypes
@@ -1223,7 +1223,6 @@ def make_type_tables():
     dall = pd.DataFrame(inpt)
 
     dall.index = dall['np_name']
-    dall.sort_index(inplace=True)
     dall.drop(['generic', 'void0', 'void', 'flexible', 'integer',
                'signedinteger', 'unsignedinteger', 'character',
                'inexact', 'floating', 'number'], inplace=True)
@@ -1236,7 +1235,7 @@ def make_type_tables():
     dall['dtype'] = dall['np_type'].map(np.dtype)
     dall['dtype_name'] = dall['dtype'].map(lambda x: x.name)
 
-    dall.reindex(columns=['dtype', 'np_name', 'np_type'])
+    dall = dall.reindex(columns=['dtype_name', 'dtype', 'np_name', 'np_type'])
     num_types = (lambda x: x[(x.dtype_name.str.startswith('bool')) |
                  (x.dtype_name.str.startswith('float')) |
                  (x.dtype_name.str.startswith('int')) |
@@ -1245,20 +1244,16 @@ def make_type_tables():
     num_types.sort_values(by='dtype_name', inplace=True)
     num_types.index = list(range(num_types.shape[0]))
 
-    obj_types = (lambda x: x[(x.dtype_name.str.startswith('bytes')) |
-                 (x.dtype_name.str.startswith('object')) |
-                 (x.dtype_name.str.startswith('str'))
-                 ])(dall).copy()
-    obj_types.sort_values(by='dtype_name', inplace=True)
-    obj_types.index = list(range(obj_types.shape[0]))
-
-    return num_types, obj_types
+    return num_types
 
 
-num_types, obj_types = make_type_tables()
+@pytest.mark.parametrize('dt_name',
+                         ['bool', 'float', 'int', 'uint'])
+@pytest.mark.parametrize('types_tbl', [make_types_table()],
+                         ids=['dtypes'])
+def test_check__pandas_sparse_invalid_coo_matrix_numerics(dt_name, types_tbl):
+    df = types_tbl[types_tbl.dtype_name.str.startswith(dt_name)]
 
-
-def make_types_df_validator(target):
     def tester_df(ntype1, ntype2):
         pd = pytest.importorskip("pandas")
         try:
@@ -1269,73 +1264,35 @@ def make_types_df_validator(target):
             return tf
         except TypeError:
             # not all np.types are supported by DataFrame. But we
-            #  dont look for this here. We search for cases when
-            #  after the DataFrame is created, it generates an
+            # don't look for this here. We search for cases when
+            # after the DataFrame is created, it generates an
             # invalid coo_matrix
             return None
 
-    def df_num_validator(df, allf, do_test):
-        for i in df.index[:-1]:
-            do_test(df.loc[i], df.loc[i+1], tester_df)
-
-        if df.index[-1] < allf.index[-1]:
-            first = df.loc[df.index[-1]]
-            second = allf.loc[df.index[-1] + 1]
-            do_test(first, second, tester_df)
-        else:
-            first = allf.loc[allf.index[0]]
-            last = df.loc[df.index[-1]]
-            do_test(first, last, tester_df)
-
-    def df_obj_validator(df, do_test):
-        for i in df.index:
-            do_test(df.loc[i], df.loc[i], tester_df)
-
-    validator = df_num_validator if target == 'numbers' else df_obj_validator
-    return validator
-
-
-@pytest.mark.parametrize('dt_name',
-                         ['bool', 'float', 'int', 'uint'])
-@pytest.mark.parametrize('types_tbl', [num_types])
-def test_check__pandas_sparse_invalid_coo_matrix_numerics(dt_name, types_tbl):
-    df = types_tbl[types_tbl.dtype_name.str.startswith(dt_name)]
-
-    def do_test(first, second, make_tester_df):
-        tdf = make_tester_df(first['np_name'], second['np_name'])
+    def do_test(one, two):
+        tdf = tester_df(one['np_name'], two['np_name'])
         if tdf is None:
             # deal with codecov
             assert True
-        elif first['dtype_name'] == second['dtype_name']:
+        elif one['dtype_name'] == two['dtype_name']:
             check_array(tdf, **{'accept_sparse': ['csr', 'csc'],
                                 'ensure_min_features': 2})
         else:
             with pytest.raises(ValueError,
-                               match="DataFrame has sparse extention "
-                                     "arrays of mixed numeric types"):
+                               match="Pandas DataFrame with mixed "
+                                     "sparse extension arrays"):
                 check_array(tdf, **{'accept_sparse': ['csr', 'csc'],
                                     'ensure_min_features': 2})
 
-    make_types_df_validator('numbers')(df, types_tbl, do_test)
+    for i in df.index[:-1]:
+        do_test(df.loc[i], df.loc[i + 1])
 
+    if df.index[-1] < types_tbl.index[-1]:
+        first = df.loc[df.index[-1]]
+        second = types_tbl.loc[df.index[-1] + 1]
+        do_test(first, second)
+    else:
+        first = types_tbl.loc[types_tbl.index[0]]
+        second = df.loc[df.index[-1]]
+        do_test(first, second)
 
-@pytest.mark.parametrize('dt_name',
-                         ['bytes', 'object', 'str'])
-@pytest.mark.parametrize('types_tbl', [obj_types])
-def test_check__pandas_sparse_invalid_coo_matrix_objects(dt_name,
-                                                         types_tbl):
-    df = types_tbl[types_tbl.dtype_name.str.startswith(dt_name)]
-
-    def do_test(first, second, make_tester_df):
-        tdf = make_tester_df(first['np_name'], second['np_name'])
-        if tdf is None:
-            # deal with codecov
-            assert True
-        else:
-            with pytest.raises(ValueError,
-                               match="generation of a coo_matrix "
-                                     "of dtype object"):
-                check_array(tdf, **{'accept_sparse': ['csr', 'csc'],
-                                    'ensure_min_features': 2})
-
-    make_types_df_validator('objects')(df, do_test)

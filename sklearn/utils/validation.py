@@ -572,18 +572,11 @@ def check_array(array, accept_sparse=False, *, accept_large_sparse=True,
             def is_sparse_df_with_mixed_types(df):
                 dtps = set([dt.subtype.name for dt in df.dtypes])
                 return len(dtps) > 1
-
-            mixed = is_sparse_df_with_mixed_types(array_orig)
-            mxg = "A coo_matrix with dtype 'np.object' is created "\
-                  "when \nDataFrame has sparse extention arrays of"\
-                  " mixed numeric types."\
-                if mixed else \
-                "SparseArrays of dtype: bytes, str or object lead"\
-                "to the generation of a coo_matrix of dtype object"
-            raise ValueError(
-                "Pandas DataFrame with sparse extention arrays generated "
-                "a sparse coo_matrix with dtype 'np.object'\n which "
-                "scipy cannot convert to a CSR or a CSC. {}".format(mxg))
+            if is_sparse_df_with_mixed_types(array_orig):
+                raise ValueError(
+                    "Pandas DataFrame with mixed sparse extension arrays "
+                    "generated a sparse matrix\n with object dtype which "
+                    "can not be converted to a scipy sparse matrix")
 
     if sp.issparse(array):
         _ensure_no_complex_data(array)
