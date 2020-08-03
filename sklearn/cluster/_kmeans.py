@@ -606,13 +606,7 @@ def _kmeans_single_lloyd(X, sample_weight, n_clusters, max_iter=300,
 
             labels_old[:] = labels
 
-<<<<<<< HEAD
-            centers, centers_new = centers_new, centers
-
-        if center_shift_tot > 0:
-=======
         if not strict_convergence:
->>>>>>> fc06baef49... [MRG] Fix KMeans convergence when tol==0 (#17959)
             # rerun E-step so that predicted labels match cluster centers
             lloyd_iter(X, sample_weight, x_squared_norms, centers, centers,
                        weight_in_clusters, labels, center_shift, n_threads,
