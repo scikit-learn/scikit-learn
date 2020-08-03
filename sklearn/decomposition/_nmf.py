@@ -863,10 +863,10 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
         + 0.5 * alpha * (1 - l1_ratio) * ||W||_Fro^2
         + 0.5 * alpha * (1 - l1_ratio) * ||H||_Fro^2
 
-    Where::
+    Where:
+    :math:`||A||_{Fro}^2 = \sum_{i,j} A_{ij}^2` (Frobenius norm)
 
-        :math:`||A||_{Fro}^2 = \sum_{i,j} A_{ij}^2` (Frobenius norm)
-        :math:`||vec(A)||_1 = \sum_{i,j} abs(A_{ij})` (Elementwise L1 norm)
+    :math:`||vec(A)||_1 = \sum_{i,j} abs(A_{ij})` (Elementwise L1 norm)
 
     For multiplicative-update ('mu') solver, the Frobenius norm
     :math:`(0.5 * ||X - WH||_{Fro}^2)` can be changed into another
