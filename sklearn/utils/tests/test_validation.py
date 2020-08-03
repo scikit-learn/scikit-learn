@@ -1274,16 +1274,10 @@ def test_check__pandas_sparse_invalid_coo_matrix_numerics(dt_name, types_tbl):
         if tdf is None:
             # deal with codecov
             assert True
-        elif one['dtype_name'] == two['dtype_name']:
-            check_array(tdf, **{'accept_sparse': ['csr', 'csc'],
-                                'ensure_min_features': 2})
-        else:
-            with pytest.raises(ValueError,
-                               match="Pandas DataFrame with mixed "
-                                     "sparse extension arrays"):
-                check_array(tdf, **{'accept_sparse': ['csr', 'csc'],
-                                    'ensure_min_features': 2})
 
+        check_array(tdf, **{'accept_sparse': ['csr', 'csc'],
+                            'ensure_min_features': 2})
+        
     for i in df.index[:-1]:
         do_test(df.loc[i], df.loc[i + 1])
 
