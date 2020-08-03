@@ -855,22 +855,27 @@ def non_negative_factorization(X, W=None, H=None, n_components=None, *,
     negative matrix X. This factorization can be used for example for
     dimensionality reduction, source separation or topic extraction.
 
-    The objective function is::
+    The objective function is:
 
-        0.5 * ||X - WH||_Fro^2
-        + alpha * l1_ratio * ||vec(W)||_1
-        + alpha * l1_ratio * ||vec(H)||_1
-        + 0.5 * alpha * (1 - l1_ratio) * ||W||_Fro^2
-        + 0.5 * alpha * (1 - l1_ratio) * ||H||_Fro^2
+        .. math::
 
-    Where::
+            0.5 * ||X - WH||_{Fro}^2 + alpha * l1_{ratio} * ||vec(W)||_1
 
-        ||A||_Fro^2 = \sum_{i,j} A_{ij}^2 (Frobenius norm)
-        ||vec(A)||_1 = \sum_{i,j} abs(A_{ij}) (Elementwise L1 norm)
+            + alpha * l1_{ratio} * ||vec(H)||_1
+
+            + 0.5 * alpha * (1 - l1_{ratio}) * ||W||_{Fro}^2
+
+            + 0.5 * alpha * (1 - l1_{ratio}) * ||H||_{Fro}^2
+
+    Where:
+
+        :math:`||A||_{Fro}^2 = \sum_{i,j} A_{ij}^2` (Frobenius norm)
+
+        :math:`||vec(A)||_1 = \sum_{i,j} abs(A_{ij})` (Elementwise L1 norm)
 
     For multiplicative-update ('mu') solver, the Frobenius norm
-    (0.5 * ||X - WH||_Fro^2) can be changed into another beta-divergence loss,
-    by changing the beta_loss parameter.
+    :math:`(0.5 * ||X - WH||_{Fro}^2)` can be changed into another
+    beta-divergence loss, by changing the beta_loss parameter.
 
     The objective function is minimized with an alternating minimization of W
     and H. If H is given and update_H=False, it solves for W only.
@@ -1087,22 +1092,27 @@ class NMF(TransformerMixin, BaseEstimator):
     negative matrix X. This factorization can be used for example for
     dimensionality reduction, source separation or topic extraction.
 
-    The objective function is::
+    The objective function is:
 
-        0.5 * ||X - WH||_Fro^2
-        + alpha * l1_ratio * ||vec(W)||_1
-        + alpha * l1_ratio * ||vec(H)||_1
-        + 0.5 * alpha * (1 - l1_ratio) * ||W||_Fro^2
-        + 0.5 * alpha * (1 - l1_ratio) * ||H||_Fro^2
+        .. math::
 
-    Where::
+            0.5 * ||X - WH||_{Fro}^2 + alpha * l1_{ratio} * ||vec(W)||_1
 
-        ||A||_Fro^2 = \sum_{i,j} A_{ij}^2 (Frobenius norm)
-        ||vec(A)||_1 = \sum_{i,j} abs(A_{ij}) (Elementwise L1 norm)
+            + alpha * l1_{ratio} * ||vec(H)||_1
+
+            + 0.5 * alpha * (1 - l1_{ratio}) * ||W||_{Fro}^2
+
+            + 0.5 * alpha * (1 - l1_{ratio}) * ||H||_{Fro}^2
+
+    Where:
+
+        :math:`||A||_{Fro}^2 = \sum_{i,j} A_{ij}^2` (Frobenius norm)
+
+        :math:`||vec(A)||_1 = \sum_{i,j} abs(A_{ij})` (Elementwise L1 norm)
 
     For multiplicative-update ('mu') solver, the Frobenius norm
-    (0.5 * ||X - WH||_Fro^2) can be changed into another beta-divergence loss,
-    by changing the beta_loss parameter.
+    (:math:`0.5 * ||X - WH||_{Fro}^2`) can be changed into another
+    beta-divergence loss, by changing the beta_loss parameter.
 
     The objective function is minimized with an alternating minimization of W
     and H.
