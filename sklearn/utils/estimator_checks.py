@@ -29,7 +29,6 @@ from ._testing import ignore_warnings
 from ._testing import create_memmap_backed_data
 from . import is_scalar_nan
 from ..discriminant_analysis import LinearDiscriminantAnalysis
-# from ..linear_model import LogisticRegression
 from ..linear_model import Ridge
 
 from ..base import (clone, ClusterMixin, is_classifier, is_regressor,
@@ -336,7 +335,6 @@ def _construct_instance(Estimator):
                 estimator = Estimator(Ridge())
             else:
                 estimator = Estimator(LinearDiscriminantAnalysis())
-                # estimator = Estimator(LogisticRegression())
         else:
             raise SkipTest("Can't instantiate estimator {} which requires "
                            "parameters {}".format(Estimator.__name__,
@@ -1384,25 +1382,24 @@ def check_fit_score_takes_y(name, estimator_orig):
 @ignore_warnings
 def check_estimators_dtypes(name, estimator_orig):
     rnd = np.random.RandomState(0)
-    X_train_32 = 3 * rnd.uniform(size=(200, 10)).astype(np.float32)
+    X_train_32 = 3 * rnd.uniform(size=(20, 5)).astype(np.float32)
     X_train_32 = _pairwise_estimator_convert_X(X_train_32, estimator_orig)
-    # X_train_64 = X_train_32.astype(np.float64)
+    X_train_64 = X_train_32.astype(np.float64)
     X_train_int_64 = X_train_32.astype(np.int64)
     X_train_int_32 = X_train_32.astype(np.int32)
     y = X_train_int_64[:, 0]
     y = _enforce_estimator_tags_y(estimator_orig, y)
 
-    # methods = ["predict", "transform", "decision_function", "predict_proba"]
+    methods = ["predict", "transform", "decision_function", "predict_proba"]
 
-    # for X_train in [X_train_32, X_train_64, X_train_int_64, X_train_int_32]:
-    for X_train in [X_train_int_32]:
+    for X_train in [X_train_32, X_train_64, X_train_int_64, X_train_int_32]:
         estimator = clone(estimator_orig)
         set_random_state(estimator, 1)
         estimator.fit(X_train, y)
 
-        # for method in methods:
-        #     if hasattr(estimator, method):
-        #         getattr(estimator, method)(X_train)
+        for method in methods:
+            if hasattr(estimator, method):
+                getattr(estimator, method)(X_train)
 
 
 @ignore_warnings(category=FutureWarning)
