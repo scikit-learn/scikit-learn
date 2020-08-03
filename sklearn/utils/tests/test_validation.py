@@ -1274,7 +1274,7 @@ def test_check__pandas_sparse_invalid_coo_matrix_numerics(dt_name, types_tbl):
     def do_test(one, two):
         tdf = tester_df(one['np_name'], two['np_name'])
         if (one['dtype_name'] == two['dtype_name']
-              or new_pandas_version()):
+           or new_pandas_version()):
             check_array(tdf, **{'accept_sparse': ['csr', 'csc'],
                         'ensure_min_features': 2})
         else:
