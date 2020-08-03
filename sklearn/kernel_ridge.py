@@ -38,19 +38,19 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
     Parameters
     ----------
-    alpha : float or array-like of shape (n_targets,)
+    alpha : float or array-like of shape (n_targets,), default=1.0
         Regularization strength; must be a positive float. Regularization
         improves the conditioning of the problem and reduces the variance of
         the estimates. Larger values specify stronger regularization.
         Alpha corresponds to ``1 / (2C)`` in other linear models such as
         :class:`~sklearn.linear_model.LogisticRegression` or
-        :class:`sklearn.svm.LinearSVC`. If an array is passed, penalties are
+        :class:`~sklearn.svm.LinearSVC`. If an array is passed, penalties are
         assumed to be specific to the targets. Hence they must correspond in
         number. See :ref:`ridge_regression` for formula.
 
     kernel : string or callable, default="linear"
         Kernel mapping used internally. This parameter is directly passed to
-        :class:`sklearn.metrics.pairwise.pairwise_kernel`.
+        :class:`~sklearn.metrics.pairwise.pairwise_kernel`.
         If `kernel` is a string, it must be one of the metrics
         in `pairwise.PAIRWISE_KERNEL_FUNCTIONS`.
         If `kernel` is "precomputed", X is assumed to be a kernel matrix.
@@ -75,7 +75,7 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
         Zero coefficient for polynomial and sigmoid kernels.
         Ignored by other kernels.
 
-    kernel_params : mapping of string to any, optional
+    kernel_params : mapping of string to any, default=None
         Additional parameters (keyword arguments) for kernel function passed
         as callable object.
 
@@ -138,7 +138,7 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
     def _pairwise(self):
         return self.kernel == "precomputed"
 
-    def fit(self, X, y=None, sample_weight=None):
+    def fit(self, X, y, sample_weight=None):
         """Fit Kernel Ridge regression model
 
         Parameters
@@ -150,7 +150,7 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
         y : array-like of shape (n_samples,) or (n_samples, n_targets)
             Target values
 
-        sample_weight : float or array-like of shape [n_samples]
+        sample_weight : float or array-like of shape (n_samples,), default=None
             Individual weights for each sample, ignored if None is passed.
 
         Returns
