@@ -808,7 +808,7 @@ def test_x_squared_norms_init_centroids():
 @pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
 def test_float_precision(Estimator, data):
     # Check that the results are the same for single and double precision.
-    km = Estimator(n_init=1, random_state=0)
+    estimator = Estimator(n_init=1, random_state=0)
 
     inertia = {}
     X_new = {}
