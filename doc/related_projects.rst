@@ -47,6 +47,13 @@ enhance the functionality of scikit-learn's estimators.
   transforming temporal and relational datasets into feature matrices for 
   machine learning.
 
+- `Neuraxle <https://github.com/Neuraxio/Neuraxle>`_
+  A library for building neat pipelines, providing the right abstractions to
+  both ease research, development, and deployment of machine learning
+  applications. Compatible with deep learning frameworks and scikit-learn API,
+  it can stream minibatches, use data checkpoints, build funky pipelines, and
+  serialize models with custom per-step savers.
+
 **Experimentation frameworks**
 
 - `REP <https://github.com/yandex/REP>`_ Environment for conducting data-driven
