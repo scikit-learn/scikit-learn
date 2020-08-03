@@ -1240,3 +1240,6 @@ def test_feature_union_warns_with_none():
 
     with pytest.warns(FutureWarning, match=msg):
         union.fit_transform(X)
+
+    with pytest.warns(FutureWarning, match=msg):
+        union.transform(X)

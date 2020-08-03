@@ -997,6 +997,14 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
             hstack of results of transformers. sum_n_components is the
             sum of n_components (output dimension) over transformers.
         """
+        for _, t in self.transformer_list:
+            # TODO: Remove in 0.24 when None is removed
+            if t is None:
+                warnings.warn("Using None as a transformer is deprecated "
+                              "in version 0.22 and will be removed in "
+                              "version 0.24. Please use 'drop' instead.",
+                              FutureWarning)
+                continue
         Xs = Parallel(n_jobs=self.n_jobs)(
             delayed(_transform_one)(trans, X, None, weight)
             for name, trans, weight in self._iter())
