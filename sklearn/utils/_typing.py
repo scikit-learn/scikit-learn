@@ -19,14 +19,14 @@ class Shape:
             raise ValueError("All shapes must be tuple")
         self.shapes = shapes
 
-    def _join_one(self, shape):
+    def _join(self, shape):
         if len(shape) == 1:
             return f"({shape[0]},)"
         inner = ', '.join(str(s) for s in shape)
         return f"({inner})"
 
     def __repr__(self):
-        output = ' or '.join(self._join_one(shape) for shape in self.shapes)
+        output = ' or '.join(self._join(shape) for shape in self.shapes)
         return f"of shape {output}"
 
 
