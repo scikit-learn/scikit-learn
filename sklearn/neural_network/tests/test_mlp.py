@@ -488,7 +488,7 @@ def test_predict_proba_binary():
 
     assert y_proba.shape == (n_samples, n_classes)
     assert_array_equal(proba_max, proba_log_max)
-    assert_array_equal(y_log_proba, np.log(y_proba))
+    assert_allclose(y_log_proba, np.log(y_proba))
 
     assert roc_auc_score(y, y_proba[:, 1]) == 1.0
 
@@ -511,7 +511,7 @@ def test_predict_proba_multiclass():
 
     assert y_proba.shape == (n_samples, n_classes)
     assert_array_equal(proba_max, proba_log_max)
-    assert_array_equal(y_log_proba, np.log(y_proba))
+    assert_allclose(y_log_proba, np.log(y_proba))
 
 
 def test_predict_proba_multilabel():
@@ -535,7 +535,7 @@ def test_predict_proba_multilabel():
 
     assert (y_proba.sum(1) - 1).dot(y_proba.sum(1) - 1) > 1e-10
     assert_array_equal(proba_max, proba_log_max)
-    assert_array_equal(y_log_proba, np.log(y_proba))
+    assert_allclose(y_log_proba, np.log(y_proba))
 
 
 def test_shuffle():
