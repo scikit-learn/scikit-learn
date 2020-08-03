@@ -69,6 +69,7 @@ def _get_weights(dist, weights):
     ----------
     dist : ndarray
         The input distances
+
     weights : {'uniform', 'distance' or a callable}
         The kind of weighting used
 
@@ -77,6 +78,7 @@ def _get_weights(dist, weights):
     weights_arr : array of the same shape as ``dist``
         if ``weights == 'uniform'``, then returns None
     """
+
     if weights in (None, 'uniform'):
         return None
     elif weights == 'distance':
@@ -111,19 +113,19 @@ def _is_sorted_by_data(graph):
 
     The non-zero entries are stored in graph.data and graph.indices.
     For each row (or sample), the non-zero entries can be either:
-        - sorted by indices, as after graph.sort_indices()
-        - sorted by data, as after _check_precomputed(graph)
+        - sorted by indices, as after graph.sort_indices().
+        - sorted by data, as after _check_precomputed(graph).
         - not sorted.
 
     Parameters
     ----------
     graph : CSR sparse matrix, shape (n_samples, n_samples)
-        Neighbors graph as given by kneighbors_graph or radius_neighbors_graph
+        Neighbors graph as given by kneighbors_graph or radius_neighbors_graph.
 
     Returns
     -------
-    res : boolean
-        Whether input graph is sorted by data
+    res : bool
+        Whether input graph is sorted by data.
     """
     assert graph.format == 'csr'
     out_of_order = graph.data[:-1] > graph.data[1:]
@@ -201,8 +203,8 @@ def _kneighbors_from_graph(graph, n_neighbors, return_distance):
     n_neighbors : int
         Number of neighbors required for each sample.
 
-    return_distance : boolean
-        If False, distances will not be returned
+    return_distance : bool
+        If False, distances will not be returned.
 
     Returns
     -------
@@ -251,8 +253,8 @@ def _radius_neighbors_from_graph(graph, radius, return_distance):
     radius : float > 0
         Radius of neighborhoods.
 
-    return_distance : boolean
-        If False, distances will not be returned
+    return_distance : bool
+        If False, distances will not be returned.
 
     Returns
     -------
@@ -542,10 +544,15 @@ class KNeighborsMixin:
         Parameters
         ----------
         dist : array of shape (n_samples_chunk, n_samples)
+
         start : int
             The index in X which the first row of dist corresponds to.
+
         n_neighbors : int
+            Number of neighbors required for each sample.
+
         return_distance : bool
+            If False, distances will not be returned.
 
         Returns
         -------
@@ -581,11 +588,11 @@ class KNeighborsMixin:
             In this case, the query point is not considered its own neighbor.
 
         n_neighbors : int
-            Number of neighbors to get (default is the value
-            passed to the constructor).
+            Number of neighbors required for each sample.
+            (default is the value passed to the constructor).
 
-        return_distance : boolean, optional. Defaults to True.
-            If False, distances will not be returned
+        return_distance : bool, defaults=True
+            If False, distances will not be returned.
 
         Returns
         -------
@@ -749,7 +756,8 @@ class KNeighborsMixin:
         Parameters
         ----------
         X : array-like, shape (n_queries, n_features), \
-                or (n_queries, n_indexed) if metric == 'precomputed'
+                or (n_queries, n_indexed) if metric == 'precomputed', \
+                default=None
             The query point or points.
             If not provided, neighbors of each indexed point are returned.
             In this case, the query point is not considered its own neighbor.
@@ -758,7 +766,7 @@ class KNeighborsMixin:
             Number of neighbors for each sample.
             (default is value passed to the constructor).
 
-        mode : {'connectivity', 'distance'}, optional
+        mode : {'connectivity', 'distance'}, default='connectivity'
             Type of returned matrix: 'connectivity' will return the
             connectivity matrix with ones and zeros, in 'distance' the
             edges are Euclidean distance between points.
@@ -840,10 +848,14 @@ class RadiusNeighborsMixin:
         Parameters
         ----------
         dist : array of shape (n_samples_chunk, n_samples)
+
         start : int
             The index in X which the first row of dist corresponds to.
+
         radius : float
+
         return_distance : bool
+            If False, distances will not be returned.
 
         Returns
         -------
@@ -878,7 +890,7 @@ class RadiusNeighborsMixin:
 
         Parameters
         ----------
-        X : array-like, (n_samples, n_features), optional
+        X : array-like, (n_samples, n_features), default=None
             The query point or points.
             If not provided, neighbors of each indexed point are returned.
             In this case, the query point is not considered its own neighbor.
@@ -887,10 +899,10 @@ class RadiusNeighborsMixin:
             Limiting distance of neighbors to return.
             (default is the value passed to the constructor).
 
-        return_distance : boolean, optional. Defaults to True.
+        return_distance : bool, defaults=True
             If False, distances will not be returned.
 
-        sort_results : boolean, optional. Defaults to False.
+        sort_results : bool, defaults=False
             If True, the distances and indices will be sorted before being
             returned. If False, the results will not be sorted. If
             return_distance == False, setting sort_results = True will
@@ -1057,12 +1069,12 @@ class RadiusNeighborsMixin:
             Radius of neighborhoods.
             (default is the value passed to the constructor).
 
-        mode : {'connectivity', 'distance'}, optional
+        mode : {'connectivity', 'distance'}, default='connectivity'
             Type of returned matrix: 'connectivity' will return the
             connectivity matrix with ones and zeros, in 'distance' the
             edges are Euclidean distance between points.
 
-        sort_results : boolean, optional. Defaults to False.
+        sort_results : bool, defaults=False
             If True, the distances and indices will be sorted before being
             returned. If False, the results will not be sorted.
             Only used with mode='distance'.
