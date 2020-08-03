@@ -805,12 +805,6 @@ def test_x_squared_norms_init_centroids():
         _init_centroids(X, 3, "k-means++", random_state=0))
 
 
-def test_max_iter_error():
-    km = KMeans(max_iter=-1)
-    assert_raise_message(ValueError, 'Number of iterations should be',
-                         km.fit, X)
-
-
 @pytest.mark.parametrize("data", [X, X_csr], ids=["dense", "sparse"])
 @pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
 def test_float_precision(Estimator, data):
