@@ -92,7 +92,7 @@ Changelog
 .......................
 
 - |Fix| Fixed a bug where :func:`metrics.pairwise_distances` would raise an
-   error if ``metric='seuclidean'`` and ``X`` is not type ``np.float64``.
+  error if ``metric='seuclidean'`` and ``X`` is not type ``np.float64``.
   :pr:`15730` by :user:`Forrest Koch <ForrestCKoch>`.
 
 :mod:`sklearn.metrics`
