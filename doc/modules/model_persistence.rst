@@ -10,8 +10,8 @@ you some hints on how to persist a scikit-learn model.
 
 .. note::
 
-   Remember that, once exported in a persistent format, the model could only be
-   used for predictions and it cannot be refitted.
+   Remember that, once exported in a persistent format, the model should only
+   be used for predictions and it shouldn not be refitted.
 
 Binary serialization
 --------------------
