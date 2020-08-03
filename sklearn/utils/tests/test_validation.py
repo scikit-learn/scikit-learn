@@ -1256,18 +1256,11 @@ def test_check__pandas_sparse_invalid_coo_matrix_numerics(dt_name, types_tbl):
 
     def tester_df(ntype1, ntype2):
         pd = pytest.importorskip("pandas")
-        try:
-            tf = pd.DataFrame({'col1': pd.arrays.SparseArray([0, 1, 0],
-                                                             dtype=ntype1),
-                               'col2': pd.arrays.SparseArray([1, 0, 1],
-                                                             dtype=ntype2)})
-            return tf
-        except TypeError:
-            # not all np.types are supported by DataFrame. But we
-            # don't look for this here. We search for cases when
-            # after the DataFrame is created, it generates an
-            # invalid coo_matrix
-            return None
+        tf = pd.DataFrame({'col1': pd.arrays.SparseArray([0, 1, 0],
+                                                         dtype=ntype1),
+                           'col2': pd.arrays.SparseArray([1, 0, 1],
+                                                         dtype=ntype2)})
+        return tf
 
     def new_pandas_version():
         pd = pytest.importorskip("pandas")
@@ -1280,10 +1273,7 @@ def test_check__pandas_sparse_invalid_coo_matrix_numerics(dt_name, types_tbl):
 
     def do_test(one, two):
         tdf = tester_df(one['np_name'], two['np_name'])
-        if tdf is None:
-            # deal with codecov
-            assert True
-        elif (one['dtype_name'] == two['dtype_name']
+        if (one['dtype_name'] == two['dtype_name']
               or new_pandas_version()):
             check_array(tdf, **{'accept_sparse': ['csr', 'csc'],
                         'ensure_min_features': 2})
