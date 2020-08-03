@@ -33,10 +33,9 @@ from sklearn.model_selection import train_test_split
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.5)
 
 # %%
+# Fit the Non-Negative least squares.
 from sklearn.linear_model import LinearRegression
 
-# %%
-# Fit the Non-Negative least squares.
 reg_nnls = LinearRegression(positive=True)
 y_pred_nnls = reg_nnls.fit(X_train, y_train).predict(X_test)
 r2_score_nnls = r2_score(y_test, y_pred_nnls)

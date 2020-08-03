@@ -259,7 +259,7 @@ def test_linear_regression_positive_multiple_outcome(random_state=0):
 
 
 def test_linear_regression_positive_vs_nonpositive():
-    # Test differences LinearRegression.
+    # Test differences with LinearRegression when positive=False.
     X, y = make_sparse_uncorrelated(random_state=0)
 
     reg = LinearRegression(positive=True)
