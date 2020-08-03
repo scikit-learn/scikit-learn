@@ -427,9 +427,9 @@ You can check for common programming errors with the following tools:
   see also :ref:`testing_coverage`
 
 * A moderate use of type annotations is encouraged but is not mandatory. See
-  [mypy quickstart](https://mypy.readthedocs.io/en/latest/getting_started.html)
-  for an introduction, as well as [pandas contributing documentation](
-  https://pandas.pydata.org/pandas-docs/stable/development/contributing.html#type-hints)
+  `mypy quickstart <https://mypy.readthedocs.io/en/latest/getting_started.html>`_
+  for an introduction, as well as `pandas contributing documentation
+  <https://pandas.pydata.org/pandas-docs/stable/development/contributing.html#type-hints>`_
   for style guidelines. Whether you add type annotation or not::
 
     mypy --ignore-missing-import sklearn
@@ -477,9 +477,10 @@ message, the following actions are taken.
     ====================== ===================
     Commit Message Marker  Action Taken by CI
     ---------------------- -------------------
-    [scipy-dev]            Add a Travis build with our dependencies (numpy, scipy, etc ...) development builds
     [ci skip]              CI is skipped completely
     [lint skip]            Azure pipeline skips linting
+    [scipy-dev]            Add a Travis build with our dependencies (numpy, scipy, etc ...) development builds
+    [arm64]                Add a Travis build for the ARM64 / aarch64 little endian architecture
     [doc skip]             Docs are not built
     [doc quick]            Docs built, but excludes example gallery plots
     [doc build]            Docs built including example gallery plots
@@ -525,7 +526,7 @@ Stalled and Unclaimed Issues
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Generally speaking, issues which are up for grabs will have a
-`"help wanted" <https://github.com/scikit-learn/scikit-learn/labels/help%20wanted>`__ .
+`"help wanted" <https://github.com/scikit-learn/scikit-learn/labels/help%20wanted>`_.
 tag. However, not all issues which need contributors will have this tag,
 as the "help wanted" tag is not always up-to-date with the state
 of the issue. Contributors can find issues which are still up for grabs
@@ -585,7 +586,7 @@ underestimate how easy an issue is to solve!
     we use the help wanted tag to mark Pull Requests which have been abandoned
     by their original contributor and are available for someone to pick up where the original
     contributor left off. The list of issues with the help wanted tag can be found
-    `here <https://github.com/scikit-learn/scikit-learn/labels/help%20wanted>`__ .
+    `here <https://github.com/scikit-learn/scikit-learn/labels/help%20wanted>`_.
 
     Note that not all issues which need contributors will have this tag.
 
