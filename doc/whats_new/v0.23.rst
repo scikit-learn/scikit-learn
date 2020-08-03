@@ -7,11 +7,68 @@
 Version 0.23.2
 ==============
 
+Changed models
+--------------
+
+The following estimators and functions, when fit with the same data and
+parameters, may produce different models from the previous version. This often
+occurs due to changes in the modelling logic (bug fixes or enhancements), or in
+random sampling procedures.
+
+- |Fix| ``inertia_`` attribute of :class:`cluster.KMeans` and
+  :class:`cluster.MiniBatchKMeans`.
+
+Details are listed in the changelog below.
+
+(While we are trying to better inform users by providing this information, we
+cannot assure that this list is complete.)
+
 Changelog
 ---------
 
+:mod:`sklearn.cluster`
+......................
+
+- |Fix| Fixed a bug in :class:`cluster.KMeans` where rounding errors could
+  prevent convergence to be declared when `tol=0`. :pr:`17959` by
+  :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+- |Fix| Fixed a bug in :class:`cluster.KMeans` and
+  :class:`cluster.MiniBatchKMeans` where the reported inertia was incorrectly
+  weighted by the sample weights. :pr:`17848` by
+  :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+- |Fix| Fixed a bug in :class:`cluster.MeanShift` with `bin_seeding=True`. When
+  the estimated bandwidth is 0, the behavior is equivalent to
+  `bin_seeding=False`.
+  :pr:`17742` by :user:`Jeremie du Boisberranger <jeremiedbb>`.
+
+- |Fix| Fixed a bug in :class:`cluster.AffinityPropagation`, that
+  gives incorrect clusters when the array dtype is float32.
+  :pr:`17995` by :user:`Thomaz Santana  <Wikilicious>` and
+  :user:`Amanda Dsouza <amy12xx>`.
+
+:mod:`sklearn.decomposition`
+............................
+
+- |Fix| Fixed a bug in
+  :func:`decomposition.MiniBatchDictionaryLearning.partial_fit` which should
+  update the dictionary by iterating only once over a mini-batch.
+  :pr:`17433` by :user:`Chiara Marmo <cmarmo>`.
+
+- |Fix| Avoid overflows on Windows in
+  :func:`decomposition.IncrementalPCA.partial_fit` for large ``batch_size`` and
+  ``n_samples`` values.
+  :pr:`17985` by :user:`Alan Butler <aldee153>` and
+  :user:`Amanda Dsouza <amy12xx>`.
+
 :mod:`sklearn.ensemble`
 .......................
+
+- |Fix| Fixed bug in :class:`ensemble.MultinomialDeviance` where the
+  average of logloss was incorrectly calculated as sum of logloss.
+  :pr:`17694` by :user:`Markus Rempfler <rempfler>` and
+  :user:`Tsutomu Kusanagi <t-kusanagi2>`.
 
 - |Fix| Fixes :class:`ensemble.StackingClassifier` and
   :class:`ensemble.StackingRegressor` compatibility with estimators that
@@ -30,6 +87,28 @@ Changelog
 
 - |Fix| :func:`linear_model.lars_path` does not overwrite `X` when
   `X_copy=True` and `Gram='auto'`. :pr:`17914` by `Thomas Fan`_.
+
+:mod:`sklearn.manifold`
+.......................
+
+- |Fix| Fixed a bug where :func:`metrics.pairwise_distances` would raise an
+  error if ``metric='seuclidean'`` and ``X`` is not type ``np.float64``.
+  :pr:`15730` by :user:`Forrest Koch <ForrestCKoch>`.
+
+:mod:`sklearn.metrics`
+......................
+
+- |Fix| Fixed a bug in :func:`metrics.mean_squared_error` where the
+  average of multiple RMSE values was incorrectly calculated as the root of the
+  average of multiple MSE values.
+  :pr:`17309` by :user:`Swier Heeres <swierh>`.
+
+:mod:`sklearn.utils`
+....................
+
+- |Fix| Fix :func:`utils.estimator_checks.check_estimator` so that all test
+  cases support the `binary_only` estimator tag.
+  :pr:`17812` by :user:`Bruno Charron <brcharron>`.
 
 .. _changes_0_23_1:
 

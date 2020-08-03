@@ -22,8 +22,8 @@ parameters, may produce different models from the previous version. This often
 occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
-- |Fix| ``inertia_`` attribute of :class:`cluster.KMeans` and
-  :class:`cluster.MiniBatchKMeans`.
+- item
+- item
 
 Details are listed in the changelog below.
 
@@ -72,27 +72,8 @@ Changelog
   :user:`Emilie Delattre <EmilieDel>`, and
   :user:`Francesco Casalegno <FrancescoCasalegno>`.
 
-- |Fix| Fixed a bug in :class:`cluster.MeanShift` with `bin_seeding=True`. When
-  the estimated bandwidth is 0, the behavior is equivalent to
-  `bin_seeding=False`.
-  :pr:`17742` by :user:`Jeremie du Boisberranger <jeremiedbb>`.
-
-- |Fix| Fixed a bug in :class:`cluster.KMeans` and
-  :class:`cluster.MiniBatchKMeans` where the reported inertia was incorrectly
-  weighted by the sample weights. :pr:`17848` by
-  :user:`Jérémie du Boisberranger <jeremiedbb>`.
-
 - |API| :class:`cluster.MiniBatchKMeans` attributes, `counts_` and
   `init_size_`, are deprecated and will be removed in 0.26. :pr:`17864` by
-  :user:`Jérémie du Boisberranger <jeremiedbb>`.
-
-- |Fix| Fixed a bug in :class:`cluster.AffinityPropagation`, that
-  gives incorrect clusters when the array dtype is float32.
-  :pr:`17995` by :user:`Thomaz Santana  <Wikilicious>` and
-  :user:`Amanda Dsouza <amy12xx>`.
-
-- |Fix| Fixed a bug in :class:`cluster.KMeans` where rounding errors could
-  prevent convergence to be declared when `tol=0`. :pr:`17959` by
   :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 :mod:`sklearn.covariance`
@@ -123,11 +104,6 @@ Changelog
 :mod:`sklearn.decomposition`
 ............................
 
-- |Fix| Fixed a bug in
-  :func:`decomposition.MiniBatchDictionaryLearning.partial_fit` which should
-  update the dictionary by iterating only once over a mini-batch.
-  :pr:`17433` by :user:`Chiara Marmo <cmarmo>`.
-
 - |Fix| Fix :class:`decomposition.SparseCoder` such that it follows
   scikit-learn API and support cloning. The attribute `components_` is
   deprecated in 0.24 and will be removed in 0.26. This attribute was
@@ -138,10 +114,6 @@ Changelog
   argument `rotation`, which can take the value `None`, `'varimax'` or `'quartimax'.`
   :pr:`11064` by :user:`Jona Sassenhagen <jona-sassenhagen>`.
 
-- |Fix| Avoid overflows on Windows in :func:`decomposition.IncrementalPCA.partial_fit`
-  for large ``batch_size`` and ``n_samples`` values.`
-  :pr:`17985` by :user:`Alan Butler <aldee153>` and :user:`Amanda Dsouza <amy12xx>`.
-
 :mod:`sklearn.ensemble`
 .......................
 
@@ -149,11 +121,6 @@ Changelog
   :class:`ensemble.HistGradientClassifier` now support `staged_predict`,
   which allows monitoring of each stage.
   :pr:`16985` by :user:`Hao Chun Chang <haochunchang>`.
-
-- |Fix| Fixed bug in :class:`ensemble.MultinomialDeviance` where the
-  average of logloss was incorrectly calculated as sum of logloss.
-  :pr:`17694` by :user:`Markus Rempfler <rempfler>` and
-  :user:`Tsutomu Kusanagi <t-kusanagi2>`.
 
 :mod:`sklearn.exceptions`
 .........................
@@ -254,12 +221,7 @@ Changelog
   some practical test cases were taken from PR :pr:`10711` by
   :user:`Mohamed Ali Jamaoui <mohamed-ali>`.
 
-- |Fix| Fixed a bug in :func:`metrics.mean_squared_error` where the
-  average of multiple RMSE values was incorrectly calculated as the root of the
-  average of multiple MSE values.
-  :pr:`17309` by :user:`Swier Heeres <swierh>`
-  
-- |Fix| Fixed a bug in 
+- |Fix| Fixed a bug in
   :func:`metrics.classification_report` which was raising AttributeError
   when called with `output_dict=True` for 0-length values.
   :pr:`17777` by :user:`Shubhanshu Mishra <napsternxg>`
@@ -281,10 +243,6 @@ Changelog
   :func:`metrics.plot_roc_curve` in order to specify the positive
   class to be used when computing the roc auc statistics.
   :pr:`17651` by :user:`Clara Matos <claramatos>`.
-
-- |Fix| Fixed a bug where :func:`metrics.pairwise_distances` would raise an error if
-  ``metric='seuclidean'`` and ``X`` is not type ``np.float64``.
-  :pr:`15730` by :user:`Forrest Koch <ForrestCKoch>`.
 
 :mod:`sklearn.model_selection`
 ..............................
@@ -390,13 +348,6 @@ Changelog
   :meth:`tree.DecisionTreeClassifier.fit` and
   :meth:`tree.DecisionTreeRegressor.fit`, and has not effect.
   :pr:`17614` by :user:`Juan Carlos Alfaro Jiménez <alfaro96>`.
-
-:mod:`sklearn.utils`
-.........................
-
-- |Fix| Fix :func:`utils.estimator_checks.check_estimator` so that all test
-  cases support the `binary_only` estimator tag.
-  :pr:`17812` by :user:`Bruno Charron <brcharron>`.
 
 Code and Documentation Contributors
 -----------------------------------
