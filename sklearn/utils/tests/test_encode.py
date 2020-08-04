@@ -101,7 +101,7 @@ def test_check_unknown(values, uniques, expected_diff, expected_mask):
 
 @pytest.mark.parametrize("missing_value", [None, np.nan])
 def test_check_unknown_missing_values(missing_value):
-    # sanity check for check_unknown with missing values with object dtypes
+    # check for check_unknown with missing values with object dtypes
     values = np.array(['d', 'c', 'a', 'b', missing_value], dtype=object)
     uniques = np.array(['c', 'a', 'b', missing_value], dtype=object)
     expected_diff = ['d']
@@ -125,9 +125,9 @@ def test_check_unknown_missing_values(missing_value):
 
 
 @pytest.mark.parametrize('missing_value', [np.nan, None])
-def test_unique_util_missing_values_objects(missing_value):
-    # santiy check for _unique and _encode with missing values with object
-    # dtypes
+@pytest.mark.parametrize('to_pickle', [True, False])
+def test_unique_util_missing_values_objects(missing_value, to_pickle):
+    # check for _unique and _encode with missing values with object dtypes
     values = np.array(['a', 'c', 'c', missing_value, 'b'], dtype=object)
     expected_uniques = np.array(['a', 'b', 'c', missing_value], dtype=object)
 
