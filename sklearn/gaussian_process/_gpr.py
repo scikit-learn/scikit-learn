@@ -93,7 +93,7 @@ class GaussianProcessRegressor(MultiOutputMixin,
         must be finite. Note that n_restarts_optimizer == 0 implies that one
         run is performed.
 
-    normalize_y : boolean, optional (default: False)
+    normalize_y : bool, default=False
         Whether the target values y are normalized, the mean and variance of
         the target values are set equal to 0 and 1 respectively. This is
         recommended for cases where zero-mean, unit-variance priors are used.
@@ -296,12 +296,12 @@ class GaussianProcessRegressor(MultiOutputMixin,
 
         return_cov : bool, default=False
             If True, the covariance of the joint predictive distribution at
-            the query points is returned along with the mean
+            the query points is returned along with the mean.
 
         Returns
         -------
         y_mean : ndarray of shape (n_samples, [n_output_dims])
-            Mean of predictive distribution a query points
+            Mean of predictive distribution a query points.
 
         y_std : ndarray of shape (n_samples,), optional
             Standard deviation of predictive distribution at query points.
