@@ -1194,7 +1194,8 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
                                  loss=self.loss,
                                  learning_rate=self.learning_rate, max_iter=1,
                                  sample_weight=sample_weight, coef_init=None,
-                                 intercept_init=None, accept_large_sparse=accept_large_sparse)
+                                 intercept_init=None,
+                                 accept_large_sparse=accept_large_sparse)
 
     def _fit(self, X, y, alpha, C, loss, learning_rate, coef_init=None,
              intercept_init=None, sample_weight=None, accept_large_sparse=False):
@@ -1213,7 +1214,8 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
 
         self._partial_fit(X, y, alpha, C, loss, learning_rate,
                           self.max_iter, sample_weight, coef_init,
-                          intercept_init, accept_large_sparse=accept_large_sparse)
+                          intercept_init,
+                          accept_large_sparse=accept_large_sparse)
 
         if (self.tol is not None and self.tol > -np.inf
                 and self.n_iter_ == self.max_iter):
@@ -1253,7 +1255,8 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
                          loss=self.loss, learning_rate=self.learning_rate,
                          coef_init=coef_init,
                          intercept_init=intercept_init,
-                         sample_weight=sample_weight, accept_large_sparse=accept_large_sparse)
+                         sample_weight=sample_weight,
+                         accept_large_sparse=accept_large_sparse)
 
     def _decision_function(self, X):
         """Predict using the linear model
