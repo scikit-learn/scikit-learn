@@ -121,6 +121,7 @@ def _is_sorted_by_data(graph):
     ----------
     graph : sparse matrix of shape (n_samples, n_samples)
         Neighbors graph as given by kneighbors_graph or radius_neighbors_graph.
+        Matrix should be of format CSR format.
 
     Returns
     -------
