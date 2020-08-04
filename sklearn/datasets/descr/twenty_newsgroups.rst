@@ -107,14 +107,14 @@ from a subset of 20news::
   >>> vectorizer = TfidfVectorizer()
   >>> vectors = vectorizer.fit_transform(newsgroups_train.data)
   >>> vectors.shape
-  (2034, 34118)
+  (2034, 33814)
 
 The extracted TF-IDF vectors are very sparse, with an average of 159 non-zero
 components by sample in a more than 30000-dimensional space
 (less than .5% non-zero features)::
 
   >>> vectors.nnz / float(vectors.shape[0])
-  159.01327...
+  114.78072...
 
 :func:`sklearn.datasets.fetch_20newsgroups_vectorized` is a function which 
 returns ready-to-use token counts features instead of file names.
@@ -145,7 +145,7 @@ which is fast to train and achieves a decent F-score::
 
   >>> pred = clf.predict(vectors_test)
   >>> metrics.f1_score(newsgroups_test.target, pred, average='macro')
-  0.88213...
+  0.88376...
 
 (The example :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py` shuffles
 the training and test data, instead of segmenting by time, and in that case
