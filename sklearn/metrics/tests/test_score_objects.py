@@ -21,11 +21,17 @@ from sklearn.metrics import (f1_score, r2_score, roc_auc_score, fbeta_score,
                              jaccard_score)
 from sklearn.metrics import cluster as cluster_module
 from sklearn.metrics import check_scoring
-from sklearn.metrics._scorer import (_PredictScorer, _passthrough_scorer,
-                                     _MultimetricScorer,
-                                     _check_multimetric_scoring)
+from sklearn.metrics._scorer import (
+    _check_multimetric_scoring,
+    _passthrough_scorer,
+    _MultimetricScorer,
+    _PredictScorer,
+    _ProbaScorer,
+    _ThresholdScorer,
+)
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import make_scorer, get_scorer, SCORERS
+from sklearn.dummy import DummyClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import LinearSVC
 from sklearn.pipeline import make_pipeline
@@ -773,3 +779,48 @@ def test_get_scorer_copy_custom_scorers():
         accuracy_scorer_with_copy._kwargs["mutable_list"]
         is accuracy_scorer._kwargs["mutable_list"]
     )
+
+
+@pytest.mark.parametrize(
+    "Scorer", [_PredictScorer, _ProbaScorer, _ThresholdScorer]
+)
+def test_scorer_set_kwargs(Scorer):
+    # check that one can set the additional parameters to pass to the scoring
+    # function once the wrapper created.
+
+    def scoring_func(y_true, y_pred, *, returned_value=0):
+        return returned_value
+
+    scorer = make_scorer(scoring_func)
+
+    rng = np.random.RandomState(42)
+    X, y = rng.randn(5, 2), rng.randint(2, size=5)
+
+    estimator = DummyClassifier().fit(X, y)
+    assert scorer(estimator, X, y) == 0
+
+    scorer.set_kwargs(returned_value=1)
+    assert scorer(estimator, X, y) == 1
+
+
+@pytest.mark.parametrize(
+    "Scorer", [_PredictScorer, _ProbaScorer, _ThresholdScorer]
+)
+def test_scorer_set_kwargs_unknown_param(Scorer):
+    # check that we raise an error if a parameter passed is not in the
+    # signature of the scoring func
+
+    def scoring_func(y_true, y_pred, *, returned_value=0):
+        return returned_value
+
+    scorer = make_scorer(scoring_func)
+
+    rng = np.random.RandomState(42)
+    X, y = rng.randn(5, 2), rng.randint(2, size=5)
+
+    estimator = DummyClassifier().fit(X, y)
+    assert scorer(estimator, X, y) == 0
+
+    err_msg = "Unknown parameters provided: "
+    with pytest.raises(ValueError, match=err_msg):
+        scorer.set_kwargs(unknown_param=1)

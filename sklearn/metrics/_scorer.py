@@ -22,6 +22,7 @@ from collections import Counter
 from collections.abc import Iterable
 from copy import deepcopy
 from functools import partial
+from inspect import signature
 
 import numpy as np
 
@@ -165,6 +166,38 @@ class _BaseScorer:
     def _factory_args(self):
         """Return non-default make_scorer arguments for repr."""
         return ""
+
+    def set_kwargs(self, **kwargs):
+        """Set the parameters which will be given to the scoring function.
+
+        Parameters
+        ----------
+        **kwargs : dict
+            Additional scoring function parameters.
+
+        Returns
+        -------
+        self : object
+            Scorer instance.
+        """
+        if not kwargs:
+            return self
+
+        signature_score_func = signature(self._score_func)
+        params_score_func = set(
+            [name for name, param in signature_score_func.parameters.items()
+             if param.kind == param.KEYWORD_ONLY]
+        )
+
+        unknown_params = (set(kwargs.keys()) - params_score_func)
+        if unknown_params:
+            raise ValueError(
+                f"Unknown parameters provided: {unknown_params}. The scoring "
+                f"function takes only the parameters {params_score_func}."
+            )
+
+        self._kwargs.update(kwargs)
+        return self
 
 
 class _PredictScorer(_BaseScorer):
