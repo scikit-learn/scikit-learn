@@ -531,7 +531,8 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
         return self
 
     def _fit(self, X, y, alpha, C, loss, learning_rate, coef_init=None,
-             intercept_init=None, sample_weight=None, accept_large_sparse=False):
+             intercept_init=None, sample_weight=None,
+             accept_large_sparse=False):
         self._validate_params()
         if hasattr(self, "classes_"):
             self.classes_ = None
@@ -672,6 +673,10 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
             Weights applied to individual samples.
             If not provided, uniform weights are assumed.
 
+        accept_large_sparse : boolean, default=False
+            if accept_large_sparse is set to True, model input validation allows for
+            sparse matrices with 64-bit integer indices.
+
         Returns
         -------
         self :
@@ -725,7 +730,8 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
         return self._fit(X, y, alpha=self.alpha, C=1.0,
                          loss=self.loss, learning_rate=self.learning_rate,
                          coef_init=coef_init, intercept_init=intercept_init,
-                         sample_weight=sample_weight, accept_large_sparse=accept_large_sparse)
+                         sample_weight=sample_weight,
+                         accept_large_sparse=accept_large_sparse)
 
 
 class SGDClassifier(BaseSGDClassifier):
@@ -1133,10 +1139,11 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
             average=average)
 
     def _partial_fit(self, X, y, alpha, C, loss, learning_rate,
-                     max_iter, sample_weight, coef_init, intercept_init, accept_large_sparse):
+                     max_iter, sample_weight, coef_init, intercept_init,
+                     accept_large_sparse):
         X, y = self._validate_data(X, y, accept_sparse="csr", copy=False,
                                    order='C', dtype=np.float64,
-                                   accept_large_sparse=False)
+                                   accept_large_sparse=accept_large_sparse)
         y = y.astype(np.float64, copy=False)
 
         n_samples, n_features = X.shape
