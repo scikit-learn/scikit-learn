@@ -122,11 +122,11 @@ Multiclass classification
     unless you want to experiment with different multiclass strategies.
 
 **Multiclass classification** is a classification task with more than two
-classes. Each sample can only be labelled as one class.
+classes. Each sample can only be labeled as one class.
 
 For example, classification using features extracted from a set of images of
 fruit, where each image may either be of an orange, an apple, or a pear.
-Each image is one sample and is labelled as one of the 3 possible classes.
+Each image is one sample and is labeled as one of the 3 possible classes.
 Multiclass classification makes the assumption that each sample is assigned
 to one and only one label - one sample cannot, for example, be both a pear
 and an apple.
@@ -338,7 +338,7 @@ Multilabel classification
 =========================
 
 **Multilabel classification** (closely related to **multioutput**
-**classification**) is a classification task labelling each sample with ``x``
+**classification**) is a classification task labeling each sample with ``x``
 labels from ``n_classes`` possible classes, where ``x`` can be 0 to
 ``n_classes`` inclusive. This can be thought of as predicting properties of a
 sample that are not mutually exclusive. Formally, a binary output is assigned
@@ -360,7 +360,7 @@ Target format
 A valid representation of :term:`multilabel` `y` is an either dense or sparse
 :term:`binary` matrix of shape ``(n_samples, n_classes)``. Each column
 represents a class. The ``1``'s in each row denote the positive classes a
-sample has been labelled with. An example of a dense matrix ``y`` for 3
+sample has been labeled with. An example of a dense matrix ``y`` for 3
 samples:
 
   >>> y = np.array([[1, 0, 0, 1], [0, 0, 1, 1], [0, 0, 0, 0]])
