@@ -51,7 +51,7 @@ def _format_annotation(annotation):
     elif class_name == 'Literal':
         values = ', '.join(repr(t) for t in annotation.__args__)
         return f'{{{values}}}'
-    elif class_name in ('list', 'List'):
+    elif class_name == 'List':
         values = ', '.join(_format_annotation(t)
                            for t in annotation.__args__)
         return f'list of {values}'
@@ -60,12 +60,11 @@ def _format_annotation(annotation):
 
 
 def get_annotations(obj):
-    """Get human readable docstring for types for a function or an estimator
-    with annotations.
+    """Get human readable docstring for types for a obj with annotations.
 
     Parameters
     ----------
-    obj: callable or estimator class
+    obj: object
 
     Returns
     -------
@@ -73,7 +72,7 @@ def get_annotations(obj):
         dictionary mapping from name to human-readable docstring.
     """
     if not hasattr(obj, '__annotations__'):
-        raise ValueError(f"{obj} does not have annotations")
+        return {}
 
     annotations = obj.__annotations__
     # get defaults

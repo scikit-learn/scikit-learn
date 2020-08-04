@@ -1254,6 +1254,11 @@ class LogisticRegression(LinearClassifierMixin,
     >>> clf.score(X, y)
     0.97...
     """
+    classes_: np.ndarray
+    coef_: np.ndarray
+    intercept_: np.ndarray
+    n_iter_: np.ndarray
+
     @_deprecate_positional_args
     def __init__(self,
                  penalty: Literal['l1', 'l2', 'elasticnet', 'none'] = 'l2',

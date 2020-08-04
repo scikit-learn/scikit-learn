@@ -284,19 +284,26 @@ def test_estimators_typestring(name, Estimator):
     doc = docscrape.ClassDoc(Estimator)
     parameters = doc['Parameters']
     parameter_annnotations = get_annotations(Estimator.__init__)
-
-    for parameter in parameters:
-        name, type_str = parameter.name, parameter.type
-        # whitespaces are collapsed to one whitespace
-        type_str = ' '.join(parameter.type.split())
-        assert parameter_annnotations[parameter.name] == type_str, (
-            f"{name} has incorrectly formated docstring")
+    _check_annotations(parameters, parameter_annnotations)
 
     attributes = doc['Attributes']
     attribute_annotations = get_annotations(Estimator)
-    for attribute in attributes:
-        name, type_str = attribute.name, attribute.type
+    _check_annotations(attributes, attribute_annotations)
+
+
+def _check_annotations(docstring_items, expected_annotations):
+
+    assert len(docstring_items) == len(expected_annotations)
+
+    for item in docstring_items:
+        name, type_str = item.name, item.type
+
+        # skip annotations with "shape of" for now, this can be added when
+        # we support Annotated
+        if "of shape" in type_str:
+            continue
+
         # whitespaces are collapsed to one whitespace
-        type_str = ' '.join(attribute.type.split())
-        assert attribute_annotations[name] == type_str, (
+        type_str = ' '.join(item.type.split())
+        assert expected_annotations[name] == type_str, (
             f"{name} has incorrectly formated docstring")
