@@ -824,3 +824,17 @@ def test_scorer_set_kwargs_unknown_param(Scorer):
     err_msg = "Unknown parameters provided: "
     with pytest.raises(ValueError, match=err_msg):
         scorer.set_kwargs(unknown_param=1)
+
+
+def test_get_scorer_kwargs():
+    # check that we can pass argument to get the scorer
+    scorer_kwargs = get_scorer("f1", average="micro")
+    scorer_micro = get_scorer("f1_micro")
+
+    X, y = make_classification(
+        n_classes=3, n_clusters_per_class=1, random_state=0
+    )
+    classifier = DummyClassifier().fit(X, y)
+    assert scorer_kwargs(classifier, X, y) == pytest.approx(
+        scorer_micro(classifier, X, y)
+    )
