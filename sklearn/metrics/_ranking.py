@@ -49,7 +49,7 @@ def auc(x, y):
 
     Parameters
     ----------
-    x : ndarray, of shape (n,)
+    x : ndarray of shape (n,)
         x coordinates. These must be either monotonic increasing or monotonic
         decreasing.
     y : ndarray of shape, (n,)
@@ -219,7 +219,7 @@ def average_precision_score(y_true, y_score, *, average="macro", pos_label=1,
 
 
 def _binary_roc_auc_score(y_true, y_score, sample_weight=None, max_fpr=None):
-    """Binary roc auc score"""
+    """Binary roc auc score."""
     if len(np.unique(y_true)) != 2:
         raise ValueError("Only one class present in y_true. ROC AUC score "
                          "is not defined in that case.")
@@ -403,7 +403,7 @@ def roc_auc_score(y_true, y_score, *, average="macro", sample_weight=None,
 
 def _multiclass_roc_auc_score(y_true, y_score, labels,
                               multi_class, average, sample_weight):
-    """Multiclass roc auc score
+    """Multiclass roc auc score.
 
     Parameters
     ----------
@@ -506,10 +506,10 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
 
     Parameters
     ----------
-    y_true : array of shape (n_samples,)
+    y_true : ndarray of shape (n_samples,)
         True targets of binary classification.
 
-    y_score : array of shape (n_samples,)
+    y_score : ndarray of shape (n_samples,)
         Estimated probabilities or decision function.
 
     pos_label : int or str, default=None
@@ -628,7 +628,7 @@ def precision_recall_curve(y_true, probas_pred, *, pos_label=None,
         True binary labels. If labels are not either {-1, 1} or {0, 1}, then
         pos_label should be explicitly given.
 
-    probas_pred : array of shape (n_samples,)
+    probas_pred : ndarray of shape (n_samples,)
         Estimated probabilities or decision function.
 
     pos_label : int or str, default=None
@@ -696,7 +696,7 @@ def precision_recall_curve(y_true, probas_pred, *, pos_label=None,
 @_deprecate_positional_args
 def roc_curve(y_true, y_score, *, pos_label=None, sample_weight=None,
               drop_intermediate=True):
-    """Compute Receiver operating characteristic (ROC)
+    """Compute Receiver operating characteristic (ROC).
 
     Note: this implementation is restricted to the binary classification task.
 
@@ -845,7 +845,7 @@ def label_ranking_average_precision_score(y_true, y_score, *,
 
     Parameters
     ----------
-    y_true : {ndarray, sparse matrix} of shape = (n_samples, n_labels)
+    y_true : {ndarray, sparse matrix} of shape (n_samples, n_labels)
         True binary labels in binary indicator format.
 
     y_score : ndarray of shape (n_samples, n_labels)
@@ -1140,10 +1140,10 @@ def _tie_averaged_dcg(y_true, y_score, discount_cumsum):
     Parameters
     ----------
     y_true : ndarray
-        The true relevance scores
+        The true relevance scores.
 
     y_score : ndarray
-        Predicted scores
+        Predicted scores.
 
     discount_cumsum : ndarray
         Precomputed cumulative sum of the discounts.
