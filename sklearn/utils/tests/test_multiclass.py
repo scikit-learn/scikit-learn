@@ -3,7 +3,6 @@ import numpy as np
 import scipy.sparse as sp
 from itertools import product
 import pytest
-from distutils.version import LooseVersion
 
 from scipy.sparse import issparse
 from scipy.sparse import csc_matrix
@@ -16,6 +15,7 @@ from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils.estimator_checks import _NotAnArray
+from sklearn.utils.fixes import parse_version
 
 from sklearn.utils.multiclass import unique_labels
 from sklearn.utils.multiclass import is_multilabel
@@ -307,7 +307,7 @@ def test_type_of_target():
 def test_type_of_target_pandas_sparse():
     pd = pytest.importorskip("pandas")
 
-    if LooseVersion(pd.__version__) >= '0.25':
+    if parse_version(pd.__version__) >= parse_version('0.25'):
         pd_sparse_array = pd.arrays.SparseArray
     else:
         pd_sparse_array = pd.SparseArray

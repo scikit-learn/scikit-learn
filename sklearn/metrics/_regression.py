@@ -244,6 +244,8 @@ def mean_squared_error(y_true, y_pred, *,
     >>> y_pred = [[0, 2],[-1, 2],[8, -5]]
     >>> mean_squared_error(y_true, y_pred)
     0.708...
+    >>> mean_squared_error(y_true, y_pred, squared=False)
+    0.822...
     >>> mean_squared_error(y_true, y_pred, multioutput='raw_values')
     array([0.41666667, 1.        ])
     >>> mean_squared_error(y_true, y_pred, multioutput=[0.3, 0.7])
@@ -255,15 +257,18 @@ def mean_squared_error(y_true, y_pred, *,
     check_consistent_length(y_true, y_pred, sample_weight)
     output_errors = np.average((y_true - y_pred) ** 2, axis=0,
                                weights=sample_weight)
+
+    if not squared:
+        output_errors = np.sqrt(output_errors)
+
     if isinstance(multioutput, str):
         if multioutput == 'raw_values':
-            return output_errors if squared else np.sqrt(output_errors)
+            return output_errors
         elif multioutput == 'uniform_average':
             # pass None as weights to np.average: uniform mean
             multioutput = None
 
-    mse = np.average(output_errors, weights=multioutput)
-    return mse if squared else np.sqrt(mse)
+    return np.average(output_errors, weights=multioutput)
 
 
 @_deprecate_positional_args

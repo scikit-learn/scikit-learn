@@ -61,8 +61,8 @@ def set_config(assume_finite=None, working_memory=None,
         .. versionadded:: 0.21
 
     display : {'text', 'diagram'}, optional
-        If 'diagram', estimators will be displayed as text in a jupyter lab
-        of notebook context. If 'text', estimators will be displayed as
+        If 'diagram', estimators will be displayed as a diagram in a Jupyter
+        lab or notebook context. If 'text', estimators will be displayed as
         text. Default is 'text'.
 
         .. versionadded:: 0.23
@@ -111,8 +111,8 @@ def config_context(**new_config):
            Default changed from False to True.
 
     display : {'text', 'diagram'}, optional
-        If 'diagram', estimators will be displayed as text in a jupyter lab
-        of notebook context. If 'text', estimators will be displayed as
+        If 'diagram', estimators will be displayed as a diagram in a Jupyter
+        lab or notebook context. If 'text', estimators will be displayed as
         text. Default is 'text'.
 
         .. versionadded:: 0.23

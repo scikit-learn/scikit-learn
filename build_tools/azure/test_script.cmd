@@ -10,7 +10,8 @@ mkdir %TMP_FOLDER%
 cd %TMP_FOLDER%
 
 if "%CHECK_WARNINGS%" == "true" (
-    set PYTEST_ARGS=%PYTEST_ARGS% -Werror::DeprecationWarning -Werror::FutureWarning
+    REM numpy's 1.19.0's tostring() deprecation is ignored until scipy and joblib removes its usage
+    set PYTEST_ARGS=%PYTEST_ARGS% -Werror::DeprecationWarning -Werror::FutureWarning -Wignore:tostring:DeprecationWarning
 )
 
 if "%COVERAGE%" == "true" (

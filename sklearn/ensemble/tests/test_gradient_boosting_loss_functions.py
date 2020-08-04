@@ -27,7 +27,7 @@ def test_binomial_deviance():
 
     # pred has the same BD for y in {0, 1}
     assert (bd(np.array([0.0]), np.array([0.0])) ==
-                 bd(np.array([1.0]), np.array([0.0])))
+            bd(np.array([1.0]), np.array([0.0])))
 
     assert_almost_equal(bd(np.array([1.0, 1.0, 1.0]),
                            np.array([100.0, 100.0, 100.0])),
@@ -36,8 +36,9 @@ def test_binomial_deviance():
                            np.array([100.0, -100.0, -100.0])), 0)
 
     # check if same results as alternative definition of deviance (from ESLII)
-    alt_dev = lambda y, pred: np.mean(np.logaddexp(0.0, -2.0 *
-                                                   (2.0 * y - 1) * pred))
+    def alt_dev(y, pred):
+        return np.mean(np.logaddexp(0.0, -2.0 * (2.0 * y - 1) * pred))
+
     test_data = [(np.array([1.0, 1.0, 1.0]), np.array([100.0, 100.0, 100.0])),
                  (np.array([0.0, 0.0, 0.0]), np.array([100.0, 100.0, 100.0])),
                  (np.array([0.0, 0.0, 0.0]),
@@ -49,7 +50,9 @@ def test_binomial_deviance():
         assert_almost_equal(bd(*datum), alt_dev(*datum))
 
     # check the gradient against the
-    alt_ng = lambda y, pred: (2 * y - 1) / (1 + np.exp(2 * (2 * y - 1) * pred))
+    def alt_ng(y, pred):
+        return (2 * y - 1) / (1 + np.exp(2 * (2 * y - 1) * pred))
+
     for datum in test_data:
         assert_almost_equal(bd.negative_gradient(*datum), alt_ng(*datum))
 
@@ -174,6 +177,50 @@ def test_sample_weight_deviance():
         deviance_w_w = loss(y, p, sample_weight)
         deviance_wo_w = loss(y, p)
         assert deviance_wo_w == deviance_w_w
+
+
+@pytest.mark.parametrize(
+    'n_classes, n_samples', [(3, 100), (5, 57), (7, 13)]
+)
+def test_multinomial_deviance(n_classes, n_samples):
+    # Check multinomial deviance with and without sample weights.
+    rng = np.random.RandomState(13)
+    sample_weight = np.ones(n_samples)
+    y_true = rng.randint(0, n_classes, size=n_samples)
+    y_pred = np.zeros((n_samples, n_classes), dtype=np.float64)
+    for klass in range(y_pred.shape[1]):
+        y_pred[:, klass] = y_true == klass
+
+    loss = MultinomialDeviance(n_classes)
+    loss_wo_sw = loss(y_true, y_pred)
+    assert loss_wo_sw > 0
+    loss_w_sw = loss(y_true, y_pred, sample_weight=sample_weight)
+    assert loss_wo_sw == pytest.approx(loss_w_sw)
+
+    # Multinomial deviance uses weighted average loss rather than
+    # weighted sum loss, so we make sure that the value remains the same
+    # when we device the weight by 2.
+    loss_w_sw = loss(y_true, y_pred, sample_weight=0.5 * sample_weight)
+    assert loss_wo_sw == pytest.approx(loss_w_sw)
+
+
+def test_mdl_computation_weighted():
+    raw_predictions = np.array([[1., -1., -.1], [-2., 1., 2.]])
+    y_true = np.array([0, 1])
+    weights = np.array([1, 3])
+    expected_loss = 1.0909323
+    # MultinomialDeviance loss computation with weights.
+    loss = MultinomialDeviance(3)
+    assert (loss(y_true, raw_predictions, weights)
+            == pytest.approx(expected_loss))
+
+
+@pytest.mark.parametrize('n', [0, 1, 2])
+def test_mdl_exception(n):
+    # Check that MultinomialDeviance throws an exception when n_classes <= 2
+    err_msg = 'MultinomialDeviance requires more than 2 classes.'
+    with pytest.raises(ValueError, match=err_msg):
+        MultinomialDeviance(n)
 
 
 def test_init_raw_predictions_shapes():

@@ -162,7 +162,7 @@ def affinity_propagation(S, *, preference=None, convergence_iter=15,
     tmp = np.zeros((n_samples, n_samples))
 
     # Remove degeneracies
-    S += ((np.finfo(np.double).eps * S + np.finfo(np.double).tiny * 100) *
+    S += ((np.finfo(S.dtype).eps * S + np.finfo(S.dtype).tiny * 100) *
           random_state.randn(n_samples, n_samples))
 
     # Execute parallel affinity propagation updates
