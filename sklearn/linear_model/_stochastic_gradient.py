@@ -673,10 +673,6 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
             Weights applied to individual samples.
             If not provided, uniform weights are assumed.
 
-        accept_large_sparse : boolean, default=False
-            if accept_large_sparse is set to True, model input validation allows for
-            sparse matrices with 64-bit integer indices.
-
         Returns
         -------
         self :
@@ -721,6 +717,10 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
             If not provided, uniform weights are assumed. These weights will
             be multiplied with class_weight (passed through the
             constructor) if class_weight is specified.
+
+        accept_large_sparse : boolean, default=False
+            if accept_large_sparse is set to True, model input validation
+            allows for sparse matrices with 64-bit integer indices.
 
         Returns
         -------
@@ -1189,8 +1189,8 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
             If not provided, uniform weights are assumed.
 
         accept_large_sparse : boolean, default=False
-            if accept_large_sparse is set to True, model input validation allows for
-            sparse matrices with 64-bit integer indices.
+            if accept_large_sparse is set to True, model input validation
+            allows for sparse matrices with 64-bit integer indices.
 
         Returns
         -------
