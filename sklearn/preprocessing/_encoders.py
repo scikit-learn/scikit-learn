@@ -635,16 +635,16 @@ class OrdinalEncoder(_BaseEncoder):
         When the parameter handle_unknown is set to 'use_encoded_value', this
         parameter is required and will set the encoded value of unknown
         categories. It has to be distinct from the values used to encode any of
-        the categories in the fit.
+        the categories in `fit`.
 
         .. versionadded:: 0.24
 
     Attributes
     ----------
     categories_ : list of arrays
-        The categories of each feature determined during fitting
-        (in order of the features in X and corresponding with the output
-        of ``transform`` except for categories not seen during ``fit``).
+        The categories of each feature determined during ``fit`` (in order of
+        the features in X and corresponding with the output of ``transform``).
+        This does not include categories that weren't seen during ``fit``.
 
     See Also
     --------
@@ -701,14 +701,20 @@ class OrdinalEncoder(_BaseEncoder):
         """
         if self.handle_unknown == 'use_encoded_value':
             if not isinstance(self.unknown_value, numbers.Integral):
-                raise TypeError(f"unknown_value should be an integer, got "
+                raise TypeError(f"unknown_value should be an integer when "
+                                f"`handle_unknown is 'use_encoded_value'`, "
+                                f"got {self.unknown_value}.")
+        else:
+            if self.unknown_value is not None:
+                raise TypeError(f"unknown_value should only be set when "
+                                f"`handle_unknown is 'use_encoded_value'`, got "
                                 f"{self.unknown_value}.")
 
         self._fit(X)
 
         if self.handle_unknown == 'use_encoded_value':
-            for i in range(len(self.categories_)):
-                if 0 <= self.unknown_value < len(self.categories_[i]):
+            for feature_cats in self.categories_:
+                if 0 <= self.unknown_value < len(feature_cats):
                     raise ValueError(f"The used value for unknown_value "
                                      f"{self.unknown_value} is one of the "
                                      f"values already used for encoding the "
@@ -734,8 +740,7 @@ class OrdinalEncoder(_BaseEncoder):
 
         # create separate category for unknown values
         if self.handle_unknown == 'use_encoded_value':
-            for i in range(len(self.categories_)):
-                X_int[~X_mask[:, i], i] = self.unknown_value
+            X_int[~X_mask] = self.unknown_value
         return X_int.astype(self.dtype, copy=False)
 
     def inverse_transform(self, X):
@@ -782,8 +787,7 @@ class OrdinalEncoder(_BaseEncoder):
 
         # insert None values for unknown values
         if found_unknown:
-            if X_tr.dtype != object:
-                X_tr = X_tr.astype(object, copy=False)
+            X_tr = X_tr.astype(object, copy=False)
 
             for idx, mask in found_unknown.items():
                 X_tr[mask, idx] = None
