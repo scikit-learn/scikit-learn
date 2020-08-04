@@ -644,7 +644,7 @@ class OrdinalEncoder(_BaseEncoder):
     categories_ : list of arrays
         The categories of each feature determined during fitting
         (in order of the features in X and corresponding with the output
-        of ``transform``).
+        of ``transform`` except for categories not seen during ``fit``).
 
     See Also
     --------
