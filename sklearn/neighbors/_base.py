@@ -543,7 +543,7 @@ class KNeighborsMixin:
 
         Parameters
         ----------
-        dist : array of shape (n_samples_chunk, n_samples)
+        dist : ndarray of shape (n_samples_chunk, n_samples)
 
         start : int
             The index in X which the first row of dist corresponds to.
