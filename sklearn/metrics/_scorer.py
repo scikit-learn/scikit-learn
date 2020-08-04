@@ -362,7 +362,7 @@ class _ThresholdScorer(_BaseScorer):
         return ", needs_threshold=True"
 
 
-def get_scorer(scoring):
+def get_scorer(scoring, **kwargs):
     """Get a scorer from string or a callable.
 
     Read more in the :ref:`User Guide <scoring_parameter>`.
@@ -372,14 +372,64 @@ def get_scorer(scoring):
     scoring : str or callable
         Scoring method as string. If callable it is returned as is.
 
+    **kwargs : dict
+        Additional parameters that will be passed to later on when calling the
+        scorer.
+
     Returns
     -------
     scorer : callable
         The scorer.
+
+    Examples
+    --------
+    :func:`get_scorer` allows to fetch a callable instance which can be used
+    for getting a score given `X` and `y`. When a string is provided, the
+    scorer pre-built in scikit-learn is returned:
+
+    >>> from sklearn.metrics import get_scorer
+    >>> scorer = get_scorer("f1")
+
+    However, this scorer can sometimes not be used on some specific target. For
+    instance, the F1 score cannot be used on multi-class problems without
+    providing the average parameter, otherwise the result will be ambiguous.
+
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn.dummy import DummyClassifier
+    >>> X, y = load_iris(return_X_y=True)
+    >>> classifier = DummyClassifier().fit(X, y)
+    >>> try:
+    ...     scorer(classifier, X, y)
+    ... except ValueError as e:
+    ...     print(e)
+    Target is multiclass but average='binary'. Please choose another average
+    setting, one of [None, 'micro', 'macro', 'weighted'].
+
+    In this case, there are several solutions to overcome this problem.
+    First, you can used a string to get the qualified metric:
+
+    >>> scorer = get_scorer("f1_micro")
+    >>> scorer(classifier, X, y)
+    0.333...
+
+    Otherwise, one can set the additional parameters to pass to the scoring
+    function by setting the keyword arguments of the scorer.
+
+    >>> scorer = get_scorer("f1")
+    >>> _ = scorer.set_kwargs(average="micro")
+    >>> scorer(classifier, X, y)
+    0.333...
+
+    Finally, we could have directly pass the additional parameters when calling
+    :func:`get_scorer`.
+
+    >>> scorer = get_scorer("f1", average="micro")
+    >>> scorer(classifier, X, y)
+    0.333...
     """
     if isinstance(scoring, str):
         try:
-            scorer = deepcopy(SCORERS[scoring])
+            scorer = deepcopy(SCORERS[scoring]).set_kwargs(**kwargs)
         except KeyError:
             raise ValueError(
                 f"'{scoring}' is not a valid scoring value. Use "
