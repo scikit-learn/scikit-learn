@@ -892,7 +892,10 @@ on whether the classifier has found a real class structure and can help in
 evaluating the performance of the classifier.
 
 Finally, it is important to note that this test has been shown to produce low
-p-values even if there is only weak structure in the data
+p-values even if there is only weak structure in the data because in the
+corresponding permutated datasets there is absolutely no structure. This
+test is therefore only able to show when the model reliably outperforms
+random guessing.
 
 .. topic:: Examples
 
