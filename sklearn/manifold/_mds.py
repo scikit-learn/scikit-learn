@@ -18,7 +18,8 @@ from ..utils.validation import _deprecate_positional_args
 
 
 def _smacof_single(dissimilarities, metric=True, n_components=2, init=None,
-                   max_iter=300, verbose=0, eps=1e-3, random_state=None):
+                   max_iter=300, verbose=0, eps=1e-3, random_state=None,
+                   normalize=False):
     """Computes multidimensional scaling using SMACOF algorithm.
 
     Parameters
@@ -54,6 +55,10 @@ def _smacof_single(dissimilarities, metric=True, n_components=2, init=None,
         Pass an int for reproducible results across multiple function calls.
         See :term: `Glossary <random_state>`.
 
+    normalize : boolean, optional, default: False
+        Whether use and return normed stress value (Stress-1) instead of raw
+        stress calculated by default.
+
     Returns
     -------
     X : ndarray of shape (n_samples, n_components)
@@ -62,6 +67,9 @@ def _smacof_single(dissimilarities, metric=True, n_components=2, init=None,
     stress : float
         The final value of the stress (sum of squared distance of the
         disparities and the distances for all constrained points).
+        If normalize is set to True, returns Stress-1 (according to
+        Kruskal (1964, p. 3) value 0 indicates "perfect" fit, 0.025
+        excellent, 0.05 good, 0.1 fair, and 0.2 poor).
 
     n_iter : int
         The number of iterations corresponding to the best stress.
@@ -109,6 +117,11 @@ def _smacof_single(dissimilarities, metric=True, n_components=2, init=None,
         # Compute stress
         stress = ((dis.ravel() - disparities.ravel()) ** 2).sum() / 2
 
+        # Use Stress-1
+        if normalize:
+            stress = np.sqrt(stress /
+                             ((disparities.ravel() ** 2).sum() / 2))
+
         # Update X using the Guttman transform
         dis[dis == 0] = 1e-5
         ratio = disparities / dis
@@ -133,7 +146,7 @@ def _smacof_single(dissimilarities, metric=True, n_components=2, init=None,
 @_deprecate_positional_args
 def smacof(dissimilarities, *, metric=True, n_components=2, init=None,
            n_init=8, n_jobs=None, max_iter=300, verbose=0, eps=1e-3,
-           random_state=None, return_n_iter=False):
+           random_state=None, return_n_iter=False, normalize=False):
     """Computes multidimensional scaling using the SMACOF algorithm.
 
     The SMACOF (Scaling by MAjorizing a COmplicated Function) algorithm is a
@@ -204,6 +217,10 @@ def smacof(dissimilarities, *, metric=True, n_components=2, init=None,
     return_n_iter : bool, default=False
         Whether or not to return the number of iterations.
 
+    normalize : boolean, optional, default: False
+        Whether use and return normed stress value (Stress-1) instead of raw
+        stress calculated by default.
+
     Returns
     -------
     X : ndarray of shape (n_samples, n_components)
@@ -212,6 +229,9 @@ def smacof(dissimilarities, *, metric=True, n_components=2, init=None,
     stress : float
         The final value of the stress (sum of squared distance of the
         disparities and the distances for all constrained points).
+        If normalize is set to True, returns Stress-1 (according to
+        Kruskal (1964, p. 3) value 0 indicates "perfect" fit, 0.025
+        excellent, 0.05 good, 0.1 fair, and 0.2 poor).
 
     n_iter : int
         The number of iterations corresponding to the best stress. Returned
@@ -249,7 +269,8 @@ def smacof(dissimilarities, *, metric=True, n_components=2, init=None,
                 dissimilarities, metric=metric,
                 n_components=n_components, init=init,
                 max_iter=max_iter, verbose=verbose,
-                eps=eps, random_state=random_state)
+                eps=eps, random_state=random_state,
+                normalize=normalize)
             if best_stress is None or stress < best_stress:
                 best_stress = stress
                 best_pos = pos.copy()
@@ -260,7 +281,7 @@ def smacof(dissimilarities, *, metric=True, n_components=2, init=None,
             delayed(_smacof_single)(
                 dissimilarities, metric=metric, n_components=n_components,
                 init=init, max_iter=max_iter, verbose=verbose, eps=eps,
-                random_state=seed)
+                random_state=seed, normalize=normalize)
             for seed in seeds)
         positions, stress, n_iters = zip(*results)
         best = np.argmin(stress)
@@ -326,6 +347,10 @@ class MDS(BaseEstimator):
             Pre-computed dissimilarities are passed directly to ``fit`` and
             ``fit_transform``.
 
+    normalize : boolean, optional, default: False
+        Whether use and return normed stress value (Stress-1) instead of raw
+        stress calculated by default.
+
     Attributes
     ----------
     embedding_ : ndarray of shape (n_samples, n_components)
@@ -334,7 +359,10 @@ class MDS(BaseEstimator):
     stress_ : float
         The final value of the stress (sum of squared distance of the
         disparities and the distances for all constrained points).
-
+        If normalize is set to True, returns Stress-1 (according to
+        Kruskal (1964, p. 3) value 0 indicates "perfect" fit, 0.025
+        excellent, 0.05 good, 0.1 fair, and 0.2 poor).
+        
     dissimilarity_matrix_ : ndarray of shape (n_samples, n_samples)
         Pairwise dissimilarities between the points. Symmetric matrix that:
 
@@ -373,7 +401,8 @@ class MDS(BaseEstimator):
     @_deprecate_positional_args
     def __init__(self, n_components=2, *, metric=True, n_init=4,
                  max_iter=300, verbose=0, eps=1e-3, n_jobs=None,
-                 random_state=None, dissimilarity="euclidean"):
+                 random_state=None, dissimilarity="euclidean",
+                 normalize=False):
         self.n_components = n_components
         self.dissimilarity = dissimilarity
         self.metric = metric
@@ -383,6 +412,7 @@ class MDS(BaseEstimator):
         self.verbose = verbose
         self.n_jobs = n_jobs
         self.random_state = random_state
+        self.normalize = normalize
 
     @property
     def _pairwise(self):
@@ -447,6 +477,6 @@ class MDS(BaseEstimator):
             n_components=self.n_components, init=init, n_init=self.n_init,
             n_jobs=self.n_jobs, max_iter=self.max_iter, verbose=self.verbose,
             eps=self.eps, random_state=self.random_state,
-            return_n_iter=True)
+            return_n_iter=True, normalize=self.normalize)
 
         return self.embedding_
